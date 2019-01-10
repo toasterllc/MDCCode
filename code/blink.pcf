@@ -1,25 +1,6 @@
 set_io clk 21
-set_io rst 44     # J3_10
-set_io J3_9 45
-set_io J3_8 47
-set_io J3_7 48
-set_io J3_6 56
-set_io J3_5 60
-set_io J3_4 61
-set_io J3_3 62
-set_io GLED5 95
-set_io out 96       # RLED4
-set_io RLED3 97
-set_io RLED2 98
-set_io RLED1 99
-set_io IR_TX 105
-set_io IR_RX 106
-set_io IR_SD 107
-set_io J1_3 112
-set_io J1_4 113
-set_io J1_5 114
-set_io J1_6 115
-set_io J1_7 116
-set_io J1_8 117
-set_io J1_9 118
-set_io J1_10 119
+set_io led1 99
+set_io led2 98
+set_io led3 97
+set_io led4 96
+set_io led5 95
