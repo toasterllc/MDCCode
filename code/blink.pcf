@@ -1,4 +1,6 @@
 set_io clk 21
+set_io clkcopy 44
+set_io clkout 45
 set_io led1 99
 set_io led2 98
 set_io led3 97

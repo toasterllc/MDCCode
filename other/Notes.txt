@@ -27,6 +27,9 @@
       Throughput: 143e6 Hz * 16 bits == 2,656,000,000 bits/sec
       $2.44
 
+    - Needs 1 refresh every 64ms/4096 == 15.625us.
+      Wait tRC=63ns after refresh command.
+
 * FPGA
 
     - ECP5 series FPGA
