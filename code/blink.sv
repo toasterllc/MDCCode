@@ -22,72 +22,117 @@ module SDRAMController(
     output logic sdram_ldqm,        // Data input mask
     output logic sdram_udqm,        // Data output mask
     inout logic[15:0] sdram_dq,     // Data input/output
+    
+//    // SDRAM port
+//    output logic sdramClk,              // Clock
+//    output logic sdramClkEn,            // Clock enable
+//    output logic[1:0] sdramBankAddr,    // Bank address
+//    output logic[11:0] sdramAddr,       // Address
+//    output logic sdramChipSel,          // Chip select
+//    output logic sdramRowAddrStrobe,    // Row address strobe
+//    output logic sdramColAddrStrobe,    // Column address strobe
+//    output logic sdramWriteEn,          // Write enable
+//    output logic sdramDataInMask,       // Data input mask
+//    output logic sdramDataOutMask,      // Data output mask
+//    inout logic[15:0] sdramDataInOut,   // Data input/output
 );
     
-    localparam AddressWidth = 23;
-    localparam BankCount = 4;
-    localparam RowWidth = 12;
-    localparam ColWidth = 9;
     localparam ClockFrequency = 12000000;
     localparam TimeBetweenRefresh = 0.064/4096.0;
-    localparam ClocksBetweenRefresh = $rtoi(TimeBetweenRefresh*ClockFrequency);
-    localparam RefreshCounterWidth = $clog2(ClocksBetweenRefresh+1);
+    localparam RefreshClocks = $rtoi(TimeBetweenRefresh*ClockFrequency);
+    localparam RefreshCounterWidth = $clog2(RefreshClocks+1);
     
-    localparam SDRAMBankCount = 4;
-    localparam SDRAMBankWidth = $clog2(SDRAMBankCount);
-    localparam SDRAMAddressWidth = 12;
+    localparam TRCD = 21e-9;
+    localparam TRCDClocks = $rtoi(TRCD*ClockFrequency);
+    
+    localparam CmdBankActivate = 3'b011;
     
     localparam StateIdle = 0;
     localparam StateWrite = 1;
     localparam StateRead = 2;
+    localparam StateDelay = 3;
     
 //    initial begin
 //        $display("SDRAMBankWidth: %d", SDRAMBankWidth);
 //    end
     
-    logic state;
+    logic[2:0] state;
+    logic[2:0] delayNextState;
+    logic[3:0] delayCounter;
+    
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
-    logic[1:0] bankAddr = cmdAddr[22:21];
-    logic[11:0] rowAddr = cmdAddr[20:9];
-    logic[9:0] colAddr = cmdAddr[8:0];
+    logic[2:0] sdram_cmd;
+    assign sdram_ras_ = sdram_cmd[2];
+    assign sdram_cas_ = sdram_cmd[1];
+    assign sdram_we_ = sdram_cmd[0];
     
-    logic[22:0] addr;
+    logic[1:0] cmdBankAddr = cmdAddr[22:21];
+    logic[11:0] cmdRowAddr = cmdAddr[20:9];
+    logic[9:0] cmdColAddr = cmdAddr[8:0];
+    
+    logic[22:0] saveAddr;
+    logic[22:0] saveWriteData;
+    
+    logic[1:0] saveBankAddr = saveAddr[22:21];
+    logic[11:0] saveRowAddr = saveAddr[20:9];
+    logic[9:0] saveColAddr = saveAddr[8:0];
     
 	always_ff @(posedge clk) begin
         // Handle reset
         if (rst) begin
             state <= StateIdle;
-            refreshCounter <= ClocksBetweenRefresh;
+            refreshCounter <= RefreshClocks;
         
         end else begin
             refreshCounter <= refreshCounter-1;
             
             case (state)
             StateIdle: begin
-                if (cmdWrite) begin
-                    state <= StateWrite;
-                    
-                    // Save the address
-                    addr <= cmdAddr;
-                    
-                    sdram_ras_ <= 0;
-                    sdram_cas_ <= 1;
-                    sdram_we_ <= 1;
-                    sdram_ba <= bankAddr;
-                    sdram_a <= rowAddr;
+                // Save the address
+                saveAddr <= cmdAddr;
+                saveWriteData <= cmdWriteData;
                 
+                // Activate the bank
+                sdram_cmd <= CmdBankActivate;
+                sdram_ba <= cmdBankAddr;
+                sdram_a <= cmdRowAddr;
+                
+                // Delay tRCD clocks before the next state if needed
+                if (TRCDClocks > 0) begin
+                    state <= StateDelay;
+                    delayNextState <= (cmdWrite ? StateWrite : StateRead);
+                    delayCounter <= TRCDClocks-1;
+                
+                // Otherwise advance to the next state without a delay
                 end else begin
-                    state <= StateRead;
-                    
+                    state <= (cmdWrite ? StateWrite : StateRead);
                 end
             end
+            
+            StateWrite: begin
+                sdram_a <= {2'b00, saveColAddr};
+                sdram_writeData <= saveWriteData;
+            end
+            
+            StateRead: begin
+                
+            end
+            
+            StateDelay: begin
+                if (delayCounter == 0) begin
+                    state <= delayNextState;
+                end else begin
+                    delayCounter <= delayCounter-1;
+                end
+            end
+            
             endcase
         end
     end
     
-    logic[15:0] d;
-    logic[15:0] q;
+    logic[15:0] sdram_writeData;
+    logic[15:0] sdram_readData;
     
     genvar i;
     for (i=0; i<16; i=i+1) begin
@@ -97,8 +142,8 @@ module SDRAMController(
         ) dqio (
             .PACKAGE_PIN(sdram_dq[i]),
             .OUTPUT_ENABLE(),
-            .D_OUT_0(q[i]),
-            .D_IN_0(d[i]),
+            .D_OUT_0(sdram_writeData[i]),
+            .D_IN_0(sdram_readData[i]),
         );
     end
     
