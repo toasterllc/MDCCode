@@ -3,12 +3,13 @@ module SDRAMController(
     input logic rst,                // Reset (synchronous)
     
     // Command port
+    output logic cmdReady,          // Ready for new command
     input logic cmdTrigger,         // Start the command
     input logic[22:0] cmdAddr,      // Address
     input logic cmdWrite,           // Read (0) or write (1)
     input logic[15:0] cmdWriteData, // Data to write to address
     output logic[15:0] cmdReadData, // Data read from address
-    output logic cmdDone,           // Previous command is complete
+    output logic cmdReadDataValid,  // `cmdReadData` is valid data
     
     // SDRAM port
     output logic sdram_clk,         // Clock
@@ -22,43 +23,53 @@ module SDRAMController(
     output logic sdram_ldqm,        // Data input mask
     output logic sdram_udqm,        // Data output mask
     inout logic[15:0] sdram_dq,     // Data input/output
-    
-//    // SDRAM port
-//    output logic sdramClk,              // Clock
-//    output logic sdramClkEn,            // Clock enable
-//    output logic[1:0] sdramBankAddr,    // Bank address
-//    output logic[11:0] sdramAddr,       // Address
-//    output logic sdramChipSel,          // Chip select
-//    output logic sdramRowAddrStrobe,    // Row address strobe
-//    output logic sdramColAddrStrobe,    // Column address strobe
-//    output logic sdramWriteEn,          // Write enable
-//    output logic sdramDataInMask,       // Data input mask
-//    output logic sdramDataOutMask,      // Data output mask
-//    inout logic[15:0] sdramDataInOut,   // Data input/output
 );
     
     localparam ClockFrequency = 12000000;
-    localparam TimeBetweenRefresh = 0.064/4096.0;
-    localparam RefreshClocks = $rtoi(TimeBetweenRefresh*ClockFrequency);
-    localparam RefreshCounterWidth = $clog2(RefreshClocks+1);
+    localparam BurstLength = 1;
+    localparam RefreshCounterWidth = $clog2(Clocks(TREFI)+1);
     
-    localparam TRCD = 21e-9;
-    localparam TRCDClocks = $rtoi(TRCD*ClockFrequency);
+    // Timing parameters (nanoseconds)
+    localparam TREFI = 15625; // max time between refreshes
+    localparam TRC = 63; // min time between activating the same bank
+    localparam TRRD = 14; // min time between activating different banks
+    localparam TRCD = 21; // min time between activating bank and performing read/write
+    localparam TRP = 21;
+    localparam TWR = 14;
+    localparam CAS = 2; // Column address strobe (CAS) latency
     
+    // ras_, cas_, we_
     localparam CmdBankActivate = 3'b011;
+    localparam CmdWrite = 3'b100;
+    localparam CmdRead = 3'b101;
     
     localparam StateIdle = 0;
     localparam StateWrite = 1;
     localparam StateRead = 2;
-    localparam StateDelay = 3;
+    localparam StateRead2 = 3;
+    localparam StateRead3 = 4;
+    localparam StateDelay = 5;
     
-//    initial begin
-//        $display("SDRAMBankWidth: %d", SDRAMBankWidth);
-//    end
+    function integer Clocks;
+        input logic[63:0] t;
+        Clocks = (t*ClockFrequency)/1000000000;
+    endfunction
+    
+    // Verify constant values:
+    //   yosys -p "read_verilog -dump_rtlil -formal -sv blink.sv"
+    
+    // initial begin
+    //     $display("Clocks(TREFI): %d", myvar);
+    //     $display("Clocks(TREFI): %d", Clocks(TREFI));
+    //     $display("Clocks(TRCD): %d", Clocks(TRCD));
+    //     $display("Clocks(TRP): %d", Clocks(TRP));
+    //     $display("Clocks(TWR): %d", Clocks(TWR));
+    // end
     
     logic[2:0] state;
     logic[2:0] delayNextState;
     logic[3:0] delayCounter;
+    logic[9:0] readCounter;
     
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
@@ -69,54 +80,114 @@ module SDRAMController(
     
     logic[1:0] cmdBankAddr = cmdAddr[22:21];
     logic[11:0] cmdRowAddr = cmdAddr[20:9];
-    logic[9:0] cmdColAddr = cmdAddr[8:0];
+    logic[8:0] cmdColAddr = cmdAddr[8:0];
     
     logic[22:0] saveAddr;
-    logic[22:0] saveWriteData;
+    logic[15:0] saveWriteData;
     
     logic[1:0] saveBankAddr = saveAddr[22:21];
     logic[11:0] saveRowAddr = saveAddr[20:9];
-    logic[9:0] saveColAddr = saveAddr[8:0];
+    logic[8:0] saveColAddr = saveAddr[8:0];
+    
+    // TODO: this shouldn't reflect whether we're currently refreshing right? that should be transparent to clients?
+    assign cmdReady = (state == StateIdle);
     
 	always_ff @(posedge clk) begin
         // Handle reset
         if (rst) begin
             state <= StateIdle;
-            refreshCounter <= RefreshClocks;
+            refreshCounter <= Clocks(TREFI);
         
         end else begin
             refreshCounter <= refreshCounter-1;
             
             case (state)
             StateIdle: begin
-                // Save the address
-                saveAddr <= cmdAddr;
-                saveWriteData <= cmdWriteData;
-                
-                // Activate the bank
-                sdram_cmd <= CmdBankActivate;
-                sdram_ba <= cmdBankAddr;
-                sdram_a <= cmdRowAddr;
-                
-                // Delay tRCD clocks before the next state if needed
-                if (TRCDClocks > 0) begin
-                    state <= StateDelay;
-                    delayNextState <= (cmdWrite ? StateWrite : StateRead);
-                    delayCounter <= TRCDClocks-1;
-                
-                // Otherwise advance to the next state without a delay
-                end else begin
-                    state <= (cmdWrite ? StateWrite : StateRead);
+                if (cmdTrigger) begin
+                    // Save the address and data
+                    saveAddr <= cmdAddr;
+                    saveWriteData <= cmdWriteData;
+                    
+                    // TODO: we need to guarantee that TRC/TRRD are met when activating a bank
+                    // Activate the bank
+                    sdram_cmd <= CmdBankActivate;
+                    sdram_ba <= cmdBankAddr;
+                    sdram_a <= cmdRowAddr;
+                    
+                    // Delay tRCD clocks before the next state, if needed
+                    if (Clocks(TRCD) > 0) begin
+                        state <= StateDelay;
+                        delayNextState <= (cmdWrite ? StateWrite : StateRead);
+                        delayCounter <= Clocks(TRCD)-1;
+                    
+                    // Otherwise advance to the next state without a delay
+                    end else begin
+                        state <= (cmdWrite ? StateWrite : StateRead);
+                    end
                 end
             end
             
             StateWrite: begin
-                sdram_a <= {2'b00, saveColAddr};
+                // Supply the column address
+                sdram_a <= {3'b010, saveColAddr}; // sdram_a[10]=1 means WriteWithPrecharge
+                // Supply data to be written
                 sdram_writeData <= saveWriteData;
+                // Issue write command
+                sdram_cmd <= CmdWrite;
+                
+                // Delay {tWR+tRP+(BurstLength-1)} clocks before the next state, if needed
+                // NOTE: need to change sleep time if we write more than 1 word! See "Write and AutoPrecharge command"..., page 11
+                if (Clocks(TWR+TRP)+(BurstLength-1)-1 > 0) begin
+                    state <= StateDelay;
+                    delayNextState <= StateIdle;
+                    delayCounter <= Clocks(TWR+TRP)+(BurstLength-1)-1;
+                
+                // Otherwise advance to the next state without a delay
+                end else begin
+                    state <= StateIdle;
+                end
             end
             
             StateRead: begin
-                
+                // Supply the column address
+                sdram_a <= {3'b010, saveColAddr}; // sdram_a[10]=1 means ReadWithPrecharge
+                // Issue read command
+                sdram_cmd <= CmdRead;
+                // Delay for CAS cycles before readout begins
+                state <= StateRead2;
+                delayCounter <= CAS-1;
+            end
+            
+            StateRead2: begin
+                // Delay for CAS cycles
+                if (delayCounter == 0) begin
+                    state <= StateRead3;
+                    cmdReadDataValid <= 1;
+                    delayCounter <= BurstLength-1;
+                end else begin
+                    delayCounter <= delayCounter-1;
+                end
+            end
+            
+            StateRead3: begin
+                // Repeat until BurstLength words have been read out
+                if (delayCounter == 0) begin
+                    // End of readout
+                    cmdReadDataValid <= 0;
+                    
+                    // Delay tRP clocks before the next state, if needed
+                    if (Clocks(TRP) > 0) begin
+                        state <= StateDelay;
+                        delayNextState <= StateIdle;
+                        delayCounter <= Clocks(TRP)-1;
+                    
+                    // Otherwise advance to the next state without a delay
+                    end else begin
+                        state <= StateIdle;
+                    end
+                end else begin
+                    delayCounter <= delayCounter-1;
+                end
             end
             
             StateDelay: begin
@@ -141,6 +212,7 @@ module SDRAMController(
             .PULLUP(1'b0),
         ) dqio (
             .PACKAGE_PIN(sdram_dq[i]),
+            // TODO: figure out the right expression for OUTPUT_ENABLE
             .OUTPUT_ENABLE(),
             .D_OUT_0(sdram_writeData[i]),
             .D_IN_0(sdram_readData[i]),
