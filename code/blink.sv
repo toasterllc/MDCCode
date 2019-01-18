@@ -79,8 +79,15 @@ module SDRAMController(
     logic[3:0] state;
     logic[2:0] delayNextState;
     logic[11:0] delayCounter;
-    
     logic[RefreshCounterWidth-1:0] refreshCounter;
+    
+    // TODO: this shouldn't reflect whether we're currently refreshing right? that should be transparent to clients?
+    assign cmdReady = (state == StateIdle);
+    
+    // ## SDRAM nets
+    
+    assign sdram_clk = clk;
+    assign sdram_cs_ = 0;
     
     logic[2:0] sdram_cmd;
     assign sdram_ras_ = sdram_cmd[2];
@@ -102,12 +109,24 @@ module SDRAMController(
     assign sdram_ldqm = sdram_dqm;
     assign sdram_udqm = sdram_dqm;
     
-    // TODO: this shouldn't reflect whether we're currently refreshing right? that should be transparent to clients?
-    assign cmdReady = (state == StateIdle);
+    logic[15:0] sdram_writeData;
+    logic[15:0] sdram_readData;
+    
+    genvar i;
+    for (i=0; i<16; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1010_01),
+            .PULLUP(1'b0),
+        ) dqio (
+            .PACKAGE_PIN(sdram_dq[i]),
+            // TODO: update OUTPUT_ENABLE if we have multiple Write states
+            .OUTPUT_ENABLE(sdram_cmd == CmdWrite),
+            .D_OUT_0(sdram_writeData[i]),
+            .D_IN_0(sdram_readData[i]),
+        );
+    end
     
     // TODO: get refreshing working properly with incoming commands
-    // TODO: make sure cs_ is assigned
-    // TODO: make sure all sdram_ are driven or used
     // TODO: make sure refreshing doesnt interrupt StateInit/StateInit2/StateInit3
     // TODO: make sure we're doing the right thing with dqm
     
@@ -124,10 +143,11 @@ module SDRAMController(
         // Handle reset
         if (rst) begin
             state <= StateInit;
-            refreshCounter <= Clocks(TREFI)-1;
+            cmdReady <= 0;
+            cmdReadDataValid <= 0;
         
         end else begin
-            refreshCounter <= refreshCounter-1;
+            refreshCounter <= (refreshCounter>0 ? refreshCounter-1 : 0);
             
             case (state)
             StateInit: begin
@@ -169,6 +189,10 @@ module SDRAMController(
                 sdram_cmd <= CmdAutoRefresh;
                 // Delay TRP clocks before going Idle
                 `NextState(Clocks(TRP), StateIdle);
+                
+                // Do final set up
+                sdram_dqm <= 0;
+                refreshCounter <= Clocks(TREFI)-1;
             end
             
             StateIdle: begin
@@ -233,24 +257,6 @@ module SDRAMController(
             endcase
         end
     end
-    
-    logic[15:0] sdram_writeData;
-    logic[15:0] sdram_readData;
-    
-    genvar i;
-    for (i=0; i<16; i=i+1) begin
-        SB_IO #(
-            .PIN_TYPE(6'b1010_01),
-            .PULLUP(1'b0),
-        ) dqio (
-            .PACKAGE_PIN(sdram_dq[i]),
-            // TODO: figure out the right expression for OUTPUT_ENABLE
-            .OUTPUT_ENABLE(),
-            .D_OUT_0(sdram_writeData[i]),
-            .D_IN_0(sdram_readData[i]),
-        );
-    end
-    
 endmodule
 
 module clockgen(input clkin, output clkout);
