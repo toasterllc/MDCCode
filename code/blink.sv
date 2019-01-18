@@ -111,6 +111,15 @@ module SDRAMController(
     // TODO: make sure all sdram_ are driven or used
     // TODO: make sure refreshing doesnt interrupt StateInit/StateInit2/StateInit3
     
+    `define NextState(n, s)         \
+        if (n > 0) begin            \
+            state <= StateDelay;    \
+            delayCounter <= n-1;    \
+            delayNextState <= s;    \
+        end else begin              \
+            state <= s;             \
+        end
+    
 	always_ff @(posedge clk) begin
         // Handle reset
         if (rst) begin
@@ -125,11 +134,8 @@ module SDRAMController(
                 sdram_cke <= 0;
                 sdram_dqm <= 1;
                 sdram_cmd <= CmdNop;
-                
                 // Delay 200us
-                state <= StateDelay;
-                delayCounter <= Clocks(TINIT)-1;
-                delayNextState <= StateInit2;
+                `NextState(Clocks(TINIT), StateInit2);
             end
             
             StateInit2: begin
@@ -137,16 +143,7 @@ module SDRAMController(
                 sdram_cke <= 1;
                 sdram_cmd <= CmdPrechargeAll;
                 sdram_a <= 12'b010000000000; // sdram_a[10]=1
-                
-                // Delay tRP clocks before the next state, if needed
-                if (Clocks(TRP) > 0) begin
-                    state <= StateDelay;
-                    delayCounter <= Clocks(TRP)-1;
-                    delayNextState <= StateInit3;
-                // Otherwise advance to the next state without a delay
-                end else begin
-                    state <= StateInit3;
-                end
+                `NextState(Clocks(TRP), StateInit3);
             end
             
             StateInit3: begin
@@ -157,37 +154,21 @@ module SDRAMController(
                 // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
                 sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b0};
                 // Delay 2 clock cycles for the mode to be set
-                state <= StateDelay;
-                delayCounter <= 1;
-                delayNextState <= StateInit4;
+                `NextState(2, StateInit4);
             end
             
             StateInit4: begin
                 // Autorefresh 1/2
                 sdram_cmd <= CmdAutoRefresh;
-                // Delay tRP clocks before the next state, if needed
-                if (Clocks(TRP) > 0) begin
-                    state <= StateDelay;
-                    delayCounter <= Clocks(TRP)-1;
-                    delayNextState <= StateInit5;
-                // Otherwise advance to the next state without a delay
-                end else begin
-                    state <= StateInit5;
-                end
+                // Delay tRP clocks before the next state
+                `NextState(Clocks(TRP), StateInit5);
             end
             
             StateInit5: begin
                 // Autorefresh 2/2
                 sdram_cmd <= CmdAutoRefresh;
-                // Delay tRP clocks before the next state, if needed
-                if (Clocks(TRP) > 0) begin
-                    state <= StateDelay;
-                    delayCounter <= Clocks(TRP)-1;
-                    delayNextState <= StateIdle;
-                // Otherwise advance to the next state without a delay
-                end else begin
-                    state <= StateIdle;
-                end
+                // Delay tRP clocks before going Idle
+                `NextState(Clocks(TRP), StateIdle);
             end
             
             StateIdle: begin
@@ -202,16 +183,8 @@ module SDRAMController(
                     sdram_ba <= cmdBankAddr;
                     sdram_a <= cmdRowAddr;
                     
-                    // Delay tRCD clocks before the next state, if needed
-                    if (Clocks(TRCD) > 0) begin
-                        state <= StateDelay;
-                        delayCounter <= Clocks(TRCD)-1;
-                        delayNextState <= (cmdWrite ? StateWrite : StateRead);
-                    
-                    // Otherwise advance to the next state without a delay
-                    end else begin
-                        state <= (cmdWrite ? StateWrite : StateRead);
-                    end
+                    // Delay tRCD clocks after activating the bank to perform the command
+                    `NextState(Clocks(TRCD), (cmdWrite ? StateWrite : StateRead));
                 end else begin
                     sdram_cmd <= CmdNop;
                 end
@@ -225,17 +198,9 @@ module SDRAMController(
                 // Issue write command
                 sdram_cmd <= CmdWrite;
                 
-                // Delay {tWR+tRP+(BurstLength-1)} clocks before the next state, if needed
+                // Delay {tWR+tRP+(BurstLength-1)} clocks before going Idle
                 // NOTE: need to change sleep time if we write more than 1 word! See "Write and AutoPrecharge command"..., page 11
-                if (Clocks(TWR+TRP)+(BurstLength-1) > 0) begin
-                    state <= StateDelay;
-                    delayCounter <= Clocks(TWR+TRP)+(BurstLength-1)-1;
-                    delayNextState <= StateIdle;
-                
-                // Otherwise advance to the next state without a delay
-                end else begin
-                    state <= StateIdle;
-                end
+                `NextState(Clocks(TWR+TRP)+(BurstLength-1), StateIdle);
             end
             
             StateRead: begin
@@ -265,15 +230,8 @@ module SDRAMController(
                 if (delayCounter == 0) begin
                     // End of readout
                     cmdReadDataValid <= 0;
-                    // Delay tRP clocks before the next state, if needed
-                    if (Clocks(TRP) > 0) begin
-                        state <= StateDelay;
-                        delayCounter <= Clocks(TRP)-1;
-                        delayNextState <= StateIdle;
-                    // Otherwise advance to the next state without a delay
-                    end else begin
-                        state <= StateIdle;
-                    end
+                    // Delay tRP clocks before the next state
+                    `NextState(Clocks(TRP), StateIdle);
                 end else begin
                     delayCounter <= delayCounter-1;
                 end
