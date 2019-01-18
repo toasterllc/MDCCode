@@ -76,7 +76,7 @@ module SDRAMController(
     //     $display("Clocks(TWR): %d", Clocks(TWR));
     // end
     
-    logic[2:0] state;
+    logic[3:0] state;
     logic[2:0] delayNextState;
     logic[11:0] delayCounter;
     
@@ -106,18 +106,17 @@ module SDRAMController(
     assign cmdReady = (state == StateIdle);
     
     // TODO: get refreshing working properly with incoming commands
-    // TODO: implement SDRAM initialization
     // TODO: make sure cs_ is assigned
     // TODO: make sure all sdram_ are driven or used
     // TODO: make sure refreshing doesnt interrupt StateInit/StateInit2/StateInit3
     
     `define NextState(n, s)         \
-        if (n > 0) begin            \
+        if ((n) > 0) begin          \
             state <= StateDelay;    \
-            delayCounter <= n-1;    \
-            delayNextState <= s;    \
+            delayCounter <= (n)-1;  \
+            delayNextState <= (s);  \
         end else begin              \
-            state <= s;             \
+            state <= (s);           \
         end
     
 	always_ff @(posedge clk) begin
@@ -160,14 +159,14 @@ module SDRAMController(
             StateInit4: begin
                 // Autorefresh 1/2
                 sdram_cmd <= CmdAutoRefresh;
-                // Delay tRP clocks before the next state
+                // Delay TRP clocks before the next state
                 `NextState(Clocks(TRP), StateInit5);
             end
             
             StateInit5: begin
                 // Autorefresh 2/2
                 sdram_cmd <= CmdAutoRefresh;
-                // Delay tRP clocks before going Idle
+                // Delay TRP clocks before going Idle
                 `NextState(Clocks(TRP), StateIdle);
             end
             
@@ -183,7 +182,7 @@ module SDRAMController(
                     sdram_ba <= cmdBankAddr;
                     sdram_a <= cmdRowAddr;
                     
-                    // Delay tRCD clocks after activating the bank to perform the command
+                    // Delay TRCD clocks after activating the bank to perform the command
                     `NextState(Clocks(TRCD), (cmdWrite ? StateWrite : StateRead));
                 end else begin
                     sdram_cmd <= CmdNop;
@@ -198,7 +197,7 @@ module SDRAMController(
                 // Issue write command
                 sdram_cmd <= CmdWrite;
                 
-                // Delay {tWR+tRP+(BurstLength-1)} clocks before going Idle
+                // Delay {TWR+TRP+(BurstLength-1)} clocks before going Idle
                 // NOTE: need to change sleep time if we write more than 1 word! See "Write and AutoPrecharge command"..., page 11
                 `NextState(Clocks(TWR+TRP)+(BurstLength-1), StateIdle);
             end
@@ -209,41 +208,26 @@ module SDRAMController(
                 // Issue read command
                 sdram_cmd <= CmdRead;
                 // Delay for CAS cycles before readout begins
-                state <= StateRead2;
-                delayCounter <= CAS-1;
+                `NextState(CAS-1, StateRead2);
             end
             
             StateRead2: begin
                 sdram_cmd <= CmdNop;
-                // Delay for CAS cycles
-                if (delayCounter == 0) begin
-                    state <= StateRead3;
-                    cmdReadDataValid <= 1;
-                    delayCounter <= BurstLength-1;
-                end else begin
-                    delayCounter <= delayCounter-1;
-                end
+                cmdReadDataValid <= 1;
+                // Wait for the data to be read out
+                `NextState(BurstLength-1, StateRead3);
             end
             
             StateRead3: begin
-                // Repeat until BurstLength words have been read out
-                if (delayCounter == 0) begin
-                    // End of readout
-                    cmdReadDataValid <= 0;
-                    // Delay tRP clocks before the next state
-                    `NextState(Clocks(TRP), StateIdle);
-                end else begin
-                    delayCounter <= delayCounter-1;
-                end
+                cmdReadDataValid <= 0;
+                // Delay TRP clocks before going idle (needed because we performed a Read+AutoPrecharge)
+                `NextState(Clocks(TRP), StateIdle);
             end
             
             StateDelay: begin
                 sdram_cmd <= CmdNop;
-                if (delayCounter == 0) begin
-                    state <= delayNextState;
-                end else begin
-                    delayCounter <= delayCounter-1;
-                end
+                if (delayCounter == 0) state <= delayNextState;
+                else delayCounter <= delayCounter-1;
             end
             endcase
         end
