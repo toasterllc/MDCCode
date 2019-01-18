@@ -109,6 +109,7 @@ module SDRAMController(
     // TODO: make sure cs_ is assigned
     // TODO: make sure all sdram_ are driven or used
     // TODO: make sure refreshing doesnt interrupt StateInit/StateInit2/StateInit3
+    // TODO: make sure we're doing the right thing with dqm
     
     `define NextState(n, s)         \
         if ((n) > 0) begin          \
