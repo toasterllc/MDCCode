@@ -30,6 +30,7 @@ module SDRAMController(
     localparam RefreshCounterWidth = $clog2(Clocks(TREFI)+1);
     
     // Timing parameters (nanoseconds)
+    localparam TINIT = 200000; // power up initialization time
     localparam TREFI = 15625; // max time between refreshes
     localparam TRC = 63; // min time between activating the same bank
     localparam TRRD = 14; // min time between activating different banks
@@ -39,19 +40,25 @@ module SDRAMController(
     localparam CAS = 2; // Column address strobe (CAS) latency
     
     // ras_, cas_, we_
-    localparam CmdSetMode = 3'b000;
-    localparam CmdBankActivate = 3'b011;
-    localparam CmdWrite = 3'b100;
-    localparam CmdRead = 3'b101;
-    localparam CmdNop = 3'b111;
+    localparam CmdPrechargeAll  = 3'b010;
+    localparam CmdSetMode       = 3'b000;
+    localparam CmdAutoRefresh   = 3'b001;
+    localparam CmdBankActivate  = 3'b011;
+    localparam CmdWrite         = 3'b100;
+    localparam CmdRead          = 3'b101;
+    localparam CmdNop           = 3'b111;
     
-    localparam StateInit = 0;
-    localparam StateIdle = 1;
-    localparam StateWrite = 2;
-    localparam StateRead = 3;
-    localparam StateRead2 = 4;
-    localparam StateRead3 = 5;
-    localparam StateDelay = 6;
+    localparam StateInit    = 0;
+    localparam StateInit2   = 1;
+    localparam StateInit3   = 2;
+    localparam StateInit4   = 3;
+    localparam StateInit5   = 4;
+    localparam StateIdle    = 5;
+    localparam StateWrite   = 6;
+    localparam StateRead    = 7;
+    localparam StateRead2   = 8;
+    localparam StateRead3   = 9;
+    localparam StateDelay   = 10;
     
     function integer Clocks;
         input logic[63:0] t;
@@ -71,7 +78,7 @@ module SDRAMController(
     
     logic[2:0] state;
     logic[2:0] delayNextState;
-    logic[3:0] delayCounter;
+    logic[11:0] delayCounter;
     
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
@@ -91,6 +98,10 @@ module SDRAMController(
     logic[11:0] saveRowAddr = saveAddr[20:9];
     logic[8:0] saveColAddr = saveAddr[8:0];
     
+    logic sdram_dqm;
+    assign sdram_ldqm = sdram_dqm;
+    assign sdram_udqm = sdram_dqm;
+    
     // TODO: this shouldn't reflect whether we're currently refreshing right? that should be transparent to clients?
     assign cmdReady = (state == StateIdle);
     
@@ -98,18 +109,47 @@ module SDRAMController(
     // TODO: implement SDRAM initialization
     // TODO: make sure cs_ is assigned
     // TODO: make sure all sdram_ are driven or used
+    // TODO: make sure refreshing doesnt interrupt StateInit/StateInit2/StateInit3
     
 	always_ff @(posedge clk) begin
         // Handle reset
         if (rst) begin
             state <= StateInit;
-            refreshCounter <= Clocks(TREFI);
+            refreshCounter <= Clocks(TREFI)-1;
         
         end else begin
             refreshCounter <= refreshCounter-1;
             
             case (state)
             StateInit: begin
+                sdram_cke <= 0;
+                sdram_dqm <= 1;
+                sdram_cmd <= CmdNop;
+                
+                // Delay 200us
+                state <= StateDelay;
+                delayCounter <= Clocks(TINIT)-1;
+                delayNextState <= StateInit2;
+            end
+            
+            StateInit2: begin
+                // Precharge all banks
+                sdram_cke <= 1;
+                sdram_cmd <= CmdPrechargeAll;
+                sdram_a <= 12'b010000000000; // sdram_a[10]=1
+                
+                // Delay tRP clocks before the next state, if needed
+                if (Clocks(TRP) > 0) begin
+                    state <= StateDelay;
+                    delayCounter <= Clocks(TRP)-1;
+                    delayNextState <= StateInit3;
+                // Otherwise advance to the next state without a delay
+                end else begin
+                    state <= StateInit3;
+                end
+            end
+            
+            StateInit3: begin
                 // Set the operating mode of the SDRAM
                 sdram_cmd <= CmdSetMode;
                 // sdram_ba:    reserved
@@ -119,6 +159,35 @@ module SDRAMController(
                 // Delay 2 clock cycles for the mode to be set
                 state <= StateDelay;
                 delayCounter <= 1;
+                delayNextState <= StateInit4;
+            end
+            
+            StateInit4: begin
+                // Autorefresh 1/2
+                sdram_cmd <= CmdAutoRefresh;
+                // Delay tRP clocks before the next state, if needed
+                if (Clocks(TRP) > 0) begin
+                    state <= StateDelay;
+                    delayCounter <= Clocks(TRP)-1;
+                    delayNextState <= StateInit5;
+                // Otherwise advance to the next state without a delay
+                end else begin
+                    state <= StateInit5;
+                end
+            end
+            
+            StateInit5: begin
+                // Autorefresh 2/2
+                sdram_cmd <= CmdAutoRefresh;
+                // Delay tRP clocks before the next state, if needed
+                if (Clocks(TRP) > 0) begin
+                    state <= StateDelay;
+                    delayCounter <= Clocks(TRP)-1;
+                    delayNextState <= StateIdle;
+                // Otherwise advance to the next state without a delay
+                end else begin
+                    state <= StateIdle;
+                end
             end
             
             StateIdle: begin
@@ -136,8 +205,8 @@ module SDRAMController(
                     // Delay tRCD clocks before the next state, if needed
                     if (Clocks(TRCD) > 0) begin
                         state <= StateDelay;
-                        delayNextState <= (cmdWrite ? StateWrite : StateRead);
                         delayCounter <= Clocks(TRCD)-1;
+                        delayNextState <= (cmdWrite ? StateWrite : StateRead);
                     
                     // Otherwise advance to the next state without a delay
                     end else begin
@@ -158,10 +227,10 @@ module SDRAMController(
                 
                 // Delay {tWR+tRP+(BurstLength-1)} clocks before the next state, if needed
                 // NOTE: need to change sleep time if we write more than 1 word! See "Write and AutoPrecharge command"..., page 11
-                if (Clocks(TWR+TRP)+(BurstLength-1)-1 > 0) begin
+                if (Clocks(TWR+TRP)+(BurstLength-1) > 0) begin
                     state <= StateDelay;
-                    delayNextState <= StateIdle;
                     delayCounter <= Clocks(TWR+TRP)+(BurstLength-1)-1;
+                    delayNextState <= StateIdle;
                 
                 // Otherwise advance to the next state without a delay
                 end else begin
@@ -199,8 +268,8 @@ module SDRAMController(
                     // Delay tRP clocks before the next state, if needed
                     if (Clocks(TRP) > 0) begin
                         state <= StateDelay;
-                        delayNextState <= StateIdle;
                         delayCounter <= Clocks(TRP)-1;
+                        delayNextState <= StateIdle;
                     // Otherwise advance to the next state without a delay
                     end else begin
                         state <= StateIdle;
