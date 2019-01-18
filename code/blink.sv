@@ -39,16 +39,19 @@ module SDRAMController(
     localparam CAS = 2; // Column address strobe (CAS) latency
     
     // ras_, cas_, we_
+    localparam CmdSetMode = 3'b000;
     localparam CmdBankActivate = 3'b011;
     localparam CmdWrite = 3'b100;
     localparam CmdRead = 3'b101;
+    localparam CmdNop = 3'b111;
     
-    localparam StateIdle = 0;
-    localparam StateWrite = 1;
-    localparam StateRead = 2;
-    localparam StateRead2 = 3;
-    localparam StateRead3 = 4;
-    localparam StateDelay = 5;
+    localparam StateInit = 0;
+    localparam StateIdle = 1;
+    localparam StateWrite = 2;
+    localparam StateRead = 3;
+    localparam StateRead2 = 4;
+    localparam StateRead3 = 5;
+    localparam StateDelay = 6;
     
     function integer Clocks;
         input logic[63:0] t;
@@ -69,7 +72,6 @@ module SDRAMController(
     logic[2:0] state;
     logic[2:0] delayNextState;
     logic[3:0] delayCounter;
-    logic[9:0] readCounter;
     
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
@@ -92,16 +94,33 @@ module SDRAMController(
     // TODO: this shouldn't reflect whether we're currently refreshing right? that should be transparent to clients?
     assign cmdReady = (state == StateIdle);
     
+    // TODO: get refreshing working properly with incoming commands
+    // TODO: implement SDRAM initialization
+    // TODO: make sure cs_ is assigned
+    // TODO: make sure all sdram_ are driven or used
+    
 	always_ff @(posedge clk) begin
         // Handle reset
         if (rst) begin
-            state <= StateIdle;
+            state <= StateInit;
             refreshCounter <= Clocks(TREFI);
         
         end else begin
             refreshCounter <= refreshCounter-1;
             
             case (state)
+            StateInit: begin
+                // Set the operating mode of the SDRAM
+                sdram_cmd <= CmdSetMode;
+                // sdram_ba:    reserved
+                sdram_ba <=     2'b0;
+                // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
+                sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b0};
+                // Delay 2 clock cycles for the mode to be set
+                state <= StateDelay;
+                delayCounter <= 1;
+            end
+            
             StateIdle: begin
                 if (cmdTrigger) begin
                     // Save the address and data
@@ -124,6 +143,8 @@ module SDRAMController(
                     end else begin
                         state <= (cmdWrite ? StateWrite : StateRead);
                     end
+                end else begin
+                    sdram_cmd <= CmdNop;
                 end
             end
             
@@ -159,6 +180,7 @@ module SDRAMController(
             end
             
             StateRead2: begin
+                sdram_cmd <= CmdNop;
                 // Delay for CAS cycles
                 if (delayCounter == 0) begin
                     state <= StateRead3;
@@ -174,13 +196,11 @@ module SDRAMController(
                 if (delayCounter == 0) begin
                     // End of readout
                     cmdReadDataValid <= 0;
-                    
                     // Delay tRP clocks before the next state, if needed
                     if (Clocks(TRP) > 0) begin
                         state <= StateDelay;
                         delayNextState <= StateIdle;
                         delayCounter <= Clocks(TRP)-1;
-                    
                     // Otherwise advance to the next state without a delay
                     end else begin
                         state <= StateIdle;
@@ -191,13 +211,13 @@ module SDRAMController(
             end
             
             StateDelay: begin
+                sdram_cmd <= CmdNop;
                 if (delayCounter == 0) begin
                     state <= delayNextState;
                 end else begin
                     delayCounter <= delayCounter-1;
                 end
             end
-            
             endcase
         end
     end
