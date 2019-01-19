@@ -4,7 +4,7 @@ set -e
 proj="blink"
 
 # Synthesize the design from Verilog (.sv -> .blif)
-yosys -q -p "synth_ice40 -top main -blif $proj.blif" "$proj.sv"
+yosys -q -p "synth_ice40 -top top -blif $proj.blif" "$proj.sv"
 
 # Place and route the design ({.pcf, .blif} -> .txt)
 arachne-pnr -q -d 1k -o "$proj.txt" -p "$proj.pcf" "$proj.blif"
