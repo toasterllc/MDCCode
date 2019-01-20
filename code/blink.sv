@@ -1,6 +1,10 @@
-`timescale 1ns / 1ps
-// Verify constant values:
+`timescale 1ns/1ps
+
+// Verify constant values with yosys:
 //   yosys -p "read_verilog -dump_rtlil -formal -sv blink.sv"
+
+// Run simulation using Icarus Verilog (generates waveform file 'blink.vcd'):
+//   rm -f blink.vvp ; iverilog -o blink.vvp -g2012 blink.sv ; ./blink.vvp
 
 module SDRAMController(
     input logic clk,                // Clock
@@ -26,10 +30,10 @@ module SDRAMController(
     output logic sdram_we_,         // Write enable
     output logic sdram_ldqm,        // Data input mask
     output logic sdram_udqm,        // Data output mask
-    inout logic[15:0] sdram_dq,     // Data input/output
+    inout logic[15:0] sdram_dq      // Data input/output
 );
     
-    localparam ClockFrequency = 12000000;
+    localparam ClockFrequency = 20000000;
     localparam BurstLength = 1;
     localparam RefreshCounterWidth = $clog2(Clocks(TREFI)+1);
     
@@ -52,20 +56,21 @@ module SDRAMController(
     localparam CmdRead          = 3'b101;
     localparam CmdNop           = 3'b111;
     
-    localparam StateInit    = 0;
-    localparam StateInit2   = 1;
-    localparam StateInit3   = 2;
-    localparam StateInit4   = 3;
-    localparam StateInit5   = 4;
-    localparam StateIdle    = 5;
-    localparam StateWrite   = 6;
-    localparam StateRead    = 7;
-    localparam StateRead2   = 8;
-    localparam StateRead3   = 9;
-    localparam StateDelay   = 10;
+    localparam StateInit    = 4'h0;
+    localparam StateInit2   = 4'h1;
+    localparam StateInit3   = 4'h2;
+    localparam StateInit4   = 4'h3;
+    localparam StateInit5   = 4'h4;
+    localparam StateIdle    = 4'h5;
+    localparam StateWrite   = 4'h6;
+    localparam StateRead    = 4'h7;
+    localparam StateRead2   = 4'h8;
+    localparam StateRead3   = 4'h9;
+    localparam StateDelay   = 4'hA;
     
     function integer Clocks;
-        input logic[63:0] t;
+        // Icarus Verilog doesn't support `logic` type for arguments for some reason, so use `reg` instead.
+        input reg[63:0] t;
         Clocks = (t*ClockFrequency)/1000000000;
     endfunction
     
@@ -87,16 +92,22 @@ module SDRAMController(
     assign sdram_cas_ = sdram_cmd[1];
     assign sdram_we_ = sdram_cmd[0];
     
-    logic[1:0] cmdBankAddr = cmdAddr[22:21];
-    logic[11:0] cmdRowAddr = cmdAddr[20:9];
-    logic[8:0] cmdColAddr = cmdAddr[8:0];
+    logic[1:0] cmdBankAddr;
+    logic[11:0] cmdRowAddr;
+    logic[8:0] cmdColAddr;
+    assign cmdBankAddr = cmdAddr[22:21];
+    assign cmdRowAddr = cmdAddr[20:9];
+    assign cmdColAddr = cmdAddr[8:0];
     
     logic[22:0] saveAddr;
     logic[15:0] saveWriteData;
     
-    logic[1:0] saveBankAddr = saveAddr[22:21];
-    logic[11:0] saveRowAddr = saveAddr[20:9];
-    logic[8:0] saveColAddr = saveAddr[8:0];
+    logic[1:0] saveBankAddr;
+    logic[11:0] saveRowAddr;
+    logic[8:0] saveColAddr;
+    assign saveBankAddr = saveAddr[22:21];
+    assign saveRowAddr = saveAddr[20:9];
+    assign saveColAddr = saveAddr[8:0];
     
     logic sdram_dqm;
     assign sdram_ldqm = sdram_dqm;
@@ -129,6 +140,7 @@ module SDRAMController(
     // TODO: get refreshing working properly with incoming commands
     // TODO: make sure refreshing doesnt interrupt StateInit/StateInit2/StateInit3
     // TODO: make sure we're doing the right thing with dqm
+    // TODO: get back-to-back reads/writes working
     
     `define NextState(n, s)         \
         if ((n) > 0) begin          \
@@ -139,7 +151,7 @@ module SDRAMController(
             state <= (s);           \
         end
     
-	always_ff @(posedge clk) begin
+	always @(posedge clk) begin
         // Handle reset
         if (rst) begin
             state <= StateInit;
@@ -172,8 +184,9 @@ module SDRAMController(
                 sdram_ba <=     2'b0;
                 // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
                 sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b0};
-                // Delay 2 clock cycles for the mode to be set
-                `NextState(2, StateInit4);
+                // We have to wait 2 clock cycles before issuing the next command, so delay
+                // one clock cycle before going to the next state
+                `NextState(1, StateInit4);
             end
             
             StateInit4: begin
@@ -258,7 +271,11 @@ module SDRAMController(
     end
 endmodule
 
-module top(input logic clk, input logic rst, output tmp);
+module top();
+    logic clk;
+    logic delayed_clk;
+    logic rst;
+    
     logic cmdReady;
     logic cmdTrigger;
     logic[22:0] cmdAddr;
@@ -280,7 +297,7 @@ module top(input logic clk, input logic rst, output tmp);
     logic[15:0] sdram_dq;
     
     SDRAMController sdramController(
-        .clk(clk),
+        .clk(delayed_clk),
         .rst(rst),
         .cmdReady(cmdReady),
         .cmdTrigger(cmdTrigger),
@@ -299,14 +316,59 @@ module top(input logic clk, input logic rst, output tmp);
         .sdram_we_(sdram_we_),
         .sdram_ldqm(sdram_ldqm),
         .sdram_udqm(sdram_udqm),
-        .sdram_dq(sdram_dq),
+        .sdram_dq(sdram_dq)
     );
     
-    always @(posedge clk) begin
-        if (cmdReady) cmdTrigger <= 1;
-        else cmdTrigger <= 0;
+    task DelayClocks(input integer t);
+        #(50*t);
+    endtask
+    
+    task DelayMicroseconds(input integer t);
+        #(t*1000);
+    endtask
+    
+    initial begin
+        $dumpfile("blink.vcd");
+        $dumpvars(0, top);
+        
+        cmdTrigger = 0;
+        
+        // Reset
+        rst = 1;
+        DelayClocks(2);
+        rst = 0;
+        DelayClocks(1);
+        
+        // Wait until our RAM is ready
+        wait(cmdReady) #1;
+//        DelayMicroseconds(250);
+        
+        cmdAddr = 22'hAAAAA;
+        cmdWrite = 1;
+        cmdWriteData = 16'hABCD;
+        DelayClocks(1);
+        
+        cmdTrigger = 1;
+        DelayClocks(1);
+        
+        cmdTrigger = 0;
+        DelayClocks(1);
+        
+        DelayClocks(100);
+        
+        $finish;
     end
     
-    assign tmp = cmdReady;
+    // Run clock
+    initial begin
+        clk = 0;
+        forever begin
+            #25;
+            clk = !clk;
+        end
+    end
     
+    always @(clk) begin
+        #10 delayed_clk = clk;
+    end
 endmodule
