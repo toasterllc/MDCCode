@@ -1,0 +1,45 @@
+[*]
+[*] GTKWave Analyzer v3.3.98 (w)1999-2019 BSI
+[*] Sun Jan 20 03:20:14 2019
+[*]
+[dumpfile] "/Users/dave/repos/MotionDetectorCamera/code/blink.vcd"
+[dumpfile_mtime] "Sun Jan 20 03:20:03 2019"
+[dumpfile_size] 311256
+[savefile] "/Users/dave/repos/MotionDetectorCamera/code/blink.gtkw"
+[timestart] 200232300
+[size] 1440 815
+[pos] -1 -1
+*-16.957935 200575000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.sdramController.
+[sst_width] 193
+[signals_width] 244
+[sst_expanded] 1
+[sst_vpaned_height] 175
+@29
+top.clk
+@28
+top.rst
+@22
+top.sdramController.state[3:0]
+@28
+top.sdramController.sdram_cke
+top.sdramController.sdram_udqm
+top.sdramController.sdram_ldqm
+top.sdramController.sdram_cmd[2:0]
+top.sdramController.sdram_ba[1:0]
+@22
+top.sdramController.sdram_a[11:0]
+top.sdramController.sdram_writeData[15:0]
+@28
+top.sdramController.cmdReady
+@22
+top.sdramController.cmdAddr[22:0]
+@28
+top.sdramController.cmdWrite
+@22
+top.sdramController.cmdWriteData[15:0]
+@28
+top.sdramController.cmdTrigger
+[pattern_trace] 1
+[pattern_trace] 0
