@@ -145,15 +145,6 @@ module SDRAMController(
         delayCounter <= (n);        \
         state <= (s);
     
-    localparam Any = 1'b?;
-    
-    // logic initState;
-    // assign initState = (state>=StateInit4 && state<=StateInit0);
-    
-    logic delay;
-    assign delay = delayCounter>0;
-    localparam Delay = 1'b1;
-    
 	always @(posedge clk) begin
         // Handle reset
         if (rst) begin
