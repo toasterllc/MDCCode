@@ -57,17 +57,20 @@ module SDRAMController(
     localparam CmdNop           = 3'b111;
     
     localparam StateIdle        = 4'h0;
-    localparam StateInit4       = 4'h1;
-    localparam StateInit3       = 4'h2;
-    localparam StateInit2       = 4'h3;
-    localparam StateInit1       = 4'h4;
-    localparam StateInit0       = 4'h5;
-    localparam StateWrite       = 4'h6;
-    localparam StateRead2       = 4'h7;
-    localparam StateRead1       = 4'h8;
-    localparam StateRead0       = 4'h9;
-    localparam StateRefresh1    = 4'hA;
-    localparam StateRefresh0    = 4'hB;
+    localparam StateRestart     = 4'h1;
+    localparam StateInit4       = 4'h2;
+    localparam StateInit3       = 4'h3;
+    localparam StateInit2       = 4'h4;
+    localparam StateInit1       = 4'h5;
+    localparam StateInit0       = 4'h6;
+    localparam StateRefresh1    = 4'h7;
+    localparam StateRefresh0    = 4'h8;
+    localparam StateWrite1      = 4'h9;
+    localparam StateWrite0      = 4'hA;
+    localparam StateRead3       = 4'hB;
+    localparam StateRead2       = 4'hC;
+    localparam StateRead1       = 4'hD;
+    localparam StateRead0       = 4'hE;
     
     function integer Clocks;
         // Icarus Verilog doesn't support `logic` type for arguments for some reason, so use `reg` instead.
@@ -79,8 +82,9 @@ module SDRAMController(
     logic[11:0] delayCounter;
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
-    // TODO: this shouldn't reflect whether we're currently refreshing right? that should be transparent to clients?
-    assign cmdReady = (state == StateIdle);
+    // TODO: `cmdReady` shouldn't reflect whether we're currently refreshing right? that should be transparent to clients? also what if we're in StateIdle but there's a delay?
+    assign cmdReady = (state==StateIdle && delayCounter==0);
+    assign cmdReadDataValid = (state==StateRead0);
     
     // ## SDRAM nets
     assign sdram_clk = clk;
@@ -98,15 +102,17 @@ module SDRAMController(
     assign cmdRowAddr = cmdAddr[20:9];
     assign cmdColAddr = cmdAddr[8:0];
     
-    logic[22:0] saveAddr;
-    logic[15:0] saveWriteData;
+    logic[3:0] saveState;
+    logic[22:0] saveCmdAddr;
+    logic saveCmdWrite;
+    logic[15:0] saveCmdWriteData;
     
     logic[1:0] saveBankAddr;
     logic[11:0] saveRowAddr;
     logic[8:0] saveColAddr;
-    assign saveBankAddr = saveAddr[22:21];
-    assign saveRowAddr = saveAddr[20:9];
-    assign saveColAddr = saveAddr[8:0];
+    assign saveBankAddr = saveCmdAddr[22:21];
+    assign saveRowAddr = saveCmdAddr[20:9];
+    assign saveColAddr = saveCmdAddr[8:0];
     
     logic sdram_dqm;
     assign sdram_ldqm = sdram_dqm;
@@ -148,8 +154,7 @@ module SDRAMController(
 	always @(posedge clk) begin
         // Handle reset
         if (rst) begin
-            state <= StateInit4;
-            cmdReadDataValid <= 0;
+            `NextState(0, StateInit4);
         
         // Handle delays in Init states
         end else if (state>=StateInit4 && state<=StateInit0 && delayCounter>0) begin
@@ -181,8 +186,8 @@ module SDRAMController(
                 sdram_ba <=     2'b0;
                 // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
                 sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b0};
-                // We have to wait 2 clock cycles before issuing the next command, so delay
-                // one clock cycle before going to the next state
+                // We have to wait 2 clock cycles before issuing the next command, so inject
+                // 1 clock cycle before going to the next state
                 `NextState(1, StateInit1);
             end
             
@@ -213,10 +218,12 @@ module SDRAMController(
         
         // Initiate refresh when refreshCounter==0
         end else if (refreshCounter == 0) begin
-            // TODO: we could shorten our refresh by 1 clock cycle by starting our refresh here, instead of waiting an extra clock cycle
+            // TODO: we could shorten our refresh by 1 clock cycle by starting our refresh here instead of transitioning to StateRefresh1 first
             // TODO: we need to save our current state and restore ourself to it after refresh!
-            state <= StateRefresh1;
+            // TODO: should we save/restore `delayCounter`?
+            saveState <= state;
             refreshCounter <= Clocks(TREFI)-1;
+            `NextState(0, StateRefresh1);
         
         // Handle delays
         end else if (delayCounter > 0) begin
@@ -236,7 +243,7 @@ module SDRAMController(
             
             StateRefresh0: begin
                 sdram_cmd <= CmdAutoRefresh;
-                `NextState(Clocks(TRC), StateIdle);
+                `NextState(Clocks(TRC), (saveState==StateIdle ? StateIdle : StateRestart));
             end
             endcase
         
@@ -249,54 +256,82 @@ module SDRAMController(
             StateIdle: begin
                 if (cmdTrigger) begin
                     // Save the address and data
-                    saveAddr <= cmdAddr;
-                    saveWriteData <= cmdWriteData;
+                    saveCmdAddr <= cmdAddr;
+                    saveCmdWrite <= cmdWrite;
+                    saveCmdWriteData <= cmdWriteData;
                     
                     // TODO: we need to guarantee that TRC/TRRD are met when activating a bank
                     // Activate the bank
                     sdram_cmd <= CmdBankActivate;
                     sdram_ba <= cmdBankAddr;
                     sdram_a <= cmdRowAddr;
-                
+                    
                     // Delay TRCD clocks after activating the bank to perform the command
-                    `NextState(Clocks(TRCD), (cmdWrite ? StateWrite : StateRead2));
+                    `NextState(Clocks(TRCD), (cmdWrite ? StateWrite1 : StateRead3));
                 end else begin
                     sdram_cmd <= CmdNop;
                 end
             end
             
-            StateWrite: begin
+            StateRestart: begin
+                // Restart the command that was in process before the refresh
+                // TODO: we need to guarantee that TRC/TRRD are met when activating a bank
+                // Activate the bank
+                sdram_cmd <= CmdBankActivate;
+                sdram_ba <= saveBankAddr;
+                sdram_a <= saveRowAddr;
+                
+                // Delay TRCD clocks after activating the bank to perform the command
+                `NextState(Clocks(TRCD), (saveCmdWrite ? StateWrite1 : StateRead3));
+            end
+            
+            StateWrite1: begin
                 // Supply the column address
                 sdram_a <= {3'b010, saveColAddr}; // sdram_a[10]=1 means WriteWithPrecharge
                 // Supply data to be written
-                sdram_writeData <= saveWriteData;
+                sdram_writeData <= saveCmdWriteData;
                 // Issue write command
                 sdram_cmd <= CmdWrite;
-            
-                // Delay {TWR+TRP+(BurstLength-1)} clocks before going Idle
-                // NOTE: need to change sleep time if we write more than 1 word! See "Write and AutoPrecharge command"..., page 11
-                `NextState(Clocks(TWR+TRP)+(BurstLength-1), StateIdle);
+                // Transition to NOP write state
+                `NextState(0, StateWrite0);
             end
             
-            StateRead2: begin
+            StateWrite0: begin
+                // Issue NOPs after the initial write command
+                sdram_cmd <= CmdNop;
+                // Delay {TWR+TRP+(BurstLength-1)-1} clocks before going Idle
+                // TODO: update delay time. for now it's -1, so clip to 0...
+                `NextState(0, StateIdle);
+            end
+            
+            StateRead3: begin
                 // Supply the column address
                 sdram_a <= {3'b010, saveColAddr}; // sdram_a[10]=1 means ReadWithPrecharge
                 // Issue read command
                 sdram_cmd <= CmdRead;
+                // Transition to NOP read state
+                `NextState(0, StateRead2);
+            end
+            
+            StateRead2: begin
+                // Issue NOPs after the initial read command
+                sdram_cmd <= CmdNop;
                 // Delay for CAS cycles before readout begins
-                `NextState(CAS-1, StateRead1);
+                // -1 for the transition to this state
+                // -1 for the transition to the next state
+                `NextState(CAS-2, StateRead1);
             end
             
             StateRead1: begin
-                sdram_cmd <= CmdNop;
-                cmdReadDataValid <= 1;
-                // Wait for the data to be read out
+                // Reserved state so we can sit here to meet the CAS requirement. We can't merge
+                // this into StateRead0, because we can only be in StateRead0 for the exact
+                // number of readout cycles, since cmdReadDataValid=(state==StateRead0).
                 `NextState(BurstLength-1, StateRead0);
             end
             
             StateRead0: begin
-                cmdReadDataValid <= 0;
-                // Delay TRP clocks before going idle (needed because we performed a Read+AutoPrecharge)
+                // Wait TRP clocks before going idle (needed because we performed a Read+AutoPrecharge)
+                // TODO: if Clocks(TRP)==0 can we jump from StateRead1->Idle? the problem with that though is cmdReadDataValid=(state==StateRead0)
                 `NextState(Clocks(TRP), StateIdle);
             end
             endcase
