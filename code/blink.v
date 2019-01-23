@@ -34,7 +34,7 @@ module SDRAMController(
 );
     
     localparam ClockFrequency = 100000000;
-    localparam RefreshCounterWidth = $clog2(Clocks(TREFI)+1);
+    localparam RefreshCounterWidth = $clog2(Clocks(T_REFI)+1);
     
     // Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
@@ -69,10 +69,16 @@ module SDRAMController(
     localparam StateInit0               = 4'h6;
     localparam StateRefresh1            = 4'h8;
     localparam StateRefresh0            = 4'h8;
-    localparam StateWrite               = 4'h9;
+    localparam StateWrite1              = 4'h9;
+    localparam StateWrite0              = 4'h9;
+    localparam StateWriteAbort1         = 4'h9;
+    localparam StateWriteAbort0         = 4'h9;
     localparam StateRead3               = 4'hB;
     localparam StateRead2               = 4'hC;
     localparam StateRead1               = 4'hD;
+    localparam StateReadAbort2          = 4'hB;
+    localparam StateReadAbort1          = 4'hC;
+    localparam StateReadAbort0          = 4'hD;
     localparam StateRead0               = 4'hE;
     
     function integer Clocks;
@@ -253,7 +259,7 @@ module SDRAMController(
         activeAddr <= addr;
         
         // Delay T_RCD clocks after activating the bank to perform the command
-        NextState(Clocks(T_RCD), (cmdWrite ? StateWrite : StateRead3));
+        NextState(Clocks(T_RCD), (cmdWrite ? StateWrite1 : StateRead3));
     endtask
     
 	always @(posedge clk) begin
@@ -303,7 +309,7 @@ module SDRAMController(
                 // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because TRC>T_RP, I'm
                 // assuming we just have to wait TRC.
-                NextState(Clocks(TRC), StateInit0);
+                NextState(Clocks(T_RC), StateInit0);
             end
             
             StateInit0: begin
@@ -313,10 +319,10 @@ module SDRAMController(
                 // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because TRC>T_RP, I'm
                 // assuming we just have to wait TRC.
-                NextState(Clocks(TRC), StateIdle);
+                NextState(Clocks(T_RC), StateIdle);
                 
                 // Do final set up
-                refreshCounter <= Clocks(TREFI)-1;
+                refreshCounter <= Clocks(T_REFI)-1;
             end
             endcase
         
@@ -326,7 +332,7 @@ module SDRAMController(
             // TODO: should we save/restore `delayCounter`?
             
             // Reset refresh counter
-            refreshCounter <= Clocks(TREFI)-1;
+            refreshCounter <= Clocks(T_REFI)-1;
             
             // Mask data lines to immediately stop reading/writing data
             sdram_dqm <= 1;
@@ -435,43 +441,6 @@ module SDRAMController(
                 PrechargeAll();
                 // After precharge completes, handle the saved command or go idle if there isn't a saved command
                 NextState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSavedCommand : StateIdle));
-            end
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            StateRead2: begin
-                SaveCommand();
-                HandleRead();
-                sdram_cmd <= CmdNop;
-            end
-            
-            StateRead1: begin
-                // Issue NOPs after the initial read command
-                sdram_cmd <= CmdNop;
-                // Delay for CAS cycles before readout begins
-                // -1 for the transition to this state
-                // -1 for the transition to the next state
-                NextState(CAS-2, StateRead1);
-            end
-            
-            StateRead1: begin
-                // Reserved state so we can sit here to meet the CAS requirement. We can't merge
-                // this into StateRead0, because we can only be in StateRead0 for the exact
-                // number of readout cycles, since cmdReadDataValid=(state==StateRead0).
-                NextState(BurstLength-1, StateRead0);
-            end
-            
-            StateRead0: begin
-                // Wait T_RP clocks before going idle (needed because we performed a Read+AutoPrecharge)
-                // TODO: if Clocks(T_RP)==0 can we jump from StateRead1->Idle? the problem with that though is cmdReadDataValid=(state==StateRead0)
-                NextState(Clocks(T_RP), StateIdle);
             end
             endcase
         end
