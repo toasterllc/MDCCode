@@ -45,7 +45,6 @@ module SDRAMController(
     localparam T_RCD = 21; // bank activate to read/write time (same bank)
     localparam T_RP = 21; // precharge to refresh/row activate (same bank)
     localparam T_WR = 14; // write recover time
-    localparam T_CK = 10;
     
     // Timing parameters (clock cycles)
     localparam C_CAS = 2; // Column address strobe (CAS) latency
@@ -59,27 +58,22 @@ module SDRAMController(
     localparam CmdRead          = 3'b101;
     localparam CmdNop           = 3'b111;
     
-    // TODO: fix state values when we're done defining states
-    localparam StateIdle                = 4'h0;
-    localparam StateHandleSavedCommand  = 4'h0;
-    localparam StateInit4               = 4'h2;
-    localparam StateInit3               = 4'h3;
-    localparam StateInit2               = 4'h4;
-    localparam StateInit1               = 4'h5;
-    localparam StateInit0               = 4'h6;
-    localparam StateRefresh1            = 4'h8;
-    localparam StateRefresh0            = 4'h8;
+    localparam StateInit4               = 4'h0;
+    localparam StateInit3               = 4'h1;
+    localparam StateInit2               = 4'h2;
+    localparam StateInit1               = 4'h3;
+    localparam StateInit0               = 4'h4;
+    localparam StateRefresh1            = 4'h5;
+    localparam StateRefresh0            = 4'h6;
+    localparam StateIdle                = 4'h7;
+    localparam StateHandleSaved         = 4'h8;
     localparam StateWrite1              = 4'h9;
-    localparam StateWrite0              = 4'h9;
-    localparam StateWriteAbort1         = 4'h9;
-    localparam StateWriteAbort0         = 4'h9;
-    localparam StateRead3               = 4'hB;
-    localparam StateRead2               = 4'hC;
+    localparam StateWrite0              = 4'hA;
+    localparam StateWriteAbort1         = 4'hB;
+    localparam StateWriteAbort0         = 4'hC;
     localparam StateRead1               = 4'hD;
-    localparam StateReadAbort2          = 4'hB;
-    localparam StateReadAbort1          = 4'hC;
-    localparam StateReadAbort0          = 4'hD;
     localparam StateRead0               = 4'hE;
+    localparam StateReadAbort           = 4'hF;
     
     function integer Clocks;
         // Icarus Verilog doesn't support `logic` type for arguments for some reason, so use `reg` instead.
@@ -91,18 +85,18 @@ module SDRAMController(
     logic[11:0] delayCounter;
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
-    // TODO: `cmdReady` shouldn't reflect exactly the states where we call SaveCommand, and delayCounter==0
-    assign cmdReady = (delayCounter==0);
-    assign cmdReadDataValid = (state==StateRead0);
+    // cmdReady==true in the states where we invoke SaveCommand().
+    // In other words, cmdReady==true when we're going to store the incoming command.
+    assign cmdReady = (
+        delayCounter==0 &&
+        (state==StateIdle   ||
+         state==StateWrite1 ||
+         state==StateWrite0 ||
+         state==StateRead1  ||
+         state==StateRead0  ));
     
-    // ## SDRAM nets
-    assign sdram_clk = clk;
-    assign sdram_cs_ = 0;
-    
-    logic[2:0] sdram_cmd;
-    assign sdram_ras_ = sdram_cmd[2];
-    assign sdram_cas_ = sdram_cmd[1];
-    assign sdram_we_ = sdram_cmd[0];
+    logic[2:0] cmdReadDataValidShiftReg;
+    assign cmdReadDataValid = cmdReadDataValidShiftReg[0];
     
     logic[1:0] cmdAddrBank;
     logic[11:0] cmdAddrRow;
@@ -110,8 +104,6 @@ module SDRAMController(
     assign cmdAddrBank = cmdAddr[22:21];
     assign cmdAddrRow = cmdAddr[20:9];
     assign cmdAddrCol = cmdAddr[8:0];
-    
-    logic[3:0] saveState;
     
     logic savedCmdTrigger;
     logic savedCmdWrite;
@@ -132,6 +124,15 @@ module SDRAMController(
     assign activeAddrBank = activeAddr[22:21];
     assign activeAddrRow = activeAddr[20:9];
     assign activeAddrCol = activeAddr[8:0];
+    
+    // ## SDRAM nets
+    assign sdram_clk = clk;
+    assign sdram_cs_ = 0;
+    
+    logic[2:0] sdram_cmd;
+    assign sdram_ras_ = sdram_cmd[2];
+    assign sdram_cas_ = sdram_cmd[1];
+    assign sdram_we_ = sdram_cmd[0];
     
     logic sdram_dqm;
     assign sdram_ldqm = sdram_dqm;
@@ -160,11 +161,6 @@ module SDRAMController(
             assign cmdReadData[i] = sdram_dq[i];
         `endif
     end
-    
-    // TODO: get refreshing working properly with incoming commands
-    // TODO: get back-to-back reads/writes working
-    // TODO: make sure we're doing the right thing with dqm
-    // TODO: make sure we're adhering to tRAS.min/tRAS max -- we need to precharge the bank within a certain time
     
     task NextState(input logic[11:0] n, input logic[3:0] s);
         delayCounter <= n;
@@ -215,41 +211,45 @@ module SDRAMController(
         end
     endtask
     
-    task HandleRead(input logic first, input logic[3:0] continueState, input logic[3:0] abortState);
+    task HandleRead(input logic first);
         // Supply the column address
         sdram_a <= {3'b000, savedCmdAddrCol};
         // Unmask the data
         sdram_dqm <= 0;
         // Supply the command
         sdram_cmd <= (first ? CmdRead : CmdNop);
-        
+    
+        cmdReadDataValidShiftReg <= 3'b100|cmdReadDataValidShiftReg;
+    
         // Continue reading if we're reading from the next word
         if (cmdTrigger &&
             !cmdWrite &&
             cmdAddrBank==activeAddrBank &&
             cmdAddrRow==activeAddrRow &&
             cmdAddrCol==activeAddrCol+1) begin
-            
+        
             // Update active address
             activeAddr <= cmdAddr;
             
             // Continue reading
-            NextState(0, continueState);
+            NextState(0, StateRead0);
         
         // Otherwise abort the read
         end else begin
             // Start aborting the read
-            NextState(0, abortState);
+            NextState(0, StateReadAbort);
         end
     endtask
     
-    task DecrementCounters;
+    task UpdateCounters;
         delayCounter <= (delayCounter>0 ? delayCounter-1 : 0);
-        refreshCounter <= (refreshCounter>0 ? refreshCounter-1 : 0);
+        refreshCounter <= (refreshCounter>0 ? refreshCounter-1 : Clocks(T_REFI)-1);
+        cmdReadDataValidShiftReg <= cmdReadDataValidShiftReg>>1;
     endtask
     
     task PrepareReadWrite(input logic[22:0] addr);
         // TODO: we need to guarantee that T_RC/T_RRD are met when activating a bank
+        // TODO: we need to guarantee that T_RAS is met -- it won't be if we CmdPrechargeAll too soon after we CmdBankActivate. should we just wait T_RAS here?
         // Activate the bank+row
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];
@@ -259,23 +259,19 @@ module SDRAMController(
         activeAddr <= addr;
         
         // Delay T_RCD clocks after activating the bank to perform the command
-        NextState(Clocks(T_RCD), (cmdWrite ? StateWrite1 : StateRead3));
+        NextState(Clocks(T_RCD), (cmdWrite ? StateWrite1 : StateRead1));
     endtask
     
-	always @(posedge clk) begin
-        // Handle reset
-        if (rst) begin
-            NextState(0, StateInit4);
-        
-        // Handle delays in Init states
-        end else if (state>=StateInit4 && state<=StateInit0 && delayCounter>0) begin
-            DecrementCounters();
+    task HandleInit;
+        // Handle delays
+        if (delayCounter > 0) begin
             sdram_cmd <= CmdNop;
         
-        // Handle Init states
-        end else if (state>=StateInit4 && state<=StateInit0) begin
+        // Handle init states
+        end else begin
             case (state)
             StateInit4: begin
+                cmdReadDataValidShiftReg <= 0;
                 sdram_cke <= 0;
                 sdram_dqm <= 1;
                 sdram_cmd <= CmdNop;
@@ -325,14 +321,14 @@ module SDRAMController(
                 refreshCounter <= Clocks(T_REFI)-1;
             end
             endcase
-        
+        end
+    endtask
+    
+    task HandleRefresh;
         // Initiate refresh when refreshCounter==0
-        end else if (refreshCounter == 0) begin
+        if (refreshCounter == 0) begin
             // TODO: we need to save our current state and restore ourself to it after refresh!
             // TODO: should we save/restore `delayCounter`?
-            
-            // Reset refresh counter
-            refreshCounter <= Clocks(T_REFI)-1;
             
             // Mask data lines to immediately stop reading/writing data
             sdram_dqm <= 1;
@@ -345,14 +341,10 @@ module SDRAMController(
         
         // Handle delays
         end else if (delayCounter > 0) begin
-            DecrementCounters();
             sdram_cmd <= CmdNop;
         
         // Handle Refresh states
-        end else if (state>=StateRefresh1 && state<=StateRefresh0) begin
-            // Update counters
-            DecrementCounters();
-            
+        end else begin
             case (state)
             StateRefresh1: begin
                 PrechargeAll();
@@ -364,15 +356,19 @@ module SDRAMController(
                 sdram_cmd <= CmdAutoRefresh;
                 // Wait T_RC (bank activate to bank activate) to guarantee that the next command can
                 // activate the same bank immediately
-                NextState(Clocks(T_RC), StateHandleSavedCommand);
+                NextState(Clocks(T_RC), (savedCmdTrigger ? StateHandleSaved : StateIdle));
             end
             endcase
+        end
+    endtask
+    
+    task HandleCommand;
+        // Handle delays
+        if (delayCounter > 0) begin
+            sdram_cmd <= CmdNop;
         
-        // Handle command states
+        // Handle commands
         end else begin
-            // Update counters
-            DecrementCounters();
-            
             case (state)
             StateIdle: begin
                 SaveCommand();
@@ -380,7 +376,7 @@ module SDRAMController(
                 else sdram_cmd <= CmdNop;
             end
             
-            StateHandleSavedCommand: begin
+            StateHandleSaved: begin
                 PrepareReadWrite(savedCmdAddr);
             end
             
@@ -395,55 +391,64 @@ module SDRAMController(
             end
             
             StateWriteAbort1: begin
-                // Mask the data to stop writing immediately
+                // Mask the data top stop writing immediately
                 sdram_dqm <= 1;
                 // Wait the 'write recover' time
-                // -1 cycle because we already waited one cycle in this state
+                // -1 cycle because we already waited one cycle in this state.
+                // Datasheet (paraphrased):
+                // "The PrechargeAll command that interrupts a write burst should be
+                // issued ceil(tWR/tCK) cycles after the clock edge in which the
+                // last data-in element is registered."
                 NextState(Clocks(T_WR)-1, StateWriteAbort0);
             end
             
             StateWriteAbort0: begin
                 PrechargeAll();
                 // After precharge completes, handle the saved command or go idle if there isn't a saved command
-                NextState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSavedCommand : StateIdle));
-            end
-            
-            StateRead2: begin
-                SaveCommand();
-                HandleRead(1, StateRead1, StateReadAbort2);
+                NextState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSaved : StateIdle));
             end
             
             StateRead1: begin
                 SaveCommand();
-                HandleRead(0, StateRead0, StateReadAbort1);
+                HandleRead(1);
             end
             
             StateRead0: begin
                 SaveCommand();
-                HandleRead(0, StateRead0, StateReadAbort1);
+                HandleRead(0);
             end
             
-            StateReadAbort2: begin
-                PrechargeAll();
+            StateReadAbort: begin
                 // Mask the data to stop reading
                 sdram_dqm <= 1;
-                NextState(0, StateReadAbort1);
-            end
-            
-            StateReadAbort1: begin
-                PrechargeAll();
-                // Mask the data to stop reading
-                sdram_dqm <= 1;
-                NextState(0, StateReadAbort0);
-            end
-            
-            StateReadAbort0: begin
                 PrechargeAll();
                 // After precharge completes, handle the saved command or go idle if there isn't a saved command
-                NextState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSavedCommand : StateIdle));
+                // -1 because we already spent one clock cycle of the CAS latency in this state
+                // TODO: verify this timing
+                NextState(C_CAS+Clocks(T_RP)-1, (savedCmdTrigger ? StateHandleSaved : StateIdle));
             end
             endcase
         end
+    endtask
+    
+	always @(posedge clk) begin
+        UpdateCounters();
+        
+        // Handle reset
+        if (rst)
+            NextState(0, StateInit4);
+        
+        // Handle init states
+        else if (state>=StateInit4 && state<=StateInit0)
+            HandleInit();
+        
+        // Handle refresh states
+        else if (refreshCounter==0 || (state>=StateRefresh1 && state<=StateRefresh0))
+            HandleRefresh();
+        
+        // Handle command states
+        else
+            HandleCommand();
     end
 endmodule
 
