@@ -150,14 +150,13 @@ module SDRAMController(
                 .PULLUP(1'b0),
             ) dqio (
                 .PACKAGE_PIN(sdram_dq[i]),
-                // TODO: update OUTPUT_ENABLE if we have multiple Write states
-                .OUTPUT_ENABLE(sdram_cmd == CmdWrite),
+                .OUTPUT_ENABLE(state==StateWrite1 || state==StateWrite0),
                 .D_OUT_0(sdram_writeData[i]),
                 .D_IN_0(sdram_readData[i]),
             );
         `else
             // For simulation, use a normal tristate buffer
-            assign sdram_dq[i] = (sdram_cmd==CmdWrite ? sdram_writeData[i] : 1'bz);
+            assign sdram_dq[i] = ((state==StateWrite1 || state==StateWrite0) ? sdram_writeData[i] : 1'bz);
             assign cmdReadData[i] = sdram_dq[i];
         `endif
     end
@@ -327,9 +326,6 @@ module SDRAMController(
     task HandleRefresh;
         // Initiate refresh when refreshCounter==0
         if (refreshCounter == 0) begin
-            // TODO: we need to save our current state and restore ourself to it after refresh!
-            // TODO: should we save/restore `delayCounter`?
-            
             // Mask data lines to immediately stop reading/writing data
             sdram_dqm <= 1;
             
