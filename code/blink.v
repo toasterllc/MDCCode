@@ -34,7 +34,7 @@ module SDRAMController(
 );
     
     localparam ClockFrequency = 100000000;
-    localparam RefreshCounterWidth = $clog2(Clocks(T_REFI)+1);
+    localparam RefreshCounterWidth = $clog2(Clocks(T_REFI));
     
     // Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
