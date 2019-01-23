@@ -34,7 +34,6 @@ module SDRAMController(
 );
     
     localparam ClockFrequency = 100000000;
-    localparam BurstLength = 1;
     localparam RefreshCounterWidth = $clog2(Clocks(TREFI)+1);
     
     // Timing parameters (nanoseconds)
@@ -174,13 +173,20 @@ module SDRAMController(
         savedCmdWriteData <= cmdWriteData;
     endtask
     
-    task HandleWrite;
+    task PrechargeAll;
+        sdram_cmd <= CmdPrechargeAll;
+        sdram_a <= 12'b010000000000; // sdram_a[10]=1 for PrechargeAll
+    endtask
+    
+    task HandleWrite(input logic first);
         // Supply the column address
         sdram_a <= {3'b000, savedCmdAddrCol};
         // Supply data to be written
         sdram_writeData <= savedCmdWriteData;
         // Unmask the data
         sdram_dqm <= 0;
+        // Supply the command
+        sdram_cmd <= (first ? CmdWrite : CmdNop);
         
         // Continue writing if we're writing to the next word
         if (cmdTrigger &&
@@ -194,12 +200,40 @@ module SDRAMController(
             
             // Continue writing
             NextState(0, StateWrite0);
-    
+        
         // Otherwise abort the write
         end else begin
             // Start aborting the write
             // TODO: verify that the PrechargeAll comes at the 2nd clock after the last word to write
             NextState(0, StateWriteAbort1);
+        end
+    endtask
+    
+    task HandleRead(input logic first, input logic[3:0] continueState, input logic[3:0] abortState);
+        // Supply the column address
+        sdram_a <= {3'b000, savedCmdAddrCol};
+        // Unmask the data
+        sdram_dqm <= 0;
+        // Supply the command
+        sdram_cmd <= (first ? CmdRead : CmdNop);
+        
+        // Continue reading if we're reading from the next word
+        if (cmdTrigger &&
+            !cmdWrite &&
+            cmdAddrBank==activeAddrBank &&
+            cmdAddrRow==activeAddrRow &&
+            cmdAddrCol==activeAddrCol+1) begin
+            
+            // Update active address
+            activeAddr <= cmdAddr;
+            
+            // Continue reading
+            NextState(0, continueState);
+        
+        // Otherwise abort the read
+        end else begin
+            // Start aborting the read
+            NextState(0, abortState);
         end
     endtask
     
@@ -246,8 +280,7 @@ module SDRAMController(
             StateInit3: begin
                 // Precharge all banks
                 sdram_cke <= 1;
-                sdram_cmd <= CmdPrechargeAll;
-                sdram_a <= 12'b010000000000; // sdram_a[10]=1
+                PrechargeAll();
                 NextState(Clocks(T_RP), StateInit2);
             end
             
@@ -298,11 +331,11 @@ module SDRAMController(
             // Mask data lines to immediately stop reading/writing data
             sdram_dqm <= 1;
             
-            // Wait long to enough to guarantee we can issue CmdPrechargeAll
+            // Wait long to enough to guarantee we can issue CmdPrechargeAll.
             // T_RAS (row activate to precharge time) should be the most
             // conservative value, which assumes we just activated a row
             // and we have to wait before precharging it.
-            NextState(Clocks(T_RAS), StateRefresh2);
+            NextState(Clocks(T_RAS), StateRefresh1);
         
         // Handle delays
         end else if (delayCounter > 0) begin
@@ -316,7 +349,7 @@ module SDRAMController(
             
             case (state)
             StateRefresh1: begin
-                sdram_cmd <= CmdPrechargeAll;
+                PrechargeAll();
                 // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
                 NextState(Clocks(T_RP), StateRefresh0);
             end
@@ -331,7 +364,7 @@ module SDRAMController(
         
         // Handle command states
         end else begin
-            // Update refresh counter
+            // Update counters
             DecrementCounters();
             
             case (state)
@@ -347,14 +380,12 @@ module SDRAMController(
             
             StateWrite1: begin
                 SaveCommand();
-                HandleWrite();
-                sdram_cmd <= CmdWrite;
+                HandleWrite(1);
             end
             
             StateWrite0: begin
                 SaveCommand();
-                HandleWrite();
-                sdram_cmd <= CmdNop;
+                HandleWrite(0);
             end
             
             StateWriteAbort1: begin
@@ -366,52 +397,62 @@ module SDRAMController(
             end
             
             StateWriteAbort0: begin
-                // Issue PrechargeAll command
-                sdram_cmd <= CmdPrechargeAll;
+                PrechargeAll();
                 // After precharge completes, handle the saved command or go idle if there isn't a saved command
                 NextState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSavedCommand : StateIdle));
             end
             
-            // StateWrite0: begin
-            //     SaveCommand();
-            //
-            //     // Supply the column address
-            //     sdram_a <= {3'b000, savedCmdAddrCol};
-            //     // Supply data to be written
-            //     sdram_writeData <= savedCmdWriteData;
-            //     // Issue NOPs for writing sequential words
-            //     sdram_cmd <= CmdNop;
-            //
-            //     // TODO: adhere to tRAS.max -- we cant have a row open indefinitely
-            //     //       ^^^ actually our refresh interrupt will cause us to precharge all banks so we shouldn't have to do anything extra
-            //
-            //     // Continue writing if we're writing to the next word
-            //     if (cmdTrigger &&
-            //         cmdWrite &&
-            //         cmdAddrBank==activeAddrBank &&
-            //         cmdAddrRow==activeAddrRow &&
-            //         cmdAddrCol==activeAddrCol+1) begin
-            //
-            //         // Update active address
-            //         activeAddr <= cmdAddr;
-            //
-            //     // Otherwise complete the write by precharging
-            //     end else begin
-            //         sdram_cmd <= CmdPrechargeAll;
-            //         NextState(Clocks(TRC), (cmdTrigger ? StateHandleSaved : StateIdle));
-            //     end
-            // end
-            
-            StateRead3: begin
-                // Supply the column address
-                sdram_a <= {3'b010, savedCmdAddrCol}; // sdram_a[10]=1 means ReadWithPrecharge
-                // Issue read command
-                sdram_cmd <= CmdRead;
-                // Transition to NOP read state
-                NextState(0, StateRead2);
+            StateRead2: begin
+                SaveCommand();
+                HandleRead(1, StateRead1, StateReadAbort2);
             end
             
+            StateRead1: begin
+                SaveCommand();
+                HandleRead(0, StateRead0, StateReadAbort1);
+            end
+            
+            StateRead0: begin
+                SaveCommand();
+                HandleRead(0, StateRead0, StateReadAbort1);
+            end
+            
+            StateReadAbort2: begin
+                PrechargeAll();
+                // Mask the data to stop reading
+                sdram_dqm <= 1;
+                NextState(0, StateReadAbort1);
+            end
+            
+            StateReadAbort1: begin
+                PrechargeAll();
+                // Mask the data to stop reading
+                sdram_dqm <= 1;
+                NextState(0, StateReadAbort0);
+            end
+            
+            StateReadAbort0: begin
+                PrechargeAll();
+                // After precharge completes, handle the saved command or go idle if there isn't a saved command
+                NextState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSavedCommand : StateIdle));
+            end
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             StateRead2: begin
+                SaveCommand();
+                HandleRead();
+                sdram_cmd <= CmdNop;
+            end
+            
+            StateRead1: begin
                 // Issue NOPs after the initial read command
                 sdram_cmd <= CmdNop;
                 // Delay for CAS cycles before readout begins
