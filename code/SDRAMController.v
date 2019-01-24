@@ -74,7 +74,7 @@ module SDRAMController(
     endfunction
     
     logic[3:0] state;
-    logic[11:0] delayCounter;
+    logic[3:0] delayCounter;
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
     logic idleState;
