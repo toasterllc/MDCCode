@@ -88,21 +88,27 @@ module Top();
         // Wait until our RAM is ready
         wait(go);
         
-        cmdWrite = 1;
-        cmdWriteData = 16'hABCD;
-        cmdTrigger = 1;
-        // DelayClocks(1);
-        // cmdTrigger = 0;
-        
-        // // Wait until our RAM is ready
-        // wait(go);
-        //
-        // cmdAddr = 22'hAAAAA;
+        // Test single write
         // cmdWrite = 1;
         // cmdWriteData = 16'hABCD;
         // cmdTrigger = 1;
         // DelayClocks(1);
         // cmdTrigger = 0;
+        
+        // Test mass write
+        // cmdWrite = 1;
+        // cmdWriteData = 16'hABCD;
+        // cmdTrigger = 1;
+        
+        // Test single read
+        // cmdWrite = 0;
+        // cmdTrigger = 1;
+        // DelayClocks(1);
+        // cmdTrigger = 0;
+        
+        // Test mass read
+        cmdWrite = 0;
+        cmdTrigger = 1;
         
         DelayClocks(30000); // Wait 300us
         

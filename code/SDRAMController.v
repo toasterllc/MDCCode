@@ -42,9 +42,9 @@ module SDRAMController(
     localparam C_CAS = 2; // Column address strobe (CAS) latency
     
     // ras_, cas_, we_
-    localparam CmdPrechargeAll  = 3'b010;
     localparam CmdSetMode       = 3'b000;
     localparam CmdAutoRefresh   = 3'b001;
+    localparam CmdPrechargeAll  = 3'b010;
     localparam CmdBankActivate  = 3'b011;
     localparam CmdWrite         = 3'b100;
     localparam CmdRead          = 3'b101;
@@ -77,15 +77,18 @@ module SDRAMController(
     logic[11:0] delayCounter;
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
+    logic idleState;
+    assign idleState = (delayCounter==0 && state==StateIdle);
+    
+    logic readState;
+    assign readState = (delayCounter==0 && (state==StateRead1 || state==StateRead0));
+    
+    logic writeState;
+    assign writeState = (delayCounter==0 && (state==StateWrite1 || state==StateWrite0));
+    
     // cmdReady==true in the states where we invoke SaveCommand().
     // In other words, cmdReady==true when we're going to store the incoming command.
-    assign cmdReady = (
-        delayCounter==0 &&
-        (state==StateIdle   ||
-         state==StateWrite1 ||
-         state==StateWrite0 ||
-         state==StateRead1  ||
-         state==StateRead0  ));
+    assign cmdReady = (idleState || readState || writeState);
     
     logic[2:0] cmdReadDataValidShiftReg;
     assign cmdReadDataValid = cmdReadDataValidShiftReg[0];
@@ -142,13 +145,13 @@ module SDRAMController(
                 .PULLUP(1'b0),
             ) dqio (
                 .PACKAGE_PIN(sdram_dq[i]),
-                .OUTPUT_ENABLE(state==StateWrite1 || state==StateWrite0),
+                .OUTPUT_ENABLE(writeState),
                 .D_OUT_0(sdram_writeData[i]),
                 .D_IN_0(sdram_readData[i]),
             );
         `else
             // For simulation, use a normal tristate buffer
-            assign sdram_dq[i] = ((state==StateWrite1 || state==StateWrite0) ? sdram_writeData[i] : 1'bz);
+            assign sdram_dq[i] = (writeState ? sdram_writeData[i] : 1'bz);
             assign cmdReadData[i] = sdram_dq[i];
         `endif
     end
@@ -169,6 +172,10 @@ module SDRAMController(
     task PrechargeAll;
         sdram_cmd <= CmdPrechargeAll;
         sdram_a <= 12'b010000000000; // sdram_a[10]=1 for PrechargeAll
+    endtask
+    
+    task HandleDelay;
+        sdram_cmd <= CmdNop;
     endtask
     
     task HandleWrite(input logic first);
@@ -209,16 +216,16 @@ module SDRAMController(
         sdram_dqm <= 0;
         // Supply the command
         sdram_cmd <= (first ? CmdRead : CmdNop);
-    
-        cmdReadDataValidShiftReg <= 3'b100|cmdReadDataValidShiftReg;
-    
+        
+        cmdReadDataValidShiftReg[2] <= 1;
+        
         // Continue reading if we're reading from the next word
         if (cmdTrigger &&
             !cmdWrite &&
             cmdAddrBank==activeAddrBank &&
             cmdAddrRow==activeAddrRow &&
             cmdAddrCol==activeAddrCol+1) begin
-        
+            
             // Update active address
             activeAddr <= cmdAddr;
             
@@ -235,7 +242,7 @@ module SDRAMController(
     task UpdateCounters;
         delayCounter <= (delayCounter>0 ? delayCounter-1 : 0);
         refreshCounter <= (refreshCounter>0 ? refreshCounter-1 : Clocks(T_REFI)-1);
-        cmdReadDataValidShiftReg <= cmdReadDataValidShiftReg>>1;
+        cmdReadDataValidShiftReg <= {readState, cmdReadDataValidShiftReg[2:1]};
     endtask
     
     task PrepareReadWrite(input logic[22:0] addr);
@@ -256,7 +263,7 @@ module SDRAMController(
     task HandleInit;
         // Handle delays
         if (delayCounter > 0) begin
-            sdram_cmd <= CmdNop;
+            HandleDelay();
         
         // Handle init states
         end else begin
@@ -321,6 +328,9 @@ module SDRAMController(
             // Mask data lines to immediately stop reading/writing data
             sdram_dqm <= 1;
             
+            // Clear our command
+            sdram_cmd <= CmdNop;
+            
             // Wait long to enough to guarantee we can issue CmdPrechargeAll.
             // T_RAS (row activate to precharge time) should be the most
             // conservative value, which assumes we just activated a row
@@ -329,7 +339,7 @@ module SDRAMController(
         
         // Handle delays
         end else if (delayCounter > 0) begin
-            sdram_cmd <= CmdNop;
+            HandleDelay();
         
         // Handle Refresh states
         end else begin
@@ -353,7 +363,7 @@ module SDRAMController(
     task HandleCommand;
         // Handle delays
         if (delayCounter > 0) begin
-            sdram_cmd <= CmdNop;
+            HandleDelay();
         
         // Handle commands
         end else begin
@@ -420,22 +430,24 @@ module SDRAMController(
     endtask
     
 	always @(posedge clk) begin
-        UpdateCounters();
-        
         // Handle reset
         if (rst)
             NextState(0, StateInit4);
         
-        // Handle init states
-        else if (state>=StateInit4 && state<=StateInit0)
-            HandleInit();
+        else begin
+            UpdateCounters();
+            
+            // Handle init states
+            if (state>=StateInit4 && state<=StateInit0)
+                HandleInit();
         
-        // Handle refresh states
-        else if (refreshCounter==0 || (state>=StateRefresh1 && state<=StateRefresh0))
-            HandleRefresh();
+            // Handle refresh states
+            else if (refreshCounter==0 || (state>=StateRefresh1 && state<=StateRefresh0))
+                HandleRefresh();
         
-        // Handle command states
-        else
-            HandleCommand();
+            // Handle command states
+            else
+                HandleCommand();
+        end
     end
 endmodule
