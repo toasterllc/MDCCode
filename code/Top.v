@@ -1,7 +1,7 @@
 `define SYNTH
 `include "SDRAMController.v"
 
-module Top(input logic clk, input logic rst);
+module Top(input logic clk, input logic rst, output logic tmp);
     logic cmdReady;
     logic cmdTrigger;
     logic[22:0] cmdAddr;
@@ -44,4 +44,6 @@ module Top(input logic clk, input logic rst);
         .sdram_udqm(sdram_udqm),
         .sdram_dq(sdram_dq)
     );
+    
+    assign tmp = sdram_dq[5];
 endmodule

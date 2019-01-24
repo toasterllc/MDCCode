@@ -1,2 +1,3 @@
 set_io clk 21
 set_io rst 44
+set_io tmp 95
