@@ -440,11 +440,11 @@ module SDRAMController(
             // Handle init states
             if (state>=StateInit4 && state<=StateInit0)
                 HandleInit();
-        
+            
             // Handle refresh states
             else if (refreshCounter==0 || (state>=StateRefresh1 && state<=StateRefresh0))
                 HandleRefresh();
-        
+            
             // Handle command states
             else
                 HandleCommand();

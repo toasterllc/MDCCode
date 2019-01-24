@@ -1,6 +1,8 @@
 `define SYNTH
 `include "SDRAMController.v"
 
+// TODO: hook up all SDRAM outputs and check our timing
+
 module Top(input logic clk, input logic rst, output logic tmp);
     logic cmdReady;
     logic cmdTrigger;
