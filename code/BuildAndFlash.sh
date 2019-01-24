@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-proj="blink"
+proj="Top"
 
 # Synthesize the design from Verilog (.sv -> .blif)
 yosys -q -p "synth_ice40 -top top -blif $proj.blif" "$proj.sv"

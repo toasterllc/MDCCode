@@ -1,0 +1,39 @@
+[*]
+[*] GTKWave Analyzer v3.3.98 (w)1999-2019 BSI
+[*] Thu Jan 24 08:50:55 2019
+[*]
+[dumpfile] "/Users/dave/repos/MotionDetectorCamera/code/TopSim.vcd"
+[dumpfile_mtime] "Thu Jan 24 08:07:52 2019"
+[dumpfile_size] 6387335
+[savefile] "/Users/dave/repos/MotionDetectorCamera/code/TopSim.gtkw"
+[timestart] 332622000
+[size] 1338 789
+[pos] -1 -1
+*-18.080109 333209000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] Top.
+[treeopen] Top.sdramController.
+[sst_width] 193
+[signals_width] 250
+[sst_expanded] 1
+[sst_vpaned_height] 314
+@28
+Top.clk
+Top.delayed_clk
+Top.rst
+Top.cmdReady
+Top.cmdTrigger
+Top.cmdWrite
+@22
+Top.cmdAddr[22:0]
+Top.cmdWriteData[15:0]
+@28
+Top.go
+@23
+Top.sdramController.refreshCounter[10:0]
+@28
+Top.sdramController.cmdAddrBank[1:0]
+@22
+Top.sdramController.cmdAddrRow[11:0]
+Top.sdramController.cmdAddrCol[8:0]
+[pattern_trace] 1
+[pattern_trace] 0
