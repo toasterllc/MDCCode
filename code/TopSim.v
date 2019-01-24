@@ -2,10 +2,13 @@
 `include "SDRAMController.v"
 
 // Verify constant values with yosys:
-//   yosys -p "read_verilog -dump_rtlil -formal -sv TopSim.sv"
+//   yosys -p "read_verilog -dump_rtlil -formal -sv Top.sv"
 
 // Run simulation using Icarus Verilog (generates waveform file 'TopSim.vcd'):
 //   rm -f TopSim.vvp ; iverilog -o TopSim.vvp -g2012 TopSim.v ; ./TopSim.vvp
+
+// Run timing analysis
+//  icetime -tmd hx1k Top.asc
 
 module Top();
     logic clk;
