@@ -286,8 +286,8 @@ module SDRAMController(
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
     // initial $finish;
     
-    task SetInitDelayCounter(input integer n);
-        {delayCounter, refreshCounter} <= n;
+    task SetInitDelayCounter(input integer delay);
+        {delayCounter, refreshCounter} <= delay;
     endtask
     
     task StartStateInit(input integer delay);

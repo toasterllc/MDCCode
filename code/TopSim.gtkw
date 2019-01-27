@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.98 (w)1999-2019 BSI
-[*] Sun Jan 27 09:38:27 2019
+[*] Sun Jan 27 12:54:50 2019
 [*]
 [dumpfile] "/Users/dave/repos/MotionDetectorCamera/code/TopSim.vcd"
-[dumpfile_mtime] "Sun Jan 27 09:20:33 2019"
-[dumpfile_size] 8801773
+[dumpfile_mtime] "Sun Jan 27 12:54:02 2019"
+[dumpfile_size] 17943155
 [savefile] "/Users/dave/repos/MotionDetectorCamera/code/TopSim.gtkw"
-[timestart] 216808100
+[timestart] 196580000
 [size] 1440 789
 [pos] -1 -1
-*-16.080109 216945000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-22.080109 205340000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] Top.
 [treeopen] Top.sdramController.
 [sst_width] 259
@@ -39,11 +39,13 @@ Top.sdramController.cmdReadDataValid
 Top.sdramController.delayCounter[2:0]
 @22
 Top.sdramController.refreshCounter[11:0]
-Top.sdramController.state[3:0]
-@28
-Top.sdramController.idleState
-@22
+Top.sdramController.substate[3:0]
 Top.sdramController.savedCmdAddr[22:0]
+@28
+Top.sdramController.savedCmdAddrBank[1:0]
+@22
+Top.sdramController.savedCmdAddrRow[11:0]
+Top.sdramController.savedCmdAddrCol[8:0]
 @28
 Top.sdramController.sdram_cmd[2:0]
 @22
