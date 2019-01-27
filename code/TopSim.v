@@ -93,7 +93,7 @@ module Top();
         end
     end
     
-    assign cmdWriteData = cmdAddr;
+    assign cmdWriteData = ~cmdAddr;
     
     initial begin
         $dumpfile("TopSim.vcd");
@@ -121,6 +121,12 @@ module Top();
         cmdAddr = 0;
         cmdWrite = 0;
         cmdTrigger = 1;
+        DelayClocks(4);
+        repeat (500) begin
+            DelayClocks(1);
+            $display("%x", cmdReadData);
+        end
+        
         DelayClocks(500);
         
         
