@@ -288,7 +288,6 @@ module SDRAMController(
     endtask
     
     task StartReadWrite(input logic[22:0] addr);
-        // TODO: we need to guarantee that T_RC/T_RRD are met when activating a bank
         // Activate the bank+row
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];
@@ -360,7 +359,7 @@ module SDRAMController(
         StateInit1: begin
             // Autorefresh 1/2
             sdram_cmd <= CmdAutoRefresh;
-            // Wait TRC for autorefresh to complete
+            // Wait T_RC for autorefresh to complete
             // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
             // before issuing successive AutoRefresh commands. Because TRC>T_RP, I'm
             // assuming we just have to wait TRC.
@@ -374,9 +373,9 @@ module SDRAMController(
             // Prepare refresh timer
             refreshCounter <= Max(0, Clocks(T_REFI)-1);
             
-            // Wait TRC for autorefresh to complete
-            // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
-            // before issuing successive AutoRefresh commands. Because TRC>T_RP, I'm
+            // Wait T_RC for autorefresh to complete
+            // The docs say it takes T_RC for AutoRefresh to complete, but T_RP must be met
+            // before issuing successive AutoRefresh commands. Because T_RC>T_RP, I'm
             // assuming we just have to wait TRC.
             // ## Use NextState() (not NextStateInit()) because the next state isn't an
             // ## init state (StateInitXXX), and we don't want to clobber refreshCounter.
