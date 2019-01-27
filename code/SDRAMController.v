@@ -155,7 +155,7 @@ module SDRAMController(
             // For synthesis, we have to use a SB_IO for a tristate buffer
             SB_IO #(
                 .PIN_TYPE(6'b1010_01),
-                .PULLUP(1'b0),
+                .PULLUP(0),
             ) dqio (
                 .PACKAGE_PIN(sdram_dq[i]),
                 .OUTPUT_ENABLE(writeDataValid),
@@ -218,7 +218,6 @@ module SDRAMController(
         // Otherwise abort the write
         end else begin
             // Start aborting the write
-            // TODO: verify that the PrechargeAll comes at the 2nd clock after the last word to write
             NextState(0, StateWriteAbort1);
         end
     endtask
@@ -449,10 +448,13 @@ module SDRAMController(
             // Mask the data to stop reading
             sdram_dqm <= 1;
             PrechargeAll();
-            // After precharge completes, handle the saved command or go idle if there isn't a saved command
-            // -1 because we already spent one clock cycle of the CAS latency in this state
-            // TODO: verify this timing
-            NextState(C_CAS+Clocks(T_RP)-1, (savedCmdTrigger ? StateHandleSaved : StateIdle));
+            // After precharge completes, handle the saved command or go idle
+            // if there isn't a saved command.
+            // Wait for precharge to complete, or for the data to finish reading
+            // out, whichever takes longer.
+            // Use C_CAS-1 because we already spent one clock cycle of the CAS
+            // latency in this state.
+            NextState($max(C_CAS-1, Clocks(T_RP)), (savedCmdTrigger ? StateHandleSaved : StateIdle));
         end
         endcase
     endtask
