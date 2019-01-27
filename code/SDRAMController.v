@@ -157,6 +157,7 @@ module SDRAMController(
     logic[15:0] sdram_writeData;
     logic[15:0] sdram_readData;
     
+    // Hook up cmdReadData/sdram_writeData to sdram_dq
     genvar i;
     for (i=0; i<16; i=i+1) begin
         `ifdef SYNTH
@@ -206,23 +207,27 @@ module SDRAMController(
         // Unmask the data
         sdram_dqm <= 0;
         // Supply the write command, or Nop if this isn't the first write iteration
-        sdram_cmd <= (first ? CmdWrite : CmdNop);
+        if (first) sdram_cmd <= CmdWrite;
         
         writeDataValid <= 1;
         
-        // Continue writing if we're writing to the next word
+        // Continue writing if we're writing to the same bank and row
         if (cmdTrigger &&
-            cmdWrite &&
             cmdAddrBank==activeAddrBank &&
-            cmdAddrRow==activeAddrRow &&
-            cmdAddrCol==activeAddrCol+1) begin
+            cmdAddrRow==activeAddrRow) begin
             
             // Update active address
             activeAddr <= cmdAddr;
             
             // Continue writing
-            NextState(0, StateWrite0);
-        
+            if (cmdWrite) NextState(0, (cmdAddrCol==activeAddrCol+1 ? StateWrite0 : StateWrite1));
+            // Transition to reading
+            // We don't need to wait any clock cycles before transitioning to StateRead1,
+            // since we'll stop driving the DQs immediately after this state.
+            // Page 11: "Input data must be removed from the DQ at least one clock cycle
+            // before the Read data appears on the outputs to avoid data contention"
+            else NextState(0, StateRead1);
+            
         // Otherwise abort the write
         end else begin
             // Start aborting the write
@@ -239,22 +244,27 @@ module SDRAMController(
         // Unmask the data
         sdram_dqm <= 0;
         // Supply the read command, or Nop if this isn't the first read iteration
-        sdram_cmd <= (first ? CmdRead : CmdNop);
+        if (first) sdram_cmd <= CmdRead;
         
         readDataValidShiftReg[C_CAS] <= 1;
         
-        // Continue reading if we're reading from the next word
+        // Continue reading if we're reading from the same bank and row
         if (cmdTrigger &&
-            !cmdWrite &&
             cmdAddrBank==activeAddrBank &&
-            cmdAddrRow==activeAddrRow &&
-            cmdAddrCol==activeAddrCol+1) begin
+            cmdAddrRow==activeAddrRow) begin
             
             // Update active address
             activeAddr <= cmdAddr;
             
             // Continue reading
-            NextState(0, StateRead0);
+            if (!cmdWrite) NextState(0, (cmdAddrCol==activeAddrCol+1 ? StateRead0 : StateRead1));
+            // Transition to writing
+            // Wait 3 cycles before doing so; page 8: "The DQMs must be asserted (HIGH) at
+            // least two clocks prior to the Write command to suppress data-out on the DQ
+            // pins. To guarantee the DQ pins against I/O contention, a single cycle with
+            // high-impedance on the DQ pins must occur between the last read data and the
+            // Write command (refer to the following three figures)."
+            else NextState(3, StateWrite1);
         
         // Otherwise abort the read
         end else begin
@@ -263,11 +273,18 @@ module SDRAMController(
         end
     endtask
     
-    task UpdateCounters;
-        delayCounter <= (delayCounter!=0 ? delayCounter-1 : 0);
-        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
+    task SetDefaultState;
+        // Mask data, nop command
+        sdram_dqm <= 1;
+        sdram_cmd <= CmdNop;
+        
+        // Update data-valid registers
         writeDataValid <= 0;
         readDataValidShiftReg[C_CAS:0] <= {1'b0, readDataValidShiftReg[C_CAS:1]};
+        
+        // Update counters
+        delayCounter <= (delayCounter!=0 ? delayCounter-1 : 0);
+        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
     endtask
     
     task StartReadWrite(input logic[22:0] addr);
@@ -280,12 +297,15 @@ module SDRAMController(
         // Update active address
         activeAddr <= addr;
         
-        // Delay T_RCD or T_RAS clocks after activating the bank to perform the command.
-        // T_RCD ensures "bank activate to read/write time"
-        // T_RAS ensures "row activate to precharge time", ie that we don't
-        // CmdPrechargeAll too soon.
-        // We use Clocks(T_RAS)-2, since we know that both reading and writing states take
-        // at least 2 cycles before they issue CmdPrechargeAll.
+        // # Delay T_RCD or T_RAS clocks after activating the bank to perform the command.
+        // - T_RCD ensures "bank activate to read/write time"
+        // - T_RAS ensures "row activate to precharge time", ie that we don't
+        //   CmdPrechargeAll too soon.
+        // - We use Clocks(T_RAS)-2, since we know that reading/writing states take at
+        //   least 2 cycles before they issue CmdPrechargeAll.
+        // - If reads/writes to the same bank causes CmdBankActivate to be issued
+        //   more frequently than every T_RC, then we need to add additional delay here to
+        //   ensure that at least T_RC passes between CmdBankActivate commands.
         NextState(Max(Clocks(T_RCD), Clocks(T_RAS)-2), (cmdWrite ? StateWrite1 : StateRead1));
     endtask
     
@@ -366,31 +386,18 @@ module SDRAMController(
     endtask
     
     task HandleRefresh;
-        UpdateCounters();
+        SetDefaultState();
         
         // Initiate refresh when refreshCounter==0
-        if (refreshCounter == 0) begin
-            // Mask data lines to immediately stop reading/writing data
-            sdram_dqm <= 1;
-            
-            // Clear our command
-            sdram_cmd <= CmdNop;
-            
+        if (refreshCounter == 0)
             // Wait long to enough to guarantee we can issue CmdPrechargeAll.
             // T_RAS (row activate to precharge time) should be the most
             // conservative value, which assumes we just activated a row
             // and we have to wait before precharging it.
             NextState(Clocks(T_RAS), StateRefresh1);
         
-        // Handle delays
-        // This needs to come after handling refreshCounter==0, because we
-        // need to ignore any delay that was happening during normal command
-        // handling.
-        end else if (delayCounter != 0)
-            sdram_cmd <= CmdNop;
-        
         // Handle Refresh states
-        else case (state)
+        else if (delayCounter == 0) case (state)
         StateRefresh1: begin
             PrechargeAll();
             // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
@@ -407,18 +414,13 @@ module SDRAMController(
     endtask
     
     task HandleCommand;
-        UpdateCounters();
-        
-        // Handle delays
-        if (delayCounter != 0)
-            sdram_cmd <= CmdNop;
+        SetDefaultState();
         
         // Handle commands
-        else case (state)
+        if (delayCounter == 0) case (state)
         StateIdle: begin
             SaveCommand();
             if (cmdTrigger) StartReadWrite(cmdAddr);
-            else sdram_cmd <= CmdNop;
         end
         
         StateHandleSaved: begin
@@ -434,8 +436,6 @@ module SDRAMController(
         end
         
         StateWriteAbort1: begin
-            // Mask the data top stop writing immediately
-            sdram_dqm <= 1;
             // Wait the 'write recover' time
             // -1 cycle because we already waited one cycle in this state.
             // Datasheet (paraphrased):
@@ -460,8 +460,6 @@ module SDRAMController(
         end
         
         StateReadAbort: begin
-            // Mask the data to stop reading
-            sdram_dqm <= 1;
             PrechargeAll();
             // After precharge completes, handle the saved command or go idle
             // if there isn't a saved command.
