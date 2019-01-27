@@ -74,7 +74,7 @@ module Top();
             cmdAddr <= 0;
             // cmdWrite <= 0;
         end else if (cmdReady & cmdTrigger) begin
-            cmdAddr <= cmdAddr+515;
+            cmdAddr <= cmdAddr+514;
             // cmdWrite <= !cmdWrite;
         end
     end
@@ -105,10 +105,23 @@ module Top();
         // DelayClocks(1);
         // cmdTrigger = 0;
         
-        // // Test mass write
-        // cmdWrite = 1;
-        // // cmdWriteData = 16'hABCD;
-        // cmdTrigger = 1;
+        // DelayClocks(10);
+        
+        // repeat (10) begin
+        //     cmdWrite = 1;
+        //     cmdTrigger = 1;
+        //
+        //     DelayClocks(1);
+        //
+        //     cmdTrigger = 0;
+        //     DelayClocks(1600);
+        //
+        //     // Test mass write
+        //
+        //     // cmdWriteData = 16'hABCD;
+        //
+        //
+        // end
         
         // // Test single read
         // cmdWrite = 0;
@@ -119,6 +132,10 @@ module Top();
         // // Test mass read
         // cmdWrite = 0;
         // cmdTrigger = 1;
+        
+        // Test mass write
+        cmdWrite = 1;
+        cmdTrigger = 1;
         
         DelayClocks(30000); // Wait 300us
         

@@ -133,14 +133,6 @@ module SDRAMController(
     assign savedCmdAddrRow = savedCmdAddr[20:9];
     assign savedCmdAddrCol = savedCmdAddr[8:0];
     
-    logic[22:0] activeAddr;
-    logic[1:0] activeAddrBank;
-    logic[11:0] activeAddrRow;
-    logic[8:0] activeAddrCol;
-    assign activeAddrBank = activeAddr[22:21];
-    assign activeAddrRow = activeAddr[20:9];
-    assign activeAddrCol = activeAddr[8:0];
-    
     // ## SDRAM nets
     assign sdram_clk = clk;
     assign sdram_cs_ = 0;
@@ -186,9 +178,13 @@ module SDRAMController(
     task SaveCommand;
         // Save the command
         savedCmdTrigger <= cmdTrigger;
-        savedCmdWrite <= cmdWrite;
-        savedCmdAddr <= cmdAddr;
-        savedCmdWriteData <= cmdWriteData;
+        // Don't clobber the previously saved command if we're not triggering,
+        // so we can refer to `savedCmdAddr` to tell what address is active.
+        if (cmdTrigger) begin
+            savedCmdWrite <= cmdWrite;
+            savedCmdAddr <= cmdAddr;
+            savedCmdWriteData <= cmdWriteData;
+        end
     endtask
     
     task PrechargeAll;
@@ -200,38 +196,35 @@ module SDRAMController(
         // Save the incoming command
         SaveCommand();
         
-        // Supply the column address
-        sdram_a <= {3'b000, savedCmdAddrCol};
-        // Supply data to be written
-        sdram_writeData <= savedCmdWriteData;
-        // Unmask the data
-        sdram_dqm <= 0;
-        // Supply the write command, or Nop if this isn't the first write iteration
-        if (first) sdram_cmd <= CmdWrite;
+        if (savedCmdTrigger) begin
+            // Supply the column address
+            sdram_a <= {3'b000, savedCmdAddrCol};
+            // Supply data to be written
+            sdram_writeData <= savedCmdWriteData;
+            // Unmask the data
+            sdram_dqm <= 0;
+            
+            // Supply the write command
+            if (first) sdram_cmd <= CmdWrite;
+            
+            writeDataValid <= 1;
+        end
         
-        writeDataValid <= 1;
-        
-        // Continue writing if we're writing to the same bank and row
-        if (cmdTrigger &&
-            cmdAddrBank==activeAddrBank &&
-            cmdAddrRow==activeAddrRow) begin
+        if (cmdTrigger) begin
+            // Continue writing if we're writing to the same bank and row
+            if (cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
+                // Continue writing
+                if (cmdWrite) NextState(0, (cmdAddrCol==savedCmdAddrCol+1 ? StateWrite0 : StateWrite1));
+                
+                // Transition to reading
+                // We don't need to wait any clock cycles before transitioning to StateRead1,
+                // since we'll stop driving the DQs immediately after this state.
+                // Page 11: "Input data must be removed from the DQ at least one clock cycle
+                // before the Read data appears on the outputs to avoid data contention"
+                else NextState(0, StateRead1);
             
-            // Update active address
-            activeAddr <= cmdAddr;
-            
-            // Continue writing
-            if (cmdWrite) NextState(0, (cmdAddrCol==activeAddrCol+1 ? StateWrite0 : StateWrite1));
-            // Transition to reading
-            // We don't need to wait any clock cycles before transitioning to StateRead1,
-            // since we'll stop driving the DQs immediately after this state.
-            // Page 11: "Input data must be removed from the DQ at least one clock cycle
-            // before the Read data appears on the outputs to avoid data contention"
-            else NextState(0, StateRead1);
-            
-        // Otherwise abort the write
-        end else begin
-            // Start aborting the write
-            NextState(0, StateWriteAbort1);
+            // Abort the write if we're not writing to the same bank and row
+            end else NextState(0, StateWriteAbort1);
         end
     endtask
     
@@ -239,37 +232,34 @@ module SDRAMController(
         // Save the incoming command
         SaveCommand();
         
-        // Supply the column address
-        sdram_a <= {3'b000, savedCmdAddrCol};
-        // Unmask the data
-        sdram_dqm <= 0;
-        // Supply the read command, or Nop if this isn't the first read iteration
-        if (first) sdram_cmd <= CmdRead;
-        
-        readDataValidShiftReg[C_CAS] <= 1;
-        
-        // Continue reading if we're reading from the same bank and row
-        if (cmdTrigger &&
-            cmdAddrBank==activeAddrBank &&
-            cmdAddrRow==activeAddrRow) begin
+        if (savedCmdTrigger) begin
+            // Supply the column address
+            sdram_a <= {3'b000, savedCmdAddrCol};
+            // Unmask the data
+            sdram_dqm <= 0;
             
-            // Update active address
-            activeAddr <= cmdAddr;
+            // Supply the read command
+            if (first) sdram_cmd <= CmdRead;
             
-            // Continue reading
-            if (!cmdWrite) NextState(0, (cmdAddrCol==activeAddrCol+1 ? StateRead0 : StateRead1));
-            // Transition to writing
-            // Wait 3 cycles before doing so; page 8: "The DQMs must be asserted (HIGH) at
-            // least two clocks prior to the Write command to suppress data-out on the DQ
-            // pins. To guarantee the DQ pins against I/O contention, a single cycle with
-            // high-impedance on the DQ pins must occur between the last read data and the
-            // Write command (refer to the following three figures)."
-            else NextState(3, StateWrite1);
+            readDataValidShiftReg[C_CAS] <= 1;
+        end
         
-        // Otherwise abort the read
-        end else begin
-            // Start aborting the read
-            NextState(0, StateReadAbort);
+        if (cmdTrigger) begin
+            // Continue reading if we're reading from the same bank and row
+            if (cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
+                // Continue reading
+                if (!cmdWrite) NextState(0, (cmdAddrCol==savedCmdAddrCol+1 ? StateRead0 : StateRead1));
+                
+                // Transition to writing
+                // Wait 3 cycles before doing so; page 8: "The DQMs must be asserted (HIGH) at
+                // least two clocks prior to the Write command to suppress data-out on the DQ
+                // pins. To guarantee the DQ pins against I/O contention, a single cycle with
+                // high-impedance on the DQ pins must occur between the last read data and the
+                // Write command (refer to the following three figures)."
+                else NextState(3, StateWrite1);
+            
+            // Abort the read if we're not reading from the same bank and row
+            end else NextState(0, StateReadAbort);
         end
     endtask
     
@@ -292,9 +282,6 @@ module SDRAMController(
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];
         sdram_a <= addr[20:9];
-        
-        // Update active address
-        activeAddr <= addr;
         
         // # Delay T_RCD or T_RAS clocks after activating the bank to perform the command.
         // - T_RCD ensures "bank activate to read/write time"
