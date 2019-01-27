@@ -45,13 +45,13 @@ module SDRAMController(
     localparam C_CAS = 2; // Column address strobe (CAS) latency
     
     // ras_, cas_, we_
-    localparam CmdSetMode       = 3'b000;
-    localparam CmdAutoRefresh   = 3'b001;
-    localparam CmdPrechargeAll  = 3'b010;
-    localparam CmdBankActivate  = 3'b011;
-    localparam CmdWrite         = 3'b100;
-    localparam CmdRead          = 3'b101;
-    localparam CmdNop           = 3'b111;
+    localparam CmdSetMode           = 3'b000;
+    localparam CmdAutoRefresh       = 3'b001;
+    localparam CmdPrechargeAll      = 3'b010;
+    localparam CmdBankActivate      = 3'b011;
+    localparam CmdWrite             = 3'b100;
+    localparam CmdRead              = 3'b101;
+    localparam CmdNop               = 3'b111;
     
     localparam StateInit            = 3'h0;
     localparam StateRefresh         = 3'h1;
