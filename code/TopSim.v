@@ -124,7 +124,7 @@ module Top();
         DelayClocks(4);
         repeat (500) begin
             DelayClocks(1);
-            $display("%x", cmdReadData);
+            // $display("%x", cmdReadData);
         end
         
         DelayClocks(500);
