@@ -76,6 +76,13 @@ module SDRAMController(
         Clocks = (t*ClockFrequency)/1000000000;
     endfunction
     
+    function integer Max;
+        // Icarus Verilog doesn't support `logic` type for arguments for some reason, so use `reg` instead.
+        input reg[63:0] a;
+        input reg[63:0] b;
+        Max = (a > b ? a : b);
+    endfunction
+    
     logic[StateWidth-1:0] state;
     logic[DelayCounterWidth-1:0] delayCounter;
     logic[RefreshCounterWidth-1:0] refreshCounter;
@@ -454,7 +461,7 @@ module SDRAMController(
             // out, whichever takes longer.
             // Use C_CAS-1 because we already spent one clock cycle of the CAS
             // latency in this state.
-            NextState($max(C_CAS-1, Clocks(T_RP)), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+            NextState(Max(C_CAS-1, Clocks(T_RP)), (savedCmdTrigger ? StateHandleSaved : StateIdle));
         end
         endcase
     endtask
