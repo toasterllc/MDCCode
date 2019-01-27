@@ -217,6 +217,7 @@ module SDRAMController(
                 if (cmdWrite) NextState(0, (cmdAddrCol==savedCmdAddrCol+1 ? StateWrite0 : StateWrite1));
                 
                 // Transition to reading
+                // TODO: should we actually wait Clocks(T_WR) before transitioning to StateRead1, to ensure the write completed? what if we're able to precharge earlier than we should after a write, by transitioning to a read before doing the precharge?
                 // We don't need to wait any clock cycles before transitioning to StateRead1,
                 // since we'll stop driving the DQs immediately after this state.
                 // Page 11: "Input data must be removed from the DQ at least one clock cycle

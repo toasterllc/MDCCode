@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
+`include "4062mt48lc8m16a2/mt48lc8m16a2.v"
 
 // Verify constant values with yosys:
 //   yosys -p "read_verilog -dump_rtlil -formal -sv Top.sv"
@@ -33,7 +34,7 @@ module Top();
     logic sdram_we_;
     logic sdram_ldqm;
     logic sdram_udqm;
-    logic[15:0] sdram_dq;
+    inout logic[15:0] sdram_dq;
     
     SDRAMController sdramController(
         .clk(delayed_clk),
@@ -56,6 +57,19 @@ module Top();
         .sdram_ldqm(sdram_ldqm),
         .sdram_udqm(sdram_udqm),
         .sdram_dq(sdram_dq)
+    );
+    
+    mt48lc8m16a2 ram(
+        .Clk(sdram_clk),
+        .Dq(sdram_dq),
+        .Addr(sdram_a),
+        .Ba(sdram_ba),
+        .Cke(sdram_cke),
+        .Cs_n(sdram_cs_),
+        .Ras_n(sdram_ras_),
+        .Cas_n(sdram_cas_),
+        .We_n(sdram_we_),
+        .Dqm({sdram_udqm, sdram_ldqm})
     );
     
     task DelayClocks(input integer n);
