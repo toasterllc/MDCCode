@@ -112,6 +112,19 @@ module Top();
         // Wait until our RAM is ready
         wait(go);
         
+        // Test writes
+        cmdWrite = 1;
+        cmdTrigger = 1;
+        DelayClocks(500);
+        
+        // Test reads
+        cmdAddr = 0;
+        cmdWrite = 0;
+        cmdTrigger = 1;
+        DelayClocks(500);
+        
+        
+        
         // // Test single write
         // cmdWrite = 1;
         // cmdWriteData = 16'hABCD;

@@ -53,22 +53,14 @@ module SDRAMController(
     localparam CmdRead          = 3'b101;
     localparam CmdNop           = 3'b111;
     
-    localparam StateInit4               = 4'h0;
-    localparam StateInit3               = 4'h1;
-    localparam StateInit2               = 4'h2;
-    localparam StateInit1               = 4'h3;
-    localparam StateInit0               = 4'h4;
-    localparam StateRefresh1            = 4'h5;
-    localparam StateRefresh0            = 4'h6;
-    localparam StateIdle                = 4'h7;
-    localparam StateHandleSaved         = 4'h8;
-    localparam StateWrite1              = 4'h9;
-    localparam StateWrite0              = 4'hA;
-    localparam StateWriteAbort1         = 4'hB;
-    localparam StateWriteAbort0         = 4'hC;
-    localparam StateRead1               = 4'hD;
-    localparam StateRead0               = 4'hE;
-    localparam StateReadAbort           = 4'hF;
+    localparam StateInit            = 3'h0;
+    localparam StateRefresh         = 3'h1;
+    localparam StateIdle            = 3'h2;
+    localparam StateHandleSaved     = 3'h3;
+    localparam StateWrite           = 3'h4;
+    localparam StateWriteAbort      = 3'h5;
+    localparam StateRead            = 3'h6;
+    localparam StateReadAbort       = 3'h7;
     
     function integer Clocks;
         // Icarus Verilog doesn't support `logic` type for arguments for
@@ -85,30 +77,19 @@ module SDRAMController(
     endfunction
     
     logic[StateWidth-1:0] state;
+    logic[3:0] substate;
     logic[DelayCounterWidth-1:0] delayCounter;
     logic[RefreshCounterWidth-1:0] refreshCounter;
     
-    logic[DelayCounterWidth+RefreshCounterWidth-1:0] initCounter;
-    assign initCounter = {delayCounter, refreshCounter};
-    
-    logic idleState;
-    assign idleState = (state==StateIdle);
-    
-    logic initState;
-    assign initState = (state>=StateInit4 && state<=StateInit0);
-    
-    logic refreshState;
-    assign refreshState = (state==StateRefresh1 || state==StateRefresh0);
-    
-    logic readState;
-    assign readState = (state==StateRead1 || state==StateRead0);
-    
-    logic writeState;
-    assign writeState = (state==StateWrite1 || state==StateWrite0);
+    logic[DelayCounterWidth+RefreshCounterWidth-1:0] initDelayCounter;
+    assign initDelayCounter = {delayCounter, refreshCounter};
     
     // cmdReady==true in the states where we invoke SaveCommand().
     // In other words, cmdReady==true when we're going to store the incoming command.
-    assign cmdReady = (delayCounter==0 && refreshCounter!=0 && (idleState || readState || writeState));
+    assign cmdReady = (
+        delayCounter==0 &&
+        refreshCounter!=0 &&
+        (state==StateIdle || state==StateRead || state==StateWrite));
     
     logic writeDataValid;
     logic[C_CAS:0] readDataValidShiftReg;
@@ -170,9 +151,15 @@ module SDRAMController(
         `endif
     end
     
-    task NextState(input integer n, input integer s);
-        delayCounter <= n;
-        state <= s;
+    task StartState(input integer delay, input integer newState);
+        delayCounter <= delay;
+        state <= newState;
+        substate <= 0;
+    endtask
+    
+    task NextSubstate(input integer delay);
+        delayCounter <= delay;
+        substate <= substate+1;
     endtask
     
     task SaveCommand;
@@ -192,7 +179,7 @@ module SDRAMController(
         sdram_a <= 12'b010000000000; // sdram_a[10]=1 for PrechargeAll
     endtask
     
-    task HandleWrite(input logic first);
+    task HandleWrite(input logic substate);
         // Save the incoming command
         SaveCommand();
         
@@ -205,7 +192,7 @@ module SDRAMController(
             sdram_dqm <= 0;
             
             // Supply the write command
-            if (first) sdram_cmd <= CmdWrite;
+            if (substate==0) sdram_cmd <= CmdWrite;
             
             writeDataValid <= 1;
         end
@@ -214,7 +201,7 @@ module SDRAMController(
             // Continue writing if we're writing to the same bank and row
             if (cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
                 // Continue writing
-                if (cmdWrite) NextState(0, (cmdAddrCol==savedCmdAddrCol+1 ? StateWrite0 : StateWrite1));
+                if (cmdWrite && cmdAddrCol==savedCmdAddrCol+1 && substate==0) NextSubstate(0);
                 
                 // Transition to reading
                 // TODO: should we actually wait Clocks(T_WR) before transitioning to StateRead1, to ensure the write completed? what if we're able to precharge earlier than we should after a write, by transitioning to a read before doing the precharge?
@@ -222,14 +209,14 @@ module SDRAMController(
                 // since we'll stop driving the DQs immediately after this state.
                 // Page 11: "Input data must be removed from the DQ at least one clock cycle
                 // before the Read data appears on the outputs to avoid data contention"
-                else NextState(0, StateRead1);
+                else if (!cmdWrite) StartState(0, StateRead);
             
             // Abort the write if we're not writing to the same bank and row
-            end else NextState(0, StateWriteAbort1);
+            end else StartState(0, StateWriteAbort);
         end
     endtask
     
-    task HandleRead(input logic first);
+    task HandleRead(input logic substate);
         // Save the incoming command
         SaveCommand();
         
@@ -240,7 +227,7 @@ module SDRAMController(
             sdram_dqm <= 0;
             
             // Supply the read command
-            if (first) sdram_cmd <= CmdRead;
+            if (substate==0) sdram_cmd <= CmdRead;
             
             readDataValidShiftReg[C_CAS] <= 1;
         end
@@ -249,7 +236,7 @@ module SDRAMController(
             // Continue reading if we're reading from the same bank and row
             if (cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
                 // Continue reading
-                if (!cmdWrite) NextState(0, (cmdAddrCol==savedCmdAddrCol+1 ? StateRead0 : StateRead1));
+                if (!cmdWrite && cmdAddrCol==savedCmdAddrCol+1 && substate==0) NextSubstate(0);
                 
                 // Transition to writing
                 // Wait 3 cycles before doing so; page 8: "The DQMs must be asserted (HIGH) at
@@ -257,10 +244,10 @@ module SDRAMController(
                 // pins. To guarantee the DQ pins against I/O contention, a single cycle with
                 // high-impedance on the DQ pins must occur between the last read data and the
                 // Write command (refer to the following three figures)."
-                else NextState(3, StateWrite1);
+                else if (cmdWrite) StartState(3, StateWrite);
             
             // Abort the read if we're not reading from the same bank and row
-            end else NextState(0, StateReadAbort);
+            end else StartState(0, StateReadAbort);
         end
     endtask
     
@@ -287,89 +274,100 @@ module SDRAMController(
         // # Delay T_RCD or T_RAS clocks after activating the bank to perform the command.
         // - T_RCD ensures "bank activate to read/write time"
         // - T_RAS ensures "row activate to precharge time", ie that we don't
-        //   CmdPrechargeAll too soon.
+        //   CmdPrechargeAll too soon after we activate the bank.
         // - We use Clocks(T_RAS)-2, since we know that reading/writing states take at
         //   least 2 cycles before they issue CmdPrechargeAll.
         // - If reads/writes to the same bank causes CmdBankActivate to be issued
         //   more frequently than every T_RC, then we need to add additional delay here to
         //   ensure that at least T_RC passes between CmdBankActivate commands.
-        NextState(Max(Clocks(T_RCD), Clocks(T_RAS)-2), (cmdWrite ? StateWrite1 : StateRead1));
+        StartState(Max(Clocks(T_RCD), Clocks(T_RAS)-2), (cmdWrite ? StateWrite : StateRead));
     endtask
     
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
     // initial $finish;
     
-    task SetInitCounter(input integer n);
+    task SetInitDelayCounter(input integer n);
         {delayCounter, refreshCounter} <= n;
     endtask
     
-    task NextStateInit(input integer n, input integer s);
-        SetInitCounter(n);
-        state <= s;
+    task StartStateInit(input integer delay);
+        SetInitDelayCounter(delay);
+        state <= StateInit;
+        substate <= 0;
+    endtask
+    
+    task NextSubstateInit(input integer delay);
+        SetInitDelayCounter(delay);
+        substate <= substate+1;
     endtask
     
     task HandleInit;
         // Handle delays
-        if (initCounter != 0) begin
+        if (initDelayCounter != 0) begin
             sdram_cmd <= CmdNop;
-            SetInitCounter(initCounter-1);
+            SetInitDelayCounter(initDelayCounter-1);
         
         // Handle init states
-        end else case (state)
-        StateInit4: begin
-            readDataValidShiftReg <= 0;
-            sdram_cke <= 0;
-            sdram_dqm <= 1;
-            sdram_cmd <= CmdNop;
-            // Delay 200us
-            NextStateInit(Clocks(T_INIT), StateInit3);
-        end
-        
-        StateInit3: begin
-            // Precharge all banks
-            sdram_cke <= 1;
-            PrechargeAll();
-            NextStateInit(Clocks(T_RP), StateInit2);
-        end
-        
-        StateInit2: begin
-            // Set the operating mode of the SDRAM
-            sdram_cmd <= CmdSetMode;
-            // sdram_ba:    reserved
-            sdram_ba <=     2'b0;
-            // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
-            sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
-            // We have to wait 2 clock cycles before issuing the next command, so inject
-            // 1 clock cycle before going to the next state
-            NextStateInit(1, StateInit1);
-        end
-        
-        StateInit1: begin
-            // Autorefresh 1/2
-            sdram_cmd <= CmdAutoRefresh;
-            // Wait T_RC for autorefresh to complete
-            // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
-            // before issuing successive AutoRefresh commands. Because TRC>T_RP, I'm
-            // assuming we just have to wait TRC.
-            NextStateInit(Clocks(T_RC), StateInit0);
-        end
-        
-        StateInit0: begin
-            // Autorefresh 2/2
-            sdram_cmd <= CmdAutoRefresh;
+        end else case (substate)
+            0: begin
+                readDataValidShiftReg <= 0;
+                sdram_cke <= 0;
+                sdram_dqm <= 1;
+                sdram_cmd <= CmdNop;
+                // Delay 200us
+                NextSubstateInit(Clocks(T_INIT));
+            end
             
-            // Prepare refresh timer
-            refreshCounter <= Max(0, Clocks(T_REFI)-1);
+            1: begin
+                // Bring sdram_cke high for a bit before issuing commands
+                sdram_cke <= 1;
+                NextSubstateInit(10);
+            end
             
-            // Wait T_RC for autorefresh to complete
-            // The docs say it takes T_RC for AutoRefresh to complete, but T_RP must be met
-            // before issuing successive AutoRefresh commands. Because T_RC>T_RP, I'm
-            // assuming we just have to wait TRC.
-            // ## Use NextState() (not NextStateInit()) because the next state isn't an
-            // ## init state (StateInitXXX), and we don't want to clobber refreshCounter.
-            NextState(Clocks(T_RC), StateIdle);
-        end
-        endcase
+            2: begin
+                // Precharge all banks
+                PrechargeAll();
+                NextSubstateInit(Clocks(T_RP));
+            end
+            
+            3: begin
+                // Set the operating mode of the SDRAM
+                sdram_cmd <= CmdSetMode;
+                // sdram_ba:    reserved
+                sdram_ba <=     2'b0;
+                // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
+                sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
+                // We have to wait 2 clock cycles before issuing the next command, so inject
+                // 1 clock cycle before going to the next state
+                NextSubstateInit(1);
+            end
+            
+            4: begin
+                // Autorefresh 1/2
+                sdram_cmd <= CmdAutoRefresh;
+                // Wait T_RC for autorefresh to complete
+                // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
+                // before issuing successive AutoRefresh commands. Because TRC>T_RP, I'm
+                // assuming we just have to wait TRC.
+                NextSubstateInit(Clocks(T_RC));
+            end
+            
+            5: begin
+                // Autorefresh 2/2
+                sdram_cmd <= CmdAutoRefresh;
+                
+                // Prepare refresh timer
+                refreshCounter <= Max(0, Clocks(T_REFI)-1);
+                
+                // Wait T_RC for autorefresh to complete
+                // The docs say it takes T_RC for AutoRefresh to complete, but T_RP must be met
+                // before issuing successive AutoRefresh commands. Because T_RC>T_RP, I'm
+                // assuming we just have to wait TRC.
+                // ## Use StartState() (not StartStateInit()) because the next state isn't an
+                // ## init state (StateInitXXX), and we don't want to clobber refreshCounter.
+                StartState(Clocks(T_RC), StateIdle);
+            end
+            endcase
     endtask
     
     task HandleRefresh;
@@ -381,95 +379,88 @@ module SDRAMController(
             // T_RAS (row activate to precharge time) should be the most
             // conservative value, which assumes we just activated a row
             // and we have to wait before precharging it.
-            NextState(Clocks(T_RAS), StateRefresh1);
+            StartState(Clocks(T_RAS), StateRefresh);
         
         // Handle Refresh states
-        else if (delayCounter == 0) case (state)
-        StateRefresh1: begin
-            PrechargeAll();
-            // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
-            NextState(Clocks(T_RP), StateRefresh0);
-        end
+        else if (delayCounter == 0)
+            case (substate)
+            0: begin
+                PrechargeAll();
+                // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
+                NextSubstate(Clocks(T_RP));
+            end
         
-        StateRefresh0: begin
-            sdram_cmd <= CmdAutoRefresh;
-            // Wait T_RC (bank activate to bank activate) to guarantee that the next command can
-            // activate the same bank immediately
-            NextState(Clocks(T_RC), (savedCmdTrigger ? StateHandleSaved : StateIdle));
-        end
-        endcase
+            1: begin
+                sdram_cmd <= CmdAutoRefresh;
+                // Wait T_RC (bank activate to bank activate) to guarantee that the next command can
+                // activate the same bank immediately
+                StartState(Clocks(T_RC), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+            end
+            endcase
     endtask
     
     task HandleCommand;
         SetDefaultState();
         
         // Handle commands
-        if (delayCounter == 0) case (state)
-        StateIdle: begin
-            SaveCommand();
-            if (cmdTrigger) StartReadWrite(cmdAddr);
-        end
+        if (delayCounter == 0) begin
+            case (state)
+            StateIdle: begin
+                SaveCommand();
+                if (cmdTrigger) StartReadWrite(cmdAddr);
+            end
+            
+            StateHandleSaved:
+                StartReadWrite(savedCmdAddr);
+            
+            StateWrite:
+                HandleWrite(substate);
+            
+            StateWriteAbort:
+                case (substate)
+                // Wait the 'write recover' time before transitioning
+                // -1 cycle because we already waited one cycle in this state.
+                // Datasheet (paraphrased):
+                // "The PrechargeAll command that interrupts a write burst should be
+                // issued ceil(tWR/tCK) cycles after the clock edge in which the
+                // last data-in element is registered."
+                0: NextSubstate(Max(0, Clocks(T_WR)-1));
+                1: begin
+                    PrechargeAll();
+                    // After precharge completes, handle the saved command or
+                    // go idle if there isn't a saved command
+                    StartState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                end
+                endcase
         
-        StateHandleSaved: begin
-            StartReadWrite(savedCmdAddr);
-        end
+            StateRead:
+                HandleRead(substate);
         
-        StateWrite1: begin
-            HandleWrite(1);
+            StateReadAbort: begin
+                PrechargeAll();
+                // After precharge completes, handle the saved command or go idle
+                // if there isn't a saved command.
+                // Wait for precharge to complete, or for the data to finish reading
+                // out, whichever takes longer.
+                // Use C_CAS-1 because we already spent one clock cycle of the CAS
+                // latency in this state.
+                StartState(Max(C_CAS-1, Clocks(T_RP)), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+            end
+            endcase
         end
-        
-        StateWrite0: begin
-            HandleWrite(0);
-        end
-        
-        StateWriteAbort1: begin
-            // Wait the 'write recover' time
-            // -1 cycle because we already waited one cycle in this state.
-            // Datasheet (paraphrased):
-            // "The PrechargeAll command that interrupts a write burst should be
-            // issued ceil(tWR/tCK) cycles after the clock edge in which the
-            // last data-in element is registered."
-            NextState(Max(0, Clocks(T_WR)-1), StateWriteAbort0);
-        end
-        
-        StateWriteAbort0: begin
-            PrechargeAll();
-            // After precharge completes, handle the saved command or go idle if there isn't a saved command
-            NextState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSaved : StateIdle));
-        end
-        
-        StateRead1: begin
-            HandleRead(1);
-        end
-        
-        StateRead0: begin
-            HandleRead(0);
-        end
-        
-        StateReadAbort: begin
-            PrechargeAll();
-            // After precharge completes, handle the saved command or go idle
-            // if there isn't a saved command.
-            // Wait for precharge to complete, or for the data to finish reading
-            // out, whichever takes longer.
-            // Use C_CAS-1 because we already spent one clock cycle of the CAS
-            // latency in this state.
-            NextState(Max(C_CAS-1, Clocks(T_RP)), (savedCmdTrigger ? StateHandleSaved : StateIdle));
-        end
-        endcase
     endtask
     
 	always @(posedge clk) begin
         // Handle reset
         if (rst)
-            NextStateInit(0, StateInit4);
+            StartStateInit(0);
         
         // Handle initialization
-        else if (initState)
+        else if (state == StateInit)
             HandleInit();
         
         // Handle refresh
-        else if (refreshCounter==0 || refreshState)
+        else if (refreshCounter==0 || state==StateRefresh)
             HandleRefresh();
         
         // Handle commands
