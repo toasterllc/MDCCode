@@ -74,12 +74,14 @@ module Top();
         else if (cmdReady & cmdTrigger) cmdAddr <= cmdAddr+1;
     end
     
+    assign cmdWriteData = cmdAddr;
+    
     initial begin
         $dumpfile("TopSim.vcd");
         $dumpvars(0, Top);
         
         cmdWrite = 0;
-        cmdWriteData = 0;
+        // cmdWriteData = 0;
         cmdTrigger = 0;
         
         // Reset
@@ -91,19 +93,19 @@ module Top();
         // Wait until our RAM is ready
         wait(go);
         
-        // Test single write
+        // // Test single write
         // cmdWrite = 1;
         // cmdWriteData = 16'hABCD;
         // cmdTrigger = 1;
         // DelayClocks(1);
         // cmdTrigger = 0;
         
-        // Test mass write
+        // // Test mass write
         // cmdWrite = 1;
-        // cmdWriteData = 16'hABCD;
+        // // cmdWriteData = 16'hABCD;
         // cmdTrigger = 1;
         
-        // Test single read
+        // // Test single read
         // cmdWrite = 0;
         // cmdTrigger = 1;
         // DelayClocks(1);
