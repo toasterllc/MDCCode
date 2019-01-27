@@ -20,8 +20,8 @@ module SDRAMController(
     output logic sdram_ras_,        // Row address strobe
     output logic sdram_cas_,        // Column address strobe
     output logic sdram_we_,         // Write enable
-    output logic sdram_ldqm,        // Data input mask
-    output logic sdram_udqm,        // Data output mask
+    output logic sdram_ldqm,        // Low byte data mask
+    output logic sdram_udqm,        // High byte data mask
     inout logic[15:0] sdram_dq      // Data input/output
 );
     
@@ -185,7 +185,7 @@ module SDRAMController(
         sdram_writeData <= savedCmdWriteData;
         // Unmask the data
         sdram_dqm <= 0;
-        // Supply the command
+        // Supply the write command, or Nop if this isn't the first write iteration
         sdram_cmd <= (first ? CmdWrite : CmdNop);
         
         // Continue writing if we're writing to the next word
@@ -194,7 +194,7 @@ module SDRAMController(
             cmdAddrBank==activeAddrBank &&
             cmdAddrRow==activeAddrRow &&
             cmdAddrCol==activeAddrCol+1) begin
-        
+            
             // Update active address
             activeAddr <= cmdAddr;
             
@@ -214,7 +214,7 @@ module SDRAMController(
         sdram_a <= {3'b000, savedCmdAddrCol};
         // Unmask the data
         sdram_dqm <= 0;
-        // Supply the command
+        // Supply the read command, or Nop if this isn't the first read iteration
         sdram_cmd <= (first ? CmdRead : CmdNop);
         
         cmdReadDataValidShiftReg[2] <= 1;
