@@ -71,15 +71,16 @@ module SDRAMController(
     localparam StateReadAbort           = 4'hF;
     
     function integer Clocks;
-        // Icarus Verilog doesn't support `logic` type for arguments for some reason, so use `reg` instead.
+        // Icarus Verilog doesn't support `logic` type for arguments for
+        // some reason, so use `reg` instead.
+        // We can't use `integer` because it's only 32 bits.
         input reg[63:0] t;
         Clocks = (t*ClockFrequency)/1000000000;
     endfunction
     
     function integer Max;
-        // Icarus Verilog doesn't support `logic` type for arguments for some reason, so use `reg` instead.
-        input reg[63:0] a;
-        input reg[63:0] b;
+        input integer a;
+        input integer b;
         Max = (a > b ? a : b);
     endfunction
     
@@ -264,14 +265,13 @@ module SDRAMController(
     
     task UpdateCounters;
         delayCounter <= (delayCounter!=0 ? delayCounter-1 : 0);
-        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Clocks(T_REFI)-1);
+        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
         writeDataValid <= 0;
         readDataValidShiftReg[C_CAS:0] <= {1'b0, readDataValidShiftReg[C_CAS:1]};
     endtask
     
-    task PrepareReadWrite(input logic[22:0] addr);
+    task StartReadWrite(input logic[22:0] addr);
         // TODO: we need to guarantee that T_RC/T_RRD are met when activating a bank
-        // TODO: we need to guarantee that T_RAS is met -- it won't be if we CmdPrechargeAll too soon after we CmdBankActivate. should we just wait T_RAS here?
         // Activate the bank+row
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];
@@ -280,9 +280,17 @@ module SDRAMController(
         // Update active address
         activeAddr <= addr;
         
-        // Delay T_RCD clocks after activating the bank to perform the command
-        NextState(Clocks(T_RCD), (cmdWrite ? StateWrite1 : StateRead1));
+        // Delay T_RCD or T_RAS clocks after activating the bank to perform the command.
+        // T_RCD ensures "bank activate to read/write time"
+        // T_RAS ensures "row activate to precharge time", ie that we don't
+        // CmdPrechargeAll too soon.
+        // We use Clocks(T_RAS)-2, since we know that both reading and writing states take
+        // at least 2 cycles before they issue CmdPrechargeAll.
+        NextState(Max(Clocks(T_RCD), Clocks(T_RAS)-2), (cmdWrite ? StateWrite1 : StateRead1));
     endtask
+    
+    // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
+    // initial $finish;
     
     task SetInitCounter(input integer n);
         {delayCounter, refreshCounter} <= n;
@@ -344,7 +352,7 @@ module SDRAMController(
             sdram_cmd <= CmdAutoRefresh;
             
             // Prepare refresh timer
-            refreshCounter <= Clocks(T_REFI)-1;
+            refreshCounter <= Max(0, Clocks(T_REFI)-1);
             
             // Wait TRC for autorefresh to complete
             // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
@@ -409,12 +417,12 @@ module SDRAMController(
         else case (state)
         StateIdle: begin
             SaveCommand();
-            if (cmdTrigger) PrepareReadWrite(cmdAddr);
+            if (cmdTrigger) StartReadWrite(cmdAddr);
             else sdram_cmd <= CmdNop;
         end
         
         StateHandleSaved: begin
-            PrepareReadWrite(savedCmdAddr);
+            StartReadWrite(savedCmdAddr);
         end
         
         StateWrite1: begin
@@ -434,7 +442,7 @@ module SDRAMController(
             // "The PrechargeAll command that interrupts a write burst should be
             // issued ceil(tWR/tCK) cycles after the clock edge in which the
             // last data-in element is registered."
-            NextState(Clocks(T_WR)-1, StateWriteAbort0);
+            NextState(Max(0, Clocks(T_WR)-1), StateWriteAbort0);
         end
         
         StateWriteAbort0: begin

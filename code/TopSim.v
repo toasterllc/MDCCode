@@ -71,7 +71,7 @@ module Top();
     
     always @(posedge delayed_clk) begin
         if (rst) cmdAddr <= 0;
-        else if (cmdReady & cmdTrigger) cmdAddr <= cmdAddr+1;
+        else if (cmdReady & cmdTrigger) cmdAddr <= cmdAddr+2;
     end
     
     assign cmdWriteData = cmdAddr;
@@ -100,10 +100,10 @@ module Top();
         // DelayClocks(1);
         // cmdTrigger = 0;
         
-        // // Test mass write
-        // cmdWrite = 1;
-        // // cmdWriteData = 16'hABCD;
-        // cmdTrigger = 1;
+        // Test mass write
+        cmdWrite = 1;
+        // cmdWriteData = 16'hABCD;
+        cmdTrigger = 1;
         
         // // Test single read
         // cmdWrite = 0;
@@ -111,9 +111,9 @@ module Top();
         // DelayClocks(1);
         // cmdTrigger = 0;
         
-        // Test mass read
-        cmdWrite = 0;
-        cmdTrigger = 1;
+        // // Test mass read
+        // cmdWrite = 0;
+        // cmdTrigger = 1;
         
         DelayClocks(30000); // Wait 300us
         
