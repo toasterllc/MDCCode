@@ -29,7 +29,7 @@ module SDRAMController(
     localparam DelayCounterWidth = $clog2(Clocks(T_RC));
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT))-DelayCounterWidth;
-    localparam StateWidth = 4;
+    localparam StateWidth = 3;
     
     // Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
