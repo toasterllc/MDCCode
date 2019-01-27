@@ -74,7 +74,7 @@ module Top();
             cmdAddr <= 0;
             // cmdWrite <= 0;
         end else if (cmdReady & cmdTrigger) begin
-            cmdAddr <= cmdAddr+514;
+            cmdAddr <= cmdAddr+1;
             // cmdWrite <= !cmdWrite;
         end
     end
@@ -114,7 +114,7 @@ module Top();
         //     DelayClocks(1);
         //
         //     cmdTrigger = 0;
-        //     DelayClocks(1600);
+        //     DelayClocks(1552);
         //
         //     // Test mass write
         //
