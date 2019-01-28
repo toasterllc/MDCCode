@@ -1,0 +1,27 @@
+set_io clk          21
+set_io rst          91      # J2.10
+
+set_io sdram_a[0]   44
+set_io sdram_a[1]   45
+set_io sdram_a[2]   47
+set_io sdram_a[3]   48
+set_io sdram_a[4]   56
+set_io sdram_a[5]   60
+set_io sdram_a[6]   61
+set_io sdram_a[7]   62
+
+set_io sdram_dq[0]  119
+set_io sdram_dq[1]  118
+set_io sdram_dq[2]  117
+set_io sdram_dq[3]  116
+set_io sdram_dq[4]  115
+set_io sdram_dq[5]  114
+set_io sdram_dq[6]  113
+set_io sdram_dq[7]  112
+
+set_io sdram_clk    78      # J2.1
+set_io sdram_cke    79      # J2.2
+set_io sdram_ras_   80      # J2.3
+set_io sdram_cas_   81      # J2.4
+set_io sdram_we_    87      # J2.7
+set_io sdram_dqm    88      # J2.8
