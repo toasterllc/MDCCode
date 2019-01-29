@@ -128,7 +128,6 @@ module SDRAMController(
     assign sdram_udqm = sdram_dqm;
     
     logic[15:0] sdram_writeData;
-    logic[15:0] sdram_readData;
     
     // Hook up cmdReadData/sdram_writeData to sdram_dq
     genvar i;
@@ -142,7 +141,7 @@ module SDRAMController(
                 .PACKAGE_PIN(sdram_dq[i]),
                 .OUTPUT_ENABLE(writeDataValid),
                 .D_OUT_0(sdram_writeData[i]),
-                .D_IN_0(sdram_readData[i]),
+                .D_IN_0(cmdReadData[i]),
             );
         `else
             // For simulation, use a normal tristate buffer
@@ -310,7 +309,10 @@ module SDRAMController(
         // Handle init states
         end else case (substate)
             0: begin
+                // Initialize registers
+                writeDataValid <= 0;
                 readDataValidShiftReg <= 0;
+                
                 sdram_cke <= 0;
                 sdram_dqm <= 1;
                 sdram_cmd <= CmdNop;

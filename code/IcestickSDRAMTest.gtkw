@@ -1,0 +1,23 @@
+[*]
+[*] GTKWave Analyzer v3.3.98 (w)1999-2019 BSI
+[*] Tue Jan 29 08:54:08 2019
+[*]
+[dumpfile] "/Users/dave/repos/MotionDetectorCamera/code/IcestickSDRAMTest.vcd"
+[dumpfile_mtime] "Tue Jan 29 08:53:52 2019"
+[dumpfile_size] 25020746
+[savefile] "/Users/dave/repos/MotionDetectorCamera/code/IcestickSDRAMTest.gtkw"
+[timestart] 0
+[size] 1440 789
+[pos] -1 -1
+*-27.421116 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] IcestickSDRAMTest.
+[sst_width] 193
+[signals_width] 78
+[sst_expanded] 1
+[sst_vpaned_height] 224
+@28
+IcestickSDRAMTest.clk
+@29
+IcestickSDRAMTest.rst
+[pattern_trace] 1
+[pattern_trace] 0

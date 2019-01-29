@@ -10,10 +10,10 @@ fi
 proj="$1"
 
 # Synthesize the design from Verilog (.sv -> .blif)
-yosys -p "synth_ice40 -top $proj -blif $proj.blif" "$proj.sv"
+yosys -q -p "synth_ice40 -top $proj -blif $proj.blif" "$proj.sv"
 
 # Place and route the design ({.pcf, .blif} -> .asc)
-arachne-pnr -q -d 1k -o "$proj.asc" -p "$proj.pcf" "$proj.blif"
+arachne-pnr -d 1k -o "$proj.asc" -p "$proj.pcf" "$proj.blif"
 
 # Generate the bitstream file (.asc -> .bin)
 icepack "$proj.asc" "$proj.bin"

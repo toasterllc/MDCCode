@@ -3,7 +3,7 @@ set -e
 
 if [ "$#" -ne 1 ]; then
 	echo "Usage:"
-    echo "  BuildAndFlash.sh <ProjName>"
+    echo "  BuildAndSimulate.sh <ProjName>"
 	exit 1
 fi
 
