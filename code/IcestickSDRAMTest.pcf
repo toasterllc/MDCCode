@@ -3,14 +3,14 @@ set_io rst          91      # J2.10
 set_io ledRed       99
 set_io ledGreen     95
 
-set_io sdram_a[0]   44
-set_io sdram_a[1]   45
-set_io sdram_a[2]   47
-set_io sdram_a[3]   48
-set_io sdram_a[4]   56
-set_io sdram_a[5]   60
-set_io sdram_a[6]   61
-set_io sdram_a[7]   62
+set_io sdram_a[4]   44
+set_io sdram_a[5]   45
+set_io sdram_a[6]   47
+set_io sdram_a[7]   48
+set_io sdram_a[8]   56
+set_io sdram_a[9]   60
+set_io sdram_a[10]  61
+set_io sdram_a[11]  62
 
 set_io sdram_dq[0]  119
 set_io sdram_dq[1]  118

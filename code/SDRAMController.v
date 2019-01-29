@@ -1,3 +1,5 @@
+// TODO: we should reset our registers during rst, instead of waiting for StateInit, because clients may observe `cmdReadDataValid==1` before we're done resetting
+
 module SDRAMController(
     input logic clk,                // Clock
     input logic rst,                // Reset (synchronous)
