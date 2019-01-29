@@ -174,20 +174,20 @@ module TestController(
     output logic        sdram_clk,
     output logic        sdram_cke,
     // Use the high bits of `sdram_a` because we need A[10] for precharging to work!
-    output logic[11:0]  sdram_a,
+    output logic[11:4]  sdram_a,
     output logic        sdram_ras_,
     output logic        sdram_cas_,
     output logic        sdram_we_,
     output logic        sdram_dqm,
-    inout logic[15:0]   sdram_dq
+    inout logic[7:0]    sdram_dq
 );
     
     logic               cmdReady;
     logic               cmdTrigger;
-    logic[22:0]         cmdAddr;
+    logic[20:13]        cmdAddr;
     logic               cmdWrite;
-    logic[15:0]         cmdWriteData;
-    logic[15:0]         cmdReadData;
+    logic[7:0]          cmdWriteData;
+    logic[7:0]          cmdReadData;
     logic               cmdReadDataValid;
     
     logic[1:0]          sdram_ba;
@@ -198,7 +198,7 @@ module TestController(
     `define dataFromAddress(addr) ~addr
     
     logic status;
-    logic[15:0] readAddr;
+    logic[7:0] readAddr;
     
     assign cmdTrigger = (cmdReady && status==StatusOK);
     assign cmdWriteData = `dataFromAddress(cmdAddr);
@@ -206,29 +206,33 @@ module TestController(
     assign ledRed = (status==StatusFailed);
     assign ledGreen = (status==StatusOK);
     
+    logic[3:0] ignored_sdram_a;
+    logic[7:0] ignored_cmdReadData;
+    inout logic[7:0] ignored_sdram_dq;
+    
     SDRAMController sdramController(
         .clk(clk),
         .rst(rst),
         
         .cmdReady(cmdReady),
         .cmdTrigger(cmdTrigger),
-        .cmdAddr(cmdAddr),
+        .cmdAddr({2'b0, cmdAddr, 13'b0}),
         .cmdWrite(cmdWrite),
-        .cmdWriteData(cmdWriteData),
-        .cmdReadData(cmdReadData),
+        .cmdWriteData({8'b0, cmdWriteData}),
+        .cmdReadData({ignored_cmdReadData, cmdReadData}),
         .cmdReadDataValid(cmdReadDataValid),
         
         .sdram_clk(sdram_clk),
         .sdram_cke(sdram_cke),
         .sdram_ba(sdram_ba),
-        .sdram_a(sdram_a),
+        .sdram_a({sdram_a, ignored_sdram_a}),
         .sdram_cs_(),
         .sdram_ras_(sdram_ras_),
         .sdram_cas_(sdram_cas_),
         .sdram_we_(sdram_we_),
         .sdram_ldqm(sdram_dqm),
         .sdram_udqm(),
-        .sdram_dq(sdram_dq)
+        .sdram_dq({ignored_sdram_dq, sdram_dq})
     );
     
     always @(posedge clk) begin
@@ -270,12 +274,12 @@ module TopSim(
     output logic        sdram_clk,
     output logic        sdram_cke,
     // Use the high bits of `sdram_a` because we need A[10] for precharging to work!
-    output logic[11:0]  sdram_a,
+    output logic[11:4]  sdram_a,
     output logic        sdram_ras_,
     output logic        sdram_cas_,
     output logic        sdram_we_,
     output logic        sdram_dqm,
-    inout logic[15:0]   sdram_dq
+    inout logic[7:0]    sdram_dq
 );
     
     logic clk;
@@ -296,10 +300,11 @@ module TopSim(
         .sdram_dq(sdram_dq)
     );
     
+    inout logic[7:0] ignored_Dq;
     mt48lc8m16a2 sdram(
         .Clk(sdram_clk),
-        .Dq(sdram_dq),
-        .Addr(sdram_a),
+        .Dq({ignored_Dq, sdram_dq}),
+        .Addr({sdram_a, 4'b0}),
         .Ba(2'b0),
         .Cke(sdram_cke),
         .Cs_n(1'b0),

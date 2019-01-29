@@ -276,12 +276,12 @@ module SDRAMController(
         // - T_RCD ensures "bank activate to read/write time"
         // - T_RAS ensures "row activate to precharge time", ie that we don't
         //   CmdPrechargeAll too soon after we activate the bank.
-        // - We use Clocks(T_RAS)-2, since we know that reading/writing states take at
-        //   least 2 cycles before they issue CmdPrechargeAll.
+        // - We use Clocks(T_RAS)-1, since we know that reading/writing states take at
+        //   least 1 cycle before they issue CmdPrechargeAll.
         // - If reads/writes to the same bank causes CmdBankActivate to be issued
         //   more frequently than every T_RC, then we need to add additional delay here to
         //   ensure that at least T_RC passes between CmdBankActivate commands.
-        StartState(Max(Clocks(T_RCD), Clocks(T_RAS)-2), (cmdWrite ? StateWrite : StateRead));
+        StartState(Max(Clocks(T_RCD), Clocks(T_RAS)-1), (cmdWrite ? StateWrite : StateRead));
     endtask
     
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
