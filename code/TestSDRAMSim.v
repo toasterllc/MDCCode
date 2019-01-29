@@ -11,7 +11,7 @@
 // Run timing analysis
 //  icetime -tmd hx1k Top.asc
 
-module Top();
+module TestSDRAMSim();
     logic clk;
     logic delayed_clk;
     logic rst;
@@ -96,8 +96,8 @@ module Top();
     assign cmdWriteData = ~cmdAddr;
     
     initial begin
-        $dumpfile("TopSim.vcd");
-        $dumpvars(0, Top);
+        $dumpfile("TestSDRAMSim.vcd");
+        $dumpvars(0, TestSDRAMSim);
         
         cmdWrite = 0;
         // cmdWriteData = 0;
