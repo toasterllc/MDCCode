@@ -266,7 +266,7 @@ module SDRAMController(
         refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
     endtask
     
-    task StartReadWrite(input logic[22:0] addr);
+    task StartReadWrite(input logic write, input logic[22:0] addr);
         // Activate the bank+row
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];
@@ -281,7 +281,7 @@ module SDRAMController(
         // - If reads/writes to the same bank causes CmdBankActivate to be issued
         //   more frequently than every T_RC, then we need to add additional delay here to
         //   ensure that at least T_RC passes between CmdBankActivate commands.
-        StartState(Max(Clocks(T_RCD), Clocks(T_RAS)-1), (cmdWrite ? StateWrite : StateRead));
+        StartState(Max(Clocks(T_RCD), Clocks(T_RAS)-1), (write ? StateWrite : StateRead));
     endtask
     
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
@@ -411,11 +411,11 @@ module SDRAMController(
             case (state)
             StateIdle: begin
                 SaveCommand();
-                if (cmdTrigger) StartReadWrite(cmdAddr);
+                if (cmdTrigger) StartReadWrite(cmdWrite, cmdAddr);
             end
             
             StateHandleSaved:
-                StartReadWrite(savedCmdAddr);
+                StartReadWrite(savedCmdWrite, savedCmdAddr);
             
             StateWrite:
                 HandleWrite(substate);
