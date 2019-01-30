@@ -2,6 +2,18 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
+module RandomNumberGenerator(
+    input logic clk,
+    input logic rst,
+    output logic[7:0] q
+);
+    parameter SEED = 8'd1;
+    always @(posedge clk)
+    if (rst) q <= SEED; // anything except zero
+     // polynomial for maximal LFSR
+    else q <= {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]};
+endmodule
+
 module IcestickSDRAMTest(
     input logic         clk,
     input logic         rst,
@@ -33,13 +45,15 @@ module IcestickSDRAMTest(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
-    `define dataFromAddress(addr) ~addr
+    `define dataFromAddress(addr) ~(addr)
     
+    logic needInit;
     logic status;
-    logic[7:0] readAddr;
+    logic[23:0] enqueuedReadAddr;
+    logic[2:0] enqueuedReadCount;
     
-    assign cmdTrigger = (cmdReady && status==StatusOK);
-    assign cmdWriteData = `dataFromAddress(cmdAddr);
+    // assign cmdTrigger = (cmdReady && status==StatusOK);
+    // assign cmdWriteData = `dataFromAddress(cmdAddr);
     
     assign ledRed = (status==StatusFailed);
     assign ledGreen = (status==StatusOK);
@@ -73,32 +87,80 @@ module IcestickSDRAMTest(
         .sdram_dq({ignored_sdram_dq, sdram_dq})
     );
     
+    logic[7:0] randomBits;
+    RandomNumberGenerator #(.SEED(1)) rng(.clk(clk), .rst(rst), .q(randomBits));
+    
+    logic[7:0] randomAddr;
+    RandomNumberGenerator #(.SEED(42)) rng2(.clk(clk), .rst(rst), .q(randomAddr));
+    
+    logic shouldWrite;
+    assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
+    
     always @(posedge clk) begin
         if (rst) begin
-            cmdWrite <= 1;
-            cmdAddr <= 0;
-            
+            cmdTrigger <= 0;
+            needInit <= 1;
             status <= StatusOK;
-            readAddr <= 0;
+            enqueuedReadAddr <= 0;
+            enqueuedReadCount <= 0;
         
-        end else if (status == StatusOK) begin
-            if (cmdReadDataValid) begin
-                // Verify that the data read out is what we expect
-                if (cmdReadData == `dataFromAddress(readAddr))
-                    status <= StatusOK;
-                else
-                    status <= StatusFailed;
-                
-                readAddr <= readAddr+1;
-            end
-            
-            // Update our state
-            if (cmdReady) begin
+        // Initialize memory to known values
+        end else if (needInit) begin
+            if (!cmdTrigger) begin
+                cmdAddr <= 0;
+                cmdWrite <= 1;
+                cmdWriteData <= `dataFromAddress(0);
+                cmdTrigger <= 1;
+            end else if (cmdReady) begin
+                // if (cmdAddr == 8'h63) begin
+                //     cmdAddr <= cmdAddr+1;
+                //     cmdWriteData <= `dataFromAddress(cmdAddr);
+                // end else
                 if (cmdAddr < 8'hFF) begin
                     cmdAddr <= cmdAddr+1;
+                    cmdWriteData <= `dataFromAddress(cmdAddr+1);
                 end else begin
-                    cmdWrite <= !cmdWrite;
-                    cmdAddr <= 0;
+                    // Next stage
+                    needInit <= 0;
+                    cmdTrigger <= 0;
+                end
+            end
+        
+        end else if (status == StatusOK) begin
+            // Prevent duplicate commands
+            if (cmdTrigger && cmdReady) begin
+                cmdTrigger <= 0;
+            end
+            
+            // Handle read data if available
+            if (cmdReadDataValid) begin
+                if (enqueuedReadCount > 0) begin
+                    enqueuedReadCount <= enqueuedReadCount-1;
+                    
+                    // Verify that the data read out is what we expect
+                    if (cmdReadData == `dataFromAddress(enqueuedReadAddr[7:0]))
+                        status <= StatusOK;
+                    else
+                        status <= StatusFailed;
+                    
+                    enqueuedReadAddr <= enqueuedReadAddr>>8;
+                
+                // Something's wrong if we weren't expecting data and we got some
+                end else status <= StatusFailed;
+            
+            // Otherwise issue a new command
+            end else if (!cmdTrigger || (cmdTrigger && cmdReady)) begin
+                // Prepare a command
+                cmdWrite <= shouldWrite;
+                cmdAddr <= randomAddr;
+                cmdTrigger <= 1;
+                
+                // If we're writing, load the data into cmdWriteData
+                if (shouldWrite) cmdWriteData <= `dataFromAddress(randomAddr);
+                // If we're reading, remember the address that we're expecting data from
+                else begin
+                    enqueuedReadAddr <= enqueuedReadAddr|(randomAddr<<(8*enqueuedReadCount));
+                    enqueuedReadCount <= enqueuedReadCount+1;
                 end
             end
         end
