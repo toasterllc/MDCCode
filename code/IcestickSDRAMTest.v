@@ -1,7 +1,6 @@
 // `define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
-`include "4062mt48lc8m16a2/mt48lc8m16a2.v"
 
 // module IcestickSDRAMTest(
 // `ifdef SYNTH
@@ -208,7 +207,7 @@ module TestController(
     
     logic[3:0] ignored_sdram_a;
     logic[7:0] ignored_cmdReadData;
-    inout logic[7:0] ignored_sdram_dq;
+    logic[7:0] ignored_sdram_dq;
     
     SDRAMController sdramController(
         .clk(clk),
@@ -267,6 +266,9 @@ module TestController(
     end
 endmodule
 
+`ifndef SYNTH
+`include "4062mt48lc8m16a2/mt48lc8m16a2.v"
+
 module TopSim(
     output logic        ledRed,
     output logic        ledGreen,
@@ -300,7 +302,7 @@ module TopSim(
         .sdram_dq(sdram_dq)
     );
     
-    inout logic[7:0] ignored_Dq;
+    logic[7:0] ignored_Dq;
     mt48lc8m16a2 sdram(
         .Clk(sdram_clk),
         .Dq({ignored_Dq, sdram_dq}),
@@ -331,7 +333,9 @@ module TopSim(
         clk = 0;
         forever begin
             clk = !clk;
-            #5;
+            #83;
         end
     end
 endmodule
+
+`endif

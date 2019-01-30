@@ -1,5 +1,3 @@
-// TODO: we should reset our registers during rst, instead of waiting for StateInit, because clients may observe `cmdReadDataValid==1` before we're done resetting
-
 module SDRAMController(
     input logic clk,                // Clock
     input logic rst,                // Reset (synchronous)
@@ -27,7 +25,7 @@ module SDRAMController(
     inout logic[15:0] sdram_dq      // Data input/output
 );
     
-    localparam ClockFrequency = 100000000;
+    localparam ClockFrequency = 12000000;
     localparam DelayCounterWidth = $clog2(Clocks(T_RC));
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT))-DelayCounterWidth;
@@ -287,51 +285,58 @@ module SDRAMController(
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
     // initial $finish;
     
-    task SetInitDelayCounter(input integer delay);
+    task InitSetDelayCounter(input integer delay);
         {delayCounter, refreshCounter} <= delay;
     endtask
     
-    task StartStateInit(input integer delay);
-        SetInitDelayCounter(delay);
+    task InitStartState(input integer delay);
+        InitSetDelayCounter(delay);
         state <= StateInit;
         substate <= 0;
     endtask
     
-    task NextSubstateInit(input integer delay);
-        SetInitDelayCounter(delay);
+    task InitNextSubstate(input integer delay);
+        InitSetDelayCounter(delay);
         substate <= substate+1;
+    endtask
+    
+    task HandleReset;
+        // Reset the important registers while in the reset state.
+        // This is necessary so clients don't observe `cmdReadDataValid`
+        // immediately after reset de-asserts but before the HandleInit
+        // state machine starts.
+        writeDataValid <= 0;
+        readDataValidShiftReg <= 0;
+        InitStartState(0);
     endtask
     
     task HandleInit;
         // Handle delays
         if (initDelayCounter != 0) begin
             sdram_cmd <= CmdNop;
-            SetInitDelayCounter(initDelayCounter-1);
+            InitSetDelayCounter(initDelayCounter-1);
         
         // Handle init states
         end else case (substate)
             0: begin
                 // Initialize registers
-                writeDataValid <= 0;
-                readDataValidShiftReg <= 0;
-                
                 sdram_cke <= 0;
                 sdram_dqm <= 1;
                 sdram_cmd <= CmdNop;
                 // Delay 200us
-                NextSubstateInit(Clocks(T_INIT));
+                InitNextSubstate(Clocks(T_INIT));
             end
             
             1: begin
                 // Bring sdram_cke high for a bit before issuing commands
                 sdram_cke <= 1;
-                NextSubstateInit(10);
+                InitNextSubstate(10);
             end
             
             2: begin
                 // Precharge all banks
                 PrechargeAll();
-                NextSubstateInit(Clocks(T_RP));
+                InitNextSubstate(Clocks(T_RP));
             end
             
             3: begin
@@ -343,7 +348,7 @@ module SDRAMController(
                 sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
                 // We have to wait 2 clock cycles before issuing the next command, so inject
                 // 1 clock cycle before going to the next state
-                NextSubstateInit(1);
+                InitNextSubstate(1);
             end
             
             4: begin
@@ -353,21 +358,21 @@ module SDRAMController(
                 // The docs say it takes TRC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because TRC>T_RP, I'm
                 // assuming we just have to wait TRC.
-                NextSubstateInit(Clocks(T_RC));
+                InitNextSubstate(Clocks(T_RC));
             end
             
             5: begin
                 // Autorefresh 2/2
                 sdram_cmd <= CmdAutoRefresh;
                 
-                // Prepare refresh timer
+                // Start the refresh timer
                 refreshCounter <= Max(0, Clocks(T_REFI)-1);
                 
                 // Wait T_RC for autorefresh to complete
                 // The docs say it takes T_RC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RC>T_RP, I'm
                 // assuming we just have to wait TRC.
-                // ## Use StartState() (not StartStateInit()) because the next state isn't an
+                // ## Use StartState() (not InitStartState()) because the next state isn't an
                 // ## init state (StateInitXXX), and we don't want to clobber refreshCounter.
                 StartState(Clocks(T_RC), StateIdle);
             end
@@ -455,19 +460,19 @@ module SDRAMController(
     endtask
     
 	always @(posedge clk) begin
-        // Handle reset
+        // Reset
         if (rst)
-            StartStateInit(0);
+            HandleReset();
         
-        // Handle initialization
+        // Initialization
         else if (state == StateInit)
             HandleInit();
         
-        // Handle refresh
+        // Refresh
         else if (refreshCounter==0 || state==StateRefresh)
             HandleRefresh();
         
-        // Handle commands
+        // Commands
         else
             HandleCommand();
     end
