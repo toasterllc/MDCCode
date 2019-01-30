@@ -10,7 +10,7 @@ fi
 proj="$1"
 
 # Synthesize the design from Verilog (.sv -> .blif)
-yosys -q -p "synth_ice40 -top $proj -blif $proj.blif" "$proj.sv"
+yosys -p "synth_ice40 -top $proj -blif $proj.blif" "$proj.sv"
 
 # Place and route the design ({.pcf, .blif} -> .asc)
 arachne-pnr -d 1k -o "$proj.asc" -p "$proj.pcf" "$proj.blif"
