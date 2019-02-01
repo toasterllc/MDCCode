@@ -16,7 +16,6 @@ endmodule
 
 module IcestickSDRAMTest(
     input logic         clk12mhz,
-    input logic         rst,
     
     output logic        ledRed,
     output logic        ledGreen,
@@ -41,8 +40,13 @@ module IcestickSDRAMTest(
         clkdivider <= clkdivider+1;
     
     logic clk;
-    assign clk = clkdivider[0];
+    assign clk = clkdivider[4];
     // assign clk = clk12mhz;
+    
+    logic[19:0] rstCounter;
+    logic rst;
+    assign rst = !rstCounter[$size(rstCounter)-1];
+    always @(posedge clk) if (rst) rstCounter <= rstCounter+1;
     
     logic               cmdReady;
     logic               cmdTrigger;
