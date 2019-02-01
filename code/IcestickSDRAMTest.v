@@ -1,4 +1,4 @@
-// `define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
@@ -15,7 +15,7 @@ module RandomNumberGenerator(
 endmodule
 
 module IcestickSDRAMTest(
-    input logic         clk,
+    input logic         clk12mhz,
     input logic         rst,
     
     output logic        ledRed,
@@ -32,6 +32,18 @@ module IcestickSDRAMTest(
     inout logic[7:0]    sdram_dq
 );
     
+    logic[7:0] clkdivider;
+    `ifndef SYNTH
+        always @(posedge rst) clkdivider <= 0;
+    `endif
+    
+    always @(posedge clk12mhz)
+        clkdivider <= clkdivider+1;
+    
+    logic clk;
+    assign clk = clkdivider[0];
+    // assign clk = clk12mhz;
+    
     logic               cmdReady;
     logic               cmdTrigger;
     logic[20:13]        cmdAddr;
@@ -45,7 +57,7 @@ module IcestickSDRAMTest(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
-    `define dataFromAddress(addr) ~(addr)
+    `define dataFromAddress(addr) 8'h0
     
     logic needInit;
     logic status;
@@ -126,6 +138,7 @@ module IcestickSDRAMTest(
                 end
             end
         
+        // end else begin
         end else if (status == StatusOK) begin
             // Prevent duplicate commands
             if (cmdTrigger && cmdReady) begin
@@ -190,7 +203,7 @@ module IcestickSDRAMTestSim(
     logic rst;
     
     IcestickSDRAMTest icestickSDRAMTest(
-        .clk(clk),
+        .clk12mhz(clk),
         .rst(rst),
         .ledRed(ledRed),
         .ledGreen(ledGreen),
@@ -223,11 +236,13 @@ module IcestickSDRAMTestSim(
         $dumpvars(0, IcestickSDRAMTestSim);
         
         // Reset
-        rst = 1;
+        rst = 0;
         #100;
+        rst = 1;
+        #100000;
         rst = 0;
         
-        #1000000;
+        #100000000;
         $finish;
     end
     
@@ -235,7 +250,7 @@ module IcestickSDRAMTestSim(
         clk = 0;
         forever begin
             clk = !clk;
-            #83;
+            #42;
         end
     end
 endmodule

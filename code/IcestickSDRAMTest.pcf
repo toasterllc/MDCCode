@@ -1,4 +1,4 @@
-set_io clk          21
+set_io clk12mhz     21
 set_io rst          91      # J2.10
 set_io ledRed       99
 set_io ledGreen     95
