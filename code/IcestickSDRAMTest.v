@@ -31,19 +31,24 @@ module IcestickSDRAMTest(
     inout logic[7:0]    sdram_dq
 );
     
-    logic[7:0] clkdivider;
+    logic[7:0] clkDivider;
+    
     `ifndef SYNTH
-        always @(posedge rst) clkdivider <= 0;
+    initial clkDivider = 0;
     `endif
     
     always @(posedge clk12mhz)
-        clkdivider <= clkdivider+1;
+        clkDivider <= clkDivider+1;
     
     logic clk;
-    assign clk = clkdivider[4];
+    assign clk = clkDivider[0];
     // assign clk = clk12mhz;
     
-    logic[19:0] rstCounter;
+    `ifndef SYNTH
+    initial rstCounter = 0;
+    `endif
+    
+    logic[12:0] rstCounter;
     logic rst;
     assign rst = !rstCounter[$size(rstCounter)-1];
     always @(posedge clk) if (rst) rstCounter <= rstCounter+1;
@@ -61,7 +66,10 @@ module IcestickSDRAMTest(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
-    `define dataFromAddress(addr) 8'h0
+    // `define dataFromAddress(addr) ((addr))
+    // `define dataFromAddress(addr) (addr)
+    // `define dataFromAddress(addr) (~(addr))
+    `define dataFromAddress(addr) (8'h01)
     
     logic needInit;
     logic status;
@@ -110,7 +118,8 @@ module IcestickSDRAMTest(
     RandomNumberGenerator #(.SEED(42)) rng2(.clk(clk), .rst(rst), .q(randomAddr));
     
     logic shouldWrite;
-    assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
+    // assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
+    assign shouldWrite = 0;
     
     always @(posedge clk) begin
         if (rst) begin
@@ -142,8 +151,8 @@ module IcestickSDRAMTest(
                 end
             end
         
-        // end else begin
-        end else if (status == StatusOK) begin
+        end else begin
+        // end else if (status == StatusOK) begin
             // Prevent duplicate commands
             if (cmdTrigger && cmdReady) begin
                 cmdTrigger <= 0;
@@ -204,11 +213,9 @@ module IcestickSDRAMTestSim(
 );
     
     logic clk;
-    logic rst;
     
     IcestickSDRAMTest icestickSDRAMTest(
         .clk12mhz(clk),
-        .rst(rst),
         .ledRed(ledRed),
         .ledGreen(ledGreen),
         .sdram_clk(sdram_clk),
@@ -225,7 +232,7 @@ module IcestickSDRAMTestSim(
     mt48lc8m16a2 sdram(
         .Clk(sdram_clk),
         .Dq({ignored_Dq, sdram_dq}),
-        .Addr({sdram_a, 4'b0}),
+        .Addr({sdram_a, 4'b1111}),
         .Ba(2'b0),
         .Cke(sdram_cke),
         .Cs_n(1'b0),
@@ -239,14 +246,7 @@ module IcestickSDRAMTestSim(
         $dumpfile("IcestickSDRAMTest.vcd");
         $dumpvars(0, IcestickSDRAMTestSim);
         
-        // Reset
-        rst = 0;
-        #100;
-        rst = 1;
-        #100000;
-        rst = 0;
-        
-        #100000000;
+        #10000000;
         $finish;
     end
     
