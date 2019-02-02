@@ -4,7 +4,7 @@
 `include "SDRAMController.v"
 
 module IcestickSDRAMTest(
-    input logic         clk,
+    input logic         clk12mhz,
 
     output logic        ledRed,
     output logic        ledGreen,
@@ -22,12 +22,29 @@ module IcestickSDRAMTest(
     input logic         RS232_Rx_TTL,
     output logic        RS232_Tx_TTL
 );
+    localparam ClockFrequency = 750000;
+    
+    logic[23:0] clkDivider;
+    
+    `ifndef SYNTH
+    initial clkDivider = 0;
+    `endif
+    
+    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
+    
+    logic clk;
+    assign clk = clkDivider[3];
+    
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
-    logic[16:0] rstCounter;
+    logic[12:0] rstCounter;
     logic rst;
     assign rst = !rstCounter[$size(rstCounter)-1];
     always @(posedge clk) if (rst) rstCounter <= rstCounter+1;
+    
+    `ifndef SYNTH
+    initial rstCounter = 0;
+    `endif
     
     logic               cmdReady;
     logic               cmdTrigger;
@@ -43,7 +60,9 @@ module IcestickSDRAMTest(
     logic[7:0]          ignored_cmdReadData;
     logic[7:0]          ignored_sdram_dq;
 
-    SDRAMController sdramController(
+    SDRAMController #(
+        .ClockFrequency(ClockFrequency)
+    ) sdramController(
         .clk(clk),
         .rst(rst),
 
@@ -79,7 +98,7 @@ module IcestickSDRAMTest(
 
     uart #(
         .baud_rate(9600),                 // The baud rate in kilobits/s
-        .sys_clk_freq(12000000)           // The master clock frequency
+        .sys_clk_freq(ClockFrequency)       // The master clock frequency
     )
     uart0(
         .clk(clk),                      // The master clock for this module
@@ -222,6 +241,10 @@ module IcestickSDRAMTest(
                     // Reading data case: wait until the data is available
                     end else begin
                         if (uartCmdReadDataValid) begin
+                            // // TODO: remove
+                            // if (cmdAddr == 8'h42) begin
+                            //     uartCmdReadData <= 8'h42;
+                            // end
                             uartCmdStage <= uartCmdStage+1;
                         end
                     end
@@ -279,10 +302,10 @@ module IcestickSDRAMTestSim(
     inout logic[7:0]    sdram_dq
 );
 
-    logic clk;
+    logic clk12mhz;
 
     IcestickSDRAMTest icestickSDRAMTest(
-        .clk(clk),
+        .clk12mhz(clk12mhz),
         .ledRed(ledRed),
         .ledGreen(ledGreen),
         .sdram_clk(sdram_clk),
@@ -318,9 +341,9 @@ module IcestickSDRAMTestSim(
     end
 
     initial begin
-        clk = 0;
+        clk12mhz = 0;
         forever begin
-            clk = !clk;
+            clk12mhz = !clk12mhz;
             #42;
         end
     end

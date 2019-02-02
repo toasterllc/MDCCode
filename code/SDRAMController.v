@@ -25,7 +25,8 @@ module SDRAMController(
     inout logic[15:0] sdram_dq      // Data input/output
 );
     
-    localparam ClockFrequency = 12000000;
+    // localparam ClockFrequency = 12000000;
+    parameter ClockFrequency = 12000000;
     // 366,300
     // localparam ClockFrequency = 739645;
     // localparam ClockFrequency = 5952380;
