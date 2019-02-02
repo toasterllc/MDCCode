@@ -67,9 +67,10 @@ module IcestickSDRAMTest(
     localparam StatusFailed = 0;
     
     // `define dataFromAddress(addr) ((addr))
-    // `define dataFromAddress(addr) (addr)
+    // `define dataFromAddress(addr) (!((addr)&8'b1))
     // `define dataFromAddress(addr) (~(addr))
-    `define dataFromAddress(addr) (8'h01)
+    // `define dataFromAddress(addr) (8'h00)
+    // `define dataFromAddress(addr) (8'hFF)
     
     logic needInit;
     logic status;
@@ -118,8 +119,8 @@ module IcestickSDRAMTest(
     RandomNumberGenerator #(.SEED(42)) rng2(.clk(clk), .rst(rst), .q(randomAddr));
     
     logic shouldWrite;
-    // assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
-    assign shouldWrite = 0;
+    assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
+    // assign shouldWrite = 0;
     
     always @(posedge clk) begin
         if (rst) begin
