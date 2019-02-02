@@ -93,7 +93,7 @@ module SDRAMController(
     // In other words, cmdReady==true when we're going to store the incoming command.
     assign cmdReady = (
         delayCounter==0 &&
-        refreshCounter!=0 &&
+        // refreshCounter!=0 &&
         (state==StateIdle || state==StateRead || state==StateWrite));
     
     logic writeDataValid;
@@ -446,10 +446,10 @@ module SDRAMController(
                     StartState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSaved : StateIdle));
                 end
                 endcase
-        
+            
             StateRead:
                 HandleRead(substate);
-        
+            
             StateReadAbort: begin
                 PrechargeAll();
                 // After precharge completes, handle the saved command or go idle
