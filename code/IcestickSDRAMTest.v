@@ -22,7 +22,7 @@ module IcestickSDRAMTest(
     input logic         RS232_Rx_TTL,
     output logic        RS232_Tx_TTL
 );
-    localparam ClockFrequency = 750000;
+    localparam ClockFrequency = 1500000;
     
     logic[23:0] clkDivider;
     
@@ -33,7 +33,7 @@ module IcestickSDRAMTest(
     always @(posedge clk12mhz) clkDivider <= clkDivider+1;
     
     logic clk;
-    assign clk = clkDivider[3];
+    assign clk = clkDivider[2];
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
