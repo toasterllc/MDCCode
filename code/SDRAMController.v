@@ -25,10 +25,10 @@ module SDRAMController(
     inout logic[15:0] sdram_dq      // Data input/output
 );
     
-    // localparam ClockFrequency = 12000000;
+    localparam ClockFrequency = 12000000;
     // 366,300
     // localparam ClockFrequency = 739645;
-    localparam ClockFrequency = 5952380;
+    // localparam ClockFrequency = 5952380;
     // localparam ClockFrequency = 754148;
     localparam DelayCounterWidth = $clog2(Clocks(T_RC));
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
@@ -472,9 +472,9 @@ module SDRAMController(
         else if (state == StateInit)
             HandleInit();
         
-        // // Refresh
-        // else if (refreshCounter==0 || state==StateRefresh)
-        //     HandleRefresh();
+        // Refresh
+        else if (refreshCounter==0 || state==StateRefresh)
+            HandleRefresh();
         
         // Commands
         else
