@@ -147,6 +147,7 @@ module IcestickSDRAMTest(
             end
             
             if (cmdReadDataValid) begin
+                // uartCmdReadData <= cmdAddr;
                 uartCmdReadData <= cmdReadData;
                 uartCmdReadDataValid <= 1;
             end

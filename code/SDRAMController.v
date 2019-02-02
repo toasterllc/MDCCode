@@ -473,9 +473,9 @@ module SDRAMController(
         else if (state == StateInit)
             HandleInit();
         
-        // Refresh
-        else if (refreshCounter==0 || state==StateRefresh)
-            HandleRefresh();
+        // // Refresh
+        // else if (refreshCounter==0 || state==StateRefresh)
+        //     HandleRefresh();
         
         // Commands
         else
