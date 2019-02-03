@@ -147,7 +147,8 @@ module IcestickSDRAMTest(
                 end
             end
         
-        end else if (status == StatusOK) begin
+        end else begin
+        // end else if (status == StatusOK) begin
             // Prevent duplicate commands
             if (cmdTrigger && cmdReady) begin
                 cmdTrigger <= 0;

@@ -93,7 +93,7 @@ module SDRAMController(
     // In other words, cmdReady==true when we're going to store the incoming command.
     assign cmdReady = (
         delayCounter==0 &&
-        // refreshCounter!=0 &&
+        refreshCounter!=0 &&
         (state==StateIdle || state==StateRead || state==StateWrite));
     
     logic writeDataValid;
@@ -405,7 +405,7 @@ module SDRAMController(
             end
         
             1: begin
-                sdram_cmd <= CmdAutoRefresh;
+                // sdram_cmd <= CmdAutoRefresh;
                 // Wait T_RC (bank activate to bank activate) to guarantee that the next command can
                 // activate the same bank immediately
                 StartState(Clocks(T_RC), (savedCmdTrigger ? StateHandleSaved : StateIdle));
@@ -473,9 +473,9 @@ module SDRAMController(
         else if (state == StateInit)
             HandleInit();
         
-        // // Refresh
-        // else if (refreshCounter==0 || state==StateRefresh)
-        //     HandleRefresh();
+        // Refresh
+        else if (refreshCounter==0 || state==StateRefresh)
+            HandleRefresh();
         
         // Commands
         else
