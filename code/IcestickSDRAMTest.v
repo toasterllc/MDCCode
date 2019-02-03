@@ -1,4 +1,4 @@
-`define SYNTH
+// `define SYNTH
 `timescale 1ns/1ps
 `include "uart.v"
 `include "SDRAMController.v"
@@ -113,10 +113,10 @@ module IcestickSDRAMTest(
     );
     
     logic[7:0] randomBits;
-    RandomNumberGenerator #(.SEED(1)) rng(.clk(clk), .rst(rst), .q(randomBits));
+    RandomNumberGenerator #(.SEED(22)) rng(.clk(clk), .rst(rst), .q(randomBits));
     
     logic[7:0] randomAddr;
-    RandomNumberGenerator #(.SEED(42)) rng2(.clk(clk), .rst(rst), .q(randomAddr));
+    RandomNumberGenerator #(.SEED(99)) rng2(.clk(clk), .rst(rst), .q(randomAddr));
     
     logic shouldWrite;
     assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
@@ -147,8 +147,8 @@ module IcestickSDRAMTest(
                 end
             end
         
-        end else begin
-        // end else if (status == StatusOK) begin
+        // end else begin
+        end else if (status == StatusOK) begin
             // Prevent duplicate commands
             if (cmdTrigger && cmdReady) begin
                 cmdTrigger <= 0;
