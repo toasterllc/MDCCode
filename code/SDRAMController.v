@@ -1,3 +1,5 @@
+`define DO_REFRESH
+
 module SDRAMController(
     input logic clk,                // Clock
     input logic rst,                // Reset (synchronous)
@@ -10,6 +12,7 @@ module SDRAMController(
     input logic[15:0] cmdWriteData, // Data to write to address
     output logic[15:0] cmdReadData, // Data read from address
     output logic cmdReadDataValid,  // `cmdReadData` is valid data
+    output logic didRefresh,
     
     // SDRAM port
     output logic sdram_clk,         // Clock
@@ -93,7 +96,9 @@ module SDRAMController(
     // In other words, cmdReady==true when we're going to store the incoming command.
     assign cmdReady = (
         delayCounter==0 &&
+`ifdef DO_REFRESH
         refreshCounter!=0 &&
+`endif
         (state==StateIdle || state==StateRead || state==StateWrite));
     
     logic writeDataValid;
@@ -313,6 +318,8 @@ module SDRAMController(
         writeDataValid <= 0;
         readDataValidShiftReg <= 0;
         InitStartState(0);
+        
+        didRefresh <= 0;
     endtask
     
     task HandleInit;
@@ -403,12 +410,14 @@ module SDRAMController(
                 // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
                 NextSubstate(Clocks(T_RP));
             end
-        
+            
             1: begin
-                // sdram_cmd <= CmdAutoRefresh;
+                sdram_cmd <= CmdAutoRefresh;
                 // Wait T_RC (bank activate to bank activate) to guarantee that the next command can
                 // activate the same bank immediately
                 StartState(Clocks(T_RC), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                
+                didRefresh <= !didRefresh;
             end
             endcase
     endtask
@@ -473,9 +482,11 @@ module SDRAMController(
         else if (state == StateInit)
             HandleInit();
         
+`ifdef DO_REFRESH
         // Refresh
         else if (refreshCounter==0 || state==StateRefresh)
             HandleRefresh();
+`endif
         
         // Commands
         else

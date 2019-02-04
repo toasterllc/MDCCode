@@ -1,4 +1,4 @@
-// `define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "uart.v"
 `include "SDRAMController.v"
@@ -36,7 +36,9 @@ module IcestickSDRAMTest(
 );
     localparam ClockFrequency = 1500000;
     
-    logic[23:0] clkDivider;
+    `define RESET_BIT 26
+    
+    logic[`RESET_BIT:0] clkDivider;
     
     `ifndef SYNTH
     initial clkDivider = 0;
@@ -51,8 +53,20 @@ module IcestickSDRAMTest(
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
     logic[12:0] rstCounter;
     logic rst;
+    logic lastBit;
     assign rst = !rstCounter[$size(rstCounter)-1];
-    always @(posedge clk) if (rst) rstCounter <= rstCounter+1;
+    always @(posedge clk) begin
+        if (rst) begin
+            rstCounter <= rstCounter+1;
+        end
+        
+        // Generate a reset every time clkDivider[`RESET_BIT] goes 0->1
+        lastBit <= clkDivider[`RESET_BIT];
+        if (clkDivider[`RESET_BIT] && !lastBit) begin
+            rstCounter <= 0;
+        end
+    end
+    assign ledGreen = rst;
     
     `ifndef SYNTH
     initial rstCounter = 0;
@@ -75,15 +89,14 @@ module IcestickSDRAMTest(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
-    `define dataFromAddress(addr) ~(addr)
+    `define dataFromAddress(addr) (~(addr))
     
     logic needInit;
     logic status;
     logic[23:0] enqueuedReadAddr;
     logic[2:0] enqueuedReadCount;
     
-    assign ledRed = (status==StatusFailed);
-    assign ledGreen = (status==StatusOK);
+    assign ledRed = (status!=StatusOK);
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
