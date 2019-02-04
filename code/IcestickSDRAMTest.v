@@ -1,4 +1,4 @@
-`define SYNTH
+// `define SYNTH
 `timescale 1ns/1ps
 `include "uart.v"
 `include "SDRAMController.v"
@@ -241,7 +241,7 @@ module IcestickSDRAMTestSim(
     mt48lc8m16a2 sdram(
         .Clk(sdram_clk),
         .Dq({ignored_Dq, sdram_dq}),
-        .Addr({sdram_a, 4'b1111}),
+        .Addr({sdram_a, 4'b0111}),
         .Ba(2'b0),
         .Cke(sdram_cke),
         .Cs_n(1'b0),
