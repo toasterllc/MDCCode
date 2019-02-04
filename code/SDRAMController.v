@@ -410,7 +410,7 @@ module SDRAMController(
                 // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
                 NextSubstate(Clocks(T_RP));
             end
-        
+            
             1: begin
                 sdram_cmd <= CmdAutoRefresh;
                 // Wait T_RC (bank activate to bank activate) to guarantee that the next command can

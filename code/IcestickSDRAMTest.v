@@ -24,7 +24,9 @@ module IcestickSDRAMTest(
 );
     localparam ClockFrequency = 1500000;
     
-    logic[28:0] clkDivider;
+    `define RESET_BIT 28
+    
+    logic[`RESET_BIT:0] clkDivider;
     
     `ifndef SYNTH
     initial clkDivider = 0;
@@ -46,9 +48,9 @@ module IcestickSDRAMTest(
             rstCounter <= rstCounter+1;
         end
         
-        // Generate a reset every time clkDivider[28] goes 0->1
-        lastBit <= clkDivider[28];
-        if (clkDivider[28] && !lastBit) begin
+        // Generate a reset every time clkDivider[`RESET_BIT] goes 0->1
+        lastBit <= clkDivider[`RESET_BIT];
+        if (clkDivider[`RESET_BIT] && !lastBit) begin
             rstCounter <= 0;
         end
     end
@@ -79,7 +81,7 @@ module IcestickSDRAMTest(
     ) sdramController(
         .clk(clk),
         .rst(rst),
-
+        
         .cmdReady(cmdReady),
         .cmdTrigger(cmdTrigger),
         .cmdAddr({2'b0, cmdAddr, 13'b0}),
@@ -88,7 +90,7 @@ module IcestickSDRAMTest(
         .cmdReadData({ignored_cmdReadData, cmdReadData}),
         .cmdReadDataValid(cmdReadDataValid),
         .didRefresh(didRefresh),
-
+        
         .sdram_clk(sdram_clk),
         .sdram_cke(sdram_cke),
         .sdram_ba(sdram_ba),
@@ -101,7 +103,7 @@ module IcestickSDRAMTest(
         .sdram_udqm(),
         .sdram_dq({ignored_sdram_dq, sdram_dq})
     );
-
+    
     // UART stuff
     reg uartTransmit;
     reg [7:0] uartTxByte;
@@ -110,7 +112,7 @@ module IcestickSDRAMTest(
     wire is_receiving;
     wire is_transmitting;
     wire recv_error;
-
+    
     uart #(
         .baud_rate(9600),                 // The baud rate in kilobits/s
         .sys_clk_freq(ClockFrequency)       // The master clock frequency
