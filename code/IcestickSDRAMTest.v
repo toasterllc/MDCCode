@@ -24,7 +24,7 @@ module IcestickSDRAMTest(
 );
     localparam ClockFrequency = 1500000;
     
-    logic[23:0] clkDivider;
+    logic[28:0] clkDivider;
     
     `ifndef SYNTH
     initial clkDivider = 0;
@@ -39,8 +39,20 @@ module IcestickSDRAMTest(
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
     logic[12:0] rstCounter;
     logic rst;
+    logic lastBit;
     assign rst = !rstCounter[$size(rstCounter)-1];
-    always @(posedge clk) if (rst) rstCounter <= rstCounter+1;
+    always @(posedge clk) begin
+        if (rst) begin
+            rstCounter <= rstCounter+1;
+        end
+        
+        // Generate a reset every time clkDivider[28] goes 0->1
+        lastBit <= clkDivider[28];
+        if (clkDivider[28] && !lastBit) begin
+            rstCounter <= 0;
+        end
+    end
+    assign ledGreen = rst;
     
     `ifndef SYNTH
     initial rstCounter = 0;
@@ -59,7 +71,9 @@ module IcestickSDRAMTest(
     logic[3:0]          ignored_sdram_a;
     logic[7:0]          ignored_cmdReadData;
     logic[7:0]          ignored_sdram_dq;
-
+    logic               didRefresh;
+    assign ledRed = didRefresh;
+    
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
@@ -73,6 +87,7 @@ module IcestickSDRAMTest(
         .cmdWriteData({8'b0, cmdWriteData}),
         .cmdReadData({ignored_cmdReadData, cmdReadData}),
         .cmdReadDataValid(cmdReadDataValid),
+        .didRefresh(didRefresh),
 
         .sdram_clk(sdram_clk),
         .sdram_cke(sdram_cke),
