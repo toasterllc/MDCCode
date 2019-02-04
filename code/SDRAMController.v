@@ -1,4 +1,4 @@
-// `define DO_REFRESH
+`define DO_REFRESH
 
 module SDRAMController(
     input logic clk,                // Clock

@@ -23,8 +23,10 @@ module IcestickSDRAMTest(
     output logic        RS232_Tx_TTL
 );
     localparam ClockFrequency = 1500000;
+    logic clk;
+    assign clk = clkDivider[2];
     
-    `define RESET_BIT 28
+    `define RESET_BIT 25
     
     logic[`RESET_BIT:0] clkDivider;
     
@@ -34,12 +36,9 @@ module IcestickSDRAMTest(
     
     always @(posedge clk12mhz) clkDivider <= clkDivider+1;
     
-    logic clk;
-    assign clk = clkDivider[2];
-    
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
-    logic[12:0] rstCounter;
+    logic[13:0] rstCounter;
     logic rst;
     logic lastBit;
     assign rst = !rstCounter[$size(rstCounter)-1];
@@ -48,11 +47,11 @@ module IcestickSDRAMTest(
             rstCounter <= rstCounter+1;
         end
         
-        // Generate a reset every time clkDivider[`RESET_BIT] goes 0->1
-        lastBit <= clkDivider[`RESET_BIT];
-        if (clkDivider[`RESET_BIT] && !lastBit) begin
-            rstCounter <= 0;
-        end
+        // // Generate a reset every time clkDivider[`RESET_BIT] goes 0->1
+        // lastBit <= clkDivider[`RESET_BIT];
+        // if (clkDivider[`RESET_BIT] && !lastBit) begin
+        //     rstCounter <= 0;
+        // end
     end
     assign ledGreen = rst;
     
@@ -340,7 +339,7 @@ module IcestickSDRAMTestSim(
     mt48lc8m16a2 sdram(
         .Clk(sdram_clk),
         .Dq({ignored_Dq, sdram_dq}),
-        .Addr({sdram_a, 4'b1111}),
+        .Addr({sdram_a, 4'b0111}),
         .Ba(2'b0),
         .Cke(sdram_cke),
         .Cs_n(1'b0),
