@@ -1,4 +1,4 @@
-// `define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "uart.v"
 `include "SDRAMController.v"
@@ -60,11 +60,11 @@ module IcestickSDRAMTest(
             rstCounter <= rstCounter+1;
         end
         
-        // Generate a reset every time clkDivider[`RESET_BIT] goes 0->1
-        lastBit <= clkDivider[`RESET_BIT];
-        if (clkDivider[`RESET_BIT] && !lastBit) begin
-            rstCounter <= 0;
-        end
+        // // Generate a reset every time clkDivider[`RESET_BIT] goes 0->1
+        // lastBit <= clkDivider[`RESET_BIT];
+        // if (clkDivider[`RESET_BIT] && !lastBit) begin
+        //     rstCounter <= 0;
+        // end
     end
     assign ledGreen = rst;
     
@@ -160,8 +160,8 @@ module IcestickSDRAMTest(
                 end
             end
         
-        // end else begin
-        end else if (status == StatusOK) begin
+        end else begin
+        // end else if (status == StatusOK) begin
             // Prevent duplicate commands
             if (cmdTrigger && cmdReady) begin
                 cmdTrigger <= 0;
