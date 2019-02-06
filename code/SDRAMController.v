@@ -41,7 +41,7 @@ module SDRAMController(
     
     // Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
-    localparam T_REFI = 15625; // max time between refreshes
+    localparam T_REFI = 7812; // max time between refreshes
     localparam T_RC = 63; // bank activate to bank activate (same bank)
     localparam T_RRD = 14; // row activate to row activate (different banks)
     localparam T_RAS = 42; // row activate to precharge time (same bank)
