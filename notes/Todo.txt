@@ -1,0 +1,3 @@
+- Test commit 1112b4686d changes via simulator that uses Micron model
+- Test commit 1112b4686d changes on real device (random read/write test + UART test)
+- See if there's a model for AS4C8M16MSA (low power SDRAM) and test commit 1112b4686d with that
