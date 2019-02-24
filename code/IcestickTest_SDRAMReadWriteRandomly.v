@@ -15,7 +15,7 @@ module RandomNumberGenerator(
     else q <= {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]};
 endmodule
 
-module IcestickSDRAMTest(
+module IcestickTest_SDRAMReadWriteRandomly(
     input logic         clk12mhz,
 
     output logic        ledRed,
@@ -206,7 +206,7 @@ endmodule
 
 `include "4062mt48lc8m16a2/mt48lc8m16a2.v"
 
-module IcestickSDRAMTestSim(
+module IcestickTest_SDRAMReadWriteRandomlySim(
     output logic        ledRed,
     output logic        ledGreen,
 
@@ -223,7 +223,7 @@ module IcestickSDRAMTestSim(
 
     logic clk12mhz;
 
-    IcestickSDRAMTest icestickSDRAMTest(
+    IcestickTest_SDRAMReadWriteRandomly icestickSDRAMTest(
         .clk12mhz(clk12mhz),
         .ledRed(ledRed),
         .ledGreen(ledGreen),
@@ -252,8 +252,8 @@ module IcestickSDRAMTestSim(
     );
 
     initial begin
-        $dumpfile("IcestickSDRAMTest.vcd");
-        $dumpvars(0, IcestickSDRAMTestSim);
+        $dumpfile("IcestickTest_SDRAMReadWriteRandomly.vcd");
+        $dumpvars(0, IcestickTest_SDRAMReadWriteRandomlySim);
 
         #10000000;
         $finish;
