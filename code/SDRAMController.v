@@ -213,15 +213,19 @@ module SDRAMController(
                 if (cmdWrite && cmdAddrCol==savedCmdAddrCol+1 && substate==0) NextSubstate(0);
                 
                 // Transition to reading
-                // TODO: should we actually wait Clocks(T_WR) before transitioning to StateRead1, to ensure the write completed? what if we're able to precharge earlier than we should after a write, by transitioning to a read before doing the precharge?
-                // We don't need to wait any clock cycles before transitioning to StateRead1,
-                // since we'll stop driving the DQs immediately after this state.
-                // Page 11: "Input data must be removed from the DQ at least one clock cycle
-                // before the Read data appears on the outputs to avoid data contention"
-                else if (!cmdWrite) StartState(0, StateRead);
+                // Wait Clocks(T_WR) before transitioning to StateRead to avoid the read state
+                // allowing us to precharge too soon after a write (which would violate T_WR).
+                // -1 clock cycle since we know StateRead will eat one cycle before allowing
+                // a precharge via StateReadAbort.
+                else if (!cmdWrite) StartState(Max(0, Clocks(T_WR)-1), StateRead);
             
-            // Abort the write if we're not writing to the same bank and row
-            end else StartState(0, StateWriteAbort);
+            // Abort the write if we're not writing to the same bank and row.
+            // Wait the 'write recover' time before doing so.
+            // Datasheet (paraphrased):
+            // "The PrechargeAll command that interrupts a write burst should be
+            // issued ceil(tWR/tCK) cycles after the clock edge in which the
+            // last data-in element is registered."
+            end else StartState(Max(0, Clocks(T_WR)), StateWriteAbort);
         end
     endtask
     
@@ -247,6 +251,7 @@ module SDRAMController(
                 // Continue reading
                 if (!cmdWrite && cmdAddrCol==savedCmdAddrCol+1 && substate==0) NextSubstate(0);
                 
+                // TODO: parameterize this delay (reference newer Aliiance datasheets for delay name)
                 // Transition to writing
                 // Wait 3 cycles before doing so; page 8: "The DQMs must be asserted (HIGH) at
                 // least two clocks prior to the Write command to suppress data-out on the DQ
@@ -280,8 +285,10 @@ module SDRAMController(
         sdram_ba <= addr[22:21];
         sdram_a <= addr[20:9];
         
-        // # Delay T_RCD or T_RAS clocks after activating the bank to perform the command.
+        // # Delay T_RCD/T_RRD/T_RAS clocks after activating the bank to perform the command.
         // - T_RCD ensures "bank activate to read/write time"
+        // - T_RRD ensures "activate bank A to activate bank B time", to ensure that the next
+        //   bank can't be activated too soon after this bank activation
         // - T_RAS ensures "row activate to precharge time", ie that we don't
         //   CmdPrechargeAll too soon after we activate the bank.
         // - We use Clocks(T_RAS)-1, since we know that reading/writing states take at
@@ -289,7 +296,7 @@ module SDRAMController(
         // - If reads/writes to the same bank causes CmdBankActivate to be issued
         //   more frequently than every T_RC, then we need to add additional delay here to
         //   ensure that at least T_RC passes between CmdBankActivate commands.
-        StartState(Max(Clocks(T_RCD), Clocks(T_RAS)-1), (write ? StateWrite : StateRead));
+        StartState(Max(Max(Clocks(T_RCD), Clocks(T_RRD)), Clocks(T_RAS)-1), (write ? StateWrite : StateRead));
     endtask
     
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
@@ -358,6 +365,7 @@ module SDRAMController(
                 sdram_ba <=     2'b0;
                 // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
                 sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
+                // TODO: parameterize this (TMRD)
                 // We have to wait 2 clock cycles before issuing the next command, so inject
                 // 1 clock cycle before going to the next state
                 InitNextSubstate(1);
@@ -439,22 +447,12 @@ module SDRAMController(
             StateWrite:
                 HandleWrite(substate);
             
-            StateWriteAbort:
-                case (substate)
-                // Wait the 'write recover' time before transitioning
-                // -1 cycle because we already waited one cycle in this state.
-                // Datasheet (paraphrased):
-                // "The PrechargeAll command that interrupts a write burst should be
-                // issued ceil(tWR/tCK) cycles after the clock edge in which the
-                // last data-in element is registered."
-                0: NextSubstate(Max(0, Clocks(T_WR)-1));
-                1: begin
-                    PrechargeAll();
-                    // After precharge completes, handle the saved command or
-                    // go idle if there isn't a saved command
-                    StartState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSaved : StateIdle));
-                end
-                endcase
+            StateWriteAbort: begin
+                PrechargeAll();
+                // After precharge completes, handle the saved command or
+                // go idle if there isn't a saved command
+                StartState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+            end
             
             StateRead:
                 HandleRead(substate);
