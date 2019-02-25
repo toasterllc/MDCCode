@@ -41,21 +41,21 @@ module IcestickTest_SDRAMReadWriteRandomly(
     input logic         RS232_Rx_TTL,
     output logic        RS232_Tx_TTL
 );
-    // localparam ClockFrequency = 1500000;
-    localparam ClockFrequency = 12000000;
+    localparam ClockFrequency = 1500000;
+    // localparam ClockFrequency = 12000000;
     
-    // `define RESET_BIT 26
-    //
-    // logic[`RESET_BIT:0] clkDivider;
-    //
-    // `ifndef SYNTH
-    // initial clkDivider = 0;
-    // `endif
+    `define RESET_BIT 26
+
+    logic[`RESET_BIT:0] clkDivider;
+
+    `ifndef SYNTH
+    initial clkDivider = 0;
+    `endif
     
-    // always @(posedge clk12mhz) clkDivider <= clkDivider+1;
+    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
     
     logic clk;
-    assign clk = clk12mhz;//clkDivider[0];
+    assign clk = clkDivider[2];
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up

@@ -293,7 +293,7 @@ module SDRAMController(
         // - T_RAS ensures "row activate to precharge time", ie that we don't
         //   CmdPrechargeAll too soon after we activate the bank.
         //   - We use Clocks(T_RAS)-2, since we know that it takes >=2 state transitions
-        //     from this state to issue CmdPrechargeAll (TODO: verify this in simulation)
+        //     from this state to issue CmdPrechargeAll
         //
         // - T_RC ensures "activate bank A to activate bank A time", to ensure that the next
         //   bank can't be activated too soon after this bank activation
