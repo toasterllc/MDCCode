@@ -258,7 +258,8 @@ module SDRAMController(
                 // Wait `C_DQZ+1` cycles before doing so to ensure DQs are high-Z. +1 cycle because
                 // "at least a single-cycle delay should occur between the last read data and
                 // the WRITE command".
-                // TODO: verify this delay in simulation
+                // 2/24: verified that we have 1 cycle between SDRAM driving DQs (due to read)
+                //       and us driving DQs (due to write)
                 else if (cmdWrite) StartState(C_DQZ+1, StateWrite);
             
             // Abort the read if we're not reading from the same bank and row
