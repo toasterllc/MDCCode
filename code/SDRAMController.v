@@ -287,7 +287,7 @@ module SDRAMController(
         sdram_ba <= addr[22:21];
         sdram_a <= addr[20:9];
         
-        // # Delay T_RCD/T_RAS/T_RRD/T_RC clocks after activating the bank to perform the command.
+        // # Delay T_RCD/T_RAS/T_RC/T_RRD clocks after activating the bank to perform the command.
         // - T_RCD ensures "bank activate to read/write time"
         //
         // - T_RAS ensures "row activate to precharge time", ie that we don't
@@ -306,7 +306,8 @@ module SDRAMController(
         // - T_RRD ensures "activate bank A to activate bank B time", to ensure that the next
         //   bank can't be activated too soon after this bank activation
         //   - We use Clocks(T_RRD)-3, since we know that it takes >=3 state transitions
-        //     from this state to reach this state again and issue another CmdBankActivate (TODO: verify this in simulation)
+        //     from this state to reach this state again and issue another CmdBankActivate
+        //     (see explanation for T_RC, above)
         StartState(Max(Max(Clocks(T_RCD), Clocks(T_RAS)-2), Max(Clocks(T_RC)-3, Clocks(T_RRD)-3)),
             (write ? StateWrite : StateRead));
     endtask
