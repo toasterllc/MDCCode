@@ -379,8 +379,7 @@ module SDRAMController(
                 // sdram_a:     reserved,   write burst length,     test mode,  CAS latency,    burst type,     burst length
                 sdram_a <= {    2'b0,       1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
                 // We need a delay of C_MRD clock cycles before issuing the next command
-                // -1 clock cycle since we burn one cycle getting to the next substate.
-                // TODO: verify this delay in simulation
+                // -1 clock cycle since we already burn one cycle getting to the next substate.
                 InitNextSubstate(Max(0, C_MRD-1));
             end
             
