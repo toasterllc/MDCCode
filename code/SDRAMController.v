@@ -34,7 +34,7 @@ module SDRAMController(
     // localparam ClockFrequency = 739645;
     // localparam ClockFrequency = 5952380;
     // localparam ClockFrequency = 754148;
-    localparam DelayCounterWidth = $clog2(Clocks(T_RC));
+    localparam DelayCounterWidth = $clog2(Clocks(T_RFC));
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT))-DelayCounterWidth;
     localparam StateWidth = 3;
@@ -44,6 +44,7 @@ module SDRAMController(
     localparam T_REFI = 7812; // time between refreshes
     localparam T_RC = 63; // bank activate to bank activate time (same bank)
     localparam T_RFC = 63; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
+                                            // TODO: maybe increasing this value would make Alliance SDRAM work?
     localparam T_RRD = 14; // row activate to row activate time (different banks)
     localparam T_RAS = 42; // row activate to precharge time (same bank)
     localparam T_RCD = 21; // bank activate to read/write time (same bank)
@@ -416,14 +417,29 @@ module SDRAMController(
         
         // Initiate refresh when refreshCounter==0
         if (refreshCounter == 0)
-            // TODO: shouldnt we wait T_RC here to ensure we dont activate the same bank too soon?
-            //       actually we should do some condination of T_RAS and T_RC
-            // Wait long to enough to guarantee we can issue CmdPrechargeAll.
-            // T_RAS (row activate to precharge time) should be the most
-            // conservative value, which assumes we just activated a row
-            // and we have to wait before precharging it.
-            StartState(Clocks(T_RAS), StateRefresh);
-        
+            
+            // We don't know what state we came from, so wait the most conservative amount of time.
+            StartState(Max(0, Max(Max(Max(Max(Max(
+                // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
+                // when we return to that command via StateHandleSaved after refreshing is complete.
+                Clocks(T_RC),
+                // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
+                // when we return to that command via StateHandleSaved after refreshing is complete.
+                Clocks(T_RRD)),
+                // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
+                // since we're about to issue CmdPrechargeAll.
+                Clocks(T_RAS)),
+                // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
+                // when we return to that command via StateHandleSaved after refreshing is complete.
+                Clocks(T_RCD)),
+                // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
+                // until precharging is complete.
+                Clocks(T_RP)),
+                // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
+                // until precharging is complete.
+                Clocks(T_WR))-1) // -1 because we spent a cycle in this state
+            , StateRefresh);
+            
         // Handle Refresh states
         else if (delayCounter == 0)
             case (substate)
