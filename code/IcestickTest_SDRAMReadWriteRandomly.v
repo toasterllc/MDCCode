@@ -1,4 +1,4 @@
-`define SYNTH
+// `define SYNTH
 `timescale 1ns/1ps
 `include "uart.v"
 `include "SDRAMController.v"
@@ -8,11 +8,18 @@ module RandomNumberGenerator(
     input logic rst,
     output logic[7:0] q
 );
+    logic[7:0] counter;
+    
     parameter SEED = 8'd1;
     always @(posedge clk)
-    if (rst) q <= SEED; // anything except zero
+    if (rst) begin
+        q <= SEED; // anything except zero
+        counter <= 0;
      // polynomial for maximal LFSR
-    else q <= {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]};
+    end else begin
+        q <= (counter>=8'h42 && counter<=8'h52 ? 8'h42 : {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]});
+        counter <= counter+1;
+    end
 endmodule
 
 module IcestickTest_SDRAMReadWriteRandomly(
@@ -34,20 +41,21 @@ module IcestickTest_SDRAMReadWriteRandomly(
     input logic         RS232_Rx_TTL,
     output logic        RS232_Tx_TTL
 );
-    localparam ClockFrequency = 1500000;
+    // localparam ClockFrequency = 1500000;
+    localparam ClockFrequency = 12000000;
     
-    `define RESET_BIT 26
+    // `define RESET_BIT 26
+    //
+    // logic[`RESET_BIT:0] clkDivider;
+    //
+    // `ifndef SYNTH
+    // initial clkDivider = 0;
+    // `endif
     
-    logic[`RESET_BIT:0] clkDivider;
-    
-    `ifndef SYNTH
-    initial clkDivider = 0;
-    `endif
-    
-    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
+    // always @(posedge clk12mhz) clkDivider <= clkDivider+1;
     
     logic clk;
-    assign clk = clkDivider[2];
+    assign clk = clk12mhz;//clkDivider[0];
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
@@ -89,7 +97,7 @@ module IcestickTest_SDRAMReadWriteRandomly(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
-    `define dataFromAddress(addr) (~(addr))
+    `define dataFromAddress(addr) (addr) //(~(addr))
     
     logic needInit;
     logic status;
