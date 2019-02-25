@@ -8,18 +8,11 @@ module RandomNumberGenerator(
     input logic rst,
     output logic[7:0] q
 );
-    logic[7:0] counter;
-    
     parameter SEED = 8'd1;
     always @(posedge clk)
-    if (rst) begin
-        q <= SEED; // anything except zero
-        counter <= 0;
+    if (rst) q <= SEED; // anything except zero
      // polynomial for maximal LFSR
-    end else begin
-        q <= (counter>=8'h42 && counter<=8'h52 ? 8'h42 : {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]});
-        counter <= counter+1;
-    end
+    else q <= {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]};
 endmodule
 
 module IcestickTest_SDRAMReadWriteRandomly(
@@ -97,7 +90,7 @@ module IcestickTest_SDRAMReadWriteRandomly(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
-    `define dataFromAddress(addr) (addr) //(~(addr))
+    `define dataFromAddress(addr) (~(addr))
     
     logic needInit;
     logic status;

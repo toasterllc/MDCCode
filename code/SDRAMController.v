@@ -288,29 +288,28 @@ module SDRAMController(
         sdram_ba <= addr[22:21];
         sdram_a <= addr[20:9];
         
-        // # Delay T_RCD/T_RAS/T_RC/T_RRD clocks after activating the bank to perform the command.
-        // - T_RCD ensures "bank activate to read/write time"
-        //
-        // - T_RAS ensures "row activate to precharge time", ie that we don't
-        //   CmdPrechargeAll too soon after we activate the bank.
-        //   - We use Clocks(T_RAS)-2, since we know that it takes >=2 state transitions
-        //     from this state to issue CmdPrechargeAll
-        //     (StateIdle/StateHandleSaved -> StateRead/StateWrite -> StateReadAbort/StateWriteAbort)
-        //
-        // - T_RC ensures "activate bank A to activate bank A time", to ensure that the next
-        //   bank can't be activated too soon after this bank activation
-        //   - We use Clocks(T_RC)-3, since we know that it takes >=3 state transitions
-        //     from this state to reach this state again and issue another CmdBankActivate
-        //     (StateIdle/StateHandleSaved -> StateRead/StateWrite ->
-        //         StateReadAbort/StateWriteAbort -> StateIdle/StateHandleSaved)
-        //
-        // - T_RRD ensures "activate bank A to activate bank B time", to ensure that the next
-        //   bank can't be activated too soon after this bank activation
-        //   - We use Clocks(T_RRD)-3, since we know that it takes >=3 state transitions
-        //     from this state to reach this state again and issue another CmdBankActivate
-        //     (see explanation for T_RC, above)
-        StartState(Max(Max(Clocks(T_RCD), Clocks(T_RAS)-2), Max(Clocks(T_RC)-3, Clocks(T_RRD)-3)),
-            (write ? StateWrite : StateRead));
+        // Delay the most conservative amount of time necessary after activating the bank to perform the command.
+        StartState(Max(0, Max(Max(Max(
+            // T_RCD: ensure "bank activate to read/write time".
+            Clocks(T_RCD),
+            // T_RAS: ensure "row activate to precharge time", ie that we don't
+            // CmdPrechargeAll too soon after we activate the bank.
+            // -2 cycles since we know that it takes >=2 state transitions from this state
+            // to issue CmdPrechargeAll (StateIdle/StateHandleSaved -> StateRead/StateWrite ->
+            // StateReadAbort/StateWriteAbort)
+            Clocks(T_RAS)-2),
+            // T_RC: ensure "activate bank A to activate bank A time", to ensure that the next
+            // bank can't be activated too soon after this bank activation.
+            // -3 cycles since we know that it takes >=3 state transitions from this state to
+            // reach this state again and issue another CmdBankActivate (StateIdle/StateHandleSaved ->
+            // StateRead/StateWrite -> StateReadAbort/StateWriteAbort -> StateIdle/StateHandleSaved)
+            Clocks(T_RC)-3),
+            // T_RRD: ensure "activate bank A to activate bank B time", to ensure that the next
+            // bank can't be activated too soon after this bank activation.
+            // -3 cycles since we know that it takes >=3 state transitions from this state to
+            // reach this state again and issue another CmdBankActivate (see explanation for T_RC, above.)
+            Clocks(T_RRD)-3)),
+        (write ? StateWrite : StateRead));
     endtask
     
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
