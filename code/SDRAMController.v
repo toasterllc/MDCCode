@@ -294,11 +294,14 @@ module SDRAMController(
         //   CmdPrechargeAll too soon after we activate the bank.
         //   - We use Clocks(T_RAS)-2, since we know that it takes >=2 state transitions
         //     from this state to issue CmdPrechargeAll
+        //     (StateIdle/StateHandleSaved -> StateRead/StateWrite -> StateReadAbort/StateWriteAbort)
         //
         // - T_RC ensures "activate bank A to activate bank A time", to ensure that the next
         //   bank can't be activated too soon after this bank activation
         //   - We use Clocks(T_RC)-3, since we know that it takes >=3 state transitions
-        //     from this state to reach this state again and issue another CmdBankActivate (TODO: verify this in simulation)
+        //     from this state to reach this state again and issue another CmdBankActivate
+        //     (StateIdle/StateHandleSaved -> StateRead/StateWrite ->
+        //         StateReadAbort/StateWriteAbort -> StateIdle/StateHandleSaved)
         //
         // - T_RRD ensures "activate bank A to activate bank B time", to ensure that the next
         //   bank can't be activated too soon after this bank activation
