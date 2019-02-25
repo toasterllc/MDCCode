@@ -276,8 +276,6 @@ module SDRAMController(
         writeDataValid <= 0;
         readDataValidShiftReg[C_CAS:0] <= {1'b0, readDataValidShiftReg[C_CAS:1]};
         
-        // TODO: verify `Clocks(T_REFI)-1` is the right quantity for refresh.
-        //       does this cause the refresh command to be issued at exactly the right clock cycle?
         // Update counters
         delayCounter <= (delayCounter!=0 ? delayCounter-1 : 0);
         refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
