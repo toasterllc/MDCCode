@@ -1,4 +1,4 @@
-// `define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "uart.v"
 `include "SDRAMController.v"
@@ -34,8 +34,7 @@ module IcestickTest_SDRAMReadWriteRandomly(
     input logic         RS232_Rx_TTL,
     output logic        RS232_Tx_TTL
 );
-    localparam ClockFrequency = 1500000;
-    // localparam ClockFrequency = 12000000;
+    localparam ClockFrequency = 12000000;
     
     `define RESET_BIT 26
 
@@ -48,7 +47,7 @@ module IcestickTest_SDRAMReadWriteRandomly(
     always @(posedge clk12mhz) clkDivider <= clkDivider+1;
     
     logic clk;
-    assign clk = clkDivider[2];
+    assign clk = clk12mhz;
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up

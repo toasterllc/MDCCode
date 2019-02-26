@@ -39,9 +39,9 @@ module SDRAMController(
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT))-DelayCounterWidth;
     localparam StateWidth = 3;
     
-    // Timing parameters (nanoseconds)
+    // Alliance AS4C8M16SA Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
-    localparam T_REFI = 7812; // time between refreshes
+    localparam T_REFI = 15625; // time between refreshes
     localparam T_RC = 63; // bank activate to bank activate time (same bank)
     localparam T_RFC = 63; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
                                             // TODO: maybe increasing this value would make Alliance SDRAM work?
@@ -50,6 +50,18 @@ module SDRAMController(
     localparam T_RCD = 21; // bank activate to read/write time (same bank)
     localparam T_RP = 21; // precharge to refresh/row activate (same bank)
     localparam T_WR = 14; // write recover time
+    
+    // // Micron 48LC16M16A2 Timing parameters (nanoseconds)
+    // localparam T_INIT = ; // power up initialization time
+    // localparam T_REFI = ; // time between refreshes
+    // localparam T_RC = ; // bank activate to bank activate time (same bank)
+    // localparam T_RFC = ; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
+    //                                         // TODO: maybe increasing this value would make Alliance SDRAM work?
+    // localparam T_RRD = ; // row activate to row activate time (different banks)
+    // localparam T_RAS = ; // row activate to precharge time (same bank)
+    // localparam T_RCD = ; // bank activate to read/write time (same bank)
+    // localparam T_RP = ; // precharge to refresh/row activate (same bank)
+    // localparam T_WR = ; // write recover time
     
     // Timing parameters (clock cycles)
     localparam C_CAS = 2; // Column address strobe (CAS) delay
