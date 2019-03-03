@@ -1,0 +1,60 @@
+[*]
+[*] GTKWave Analyzer v3.3.98 (w)1999-2019 BSI
+[*] Tue Feb 26 19:48:56 2019
+[*]
+[dumpfile] "/Users/dave/repos/MotionDetectorCamera/code/IcestickTest_SDRAMReadWriteRandomly.vcd"
+[dumpfile_mtime] "Mon Feb 25 03:44:13 2019"
+[dumpfile_size] 9452388
+[savefile] "/Users/dave/repos/MotionDetectorCamera/code/IcestickTest_SDRAMReadWriteRandomly2.gtkw"
+[timestart] 9639800000
+[size] 1440 782
+[pos] -1 -1
+*-26.346611 10000000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] IcestickTest_SDRAMReadWriteRandomlySim.
+[treeopen] IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.
+[treeopen] IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.
+[sst_width] 256
+[signals_width] 292
+[sst_expanded] 1
+[sst_vpaned_height] 365
+@29
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.clk
+@28
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdTrigger
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdReady
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.cmdWrite
+@22
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdAddr[22:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.savedCmdAddr[22:0]
+@28
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.rst
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdAddrBank[1:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.savedCmdAddrBank[1:0]
+@22
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdAddrRow[11:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.savedCmdAddrRow[11:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdReadData[15:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdWriteData[15:0]
+@28
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.writeDataValid
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.cmdReadDataValid
+@22
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.refreshCounter[8:0]
+@28
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.delayCounter[1:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.didRefresh
+IcestickTest_SDRAMReadWriteRandomlySim.ledRed
+IcestickTest_SDRAMReadWriteRandomlySim.ledGreen
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.status
+@22
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.state[2:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.randomAddr[7:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.randomBits[7:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.sdram_a[11:0]
+@28
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.sdram_cmd[2:0]
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.sdram_dqm
+@22
+IcestickTest_SDRAMReadWriteRandomlySim.icestickSDRAMTest.sdramController.substate[3:0]
+[pattern_trace] 1
+[pattern_trace] 0
