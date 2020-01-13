@@ -26,6 +26,3 @@ set_io sdram_ras_   80      # 18        J2.3
 set_io sdram_cas_   81      # 17        J2.4
 set_io sdram_we_    87      # 16        J2.7
 set_io sdram_dqm    88      # 15+39     J2.8
-
-set_io RS232_Rx_TTL 9
-set_io RS232_Tx_TTL 8
