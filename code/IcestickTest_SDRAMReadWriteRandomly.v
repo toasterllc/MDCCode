@@ -15,6 +15,20 @@ module RandomNumberGenerator(
     else q <= {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]};
 endmodule
 
+module Scrambler(
+    input logic[7:0] d,
+    output logic[7:0] q
+);
+	assign q[0] = d[5];
+	assign q[1] = d[2];
+	assign q[2] = d[1];
+	assign q[3] = d[3];
+	assign q[4] = d[4];
+	assign q[5] = d[0];
+	assign q[6] = d[7];
+	assign q[7] = d[6];
+endmodule
+
 module IcestickTest_SDRAMReadWriteRandomly(
     input logic         clk12mhz,
 
@@ -29,10 +43,7 @@ module IcestickTest_SDRAMReadWriteRandomly(
     output logic        sdram_cas_,
     output logic        sdram_we_,
     output logic        sdram_dqm,
-    inout logic[7:0]    sdram_dq,
-
-    input logic         RS232_Rx_TTL,
-    output logic        RS232_Tx_TTL
+    inout logic[7:0]    sdram_dq
 );
     localparam ClockFrequency = 12000000;
     
@@ -127,12 +138,16 @@ module IcestickTest_SDRAMReadWriteRandomly(
     
     logic[7:0] randomBits;
     RandomNumberGenerator #(.SEED(22)) rng(.clk(clk), .rst(rst), .q(randomBits));
-    
-    logic[7:0] randomAddr;
-    RandomNumberGenerator #(.SEED(99)) rng2(.clk(clk), .rst(rst), .q(randomAddr));
-    
     logic shouldWrite;
     assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
+	
+    logic[7:0] readCounter;
+    logic[7:0] scrambledReadAddr;
+	Scrambler readAddrScrambler(.d(readCounter), .q(scrambledReadAddr));
+	
+	logic[7:0] writeCounter;
+    logic[7:0] scrambledWriteAddr;
+	Scrambler writeAddrScrambler(.d(writeCounter), .q(scrambledWriteAddr));
     
     always @(posedge clk) begin
         if (rst) begin
@@ -141,6 +156,8 @@ module IcestickTest_SDRAMReadWriteRandomly(
             status <= StatusOK;
             enqueuedReadAddr <= 0;
             enqueuedReadCount <= 0;
+			readCounter <= 0;
+			writeCounter <= 0;
         
         // Initialize memory to known values
         end else if (needInit) begin
@@ -160,8 +177,8 @@ module IcestickTest_SDRAMReadWriteRandomly(
                 end
             end
         
-        end else begin
-        // end else if (status == StatusOK) begin
+        //end else begin
+        end else if (status == StatusOK) begin
             // Prevent duplicate commands
             if (cmdTrigger && cmdReady) begin
                 cmdTrigger <= 0;
@@ -172,11 +189,15 @@ module IcestickTest_SDRAMReadWriteRandomly(
                 if (enqueuedReadCount > 0) begin
                     enqueuedReadCount <= enqueuedReadCount-1;
                     
-                    // Verify that the data read out is what we expect
-                    if (cmdReadData == `dataFromAddress(enqueuedReadAddr[7:0]))
-                        status <= StatusOK;
-                    else
-                        status <= StatusFailed;
+//					if (enqueuedReadAddr[7:0] == 8'd126) begin
+//						status <= StatusFailed;
+//					end else begin
+	                    // Verify that the data read out is what we expect
+	                    if (cmdReadData == `dataFromAddress(enqueuedReadAddr[7:0]))
+	                        status <= StatusOK;
+	                    else
+	                        status <= StatusFailed;
+//					end
                     
                     enqueuedReadAddr <= enqueuedReadAddr>>8;
                 
@@ -187,14 +208,22 @@ module IcestickTest_SDRAMReadWriteRandomly(
             end else if (!cmdTrigger || (cmdTrigger && cmdReady)) begin
                 // Prepare a command
                 cmdWrite <= shouldWrite;
-                cmdAddr <= randomAddr;
+				
+				if (shouldWrite) begin
+					cmdAddr <= scrambledWriteAddr;
+					writeCounter <= writeCounter+1;
+				end else begin
+					cmdAddr <= scrambledReadAddr;
+					readCounter <= readCounter+1;
+				end
+                
                 cmdTrigger <= 1;
                 
                 // If we're writing, load the data into cmdWriteData
-                if (shouldWrite) cmdWriteData <= `dataFromAddress(randomAddr);
+                if (shouldWrite) cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
                 // If we're reading, remember the address that we're expecting data from
                 else begin
-                    enqueuedReadAddr <= enqueuedReadAddr|(randomAddr<<(8*enqueuedReadCount));
+                    enqueuedReadAddr <= enqueuedReadAddr|(scrambledReadAddr<<(8*enqueuedReadCount));
                     enqueuedReadCount <= enqueuedReadCount+1;
                 end
             end
