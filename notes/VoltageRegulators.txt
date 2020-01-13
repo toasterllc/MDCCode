@@ -1,7 +1,9 @@
-https://www.mouser.com/ProductDetail/Diodes-Incorporated/AP7361C-Y5-13?qs=sGAEpiMZZMsGz1a6aV8DcK3Ple2JfpeNInWk57bRC0s%3D
-	Shutdown current: 1uA
-	Current: 1A
-	Price: 0.64
+Adjustable regulator
+	- This should work for all the rails that we need. This way we only need to change the resistors instead of supporting multiple types of regulators:
+		https://www.mouser.com/ProductDetail/Diodes-Incorporated/AP7361C-Y5-13?qs=sGAEpiMZZMsGz1a6aV8DcK3Ple2JfpeNInWk57bRC0s%3D
+			Shutdown current: 1uA
+			Current: 1A
+			Price: 0.64
 	
 
 
