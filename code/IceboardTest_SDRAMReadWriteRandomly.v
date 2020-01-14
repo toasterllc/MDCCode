@@ -339,7 +339,7 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
 //        #10000000;
-        #3000000000;
+        #2300000000;
         $finish;
     end
 
