@@ -1,19 +1,26 @@
 #!/bin/bash
 set -e
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -ne 2 ]; then
 	echo "Usage:"
-    echo "  BuildAndFlash.sh <ProjName>"
+    echo "  BuildAndFlash.sh <DeviceType> <ProjName>"
+	echo "    DeviceType: 1k (iCEstick) or 8k (iCE40HX board)"
+	
+	echo
+	echo "Examples:"
+	echo "  BuildAndFlash.sh 1k IcestickTest_SDRAMReadWriteRandomly"
+	echo "  BuildAndFlash.sh 8k IceboardTest_Blinky"
 	exit 1
 fi
 
-proj="$1"
+dev="$1"
+proj="$2"
 
 # Synthesize the design from Verilog (.sv -> .blif)
-yosys -p "synth_ice40 -top $proj -blif $proj.blif" "$proj.sv"
+yosys -p "synth_ice40 -top "$proj" -blif $proj.blif" "$proj.sv"
 
 # Place and route the design ({.pcf, .blif} -> .asc)
-arachne-pnr -d 1k -o "$proj.asc" -p "$proj.pcf" "$proj.blif"
+arachne-pnr -d "$dev" -o "$proj.asc" -p "$proj.pcf" "$proj.blif"
 
 # Generate the bitstream file (.asc -> .bin)
 icepack "$proj.asc" "$proj.bin"
