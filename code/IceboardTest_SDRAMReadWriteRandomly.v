@@ -18,53 +18,53 @@ module Scrambler(
     input logic[22:0] d,
     output logic[22:0] q
 );
-//    assign q[00] = d[00];
-//    assign q[01] = d[01];
-//    assign q[02] = d[02];
-//    assign q[03] = d[03];
-//    assign q[04] = d[04];
-//    assign q[05] = d[05];
-//    assign q[06] = d[06];
-//    assign q[07] = d[07];
-//    assign q[08] = d[08];
-//    assign q[09] = d[09];
-//    assign q[10] = d[10];
-//    assign q[11] = d[11];
-//    assign q[12] = d[12];
-//    assign q[13] = d[13];
-//    assign q[14] = d[14];
-//    assign q[15] = d[15];
-//    assign q[16] = d[16];
-//    assign q[17] = d[17];
-//    assign q[18] = d[18];
-//    assign q[19] = d[19];
-//    assign q[20] = d[20];
-//    assign q[21] = d[21];
-//    assign q[22] = d[22];
+    assign q[00] = d[00];
+    assign q[01] = d[01];
+    assign q[02] = d[02];
+    assign q[03] = d[03];
+    assign q[04] = d[04];
+    assign q[05] = d[05];
+    assign q[06] = d[06];
+    assign q[07] = d[07];
+    assign q[08] = d[08];
+    assign q[09] = d[09];
+    assign q[10] = d[10];
+    assign q[11] = d[11];
+    assign q[12] = d[12];
+    assign q[13] = d[13];
+    assign q[14] = d[14];
+    assign q[15] = d[15];
+    assign q[16] = d[16];
+    assign q[17] = d[17];
+    assign q[18] = d[18];
+    assign q[19] = d[19];
+    assign q[20] = d[20];
+    assign q[21] = d[21];
+    assign q[22] = d[22];
     
-    assign q[00] = d[15];
-    assign q[01] = d[21];
-    assign q[02] = d[20];
-    assign q[03] = d[10];
-    assign q[04] = d[02];
-    assign q[05] = d[22];
-    assign q[06] = d[13];
-    assign q[07] = d[06];
-    assign q[08] = d[16];
-    assign q[09] = d[11];
-    assign q[10] = d[17];
-    assign q[11] = d[12];
-    assign q[12] = d[07];
-    assign q[13] = d[08];
-    assign q[14] = d[01];
-    assign q[15] = d[09];
-    assign q[16] = d[18];
-    assign q[17] = d[05];
-    assign q[18] = d[03];
-    assign q[19] = d[00];
-    assign q[20] = d[04];
-    assign q[21] = d[14];
-    assign q[22] = d[19];
+//    assign q[00] = d[15];
+//    assign q[01] = d[21];
+//    assign q[02] = d[20];
+//    assign q[03] = d[10];
+//    assign q[04] = d[02];
+//    assign q[05] = d[22];
+//    assign q[06] = d[13];
+//    assign q[07] = d[06];
+//    assign q[08] = d[16];
+//    assign q[09] = d[11];
+//    assign q[10] = d[17];
+//    assign q[11] = d[12];
+//    assign q[12] = d[07];
+//    assign q[13] = d[08];
+//    assign q[14] = d[01];
+//    assign q[15] = d[09];
+//    assign q[16] = d[18];
+//    assign q[17] = d[05];
+//    assign q[18] = d[03];
+//    assign q[19] = d[00];
+//    assign q[20] = d[04];
+//    assign q[21] = d[14];
+//    assign q[22] = d[19];
 endmodule
 
 module IceboardTest_SDRAMReadWriteRandomly(
@@ -128,8 +128,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
-//    `define dataFromAddress(addr) (addr[15:0])
-    `define dataFromAddress(addr) ({9'h1B5, addr[22:16]} ^ ~(addr[15:0]))
+    `define dataFromAddress(addr) (addr[15:0])
+//    `define dataFromAddress(addr) ({9'h1B5, addr[22:16]} ^ ~(addr[15:0]))
 //    `define dataFromAddress(addr) 23'd0
     
     logic                   cmdReady;
@@ -213,20 +213,31 @@ module IceboardTest_SDRAMReadWriteRandomly(
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
 //                if (writeCounter < 'h100) begin
-                if (writeCounter < 'h800000) begin
-                    cmdAddr <= scrambledWriteAddr;
-                    cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
+                
+                cmdAddr <= scrambledWriteAddr;
+                cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
+                
+//                    if (scrambledWriteAddr == 0) begin
+//                        cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
+//                    end else begin
+//                        cmdWriteData <= 16'h1234;
+//                    end
+                
+                
+//                if (writeCounter < 'h7FFFFF) begin
+                if (writeCounter < 'hFF) begin
                     writeCounter <= writeCounter+1;
+                
                 end else begin
                     // Next stage
                     
-//                    readCounter <= 'hFE;
-//                    writeCounter <= 0;
                     
-                    readCounter <= 'h04C505; // Start at a random address
-                    writeCounter <= 'h68A052; // Start at a random address
+                    readCounter <= 'hFE; // Start at a random address
+                    writeCounter <= 0; // Start at a random address
+                    
+//                    readCounter <= 'h04C505; // Start at a random address
+//                    writeCounter <= 'h68A052; // Start at a random address
                     needInit <= 0;
-                    cmdTrigger <= 0;
                 end
             end
         
@@ -269,8 +280,18 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 
                 cmdTrigger <= 1;
                 
+                
                 // If we're writing, load the data into cmdWriteData
-                if (shouldWrite) cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
+                if (shouldWrite) begin
+                    if (scrambledWriteAddr != 0) begin
+                        cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
+                    end else begin
+                        cmdWriteData <= 16'h1234;
+                    end
+                end
+                
+//                // If we're writing, load the data into cmdWriteData
+//                if (shouldWrite) cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
                 // If we're reading, remember the address that we're expecting data from
                 else begin
                     enqueuedReadAddr <= enqueuedReadAddr|(scrambledReadAddr<<(AddrWidth*enqueuedReadCount));
@@ -338,8 +359,8 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
         $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-//        #10000000;
-        #2300000000;
+        #10000000;
+//        #2300000000;
         $finish;
     end
 
