@@ -18,6 +18,30 @@ module Scrambler(
     input logic[22:0] d,
     output logic[22:0] q
 );
+//    assign q[00] = d[00];
+//    assign q[01] = d[01];
+//    assign q[02] = d[02];
+//    assign q[03] = d[03];
+//    assign q[04] = d[04];
+//    assign q[05] = d[05];
+//    assign q[06] = d[06];
+//    assign q[07] = d[07];
+//    assign q[08] = d[08];
+//    assign q[09] = d[09];
+//    assign q[10] = d[10];
+//    assign q[11] = d[11];
+//    assign q[12] = d[12];
+//    assign q[13] = d[13];
+//    assign q[14] = d[14];
+//    assign q[15] = d[15];
+//    assign q[16] = d[16];
+//    assign q[17] = d[17];
+//    assign q[18] = d[18];
+//    assign q[19] = d[19];
+//    assign q[20] = d[20];
+//    assign q[21] = d[21];
+//    assign q[22] = d[22];
+    
     assign q[00] = d[15];
     assign q[01] = d[21];
     assign q[02] = d[20];
@@ -104,7 +128,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
     
+//    `define dataFromAddress(addr) (addr[15:0])
     `define dataFromAddress(addr) ({9'h1B5, addr[22:16]} ^ ~(addr[15:0]))
+//    `define dataFromAddress(addr) 23'd0
     
     logic                   cmdReady;
     logic                   cmdTrigger;
@@ -117,7 +143,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic needInit;
     logic status;
     logic[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddr;
-    logic[MaxEnqueuedReads-1:0] enqueuedReadCount;
+    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount;
     
     assign ledRed = (status!=StatusOK);
     
@@ -151,7 +177,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic[7:0] randomBits;
     RandomNumberGenerator #(.SEED(22)) rng(.clk(clk), .rst(rst), .q(randomBits));
     logic shouldWrite;
-    assign shouldWrite = randomBits[0] || enqueuedReadCount>=3;
+    assign shouldWrite = randomBits[0] || enqueuedReadCount>=MaxEnqueuedReads;
     
     logic[AddrWidth-1:0] readCounter;
     logic[AddrWidth-1:0] scrambledReadAddr;
@@ -160,6 +186,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic[AddrWidth-1:0] writeCounter;
     logic[AddrWidth-1:0] scrambledWriteAddr;
     Scrambler writeAddrScrambler(.d(writeCounter), .q(scrambledWriteAddr));
+    
+    logic[AddrWidth-1:0] currentReadAddress;
+    assign currentReadAddress = enqueuedReadAddr[AddrWidth-1:0];
     
     always @(posedge clk) begin
         if (rst) begin
@@ -175,16 +204,27 @@ module IceboardTest_SDRAMReadWriteRandomly(
         end else if (needInit) begin
             if (!cmdTrigger) begin
                 cmdAddr <= scrambledWriteAddr;
-                cmdWrite <= 1;
                 cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
+                writeCounter <= writeCounter+1;
+                
+                cmdWrite <= 1;
                 cmdTrigger <= 1;
+            
+            // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
+//                if (writeCounter < 'h100) begin
                 if (writeCounter < 'h800000) begin
                     cmdAddr <= scrambledWriteAddr;
                     cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
                     writeCounter <= writeCounter+1;
                 end else begin
                     // Next stage
+                    
+//                    readCounter <= 'hFE;
+//                    writeCounter <= 0;
+                    
+                    readCounter <= 'h04C505; // Start at a random address
+                    writeCounter <= 'h68A052; // Start at a random address
                     needInit <= 0;
                     cmdTrigger <= 0;
                 end
@@ -202,15 +242,12 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 if (enqueuedReadCount > 0) begin
                     enqueuedReadCount <= enqueuedReadCount-1;
                     
-//                  if (enqueuedReadAddr[7:0] == 8'd126) begin
-//                      status <= StatusFailed;
-//                  end else begin
-                        // Verify that the data read out is what we expect
-                        if (cmdReadData == `dataFromAddress(enqueuedReadAddr[AddrWidth-1:0]))
-                            status <= StatusOK;
-                        else
-                            status <= StatusFailed;
-//                  end
+                    // Verify that the data read out is what we expect
+                    if (cmdReadData == `dataFromAddress(currentReadAddress)) begin
+                        status <= StatusOK;
+                    end else begin
+                        status <= StatusFailed;
+                    end
                     
                     enqueuedReadAddr <= enqueuedReadAddr >> AddrWidth;
                 
@@ -224,7 +261,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 
                 if (shouldWrite) begin
                     cmdAddr <= scrambledWriteAddr;
-                    writeCounter <= writeCounter+1;
+                    writeCounter <= writeCounter-1;
                 end else begin
                     cmdAddr <= scrambledReadAddr;
                     readCounter <= readCounter+1;
@@ -301,7 +338,8 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
         $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-        #1000000000;
+//        #10000000;
+        #3000000000;
         $finish;
     end
 
