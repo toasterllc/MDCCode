@@ -2,16 +2,6 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
-module Random8(
-    input logic clk, rst,
-    output logic[7:0] q
-);
-    always @(posedge clk)
-        if (rst) q <= 1;
-        // Feedback polynomial for N=8: x^8 + x^6 + x^5 + x^4 + 1
-        else q <= {q[6:0], q[8-1] ^ q[6-1] ^ q[5-1] ^ q[4-1]};
-endmodule
-
 module Random9(
     input logic clk, rst,
     output logic[8:0] q
@@ -20,6 +10,16 @@ module Random9(
         if (rst) q <= 1;
         // Feedback polynomial for N=9: x^9 + x^5 + 1
         else q <= {q[7:0], q[9-1] ^ q[5-1]};
+endmodule
+
+module Random16(
+    input logic clk, rst,
+    output logic[15:0] q
+);
+    always @(posedge clk)
+        if (rst) q <= 1;
+        // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
+        else q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
 endmodule
 
 module Random23(
@@ -80,12 +80,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
         if (rst) begin
             rstCounter <= rstCounter+1;
         end
-        
-        // // Generate a reset every time clkDivider[`RESET_BIT] goes 0->1
-        // lastBit <= clkDivider[`RESET_BIT];
-        // if (clkDivider[`RESET_BIT] && !lastBit) begin
-        //     rstCounter <= 0;
-        // end
     end
     assign ledGreen = rst;
     
@@ -104,17 +98,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
     localparam ModeIdle     = 2'h0;
     localparam ModeRead     = 2'h1;
     localparam ModeWrite    = 2'h2;
-    
-//    localparam ModeNop          = 3'h0;
-//    localparam ModeRead         = 3'h1;
-//    localparam ModeReadSeq      = 3'h2;
-//    localparam ModeReadAll      = 3'h3;
-//    localparam ModeWrite        = 3'h4;
-//    localparam ModeWriteSeq     = 3'h5;
-    
-    `define dataFromAddress(addr) (addr[15:0])
-//    `define dataFromAddress(addr) ({9'h1B5, addr[22:16]} ^ ~(addr[15:0]))
-//    `define dataFromAddress(addr) 23'd0
     
     logic                   cmdReady;
     logic                   cmdTrigger;
@@ -164,11 +147,11 @@ module IceboardTest_SDRAMReadWriteRandomly(
         .sdram_dq(sdram_dq)
     );
     
-    logic[7:0] random8;
-    Random8 random8Gen(.clk(clk), .rst(rst), .q(random8));
-    
     logic[8:0] random9;
     Random9 random9Gen(.clk(clk), .rst(rst), .q(random9));
+    
+    logic[15:0] random16;
+    Random16 random16Gen(.clk(clk), .rst(rst), .q(random16));
     
     logic[22:0] random23;
     Random23 random23Gen(.clk(clk), .rst(rst), .q(random23));
@@ -197,7 +180,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
-//                if (writeCounter < 'h7FFFFF) begin
+//                if (cmdAddr < 'h7FFFFF) begin
                 if (cmdAddr < 'hFF) begin
                     cmdTrigger <= 1;
                     cmdAddr <= cmdAddr+1;
@@ -232,14 +215,12 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 case (mode)
                 // We're idle: accept a new mode
                 ModeIdle: begin
-                    case (random8[2:0])
                     // Nop
-                    0: begin
-                    
+                    if (random16 < 1*'h3333) begin
                     end
                     
                     // Read
-                    1,2: begin
+                    else if (random16 < 2*'h3333) begin
                         cmdTrigger <= 1;
                         cmdAddr <= random23;
                         cmdWrite <= 0;
@@ -251,7 +232,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end
                     
                     // Read sequential (start)
-                    3,4: begin
+                    else if (random16 < 3*'h3333) begin
                         cmdTrigger <= 1;
                         cmdAddr <= random23;
                         cmdWrite <= 0;
@@ -264,7 +245,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end
                     
                     // Read all (start)
-                    5: begin
+                    // We want this to be rare so only check for 1 value
+                    else if (random16 == 3*'h3333) begin
                         cmdTrigger <= 1;
                         cmdAddr <= 0;
                         cmdWrite <= 0;
@@ -277,7 +259,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end
                     
                     // Write
-                    6: begin
+                    else if (random16 < 4*'h3333) begin
                         cmdTrigger <= 1;
                         cmdAddr <= random23;
                         cmdWrite <= 1;
@@ -287,7 +269,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end
                     
                     // Write sequential (start)
-                    7: begin
+                    else begin
                         cmdTrigger <= 1;
                         cmdAddr <= random23;
                         cmdWrite <= 1;
@@ -295,7 +277,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         mode <= ModeWrite;
                         modeCounter <= random9;
                     end
-                    endcase
                 end
                 
                 // Read (continue)
