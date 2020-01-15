@@ -2,64 +2,34 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
-module Random8
-#(
-    parameter N = 8
-)(
+module Random8(
     input logic clk, rst,
-    output logic[N:0] out
+    output logic[7:0] q
 );
-    logic[N:0] next;
-    logic feedback;
-    
-    always @(posedge clk) begin
-        if (rst) out <= 1;
-        else out <= next;
-    end
-    
-    // Feedback polynomial for N=8: x^8 + x^6 + x^5 + x^4 + 1
-    assign feedback = out[8] ^ out[6] ^ out[5] ^ out[4] ^ out[0];
-    assign next = {feedback, out[N:1]};
+    always @(posedge clk)
+        if (rst) q <= 1;
+        // Feedback polynomial for N=8: x^8 + x^6 + x^5 + x^4 + 1
+        else q <= {q[6:0], q[8-1] ^ q[6-1] ^ q[5-1] ^ q[4-1]};
 endmodule
 
-module Random9
-#(
-    parameter N = 9
-)(
+module Random9(
     input logic clk, rst,
-    output logic[N:0] out
+    output logic[8:0] q
 );
-    logic[N:0] next;
-    logic feedback;
-    
-    always @(posedge clk) begin
-        if (rst) out <= 1;
-        else out <= next;
-    end
-    
-    // Feedback polynomial for N=9: x^9 + x^5 + 1
-    assign feedback = out[9] ^ out[5] ^ out[0];
-    assign next = {feedback, out[N:1]};
+    always @(posedge clk)
+        if (rst) q <= 1;
+        // Feedback polynomial for N=9: x^9 + x^5 + 1
+        else q <= {q[7:0], q[9-1] ^ q[5-1]};
 endmodule
 
-module Random23
-#(
-    parameter N = 23
-)(
+module Random23(
     input logic clk, rst,
-    output logic[N:0] out
+    output logic[22:0] q
 );
-    logic[N:0] next;
-    logic feedback;
-    
-    always @(posedge clk) begin
-        if (rst) out <= 1;
-        else out <= next;
-    end
-    
-    // Feedback polynomial for N=23: x^23 + x^18 + 1
-    assign feedback = out[23] ^ out[18] ^ out[0];
-    assign next = {feedback, out[N:1]};
+    always @(posedge clk)
+        if (rst) q <= 1;
+        // Feedback polynomial for N=23: x^23 + x^18 + 1
+        else q <= {q[21:0], q[23-1] ^ q[18-1]};
 endmodule
 
 function reg[15:0] DataFromAddress;
@@ -195,13 +165,13 @@ module IceboardTest_SDRAMReadWriteRandomly(
     );
     
     logic[7:0] random8;
-    Random8 random8Gen(.clk(clk), .rst(rst), .out(random8));
+    Random8 random8Gen(.clk(clk), .rst(rst), .q(random8));
     
     logic[8:0] random9;
-    Random9 random9Gen(.clk(clk), .rst(rst), .out(random9));
+    Random9 random9Gen(.clk(clk), .rst(rst), .q(random9));
     
     logic[22:0] random23;
-    Random23 random23Gen(.clk(clk), .rst(rst), .out(random23));
+    Random23 random23Gen(.clk(clk), .rst(rst), .q(random23));
     
     always @(posedge clk) begin
         // Set default state
@@ -215,7 +185,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
             status <= StatusOK;
             enqueuedReadCount <= 0;
             mode <= ModeIdle;
-            counter <= 0;
+            modeCounter <= 0;
         
         // Initialize memory to known values
         end else if (needInit) begin
@@ -271,10 +241,10 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     // Read
                     1,2: begin
                         cmdTrigger <= 1;
-                        cmdAddr <= randomAddr;
+                        cmdAddr <= random23;
                         cmdWrite <= 0;
                         
-                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        expectedReadData <= expectedReadData|(DataFromAddress(random23)<<(DataWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeIdle;
@@ -283,10 +253,10 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     // Read sequential (start)
                     3,4: begin
                         cmdTrigger <= 1;
-                        cmdAddr <= randomAddr;
+                        cmdAddr <= random23;
                         cmdWrite <= 0;
                         
-                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        expectedReadData <= expectedReadData|(DataFromAddress(random23)<<(DataWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeRead;
@@ -302,16 +272,16 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         expectedReadData <= expectedReadData|(DataFromAddress(0)<<(DataWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
-                        mode <= ModeReadAll;
+                        mode <= ModeRead;
                         modeCounter <= AddrCount-1;
                     end
                     
                     // Write
                     6: begin
                         cmdTrigger <= 1;
-                        cmdAddr <= randomAddr;
+                        cmdAddr <= random23;
                         cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(randomAddr);
+                        cmdWriteData <= DataFromAddress(random23);
                         
                         mode <= ModeIdle;
                     end
@@ -319,7 +289,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     // Write sequential (start)
                     7: begin
                         cmdTrigger <= 1;
-                        cmdAddr <= randomAddr;
+                        cmdAddr <= random23;
                         cmdWrite <= 1;
                         
                         mode <= ModeWrite;
@@ -343,7 +313,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end else mode <= ModeIdle;
                 end
                 
-                // Write sequential (continue)
+                // Write (continue)
                 ModeWrite: begin
                     if (modeCounter > 0) begin
                         cmdTrigger <= 1;
