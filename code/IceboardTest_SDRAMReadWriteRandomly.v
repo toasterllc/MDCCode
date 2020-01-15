@@ -2,9 +2,6 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
-`define stringify(x) `"x```"
-`define assert(cond) if (!cond) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)
-
 module Random9(
     input logic clk, rst,
     output logic[8:0] q
@@ -35,8 +32,8 @@ module Random23(
         else q <= {q[21:0], q[23-1] ^ q[18-1]};
 endmodule
 
-function reg[15:0] DataFromAddress;
-    input reg[22:0] addr;
+function [15:0] DataFromAddress;
+    input [22:0] addr;
     DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
 //    DataFromAddress = addr[15:0];
 endfunction
@@ -93,7 +90,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
-    localparam AddrCountLimit = AddrCount/256; // 32k words
+    localparam AddrCountLimit = AddrCount;
+//    localparam AddrCountLimit = AddrCount/256; // 32k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
@@ -113,8 +111,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic needInit;
     logic status;
-    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount;
-    logic[(DataWidth*MaxEnqueuedReads)-1:0] expectedReadData;
+    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount, nextEnqueuedReadCount;
+    logic[(DataWidth*MaxEnqueuedReads)-1:0] expectedReadData, nextExpectedReadData;
     
     logic[DataWidth-1:0] currentExpectedReadData;
     assign currentExpectedReadData = expectedReadData[DataWidth-1:0];
@@ -200,9 +198,11 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     cmdWrite <= 1;
                     cmdWriteData <= ~DataFromAddress(cmdAddr+1);
                     
-                    if (!(cmdAddr % 'h1000)) begin
-                        $display("Initializing memory: %h", cmdAddr);
-                    end
+                    `ifndef SYNTH
+                        if (!(cmdAddr % 'h1000)) begin
+                            $display("Initializing memory: %h", cmdAddr);
+                        end
+                    `endif
                 
                 end else begin
                     // Next stage
@@ -211,9 +211,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
             end
         
         end else if (status == StatusOK) begin
-            logic[$clog2(MaxEnqueuedReads)-1:0] nextEnqueuedReadCount;
-            logic[(DataWidth*MaxEnqueuedReads)-1:0] nextExpectedReadData;
-            
             nextEnqueuedReadCount = enqueuedReadCount;
             nextExpectedReadData = expectedReadData;
             
@@ -222,8 +219,10 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 if (nextEnqueuedReadCount > 0) begin
                     nextEnqueuedReadCount--;
                     
-                    if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData)
-                        $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
+                    `ifndef SYNTH
+                        if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData)
+                            $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
+                    `endif
                     
                     // Verify that the data read out is what we expect
                     if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData)
@@ -242,12 +241,16 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 ModeIdle: begin
                     // Nop
                     if (random16 < 1*'h3333) begin
-                        $display("Nop");
+                        `ifndef SYNTH
+                            $display("Nop");
+                        `endif
                     end
                     
                     // Read
                     else if (random16 < 2*'h3333) begin
-                        $display("Read: %h", randomAddr);
+                        `ifndef SYNTH
+                            $display("Read: %h", randomAddr);
+                        `endif
                         
                         cmdTrigger <= 1;
                         cmdAddr <= randomAddr;
@@ -261,7 +264,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     
                     // Read sequential (start)
                     else if (random16 < 3*'h3333) begin
-                        $display("ReadSeq: %h[%h]", randomAddr, random9);
+                        `ifndef SYNTH
+                            $display("ReadSeq: %h[%h]", randomAddr, random9);
+                        `endif
                         
                         cmdTrigger <= 1;
                         cmdAddr <= randomAddr;
@@ -277,7 +282,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     // Read all (start)
                     // We want this to be rare so only check for 1 value
                     else if (random16 < 3*'h3333+'h40) begin
-                        $display("ReadAll");
+                        `ifndef SYNTH
+                            $display("ReadAll");
+                        `endif
                         
                         cmdTrigger <= 1;
                         cmdAddr <= 0;
@@ -292,7 +299,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     
                     // Write
                     else if (random16 < 4*'h3333) begin
-                        $display("Write: %h", randomAddr);
+                        `ifndef SYNTH
+                            $display("Write: %h", randomAddr);
+                        `endif
                         
                         cmdTrigger <= 1;
                         cmdAddr <= randomAddr;
@@ -304,7 +313,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     
                     // Write sequential (start)
                     else begin
-                        $display("WriteSeq: %h[%h]", randomAddr, random9);
+                        `ifndef SYNTH
+                            $display("WriteSeq: %h[%h]", randomAddr, random9);
+                        `endif
                         
                         cmdTrigger <= 1;
                         cmdAddr <= randomAddr;
