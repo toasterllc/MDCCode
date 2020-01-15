@@ -131,8 +131,8 @@ module IcestickTest_SDRAMReadWriteRandomly(
         .sdram_ras_(sdram_ras_),
         .sdram_cas_(sdram_cas_),
         .sdram_we_(sdram_we_),
-        .sdram_ldqm(sdram_dqm),
         .sdram_udqm(),
+        .sdram_ldqm(sdram_dqm),
         .sdram_dq({ignored_sdram_dq, sdram_dq})
     );
     

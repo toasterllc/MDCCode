@@ -52,8 +52,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     output logic        sdram_ras_,
     output logic        sdram_cas_,
     output logic        sdram_we_,
-    output logic        sdram_ldqm,
     output logic        sdram_udqm,
+    output logic        sdram_ldqm,
     inout logic[15:0]   sdram_dq
 );
     localparam ClockFrequency = 12000000;
@@ -144,8 +144,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
         .sdram_ras_(sdram_ras_),
         .sdram_cas_(sdram_cas_),
         .sdram_we_(sdram_we_),
-        .sdram_ldqm(sdram_ldqm),
         .sdram_udqm(sdram_udqm),
+        .sdram_ldqm(sdram_ldqm),
         .sdram_dq(sdram_dq)
     );
     
@@ -379,8 +379,8 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
     output logic        sdram_ras_,
     output logic        sdram_cas_,
     output logic        sdram_we_,
-    output logic        sdram_ldqm,
     output logic        sdram_udqm,
+    output logic        sdram_ldqm,
     inout logic[15:0]   sdram_dq
 );
 
@@ -398,8 +398,8 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         .sdram_ras_(sdram_ras_),
         .sdram_cas_(sdram_cas_),
         .sdram_we_(sdram_we_),
-        .sdram_ldqm(sdram_ldqm),
         .sdram_udqm(sdram_udqm),
+        .sdram_ldqm(sdram_ldqm),
         .sdram_dq(sdram_dq)
     );
 

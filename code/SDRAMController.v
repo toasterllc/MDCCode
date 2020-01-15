@@ -23,8 +23,8 @@ module SDRAMController(
     output logic sdram_ras_,        // Row address strobe
     output logic sdram_cas_,        // Column address strobe
     output logic sdram_we_,         // Write enable
-    output logic sdram_ldqm,        // Low byte data mask
     output logic sdram_udqm,        // High byte data mask
+    output logic sdram_ldqm,        // Low byte data mask
     inout logic[15:0] sdram_dq      // Data input/output
 );
     
@@ -150,8 +150,8 @@ module SDRAMController(
     assign sdram_we_ = sdram_cmd[0];
     
     logic sdram_dqm;
-    assign sdram_ldqm = sdram_dqm;
     assign sdram_udqm = sdram_dqm;
+    assign sdram_ldqm = sdram_dqm;
     
     logic[15:0] sdram_writeData;
     
