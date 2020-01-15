@@ -2,77 +2,77 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
-module RandomNumberGenerator(
-    input logic clk,
-    input logic rst,
-    output logic[7:0] q
+module Random8
+#(
+    parameter N = 8
+)(
+    input logic clk, rst,
+    output logic[N:0] out
 );
-    parameter SEED = 8'd1;
-    always @(posedge clk)
-    if (rst) q <= SEED; // anything except zero
-     // polynomial for maximal LFSR
-    else q <= {q[6:0], q[7] ^ q[5] ^ q[4] ^ q[3]};
+    logic[N:0] next;
+    logic feedback;
+    
+    always @(posedge clk) begin
+        if (rst) out <= 1;
+        else out <= next;
+    end
+    
+    // Feedback polynomial for N=8: x^8 + x^6 + x^5 + x^4 + 1
+    assign feedback = out[8] ^ out[6] ^ out[5] ^ out[4] ^ out[0];
+    assign next = {feedback, out[N:1]};
 endmodule
 
-module Scrambler(
-    input logic[22:0] d,
-    output logic[22:0] q
+module Random9
+#(
+    parameter N = 9
+)(
+    input logic clk, rst,
+    output logic[N:0] out
 );
-    assign q[00] = d[00];
-    assign q[01] = d[01];
-    assign q[02] = d[02];
-    assign q[03] = d[03];
-    assign q[04] = d[04];
-    assign q[05] = d[05];
-    assign q[06] = d[06];
-    assign q[07] = d[07];
-    assign q[08] = d[08];
-    assign q[09] = d[09];
-    assign q[10] = d[10];
-    assign q[11] = d[11];
-    assign q[12] = d[12];
-    assign q[13] = d[13];
-    assign q[14] = d[14];
-    assign q[15] = d[15];
-    assign q[16] = d[16];
-    assign q[17] = d[17];
-    assign q[18] = d[18];
-    assign q[19] = d[19];
-    assign q[20] = d[20];
-    assign q[21] = d[21];
-    assign q[22] = d[22];
+    logic[N:0] next;
+    logic feedback;
     
-//    assign q[00] = d[15];
-//    assign q[01] = d[21];
-//    assign q[02] = d[20];
-//    assign q[03] = d[10];
-//    assign q[04] = d[02];
-//    assign q[05] = d[22];
-//    assign q[06] = d[13];
-//    assign q[07] = d[06];
-//    assign q[08] = d[16];
-//    assign q[09] = d[11];
-//    assign q[10] = d[17];
-//    assign q[11] = d[12];
-//    assign q[12] = d[07];
-//    assign q[13] = d[08];
-//    assign q[14] = d[01];
-//    assign q[15] = d[09];
-//    assign q[16] = d[18];
-//    assign q[17] = d[05];
-//    assign q[18] = d[03];
-//    assign q[19] = d[00];
-//    assign q[20] = d[04];
-//    assign q[21] = d[14];
-//    assign q[22] = d[19];
+    always @(posedge clk) begin
+        if (rst) out <= 1;
+        else out <= next;
+    end
+    
+    // Feedback polynomial for N=9: x^9 + x^5 + 1
+    assign feedback = out[9] ^ out[5] ^ out[0];
+    assign next = {feedback, out[N:1]};
 endmodule
+
+module Random23
+#(
+    parameter N = 23
+)(
+    input logic clk, rst,
+    output logic[N:0] out
+);
+    logic[N:0] next;
+    logic feedback;
+    
+    always @(posedge clk) begin
+        if (rst) out <= 1;
+        else out <= next;
+    end
+    
+    // Feedback polynomial for N=23: x^23 + x^18 + 1
+    assign feedback = out[23] ^ out[18] ^ out[0];
+    assign next = {feedback, out[N:1]};
+endmodule
+
+function reg[15:0] DataFromAddress;
+    input reg[22:0] addr;
+    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+endfunction
 
 module IceboardTest_SDRAMReadWriteRandomly(
     input logic         clk12mhz,
-
+    
     output logic        ledRed,
     output logic        ledGreen,
-
+    
     output logic        sdram_clk,
     output logic        sdram_cke,
     output logic[1:0]   sdram_ba,
@@ -124,9 +124,23 @@ module IceboardTest_SDRAMReadWriteRandomly(
     `endif
     
     localparam AddrWidth = 23;
-    localparam MaxEnqueuedReads = 3;
+    localparam AddrCount = 'h800000;
+    localparam DataWidth = 16;
+    localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
     localparam StatusFailed = 0;
+    localparam DefaultVal = 16'hCAFE;
+    
+    localparam ModeIdle     = 2'h0;
+    localparam ModeRead     = 2'h1;
+    localparam ModeWrite    = 2'h2;
+    
+//    localparam ModeNop          = 3'h0;
+//    localparam ModeRead         = 3'h1;
+//    localparam ModeReadSeq      = 3'h2;
+//    localparam ModeReadAll      = 3'h3;
+//    localparam ModeWrite        = 3'h4;
+//    localparam ModeWriteSeq     = 3'h5;
     
     `define dataFromAddress(addr) (addr[15:0])
 //    `define dataFromAddress(addr) ({9'h1B5, addr[22:16]} ^ ~(addr[15:0]))
@@ -136,14 +150,20 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic                   cmdTrigger;
     logic[AddrWidth-1:0]    cmdAddr;
     logic                   cmdWrite;
-    logic[15:0]             cmdWriteData;
-    logic[15:0]             cmdReadData;
+    logic[DataWidth-1:0]    cmdWriteData;
+    logic[DataWidth-1:0]    cmdReadData;
     logic                   cmdReadDataValid;
     
     logic needInit;
     logic status;
-    logic[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddr;
     logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount;
+    logic[(DataWidth*MaxEnqueuedReads)-1:0] expectedReadData;
+    
+    logic[DataWidth-1:0] currentExpectedReadData;
+    assign currentExpectedReadData = expectedReadData[DataWidth-1:0];
+    
+    logic[1:0] mode;
+    logic[AddrWidth-1:0] modeCounter;
     
     assign ledRed = (status!=StatusOK);
     
@@ -174,129 +194,167 @@ module IceboardTest_SDRAMReadWriteRandomly(
         .sdram_dq(sdram_dq)
     );
     
-    logic[7:0] randomBits;
-    RandomNumberGenerator #(.SEED(22)) rng(.clk(clk), .rst(rst), .q(randomBits));
-    logic shouldWrite;
-    assign shouldWrite = randomBits[0] || enqueuedReadCount>=MaxEnqueuedReads;
+    logic[7:0] random8;
+    Random8 random8Gen(.clk(clk), .rst(rst), .out(random8));
     
-    logic[AddrWidth-1:0] readCounter;
-    logic[AddrWidth-1:0] scrambledReadAddr;
-    Scrambler readAddrScrambler(.d(readCounter), .q(scrambledReadAddr));
+    logic[8:0] random9;
+    Random9 random9Gen(.clk(clk), .rst(rst), .out(random9));
     
-    logic[AddrWidth-1:0] writeCounter;
-    logic[AddrWidth-1:0] scrambledWriteAddr;
-    Scrambler writeAddrScrambler(.d(writeCounter), .q(scrambledWriteAddr));
-    
-    logic[AddrWidth-1:0] currentReadAddress;
-    assign currentReadAddress = enqueuedReadAddr[AddrWidth-1:0];
+    logic[22:0] random23;
+    Random23 random23Gen(.clk(clk), .rst(rst), .out(random23));
     
     always @(posedge clk) begin
+        // Set default state
+        cmdTrigger <= 0;
+        cmdAddr <= 0;
+        cmdWrite <= 0;
+        cmdWriteData <= 0;
+        
         if (rst) begin
-            cmdTrigger <= 0;
             needInit <= 1;
             status <= StatusOK;
-            enqueuedReadAddr <= 0;
             enqueuedReadCount <= 0;
-            readCounter <= 0;
-            writeCounter <= 0;
+            mode <= ModeIdle;
+            counter <= 0;
         
         // Initialize memory to known values
         end else if (needInit) begin
-            if (!cmdTrigger) begin
-                cmdAddr <= scrambledWriteAddr;
-                cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
-                writeCounter <= writeCounter+1;
-                
-                cmdWrite <= 1;
+            if (!cmdWrite) begin
                 cmdTrigger <= 1;
+                cmdAddr <= 0;
+                cmdWrite <= 1;
+                cmdWriteData <= DefaultVal;
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
-//                if (writeCounter < 'h100) begin
-                
-                cmdAddr <= scrambledWriteAddr;
-                cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
-                
-//                    if (scrambledWriteAddr == 0) begin
-//                        cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
-//                    end else begin
-//                        cmdWriteData <= 16'h1234;
-//                    end
-                
-                
 //                if (writeCounter < 'h7FFFFF) begin
-                if (writeCounter < 'hFF) begin
-                    writeCounter <= writeCounter+1;
+                if (cmdAddr < 'hFF) begin
+                    cmdTrigger <= 1;
+                    cmdAddr <= cmdAddr+1;
+                    cmdWrite <= 1;
+                    cmdWriteData <= DefaultVal;
                 
                 end else begin
                     // Next stage
-                    
-                    
-                    readCounter <= 'hFE; // Start at a random address
-                    writeCounter <= 0; // Start at a random address
-                    
-//                    readCounter <= 'h04C505; // Start at a random address
-//                    writeCounter <= 'h68A052; // Start at a random address
                     needInit <= 0;
                 end
             end
         
-        //end else begin
         end else if (status == StatusOK) begin
-            // Prevent duplicate commands
-            if (cmdTrigger && cmdReady) begin
-                cmdTrigger <= 0;
-            end
-            
             // Handle read data if available
             if (cmdReadDataValid) begin
                 if (enqueuedReadCount > 0) begin
                     enqueuedReadCount <= enqueuedReadCount-1;
                     
                     // Verify that the data read out is what we expect
-                    if (cmdReadData == `dataFromAddress(currentReadAddress)) begin
-                        status <= StatusOK;
-                    end else begin
+                    if (cmdReadData!==DefaultVal && cmdReadData!==currentExpectedReadData) begin
                         status <= StatusFailed;
                     end
                     
-                    enqueuedReadAddr <= enqueuedReadAddr >> AddrWidth;
+                    expectedReadData <= expectedReadData >> DataWidth;
                 
                 // Something's wrong if we weren't expecting data and we got some
                 end else status <= StatusFailed;
+            end
             
-            // Otherwise issue a new command
-            end else if (!cmdTrigger || (cmdTrigger && cmdReady)) begin
-                // Prepare a command
-                cmdWrite <= shouldWrite;
-                
-                if (shouldWrite) begin
-                    cmdAddr <= scrambledWriteAddr;
-                    writeCounter <= writeCounter-1;
-                end else begin
-                    cmdAddr <= scrambledReadAddr;
-                    readCounter <= readCounter+1;
-                end
-                
-                cmdTrigger <= 1;
-                
-                
-                // If we're writing, load the data into cmdWriteData
-                if (shouldWrite) begin
-                    if (scrambledWriteAddr != 0) begin
-                        cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
-                    end else begin
-                        cmdWriteData <= 16'h1234;
+            // Current command was accepted: prepare a new command
+            if (cmdReady) begin
+                case (mode)
+                // We're idle: accept a new mode
+                ModeIdle: begin
+                    case (random8[2:0])
+                    // Nop
+                    0: begin
+                    
                     end
+                    
+                    // Read
+                    1,2: begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= randomAddr;
+                        cmdWrite <= 0;
+                        
+                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
+                        
+                        mode <= ModeIdle;
+                    end
+                    
+                    // Read sequential (start)
+                    3,4: begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= randomAddr;
+                        cmdWrite <= 0;
+                        
+                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
+                        
+                        mode <= ModeRead;
+                        modeCounter <= random9;
+                    end
+                    
+                    // Read all (start)
+                    5: begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= 0;
+                        cmdWrite <= 0;
+                        
+                        expectedReadData <= expectedReadData|(DataFromAddress(0)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
+                        
+                        mode <= ModeReadAll;
+                        modeCounter <= AddrCount-1;
+                    end
+                    
+                    // Write
+                    6: begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= randomAddr;
+                        cmdWrite <= 1;
+                        cmdWriteData <= DataFromAddress(randomAddr);
+                        
+                        mode <= ModeIdle;
+                    end
+                    
+                    // Write sequential (start)
+                    7: begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= randomAddr;
+                        cmdWrite <= 1;
+                        
+                        mode <= ModeWrite;
+                        modeCounter <= random9;
+                    end
+                    endcase
                 end
                 
-//                // If we're writing, load the data into cmdWriteData
-//                if (shouldWrite) cmdWriteData <= `dataFromAddress(scrambledWriteAddr);
-                // If we're reading, remember the address that we're expecting data from
-                else begin
-                    enqueuedReadAddr <= enqueuedReadAddr|(scrambledReadAddr<<(AddrWidth*enqueuedReadCount));
-                    enqueuedReadCount <= enqueuedReadCount+1;
+                // Read (continue)
+                ModeRead: begin
+                    if (modeCounter > 0) begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= cmdAddr+1;
+                        cmdWrite <= 0;
+                    
+                        expectedReadData <= expectedReadData|(DataFromAddress(cmdAddr+1)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
+                        
+                        modeCounter <= modeCounter-1;
+                    
+                    end else mode <= ModeIdle;
                 end
+                
+                // Write sequential (continue)
+                ModeWrite: begin
+                    if (modeCounter > 0) begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= cmdAddr+1;
+                        cmdWrite <= 1;
+                        
+                        modeCounter <= modeCounter-1;
+                    
+                    end else mode <= ModeIdle;
+                end
+                endcase
             end
         end
     end
