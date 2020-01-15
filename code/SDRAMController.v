@@ -222,31 +222,29 @@ module SDRAMController(
             writeDataValid <= 1;
         end
         
-        if (cmdTrigger) begin
-            // Continue writing if we're writing to the same bank and row
-            if (cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
-                // Continue writing
-                if (cmdWrite) begin
-                    // The column isn't the next sequential column: issue a new write command
-                    if (cmdAddrCol != savedCmdAddrCol+1) StartState(0, StateWrite);
-                    // The column is the next sequential column: enter sequential-write substate
-                    else if (substate == 0) NextSubstate(0);
-                
-                // Transition to reading
-                // Wait Clocks(T_WR) before transitioning to StateRead to avoid the read state
-                // allowing us to precharge too soon after a write (which would violate T_WR).
-                // -1 clock cycle since we know StateRead will eat one cycle before allowing
-                // a precharge via StateReadAbort.
-                end else StartState(Max(0, Clocks(T_WR)-1), StateRead);
+        // Continue writing if we're writing to the same bank and row
+        if (cmdTrigger && cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
+            // Continue writing
+            if (cmdWrite) begin
+                // The column isn't the next sequential column: issue a new write command
+                if (cmdAddrCol != savedCmdAddrCol+1) StartState(0, StateWrite);
+                // The column is the next sequential column: enter sequential-write substate
+                else if (substate == 0) NextSubstate(0);
             
-            // Abort the write if we're not writing to the same bank and row.
-            // Wait the 'write recover' time before doing so.
-            // Datasheet (paraphrased):
-            // "The PrechargeAll command that interrupts a write burst should be
-            // issued ceil(tWR/tCK) cycles after the clock edge in which the
-            // last data-in element is registered."
-            end else StartState(Max(0, Clocks(T_WR)), StateWriteAbort);
-        end
+            // Transition to reading
+            // Wait Clocks(T_WR) before transitioning to StateRead to avoid the read state
+            // allowing us to precharge too soon after a write (which would violate T_WR).
+            // -1 clock cycle since we know StateRead will eat one cycle before allowing
+            // a precharge via StateReadAbort.
+            end else StartState(Max(0, Clocks(T_WR)-1), StateRead);
+        
+        // Abort the write if we're not writing to the same bank and row.
+        // Wait the 'write recover' time before doing so.
+        // Datasheet (paraphrased):
+        // "The PrechargeAll command that interrupts a write burst should be
+        // issued ceil(tWR/tCK) cycles after the clock edge in which the
+        // last data-in element is registered."
+        end else StartState(Max(0, Clocks(T_WR)), StateWriteAbort);
     endtask
     
     task HandleRead(input logic substate);
@@ -265,27 +263,25 @@ module SDRAMController(
             readDataValidShiftReg[C_CAS] <= 1;
         end
         
-        if (cmdTrigger) begin
-            // Continue reading if we're reading from the same bank and row
-            if (cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
-                // Continue reading
-                if (!cmdWrite) begin
-                    // The column isn't the next sequential column: issue a new read command
-                    if (cmdAddrCol != savedCmdAddrCol+1) StartState(0, StateRead);
-                    // The column is the next sequential column: enter sequential-read substate
-                    else if (substate == 0) NextSubstate(0);
-                
-                // Transition to writing
-                // Wait `C_DQZ+1` cycles before doing so to ensure DQs are high-Z. +1 cycle because
-                // "at least a single-cycle delay should occur between the last read data and
-                // the WRITE command".
-                // 2/24: verified that we have 1 cycle between SDRAM driving DQs (due to read)
-                //       and us driving DQs (due to write)
-                end else StartState(C_DQZ+1, StateWrite);
+        // Continue reading if we're reading from the same bank and row
+        if (cmdTrigger && cmdAddrBank==savedCmdAddrBank && cmdAddrRow==savedCmdAddrRow) begin
+            // Continue reading
+            if (!cmdWrite) begin
+                // The column isn't the next sequential column: issue a new read command
+                if (cmdAddrCol != savedCmdAddrCol+1) StartState(0, StateRead);
+                // The column is the next sequential column: enter sequential-read substate
+                else if (substate == 0) NextSubstate(0);
             
-            // Abort the read if we're not reading from the same bank and row
-            end else StartState(0, StateReadAbort);
-        end
+            // Transition to writing
+            // Wait `C_DQZ+1` cycles before doing so to ensure DQs are high-Z. +1 cycle because
+            // "at least a single-cycle delay should occur between the last read data and
+            // the WRITE command".
+            // 2/24: verified that we have 1 cycle between SDRAM driving DQs (due to read)
+            //       and us driving DQs (due to write)
+            end else StartState(C_DQZ+1, StateWrite);
+        
+        // Abort the read if we're not reading from the same bank and row
+        end else StartState(0, StateReadAbort);
     endtask
     
     task SetDefaultState;
