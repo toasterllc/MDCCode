@@ -1,4 +1,4 @@
-`define SYNTH
+//`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
@@ -88,8 +88,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
-    localparam AddrCountLimit = AddrCount;
-//    localparam AddrCountLimit = AddrCount/256; // 32k words
+//    localparam AddrCountLimit = AddrCount;
+    localparam AddrCountLimit = AddrCount/256; // 32k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
@@ -364,6 +364,7 @@ endmodule
 `ifndef SYNTH
 
 `include "4062mt48lc8m16a2/mt48lc8m16a2.v"
+`include "4012mt48lc16m16a2/mt48lc16m16a2.v"
 
 module IceboardTest_SDRAMReadWriteRandomlySim(
     output logic        ledRed,
@@ -399,10 +400,23 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         .sdram_dq(sdram_dq)
     );
 
-    mt48lc8m16a2 sdram(
+//    mt48lc8m16a2 sdram(
+//        .Clk(sdram_clk),
+//        .Dq(sdram_dq),
+//        .Addr(sdram_a),
+//        .Ba(sdram_ba),
+//        .Cke(sdram_cke),
+//        .Cs_n(sdram_cs_),
+//        .Ras_n(sdram_ras_),
+//        .Cas_n(sdram_cas_),
+//        .We_n(sdram_we_),
+//        .Dqm({sdram_udqm, sdram_ldqm})
+//    );
+
+    mt48lc16m16a2 sdram(
         .Clk(sdram_clk),
         .Dq(sdram_dq),
-        .Addr(sdram_a),
+        .Addr({1'b0, sdram_a}),
         .Ba(sdram_ba),
         .Cke(sdram_cke),
         .Cs_n(sdram_cs_),
