@@ -2,6 +2,9 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
+`define stringify(x) `"x```"
+`define assert(cond) if (!cond) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)
+
 module Random9(
     input logic clk, rst,
     output logic[8:0] q
@@ -34,7 +37,8 @@ endmodule
 
 function reg[15:0] DataFromAddress;
     input reg[22:0] addr;
-    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+    DataFromAddress = addr[15:0];
 endfunction
 
 module IceboardTest_SDRAMReadWriteRandomly(
@@ -89,6 +93,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
+    localparam AddrCountLimit = AddrCount/256; // 32k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
@@ -156,17 +161,25 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic[22:0] random23;
     Random23 random23Gen(.clk(clk), .rst(rst), .q(random23));
     
+    logic[22:0] randomAddr;
+    assign randomAddr = random23%AddrCountLimit;
+    
     always @(posedge clk) begin
-        // Set default state
-        cmdTrigger <= 0;
-        cmdAddr <= 0;
-        cmdWrite <= 0;
-        cmdWriteData <= 0;
+        // Set our default state if the current command was accepted
+        if (cmdReady) cmdTrigger <= 0;
         
         if (rst) begin
             needInit <= 1;
             status <= StatusOK;
+            
+            cmdTrigger <= 0;
+            cmdAddr <= 0;
+            cmdWrite <= 0;
+            cmdWriteData <= 0;
+            
             enqueuedReadCount <= 0;
+            expectedReadData <= 0;
+            
             mode <= ModeIdle;
             modeCounter <= 0;
         
@@ -180,12 +193,17 @@ module IceboardTest_SDRAMReadWriteRandomly(
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
+                if (cmdAddr < AddrCountLimit-1) begin
 //                if (cmdAddr < 'h7FFFFF) begin
-                if (cmdAddr < 'hFF) begin
+//                if (cmdAddr < 'hFF) begin
                     cmdTrigger <= 1;
                     cmdAddr <= cmdAddr+1;
                     cmdWrite <= 1;
                     cmdWriteData <= DefaultVal;
+                    
+                    if (!(cmdAddr % 'h1000)) begin
+                        $display("Initializing memory: %h", cmdAddr);
+                    end
                 
                 end else begin
                     // Next stage
@@ -199,10 +217,12 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 if (enqueuedReadCount > 0) begin
                     enqueuedReadCount <= enqueuedReadCount-1;
                     
+                    if (cmdReadData!==currentExpectedReadData && cmdReadData!==DefaultVal)
+                        $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, DefaultVal, cmdReadData);
+                    
                     // Verify that the data read out is what we expect
-                    if (cmdReadData!==DefaultVal && cmdReadData!==currentExpectedReadData) begin
+                    if (cmdReadData!==currentExpectedReadData && cmdReadData!==DefaultVal)
                         status <= StatusFailed;
-                    end
                     
                     expectedReadData <= expectedReadData >> DataWidth;
                 
@@ -211,21 +231,24 @@ module IceboardTest_SDRAMReadWriteRandomly(
             end
             
             // Current command was accepted: prepare a new command
-            if (cmdReady) begin
+            else if (cmdReady) begin
                 case (mode)
                 // We're idle: accept a new mode
                 ModeIdle: begin
                     // Nop
                     if (random16 < 1*'h3333) begin
+                        $display("Nop");
                     end
                     
                     // Read
                     else if (random16 < 2*'h3333) begin
+                        $display("Read: %h", randomAddr);
+                        
                         cmdTrigger <= 1;
-                        cmdAddr <= random23;
+                        cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        expectedReadData <= expectedReadData|(DataFromAddress(random23)<<(DataWidth*enqueuedReadCount));
+                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeIdle;
@@ -233,11 +256,13 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     
                     // Read sequential (start)
                     else if (random16 < 3*'h3333) begin
+                        $display("ReadSeq: %h[%h]", randomAddr, random9);
+                        
                         cmdTrigger <= 1;
-                        cmdAddr <= random23;
+                        cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        expectedReadData <= expectedReadData|(DataFromAddress(random23)<<(DataWidth*enqueuedReadCount));
+                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeRead;
@@ -247,6 +272,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     // Read all (start)
                     // We want this to be rare so only check for 1 value
                     else if (random16 == 3*'h3333) begin
+                        $display("ReadAll");
+                        
                         cmdTrigger <= 1;
                         cmdAddr <= 0;
                         cmdWrite <= 0;
@@ -260,19 +287,24 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     
                     // Write
                     else if (random16 < 4*'h3333) begin
+                        $display("Write: %h", randomAddr);
+                        
                         cmdTrigger <= 1;
-                        cmdAddr <= random23;
+                        cmdAddr <= randomAddr;
                         cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(random23);
+                        cmdWriteData <= DataFromAddress(randomAddr);
                         
                         mode <= ModeIdle;
                     end
                     
                     // Write sequential (start)
                     else begin
+                        $display("WriteSeq: %h[%h]", randomAddr, random9);
+                        
                         cmdTrigger <= 1;
-                        cmdAddr <= random23;
+                        cmdAddr <= randomAddr;
                         cmdWrite <= 1;
+                        cmdWriteData <= DataFromAddress(randomAddr);
                         
                         mode <= ModeWrite;
                         modeCounter <= random9;
@@ -285,7 +317,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdTrigger <= 1;
                         cmdAddr <= cmdAddr+1;
                         cmdWrite <= 0;
-                    
+                        
                         expectedReadData <= expectedReadData|(DataFromAddress(cmdAddr+1)<<(DataWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
@@ -300,6 +332,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdTrigger <= 1;
                         cmdAddr <= cmdAddr+1;
                         cmdWrite <= 1;
+                        cmdWriteData <= DataFromAddress(cmdAddr+1);
                         
                         modeCounter <= modeCounter-1;
                     
