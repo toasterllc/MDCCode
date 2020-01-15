@@ -1,4 +1,4 @@
-//`define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
@@ -42,7 +42,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
     input logic         clk12mhz,
     
     output logic        ledRed,
-    output logic        ledGreen,
     
     output logic        sdram_clk,
     output logic        sdram_cke,
@@ -82,7 +81,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
             rstCounter <= rstCounter+1;
         end
     end
-    assign ledGreen = rst;
     
     `ifndef SYNTH
     initial rstCounter = 0;
@@ -369,7 +367,6 @@ endmodule
 
 module IceboardTest_SDRAMReadWriteRandomlySim(
     output logic        ledRed,
-    output logic        ledGreen,
 
     output logic        sdram_clk,
     output logic        sdram_cke,
@@ -389,7 +386,6 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
     IceboardTest_SDRAMReadWriteRandomly iceboardSDRAMTest(
         .clk12mhz(clk12mhz),
         .ledRed(ledRed),
-        .ledGreen(ledGreen),
         .sdram_clk(sdram_clk),
         .sdram_cke(sdram_cke),
         .sdram_ba(sdram_ba),

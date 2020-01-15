@@ -1,6 +1,5 @@
 set_io clk12mhz     J3      # 
 set_io ledRed       B5      # 
-set_io ledGreen             # 
 
 set_io sdram_clk    B15     # 
 set_io sdram_cke    B13     # 
