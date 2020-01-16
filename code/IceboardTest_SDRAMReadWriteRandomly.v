@@ -34,8 +34,8 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
-    DataFromAddress = addr[15:0];
+    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+//    DataFromAddress = addr[15:0];
 //    DataFromAddress = 0;
 endfunction
 
@@ -101,8 +101,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
 //    localparam AddrCountLimit = AddrCount;
-    localparam AddrCountLimit = AddrCount/1024; // 32k words
-//    localparam AddrCountLimit = AddrCount/8192; // 1k words
+//    localparam AddrCountLimit = AddrCount/1024; // 32k words
+    localparam AddrCountLimit = AddrCount/8192; // 1k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
