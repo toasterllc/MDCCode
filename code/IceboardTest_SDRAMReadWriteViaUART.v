@@ -129,17 +129,17 @@ module IceboardTest_SDRAMReadWriteViaUART(
         .recv_error()                       // Indicates error in receiving packet.
     );
     
-    logic[2:0]  uartStage;
+    logic[2:0]      uartStage;
     
-    logic[47:0] uartDataIn;
-    logic[2:0]  uartDataInCount;
-    logic       uartDataInEcho;
+    logic[63:0]     uartDataIn;
+    logic[15:0]     uartDataInCount;
+    logic           uartDataInEcho;
     
-    logic[31:0] uartDataOut;
-    logic[2:0]  uartDataOutCount;
+    logic[128:0]    uartDataOut;
+    logic[15:0]     uartDataOutCount;
     
-    logic[15:0] uartReadData;
-    logic       uartReadDataValid;
+    logic[15:0]     uartReadData;
+    logic           uartReadDataValid;
     
     function [7:0] HexASCIIFromNibble;
         input [3:0] n;
@@ -178,10 +178,8 @@ module IceboardTest_SDRAMReadWriteViaUART(
             // Wait until active transmissions complete
             if (!uartTransmit && !uartTransmitting) begin
                 if (uartDataOutCount > 0) begin
-        			uartTxByte <= uartDataOut[7:0];
+        			uartTxByte <= uartDataOut[(8*uartDataOutCount)-1 -: 8];
                     uartTransmit <= 1;
-                    
-                    uartDataOut <= uartDataOut>>8;
         			uartDataOutCount <= uartDataOutCount-1;
                 
                 end else if (uartDataInCount > 0) begin
@@ -271,10 +269,10 @@ module IceboardTest_SDRAMReadWriteViaUART(
                     5: begin
                         if (!cmdWrite) begin
                             uartDataOut <= {
-                                HexASCIIFromNibble(uartReadData[3:0]),
-                                HexASCIIFromNibble(uartReadData[7:4]),
+                                HexASCIIFromNibble(uartReadData[15:12]),
                                 HexASCIIFromNibble(uartReadData[11:8]),
-                                HexASCIIFromNibble(uartReadData[15:12])
+                                HexASCIIFromNibble(uartReadData[7:4]),
+                                HexASCIIFromNibble(uartReadData[3:0])
                             };
                             uartDataOutCount <= 4; // Output 4 bytes
                         end
