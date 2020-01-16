@@ -56,14 +56,14 @@ module IceboardTest_SDRAMReadWriteRandomly(
     inout logic[15:0]   sdram_dq
 );
     `define RESET_BIT 26
-
+    
     logic[`RESET_BIT:0] clkDivider;
-
+    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
+    
     `ifndef SYNTH
     initial clkDivider = 0;
     `endif
     
-    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
     logic clk;
     
     localparam ClockFrequency = 12000000;       // 12 MHz
