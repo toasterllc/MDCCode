@@ -1,4 +1,4 @@
-//`define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
@@ -55,8 +55,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
     output logic        sdram_ldqm,
     inout logic[15:0]   sdram_dq
 );
-    localparam ClockFrequency = 12000000;
-    
     `define RESET_BIT 26
 
     logic[`RESET_BIT:0] clkDivider;
@@ -67,8 +65,17 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     always @(posedge clk12mhz) clkDivider <= clkDivider+1;
     
+//    localparam ClockFrequency = 12000000;
+//    localparam ClockFrequency =  6000000;
+//    localparam ClockFrequency =  3000000;
+//    localparam ClockFrequency =  1500000;
+    localparam ClockFrequency =   750000;
     logic clk;
-    assign clk = clk12mhz;
+//    assign clk = clk12mhz;        // 12 MHz
+//    assign clk = clkDivider[0];   // 6 MHz
+//    assign clk = clkDivider[1];   // 3 MHz
+//    assign clk = clkDivider[2];   // 1.5 MHz
+    assign clk = clkDivider[3];     // .75 MHz
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
@@ -426,14 +433,15 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         .Dqm({sdram_udqm, sdram_ldqm})
     );
 
-//    initial begin
-//        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
-//        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
-//
+    initial begin
+        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
+        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
+
 //        #10000000;
+        #200000000;
 //        #2300000000;
-//        $finish;
-//    end
+        $finish;
+    end
 
     initial begin
         clk12mhz = 0;
