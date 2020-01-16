@@ -130,12 +130,17 @@ module IceboardTest_SDRAMReadWriteViaUART(
         .recv_error(recv_error)           // Indicates error in receiving packet.
     );
     
-    logic[3:0]  uartCmdStage;
-    logic       uartCmdWrite;
-    logic[7:0]  uartCmdAddr;
-    logic[7:0]  uartCmdWriteData;
-    logic[7:0]  uartCmdReadData;
-    logic       uartCmdReadDataValid;
+    logic[2:0]  stage;
+    
+    logic[47:0] dataIn;
+    logic[2:0]  dataInCount;
+    logic       dataInEcho;
+    
+    logic[31:0] dataOut;
+    logic[2:0]  dataOutCount;
+    
+    logic[15:0] readData;
+    logic       readDataValid;
     
     function [7:0] HexASCIIFromNibble;
         input [3:0] n;
@@ -150,151 +155,139 @@ module IceboardTest_SDRAMReadWriteViaUART(
     always @(posedge clk) begin
         if (rst) begin
             cmdTrigger <= 0;
-            uartCmdStage <= 0;
+            stage <= 0;
             uartTransmit <= 0;
+            dataInCount <= 0;
+            dataInEcho <= 1;
+            dataOutCount <= 0;
+            readDataValid <= 0;
         
         end else begin
             // By default we're not transmitting
             uartTransmit <= 0;
             
             // Disable cmdTrigger once the RAM controller accepts the command
-            if (cmdTrigger && cmdReady) begin
+            if (cmdReady) begin
                 cmdTrigger <= 0;
             end
             
             if (cmdReadDataValid) begin
-                // uartCmdReadData <= cmdAddr;
-                uartCmdReadData <= cmdReadData[7:0];
-                uartCmdReadDataValid <= 1;
+                readData <= cmdReadData;
+                readDataValid <= 1;
             end
             
             // Wait until active transmissions complete
-            if (!is_transmitting && !uartTransmit) begin
-                case (uartCmdStage)
-                
-                // ## Get command
-                0: begin
-                    if (uartReceived) begin
-                        // Get command (read or write)
-                        uartCmdWrite <= (uartRxByte=="w");
-                        // Echo the command
-                        uartTxByte <= (uartRxByte=="w" ? "w" : "r");
-                        uartTransmit <= 1;
-                        // Next stage
-                        uartCmdStage <= uartCmdStage+1;
-                    end
-                end
-                
-                // ## Get address
-                1: begin
-                    if (uartReceived) begin
-                        // Get address high nibble
-                        uartCmdAddr <= NibbleFromHexASCII(uartRxByte)<<4;
-                        // Echo typed character
-                        uartTxByte <= uartRxByte;
-                        uartTransmit <= 1;
-                        // Next stage
-                        uartCmdStage <= uartCmdStage+1;
-                    end
-                end
-                2: begin
-                    if (uartReceived) begin
-                        // Get address low nibble
-                        uartCmdAddr <= uartCmdAddr|NibbleFromHexASCII(uartRxByte);
-                        // Echo typed character
-                        uartTxByte <= uartRxByte;
-                        uartTransmit <= 1;
-                        // Next stage
-                        if (uartCmdWrite) uartCmdStage <= uartCmdStage+1;
-                        // If we're reading, skip reading the byte to write
-                        else uartCmdStage <= uartCmdStage+3;
-                    end
-                end
-                
-                // ## Get byte to write
-                3: begin
-                    if (uartReceived) begin
-                        // Get address high nibble
-                        uartCmdWriteData <= NibbleFromHexASCII(uartRxByte)<<4;
-                        // Echo typed character
-                        uartTxByte <= uartRxByte;
-                        uartTransmit <= 1;
-                        // Next stage
-                        uartCmdStage <= uartCmdStage+1;
-                    end
-                end
-                4: begin
-                    if (uartReceived) begin
-                        // Get address low nibble
-                        uartCmdWriteData <= uartCmdWriteData|NibbleFromHexASCII(uartRxByte);
-                        // Echo typed character
-                        uartTxByte <= uartRxByte;
-                        uartTransmit <= 1;
-                        // Next stage
-                        uartCmdStage <= uartCmdStage+1;
-                    end
-                end
-                
-                // ## Issue command to RAM
-                5: begin
-                    // Issue the command to the SDRAM
-                    cmdAddr <= {15'h0, uartCmdAddr};
-                    cmdWrite <= uartCmdWrite;
-                    cmdWriteData <= {8'h0, uartCmdWriteData};
-                    cmdTrigger <= 1;
-                    // Reset our flag so we know when we receive the data
-                    uartCmdReadDataValid <= 0;
-                    // Next stage
-                    uartCmdStage <= uartCmdStage+1;
-                end
-                
-                // ## Wait for command to complete...
-                6: begin
-                    // Writing data case: wait until the RAM controller accepts the command
-                    if (uartCmdWrite) begin
-                        // Skip sending the byte we read in the write case
-                        if (cmdReady) uartCmdStage <= uartCmdStage+3;
+            if (!uartTransmit && !is_transmitting) begin
+                if (dataOutCount > 0) begin
+        			uartTxByte <= dataOut[7:0];
+                    uartTransmit <= 1;
                     
-                    // Reading data case: wait until the data is available
-                    end else begin
-                        if (uartCmdReadDataValid) begin
-                            // // TODO: remove
-                            // if (cmdAddr == 8'h42) begin
-                            //     uartCmdReadData <= 8'h42;
-                            // end
-                            uartCmdStage <= uartCmdStage+1;
+                    dataOut <= dataOut>>8;
+        			dataOutCount <= dataOutCount-1;
+                
+                end else if (dataInCount > 0) begin
+                    if (uartReceived) begin
+                        dataIn <= (dataIn<<8)|uartRxByte;
+                        dataInCount <= dataInCount-1;
+                        
+                        // Echo typed character
+                        if (dataInEcho) begin
+                            uartTxByte <= uartRxByte;
+                            uartTransmit <= 1;
                         end
                     end
-                end
                 
-                // ## Send the byte that we read
-                7: begin
-                    // Transmit the high nibble as ASCII-hex
-        			uartTxByte <= HexASCIIFromNibble(uartCmdReadData[7:4]);
-        			uartTransmit <= 1;
-                    uartCmdStage <= uartCmdStage+1;
+                end else begin
+                    // Go to the next stage by default
+                    stage <= (stage<6 ? stage+1 : 0);
+                    
+                    // Reset our echo state by default
+                    dataInEcho <= 1;
+                    
+                    case (stage)
+                    
+                    // Wait for command
+                    0: begin
+                        dataInCount <= 1; // Load a byte for the command
+                        dataInEcho <= 0;
+                    end
+                    
+                    // Load command, wait for address
+                    1: begin
+                        cmdWrite <= (uartRxByte=="w");
+                        
+                        // Echo a "w" or "r"
+                        dataOut <= (uartRxByte=="w" ? "w" : "r");
+            			dataOutCount <= 1;
+                        
+                        dataInCount <= 6; // Load 6 bytes of address (each byte is a hex nibble)
+                    end
+                    
+                    // Load address, and if we're writing, wait for the value to write
+                    2: begin
+                        
+                        // Echo a "="
+                        dataOut <= "=";
+            			dataOutCount <= 1;
+                        
+                        cmdAddr <= {
+                            NibbleFromHexASCII(dataIn[(8*6)-1 -: 8]),
+                            NibbleFromHexASCII(dataIn[(8*5)-1 -: 8]),
+                            NibbleFromHexASCII(dataIn[(8*4)-1 -: 8]),
+                            NibbleFromHexASCII(dataIn[(8*3)-1 -: 8]),
+                            NibbleFromHexASCII(dataIn[(8*2)-1 -: 8]),
+                            NibbleFromHexASCII(dataIn[(8*1)-1 -: 8])
+                        };
+
+                        // If we're writing, get the data to write
+                        if (cmdWrite) dataInCount <= 4; // Load 4 bytes of data (each byte is a hex nibble)
+                    end
+                    
+                    // Issue command to the RAM controller
+                    3: begin
+                        if (cmdWrite) begin
+                            cmdWriteData <= {
+                                NibbleFromHexASCII(dataIn[(8*4)-1 -: 8]),
+                                NibbleFromHexASCII(dataIn[(8*3)-1 -: 8]),
+                                NibbleFromHexASCII(dataIn[(8*2)-1 -: 8]),
+                                NibbleFromHexASCII(dataIn[(8*1)-1 -: 8])
+                            };
+                        end
+                        
+                        cmdTrigger <= 1;
+                        // Reset our flag so we know when we receive the data
+                        readDataValid <= 0;
+                    end
+                    
+                    // Wait for command to complete
+                    4: begin
+                        // Stall until the RAM controller accepts our command
+                        // (We reset cmdTrigger above, when cmdReady fires)
+                        if (cmdTrigger) stage <= stage;
+                        // If we're reading, stall until we have the data
+                        else if (!cmdWrite && !readDataValid) stage <= stage;
+                    end
+                    
+                    // If we were reading, output the read data
+                    5: begin
+                        if (!cmdWrite) begin
+                            dataOut <= {
+                                HexASCIIFromNibble(readData[3:0]),
+                                HexASCIIFromNibble(readData[7:4]),
+                                HexASCIIFromNibble(readData[11:8]),
+                                HexASCIIFromNibble(readData[15:12])
+                            };
+                            dataOutCount <= 4; // Output 4 bytes
+                        end
+                    end
+                    
+                    // Send a newline
+                    6: begin
+                        dataOut <= "\r\n";
+                        dataOutCount <= 2;
+                    end
+                    endcase
                 end
-                
-                8: begin
-                    // Transmit the low nibble as ASCII-hex
-        			uartTxByte <= HexASCIIFromNibble(uartCmdReadData[3:0]);
-        			uartTransmit <= 1;
-                    uartCmdStage <= uartCmdStage+1;
-                end
-                
-                // ## Finish by sending a newline
-                9: begin
-        			uartTxByte <= 13;
-        			uartTransmit <= 1;
-                    uartCmdStage <= uartCmdStage+1;
-                end
-                
-                10: begin
-        			uartTxByte <= 10;
-        			uartTransmit <= 1;
-                    uartCmdStage <= 0;
-                end
-                endcase
             end
         end
     end
