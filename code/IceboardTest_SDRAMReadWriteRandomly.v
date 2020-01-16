@@ -1,4 +1,4 @@
-`define SYNTH
+//`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
@@ -64,18 +64,22 @@ module IceboardTest_SDRAMReadWriteRandomly(
     `endif
     
     always @(posedge clk12mhz) clkDivider <= clkDivider+1;
-    
-//    localparam ClockFrequency = 12000000;
-//    localparam ClockFrequency =  6000000;
-//    localparam ClockFrequency =  3000000;
-//    localparam ClockFrequency =  1500000;
-    localparam ClockFrequency =   750000;
     logic clk;
-//    assign clk = clk12mhz;        // 12 MHz
-//    assign clk = clkDivider[0];   // 6 MHz
-//    assign clk = clkDivider[1];   // 3 MHz
-//    assign clk = clkDivider[2];   // 1.5 MHz
-    assign clk = clkDivider[3];     // .75 MHz
+    
+    localparam ClockFrequency = 12000000;       // 12 MHz
+    assign clk = clk12mhz;
+    
+//    localparam ClockFrequency =  6000000;     // 6 MHz
+//    assign clk = clkDivider[0];
+//
+//    localparam ClockFrequency =  3000000;     // 3 MHz
+//    assign clk = clkDivider[1];
+//
+//    localparam ClockFrequency =  1500000;     // 1.5 MHz
+//    assign clk = clkDivider[2];
+//
+//    localparam ClockFrequency =   750000;     // .75 MHz
+//    assign clk = clkDivider[3];
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
@@ -96,7 +100,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
 //    localparam AddrCountLimit = AddrCount;
-    localparam AddrCountLimit = AddrCount/256; // 32k words
+//    localparam AddrCountLimit = AddrCount/1024; // 32k words
+    localparam AddrCountLimit = AddrCount/8192; // 1k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
@@ -222,21 +227,26 @@ module IceboardTest_SDRAMReadWriteRandomly(
             // Handle read data if available
             if (cmdReadDataValid) begin
                 if (nextEnqueuedReadCount > 0) begin
-                    nextEnqueuedReadCount--;
-                    
-                    `ifndef SYNTH
-                        if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData)
-                            $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
-                    `endif
-                    
                     // Verify that the data read out is what we expect
-                    if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData)
+                    if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData) begin
+                        `ifndef SYNTH
+                            $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
+                        `endif
+                        
                         status <= StatusFailed;
+                    end
                     
+                    nextEnqueuedReadCount--;
                     nextExpectedReadData = nextExpectedReadData >> DataWidth;
                 
                 // Something's wrong if we weren't expecting data and we got some
-                end else status <= StatusFailed;
+                end else begin
+                    `ifndef SYNTH
+                        $error("Received data when we didn't expect any");
+                    `endif
+                    
+                    status <= StatusFailed;
+                end
             end
             
             // Current command was accepted: prepare a new command
@@ -407,23 +417,10 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         .sdram_dq(sdram_dq)
     );
 
-//    mt48lc8m16a2 sdram(
-//        .Clk(sdram_clk),
-//        .Dq(sdram_dq),
-//        .Addr(sdram_a),
-//        .Ba(sdram_ba),
-//        .Cke(sdram_cke),
-//        .Cs_n(sdram_cs_),
-//        .Ras_n(sdram_ras_),
-//        .Cas_n(sdram_cas_),
-//        .We_n(sdram_we_),
-//        .Dqm({sdram_udqm, sdram_ldqm})
-//    );
-
-    mt48lc16m16a2 sdram(
+    mt48lc8m16a2 sdram(
         .Clk(sdram_clk),
         .Dq(sdram_dq),
-        .Addr({1'b0, sdram_a}),
+        .Addr(sdram_a),
         .Ba(sdram_ba),
         .Cke(sdram_cke),
         .Cs_n(sdram_cs_),
@@ -433,12 +430,25 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         .Dqm({sdram_udqm, sdram_ldqm})
     );
 
+//    mt48lc16m16a2 sdram(
+//        .Clk(sdram_clk),
+//        .Dq(sdram_dq),
+//        .Addr({1'b0, sdram_a}),
+//        .Ba(sdram_ba),
+//        .Cke(sdram_cke),
+//        .Cs_n(sdram_cs_),
+//        .Ras_n(sdram_ras_),
+//        .Cas_n(sdram_cas_),
+//        .We_n(sdram_we_),
+//        .Dqm({sdram_udqm, sdram_ldqm})
+//    );
+
     initial begin
         $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
         $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-//        #10000000;
-        #200000000;
+        #10000000;
+//        #200000000;
 //        #2300000000;
         $finish;
     end
