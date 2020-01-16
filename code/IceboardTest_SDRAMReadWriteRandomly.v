@@ -121,8 +121,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic needInit;
     logic status;
-    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount, nextEnqueuedReadCount;
-    logic[(DataWidth*MaxEnqueuedReads)-1:0] expectedReadData, nextExpectedReadData;
+    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount;
+    logic[(DataWidth*MaxEnqueuedReads)-1:0] expectedReadData;
     
     logic[DataWidth-1:0] currentExpectedReadData;
     assign currentExpectedReadData = expectedReadData[DataWidth-1:0];
@@ -221,12 +221,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
             end
         
         end else if (status == StatusOK) begin
-            nextEnqueuedReadCount = enqueuedReadCount;
-            nextExpectedReadData = expectedReadData;
-            
             // Handle read data if available
             if (cmdReadDataValid) begin
-                if (nextEnqueuedReadCount > 0) begin
+                if (enqueuedReadCount > 0) begin
                     // Verify that the data read out is what we expect
                     if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData) begin
                         `ifndef SYNTH
@@ -236,8 +233,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         status <= StatusFailed;
                     end
                     
-                    nextEnqueuedReadCount--;
-                    nextExpectedReadData = nextExpectedReadData >> DataWidth;
+                    enqueuedReadCount <= enqueuedReadCount-1;
+                    expectedReadData <= expectedReadData >> DataWidth;
                 
                 // Something's wrong if we weren't expecting data and we got some
                 end else begin
@@ -250,7 +247,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
             end
             
             // Current command was accepted: prepare a new command
-            if (cmdReady) begin
+            else if (cmdReady) begin
                 case (mode)
                 // We're idle: accept a new mode
                 ModeIdle: begin
@@ -271,8 +268,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        nextExpectedReadData = nextExpectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*nextEnqueuedReadCount));
-                        nextEnqueuedReadCount++;
+                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeIdle;
                     end
@@ -287,8 +284,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        nextExpectedReadData = nextExpectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*nextEnqueuedReadCount));
-                        nextEnqueuedReadCount++;
+                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeRead;
                         modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
@@ -305,8 +302,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= 0;
                         cmdWrite <= 0;
                         
-                        nextExpectedReadData = nextExpectedReadData|(DataFromAddress(0)<<(DataWidth*nextEnqueuedReadCount));
-                        nextEnqueuedReadCount++;
+                        expectedReadData <= expectedReadData|(DataFromAddress(0)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeRead;
                         modeCounter <= AddrCountLimit-1;
@@ -349,8 +346,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= cmdAddr+1;
                         cmdWrite <= 0;
                         
-                        nextExpectedReadData = nextExpectedReadData|(DataFromAddress(cmdAddr+1)<<(DataWidth*nextEnqueuedReadCount));
-                        nextEnqueuedReadCount++;
+                        expectedReadData <= expectedReadData|(DataFromAddress(cmdAddr+1)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadCount <= enqueuedReadCount+1;
                         
                         modeCounter <= modeCounter-1;
                     
@@ -371,9 +368,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 end
                 endcase
             end
-            
-            enqueuedReadCount <= nextEnqueuedReadCount;
-            expectedReadData <= nextExpectedReadData;
         end
     end
 endmodule
