@@ -1,4 +1,4 @@
-//`define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
@@ -34,14 +34,15 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
-//    DataFromAddress = addr[15:0];
+//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+    DataFromAddress = addr[15:0];
+//    DataFromAddress = 0;
 endfunction
 
 module IceboardTest_SDRAMReadWriteRandomly(
     input logic         clk12mhz,
     
-    output logic        ledRed,
+    output logic[7:0]   leds,
     
     output logic        sdram_clk,
     output logic        sdram_cke,
@@ -66,17 +67,17 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic clk;
     
-    localparam ClockFrequency = 12000000;       // 12 MHz
-    assign clk = clk12mhz;
-    
+//    localparam ClockFrequency = 12000000;       // 12 MHz
+//    assign clk = clk12mhz;
+//    
 //    localparam ClockFrequency =  6000000;     // 6 MHz
 //    assign clk = clkDivider[0];
 //
 //    localparam ClockFrequency =  3000000;     // 3 MHz
 //    assign clk = clkDivider[1];
 //
-//    localparam ClockFrequency =  1500000;     // 1.5 MHz
-//    assign clk = clkDivider[2];
+    localparam ClockFrequency =  1500000;     // 1.5 MHz
+    assign clk = clkDivider[2];
 //
 //    localparam ClockFrequency =   750000;     // .75 MHz
 //    assign clk = clkDivider[3];
@@ -99,9 +100,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
-//    localparam AddrCountLimit = AddrCount;
+    localparam AddrCountLimit = AddrCount;
 //    localparam AddrCountLimit = AddrCount/1024; // 32k words
-    localparam AddrCountLimit = AddrCount/8192; // 1k words
+//    localparam AddrCountLimit = AddrCount/8192; // 1k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
@@ -129,8 +130,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic[1:0] mode;
     logic[AddrWidth-1:0] modeCounter;
-    
-    assign ledRed = (status!=StatusOK);
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
@@ -169,7 +168,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
     Random23 random23Gen(.clk(clk), .rst(rst), .q(random23));
     
     logic[22:0] randomAddr;
-    assign randomAddr = random23%AddrCountLimit;
+    assign randomAddr = random23&(AddrCountLimit-1);
     
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
@@ -178,6 +177,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
         if (rst) begin
             needInit <= 1;
             status <= StatusOK;
+            leds <= 0;
             
             cmdTrigger <= 0;
             cmdAddr <= 0;
@@ -216,6 +216,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 
                 end else begin
                     // Next stage
+                    leds <= 8'b10000000;
                     needInit <= 0;
                 end
             end
@@ -231,6 +232,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         `endif
                         
                         status <= StatusFailed;
+                        leds <= 8'b00000001;
                     end
                     
                     enqueuedReadCount <= enqueuedReadCount-1;
@@ -243,6 +245,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     `endif
                     
                     status <= StatusFailed;
+                    leds <= 8'b00000010;
                 end
             end
             
@@ -309,34 +312,34 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         modeCounter <= AddrCountLimit-1;
                     end
                     
-                    // Write
-                    else if (random16 < 4*'h3333) begin
-                        `ifndef SYNTH
-                            $display("Write: %h", randomAddr);
-                        `endif
-                        
-                        cmdTrigger <= 1;
-                        cmdAddr <= randomAddr;
-                        cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(randomAddr);
-                        
-                        mode <= ModeIdle;
-                    end
-                    
-                    // Write sequential (start)
-                    else begin
-                        `ifndef SYNTH
-                            $display("WriteSeq: %h[%h]", randomAddr, random9);
-                        `endif
-                        
-                        cmdTrigger <= 1;
-                        cmdAddr <= randomAddr;
-                        cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(randomAddr);
-                        
-                        mode <= ModeWrite;
-                        modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
-                    end
+//                    // Write
+//                    else if (random16 < 4*'h3333) begin
+//                        `ifndef SYNTH
+//                            $display("Write: %h", randomAddr);
+//                        `endif
+//                        
+//                        cmdTrigger <= 1;
+//                        cmdAddr <= randomAddr;
+//                        cmdWrite <= 1;
+//                        cmdWriteData <= DataFromAddress(randomAddr);
+//                        
+//                        mode <= ModeIdle;
+//                    end
+//                    
+//                    // Write sequential (start)
+//                    else begin
+//                        `ifndef SYNTH
+//                            $display("WriteSeq: %h[%h]", randomAddr, random9);
+//                        `endif
+//                        
+//                        cmdTrigger <= 1;
+//                        cmdAddr <= randomAddr;
+//                        cmdWrite <= 1;
+//                        cmdWriteData <= DataFromAddress(randomAddr);
+//                        
+//                        mode <= ModeWrite;
+//                        modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
+//                    end
                 end
                 
                 // Read (continue)
@@ -378,7 +381,7 @@ endmodule
 `include "4012mt48lc16m16a2/mt48lc16m16a2.v"
 
 module IceboardTest_SDRAMReadWriteRandomlySim(
-    output logic        ledRed,
+    output logic[7:0]   leds,
 
     output logic        sdram_clk,
     output logic        sdram_cke,
@@ -397,7 +400,7 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
 
     IceboardTest_SDRAMReadWriteRandomly iceboardSDRAMTest(
         .clk12mhz(clk12mhz),
-        .ledRed(ledRed),
+        .leds(leds),
         .sdram_clk(sdram_clk),
         .sdram_cke(sdram_cke),
         .sdram_ba(sdram_ba),
@@ -438,10 +441,10 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
 //    );
 
     initial begin
-        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
-        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
+//        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
+//        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-        #10000000;
+        #100000000;
 //        #200000000;
 //        #2300000000;
         $finish;

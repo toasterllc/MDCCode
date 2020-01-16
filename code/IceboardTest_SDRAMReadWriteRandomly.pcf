@@ -1,5 +1,12 @@
-set_io clk12mhz     J3      # 
-set_io ledRed       B5      # 
+set_io clk12mhz     J3
+set_io leds[7]      B5
+set_io leds[6]      B4
+set_io leds[5]      A2
+set_io leds[4]      A1
+set_io leds[3]      C5
+set_io leds[2]      C4
+set_io leds[1]      B3
+set_io leds[0]      C3
 
 set_io sdram_clk    B8      # √ DCDn
 set_io sdram_cke    A7      # √ RTSn
