@@ -110,7 +110,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam ModeIdle     = 2'h0;
     localparam ModeRead     = 2'h1;
-    localparam ModeWrite    = 2'h2;
     
     logic                   cmdReady;
     logic                   cmdTrigger;
@@ -254,15 +253,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 case (mode)
                 // We're idle: accept a new mode
                 ModeIdle: begin
-                    // Nop
-                    if (random16 < 1*'h3333) begin
-                        `ifndef SYNTH
-                            $display("Nop");
-                        `endif
-                    end
-                    
                     // Read
-                    else if (random16 < 3*'h3333) begin
+                    if (random16 < 3*'h3333) begin
                         `ifndef SYNTH
                             $display("Read: %h", randomAddr);
                         `endif
@@ -293,53 +285,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         mode <= ModeRead;
                         modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
                     end
-                    
-//                    // Read all (start)
-//                    // We want this to be rare so only check for 1 value
-//                    else if (random16 < 3*'h3333+'h40) begin
-//                        `ifndef SYNTH
-//                            $display("ReadAll");
-//                        `endif
-//                        
-//                        cmdTrigger <= 1;
-//                        cmdAddr <= 0;
-//                        cmdWrite <= 0;
-//                        
-//                        expectedReadData <= expectedReadData|(DataFromAddress(0)<<(DataWidth*enqueuedReadCount));
-//                        enqueuedReadCount <= enqueuedReadCount+1;
-//                        
-//                        mode <= ModeRead;
-//                        modeCounter <= AddrCountLimit-1;
-//                    end
-//                    
-//                    // Write
-//                    else if (random16 < 4*'h3333) begin
-//                        `ifndef SYNTH
-//                            $display("Write: %h", randomAddr);
-//                        `endif
-//                        
-//                        cmdTrigger <= 1;
-//                        cmdAddr <= randomAddr;
-//                        cmdWrite <= 1;
-//                        cmdWriteData <= DataFromAddress(randomAddr);
-//                        
-//                        mode <= ModeIdle;
-//                    end
-//                    
-//                    // Write sequential (start)
-//                    else begin
-//                        `ifndef SYNTH
-//                            $display("WriteSeq: %h[%h]", randomAddr, random9);
-//                        `endif
-//                        
-//                        cmdTrigger <= 1;
-//                        cmdAddr <= randomAddr;
-//                        cmdWrite <= 1;
-//                        cmdWriteData <= DataFromAddress(randomAddr);
-//                        
-//                        mode <= ModeWrite;
-//                        modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
-//                    end
                 end
                 
                 // Read (continue)
@@ -351,19 +296,6 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         
                         expectedReadData <= expectedReadData|(DataFromAddress(cmdAddr+1)<<(DataWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
-                        
-                        modeCounter <= modeCounter-1;
-                    
-                    end else mode <= ModeIdle;
-                end
-                
-                // Write (continue)
-                ModeWrite: begin
-                    if (modeCounter > 0) begin
-                        cmdTrigger <= 1;
-                        cmdAddr <= cmdAddr+1;
-                        cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(cmdAddr+1);
                         
                         modeCounter <= modeCounter-1;
                     
