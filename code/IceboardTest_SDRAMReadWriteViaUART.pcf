@@ -1,0 +1,47 @@
+set_io clk12mhz         J3      # 
+set_io ledRed           B5      # 
+set_io RS232_Rx_TTL     B10
+set_io RS232_Tx_TTL     B12
+
+set_io sdram_clk        B8      # √ DCDn
+set_io sdram_cke        A7      # √ RTSn
+
+set_io sdram_ba[1]      E16     # 
+set_io sdram_ba[0]      F16     # 
+
+set_io sdram_a[11]      B7      # √ DSRn
+set_io sdram_a[10]      D15     # 
+set_io sdram_a[9]       C7      # √ RS232_Tx_TTL
+set_io sdram_a[8]       B11     # 
+set_io sdram_a[7]       A11     # 
+set_io sdram_a[6]       C6      # √ RS232_Rx_TTL
+set_io sdram_a[5]       A10     # 
+set_io sdram_a[4]       C9      # 
+set_io sdram_a[3]       C16     # 
+set_io sdram_a[2]       B16     # 
+set_io sdram_a[1]       D16     # 
+set_io sdram_a[0]       D14     # 
+
+set_io sdram_cs_        E14     # 
+set_io sdram_ras_       G16     # 
+set_io sdram_cas_       F15     # 
+set_io sdram_we_        A6      # √ GBIN2
+set_io sdram_udqm       B9      # √ CTSn
+set_io sdram_ldqm       G15     # 
+
+set_io sdram_dq[15]     L16    # 
+set_io sdram_dq[14]     M16    # 
+set_io sdram_dq[13]     M15    # 
+set_io sdram_dq[12]     N16    # 
+set_io sdram_dq[11]     P15    # 
+set_io sdram_dq[10]     P16    # 
+set_io sdram_dq[9]      R15    # 
+set_io sdram_dq[8]      A9     # √ DTRn
+set_io sdram_dq[7]      J15    # 
+set_io sdram_dq[6]      H14    # 
+set_io sdram_dq[5]      G14    # 
+set_io sdram_dq[4]      F14    # 
+set_io sdram_dq[3]      K14    # 
+set_io sdram_dq[2]      J14    # 
+set_io sdram_dq[1]      K15    # 
+set_io sdram_dq[0]      K16    # 
