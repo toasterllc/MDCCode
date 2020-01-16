@@ -34,8 +34,8 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
-    DataFromAddress = addr[15:0];
+    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+//    DataFromAddress = addr[15:0];
 //    DataFromAddress = 0;
 endfunction
 
@@ -262,7 +262,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end
                     
                     // Read
-                    else if (random16 < 2*'h3333) begin
+                    else if (random16 < 3*'h3333) begin
                         `ifndef SYNTH
                             $display("Read: %h", randomAddr);
                         `endif
@@ -278,7 +278,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end
                     
                     // Read sequential (start)
-                    else if (random16 < 3*'h3333) begin
+                    else begin
                         `ifndef SYNTH
                             $display("ReadSeq: %h[%h]", randomAddr, random9);
                         `endif
@@ -294,24 +294,24 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
                     end
                     
-                    // Read all (start)
-                    // We want this to be rare so only check for 1 value
-                    else if (random16 < 3*'h3333+'h40) begin
-                        `ifndef SYNTH
-                            $display("ReadAll");
-                        `endif
-                        
-                        cmdTrigger <= 1;
-                        cmdAddr <= 0;
-                        cmdWrite <= 0;
-                        
-                        expectedReadData <= expectedReadData|(DataFromAddress(0)<<(DataWidth*enqueuedReadCount));
-                        enqueuedReadCount <= enqueuedReadCount+1;
-                        
-                        mode <= ModeRead;
-                        modeCounter <= AddrCountLimit-1;
-                    end
-                    
+//                    // Read all (start)
+//                    // We want this to be rare so only check for 1 value
+//                    else if (random16 < 3*'h3333+'h40) begin
+//                        `ifndef SYNTH
+//                            $display("ReadAll");
+//                        `endif
+//                        
+//                        cmdTrigger <= 1;
+//                        cmdAddr <= 0;
+//                        cmdWrite <= 0;
+//                        
+//                        expectedReadData <= expectedReadData|(DataFromAddress(0)<<(DataWidth*enqueuedReadCount));
+//                        enqueuedReadCount <= enqueuedReadCount+1;
+//                        
+//                        mode <= ModeRead;
+//                        modeCounter <= AddrCountLimit-1;
+//                    end
+//                    
 //                    // Write
 //                    else if (random16 < 4*'h3333) begin
 //                        `ifndef SYNTH
@@ -441,10 +441,10 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
 //    );
 
     initial begin
-//        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
-//        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
+        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
+        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-        #100000000;
+        #2000000000;
 //        #200000000;
 //        #2300000000;
         $finish;
