@@ -2,34 +2,61 @@
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 
+//module Random9(
+//    input logic next, rst,
+//    output logic[8:0] q
+//);
+//    always @(posedge next, negedge next)
+//        if (rst) q <= 1;
+//        // Feedback polynomial for N=9: x^9 + x^5 + 1
+//        else q <= {q[7:0], q[9-1] ^ q[5-1]};
+//endmodule
+//
+//module Random16(
+//    input logic next, rst,
+//    output logic[15:0] q
+//);
+//    always @(posedge next, negedge next)
+//        if (rst) q <= 1;
+//        // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
+//        else q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
+//endmodule
+//
+//module Random23(
+//    input logic next, rst,
+//    output logic[22:0] q
+//);
+//    always @(posedge next, negedge next)
+//        if (rst) q <= 1;
+//        // Feedback polynomial for N=23: x^23 + x^18 + 1
+//        else q <= {q[21:0], q[23-1] ^ q[18-1]};
+//endmodule
+
 module Random9(
-    input logic clk, rst,
+    input logic clk, rst, next,
     output logic[8:0] q
 );
     always @(posedge clk)
-        if (rst) q <= 1;
-        // Feedback polynomial for N=9: x^9 + x^5 + 1
-        else q <= {q[7:0], q[9-1] ^ q[5-1]};
+        if (rst) q <= 0;
+        else if (next) q <= q+1;
 endmodule
 
 module Random16(
-    input logic clk, rst,
+    input logic clk, rst, next,
     output logic[15:0] q
 );
     always @(posedge clk)
-        if (rst) q <= 1;
-        // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
-        else q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
+        if (rst) q <= 0;
+        else if (next) q <= q+1;
 endmodule
 
 module Random23(
-    input logic clk, rst,
+    input logic clk, rst, next,
     output logic[22:0] q
 );
     always @(posedge clk)
-        if (rst) q <= 1;
-        // Feedback polynomial for N=23: x^23 + x^18 + 1
-        else q <= {q[21:0], q[23-1] ^ q[18-1]};
+        if (rst) q <= 0;
+        else if (next) q <= q+1;
 endmodule
 
 function [15:0] DataFromAddress;
@@ -159,13 +186,16 @@ module IceboardTest_SDRAMReadWriteRandomly(
     );
     
     logic[8:0] random9;
-    Random9 random9Gen(.clk(clk), .rst(rst), .q(random9));
+    logic random9Next;
+    Random9 random9Gen(.clk(clk), .rst(rst), .next(random9Next), .q(random9));
     
     logic[15:0] random16;
-    Random16 random16Gen(.clk(clk), .rst(rst), .q(random16));
+    logic random16Next;
+    Random16 random16Gen(.clk(clk), .rst(rst), .next(random16Next), .q(random16));
     
     logic[22:0] random23;
-    Random23 random23Gen(.clk(clk), .rst(rst), .q(random23));
+    logic random23Next;
+    Random23 random23Gen(.clk(clk), .rst(rst), .next(random23Next), .q(random23));
     
     logic[22:0] randomAddr;
     assign randomAddr = random23&(AddrCountLimit-1);
@@ -174,7 +204,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic[63:0] debugData;
     logic[3:0] debugState;
     
-    always @(posedge rst, posedge clkDivider[24]) begin
+    always @(posedge rst, posedge clkDivider[23]) begin
         if (rst) begin
             debugState <= 0;
             leds <= 0;
@@ -182,20 +212,20 @@ module IceboardTest_SDRAMReadWriteRandomly(
         end else if (status != StatusOK) begin
             debugState <= debugState+1;
             case (debugState)
-            0:          leds <= {32{1'b1}};
-            1:          leds <= 0;
-            2:          leds <= {32{1'b1}};
-            3:          leds <= 0;
+            0:          leds <= 8'b11111111;
+            1:          leds <= 8'b00000000;
+            2:          leds <= 8'b11111111;
+            3:          leds <= 8'b00000000;
             
             4:          leds <= debugData[64-1 -: 8];
             5:          leds <= debugData[56-1 -: 8];
             6:          leds <= debugData[48-1 -: 8];
             7:          leds <= debugData[40-1 -: 8];
             
-            8:          leds <= {32{1'b1}};
-            9:          leds <= 0;
-            10:         leds <= {32{1'b1}};
-            11:         leds <= 0;
+            8:          leds <= 8'b11110000;
+            9:          leds <= 8'b00001111;
+            10:         leds <= 8'b11110000;
+            11:         leds <= 8'b00001111;
             
             12:         leds <= debugData[32-1 -: 8];
             13:         leds <= debugData[24-1 -: 8];
@@ -206,8 +236,12 @@ module IceboardTest_SDRAMReadWriteRandomly(
     end
     
     always @(posedge clk) begin
-        // Set our default state if the current command was accepted
+        // Set our default state
         if (cmdReady) cmdTrigger <= 0;
+        
+        random9Next <= 0;
+        random16Next <= 0;
+        random23Next <= 0;
         
         if (rst) begin
             needInit <= 1;
@@ -314,6 +348,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeIdle;
+                        random23Next <= 1;
                     end
                     
                     // Read sequential (start)
@@ -331,7 +366,11 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         
                         mode <= ModeRead;
                         modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
+                        random9Next <= 1;
+                        random23Next <= 1;
                     end
+                    
+                    random16Next <= 1;
                 end
                 
                 // Read (continue)
