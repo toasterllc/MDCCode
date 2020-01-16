@@ -108,9 +108,8 @@ module IceboardTest_SDRAMReadWriteViaUART(
     reg [7:0] uartTxByte;
     wire uartReceived;
     wire [7:0] uartRxByte;
-    wire is_receiving;
-    wire is_transmitting;
-    wire recv_error;
+    wire uartReceiving;
+    wire uartTransmitting;
     
     uart #(
         .baud_rate(9600),                 // The baud rate in kilobits/s
@@ -125,22 +124,22 @@ module IceboardTest_SDRAMReadWriteViaUART(
         .tx_byte(uartTxByte),                // Byte to transmit
         .received(uartReceived),              // Indicated that a byte has been received
         .rx_byte(uartRxByte),                // Byte received
-        .is_receiving(is_receiving),      // Low when receive line is idle
-        .is_transmitting(is_transmitting),// Low when transmit line is idle
-        .recv_error(recv_error)           // Indicates error in receiving packet.
+        .is_receiving(uartReceiving),      // Low when receive line is idle
+        .is_transmitting(uartTransmitting),// Low when transmit line is idle
+        .recv_error()                       // Indicates error in receiving packet.
     );
     
-    logic[2:0]  stage;
+    logic[2:0]  uartStage;
     
-    logic[47:0] dataIn;
-    logic[2:0]  dataInCount;
-    logic       dataInEcho;
+    logic[47:0] uartDataIn;
+    logic[2:0]  uartDataInCount;
+    logic       uartDataInEcho;
     
-    logic[31:0] dataOut;
-    logic[2:0]  dataOutCount;
+    logic[31:0] uartDataOut;
+    logic[2:0]  uartDataOutCount;
     
-    logic[15:0] readData;
-    logic       readDataValid;
+    logic[15:0] uartReadData;
+    logic       uartReadDataValid;
     
     function [7:0] HexASCIIFromNibble;
         input [3:0] n;
@@ -155,12 +154,12 @@ module IceboardTest_SDRAMReadWriteViaUART(
     always @(posedge clk) begin
         if (rst) begin
             cmdTrigger <= 0;
-            stage <= 0;
+            uartStage <= 0;
             uartTransmit <= 0;
-            dataInCount <= 0;
-            dataInEcho <= 1;
-            dataOutCount <= 0;
-            readDataValid <= 0;
+            uartDataInCount <= 0;
+            uartDataInEcho <= 1;
+            uartDataOutCount <= 0;
+            uartReadDataValid <= 0;
         
         end else begin
             // By default we're not transmitting
@@ -172,44 +171,44 @@ module IceboardTest_SDRAMReadWriteViaUART(
             end
             
             if (cmdReadDataValid) begin
-                readData <= cmdReadData;
-                readDataValid <= 1;
+                uartReadData <= cmdReadData;
+                uartReadDataValid <= 1;
             end
             
             // Wait until active transmissions complete
-            if (!uartTransmit && !is_transmitting) begin
-                if (dataOutCount > 0) begin
-        			uartTxByte <= dataOut[7:0];
+            if (!uartTransmit && !uartTransmitting) begin
+                if (uartDataOutCount > 0) begin
+        			uartTxByte <= uartDataOut[7:0];
                     uartTransmit <= 1;
                     
-                    dataOut <= dataOut>>8;
-        			dataOutCount <= dataOutCount-1;
+                    uartDataOut <= uartDataOut>>8;
+        			uartDataOutCount <= uartDataOutCount-1;
                 
-                end else if (dataInCount > 0) begin
+                end else if (uartDataInCount > 0) begin
                     if (uartReceived) begin
-                        dataIn <= (dataIn<<8)|uartRxByte;
-                        dataInCount <= dataInCount-1;
+                        uartDataIn <= (uartDataIn<<8)|uartRxByte;
+                        uartDataInCount <= uartDataInCount-1;
                         
                         // Echo typed character
-                        if (dataInEcho) begin
+                        if (uartDataInEcho) begin
                             uartTxByte <= uartRxByte;
                             uartTransmit <= 1;
                         end
                     end
                 
                 end else begin
-                    // Go to the next stage by default
-                    stage <= (stage<6 ? stage+1 : 0);
+                    // Go to the next uartStage by default
+                    uartStage <= (uartStage<6 ? uartStage+1 : 0);
                     
                     // Reset our echo state by default
-                    dataInEcho <= 1;
+                    uartDataInEcho <= 1;
                     
-                    case (stage)
+                    case (uartStage)
                     
                     // Wait for command
                     0: begin
-                        dataInCount <= 1; // Load a byte for the command
-                        dataInEcho <= 0;
+                        uartDataInCount <= 1; // Load a byte for the command
+                        uartDataInEcho <= 0;
                     end
                     
                     // Load command, wait for address
@@ -217,74 +216,74 @@ module IceboardTest_SDRAMReadWriteViaUART(
                         cmdWrite <= (uartRxByte=="w");
                         
                         // Echo a "w" or "r"
-                        dataOut <= (uartRxByte=="w" ? "w" : "r");
-            			dataOutCount <= 1;
+                        uartDataOut <= (uartRxByte=="w" ? "w" : "r");
+            			uartDataOutCount <= 1;
                         
-                        dataInCount <= 6; // Load 6 bytes of address (each byte is a hex nibble)
+                        uartDataInCount <= 6; // Load 6 bytes of address (each byte is a hex nibble)
                     end
                     
                     // Load address, and if we're writing, wait for the value to write
                     2: begin
                         
                         // Echo a "="
-                        dataOut <= "=";
-            			dataOutCount <= 1;
+                        uartDataOut <= "=";
+            			uartDataOutCount <= 1;
                         
                         cmdAddr <= {
-                            NibbleFromHexASCII(dataIn[(8*6)-1 -: 8]),
-                            NibbleFromHexASCII(dataIn[(8*5)-1 -: 8]),
-                            NibbleFromHexASCII(dataIn[(8*4)-1 -: 8]),
-                            NibbleFromHexASCII(dataIn[(8*3)-1 -: 8]),
-                            NibbleFromHexASCII(dataIn[(8*2)-1 -: 8]),
-                            NibbleFromHexASCII(dataIn[(8*1)-1 -: 8])
+                            NibbleFromHexASCII(uartDataIn[(8*6)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*5)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
                         };
 
                         // If we're writing, get the data to write
-                        if (cmdWrite) dataInCount <= 4; // Load 4 bytes of data (each byte is a hex nibble)
+                        if (cmdWrite) uartDataInCount <= 4; // Load 4 bytes of data (each byte is a hex nibble)
                     end
                     
                     // Issue command to the RAM controller
                     3: begin
                         if (cmdWrite) begin
                             cmdWriteData <= {
-                                NibbleFromHexASCII(dataIn[(8*4)-1 -: 8]),
-                                NibbleFromHexASCII(dataIn[(8*3)-1 -: 8]),
-                                NibbleFromHexASCII(dataIn[(8*2)-1 -: 8]),
-                                NibbleFromHexASCII(dataIn[(8*1)-1 -: 8])
+                                NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
+                                NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
+                                NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
+                                NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
                             };
                         end
                         
                         cmdTrigger <= 1;
                         // Reset our flag so we know when we receive the data
-                        readDataValid <= 0;
+                        uartReadDataValid <= 0;
                     end
                     
                     // Wait for command to complete
                     4: begin
                         // Stall until the RAM controller accepts our command
                         // (We reset cmdTrigger above, when cmdReady fires)
-                        if (cmdTrigger) stage <= stage;
+                        if (cmdTrigger) uartStage <= uartStage;
                         // If we're reading, stall until we have the data
-                        else if (!cmdWrite && !readDataValid) stage <= stage;
+                        else if (!cmdWrite && !uartReadDataValid) uartStage <= uartStage;
                     end
                     
                     // If we were reading, output the read data
                     5: begin
                         if (!cmdWrite) begin
-                            dataOut <= {
-                                HexASCIIFromNibble(readData[3:0]),
-                                HexASCIIFromNibble(readData[7:4]),
-                                HexASCIIFromNibble(readData[11:8]),
-                                HexASCIIFromNibble(readData[15:12])
+                            uartDataOut <= {
+                                HexASCIIFromNibble(uartReadData[3:0]),
+                                HexASCIIFromNibble(uartReadData[7:4]),
+                                HexASCIIFromNibble(uartReadData[11:8]),
+                                HexASCIIFromNibble(uartReadData[15:12])
                             };
-                            dataOutCount <= 4; // Output 4 bytes
+                            uartDataOutCount <= 4; // Output 4 bytes
                         end
                     end
                     
                     // Send a newline
                     6: begin
-                        dataOut <= "\r\n";
-                        dataOutCount <= 2;
+                        uartDataOut <= "\r\n";
+                        uartDataOutCount <= 2;
                     end
                     endcase
                 end
