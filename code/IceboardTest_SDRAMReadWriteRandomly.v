@@ -34,8 +34,9 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
-//    DataFromAddress = addr[15:0];
+//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+//    DataFromAddress = addr[22:7];
+    DataFromAddress = addr[15:0];
 //    DataFromAddress = 0;
 endfunction
 
@@ -100,9 +101,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
-//    localparam AddrCountLimit = AddrCount;
+    localparam AddrCountLimit = AddrCount;
 //    localparam AddrCountLimit = AddrCount/1024; // 32k words
-    localparam AddrCountLimit = AddrCount/8192; // 1k words
+//    localparam AddrCountLimit = AddrCount/8192; // 1k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
@@ -121,11 +122,11 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic needInit;
     logic status;
+    logic[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddrs;
     logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount;
-    logic[(DataWidth*MaxEnqueuedReads)-1:0] expectedReadData;
     
-    logic[DataWidth-1:0] currentExpectedReadData;
-    assign currentExpectedReadData = expectedReadData[DataWidth-1:0];
+    logic[AddrWidth-1:0] currentReadAddr;
+    assign currentReadAddr = enqueuedReadAddrs[AddrWidth-1:0];
     
     logic[1:0] mode;
     logic[AddrWidth-1:0] modeCounter;
@@ -169,6 +170,41 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic[22:0] randomAddr;
     assign randomAddr = random23&(AddrCountLimit-1);
     
+    // Show the 4 debug bytes on our LEDs
+    logic[63:0] debugData;
+    logic[3:0] debugState;
+    
+    always @(posedge rst, posedge clkDivider[24]) begin
+        if (rst) begin
+            debugState <= 0;
+            leds <= 0;
+        
+        end else if (status != StatusOK) begin
+            debugState <= debugState+1;
+            case (debugState)
+            0:          leds <= {32{1'b1}};
+            1:          leds <= 0;
+            2:          leds <= {32{1'b1}};
+            3:          leds <= 0;
+            
+            4:          leds <= debugData[64-1 -: 8];
+            5:          leds <= debugData[56-1 -: 8];
+            6:          leds <= debugData[48-1 -: 8];
+            7:          leds <= debugData[40-1 -: 8];
+            
+            8:          leds <= {32{1'b1}};
+            9:          leds <= 0;
+            10:         leds <= {32{1'b1}};
+            11:         leds <= 0;
+            
+            12:         leds <= debugData[32-1 -: 8];
+            13:         leds <= debugData[24-1 -: 8];
+            14:         leds <= debugData[16-1 -: 8];
+            15:         leds <= debugData[ 8-1 -: 8];
+            endcase
+        end
+    end
+    
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
         if (cmdReady) cmdTrigger <= 0;
@@ -176,18 +212,19 @@ module IceboardTest_SDRAMReadWriteRandomly(
         if (rst) begin
             needInit <= 1;
             status <= StatusOK;
-            leds <= 0;
             
             cmdTrigger <= 0;
             cmdAddr <= 0;
             cmdWrite <= 0;
             cmdWriteData <= 0;
             
+            enqueuedReadAddrs <= 0;
             enqueuedReadCount <= 0;
-            expectedReadData <= 0;
             
             mode <= ModeIdle;
             modeCounter <= 0;
+            
+            debugData <= 0;
         
         // Initialize memory to known values
         end else if (needInit) begin
@@ -195,7 +232,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
                 cmdWrite <= 1;
-                cmdWriteData <= ~DataFromAddress(0);
+                cmdWriteData <= DataFromAddress(0);
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
@@ -205,7 +242,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     cmdTrigger <= 1;
                     cmdAddr <= cmdAddr+1;
                     cmdWrite <= 1;
-                    cmdWriteData <= ~DataFromAddress(cmdAddr+1);
+                    cmdWriteData <= DataFromAddress(cmdAddr+1);
                     
                     `ifndef SYNTH
                         if (!(cmdAddr % 'h1000)) begin
@@ -215,7 +252,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 
                 end else begin
                     // Next stage
-                    leds <= 8'b10000000;
+//                    leds <= 8'b10000000;
                     needInit <= 0;
                 end
             end
@@ -225,17 +262,27 @@ module IceboardTest_SDRAMReadWriteRandomly(
             if (cmdReadDataValid) begin
                 if (enqueuedReadCount > 0) begin
                     // Verify that the data read out is what we expect
-                    if (cmdReadData!==currentExpectedReadData && cmdReadData!==~currentExpectedReadData) begin
+                    if (cmdReadData !== DataFromAddress(currentReadAddr)) begin
                         `ifndef SYNTH
-                            $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
+                            $error("Read invalid data (wanted: 0x%h, got: 0x%h)", DataFromAddress(currentReadAddr), cmdReadData);
                         `endif
                         
                         status <= StatusFailed;
-                        leds <= 8'b00000001;
+                        debugData[63:32] <= {9'b0, currentReadAddr};
+                        debugData[31:0] <= {16'b0, cmdReadData};
+                        
+//                        leds <= 8'b00000001;
+//                        leds <= cmdReadData[7:0] | 8'b1;
+//                        leds <= cmdReadData[15:8] | cmdReadData[7:0] | 8'b1;
+//                        leds <= cmdReadData[15:8];
+//                        leds <= cmdReadData[7:0];
+//                        leds <= {1'b0, currentReadAddr[22:16]};
+//                        leds <= currentReadAddr[15:8];
+//                        leds <= currentReadAddr[7:0];
                     end
                     
+                    enqueuedReadAddrs <= enqueuedReadAddrs >> AddrWidth;
                     enqueuedReadCount <= enqueuedReadCount-1;
-                    expectedReadData <= expectedReadData >> DataWidth;
                 
                 // Something's wrong if we weren't expecting data and we got some
                 end else begin
@@ -244,7 +291,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     `endif
                     
                     status <= StatusFailed;
-                    leds <= 8'b00000010;
+                    debugData <= 0;
                 end
             end
             
@@ -263,7 +310,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadAddrs <= enqueuedReadAddrs|(randomAddr<<(AddrWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeIdle;
@@ -279,7 +326,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        expectedReadData <= expectedReadData|(DataFromAddress(randomAddr)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadAddrs <= enqueuedReadAddrs|(randomAddr<<(AddrWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         mode <= ModeRead;
@@ -294,7 +341,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= cmdAddr+1;
                         cmdWrite <= 0;
                         
-                        expectedReadData <= expectedReadData|(DataFromAddress(cmdAddr+1)<<(DataWidth*enqueuedReadCount));
+                        enqueuedReadAddrs <= enqueuedReadAddrs|((cmdAddr+1)<<(AddrWidth*enqueuedReadCount));
                         enqueuedReadCount <= enqueuedReadCount+1;
                         
                         modeCounter <= modeCounter-1;
@@ -376,7 +423,7 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
         $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-        #2000000000;
+        #100000000;
 //        #200000000;
 //        #2300000000;
         $finish;
