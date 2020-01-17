@@ -1,4 +1,4 @@
-//`define SYNTH
+`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 `include "uart.v"
@@ -62,9 +62,9 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
 //    DataFromAddress = addr[22:7];
-//    DataFromAddress = addr[15:0];
+    DataFromAddress = addr[15:0];
 //    DataFromAddress = 0;
 endfunction
 
