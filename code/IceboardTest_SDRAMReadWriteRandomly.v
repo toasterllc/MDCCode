@@ -1,4 +1,4 @@
-`define SYNTH
+//`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 `include "uart.v"
@@ -156,8 +156,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic needInit;
     logic status;
-    logic[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddrs;
-    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount;
+    logic[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddrs, nextEnqueuedReadAddrs;
+    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount, nextEnqueuedReadCount;
     
     logic[AddrWidth-1:0] currentReadAddr;
     assign currentReadAddr = enqueuedReadAddrs[AddrWidth-1:0];
@@ -338,9 +338,12 @@ module IceboardTest_SDRAMReadWriteRandomly(
             end
         
         end else if (status == StatusOK) begin
+            nextEnqueuedReadAddrs = enqueuedReadAddrs;
+            nextEnqueuedReadCount = enqueuedReadCount;
+            
             // Handle read data if available
             if (cmdReadDataValid) begin
-                if (enqueuedReadCount > 0) begin
+                if (nextEnqueuedReadCount > 0) begin
                     // Verify that the data read out is what we expect
 //                    if ((cmdReadData|1'b1) !== (DataFromAddress(currentReadAddr)|1'b1)) begin
                     if (cmdReadData !== expectedReadData) begin
@@ -389,8 +392,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
             			uartDataOutCount <= 28;
                     end
                     
-                    enqueuedReadAddrs <= enqueuedReadAddrs >> AddrWidth;
-                    enqueuedReadCount <= enqueuedReadCount-1;
+                    nextEnqueuedReadAddrs = nextEnqueuedReadAddrs >> AddrWidth;
+                    nextEnqueuedReadCount = nextEnqueuedReadCount-1;
                 
                 // Something's wrong if we weren't expecting data and we got some
                 end else begin
@@ -406,7 +409,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
             end
             
             // Current command was accepted: prepare a new command
-            else if (cmdReady) begin
+            if (cmdReady) begin
                 case (mode)
                 // We're idle: accept a new mode
                 ModeIdle: begin
@@ -420,8 +423,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        enqueuedReadAddrs <= enqueuedReadAddrs|(randomAddr<<(AddrWidth*enqueuedReadCount));
-                        enqueuedReadCount <= enqueuedReadCount+1;
+                        nextEnqueuedReadAddrs = nextEnqueuedReadAddrs|(randomAddr<<(AddrWidth*nextEnqueuedReadCount));
+                        nextEnqueuedReadCount = nextEnqueuedReadCount+1;
                         
                         mode <= ModeIdle;
                         random23Next <= 1;
@@ -437,8 +440,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= randomAddr;
                         cmdWrite <= 0;
                         
-                        enqueuedReadAddrs <= enqueuedReadAddrs|(randomAddr<<(AddrWidth*enqueuedReadCount));
-                        enqueuedReadCount <= enqueuedReadCount+1;
+                        nextEnqueuedReadAddrs = nextEnqueuedReadAddrs|(randomAddr<<(AddrWidth*nextEnqueuedReadCount));
+                        nextEnqueuedReadCount = nextEnqueuedReadCount+1;
                         
                         mode <= ModeRead;
                         modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
@@ -456,8 +459,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         cmdAddr <= cmdAddr+1;
                         cmdWrite <= 0;
                         
-                        enqueuedReadAddrs <= enqueuedReadAddrs|((cmdAddr+1)<<(AddrWidth*enqueuedReadCount));
-                        enqueuedReadCount <= enqueuedReadCount+1;
+                        nextEnqueuedReadAddrs = nextEnqueuedReadAddrs|((cmdAddr+1)<<(AddrWidth*nextEnqueuedReadCount));
+                        nextEnqueuedReadCount = nextEnqueuedReadCount+1;
                         
                         modeCounter <= modeCounter-1;
                     
@@ -465,6 +468,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 end
                 endcase
             end
+            
+            enqueuedReadAddrs <= nextEnqueuedReadAddrs;
+            enqueuedReadCount <= nextEnqueuedReadCount;
         
         // Something went wrong -- allow access via UART
         end else begin
