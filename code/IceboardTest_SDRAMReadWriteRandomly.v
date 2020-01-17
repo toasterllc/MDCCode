@@ -62,9 +62,9 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
 //    DataFromAddress = addr[22:7];
-    DataFromAddress = addr[15:0];
+//    DataFromAddress = addr[15:0];
 //    DataFromAddress = 0;
 endfunction
 
@@ -108,11 +108,14 @@ module IceboardTest_SDRAMReadWriteRandomly(
 //    localparam ClockFrequency =  3000000;     // 3 MHz
 //    assign clk = clkDivider[1];
 //
-    localparam ClockFrequency =  1500000;     // 1.5 MHz
-    assign clk = clkDivider[2];
+//    localparam ClockFrequency =  1500000;     // 1.5 MHz
+//    assign clk = clkDivider[2];
 //
-//    localparam ClockFrequency =   750000;     // .75 MHz
-//    assign clk = clkDivider[3];
+    localparam ClockFrequency =   750000;     // .75 MHz
+    assign clk = clkDivider[3];
+//
+//    localparam ClockFrequency =   375000;     // .375 MHz     This frequency is too slow -- the RAM controller doesn't have enough time to do anything except refresh
+//    assign clk = clkDivider[4];
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
@@ -242,7 +245,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic[15:0]     uartDataInCount;
     logic           uartDataInEcho;
     
-    logic[128:0]    uartDataOut;
+    logic[32*8-1:0] uartDataOut;
     logic[15:0]     uartDataOutCount;
     
     logic[15:0]     uartReadData;
@@ -260,6 +263,15 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     
     
+    
+    logic[DataWidth-1:0] expectedReadData;
+    assign expectedReadData = DataFromAddress(currentReadAddr);
+    
+    logic[DataWidth-1:0] prevReadData;
+    assign prevReadData = DataFromAddress(currentReadAddr-1);
+    
+    logic[DataWidth-1:0] nextReadData;
+    assign nextReadData = DataFromAddress(currentReadAddr+1);
     
     
     
@@ -330,7 +342,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
             if (cmdReadDataValid) begin
                 if (enqueuedReadCount > 0) begin
                     // Verify that the data read out is what we expect
-                    if (cmdReadData !== DataFromAddress(currentReadAddr)) begin
+//                    if ((cmdReadData|1'b1) !== (DataFromAddress(currentReadAddr)|1'b1)) begin
+                    if (cmdReadData !== expectedReadData) begin
                         `ifndef SYNTH
                             $error("Read invalid data (wanted: 0x%h, got: 0x%h)", DataFromAddress(currentReadAddr), cmdReadData);
                         `endif
@@ -345,15 +358,35 @@ module IceboardTest_SDRAMReadWriteRandomly(
                             HexASCIIFromNibble(currentReadAddr[11:8]),
                             HexASCIIFromNibble(currentReadAddr[7:4]),
                             HexASCIIFromNibble(currentReadAddr[3:0]),
-                            "=",
+                            
+                            "E",
+                            HexASCIIFromNibble(expectedReadData[15:12]),
+                            HexASCIIFromNibble(expectedReadData[11:8]),
+                            HexASCIIFromNibble(expectedReadData[7:4]),
+                            HexASCIIFromNibble(expectedReadData[3:0]),
+                            
+                            "G",
                             HexASCIIFromNibble(cmdReadData[15:12]),
                             HexASCIIFromNibble(cmdReadData[11:8]),
                             HexASCIIFromNibble(cmdReadData[7:4]),
                             HexASCIIFromNibble(cmdReadData[3:0]),
+                            
+                            "P",
+                            HexASCIIFromNibble(prevReadData[15:12]),
+                            HexASCIIFromNibble(prevReadData[11:8]),
+                            HexASCIIFromNibble(prevReadData[7:4]),
+                            HexASCIIFromNibble(prevReadData[3:0]),
+                            
+                            "N",
+                            HexASCIIFromNibble(nextReadData[15:12]),
+                            HexASCIIFromNibble(nextReadData[11:8]),
+                            HexASCIIFromNibble(nextReadData[7:4]),
+                            HexASCIIFromNibble(nextReadData[3:0]),
+                            
                             "\r\n"
                         };
                         
-            			uartDataOutCount <= 13;
+            			uartDataOutCount <= 28;
                     end
                     
                     enqueuedReadAddrs <= enqueuedReadAddrs >> AddrWidth;
@@ -631,7 +664,7 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
         $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
         $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-        #100000000;
+        #10000000;
 //        #200000000;
 //        #2300000000;
         $finish;
