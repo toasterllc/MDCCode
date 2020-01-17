@@ -1,4 +1,4 @@
-`define SYNTH
+//`define SYNTH
 `timescale 1ns/1ps
 `include "SDRAMController.v"
 `include "uart.v"
@@ -135,9 +135,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
-    localparam AddrCountLimit = AddrCount;
+//    localparam AddrCountLimit = AddrCount;
 //    localparam AddrCountLimit = AddrCount/1024; // 32k words
-//    localparam AddrCountLimit = AddrCount/8192; // 1k words
+    localparam AddrCountLimit = AddrCount/8192; // 1k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
@@ -349,7 +349,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
 //                    if ((cmdReadData|1'b1) !== (DataFromAddress(currentReadAddr)|1'b1)) begin
                     if (cmdReadData !== expectedReadData) begin
                         `ifndef SYNTH
-                            $error("Read invalid data (wanted: 0x%h, got: 0x%h)", DataFromAddress(currentReadAddr), cmdReadData);
+                            $error("Read invalid data; (wanted: 0x%h=0x%h, got: 0x%h=0x%h)", currentReadAddr, DataFromAddress(currentReadAddr), currentReadAddr, cmdReadData);
                         `endif
                         
                         status <= StatusFailed;
