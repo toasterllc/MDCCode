@@ -3,62 +3,62 @@
 `include "SDRAMController.v"
 `include "uart.v"
 
-//module Random9(
-//    input logic next, rst,
-//    output logic[8:0] q
-//);
-//    always @(posedge next, negedge next)
-//        if (rst) q <= 1;
-//        // Feedback polynomial for N=9: x^9 + x^5 + 1
-//        else q <= {q[7:0], q[9-1] ^ q[5-1]};
-//endmodule
-//
-//module Random16(
-//    input logic next, rst,
-//    output logic[15:0] q
-//);
-//    always @(posedge next, negedge next)
-//        if (rst) q <= 1;
-//        // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
-//        else q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
-//endmodule
-//
-//module Random23(
-//    input logic next, rst,
-//    output logic[22:0] q
-//);
-//    always @(posedge next, negedge next)
-//        if (rst) q <= 1;
-//        // Feedback polynomial for N=23: x^23 + x^18 + 1
-//        else q <= {q[21:0], q[23-1] ^ q[18-1]};
-//endmodule
-
 module Random9(
     input logic clk, rst, next,
     output logic[8:0] q
 );
-    always @(posedge clk)
-        if (rst) q <= 0;
-        else if (next) q <= q+1;
+    always @(posedge next, negedge next)
+        if (rst) q <= 1;
+        // Feedback polynomial for N=9: x^9 + x^5 + 1
+        else if (next) q <= {q[7:0], q[9-1] ^ q[5-1]};
 endmodule
 
 module Random16(
     input logic clk, rst, next,
     output logic[15:0] q
 );
-    always @(posedge clk)
-        if (rst) q <= 0;
-        else if (next) q <= q+1;
+    always @(posedge next, negedge next)
+        if (rst) q <= 1;
+        // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
+        else if (next) q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
 endmodule
 
 module Random23(
     input logic clk, rst, next,
     output logic[22:0] q
 );
-    always @(posedge clk)
-        if (rst) q <= 0;
-        else if (next) q <= q+1;
+    always @(posedge next, negedge next)
+        if (rst) q <= 1;
+        // Feedback polynomial for N=23: x^23 + x^18 + 1
+        else if (next) q <= {q[21:0], q[23-1] ^ q[18-1]};
 endmodule
+
+//module Random9(
+//    input logic clk, rst, next,
+//    output logic[8:0] q
+//);
+//    always @(posedge clk)
+//        if (rst) q <= 0;
+//        else if (next) q <= q+1;
+//endmodule
+//
+//module Random16(
+//    input logic clk, rst, next,
+//    output logic[15:0] q
+//);
+//    always @(posedge clk)
+//        if (rst) q <= 0;
+//        else if (next) q <= q+1;
+//endmodule
+//
+//module Random23(
+//    input logic clk, rst, next,
+//    output logic[22:0] q
+//);
+//    always @(posedge clk)
+//        if (rst) q <= 0;
+//        else if (next) q <= q+1;
+//endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
@@ -145,6 +145,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam ModeIdle     = 2'h0;
     localparam ModeRead     = 2'h1;
+    localparam ModeWrite    = 2'h2;
     
     logic                   cmdReady;
     logic                   cmdTrigger;
@@ -413,8 +414,15 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 case (mode)
                 // We're idle: accept a new mode
                 ModeIdle: begin
+                    // Nop
+                    if (random16 < 1*'h3333) begin
+                        `ifndef SYNTH
+                            $display("Nop");
+                        `endif
+                    end
+                    
                     // Read
-                    if (random16 < 3*'h3333) begin
+                    else if (random16 < 2*'h3333) begin
                         `ifndef SYNTH
                             $display("Read: %h", randomAddr);
                         `endif
@@ -431,7 +439,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     end
                     
                     // Read sequential (start)
-                    else begin
+                    else if (random16 < 3*'h3333) begin
                         `ifndef SYNTH
                             $display("ReadSeq: %h[%h]", randomAddr, random9);
                         `endif
@@ -444,7 +452,57 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         nextEnqueuedReadCount = nextEnqueuedReadCount+1;
                         
                         mode <= ModeRead;
-                        modeCounter <= (AddrCountLimit-randomAddr-1 < random9 ? AddrCountLimit-randomAddr-1 : random9);
+                        modeCounter <= random9;
+                        random9Next <= 1;
+                        random23Next <= 1;
+                    end
+                    
+                    // Read all (start)
+                    // We want this to be rare so only check for 1 value
+                    else if (random16 < 3*'h3333+'h40) begin
+                        `ifndef SYNTH
+                            $display("ReadAll");
+                        `endif
+                        
+                        cmdTrigger <= 1;
+                        cmdAddr <= 0;
+                        cmdWrite <= 0;
+                        
+                        nextEnqueuedReadAddrs = nextEnqueuedReadAddrs|(DataFromAddress(0)<<(AddrWidth*nextEnqueuedReadCount));
+                        nextEnqueuedReadCount = nextEnqueuedReadCount+1;
+                        
+                        mode <= ModeRead;
+                        modeCounter <= AddrCountLimit-1;
+                    end
+                    
+                    // Write
+                    else if (random16 < 4*'h3333) begin
+                        `ifndef SYNTH
+                            $display("Write: %h", randomAddr);
+                        `endif
+                        
+                        cmdTrigger <= 1;
+                        cmdAddr <= randomAddr;
+                        cmdWrite <= 1;
+                        cmdWriteData <= DataFromAddress(randomAddr);
+                        
+                        mode <= ModeIdle;
+                        random23Next <= 1;
+                    end
+                    
+                    // Write sequential (start)
+                    else begin
+                        `ifndef SYNTH
+                            $display("WriteSeq: %h[%h]", randomAddr, random9);
+                        `endif
+                        
+                        cmdTrigger <= 1;
+                        cmdAddr <= randomAddr;
+                        cmdWrite <= 1;
+                        cmdWriteData <= DataFromAddress(randomAddr);
+                        
+                        mode <= ModeWrite;
+                        modeCounter <= random9;
                         random9Next <= 1;
                         random23Next <= 1;
                     end
@@ -454,13 +512,26 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 
                 // Read (continue)
                 ModeRead: begin
-                    if (modeCounter > 0) begin
+                    if (modeCounter>0 && (cmdAddr+1)<AddrCountLimit) begin
                         cmdTrigger <= 1;
                         cmdAddr <= cmdAddr+1;
                         cmdWrite <= 0;
                         
                         nextEnqueuedReadAddrs = nextEnqueuedReadAddrs|((cmdAddr+1)<<(AddrWidth*nextEnqueuedReadCount));
                         nextEnqueuedReadCount = nextEnqueuedReadCount+1;
+                        
+                        modeCounter <= modeCounter-1;
+                    
+                    end else mode <= ModeIdle;
+                end
+                
+                // Write (continue)
+                ModeWrite: begin
+                    if (modeCounter>0 && (cmdAddr+1)<AddrCountLimit) begin
+                        cmdTrigger <= 1;
+                        cmdAddr <= cmdAddr+1;
+                        cmdWrite <= 1;
+                        cmdWriteData <= DataFromAddress(cmdAddr+1);
                         
                         modeCounter <= modeCounter-1;
                     
