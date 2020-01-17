@@ -62,9 +62,9 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-//    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
 //    DataFromAddress = addr[22:7];
-    DataFromAddress = addr[15:0];
+//    DataFromAddress = addr[15:0];
 //    DataFromAddress = 0;
 endfunction
 
@@ -99,8 +99,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic clk;
     
-    localparam ClockFrequency = 12000000;       // 12 MHz
-    assign clk = clk12mhz;
+//    localparam ClockFrequency = 12000000;       // 12 MHz
+//    assign clk = clk12mhz;
 //    
 //    localparam ClockFrequency =  6000000;     // 6 MHz
 //    assign clk = clkDivider[0];
@@ -111,8 +111,8 @@ module IceboardTest_SDRAMReadWriteRandomly(
 //    localparam ClockFrequency =  1500000;     // 1.5 MHz
 //    assign clk = clkDivider[2];
 //
-//    localparam ClockFrequency =   750000;     // .75 MHz
-//    assign clk = clkDivider[3];
+    localparam ClockFrequency =   750000;     // .75 MHz
+    assign clk = clkDivider[3];
 //
 //    localparam ClockFrequency =   375000;     // .375 MHz     This frequency is too slow -- the RAM controller doesn't have enough time to do anything except refresh
 //    assign clk = clkDivider[4];
