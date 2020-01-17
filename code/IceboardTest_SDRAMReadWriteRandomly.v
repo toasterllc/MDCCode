@@ -352,7 +352,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         `endif
                         
                         status <= StatusFailed;
-                        leds <= 8'b00000001;
+                        leds <= 8'b01111111;
                         
                         uartDataOut <= {
                             HexASCIIFromNibble(currentReadAddr[22:20]),
@@ -667,13 +667,13 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
 //    );
 
     initial begin
-        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
-        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
+//        $dumpfile("IceboardTest_SDRAMReadWriteRandomly.vcd");
+//        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
 
-        #10000000;
+//        #10000000;
 //        #200000000;
 //        #2300000000;
-        $finish;
+//        $finish;
     end
 
     initial begin
