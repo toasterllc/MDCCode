@@ -7,7 +7,7 @@ module Random9(
     input logic clk, rst, next,
     output logic[8:0] q
 );
-    always @(posedge next, negedge next)
+    always @(posedge clk)
         if (rst) q <= 1;
         // Feedback polynomial for N=9: x^9 + x^5 + 1
         else if (next) q <= {q[7:0], q[9-1] ^ q[5-1]};
@@ -17,7 +17,7 @@ module Random16(
     input logic clk, rst, next,
     output logic[15:0] q
 );
-    always @(posedge next, negedge next)
+    always @(posedge clk)
         if (rst) q <= 1;
         // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
         else if (next) q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
@@ -27,7 +27,7 @@ module Random23(
     input logic clk, rst, next,
     output logic[22:0] q
 );
-    always @(posedge next, negedge next)
+    always @(posedge clk)
         if (rst) q <= 1;
         // Feedback polynomial for N=23: x^23 + x^18 + 1
         else if (next) q <= {q[21:0], q[23-1] ^ q[18-1]};
