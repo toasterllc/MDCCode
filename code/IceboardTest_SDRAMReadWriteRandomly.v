@@ -135,9 +135,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     localparam AddrWidth = 23;
     localparam AddrCount = 'h800000;
-   localparam AddrCountLimit = AddrCount;
-//    localparam AddrCountLimit = AddrCount/1024; // 32k words
-//    localparam AddrCountLimit = AddrCount/8192; // 1k words
+    localparam AddrCountLimit = AddrCount;
+    // localparam AddrCountLimit = AddrCount/1024; // 32k words
+    // localparam AddrCountLimit = AddrCount/8192; // 1k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 1;
