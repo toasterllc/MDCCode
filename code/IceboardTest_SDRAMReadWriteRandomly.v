@@ -25,12 +25,19 @@ endmodule
 
 module Random23(
     input logic clk, rst, next,
-    output logic[22:0] q
+    output logic[22:0] q,
+    output logic wrapped
 );
     always @(posedge clk)
-        if (rst) q <= 1;
+        if (rst) begin
+            q <= 1;
+            wrapped <= 0;
+        end
         // Feedback polynomial for N=23: x^23 + x^18 + 1
-        else if (next) q <= {q[21:0], q[23-1] ^ q[18-1]};
+        else if (next) begin
+            q <= {q[21:0], q[23-1] ^ q[18-1]};
+            if (q == 1) wrapped <= !wrapped;
+        end
 endmodule
 
 //module Random9(
@@ -62,10 +69,10 @@ endmodule
 
 function [15:0] DataFromAddress;
     input [22:0] addr;
-    DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
-//    DataFromAddress = addr[22:7];
-//    DataFromAddress = addr[15:0];
-//    DataFromAddress = 0;
+    // DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
+    // DataFromAddress = addr[22:7];
+    DataFromAddress = addr[15:0];
+    // DataFromAddress = 0;
 endfunction
 
 module IceboardTest_SDRAMReadWriteRandomly(
@@ -99,23 +106,23 @@ module IceboardTest_SDRAMReadWriteRandomly(
     
     logic clk;
     
-//    localparam ClockFrequency = 12000000;       // 12 MHz
-//    assign clk = clk12mhz;
-//    
-//    localparam ClockFrequency =  6000000;     // 6 MHz
-//    assign clk = clkDivider[0];
-//
-//    localparam ClockFrequency =  3000000;     // 3 MHz
-//    assign clk = clkDivider[1];
-//
-//    localparam ClockFrequency =  1500000;     // 1.5 MHz
-//    assign clk = clkDivider[2];
-//
+    // localparam ClockFrequency = 12000000;       // 12 MHz
+    // assign clk = clk12mhz;
+    //
+    // localparam ClockFrequency =  6000000;     // 6 MHz
+    // assign clk = clkDivider[0];
+    //
+    // localparam ClockFrequency =  3000000;     // 3 MHz
+    // assign clk = clkDivider[1];
+    //
+    // localparam ClockFrequency =  1500000;     // 1.5 MHz
+    // assign clk = clkDivider[2];
+    //
     localparam ClockFrequency =   750000;     // .75 MHz
     assign clk = clkDivider[3];
-//
-//    localparam ClockFrequency =   375000;     // .375 MHz     This frequency is too slow -- the RAM controller doesn't have enough time to do anything except refresh
-//    assign clk = clkDivider[4];
+    //
+    // localparam ClockFrequency =   375000;     // .375 MHz     This frequency is too slow -- the RAM controller doesn't have enough time to do anything except refresh
+    // assign clk = clkDivider[4];
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
@@ -201,9 +208,12 @@ module IceboardTest_SDRAMReadWriteRandomly(
     logic random16Next;
     Random16 random16Gen(.clk(clk), .rst(rst), .next(random16Next), .q(random16));
     
+    logic wrapped;
+    assign leds[7] = wrapped;
+    
     logic[22:0] random23;
     logic random23Next;
-    Random23 random23Gen(.clk(clk), .rst(rst), .next(random23Next), .q(random23));
+    Random23 random23Gen(.clk(clk), .rst(rst), .next(random23Next), .q(random23), .wrapped(wrapped));
     
     logic[22:0] randomAddr;
     assign randomAddr = random23&(AddrCountLimit-1);
@@ -336,12 +346,12 @@ module IceboardTest_SDRAMReadWriteRandomly(
                 
                 end else begin
                     // Next stage
-                    leds <= 8'b10000000;
                     needInit <= 0;
                 end
             end
+        end
         
-        end else if (status == StatusOK) begin
+        else if (status == StatusOK) begin
             nextEnqueuedReadAddrs = enqueuedReadAddrs;
             nextEnqueuedReadCount = enqueuedReadCount;
             
@@ -356,7 +366,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                         `endif
                         
                         status <= StatusFailed;
-                        leds <= 8'b01111111;
+                        // leds[6:0] <= 7'b1111111;
                         
                         uartDataOut <= {
                             HexASCIIFromNibble(currentReadAddr[22:20]),
@@ -406,7 +416,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     `endif
                     
                     status <= StatusFailed;
-                    leds <= 8'b00000010;
+                    // leds[6:0] <= 7'b0001111;
                     uartDataOut <= "BAD2";
         			uartDataOutCount <= 4;
                 end
@@ -462,7 +472,7 @@ module IceboardTest_SDRAMReadWriteRandomly(
                     
                     // Read all (start)
                     // We want this to be rare so only check for 1 value
-                    else if (random16 < 3*'h3333+'h40) begin
+                    else if (random16 < 3*'h3333+'h100) begin
                         `ifndef SYNTH
                             $display("ReadAll");
                         `endif
