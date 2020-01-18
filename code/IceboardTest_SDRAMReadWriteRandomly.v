@@ -297,6 +297,9 @@ module IceboardTest_SDRAMReadWriteRandomly(
             enqueuedReadCount <= 0;
             enqueuedReadAddrs <= 0;
             
+            nextEnqueuedReadCount <= 0;
+            nextEnqueuedReadAddrs <= 0;
+            
             mode <= ModeIdle;
             modeCounter <= 0;
             
