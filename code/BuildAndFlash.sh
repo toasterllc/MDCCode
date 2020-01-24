@@ -17,13 +17,13 @@ dev="$1"
 proj="$2"
 
 # Synthesize the design from Verilog (.sv -> .blif)
-yosys -p "synth_ice40 -top "$proj" -blif $proj.blif" "$proj.sv"
+yosys -p "synth_ice40 -top "$proj" -blif $proj/top.blif" "$proj/top.sv"
 
 # Place and route the design ({.pcf, .blif} -> .asc)
-arachne-pnr -d "$dev" -o "$proj.asc" -p "$proj.pcf" "$proj.blif"
+arachne-pnr -d "$dev" -o "$proj/top.asc" -p "$proj/pins.pcf" "$proj/top.blif"
 
 # Generate the bitstream file (.asc -> .bin)
-icepack "$proj.asc" "$proj.bin"
+icepack "$proj/top.asc" "$proj/top.bin"
 
 # Flash the bitstream (.bin)
-iceprog "$proj.bin"
+iceprog "$proj/top.bin"

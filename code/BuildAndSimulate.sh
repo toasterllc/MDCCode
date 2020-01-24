@@ -9,6 +9,6 @@ fi
 
 proj="$1"
 
-rm -f "$proj.vvp"
-iverilog -o "$proj.vvp" -g2012 "$proj.v"
-./"$proj.vvp"
+rm -f "$proj/top.vvp"
+iverilog -o "$proj/top.vvp" -g2012 "$proj/top.v"
+./"$proj/top.vvp"
