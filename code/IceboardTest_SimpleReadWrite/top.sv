@@ -1,4 +1,3 @@
-//`define SYNTH
 `timescale 1ns/1ps
 `include "../SDRAMController.v"
 
