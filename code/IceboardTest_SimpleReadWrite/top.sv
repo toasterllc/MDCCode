@@ -2,9 +2,9 @@
 `timescale 1ns/1ps
 `include "../SDRAMController.v"
 
-`ifndef SYNTH
+`ifdef SIM
 
-`include "4062mt48lc8m16a2/mt48lc8m16a2.v"
+`include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 
 `define stringify(x) `"x```"
 `define assert(cond) if (!cond) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)
@@ -128,7 +128,7 @@ module IceboardTest_SimpleReadWriteSim(
     
     // Reset
     initial begin
-//        $dumpfile("IceboardTest_SimpleReadWrite.vcd");
+//        $dumpfile("top.vcd");
 //        $dumpvars(0, IceboardTest_SimpleReadWriteSim);
         
         rst = 1;

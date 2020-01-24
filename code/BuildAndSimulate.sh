@@ -8,8 +8,13 @@ if [ "$#" -ne 1 ]; then
 fi
 
 proj="$1"
-cd "$proj"
+mkdir -p "$proj/tmp"
+cd "$proj/tmp"
 
-rm -f "top.vvp"
-iverilog -o "top.vvp" -g2012 "top.v"
-./"top.vvp"
+# Create our top.v file that is just top.sv with "`define SIM" prepended
+cp ../top.sv top.v
+
+# Simulate!
+rm -f top.vvp
+iverilog "-I./.." -DSIM -o top.vvp -g2012 top.v
+./top.vvp

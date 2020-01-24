@@ -158,7 +158,11 @@ module SDRAMController(
     // Hook up cmdReadData/sdram_writeData to sdram_dq
     genvar i;
     for (i=0; i<16; i=i+1) begin
-        `ifdef SYNTH
+        `ifdef SIM
+            // For simulation, use a normal tristate buffer
+            assign sdram_dq[i] = (writeDataValid ? sdram_writeData[i] : 1'bz);
+            assign cmdReadData[i] = sdram_dq[i];
+        `else
             // For synthesis, we have to use a SB_IO for a tristate buffer
             SB_IO #(
                 .PIN_TYPE(6'b1010_01),
@@ -169,10 +173,6 @@ module SDRAMController(
                 .D_OUT_0(sdram_writeData[i]),
                 .D_IN_0(cmdReadData[i]),
             );
-        `else
-            // For simulation, use a normal tristate buffer
-            assign sdram_dq[i] = (writeDataValid ? sdram_writeData[i] : 1'bz);
-            assign cmdReadData[i] = sdram_dq[i];
         `endif
     end
     

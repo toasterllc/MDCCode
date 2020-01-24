@@ -15,10 +15,12 @@ fi
 
 dev="$1"
 proj="$2"
-cd "$proj"
+
+mkdir -p "$proj/tmp"
+cd "$proj/tmp"
 
 # Synthesize the design from Verilog (.sv -> .blif)
-yosys -p "synth_ice40 -top "$proj" -blif top.blif" "top.sv"
+yosys -p "synth_ice40 -top "$proj" -blif top.blif" "../top.sv"
 
 # Place and route the design ({.pcf, .blif} -> .asc)
 arachne-pnr -d "$dev" -o "top.asc" -p "pins.pcf" "top.blif"
