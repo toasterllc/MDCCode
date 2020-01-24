@@ -1,4 +1,3 @@
-`define SIM
 `timescale 1ns/1ps
 
 module IceboardTest_Blinky(

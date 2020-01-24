@@ -23,7 +23,7 @@ cd "$proj/tmp"
 yosys -p "synth_ice40 -top "$proj" -blif top.blif" "../top.sv"
 
 # Place and route the design ({.pcf, .blif} -> .asc)
-arachne-pnr -d "$dev" -o "top.asc" -p "pins.pcf" "top.blif"
+arachne-pnr -d "$dev" -o "top.asc" -p "../pins.pcf" "top.blif"
 
 # Generate the bitstream file (.asc -> .bin)
 icepack "top.asc" "top.bin"

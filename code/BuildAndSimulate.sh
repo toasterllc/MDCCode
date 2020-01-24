@@ -11,7 +11,7 @@ proj="$1"
 mkdir -p "$proj/tmp"
 cd "$proj/tmp"
 
-# Create our top.v file that is just top.sv with "`define SIM" prepended
+# iverilog only allows .v files, so copy top.sv to tmp/top.v and use that
 cp ../top.sv top.v
 
 # Simulate!
