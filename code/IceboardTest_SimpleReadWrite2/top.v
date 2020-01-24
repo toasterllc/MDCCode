@@ -1,6 +1,6 @@
 `define SYNTH
 `timescale 1ns/1ps
-`include "SDRAMController.v"
+`include "../SDRAMController.v"
 
 module Random9(
     input logic clk, rst,

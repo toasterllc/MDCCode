@@ -1,7 +1,7 @@
 `define SYNTH
 `timescale 1ns/1ps
-`include "SDRAMController.v"
-`include "uart.v"
+`include "../SDRAMController.v"
+`include "../uart.v"
 
 module Random9(
     input logic clk, rst, next,
@@ -687,8 +687,8 @@ endmodule
 
 `ifndef SYNTH
 
-`include "4062mt48lc8m16a2/mt48lc8m16a2.v"
-`include "4012mt48lc16m16a2/mt48lc16m16a2.v"
+`include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
+`include "../4012mt48lc16m16a2/mt48lc16m16a2.v"
 
 module IceboardTest_SDRAMReadWriteRandomlySim(
     output logic[7:0]   leds,

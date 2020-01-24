@@ -8,7 +8,8 @@ if [ "$#" -ne 1 ]; then
 fi
 
 proj="$1"
+cd "$proj"
 
-rm -f "$proj/top.vvp"
-iverilog -o "$proj/top.vvp" -g2012 "$proj/top.v"
-./"$proj/top.vvp"
+rm -f "top.vvp"
+iverilog -o "top.vvp" -g2012 "top.v"
+./"top.vvp"

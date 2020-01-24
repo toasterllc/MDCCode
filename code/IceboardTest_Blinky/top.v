@@ -3,7 +3,7 @@
 
 module IceboardTest_Blinky(
     input logic         clk12mhz,
-    output logic        ledRed,
+    output logic        ledRed
 );
     logic clk;
     assign clk = clk12mhz;
@@ -39,7 +39,7 @@ endmodule
 `ifndef SYNTH
 
 module IceboardTest_BlinkySim(
-    output logic        ledRed,
+    output logic        ledRed
 );
 
     logic clk12mhz;

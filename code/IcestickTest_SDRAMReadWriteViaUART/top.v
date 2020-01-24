@@ -1,7 +1,7 @@
 `define SYNTH
 `timescale 1ns/1ps
-`include "uart.v"
-`include "SDRAMController.v"
+`include "../uart.v"
+`include "../SDRAMController.v"
 
 module IcestickTest_SDRAMReadWriteViaUART(
     input logic         clk12mhz,
