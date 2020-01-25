@@ -9,37 +9,37 @@ module FIFOTest(
     output logic[11:0]  q,
     output logic        qValid,
 );
-    // // One-hot implementation
-    // localparam PixBufferSize = 3;
-    // logic[(12*PixBufferSize)-1:0] pixBuffer;
-    // logic[PixBufferSize-1:0] pixBufferValidData; // One-hot
-    //
-    // always @(posedge pix_clk) begin
-    //     // Produce data
-    //     if (pix_frameValid && pix_lineValid) begin
-    //         if (!pixBufferValidData[0]) begin
-    //             pixBuffer[11:0] <= pix_d;
-    //             pixBufferValidData[0] <= 1;
-    //
-    //         end else if (!pixBufferValidData[1]) begin
-    //             pixBuffer[23:12] <= pix_d;
-    //             pixBufferValidData[1] <= 1;
-    //         end
-    //
-    //         end else if (!pixBufferValidData[2]) begin
-    //             pixBuffer[35:24] <= pix_d;
-    //             pixBufferValidData[2] <= 1;
-    //         end
-    //
-    //     // Consume data
-    //     else begin
-    //         pixBuffer <= pixBuffer>>12;
-    //         pixBufferValidData <= pixBufferValidData>>1;
-    //     end
-    // end
-    //
-    // assign q = pixBuffer[11:0];
-    // assign qValid = pixBufferValidData[0];
+    // One-hot implementation
+    localparam PixBufferSize = 3;
+    logic[(12*PixBufferSize)-1:0] pixBuffer;
+    logic[PixBufferSize-1:0] pixBufferValidData; // One-hot
+    
+    always @(posedge pix_clk) begin
+        // Data in
+        if (pix_frameValid && pix_lineValid) begin
+            if (!pixBufferValidData[0]) begin
+                pixBuffer[11:0] <= pix_d;
+                pixBufferValidData[0] <= 1;
+            
+            end else if (!pixBufferValidData[1]) begin
+                pixBuffer[23:12] <= pix_d;
+                pixBufferValidData[1] <= 1;
+            end
+            
+            end else if (!pixBufferValidData[2]) begin
+                pixBuffer[35:24] <= pix_d;
+                pixBufferValidData[2] <= 1;
+            end
+        
+        // Data out
+        else begin
+            pixBuffer <= pixBuffer>>12;
+            pixBufferValidData <= pixBufferValidData>>1;
+        end
+    end
+    
+    assign q = pixBuffer[11:0];
+    assign qValid = pixBufferValidData[0];
     
     // // Integer implementation
     // localparam PixBufferSize = 3;
