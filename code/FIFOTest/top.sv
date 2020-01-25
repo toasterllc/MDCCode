@@ -28,13 +28,11 @@ module FIFO(
     always @(posedge clk) begin
         // Data in + data out
         if (din & qout) begin
-            // TODO: try only allowing if (qout & !empty)
             slots <= (slots<<Width) | d;
             qSlot <= (empty ? 1 : qSlot);
         
         // Data in
         end else if (din) begin
-            // TODO: try only allowing if (din & !full)
             slots <= (slots<<Width) | d;
             qSlot <= (empty ? 1 : (full ? qSlot : qSlot<<1));
         
