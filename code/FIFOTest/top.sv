@@ -24,7 +24,6 @@ module FIFOTest(
             end else if (!pixBufferValidData[1]) begin
                 pixBuffer[23:12] <= pix_d;
                 pixBufferValidData[1] <= 1;
-            end
             
             end else if (!pixBufferValidData[2]) begin
                 pixBuffer[35:24] <= pix_d;
@@ -32,7 +31,7 @@ module FIFOTest(
             end
         
         // Data out
-        else begin
+        end else begin
             pixBuffer <= pixBuffer>>12;
             pixBufferValidData <= pixBufferValidData>>1;
         end
