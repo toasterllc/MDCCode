@@ -12,23 +12,70 @@ module FIFOTest(
     // One-hot implementation
     localparam PixBufferSize = 3;
     logic[(12*PixBufferSize)-1:0] pixBuffer;
-    logic[PixBufferSize-1:0] pixBufferValidData; // One-hot
+    logic[PixBufferSize-1:0] pixBufferValidData;
+    
+    logic full;
+    assign full = pixBufferValidData[PixBufferSize-1];
+    
+    logic[(12*PixBufferSize)-1:0] pixBufferNext;
+    genvar i;
+    for (i=0; i<PixBufferSize; i=i+1) begin
+        // assign pixBufferNext[(12*(i+1))-1 -: 12] = pix_d & (i>0 ? !pixBufferValidData[i] && pixBufferValidData[i-1] : !pixBufferValidData[i]);
+        
+        if (i > 0)
+            assign pixBufferNext[(12*(i+1))-1 -: 12] = pix_d & {12{(!pixBufferValidData[i] & pixBufferValidData[i-1])}};
+        else
+            assign pixBufferNext[(12*(i+1))-1 -: 12] = pix_d & {12{!pixBufferValidData[i]}};
+        // pixBufferNext <= ;
+        // `ifdef SIM
+        //     // For simulation, use a normal tristate buffer
+        //     assign sdram_dq[i] = (writeDataValid ? sdram_writeData[i] : 1'bz);
+        //     assign cmdReadData[i] = sdram_dq[i];
+        // `else
+        //     // For synthesis, we have to use a SB_IO for a tristate buffer
+        //     SB_IO #(
+        //         .PIN_TYPE(6'b1010_01),
+        //         .PULLUP(0),
+        //     ) dqio (
+        //         .PACKAGE_PIN(sdram_dq[i]),
+        //         .OUTPUT_ENABLE(writeDataValid),
+        //         .D_OUT_0(sdram_writeData[i]),
+        //         .D_IN_0(cmdReadData[i]),
+        //     );
+        // `endif
+    end
     
     always @(posedge pix_clk) begin
         // Data in
         if (pix_frameValid && pix_lineValid) begin
-            if (!pixBufferValidData[0]) begin
-                pixBuffer[11:0] <= pix_d;
-                pixBufferValidData[0] <= 1;
             
-            end else if (!pixBufferValidData[1]) begin
-                pixBuffer[23:12] <= pix_d;
-                pixBufferValidData[1] <= 1;
-            
-            end else if (!pixBufferValidData[2]) begin
-                pixBuffer[35:24] <= pix_d;
-                pixBufferValidData[2] <= 1;
+            // If we're not full
+            if (!full) begin
+                pixBufferValidData <= pixBufferValidData<<1 | 1'b1;
+                pixBuffer <= pixBufferNext;
+                
+                // if ()
+                
             end
+            
+            // for (int i=0; i<X; i++) begin
+            //     // if (onehot == (1 << i)) begin
+            //     //     o_data = i_data[i];
+            //     // end
+            // end
+            
+            // if (!pixBufferValidData[0]) begin
+            //     pixBuffer[11:0] <= pix_d;
+            //     pixBufferValidData[0] <= 1;
+            //
+            // end else if (!pixBufferValidData[1]) begin
+            //     pixBuffer[23:12] <= pix_d;
+            //     pixBufferValidData[1] <= 1;
+            //
+            // end else if (!pixBufferValidData[2]) begin
+            //     pixBuffer[35:24] <= pix_d;
+            //     pixBufferValidData[2] <= 1;
+            // end
         
         // Data out
         end else begin
