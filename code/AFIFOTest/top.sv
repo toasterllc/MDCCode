@@ -1,6 +1,9 @@
 `timescale 1ns/1ps
 `include "../GrayCode.v"
 
+`define stringify(x) `"x```"
+`define assert(cond) if (!(cond)) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)
+
 module AFIFO(
     input logic wclk,
     input logic w,
@@ -115,112 +118,125 @@ module AFIFOTestSim();
     logic[11:0] rd;
     logic rempty;
     
+    logic[11:0] tmp;
+    
+    
+    
+    // task WaitUntilCommandAccepted;
+    //     wait (!clk && cmdReady);
+    //     wait (clk && cmdReady);
+    //
+    //     // Wait one time unit, so that changes that are made after aren't
+    //     // sampled by the SDRAM controller on this clock edge
+    //     #1;
+    // endtask
+    
+    task Read(output logic[11:0] val);
+        `assert(!rempty);
+        
+        // Get the current value that's available
+        val = rd;
+        $display("Read byte: %h", val);
+        if (!rclk) #1; // Ensure rclk isn't transitioning on this step
+        
+        // Read a new value
+        wait(!rclk);
+        #1;
+        r = 1;
+        wait(rclk);
+        #1;
+        r = 0;
+    endtask
+    
+    task Write(input logic[11:0] val);
+        `assert(!wfull);
+        
+        if (!wclk) #1; // Ensure wclk isn't transitioning on this step
+        wait(!wclk);
+        #1;
+        wd = val;
+        w = 1;
+        wait(wclk);
+        #1;
+        w = 0;
+        
+        $display("Wrote byte: %h", val);
+    endtask
+    
+    task WaitUntilCanRead;
+        wait(!rempty && !rclk);
+    endtask
+    
+    task WaitUntilCanWrite;
+        wait(!wfull && !wclk);
+    endtask
+    
+    
+    
     AFIFO afifo(.*);
     
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, AFIFOTestSim);
-
+        
         wclk = 0;
         w = 0;
         wd = 0;
         rclk = 0;
         r = 0;
         
-        w = 1;
-        wd = 8'hA;
-        #1; wclk = 1;
-        #1; wclk = 0;
-        w = 0;
-        $display("wrote byte, wfull: %d", wfull);
-        
-        w = 1;
-        wd = 8'hB;
-        #1; wclk = 1;
-        #1; wclk = 0;
-        w = 0; 
-        $display("wrote byte, wfull: %d", wfull);
-        
-        w = 1;
-        wd = 8'hC;
-        #1; wclk = 1;
-        #1; wclk = 0;
-        w = 0;
-        $display("wrote byte, wfull: %d", wfull);
-        
-        w = 1;
-        wd = 8'hD;
-        #1; wclk = 1;
-        #1; wclk = 0;
-        w = 0;
-        $display("wrote byte, wfull: %d", wfull);
-        
-        // w = 1;
-        // wd = 8'hD;
-        // #1; clk = 1;
-        // #1; clk = 0;
-        // w = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-        
-        $display("read byte: %h (rempty: %d)", rd, rempty);
-        r = 1;
-        #1; rclk = 1;
-        #1; rclk = 0;
-        r = 0;
-
-
-
+        // Write(12'hA);
+        // Write(12'hB);
+        // Write(12'hC);
+        // Write(12'hD);
+        //
+        // Read(tmp);
+        // Read(tmp);
+        // Read(tmp);
+        // Read(tmp);
+        // Read(tmp);
+        // Read(tmp);
+        // Read(tmp);
+       
         #10000000;
         //        #200000000;
         //        #2300000000;
         $finish;
+    end
+    
+    initial begin
+        int i;
+        forever begin
+            WaitUntilCanWrite;
+            Write(i);
+            i++;
+        end
+    end
+    
+    initial begin
+        forever begin
+            WaitUntilCanRead;
+            Read(tmp);
+        end
+    end
+    
+    // wclk
+    initial begin
+        wclk = 0;
+        forever begin
+            wclk = !wclk;
+            #42;
+        end
+    end
+    
+    // rclk
+    initial begin
+        #7;
+        rclk = 0;
+        forever begin
+            rclk = !rclk;
+            #3;
+        end
     end
 endmodule
 
