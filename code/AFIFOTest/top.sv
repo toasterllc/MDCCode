@@ -17,7 +17,8 @@ module AFIFO(
 );
     parameter Width = 12;
     parameter Size = 4; // Must be a power of 2
-    localparam N = $clog2(Size)-1;
+    localparam N = $clog2(Size); // Not $clog2(Size)-1 because we need an extra bit
+                                 // to differentiate between full and empty
     
     logic[Width-1:0] mem[Size-1:0];
     logic[N:0] rbaddr, rgaddr; // Read addresses (binary, gray)
@@ -38,7 +39,7 @@ module AFIFO(
         if (aempty) {rempty, rempty2} <= 2'b11;
         else {rempty, rempty2} <= {rempty2, 1'b0};
     
-    assign rd = mem[rbaddr];
+    assign rd = mem[rbaddr[N-1:0]];
     
     // ====================
     // Write handling
@@ -59,14 +60,8 @@ module AFIFO(
     // ====================
     // Async signal generation
     // ====================
-    logic dir;
-    wire aempty = (rgaddr==wgaddr) & !dir;
-    wire afull = (rgaddr==wgaddr) & dir;
-    wire dirset = (wgaddr[N]^rgaddr[N-1]) & ~(wgaddr[N-1]^rgaddr[N]);
-    wire dirclr = ~(wgaddr[N]^rgaddr[N-1]) & (wgaddr[N-1]^rgaddr[N]);
-    always @(posedge dirset, posedge dirclr)
-        if (dirset) dir <= 1'b1;
-        else dir <= 1'b0;
+    wire aempty = (rgaddr == wgaddr);
+    wire afull = (rgaddr[N]!=wgaddr[N] & rgaddr[N-1:0]==wgaddr[N-1:0]);
     
 `ifdef SIM
     initial begin
@@ -82,7 +77,6 @@ module AFIFO(
         rgaddr = 0;
         wbaddr = 0;
         wgaddr = 0;
-        dir = 0;
     end
 `endif
 endmodule
