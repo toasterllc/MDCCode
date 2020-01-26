@@ -17,20 +17,19 @@ module AFIFO(
     
     logic[Width-1:0] mem[Size-1:0];
     
-    logic[AddrWidth-1:0] waddrGray;
-    logic[AddrWidth-1:0] waddrGrayNext;
-    Bin2Gray #(.Width(AddrWidth)) x0(.d(waddr+1), .q(waddrGrayNext));
-    logic[AddrWidth-1:0] waddr;
+    logic[AddrWidth-1:0] waddrGray, raddrGray;
+    logic[AddrWidth-1:0] waddrGrayNext, raddrGrayNext;
+    logic[AddrWidth-1:0] waddr, raddr;
+    Bin2Gray #(.Width(AddrWidth)) x0(.d(waddr+1'b1), .q(waddrGrayNext));
+    Bin2Gray #(.Width(AddrWidth)) x2(.d(raddr+1'b1), .q(raddrGrayNext));
     Gray2Bin #(.Width(AddrWidth)) x1(.d(waddrGray), .q(waddr));
-    
-    logic[AddrWidth-1:0] raddrGray;
-    logic[AddrWidth-1:0] raddrGrayNext;
-    Bin2Gray #(.Width(AddrWidth)) x2(.d(raddr+1), .q(raddrGrayNext));
-    logic[AddrWidth-1:0] raddr;
     Gray2Bin #(.Width(AddrWidth)) x3(.d(raddrGray), .q(raddr));
     
-    // logic empty;
-    // assign empty = ;
+    logic empty;
+    assign empty = (waddrGray==raddrGray);
+    
+    logic full;
+    assign full = ();
     
     // // Read domain
     // logic r_empty;
@@ -41,6 +40,7 @@ module AFIFO(
     // // assign w_full = ;
     
     always @(posedge wclk) begin
+        // TODO: protect from overflow (full)
         if (w) begin
             mem[waddr] <= wd;
             waddrGray <= waddrGrayNext;
@@ -48,13 +48,14 @@ module AFIFO(
     end
     
     always @(posedge rclk) begin
+        // TODO: protect from underflow (empty)
         if (r) begin
             raddrGray <= raddrGrayNext;
         end
     end
     
     assign rd = mem[raddr];
-    assign rdValid = !r_empty;
+    assign rdValid = !empty;
 endmodule
 
 module AFIFOTest(
