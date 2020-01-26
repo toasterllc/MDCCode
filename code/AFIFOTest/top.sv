@@ -5,15 +5,15 @@
 `define assert(cond) if (!(cond)) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)
 
 module AFIFO(
-    input logic wclk,
-    input logic w,
-    input logic[Width-1:0] wd,
-    output logic wfull,
-    
     input logic rclk,
     input logic r,
     output logic[Width-1:0] rd,
-    output logic rempty
+    output logic rempty,
+    
+    input logic wclk,
+    input logic w,
+    input logic[Width-1:0] wd,
+    output logic wfull
 );
     parameter Width = 12;
     parameter Size = 4; // Must be a power of 2
@@ -68,6 +68,7 @@ module AFIFO(
         if (dirset) dir <= 1'b1;
         else dir <= 1'b0;
     
+`ifdef SIM
     initial begin
         wfull = 0;
         wfull2 = 0;
@@ -83,28 +84,8 @@ module AFIFO(
         wgaddr = 0;
         dir = 0;
     end
+`endif
 endmodule
-
-// module AFIFOTest(
-//     input logic         pix_clk,    // Clock from image sensor
-//     input logic         pix_frameValid,
-//     input logic         pix_lineValid,
-//     input logic[11:0]   pix_d,      // Data from image sensor
-//
-//     input logic         clk, // Clock from pll
-//     output logic[11:0]  q,
-//     output logic        qValid
-// );
-//     // AFIFO afifo(
-//     //     .wclk(pix_clk),
-//     //     .w(pix_frameValid & pix_lineValid),
-//     //     .wd(pix_d),
-//     //     .rclk(clk),
-//     //     .r(!(pix_frameValid & pix_lineValid)),
-//     //     .rd(q),
-//     //     .rdValid(qValid)
-//     // );
-// endmodule
 
 `ifdef SIM
 
