@@ -1,63 +1,9 @@
 `timescale 1ns/1ps
+`include "../FIFO.v"
+`include "../AFIFO.v"
 
 
 
-
-module FIFO(
-    input logic clk,
-    
-    input logic din,
-    input logic[Width-1:0] d,
-    
-    input logic qout,
-    output logic[Width-1:0] q,
-    output logic qValid
-);
-    parameter Width = 12;
-    parameter Slots = 3;
-    
-    logic[(Width*Slots)-1:0] slots;
-    logic[Slots-1:0] qSlot;
-    initial begin
-        slots = 0;
-        qSlot = 0;
-    end
-    
-    logic empty;
-    assign empty = qSlot==0;
-    
-    logic full;
-    assign full = qSlot[Slots-1];
-    
-    always @(posedge clk) begin
-        // Data in + data out
-        if (din & qout) begin
-            slots <= (slots<<Width) | d;
-            qSlot <= (empty ? 1 : qSlot);
-        
-        // Data in
-        end else if (din) begin
-            slots <= (slots<<Width) | d;
-            qSlot <= (empty ? 1 : (full ? qSlot : qSlot<<1));
-        
-        // Data out
-        end else if (qout) begin
-            qSlot <= qSlot>>1;
-        end
-    end
-    
-    integer i;
-    always @* begin
-        q = 0;
-        for (i=0; i<Slots; i=i+1) begin
-            if (qSlot[i]) begin
-                q = q|slots[(Width*(i+1))-1 -: Width];
-            end
-        end
-    end
-    
-    assign qValid = !empty;
-endmodule
 
 
 
@@ -210,20 +156,32 @@ module FIFOTest(
     output logic[11:0]  q,
     output logic        qValid
 );
-    logic din;
-    logic[11:0] d;
-    logic qout;
+    logic rempty;
+    assign qValid = !rempty;
     
-    FIFO #(.Width(12), .Slots(3)) fifo(
-        .clk(pix_clk),
-        
-        .din(din),
-        .d(d),
-        .qout(qout),
-        .q(q),
-        .qValid(qValid)
+    afifo #(.DSIZE(12), .ASIZE(3)) fifo(
+        .i_wclk(pix_clk),
+        .i_wrst_n(),
+        .i_wr(pix_frameValid & pix_lineValid),
+        .i_wdata(pix_d),
+        .o_wfull(),
+        .i_rclk(pix_clk),
+        .i_rrst_n(),
+        .i_rd(!(pix_frameValid & pix_lineValid)),
+        .o_rdata(q),
+        .o_rempty(rempty)
     );
     
+    // FIFO #(.Width(12), .Slots(3)) fifo(
+    //     .clk(pix_clk),
+    //
+    //     .din(pix_frameValid & pix_lineValid),
+    //     .d(pix_d),
+    //     .qout(!(pix_frameValid & pix_lineValid)),
+    //     .q(q),
+    //     .qValid(qValid)
+    // );
+    //
     
     // // One-hot implementation
     // localparam PixBufferSize = 3;
@@ -329,6 +287,12 @@ endmodule
 
 `ifdef SIM
 
+
+
+
+
+
+
 module FIFOTestSim(
 );
     logic clk;
@@ -337,20 +301,26 @@ module FIFOTestSim(
     logic qout;
     logic[7:0] q;
     logic qValid;
+    assign qValid = !rempty;
     
-    FIFO #(.Width(8), .Slots(3)) fifo(
-        .clk(clk),
-        .din(din),
-        .d(d),
-        .qout(qout),
-        .q(q),
-        .qValid(qValid)
+    logic rempty;
+    
+    afifo #(.DSIZE(8), .ASIZE(4)) fifo(
+        .i_wclk(clk),
+        .i_wrst_n(),
+        .i_wr(din),
+        .i_wdata(d),
+        .o_wfull(),
+        .i_rclk(clk),
+        .i_rrst_n(),
+        .i_rd(qout),
+        .o_rdata(q),
+        .o_rempty(rempty)
     );
     
     initial begin
        $dumpfile("top.vcd");
        $dumpvars(0, FIFOTestSim);
-       
        
        clk = 0;
        
@@ -359,18 +329,25 @@ module FIFOTestSim(
        #1; clk = 1;
        #1; clk = 0;
        din = 0;
+       $display("qValid: %d", qValid);
        
-       din = 1;
+       // din = 1;
        d = 8'hB;
        #1; clk = 1;
        #1; clk = 0;
-       din = 0;
+       din = 0; 
+       $display("qValid: %d", qValid);
        
-       din = 1;
+       // din = 1;
        d = 8'hC;
        #1; clk = 1;
        #1; clk = 0;
        din = 0;
+       $display("qValid: %d", qValid);
+       
+       #1; clk = 1;
+       #1; clk = 0;
+       $display("qValid: %d", qValid);
        
        // din = 1;
        // d = 8'hD;
@@ -416,5 +393,99 @@ module FIFOTestSim(
        $finish;
     end
 endmodule
+
+
+
+
+
+
+
+// module FIFOTestSim(
+// );
+//     logic clk;
+//     logic din;
+//     logic[7:0] d;
+//     logic qout;
+//     logic[7:0] q;
+//     logic qValid;
+//
+//     FIFO #(.Width(8), .Slots(3)) fifo(
+//         .clk(clk),
+//         .din(din),
+//         .d(d),
+//         .qout(qout),
+//         .q(q),
+//         .qValid(qValid)
+//     );
+//
+//     initial begin
+//        $dumpfile("top.vcd");
+//        $dumpvars(0, FIFOTestSim);
+//
+//
+//        clk = 0;
+//
+//        din = 1;
+//        d = 8'hA;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        din = 0;
+//
+//        din = 1;
+//        d = 8'hB;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        din = 0;
+//
+//        din = 1;
+//        d = 8'hC;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        din = 0;
+//
+//        // din = 1;
+//        // d = 8'hD;
+//        // #1; clk = 1;
+//        // #1; clk = 0;
+//        // din = 0;
+//
+//        $display("q: %h (valid: %d)", q, qValid);
+//        qout = 1;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        qout = 0;
+//
+//        $display("q: %h (valid: %d)", q, qValid);
+//        qout = 1;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        qout = 0;
+//
+//        $display("q: %h (valid: %d)", q, qValid);
+//        qout = 1;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        qout = 0;
+//
+//        $display("q: %h (valid: %d)", q, qValid);
+//        qout = 1;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        qout = 0;
+//
+//        $display("q: %h (valid: %d)", q, qValid);
+//        qout = 1;
+//        #1; clk = 1;
+//        #1; clk = 0;
+//        qout = 0;
+//
+//
+//
+//        #10000000;
+// //        #200000000;
+// //        #2300000000;
+//        $finish;
+//     end
+// endmodule
 
 `endif
