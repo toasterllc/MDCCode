@@ -177,14 +177,13 @@ module AFIFOTest(
     end
     
     // wclk
-    // reg wclk = 0;
-    wire wclk;
-    // initial begin
-    //     forever begin
-    //         wclk = !wclk;
-    //         #42;
-    //     end
-    // end
+    reg wclk = 0;
+    initial begin
+        forever begin
+            wclk = !wclk;
+            #42;
+        end
+    end
 `else
     wire rclk;
     RCLKPLL pll1(.clock_in(clk12mhz), .clock_out(rclk));
@@ -193,6 +192,7 @@ module AFIFOTest(
     WCLKPLL pll2(.clock_in(clk12mhz), .clock_out(wclk));
 `endif
     
+    // wire wclk;
     // assign wclk = rclk;
     
     reg r = 0;
