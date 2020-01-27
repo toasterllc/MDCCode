@@ -62,8 +62,8 @@ module AFIFO(
     logic dir;
     wire aempty = (rgaddr==wgaddr) & !dir;
     wire afull = (rgaddr==wgaddr) & dir;
-    wire dirset = (wgaddr[N]!=rgaddr[N-1]) & (rgaddr[N]==wgaddr[N-1]);
-    wire dirclr = (wgaddr[N]==rgaddr[N-1]) & (rgaddr[N]!=wgaddr[N-1]);
+    wire dirset = (rgaddr[N]==wgaddr[N-1]) & (rgaddr[N-1]!=wgaddr[N]);
+    wire dirclr = (rgaddr[N]!=wgaddr[N-1]) & (rgaddr[N-1]==wgaddr[N]);
     always @(posedge dirset, posedge dirclr)
         if (dirset) dir <= 1'b1;
         else dir <= 1'b0;
