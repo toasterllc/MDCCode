@@ -1,7 +1,12 @@
 `timescale 1ns/1ps
 
 `define stringify(x) `"x```"
+
+`ifdef SIM
 `define assert(cond) if (!(cond)) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)
+`else
+`define assert(cond)
+`endif
 
 module AFIFO(
     input wire rclk,
@@ -149,8 +154,41 @@ endmodule
 
 
 module AFIFOTest(input logic clk12mhz);
+`ifdef SIM
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, AFIFOTest);
+        #10000000;
+        $finish;
+    end
+    
+    // rclk
     reg rclk = 0;
-    reg wclk = 0;
+    initial begin
+        #7;
+        forever begin
+            rclk = !rclk;
+            #3;
+        end
+    end
+    
+    // // wclk
+    // reg wclk = 0;
+    // initial begin
+    //     forever begin
+    //         wclk = !wclk;
+    //         #42;
+    //     end
+    // end
+`else
+    wire rclk;
+    rclkPLL pll2(.clock_in(clk12mhz), .clock_out(rclk));
+    
+    // wire wclk;
+    // wclkPLL pll1(.clock_in(clk12mhz), .clock_out(wclk));
+`endif
+    
+    assign wclk = rclk;
     
     reg r = 0;
     wire[11:0] rd;
@@ -170,36 +208,7 @@ module AFIFOTest(input logic clk12mhz);
         .wd(wd),
         .wfull(wfull)
     );
-
-`ifdef SIM
-    initial begin
-        $dumpfile("top.vcd");
-        $dumpvars(0, AFIFOTest);
-        #10000000;
-        $finish;
-    end
     
-    // rclk
-    initial begin
-        #7;
-        forever begin
-            rclk = !rclk;
-            #3;
-        end
-    end
-
-    // wclk
-    initial begin
-        forever begin
-            wclk = !wclk;
-            #42;
-        end
-    end
-`else
-    wclkPLL pll1(.clock_in(clk12mhz), .clock_out(wclk));
-    rclkPLL pll2(.clock_in(clk12mhz), .clock_out(rclk));
-`endif
-
     // Produce values
     always @(posedge wclk) begin
         // Init
@@ -219,19 +228,25 @@ module AFIFOTest(input logic clk12mhz);
     reg rvalValid = 0;
     reg rfail = 0;
     always @(posedge rclk) begin
-        // Init
-        if (!r) begin
-            r <= 1;
-        
-        end else if (!rfail & !rempty) begin
-            $display("Read value: %h", rd);
-            rval <= rd;
-            rvalValid <= 1;
+        if (!rfail) begin
+            // Init
+            if (!r) begin
+                r <= 1;
             
-            // Check if the current value is the previous value +1
-            `assert(!rvalValid | ((rval+1'b1)==rd));
-            if (rvalValid & ((rval+1'b1)!=rd)) begin
-                rfail <= 1;
+            // Read if data is available
+            end else if (!rempty) begin
+                $display("Read value: %h", rd);
+                rval <= rd;
+                rvalValid <= 1;
+                
+                // Check if the current value is the previous value +1
+                // `assert(!rvalValid | ((rval+1'b1)==rd));
+                if (rvalValid & ((rval+1'b1)!=rd)) begin
+                    $display("Error: read invalid value; wanted: %h got: %h", (rval+1'b1), rd);
+                    rfail <= 1;
+                    // Stop reading
+                    r <= 0;
+                end
             end
         end
     end
