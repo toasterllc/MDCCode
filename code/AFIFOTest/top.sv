@@ -91,7 +91,7 @@ endmodule
  * Achieved output frequency:    50.250 MHz
  */
 
-module wclkPLL(
+module WCLKPLL(
     input  clock_in,
     output clock_out,
     output locked
@@ -128,7 +128,7 @@ endmodule
  * Achieved output frequency:    90.000 MHz
  */
 
-module rclkPll(
+module RCLKPLL(
     input  clock_in,
     output clock_out,
     output locked
@@ -153,7 +153,11 @@ endmodule
 `endif
 
 
-module AFIFOTest(input logic clk12mhz);
+module AFIFOTest(
+    input wire clk12mhz,
+    output wire led
+);
+
 `ifdef SIM
     initial begin
         $dumpfile("top.vcd");
@@ -172,8 +176,9 @@ module AFIFOTest(input logic clk12mhz);
         end
     end
     
-    // // wclk
+    // wclk
     // reg wclk = 0;
+    wire wclk;
     // initial begin
     //     forever begin
     //         wclk = !wclk;
@@ -182,13 +187,13 @@ module AFIFOTest(input logic clk12mhz);
     // end
 `else
     wire rclk;
-    rclkPLL pll2(.clock_in(clk12mhz), .clock_out(rclk));
+    RCLKPLL pll1(.clock_in(clk12mhz), .clock_out(rclk));
     
-    // wire wclk;
-    // wclkPLL pll1(.clock_in(clk12mhz), .clock_out(wclk));
+    wire wclk;
+    WCLKPLL pll2(.clock_in(clk12mhz), .clock_out(wclk));
 `endif
     
-    assign wclk = rclk;
+    // assign wclk = rclk;
     
     reg r = 0;
     wire[11:0] rd;
@@ -222,7 +227,7 @@ module AFIFOTest(input logic clk12mhz);
             wd <= wd+1'b1;
         end
     end
-
+    
     // Consume values
     reg[11:0] rval;
     reg rvalValid = 0;
@@ -250,6 +255,8 @@ module AFIFOTest(input logic clk12mhz);
             end
         end
     end
+    
+    assign led = rfail;
 endmodule
 
 
