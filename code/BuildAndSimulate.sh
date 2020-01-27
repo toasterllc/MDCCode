@@ -12,7 +12,7 @@ mkdir -p "$proj/tmp"
 cd "$proj/tmp"
 
 # iverilog only allows .v files, so copy top.sv to tmp/top.v and use that
-cp ../top.sv top.v
+cp ../top.v top.v
 
 # Simulate!
 rm -f top.vvp
