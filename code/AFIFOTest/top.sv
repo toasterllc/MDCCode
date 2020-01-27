@@ -79,6 +79,86 @@ endmodule
 
 `ifndef SIM
 
+
+
+
+
+
+
+// /**
+//  * PLL configuration
+//  *
+//  * This Verilog module was generated automatically
+//  * using the icepll tool from the IceStorm project.
+//  * Use at your own risk.
+//  *
+//  * Given input frequency:        12.000 MHz
+//  * Requested output frequency:   80.000 MHz
+//  * Achieved output frequency:    79.500 MHz
+//  */
+//
+// module RCLKPLL(
+//     input  clock_in,
+//     output clock_out,
+//     output locked
+//     );
+//
+// SB_PLL40_CORE #(
+//         .FEEDBACK_PATH("SIMPLE"),
+//         .DIVR(4'b0000),        // DIVR =  0
+//         .DIVF(7'b0110100),    // DIVF = 52
+//         .DIVQ(3'b011),        // DIVQ =  3
+//         .FILTER_RANGE(3'b001)    // FILTER_RANGE = 1
+//     ) uut (
+//         .LOCK(locked),
+//         .RESETB(1'b1),
+//         .BYPASS(1'b0),
+//         .REFERENCECLK(clock_in),
+//         .PLLOUTCORE(clock_out)
+//         );
+//
+// endmodule
+
+
+
+
+
+
+// /**
+//  * PLL configuration
+//  *
+//  * This Verilog module was generated automatically
+//  * using the icepll tool from the IceStorm project.
+//  * Use at your own risk.
+//  *
+//  * Given input frequency:        12.000 MHz
+//  * Requested output frequency:   78.500 MHz
+//  * Achieved output frequency:    78.000 MHz
+//  */
+//
+// module RCLKPLL(
+//     input  clock_in,
+//     output clock_out,
+//     output locked
+//     );
+//
+// SB_PLL40_CORE #(
+//         .FEEDBACK_PATH("SIMPLE"),
+//         .DIVR(4'b0000),        // DIVR =  0
+//         .DIVF(7'b0110011),    // DIVF = 51
+//         .DIVQ(3'b011),        // DIVQ =  3
+//         .FILTER_RANGE(3'b001)    // FILTER_RANGE = 1
+//     ) uut (
+//         .LOCK(locked),
+//         .RESETB(1'b1),
+//         .BYPASS(1'b0),
+//         .REFERENCECLK(clock_in),
+//         .PLLOUTCORE(clock_out)
+//         );
+//
+// endmodule
+
+
 /**
  * PLL configuration
  *
@@ -87,11 +167,11 @@ endmodule
  * Use at your own risk.
  *
  * Given input frequency:        12.000 MHz
- * Requested output frequency:   50.000 MHz
- * Achieved output frequency:    50.250 MHz
+ * Requested output frequency:   81.000 MHz
+ * Achieved output frequency:    81.000 MHz
  */
 
-module WCLKPLL(
+module RCLKPLL(
     input  clock_in,
     output clock_out,
     output locked
@@ -100,8 +180,8 @@ module WCLKPLL(
 SB_PLL40_CORE #(
         .FEEDBACK_PATH("SIMPLE"),
         .DIVR(4'b0000),        // DIVR =  0
-        .DIVF(7'b1000010),    // DIVF = 66
-        .DIVQ(3'b100),        // DIVQ =  4
+        .DIVF(7'b0110101),    // DIVF = 53
+        .DIVQ(3'b011),        // DIVQ =  3
         .FILTER_RANGE(3'b001)    // FILTER_RANGE = 1
     ) uut (
         .LOCK(locked),
@@ -116,6 +196,7 @@ endmodule
 
 
 
+
 /**
  * PLL configuration
  *
@@ -124,29 +205,29 @@ endmodule
  * Use at your own risk.
  *
  * Given input frequency:        12.000 MHz
- * Requested output frequency:   90.000 MHz
- * Achieved output frequency:    90.000 MHz
+ * Requested output frequency:   80.000 MHz
+ * Achieved output frequency:    79.500 MHz
  */
 
-module RCLKPLL(
-    input  clock_in,
-    output clock_out,
-    output locked
-    );
+module WCLKPLL(
+	input  clock_in,
+	output clock_out,
+	output locked
+	);
 
 SB_PLL40_CORE #(
-        .FEEDBACK_PATH("SIMPLE"),
-        .DIVR(4'b0000),        // DIVR =  0
-        .DIVF(7'b0111011),    // DIVF = 59
-        .DIVQ(3'b011),        // DIVQ =  3
-        .FILTER_RANGE(3'b001)    // FILTER_RANGE = 1
-    ) uut (
-        .LOCK(locked),
-        .RESETB(1'b1),
-        .BYPASS(1'b0),
-        .REFERENCECLK(clock_in),
-        .PLLOUTCORE(clock_out)
-        );
+		.FEEDBACK_PATH("SIMPLE"),
+		.DIVR(4'b0000),		// DIVR =  0
+		.DIVF(7'b0110100),	// DIVF = 52
+		.DIVQ(3'b011),		// DIVQ =  3
+		.FILTER_RANGE(3'b001)	// FILTER_RANGE = 1
+	) uut (
+		.LOCK(locked),
+		.RESETB(1'b1),
+		.BYPASS(1'b0),
+		.REFERENCECLK(clock_in),
+		.PLLOUTCORE(clock_out)
+		);
 
 endmodule
 
@@ -160,9 +241,9 @@ module AFIFOTest(
 
 `ifdef SIM
     initial begin
-        $dumpfile("top.vcd");
-        $dumpvars(0, AFIFOTest);
-        #10000000;
+        // $dumpfile("top.vcd");
+        // $dumpvars(0, AFIFOTest);
+        #1000000000;
         $finish;
     end
     
@@ -172,7 +253,7 @@ module AFIFOTest(
         #7;
         forever begin
             rclk = !rclk;
-            #3;
+            #30;
         end
     end
     
@@ -220,11 +301,11 @@ module AFIFOTest(
         if (!w) begin
             w <= 1;
             wd <= 0;
-        end else if (!wfull) begin
-            $display("Wrote value: %h", wd);
-            
+        end else begin
             // We wrote a value, continue to the next one
             wd <= wd+1'b1;
+            if (!wfull) $display("Wrote value: %h", wd);
+            else $display("Error: failed to write value: %h", wd);
         end
     end
     
