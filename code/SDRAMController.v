@@ -1,31 +1,31 @@
 `define DO_REFRESH
 
 module SDRAMController(
-    input logic clk,                // Clock
-    input logic rst,                // Reset (synchronous)
+    input wire clk,                // Clock
+    input wire rst,                // Reset (synchronous)
     
     // Command port
-    output logic cmdReady,          // Ready for new command
-    input logic cmdTrigger,         // Start the command
-    input logic cmdWrite,           // Read (0) or write (1)
-    input logic[22:0] cmdAddr,      // Address
-    input logic[15:0] cmdWriteData, // Data to write to address
-    output logic[15:0] cmdReadData, // Data read from address
-    output logic cmdReadDataValid,  // `cmdReadData` is valid data
-    output logic didRefresh,
+    output wire cmdReady,          // Ready for new command
+    input wire cmdTrigger,         // Start the command
+    input wire cmdWrite,           // Read (0) or write (1)
+    input wire[22:0] cmdAddr,      // Address
+    input wire[15:0] cmdWriteData, // Data to write to address
+    output wire[15:0] cmdReadData, // Data read from address
+    output wire cmdReadDataValid,  // `cmdReadData` is valid data
+    output reg didRefresh,
     
     // SDRAM port
-    output logic sdram_clk,         // Clock
-    output logic sdram_cke,         // Clock enable
-    output logic[1:0] sdram_ba,     // Bank address
-    output logic[11:0] sdram_a,     // Address
-    output logic sdram_cs_,         // Chip select
-    output logic sdram_ras_,        // Row address strobe
-    output logic sdram_cas_,        // Column address strobe
-    output logic sdram_we_,         // Write enable
-    output logic sdram_udqm,        // High byte data mask
-    output logic sdram_ldqm,        // Low byte data mask
-    inout logic[15:0] sdram_dq      // Data input/output
+    output wire sdram_clk,         // Clock
+    output reg sdram_cke,         // Clock enable
+    output reg[1:0] sdram_ba,     // Bank address
+    output reg[11:0] sdram_a,     // Address
+    output wire sdram_cs_,         // Chip select
+    output wire sdram_ras_,        // Row address strobe
+    output wire sdram_cas_,        // Column address strobe
+    output wire sdram_we_,         // Write enable
+    output wire sdram_udqm,        // High byte data mask
+    output wire sdram_ldqm,         // Low byte data mask
+    inout wire[15:0] sdram_dq        // Data input/output
 );
     
     // localparam ClockFrequency = 12000000;
@@ -100,13 +100,12 @@ module SDRAMController(
         Max = (a > b ? a : b);
     endfunction
     
-    logic[StateWidth-1:0] state;
-    logic[3:0] substate;
-    logic[DelayCounterWidth-1:0] delayCounter;
-    logic[RefreshCounterWidth-1:0] refreshCounter;
+    reg[StateWidth-1:0] state;
+    reg[3:0] substate;
+    reg[DelayCounterWidth-1:0] delayCounter;
+    reg[RefreshCounterWidth-1:0] refreshCounter;
     
-    logic[DelayCounterWidth+RefreshCounterWidth-1:0] initDelayCounter;
-    assign initDelayCounter = {delayCounter, refreshCounter};
+    wire[DelayCounterWidth+RefreshCounterWidth-1:0] initDelayCounter = {delayCounter, refreshCounter};
     
     // cmdReady==true in the states where we invoke SaveCommand().
     // In other words, cmdReady==true when we're going to store the incoming command.
@@ -117,43 +116,37 @@ module SDRAMController(
 `endif
         (state==StateIdle || state==StateRead || state==StateWrite));
     
-    logic writeDataValid;
-    logic[C_CAS:0] readDataValidShiftReg;
+    reg writeDataValid;
+    reg[C_CAS:0] readDataValidShiftReg;
     assign cmdReadDataValid = readDataValidShiftReg[0];
     
-    logic[1:0] cmdAddrBank;
-    logic[11:0] cmdAddrRow;
-    logic[8:0] cmdAddrCol;
-    assign cmdAddrBank = cmdAddr[22:21];
-    assign cmdAddrRow = cmdAddr[20:9];
-    assign cmdAddrCol = cmdAddr[8:0];
+    wire[1:0] cmdAddrBank = cmdAddr[22:21];
+    wire[11:0] cmdAddrRow = cmdAddr[20:9];
+    wire[8:0] cmdAddrCol = cmdAddr[8:0];
     
-    logic savedCmdTrigger;
-    logic savedCmdWrite;
-    logic[22:0] savedCmdAddr;
-    logic[15:0] savedCmdWriteData;
+    reg savedCmdTrigger;
+    reg savedCmdWrite;
+    reg[22:0] savedCmdAddr;
+    reg[15:0] savedCmdWriteData;
     
-    logic[1:0] savedCmdAddrBank;
-    logic[11:0] savedCmdAddrRow;
-    logic[8:0] savedCmdAddrCol;
-    assign savedCmdAddrBank = savedCmdAddr[22:21];
-    assign savedCmdAddrRow = savedCmdAddr[20:9];
-    assign savedCmdAddrCol = savedCmdAddr[8:0];
+    wire[1:0] savedCmdAddrBank = savedCmdAddr[22:21];
+    wire[11:0] savedCmdAddrRow = savedCmdAddr[20:9];
+    wire[8:0] savedCmdAddrCol = savedCmdAddr[8:0];
     
     // ## SDRAM nets
     assign sdram_clk = clk;
     assign sdram_cs_ = 0;
     
-    logic[2:0] sdram_cmd;
+    reg[2:0] sdram_cmd;
     assign sdram_ras_ = sdram_cmd[2];
     assign sdram_cas_ = sdram_cmd[1];
     assign sdram_we_ = sdram_cmd[0];
     
-    logic sdram_dqm;
+    reg sdram_dqm;
     assign sdram_udqm = sdram_dqm;
     assign sdram_ldqm = sdram_dqm;
     
-    logic[15:0] sdram_writeData;
+    reg[15:0] sdram_writeData;
     
     // Hook up cmdReadData/sdram_writeData to sdram_dq
     genvar i;
@@ -204,7 +197,7 @@ module SDRAMController(
         sdram_a <= 12'b010000000000; // sdram_a[10]=1 for PrechargeAll
     endtask
     
-    task HandleWrite(input logic substate);
+    task HandleWrite(input wire substate);
         // Save the incoming command
         SaveCommand();
         
@@ -247,7 +240,7 @@ module SDRAMController(
         end else StartState(Max(0, Clocks(T_WR)), StateWriteAbort);
     endtask
     
-    task HandleRead(input logic substate);
+    task HandleRead(input wire substate);
         // Save the incoming command
         SaveCommand();
         
@@ -298,7 +291,7 @@ module SDRAMController(
         refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
     endtask
     
-    task StartReadWrite(input logic write, input logic[22:0] addr);
+    task StartReadWrite(input wire write, input wire[22:0] addr);
         // Activate the bank+row
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];
