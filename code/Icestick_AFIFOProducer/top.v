@@ -1,77 +1,22 @@
 `timescale 1ns/1ps
 
-`ifndef SIM
-
-/**
- * PLL configuration
- *
- * This Verilog module was generated automatically
- * using the icepll tool from the IceStorm project.
- * Use at your own risk.
- *
- * Given input frequency:        12.000 MHz
- * Requested output frequency:   16.000 MHz
- * Achieved output frequency:    15.938 MHz
- */
-
-module CLKPLL(
-	input  clock_in,
-	output clock_out,
-	output locked
-	);
-
-SB_PLL40_CORE #(
-		.FEEDBACK_PATH("SIMPLE"),
-		.DIVR(4'b0000),		// DIVR =  0
-		.DIVF(7'b1010100),	// DIVF = 84
-		.DIVQ(3'b110),		// DIVQ =  6
-		.FILTER_RANGE(3'b001)	// FILTER_RANGE = 1
-	) uut (
-		.LOCK(locked),
-		.RESETB(1'b1),
-		.BYPASS(1'b0),
-		.REFERENCECLK(clock_in),
-		.PLLOUTCORE(clock_out)
-		);
-
-endmodule
-
-`endif
-
 module Icestick_AFIFOProducer(
     input wire clk12mhz,
-    
-`ifdef SIM
-    output reg clk = 0,
-`else
     output wire clk,
-`endif
     output reg w = 0,
     output reg[11:0] wd = 0
 );
-
+    
 `ifdef SIM
-    initial begin
-        $dumpfile("top.vcd");
-        $dumpvars(0, Icestick_AFIFOProducer);
-        #10000000;
-        $finish;
-    end
-    
-    // clk (16 MHz)
-    initial begin
-        forever begin
-            clk = !clk;
-            #31;
-        end
-    end
-    
-    reg[7:0] rstCounter = 0;
+    reg[7:0] clkDivider = 0;
 `else
-    reg[25:0] rstCounter = 0; // 4 second reset
-    CLKPLL pll(.clock_in(clk12mhz), .clock_out(clk));
+    reg[23:0] clkDivider = 0; // 1.4 Hz
 `endif
     
+    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
+    assign clk = clkDivider[$size(clkDivider)-1];
+    
+    reg[1:0] rstCounter = 0;
     wire rst = !(&rstCounter);
     always @(posedge clk)
         if (rst)
