@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 `include "../SDRAMController.v"
-`include "../FIFO.v"
+`include "../AFIFO.v"
 `include "../uart.v"
 
 module ClockGenerator(
@@ -24,138 +24,128 @@ module ClockGenerator(
 endmodule
 
 module IceboardTest_PretendWriteImage(
-    input logic         clk12mhz,   // 12 MHz crystal
+    input wire          clk12mhz,   // 12 MHz crystal
     
-    output logic        sdram_clk,
-    output logic        sdram_cke,
-    output logic[1:0]   sdram_ba,
-    output logic[11:0]  sdram_a,
-    output logic        sdram_cs_,
-    output logic        sdram_ras_,
-    output logic        sdram_cas_,
-    output logic        sdram_we_,
-    output logic        sdram_udqm,
-    output logic        sdram_ldqm,
-    inout logic[15:0]   sdram_dq,
+    output wire         ram_clk,
+    output wire         ram_cke,
+    output wire[1:0]    ram_ba,
+    output wire[11:0]   ram_a,
+    output wire         ram_cs_,
+    output wire         ram_ras_,
+    output wire         ram_cas_,
+    output wire         ram_we_,
+    output wire         ram_udqm,
+    output wire         ram_ldqm,
+    inout wire[15:0]    ram_dq,
     
-    input logic         pix_clk,    // Clock from image sensor
-    input logic         pix_frameValid,
-    input logic         pix_lineValid,
-    input logic[11:0]   pix_d       // Data from image sensor
+    input wire          pix_clk,    // Clock from image sensor
+    input wire          pix_frameValid,
+    input wire          pix_lineValid,
+    input wire[11:0]    pix_d       // Data from image sensor
 );
-    // Generate our own reset signal
-    // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
-    logic[12:0] rstCounter;
-    logic rst;
-    `ifdef SIM
-    initial rstCounter = 0;
-    `endif
-    assign rst = !rstCounter[$size(rstCounter)-1];
-    always @(posedge clk12mhz) begin
-        if (rst) begin
-            rstCounter <= rstCounter+1;
-        end
-    end
-    
     localparam ClockFrequency = 100000000; // 100 MHz
-    localparam AddrWidth = 23;
-    localparam AddrCount = 'h800000;
-    localparam AddrCountLimit = AddrCount;
-    // localparam AddrCountLimit = AddrCount/1024; // 32k words
-    // localparam AddrCountLimit = AddrCount/8192; // 1k words
-    localparam DataWidth = 16;
-    localparam MaxEnqueuedReads = 10;
     
-    logic clk;
+    localparam RAM_AddrWidth = 23;
+    localparam RAM_DataWidth = 16;
+    
+    wire clk;
     ClockGenerator clockGen(
         .clock_in(clk12mhz),
         .clock_out(clk),
         .locked()
     );
     
-    logic                   cmdReady;
-    logic                   cmdTrigger;
-    logic[AddrWidth-1:0]    cmdAddr;
-    logic                   cmdWrite;
-    logic[DataWidth-1:0]    cmdWriteData;
-    logic[DataWidth-1:0]    cmdReadData;
-    logic                   cmdReadDataValid;
+    // RAM
+    wire                    ram_cmdReady;
+    reg                     ram_cmdTrigger = 0;
+    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
+    reg                     ram_cmdWrite = 0;
+    wire[RAM_DataWidth-1:0] ram_cmdWriteData;
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
         .clk(clk),
-        .rst(rst),
+        .rst(0), // TODO: figure out resetting
         
-        .cmdReady(cmdReady),
-        .cmdTrigger(cmdTrigger),
-        .cmdAddr(cmdAddr),
-        .cmdWrite(cmdWrite),
-        .cmdWriteData(cmdWriteData),
-        .cmdReadData(cmdReadData),
-        .cmdReadDataValid(cmdReadDataValid),
+        .cmdReady(ram_cmdReady),
+        .cmdTrigger(ram_cmdTrigger),
+        .cmdAddr(ram_cmdAddr),
+        .cmdWrite(ram_cmdWrite),
+        .cmdWriteData(ram_cmdWriteData),
+        .cmdReadData(),
+        .cmdReadDataValid(),
         
-        .sdram_clk(sdram_clk),
-        .sdram_cke(sdram_cke),
-        .sdram_ba(sdram_ba),
-        .sdram_a(sdram_a),
-        .sdram_cs_(sdram_cs_),
-        .sdram_ras_(sdram_ras_),
-        .sdram_cas_(sdram_cas_),
-        .sdram_we_(sdram_we_),
-        .sdram_udqm(sdram_udqm),
-        .sdram_ldqm(sdram_ldqm),
-        .sdram_dq(sdram_dq)
+        .sdram_clk(ram_clk),
+        .sdram_cke(ram_cke),
+        .sdram_ba(ram_ba),
+        .sdram_a(ram_a),
+        .sdram_cs_(ram_cs_),
+        .sdram_ras_(ram_ras_),
+        .sdram_cas_(ram_cas_),
+        .sdram_we_(ram_we_),
+        .sdram_udqm(ram_udqm),
+        .sdram_ldqm(ram_ldqm),
+        .sdram_dq(ram_dq)
     );
     
-    AFIFO #(.Size(32)) pixBuffer(
-        .rclk(clk),
-        .r(pix_frameValid & pix_lineValid),
-        .rd(pix_d),
-        .rempty(rempty),
-        
-        .wclk(wclk),
-        .w(w),
-        .wd(wd),
-        .wfull()
-    );
+    // Pixel buffer
+    wire[11:0] pixbuf_data;
+    wire pixbuf_read;
+    wire pixbuf_canRead;
+    wire pixbuf_canWrite;
+    // AFIFO #(.Width(12), .Size(32)) pixbuf(
+    //     .rclk(clk),
+    //     .r(pixbuf_read),
+    //     .rd(pixbuf_data),
+    //     .rok(pixbuf_canRead),
+    //
+    //     .wclk(pix_clk),
+    //     .w(pix_frameValid & pix_lineValid),
+    //     .wd(pix_d),
+    //     .wok(pixbuf_canWrite)
+    // );
+    
+    // // Handle pixbuf becoming full
+    // always @(posedge clk) begin
+    //     // TODO: handle pixbuf being full -- should never happen as long as we're consuming pixels at a rate >= the pixel production rate
+    //     if (!pixbuf_canWrite);
+    // end
+    
+    // Logic
+    // assign ram_cmdWriteData = {4'b0, pixbuf_data};
+    //
+    // wire writePixel = ram_cmdReady & ram_cmdTrigger & ram_cmdWrite & pixbuf_canRead;
+    // assign pixbuf_read = writePixel;
+    //
+    // always @(posedge clk) begin
+    //     if (!ram_cmdTrigger) begin
+    //         ram_cmdTrigger <= 1;
+    //         ram_cmdWrite <= 1;
+    //
+    //     end else if (writePixel) begin
+    //         ram_cmdAddr <= ram_cmdAddr+1;
+    //     end
+    // end
+    
+    
+    
+    assign ram_cmdWriteData = 0;
+    
+    wire writePixel = ram_cmdReady & ram_cmdTrigger & ram_cmdWrite & pixbuf_canRead;
+    assign pixbuf_read = writePixel;
     
     always @(posedge clk) begin
-        if (rst) begin
-            cmdTrigger <= 0;
+        if (!ram_cmdTrigger) begin
+            ram_cmdTrigger <= 1;
+            ram_cmdWrite <= 1;
         
-        // Initialize memory to known values
         end else begin
-            // Start
-            if (!cmdTrigger) begin
-                cmdTrigger <= 1;
-                cmdAddr <= 0;
-                cmdWrite <= 0;
-                cmdWriteData <= 0;
-            
-            // Continue
-            end else if (cmdReady) begin
-                cmdAddr <= cmdAddr+1;
-                cmdWriteData <= cmdAddr;
-            end
+            ram_cmdAddr <= ram_cmdAddr+1;
         end
     end
     
-    localparam PixelWidth = 12; // Width of a single pixel
-    localparam PixelBufferSlots = 10; // Number of pixels that the buffer contains
-    FIFO #(
-        .Width(PixelWidth),
-        .Slots(PixelBufferSlots)
-    ) pixBuffer(
-        .clk(pix_clk),
-        
-        .din(pix_frameValid & pix_lineValid),
-        .d(pix_d),
-        
-        .qout(),
-        .q(),
-        .qValid()
-    );
+    
 endmodule
 
 `ifdef SIM
