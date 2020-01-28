@@ -14,7 +14,7 @@
  * Achieved output frequency:    15.938 MHz
  */
 
-module WCLKPLL(
+module CLKPLL(
 	input  clock_in,
 	output clock_out,
 	output locked
@@ -42,9 +42,9 @@ module Icestick_AFIFOProducer(
     input wire clk12mhz,
     
 `ifdef SIM
-    output reg wclk = 0,
+    output reg clk = 0,
 `else
-    output wire wclk,
+    output wire clk,
 `endif
     output reg w = 0,
     output reg[11:0] wd = 0
@@ -58,10 +58,10 @@ module Icestick_AFIFOProducer(
         $finish;
     end
     
-    // wclk (16 MHz)
+    // clk (16 MHz)
     initial begin
         forever begin
-            wclk = !wclk;
+            clk = !clk;
             #31;
         end
     end
@@ -69,16 +69,16 @@ module Icestick_AFIFOProducer(
     reg[7:0] rstCounter = 0;
 `else
     reg[25:0] rstCounter = 0; // 4 second reset
-    WCLKPLL pll(.clock_in(clk12mhz), .clock_out(wclk));
+    CLKPLL pll(.clock_in(clk12mhz), .clock_out(clk));
 `endif
     
     wire rst = !(&rstCounter);
-    always @(posedge wclk)
+    always @(posedge clk)
         if (rst)
             rstCounter <= rstCounter+1;
     
     // Produce values
-    always @(posedge wclk) begin
+    always @(posedge clk) begin
         if (!rst) begin
             if (w) begin
                 // We wrote a value, continue to the next one
