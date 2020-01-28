@@ -94,17 +94,17 @@ module IceboardTest_PretendWriteImage(
     wire pixbuf_read;
     wire pixbuf_canRead;
     wire pixbuf_canWrite;
-    // AFIFO #(.Width(12), .Size(32)) pixbuf(
-    //     .rclk(clk),
-    //     .r(pixbuf_read),
-    //     .rd(pixbuf_data),
-    //     .rok(pixbuf_canRead),
-    //
-    //     .wclk(pix_clk),
-    //     .w(pix_frameValid & pix_lineValid),
-    //     .wd(pix_d),
-    //     .wok(pixbuf_canWrite)
-    // );
+    AFIFO #(.Width(12), .Size(32)) pixbuf(
+        .rclk(clk),
+        .r(pixbuf_read),
+        .rd(pixbuf_data),
+        .rok(pixbuf_canRead),
+
+        .wclk(pix_clk),
+        .w(pix_frameValid & pix_lineValid),
+        .wd(pix_d),
+        .wok(pixbuf_canWrite)
+    );
     
     // // Handle pixbuf becoming full
     // always @(posedge clk) begin
@@ -112,7 +112,7 @@ module IceboardTest_PretendWriteImage(
     //     if (!pixbuf_canWrite);
     // end
     
-    // Logic
+    // // Logic
     // assign ram_cmdWriteData = {4'b0, pixbuf_data};
     //
     // wire writePixel = ram_cmdReady & ram_cmdTrigger & ram_cmdWrite & pixbuf_canRead;
@@ -140,11 +140,10 @@ module IceboardTest_PretendWriteImage(
             ram_cmdTrigger <= 1;
             ram_cmdWrite <= 1;
         
-        end else begin
+        end else if (writePixel) begin
             ram_cmdAddr <= ram_cmdAddr+1;
         end
     end
-    
     
 endmodule
 

@@ -21,7 +21,7 @@ proj="$3"
 mkdir -p "$proj/tmp"
 cd "$proj/tmp"
 
-# Synthesize the design from Verilog (.v -> .blif)
+# Synthesize the design from Verilog (.v -> .json)
 yosys -p "synth_ice40 -top $proj -json top.json" ../top.v
 
 # Place and route the design ({top.json, pins.pcf} -> .asc)
