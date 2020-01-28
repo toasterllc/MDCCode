@@ -1,6 +1,9 @@
 `timescale 1ns/1ps
 `include "../AFIFO.v"
+
+`ifdef SIM
 `include "../Icestick_AFIFOProducer/top.v"
+`endif
 
 
 
@@ -125,4 +128,6 @@ module Iceboard_AFIFOConsumer(
     end
     
     assign led = rfail;
+    // assign led = !rempty;
+    // assign led = rvalValid;
 endmodule
