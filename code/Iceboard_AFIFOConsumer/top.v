@@ -21,7 +21,7 @@ module Iceboard_AFIFOConsumer(
 `ifdef SIM
     reg[7:0] clkDivider = 0;
 `else
-    reg[23:0] clkDivider = 0; // 1.4 Hz
+    reg[11:0] clkDivider = 0;
 `endif
     
     always @(posedge clk12mhz) clkDivider <= clkDivider+1;
