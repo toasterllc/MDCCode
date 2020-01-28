@@ -46,7 +46,7 @@ module Iceboard_AFIFOConsumer(
     wire[11:0] rd;
     wire rempty;
     
-    AFIFO afifo(
+    AFIFO #(.Size(32)) afifo(
         .rclk(clk),
         .r(r),
         .rd(rd),
