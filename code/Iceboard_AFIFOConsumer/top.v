@@ -17,15 +17,7 @@ module Iceboard_AFIFOConsumer(
     input wire[11:0] wd
 );
     
-    wire clk;
-`ifdef SIM
-    reg[7:0] clkDivider = 0;
-`else
-    reg[11:0] clkDivider = 0;
-`endif
-    
-    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
-    assign clk = clkDivider[$size(clkDivider)-1];
+    wire clk = clk12mhz;
     
 `ifdef SIM
     // clk12mhz
