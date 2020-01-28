@@ -108,6 +108,18 @@ module IceboardTest_PretendWriteImage(
         .sdram_dq(sdram_dq)
     );
     
+    AFIFO #(.Size(32)) pixBuffer(
+        .rclk(clk),
+        .r(pix_frameValid & pix_lineValid),
+        .rd(pix_d),
+        .rempty(rempty),
+        
+        .wclk(wclk),
+        .w(w),
+        .wd(wd),
+        .wfull()
+    );
+    
     always @(posedge clk) begin
         if (rst) begin
             cmdTrigger <= 0;

@@ -44,18 +44,18 @@ module Iceboard_AFIFOConsumer(
     
     reg r = 0;
     wire[11:0] rd;
-    wire rempty;
+    wire rok;
     
     AFIFO #(.Size(32)) afifo(
         .rclk(clk),
         .r(r),
         .rd(rd),
-        .rempty(rempty),
+        .rok(rok),
         
         .wclk(wclk),
         .w(w),
         .wd(wd),
-        .wfull()
+        .wok()
     );
     
     // Consume values
@@ -69,7 +69,7 @@ module Iceboard_AFIFOConsumer(
                 r <= 1;
             
             // Read if data is available
-            end else if (!rempty) begin
+            end else if (rok) begin
                 $display("Read value: %h", rd);
                 rval <= rd;
                 rvalValid <= 1;

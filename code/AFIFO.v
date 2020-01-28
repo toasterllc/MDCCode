@@ -1,15 +1,15 @@
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
 module AFIFO(
-    input wire rclk,
-    input wire r,
-    output wire[Width-1:0] rd,
-    output reg rempty,
+    input wire rclk,            // Read clock
+    input wire r,               // Read trigger
+    output wire[Width-1:0] rd,  // Read data
+    output wire rok,            // Read OK (data available -- not empty)
     
-    input wire wclk,
-    input wire w,
-    input wire[Width-1:0] wd,
-    output reg wfull = 0
+    input wire wclk,            // Write clock
+    input wire w,               // Write trigger
+    input wire[Width-1:0] wd,   // Write data
+    output wire wok             // Write OK (space available -- not full)
 );
     parameter Width = 12;
     parameter Size = 4; // Must be a power of 2 and >=4
@@ -29,13 +29,14 @@ module AFIFO(
             rgaddr <= (rbaddrNext>>1)^rbaddrNext;
         end
     
-    reg rempty2 = 0;
+    reg rempty, rempty2 = 0;
     always @(posedge rclk, posedge aempty)
         // TODO: ensure that before the first clock, empty==true so outside entities don't think they can read
         if (aempty) {rempty, rempty2} <= 2'b11;
         else {rempty, rempty2} <= {rempty2, 1'b0};
     
     assign rd = mem[rbaddr];
+    assign rok = !rempty;
     
     // ====================
     // Write handling
@@ -48,10 +49,12 @@ module AFIFO(
             wgaddr <= (wbaddrNext>>1)^wbaddrNext;
         end
     
-    reg wfull2 = 0;
+    reg wfull, wfull2 = 0;
     always @(posedge wclk, posedge afull)
         if (afull) {wfull, wfull2} <= 2'b11;
         else {wfull, wfull2} <= {wfull2, 1'b0};
+    
+    assign wok = !wfull;
     
     // ====================
     // Async signal generation
