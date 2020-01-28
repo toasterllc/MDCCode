@@ -10,7 +10,7 @@ module Icestick_AFIFOProducer(
 `ifdef SIM
     reg[7:0] clkDivider = 0;
 `else
-    reg[12:0] clkDivider = 0;
+    reg[8:0] clkDivider = 0; // 23kHz
 `endif
     
     always @(posedge clk12mhz) clkDivider <= clkDivider+1;
