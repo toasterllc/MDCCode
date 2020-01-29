@@ -1,48 +1,28 @@
 `timescale 1ns/1ps
+`include "../ClockGen.v"
 `include "../AFIFO.v"
-
-`ifdef SIM
-`include "../Icestick_AFIFOProducer/top.v"
-`endif
+// `include "../Icestick_AFIFOProducer/top.v"
 
 module Iceboard_AFIFOConsumer(
-`ifndef SIM
     input wire clk12mhz,
-`endif
-    
     output wire led,
-    
     input wire wclk,
     input wire w,
     input wire[11:0] wd
 );
+    wire clk;
+    wire rst;
     
-    wire clk = clk12mhz;
+    // 100 MHz clock
+    ClockGen #(
+        .FREQ(100),
+		.DIVR(0),
+		.DIVF(66),
+		.DIVQ(3),
+		.FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
-`ifdef SIM
-    // clk12mhz
-    reg clk12mhz = 0;
-    initial begin
-        forever begin
-            clk12mhz = !clk12mhz;
-            #42; // 12 MHz
-        end
-    end
-    
-    Icestick_AFIFOProducer producer(.clk12mhz(clk12mhz), .clk(wclk), .w(w), .wd(wd));
-    
-    initial begin
-        $dumpfile("top.vcd");
-        $dumpvars(0, Iceboard_AFIFOConsumer);
-        #100000000;
-        $finish;
-    end
-`endif
-    
-    // wire wclk;
-    // assign wclk = clk;
-    
-    reg r = 0;
+    reg r;
     wire[11:0] rd;
     wire rok;
     
@@ -60,10 +40,15 @@ module Iceboard_AFIFOConsumer(
     
     // Consume values
     reg[11:0] rval;
-    reg rvalValid = 0;
-    reg rfail = 0;
+    reg rvalValid;
+    reg rfail;
     always @(posedge clk) begin
-        if (!rfail) begin
+        if (rst) begin
+            r <= 0;
+            rvalValid <= 0;
+            rfail <= 0;
+        
+        end else if (!rfail) begin
             // Init
             if (!r) begin
                 r <= 1;
@@ -89,4 +74,15 @@ module Iceboard_AFIFOConsumer(
     assign led = rfail;
     // assign led = !rempty;
     // assign led = rvalValid;
+    
+`ifdef SIM
+    Icestick_AFIFOProducer producer(.clk12mhz(clk12mhz), .wclk(wclk), .w(w), .wd(wd));
+    
+    initial begin
+       $dumpfile("top.vcd");
+       $dumpvars(0, Iceboard_AFIFOConsumer);
+       #1000000000000;
+       $finish;
+      end
+`endif
 endmodule
