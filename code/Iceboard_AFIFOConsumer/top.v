@@ -5,7 +5,7 @@
 
 module Iceboard_AFIFOConsumer(
     input wire clk12mhz,
-    output wire led,
+    output reg[7:0] led,
     input wire wclk,
     input wire w,
     input wire[11:0] wd
@@ -67,8 +67,10 @@ module Iceboard_AFIFOConsumer(
     always @(posedge clk) begin
         if (rst) begin
             r <= 0;
+            rval <= 0;
             rvalValid <= 0;
             rfail <= 0;
+            led <= 0;
         
         end else if (!rfail) begin
             // Init
@@ -85,15 +87,14 @@ module Iceboard_AFIFOConsumer(
                 // `assert(!rvalValid | ((rval+1'b1)==rd));
                 if (rvalValid & ((rval+1'b1)!=rd)) begin
                     $display("Error: read invalid value; wanted: %h got: %h", (rval+1'b1), rd);
+                    led <= led+1;
                     rfail <= 1;
-                    // Stop reading
-                    r <= 0;
                 end
             end
         end
     end
     
-    assign led = rfail;
+    // assign led = rfail;
     // assign led = rst;
     // assign led = !rempty;
     // assign led = rvalValid;
