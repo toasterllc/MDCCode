@@ -1,9 +1,6 @@
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
-module AFIFO #(
-    parameter Width=12,
-    parameter Size=4
-)(
+module AFIFO(
     input wire rclk,            // Read clock
     input wire r,               // Read trigger
     output wire[Width-1:0] rd,  // Read data
@@ -14,9 +11,11 @@ module AFIFO #(
     input wire[Width-1:0] wd,   // Write data
     output wire wok             // Write OK (space available -- not full)
 );
+    parameter Width = 12;
+    parameter Size = 4; // Must be a power of 2 and >=4
     localparam N = $clog2(Size)-1;
     
-    reg[(Size*Width)-1:0] mem;
+    reg[Width-1:0] mem[Size-1:0];
     reg[N:0] rbaddr=0, rgaddr=0; // Read addresses (binary, gray)
     reg[N:0] wbaddr=0, wgaddr=0; // Write addresses (binary, gray)
     
@@ -36,7 +35,7 @@ module AFIFO #(
         if (aempty) {rempty, rempty2} <= 2'b11;
         else {rempty, rempty2} <= {rempty2, 1'b0};
     
-    assign rd = mem[rbaddr*Width +: Width];
+    assign rd = mem[rbaddr];
     assign rok = !rempty;
     
     // ====================
@@ -45,7 +44,7 @@ module AFIFO #(
     wire[N:0] wbaddrNext = wbaddr+1'b1;
     always @(posedge wclk)
         if (w & !wfull) begin
-            mem[wbaddr*Width +: Width] <= wd;
+            mem[wbaddr] <= wd;
             wbaddr <= wbaddrNext;
             wgaddr <= (wbaddrNext>>1)^wbaddrNext;
         end
