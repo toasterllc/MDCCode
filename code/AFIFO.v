@@ -1,6 +1,9 @@
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
-module AFIFO(
+module AFIFO #(
+    parameter Width=12,
+    parameter Size=4 // Must be a power of 2 and >=4
+)(
     input wire rclk,            // Read clock
     input wire r,               // Read trigger
     output wire[Width-1:0] rd,  // Read data
@@ -11,8 +14,6 @@ module AFIFO(
     input wire[Width-1:0] wd,   // Write data
     output wire wok             // Write OK (space available -- not full)
 );
-    parameter Width = 12;
-    parameter Size = 4; // Must be a power of 2 and >=4
     localparam N = $clog2(Size)-1;
     
     reg[Width-1:0] mem[Size-1:0];
