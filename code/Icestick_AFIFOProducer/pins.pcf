@@ -1,6 +1,6 @@
 set_io clk12mhz     21
 
-set_io clk          119
+set_io wclk         119
 set_io w            118
 
 set_io wd[11]       117
