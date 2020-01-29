@@ -104,7 +104,7 @@ module Iceboard_AFIFOConsumer(
     initial begin
        $dumpfile("top.vcd");
        $dumpvars(0, Iceboard_AFIFOConsumer);
-       #1000000000000;
+       #10000000000000;
        $finish;
       end
 `endif

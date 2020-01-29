@@ -19,6 +19,8 @@ module AFIFO #(
     localparam N = $clog2(Size)-1;
     reg[Width-1:0] mem[Size-1:0];
     
+    //          /* synthesis syn_ramstyle="registers" */
+    
     // ====================
     // Read handling
     // ====================
