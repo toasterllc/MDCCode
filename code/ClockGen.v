@@ -54,8 +54,15 @@ module ClockGen #(
     
     // Generate `rst`
     reg[15:0] rst_;
+    assign rst = !rst_[$size(rst_)-1];
     always @(posedge clk)
         if (!locked) rst_ <= 1;
         else if (rst) rst_ <= rst_<<1;
-    assign rst = !rst_[$size(rst_)-1];
+    
+    // // Generate `rst`
+    // reg[15:0] rstCounter;
+    // always @(posedge clk)
+    //     if (!locked) rstCounter <= 0;
+    //     else if (rst) rstCounter <= rstCounter+1;
+    // assign rst = !(&rstCounter);
 endmodule

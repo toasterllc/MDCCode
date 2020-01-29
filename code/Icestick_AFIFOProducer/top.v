@@ -20,17 +20,24 @@ module Icestick_AFIFOProducer(
 		.FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
-    reg[8:0] wclkCounter;
+    reg[25:0] delayCounter;
+    wire delay = !(&delayCounter);
+    
+    reg[13:0] wclkCounter;
     assign wclk = wclkCounter[$size(wclkCounter)-1];
     reg wclkLast;
     
     // Produce values
     always @(posedge clk) begin
         if (rst) begin
+            delayCounter <= 0;
             wclkCounter <= 0;
             w <= 0;
             wd <= 0;
             wclkLast <= 0;
+        
+        end else if (delay) begin
+            delayCounter <= delayCounter+1;
         
         end else begin
             if (wclk & !wclkLast) begin

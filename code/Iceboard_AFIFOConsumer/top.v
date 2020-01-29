@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
-`include "../ClockGen.v"
+// `include "../ClockGen.v"
 `include "../AFIFO.v"
-// `include "../Icestick_AFIFOProducer/top.v"
+`include "../Icestick_AFIFOProducer/top.v"
 
 module Iceboard_AFIFOConsumer(
     input wire clk12mhz,
@@ -15,24 +15,46 @@ module Iceboard_AFIFOConsumer(
     
     // 100 MHz clock
     ClockGen #(
-        .FREQ(100),
+        .FREQ(16),
 		.DIVR(0),
-		.DIVF(66),
-		.DIVQ(3),
+		.DIVF(84),
+		.DIVQ(6),
 		.FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
+    
+    
+    
+    // reg[15:0] wrstShiftReg;
+    // wire wrstStart = wrstShiftReg[0];
+    // wire wrstDeassert = wrstShiftReg[7];
+    // wire wrstDone = wrstShiftReg[15];
+    // wire wrst =
+    // always @(posedge clk) begin
+    //     if (rst) wrstShiftReg <= 1;
+    //     else if (wrst) wrstShiftReg <= (wrstShiftReg<<1)|1;
+    // end
+    
+    // wire wclktri;
+    // Tristate wclkTristate(.d(clk), .en(wrst), .q(wclktri));
+    
+    reg wrst;
+    always @(negedge clk) begin
+        if (rst) wrst <= 1;
+        else wrst <= 0;
+    end
     
     reg r;
     wire[11:0] rd;
     wire rok;
-    
     AFIFO #(.Size(32)) afifo(
         .rclk(clk),
+        .rrst(rst),
         .r(r),
         .rd(rd),
         .rok(rok),
         
-        .wclk(wclk),
+        .wclk(wrst ? clk : wclk),
+        .wrst(wrst),
         .w(w),
         .wd(wd),
         .wok()
@@ -72,6 +94,7 @@ module Iceboard_AFIFOConsumer(
     end
     
     assign led = rfail;
+    // assign led = rst;
     // assign led = !rempty;
     // assign led = rvalValid;
     
