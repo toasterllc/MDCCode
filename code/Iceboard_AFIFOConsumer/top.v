@@ -72,7 +72,7 @@ module Iceboard_AFIFOConsumer(
                 
                 // Check if the current value is the previous value +1
                 if ((rval1Valid&rval2Valid) & ((rval1+1'b1)!=rval2)) begin
-                    $display("Error: read invalid value; wanted: %h got: %h", rexpected, rd);
+                    $display("Error: read invalid value; wanted: %h got: %h", (rval1+1'b1), rval2);
                     rfail <= 1;
                 end
             end
