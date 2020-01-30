@@ -53,8 +53,8 @@ module Iceboard_AFIFOConsumer(
     
     // Consume values
     reg[11:0] rval = 0;
-    reg rvalValid = 0 /* synthesis syn_keep=1 */;
-    reg rfail = 0 /* synthesis syn_keep=1 */;
+    reg rvalValid = 0;
+    reg rfail = 0 /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
     always @(posedge clk) begin
         if (!rfail) begin
             // Init
