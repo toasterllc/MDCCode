@@ -17,53 +17,51 @@ module AFIFO #(
     localparam N = $clog2(Size)-1;
     reg[Width-1:0] mem[Size-1:0];
     
-    //          /* synthesis syn_ramstyle="registers" */
-    
     // ====================
     // Read handling
     // ====================
-    reg[N:0] rbaddr, rgaddr; // Read addresses (binary, gray)
+    reg[N:0] rbaddr=0, rgaddr=0; // Read addresses (binary, gray)
     wire[N:0] rbaddrNext = rbaddr+1'b1;
     always @(posedge rclk)
-        if (r & !rempty) begin
+        if (r & rok) begin
             rbaddr <= rbaddrNext;
             rgaddr <= (rbaddrNext>>1)^rbaddrNext;
         end
     
-    reg rempty, rempty2;
-    always @(posedge rclk, posedge aempty)
-        // TODO: ensure that before the first clock, empty==true so outside entities don't think they can read
-        if (aempty) {rempty, rempty2} <= 2'b11;
-        else {rempty, rempty2} <= {rempty2, 1'b0};
+    reg[1:0] rokReg = 0;
+    always @(posedge rclk, negedge arok)
+        // TODO: ensure that before the first clock, rok==true so outside entities don't think they can read
+        if (!arok) rokReg <= 2'b00;
+        else rokReg <= (rokReg<<1)|1'b1;
     
     assign rd = mem[rbaddr];
-    assign rok = !rempty;
+    assign rok = rokReg[1];
     
     // ====================
     // Write handling
     // ====================
-    reg[N:0] wbaddr, wgaddr; // Write addresses (binary, gray)
+    reg[N:0] wbaddr=0, wgaddr=0; // Write addresses (binary, gray)
     wire[N:0] wbaddrNext = wbaddr+1'b1;
     always @(posedge wclk)
-        if (w & !wfull) begin
+        if (w & wok) begin
             mem[wbaddr] <= wd;
             wbaddr <= wbaddrNext;
             wgaddr <= (wbaddrNext>>1)^wbaddrNext;
         end
     
-    reg wfull, wfull2;
-    always @(posedge wclk, posedge afull)
-        if (afull) {wfull, wfull2} <= 2'b11;
-        else {wfull, wfull2} <= {wfull2, 1'b0};
+    reg[1:0] wokReg_ = 0; // Inverted logic so we come out of reset with wok==true
+    always @(posedge wclk, negedge awok)
+        if (!awok) wokReg_ <= 2'b11;
+        else wokReg_ <= (wokReg_<<1)|1'b0;
     
-    assign wok = !wfull;
+    assign wok = !wokReg_[1];
     
     // ====================
     // Async signal generation
     // ====================
-    reg dir;
-    wire aempty = (rgaddr==wgaddr) & !dir;
-    wire afull = (rgaddr==wgaddr) & dir;
+    reg dir = 0;
+    wire arok = !((rgaddr==wgaddr) & !dir); // Read OK == not empty
+    wire awok = !((rgaddr==wgaddr) & dir); // Write OK == not full
     wire dirclr = (rgaddr[N]!=wgaddr[N-1]) & (rgaddr[N-1]==wgaddr[N]);
     wire dirset = (rgaddr[N]==wgaddr[N-1]) & (rgaddr[N-1]!=wgaddr[N]);
     always @(posedge dirclr, posedge dirset)
