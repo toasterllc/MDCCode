@@ -36,7 +36,7 @@ module Iceboard_AFIFOConsumer(
     // wire wclktri;
     // Tristate wclkTristate(.d(clk), .en(wrst), .q(wclktri));
     
-    reg r = 0 /* synthesis syn_keep=1 */;
+    reg r = 0;
     wire[11:0] rd;
     wire rok;
     AFIFO #(.Size(32)) afifo(
