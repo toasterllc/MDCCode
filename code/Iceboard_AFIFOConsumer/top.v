@@ -52,8 +52,8 @@ module Iceboard_AFIFOConsumer(
     );
     
     // Consume values
-    reg[11:0] rval = 0;
-    reg rvalValid = 0;
+    reg[11:0] rval1=0, rval2=0;
+    reg rval1Valid=0, rval2Valid=0;
     reg rfail = 0 /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
     always @(posedge clk) begin
         if (!rfail) begin
@@ -64,13 +64,15 @@ module Iceboard_AFIFOConsumer(
             // Read if data is available
             end else if (rok) begin
                 $display("Read value: %h", rd);
-                rval <= rd;
-                rvalValid <= 1;
+                rval2 <= rd;
+                rval2Valid <= 1'b1;
+                
+                rval1 <= rval2;
+                rval1Valid <= rval2Valid;
                 
                 // Check if the current value is the previous value +1
-                // `assert(!rvalValid | ((rval+1'b1)==rd));
-                if (rvalValid & ((rval+1'b1)!=rd)) begin
-                    $display("Error: read invalid value; wanted: %h got: %h", (rval+1'b1), rd);
+                if ((rval1Valid&rval2Valid) & ((rval1+1'b1)!=rval2)) begin
+                    $display("Error: read invalid value; wanted: %h got: %h", rexpected, rd);
                     rfail <= 1;
                 end
             end
@@ -78,9 +80,6 @@ module Iceboard_AFIFOConsumer(
     end
     
     assign led = rfail;
-    // assign led = rst;
-    // assign led = !rempty;
-    // assign led = rvalValid;
     
 `ifdef SIM
     Icestick_AFIFOProducer producer(.clk12mhz(clk12mhz), .wclk(wclk), .w(w), .wd(wd));
