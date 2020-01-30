@@ -3,7 +3,7 @@
 `include "../SDRAMController.v"
 `include "../AFIFO.v"
 
-module IceboardTest_CopyImage(
+module Iceboard_CopyImage(
     input wire          clk12mhz,   // 12 MHz crystal
     
     output wire         ram_clk,
@@ -121,7 +121,7 @@ endmodule
 // `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 // `include "../4012mt48lc16m16a2/mt48lc16m16a2.v"
 //
-// module IceboardTest_CopyImageSim(
+// module Iceboard_CopyImageSim(
 //     output logic        sdram_clk,
 //     output logic        sdram_cke,
 //     output logic[1:0]   sdram_ba,
@@ -137,7 +137,7 @@ endmodule
 //
 //     logic clk12mhz;
 //
-//     IceboardTest_CopyImage iceboardSDRAMTest(
+//     Iceboard_CopyImage iceboardSDRAMTest(
 //         .clk12mhz(clk12mhz),
 //         .sdram_clk(sdram_clk),
 //         .sdram_cke(sdram_cke),
@@ -167,7 +167,7 @@ endmodule
 //
 //     initial begin
 //        $dumpfile("top.vcd");
-//        $dumpvars(0, IceboardTest_CopyImageSim);
+//        $dumpvars(0, Iceboard_CopyImageSim);
 //
 //        #10000000;
 // //        #200000000;

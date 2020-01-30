@@ -2,7 +2,7 @@
 `include "../uart.v"
 `include "../SDRAMController.v"
 
-module IceboardTest_SDRAMReadWriteViaUART(
+module Iceboard_SDRAMReadWriteViaUART(
     input logic         clk12mhz,
 
     output logic        ledRed,
@@ -294,7 +294,7 @@ endmodule
 `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 `include "../4012mt48lc16m16a2/mt48lc16m16a2.v"
 
-module IceboardTest_SDRAMReadWriteViaUARTSim(
+module Iceboard_SDRAMReadWriteViaUARTSim(
     output logic        ledRed,
 
     output logic        sdram_clk,
@@ -312,7 +312,7 @@ module IceboardTest_SDRAMReadWriteViaUARTSim(
 
     logic clk12mhz;
 
-    IceboardTest_SDRAMReadWriteViaUART iceboardSDRAMTest(
+    Iceboard_SDRAMReadWriteViaUART iceboardSDRAMTest(
         .clk12mhz(clk12mhz),
         .ledRed(ledRed),
         .sdram_clk(sdram_clk),
@@ -356,7 +356,7 @@ module IceboardTest_SDRAMReadWriteViaUARTSim(
 
     initial begin
         $dumpfile("top.vcd");
-        $dumpvars(0, IceboardTest_SDRAMReadWriteViaUARTSim);
+        $dumpvars(0, Iceboard_SDRAMReadWriteViaUARTSim);
 
         #10000000;
         $finish;

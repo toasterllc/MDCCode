@@ -28,7 +28,7 @@ module Scrambler(
 	assign q[7] = d[6];
 endmodule
 
-module IcestickTest_SDRAMReadWriteRandomly(
+module Icestick_SDRAMReadWriteRandomly(
     input logic         clk12mhz,
 
     output logic        ledRed,
@@ -234,7 +234,7 @@ endmodule
 
 `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 
-module IcestickTest_SDRAMReadWriteRandomlySim(
+module Icestick_SDRAMReadWriteRandomlySim(
     output logic        ledRed,
     output logic        ledGreen,
 
@@ -251,7 +251,7 @@ module IcestickTest_SDRAMReadWriteRandomlySim(
 
     logic clk12mhz;
 
-    IcestickTest_SDRAMReadWriteRandomly icestickSDRAMTest(
+    Icestick_SDRAMReadWriteRandomly icestickSDRAMTest(
         .clk12mhz(clk12mhz),
         .ledRed(ledRed),
         .ledGreen(ledGreen),
@@ -281,7 +281,7 @@ module IcestickTest_SDRAMReadWriteRandomlySim(
 
     initial begin
         $dumpfile("top.vcd");
-        $dumpvars(0, IcestickTest_SDRAMReadWriteRandomlySim);
+        $dumpvars(0, Icestick_SDRAMReadWriteRandomlySim);
 
         #10000000;
         $finish;

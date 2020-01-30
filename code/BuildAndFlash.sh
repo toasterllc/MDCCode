@@ -9,8 +9,8 @@ if [ "$#" -ne 3 ]; then
 	
 	echo
 	echo "Examples:"
-	echo "  BuildAndFlash.sh 1k tq144 IcestickTest_SDRAMReadWriteRandomly"
-	echo "  BuildAndFlash.sh 8k ct256 IceboardTest_Blinky"
+	echo "  BuildAndFlash.sh 1k tq144 Icestick_SDRAMReadWriteRandomly"
+	echo "  BuildAndFlash.sh 8k ct256 Iceboard_Blinky"
 	exit 1
 fi
 

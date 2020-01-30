@@ -14,7 +14,7 @@ function reg[15:0] DataFromAddress;
     DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
 endfunction
 
-module IceboardTest_SimpleReadWriteSim(
+module Iceboard_SimpleReadWriteSim(
     output logic        ledRed,
     output logic        ledGreen,
 
@@ -128,7 +128,7 @@ module IceboardTest_SimpleReadWriteSim(
     // Reset
     initial begin
 //        $dumpfile("top.vcd");
-//        $dumpvars(0, IceboardTest_SimpleReadWriteSim);
+//        $dumpvars(0, Iceboard_SimpleReadWriteSim);
         
         rst = 1;
         cmdTrigger = 0;

@@ -21,7 +21,7 @@ module ClockGenerator(
     		);
 endmodule
 
-module IceboardTest_SimpleWriteTest(
+module Iceboard_SimpleWriteTest(
     input wire          clk12mhz,   // 12 MHz crystal
     
     output wire         ram_clk,

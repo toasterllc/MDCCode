@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module IceboardTest_Blinky(
+module Iceboard_Blinky(
     input logic         clk12mhz,
     output logic        ledRed
 );
@@ -37,20 +37,20 @@ endmodule
 
 `ifdef SIM
 
-module IceboardTest_BlinkySim(
+module Iceboard_BlinkySim(
     output logic        ledRed
 );
 
     logic clk12mhz;
 
-    IceboardTest_Blinky icestickSDRAMTest(
+    Iceboard_Blinky icestickSDRAMTest(
         .clk12mhz(clk12mhz),
         .ledRed(ledRed)
     );
 
     initial begin
         $dumpfile("top.vcd");
-        $dumpvars(0, IceboardTest_BlinkySim);
+        $dumpvars(0, Iceboard_BlinkySim);
 
         #10000000;
         $finish;

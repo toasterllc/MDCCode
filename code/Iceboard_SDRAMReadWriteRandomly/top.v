@@ -74,7 +74,7 @@ function [15:0] DataFromAddress;
     // DataFromAddress = 0;
 endfunction
 
-module IceboardTest_SDRAMReadWriteRandomly(
+module Iceboard_SDRAMReadWriteRandomly(
     input logic         clk12mhz,
     
     output logic[7:0]   leds,
@@ -689,7 +689,7 @@ endmodule
 `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 `include "../4012mt48lc16m16a2/mt48lc16m16a2.v"
 
-module IceboardTest_SDRAMReadWriteRandomlySim(
+module Iceboard_SDRAMReadWriteRandomlySim(
     output logic[7:0]   leds,
 
     output logic        sdram_clk,
@@ -707,7 +707,7 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
 
     logic clk12mhz;
 
-    IceboardTest_SDRAMReadWriteRandomly iceboardSDRAMTest(
+    Iceboard_SDRAMReadWriteRandomly iceboardSDRAMTest(
         .clk12mhz(clk12mhz),
         .leds(leds),
         .sdram_clk(sdram_clk),
@@ -751,7 +751,7 @@ module IceboardTest_SDRAMReadWriteRandomlySim(
 
     initial begin
 //        $dumpfile("top.vcd");
-//        $dumpvars(0, IceboardTest_SDRAMReadWriteRandomlySim);
+//        $dumpvars(0, Iceboard_SDRAMReadWriteRandomlySim);
 
 //        #10000000;
 //        #200000000;

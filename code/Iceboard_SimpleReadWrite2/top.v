@@ -37,7 +37,7 @@ function [15:0] DataFromAddress;
 //    DataFromAddress = addr[15:0];
 endfunction
 
-module IceboardTest_SimpleReadWrite2(
+module Iceboard_SimpleReadWrite2(
     input logic         clk12mhz,
     
     output logic        ledFailed,
@@ -281,7 +281,7 @@ endmodule
 `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 `include "../4012mt48lc16m16a2/mt48lc16m16a2.v"
 
-module IceboardTest_SimpleReadWrite2Sim(
+module Iceboard_SimpleReadWrite2Sim(
     output logic        ledFailed,
     output logic        ledDebug,
 
@@ -300,7 +300,7 @@ module IceboardTest_SimpleReadWrite2Sim(
 
     logic clk12mhz;
 
-    IceboardTest_SimpleReadWrite2 iceboardSDRAMTest(
+    Iceboard_SimpleReadWrite2 iceboardSDRAMTest(
         .clk12mhz(clk12mhz),
         .ledFailed(ledFailed),
         .ledDebug(ledDebug),
@@ -345,7 +345,7 @@ module IceboardTest_SimpleReadWrite2Sim(
 
     initial begin
         $dumpfile("top.vcd");
-        $dumpvars(0, IceboardTest_SimpleReadWrite2Sim);
+        $dumpvars(0, Iceboard_SimpleReadWrite2Sim);
 
         #10000000;
 //        #200000000;
