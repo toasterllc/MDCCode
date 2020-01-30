@@ -9,7 +9,6 @@ module Icestick_AFIFOProducer(
 );
     
     wire clk;
-    wire rst;
     
     // 16 MHz clock
     ClockGen #(
@@ -18,7 +17,7 @@ module Icestick_AFIFOProducer(
 		.DIVF(84),
 		.DIVQ(6),
 		.FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
+    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst());
     
     reg[25:0] delayCounter;
     wire delay = !(&delayCounter);
@@ -29,14 +28,7 @@ module Icestick_AFIFOProducer(
     
     // Produce values
     always @(posedge clk) begin
-        if (rst) begin
-            delayCounter <= 0;
-            wclkCounter <= 0;
-            w <= 0;
-            wd <= 0;
-            wclkLast <= 0;
-        
-        end else if (delay) begin
+        if (delay) begin
             delayCounter <= delayCounter+1;
         
         end else begin

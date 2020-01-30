@@ -5,13 +5,11 @@ module AFIFO #(
     parameter Size=4 // Must be a power of 2 and >=4
 )(
     input wire rclk,            // Read clock
-    input wire rrst,            // Read reset
     input wire r,               // Read trigger
     output wire[Width-1:0] rd,  // Read data
     output wire rok,            // Read OK (data available -- not empty)
     
     input wire wclk,            // Write clock
-    input wire wrst,            // Write reset
     input wire w,               // Write trigger
     input wire[Width-1:0] wd,   // Write data
     output wire wok             // Write OK (space available -- not full)
@@ -27,11 +25,7 @@ module AFIFO #(
     reg[N:0] rbaddr, rgaddr; // Read addresses (binary, gray)
     wire[N:0] rbaddrNext = rbaddr+1'b1;
     always @(posedge rclk)
-        if (rrst) begin
-            rbaddr <= 0;
-            rgaddr <= 0;
-        
-        end else if (r & !rempty) begin
+        if (r & !rempty) begin
             rbaddr <= rbaddrNext;
             rgaddr <= (rbaddrNext>>1)^rbaddrNext;
         end
@@ -51,11 +45,7 @@ module AFIFO #(
     reg[N:0] wbaddr, wgaddr; // Write addresses (binary, gray)
     wire[N:0] wbaddrNext = wbaddr+1'b1;
     always @(posedge wclk)
-        if (wrst) begin
-            wbaddr <= 0;
-            wgaddr <= 0;
-        
-        end else if (w & !wfull) begin
+        if (w & !wfull) begin
             mem[wbaddr] <= wd;
             wbaddr <= wbaddrNext;
             wgaddr <= (wbaddrNext>>1)^wbaddrNext;
@@ -74,7 +64,7 @@ module AFIFO #(
     reg dir;
     wire aempty = (rgaddr==wgaddr) & !dir;
     wire afull = (rgaddr==wgaddr) & dir;
-    wire dirclr = ((rgaddr[N]!=wgaddr[N-1]) & (rgaddr[N-1]==wgaddr[N])) | wrst;
+    wire dirclr = (rgaddr[N]!=wgaddr[N-1]) & (rgaddr[N-1]==wgaddr[N]);
     wire dirset = (rgaddr[N]==wgaddr[N-1]) & (rgaddr[N-1]!=wgaddr[N]);
     always @(posedge dirclr, posedge dirset)
         if (dirclr) dir <= 0;

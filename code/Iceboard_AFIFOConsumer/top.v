@@ -11,7 +11,6 @@ module Iceboard_AFIFOConsumer(
     input wire[11:0] wd
 );
     wire clk;
-    wire rst;
     
     // 100 MHz clock
     ClockGen #(
@@ -20,7 +19,7 @@ module Iceboard_AFIFOConsumer(
 		.DIVF(84),
 		.DIVQ(6),
 		.FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
+    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst());
     
     
     
@@ -37,24 +36,16 @@ module Iceboard_AFIFOConsumer(
     // wire wclktri;
     // Tristate wclkTristate(.d(clk), .en(wrst), .q(wclktri));
     
-    reg wrst;
-    always @(negedge clk) begin
-        if (rst) wrst <= 1;
-        else wrst <= 0;
-    end
-    
     reg r;
     wire[11:0] rd;
     wire rok;
     AFIFO #(.Size(32)) afifo(
         .rclk(clk),
-        .rrst(rst),
         .r(r),
         .rd(rd),
         .rok(rok),
         
-        .wclk(wrst ? clk : wclk),
-        .wrst(wrst),
+        .wclk(wclk),
         .w(w),
         .wd(wd),
         .wok()
@@ -65,13 +56,7 @@ module Iceboard_AFIFOConsumer(
     reg rvalValid;
     reg rfail;
     always @(posedge clk) begin
-        if (rst) begin
-            r <= 0;
-            rval <= 0;
-            rvalValid <= 0;
-            rfail <= 0;
-        
-        end else if (!rfail) begin
+        if (!rfail) begin
             // Init
             if (!r) begin
                 r <= 1;
