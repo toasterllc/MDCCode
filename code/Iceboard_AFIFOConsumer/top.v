@@ -10,9 +10,8 @@ module Iceboard_AFIFOConsumer(
     input wire w,
     input wire[11:0] wd
 );
-    wire clk;
-    
     // 100 MHz clock
+    wire clk;
     ClockGen #(
         .FREQ(16),
 		.DIVR(0),

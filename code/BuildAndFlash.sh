@@ -25,7 +25,7 @@ cd "$proj/tmp"
 yosys -p "synth_ice40 -top $proj -json top.json" ../top.v
 
 # Place and route the design ({top.json, pins.pcf} -> .asc)
-nextpnr-ice40 "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc
+nextpnr-ice40 "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc # --pcf-allow-unconstrained
 
 # Generate the bitstream file (.asc -> .bin)
 icepack top.asc top.bin
