@@ -1,6 +1,8 @@
 `define DO_REFRESH
 
-module SDRAMController(
+module SDRAMController #(
+    parameter ClockFrequency = 12000000
+)(
     input wire clk,                // Clock
     input wire rst,                // Reset (synchronous)
     
@@ -27,18 +29,6 @@ module SDRAMController(
     output wire sdram_ldqm,         // Low byte data mask
     inout wire[15:0] sdram_dq        // Data input/output
 );
-    
-    // localparam ClockFrequency = 12000000;
-    parameter ClockFrequency = 12000000;
-    // 366,300
-    // localparam ClockFrequency = 739645;
-    // localparam ClockFrequency = 5952380;
-    // localparam ClockFrequency = 754148;
-    localparam DelayCounterWidth = $clog2(Clocks(T_RFC));
-    // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
-    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT))-DelayCounterWidth;
-    localparam StateWidth = 3;
-    
     // Alliance AS4C8M16SA Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
     localparam T_REFI = 15625; // time between refreshes
@@ -67,6 +57,11 @@ module SDRAMController(
     localparam C_CAS = 2; // Column address strobe (CAS) delay
     localparam C_DQZ = 2; // (T_DQZ) DQM to data high-impedance during reads delay
     localparam C_MRD = 2; // (T_MRD) set mode command to bank activate/refresh command delay
+    
+    localparam DelayCounterWidth = $clog2(Clocks(T_RFC));
+    // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
+    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT))-DelayCounterWidth;
+    localparam StateWidth = 3;
     
     // ras_, cas_, we_
     localparam CmdSetMode           = 3'b000;
@@ -159,28 +154,28 @@ module SDRAMController(
             // For synthesis, we have to use a SB_IO for a tristate buffer
             SB_IO #(
                 .PIN_TYPE(6'b1010_01),
-                .PULLUP(0),
+                .PULLUP(0)
             ) dqio (
                 .PACKAGE_PIN(sdram_dq[i]),
                 .OUTPUT_ENABLE(writeDataValid),
                 .D_OUT_0(sdram_writeData[i]),
-                .D_IN_0(cmdReadData[i]),
+                .D_IN_0(cmdReadData[i])
             );
         `endif
     end
     
-    task StartState(input integer delay, input integer newState);
+    task StartState(input integer delay, input integer newState); begin
         delayCounter <= delay;
         state <= newState;
         substate <= 0;
-    endtask
+    end endtask
     
-    task NextSubstate(input integer delay);
+    task NextSubstate(input integer delay); begin
         delayCounter <= delay;
         substate <= substate+1;
-    endtask
+    end endtask
     
-    task SaveCommand;
+    task SaveCommand; begin
         // Save the command
         savedCmdTrigger <= cmdTrigger;
         // Don't clobber the previously saved command if we're not triggering,
@@ -190,16 +185,14 @@ module SDRAMController(
             savedCmdAddr <= cmdAddr;
             savedCmdWriteData <= cmdWriteData;
         end
-    endtask
+    end endtask
     
-    task PrechargeAll;
+    task PrechargeAll; begin
         sdram_cmd <= CmdPrechargeAll;
         sdram_a <= 12'b010000000000; // sdram_a[10]=1 for PrechargeAll
-    endtask
+    end endtask
     
-    task HandleWrite;
-        input substate;
-        
+    task HandleWrite(input substate); begin
         // Save the incoming command
         SaveCommand();
         
@@ -240,11 +233,9 @@ module SDRAMController(
         // issued ceil(tWR/tCK) cycles after the clock edge in which the
         // last data-in element is registered."
         end else StartState(Max(0, Clocks(T_WR)), StateWriteAbort);
-    endtask
+    end endtask
     
-    task HandleRead;
-        input substate;
-        
+    task HandleRead(input substate); begin
         // Save the incoming command
         SaveCommand();
         
@@ -279,9 +270,9 @@ module SDRAMController(
         
         // Abort the read if we're not reading from the same bank and row
         end else StartState(0, StateReadAbort);
-    endtask
+    end endtask
     
-    task SetDefaultState;
+    task SetDefaultState; begin
         // Mask data, nop command
         sdram_dqm <= 1;
         sdram_cmd <= CmdNop;
@@ -293,12 +284,9 @@ module SDRAMController(
         // Update counters
         delayCounter <= (delayCounter!=0 ? delayCounter-1 : 0);
         refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
-    endtask
+    end endtask
     
-    task StartReadWrite;
-        input write;
-        input[22:0] addr;
-        
+    task StartReadWrite(input write, input[22:0] addr); begin
         // Activate the bank+row
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];
@@ -326,27 +314,27 @@ module SDRAMController(
             // reach this state again and issue another CmdBankActivate (see explanation for T_RC, above.)
             Clocks(T_RRD)-3)),
         (write ? StateWrite : StateRead));
-    endtask
+    end endtask
     
     // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
     // initial $finish;
     
-    task InitSetDelayCounter(input integer delay);
+    task InitSetDelayCounter(input integer delay); begin
         {delayCounter, refreshCounter} <= delay;
-    endtask
+    end endtask
     
-    task InitStartState(input integer delay);
+    task InitStartState(input integer delay); begin
         InitSetDelayCounter(delay);
         state <= StateInit;
         substate <= 0;
-    endtask
+    end endtask
     
-    task InitNextSubstate(input integer delay);
+    task InitNextSubstate(input integer delay); begin
         InitSetDelayCounter(delay);
         substate <= substate+1;
-    endtask
+    end endtask
     
-    task HandleReset;
+    task HandleReset; begin
         // Reset the important registers while in the reset state.
         // This is necessary so clients don't observe `cmdReadDataValid`
         // immediately after reset de-asserts but before the HandleInit
@@ -356,9 +344,9 @@ module SDRAMController(
         InitStartState(0);
         
         didRefresh <= 0;
-    endtask
+    end endtask
     
-    task HandleInit;
+    task HandleInit; begin
         // Handle delays
         if (initDelayCounter != 0) begin
             sdram_cmd <= CmdNop;
@@ -425,9 +413,9 @@ module SDRAMController(
                 StartState(Clocks(T_RFC), StateIdle);
             end
             endcase
-    endtask
+    end endtask
     
-    task HandleRefresh;
+    task HandleRefresh; begin
         SetDefaultState();
         
         // Initiate refresh when refreshCounter==0
@@ -472,9 +460,9 @@ module SDRAMController(
                 didRefresh <= !didRefresh;
             end
             endcase
-    endtask
+    end endtask
     
-    task HandleCommand;
+    task HandleCommand; begin
         SetDefaultState();
         
         // Handle commands
@@ -513,7 +501,7 @@ module SDRAMController(
             end
             endcase
         end
-    endtask
+    end endtask
     
 	always @(posedge clk) begin
         // Reset

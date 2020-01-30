@@ -110,7 +110,7 @@ module Iceboard_CopyImage(
         end
         
         if (copyPixel) begin
-            $display("Copied pixel value into RAM: %h", pixbuf_data);
+            $display("Copied value: %h", pixbuf_data);
             ram_cmdTrigger <= 1;
             ram_cmdWrite <= 1;
             ram_cmdWriteData <= {4'b0, pixbuf_data};
