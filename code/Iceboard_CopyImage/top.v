@@ -1,7 +1,10 @@
 `timescale 1ns/1ps
-`include "../ClockGen.v"
+// `include "../ClockGen.v"
 `include "../SDRAMController.v"
 `include "../AFIFO.v"
+
+`include "../Icestick_AFIFOProducer/top.v"
+`include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 
 module Iceboard_CopyImage(
     input wire          clk12mhz,   // 12 MHz crystal
@@ -29,13 +32,14 @@ module Iceboard_CopyImage(
     
     // 100 MHz clock
     wire clk;
+    wire rst;
     ClockGen #(
         .FREQ(100),
 		.DIVR(0),
 		.DIVF(66),
 		.DIVQ(3),
 		.FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst());
+    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
     // RAM controller
     wire                    ram_cmdReady;
@@ -48,7 +52,7 @@ module Iceboard_CopyImage(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
         .clk(clk),
-        .rst(1'b0), // TODO: figure out resetting
+        .rst(rst), // TODO: figure out resetting
         
         .cmdReady(ram_cmdReady),
         .cmdTrigger(ram_cmdTrigger),
@@ -74,7 +78,7 @@ module Iceboard_CopyImage(
     // Pixel FIFO buffer
     // This is an asynchronous buffer with separate producer (pix_clk) and consumer (clk) clocks
     wire[11:0] pixbuf_data;
-    reg pixbuf_read = 0;
+    wire pixbuf_read;
     wire pixbuf_canRead;
     wire pixbuf_canWrite;
     AFIFO #(.Width(12), .Size(32)) pixbuf(
@@ -90,10 +94,13 @@ module Iceboard_CopyImage(
     );
     
     // AFIFO -> RAM copy logic
+    // Copy a pixel into RAM when:
+    //   (1) data is available from pixbuf FIFO, AND
+    //     (2a) there's no underway RAM write command, OR
+    //     (2b) the underway RAM write command was accepted on this clock cycle
+    wire copyPixel = pixbuf_canRead & (!ram_cmdTrigger | ram_cmdReady);
+    assign pixbuf_read = copyPixel;
     always @(posedge clk) begin
-        // Always reset pixbuf_read since AFIFO always accepts reads/writes (assuming data was available)
-        pixbuf_read <= 0;
-        
         // Update our RAM state when a command is accepted
         if (ram_cmdTrigger & ram_cmdReady) begin
             ram_cmdTrigger <= 0;
@@ -102,17 +109,42 @@ module Iceboard_CopyImage(
             ram_cmdAddr <= ram_cmdAddr+1'b1;
         end
         
-        // Issue new RAM write commands when:
-        //   (1) data is available from pixbuf FIFO, AND
-        //     (2a) there's no underway RAM write command, OR
-        //     (2b) the underway RAM write command was accepted on this clock cycle
-        if (pixbuf_canRead & (!ram_cmdTrigger | ram_cmdReady)) begin
+        if (copyPixel) begin
+            $display("Copied value: %h", pixbuf_data);
             ram_cmdTrigger <= 1;
             ram_cmdWrite <= 1;
             ram_cmdWriteData <= {4'b0, pixbuf_data};
-            pixbuf_read <= 1;
         end
     end
+    
+`ifdef SIM
+    // Produce data
+    wire w;
+    assign pix_frameValid = w;
+    assign pix_lineValid = w;
+    Icestick_AFIFOProducer producer(.clk12mhz(clk12mhz), .wclk(pix_clk), .w(w), .wd(pix_d));
+    
+    mt48lc8m16a2 sdram(
+        .Clk(ram_clk),
+        .Dq(ram_dq),
+        .Addr(ram_a),
+        .Ba(ram_ba),
+        .Cke(ram_cke),
+        .Cs_n(ram_cs_),
+        .Ras_n(ram_ras_),
+        .Cas_n(ram_cas_),
+        .We_n(ram_we_),
+        .Dqm({ram_udqm, ram_ldqm})
+    );
+    
+    initial begin
+       $dumpfile("top.vcd");
+       $dumpvars(0, Iceboard_CopyImage);
+       #10000000000000;
+       $finish;
+      end
+`endif
+    
     
 endmodule
 
