@@ -52,7 +52,7 @@ module Iceboard_AFIFOConsumer(
     );
     
     // Consume values
-    reg[11:0] rval = 0 /* synthesis syn_keep=1 */;
+    reg[11:0] rval = 0;
     reg rvalValid = 0 /* synthesis syn_keep=1 */;
     reg rfail = 0 /* synthesis syn_keep=1 */;
     always @(posedge clk) begin
