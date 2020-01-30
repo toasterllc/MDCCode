@@ -75,8 +75,8 @@ module Iceboard_CopyImage(
         .sdram_dq(ram_dq)
     );
     
-    // Pixel FIFO buffer
-    // This is an asynchronous buffer with separate producer (pix_clk) and consumer (clk) clocks
+    // Pixel FIFO buffer: asynchronous buffer with separate
+    // producer (pix_clk) and consumer (clk) clocks
     wire[11:0] pixbuf_data;
     wire pixbuf_read;
     wire pixbuf_canRead;
@@ -110,7 +110,7 @@ module Iceboard_CopyImage(
         end
         
         if (copyPixel) begin
-            $display("Copied value: %h", pixbuf_data);
+            $display("Copied pixel value into RAM: %h", pixbuf_data);
             ram_cmdTrigger <= 1;
             ram_cmdWrite <= 1;
             ram_cmdWriteData <= {4'b0, pixbuf_data};
