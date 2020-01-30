@@ -4,8 +4,8 @@
 module Icestick_AFIFOProducer(
     input wire clk12mhz,
     output wire wclk,
-    output reg w,
-    output reg[11:0] wd
+    output reg w = 0 /* synthesis syn_preserve = 1 */,
+    output reg[11:0] wd = 0 /* synthesis syn_preserve = 1 */
 );
     
     wire clk;
@@ -19,12 +19,12 @@ module Icestick_AFIFOProducer(
 		.FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst());
     
-    reg[25:0] delayCounter;
+    reg[25:0] delayCounter = 0 /* synthesis syn_preserve = 1 */;
     wire delay = !(&delayCounter);
     
-    reg[13:0] wclkCounter;
+    reg[13:0] wclkCounter = 0 /* synthesis syn_preserve = 1 */;
     assign wclk = wclkCounter[$size(wclkCounter)-1];
-    reg wclkLast;
+    reg wclkLast = 0 /* synthesis syn_preserve = 1 */;
     
     // Produce values
     always @(posedge clk) begin
