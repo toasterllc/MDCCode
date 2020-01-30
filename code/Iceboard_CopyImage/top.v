@@ -1,10 +1,10 @@
 `timescale 1ns/1ps
-// `include "../ClockGen.v"
+`include "../ClockGen.v"
 `include "../SDRAMController.v"
 `include "../AFIFO.v"
 
-`include "../Icestick_AFIFOProducer/top.v"
-`include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
+// `include "../Icestick_AFIFOProducer/top.v"
+// `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 
 module Iceboard_CopyImage(
     input wire          clk12mhz,   // 12 MHz crystal
