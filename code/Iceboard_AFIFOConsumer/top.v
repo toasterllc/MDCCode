@@ -1,11 +1,11 @@
 `timescale 1ns/1ps
-// `include "../ClockGen.v"
+`include "../ClockGen.v"
 `include "../AFIFO.v"
-`include "../Icestick_AFIFOProducer/top.v"
+// `include "../Icestick_AFIFOProducer/top.v"
 
 module Iceboard_AFIFOConsumer(
     input wire clk12mhz,
-    output reg[7:0] led,
+    output wire led,
     input wire wclk,
     input wire w,
     input wire[11:0] wd
@@ -70,7 +70,6 @@ module Iceboard_AFIFOConsumer(
             rval <= 0;
             rvalValid <= 0;
             rfail <= 0;
-            led <= 0;
         
         end else if (!rfail) begin
             // Init
@@ -87,14 +86,13 @@ module Iceboard_AFIFOConsumer(
                 // `assert(!rvalValid | ((rval+1'b1)==rd));
                 if (rvalValid & ((rval+1'b1)!=rd)) begin
                     $display("Error: read invalid value; wanted: %h got: %h", (rval+1'b1), rd);
-                    led <= led+1;
                     rfail <= 1;
                 end
             end
         end
     end
     
-    // assign led = rfail;
+    assign led = rfail;
     // assign led = rst;
     // assign led = !rempty;
     // assign led = rvalValid;
