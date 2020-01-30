@@ -20,7 +20,7 @@ module AFIFO #(
     // ====================
     // Read handling
     // ====================
-    reg[N:0] rbaddr = 0 /* synthesis syn_preserve = 1 */, rgaddr = 0 /* synthesis syn_preserve = 1 */; // Read addresses (binary, gray)
+    reg[N:0] rbaddr = 0, rgaddr = 0; // Read addresses (binary, gray)
     wire[N:0] rbaddrNext = rbaddr+1'b1;
     always @(posedge rclk)
         if (r & !rempty) begin
@@ -28,7 +28,7 @@ module AFIFO #(
             rgaddr <= (rbaddrNext>>1)^rbaddrNext;
         end
     
-    reg rempty = 0 /* synthesis syn_preserve = 1 */, rempty2 = 0 /* synthesis syn_preserve = 1 */;
+    reg rempty = 0, rempty2 = 0;
     always @(posedge rclk, posedge aempty)
         // TODO: ensure that before the first clock, empty==true so outside entities don't think they can read
         if (aempty) {rempty, rempty2} <= 2'b11;
@@ -40,7 +40,7 @@ module AFIFO #(
     // ====================
     // Write handling
     // ====================
-    reg[N:0] wbaddr = 0 /* synthesis syn_preserve = 1 */, wgaddr = 0 /* synthesis syn_preserve = 1 */; // Write addresses (binary, gray)
+    reg[N:0] wbaddr = 0, wgaddr = 0; // Write addresses (binary, gray)
     wire[N:0] wbaddrNext = wbaddr+1'b1;
     always @(posedge wclk)
         if (w & !wfull) begin
@@ -49,7 +49,7 @@ module AFIFO #(
             wgaddr <= (wbaddrNext>>1)^wbaddrNext;
         end
     
-    reg wfull = 0 /* synthesis syn_preserve = 1 */, wfull2 = 0 /* synthesis syn_preserve = 1 */;
+    reg wfull = 0, wfull2 = 0;
     always @(posedge wclk, posedge afull)
         if (afull) {wfull, wfull2} <= 2'b11;
         else {wfull, wfull2} <= {wfull2, 1'b0};
@@ -59,7 +59,7 @@ module AFIFO #(
     // ====================
     // Async signal generation
     // ====================
-    reg dir = 0 /* synthesis syn_preserve = 1 */;
+    reg dir = 0;
     wire aempty = (rgaddr==wgaddr) & !dir;
     wire afull = (rgaddr==wgaddr) & dir;
     wire dirclr = (rgaddr[N]!=wgaddr[N-1]) & (rgaddr[N-1]==wgaddr[N]);

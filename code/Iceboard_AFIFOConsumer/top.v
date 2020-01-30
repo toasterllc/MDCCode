@@ -36,7 +36,7 @@ module Iceboard_AFIFOConsumer(
     // wire wclktri;
     // Tristate wclkTristate(.d(clk), .en(wrst), .q(wclktri));
     
-    reg r = 0 /* synthesis syn_preserve = 1 */;
+    reg r = 0 /* synthesis syn_keep=1 */;
     wire[11:0] rd;
     wire rok;
     AFIFO #(.Size(32)) afifo(
@@ -52,9 +52,9 @@ module Iceboard_AFIFOConsumer(
     );
     
     // Consume values
-    reg[11:0] rval = 0 /* synthesis syn_preserve = 1 */;
-    reg rvalValid = 0 /* synthesis syn_preserve = 1 */;
-    reg rfail = 0 /* synthesis syn_preserve = 1 */;
+    reg[11:0] rval = 0 /* synthesis syn_keep=1 */;
+    reg rvalValid = 0 /* synthesis syn_keep=1 */;
+    reg rfail = 0 /* synthesis syn_keep=1 */;
     always @(posedge clk) begin
         if (!rfail) begin
             // Init
