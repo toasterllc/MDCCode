@@ -197,7 +197,9 @@ module SDRAMController(
         sdram_a <= 12'b010000000000; // sdram_a[10]=1 for PrechargeAll
     endtask
     
-    task HandleWrite(input wire substate);
+    task HandleWrite;
+        input substate;
+        
         // Save the incoming command
         SaveCommand();
         
@@ -240,7 +242,9 @@ module SDRAMController(
         end else StartState(Max(0, Clocks(T_WR)), StateWriteAbort);
     endtask
     
-    task HandleRead(input wire substate);
+    task HandleRead;
+        input substate;
+        
         // Save the incoming command
         SaveCommand();
         
@@ -291,7 +295,10 @@ module SDRAMController(
         refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
     endtask
     
-    task StartReadWrite(input wire write, input wire[22:0] addr);
+    task StartReadWrite;
+        input write;
+        input[22:0] addr;
+        
         // Activate the bank+row
         sdram_cmd <= CmdBankActivate;
         sdram_ba <= addr[22:21];

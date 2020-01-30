@@ -42,13 +42,13 @@ module IceboardTest_CopyImage(
     reg                     ram_cmdTrigger = 0;
     reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
     reg                     ram_cmdWrite = 0;
-    reg[RAM_DataWidth-1:0]  ram_cmdWriteData;
+    reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
         .clk(clk),
-        .rst(0), // TODO: figure out resetting
+        .rst(1'b0), // TODO: figure out resetting
         
         .cmdReady(ram_cmdReady),
         .cmdTrigger(ram_cmdTrigger),
