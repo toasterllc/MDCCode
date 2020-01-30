@@ -20,7 +20,14 @@ module AFIFO #(
     // ====================
     // Read handling
     // ====================
-    reg[N:0] rbaddr=0, rgaddr=0; // Read addresses (binary, gray)
+    // Don't init rbaddr=0, since that breaks RAM inference with Icestorm,
+    // since it thinks rbaddr is async instead of being clocked by rclk
+    reg[N:0] rbaddr, rgaddr=0; // Read addresses (binary, gray)
+    
+`ifdef SIM
+    initial rbaddr = 0; // For simulation (see rbaddr comment above)
+`endif
+    
     wire[N:0] rbaddrNext = rbaddr+1'b1;
     always @(posedge rclk)
         if (r & rok) begin
