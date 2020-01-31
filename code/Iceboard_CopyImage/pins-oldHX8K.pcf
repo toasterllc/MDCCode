@@ -1,0 +1,56 @@
+# set_io clk12mhz         K9      -pullup no
+#
+# set_io ram_clk          E4      -pullup no
+# set_io ram_cke          B2      -pullup no
+# set_io ram_ba[1]        F5      -pullup no
+# set_io ram_ba[0]        B1      -pullup no
+# set_io ram_a[11]        C1      -pullup no
+# set_io ram_a[10]        C2      -pullup no
+# set_io ram_a[9]         F4      -pullup no
+# set_io ram_a[8]         D2      -pullup no
+# set_io ram_a[7]         G5      -pullup no
+# set_io ram_a[6]         D1      -pullup no
+# set_io ram_a[5]         G4      -pullup no
+# set_io ram_a[4]         E3      -pullup no
+# set_io ram_a[3]         H5      -pullup no
+# set_io ram_a[2]         E2      -pullup no
+# set_io ram_a[1]         G3      -pullup no
+# set_io ram_a[0]         F3      -pullup no
+# set_io ram_cs_          H3      -pullup no
+# set_io ram_ras_         F2      -pullup no
+# set_io ram_cas_         H6      -pullup no
+# set_io ram_we_          F1      -pullup no
+# set_io ram_udqm         H4      -pullup no
+# set_io ram_ldqm         G2      -pullup no
+# set_io ram_dq[15]       J4      -pullup no
+# set_io ram_dq[14]       H2      -pullup no
+# set_io ram_dq[13]       J5      -pullup no
+# set_io ram_dq[12]       H1      -pullup no
+# set_io ram_dq[11]       J2      -pullup no
+# set_io ram_dq[10]       J1      -pullup no
+# set_io ram_dq[9]        K1      -pullup no
+# set_io ram_dq[8]        K3      -pullup no
+# set_io ram_dq[7]        L4      -pullup no
+# set_io ram_dq[6]        L1      -pullup no
+# set_io ram_dq[5]        K4      -pullup no
+# set_io ram_dq[4]        M1      -pullup no
+# set_io ram_dq[3]        L6      -pullup no
+# set_io ram_dq[2]        L3      -pullup no
+# set_io ram_dq[1]        K5      -pullup no
+# set_io ram_dq[0]        M2      -pullup no
+#
+# # set_io pix_clk          C8      -pullup no
+# # set_io pix_frameValid   F13     -pullup no
+# # set_io pix_lineValid    E14     -pullup no
+# # set_io pix_d[11]        F11     -pullup no
+# # set_io pix_d[10]        F12     -pullup no
+# # set_io pix_d[9]         G12     -pullup no
+# # set_io pix_d[8]         G13     -pullup no
+# # set_io pix_d[7]         G14     -pullup no
+# # set_io pix_d[6]         G11     -pullup no
+# # set_io pix_d[5]         G10     -pullup no
+# # set_io pix_d[4]         H12     -pullup no
+# # set_io pix_d[3]         H14     -pullup no
+# # set_io pix_d[2]         H13     -pullup no
+# # set_io pix_d[1]         J16     -pullup no
+# # set_io pix_d[0]         J12     -pullup no
