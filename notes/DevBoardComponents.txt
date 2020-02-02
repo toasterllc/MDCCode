@@ -39,7 +39,7 @@
         
         https://www.mouser.com/ProductDetail/SiTime/SiT8021AI-J4-18S-12000000E?qs=sGAEpiMZZMt8zWNA7msRClCqa6DO0PP1pyoDKRTdWkjwX4HbinU6Eg%3D%3D
         
-        Vdd input capacitor (0.01μF X7R ceramic):
+        Vdd input capacitor (10nF X7R ceramic):
             GCM155R71H103JA55D
             https://www.mouser.com/ProductDetail/Murata-Electronics/GCM155R71H103JA55D?qs=sGAEpiMZZMs0AnBnWHyRQKFZIQ7b73cdsQrN1P1IHl%2FOMGz4iBFrnQ%3D%3D
 
@@ -58,16 +58,16 @@
         
         * Support components:
         
-            * Vdd input capacitor (10μF X5R ceramic):
+            * Vdd input capacitor (10µF X5R ceramic):
                 GRM188R61A106KE69D
                 https://www.mouser.com/ProductDetail/Murata-Electronics/GRM188R61A106KE69D?qs=sGAEpiMZZMs0AnBnWHyRQIQ9GZ%252BR1NCaPZjWVMvlF0E%3D
                 
-                *** Using a 10uF instead of 4.7uF because: "When operating from a high impedance source, like a coin cell, a larger input buffer capacitor ≥10uF is recommended" ***
+                *** Using a 10µF instead of 4.7uF because: "When operating from a high impedance source, like a coin cell, a larger input buffer capacitor ≥10µF is recommended" ***
             
-            * Output capacitor (10μF X5R ceramic):
-                Same as input capacitor
+            * Output capacitor (10µF X5R ceramic):
+                GRM188R61A106KE69D (see above)
             
-            * Output inductor (0.47μH):
+            * Output inductor (470nH):
                 * OptionA (low DCR = 1.2 mΩ):
                     PA4343.471NLT
                     https://www.mouser.com/ProductDetail/Pulse-Electronics/PA4343471NLT?qs=sGAEpiMZZMsg%252By3WlYCkU3EGgopxbfNa7%2FhaIP3vA9E%3D
@@ -111,17 +111,21 @@
         
         * Support components:
         
-            * Vdd input capacitor (10μF X5R ceramic):
-                Same as 1v2
+            * Vdd input capacitor (10µF X5R ceramic):
+                GRM188R61A106KE69D (see above)
             
-            * Output capacitor (22μF X5R ceramic):
+            * Output capacitor (22µF X5R ceramic):
                 GRM219R61C226ME15L
                 $.44
                 R=.006Ω @ 3MHz
                 https://www.mouser.com/ProductDetail/Murata-Electronics/GRM219R61C226ME15L?qs=sGAEpiMZZMs0AnBnWHyRQFv7x1xn%252BYFdlpx3rHjqsYGFGOccM8ifgQ%3D%3D
             
-            * Output inductor (0.47μH):
+            * Output inductor (470nH):
                 Same as 1v2
+            
+            * Resistors
+                91k 1% 0603: https://www.mouser.com/ProductDetail/Bourns/CR0603-FX-9102ELF?qs=sGAEpiMZZMvdGkrng054t%2Fh5BnJxeWSz%2F9ci%2FmWbmMw%3D
+                365k 1% 0603: https://www.mouser.com/ProductDetail/Bourns/CR0603-FX-3653ELF?qs=sGAEpiMZZMvdGkrng054t%252BRNGJdg958RVTULyWnTm%2FY%3D
         
         
         Use a buck-boost regulator for the 2v5 rail, so we can use 1.5V batteries that are discharged
@@ -141,16 +145,67 @@
     * 1.8V, low-current leds:
         https://www.mouser.com/ProductDetail/OSRAM-Opto-Semiconductors/KS-DELLS122-JHKI-1?qs=sGAEpiMZZMseGfSY3csMkXiJOH5X%252BfXwNJsZ%252BOXg8XaVOHkeln0GNw%3D%3D
 
+    * 1.8k 0402 resistors
+        https://www.mouser.com/ProductDetail/TE-Connectivity-Holsworthy/CRGP0402F1K8?qs=sGAEpiMZZMvdGkrng054t7z4BkURc4LzLwl1egGSUqb5tbuRcoJW%252Bw%3D%3D
 
 
+===== iCE40HX4K =====
 
-
-===== iCE40HX8K =====
-
-    * Chip: iCE40HX8K-CT256
-        https://www.mouser.com/ProductDetail/Lattice/iCE40HX8K-CT256?qs=sGAEpiMZZMvg1mlwe17tRhANKfQF%2FGTT
+    * Chip: iCE40HX4K-CB132
+        https://www.mouser.com/ProductDetail/Lattice/iCE40HX4K-CB132?qs=sGAEpiMZZMvoScKlWpK8TFmJQqGdnp9VBwdRw2uKJ9w%3D
     
-        * PLL filter caps:
-            * 100nF: GCM155R71C104KA55D (https://www.mouser.com/ProductDetail/Murata-Electronics/GCM155R71C104KA55D?qs=sGAEpiMZZMs0AnBnWHyRQL5pa%2FOmIg5iYhKWBkJjPNQ%3D)
-            * 10μF: same as above
+        * PLL filter caps (2 of each):
+            * 100nF
+                GRM155R61H104KE19D
+                https://www.mouser.com/ProductDetail/Murata-Electronics/GRM155R61H104KE19D?qs=sGAEpiMZZMs0AnBnWHyRQA3eyUP2RfX7def7QuOYRWZWBPIWABfFhg%3D%3D
+            
+            * 10µF:
+                GRM188R61A106KE69D (see above)
+    
+    * Power pin filter capacitors:
+        * GRM155R61H104KE19D (100nF): see above
+        * GCM155R71H103JA55D (10nF): see above
+    
+    * PLL filter resistors:
+        * 100Ω 0402
+            https://www.mouser.com/ProductDetail/Bourns/CR0402AJW-101GAS?qs=sGAEpiMZZMvdGkrng054t7z4BkURc4LzvbPhO4IF2QDMroCmRI7MeQ%3D%3D
 
+
+
+===== SDRAM =====
+
+    * W989D6DBGX6I (1.8V, 64 MB)
+        https://www.mouser.com/ProductDetail/Winbond/W989D6DBGX6I?qs=sGAEpiMZZMti5BT4iPSEnQu7z0iSiUMhEmurxJiFX9A%3D
+    
+
+
+===== Resistors (generic) =====
+
+    * 0 0805
+        https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW08050000Z0EAC?qs=sGAEpiMZZMvdGkrng054t8r8AhKhXLMmzPPGu4AYPLvHc5kYCgGUXA%3D%3D
+    
+    * 0 1206
+        https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW12060000Z0EAC?qs=sGAEpiMZZMvdGkrng054t0DrEhLhGh8gmWu5YO3o1qhRpAhriXClmA%3D%3D
+    
+    * 1 1206
+        https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW12061R00FKEA?qs=sGAEpiMZZMvdGkrng054txEw7b1YnvGuTZtUTj8nHhg%3D
+    
+    * 10k 0402
+        https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW040210K0FKEDC?qs=sGAEpiMZZMvdGkrng054t0DrEhLhGh8ghRTPC4LoFoV0V5heIyAs3Q%3D%3D
+
+
+===== AC decoupling+termination (so we don't need to solder capacitors at every U.FL connector to measure noise) =====
+
+    * PRL-TNET-SMF
+        https://www.pulseresearchlab.com/products/prl-tnet?variant=29205917576
+    
+    * 10µF 0805 decoupling capacitor:
+        https://www.mouser.com/ProductDetail/Murata-Electronics/GRM21BR61C106KE15L?qs=sGAEpiMZZMs0AnBnWHyRQFQYdTDrJniY6UiV3hUxNOg%3D
+    
+    * 50Ω 1206 resistor:
+        https://www.mouser.com/ProductDetail/Vishay-Dale/TNPW120650R0BEEN07?qs=sGAEpiMZZMvdGkrng054t8nP1M%252BdxxzU2eIMsuXw3xI%3D
+    
+    * Extra SMA connectors (buy 2-4)
+        https://www.mouser.com/ProductDetail/712-CSI-SGFI-1-UFFR
+    
+    

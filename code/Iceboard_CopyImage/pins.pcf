@@ -1,10 +1,11 @@
 # HX4K
-set_io clk12mhz         P1      -pullup no
+set_io ice_clk12mhz     P1      -pullup no
+
 set_io pix_clk          G1      -pullup no
+set_io pix_fv           C12     -pullup no
+set_io pix_ln           A12     -pullup no
 set_io pix_d[0]         M1      -pullup no
 set_io pix_d[1]         F12     -pullup no
-set_io pix_d[10]        F14     -pullup no
-set_io pix_d[11]        G14     -pullup no
 set_io pix_d[2]         F11     -pullup no
 set_io pix_d[3]         E11     -pullup no
 set_io pix_d[4]         E12     -pullup no
@@ -13,12 +14,11 @@ set_io pix_d[6]         D14     -pullup no
 set_io pix_d[7]         C14     -pullup no
 set_io pix_d[8]         D12     -pullup no
 set_io pix_d[9]         B14     -pullup no
-set_io pix_frameValid   C12     -pullup no
-set_io pix_lineValid    A12     -pullup no
+set_io pix_d[10]        F14     -pullup no
+set_io pix_d[11]        G14     -pullup no
+
 set_io ram_a[0]         C3      -pullup no
 set_io ram_a[1]         C1      -pullup no
-set_io ram_a[10]        B1      -pullup no
-set_io ram_a[11]        F4      -pullup no
 set_io ram_a[2]         A1      -pullup no
 set_io ram_a[3]         E4      -pullup no
 set_io ram_a[4]         D4      -pullup no
@@ -27,6 +27,8 @@ set_io ram_a[6]         E1      -pullup no
 set_io ram_a[7]         D1      -pullup no
 set_io ram_a[8]         D3      -pullup no
 set_io ram_a[9]         A5      -pullup no
+set_io ram_a[10]        B1      -pullup no
+set_io ram_a[11]        F4      -pullup no
 set_io ram_ba[0]        K4      -pullup no
 set_io ram_ba[1]        K3      -pullup no
 set_io ram_cas_         G4      -pullup no
@@ -35,12 +37,6 @@ set_io ram_clk          C11     -pullup no
 set_io ram_cs_          G12     -pullup no
 set_io ram_dq[0]        A7      -pullup no
 set_io ram_dq[1]        C10     -pullup no
-set_io ram_dq[10]       C9      -pullup no
-set_io ram_dq[11]       D9      -pullup no
-set_io ram_dq[12]       H3      -pullup no
-set_io ram_dq[13]       H1      -pullup no
-set_io ram_dq[14]       G3      -pullup no
-set_io ram_dq[15]       J1      -pullup no
 set_io ram_dq[2]        A10     -pullup no
 set_io ram_dq[3]        A11     -pullup no
 set_io ram_dq[4]        D11     -pullup no
@@ -49,7 +45,22 @@ set_io ram_dq[6]        D6      -pullup no
 set_io ram_dq[7]        C6      -pullup no
 set_io ram_dq[8]        D7      -pullup no
 set_io ram_dq[9]        C7      -pullup no
+set_io ram_dq[10]       C9      -pullup no
+set_io ram_dq[11]       D9      -pullup no
+set_io ram_dq[12]       H3      -pullup no
+set_io ram_dq[13]       H1      -pullup no
+set_io ram_dq[14]       G3      -pullup no
+set_io ram_dq[15]       J1      -pullup no
 set_io ram_ldqm         C4      -pullup no
 set_io ram_ras_         H4      -pullup no
 set_io ram_udqm         C5      -pullup no
 set_io ram_we_          A4      -pullup no
+
+set_io led[0]           P2      -pullup no
+set_io led[1]           P3      -pullup no
+set_io led[2]           M4      -pullup no
+set_io led[3]           M3      -pullup no
+set_io led[4]           L5      -pullup no
+set_io led[5]           L4      -pullup no
+set_io led[6]           P4      -pullup no
+set_io led[7]           P5      -pullup no

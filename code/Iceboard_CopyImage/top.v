@@ -7,7 +7,7 @@
 // `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
 
 module Iceboard_CopyImage(
-    input wire          clk12mhz,   // 12 MHz crystal
+    input wire          ice_clk12mhz,   // 12 MHz crystal
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -22,8 +22,8 @@ module Iceboard_CopyImage(
     inout wire[15:0]    ram_dq,
     
     input wire          pix_clk,    // Clock from image sensor
-    input wire          pix_frameValid,
-    input wire          pix_lineValid,
+    input wire          pix_fv,
+    input wire          pix_lv,
     input wire[11:0]    pix_d       // Data from image sensor
 );
     localparam ClockFrequency = 100000000; // 100 MHz
@@ -39,7 +39,7 @@ module Iceboard_CopyImage(
 		.DIVF(66),
 		.DIVQ(3),
 		.FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
+    ) cg(.clk12mhz(ice_clk12mhz), .clk(clk), .rst(rst));
     
     // RAM controller
     wire                    ram_cmdReady;
@@ -88,7 +88,7 @@ module Iceboard_CopyImage(
         .rok(pixbuf_canRead),
         
         .wclk(pix_clk),
-        .w(pix_frameValid & pix_lineValid),
+        .w(pix_fv & pix_lv),
         .wd(pix_d),
         .wok(pixbuf_canWrite)
     );
@@ -120,9 +120,9 @@ module Iceboard_CopyImage(
 `ifdef SIM
     // Produce data
     wire w;
-    assign pix_frameValid = w;
-    assign pix_lineValid = w;
-    Icestick_AFIFOProducer producer(.clk12mhz(clk12mhz), .wclk(pix_clk), .w(w), .wd(pix_d));
+    assign pix_fv = w;
+    assign pix_lv = w;
+    Icestick_AFIFOProducer producer(.ice_clk12mhz(ice_clk12mhz), .wclk(pix_clk), .w(w), .wd(pix_d));
     
     mt48lc8m16a2 sdram(
         .Clk(ram_clk),
@@ -167,10 +167,10 @@ endmodule
 //     inout logic[15:0]   sdram_dq
 // );
 //
-//     logic clk12mhz;
+//     logic ice_clk12mhz;
 //
 //     Iceboard_CopyImage iceboardSDRAMTest(
-//         .clk12mhz(clk12mhz),
+//         .ice_clk12mhz(ice_clk12mhz),
 //         .sdram_clk(sdram_clk),
 //         .sdram_cke(sdram_cke),
 //         .sdram_ba(sdram_ba),
@@ -208,9 +208,9 @@ endmodule
 //     end
 //
 //     initial begin
-//         clk12mhz = 0;
+//         ice_clk12mhz = 0;
 //         forever begin
-//             clk12mhz = !clk12mhz;
+//             ice_clk12mhz = !ice_clk12mhz;
 //             #42;
 //         end
 //     end

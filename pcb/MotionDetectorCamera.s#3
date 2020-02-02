@@ -11620,7 +11620,6 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MODEL" value="GCM155R71H103JA55D"/>
 </part>
-<part name="LED0" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
 <part name="LED1" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
 <part name="LED2" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
 <part name="LED3" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
@@ -11628,6 +11627,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="LED5" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
 <part name="LED6" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
 <part name="LED7" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
+<part name="LED8" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="CHIPLED_0603" package3d_urn="urn:adsk.eagle:package:15822/2"/>
 <part name="U1" library="AT25XV041B-SSHV-T" deviceset="AT25XV041B-SSHV-T" device="">
 <attribute name="MP" value="AT25XV041B-SSHV-T"/>
 </part>
@@ -12000,35 +12000,35 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="VALUE" x="360.68" y="-52.197" size="1.778" layer="96"/>
 <attribute name="MODEL" x="360.68" y="-54.61" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="LED0" gate="G$1" x="457.2" y="104.14" smashed="yes">
+<instance part="LED1" gate="G$1" x="457.2" y="104.14" smashed="yes">
 <attribute name="NAME" x="460.756" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="462.915" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="LED1" gate="G$1" x="467.36" y="104.14" smashed="yes">
+<instance part="LED2" gate="G$1" x="467.36" y="104.14" smashed="yes">
 <attribute name="NAME" x="470.916" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="473.075" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="LED2" gate="G$1" x="477.52" y="104.14" smashed="yes">
+<instance part="LED3" gate="G$1" x="477.52" y="104.14" smashed="yes">
 <attribute name="NAME" x="481.076" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="483.235" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="LED3" gate="G$1" x="487.68" y="104.14" smashed="yes">
+<instance part="LED4" gate="G$1" x="487.68" y="104.14" smashed="yes">
 <attribute name="NAME" x="491.236" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="493.395" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="LED4" gate="G$1" x="497.84" y="104.14" smashed="yes">
+<instance part="LED5" gate="G$1" x="497.84" y="104.14" smashed="yes">
 <attribute name="NAME" x="501.396" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="503.555" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="LED5" gate="G$1" x="508" y="104.14" smashed="yes">
+<instance part="LED6" gate="G$1" x="508" y="104.14" smashed="yes">
 <attribute name="NAME" x="511.556" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="513.715" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="LED6" gate="G$1" x="518.16" y="104.14" smashed="yes">
+<instance part="LED7" gate="G$1" x="518.16" y="104.14" smashed="yes">
 <attribute name="NAME" x="521.716" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="523.875" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="LED7" gate="G$1" x="528.32" y="104.14" smashed="yes">
+<instance part="LED8" gate="G$1" x="528.32" y="104.14" smashed="yes">
 <attribute name="NAME" x="531.876" y="99.568" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="534.035" y="99.568" size="1.778" layer="96" rot="R90"/>
 </instance>
@@ -14043,7 +14043,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="40.64" x2="492.76" y2="40.64" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED0" gate="G$1" pin="A"/>
+<pinref part="LED1" gate="G$1" pin="A"/>
 <wire x1="457.2" y1="106.68" x2="457.2" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -14053,7 +14053,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="38.1" x2="492.76" y2="38.1" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED1" gate="G$1" pin="A"/>
+<pinref part="LED2" gate="G$1" pin="A"/>
 <wire x1="467.36" y1="106.68" x2="467.36" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -14063,7 +14063,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="35.56" x2="492.76" y2="35.56" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED2" gate="G$1" pin="A"/>
+<pinref part="LED3" gate="G$1" pin="A"/>
 <wire x1="477.52" y1="106.68" x2="477.52" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -14073,7 +14073,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="33.02" x2="492.76" y2="33.02" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED3" gate="G$1" pin="A"/>
+<pinref part="LED4" gate="G$1" pin="A"/>
 <wire x1="487.68" y1="106.68" x2="487.68" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -14083,7 +14083,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="30.48" x2="492.76" y2="30.48" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED4" gate="G$1" pin="A"/>
+<pinref part="LED5" gate="G$1" pin="A"/>
 <wire x1="497.84" y1="106.68" x2="497.84" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -14093,7 +14093,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="27.94" x2="492.76" y2="27.94" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED5" gate="G$1" pin="A"/>
+<pinref part="LED6" gate="G$1" pin="A"/>
 <wire x1="508" y1="106.68" x2="508" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -14103,7 +14103,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="25.4" x2="492.76" y2="25.4" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED6" gate="G$1" pin="A"/>
+<pinref part="LED7" gate="G$1" pin="A"/>
 <wire x1="518.16" y1="106.68" x2="518.16" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -14113,62 +14113,62 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="487.68" y1="22.86" x2="492.76" y2="22.86" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="LED7" gate="G$1" pin="A"/>
+<pinref part="LED8" gate="G$1" pin="A"/>
 <wire x1="528.32" y1="106.68" x2="528.32" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$15" class="0">
 <segment>
-<pinref part="LED7" gate="G$1" pin="C"/>
+<pinref part="LED8" gate="G$1" pin="C"/>
 <wire x1="528.32" y1="99.06" x2="528.32" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R19" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$17" class="0">
 <segment>
-<pinref part="LED6" gate="G$1" pin="C"/>
+<pinref part="LED7" gate="G$1" pin="C"/>
 <wire x1="518.16" y1="99.06" x2="518.16" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R18" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$19" class="0">
 <segment>
-<pinref part="LED5" gate="G$1" pin="C"/>
+<pinref part="LED6" gate="G$1" pin="C"/>
 <wire x1="508" y1="99.06" x2="508" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R17" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$21" class="0">
 <segment>
-<pinref part="LED4" gate="G$1" pin="C"/>
+<pinref part="LED5" gate="G$1" pin="C"/>
 <wire x1="497.84" y1="99.06" x2="497.84" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R16" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$23" class="0">
 <segment>
-<pinref part="LED3" gate="G$1" pin="C"/>
+<pinref part="LED4" gate="G$1" pin="C"/>
 <wire x1="487.68" y1="99.06" x2="487.68" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R15" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$26" class="0">
 <segment>
-<pinref part="LED2" gate="G$1" pin="C"/>
+<pinref part="LED3" gate="G$1" pin="C"/>
 <wire x1="477.52" y1="99.06" x2="477.52" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R14" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$29" class="0">
 <segment>
-<pinref part="LED1" gate="G$1" pin="C"/>
+<pinref part="LED2" gate="G$1" pin="C"/>
 <wire x1="467.36" y1="99.06" x2="467.36" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R13" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$31" class="0">
 <segment>
-<pinref part="LED0" gate="G$1" pin="C"/>
+<pinref part="LED1" gate="G$1" pin="C"/>
 <wire x1="457.2" y1="99.06" x2="457.2" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R12" gate="G$1" pin="1"/>
 </segment>
