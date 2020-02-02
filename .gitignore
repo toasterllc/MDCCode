@@ -4,3 +4,5 @@
 *.blif
 *.asc
 tmp
+*.s#*
+*.b#*
