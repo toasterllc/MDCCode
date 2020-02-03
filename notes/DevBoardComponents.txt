@@ -208,4 +208,7 @@
     * Extra SMA connectors (buy 2-4)
         https://www.mouser.com/ProductDetail/712-CSI-SGFI-1-UFFR
     
-    
+===== U.FL connectors =====
+
+    https://www.mouser.com/ProductDetail/538-73412-0110
+
