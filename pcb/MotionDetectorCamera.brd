@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="50" unitdist="mil" unit="mm" style="lines" multiple="1" display="no" altdistance="5" altunitdist="mil" altunit="mm"/>
+<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="1" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -688,41 +688,35 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <class number="0" name="default" width="0" drill="0">
 </class>
 </classes>
-<designrules name="default *">
-<description language="de">&lt;b&gt;EAGLE Design Rules&lt;/b&gt;
+<designrules name="oshpark-4layer">
+<description language="en">&lt;b&gt;OSH Park Design Rules&lt;/b&gt;
 &lt;p&gt;
-Die Standard-Design-Rules sind so gewählt, dass sie für 
-die meisten Anwendungen passen. Sollte ihre Platine 
-besondere Anforderungen haben, treffen Sie die erforderlichen
-Einstellungen hier und speichern die Design Rules unter 
-einem neuen Namen ab.</description>
-<description language="en">&lt;b&gt;EAGLE Design Rules&lt;/b&gt;
+Please make sure your boards conform to these design rules.
+&lt;/p&gt;
 &lt;p&gt;
-The default Design Rules have been set to cover
-a wide range of applications. Your particular design
-may have different requirements, so please make the
-necessary adjustments and save your customized
-design rules under a new name.</description>
-<param name="layerSetup" value="(1+2*15+16)"/>
-<param name="mtCopper" value="0.0356mm 0.0178mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.0178mm 0.0356mm"/>
-<param name="mtIsolate" value="0.1702mm 47mil 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.1702mm"/>
-<param name="mdWireWire" value="6mil"/>
-<param name="mdWirePad" value="6mil"/>
-<param name="mdWireVia" value="6mil"/>
-<param name="mdPadPad" value="6mil"/>
-<param name="mdPadVia" value="6mil"/>
-<param name="mdViaVia" value="6mil"/>
-<param name="mdSmdPad" value="6mil"/>
-<param name="mdSmdVia" value="6mil"/>
-<param name="mdSmdSmd" value="6mil"/>
-<param name="mdViaViaSameLayer" value="6mil"/>
+Note, that not all DRC settings must be set by the manufacturer. Several can be adjusted for the design, including those listed on our docs page here. 
+&lt;a href=&quot;http://docs.oshpark.com/design-tools/eagle/design-rules-files/&quot;&gt;Adjustable Settings&lt;/a&gt;
+&lt;/p&gt;</description>
+<param name="layerSetup" value="(1*2*15*16)"/>
+<param name="mtCopper" value="0.035559375mm 0.01778125mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.01778125mm 0.035559375mm"/>
+<param name="mtIsolate" value="0.17018125mm 47mil 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.17018125mm"/>
+<param name="mdWireWire" value="5mil"/>
+<param name="mdWirePad" value="5mil"/>
+<param name="mdWireVia" value="5mil"/>
+<param name="mdPadPad" value="5mil"/>
+<param name="mdPadVia" value="5mil"/>
+<param name="mdViaVia" value="5mil"/>
+<param name="mdSmdPad" value="5mil"/>
+<param name="mdSmdVia" value="5mil"/>
+<param name="mdSmdSmd" value="5mil"/>
+<param name="mdViaViaSameLayer" value="8mil"/>
 <param name="mnLayersViaInSmd" value="2"/>
-<param name="mdCopperDimension" value="40mil"/>
+<param name="mdCopperDimension" value="15mil"/>
 <param name="mdDrill" value="6mil"/>
 <param name="mdSmdStop" value="0mil"/>
-<param name="msWidth" value="6mil"/>
-<param name="msDrill" value="0.35mm"/>
-<param name="msMicroVia" value="9.99mm"/>
+<param name="msWidth" value="5mil"/>
+<param name="msDrill" value="10mil"/>
+<param name="msMicroVia" value="10mil"/>
 <param name="msBlindViaRatio" value="0.5"/>
 <param name="rvPadTop" value="0.25"/>
 <param name="rvPadInner" value="0.25"/>
@@ -731,15 +725,15 @@ design rules under a new name.</description>
 <param name="rvViaInner" value="0.25"/>
 <param name="rvMicroViaOuter" value="0.25"/>
 <param name="rvMicroViaInner" value="0.25"/>
-<param name="rlMinPadTop" value="10mil"/>
+<param name="rlMinPadTop" value="4mil"/>
 <param name="rlMaxPadTop" value="20mil"/>
-<param name="rlMinPadInner" value="10mil"/>
+<param name="rlMinPadInner" value="4mil"/>
 <param name="rlMaxPadInner" value="20mil"/>
-<param name="rlMinPadBottom" value="10mil"/>
+<param name="rlMinPadBottom" value="4mil"/>
 <param name="rlMaxPadBottom" value="20mil"/>
-<param name="rlMinViaOuter" value="8mil"/>
+<param name="rlMinViaOuter" value="4mil"/>
 <param name="rlMaxViaOuter" value="20mil"/>
-<param name="rlMinViaInner" value="8mil"/>
+<param name="rlMinViaInner" value="4mil"/>
 <param name="rlMaxViaInner" value="20mil"/>
 <param name="rlMinMicroViaOuter" value="4mil"/>
 <param name="rlMaxMicroViaOuter" value="20mil"/>
@@ -752,8 +746,8 @@ design rules under a new name.</description>
 <param name="psElongationOffset" value="100"/>
 <param name="mvStopFrame" value="1"/>
 <param name="mvCreamFrame" value="0"/>
-<param name="mlMinStopFrame" value="4mil"/>
-<param name="mlMaxStopFrame" value="4mil"/>
+<param name="mlMinStopFrame" value="2.5mil"/>
+<param name="mlMaxStopFrame" value="2.5mil"/>
 <param name="mlMinCreamFrame" value="0mil"/>
 <param name="mlMaxCreamFrame" value="0mil"/>
 <param name="mlViaStopLimit" value="0mil"/>
@@ -872,360 +866,348 @@ design rules under a new name.</description>
 </pass>
 </autorouter>
 <elements>
-<element name="C1" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="88.42" y="46.99" smashed="yes">
-<attribute name="MODEL" value="GCM155R71H103JA55D" x="120.17" y="-5.08" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="87.74" y="47.572" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="2" x="120.17" y="-5.08" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="120.17" y="-5.08" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C10" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="19.431" y="44.196" smashed="yes" rot="MR0">
-<attribute name="MP" value="GRM188R61A106KE69D" x="-38.989" y="-4.064" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="17.907" y="44.831" size="0.508" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="30" x="-38.989" y="-4.064" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-38.989" y="-4.064" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C11" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="19.431" y="45.466" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-17.399" y="-6.604" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="20.746" y="45.794" size="0.3" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="2" x="-17.399" y="-6.604" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-17.399" y="-6.604" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C12" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="86.83" y="59.69" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="102.07" y="7.62" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="85.56" y="60.452" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="102.07" y="7.62" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="102.07" y="7.62" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C13" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="87.15" y="55.88" smashed="yes">
-<attribute name="MP" value="GRM155R61H104KE19D" x="126.52" y="3.81" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="86.47" y="56.462" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="2" x="126.52" y="3.81" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="126.52" y="3.81" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C14" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="19.431" y="42.926" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-22.479" y="-9.144" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="20.873" y="43.254" size="0.3" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="2" x="-22.479" y="-9.144" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-22.479" y="-9.144" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C15" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="19.431" y="41.91" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-25.019" y="-10.16" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="20.238" y="41.095" size="0.3" layer="26" rot="MR0"/>
-<attribute name="POPULARITY" value="2" x="-25.019" y="-10.16" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-25.019" y="-10.16" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C16" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="22.606" y="38.608" smashed="yes" rot="MR180">
-<attribute name="MP" value="GCM155R71C104KA55D" x="69.596" y="90.678" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="21.926" y="38.026" size="0.3" layer="26" rot="MR180"/>
-<attribute name="POPULARITY" value="2" x="69.596" y="90.678" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="69.596" y="90.678" size="1.778" layer="28" rot="MR180" display="off"/>
-</element>
-<element name="C17" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="22.606" y="39.624" smashed="yes" rot="MR180">
-<attribute name="MP" value="GCM155R71C104KA55D" x="72.136" y="91.694" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="21.799" y="40.566" size="0.3" layer="26" rot="MR180"/>
-<attribute name="POPULARITY" value="2" x="72.136" y="91.694" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="72.136" y="91.694" size="1.778" layer="28" rot="MR180" display="off"/>
-</element>
-<element name="C18" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="16.002" y="37.846" smashed="yes" rot="MR270">
-<attribute name="MP" value="GCM155R71C104KA55D" x="68.072" y="-14.224" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="15.42" y="38.526" size="0.3" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="2" x="68.072" y="-14.224" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="68.072" y="-14.224" size="1.778" layer="28" rot="MR270" display="off"/>
-</element>
-<element name="C19" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="17.018" y="37.846" smashed="yes" rot="MR270">
-<attribute name="MP" value="GCM155R71C104KA55D" x="69.088" y="-16.764" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="17.833" y="38.653" size="0.3" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="2" x="69.088" y="-16.764" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="69.088" y="-16.764" size="1.778" layer="28" rot="MR270" display="off"/>
-</element>
-<element name="C2" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="89.37" y="41.91" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="124.93" y="-6.35" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="88.1" y="42.672" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="124.93" y="-6.35" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="124.93" y="-6.35" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C20" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="16.891" y="42.418" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-40.259" y="-9.652" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="17.571" y="43" size="0.3" layer="26" rot="MR0"/>
-<attribute name="POPULARITY" value="2" x="-40.259" y="-9.652" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-40.259" y="-9.652" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C21" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="16.891" y="41.402" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-42.799" y="-10.668" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="17.571" y="40.46" size="0.3" layer="26" rot="MR0"/>
-<attribute name="POPULARITY" value="2" x="-42.799" y="-10.668" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-42.799" y="-10.668" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C24" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="19.304" y="39.624" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="0.254" y="-14.986" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="19.984" y="40.206" size="0.3" layer="26" rot="MR0"/>
-<attribute name="POPULARITY" value="2" x="0.254" y="-14.986" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="0.254" y="-14.986" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C25" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="19.304" y="38.608" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-2.286" y="-16.002" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="20.746" y="38.936" size="0.3" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="2" x="-2.286" y="-16.002" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-2.286" y="-16.002" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C28" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="22.352" y="44.323" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-6.858" y="-10.287" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="23.032" y="44.905" size="0.3" layer="26" rot="MR0"/>
-<attribute name="POPULARITY" value="2" x="-6.858" y="-10.287" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-6.858" y="-10.287" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C29" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="22.352" y="43.307" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-9.398" y="-11.303" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="23.032" y="42.492" size="0.3" layer="26" rot="MR0"/>
-<attribute name="POPULARITY" value="2" x="-9.398" y="-11.303" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-9.398" y="-11.303" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C3" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="86.83" y="27.94" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="126.2" y="-20.32" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="85.56" y="28.702" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="126.2" y="-20.32" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="126.2" y="-20.32" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C30" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="86.83" y="53.34" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="105.88" y="1.27" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="85.56" y="54.102" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="105.88" y="1.27" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="105.88" y="1.27" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C31" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="78.26" y="44.45" smashed="yes">
-<attribute name="MP" value="GRM155R61H104KE19D" x="112.55" y="-10.16" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="77.58" y="45.032" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="2" x="112.55" y="-10.16" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="112.55" y="-10.16" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C32" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="72.86" y="39.37" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="95.72" y="-12.7" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="71.59" y="40.132" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="95.72" y="-12.7" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="95.72" y="-12.7" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C33" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="71.91" y="35.56" smashed="yes">
-<attribute name="MP" value="GRM155R61H104KE19D" x="108.74" y="-19.05" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="71.23" y="36.142" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="2" x="108.74" y="-19.05" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="108.74" y="-19.05" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C4" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="88.1" y="31.75" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="131.28" y="-16.51" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="86.83" y="32.512" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="131.28" y="-16.51" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="131.28" y="-16.51" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C5" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="76.67" y="62.23" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="123.66" y="13.97" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="75.4" y="62.992" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="123.66" y="13.97" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="123.66" y="13.97" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C6" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="76.67" y="58.42" smashed="yes">
-<attribute name="MP" value="GRM188R61A106KE69D" x="127.47" y="10.16" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="75.4" y="59.182" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="30" x="127.47" y="10.16" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="127.47" y="10.16" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C7" library="MotionDetectorCamera" package="RCL_C0805" value="22u" x="76.52" y="54.61" smashed="yes">
-<attribute name="MP" value="GRM219R61C226ME15L" x="126.05" y="12.7" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="74.996" y="55.753" size="0.635" layer="25"/>
-<attribute name="POPULARITY" value="0" x="126.05" y="12.7" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="126.05" y="12.7" size="1.778" layer="27" display="off"/>
-</element>
-<element name="C8" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="19.558" y="37.211" smashed="yes" rot="MR0">
-<attribute name="MP" value="GRM188R61A106KE69D" x="-35.052" y="-11.049" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="21.59" y="37.592" size="0.508" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="30" x="-35.052" y="-11.049" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-35.052" y="-11.049" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="C9" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="19.558" y="36.068" smashed="yes" rot="MR0">
-<attribute name="MP" value="GCM155R71C104KA55D" x="-14.732" y="-16.002" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="18.46" y="36.269" size="0.3" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="2" x="-14.732" y="-16.002" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="C" x="-14.732" y="-16.002" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="L1" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="-20.32" y="10.16" smashed="yes">
-<attribute name="MP" value="PA4343.471NLT" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-26.783" y="1.231" size="1.27" layer="25"/>
-</element>
-<element name="L2" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="-34.29" y="10.16" smashed="yes">
-<attribute name="MP" value="PA4343.471NLT" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-40.753" y="1.231" size="1.27" layer="25"/>
-</element>
-<element name="L3" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="-48.26" y="10.16" smashed="yes">
-<attribute name="MP" value="PA4343.471NLT" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-54.723" y="1.231" size="1.27" layer="25"/>
-</element>
-<element name="LED0" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="22.86" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="21.336" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="62.23" y="62.23" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="LED1" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="20.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="18.796" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="62.23" y="63.5" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="LED2" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="17.78" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="16.256" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="62.23" y="64.77" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="LED3" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="15.24" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="13.716" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="62.23" y="66.04" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="LED4" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="12.7" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="11.176" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="62.23" y="67.31" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="LED5" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="10.16" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="8.636" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="62.23" y="68.58" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="LED6" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="7.62" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="6.096" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="64.77" y="21.59" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="LED7" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="7.62" y="5.08" smashed="yes" rot="R90">
-<attribute name="NAME" x="7.239" y="3.556" size="0.254" layer="25" rot="R270" align="top-right"/>
-<attribute name="POPULARITY" value="0" x="64.77" y="22.86" size="1.778" layer="27" rot="R90" display="off"/>
-</element>
-<element name="R1" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="65.56" y="58.42" smashed="yes">
-<attribute name="NAME" x="64.925" y="58.928" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="87.15" y="1.27" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="87.15" y="1.27" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R10" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="78.26" y="39.37" smashed="yes">
-<attribute name="NAME" x="77.625" y="39.878" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="115.09" y="-17.78" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="115.09" y="-17.78" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R11" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="69.37" y="40.64" smashed="yes">
-<attribute name="NAME" x="68.735" y="41.148" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="108.74" y="-16.51" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="108.74" y="-16.51" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R12" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="78.26" y="34.29" smashed="yes">
-<attribute name="NAME" x="77.625" y="34.798" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="120.17" y="-22.86" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="120.17" y="-22.86" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R13" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="78.26" y="29.21" smashed="yes">
-<attribute name="NAME" x="77.625" y="29.718" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="122.71" y="-27.94" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="122.71" y="-27.94" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R14" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="65.56" y="44.45" smashed="yes">
-<attribute name="NAME" x="64.925" y="44.958" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="112.55" y="-12.7" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="112.55" y="-12.7" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R15" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="68.1" y="46.99" smashed="yes">
-<attribute name="NAME" x="67.465" y="47.498" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="117.63" y="-10.16" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="117.63" y="-10.16" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R16" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="64.29" y="46.99" smashed="yes">
-<attribute name="NAME" x="63.655" y="47.498" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="116.36" y="-10.16" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="116.36" y="-10.16" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R17" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="64.29" y="38.1" smashed="yes">
-<attribute name="NAME" x="63.655" y="38.608" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="118.9" y="-19.05" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="118.9" y="-19.05" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R18" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="64.29" y="33.02" smashed="yes">
-<attribute name="NAME" x="63.655" y="33.528" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="121.44" y="-24.13" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="121.44" y="-24.13" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R19" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="71.91" y="44.45" smashed="yes">
-<attribute name="NAME" x="71.275" y="44.958" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="131.6" y="-12.7" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="131.6" y="-12.7" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R2" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="65.56" y="55.88" smashed="yes">
-<attribute name="NAME" x="64.925" y="56.388" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="89.69" y="-1.27" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="89.69" y="-1.27" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R20" library="MotionDetectorCamera" package="RCL_R0805" value="0" x="71.44" y="26.67" smashed="yes">
-<attribute name="NAME" x="69.789" y="27.686" size="0.635" layer="25"/>
-<attribute name="POPULARITY" value="0" x="126.05" y="-15.24" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="126.05" y="-15.24" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R21" library="MotionDetectorCamera" package="RCL_R0805" value="0" x="71.44" y="21.59" smashed="yes">
-<attribute name="NAME" x="69.789" y="22.606" size="0.635" layer="25"/>
-<attribute name="POPULARITY" value="0" x="86.68" y="-26.67" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="86.68" y="-26.67" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R22" library="MotionDetectorCamera" package="RCL_R0805" value="0" x="71.44" y="17.78" smashed="yes">
-<attribute name="NAME" x="69.789" y="18.796" size="0.635" layer="25"/>
-<attribute name="POPULARITY" value="0" x="91.76" y="-30.48" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="91.76" y="-30.48" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R3" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="88.42" y="36.83" smashed="yes">
-<attribute name="NAME" x="87.785" y="37.338" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="115.09" y="-20.32" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="115.09" y="-20.32" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R4" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="87.15" y="24.13" smashed="yes">
-<attribute name="NAME" x="86.515" y="24.638" size="0.3" layer="25"/>
-<attribute name="POPULARITY" value="34" x="116.36" y="-33.02" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="116.36" y="-33.02" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R5" library="MotionDetectorCamera" package="RCL_R1206" value="1" x="70.94" y="31.75" smashed="yes">
-<attribute name="NAME" x="69.416" y="32.893" size="0.635" layer="25"/>
-<attribute name="POPULARITY" value="0" x="115.39" y="-10.16" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="115.39" y="-10.16" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R6" library="MotionDetectorCamera" package="RCL_R0603" value="365k" x="76.67" y="52.07" smashed="yes">
-<attribute name="NAME" x="75.273" y="52.832" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="77" x="104.61" y="3.81" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="104.61" y="3.81" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R7" library="MotionDetectorCamera" package="RCL_R0603" value="91k" x="86.83" y="63.5" smashed="yes">
-<attribute name="NAME" x="85.433" y="64.262" size="0.508" layer="25"/>
-<attribute name="POPULARITY" value="77" x="118.58" y="15.24" size="1.778" layer="27" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="118.58" y="15.24" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R8" library="MotionDetectorCamera" package="RCL_R0402" value="100" x="19.558" y="35.052" smashed="yes" rot="MR0">
-<attribute name="NAME" x="20.955" y="35.306" size="0.3" layer="26" rot="MR270"/>
-<attribute name="POPULARITY" value="34" x="-12.192" y="-22.098" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="-12.192" y="-22.098" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="R9" library="MotionDetectorCamera" package="RCL_R0402" value="100" x="19.431" y="46.482" smashed="yes" rot="MR0">
-<attribute name="NAME" x="20.32" y="46.99" size="0.3" layer="26" rot="MR0"/>
-<attribute name="POPULARITY" value="34" x="-14.859" y="-10.668" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="SPICEPREFIX" value="R" x="-14.859" y="-10.668" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
-<element name="SV1" library="MotionDetectorCamera" package="CON-LSTA_FE10-2" value="" x="-46.99" y="24.13" smashed="yes">
-<attribute name="MF" value="" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MPN" value="" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-50.419" y="27.559" size="1.27" layer="25" ratio="10"/>
-<attribute name="OC_FARNELL" value="unknown" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="OC_NEWARK" value="unknown" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
-</element>
-<element name="TC1" library="MotionDetectorCamera" package="TAGCONNECT_TC2050-IDC" value="TAGCONNECT_TC2050-IDC" x="-17.78" y="35.56" smashed="yes">
-<attribute name="NAME" x="-23.749" y="33.655" size="0.762" layer="25" rot="R90"/>
-</element>
-<element name="U1" library="MotionDetectorCamera" package="AT25XV041B-SSHV-T_AT25XV041B-SSHV-T" value="AT25XV041B-SSHV-T_AT25XV041B-SSHV-T" x="-29.21" y="33.02" smashed="yes">
-<attribute name="MP" value="AT25XV041B-SSHV-T" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-32.8731" y="36.08946875" size="1.27188125" layer="25"/>
-</element>
-<element name="U2" library="MotionDetectorCamera" package="TPS62801X_TPS6280X" value="TPS62801X_TPS6280X" x="-26.67" y="52.07" smashed="yes">
-<attribute name="MP" value="TPS62801YKAR" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-27.082740625" y="52.838990625" size="0.1524" layer="25" ratio="10" rot="SR0"/>
-</element>
-<element name="U3" library="MotionDetectorCamera" package="TPS62801X_TPS6280X" value="TPS62801X_TPS6280X" x="-29.21" y="52.07" smashed="yes">
-<attribute name="MP" value="TPS62802YKAR" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-29.622740625" y="52.838990625" size="0.1524" layer="25" ratio="10" rot="SR0"/>
-</element>
-<element name="U4" library="MotionDetectorCamera" package="TPS6380X_TPS6380X" value="TPS6380X_TPS6380X" x="-39.37" y="43.18" smashed="yes">
-<attribute name="MP" value="TPS63805YFFR" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-40.165" y="44.626" size="0.254" layer="25"/>
+<element name="C1" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="15.649" y="35.306" smashed="yes" rot="MR180">
+<attribute name="MODEL" value="GCM155R71H103JA55D" x="47.399" y="87.376" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="14.969" y="34.724" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="2" x="47.399" y="87.376" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="47.399" y="87.376" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="C10" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="19.558" y="45.974" smashed="yes" rot="MR0">
+<attribute name="MP" value="GRM188R61A106KE69D" x="-38.862" y="-2.286" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="18.034" y="46.609" size="0.508" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="30" x="-38.862" y="-2.286" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-38.862" y="-2.286" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C11" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="19.558" y="47.244" smashed="yes" rot="MR0">
+<attribute name="MP" value="GCM155R71C104KA55D" x="-17.272" y="-4.826" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="20.873" y="47.572" size="0.3" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="2" x="-17.272" y="-4.826" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-17.272" y="-4.826" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C12" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="7.074" y="46.101" smashed="yes" rot="MR0">
+<attribute name="MP" value="GRM188R61A106KE69D" x="-8.166" y="-5.969" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="8.598" y="45.466" size="0.508" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="30" x="-8.166" y="-5.969" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-8.166" y="-5.969" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C13" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="7.074" y="47.371" smashed="yes" rot="MR0">
+<attribute name="MP" value="GRM155R61H104KE19D" x="-32.296" y="-4.699" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="8.135" y="47.064" size="0.3" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="2" x="-32.296" y="-4.699" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-32.296" y="-4.699" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C16" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="24.13" y="38.1" smashed="yes" rot="MR270">
+<attribute name="MP" value="GCM155R71C104KA55D" x="76.2" y="-8.89" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="23.802" y="39.415" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="2" x="76.2" y="-8.89" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="76.2" y="-8.89" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C17" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="25.1714" y="38.1" smashed="yes" rot="MR270">
+<attribute name="MP" value="GCM155R71C104KA55D" x="77.2414" y="-11.43" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="24.8434" y="39.415" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="2" x="77.2414" y="-11.43" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="77.2414" y="-11.43" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C18" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="21.844" y="34.5186" smashed="yes" rot="MR180">
+<attribute name="MP" value="GCM155R71C104KA55D" x="73.914" y="86.5886" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="22.942" y="34.1906" size="0.3" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="2" x="73.914" y="86.5886" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="73.914" y="86.5886" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="C19" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="21.844" y="35.56" smashed="yes" rot="MR180">
+<attribute name="MP" value="GCM155R71C104KA55D" x="76.454" y="87.63" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="22.942" y="35.232" size="0.3" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="2" x="76.454" y="87.63" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="76.454" y="87.63" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="C2" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="19.0628" y="61.6458" smashed="yes" rot="MR270">
+<attribute name="MP" value="GRM188R61A106KE69D" x="67.3228" y="26.0858" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="20.3328" y="62.1538" size="0.508" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="30" x="67.3228" y="26.0858" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="67.3228" y="26.0858" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C20" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="16.256" y="46.7868" smashed="yes" rot="MR0">
+<attribute name="MP" value="GCM155R71C104KA55D" x="-40.894" y="-5.2832" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="15.158" y="47.1148" size="0.3" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="2" x="-40.894" y="-5.2832" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-40.894" y="-5.2832" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C21" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="16.256" y="45.7454" smashed="yes" rot="MR0">
+<attribute name="MP" value="GCM155R71C104KA55D" x="-43.434" y="-6.3246" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="15.158" y="46.0734" size="0.3" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="2" x="-43.434" y="-6.3246" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-43.434" y="-6.3246" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C24" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="24.13" y="41.148" smashed="yes" rot="MR270">
+<attribute name="MP" value="GCM155R71C104KA55D" x="78.74" y="22.098" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="23.802" y="40.05" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="2" x="78.74" y="22.098" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="78.74" y="22.098" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C25" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="25.1714" y="41.148" smashed="yes" rot="MR270">
+<attribute name="MP" value="GCM155R71C104KA55D" x="79.7814" y="19.558" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="24.8434" y="40.05" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="2" x="79.7814" y="19.558" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="79.7814" y="19.558" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C28" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="24.13" y="43.434" smashed="yes" rot="MR270">
+<attribute name="MP" value="GCM155R71C104KA55D" x="78.74" y="14.224" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="23.802" y="44.749" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="2" x="78.74" y="14.224" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="78.74" y="14.224" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C29" library="MotionDetectorCamera" package="RCL_C0402" value="10n" x="25.1714" y="43.434" smashed="yes" rot="MR270">
+<attribute name="MP" value="GCM155R71C104KA55D" x="79.7814" y="11.684" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="24.8434" y="44.749" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="2" x="79.7814" y="11.684" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="79.7814" y="11.684" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C3" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="16.3196" y="61.595" smashed="yes" rot="R90">
+<attribute name="MP" value="GRM188R61A106KE69D" x="64.5796" y="100.965" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="NAME" x="17.5896" y="61.214" size="0.508" layer="25" rot="R90"/>
+<attribute name="POPULARITY" value="30" x="64.5796" y="100.965" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="64.5796" y="100.965" size="1.778" layer="27" rot="R90" display="off"/>
+</element>
+<element name="C30" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="7.074" y="35.179" smashed="yes" rot="MR0">
+<attribute name="MP" value="GRM188R61A106KE69D" x="-11.976" y="-16.891" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="8.725" y="34.544" size="0.508" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="30" x="-11.976" y="-16.891" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-11.976" y="-16.891" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C31" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="7.074" y="33.909" smashed="yes" rot="MR0">
+<attribute name="MP" value="GRM155R61H104KE19D" x="-27.216" y="-20.701" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="8.135" y="33.602" size="0.3" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="2" x="-27.216" y="-20.701" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-27.216" y="-20.701" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C32" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="30.061" y="32.385" smashed="yes" rot="MR270">
+<attribute name="MP" value="GRM188R61A106KE69D" x="82.131" y="9.525" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="29.426" y="34.417" size="0.508" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="30" x="82.131" y="9.525" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="82.131" y="9.525" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C33" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="28.73" y="32.385" smashed="yes" rot="MR270">
+<attribute name="MP" value="GRM155R61H104KE19D" x="83.34" y="-4.445" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="28.148" y="32.684" size="0.3" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="2" x="83.34" y="-4.445" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="83.34" y="-4.445" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C4" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="18.5802" y="19.4056" smashed="yes" rot="MR270">
+<attribute name="MP" value="GRM188R61A106KE69D" x="66.8402" y="-23.7744" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="19.8502" y="20.0406" size="0.508" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="30" x="66.8402" y="-23.7744" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="66.8402" y="-23.7744" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C5" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="15.964" y="19.431" smashed="yes" rot="R90">
+<attribute name="MP" value="GRM188R61A106KE69D" x="64.224" y="66.421" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="NAME" x="15.075" y="18.923" size="0.508" layer="25" rot="R90"/>
+<attribute name="POPULARITY" value="30" x="64.224" y="66.421" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="64.224" y="66.421" size="1.778" layer="27" rot="R90" display="off"/>
+</element>
+<element name="C6" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="25.87" y="50.2412" smashed="yes" rot="MR270">
+<attribute name="MP" value="GRM188R61A106KE69D" x="74.13" y="-0.5588" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="25.489" y="52.2732" size="0.508" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="30" x="74.13" y="-0.5588" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="74.13" y="-0.5588" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="C7" library="MotionDetectorCamera" package="RCL_C0805" value="22u" x="24.1452" y="50.4698" smashed="yes" rot="MR90">
+<attribute name="MP" value="GRM219R61C226ME15L" x="-17.7648" y="99.9998" size="1.778" layer="28" rot="MR90" display="off"/>
+<attribute name="NAME" x="24.6532" y="52.3748" size="0.635" layer="26" rot="MR0"/>
+<attribute name="POPULARITY" value="0" x="-17.7648" y="99.9998" size="1.778" layer="28" rot="MR90" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-17.7648" y="99.9998" size="1.778" layer="28" rot="MR90" display="off"/>
+</element>
+<element name="C8" library="MotionDetectorCamera" package="RCL_C0603" value="10u" x="18.415" y="35.306" smashed="yes" rot="MR0">
+<attribute name="MP" value="GRM188R61A106KE69D" x="-36.195" y="-12.954" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="20.447" y="35.687" size="0.508" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="30" x="-36.195" y="-12.954" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-36.195" y="-12.954" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="C9" library="MotionDetectorCamera" package="RCL_C0402" value="100n" x="18.415" y="34.0614" smashed="yes" rot="MR0">
+<attribute name="MP" value="GCM155R71C104KA55D" x="-15.875" y="-18.0086" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="17.317" y="34.2624" size="0.3" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="2" x="-15.875" y="-18.0086" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="C" x="-15.875" y="-18.0086" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="L1" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="10.287" y="55.753" smashed="yes" rot="MR0">
+<attribute name="MP" value="PA4343.471NLT" x="-10.033" y="45.593" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="11.162" y="63.969" size="1.27" layer="26" rot="MR0"/>
+</element>
+<element name="L2" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="10.16" y="25.781" smashed="yes" rot="MR180">
+<attribute name="MP" value="PA4343.471NLT" x="44.45" y="35.941" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="3.697" y="34.71" size="1.27" layer="26" rot="MR180"/>
+</element>
+<element name="L3" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="33.274" y="49.911" smashed="yes" rot="MR0">
+<attribute name="MP" value="PA4343.471NLT" x="-14.986" y="39.751" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="39.356" y="58" size="1.27" layer="26" rot="MR0"/>
+</element>
+<element name="LED0" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="31.623" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="31.75" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="59.944" y="86.233" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="LED1" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="30.48" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="30.607" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="63.754" y="85.09" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="LED2" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="29.337" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="29.464" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="67.564" y="83.947" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="LED3" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="28.194" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="28.321" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="71.374" y="82.804" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="LED4" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="27.051" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="27.178" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="75.184" y="81.661" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="LED5" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="25.908" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="26.035" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="78.994" y="80.518" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="LED6" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="24.765" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="24.892" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="34.544" y="81.915" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="LED7" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="20.574" y="23.622" smashed="yes" rot="MR180">
+<attribute name="NAME" x="18.034" y="23.749" size="0.254" layer="26" rot="MR0" align="top-right"/>
+<attribute name="POPULARITY" value="0" x="38.354" y="80.772" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R1" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="25.809" y="31.877" smashed="yes" rot="MR0">
+<attribute name="NAME" x="26.063" y="32.512" size="0.3" layer="26" rot="MR0"/>
+<attribute name="POPULARITY" value="34" x="4.219" y="-25.273" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="4.219" y="-25.273" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="R10" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="24.666" y="36.449" smashed="yes" rot="MR0">
+<attribute name="NAME" x="26.063" y="36.83" size="0.3" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="34" x="-12.164" y="-20.701" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-12.164" y="-20.701" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="R11" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="22.634" y="51.054" smashed="yes" rot="MR90">
+<attribute name="NAME" x="21.745" y="50.419" size="0.3" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="34" x="-34.516" y="90.424" size="1.778" layer="28" rot="MR90" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-34.516" y="90.424" size="1.778" layer="28" rot="MR90" display="off"/>
+</element>
+<element name="R12" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="31.623" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="31.623" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="64.417" y="88.773" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="64.417" y="88.773" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R13" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="30.48" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="30.48" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="66.957" y="87.63" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="66.957" y="87.63" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R14" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="29.337" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="29.337" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="69.497" y="86.487" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="69.497" y="86.487" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R15" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="28.194" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="28.194" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="72.037" y="85.344" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="72.037" y="85.344" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R16" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="27.051" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="27.051" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="74.577" y="84.201" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="74.577" y="84.201" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R17" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="25.908" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="25.908" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="77.117" y="83.058" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="77.117" y="83.058" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R18" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="24.765" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="24.765" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="79.657" y="81.915" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="79.657" y="81.915" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R19" library="MotionDetectorCamera" package="RCL_R0402" value="1.8k" x="22.507" y="23.622" smashed="yes" rot="MR180">
+<attribute name="NAME" x="23.65" y="23.622" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="82.197" y="80.772" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="82.197" y="80.772" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R2" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="33.048" y="33.147" smashed="yes" rot="MR180">
+<attribute name="NAME" x="32.921" y="32.639" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="57.178" y="90.297" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="57.178" y="90.297" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R20" library="MotionDetectorCamera" package="RCL_R0805" value="0" x="12.512" y="47.3964" smashed="yes" rot="MR0">
+<attribute name="NAME" x="10.099" y="46.5074" size="0.635" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="0" x="-42.098" y="5.4864" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-42.098" y="5.4864" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="R21" library="MotionDetectorCamera" package="RCL_R0805" value="0" x="12.512" y="34.1122" smashed="yes" rot="MR0">
+<attribute name="NAME" x="10.099" y="33.3502" size="0.635" layer="26" rot="MR90"/>
+<attribute name="POPULARITY" value="0" x="-2.728" y="-14.1478" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-2.728" y="-14.1478" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="R22" library="MotionDetectorCamera" package="RCL_R0805" value="0" x="23.815" y="46.355" smashed="yes" rot="MR180">
+<attribute name="NAME" x="22.037" y="47.117" size="0.635" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="0" x="44.135" y="94.615" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="44.135" y="94.615" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R3" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="17.808" y="62.103" smashed="yes" rot="MR90">
+<attribute name="NAME" x="17.554" y="63.5" size="0.3" layer="26" rot="MR180"/>
+<attribute name="POPULARITY" value="34" x="-39.342" y="88.773" size="1.778" layer="28" rot="MR90" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-39.342" y="88.773" size="1.778" layer="28" rot="MR90" display="off"/>
+</element>
+<element name="R4" library="MotionDetectorCamera" package="RCL_R0402" value="10k" x="17.3" y="18.923" smashed="yes" rot="MR270">
+<attribute name="NAME" x="17.427" y="17.526" size="0.3" layer="26" rot="MR0"/>
+<attribute name="POPULARITY" value="34" x="74.45" y="-10.287" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="74.45" y="-10.287" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
+<element name="R5" library="MotionDetectorCamera" package="RCL_R1206" value="1" x="55.7" y="59.69" smashed="yes">
+<attribute name="NAME" x="54.176" y="60.833" size="0.635" layer="25"/>
+<attribute name="POPULARITY" value="0" x="100.15" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="100.15" y="17.78" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R6" library="MotionDetectorCamera" package="RCL_R0603" value="365k" x="23.965" y="48.006" smashed="yes" rot="MR180">
+<attribute name="NAME" x="25.997" y="48.387" size="0.508" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="77" x="51.905" y="96.266" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="51.905" y="96.266" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
+<element name="R7" library="MotionDetectorCamera" package="RCL_R0603" value="91k" x="22.441" y="50.292" smashed="yes" rot="R270">
+<attribute name="NAME" x="21.171" y="49.784" size="0.508" layer="25" rot="R270"/>
+<attribute name="POPULARITY" value="77" x="-25.819" y="18.542" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-25.819" y="18.542" size="1.778" layer="27" rot="R270" display="off"/>
+</element>
+<element name="R8" library="MotionDetectorCamera" package="RCL_R0402" value="100" x="18.415" y="33.02" smashed="yes" rot="MR0">
+<attribute name="NAME" x="19.812" y="33.274" size="0.3" layer="26" rot="MR270"/>
+<attribute name="POPULARITY" value="34" x="-13.335" y="-24.13" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-13.335" y="-24.13" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="R9" library="MotionDetectorCamera" package="RCL_R0402" value="100" x="19.558" y="48.2854" smashed="yes" rot="MR0">
+<attribute name="NAME" x="20.447" y="48.7934" size="0.3" layer="26" rot="MR0"/>
+<attribute name="POPULARITY" value="34" x="-14.732" y="-8.8646" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="SPICEPREFIX" value="R" x="-14.732" y="-8.8646" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
+<element name="SV1" library="MotionDetectorCamera" package="CON-LSTA_FE10-2" value="" x="20.32" y="72.39" smashed="yes">
+<attribute name="MF" value="" x="67.31" y="48.26" size="1.778" layer="27" display="off"/>
+<attribute name="MPN" value="" x="67.31" y="48.26" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="16.891" y="75.819" size="1.27" layer="25" ratio="10"/>
+<attribute name="OC_FARNELL" value="unknown" x="67.31" y="48.26" size="1.778" layer="27" display="off"/>
+<attribute name="OC_NEWARK" value="unknown" x="67.31" y="48.26" size="1.778" layer="27" display="off"/>
+<attribute name="POPULARITY" value="0" x="67.31" y="48.26" size="1.778" layer="27" display="off"/>
+</element>
+<element name="TC1" library="MotionDetectorCamera" package="TAGCONNECT_TC2050-IDC" value="TAGCONNECT_TC2050-IDC" x="50.8" y="45.72" smashed="yes">
+<attribute name="NAME" x="44.831" y="43.815" size="0.762" layer="25" rot="R90"/>
+</element>
+<element name="U1" library="MotionDetectorCamera" package="AT25XV041B-SSHV-T_AT25XV041B-SSHV-T" value="AT25XV041B-SSHV-T_AT25XV041B-SSHV-T" x="29.464" y="32.512" smashed="yes">
+<attribute name="MP" value="AT25XV041B-SSHV-T" x="58.674" y="-0.508" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="28.7219" y="28.34246875" size="1.27188125" layer="25"/>
+</element>
+<element name="U2" library="MotionDetectorCamera" package="TPS62801X_TPS6280X" value="TPS62801X_TPS6280X" x="17.653" y="61.595" smashed="yes">
+<attribute name="MP" value="TPS62801YKAR" x="44.323" y="9.525" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="17.494259375" y="60.585990625" size="0.1524" layer="25" ratio="10" rot="SR0"/>
+</element>
+<element name="U3" library="MotionDetectorCamera" package="TPS62801X_TPS6280X" value="TPS62801X_TPS6280X" x="17.272" y="19.558" smashed="yes">
+<attribute name="MP" value="TPS62802YKAR" x="46.482" y="-32.512" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="17.189459375" y="20.377790625" size="0.1524" layer="25" ratio="10" rot="SR0"/>
+</element>
+<element name="U4" library="MotionDetectorCamera" package="TPS6380X_TPS6380X" value="TPS6380X_TPS6380X" x="24.13" y="50.165" smashed="yes">
+<attribute name="MP" value="TPS63805YFFR" x="63.5" y="6.985" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="23.335" y="51.611" size="0.254" layer="25"/>
 </element>
 <element name="U5" library="MotionDetectorCamera" package="LATTICE-SEMICONDUCTOR---ICE40HX4K-CB132_LATTICE_SEMICONDUCTOR_ICE40HX4K-CB132_0" value="LATTICE-SEMICONDUCTOR---ICE40HX4K-CB132_LATTICE_SEMICONDUCTOR_ICE40HX4K-CB132LATTICE_SEMICONDUCTOR_ICE40HX4K-CB132_0_0" x="19.05" y="40.64" smashed="yes">
 <attribute name="CIIVA_IDS" value="1134083" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
@@ -1244,7 +1226,7 @@ design rules under a new name.</description>
 <attribute name="MF" value="Lattice Semiconductor" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
 <attribute name="MOUNTING_TECHNOLOGY" value="Surface Mount" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
 <attribute name="MPN" value="ICE40HX4K-CB132" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="14.545" y="45.521" size="1" layer="25"/>
+<attribute name="NAME" x="18.355" y="34.853" size="1" layer="25"/>
 <attribute name="PACKAGE" value="csBGA-132" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
 <attribute name="PACKAGE_DESCRIPTION" value="132-Ball Chip Scale Ball Grid Array, Body 8 x 8 mm, Pitch 0.5 mm" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
 <attribute name="PACKAGE_VERSION" value="Rev. 03.9, 02/2013" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
@@ -1266,96 +1248,93 @@ design rules under a new name.</description>
 <attribute name="VAULT_GUID" value="9F6F6CC5-81E1-4925-A6A6-21FD61614BFD" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
 <attribute name="VAULT_REVISION" value="395FDF84-D05A-471C-BF0F-E44D2953D20B" x="36.83" y="17.78" size="1.778" layer="27" display="off"/>
 </element>
-<element name="U6" library="MotionDetectorCamera" package="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0" value="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-CMICRON_MT48H32M16LFB4-6_IT-C_0_0" x="-27.94" y="22.86" smashed="yes">
-<attribute name="AMBIENT_TEMPERATURE_RANGE_HIGH" value="+85°C" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="AMBIENT_TEMPERATURE_RANGE_LOW" value="-40°C" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="CENTROID_NOT_SPECIFIED" value="No" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="DATASHEET" value="https://www.micron.com/~/media/documents/products/data-sheet/dram/mobile-dram/low-power-dram/lpsdr/y67m_512mb_mobile_lpsdr_at.pdf" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="DEVICE_CLASS_L1" value="Integrated Circuits (ICs)" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="DEVICE_CLASS_L2" value="Memory" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="DEVICE_CLASS_L3" value="RAM" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="DIGIKEY_DESCRIPTION" value="IC DRAM 512M PARALLEL 54VFBGA" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="DIGIKEY_PART_NUMBER" value="MT48H32M16LFB4-6IT:C-ND" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="FOOTPRINT_PARAMETERS_0" value="{&quot;fp_type&quot;:&quot;bga&quot;,&quot;params&quot;:{&quot;num_rows&quot;:9,&quot;num_cols&quot;:9,&quot;row_enumeration&quot;:&quot;alphabetic&quot;,&quot;col_enumeration&quot;:&quot;numeric&quot;,&quot;skip_rows&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;skip_cols&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;row_pitch&quot;:800000,&quot;col_pitch&quot;:800000,&quot;package_length&quot;:8150000,&quot;package_width&quot;:8150000,&quot;package_height&quot;:1000000,&quot;packing_level&quot;:&quot;C&quot;,&quot;collapsing&quot;:false}}" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="FREQUENCY" value="166MHz" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="HEIGHT" value="1mm" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="INTERFACE" value="Parallel" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="IPC_LAND_PATTERN_NAME" value="BGA81N80P9X9_815X815X100" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="LEAD_FREE" value="yes" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MAX_SUPPLY_VOLTAGE" value="1.95V" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MEMORY_SIZE" value="32MB" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MEMORY_TYPE" value="RAM,SDRAM" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MF" value="Micron" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MFG_PACKAGE_IDENT" value="B4" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MFG_PACKAGE_IDENT_DATE" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MFG_PACKAGE_IDENT_REV" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MIN_SUPPLY_VOLTAGE" value="1.7V" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MOUSER_PART_NUMBER" value="340-123397-TRAY" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MPN" value="MT48H32M16LFB4-6 IT:C" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-32.59" y="27.535" size="1" layer="25"/>
-<attribute name="PACKAGE" value="VFBGA54" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="PIN_0_1_36_INSIDE_EDGE" value="clock" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="PREFIX" value="U" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="ROHS" value="yes" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="STANDOFF_HEIGHT" value="0.25mm" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="TEMPERATURE_RANGE_HIGH" value="+85°C" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="TEMPERATURE_RANGE_LOW" value="-40°C" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="VERIFICATION_VERSION" value="0.0.0.1" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="U6" library="MotionDetectorCamera" package="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0" value="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-CMICRON_MT48H32M16LFB4-6_IT-C_0_0" x="9.652" y="40.64" smashed="yes">
+<attribute name="AMBIENT_TEMPERATURE_RANGE_HIGH" value="+85°C" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="AMBIENT_TEMPERATURE_RANGE_LOW" value="-40°C" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="CENTROID_NOT_SPECIFIED" value="No" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="DATASHEET" value="https://www.micron.com/~/media/documents/products/data-sheet/dram/mobile-dram/low-power-dram/lpsdr/y67m_512mb_mobile_lpsdr_at.pdf" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="DEVICE_CLASS_L1" value="Integrated Circuits (ICs)" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="DEVICE_CLASS_L2" value="Memory" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="DEVICE_CLASS_L3" value="RAM" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="DIGIKEY_DESCRIPTION" value="IC DRAM 512M PARALLEL 54VFBGA" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="DIGIKEY_PART_NUMBER" value="MT48H32M16LFB4-6IT:C-ND" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="FOOTPRINT_PARAMETERS_0" value="{&quot;fp_type&quot;:&quot;bga&quot;,&quot;params&quot;:{&quot;num_rows&quot;:9,&quot;num_cols&quot;:9,&quot;row_enumeration&quot;:&quot;alphabetic&quot;,&quot;col_enumeration&quot;:&quot;numeric&quot;,&quot;skip_rows&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;skip_cols&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;row_pitch&quot;:800000,&quot;col_pitch&quot;:800000,&quot;package_length&quot;:8150000,&quot;package_width&quot;:8150000,&quot;package_height&quot;:1000000,&quot;packing_level&quot;:&quot;C&quot;,&quot;collapsing&quot;:false}}" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="FREQUENCY" value="166MHz" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="HEIGHT" value="1mm" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="INTERFACE" value="Parallel" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="IPC_LAND_PATTERN_NAME" value="BGA81N80P9X9_815X815X100" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="LEAD_FREE" value="yes" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MAX_SUPPLY_VOLTAGE" value="1.95V" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MEMORY_SIZE" value="32MB" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MEMORY_TYPE" value="RAM,SDRAM" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MF" value="Micron" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MFG_PACKAGE_IDENT" value="B4" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MFG_PACKAGE_IDENT_DATE" value="0" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MFG_PACKAGE_IDENT_REV" value="0" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MIN_SUPPLY_VOLTAGE" value="1.7V" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MOUSER_PART_NUMBER" value="340-123397-TRAY" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="MPN" value="MT48H32M16LFB4-6 IT:C" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="8.812" y="34.647" size="1" layer="25"/>
+<attribute name="PACKAGE" value="VFBGA54" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="PIN_0_1_36_INSIDE_EDGE" value="clock" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="PREFIX" value="U" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="ROHS" value="yes" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="STANDOFF_HEIGHT" value="0.25mm" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="TEMPERATURE_RANGE_HIGH" value="+85°C" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="TEMPERATURE_RANGE_LOW" value="-40°C" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
+<attribute name="VERIFICATION_VERSION" value="0.0.0.1" x="37.592" y="17.78" size="1.778" layer="27" display="off"/>
 </element>
-<element name="X1" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-36.83" y="31.75" smashed="yes">
-<attribute name="NAME" x="-38.707" y="34.219" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X1" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="69.85" y="17.78" smashed="yes">
+<attribute name="NAME" x="67.973" y="20.249" size="0.762" layer="25"/>
+<attribute name="POPULARITY" value="0" x="106.68" y="-13.97" size="1.778" layer="27" display="off"/>
 </element>
-<element name="X10" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-35.56" y="43.18" smashed="yes">
-<attribute name="NAME" x="-37.437" y="45.649" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X10" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="82.55" y="8.89" smashed="yes" rot="R270">
+<attribute name="NAME" x="85.019" y="10.767" size="0.762" layer="25" rot="R270"/>
+<attribute name="POPULARITY" value="0" x="39.37" y="-26.67" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="X2" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-41.91" y="31.75" smashed="yes">
-<attribute name="NAME" x="-43.787" y="34.219" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X2" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="64.77" y="17.78" smashed="yes">
+<attribute name="NAME" x="62.893" y="20.249" size="0.762" layer="25"/>
+<attribute name="POPULARITY" value="0" x="106.68" y="-13.97" size="1.778" layer="27" display="off"/>
 </element>
-<element name="X3" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-46.99" y="31.75" smashed="yes">
-<attribute name="NAME" x="-48.867" y="34.219" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X3" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="59.69" y="17.78" smashed="yes">
+<attribute name="NAME" x="57.813" y="20.249" size="0.762" layer="25"/>
+<attribute name="POPULARITY" value="0" x="106.68" y="-13.97" size="1.778" layer="27" display="off"/>
 </element>
-<element name="X4" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-52.07" y="31.75" smashed="yes">
-<attribute name="NAME" x="-53.947" y="34.219" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X4" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="54.61" y="17.78" smashed="yes">
+<attribute name="NAME" x="52.733" y="20.249" size="0.762" layer="25"/>
+<attribute name="POPULARITY" value="0" x="106.68" y="-13.97" size="1.778" layer="27" display="off"/>
 </element>
-<element name="X5" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="25.781" y="41.529" smashed="yes" rot="R270">
-<attribute name="NAME" x="27.615" y="43.66" size="0.762" layer="25" rot="R270"/>
-<attribute name="POPULARITY" value="0" x="-5.969" y="-15.621" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="X5" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="75.311" y="8.509" smashed="yes" rot="R270">
+<attribute name="NAME" x="77.145" y="10.64" size="0.762" layer="25" rot="R270"/>
+<attribute name="POPULARITY" value="0" x="43.561" y="-48.641" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="X6" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="12.319" y="40.386" smashed="yes" rot="R90">
-<attribute name="NAME" x="10.358" y="41.43" size="0.762" layer="25" rot="R90"/>
-<attribute name="POPULARITY" value="0" x="55.499" y="55.626" size="1.778" layer="27" rot="R90" display="off"/>
+<element name="X6" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="68.199" y="8.636" smashed="yes" rot="R90">
+<attribute name="NAME" x="66.238" y="9.68" size="0.762" layer="25" rot="R90"/>
+<attribute name="POPULARITY" value="0" x="111.379" y="23.876" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="X7" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-20.32" y="43.18" smashed="yes">
-<attribute name="NAME" x="-22.197" y="45.649" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X7" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="72.39" y="25.4" smashed="yes">
+<attribute name="NAME" x="70.513" y="27.869" size="0.762" layer="25"/>
+<attribute name="POPULARITY" value="0" x="92.71" y="-17.78" size="1.778" layer="27" display="off"/>
 </element>
-<element name="X8" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-25.4" y="43.18" smashed="yes">
-<attribute name="NAME" x="-27.277" y="45.649" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X8" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="67.31" y="25.4" smashed="yes">
+<attribute name="NAME" x="65.433" y="27.869" size="0.762" layer="25"/>
+<attribute name="POPULARITY" value="0" x="92.71" y="-17.78" size="1.778" layer="27" display="off"/>
 </element>
-<element name="X9" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="-30.48" y="43.18" smashed="yes">
-<attribute name="NAME" x="-32.357" y="45.649" size="0.762" layer="25"/>
-<attribute name="POPULARITY" value="0" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="X9" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="62.23" y="25.4" smashed="yes">
+<attribute name="NAME" x="60.353" y="27.869" size="0.762" layer="25"/>
+<attribute name="POPULARITY" value="0" x="92.71" y="-17.78" size="1.778" layer="27" display="off"/>
 </element>
-<element name="Y1" library="MotionDetectorCamera" package="SIT8021AI-J4-XXS-12.000000E_OSC_SIT8021AI-J4-XXS-12.000000E" value="SIT8021AI-J4-XXS-12.000000E_SIT8021AI-J4-XXS-12.000000E" x="-24.13" y="48.26" smashed="yes">
-<attribute name="AVAILABILITY" value="Unavailable" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="DESCRIPTION" value=" 12MHz XO _Standard_ LVCMOS Oscillator 2.25V ~ 3.63V Standby _Power Down_ 4-UFBGA, CSPBGA " x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MF" value="SiTIME" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="MP" value="SiT8021AI-J4-18S-12.000000E" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-24.749" y="49.387" size="0.254" layer="25"/>
-<attribute name="PACKAGE" value="UFBGA-4 SiTIME" x="0" y="0" size="1.778" layer="27" display="off"/>
-<attribute name="PRICE" value="None" x="0" y="0" size="1.778" layer="27" display="off"/>
+<element name="Y1" library="MotionDetectorCamera" package="SIT8021AI-J4-XXS-12.000000E_OSC_SIT8021AI-J4-XXS-12.000000E" value="SIT8021AI-J4-XXS-12.000000E_SIT8021AI-J4-XXS-12.000000E" x="15.621" y="35.306" smashed="yes" rot="R270">
+<attribute name="AVAILABILITY" value="Unavailable" x="-32.639" y="11.176" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="DESCRIPTION" value=" 12MHz XO _Standard_ LVCMOS Oscillator 2.25V ~ 3.63V Standby _Power Down_ 4-UFBGA, CSPBGA " x="-32.639" y="11.176" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="MF" value="SiTIME" x="-32.639" y="11.176" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="MP" value="SiT8021AI-J4-18S-12.000000E" x="-32.639" y="11.176" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="NAME" x="16.748" y="35.925" size="0.254" layer="25" rot="R270"/>
+<attribute name="PACKAGE" value="UFBGA-4 SiTIME" x="-32.639" y="11.176" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="PRICE" value="None" x="-32.639" y="11.176" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 </elements>
 <signals>
-<signal name="1_VCCIO_0">
-<contactref element="U5" pad="A8"/>
-</signal>
 <signal name="VPP_FAST">
 <contactref element="U5" pad="A13"/>
 </signal>
@@ -1372,17 +1351,17 @@ design rules under a new name.</description>
 <contactref element="R11" pad="2"/>
 <contactref element="R5" pad="1"/>
 <contactref element="X9" pad="1"/>
-<wire x1="69.85" y1="40.64" x2="69.49" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="75.87" y1="58.42" x2="69.85" y2="40.64" width="0" layer="19" extent="1-1"/>
-<wire x1="87.63" y1="24.13" x2="75.87" y2="58.42" width="0" layer="19" extent="1-1"/>
-<wire x1="87.3" y1="31.75" x2="87.63" y2="24.13" width="0" layer="19" extent="1-1"/>
-<wire x1="88.9" y1="36.83" x2="87.3" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="88.57" y1="41.91" x2="88.9" y2="36.83" width="0" layer="19" extent="1-1"/>
-<wire x1="-30.48" y1="41.68" x2="88.57" y2="41.91" width="0" layer="19" extent="1-1"/>
-<wire x1="-38.97" y1="43.98" x2="-30.48" y2="41.68" width="0" layer="19" extent="1-1"/>
-<wire x1="-39.37" y1="43.98" x2="-38.97" y2="43.98" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.035" y1="52.4764" x2="-30.48" y2="41.68" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.495" y1="52.4764" x2="-29.035" y2="52.4764" width="0" layer="19" extent="1-1"/>
+<wire x1="25.87" y1="51.0412" x2="54.25" y2="59.69" width="0" layer="19" extent="1-16"/>
+<wire x1="24.53" y1="50.965" x2="25.87" y2="51.0412" width="0" layer="19" extent="1-16"/>
+<wire x1="24.13" y1="50.965" x2="24.53" y2="50.965" width="0" layer="19" extent="1-1"/>
+<wire x1="22.634" y1="51.534" x2="24.13" y2="50.965" width="0" layer="19" extent="1-16"/>
+<wire x1="19.0628" y1="62.4458" x2="22.634" y2="51.534" width="0" layer="19" extent="16-16"/>
+<wire x1="17.808" y1="62.583" x2="19.0628" y2="62.4458" width="0" layer="19" extent="16-16"/>
+<wire x1="17.828" y1="62.0014" x2="17.808" y2="62.583" width="0" layer="19" extent="1-16"/>
+<wire x1="18.5802" y1="20.2056" x2="24.13" y2="50.965" width="0" layer="19" extent="1-16"/>
+<wire x1="17.447" y1="19.9644" x2="18.5802" y2="20.2056" width="0" layer="19" extent="1-16"/>
+<wire x1="17.3" y1="18.443" x2="17.447" y2="19.9644" width="0" layer="19" extent="1-16"/>
+<wire x1="62.23" y1="23.9" x2="54.25" y2="59.69" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="1V8">
 <contactref element="TC1" pad="4"/>
@@ -1402,17 +1381,7 @@ design rules under a new name.</description>
 <contactref element="U5" pad="J9"/>
 <contactref element="U5" pad="F9"/>
 <contactref element="U5" pad="F6"/>
-<contactref element="C15" pad="1"/>
-<contactref element="C14" pad="1"/>
-<contactref element="X5" pad="1"/>
-<contactref element="C16" pad="1"/>
-<contactref element="C17" pad="1"/>
-<contactref element="U5" pad="H14"/>
-<contactref element="C18" pad="1"/>
-<contactref element="C19" pad="1"/>
 <contactref element="U5" pad="M5"/>
-<contactref element="C20" pad="1"/>
-<contactref element="C21" pad="1"/>
 <contactref element="U5" pad="E3"/>
 <contactref element="U5" pad="L11"/>
 <contactref element="C30" pad="1"/>
@@ -1426,46 +1395,54 @@ design rules under a new name.</description>
 <contactref element="C1" pad="1"/>
 <contactref element="R21" pad="1"/>
 <contactref element="U5" pad="K1"/>
-<wire x1="86.67" y1="55.88" x2="86.03" y2="59.69" width="0" layer="19" extent="1-1"/>
-<wire x1="86.03" y1="53.34" x2="86.67" y2="55.88" width="0" layer="19" extent="1-1"/>
-<wire x1="87.94" y1="46.99" x2="86.03" y2="53.34" width="0" layer="19" extent="1-1"/>
-<wire x1="77.78" y1="44.45" x2="87.94" y2="46.99" width="0" layer="19" extent="1-1"/>
-<wire x1="77.78" y1="39.37" x2="77.78" y2="44.45" width="0" layer="19" extent="1-1"/>
-<wire x1="72.06" y1="39.37" x2="77.78" y2="39.37" width="0" layer="19" extent="1-1"/>
-<wire x1="71.43" y1="35.56" x2="72.06" y2="39.37" width="0" layer="19" extent="1-1"/>
-<wire x1="70.49" y1="21.59" x2="71.43" y2="35.56" width="0" layer="19" extent="1-1"/>
-<wire x1="66.04" y1="55.88" x2="77.78" y2="44.45" width="0" layer="19" extent="1-1"/>
-<wire x1="66.04" y1="58.42" x2="66.04" y2="55.88" width="0" layer="19" extent="1-1"/>
-<wire x1="24.281" y1="41.529" x2="66.04" y2="55.88" width="0" layer="19" extent="1-1"/>
-<wire x1="22.126" y1="38.608" x2="24.281" y2="41.529" width="0" layer="19" extent="1-16"/>
-<wire x1="22.126" y1="39.624" x2="22.126" y2="38.608" width="0" layer="19" extent="16-16"/>
-<wire x1="22.3" y1="40.39" x2="22.126" y2="39.624" width="0" layer="19" extent="1-16"/>
-<wire x1="20.8" y1="38.89" x2="22.126" y2="38.608" width="0" layer="19" extent="1-16"/>
+<contactref element="U5" pad="H14"/>
+<contactref element="U5" pad="A8"/>
+<contactref element="C20" pad="1"/>
+<contactref element="C21" pad="1"/>
+<contactref element="C19" pad="1"/>
+<contactref element="X5" pad="1"/>
+<contactref element="C16" pad="1"/>
+<contactref element="C18" pad="1"/>
+<contactref element="C17" pad="1"/>
+<wire x1="33.528" y1="33.147" x2="52.07" y2="45.085" width="0" layer="19" extent="1-16"/>
+<wire x1="31.939" y1="34.417" x2="33.528" y2="33.147" width="0" layer="19" extent="1-16"/>
+<wire x1="30.061" y1="33.185" x2="31.939" y2="34.417" width="0" layer="19" extent="1-16"/>
+<wire x1="28.73" y1="32.865" x2="30.061" y2="33.185" width="0" layer="19" extent="16-16"/>
+<wire x1="25.329" y1="31.877" x2="28.73" y2="32.865" width="0" layer="19" extent="16-16"/>
+<wire x1="25.146" y1="36.449" x2="25.329" y2="31.877" width="0" layer="19" extent="16-16"/>
+<wire x1="25.1714" y1="38.58" x2="25.146" y2="36.449" width="0" layer="19" extent="16-16"/>
+<wire x1="24.13" y1="38.58" x2="25.1714" y2="38.58" width="0" layer="19" extent="16-16"/>
+<wire x1="22.3" y1="40.39" x2="24.13" y2="38.58" width="0" layer="19" extent="1-16"/>
+<wire x1="20.8" y1="38.89" x2="22.3" y2="40.39" width="0" layer="19" extent="1-1"/>
 <wire x1="19.8" y1="39.89" x2="20.8" y2="38.89" width="0" layer="19" extent="1-1"/>
 <wire x1="19.8" y1="41.39" x2="19.8" y2="39.89" width="0" layer="19" extent="1-1"/>
-<wire x1="19.911" y1="41.91" x2="19.8" y2="41.39" width="0" layer="19" extent="1-16"/>
-<wire x1="19.911" y1="42.926" x2="19.911" y2="41.91" width="0" layer="19" extent="16-16"/>
 <wire x1="18.3" y1="41.39" x2="19.8" y2="41.39" width="0" layer="19" extent="1-1"/>
-<wire x1="17.371" y1="41.402" x2="18.3" y2="41.39" width="0" layer="19" extent="1-16"/>
-<wire x1="16.8" y1="41.89" x2="17.371" y2="41.402" width="0" layer="19" extent="1-16"/>
-<wire x1="17.371" y1="42.418" x2="16.8" y2="41.89" width="0" layer="19" extent="1-16"/>
 <wire x1="18.3" y1="39.89" x2="19.8" y2="39.89" width="0" layer="19" extent="1-1"/>
 <wire x1="17.8" y1="38.39" x2="18.3" y2="39.89" width="0" layer="19" extent="1-1"/>
-<wire x1="17.018" y1="38.326" x2="17.8" y2="38.39" width="0" layer="19" extent="1-16"/>
-<wire x1="16.002" y1="38.326" x2="17.018" y2="38.326" width="0" layer="19" extent="16-16"/>
-<wire x1="15.8" y1="39.39" x2="16.002" y2="38.326" width="0" layer="19" extent="1-16"/>
-<wire x1="-16.51" y1="34.925" x2="15.8" y2="39.39" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.735" y1="34.925" x2="-16.51" y2="34.925" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.34" y1="26.06" x2="-26.735" y2="34.925" width="0" layer="19" extent="1-1"/>
-<wire x1="-24.74" y1="26.06" x2="-26.34" y2="26.06" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.34" y1="24.46" x2="-26.34" y2="26.06" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.34" y1="22.86" x2="-26.34" y2="24.46" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.54" y1="23.66" x2="-26.34" y2="24.46" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.54" y1="25.26" x2="-29.54" y2="23.66" width="0" layer="19" extent="1-1"/>
-<wire x1="-24.74" y1="19.66" x2="-26.34" y2="22.86" width="0" layer="19" extent="1-1"/>
-<wire x1="-36.83" y1="30.25" x2="-29.54" y2="25.26" width="0" layer="19" extent="1-1"/>
-<wire x1="-35.56" y1="41.68" x2="-26.735" y2="34.925" width="0" layer="19" extent="1-1"/>
-<wire x1="-23.925" y1="47.76" x2="-35.56" y2="41.68" width="0" layer="19" extent="1-1"/>
+<wire x1="16.8" y1="41.89" x2="18.3" y2="41.39" width="0" layer="19" extent="1-1"/>
+<wire x1="15.8" y1="39.39" x2="17.8" y2="38.39" width="0" layer="19" extent="1-1"/>
+<wire x1="19.3" y1="43.89" x2="19.8" y2="41.39" width="0" layer="19" extent="1-1"/>
+<wire x1="16.736" y1="45.7454" x2="19.3" y2="43.89" width="0" layer="19" extent="1-16"/>
+<wire x1="16.736" y1="46.7868" x2="16.736" y2="45.7454" width="0" layer="19" extent="16-16"/>
+<wire x1="21.364" y1="35.56" x2="20.8" y2="38.89" width="0" layer="19" extent="1-16"/>
+<wire x1="21.364" y1="34.5186" x2="21.364" y2="35.56" width="0" layer="19" extent="16-16"/>
+<wire x1="12.852" y1="37.44" x2="15.8" y2="39.39" width="0" layer="19" extent="1-1"/>
+<wire x1="15.169" y1="35.306" x2="12.852" y2="37.44" width="0" layer="19" extent="1-16"/>
+<wire x1="15.121" y1="35.101" x2="15.169" y2="35.306" width="0" layer="19" extent="1-16"/>
+<wire x1="13.462" y1="34.1122" x2="15.121" y2="35.101" width="0" layer="19" extent="1-16"/>
+<wire x1="11.252" y1="40.64" x2="12.852" y2="37.44" width="0" layer="19" extent="1-1"/>
+<wire x1="11.252" y1="42.24" x2="11.252" y2="40.64" width="0" layer="19" extent="1-1"/>
+<wire x1="11.252" y1="43.84" x2="11.252" y2="42.24" width="0" layer="19" extent="1-1"/>
+<wire x1="12.852" y1="43.84" x2="11.252" y2="43.84" width="0" layer="19" extent="1-1"/>
+<wire x1="8.052" y1="41.44" x2="11.252" y2="40.64" width="0" layer="19" extent="1-1"/>
+<wire x1="8.052" y1="43.04" x2="8.052" y2="41.44" width="0" layer="19" extent="1-1"/>
+<wire x1="7.874" y1="46.101" x2="8.052" y2="43.04" width="0" layer="19" extent="1-16"/>
+<wire x1="7.554" y1="47.371" x2="7.874" y2="46.101" width="0" layer="19" extent="16-16"/>
+<wire x1="7.874" y1="35.179" x2="12.852" y2="37.44" width="0" layer="19" extent="1-16"/>
+<wire x1="7.554" y1="33.909" x2="7.874" y2="35.179" width="0" layer="19" extent="16-16"/>
+<wire x1="69.85" y1="16.28" x2="52.07" y2="45.085" width="0" layer="19" extent="1-1"/>
+<wire x1="73.811" y1="8.509" x2="69.85" y2="16.28" width="0" layer="19" extent="1-1"/>
+<wire x1="81.05" y1="8.89" x2="73.811" y2="8.509" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$9">
 <contactref element="TC1" pad="7"/>
@@ -1478,15 +1455,10 @@ design rules under a new name.</description>
 <contactref element="Y1" pad="4"/>
 <contactref element="C1" pad="2"/>
 <contactref element="Y1" pad="1"/>
-<contactref element="R3" pad="1"/>
-<contactref element="U2" pad="B2"/>
 <contactref element="U2" pad="A1"/>
 <contactref element="C3" pad="2"/>
-<contactref element="R4" pad="1"/>
-<contactref element="U3" pad="B2"/>
 <contactref element="U3" pad="A1"/>
 <contactref element="C5" pad="2"/>
-<contactref element="U4" pad="B1"/>
 <contactref element="U4" pad="C2"/>
 <contactref element="U4" pad="C3"/>
 <contactref element="C6" pad="2"/>
@@ -1498,11 +1470,6 @@ design rules under a new name.</description>
 <contactref element="U6" pad="J1"/>
 <contactref element="C13" pad="2"/>
 <contactref element="C12" pad="2"/>
-<contactref element="C14" pad="2"/>
-<contactref element="C15" pad="2"/>
-<contactref element="C16" pad="2"/>
-<contactref element="C17" pad="2"/>
-<contactref element="C18" pad="2"/>
 <contactref element="C19" pad="2"/>
 <contactref element="C20" pad="2"/>
 <contactref element="C21" pad="2"/>
@@ -1567,33 +1534,64 @@ design rules under a new name.</description>
 <contactref element="X10" pad="GND@1"/>
 <contactref element="X10" pad="GND@2"/>
 <contactref element="X10" pad="GND@3"/>
-<wire x1="87.63" y1="59.69" x2="86.03" y2="63.5" width="0" layer="19" extent="1-1"/>
-<wire x1="87.63" y1="55.88" x2="87.63" y2="59.69" width="0" layer="19" extent="1-1"/>
-<wire x1="87.63" y1="53.34" x2="87.63" y2="55.88" width="0" layer="19" extent="1-1"/>
-<wire x1="88.9" y1="46.99" x2="87.63" y2="53.34" width="0" layer="19" extent="1-1"/>
-<wire x1="77.47" y1="62.23" x2="86.03" y2="63.5" width="0" layer="19" extent="1-1"/>
-<wire x1="77.47" y1="58.42" x2="77.47" y2="62.23" width="0" layer="19" extent="1-1"/>
-<wire x1="77.47" y1="54.61" x2="77.47" y2="58.42" width="0" layer="19" extent="1-1"/>
-<wire x1="87.94" y1="36.83" x2="88.9" y2="46.99" width="0" layer="19" extent="1-1"/>
-<wire x1="87.63" y1="27.94" x2="87.94" y2="36.83" width="0" layer="19" extent="1-1"/>
-<wire x1="86.67" y1="24.13" x2="87.63" y2="27.94" width="0" layer="19" extent="1-1"/>
-<wire x1="78.74" y1="29.21" x2="87.63" y2="27.94" width="0" layer="19" extent="1-1"/>
-<wire x1="78.74" y1="34.29" x2="78.74" y2="29.21" width="0" layer="19" extent="1-1"/>
-<wire x1="72.39" y1="35.56" x2="78.74" y2="34.29" width="0" layer="19" extent="1-1"/>
-<wire x1="73.66" y1="39.37" x2="72.39" y2="35.56" width="0" layer="19" extent="1-1"/>
-<wire x1="72.39" y1="44.45" x2="73.66" y2="39.37" width="0" layer="19" extent="1-1"/>
-<wire x1="68.58" y1="46.99" x2="72.39" y2="44.45" width="0" layer="19" extent="1-1"/>
-<wire x1="66.04" y1="44.45" x2="68.58" y2="46.99" width="0" layer="19" extent="1-1"/>
-<wire x1="64.77" y1="46.99" x2="66.04" y2="44.45" width="0" layer="19" extent="1-1"/>
-<wire x1="78.74" y1="44.45" x2="72.39" y2="44.45" width="0" layer="19" extent="1-1"/>
-<wire x1="64.77" y1="38.1" x2="66.04" y2="44.45" width="0" layer="19" extent="1-1"/>
-<wire x1="64.77" y1="33.02" x2="64.77" y2="38.1" width="0" layer="19" extent="1-1"/>
-<wire x1="27.281" y1="41.529" x2="64.77" y2="38.1" width="0" layer="19" extent="1-1"/>
-<wire x1="25.781" y1="43.004" x2="27.281" y2="41.529" width="0" layer="19" extent="1-1"/>
-<wire x1="23.086" y1="39.624" x2="25.781" y2="43.004" width="0" layer="19" extent="1-16"/>
-<wire x1="22.3" y1="39.89" x2="23.086" y2="39.624" width="0" layer="19" extent="1-16"/>
-<wire x1="23.086" y1="38.608" x2="23.086" y2="39.624" width="0" layer="19" extent="16-16"/>
-<wire x1="25.781" y1="40.054" x2="23.086" y2="38.608" width="0" layer="19" extent="1-16"/>
+<contactref element="U2" pad="C2"/>
+<contactref element="C2" pad="2"/>
+<contactref element="U3" pad="C2"/>
+<contactref element="C4" pad="2"/>
+<contactref element="U4" pad="B1"/>
+<contactref element="C16" pad="2"/>
+<contactref element="C18" pad="2"/>
+<contactref element="C17" pad="2"/>
+<wire x1="62.23" y1="26.9" x2="53.34" y2="46.355" width="0" layer="19" extent="1-1"/>
+<wire x1="63.705" y1="25.4" x2="62.23" y2="26.9" width="0" layer="19" extent="1-1"/>
+<wire x1="60.755" y1="25.4" x2="62.23" y2="26.9" width="0" layer="19" extent="1-1"/>
+<wire x1="65.835" y1="25.4" x2="63.705" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="67.31" y1="26.9" x2="65.835" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="68.785" y1="25.4" x2="67.31" y2="26.9" width="0" layer="19" extent="1-1"/>
+<wire x1="70.915" y1="25.4" x2="68.785" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="72.39" y1="26.9" x2="70.915" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="73.865" y1="25.4" x2="72.39" y2="26.9" width="0" layer="19" extent="1-1"/>
+<wire x1="69.85" y1="19.28" x2="68.785" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="71.325" y1="17.78" x2="69.85" y2="19.28" width="0" layer="19" extent="1-1"/>
+<wire x1="68.375" y1="17.78" x2="69.85" y2="19.28" width="0" layer="19" extent="1-1"/>
+<wire x1="66.245" y1="17.78" x2="68.375" y2="17.78" width="0" layer="19" extent="1-1"/>
+<wire x1="64.77" y1="19.28" x2="66.245" y2="17.78" width="0" layer="19" extent="1-1"/>
+<wire x1="63.295" y1="17.78" x2="64.77" y2="19.28" width="0" layer="19" extent="1-1"/>
+<wire x1="61.165" y1="17.78" x2="63.295" y2="17.78" width="0" layer="19" extent="1-1"/>
+<wire x1="59.69" y1="19.28" x2="61.165" y2="17.78" width="0" layer="19" extent="1-1"/>
+<wire x1="58.215" y1="17.78" x2="59.69" y2="19.28" width="0" layer="19" extent="1-1"/>
+<wire x1="56.085" y1="17.78" x2="58.215" y2="17.78" width="0" layer="19" extent="1-1"/>
+<wire x1="54.61" y1="19.28" x2="56.085" y2="17.78" width="0" layer="19" extent="1-1"/>
+<wire x1="53.135" y1="17.78" x2="54.61" y2="19.28" width="0" layer="19" extent="1-1"/>
+<wire x1="68.199" y1="10.111" x2="68.375" y2="17.78" width="0" layer="19" extent="1-1"/>
+<wire x1="66.699" y1="8.636" x2="68.199" y2="10.111" width="0" layer="19" extent="1-1"/>
+<wire x1="68.199" y1="7.161" x2="66.699" y2="8.636" width="0" layer="19" extent="1-1"/>
+<wire x1="75.311" y1="9.984" x2="68.199" y2="10.111" width="0" layer="19" extent="1-1"/>
+<wire x1="76.811" y1="8.509" x2="75.311" y2="9.984" width="0" layer="19" extent="1-1"/>
+<wire x1="75.311" y1="7.034" x2="76.811" y2="8.509" width="0" layer="19" extent="1-1"/>
+<wire x1="82.55" y1="7.415" x2="76.811" y2="8.509" width="0" layer="19" extent="1-1"/>
+<wire x1="84.05" y1="8.89" x2="82.55" y2="7.415" width="0" layer="19" extent="1-1"/>
+<wire x1="82.55" y1="10.365" x2="84.05" y2="8.89" width="0" layer="19" extent="1-1"/>
+<wire x1="30.061" y1="31.585" x2="53.135" y2="17.78" width="0" layer="19" extent="1-16"/>
+<wire x1="28.73" y1="31.905" x2="30.061" y2="31.585" width="0" layer="19" extent="16-16"/>
+<wire x1="26.989" y1="30.607" x2="28.73" y2="31.905" width="0" layer="19" extent="1-16"/>
+<wire x1="22.987" y1="30.48" x2="26.989" y2="30.607" width="0" layer="19" extent="1-16"/>
+<wire x1="22.987" y1="31.623" x2="22.987" y2="30.48" width="0" layer="19" extent="16-16"/>
+<wire x1="22.987" y1="29.337" x2="22.987" y2="30.48" width="0" layer="19" extent="16-16"/>
+<wire x1="22.987" y1="28.194" x2="22.987" y2="29.337" width="0" layer="19" extent="16-16"/>
+<wire x1="22.987" y1="27.051" x2="22.987" y2="28.194" width="0" layer="19" extent="16-16"/>
+<wire x1="22.987" y1="25.908" x2="22.987" y2="27.051" width="0" layer="19" extent="16-16"/>
+<wire x1="22.987" y1="24.765" x2="22.987" y2="25.908" width="0" layer="19" extent="16-16"/>
+<wire x1="22.987" y1="23.622" x2="22.987" y2="24.765" width="0" layer="19" extent="16-16"/>
+<wire x1="22.324" y1="34.5186" x2="22.987" y2="31.623" width="0" layer="19" extent="16-16"/>
+<wire x1="22.324" y1="35.56" x2="22.324" y2="34.5186" width="0" layer="19" extent="16-16"/>
+<wire x1="24.13" y1="37.62" x2="22.324" y2="35.56" width="0" layer="19" extent="16-16"/>
+<wire x1="25.1714" y1="37.62" x2="24.13" y2="37.62" width="0" layer="19" extent="16-16"/>
+<wire x1="22.3" y1="39.89" x2="24.13" y2="37.62" width="0" layer="19" extent="1-16"/>
+<wire x1="24.13" y1="40.668" x2="22.3" y2="39.89" width="0" layer="19" extent="1-16"/>
+<wire x1="25.1714" y1="40.668" x2="24.13" y2="40.668" width="0" layer="19" extent="16-16"/>
+<wire x1="24.13" y1="42.954" x2="24.13" y2="40.668" width="0" layer="19" extent="16-16"/>
+<wire x1="25.1714" y1="42.954" x2="24.13" y2="42.954" width="0" layer="19" extent="16-16"/>
 <wire x1="19.8" y1="40.89" x2="22.3" y2="39.89" width="0" layer="19" extent="1-1"/>
 <wire x1="19.3" y1="40.89" x2="19.8" y2="40.89" width="0" layer="19" extent="1-1"/>
 <wire x1="18.8" y1="40.89" x2="19.3" y2="40.89" width="0" layer="19" extent="1-1"/>
@@ -1602,93 +1600,63 @@ design rules under a new name.</description>
 <wire x1="18.3" y1="40.39" x2="18.8" y2="40.39" width="0" layer="19" extent="1-1"/>
 <wire x1="19.3" y1="40.39" x2="19.3" y2="40.89" width="0" layer="19" extent="1-1"/>
 <wire x1="19.3" y1="39.89" x2="19.3" y2="40.39" width="0" layer="19" extent="1-1"/>
-<wire x1="18.951" y1="41.91" x2="18.8" y2="41.39" width="0" layer="19" extent="1-16"/>
-<wire x1="18.824" y1="39.624" x2="19.3" y2="39.89" width="0" layer="19" extent="1-16"/>
-<wire x1="18.951" y1="42.926" x2="18.951" y2="41.91" width="0" layer="19" extent="16-16"/>
-<wire x1="18.824" y1="38.608" x2="18.824" y2="39.624" width="0" layer="19" extent="16-16"/>
-<wire x1="19.8" y1="43.89" x2="18.951" y2="42.926" width="0" layer="19" extent="1-16"/>
-<wire x1="18.3" y1="37.39" x2="18.824" y2="38.608" width="0" layer="19" extent="1-16"/>
-<wire x1="17.018" y1="37.366" x2="18.3" y2="37.39" width="0" layer="19" extent="1-16"/>
-<wire x1="16.002" y1="37.366" x2="17.018" y2="37.366" width="0" layer="19" extent="16-16"/>
-<wire x1="16.8" y1="38.89" x2="17.018" y2="37.366" width="0" layer="19" extent="1-16"/>
-<wire x1="21.872" y1="44.323" x2="19.8" y2="43.89" width="0" layer="19" extent="1-16"/>
-<wire x1="21.872" y1="43.307" x2="21.872" y2="44.323" width="0" layer="19" extent="16-16"/>
-<wire x1="16.411" y1="41.402" x2="18.3" y2="40.39" width="0" layer="19" extent="1-16"/>
-<wire x1="15.8" y1="41.39" x2="16.411" y2="41.402" width="0" layer="19" extent="1-16"/>
-<wire x1="16.411" y1="42.418" x2="16.411" y2="41.402" width="0" layer="19" extent="16-16"/>
-<wire x1="12.319" y1="41.861" x2="15.8" y2="41.39" width="0" layer="19" extent="1-1"/>
-<wire x1="10.819" y1="40.386" x2="12.319" y2="41.861" width="0" layer="19" extent="1-1"/>
-<wire x1="12.319" y1="38.911" x2="10.819" y2="40.386" width="0" layer="19" extent="1-1"/>
-<wire x1="-15.24" y1="36.195" x2="10.819" y2="40.386" width="0" layer="19" extent="1-1"/>
-<wire x1="-18.845" y1="43.18" x2="-15.24" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="-20.32" y1="44.68" x2="-18.845" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-21.795" y1="43.18" x2="-20.32" y2="44.68" width="0" layer="19" extent="1-1"/>
-<wire x1="-23.925" y1="43.18" x2="-21.795" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-25.4" y1="44.68" x2="-23.925" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.875" y1="43.18" x2="-25.4" y2="44.68" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.005" y1="43.18" x2="-26.875" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-30.48" y1="44.68" x2="-29.005" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-31.955" y1="43.18" x2="-30.48" y2="44.68" width="0" layer="19" extent="1-1"/>
-<wire x1="-34.085" y1="43.18" x2="-31.955" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-35.56" y1="44.68" x2="-34.085" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-37.035" y1="43.18" x2="-35.56" y2="44.68" width="0" layer="19" extent="1-1"/>
-<wire x1="-38.97" y1="43.18" x2="-37.035" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-39.37" y1="43.18" x2="-38.97" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-39.77" y1="43.18" x2="-39.37" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-39.77" y1="43.58" x2="-39.77" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-24.335" y1="48.76" x2="-25.4" y2="44.68" width="0" layer="19" extent="1-1"/>
-<wire x1="-23.925" y1="48.76" x2="-24.335" y2="48.76" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.495" y1="52.07" x2="-24.335" y2="48.76" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.845" y1="52.4764" x2="-26.495" y2="52.07" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.035" y1="52.07" x2="-26.845" y2="52.4764" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.385" y1="52.4764" x2="-29.035" y2="52.07" width="0" layer="19" extent="1-1"/>
-<wire x1="-36.83" y1="33.25" x2="-37.035" y2="43.18" width="0" layer="19" extent="1-1"/>
-<wire x1="-38.305" y1="31.75" x2="-36.83" y2="33.25" width="0" layer="19" extent="1-1"/>
-<wire x1="-35.355" y1="31.75" x2="-36.83" y2="33.25" width="0" layer="19" extent="1-1"/>
-<wire x1="-40.435" y1="31.75" x2="-38.305" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-41.91" y1="33.25" x2="-40.435" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-43.385" y1="31.75" x2="-41.91" y2="33.25" width="0" layer="19" extent="1-1"/>
-<wire x1="-45.515" y1="31.75" x2="-43.385" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-46.99" y1="33.25" x2="-45.515" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-48.465" y1="31.75" x2="-46.99" y2="33.25" width="0" layer="19" extent="1-1"/>
-<wire x1="-50.595" y1="31.75" x2="-48.465" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-52.07" y1="33.25" x2="-50.595" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-53.545" y1="31.75" x2="-52.07" y2="33.25" width="0" layer="19" extent="1-1"/>
-<wire x1="-31.685" y1="31.115" x2="-35.355" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-31.14" y1="26.06" x2="-31.685" y2="31.115" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.54" y1="26.06" x2="-31.14" y2="26.06" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.54" y1="24.46" x2="-29.54" y2="26.06" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.54" y1="22.86" x2="-29.54" y2="24.46" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.34" y1="23.66" x2="-29.54" y2="24.46" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.34" y1="25.26" x2="-26.34" y2="23.66" width="0" layer="19" extent="1-1"/>
-<wire x1="-31.14" y1="19.66" x2="-29.54" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="16.8" y1="38.89" x2="18.3" y2="40.39" width="0" layer="19" extent="1-1"/>
+<wire x1="18.3" y1="37.39" x2="16.8" y2="38.89" width="0" layer="19" extent="1-1"/>
+<wire x1="19.8" y1="43.89" x2="18.8" y2="41.39" width="0" layer="19" extent="1-1"/>
+<wire x1="15.8" y1="41.39" x2="18.3" y2="40.39" width="0" layer="19" extent="1-1"/>
+<wire x1="16.121" y1="35.511" x2="18.3" y2="37.39" width="0" layer="19" extent="1-1"/>
+<wire x1="16.129" y1="35.306" x2="16.121" y2="35.511" width="0" layer="19" extent="1-16"/>
+<wire x1="16.121" y1="35.101" x2="16.129" y2="35.306" width="0" layer="19" extent="1-16"/>
+<wire x1="15.776" y1="45.7454" x2="15.8" y2="41.39" width="0" layer="19" extent="1-16"/>
+<wire x1="15.776" y1="46.7868" x2="15.776" y2="45.7454" width="0" layer="19" extent="16-16"/>
+<wire x1="11.252" y1="41.44" x2="15.8" y2="41.39" width="0" layer="19" extent="1-1"/>
+<wire x1="11.252" y1="43.04" x2="11.252" y2="41.44" width="0" layer="19" extent="1-1"/>
+<wire x1="8.052" y1="43.84" x2="11.252" y2="43.04" width="0" layer="19" extent="1-1"/>
+<wire x1="6.452" y1="43.84" x2="8.052" y2="43.84" width="0" layer="19" extent="1-1"/>
+<wire x1="8.052" y1="42.24" x2="8.052" y2="43.84" width="0" layer="19" extent="1-1"/>
+<wire x1="8.052" y1="40.64" x2="8.052" y2="42.24" width="0" layer="19" extent="1-1"/>
+<wire x1="6.274" y1="46.101" x2="6.452" y2="43.84" width="0" layer="19" extent="1-16"/>
+<wire x1="6.594" y1="47.371" x2="6.274" y2="46.101" width="0" layer="19" extent="16-16"/>
+<wire x1="6.452" y1="37.44" x2="8.052" y2="40.64" width="0" layer="19" extent="1-1"/>
+<wire x1="6.274" y1="35.179" x2="6.452" y2="37.44" width="0" layer="19" extent="1-16"/>
+<wire x1="6.594" y1="33.909" x2="6.274" y2="35.179" width="0" layer="19" extent="16-16"/>
+<wire x1="25.87" y1="49.4412" x2="25.1714" y2="42.954" width="0" layer="19" extent="16-16"/>
+<wire x1="24.53" y1="50.165" x2="25.87" y2="49.4412" width="0" layer="19" extent="1-16"/>
+<wire x1="24.13" y1="50.165" x2="24.53" y2="50.165" width="0" layer="19" extent="1-1"/>
+<wire x1="23.73" y1="50.165" x2="24.13" y2="50.165" width="0" layer="19" extent="1-1"/>
+<wire x1="23.73" y1="50.565" x2="23.73" y2="50.165" width="0" layer="19" extent="1-1"/>
+<wire x1="24.1452" y1="51.4198" x2="23.73" y2="50.565" width="0" layer="19" extent="1-16"/>
+<wire x1="22.441" y1="51.092" x2="23.73" y2="50.565" width="0" layer="19" extent="1-1"/>
+<wire x1="18.5802" y1="18.6056" x2="22.987" y2="23.622" width="0" layer="19" extent="16-16"/>
+<wire x1="17.447" y1="19.1516" x2="18.5802" y2="18.6056" width="0" layer="19" extent="1-16"/>
+<wire x1="17.097" y1="19.9644" x2="17.447" y2="19.1516" width="0" layer="19" extent="1-1"/>
+<wire x1="15.964" y1="20.231" x2="17.097" y2="19.9644" width="0" layer="19" extent="1-1"/>
+<wire x1="19.0628" y1="60.8458" x2="22.441" y2="51.092" width="0" layer="19" extent="1-16"/>
+<wire x1="17.828" y1="61.1886" x2="19.0628" y2="60.8458" width="0" layer="19" extent="1-16"/>
+<wire x1="17.478" y1="62.0014" x2="17.828" y2="61.1886" width="0" layer="19" extent="1-1"/>
+<wire x1="16.3196" y1="62.395" x2="17.478" y2="62.0014" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$6">
 <contactref element="R2" pad="1"/>
 <contactref element="U1" pad="7"/>
-<wire x1="-26.735" y1="33.655" x2="65.08" y2="55.88" width="0" layer="19" extent="1-1"/>
+<wire x1="31.939" y1="33.147" x2="32.568" y2="33.147" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="N$1">
 <contactref element="R1" pad="1"/>
 <contactref element="U1" pad="3"/>
-<wire x1="-31.685" y1="32.385" x2="65.08" y2="58.42" width="0" layer="19" extent="1-1"/>
+<wire x1="26.989" y1="31.877" x2="26.289" y2="31.877" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="ICE_CLK12MHZ">
 <contactref element="Y1" pad="2"/>
 <contactref element="X7" pad="1"/>
 <contactref element="U5" pad="P1"/>
-<wire x1="-20.32" y1="41.68" x2="-24.335" y2="47.76" width="0" layer="19" extent="1-1"/>
-<wire x1="15.8" y1="37.39" x2="-20.32" y2="41.68" width="0" layer="19" extent="1-1"/>
-</signal>
-<signal name="N$7">
-<contactref element="U2" pad="C2"/>
-<contactref element="C2" pad="2"/>
-<wire x1="-26.495" y1="51.6636" x2="90.17" y2="41.91" width="0" layer="19" extent="1-1"/>
+<wire x1="15.8" y1="37.39" x2="72.39" y2="23.9" width="0" layer="19" extent="1-1"/>
+<wire x1="15.121" y1="35.511" x2="15.8" y2="37.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$5">
 <contactref element="U2" pad="B1"/>
 <contactref element="L1" pad="1"/>
-<wire x1="-20.32" y1="14.351" x2="-26.845" y2="52.07" width="0" layer="19" extent="1-1"/>
+<wire x1="10.287" y1="59.944" x2="17.478" y2="61.595" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="1V2">
 <contactref element="C25" pad="1"/>
@@ -1698,192 +1666,187 @@ design rules under a new name.</description>
 <contactref element="U5" pad="H9"/>
 <contactref element="U5" pad="J7"/>
 <contactref element="U5" pad="J4"/>
-<contactref element="X6" pad="1"/>
 <contactref element="R8" pad="2"/>
 <contactref element="R9" pad="2"/>
 <contactref element="R20" pad="1"/>
-<wire x1="19.784" y1="38.608" x2="70.49" y2="26.67" width="0" layer="19" extent="1-16"/>
-<wire x1="19.784" y1="39.624" x2="19.784" y2="38.608" width="0" layer="19" extent="16-16"/>
-<wire x1="19.8" y1="40.39" x2="19.784" y2="39.624" width="0" layer="19" extent="1-16"/>
-<wire x1="18.8" y1="39.89" x2="19.784" y2="39.624" width="0" layer="19" extent="1-16"/>
+<contactref element="X6" pad="1"/>
+<wire x1="25.1714" y1="41.628" x2="69.699" y2="8.636" width="0" layer="19" extent="1-16"/>
+<wire x1="24.13" y1="41.628" x2="25.1714" y2="41.628" width="0" layer="19" extent="16-16"/>
+<wire x1="19.8" y1="40.39" x2="24.13" y2="41.628" width="0" layer="19" extent="1-16"/>
 <wire x1="19.3" y1="41.39" x2="19.8" y2="40.39" width="0" layer="19" extent="1-1"/>
-<wire x1="18.3" y1="40.89" x2="18.8" y2="39.89" width="0" layer="19" extent="1-1"/>
+<wire x1="18.3" y1="40.89" x2="19.3" y2="41.39" width="0" layer="19" extent="1-1"/>
+<wire x1="18.8" y1="39.89" x2="19.8" y2="40.39" width="0" layer="19" extent="1-1"/>
 <wire x1="17.3" y1="39.89" x2="18.3" y2="40.89" width="0" layer="19" extent="1-1"/>
-<wire x1="13.819" y1="40.386" x2="17.3" y2="39.89" width="0" layer="19" extent="1-1"/>
-<wire x1="19.078" y1="35.052" x2="19.784" y2="38.608" width="0" layer="19" extent="16-16"/>
-<wire x1="18.951" y1="46.482" x2="19.3" y2="41.39" width="0" layer="19" extent="1-16"/>
-</signal>
-<signal name="N$3">
-<contactref element="U3" pad="C2"/>
-<contactref element="C4" pad="2"/>
-<wire x1="-29.035" y1="51.6636" x2="88.9" y2="31.75" width="0" layer="19" extent="1-1"/>
+<wire x1="17.935" y1="33.02" x2="17.3" y2="39.89" width="0" layer="19" extent="1-16"/>
+<wire x1="19.078" y1="48.2854" x2="19.3" y2="41.39" width="0" layer="19" extent="1-16"/>
+<wire x1="13.462" y1="47.3964" x2="19.078" y2="48.2854" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$4">
 <contactref element="U3" pad="B1"/>
 <contactref element="L2" pad="1"/>
-<wire x1="-34.29" y1="14.351" x2="-29.385" y2="52.07" width="0" layer="19" extent="1-1"/>
+<wire x1="10.16" y1="21.59" x2="17.097" y2="19.558" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="2V5">
 <contactref element="C28" pad="1"/>
 <contactref element="C29" pad="1"/>
-<contactref element="U5" pad="A14"/>
 <contactref element="R22" pad="1"/>
-<wire x1="22.832" y1="43.307" x2="70.49" y2="17.78" width="0" layer="19" extent="1-16"/>
-<wire x1="22.3" y1="43.89" x2="22.832" y2="43.307" width="0" layer="19" extent="1-16"/>
-<wire x1="22.832" y1="44.323" x2="22.3" y2="43.89" width="0" layer="19" extent="1-16"/>
+<contactref element="U5" pad="A14"/>
+<wire x1="22.3" y1="43.89" x2="22.865" y2="46.355" width="0" layer="19" extent="1-16"/>
+<wire x1="24.13" y1="43.914" x2="22.3" y2="43.89" width="0" layer="19" extent="1-16"/>
+<wire x1="25.1714" y1="43.914" x2="24.13" y2="43.914" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$12">
 <contactref element="U4" pad="B2"/>
 <contactref element="U4" pad="B3"/>
 <contactref element="L3" pad="1"/>
-<wire x1="-39.37" y1="43.58" x2="-48.26" y2="14.351" width="0" layer="19" extent="1-1"/>
-<wire x1="-38.97" y1="43.58" x2="-39.37" y2="43.58" width="0" layer="19" extent="1-1"/>
+<wire x1="24.53" y1="50.565" x2="33.274" y2="54.102" width="0" layer="19" extent="1-16"/>
+<wire x1="24.13" y1="50.565" x2="24.53" y2="50.565" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$13">
 <contactref element="U4" pad="D2"/>
 <contactref element="U4" pad="D3"/>
 <contactref element="L3" pad="2"/>
-<wire x1="-39.37" y1="42.78" x2="-48.26" y2="6.477" width="0" layer="19" extent="1-1"/>
-<wire x1="-38.97" y1="42.78" x2="-39.37" y2="42.78" width="0" layer="19" extent="1-1"/>
+<wire x1="24.53" y1="49.765" x2="33.274" y2="46.228" width="0" layer="19" extent="1-16"/>
+<wire x1="24.13" y1="49.765" x2="24.53" y2="49.765" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$11">
 <contactref element="R6" pad="1"/>
 <contactref element="R7" pad="2"/>
 <contactref element="U4" pad="D1"/>
-<wire x1="75.87" y1="52.07" x2="87.63" y2="63.5" width="0" layer="19" extent="1-1"/>
-<wire x1="-39.77" y1="42.78" x2="75.87" y2="52.07" width="0" layer="19" extent="1-1"/>
+<wire x1="22.441" y1="49.492" x2="23.73" y2="49.765" width="0" layer="19" extent="1-1"/>
+<wire x1="23.165" y1="48.006" x2="22.441" y2="49.492" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="GNDPLL1">
 <contactref element="C10" pad="2"/>
 <contactref element="C11" pad="2"/>
 <contactref element="U5" pad="D8"/>
-<wire x1="18.951" y1="45.466" x2="18.631" y2="44.196" width="0" layer="19" extent="16-16"/>
-<wire x1="19.3" y1="42.39" x2="18.631" y2="44.196" width="0" layer="19" extent="1-16"/>
+<wire x1="19.078" y1="47.244" x2="18.758" y2="45.974" width="0" layer="19" extent="16-16"/>
+<wire x1="19.3" y1="42.39" x2="18.758" y2="45.974" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="GNDPLL0">
 <contactref element="C8" pad="2"/>
 <contactref element="C9" pad="2"/>
 <contactref element="U5" pad="L7"/>
-<wire x1="19.078" y1="36.068" x2="18.8" y2="38.89" width="0" layer="19" extent="1-16"/>
-<wire x1="18.758" y1="37.211" x2="19.078" y2="36.068" width="0" layer="19" extent="16-16"/>
+<wire x1="17.615" y1="35.306" x2="18.8" y2="38.89" width="0" layer="19" extent="1-16"/>
+<wire x1="17.935" y1="34.0614" x2="17.615" y2="35.306" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$10">
 <contactref element="U5" pad="M8"/>
 <contactref element="R8" pad="1"/>
 <contactref element="C8" pad="1"/>
 <contactref element="C9" pad="1"/>
-<wire x1="20.038" y1="36.068" x2="19.3" y2="38.39" width="0" layer="19" extent="1-16"/>
-<wire x1="20.358" y1="37.211" x2="20.038" y2="36.068" width="0" layer="19" extent="16-16"/>
-<wire x1="20.038" y1="35.052" x2="20.038" y2="36.068" width="0" layer="19" extent="16-16"/>
+<wire x1="19.215" y1="35.306" x2="19.3" y2="38.39" width="0" layer="19" extent="1-16"/>
+<wire x1="18.895" y1="34.0614" x2="19.215" y2="35.306" width="0" layer="19" extent="16-16"/>
+<wire x1="18.895" y1="33.02" x2="18.895" y2="34.0614" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$14">
 <contactref element="R9" pad="1"/>
 <contactref element="C10" pad="1"/>
 <contactref element="C11" pad="1"/>
 <contactref element="U5" pad="C8"/>
-<wire x1="19.911" y1="45.466" x2="19.911" y2="46.482" width="0" layer="19" extent="16-16"/>
-<wire x1="20.231" y1="44.196" x2="19.911" y2="45.466" width="0" layer="19" extent="16-16"/>
-<wire x1="19.3" y1="42.89" x2="20.231" y2="44.196" width="0" layer="19" extent="1-16"/>
+<wire x1="20.038" y1="47.244" x2="20.038" y2="48.2854" width="0" layer="19" extent="16-16"/>
+<wire x1="20.358" y1="45.974" x2="20.038" y2="47.244" width="0" layer="19" extent="16-16"/>
+<wire x1="19.3" y1="42.89" x2="20.358" y2="45.974" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="RAM_CAS_">
 <contactref element="U6" pad="F7"/>
 <contactref element="U5" pad="G4"/>
-<wire x1="17.3" y1="40.89" x2="-26.34" y2="22.06" width="0" layer="19" extent="1-1"/>
+<wire x1="11.252" y1="39.84" x2="17.3" y2="40.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_CS_">
 <contactref element="U6" pad="G9"/>
 <contactref element="U5" pad="G12"/>
-<wire x1="-24.74" y1="21.26" x2="21.3" y2="40.89" width="0" layer="19" extent="1-1"/>
+<wire x1="12.852" y1="39.04" x2="21.3" y2="40.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_RAS_">
 <contactref element="U6" pad="F8"/>
 <contactref element="U5" pad="H4"/>
-<wire x1="17.3" y1="40.39" x2="-25.54" y2="22.06" width="0" layer="19" extent="1-1"/>
+<wire x1="12.052" y1="39.84" x2="17.3" y2="40.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_WE_">
 <contactref element="U6" pad="F9"/>
 <contactref element="U5" pad="A4"/>
-<wire x1="-24.74" y1="22.06" x2="17.3" y2="43.89" width="0" layer="19" extent="1-1"/>
+<wire x1="17.3" y1="43.89" x2="12.852" y2="39.84" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_CKE">
 <contactref element="U6" pad="F3"/>
 <contactref element="U5" pad="A3"/>
-<wire x1="16.8" y1="43.89" x2="-29.54" y2="22.06" width="0" layer="19" extent="1-1"/>
+<wire x1="16.8" y1="43.89" x2="8.052" y2="39.84" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_CLK">
 <contactref element="U6" pad="F2"/>
 <contactref element="U5" pad="C11"/>
-<wire x1="20.8" y1="42.89" x2="-30.34" y2="22.06" width="0" layer="19" extent="1-1"/>
+<wire x1="7.252" y1="39.84" x2="20.8" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_LDQM">
 <contactref element="U6" pad="E8"/>
 <contactref element="U5" pad="C4"/>
-<wire x1="-25.54" y1="22.86" x2="17.3" y2="42.89" width="0" layer="19" extent="1-1"/>
+<wire x1="12.052" y1="40.64" x2="17.3" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_UDQM">
 <contactref element="U6" pad="F1"/>
 <contactref element="U5" pad="C5"/>
-<wire x1="17.8" y1="42.89" x2="-31.14" y2="22.06" width="0" layer="19" extent="1-1"/>
+<wire x1="6.452" y1="39.84" x2="17.8" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A0">
 <contactref element="U6" pad="H7"/>
 <contactref element="U5" pad="C3"/>
-<wire x1="16.8" y1="42.89" x2="-26.34" y2="20.46" width="0" layer="19" extent="1-1"/>
+<wire x1="11.252" y1="38.24" x2="16.8" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A1">
 <contactref element="U6" pad="H8"/>
 <contactref element="U5" pad="C1"/>
-<wire x1="15.8" y1="42.89" x2="-25.54" y2="20.46" width="0" layer="19" extent="1-1"/>
+<wire x1="12.052" y1="38.24" x2="15.8" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A2">
 <contactref element="U6" pad="J8"/>
 <contactref element="U5" pad="A1"/>
-<wire x1="15.8" y1="43.89" x2="-25.54" y2="19.66" width="0" layer="19" extent="1-1"/>
+<wire x1="15.8" y1="43.89" x2="12.052" y2="37.44" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A3">
 <contactref element="U6" pad="J7"/>
 <contactref element="U5" pad="E4"/>
-<wire x1="17.3" y1="41.89" x2="-26.34" y2="19.66" width="0" layer="19" extent="1-1"/>
+<wire x1="11.252" y1="37.44" x2="17.3" y2="41.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A4">
 <contactref element="U6" pad="J3"/>
 <contactref element="U5" pad="D4"/>
-<wire x1="17.3" y1="42.39" x2="-29.54" y2="19.66" width="0" layer="19" extent="1-1"/>
+<wire x1="8.052" y1="37.44" x2="17.3" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A5">
 <contactref element="U6" pad="J2"/>
 <contactref element="U5" pad="A2"/>
-<wire x1="16.3" y1="43.89" x2="-30.34" y2="19.66" width="0" layer="19" extent="1-1"/>
+<wire x1="16.3" y1="43.89" x2="7.252" y2="37.44" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A6">
 <contactref element="U6" pad="H3"/>
 <contactref element="U5" pad="E1"/>
-<wire x1="15.8" y1="41.89" x2="-29.54" y2="20.46" width="0" layer="19" extent="1-1"/>
+<wire x1="8.052" y1="38.24" x2="15.8" y2="41.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A7">
 <contactref element="U6" pad="H2"/>
 <contactref element="U5" pad="D1"/>
-<wire x1="15.8" y1="42.39" x2="-30.34" y2="20.46" width="0" layer="19" extent="1-1"/>
+<wire x1="7.252" y1="38.24" x2="15.8" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A8">
 <contactref element="U6" pad="H1"/>
 <contactref element="U5" pad="D3"/>
-<wire x1="16.8" y1="42.39" x2="-31.14" y2="20.46" width="0" layer="19" extent="1-1"/>
+<wire x1="6.452" y1="38.24" x2="16.8" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A9">
 <contactref element="U6" pad="G3"/>
 <contactref element="U5" pad="A5"/>
-<wire x1="17.8" y1="43.89" x2="-29.54" y2="21.26" width="0" layer="19" extent="1-1"/>
+<wire x1="17.8" y1="43.89" x2="8.052" y2="39.04" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A10">
 <contactref element="U6" pad="H9"/>
 <contactref element="U5" pad="B1"/>
-<wire x1="-24.74" y1="20.46" x2="15.8" y2="43.39" width="0" layer="19" extent="1-1"/>
+<wire x1="12.852" y1="38.24" x2="15.8" y2="43.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A11">
 <contactref element="U6" pad="G2"/>
 <contactref element="U5" pad="F4"/>
-<wire x1="17.3" y1="41.39" x2="-30.34" y2="21.26" width="0" layer="19" extent="1-1"/>
+<wire x1="7.252" y1="39.04" x2="17.3" y2="41.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_A12">
 <contactref element="U6" pad="G1"/>
@@ -1891,82 +1854,82 @@ design rules under a new name.</description>
 <signal name="RAM_DQ0">
 <contactref element="U6" pad="A8"/>
 <contactref element="U5" pad="A7"/>
-<wire x1="-25.54" y1="26.06" x2="18.8" y2="43.89" width="0" layer="19" extent="1-1"/>
+<wire x1="12.052" y1="43.84" x2="18.8" y2="43.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ1">
 <contactref element="U6" pad="B9"/>
 <contactref element="U5" pad="C10"/>
-<wire x1="-24.74" y1="25.26" x2="20.3" y2="42.89" width="0" layer="19" extent="1-1"/>
+<wire x1="12.852" y1="43.04" x2="20.3" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ2">
 <contactref element="U6" pad="B8"/>
 <contactref element="U5" pad="A10"/>
-<wire x1="-25.54" y1="25.26" x2="20.3" y2="43.89" width="0" layer="19" extent="1-1"/>
+<wire x1="12.052" y1="43.04" x2="20.3" y2="43.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ3">
 <contactref element="U6" pad="C9"/>
 <contactref element="U5" pad="A11"/>
-<wire x1="-24.74" y1="24.46" x2="20.8" y2="43.89" width="0" layer="19" extent="1-1"/>
+<wire x1="12.852" y1="42.24" x2="20.8" y2="43.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ4">
 <contactref element="U6" pad="C8"/>
 <contactref element="U5" pad="D11"/>
-<wire x1="-25.54" y1="24.46" x2="20.8" y2="42.39" width="0" layer="19" extent="1-1"/>
+<wire x1="12.052" y1="42.24" x2="20.8" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ5">
 <contactref element="U6" pad="D9"/>
 <contactref element="U5" pad="D10"/>
-<wire x1="-24.74" y1="23.66" x2="20.3" y2="42.39" width="0" layer="19" extent="1-1"/>
+<wire x1="12.852" y1="41.44" x2="20.3" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ6">
 <contactref element="U6" pad="D8"/>
 <contactref element="U5" pad="D6"/>
-<wire x1="-25.54" y1="23.66" x2="18.3" y2="42.39" width="0" layer="19" extent="1-1"/>
+<wire x1="12.052" y1="41.44" x2="18.3" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ7">
 <contactref element="U6" pad="E9"/>
 <contactref element="U5" pad="C6"/>
-<wire x1="-24.74" y1="22.86" x2="18.3" y2="42.89" width="0" layer="19" extent="1-1"/>
+<wire x1="12.852" y1="40.64" x2="18.3" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ8">
 <contactref element="U6" pad="E1"/>
 <contactref element="U5" pad="D7"/>
-<wire x1="18.8" y1="42.39" x2="-31.14" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="6.452" y1="40.64" x2="18.8" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ9">
 <contactref element="U6" pad="D2"/>
 <contactref element="U5" pad="C7"/>
-<wire x1="18.8" y1="42.89" x2="-30.34" y2="23.66" width="0" layer="19" extent="1-1"/>
+<wire x1="7.252" y1="41.44" x2="18.8" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ10">
 <contactref element="U6" pad="D1"/>
 <contactref element="U5" pad="C9"/>
-<wire x1="19.8" y1="42.89" x2="-31.14" y2="23.66" width="0" layer="19" extent="1-1"/>
+<wire x1="6.452" y1="41.44" x2="19.8" y2="42.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ11">
 <contactref element="U6" pad="C2"/>
 <contactref element="U5" pad="D9"/>
-<wire x1="-30.34" y1="24.46" x2="19.8" y2="42.39" width="0" layer="19" extent="1-1"/>
+<wire x1="7.252" y1="42.24" x2="19.8" y2="42.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ12">
 <contactref element="U6" pad="C1"/>
 <contactref element="U5" pad="H3"/>
-<wire x1="16.8" y1="40.39" x2="-31.14" y2="24.46" width="0" layer="19" extent="1-1"/>
+<wire x1="6.452" y1="42.24" x2="16.8" y2="40.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ13">
 <contactref element="U6" pad="B2"/>
 <contactref element="U5" pad="H1"/>
-<wire x1="15.8" y1="40.39" x2="-30.34" y2="25.26" width="0" layer="19" extent="1-1"/>
+<wire x1="7.252" y1="43.04" x2="15.8" y2="40.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ14">
 <contactref element="U6" pad="B1"/>
 <contactref element="U5" pad="G3"/>
-<wire x1="16.8" y1="40.89" x2="-31.14" y2="25.26" width="0" layer="19" extent="1-1"/>
+<wire x1="6.452" y1="43.04" x2="16.8" y2="40.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ15">
 <contactref element="U6" pad="A2"/>
 <contactref element="U5" pad="J1"/>
-<wire x1="15.8" y1="39.89" x2="-30.34" y2="26.06" width="0" layer="19" extent="1-1"/>
+<wire x1="7.252" y1="43.84" x2="15.8" y2="39.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="BA0">
 <contactref element="U6" pad="G7"/>
@@ -1983,7 +1946,7 @@ design rules under a new name.</description>
 <signal name="PIX_CLK">
 <contactref element="U5" pad="G1"/>
 <contactref element="SV1" pad="13"/>
-<wire x1="15.8" y1="40.89" x2="-43.18" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="15.8" y1="40.89" x2="24.13" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_BA1">
 <contactref element="U5" pad="K3"/>
@@ -1997,7 +1960,7 @@ design rules under a new name.</description>
 <signal name="PIX_D0">
 <contactref element="U5" pad="M1"/>
 <contactref element="SV1" pad="1"/>
-<wire x1="15.8" y1="38.39" x2="-58.42" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="15.8" y1="38.39" x2="8.89" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$37">
 <contactref element="U5" pad="N1"/>
@@ -2005,12 +1968,12 @@ design rules under a new name.</description>
 <signal name="PIX_LV">
 <contactref element="U5" pad="A12"/>
 <contactref element="SV1" pad="15"/>
-<wire x1="21.3" y1="43.89" x2="-40.64" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="21.3" y1="43.89" x2="26.67" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_FV">
 <contactref element="U5" pad="C12"/>
 <contactref element="SV1" pad="14"/>
-<wire x1="21.3" y1="42.89" x2="-43.18" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="21.3" y1="42.89" x2="24.13" y2="71.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$49">
 <contactref element="U5" pad="A6"/>
@@ -2060,69 +2023,69 @@ design rules under a new name.</description>
 <signal name="PIX_D1">
 <contactref element="U5" pad="F12"/>
 <contactref element="SV1" pad="2"/>
-<wire x1="21.3" y1="41.39" x2="-58.42" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="21.3" y1="41.39" x2="8.89" y2="71.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D10">
 <contactref element="U5" pad="F14"/>
 <contactref element="SV1" pad="11"/>
-<wire x1="22.3" y1="41.39" x2="-45.72" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="22.3" y1="41.39" x2="21.59" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D11">
 <contactref element="U5" pad="G14"/>
 <contactref element="SV1" pad="12"/>
-<wire x1="22.3" y1="40.89" x2="-45.72" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="22.3" y1="40.89" x2="21.59" y2="71.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D2">
 <contactref element="U5" pad="F11"/>
 <contactref element="SV1" pad="3"/>
-<wire x1="20.8" y1="41.39" x2="-55.88" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="20.8" y1="41.39" x2="11.43" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D3">
 <contactref element="U5" pad="E11"/>
 <contactref element="SV1" pad="4"/>
-<wire x1="20.8" y1="41.89" x2="-55.88" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="20.8" y1="41.89" x2="11.43" y2="71.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D4">
 <contactref element="U5" pad="E12"/>
 <contactref element="SV1" pad="5"/>
-<wire x1="21.3" y1="41.89" x2="-53.34" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="21.3" y1="41.89" x2="13.97" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D5">
 <contactref element="U5" pad="E14"/>
 <contactref element="SV1" pad="6"/>
-<wire x1="22.3" y1="41.89" x2="-53.34" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="22.3" y1="41.89" x2="13.97" y2="71.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D6">
 <contactref element="U5" pad="D14"/>
 <contactref element="SV1" pad="7"/>
-<wire x1="22.3" y1="42.39" x2="-50.8" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="22.3" y1="42.39" x2="16.51" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D7">
 <contactref element="U5" pad="C14"/>
 <contactref element="SV1" pad="8"/>
-<wire x1="22.3" y1="42.89" x2="-50.8" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="22.3" y1="42.89" x2="16.51" y2="71.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D8">
 <contactref element="U5" pad="D12"/>
 <contactref element="SV1" pad="9"/>
-<wire x1="21.3" y1="42.39" x2="-48.26" y2="25.4" width="0" layer="19" extent="1-1"/>
+<wire x1="21.3" y1="42.39" x2="19.05" y2="73.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="PIX_D9">
 <contactref element="U5" pad="B14"/>
 <contactref element="SV1" pad="10"/>
-<wire x1="22.3" y1="43.39" x2="-48.26" y2="22.86" width="0" layer="19" extent="1-1"/>
+<wire x1="22.3" y1="43.39" x2="19.05" y2="71.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_PRG_CDONE">
 <contactref element="U5" pad="M10"/>
 <contactref element="TC1" pad="3"/>
-<wire x1="20.3" y1="38.39" x2="-17.78" y2="34.925" width="0" layer="19" extent="1-1"/>
+<wire x1="20.3" y1="38.39" x2="50.8" y2="45.085" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_PRG_CRESET_">
 <contactref element="U5" pad="L10"/>
 <contactref element="R10" pad="2"/>
 <contactref element="TC1" pad="8"/>
-<wire x1="-17.78" y1="36.195" x2="78.74" y2="39.37" width="0" layer="19" extent="1-1"/>
-<wire x1="20.3" y1="38.89" x2="-17.78" y2="36.195" width="0" layer="19" extent="1-1"/>
+<wire x1="24.186" y1="36.449" x2="50.8" y2="46.355" width="0" layer="19" extent="1-16"/>
+<wire x1="20.3" y1="38.89" x2="24.186" y2="36.449" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="N$97">
 <contactref element="U5" pad="M6"/>
@@ -2158,29 +2121,29 @@ design rules under a new name.</description>
 <contactref element="U5" pad="M11"/>
 <contactref element="TC1" pad="10"/>
 <contactref element="U1" pad="2"/>
-<wire x1="-31.685" y1="33.655" x2="-20.32" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="20.8" y1="38.39" x2="-20.32" y2="36.195" width="0" layer="19" extent="1-1"/>
+<wire x1="26.989" y1="33.147" x2="48.26" y2="46.355" width="0" layer="19" extent="1-1"/>
+<wire x1="20.8" y1="38.39" x2="26.989" y2="33.147" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_PRG_SI">
 <contactref element="U5" pad="P11"/>
 <contactref element="TC1" pad="1"/>
 <contactref element="U1" pad="5"/>
-<wire x1="-26.735" y1="31.115" x2="-20.32" y2="34.925" width="0" layer="19" extent="1-1"/>
-<wire x1="20.8" y1="37.39" x2="-26.735" y2="31.115" width="0" layer="19" extent="1-1"/>
+<wire x1="31.939" y1="30.607" x2="48.26" y2="45.085" width="0" layer="19" extent="1-1"/>
+<wire x1="20.8" y1="37.39" x2="31.939" y2="30.607" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_PRG_SCLK">
 <contactref element="U5" pad="P12"/>
 <contactref element="TC1" pad="9"/>
 <contactref element="U1" pad="6"/>
-<wire x1="-26.735" y1="32.385" x2="-19.05" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="21.3" y1="37.39" x2="-19.05" y2="36.195" width="0" layer="19" extent="1-1"/>
+<wire x1="31.939" y1="31.877" x2="49.53" y2="46.355" width="0" layer="19" extent="1-1"/>
+<wire x1="21.3" y1="37.39" x2="31.939" y2="31.877" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_PRG_CS_">
 <contactref element="U5" pad="P13"/>
 <contactref element="TC1" pad="2"/>
 <contactref element="U1" pad="1"/>
-<wire x1="-31.685" y1="34.925" x2="-19.05" y2="34.925" width="0" layer="19" extent="1-1"/>
-<wire x1="21.8" y1="37.39" x2="-19.05" y2="34.925" width="0" layer="19" extent="1-1"/>
+<wire x1="26.989" y1="34.417" x2="49.53" y2="45.085" width="0" layer="19" extent="1-1"/>
+<wire x1="21.8" y1="37.39" x2="26.989" y2="34.417" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$32">
 <contactref element="SV1" pad="16"/>
@@ -2200,94 +2163,94 @@ design rules under a new name.</description>
 <signal name="LED0">
 <contactref element="U5" pad="P2"/>
 <contactref element="LED0" pad="A"/>
-<wire x1="16.3" y1="37.39" x2="7.62" y2="21.844" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="31.623" x2="16.3" y2="37.39" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="LED1">
 <contactref element="U5" pad="P3"/>
 <contactref element="LED1" pad="A"/>
-<wire x1="7.62" y1="19.304" x2="16.8" y2="37.39" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="30.48" x2="16.8" y2="37.39" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="LED2">
 <contactref element="U5" pad="M4"/>
 <contactref element="LED2" pad="A"/>
-<wire x1="7.62" y1="16.764" x2="17.3" y2="38.39" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="29.337" x2="17.3" y2="38.39" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="LED3">
 <contactref element="U5" pad="M3"/>
 <contactref element="LED3" pad="A"/>
-<wire x1="7.62" y1="14.224" x2="16.8" y2="38.39" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="28.194" x2="16.8" y2="38.39" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="LED4">
 <contactref element="U5" pad="L5"/>
 <contactref element="LED4" pad="A"/>
-<wire x1="7.62" y1="11.684" x2="17.8" y2="38.89" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="27.051" x2="17.8" y2="38.89" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="LED5">
 <contactref element="U5" pad="L4"/>
 <contactref element="LED5" pad="A"/>
-<wire x1="7.62" y1="9.144" x2="17.3" y2="38.89" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="25.908" x2="17.3" y2="38.89" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="LED6">
 <contactref element="U5" pad="P4"/>
 <contactref element="LED6" pad="A"/>
-<wire x1="7.62" y1="6.604" x2="17.3" y2="37.39" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="24.765" x2="17.3" y2="37.39" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="LED7">
 <contactref element="U5" pad="P5"/>
 <contactref element="LED7" pad="A"/>
-<wire x1="7.62" y1="4.064" x2="17.8" y2="37.39" width="0" layer="19" extent="1-1"/>
+<wire x1="19.558" y1="23.622" x2="17.8" y2="37.39" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="N$15">
 <contactref element="LED7" pad="C"/>
 <contactref element="R19" pad="1"/>
-<wire x1="7.62" y1="5.18" x2="71.43" y2="44.45" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="23.622" x2="20.674" y2="23.622" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$17">
 <contactref element="LED6" pad="C"/>
 <contactref element="R18" pad="1"/>
-<wire x1="7.62" y1="7.72" x2="63.81" y2="33.02" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="24.765" x2="20.674" y2="24.765" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$19">
 <contactref element="LED5" pad="C"/>
 <contactref element="R17" pad="1"/>
-<wire x1="7.62" y1="10.26" x2="63.81" y2="38.1" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="25.908" x2="20.674" y2="25.908" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$21">
 <contactref element="LED4" pad="C"/>
 <contactref element="R16" pad="1"/>
-<wire x1="7.62" y1="12.8" x2="63.81" y2="46.99" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="27.051" x2="20.674" y2="27.051" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$23">
 <contactref element="LED3" pad="C"/>
 <contactref element="R15" pad="1"/>
-<wire x1="7.62" y1="15.34" x2="67.62" y2="46.99" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="28.194" x2="20.674" y2="28.194" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$26">
 <contactref element="LED2" pad="C"/>
 <contactref element="R14" pad="1"/>
-<wire x1="65.08" y1="44.45" x2="7.62" y2="17.88" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="29.337" x2="20.674" y2="29.337" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$29">
 <contactref element="LED1" pad="C"/>
 <contactref element="R13" pad="1"/>
-<wire x1="77.78" y1="29.21" x2="7.62" y2="20.42" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="30.48" x2="20.674" y2="30.48" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$31">
 <contactref element="LED0" pad="C"/>
 <contactref element="R12" pad="1"/>
-<wire x1="7.62" y1="22.96" x2="77.78" y2="34.29" width="0" layer="19" extent="1-1"/>
+<wire x1="22.027" y1="31.623" x2="20.674" y2="31.623" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$2">
 <contactref element="U4" pad="A1"/>
 <contactref element="R11" pad="1"/>
-<wire x1="-39.77" y1="43.98" x2="68.89" y2="40.64" width="0" layer="19" extent="1-1"/>
+<wire x1="22.634" y1="50.574" x2="23.73" y2="50.965" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="VDDIN">
 <contactref element="TC1" pad="5"/>
 <contactref element="R5" pad="2"/>
 <contactref element="X8" pad="1"/>
-<wire x1="-15.24" y1="34.925" x2="72.39" y2="31.75" width="0" layer="19" extent="1-1"/>
-<wire x1="-25.4" y1="41.68" x2="-15.24" y2="34.925" width="0" layer="19" extent="1-1"/>
+<wire x1="53.34" y1="45.085" x2="57.15" y2="59.69" width="0" layer="19" extent="1-1"/>
+<wire x1="67.31" y1="23.9" x2="53.34" y2="45.085" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$16">
 <contactref element="L1" pad="2"/>
@@ -2295,10 +2258,10 @@ design rules under a new name.</description>
 <contactref element="U2" pad="C1"/>
 <contactref element="C3" pad="1"/>
 <contactref element="X2" pad="1"/>
-<wire x1="86.03" y1="27.94" x2="72.39" y2="26.67" width="0" layer="19" extent="1-1"/>
-<wire x1="-20.32" y1="6.477" x2="86.03" y2="27.94" width="0" layer="19" extent="1-1"/>
-<wire x1="-41.91" y1="30.25" x2="-20.32" y2="6.477" width="0" layer="19" extent="1-1"/>
-<wire x1="-26.845" y1="51.6636" x2="-41.91" y2="30.25" width="0" layer="19" extent="1-1"/>
+<wire x1="11.562" y1="47.3964" x2="64.77" y2="16.28" width="0" layer="19" extent="1-16"/>
+<wire x1="10.287" y1="52.07" x2="11.562" y2="47.3964" width="0" layer="19" extent="16-16"/>
+<wire x1="16.3196" y1="60.795" x2="10.287" y2="52.07" width="0" layer="19" extent="1-16"/>
+<wire x1="17.478" y1="61.1886" x2="16.3196" y2="60.795" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$8">
 <contactref element="X3" pad="1"/>
@@ -2306,10 +2269,10 @@ design rules under a new name.</description>
 <contactref element="L2" pad="2"/>
 <contactref element="C5" pad="1"/>
 <contactref element="U3" pad="C1"/>
-<wire x1="75.87" y1="62.23" x2="72.39" y2="21.59" width="0" layer="19" extent="1-1"/>
-<wire x1="-34.29" y1="6.477" x2="75.87" y2="62.23" width="0" layer="19" extent="1-1"/>
-<wire x1="-46.99" y1="30.25" x2="-34.29" y2="6.477" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.385" y1="51.6636" x2="-46.99" y2="30.25" width="0" layer="19" extent="1-1"/>
+<wire x1="17.097" y1="19.1516" x2="59.69" y2="16.28" width="0" layer="19" extent="1-1"/>
+<wire x1="15.964" y1="18.631" x2="17.097" y2="19.1516" width="0" layer="19" extent="1-1"/>
+<wire x1="10.16" y1="29.464" x2="15.964" y2="18.631" width="0" layer="19" extent="1-16"/>
+<wire x1="11.562" y1="34.1122" x2="10.16" y2="29.464" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$18">
 <contactref element="U4" pad="E2"/>
@@ -2318,11 +2281,21 @@ design rules under a new name.</description>
 <contactref element="R6" pad="2"/>
 <contactref element="X4" pad="1"/>
 <contactref element="R22" pad="2"/>
-<wire x1="77.47" y1="52.07" x2="72.39" y2="17.78" width="0" layer="19" extent="1-1"/>
-<wire x1="75.57" y1="54.61" x2="77.47" y2="52.07" width="0" layer="19" extent="1-1"/>
-<wire x1="-52.07" y1="30.25" x2="75.57" y2="54.61" width="0" layer="19" extent="1-1"/>
-<wire x1="-39.37" y1="42.38" x2="-52.07" y2="30.25" width="0" layer="19" extent="1-1"/>
-<wire x1="-38.97" y1="42.38" x2="-39.37" y2="42.38" width="0" layer="19" extent="1-1"/>
+<wire x1="24.1452" y1="49.5198" x2="24.13" y2="49.365" width="0" layer="19" extent="1-16"/>
+<wire x1="24.53" y1="49.365" x2="24.1452" y2="49.5198" width="0" layer="19" extent="1-16"/>
+<wire x1="24.765" y1="48.006" x2="24.53" y2="49.365" width="0" layer="19" extent="1-16"/>
+<wire x1="24.765" y1="46.355" x2="24.765" y2="48.006" width="0" layer="19" extent="16-16"/>
+<wire x1="54.61" y1="16.28" x2="24.765" y2="46.355" width="0" layer="19" extent="1-16"/>
+</signal>
+<signal name="N$20">
+<contactref element="R3" pad="1"/>
+<contactref element="U2" pad="B2"/>
+<wire x1="17.828" y1="61.595" x2="17.808" y2="61.623" width="0" layer="19" extent="1-16"/>
+</signal>
+<signal name="N$7">
+<contactref element="R4" pad="1"/>
+<contactref element="U3" pad="B2"/>
+<wire x1="17.447" y1="19.558" x2="17.3" y2="19.403" width="0" layer="19" extent="1-16"/>
 </signal>
 </signals>
 <mfgpreviewcolors>
