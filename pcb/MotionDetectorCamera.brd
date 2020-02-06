@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="1" altunitdist="mil" altunit="mil"/>
+<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.1" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -2152,32 +2152,87 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="RAM_DQ10">
 <contactref element="U6" pad="D1"/>
 <contactref element="U5" pad="C9"/>
-<wire x1="6.452" y1="41.44" x2="57.8" y2="36.89" width="0" layer="19" extent="1-1"/>
+<contactref element="U$1" pad="A6"/>
+<wire x1="6.452" y1="41.44" x2="6.85291875" y2="41.84091875" width="0.127" layer="1"/>
+<wire x1="6.85291875" y1="41.84091875" x2="6.85291875" y2="41.84141875" width="0.127" layer="1"/>
+<via x="6.85291875" y="41.84141875" extent="1-16" drill="0.254"/>
+<wire x1="6.85291875" y1="41.84141875" x2="16.1925" y2="41.84141875" width="0.127" layer="16"/>
+<wire x1="16.1925" y1="41.84141875" x2="18.608040625" y2="44.256959375" width="0.127" layer="16"/>
+<via x="18.608040625" y="44.256959375" extent="1-16" drill="0.254"/>
+<wire x1="18.608040625" y1="44.256959375" x2="18.99908125" y2="44.648" width="0.127" layer="1"/>
+<wire x1="18.99908125" y1="44.648" x2="19.027" y2="44.648" width="0.127" layer="1"/>
+<wire x1="19.027" y1="44.648" x2="57.8" y2="36.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ11">
 <contactref element="U6" pad="C2"/>
 <contactref element="U5" pad="D9"/>
-<wire x1="7.252" y1="42.24" x2="57.8" y2="36.39" width="0" layer="19" extent="1-1"/>
+<contactref element="U$1" pad="A5"/>
+<wire x1="7.252" y1="42.24" x2="7.2662625" y2="42.24" width="0.127" layer="1"/>
+<via x="8.89" y="42.418" extent="1-16" drill="0.254"/>
+<wire x1="7.63625" y1="42.6305" x2="8.46775" y2="42.6305" width="0.127" layer="1"/>
+<wire x1="7.252" y1="42.24" x2="7.252" y2="42.24625" width="0.127" layer="1"/>
+<wire x1="7.63625" y1="42.6305" x2="7.252" y2="42.24625" width="0.127" layer="1"/>
+<wire x1="8.46775" y1="42.6305" x2="8.68025" y2="42.418" width="0.127" layer="1"/>
+<wire x1="8.68025" y1="42.418" x2="8.89" y2="42.418" width="0.127" layer="1"/>
+<wire x1="8.89" y1="42.418" x2="15.9893" y2="42.418" width="0.127" layer="16"/>
+<wire x1="15.9893" y1="42.418" x2="17.82571875" y2="44.25441875" width="0.127" layer="16"/>
+<via x="17.82571875" y="44.25441875" extent="1-16" drill="0.254"/>
+<wire x1="17.82571875" y1="44.25441875" x2="18.2193" y2="44.648" width="0.127" layer="1"/>
+<wire x1="18.2193" y1="44.648" x2="18.227" y2="44.648" width="0.127" layer="1"/>
+<wire x1="18.227" y1="44.648" x2="57.8" y2="36.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ12">
 <contactref element="U6" pad="C1"/>
 <contactref element="U5" pad="H3"/>
-<wire x1="6.452" y1="42.24" x2="54.8" y2="34.39" width="0" layer="19" extent="1-1"/>
+<contactref element="U$1" pad="A4"/>
+<wire x1="6.452" y1="42.24" x2="6.85038125" y2="42.63838125" width="0.127" layer="1"/>
+<wire x1="6.85038125" y1="42.63838125" x2="6.85038125" y2="42.63898125" width="0.127" layer="1"/>
+<via x="6.85038125" y="42.63898125" extent="1-16" drill="0.254"/>
+<wire x1="6.85038125" y1="42.63898125" x2="7.218684375" y2="43.007284375" width="0.127" layer="16"/>
+<wire x1="15.78864375" y1="43.007284375" x2="7.218684375" y2="43.007284375" width="0.127" layer="16"/>
+<wire x1="15.78864375" y1="43.007284375" x2="17.028159375" y2="44.2468" width="0.127" layer="16"/>
+<via x="17.028159375" y="44.2468" extent="1-16" drill="0.254"/>
+<wire x1="17.028159375" y1="44.2468" x2="17.028159375" y2="44.249159375" width="0.127" layer="1"/>
+<wire x1="17.028159375" y1="44.249159375" x2="17.427" y2="44.648" width="0.127" layer="1"/>
+<wire x1="17.427" y1="44.648" x2="54.8" y2="34.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ13">
 <contactref element="U6" pad="B2"/>
 <contactref element="U5" pad="H1"/>
-<wire x1="7.252" y1="43.04" x2="53.8" y2="34.39" width="0" layer="19" extent="1-1"/>
+<contactref element="U$1" pad="A3"/>
+<wire x1="7.252" y1="43.04" x2="7.65301875" y2="43.44101875" width="0.127" layer="1"/>
+<wire x1="7.65301875" y1="43.44101875" x2="7.65301875" y2="43.44161875" width="0.127" layer="1"/>
+<via x="7.65301875" y="43.44161875" extent="1-16" drill="0.254"/>
+<wire x1="15.681959375" y1="43.69561875" x2="7.90701875" y2="43.69561875" width="0.127" layer="16"/>
+<wire x1="7.65301875" y1="43.44161875" x2="7.90701875" y2="43.69561875" width="0.127" layer="16"/>
+<wire x1="15.681959375" y1="43.69561875" x2="16.233140625" y2="44.2468" width="0.127" layer="16"/>
+<via x="16.233140625" y="44.2468" extent="1-16" drill="0.254"/>
+<wire x1="16.233140625" y1="44.2468" x2="16.233140625" y2="44.254140625" width="0.127" layer="1"/>
+<wire x1="16.233140625" y1="44.254140625" x2="16.627" y2="44.648" width="0.127" layer="1"/>
+<wire x1="16.627" y1="44.648" x2="53.8" y2="34.39" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ14">
 <contactref element="U6" pad="B1"/>
 <contactref element="U5" pad="G3"/>
-<wire x1="6.452" y1="43.04" x2="54.8" y2="34.89" width="0" layer="19" extent="1-1"/>
+<contactref element="U$1" pad="A2"/>
+<wire x1="6.452" y1="43.04" x2="6.85038125" y2="43.43838125" width="0.127" layer="1"/>
+<wire x1="6.85038125" y1="43.43838125" x2="6.85038125" y2="43.44161875" width="0.127" layer="1"/>
+<via x="6.85038125" y="43.44161875" extent="1-16" drill="0.254"/>
+<wire x1="6.85038125" y1="43.44161875" x2="7.6758625" y2="44.2671" width="0.127" layer="16"/>
+<wire x1="7.6758625" y1="44.2671" x2="15.42541875" y2="44.2671" width="0.127" layer="16"/>
+<via x="15.42541875" y="44.2671" extent="1-16" drill="0.254"/>
+<wire x1="15.42541875" y1="44.2671" x2="15.80631875" y2="44.648" width="0.127" layer="1"/>
+<wire x1="15.80631875" y1="44.648" x2="15.827" y2="44.648" width="0.127" layer="1"/>
+<wire x1="15.827" y1="44.648" x2="54.8" y2="34.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="RAM_DQ15">
 <contactref element="U6" pad="A2"/>
 <contactref element="U5" pad="J1"/>
-<wire x1="7.252" y1="43.84" x2="53.8" y2="33.89" width="0" layer="19" extent="1-1"/>
+<contactref element="U$1" pad="A1"/>
+<wire x1="7.252" y1="43.84" x2="8.37" y2="44.958" width="0.127" layer="1"/>
+<wire x1="14.717" y1="44.958" x2="15.027" y2="44.648" width="0.127" layer="1"/>
+<wire x1="8.37" y1="44.958" x2="14.717" y2="44.958" width="0.127" layer="1"/>
+<wire x1="15.027" y1="44.648" x2="53.8" y2="33.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$24">
 <contactref element="U5" pad="F3"/>
@@ -2653,75 +2708,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="N$3">
 <contactref element="TC1" pad="6"/>
 </signal>
-<signal name="N$9">
-<contactref element="U$1" pad="A1"/>
-</signal>
-<signal name="N$22">
-<contactref element="U$1" pad="A2"/>
-</signal>
-<signal name="N$25">
-<contactref element="U$1" pad="A3"/>
-</signal>
-<signal name="N$28">
-<contactref element="U$1" pad="A4"/>
-</signal>
-<signal name="N$54">
-<contactref element="U$1" pad="A5"/>
-</signal>
-<signal name="N$56">
-<contactref element="U$1" pad="A6"/>
-</signal>
-<signal name="N$57">
-<contactref element="U$1" pad="A7"/>
-</signal>
-<signal name="N$58">
-<contactref element="U$1" pad="A8"/>
-</signal>
-<signal name="N$59">
-<contactref element="U$1" pad="A9"/>
-</signal>
-<signal name="N$60">
-<contactref element="U$1" pad="A10"/>
-</signal>
-<signal name="N$61">
-<contactref element="U$1" pad="A11"/>
-</signal>
-<signal name="N$74">
-<contactref element="U$1" pad="B3"/>
-</signal>
-<signal name="N$76">
-<contactref element="U$1" pad="B4"/>
-</signal>
-<signal name="N$77">
-<contactref element="U$1" pad="B5"/>
-</signal>
-<signal name="N$78">
-<contactref element="U$1" pad="B6"/>
-</signal>
-<signal name="N$79">
-<contactref element="U$1" pad="B7"/>
-</signal>
-<signal name="N$80">
-<contactref element="U$1" pad="B8"/>
-</signal>
-<signal name="N$81">
-<contactref element="U$1" pad="B9"/>
-</signal>
-<signal name="N$82">
-<contactref element="U$1" pad="C7"/>
-</signal>
-<signal name="N$83">
-<contactref element="U$1" pad="C8"/>
-</signal>
-<signal name="N$84">
-<contactref element="U$1" pad="C9"/>
-</signal>
-<signal name="N$85">
-<contactref element="U$1" pad="D5"/>
-</signal>
-<signal name="N$86">
-<contactref element="U$1" pad="D7"/>
-</signal>
 <signal name="N$87">
 <contactref element="U$1" pad="B11"/>
 </signal>
@@ -2883,6 +2869,105 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="8.344" y1="9.652" x2="19.027" y2="43.048" width="0" layer="19" extent="1-1"/>
 <wire x1="9.172" y1="11.684" x2="8.344" y2="9.652" width="0" layer="19" extent="1-1"/>
 <wire x1="9.172" y1="13.208" x2="9.172" y2="11.684" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$57">
+<contactref element="U$1" pad="A7"/>
+</signal>
+<signal name="N$58">
+<contactref element="U$1" pad="A8"/>
+</signal>
+<signal name="N$59">
+<contactref element="U$1" pad="A9"/>
+</signal>
+<signal name="N$60">
+<contactref element="U$1" pad="A10"/>
+</signal>
+<signal name="N$61">
+<contactref element="U$1" pad="A11"/>
+</signal>
+<signal name="N$76">
+<contactref element="U$1" pad="B4"/>
+</signal>
+<signal name="N$77">
+<contactref element="U$1" pad="B5"/>
+</signal>
+<signal name="N$78">
+<contactref element="U$1" pad="B6"/>
+</signal>
+<signal name="N$79">
+<contactref element="U$1" pad="B7"/>
+</signal>
+<signal name="N$80">
+<contactref element="U$1" pad="B8"/>
+</signal>
+<signal name="N$81">
+<contactref element="U$1" pad="B9"/>
+</signal>
+<signal name="N$82">
+<contactref element="U$1" pad="C7"/>
+</signal>
+<signal name="N$83">
+<contactref element="U$1" pad="C8"/>
+</signal>
+<signal name="N$84">
+<contactref element="U$1" pad="C9"/>
+</signal>
+<signal name="N$85">
+<contactref element="U$1" pad="D5"/>
+</signal>
+<signal name="N$86">
+<contactref element="U$1" pad="D7"/>
+</signal>
+<signal name="N$9">
+<contactref element="U$1" pad="B3"/>
+</signal>
+<signal name="N$74">
+<via x="3.84048125" y="43.44161875" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$22">
+<via x="3.04038125" y="43.44161875" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$137">
+<via x="3.84048125" y="42.636440625" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$138">
+<via x="3.04038125" y="42.636440625" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$139">
+<via x="3.84048125" y="41.84141875" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$140">
+<via x="3.04038125" y="41.84141875" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$143">
+<via x="3.84048125" y="41.03878125" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$144">
+<via x="3.04038125" y="41.03878125" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$146">
+<via x="3.84048125" y="40.23868125" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$147">
+<via x="3.04038125" y="40.23868125" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$149">
+<via x="3.84048125" y="39.43858125" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$150">
+<via x="3.04038125" y="39.43858125" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$153">
+<via x="3.84048125" y="38.64101875" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$154">
+<via x="3.04038125" y="38.64101875" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$155">
+<via x="3.84048125" y="37.835840625" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="N$156">
+<via x="3.04038125" y="37.835840625" extent="1-16" drill="0.254"/>
 </signal>
 </signals>
 <mfgpreviewcolors>
