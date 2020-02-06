@@ -316,6 +316,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <hole x="-3.81" y="-2.54" drill="2.3749"/>
 <hole x="1.905" y="2.54" drill="2.3749"/>
 <hole x="1.905" y="-2.54" drill="2.3749"/>
+<rectangle x1="-2.54" y1="-0.635" x2="2.54" y2="0.635" layer="39"/>
 </package>
 <package name="AT25XV041B-SSHV-T_AT25XV041B-SSHV-T">
 <circle x="-4.061" y="1.905" radius="0.15" width="0.3" layer="21"/>
@@ -2724,18 +2725,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="317.5" y="119.38" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$9" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="7"/>
-<wire x1="561.34" y1="58.42" x2="563.88" y2="58.42" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="GND" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="6"/>
-<wire x1="561.34" y1="55.88" x2="563.88" y2="55.88" width="0.1524" layer="91"/>
-<label x="563.88" y="55.88" size="1.778" layer="95"/>
-</segment>
 <segment>
 <wire x1="568.96" y1="7.62" x2="571.5" y2="7.62" width="0.1524" layer="91"/>
 <label x="581.66" y="7.62" size="1.778" layer="95"/>
@@ -3010,6 +3000,11 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="246.38" y1="111.76" x2="243.84" y2="111.76" width="0.1524" layer="91"/>
 <pinref part="C4" gate="G$1" pin="2"/>
 <label x="243.84" y="109.22" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="TC1" gate="A" pin="7"/>
+<wire x1="561.34" y1="58.42" x2="563.88" y2="58.42" width="0.1524" layer="91"/>
+<label x="563.88" y="58.42" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$6" class="0">
@@ -4350,6 +4345,12 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="231.14" y1="106.68" x2="231.14" y2="104.14" width="0.1524" layer="91"/>
 <pinref part="U3" gate="A" pin="EN"/>
 <wire x1="231.14" y1="104.14" x2="246.38" y2="104.14" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$3" class="0">
+<segment>
+<pinref part="TC1" gate="A" pin="6"/>
+<wire x1="561.34" y1="55.88" x2="563.88" y2="55.88" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
