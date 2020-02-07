@@ -6,10 +6,22 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.1" altunitdist="mil" altunit="mil"/>
+<grid distance="1" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.1" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="yes" active="yes"/>
+<layer number="3" name="Route3" color="17" fill="1" visible="no" active="yes"/>
+<layer number="4" name="Route4" color="18" fill="1" visible="no" active="yes"/>
+<layer number="5" name="Route5" color="19" fill="1" visible="no" active="yes"/>
+<layer number="6" name="Route6" color="25" fill="1" visible="no" active="yes"/>
+<layer number="7" name="Route7" color="26" fill="1" visible="no" active="yes"/>
+<layer number="8" name="Route8" color="27" fill="1" visible="no" active="yes"/>
+<layer number="9" name="Route9" color="28" fill="1" visible="no" active="yes"/>
+<layer number="10" name="Route10" color="29" fill="1" visible="no" active="yes"/>
+<layer number="11" name="Route11" color="30" fill="1" visible="no" active="yes"/>
+<layer number="12" name="Route12" color="20" fill="1" visible="no" active="yes"/>
+<layer number="13" name="Route13" color="21" fill="1" visible="no" active="yes"/>
+<layer number="14" name="Route14" color="22" fill="1" visible="no" active="yes"/>
 <layer number="15" name="Power" color="42" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
@@ -899,7 +911,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <param name="mlMaxStopFrame" value="2.5mil"/>
 <param name="mlMinCreamFrame" value="0mil"/>
 <param name="mlMaxCreamFrame" value="0mil"/>
-<param name="mlViaStopLimit" value="0mil"/>
+<param name="mlViaStopLimit" value="25mil"/>
 <param name="srRoundness" value="0"/>
 <param name="srMinRoundness" value="0mil"/>
 <param name="srMaxRoundness" value="0mil"/>
@@ -1581,6 +1593,46 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="59.159" y1="34.984" x2="59.5503" y2="34.5927" width="0.1524" layer="1"/>
 <wire x1="59.5503" y1="34.5927" x2="59.5503" y2="34.58971875" width="0.1524" layer="1"/>
 <wire x1="63.17" y1="31.822" x2="63.17" y2="32.482" width="0.127" layer="1"/>
+<polygon width="0.1524" layer="15">
+<vertex x="57.5818" y="39.8526"/>
+<vertex x="57.5818" y="38.4048"/>
+<vertex x="57.404" y="38.227"/>
+<vertex x="57.3786" y="38.2016"/>
+<vertex x="56.8198" y="38.2016"/>
+<vertex x="56.8198" y="37.5158"/>
+<vertex x="56.7944" y="37.4904"/>
+<vertex x="57.6072" y="37.4904"/>
+<vertex x="57.6326" y="37.465"/>
+<vertex x="57.6326" y="36.6522"/>
+<vertex x="57.5818" y="36.6014"/>
+<vertex x="56.769" y="36.6014"/>
+<vertex x="56.769" y="35.9664"/>
+<vertex x="56.9214" y="35.814"/>
+<vertex x="56.9722" y="35.7632"/>
+<vertex x="57.6072" y="35.7632"/>
+<vertex x="59.1566" y="34.2138"/>
+<vertex x="59.9694" y="34.2138"/>
+<vertex x="59.9694" y="35.0266"/>
+<vertex x="59.944" y="35.052"/>
+<vertex x="60.706" y="35.814"/>
+<vertex x="60.706" y="36.576"/>
+<vertex x="60.8076" y="36.6776"/>
+<vertex x="61.5188" y="36.6776"/>
+<vertex x="61.5188" y="37.2872"/>
+<vertex x="61.468" y="37.338"/>
+<vertex x="60.7568" y="37.338"/>
+<vertex x="59.944" y="38.1508"/>
+<vertex x="59.944" y="38.9382"/>
+<vertex x="59.3344" y="38.9382"/>
+<vertex x="59.309" y="38.9128"/>
+<vertex x="59.2074" y="38.8112"/>
+<vertex x="59.2074" y="38.1254"/>
+<vertex x="58.5216" y="38.1254"/>
+<vertex x="58.2676" y="38.3794"/>
+<vertex x="58.166" y="38.481"/>
+<vertex x="58.166" y="39.8272"/>
+<vertex x="58.1406" y="39.8526"/>
+</polygon>
 <wire x1="51.859" y1="49.234" x2="53.459" y2="49.234" width="0" layer="19" extent="1-1"/>
 <wire x1="51.859" y1="47.634" x2="51.859" y2="49.234" width="0" layer="19" extent="1-1"/>
 <wire x1="51.859" y1="46.034" x2="51.859" y2="47.634" width="0" layer="19" extent="1-1"/>
@@ -1588,10 +1640,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="48.659" y1="46.834" x2="48.659" y2="48.434" width="0" layer="19" extent="1-1"/>
 <wire x1="53.459" y1="42.834" x2="51.859" y2="46.034" width="0" layer="19" extent="1-1"/>
 <wire x1="57.1627" y1="37.7952" x2="53.459" y2="42.834" width="0" layer="19" extent="1-1"/>
-<wire x1="57.1627" y1="36.195" x2="57.559" y2="37.384" width="0" layer="19" extent="1-1"/>
-<wire x1="59.159" y1="38.184" x2="57.559" y2="37.384" width="0" layer="19" extent="1-1"/>
-<wire x1="59.159" y1="34.984" x2="57.559" y2="35.784" width="0" layer="19" extent="1-1"/>
-<wire x1="61.1632" y1="36.9824" x2="59.5503" y2="38.5826" width="0" layer="19" extent="1-1"/>
 <wire x1="63.159" y1="32.584" x2="59.5503" y2="34.58971875" width="0" layer="19" extent="1-1"/>
 <wire x1="63.17" y1="32.482" x2="63.159" y2="32.584" width="0" layer="19" extent="1-1"/>
 <wire x1="17.752" y1="67.0814" x2="48.659" y2="48.434" width="0" layer="19" extent="1-16"/>
@@ -1752,6 +1800,21 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="103.632" y="-2.54"/>
 <vertex x="103.632" y="82.296"/>
 </polygon>
+<via x="58.7502" y="35.3822" extent="1-16" drill="0.254"/>
+<polygon width="0.1524" layer="1">
+<vertex x="58.1152" y="37.4396"/>
+<vertex x="58.1152" y="34.9758"/>
+<vertex x="58.3184" y="34.7726"/>
+<vertex x="58.547" y="34.7726"/>
+<vertex x="59.309" y="35.5346"/>
+<vertex x="60.0456" y="35.5346"/>
+<vertex x="60.1726" y="35.6616"/>
+<vertex x="60.1726" y="37.4142"/>
+<vertex x="59.9948" y="37.592"/>
+<vertex x="58.3184" y="37.592"/>
+<vertex x="58.2422" y="37.592"/>
+<vertex x="58.1152" y="37.465"/>
+</polygon>
 <wire x1="18.844" y1="82.5246" x2="18.494" y2="83.3374" width="0" layer="19" extent="1-1"/>
 <wire x1="17.3356" y1="83.731" x2="18.494" y2="83.3374" width="0" layer="19" extent="1-1"/>
 <wire x1="20.0788" y1="82.1818" x2="18.844" y2="82.5246" width="0" layer="19" extent="1-16"/>
@@ -1767,16 +1830,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="51.859" y1="46.834" x2="51.859" y2="48.434" width="0" layer="19" extent="1-1"/>
 <wire x1="47.059" y1="42.834" x2="48.659" y2="46.034" width="0" layer="19" extent="1-1"/>
 <wire x1="58.359" y1="37.384" x2="51.859" y2="46.834" width="0" layer="19" extent="1-1"/>
-<wire x1="58.7502" y1="36.9824" x2="58.359" y2="37.384" width="0" layer="19" extent="1-1"/>
-<wire x1="59.159" y1="36.584" x2="59.563" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="59.959" y1="36.584" x2="59.563" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="58.359" y1="36.584" x2="58.7502" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="59.159" y1="37.384" x2="59.563" y2="36.9824" width="0" layer="19" extent="1-1"/>
-<wire x1="59.959" y1="37.384" x2="59.563" y2="36.9824" width="0" layer="19" extent="1-1"/>
-<wire x1="59.159" y1="35.784" x2="58.7502" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="59.959" y1="35.784" x2="59.563" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="58.359" y1="35.784" x2="58.7502" y2="36.195" width="0" layer="19" extent="1-1"/>
-<wire x1="58.359" y1="34.984" x2="58.359" y2="35.784" width="0" layer="19" extent="1-1"/>
 <wire x1="66.0552" y1="-13.3502" x2="58.359" y2="34.984" width="0" layer="19" extent="1-16"/>
 <wire x1="65.64" y1="-14.205" x2="66.0552" y2="-13.3502" width="0" layer="19" extent="1-16"/>
 <wire x1="65.64" y1="-14.605" x2="65.64" y2="-14.205" width="0" layer="19" extent="1-1"/>
