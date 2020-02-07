@@ -2491,7 +2491,6 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="R19" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
 <part name="X1" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X2" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
-<part name="X5" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X6" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X3" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X4" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
@@ -2711,35 +2710,35 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="VALUE" x="259.461" y="-145.796" size="1.778" layer="96" rot="MR180"/>
 <attribute name="MP" x="256.54" y="-142.24" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="C16" gate="G$1" x="106.68" y="15.24" smashed="yes">
-<attribute name="NAME" x="104.14" y="14.859" size="1.778" layer="95" rot="MR0"/>
-<attribute name="VALUE" x="104.14" y="12.319" size="1.778" layer="96" rot="MR0"/>
-<attribute name="MP" x="106.68" y="15.24" size="1.778" layer="96" display="off"/>
+<instance part="C16" gate="G$1" x="48.26" y="-278.638" smashed="yes">
+<attribute name="NAME" x="45.72" y="-279.019" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="45.72" y="-281.559" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="63.5" y="-273.558" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C17" gate="G$1" x="106.172" y="-1.778" smashed="yes">
-<attribute name="NAME" x="104.14" y="-2.159" size="1.778" layer="95" rot="MR0"/>
-<attribute name="VALUE" x="104.14" y="-4.699" size="1.778" layer="96" rot="MR0"/>
-<attribute name="MP" x="106.172" y="-1.778" size="1.778" layer="96" display="off"/>
+<instance part="C17" gate="G$1" x="17.272" y="-278.638" smashed="yes">
+<attribute name="NAME" x="15.24" y="-279.019" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="15.24" y="-281.559" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="32.512" y="-273.558" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C18" gate="G$1" x="116.84" y="15.24" smashed="yes">
-<attribute name="NAME" x="114.3" y="14.859" size="1.778" layer="95" rot="MR0"/>
-<attribute name="VALUE" x="114.3" y="12.319" size="1.778" layer="96" rot="MR0"/>
-<attribute name="MP" x="109.22" y="0" size="1.778" layer="96" display="off"/>
+<instance part="C18" gate="G$1" x="37.592" y="-278.638" smashed="yes">
+<attribute name="NAME" x="35.052" y="-279.019" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="35.052" y="-281.559" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="45.212" y="-288.798" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C19" gate="G$1" x="116.332" y="-1.778" smashed="yes">
-<attribute name="NAME" x="114.3" y="-2.159" size="1.778" layer="95" rot="MR0"/>
-<attribute name="VALUE" x="114.3" y="-4.699" size="1.778" layer="96" rot="MR0"/>
-<attribute name="MP" x="126.492" y="21.082" size="1.778" layer="96" display="off"/>
+<instance part="C19" gate="G$1" x="27.432" y="-278.638" smashed="yes">
+<attribute name="NAME" x="25.4" y="-279.019" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="25.4" y="-281.559" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="52.832" y="-250.698" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C24" gate="G$1" x="137.16" y="-27.94" smashed="yes">
-<attribute name="NAME" x="134.62" y="-28.321" size="1.778" layer="95" rot="MR0"/>
-<attribute name="VALUE" x="134.62" y="-30.861" size="1.778" layer="96" rot="MR0"/>
-<attribute name="MP" x="137.16" y="-27.94" size="1.778" layer="96" display="off"/>
+<instance part="C24" gate="G$1" x="33.02" y="-302.26" smashed="yes">
+<attribute name="NAME" x="30.48" y="-302.641" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="30.48" y="-305.181" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="63.5" y="-299.72" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C25" gate="G$1" x="147.32" y="-27.94" smashed="yes">
-<attribute name="NAME" x="145.288" y="-28.321" size="1.778" layer="95" rot="MR0"/>
-<attribute name="VALUE" x="145.288" y="-30.861" size="1.778" layer="96" rot="MR0"/>
-<attribute name="MP" x="147.32" y="-27.94" size="1.778" layer="96" display="off"/>
+<instance part="C25" gate="G$1" x="43.18" y="-302.26" smashed="yes">
+<attribute name="NAME" x="41.148" y="-302.641" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="41.148" y="-305.181" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="73.66" y="-299.72" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C30" gate="G$1" x="256.54" y="-182.88" smashed="yes" rot="R90">
 <attribute name="NAME" x="259.715" y="-183.896" size="1.778" layer="95" rot="MR180"/>
@@ -2797,11 +2796,8 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="X2" gate="G$1" x="193.04" y="129.54" smashed="yes" rot="R270">
 <attribute name="NAME" x="196.342" y="132.08" size="1.778" layer="95"/>
 </instance>
-<instance part="X5" gate="G$1" x="88.9" y="17.78" smashed="yes">
-<attribute name="NAME" x="86.36" y="21.082" size="1.778" layer="95"/>
-</instance>
-<instance part="X6" gate="G$1" x="119.38" y="-25.4" smashed="yes">
-<attribute name="NAME" x="116.84" y="-22.098" size="1.778" layer="95"/>
+<instance part="X6" gate="G$1" x="15.24" y="-299.72" smashed="yes">
+<attribute name="NAME" x="12.7" y="-296.418" size="1.778" layer="95"/>
 </instance>
 <instance part="X3" gate="G$1" x="302.26" y="129.54" smashed="yes" rot="R270">
 <attribute name="NAME" x="305.562" y="132.08" size="1.778" layer="95"/>
@@ -3029,6 +3025,17 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="238.76" y1="-142.24" x2="243.84" y2="-142.24" width="0.1524" layer="91"/>
 </segment>
 <segment>
+<pinref part="C18" gate="G$1" pin="1"/>
+<wire x1="37.592" y1="-276.098" x2="50.8" y2="-276.098" width="0.1524" layer="91"/>
+<junction x="37.592" y="-276.098"/>
+<pinref part="C19" gate="G$1" pin="1"/>
+<wire x1="27.432" y1="-276.098" x2="37.592" y2="-276.098" width="0.1524" layer="91"/>
+<junction x="27.432" y="-276.098"/>
+<pinref part="C17" gate="G$1" pin="1"/>
+<wire x1="17.272" y1="-276.098" x2="27.432" y2="-276.098" width="0.1524" layer="91"/>
+<label x="18.034" y="-275.082" size="1.778" layer="95"/>
+</segment>
+<segment>
 <pinref part="U5" gate="E" pin="VCC_SPI"/>
 <wire x1="139.7" y1="40.64" x2="160.02" y2="40.64" width="0.1524" layer="91"/>
 <pinref part="U5" gate="E" pin="2_VCCIO_3"/>
@@ -3066,6 +3073,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="139.7" y1="27.94" x2="139.7" y2="25.4" width="0.1524" layer="91"/>
 <wire x1="160.02" y1="27.94" x2="139.7" y2="27.94" width="0.1524" layer="91"/>
 <junction x="139.7" y="27.94"/>
+<pinref part="C16" gate="G$1" pin="1"/>
 <wire x1="139.7" y1="0.762" x2="139.7" y2="7.62" width="0.1524" layer="91"/>
 <junction x="139.7" y="7.62"/>
 </segment>
@@ -3130,21 +3138,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="U$1" gate="G$5" pin="VCC_SPI_L11"/>
 <wire x1="76.2" y1="-220.98" x2="71.12" y2="-220.98" width="0.1524" layer="91"/>
 <label x="70.358" y="-220.98" size="1.778" layer="95" rot="MR0"/>
-</segment>
-<segment>
-<pinref part="C18" gate="G$1" pin="1"/>
-<pinref part="C16" gate="G$1" pin="1"/>
-<wire x1="106.68" y1="17.78" x2="116.84" y2="17.78" width="0.1524" layer="91"/>
-<junction x="106.68" y="17.78"/>
-<pinref part="X5" gate="G$1" pin="1"/>
-<wire x1="91.44" y1="17.78" x2="106.68" y2="17.78" width="0.1524" layer="91"/>
-<label x="106.934" y="18.542" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="C19" gate="G$1" pin="1"/>
-<pinref part="C17" gate="G$1" pin="1"/>
-<wire x1="106.172" y1="0.762" x2="116.332" y2="0.762" width="0.1524" layer="91"/>
-<label x="106.934" y="1.778" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -3223,15 +3216,19 @@ to 1V8 for ICE_PRG_CDONE</text>
 </segment>
 <segment>
 <pinref part="C19" gate="G$1" pin="2"/>
+<pinref part="C16" gate="G$1" pin="2"/>
+<pinref part="C18" gate="G$1" pin="2"/>
 <pinref part="C17" gate="G$1" pin="2"/>
-<wire x1="106.172" y1="-6.858" x2="116.332" y2="-6.858" width="0.1524" layer="91"/>
-<label x="106.68" y="-9.398" size="1.778" layer="95"/>
+<wire x1="17.272" y1="-283.718" x2="27.432" y2="-283.718" width="0.1524" layer="91"/>
+<wire x1="27.432" y1="-283.718" x2="37.592" y2="-283.718" width="0.1524" layer="91"/>
+<junction x="27.432" y="-283.718"/>
+<label x="17.78" y="-286.258" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C24" gate="G$1" pin="2"/>
 <pinref part="C25" gate="G$1" pin="2"/>
-<wire x1="137.16" y1="-33.02" x2="147.32" y2="-33.02" width="0.1524" layer="91"/>
-<label x="137.16" y="-48.26" size="1.778" layer="95"/>
+<wire x1="33.02" y1="-307.34" x2="43.18" y2="-307.34" width="0.1524" layer="91"/>
+<label x="33.02" y="-309.88" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U5" gate="E" pin="3_GND"/>
@@ -3346,14 +3343,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="528.32" y="83.82" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="X5" gate="G$1" pin="GND"/>
-<wire x1="91.44" y1="15.24" x2="93.98" y2="15.24" width="0.1524" layer="91"/>
-<label x="91.44" y="12.7" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="X6" gate="G$1" pin="GND"/>
-<wire x1="121.92" y1="-27.94" x2="124.46" y2="-27.94" width="0.1524" layer="91"/>
-<label x="121.92" y="-30.48" size="1.778" layer="95"/>
+<wire x1="17.78" y1="-302.26" x2="20.32" y2="-302.26" width="0.1524" layer="91"/>
+<label x="17.78" y="-304.8" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="X2" gate="G$1" pin="GND"/>
@@ -3457,12 +3449,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="111.76" y1="-190.5" x2="116.84" y2="-190.5" width="0.1524" layer="91"/>
 <junction x="116.84" y="-190.5"/>
 </segment>
-<segment>
-<pinref part="C18" gate="G$1" pin="2"/>
-<pinref part="C16" gate="G$1" pin="2"/>
-<wire x1="106.68" y1="10.16" x2="116.84" y2="10.16" width="0.1524" layer="91"/>
-<label x="106.68" y="7.62" size="1.778" layer="95"/>
-</segment>
 </net>
 <net name="N$6" class="0">
 <segment>
@@ -3513,9 +3499,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="C25" gate="G$1" pin="1"/>
 <pinref part="C24" gate="G$1" pin="1"/>
-<wire x1="137.16" y1="-25.4" x2="147.32" y2="-25.4" width="0.1524" layer="91"/>
-<label x="137.414" y="-24.892" size="1.778" layer="95"/>
-<junction x="147.32" y="-25.4"/>
+<wire x1="33.02" y1="-299.72" x2="43.18" y2="-299.72" width="0.1524" layer="91"/>
+<label x="33.274" y="-299.212" size="1.778" layer="95"/>
+<junction x="43.18" y="-299.72"/>
 <pinref part="U5" gate="E" pin="1_VCC"/>
 <wire x1="160.02" y1="2.54" x2="147.32" y2="2.54" width="0.1524" layer="91"/>
 <wire x1="147.32" y1="2.54" x2="147.32" y2="0" width="0.1524" layer="91"/>
@@ -3533,12 +3519,12 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="U5" gate="E" pin="4_VCC"/>
 <wire x1="160.02" y1="-5.08" x2="147.32" y2="-5.08" width="0.1524" layer="91"/>
 <junction x="147.32" y="-5.08"/>
-<wire x1="147.32" y1="-25.4" x2="147.32" y2="-17.78" width="0.1524" layer="91"/>
+<wire x1="43.18" y1="-299.72" x2="43.18" y2="-292.1" width="0.1524" layer="91"/>
 <junction x="147.32" y="-7.62"/>
 <wire x1="147.32" y1="-17.78" x2="147.32" y2="-7.62" width="0.1524" layer="91"/>
 <pinref part="X6" gate="G$1" pin="1"/>
-<wire x1="121.92" y1="-25.4" x2="137.16" y2="-25.4" width="0.1524" layer="91"/>
-<junction x="137.16" y="-25.4"/>
+<wire x1="17.78" y1="-299.72" x2="33.02" y2="-299.72" width="0.1524" layer="91"/>
+<junction x="33.02" y="-299.72"/>
 </segment>
 <segment>
 <pinref part="R20" gate="G$1" pin="1"/>
