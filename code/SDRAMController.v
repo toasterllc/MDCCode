@@ -81,17 +81,14 @@ module SDRAMController #(
     localparam StateRead            = 3'h6;
     localparam StateReadAbort       = 3'h7;
     
-    function integer Clocks;
-        // Icarus Verilog doesn't support `logic` type for arguments for
-        // some reason, so use `reg` instead.
-        // We can't use `integer` because it's only 32 bits.
-        input reg[63:0] t;
+    function [63:0] Clocks;
+        input [63:0] t;
         Clocks = (t*ClockFrequency)/1000000000;
     endfunction
     
-    function integer Max;
-        input integer a;
-        input integer b;
+    function [63:0] Max;
+        input [63:0] a;
+        input [63:0] b;
         Max = (a > b ? a : b);
     endfunction
     
