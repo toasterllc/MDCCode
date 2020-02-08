@@ -1,9 +1,16 @@
 # HX4K
 set_io ice_clk12mhz     P1      -pullup no
 
+set_io led[0]           P2      -pullup no
+set_io led[1]           P3      -pullup no
+set_io led[2]           M4      -pullup no
+set_io led[3]           M3      -pullup no
+set_io led[4]           L5      -pullup no
+set_io led[5]           L4      -pullup no
+set_io led[6]           P4      -pullup no
+set_io led[7]           P5      -pullup no
+
 set_io pix_clk          G1      -pullup no
-set_io pix_fv           C12     -pullup no
-set_io pix_lv           A12     -pullup no
 set_io pix_d[0]         M1      -pullup no
 set_io pix_d[1]         F12     -pullup no
 set_io pix_d[2]         F11     -pullup no
@@ -16,6 +23,8 @@ set_io pix_d[8]         D12     -pullup no
 set_io pix_d[9]         B14     -pullup no
 set_io pix_d[10]        F14     -pullup no
 set_io pix_d[11]        G14     -pullup no
+set_io pix_fv           C12     -pullup no
+set_io pix_lv           A12     -pullup no
 
 set_io ram_a[0]         C3      -pullup no
 set_io ram_a[1]         C1      -pullup no
@@ -55,12 +64,3 @@ set_io ram_ldqm         C4      -pullup no
 set_io ram_ras_         H4      -pullup no
 set_io ram_udqm         C5      -pullup no
 set_io ram_we_          A4      -pullup no
-
-set_io led[0]           P2      -pullup no
-set_io led[1]           P3      -pullup no
-set_io led[2]           M4      -pullup no
-set_io led[3]           M3      -pullup no
-set_io led[4]           L5      -pullup no
-set_io led[5]           L4      -pullup no
-set_io led[6]           P4      -pullup no
-set_io led[7]           P5      -pullup no
