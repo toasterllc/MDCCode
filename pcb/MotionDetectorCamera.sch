@@ -326,19 +326,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="0.569" y1="0.765" x2="-0.569" y2="0.765" width="0.05" layer="39"/>
 </package>
 <package name="TPS6380X_TPS6380X">
-<circle x="-1.3" y="0.9" radius="0.1016" width="0" layer="21"/>
-<wire x1="-0.69" y1="1.14" x2="-0.69" y2="-1.14" width="0.127" layer="51"/>
-<wire x1="-0.69" y1="-1.14" x2="0.69" y2="-1.14" width="0.127" layer="51"/>
-<wire x1="0.69" y1="-1.14" x2="0.69" y2="1.14" width="0.127" layer="51"/>
-<wire x1="0.69" y1="1.14" x2="-0.69" y2="1.14" width="0.127" layer="51"/>
-<wire x1="-0.84" y1="0.81" x2="-0.84" y2="1.24" width="0.127" layer="21"/>
-<wire x1="-0.84" y1="1.24" x2="-0.42" y2="1.24" width="0.127" layer="21"/>
-<wire x1="0.84" y1="-0.81" x2="0.84" y2="-1.24" width="0.127" layer="21"/>
-<wire x1="0.84" y1="-1.24" x2="0.41" y2="-1.24" width="0.127" layer="21"/>
-<wire x1="-0.84" y1="-0.81" x2="-0.84" y2="-1.24" width="0.127" layer="21"/>
-<wire x1="0.84" y1="0.81" x2="0.84" y2="1.24" width="0.127" layer="21"/>
-<wire x1="-0.84" y1="-1.24" x2="-0.41" y2="-1.24" width="0.127" layer="21"/>
-<wire x1="0.84" y1="1.24" x2="0.41" y2="1.24" width="0.127" layer="21"/>
 <wire x1="-0.95" y1="1.4" x2="-0.95" y2="-1.4" width="0.05" layer="39"/>
 <wire x1="-0.95" y1="-1.4" x2="0.95" y2="-1.4" width="0.05" layer="39"/>
 <wire x1="0.95" y1="-1.4" x2="0.95" y2="1.4" width="0.05" layer="39"/>
@@ -359,6 +346,11 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="E2" x="0" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E3" x="0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <text x="-0.795" y="1.446" size="0.254" layer="25">&gt;NAME</text>
+<wire x1="-0.84" y1="0.81" x2="-0.84" y2="-1.24" width="0.127" layer="21"/>
+<wire x1="-0.84" y1="-1.24" x2="0.84" y2="-1.24" width="0.127" layer="21"/>
+<wire x1="0.84" y1="-1.24" x2="0.84" y2="1.24" width="0.127" layer="21"/>
+<wire x1="0.84" y1="1.24" x2="-0.4" y2="1.24" width="0.127" layer="21"/>
+<wire x1="-0.4" y1="1.24" x2="-0.84" y2="0.81" width="0.127" layer="21"/>
 </package>
 <package name="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
