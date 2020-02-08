@@ -1269,10 +1269,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="22.4529" y1="22.479" x2="21.6154" y2="22.479" width="0.2032" layer="16"/>
 <via x="21.6154" y="22.479" extent="1-16" drill="0.254"/>
 <polygon width="0.1524" layer="15" rank="4">
-<vertex x="-2.1336" y="52.451"/>
-<vertex x="-2.1336" y="-1.524"/>
-<vertex x="42.291" y="-1.524"/>
-<vertex x="42.291" y="52.451"/>
+<vertex x="-2.7432" y="53.467"/>
+<vertex x="-2.7432" y="-2.5908"/>
+<vertex x="43.561" y="-2.5908"/>
+<vertex x="43.561" y="53.467"/>
 </polygon>
 <wire x1="7.723325" y1="36.714075" x2="8.4587875" y2="37.4136125" width="0.2032" layer="16"/>
 <via x="8.4587875" y="37.4136125" extent="1-16" drill="0.254"/>
@@ -1394,10 +1394,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="17.9324" y="27.178" extent="1-16" drill="0.254"/>
 <via x="17.1196" y="27.178" extent="1-16" drill="0.254"/>
 <polygon width="0.127" layer="2">
-<vertex x="-3.556" y="54.0512"/>
-<vertex x="-3.556" y="-2.54"/>
-<vertex x="43.7134" y="-2.54"/>
-<vertex x="43.7134" y="54.0512"/>
+<vertex x="-1.7526" y="52.5018"/>
+<vertex x="-1.7526" y="-1.6002"/>
+<vertex x="42.5196" y="-1.6002"/>
+<vertex x="42.5196" y="52.5018"/>
 </polygon>
 <via x="17.1196" y="26.3652" extent="1-16" drill="0.254"/>
 <polygon width="0.1524" layer="1">
@@ -1577,6 +1577,19 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="27.2924" y1="7.912" x2="28.2702" y2="7.912" width="0.2032" layer="1"/>
 <wire x1="25.8826" y1="7.5664" x2="26.2028" y2="7.8866" width="0.2032" layer="1"/>
 <wire x1="26.2028" y1="7.8866" x2="27.267" y2="7.8866" width="0.2032" layer="1"/>
+<polygon width="0.1524" layer="1">
+<vertex x="-0.762" y="51.6382"/>
+<vertex x="-0.762" y="-0.6096"/>
+<vertex x="41.4528" y="-0.6096"/>
+<vertex x="41.4528" y="51.6382"/>
+</polygon>
+<polygon width="0.1524" layer="16">
+<vertex x="-3.7084" y="54.483"/>
+<vertex x="-3.7084" y="-3.683"/>
+<vertex x="44.5008" y="-3.683"/>
+<vertex x="44.5008" y="54.483"/>
+</polygon>
+<via x="4.1402" y="18.415" extent="1-16" drill="0.254"/>
 </signal>
 <signal name="ICE_CLK12MHZ">
 <contactref element="Y1" pad="2"/>
@@ -3023,6 +3036,24 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="N$40">
 <contactref element="SV1" pad="20"/>
+</signal>
+<signal name="GND1">
+<via x="28.702" y="16.7894" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="GND2">
+<via x="4.953" y="45.1866" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="GND3">
+<via x="23.6474" y="44.7294" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="GND4">
+<via x="31.5722" y="4.2926" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="GND5">
+<via x="37.338" y="19.6088" extent="1-16" drill="0.254"/>
+</signal>
+<signal name="GND6">
+<via x="4.0386" y="4.0894" extent="1-16" drill="0.254"/>
 </signal>
 </signals>
 <mfgpreviewcolors>
