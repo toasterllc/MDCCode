@@ -2075,7 +2075,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="C15" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
-<part name="U7" library="MotionDetectorCamera" deviceset="TC2050-NL" device=""/>
+<part name="U$1" library="MotionDetectorCamera" deviceset="TC2050-NL" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -2409,7 +2409,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="VALUE" x="425.45" y="-139.573" size="1.778" layer="96" rot="MR180"/>
 <attribute name="MP" x="421.64" y="-137.16" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U7" gate="G$1" x="416.56" y="-53.34" smashed="yes">
+<instance part="U$1" gate="G$1" x="416.56" y="-53.34" smashed="yes">
 <attribute name="NAME" x="409.194" y="-45.212" size="1.778" layer="95"/>
 </instance>
 </instances>
@@ -2602,9 +2602,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="411.734" y="-133.858" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="4"/>
-<wire x1="403.86" y1="-55.88" x2="401.32" y2="-55.88" width="0.1524" layer="91"/>
-<label x="401.32" y="-55.88" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="431.8" y1="-55.88" x2="429.26" y2="-55.88" width="0.1524" layer="91"/>
+<label x="431.8" y="-55.88" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="7"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -2857,9 +2857,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="411.734" y="-144.526" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="3"/>
-<wire x1="403.86" y1="-53.34" x2="401.32" y2="-53.34" width="0.1524" layer="91"/>
-<label x="401.32" y="-53.34" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="431.8" y1="-53.34" x2="429.26" y2="-53.34" width="0.1524" layer="91"/>
+<label x="431.8" y="-53.34" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="8"/>
 </segment>
 </net>
 <net name="ICE_CLK12MHZ" class="0">
@@ -3568,9 +3568,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="167.64" y1="-91.44" x2="165.1" y2="-91.44" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="1"/>
-<wire x1="403.86" y1="-48.26" x2="401.32" y2="-48.26" width="0.1524" layer="91"/>
-<label x="401.32" y="-48.26" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="403.86" y1="-58.42" x2="401.32" y2="-58.42" width="0.1524" layer="91"/>
+<label x="401.32" y="-58.42" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U$1" gate="G$1" pin="5"/>
 </segment>
 </net>
 <net name="ICE_PRG_CRESET_" class="0">
@@ -3588,9 +3588,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="172.72" y1="-109.22" x2="172.72" y2="-76.2" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="9"/>
-<wire x1="429.26" y1="-50.8" x2="431.8" y2="-50.8" width="0.1524" layer="91"/>
-<label x="431.8" y="-50.8" size="1.778" layer="95"/>
+<wire x1="429.26" y1="-48.26" x2="431.8" y2="-48.26" width="0.1524" layer="91"/>
+<label x="431.8" y="-48.26" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="10"/>
 </segment>
 </net>
 <net name="ICE_PRG_SO" class="0">
@@ -3610,9 +3610,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="U1" gate="G$1" pin="SO"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="10"/>
-<wire x1="429.26" y1="-48.26" x2="431.8" y2="-48.26" width="0.1524" layer="91"/>
-<label x="431.8" y="-48.26" size="1.778" layer="95"/>
+<wire x1="401.32" y1="-55.88" x2="403.86" y2="-55.88" width="0.1524" layer="91"/>
+<label x="401.32" y="-55.88" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U$1" gate="G$1" pin="4"/>
 </segment>
 </net>
 <net name="ICE_PRG_SI" class="0">
@@ -3632,9 +3632,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="434.34" y="-109.22" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="6"/>
-<wire x1="429.26" y1="-58.42" x2="431.8" y2="-58.42" width="0.1524" layer="91"/>
-<label x="431.8" y="-58.42" size="1.778" layer="95"/>
+<wire x1="401.32" y1="-48.26" x2="403.86" y2="-48.26" width="0.1524" layer="91"/>
+<label x="401.32" y="-48.26" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U$1" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="ICE_PRG_SCLK" class="0">
@@ -3654,9 +3654,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="U1" gate="G$1" pin="SCLK"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="7"/>
-<wire x1="429.26" y1="-55.88" x2="431.8" y2="-55.88" width="0.1524" layer="91"/>
-<label x="431.8" y="-55.88" size="1.778" layer="95"/>
+<wire x1="401.32" y1="-50.8" x2="403.86" y2="-50.8" width="0.1524" layer="91"/>
+<label x="401.32" y="-50.8" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U$1" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="ICE_PRG_CS_" class="0">
@@ -3676,9 +3676,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="U1" gate="G$1" pin="CS_"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="8"/>
-<wire x1="429.26" y1="-53.34" x2="431.8" y2="-53.34" width="0.1524" layer="91"/>
-<label x="431.8" y="-53.34" size="1.778" layer="95"/>
+<wire x1="401.32" y1="-53.34" x2="403.86" y2="-53.34" width="0.1524" layer="91"/>
+<label x="401.32" y="-53.34" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U$1" gate="G$1" pin="3"/>
 </segment>
 </net>
 <net name="N$32" class="0">
@@ -3878,13 +3878,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <junction x="86.36" y="106.68"/>
 </segment>
 <segment>
-<pinref part="U7" gate="G$1" pin="2"/>
-<wire x1="403.86" y1="-50.8" x2="401.32" y2="-50.8" width="0.1524" layer="91"/>
-</segment>
-<segment>
-<pinref part="U7" gate="G$1" pin="5"/>
-<wire x1="403.86" y1="-58.42" x2="401.32" y2="-58.42" width="0.1524" layer="91"/>
-<label x="401.32" y="-58.42" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="431.8" y1="-58.42" x2="429.26" y2="-58.42" width="0.1524" layer="91"/>
+<label x="431.8" y="-58.42" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="6"/>
 </segment>
 </net>
 <net name="N$16" class="0">
