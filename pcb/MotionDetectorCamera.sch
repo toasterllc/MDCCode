@@ -3722,7 +3722,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="15"/>
 <wire x1="454.66" y1="76.2" x2="452.12" y2="76.2" width="0.1524" layer="91"/>
-<label x="444.5" y="76.2" size="1.778" layer="95"/>
+<label x="452.12" y="76.2" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="PIX_D11" class="0">
@@ -3734,7 +3734,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="13"/>
 <wire x1="454.66" y1="73.66" x2="452.12" y2="73.66" width="0.1524" layer="91"/>
-<label x="441.96" y="73.66" size="1.778" layer="95"/>
+<label x="452.12" y="73.66" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="PIX_FV" class="0">
@@ -3765,7 +3765,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="11"/>
 <wire x1="454.66" y1="71.12" x2="452.12" y2="71.12" width="0.1524" layer="91"/>
-<label x="444.5" y="71.12" size="1.778" layer="95"/>
+<label x="452.12" y="71.12" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U5" gate="G$2" pin="G8"/>
@@ -3789,7 +3789,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="9"/>
 <wire x1="454.66" y1="68.58" x2="452.12" y2="68.58" width="0.1524" layer="91"/>
-<label x="444.5" y="68.58" size="1.778" layer="95"/>
+<label x="452.12" y="68.58" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U5" gate="G$2" pin="F10"/>
@@ -3830,7 +3830,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="7"/>
 <wire x1="454.66" y1="66.04" x2="452.12" y2="66.04" width="0.1524" layer="91"/>
-<label x="441.96" y="66.04" size="1.778" layer="95"/>
+<label x="452.12" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="PIX_D3" class="0">
@@ -3854,7 +3854,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="5"/>
 <wire x1="454.66" y1="63.5" x2="452.12" y2="63.5" width="0.1524" layer="91"/>
-<label x="441.96" y="63.5" size="1.778" layer="95"/>
+<label x="452.12" y="63.5" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="PIX_D1" class="0">
@@ -3878,7 +3878,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="3"/>
 <wire x1="454.66" y1="60.96" x2="452.12" y2="60.96" width="0.1524" layer="91"/>
-<label x="441.96" y="60.96" size="1.778" layer="95"/>
+<label x="452.12" y="60.96" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="PIX_D0" class="0">
@@ -3890,7 +3890,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <pinref part="SV1" gate="G$1" pin="1"/>
 <wire x1="454.66" y1="58.42" x2="452.12" y2="58.42" width="0.1524" layer="91"/>
-<label x="444.5" y="58.42" size="1.778" layer="95"/>
+<label x="452.12" y="58.42" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$122" class="0">
