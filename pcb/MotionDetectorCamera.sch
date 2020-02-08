@@ -1075,7 +1075,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="CAPACITOR">
+<deviceset name="CAPACITOR" prefix="C">
 <gates>
 <gate name="G$1" symbol="CAPACITOR" x="0" y="0"/>
 </gates>
@@ -1166,7 +1166,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </device>
 </devices>
 </deviceset>
-<deviceset name="RESISTOR">
+<deviceset name="RESISTOR" prefix="R">
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -1426,7 +1426,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </device>
 </devices>
 </deviceset>
-<deviceset name="ICE40HX4K">
+<deviceset name="ICE40HX4K" prefix="U">
 <gates>
 <gate name="G$1" symbol="ICE40HX4K_BG121_0" x="-71.12" y="2.54"/>
 <gate name="G$2" symbol="ICE40HX4K_BG121_1" x="-33.02" y="2.54"/>
@@ -1568,7 +1568,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </device>
 </devices>
 </deviceset>
-<deviceset name="GD25LQ80C">
+<deviceset name="GD25LQ80C" prefix="U">
 <gates>
 <gate name="G$1" symbol="GD25LQ80C" x="7.62" y="-12.7"/>
 </gates>
@@ -1593,7 +1593,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </device>
 </devices>
 </deviceset>
-<deviceset name="TC2050-NL">
+<deviceset name="TC2050-NL" prefix="TC">
 <gates>
 <gate name="G$1" symbol="TC2050" x="0" y="0"/>
 </gates>
