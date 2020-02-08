@@ -218,6 +218,17 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="2" x="0.95" y="0" dx="1" dy="1.45" layer="1"/>
 <text x="-1.651" y="1.016" size="0.635" layer="25">&gt;NAME</text>
 </package>
+<package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
+<description>Chip, 3.20 X 1.60 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
+<smd name="2" x="1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
+<text x="-2.195" y="1.0467" size="0.4" layer="25">&gt;NAME</text>
+<wire x1="-2.16" y1="1.01" x2="-2.16" y2="-1.01" width="0.05" layer="21"/>
+<wire x1="-2.16" y1="-1.01" x2="2.16" y2="-1.01" width="0.05" layer="21"/>
+<wire x1="2.16" y1="-1.01" x2="2.16" y2="1.01" width="0.05" layer="21"/>
+<wire x1="2.16" y1="1.01" x2="-2.16" y2="1.01" width="0.05" layer="21"/>
+</package>
 <package name="RCL_R1206">
 <description>&lt;b&gt;RESISTOR&lt;/b&gt;</description>
 <wire x1="0.9525" y1="-0.8128" x2="-0.9652" y2="-0.8128" width="0.1524" layer="51"/>
@@ -645,6 +656,51 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <hole x="7.62" y="-1.016" drill="0.9906"/>
 <hole x="7.62" y="1.016" drill="0.9906"/>
 </package>
+<package name="0402" urn="urn:adsk.eagle:footprint:17080097/1" locally_modified="yes">
+<description>Chip, 1.00 X 0.50 X 0.50 mm body
+&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
+<smd name="1" x="-0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
+<smd name="2" x="0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
+<text x="-0.881" y="0.429" size="0.3" layer="25">&gt;NAME</text>
+<wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="39"/>
+<wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="39"/>
+<wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="39"/>
+<wire x1="0.85" y1="0.4" x2="-0.85" y2="0.4" width="0.05" layer="39"/>
+<wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
+<wire x1="0.85" y1="0.4" x2="-0.85" y2="0.4" width="0.05" layer="21"/>
+</package>
+<package name="0603" urn="urn:adsk.eagle:footprint:17080179/1" locally_modified="yes">
+<description>Chip, 1.60 X 0.80 X 0.70 mm body
+&lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
+<smd name="1" x="-0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
+<smd name="2" x="0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
+<text x="-1.379" y="0.635" size="0.3" layer="25">&gt;NAME</text>
+<wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="39"/>
+<wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="39"/>
+<wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="39"/>
+<wire x1="1.35" y1="0.6" x2="-1.35" y2="0.6" width="0.05" layer="39"/>
+<wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="21"/>
+<wire x1="1.35" y1="0.6" x2="-1.35" y2="0.6" width="0.05" layer="21"/>
+</package>
+<package name="0805" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
+<description>Chip, 2.00 X 1.25 X 0.70 mm body
+&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
+<smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
+<smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
+<text x="-1.596" y="0.8737" size="0.4" layer="25">&gt;NAME</text>
+<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="39"/>
+<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="39"/>
+<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="39"/>
+<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="39"/>
+<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="21"/>
+<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="21"/>
+<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="21"/>
+<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="21"/>
+</package>
 </packages>
 <packages3d>
 <package3d name="BGA121C80P11X11_900X900X100N" urn="urn:adsk.eagle:package:16997455/1" type="model">
@@ -659,6 +715,34 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 &lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="SON50P300X200X60-8N"/>
+</packageinstances>
+</package3d>
+<package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198/1" type="model">
+<description>Chip, 3.20 X 1.60 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="1206"/>
+</packageinstances>
+</package3d>
+<package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
+<description>Chip, 1.00 X 0.50 X 0.50 mm body
+&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="0402"/>
+</packageinstances>
+</package3d>
+<package3d name="RESC1608X70N" urn="urn:adsk.eagle:package:17080173/1" type="model">
+<description>Chip, 1.60 X 0.80 X 0.70 mm body
+&lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="0603"/>
+</packageinstances>
+</package3d>
+<package3d name="RESC2012X70N" urn="urn:adsk.eagle:package:17080181/1" type="model">
+<description>Chip, 2.00 X 1.25 X 0.70 mm body
+&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="0805"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -705,6 +789,21 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <vertex x="-2.921" y="-2.413"/>
 <vertex x="-2.413" y="-2.921"/>
 </polygon>
+</symbol>
+<symbol name="RES">
+<wire x1="-2.54" y1="0" x2="-2.159" y2="1.016" width="0.2032" layer="94"/>
+<wire x1="-2.159" y1="1.016" x2="-1.524" y2="-1.016" width="0.2032" layer="94"/>
+<wire x1="-1.524" y1="-1.016" x2="-0.889" y2="1.016" width="0.2032" layer="94"/>
+<wire x1="-0.889" y1="1.016" x2="-0.254" y2="-1.016" width="0.2032" layer="94"/>
+<wire x1="-0.254" y1="-1.016" x2="0.381" y2="1.016" width="0.2032" layer="94"/>
+<wire x1="0.381" y1="1.016" x2="1.016" y2="-1.016" width="0.2032" layer="94"/>
+<wire x1="1.016" y1="-1.016" x2="1.651" y2="1.016" width="0.2032" layer="94"/>
+<wire x1="1.651" y1="1.016" x2="2.286" y2="-1.016" width="0.2032" layer="94"/>
+<wire x1="2.286" y1="-1.016" x2="2.54" y2="0" width="0.2032" layer="94"/>
+<pin name="1" x="-5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1"/>
+<pin name="2" x="5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1" rot="R180"/>
+<text x="-2.54" y="3.81" size="1.778" layer="95">&gt;NAME</text>
+<text x="-2.54" y="1.27" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
 <symbol name="RCL_R-US">
 <wire x1="-2.54" y1="0" x2="-2.159" y2="1.016" width="0.2032" layer="94"/>
@@ -1251,6 +1350,61 @@ Source: www.kingbright.com</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="RES">
+<gates>
+<gate name="G$1" symbol="RES" x="0" y="0"/>
+</gates>
+<devices>
+<device name="0402" package="0402">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
+</package3dinstances>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="0603" package="0603">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
+</package3dinstances>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="0805" package="0805">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
+</package3dinstances>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="1206" package="1206">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
+</package3dinstances>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 <deviceset name="RCL_R-US_" prefix="R" uservalue="yes">
 <description>&lt;B&gt;RESISTOR&lt;/B&gt;, American symbol</description>
 <gates>
@@ -1781,7 +1935,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="U2" library="MotionDetectorCamera" deviceset="TPS62801X_TPS6280X" device="">
 <attribute name="MP" value="TPS62801YKAR"/>
 </part>
-<part name="R3" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="10k"/>
+<part name="R3" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
 <part name="L1" library="MotionDetectorCamera" deviceset="INDUCTORS_INDUCTOR" device="LARGE" value="470n">
 <attribute name="MP" value="PA4343.471NLT"/>
 </part>
@@ -1797,7 +1951,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="U3" library="MotionDetectorCamera" deviceset="TPS62801X_TPS6280X" device="">
 <attribute name="MP" value="TPS62802YKAR"/>
 </part>
-<part name="R4" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="10k"/>
+<part name="R4" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
 <part name="L2" library="MotionDetectorCamera" deviceset="INDUCTORS_INDUCTOR" device="LARGE" value="470n">
 <attribute name="MP" value="PA4343.471NLT"/>
 </part>
@@ -1937,25 +2091,25 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="SV1" library="MotionDetectorCamera" deviceset="CON-LSTA_FE10-2" device=""/>
-<part name="R10" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="10k"/>
-<part name="R12" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
-<part name="R13" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
-<part name="R14" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
-<part name="R15" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
-<part name="R16" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
-<part name="R17" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
-<part name="R18" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
-<part name="R19" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="1.8k"/>
+<part name="R10" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="R12" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R13" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R14" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R15" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R16" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R17" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R18" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R19" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
 <part name="X2" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X3" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X4" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X7" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
-<part name="R11" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="10k"/>
-<part name="R5" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R1206" value="1"/>
+<part name="R11" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="R5" library="MotionDetectorCamera" deviceset="RES" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1"/>
 <part name="X8" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X9" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X10" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
-<part name="R20" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0805" value="0"/>
+<part name="R20" library="MotionDetectorCamera" deviceset="RES" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
 <part name="R21" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0805" value="0"/>
 <part name="R22" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0805" value="0"/>
 <part name="U5" library="MotionDetectorCamera" deviceset="ICE40HX4K" device="BG121" package3d_urn="urn:adsk.eagle:package:16997455/1"/>
@@ -1965,14 +2119,14 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="C29" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="10n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="R8" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="100"/>
+<part name="R8" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
 <part name="C8" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C9" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="R9" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="100"/>
+<part name="R9" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
 <part name="C10" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
@@ -1980,7 +2134,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="U1" library="MotionDetectorCamera" deviceset="GD25LQ80C" device="USON8" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
-<part name="R23" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0402" value="10k"/>
+<part name="R23" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
 <part name="C14" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>

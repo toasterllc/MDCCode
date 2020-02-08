@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.001" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -948,60 +948,56 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
 <smd name="2" x="0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
-<text x="-0.962" y="0.549" size="0.3" layer="25">&gt;NAME</text>
-<wire x1="-0.9" y1="0.5" x2="-0.9" y2="-0.5" width="0.127" layer="39"/>
-<wire x1="-0.9" y1="-0.5" x2="0.9" y2="-0.5" width="0.127" layer="39"/>
-<wire x1="0.9" y1="-0.5" x2="0.9" y2="0.5" width="0.127" layer="39"/>
-<wire x1="0.9" y1="0.5" x2="-0.9" y2="0.5" width="0.127" layer="39"/>
-<wire x1="-0.9" y1="0.5" x2="-0.9" y2="-0.5" width="0.127" layer="21"/>
-<wire x1="-0.9" y1="-0.5" x2="0.9" y2="-0.5" width="0.127" layer="21"/>
-<wire x1="0.9" y1="-0.5" x2="0.9" y2="0.5" width="0.127" layer="21"/>
-<wire x1="0.9" y1="0.5" x2="-0.9" y2="0.5" width="0.127" layer="21"/>
+<text x="-0.881" y="0.429" size="0.3" layer="25">&gt;NAME</text>
+<wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="39"/>
+<wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="39"/>
+<wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="39"/>
+<wire x1="0.85" y1="0.4" x2="-0.85" y2="0.4" width="0.05" layer="39"/>
+<wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
+<wire x1="0.85" y1="0.4" x2="-0.85" y2="0.4" width="0.05" layer="21"/>
 </package>
 <package name="0603" urn="urn:adsk.eagle:footprint:17080179/1" locally_modified="yes">
 <description>Chip, 1.60 X 0.80 X 0.70 mm body
 &lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
 <smd name="2" x="0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
-<text x="-1.4" y="0.7341" size="0.4" layer="25">&gt;NAME</text>
-<wire x1="-1.4" y1="0.65" x2="-1.4" y2="-0.65" width="0.127" layer="39"/>
-<wire x1="-1.4" y1="-0.65" x2="1.4" y2="-0.65" width="0.127" layer="39"/>
-<wire x1="1.4" y1="-0.65" x2="1.4" y2="0.65" width="0.127" layer="39"/>
-<wire x1="1.4" y1="0.65" x2="-1.4" y2="0.65" width="0.127" layer="39"/>
-<wire x1="-1.4" y1="0.65" x2="-1.4" y2="-0.65" width="0.127" layer="21"/>
-<wire x1="-1.4" y1="-0.65" x2="1.4" y2="-0.65" width="0.127" layer="21"/>
-<wire x1="1.4" y1="-0.65" x2="1.4" y2="0.65" width="0.127" layer="21"/>
-<wire x1="1.4" y1="0.65" x2="-1.4" y2="0.65" width="0.127" layer="21"/>
+<text x="-1.379" y="0.635" size="0.3" layer="25">&gt;NAME</text>
+<wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="39"/>
+<wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="39"/>
+<wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="39"/>
+<wire x1="1.35" y1="0.6" x2="-1.35" y2="0.6" width="0.05" layer="39"/>
+<wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="21"/>
+<wire x1="1.35" y1="0.6" x2="-1.35" y2="0.6" width="0.05" layer="21"/>
 </package>
 <package name="0805" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
 <description>Chip, 2.00 X 1.25 X 0.70 mm body
 &lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
 <smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
-<text x="-1.7" y="0.9817" size="0.5" layer="25">&gt;NAME</text>
-<wire x1="-1.6" y1="0.87" x2="-1.6" y2="-0.87" width="0.127" layer="39"/>
-<wire x1="-1.6" y1="-0.87" x2="1.6" y2="-0.87" width="0.127" layer="39"/>
-<wire x1="1.6" y1="-0.87" x2="1.6" y2="0.87" width="0.127" layer="39"/>
-<wire x1="1.6" y1="0.87" x2="-1.6" y2="0.87" width="0.127" layer="39"/>
-<wire x1="-1.6" y1="0.87" x2="-1.6" y2="-0.87" width="0.127" layer="21"/>
-<wire x1="-1.6" y1="-0.87" x2="1.6" y2="-0.87" width="0.127" layer="21"/>
-<wire x1="1.6" y1="-0.87" x2="1.6" y2="0.87" width="0.127" layer="21"/>
-<wire x1="1.6" y1="0.87" x2="-1.6" y2="0.87" width="0.127" layer="21"/>
+<text x="-1.596" y="0.8737" size="0.4" layer="25">&gt;NAME</text>
+<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="39"/>
+<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="39"/>
+<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="39"/>
+<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="39"/>
+<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="21"/>
+<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="21"/>
+<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="21"/>
+<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="21"/>
 </package>
 <package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
 <description>Chip, 3.20 X 1.60 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
 <smd name="2" x="1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
-<text x="-2.3" y="1.1567" size="0.6" layer="25">&gt;NAME</text>
-<wire x1="-2.24" y1="1.07" x2="-2.24" y2="-1.07" width="0.127" layer="39"/>
-<wire x1="-2.24" y1="-1.07" x2="2.24" y2="-1.07" width="0.127" layer="39"/>
-<wire x1="2.24" y1="-1.07" x2="2.24" y2="1.07" width="0.127" layer="39"/>
-<wire x1="2.24" y1="1.07" x2="-2.24" y2="1.07" width="0.127" layer="39"/>
-<wire x1="-2.24" y1="1.07" x2="-2.24" y2="-1.07" width="0.127" layer="21"/>
-<wire x1="-2.24" y1="-1.07" x2="2.24" y2="-1.07" width="0.127" layer="21"/>
-<wire x1="2.24" y1="-1.07" x2="2.24" y2="1.07" width="0.127" layer="21"/>
-<wire x1="2.24" y1="1.07" x2="-2.24" y2="1.07" width="0.127" layer="21"/>
+<text x="-2.195" y="1.0467" size="0.4" layer="25">&gt;NAME</text>
+<wire x1="-2.16" y1="1.01" x2="-2.16" y2="-1.01" width="0.05" layer="21"/>
+<wire x1="-2.16" y1="-1.01" x2="2.16" y2="-1.01" width="0.05" layer="21"/>
+<wire x1="2.16" y1="-1.01" x2="2.16" y2="1.01" width="0.05" layer="21"/>
+<wire x1="2.16" y1="1.01" x2="-2.16" y2="1.01" width="0.05" layer="21"/>
 </package>
 </packages>
 <packages3d>
