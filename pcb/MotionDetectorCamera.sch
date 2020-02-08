@@ -109,7 +109,7 @@
 <description>Generated from &lt;b&gt;MotionDetectorCamera.sch&lt;/b&gt;&lt;p&gt;
 by exp-lbrs.ulp</description>
 <packages>
-<package name="INDUCTORS_LARGE">
+<package name="INDUCTOR_LARGE">
 <wire x1="-6.588" y1="-7.362" x2="6.588" y2="-7.362" width="0.05" layer="39"/>
 <wire x1="-6.588" y1="7.87" x2="6.588" y2="7.87" width="0.05" layer="39"/>
 <wire x1="-6.588" y1="-7.362" x2="-6.588" y2="7.87" width="0.05" layer="39"/>
@@ -118,15 +118,17 @@ by exp-lbrs.ulp</description>
 <smd name="2" x="0" y="-3.683" dx="4.299990625" dy="6.35" layer="1"/>
 <text x="-6.463" y="-8.929" size="1.27" layer="25">&gt;NAME</text>
 </package>
-<package name="LED_CHIPLED_0603">
+<package name="LED_0603">
 <description>&lt;b&gt;CHIPLED&lt;/b&gt;&lt;p&gt;
 Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
-<smd name="A" x="-1.016" y="0" dx="0.7" dy="0.5" layer="1" stop="no"/>
-<smd name="C" x="0.1" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" stop="no" thermals="no"/>
-<text x="-1.524" y="0.381" size="0.254" layer="25" rot="R180" align="top-right">&gt;NAME</text>
-<rectangle x1="-1.3716" y1="-0.254" x2="-0.6604" y2="0.254" layer="29"/>
-<rectangle x1="-0.4318" y1="-0.254" x2="0.63" y2="0.25395" layer="29"/>
-<rectangle x1="-1.524" y1="-0.381" x2="0.762" y2="0.381" layer="39"/>
+<smd name="A" x="-0.641" y="0" dx="0.7" dy="0.5" layer="1"/>
+<smd name="C" x="0.475" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" thermals="no"/>
+<text x="-1.101" y="0.361" size="0.254" layer="25" rot="R180" align="top-right">&gt;NAME</text>
+<wire x1="-1.075" y1="0.2" x2="-1.075" y2="-0.33" width="0.05" layer="21"/>
+<wire x1="-1.075" y1="-0.33" x2="1.075" y2="-0.33" width="0.05" layer="21"/>
+<wire x1="1.075" y1="-0.33" x2="1.075" y2="0.33" width="0.05" layer="21"/>
+<wire x1="1.075" y1="0.33" x2="-0.925" y2="0.33" width="0.05" layer="21"/>
+<wire x1="-0.925" y1="0.33" x2="-1.075" y2="0.2" width="0.05" layer="21"/>
 </package>
 <package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
 <description>Chip, 3.20 X 1.60 X 0.70 mm body
@@ -258,7 +260,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="0.84" y1="1.24" x2="-0.4" y2="1.24" width="0.127" layer="21"/>
 <wire x1="-0.4" y1="1.24" x2="-0.84" y2="0.81" width="0.127" layer="21"/>
 </package>
-<package name="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0">
+<package name="W989D6DB">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <wire x1="-4" y1="-4.5" x2="-4" y2="4.5" width="0.15" layer="39"/>
 <wire x1="-4" y1="4.5" x2="4" y2="4.5" width="0.15" layer="39"/>
@@ -642,7 +644,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </package3d>
 </packages3d>
 <symbols>
-<symbol name="CAP">
+<symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
 <rectangle x1="-2.032" y1="-1.016" x2="2.032" y2="-0.508" layer="94"/>
 <wire x1="0" y1="0" x2="0" y2="-0.508" width="0.1524" layer="94"/>
@@ -652,7 +654,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <text x="1.524" y="2.921" size="1.778" layer="95">&gt;NAME</text>
 <text x="1.524" y="0.381" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
-<symbol name="INDUCTORS_INDUCTOR">
+<symbol name="INDUCTOR">
 <wire x1="-5.08" y1="0" x2="-2.54" y2="0" width="0.254" layer="94" curve="-180"/>
 <wire x1="-2.54" y1="0" x2="0" y2="0" width="0.254" layer="94" curve="-180"/>
 <wire x1="0" y1="0" x2="2.54" y2="0" width="0.254" layer="94" curve="-180"/>
@@ -662,7 +664,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <text x="-7.62" y="5.08" size="1.778" layer="95">&gt;NAME</text>
 <text x="-7.62" y="2.54" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
-<symbol name="LED_LED">
+<symbol name="LED">
 <wire x1="1.27" y1="0" x2="0" y2="-2.54" width="0.254" layer="94"/>
 <wire x1="0" y1="-2.54" x2="-1.27" y2="0" width="0.254" layer="94"/>
 <wire x1="1.27" y1="-2.54" x2="0" y2="-2.54" width="0.254" layer="94"/>
@@ -685,7 +687,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <vertex x="-2.413" y="-2.921"/>
 </polygon>
 </symbol>
-<symbol name="RES">
+<symbol name="RESISTOR">
 <wire x1="-2.54" y1="0" x2="-2.159" y2="1.016" width="0.2032" layer="94"/>
 <wire x1="-2.159" y1="1.016" x2="-1.524" y2="-1.016" width="0.2032" layer="94"/>
 <wire x1="-1.524" y1="-1.016" x2="-0.889" y2="1.016" width="0.2032" layer="94"/>
@@ -780,7 +782,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <text x="-10.16" y="-18.034" size="1.778" layer="95">&gt;NAME</text>
 <text x="-10.16" y="-21.082" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
-<symbol name="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0_0">
+<symbol name="W989D6DB_0">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <wire x1="0" y1="-25.4" x2="0" y2="-5.08" width="0.254" layer="94"/>
 <wire x1="0" y1="-5.08" x2="17.78" y2="-5.08" width="0.254" layer="94"/>
@@ -801,9 +803,8 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pin name="4_VDDQ" x="-5.08" y="-22.86" length="middle" direction="pwr"/>
 <pin name="4_VSSQ" x="22.86" y="-22.86" length="middle" direction="pwr" rot="R180"/>
 <text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
-<text x="0" y="-30.48" size="2.54" layer="95" align="top-left">MT48H32M16LFB4-6 IT:C</text>
 </symbol>
-<symbol name="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0_1">
+<symbol name="W989D6DB_1">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <wire x1="2.54" y1="-76.2" x2="2.54" y2="-5.08" width="0.254" layer="94"/>
 <wire x1="2.54" y1="-5.08" x2="20.32" y2="-5.08" width="0.254" layer="94"/>
@@ -850,7 +851,6 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pin name="NC" x="25.4" y="-66.04" length="middle" direction="pas" rot="R180"/>
 <pin name="UDQM" x="25.4" y="-73.66" length="middle" direction="in" rot="R180"/>
 <text x="2.54" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
-<text x="-5.08" y="-78.74" size="2.54" layer="95" align="top-left">MT48H32M16LFB4-6 IT:C</text>
 </symbol>
 <symbol name="CON-COAX_BNC-MGND">
 <rectangle x1="-2.54" y1="-0.254" x2="-0.254" y2="0.254" layer="94"/>
@@ -1075,9 +1075,9 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="CAP">
+<deviceset name="CAPACITOR">
 <gates>
-<gate name="G$1" symbol="CAP" x="0" y="0"/>
+<gate name="G$1" symbol="CAPACITOR" x="0" y="0"/>
 </gates>
 <devices>
 <device name="0402" package="0402">
@@ -1130,12 +1130,12 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </device>
 </devices>
 </deviceset>
-<deviceset name="INDUCTORS_INDUCTOR" prefix="L" uservalue="yes">
+<deviceset name="INDUCTOR_LARGE" prefix="L" uservalue="yes">
 <gates>
-<gate name="G$1" symbol="INDUCTORS_INDUCTOR" x="0" y="0"/>
+<gate name="G$1" symbol="INDUCTOR" x="0" y="0"/>
 </gates>
 <devices>
-<device name="LARGE" package="INDUCTORS_LARGE">
+<device name="" package="INDUCTOR_LARGE">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
@@ -1148,87 +1148,12 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </device>
 </devices>
 </deviceset>
-<deviceset name="LED_LED" prefix="LED" uservalue="yes">
-<description>&lt;b&gt;LED&lt;/b&gt;&lt;p&gt;
-&lt;u&gt;OSRAM&lt;/u&gt;:&lt;br&gt;
-
-- &lt;u&gt;CHIPLED&lt;/u&gt;&lt;br&gt;
-LG R971, LG N971, LY N971, LG Q971, LY Q971, LO R971, LY R971
-LH N974, LH R974&lt;br&gt;
-LS Q976, LO Q976, LY Q976&lt;br&gt;
-LO Q996&lt;br&gt;
-
-- &lt;u&gt;Hyper CHIPLED&lt;/u&gt;&lt;br&gt;
-LW Q18S&lt;br&gt;
-LB Q993, LB Q99A, LB R99A&lt;br&gt;
-
-- &lt;u&gt;SideLED&lt;/u&gt;&lt;br&gt;
-LS A670, LO A670, LY A670, LG A670, LP A670&lt;br&gt;
-LB A673, LV A673, LT A673, LW A673&lt;br&gt;
-LH A674&lt;br&gt;
-LY A675&lt;br&gt;
-LS A676, LA A676, LO A676, LY A676, LW A676&lt;br&gt;
-LS A679, LY A679, LG A679&lt;br&gt;
-
--  &lt;u&gt;Hyper Micro SIDELED®&lt;/u&gt;&lt;br&gt;
-LS Y876, LA Y876, LO Y876, LY Y876&lt;br&gt;
-LT Y87S&lt;br&gt;
-
-- &lt;u&gt;SmartLED&lt;/u&gt;&lt;br&gt;
-LW L88C, LW L88S&lt;br&gt;
-LB L89C, LB L89S, LG L890&lt;br&gt;
-LS L89K, LO L89K, LY L89K&lt;br&gt;
-LS L896, LA L896, LO L896, LY L896&lt;br&gt;
-
-- &lt;u&gt;TOPLED&lt;/u&gt;&lt;br&gt;
-LS T670, LO T670, LY T670, LG T670, LP T670&lt;br&gt;
-LSG T670, LSP T670, LSY T670, LOP T670, LYG T670&lt;br&gt;
-LG T671, LOG T671, LSG T671&lt;br&gt;
-LB T673, LV T673, LT T673, LW T673&lt;br&gt;
-LH T674&lt;br&gt;
-LS T676, LA T676, LO T676, LY T676, LB T676, LH T676, LSB T676, LW T676&lt;br&gt;
-LB T67C, LV T67C, LT T67C, LS T67K, LO T67K, LY T67K, LW E67C&lt;br&gt;
-LS E67B, LA E67B, LO E67B, LY E67B, LB E67C, LV E67C, LT E67C&lt;br&gt;
-LW T67C&lt;br&gt;
-LS T679, LY T679, LG T679&lt;br&gt;
-LS T770, LO T770, LY T770, LG T770, LP T770&lt;br&gt;
-LB T773, LV T773, LT T773, LW T773&lt;br&gt;
-LH T774&lt;br&gt;
-LS E675, LA E675, LY E675, LS T675&lt;br&gt;
-LS T776, LA T776, LO T776, LY T776, LB T776&lt;br&gt;
-LHGB T686&lt;br&gt;
-LT T68C, LB T68C&lt;br&gt;
-
-- &lt;u&gt;Hyper Mini TOPLED®&lt;/u&gt;&lt;br&gt;
-LB M676&lt;br&gt;
-
-- &lt;u&gt;Mini TOPLED Santana®&lt;/u&gt;&lt;br&gt;
-LG M470&lt;br&gt;
-LS M47K, LO M47K, LY M47K
-&lt;p&gt;
-Source: http://www.osram.convergy.de&lt;p&gt;
-
-&lt;u&gt;LUXEON:&lt;/u&gt;&lt;br&gt;
-- &lt;u&gt;LUMILED®&lt;/u&gt;&lt;br&gt;
-LXK2-PW12-R00, LXK2-PW12-S00, LXK2-PW14-U00, LXK2-PW14-V00&lt;br&gt;
-LXK2-PM12-R00, LXK2-PM12-S00, LXK2-PM14-U00&lt;br&gt;
-LXK2-PE12-Q00, LXK2-PE12-R00, LXK2-PE12-S00, LXK2-PE14-T00, LXK2-PE14-U00&lt;br&gt;
-LXK2-PB12-K00, LXK2-PB12-L00, LXK2-PB12-M00, LXK2-PB14-N00, LXK2-PB14-P00, LXK2-PB14-Q00&lt;br&gt;
-LXK2-PR12-L00, LXK2-PR12-M00, LXK2-PR14-Q00, LXK2-PR14-R00&lt;br&gt;
-LXK2-PD12-Q00, LXK2-PD12-R00, LXK2-PD12-S00&lt;br&gt;
-LXK2-PH12-R00, LXK2-PH12-S00&lt;br&gt;
-LXK2-PL12-P00, LXK2-PL12-Q00, LXK2-PL12-R00
-&lt;p&gt;
-Source: www.luxeon.com&lt;p&gt;
-
-&lt;u&gt;KINGBRIGHT:&lt;/U&gt;&lt;p&gt;
-KA-3528ASYC&lt;br&gt;
-Source: www.kingbright.com</description>
+<deviceset name="LED_0603" prefix="LED" uservalue="yes">
 <gates>
-<gate name="G$1" symbol="LED_LED" x="0" y="0"/>
+<gate name="G$1" symbol="LED" x="0" y="0"/>
 </gates>
 <devices>
-<device name="CHIPLED_0603" package="LED_CHIPLED_0603">
+<device name="" package="LED_0603">
 <connects>
 <connect gate="G$1" pin="A" pad="A"/>
 <connect gate="G$1" pin="C" pad="C"/>
@@ -1241,9 +1166,9 @@ Source: www.kingbright.com</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="RES">
+<deviceset name="RESISTOR">
 <gates>
-<gate name="G$1" symbol="RES" x="0" y="0"/>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
 <devices>
 <device name="0402" package="0402">
@@ -1385,14 +1310,14 @@ Source: www.kingbright.com</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C*?" prefix="U">
+<deviceset name="W989D6DB" prefix="U">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <gates>
-<gate name="A" symbol="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0_0" x="0" y="0"/>
-<gate name="B" symbol="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0_1" x="37.78" y="0"/>
+<gate name="A" symbol="W989D6DB_0" x="0" y="0"/>
+<gate name="B" symbol="W989D6DB_1" x="37.78" y="0"/>
 </gates>
 <devices>
-<device name="MICRON_MT48H32M16LFB4-6_IT-C_0_0" package="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0">
+<device name="" package="W989D6DB">
 <connects>
 <connect gate="A" pin="1_VDD" pad="A9"/>
 <connect gate="A" pin="1_VDDQ" pad="A7"/>
@@ -1450,41 +1375,7 @@ Source: www.kingbright.com</description>
 <connect gate="B" pin="UDQM" pad="F1"/>
 </connects>
 <technologies>
-<technology name="">
-<attribute name="AMBIENT_TEMPERATURE_RANGE_HIGH" value="+85°C"/>
-<attribute name="AMBIENT_TEMPERATURE_RANGE_LOW" value="-40°C"/>
-<attribute name="CENTROID_NOT_SPECIFIED" value="No"/>
-<attribute name="DATASHEET" value="https://www.micron.com/~/media/documents/products/data-sheet/dram/mobile-dram/low-power-dram/lpsdr/y67m_512mb_mobile_lpsdr_at.pdf"/>
-<attribute name="DEVICE_CLASS_L1" value="Integrated Circuits (ICs)"/>
-<attribute name="DEVICE_CLASS_L2" value="Memory"/>
-<attribute name="DEVICE_CLASS_L3" value="RAM"/>
-<attribute name="DIGIKEY_DESCRIPTION" value="IC DRAM 512M PARALLEL 54VFBGA"/>
-<attribute name="DIGIKEY_PART_NUMBER" value="MT48H32M16LFB4-6IT:C-ND"/>
-<attribute name="FOOTPRINT_PARAMETERS_0" value="{&quot;fp_type&quot;:&quot;bga&quot;,&quot;params&quot;:{&quot;num_rows&quot;:9,&quot;num_cols&quot;:9,&quot;row_enumeration&quot;:&quot;alphabetic&quot;,&quot;col_enumeration&quot;:&quot;numeric&quot;,&quot;skip_rows&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;skip_cols&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;row_pitch&quot;:800000,&quot;col_pitch&quot;:800000,&quot;package_length&quot;:8150000,&quot;package_width&quot;:8150000,&quot;package_height&quot;:1000000,&quot;packing_level&quot;:&quot;C&quot;,&quot;collapsing&quot;:false}}"/>
-<attribute name="FREQUENCY" value="166MHz"/>
-<attribute name="HEIGHT" value="1mm"/>
-<attribute name="INTERFACE" value="Parallel"/>
-<attribute name="IPC_LAND_PATTERN_NAME" value="BGA81N80P9X9_815X815X100"/>
-<attribute name="LEAD_FREE" value="yes"/>
-<attribute name="MAX_SUPPLY_VOLTAGE" value="1.95V"/>
-<attribute name="MEMORY_SIZE" value="32MB"/>
-<attribute name="MEMORY_TYPE" value="RAM,SDRAM"/>
-<attribute name="MF" value="Micron"/>
-<attribute name="MFG_PACKAGE_IDENT" value="B4"/>
-<attribute name="MFG_PACKAGE_IDENT_DATE" value="0"/>
-<attribute name="MFG_PACKAGE_IDENT_REV" value="0"/>
-<attribute name="MIN_SUPPLY_VOLTAGE" value="1.7V"/>
-<attribute name="MOUSER_PART_NUMBER" value="340-123397-TRAY"/>
-<attribute name="MPN" value="MT48H32M16LFB4-6 IT:C"/>
-<attribute name="PACKAGE" value="VFBGA54"/>
-<attribute name="PIN_0_1_36_INSIDE_EDGE" value="clock"/>
-<attribute name="PREFIX" value="U"/>
-<attribute name="ROHS" value="yes"/>
-<attribute name="STANDOFF_HEIGHT" value="0.25mm"/>
-<attribute name="TEMPERATURE_RANGE_HIGH" value="+85°C"/>
-<attribute name="TEMPERATURE_RANGE_LOW" value="-40°C"/>
-<attribute name="VERIFICATION_VERSION" value="0.0.0.1"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -1741,7 +1632,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="Y1" library="MotionDetectorCamera" deviceset="SIT8021AI-J4-XXS-12.000000E_SIT8021AI-J4-XXS-12.000000E" device="">
 <attribute name="MP" value="SiT8021AI-J4-18S-12.000000E"/>
 </part>
-<part name="C1" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C1" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1750,15 +1641,15 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MODEL" value="GCM155R71H103JA55D"/>
 </part>
-<part name="LED0" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="LED1" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="LED2" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="LED3" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="LED4" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="LED5" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="LED6" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="LED7" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="C2" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="LED0" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="LED1" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="LED2" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="LED3" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="LED4" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="LED5" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="LED6" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="LED7" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
+<part name="C2" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1770,11 +1661,11 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="U2" library="MotionDetectorCamera" deviceset="TPS62801X_TPS6280X" device="">
 <attribute name="MP" value="TPS62801YKAR"/>
 </part>
-<part name="R3" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="L1" library="MotionDetectorCamera" deviceset="INDUCTORS_INDUCTOR" device="LARGE" value="470n">
+<part name="R3" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="L1" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n">
 <attribute name="MP" value="PA4343.471NLT"/>
 </part>
-<part name="C4" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C4" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1786,14 +1677,14 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="U3" library="MotionDetectorCamera" deviceset="TPS62801X_TPS6280X" device="">
 <attribute name="MP" value="TPS62802YKAR"/>
 </part>
-<part name="R4" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="L2" library="MotionDetectorCamera" deviceset="INDUCTORS_INDUCTOR" device="LARGE" value="470n">
+<part name="R4" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="L2" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n">
 <attribute name="MP" value="PA4343.471NLT"/>
 </part>
 <part name="U4" library="MotionDetectorCamera" deviceset="TPS6380X_TPS6380X" device="">
 <attribute name="MP" value="TPS63805YFFR"/>
 </part>
-<part name="C3" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C3" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1802,7 +1693,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C5" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C5" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1811,7 +1702,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C6" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C6" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1820,7 +1711,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C7" library="MotionDetectorCamera" deviceset="CAP" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
+<part name="C7" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1829,13 +1720,13 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM219R61C226ME15L"/>
 </part>
-<part name="L3" library="MotionDetectorCamera" deviceset="INDUCTORS_INDUCTOR" device="LARGE" value="470n">
+<part name="L3" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n">
 <attribute name="MP" value="PA4343.471NLT"/>
 </part>
-<part name="R6" library="MotionDetectorCamera" deviceset="RES" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k"/>
-<part name="R7" library="MotionDetectorCamera" deviceset="RES" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k"/>
-<part name="U6" library="MotionDetectorCamera" deviceset="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C*?" device="MICRON_MT48H32M16LFB4-6_IT-C_0_0"/>
-<part name="C12" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="R6" library="MotionDetectorCamera" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k"/>
+<part name="R7" library="MotionDetectorCamera" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k"/>
+<part name="U6" library="MotionDetectorCamera" deviceset="W989D6DB" device=""/>
+<part name="C12" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1844,7 +1735,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C13" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C13" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1853,7 +1744,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C16" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C16" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1862,7 +1753,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C17" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C17" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1871,7 +1762,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C18" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C18" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1880,7 +1771,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C19" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C19" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1889,7 +1780,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C24" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C24" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1898,7 +1789,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C25" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C25" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1907,7 +1798,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C30" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C30" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1916,7 +1807,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C31" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C31" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1926,54 +1817,54 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="SV1" library="MotionDetectorCamera" deviceset="CON-LSTA_FE10-2" device=""/>
-<part name="R10" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="R12" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R13" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R14" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R15" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R16" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R17" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R18" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R19" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R10" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="R12" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R13" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R14" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R15" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R16" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R17" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R18" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="R19" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
 <part name="X2" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X3" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X4" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X7" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
-<part name="R11" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="R5" library="MotionDetectorCamera" deviceset="RES" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1"/>
+<part name="R11" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="R5" library="MotionDetectorCamera" deviceset="RESISTOR" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1"/>
 <part name="X8" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X9" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X10" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
-<part name="R20" library="MotionDetectorCamera" deviceset="RES" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
-<part name="R21" library="MotionDetectorCamera" deviceset="RES" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
-<part name="R22" library="MotionDetectorCamera" deviceset="RES" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
+<part name="R20" library="MotionDetectorCamera" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
+<part name="R21" library="MotionDetectorCamera" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
+<part name="R22" library="MotionDetectorCamera" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
 <part name="U5" library="MotionDetectorCamera" deviceset="ICE40HX4K" device="BG121" package3d_urn="urn:adsk.eagle:package:16997455/1"/>
-<part name="C28" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C28" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C29" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C29" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="R8" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
-<part name="C8" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="R8" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
+<part name="C8" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C9" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C9" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="R9" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
-<part name="C10" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="R9" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
+<part name="C10" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C11" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C11" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="U1" library="MotionDetectorCamera" deviceset="GD25LQ80C" device="USON8" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
-<part name="R23" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="C14" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="R23" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="C14" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C15" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C15" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="TC1" library="MotionDetectorCamera" deviceset="TC2050-NL" device=""/>

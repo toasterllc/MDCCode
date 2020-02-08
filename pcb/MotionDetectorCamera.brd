@@ -115,7 +115,7 @@
 <description>Generated from &lt;b&gt;MotionDetectorCamera.sch&lt;/b&gt;&lt;p&gt;
 by exp-lbrs.ulp</description>
 <packages>
-<package name="INDUCTORS_LARGE">
+<package name="INDUCTOR_LARGE">
 <wire x1="-6.588" y1="-7.362" x2="6.588" y2="-7.362" width="0.05" layer="39"/>
 <wire x1="-6.588" y1="7.87" x2="6.588" y2="7.87" width="0.05" layer="39"/>
 <wire x1="-6.588" y1="-7.362" x2="-6.588" y2="7.87" width="0.05" layer="39"/>
@@ -124,15 +124,17 @@ by exp-lbrs.ulp</description>
 <smd name="2" x="0" y="-3.683" dx="4.299990625" dy="6.35" layer="1"/>
 <text x="-6.463" y="-8.929" size="1.27" layer="25">&gt;NAME</text>
 </package>
-<package name="LED_CHIPLED_0603">
+<package name="LED_0603">
 <description>&lt;b&gt;CHIPLED&lt;/b&gt;&lt;p&gt;
 Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
-<smd name="A" x="-1.016" y="0" dx="0.7" dy="0.5" layer="1" stop="no"/>
-<smd name="C" x="0.1" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" stop="no" thermals="no"/>
-<text x="-1.524" y="0.381" size="0.254" layer="25" rot="R180" align="top-right">&gt;NAME</text>
-<rectangle x1="-1.3716" y1="-0.254" x2="-0.6604" y2="0.254" layer="29"/>
-<rectangle x1="-0.4318" y1="-0.254" x2="0.63" y2="0.25395" layer="29"/>
-<rectangle x1="-1.524" y1="-0.381" x2="0.762" y2="0.381" layer="39"/>
+<smd name="A" x="-0.641" y="0" dx="0.7" dy="0.5" layer="1"/>
+<smd name="C" x="0.475" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" thermals="no"/>
+<text x="-1.101" y="0.361" size="0.254" layer="25" rot="R180" align="top-right">&gt;NAME</text>
+<wire x1="-1.075" y1="0.2" x2="-1.075" y2="-0.33" width="0.05" layer="21"/>
+<wire x1="-1.075" y1="-0.33" x2="1.075" y2="-0.33" width="0.05" layer="21"/>
+<wire x1="1.075" y1="-0.33" x2="1.075" y2="0.33" width="0.05" layer="21"/>
+<wire x1="1.075" y1="0.33" x2="-0.925" y2="0.33" width="0.05" layer="21"/>
+<wire x1="-0.925" y1="0.33" x2="-1.075" y2="0.2" width="0.05" layer="21"/>
 </package>
 <package name="0402" urn="urn:adsk.eagle:footprint:17080097/1" locally_modified="yes">
 <description>Chip, 1.00 X 0.50 X 0.50 mm body
@@ -309,7 +311,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="0.84" y1="1.24" x2="-0.4" y2="1.24" width="0.127" layer="21"/>
 <wire x1="-0.4" y1="1.24" x2="-0.84" y2="0.81" width="0.127" layer="21"/>
 </package>
-<package name="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0">
+<package name="W989D6DB">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <wire x1="-4" y1="-4.5" x2="-4" y2="4.5" width="0.15" layer="39"/>
 <wire x1="-4" y1="4.5" x2="4" y2="4.5" width="0.15" layer="39"/>
@@ -903,47 +905,47 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MP" value="GRM219R61C226ME15L" x="109.6772" y="96.3828" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="67.2592" y="48.7578" size="0.635" layer="25"/>
 </element>
-<element name="L1" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="50.1142" y="20.7772" smashed="yes" rot="MR180">
+<element name="L1" library="MotionDetectorCamera" package="INDUCTOR_LARGE" value="470n" x="50.1142" y="20.7772" smashed="yes" rot="MR180">
 <attribute name="MP" value="PA4343.471NLT" x="70.4342" y="30.9372" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="43.6004" y="11.9008" size="1.27" layer="26" rot="MR180"/>
 </element>
-<element name="L2" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="66.8782" y="19.9136" smashed="yes" rot="MR90">
+<element name="L2" library="MotionDetectorCamera" package="INDUCTOR_LARGE" value="470n" x="66.8782" y="19.9136" smashed="yes" rot="MR90">
 <attribute name="MP" value="PA4343.471NLT" x="56.7182" y="54.2036" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="74.5608" y="11.7234" size="1.27" layer="26" rot="MR0"/>
 </element>
-<element name="L3" library="MotionDetectorCamera" package="INDUCTORS_LARGE" value="470n" x="65.6336" y="50.8508" smashed="yes" rot="MR270">
+<element name="L3" library="MotionDetectorCamera" package="INDUCTOR_LARGE" value="470n" x="65.6336" y="50.8508" smashed="yes" rot="MR270">
 <attribute name="MP" value="PA4343.471NLT" x="75.7936" y="2.5908" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="57.5446" y="56.9328" size="1.27" layer="26" rot="MR270"/>
 </element>
-<element name="LED0" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="11.7602" smashed="yes" rot="R270">
+<element name="LED0" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="11.7602" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.72396875" y="12.5984" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="1.90136875" y="-27.6098" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="LED1" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="14.064340625" smashed="yes" rot="R270">
+<element name="LED1" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="14.064340625" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.67316875" y="14.800940625" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="1.90136875" y="-29.115659375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="LED2" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="16.36848125" smashed="yes" rot="R270">
+<element name="LED2" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="16.36848125" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.72396875" y="16.95268125" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="1.90136875" y="-30.62151875" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="LED3" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="18.672621875" smashed="yes" rot="R270">
+<element name="LED3" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="18.672621875" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.72396875" y="19.231421875" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="1.90136875" y="-32.127378125" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="LED4" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="20.9767625" smashed="yes" rot="R270">
+<element name="LED4" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="20.9767625" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.64776875" y="21.6879625" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="1.90136875" y="-33.6332375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="LED5" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="23.280903125" smashed="yes" rot="R270">
+<element name="LED5" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="23.280903125" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.72396875" y="24.144503125" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="1.90136875" y="-35.139096875" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="LED6" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="25.58504375" smashed="yes" rot="R270">
+<element name="LED6" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="25.58504375" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.74936875" y="26.32164375" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-0.63863125" y="11.61504375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="LED7" library="MotionDetectorCamera" package="LED_CHIPLED_0603" value="" x="56.51136875" y="27.889184375" smashed="yes" rot="R270">
+<element name="LED7" library="MotionDetectorCamera" package="LED_0603" value="" x="56.51136875" y="27.889184375" smashed="yes" rot="R270">
 <attribute name="NAME" x="55.80016875" y="28.651184375" size="0.254" layer="25" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-0.63863125" y="10.109184375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
@@ -1021,41 +1023,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MP" value="TPS63805YFFR" x="108.4834" y="86.995" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="65.5846" y="48.8874" size="0.254" layer="25" rot="R180"/>
 </element>
-<element name="U6" library="MotionDetectorCamera" package="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C_0" value="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-CMICRON_MT48H32M16LFB4-6_IT-C_0_0" x="50.85815625" y="44.745409375" smashed="yes" rot="R45">
-<attribute name="AMBIENT_TEMPERATURE_RANGE_HIGH" value="+85°C" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="AMBIENT_TEMPERATURE_RANGE_LOW" value="-40°C" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="CENTROID_NOT_SPECIFIED" value="No" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="DATASHEET" value="https://www.micron.com/~/media/documents/products/data-sheet/dram/mobile-dram/low-power-dram/lpsdr/y67m_512mb_mobile_lpsdr_at.pdf" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="DEVICE_CLASS_L1" value="Integrated Circuits (ICs)" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="DEVICE_CLASS_L2" value="Memory" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="DEVICE_CLASS_L3" value="RAM" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="DIGIKEY_DESCRIPTION" value="IC DRAM 512M PARALLEL 54VFBGA" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="DIGIKEY_PART_NUMBER" value="MT48H32M16LFB4-6IT:C-ND" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="FOOTPRINT_PARAMETERS_0" value="{&quot;fp_type&quot;:&quot;bga&quot;,&quot;params&quot;:{&quot;num_rows&quot;:9,&quot;num_cols&quot;:9,&quot;row_enumeration&quot;:&quot;alphabetic&quot;,&quot;col_enumeration&quot;:&quot;numeric&quot;,&quot;skip_rows&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;skip_cols&quot;:&quot;I,O,Q,S,X,Z&quot;,&quot;row_pitch&quot;:800000,&quot;col_pitch&quot;:800000,&quot;package_length&quot;:8150000,&quot;package_width&quot;:8150000,&quot;package_height&quot;:1000000,&quot;packing_level&quot;:&quot;C&quot;,&quot;collapsing&quot;:false}}" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="FREQUENCY" value="166MHz" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="HEIGHT" value="1mm" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="INTERFACE" value="Parallel" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="IPC_LAND_PATTERN_NAME" value="BGA81N80P9X9_815X815X100" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="LEAD_FREE" value="yes" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MAX_SUPPLY_VOLTAGE" value="1.95V" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MEMORY_SIZE" value="32MB" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MEMORY_TYPE" value="RAM,SDRAM" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MF" value="Micron" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MFG_PACKAGE_IDENT" value="B4" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MFG_PACKAGE_IDENT_DATE" value="0" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MFG_PACKAGE_IDENT_REV" value="0" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MIN_SUPPLY_VOLTAGE" value="1.7V" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MOUSER_PART_NUMBER" value="340-123397-TRAY" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="MPN" value="MT48H32M16LFB4-6 IT:C" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
+<element name="U6" library="MotionDetectorCamera" package="W989D6DB" value="W989D6DB" x="50.85815625" y="44.745409375" smashed="yes" rot="R45">
 <attribute name="NAME" x="44.648584375" y="45.27294375" size="1" layer="25" rot="R45"/>
-<attribute name="PACKAGE" value="VFBGA54" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="PIN_0_1_36_INSIDE_EDGE" value="clock" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="PREFIX" value="U" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="ROHS" value="yes" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="STANDOFF_HEIGHT" value="0.25mm" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="TEMPERATURE_RANGE_HIGH" value="+85°C" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="TEMPERATURE_RANGE_LOW" value="-40°C" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
-<attribute name="VERIFICATION_VERSION" value="0.0.0.1" x="86.77918125" y="48.3375125" size="1.778" layer="27" rot="R45" display="off"/>
 </element>
 <element name="X10" library="MotionDetectorCamera" package="CON-COAX_734120110" value="CON-COAX_734120110" x="53.1876" y="52.3494" smashed="yes" rot="R315">
 <attribute name="NAME" x="53.60620625" y="55.4224875" size="0.762" layer="25" rot="R315"/>
@@ -2412,11 +2381,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="LED0">
 <contactref element="LED0" pad="A"/>
 <contactref element="U5" pad="L1"/>
-<wire x1="56.48596875" y1="12.7508" x2="56.51136875" y2="12.7762" width="0.127" layer="1"/>
+<wire x1="56.50321875" y1="12.53035" x2="56.51136875" y2="12.4012" width="0.127" layer="1"/>
 <wire x1="55.159" y1="32.584" x2="55.159" y2="32.0208875" width="0.127" layer="1"/>
 <wire x1="55.159" y1="32.0208875" x2="53.9791875" y2="30.841075" width="0.127" layer="1"/>
-<wire x1="53.9791875" y1="30.841075" x2="53.9791875" y2="15.25758125" width="0.127" layer="1"/>
-<wire x1="53.9791875" y1="15.25758125" x2="56.48596875" y2="12.7508" width="0.127" layer="1"/>
+<wire x1="53.9791875" y1="30.841075" x2="53.9791875" y2="15.05438125" width="0.127" layer="1"/>
+<wire x1="53.9791875" y1="15.05438125" x2="56.50321875" y2="12.53035" width="0.127" layer="1"/>
 </signal>
 <signal name="LED1">
 <contactref element="LED1" pad="A"/>
@@ -2424,7 +2393,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="55.959" y1="32.584" x2="55.959" y2="32.461675" width="0.127" layer="1"/>
 <wire x1="55.959" y1="32.461675" x2="54.2331875" y2="30.7358625" width="0.127" layer="1"/>
 <wire x1="54.2331875" y1="30.7358625" x2="54.2331875" y2="17.358521875" width="0.127" layer="1"/>
-<wire x1="54.2331875" y1="17.358521875" x2="56.51136875" y2="15.080340625" width="0.127" layer="1"/>
+<wire x1="54.2331875" y1="17.358521875" x2="56.51136875" y2="14.705340625" width="0.127" layer="1"/>
 </signal>
 <signal name="LED2">
 <contactref element="LED2" pad="A"/>
@@ -2434,7 +2403,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="56.4185" y1="32.7250375" x2="56.4185" y2="32.5619625" width="0.127" layer="1"/>
 <wire x1="56.4185" y1="32.5619625" x2="54.4871875" y2="30.63065" width="0.127" layer="1"/>
 <wire x1="54.4871875" y1="30.63065" x2="54.4871875" y2="19.4086625" width="0.127" layer="1"/>
-<wire x1="54.4871875" y1="19.4086625" x2="56.51136875" y2="17.38448125" width="0.127" layer="1"/>
+<wire x1="54.4871875" y1="19.4086625" x2="56.51136875" y2="17.00948125" width="0.127" layer="1"/>
 </signal>
 <signal name="LED3">
 <contactref element="LED3" pad="A"/>
@@ -2449,14 +2418,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="56.3399" y1="31.8906625" x2="56.3399" y2="31.657175" width="0.127" layer="1"/>
 <wire x1="56.3399" y1="31.657175" x2="54.7411875" y2="30.0584625" width="0.127" layer="1"/>
 <wire x1="54.7411875" y1="30.0584625" x2="54.7411875" y2="21.458803125" width="0.127" layer="1"/>
-<wire x1="54.7411875" y1="21.458803125" x2="56.51136875" y2="19.688621875" width="0.127" layer="1"/>
+<wire x1="54.7411875" y1="21.458803125" x2="56.51136875" y2="19.313621875" width="0.127" layer="1"/>
 </signal>
 <signal name="LED4">
 <contactref element="LED4" pad="A"/>
 <contactref element="U5" pad="L3"/>
 <wire x1="56.759" y1="32.584" x2="56.759" y2="31.7170625" width="0.127" layer="1"/>
 <wire x1="54.9951875" y1="29.95325" x2="54.9951875" y2="23.50894375" width="0.127" layer="1"/>
-<wire x1="54.9951875" y1="23.50894375" x2="56.51136875" y2="21.9927625" width="0.127" layer="1"/>
+<wire x1="54.9951875" y1="23.50894375" x2="56.51136875" y2="21.6177625" width="0.127" layer="1"/>
 <wire x1="56.759" y1="31.7170625" x2="54.9951875" y2="29.95325" width="0.127" layer="1"/>
 </signal>
 <signal name="LED5">
@@ -2466,14 +2435,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="57.0995" y1="32.9245" x2="57.0995" y2="31.69835" width="0.127" layer="1"/>
 <wire x1="57.0995" y1="31.69835" x2="55.2491875" y2="29.8480375" width="0.127" layer="1"/>
 <wire x1="55.2491875" y1="29.8480375" x2="55.2491875" y2="25.559084375" width="0.127" layer="1"/>
-<wire x1="55.2491875" y1="25.559084375" x2="56.51136875" y2="24.296903125" width="0.127" layer="1"/>
+<wire x1="55.2491875" y1="25.559084375" x2="56.51136875" y2="23.921903125" width="0.127" layer="1"/>
 </signal>
 <signal name="LED6">
 <contactref element="LED6" pad="A"/>
 <contactref element="U5" pad="L4"/>
 <wire x1="57.559" y1="32.584" x2="57.559" y2="30.965675" width="0.127" layer="1"/>
-<wire x1="55.5031875" y1="29.742825" x2="55.5031875" y2="27.609225" width="0.127" layer="1"/>
-<wire x1="55.5031875" y1="27.609225" x2="56.51136875" y2="26.60104375" width="0.127" layer="1"/>
+<wire x1="55.5031875" y1="29.742825" x2="55.5031875" y2="27.234225" width="0.127" layer="1"/>
+<wire x1="55.5031875" y1="27.234225" x2="56.51136875" y2="26.22604375" width="0.127" layer="1"/>
 <wire x1="57.083" y1="30.489675" x2="56.2500375" y2="30.489675" width="0.127" layer="1"/>
 <wire x1="57.559" y1="30.965675" x2="57.083" y2="30.489675" width="0.127" layer="1"/>
 <wire x1="56.2500375" y1="30.489675" x2="55.5031875" y2="29.742825" width="0.127" layer="1"/>
@@ -2488,56 +2457,56 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="58.0185" y1="32.7250375" x2="58.0185" y2="31.0659625" width="0.127" layer="1"/>
 <wire x1="58.0185" y1="31.0659625" x2="57.1882125" y2="30.235675" width="0.127" layer="1"/>
 <wire x1="55.7571875" y1="29.6376125" x2="55.7571875" y2="29.2566125" width="0.127" layer="1"/>
-<wire x1="56.108615625" y1="28.905184375" x2="56.51136875" y2="28.905184375" width="0.127" layer="1"/>
+<wire x1="56.108615625" y1="28.905184375" x2="56.51136875" y2="28.530184375" width="0.127" layer="1"/>
 <wire x1="55.7571875" y1="29.2566125" x2="56.108615625" y2="28.905184375" width="0.127" layer="1"/>
 </signal>
 <signal name="N$15">
 <contactref element="LED7" pad="C"/>
 <contactref element="R19" pad="1"/>
-<wire x1="56.51136875" y1="27.789184375" x2="57.4365" y2="27.789184375" width="0.127" layer="1"/>
-<wire x1="57.4365" y1="27.789184375" x2="57.5056" y2="27.720084375" width="0.127" layer="1"/>
+<wire x1="57.5056" y1="27.720084375" x2="57.2247" y2="27.439184375" width="0.1524" layer="1"/>
+<wire x1="57.2247" y1="27.439184375" x2="56.51136875" y2="27.414184375" width="0.1524" layer="1"/>
 </signal>
 <signal name="N$17">
 <contactref element="LED6" pad="C"/>
 <contactref element="R18" pad="1"/>
 <wire x1="57.5056" y1="25.41594375" x2="56.58046875" y2="25.41594375" width="0.127" layer="1"/>
-<wire x1="56.58046875" y1="25.41594375" x2="56.51136875" y2="25.48504375" width="0.127" layer="1"/>
+<wire x1="56.58046875" y1="25.41594375" x2="56.51136875" y2="25.11004375" width="0.127" layer="1"/>
 </signal>
 <signal name="N$19">
 <contactref element="LED5" pad="C"/>
 <contactref element="R17" pad="1"/>
 <wire x1="57.5056" y1="23.111803125" x2="56.58046875" y2="23.111803125" width="0.127" layer="1"/>
-<wire x1="56.58046875" y1="23.111803125" x2="56.51136875" y2="23.180903125" width="0.127" layer="1"/>
+<wire x1="56.58046875" y1="23.111803125" x2="56.51136875" y2="22.805903125" width="0.127" layer="1"/>
 </signal>
 <signal name="N$21">
 <contactref element="LED4" pad="C"/>
 <contactref element="R16" pad="1"/>
 <wire x1="57.5056" y1="20.8076625" x2="56.58046875" y2="20.8076625" width="0.127" layer="1"/>
-<wire x1="56.58046875" y1="20.8076625" x2="56.51136875" y2="20.8767625" width="0.127" layer="1"/>
+<wire x1="56.58046875" y1="20.8076625" x2="56.51136875" y2="20.5017625" width="0.127" layer="1"/>
 </signal>
 <signal name="N$23">
 <contactref element="LED3" pad="C"/>
 <contactref element="R15" pad="1"/>
 <wire x1="57.5056" y1="18.503521875" x2="56.58046875" y2="18.503521875" width="0.127" layer="1"/>
-<wire x1="56.58046875" y1="18.503521875" x2="56.51136875" y2="18.572621875" width="0.127" layer="1"/>
+<wire x1="56.58046875" y1="18.503521875" x2="56.51136875" y2="18.197621875" width="0.127" layer="1"/>
 </signal>
 <signal name="N$26">
 <contactref element="LED2" pad="C"/>
 <contactref element="R14" pad="1"/>
 <wire x1="57.5056" y1="16.19938125" x2="56.58046875" y2="16.19938125" width="0.127" layer="1"/>
-<wire x1="56.58046875" y1="16.19938125" x2="56.51136875" y2="16.26848125" width="0.127" layer="1"/>
+<wire x1="56.58046875" y1="16.19938125" x2="56.51136875" y2="15.89348125" width="0.127" layer="1"/>
 </signal>
 <signal name="N$29">
 <contactref element="LED1" pad="C"/>
 <contactref element="R13" pad="1"/>
 <wire x1="57.5056" y1="13.895240625" x2="56.58046875" y2="13.895240625" width="0.127" layer="1"/>
-<wire x1="56.58046875" y1="13.895240625" x2="56.51136875" y2="13.964340625" width="0.127" layer="1"/>
+<wire x1="56.58046875" y1="13.895240625" x2="56.51136875" y2="13.589340625" width="0.127" layer="1"/>
 </signal>
 <signal name="N$31">
 <contactref element="LED0" pad="C"/>
 <contactref element="R12" pad="1"/>
 <wire x1="57.5056" y1="11.5911" x2="56.58046875" y2="11.5911" width="0.127" layer="1"/>
-<wire x1="56.58046875" y1="11.5911" x2="56.51136875" y2="11.6602" width="0.127" layer="1"/>
+<wire x1="56.58046875" y1="11.5911" x2="56.51136875" y2="11.2852" width="0.127" layer="1"/>
 </signal>
 <signal name="N$2">
 <contactref element="U4" pad="A1"/>
