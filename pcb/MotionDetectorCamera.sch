@@ -307,31 +307,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="-11.811" y="3.429" size="1.27" layer="21" ratio="10">1</text>
 <text x="10.541" y="-4.699" size="1.27" layer="21" ratio="10">20</text>
 </package>
-<package name="TAGCONNECT_TC2050-IDC">
-<rectangle x1="-4.5847" y1="-5.14985" x2="-3.0353" y2="-2.54" layer="40"/>
-<rectangle x1="1.1303" y1="-5.14985" x2="2.6797" y2="-2.54" layer="40"/>
-<rectangle x1="-4.5847" y1="2.54" x2="-3.0353" y2="5.14985" layer="40"/>
-<rectangle x1="1.1303" y1="2.54" x2="2.6797" y2="5.14985" layer="40"/>
-<smd name="1" x="-2.54" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="2" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="4" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="5" x="2.54" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="6" x="2.54" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="7" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="8" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="9" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="10" x="-2.54" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<text x="-5.969" y="-1.905" size="0.762" layer="25" rot="R90">&gt;NAME</text>
-<hole x="-3.81" y="0" drill="0.9906"/>
-<hole x="3.81" y="1.016" drill="0.9906"/>
-<hole x="3.81" y="-1.016" drill="0.9906"/>
-<hole x="-3.81" y="2.54" drill="2.3749"/>
-<hole x="-3.81" y="-2.54" drill="2.3749"/>
-<hole x="1.905" y="2.54" drill="2.3749"/>
-<hole x="1.905" y="-2.54" drill="2.3749"/>
-<rectangle x1="-2.54" y1="-0.635" x2="2.54" y2="0.635" layer="39"/>
-</package>
 <package name="TPS62801X_TPS6280X">
 <wire x1="-0.2794" y1="0.6858" x2="-0.4826" y2="0.4826" width="0" layer="51"/>
 <wire x1="-0.4826" y1="-0.6858" x2="0.4826" y2="-0.6858" width="0" layer="51"/>
@@ -801,34 +776,6 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pin name="20" x="7.62" y="12.7" visible="pad" length="middle" direction="pas" swaplevel="1" rot="R180"/>
 <text x="-3.81" y="-15.24" size="1.778" layer="96">&gt;VALUE</text>
 <text x="-3.81" y="16.002" size="1.778" layer="95">&gt;NAME</text>
-</symbol>
-<symbol name="TAGCONNECT_TC2050-IDC">
-<wire x1="3.81" y1="-7.62" x2="-3.81" y2="-7.62" width="0.4064" layer="94"/>
-<wire x1="1.27" y1="0" x2="2.54" y2="0" width="0.6096" layer="94"/>
-<wire x1="1.27" y1="-2.54" x2="2.54" y2="-2.54" width="0.6096" layer="94"/>
-<wire x1="1.27" y1="-5.08" x2="2.54" y2="-5.08" width="0.6096" layer="94"/>
-<wire x1="-2.54" y1="0" x2="-1.27" y2="0" width="0.6096" layer="94"/>
-<wire x1="-2.54" y1="-2.54" x2="-1.27" y2="-2.54" width="0.6096" layer="94"/>
-<wire x1="-2.54" y1="-5.08" x2="-1.27" y2="-5.08" width="0.6096" layer="94"/>
-<wire x1="-3.81" y1="7.62" x2="-3.81" y2="-7.62" width="0.4064" layer="94"/>
-<wire x1="3.81" y1="-7.62" x2="3.81" y2="7.62" width="0.4064" layer="94"/>
-<wire x1="-3.81" y1="7.62" x2="3.81" y2="7.62" width="0.4064" layer="94"/>
-<wire x1="1.27" y1="5.08" x2="2.54" y2="5.08" width="0.6096" layer="94"/>
-<wire x1="1.27" y1="2.54" x2="2.54" y2="2.54" width="0.6096" layer="94"/>
-<wire x1="-2.54" y1="5.08" x2="-1.27" y2="5.08" width="0.6096" layer="94"/>
-<wire x1="-2.54" y1="2.54" x2="-1.27" y2="2.54" width="0.6096" layer="94"/>
-<pin name="1" x="-7.62" y="5.08" visible="pad" length="middle" direction="pas" swaplevel="1"/>
-<pin name="2" x="-7.62" y="2.54" visible="pad" length="middle" direction="pas" swaplevel="1"/>
-<pin name="3" x="-7.62" y="0" visible="pad" length="middle" direction="pas" swaplevel="1"/>
-<pin name="4" x="-7.62" y="-2.54" visible="pad" length="middle" direction="pas" swaplevel="1"/>
-<pin name="5" x="-7.62" y="-5.08" visible="pad" length="middle" direction="pas" swaplevel="1"/>
-<pin name="6" x="7.62" y="-5.08" visible="pad" length="middle" direction="pas" swaplevel="1" rot="R180"/>
-<pin name="7" x="7.62" y="-2.54" visible="pad" length="middle" direction="pas" swaplevel="1" rot="R180"/>
-<pin name="8" x="7.62" y="0" visible="pad" length="middle" direction="pas" swaplevel="1" rot="R180"/>
-<pin name="9" x="7.62" y="2.54" visible="pad" length="middle" direction="pas" swaplevel="1" rot="R180"/>
-<pin name="10" x="7.62" y="5.08" visible="pad" length="middle" direction="pas" swaplevel="1" rot="R180"/>
-<text x="-3.81" y="-10.16" size="1.778" layer="96">&gt;VALUE</text>
-<text x="-3.81" y="8.382" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
 <symbol name="TPS62801X_TPS6280X">
 <wire x1="-12.7" y1="10.16" x2="-12.7" y2="-15.24" width="0.4064" layer="94"/>
@@ -1409,32 +1356,6 @@ Source: www.kingbright.com</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TAGCONNECT_TC2050-IDC" prefix="TC">
-<description>Tag-Connect In Circuit Programming &amp; Debug Cable 10 Pin
-http://www.tag-connect.com</description>
-<gates>
-<gate name="A" symbol="TAGCONNECT_TC2050-IDC" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="TAGCONNECT_TC2050-IDC">
-<connects>
-<connect gate="A" pin="1" pad="1"/>
-<connect gate="A" pin="10" pad="10"/>
-<connect gate="A" pin="2" pad="2"/>
-<connect gate="A" pin="3" pad="3"/>
-<connect gate="A" pin="4" pad="4"/>
-<connect gate="A" pin="5" pad="5"/>
-<connect gate="A" pin="6" pad="6"/>
-<connect gate="A" pin="7" pad="7"/>
-<connect gate="A" pin="8" pad="8"/>
-<connect gate="A" pin="9" pad="9"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TPS62801X_TPS6280X" prefix="U">
 <description>STEP-DOWN CONVERTER</description>
 <gates>
@@ -1836,7 +1757,6 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </class>
 </classes>
 <parts>
-<part name="TC1" library="MotionDetectorCamera" deviceset="TAGCONNECT_TC2050-IDC" device=""/>
 <part name="Y1" library="MotionDetectorCamera" deviceset="SIT8021AI-J4-XXS-12.000000E_SIT8021AI-J4-XXS-12.000000E" device="">
 <attribute name="MP" value="SiT8021AI-J4-18S-12.000000E"/>
 </part>
@@ -2075,7 +1995,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="C15" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
-<part name="U$1" library="MotionDetectorCamera" deviceset="TC2050-NL" device=""/>
+<part name="TC1" library="MotionDetectorCamera" deviceset="TC2050-NL" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -2086,10 +2006,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <text x="142.24" y="-81.28" size="1.778" layer="91" align="bottom-right">GNDPLL should not be connected to GND!</text>
 </plain>
 <instances>
-<instance part="TC1" gate="A" x="416.56" y="-25.4" smashed="yes">
-<attribute name="VALUE" x="412.75" y="-35.56" size="1.778" layer="96"/>
-<attribute name="NAME" x="412.75" y="-17.018" size="1.778" layer="95"/>
-</instance>
 <instance part="Y1" gate="G$1" x="391.16" y="58.42" smashed="yes">
 <attribute name="NAME" x="381" y="66.802" size="1.778" layer="95"/>
 <attribute name="VALUE" x="381" y="48.26" size="1.778" layer="96"/>
@@ -2409,7 +2325,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="VALUE" x="425.45" y="-139.573" size="1.778" layer="96" rot="MR180"/>
 <attribute name="MP" x="421.64" y="-137.16" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U$1" gate="G$1" x="416.56" y="-53.34" smashed="yes">
+<instance part="TC1" gate="G$1" x="416.56" y="-53.34" smashed="yes">
 <attribute name="NAME" x="409.194" y="-45.212" size="1.778" layer="95"/>
 </instance>
 </instances>
@@ -2483,11 +2399,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 </segment>
 </net>
 <net name="1V8" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="4"/>
-<wire x1="408.94" y1="-27.94" x2="406.4" y2="-27.94" width="0.1524" layer="91"/>
-<label x="406.4" y="-27.94" size="1.778" layer="95" align="bottom-right"/>
-</segment>
 <segment>
 <pinref part="U6" gate="A" pin="3_VDD"/>
 <pinref part="U6" gate="A" pin="2_VDD"/>
@@ -2604,7 +2515,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="431.8" y1="-55.88" x2="429.26" y2="-55.88" width="0.1524" layer="91"/>
 <label x="431.8" y="-55.88" size="1.778" layer="95"/>
-<pinref part="U$1" gate="G$1" pin="7"/>
+<pinref part="TC1" gate="G$1" pin="7"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -2790,11 +2701,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="243.84" y="109.22" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="TC1" gate="A" pin="7"/>
-<wire x1="424.18" y1="-27.94" x2="426.72" y2="-27.94" width="0.1524" layer="91"/>
-<label x="426.72" y="-27.94" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="C28" gate="G$1" pin="2"/>
 <pinref part="C29" gate="G$1" pin="2"/>
 <wire x1="119.38" y1="-43.18" x2="129.54" y2="-43.18" width="0.1524" layer="91"/>
@@ -2859,7 +2765,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="431.8" y1="-53.34" x2="429.26" y2="-53.34" width="0.1524" layer="91"/>
 <label x="431.8" y="-53.34" size="1.778" layer="95"/>
-<pinref part="U$1" gate="G$1" pin="8"/>
+<pinref part="TC1" gate="G$1" pin="8"/>
 </segment>
 </net>
 <net name="ICE_CLK12MHZ" class="0">
@@ -3556,11 +3462,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 </net>
 <net name="ICE_PRG_CDONE" class="0">
 <segment>
-<pinref part="TC1" gate="A" pin="3"/>
-<wire x1="408.94" y1="-25.4" x2="406.4" y2="-25.4" width="0.1524" layer="91"/>
-<label x="406.4" y="-25.4" size="1.778" layer="95" rot="MR0"/>
-</segment>
-<segment>
 <pinref part="U5" gate="G$5" pin="CDONE_K8"/>
 <label x="164.846" y="-91.186" size="1.778" layer="95" rot="MR0"/>
 <wire x1="177.8" y1="-73.66" x2="167.64" y2="-73.66" width="0.1524" layer="91"/>
@@ -3570,15 +3471,10 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="403.86" y1="-58.42" x2="401.32" y2="-58.42" width="0.1524" layer="91"/>
 <label x="401.32" y="-58.42" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U$1" gate="G$1" pin="5"/>
+<pinref part="TC1" gate="G$1" pin="5"/>
 </segment>
 </net>
 <net name="ICE_PRG_CRESET_" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="8"/>
-<wire x1="424.18" y1="-25.4" x2="426.72" y2="-25.4" width="0.1524" layer="91"/>
-<label x="426.72" y="-25.4" size="1.778" layer="95"/>
-</segment>
 <segment>
 <pinref part="U5" gate="G$5" pin="CRESET_B_L9"/>
 <wire x1="177.8" y1="-76.2" x2="172.72" y2="-76.2" width="0.1524" layer="91"/>
@@ -3590,15 +3486,10 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="429.26" y1="-48.26" x2="431.8" y2="-48.26" width="0.1524" layer="91"/>
 <label x="431.8" y="-48.26" size="1.778" layer="95"/>
-<pinref part="U$1" gate="G$1" pin="10"/>
+<pinref part="TC1" gate="G$1" pin="10"/>
 </segment>
 </net>
 <net name="ICE_PRG_SO" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="10"/>
-<wire x1="424.18" y1="-20.32" x2="426.72" y2="-20.32" width="0.1524" layer="91"/>
-<label x="426.72" y="-20.32" size="1.778" layer="95"/>
-</segment>
 <segment>
 <pinref part="U5" gate="G$5" pin="SPI_SO_K9"/>
 <wire x1="177.8" y1="-63.5" x2="172.72" y2="-63.5" width="0.1524" layer="91"/>
@@ -3612,15 +3503,10 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="401.32" y1="-55.88" x2="403.86" y2="-55.88" width="0.1524" layer="91"/>
 <label x="401.32" y="-55.88" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U$1" gate="G$1" pin="4"/>
+<pinref part="TC1" gate="G$1" pin="4"/>
 </segment>
 </net>
 <net name="ICE_PRG_SI" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="1"/>
-<wire x1="408.94" y1="-20.32" x2="406.4" y2="-20.32" width="0.1524" layer="91"/>
-<label x="406.4" y="-20.32" size="1.778" layer="95" rot="MR0"/>
-</segment>
 <segment>
 <pinref part="U5" gate="G$5" pin="SPI_SI_J9"/>
 <wire x1="177.8" y1="-60.96" x2="172.72" y2="-60.96" width="0.1524" layer="91"/>
@@ -3634,15 +3520,10 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="401.32" y1="-48.26" x2="403.86" y2="-48.26" width="0.1524" layer="91"/>
 <label x="401.32" y="-48.26" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U$1" gate="G$1" pin="1"/>
+<pinref part="TC1" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="ICE_PRG_SCLK" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="9"/>
-<wire x1="424.18" y1="-22.86" x2="426.72" y2="-22.86" width="0.1524" layer="91"/>
-<label x="426.72" y="-22.86" size="1.778" layer="95"/>
-</segment>
 <segment>
 <pinref part="U5" gate="G$5" pin="SPI_SCK_L10"/>
 <wire x1="177.8" y1="-68.58" x2="172.72" y2="-68.58" width="0.1524" layer="91"/>
@@ -3656,15 +3537,10 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="401.32" y1="-50.8" x2="403.86" y2="-50.8" width="0.1524" layer="91"/>
 <label x="401.32" y="-50.8" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U$1" gate="G$1" pin="2"/>
+<pinref part="TC1" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="ICE_PRG_CS_" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="2"/>
-<wire x1="408.94" y1="-22.86" x2="406.4" y2="-22.86" width="0.1524" layer="91"/>
-<label x="406.4" y="-22.86" size="1.778" layer="95" rot="MR0"/>
-</segment>
 <segment>
 <pinref part="U5" gate="G$5" pin="SPI_SS_B_K10"/>
 <wire x1="177.8" y1="-66.04" x2="172.72" y2="-66.04" width="0.1524" layer="91"/>
@@ -3678,7 +3554,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="401.32" y1="-53.34" x2="403.86" y2="-53.34" width="0.1524" layer="91"/>
 <label x="401.32" y="-53.34" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U$1" gate="G$1" pin="3"/>
+<pinref part="TC1" gate="G$1" pin="3"/>
 </segment>
 </net>
 <net name="N$32" class="0">
@@ -3865,11 +3741,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 </net>
 <net name="VDDIN" class="0">
 <segment>
-<pinref part="TC1" gate="A" pin="5"/>
-<wire x1="408.94" y1="-30.48" x2="406.4" y2="-30.48" width="0.1524" layer="91"/>
-<label x="406.4" y="-30.48" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <pinref part="R5" gate="G$1" pin="2"/>
 <wire x1="86.36" y1="106.68" x2="83.82" y2="106.68" width="0.1524" layer="91"/>
 <label x="83.82" y="106.68" size="1.778" layer="95" rot="MR0"/>
@@ -3880,7 +3751,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="431.8" y1="-58.42" x2="429.26" y2="-58.42" width="0.1524" layer="91"/>
 <label x="431.8" y="-58.42" size="1.778" layer="95"/>
-<pinref part="U$1" gate="G$1" pin="6"/>
+<pinref part="TC1" gate="G$1" pin="6"/>
 </segment>
 </net>
 <net name="N$16" class="0">
@@ -3947,12 +3818,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="231.14" y1="106.68" x2="231.14" y2="104.14" width="0.1524" layer="91"/>
 <pinref part="U3" gate="A" pin="EN"/>
 <wire x1="231.14" y1="104.14" x2="246.38" y2="104.14" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$3" class="0">
-<segment>
-<pinref part="TC1" gate="A" pin="6"/>
-<wire x1="424.18" y1="-30.48" x2="426.72" y2="-30.48" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$87" class="0">
