@@ -3,7 +3,7 @@ set_io ice_clk12mhz     P1      -pullup no
 
 set_io pix_clk          G1      -pullup no
 set_io pix_fv           C12     -pullup no
-set_io pix_ln           A12     -pullup no
+set_io pix_lv           A12     -pullup no
 set_io pix_d[0]         M1      -pullup no
 set_io pix_d[1]         F12     -pullup no
 set_io pix_d[2]         F11     -pullup no
