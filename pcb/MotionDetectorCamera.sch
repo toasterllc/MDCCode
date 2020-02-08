@@ -109,51 +109,6 @@
 <description>Generated from &lt;b&gt;MotionDetectorCamera.sch&lt;/b&gt;&lt;p&gt;
 by exp-lbrs.ulp</description>
 <packages>
-<package name="RCL_C0402">
-<description>&lt;b&gt;CAPACITOR&lt;/b&gt;</description>
-<wire x1="-0.245" y1="0.224" x2="0.245" y2="0.224" width="0.1524" layer="51"/>
-<wire x1="0.245" y1="-0.224" x2="-0.245" y2="-0.224" width="0.1524" layer="51"/>
-<wire x1="-1" y1="0.483" x2="1" y2="0.483" width="0.0508" layer="39"/>
-<wire x1="1" y1="0.483" x2="1" y2="-0.483" width="0.0508" layer="39"/>
-<wire x1="1" y1="-0.483" x2="-1" y2="-0.483" width="0.0508" layer="39"/>
-<wire x1="-1" y1="-0.483" x2="-1" y2="0.483" width="0.0508" layer="39"/>
-<rectangle x1="-0.554" y1="-0.3048" x2="-0.254" y2="0.2951" layer="51"/>
-<rectangle x1="0.2588" y1="-0.3048" x2="0.5588" y2="0.2951" layer="51"/>
-<rectangle x1="-0.1999" y1="-0.3" x2="0.1999" y2="0.3" layer="35"/>
-<smd name="1" x="-0.48" y="0" dx="0.57" dy="0.62" layer="1"/>
-<smd name="2" x="0.48" y="0" dx="0.57" dy="0.62" layer="1"/>
-<text x="-0.68" y="0.582" size="0.3" layer="25">&gt;NAME</text>
-</package>
-<package name="RCL_C0603">
-<description>&lt;b&gt;CAPACITOR&lt;/b&gt;</description>
-<wire x1="-1.466" y1="0.688" x2="1.466" y2="0.688" width="0.0508" layer="39"/>
-<wire x1="1.466" y1="0.688" x2="1.466" y2="-0.688" width="0.0508" layer="39"/>
-<wire x1="1.466" y1="-0.688" x2="-1.466" y2="-0.688" width="0.0508" layer="39"/>
-<wire x1="-1.466" y1="-0.688" x2="-1.466" y2="0.688" width="0.0508" layer="39"/>
-<wire x1="-0.356" y1="0.432" x2="0.356" y2="0.432" width="0.1016" layer="51"/>
-<wire x1="-0.356" y1="-0.419" x2="0.356" y2="-0.419" width="0.1016" layer="51"/>
-<rectangle x1="-0.8382" y1="-0.4699" x2="-0.3381" y2="0.4801" layer="51"/>
-<rectangle x1="0.3302" y1="-0.4699" x2="0.8303" y2="0.4801" layer="51"/>
-<rectangle x1="-0.1999" y1="-0.3" x2="0.1999" y2="0.3" layer="35"/>
-<smd name="1" x="-0.8" y="0" dx="0.95" dy="1" layer="1"/>
-<smd name="2" x="0.8" y="0" dx="0.95" dy="1" layer="1"/>
-<text x="-1.27" y="0.762" size="0.508" layer="25">&gt;NAME</text>
-</package>
-<package name="RCL_C0805">
-<description>&lt;b&gt;CAPACITOR&lt;/b&gt;&lt;p&gt;</description>
-<wire x1="-1.7" y1="0.9" x2="1.7" y2="0.9" width="0.0508" layer="39"/>
-<wire x1="1.7" y1="-0.9" x2="-1.7" y2="-0.9" width="0.0508" layer="39"/>
-<wire x1="-1.7" y1="-0.9" x2="-1.7" y2="0.9" width="0.0508" layer="39"/>
-<wire x1="-0.381" y1="0.66" x2="0.381" y2="0.66" width="0.1016" layer="51"/>
-<wire x1="-0.356" y1="-0.66" x2="0.381" y2="-0.66" width="0.1016" layer="51"/>
-<wire x1="1.7" y1="0.9" x2="1.7" y2="-0.9" width="0.0508" layer="39"/>
-<rectangle x1="-1.0922" y1="-0.7239" x2="-0.3421" y2="0.7262" layer="51"/>
-<rectangle x1="0.3556" y1="-0.7239" x2="1.1057" y2="0.7262" layer="51"/>
-<rectangle x1="-0.1001" y1="-0.4001" x2="0.1001" y2="0.4001" layer="35"/>
-<smd name="1" x="-0.95" y="0" dx="1" dy="1.45" layer="1"/>
-<smd name="2" x="0.95" y="0" dx="1" dy="1.45" layer="1"/>
-<text x="-1.524" y="1.143" size="0.635" layer="25">&gt;NAME</text>
-</package>
 <package name="INDUCTORS_LARGE">
 <wire x1="-6.588" y1="-7.362" x2="6.588" y2="-7.362" width="0.05" layer="39"/>
 <wire x1="-6.588" y1="7.87" x2="6.588" y2="7.87" width="0.05" layer="39"/>
@@ -173,51 +128,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <rectangle x1="-0.4318" y1="-0.254" x2="0.63" y2="0.25395" layer="29"/>
 <rectangle x1="-1.524" y1="-0.381" x2="0.762" y2="0.381" layer="39"/>
 </package>
-<package name="RCL_R0402">
-<description>&lt;b&gt;Chip RESISTOR 0402 EIA (1005 Metric)&lt;/b&gt;</description>
-<wire x1="-0.245" y1="0.224" x2="0.245" y2="0.224" width="0.1524" layer="51"/>
-<wire x1="0.245" y1="-0.224" x2="-0.245" y2="-0.224" width="0.1524" layer="51"/>
-<wire x1="-1" y1="0.483" x2="1" y2="0.483" width="0.0508" layer="39"/>
-<wire x1="1" y1="0.483" x2="1" y2="-0.483" width="0.0508" layer="39"/>
-<wire x1="1" y1="-0.483" x2="-1" y2="-0.483" width="0.0508" layer="39"/>
-<wire x1="-1" y1="-0.483" x2="-1" y2="0.483" width="0.0508" layer="39"/>
-<rectangle x1="-0.554" y1="-0.3048" x2="-0.254" y2="0.2951" layer="51"/>
-<rectangle x1="0.2588" y1="-0.3048" x2="0.5588" y2="0.2951" layer="51"/>
-<rectangle x1="-0.1999" y1="-0.35" x2="0.1999" y2="0.35" layer="35"/>
-<smd name="1" x="-0.48" y="0" dx="0.57" dy="0.62" layer="1"/>
-<smd name="2" x="0.48" y="0" dx="0.57" dy="0.62" layer="1"/>
-<text x="-0.635" y="0.508" size="0.3" layer="25">&gt;NAME</text>
-</package>
-<package name="RCL_R0603">
-<description>&lt;b&gt;RESISTOR&lt;/b&gt;</description>
-<wire x1="-0.432" y1="-0.356" x2="0.432" y2="-0.356" width="0.1524" layer="51"/>
-<wire x1="0.432" y1="0.356" x2="-0.432" y2="0.356" width="0.1524" layer="51"/>
-<wire x1="-1.5" y1="0.65" x2="1.5" y2="0.65" width="0.0508" layer="39"/>
-<wire x1="1.5" y1="0.65" x2="1.5" y2="-0.65" width="0.0508" layer="39"/>
-<wire x1="1.5" y1="-0.65" x2="-1.5" y2="-0.65" width="0.0508" layer="39"/>
-<wire x1="-1.5" y1="-0.65" x2="-1.5" y2="0.65" width="0.0508" layer="39"/>
-<rectangle x1="0.4318" y1="-0.4318" x2="0.8382" y2="0.4318" layer="51"/>
-<rectangle x1="-0.8382" y1="-0.4318" x2="-0.4318" y2="0.4318" layer="51"/>
-<rectangle x1="-0.1999" y1="-0.4001" x2="0.1999" y2="0.4001" layer="35"/>
-<smd name="1" x="-0.8" y="0" dx="0.95" dy="1" layer="1"/>
-<smd name="2" x="0.8" y="0" dx="0.95" dy="1" layer="1"/>
-<text x="-1.397" y="0.762" size="0.508" layer="25">&gt;NAME</text>
-</package>
-<package name="RCL_R0805">
-<description>&lt;b&gt;RESISTOR&lt;/b&gt;&lt;p&gt;</description>
-<wire x1="-0.41" y1="0.635" x2="0.41" y2="0.635" width="0.1524" layer="51"/>
-<wire x1="-0.41" y1="-0.635" x2="0.41" y2="-0.635" width="0.1524" layer="51"/>
-<wire x1="-1.7" y1="0.9" x2="1.7" y2="0.9" width="0.0508" layer="39"/>
-<wire x1="1.7" y1="0.9" x2="1.7" y2="-0.9" width="0.0508" layer="39"/>
-<wire x1="1.7" y1="-0.9" x2="-1.7" y2="-0.9" width="0.0508" layer="39"/>
-<wire x1="-1.7" y1="-0.9" x2="-1.7" y2="0.9" width="0.0508" layer="39"/>
-<rectangle x1="0.4064" y1="-0.6985" x2="1.0564" y2="0.7015" layer="51"/>
-<rectangle x1="-1.0668" y1="-0.6985" x2="-0.4168" y2="0.7015" layer="51"/>
-<rectangle x1="-0.1999" y1="-0.5001" x2="0.1999" y2="0.5001" layer="35"/>
-<smd name="1" x="-0.95" y="0" dx="1" dy="1.45" layer="1"/>
-<smd name="2" x="0.95" y="0" dx="1" dy="1.45" layer="1"/>
-<text x="-1.651" y="1.016" size="0.635" layer="25">&gt;NAME</text>
-</package>
 <package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
 <description>Chip, 3.20 X 1.60 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
@@ -228,21 +138,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="-2.16" y1="-1.01" x2="2.16" y2="-1.01" width="0.05" layer="21"/>
 <wire x1="2.16" y1="-1.01" x2="2.16" y2="1.01" width="0.05" layer="21"/>
 <wire x1="2.16" y1="1.01" x2="-2.16" y2="1.01" width="0.05" layer="21"/>
-</package>
-<package name="RCL_R1206">
-<description>&lt;b&gt;RESISTOR&lt;/b&gt;</description>
-<wire x1="0.9525" y1="-0.8128" x2="-0.9652" y2="-0.8128" width="0.1524" layer="51"/>
-<wire x1="0.9525" y1="0.8128" x2="-0.9652" y2="0.8128" width="0.1524" layer="51"/>
-<wire x1="-2.3" y1="0.983" x2="2.3" y2="0.983" width="0.0508" layer="39"/>
-<wire x1="2.3" y1="0.983" x2="2.3" y2="-0.983" width="0.0508" layer="39"/>
-<wire x1="2.3" y1="-0.983" x2="-2.3" y2="-0.983" width="0.0508" layer="39"/>
-<wire x1="-2.3" y1="-0.983" x2="-2.3" y2="0.983" width="0.0508" layer="39"/>
-<rectangle x1="-1.6891" y1="-0.8763" x2="-0.9525" y2="0.8763" layer="51"/>
-<rectangle x1="0.9525" y1="-0.8763" x2="1.6891" y2="0.8763" layer="51"/>
-<rectangle x1="-0.3" y1="-0.7" x2="0.3" y2="0.7" layer="35"/>
-<smd name="1" x="-1.45" y="0" dx="1.15" dy="1.8" layer="1"/>
-<smd name="2" x="1.45" y="0" dx="1.15" dy="1.8" layer="1"/>
-<text x="-1.524" y="1.143" size="0.635" layer="25">&gt;NAME</text>
 </package>
 <package name="CON-LSTA_FE10-2">
 <description>&lt;b&gt;FEMALE HEADER&lt;/b&gt;</description>
@@ -747,15 +642,15 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </package3d>
 </packages3d>
 <symbols>
-<symbol name="RCL_C-EU">
+<symbol name="CAP">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
 <rectangle x1="-2.032" y1="-1.016" x2="2.032" y2="-0.508" layer="94"/>
 <wire x1="0" y1="0" x2="0" y2="-0.508" width="0.1524" layer="94"/>
 <wire x1="0" y1="-2.54" x2="0" y2="-2.032" width="0.1524" layer="94"/>
 <pin name="1" x="0" y="2.54" visible="off" length="short" direction="pas" swaplevel="1" rot="R270"/>
 <pin name="2" x="0" y="-5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R90"/>
-<text x="1.524" y="0.381" size="1.778" layer="95">&gt;NAME</text>
-<text x="1.524" y="-4.699" size="1.778" layer="96">&gt;VALUE</text>
+<text x="1.524" y="2.921" size="1.778" layer="95">&gt;NAME</text>
+<text x="1.524" y="0.381" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
 <symbol name="INDUCTORS_INDUCTOR">
 <wire x1="-5.08" y1="0" x2="-2.54" y2="0" width="0.254" layer="94" curve="-180"/>
@@ -804,21 +699,6 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pin name="2" x="5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1" rot="R180"/>
 <text x="-2.54" y="3.81" size="1.778" layer="95">&gt;NAME</text>
 <text x="-2.54" y="1.27" size="1.778" layer="96">&gt;VALUE</text>
-</symbol>
-<symbol name="RCL_R-US">
-<wire x1="-2.54" y1="0" x2="-2.159" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="-2.159" y1="1.016" x2="-1.524" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="-1.524" y1="-1.016" x2="-0.889" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="-0.889" y1="1.016" x2="-0.254" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="-0.254" y1="-1.016" x2="0.381" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="0.381" y1="1.016" x2="1.016" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="1.016" y1="-1.016" x2="1.651" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="1.651" y1="1.016" x2="2.286" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="2.286" y1="-1.016" x2="2.54" y2="0" width="0.2032" layer="94"/>
-<pin name="1" x="-5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1"/>
-<pin name="2" x="5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1" rot="R180"/>
-<text x="-3.81" y="1.4986" size="1.778" layer="95">&gt;NAME</text>
-<text x="-3.81" y="-3.302" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
 <symbol name="CON-LSTA_FE10-2">
 <wire x1="3.81" y1="-12.7" x2="-3.81" y2="-12.7" width="0.4064" layer="94"/>
@@ -1195,46 +1075,57 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="RCL_C-EU" prefix="C" uservalue="yes">
-<description>&lt;B&gt;CAPACITOR&lt;/B&gt;, European symbol</description>
+<deviceset name="CAP">
 <gates>
-<gate name="G$1" symbol="RCL_C-EU" x="0" y="0"/>
+<gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
 <devices>
-<device name="C0402" package="RCL_C0402">
+<device name="0402" package="0402">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
+</package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="POPULARITY" value="2" constant="no"/>
-<attribute name="SPICEPREFIX" value="C" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
-<device name="C0603" package="RCL_C0603">
+<device name="0603" package="0603">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
+</package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="POPULARITY" value="30" constant="no"/>
-<attribute name="SPICEPREFIX" value="C" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
-<device name="C0805" package="RCL_C0805">
+<device name="0805" package="0805">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
+</package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="POPULARITY" value="0" constant="no"/>
-<attribute name="SPICEPREFIX" value="C" constant="no"/>
-</technology>
+<technology name=""/>
+</technologies>
+</device>
+<device name="1206" package="1206">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
+</package3dinstances>
+<technologies>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -1401,62 +1292,6 @@ Source: www.kingbright.com</description>
 </package3dinstances>
 <technologies>
 <technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="RCL_R-US_" prefix="R" uservalue="yes">
-<description>&lt;B&gt;RESISTOR&lt;/B&gt;, American symbol</description>
-<gates>
-<gate name="G$1" symbol="RCL_R-US" x="0" y="0"/>
-</gates>
-<devices>
-<device name="R0402" package="RCL_R0402">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="POPULARITY" value="34" constant="no"/>
-<attribute name="SPICEPREFIX" value="R" constant="no"/>
-</technology>
-</technologies>
-</device>
-<device name="R0603" package="RCL_R0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="POPULARITY" value="77" constant="no"/>
-<attribute name="SPICEPREFIX" value="R" constant="no"/>
-</technology>
-</technologies>
-</device>
-<device name="R0805" package="RCL_R0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="POPULARITY" value="0" constant="no"/>
-<attribute name="SPICEPREFIX" value="R" constant="no"/>
-</technology>
-</technologies>
-</device>
-<device name="R1206" package="RCL_R1206">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="POPULARITY" value="0" constant="no"/>
-<attribute name="SPICEPREFIX" value="R" constant="no"/>
-</technology>
 </technologies>
 </device>
 </devices>
@@ -1906,7 +1741,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="Y1" library="MotionDetectorCamera" deviceset="SIT8021AI-J4-XXS-12.000000E_SIT8021AI-J4-XXS-12.000000E" device="">
 <attribute name="MP" value="SiT8021AI-J4-18S-12.000000E"/>
 </part>
-<part name="C1" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="10n">
+<part name="C1" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1923,7 +1758,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="LED5" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
 <part name="LED6" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
 <part name="LED7" library="MotionDetectorCamera" deviceset="LED_LED" device="CHIPLED_0603"/>
-<part name="C2" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C2" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1939,7 +1774,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="L1" library="MotionDetectorCamera" deviceset="INDUCTORS_INDUCTOR" device="LARGE" value="470n">
 <attribute name="MP" value="PA4343.471NLT"/>
 </part>
-<part name="C4" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C4" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1958,7 +1793,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="U4" library="MotionDetectorCamera" deviceset="TPS6380X_TPS6380X" device="">
 <attribute name="MP" value="TPS63805YFFR"/>
 </part>
-<part name="C3" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C3" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1967,7 +1802,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C5" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C5" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1976,7 +1811,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C6" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C6" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1985,7 +1820,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C7" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0805" value="22u">
+<part name="C7" library="MotionDetectorCamera" deviceset="CAP" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1997,10 +1832,10 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="L3" library="MotionDetectorCamera" deviceset="INDUCTORS_INDUCTOR" device="LARGE" value="470n">
 <attribute name="MP" value="PA4343.471NLT"/>
 </part>
-<part name="R6" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0603" value="365k"/>
-<part name="R7" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0603" value="91k"/>
+<part name="R6" library="MotionDetectorCamera" deviceset="RES" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k"/>
+<part name="R7" library="MotionDetectorCamera" deviceset="RES" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k"/>
 <part name="U6" library="MotionDetectorCamera" deviceset="MICRON---MT48H32M16LFB4-6-IT:C_MICRON_MT48H32M16LFB4-6_IT-C*?" device="MICRON_MT48H32M16LFB4-6_IT-C_0_0"/>
-<part name="C12" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C12" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2009,7 +1844,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C13" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C13" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2018,7 +1853,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C16" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C16" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2027,7 +1862,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C17" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="10n">
+<part name="C17" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2036,7 +1871,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C18" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C18" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2045,7 +1880,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C19" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="10n">
+<part name="C19" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2054,7 +1889,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C24" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C24" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2063,7 +1898,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C25" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="10n">
+<part name="C25" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2072,7 +1907,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C30" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C30" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2081,7 +1916,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </spice>
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C31" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C31" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -2110,35 +1945,35 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="X9" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="X10" library="MotionDetectorCamera" deviceset="CON-COAX_734120110" device=""/>
 <part name="R20" library="MotionDetectorCamera" deviceset="RES" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
-<part name="R21" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0805" value="0"/>
-<part name="R22" library="MotionDetectorCamera" deviceset="RCL_R-US_" device="R0805" value="0"/>
+<part name="R21" library="MotionDetectorCamera" deviceset="RES" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
+<part name="R22" library="MotionDetectorCamera" deviceset="RES" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
 <part name="U5" library="MotionDetectorCamera" deviceset="ICE40HX4K" device="BG121" package3d_urn="urn:adsk.eagle:package:16997455/1"/>
-<part name="C28" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C28" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
-<part name="C29" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="10n">
+<part name="C29" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="R8" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
-<part name="C8" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C8" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C9" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C9" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="R9" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
-<part name="C10" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C10" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C11" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C11" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="U1" library="MotionDetectorCamera" deviceset="GD25LQ80C" device="USON8" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
 <part name="R23" library="MotionDetectorCamera" deviceset="RES" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="C14" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0603" value="10u">
+<part name="C14" library="MotionDetectorCamera" deviceset="CAP" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C15" library="MotionDetectorCamera" deviceset="RCL_C-EU" device="C0402" value="100n">
+<part name="C15" library="MotionDetectorCamera" deviceset="CAP" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="TC1" library="MotionDetectorCamera" deviceset="TC2050-NL" device=""/>
