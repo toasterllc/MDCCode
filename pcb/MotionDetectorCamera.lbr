@@ -1232,23 +1232,23 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </symbol>
 <symbol name="W989D6DB_0">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
-<wire x1="0" y1="-25.4" x2="0" y2="-5.08" width="0.254" layer="94"/>
-<wire x1="0" y1="-5.08" x2="17.78" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-25.4" x2="-7.62" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-5.08" x2="17.78" y2="-5.08" width="0.254" layer="94"/>
 <wire x1="17.78" y1="-5.08" x2="17.78" y2="-25.4" width="0.254" layer="94"/>
-<wire x1="17.78" y1="-25.4" x2="0" y2="-25.4" width="0.254" layer="94"/>
-<pin name="1_VDD" x="-5.08" y="-7.62" length="middle"/>
-<pin name="1_VDDQ" x="-5.08" y="-15.24" length="middle"/>
+<wire x1="17.78" y1="-25.4" x2="-7.62" y2="-25.4" width="0.254" layer="94"/>
+<pin name="1_VDD" x="-12.7" y="-7.62" length="middle"/>
+<pin name="1_VDDQ" x="-12.7" y="-15.24" length="middle"/>
 <pin name="1_VSS" x="22.86" y="-7.62" length="middle" rot="R180"/>
 <pin name="1_VSSQ" x="22.86" y="-15.24" length="middle" rot="R180"/>
-<pin name="2_VDD" x="-5.08" y="-10.16" length="middle"/>
-<pin name="2_VDDQ" x="-5.08" y="-17.78" length="middle"/>
+<pin name="2_VDD" x="-12.7" y="-10.16" length="middle"/>
+<pin name="2_VDDQ" x="-12.7" y="-17.78" length="middle"/>
 <pin name="2_VSS" x="22.86" y="-10.16" length="middle" rot="R180"/>
 <pin name="2_VSSQ" x="22.86" y="-17.78" length="middle" rot="R180"/>
-<pin name="3_VDD" x="-5.08" y="-12.7" length="middle"/>
-<pin name="3_VDDQ" x="-5.08" y="-20.32" length="middle"/>
+<pin name="3_VDD" x="-12.7" y="-12.7" length="middle"/>
+<pin name="3_VDDQ" x="-12.7" y="-20.32" length="middle"/>
 <pin name="3_VSS" x="22.86" y="-12.7" length="middle" rot="R180"/>
 <pin name="3_VSSQ" x="22.86" y="-20.32" length="middle" rot="R180"/>
-<pin name="4_VDDQ" x="-5.08" y="-22.86" length="middle"/>
+<pin name="4_VDDQ" x="-12.7" y="-22.86" length="middle"/>
 <pin name="4_VSSQ" x="22.86" y="-22.86" length="middle" rot="R180"/>
 <text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
 </symbol>
