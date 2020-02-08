@@ -122,7 +122,7 @@ module Iceboard_CopyImage(
     wire w;
     assign pix_fv = w;
     assign pix_lv = w;
-    Icestick_AFIFOProducer producer(.ice_clk12mhz(ice_clk12mhz), .wclk(pix_clk), .w(w), .wd(pix_d));
+    Icestick_AFIFOProducer producer(.clk12mhz(ice_clk12mhz), .wclk(pix_clk), .w(w), .wd(pix_d));
     
     mt48lc8m16a2 sdram(
         .Clk(ram_clk),
