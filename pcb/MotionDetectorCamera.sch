@@ -1994,7 +1994,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="U6" gate="A" x="320.04" y="-35.56" smashed="yes">
 <attribute name="NAME" x="320.04" y="-38.1" size="2.54" layer="95" align="top-left"/>
 </instance>
-<instance part="U6" gate="B" x="317.5" y="71.12" smashed="yes"/>
+<instance part="U6" gate="B" x="317.5" y="71.12" smashed="yes">
+<attribute name="NAME" x="320.04" y="68.58" size="2.54" layer="95" align="top-left"/>
+</instance>
 <instance part="C12" gate="G$1" x="327.66" y="-25.4" smashed="yes" rot="R90">
 <attribute name="NAME" x="330.835" y="-26.416" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="330.835" y="-28.956" size="1.778" layer="96" rot="MR180"/>
