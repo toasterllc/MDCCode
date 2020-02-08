@@ -23,11 +23,19 @@
 
 ===== SPI NOR flash =====
 
+    * GD25LQ80CEIGR
+        https://www.mouser.com/ProductDetail/GigaDevice/GD25LQ80CEIGR?qs=sGAEpiMZZMtI%252BQ06EiAoG%252B%252B%252BMGla4gm4T%2FQH3qQ%252BJc4%3D
+    
+    
+    
     * AT25XV041B-SSHV-T
         https://www.mouser.com/ProductDetail/Adesto-Technologies/AT25XV041B-SSHV-T?qs=sGAEpiMZZMtI%252BQ06EiAoG6XpRdQIfcdLBt%2Fpz0Hz8k0%3D
         
         Search query:
         https://www.mouser.com/Semiconductors/Memory-ICs/NOR-Flash/_/N-488w1Z1yzvvqx?P=1z0y176Z1y95odyZ1yzmm0aZ1yzmlzwZ1z0t47xZ1z0z7v5&Ns=Pricing|0
+    
+    * Buy GD25LQ80C instead? It's 3x2 mm so it'll be easier to route...
+        Nevermind, it doesn't support a 1.8V rail
 
 
 

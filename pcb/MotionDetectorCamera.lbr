@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="0.1" altunitdist="mil" altunit="mil"/>
+<grid distance="1" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.1" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -944,6 +944,24 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="0" y="4.635" size="1.27" layer="25" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-4.635" size="1.27" layer="27" align="top-center">&gt;VALUE</text>
 </package>
+<package name="SON50P300X200X60-8N" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="2" x="-1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="3" x="-1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="4" x="-1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="5" x="1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="6" x="1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="7" x="1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="8" x="1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<text x="-0.254" y="1.385" size="0.508" layer="25" align="bottom-center">&gt;NAME</text>
+<wire x1="-1.55" y1="0.635" x2="-1.033" y2="1.05" width="0.127" layer="21"/>
+<wire x1="-1.033" y1="1.05" x2="1.55" y2="1.05" width="0.127" layer="21"/>
+<wire x1="1.55" y1="1.05" x2="1.55" y2="-1.05" width="0.127" layer="21"/>
+<wire x1="1.55" y1="-1.05" x2="-1.55" y2="-1.05" width="0.127" layer="21"/>
+<wire x1="-1.55" y1="-1.05" x2="-1.55" y2="0.635" width="0.127" layer="21"/>
+</package>
 </packages>
 <packages3d>
 <package3d name="BGA121C80P11X11_900X900X100N" urn="urn:adsk.eagle:package:16997455/1" type="model">
@@ -965,6 +983,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;54-pin collapsing BGA package with 0.75 mm col pitch and 0.75 mm row pitch with body size 8.00 X 6.00 X 1.00 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="BGA54C75P6X9_800X600X100N"/>
+</packageinstances>
+</package3d>
+<package3d name="SON50P300X200X60-8N" urn="urn:adsk.eagle:package:17077898/1" type="model">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="SON50P300X200X60-8N"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -1591,6 +1616,22 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="VCC_SPI_L11" x="-20.32" y="-20.32" length="short"/>
 <pin name="GNDPLL0_L6" x="-20.32" y="-15.24" length="short"/>
 <pin name="CRESET_B_L9" x="-20.32" y="-38.1" length="short"/>
+</symbol>
+<symbol name="GD25LQ80C">
+<wire x1="-10.16" y1="5.08" x2="-10.16" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="-10.16" y1="-7.62" x2="10.16" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="10.16" y1="-7.62" x2="10.16" y2="5.08" width="0.254" layer="94"/>
+<wire x1="10.16" y1="5.08" x2="-10.16" y2="5.08" width="0.254" layer="94"/>
+<pin name="CS_" x="-15.24" y="2.54" length="middle"/>
+<pin name="SO" x="-15.24" y="0" length="middle"/>
+<pin name="WP_" x="-15.24" y="-2.54" length="middle"/>
+<pin name="GND" x="-15.24" y="-5.08" length="middle"/>
+<pin name="VDD" x="15.24" y="2.54" length="middle" rot="R180"/>
+<pin name="HOLD_" x="15.24" y="0" length="middle" rot="R180"/>
+<pin name="SCLK" x="15.24" y="-2.54" length="middle" rot="R180"/>
+<pin name="SI" x="15.24" y="-5.08" length="middle" rot="R180"/>
+<text x="-8.89" y="-10.16" size="1.778" layer="96">&gt;VALUE</text>
+<text x="-8.89" y="5.842" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -2437,6 +2478,31 @@ Source: www.kingbright.com</description>
 <device name="TEST2" package="BGA54C75P6X9_800X600X100N">
 <package3dinstances>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17001124/1"/>
+</package3dinstances>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="GD25LQ80C">
+<gates>
+<gate name="G$1" symbol="GD25LQ80C" x="7.62" y="-12.7"/>
+</gates>
+<devices>
+<device name="USON8" package="SON50P300X200X60-8N">
+<connects>
+<connect gate="G$1" pin="CS_" pad="1"/>
+<connect gate="G$1" pin="GND" pad="4"/>
+<connect gate="G$1" pin="HOLD_" pad="7"/>
+<connect gate="G$1" pin="SCLK" pad="6"/>
+<connect gate="G$1" pin="SI" pad="5"/>
+<connect gate="G$1" pin="SO" pad="2"/>
+<connect gate="G$1" pin="VDD" pad="8"/>
+<connect gate="G$1" pin="WP_" pad="3"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17077898/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
