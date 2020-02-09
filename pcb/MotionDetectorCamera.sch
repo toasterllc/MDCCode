@@ -135,7 +135,7 @@ by exp-lbrs.ulp</description>
 Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="A" x="-0.641" y="0" dx="0.7" dy="0.5" layer="1"/>
 <smd name="C" x="0.475" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" thermals="no"/>
-<text x="-1.105" y="0.363" size="0.254" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
+<text x="-1.105" y="0.363" size="0.3556" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-1.075" y="0.33"/>
 <vertex x="-0.775" y="0.33"/>
@@ -209,7 +209,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<text x="-0.532740625" y="0.734990625" size="0.3048" layer="25" font="vector" rot="SR0">&gt;NAME</text>
+<text x="-0.532740625" y="0.734990625" size="0.3556" layer="25" font="vector" rot="SR0">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.7"/>
 <vertex x="-0.3" y="0.7"/>
@@ -242,7 +242,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="E1" x="-0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E2" x="0" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E3" x="0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<text x="-0.838" y="1.245" size="0.3048" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.838" y="1.245" size="0.3556" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.8" y="1.2"/>
 <vertex x="-0.5" y="1.2"/>
@@ -367,7 +367,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
 <smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
 <smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
-<text x="-0.53" y="0.932" size="0.254" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.53" y="0.932" size="0.3556" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.9"/>
 <vertex x="-0.5" y="0.7"/>
@@ -564,7 +564,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <smd name="6" x="6.35" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
 <smd name="4" x="5.08" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
 <smd name="5" x="6.35" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
-<text x="-0.635" y="1.47" size="0.762" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.635" y="1.47" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <hole x="0" y="0" drill="0.9906"/>
 <hole x="7.62" y="-1.016" drill="0.9906"/>
 <hole x="7.62" y="1.016" drill="0.9906"/>
@@ -574,7 +574,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 &lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
 <smd name="2" x="0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
-<text x="-0.881" y="0.429" size="0.3048" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.881" y="0.429" size="0.3556" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
 <wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
 <wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
@@ -591,7 +591,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 &lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
 <smd name="2" x="0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
-<text x="-1.379" y="0.635" size="0.3048" layer="25" font="vector">&gt;NAME</text>
+<text x="-1.379" y="0.635" size="0.4064" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="21"/>
