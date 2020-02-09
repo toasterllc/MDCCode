@@ -49,7 +49,7 @@
         
         https://www.mouser.com/ProductDetail/SiTime/SiT8021AI-J4-18S-12000000E?qs=sGAEpiMZZMt8zWNA7msRClCqa6DO0PP1pyoDKRTdWkjwX4HbinU6Eg%3D%3D
         
-        Vdd input capacitor (10nF X7R ceramic):
+        Vdd input capacitor (10nF 0402 X7R ceramic):
             GCM155R71H103JA55D
             https://www.mouser.com/ProductDetail/Murata-Electronics/GCM155R71H103JA55D?qs=sGAEpiMZZMs0AnBnWHyRQKFZIQ7b73cdsQrN1P1IHl%2FOMGz4iBFrnQ%3D%3D
 
@@ -68,7 +68,7 @@
         
         * Support components:
         
-            * Vdd input capacitor (10µF X5R ceramic):
+            * Vdd input capacitor (10µF 0603 X5R ceramic):
                 GRM188R61A106KE69D
                 https://www.mouser.com/ProductDetail/Murata-Electronics/GRM188R61A106KE69D?qs=sGAEpiMZZMs0AnBnWHyRQIQ9GZ%252BR1NCaPZjWVMvlF0E%3D
                 
@@ -124,7 +124,7 @@
             * Vdd input capacitor (10µF X5R ceramic):
                 GRM188R61A106KE69D (see above)
             
-            * Output capacitor (22µF X5R ceramic):
+            * Output capacitor (22µF 0805 X5R ceramic):
                 GRM219R61C226ME15L
                 $.44
                 R=.006Ω @ 3MHz
@@ -165,7 +165,7 @@
         https://www.mouser.com/ProductDetail/Lattice/iCE40HX4K-CB132?qs=sGAEpiMZZMvoScKlWpK8TFmJQqGdnp9VBwdRw2uKJ9w%3D
     
         * PLL filter caps (2 of each):
-            * 100nF
+            * 100nF (0402 X5R ceramic)
                 GRM155R61H104KE19D
                 https://www.mouser.com/ProductDetail/Murata-Electronics/GRM155R61H104KE19D?qs=sGAEpiMZZMs0AnBnWHyRQA3eyUP2RfX7def7QuOYRWZWBPIWABfFhg%3D%3D
             
@@ -209,7 +209,7 @@
     * PRL-TNET-SMF
         https://www.pulseresearchlab.com/products/prl-tnet?variant=29205917576
     
-    * 10µF 0805 decoupling capacitor:
+    * 10µF 0805 decoupling capacitor (adapter doesn't support 0603):
         https://www.mouser.com/ProductDetail/Murata-Electronics/GRM21BR61C106KE15L?qs=sGAEpiMZZMs0AnBnWHyRQFQYdTDrJniY6UiV3hUxNOg%3D
     
     * 50Ω 1206 resistor:
