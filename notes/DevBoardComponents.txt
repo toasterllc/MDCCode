@@ -4,10 +4,15 @@
         https://www.mouser.com/ProductDetail/FTDI/C232HM-DDHSL-0?qs=EB8w3yL7SqMfAQpmyuyp%252Bw%3D%3D
     
     * 10-pin Tag-Connect
-        Cable: https://www.tag-connect.com/product/tc2050-idc-nl-10-pin-no-legs-cable-with-ribbon-connector
-        Clip: https://www.tag-connect.com/product/tc2050-clip
+        Cable:
+            https://www.digikey.com/product-detail/en/TC2050-IDC-NL/TC2050-IDC-NL-ND/2605367/?itemSeq=317149389
+            https://www.tag-connect.com/product/tc2050-idc-nl-10-pin-no-legs-cable-with-ribbon-connector
+        Clip:
+            https://www.digikey.com/product-detail/en/TC2050-CLIP/TC2050-CLIP-ND/2605374/?itemSeq=317149392
+            https://www.tag-connect.com/product/tc2050-clip
     
     * Level-shifter to convert between FTDI 3v3 signals to SPI NOR flash 1v8 signals
+        https://www.digikey.com/product-detail/en/395/1528-1003-ND/4990752/?itemSeq=317149347
         https://www.adafruit.com/product/395
 
 
@@ -18,8 +23,7 @@
         https://www.mouser.com/ProductDetail/Lattice/HW-USBN-2B?qs=HqOR3aA30b56VfKOuz6yiw%3D%3D
     
     * 10-pin Tag-Connect
-        Cable: https://www.tag-connect.com/product/tc2050-idc-nl-10-pin-no-legs-cable-with-ribbon-connector
-        Clip: https://www.tag-connect.com/product/tc2050-clip
+        See above (get another cable+clip for NVCM flashing)
 
 
 
@@ -29,15 +33,12 @@
         https://www.mouser.com/ProductDetail/GigaDevice/GD25LQ80CEIGR?qs=sGAEpiMZZMtI%252BQ06EiAoG%252B%252B%252BMGla4gm4T%2FQH3qQ%252BJc4%3D
     
     
-    
-    * AT25XV041B-SSHV-T
-        https://www.mouser.com/ProductDetail/Adesto-Technologies/AT25XV041B-SSHV-T?qs=sGAEpiMZZMtI%252BQ06EiAoG6XpRdQIfcdLBt%2Fpz0Hz8k0%3D
-        
-        Search query:
-        https://www.mouser.com/Semiconductors/Memory-ICs/NOR-Flash/_/N-488w1Z1yzvvqx?P=1z0y176Z1y95odyZ1yzmm0aZ1yzmlzwZ1z0t47xZ1z0z7v5&Ns=Pricing|0
-    
-    * Buy GD25LQ80C instead? It's 3x2 mm so it'll be easier to route...
-        Nevermind, it doesn't support a 1.8V rail
+        Older option that was in a larger package:
+        * AT25XV041B-SSHV-T
+            https://www.mouser.com/ProductDetail/Adesto-Technologies/AT25XV041B-SSHV-T?qs=sGAEpiMZZMtI%252BQ06EiAoG6XpRdQIfcdLBt%2Fpz0Hz8k0%3D
+            
+            Search query:
+            https://www.mouser.com/Semiconductors/Memory-ICs/NOR-Flash/_/N-488w1Z1yzvvqx?P=1z0y176Z1y95odyZ1yzmm0aZ1yzmlzwZ1z0t47xZ1z0z7v5&Ns=Pricing|0
 
 
 
@@ -47,6 +48,7 @@
         12 MHz, 1.8V, .38 mA with 10pF load
         -40 C, 85C
         
+        https://www.arrow.com/en/products/sit8021ai-j4-18s-12.000000e/sitime
         https://www.mouser.com/ProductDetail/SiTime/SiT8021AI-J4-18S-12000000E?qs=sGAEpiMZZMt8zWNA7msRClCqa6DO0PP1pyoDKRTdWkjwX4HbinU6Eg%3D%3D
         
         Vdd input capacitor (10nF 0402 X7R ceramic):
@@ -74,7 +76,7 @@
                 
                 *** Using a 10µF instead of 4.7uF because: "When operating from a high impedance source, like a coin cell, a larger input buffer capacitor ≥10µF is recommended" ***
             
-            * Output capacitor (10µF X5R ceramic):
+            * Output capacitor (10µF 0603 X5R ceramic):
                 GRM188R61A106KE69D (see above)
             
             * Output inductor (470nH):
@@ -121,7 +123,7 @@
         
         * Support components:
         
-            * Vdd input capacitor (10µF X5R ceramic):
+            * Vdd input capacitor (10µF 0603 X5R ceramic):
                 GRM188R61A106KE69D (see above)
             
             * Output capacitor (22µF 0805 X5R ceramic):
@@ -161,8 +163,9 @@
 
 ===== iCE40HX4K =====
 
-    * Chip: iCE40HX4K-CB132
-        https://www.mouser.com/ProductDetail/Lattice/iCE40HX4K-CB132?qs=sGAEpiMZZMvoScKlWpK8TFmJQqGdnp9VBwdRw2uKJ9w%3D
+    * Chip: ICE40HX4K-BG121
+        https://www.digikey.com/product-detail/en/ICE40HX4K-BG121/220-2147-ND/7784602/?itemSeq=317149379
+        https://www.mouser.com/ProductDetail/Lattice/ICE40HX4K-BG121?qs=sGAEpiMZZMvoScKlWpK8TKikNydnC9niueErIV1QQEY%3D
     
         * PLL filter caps (2 of each):
             * 100nF (0402 X5R ceramic)
@@ -184,27 +187,27 @@
 
 ===== SDRAM =====
 
-    * W989D6DBGX6I (1.8V, 64 MB)
+    * W989D6DBGX6I (1.8V, 512 Mbit == 64 MB)
         https://www.mouser.com/ProductDetail/Winbond/W989D6DBGX6I?qs=sGAEpiMZZMti5BT4iPSEnQu7z0iSiUMhEmurxJiFX9A%3D
-    
+
 
 
 ===== Resistors (generic) =====
 
-    * 0 0805
+    * 0 0805 (jumper to isolate individual rails)
         https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW08050000Z0EAC?qs=sGAEpiMZZMvdGkrng054t8r8AhKhXLMmzPPGu4AYPLvHc5kYCgGUXA%3D%3D
     
-    * 0 1206
+    * 0 1206 (to replace current-sensing resistor that powers entire board)
         https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW12060000Z0EAC?qs=sGAEpiMZZMvdGkrng054t0DrEhLhGh8gmWu5YO3o1qhRpAhriXClmA%3D%3D
     
-    * 1 1206
+    * 1 1206 (current sensing resistor)
         https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW12061R00FKEA?qs=sGAEpiMZZMvdGkrng054txEw7b1YnvGuTZtUTj8nHhg%3D
     
     * 10k 0402
         https://www.mouser.com/ProductDetail/Vishay-Dale/CRCW040210K0FKEDC?qs=sGAEpiMZZMvdGkrng054t0DrEhLhGh8ghRTPC4LoFoV0V5heIyAs3Q%3D%3D
 
 
-===== AC decoupling+termination (so we don't need to solder capacitors at every U.FL connector to measure noise) =====
+===== AC decoupling+termination (so we don't need to solder capacitors at every UFL connector to measure noise) =====
 
     * PRL-TNET-SMF
         https://www.pulseresearchlab.com/products/prl-tnet?variant=29205917576
@@ -218,7 +221,7 @@
     * Extra SMA connectors (buy 2-4)
         https://www.mouser.com/ProductDetail/712-CSI-SGFI-1-UFFR
     
-===== U.FL connectors =====
+===== UFL connectors =====
 
     https://www.mouser.com/ProductDetail/538-73412-0110
 
