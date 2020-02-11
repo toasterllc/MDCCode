@@ -189,6 +189,7 @@
 
     * W989D6DBGX6I (1.8V, 512 Mbit == 64 MB)
         https://www.mouser.com/ProductDetail/Winbond/W989D6DBGX6I?qs=sGAEpiMZZMti5BT4iPSEnQu7z0iSiUMhEmurxJiFX9A%3D
+        https://www.mouser.com/datasheet/2/949/w989dxdb_pkg_datasheet_a01-002_20161201-1760425.pdf
 
 
 
