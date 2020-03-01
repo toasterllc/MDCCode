@@ -156,7 +156,7 @@
 
     * 1.8V, low-current leds:
         https://www.mouser.com/ProductDetail/OSRAM-Opto-Semiconductors/KS-DELLS122-JHKI-1?qs=sGAEpiMZZMseGfSY3csMkXiJOH5X%252BfXwNJsZ%252BOXg8XaVOHkeln0GNw%3D%3D
-
+    
     * 1.8k 0402 resistors
         https://www.mouser.com/ProductDetail/TE-Connectivity-Holsworthy/CRGP0402F1K8?qs=sGAEpiMZZMvdGkrng054t7z4BkURc4LzLwl1egGSUqb5tbuRcoJW%252Bw%3D%3D
 

@@ -639,6 +639,73 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="2.16" y="1.01"/>
 </polygon>
 </package>
+<package name="QFN50P700X700X100-48N" urn="urn:adsk.eagle:footprint:17276323/1">
+<description>48-QFN, 0.50 mm pitch, 7.00 X 7.00 X 1.00 mm body
+&lt;p&gt;48-pin QFN package with 0.50 mm pitch with body size 7.00 X 7.00 X 1.00 mm&lt;/p&gt;</description>
+<circle x="-4.004" y="3.3699" radius="0.25" width="0" layer="21"/>
+<wire x1="-3.5" y1="3.1199" x2="-3.5" y2="3.5" width="0.12" layer="21"/>
+<wire x1="-3.5" y1="3.5" x2="-3.1199" y2="3.5" width="0.12" layer="21"/>
+<wire x1="3.5" y1="3.1199" x2="3.5" y2="3.5" width="0.12" layer="21"/>
+<wire x1="3.5" y1="3.5" x2="3.1199" y2="3.5" width="0.12" layer="21"/>
+<wire x1="3.5" y1="-3.1199" x2="3.5" y2="-3.5" width="0.12" layer="21"/>
+<wire x1="3.5" y1="-3.5" x2="3.1199" y2="-3.5" width="0.12" layer="21"/>
+<wire x1="-3.5" y1="-3.1199" x2="-3.5" y2="-3.5" width="0.12" layer="21"/>
+<wire x1="-3.5" y1="-3.5" x2="-3.1199" y2="-3.5" width="0.12" layer="21"/>
+<wire x1="3.5" y1="-3.5" x2="-3.5" y2="-3.5" width="0.12" layer="51"/>
+<wire x1="-3.5" y1="-3.5" x2="-3.5" y2="3.5" width="0.12" layer="51"/>
+<wire x1="-3.5" y1="3.5" x2="3.5" y2="3.5" width="0.12" layer="51"/>
+<wire x1="3.5" y1="3.5" x2="3.5" y2="-3.5" width="0.12" layer="51"/>
+<smd name="1" x="-3.4506" y="2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="2" x="-3.4506" y="2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="3" x="-3.4506" y="1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="4" x="-3.4506" y="1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="5" x="-3.4506" y="0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="6" x="-3.4506" y="0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="7" x="-3.4506" y="-0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="8" x="-3.4506" y="-0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="9" x="-3.4506" y="-1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="10" x="-3.4506" y="-1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="11" x="-3.4506" y="-2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="12" x="-3.4506" y="-2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="13" x="-2.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="14" x="-2.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="15" x="-1.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="16" x="-1.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="17" x="-0.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="18" x="-0.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="19" x="0.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="20" x="0.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="21" x="1.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="22" x="1.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="23" x="2.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="24" x="2.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="25" x="3.4506" y="-2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="26" x="3.4506" y="-2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="27" x="3.4506" y="-1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="28" x="3.4506" y="-1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="29" x="3.4506" y="-0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="30" x="3.4506" y="-0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="31" x="3.4506" y="0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="32" x="3.4506" y="0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="33" x="3.4506" y="1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="34" x="3.4506" y="1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="35" x="3.4506" y="2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="36" x="3.4506" y="2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
+<smd name="37" x="2.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="38" x="2.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="39" x="1.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="40" x="1.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="41" x="0.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="42" x="0.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="43" x="-0.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="44" x="-0.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="45" x="-1.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="46" x="-1.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="47" x="-2.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<smd name="48" x="-2.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
+<text x="0" y="4.4909" size="1.27" layer="25" align="bottom-center">&gt;NAME</text>
+<text x="0" y="-4.4909" size="1.27" layer="27" align="top-center">&gt;VALUE</text>
+</package>
 </packages>
 <packages3d>
 <package3d name="BGA121C80P11X11_900X900X100N" urn="urn:adsk.eagle:package:16997455/1" type="model">
@@ -681,6 +748,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="1206"/>
+</packageinstances>
+</package3d>
+<package3d name="QFN50P700X700X100-48N" urn="urn:adsk.eagle:package:17276209/1" type="model">
+<description>48-QFN, 0.50 mm pitch, 7.00 X 7.00 X 1.00 mm body
+&lt;p&gt;48-pin QFN package with 0.50 mm pitch with body size 7.00 X 7.00 X 1.00 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="QFN50P700X700X100-48N"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -1856,6 +1930,20 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </connects>
 <package3dinstances>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
+</package3dinstances>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TEST">
+<gates>
+</gates>
+<devices>
+<device name="TEST" package="QFN50P700X700X100-48N">
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17276209/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
