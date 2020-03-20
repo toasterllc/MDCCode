@@ -3,7 +3,7 @@
 
 `ifdef SIM
 
-`include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
+`include "../mt48lc8m16a2/mt48lc8m16a2.v"
 
 `define stringify(x) `"x```"
 `define assert(cond) if (!(cond)) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)

@@ -232,7 +232,7 @@ endmodule
 
 `ifdef SIM
 
-`include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
+`include "../mt48lc8m16a2/mt48lc8m16a2.v"
 
 module Icestick_SDRAMReadWriteRandomlySim(
     output logic        ledRed,

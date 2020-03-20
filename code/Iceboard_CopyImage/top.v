@@ -3,16 +3,17 @@
 `include "../SDRAMController.v"
 `include "../AFIFO.v"
 
-// `include "../Icestick_AFIFOProducer/top.v"
-// `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
+`include "../Icestick_AFIFOProducer/Icestick_AFIFOProducer.v"
+// `include "../mt48lc8m16a2/mt48lc8m16a2.v"
+`include "../mt48h32m16lf/mobile_sdr.v"
 
-module Iceboard_CopyImage(
+module Top(
     input wire          ice_clk12mhz,   // 12 MHz crystal
     
     output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
-    output wire[11:0]   ram_a,
+    output wire[12:0]   ram_a,
     output wire         ram_cs_,
     output wire         ram_ras_,
     output wire         ram_cas_,
@@ -27,14 +28,14 @@ module Iceboard_CopyImage(
     input wire[11:0]    pix_d       // Data from image sensor
 );
     localparam ClockFrequency = 100000000; // 100 MHz
-    localparam RAM_AddrWidth = 23;
+    localparam RAM_AddrWidth = 25;
     localparam RAM_DataWidth = 16;
     
     // 100 MHz clock
     wire clk;
     wire rst;
     ClockGen #(
-        .FREQ(100),
+        .FREQ(ClockFrequency),
 		.DIVR(0),
 		.DIVF(66),
 		.DIVQ(3),
@@ -122,98 +123,28 @@ module Iceboard_CopyImage(
     wire w;
     assign pix_fv = w;
     assign pix_lv = w;
-    Icestick_AFIFOProducer producer(.clk12mhz(ice_clk12mhz), .wclk(pix_clk), .w(w), .wd(pix_d));
+    Icestick_AFIFOProducer producer(.clk(clk), .wclk(pix_clk), .w(w), .wd(pix_d));
     
-    mt48lc8m16a2 sdram(
-        .Clk(ram_clk),
-        .Dq(ram_dq),
-        .Addr(ram_a),
-        .Ba(ram_ba),
-        .Cke(ram_cke),
-        .Cs_n(ram_cs_),
-        .Ras_n(ram_ras_),
-        .Cas_n(ram_cas_),
-        .We_n(ram_we_),
-        .Dqm({ram_udqm, ram_ldqm})
+    mobile_sdr sdram(
+        .clk(ram_clk),
+        .dq(ram_dq),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cke(ram_cke),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dqm({ram_udqm, ram_ldqm})
     );
     
     initial begin
        $dumpfile("top.vcd");
-       $dumpvars(0, Iceboard_CopyImage);
-       #10000000000000;
+       $dumpvars(0, Top);
+       #1000000000;
        $finish;
       end
 `endif
     
     
 endmodule
-
-// `ifdef SIM
-//
-// `include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
-// `include "../4012mt48lc16m16a2/mt48lc16m16a2.v"
-//
-// module Iceboard_CopyImageSim(
-//     output logic        sdram_clk,
-//     output logic        sdram_cke,
-//     output logic[1:0]   sdram_ba,
-//     output logic[11:0]  sdram_a,
-//     output logic        sdram_cs_,
-//     output logic        sdram_ras_,
-//     output logic        sdram_cas_,
-//     output logic        sdram_we_,
-//     output logic        sdram_udqm,
-//     output logic        sdram_ldqm,
-//     inout logic[15:0]   sdram_dq
-// );
-//
-//     logic ice_clk12mhz;
-//
-//     Iceboard_CopyImage iceboardSDRAMTest(
-//         .ice_clk12mhz(ice_clk12mhz),
-//         .sdram_clk(sdram_clk),
-//         .sdram_cke(sdram_cke),
-//         .sdram_ba(sdram_ba),
-//         .sdram_a(sdram_a),
-//         .sdram_cs_(sdram_cs_),
-//         .sdram_ras_(sdram_ras_),
-//         .sdram_cas_(sdram_cas_),
-//         .sdram_we_(sdram_we_),
-//         .sdram_udqm(sdram_udqm),
-//         .sdram_ldqm(sdram_ldqm),
-//         .sdram_dq(sdram_dq)
-//     );
-//
-//     mt48lc8m16a2 sdram(
-//         .Clk(sdram_clk),
-//         .Dq(sdram_dq),
-//         .Addr(sdram_a),
-//         .Ba(sdram_ba),
-//         .Cke(sdram_cke),
-//         .Cs_n(sdram_cs_),
-//         .Ras_n(sdram_ras_),
-//         .Cas_n(sdram_cas_),
-//         .We_n(sdram_we_),
-//         .Dqm({sdram_udqm, sdram_ldqm})
-//     );
-//
-//     initial begin
-//        $dumpfile("top.vcd");
-//        $dumpvars(0, Iceboard_CopyImageSim);
-//
-//        #10000000;
-// //        #200000000;
-// //        #2300000000;
-// //        $finish;
-//     end
-//
-//     initial begin
-//         ice_clk12mhz = 0;
-//         forever begin
-//             ice_clk12mhz = !ice_clk12mhz;
-//             #42;
-//         end
-//     end
-// endmodule
-//
-// `endif

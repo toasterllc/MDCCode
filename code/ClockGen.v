@@ -1,6 +1,8 @@
+`timescale 1ns/1ps
+
 module ClockGen #(
     // 100MHz by default
-    parameter FREQ=100,
+    parameter FREQ=100000000,
     parameter DIVR=0,
     parameter DIVF=66,
     parameter DIVQ=3,
@@ -13,11 +15,6 @@ module ClockGen #(
     wire locked;
     
 `ifdef SIM
-    function integer Clocks;
-        input reg[63:0] t;
-        Clocks = (1000000000/FREQ);
-    endfunction
-    
     reg simClk;
     reg[3:0] simLockedCounter;
     assign clk = simClk;
@@ -27,7 +24,7 @@ module ClockGen #(
         simClk = 0;
         simLockedCounter = 0;
         forever begin
-            #(Clocks(FREQ)/2);
+            #((1000000000/FREQ)/2);
             simClk = !simClk;
             
             if (!simClk & !locked) begin

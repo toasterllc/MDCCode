@@ -278,8 +278,8 @@ endmodule
 
 `ifdef SIM
 
-`include "../4062mt48lc8m16a2/mt48lc8m16a2.v"
-`include "../4012mt48lc16m16a2/mt48lc16m16a2.v"
+`include "../mt48lc8m16a2/mt48lc8m16a2.v"
+`include "../mt48lc16m16a2/mt48lc16m16a2.v"
 
 module Iceboard_SimpleReadWrite2Sim(
     output logic        ledFailed,
