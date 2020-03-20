@@ -1,109 +1,82 @@
 `timescale 1ns/1ps
+`include "../ClockGen.v"
 `include "../SDRAMController.v"
 `include "../uart.v"
+`include "../mt48h32m16lf/mobile_sdr.v"
 
 module Random9(
-    input logic clk, rst, next,
-    output logic[8:0] q
+    input wire clk, next,
+    output reg[8:0] q = 0
 );
     always @(posedge clk)
-        if (rst) q <= 1;
+        if (q == 0) q <= 1;
         // Feedback polynomial for N=9: x^9 + x^5 + 1
         else if (next) q <= {q[7:0], q[9-1] ^ q[5-1]};
 endmodule
 
 module Random16(
-    input logic clk, rst, next,
-    output logic[15:0] q
+    input wire clk, next,
+    output reg[15:0] q = 0
 );
     always @(posedge clk)
-        if (rst) q <= 1;
+        if (q == 0) q <= 1;
         // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
         else if (next) q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
 endmodule
 
-module Random23(
-    input logic clk, rst, next,
-    output logic[22:0] q,
-    output logic wrapped
+module Random25(
+    input wire clk, next,
+    output reg[24:0] q = 0,
+    output reg wrapped
 );
     always @(posedge clk)
-        if (rst) begin
+        if (q == 0) begin
             q <= 1;
             wrapped <= 0;
         end
-        // Feedback polynomial for N=23: x^23 + x^18 + 1
+        // Feedback polynomial for N=25: x^25 + x^22 + 1
         else if (next) begin
-            q <= {q[21:0], q[23-1] ^ q[18-1]};
+            q <= {q[23:0], q[25-1] ^ q[22-1]};
             if (q == 1) wrapped <= !wrapped;
         end
 endmodule
 
-//module Random9(
-//    input logic clk, rst, next,
-//    output logic[8:0] q
-//);
-//    always @(posedge clk)
-//        if (rst) q <= 0;
-//        else if (next) q <= q+1;
-//endmodule
-//
-//module Random16(
-//    input logic clk, rst, next,
-//    output logic[15:0] q
-//);
-//    always @(posedge clk)
-//        if (rst) q <= 0;
-//        else if (next) q <= q+1;
-//endmodule
-//
-//module Random23(
-//    input logic clk, rst, next,
-//    output logic[22:0] q
-//);
-//    always @(posedge clk)
-//        if (rst) q <= 0;
-//        else if (next) q <= q+1;
-//endmodule
-
 function [15:0] DataFromAddress;
-    input [22:0] addr;
-    // DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
-    // DataFromAddress = addr[22:7];
-    DataFromAddress = addr[15:0];
-    // DataFromAddress = 0;
+    input [24:0] addr;
+    DataFromAddress = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+//    DataFromAddress = addr[15:0];
 endfunction
 
-module Iceboard_SDRAMReadWriteRandomly(
-    input logic         clk12mhz,
+module Top(
+    input wire          clk12mhz,
     
-    output logic[7:0]   leds,
+    output wire[7:0]    leds,
     
-    output logic        sdram_clk,
-    output logic        sdram_cke,
-    output logic[1:0]   sdram_ba,
-    output logic[11:0]  sdram_a,
-    output logic        sdram_cs_,
-    output logic        sdram_ras_,
-    output logic        sdram_cas_,
-    output logic        sdram_we_,
-    output logic        sdram_udqm,
-    output logic        sdram_ldqm,
-    inout logic[15:0]   sdram_dq,
+    output wire         ram_clk,
+    output wire         ram_cke,
+    output wire[1:0]    ram_ba,
+    output wire[12:0]   ram_a,
+    output wire         ram_cs_,
+    output wire         ram_ras_,
+    output wire         ram_cas_,
+    output wire         ram_we_,
+    output wire[1:0]    ram_dqm,
+    inout wire[15:0]    ram_dq,
     
-    input logic         RS232_Rx_TTL,
-    output logic        RS232_Tx_TTL
+    input wire          RS232_Rx_TTL,
+    output wire         RS232_Tx_TTL
 );
-    `define RESET_BIT 26
-    
-    logic[`RESET_BIT:0] clkDivider;
-    always @(posedge clk12mhz) clkDivider <= clkDivider+1;
-    
-    `ifdef SIM
-    initial clkDivider = 0;
-    `endif
-    
-    logic clk;
+    // 100 MHz clock
+    localparam ClockFrequency =   100000000;
+    wire clk;
+    wire rst;
+    ClockGen #(
+        .FREQ(ClockFrequency),
+		.DIVR(0),
+		.DIVF(66),
+		.DIVQ(3),
+		.FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
     // localparam ClockFrequency = 12000000;       // 12 MHz
     // assign clk = clk12mhz;
@@ -117,66 +90,48 @@ module Iceboard_SDRAMReadWriteRandomly(
     // localparam ClockFrequency =  1500000;     // 1.5 MHz
     // assign clk = clkDivider[2];
     //
-    localparam ClockFrequency =   750000;     // .75 MHz
-    assign clk = clkDivider[3];
+    // localparam ClockFrequency =   750000;     // .75 MHz
+    // assign clk = clkDivider[3];
     //
     // localparam ClockFrequency =   375000;     // .375 MHz     This frequency is too slow -- the RAM controller doesn't have enough time to do anything except refresh
     // assign clk = clkDivider[4];
     
-    // Generate our own reset signal
-    // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
-    logic[12:0] rstCounter;
-    logic rst;
-    logic lastBit;
-    assign rst = !rstCounter[$size(rstCounter)-1];
-    always @(posedge clk) begin
-        if (rst) begin
-            rstCounter <= rstCounter+1;
-        end
-    end
-    
-    `ifdef SIM
-    initial rstCounter = 0;
-    `endif
-    
-    localparam AddrWidth = 23;
-    localparam AddrCount = 'h800000;
-    localparam AddrCountLimit = AddrCount;
+    localparam AddrWidth = 25;
+    localparam AddrCount = 'h2000000;
+    // localparam AddrCountLimit = AddrCount;
     // localparam AddrCountLimit = AddrCount/1024; // 32k words
-    // localparam AddrCountLimit = AddrCount/8192; // 1k words
+    localparam AddrCountLimit = AddrCount/8192; // 4k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
-    localparam StatusOK = 1;
-    localparam StatusFailed = 0;
+    localparam StatusOK = 0;
+    localparam StatusFailed = 1;
     
     localparam ModeIdle     = 2'h0;
     localparam ModeRead     = 2'h1;
     localparam ModeWrite    = 2'h2;
     
-    logic                   cmdReady;
-    logic                   cmdTrigger;
-    logic[AddrWidth-1:0]    cmdAddr;
-    logic                   cmdWrite;
-    logic[DataWidth-1:0]    cmdWriteData;
-    logic[DataWidth-1:0]    cmdReadData;
-    logic                   cmdReadDataValid;
+    wire                    cmdReady;
+    reg                     cmdTrigger = 0;
+    reg[AddrWidth-1:0]      cmdAddr = 0;
+    reg                     cmdWrite = 0;
+    reg[DataWidth-1:0]      cmdWriteData = 0;
+    wire[DataWidth-1:0]     cmdReadData;
+    wire                    cmdReadDataValid;
     
-    logic needInit;
-    logic status;
-    logic[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddrs, nextEnqueuedReadAddrs;
-    logic[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount, nextEnqueuedReadCount;
+    reg init = 0;
+    reg status = StatusOK;
+    reg[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddrs = 0, nextEnqueuedReadAddrs = 0;
+    reg[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount = 0, nextEnqueuedReadCount = 0;
     
-    logic[AddrWidth-1:0] currentReadAddr;
-    assign currentReadAddr = enqueuedReadAddrs[AddrWidth-1:0];
+    wire[AddrWidth-1:0] currentReadAddr = enqueuedReadAddrs[AddrWidth-1:0];
     
-    logic[1:0] mode;
-    logic[AddrWidth-1:0] modeCounter;
+    reg[1:0] mode = ModeIdle;
+    reg[AddrWidth-1:0] modeCounter = 0;
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
         .clk(clk),
-        .rst(rst),
         
         .cmdReady(cmdReady),
         .cmdTrigger(cmdTrigger),
@@ -186,36 +141,34 @@ module Iceboard_SDRAMReadWriteRandomly(
         .cmdReadData(cmdReadData),
         .cmdReadDataValid(cmdReadDataValid),
         
-        .sdram_clk(sdram_clk),
-        .sdram_cke(sdram_cke),
-        .sdram_ba(sdram_ba),
-        .sdram_a(sdram_a),
-        .sdram_cs_(sdram_cs_),
-        .sdram_ras_(sdram_ras_),
-        .sdram_cas_(sdram_cas_),
-        .sdram_we_(sdram_we_),
-        .sdram_udqm(sdram_udqm),
-        .sdram_ldqm(sdram_ldqm),
-        .sdram_dq(sdram_dq)
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
     );
     
-    logic[8:0] random9;
-    logic random9Next;
-    Random9 random9Gen(.clk(clk), .rst(rst), .next(random9Next), .q(random9));
+    wire[8:0] random9;
+    reg random9Next = 0;
+    Random9 random9Gen(.clk(clk), .next(random9Next), .q(random9));
     
-    logic[15:0] random16;
-    logic random16Next;
-    Random16 random16Gen(.clk(clk), .rst(rst), .next(random16Next), .q(random16));
+    wire[15:0] random16;
+    reg random16Next = 0;
+    Random16 random16Gen(.clk(clk), .next(random16Next), .q(random16));
     
-    logic wrapped;
+    wire wrapped;
     assign leds[7] = wrapped;
     
-    logic[22:0] random23;
-    logic random23Next;
-    Random23 random23Gen(.clk(clk), .rst(rst), .next(random23Next), .q(random23), .wrapped(wrapped));
+    wire[24:0] random25;
+    reg random25Next = 0;
+    Random25 random25Gen(.clk(clk), .next(random25Next), .q(random25), .wrapped(wrapped));
     
-    logic[22:0] randomAddr;
-    assign randomAddr = random23&(AddrCountLimit-1);
+    wire[24:0] randomAddr = random25&(AddrCountLimit-1);
     
     
     
@@ -224,8 +177,8 @@ module Iceboard_SDRAMReadWriteRandomly(
     
     
     // UART stuff
-    reg uartTransmit;
-    reg [7:0] uartTxByte;
+    reg uartTransmit = 0;
+    reg [7:0] uartTxByte = 0;
     wire uartReceived;
     wire [7:0] uartRxByte;
     wire uartReceiving;
@@ -249,17 +202,17 @@ module Iceboard_SDRAMReadWriteRandomly(
         .recv_error()                       // Indicates error in receiving packet.
     );
     
-    logic[2:0]      uartStage;
+    reg[2:0]      uartStage = 0;
     
-    logic[63:0]     uartDataIn;
-    logic[15:0]     uartDataInCount;
-    logic           uartDataInEcho;
+    reg[63:0]     uartDataIn = 0;
+    reg[15:0]     uartDataInCount = 0;
+    reg           uartDataInSuppress = 0;
     
-    logic[32*8-1:0] uartDataOut;
-    logic[15:0]     uartDataOutCount;
+    reg[32*8-1:0] uartDataOut = 0;
+    reg[15:0]     uartDataOutCount = 0;
     
-    logic[15:0]     uartReadData;
-    logic           uartReadDataValid;
+    reg[15:0]     uartReadData = 0;
+    reg           uartReadDataValid = 0;
     
     function [7:0] HexASCIIFromNibble;
         input [3:0] n;
@@ -274,14 +227,9 @@ module Iceboard_SDRAMReadWriteRandomly(
     
     
     
-    logic[DataWidth-1:0] expectedReadData;
-    assign expectedReadData = DataFromAddress(currentReadAddr);
-    
-    logic[DataWidth-1:0] prevReadData;
-    assign prevReadData = DataFromAddress(currentReadAddr-1);
-    
-    logic[DataWidth-1:0] nextReadData;
-    assign nextReadData = DataFromAddress(currentReadAddr+1);
+    wire[DataWidth-1:0] expectedReadData = DataFromAddress(currentReadAddr);
+    wire[DataWidth-1:0] prevReadData = DataFromAddress(currentReadAddr-1);
+    wire[DataWidth-1:0] nextReadData = DataFromAddress(currentReadAddr+1);
     
     
     
@@ -292,35 +240,10 @@ module Iceboard_SDRAMReadWriteRandomly(
         
         random9Next <= 0;
         random16Next <= 0;
-        random23Next <= 0;
-        
-        if (rst) begin
-            needInit <= 1;
-            status <= StatusOK;
-            
-            cmdTrigger <= 0;
-            cmdAddr <= 0;
-            cmdWrite <= 0;
-            cmdWriteData <= 0;
-            
-            enqueuedReadAddrs <= 0;
-            enqueuedReadCount <= 0;
-            
-            nextEnqueuedReadAddrs <= 0;
-            nextEnqueuedReadCount <= 0;
-            
-            mode <= ModeIdle;
-            modeCounter <= 0;
-            
-            uartStage <= 0;
-            uartTransmit <= 0;
-            uartDataInCount <= 0;
-            uartDataInEcho <= 1;
-            uartDataOutCount <= 0;
-            uartReadDataValid <= 0;
+        random25Next <= 0;
         
         // Initialize memory to known values
-        end else if (needInit) begin
+        if (!init) begin
             if (!cmdWrite) begin
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
@@ -345,7 +268,7 @@ module Iceboard_SDRAMReadWriteRandomly(
                 
                 end else begin
                     // Next stage
-                    needInit <= 0;
+                    init <= 1;
                 end
             end
         end
@@ -368,7 +291,8 @@ module Iceboard_SDRAMReadWriteRandomly(
                         // leds[6:0] <= 7'b1111111;
                         
                         uartDataOut <= {
-                            HexASCIIFromNibble(currentReadAddr[22:20]),
+                            HexASCIIFromNibble({3'b0, currentReadAddr[24]}),
+                            HexASCIIFromNibble(currentReadAddr[23:20]),
                             HexASCIIFromNibble(currentReadAddr[19:16]),
                             HexASCIIFromNibble(currentReadAddr[15:12]),
                             HexASCIIFromNibble(currentReadAddr[11:8]),
@@ -447,7 +371,7 @@ module Iceboard_SDRAMReadWriteRandomly(
                         nextEnqueuedReadCount = nextEnqueuedReadCount+1;
                         
                         mode <= ModeIdle;
-                        random23Next <= 1;
+                        random25Next <= 1;
                     end
                     
                     // Read sequential (start)
@@ -466,7 +390,7 @@ module Iceboard_SDRAMReadWriteRandomly(
                         mode <= ModeRead;
                         modeCounter <= random9;
                         random9Next <= 1;
-                        random23Next <= 1;
+                        random25Next <= 1;
                     end
                     
                     // Read all (start)
@@ -499,7 +423,7 @@ module Iceboard_SDRAMReadWriteRandomly(
                         cmdWriteData <= DataFromAddress(randomAddr);
                         
                         mode <= ModeIdle;
-                        random23Next <= 1;
+                        random25Next <= 1;
                     end
                     
                     // Write sequential (start)
@@ -516,7 +440,7 @@ module Iceboard_SDRAMReadWriteRandomly(
                         mode <= ModeWrite;
                         modeCounter <= random9;
                         random9Next <= 1;
-                        random23Next <= 1;
+                        random25Next <= 1;
                     end
                     
                     random16Next <= 1;
@@ -582,8 +506,8 @@ module Iceboard_SDRAMReadWriteRandomly(
                         uartDataIn <= (uartDataIn<<8)|uartRxByte;
                         uartDataInCount <= uartDataInCount-1;
                         
-                        // Echo typed character
-                        if (uartDataInEcho) begin
+                        // Echo typed character if we're not suppressing
+                        if (!uartDataInSuppress) begin
                             uartTxByte <= uartRxByte;
                             uartTransmit <= 1;
                         end
@@ -594,13 +518,13 @@ module Iceboard_SDRAMReadWriteRandomly(
                     uartStage <= (uartStage<6 ? uartStage+1 : 0);
                     
                     // Reset our echo state by default
-                    uartDataInEcho <= 1;
+                    uartDataInSuppress <= 0;
                     
                     case (uartStage)
                     // Wait for command
                     0: begin
                         uartDataInCount <= 1; // Load a byte for the command
-                        uartDataInEcho <= 0;
+                        uartDataInSuppress <= 1;
                     end
                     
                     // Load command, wait for address
@@ -682,90 +606,26 @@ module Iceboard_SDRAMReadWriteRandomly(
             end
         end
     end
-endmodule
-
+    
 `ifdef SIM
-
-`include "../mt48lc8m16a2/mt48lc8m16a2.v"
-`include "../mt48lc16m16a2/mt48lc16m16a2.v"
-
-module Iceboard_SDRAMReadWriteRandomlySim(
-    output logic[7:0]   leds,
-
-    output logic        sdram_clk,
-    output logic        sdram_cke,
-    output logic[1:0]   sdram_ba,
-    output logic[11:0]  sdram_a,
-    output logic        sdram_cs_,
-    output logic        sdram_ras_,
-    output logic        sdram_cas_,
-    output logic        sdram_we_,
-    output logic        sdram_udqm,
-    output logic        sdram_ldqm,
-    inout logic[15:0]   sdram_dq
-);
-
-    logic clk12mhz;
-
-    Iceboard_SDRAMReadWriteRandomly iceboardSDRAMTest(
-        .clk12mhz(clk12mhz),
-        .leds(leds),
-        .sdram_clk(sdram_clk),
-        .sdram_cke(sdram_cke),
-        .sdram_ba(sdram_ba),
-        .sdram_a(sdram_a),
-        .sdram_cs_(sdram_cs_),
-        .sdram_ras_(sdram_ras_),
-        .sdram_cas_(sdram_cas_),
-        .sdram_we_(sdram_we_),
-        .sdram_udqm(sdram_udqm),
-        .sdram_ldqm(sdram_ldqm),
-        .sdram_dq(sdram_dq)
+    mobile_sdr sdram(
+        .clk(ram_clk),
+        .cke(ram_cke),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dq(ram_dq),
+        .dqm(ram_dqm)
     );
-
-    mt48lc8m16a2 sdram(
-        .Clk(sdram_clk),
-        .Dq(sdram_dq),
-        .Addr(sdram_a),
-        .Ba(sdram_ba),
-        .Cke(sdram_cke),
-        .Cs_n(sdram_cs_),
-        .Ras_n(sdram_ras_),
-        .Cas_n(sdram_cas_),
-        .We_n(sdram_we_),
-        .Dqm({sdram_udqm, sdram_ldqm})
-    );
-
-//    mt48lc16m16a2 sdram(
-//        .Clk(sdram_clk),
-//        .Dq(sdram_dq),
-//        .Addr({1'b0, sdram_a}),
-//        .Ba(sdram_ba),
-//        .Cke(sdram_cke),
-//        .Cs_n(sdram_cs_),
-//        .Ras_n(sdram_ras_),
-//        .Cas_n(sdram_cas_),
-//        .We_n(sdram_we_),
-//        .Dqm({sdram_udqm, sdram_ldqm})
-//    );
-
-    initial begin
-//        $dumpfile("top.vcd");
-//        $dumpvars(0, Iceboard_SDRAMReadWriteRandomlySim);
-
-//        #10000000;
-//        #200000000;
-//        #2300000000;
-//        $finish;
-    end
-
-    initial begin
-        clk12mhz = 0;
-        forever begin
-            clk12mhz = !clk12mhz;
-            #42;
-        end
-    end
-endmodule
-
+    
+    // initial begin
+    //     $dumpfile("top.vcd");
+    //     $dumpvars(0, Top);
+    //     #1000000000;
+    //     $finish;
+    // end
 `endif
+endmodule

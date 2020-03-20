@@ -56,6 +56,8 @@ module ClockGen #(
         if (!locked) rst_ <= 1;
         else if (rst) rst_ <= rst_<<1;
     
+    // TODO: should we only output clk if locked==1? that way, if clients receive a clock, they know it's stable?
+    
     // // Generate `rst`
     // reg[15:0] rstCounter;
     // always @(posedge clk)

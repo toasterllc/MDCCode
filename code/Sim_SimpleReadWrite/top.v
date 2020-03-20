@@ -1,9 +1,7 @@
-`timescale 1ns/1ps
 `include "../SDRAMController.v"
+`include "../mt48h32m16lf/mobile_sdr.v"
 
-`ifdef SIM
-
-`include "../mt48lc8m16a2/mt48lc8m16a2.v"
+`timescale 1ns/1ps
 
 `define stringify(x) `"x```"
 `define assert(cond) if (!(cond)) $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__)
@@ -14,44 +12,38 @@ function reg[15:0] DataFromAddress;
     DataFromAddress = {9'h1B5, addr[22:16]} ^ ~(addr[15:0]);
 endfunction
 
-module Iceboard_SimpleReadWriteSim(
-    output logic        ledRed,
-    output logic        ledGreen,
-
-    output logic        sdram_clk,
-    output logic        sdram_cke,
-    output logic[1:0]   sdram_ba,
-    output logic[11:0]  sdram_a,
-    output logic        sdram_cs_,
-    output logic        sdram_ras_,
-    output logic        sdram_cas_,
-    output logic        sdram_we_,
-    output logic        sdram_udqm,
-    output logic        sdram_ldqm,
-    inout logic[15:0]   sdram_dq
-);
-    
-    localparam ClockFrequency = 12000000;
-    localparam AddrWidth = 23; // Width of addresses
-    localparam AddrCount = 'h800000; // Number of addresses
+module Top();
+    localparam ClockFrequency = 100000000;
+    localparam AddrWidth = 25; // Width of addresses
+    localparam AddrCount = 'h8000; // Number of addresses
     localparam UnknownVal = {16{'x}};
     
-    logic clk;
-    logic rst;
+    reg clk;
+    reg rst;
     
-    logic cmdReady;
+    reg cmdReady;
     
-    logic cmdTrigger;
-    logic cmdWrite;
-    logic[AddrWidth-1:0] cmdAddr;
-    logic[15:0] cmdWriteData;
+    reg cmdTrigger;
+    reg cmdWrite;
+    reg[AddrWidth-1:0] cmdAddr;
+    reg[15:0] cmdWriteData;
     
-    logic[15:0] cmdReadData;
-    logic cmdReadDataValid;
+    reg[15:0] cmdReadData;
+    reg cmdReadDataValid;
     
-    logic[AddrCount-1:0] writtenAddrs; // Addresses that have been written to
-    logic[15:0] expectedDataQueue[$]; // The queue of data that we expect to read from the SDRAM
+    reg[AddrCount-1:0] writtenAddrs; // Addresses that have been written to
+    reg[15:0] expectedDataQueue[$]; // The queue of data that we expect to read from the SDRAM
     
+    logic       ram_clk;
+    logic       ram_cke;
+    logic[1:0]  ram_ba;
+    logic[12:0] ram_a;
+    logic       ram_cs_;
+    logic       ram_ras_;
+    logic       ram_cas_;
+    logic       ram_we_;
+    logic[1:0]  ram_dqm;
+    wire[15:0] ram_dq;
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
@@ -66,30 +58,29 @@ module Iceboard_SimpleReadWriteSim(
         .cmdReadData(cmdReadData),
         .cmdReadDataValid(cmdReadDataValid),
         
-        .sdram_clk(sdram_clk),
-        .sdram_cke(sdram_cke),
-        .sdram_ba(sdram_ba),
-        .sdram_a(sdram_a),
-        .sdram_cs_(sdram_cs_),
-        .sdram_ras_(sdram_ras_),
-        .sdram_cas_(sdram_cas_),
-        .sdram_we_(sdram_we_),
-        .sdram_udqm(sdram_udqm),
-        .sdram_ldqm(sdram_ldqm),
-        .sdram_dq(sdram_dq)
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
     );
     
-    mt48lc8m16a2 sdram(
-        .Clk(sdram_clk),
-        .Dq(sdram_dq),
-        .Addr(sdram_a),
-        .Ba(sdram_ba),
-        .Cke(sdram_cke),
-        .Cs_n(sdram_cs_),
-        .Ras_n(sdram_ras_),
-        .Cas_n(sdram_cas_),
-        .We_n(sdram_we_),
-        .Dqm({sdram_udqm, sdram_ldqm})
+    mobile_sdr sdram(
+        .clk(ram_clk),
+        .cke(ram_cke),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dq(ram_dq),
+        .dqm(ram_dqm)
     );
     
     task WaitUntilCommandAccepted;
@@ -101,7 +92,7 @@ module Iceboard_SimpleReadWriteSim(
         #1;
     endtask
     
-    task Write(input logic[22:0] addr, input logic[15:0] val);
+    task Write(input [22:0] addr, input [15:0] val);
         cmdTrigger = 1;
         cmdWrite = 1;
         cmdAddr = addr;
@@ -110,7 +101,7 @@ module Iceboard_SimpleReadWriteSim(
         cmdTrigger = 0;
     endtask
     
-    task ReadAsync(input logic[22:0] addr, input logic[15:0] val);
+    task ReadAsync(input [22:0] addr, input [15:0] val);
         cmdTrigger = 1;
         cmdWrite = 0;
         cmdAddr = addr;
@@ -211,36 +202,6 @@ module Iceboard_SimpleReadWriteSim(
         end
     end
     
-//    // Issue commands
-//    initial begin
-//        logic[23:0] addr; // width=24 so we can detect overflow
-//        
-//        wait (clk && cmdReady);
-//        #1;
-//        
-//        // Initialize our memory
-//        for (addr=0; addr<'h800000; addr++) begin
-//            Write(addr, DataFromAddress(addr));
-//            if (!(addr % 'h1000)) begin
-//                $display("Initialized 0x%h", addr);
-//            end
-//        end
-//        
-////        $display("Finished initializing memory");
-//        
-////        forever begin
-////            logic shouldWrite;
-////            
-////            Write('h000000, DataFromAddress('h000000));
-////            Write('h000001, DataFromAddress('h000001));
-////            
-////            ReadAsync('h000000, DataFromAddress('h000000));
-////            ReadAsync('h000001, DataFromAddress('h000001));
-////            
-////            shouldWrite = $urandom%2;
-////        end
-//    end
-    
     // Verify read data
     initial begin
         forever begin
@@ -255,7 +216,7 @@ module Iceboard_SimpleReadWriteSim(
             
             expectedData = expectedDataQueue.pop_front();
             
-//            $display("Read data; wanted: 0x%h, got: 0x%h", expectedData, cmdReadData);
+           // $display("Read data; wanted: 0x%h, got: 0x%h", expectedData, cmdReadData);
             if (expectedData !== cmdReadData)
                 $error("Read invalid data (wanted: 0x%h, got: 0x%h)", expectedData, cmdReadData);
         end
@@ -266,9 +227,14 @@ module Iceboard_SimpleReadWriteSim(
         clk = 0;
         forever begin
             clk = !clk;
-            #42;
+            #5;
         end
     end
+    
+    // initial begin
+    //    $dumpfile("top.vcd");
+    //    $dumpvars(0, Top);
+    //    #1000000000;
+    //    $finish;
+    // end
 endmodule
-
-`endif

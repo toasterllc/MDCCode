@@ -3,12 +3,13 @@
 `include "../SDRAMController.v"
 `include "../AFIFO.v"
 
+`ifdef SIM
 `include "../Icestick_AFIFOProducer/Icestick_AFIFOProducer.v"
-// `include "../mt48lc8m16a2/mt48lc8m16a2.v"
 `include "../mt48h32m16lf/mobile_sdr.v"
+`endif
 
 module Top(
-    input wire          ice_clk12mhz,   // 12 MHz crystal
+    input wire          clk12mhz,   // 12 MHz crystal
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -18,8 +19,7 @@ module Top(
     output wire         ram_ras_,
     output wire         ram_cas_,
     output wire         ram_we_,
-    output wire         ram_udqm,
-    output wire         ram_ldqm,
+    output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq,
     
     input wire          pix_clk,    // Clock from image sensor
@@ -33,14 +33,13 @@ module Top(
     
     // 100 MHz clock
     wire clk;
-    wire rst;
     ClockGen #(
         .FREQ(ClockFrequency),
 		.DIVR(0),
 		.DIVF(66),
 		.DIVQ(3),
 		.FILTER_RANGE(1)
-    ) cg(.clk12mhz(ice_clk12mhz), .clk(clk), .rst(rst));
+    ) cg(.clk12mhz(clk12mhz), .clk(clk));
     
     // RAM controller
     wire                    ram_cmdReady;
@@ -53,7 +52,6 @@ module Top(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
         .clk(clk),
-        .rst(rst), // TODO: figure out resetting
         
         .cmdReady(ram_cmdReady),
         .cmdTrigger(ram_cmdTrigger),
@@ -63,17 +61,16 @@ module Top(
         .cmdReadData(),
         .cmdReadDataValid(),
         
-        .sdram_clk(ram_clk),
-        .sdram_cke(ram_cke),
-        .sdram_ba(ram_ba),
-        .sdram_a(ram_a),
-        .sdram_cs_(ram_cs_),
-        .sdram_ras_(ram_ras_),
-        .sdram_cas_(ram_cas_),
-        .sdram_we_(ram_we_),
-        .sdram_udqm(ram_udqm),
-        .sdram_ldqm(ram_ldqm),
-        .sdram_dq(ram_dq)
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
     );
     
     // Pixel FIFO buffer: asynchronous buffer with separate
@@ -125,17 +122,17 @@ module Top(
     assign pix_lv = w;
     Icestick_AFIFOProducer producer(.clk(clk), .wclk(pix_clk), .w(w), .wd(pix_d));
     
-    mobile_sdr sdram(
+    mobile_sdr sdram (
         .clk(ram_clk),
-        .dq(ram_dq),
+        .cke(ram_cke),
         .addr(ram_a),
         .ba(ram_ba),
-        .cke(ram_cke),
         .cs_n(ram_cs_),
         .ras_n(ram_ras_),
         .cas_n(ram_cas_),
         .we_n(ram_we_),
-        .dqm({ram_udqm, ram_ldqm})
+        .dq(ram_dq),
+        .dqm(ram_dqm)
     );
     
     initial begin
@@ -143,8 +140,6 @@ module Top(
        $dumpvars(0, Top);
        #1000000000;
        $finish;
-      end
+    end
 `endif
-    
-    
 endmodule

@@ -1,0 +1,40 @@
+- For proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
+
+- SDRAMController.v: stop requiring an explicit reset signal, generate itself
+- SDRAMController.v: mark all registers `= 0`
+- SDRAMController.v: figure out what to do with our Max(0, X-1) expressions, since they're now unsigned, since we switched up our functions return types...
+
+√ SDRAMController.v: make work with W989D6DBGX6I, which adds another address bit
+
+
+
+
+
+
+
+√ dev board schematic
+    √ ice40: connect CDONE/CRESET
+    √ ice40: connect SPI flash pins
+    √ connect LEDs
+    √ add ufl voltage test points
+    √ add a header for the pix_ IOs, so we can provide data to the dev board to write
+    √ update package sizes for all resistors, capacitors, and inductors
+    √ choose resistor products/packages
+    √ make sure inductor footprint allows any of our inductors to be soldered
+    √ add 0ohm/1ohm resistors for testing/isolation
+    √ consider removing some of the decoupling capacitors for ice40 power? the technote mentioned varying the 2 kinds of caps, so we can remove half...
+    √ verify all packages+pins are correct and match datasheets
+
+
+√ remove reset signal and see how that improves timing. need to decide whether we're going to use an explicit or implicit (configuration) reset
+    definitely makes design smaller. we should use the implicit reset since it simplifies everything. the only caveat is we'll have to keep an eye out for Synplify's warning:
+        removing sequential instance XXX because it does not drive other instances
+
+√ make Lattice tool 'high effort' in the synthesis options
+    no effect, design runs at the same speed
+
+√ can we improve the empty/full logic of AFIFO to use readOK / writeOK logic instead? that way our registers will be initialized correctly with readOK=0 and writeOK=0
+
+
+√ Iceboard_CopyImage: move pix_ IOs to the top-left instead of the top right, so they're closer to the RAM IOs. Does that improve speed?
+    Doesn't help much

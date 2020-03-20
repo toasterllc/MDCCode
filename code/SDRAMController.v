@@ -13,7 +13,6 @@ module SDRAMController #(
     `define COL_BITS    `ADDR_WIDTH-`BANK_WIDTH-`ROW_WIDTH-1    -: `COL_WIDTH
     
     input wire clk,                         // Clock
-    input wire rst,                         // Reset (synchronous)
     
     // Command port
     output wire cmdReady,                   // Ready for new command
@@ -23,32 +22,43 @@ module SDRAMController #(
     input wire[15:0] cmdWriteData,          // Data to write to address
     output wire[15:0] cmdReadData,          // Data read from address
     output wire cmdReadDataValid,           // `cmdReadData` is valid data
-    output reg didRefresh,
+    output reg didRefresh = 0,
     
-    // SDRAM port
-    output wire sdram_clk,                  // Clock
-    output reg sdram_cke,                   // Clock enable
-    output reg[`BANK_WIDTH-1:0] sdram_ba,   // Bank address
-    output reg[`ROW_WIDTH-1:0] sdram_a,     // Address
-    output wire sdram_cs_,                  // Chip select
-    output wire sdram_ras_,                 // Row address strobe
-    output wire sdram_cas_,                 // Column address strobe
-    output wire sdram_we_,                  // Write enable
-    output wire sdram_udqm,                 // High byte data mask
-    output wire sdram_ldqm,                 // Low byte data mask
-    inout wire[15:0] sdram_dq               // Data input/output
+    // RAM port
+    output wire ram_clk,                    // Clock
+    output reg ram_cke = 0,                 // Clock enable
+    output reg[`BANK_WIDTH-1:0] ram_ba = 0, // Bank address
+    output reg[`ROW_WIDTH-1:0] ram_a = 0,   // Address
+    output wire ram_cs_,                    // Chip select
+    output wire ram_ras_,                   // Row address strobe
+    output wire ram_cas_,                   // Column address strobe
+    output wire ram_we_,                    // Write enable
+    output reg[1:0] ram_dqm = 0,            // Data mask
+    inout wire[15:0] ram_dq                 // Data input/output
 );
-    // Alliance AS4C8M16SA Timing parameters (nanoseconds)
+    // Winbond W989D6DB Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
-    localparam T_REFI = 15625; // time between refreshes
-    localparam T_RC = 63; // bank activate to bank activate time (same bank)
-    localparam T_RFC = 98; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
+    localparam T_REFI = 7812; // time between refreshes
+    localparam T_RC = 68; // bank activate to bank activate time (same bank)
+    localparam T_RFC = 72; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
                                             // TODO: maybe increasing this value would make Alliance SDRAM work?
-    localparam T_RRD = 14; // row activate to row activate time (different banks)
-    localparam T_RAS = 42; // row activate to precharge time (same bank)
-    localparam T_RCD = 21; // bank activate to read/write time (same bank)
-    localparam T_RP = 21; // precharge to refresh/row activate (same bank)
-    localparam T_WR = 14; // write recover time
+    localparam T_RRD = 15; // row activate to row activate time (different banks)
+    localparam T_RAS = 45; // row activate to precharge time (same bank)
+    localparam T_RCD = 18; // bank activate to read/write time (same bank)
+    localparam T_RP = 18; // precharge to refresh/row activate (same bank)
+    localparam T_WR = 15; // write recover time
+    
+    // // Alliance AS4C8M16SA Timing parameters (nanoseconds)
+    // localparam T_INIT = 200000; // power up initialization time
+    // localparam T_REFI = 15625; // time between refreshes
+    // localparam T_RC = 63; // bank activate to bank activate time (same bank)
+    // localparam T_RFC = 98; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
+    //                                         // TODO: maybe increasing this value would make Alliance SDRAM work?
+    // localparam T_RRD = 14; // row activate to row activate time (different banks)
+    // localparam T_RAS = 42; // row activate to precharge time (same bank)
+    // localparam T_RCD = 21; // bank activate to read/write time (same bank)
+    // localparam T_RP = 21; // precharge to refresh/row activate (same bank)
+    // localparam T_WR = 14; // write recover time
     
     // // Micron 48LC16M16A2 Timing parameters (nanoseconds)
     // localparam T_INIT = ; // power up initialization time
@@ -101,10 +111,10 @@ module SDRAMController #(
         Max = (a > b ? a : b);
     endfunction
     
-    reg[StateWidth-1:0] state;
-    reg[3:0] substate;
-    reg[DelayCounterWidth-1:0] delayCounter;
-    reg[RefreshCounterWidth-1:0] refreshCounter;
+    reg[StateWidth-1:0] state = StateInit;
+    reg[3:0] substate = 0;
+    reg[DelayCounterWidth-1:0] delayCounter = 0;
+    reg[RefreshCounterWidth-1:0] refreshCounter = 0;
     
     wire[DelayCounterWidth+RefreshCounterWidth-1:0] initDelayCounter = {delayCounter, refreshCounter};
     
@@ -117,54 +127,50 @@ module SDRAMController #(
 `endif
         (state==StateIdle || state==StateRead || state==StateWrite));
     
-    reg writeDataValid;
-    reg[C_CAS:0] readDataValidShiftReg;
+    reg writeDataValid = 0;
+    reg[C_CAS:0] readDataValidShiftReg = 0;
     assign cmdReadDataValid = readDataValidShiftReg[0];
     
     wire[`BANK_WIDTH-1:0] cmdAddrBank = cmdAddr[`BANK_BITS];
     wire[`ROW_WIDTH-1:0] cmdAddrRow = cmdAddr[`ROW_BITS];
     wire[`COL_WIDTH-1:0] cmdAddrCol = cmdAddr[`COL_BITS];
     
-    reg savedCmdTrigger;
-    reg savedCmdWrite;
-    reg[`ADDR_WIDTH-1:0] savedCmdAddr;
-    reg[15:0] savedCmdWriteData;
+    reg savedCmdTrigger = 0;
+    reg savedCmdWrite = 0;
+    reg[`ADDR_WIDTH-1:0] savedCmdAddr = 0;
+    reg[15:0] savedCmdWriteData = 0;
     
     wire[`BANK_WIDTH-1:0] savedCmdAddrBank = savedCmdAddr[`BANK_BITS];
     wire[`ROW_WIDTH-1:0] savedCmdAddrRow = savedCmdAddr[`ROW_BITS];
     wire[`COL_WIDTH-1:0] savedCmdAddrCol = savedCmdAddr[`COL_BITS];
     
     // ## SDRAM nets
-    assign sdram_clk = clk;
-    assign sdram_cs_ = 0;
+    assign ram_clk = clk;
+    assign ram_cs_ = 0;
     
-    reg[2:0] sdram_cmd;
-    assign sdram_ras_ = sdram_cmd[2];
-    assign sdram_cas_ = sdram_cmd[1];
-    assign sdram_we_ = sdram_cmd[0];
+    reg[2:0] ram_cmd = 0;
+    assign ram_ras_ = ram_cmd[2];
+    assign ram_cas_ = ram_cmd[1];
+    assign ram_we_ = ram_cmd[0];
     
-    reg sdram_dqm;
-    assign sdram_udqm = sdram_dqm;
-    assign sdram_ldqm = sdram_dqm;
+    reg[15:0] ram_writeData = 0;
     
-    reg[15:0] sdram_writeData;
-    
-    // Hook up cmdReadData/sdram_writeData to sdram_dq
+    // Hook up cmdReadData/ram_writeData to ram_dq
     genvar i;
     for (i=0; i<16; i=i+1) begin
         `ifdef SIM
             // For simulation, use a normal tristate buffer
-            assign sdram_dq[i] = (writeDataValid ? sdram_writeData[i] : 1'bz);
-            assign cmdReadData[i] = sdram_dq[i];
+            assign ram_dq[i] = (writeDataValid ? ram_writeData[i] : 1'bz);
+            assign cmdReadData[i] = ram_dq[i];
         `else
             // For synthesis, we have to use a SB_IO for a tristate buffer
             SB_IO #(
                 .PIN_TYPE(6'b1010_01),
                 .PULLUP(0)
             ) dqio (
-                .PACKAGE_PIN(sdram_dq[i]),
+                .PACKAGE_PIN(ram_dq[i]),
                 .OUTPUT_ENABLE(writeDataValid),
-                .D_OUT_0(sdram_writeData[i]),
+                .D_OUT_0(ram_writeData[i]),
                 .D_IN_0(cmdReadData[i])
             );
         `endif
@@ -194,8 +200,8 @@ module SDRAMController #(
     end endtask
     
     task PrechargeAll; begin
-        sdram_cmd <= CmdPrechargeAll;
-        sdram_a <= `ROW_WIDTH'b10000000000; // sdram_a[10]=1 for PrechargeAll
+        ram_cmd <= CmdPrechargeAll;
+        ram_a <= `ROW_WIDTH'b10000000000; // ram_a[10]=1 for PrechargeAll
     end endtask
     
     task HandleWrite(input substate); begin
@@ -204,14 +210,14 @@ module SDRAMController #(
         
         if (savedCmdTrigger) begin
             // Supply the column address
-            sdram_a <= savedCmdAddrCol;
+            ram_a <= savedCmdAddrCol;
             // Supply data to be written
-            sdram_writeData <= savedCmdWriteData;
+            ram_writeData <= savedCmdWriteData;
             // Unmask the data
-            sdram_dqm <= 0;
+            ram_dqm <= 2'b00;
             
             // Supply the write command
-            if (substate==0) sdram_cmd <= CmdWrite;
+            if (substate==0) ram_cmd <= CmdWrite;
             
             writeDataValid <= 1;
         end
@@ -247,12 +253,12 @@ module SDRAMController #(
         
         if (savedCmdTrigger) begin
             // Supply the column address
-            sdram_a <= savedCmdAddrCol;
+            ram_a <= savedCmdAddrCol;
             // Unmask the data
-            sdram_dqm <= 0;
+            ram_dqm <= 2'b00;
             
             // Supply the read command
-            if (substate==0) sdram_cmd <= CmdRead;
+            if (substate==0) ram_cmd <= CmdRead;
             
             readDataValidShiftReg[C_CAS] <= 1;
         end
@@ -280,8 +286,8 @@ module SDRAMController #(
     
     task SetDefaultState; begin
         // Mask data, nop command
-        sdram_dqm <= 1;
-        sdram_cmd <= CmdNop;
+        ram_dqm <= 2'b11;
+        ram_cmd <= CmdNop;
         
         // Update data-valid registers
         writeDataValid <= 0;
@@ -294,9 +300,9 @@ module SDRAMController #(
     
     task StartReadWrite(input write, input[`ADDR_WIDTH-1:0] addr); begin
         // Activate the bank+row
-        sdram_cmd <= CmdBankActivate;
-        sdram_ba <= addr[`BANK_BITS];
-        sdram_a <= addr[`ROW_BITS];
+        ram_cmd <= CmdBankActivate;
+        ram_ba <= addr[`BANK_BITS];
+        ram_a <= addr[`ROW_BITS];
         
         // Delay the most conservative amount of time necessary after activating the bank to perform the command.
         StartState(Max(0, Max(Max(Max(
@@ -329,49 +335,31 @@ module SDRAMController #(
         {delayCounter, refreshCounter} <= delay;
     end endtask
     
-    task InitStartState(input integer delay); begin
-        InitSetDelayCounter(delay);
-        state <= StateInit;
-        substate <= 0;
-    end endtask
-    
     task InitNextSubstate(input integer delay); begin
         InitSetDelayCounter(delay);
         substate <= substate+1;
     end endtask
     
-    task HandleReset; begin
-        // Reset the important registers while in the reset state.
-        // This is necessary so clients don't observe `cmdReadDataValid`
-        // immediately after reset de-asserts but before the HandleInit
-        // state machine starts.
-        writeDataValid <= 0;
-        readDataValidShiftReg <= 0;
-        InitStartState(0);
-        
-        didRefresh <= 0;
-    end endtask
-    
     task HandleInit; begin
         // Handle delays
         if (initDelayCounter != 0) begin
-            sdram_cmd <= CmdNop;
+            ram_cmd <= CmdNop;
             InitSetDelayCounter(initDelayCounter-1);
         
         // Handle init states
         end else case (substate)
             0: begin
                 // Initialize registers
-                sdram_cke <= 0;
-                sdram_dqm <= 1;
-                sdram_cmd <= CmdNop;
+                ram_cke <= 0;
+                ram_dqm <= 2'b11;
+                ram_cmd <= CmdNop;
                 // Delay 200us
                 InitNextSubstate(Clocks(T_INIT));
             end
             
             1: begin
-                // Bring sdram_cke high for a bit before issuing commands
-                sdram_cke <= 1;
+                // Bring ram_cke high for a bit before issuing commands
+                ram_cke <= 1;
                 InitNextSubstate(10);
             end
             
@@ -383,7 +371,7 @@ module SDRAMController #(
             
             3: begin
                 // Autorefresh 1/2
-                sdram_cmd <= CmdAutoRefresh;
+                ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC for autorefresh to complete
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
@@ -393,7 +381,7 @@ module SDRAMController #(
             
             4: begin
                 // Autorefresh 2/2
-                sdram_cmd <= CmdAutoRefresh;
+                ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC for autorefresh to complete
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
@@ -403,11 +391,11 @@ module SDRAMController #(
             
             5: begin
                 // Set the operating mode of the SDRAM
-                sdram_cmd <= CmdSetMode;
-                // sdram_ba: reserved
-                sdram_ba <= `BANK_WIDTH'b0;
-                // sdram_a:     write burst length,     test mode,  CAS latency,    burst type,     burst length
-                sdram_a <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
+                ram_cmd <= CmdSetMode;
+                // ram_ba: reserved
+                ram_ba <= `BANK_WIDTH'b0;
+                // ram_a:     write burst length,     test mode,  CAS latency,    burst type,     burst length
+                ram_a <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
                 // We need a delay of C_MRD clock cycles before issuing the next command
                 // -1 clock cycle since we already burn one cycle getting to the next substate.
                 InitNextSubstate(Max(0, C_MRD-1));
@@ -415,20 +403,17 @@ module SDRAMController #(
             
             6: begin
                 // Set the extended operating mode of the SDRAM (applies only to Winbond RAMs)
-                sdram_cmd <= CmdSetMode;
-                // sdram_ba: reserved
-                sdram_ba <= `BANK_WIDTH'b10;
-                // sdram_a:     output drive strength,      reserved,       self refresh banks
-                sdram_a <= {    2'b0,                       2'b0,           3'b000};
+                ram_cmd <= CmdSetMode;
+                // ram_ba: reserved
+                ram_ba <= `BANK_WIDTH'b10;
+                // ram_a:     output drive strength,      reserved,       self refresh banks
+                ram_a <= {    2'b0,                       2'b0,           3'b000};
                 
                 // Start the refresh timer
                 refreshCounter <= Max(0, Clocks(T_REFI)-1);
                 
                 // We need a delay of C_MRD clock cycles before issuing the next command.
                 // -1 clock cycle since we already burn one cycle getting to the next substate.
-                // ## Use StartState() (not InitStartState()) because the next state isn't an
-                // ## init state (StateInitXXX), and we don't want to clobber refreshCounter,
-                // ## which we just set above.
                 StartState(C_MRD-1, StateIdle);
             end
             endcase
@@ -472,7 +457,7 @@ module SDRAMController #(
             end
             
             1: begin
-                sdram_cmd <= CmdAutoRefresh;
+                ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC (auto refresh time) to guarantee that the next command can
                 // activate the same bank immediately
                 StartState(Clocks(T_RFC), (savedCmdTrigger ? StateHandleSaved : StateIdle));
@@ -523,12 +508,8 @@ module SDRAMController #(
     end endtask
     
 	always @(posedge clk) begin
-        // Reset
-        if (rst)
-            HandleReset();
-        
         // Initialization
-        else if (state == StateInit)
+        if (state == StateInit)
             HandleInit();
         
 `ifdef DO_REFRESH
