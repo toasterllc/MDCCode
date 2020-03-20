@@ -77,9 +77,9 @@ module SDRAMController #(
     localparam C_DQZ = 2; // (T_DQZ) DQM to data high-impedance during reads delay
     localparam C_MRD = 2; // (T_MRD) set mode command to bank activate/refresh command delay
     
-    localparam DelayCounterWidth = $clog2(Clocks(T_RFC));
+    localparam DelayCounterWidth = $clog2(Clocks(T_RFC, 0));
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
-    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT))-DelayCounterWidth;
+    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0))-DelayCounterWidth;
     localparam StateWidth = 3;
     
     // ras_, cas_, we_
@@ -102,7 +102,14 @@ module SDRAMController #(
     
     function [63:0] Clocks;
         input [63:0] t;
-        Clocks = (t*ClockFrequency)/1000000000;
+        input [63:0] sub;
+        
+        reg [63:0] out;
+        out = (t*ClockFrequency)/1000000000;
+        if (out >= sub) out = out-sub;
+        else out = 0;
+        
+        Clocks = out;
     endfunction
     
     function [63:0] Max;
@@ -236,7 +243,7 @@ module SDRAMController #(
             // allowing us to precharge too soon after a write (which would violate T_WR).
             // -1 clock cycle since we know StateRead will eat one cycle before allowing
             // a precharge via StateReadAbort.
-            end else StartState(Max(0, Clocks(T_WR)-1), StateRead);
+            end else StartState(Clocks(T_WR, 1), StateRead);
         
         // Abort the write if we're not writing to the same bank and row.
         // Wait the 'write recover' time before doing so.
@@ -244,7 +251,7 @@ module SDRAMController #(
         // "The PrechargeAll command that interrupts a write burst should be
         // issued ceil(tWR/tCK) cycles after the clock edge in which the
         // last data-in element is registered."
-        end else StartState(Max(0, Clocks(T_WR)), StateWriteAbort);
+        end else StartState(Clocks(T_WR, 0), StateWriteAbort);
     end endtask
     
     task HandleRead(input substate); begin
@@ -295,7 +302,7 @@ module SDRAMController #(
         
         // Update counters
         delayCounter <= (delayCounter!=0 ? delayCounter-1 : 0);
-        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Max(0, Clocks(T_REFI)-1));
+        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Clocks(T_REFI, 1));
     end endtask
     
     task StartReadWrite(input write, input[`ADDR_WIDTH-1:0] addr); begin
@@ -305,31 +312,28 @@ module SDRAMController #(
         ram_a <= addr[`ROW_BITS];
         
         // Delay the most conservative amount of time necessary after activating the bank to perform the command.
-        StartState(Max(0, Max(Max(Max(
+        StartState(Max(Max(Max(
             // T_RCD: ensure "bank activate to read/write time".
-            Clocks(T_RCD),
+            Clocks(T_RCD, 0),
             // T_RAS: ensure "row activate to precharge time", ie that we don't
             // CmdPrechargeAll too soon after we activate the bank.
             // -2 cycles since we know that it takes >=2 state transitions from this state
             // to issue CmdPrechargeAll (StateIdle/StateHandleSaved -> StateRead/StateWrite ->
             // StateReadAbort/StateWriteAbort)
-            Clocks(T_RAS)-2),
+            Clocks(T_RAS, 2)),
             // T_RC: ensure "activate bank A to activate bank A time", to ensure that the next
             // bank can't be activated too soon after this bank activation.
             // -3 cycles since we know that it takes >=3 state transitions from this state to
             // reach this state again and issue another CmdBankActivate (StateIdle/StateHandleSaved ->
             // StateRead/StateWrite -> StateReadAbort/StateWriteAbort -> StateIdle/StateHandleSaved)
-            Clocks(T_RC)-3),
+            Clocks(T_RC, 3)),
             // T_RRD: ensure "activate bank A to activate bank B time", to ensure that the next
             // bank can't be activated too soon after this bank activation.
             // -3 cycles since we know that it takes >=3 state transitions from this state to
             // reach this state again and issue another CmdBankActivate (see explanation for T_RC, above.)
-            Clocks(T_RRD)-3)),
+            Clocks(T_RRD, 3)),
         (write ? StateWrite : StateRead));
     end endtask
-    
-    // initial $display("Max(Clocks(T_RCD), Clocks(T_RAS)-2): %d", Max(Clocks(T_RCD), Clocks(T_RAS)-2));
-    // initial $finish;
     
     task InitSetDelayCounter(input integer delay); begin
         {delayCounter, refreshCounter} <= delay;
@@ -354,7 +358,7 @@ module SDRAMController #(
                 ram_dqm <= 2'b11;
                 ram_cmd <= CmdNop;
                 // Delay 200us
-                InitNextSubstate(Clocks(T_INIT));
+                InitNextSubstate(Clocks(T_INIT, 0));
             end
             
             1: begin
@@ -366,7 +370,7 @@ module SDRAMController #(
             2: begin
                 // Precharge all banks
                 PrechargeAll();
-                InitNextSubstate(Clocks(T_RP));
+                InitNextSubstate(Clocks(T_RP, 0));
             end
             
             3: begin
@@ -376,7 +380,7 @@ module SDRAMController #(
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
                 // we just have to wait T_RFC.
-                InitNextSubstate(Clocks(T_RFC));
+                InitNextSubstate(Clocks(T_RFC, 0));
             end
             
             4: begin
@@ -386,7 +390,7 @@ module SDRAMController #(
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
                 // we just have to wait T_RFC.
-                InitNextSubstate(Clocks(T_RFC));
+                InitNextSubstate(Clocks(T_RFC, 0));
             end
             
             5: begin
@@ -398,7 +402,7 @@ module SDRAMController #(
                 ram_a <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
                 // We need a delay of C_MRD clock cycles before issuing the next command
                 // -1 clock cycle since we already burn one cycle getting to the next substate.
-                InitNextSubstate(Max(0, C_MRD-1));
+                InitNextSubstate(C_MRD-1);
             end
             
             6: begin
@@ -410,7 +414,7 @@ module SDRAMController #(
                 ram_a <= {    2'b0,                       2'b0,           3'b000};
                 
                 // Start the refresh timer
-                refreshCounter <= Max(0, Clocks(T_REFI)-1);
+                refreshCounter <= Clocks(T_REFI, 1);
                 
                 // We need a delay of C_MRD clock cycles before issuing the next command.
                 // -1 clock cycle since we already burn one cycle getting to the next substate.
@@ -426,25 +430,26 @@ module SDRAMController #(
         if (refreshCounter == 0)
             
             // We don't know what state we came from, so wait the most conservative amount of time.
-            StartState(Max(0, Max(Max(Max(Max(Max(
+            // -1 for each, because we spent a cycle in this state
+            StartState(Max(Max(Max(Max(Max(
                 // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
                 // when we return to that command via StateHandleSaved after refreshing is complete.
-                Clocks(T_RC),
+                Clocks(T_RC, 1),
                 // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
                 // when we return to that command via StateHandleSaved after refreshing is complete.
-                Clocks(T_RRD)),
+                Clocks(T_RRD, 1)),
                 // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
                 // since we're about to issue CmdPrechargeAll.
-                Clocks(T_RAS)),
+                Clocks(T_RAS, 1)),
                 // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
                 // when we return to that command via StateHandleSaved after refreshing is complete.
-                Clocks(T_RCD)),
+                Clocks(T_RCD, 1)),
                 // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
                 // until precharging is complete.
-                Clocks(T_RP)),
+                Clocks(T_RP, 1)),
                 // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
                 // until precharging is complete.
-                Clocks(T_WR))-1) // -1 because we spent a cycle in this state
+                Clocks(T_WR, 1))
             , StateRefresh);
             
         // Handle Refresh states
@@ -453,14 +458,14 @@ module SDRAMController #(
             0: begin
                 PrechargeAll();
                 // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
-                NextSubstate(Clocks(T_RP));
+                NextSubstate(Clocks(T_RP, 0));
             end
             
             1: begin
                 ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC (auto refresh time) to guarantee that the next command can
                 // activate the same bank immediately
-                StartState(Clocks(T_RFC), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
                 didRefresh <= !didRefresh;
             end
             endcase
@@ -487,7 +492,7 @@ module SDRAMController #(
                 PrechargeAll();
                 // After precharge completes, handle the saved command or
                 // go idle if there isn't a saved command
-                StartState(Clocks(T_RP), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                StartState(Clocks(T_RP, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
             end
             
             StateRead:
@@ -501,7 +506,7 @@ module SDRAMController #(
                 // out, whichever takes longer.
                 // Use C_CAS-1 because we already spent one clock cycle of the CAS
                 // latency in this state.
-                StartState(Max(C_CAS-1, Clocks(T_RP)), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                StartState(Max(C_CAS-1, Clocks(T_RP, 0)), (savedCmdTrigger ? StateHandleSaved : StateIdle));
             end
             endcase
         end

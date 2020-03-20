@@ -186,7 +186,7 @@ module Top(
                     Read(0);
                 end
                 
-                $display("Write: %h", cmdAddr);
+                // $display("Write: %h", cmdAddr);
             end
         
         end else if (status == StatusOK) begin

@@ -71,11 +71,18 @@ module main();
     
     function [63:0] Clocks;
         input [63:0] t;
-        Clocks = (t*ClockFrequency)/1000000000;
+        input [63:0] sub;
+        
+        reg [63:0] out;
+        out = (t*ClockFrequency)/1000000000;
+        if (out >= sub) out = out-sub;
+        else out = 0;
+        
+        Clocks = out;
     endfunction
     
     initial begin
-        $display("%0d", Clocks(9)-1);
+        $display("%0d", Clocks(0, 1));
         $finish;
     end
 

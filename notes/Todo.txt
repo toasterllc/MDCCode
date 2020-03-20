@@ -1,9 +1,9 @@
 - For proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
 
-- SDRAMController.v: stop requiring an explicit reset signal, generate itself
-- SDRAMController.v: mark all registers `= 0`
-- SDRAMController.v: figure out what to do with our Max(0, X-1) expressions, since they're now unsigned, since we switched up our functions return types...
+√ SDRAMController.v: figure out what to do with our Max(0, X-1) expressions, since they're now unsigned, since we switched up our functions return types...
 
+√ SDRAMController.v: mark all registers `= 0`
+√ SDRAMController.v: stop requiring an explicit reset signal, generate itself
 √ SDRAMController.v: make work with W989D6DBGX6I, which adds another address bit
 
 
