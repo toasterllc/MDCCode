@@ -2863,7 +2863,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="213.36" y="175.26" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RAM_LDQM" class="0">
+<net name="RAM_DQM0" class="0">
 <segment>
 <wire x1="309.88" y1="142.24" x2="304.8" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="U5" gate="B" pin="LDQM"/>
@@ -2875,7 +2875,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="66.04" y="195.58" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RAM_UDQM" class="0">
+<net name="RAM_DQM1" class="0">
 <segment>
 <wire x1="309.88" y1="139.7" x2="304.8" y2="139.7" width="0.1524" layer="91"/>
 <pinref part="U5" gate="B" pin="UDQM"/>

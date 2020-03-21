@@ -1886,7 +1886,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="14.322559375" y1="27.567" x2="14.3284" y2="27.567" width="0.127" layer="1"/>
 <wire x1="13.962959375" y1="27.9266" x2="14.322559375" y2="27.567" width="0.127" layer="1"/>
 </signal>
-<signal name="RAM_LDQM">
+<signal name="RAM_DQM0">
 <contactref element="U5" pad="E8"/>
 <contactref element="U4" pad="A6"/>
 <wire x1="11.1248" y1="38.142546875" x2="11.3389" y2="38.356646875" width="0.127" layer="1"/>
@@ -1899,7 +1899,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="17.5394" y1="31.578" x2="17.5284" y2="31.567" width="0.127" layer="1"/>
 <wire x1="17.5394" y1="33.2810875" x2="17.5394" y2="31.578" width="0.127" layer="1"/>
 </signal>
-<signal name="RAM_UDQM">
+<signal name="RAM_DQM1">
 <contactref element="U5" pad="F1"/>
 <wire x1="7.530496875" y1="32.89998125" x2="7.3152" y2="32.684684375" width="0.127" layer="1"/>
 <contactref element="U4" pad="E1"/>

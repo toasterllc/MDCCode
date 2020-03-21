@@ -2,7 +2,10 @@
 `include "../ClockGen.v"
 `include "../SDRAMController.v"
 `include "../uart.v"
+
+`ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"
+`endif
 
 module Random9(
     input wire clk, next,
@@ -41,16 +44,10 @@ module Random25(
         end
 endmodule
 
-function [15:0] DataFromAddress;
-    input [24:0] addr;
-    DataFromAddress = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-//    DataFromAddress = addr[15:0];
-endfunction
-
 module Top(
     input wire          clk12mhz,
     
-    output wire[7:0]    leds,
+    output wire[7:0]    led,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -66,6 +63,12 @@ module Top(
     input wire          RS232_Rx_TTL,
     output wire         RS232_Tx_TTL
 );
+    function [15:0] DataFromAddress;
+        input [24:0] addr;
+        DataFromAddress = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+    //    DataFromAddress = addr[15:0];
+    endfunction
+    
     // 100 MHz clock
     localparam ClockFrequency =   100000000;
     wire clk;
@@ -118,8 +121,8 @@ module Top(
     wire[DataWidth-1:0]     cmdReadData;
     wire                    cmdReadDataValid;
     
-    reg init = 0;
-    reg status = StatusOK;
+    reg init = 0 /* synthesis syn_keep=1 */; // TODO: figure out if we need syn_keep=1 for `init`. Synplify is removing `init`...
+    reg status = StatusOK /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
     reg[(AddrWidth*MaxEnqueuedReads)-1:0] enqueuedReadAddrs = 0, nextEnqueuedReadAddrs = 0;
     reg[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount = 0, nextEnqueuedReadCount = 0;
     
@@ -162,7 +165,7 @@ module Top(
     Random16 random16Gen(.clk(clk), .next(random16Next), .q(random16));
     
     wire wrapped;
-    assign leds[7] = wrapped;
+    assign led[7] = wrapped;
     
     wire[24:0] random25;
     reg random25Next = 0;
@@ -288,7 +291,7 @@ module Top(
                         `endif
                         
                         status <= StatusFailed;
-                        // leds[6:0] <= 7'b1111111;
+                        // led[6:0] <= 7'b1111111;
                         
                         uartDataOut <= {
                             HexASCIIFromNibble({3'b0, currentReadAddr[24]}),
@@ -339,7 +342,7 @@ module Top(
                     `endif
                     
                     status <= StatusFailed;
-                    // leds[6:0] <= 7'b0001111;
+                    // led[6:0] <= 7'b0001111;
                     uartDataOut <= "BAD2";
         			uartDataOutCount <= 4;
                 end

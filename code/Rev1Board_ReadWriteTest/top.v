@@ -1,49 +1,15 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 `include "../SDRAMController.v"
+
+`ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"
-
-module Random9(
-    input wire clk,
-    output reg[8:0] q = 0
-);
-    always @(posedge clk)
-        if (q == 0) q <= 1;
-        // Feedback polynomial for N=9: x^9 + x^5 + 1
-        else q <= {q[7:0], q[9-1] ^ q[5-1]};
-endmodule
-
-module Random16(
-    input wire clk,
-    output reg[15:0] q = 0
-);
-    always @(posedge clk)
-        if (q == 0) q <= 1;
-        // Feedback polynomial for N=16: x^16 + x^15 + x^13 + x^4 + 1
-        else q <= {q[14:0], q[16-1] ^ q[15-1] ^ q[13-1] ^ q[4-1]};
-endmodule
-
-module Random25(
-    input wire clk,
-    output reg[24:0] q = 0
-);
-    always @(posedge clk)
-        if (q == 0) q <= 1;
-        // Feedback polynomial for N=25: x^25 + x^22 + 1
-        else q <= {q[23:0], q[25-1] ^ q[22-1]};
-endmodule
-
-function [15:0] DataFromAddress;
-    input [24:0] addr;
-    DataFromAddress = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-//    DataFromAddress = addr[15:0];
-endfunction
+`endif
 
 module Top(
     input wire          clk12mhz,
     
-    output wire         ledFailed,
-    output reg          ledDebug = 0,
+    output wire[7:0]    led,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -56,6 +22,12 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
+    function [15:0] DataFromAddress;
+        input [24:0] addr;
+        DataFromAddress = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+    //    DataFromAddress = addr[15:0];
+    endfunction
+    
     localparam ClockFrequency = 100000000; // 100 MHz
     
     // 100 MHz clock
@@ -70,8 +42,8 @@ module Top(
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
-    // localparam AddrCountLimit = AddrCount;
-    localparam AddrCountLimit = AddrCount/1024; // 32k words
+    localparam AddrCountLimit = AddrCount;
+    // localparam AddrCountLimit = AddrCount/1024; // 32k words
 //    localparam AddrCountLimit = AddrCount/8192;
     localparam DataWidth = 16;
     localparam StatusOK = 0;
@@ -92,9 +64,13 @@ module Top(
     wire[DataWidth-1:0] currentExpectedReadData = expectedReadData[DataWidth-1:0];
     
     reg init = 0;
-    reg status = StatusOK;
+    reg status = StatusOK /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
     
-    assign ledFailed = (status!=StatusOK);
+    wire ledFailed = (status!=StatusOK);
+    reg ledDebug = 0;
+    assign led[7] = ledFailed;
+    assign led[6:1] = 0;
+    assign led[0] = ledDebug;
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
@@ -121,19 +97,7 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    wire[8:0] random9;
-    Random9 random9Gen(.clk(clk), .q(random9));
-    
-    wire[15:0] random16;
-    Random16 random16Gen(.clk(clk), .q(random16));
-    
-    wire[AddrWidth-1:0] random25;
-    Random25 random25Gen(.clk(clk), .q(random25));
-    
-    logic[AddrWidth-1:0] randomAddr;
-    assign randomAddr = random25%AddrCountLimit;
-    
-    task Read(input logic[AddrWidth-1:0] addr);
+    task Read(input [AddrWidth-1:0] addr); begin
         cmdTrigger <= 1;
         cmdAddr <= addr;
         cmdWrite <= 0;
@@ -148,7 +112,7 @@ module Top(
         
         expectedReadData <= expectedReadData|(DataFromAddress(addr)<<(DataWidth*enqueuedReadCount));
         enqueuedReadCount <= enqueuedReadCount+1;
-    endtask
+    end endtask
     
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
@@ -196,7 +160,7 @@ module Top(
                     // $display("Read data: 0x%h", cmdReadData);
                     
                     // Verify that the data read out is what we expect
-                    if (cmdReadData !== currentExpectedReadData) begin
+                    if (cmdReadData != currentExpectedReadData) begin
                         `ifdef SIM
                             $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
                         `endif
@@ -220,11 +184,13 @@ module Top(
             // Current command was accepted: prepare a new command
             else if (cmdReady) begin
                 // A command was accepted, issue a new one
-                $display("Enqueue read @ 0x%h", cmdAddr);
+                `ifdef SIM
+                    $display("Enqueue read @ 0x%h", cmdAddr);
+                `endif
                 
                 Read((cmdAddr+1)&(AddrCountLimit-1));
                 
-                if (cmdAddr === 0) begin
+                if (cmdAddr == 0) begin
                     ledDebug <= !ledDebug;
                 end
             end
