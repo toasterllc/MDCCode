@@ -23,34 +23,34 @@
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
 <layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
 <layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
 <layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
 <layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
@@ -125,15 +125,15 @@ by exp-lbrs.ulp</description>
 <wire x1="-6.5" y1="7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
 <wire x1="-6.5" y1="-7.3" x2="-6.5" y2="7.3" width="0.05" layer="21"/>
 <wire x1="6.5" y1="-7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
-<smd name="1A" x="0" y="5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
-<smd name="2A" x="0" y="-5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
+<smd name="1A" x="0" y="5.75" dx="4.3" dy="2.7" layer="1"/>
+<smd name="2A" x="0" y="-5.75" dx="4.3" dy="2.7" layer="1"/>
 <text x="-6.561" y="7.354" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<smd name="1B" x="0" y="3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
-<smd name="2B" x="0" y="-3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
-<smd name="1C" x="0" y="1.85" dx="5" dy="1.3" layer="1" cream="no"/>
-<smd name="2C" x="0" y="-1.85" dx="5" dy="1.3" layer="1" cream="no"/>
-<smd name="1D" x="0" y="0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
-<smd name="2D" x="0" y="-0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
+<smd name="1B" x="0" y="3.45" dx="3.5" dy="1.5" layer="1"/>
+<smd name="2B" x="0" y="-3.45" dx="3.5" dy="1.5" layer="1"/>
+<smd name="1C" x="0" y="1.85" dx="5" dy="1.3" layer="1"/>
+<smd name="2C" x="0" y="-1.85" dx="5" dy="1.3" layer="1"/>
+<smd name="1D" x="0" y="0.75" dx="1.6" dy="0.5" layer="1"/>
+<smd name="2D" x="0" y="-0.75" dx="1.6" dy="0.5" layer="1"/>
 <polygon width="0.05" layer="39">
 <vertex x="6.5" y="-7.3"/>
 <vertex x="-6.5" y="-7.3"/>
@@ -146,7 +146,7 @@ by exp-lbrs.ulp</description>
 Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="A" x="-0.641" y="0" dx="0.7" dy="0.5" layer="1"/>
 <smd name="C" x="0.475" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" thermals="no"/>
-<text x="-1.105" y="0.363" size="0.3556" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
+<text x="-1.105" y="0.363" size="0.254" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-1.075" y="0.33"/>
 <vertex x="-0.775" y="0.33"/>
@@ -168,7 +168,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
 <smd name="2" x="0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
-<text x="-0.881" y="0.429" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.881" y="0.429" size="0.3048" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
 <wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
 <wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
@@ -219,7 +219,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
 <smd name="2" x="0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
-<text x="-1.379" y="0.635" size="0.4064" layer="25" font="vector">&gt;NAME</text>
+<text x="-1.379" y="0.635" size="0.3048" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="21"/>
@@ -271,7 +271,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<text x="-0.532740625" y="0.734990625" size="0.3556" layer="25" font="vector" rot="SR0">&gt;NAME</text>
+<text x="-0.532740625" y="0.734990625" size="0.3048" layer="25" font="vector" rot="SR0">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.7"/>
 <vertex x="-0.3" y="0.7"/>
@@ -304,7 +304,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="E1" x="-0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E2" x="0" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E3" x="0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<text x="-0.838" y="1.245" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.838" y="1.245" size="0.3048" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.8" y="1.2"/>
 <vertex x="-0.5" y="1.2"/>
@@ -421,11 +421,15 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </polygon>
 </package>
 <package name="SIT8021AI-J4-18S-12.000000E">
-<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<text x="-0.53" y="0.932" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<circle x="-0.205" y="0.5" radius="0.175" width="0" layer="29"/>
+<circle x="-0.205" y="-0.5" radius="0.175" width="0" layer="29"/>
+<circle x="0.205" y="-0.5" radius="0.175" width="0" layer="29"/>
+<circle x="0.205" y="0.5" radius="0.175" width="0" layer="29"/>
+<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<text x="-0.53" y="0.932" size="0.254" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.9"/>
 <vertex x="-0.5" y="0.7"/>
@@ -583,7 +587,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <vertex x="4.5" y="4.5"/>
 </polygon>
 </package>
-<package name="GD25LQ80CEIGR" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
+<package name="GD25LQ80C" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
 <description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
 &lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
 <smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
@@ -622,7 +626,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <smd name="6" x="6.35" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
 <smd name="4" x="5.08" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
 <smd name="5" x="6.35" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
-<text x="-0.635" y="1.47" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.635" y="1.47" size="0.762" layer="25" font="vector">&gt;NAME</text>
 <hole x="0" y="0" drill="0.9906"/>
 <hole x="7.62" y="-1.016" drill="0.9906"/>
 <hole x="7.62" y="1.016" drill="0.9906"/>
@@ -640,7 +644,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
 &lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
 <packageinstances>
-<packageinstance name="GD25LQ80CEIGR"/>
+<packageinstance name="GD25LQ80C"/>
 </packageinstances>
 </package3d>
 <package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198/1" type="model">
@@ -861,203 +865,220 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </autorouter>
 <elements>
 <element name="C27" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="3.7364" y="27.5336" smashed="yes" rot="MR270">
-<attribute name="NAME" x="3.1804" y="28.3638" size="0.3556" layer="26" font="vector" rot="MR270"/>
+<attribute name="MODEL" value="GCM155R71H103JA55D" x="55.8064" y="-4.2164" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="3.2306" y="28.366" size="0.3" layer="26" font="vector" rot="MR270"/>
 </element>
 <element name="C23" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="7.1756" y="37.2618" smashed="yes" rot="MR45">
-<attribute name="NAME" x="7.278915625" y="35.4911125" size="0.4064" layer="26" font="vector" rot="MR45"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="-40.41975625" y="11.2190625" size="1.778" layer="28" rot="MR45" display="off"/>
+<attribute name="NAME" x="5.31501875" y="38.224365625" size="0.508" layer="26" font="vector" rot="MR135"/>
 </element>
 <element name="C24" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="8.852" y="35.306" smashed="yes" rot="MR225">
-<attribute name="NAME" x="8.459090625" y="34.939809375" size="0.3556" layer="26" font="vector" rot="MR225"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="73.50983125" y="44.28624375" size="1.778" layer="28" rot="MR225" display="off"/>
+<attribute name="NAME" x="8.572840625" y="34.87631875" size="0.3" layer="26" font="vector" rot="MR225"/>
 </element>
 <element name="C7" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="22.6822" y="23.5204" smashed="yes" rot="MR180">
-<attribute name="NAME" x="22.995" y="24.3868" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="69.6722" y="75.5904" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="22.8658" y="24.31" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="C8" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="22.8854" y="22.479" smashed="yes" rot="MR180">
-<attribute name="NAME" x="22.1568" y="21.8468" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GCM155R71C104KA55D" x="72.4154" y="74.549" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="23.0944" y="21.9478" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="C14" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="22.9362" y="32.5628" smashed="yes" rot="MR180">
-<attribute name="NAME" x="20.6836" y="32.718" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="75.0062" y="84.6328" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="23.958" y="32.2348" size="0.3" layer="26" font="vector" rot="MR90"/>
 </element>
 <element name="C18" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="22.9362" y="33.6042" smashed="yes" rot="MR180">
-<attribute name="NAME" x="22.106" y="34.4198" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GCM155R71C104KA55D" x="77.5462" y="85.6742" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="22.8404" y="34.1144" size="0.3" layer="26" font="vector" rot="MR0"/>
 </element>
 <element name="C1" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="4.7118" y="9.7282" smashed="yes">
-<attribute name="NAME" x="3.4344" y="8.5852" size="0.4064" layer="25" font="vector"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="40.2718" y="-38.5318" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="4.2038" y="8.4582" size="0.508" layer="25" font="vector"/>
 </element>
 <element name="C11" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="12.6238" y="22.8346" smashed="yes" rot="MR0">
-<attribute name="NAME" x="13.4794" y="21.9174" size="0.3556" layer="26" font="vector" rot="MR0"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="-6.4262" y="-31.7754" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="12.745" y="22.3498" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="C13" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="12.6238" y="23.876" smashed="yes" rot="MR0">
-<attribute name="NAME" x="12.5904" y="24.4066" size="0.3556" layer="26" font="vector" rot="MR0"/>
+<attribute name="MP" value="GCM155R71C104KA55D" x="-8.9662" y="-30.734" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="11.8052" y="24.6358" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="C2" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="4.7118" y="13.2334" smashed="yes" rot="R180">
-<attribute name="NAME" x="5.9892" y="14.3002" size="0.4064" layer="25" font="vector" rot="R180"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="-34.6582" y="61.4934" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="NAME" x="5.0928" y="14.5034" size="0.508" layer="25" font="vector" rot="R180"/>
 </element>
 <element name="C25" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="10.8332" y="33.6296" smashed="yes" rot="MR45">
-<attribute name="NAME" x="10.885715625" y="31.9351125" size="0.4064" layer="26" font="vector" rot="MR45"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="-39.456225" y="10.2809375" size="1.778" layer="28" rot="MR45" display="off"/>
+<attribute name="NAME" x="11.475421875" y="32.089353125" size="0.508" layer="26" font="vector" rot="MR135"/>
 </element>
 <element name="C26" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="9.5886" y="36.0426" smashed="yes" rot="MR225">
-<attribute name="NAME" x="9.627490625" y="37.225809375" size="0.3556" layer="26" font="vector" rot="MR225"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="72.450390625" y="50.41100625" size="1.778" layer="28" rot="MR225" display="off"/>
+<attribute name="NAME" x="9.563440625" y="37.16231875" size="0.3" layer="26" font="vector" rot="MR225"/>
 </element>
 <element name="C3" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="27.267" y="7.112" smashed="yes" rot="R90">
-<attribute name="NAME" x="28.4354" y="5.9616" size="0.4064" layer="25" font="vector" rot="R90"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="75.527" y="50.292" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="NAME" x="28.4608" y="5.7912" size="0.508" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="C4" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="23.7618" y="7.112" smashed="yes" rot="R270">
-<attribute name="NAME" x="22.6188" y="8.4402" size="0.4064" layer="25" font="vector" rot="R270"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="-24.4982" y="-39.878" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="NAME" x="22.568" y="8.382" size="0.508" layer="25" font="vector" rot="R270"/>
 </element>
 <element name="C5" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="21.3868" y="38.062" smashed="yes" rot="R270">
-<attribute name="NAME" x="20.2184" y="37.3328" size="0.4064" layer="25" font="vector" rot="R270"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="-26.8732" y="-12.738" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="NAME" x="20.193" y="37.7064" size="0.508" layer="25" font="vector" rot="R270"/>
 </element>
 <element name="C6" library="MotionDetectorCamera" package="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u" x="26.1366" y="37.8358" smashed="yes" rot="R90">
-<attribute name="NAME" x="26.9393" y="39.9228" size="0.4064" layer="25" font="vector" rot="R180"/>
+<attribute name="MP" value="GRM219R61C226ME15L" x="68.0466" y="87.3658" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="NAME" x="25.5778" y="39.5122" size="0.635" layer="25" font="vector"/>
 </element>
 <element name="L1" library="MotionDetectorCamera" package="INDUCTOR_LARGE" value="470n" x="8.4836" y="11.7602" smashed="yes" rot="MR180">
-<attribute name="MP" value="" x="28.8036" y="21.9202" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="1.9226" y="4.2284" size="1.27" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="PA4343.471NLT" x="28.8036" y="21.9202" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="7.3546" y="4.2808" size="1.27" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="L2" library="MotionDetectorCamera" package="INDUCTOR_LARGE" value="470n" x="25.2476" y="10.8966" smashed="yes" rot="MR90">
-<attribute name="MP" value="" x="15.0876" y="45.1866" size="1.778" layer="28" rot="MR90" display="off"/>
-<attribute name="NAME" x="32.7794" y="4.361" size="1.27" layer="26" font="vector" rot="MR90"/>
+<attribute name="MP" value="PA4343.471NLT" x="15.0876" y="45.1866" size="1.778" layer="28" rot="MR90" display="off"/>
+<attribute name="NAME" x="26.2754" y="2.9604" size="1.27" layer="26" font="vector" rot="MR0"/>
 </element>
 <element name="L3" library="MotionDetectorCamera" package="INDUCTOR_LARGE" value="470n" x="24.003" y="41.8338" smashed="yes" rot="MR270">
-<attribute name="MP" value="" x="34.163" y="-6.4262" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="16.4712" y="48.3948" size="1.27" layer="26" font="vector" rot="MR270"/>
+<attribute name="MP" value="PA4343.471NLT" x="34.163" y="-6.4262" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="16.4728" y="42.6834" size="1.27" layer="26" font="vector" rot="MR270"/>
 </element>
 <element name="LED1" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="2.7432" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.11876875" y="2.8194" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.22036875" y="2.5908" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-39.72923125" y="-36.6268" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="LED2" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="5.047340625" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.11876875" y="5.072740625" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.22036875" y="4.844140625" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-39.72923125" y="-38.132659375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="LED3" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="7.35148125" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.11876875" y="7.40228125" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.22036875" y="7.17368125" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-39.72923125" y="-39.63851875" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="LED4" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="9.655621875" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.11876875" y="9.706421875" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.22036875" y="9.477821875" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-39.72923125" y="-41.144378125" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="LED5" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="11.9597625" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.11876875" y="12.0105625" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.22036875" y="11.7819625" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-39.72923125" y="-42.6502375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="LED6" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="14.263903125" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.11876875" y="14.314703125" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.22036875" y="14.086103125" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-39.72923125" y="-44.156096875" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="LED7" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="16.56804375" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.11876875" y="16.61884375" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.22036875" y="16.39024375" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-42.26923125" y="2.59804375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="LED8" library="MotionDetectorCamera" package="LED_0603" value="" x="14.88076875" y="18.872184375" smashed="yes" rot="R270">
-<attribute name="NAME" x="14.09336875" y="18.897584375" size="0.3556" layer="25" font="vector" rot="R90" align="top-right"/>
+<attribute name="NAME" x="14.19496875" y="18.668984375" size="0.254" layer="25" font="vector" rot="R90" align="top-right"/>
 <attribute name="POPULARITY" value="0" x="-42.26923125" y="1.092184375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="R12" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="19.9162" y="20.3708" smashed="yes" rot="R90">
-<attribute name="NAME" x="19.4364" y="19.5152" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="19.4082" y="19.558" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R6" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="21.6382" y="39.9288" smashed="yes">
-<attribute name="NAME" x="21.9002" y="40.434" size="0.3556" layer="25" font="vector"/>
+<attribute name="NAME" x="21.816" y="40.4114" size="0.3048" layer="25" font="vector"/>
 </element>
 <element name="R13" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="3.0066" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7894" y="2.143" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="2.143" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R14" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="5.310740625" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7894" y="4.447140625" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="4.447140625" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R15" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="7.61488125" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7894" y="6.75128125" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="6.75128125" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R16" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="9.919021875" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7894" y="9.055421875" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="9.055421875" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R17" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="12.2231625" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7894" y="11.3595625" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="11.3595625" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R18" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="14.527303125" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7894" y="13.663703125" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="13.663703125" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R19" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="16.83144375" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7894" y="15.96784375" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="15.96784375" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R20" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="15.875" y="19.135584375" smashed="yes" rot="R90">
-<attribute name="NAME" x="16.7922" y="18.279984375" size="0.3556" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="16.637" y="18.271984375" size="0.3048" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R3" library="MotionDetectorCamera" package="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0" x="11.0642" y="20.4978" smashed="yes" rot="MR0">
-<attribute name="NAME" x="13.1936" y="20.3047" size="0.4064" layer="26" font="vector" rot="MR270"/>
+<attribute name="NAME" x="12.8168" y="19.9136" size="0.635" layer="26" font="vector" rot="MR90"/>
 </element>
 <element name="R5" library="MotionDetectorCamera" package="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0" x="16.5506" y="17.399" smashed="yes" rot="MR270">
-<attribute name="NAME" x="16.6929" y="15.6422" size="0.4064" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="17.084" y="15.0368" size="0.635" layer="26" font="vector" rot="MR0"/>
 </element>
 <element name="R9" library="MotionDetectorCamera" package="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0" x="28.0162" y="35.7022" smashed="yes" rot="R90">
-<attribute name="NAME" x="29.3777" y="34.2332" size="0.4064" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="29.0068" y="37.15" size="0.635" layer="25" font="vector" rot="R270"/>
 </element>
 <element name="R2" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="3.7364" y="11.4808" smashed="yes" rot="R270">
-<attribute name="NAME" x="2.87" y="11.7522" size="0.3556" layer="25" font="vector" rot="R270"/>
+<attribute name="NAME" x="2.8728" y="11.7094" size="0.3048" layer="25" font="vector" rot="R270"/>
 </element>
 <element name="R4" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="25.5042" y="6.1214" smashed="yes">
-<attribute name="NAME" x="25.2836" y="5.2042" size="0.3556" layer="25" font="vector"/>
+<attribute name="NAME" x="25.7328" y="5.6134" size="0.3048" layer="25" font="vector" rot="R180"/>
 </element>
 <element name="R1" library="MotionDetectorCamera" package="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1" x="30.5308" y="10.869" smashed="yes" rot="R90">
-<attribute name="NAME" x="29.3825" y="8.8264" size="0.4064" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="29.3624" y="8.837" size="0.635" layer="25" font="vector" rot="R90"/>
 </element>
 <element name="R7" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k" x="25.527" y="35.4204" smashed="yes">
-<attribute name="NAME" x="24.148" y="36.0554" size="0.4064" layer="25" font="vector"/>
+<attribute name="NAME" x="25.1714" y="34.6584" size="0.508" layer="25" font="vector" rot="R180"/>
 </element>
 <element name="R8" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k" x="23.6474" y="36.8682" smashed="yes">
-<attribute name="NAME" x="22.3954" y="35.7252" size="0.4064" layer="25" font="vector"/>
+<attribute name="NAME" x="23.220678125" y="36.13921875" size="0.508" layer="25" font="vector" rot="R180"/>
 </element>
 <element name="SV1" library="MotionDetectorCamera" package="2X10_HEADER" value="" x="34.8742" y="36.4236" smashed="yes" rot="R90">
 <attribute name="MF" value="" x="59.0042" y="83.4136" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MPN" value="" x="59.0042" y="83.4136" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="NAME" x="35.5536" y="23.4188" size="1.016" layer="25" font="vector" rot="R180" align="bottom-right"/>
+<attribute name="NAME" x="38.018721875" y="23.4823" size="1.016" layer="25" font="vector" rot="R180"/>
 <attribute name="OC_FARNELL" value="unknown" x="59.0042" y="83.4136" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="OC_NEWARK" value="unknown" x="59.0042" y="83.4136" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="POPULARITY" value="0" x="59.0042" y="83.4136" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="U1" library="MotionDetectorCamera" package="TPS62801X_TPS6280X" value="TPS62801X_TPS6280X" x="4.8768" y="11.4554" smashed="yes" rot="R180">
 <attribute name="MP" value="TPS62801YKAR" x="-21.7932" y="63.5254" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="5.845803125" y="11.194409375" size="0.3556" layer="25" font="vector" rot="SR90"/>
+<attribute name="NAME" x="5.764521875" y="11.219809375" size="0.3048" layer="25" font="vector" rot="SR90"/>
 </element>
 <element name="U2" library="MotionDetectorCamera" package="TPS62801X_TPS6280X" value="TPS62801X_TPS6280X" x="25.4762" y="7.3914" smashed="yes" rot="R270">
 <attribute name="MP" value="TPS62802YKAR" x="-26.5938" y="-21.8186" size="1.778" layer="27" rot="R270" display="off"/>
-<attribute name="NAME" x="25.347590625" y="8.025740625" size="0.3556" layer="25" font="vector" rot="SR0"/>
+<attribute name="NAME" x="25.330790625" y="8.007340625" size="0.3048" layer="25" font="vector" rot="SR0"/>
 </element>
 <element name="U3" library="MotionDetectorCamera" package="TPS6380X_TPS6380X" value="TPS6380X_TPS6380X" x="23.6728" y="38.608" smashed="yes" rot="R90">
 <attribute name="MP" value="TPS63805YFFR" x="66.8528" y="77.978" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="NAME" x="24.8408" y="39.9036" size="0.3556" layer="25" font="vector" rot="R180"/>
+<attribute name="NAME" x="24.84808125" y="39.81198125" size="0.3048" layer="25" font="vector" rot="R180"/>
 </element>
 <element name="U5" library="MotionDetectorCamera" package="W989D6DB" value="W989D6DB" x="9.22755625" y="35.728409375" smashed="yes" rot="R45">
-<attribute name="NAME" x="3.09976875" y="36.069234375" size="1.016" layer="25" font="vector" rot="R45"/>
+<attribute name="NAME" x="3.017984375" y="36.25594375" size="1.016" layer="25" font="vector" rot="R45"/>
 </element>
 <element name="X6" library="MotionDetectorCamera" package="UFL_CONNECTOR" value="UFL_CONNECTOR" x="11.557" y="43.3324" smashed="yes" rot="R315">
-<attribute name="NAME" x="12.808315625" y="45.300909375" size="0.6096" layer="25" font="vector" rot="R315"/>
+<attribute name="NAME" x="12.73760625" y="45.4402875" size="0.762" layer="25" font="vector" rot="R315"/>
 <attribute name="POPULARITY" value="0" x="6.16884375" y="-12.3451875" size="1.778" layer="27" rot="R315" display="off"/>
 </element>
 <element name="X3" library="MotionDetectorCamera" package="UFL_CONNECTOR" value="UFL_CONNECTOR" x="7.1628" y="21.3614" smashed="yes" rot="MR0">
-<attribute name="NAME" x="7.6238" y="23.5558" size="0.6096" layer="26" font="vector" rot="MR0"/>
+<attribute name="NAME" x="7.7444" y="23.6018" size="0.762" layer="26" font="vector" rot="MR0"/>
 <attribute name="POPULARITY" value="0" x="-34.7472" y="-10.3886" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="X4" library="MotionDetectorCamera" package="UFL_CONNECTOR" value="UFL_CONNECTOR" x="19.812" y="5.8928" smashed="yes" rot="R180">
-<attribute name="NAME" x="20.273" y="3.5714" size="0.6096" layer="25" font="vector" rot="R180"/>
+<attribute name="NAME" x="20.3936" y="3.5508" size="0.762" layer="25" font="vector" rot="R180"/>
 <attribute name="POPULARITY" value="0" x="-27.178" y="37.6428" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="X5" library="MotionDetectorCamera" package="UFL_CONNECTOR" value="UFL_CONNECTOR" x="27.559" y="31.0388" smashed="yes" rot="MR180">
-<attribute name="NAME" x="27.0726" y="28.7428" size="0.6096" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="26.9774" y="28.7476" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="POPULARITY" value="0" x="79.629" y="62.7888" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="X7" library="MotionDetectorCamera" package="UFL_CONNECTOR" value="UFL_CONNECTOR" x="5.2578" y="23.9268" smashed="yes" rot="R180">
-<attribute name="NAME" x="7.4714" y="24.247" size="0.6096" layer="25" font="vector" rot="R270"/>
+<attribute name="NAME" x="7.465" y="24.4042" size="0.762" layer="25" font="vector" rot="R270"/>
 <attribute name="POPULARITY" value="0" x="-15.0622" y="67.1068" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="X1" library="MotionDetectorCamera" package="UFL_CONNECTOR" value="UFL_CONNECTOR" x="35.3314" y="13.0302" smashed="yes" rot="R270">
-<attribute name="NAME" x="37.5512" y="13.4912" size="0.6096" layer="25" font="vector" rot="R270"/>
+<attribute name="NAME" x="37.5718" y="13.688" size="0.762" layer="25" font="vector" rot="R270"/>
 <attribute name="POPULARITY" value="0" x="-7.8486" y="-12.3698" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="X2" library="MotionDetectorCamera" package="UFL_CONNECTOR" value="UFL_CONNECTOR" x="35.306" y="8.7122" smashed="yes" rot="R270">
-<attribute name="NAME" x="37.5766" y="9.1224" size="0.6096" layer="25" font="vector" rot="R270"/>
+<attribute name="NAME" x="37.5972" y="9.243" size="0.762" layer="25" font="vector" rot="R270"/>
 <attribute name="POPULARITY" value="0" x="-7.874" y="-21.7678" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="Y1" library="MotionDetectorCamera" package="SIT8021AI-J4-18S-12.000000E" value="SIT8021AI-J4-18S-12.000000E" x="3.7338" y="27.518359375" smashed="yes" rot="R180">
@@ -1065,63 +1086,75 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="DESCRIPTION" value=" 12MHz XO _Standard_ LVCMOS Oscillator 2.25V ~ 3.63V Standby _Power Down_ 4-UFBGA, CSPBGA " x="-20.3962" y="75.778359375" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MF" value="SiTIME" x="-20.3962" y="75.778359375" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MP" value="SiT8021AI-J4-18S-12.000000E" x="-20.3962" y="75.778359375" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="4.213" y="28.872359375" size="0.3556" layer="25" font="vector" rot="R180"/>
+<attribute name="NAME" x="4.2512" y="28.753559375" size="0.254" layer="25" font="vector" rot="R180"/>
 <attribute name="PACKAGE" value="UFBGA-4 SiTIME" x="-20.3962" y="75.778359375" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="PRICE" value="None" x="-20.3962" y="75.778359375" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="U4" library="MotionDetectorCamera" package="BG121" package3d_urn="urn:adsk.eagle:package:16997455/1" value="ICE40HX4KBG121" x="17.5284" y="27.567" smashed="yes">
-<attribute name="NAME" x="20.5764" y="32.2194" size="1.016" layer="25" font="vector"/>
+<attribute name="NAME" x="22.14611875" y="32.221940625" size="1.016" layer="25" font="vector" align="bottom-right"/>
 </element>
 <element name="C12" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="23.368" y="31.496" smashed="yes" rot="MR180">
-<attribute name="NAME" x="21.1154" y="31.6512" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="23.368" y="31.496" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="24.3898" y="31.1426" size="0.3" layer="26" font="vector" rot="MR90"/>
 </element>
 <element name="C15" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="23.368" y="30.4546" smashed="yes" rot="MR180">
-<attribute name="NAME" x="23.0204" y="29.8986" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GCM155R71C104KA55D" x="23.368" y="30.4546" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="24.212" y="29.6694" size="0.3" layer="26" font="vector" rot="MR0"/>
 </element>
 <element name="R11" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100" x="16.1798" y="22.987" smashed="yes" rot="MR270">
-<attribute name="NAME" x="15.7508" y="21.9376" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="15.8496" y="22.0218" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="C10" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="18.4912" y="22.5298" smashed="yes" rot="MR270">
-<attribute name="NAME" x="18.034" y="20.9624" size="0.4064" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="20.5232" y="22.5298" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="17.8562" y="21.0312" size="0.508" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="C17" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="17.2212" y="22.987" smashed="yes" rot="MR270">
-<attribute name="NAME" x="16.7922" y="24.3252" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="19.2532" y="22.987" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="16.8424" y="24.2512" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="R10" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100" x="17.0942" y="34.1884" smashed="yes" rot="MR0">
-<attribute name="NAME" x="18.4832" y="34.6174" size="0.3556" layer="26" font="vector" rot="MR270"/>
+<attribute name="NAME" x="18.3896" y="34.5694" size="0.3" layer="26" font="vector" rot="MR270"/>
 </element>
 <element name="C9" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="17.0942" y="31.9024" smashed="yes" rot="MR0">
-<attribute name="NAME" x="19.0066" y="31.9278" size="0.4064" layer="26" font="vector" rot="MR270"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="17.0942" y="29.8704" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="19.0754" y="32.2834" size="0.508" layer="26" font="vector" rot="MR270"/>
 </element>
 <element name="C16" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="17.0942" y="33.147" smashed="yes" rot="MR0">
-<attribute name="NAME" x="16.0702" y="33.5252" size="0.3556" layer="26" font="vector" rot="MR270"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="17.0942" y="31.115" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="16.047" y="33.5004" size="0.3" layer="26" font="vector" rot="MR270"/>
 </element>
-<element name="U6" library="MotionDetectorCamera" package="GD25LQ80CEIGR" package3d_urn="urn:adsk.eagle:package:17077898/1" value="GD25LQ80CEIGR" x="20.5994" y="15.7988" smashed="yes" rot="R270">
-<attribute name="NAME" x="21.9222" y="16.1738" size="0.508" layer="25" font="vector" rot="R270"/>
+<element name="U6" library="MotionDetectorCamera" package="GD25LQ80C" package3d_urn="urn:adsk.eagle:package:17077898/1" value="GD25LQ80CUSON8" x="20.5994" y="15.7988" smashed="yes" rot="R270">
+<attribute name="NAME" x="21.8574" y="15.8242" size="0.508" layer="25" font="vector" rot="R270" align="bottom-center"/>
 </element>
 <element name="R21" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="18.3896" y="17.8816" smashed="yes" rot="R180">
-<attribute name="NAME" x="18.407" y="18.7226" size="0.3556" layer="25" font="vector" rot="R180"/>
+<attribute name="NAME" x="17.5514" y="18.3896" size="0.3048" layer="25" font="vector"/>
 </element>
 <element name="C28" library="MotionDetectorCamera" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="18.7198" y="15.7988" smashed="yes" rot="R270">
-<attribute name="NAME" x="18.3388" y="13.9012" size="0.4064" layer="25" font="vector"/>
+<attribute name="MP" value="GRM188R61A106KE69D" x="18.7198" y="15.7988" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="NAME" x="18.0594" y="13.7922" size="0.508" layer="25" font="vector"/>
 </element>
 <element name="C29" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="17.4498" y="15.7734" smashed="yes" rot="R270">
-<attribute name="NAME" x="17.066" y="14.4446" size="0.3556" layer="25" font="vector"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="17.4498" y="15.7734" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="NAME" x="17.092" y="14.4976" size="0.3048" layer="25" font="vector"/>
 </element>
 <element name="TC1" library="MotionDetectorCamera" package="TC2050-NL" value="TC2050-NL" x="25.3746" y="20.3454" smashed="yes">
-<attribute name="NAME" x="31.1658" y="17.2942" size="1.016" layer="25" font="vector"/>
+<attribute name="NAME" x="33.4772" y="18.3388" size="0.635" layer="25" font="vector" rot="R180"/>
 </element>
 <element name="C19" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="16.7386" y="28.829" smashed="yes" rot="MR180">
-<attribute name="NAME" x="15.883" y="29.67" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="16.7386" y="28.7528" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="15.9338" y="29.5938" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 <element name="C21" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="16.7386" y="27.8638" smashed="yes" rot="MR180">
-<attribute name="NAME" x="14.994" y="27.8666" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GRM155R61H104KE19D" x="16.7386" y="27.7876" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="15.8068" y="28.2476" size="0.3" layer="26" font="vector" rot="MR270"/>
 </element>
 <element name="C20" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="18.7198" y="28.3464" smashed="yes" rot="MR270">
-<attribute name="NAME" x="18.8496" y="27.2462" size="0.3556" layer="26" font="vector" rot="MR270"/>
+<attribute name="MP" value="GCM155R71C104KA55D" x="18.6436" y="28.3464" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="18.2908" y="29.2274" size="0.3" layer="26" font="vector" rot="MR270"/>
 </element>
 <element name="C22" library="MotionDetectorCamera" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="16.2814" y="26.4922" smashed="yes" rot="MR270">
-<attribute name="NAME" x="15.954" y="25.4936" size="0.3556" layer="26" font="vector" rot="MR180"/>
+<attribute name="MP" value="GCM155R71C104KA55D" x="16.2052" y="26.4922" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="15.954" y="25.5444" size="0.3" layer="26" font="vector" rot="MR180"/>
 </element>
 </elements>
 <signals>
@@ -1617,6 +1650,16 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C22" pad="2"/>
 <wire x1="16.2814" y1="26.0597" x2="16.5869" y2="26.3652" width="0.2032" layer="16"/>
 <wire x1="16.5869" y1="26.3652" x2="17.1196" y2="26.3652" width="0.2032" layer="16"/>
+<wire x1="17.9324" y1="27.9654" x2="18.3284" y2="28.367" width="0" layer="19" extent="1-1"/>
+<wire x1="16.7284" y1="25.967" x2="16.2814" y2="26.0597" width="0" layer="19" extent="1-16"/>
+<wire x1="17.5284" y1="27.567" x2="17.1711" y2="27.8638" width="0" layer="19" extent="1-16"/>
+<wire x1="18.3284" y1="27.567" x2="18.7198" y2="27.9139" width="0" layer="19" extent="1-16"/>
+<wire x1="16.7284" y1="27.567" x2="17.1711" y2="27.8638" width="0" layer="19" extent="1-16"/>
+<wire x1="16.7284" y1="26.767" x2="17.1196" y2="26.3652" width="0" layer="19" extent="1-1"/>
+<wire x1="17.5284" y1="28.367" x2="17.9324" y2="27.9654" width="0" layer="19" extent="1-1"/>
+<wire x1="18.3284" y1="26.767" x2="17.9324" y2="27.178" width="0" layer="19" extent="1-1"/>
+<wire x1="17.5284" y1="26.767" x2="17.1196" y2="26.3652" width="0" layer="19" extent="1-1"/>
+<wire x1="16.7284" y1="28.367" x2="17.1711" y2="28.829" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="ICE_CLK12MHZ">
 <contactref element="Y1" pad="2"/>
@@ -1886,7 +1929,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="14.322559375" y1="27.567" x2="14.3284" y2="27.567" width="0.127" layer="1"/>
 <wire x1="13.962959375" y1="27.9266" x2="14.322559375" y2="27.567" width="0.127" layer="1"/>
 </signal>
-<signal name="RAM_DQM0">
+<signal name="RAM_LDQM">
 <contactref element="U5" pad="E8"/>
 <contactref element="U4" pad="A6"/>
 <wire x1="11.1248" y1="38.142546875" x2="11.3389" y2="38.356646875" width="0.127" layer="1"/>
@@ -1899,7 +1942,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="17.5394" y1="31.578" x2="17.5284" y2="31.567" width="0.127" layer="1"/>
 <wire x1="17.5394" y1="33.2810875" x2="17.5394" y2="31.578" width="0.127" layer="1"/>
 </signal>
-<signal name="RAM_DQM1">
+<signal name="RAM_UDQM">
 <contactref element="U5" pad="F1"/>
 <wire x1="7.530496875" y1="32.89998125" x2="7.3152" y2="32.684684375" width="0.127" layer="1"/>
 <contactref element="U4" pad="E1"/>

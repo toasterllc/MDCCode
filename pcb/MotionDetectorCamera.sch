@@ -114,15 +114,15 @@ by exp-lbrs.ulp</description>
 <wire x1="-6.5" y1="7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
 <wire x1="-6.5" y1="-7.3" x2="-6.5" y2="7.3" width="0.05" layer="21"/>
 <wire x1="6.5" y1="-7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
-<smd name="1A" x="0" y="5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
-<smd name="2A" x="0" y="-5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
+<smd name="1A" x="0" y="5.75" dx="4.3" dy="2.7" layer="1"/>
+<smd name="2A" x="0" y="-5.75" dx="4.3" dy="2.7" layer="1"/>
 <text x="-6.561" y="7.354" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<smd name="1B" x="0" y="3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
-<smd name="2B" x="0" y="-3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
-<smd name="1C" x="0" y="1.85" dx="5" dy="1.3" layer="1" cream="no"/>
-<smd name="2C" x="0" y="-1.85" dx="5" dy="1.3" layer="1" cream="no"/>
-<smd name="1D" x="0" y="0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
-<smd name="2D" x="0" y="-0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
+<smd name="1B" x="0" y="3.45" dx="3.5" dy="1.5" layer="1"/>
+<smd name="2B" x="0" y="-3.45" dx="3.5" dy="1.5" layer="1"/>
+<smd name="1C" x="0" y="1.85" dx="5" dy="1.3" layer="1"/>
+<smd name="2C" x="0" y="-1.85" dx="5" dy="1.3" layer="1"/>
+<smd name="1D" x="0" y="0.75" dx="1.6" dy="0.5" layer="1"/>
+<smd name="2D" x="0" y="-0.75" dx="1.6" dy="0.5" layer="1"/>
 <polygon width="0.05" layer="39">
 <vertex x="6.5" y="-7.3"/>
 <vertex x="-6.5" y="-7.3"/>
@@ -135,7 +135,7 @@ by exp-lbrs.ulp</description>
 Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="A" x="-0.641" y="0" dx="0.7" dy="0.5" layer="1"/>
 <smd name="C" x="0.475" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" thermals="no"/>
-<text x="-1.105" y="0.363" size="0.3556" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
+<text x="-1.105" y="0.363" size="0.254" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-1.075" y="0.33"/>
 <vertex x="-0.775" y="0.33"/>
@@ -209,7 +209,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<text x="-0.532740625" y="0.734990625" size="0.3556" layer="25" font="vector" rot="SR0">&gt;NAME</text>
+<text x="-0.532740625" y="0.734990625" size="0.3048" layer="25" font="vector" rot="SR0">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.7"/>
 <vertex x="-0.3" y="0.7"/>
@@ -242,7 +242,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="E1" x="-0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E2" x="0" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E3" x="0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<text x="-0.838" y="1.245" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.838" y="1.245" size="0.3048" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.8" y="1.2"/>
 <vertex x="-0.5" y="1.2"/>
@@ -359,11 +359,15 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </polygon>
 </package>
 <package name="SIT8021AI-J4-18S-12.000000E">
-<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<text x="-0.53" y="0.932" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<circle x="-0.205" y="0.5" radius="0.175" width="0" layer="29"/>
+<circle x="-0.205" y="-0.5" radius="0.175" width="0" layer="29"/>
+<circle x="0.205" y="-0.5" radius="0.175" width="0" layer="29"/>
+<circle x="0.205" y="0.5" radius="0.175" width="0" layer="29"/>
+<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" stop="no"/>
+<text x="-0.53" y="0.932" size="0.254" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.9"/>
 <vertex x="-0.5" y="0.7"/>
@@ -521,7 +525,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <vertex x="4.5" y="4.5"/>
 </polygon>
 </package>
-<package name="GD25LQ80CEIGR" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
+<package name="GD25LQ80C" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
 <description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
 &lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
 <smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
@@ -560,7 +564,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <smd name="6" x="6.35" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
 <smd name="4" x="5.08" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
 <smd name="5" x="6.35" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100" cream="no"/>
-<text x="-0.635" y="1.47" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.635" y="1.47" size="0.762" layer="25" font="vector">&gt;NAME</text>
 <hole x="0" y="0" drill="0.9906"/>
 <hole x="7.62" y="-1.016" drill="0.9906"/>
 <hole x="7.62" y="1.016" drill="0.9906"/>
@@ -570,7 +574,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 &lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
 <smd name="2" x="0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
-<text x="-0.881" y="0.429" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.881" y="0.429" size="0.3048" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
 <wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
 <wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
@@ -587,7 +591,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 &lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
 <smd name="2" x="0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
-<text x="-1.379" y="0.635" size="0.4064" layer="25" font="vector">&gt;NAME</text>
+<text x="-1.379" y="0.635" size="0.3048" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="21"/>
@@ -629,7 +633,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
 &lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
 <packageinstances>
-<packageinstance name="GD25LQ80CEIGR"/>
+<packageinstance name="GD25LQ80C"/>
 </packageinstances>
 </package3d>
 <package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198/1" type="model">
@@ -1058,7 +1062,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pin name="GNDPLL0_L6" x="-20.32" y="-15.24" length="short"/>
 <pin name="CRESET_B_L9" x="-20.32" y="-38.1" length="short"/>
 </symbol>
-<symbol name="GD25LQ80CEIGR">
+<symbol name="GD25LQ80C">
 <wire x1="-10.16" y1="5.08" x2="-10.16" y2="-7.62" width="0.254" layer="94"/>
 <wire x1="-10.16" y1="-7.62" x2="10.16" y2="-7.62" width="0.254" layer="94"/>
 <wire x1="10.16" y1="-7.62" x2="10.16" y2="5.08" width="0.254" layer="94"/>
@@ -1586,12 +1590,12 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </device>
 </devices>
 </deviceset>
-<deviceset name="GD25LQ80CEIGR" prefix="U">
+<deviceset name="GD25LQ80C" prefix="U">
 <gates>
-<gate name="G$1" symbol="GD25LQ80CEIGR" x="7.62" y="-12.7"/>
+<gate name="G$1" symbol="GD25LQ80C" x="7.62" y="-12.7"/>
 </gates>
 <devices>
-<device name="" package="GD25LQ80CEIGR">
+<device name="USON8" package="GD25LQ80C">
 <connects>
 <connect gate="G$1" pin="CS_" pad="1"/>
 <connect gate="G$1" pin="GND" pad="4"/>
@@ -1657,6 +1661,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MODEL" value="GCM155R71H103JA55D"/>
 </part>
 <part name="LED1" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
 <part name="LED2" library="MotionDetectorCamera" deviceset="LED_0603" device=""/>
@@ -1673,12 +1678,15 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="U1" library="MotionDetectorCamera" deviceset="TPS62801X_TPS6280X" device="">
 <attribute name="MP" value="TPS62801YKAR"/>
 </part>
 <part name="R2" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="L1" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n"/>
+<part name="L1" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n">
+<attribute name="MP" value="PA4343.471NLT"/>
+</part>
 <part name="C3" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
@@ -1686,12 +1694,15 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="U2" library="MotionDetectorCamera" deviceset="TPS62801X_TPS6280X" device="">
 <attribute name="MP" value="TPS62802YKAR"/>
 </part>
 <part name="R4" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="L2" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n"/>
+<part name="L2" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n">
+<attribute name="MP" value="PA4343.471NLT"/>
+</part>
 <part name="U3" library="MotionDetectorCamera" deviceset="TPS6380X_TPS6380X" device="">
 <attribute name="MP" value="TPS63805YFFR"/>
 </part>
@@ -1702,6 +1713,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C4" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1710,6 +1722,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C5" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1718,6 +1731,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C6" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
 <spice>
@@ -1726,8 +1740,11 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM219R61C226ME15L"/>
 </part>
-<part name="L3" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n"/>
+<part name="L3" library="MotionDetectorCamera" deviceset="INDUCTOR_LARGE" device="" value="470n">
+<attribute name="MP" value="PA4343.471NLT"/>
+</part>
 <part name="R7" library="MotionDetectorCamera" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k"/>
 <part name="R8" library="MotionDetectorCamera" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k"/>
 <part name="U5" library="MotionDetectorCamera" deviceset="W989D6DB" device=""/>
@@ -1738,6 +1755,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C24" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1746,6 +1764,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C7" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1754,6 +1773,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C8" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
@@ -1762,6 +1782,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="C14" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1770,6 +1791,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C18" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
@@ -1778,6 +1800,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="C11" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1786,6 +1809,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C13" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
@@ -1794,6 +1818,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GCM155R71C104KA55D"/>
 </part>
 <part name="C25" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1802,6 +1827,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C26" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1810,6 +1836,7 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MP" value="GRM155R61H104KE19D"/>
 </part>
 <part name="SV1" library="MotionDetectorCamera" deviceset="2X10_HEADER" device=""/>
 <part name="R12" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
@@ -1834,23 +1861,47 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <part name="R5" library="MotionDetectorCamera" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
 <part name="R9" library="MotionDetectorCamera" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
 <part name="U4" library="MotionDetectorCamera" deviceset="ICE40HX4K" device="BG121" package3d_urn="urn:adsk.eagle:package:16997455/1"/>
-<part name="C12" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n"/>
-<part name="C15" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n"/>
+<part name="C12" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<attribute name="MP" value="GRM155R61H104KE19D"/>
+</part>
+<part name="C15" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<attribute name="MP" value="GCM155R71C104KA55D"/>
+</part>
 <part name="R11" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
-<part name="C10" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u"/>
-<part name="C17" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n"/>
+<part name="C10" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<attribute name="MP" value="GRM188R61A106KE69D"/>
+</part>
+<part name="C17" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<attribute name="MP" value="GRM155R61H104KE19D"/>
+</part>
 <part name="R10" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
-<part name="C9" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u"/>
-<part name="C16" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n"/>
-<part name="U6" library="MotionDetectorCamera" deviceset="GD25LQ80CEIGR" device="" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
+<part name="C9" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<attribute name="MP" value="GRM188R61A106KE69D"/>
+</part>
+<part name="C16" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<attribute name="MP" value="GRM155R61H104KE19D"/>
+</part>
+<part name="U6" library="MotionDetectorCamera" deviceset="GD25LQ80C" device="USON8" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
 <part name="R21" library="MotionDetectorCamera" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="C28" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u"/>
-<part name="C29" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n"/>
+<part name="C28" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<attribute name="MP" value="GRM188R61A106KE69D"/>
+</part>
+<part name="C29" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<attribute name="MP" value="GRM155R61H104KE19D"/>
+</part>
 <part name="TC1" library="MotionDetectorCamera" deviceset="TC2050-NL" device=""/>
-<part name="C19" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n"/>
-<part name="C21" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n"/>
-<part name="C20" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n"/>
-<part name="C22" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n"/>
+<part name="C19" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<attribute name="MP" value="GRM155R61H104KE19D"/>
+</part>
+<part name="C21" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<attribute name="MP" value="GRM155R61H104KE19D"/>
+</part>
+<part name="C20" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<attribute name="MP" value="GCM155R71C104KA55D"/>
+</part>
+<part name="C22" library="MotionDetectorCamera" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<attribute name="MP" value="GCM155R71C104KA55D"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -1868,6 +1919,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C27" gate="G$1" x="325.12" y="36.83" smashed="yes">
 <attribute name="NAME" x="327.914" y="36.449" size="1.778" layer="95"/>
 <attribute name="VALUE" x="327.66" y="34.163" size="1.778" layer="96"/>
+<attribute name="MODEL" x="327.66" y="31.75" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED1" gate="G$1" x="340.36" y="162.56" smashed="yes">
 <attribute name="NAME" x="343.916" y="157.988" size="1.778" layer="95" rot="R90"/>
@@ -1904,6 +1956,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C1" gate="G$1" x="96.52" y="264.16" smashed="yes">
 <attribute name="NAME" x="93.98" y="263.779" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="93.98" y="261.493" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MP" x="92.964" y="259.08" size="1.778" layer="96" align="bottom-right" display="off"/>
 </instance>
 <instance part="U1" gate="A" x="116.84" y="261.62" smashed="yes">
 <attribute name="NAME" x="111.581" y="274.4499" size="2.08328125" layer="95" ratio="10" rot="SR0"/>
@@ -1921,6 +1974,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C3" gate="G$1" x="210.82" y="264.16" smashed="yes">
 <attribute name="NAME" x="208.28" y="263.779" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="208.28" y="261.493" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MP" x="207.264" y="259.08" size="1.778" layer="96" align="bottom-right" display="off"/>
 </instance>
 <instance part="U2" gate="A" x="231.14" y="261.62" smashed="yes">
 <attribute name="NAME" x="225.881" y="274.4499" size="2.08328125" layer="95" ratio="10" rot="SR0"/>
@@ -1942,18 +1996,22 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C2" gate="G$1" x="154.94" y="256.54" smashed="yes">
 <attribute name="NAME" x="157.988" y="255.905" size="1.778" layer="95"/>
 <attribute name="VALUE" x="157.988" y="253.111" size="1.778" layer="96"/>
+<attribute name="MP" x="154.94" y="256.54" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C4" gate="G$1" x="269.24" y="256.54" smashed="yes">
 <attribute name="NAME" x="272.542" y="256.159" size="1.778" layer="95"/>
 <attribute name="VALUE" x="272.288" y="253.365" size="1.778" layer="96"/>
+<attribute name="MP" x="269.24" y="256.54" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C5" gate="G$1" x="312.42" y="261.62" smashed="yes">
 <attribute name="NAME" x="309.626" y="261.239" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="309.626" y="258.699" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="312.42" y="261.62" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C6" gate="G$1" x="358.14" y="259.08" smashed="yes">
 <attribute name="NAME" x="360.68" y="259.207" size="1.778" layer="95"/>
 <attribute name="VALUE" x="360.68" y="256.667" size="1.778" layer="96"/>
+<attribute name="MP" x="358.14" y="259.08" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="L3" gate="G$1" x="335.28" y="284.48" smashed="yes">
 <attribute name="NAME" x="327.66" y="289.56" size="1.778" layer="95"/>
@@ -1976,42 +2034,52 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C23" gate="G$1" x="289.56" y="119.38" smashed="yes" rot="R90">
 <attribute name="NAME" x="292.735" y="118.364" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="292.735" y="115.824" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MP" x="289.56" y="119.38" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C24" gate="G$1" x="289.56" y="111.76" smashed="yes" rot="R90">
 <attribute name="NAME" x="292.481" y="110.744" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="292.481" y="108.204" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MP" x="289.56" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C7" gate="G$1" x="55.88" y="99.06" smashed="yes">
 <attribute name="NAME" x="53.34" y="98.679" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="53.34" y="96.139" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="71.12" y="104.14" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C8" gate="G$1" x="66.04" y="99.06" smashed="yes">
 <attribute name="NAME" x="64.008" y="98.679" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="64.008" y="96.139" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="81.28" y="104.14" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C14" gate="G$1" x="83.82" y="99.06" smashed="yes">
 <attribute name="NAME" x="81.28" y="98.679" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="81.28" y="96.139" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="91.44" y="88.9" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C18" gate="G$1" x="93.98" y="99.06" smashed="yes">
 <attribute name="NAME" x="91.948" y="98.679" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="91.948" y="96.139" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="119.38" y="127" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C11" gate="G$1" x="73.66" y="114.3" smashed="yes">
 <attribute name="NAME" x="71.12" y="113.919" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="71.12" y="111.379" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="104.14" y="116.84" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C13" gate="G$1" x="83.82" y="114.3" smashed="yes">
 <attribute name="NAME" x="81.788" y="113.919" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="81.788" y="111.379" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="114.3" y="116.84" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C25" gate="G$1" x="289.56" y="76.2" smashed="yes" rot="R90">
 <attribute name="NAME" x="292.735" y="75.184" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="292.735" y="72.644" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MP" x="289.56" y="76.2" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C26" gate="G$1" x="289.56" y="68.58" smashed="yes" rot="R90">
 <attribute name="NAME" x="292.481" y="67.564" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="292.481" y="65.024" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MP" x="289.56" y="68.58" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="SV1" gate="G$1" x="378.46" y="190.5" smashed="yes">
 <attribute name="VALUE" x="374.65" y="175.26" size="1.778" layer="96"/>
@@ -2112,10 +2180,12 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C12" gate="G$1" x="73.66" y="83.82" smashed="yes">
 <attribute name="NAME" x="71.12" y="83.439" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="71.12" y="80.899" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="73.66" y="83.82" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C15" gate="G$1" x="83.82" y="83.82" smashed="yes">
 <attribute name="NAME" x="81.788" y="83.439" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="81.788" y="80.899" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="83.82" y="83.82" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R11" gate="G$1" x="58.42" y="50.8" smashed="yes" rot="R180">
 <attribute name="NAME" x="55.118" y="54.1274" size="1.778" layer="95" rot="MR180"/>
@@ -2124,10 +2194,12 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C10" gate="G$1" x="68.58" y="48.26" smashed="yes">
 <attribute name="NAME" x="65.786" y="47.879" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="65.786" y="45.339" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="68.58" y="48.26" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C17" gate="G$1" x="83.82" y="48.26" smashed="yes">
 <attribute name="NAME" x="81.026" y="47.879" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="81.026" y="45.339" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="83.82" y="48.26" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R10" gate="G$1" x="58.42" y="71.12" smashed="yes" rot="R180">
 <attribute name="NAME" x="55.118" y="74.4474" size="1.778" layer="95" rot="MR180"/>
@@ -2136,10 +2208,12 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C9" gate="G$1" x="68.58" y="68.58" smashed="yes">
 <attribute name="NAME" x="65.786" y="68.199" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="65.786" y="65.659" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="68.58" y="68.58" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C16" gate="G$1" x="83.82" y="68.58" smashed="yes">
 <attribute name="NAME" x="81.026" y="68.199" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="81.026" y="65.659" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="83.82" y="68.58" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U6" gate="G$1" x="378.46" y="121.92" smashed="yes">
 <attribute name="VALUE" x="369.57" y="111.76" size="1.778" layer="96"/>
@@ -2152,10 +2226,12 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C28" gate="G$1" x="373.38" y="88.9" smashed="yes">
 <attribute name="NAME" x="366.522" y="89.535" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="366.522" y="86.995" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MP" x="373.38" y="88.9" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C29" gate="G$1" x="383.54" y="88.9" smashed="yes">
 <attribute name="NAME" x="387.35" y="89.027" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="387.35" y="86.487" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MP" x="383.54" y="88.9" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="TC1" gate="G$1" x="381" y="60.96" smashed="yes">
 <attribute name="NAME" x="373.634" y="69.088" size="1.778" layer="95"/>
@@ -2163,18 +2239,22 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="C19" gate="G$1" x="99.06" y="114.3" smashed="yes">
 <attribute name="NAME" x="96.52" y="113.919" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="96.52" y="111.379" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="114.3" y="119.38" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C21" gate="G$1" x="109.22" y="99.06" smashed="yes">
 <attribute name="NAME" x="106.68" y="98.679" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="106.68" y="96.139" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="116.84" y="88.9" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C20" gate="G$1" x="109.22" y="114.3" smashed="yes">
 <attribute name="NAME" x="107.188" y="113.919" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="107.188" y="111.379" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="139.7" y="116.84" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C22" gate="G$1" x="119.38" y="99.06" smashed="yes">
 <attribute name="NAME" x="117.348" y="98.679" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="117.348" y="96.139" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MP" x="144.78" y="127" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -2863,7 +2943,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="213.36" y="175.26" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RAM_DQM0" class="0">
+<net name="RAM_LDQM" class="0">
 <segment>
 <wire x1="309.88" y1="142.24" x2="304.8" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="U5" gate="B" pin="LDQM"/>
@@ -2875,7 +2955,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="66.04" y="195.58" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RAM_DQM1" class="0">
+<net name="RAM_UDQM" class="0">
 <segment>
 <wire x1="309.88" y1="139.7" x2="304.8" y2="139.7" width="0.1524" layer="91"/>
 <pinref part="U5" gate="B" pin="UDQM"/>
