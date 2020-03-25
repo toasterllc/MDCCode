@@ -1,17 +1,16 @@
 `timescale 1ns/1ps
 
-module Iceboard_Blinky(
-    input logic         clk12mhz,
-    output logic        ledRed
+module Top(
+    input wire         clk12mhz,
+    output wire        ledRed
 );
-    logic clk;
-    assign clk = clk12mhz;
+    wire clk = clk12mhz;
     
     // Generate our own reset signal
     // This relies on the fact that the ice40 FPGA resets flipflops to 0 at power up
-    logic[12:0] rstCounter;
-    logic rst;
-    logic lastBit;
+    reg[12:0] rstCounter;
+    reg rst;
+    reg lastBit;
     assign rst = !rstCounter[$size(rstCounter)-1];
     always @(posedge clk) begin
         if (rst) begin
@@ -19,7 +18,7 @@ module Iceboard_Blinky(
         end
     end
 	
-	logic[24:0] counter;
+	reg[24:0] counter;
     always @(posedge clk) begin
 		if (rst) begin
 			counter <= 0;
@@ -38,10 +37,10 @@ endmodule
 `ifdef SIM
 
 module Iceboard_BlinkySim(
-    output logic        ledRed
+    output wire        ledRed
 );
 
-    logic clk12mhz;
+    wire clk12mhz;
 
     Iceboard_Blinky icestickSDRAMTest(
         .clk12mhz(clk12mhz),

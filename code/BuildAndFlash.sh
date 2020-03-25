@@ -31,4 +31,4 @@ nextpnr-ice40 "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --as
 icepack top.asc top.bin
 
 # Flash the bitstream (.bin)
-iceprog top.bin
+sudo iceprog top.bin
