@@ -48,11 +48,14 @@ module Top(
     );
     
     always @(posedge clk) begin
-        if (rst) begin
-            led <= 8'hFF;
-            
-        end else if (uartReceived) begin
-            led <= led+1;
+        // Reset uartTransmit
+        uartTransmit <= 0;
+        
+        // Wait until active transmissions complete
+        if (uartReceived & !uartTransmitting) begin
+            uartTxByte <= uartRxByte;
+            uartTransmit <= 1;
+            led <= uartRxByte;
         end
     end
 endmodule
