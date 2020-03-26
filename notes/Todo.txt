@@ -1,24 +1,21 @@
 - Rev2 fixes
+    - Use new EagleLibrary as a submodule
+    
     - TPS62801X_TPS6280X (U1/U2)
         - Fix pinout. The 1V8 and 1V2 rails are currently broken because the pins of the TPS* chips are scrambled for some reason.
     
     - TPS6380X_TPS6380X (U3):
         - "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
     
-    - For proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
+    - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
     
-    - ICE40 loading from flash isn't working
+    - ICE40: loading from flash isn't working
         - Swap ICE_PRG_SO/ICE_PRG_SI pins entering flash chip. Currently we have the ICE40's SPI input connected to the flash's SPI input, and the ICE40's output connected to the flash's SPI output.
         - Make sure the chosen flash meets the "SPI PROM Requirements" criteria in "iCE40 Programming and Configuration" document
     
-    - ICE40 configuring SRAM isn't working
-        - Level shifter doesn't work for our use case, likely due to its bidirectional behavior and weak drive strength.
+    - ICE40: configuring SRAM isn't working
+        - Bidirectional level shifter doesn't work for our use case, likely due to its bidirectional behavior and weak drive strength.
             - Switch to a real level shifter with explicit inputs and outputs
-        
-        - Level shifter drive strength, or glitches due to sensing direction of IO
-            - Try: replace level shifter with voltage divider. Does that 
-        - Does the ICE40 respond to the FC_JEDECID command? If so, try that to see if we can communicate with the ICE40.
-        - "Ensure that SPI_SCK frequency is between 1 MHz and 25 MHz"
     
     
     
