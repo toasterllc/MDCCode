@@ -6,7 +6,7 @@
 module Top(
     input wire          clk12mhz,
     
-    output reg[7:0]     led = 0,
+    output wire[7:0]    led,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -34,9 +34,9 @@ module Top(
 		.FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
-    localparam AddrWidth = 25;
+    localparam AddrWidth = 16;
     localparam DataWidth = 16;
-    localparam AddrCount = 'h2000000;
+    localparam AddrCount = 'h10000;
     
     wire                  cmdReady;
     reg                   cmdTrigger = 0;
@@ -45,6 +45,9 @@ module Top(
     reg[DataWidth-1:0]    cmdWriteData = 0;
     wire[DataWidth-1:0]   cmdReadData;
     wire                  cmdReadDataValid;
+    
+    wire didRefresh;
+    assign led[7:0] = {8{didRefresh}};
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
@@ -68,7 +71,9 @@ module Top(
         .ram_cas_(ram_cas_),
         .ram_we_(ram_we_),
         .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq)
+        .ram_dq(ram_dq),
+        
+        .didRefresh(didRefresh)
     );
     
     // UART stuff
@@ -119,7 +124,7 @@ module Top(
         NibbleFromHexASCII = (n>=97 ? n-97+10 : n-48);
     endfunction
     
-    reg[3:0] init = 0;
+    reg[12:0] init = 0;
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
         if (cmdReady) cmdTrigger <= 0;
@@ -133,14 +138,14 @@ module Top(
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
                 cmdWrite <= 1;
-                cmdWriteData <= 16'hFFFF;
+                cmdWriteData <= 0;
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
                 cmdTrigger <= 1;
                 cmdAddr <= cmdAddr+1;
                 cmdWrite <= 1;
-                cmdWriteData <= 16'hFFFF;
+                cmdWriteData <= cmdAddr+1;
                 
                 if (cmdAddr == AddrCount-1) begin
                     // Next stage
@@ -149,7 +154,7 @@ module Top(
             end
         
         end else begin
-            led <= 8'hFF;
+            // led <= 8'hFF;
             
             if (cmdReadDataValid) begin
                 uartReadData <= cmdReadData;
@@ -198,7 +203,7 @@ module Top(
                         uartDataOut <= (uartRxByte=="w" ? "w" : "r");
             			uartDataOutCount <= 1;
                     
-                        uartDataInCount <= 7; // Load 7 bytes of address (each byte is a hex nibble)
+                        uartDataInCount <= 4; // Load 4 bytes of address (each byte is a hex nibble)
                     end
                 
                     // Load address, and if we're writing, wait for the value to write
@@ -209,9 +214,6 @@ module Top(
             			uartDataOutCount <= 1;
                     
                         cmdAddr <= {
-                            NibbleFromHexASCII(uartDataIn[(8*7)-1 -: 8]) & 4'b0001,
-                            NibbleFromHexASCII(uartDataIn[(8*6)-1 -: 8]),
-                            NibbleFromHexASCII(uartDataIn[(8*5)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
