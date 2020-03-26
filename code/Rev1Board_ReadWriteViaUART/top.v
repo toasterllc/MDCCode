@@ -119,7 +119,7 @@ module Top(
         NibbleFromHexASCII = (n>=97 ? n-97+10 : n-48);
     endfunction
     
-    reg init = 0;
+    reg[3:0] init = 0;
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
         if (cmdReady) cmdTrigger <= 0;
@@ -128,29 +128,29 @@ module Top(
         uartTransmit <= 0;
         
         // Initialize all memory to 0
-        if (!init) begin
+        if (!(&init)) begin
             if (!cmdWrite) begin
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
                 cmdWrite <= 1;
-                cmdWriteData <= 0;
+                cmdWriteData <= 16'hFFFF;
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
-                if (cmdAddr < AddrCount-1) begin
-                    cmdTrigger <= 1;
-                    cmdAddr <= cmdAddr+1;
-                    cmdWrite <= 1;
-                    cmdWriteData <= 0;
+                cmdTrigger <= 1;
+                cmdAddr <= cmdAddr+1;
+                cmdWrite <= 1;
+                cmdWriteData <= 16'hFFFF;
                 
-                end else begin
+                if (cmdAddr == AddrCount-1) begin
                     // Next stage
-                    init <= 1;
-                    led <= 8'hFF;
+                    init <= init+1;
                 end
             end
         
         end else begin
+            led <= 8'hFF;
+            
             if (cmdReadDataValid) begin
                 uartReadData <= cmdReadData;
                 uartReadDataValid <= 1;
