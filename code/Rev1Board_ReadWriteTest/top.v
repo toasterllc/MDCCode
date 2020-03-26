@@ -28,15 +28,15 @@ module Top(
     //    DataFromAddress = addr[15:0];
     endfunction
     
-    localparam ClockFrequency = 100000000; // 100 MHz
-    
-    // 100 MHz clock
+    // 50 MHz clock
+    //   icepll -i 12 -o 50 -m
+    localparam ClockFrequency = 50000000; // 50 MHz
     wire clk;
     ClockGen #(
         .FREQ(ClockFrequency),
         .DIVR(0),
         .DIVF(66),
-        .DIVQ(3),
+        .DIVQ(4),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk));
     
