@@ -14,6 +14,7 @@ if [ "$#" -ne 3 ]; then
 	exit 1
 fi
 
+dir=$(cd $(dirname "$0"); pwd)
 dev="$1"
 pkg="$2"
 proj="$3"
@@ -31,4 +32,4 @@ nextpnr-ice40 "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --as
 icepack top.asc top.bin
 
 # Flash the bitstream (.bin)
-sudo iceprog top.bin
+sudo "$dir/iceprog_MotionDetectorCameraRev1" -S top.bin
