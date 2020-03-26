@@ -11,7 +11,7 @@ module Top(
     output wire         uart_tx
 );
     // 24 MHz clock
-    localparam ClockFrequency =   24000000;
+    localparam ClockFrequency = 24000000;
     wire clk;
     wire rst;
     ClockGen #(
