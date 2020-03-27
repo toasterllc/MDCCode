@@ -38,9 +38,9 @@ module Top(
 		.FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
-    localparam AddrWidth = 16;
+    localparam AddrWidth = 25;
     localparam DataWidth = 16;
-    localparam AddrCount = 'h10000;
+    localparam AddrCount = 'h2000000;
     
     wire                  cmdReady;
     reg                   cmdTrigger = 0;
@@ -128,7 +128,7 @@ module Top(
         NibbleFromHexASCII = (n>=97 ? n-97+10 : n-48);
     endfunction
     
-    reg[0:0] init = 0;
+    reg init = 0;
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
         if (cmdReady) cmdTrigger <= 0;
@@ -137,29 +137,25 @@ module Top(
         uartTransmit <= 0;
         
         // Initialize all memory to 0
-        if (!(&init)) begin
+        if (!init) begin
             if (!cmdWrite) begin
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
                 cmdWrite <= 1;
-                // cmdWriteData <= 16'h0;
-                cmdWriteData <= 16'h4444;
-                // cmdWriteData <= 16'hFFFF;
+                cmdWriteData <= 16'h0;
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
                 if (cmdAddr != AddrCount-1) begin
-                    $display("Initializing 0x%x=0x%x", cmdAddr+1, 16'hFFFF-(cmdAddr+1));
+                    $display("Initializing 0x%x", cmdAddr+1);
                     
                     cmdTrigger <= 1;
                     cmdAddr <= cmdAddr+1;
                     cmdWrite <= 1;
-                    // cmdWriteData <= 16'h0;
-                    cmdWriteData <= 16'h4444;
-                    // cmdWriteData <= 16'hFFFF;
+                    cmdWriteData <= cmdAddr+1;
                 end else begin
                     // Next stage
-                    init <= init+1;
+                    init <= 1;
                 end
             end
         
@@ -170,70 +166,73 @@ module Top(
                 uartReadData <= cmdReadData;
                 uartReadDataValid <= 1;
             end
-        
+            
             // Wait until active transmissions complete
             if (!uartTransmit && !uartTransmitting) begin
                 if (uartDataOutCount > 0) begin
         			uartTxByte <= uartDataOut[(8*uartDataOutCount)-1 -: 8];
                     uartTransmit <= 1;
         			uartDataOutCount <= uartDataOutCount-1;
-            
+                
                 end else if (uartDataInCount > 0) begin
                     if (uartReceived) begin
                         uartDataIn <= (uartDataIn<<8)|uartRxByte;
                         uartDataInCount <= uartDataInCount-1;
-                    
+                        
                         // Echo typed character
                         if (!uartDataInSuppress) begin
                             uartTxByte <= uartRxByte;
                             uartTransmit <= 1;
                         end
                     end
-            
+                
                 end else begin
                     // Go to the next uartStage by default
                     uartStage <= (uartStage<6 ? uartStage+1 : 0);
-                
+                    
                     // Reset our echo state by default
                     uartDataInSuppress <= 0;
-                
+                    
                     case (uartStage)
-                
+                    
                     // Wait for command
                     0: begin
                         uartDataInCount <= 1; // Load a byte for the command
                         uartDataInSuppress <= 1;
                     end
-                
+                    
                     // Load command, wait for address
                     1: begin
                         cmdWrite <= (uartRxByte=="w");
-                    
+                        
                         // Echo a "w" or "r"
                         uartDataOut <= (uartRxByte=="w" ? "w" : "r");
             			uartDataOutCount <= 1;
                     
-                        uartDataInCount <= 4; // Load 4 bytes of address (each byte is a hex nibble)
+                        uartDataInCount <= 7; // Load 7 bytes of address (each byte is a hex nibble)
                     end
-                
+                    
                     // Load address, and if we're writing, wait for the value to write
                     2: begin
                     
                         // Echo a "="
                         uartDataOut <= "=";
             			uartDataOutCount <= 1;
-                    
+                        
                         cmdAddr <= {
+                            NibbleFromHexASCII(uartDataIn[(8*7)-1 -: 8]) & 4'b0001,
+                            NibbleFromHexASCII(uartDataIn[(8*6)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*5)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
                         };
-
+                        
                         // If we're writing, get the data to write
                         if (cmdWrite) uartDataInCount <= 4; // Load 4 bytes of data (each byte is a hex nibble)
                     end
-                
+                    
                     // Issue command to the RAM controller
                     3: begin
                         if (cmdWrite) begin
@@ -244,12 +243,12 @@ module Top(
                                 NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
                             };
                         end
-                    
+                        
                         cmdTrigger <= 1;
                         // Reset our flag so we know when we receive the data
                         uartReadDataValid <= 0;
                     end
-                
+                    
                     // Wait for command to complete
                     4: begin
                         // Stall until the RAM controller accepts our command
@@ -258,7 +257,7 @@ module Top(
                         // If we're reading, stall until we have the data
                         else if (!cmdWrite && !uartReadDataValid) uartStage <= uartStage;
                     end
-                
+                    
                     // If we were reading, output the read data
                     5: begin
                         if (!cmdWrite) begin
@@ -271,7 +270,7 @@ module Top(
                             uartDataOutCount <= 4; // Output 4 bytes
                         end
                     end
-                
+                    
                     // Send a newline
                     6: begin
                         uartDataOut <= "\r\n";
