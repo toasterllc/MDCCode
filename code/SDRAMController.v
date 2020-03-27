@@ -76,9 +76,9 @@ module SDRAMController #(
     localparam C_DQZ = 2; // (T_DQZ) DQM to data high-impedance during reads delay
     localparam C_MRD = 2; // (T_MRD) set mode command to bank activate/refresh command delay
     
-    localparam DelayCounterWidth = 6;//$clog2(Clocks(T_RFC, 0));
+    localparam DelayCounterWidth = $clog2(Clocks(T_RFC, 0)+1);
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
-    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0))-DelayCounterWidth;
+    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0)+1)-DelayCounterWidth;
     localparam StateWidth = 3;
     
     // ras_, cas_, we_
@@ -367,7 +367,7 @@ module SDRAMController #(
                 ram_dqm <= 2'b11;
                 ram_cmd <= CmdNop;
                 // Delay 200us
-                InitNextSubstate(Clocks(T_INIT, 0)+10);
+                InitNextSubstate(Clocks(T_INIT, 0));
             end
             
             1: begin
@@ -379,7 +379,7 @@ module SDRAMController #(
             2: begin
                 // Precharge all banks
                 PrechargeAll();
-                InitNextSubstate(Clocks(T_RP, 0)+10);
+                InitNextSubstate(Clocks(T_RP, 0));
             end
             
             3: begin
@@ -389,7 +389,7 @@ module SDRAMController #(
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
                 // we just have to wait T_RFC.
-                InitNextSubstate(Clocks(T_RFC, 0)+10);
+                InitNextSubstate(Clocks(T_RFC, 0));
             end
             
             4: begin
@@ -399,7 +399,7 @@ module SDRAMController #(
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
                 // we just have to wait T_RFC.
-                InitNextSubstate(Clocks(T_RFC, 0)+10);
+                InitNextSubstate(Clocks(T_RFC, 0));
             end
             
             5: begin
@@ -411,7 +411,7 @@ module SDRAMController #(
                 ram_a <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
                 // We need a delay of C_MRD clock cycles before issuing the next command
                 // -1 clock cycle since we already burn one cycle getting to the next substate.
-                InitNextSubstate(C_MRD-1+10);
+                InitNextSubstate(C_MRD-1);
             end
             
             6: begin
@@ -458,7 +458,7 @@ module SDRAMController #(
                 Clocks(T_RP, 1)),
                 // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
                 // until precharging is complete.
-                Clocks(T_WR, 1))+10
+                Clocks(T_WR, 1))
             , StateRefresh);
             
         // Handle Refresh states
@@ -467,15 +467,19 @@ module SDRAMController #(
             0: begin
                 PrechargeAll();
                 // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
-                NextSubstate(Clocks(T_RP, 0)+10);
+                NextSubstate(Clocks(T_RP, 0));
+                
+                $display("REFRESH: precharge delay: %0d ns -> %0d clocks (width: %0d)", T_RP, Clocks(T_RP, 0), DelayCounterWidth);
             end
             
             1: begin
                 ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC (auto refresh time) to guarantee that the next command can
                 // activate the same bank immediately
-                StartState(Clocks(T_RFC, 0)+10, (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
                 didRefresh <= !didRefresh;
+                
+                $display("REFRESH: autorefresh delay: %0d ns -> %0d clocks (width: %0d)", T_RFC, Clocks(T_RFC, 0), DelayCounterWidth);
             end
             endcase
     end endtask

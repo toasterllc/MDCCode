@@ -3,6 +3,10 @@
 `include "../uart.v"
 `include "../SDRAMController.v"
 
+`ifdef SIM
+`include "../mt48h32m16lf/mobile_sdr.v"
+`endif
+
 module Top(
     input wire          clk12mhz,
     
@@ -139,7 +143,7 @@ module Top(
                 cmdAddr <= 0;
                 cmdWrite <= 1;
                 // cmdWriteData <= 16'h0;
-                cmdWriteData <= 16'h2222;
+                cmdWriteData <= 16'h4444;
                 // cmdWriteData <= 16'hFFFF;
             
             // The SDRAM controller accepted the command, so transition to the next state
@@ -151,7 +155,7 @@ module Top(
                     cmdAddr <= cmdAddr+1;
                     cmdWrite <= 1;
                     // cmdWriteData <= 16'h0;
-                    cmdWriteData <= 16'h2222;
+                    cmdWriteData <= 16'h4444;
                     // cmdWriteData <= 16'hFFFF;
                 end else begin
                     // Next stage
@@ -278,4 +282,26 @@ module Top(
             end
         end
     end
+    
+`ifdef SIM
+    mobile_sdr sdram(
+        .clk(ram_clk),
+        .cke(ram_cke),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dq(ram_dq),
+        .dqm(ram_dqm)
+    );
+
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        // #1000000000;
+        // $finish;
+    end
+`endif
 endmodule
