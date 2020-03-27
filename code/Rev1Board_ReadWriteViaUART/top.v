@@ -81,28 +81,28 @@ module Top(
     );
     
     // UART stuff
-    reg uartTransmit;
-    reg [7:0] uartTxByte;
+    reg uartTransmit = 0;
+    reg [7:0] uartTxByte = 0;
     wire uartReceived;
     wire [7:0] uartRxByte;
     wire uartReceiving;
     wire uartTransmitting;
     
     uart #(
-        .baud_rate(9600),                 // The baud rate in kilobits/s
+        .baud_rate(9600),                   // The baud rate in kilobits/s
         .sys_clk_freq(ClockFrequency)       // The master clock frequency
     )
     uart0(
-        .clk(clk),                      // The master clock for this module
-        .rst(rst),                      // Synchronous reset
-        .rx(uart_rx),                // Incoming serial line
-        .tx(uart_tx),                // Outgoing serial line
-        .transmit(uartTransmit),              // Signal to transmit
-        .tx_byte(uartTxByte),                // Byte to transmit
-        .received(uartReceived),              // Indicated that a byte has been received
-        .rx_byte(uartRxByte),                // Byte received
-        .is_receiving(uartReceiving),      // Low when receive line is idle
-        .is_transmitting(uartTransmitting),// Low when transmit line is idle
+        .clk(clk),                          // The master clock for this module
+        .rst(rst),                          // Synchronous reset
+        .rx(uart_rx),                       // Incoming serial line
+        .tx(uart_tx),                       // Outgoing serial line
+        .transmit(uartTransmit),            // Signal to transmit
+        .tx_byte(uartTxByte),               // Byte to transmit
+        .received(uartReceived),            // Indicated that a byte has been received
+        .rx_byte(uartRxByte),               // Byte received
+        .is_receiving(uartReceiving),       // Low when receive line is idle
+        .is_transmitting(uartTransmitting), // Low when transmit line is idle
         .recv_error()                       // Indicates error in receiving packet.
     );
     

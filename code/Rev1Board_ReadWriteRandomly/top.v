@@ -60,8 +60,8 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq,
     
-    input wire          RS232_Rx_TTL,
-    output wire         RS232_Tx_TTL
+    input wire          uart_rx,
+    output wire         uart_tx
 );
     function [15:0] DataFromAddress;
         input [24:0] addr;
@@ -188,20 +188,20 @@ module Top(
     wire uartTransmitting;
     
     uart #(
-        .baud_rate(9600),                 // The baud rate in kilobits/s
+        .baud_rate(9600),                   // The baud rate in kilobits/s
         .sys_clk_freq(ClockFrequency)       // The master clock frequency
     )
     uart0(
-        .clk(clk),                      // The master clock for this module
-        .rst(rst),                      // Synchronous reset
-        .rx(RS232_Rx_TTL),                // Incoming serial line
-        .tx(RS232_Tx_TTL),                // Outgoing serial line
-        .transmit(uartTransmit),              // Signal to transmit
-        .tx_byte(uartTxByte),                // Byte to transmit
-        .received(uartReceived),              // Indicated that a byte has been received
-        .rx_byte(uartRxByte),                // Byte received
-        .is_receiving(uartReceiving),      // Low when receive line is idle
-        .is_transmitting(uartTransmitting),// Low when transmit line is idle
+        .clk(clk),                          // The master clock for this module
+        .rst(rst),                          // Synchronous reset
+        .rx(uart_rx),                       // Incoming serial line
+        .tx(uart_tx),                       // Outgoing serial line
+        .transmit(uartTransmit),            // Signal to transmit
+        .tx_byte(uartTxByte),               // Byte to transmit
+        .received(uartReceived),            // Indicated that a byte has been received
+        .rx_byte(uartRxByte),               // Byte received
+        .is_receiving(uartReceiving),       // Low when receive line is idle
+        .is_transmitting(uartTransmitting), // Low when transmit line is idle
         .recv_error()                       // Indicates error in receiving packet.
     );
     
