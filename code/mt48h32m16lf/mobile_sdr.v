@@ -144,28 +144,28 @@ module mobile_sdr (
 `define PAGE_SIZE  (1<<COL_BITS)
 
 //------------- Parameters (cke, addr[10], cs_n, ras_n, cas_n, we_n) --------------
-    parameter NOP              = 6'b100111 ;
-    parameter ACTIVATE         = 6'b100011 ;
-    parameter READ             = 6'b100101 ;
-    parameter READ_AP          = 6'b110101 ;
-    parameter READ_SUSPEND     = 6'b000101 ;
-    parameter READ_AP_SUSPEND  = 6'b010101 ;
-    parameter WRITE            = 6'b100100 ;
-    parameter WRITE_AP         = 6'b110100 ;
-    parameter WRITE_SUSPEND    = 6'b000100 ;
-    parameter WRITE_AP_SUSPEND = 6'b010100 ;
-    parameter BURST_TERMINATE  = 6'b100110 ;
-    parameter POWER_DOWN_CI    = 6'b001111 ;
-    parameter POWER_DOWN_NOP   = 6'b000111 ;
-    parameter DEEP_POWER_DOWN  = 6'b000110 ;
-    parameter PRECHARGE        = 6'b100010 ;
-    parameter PRECHARGE_ALL    = 6'b110010 ;
-    parameter AUTO_REFRESH     = 6'b100001 ;
-    parameter SELF_REFRESH     = 6'b000001 ;
-    parameter LOAD_MODE        = 6'b100000 ;
-    parameter CKE_DISABLE      = 6'b011111 ;
+    parameter NOP              = 6'b100111 ;    // NOP
+    parameter ACTIVATE         = 6'b100011 ;    // 
+    parameter READ             = 6'b100101 ;    // 
+    parameter READ_AP          = 6'b110101 ;    // 
+    parameter READ_SUSPEND     = 6'b000101 ;    // 
+    parameter READ_AP_SUSPEND  = 6'b010101 ;    // 
+    parameter WRITE            = 6'b100100 ;    // 
+    parameter WRITE_AP         = 6'b110100 ;    // 
+    parameter WRITE_SUSPEND    = 6'b000100 ;    // 
+    parameter WRITE_AP_SUSPEND = 6'b010100 ;    // 
+    parameter BURST_TERMINATE  = 6'b100110 ;    // 
+    parameter POWER_DOWN_CI    = 6'b001111 ;    // 
+    parameter POWER_DOWN_NOP   = 6'b000111 ;    // 
+    parameter DEEP_POWER_DOWN  = 6'b000110 ;    // 
+    parameter PRECHARGE        = 6'b100010 ;    // 
+    parameter PRECHARGE_ALL    = 6'b110010 ;    // 50
+    parameter AUTO_REFRESH     = 6'b100001 ;    // 33
+    parameter SELF_REFRESH     = 6'b000001 ;    // 
+    parameter LOAD_MODE        = 6'b100000 ;    // 32
+    parameter CKE_DISABLE      = 6'b011111 ;    // 
 
-    parameter DEBUG = 0             ;
+    parameter DEBUG = 1             ;
 
 //----------------------------------------
 // Error codes and reporting
@@ -860,18 +860,29 @@ module mobile_sdr (
 
 //-------------------------------- Initialization tasks -------------------------------
 
-    task initialization_cmd_func;                        // ************************** INITIALIZATION STATES ********************************
-    begin                                                // initialization_state 0 - waiting for power up and stable clock
-        if (initialization_state == 4'h0) begin          // initialization_state 1 - chip powered up and stable clock applied
-            if (1) begin // not dependant on CKE         // initialization_state 2 - all banks precharged
-                initialization_state = 4'h1 ;            // initialization_state 3 - one auto refresh command executed
-            end                                          // initialization_state 4 - two auto refresh commands executed
-        end else if (initialization_state == 4'h1) begin // initialization_state 5 - load mode command executed
-            if (~(|active_bank)) begin                   // initialization_state 6 - extended load mode command executed
-                initialization_state = 4'h2 ;            // initialization_state 7 - both load mode and extended load mode command executed
-            end                                          // initialization_state 8 - tRFC after the second auto refresh command has expired
-        end else if (initialization_state == 4'h2) begin // initialization_state 9 - Initialization message printed to the screen
-            if (command == AUTO_REFRESH) begin
+    // ************************** INITIALIZATION STATES ********************************
+    // initialization_state 0 - waiting for power up and stable clock
+    // initialization_state 1 - chip powered up and stable clock applied
+    //      *** Keck: removed state 1, because this prevents the AutoRefresh command from being issued
+    //          on the clock cycle immediately following the Precharge command. So we removed this state,
+    //          and moved the `~(|active_bank)` check to state 2.
+    // initialization_state 2 - all banks precharged
+    // initialization_state 3 - one auto refresh command executed
+    // initialization_state 4 - two auto refresh commands executed
+    // initialization_state 5 - load mode command executed
+    // initialization_state 6 - extended load mode command executed
+    // initialization_state 7 - both load mode and extended load mode command executed
+    // initialization_state 8 - tRFC after the second auto refresh command has expired
+    // initialization_state 9 - Initialization message printed to the screen
+
+    task initialization_cmd_func;
+    begin
+        if (initialization_state == 4'h0) begin
+            if (1) begin // not dependant on CKE
+                initialization_state = 4'h2 ;
+            end
+        end else if (initialization_state == 4'h2) begin
+            if (~(|active_bank) && (command == AUTO_REFRESH)) begin
                 initialization_state = 4'h3 ;
             end
         end else if (initialization_state == 4'h3) begin
