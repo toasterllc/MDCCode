@@ -65,3 +65,6 @@ set_io ram_dqm[0]       A6      -pullup no
 set_io ram_dqm[1]       E1      -pullup no
 set_io ram_ras_         A5      -pullup no
 set_io ram_we_          B4      -pullup no
+
+set_io uart_rx          L10     -pullup no
+set_io uart_tx          J9      -pullup no

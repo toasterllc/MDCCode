@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 `include "../SDRAMController.v"
+`include "../uart.v"
 
 `ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"
@@ -20,13 +21,18 @@ module Top(
     output wire         ram_cas_,
     output wire         ram_we_,
     output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq
+    inout wire[15:0]    ram_dq,
+    
+    input wire          uart_rx,
+    output wire         uart_tx
 );
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+        DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
         // DataFromAddr = addr[15:0];
-        DataFromAddr = 16'h0;
+        // DataFromAddr = 16'hFFFF;
+        // DataFromAddr = 16'h0000;
+        // DataFromAddr = 16'h7832;
     endfunction
     
     // 24 MHz clock
@@ -43,7 +49,12 @@ module Top(
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
-    localparam AddrCountLimit = AddrCount/1024;
+    localparam AddrCountLimit = AddrCount;
+    // localparam AddrCountLimit = 'h10000;
+    // localparam AddrCountLimit = AddrCount/8192;
+    
+    
+    // localparam AddrCountLimit = AddrCount/512;
     // localparam AddrCountLimit = AddrCount/1024; // 32k words
     // localparam AddrCountLimit = AddrCount/8192;
     localparam DataWidth = 16;
@@ -64,10 +75,11 @@ module Top(
     wire                  cmdReadDataValid;
     
     localparam MaxEnqueuedReads = 10;
-    reg[(AddrWidth*MaxEnqueuedReads)-1:0] expectedReadAddr = 0;
+    reg[(AddrWidth*MaxEnqueuedReads)-1:0] readAddr = 0;
     reg[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount = 0;
     
-    wire[AddrWidth-1:0] currentExpectedReadAddr = expectedReadAddr[AddrWidth-1:0];
+    wire[AddrWidth-1:0] currentReadAddr = readAddr[AddrWidth-1:0];
+    wire[DataWidth-1:0] expectedReadData = DataFromAddr(currentReadAddr);
     
     reg[6:0] status = StatusStart /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
     assign led[6:0] = status;
@@ -100,6 +112,90 @@ module Top(
         .ram_dq(ram_dq)
     );
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // UART stuff
+    reg uartTransmit = 0;
+    reg [7:0] uartTxByte = 0;
+    wire uartReceived;
+    wire [7:0] uartRxByte;
+    wire uartReceiving;
+    wire uartTransmitting;
+    
+    uart #(
+        .baud_rate(9600),                   // The baud rate in kilobits/s
+        .sys_clk_freq(ClockFrequency)       // The master clock frequency
+    )
+    uart0(
+        .clk(clk),                          // The master clock for this module
+        .rst(rst),                          // Synchronous reset
+        .rx(uart_rx),                       // Incoming serial line
+        .tx(uart_tx),                       // Outgoing serial line
+        .transmit(uartTransmit),            // Signal to transmit
+        .tx_byte(uartTxByte),               // Byte to transmit
+        .received(uartReceived),            // Indicated that a byte has been received
+        .rx_byte(uartRxByte),               // Byte received
+        .is_receiving(uartReceiving),       // Low when receive line is idle
+        .is_transmitting(uartTransmitting), // Low when transmit line is idle
+        .recv_error()                       // Indicates error in receiving packet.
+    );
+    
+    reg[2:0]      uartStage = 0;
+    
+    reg[63:0]     uartDataIn = 0;
+    reg[15:0]     uartDataInCount = 0;
+    reg           uartDataInSuppress = 0;
+    
+    reg[32*8-1:0] uartDataOut = 0;
+    reg[15:0]     uartDataOutCount = 0;
+    
+    reg[15:0]     uartReadData = 0;
+    reg           uartReadDataValid = 0;
+    
+    function [7:0] HexASCIIFromNibble;
+        input [3:0] n;
+        HexASCIIFromNibble = (n<10 ? 8'd48+n : 8'd97-8'd10+n);
+    endfunction
+    
+    function [3:0] NibbleFromHexASCII;
+        input [7:0] n;
+        NibbleFromHexASCII = (n>=97 ? n-97+10 : n-48);
+    endfunction
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     task Read(input [AddrWidth-1:0] addr); begin
         cmdTrigger <= 1;
         cmdAddr <= addr;
@@ -113,13 +209,16 @@ module Top(
             status <= StatusTooManyReads;
         end
         
-        expectedReadAddr <= (addr<<(AddrWidth*enqueuedReadCount))|expectedReadAddr;
+        readAddr <= (addr<<(AddrWidth*enqueuedReadCount))|readAddr;
         enqueuedReadCount <= enqueuedReadCount+1;
     end endtask
     
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
         if (cmdReady) cmdTrigger <= 0;
+        
+        // By default we're not transmitting
+        uartTransmit <= 0;
         
         // Initialize memory to known values
         if (status == StatusStart) begin
@@ -163,17 +262,44 @@ module Top(
                     // $display("Read data: 0x%h", cmdReadData);
                     
                     // Verify that the data read out is what we expect
-                    if (cmdReadData != DataFromAddr(currentExpectedReadAddr)) begin
+                    if (cmdReadData != expectedReadData) begin
                         `ifdef SIM
-                            $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", DataFromAddr(currentExpectedReadAddr), ~DataFromAddr(currentExpectedReadAddr), cmdReadData);
+                            $error("Read invalid data (expected: 0x%h, got: 0x%h)", expectedReadData, cmdReadData);
                         `endif
                         
                         status <= StatusInvalidData;
+                        
+                        uartDataOut <= {
+                            HexASCIIFromNibble({3'b0, currentReadAddr[24:24]}),
+                            HexASCIIFromNibble(currentReadAddr[23:20]),
+                            HexASCIIFromNibble(currentReadAddr[19:16]),
+                            HexASCIIFromNibble(currentReadAddr[15:12]),
+                            HexASCIIFromNibble(currentReadAddr[11:8]),
+                            HexASCIIFromNibble(currentReadAddr[7:4]),
+                            HexASCIIFromNibble(currentReadAddr[3:0]),
+                            
+                            "E",
+                            HexASCIIFromNibble(expectedReadData[15:12]),
+                            HexASCIIFromNibble(expectedReadData[11:8]),
+                            HexASCIIFromNibble(expectedReadData[7:4]),
+                            HexASCIIFromNibble(expectedReadData[3:0]),
+                            
+                            "G",
+                            HexASCIIFromNibble(cmdReadData[15:12]),
+                            HexASCIIFromNibble(cmdReadData[11:8]),
+                            HexASCIIFromNibble(cmdReadData[7:4]),
+                            HexASCIIFromNibble(cmdReadData[3:0]),
+                            
+                            "\r\n"
+                        };
+                        
+                        uartDataOutCount <= 19;
+                        
                     end else begin
-                        $display("Read expected data from addr 0x%x: 0x%x", currentExpectedReadAddr, DataFromAddr(currentExpectedReadAddr));
+                        $display("Read expected data from addr 0x%x: 0x%x", currentReadAddr, DataFromAddr(currentReadAddr));
                     end
                     
-                    expectedReadAddr <= expectedReadAddr >> AddrWidth;
+                    readAddr <= readAddr >> AddrWidth;
                     enqueuedReadCount <= enqueuedReadCount-1;
                 
                 // Something's wrong if we weren't expecting data and we got some
@@ -197,6 +323,125 @@ module Top(
                 
                 if (cmdAddr == 0) begin
                     wrapped <= !wrapped;
+                end
+            end
+        
+        // Something went wrong -- allow access via UART
+        end else begin
+            if (cmdReadDataValid) begin
+                uartReadData <= cmdReadData;
+                uartReadDataValid <= 1;
+            end
+            
+            // Wait until active transmissions complete
+            if (!uartTransmit && !uartTransmitting) begin
+                if (uartDataOutCount > 0) begin
+        			uartTxByte <= uartDataOut[(8*uartDataOutCount)-1 -: 8];
+                    uartTransmit <= 1;
+        			uartDataOutCount <= uartDataOutCount-1;
+                
+                end else if (uartDataInCount > 0) begin
+                    if (uartReceived) begin
+                        uartDataIn <= (uartDataIn<<8)|uartRxByte;
+                        uartDataInCount <= uartDataInCount-1;
+                        
+                        // Echo typed character if we're not suppressing
+                        if (!uartDataInSuppress) begin
+                            uartTxByte <= uartRxByte;
+                            uartTransmit <= 1;
+                        end
+                    end
+                
+                end else begin
+                    // Go to the next uartStage by default
+                    uartStage <= (uartStage<6 ? uartStage+1 : 0);
+                    
+                    // Reset our echo state by default
+                    uartDataInSuppress <= 0;
+                    
+                    case (uartStage)
+                    // Wait for command
+                    0: begin
+                        uartDataInCount <= 1; // Load a byte for the command
+                        uartDataInSuppress <= 1;
+                    end
+                    
+                    // Load command, wait for address
+                    1: begin
+                        cmdWrite <= (uartRxByte=="w");
+                        
+                        // Echo a "w" or "r"
+                        uartDataOut <= (uartRxByte=="w" ? "w" : "r");
+            			uartDataOutCount <= 1;
+                        
+                        uartDataInCount <= 7; // Load 6 bytes of address (each byte is a hex nibble)
+                    end
+                    
+                    // Load address, and if we're writing, wait for the value to write
+                    2: begin
+                        
+                        // Echo a "="
+                        uartDataOut <= "=";
+            			uartDataOutCount <= 1;
+                        
+                        cmdAddr <= {
+                            NibbleFromHexASCII(uartDataIn[(8*7)-1 -: 8]) & 4'b0001,
+                            NibbleFromHexASCII(uartDataIn[(8*6)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*5)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
+                            NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
+                        };
+
+                        // If we're writing, get the data to write
+                        if (cmdWrite) uartDataInCount <= 4; // Load 4 bytes of data (each byte is a hex nibble)
+                    end
+                    
+                    // Issue command to the RAM controller
+                    3: begin
+                        if (cmdWrite) begin
+                            cmdWriteData <= {
+                                NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
+                                NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
+                                NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
+                                NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
+                            };
+                        end
+                        
+                        cmdTrigger <= 1;
+                        // Reset our flag so we know when we receive the data
+                        uartReadDataValid <= 0;
+                    end
+                    
+                    // Wait for command to complete
+                    4: begin
+                        // Stall until the RAM controller accepts our command
+                        // (We reset cmdTrigger above, when cmdReady fires)
+                        if (cmdTrigger) uartStage <= uartStage;
+                        // If we're reading, stall until we have the data
+                        else if (!cmdWrite && !uartReadDataValid) uartStage <= uartStage;
+                    end
+                    
+                    // If we were reading, output the read data
+                    5: begin
+                        if (!cmdWrite) begin
+                            uartDataOut <= {
+                                HexASCIIFromNibble(uartReadData[15:12]),
+                                HexASCIIFromNibble(uartReadData[11:8]),
+                                HexASCIIFromNibble(uartReadData[7:4]),
+                                HexASCIIFromNibble(uartReadData[3:0])
+                            };
+                            uartDataOutCount <= 4; // Output 4 bytes
+                        end
+                    end
+                    
+                    // Send a newline
+                    6: begin
+                        uartDataOut <= "\r\n";
+                        uartDataOutCount <= 2;
+                    end
+                    endcase
                 end
             end
         end
