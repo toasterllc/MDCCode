@@ -9,7 +9,7 @@
 module Top(
     input wire          clk12mhz,
     
-    output reg[7:0]     led = 0,
+    output wire[7:0]    led,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -24,53 +24,36 @@ module Top(
 );
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        
-        DataFromAddr = 16'h00;
-        
-        // DataFromAddr = 8'hFF-addr[7:0];
-        
-        // DataFromAddr = 16'h1234;
         // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-       // DataFromAddr = addr[15:0];
-       // DataFromAddr = addr[24:9];
-       // DataFromAddr = {1'b0, addr[14:0]};
-       // DataFromAddr = {addr[14:0], 1'b1};
-       
-       // DataFromAddr = addr[15:0];
-       
-       // DataFromAddr = addr[15:0];
-       
-       // DataFromAddr = addr[24:9] ^ addr[14:0];
-       
-       // DataFromAddr = {addr[24:13], addr[10], addr[8], addr[6], addr[0]};
-       
-       // DataFromAddr = {15'b0, addr[15]^addr[14]^addr[13]^addr[12]^addr[11]^addr[10]^addr[ 9]^addr[ 8]^addr[ 7]^addr[ 6]^addr[ 5]^addr[ 4]^addr[ 3]^addr[ 2]^addr[ 1]^addr[ 0]};
+        // DataFromAddr = addr[15:0];
+        DataFromAddr = 16'h0;
     endfunction
     
-    // 50 MHz clock
-    //   icepll -i 12 -o 50 -m
-    localparam ClockFrequency = 50000000; // 50 MHz
+    // 24 MHz clock
+    localparam ClockFrequency = 24000000;
     wire clk;
+    wire rst;
     ClockGen #(
         .FREQ(ClockFrequency),
-        .DIVR(0),
-        .DIVF(66),
-        .DIVQ(4),
-        .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
+		.DIVR(0),
+		.DIVF(63),
+		.DIVQ(5),
+		.FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
-    localparam AddrCountLimit = 16;
+    localparam AddrCountLimit = AddrCount/1024;
     // localparam AddrCountLimit = AddrCount/1024; // 32k words
     // localparam AddrCountLimit = AddrCount/8192;
-    // localparam AddrCountLimit = 8;
     localparam DataWidth = 16;
     
-    localparam StatusOK             = 0;
-    localparam StatusTooManyReads   = 1;
-    localparam StatusInvalidData    = 2;
-    localparam StatusUnexpectedData = 3;
+    localparam StatusStart          = 0;
+    localparam StatusInit           = 1;
+    localparam StatusUnderway       = 2;
+    localparam StatusTooManyReads   = 3;
+    localparam StatusInvalidData    = 4;
+    localparam StatusUnexpectedData = 5;
     
     wire                  cmdReady;
     reg                   cmdTrigger = 0;
@@ -86,12 +69,11 @@ module Top(
     
     wire[AddrWidth-1:0] currentExpectedReadAddr = expectedReadAddr[AddrWidth-1:0];
     
-    reg init = 0;
-    reg[7:0] status = StatusOK /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
+    reg[6:0] status = StatusStart /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
+    assign led[6:0] = status;
     
     reg wrapped = 0;
-    // assign led[7] = wrapped;
-    // assign led[7:0] = status;
+    assign led[7] = wrapped;
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
@@ -140,20 +122,18 @@ module Top(
         if (cmdReady) cmdTrigger <= 0;
         
         // Initialize memory to known values
-        if (!init) begin
-            if (!cmdWrite) begin
-                cmdTrigger <= 1;
-                cmdAddr <= 0;
-                cmdWrite <= 1;
-                cmdWriteData <= DataFromAddr(0);
-                
-                led <= 8'h55;
+        if (status == StatusStart) begin
+            cmdTrigger <= 1;
+            cmdAddr <= 0;
+            cmdWrite <= 1;
+            cmdWriteData <= DataFromAddr(0);
             
+            status <= StatusInit;
+        
+        end else if (status == StatusInit) begin
             // The SDRAM controller accepted the command, so transition to the next state
-            end else if (cmdReady) begin
+            if (cmdReady) begin
                 if (cmdAddr < AddrCountLimit-1) begin
-//                if (cmdAddr < 'h7FFFFF) begin
-//                if (cmdAddr < 'hFF) begin
                     cmdTrigger <= 1;
                     cmdAddr <= cmdAddr+1;
                     cmdWrite <= 1;
@@ -166,19 +146,17 @@ module Top(
                     `endif
                 
                 end else begin
-                    // Next stage
-                    init <= 1;
-                    
                     // Kick off reading
                     Read(0);
                     
-                    led <= 8'h00;
+                    // Next stage
+                    status <= StatusUnderway;
                 end
                 
                 // $display("Write: %h", cmdAddr);
             end
         
-        end else if (status == StatusOK) begin
+        end else if (status == StatusUnderway) begin
             // Handle read data if available
             if (cmdReadDataValid) begin
                 if (enqueuedReadCount > 0) begin
@@ -191,22 +169,9 @@ module Top(
                         `endif
                         
                         status <= StatusInvalidData;
-                        
-                        led <= currentExpectedReadAddr;
-                        // led <= 8'b11110000;
                     end else begin
                         $display("Read expected data from addr 0x%x: 0x%x", currentExpectedReadAddr, DataFromAddr(currentExpectedReadAddr));
                     end
-                    
-                    
-                    // // 16'h2BE
-                    // if ((cmdReadData|16'h2BE) != (currentExpectedReadData|16'h2BE)) begin
-                    //     `ifdef SIM
-                    //         $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
-                    //     `endif
-                    //
-                    //     status <= StatusInvalidData;
-                    // end
                     
                     expectedReadAddr <= expectedReadAddr >> AddrWidth;
                     enqueuedReadCount <= enqueuedReadCount-1;
@@ -224,9 +189,9 @@ module Top(
             // Current command was accepted: prepare a new command
             else if (cmdReady) begin
                 // A command was accepted, issue a new one
-                `ifdef SIM
-                    $display("Enqueue read @ 0x%h", cmdAddr);
-                `endif
+                // `ifdef SIM
+                //     $display("Enqueue read @ 0x%h", cmdAddr);
+                // `endif
                 
                 Read((cmdAddr+1)&(AddrCountLimit-1));
                 
