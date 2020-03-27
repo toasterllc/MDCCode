@@ -38,7 +38,7 @@ module SDRAMController #(
 );
     // Winbond W989D6DB Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
-    localparam T_REFI = 4000; // time between refreshes // TODO: revert back to 7812
+    localparam T_REFI = 4834; // time between refreshes // TODO: revert back to 7812    Works:4833, Broken:4834
     localparam T_RC = 68; // bank activate to bank activate time (same bank)
     localparam T_RFC = 72; // refresh time
     localparam T_RRD = 15; // row activate to row activate time (different banks)
