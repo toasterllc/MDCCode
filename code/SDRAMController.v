@@ -38,10 +38,9 @@ module SDRAMController #(
 );
     // Winbond W989D6DB Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
-    localparam T_REFI = 7812; // time between refreshes
+    localparam T_REFI = 4000; // time between refreshes
     localparam T_RC = 68; // bank activate to bank activate time (same bank)
-    localparam T_RFC = 72; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
-                                            // TODO: maybe increasing this value would make Alliance SDRAM work?
+    localparam T_RFC = 72; // refresh time
     localparam T_RRD = 15; // row activate to row activate time (different banks)
     localparam T_RAS = 45; // row activate to precharge time (same bank)
     localparam T_RCD = 18; // bank activate to read/write time (same bank)
@@ -77,7 +76,7 @@ module SDRAMController #(
     localparam C_DQZ = 2; // (T_DQZ) DQM to data high-impedance during reads delay
     localparam C_MRD = 2; // (T_MRD) set mode command to bank activate/refresh command delay
     
-    localparam DelayCounterWidth = $clog2(Clocks(T_RFC, 0));
+    localparam DelayCounterWidth = 6;//$clog2(Clocks(T_RFC, 0));
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0))-DelayCounterWidth;
     localparam StateWidth = 3;
@@ -368,7 +367,7 @@ module SDRAMController #(
                 ram_dqm <= 2'b11;
                 ram_cmd <= CmdNop;
                 // Delay 200us
-                InitNextSubstate(Clocks(T_INIT, 0));
+                InitNextSubstate(Clocks(T_INIT, 0)+10);
             end
             
             1: begin
@@ -380,7 +379,7 @@ module SDRAMController #(
             2: begin
                 // Precharge all banks
                 PrechargeAll();
-                InitNextSubstate(Clocks(T_RP, 0));
+                InitNextSubstate(Clocks(T_RP, 0)+10);
             end
             
             3: begin
@@ -390,7 +389,7 @@ module SDRAMController #(
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
                 // we just have to wait T_RFC.
-                InitNextSubstate(Clocks(T_RFC, 0));
+                InitNextSubstate(Clocks(T_RFC, 0)+10);
             end
             
             4: begin
@@ -400,19 +399,19 @@ module SDRAMController #(
                 // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
                 // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
                 // we just have to wait T_RFC.
-                InitNextSubstate(Clocks(T_RFC, 0));
+                InitNextSubstate(Clocks(T_RFC, 0)+10);
             end
             
             5: begin
                 // Set the operating mode of the SDRAM
                 ram_cmd <= CmdSetMode;
                 // ram_ba: reserved
-                ram_ba <= `BANK_WIDTH'b0;
+                ram_ba <= `BANK_WIDTH'b00;
                 // ram_a:     write burst length,     test mode,  CAS latency,    burst type,     burst length
                 ram_a <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
                 // We need a delay of C_MRD clock cycles before issuing the next command
                 // -1 clock cycle since we already burn one cycle getting to the next substate.
-                InitNextSubstate(C_MRD-1);
+                InitNextSubstate(C_MRD-1+10);
             end
             
             6: begin
@@ -459,7 +458,7 @@ module SDRAMController #(
                 Clocks(T_RP, 1)),
                 // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
                 // until precharging is complete.
-                Clocks(T_WR, 1))
+                Clocks(T_WR, 1))+10
             , StateRefresh);
             
         // Handle Refresh states
@@ -468,14 +467,14 @@ module SDRAMController #(
             0: begin
                 PrechargeAll();
                 // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
-                NextSubstate(Clocks(T_RP, 0));
+                NextSubstate(Clocks(T_RP, 0)+10);
             end
             
             1: begin
                 ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC (auto refresh time) to guarantee that the next command can
                 // activate the same bank immediately
-                StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                StartState(Clocks(T_RFC, 0)+10, (savedCmdTrigger ? StateHandleSaved : StateIdle));
                 didRefresh <= !didRefresh;
             end
             endcase

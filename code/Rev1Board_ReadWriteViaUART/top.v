@@ -6,7 +6,7 @@
 module Top(
     input wire          clk12mhz,
     
-    output wire[7:0]    led,
+    output reg[7:0]     led = 0,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -46,8 +46,8 @@ module Top(
     wire[DataWidth-1:0]   cmdReadData;
     wire                  cmdReadDataValid;
     
-    wire didRefresh;
-    assign led[7:0] = {8{didRefresh}};
+    // wire didRefresh;
+    // assign led[7:0] = {8{didRefresh}};
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
@@ -56,7 +56,7 @@ module Top(
         
         .cmdReady(cmdReady),
         .cmdTrigger(cmdTrigger),
-        .cmdAddr(cmdAddr),
+        .cmdAddr({9'b0, cmdAddr}),
         .cmdWrite(cmdWrite),
         .cmdWriteData(cmdWriteData),
         .cmdReadData(cmdReadData),
@@ -71,9 +71,9 @@ module Top(
         .ram_cas_(ram_cas_),
         .ram_we_(ram_we_),
         .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq),
+        .ram_dq(ram_dq)
         
-        .didRefresh(didRefresh)
+        // .didRefresh(didRefresh)
     );
     
     // UART stuff
@@ -124,7 +124,7 @@ module Top(
         NibbleFromHexASCII = (n>=97 ? n-97+10 : n-48);
     endfunction
     
-    reg[12:0] init = 0;
+    reg[0:0] init = 0;
     always @(posedge clk) begin
         // Set our default state if the current command was accepted
         if (cmdReady) cmdTrigger <= 0;
@@ -138,23 +138,29 @@ module Top(
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
                 cmdWrite <= 1;
-                cmdWriteData <= 0;
+                // cmdWriteData <= 16'h0;
+                cmdWriteData <= 16'h2222;
+                // cmdWriteData <= 16'hFFFF;
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
-                cmdTrigger <= 1;
-                cmdAddr <= cmdAddr+1;
-                cmdWrite <= 1;
-                cmdWriteData <= cmdAddr+1;
-                
-                if (cmdAddr == AddrCount-1) begin
+                if (cmdAddr != AddrCount-1) begin
+                    $display("Initializing 0x%x=0x%x", cmdAddr+1, 16'hFFFF-(cmdAddr+1));
+                    
+                    cmdTrigger <= 1;
+                    cmdAddr <= cmdAddr+1;
+                    cmdWrite <= 1;
+                    // cmdWriteData <= 16'h0;
+                    cmdWriteData <= 16'h2222;
+                    // cmdWriteData <= 16'hFFFF;
+                end else begin
                     // Next stage
                     init <= init+1;
                 end
             end
         
         end else begin
-            // led <= 8'hFF;
+            led <= 8'hFF;
             
             if (cmdReadDataValid) begin
                 uartReadData <= cmdReadData;

@@ -9,7 +9,7 @@
 module Top(
     input wire          clk12mhz,
     
-    output wire[7:0]    led,
+    output reg[7:0]     led = 0,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -22,10 +22,29 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    function [15:0] DataFromAddress;
+    function [15:0] DataFromAddr;
         input [24:0] addr;
-        DataFromAddress = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-    //    DataFromAddress = addr[15:0];
+        
+        DataFromAddr = 16'h00;
+        
+        // DataFromAddr = 8'hFF-addr[7:0];
+        
+        // DataFromAddr = 16'h1234;
+        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+       // DataFromAddr = addr[15:0];
+       // DataFromAddr = addr[24:9];
+       // DataFromAddr = {1'b0, addr[14:0]};
+       // DataFromAddr = {addr[14:0], 1'b1};
+       
+       // DataFromAddr = addr[15:0];
+       
+       // DataFromAddr = addr[15:0];
+       
+       // DataFromAddr = addr[24:9] ^ addr[14:0];
+       
+       // DataFromAddr = {addr[24:13], addr[10], addr[8], addr[6], addr[0]};
+       
+       // DataFromAddr = {15'b0, addr[15]^addr[14]^addr[13]^addr[12]^addr[11]^addr[10]^addr[ 9]^addr[ 8]^addr[ 7]^addr[ 6]^addr[ 5]^addr[ 4]^addr[ 3]^addr[ 2]^addr[ 1]^addr[ 0]};
     endfunction
     
     // 50 MHz clock
@@ -42,12 +61,16 @@ module Top(
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
-    localparam AddrCountLimit = AddrCount;
+    localparam AddrCountLimit = 16;
     // localparam AddrCountLimit = AddrCount/1024; // 32k words
-//    localparam AddrCountLimit = AddrCount/8192;
+    // localparam AddrCountLimit = AddrCount/8192;
+    // localparam AddrCountLimit = 8;
     localparam DataWidth = 16;
-    localparam StatusOK = 0;
-    localparam StatusFailed = 1;
+    
+    localparam StatusOK             = 0;
+    localparam StatusTooManyReads   = 1;
+    localparam StatusInvalidData    = 2;
+    localparam StatusUnexpectedData = 3;
     
     wire                  cmdReady;
     reg                   cmdTrigger = 0;
@@ -58,19 +81,17 @@ module Top(
     wire                  cmdReadDataValid;
     
     localparam MaxEnqueuedReads = 10;
-    reg[(DataWidth*MaxEnqueuedReads)-1:0] expectedReadData = 0;
+    reg[(AddrWidth*MaxEnqueuedReads)-1:0] expectedReadAddr = 0;
     reg[$clog2(MaxEnqueuedReads)-1:0] enqueuedReadCount = 0;
     
-    wire[DataWidth-1:0] currentExpectedReadData = expectedReadData[DataWidth-1:0];
+    wire[AddrWidth-1:0] currentExpectedReadAddr = expectedReadAddr[AddrWidth-1:0];
     
     reg init = 0;
-    reg status = StatusOK /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
+    reg[7:0] status = StatusOK /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
     
-    wire ledFailed = (status!=StatusOK);
-    reg ledDebug = 0;
-    assign led[7] = ledFailed;
-    assign led[6:1] = 0;
-    assign led[0] = ledDebug;
+    reg wrapped = 0;
+    // assign led[7] = wrapped;
+    // assign led[7:0] = status;
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
@@ -107,10 +128,10 @@ module Top(
                 $error("Too many enqueued reads");
             `endif
             
-            status <= StatusFailed;
+            status <= StatusTooManyReads;
         end
         
-        expectedReadData <= expectedReadData|(DataFromAddress(addr)<<(DataWidth*enqueuedReadCount));
+        expectedReadAddr <= (addr<<(AddrWidth*enqueuedReadCount))|expectedReadAddr;
         enqueuedReadCount <= enqueuedReadCount+1;
     end endtask
     
@@ -124,7 +145,9 @@ module Top(
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
                 cmdWrite <= 1;
-                cmdWriteData <= DataFromAddress(0);
+                cmdWriteData <= DataFromAddr(0);
+                
+                led <= 8'h55;
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
@@ -134,7 +157,7 @@ module Top(
                     cmdTrigger <= 1;
                     cmdAddr <= cmdAddr+1;
                     cmdWrite <= 1;
-                    cmdWriteData <= DataFromAddress(cmdAddr+1);
+                    cmdWriteData <= DataFromAddr(cmdAddr+1);
                     
                     `ifdef SIM
                         if (!(cmdAddr % 'h1000)) begin
@@ -148,6 +171,8 @@ module Top(
                     
                     // Kick off reading
                     Read(0);
+                    
+                    led <= 8'h00;
                 end
                 
                 // $display("Write: %h", cmdAddr);
@@ -160,15 +185,30 @@ module Top(
                     // $display("Read data: 0x%h", cmdReadData);
                     
                     // Verify that the data read out is what we expect
-                    if (cmdReadData != currentExpectedReadData) begin
+                    if (cmdReadData != DataFromAddr(currentExpectedReadAddr)) begin
                         `ifdef SIM
-                            $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
+                            $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", DataFromAddr(currentExpectedReadAddr), ~DataFromAddr(currentExpectedReadAddr), cmdReadData);
                         `endif
                         
-                        status <= StatusFailed;
+                        status <= StatusInvalidData;
+                        
+                        led <= currentExpectedReadAddr;
+                        // led <= 8'b11110000;
+                    end else begin
+                        $display("Read expected data from addr 0x%x: 0x%x", currentExpectedReadAddr, DataFromAddr(currentExpectedReadAddr));
                     end
                     
-                    expectedReadData <= expectedReadData >> DataWidth;
+                    
+                    // // 16'h2BE
+                    // if ((cmdReadData|16'h2BE) != (currentExpectedReadData|16'h2BE)) begin
+                    //     `ifdef SIM
+                    //         $error("Read invalid data (wanted: 0x%h/0x%h, got: 0x%h)", currentExpectedReadData, ~currentExpectedReadData, cmdReadData);
+                    //     `endif
+                    //
+                    //     status <= StatusInvalidData;
+                    // end
+                    
+                    expectedReadAddr <= expectedReadAddr >> AddrWidth;
                     enqueuedReadCount <= enqueuedReadCount-1;
                 
                 // Something's wrong if we weren't expecting data and we got some
@@ -177,7 +217,7 @@ module Top(
                         $error("Received data when we didn't expect any");
                     `endif
                     
-                    status <= StatusFailed;
+                    status <= StatusUnexpectedData;
                 end
             end
             
@@ -191,7 +231,7 @@ module Top(
                 Read((cmdAddr+1)&(AddrCountLimit-1));
                 
                 if (cmdAddr == 0) begin
-                    ledDebug <= !ledDebug;
+                    wrapped <= !wrapped;
                 end
             end
         end
@@ -211,11 +251,11 @@ module Top(
         .dqm(ram_dqm)
     );
     
-    initial begin
-        $dumpfile("top.vcd");
-        $dumpvars(0, Top);
-        // #1000000000;
-        // $finish;
-    end
+    // initial begin
+    //     $dumpfile("top.vcd");
+    //     $dumpvars(0, Top);
+    //     // #1000000000;
+    //     // $finish;
+    // end
 `endif
 endmodule
