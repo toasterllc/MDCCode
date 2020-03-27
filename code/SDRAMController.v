@@ -38,7 +38,7 @@ module SDRAMController #(
 );
     // Winbond W989D6DB Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
-    localparam T_REFI = 4000; // time between refreshes
+    localparam T_REFI = 4000; // time between refreshes // TODO: revert back to 7812
     localparam T_RC = 68; // bank activate to bank activate time (same bank)
     localparam T_RFC = 72; // refresh time
     localparam T_RRD = 15; // row activate to row activate time (different banks)
@@ -468,8 +468,6 @@ module SDRAMController #(
                 PrechargeAll();
                 // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
                 NextSubstate(Clocks(T_RP, 0));
-                
-                $display("REFRESH: precharge delay: %0d ns -> %0d clocks (width: %0d)", T_RP, Clocks(T_RP, 0), DelayCounterWidth);
             end
             
             1: begin
@@ -478,8 +476,6 @@ module SDRAMController #(
                 // activate the same bank immediately
                 StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
                 didRefresh <= !didRefresh;
-                
-                $display("REFRESH: autorefresh delay: %0d ns -> %0d clocks (width: %0d)", T_RFC, Clocks(T_RFC, 0), DelayCounterWidth);
             end
             endcase
     end endtask
