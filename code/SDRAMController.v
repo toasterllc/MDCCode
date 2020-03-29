@@ -38,7 +38,7 @@ module SDRAMController #(
 );
     // Winbond W989D6DB Timing parameters (nanoseconds)
     localparam T_INIT = 200000; // power up initialization time
-    localparam T_REFI = 1500; // time between refreshes // TODO: revert back to 7812    Works:4833, Broken:4834
+    localparam T_REFI = 7812; // time between refreshes // TODO: revert back to 7812    Works:4833, Broken:4834
     localparam T_RC = 68; // bank activate to bank activate time (same bank)
     localparam T_RFC = 72; // refresh time
     localparam T_RRD = 15; // row activate to row activate time (different banks)
@@ -58,18 +58,6 @@ module SDRAMController #(
     // localparam T_RCD = 21; // bank activate to read/write time (same bank)
     // localparam T_RP = 21; // precharge to refresh/row activate (same bank)
     // localparam T_WR = 14; // write recover time
-    
-    // // Micron 48LC16M16A2 Timing parameters (nanoseconds)
-    // localparam T_INIT = ; // power up initialization time
-    // localparam T_REFI = ; // time between refreshes
-    // localparam T_RC = ; // bank activate to bank activate time (same bank)
-    // localparam T_RFC = ; // refresh time // TODO: we dont know what this is for our Alliance SDRAM
-    //                                         // TODO: maybe increasing this value would make Alliance SDRAM work?
-    // localparam T_RRD = ; // row activate to row activate time (different banks)
-    // localparam T_RAS = ; // row activate to precharge time (same bank)
-    // localparam T_RCD = ; // bank activate to read/write time (same bank)
-    // localparam T_RP = ; // precharge to refresh/row activate (same bank)
-    // localparam T_WR = ; // write recover time
     
     // Timing parameters (clock cycles)
     localparam C_CAS = 2; // Column address strobe (CAS) delay
@@ -433,8 +421,6 @@ module SDRAMController #(
     end endtask
     
     task HandleRefresh; begin
-        SetDefaultState();
-        
         // Initiate refresh when refreshCounter==0
         if (refreshCounter == 0)
             
@@ -481,8 +467,6 @@ module SDRAMController #(
     end endtask
     
     task HandleCommand; begin
-        SetDefaultState();
-        
         // Handle commands
         if (delayCounter == 0) begin
             case (state)
@@ -526,14 +510,15 @@ module SDRAMController #(
         if (state == StateInit)
             HandleInit();
         
+        else begin
+            SetDefaultState();
+            
 `ifdef DO_REFRESH
-        // Refresh
-        else if (refreshCounter==0 || state==StateRefresh)
-            HandleRefresh();
+            // Refresh
+            if (refreshCounter==0 || state==StateRefresh) HandleRefresh();
 `endif
-        
-        // Commands
-        else
-            HandleCommand();
+            // Commands
+            else HandleCommand();
+        end
     end
 endmodule
