@@ -13,13 +13,13 @@ module ClockGen #(
     output wire rst
 );
     wire locked;
-    wire pllclk;
-    assign clk = pllclk&locked;
+    wire pllClk;
+    assign clk = pllClk&locked;
     
 `ifdef SIM
     reg simClk;
     reg[3:0] simLockedCounter;
-    assign pllclk = simClk;
+    assign pllClk = simClk;
     assign locked = &simLockedCounter;
     
     initial begin
@@ -47,16 +47,21 @@ module ClockGen #(
 		.RESETB(1'b1),
 		.BYPASS(1'b0),
 		.REFERENCECLK(clk12mhz),
-		.PLLOUTCORE(pllclk)
+		.PLLOUTCORE(pllClk)
     );
 `endif
     
     // Generate `rst`
+    reg init = 0;
     reg[15:0] rst_;
     assign rst = !rst_[$size(rst_)-1];
     always @(posedge clk)
-        if (!locked) rst_ <= 1;
-        else if (rst) rst_ <= rst_<<1;
+        if (!init) begin
+            rst_ <= 1;
+            init <= 1;
+        end else if (rst) begin
+            rst_ <= rst_<<1;
+        end
     
     // TODO: should we only output clk if locked==1? that way, if clients receive a clock, they know it's stable?
     
