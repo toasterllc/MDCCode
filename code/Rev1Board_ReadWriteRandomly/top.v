@@ -63,21 +63,21 @@ module Top(
     input wire          uart_rx,
     output wire         uart_tx
 );
-    function [15:0] DataFromAddress;
+    function [15:0] DataFromAddr;
         input [24:0] addr;
-        DataFromAddress = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-    //    DataFromAddress = addr[15:0];
+        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+       DataFromAddr = addr[15:0];
     endfunction
     
-    // 100 MHz clock
-    localparam ClockFrequency =   100000000;
+    // 24 MHz clock
+    localparam ClockFrequency = 24000000;
     wire clk;
     wire rst;
     ClockGen #(
         .FREQ(ClockFrequency),
 		.DIVR(0),
-		.DIVF(66),
-		.DIVQ(3),
+		.DIVF(63),
+		.DIVQ(5),
 		.FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
     
@@ -101,9 +101,9 @@ module Top(
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
-    // localparam AddrCountLimit = AddrCount;
+    localparam AddrCountLimit = AddrCount;
     // localparam AddrCountLimit = AddrCount/1024; // 32k words
-    localparam AddrCountLimit = AddrCount/8192; // 4k words
+    // localparam AddrCountLimit = AddrCount/8192; // 4k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 0;
@@ -230,9 +230,9 @@ module Top(
     
     
     
-    wire[DataWidth-1:0] expectedReadData = DataFromAddress(currentReadAddr);
-    wire[DataWidth-1:0] prevReadData = DataFromAddress(currentReadAddr-1);
-    wire[DataWidth-1:0] nextReadData = DataFromAddress(currentReadAddr+1);
+    wire[DataWidth-1:0] expectedReadData = DataFromAddr(currentReadAddr);
+    wire[DataWidth-1:0] prevReadData = DataFromAddr(currentReadAddr-1);
+    wire[DataWidth-1:0] nextReadData = DataFromAddr(currentReadAddr+1);
     
     
     
@@ -251,7 +251,7 @@ module Top(
                 cmdTrigger <= 1;
                 cmdAddr <= 0;
                 cmdWrite <= 1;
-                cmdWriteData <= DataFromAddress(0);
+                cmdWriteData <= DataFromAddr(0);
             
             // The SDRAM controller accepted the command, so transition to the next state
             end else if (cmdReady) begin
@@ -261,7 +261,7 @@ module Top(
                     cmdTrigger <= 1;
                     cmdAddr <= cmdAddr+1;
                     cmdWrite <= 1;
-                    cmdWriteData <= DataFromAddress(cmdAddr+1);
+                    cmdWriteData <= DataFromAddr(cmdAddr+1);
                     
                     `ifdef SIM
                         if (!(cmdAddr % 'h1000)) begin
@@ -284,10 +284,10 @@ module Top(
             if (cmdReadDataValid) begin
                 if (nextEnqueuedReadCount > 0) begin
                     // Verify that the data read out is what we expect
-//                    if ((cmdReadData|1'b1) !== (DataFromAddress(currentReadAddr)|1'b1)) begin
+//                    if ((cmdReadData|1'b1) !== (DataFromAddr(currentReadAddr)|1'b1)) begin
                     if (cmdReadData !== expectedReadData) begin
                         `ifdef SIM
-                            $error("Read invalid data; (wanted: 0x%h=0x%h, got: 0x%h=0x%h)", currentReadAddr, DataFromAddress(currentReadAddr), currentReadAddr, cmdReadData);
+                            $error("Read invalid data; (wanted: 0x%h=0x%h, got: 0x%h=0x%h)", currentReadAddr, DataFromAddr(currentReadAddr), currentReadAddr, cmdReadData);
                         `endif
                         
                         status <= StatusFailed;
@@ -329,7 +329,7 @@ module Top(
                             "\r\n"
                         };
                         
-            			uartDataOutCount <= 28;
+            			uartDataOutCount <= 29;
                     end
                     
                     nextEnqueuedReadAddrs = nextEnqueuedReadAddrs >> AddrWidth;
@@ -423,7 +423,7 @@ module Top(
                         cmdTrigger <= 1;
                         cmdAddr <= randomAddr;
                         cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(randomAddr);
+                        cmdWriteData <= DataFromAddr(randomAddr);
                         
                         mode <= ModeIdle;
                         random25Next <= 1;
@@ -438,7 +438,7 @@ module Top(
                         cmdTrigger <= 1;
                         cmdAddr <= randomAddr;
                         cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(randomAddr);
+                        cmdWriteData <= DataFromAddr(randomAddr);
                         
                         mode <= ModeWrite;
                         modeCounter <= random9;
@@ -470,7 +470,7 @@ module Top(
                         cmdTrigger <= 1;
                         cmdAddr <= cmdAddr+1;
                         cmdWrite <= 1;
-                        cmdWriteData <= DataFromAddress(cmdAddr+1);
+                        cmdWriteData <= DataFromAddr(cmdAddr+1);
                         
                         modeCounter <= modeCounter-1;
                     
@@ -538,7 +538,7 @@ module Top(
                         uartDataOut <= (uartRxByte=="w" ? "w" : "r");
             			uartDataOutCount <= 1;
                         
-                        uartDataInCount <= 6; // Load 6 bytes of address (each byte is a hex nibble)
+                        uartDataInCount <= 7; // Load 6 bytes of address (each byte is a hex nibble)
                     end
                     
                     // Load address, and if we're writing, wait for the value to write
@@ -549,6 +549,7 @@ module Top(
             			uartDataOutCount <= 1;
                         
                         cmdAddr <= {
+                            NibbleFromHexASCII(uartDataIn[(8*7)-1 -: 8]) & 4'b0001,
                             NibbleFromHexASCII(uartDataIn[(8*6)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*5)-1 -: 8]),
                             NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
