@@ -7,14 +7,14 @@
 `include "../mt48h32m16lf/mobile_sdr.v"
 `endif
 
-module Random9(
+module Random6(
     input wire clk, next,
-    output reg[8:0] q = 0
+    output reg[5:0] q = 0
 );
     always @(posedge clk)
         if (q == 0) q <= 1;
-        // Feedback polynomial for N=9: x^9 + x^5 + 1
-        else if (next) q <= {q[7:0], q[9-1] ^ q[5-1]};
+        // Feedback polynomial for N=6: x^6 + x^5 + 1
+        else if (next) q <= {q[4:0], q[6-1] ^ q[5-1]};
 endmodule
 
 module Random16(
@@ -30,6 +30,7 @@ endmodule
 module Random25(
     input wire clk, next,
     output reg[24:0] q = 0,
+    output reg[24:0] counter = 0,
     output reg wrapped
 );
     always @(posedge clk)
@@ -41,6 +42,7 @@ module Random25(
         else if (next) begin
             q <= {q[23:0], q[25-1] ^ q[22-1]};
             if (q == 1) wrapped <= !wrapped;
+            counter <= counter+1;
         end
 endmodule
 
@@ -65,8 +67,8 @@ module Top(
 );
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-       DataFromAddr = addr[15:0];
+        DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+       // DataFromAddr = addr[15:0];
     endfunction
     
     // 24 MHz clock
@@ -101,9 +103,9 @@ module Top(
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
-    localparam AddrCountLimit = AddrCount;
+    // localparam AddrCountLimit = AddrCount;
     // localparam AddrCountLimit = AddrCount/1024; // 32k words
-    // localparam AddrCountLimit = AddrCount/8192; // 4k words
+    localparam AddrCountLimit = AddrCount/8192; // 4k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 0;
@@ -156,9 +158,9 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    wire[8:0] random9;
-    reg random9Next = 0;
-    Random9 random9Gen(.clk(clk), .next(random9Next), .q(random9));
+    wire[5:0] random6;
+    reg random6Next = 0;
+    Random6 random6Gen(.clk(clk), .next(random6Next), .q(random6));
     
     wire[15:0] random16;
     reg random16Next = 0;
@@ -168,8 +170,9 @@ module Top(
     assign led[7] = wrapped;
     
     wire[24:0] random25;
+    wire[24:0] random25Counter;
     reg random25Next = 0;
-    Random25 random25Gen(.clk(clk), .next(random25Next), .q(random25), .wrapped(wrapped));
+    Random25 random25Gen(.clk(clk), .next(random25Next), .q(random25), .counter(random25Counter), .wrapped(wrapped));
     
     wire[24:0] randomAddr = random25&(AddrCountLimit-1);
     
@@ -186,6 +189,7 @@ module Top(
     wire [7:0] uartRxByte;
     wire uartReceiving;
     wire uartTransmitting;
+    reg uartTransmittingOld = 0;
     
     uart #(
         .baud_rate(9600),                   // The baud rate in kilobits/s
@@ -241,9 +245,36 @@ module Top(
         // Set our default state
         if (cmdReady) cmdTrigger <= 0;
         
-        random9Next <= 0;
+        random6Next <= 0;
         random16Next <= 0;
         random25Next <= 0;
+        
+        uartTransmit <= 0;
+        
+        // Transmit another UART byte if data is available, and we're not currently transmitting
+        if (!uartTransmit && !uartTransmitting && uartDataOutCount>0) begin
+			uartTxByte <= uartDataOut[(8*uartDataOutCount)-1 -: 8];
+            uartTransmit <= 1;
+			uartDataOutCount <= uartDataOutCount-1;
+        end
+        
+        if (random25Counter!=25'h0 && !(random25Counter%25'h100000)) begin
+            if (!uartDataOutCount) begin
+                uartDataOut <= {
+                    HexASCIIFromNibble({3'b0, random25Counter[24]}),
+                    HexASCIIFromNibble(random25Counter[23:20]),
+                    HexASCIIFromNibble(random25Counter[19:16]),
+                    HexASCIIFromNibble(random25Counter[15:12]),
+                    HexASCIIFromNibble(random25Counter[11:8]),
+                    HexASCIIFromNibble(random25Counter[7:4]),
+                    HexASCIIFromNibble(random25Counter[3:0]),
+                
+                    "\r\n"
+                };
+            
+                uartDataOutCount <= 9;
+            end
+        end
         
         // Initialize memory to known values
         if (!init) begin
@@ -380,7 +411,7 @@ module Top(
                     // Read sequential (start)
                     else if (random16 < 3*'h3333) begin
                         `ifdef SIM
-                            $display("ReadSeq: %h[%h]", randomAddr, random9);
+                            $display("ReadSeq: %h[%h]", randomAddr, random6);
                         `endif
                         
                         cmdTrigger <= 1;
@@ -391,8 +422,8 @@ module Top(
                         nextEnqueuedReadCount = nextEnqueuedReadCount+1;
                         
                         mode <= ModeRead;
-                        modeCounter <= random9;
-                        random9Next <= 1;
+                        modeCounter <= random6;
+                        random6Next <= 1;
                         random25Next <= 1;
                     end
                     
@@ -432,7 +463,7 @@ module Top(
                     // Write sequential (start)
                     else begin
                         `ifdef SIM
-                            $display("WriteSeq: %h[%h]", randomAddr, random9);
+                            $display("WriteSeq: %h[%h]", randomAddr, random6);
                         `endif
                         
                         cmdTrigger <= 1;
@@ -441,8 +472,8 @@ module Top(
                         cmdWriteData <= DataFromAddr(randomAddr);
                         
                         mode <= ModeWrite;
-                        modeCounter <= random9;
-                        random9Next <= 1;
+                        modeCounter <= random6;
+                        random6Next <= 1;
                         random25Next <= 1;
                     end
                     
@@ -481,133 +512,6 @@ module Top(
             
             enqueuedReadAddrs <= nextEnqueuedReadAddrs;
             enqueuedReadCount <= nextEnqueuedReadCount;
-        
-        // Something went wrong -- allow access via UART
-        end else begin
-            // By default we're not transmitting
-            uartTransmit <= 0;
-            
-            // Disable cmdTrigger once the RAM controller accepts the command
-            if (cmdReady) begin
-                cmdTrigger <= 0;
-            end
-            
-            if (cmdReadDataValid) begin
-                uartReadData <= cmdReadData;
-                uartReadDataValid <= 1;
-            end
-            
-            // Wait until active transmissions complete
-            if (!uartTransmit && !uartTransmitting) begin
-                if (uartDataOutCount > 0) begin
-        			uartTxByte <= uartDataOut[(8*uartDataOutCount)-1 -: 8];
-                    uartTransmit <= 1;
-        			uartDataOutCount <= uartDataOutCount-1;
-                
-                end else if (uartDataInCount > 0) begin
-                    if (uartReceived) begin
-                        uartDataIn <= (uartDataIn<<8)|uartRxByte;
-                        uartDataInCount <= uartDataInCount-1;
-                        
-                        // Echo typed character if we're not suppressing
-                        if (!uartDataInSuppress) begin
-                            uartTxByte <= uartRxByte;
-                            uartTransmit <= 1;
-                        end
-                    end
-                
-                end else begin
-                    // Go to the next uartStage by default
-                    uartStage <= (uartStage<6 ? uartStage+1 : 0);
-                    
-                    // Reset our echo state by default
-                    uartDataInSuppress <= 0;
-                    
-                    case (uartStage)
-                    // Wait for command
-                    0: begin
-                        uartDataInCount <= 1; // Load a byte for the command
-                        uartDataInSuppress <= 1;
-                    end
-                    
-                    // Load command, wait for address
-                    1: begin
-                        cmdWrite <= (uartRxByte=="w");
-                        
-                        // Echo a "w" or "r"
-                        uartDataOut <= (uartRxByte=="w" ? "w" : "r");
-            			uartDataOutCount <= 1;
-                        
-                        uartDataInCount <= 7; // Load 6 bytes of address (each byte is a hex nibble)
-                    end
-                    
-                    // Load address, and if we're writing, wait for the value to write
-                    2: begin
-                        
-                        // Echo a "="
-                        uartDataOut <= "=";
-            			uartDataOutCount <= 1;
-                        
-                        cmdAddr <= {
-                            NibbleFromHexASCII(uartDataIn[(8*7)-1 -: 8]) & 4'b0001,
-                            NibbleFromHexASCII(uartDataIn[(8*6)-1 -: 8]),
-                            NibbleFromHexASCII(uartDataIn[(8*5)-1 -: 8]),
-                            NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
-                            NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
-                            NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
-                            NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
-                        };
-
-                        // If we're writing, get the data to write
-                        if (cmdWrite) uartDataInCount <= 4; // Load 4 bytes of data (each byte is a hex nibble)
-                    end
-                    
-                    // Issue command to the RAM controller
-                    3: begin
-                        if (cmdWrite) begin
-                            cmdWriteData <= {
-                                NibbleFromHexASCII(uartDataIn[(8*4)-1 -: 8]),
-                                NibbleFromHexASCII(uartDataIn[(8*3)-1 -: 8]),
-                                NibbleFromHexASCII(uartDataIn[(8*2)-1 -: 8]),
-                                NibbleFromHexASCII(uartDataIn[(8*1)-1 -: 8])
-                            };
-                        end
-                        
-                        cmdTrigger <= 1;
-                        // Reset our flag so we know when we receive the data
-                        uartReadDataValid <= 0;
-                    end
-                    
-                    // Wait for command to complete
-                    4: begin
-                        // Stall until the RAM controller accepts our command
-                        // (We reset cmdTrigger above, when cmdReady fires)
-                        if (cmdTrigger) uartStage <= uartStage;
-                        // If we're reading, stall until we have the data
-                        else if (!cmdWrite && !uartReadDataValid) uartStage <= uartStage;
-                    end
-                    
-                    // If we were reading, output the read data
-                    5: begin
-                        if (!cmdWrite) begin
-                            uartDataOut <= {
-                                HexASCIIFromNibble(uartReadData[15:12]),
-                                HexASCIIFromNibble(uartReadData[11:8]),
-                                HexASCIIFromNibble(uartReadData[7:4]),
-                                HexASCIIFromNibble(uartReadData[3:0])
-                            };
-                            uartDataOutCount <= 4; // Output 4 bytes
-                        end
-                    end
-                    
-                    // Send a newline
-                    6: begin
-                        uartDataOut <= "\r\n";
-                        uartDataOutCount <= 2;
-                    end
-                    endcase
-                end
-            end
         end
     end
     
@@ -625,11 +529,11 @@ module Top(
         .dqm(ram_dqm)
     );
     
-    // initial begin
-    //     $dumpfile("top.vcd");
-    //     $dumpvars(0, Top);
-    //     #1000000000;
-    //     $finish;
-    // end
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        #1000000000;
+        $finish;
+    end
 `endif
 endmodule

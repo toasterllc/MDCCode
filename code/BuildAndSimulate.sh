@@ -8,6 +8,8 @@ if [ "$#" -ne 1 ]; then
 fi
 
 proj="$1"
+
+rm -Rf "$proj/tmp"
 mkdir -p "$proj/tmp"
 cd "$proj/tmp"
 

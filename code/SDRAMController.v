@@ -224,7 +224,7 @@ module SDRAMController #(
         // Save the incoming command
         SaveCommand();
         
-        if (savedCmdTrigger) begin
+        if (savedCmdTrigger & !(|readDataValidShiftReg)) begin
             // Supply the column address
             ram_a <= savedCmdAddrCol;
             // Supply data to be written
