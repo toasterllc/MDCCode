@@ -88,6 +88,7 @@ module SDRAMController #(
     localparam CmdBankActivate      = 3'b011;
     localparam CmdWrite             = 3'b100;
     localparam CmdRead              = 3'b101;
+    localparam CmdPowerDown         = 3'b110;
     localparam CmdNop               = 3'b111;
     
     localparam StateInit            = 3'h0;
@@ -362,27 +363,37 @@ module SDRAMController #(
         // Handle init states
         end else case (substate)
             0: begin
-                // Initialize registers
-                ram_cke <= 0;
+                ram_cke <= 1;
                 ram_dqm <= 2'b11;
-                ram_cmd <= CmdNop;
+                InitNextSubstate(10);
+            end
+            
+            1: begin
+                // Precharge all banks so that they're idle, so we can enter deep power down mode
+                PrechargeAll();
+                InitNextSubstate(Clocks(T_RP, 0));
+            end
+            
+            2: begin
+                ram_cke <= 0;
+                ram_cmd <= CmdPowerDown;
+                InitNextSubstate(50);
+            end
+            
+            3: begin
+                // Exit deep power down mode
+                ram_cke <= 1;
                 // Delay 200us
                 InitNextSubstate(Clocks(T_INIT, 0));
             end
             
-            1: begin
-                // Bring ram_cke high for a bit before issuing commands
-                ram_cke <= 1;
-                InitNextSubstate(10);
-            end
-            
-            2: begin
+            4: begin
                 // Precharge all banks
                 PrechargeAll();
                 InitNextSubstate(Clocks(T_RP, 0));
             end
             
-            3: begin
+            5: begin
                 // Autorefresh 1/2
                 ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC for autorefresh to complete
@@ -392,7 +403,7 @@ module SDRAMController #(
                 InitNextSubstate(Clocks(T_RFC, 0));
             end
             
-            4: begin
+            6: begin
                 // Autorefresh 2/2
                 ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC for autorefresh to complete
@@ -402,7 +413,7 @@ module SDRAMController #(
                 InitNextSubstate(Clocks(T_RFC, 0));
             end
             
-            5: begin
+            7: begin
                 // Set the operating mode of the SDRAM
                 ram_cmd <= CmdSetMode;
                 // ram_ba: reserved
@@ -414,7 +425,7 @@ module SDRAMController #(
                 InitNextSubstate(C_MRD-1);
             end
             
-            6: begin
+            8: begin
                 // Set the extended operating mode of the SDRAM (applies only to Winbond RAMs)
                 ram_cmd <= CmdSetMode;
                 // ram_ba: reserved

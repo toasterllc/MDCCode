@@ -28,8 +28,8 @@ module Top(
 );
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-        DataFromAddr = addr[15:0];
+        DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+        // DataFromAddr = addr[15:0];
         // DataFromAddr = 16'hFFFF;
         // DataFromAddr = 16'h0000;
         // DataFromAddr = 16'h7832;
@@ -282,23 +282,29 @@ module Top(
                                 HexASCIIFromNibble(currentReadAddr[11:8]),
                                 HexASCIIFromNibble(currentReadAddr[7:4]),
                                 HexASCIIFromNibble(currentReadAddr[3:0]),
-                            
+
                                 "E",
                                 HexASCIIFromNibble(expectedReadData[15:12]),
                                 HexASCIIFromNibble(expectedReadData[11:8]),
                                 HexASCIIFromNibble(expectedReadData[7:4]),
                                 HexASCIIFromNibble(expectedReadData[3:0]),
-                            
+
                                 "G",
                                 HexASCIIFromNibble(cmdReadData[15:12]),
                                 HexASCIIFromNibble(cmdReadData[11:8]),
                                 HexASCIIFromNibble(cmdReadData[7:4]),
                                 HexASCIIFromNibble(cmdReadData[3:0]),
-                            
+                                
+                                "D",
+                                HexASCIIFromNibble(cmdReadData[15:12]   ^ expectedReadData[15:12]),
+                                HexASCIIFromNibble(cmdReadData[11:8]    ^ expectedReadData[11:8]),
+                                HexASCIIFromNibble(cmdReadData[7:4]     ^ expectedReadData[7:4]),
+                                HexASCIIFromNibble(cmdReadData[3:0]     ^ expectedReadData[3:0]),
+
                                 "\r\n"
                             };
-                            
-                            uartDataOutCount <= 19;
+
+                            uartDataOutCount <= 24;
                         end
                         
                     end else begin
@@ -348,11 +354,11 @@ module Top(
         .dqm(ram_dqm)
     );
     
-    // initial begin
-    //     $dumpfile("top.vcd");
-    //     $dumpvars(0, Top);
-    //     // #1000000000;
-    //     // $finish;
-    // end
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        #1000000000;
+        $finish;
+    end
 `endif
 endmodule

@@ -34,3 +34,6 @@ icepack top.asc top.bin
 
 # Flash the bitstream (.bin)
 sudo "$dir/iceprog_MotionDetectorCameraRev1" -S top.bin
+
+# Open a serial connection to the board
+sudo picocom /dev/ttyUSB0

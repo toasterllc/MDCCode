@@ -13,11 +13,13 @@ module ClockGen #(
     output wire rst
 );
     wire locked;
+    wire pllclk;
+    assign clk = pllclk&locked;
     
 `ifdef SIM
     reg simClk;
     reg[3:0] simLockedCounter;
-    assign clk = simClk;
+    assign pllclk = simClk;
     assign locked = &simLockedCounter;
     
     initial begin
@@ -45,7 +47,7 @@ module ClockGen #(
 		.RESETB(1'b1),
 		.BYPASS(1'b0),
 		.REFERENCECLK(clk12mhz),
-		.PLLOUTCORE(clk)
+		.PLLOUTCORE(pllclk)
     );
 `endif
     
