@@ -103,9 +103,9 @@ module Top(
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
-    // localparam AddrCountLimit = AddrCount;
+    localparam AddrCountLimit = AddrCount;
     // localparam AddrCountLimit = AddrCount/1024; // 32k words
-    localparam AddrCountLimit = AddrCount/8192; // 4k words
+    // localparam AddrCountLimit = AddrCount/8192; // 4k words
     localparam DataWidth = 16;
     localparam MaxEnqueuedReads = 10;
     localparam StatusOK = 0;
@@ -429,7 +429,7 @@ module Top(
                     
                     // Read all (start)
                     // We want this to be rare so only check for 1 value
-                    else if (random16 < 3*'h3333+'h100) begin
+                    else if (random16 < 3*'h3333+'h1) begin
                         `ifdef SIM
                             $display("ReadAll");
                         `endif
@@ -532,7 +532,7 @@ module Top(
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
-        #1000000000;
+        #10000000000;
         $finish;
     end
 `endif

@@ -28,8 +28,8 @@ module Top(
 );
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-        DataFromAddr = addr[15:0];
+        DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+        // DataFromAddr = addr[15:0];
         // DataFromAddr = 16'hFFFF;
         // DataFromAddr = 16'h0000;
         // DataFromAddr = 16'h7832;
