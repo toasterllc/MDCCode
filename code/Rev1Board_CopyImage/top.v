@@ -25,9 +25,9 @@ module Top(
     input wire          pix_clk,    // Clock from image sensor
     input wire          pix_fv,
     input wire          pix_lv,
-    input wire[11:0]    pix_d       // Data from image sensor
+    input wire[11:0]    pix_d,      // Data from image sensor
 );
-    localparam ClockFrequency = 100000000; // 100 MHz
+    localparam ClockFrequency = 100000000;
     localparam RAM_AddrWidth = 25;
     localparam RAM_DataWidth = 16;
     
@@ -122,7 +122,7 @@ module Top(
     assign pix_lv = w;
     Icestick_AFIFOProducer producer(.clk(clk), .wclk(pix_clk), .w(w), .wd(pix_d));
     
-    mobile_sdr sdram (
+    mobile_sdr sdram(
         .clk(ram_clk),
         .cke(ram_cke),
         .addr(ram_a),

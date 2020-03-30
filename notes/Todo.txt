@@ -17,6 +17,8 @@
         - Bidirectional level shifter doesn't work for our use case, likely due to its bidirectional behavior and weak drive strength.
             - Switch to a real level shifter with explicit inputs and outputs
     
+    - If we still have a pin header, add 1V8/GND signals to it
+    
     
     
     
