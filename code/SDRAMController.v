@@ -64,10 +64,25 @@ module SDRAMController #(
     localparam C_DQZ = 2; // (T_DQZ) DQM to data high-impedance during reads delay
     localparam C_MRD = 2; // (T_MRD) set mode command to bank activate/refresh command delay
     
-    localparam DelayCounterWidth = $clog2(Clocks(T_RFC, 0)+1);
+    // At high clock speeds, Clocks(T_RFC, 0) is the largest delay stored in delayCounter.
+    // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
+    localparam DelayCounterWidth = Max($clog2(Clocks(T_RFC, 0)+1), $clog2(C_DQZ+1+1));
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0)+1)-DelayCounterWidth;
     localparam StateWidth = 3;
+    
+    // initial begin
+    // $display("C_DQZ+1: %0d", C_DQZ+1);
+    // $display("C_MRD-1: %0d", C_MRD-1);
+    // $display("Clocks(T_RFC, 0): %0d", Clocks(T_RFC, 0));
+    // $display("Clocks(T_RP, 0): %0d", Clocks(T_RP, 0));
+    // $display("Clocks(T_WR, 0): %0d", Clocks(T_WR, 0));
+    // $display("Clocks(T_WR, 1): %0d", Clocks(T_WR, 1));
+    // $display("Max(C_CAS-1, Clocks(T_RP, 0)): %0d", Max(C_CAS-1, Clocks(T_RP, 0)));
+    // $display("Max(Max(Max(Clocks(T_RCD, 0), Clocks(T_RAS, 2)), Clocks(T_RC, 3)), Clocks(T_RRD, 3)): %0d", Max(Max(Max(Clocks(T_RCD, 0), Clocks(T_RAS, 2)), Clocks(T_RC, 3)), Clocks(T_RRD, 3)));
+    // $display("Max(Max(Max(Max(Max(Clocks(T_RC, 1), Clocks(T_RRD, 1)), Clocks(T_RAS, 1)), Clocks(T_RCD, 1)), Clocks(T_RP, 1)), Clocks(T_WR, 1)): %0d", Max(Max(Max(Max(Max(Clocks(T_RC, 1), Clocks(T_RRD, 1)), Clocks(T_RAS, 1)), Clocks(T_RCD, 1)), Clocks(T_RP, 1)), Clocks(T_WR, 1)));
+    //     // $display("DelayCounterWidth: %0d", DelayCounterWidth);
+    // end
     
     // ras_, cas_, we_
     localparam CmdSetMode           = 3'b000;
@@ -181,6 +196,13 @@ module SDRAMController #(
     end
     
     task StartState(input integer delay, input integer newState); begin
+        // Verify that `delay` can fit in `delayCounter`
+        `ifdef SIM
+            if ($clog2(delay+1) > $bits(delayCounter)) begin
+                $error("delay (%0d) is too large to fit in delayCounter (max value: %0d)", delay, {$bits(delayCounter){1'b1}});
+            end
+        `endif
+        
         delayCounter <= delay;
         state <= newState;
         substate <= 0;
@@ -212,7 +234,7 @@ module SDRAMController #(
         // Save the incoming command
         SaveCommand();
         
-        if (savedCmdTrigger & !(|readDataValidShiftReg)) begin
+        if (savedCmdTrigger) begin
             // Supply the column address
             ram_a <= savedCmdAddrCol;
             // Supply data to be written
