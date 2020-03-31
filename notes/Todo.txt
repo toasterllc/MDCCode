@@ -16,6 +16,12 @@
 
 
 - Rev2
+    - Update MFG/PN for all components on schematic
+    
+    - Update EagleLibrary's description of all MDC-imported components
+    
+    - Rename MOLEX-734120110 -> UFL-CONNECTOR, make MFG/PN custom attributes on the schematic
+    
     - Use new EagleLibrary as a submodule
     
     - TPS62801X_TPS6280X (U1/U2)

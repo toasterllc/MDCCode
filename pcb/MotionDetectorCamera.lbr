@@ -107,14 +107,14 @@
 <description>Generated from &lt;b&gt;MotionDetectorCamera.sch&lt;/b&gt;&lt;p&gt;
 by exp-lbrs.ulp</description>
 <packages>
-<package name="INDUCTOR_LARGE">
+<package name="INDUCTOR-TESTBED">
 <wire x1="-6.5" y1="-7.3" x2="6.5" y2="-7.3" width="0.05" layer="21"/>
 <wire x1="-6.5" y1="7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
 <wire x1="-6.5" y1="-7.3" x2="-6.5" y2="7.3" width="0.05" layer="21"/>
 <wire x1="6.5" y1="-7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
 <smd name="1A" x="0" y="5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
 <smd name="2A" x="0" y="-5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
-<text x="-6.561" y="7.354" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<text x="-6.561" y="7.735" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <smd name="1B" x="0" y="3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
 <smd name="2B" x="0" y="-3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
 <smd name="1C" x="0" y="1.85" dx="5" dy="1.3" layer="1" cream="no"/>
@@ -128,7 +128,7 @@ by exp-lbrs.ulp</description>
 <vertex x="6.5" y="7.3"/>
 </polygon>
 </package>
-<package name="W989D6DB">
+<package name="W989D6DBGX6I">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <smd name="A1" x="-3.2" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
 <smd name="A2" x="-2.4" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
@@ -184,7 +184,7 @@ by exp-lbrs.ulp</description>
 <smd name="J7" x="1.6" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
 <smd name="J8" x="2.4" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
 <smd name="J9" x="3.2" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<text x="-4.092" y="4.574" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<text x="-4.092" y="4.828" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-4" y1="-4.5" x2="-4" y2="4.5" width="0.05" layer="21"/>
 <wire x1="-4" y1="4.5" x2="4" y2="4.5" width="0.05" layer="21"/>
 <wire x1="4" y1="4.5" x2="4" y2="-4.5" width="0.05" layer="21"/>
@@ -206,7 +206,7 @@ by exp-lbrs.ulp</description>
 <smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
 <smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
 <smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<text x="-0.53" y="0.932" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.53" y="1.059" size="0.508" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.9"/>
 <vertex x="-0.5" y="0.7"/>
@@ -223,7 +223,7 @@ by exp-lbrs.ulp</description>
 <vertex x="0.5" y="0.9"/>
 </polygon>
 </package>
-<package name="TPS6380X_TPS6380X">
+<package name="TPS63805YFFR">
 <smd name="A1" x="-0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="A2" x="0" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="A3" x="0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
@@ -239,7 +239,7 @@ by exp-lbrs.ulp</description>
 <smd name="E1" x="-0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E2" x="0" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="E3" x="0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<text x="-0.838" y="1.245" size="0.3556" layer="25" font="vector">&gt;NAME</text>
+<text x="-0.838" y="1.372" size="0.508" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.8" y="1.2"/>
 <vertex x="-0.5" y="1.2"/>
@@ -256,14 +256,14 @@ by exp-lbrs.ulp</description>
 <vertex x="0.8" y="1.2"/>
 </polygon>
 </package>
-<package name="TPS62801X_TPS6280X">
+<package name="TPS6280XYKAR">
 <smd name="A1" x="-0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="A2" x="0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="B1" x="-0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
 <smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<text x="-0.532740625" y="0.734990625" size="0.3556" layer="25" font="vector" rot="SR0">&gt;NAME</text>
+<text x="-0.532740625" y="0.861990625" size="0.508" layer="25" font="vector" rot="SR0">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.7"/>
 <vertex x="-0.3" y="0.7"/>
@@ -280,58 +280,7 @@ by exp-lbrs.ulp</description>
 <vertex x="0.5" y="0.7"/>
 </polygon>
 </package>
-<package name="TC2050">
-<rectangle x1="-4.5847" y1="-5.14985" x2="-3.0353" y2="-2.54" layer="40"/>
-<rectangle x1="1.1303" y1="-5.14985" x2="2.6797" y2="-2.54" layer="40"/>
-<rectangle x1="-4.5847" y1="2.54" x2="-3.0353" y2="5.14985" layer="40"/>
-<rectangle x1="1.1303" y1="2.54" x2="2.6797" y2="5.14985" layer="40"/>
-<smd name="1" x="-2.54" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="2" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="4" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="5" x="2.54" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="6" x="2.54" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="7" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="8" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="9" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="10" x="-2.54" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<text x="-5.969" y="-1.905" size="1.016" layer="25" font="vector" rot="R90">&gt;NAME</text>
-<hole x="-3.81" y="0" drill="0.9906"/>
-<hole x="3.81" y="1.016" drill="0.9906"/>
-<hole x="3.81" y="-1.016" drill="0.9906"/>
-<hole x="-3.81" y="2.54" drill="2.3749"/>
-<hole x="-3.81" y="-2.54" drill="2.3749"/>
-<hole x="1.905" y="2.54" drill="2.3749"/>
-<hole x="1.905" y="-2.54" drill="2.3749"/>
-<rectangle x1="-2.54" y1="-0.635" x2="2.54" y2="0.635" layer="39"/>
-</package>
-<package name="UFL_CONNECTOR">
-<description>&lt;b&gt;MICRO COAXIAL CONNECTOR RECEPTACLE VERTICAL&lt;/b&gt;&lt;p&gt;
-Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data sheet &lt;/a&gt;</description>
-<circle x="0" y="0" radius="0.95" width="0.05" layer="21"/>
-<circle x="0" y="0" radius="0.200059375" width="0.05" layer="21"/>
-<smd name="1" x="0" y="-1.5" dx="1" dy="1" layer="1"/>
-<smd name="GND@2" x="0" y="1.5" dx="1" dy="1" layer="1"/>
-<smd name="GND@1" x="-1.475" y="0" dx="1.05" dy="2.2" layer="1"/>
-<smd name="GND@3" x="1.475" y="0" dx="1.05" dy="2.2" layer="1"/>
-<text x="-1.477" y="2.169" size="0.6096" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="21">
-<vertex x="-1.4" y="-0.9"/>
-<vertex x="-0.9" y="-1.4"/>
-<vertex x="-1.4" y="-1.4"/>
-</polygon>
-<wire x1="-1.4" y1="1.4" x2="-1.4" y2="-1.4" width="0.05" layer="21"/>
-<wire x1="-1.4" y1="-1.4" x2="1.4" y2="-1.4" width="0.05" layer="21"/>
-<wire x1="1.4" y1="-1.4" x2="1.4" y2="1.4" width="0.05" layer="21"/>
-<wire x1="1.4" y1="1.4" x2="-1.4" y2="1.4" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-1.4" y="1.4"/>
-<vertex x="-1.4" y="-1.4"/>
-<vertex x="1.4" y="-1.4"/>
-<vertex x="1.4" y="1.4"/>
-</polygon>
-</package>
-<package name="2X10_HEADER">
+<package name="HEADER-2X10">
 <description>&lt;b&gt;FEMALE HEADER&lt;/b&gt;</description>
 <pad name="1" x="-11.43" y="1.27" drill="0.9144"/>
 <pad name="2" x="-11.43" y="-1.27" drill="0.9144"/>
@@ -353,8 +302,8 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <pad name="18" x="8.89" y="-1.27" drill="0.9144"/>
 <pad name="19" x="11.43" y="1.27" drill="0.9144"/>
 <pad name="20" x="11.43" y="-1.27" drill="0.9144"/>
-<text x="12.827" y="3.156" size="1.016" layer="25" font="vector" align="bottom-right">&gt;NAME</text>
-<text x="-11.822" y="3.156" size="1.016" layer="21" font="vector">1</text>
+<text x="12.827" y="3.41" size="1.016" layer="25" font="vector" align="bottom-right">&gt;NAME</text>
+<text x="-11.822" y="3.41" size="1.016" layer="21" font="vector">1</text>
 <wire x1="-12.7" y1="3" x2="12.7" y2="3" width="0.05" layer="39"/>
 <wire x1="12.7" y1="3" x2="12.7" y2="-3" width="0.05" layer="39"/>
 <wire x1="12.7" y1="-3" x2="-12.7" y2="-3" width="0.05" layer="39"/>
@@ -364,12 +313,12 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <wire x1="12.7" y1="-3" x2="-12.7" y2="-3" width="0.05" layer="21"/>
 <wire x1="-12.7" y1="-3" x2="-12.7" y2="3" width="0.05" layer="21"/>
 </package>
-<package name="LED_0603">
+<package name="LED-0603">
 <description>&lt;b&gt;CHIPLED&lt;/b&gt;&lt;p&gt;
 Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="A" x="-0.641" y="0" dx="0.7" dy="0.5" layer="1"/>
 <smd name="C" x="0.475" y="0" dx="1.05" dy="0.5" layer="1" rot="R180" thermals="no"/>
-<text x="-1.105" y="0.363" size="0.3556" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
+<text x="-1.105" y="0.49" size="0.508" layer="25" font="vector" rot="R180" align="top-right">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-1.075" y="0.33"/>
 <vertex x="-0.775" y="0.33"/>
@@ -386,7 +335,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="1.075" y="0.33"/>
 </polygon>
 </package>
-<package name="BG121" urn="urn:adsk.eagle:footprint:16997456/1" locally_modified="yes">
+<package name="ICE40HX4K-BG121" urn="urn:adsk.eagle:footprint:16997456/1" locally_modified="yes">
 <description>121-BGA, collapsing, 0.80 mm pitch, 9.00 X 9.00 X 1.00 mm body
 &lt;p&gt;121-pin collapsing BGA package with 0.80 mm col pitch and 0.80 mm row pitch with body size 9.00 X 9.00 X 1.00 mm&lt;/p&gt;</description>
 <smd name="A1" x="-4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
@@ -510,7 +459,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="L9" x="2.4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
 <smd name="L10" x="3.2" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
 <smd name="L11" x="4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<text x="-4.572" y="4.627" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<text x="-4.572" y="4.754" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <wire x1="4.5" y1="-4.5" x2="-4.5" y2="-4.5" width="0.12" layer="21"/>
 <wire x1="-4.5" y1="-4.5" x2="-4.5" y2="4.5" width="0.12" layer="21"/>
 <wire x1="-4.5" y1="4.5" x2="4.5" y2="4.5" width="0.12" layer="21"/>
@@ -538,7 +487,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="6" x="1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
 <smd name="7" x="1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
 <smd name="8" x="1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<text x="-1.645" y="1.145" size="0.508" layer="25" font="vector">&gt;NAME</text>
+<text x="-1.645" y="1.272" size="0.508" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-1.6" y="1.1"/>
 <vertex x="-1.2" y="1.1"/>
@@ -571,148 +520,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <hole x="7.62" y="-1.016" drill="0.9906"/>
 <hole x="7.62" y="1.016" drill="0.9906"/>
 </package>
-<package name="0402" urn="urn:adsk.eagle:footprint:17080097/1" locally_modified="yes">
-<description>Chip, 1.00 X 0.50 X 0.50 mm body
-&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
-<smd name="1" x="-0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
-<smd name="2" x="0.4325" y="0" dx="0.6351" dy="0.6" layer="1"/>
-<text x="-0.881" y="0.429" size="0.3556" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
-<wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
-<wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
-<wire x1="0.85" y1="0.4" x2="-0.85" y2="0.4" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-0.85" y="0.4"/>
-<vertex x="-0.85" y="-0.4"/>
-<vertex x="0.85" y="-0.4"/>
-<vertex x="0.85" y="0.4"/>
-</polygon>
-</package>
-<package name="0603" urn="urn:adsk.eagle:footprint:17080179/1" locally_modified="yes">
-<description>Chip, 1.60 X 0.80 X 0.70 mm body
-&lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
-<smd name="2" x="0.7746" y="0" dx="0.9209" dy="0.9702" layer="1"/>
-<text x="-1.379" y="0.635" size="0.4064" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-1.35" y1="0.6" x2="-1.35" y2="-0.6" width="0.05" layer="21"/>
-<wire x1="-1.35" y1="-0.6" x2="1.35" y2="-0.6" width="0.05" layer="21"/>
-<wire x1="1.35" y1="-0.6" x2="1.35" y2="0.6" width="0.05" layer="21"/>
-<wire x1="1.35" y1="0.6" x2="-1.35" y2="0.6" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-1.35" y="0.6"/>
-<vertex x="-1.35" y="-0.6"/>
-<vertex x="1.35" y="-0.6"/>
-<vertex x="1.35" y="0.6"/>
-</polygon>
-</package>
-<package name="0805" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
-<smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
-<text x="-1.596" y="0.8737" size="0.4064" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="21"/>
-<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="21"/>
-<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="21"/>
-<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-1.56" y="0.84"/>
-<vertex x="-1.56" y="-0.84"/>
-<vertex x="1.56" y="-0.84"/>
-<vertex x="1.56" y="0.84"/>
-</polygon>
-</package>
-<package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
-<description>Chip, 3.20 X 1.60 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
-<smd name="2" x="1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
-<text x="-2.195" y="1.0467" size="0.4064" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-2.16" y1="1.01" x2="-2.16" y2="-1.01" width="0.05" layer="21"/>
-<wire x1="-2.16" y1="-1.01" x2="2.16" y2="-1.01" width="0.05" layer="21"/>
-<wire x1="2.16" y1="-1.01" x2="2.16" y2="1.01" width="0.05" layer="21"/>
-<wire x1="2.16" y1="1.01" x2="-2.16" y2="1.01" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-2.16" y="1.01"/>
-<vertex x="-2.16" y="-1.01"/>
-<vertex x="2.16" y="-1.01"/>
-<vertex x="2.16" y="1.01"/>
-</polygon>
-</package>
-<package name="QFN50P700X700X100-48N" urn="urn:adsk.eagle:footprint:17276323/1">
-<description>48-QFN, 0.50 mm pitch, 7.00 X 7.00 X 1.00 mm body
-&lt;p&gt;48-pin QFN package with 0.50 mm pitch with body size 7.00 X 7.00 X 1.00 mm&lt;/p&gt;</description>
-<circle x="-4.004" y="3.3699" radius="0.25" width="0" layer="21"/>
-<wire x1="-3.5" y1="3.1199" x2="-3.5" y2="3.5" width="0.12" layer="21"/>
-<wire x1="-3.5" y1="3.5" x2="-3.1199" y2="3.5" width="0.12" layer="21"/>
-<wire x1="3.5" y1="3.1199" x2="3.5" y2="3.5" width="0.12" layer="21"/>
-<wire x1="3.5" y1="3.5" x2="3.1199" y2="3.5" width="0.12" layer="21"/>
-<wire x1="3.5" y1="-3.1199" x2="3.5" y2="-3.5" width="0.12" layer="21"/>
-<wire x1="3.5" y1="-3.5" x2="3.1199" y2="-3.5" width="0.12" layer="21"/>
-<wire x1="-3.5" y1="-3.1199" x2="-3.5" y2="-3.5" width="0.12" layer="21"/>
-<wire x1="-3.5" y1="-3.5" x2="-3.1199" y2="-3.5" width="0.12" layer="21"/>
-<wire x1="3.5" y1="-3.5" x2="-3.5" y2="-3.5" width="0.12" layer="51"/>
-<wire x1="-3.5" y1="-3.5" x2="-3.5" y2="3.5" width="0.12" layer="51"/>
-<wire x1="-3.5" y1="3.5" x2="3.5" y2="3.5" width="0.12" layer="51"/>
-<wire x1="3.5" y1="3.5" x2="3.5" y2="-3.5" width="0.12" layer="51"/>
-<smd name="1" x="-3.4506" y="2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="2" x="-3.4506" y="2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="3" x="-3.4506" y="1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="4" x="-3.4506" y="1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="5" x="-3.4506" y="0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="6" x="-3.4506" y="0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="7" x="-3.4506" y="-0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="8" x="-3.4506" y="-0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="9" x="-3.4506" y="-1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="10" x="-3.4506" y="-1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="11" x="-3.4506" y="-2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="12" x="-3.4506" y="-2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="13" x="-2.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="14" x="-2.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="15" x="-1.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="16" x="-1.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="17" x="-0.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="18" x="-0.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="19" x="0.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="20" x="0.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="21" x="1.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="22" x="1.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="23" x="2.25" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="24" x="2.75" y="-3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="25" x="3.4506" y="-2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="26" x="3.4506" y="-2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="27" x="3.4506" y="-1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="28" x="3.4506" y="-1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="29" x="3.4506" y="-0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="30" x="3.4506" y="-0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="31" x="3.4506" y="0.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="32" x="3.4506" y="0.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="33" x="3.4506" y="1.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="34" x="3.4506" y="1.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="35" x="3.4506" y="2.25" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="36" x="3.4506" y="2.75" dx="0.8107" dy="0.2318" layer="1" roundness="100"/>
-<smd name="37" x="2.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="38" x="2.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="39" x="1.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="40" x="1.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="41" x="0.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="42" x="0.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="43" x="-0.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="44" x="-0.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="45" x="-1.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="46" x="-1.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="47" x="-2.25" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<smd name="48" x="-2.75" y="3.4506" dx="0.8107" dy="0.2318" layer="1" roundness="100" rot="R90"/>
-<text x="0" y="4.4909" size="1.27" layer="25" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-4.4909" size="1.27" layer="27" align="top-center">&gt;VALUE</text>
-</package>
 </packages>
 <packages3d>
 <package3d name="BGA121C80P11X11_900X900X100N" urn="urn:adsk.eagle:package:16997455/1" type="model">
 <description>121-BGA, collapsing, 0.80 mm pitch, 9.00 X 9.00 X 1.00 mm body
 &lt;p&gt;121-pin collapsing BGA package with 0.80 mm col pitch and 0.80 mm row pitch with body size 9.00 X 9.00 X 1.00 mm&lt;/p&gt;</description>
 <packageinstances>
-<packageinstance name="BG121"/>
+<packageinstance name="ICE40HX4K-BG121"/>
 </packageinstances>
 </package3d>
 <package3d name="SON50P300X200X60-8N" urn="urn:adsk.eagle:package:17077898/1" type="model">
@@ -720,41 +534,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="GD25LQ80CEIGR"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
-<description>Chip, 1.00 X 0.50 X 0.50 mm body
-&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0402"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC1608X70N" urn="urn:adsk.eagle:package:17080173/1" type="model">
-<description>Chip, 1.60 X 0.80 X 0.70 mm body
-&lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0603"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC2012X70N" urn="urn:adsk.eagle:package:17080181/1" type="model">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0805"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198/1" type="model">
-<description>Chip, 3.20 X 1.60 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="1206"/>
-</packageinstances>
-</package3d>
-<package3d name="QFN50P700X700X100-48N" urn="urn:adsk.eagle:package:17276209/1" type="model">
-<description>48-QFN, 0.50 mm pitch, 7.00 X 7.00 X 1.00 mm body
-&lt;p&gt;48-pin QFN package with 0.50 mm pitch with body size 7.00 X 7.00 X 1.00 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="QFN50P700X700X100-48N"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -769,188 +548,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="-7.62" y="5.08" size="1.778" layer="95">&gt;NAME</text>
 <text x="-7.62" y="2.54" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
-<symbol name="ICE40HX4K_CB132_0">
-<description>LATC-HXxK-csBGA-132</description>
-<wire x1="0" y1="-68.58" x2="0" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="0" y1="-5.08" x2="25.4" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-5.08" x2="25.4" y2="-68.58" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-68.58" x2="0" y2="-68.58" width="0.508" layer="94"/>
-<pin name="IOT_170" x="30.48" y="-7.62" length="middle" rot="R180"/>
-<pin name="IOT_172" x="30.48" y="-10.16" length="middle" rot="R180"/>
-<pin name="IOT_174" x="30.48" y="-12.7" length="middle" rot="R180"/>
-<pin name="IOT_177" x="30.48" y="-15.24" length="middle" rot="R180"/>
-<pin name="IOT_178" x="30.48" y="-17.78" length="middle" rot="R180"/>
-<pin name="IOT_179" x="30.48" y="-20.32" length="middle" rot="R180"/>
-<pin name="IOT_181" x="30.48" y="-22.86" length="middle" rot="R180"/>
-<pin name="IOT_186" x="30.48" y="-25.4" length="middle" rot="R180"/>
-<pin name="IOT_188" x="30.48" y="-27.94" length="middle" rot="R180"/>
-<pin name="IOT_190" x="30.48" y="-30.48" length="middle" rot="R180"/>
-<pin name="IOT_197_GBIN1" x="30.48" y="-33.02" length="middle" rot="R180"/>
-<pin name="IOT_198_GBIN0" x="30.48" y="-35.56" length="middle" rot="R180"/>
-<pin name="IOT_200" x="30.48" y="-38.1" length="middle" rot="R180"/>
-<pin name="IOT_202" x="30.48" y="-40.64" length="middle" rot="R180"/>
-<pin name="IOT_206" x="30.48" y="-43.18" length="middle" rot="R180"/>
-<pin name="IOT_207" x="30.48" y="-45.72" length="middle" rot="R180"/>
-<pin name="IOT_208" x="30.48" y="-48.26" length="middle" rot="R180"/>
-<pin name="IOT_211" x="30.48" y="-50.8" length="middle" rot="R180"/>
-<pin name="IOT_212" x="30.48" y="-53.34" length="middle" rot="R180"/>
-<pin name="IOT_219" x="30.48" y="-55.88" length="middle" rot="R180"/>
-<pin name="IOT_221" x="30.48" y="-58.42" length="middle" rot="R180"/>
-<pin name="IOT_222" x="30.48" y="-60.96" length="middle" rot="R180"/>
-<pin name="IOT_223" x="30.48" y="-63.5" length="middle" rot="R180"/>
-<pin name="IOT_225" x="30.48" y="-66.04" length="middle" rot="R180"/>
-<text x="5.08" y="-19.05" size="2.54" layer="94" rot="R90">BANK 0</text>
-<text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
-<text x="0" y="-73.66" size="2.54" layer="95" align="top-left">ICE40HX4K-CB132</text>
-</symbol>
-<symbol name="ICE40HX4K_CB132_1">
-<description>LATC-HXxK-csBGA-132</description>
-<wire x1="0" y1="-71.12" x2="0" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="0" y1="-5.08" x2="25.4" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-5.08" x2="25.4" y2="-71.12" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-71.12" x2="0" y2="-71.12" width="0.508" layer="94"/>
-<pin name="IOR_109" x="30.48" y="-7.62" length="middle" rot="R180"/>
-<pin name="IOR_110" x="30.48" y="-10.16" length="middle" rot="R180"/>
-<pin name="IOR_111" x="30.48" y="-12.7" length="middle" rot="R180"/>
-<pin name="IOR_112" x="30.48" y="-15.24" length="middle" rot="R180"/>
-<pin name="IOR_114" x="30.48" y="-17.78" length="middle" rot="R180"/>
-<pin name="IOR_115" x="30.48" y="-20.32" length="middle" rot="R180"/>
-<pin name="IOR_116" x="30.48" y="-22.86" length="middle" rot="R180"/>
-<pin name="IOR_117" x="30.48" y="-25.4" length="middle" rot="R180"/>
-<pin name="IOR_118" x="30.48" y="-27.94" length="middle" rot="R180"/>
-<pin name="IOR_119" x="30.48" y="-30.48" length="middle" rot="R180"/>
-<pin name="IOR_120" x="30.48" y="-33.02" length="middle" rot="R180"/>
-<pin name="IOR_128" x="30.48" y="-35.56" length="middle" rot="R180"/>
-<pin name="IOR_129" x="30.48" y="-38.1" length="middle" rot="R180"/>
-<pin name="IOR_136" x="30.48" y="-40.64" length="middle" rot="R180"/>
-<pin name="IOR_137" x="30.48" y="-43.18" length="middle" rot="R180"/>
-<pin name="IOR_140_GBIN3" x="30.48" y="-45.72" length="middle" rot="R180"/>
-<pin name="IOR_141_GBIN2" x="30.48" y="-48.26" length="middle" rot="R180"/>
-<pin name="IOR_144" x="30.48" y="-50.8" length="middle" rot="R180"/>
-<pin name="IOR_146" x="30.48" y="-53.34" length="middle" rot="R180"/>
-<pin name="IOR_147" x="30.48" y="-55.88" length="middle" rot="R180"/>
-<pin name="IOR_148" x="30.48" y="-58.42" length="middle" rot="R180"/>
-<pin name="IOR_152" x="30.48" y="-60.96" length="middle" rot="R180"/>
-<pin name="IOR_154" x="30.48" y="-63.5" length="middle" rot="R180"/>
-<pin name="IOR_160" x="30.48" y="-66.04" length="middle" rot="R180"/>
-<pin name="IOR_161" x="30.48" y="-68.58" length="middle" rot="R180"/>
-<text x="5.08" y="-19.05" size="2.54" layer="94" rot="R90">BANK 1</text>
-<text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
-<text x="0" y="-76.2" size="2.54" layer="95" align="top-left">ICE40HX4K-CB132</text>
-</symbol>
-<symbol name="ICE40HX4K_CB132_2">
-<description>LATC-HXxK-csBGA-132</description>
-<wire x1="0" y1="-73.66" x2="0" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="0" y1="-5.08" x2="25.4" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-5.08" x2="25.4" y2="-73.66" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-73.66" x2="0" y2="-73.66" width="0.508" layer="94"/>
-<pin name="CDONE" x="30.48" y="-66.04" length="middle" rot="R180"/>
-<pin name="CRESET_B" x="30.48" y="-71.12" length="middle" direction="in" rot="R180"/>
-<pin name="IOB_56" x="30.48" y="-7.62" length="middle" rot="R180"/>
-<pin name="IOB_59" x="30.48" y="-10.16" length="middle" rot="R180"/>
-<pin name="IOB_63" x="30.48" y="-12.7" length="middle" rot="R180"/>
-<pin name="IOB_64" x="30.48" y="-15.24" length="middle" rot="R180"/>
-<pin name="IOB_71" x="30.48" y="-17.78" length="middle" rot="R180"/>
-<pin name="IOB_72" x="30.48" y="-20.32" length="middle" rot="R180"/>
-<pin name="IOB_73" x="30.48" y="-22.86" length="middle" rot="R180"/>
-<pin name="IOB_74" x="30.48" y="-25.4" length="middle" rot="R180"/>
-<pin name="IOB_77" x="30.48" y="-27.94" length="middle" rot="R180"/>
-<pin name="IOB_78" x="30.48" y="-30.48" length="middle" rot="R180"/>
-<pin name="IOB_79" x="30.48" y="-33.02" length="middle" rot="R180"/>
-<pin name="IOB_81_GBIN5" x="30.48" y="-35.56" length="middle" rot="R180"/>
-<pin name="IOB_82_GBIN4" x="30.48" y="-38.1" length="middle" rot="R180"/>
-<pin name="IOB_87" x="30.48" y="-40.64" length="middle" rot="R180"/>
-<pin name="IOB_89" x="30.48" y="-43.18" length="middle" rot="R180"/>
-<pin name="IOB_91" x="30.48" y="-45.72" length="middle" rot="R180"/>
-<pin name="IOB_103_CBSEL0" x="30.48" y="-48.26" length="middle" rot="R180"/>
-<pin name="IOB_104_CBSEL1" x="30.48" y="-50.8" length="middle" rot="R180"/>
-<pin name="IOB_105_SDO" x="30.48" y="-53.34" length="middle" rot="R180"/>
-<pin name="IOB_106_SDI" x="30.48" y="-55.88" length="middle" rot="R180"/>
-<pin name="IOB_107_SCK" x="30.48" y="-58.42" length="middle" rot="R180"/>
-<pin name="IOB_108_SS_B" x="30.48" y="-60.96" length="middle" rot="R180"/>
-<text x="5.08" y="-19.05" size="2.54" layer="94" rot="R90">BANK 2</text>
-<text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
-<text x="0" y="-78.74" size="2.54" layer="95" align="top-left">ICE40HX4K-CB132</text>
-</symbol>
-<symbol name="ICE40HX4K_CB132_3">
-<description>LATC-HXxK-csBGA-132</description>
-<wire x1="0" y1="-68.58" x2="0" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="0" y1="-5.08" x2="25.4" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-5.08" x2="25.4" y2="-68.58" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-68.58" x2="0" y2="-68.58" width="0.508" layer="94"/>
-<pin name="IOL_2A" x="30.48" y="-10.16" length="middle" rot="R180"/>
-<pin name="IOL_2B" x="30.48" y="-7.62" length="middle" rot="R180"/>
-<pin name="IOL_4A" x="30.48" y="-15.24" length="middle" rot="R180"/>
-<pin name="IOL_4B" x="30.48" y="-12.7" length="middle" rot="R180"/>
-<pin name="IOL_5A" x="30.48" y="-20.32" length="middle" rot="R180"/>
-<pin name="IOL_5B" x="30.48" y="-17.78" length="middle" rot="R180"/>
-<pin name="IOL_8A" x="30.48" y="-25.4" length="middle" rot="R180"/>
-<pin name="IOL_8B" x="30.48" y="-22.86" length="middle" rot="R180"/>
-<pin name="IOL_9A" x="30.48" y="-30.48" length="middle" rot="R180"/>
-<pin name="IOL_9B" x="30.48" y="-27.94" length="middle" rot="R180"/>
-<pin name="IOL_10A" x="30.48" y="-35.56" length="middle" rot="R180"/>
-<pin name="IOL_10B" x="30.48" y="-33.02" length="middle" rot="R180"/>
-<pin name="IOL_12A" x="30.48" y="-40.64" length="middle" rot="R180"/>
-<pin name="IOL_12B" x="30.48" y="-38.1" length="middle" rot="R180"/>
-<pin name="IOL_13A" x="30.48" y="-45.72" length="middle" rot="R180"/>
-<pin name="IOL_13B_GBIN7" x="30.48" y="-43.18" length="middle" rot="R180"/>
-<pin name="IOL_14A_GBIN6" x="30.48" y="-50.8" length="middle" rot="R180"/>
-<pin name="IOL_14B" x="30.48" y="-48.26" length="middle" rot="R180"/>
-<pin name="IOL_18A" x="30.48" y="-55.88" length="middle" rot="R180"/>
-<pin name="IOL_18B" x="30.48" y="-53.34" length="middle" rot="R180"/>
-<pin name="IOL_23A" x="30.48" y="-60.96" length="middle" rot="R180"/>
-<pin name="IOL_23B" x="30.48" y="-58.42" length="middle" rot="R180"/>
-<pin name="IOL_25A" x="30.48" y="-66.04" length="middle" rot="R180"/>
-<pin name="IOL_25B" x="30.48" y="-63.5" length="middle" rot="R180"/>
-<text x="5.08" y="-19.05" size="2.54" layer="94" rot="R90">BANK 3</text>
-<text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
-<text x="0" y="-73.66" size="2.54" layer="95" align="top-left">ICE40HX4K-CB132</text>
-</symbol>
-<symbol name="ICE40HX4K_CB132_4">
-<description>LATC-HXxK-csBGA-132</description>
-<wire x1="0" y1="-66.04" x2="0" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="0" y1="-5.08" x2="25.4" y2="-5.08" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-5.08" x2="25.4" y2="-66.04" width="0.508" layer="94"/>
-<wire x1="25.4" y1="-66.04" x2="0" y2="-66.04" width="0.508" layer="94"/>
-<pin name="1_GND" x="30.48" y="-25.4" length="middle" rot="R180"/>
-<pin name="1_VCC" x="-5.08" y="-45.72" length="middle"/>
-<pin name="1_VCCIO_0" x="-5.08" y="-20.32" length="middle"/>
-<pin name="1_VCCIO_1" x="-5.08" y="-25.4" length="middle"/>
-<pin name="1_VCCIO_2" x="-5.08" y="-30.48" length="middle"/>
-<pin name="1_VCCIO_3" x="-5.08" y="-35.56" length="middle"/>
-<pin name="2_GND" x="30.48" y="-27.94" length="middle" rot="R180"/>
-<pin name="2_VCC" x="-5.08" y="-48.26" length="middle"/>
-<pin name="2_VCCIO_0" x="-5.08" y="-22.86" length="middle"/>
-<pin name="2_VCCIO_1" x="-5.08" y="-27.94" length="middle"/>
-<pin name="2_VCCIO_2" x="-5.08" y="-33.02" length="middle"/>
-<pin name="2_VCCIO_3" x="-5.08" y="-38.1" length="middle"/>
-<pin name="3_GND" x="30.48" y="-30.48" length="middle" rot="R180"/>
-<pin name="3_VCC" x="-5.08" y="-50.8" length="middle"/>
-<pin name="3_VCCIO_3" x="-5.08" y="-40.64" length="middle"/>
-<pin name="4_GND" x="30.48" y="-33.02" length="middle" rot="R180"/>
-<pin name="4_VCC" x="-5.08" y="-53.34" length="middle"/>
-<pin name="5_GND" x="30.48" y="-35.56" length="middle" rot="R180"/>
-<pin name="5_VCC" x="-5.08" y="-55.88" length="middle"/>
-<pin name="6_GND" x="30.48" y="-38.1" length="middle" rot="R180"/>
-<pin name="7_GND" x="30.48" y="-40.64" length="middle" rot="R180"/>
-<pin name="8_GND" x="30.48" y="-43.18" length="middle" rot="R180"/>
-<pin name="9_GND" x="30.48" y="-45.72" length="middle" rot="R180"/>
-<pin name="10_GND" x="30.48" y="-50.8" length="middle" rot="R180"/>
-<pin name="11_GND" x="30.48" y="-48.26" length="middle" rot="R180"/>
-<pin name="12_GND" x="30.48" y="-53.34" length="middle" rot="R180"/>
-<pin name="13_GND" x="30.48" y="-55.88" length="middle" rot="R180"/>
-<pin name="GNDPLL0" x="30.48" y="-60.96" length="middle" rot="R180"/>
-<pin name="GNDPLL1" x="30.48" y="-63.5" length="middle" rot="R180"/>
-<pin name="NC" x="30.48" y="-7.62" length="middle" rot="R180"/>
-<pin name="VCCPLL0" x="-5.08" y="-60.96" length="middle"/>
-<pin name="VCCPLL1" x="-5.08" y="-63.5" length="middle"/>
-<pin name="VCC_SPI" x="-5.08" y="-7.62" length="middle"/>
-<pin name="VPP_2V5" x="-5.08" y="-12.7" length="middle"/>
-<pin name="VPP_FAST" x="-5.08" y="-15.24" length="middle"/>
-<text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
-<text x="0" y="-71.12" size="2.54" layer="95" align="top-left">ICE40HX4K-CB132</text>
-</symbol>
-<symbol name="W989D6DB_0">
+<symbol name="W989D6DBGX6I-A">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <wire x1="-7.62" y1="-25.4" x2="-7.62" y2="-5.08" width="0.254" layer="94"/>
 <wire x1="-7.62" y1="-5.08" x2="17.78" y2="-5.08" width="0.254" layer="94"/>
@@ -970,9 +568,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="3_VSSQ" x="22.86" y="-20.32" length="middle" rot="R180"/>
 <pin name="4_VDDQ" x="-12.7" y="-22.86" length="middle"/>
 <pin name="4_VSSQ" x="22.86" y="-22.86" length="middle" rot="R180"/>
-<text x="0" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
+<text x="-7.62" y="-2.032" size="2.54" layer="95" align="top-left">&gt;NAME</text>
 </symbol>
-<symbol name="W989D6DB_1">
+<symbol name="W989D6DBGX6I-B">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <wire x1="2.54" y1="-76.2" x2="2.54" y2="-5.08" width="0.254" layer="94"/>
 <wire x1="2.54" y1="-5.08" x2="20.32" y2="-5.08" width="0.254" layer="94"/>
@@ -1018,7 +616,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="LDQM" x="25.4" y="-71.12" length="middle" rot="R180"/>
 <pin name="NC" x="25.4" y="-66.04" length="middle" rot="R180"/>
 <pin name="UDQM" x="25.4" y="-73.66" length="middle" rot="R180"/>
-<text x="2.54" y="-2.54" size="2.54" layer="95" align="top-left">&gt;NAME</text>
+<text x="2.286" y="-2.032" size="2.54" layer="95" align="top-left">&gt;NAME</text>
 </symbol>
 <symbol name="SIT8021AI-J4-18S-12.000000E">
 <wire x1="10.16" y1="7.62" x2="10.16" y2="-7.62" width="0.1524" layer="94"/>
@@ -1030,9 +628,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="ST" x="-15.24" y="0" length="middle" direction="in"/>
 <pin name="VDD" x="15.24" y="5.08" length="middle" rot="R180"/>
 <text x="-10.16" y="8.382" size="1.778" layer="95">&gt;NAME</text>
-<text x="-10.16" y="-10.16" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
-<symbol name="TPS6380X_TPS6380X">
+<symbol name="TPS63805YFF">
 <wire x1="10.16" y1="17.78" x2="10.16" y2="-15.24" width="0.254" layer="94"/>
 <wire x1="10.16" y1="-15.24" x2="-10.16" y2="-15.24" width="0.254" layer="94"/>
 <wire x1="-10.16" y1="-15.24" x2="-10.16" y2="17.78" width="0.254" layer="94"/>
@@ -1048,9 +645,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="VIN" x="-15.24" y="10.16" length="middle"/>
 <pin name="VOUT" x="15.24" y="10.16" length="middle" rot="R180"/>
 <text x="-10.16" y="-18.034" size="1.778" layer="95">&gt;NAME</text>
-<text x="-10.16" y="-21.082" size="1.778" layer="96">&gt;VALUE</text>
 </symbol>
-<symbol name="TPS62801X_TPS6280X">
+<symbol name="TPS6280XYKA">
 <wire x1="-12.7" y1="10.16" x2="-12.7" y2="-15.24" width="0.4064" layer="94"/>
 <wire x1="-12.7" y1="-15.24" x2="12.7" y2="-15.24" width="0.4064" layer="94"/>
 <wire x1="12.7" y1="-15.24" x2="12.7" y2="10.16" width="0.4064" layer="94"/>
@@ -1061,19 +657,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="SW" x="17.78" y="5.08" length="middle" rot="R180"/>
 <pin name="VIN" x="-17.78" y="5.08" length="middle"/>
 <pin name="VOS" x="17.78" y="-2.54" length="middle" rot="R180"/>
-<text x="-5.259" y="12.8299" size="2.08328125" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
-<text x="-3.686340625" y="-20.0079" size="2.084690625" layer="96" ratio="10" rot="SR0">&gt;VALUE</text>
-</symbol>
-<symbol name="UFL_CONNECTOR">
-<rectangle x1="-2.54" y1="-0.254" x2="-0.254" y2="0.254" layer="94"/>
-<wire x1="0" y1="-2.54" x2="-0.762" y2="-1.778" width="0.254" layer="94"/>
-<wire x1="0" y1="0" x2="-0.508" y2="0" width="0.1524" layer="94"/>
-<wire x1="-2.54" y1="2.54" x2="0" y2="0.508" width="0.3048" layer="94" curve="-79.611142" cap="flat"/>
-<wire x1="-2.54" y1="-2.54" x2="0" y2="-0.508" width="0.3048" layer="94" curve="79.611142" cap="flat"/>
-<pin name="1" x="2.54" y="0" visible="off" length="short" rot="R180"/>
-<pin name="GND" x="2.54" y="-2.54" visible="off" length="short" rot="R180"/>
-<text x="-2.54" y="-5.08" size="1.778" layer="96">&gt;VALUE</text>
-<text x="-2.54" y="3.302" size="1.778" layer="95">&gt;NAME</text>
+<text x="-12.625" y="11.0519" size="2.08328125" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
 </symbol>
 <symbol name="2X10_HEADER">
 <wire x1="3.81" y1="-12.7" x2="-3.81" y2="-12.7" width="0.4064" layer="94"/>
@@ -1120,7 +704,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="18" x="7.62" y="10.16" visible="pad" length="middle" swaplevel="1" rot="R180"/>
 <pin name="19" x="-7.62" y="12.7" visible="pad" length="middle" swaplevel="1"/>
 <pin name="20" x="7.62" y="12.7" visible="pad" length="middle" swaplevel="1" rot="R180"/>
-<text x="-3.81" y="-15.24" size="1.778" layer="96">&gt;VALUE</text>
 <text x="-3.81" y="16.002" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
 <symbol name="LED">
@@ -1134,7 +717,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="A" x="0" y="2.54" visible="off" length="short" rot="R270"/>
 <pin name="C" x="0" y="-5.08" visible="off" length="short" rot="R90"/>
 <text x="3.556" y="-4.572" size="1.778" layer="95" rot="R90">&gt;NAME</text>
-<text x="5.715" y="-4.572" size="1.778" layer="96" rot="R90">&gt;VALUE</text>
 <polygon width="0.1524" layer="94">
 <vertex x="-3.429" y="-2.159"/>
 <vertex x="-3.048" y="-1.27"/>
@@ -1146,32 +728,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-2.413" y="-2.921"/>
 </polygon>
 </symbol>
-<symbol name="CAPACITOR">
-<rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
-<rectangle x1="-2.032" y1="-1.016" x2="2.032" y2="-0.508" layer="94"/>
-<wire x1="0" y1="0" x2="0" y2="-0.508" width="0.1524" layer="94"/>
-<wire x1="0" y1="-2.54" x2="0" y2="-2.032" width="0.1524" layer="94"/>
-<pin name="1" x="0" y="2.54" visible="off" length="short" swaplevel="1" rot="R270"/>
-<pin name="2" x="0" y="-5.08" visible="off" length="short" swaplevel="1" rot="R90"/>
-<text x="1.524" y="2.921" size="1.778" layer="95">&gt;NAME</text>
-<text x="1.524" y="0.381" size="1.778" layer="96">&gt;VALUE</text>
-</symbol>
-<symbol name="RESISTOR">
-<wire x1="-2.54" y1="0" x2="-2.159" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="-2.159" y1="1.016" x2="-1.524" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="-1.524" y1="-1.016" x2="-0.889" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="-0.889" y1="1.016" x2="-0.254" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="-0.254" y1="-1.016" x2="0.381" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="0.381" y1="1.016" x2="1.016" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="1.016" y1="-1.016" x2="1.651" y2="1.016" width="0.2032" layer="94"/>
-<wire x1="1.651" y1="1.016" x2="2.286" y2="-1.016" width="0.2032" layer="94"/>
-<wire x1="2.286" y1="-1.016" x2="2.54" y2="0" width="0.2032" layer="94"/>
-<pin name="1" x="-5.08" y="0" visible="off" length="short" swaplevel="1"/>
-<pin name="2" x="5.08" y="0" visible="off" length="short" swaplevel="1" rot="R180"/>
-<text x="-2.54" y="3.81" size="1.778" layer="95">&gt;NAME</text>
-<text x="-2.54" y="1.27" size="1.778" layer="96">&gt;VALUE</text>
-</symbol>
-<symbol name="ICE40HX4K_BG121_0">
+<symbol name="ICE40HX4K-BG121-A">
 <wire x1="-12.7" y1="-27.94" x2="-12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="-12.7" y1="33.02" x2="12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="12.7" y1="33.02" x2="12.7" y2="-27.94" width="0.508" layer="94"/>
@@ -1203,7 +760,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="D5" x="15.24" y="-22.86" length="short" rot="R180"/>
 <pin name="D7" x="15.24" y="-25.4" length="short" rot="R180"/>
 </symbol>
-<symbol name="ICE40HX4K_BG121_1">
+<symbol name="ICE40HX4K-BG121-B">
 <wire x1="-12.7" y1="-27.94" x2="-12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="-12.7" y1="33.02" x2="12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="12.7" y1="33.02" x2="12.7" y2="-27.94" width="0.508" layer="94"/>
@@ -1233,7 +790,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="J11" x="15.24" y="-17.78" length="short" rot="R180"/>
 <pin name="K11" x="15.24" y="-20.32" length="short" rot="R180"/>
 </symbol>
-<symbol name="ICE40HX4K_BG121_2">
+<symbol name="ICE40HX4K-BG121-C">
 <wire x1="-12.7" y1="-27.94" x2="-12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="-12.7" y1="33.02" x2="12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="12.7" y1="33.02" x2="12.7" y2="-27.94" width="0.508" layer="94"/>
@@ -1261,7 +818,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="H7" x="15.24" y="-12.7" length="short" rot="R180"/>
 <pin name="H9" x="15.24" y="-15.24" length="short" rot="R180"/>
 </symbol>
-<symbol name="ICE40HX4K_BG121_3">
+<symbol name="ICE40HX4K-BG121-D">
 <wire x1="-12.7" y1="-35.56" x2="-12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="-12.7" y1="33.02" x2="12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="12.7" y1="33.02" x2="12.7" y2="-35.56" width="0.508" layer="94"/>
@@ -1296,7 +853,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="K1" x="15.24" y="-30.48" length="short" rot="R180"/>
 <pin name="K2" x="15.24" y="-33.02" length="short" rot="R180"/>
 </symbol>
-<symbol name="ICE40HX4K_BG121_4">
+<symbol name="ICE40HX4K-BG121-E">
 <wire x1="-17.78" y1="-40.64" x2="-17.78" y2="33.02" width="0.508" layer="94"/>
 <wire x1="-17.78" y1="33.02" x2="12.7" y2="33.02" width="0.508" layer="94"/>
 <wire x1="12.7" y1="33.02" x2="12.7" y2="-40.64" width="0.508" layer="94"/>
@@ -1349,10 +906,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="HOLD_" x="15.24" y="0" length="middle" rot="R180"/>
 <pin name="SCLK" x="15.24" y="-2.54" length="middle" rot="R180"/>
 <pin name="SI" x="15.24" y="-5.08" length="middle" rot="R180"/>
-<text x="-8.89" y="-10.16" size="1.778" layer="96">&gt;VALUE</text>
 <text x="-8.89" y="5.842" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
-<symbol name="TC2050">
+<symbol name="TC2050-NL">
 <wire x1="-7.62" y1="7.62" x2="-7.62" y2="-7.62" width="0.254" layer="94"/>
 <wire x1="-7.62" y1="-7.62" x2="7.62" y2="-7.62" width="0.254" layer="94"/>
 <wire x1="7.62" y1="-7.62" x2="7.62" y2="7.62" width="0.254" layer="94"/>
@@ -1371,32 +927,33 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="INDUCTOR_LARGE" prefix="L" uservalue="yes">
+<deviceset name="INDUCTOR-TESTBED" prefix="L" uservalue="yes">
 <gates>
 <gate name="G$1" symbol="INDUCTOR" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="INDUCTOR_LARGE">
+<device name="" package="INDUCTOR-TESTBED">
 <connects>
 <connect gate="G$1" pin="1" pad="1A 1B 1C 1D"/>
 <connect gate="G$1" pin="2" pad="2A 2B 2C 2D"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MP" value="" constant="no"/>
+<attribute name="MFG" value="" constant="no"/>
+<attribute name="PN" value="" constant="no"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
-<deviceset name="W989D6DB" prefix="U">
+<deviceset name="W989D6DBGX6I" prefix="U">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
 <gates>
-<gate name="A" symbol="W989D6DB_0" x="0" y="0"/>
-<gate name="B" symbol="W989D6DB_1" x="37.78" y="0"/>
+<gate name="A" symbol="W989D6DBGX6I-A" x="0" y="0"/>
+<gate name="B" symbol="W989D6DBGX6I-B" x="37.78" y="0"/>
 </gates>
 <devices>
-<device name="" package="W989D6DB">
+<device name="" package="W989D6DBGX6I">
 <connects>
 <connect gate="A" pin="1_VDD" pad="A9"/>
 <connect gate="A" pin="1_VDDQ" pad="A7"/>
@@ -1454,12 +1011,15 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="B" pin="UDQM" pad="F1"/>
 </connects>
 <technologies>
-<technology name=""/>
+<technology name="">
+<attribute name="MFG" value="Winbond"/>
+<attribute name="PN" value="W989D6DBGX6I"/>
+</technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
-<deviceset name="SIT8021AI-J4-18S-12.000000E" prefix="Y">
+<deviceset name="SIT8021AI-J4-18S-12.000000E" prefix="X">
 <description>MEMS OSC XO 12.0000MHZ LVCMOS</description>
 <gates>
 <gate name="G$1" symbol="SIT8021AI-J4-18S-12.000000E" x="0" y="0"/>
@@ -1474,24 +1034,20 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="AVAILABILITY" value="Unavailable"/>
-<attribute name="DESCRIPTION" value=" 12MHz XO _Standard_ LVCMOS Oscillator 2.25V ~ 3.63V Standby _Power Down_ 4-UFBGA, CSPBGA "/>
-<attribute name="MF" value="SiTIME"/>
-<attribute name="MP" value="SIT8021AI-J4-XXS-12.000000E"/>
-<attribute name="PACKAGE" value="UFBGA-4 SiTIME"/>
-<attribute name="PRICE" value="None"/>
+<attribute name="MFG" value="SiTime"/>
+<attribute name="PN" value="SIT8021AI-J4-18S-12.000000E"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TPS6380X_TPS6380X" prefix="U">
+<deviceset name="TPS63805YFFR" prefix="U">
 <description>Conv DC-DC 1.3V to 5.5V Step Down/Step Up Single-Out 1.8V to 5V 2A 15-Pin DSBGA T/R</description>
 <gates>
-<gate name="G$1" symbol="TPS6380X_TPS6380X" x="0" y="0"/>
+<gate name="G$1" symbol="TPS63805YFF" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="TPS6380X_TPS6380X">
+<device name="" package="TPS63805YFFR">
 <connects>
 <connect gate="G$1" pin="AGND" pad="C1"/>
 <connect gate="G$1" pin="EN" pad="A1"/>
@@ -1506,60 +1062,44 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MP" value="" constant="no"/>
+<attribute name="MFG" value="Texas Instruments"/>
+<attribute name="PN" value="TPS63805YFFR"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TPS62801X_TPS6280X" prefix="U">
+<deviceset name="TPS6280XYKAR" prefix="U">
 <description>STEP-DOWN CONVERTER</description>
 <gates>
-<gate name="A" symbol="TPS62801X_TPS6280X" x="0" y="0"/>
+<gate name="G$1" symbol="TPS6280XYKA" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="TPS62801X_TPS6280X">
+<device name="" package="TPS6280XYKAR">
 <connects>
-<connect gate="A" pin="EN" pad="B2"/>
-<connect gate="A" pin="GND" pad="C2"/>
-<connect gate="A" pin="MODE" pad="A1"/>
-<connect gate="A" pin="SW" pad="B1"/>
-<connect gate="A" pin="VIN" pad="A2"/>
-<connect gate="A" pin="VOS" pad="C1"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="UFL_CONNECTOR" prefix="X">
-<description>&lt;b&gt;MICRO COAXIAL CONNECTOR RECEPTACLE VERTICAL&lt;/b&gt;&lt;p&gt;
-Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data sheet &lt;/a&gt;</description>
-<gates>
-<gate name="G$1" symbol="UFL_CONNECTOR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="UFL_CONNECTOR">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="GND" pad="GND@1 GND@2 GND@3"/>
+<connect gate="G$1" pin="EN" pad="C2"/>
+<connect gate="G$1" pin="GND" pad="A1"/>
+<connect gate="G$1" pin="MODE" pad="C1"/>
+<connect gate="G$1" pin="SW" pad="B2"/>
+<connect gate="G$1" pin="VIN" pad="B1"/>
+<connect gate="G$1" pin="VOS" pad="A2"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="POPULARITY" value="0" constant="no"/>
+<attribute name="MFG" value="Texas Instruments"/>
+<attribute name="PN" value="" constant="no"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
-<deviceset name="2X10_HEADER" prefix="SV" uservalue="yes">
+<deviceset name="HEADER" prefix="SV" uservalue="yes">
 <description>&lt;b&gt;FEMALE HEADER&lt;/b&gt;</description>
 <gates>
 <gate name="G$1" symbol="2X10_HEADER" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="2X10_HEADER">
+<device name="" package="HEADER-2X10">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="10" pad="10"/>
@@ -1584,44 +1124,42 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MF" value="" constant="no"/>
-<attribute name="MPN" value="" constant="no"/>
-<attribute name="OC_FARNELL" value="unknown" constant="no"/>
-<attribute name="OC_NEWARK" value="unknown" constant="no"/>
-<attribute name="POPULARITY" value="0" constant="no"/>
+<attribute name="MFG" value="" constant="no"/>
+<attribute name="PN" value="" constant="no"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
-<deviceset name="LED_0603" prefix="LED" uservalue="yes">
+<deviceset name="LED" prefix="LED" uservalue="yes">
 <gates>
 <gate name="G$1" symbol="LED" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="LED_0603">
+<device name="" package="LED-0603">
 <connects>
 <connect gate="G$1" pin="A" pad="A"/>
 <connect gate="G$1" pin="C" pad="C"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="POPULARITY" value="0" constant="no"/>
+<attribute name="MFG" value="" constant="no"/>
+<attribute name="PN" value="" constant="no"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
-<deviceset name="ICE40HX4K" prefix="U">
+<deviceset name="ICE40HX4K-BG121" prefix="U">
 <gates>
-<gate name="A" symbol="ICE40HX4K_BG121_0" x="-71.12" y="2.54"/>
-<gate name="B" symbol="ICE40HX4K_BG121_1" x="-33.02" y="2.54"/>
-<gate name="C" symbol="ICE40HX4K_BG121_2" x="5.08" y="2.54"/>
-<gate name="D" symbol="ICE40HX4K_BG121_3" x="43.18" y="2.54"/>
-<gate name="E" symbol="ICE40HX4K_BG121_4" x="91.44" y="2.54"/>
+<gate name="A" symbol="ICE40HX4K-BG121-A" x="-71.12" y="2.54"/>
+<gate name="B" symbol="ICE40HX4K-BG121-B" x="-33.02" y="2.54"/>
+<gate name="C" symbol="ICE40HX4K-BG121-C" x="5.08" y="2.54"/>
+<gate name="D" symbol="ICE40HX4K-BG121-D" x="43.18" y="2.54"/>
+<gate name="E" symbol="ICE40HX4K-BG121-E" x="91.44" y="2.54"/>
 </gates>
 <devices>
-<device name="BG121" package="BG121">
+<device name="" package="ICE40HX4K-BG121">
 <connects>
 <connect gate="A" pin="A1" pad="A1"/>
 <connect gate="A" pin="A10" pad="A10"/>
@@ -1749,7 +1287,10 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <package3dinstance package3d_urn="urn:adsk.eagle:package:16997455/1"/>
 </package3dinstances>
 <technologies>
-<technology name=""/>
+<technology name="">
+<attribute name="MFG" value="Lattice"/>
+<attribute name="PN" value="ICE40HX4K-BG121"/>
+</technology>
 </technologies>
 </device>
 </devices>
@@ -1774,38 +1315,17 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17077898/1"/>
 </package3dinstances>
 <technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="TC2050" prefix="TC">
-<gates>
-<gate name="G$1" symbol="TC2050" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="TC2050">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="10" pad="10"/>
-<connect gate="G$1" pin="2" pad="2"/>
-<connect gate="G$1" pin="3" pad="3"/>
-<connect gate="G$1" pin="4" pad="4"/>
-<connect gate="G$1" pin="5" pad="5"/>
-<connect gate="G$1" pin="6" pad="6"/>
-<connect gate="G$1" pin="7" pad="7"/>
-<connect gate="G$1" pin="8" pad="8"/>
-<connect gate="G$1" pin="9" pad="9"/>
-</connects>
-<technologies>
-<technology name=""/>
+<technology name="">
+<attribute name="MFG" value="GigaDevice" constant="no"/>
+<attribute name="PN" value="GD25LQ80CEIGR" constant="no"/>
+</technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
 <deviceset name="TC2050-NL" prefix="TC">
 <gates>
-<gate name="G$1" symbol="TC2050" x="0" y="0"/>
+<gate name="G$1" symbol="TC2050-NL" x="0" y="0"/>
 </gates>
 <devices>
 <device name="" package="TC2050-NL">
@@ -1821,130 +1341,6 @@ Source: &lt;a href="http://www.molex.com/pdm_docs/sd/734120110_sd.pdf"&gt; Data 
 <connect gate="G$1" pin="8" pad="8"/>
 <connect gate="G$1" pin="9" pad="9"/>
 </connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="CAPACITOR" prefix="C">
-<gates>
-<gate name="G$1" symbol="CAPACITOR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="0402" package="0402">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="0603" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="0805" package="0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="1206" package="1206">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="RESISTOR" prefix="R">
-<gates>
-<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="0402" package="0402">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="0603" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="0805" package="0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="1206" package="1206">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="TEST">
-<gates>
-</gates>
-<devices>
-<device name="TEST" package="QFN50P700X700X100-48N">
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17276209/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>

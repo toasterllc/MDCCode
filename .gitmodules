@@ -1,0 +1,3 @@
+[submodule "pcb/EagleLibrary"]
+	path = pcb/EagleLibrary
+	url = git@github.com:davekeck/EagleLibrary.git
