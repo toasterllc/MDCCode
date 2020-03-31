@@ -116,8 +116,84 @@
 <text x="31.4452" y="1.905" size="1.016" layer="25" font="vector" ratio="10">MDC Rev 1</text>
 </plain>
 <libraries>
+<library name="MotionDetectorCamera">
+<description>Generated from &lt;b&gt;MotionDetectorCamera.sch&lt;/b&gt;&lt;p&gt;
+by exp-lbrs.ulp</description>
+<packages>
+<package name="GD25LQ80C" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="2" x="-1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="3" x="-1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="4" x="-1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="5" x="1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="6" x="1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="7" x="1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="8" x="1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<text x="-1.645" y="1.145" size="0.508" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="21">
+<vertex x="-1.6" y="1.1"/>
+<vertex x="-1.2" y="1.1"/>
+<vertex x="-1.6" y="0.7"/>
+</polygon>
+<wire x1="-1.6" y1="1.1" x2="-1.6" y2="-1.1" width="0.05" layer="21"/>
+<wire x1="-1.6" y1="-1.1" x2="1.6" y2="-1.1" width="0.05" layer="21"/>
+<wire x1="1.6" y1="-1.1" x2="1.6" y2="1.1" width="0.05" layer="21"/>
+<wire x1="1.6" y1="1.1" x2="-1.6" y2="1.1" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-1.6" y="1.1"/>
+<vertex x="-1.6" y="-1.1"/>
+<vertex x="1.6" y="-1.1"/>
+<vertex x="1.6" y="1.1"/>
+</polygon>
+</package>
+</packages>
+<packages3d>
+<package3d name="SON50P300X200X60-8N" urn="urn:adsk.eagle:package:17077898/1" type="model">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="GD25LQ80C"/>
+</packageinstances>
+</package3d>
+</packages3d>
+</library>
 <library name="EagleLibrary">
 <packages>
+<package name="HEADER-2X10">
+<description>&lt;b&gt;FEMALE HEADER&lt;/b&gt;</description>
+<pad name="1" x="-11.43" y="1.27" drill="0.9144"/>
+<pad name="2" x="-11.43" y="-1.27" drill="0.9144"/>
+<pad name="3" x="-8.89" y="1.27" drill="0.9144"/>
+<pad name="4" x="-8.89" y="-1.27" drill="0.9144"/>
+<pad name="5" x="-6.35" y="1.27" drill="0.9144"/>
+<pad name="6" x="-6.35" y="-1.27" drill="0.9144"/>
+<pad name="7" x="-3.81" y="1.27" drill="0.9144"/>
+<pad name="8" x="-3.81" y="-1.27" drill="0.9144"/>
+<pad name="9" x="-1.27" y="1.27" drill="0.9144"/>
+<pad name="10" x="-1.27" y="-1.27" drill="0.9144"/>
+<pad name="11" x="1.27" y="1.27" drill="0.9144"/>
+<pad name="12" x="1.27" y="-1.27" drill="0.9144"/>
+<pad name="13" x="3.81" y="1.27" drill="0.9144"/>
+<pad name="14" x="3.81" y="-1.27" drill="0.9144"/>
+<pad name="15" x="6.35" y="1.27" drill="0.9144"/>
+<pad name="16" x="6.35" y="-1.27" drill="0.9144"/>
+<pad name="17" x="8.89" y="1.27" drill="0.9144"/>
+<pad name="18" x="8.89" y="-1.27" drill="0.9144"/>
+<pad name="19" x="11.43" y="1.27" drill="0.9144"/>
+<pad name="20" x="11.43" y="-1.27" drill="0.9144"/>
+<text x="12.827" y="3.41" size="1.016" layer="25" font="vector" align="bottom-right">&gt;NAME</text>
+<text x="-11.822" y="3.41" size="1.016" layer="21" font="vector">1</text>
+<wire x1="-12.7" y1="3" x2="12.7" y2="3" width="0.05" layer="39"/>
+<wire x1="12.7" y1="3" x2="12.7" y2="-3" width="0.05" layer="39"/>
+<wire x1="12.7" y1="-3" x2="-12.7" y2="-3" width="0.05" layer="39"/>
+<wire x1="-12.7" y1="-3" x2="-12.7" y2="3" width="0.05" layer="39"/>
+<wire x1="-12.7" y1="3" x2="12.7" y2="3" width="0.05" layer="21"/>
+<wire x1="12.7" y1="3" x2="12.7" y2="-3" width="0.05" layer="21"/>
+<wire x1="12.7" y1="-3" x2="-12.7" y2="-3" width="0.05" layer="21"/>
+<wire x1="-12.7" y1="-3" x2="-12.7" y2="3" width="0.05" layer="21"/>
+</package>
 <package name="0402" urn="urn:adsk.eagle:footprint:17080097/1" locally_modified="yes">
 <description>Chip, 1.00 X 0.50 X 0.50 mm body
 &lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
@@ -185,60 +261,6 @@
 <vertex x="2.16" y="-1.01"/>
 <vertex x="2.16" y="1.01"/>
 </polygon>
-</package>
-<package name="INDUCTOR-TESTBED">
-<wire x1="-6.5" y1="-7.3" x2="6.5" y2="-7.3" width="0.05" layer="21"/>
-<wire x1="-6.5" y1="7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
-<wire x1="-6.5" y1="-7.3" x2="-6.5" y2="7.3" width="0.05" layer="21"/>
-<wire x1="6.5" y1="-7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
-<smd name="1A" x="0" y="5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
-<smd name="2A" x="0" y="-5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
-<text x="-6.561" y="7.735" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<smd name="1B" x="0" y="3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
-<smd name="2B" x="0" y="-3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
-<smd name="1C" x="0" y="1.85" dx="5" dy="1.3" layer="1" cream="no"/>
-<smd name="2C" x="0" y="-1.85" dx="5" dy="1.3" layer="1" cream="no"/>
-<smd name="1D" x="0" y="0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
-<smd name="2D" x="0" y="-0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
-<polygon width="0.05" layer="39">
-<vertex x="6.5" y="-7.3"/>
-<vertex x="-6.5" y="-7.3"/>
-<vertex x="-6.5" y="7.3"/>
-<vertex x="6.5" y="7.3"/>
-</polygon>
-</package>
-<package name="HEADER-2X10">
-<description>&lt;b&gt;FEMALE HEADER&lt;/b&gt;</description>
-<pad name="1" x="-11.43" y="1.27" drill="0.9144"/>
-<pad name="2" x="-11.43" y="-1.27" drill="0.9144"/>
-<pad name="3" x="-8.89" y="1.27" drill="0.9144"/>
-<pad name="4" x="-8.89" y="-1.27" drill="0.9144"/>
-<pad name="5" x="-6.35" y="1.27" drill="0.9144"/>
-<pad name="6" x="-6.35" y="-1.27" drill="0.9144"/>
-<pad name="7" x="-3.81" y="1.27" drill="0.9144"/>
-<pad name="8" x="-3.81" y="-1.27" drill="0.9144"/>
-<pad name="9" x="-1.27" y="1.27" drill="0.9144"/>
-<pad name="10" x="-1.27" y="-1.27" drill="0.9144"/>
-<pad name="11" x="1.27" y="1.27" drill="0.9144"/>
-<pad name="12" x="1.27" y="-1.27" drill="0.9144"/>
-<pad name="13" x="3.81" y="1.27" drill="0.9144"/>
-<pad name="14" x="3.81" y="-1.27" drill="0.9144"/>
-<pad name="15" x="6.35" y="1.27" drill="0.9144"/>
-<pad name="16" x="6.35" y="-1.27" drill="0.9144"/>
-<pad name="17" x="8.89" y="1.27" drill="0.9144"/>
-<pad name="18" x="8.89" y="-1.27" drill="0.9144"/>
-<pad name="19" x="11.43" y="1.27" drill="0.9144"/>
-<pad name="20" x="11.43" y="-1.27" drill="0.9144"/>
-<text x="12.827" y="3.41" size="1.016" layer="25" font="vector" align="bottom-right">&gt;NAME</text>
-<text x="-11.822" y="3.41" size="1.016" layer="21" font="vector">1</text>
-<wire x1="-12.7" y1="3" x2="12.7" y2="3" width="0.05" layer="39"/>
-<wire x1="12.7" y1="3" x2="12.7" y2="-3" width="0.05" layer="39"/>
-<wire x1="12.7" y1="-3" x2="-12.7" y2="-3" width="0.05" layer="39"/>
-<wire x1="-12.7" y1="-3" x2="-12.7" y2="3" width="0.05" layer="39"/>
-<wire x1="-12.7" y1="3" x2="12.7" y2="3" width="0.05" layer="21"/>
-<wire x1="12.7" y1="3" x2="12.7" y2="-3" width="0.05" layer="21"/>
-<wire x1="12.7" y1="-3" x2="-12.7" y2="-3" width="0.05" layer="21"/>
-<wire x1="-12.7" y1="-3" x2="-12.7" y2="3" width="0.05" layer="21"/>
 </package>
 <package name="ICE40HX4K-BG121" urn="urn:adsk.eagle:footprint:16997456/1" locally_modified="yes">
 <description>121-BGA, collapsing, 0.80 mm pitch, 9.00 X 9.00 X 1.00 mm body
@@ -381,32 +403,25 @@
 <vertex x="4.5" y="4.5"/>
 </polygon>
 </package>
-<package name="GD25LQ80CEIGR" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="2" x="-1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="3" x="-1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="4" x="-1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="5" x="1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="6" x="1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="7" x="1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="8" x="1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<text x="-1.645" y="1.272" size="0.508" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="21">
-<vertex x="-1.6" y="1.1"/>
-<vertex x="-1.2" y="1.1"/>
-<vertex x="-1.6" y="0.7"/>
-</polygon>
-<wire x1="-1.6" y1="1.1" x2="-1.6" y2="-1.1" width="0.05" layer="21"/>
-<wire x1="-1.6" y1="-1.1" x2="1.6" y2="-1.1" width="0.05" layer="21"/>
-<wire x1="1.6" y1="-1.1" x2="1.6" y2="1.1" width="0.05" layer="21"/>
-<wire x1="1.6" y1="1.1" x2="-1.6" y2="1.1" width="0.05" layer="21"/>
+<package name="INDUCTOR-TESTBED">
+<wire x1="-6.5" y1="-7.3" x2="6.5" y2="-7.3" width="0.05" layer="21"/>
+<wire x1="-6.5" y1="7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
+<wire x1="-6.5" y1="-7.3" x2="-6.5" y2="7.3" width="0.05" layer="21"/>
+<wire x1="6.5" y1="-7.3" x2="6.5" y2="7.3" width="0.05" layer="21"/>
+<smd name="1A" x="0" y="5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
+<smd name="2A" x="0" y="-5.75" dx="4.3" dy="2.7" layer="1" cream="no"/>
+<text x="-6.561" y="7.735" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<smd name="1B" x="0" y="3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
+<smd name="2B" x="0" y="-3.45" dx="3.5" dy="1.5" layer="1" cream="no"/>
+<smd name="1C" x="0" y="1.85" dx="5" dy="1.3" layer="1" cream="no"/>
+<smd name="2C" x="0" y="-1.85" dx="5" dy="1.3" layer="1" cream="no"/>
+<smd name="1D" x="0" y="0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
+<smd name="2D" x="0" y="-0.75" dx="1.6" dy="0.5" layer="1" cream="no"/>
 <polygon width="0.05" layer="39">
-<vertex x="-1.6" y="1.1"/>
-<vertex x="-1.6" y="-1.1"/>
-<vertex x="1.6" y="-1.1"/>
-<vertex x="1.6" y="1.1"/>
+<vertex x="6.5" y="-7.3"/>
+<vertex x="-6.5" y="-7.3"/>
+<vertex x="-6.5" y="7.3"/>
+<vertex x="6.5" y="7.3"/>
 </polygon>
 </package>
 <package name="LED-0603">
@@ -469,30 +484,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <hole x="7.62" y="-1.016" drill="0.9906"/>
 <hole x="7.62" y="1.016" drill="0.9906"/>
 </package>
-<package name="TPS6280XYKAR">
-<smd name="A1" x="-0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="A2" x="0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="B1" x="-0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<text x="-0.532740625" y="0.861990625" size="0.508" layer="25" font="vector" rot="SR0">&gt;NAME</text>
-<polygon width="0.05" layer="21">
-<vertex x="-0.5" y="0.7"/>
-<vertex x="-0.3" y="0.7"/>
-<vertex x="-0.5" y="0.5"/>
-</polygon>
-<wire x1="-0.5" y1="-0.7" x2="0.5" y2="-0.7" width="0.05" layer="21"/>
-<wire x1="0.5" y1="-0.7" x2="0.5" y2="0.7" width="0.05" layer="21"/>
-<wire x1="0.5" y1="0.7" x2="-0.5" y2="0.7" width="0.05" layer="21"/>
-<wire x1="-0.5" y1="0.7" x2="-0.5" y2="-0.7" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-0.5" y="0.7"/>
-<vertex x="-0.5" y="-0.7"/>
-<vertex x="0.5" y="-0.7"/>
-<vertex x="0.5" y="0.7"/>
-</polygon>
-</package>
 <package name="TPS63805YFFR">
 <smd name="A1" x="-0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
 <smd name="A2" x="0" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
@@ -526,7 +517,31 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.8" y="1.2"/>
 </polygon>
 </package>
-<package name="MOLEX-734120110">
+<package name="TPS6280XYKAR">
+<smd name="A1" x="-0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
+<smd name="A2" x="0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
+<smd name="B1" x="-0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
+<smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
+<smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
+<smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
+<text x="-0.532740625" y="0.861990625" size="0.508" layer="25" font="vector" rot="SR0">&gt;NAME</text>
+<polygon width="0.05" layer="21">
+<vertex x="-0.5" y="0.7"/>
+<vertex x="-0.3" y="0.7"/>
+<vertex x="-0.5" y="0.5"/>
+</polygon>
+<wire x1="-0.5" y1="-0.7" x2="0.5" y2="-0.7" width="0.05" layer="21"/>
+<wire x1="0.5" y1="-0.7" x2="0.5" y2="0.7" width="0.05" layer="21"/>
+<wire x1="0.5" y1="0.7" x2="-0.5" y2="0.7" width="0.05" layer="21"/>
+<wire x1="-0.5" y1="0.7" x2="-0.5" y2="-0.7" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-0.5" y="0.7"/>
+<vertex x="-0.5" y="-0.7"/>
+<vertex x="0.5" y="-0.7"/>
+<vertex x="0.5" y="0.7"/>
+</polygon>
+</package>
+<package name="UFL-CONNECTOR">
 <circle x="0" y="0" radius="0.95" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="0.200059375" width="0.05" layer="21"/>
 <smd name="1" x="0" y="-1.5" dx="1" dy="1" layer="1"/>
@@ -658,13 +673,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;121-pin collapsing BGA package with 0.80 mm col pitch and 0.80 mm row pitch with body size 9.00 X 9.00 X 1.00 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="ICE40HX4K-BG121"/>
-</packageinstances>
-</package3d>
-<package3d name="SON50P300X200X60-8N" urn="urn:adsk.eagle:package:17077898/1" type="model">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="GD25LQ80CEIGR"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -1108,13 +1116,13 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="38.018721875" y="23.4823" size="1.016" layer="25" font="vector" rot="R180"/>
 <attribute name="PN" value="" x="34.8742" y="36.4236" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="U1" library="EagleLibrary" package="TPS6280XYKAR" value="" x="4.8768" y="11.4554" smashed="yes" rot="R180">
+<element name="U1" library="EagleLibrary" package="TPS6280XYKAR" value="TPS6280XYKAR" x="4.8768" y="11.4554" smashed="yes" rot="R180">
 <attribute name="MFG" value="Texas Instruments" x="4.8768" y="11.4554" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MP" value="TPS62801YKAR" x="-21.7932" y="63.5254" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="5.764521875" y="11.219809375" size="0.3048" layer="25" font="vector" rot="SR90"/>
 <attribute name="PN" value="" x="4.8768" y="11.4554" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="U2" library="EagleLibrary" package="TPS6280XYKAR" value="" x="25.4762" y="7.3914" smashed="yes" rot="R270">
+<element name="U2" library="EagleLibrary" package="TPS6280XYKAR" value="TPS6280XYKAR" x="25.4762" y="7.3914" smashed="yes" rot="R270">
 <attribute name="MFG" value="Texas Instruments" x="25.4762" y="7.3914" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="MP" value="TPS62802YKAR" x="-26.5938" y="-21.8186" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="25.330790625" y="8.007340625" size="0.3048" layer="25" font="vector" rot="SR0"/>
@@ -1130,40 +1138,40 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="3.017984375" y="36.25594375" size="1.016" layer="25" font="vector" rot="R45"/>
 <attribute name="PN" value="W989D6DBGX6I" x="9.22755625" y="35.728409375" size="1.778" layer="27" rot="R45" display="off"/>
 </element>
-<element name="X6" library="EagleLibrary" package="MOLEX-734120110" value="MOLEX-734120110" x="11.557" y="43.3324" smashed="yes" rot="R315">
-<attribute name="MFG" value="Molex" x="11.557" y="43.3324" size="1.778" layer="27" rot="R315" display="off"/>
+<element name="X6" library="EagleLibrary" package="UFL-CONNECTOR" value="UFL-CONNECTOR" x="11.557" y="43.3324" smashed="yes" rot="R315">
+<attribute name="MFG" value="" x="11.557" y="43.3324" size="1.778" layer="27" rot="R315" display="off"/>
 <attribute name="NAME" x="12.73760625" y="45.4402875" size="0.762" layer="25" font="vector" rot="R315"/>
-<attribute name="PN" value="734120110" x="11.557" y="43.3324" size="1.778" layer="27" rot="R315" display="off"/>
+<attribute name="PN" value="" x="11.557" y="43.3324" size="1.778" layer="27" rot="R315" display="off"/>
 </element>
-<element name="X3" library="EagleLibrary" package="MOLEX-734120110" value="MOLEX-734120110" x="7.1628" y="21.3614" smashed="yes" rot="MR0">
-<attribute name="MFG" value="Molex" x="7.1628" y="21.3614" size="1.778" layer="28" rot="MR0" display="off"/>
+<element name="X3" library="EagleLibrary" package="UFL-CONNECTOR" value="UFL-CONNECTOR" x="7.1628" y="21.3614" smashed="yes" rot="MR0">
+<attribute name="MFG" value="" x="7.1628" y="21.3614" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="7.7444" y="23.6018" size="0.762" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="734120110" x="7.1628" y="21.3614" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="PN" value="" x="7.1628" y="21.3614" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="X4" library="EagleLibrary" package="MOLEX-734120110" value="MOLEX-734120110" x="19.812" y="5.8928" smashed="yes" rot="R180">
-<attribute name="MFG" value="Molex" x="19.812" y="5.8928" size="1.778" layer="27" rot="R180" display="off"/>
+<element name="X4" library="EagleLibrary" package="UFL-CONNECTOR" value="UFL-CONNECTOR" x="19.812" y="5.8928" smashed="yes" rot="R180">
+<attribute name="MFG" value="" x="19.812" y="5.8928" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="20.3936" y="3.5508" size="0.762" layer="25" font="vector" rot="R180"/>
-<attribute name="PN" value="734120110" x="19.812" y="5.8928" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="" x="19.812" y="5.8928" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="X5" library="EagleLibrary" package="MOLEX-734120110" value="MOLEX-734120110" x="27.559" y="31.0388" smashed="yes" rot="MR180">
-<attribute name="MFG" value="Molex" x="27.559" y="31.0388" size="1.778" layer="28" rot="MR180" display="off"/>
+<element name="X5" library="EagleLibrary" package="UFL-CONNECTOR" value="UFL-CONNECTOR" x="27.559" y="31.0388" smashed="yes" rot="MR180">
+<attribute name="MFG" value="" x="27.559" y="31.0388" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="26.9774" y="28.7476" size="0.762" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="734120110" x="27.559" y="31.0388" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="" x="27.559" y="31.0388" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="X7" library="EagleLibrary" package="MOLEX-734120110" value="MOLEX-734120110" x="5.2578" y="23.9268" smashed="yes" rot="R180">
-<attribute name="MFG" value="Molex" x="5.2578" y="23.9268" size="1.778" layer="27" rot="R180" display="off"/>
+<element name="X7" library="EagleLibrary" package="UFL-CONNECTOR" value="UFL-CONNECTOR" x="5.2578" y="23.9268" smashed="yes" rot="R180">
+<attribute name="MFG" value="" x="5.2578" y="23.9268" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="7.465" y="24.4042" size="0.762" layer="25" font="vector" rot="R270"/>
-<attribute name="PN" value="734120110" x="5.2578" y="23.9268" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="" x="5.2578" y="23.9268" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="X1" library="EagleLibrary" package="MOLEX-734120110" value="MOLEX-734120110" x="35.3314" y="13.0302" smashed="yes" rot="R270">
-<attribute name="MFG" value="Molex" x="35.3314" y="13.0302" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="X1" library="EagleLibrary" package="UFL-CONNECTOR" value="UFL-CONNECTOR" x="35.3314" y="13.0302" smashed="yes" rot="R270">
+<attribute name="MFG" value="" x="35.3314" y="13.0302" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="37.5718" y="13.688" size="0.762" layer="25" font="vector" rot="R270"/>
-<attribute name="PN" value="734120110" x="35.3314" y="13.0302" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="PN" value="" x="35.3314" y="13.0302" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="X2" library="EagleLibrary" package="MOLEX-734120110" value="MOLEX-734120110" x="35.306" y="8.7122" smashed="yes" rot="R270">
-<attribute name="MFG" value="Molex" x="35.306" y="8.7122" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="X2" library="EagleLibrary" package="UFL-CONNECTOR" value="UFL-CONNECTOR" x="35.306" y="8.7122" smashed="yes" rot="R270">
+<attribute name="MFG" value="" x="35.306" y="8.7122" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="37.5972" y="9.243" size="0.762" layer="25" font="vector" rot="R270"/>
-<attribute name="PN" value="734120110" x="35.306" y="8.7122" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="PN" value="" x="35.306" y="8.7122" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="Y1" library="EagleLibrary" package="SIT8021AI-J4-18S-12.000000E" value="SIT8021AI-J4-18S-12.000000E" x="3.7338" y="27.518359375" smashed="yes" rot="R180">
 <attribute name="MFG" value="SiTime" x="3.7338" y="27.518359375" size="1.778" layer="27" rot="R180" display="off"/>
@@ -1221,10 +1229,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="16.047" y="33.5004" size="0.3" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="" x="17.0942" y="33.147" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="U6" library="EagleLibrary" package="GD25LQ80CEIGR" package3d_urn="urn:adsk.eagle:package:17077898/1" value="GD25LQ80CEIGR" x="20.5994" y="15.7988" smashed="yes" rot="R270">
-<attribute name="MFG" value="GigaDevice" x="20.5994" y="15.7988" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="U6" library="MotionDetectorCamera" package="GD25LQ80C" package3d_urn="urn:adsk.eagle:package:17077898/1" value="GD25LQ80CUSON8" x="20.5994" y="15.7988" smashed="yes" rot="R270">
 <attribute name="NAME" x="21.8574" y="15.8242" size="0.508" layer="25" font="vector" rot="R270" align="bottom-center"/>
-<attribute name="PN" value="GD25LQ80CEIGR" x="20.5994" y="15.7988" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="R21" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="18.3896" y="17.8816" smashed="yes" rot="R180">
 <attribute name="MFG" value="" x="18.3896" y="17.8816" size="1.778" layer="27" rot="R180" display="off"/>
