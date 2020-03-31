@@ -105,94 +105,6 @@
 </layers>
 <schematic xreflabel="%F%N/%S.%C%R" xrefpart="/%S.%C%R">
 <libraries>
-<library name="MotionDetectorCamera">
-<description>Generated from &lt;b&gt;MotionDetectorCamera.sch&lt;/b&gt;&lt;p&gt;
-by exp-lbrs.ulp</description>
-<packages>
-<package name="GD25LQ80C" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="2" x="-1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="3" x="-1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="4" x="-1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="5" x="1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="6" x="1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="7" x="1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="8" x="1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<text x="-1.645" y="1.145" size="0.508" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="21">
-<vertex x="-1.6" y="1.1"/>
-<vertex x="-1.2" y="1.1"/>
-<vertex x="-1.6" y="0.7"/>
-</polygon>
-<wire x1="-1.6" y1="1.1" x2="-1.6" y2="-1.1" width="0.05" layer="21"/>
-<wire x1="-1.6" y1="-1.1" x2="1.6" y2="-1.1" width="0.05" layer="21"/>
-<wire x1="1.6" y1="-1.1" x2="1.6" y2="1.1" width="0.05" layer="21"/>
-<wire x1="1.6" y1="1.1" x2="-1.6" y2="1.1" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-1.6" y="1.1"/>
-<vertex x="-1.6" y="-1.1"/>
-<vertex x="1.6" y="-1.1"/>
-<vertex x="1.6" y="1.1"/>
-</polygon>
-</package>
-</packages>
-<packages3d>
-<package3d name="SON50P300X200X60-8N" urn="urn:adsk.eagle:package:17077898/1" type="model">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="GD25LQ80C"/>
-</packageinstances>
-</package3d>
-</packages3d>
-<symbols>
-<symbol name="GD25LQ80C">
-<wire x1="-10.16" y1="5.08" x2="-10.16" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-10.16" y1="-7.62" x2="10.16" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-7.62" x2="10.16" y2="5.08" width="0.254" layer="94"/>
-<wire x1="10.16" y1="5.08" x2="-10.16" y2="5.08" width="0.254" layer="94"/>
-<pin name="CS_" x="-15.24" y="2.54" length="middle"/>
-<pin name="SO" x="-15.24" y="0" length="middle"/>
-<pin name="WP_" x="-15.24" y="-2.54" length="middle"/>
-<pin name="GND" x="-15.24" y="-5.08" length="middle"/>
-<pin name="VDD" x="15.24" y="2.54" length="middle" rot="R180"/>
-<pin name="HOLD_" x="15.24" y="0" length="middle" rot="R180"/>
-<pin name="SCLK" x="15.24" y="-2.54" length="middle" rot="R180"/>
-<pin name="SI" x="15.24" y="-5.08" length="middle" rot="R180"/>
-<text x="-8.89" y="-10.16" size="1.778" layer="96">&gt;VALUE</text>
-<text x="-8.89" y="5.842" size="1.778" layer="95">&gt;NAME</text>
-</symbol>
-</symbols>
-<devicesets>
-<deviceset name="GD25LQ80C" prefix="U">
-<gates>
-<gate name="G$1" symbol="GD25LQ80C" x="7.62" y="-12.7"/>
-</gates>
-<devices>
-<device name="USON8" package="GD25LQ80C">
-<connects>
-<connect gate="G$1" pin="CS_" pad="1"/>
-<connect gate="G$1" pin="GND" pad="4"/>
-<connect gate="G$1" pin="HOLD_" pad="7"/>
-<connect gate="G$1" pin="SCLK" pad="6"/>
-<connect gate="G$1" pin="SI" pad="5"/>
-<connect gate="G$1" pin="SO" pad="2"/>
-<connect gate="G$1" pin="VDD" pad="8"/>
-<connect gate="G$1" pin="WP_" pad="3"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17077898/1"/>
-</package3dinstances>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-</devicesets>
-</library>
 <library name="EagleLibrary">
 <packages>
 <package name="HEADER-2X10">
@@ -592,7 +504,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.5" y="0.7"/>
 </polygon>
 </package>
-<package name="UFL-CONNECTOR">
+<package name="MOLEX-734120110">
 <circle x="0" y="0" radius="0.95" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="0.200059375" width="0.05" layer="21"/>
 <smd name="1" x="0" y="-1.5" dx="1" dy="1" layer="1"/>
@@ -689,6 +601,34 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="4" y="4.5"/>
 </polygon>
 </package>
+<package name="GD25LQ80CEIGR" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="2" x="-1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="3" x="-1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="4" x="-1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="5" x="1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="6" x="1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="7" x="1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<smd name="8" x="1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
+<text x="-1.645" y="1.272" size="0.508" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="21">
+<vertex x="-1.6" y="1.1"/>
+<vertex x="-1.2" y="1.1"/>
+<vertex x="-1.6" y="0.7"/>
+</polygon>
+<wire x1="-1.6" y1="1.1" x2="-1.6" y2="-1.1" width="0.05" layer="21"/>
+<wire x1="-1.6" y1="-1.1" x2="1.6" y2="-1.1" width="0.05" layer="21"/>
+<wire x1="1.6" y1="-1.1" x2="1.6" y2="1.1" width="0.05" layer="21"/>
+<wire x1="1.6" y1="1.1" x2="-1.6" y2="1.1" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-1.6" y="1.1"/>
+<vertex x="-1.6" y="-1.1"/>
+<vertex x="1.6" y="-1.1"/>
+<vertex x="1.6" y="1.1"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
@@ -731,6 +671,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;121-pin collapsing BGA package with 0.80 mm col pitch and 0.80 mm row pitch with body size 9.00 X 9.00 X 1.00 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="ICE40HX4K-BG121"/>
+</packageinstances>
+</package3d>
+<package3d name="SON50P300X200X60-8N" urn="urn:adsk.eagle:package:17077898/1" type="model">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="GD25LQ80CEIGR"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -1147,10 +1094,26 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="-7.62" y="37.846" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="-7.62" y="-36.322" size="1.778" layer="95" align="top-left">&gt;PN</text>
 </symbol>
+<symbol name="GD25LQ80CEIGR">
+<wire x1="-10.16" y1="5.08" x2="-10.16" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="-10.16" y1="-7.62" x2="10.16" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="10.16" y1="-7.62" x2="10.16" y2="5.08" width="0.254" layer="94"/>
+<wire x1="10.16" y1="5.08" x2="-10.16" y2="5.08" width="0.254" layer="94"/>
+<pin name="CS_" x="-15.24" y="2.54" length="middle"/>
+<pin name="SO" x="-15.24" y="0" length="middle"/>
+<pin name="WP_" x="-15.24" y="-2.54" length="middle"/>
+<pin name="GND" x="-15.24" y="-5.08" length="middle"/>
+<pin name="VDD" x="15.24" y="2.54" length="middle" rot="R180"/>
+<pin name="HOLD_" x="15.24" y="0" length="middle" rot="R180"/>
+<pin name="SCLK" x="15.24" y="-2.54" length="middle" rot="R180"/>
+<pin name="SI" x="15.24" y="-5.08" length="middle" rot="R180"/>
+<text x="-8.89" y="5.842" size="1.778" layer="95">&gt;NAME</text>
+<text x="-9.906" y="-10.16" size="1.778" layer="95">&gt;PN</text>
+</symbol>
 </symbols>
 <devicesets>
 <deviceset name="HEADER" prefix="H">
-<description>&lt;b&gt;FEMALE HEADER&lt;/b&gt;</description>
+<description>Header</description>
 <gates>
 <gate name="G$1" symbol="2X10_HEADER" x="0" y="0"/>
 </gates>
@@ -1179,10 +1142,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="9" pad="9"/>
 </connects>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -1201,10 +1161,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="0603" package="0603">
@@ -1216,10 +1173,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="0805" package="0805">
@@ -1231,10 +1185,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="1206" package="1206">
@@ -1246,10 +1197,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="1210" package="1210">
@@ -1261,10 +1209,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17955780/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -1283,10 +1228,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="0603" package="0603">
@@ -1298,10 +1240,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="0805" package="0805">
@@ -1313,10 +1252,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="1206" package="1206">
@@ -1328,10 +1264,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 <device name="1210" package="1210">
@@ -1343,15 +1276,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:17955780/1"/>
 </package3dinstances>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
 </deviceset>
 <deviceset name="ICE40HX4K-BG121" prefix="U">
+<description>Lattice ICE40 FPGA</description>
 <gates>
 <gate name="A" symbol="ICE40HX4K-BG121-A" x="-71.12" y="2.54"/>
 <gate name="B" symbol="ICE40HX4K-BG121-B" x="-33.02" y="2.54"/>
@@ -1497,6 +1428,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </devices>
 </deviceset>
 <deviceset name="INDUCTOR-TESTBED" prefix="L" uservalue="yes">
+<description>Testbed permitting multiple inductor sizes</description>
 <gates>
 <gate name="G$1" symbol="INDUCTOR" x="0" y="0"/>
 </gates>
@@ -1507,15 +1439,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="2" pad="2A 2B 2C 2D"/>
 </connects>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
 </deviceset>
 <deviceset name="LED" prefix="LED" uservalue="yes">
+<description>LED</description>
 <gates>
 <gate name="G$1" symbol="LED" x="0" y="0"/>
 </gates>
@@ -1526,16 +1456,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="C" pad="C"/>
 </connects>
 <technologies>
-<technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
 </deviceset>
 <deviceset name="SIT8021AI-J4-18S-12.000000E" prefix="X">
-<description>MEMS OSC XO 12.0000MHZ LVCMOS</description>
+<description>12MHz MEMS Oscillator</description>
 <gates>
 <gate name="G$1" symbol="SIT8021AI-J4-18S-12.000000E" x="0" y="0"/>
 </gates>
@@ -1557,6 +1484,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </devices>
 </deviceset>
 <deviceset name="TC2050-NL" prefix="TC">
+<description>TagConnect 10-pin Receptacle</description>
 <gates>
 <gate name="G$1" symbol="TC2050-NL" x="0" y="0"/>
 </gates>
@@ -1581,7 +1509,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </devices>
 </deviceset>
 <deviceset name="TPS63805YFFR" prefix="U">
-<description>Conv DC-DC 1.3V to 5.5V Step Down/Step Up Single-Out 1.8V to 5V 2A 15-Pin DSBGA T/R</description>
+<description>Buck-Boost Converter</description>
 <gates>
 <gate name="G$1" symbol="TPS63805YFF" x="0" y="0"/>
 </gates>
@@ -1609,7 +1537,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </devices>
 </deviceset>
 <deviceset name="TPS6280XYKAR" prefix="U">
-<description>STEP-DOWN CONVERTER</description>
+<description>Step-Down Converter</description>
 <gates>
 <gate name="G$1" symbol="TPS6280XYKA" x="0" y="0"/>
 </gates>
@@ -1626,7 +1554,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Texas Instruments"/>
-<attribute name="PN" value="" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -1638,22 +1565,22 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <gate name="G$1" symbol="UFL-CONNECTOR" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="UFL-CONNECTOR">
+<device name="" package="MOLEX-734120110">
 <connects>
 <connect gate="G$1" pin="GND" pad="2 3 4"/>
 <connect gate="G$1" pin="SIGNAL" pad="1"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MFG" value="" constant="no"/>
-<attribute name="PN" value="" constant="no"/>
+<attribute name="MFG" value="Molex"/>
+<attribute name="PN" value="734120110"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
 <deviceset name="W989D6DBGX6I" prefix="U">
-<description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
+<description>512Mbit SDRAM</description>
 <gates>
 <gate name="A" symbol="W989D6DBGX6I-A" x="0" y="-15.24"/>
 <gate name="B" symbol="W989D6DBGX6I-B" x="37.78" y="0"/>
@@ -1725,6 +1652,35 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="GD25LQ80CEIGR" prefix="U">
+<description>SPI Flash</description>
+<gates>
+<gate name="G$1" symbol="GD25LQ80CEIGR" x="7.62" y="-12.7"/>
+</gates>
+<devices>
+<device name="" package="GD25LQ80CEIGR">
+<connects>
+<connect gate="G$1" pin="CS_" pad="1"/>
+<connect gate="G$1" pin="GND" pad="4"/>
+<connect gate="G$1" pin="HOLD_" pad="7"/>
+<connect gate="G$1" pin="SCLK" pad="6"/>
+<connect gate="G$1" pin="SI" pad="5"/>
+<connect gate="G$1" pin="SO" pad="2"/>
+<connect gate="G$1" pin="VDD" pad="8"/>
+<connect gate="G$1" pin="WP_" pad="3"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17077898/1"/>
+</package3dinstances>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="GigaDevice"/>
+<attribute name="PN" value="GD25LQ80CEIGR"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -1745,16 +1701,41 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MODEL" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="LED1" library="EagleLibrary" deviceset="LED" device=""/>
-<part name="LED2" library="EagleLibrary" deviceset="LED" device=""/>
-<part name="LED3" library="EagleLibrary" deviceset="LED" device=""/>
-<part name="LED4" library="EagleLibrary" deviceset="LED" device=""/>
-<part name="LED5" library="EagleLibrary" deviceset="LED" device=""/>
-<part name="LED6" library="EagleLibrary" deviceset="LED" device=""/>
-<part name="LED7" library="EagleLibrary" deviceset="LED" device=""/>
-<part name="LED8" library="EagleLibrary" deviceset="LED" device=""/>
+<part name="LED1" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
+<part name="LED2" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
+<part name="LED3" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
+<part name="LED4" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
+<part name="LED5" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
+<part name="LED6" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
+<part name="LED7" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
+<part name="LED8" library="EagleLibrary" deviceset="LED" device="">
+<attribute name="MFG" value="OSRAM"/>
+<attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
+</part>
 <part name="C13" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
@@ -1762,13 +1743,27 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="U2" library="EagleLibrary" deviceset="TPS6280XYKAR" device="">
-<attribute name="MP" value="TPS62801YKAR"/>
+<attribute name="PN1" value="TPS62801YKAR"/>
+<attribute name="PN2" value="TPS62807YKAR"/>
 </part>
-<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="L1" library="EagleLibrary" deviceset="INDUCTOR-TESTBED" device="" value="470n"/>
+<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW040210K0FKEDC"/>
+</part>
+<part name="L1" library="EagleLibrary" deviceset="INDUCTOR-TESTBED" device="" value="470n">
+<attribute name="MFG1" value="Pulse Electronics"/>
+<attribute name="MFG2" value="Pulse Electronics"/>
+<attribute name="MFG3" value="Murata"/>
+<attribute name="MFG4" value="Murata"/>
+<attribute name="PN1" value="PA4343.471NLT"/>
+<attribute name="PN2" value="PA4341.471NLT"/>
+<attribute name="PN3" value="LQH5BPNR47NT0L"/>
+<attribute name="PN4" value="DFE201612E-R47M=P2"/>
+</part>
 <part name="C19" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
@@ -1776,13 +1771,27 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="U3" library="EagleLibrary" deviceset="TPS6280XYKAR" device="">
-<attribute name="MP" value="TPS62802YKAR"/>
+<attribute name="PN1" value="TPS62802YKAR"/>
+<attribute name="PN2" value="TPS62808YKAR"/>
 </part>
-<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="L2" library="EagleLibrary" deviceset="INDUCTOR-TESTBED" device="" value="470n"/>
+<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW040210K0FKEDC"/>
+</part>
+<part name="L2" library="EagleLibrary" deviceset="INDUCTOR-TESTBED" device="" value="470n">
+<attribute name="MFG1" value="Pulse Electronics"/>
+<attribute name="MFG2" value="Pulse Electronics"/>
+<attribute name="MFG3" value="Murata"/>
+<attribute name="MFG4" value="Murata"/>
+<attribute name="PN1" value="PA4343.471NLT"/>
+<attribute name="PN2" value="PA4341.471NLT"/>
+<attribute name="PN3" value="LQH5BPNR47NT0L"/>
+<attribute name="PN4" value="DFE201612E-R47M=P2"/>
+</part>
 <part name="U5" library="EagleLibrary" deviceset="TPS63805YFFR" device=""/>
 <part name="C18" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1791,7 +1800,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C20" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1800,7 +1810,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C25" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1809,7 +1820,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
 <spice>
@@ -1818,11 +1830,27 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM219R61C226ME15L"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM219R61C226ME15L"/>
 </part>
-<part name="L3" library="EagleLibrary" deviceset="INDUCTOR-TESTBED" device="" value="470n"/>
-<part name="R13" library="EagleLibrary" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k"/>
-<part name="R14" library="EagleLibrary" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k"/>
+<part name="L3" library="EagleLibrary" deviceset="INDUCTOR-TESTBED" device="" value="470n">
+<attribute name="MFG1" value="Pulse Electronics"/>
+<attribute name="MFG2" value="Pulse Electronics"/>
+<attribute name="MFG3" value="Murata"/>
+<attribute name="MFG4" value="Murata"/>
+<attribute name="PN1" value="PA4343.471NLT"/>
+<attribute name="PN2" value="PA4341.471NLT"/>
+<attribute name="PN3" value="LQH5BPNR47NT0L"/>
+<attribute name="PN4" value="DFE201612E-R47M=P2"/>
+</part>
+<part name="R13" library="EagleLibrary" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0603-FX-3653ELF"/>
+</part>
+<part name="R14" library="EagleLibrary" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0603-FX-9102ELF"/>
+</part>
 <part name="U4" library="EagleLibrary" deviceset="W989D6DBGX6I" device=""/>
 <part name="C21" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1831,7 +1859,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C22" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1840,7 +1869,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C1" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1849,7 +1879,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C2" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
@@ -1858,7 +1889,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GCM155R71C104KA55D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
 <part name="C8" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1867,7 +1899,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C12" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
@@ -1876,7 +1909,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GCM155R71C104KA55D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
 <part name="C5" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1885,7 +1919,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C7" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <spice>
@@ -1894,7 +1929,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GCM155R71C104KA55D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
 <part name="C23" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <spice>
@@ -1903,7 +1939,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C24" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <spice>
@@ -1912,71 +1949,138 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="H1" library="EagleLibrary" deviceset="HEADER" device=""/>
-<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R12" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R18" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R19" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R20" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
-<part name="R21" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k"/>
+<part name="H1" library="EagleLibrary" deviceset="HEADER" device="">
+<attribute name="MFG" value="3M"/>
+<attribute name="PN" value="929975-01-10-RK"/>
+</part>
+<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW040210K0FKEDC"/>
+</part>
+<part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="R12" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="R18" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="R19" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="R20" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="R21" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="CRGP0402F1K8"/>
+</part>
 <part name="TP3" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP5" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP7" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP6" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
-<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
-<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1"/>
+<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW040210K0FKEDC"/>
+</part>
+<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW12061R00FKEA"/>
+</part>
 <part name="TP1" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP2" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP4" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
-<part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
-<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
-<part name="R16" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0"/>
+<part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW08050000Z0EAC"/>
+</part>
+<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW08050000Z0EAC"/>
+</part>
+<part name="R16" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW08050000Z0EAC"/>
+</part>
 <part name="U1" library="EagleLibrary" deviceset="ICE40HX4K-BG121" device="" package3d_urn="urn:adsk.eagle:package:16997455/1"/>
 <part name="C6" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C9" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
-<attribute name="MP" value="GCM155R71C104KA55D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
+<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0402AJW-101GAS"/>
+</part>
 <part name="C4" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C11" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100"/>
+<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0402AJW-101GAS"/>
+</part>
 <part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C10" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="U6" library="MotionDetectorCamera" deviceset="GD25LQ80C" device="USON8" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
-<part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k"/>
+<part name="U6" library="EagleLibrary" deviceset="GD25LQ80CEIGR" device="" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
+<part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW040210K0FKEDC"/>
+</part>
 <part name="C28" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
-<attribute name="MP" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
 <part name="C29" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="TC1" library="EagleLibrary" deviceset="TC2050-NL" device=""/>
 <part name="C14" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C16" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
-<attribute name="MP" value="GRM155R61H104KE19D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C15" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
-<attribute name="MP" value="GCM155R71C104KA55D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
 <part name="C17" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
-<attribute name="MP" value="GCM155R71C104KA55D"/>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
 </parts>
 <sheets>
@@ -1993,105 +2097,160 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="PN" x="276.86" y="25.4" size="1.778" layer="95"/>
 </instance>
 <instance part="C26" gate="G$1" x="325.12" y="36.83" smashed="yes">
-<attribute name="MODEL" x="327.66" y="31.75" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="326.644" y="39.751" size="1.778" layer="95"/>
 <attribute name="VALUE" x="326.644" y="37.211" size="1.778" layer="96"/>
+<attribute name="MFG" x="325.12" y="36.83" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="325.12" y="36.83" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED1" gate="G$1" x="340.36" y="162.56" smashed="yes">
 <attribute name="NAME" x="343.916" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="340.36" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="340.36" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED2" gate="G$1" x="350.52" y="162.56" smashed="yes">
 <attribute name="NAME" x="354.076" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="350.52" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="350.52" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED3" gate="G$1" x="360.68" y="162.56" smashed="yes">
 <attribute name="NAME" x="364.236" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="360.68" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="360.68" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED4" gate="G$1" x="370.84" y="162.56" smashed="yes">
 <attribute name="NAME" x="374.396" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="370.84" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="370.84" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED5" gate="G$1" x="381" y="162.56" smashed="yes">
 <attribute name="NAME" x="384.556" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="381" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="381" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED6" gate="G$1" x="391.16" y="162.56" smashed="yes">
 <attribute name="NAME" x="394.716" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="391.16" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="391.16" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED7" gate="G$1" x="401.32" y="162.56" smashed="yes">
 <attribute name="NAME" x="404.876" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="401.32" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="401.32" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="LED8" gate="G$1" x="411.48" y="162.56" smashed="yes">
 <attribute name="NAME" x="415.036" y="157.988" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="411.48" y="162.56" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="411.48" y="162.56" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C13" gate="G$1" x="96.52" y="264.16" smashed="yes">
-<attribute name="MP" x="92.964" y="259.08" size="1.778" layer="96" align="bottom-right" display="off"/>
 <attribute name="NAME" x="89.916" y="263.525" size="1.778" layer="95"/>
 <attribute name="VALUE" x="89.916" y="260.985" size="1.778" layer="96"/>
+<attribute name="MFG" x="96.52" y="264.16" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="96.52" y="264.16" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U2" gate="G$1" x="116.84" y="261.62" smashed="yes">
-<attribute name="MP" x="116.84" y="261.62" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="104.215" y="272.6719" size="1.778" layer="95" ratio="10" rot="SR0"/>
-<attribute name="PN" x="104.215" y="243.7159" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN1" x="116.84" y="261.62" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="116.84" y="261.62" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R4" gate="G$1" x="83.82" y="259.08" smashed="yes" rot="R90">
 <attribute name="NAME" x="80.01" y="256.54" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="82.55" y="256.54" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="83.82" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="83.82" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="L1" gate="G$1" x="144.78" y="266.7" smashed="yes">
 <attribute name="NAME" x="137.16" y="271.78" size="1.778" layer="95"/>
 <attribute name="VALUE" x="137.16" y="269.24" size="1.778" layer="96"/>
+<attribute name="MFG1" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG3" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG4" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN1" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN3" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN4" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C19" gate="G$1" x="210.82" y="264.16" smashed="yes">
-<attribute name="MP" x="207.264" y="259.08" size="1.778" layer="96" align="bottom-right" display="off"/>
 <attribute name="NAME" x="204.47" y="263.779" size="1.778" layer="95"/>
 <attribute name="VALUE" x="204.47" y="261.239" size="1.778" layer="96"/>
+<attribute name="MFG" x="210.82" y="264.16" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="210.82" y="264.16" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U3" gate="G$1" x="231.14" y="261.62" smashed="yes">
-<attribute name="MP" x="231.14" y="261.62" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="218.515" y="272.6719" size="1.778" layer="95" ratio="10" rot="SR0"/>
-<attribute name="PN" x="218.515" y="243.7159" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN1" x="218.515" y="243.7159" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN2" x="231.14" y="261.62" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R7" gate="G$1" x="198.12" y="259.08" smashed="yes" rot="R90">
 <attribute name="NAME" x="194.31" y="256.54" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="196.85" y="256.54" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="198.12" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="198.12" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="L2" gate="G$1" x="259.08" y="266.7" smashed="yes">
 <attribute name="NAME" x="251.46" y="271.78" size="1.778" layer="95"/>
 <attribute name="VALUE" x="251.46" y="269.24" size="1.778" layer="96"/>
+<attribute name="MFG1" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG3" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG4" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN1" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN3" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN4" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U5" gate="G$1" x="335.28" y="256.54" smashed="yes">
 <attribute name="NAME" x="325.12" y="238.506" size="1.778" layer="95"/>
 <attribute name="PN" x="325.12" y="235.966" size="1.778" layer="95"/>
 </instance>
 <instance part="C18" gate="G$1" x="154.94" y="256.54" smashed="yes">
-<attribute name="MP" x="154.94" y="256.54" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="156.464" y="259.461" size="1.778" layer="95"/>
 <attribute name="VALUE" x="156.464" y="256.921" size="1.778" layer="96"/>
+<attribute name="MFG" x="154.94" y="256.54" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="154.94" y="256.54" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C20" gate="G$1" x="269.24" y="256.54" smashed="yes">
-<attribute name="MP" x="269.24" y="256.54" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="270.764" y="259.461" size="1.778" layer="95"/>
 <attribute name="VALUE" x="270.764" y="256.921" size="1.778" layer="96"/>
+<attribute name="MFG" x="269.24" y="256.54" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="269.24" y="256.54" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C25" gate="G$1" x="312.42" y="261.62" smashed="yes">
-<attribute name="MP" x="312.42" y="261.62" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="305.816" y="261.239" size="1.778" layer="95"/>
 <attribute name="VALUE" x="305.816" y="258.699" size="1.778" layer="96"/>
+<attribute name="MFG" x="312.42" y="261.62" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="312.42" y="261.62" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C27" gate="G$1" x="358.14" y="259.08" smashed="yes">
-<attribute name="MP" x="358.14" y="259.08" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="358.14" y="259.08" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="353.314" y="262.001" size="1.778" layer="95"/>
 <attribute name="VALUE" x="353.314" y="259.461" size="1.778" layer="96"/>
+<attribute name="MFG" x="358.14" y="259.08" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="L3" gate="G$1" x="335.28" y="284.48" smashed="yes">
 <attribute name="NAME" x="327.66" y="289.56" size="1.778" layer="95"/>
 <attribute name="VALUE" x="327.66" y="287.02" size="1.778" layer="96"/>
+<attribute name="MFG1" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="MFG3" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="MFG4" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN1" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN3" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN4" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R13" gate="G$1" x="368.3" y="261.62" smashed="yes" rot="R90">
 <attribute name="NAME" x="364.49" y="259.08" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="367.03" y="259.08" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="368.3" y="261.62" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="368.3" y="261.62" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="R14" gate="G$1" x="368.3" y="248.92" smashed="yes" rot="R90">
 <attribute name="NAME" x="364.49" y="246.38" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="367.03" y="246.38" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="368.3" y="248.92" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="368.3" y="248.92" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="U4" gate="A" x="292.1" y="93.98" smashed="yes">
 <attribute name="NAME" x="279.4" y="106.426" size="1.778" layer="95" align="top-left"/>
@@ -2102,93 +2261,123 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="PN" x="281.94" y="136.398" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="C21" gate="G$1" x="289.56" y="119.38" smashed="yes" rot="R90">
-<attribute name="MP" x="289.56" y="119.38" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="NAME" x="286.639" y="120.904" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="289.179" y="120.904" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="289.56" y="119.38" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="289.56" y="119.38" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C22" gate="G$1" x="289.56" y="111.76" smashed="yes" rot="R90">
-<attribute name="MP" x="289.56" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="289.56" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="NAME" x="286.639" y="113.284" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="289.179" y="113.284" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="289.56" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C1" gate="G$1" x="55.88" y="99.06" smashed="yes">
-<attribute name="MP" x="71.12" y="104.14" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="71.12" y="104.14" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="47.752" y="98.425" size="1.778" layer="95"/>
 <attribute name="VALUE" x="47.752" y="95.885" size="1.778" layer="96"/>
+<attribute name="MFG" x="55.88" y="99.06" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C2" gate="G$1" x="66.04" y="99.06" smashed="yes">
-<attribute name="MP" x="81.28" y="104.14" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="59.182" y="98.425" size="1.778" layer="95"/>
 <attribute name="VALUE" x="59.182" y="95.885" size="1.778" layer="96"/>
+<attribute name="MFG" x="66.04" y="99.06" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="66.04" y="99.06" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C8" gate="G$1" x="83.82" y="99.06" smashed="yes">
-<attribute name="MP" x="91.44" y="88.9" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="91.44" y="88.9" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="75.692" y="98.425" size="1.778" layer="95"/>
 <attribute name="VALUE" x="75.692" y="95.885" size="1.778" layer="96"/>
+<attribute name="MFG" x="83.82" y="99.06" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C12" gate="G$1" x="93.98" y="99.06" smashed="yes">
-<attribute name="MP" x="119.38" y="127" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="87.122" y="98.425" size="1.778" layer="95"/>
 <attribute name="VALUE" x="87.122" y="95.885" size="1.778" layer="96"/>
+<attribute name="MFG" x="93.98" y="99.06" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="93.98" y="99.06" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C5" gate="G$1" x="73.66" y="114.3" smashed="yes">
-<attribute name="MP" x="104.14" y="116.84" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="104.14" y="116.84" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="65.532" y="113.665" size="1.778" layer="95"/>
 <attribute name="VALUE" x="65.532" y="111.125" size="1.778" layer="96"/>
+<attribute name="MFG" x="73.66" y="114.3" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C7" gate="G$1" x="83.82" y="114.3" smashed="yes">
-<attribute name="MP" x="114.3" y="116.84" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="76.962" y="113.665" size="1.778" layer="95"/>
 <attribute name="VALUE" x="76.962" y="111.125" size="1.778" layer="96"/>
+<attribute name="MFG" x="83.82" y="114.3" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="83.82" y="114.3" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C23" gate="G$1" x="289.56" y="76.2" smashed="yes" rot="R90">
-<attribute name="MP" x="289.56" y="76.2" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="NAME" x="294.259" y="70.104" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="296.799" y="70.104" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="289.56" y="76.2" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="289.56" y="76.2" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C24" gate="G$1" x="289.56" y="68.58" smashed="yes" rot="R90">
-<attribute name="MP" x="289.56" y="68.58" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="289.56" y="68.58" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="NAME" x="289.179" y="59.944" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="291.719" y="59.944" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="289.56" y="68.58" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="H1" gate="G$1" x="378.46" y="190.5" smashed="yes">
 <attribute name="NAME" x="374.65" y="206.502" size="1.778" layer="95"/>
+<attribute name="MFG" x="378.46" y="190.5" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="378.46" y="190.5" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R5" gate="G$1" x="119.38" y="12.7" smashed="yes">
 <attribute name="NAME" x="117.856" y="9.398" size="1.778" layer="95"/>
 <attribute name="VALUE" x="117.856" y="6.858" size="1.778" layer="96"/>
+<attribute name="MFG" x="119.38" y="12.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="119.38" y="12.7" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R10" gate="G$1" x="340.36" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="344.17" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="341.63" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="340.36" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="340.36" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="R11" gate="G$1" x="350.52" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="354.33" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="351.79" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="350.52" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="350.52" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="R12" gate="G$1" x="360.68" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="364.49" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="361.95" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="360.68" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="360.68" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="R15" gate="G$1" x="370.84" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="374.65" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="372.11" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="370.84" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="370.84" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="R18" gate="G$1" x="381" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="384.81" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="382.27" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="381" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="381" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="R19" gate="G$1" x="391.16" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="394.97" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="392.43" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="391.16" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="391.16" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="R20" gate="G$1" x="401.32" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="405.13" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="402.59" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="401.32" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="401.32" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="R21" gate="G$1" x="411.48" y="149.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="415.29" y="152.4" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="412.75" y="152.4" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="411.48" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="411.48" y="149.86" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="TP3" gate="G$1" x="154.94" y="276.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="158.242" y="279.4" size="1.778" layer="95" rot="R270"/>
@@ -2205,10 +2394,14 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="R9" gate="G$1" x="317.5" y="274.32" smashed="yes" rot="R90">
 <attribute name="NAME" x="313.69" y="271.78" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="316.23" y="271.78" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="317.5" y="274.32" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="317.5" y="274.32" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="R1" gate="G$1" x="43.18" y="254" smashed="yes" rot="R180">
 <attribute name="NAME" x="45.72" y="250.19" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="45.72" y="252.73" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="43.18" y="254" size="1.778" layer="96" rot="R180" display="off"/>
+<attribute name="PN" x="43.18" y="254" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="TP1" gate="G$1" x="38.1" y="264.16" smashed="yes" rot="R270">
 <attribute name="NAME" x="37.592" y="271.78" size="1.778" layer="95" rot="R270"/>
@@ -2222,14 +2415,20 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="R6" gate="G$1" x="162.56" y="266.7" smashed="yes" rot="R180">
 <attribute name="NAME" x="165.1" y="262.89" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="165.1" y="265.43" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="162.56" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
+<attribute name="PN" x="162.56" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="R8" gate="G$1" x="276.86" y="266.7" smashed="yes" rot="R180">
 <attribute name="NAME" x="279.4" y="262.89" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="279.4" y="265.43" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="276.86" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
+<attribute name="PN" x="276.86" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="R16" gate="G$1" x="375.92" y="266.7" smashed="yes" rot="R180">
 <attribute name="NAME" x="378.46" y="262.89" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="378.46" y="265.43" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="375.92" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
+<attribute name="PN" x="375.92" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="U1" gate="A" x="45.72" y="177.8" smashed="yes">
 <attribute name="NAME" x="33.274" y="213.36" size="1.778" layer="95" align="top-left"/>
@@ -2252,83 +2451,101 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="PN" x="134.62" y="41.656" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="C6" gate="G$1" x="73.66" y="83.82" smashed="yes">
-<attribute name="MP" x="73.66" y="83.82" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="73.66" y="83.82" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="65.786" y="83.439" size="1.778" layer="95"/>
 <attribute name="VALUE" x="65.786" y="80.899" size="1.778" layer="96"/>
+<attribute name="MFG" x="73.66" y="83.82" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C9" gate="G$1" x="83.82" y="83.82" smashed="yes">
-<attribute name="MP" x="83.82" y="83.82" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="77.216" y="83.185" size="1.778" layer="95"/>
 <attribute name="VALUE" x="77.216" y="80.645" size="1.778" layer="96"/>
+<attribute name="MFG" x="83.82" y="83.82" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="83.82" y="83.82" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R3" gate="G$1" x="58.42" y="50.8" smashed="yes" rot="R180">
 <attribute name="NAME" x="60.96" y="54.61" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="60.96" y="57.15" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="58.42" y="50.8" size="1.778" layer="96" rot="R180" display="off"/>
+<attribute name="PN" x="58.42" y="50.8" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="C4" gate="G$1" x="68.58" y="48.26" smashed="yes">
-<attribute name="MP" x="68.58" y="48.26" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="61.976" y="47.625" size="1.778" layer="95"/>
 <attribute name="VALUE" x="61.976" y="45.085" size="1.778" layer="96"/>
+<attribute name="MFG" x="68.58" y="48.26" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="68.58" y="48.26" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C11" gate="G$1" x="83.82" y="48.26" smashed="yes">
-<attribute name="MP" x="83.82" y="48.26" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="83.82" y="48.26" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="75.946" y="47.625" size="1.778" layer="95"/>
 <attribute name="VALUE" x="75.946" y="45.085" size="1.778" layer="96"/>
+<attribute name="MFG" x="83.82" y="48.26" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R2" gate="G$1" x="58.42" y="71.12" smashed="yes" rot="R180">
 <attribute name="NAME" x="60.96" y="74.93" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="60.96" y="77.47" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="58.42" y="71.12" size="1.778" layer="96" rot="R180" display="off"/>
+<attribute name="PN" x="58.42" y="71.12" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="C3" gate="G$1" x="68.58" y="68.58" smashed="yes">
-<attribute name="MP" x="68.58" y="68.58" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="61.468" y="68.199" size="1.778" layer="95"/>
 <attribute name="VALUE" x="61.468" y="65.659" size="1.778" layer="96"/>
+<attribute name="MFG" x="68.58" y="68.58" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="68.58" y="68.58" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C10" gate="G$1" x="83.82" y="68.58" smashed="yes">
-<attribute name="MP" x="83.82" y="68.58" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="83.82" y="68.58" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="76.2" y="67.945" size="1.778" layer="95"/>
 <attribute name="VALUE" x="76.2" y="65.405" size="1.778" layer="96"/>
+<attribute name="MFG" x="83.82" y="68.58" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U6" gate="G$1" x="378.46" y="121.92" smashed="yes">
-<attribute name="VALUE" x="369.57" y="111.76" size="1.778" layer="96"/>
 <attribute name="NAME" x="369.57" y="127.762" size="1.778" layer="95"/>
+<attribute name="PN" x="368.554" y="111.76" size="1.778" layer="95"/>
 </instance>
 <instance part="R17" gate="G$1" x="378.46" y="104.14" smashed="yes" rot="R180">
 <attribute name="NAME" x="381" y="100.33" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="381" y="102.87" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="378.46" y="104.14" size="1.778" layer="96" rot="R180" display="off"/>
+<attribute name="PN" x="378.46" y="104.14" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="C28" gate="G$1" x="373.38" y="88.9" smashed="yes">
-<attribute name="MP" x="373.38" y="88.9" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="366.776" y="88.265" size="1.778" layer="95"/>
 <attribute name="VALUE" x="366.776" y="85.725" size="1.778" layer="96"/>
+<attribute name="MFG" x="373.38" y="88.9" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="373.38" y="88.9" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C29" gate="G$1" x="383.54" y="88.9" smashed="yes">
-<attribute name="MP" x="383.54" y="88.9" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="383.54" y="88.9" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="386.588" y="88.773" size="1.778" layer="95"/>
 <attribute name="VALUE" x="386.588" y="86.233" size="1.778" layer="96"/>
+<attribute name="MFG" x="383.54" y="88.9" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="TC1" gate="G$1" x="381" y="60.96" smashed="yes">
 <attribute name="NAME" x="373.634" y="69.088" size="1.778" layer="95"/>
 </instance>
 <instance part="C14" gate="G$1" x="99.06" y="114.3" smashed="yes">
-<attribute name="MP" x="114.3" y="119.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="114.3" y="119.38" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="90.932" y="113.411" size="1.778" layer="95"/>
 <attribute name="VALUE" x="90.932" y="110.871" size="1.778" layer="96"/>
+<attribute name="MFG" x="99.06" y="114.3" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C16" gate="G$1" x="109.22" y="99.06" smashed="yes">
-<attribute name="MP" x="116.84" y="88.9" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="116.84" y="88.9" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="101.092" y="98.425" size="1.778" layer="95"/>
 <attribute name="VALUE" x="101.092" y="95.885" size="1.778" layer="96"/>
+<attribute name="MFG" x="109.22" y="99.06" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C15" gate="G$1" x="109.22" y="114.3" smashed="yes">
-<attribute name="MP" x="139.7" y="116.84" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="102.362" y="113.665" size="1.778" layer="95"/>
 <attribute name="VALUE" x="102.362" y="111.125" size="1.778" layer="96"/>
+<attribute name="MFG" x="109.22" y="114.3" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="109.22" y="114.3" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C17" gate="G$1" x="119.38" y="99.06" smashed="yes">
-<attribute name="MP" x="144.78" y="127" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="112.522" y="98.425" size="1.778" layer="95"/>
 <attribute name="VALUE" x="112.522" y="95.885" size="1.778" layer="96"/>
+<attribute name="MFG" x="119.38" y="99.06" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="119.38" y="99.06" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
