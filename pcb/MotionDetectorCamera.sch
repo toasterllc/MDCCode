@@ -3137,7 +3137,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="L2" gate="G$1" pin="1"/>
 </segment>
 </net>
-<net name="2V5" class="0">
+<net name="2V8" class="0">
 <segment>
 <pinref part="R16" gate="G$1" pin="1"/>
 <wire x1="381" y1="266.7" x2="383.54" y2="266.7" width="0.1524" layer="91"/>

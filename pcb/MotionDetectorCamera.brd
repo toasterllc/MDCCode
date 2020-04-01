@@ -1653,7 +1653,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="23.2728" y1="38.208" x2="23.6728" y2="38.208" width="0.2032" layer="1"/>
 <wire x1="23.6728" y1="38.208" x2="23.6728" y2="38.608" width="0.2032" layer="1"/>
 <wire x1="23.6728" y1="38.608" x2="23.6728" y2="39.008" width="0.2032" layer="1"/>
-<via x="20.8788" y="36.195" extent="1-16" drill="0.254"/>
+<via x="21.2852" y="36.2204" extent="1-16" drill="0.254"/>
 <via x="26.9748" y="38.7096" extent="1-16" drill="0.254"/>
 <wire x1="35.3314" y1="11.5552" x2="35.3314" y2="10.2126" width="0.2032" layer="1"/>
 <wire x1="35.3314" y1="10.2126" x2="35.306" y2="10.1872" width="0.2032" layer="1"/>
@@ -1774,8 +1774,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="20.574" y="16.383" extent="1-16" drill="0.254"/>
 <wire x1="23.2149" y1="37.2746" x2="21.6272" y2="37.2746" width="0.2032" layer="1"/>
 <wire x1="21.6272" y1="37.2746" x2="21.5392" y2="37.1866" width="0.2032" layer="1"/>
-<wire x1="21.5392" y1="37.1866" x2="20.8788" y2="36.5262" width="0.2032" layer="1"/>
-<wire x1="20.8788" y1="36.5262" x2="20.8788" y2="36.195" width="0.2032" layer="1"/>
+<wire x1="21.5392" y1="37.1866" x2="21.2852" y2="36.9326" width="0.2032" layer="1"/>
+<wire x1="21.2852" y1="36.9326" x2="21.2852" y2="36.2204" width="0.2032" layer="1"/>
 <wire x1="23.2728" y1="38.208" x2="23.2728" y2="37.3325" width="0.2032" layer="1"/>
 <wire x1="23.2728" y1="37.3325" x2="23.2149" y2="37.2746" width="0.2032" layer="1"/>
 <wire x1="23.2149" y1="37.2746" x2="23.2149" y2="36.6014" width="0.2032" layer="1"/>
@@ -1878,7 +1878,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="25.4762" y1="7.5664" x2="25.4762" y2="7.874" width="0.2032" layer="1"/>
 <wire x1="25.4762" y1="7.874" x2="26.0096" y2="8.4074" width="0.2032" layer="1"/>
 </signal>
-<signal name="2V5">
+<signal name="2V8">
 <contactref element="R16" pad="1"/>
 <contactref element="C6" pad="1"/>
 <contactref element="C9" pad="1"/>
