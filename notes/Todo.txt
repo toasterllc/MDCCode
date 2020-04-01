@@ -2,8 +2,10 @@
     - Solder wick
     
     - Lead-free solder
+        - See SolderProducts.txt
     
     - Flux
+        - See SolderProducts.txt
     
     - Fume extractor
         Hakko FA430
@@ -16,7 +18,11 @@
 
 
 - Rev2
-    - TPS6380X_TPS6380X (U3):
+    - Make VDD net larger?
+    
+    - Check TP4 connection: was it connected in Rev1? Why isn't connected in the Rev2 board right now?
+    
+    - TPS63805:
         - "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
     
     - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
