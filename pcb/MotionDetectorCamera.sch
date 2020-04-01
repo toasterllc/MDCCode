@@ -601,34 +601,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="4" y="4.5"/>
 </polygon>
 </package>
-<package name="GD25LQ80CEIGR" urn="urn:adsk.eagle:footprint:17077903/1" locally_modified="yes">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="2" x="-1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="3" x="-1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="4" x="-1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="5" x="1.4706" y="-0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="6" x="1.4706" y="-0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="7" x="1.4706" y="0.25" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<smd name="8" x="1.4706" y="0.75" dx="0.788" dy="0.27" layer="1" roundness="100"/>
-<text x="-1.645" y="1.272" size="0.508" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="21">
-<vertex x="-1.6" y="1.1"/>
-<vertex x="-1.2" y="1.1"/>
-<vertex x="-1.6" y="0.7"/>
-</polygon>
-<wire x1="-1.6" y1="1.1" x2="-1.6" y2="-1.1" width="0.05" layer="21"/>
-<wire x1="-1.6" y1="-1.1" x2="1.6" y2="-1.1" width="0.05" layer="21"/>
-<wire x1="1.6" y1="-1.1" x2="1.6" y2="1.1" width="0.05" layer="21"/>
-<wire x1="1.6" y1="1.1" x2="-1.6" y2="1.1" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-1.6" y="1.1"/>
-<vertex x="-1.6" y="-1.1"/>
-<vertex x="1.6" y="-1.1"/>
-<vertex x="1.6" y="1.1"/>
-</polygon>
-</package>
 <package name="SOLDER-JUMPER">
 <description>Chip, 1.00 X 0.50 X 0.50 mm body
 &lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
@@ -644,6 +616,35 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-0.85" y="-0.4"/>
 <vertex x="0.85" y="-0.4"/>
 <vertex x="0.85" y="0.4"/>
+</polygon>
+</package>
+<package name="W25Q80EWUXIE" urn="urn:adsk.eagle:footprint:18792594/1" locally_modified="yes">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.80 mm body, 1.60 X 0.20 mm thermal pad
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.80 mm and thermal pad size 1.60 X 0.20 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4206" y="0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="2" x="-1.4206" y="0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="3" x="-1.4206" y="-0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="4" x="-1.4206" y="-0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="5" x="1.4206" y="-0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="6" x="1.4206" y="-0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="7" x="1.4206" y="0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="8" x="1.4206" y="0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
+<smd name="9" x="0" y="0" dx="0.2" dy="1.6" layer="1" thermals="no"/>
+<text x="-1.630678125" y="1.179259375" size="0.762" layer="25" font="vector">&gt;NAME</text>
+<wire x1="1.55" y1="-1.05" x2="-1.55" y2="-1.05" width="0.05" layer="21"/>
+<wire x1="-1.55" y1="-1.05" x2="-1.55" y2="1.05" width="0.05" layer="21"/>
+<wire x1="-1.55" y1="1.05" x2="1.55" y2="1.05" width="0.05" layer="21"/>
+<wire x1="1.55" y1="1.05" x2="1.55" y2="-1.05" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="1.55" y="-1.05"/>
+<vertex x="-1.55" y="-1.05"/>
+<vertex x="-1.55" y="1.05"/>
+<vertex x="1.55" y="1.05"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-1.55" y="1.05"/>
+<vertex x="-1.55" y="0.5"/>
+<vertex x="-1" y="1.05"/>
 </polygon>
 </package>
 </packages>
@@ -690,11 +691,11 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <packageinstance name="ICE40HX4K-BG121"/>
 </packageinstances>
 </package3d>
-<package3d name="SON50P300X200X60-8N" urn="urn:adsk.eagle:package:17077898/1" type="model">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.60 mm body
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.60 mm&lt;/p&gt;</description>
+<package3d name="SON50P300X200X80-9T20X160N" urn="urn:adsk.eagle:package:18792578/1" type="model">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.80 mm body, 1.60 X 0.20 mm thermal pad
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.80 mm and thermal pad size 1.60 X 0.20 mm&lt;/p&gt;</description>
 <packageinstances>
-<packageinstance name="GD25LQ80CEIGR"/>
+<packageinstance name="W25Q80EWUXIE"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -1111,22 +1112,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="-7.62" y="37.846" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="-7.62" y="-36.322" size="1.778" layer="95" align="top-left">&gt;PN</text>
 </symbol>
-<symbol name="GD25LQ80CEIGR">
-<wire x1="-10.16" y1="5.08" x2="-10.16" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-10.16" y1="-7.62" x2="10.16" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-7.62" x2="10.16" y2="5.08" width="0.254" layer="94"/>
-<wire x1="10.16" y1="5.08" x2="-10.16" y2="5.08" width="0.254" layer="94"/>
-<pin name="CS_" x="-15.24" y="2.54" length="middle"/>
-<pin name="SO" x="-15.24" y="0" length="middle"/>
-<pin name="WP_" x="-15.24" y="-2.54" length="middle"/>
-<pin name="GND" x="-15.24" y="-5.08" length="middle"/>
-<pin name="VDD" x="15.24" y="2.54" length="middle" rot="R180"/>
-<pin name="HOLD_" x="15.24" y="0" length="middle" rot="R180"/>
-<pin name="SCLK" x="15.24" y="-2.54" length="middle" rot="R180"/>
-<pin name="SI" x="15.24" y="-5.08" length="middle" rot="R180"/>
-<text x="-8.89" y="5.842" size="1.778" layer="95">&gt;NAME</text>
-<text x="-9.906" y="-10.16" size="1.778" layer="95">&gt;PN</text>
-</symbol>
 <symbol name="JUMPER">
 <wire x1="-2.54" y1="0" x2="-2.54" y2="1.27" width="0.1524" layer="94"/>
 <wire x1="-2.54" y1="2.54" x2="-2.54" y2="1.27" width="0.4064" layer="94"/>
@@ -1139,6 +1124,22 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="-3.81" y="5.08" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <pin name="1" x="-2.54" y="-2.54" visible="pad" length="short" rot="R90"/>
 <pin name="2" x="0" y="-2.54" visible="pad" length="short" rot="R90"/>
+</symbol>
+<symbol name="W25Q80EWUXIE">
+<wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="0" y1="-12.7" x2="20.32" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="20.32" y1="-12.7" x2="20.32" y2="0" width="0.254" layer="94"/>
+<wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="CS_" x="-5.08" y="-2.54" length="middle"/>
+<pin name="SO" x="-5.08" y="-5.08" length="middle"/>
+<pin name="WP_" x="-5.08" y="-7.62" length="middle"/>
+<pin name="GND" x="-5.08" y="-10.16" length="middle"/>
+<pin name="VDD" x="25.4" y="-2.54" length="middle" rot="R180"/>
+<pin name="HOLD_" x="25.4" y="-5.08" length="middle" rot="R180"/>
+<pin name="SCLK" x="25.4" y="-7.62" length="middle" rot="R180"/>
+<pin name="SI" x="25.4" y="-10.16" length="middle" rot="R180"/>
+<text x="1.27" y="0.762" size="1.778" layer="95">&gt;NAME</text>
+<text x="0.254" y="-15.24" size="1.778" layer="95">&gt;PN</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -1682,35 +1683,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="GD25LQ80CEIGR" prefix="U">
-<description>SPI Flash</description>
-<gates>
-<gate name="G$1" symbol="GD25LQ80CEIGR" x="7.62" y="-12.7"/>
-</gates>
-<devices>
-<device name="" package="GD25LQ80CEIGR">
-<connects>
-<connect gate="G$1" pin="CS_" pad="1"/>
-<connect gate="G$1" pin="GND" pad="4"/>
-<connect gate="G$1" pin="HOLD_" pad="7"/>
-<connect gate="G$1" pin="SCLK" pad="6"/>
-<connect gate="G$1" pin="SI" pad="5"/>
-<connect gate="G$1" pin="SO" pad="2"/>
-<connect gate="G$1" pin="VDD" pad="8"/>
-<connect gate="G$1" pin="WP_" pad="3"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17077898/1"/>
-</package3dinstances>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="GigaDevice"/>
-<attribute name="PN" value="GD25LQ80CEIGR"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="SOLDER-JUMPER" prefix="J">
 <gates>
 <gate name="G$1" symbol="JUMPER" x="0" y="0"/>
@@ -1723,6 +1695,34 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </connects>
 <technologies>
 <technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="W25Q80EWUXIE" prefix="U">
+<gates>
+<gate name="G$1" symbol="W25Q80EWUXIE" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="W25Q80EWUXIE">
+<connects>
+<connect gate="G$1" pin="CS_" pad="1"/>
+<connect gate="G$1" pin="GND" pad="4 9"/>
+<connect gate="G$1" pin="HOLD_" pad="7"/>
+<connect gate="G$1" pin="SCLK" pad="6"/>
+<connect gate="G$1" pin="SI" pad="5"/>
+<connect gate="G$1" pin="SO" pad="2"/>
+<connect gate="G$1" pin="VDD" pad="8"/>
+<connect gate="G$1" pin="WP_" pad="3"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:18792578/1"/>
+</package3dinstances>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Winbond"/>
+<attribute name="PN" value="W25Q80EWUXIE"/>
+</technology>
 </technologies>
 </device>
 </devices>
@@ -2098,7 +2098,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="U6" library="EagleLibrary" deviceset="GD25LQ80CEIGR" device="" package3d_urn="urn:adsk.eagle:package:17077898/1"/>
 <part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
@@ -2133,6 +2132,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
 <part name="J1" library="EagleLibrary" deviceset="SOLDER-JUMPER" device=""/>
+<part name="U7" library="EagleLibrary" deviceset="W25Q80EWUXIE" device="" package3d_urn="urn:adsk.eagle:package:18792578/1"/>
 </parts>
 <sheets>
 <sheet>
@@ -2549,10 +2549,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <attribute name="VALUE" x="76.2" y="65.405" size="1.778" layer="96"/>
 <attribute name="MFG" x="83.82" y="68.58" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U6" gate="G$1" x="378.46" y="121.92" smashed="yes">
-<attribute name="NAME" x="369.57" y="127.762" size="1.778" layer="95"/>
-<attribute name="PN" x="368.554" y="111.76" size="1.778" layer="95"/>
-</instance>
 <instance part="R17" gate="G$1" x="378.46" y="104.14" smashed="yes" rot="R180">
 <attribute name="NAME" x="381" y="100.33" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="381" y="102.87" size="1.778" layer="96" rot="R180"/>
@@ -2606,6 +2602,10 @@ to 1V8 for ICE_PRG_CDONE</text>
 </instance>
 <instance part="J1" gate="G$1" x="360.68" y="127" smashed="yes">
 <attribute name="NAME" x="358.648" y="130.556" size="1.778" layer="95" rot="R90" align="top-left"/>
+</instance>
+<instance part="U7" gate="G$1" x="368.3" y="127" smashed="yes">
+<attribute name="NAME" x="369.57" y="127.762" size="1.778" layer="95"/>
+<attribute name="PN" x="368.554" y="111.76" size="1.778" layer="95"/>
 </instance>
 </instances>
 <busses>
@@ -2782,9 +2782,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="370.84" y="104.14" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="G$1" pin="VDD"/>
 <wire x1="393.7" y1="124.46" x2="396.24" y2="124.46" width="0.1524" layer="91"/>
 <label x="396.24" y="124.46" size="1.778" layer="95"/>
+<pinref part="U7" gate="G$1" pin="VDD"/>
 </segment>
 <segment>
 <pinref part="C28" gate="G$1" pin="1"/>
@@ -3044,9 +3044,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="63.5" y="91.44" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="G$1" pin="GND"/>
 <wire x1="363.22" y1="116.84" x2="360.68" y2="116.84" width="0.1524" layer="91"/>
 <label x="360.68" y="116.84" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U7" gate="G$1" pin="GND"/>
 </segment>
 <segment>
 <pinref part="C28" gate="G$1" pin="2"/>
@@ -3706,9 +3706,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="TC1" gate="G$1" pin="4"/>
 </segment>
 <segment>
-<pinref part="U6" gate="G$1" pin="SI"/>
 <wire x1="393.7" y1="116.84" x2="396.24" y2="116.84" width="0.1524" layer="91"/>
 <label x="396.24" y="116.84" size="1.778" layer="95"/>
+<pinref part="U7" gate="G$1" pin="SI"/>
 </segment>
 </net>
 <net name="ICE_PRG_SI" class="0">
@@ -3723,9 +3723,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="TC1" gate="G$1" pin="1"/>
 </segment>
 <segment>
-<pinref part="U6" gate="G$1" pin="SO"/>
 <wire x1="363.22" y1="121.92" x2="360.68" y2="121.92" width="0.1524" layer="91"/>
 <label x="360.68" y="121.92" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U7" gate="G$1" pin="SO"/>
 </segment>
 </net>
 <net name="ICE_PRG_SCLK" class="0">
@@ -3737,7 +3737,7 @@ to 1V8 for ICE_PRG_CDONE</text>
 <segment>
 <wire x1="393.7" y1="119.38" x2="396.24" y2="119.38" width="0.1524" layer="91"/>
 <label x="396.24" y="119.38" size="1.778" layer="95"/>
-<pinref part="U6" gate="G$1" pin="SCLK"/>
+<pinref part="U7" gate="G$1" pin="SCLK"/>
 </segment>
 <segment>
 <wire x1="365.76" y1="63.5" x2="368.3" y2="63.5" width="0.1524" layer="91"/>
@@ -4380,14 +4380,14 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="386.08" y="104.14" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="G$1" pin="WP_"/>
 <wire x1="363.22" y1="119.38" x2="360.68" y2="119.38" width="0.1524" layer="91"/>
 <label x="342.9" y="119.38" size="1.778" layer="95"/>
+<pinref part="U7" gate="G$1" pin="WP_"/>
 </segment>
 <segment>
-<pinref part="U6" gate="G$1" pin="HOLD_"/>
 <wire x1="393.7" y1="121.92" x2="396.24" y2="121.92" width="0.1524" layer="91"/>
 <label x="396.24" y="121.92" size="1.778" layer="95"/>
+<pinref part="U7" gate="G$1" pin="HOLD_"/>
 </segment>
 </net>
 <net name="N$36" class="0">
@@ -4423,11 +4423,11 @@ to 1V8 for ICE_PRG_CDONE</text>
 <net name="N$3" class="0">
 <segment>
 <pinref part="J1" gate="G$1" pin="2"/>
-<pinref part="U6" gate="G$1" pin="CS_"/>
 <pinref part="R22" gate="G$1" pin="1"/>
 <wire x1="363.22" y1="124.46" x2="363.22" y2="127" width="0.1524" layer="91"/>
-<junction x="363.22" y="124.46"/>
 <wire x1="360.68" y1="124.46" x2="363.22" y2="124.46" width="0.1524" layer="91"/>
+<pinref part="U7" gate="G$1" pin="CS_"/>
+<junction x="363.22" y="124.46"/>
 </segment>
 </net>
 </nets>

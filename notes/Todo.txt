@@ -19,8 +19,6 @@
 
 - Rev2
     
-    - Switch flash to W25Q80EWUXIE, since its tVSL=10us, as required by the ice40
-    
     - ICE40: configuring SRAM isn't working
         - Bidirectional level shifter doesn't work for our use case, likely due to its bidirectional behavior and weak drive strength.
             - Switch to a real level shifter with explicit inputs and outputs
@@ -50,6 +48,8 @@
     
     
     
+    
+    √ Switch flash to W25Q80EWUXIE, since its tVSL=10us, as required by the ice40
     
     √ ICE40: loading from flash isn't working
         √ Swap ICE_PRG_SO/ICE_PRG_SI pins entering flash chip. Currently we have the ICE40's SPI input connected to the flash's SPI input, and the ICE40's output connected to the flash's SPI output.
