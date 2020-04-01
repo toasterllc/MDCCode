@@ -18,13 +18,8 @@
 
 
 - Rev2
-    - Check TP4 connection: was it connected in Rev1? Why isn't connected in the Rev2 board right now?
     
-    - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
-    
-    - ICE40: loading from flash isn't working
-        - Swap ICE_PRG_SO/ICE_PRG_SI pins entering flash chip. Currently we have the ICE40's SPI input connected to the flash's SPI input, and the ICE40's output connected to the flash's SPI output.
-        - Make sure the chosen flash meets the "SPI PROM Requirements" criteria in "iCE40 Programming and Configuration" document
+    - Switch flash to W25Q80EWUXIE, since its tVSL=10us, as required by the ice40
     
     - ICE40: configuring SRAM isn't working
         - Bidirectional level shifter doesn't work for our use case, likely due to its bidirectional behavior and weak drive strength.
@@ -50,9 +45,16 @@
     - TPS63805:
         - "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
     
+    - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
     
     
     
+    
+    
+    √ ICE40: loading from flash isn't working
+        √ Swap ICE_PRG_SO/ICE_PRG_SI pins entering flash chip. Currently we have the ICE40's SPI input connected to the flash's SPI input, and the ICE40's output connected to the flash's SPI output.
+        √ Make sure the chosen flash meets the "SPI PROM Requirements" criteria in "iCE40 Programming and Configuration" document
+            -> We'll meet these requirements by switching the flash chip to W25Q80EWUXIE
     
     √ TPS62801X_TPS6280X (U1/U2)
         √ Fix pinout. The 1V8 and 1V2 rails are currently broken because the pins of the TPS* chips are scrambled for some reason.
@@ -66,6 +68,9 @@
     √ Update MFG/PN for all components on schematic
     
     √ Update EagleLibrary's description of all MDC-imported components
+    
+    √ Check TP4 connection: was it connected in Rev1? Why isn't connected in the Rev2 board right now?
+        - It used to be connected. I think we just deleted it somehow...
     
     
     
