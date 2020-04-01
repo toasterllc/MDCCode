@@ -1859,7 +1859,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C25" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C25" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -1867,7 +1867,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </pinmapping>
 </spice>
 <attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM188R61A106KE69D"/>
+<attribute name="PN" value="GRM219R61C226ME15L"/>
 </part>
 <part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
 <spice>
@@ -1889,13 +1889,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN3" value="LQH5BPNR47NT0L"/>
 <attribute name="PN4" value="DFE201612E-R47M=P2"/>
 </part>
-<part name="R13" library="EagleLibrary" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="365k">
+<part name="R13" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="422k">
 <attribute name="MFG" value="Bourns"/>
-<attribute name="PN" value="CR0603-FX-3653ELF"/>
+<attribute name="PN" value="CR0402-FX-4223GLF"/>
 </part>
-<part name="R14" library="EagleLibrary" deviceset="RESISTOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="91k">
+<part name="R14" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="91k">
 <attribute name="MFG" value="Bourns"/>
-<attribute name="PN" value="CR0603-FX-9102ELF"/>
+<attribute name="PN" value="CR0402-FX-9102GLF"/>
 </part>
 <part name="U4" library="EagleLibrary" deviceset="W989D6DBGX6I" device=""/>
 <part name="C21" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
@@ -2042,10 +2042,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="TP5" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP7" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP6" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
-<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW040210K0FKEDC"/>
-</part>
 <part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW12061R00FKEA"/>
@@ -2442,12 +2438,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <instance part="TP6" gate="G$1" x="312.42" y="48.26" smashed="yes" rot="R270">
 <attribute name="NAME" x="315.722" y="50.8" size="1.778" layer="95" rot="R270"/>
 </instance>
-<instance part="R9" gate="G$1" x="317.5" y="274.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="313.69" y="271.78" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="316.23" y="271.78" size="1.778" layer="96" rot="R90"/>
-<attribute name="MFG" x="317.5" y="274.32" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="317.5" y="274.32" size="1.778" layer="96" rot="R90" display="off"/>
-</instance>
 <instance part="R1" gate="G$1" x="43.18" y="254" smashed="yes" rot="R180">
 <attribute name="NAME" x="45.72" y="250.19" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="45.72" y="252.73" size="1.778" layer="96" rot="R180"/>
@@ -2662,11 +2652,9 @@ to 1V8 for ICE_PRG_CDONE</text>
 <label x="311.404" y="266.7" size="1.778" layer="95" rot="MR0"/>
 <wire x1="312.42" y1="264.16" x2="312.42" y2="266.7" width="0.1524" layer="91"/>
 <pinref part="C25" gate="G$1" pin="1"/>
-</segment>
-<segment>
-<pinref part="R9" gate="G$1" pin="2"/>
-<wire x1="317.5" y1="279.4" x2="317.5" y2="281.94" width="0.1524" layer="91"/>
-<label x="317.5" y="281.94" size="1.778" layer="95"/>
+<pinref part="U5" gate="G$1" pin="EN"/>
+<wire x1="320.04" y1="266.7" x2="320.04" y2="259.08" width="0.1524" layer="91"/>
+<junction x="320.04" y="266.7"/>
 </segment>
 <segment>
 <pinref part="R1" gate="G$1" pin="1"/>
@@ -3904,14 +3892,6 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="LED1" gate="G$1" pin="C"/>
 <wire x1="340.36" y1="165.1" x2="340.36" y2="162.56" width="0.1524" layer="91"/>
 <pinref part="R10" gate="G$1" pin="1"/>
-</segment>
-</net>
-<net name="N$2" class="0">
-<segment>
-<pinref part="U5" gate="G$1" pin="EN"/>
-<wire x1="320.04" y1="259.08" x2="317.5" y2="259.08" width="0.1524" layer="91"/>
-<wire x1="317.5" y1="259.08" x2="317.5" y2="269.24" width="0.1524" layer="91"/>
-<pinref part="R9" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="VDDIN" class="0">

@@ -19,6 +19,8 @@
 
 - Rev2
     
+    - Replace 2V5 rail with 2V8 instead, which will work with both the image sensor and ICE40
+    
     - ICE40: configuring SRAM isn't working
         - Bidirectional level shifter doesn't work for our use case, likely due to its bidirectional behavior and weak drive strength.
             - Switch to a real level shifter with explicit inputs and outputs
@@ -29,8 +31,6 @@
     - Add image sensor
     
     - Add SD card
-    
-    - Replace 2V5 rail with 2V8 instead, which will work with both the image sensor and ICE40
     
     - Cascade PG from 2V8 into 1V8, so that the image sensor's 1V8 rail turns on after its 2V8 (per power-on sequencing steps in the AR0330CS datasheet)
     
@@ -44,6 +44,8 @@
         - "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
     
     - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
+    
+    - Upgrade capacitors where necessary, by derating them based on applied DC voltage
     
     
     
