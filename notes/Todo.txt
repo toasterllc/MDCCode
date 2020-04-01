@@ -18,12 +18,7 @@
 
 
 - Rev2
-    - Make VDD net larger?
-    
     - Check TP4 connection: was it connected in Rev1? Why isn't connected in the Rev2 board right now?
-    
-    - TPS63805:
-        - "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
     
     - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
     
@@ -49,6 +44,11 @@
     - Create programmer board using FT232H
         - Need jumpers to swap SO/SI lines to program flash vs. SRAM (see breakout board schematic)
         - Need jumper to isolate CS_ line of flash / ice40 (see breakout board schematic)
+    
+    - Make VDD net larger?
+    
+    - TPS63805:
+        - "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
     
     
     
