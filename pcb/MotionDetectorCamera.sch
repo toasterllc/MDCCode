@@ -1740,51 +1740,51 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <deviceset name="AR0330CS1C12SPKA0" prefix="U">
 <description>3.4 Megapixel CMOS Image Sensor</description>
 <gates>
-<gate name="A" symbol="AR0330CS1C12SPKA0-A" x="0" y="0"/>
-<gate name="B" symbol="AR0330CS1C12SPKA0-B" x="30.48" y="0"/>
+<gate name="G$1" symbol="AR0330CS1C12SPKA0-A" x="0" y="0"/>
+<gate name="G$2" symbol="AR0330CS1C12SPKA0-B" x="30.48" y="0"/>
 </gates>
 <devices>
 <device name="" package="AR0330CS1C12SPKA0">
 <connects>
-<connect gate="A" pin="AGND" pad="A3 B5"/>
-<connect gate="A" pin="DGND" pad="B4 B6 C4 C5 C6 D4 E6 G1 H2 H3"/>
-<connect gate="A" pin="VAA" pad="A1 A6"/>
-<connect gate="A" pin="VAAHV_NPIX" pad="A2"/>
-<connect gate="A" pin="VAA_PIX" pad="A5"/>
-<connect gate="A" pin="VDD" pad="A8 B1 G2 G8"/>
-<connect gate="A" pin="VDD_IO" pad="A7 D2 D5 D6 E5 F6 H5"/>
-<connect gate="A" pin="VDD_MIPI" pad="H6 H8"/>
-<connect gate="A" pin="VDD_PLL" pad="F8"/>
-<connect gate="B" pin="CLK_N" pad="E7"/>
-<connect gate="B" pin="CLK_P" pad="F7"/>
-<connect gate="B" pin="DATA2_N" pad="G7"/>
-<connect gate="B" pin="DATA2_P" pad="H7"/>
-<connect gate="B" pin="DATA_N" pad="D8"/>
-<connect gate="B" pin="DATA_P" pad="E8"/>
-<connect gate="B" pin="DOUT0" pad="G6"/>
-<connect gate="B" pin="DOUT1" pad="G5"/>
-<connect gate="B" pin="DOUT10" pad="D3"/>
-<connect gate="B" pin="DOUT11" pad="E2"/>
-<connect gate="B" pin="DOUT2" pad="H4"/>
-<connect gate="B" pin="DOUT3" pad="G4"/>
-<connect gate="B" pin="DOUT4" pad="F5"/>
-<connect gate="B" pin="DOUT5" pad="G3"/>
-<connect gate="B" pin="DOUT6" pad="F4"/>
-<connect gate="B" pin="DOUT7" pad="E4"/>
-<connect gate="B" pin="DOUT8" pad="F3"/>
-<connect gate="B" pin="DOUT9" pad="E3"/>
-<connect gate="B" pin="EXTCLK" pad="D7"/>
-<connect gate="B" pin="FLASH" pad="C2"/>
-<connect gate="B" pin="FRAME_VALID" pad="B3"/>
-<connect gate="B" pin="LINE_VALID" pad="C3"/>
-<connect gate="B" pin="PIXCLK" pad="E1"/>
-<connect gate="B" pin="RST_" pad="C8"/>
-<connect gate="B" pin="SADDR" pad="C1"/>
-<connect gate="B" pin="SCLK" pad="D1"/>
-<connect gate="B" pin="SDATA" pad="B2"/>
-<connect gate="B" pin="SHUTTER" pad="B8"/>
-<connect gate="B" pin="TEST" pad="B7"/>
-<connect gate="B" pin="TRIGGER" pad="C7"/>
+<connect gate="G$1" pin="AGND" pad="A3 B5"/>
+<connect gate="G$1" pin="DGND" pad="B4 B6 C4 C5 C6 D4 E6 G1 H2 H3"/>
+<connect gate="G$1" pin="VAA" pad="A1 A6"/>
+<connect gate="G$1" pin="VAAHV_NPIX" pad="A2"/>
+<connect gate="G$1" pin="VAA_PIX" pad="A5"/>
+<connect gate="G$1" pin="VDD" pad="A8 B1 G2 G8"/>
+<connect gate="G$1" pin="VDD_IO" pad="A7 D2 D5 D6 E5 F6 H5"/>
+<connect gate="G$1" pin="VDD_MIPI" pad="H6 H8"/>
+<connect gate="G$1" pin="VDD_PLL" pad="F8"/>
+<connect gate="G$2" pin="CLK_N" pad="E7"/>
+<connect gate="G$2" pin="CLK_P" pad="F7"/>
+<connect gate="G$2" pin="DATA2_N" pad="G7"/>
+<connect gate="G$2" pin="DATA2_P" pad="H7"/>
+<connect gate="G$2" pin="DATA_N" pad="D8"/>
+<connect gate="G$2" pin="DATA_P" pad="E8"/>
+<connect gate="G$2" pin="DOUT0" pad="G6"/>
+<connect gate="G$2" pin="DOUT1" pad="G5"/>
+<connect gate="G$2" pin="DOUT10" pad="D3"/>
+<connect gate="G$2" pin="DOUT11" pad="E2"/>
+<connect gate="G$2" pin="DOUT2" pad="H4"/>
+<connect gate="G$2" pin="DOUT3" pad="G4"/>
+<connect gate="G$2" pin="DOUT4" pad="F5"/>
+<connect gate="G$2" pin="DOUT5" pad="G3"/>
+<connect gate="G$2" pin="DOUT6" pad="F4"/>
+<connect gate="G$2" pin="DOUT7" pad="E4"/>
+<connect gate="G$2" pin="DOUT8" pad="F3"/>
+<connect gate="G$2" pin="DOUT9" pad="E3"/>
+<connect gate="G$2" pin="EXTCLK" pad="D7"/>
+<connect gate="G$2" pin="FLASH" pad="C2"/>
+<connect gate="G$2" pin="FRAME_VALID" pad="B3"/>
+<connect gate="G$2" pin="LINE_VALID" pad="C3"/>
+<connect gate="G$2" pin="PIXCLK" pad="E1"/>
+<connect gate="G$2" pin="RST_" pad="C8"/>
+<connect gate="G$2" pin="SADDR" pad="C1"/>
+<connect gate="G$2" pin="SCLK" pad="D1"/>
+<connect gate="G$2" pin="SDATA" pad="B2"/>
+<connect gate="G$2" pin="SHUTTER" pad="B8"/>
+<connect gate="G$2" pin="TEST" pad="B7"/>
+<connect gate="G$2" pin="TRIGGER" pad="C7"/>
 </connects>
 <package3dinstances>
 <package3dinstance package3d_urn="urn:adsk.eagle:package:18794457/1"/>
@@ -2284,15 +2284,16 @@ to 1V8 for ICE_PRG_CDONE</text>
 <text x="459.74" y="109.22" size="1.778" layer="91" align="bottom-right">VDD Bypassing</text>
 <text x="459.74" y="81.28" size="1.778" layer="91" align="bottom-right">VDD_IO Bypassing</text>
 <text x="459.74" y="66.04" size="1.778" layer="91" align="bottom-right">VDD_PLL Bypassing</text>
-<text x="198.12" y="238.76" size="0.762" layer="91">Gate 1V8 by 2V8 power-good signal,
+<text x="198.12" y="248.92" size="0.762" layer="91" align="top-left">Gate 1V8 by 2V8 power-good signal,
 because the image sensor requires
 2V8 be powered before other supplies:
+
 
 "It is critical that VDD_PLL (2V8)
 is ... powered before or at least
 at the same time as the [other
 power supplies, such as
-VDD / VDD_IO (1V8)]."</text>
+VDD / VDD_IO (1V8)]." </text>
 </plain>
 <instances>
 <instance part="C26" gate="G$1" x="266.7" y="40.64" smashed="yes">
@@ -2737,11 +2738,11 @@ VDD / VDD_IO (1V8)]."</text>
 <attribute name="NAME" x="369.57" y="115.062" size="1.778" layer="95"/>
 <attribute name="PN" x="368.554" y="99.06" size="1.778" layer="95"/>
 </instance>
-<instance part="U6" gate="A" x="500.38" y="124.46" smashed="yes">
+<instance part="U6" gate="G$1" x="500.38" y="124.46" smashed="yes">
 <attribute name="PN" x="500.38" y="93.98" size="1.778" layer="95"/>
 <attribute name="NAME" x="500.38" y="125.222" size="1.778" layer="95"/>
 </instance>
-<instance part="U6" gate="B" x="546.1" y="129.54" smashed="yes">
+<instance part="U6" gate="G$2" x="546.1" y="129.54" smashed="yes">
 <attribute name="PN" x="546.1" y="78.74" size="1.778" layer="95"/>
 <attribute name="NAME" x="546.1" y="130.302" size="1.778" layer="95"/>
 </instance>
@@ -2827,11 +2828,11 @@ VDD / VDD_IO (1V8)]."</text>
 <attribute name="NAME" x="281.94" y="46.482" size="1.778" layer="95"/>
 <attribute name="PN" x="281.94" y="33.02" size="1.778" layer="95"/>
 </instance>
-<instance part="R23" gate="G$1" x="363.22" y="284.48" smashed="yes" rot="R90">
-<attribute name="NAME" x="359.41" y="281.94" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="361.95" y="281.94" size="1.778" layer="96" rot="R90"/>
-<attribute name="MFG" x="363.22" y="284.48" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="363.22" y="284.48" size="1.778" layer="96" rot="R90" display="off"/>
+<instance part="R23" gate="G$1" x="355.6" y="281.94" smashed="yes" rot="R90">
+<attribute name="NAME" x="351.79" y="279.4" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="354.33" y="279.4" size="1.778" layer="96" rot="R90"/>
+<attribute name="MFG" x="355.6" y="281.94" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="355.6" y="281.94" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -2882,9 +2883,9 @@ VDD / VDD_IO (1V8)]."</text>
 <pinref part="U3" gate="G$1" pin="VIN"/>
 <wire x1="215.9" y1="266.7" x2="210.82" y2="266.7" width="0.1524" layer="91"/>
 <pinref part="C19" gate="G$1" pin="1"/>
-<wire x1="208.28" y1="266.7" x2="210.82" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="198.12" y1="266.7" x2="210.82" y2="266.7" width="0.1524" layer="91"/>
 <junction x="210.82" y="266.7"/>
-<label x="208.28" y="266.7" size="1.778" layer="95" rot="MR0"/>
+<label x="198.12" y="266.7" size="1.778" layer="95" rot="MR0"/>
 </segment>
 <segment>
 <pinref part="U5" gate="G$1" pin="VIN"/>
@@ -2906,11 +2907,11 @@ VDD / VDD_IO (1V8)]."</text>
 </segment>
 <segment>
 <pinref part="R23" gate="G$1" pin="2"/>
-<wire x1="363.22" y1="289.56" x2="363.22" y2="292.1" width="0.1524" layer="91"/>
-<label x="363.22" y="292.1" size="1.778" layer="95"/>
+<wire x1="355.6" y1="287.02" x2="355.6" y2="289.56" width="0.1524" layer="91"/>
+<label x="355.6" y="289.56" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$2" class="0">
+<net name="1V8" class="0">
 <segment>
 <pinref part="U4" gate="A" pin="3_VDD"/>
 <pinref part="U4" gate="A" pin="2_VDD"/>
@@ -3036,12 +3037,12 @@ VDD / VDD_IO (1V8)]."</text>
 <label x="363.22" y="127" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="A" pin="VDD_IO"/>
+<pinref part="U6" gate="G$1" pin="VDD_IO"/>
 <wire x1="497.84" y1="106.68" x2="495.3" y2="106.68" width="0.1524" layer="91"/>
 <label x="495.3" y="106.68" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U6" gate="A" pin="VDD"/>
+<pinref part="U6" gate="G$1" pin="VDD"/>
 <wire x1="497.84" y1="109.22" x2="495.3" y2="109.22" width="0.1524" layer="91"/>
 <label x="495.3" y="109.22" size="1.778" layer="95" align="bottom-right"/>
 </segment>
@@ -3325,22 +3326,22 @@ VDD / VDD_IO (1V8)]."</text>
 <pinref part="C17" gate="G$1" pin="2"/>
 </segment>
 <segment>
-<pinref part="U6" gate="A" pin="AGND"/>
+<pinref part="U6" gate="G$1" pin="AGND"/>
 <wire x1="497.84" y1="114.3" x2="495.3" y2="114.3" width="0.1524" layer="91"/>
 <label x="495.3" y="114.3" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U6" gate="A" pin="DGND"/>
+<pinref part="U6" gate="G$1" pin="DGND"/>
 <wire x1="497.84" y1="99.06" x2="495.3" y2="99.06" width="0.1524" layer="91"/>
 <label x="495.3" y="99.06" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U6" gate="B" pin="TEST"/>
+<pinref part="U6" gate="G$2" pin="TEST"/>
 <wire x1="543.56" y1="86.36" x2="541.02" y2="86.36" width="0.1524" layer="91"/>
 <label x="541.02" y="86.36" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U6" gate="B" pin="SADDR"/>
+<pinref part="U6" gate="G$2" pin="SADDR"/>
 <wire x1="543.56" y1="114.3" x2="541.02" y2="114.3" width="0.1524" layer="91"/>
 <label x="541.02" y="114.3" size="1.778" layer="95" align="bottom-right"/>
 </segment>
@@ -3405,7 +3406,7 @@ VDD / VDD_IO (1V8)]."</text>
 <pinref part="X1" gate="G$1" pin="OUT"/>
 </segment>
 <segment>
-<pinref part="U6" gate="B" pin="EXTCLK"/>
+<pinref part="U6" gate="G$2" pin="EXTCLK"/>
 <wire x1="543.56" y1="121.92" x2="541.02" y2="121.92" width="0.1524" layer="91"/>
 <label x="541.02" y="121.92" size="1.778" layer="95" align="bottom-right"/>
 </segment>
@@ -3504,18 +3505,18 @@ VDD / VDD_IO (1V8)]."</text>
 <label x="470.154" y="140.208" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="A" pin="VAA"/>
+<pinref part="U6" gate="G$1" pin="VAA"/>
 <wire x1="497.84" y1="121.92" x2="495.3" y2="121.92" width="0.1524" layer="91"/>
 <label x="495.3" y="121.92" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U6" gate="A" pin="VAA_PIX"/>
+<pinref part="U6" gate="G$1" pin="VAA_PIX"/>
 <wire x1="497.84" y1="116.84" x2="495.3" y2="116.84" width="0.1524" layer="91"/>
 <label x="495.3" y="116.84" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U6" gate="A" pin="VDD_MIPI"/>
-<pinref part="U6" gate="A" pin="VDD_PLL"/>
+<pinref part="U6" gate="G$1" pin="VDD_MIPI"/>
+<pinref part="U6" gate="G$1" pin="VDD_PLL"/>
 <wire x1="497.84" y1="101.6" x2="495.3" y2="101.6" width="0.1524" layer="91"/>
 <label x="495.3" y="101.6" size="1.778" layer="95" align="bottom-right"/>
 <wire x1="497.84" y1="104.14" x2="497.84" y2="101.6" width="0.1524" layer="91"/>
@@ -4352,7 +4353,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_LV" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="LINE_VALID"/>
+<pinref part="U6" gate="G$2" pin="LINE_VALID"/>
 <wire x1="579.12" y1="91.44" x2="581.66" y2="91.44" width="0.1524" layer="91"/>
 <label x="581.66" y="91.44" size="1.778" layer="95"/>
 </segment>
@@ -4364,7 +4365,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D11" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT11"/>
+<pinref part="U6" gate="G$2" pin="DOUT11"/>
 <wire x1="581.66" y1="127" x2="579.12" y2="127" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4375,7 +4376,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_FV" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="FRAME_VALID"/>
+<pinref part="U6" gate="G$2" pin="FRAME_VALID"/>
 <wire x1="579.12" y1="88.9" x2="581.66" y2="88.9" width="0.1524" layer="91"/>
 <label x="581.66" y="88.9" size="1.778" layer="95"/>
 </segment>
@@ -4387,7 +4388,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D10" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT10"/>
+<pinref part="U6" gate="G$2" pin="DOUT10"/>
 <wire x1="581.66" y1="124.46" x2="579.12" y2="124.46" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4398,7 +4399,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D9" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT9"/>
+<pinref part="U6" gate="G$2" pin="DOUT9"/>
 <wire x1="581.66" y1="121.92" x2="579.12" y2="121.92" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4414,14 +4415,14 @@ VDD / VDD_IO (1V8)]."</text>
 <label x="121.92" y="180.34" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="B" pin="PIXCLK"/>
+<pinref part="U6" gate="G$2" pin="PIXCLK"/>
 <wire x1="579.12" y1="93.98" x2="581.66" y2="93.98" width="0.1524" layer="91"/>
 <label x="581.66" y="93.98" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="PIX_D8" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT8"/>
+<pinref part="U6" gate="G$2" pin="DOUT8"/>
 <wire x1="581.66" y1="119.38" x2="579.12" y2="119.38" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4432,7 +4433,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D7" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT7"/>
+<pinref part="U6" gate="G$2" pin="DOUT7"/>
 <wire x1="581.66" y1="116.84" x2="579.12" y2="116.84" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4443,7 +4444,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D5" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT5"/>
+<pinref part="U6" gate="G$2" pin="DOUT5"/>
 <wire x1="581.66" y1="111.76" x2="579.12" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4454,7 +4455,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D6" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT6"/>
+<pinref part="U6" gate="G$2" pin="DOUT6"/>
 <wire x1="581.66" y1="114.3" x2="579.12" y2="114.3" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4465,7 +4466,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D3" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT3"/>
+<pinref part="U6" gate="G$2" pin="DOUT3"/>
 <wire x1="581.66" y1="106.68" x2="579.12" y2="106.68" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4476,7 +4477,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_D4" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="DOUT4"/>
+<pinref part="U6" gate="G$2" pin="DOUT4"/>
 <wire x1="581.66" y1="109.22" x2="579.12" y2="109.22" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -4492,7 +4493,7 @@ VDD / VDD_IO (1V8)]."</text>
 <label x="121.92" y="162.56" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="B" pin="DOUT1"/>
+<pinref part="U6" gate="G$2" pin="DOUT1"/>
 <wire x1="581.66" y1="101.6" x2="579.12" y2="101.6" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -4503,7 +4504,7 @@ VDD / VDD_IO (1V8)]."</text>
 <label x="121.92" y="160.02" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="B" pin="DOUT2"/>
+<pinref part="U6" gate="G$2" pin="DOUT2"/>
 <wire x1="581.66" y1="104.14" x2="579.12" y2="104.14" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -4514,7 +4515,7 @@ VDD / VDD_IO (1V8)]."</text>
 <label x="121.92" y="157.48" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U6" gate="B" pin="DOUT0"/>
+<pinref part="U6" gate="G$2" pin="DOUT0"/>
 <wire x1="581.66" y1="99.06" x2="579.12" y2="99.06" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -4709,7 +4710,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_RST_" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="RST_"/>
+<pinref part="U6" gate="G$2" pin="RST_"/>
 <wire x1="543.56" y1="127" x2="541.02" y2="127" width="0.1524" layer="91"/>
 <label x="541.02" y="127" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="R9" gate="G$1" pin="1"/>
@@ -4724,7 +4725,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_SCLK" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="SCLK"/>
+<pinref part="U6" gate="G$2" pin="SCLK"/>
 <wire x1="543.56" y1="111.76" x2="541.02" y2="111.76" width="0.1524" layer="91"/>
 <label x="541.02" y="111.76" size="1.778" layer="95" align="bottom-right"/>
 </segment>
@@ -4736,7 +4737,7 @@ VDD / VDD_IO (1V8)]."</text>
 </net>
 <net name="PIX_SDATA" class="0">
 <segment>
-<pinref part="U6" gate="B" pin="SDATA"/>
+<pinref part="U6" gate="G$2" pin="SDATA"/>
 <wire x1="543.56" y1="109.22" x2="541.02" y2="109.22" width="0.1524" layer="91"/>
 <label x="541.02" y="109.22" size="1.778" layer="95" align="bottom-right"/>
 </segment>
@@ -4760,9 +4761,8 @@ VDD / VDD_IO (1V8)]."</text>
 </segment>
 <segment>
 <pinref part="R23" gate="G$1" pin="1"/>
-<wire x1="363.22" y1="279.4" x2="363.22" y2="276.86" width="0.1524" layer="91"/>
-<label x="359.918" y="276.86" size="1.778" layer="95" align="bottom-right"/>
-<wire x1="363.22" y1="276.86" x2="360.68" y2="276.86" width="0.1524" layer="91"/>
+<wire x1="355.6" y1="276.86" x2="355.6" y2="274.32" width="0.1524" layer="91"/>
+<label x="355.6" y="274.32" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U3" gate="G$1" pin="EN"/>
