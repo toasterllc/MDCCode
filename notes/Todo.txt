@@ -19,20 +19,15 @@
 
 - Rev2
     
+    - Cascade PG from 2V8 into 1V8, so that the image sensor's 1V8 rail turns on after its 2V8 (per power-on sequencing steps in the AR0330CS datasheet)
+    
+    - Verify that we don't have any GNDN nets (GND7, GND8, ...)
+    
     - Run Rev1Board_ReadWriteRandomly / Rev1Board_ReadWriteTest with Icecube / Synplify to help verify that the timing reported for Rev1Board_CopyImage is accurate
     
-    - Do we need to gate the enable of the oscillator until 1V8/2V8 are enabled? What does the image sensor require?
-    
-    - Move oscillator to bottom of board, so it can supply both ice40 and the image sensor
-    
-    - If we still have a pin header, add 1V8/GND signals to it
-        - Add i2c lines too for image sensor
-    
-    - Add image sensor
+    - Expose i2c lines for debugging
     
     - Add SD card
-    
-    - Cascade PG from 2V8 into 1V8, so that the image sensor's 1V8 rail turns on after its 2V8 (per power-on sequencing steps in the AR0330CS datasheet)
     
     - Create programmer board using FT232H
         - Need mechanism to swap SO/SI lines to program flash vs. SRAM (see breakout board schematic)
@@ -60,6 +55,12 @@
     
     
     
+    √ Add image sensor
+    
+    √ Move oscillator so it can supply both ice40 and the image sensor
+    
+    X Do we need to gate the enable of the oscillator until 1V8/2V8 are enabled? What does the image sensor require?
+        - 1V8 rail doesn't have a power-good output signal. The oscillator runs off the 1V8 rail anyway, so it won't start oscillating until the 1V8 comes up.
     
     √ Replace 2V5 rail with 2V8 instead, which will work with both the image sensor and ICE40
     
