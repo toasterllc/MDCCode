@@ -42,7 +42,7 @@ module ClockGen #(
 		.DIVF(DIVF),
 		.DIVQ(DIVQ),
 		.FILTER_RANGE(FILTER_RANGE)
-    ) uut (
+    ) pll (
 		.LOCK(locked),
 		.RESETB(1'b1),
 		.BYPASS(1'b0),

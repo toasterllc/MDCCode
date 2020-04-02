@@ -14,17 +14,20 @@ set_io pix_clk          F11     -pullup no
 set_io pix_d[0]         K11     -pullup no
 set_io pix_d[1]         J10     -pullup no
 set_io pix_d[2]         J11     -pullup no
-set_io pix_d[3]         H10     -pullup no
-set_io pix_d[4]         H11     -pullup no
-set_io pix_d[5]         G10     -pullup no
-set_io pix_d[6]         G11     -pullup no
-set_io pix_d[7]         G9      -pullup no
-set_io pix_d[8]         F10     -pullup no
+set_io pix_d[3]         H11     -pullup no
+set_io pix_d[4]         G11     -pullup no
+set_io pix_d[5]         H10     -pullup no
+set_io pix_d[6]         G9      -pullup no
+set_io pix_d[7]         F10     -pullup no
+set_io pix_d[8]         G10     -pullup no
 set_io pix_d[9]         G8      -pullup no
 set_io pix_d[10]        F9      -pullup no
 set_io pix_d[11]        E10     -pullup no
-set_io pix_fv           E11     -pullup no
+set_io pix_fv           D11     -pullup no
 set_io pix_lv           E9      -pullup no
+set_io pix_rst_         E8      -pullup no
+set_io pix_sclk         E11     -pullup no
+set_io pix_sdata        D10     -pullup no
 
 set_io ram_a[0]         D5      -pullup no
 set_io ram_a[1]         A3      -pullup no
@@ -65,3 +68,6 @@ set_io ram_dqm[0]       A6      -pullup no
 set_io ram_dqm[1]       E1      -pullup no
 set_io ram_ras_         A5      -pullup no
 set_io ram_we_          B4      -pullup no
+
+set_io uart_rx          L10     -pullup no
+set_io uart_tx          J9      -pullup no

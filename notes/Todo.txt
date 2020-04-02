@@ -19,6 +19,8 @@
 
 - Rev2
     
+    - Run Rev1Board_ReadWriteRandomly / Rev1Board_ReadWriteTest with Icecube / Synplify to help verify that the timing reported for Rev1Board_CopyImage is accurate
+    
     - Do we need to gate the enable of the oscillator until 1V8/2V8 are enabled? What does the image sensor require?
     
     - Move oscillator to bottom of board, so it can supply both ice40 and the image sensor
