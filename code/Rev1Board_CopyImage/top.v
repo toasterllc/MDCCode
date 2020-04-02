@@ -25,7 +25,7 @@ module Top(
     input wire          pix_clk,    // Clock from image sensor
     input wire          pix_fv,
     input wire          pix_lv,
-    input wire[11:0]    pix_d,      // Data from image sensor
+    input wire[11:0]    pix_d       // Data from image sensor
 );
     localparam ClockFrequency = 100000000;
     localparam RAM_AddrWidth = 25;
