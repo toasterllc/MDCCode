@@ -19,6 +19,10 @@
 
 - Rev2
     
+    - Make sure VDD_MIPI is connected to 2V8
+    
+    - Make VDD a ring around the edge of the board
+    
     - Cascade PG from 2V8 into 1V8, so that the image sensor's 1V8 rail turns on after its 2V8 (per power-on sequencing steps in the AR0330CS datasheet)
     
     - Verify that we don't have any GNDN nets (GND7, GND8, ...)
