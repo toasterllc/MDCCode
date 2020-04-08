@@ -1,0 +1,27 @@
+SD card:
+
+    Needs to support 'A2' -- meaning supports LVI, according to:
+        https://www.spinics.net/lists/linux-mmc/msg55567.html
+        "There is also a clear statement that an A2 card must support LVI."
+    
+    "1.8V low voltage signaling (LVS) interface support"
+        SDSQXA1-256G-GN6MA
+            SanDisk 256GB Extreme MicroSDXC UHS-I Memory Card
+            https://www.amazon.com/dp/B07FCR3316?tag=0506-rev-aawp-20&linkCode=ogi&th=1
+            https://shop.westerndigital.com/products/memory-cards/sandisk-extreme-uhs-i-microsd#SDSQXA1-512G-GN6MA
+        
+        MTSD128AKC7MS-1WT
+            https://www.micron.com/products/memory-cards/industrial-memory-cards/part-catalog/mtsd128akc7ms-1wt
+            https://www.micron.com/-/media/client/global/documents/products/data-sheet/sd-cards/i300_microsd_card_128gb-1tb.pdf
+            
+            256GB version:
+                https://www.mouser.com/ProductDetail/Micron/MTSD256AKC7MS-1WTCS?qs=sGAEpiMZZMtyMAXUUxCBEyyNWGvzIQqLhDaiFiK0jwLhklHifl%2FPAg%3D%3D
+        
+
+
+
+
+
+SD card socket:
+
+    Molex 105162-0001
