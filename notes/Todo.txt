@@ -11,6 +11,8 @@
         Hakko FA430
     
     - Steel wool for soldering iron
+    
+    - Kapton tape
 
 
 
@@ -43,6 +45,8 @@
             - Nevermind, we added a solder jumper to the board itself
         
         - Add SPI lines for a debug interface, to permit fast image readout from the chip
+    
+    - Renumber all components
     
     - Clean up silkscreen component names
         - Make sure labels are large enough

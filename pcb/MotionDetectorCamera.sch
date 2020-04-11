@@ -676,7 +676,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="F1" x="-2.275" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
 <smd name="H1" x="-2.275" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
 </package>
-<package name="SIT8021AI-J4-18S-12.000000E">
+<package name="SIT8021">
 <smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
 <smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
 <smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
@@ -1233,7 +1233,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="0" y="-50.8" size="1.778" layer="95">&gt;PN</text>
 <text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
-<symbol name="SIT8021AI-J4-18S-12.000000E">
+<symbol name="SIT8021">
 <wire x1="15.24" y1="0" x2="15.24" y2="-10.16" width="0.1524" layer="94"/>
 <wire x1="15.24" y1="-10.16" x2="0" y2="-10.16" width="0.1524" layer="94"/>
 <wire x1="0" y1="-10.16" x2="0" y2="0" width="0.1524" layer="94"/>
@@ -1858,13 +1858,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="SIT8021AI-J4-18S-12.000000E" prefix="X">
+<deviceset name="SIT8021" prefix="X">
 <description>12MHz MEMS Oscillator</description>
 <gates>
-<gate name="G$1" symbol="SIT8021AI-J4-18S-12.000000E" x="10.16" y="-7.62"/>
+<gate name="G$1" symbol="SIT8021" x="10.16" y="-7.62"/>
 </gates>
 <devices>
-<device name="" package="SIT8021AI-J4-18S-12.000000E">
+<device name="" package="SIT8021">
 <connects>
 <connect gate="G$1" pin="EN_" pad="1"/>
 <connect gate="G$1" pin="GND" pad="4"/>
@@ -1874,7 +1874,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="SiTime"/>
-<attribute name="PN" value="SIT8021AI-J4-18S-12.000000E"/>
 </technology>
 </technologies>
 </device>
@@ -2335,7 +2334,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="X1" library="EagleLibrary" deviceset="SIT8021AI-J4-18S-12.000000E" device=""/>
+<part name="X1" library="EagleLibrary" deviceset="SIT8021" device="">
+<attribute name="PN" value="SIT8021AI-J4-18S-12.000000E"/>
+</part>
 <part name="R23" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
@@ -2948,7 +2949,9 @@ layer."</text>
 <attribute name="MFG" x="238.76" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="238.76" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="TP6" gate="G$1" x="302.26" y="43.18" smashed="yes" rot="R90"/>
+<instance part="TP6" gate="G$1" x="302.26" y="43.18" smashed="yes" rot="R90">
+<attribute name="NAME" x="304.8" y="53.34" size="1.778" layer="95" rot="R180"/>
+</instance>
 <instance part="TP8" gate="G$1" x="563.88" y="71.12" smashed="yes">
 <attribute name="NAME" x="563.88" y="71.882" size="1.778" layer="95"/>
 </instance>
