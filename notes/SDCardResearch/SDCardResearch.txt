@@ -4,6 +4,10 @@ SD card:
         https://www.spinics.net/lists/linux-mmc/msg55567.html
         "There is also a clear statement that an A2 card must support LVI."
     
+    
+    
+    
+    
     "1.8V low voltage signaling (LVS) interface support"
         SDSQXA1-256G-GN6MA
             SanDisk 256GB Extreme MicroSDXC UHS-I Memory Card

@@ -16,19 +16,34 @@
 
 
 
+- Future
+
+    - Add MOSFET power transistors to define power domains
+    
+    - An eMMC (such as iNAND 7250, see datasheet in notes dir) might consume less power / be more reliable than an SD card. We can likely write to them faster (and maybe initialize them faster), so even if their current usage is higher, they may end up using less energy for the same operation if we can get the operation completed faster than with an SD card.
+
+
+
+
 
 - Rev2
     
     - Add SD card
+        - What pins need pull-up resistors?
+            - CMD, D[3:0].
+            - Why does D3 need a pullup?
+                "The host shall pull-up all DAT0-3 lines by RDAT"
+                "When DAT3 is used for card detection, RDAT for DAT3 should be unconnected and another resistor should be connected to the ground."
+                    - We're not using D3 for card-detection, so it needs a pull-up
     
-    - Verify that we don't have any GNDN nets (GND7, GND8, ...)
+    - Verify that we don't have any GNDN nets (GND7, GND8, ...), which appeared at one point
     
     - Run Rev1Board_ReadWriteRandomly / Rev1Board_ReadWriteTest with Icecube / Synplify to help verify that the timing reported for Rev1Board_CopyImage is accurate
     
-    - Expose i2c lines for debugging
+    - Expose AR0330 i2c lines for debugging
     
     - Create programmer board using FT232H
-        - Need mechanism to swap SO/SI lines to program flash vs. SRAM (see breakout board schematic)
+        - Need mechanism to swap SO/SI lines to program flash vs. SRAM (see ice40 breakout board schematic)
             - Use a DPDT switch
         
         - Use level shifter with explicit inputs/outputs
@@ -48,6 +63,8 @@
         - Make sure labels are large enough
     
     - Make sure we're tenting vias
+    
+    - Update RevX text
     
     
     
