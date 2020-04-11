@@ -1265,6 +1265,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <symbol name="TEST-POINT">
 <circle x="6.35" y="0" radius="1.27" width="0.254" layer="94"/>
 <pin name="X" x="0" y="0" visible="off" length="middle"/>
+<text x="0" y="2.54" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -2369,6 +2370,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
 <part name="TP6" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
+<part name="TP8" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
+<part name="TP9" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -2400,6 +2403,13 @@ before 1V8, because:
         CMD, and DAT0-3 are at zero (0)
         volts ... before power reaches
         the card VDD pin"</text>
+<text x="350.52" y="241.3" size="1.016" layer="91" align="top-left">"Separate AGND and PGND.
+Do not connect AGND and
+PGND directly at the IC."
+
+"Connect AGND and PGND
+through a via at a different
+layer."</text>
 </plain>
 <instances>
 <instance part="C26" gate="G$1" x="266.7" y="40.64" smashed="yes">
@@ -2408,25 +2418,25 @@ before 1V8, because:
 <attribute name="MFG" x="266.7" y="40.64" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="266.7" y="40.64" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="LED1" gate="G$1" x="340.36" y="170.18" smashed="yes">
-<attribute name="NAME" x="343.916" y="165.608" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="340.36" y="170.18" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="340.36" y="170.18" size="1.778" layer="96" display="off"/>
+<instance part="LED1" gate="G$1" x="363.22" y="180.34" smashed="yes">
+<attribute name="NAME" x="366.776" y="175.768" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="363.22" y="180.34" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="363.22" y="180.34" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="LED2" gate="G$1" x="350.52" y="170.18" smashed="yes">
-<attribute name="NAME" x="354.076" y="165.608" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="350.52" y="170.18" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="350.52" y="170.18" size="1.778" layer="96" display="off"/>
+<instance part="LED2" gate="G$1" x="373.38" y="180.34" smashed="yes">
+<attribute name="NAME" x="376.936" y="175.768" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="373.38" y="180.34" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="373.38" y="180.34" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="LED3" gate="G$1" x="360.68" y="170.18" smashed="yes">
-<attribute name="NAME" x="364.236" y="165.608" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="360.68" y="170.18" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="360.68" y="170.18" size="1.778" layer="96" display="off"/>
+<instance part="LED3" gate="G$1" x="383.54" y="180.34" smashed="yes">
+<attribute name="NAME" x="387.096" y="175.768" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="383.54" y="180.34" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="383.54" y="180.34" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="LED4" gate="G$1" x="370.84" y="170.18" smashed="yes">
-<attribute name="NAME" x="374.396" y="165.608" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="370.84" y="170.18" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="370.84" y="170.18" size="1.778" layer="96" display="off"/>
+<instance part="LED4" gate="G$1" x="393.7" y="180.34" smashed="yes">
+<attribute name="NAME" x="397.256" y="175.768" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="393.7" y="180.34" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="393.7" y="180.34" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C13" gate="G$1" x="96.52" y="264.16" smashed="yes">
 <attribute name="NAME" x="89.916" y="263.525" size="1.778" layer="95"/>
@@ -2605,29 +2615,29 @@ before 1V8, because:
 <attribute name="MFG" x="104.14" y="12.7" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="104.14" y="12.7" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R10" gate="G$1" x="340.36" y="157.48" smashed="yes" rot="R270">
-<attribute name="NAME" x="344.17" y="160.02" size="1.778" layer="95" rot="R270"/>
-<attribute name="VALUE" x="341.63" y="160.02" size="1.778" layer="96" rot="R270"/>
-<attribute name="MFG" x="340.36" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="340.36" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R10" gate="G$1" x="363.22" y="167.64" smashed="yes" rot="R270">
+<attribute name="NAME" x="367.03" y="170.18" size="1.778" layer="95" rot="R270"/>
+<attribute name="VALUE" x="364.49" y="170.18" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="363.22" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="363.22" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="R11" gate="G$1" x="350.52" y="157.48" smashed="yes" rot="R270">
-<attribute name="NAME" x="354.33" y="160.02" size="1.778" layer="95" rot="R270"/>
-<attribute name="VALUE" x="351.79" y="160.02" size="1.778" layer="96" rot="R270"/>
-<attribute name="MFG" x="350.52" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="350.52" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R11" gate="G$1" x="373.38" y="167.64" smashed="yes" rot="R270">
+<attribute name="NAME" x="377.19" y="170.18" size="1.778" layer="95" rot="R270"/>
+<attribute name="VALUE" x="374.65" y="170.18" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="373.38" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="373.38" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="R12" gate="G$1" x="360.68" y="157.48" smashed="yes" rot="R270">
-<attribute name="NAME" x="364.49" y="160.02" size="1.778" layer="95" rot="R270"/>
-<attribute name="VALUE" x="361.95" y="160.02" size="1.778" layer="96" rot="R270"/>
-<attribute name="MFG" x="360.68" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="360.68" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R12" gate="G$1" x="383.54" y="167.64" smashed="yes" rot="R270">
+<attribute name="NAME" x="387.35" y="170.18" size="1.778" layer="95" rot="R270"/>
+<attribute name="VALUE" x="384.81" y="170.18" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="383.54" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="383.54" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="R15" gate="G$1" x="370.84" y="157.48" smashed="yes" rot="R270">
-<attribute name="NAME" x="374.65" y="160.02" size="1.778" layer="95" rot="R270"/>
-<attribute name="VALUE" x="372.11" y="160.02" size="1.778" layer="96" rot="R270"/>
-<attribute name="MFG" x="370.84" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="370.84" y="157.48" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R15" gate="G$1" x="393.7" y="167.64" smashed="yes" rot="R270">
+<attribute name="NAME" x="397.51" y="170.18" size="1.778" layer="95" rot="R270"/>
+<attribute name="VALUE" x="394.97" y="170.18" size="1.778" layer="96" rot="R270"/>
+<attribute name="MFG" x="393.7" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="393.7" y="167.64" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="TP3" gate="G$1" x="154.94" y="276.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="158.242" y="279.4" size="1.778" layer="95" rot="R270"/>
@@ -2939,6 +2949,12 @@ before 1V8, because:
 <attribute name="PN" x="238.76" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="TP6" gate="G$1" x="302.26" y="43.18" smashed="yes" rot="R90"/>
+<instance part="TP8" gate="G$1" x="563.88" y="71.12" smashed="yes">
+<attribute name="NAME" x="563.88" y="71.882" size="1.778" layer="95"/>
+</instance>
+<instance part="TP9" gate="G$1" x="563.88" y="66.04" smashed="yes">
+<attribute name="NAME" x="564.134" y="66.548" size="1.778" layer="95"/>
+</instance>
 </instances>
 <busses>
 <bus name="RAM_A[0..12]">
@@ -2961,7 +2977,7 @@ before 1V8, because:
 </bus>
 <bus name="LED[0..3]">
 <segment>
-<wire x1="340.36" y1="175.26" x2="370.84" y2="175.26" width="0.762" layer="92"/>
+<wire x1="363.22" y1="185.42" x2="393.7" y2="185.42" width="0.762" layer="92"/>
 </segment>
 </bus>
 <bus name="PIX_D[0..11]">
@@ -3295,23 +3311,23 @@ before 1V8, because:
 </segment>
 <segment>
 <pinref part="R10" gate="G$1" pin="2"/>
-<wire x1="340.36" y1="152.4" x2="340.36" y2="149.86" width="0.1524" layer="91"/>
-<label x="340.36" y="149.86" size="1.778" layer="95"/>
+<wire x1="363.22" y1="162.56" x2="363.22" y2="160.02" width="0.1524" layer="91"/>
+<label x="363.22" y="160.02" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R11" gate="G$1" pin="2"/>
-<wire x1="350.52" y1="152.4" x2="350.52" y2="149.86" width="0.1524" layer="91"/>
-<label x="350.52" y="149.86" size="1.778" layer="95"/>
+<wire x1="373.38" y1="162.56" x2="373.38" y2="160.02" width="0.1524" layer="91"/>
+<label x="373.38" y="160.02" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R12" gate="G$1" pin="2"/>
-<wire x1="360.68" y1="152.4" x2="360.68" y2="149.86" width="0.1524" layer="91"/>
-<label x="360.68" y="149.86" size="1.778" layer="95"/>
+<wire x1="383.54" y1="162.56" x2="383.54" y2="160.02" width="0.1524" layer="91"/>
+<label x="383.54" y="160.02" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R15" gate="G$1" pin="2"/>
-<wire x1="370.84" y1="152.4" x2="370.84" y2="149.86" width="0.1524" layer="91"/>
-<label x="370.84" y="149.86" size="1.778" layer="95"/>
+<wire x1="393.7" y1="162.56" x2="393.7" y2="160.02" width="0.1524" layer="91"/>
+<label x="393.7" y="160.02" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="TP3" gate="G$1" pin="GND"/>
@@ -4257,7 +4273,7 @@ before 1V8, because:
 <net name="LED0" class="0">
 <segment>
 <pinref part="LED1" gate="G$1" pin="A"/>
-<wire x1="340.36" y1="172.72" x2="340.36" y2="175.26" width="0.1524" layer="91"/>
+<wire x1="363.22" y1="182.88" x2="363.22" y2="185.42" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="U1" gate="D" pin="G3"/>
@@ -4268,7 +4284,7 @@ before 1V8, because:
 <net name="LED1" class="0">
 <segment>
 <pinref part="LED2" gate="G$1" pin="A"/>
-<wire x1="350.52" y1="172.72" x2="350.52" y2="175.26" width="0.1524" layer="91"/>
+<wire x1="373.38" y1="182.88" x2="373.38" y2="185.42" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="U1" gate="D" pin="F4"/>
@@ -4279,7 +4295,7 @@ before 1V8, because:
 <net name="LED2" class="0">
 <segment>
 <pinref part="LED3" gate="G$1" pin="A"/>
-<wire x1="360.68" y1="172.72" x2="360.68" y2="175.26" width="0.1524" layer="91"/>
+<wire x1="383.54" y1="182.88" x2="383.54" y2="185.42" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="U1" gate="D" pin="F3"/>
@@ -4290,7 +4306,7 @@ before 1V8, because:
 <net name="LED3" class="0">
 <segment>
 <pinref part="LED4" gate="G$1" pin="A"/>
-<wire x1="370.84" y1="172.72" x2="370.84" y2="175.26" width="0.1524" layer="91"/>
+<wire x1="393.7" y1="182.88" x2="393.7" y2="185.42" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="U1" gate="D" pin="E3"/>
@@ -4301,28 +4317,28 @@ before 1V8, because:
 <net name="N$23" class="0">
 <segment>
 <pinref part="LED4" gate="G$1" pin="C"/>
-<wire x1="370.84" y1="165.1" x2="370.84" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="393.7" y1="175.26" x2="393.7" y2="172.72" width="0.1524" layer="91"/>
 <pinref part="R15" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$26" class="0">
 <segment>
 <pinref part="LED3" gate="G$1" pin="C"/>
-<wire x1="360.68" y1="165.1" x2="360.68" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="383.54" y1="175.26" x2="383.54" y2="172.72" width="0.1524" layer="91"/>
 <pinref part="R12" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$29" class="0">
 <segment>
 <pinref part="LED2" gate="G$1" pin="C"/>
-<wire x1="350.52" y1="165.1" x2="350.52" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="373.38" y1="175.26" x2="373.38" y2="172.72" width="0.1524" layer="91"/>
 <pinref part="R11" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$31" class="0">
 <segment>
 <pinref part="LED1" gate="G$1" pin="C"/>
-<wire x1="340.36" y1="165.1" x2="340.36" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="363.22" y1="175.26" x2="363.22" y2="172.72" width="0.1524" layer="91"/>
 <pinref part="R10" gate="G$1" pin="1"/>
 </segment>
 </net>
@@ -4776,6 +4792,11 @@ before 1V8, because:
 <wire x1="116.84" y1="187.96" x2="121.92" y2="187.96" width="0.1524" layer="91"/>
 <label x="121.92" y="187.96" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="TP8" gate="G$1" pin="X"/>
+<wire x1="563.88" y1="71.12" x2="561.34" y2="71.12" width="0.1524" layer="91"/>
+<label x="561.34" y="71.12" size="1.778" layer="95" align="bottom-right"/>
+</segment>
 </net>
 <net name="PIX_SDATA" class="0">
 <segment>
@@ -4787,6 +4808,11 @@ before 1V8, because:
 <pinref part="U1" gate="B" pin="D10"/>
 <wire x1="116.84" y1="200.66" x2="121.92" y2="200.66" width="0.1524" layer="91"/>
 <label x="121.92" y="200.66" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="TP9" gate="G$1" pin="X"/>
+<wire x1="563.88" y1="66.04" x2="561.34" y2="66.04" width="0.1524" layer="91"/>
+<label x="561.34" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="2V8GOOD" class="0">
