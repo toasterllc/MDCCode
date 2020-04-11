@@ -732,6 +732,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="10.975" y="7.435"/>
 </polygon>
 </package>
+<package name="TEST-POINT">
+<smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100"/>
+<text x="0" y="0.327" size="0.508" layer="25" font="vector" align="bottom-center">&gt;NAME</text>
+</package>
 </packages>
 <packages3d>
 <package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
@@ -1257,6 +1261,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="DAT0" x="20.32" y="-10.16" visible="pin" length="short" rot="R180"/>
 <pin name="CLK" x="-2.54" y="-15.24" visible="pin" length="short" function="clk"/>
 <pin name="CMD" x="-2.54" y="-10.16" visible="pin" length="short"/>
+</symbol>
+<symbol name="TEST-POINT">
+<circle x="6.35" y="0" radius="1.27" width="0.254" layer="94"/>
+<pin name="X" x="0" y="0" visible="off" length="middle"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1898,6 +1906,21 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="TEST-POINT" prefix="TP">
+<gates>
+<gate name="G$1" symbol="TEST-POINT" x="5.08" y="0"/>
+</gates>
+<devices>
+<device name="" package="TEST-POINT">
+<connects>
+<connect gate="G$1" pin="X" pad="X"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -2171,7 +2194,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="TP3" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP5" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="TP7" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
-<part name="TP6" library="EagleLibrary" deviceset="UFL-CONNECTOR" device=""/>
 <part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW12061R00FKEA"/>
@@ -2346,6 +2368,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
+<part name="TP6" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -2614,9 +2637,6 @@ before 1V8, because:
 </instance>
 <instance part="TP7" gate="G$1" x="383.54" y="276.86" smashed="yes" rot="R270">
 <attribute name="NAME" x="386.842" y="279.4" size="1.778" layer="95" rot="R270"/>
-</instance>
-<instance part="TP6" gate="G$1" x="302.26" y="50.8" smashed="yes" rot="R270">
-<attribute name="NAME" x="305.562" y="53.34" size="1.778" layer="95" rot="R270"/>
 </instance>
 <instance part="R1" gate="G$1" x="43.18" y="254" smashed="yes" rot="R180">
 <attribute name="NAME" x="45.72" y="250.19" size="1.778" layer="95" rot="R180"/>
@@ -2918,6 +2938,7 @@ before 1V8, because:
 <attribute name="MFG" x="238.76" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="238.76" y="111.76" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
+<instance part="TP6" gate="G$1" x="302.26" y="43.18" smashed="yes" rot="R90"/>
 </instances>
 <busses>
 <bus name="RAM_A[0..12]">
@@ -3308,11 +3329,6 @@ before 1V8, because:
 <pinref part="TP7" gate="G$1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="TP6" gate="G$1" pin="GND"/>
-<wire x1="299.72" y1="48.26" x2="297.18" y2="48.26" width="0.1524" layer="91"/>
-<label x="297.18" y="48.26" size="1.778" layer="95" rot="MR0"/>
-</segment>
-<segment>
 <pinref part="TP1" gate="G$1" pin="GND"/>
 <wire x1="35.56" y1="261.62" x2="33.02" y2="261.62" width="0.1524" layer="91"/>
 <label x="33.02" y="261.62" size="1.778" layer="95" rot="MR0"/>
@@ -3504,11 +3520,11 @@ before 1V8, because:
 <segment>
 <label x="305.054" y="41.148" size="1.778" layer="95"/>
 <wire x1="299.72" y1="40.64" x2="302.26" y2="40.64" width="0.1524" layer="91"/>
-<pinref part="TP6" gate="G$1" pin="SIGNAL"/>
-<wire x1="302.26" y1="40.64" x2="304.8" y2="40.64" width="0.1524" layer="91"/>
-<wire x1="302.26" y1="40.64" x2="302.26" y2="48.26" width="0.1524" layer="91"/>
-<junction x="302.26" y="40.64"/>
 <pinref part="X1" gate="G$1" pin="OUT"/>
+<pinref part="TP6" gate="G$1" pin="X"/>
+<wire x1="302.26" y1="40.64" x2="304.8" y2="40.64" width="0.1524" layer="91"/>
+<wire x1="302.26" y1="40.64" x2="302.26" y2="43.18" width="0.1524" layer="91"/>
+<junction x="302.26" y="40.64"/>
 </segment>
 <segment>
 <pinref part="U6" gate="B" pin="EXTCLK"/>
