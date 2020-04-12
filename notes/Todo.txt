@@ -34,6 +34,8 @@
 
 - Rev2
     
+    - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
+    
     - Create programmer board using FT232H
         - Need mechanism to swap SO/SI lines to program flash vs. SRAM (see ice40 breakout board schematic)
             - Use a DPDT switch
