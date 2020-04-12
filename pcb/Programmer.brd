@@ -566,6 +566,8 @@ design rules under a new name.</description>
 <contactref element="U5" pad="5"/>
 <contactref element="U7" pad="5"/>
 <contactref element="U9" pad="5"/>
+<contactref element="X1" pad="3"/>
+<wire x1="35.1275" y1="35.56" x2="35.765" y2="37.6" width="0" layer="19" extent="1-1"/>
 <wire x1="3.5023" y1="-13.32" x2="35.1275" y2="35.56" width="0" layer="19" extent="1-1"/>
 <wire x1="3.5023" y1="-23.48" x2="3.5023" y2="-13.32" width="0" layer="19" extent="1-1"/>
 <wire x1="3.5023" y1="-31.1" x2="3.5023" y2="-23.48" width="0" layer="19" extent="1-1"/>
@@ -584,6 +586,10 @@ design rules under a new name.</description>
 <contactref element="U7" pad="3"/>
 <contactref element="U8" pad="3"/>
 <contactref element="U9" pad="3"/>
+<contactref element="X1" pad="4"/>
+<contactref element="X1" pad="1"/>
+<wire x1="35.355" y1="38.6" x2="35.765" y2="38.6" width="0" layer="19" extent="1-1"/>
+<wire x1="35.9925" y1="35.56" x2="35.765" y2="38.6" width="0" layer="19" extent="1-1"/>
 <wire x1="1.5777" y1="-1.89" x2="35.9925" y2="35.56" width="0" layer="19" extent="1-1"/>
 <wire x1="1.5777" y1="-3.19" x2="1.5777" y2="-1.89" width="0" layer="19" extent="1-1"/>
 <wire x1="1.5777" y1="-5.7" x2="1.5777" y2="-3.19" width="0" layer="19" extent="1-1"/>
@@ -610,72 +616,77 @@ design rules under a new name.</description>
 <wire x1="3.5023" y1="-5.7" x2="3.5023" y2="-9.51" width="0" layer="19" extent="1-1"/>
 <wire x1="3.5023" y1="-1.89" x2="3.5023" y2="-5.7" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="FTDI_SCLK">
+<signal name="FTDI_PRG_CLK">
 <contactref element="U2" pad="2"/>
+<contactref element="U1" pad="13"/>
+<wire x1="1.5777" y1="-2.54" x2="22.65" y2="21.5244" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="ICE_SCLK">
+<signal name="ICE_PRG_CLK">
 <contactref element="U2" pad="4"/>
 </signal>
-<signal name="FTDI_CS_">
+<signal name="FTDI_PRG_CS_">
 <contactref element="U3" pad="2"/>
+<contactref element="U1" pad="17"/>
+<wire x1="1.5777" y1="-6.35" x2="24.65" y2="21.5244" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="ICE_CS_">
+<signal name="ICE_PRG_CS_">
 <contactref element="U3" pad="4"/>
 </signal>
-<signal name="FTDI_CRESET_">
+<signal name="FTDI_PRG_CRESET_">
 <contactref element="U4" pad="2"/>
+<contactref element="U1" pad="20"/>
+<wire x1="1.5777" y1="-10.16" x2="26.15" y2="21.5244" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="ICE_CRESET_">
+<signal name="ICE_PRG_CRESET_">
 <contactref element="U4" pad="4"/>
 </signal>
-<signal name="ICE_CDONE">
+<signal name="ICE_PRG_CDONE">
 <contactref element="U5" pad="2"/>
 <contactref element="R5" pad="2"/>
 <wire x1="1.5777" y1="-13.97" x2="1.7025" y2="-16.51" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="FTDI_CDONE">
+<signal name="FTDI_PRG_CDONE">
 <contactref element="U5" pad="4"/>
+<contactref element="U1" pad="19"/>
+<wire x1="3.5023" y1="-14.62" x2="25.65" y2="21.5244" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="FTDI_SO">
+<signal name="FTDI_PRG_DO">
 <contactref element="U6" pad="2"/>
 <contactref element="U8" pad="2"/>
-<wire x1="1.5777" y1="-20.32" x2="1.5777" y2="-27.94" width="0" layer="19" extent="1-1"/>
+<contactref element="U1" pad="14"/>
+<wire x1="1.5777" y1="-20.32" x2="23.15" y2="21.5244" width="0" layer="19" extent="1-1"/>
+<wire x1="1.5777" y1="-27.94" x2="1.5777" y2="-20.32" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="FLASH_MODE">
-<contactref element="U6" pad="1"/>
-<contactref element="U7" pad="1"/>
-<contactref element="U9" pad="1"/>
-<contactref element="U8" pad="1"/>
-<wire x1="1.5777" y1="-27.29" x2="1.5777" y2="-31.1" width="0" layer="19" extent="1-1"/>
-<wire x1="1.5777" y1="-23.48" x2="1.5777" y2="-27.29" width="0" layer="19" extent="1-1"/>
-<wire x1="1.5777" y1="-19.67" x2="1.5777" y2="-23.48" width="0" layer="19" extent="1-1"/>
-</signal>
-<signal name="ICE_SI">
+<signal name="ICE_PRG_DI">
 <contactref element="U6" pad="4"/>
 <contactref element="U9" pad="2"/>
 <wire x1="3.5023" y1="-20.97" x2="1.5777" y2="-31.75" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="ICE_SO">
+<signal name="ICE_PRG_DO">
 <contactref element="U7" pad="2"/>
 <contactref element="U8" pad="4"/>
 <wire x1="1.5777" y1="-24.13" x2="3.5023" y2="-28.59" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="FTDI_SI">
+<signal name="FTDI_PRG_DI">
 <contactref element="U7" pad="4"/>
 <contactref element="U9" pad="4"/>
-<wire x1="3.5023" y1="-24.78" x2="3.5023" y2="-32.4" width="0" layer="19" extent="1-1"/>
-</signal>
-<signal name="N$1">
-<contactref element="U1" pad="13"/>
-</signal>
-<signal name="N$2">
-<contactref element="U1" pad="14"/>
-</signal>
-<signal name="N$3">
 <contactref element="U1" pad="15"/>
+<wire x1="3.5023" y1="-24.78" x2="23.65" y2="21.5244" width="0" layer="19" extent="1-1"/>
+<wire x1="3.5023" y1="-32.4" x2="3.5023" y2="-24.78" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="N$4">
-<contactref element="U1" pad="16"/>
+<signal name="FTDI_FLASH_MODE">
+<contactref element="U1" pad="18"/>
+<contactref element="U6" pad="1"/>
+<contactref element="U7" pad="1"/>
+<contactref element="U9" pad="1"/>
+<contactref element="U8" pad="1"/>
+<wire x1="1.5777" y1="-19.67" x2="25.15" y2="21.5244" width="0" layer="19" extent="1-1"/>
+<wire x1="1.5777" y1="-23.48" x2="1.5777" y2="-19.67" width="0" layer="19" extent="1-1"/>
+<wire x1="1.5777" y1="-27.29" x2="1.5777" y2="-23.48" width="0" layer="19" extent="1-1"/>
+<wire x1="1.5777" y1="-31.1" x2="1.5777" y2="-27.29" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="CLK12MHZ">
+<contactref element="X1" pad="2"/>
 </signal>
 </signals>
 <mfgpreviewcolors>

@@ -1168,13 +1168,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="20.32" y1="-12.7" x2="20.32" y2="0" width="0.254" layer="94"/>
 <wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
 <pin name="CS_" x="-5.08" y="-2.54" length="middle"/>
-<pin name="SO" x="-5.08" y="-5.08" length="middle"/>
+<pin name="DO" x="-5.08" y="-5.08" length="middle"/>
 <pin name="WP_" x="-5.08" y="-7.62" length="middle"/>
 <pin name="GND" x="-5.08" y="-10.16" length="middle"/>
 <pin name="VDD" x="25.4" y="-2.54" length="middle" rot="R180"/>
 <pin name="HOLD_" x="25.4" y="-5.08" length="middle" rot="R180"/>
-<pin name="SCLK" x="25.4" y="-7.62" length="middle" rot="R180"/>
-<pin name="SI" x="25.4" y="-10.16" length="middle" rot="R180"/>
+<pin name="CLK" x="25.4" y="-7.62" length="middle" rot="R180"/>
+<pin name="DI" x="25.4" y="-10.16" length="middle" rot="R180"/>
 <text x="1.27" y="0.762" size="1.778" layer="95">&gt;NAME</text>
 <text x="0.254" y="-15.24" size="1.778" layer="95">&gt;PN</text>
 </symbol>
@@ -1776,12 +1776,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <devices>
 <device name="" package="W25Q80EWUXIE">
 <connects>
+<connect gate="G$1" pin="CLK" pad="6"/>
 <connect gate="G$1" pin="CS_" pad="1"/>
+<connect gate="G$1" pin="DI" pad="5"/>
+<connect gate="G$1" pin="DO" pad="2"/>
 <connect gate="G$1" pin="GND" pad="4 9"/>
 <connect gate="G$1" pin="HOLD_" pad="7"/>
-<connect gate="G$1" pin="SCLK" pad="6"/>
-<connect gate="G$1" pin="SI" pad="5"/>
-<connect gate="G$1" pin="SO" pad="2"/>
 <connect gate="G$1" pin="VDD" pad="8"/>
 <connect gate="G$1" pin="WP_" pad="3"/>
 </connects>
@@ -1907,6 +1907,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </devices>
 </deviceset>
 <deviceset name="TEST-POINT" prefix="TP">
+<description>Bare copper test point</description>
 <gates>
 <gate name="G$1" symbol="TEST-POINT" x="5.08" y="0"/>
 </gates>
@@ -4205,7 +4206,7 @@ layer."</text>
 <pinref part="TC1" gate="G$1" pin="10"/>
 </segment>
 </net>
-<net name="ICE_PRG_SO" class="0">
+<net name="ICE_PRG_DO" class="0">
 <segment>
 <pinref part="U1" gate="E" pin="SPI_SO_K9"/>
 <wire x1="116.84" y1="58.42" x2="111.76" y2="58.42" width="0.1524" layer="91"/>
@@ -4219,10 +4220,10 @@ layer."</text>
 <segment>
 <wire x1="393.7" y1="91.44" x2="396.24" y2="91.44" width="0.1524" layer="91"/>
 <label x="396.24" y="91.44" size="1.778" layer="95"/>
-<pinref part="U7" gate="G$1" pin="SI"/>
+<pinref part="U7" gate="G$1" pin="DI"/>
 </segment>
 </net>
-<net name="ICE_PRG_SI" class="0">
+<net name="ICE_PRG_DI" class="0">
 <segment>
 <pinref part="U1" gate="E" pin="SPI_SI_J9"/>
 <wire x1="116.84" y1="60.96" x2="111.76" y2="60.96" width="0.1524" layer="91"/>
@@ -4236,10 +4237,10 @@ layer."</text>
 <segment>
 <wire x1="363.22" y1="96.52" x2="360.68" y2="96.52" width="0.1524" layer="91"/>
 <label x="360.68" y="96.52" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U7" gate="G$1" pin="SO"/>
+<pinref part="U7" gate="G$1" pin="DO"/>
 </segment>
 </net>
-<net name="ICE_PRG_SCLK" class="0">
+<net name="ICE_PRG_CLK" class="0">
 <segment>
 <pinref part="U1" gate="E" pin="SPI_SCK_L10"/>
 <wire x1="116.84" y1="53.34" x2="111.76" y2="53.34" width="0.1524" layer="91"/>
@@ -4248,7 +4249,7 @@ layer."</text>
 <segment>
 <wire x1="393.7" y1="93.98" x2="396.24" y2="93.98" width="0.1524" layer="91"/>
 <label x="396.24" y="93.98" size="1.778" layer="95"/>
-<pinref part="U7" gate="G$1" pin="SCLK"/>
+<pinref part="U7" gate="G$1" pin="CLK"/>
 </segment>
 <segment>
 <wire x1="365.76" y1="50.8" x2="368.3" y2="50.8" width="0.1524" layer="91"/>
