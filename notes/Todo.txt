@@ -28,6 +28,8 @@
     
     - Upgrade capacitors by derating them based on applied DC voltage
 
+    - We may want to add ESD suppression to our board. See FTDI docs, "2.2.1 Electrostatic Protection":
+        https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
 
 
 
