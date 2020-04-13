@@ -2899,7 +2899,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="19.1284" y1="24.27431875" x2="19.1284" y2="24.367" width="0.127" layer="1"/>
 <wire x1="18.77638125" y1="23.9223" x2="19.1284" y2="24.27431875" width="0.127" layer="1"/>
 </signal>
-<signal name="ICE_PRG_CRESET_">
+<signal name="ICE_PRG_CRST_">
 <contactref element="U1" pad="L9"/>
 <contactref element="R5" pad="2"/>
 <wire x1="19.9284" y1="20.863" x2="19.9162" y2="20.8033" width="0.127" layer="1"/>

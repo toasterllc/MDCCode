@@ -4191,7 +4191,7 @@ layer."</text>
 <pinref part="TC1" gate="G$1" pin="5"/>
 </segment>
 </net>
-<net name="ICE_PRG_CRESET_" class="0">
+<net name="ICE_PRG_CRST_" class="0">
 <segment>
 <pinref part="U1" gate="E" pin="CRESET_B_L9"/>
 <wire x1="116.84" y1="45.72" x2="111.76" y2="45.72" width="0.1524" layer="91"/>
