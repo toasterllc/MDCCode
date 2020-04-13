@@ -30,25 +30,13 @@
 
     - We may want to add ESD suppression to our board. See FTDI docs, "2.2.1 Electrostatic Protection":
         https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
+    
+    - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
 
 
 
 
 - Rev2
-    
-    - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
-    
-    - Create programmer board using FT232H
-        - Need mechanism to swap SO/SI lines to program flash vs. SRAM (see ice40 breakout board schematic)
-            - Use a DPDT switch
-        
-        - Use level shifter with explicit inputs/outputs
-            - Our bidirectional level shifter doesn't work for our use case (likely due to its bidirectional behavior and weak drive strength)
-        
-        X Need jumper to isolate CS_ line of flash / ice40 (see breakout board schematic)
-            - Nevermind, we added a solder jumper to the board itself
-        
-        - Add SPI lines for a debug interface, to permit fast image readout from the chip
     
     - Renumber all components
     
@@ -65,6 +53,18 @@
     
     
     
+    
+    √ Create programmer board using FT232H
+        √ Need mechanism to swap SO/SI lines to program flash vs. SRAM (see ice40 breakout board schematic)
+            - Created 'FTDI_FLASH_MODE' net controlled by FTDI
+        
+        √ Use level shifter with explicit inputs/outputs
+            - Our bidirectional level shifter doesn't work for our use case (likely due to its bidirectional behavior and weak drive strength)
+        
+        X Need jumper to isolate CS_ line of flash / ice40 (see breakout board schematic)
+            - Nevermind, we added a solder jumper to the board itself
+        
+        √ Add SPI lines for a debug interface, to permit fast image readout from the chip
     
     √ TPS63805:
         √ "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
