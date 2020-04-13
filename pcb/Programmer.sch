@@ -1306,7 +1306,10 @@
 <part name="TP1" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP2" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP3" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="H2" library="EagleLibrary" deviceset="HEADER-1X3" device="" package3d_urn="urn:adsk.eagle:package:19124821/1"/>
+<part name="H2" library="EagleLibrary" deviceset="HEADER-1X3" device="" package3d_urn="urn:adsk.eagle:package:19124821/1">
+<attribute name="MFG" value="Molex"/>
+<attribute name="PN" value="22-28-4100"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -1575,6 +1578,8 @@ Programmer Cable</text>
 </instance>
 <instance part="H2" gate="G$1" x="393.7" y="10.16" smashed="yes">
 <attribute name="NAME" x="393.7" y="10.922" size="1.778" layer="95"/>
+<attribute name="MFG" x="393.7" y="10.16" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="393.7" y="10.16" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>

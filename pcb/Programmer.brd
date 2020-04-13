@@ -849,7 +849,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="20.0914" y="19.2246" size="0.508" layer="26" font="vector" rot="MR0" align="bottom-center"/>
 </element>
 <element name="H2" library="EagleLibrary" package="HEADER-1X3" package3d_urn="urn:adsk.eagle:package:19124821/1" value="HEADER-1X3" x="11.8364" y="1.7526" smashed="yes" rot="R90">
+<attribute name="MFG" value="Molex" x="11.8364" y="1.7526" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="11.5848" y="8.2878" size="1.27" layer="25" font="vector" rot="R180"/>
+<attribute name="PN" value="22-28-4100" x="11.8364" y="1.7526" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 </elements>
 <signals>
