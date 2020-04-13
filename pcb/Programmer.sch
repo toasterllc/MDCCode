@@ -465,13 +465,6 @@
 <packageinstance name="1210"/>
 </packageinstances>
 </package3d>
-<package3d name="SOT65P210X110-5N" urn="urn:adsk.eagle:package:19104715/1" type="model">
-<description>5-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
-&lt;p&gt;5-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="SN74LV1T12XDCKR"/>
-</packageinstances>
-</package3d>
 <package3d name="SON50P100X145X60-6N" urn="urn:adsk.eagle:package:19106363/1" type="model">
 <description>6-SON (DFN), 0.50 mm pitch, 1.45 X 1.00 X 0.60 mm body
 &lt;p&gt;6-pin SON (DFN) package with 0.50 mm pitch with body size 1.45 X 1.00 X 0.60 mm&lt;/p&gt;</description>
@@ -491,6 +484,13 @@
 &lt;p&gt;Single-row (1X3), 3-pin Pin Header (Male) Straight package with 2.54 mm (0.10 in) col pitch, 0.66 mm lead width, 3.00 mm tail length and 5.84 mm mating length with overall size 10.16 X 5.08 X 8.38 mm, pin pattern - clockwise from top left&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="HEADER-1X3"/>
+</packageinstances>
+</package3d>
+<package3d name="SOT65P210X110-5N" urn="urn:adsk.eagle:package:19104715/1" type="model">
+<description>5-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
+&lt;p&gt;5-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="SN74LV1T12XDCKR"/>
 </packageinstances>
 </package3d>
 </packages3d>
