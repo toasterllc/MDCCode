@@ -177,7 +177,7 @@ Rev 1</text>
 <smd name="46" x="-1.75" y="3.8756" dx="0.9607" dy="0.27" layer="1" roundness="100" rot="R90"/>
 <smd name="47" x="-2.25" y="3.8756" dx="0.9607" dy="0.27" layer="1" roundness="100" rot="R90"/>
 <smd name="48" x="-2.75" y="3.8756" dx="0.9607" dy="0.27" layer="1" roundness="100" rot="R90"/>
-<smd name="49" x="0" y="0" dx="6.2" dy="6.2" layer="1" thermals="no"/>
+<smd name="49" x="0" y="0" dx="6.2" dy="6.2" layer="1" thermals="no" cream="no"/>
 <text x="-3.81" y="4.7369" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-4" y="4"/>
@@ -196,10 +196,10 @@ Rev 1</text>
 </polygon>
 </package>
 <package name="SIT8021">
-<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
+<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
+<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
+<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
+<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
 <text x="-0.53" y="1.059" size="0.508" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.9"/>
@@ -359,7 +359,7 @@ Rev 1</text>
 </polygon>
 </package>
 <package name="TEST-POINT">
-<smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100"/>
+<smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100" cream="no"/>
 <text x="0" y="0.327" size="0.508" layer="25" font="vector" align="bottom-center">&gt;NAME</text>
 </package>
 <package name="HEADER-1X3" urn="urn:adsk.eagle:footprint:19124831/1" locally_modified="yes">

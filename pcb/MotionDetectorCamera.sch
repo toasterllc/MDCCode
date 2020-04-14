@@ -195,127 +195,127 @@
 <package name="ICE40HX4K-BG121" urn="urn:adsk.eagle:footprint:16997456/1" locally_modified="yes">
 <description>121-BGA, collapsing, 0.80 mm pitch, 9.00 X 9.00 X 1.00 mm body
 &lt;p&gt;121-pin collapsing BGA package with 0.80 mm col pitch and 0.80 mm row pitch with body size 9.00 X 9.00 X 1.00 mm&lt;/p&gt;</description>
-<smd name="A1" x="-4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A2" x="-3.2" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A3" x="-2.4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A4" x="-1.6" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A5" x="-0.8" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A6" x="0" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A7" x="0.8" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A8" x="1.6" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A9" x="2.4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A10" x="3.2" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="A11" x="4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B1" x="-4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B2" x="-3.2" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B3" x="-2.4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B4" x="-1.6" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B5" x="-0.8" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B6" x="0" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B7" x="0.8" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B8" x="1.6" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B9" x="2.4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B10" x="3.2" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="B11" x="4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C1" x="-4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C2" x="-3.2" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C3" x="-2.4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C4" x="-1.6" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C5" x="-0.8" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C6" x="0" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C7" x="0.8" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C8" x="1.6" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C9" x="2.4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C10" x="3.2" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="C11" x="4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D1" x="-4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D2" x="-3.2" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D3" x="-2.4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D4" x="-1.6" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D5" x="-0.8" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D6" x="0" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D7" x="0.8" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D8" x="1.6" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D9" x="2.4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D10" x="3.2" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="D11" x="4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E1" x="-4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E2" x="-3.2" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E3" x="-2.4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E4" x="-1.6" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E5" x="-0.8" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E6" x="0" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E7" x="0.8" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E8" x="1.6" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E9" x="2.4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E10" x="3.2" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="E11" x="4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F1" x="-4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F2" x="-3.2" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F3" x="-2.4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F4" x="-1.6" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F5" x="-0.8" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F6" x="0" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F7" x="0.8" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F8" x="1.6" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F9" x="2.4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F10" x="3.2" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="F11" x="4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G1" x="-4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G2" x="-3.2" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G3" x="-2.4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G4" x="-1.6" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G5" x="-0.8" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G6" x="0" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G7" x="0.8" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G8" x="1.6" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G9" x="2.4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G10" x="3.2" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="G11" x="4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H1" x="-4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H2" x="-3.2" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H3" x="-2.4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H4" x="-1.6" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H5" x="-0.8" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H6" x="0" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H7" x="0.8" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H8" x="1.6" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H9" x="2.4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H10" x="3.2" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="H11" x="4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J1" x="-4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J2" x="-3.2" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J3" x="-2.4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J4" x="-1.6" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J5" x="-0.8" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J6" x="0" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J7" x="0.8" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J8" x="1.6" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J9" x="2.4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J10" x="3.2" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="J11" x="4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K1" x="-4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K2" x="-3.2" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K3" x="-2.4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K4" x="-1.6" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K5" x="-0.8" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K6" x="0" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K7" x="0.8" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K8" x="1.6" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K9" x="2.4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K10" x="3.2" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="K11" x="4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L1" x="-4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L2" x="-3.2" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L3" x="-2.4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L4" x="-1.6" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L5" x="-0.8" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L6" x="0" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L7" x="0.8" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L8" x="1.6" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L9" x="2.4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L10" x="3.2" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
-<smd name="L11" x="4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no"/>
+<smd name="A1" x="-4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A2" x="-3.2" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A3" x="-2.4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A4" x="-1.6" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A5" x="-0.8" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A6" x="0" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A7" x="0.8" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A8" x="1.6" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A9" x="2.4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A10" x="3.2" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A11" x="4" y="4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B1" x="-4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B2" x="-3.2" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B3" x="-2.4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B4" x="-1.6" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B5" x="-0.8" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B6" x="0" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B7" x="0.8" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B8" x="1.6" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B9" x="2.4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B10" x="3.2" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B11" x="4" y="3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C1" x="-4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C2" x="-3.2" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C3" x="-2.4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C4" x="-1.6" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C5" x="-0.8" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C6" x="0" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C7" x="0.8" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C8" x="1.6" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C9" x="2.4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C10" x="3.2" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C11" x="4" y="2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D1" x="-4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D2" x="-3.2" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D3" x="-2.4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D4" x="-1.6" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D5" x="-0.8" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D6" x="0" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D7" x="0.8" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D8" x="1.6" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D9" x="2.4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D10" x="3.2" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D11" x="4" y="1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E1" x="-4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E2" x="-3.2" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E3" x="-2.4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E4" x="-1.6" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E5" x="-0.8" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E6" x="0" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E7" x="0.8" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E8" x="1.6" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E9" x="2.4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E10" x="3.2" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E11" x="4" y="0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F1" x="-4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F2" x="-3.2" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F3" x="-2.4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F4" x="-1.6" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F5" x="-0.8" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F6" x="0" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F7" x="0.8" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F8" x="1.6" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F9" x="2.4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F10" x="3.2" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F11" x="4" y="0" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G1" x="-4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G2" x="-3.2" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G3" x="-2.4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G4" x="-1.6" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G5" x="-0.8" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G6" x="0" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G7" x="0.8" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G8" x="1.6" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G9" x="2.4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G10" x="3.2" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G11" x="4" y="-0.8" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H1" x="-4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H2" x="-3.2" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H3" x="-2.4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H4" x="-1.6" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H5" x="-0.8" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H6" x="0" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H7" x="0.8" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H8" x="1.6" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H9" x="2.4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H10" x="3.2" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H11" x="4" y="-1.6" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J1" x="-4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J2" x="-3.2" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J3" x="-2.4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J4" x="-1.6" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J5" x="-0.8" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J6" x="0" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J7" x="0.8" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J8" x="1.6" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J9" x="2.4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J10" x="3.2" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="J11" x="4" y="-2.4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K1" x="-4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K2" x="-3.2" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K3" x="-2.4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K4" x="-1.6" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K5" x="-0.8" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K6" x="0" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K7" x="0.8" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K8" x="1.6" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K9" x="2.4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K10" x="3.2" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="K11" x="4" y="-3.2" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L1" x="-4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L2" x="-3.2" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L3" x="-2.4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L4" x="-1.6" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L5" x="-0.8" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L6" x="0" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L7" x="0.8" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L8" x="1.6" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L9" x="2.4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L10" x="3.2" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="L11" x="4" y="-4" dx="0.3" dy="0.3" layer="1" roundness="100" thermals="no" cream="no"/>
 <text x="-4.572" y="4.754" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <wire x1="4.5" y1="-4.5" x2="-4.5" y2="-4.5" width="0.12" layer="21"/>
 <wire x1="-4.5" y1="-4.5" x2="-4.5" y2="4.5" width="0.12" layer="21"/>
@@ -393,21 +393,21 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <hole x="7.62" y="1.016" drill="0.9906"/>
 </package>
 <package name="TPS63805YFFR">
-<smd name="A1" x="-0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="A2" x="0" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="A3" x="0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="B1" x="-0.4" y="0.4" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="B2" x="0" y="0.4" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="B3" x="0.4" y="0.4" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="C1" x="-0.4" y="0" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="C2" x="0" y="0" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="C3" x="0.4" y="0" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="D1" x="-0.4" y="-0.4" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="D2" x="0" y="-0.4" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="D3" x="0.4" y="-0.4" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="E1" x="-0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="E2" x="0" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
-<smd name="E3" x="0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100"/>
+<smd name="A1" x="-0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="A2" x="0" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="A3" x="0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="B1" x="-0.4" y="0.4" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="B2" x="0" y="0.4" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="B3" x="0.4" y="0.4" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="C1" x="-0.4" y="0" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="C2" x="0" y="0" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="C3" x="0.4" y="0" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="D1" x="-0.4" y="-0.4" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="D2" x="0" y="-0.4" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="D3" x="0.4" y="-0.4" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="E1" x="-0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="E2" x="0" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
+<smd name="E3" x="0.4" y="-0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
 <text x="-0.838" y="1.372" size="0.508" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.8" y="1.2"/>
@@ -426,12 +426,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </polygon>
 </package>
 <package name="TPS6280XYKAR">
-<smd name="A1" x="-0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="A2" x="0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="B1" x="-0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
-<smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100"/>
+<smd name="A1" x="-0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
+<smd name="A2" x="0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
+<smd name="B1" x="-0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
+<smd name="B2" x="0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
+<smd name="C1" x="-0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
+<smd name="C2" x="0.175" y="-0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
 <text x="-0.532740625" y="0.861990625" size="0.508" layer="25" font="vector" rot="SR0">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.7"/>
@@ -475,60 +475,60 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </package>
 <package name="W989D6DBGX6I">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
-<smd name="A1" x="-3.2" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="A2" x="-2.4" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="A3" x="-1.6" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="A7" x="1.6" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="A8" x="2.4" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="A9" x="3.2" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="B1" x="-3.2" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="B2" x="-2.4" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="B3" x="-1.6" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="B7" x="1.6" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="B8" x="2.4" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="B9" x="3.2" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="C1" x="-3.2" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="C2" x="-2.4" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="C3" x="-1.6" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="C7" x="1.6" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="C8" x="2.4" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="C9" x="3.2" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="D1" x="-3.2" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="D2" x="-2.4" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="D3" x="-1.6" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="D7" x="1.6" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="D8" x="2.4" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="D9" x="3.2" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="E1" x="-3.2" y="0" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="E2" x="-2.4" y="0" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="E3" x="-1.6" y="0" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="E7" x="1.6" y="0" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="E8" x="2.4" y="0" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="E9" x="3.2" y="0" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="F1" x="-3.2" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="F2" x="-2.4" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="F3" x="-1.6" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="F7" x="1.6" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="F8" x="2.4" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="F9" x="3.2" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="G1" x="-3.2" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="G2" x="-2.4" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="G3" x="-1.6" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="G7" x="1.6" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="G8" x="2.4" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="G9" x="3.2" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="H1" x="-3.2" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="H2" x="-2.4" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="H3" x="-1.6" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="H7" x="1.6" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="H8" x="2.4" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="H9" x="3.2" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="J1" x="-3.2" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="J2" x="-2.4" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="J3" x="-1.6" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="J7" x="1.6" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="J8" x="2.4" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
-<smd name="J9" x="3.2" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100"/>
+<smd name="A1" x="-3.2" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="A2" x="-2.4" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="A3" x="-1.6" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="A7" x="1.6" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="A8" x="2.4" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="A9" x="3.2" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="B1" x="-3.2" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="B2" x="-2.4" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="B3" x="-1.6" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="B7" x="1.6" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="B8" x="2.4" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="B9" x="3.2" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="C1" x="-3.2" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="C2" x="-2.4" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="C3" x="-1.6" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="C7" x="1.6" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="C8" x="2.4" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="C9" x="3.2" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="D1" x="-3.2" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="D2" x="-2.4" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="D3" x="-1.6" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="D7" x="1.6" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="D8" x="2.4" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="D9" x="3.2" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="E1" x="-3.2" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="E2" x="-2.4" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="E3" x="-1.6" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="E7" x="1.6" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="E8" x="2.4" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="E9" x="3.2" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="F1" x="-3.2" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="F2" x="-2.4" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="F3" x="-1.6" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="F7" x="1.6" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="F8" x="2.4" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="F9" x="3.2" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="G1" x="-3.2" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="G2" x="-2.4" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="G3" x="-1.6" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="G7" x="1.6" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="G8" x="2.4" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="G9" x="3.2" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="H1" x="-3.2" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="H2" x="-2.4" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="H3" x="-1.6" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="H7" x="1.6" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="H8" x="2.4" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="H9" x="3.2" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="J1" x="-3.2" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="J2" x="-2.4" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="J3" x="-1.6" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="J7" x="1.6" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="J8" x="2.4" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
+<smd name="J9" x="3.2" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
 <text x="-4.092" y="4.828" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-4" y1="-4.5" x2="-4" y2="4.5" width="0.05" layer="21"/>
 <wire x1="-4" y1="4.5" x2="4" y2="4.5" width="0.05" layer="21"/>
@@ -595,67 +595,67 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package name="AR0330CS1C12SPKA0" urn="urn:adsk.eagle:footprint:18794472/1" locally_modified="yes">
 <description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
 &lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
-<smd name="A1" x="-2.275" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A2" x="-1.625" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A3" x="-0.975" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A4" x="-0.325" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A5" x="0.325" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A6" x="0.975" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A7" x="1.625" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A8" x="2.275" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B1" x="-2.275" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B2" x="-1.625" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B3" x="-0.975" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B4" x="-0.325" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B5" x="0.325" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B6" x="0.975" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B7" x="1.625" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B8" x="2.275" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C1" x="-2.275" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C2" x="-1.625" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C3" x="-0.975" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C4" x="-0.325" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C5" x="0.325" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C6" x="0.975" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C7" x="1.625" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="C8" x="2.275" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D1" x="-2.275" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D2" x="-1.625" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D3" x="-0.975" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D4" x="-0.325" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D5" x="0.325" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D6" x="0.975" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D7" x="1.625" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="D8" x="2.275" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E1" x="-2.275" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E2" x="-1.625" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E3" x="-0.975" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E4" x="-0.325" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E5" x="0.325" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E6" x="0.975" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E7" x="1.625" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="E8" x="2.275" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="F3" x="-0.975" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="F4" x="-0.325" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="F5" x="0.325" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="F6" x="0.975" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="F7" x="1.625" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="F8" x="2.275" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G1" x="-2.275" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G2" x="-1.625" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G3" x="-0.975" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G4" x="-0.325" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G5" x="0.325" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G6" x="0.975" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G7" x="1.625" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="G8" x="2.275" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H2" x="-1.625" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H3" x="-0.975" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H4" x="-0.325" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H5" x="0.325" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H6" x="0.975" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H7" x="1.625" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H8" x="2.275" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
+<smd name="A1" x="-2.275" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A2" x="-1.625" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A3" x="-0.975" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A4" x="-0.325" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A5" x="0.325" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A6" x="0.975" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A7" x="1.625" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="A8" x="2.275" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B1" x="-2.275" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B2" x="-1.625" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B3" x="-0.975" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B4" x="-0.325" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B5" x="0.325" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B6" x="0.975" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B7" x="1.625" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="B8" x="2.275" y="1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C1" x="-2.275" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C2" x="-1.625" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C3" x="-0.975" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C4" x="-0.325" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C5" x="0.325" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C6" x="0.975" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C7" x="1.625" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="C8" x="2.275" y="0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D1" x="-2.275" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D2" x="-1.625" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D3" x="-0.975" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D4" x="-0.325" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D5" x="0.325" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D6" x="0.975" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D7" x="1.625" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="D8" x="2.275" y="0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E1" x="-2.275" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E2" x="-1.625" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E3" x="-0.975" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E4" x="-0.325" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E5" x="0.325" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E6" x="0.975" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E7" x="1.625" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="E8" x="2.275" y="-0.325" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F3" x="-0.975" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F4" x="-0.325" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F5" x="0.325" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F6" x="0.975" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F7" x="1.625" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F8" x="2.275" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G1" x="-2.275" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G2" x="-1.625" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G3" x="-0.975" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G4" x="-0.325" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G5" x="0.325" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G6" x="0.975" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G7" x="1.625" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="G8" x="2.275" y="-1.625" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H2" x="-1.625" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H3" x="-0.975" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H4" x="-0.325" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H5" x="0.325" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H6" x="0.975" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H7" x="1.625" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H8" x="2.275" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
 <text x="-3.3" y="3.5715" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <wire x1="3.15" y1="-3.3365" x2="-3.15" y2="-3.3365" width="0.05" layer="21"/>
 <wire x1="-3.15" y1="-3.3365" x2="-3.15" y2="3.3365" width="0.05" layer="21"/>
@@ -672,15 +672,15 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-3.15" y="2.0865"/>
 <vertex x="-1.9" y="3.3365"/>
 </polygon>
-<smd name="F2" x="-1.625" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="F1" x="-2.275" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="H1" x="-2.275" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
+<smd name="F2" x="-1.625" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="F1" x="-2.275" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="H1" x="-2.275" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
 </package>
 <package name="SIT8021">
-<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
-<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270"/>
+<smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
+<smd name="2" x="-0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
+<smd name="3" x="0.205" y="-0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
+<smd name="4" x="0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
 <text x="-0.53" y="1.059" size="0.508" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-0.5" y="0.9"/>
@@ -733,7 +733,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </polygon>
 </package>
 <package name="TEST-POINT">
-<smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100"/>
+<smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100" cream="no"/>
 <text x="0" y="0.327" size="0.508" layer="25" font="vector" align="bottom-center">&gt;NAME</text>
 </package>
 </packages>
