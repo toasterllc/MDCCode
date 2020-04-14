@@ -1,14 +1,4 @@
-- Buy
-    - Lead-free solder
-        - See SolderProducts.txt
-    
-    - Flux
-        - See SolderProducts.txt
-    
-    - Steel wool for soldering iron
-    
-    - Kapton tape
-        https://www.amazon.com/RETERMIT-Resistant-Sublimation-Temperature-Polyimide/dp/B07MM38WLP/ref=sxin_2_ac_d_pm?ac_md=1-0-VW5kZXIgJDEw-ac_d_pm&cv_ct_cx=Kapton+Tape&dchild=1&keywords=Kapton+Tape&pd_rd_i=B07MM38WLP&pd_rd_r=9ccaae53-08dd-4dce-9e31-20301a4e83e1&pd_rd_w=cnkze&pd_rd_wg=qDdXZ&pf_rd_p=0e223c60-bcf8-4663-98f3-da892fbd4372&pf_rd_r=H9KG38T53AYDWN61ZRYC&psc=1&qid=1586830471&s=industrial&sr=1-1-22d05c05-1231-4126-b7c4-3e7a9c0027d0
+- Future Buy
     
     - Additional ice40's from DigiKey (Mouser doesn't stock)
     
@@ -117,7 +107,21 @@
     
     √ Check TP4 connection: was it connected in Rev1? Why isn't connected in the Rev2 board right now?
         - It used to be connected. I think we just deleted it somehow...
+
+
+
+
+- Buy
+    √ Lead-free solder
+        - See SolderProducts.txt
     
+    √ Steel wool for soldering iron
+    
+    √ Kapton tape
+        https://www.amazon.com/RETERMIT-Resistant-Sublimation-Temperature-Polyimide/dp/B07MM38WLP/ref=sxin_2_ac_d_pm?ac_md=1-0-VW5kZXIgJDEw-ac_d_pm&cv_ct_cx=Kapton+Tape&dchild=1&keywords=Kapton+Tape&pd_rd_i=B07MM38WLP&pd_rd_r=9ccaae53-08dd-4dce-9e31-20301a4e83e1&pd_rd_w=cnkze&pd_rd_wg=qDdXZ&pf_rd_p=0e223c60-bcf8-4663-98f3-da892fbd4372&pf_rd_r=H9KG38T53AYDWN61ZRYC&psc=1&qid=1586830471&s=industrial&sr=1-1-22d05c05-1231-4126-b7c4-3e7a9c0027d0
+    
+    √ Flux
+        - See SolderProducts.txt
     
     
     
