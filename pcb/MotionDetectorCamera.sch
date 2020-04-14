@@ -2281,8 +2281,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
 <part name="J1" library="EagleLibrary" deviceset="SOLDER-JUMPER" device=""/>
-<part name="U7" library="EagleLibrary" deviceset="W25Q80EWUXIE" device="" package3d_urn="urn:adsk.eagle:package:18792578/1"/>
-<part name="U8" library="EagleLibrary" deviceset="AR0330CS1C12SPKA0" device="" package3d_urn="urn:adsk.eagle:package:18794457/1"/>
+<part name="U7" library="EagleLibrary" deviceset="W25Q80EWUXIE" device="" package3d_urn="urn:adsk.eagle:package:18792578/1">
+<attribute name="PN" value="W25Q80EWUXIETR"/>
+</part>
+<part name="U8" library="EagleLibrary" deviceset="AR0330CS1C12SPKA0" device="" package3d_urn="urn:adsk.eagle:package:18794457/1">
+<attribute name="PN" value="AR0330CS1C12SPKA0-CP2"/>
+</part>
 <part name="C32" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>

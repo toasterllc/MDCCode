@@ -1168,7 +1168,9 @@
 </class>
 </classes>
 <parts>
-<part name="U2" library="EagleLibrary" deviceset="FT232HQ" device="" package3d_urn="urn:adsk.eagle:package:19081791/1"/>
+<part name="U2" library="EagleLibrary" deviceset="FT232HQ" device="" package3d_urn="urn:adsk.eagle:package:19081791/1">
+<attribute name="PN" value="FT232HQ-REEL"/>
+</part>
 <part name="X1" library="EagleLibrary" deviceset="SIT8021" device="">
 <attribute name="PN" value="SiT8021AI-J4-XXS-12.000000E"/>
 </part>

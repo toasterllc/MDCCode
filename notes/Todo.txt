@@ -1,18 +1,22 @@
 - Buy
-    - Solder wick
-    
     - Lead-free solder
         - See SolderProducts.txt
     
     - Flux
         - See SolderProducts.txt
     
-    - Fume extractor
-        Hakko FA430
-    
     - Steel wool for soldering iron
     
     - Kapton tape
+        https://www.amazon.com/RETERMIT-Resistant-Sublimation-Temperature-Polyimide/dp/B07MM38WLP/ref=sxin_2_ac_d_pm?ac_md=1-0-VW5kZXIgJDEw-ac_d_pm&cv_ct_cx=Kapton+Tape&dchild=1&keywords=Kapton+Tape&pd_rd_i=B07MM38WLP&pd_rd_r=9ccaae53-08dd-4dce-9e31-20301a4e83e1&pd_rd_w=cnkze&pd_rd_wg=qDdXZ&pf_rd_p=0e223c60-bcf8-4663-98f3-da892fbd4372&pf_rd_r=H9KG38T53AYDWN61ZRYC&psc=1&qid=1586830471&s=industrial&sr=1-1-22d05c05-1231-4126-b7c4-3e7a9c0027d0
+    
+    - Additional ice40's from DigiKey (Mouser doesn't stock)
+    
+    - Fume extractor
+        Hakko FA430
+    
+    √ Solder wick
+        Ordered via Mouser (purchase order: MDC Rev 2)
 
 
 
@@ -38,21 +42,16 @@
 
 - Rev2
     
-    - Renumber all components
+    √ Renumber all components
     
-    - Clean up silkscreen component names
-        - Make sure labels are large enough
+    √ Clean up silkscreen component names
+        √ Make sure labels are large enough
     
-    - Make sure we're tenting vias
+    √ Make sure we're tenting vias
     
-    - Verify that we don't have any GNDN nets (GND7, GND8, ...), which appeared at one point
+    √ Verify that we don't have any GNDN nets (GND7, GND8, ...), which appeared at one point
     
-    - Update RevX text
-    
-    
-    
-    
-    
+    √ Update RevX text
     
     √ Create programmer board using FT232H
         √ Need mechanism to swap SO/SI lines to program flash vs. SRAM (see ice40 breakout board schematic)
