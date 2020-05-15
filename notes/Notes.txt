@@ -1,58 +1,128 @@
-* Image sensors
+- Future
 
-    - AR0330CM
-        https://www.mouser.com/ProductDetail/863-AR0330CM1C00DP2
+    - Add MOSFET power transistors to define power domains
+    
+    - An eMMC (such as iNAND 7250, see datasheet in notes dir) might consume less power / be more reliable than an SD card. We can likely write to them faster (and maybe initialize them faster), so even if their current usage is higher, they may end up using less energy for the same operation if we can get the operation completed faster than with an SD card.
+    
+    - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
+    
+    - Upgrade capacitors by derating them based on applied DC voltage
+    
+    - We may want to add ESD suppression to our board. See FTDI docs, "2.2.1 Electrostatic Protection":
+        https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
+    
+    - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
+
+
+
+- Rev3
+
+    - Add proper image sensor i2c pullups:
+        - PIX_SDATA: needs a 1.5k-4.7k pullup according to AR0330CS datasheet
+        - PIX_SCLK: doesn't need a pullup since we'll always drive it from the master
+            - from the AR0330CS datasheet:
+                "the pull-up resistor is not required if the controller drives a valid logic level on SCLK at all times."
+                "the AR0330CS uses SCLK as an input only and therefore never drives it LOW."
+            - we'll save some power by not having a pullup burning power while driving the clock low
+
+- Rev2
+    
+    √ Renumber all components
+    
+    √ Clean up silkscreen component names
+        √ Make sure labels are large enough
+    
+    √ Make sure we're tenting vias
+    
+    √ Verify that we don't have any GNDN nets (GND7, GND8, ...), which appeared at one point
+    
+    √ Update RevX text
+    
+    √ Create programmer board using FT232H
+        √ Need mechanism to swap SO/SI lines to program flash vs. SRAM (see ice40 breakout board schematic)
+            - Created 'FTDI_FLASH_MODE' net controlled by FTDI
         
-        * Data rate
-            2304*1296 pixels/frame
-            16 bits/pixel (actually 12 bits but we'll use 16 bits/pixel since it'll work better with the RAM)
-            2304*1296*16 == 47,775,744 bits/frame
-            CLK_PIX (Readout Clock) == 49 Mpixel/s == 49e6 pixels/second == 49e6*16 == 784,000,000 bits/s
-            Time to read 1 frame == 2304*1296 pixels / 49e6 pixels/second == 61ms
+        √ Use level shifter with explicit inputs/outputs
+            - Our bidirectional level shifter doesn't work for our use case (likely due to its bidirectional behavior and weak drive strength)
         
-        # 4-lane mipi based on AR0330CM == 588 Mbit/sec/lane == 2352 Mbit/sec == 2,466,250,752 bits/sec
-        # 2,466,250,752 bits == 154,140,672 16-bit words == 154 MHz
-        #
-        # - Time to receive one frame:
-        #     1 frame == 35,831,808 bits
-        #     Data rate == 2,466,250,752 bits/sec
-        #     35,831,808 / 2,466,250,752 == 14.5 ms
-
-* RAM
-
-    - AS4C8M16SA-7TCN
-      https://www.mouser.com/ProductDetail/Alliance-Memory/AS4C8M16SA-7TCN?qs=sGAEpiMZZMti5BT4iPSEnVudMGEscIcdVRv91ZJHgYg%3d
-      Word width: 16 bit
-      Clock rate: 143 MHz
-      Throughput: 143e6 Hz * 16 bits == 2,656,000,000 bits/sec
-      $2.44
-
-    - Needs 1 refresh every 64ms/4096 == 15.625us.
-      Wait tRC=63ns after refresh command.
-
-* FPGA
-
-    - ECP5 series FPGA
-        https://www.mouser.com/ProductDetail/Lattice/LFE5U-12F-6BG256C?qs=sGAEpiMZZMvoScKlWpK8TKuuyQ9Pl%252byu21YKn7%252b9K98%3d
-        $5.00
-
-* Buy
-
-    - Demo3 dev board
-    https://www.mouser.com/ProductDetail/ON-Semiconductor/AGB1N0CS-GEVK?qs=O6bH0TOr7K%252bzjrpUaoFszA%3D%3D
+        X Need jumper to isolate CS_ line of flash / ice40 (see breakout board schematic)
+            - Nevermind, we added a solder jumper to the board itself
+        
+        √ Add SPI lines for a debug interface, to permit fast image readout from the chip
     
-    - AR0330CM headboard
-    https://www.mouser.com/ProductDetail/ON-Semiconductor/AR0330CM1C00SHAAH3-GEVB?qs=cGEy3R83DS%2FBftbd7Mwtgw%3D%3D
-    https://www.mouser.com/ProductDetail/ON-Semiconductor/AR0330CS1C12SPKAH3-GEVB?qs=cGEy3R83DS8JipeZnhEHTA%3D%3D
+    √ TPS63805:
+        √ "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
     
-    AR0330CM1C00SHAAH3
-    AR0330CS1C12SPKAH3
+    √ Expose AR0330 i2c lines for debugging
+    
+    √ Add SD card
+        - What pins need pull-up resistors?
+            - CMD, D[3:0].
+            - Does D3 need a pullup? Some designs omit it.
+                "The host shall pull-up all DAT0-3 lines by RDAT"
+                "When DAT3 is used for card detection, RDAT for DAT3 should be unconnected and another resistor should be connected to the ground."
+                    - We're not using D3 for card-detection, so it needs a pull-up
+    
+    √ Make VDD net larger?
+    
+    √ Cascade PG from 2V8 into 1V8, so that the image sensor's 1V8 rail turns on after its 2V8 (per power-on sequencing steps in the AR0330CS datasheet)
+    
+    √ Make VDD a ring around the edge of the board
+    
+    √ Make sure VDD_MIPI is connected to 2V8
+    
+    √ Add image sensor
+    
+    √ Move oscillator so it can supply both ice40 and the image sensor
+    
+    X Do we need to gate the enable of the oscillator until 1V8/2V8 are enabled? What does the image sensor require?
+        - 1V8 rail doesn't have a power-good output signal. The oscillator runs off the 1V8 rail anyway, so it won't start oscillating until the 1V8 comes up.
+    
+    √ Replace 2V5 rail with 2V8 instead, which will work with both the image sensor and ICE40
+    
+    √ Switch flash to W25Q80EWUXIE, since its tVSL=10us, as required by the ice40
+    
+    √ ICE40: loading from flash isn't working
+        √ Swap ICE_PRG_SO/ICE_PRG_SI pins entering flash chip. Currently we have the ICE40's SPI input connected to the flash's SPI input, and the ICE40's output connected to the flash's SPI output.
+        √ Make sure the chosen flash meets the "SPI PROM Requirements" criteria in "iCE40 Programming and Configuration" document
+            -> We'll meet these requirements by switching the flash chip to W25Q80EWUXIE
+    
+    √ TPS62801X_TPS6280X (U1/U2)
+        √ Fix pinout. The 1V8 and 1V2 rails are currently broken because the pins of the TPS* chips are scrambled for some reason.
+    
+    √ Use new EagleLibrary as a submodule
+    
+    √ Rename MOLEX-734120110 -> UFL-CONNECTOR, make MFG/PN custom attributes on the schematic
+    
+    √ Figure out a way to represent multiple component part numbers for: L1/L2/L3, 1V2 rail chip, 1V8 rail chip
+    
+    √ Update MFG/PN for all components on schematic
+    
+    √ Update EagleLibrary's description of all MDC-imported components
+    
+    √ Check TP4 connection: was it connected in Rev1? Why isn't connected in the Rev2 board right now?
+        - It used to be connected. I think we just deleted it somehow...
+
+
+
+
+- Buy
+    √ Lead-free solder
+        - See SolderProducts.txt
+    
+    √ Steel wool for soldering iron
+    
+    √ Kapton tape
+        https://www.amazon.com/RETERMIT-Resistant-Sublimation-Temperature-Polyimide/dp/B07MM38WLP/ref=sxin_2_ac_d_pm?ac_md=1-0-VW5kZXIgJDEw-ac_d_pm&cv_ct_cx=Kapton+Tape&dchild=1&keywords=Kapton+Tape&pd_rd_i=B07MM38WLP&pd_rd_r=9ccaae53-08dd-4dce-9e31-20301a4e83e1&pd_rd_w=cnkze&pd_rd_wg=qDdXZ&pf_rd_p=0e223c60-bcf8-4663-98f3-da892fbd4372&pf_rd_r=H9KG38T53AYDWN61ZRYC&psc=1&qid=1586830471&s=industrial&sr=1-1-22d05c05-1231-4126-b7c4-3e7a9c0027d0
+    
+    √ Flux
+        - See SolderProducts.txt
+    
+    
+    
+    
     
 
-* PCB assembly
-
-     https://pcbshopper.com/#assembly
-     https://www.allpcb.com/pcba.html
 
 
 
@@ -61,44 +131,11 @@
 
 
 
+√ SDRAMController.v: figure out what to do with our Max(0, X-1) expressions, since they're now unsigned, since we switched up our functions return types...
 
-auto black level calibration
-defective pixel correction
-black sun cancellation
-video or snapshot operations
-autofocus / AFC
-
-
-
-OS04B10
-OS05A10
-OS05A20
-OV4689
-
-Micron
-omnivision
-sony
-samsung
-aptina
-isocell
-imx
-ST Micro
-
-
-1 bit / (1/6 MHz) == 6*10^6 bps == 5.72 MB/sec
-1 bit / (1/27 MHz) == 27*10^6 bps == 25.75 MB/sec
-
-10 bits/pixel
-2304x1296 == 2985984 pixels == 29859840 bits
-
-12 bits/pixel
-1280x720  == 921600 pixels  == 11059200 bits
-1600x900  == 1440000 pixels == 17280000 bits
-1920x1080 == 2073600 pixels == 24883200 bits
-2304x1296 == 2985984 pixels == 35831808 bits
-
-4-lane mipi == 1500 MBit/sec/lane == 6000 Mbit/sec == 6,000,000,000 bits/sec
-6,000,000,000 bits == 375,000,000 16-bit words == 375 MHz
+√ SDRAMController.v: mark all registers `= 0`
+√ SDRAMController.v: stop requiring an explicit reset signal, generate itself
+√ SDRAMController.v: make work with W989D6DBGX6I, which adds another address bit
 
 
 
@@ -106,26 +143,29 @@ ST Micro
 
 
 
+√ dev board schematic
+    √ ice40: connect CDONE/CRESET
+    √ ice40: connect SPI flash pins
+    √ connect LEDs
+    √ add ufl voltage test points
+    √ add a header for the pix_ IOs, so we can provide data to the dev board to write
+    √ update package sizes for all resistors, capacitors, and inductors
+    √ choose resistor products/packages
+    √ make sure inductor footprint allows any of our inductors to be soldered
+    √ add 0ohm/1ohm resistors for testing/isolation
+    √ consider removing some of the decoupling capacitors for ice40 power? the technote mentioned varying the 2 kinds of caps, so we can remove half...
+    √ verify all packages+pins are correct and match datasheets
 
 
+√ remove reset signal and see how that improves timing. need to decide whether we're going to use an explicit or implicit (configuration) reset
+    definitely makes design smaller. we should use the implicit reset since it simplifies everything. the only caveat is we'll have to keep an eye out for Synplify's warning:
+        removing sequential instance XXX because it does not drive other instances
+
+√ make Lattice tool 'high effort' in the synthesis options
+    no effect, design runs at the same speed
+
+√ can we improve the empty/full logic of AFIFO to use readOK / writeOK logic instead? that way our registers will be initialized correctly with readOK=0 and writeOK=0
 
 
-2304 pixels / row, 12 bits / pixel ==  27648 bits / row
-1248 clocks / row, 1 clock=1/27e6 - 1/6e6 == 0.00004622222222 - 0.000208 s / row
-== 132923077 - 598153846 bps == 127 - 570 MB/s
-
-
-
-
-98 Mpixels/s == 98e6 pixels * 12 bits/pixel ==  1176000000 bps == 1122 MB/sec
-32 Mpixels/s == 32e6 pixels * 12 bits/pixel ==  384000000 bps == 366 MB/sec
-
-
-1308 rows
-
-
-
-2304 pixels / row, 12 bits / pixel ==  27648 bits / row
-12.7 us/Row
-
-27648 bits / 12.7e-6 s == 2177007874 bits/sec == 2076 MB/sec
+√ Iceboard_CopyImage: move pix_ IOs to the top-left instead of the top right, so they're closer to the RAM IOs. Does that improve speed?
+    Doesn't help much
