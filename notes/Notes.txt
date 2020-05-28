@@ -25,6 +25,14 @@
                 "the AR0330CS uses SCLK as an input only and therefore never drives it LOW."
             - we'll save some power by not having a pullup burning power while driving the clock low
 
+
+
+
+
+
+
+
+
 - Rev2
     
     √ Renumber all components
