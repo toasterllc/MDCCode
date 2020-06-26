@@ -1,5 +1,16 @@
 - Future
 
+    - Re-implement power supplies
+        - Use Webench to optimize efficiency
+        - Use better capacitors by focusing on DC bias
+    
+    - Add inrush current protection to MDC Programmer board
+        - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
+    
+    - Length match traces going to RAM
+    
+    - Length match traces going to image sensor
+    
     - Add MOSFET power transistors to define power domains
     
     - An eMMC (such as iNAND 7250, see datasheet in notes dir) might consume less power / be more reliable than an SD card. We can likely write to them faster (and maybe initialize them faster), so even if their current usage is higher, they may end up using less energy for the same operation if we can get the operation completed faster than with an SD card.
@@ -8,7 +19,7 @@
     
     - Upgrade capacitors by derating them based on applied DC voltage
     
-    - We may want to add ESD suppression to our board. See FTDI docs, "2.2.1 Electrostatic Protection":
+    - Add ESD suppression to MDC Programmer board. See FTDI docs, "2.2.1 Electrostatic Protection":
         https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
     
     - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
