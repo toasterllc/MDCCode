@@ -27,7 +27,13 @@
 
 
 - Rev3
-
+    
+    - Programmer: Fix USB jack model to the version that doesn't have plastic posts
+    
+    - Improve current sense resistor
+        - Use low-tempco resistor
+        - Change value to .2Ω or .1Ω (depending on current range)
+    
     - Add proper image sensor i2c pullups:
         - PIX_SDATA: needs a 1.5k-4.7k pullup according to AR0330CS datasheet
         - PIX_SCLK: doesn't need a pullup since we'll always drive it from the master
