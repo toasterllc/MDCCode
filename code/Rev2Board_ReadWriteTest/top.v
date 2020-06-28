@@ -9,7 +9,7 @@
 module Top(
     input wire          clk12mhz,
     
-    output wire[7:0]    led,
+    output wire[3:0]    led,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -77,11 +77,11 @@ module Top(
     wire[AddrWidth-1:0] currentReadAddr = readAddr[AddrWidth-1:0];
     wire[DataWidth-1:0] expectedReadData = DataFromAddr(currentReadAddr);
     
-    reg[6:0] status = StatusStart /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
-    assign led[6:0] = status;
+    reg[2:0] status = StatusStart /* synthesis syn_keep=1 */; // syn_keep is necessary to prevent Synplify optimization from removing -- "removing sequential instance ..."
+    assign led[2:0] = status;
     
     reg wrapped = 0;
-    assign led[7] = wrapped;
+    assign led[3] = wrapped;
     
     SDRAMController #(
         .ClockFrequency(ClockFrequency)
@@ -174,7 +174,7 @@ module Top(
                 // $display("Write: %h", cmdAddr);
             end
         
-        end else begin
+        end else if (status == StatusUnderway) begin
             // Handle read data if available
             if (cmdReadDataValid) begin
                 if (enqueuedReadCount > 0) begin
@@ -189,7 +189,9 @@ module Top(
                         status <= StatusInvalidData;
                         
                     end else begin
-                        $display("Read expected data from addr 0x%x: 0x%x", currentReadAddr, DataFromAddr(currentReadAddr));
+                        `ifdef SIM
+                            $display("Read expected data from addr 0x%x: 0x%x", currentReadAddr, DataFromAddr(currentReadAddr));
+                        `endif
                     end
                     
                     readAddr <= readAddr >> AddrWidth;
