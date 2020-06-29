@@ -3,6 +3,7 @@
     - Re-implement power supplies
         - Use Webench to optimize efficiency
         - Use better capacitors by focusing on DC bias
+        - Improve layout -- use the largest IO traces possible
     
     - Add inrush current protection to MDC Programmer board
         - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
