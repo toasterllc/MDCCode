@@ -132,7 +132,7 @@ public:
 //            assert(xfer);
             
             ir = ftdi_write_data(&_ftdi, cmd, sizeof(cmd));
-            printf("ftdi_write_data: %d\n", ir);
+//            printf("ftdi_write_data: %d\n", ir);
             assert(ir == sizeof(cmd));
             
             // TODO: IIRC, for flushing the buffer to work, we may need to call ftdi_write_data first. otherwise, reading data may not work...
@@ -145,7 +145,8 @@ public:
 ////                if (!ir) break;
 //            }
             
-            auto resp = this->read(2);
+            uint8_t resp[2];
+            _readFromDevice(resp, sizeof(resp));
             assert(resp[0]==0xFA && resp[1]==0xAA);
         }
     }
@@ -167,76 +168,38 @@ public:
             {.pin=Pin::CDONE,   .dir=0,     .val=0},
             {.pin=Pin::CRST_,   .dir=1,     .val=1},
         });
-        _execute();
     }
     
     void write(const Cmd cmd) {
         _write(std::vector<uint8_t>({(uint8_t)cmd}));
     }
     
-    
     Msg read() {
-//        enum class Type : uint8_t {
-//            Empty   = 0x00,
-//        };
-//        Type type = Type::Empty;
-//        std::vector<uint8_t> payload;
-//
-//        Msg r;
-//        std::vector<uint8_t> result(n);
-//        size_t len = 0;
-//        while (len < n) {
-//            const size_t readLen = n-len;
-//            int ir = ftdi_read_data(&_ftdi, result.data()+len, (int)readLen);
-//            // printf("ftdi_read_data returned: 0x%x\n", ir);
-//            assert(ir>=0 && (size_t)ir<=readLen);
-//            len += ir;
-//        }
-//        return result;
-        
-        using Type = Msg::Type;
-        
-        Type type = Type::Empty;
+        Msg msg;
         uint32_t payloadLen = 0;
-        std::vector<uint8_t> payload;
-        
-        _read((uint8_t*)&type, sizeof(type));
+        _read((uint8_t*)&msg.type, sizeof(msg.type));
         _read((uint8_t*)&payloadLen, sizeof(payloadLen));
-        payload.resize(payloadLen);
-        _read(payload.data(), payloadLen);
+        msg.payload.resize(payloadLen);
+        _read(msg.payload.data(), payloadLen);
         
-        return Msg{
-            .type = type,
-            .payload = std::move(payload),
-        };
+        return msg;
     }
     
     void _read(uint8_t* d, size_t n) {
         size_t len = 0;
         
-        // First read from the bytes that we've already read from the device
-        if (!_in.empty()) {
-            const size_t readLen = std::min(n, _in.size());
-            memcpy(d+len, _in.data(), readLen);
-            _in.erase(_in.begin(), _in.begin()+readLen);
-            len += readLen;
-        }
+        // Read from the bytes that we've already read from the device
+        const size_t readLen = std::min(n, _in.size());
+        memcpy(d+len, _in.data(), readLen);
+        _in.erase(_in.begin(), _in.begin()+readLen);
+        len += readLen;
         
         // Read remaining bytes from the device
-        _readFromDevice();
-        
-        while (len < n) {
-            const size_t readLen = n-len;
-            int ir = ftdi_read_data(&_ftdi, d+len, (int)readLen);
-            // printf("ftdi_read_data returned: 0x%x\n", ir);
-            assert(ir>=0 && (size_t)ir<=readLen);
-            len += ir;
-        }
+        _readFromDevice(d+len, n-len);
     }
-    
     
     void _readFromDevice(uint8_t* d, size_t n) {
-        for (size_t len=0; len < n;) {
+        for (size_t len=0; len<n;) {
             const size_t readLen = n-len;
             int ir = ftdi_read_data(&_ftdi, d+len, (int)readLen);
             // printf("ftdi_read_data returned: 0x%x\n", ir);
@@ -244,20 +207,6 @@ public:
             len += ir;
         }
     }
-    
-    
-//    std::vector<uint8_t> read(size_t n) {
-//        std::vector<uint8_t> result(n);
-//        size_t len = 0;
-//        while (len < n) {
-//            const size_t readLen = n-len;
-//            int ir = ftdi_read_data(&_ftdi, result.data()+len, (int)readLen);
-//            // printf("ftdi_read_data returned: 0x%x\n", ir);
-//            assert(ir>=0 && (size_t)ir<=readLen);
-//            len += ir;
-//        }
-//        return result;
-//    }
     
     void _setPins(std::vector<PinConfig> configs) {
         uint8_t pinDirs = 0;
@@ -268,6 +217,7 @@ public:
         }
         // printf("_pinVals:0x%x _pinDirs:0x%x\n", _pinVals, _pinDirs);
         _enqueue({0x80, pinVals, pinDirs});
+        _execute();
     }
     
     void _write(const std::vector<uint8_t>& d) {
@@ -278,7 +228,7 @@ public:
         
         const size_t oldSize = _in.size();
         _in.resize(oldSize+d.size());
-        _read(_in.data()+oldSize, d.size());
+        _readFromDevice(_in.data()+oldSize, d.size());
     }
     
     void _enqueue(const std::vector<uint8_t>& d) {
