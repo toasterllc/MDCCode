@@ -4,6 +4,7 @@
 #include <queue>
 #include <algorithm>
 #include <unistd.h>
+#include <string.h>
 #include <libftdi1/ftdi.h>
 
 class MDCDevice {
@@ -20,16 +21,14 @@ public:
     };
     
     enum class Cmd : uint8_t {
-        Nop     = 0x00,
-        LEDOff  = 0x80,
-        LEDOn   = 0x81,
+        Nop         = 0x00,
+        LEDOff      = 0x80,
+        LEDOn       = 0x81,
+        ReadData    = 0x82,
     };
     
     struct Msg {
-        enum class Type : uint8_t {
-            Empty   = 0x00,
-        };
-        Type type = Type::Empty;
+        Cmd cmd = Cmd::Nop;
         std::vector<uint8_t> payload;
     };
     
@@ -127,13 +126,11 @@ public:
             
             
             
-            uint8_t cmd[] = {0xAA};
+            const uint8_t cmd[] = {0xAA};
 //            struct ftdi_transfer_control* xfer = ftdi_write_data_submit(&_ftdi, cmd, sizeof(cmd));
 //            assert(xfer);
             
-            ir = ftdi_write_data(&_ftdi, cmd, sizeof(cmd));
-//            printf("ftdi_write_data: %d\n", ir);
-            assert(ir == sizeof(cmd));
+            _ftdiWrite(_ftdi, cmd, sizeof(cmd));
             
             // TODO: IIRC, for flushing the buffer to work, we may need to call ftdi_write_data first. otherwise, reading data may not work...
 //            // Flush the read buffer
@@ -146,7 +143,7 @@ public:
 //            }
             
             uint8_t resp[2];
-            _readFromDevice(resp, sizeof(resp));
+            _ftdiRead(_ftdi, resp, sizeof(resp));
             assert(resp[0]==0xFA && resp[1]==0xAA);
         }
     }
@@ -177,34 +174,23 @@ public:
     Msg read() {
         Msg msg;
         uint32_t payloadLen = 0;
-        _read((uint8_t*)&msg.type, sizeof(msg.type));
+        _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
         _read((uint8_t*)&payloadLen, sizeof(payloadLen));
         msg.payload.resize(payloadLen);
         _read(msg.payload.data(), payloadLen);
-        
         return msg;
     }
     
-    void _read(uint8_t* d, size_t n) {
-        size_t len = 0;
-        
-        // Read from the bytes that we've already read from the device
-        const size_t readLen = std::min(n, _in.size());
-        memcpy(d+len, _in.data(), readLen);
-        _in.erase(_in.begin(), _in.begin()+readLen);
-        len += readLen;
-        
-        // Read remaining bytes from the device
-        _readFromDevice(d+len, n-len);
-    }
-    
-    void _readFromDevice(uint8_t* d, size_t n) {
-        for (size_t len=0; len<n;) {
-            const size_t readLen = n-len;
-            int ir = ftdi_read_data(&_ftdi, d+len, (int)readLen);
-            // printf("ftdi_read_data returned: 0x%x\n", ir);
-            assert(ir>=0 && (size_t)ir<=readLen);
-            len += ir;
+    void _read(uint8_t* d, const size_t len) {
+        for (size_t off=0; off<len;) {
+            // Read from the bytes that we've already read from the device
+            const size_t readLen = std::min(len-off, _in.size());
+            memcpy(d+off, _in.data(), readLen);
+            _in.erase(_in.begin(), _in.begin()+readLen);
+            off += readLen;
+            
+            // Write Nop's so that we get `len-off` bytes back
+            _write(std::vector<uint8_t>(len-off, (uint8_t)Cmd::Nop));
         }
     }
     
@@ -215,35 +201,38 @@ public:
             pinDirs = (pinDirs&(~(uint8_t)c.pin))|(c.dir ? (uint8_t)c.pin : 0);
             pinVals = (pinVals&(~(uint8_t)c.pin))|(c.val ? (uint8_t)c.pin : 0);
         }
-        // printf("_pinVals:0x%x _pinDirs:0x%x\n", _pinVals, _pinDirs);
-        _enqueue({0x80, pinVals, pinDirs});
-        _execute();
+        
+        uint8_t b[] = {0x80, pinVals, pinDirs};
+        _ftdiWrite(_ftdi, b, sizeof(b));
     }
     
     void _write(const std::vector<uint8_t>& d) {
-        assert(!d.empty());
-        _enqueue({0x31, (uint8_t)((d.size()-1)&0xFF), (uint8_t)(((d.size()-1)&0xFF00)>>8)});
-        _enqueue(d);
-        _execute();
+        uint8_t b[] = {0x31, (uint8_t)((d.size()-1)&0xFF), (uint8_t)(((d.size()-1)&0xFF00)>>8)};
+        _ftdiWrite(_ftdi, b, sizeof(b));
+        _ftdiWrite(_ftdi, d.data(), d.size());
         
+        // Store the data that was clocked out from the device
         const size_t oldSize = _in.size();
         _in.resize(oldSize+d.size());
-        _readFromDevice(_in.data()+oldSize, d.size());
+        _ftdiRead(_ftdi, _in.data()+oldSize, d.size());
     }
     
-    void _enqueue(const std::vector<uint8_t>& d) {
-        _out.insert(_out.end(), d.begin(), d.end());
+    static void _ftdiRead(struct ftdi_context& ftdi, uint8_t* d, const size_t len) {
+        for (size_t off=0; off<len;) {
+            const size_t readLen = len-off;
+            int ir = ftdi_read_data(&ftdi, d+off, (int)readLen);
+            assert(ir>=0 && (size_t)ir<=readLen);
+            off += ir;
+        }
     }
     
-    void _execute() {
-        int ir = ftdi_write_data(&_ftdi, _out.data(), (int)_out.size());
-        assert(ir>=0 && (size_t)ir==_out.size());
-        _out.clear();
+    static void _ftdiWrite(struct ftdi_context& ftdi, const uint8_t* d, const size_t len) {
+        int ir = ftdi_write_data(&ftdi, d, (int)len);
+        assert(ir>=0 && (size_t)ir==len);
     }
     
 private:
     struct ftdi_context _ftdi;
-    std::vector<uint8_t> _out;
     std::vector<uint8_t> _in;
 };
 

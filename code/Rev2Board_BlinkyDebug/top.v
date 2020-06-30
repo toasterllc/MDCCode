@@ -9,9 +9,9 @@ module Top(
     input wire          debug_di,
     output wire         debug_do,
 );
-    localparam CmdNop               = 8'h00;
-    localparam CmdLEDOff            = 8'h80;
-    localparam CmdLEDOn             = 8'h81;
+    localparam CmdNop       = 8'h00;
+    localparam CmdLEDOff    = 8'h80;
+    localparam CmdLEDOn     = 8'h81;
     
     wire clk = clk12mhz;
     
