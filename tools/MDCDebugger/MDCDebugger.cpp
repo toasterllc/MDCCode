@@ -173,7 +173,7 @@ public:
     
     Msg read() {
         Msg msg;
-        uint32_t payloadLen = 0;
+        uint16_t payloadLen = 0;
         _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
         _read((uint8_t*)&payloadLen, sizeof(payloadLen));
         msg.payload.resize(payloadLen);
