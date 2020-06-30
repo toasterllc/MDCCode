@@ -16,23 +16,11 @@ module Top(
     
     wire clk = clk12mhz;
     
-    // reg tmp = 0;
-    // assign led[0] = tmp;
-    
-    // reg[23:0] counter = 0;
-    // assign led[3:0] = counter[11: 8];
-    // assign led[3:0] = counter[ 7: 4];
-    // assign led[3:0] = counter[ 3: 0];
-    
-    // assign led[3:0] = {4{counter == 35}};
-    // assign led[3:0] = {4{counter == 0}};
-    
     reg inq_readTrigger=0, inq_writeTrigger=0;
     wire[7:0] inq_readData;
     reg[7:0] inq_writeData = 0;
     wire inq_readOK, inq_writeOK;
     reg[7:0] inq_currentCmd = 0;
-    
     AFIFO #(.Width(8), .Size(8)) inq(
         .rclk(clk),
         .r(inq_readTrigger),
@@ -40,13 +28,13 @@ module Top(
         .rok(inq_readOK),
         
         .wclk(debug_clk),
-        .w(inq_writeTrigger), // TODO: &debug_cs
+        .w(debug_cs && inq_writeTrigger),
         .wd(inq_writeData),
         .wok(inq_writeOK)
     );
     
     reg[7:0] outMsg[7:0];
-    reg[7:0] outMsgCount = 0;
+    reg[7:0] outMsgLen = 0;
     always @(posedge clk) begin
         // Reset stuff by default
         inq_readTrigger <= 0;
@@ -54,11 +42,11 @@ module Top(
         inq_currentCmd <= CmdNop;
         
         // Continue shifting out `outMsg`, if there's more data available
-        if (outMsgCount) begin
+        if (outMsgLen) begin
             if (outq_writeTrigger && outq_writeOK) begin
-                outMsgCount <= outMsgCount-1;
+                outMsgLen <= outMsgLen-1;
                 // Keep triggering writes if there's more data
-                if (outMsgCount > 1) begin
+                if (outMsgLen > 1) begin
                     outq_writeTrigger <= 1;
                 end
             end else begin
@@ -86,7 +74,7 @@ module Top(
             // Queue response
             outMsg[1] <= 1;
             outMsg[0] <= inq_currentCmd;
-            outMsgCount <= 2;
+            outMsgLen <= 2;
         
         // Read the next command out of `inq`
         end else if (inq_readTrigger && inq_readOK) begin
@@ -104,16 +92,11 @@ module Top(
     
     reg outq_readTrigger=0, outq_writeTrigger=0;
     wire[7:0] outq_readData;
-    wire[7:0] outq_writeData;
-    assign outq_writeData = outMsg[(outMsgCount ? outMsgCount-1 : 0)];
-    
+    wire[7:0] outq_writeData = outMsg[(outMsgLen ? outMsgLen-1 : 0)];
     wire outq_readOK, outq_writeOK;
-    reg[8:0] outq_currentData = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    assign debug_do = outq_currentData[8];
-    
     AFIFO #(.Width(8), .Size(512)) outq(
         .rclk(debug_clk),
-        .r(outq_readTrigger), // TODO: &debug_cs
+        .r(debug_cs && outq_readTrigger),
         .rd(outq_readData),
         .rok(outq_readOK),
         
@@ -125,6 +108,8 @@ module Top(
     
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
+    reg[8:0] outq_currentData = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    assign debug_do = outq_currentData[8];
     always @(posedge debug_clk) begin
         if (debug_cs) begin
             // Reset stuff by default
@@ -132,7 +117,7 @@ module Top(
             outq_readTrigger <= 0;
             
             if (inq_writeTrigger && !inq_writeOK) begin
-                // TODO: handle dropped command
+                // TODO: handle dropped commands
             end
             
             // ## Incoming data handling (inq)
