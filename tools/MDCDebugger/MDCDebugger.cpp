@@ -173,12 +173,22 @@ public:
     
     Msg read() {
         Msg msg;
-        uint16_t payloadLen = 0;
-        _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
-        _read((uint8_t*)&payloadLen, sizeof(payloadLen));
-        msg.payload.resize(payloadLen);
-        _read(msg.payload.data(), payloadLen);
+        uint8_t len = 0;
+        _read((uint8_t*)&len, sizeof(len));
+        if (len) {
+            _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
+            const uint8_t payloadLen = len-1;
+            msg.payload.resize(payloadLen);
+            _read(msg.payload.data(), payloadLen);
+        }
         return msg;
+//        Msg msg;
+//        uint16_t payloadLen = 0;
+//        _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
+//        _read((uint8_t*)&payloadLen, sizeof(payloadLen));
+//        msg.payload.resize(payloadLen);
+//        _read(msg.payload.data(), payloadLen);
+//        return msg;
     }
     
     void _read(uint8_t* d, const size_t len) {
@@ -244,6 +254,7 @@ int main() {
     
     for (bool on = false;; on = !on) {
         device.write((on ? Cmd::LEDOn : Cmd::LEDOff));
+//        device.write(Cmd::Nop);
         printf("led = %d\n", on);
         sleep(1);
     }
