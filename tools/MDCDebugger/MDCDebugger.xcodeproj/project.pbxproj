@@ -80,7 +80,7 @@
 		55746C6023FB58BD00DA8CD8 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1130;
+				LastUpgradeCheck = 1140;
 				ORGANIZATIONNAME = dave;
 				TargetAttributes = {
 					55746C6723FB58BD00DA8CD8 = {
@@ -173,6 +173,7 @@
 		55746C7123FB58BD00DA8CD8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				LIBRARY_SEARCH_PATHS = /usr/local/Cellar/libftdi/1.4_2/lib;
 				OTHER_LDFLAGS = "-lftdi1";
