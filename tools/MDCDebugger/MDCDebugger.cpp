@@ -94,29 +94,6 @@ public:
         ir = ftdi_set_bitmode(&_ftdi, 0xFF, BITMODE_MPSSE);
         assert(!ir);
         
-//        // Flush the read buffer
-//        for (;;) {
-//            uint8_t tmp[128];
-//            int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-//            printf("read %d bytes\n", ir);
-//            assert(ir >= 0);
-//            if (!ir) break;
-//        }
-        
-        // Clear our receive buffer
-        // For some reason this needs to happen after our first write (via _flush),
-        // otherwise we don't receive anything.
-        // This is necessary in case an old process was doing IO and crashed, in which
-        // case there could still be data in the buffer.
-        for (int i=0; i<10; i++) {
-            uint8_t tmp[128];
-            int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-            printf("AAA FLUSH: %d\n", ir);
-            usleep(100000);
-        //            assert(ir >= 0);
-        //            if (!ir) break;
-        }
-        
         // Use 60MHz master clock, disable adaptive clocking, disable three-phase clocking, disable loopback
         {
             uint8_t cmd[] = {0x8A, 0x97, 0x8D, 0x85};
@@ -136,125 +113,14 @@ public:
         // otherwise we don't receive anything.
         // This is necessary in case an old process was doing IO and crashed, in which
         // case there could still be data in the buffer.
-        for (int i=0; i<10; i++) {
+        for (;;) {
             uint8_t tmp[128];
             int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-            printf("BBB FLUSH: %d\n", ir);
-            usleep(100000);
-//            assert(ir >= 0);
-//            if (!ir) break;
+            assert(ir >= 0);
+            if (!ir) break;
         }
         
         _resetPinState();
-        
-        // Clear our receive buffer
-        // For some reason this needs to happen after our first write (via _flush),
-        // otherwise we don't receive anything.
-        // This is necessary in case an old process was doing IO and crashed, in which
-        // case there could still be data in the buffer.
-        for (int i=0; i<10; i++) {
-            uint8_t tmp[128];
-            int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-            printf("CCC FLUSH: %d\n", ir);
-            usleep(100000);
-//            assert(ir >= 0);
-//            if (!ir) break;
-        }
-        
-//        // Synchronize with FTDI by sending a bad command and ensuring we get the expected error
-//        {
-//                const uint8_t cmd[] = {0xAB};
-//                _ftdiWrite(_ftdi, cmd, sizeof(cmd));
-//
-//                // TODO: IIRC, for flushing the buffer to work, we may need to call ftdi_write_data first. otherwise, reading data may not work...
-//    //            // Flush the read buffer
-//                uint8_t resp[2];
-//                for (;;) {
-//                    uint8_t tmp[128];
-//                    int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-//                    assert(ir >= 0);
-//                    for (int i=0; i<ir; i++) {
-//                        printf("ZZZ: resp[%d] = 0x%x\n", i, tmp[i]);
-//                    }
-//                    if (!ir) break;
-//                }
-//
-////            assert(resp[0]==0xFA && resp[1]==0xAB);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-////            for (;;) {
-////                auto tmp = _readData(1);
-////                printf("read %zu bytes\n", tmp.size());
-////            }
-//
-//
-////            for (;;) {
-////                const uint8_t cmd[] = {0xAB};
-////                _ftdiWrite(_ftdi, cmd, sizeof(cmd));
-////
-////                // TODO: IIRC, for flushing the buffer to work, we may need to call ftdi_write_data first. otherwise, reading data may not work...
-////    //            // Flush the read buffer
-////                for (;;) {
-////                    sleep(1);
-////                    uint8_t tmp[128];
-////                    int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-////                    printf("0xAB response: read %d bytes\n", ir);
-////                    assert(ir >= 0);
-////                    for (int i=0; i<ir; i++) {
-////                        printf("ZZZ: resp[%d] = 0x%x\n", i, tmp[i]);
-////                    }
-////                    if (!ir) break;
-////                }
-////
-//////                printf("XXX\n");
-//////                _ftdiWrite(_ftdi, cmd, sizeof(cmd));
-//////                printf("YYY\n");
-//////
-//////    //            uint8_t resp[2];
-//////    //            _ftdiRead(_ftdi, resp, sizeof(resp));
-//////
-//////                uint8_t resp[1];
-//////                _ftdiRead(_ftdi, resp, sizeof(resp));
-//////
-//////                printf("ZZZ: resp[0] = 0x%x\n", resp[0]);
-//////                exit(0);
-////            }
-////
-//////            assert(resp[0]==0xFA && resp[1]==0xAB);
-//        }
-        
-//        for (;;) {
-//            {
-//                printf("ftdi_write_data\n");
-//                uint8_t b[] = {0x31, 0x00, 0x00, 0x81};
-//                int ir = ftdi_write_data(&_ftdi, b, sizeof(b));
-//                assert(ir == sizeof(b));
-//
-//                sleep(1);
-//                for (;;) {
-//                    uint8_t tmp[128];
-//                    int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-//                    assert(ir >= 0);
-//                    printf("Read %d bytes:\n", ir);
-//                    for (int i=0; i<ir; i++) {
-//                        printf("  [%d] = 0x%x\n", i, tmp[i]);
-//                    }
-//                    if (!ir) break;
-//                }
-//            }
-//
-////            sleep(1);
-////            exit(0);
-//        }
     }
     
     ~MDCDevice() {
@@ -277,31 +143,7 @@ public:
     }
     
     void write(const Cmd cmd) {
-//        for (;;) {
-//            uint8_t tmp[128];
-//            int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-//            assert(ir >= 0);
-//            printf("[BEFORE] Read %d bytes:\n", ir);
-//            for (int i=0; i<ir; i++) {
-//                printf("  [%d] = 0x%x\n", i, tmp[i]);
-//            }
-//            if (!ir) break;
-//        }
-        
-        
         _write(std::vector<uint8_t>({(uint8_t)cmd}));
-        
-//        for (int i=0; i<100; i++) {
-//            uint8_t tmp[128];
-//            int ir = ftdi_read_data(&_ftdi, tmp, sizeof(tmp));
-//            assert(ir >= 0);
-//            printf("Read %d bytes:\n", ir);
-//            for (int i=0; i<ir; i++) {
-//                printf("  [%d] = 0x%x\n", i, tmp[i]);
-//            }
-////            if (!ir) break;
-//        }
-        
     }
     
     Msg read() {
@@ -315,13 +157,6 @@ public:
             _read(msg.payload.data(), payloadLen);
         }
         return msg;
-//        Msg msg;
-//        uint16_t payloadLen = 0;
-//        _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
-//        _read((uint8_t*)&payloadLen, sizeof(payloadLen));
-//        msg.payload.resize(payloadLen);
-//        _read(msg.payload.data(), payloadLen);
-//        return msg;
     }
 
     void _read(uint8_t* d, const size_t len) {
@@ -353,13 +188,9 @@ public:
         // Short-circuit if there's no data to write
         if (d.empty()) return;
         
-        std::vector<uint8_t> tmp = {0x31, (uint8_t)((d.size()-1)&0xFF), (uint8_t)(((d.size()-1)&0xFF00)>>8)};
-        tmp.insert(tmp.end(), d.begin(), d.end());
-        _ftdiWrite(_ftdi, tmp.data(), tmp.size());
-        
-//        uint8_t b[] = {0x31, (uint8_t)((d.size()-1)&0xFF), (uint8_t)(((d.size()-1)&0xFF00)>>8)};
-//        _ftdiWrite(_ftdi, b, sizeof(b));
-//        _ftdiWrite(_ftdi, d.data(), d.size());
+        uint8_t b[] = {0x31, (uint8_t)((d.size()-1)&0xFF), (uint8_t)(((d.size()-1)&0xFF00)>>8)};
+        _ftdiWrite(_ftdi, b, sizeof(b));
+        _ftdiWrite(_ftdi, d.data(), d.size());
         
         // Store the data that was clocked out from the device
         const size_t oldSize = _in.size();
@@ -371,7 +202,6 @@ public:
         for (size_t off=0; off<len;) {
             const size_t readLen = len-off;
             int ir = ftdi_read_data(&ftdi, d+off, (int)readLen);
-//            printf("ftdi_read_data: %d\n", ir);
             assert(ir>=0 && (size_t)ir<=readLen);
             off += ir;
         }
@@ -380,41 +210,70 @@ public:
     static void _ftdiWrite(struct ftdi_context& ftdi, const uint8_t* d, const size_t len) {
         int ir = ftdi_write_data(&ftdi, d, (int)len);
         assert(ir>=0 && (size_t)ir==len);
-        printf("_ftdiWrite wrote %d bytes:\n", ir);
-        for (int i=0; i<(int)len; i++) {
-            printf("  [%d] = 0x%x\n", i, d[i]);
-        }
         
-//        for (;;) {
-//            int ir = ftdi_write_data(&ftdi, d, (int)len);
-//            printf("ir: %d\n", ir);
-//            if (ir == (int)len) break;
+//        printf("_ftdiWrite wrote %d bytes:\n", ir);
+//        for (int i=0; i<(int)len; i++) {
+//            printf("  [%d] = 0x%x\n", i, d[i]);
 //        }
-//        assert(ir>=0 && (size_t)ir==len);
     }
     
-private:
+public:
+//private:
     struct ftdi_context _ftdi;
     std::vector<uint8_t> _in;
 };
 
 int main() {
-    using Cmd = MDCDevice::Cmd;
+//    using Cmd = MDCDevice::Cmd;
     
     MDCDevice device;
     
     printf("HALLO\n");
-    for (bool on = false;; on = !on) {
-        device.write((on ? Cmd::LEDOn : Cmd::LEDOff));
-//        device.write(Cmd::Nop);
-        printf("led = %d\n", on);
-        
-        MDCDevice::Msg msg = device.read();
-        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
-            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
-        
-//        usleep(1000000);
+    
+    
+    {
+        const uint8_t cmd[] = {0x31, 0x05, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00};
+        MDCDevice::_ftdiWrite(device._ftdi, cmd, sizeof(cmd));
     }
+    
+    {
+        sleep(1);
+        uint8_t tmp[128];
+        int ir = ftdi_read_data(&device._ftdi, tmp, sizeof(tmp));
+        assert(ir >= 0);
+        printf("Read data:\n");
+        for (int i=0; i<ir; i++) {
+            printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
+        }
+    }
+    
+    
+//    for (bool on = false;; on = !on) {
+//        device.write((on ? Cmd::LEDOn : Cmd::LEDOff));
+////        device.write(Cmd::Nop);
+//        printf("led = %d\n", on);
+//
+//        {
+//            uint8_t tmp[10];
+//            device._read(tmp, sizeof(tmp));
+//            printf("Read data:\n");
+//            for (int i=0; i<sizeof(tmp); i++) {
+//                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
+//            }
+//        }
+//
+//        MDCDevice::Msg msg = device.read();
+//        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
+//            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
+//
+////        msg = device.read();
+////        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
+////            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
+//
+//        sleep(1);
+//
+////        usleep(1000000);
+//    }
     
     return 0;
 }
