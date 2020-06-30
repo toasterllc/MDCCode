@@ -85,7 +85,7 @@ module Top(
             
             // Queue response
             outMsg[1] <= 1;
-            outMsg[0] <= 0;
+            outMsg[0] <= inq_currentCmd;
             outMsgCount <= 2;
         
         // Read the next command out of `inq`
@@ -162,6 +162,9 @@ module Top(
             // Otherwise load the next byte, if there's one available
             end else if (outq_readTrigger && outq_readOK) begin
                 outq_currentData <= {outq_readData, 1'b1}; // Add sentinel to the end
+            
+            end else if (!outq_currentData) begin
+                outq_currentData <= {8'b1, 1'b0}; // Add sentinel to the end
             
             // Otherwise shift out zeroes
             end else begin
