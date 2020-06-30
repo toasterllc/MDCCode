@@ -27,41 +27,39 @@ module Top(
     // assign led[3:0] = {4{counter == 35}};
     // assign led[3:0] = {4{counter == 0}};
     
-    assign debug_do = 0;
+    reg inq_readTrigger=0, inq_writeTrigger=0;
+    wire[7:0] inq_readData;
+    reg[7:0] inq_writeData = 0;
+    wire inq_readOK, inq_writeOK;
+    reg[7:0] inq_currentCmd = 0;
     
-    reg cmdq_readTrigger=0, cmdq_writeTrigger=0;
-    wire[7:0] cmdq_readData;
-    reg[7:0] cmdq_writeData = 0;
-    wire cmdq_readOK, cmdq_writeOK;
-    reg[7:0] cmdq_currentCmd = 0;
-    
-    AFIFO #(.Width(8), .Size(8)) cmdqfifo(
+    AFIFO #(.Width(8), .Size(8)) inq(
         .rclk(clk),
-        .r(cmdq_readTrigger),
-        .rd(cmdq_readData),
-        .rok(cmdq_readOK),
+        .r(inq_readTrigger),
+        .rd(inq_readData),
+        .rok(inq_readOK),
         
         .wclk(debug_clk),
-        .w(cmdq_writeTrigger),
-        .wd(cmdq_writeData),
-        .wok(cmdq_writeOK)
+        .w(inq_writeTrigger),
+        .wd(inq_writeData),
+        .wok(inq_writeOK)
     );
     
     always @(posedge clk) begin
-        // Reset cmdq_readTrigger by default
-        cmdq_readTrigger <= 0;
+        // Reset inq_readTrigger by default
+        inq_readTrigger <= 0;
         // Reset currentCmd by default
-        cmdq_currentCmd <= CmdNop;
+        inq_currentCmd <= CmdNop;
         
-        if (cmdq_readOK) begin
-            cmdq_currentCmd <= cmdq_readData;
-            cmdq_readTrigger <= 1;
+        if (inq_readOK) begin
+            inq_currentCmd <= inq_readData;
+            inq_readTrigger <= 1;
         end else begin
-            cmdq_currentCmd <= CmdNop;
+            inq_currentCmd <= CmdNop;
         end
         
-        // Handle cmdq_currentCmd
-        case (cmdq_currentCmd)
+        // Handle inq_currentCmd
+        case (inq_currentCmd)
         CmdNop: begin
         end
         
@@ -75,44 +73,68 @@ module Top(
         endcase
     end
     
-    // wire outbuf_readTrigger, outbuf_writeTrigger;
-    // wire[7:0] outbuf_readData;
-    // reg[7:0] outbuf_writeData = 0;
-    // wire outbuf_readOK, outbuf_writeOK;
-    // AFIFO #(.Width(8), .Size(512)) outbuf(
-    //     .rclk(debug_clk),
-    //     .r(outbuf_readTrigger),
-    //     .rd(outbuf_readData),
-    //     .rok(outbuf_readOK),
-    //
-    //     .wclk(clk),
-    //     .w(outbuf_writeTrigger),
-    //     .wd(outbuf_writeData),
-    //     .wok(outbuf_writeOK)
-    // );
+    
+    
+    
+    
+    reg outq_readTrigger=0, outq_writeTrigger=0;
+    wire[7:0] outq_readData;
+    reg[7:0] outq_writeData = 0;
+    wire outq_readOK, outq_writeOK;
+    reg[8:0] outq_currentData = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    assign debug_do = outq_currentData[8];
+    
+    AFIFO #(.Width(8), .Size(512)) outq(
+        .rclk(debug_clk),
+        .r(outq_readTrigger),
+        .rd(outq_readData),
+        .rok(outq_readOK),
+        
+        .wclk(clk),
+        .w(outq_writeTrigger),
+        .wd(outq_writeData),
+        .wok(outq_writeOK)
+    );
     
     reg[7:0] debug_cmd = 0;
     wire debug_cmdReady = debug_cmd[7];
     always @(posedge debug_clk) begin
-        // Reset cmdq_writeTrigger by default
-        cmdq_writeTrigger <= 0;
+        // Reset outq_readTrigger/inq_writeTrigger by default
+        inq_writeTrigger <= 0;
+        outq_readTrigger <= 0;
         
         if (debug_cs) begin
-            // Keep shifting in command
+            // ## Incoming command handling (inq)
+            // Continnue shifting in command
             if (!debug_cmdReady) begin
                 debug_cmd <= (debug_cmd<<1)|debug_di;
             
-            // Enqueue the command into cmdqfifo
+            // Enqueue the command into inq
             end else begin
-                if (cmdq_writeOK) begin
-                    cmdq_writeData <= debug_cmd;
-                    cmdq_writeTrigger <= 1;
+                if (inq_writeOK) begin
+                    inq_writeData <= debug_cmd;
+                    inq_writeTrigger <= 1;
                 end else begin
                     // TODO: handle dropped command
                 end
                 
                 // Start shifting the next command
                 debug_cmd <= debug_di;
+            end
+            
+            // ## Outgoing data handling (outq)
+            // Continue shifting out the current data, if there's still data remaining
+            if (outq_currentData[6:0]) begin
+                outq_currentData <= outq_currentData<<1;
+            
+            // Otherwise load the next byte, if there's one available
+            end else if (outq_readOK) begin
+                outq_currentData <= {outq_readData, 1'b1}; // Add sentinel to the end
+                outq_readTrigger <= 1;
+            
+            // Otherwise shift out zeroes
+            end else begin
+                outq_currentData <= {8'b0, 1'b1}; // Add sentinel to the end
             end
         end
     end

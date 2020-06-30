@@ -79,8 +79,19 @@ module main();
         end
     endfunction
     
+    wire[7:0] a = 8'b00000000;
+    
+    // initial begin
+    //     $display("%0d", Clocks(20, 0));
+    //     $finish;
+    // end
+    
     initial begin
-        $display("%0d", Clocks(20, 0));
+        if (a[3:0]) begin
+            $display("TRUE");
+        end else begin
+            $display("FALSE");
+        end
         $finish;
     end
 
