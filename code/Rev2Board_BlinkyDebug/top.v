@@ -40,37 +40,62 @@ module Top(
         .rok(inq_readOK),
         
         .wclk(debug_clk),
-        .w(inq_writeTrigger),
+        .w(inq_writeTrigger), // TODO: &debug_cs
         .wd(inq_writeData),
         .wok(inq_writeOK)
     );
     
+    reg[7:0] outMsg[7:0];
+    reg[7:0] outMsgCount = 0;
     always @(posedge clk) begin
-        // Reset inq_readTrigger by default
+        // Reset stuff by default
         inq_readTrigger <= 0;
-        // Reset currentCmd by default
+        outq_writeTrigger <= 0;
         inq_currentCmd <= CmdNop;
         
-        if (inq_readOK) begin
+        // Continue shifting out `outMsg`, if there's more data available
+        if (outMsgCount) begin
+            if (outq_writeTrigger && outq_writeOK) begin
+                outMsgCount <= outMsgCount-1;
+                // Keep triggering writes if there's more data
+                if (outMsgCount > 1) begin
+                    outq_writeTrigger <= 1;
+                end
+            end else begin
+                // Keep triggering writes if there's more data
+                outq_writeTrigger <= 1;
+            end
+        
+        // Handle `inq_currentCmd` if it exists
+        end else if (inq_currentCmd != CmdNop) begin
+            // Handle inq_currentCmd
+            case (inq_currentCmd)
+            CmdLEDOff: begin
+                led[0] <= 0;
+            end
+            
+            CmdLEDOn: begin
+                led[0] <= 1;
+            end
+            
+            // default: begin
+            //     led[0] <= 1;
+            // end
+            endcase
+            
+            // Queue response
+            outMsg[1] <= 1;
+            outMsg[0] <= 0;
+            outMsgCount <= 2;
+        
+        // Read the next command out of `inq`
+        end else if (inq_readTrigger && inq_readOK) begin
             inq_currentCmd <= inq_readData;
-            inq_readTrigger <= 1;
+        
+        // Otherwise trigger a new read
         end else begin
-            inq_currentCmd <= CmdNop;
+            inq_readTrigger <= 1;
         end
-        
-        // Handle inq_currentCmd
-        case (inq_currentCmd)
-        CmdNop: begin
-        end
-        
-        CmdLEDOff: begin
-            led[0] <= 0;
-        end
-        
-        CmdLEDOn: begin
-            led[0] <= 1;
-        end
-        endcase
     end
     
     
@@ -79,14 +104,16 @@ module Top(
     
     reg outq_readTrigger=0, outq_writeTrigger=0;
     wire[7:0] outq_readData;
-    reg[7:0] outq_writeData = 0;
+    wire[7:0] outq_writeData;
+    assign outq_writeData = outMsg[(outMsgCount ? outMsgCount-1 : 0)];
+    
     wire outq_readOK, outq_writeOK;
     reg[8:0] outq_currentData = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
     assign debug_do = outq_currentData[8];
     
     AFIFO #(.Width(8), .Size(512)) outq(
         .rclk(debug_clk),
-        .r(outq_readTrigger),
+        .r(outq_readTrigger), // TODO: &debug_cs
         .rd(outq_readData),
         .rok(outq_readOK),
         
@@ -96,41 +123,45 @@ module Top(
         .wok(outq_writeOK)
     );
     
-    reg[7:0] debug_cmd = 0;
-    wire debug_cmdReady = debug_cmd[7];
+    reg[7:0] inCmd = 0;
+    wire inCmdReady = inCmd[7];
     always @(posedge debug_clk) begin
-        // Reset outq_readTrigger/inq_writeTrigger by default
-        inq_writeTrigger <= 0;
-        outq_readTrigger <= 0;
-        
         if (debug_cs) begin
-            // ## Incoming command handling (inq)
-            // Continnue shifting in command
-            if (!debug_cmdReady) begin
-                debug_cmd <= (debug_cmd<<1)|debug_di;
+            // Reset stuff by default
+            inq_writeTrigger <= 0;
+            outq_readTrigger <= 0;
             
-            // Enqueue the command into inq
+            if (inq_writeTrigger && !inq_writeOK) begin
+                // TODO: handle dropped command
+            end
+            
+            // ## Incoming data handling (inq)
+            // Continue shifting in command
+            if (!inCmdReady) begin
+                inCmd <= (inCmd<<1)|debug_di;
+            
+            // Enqueue the command into `inq`
             end else begin
-                if (inq_writeOK) begin
-                    inq_writeData <= debug_cmd;
-                    inq_writeTrigger <= 1;
-                end else begin
-                    // TODO: handle dropped command
-                end
+                inq_writeTrigger <= 1;
+                inq_writeData <= inCmd;
                 
                 // Start shifting the next command
-                debug_cmd <= debug_di;
+                inCmd <= debug_di;
             end
             
             // ## Outgoing data handling (outq)
             // Continue shifting out the current data, if there's still data remaining
             if (outq_currentData[6:0]) begin
                 outq_currentData <= outq_currentData<<1;
+                
+                // Trigger a read on the correct clock cycle
+                if (outq_currentData[6:0] == 8'b01000000) begin
+                    outq_readTrigger <= 1;
+                end
             
             // Otherwise load the next byte, if there's one available
-            end else if (outq_readOK) begin
+            end else if (outq_readTrigger && outq_readOK) begin
                 outq_currentData <= {outq_readData, 1'b1}; // Add sentinel to the end
-                outq_readTrigger <= 1;
             
             // Otherwise shift out zeroes
             end else begin
