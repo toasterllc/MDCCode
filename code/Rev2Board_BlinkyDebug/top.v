@@ -8,7 +8,7 @@ module Top(
     input wire          debug_clk,
     input wire          debug_cs,
     input wire          debug_di,
-    output wire         debug_do,
+    output wire         debug_do
 );
     localparam CmdNop       = 8'h00;
     localparam CmdLEDOff    = 8'h80;
@@ -21,6 +21,8 @@ module Top(
     reg[7:0] inq_writeData = 0;
     wire inq_readOK, inq_writeOK;
     reg[7:0] inq_currentCmd = 0;
+    reg[7:0] outMsg[7:0];
+    reg[7:0] outMsgLen = 0;
     AFIFO #(.Width(8), .Size(8)) inq(
         .rclk(clk),
         .r(inq_readTrigger),
@@ -33,8 +35,22 @@ module Top(
         .wok(inq_writeOK)
     );
     
-    reg[7:0] outMsg[7:0];
-    reg[7:0] outMsgLen = 0;
+    reg outq_readTrigger=0, outq_writeTrigger=0;
+    wire[7:0] outq_readData;
+    reg[7:0] outq_writeData = 0;
+    wire outq_readOK, outq_writeOK;
+    AFIFO #(.Width(8), .Size(512)) outq(
+        .rclk(debug_clk),
+        .r(debug_cs && outq_readTrigger),
+        .rd(outq_readData),
+        .rok(outq_readOK),
+        
+        .wclk(clk),
+        .w(outq_writeTrigger),
+        .wd(outq_writeData),
+        .wok(outq_writeOK)
+    );
+    
     always @(posedge clk) begin
         // Reset stuff by default
         inq_readTrigger <= 0;
@@ -91,26 +107,6 @@ module Top(
         end
     end
     
-    
-    
-    
-    
-    reg outq_readTrigger=0, outq_writeTrigger=0;
-    wire[7:0] outq_readData;
-    reg[7:0] outq_writeData = 0;
-    wire outq_readOK, outq_writeOK;
-    AFIFO #(.Width(8), .Size(512)) outq(
-        .rclk(debug_clk),
-        .r(debug_cs && outq_readTrigger),
-        .rd(outq_readData),
-        .rok(outq_readOK),
-        
-        .wclk(clk),
-        .w(outq_writeTrigger),
-        .wd(outq_writeData),
-        .wok(outq_writeOK)
-    );
-    
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
     reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
@@ -154,15 +150,22 @@ module Top(
             end else if (outq_readTrigger && outq_readOK) begin
                 outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
             
-            // TODO: would be nice if we didnt have to do 2 separate types of initialization of outMsgShiftReg,
-            //       or if we could at least clean it up
-            end else if (!outMsgShiftReg) begin
-                outMsgShiftReg <= {8'b1, 1'b0}; // Add sentinel to the end
-            
-            // Otherwise shift out zeroes
             end else begin
-                outMsgShiftReg <= {8'b0, 1'b1}; // Add sentinel to the end
+                // outMsgShiftReg initialization must be as if it was originally
+                // initialized to 1, so after the first clock cycle it should be 1<<1.
+                if (!outMsgShiftReg) outMsgShiftReg <= 1<<1;
+                else outMsgShiftReg <= 1;
             end
+            
+            // // TODO: would be nice if we didnt have to do 2 separate types of initialization of outMsgShiftReg,
+            // //       or if we could at least clean it up
+            // end else if (!outMsgShiftReg) begin
+            //     outMsgShiftReg <= {8'b1, 1'b0}; // Add sentinel to the end
+            //
+            // // Otherwise shift out zeroes
+            // end else begin
+            //     outMsgShiftReg <= {8'b0, 1'b1}; // Add sentinel to the end
+            // end
             
             
             // end else begin
