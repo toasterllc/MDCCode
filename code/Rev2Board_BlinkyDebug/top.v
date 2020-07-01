@@ -16,6 +16,9 @@ module Top(
     
     wire clk = clk12mhz;
     
+    // ====================
+    // In queue `inq`
+    // ====================
     reg inq_readTrigger=0, inq_writeTrigger=0;
     wire[7:0] inq_readData;
     reg[7:0] inq_writeData = 0;
@@ -35,6 +38,9 @@ module Top(
         .wok(inq_writeOK)
     );
     
+    // ====================
+    // Out queue `outq`
+    // ====================
     reg outq_readTrigger=0, outq_writeTrigger=0;
     wire[7:0] outq_readData;
     reg[7:0] outq_writeData = 0;
@@ -51,6 +57,9 @@ module Top(
         .wok(outq_writeOK)
     );
     
+    // ====================
+    // Command+response handling
+    // ====================
     always @(posedge clk) begin
         // Reset stuff by default
         inq_readTrigger <= 0;
@@ -103,6 +112,9 @@ module Top(
         end
     end
     
+    // ====================
+    // Data relay/shifting (debug_di->inq, outq->debug_do)
+    // ====================
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
     reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
@@ -117,7 +129,7 @@ module Top(
                 // TODO: handle dropped commands
             end
             
-            // ## Incoming data handling (inq)
+            // ## Incoming command relay: debug_di -> inq
             // Continue shifting in command
             if (!inCmdReady) begin
                 inCmd <= (inCmd<<1)|debug_di;
@@ -131,7 +143,7 @@ module Top(
                 inCmd <= debug_di;
             end
             
-            // ## Outgoing data handling (outq)
+            // ## Outgoing message relay: outq -> debug_do
             // Continue shifting out the current data, if there's still data remaining
             if (outMsgShiftReg[6:0]) begin
                 outMsgShiftReg <= outMsgShiftReg<<1;
@@ -153,7 +165,4 @@ module Top(
             end
         end
     end
-    
-    // assign led[3:0] = 4'b1111;
-    
 endmodule
