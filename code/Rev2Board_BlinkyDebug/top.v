@@ -33,7 +33,6 @@ module Top(
         .wok(inq_writeOK)
     );
     
-    // TODO: rename outMsg so outq_currentData can use it?
     reg[7:0] outMsg[7:0];
     reg[7:0] outMsgLen = 0;
     always @(posedge clk) begin
@@ -44,14 +43,19 @@ module Top(
         
         // Continue shifting out `outMsg`, if there's more data available
         if (outMsgLen) begin
+            // Handle a byte being consumed
             if (outq_writeTrigger && outq_writeOK) begin
-                outMsgLen <= outMsgLen-1;
-                // Keep triggering writes if there's more data
+                // If there's more data, shift in the next byte
                 if (outMsgLen > 1) begin
+                    outq_writeData <= outMsg[outMsgLen-2];
                     outq_writeTrigger <= 1;
                 end
+                
+                outMsgLen <= outMsgLen-1;
+            
+            // Otherwise, keep writing the current byte
             end else begin
-                // Keep triggering writes if there's more data
+                outq_writeData <= outMsg[outMsgLen-1];
                 outq_writeTrigger <= 1;
             end
         
@@ -93,7 +97,7 @@ module Top(
     
     reg outq_readTrigger=0, outq_writeTrigger=0;
     wire[7:0] outq_readData;
-    wire[7:0] outq_writeData = outMsg[(outMsgLen ? outMsgLen-1 : 0)];
+    reg[7:0] outq_writeData = 0;
     wire outq_readOK, outq_writeOK;
     AFIFO #(.Width(8), .Size(512)) outq(
         .rclk(debug_clk),
@@ -107,13 +111,11 @@ module Top(
         .wok(outq_writeOK)
     );
     
-    // TODO: why does it take several reads() to trigger a command?
-    
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
-    // TODO: find better name for outq_currentData. Ideally outMsg, but that's already taken.... rename both?
-    reg[8:0] outq_currentData = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    assign debug_do = outq_currentData[8];
+    reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    // reg[8:0] outMsgShiftReg = 9'b1; // Low bit is the end-of-data sentinel, and isn't transmitted
+    assign debug_do = outMsgShiftReg[8];
     always @(posedge debug_clk) begin
         if (debug_cs) begin
             // Reset stuff by default
@@ -140,27 +142,32 @@ module Top(
             
             // ## Outgoing data handling (outq)
             // Continue shifting out the current data, if there's still data remaining
-            if (outq_currentData[6:0]) begin
-                outq_currentData <= outq_currentData<<1;
+            if (outMsgShiftReg[6:0]) begin
+                outMsgShiftReg <= outMsgShiftReg<<1;
                 
                 // Trigger a read on the correct clock cycle
-                if (outq_currentData[6:0] == 8'b01000000) begin
+                if (outMsgShiftReg[6:0] == 8'b01000000) begin
                     outq_readTrigger <= 1;
                 end
             
             // Otherwise load the next byte, if there's one available
             end else if (outq_readTrigger && outq_readOK) begin
-                outq_currentData <= {outq_readData, 1'b1}; // Add sentinel to the end
+                outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
             
-            // TODO: would be nice if we didnt have to do 2 separate types of initialization of outq_currentData,
+            // TODO: would be nice if we didnt have to do 2 separate types of initialization of outMsgShiftReg,
             //       or if we could at least clean it up
-            end else if (!outq_currentData) begin
-                outq_currentData <= {8'b1, 1'b0}; // Add sentinel to the end
+            end else if (!outMsgShiftReg) begin
+                outMsgShiftReg <= {8'b1, 1'b0}; // Add sentinel to the end
             
             // Otherwise shift out zeroes
             end else begin
-                outq_currentData <= {8'b0, 1'b1}; // Add sentinel to the end
+                outMsgShiftReg <= {8'b0, 1'b1}; // Add sentinel to the end
             end
+            
+            
+            // end else begin
+            //     outMsgShiftReg <= 9'b1;
+            // end
         end
     end
     
