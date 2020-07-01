@@ -121,6 +121,13 @@ public:
         }
         
         _resetPinState();
+        
+//        // Perform a single clock
+//        {
+//            uint8_t cmd[] = {0x8E, 0x00};
+//            ir = ftdi_write_data(&_ftdi, cmd, sizeof(cmd));
+//            assert(ir == sizeof(cmd));
+//        }
     }
     
     ~MDCDevice() {
