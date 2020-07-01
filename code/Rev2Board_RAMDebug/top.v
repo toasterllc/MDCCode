@@ -12,7 +12,7 @@ module Debug(
     
     input wire[7:0]     msg,
     input wire[7:0]     msgLen,
-    output wire         msgTrigger,
+    output reg          msgTrigger = 0,
     
     input wire          debug_clk,
     input wire          debug_cs,
@@ -59,37 +59,91 @@ module Debug(
     // ====================
     // Command+response handling
     // ====================
-    reg msgLenSent = 0;
-    assign msgTrigger = (msgLen && outq_writeTrigger && outq_writeOK);
-    
+    // assign msgTrigger = (msgLen && outq_writeTrigger && outq_writeOK);
+    reg[1:0] msgState = 0;
     always @(posedge clk) begin
-        // Reset stuff by default
-        outq_writeTrigger <= 0;
-        // msgTrigger <= 0;
-        msgLenSent <= 0;
-        
-        // Continue shifting out `msg`, if there's more data available
-        if (msgLen) begin
-            // Send the message length first
-            if (!msgLenSent) begin
-                outq_writeData <= msgLen;
-                outq_writeTrigger <= 1;
-                
-                // Once the message length is sent, start sending the message
-                if (outq_writeTrigger && outq_writeOK) begin
-                    msgLenSent <= 1;
-                    outq_writeData <= msg;
-                    outq_writeTrigger <= 1;
-                end
-            
-            // Continue sending the message
-            end else begin
-                // Keep msgLenSent=1 until the end of the message
-                msgLenSent <= 1;
+        case (msgState)
+        // Send command (byte 0)
+        0: begin
+            if (msgLen) begin
                 outq_writeData <= msg;
                 outq_writeTrigger <= 1;
+                msgState <= 1;
             end
         end
+        
+        // Send message length (byte 1)
+        1: begin
+            if (outq_writeOK) begin
+                outq_writeData <= msgLen-1;
+                outq_writeTrigger <= 1;
+                msgTrigger <= 1;
+                msgState <= 2;
+            end
+        end
+        
+        // Delay state while the next message byte is triggered
+        2: begin
+            msgTrigger <= 0;
+            if (outq_writeOK) begin
+                outq_writeTrigger <= 0;
+            end
+            
+            msgState <= 3;
+            
+            // // Check whether we're done
+            // if (msgLen > 1) begin
+            //     msgState <= 3;
+            // end else begin
+            //     msgState <= 0;
+            // end
+        end
+        
+        // Send the message payload
+        3: begin
+            if (msgLen) begin
+                if (outq_writeOK) begin
+                    outq_writeData <= msg;
+                    outq_writeTrigger <= 1;
+                    msgTrigger <= 1;
+                    msgState <= 2;
+                end
+            
+            end else begin
+                msgState <= 0;
+            end
+        end
+        endcase
+        
+        
+        
+        // // Reset stuff by default
+        // // outq_writeTrigger <= 0;
+        // // msgTrigger <= 0;
+        // // msgCmdSent <= 0;
+        //
+        // // Continue shifting out `msg`, if there's more data available
+        // if (msgLen) begin
+        //     // Send the message length first
+        //     if (!msgCmdSent) begin
+        //         outq_writeData <= msg;
+        //         outq_writeTrigger <= 1;
+        //
+        //         // Once the message length is sent, start sending the message
+        //         if (outq_writeTrigger && outq_writeOK) begin
+        //             msgLenSent <= 1;
+        //             outq_writeData <= msg;
+        //             outq_writeTrigger <= 1;
+        //         end
+        //
+        //     // Continue sending the message
+        //     end else begin
+        //         // Keep msgLenSent=1 until the end of the message
+        //         msgLenSent <= 1;
+        //         outq_writeData <= msg;
+        //         outq_writeTrigger <= 1;
+        //     end
+        // end
     end
     
     // ====================
@@ -97,8 +151,8 @@ module Debug(
     // ====================
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
-    reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    assign debug_do = outMsgShiftReg[8];
+    reg[16:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    assign debug_do = outMsgShiftReg[16];
     always @(posedge debug_clk) begin
         if (debug_cs) begin
             // Reset stuff by default
@@ -125,11 +179,11 @@ module Debug(
             
             // ## Outgoing message relay: outq -> debug_do
             // Continue shifting out the current data, if there's still data remaining
-            if (outMsgShiftReg[6:0]) begin
+            if (outMsgShiftReg[14:0]) begin
                 outMsgShiftReg <= outMsgShiftReg<<1;
                 
                 // Trigger a read on the correct clock cycle
-                if (outMsgShiftReg[6:0] == 8'b01000000) begin
+                if (outMsgShiftReg[14:0] == 15'b1000000_00000000) begin
                     outq_readTrigger <= 1;
                 end
             
@@ -155,16 +209,16 @@ module Top(
     input wire          clk12mhz,
     output reg[3:0]     led = 0,
     
-    output wire         ram_clk,
-    output wire         ram_cke,
-    output wire[1:0]    ram_ba,
-    output wire[12:0]   ram_a,
-    output wire         ram_cs_,
-    output wire         ram_ras_,
-    output wire         ram_cas_,
-    output wire         ram_we_,
-    output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq,
+    // output wire         ram_clk,
+    // output wire         ram_cke,
+    // output wire[1:0]    ram_ba,
+    // output wire[12:0]   ram_a,
+    // output wire         ram_cs_,
+    // output wire         ram_ras_,
+    // output wire         ram_cas_,
+    // output wire         ram_we_,
+    // output wire[1:0]    ram_dqm,
+    // inout wire[15:0]    ram_dq,
     
     input wire          debug_clk,
     input wire          debug_cs,
@@ -190,44 +244,44 @@ module Top(
     
     
     
-    // ====================
-    // SDRAM controller
-    // ====================
-    localparam RAM_Size = 'h2000000;
-    localparam RAM_AddrWidth = 25;
-    localparam RAM_DataWidth = 16;
-
-    // RAM controller
-    wire                    ram_cmdReady;
-    reg                     ram_cmdTrigger = 0;
-    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
-    reg                     ram_cmdWrite = 0;
-    reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
-
-    SDRAMController #(
-        .ClockFrequency(ClockFrequency)
-    ) sdramController(
-        .clk(clk),
-        
-        .cmdReady(ram_cmdReady),
-        .cmdTrigger(ram_cmdTrigger),
-        .cmdAddr(ram_cmdAddr),
-        .cmdWrite(ram_cmdWrite),
-        .cmdWriteData(ram_cmdWriteData),
-        .cmdReadData(),
-        .cmdReadDataValid(),
-
-        .ram_clk(ram_clk),
-        .ram_cke(ram_cke),
-        .ram_ba(ram_ba),
-        .ram_a(ram_a),
-        .ram_cs_(ram_cs_),
-        .ram_ras_(ram_ras_),
-        .ram_cas_(ram_cas_),
-        .ram_we_(ram_we_),
-        .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq)
-    );
+    // // ====================
+    // // SDRAM controller
+    // // ====================
+    // localparam RAM_Size = 'h2000000;
+    // localparam RAM_AddrWidth = 25;
+    // localparam RAM_DataWidth = 16;
+    //
+    // // RAM controller
+    // wire                    ram_cmdReady;
+    // reg                     ram_cmdTrigger = 0;
+    // reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
+    // reg                     ram_cmdWrite = 0;
+    // reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
+    //
+    // SDRAMController #(
+    //     .ClockFrequency(ClockFrequency)
+    // ) sdramController(
+    //     .clk(clk),
+    //
+    //     .cmdReady(ram_cmdReady),
+    //     .cmdTrigger(ram_cmdTrigger),
+    //     .cmdAddr(ram_cmdAddr),
+    //     .cmdWrite(ram_cmdWrite),
+    //     .cmdWriteData(ram_cmdWriteData),
+    //     .cmdReadData(),
+    //     .cmdReadDataValid(),
+    //
+    //     .ram_clk(ram_clk),
+    //     .ram_cke(ram_cke),
+    //     .ram_ba(ram_ba),
+    //     .ram_a(ram_a),
+    //     .ram_cs_(ram_cs_),
+    //     .ram_ras_(ram_ras_),
+    //     .ram_cas_(ram_cas_),
+    //     .ram_we_(ram_we_),
+    //     .ram_dqm(ram_dqm),
+    //     .ram_dq(ram_dq)
+    // );
     
     
     
@@ -246,7 +300,7 @@ module Top(
     localparam CmdNop       = 8'h00;
     localparam CmdLEDOff    = 8'h80;
     localparam CmdLEDOn     = 8'h81;
-    localparam CmdReadMem   = 8'h82;
+    // localparam CmdReadMem   = 8'h82;
     
     wire[7:0] debug_cmd;
     wire debug_cmdReady;
@@ -257,7 +311,6 @@ module Top(
     wire debug_msgTrigger;
     
     reg[7:0] cmd = 0;
-    reg cmdReady = 0;
     
     Debug debug(
         .clk(clk),
@@ -300,7 +353,7 @@ module Top(
     endfunction
     
     reg init = 0;
-    reg readMem = 0;
+    // reg readMem = 0;
     reg[7:0] memBuf1[255:0];
     reg[8:0] memBuf1Len = 0;
     reg[7:0] memBuf2[255:0];
@@ -309,28 +362,42 @@ module Top(
     reg[7:0] cmd = CmdNop;
     always @(posedge clk) begin
         // Set default values
-        ram_cmdTrigger <= 0;
+        // ram_cmdTrigger <= 0;
         debug_cmdTrigger <= 0;
-        cmd <= CmdNop;
+        
+        // // Accept commands while we're not sending messages
+        // if (debug_cmdTrigger && debug_cmdReady) begin
+        //     debug_cmdTrigger <= 0;
+        // end
         
         // Initialize the SDRAM
         if (!init) begin
-            if (!ram_cmdTrigger) begin
-                ram_cmdTrigger <= 1;
-                ram_cmdAddr <= 0;
-                ram_cmdWrite <= 1;
-                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+            // if (!ram_cmdTrigger) begin
+            //     ram_cmdTrigger <= 1;
+            //     ram_cmdAddr <= 0;
+            //     ram_cmdWrite <= 1;
+            //     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+            //
+            // end else if (ram_cmdTrigger && ram_cmdReady) begin
+            //     if (ram_cmdAddr < RAM_Size-1) begin
+            //         ram_cmdTrigger <= 1;
+            //         ram_cmdAddr <= ram_cmdAddr+1;
+            //         ram_cmdWrite <= 1;
+            //         ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+            //
+            //     end else begin
+            //         init <= 1;
+            //     end
+            // end
             
-            end else if (ram_cmdTrigger && ram_cmdReady) begin
-                if (ram_cmdAddr < RAM_Size-1) begin
-                    ram_cmdTrigger <= 1;
-                    ram_cmdAddr <= ram_cmdAddr+1;
-                    ram_cmdWrite <= 1;
-                    ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-                end else begin
-                    init <= 1;
-                end
-            end
+            init <= 1;
+        
+        
+    // reg[7:0] debug_msgCmd = 0;
+    // reg[7:0] debug_msgPayload = 0;
+    // reg[7:0] debug_msgPayloadLen = 0;
+    // wire debug_msgPayloadTrigger;
+        
         
         // Handle commands
         end else begin
@@ -342,10 +409,13 @@ module Top(
             if (debug_msgLen) begin
                 if (debug_msgTrigger) begin
                     debug_msg <= debug_msgLen-1;
-                    debug_msgLen <= 0;
+                    debug_msgLen <= debug_msgLen-1;
                 end
             
             end else begin
+                debug_cmdTrigger <= 1;
+                cmd <= CmdNop;
+                
                 // Handle current command
                 case (cmd)
                 CmdLEDOff: begin
@@ -360,16 +430,15 @@ module Top(
                     debug_msgLen <= 1;
                 end
                 
-                CmdReadMem: begin
-                    readMem <= 1;
-                end
+                // CmdReadMem: begin
+                //     readMem <= 1;
+                // end
                 endcase
-                
-                // Accept commands while we're not sending responses
-                debug_cmdTrigger <= 1;
-                if (debug_cmdTrigger && debug_cmdReady) begin
-                    cmd <= debug_cmd;
-                end
+            end
+            
+            // Accept commands while we're not sending messages
+            if (debug_cmdTrigger && debug_cmdReady) begin
+                cmd <= debug_cmd;
             end
         end
     end
