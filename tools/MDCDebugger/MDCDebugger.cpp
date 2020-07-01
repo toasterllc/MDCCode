@@ -155,11 +155,15 @@ public:
     
     Msg read() {
         Msg msg;
-        uint8_t len = 0;
-        _read((uint8_t*)&len, sizeof(len));
-        if (len) {
-            _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
-            const uint8_t payloadLen = len-1;
+        
+        // Read command
+        _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
+        
+        // Read payload length
+        uint8_t payloadLen = 0;
+        _read((uint8_t*)&payloadLen, sizeof(payloadLen));
+        
+        if (payloadLen) {
             msg.payload.resize(payloadLen);
             _read(msg.payload.data(), payloadLen);
         }
