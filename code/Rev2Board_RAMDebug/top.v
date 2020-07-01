@@ -77,14 +77,13 @@ module Debug(
         if (msgLen) begin
             // Send the message length first
             if (!msgLenSent) begin
+                outq_writeData <= msgLen;
+                outq_writeTrigger <= 1;
+                
+                // Once the message length is sent, start sending the message
                 if (outq_writeTrigger && outq_writeOK) begin
                     msgLenSent <= 1;
-                    
                     outq_writeData <= msg;
-                    outq_writeTrigger <= 1;
-                    
-                end else begin
-                    outq_writeData <= msgLen;
                     outq_writeTrigger <= 1;
                 end
             
@@ -92,7 +91,6 @@ module Debug(
             end else begin
                 // Keep msgLenSent=1 until the end of the message
                 msgLenSent <= 1;
-                
                 outq_writeData <= msg;
                 outq_writeTrigger <= 1;
             end
