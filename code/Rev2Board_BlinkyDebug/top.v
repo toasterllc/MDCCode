@@ -86,10 +86,6 @@ module Top(
             CmdLEDOn: begin
                 led[0] <= 1;
             end
-            
-            // default: begin
-            //     led[0] <= 1;
-            // end
             endcase
             
             // Queue response
@@ -110,7 +106,6 @@ module Top(
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
     reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    // reg[8:0] outMsgShiftReg = 9'b1; // Low bit is the end-of-data sentinel, and isn't transmitted
     assign debug_do = outMsgShiftReg[8];
     always @(posedge debug_clk) begin
         if (debug_cs) begin
@@ -156,21 +151,6 @@ module Top(
                 if (!outMsgShiftReg) outMsgShiftReg <= 1<<1;
                 else outMsgShiftReg <= 1;
             end
-            
-            // // TODO: would be nice if we didnt have to do 2 separate types of initialization of outMsgShiftReg,
-            // //       or if we could at least clean it up
-            // end else if (!outMsgShiftReg) begin
-            //     outMsgShiftReg <= {8'b1, 1'b0}; // Add sentinel to the end
-            //
-            // // Otherwise shift out zeroes
-            // end else begin
-            //     outMsgShiftReg <= {8'b0, 1'b1}; // Add sentinel to the end
-            // end
-            
-            
-            // end else begin
-            //     outMsgShiftReg <= 9'b1;
-            // end
         end
     end
     
