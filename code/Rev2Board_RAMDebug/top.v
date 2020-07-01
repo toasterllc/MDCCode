@@ -15,7 +15,7 @@ module Debug(
     input wire          debug_clk,
     input wire          debug_cs,
     input wire          debug_di,
-    output wire         debug_do,
+    output wire         debug_do
 );
     // ====================
     // In queue `inq`
@@ -168,7 +168,7 @@ module Top(
     input wire          debug_clk,
     input wire          debug_cs,
     input wire          debug_di,
-    output wire         debug_do,
+    output wire         debug_do
 );
     localparam CmdNop       = 8'h00;
     localparam CmdLEDOff    = 8'h80;
@@ -211,6 +211,7 @@ module Top(
         // Handle sending response
         if (debug_msgLen) begin
             if (debug_msgTrigger) begin
+                debug_msg <= debug_msgLen-1;
                 debug_msgLen <= debug_msgLen-1;
             end
         
@@ -228,7 +229,7 @@ module Top(
             
             // Prepare to send response
             debug_msg <= debug_cmd;
-            debug_msgLen <= 1;
+            debug_msgLen <= 10;
         
         // Request a new command
         end else begin
