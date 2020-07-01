@@ -267,6 +267,8 @@ int main() {
         const Cmd cmd = (on ? Cmd::LEDOn : Cmd::LEDOff);
         device.write(cmd);
         
+        printf("led = %d\n", on);
+        
 //        {
 //            uint8_t tmp[10];
 //            device._read(tmp, sizeof(tmp));
@@ -295,7 +297,7 @@ int main() {
 //        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
 //            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
 
-        sleep(3);
+        usleep(1000000);
 
 //        usleep(1000000);
     }
