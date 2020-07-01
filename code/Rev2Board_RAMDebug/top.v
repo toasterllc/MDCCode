@@ -46,7 +46,7 @@ module Debug(
     wire[7:0] outq_readData;
     reg[7:0] outq_writeData = 0;
     wire outq_readOK, outq_writeOK;
-    AFIFO #(.Width(8), .Size(512)) outq(
+    AFIFO #(.Width(8), .Size(8)) outq(
         .rclk(debug_clk),
         .r(debug_cs && outq_readTrigger),
         .rd(outq_readData),
