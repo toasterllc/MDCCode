@@ -247,33 +247,40 @@ int main() {
 //        }
 //    }
     
+//    for (int i=0; i<10; i++) {
+//        device.read();
+//    }
     
-    for (bool on = false;; on = !on) {
-        device.write((on ? Cmd::LEDOn : Cmd::LEDOff));
-//        device.write(Cmd::Nop);
-        printf("led = %d\n", on);
-
-//        {
-//            uint8_t tmp[10];
-//            device._read(tmp, sizeof(tmp));
-//            printf("Read data:\n");
-//            for (int i=0; i<sizeof(tmp); i++) {
-//                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
-//            }
-//        }
-
-        MDCDevice::Msg msg = device.read();
-        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
-            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
-
-//        msg = device.read();
+    device.write(Cmd::LEDOn);
+    device.read();
+    device.read();
+    
+//    for (bool on = false;; on = !on) {
+//        device.write((on ? Cmd::LEDOn : Cmd::LEDOff));
+////        device.write(Cmd::Nop);
+//        printf("led = %d\n", on);
+//
+////        {
+////            uint8_t tmp[10];
+////            device._read(tmp, sizeof(tmp));
+////            printf("Read data:\n");
+////            for (int i=0; i<sizeof(tmp); i++) {
+////                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
+////            }
+////        }
+//
+//        MDCDevice::Msg msg = device.read();
 //        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
 //            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
-
-        sleep(1);
-
-//        usleep(1000000);
-    }
+//
+////        msg = device.read();
+////        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
+////            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
+//
+//        sleep(1);
+//
+////        usleep(1000000);
+//    }
     
     return 0;
 }
