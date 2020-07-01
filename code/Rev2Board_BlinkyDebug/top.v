@@ -33,6 +33,7 @@ module Top(
         .wok(inq_writeOK)
     );
     
+    // TODO: rename outMsg so outq_currentData can use it?
     reg[7:0] outMsg[7:0];
     reg[7:0] outMsgLen = 0;
     always @(posedge clk) begin
@@ -106,8 +107,11 @@ module Top(
         .wok(outq_writeOK)
     );
     
+    // TODO: why does it take several reads() to trigger a command?
+    
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
+    // TODO: find better name for outq_currentData. Ideally outMsg, but that's already taken.... rename both?
     reg[8:0] outq_currentData = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
     assign debug_do = outq_currentData[8];
     always @(posedge debug_clk) begin
@@ -148,6 +152,8 @@ module Top(
             end else if (outq_readTrigger && outq_readOK) begin
                 outq_currentData <= {outq_readData, 1'b1}; // Add sentinel to the end
             
+            // TODO: would be nice if we didnt have to do 2 separate types of initialization of outq_currentData,
+            //       or if we could at least clean it up
             end else if (!outq_currentData) begin
                 outq_currentData <= {8'b1, 1'b0}; // Add sentinel to the end
             
