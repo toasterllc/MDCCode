@@ -267,24 +267,24 @@ int main() {
         const Cmd cmd = (on ? Cmd::LEDOn : Cmd::LEDOff);
         device.write(cmd);
         
-        for (;;) {
-            MDCDevice::Msg msg = device.read();
-            printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
-                (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
-            if (msg.cmd == cmd) break;
+        {
+            uint8_t tmp[10];
+            device._read(tmp, sizeof(tmp));
+            printf("Read data:\n");
+            for (int i=0; i<(int)sizeof(tmp); i++) {
+                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
+            }
         }
+        
+//        for (;;) {
+//            MDCDevice::Msg msg = device.read();
+//            printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
+//                (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
+//            if (msg.cmd == cmd) break;
+//        }
         
 //        device.write(Cmd::Nop);
 //        printf("led = %d\n", on);
-
-//        {
-//            uint8_t tmp[10];
-//            device._read(tmp, sizeof(tmp));
-//            printf("Read data:\n");
-//            for (int i=0; i<sizeof(tmp); i++) {
-//                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
-//            }
-//        }
 
 //        msg = device.read();
 //        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
