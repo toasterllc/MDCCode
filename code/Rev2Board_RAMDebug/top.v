@@ -208,7 +208,7 @@ module Top(
         .ClockFrequency(ClockFrequency)
     ) sdramController(
         .clk(clk),
-
+        
         .cmdReady(ram_cmdReady),
         .cmdTrigger(ram_cmdTrigger),
         .cmdAddr(ram_cmdAddr),
@@ -301,9 +301,10 @@ module Top(
     
     reg init = 0;
     reg readMem = 0;
-    reg[7:0] memBuf[511:0];
-    reg[8:0] memBufRead = 0;
-    reg[8:0] memBufWrite = 0;
+    reg[7:0] memBuf1[255:0];
+    reg[8:0] memBuf1Len = 0;
+    reg[7:0] memBuf2[255:0];
+    reg[8:0] memBuf2Len = 0;
     
     reg[7:0] cmd = CmdNop;
     always @(posedge clk) begin
