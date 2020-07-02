@@ -7,6 +7,7 @@
 #include <string.h>
 #include <libftdi1/ftdi.h>
 #include <optional>
+#include <memory>
 
 class MDCDevice {
 public:
@@ -441,31 +442,83 @@ int main() {
         
 //        std::optional<uint16_t> lastVal;
 //
-        const uint32_t TotalLen = 0x2000000;
+        const uint32_t RAMSize = 0x2000000;
         uint32_t len = 0;
         uint32_t msgCount = 0;
+        const size_t bufCap = 0x10000*32;
+        std::unique_ptr<uint8_t[]> buf(new uint8_t[bufCap]);
         
         for (;;) {
-            auto msgs = device.read(0xFFFF);
-            for (const Msg& msg : msgs) {
-                if (msg.cmd == Cmd::ReadMem) {
-//                    printf("Msg{\n");
-//                    printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
-//                    printf("  payload: [ ");
-//                    for (const uint8_t& x : msg.payload) {
-//                        printf("%02x ", x);
-//                    }
-//                    printf("]\n}\n\n");
-                    len += msg.payload.size()/2;
-                }
-                
-                if (len) {
-                    msgCount++;
-                    if (!(msgCount % 1000)) {
-                        printf("%.1f%% complete (%d / %d words)\n", ((float)len/TotalLen)*100, len, TotalLen);
-                    }
-                }
+            // Clock out `len` bytes
+            const uint8_t massReadCmd[] = {
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+                0x20, 0xFF, 0xFF,
+            };
+            MDCDevice::_ftdiWrite(device._ftdi, massReadCmd, sizeof(massReadCmd));
+            MDCDevice::_ftdiRead(device._ftdi, buf.get(), bufCap);
+            len += bufCap/2;
+            
+            msgCount++;
+            if (!(msgCount % 1)) {
+                printf("%.1f%% complete (%d / %d words)\n", ((float)len/RAMSize)*100, len, RAMSize);
             }
+            
+//            auto msgs = device.read(0xFFFF);
+//            for (const Msg& msg : msgs) {
+//                if (msg.cmd == Cmd::ReadMem) {
+////                    printf("Msg{\n");
+////                    printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+////                    printf("  payload: [ ");
+////                    for (const uint8_t& x : msg.payload) {
+////                        printf("%02x ", x);
+////                    }
+////                    printf("]\n}\n\n");
+//                    len += msg.payload.size()/2;
+//                }
+////                else {
+////                    // Check if our read memory packets ever get interrupted by a NOP or some other packet type
+////                    if (len) {
+////                        abort();
+////                    }
+////                }
+//
+//                if (len) {
+//                    msgCount++;
+//                    if (!(msgCount % 1000)) {
+//                        printf("%.1f%% complete (%d / %d words)\n", ((float)len/TotalLen)*100, len, TotalLen);
+//                    }
+//                }
+//            }
             
 //            MDCDevice::Msg msg = device.read();
 //            if (msg.cmd == Cmd::ReadMem) {
