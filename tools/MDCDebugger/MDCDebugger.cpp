@@ -24,7 +24,7 @@ public:
         Nop         = 0x00,
         LEDOff      = 0x80,
         LEDOn       = 0x81,
-        ReadData    = 0x82,
+        ReadMem     = 0x82,
     };
     
     struct Msg {
@@ -267,11 +267,9 @@ int main() {
 //    device.read();
 //    device.read();
     
-    for (bool on=true;; on = !on) {
-        const Cmd cmd = (on ? Cmd::LEDOn : Cmd::LEDOff);
-        device.write(cmd);
+    for (;;) {
         
-        printf("led = %d\n", on);
+        device.write(Cmd::ReadMem);
         
 //        {
 //            uint8_t tmp[10];
@@ -281,27 +279,82 @@ int main() {
 //                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
 //            }
 //        }
-//
-        for (;;) {
-            MDCDevice::Msg msg = device.read();
-            printf("Msg{\n");
-            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
-            printf("  payload: [ ");
-            for (const uint8_t& x : msg.payload) {
-                printf("%02x ", x);
-            }
-            printf("]\n}\n\n");
-            if (msg.cmd == cmd) break;
-        }
         
-//        device.write(Cmd::Nop);
+//        for (;;) {
+//            MDCDevice::Msg msg = device.read();
+//            printf("Msg{\n");
+//            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+//            printf("  payload: [ ");
+//            for (const uint8_t& x : msg.payload) {
+//                printf("%02x ", x);
+//            }
+//            printf("]\n}\n\n");
+//            usleep(100000);
+//        }
+        
+        
+        
+        
+//
+////        for (int i=0; i<3; i++) {
+////            MDCDevice::Msg msg = device.read();
+////            printf("Msg{\n");
+////            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+////            printf("  payload: [ ");
+////            for (const uint8_t& x : msg.payload) {
+////                printf("%02x ", x);
+////            }
+////            printf("]\n}\n\n");
+////        }
+        
+        
+        
+        
+//        static bool on = true;
+//        const Cmd cmd = (on ? Cmd::LEDOn : Cmd::LEDOff);
+//        device.write(cmd);
 //        printf("led = %d\n", on);
-
-//        msg = device.read();
-//        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
-//            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
-
-        usleep(1000000);
+//        on = !on;
+        
+        
+        
+        
+////        {
+////            uint8_t tmp[10];
+////            device._read(tmp, sizeof(tmp));
+////            printf("Read data:\n");
+////            for (int i=0; i<(int)sizeof(tmp); i++) {
+////                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
+////            }
+////        }
+////
+        
+        
+        
+//        for (;;) {
+//            MDCDevice::Msg msg = device.read();
+//            printf("Msg{\n");
+//            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+//            printf("  payload: [ ");
+//            for (const uint8_t& x : msg.payload) {
+//                printf("%02x ", x);
+//            }
+//            printf("]\n}\n\n");
+//            if (msg.cmd == cmd) break;
+//        }
+//        usleep(100000);
+//
+        
+        
+        
+////        device.write(Cmd::Nop);
+////        printf("led = %d\n", on);
+//
+////        msg = device.read();
+////        printf("Msg{cmd: 0x%jx, payload len: %ju}\n",
+////            (uintmax_t)msg.cmd, (uintmax_t)msg.payload.size());
+//
+//        usleep(1000000);
 
 //        usleep(1000000);
     }
