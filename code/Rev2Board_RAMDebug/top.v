@@ -11,7 +11,7 @@ module Debug(
     input wire          cmdTrigger,
     
     input wire[7:0]     msg,
-    input wire[7:0]     msgLen,
+    input wire[8:0]     msgLen,
     output reg          msgTrigger = 0,
     
     input wire          debug_clk,
@@ -87,24 +87,21 @@ module Debug(
             msgTrigger <= 0;
             if (outq_writeOK) begin
                 outq_writeTrigger <= 0;
+                
+                if (msgLen) begin
+                    msgState <= 3;
+                end else begin
+                    msgState <= 0;
+                end
             end
-            
-            msgState <= 3;
         end
         
         // Send the message payload
         3: begin
-            if (msgLen) begin
-                if (outq_writeOK) begin
-                    outq_writeData <= msg;
-                    outq_writeTrigger <= 1;
-                    msgTrigger <= 1;
-                    msgState <= 2;
-                end
-            
-            end else begin
-                msgState <= 0;
-            end
+            outq_writeData <= msg;
+            outq_writeTrigger <= 1;
+            msgTrigger <= 1;
+            msgState <= 2;
         end
         endcase
     end
@@ -142,8 +139,13 @@ module Debug(
                 end
                 
                 if (inCmd[8]) begin
-                    inq_writeTrigger <= 1;
-                    inq_writeData <= inCmd[7:0];
+                    // Only pass along non-zero commands.
+                    // Otherwise checking for data (by using 1-byte NOP commands) could produce
+                    // 2-byte output data (cmd=Nop, payloadLen=0), which would break the design.
+                    if (inCmd[7:0]) begin
+                        inq_writeTrigger <= 1;
+                        inq_writeData <= inCmd[7:0];
+                    end
                     inCmd <= {1'b1, debug_di};
                 
                 end else begin
@@ -285,15 +287,15 @@ module Top(
     output wire         debug_do
 );
     // ====================
-    // Clock PLL (90 MHz)
+    // Clock PLL (54.750 MHz)
     // ====================
-    localparam ClockFrequency = 90000000;
+    localparam ClockFrequency = 54750000;
     wire clk;
     ClockGen #(
         .FREQ(ClockFrequency),
 		.DIVR(0),
-		.DIVF(59),
-		.DIVQ(3),
+		.DIVF(72),
+		.DIVQ(4),
 		.FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk));
     
@@ -368,7 +370,7 @@ module Top(
     reg debug_cmdTrigger = 0;
     
     reg[7:0] debug_msg = 0;
-    reg[7:0] debug_msgLen = 0;
+    reg[8:0] debug_msgLen = 0;
     wire debug_msgTrigger;
     
     reg[7:0] cmd = 0;
@@ -406,14 +408,14 @@ module Top(
     // ====================
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-        // DataFromAddr = addr[15:0];
+        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+        DataFromAddr = addr[15:0];
         // DataFromAddr = 16'hFFFF;
         // DataFromAddr = 16'h0000;
         // DataFromAddr = 16'h7832;
     endfunction
     
-    reg[1:0] state = 0;
+    reg[2:0] state = 0;
     reg[7:0] mem[255:0];
     reg[7:0] memLen = 0;
     reg[7:0] memCounter = 0;
@@ -429,16 +431,14 @@ module Top(
                 ram_cmdTrigger <= 1;
                 ram_cmdAddr <= 0;
                 ram_cmdWrite <= 1;
+                ram_cmdWriteData <= DataFromAddr(0);
+            
+            end else if (ram_cmdReady) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
                 ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-
-            end else if (ram_cmdTrigger && ram_cmdReady) begin
-                if (ram_cmdAddr < RAM_Size-1) begin
-                    ram_cmdTrigger <= 1;
-                    ram_cmdAddr <= ram_cmdAddr+1;
-                    ram_cmdWrite <= 1;
-                    ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-
-                end else begin
+                
+                if (ram_cmdAddr == RAM_Size-1) begin
+                    ram_cmdTrigger <= 0;
                     state <= 1;
                 end
             end
@@ -457,55 +457,52 @@ module Top(
         2: begin
             debug_cmdTrigger <= 0;
             
+            // By default go to state 3 next
+            state <= 3;
+            
             case (cmd)
             default: begin
-                led[0] <= 1;
                 debug_msg <= cmd;
-                debug_msgLen <= 1;
-                state <= 3;
+                debug_msgLen <= 256;
             end
             
             CmdLEDOff: begin
-                led[1] <= 1;
+                led[0] <= 0;
                 debug_msg <= cmd;
-                debug_msgLen <= 1;
-                state <= 3;
+                debug_msgLen <= 256;
             end
             
             CmdLEDOn: begin
-                led[2] <= 1;
+                led[0] <= 1;
                 debug_msg <= cmd;
-                debug_msgLen <= 1;
-                state <= 3;
+                debug_msgLen <= 256;
             end
             
             CmdReadMem: begin
-                led[3] <= 1;
                 state <= 4;
             end
             endcase
         end
         
-        // Handle sending message
+        // Wait until the message is sent
         3: begin
-            if (debug_msgLen) begin
-                if (debug_msgTrigger) begin
-                    debug_msg <= debug_msgLen-1;
-                    debug_msgLen <= debug_msgLen-1;
+            if (debug_msgTrigger) begin
+                debug_msg <= debug_msgLen-1;
+                debug_msgLen <= debug_msgLen-1;
+                
+                if (debug_msgLen == 1) begin
+                    state <= 1;
                 end
-            
-            end else begin
-                state <= 1;
             end
         end
         
-        // Initiate reading memory
+        // Start reading memory
         4: begin
             ram_cmdTrigger <= 1;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
-            memCounter <= 8'hFF;
-            memCounterRecv <= 8'hFF;
+            memCounter <= 8'h7F;
+            memCounterRecv <= 8'h7F;
             memLen <= 8'h00;
             state <= 5;
         end
@@ -525,8 +522,9 @@ module Top(
             
             // Writing incoming data into `mem`
             if (ram_cmdReadDataValid) begin
-                mem[memLen] <= ram_cmdReadData;
-                memLen <= memLen+1;
+                mem[memLen] <= ram_cmdReadData[7:0];
+                mem[memLen+1] <= ram_cmdReadData[15:8];
+                memLen <= memLen+2;
                 memCounterRecv <= memCounterRecv-1;
                 
                 // Next state after we've received all the bytes
@@ -534,12 +532,13 @@ module Top(
                     state <= 6;
                 end
             end
+            led[3] <= 1;
         end
         
         // Start sending the data
         6: begin
             debug_msg <= CmdReadMem;
-            debug_msgLen <= memLen;
+            debug_msgLen <= memLen+1;
             memCounter <= 0;
             state <= 7;
         end
@@ -547,16 +546,16 @@ module Top(
         // Send the data
         7: begin
             // Continue sending data
-            if (debug_msgLen) begin
-                if (debug_msgTrigger) begin
-                    debug_msg <= mem[memCounter];
-                    debug_msgLen <= debug_msgLen-1;
-                    memCounter <= memCounter+1;
+            if (debug_msgTrigger) begin
+                // debug_msg <= memCounter;
+                debug_msg <= mem[memCounter];
+                debug_msgLen <= debug_msgLen-1;
+                memCounter <= memCounter+1;
+                
+                // We're finished
+                if (debug_msgLen == 1) begin
+                    state <= 1;
                 end
-            
-            // We're finished
-            end else begin
-                state <= 1;
             end
         end
         endcase
