@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 `include "../AFIFO.v"
-// `include "../SDRAMController.v"
+`include "../SDRAMController.v"
 
 module Debug(
     input wire          clk,
@@ -90,13 +90,6 @@ module Debug(
             end
             
             msgState <= 3;
-            
-            // // Check whether we're done
-            // if (msgLen > 1) begin
-            //     msgState <= 3;
-            // end else begin
-            //     msgState <= 0;
-            // end
         end
         
         // Send the message payload
@@ -114,36 +107,6 @@ module Debug(
             end
         end
         endcase
-        
-        
-        
-        // // Reset stuff by default
-        // // outq_writeTrigger <= 0;
-        // // msgTrigger <= 0;
-        // // msgCmdSent <= 0;
-        //
-        // // Continue shifting out `msg`, if there's more data available
-        // if (msgLen) begin
-        //     // Send the message length first
-        //     if (!msgCmdSent) begin
-        //         outq_writeData <= msg;
-        //         outq_writeTrigger <= 1;
-        //
-        //         // Once the message length is sent, start sending the message
-        //         if (outq_writeTrigger && outq_writeOK) begin
-        //             msgLenSent <= 1;
-        //             outq_writeData <= msg;
-        //             outq_writeTrigger <= 1;
-        //         end
-        //
-        //     // Continue sending the message
-        //     end else begin
-        //         // Keep msgLenSent=1 until the end of the message
-        //         msgLenSent <= 1;
-        //         outq_writeData <= msg;
-        //         outq_writeTrigger <= 1;
-        //     end
-        // end
     end
     
     
@@ -305,16 +268,16 @@ module Top(
     input wire          clk12mhz,
     output reg[3:0]     led = 0,
     
-    // output wire         ram_clk,
-    // output wire         ram_cke,
-    // output wire[1:0]    ram_ba,
-    // output wire[12:0]   ram_a,
-    // output wire         ram_cs_,
-    // output wire         ram_ras_,
-    // output wire         ram_cas_,
-    // output wire         ram_we_,
-    // output wire[1:0]    ram_dqm,
-    // inout wire[15:0]    ram_dq,
+    output wire         ram_clk,
+    output wire         ram_cke,
+    output wire[1:0]    ram_ba,
+    output wire[12:0]   ram_a,
+    output wire         ram_cs_,
+    output wire         ram_ras_,
+    output wire         ram_cas_,
+    output wire         ram_we_,
+    output wire[1:0]    ram_dqm,
+    inout wire[15:0]    ram_dq,
     
     input wire          debug_clk,
     input wire          debug_cs,
@@ -340,44 +303,46 @@ module Top(
     
     
     
-    // // ====================
-    // // SDRAM controller
-    // // ====================
-    // localparam RAM_Size = 'h2000000;
-    // localparam RAM_AddrWidth = 25;
-    // localparam RAM_DataWidth = 16;
-    //
-    // // RAM controller
-    // wire                    ram_cmdReady;
-    // reg                     ram_cmdTrigger = 0;
-    // reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
-    // reg                     ram_cmdWrite = 0;
-    // reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
-    //
-    // SDRAMController #(
-    //     .ClockFrequency(ClockFrequency)
-    // ) sdramController(
-    //     .clk(clk),
-    //
-    //     .cmdReady(ram_cmdReady),
-    //     .cmdTrigger(ram_cmdTrigger),
-    //     .cmdAddr(ram_cmdAddr),
-    //     .cmdWrite(ram_cmdWrite),
-    //     .cmdWriteData(ram_cmdWriteData),
-    //     .cmdReadData(),
-    //     .cmdReadDataValid(),
-    //
-    //     .ram_clk(ram_clk),
-    //     .ram_cke(ram_cke),
-    //     .ram_ba(ram_ba),
-    //     .ram_a(ram_a),
-    //     .ram_cs_(ram_cs_),
-    //     .ram_ras_(ram_ras_),
-    //     .ram_cas_(ram_cas_),
-    //     .ram_we_(ram_we_),
-    //     .ram_dqm(ram_dqm),
-    //     .ram_dq(ram_dq)
-    // );
+    // ====================
+    // SDRAM controller
+    // ====================
+    localparam RAM_Size = 'h2000000;
+    localparam RAM_AddrWidth = 25;
+    localparam RAM_DataWidth = 16;
+
+    // RAM controller
+    wire                    ram_cmdReady;
+    reg                     ram_cmdTrigger = 0;
+    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
+    reg                     ram_cmdWrite = 0;
+    reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
+    wire[RAM_DataWidth-1:0] ram_cmdReadData;
+    wire                    ram_cmdReadDataValid;
+
+    SDRAMController #(
+        .ClockFrequency(ClockFrequency)
+    ) sdramController(
+        .clk(clk),
+
+        .cmdReady(ram_cmdReady),
+        .cmdTrigger(ram_cmdTrigger),
+        .cmdAddr(ram_cmdAddr),
+        .cmdWrite(ram_cmdWrite),
+        .cmdWriteData(ram_cmdWriteData),
+        .cmdReadData(ram_cmdReadData),
+        .cmdReadDataValid(ram_cmdReadDataValid),
+
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
+    );
     
     
     
@@ -396,7 +361,7 @@ module Top(
     localparam CmdNop       = 8'h00;
     localparam CmdLEDOff    = 8'h80;
     localparam CmdLEDOn     = 8'h81;
-    // localparam CmdReadMem   = 8'h82;
+    localparam CmdReadMem   = 8'h82;
     
     wire[7:0] debug_cmd;
     wire debug_cmdReady;
@@ -449,11 +414,10 @@ module Top(
     endfunction
     
     reg[1:0] state = 0;
-    // reg readMem = 0;
-    reg[7:0] memBuf1[255:0];
-    reg[8:0] memBuf1Len = 0;
-    reg[7:0] memBuf2[255:0];
-    reg[8:0] memBuf2Len = 0;
+    reg[7:0] mem[255:0];
+    reg[7:0] memLen = 0;
+    reg[7:0] memCounter = 0;
+    reg[7:0] memCounterRecv = 0;
     
     reg[7:0] cmd = CmdNop;
     always @(posedge clk) begin
@@ -461,25 +425,23 @@ module Top(
         
         // Initialize the SDRAM
         0: begin
-            // if (!ram_cmdTrigger) begin
-            //     ram_cmdTrigger <= 1;
-            //     ram_cmdAddr <= 0;
-            //     ram_cmdWrite <= 1;
-            //     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-            //
-            // end else if (ram_cmdTrigger && ram_cmdReady) begin
-            //     if (ram_cmdAddr < RAM_Size-1) begin
-            //         ram_cmdTrigger <= 1;
-            //         ram_cmdAddr <= ram_cmdAddr+1;
-            //         ram_cmdWrite <= 1;
-            //         ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-            //
-            //     end else begin
-            //         init <= 1;
-            //     end
-            // end
-            
-            state <= 1;
+            if (!ram_cmdTrigger) begin
+                ram_cmdTrigger <= 1;
+                ram_cmdAddr <= 0;
+                ram_cmdWrite <= 1;
+                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+
+            end else if (ram_cmdTrigger && ram_cmdReady) begin
+                if (ram_cmdAddr < RAM_Size-1) begin
+                    ram_cmdTrigger <= 1;
+                    ram_cmdAddr <= ram_cmdAddr+1;
+                    ram_cmdWrite <= 1;
+                    ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+
+                end else begin
+                    state <= 1;
+                end
+            end
         end
         
         // Accept new command
@@ -496,20 +458,32 @@ module Top(
             debug_cmdTrigger <= 0;
             
             case (cmd)
-            CmdLEDOff: begin
-                led[0] <= 0;
+            default: begin
+                led[0] <= 1;
                 debug_msg <= cmd;
-                debug_msgLen <= 10;
+                debug_msgLen <= 1;
+                state <= 3;
+            end
+            
+            CmdLEDOff: begin
+                led[1] <= 1;
+                debug_msg <= cmd;
+                debug_msgLen <= 1;
+                state <= 3;
             end
             
             CmdLEDOn: begin
-                led[0] <= 1;
+                led[2] <= 1;
                 debug_msg <= cmd;
-                debug_msgLen <= 10;
+                debug_msgLen <= 1;
+                state <= 3;
+            end
+            
+            CmdReadMem: begin
+                led[3] <= 1;
+                state <= 4;
             end
             endcase
-            
-            state <= 3;
         end
         
         // Handle sending message
@@ -520,6 +494,67 @@ module Top(
                     debug_msgLen <= debug_msgLen-1;
                 end
             
+            end else begin
+                state <= 1;
+            end
+        end
+        
+        // Initiate reading memory
+        4: begin
+            ram_cmdTrigger <= 1;
+            ram_cmdAddr <= 0;
+            ram_cmdWrite <= 0;
+            memCounter <= 8'hFF;
+            memCounterRecv <= 8'hFF;
+            memLen <= 8'h00;
+            state <= 5;
+        end
+        
+        // Continue reading memory
+        5: begin
+            // Handle the read being accepted
+            if (ram_cmdReady && memCounter) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
+                memCounter <= memCounter-1;
+                
+                // Stop reading
+                if (memCounter == 1) begin
+                    ram_cmdTrigger <= 0;
+                end
+            end
+            
+            // Writing incoming data into `mem`
+            if (ram_cmdReadDataValid) begin
+                mem[memLen] <= ram_cmdReadData;
+                memLen <= memLen+1;
+                memCounterRecv <= memCounterRecv-1;
+                
+                // Next state after we've received all the bytes
+                if (memCounterRecv == 1) begin
+                    state <= 6;
+                end
+            end
+        end
+        
+        // Start sending the data
+        6: begin
+            debug_msg <= CmdReadMem;
+            debug_msgLen <= memLen;
+            memCounter <= 0;
+            state <= 7;
+        end
+        
+        // Send the data
+        7: begin
+            // Continue sending data
+            if (debug_msgLen) begin
+                if (debug_msgTrigger) begin
+                    debug_msg <= mem[memCounter];
+                    debug_msgLen <= debug_msgLen-1;
+                    memCounter <= memCounter+1;
+                end
+            
+            // We're finished
             end else begin
                 state <= 1;
             end
