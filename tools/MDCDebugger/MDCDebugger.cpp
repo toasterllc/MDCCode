@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <libftdi1/ftdi.h>
+#include <optional>
 
 class MDCDevice {
 public:
@@ -169,7 +170,30 @@ public:
         }
         return msg;
     }
-
+    
+    std::vector<Msg> readMany() {
+        const uint32_t Len = 0x10000;
+        // Clock in `len` bytes
+        uint8_t b[] = {0x20, (uint8_t)((Len-1)&0xFF), (uint8_t)(((Len-1)&0xFF00)>>8)};
+        _ftdiWrite(_ftdi, b, sizeof(b));
+        std::vector<uint8_t> buf;
+        buf.resize(Len);
+        
+        for (size_t off=0; off<Len;) {
+            const size_t readLen = Len-off;
+            int ir = ftdi_read_data(&_ftdi, buf.data()+off, (int)readLen);
+            printf("ftdi_read_data %d\n", ir);
+            assert(ir>=0 && (size_t)ir<=readLen);
+            off += ir;
+        }
+        
+//        for (const uint8_t& b : buf) {
+//            printf("%02x\n", b);
+//        }
+        
+        return std::vector<Msg>();
+    }
+    
     void _read(uint8_t* d, const size_t len) {
         for (size_t off=0; off<len;) {
             // Read from the bytes that we've already read from the device
@@ -272,26 +296,55 @@ int main() {
 //        device.write(Cmd::LEDOn);
         device.write(Cmd::ReadMem);
         
+        device.write(Cmd::Nop);
+        
+        std::optional<uint16_t> lastVal;
+        
+        const uint32_t TotalLen = 0x2000000;
+        uint32_t len = 0;
         for (;;) {
-            MDCDevice::Msg msg = device.read();
-            printf("Msg{\n");
-            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
-            printf("  payload: [ ");
-            for (const uint8_t& x : msg.payload) {
-                printf("%02x ", x);
-            }
-            printf("]\n}\n\n");
-            if (msg.cmd == Cmd::ReadMem) {
-                size_t i = 0;
-                assert(msg.payload.size() == 254);
-                for (const uint8_t& x : msg.payload) {
-                    if (i % 2) assert(x == 0);
-                    else assert(x == i/2);
-                    i++;
-                }
-                printf("DATA VALID\n");
-                break;
-            }
+            device.readMany();
+            
+//            MDCDevice::Msg msg = device.read();
+//            if (msg.cmd == Cmd::ReadMem) {
+//                assert(!(msg.payload.size() % 2));
+//                const size_t valsLen = msg.payload.size()/2;
+//                uint16_t vals[valsLen];
+//                memcpy(vals, msg.payload.data(), msg.payload.size());
+//
+////                printf("Msg{\n");
+////                printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+////                printf("  payload: [ ");
+////                for (const uint8_t& x : msg.payload) {
+////                    printf("%02x ", x);
+////                }
+////                printf("]\n}\n\n");
+//
+//                for (const uint16_t& val : vals) {
+////                    printf("%x %x\n", val, *lastVal);
+//                    if (lastVal) {
+//                        assert(val == (uint16_t)((*lastVal)+1)); // Cast to force overflow
+//                    }
+//                    lastVal = val;
+//                }
+//
+//                len += valsLen;
+//                printf("%.1f complete\n", ((float)len/TotalLen)*100);
+//
+////                printf("DATA VALID\n");
+//            }
+//
+//            if (msg.cmd == Cmd::ReadMem) {
+//                size_t i = 0;
+//                assert(msg.payload.size() == 254);
+//                for (const uint8_t& x : msg.payload) {
+//                    if (i % 2) assert(x == 0);
+//                    else assert(x == i/2);
+//                    i++;
+//                }
+//                printf("DATA VALID\n");
+////                break;
+//            }
         }
         
 //        {
