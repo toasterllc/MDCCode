@@ -415,7 +415,13 @@ module Top(
         // DataFromAddr = 16'h7832;
     endfunction
     
-    reg[2:0] state = 0;
+    function [63:0] Min;
+        input [63:0] a;
+        input [63:0] b;
+        Min = (a < b ? a : b);
+    endfunction
+    
+    reg[3:0] state = 0;
     reg[7:0] mem[255:0];
     reg[7:0] memLen = 0;
     reg[7:0] memCounter = 0;
@@ -479,6 +485,8 @@ module Top(
             end
             
             CmdReadMem: begin
+                ram_cmdAddr <= 0;
+                ram_cmdWrite <= 0;
                 state <= 4;
             end
             endcase
@@ -499,10 +507,8 @@ module Top(
         // Start reading memory
         4: begin
             ram_cmdTrigger <= 1;
-            ram_cmdAddr <= 0;
-            ram_cmdWrite <= 0;
-            memCounter <= 8'h7F;
-            memCounterRecv <= 8'h7F;
+            memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
             memLen <= 8'h00;
             state <= 5;
         end
@@ -511,7 +517,7 @@ module Top(
         5: begin
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
+                ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
                 memCounter <= memCounter-1;
                 
                 // Stop reading
@@ -532,7 +538,6 @@ module Top(
                     state <= 6;
                 end
             end
-            led[3] <= 1;
         end
         
         // Start sending the data
@@ -547,14 +552,19 @@ module Top(
         7: begin
             // Continue sending data
             if (debug_msgTrigger) begin
-                // debug_msg <= memCounter;
                 debug_msg <= mem[memCounter];
                 debug_msgLen <= debug_msgLen-1;
                 memCounter <= memCounter+1;
                 
-                // We're finished
+                // We're finished with this chunk.
+                // Start on the next chunk, or stop if we've read everything.
                 if (debug_msgLen == 1) begin
-                    state <= 1;
+                    if (ram_cmdAddr == 0) begin
+                        state <= 1;
+                    end else begin
+                        led[3] <= 1;
+                        state <= 4;
+                    end
                 end
             end
         end
