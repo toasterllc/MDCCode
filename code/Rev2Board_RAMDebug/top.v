@@ -157,44 +157,44 @@ module Debug(
     // ====================
     // Data relay/shifting (debug_di->inq, outq->debug_do)
     // ====================
+    reg[1:0] inCmdState = 0;
+    reg[8:0] inCmd = 0; // High bit is the end-of-data sentinel, and isn't transmitted
     reg[1:0] outMsgState = 0;
-    reg[7:0] inCmd = 0;
-    wire inCmdReady = inCmd[7];
     reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
     assign debug_do = outMsgShiftReg[8];
     always @(posedge debug_clk) begin
         if (debug_cs) begin
-            // Reset stuff by default
-            inq_writeTrigger <= 0;
-            // outq_readTrigger <= 0;
-            
-            if (inq_writeTrigger && !inq_writeOK) begin
-                // TODO: handle dropped commands
+            case (inCmdState)
+            0: begin
+                // Initialize `inCmd` as if it was originally initialized to 1,
+                // so that after the first clock it contains the sentinel and
+                // the first bit of data.
+                inCmd <= {1'b1, debug_di};
+                inCmdState <= 1;
             end
             
-            // ## Incoming command relay: debug_di -> inq
-            // Continue shifting in command
-            if (!inCmdReady) begin
-                inCmd <= (inCmd<<1)|debug_di;
-            
-            // Enqueue the command into `inq`
-            end else begin
-                inq_writeTrigger <= 1;
-                inq_writeData <= inCmd;
+            1: begin
+                if (inq_writeTrigger && !inq_writeOK) begin
+                    // TODO: handle dropped commands
+                end
                 
-                // Start shifting the next command
-                inCmd <= debug_di;
+                if (inCmd[8]) begin
+                    inq_writeTrigger <= 1;
+                    inq_writeData <= inCmd[7:0];
+                    inCmd <= {1'b1, debug_di};
+                
+                end else begin
+                    inq_writeTrigger <= 0;
+                    inCmd <= (inCmd<<1)|debug_di;
+                end
             end
-            
-            
-            
-            
+            endcase
             
             case (outMsgState)
             0: begin
                 // Initialize `outMsgShiftReg` as if it was originally initialized to 1,
-                // so that after the first clock cycle it's 1<<1.
-                outMsgShiftReg <= 1<<1;
+                // so that after the first clock cycle it contains the sentinel.
+                outMsgShiftReg <= 2'b10;
                 outMsgState <= 3;
             end
             
@@ -202,16 +202,19 @@ module Debug(
                 outMsgShiftReg <= outMsgShiftReg<<1;
                 outq_readTrigger <= 0;
                 
+                // If we successfully read a byte, shift it out
                 if (outq_readOK) begin
                     outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
                     outMsgState <= 2;
                 
+                // Otherwise shift out 2 zero bytes (cmd=Nop, payloadLen=0)
                 end else begin
                     outMsgShiftReg <= 1;
                     outMsgState <= 3;
                 end
             end
             
+            // Continue shifting out a byte
             2: begin
                 outMsgShiftReg <= outMsgShiftReg<<1;
                 if (outMsgShiftReg[6:0] == 7'b1000000) begin
@@ -220,6 +223,7 @@ module Debug(
                 end
             end
             
+            // Shift a zero byte
             3: begin
                 outMsgShiftReg <= outMsgShiftReg<<1;
                 if (outMsgShiftReg[7:0] == 8'b10000000) begin
@@ -228,27 +232,6 @@ module Debug(
                 end
             end
             endcase
-            
-            // // ## Outgoing message relay: outq -> debug_do
-            // // Continue shifting out the current data, if there's still data remaining
-            // if (outMsgShiftReg[6:0]) begin
-            //     outMsgShiftReg <= outMsgShiftReg<<1;
-            //
-            //     // Trigger a read on the correct clock cycle
-            //     if (outMsgShiftReg[6:0] == 15'b1000000) begin
-            //         outq_readTrigger <= 1;
-            //     end
-            //
-            // // Otherwise load the next byte, if there's one available
-            // end else if (outq_readTrigger && outq_readOK) begin
-            //     outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
-            //
-            // end else begin
-            //     // outMsgShiftReg initialization must be as if it was originally
-            //     // initialized to 1, so after the first clock cycle it should be 1<<1.
-            //     if (!outMsgShiftReg) outMsgShiftReg <= 1<<1;
-            //     else outMsgShiftReg <= 1;
-            // end
         end
     end
     
@@ -534,13 +517,13 @@ module Top(
                 CmdLEDOff: begin
                     led[0] <= 0;
                     debug_msg <= cmd;
-                    debug_msgLen <= 1;
+                    debug_msgLen <= 10;
                 end
                 
                 CmdLEDOn: begin
                     led[0] <= 1;
                     debug_msg <= cmd;
-                    debug_msgLen <= 1;
+                    debug_msgLen <= 10;
                 end
                 
                 // CmdReadMem: begin
