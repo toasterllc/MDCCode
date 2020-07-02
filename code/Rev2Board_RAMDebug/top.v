@@ -146,18 +146,27 @@ module Debug(
         // end
     end
     
+    
+    
+    
+    
+    
+    
+    
+    
     // ====================
     // Data relay/shifting (debug_di->inq, outq->debug_do)
     // ====================
+    reg[1:0] outMsgState = 0;
     reg[7:0] inCmd = 0;
     wire inCmdReady = inCmd[7];
-    reg[16:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    assign debug_do = outMsgShiftReg[16];
+    reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    assign debug_do = outMsgShiftReg[8];
     always @(posedge debug_clk) begin
         if (debug_cs) begin
             // Reset stuff by default
             inq_writeTrigger <= 0;
-            outq_readTrigger <= 0;
+            // outq_readTrigger <= 0;
             
             if (inq_writeTrigger && !inq_writeOK) begin
                 // TODO: handle dropped commands
@@ -177,28 +186,132 @@ module Debug(
                 inCmd <= debug_di;
             end
             
-            // ## Outgoing message relay: outq -> debug_do
-            // Continue shifting out the current data, if there's still data remaining
-            if (outMsgShiftReg[14:0]) begin
-                outMsgShiftReg <= outMsgShiftReg<<1;
-                
-                // Trigger a read on the correct clock cycle
-                if (outMsgShiftReg[14:0] == 15'b1000000_00000000) begin
-                    outq_readTrigger <= 1;
-                end
             
-            // Otherwise load the next byte, if there's one available
-            end else if (outq_readTrigger && outq_readOK) begin
-                outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
             
-            end else begin
-                // outMsgShiftReg initialization must be as if it was originally
-                // initialized to 1, so after the first clock cycle it should be 1<<1.
-                if (!outMsgShiftReg) outMsgShiftReg <= 1<<1;
-                else outMsgShiftReg <= 1;
+            
+            
+            case (outMsgState)
+            0: begin
+                // Initialize `outMsgShiftReg` as if it was originally initialized to 1,
+                // so that after the first clock cycle it's 1<<1.
+                outMsgShiftReg <= 1<<1;
+                outMsgState <= 3;
             end
+            
+            1: begin
+                outMsgShiftReg <= outMsgShiftReg<<1;
+                outq_readTrigger <= 0;
+                
+                if (outq_readOK) begin
+                    outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
+                    outMsgState <= 2;
+                
+                end else begin
+                    outMsgShiftReg <= 1;
+                    outMsgState <= 3;
+                end
+            end
+            
+            2: begin
+                outMsgShiftReg <= outMsgShiftReg<<1;
+                if (outMsgShiftReg[6:0] == 7'b1000000) begin
+                    outq_readTrigger <= 1;
+                    outMsgState <= 1;
+                end
+            end
+            
+            3: begin
+                outMsgShiftReg <= outMsgShiftReg<<1;
+                if (outMsgShiftReg[7:0] == 8'b10000000) begin
+                    outMsgShiftReg <= 1;
+                    outMsgState <= 2;
+                end
+            end
+            endcase
+            
+            // // ## Outgoing message relay: outq -> debug_do
+            // // Continue shifting out the current data, if there's still data remaining
+            // if (outMsgShiftReg[6:0]) begin
+            //     outMsgShiftReg <= outMsgShiftReg<<1;
+            //
+            //     // Trigger a read on the correct clock cycle
+            //     if (outMsgShiftReg[6:0] == 15'b1000000) begin
+            //         outq_readTrigger <= 1;
+            //     end
+            //
+            // // Otherwise load the next byte, if there's one available
+            // end else if (outq_readTrigger && outq_readOK) begin
+            //     outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
+            //
+            // end else begin
+            //     // outMsgShiftReg initialization must be as if it was originally
+            //     // initialized to 1, so after the first clock cycle it should be 1<<1.
+            //     if (!outMsgShiftReg) outMsgShiftReg <= 1<<1;
+            //     else outMsgShiftReg <= 1;
+            // end
         end
     end
+    
+    
+    
+    
+    
+    
+    
+    
+    // // ====================
+    // // Data relay/shifting (debug_di->inq, outq->debug_do)
+    // // ====================
+    // reg[7:0] inCmd = 0;
+    // wire inCmdReady = inCmd[7];
+    // reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    // assign debug_do = outMsgShiftReg[8];
+    // always @(posedge debug_clk) begin
+    //     if (debug_cs) begin
+    //         // Reset stuff by default
+    //         inq_writeTrigger <= 0;
+    //         outq_readTrigger <= 0;
+    //
+    //         if (inq_writeTrigger && !inq_writeOK) begin
+    //             // TODO: handle dropped commands
+    //         end
+    //
+    //         // ## Incoming command relay: debug_di -> inq
+    //         // Continue shifting in command
+    //         if (!inCmdReady) begin
+    //             inCmd <= (inCmd<<1)|debug_di;
+    //
+    //         // Enqueue the command into `inq`
+    //         end else begin
+    //             inq_writeTrigger <= 1;
+    //             inq_writeData <= inCmd;
+    //
+    //             // Start shifting the next command
+    //             inCmd <= debug_di;
+    //         end
+    //
+    //         // ## Outgoing message relay: outq -> debug_do
+    //         // Continue shifting out the current data, if there's still data remaining
+    //         if (outMsgShiftReg[6:0]) begin
+    //             outMsgShiftReg <= outMsgShiftReg<<1;
+    //
+    //             // Trigger a read on the correct clock cycle
+    //             if (outMsgShiftReg[6:0] == 15'b1000000) begin
+    //                 outq_readTrigger <= 1;
+    //             end
+    //
+    //         // Otherwise load the next byte, if there's one available
+    //         end else if (outq_readTrigger && outq_readOK) begin
+    //             outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
+    //
+    //         end else begin
+    //             // outMsgShiftReg initialization must be as if it was originally
+    //             // initialized to 1, so after the first clock cycle it should be 1<<1.
+    //             if (!outMsgShiftReg) outMsgShiftReg <= 1<<1;
+    //             else outMsgShiftReg <= 1;
+    //         end
+    //     end
+    // end
 endmodule
 
 

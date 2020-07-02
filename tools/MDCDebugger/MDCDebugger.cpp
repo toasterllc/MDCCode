@@ -281,7 +281,7 @@ int main() {
 //                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
 //            }
 //        }
-        
+//
         for (;;) {
             MDCDevice::Msg msg = device.read();
             printf("Msg{\n");
