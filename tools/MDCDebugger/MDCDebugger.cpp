@@ -154,58 +154,198 @@ public:
         _write(std::vector<uint8_t>({(uint8_t)cmd}));
     }
     
-    Msg read() {
-        Msg msg;
-        
-        // Read command
-        _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
-        
-        // Read payload length
-        uint8_t payloadLen = 0;
-        _read((uint8_t*)&payloadLen, sizeof(payloadLen));
-        
-        if (payloadLen) {
-            msg.payload.resize(payloadLen);
-            _read(msg.payload.data(), payloadLen);
-        }
-        return msg;
-    }
-    
-    std::vector<Msg> readMany() {
-        const uint32_t Len = 0x10000;
-        // Clock in `len` bytes
-        uint8_t b[] = {0x20, (uint8_t)((Len-1)&0xFF), (uint8_t)(((Len-1)&0xFF00)>>8)};
-        _ftdiWrite(_ftdi, b, sizeof(b));
-        std::vector<uint8_t> buf;
-        buf.resize(Len);
-        
-        for (size_t off=0; off<Len;) {
-            const size_t readLen = Len-off;
-            int ir = ftdi_read_data(&_ftdi, buf.data()+off, (int)readLen);
-            printf("ftdi_read_data %d\n", ir);
-            assert(ir>=0 && (size_t)ir<=readLen);
-            off += ir;
-        }
-        
-//        for (const uint8_t& b : buf) {
-//            printf("%02x\n", b);
+//    Msg read() {
+//        Msg msg;
+//
+//        // Read command
+//        _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
+//
+//        // Read payload length
+//        uint8_t payloadLen = 0;
+//        _read((uint8_t*)&payloadLen, sizeof(payloadLen));
+//
+//        if (payloadLen) {
+//            msg.payload.resize(payloadLen);
+//            _read(msg.payload.data(), payloadLen);
 //        }
+//        return msg;
+//    }
+    
+    
+    
+    
+    
+    
+    static void _ftdiMassRead(struct ftdi_context& ftdi, size_t len) {
+        if (!len) return;
         
-        return std::vector<Msg>();
+        // Clock in/out a single Nop first, to make DO=0 before the mass read.
+        // Otherwise we'd be clocking out an unknown value on DO during the mass read.
+        const uint8_t nopCmd[] = { 0x31, 0x00, 0x00, (uint8_t)Cmd::Nop };
+        _ftdiWrite(ftdi, nopCmd, sizeof(nopCmd));
+        len--;
+        
+        if (len) {
+            // Clock out `len` bytes
+            const uint8_t massReadCmd[] = { 0x20, (uint8_t)((len-1)&0xFF), (uint8_t)(((len-1)&0xFF00)>>8) };
+            _ftdiWrite(ftdi, massReadCmd, sizeof(massReadCmd));
+        }
     }
     
     void _read(uint8_t* d, const size_t len) {
         for (size_t off=0; off<len;) {
-            // Read from the bytes that we've already read from the device
-            const size_t readLen = std::min(len-off, _in.size());
-            memcpy(d+off, _in.data(), readLen);
-            _in.erase(_in.begin(), _in.begin()+readLen);
-            off += readLen;
+            const size_t readLen = len-off;
+            int ir = ftdi_read_data(&_ftdi, d+off, (int)readLen);
+            assert(ir>=0 && (size_t)ir<=len);
+            off += ir;
             
-            // Write Nop's so that we get `len-off` bytes back
-            _write(std::vector<uint8_t>(len-off, (uint8_t)Cmd::Nop));
+            if (off < len) {
+                _ftdiMassRead(_ftdi, len-off);
+            }
         }
     }
+    
+    std::vector<Msg> read(uint16_t len) {
+        std::vector<Msg> msgs;
+        
+        _ftdiMassRead(_ftdi, len);
+        
+        for (size_t i=0; i<len;) {
+            Msg msg;
+            
+            _read((uint8_t*)&msg.cmd, sizeof(msg.cmd));
+            i += sizeof(msg.cmd);
+            
+            uint8_t payloadLen = 0;
+            _read(&payloadLen, sizeof(payloadLen));
+            i += sizeof(payloadLen);
+            
+            if (payloadLen) {
+                msg.payload.resize(payloadLen);
+                _read(msg.payload.data(), payloadLen);
+                i += payloadLen;
+            }
+            
+            msgs.push_back(std::move(msg));
+        }
+        
+        return msgs;
+        
+        
+//        // Clock in/out a single Nop first, to make DO=0 before the mass read.
+//        // Otherwise we'd be clocking out an unknown value on DO during the mass read.
+//        const uint8_t nopCmd[] = { 0x31, 0x00, 0x00, (uint8_t)Cmd::Nop };
+//        _ftdiWrite(_ftdi, nopCmd, sizeof(nopCmd));
+//        len--;
+//
+//        for (;;) {
+//            // If we need more than one additional byte, perform a mass read
+//            if (len) {
+//                // Clock out `len-off` bytes
+//                const uint8_t massReadCmd[] = { 0x20, (uint8_t)((len-1)&0xFF), (uint8_t)(((len-1)&0xFF00)>>8) };
+//                _ftdiWrite(_ftdi, massReadCmd, sizeof(massReadCmd));
+//            }
+//
+//            for (;;) {
+//                Msg msg;
+//                int ir = ftdi_read_data(&_ftdi, buf.data()+off, (int)len);
+//                assert(ir>=0 && (size_t)ir<=len);
+//                off += ir;
+//
+//
+//                _ftdiRead(_ftdi, &msg.cmd, sizeof(msg.cmd));
+//
+//            }
+//        }
+//
+//
+//        _ftdiWrite(_ftdi, b, sizeof(b));
+//
+//        buf.resize(Len);
+//
+//        for (size_t off=0; off<Len;) {
+//            const size_t readLen = Len-off;
+//            int ir = ftdi_read_data(&_ftdi, buf.data()+off, (int)readLen);
+//            printf("ftdi_read_data %d\n", ir);
+//            assert(ir>=0 && (size_t)ir<=readLen);
+//            off += ir;
+//        }
+//
+////        for (const uint8_t& b : buf) {
+////            printf("%02x\n", b);
+////        }
+//
+//        return std::vector<Msg>();
+    }
+    
+    
+    
+//    std::vector<Msg> read(const uint16_t len) {
+//        size_t off = 0;
+//        std::vector<uint8_t> buf;
+//        buf.resize(len);
+//
+//        // Read available data first
+//        int ir = ftdi_read_data(&_ftdi, buf.data()+off, (int)len);
+//        assert(ir>=0 && (size_t)ir<=len);
+//        off += ir;
+//
+//        while (off < len) {
+//            const size_t readLen = len-off;
+//
+//            // Clock in/out a single Nop first, to make DO=0 before the mass read.
+//            // Otherwise we'd be clocking out an unknown value on DO during the mass read.
+//            const uint8_t nopCmd[] = { 0x31, 0x00, 0x00, (uint8_t)Cmd::Nop };
+//            _ftdiWrite(_ftdi, nopCmd, sizeof(nopCmd));
+//
+//            // If we need more than one additional byte, perform a mass read
+//            if (readLen > 1) {
+//                // Clock out `len-off` bytes
+//                const uint8_t massReadCmd[] = { 0x20, (uint8_t)((readLen-2)&0xFF), (uint8_t)(((readLen-2)&0xFF00)>>8) };
+//                _ftdiWrite(_ftdi, massReadCmd, sizeof(massReadCmd));
+//            }
+//
+//            _ftdiRead(_ftdi, buf.data()+off, readLen);
+//        }
+//
+//        for (size_t i=0;;) {
+//            Msg msg;
+//            msg.cmd = (Cmd)buf[i];
+//            msg.payload = buf[i+1];
+//        }
+//
+//
+//        _ftdiWrite(_ftdi, b, sizeof(b));
+//
+//        buf.resize(Len);
+//
+//        for (size_t off=0; off<Len;) {
+//            const size_t readLen = Len-off;
+//            int ir = ftdi_read_data(&_ftdi, buf.data()+off, (int)readLen);
+//            printf("ftdi_read_data %d\n", ir);
+//            assert(ir>=0 && (size_t)ir<=readLen);
+//            off += ir;
+//        }
+//
+////        for (const uint8_t& b : buf) {
+////            printf("%02x\n", b);
+////        }
+//
+//        return std::vector<Msg>();
+//    }
+    
+//    void _read(uint8_t* d, const size_t len) {
+//        for (size_t off=0; off<len;) {
+//            // Read from the bytes that we've already read from the device
+//            const size_t readLen = std::min(len-off, _in.size());
+//            memcpy(d+off, _in.data(), readLen);
+//            _in.erase(_in.begin(), _in.begin()+readLen);
+//            off += readLen;
+//
+//            // Write Nop's so that we get `len-off` bytes back
+//            _write(std::vector<uint8_t>(len-off, (uint8_t)Cmd::Nop));
+//        }
+//    }
     
     void _setPins(std::vector<PinConfig> configs) {
         uint8_t pinDirs = 0;
@@ -227,10 +367,10 @@ public:
         _ftdiWrite(_ftdi, b, sizeof(b));
         _ftdiWrite(_ftdi, d.data(), d.size());
         
-        // Store the data that was clocked out from the device
-        const size_t oldSize = _in.size();
-        _in.resize(oldSize+d.size());
-        _ftdiRead(_ftdi, _in.data()+oldSize, d.size());
+//        // Store the data that was clocked out from the device
+//        const size_t oldSize = _in.size();
+//        _in.resize(oldSize+d.size());
+//        _ftdiRead(_ftdi, _in.data()+oldSize, d.size());
     }
     
     static void _ftdiRead(struct ftdi_context& ftdi, uint8_t* d, const size_t len) {
@@ -260,6 +400,7 @@ public:
 
 int main() {
     using Cmd = MDCDevice::Cmd;
+    using Msg = MDCDevice::Msg;
     
     MDCDevice device;
     
@@ -282,9 +423,9 @@ int main() {
 //        }
 //    }
     
-    for (int i=0; i<10; i++) {
-        device.read();
-    }
+//    for (int i=0; i<10; i++) {
+//        device.read();
+//    }
     
 //    device.write(Cmd::LEDOn);
 //    device.read();
@@ -296,14 +437,35 @@ int main() {
 //        device.write(Cmd::LEDOn);
         device.write(Cmd::ReadMem);
         
-        device.write(Cmd::Nop);
+//        device.write(Cmd::Nop);
         
-        std::optional<uint16_t> lastVal;
-        
+//        std::optional<uint16_t> lastVal;
+//
         const uint32_t TotalLen = 0x2000000;
         uint32_t len = 0;
+        uint32_t msgCount = 0;
+        
         for (;;) {
-            device.readMany();
+            auto msgs = device.read(0xFFFF);
+            for (const Msg& msg : msgs) {
+                if (msg.cmd == Cmd::ReadMem) {
+//                    printf("Msg{\n");
+//                    printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+//                    printf("  payload: [ ");
+//                    for (const uint8_t& x : msg.payload) {
+//                        printf("%02x ", x);
+//                    }
+//                    printf("]\n}\n\n");
+                    len += msg.payload.size()/2;
+                }
+                
+                if (len) {
+                    msgCount++;
+                    if (!(msgCount % 1000)) {
+                        printf("%.1f%% complete (%d / %d words)\n", ((float)len/TotalLen)*100, len, TotalLen);
+                    }
+                }
+            }
             
 //            MDCDevice::Msg msg = device.read();
 //            if (msg.cmd == Cmd::ReadMem) {
