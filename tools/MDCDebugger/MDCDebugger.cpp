@@ -94,16 +94,16 @@ public:
         ir = ftdi_set_bitmode(&_ftdi, 0xFF, BITMODE_MPSSE);
         assert(!ir);
         
-        // Use 60MHz master clock, disable adaptive clocking, disable three-phase clocking, disable loopback
+        // Disable clock divide-by-5, disable adaptive clocking, disable three-phase clocking, disable loopback
         {
             uint8_t cmd[] = {0x8A, 0x97, 0x8D, 0x85};
             ir = ftdi_write_data(&_ftdi, cmd, sizeof(cmd));
             assert(ir == sizeof(cmd));
         }
         
-        // Set CLK frequency to 1MHz
+        // Set the minimum clock divisor for maximum clock rate (30 MHz)
         {
-            uint8_t cmd[] = {0x86, 0x1D, 0x00};
+            uint8_t cmd[] = {0x86, 0x00, 0x00};
             ir = ftdi_write_data(&_ftdi, cmd, sizeof(cmd));
             assert(ir == sizeof(cmd));
         }
@@ -269,7 +269,69 @@ int main() {
     
     for (;;) {
         
+//        device.write(Cmd::LEDOn);
         device.write(Cmd::ReadMem);
+        
+        for (;;) {
+            MDCDevice::Msg msg = device.read();
+            printf("Msg{\n");
+            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+            printf("  payload: [ ");
+            for (const uint8_t& x : msg.payload) {
+                printf("%02x ", x);
+            }
+            printf("]\n}\n\n");
+            if (msg.cmd == Cmd::ReadMem) {
+                size_t i = 0;
+                assert(msg.payload.size() == 254);
+                for (const uint8_t& x : msg.payload) {
+                    if (i % 2) assert(x == 0);
+                    else assert(x == i/2);
+                    i++;
+                }
+                printf("DATA VALID\n");
+                break;
+            }
+        }
+        
+//        {
+//            uint8_t tmp[10];
+//            device._read(tmp, sizeof(tmp));
+//            printf("Read data:\n");
+//            for (int i=0; i<(int)sizeof(tmp); i++) {
+//                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
+//            }
+//        }
+        
+//        for (int i=0; i<10; i++) {
+//            MDCDevice::Msg msg = device.read();
+//            printf("Msg{\n");
+//            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+//            printf("  payload: [ ");
+//            for (const uint8_t& x : msg.payload) {
+//                printf("%02x ", x);
+//            }
+//            printf("]\n}\n\n");
+//            usleep(100000);
+//        }
+        
+        
+//        device.write(Cmd::LEDOn);
+//        device.write(Cmd::LEDOff);
+//
+//        for (int i=0; i<2; i++) {
+//            MDCDevice::Msg msg = device.read();
+//            printf("Msg{\n");
+//            printf("  cmd: 0x%jx\n", (uintmax_t)msg.cmd);
+//            printf("  payload: [ ");
+//            for (const uint8_t& x : msg.payload) {
+//                printf("%02x ", x);
+//            }
+//            printf("]\n}\n\n");
+//            usleep(100000);
+//        }
+        
+//        device.write(Cmd::ReadMem);
         
 //        {
 //            uint8_t tmp[10];
@@ -316,20 +378,15 @@ int main() {
 //        printf("led = %d\n", on);
 //        on = !on;
         
-        
-        
-        
-////        {
-////            uint8_t tmp[10];
-////            device._read(tmp, sizeof(tmp));
-////            printf("Read data:\n");
-////            for (int i=0; i<(int)sizeof(tmp); i++) {
-////                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
-////            }
-////        }
-////
-        
-        
+//        {
+//            uint8_t tmp[20];
+//            device._read(tmp, sizeof(tmp));
+//            printf("Read data:\n");
+//            for (int i=0; i<(int)sizeof(tmp); i++) {
+//                printf("  [%d]: %jx\n", i, (uintmax_t)tmp[i]);
+//            }
+//        }
+//        usleep(1000000);
         
 //        for (;;) {
 //            MDCDevice::Msg msg = device.read();
@@ -342,8 +399,8 @@ int main() {
 //            printf("]\n}\n\n");
 //            if (msg.cmd == cmd) break;
 //        }
-//        usleep(100000);
-//
+//        usleep(1000000);
+
         
         
         
