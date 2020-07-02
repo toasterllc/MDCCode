@@ -562,7 +562,6 @@ module Top(
                     if (ram_cmdAddr == 0) begin
                         state <= 1;
                     end else begin
-                        led[3] <= 1;
                         state <= 4;
                     end
                 end
