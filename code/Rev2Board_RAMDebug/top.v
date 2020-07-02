@@ -223,7 +223,7 @@ module Debug(
                 end
             end
             
-            // Shift a zero byte
+            // Shift out 2 zero bytes
             3: begin
                 outMsgShiftReg <= outMsgShiftReg<<1;
                 if (outMsgShiftReg[7:0] == 8'b10000000) begin
@@ -448,7 +448,7 @@ module Top(
         // DataFromAddr = 16'h7832;
     endfunction
     
-    reg init = 0;
+    reg[1:0] state = 0;
     // reg readMem = 0;
     reg[7:0] memBuf1[255:0];
     reg[8:0] memBuf1Len = 0;
@@ -457,17 +457,10 @@ module Top(
     
     reg[7:0] cmd = CmdNop;
     always @(posedge clk) begin
-        // Set default values
-        // ram_cmdTrigger <= 0;
-        debug_cmdTrigger <= 0;
-        
-        // // Accept commands while we're not sending messages
-        // if (debug_cmdTrigger && debug_cmdReady) begin
-        //     debug_cmdTrigger <= 0;
-        // end
+        case (state)
         
         // Initialize the SDRAM
-        if (!init) begin
+        0: begin
             // if (!ram_cmdTrigger) begin
             //     ram_cmdTrigger <= 1;
             //     ram_cmdAddr <= 0;
@@ -486,22 +479,41 @@ module Top(
             //     end
             // end
             
-            init <= 1;
+            state <= 1;
+        end
         
+        // Accept new command
+        1: begin
+            debug_cmdTrigger <= 1;
+            if (debug_cmdTrigger && debug_cmdReady) begin
+                cmd <= debug_cmd;
+                state <= 2;
+            end
+        end
         
-    // reg[7:0] debug_msgCmd = 0;
-    // reg[7:0] debug_msgPayload = 0;
-    // reg[7:0] debug_msgPayloadLen = 0;
-    // wire debug_msgPayloadTrigger;
-        
-        
-        // Handle commands
-        end else begin
-            // if (readMem) begin
-            //
-            // end
+        // Handle new command
+        2: begin
+            debug_cmdTrigger <= 0;
             
-            // Handle sending messages
+            case (cmd)
+            CmdLEDOff: begin
+                led[0] <= 0;
+                debug_msg <= cmd;
+                debug_msgLen <= 10;
+            end
+            
+            CmdLEDOn: begin
+                led[0] <= 1;
+                debug_msg <= cmd;
+                debug_msgLen <= 10;
+            end
+            endcase
+            
+            state <= 3;
+        end
+        
+        // Handle sending message
+        3: begin
             if (debug_msgLen) begin
                 if (debug_msgTrigger) begin
                     debug_msg <= debug_msgLen-1;
@@ -509,33 +521,9 @@ module Top(
                 end
             
             end else begin
-                debug_cmdTrigger <= 1;
-                cmd <= CmdNop;
-                
-                // Handle current command
-                case (cmd)
-                CmdLEDOff: begin
-                    led[0] <= 0;
-                    debug_msg <= cmd;
-                    debug_msgLen <= 10;
-                end
-                
-                CmdLEDOn: begin
-                    led[0] <= 1;
-                    debug_msg <= cmd;
-                    debug_msgLen <= 10;
-                end
-                
-                // CmdReadMem: begin
-                //     readMem <= 1;
-                // end
-                endcase
-            end
-            
-            // Accept commands while we're not sending messages
-            if (debug_cmdTrigger && debug_cmdReady) begin
-                cmd <= debug_cmd;
+                state <= 1;
             end
         end
+        endcase
     end
 endmodule
