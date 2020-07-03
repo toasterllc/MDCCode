@@ -469,19 +469,19 @@ module Top(
             case (cmd)
             default: begin
                 debug_msg <= cmd;
-                debug_msgLen <= 256;
+                debug_msgLen <= 255;
             end
             
             CmdLEDOff: begin
                 led[0] <= 0;
                 debug_msg <= cmd;
-                debug_msgLen <= 256;
+                debug_msgLen <= 255;
             end
             
             CmdLEDOn: begin
                 led[0] <= 1;
                 debug_msg <= cmd;
-                debug_msgLen <= 256;
+                debug_msgLen <= 255;
             end
             
             CmdReadMem: begin
@@ -494,13 +494,17 @@ module Top(
         
         // Wait until the message is sent
         3: begin
-            if (debug_msgTrigger) begin
+            if (debug_msg == 0) begin
+                debug_msg <= cmd;
+                debug_msgLen <= 255;
+            
+            end else if (debug_msgTrigger) begin
                 debug_msg <= debug_msgLen-1;
                 debug_msgLen <= debug_msgLen-1;
                 
-                if (debug_msgLen == 1) begin
-                    state <= 1;
-                end
+                // if (debug_msgLen == 1) begin
+                //     state <= 1;
+                // end
             end
         end
         
