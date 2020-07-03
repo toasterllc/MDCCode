@@ -313,21 +313,6 @@ int main() {
     
     auto device = std::make_unique<MDCDevice>();
     
-    uint32_t i = 0;
-    for (bool on=true;; on=!on) {
-        printf("Flip\n");
-        Cmd cmd = (on ? Cmd::LEDOn : Cmd::LEDOff);
-        device->write(cmd);
-        for (;;) {
-            Msg msg = device->read(0);
-//            std::cout << msg.desc();
-            if (msg.cmd == cmd) break;
-        }
-        usleep(1);
-        i++;
-        if (i > 25) return 0;
-    }
-    
     for (uint64_t trial=0;; trial++) {
 //        device->write(Cmd::LEDOn);
         device->write(Cmd::ReadMem);
