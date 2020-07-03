@@ -313,6 +313,7 @@ int main() {
     
     auto device = std::make_unique<MDCDevice>();
     
+    printf("Running trials...\n");
     for (uint64_t trial=0;; trial++) {
 //        device->write(Cmd::LEDOn);
         device->write(Cmd::ReadMem);
@@ -323,17 +324,20 @@ int main() {
         for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
             Msg msg = device->read();
             
-            assert(!(msg.payloadLen%2));
-            for (size_t i=0; i<msg.payloadLen; i+=2) {
-                uint16_t val;
-                memcpy(&val, msg.payload+i, sizeof(val));
-                if (lastVal) {
-                    uint16_t expected = (uint16_t)(*lastVal+1);
-                    if (val != expected) {
-                        printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+            if (!(msg.payloadLen % 2)) {
+                for (size_t i=0; i<msg.payloadLen; i+=2) {
+                    uint16_t val;
+                    memcpy(&val, msg.payload+i, sizeof(val));
+                    if (lastVal) {
+                        uint16_t expected = (uint16_t)(*lastVal+1);
+                        if (val != expected) {
+                            printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+                        }
                     }
+                    lastVal = val;
                 }
-                lastVal = val;
+            } else {
+                printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.payloadLen);
             }
             
             dataLen += msg.payloadLen;
