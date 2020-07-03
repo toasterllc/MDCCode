@@ -308,70 +308,13 @@ int main() {
         device->write(Cmd::ReadMem);
         
         auto startTime = CurrentTime();
-        size_t msgCount = 0;
         size_t totalDataLen = 0;
-        
-        bool during = false;
-        for (;;) {
+        for (size_t msgCount=0; totalDataLen<RAMSize; msgCount++) {
             Msg msg = device->read();
-//            if (msg.payloadLen) {
-//                during = true;
-//            } else {
-//                if (during) {
-//                    printf("*** Message length == 0\n");
-//                }
-//            }
-//            
-//            bool last = (totalDataLen+msg.payloadLen)>=RAMSize;
-//            if (!last && during && msg.payloadLen != 254) {
-//                printf("*** Bad message length: %ju\n", (uintmax_t)msg.payloadLen);
-//                
-//                printf("Before:\n");
-//                uint8_t* badMessageStart = msg.payload-2;
-//                for (uint8_t* p=badMessageStart-10; p<badMessageStart; p++) {
-//                    printf("0x%jx ", (uintmax_t)*p);
-//                }
-//                printf("\n");
-//                
-//                
-//                
-//                printf("After:\n");
-//                for (uint8_t* p=badMessageStart; p<badMessageStart+10; p++) {
-//                    printf("0x%jx ", (uintmax_t)*p);
-//                }
-//                printf("\n");
-//            }
-//            
-            msgCount++;
             totalDataLen += msg.payloadLen;
             if (!(msgCount % 4000)) {
                 printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
-//                std::cout << msg.desc();
             }
-            
-//            if (during && msg.payloadLen!=254) {
-//                printf("*** Bad message length: %ju\n", (uintmax_t)msg.payloadLen);
-//                
-//                printf("Before:\n");
-//                uint8_t* badMessageStart = msg.payload-2;
-//                for (uint8_t* p=badMessageStart-10; p<badMessageStart; p++) {
-//                    printf("0x%jx ", (uintmax_t)*p);
-//                }
-//                printf("\n");
-//                
-//                
-//                
-//                printf("After:\n");
-//                for (uint8_t* p=badMessageStart; p<badMessageStart+10; p++) {
-//                    printf("0x%jx ", (uintmax_t)*p);
-//                }
-//                printf("\n");
-//            }
-            
-            
-//            std::cout << msg.desc();
-            
-            if (totalDataLen >= RAMSize) break;
         }
         auto stopTime = CurrentTime();
         printf("Success!\n");
