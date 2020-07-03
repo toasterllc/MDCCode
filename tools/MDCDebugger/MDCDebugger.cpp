@@ -309,8 +309,18 @@ int main() {
         
         auto startTime = CurrentTime();
         size_t totalDataLen = 0;
+        std::optional<uint16_t> lastVal;
         for (size_t msgCount=0; totalDataLen<RAMSize; msgCount++) {
             Msg msg = device->read();
+            
+            assert(!(msg.payloadLen%2));
+            for (size_t i=0; i<msg.payloadLen; i+=2) {
+                uint16_t val;
+                memcpy(&val, msg.payload+i, sizeof(val));
+                if (lastVal) assert(val == (uint16_t)(*lastVal+1));
+                lastVal = val;
+            }
+            
             totalDataLen += msg.payloadLen;
             if (!(msgCount % 4000)) {
                 printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
