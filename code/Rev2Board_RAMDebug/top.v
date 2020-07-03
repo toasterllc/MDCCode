@@ -65,6 +65,7 @@ module Debug(
         case (msgState)
         // Send command (byte 0)
         0: begin
+            msgTrigger <= 0; // Necessary to clear the final msgTrigger=1 from state 2
             if (msgLen) begin
                 outq_writeData <= msg;
                 outq_writeTrigger <= 1;
@@ -82,26 +83,53 @@ module Debug(
             end
         end
         
+        // // Delay state while the next message byte is triggered
+        // 2: begin
+        //     msgTrigger <= 0;
+        //     if (outq_writeOK) begin
+        //         outq_writeTrigger <= 0;
+        //
+        //         if (msgLen) begin
+        //             msgState <= 3;
+        //         end else begin
+        //             msgTrigger <= 1;
+        //             msgState <= 0;
+        //         end
+        //     end
+        // end
+        //
+        // // Send the message payload
+        // 3: begin
+        //     outq_writeData <= msg;
+        //     outq_writeTrigger <= 1;
+        //     msgTrigger <= 1;
+        //     msgState <= 2;
+        // end
+        
+        
+        
+        
+        
         // Delay state while the next message byte is triggered
         2: begin
             msgTrigger <= 0;
             if (outq_writeOK) begin
                 outq_writeTrigger <= 0;
-                
-                if (msgLen) begin
-                    msgState <= 3;
-                end else begin
-                    msgState <= 0;
-                end
+                msgState <= 3;
             end
         end
         
         // Send the message payload
         3: begin
-            outq_writeData <= msg;
-            outq_writeTrigger <= 1;
-            msgTrigger <= 1;
-            msgState <= 2;
+            if (msgLen) begin
+                outq_writeData <= msg;
+                outq_writeTrigger <= 1;
+                msgTrigger <= 1;
+                msgState <= 2;
+            end else begin
+                msgTrigger <= 1;
+                msgState <= 0;
+            end
         end
         endcase
     end
@@ -373,8 +401,6 @@ module Top(
     reg[8:0] debug_msgLen = 0;
     wire debug_msgTrigger;
     
-    reg[7:0] cmd = 0;
-    
     Debug debug(
         .clk(clk),
         
@@ -454,6 +480,7 @@ module Top(
         1: begin
             debug_cmdTrigger <= 1;
             if (debug_cmdTrigger && debug_cmdReady) begin
+                debug_cmdTrigger <= 0;
                 cmd <= debug_cmd;
                 state <= 2;
             end
@@ -461,8 +488,6 @@ module Top(
         
         // Handle new command
         2: begin
-            debug_cmdTrigger <= 0;
-            
             // By default go to state 3 next
             state <= 3;
             
@@ -492,19 +517,15 @@ module Top(
             endcase
         end
         
-        // Wait until the message is sent
+        // Wait while the message is being sent
         3: begin
-            if (debug_msg == 0) begin
-                debug_msg <= cmd;
-                debug_msgLen <= 255;
-            
-            end else if (debug_msgTrigger) begin
-                debug_msg <= debug_msgLen-1;
-                debug_msgLen <= debug_msgLen-1;
-                
-                // if (debug_msgLen == 1) begin
-                //     state <= 1;
-                // end
+            if (debug_msgTrigger) begin
+                if (debug_msgLen) begin
+                    debug_msg <= 8'hff-debug_msgLen+1;
+                    debug_msgLen <= debug_msgLen-1;
+                end else begin
+                    state <= 1;
+                end
             end
         end
         
@@ -556,13 +577,13 @@ module Top(
         7: begin
             // Continue sending data
             if (debug_msgTrigger) begin
-                debug_msg <= mem[memCounter];
-                debug_msgLen <= debug_msgLen-1;
-                memCounter <= memCounter+1;
-                
-                // We're finished with this chunk.
-                // Start on the next chunk, or stop if we've read everything.
-                if (debug_msgLen == 1) begin
+                if (debug_msgLen) begin
+                    debug_msg <= mem[memCounter];
+                    debug_msgLen <= debug_msgLen-1;
+                    memCounter <= memCounter+1;
+                end else begin
+                    // We're finished with this chunk.
+                    // Start on the next chunk, or stop if we've read everything.
                     if (ram_cmdAddr == 0) begin
                         state <= 1;
                     end else begin
@@ -573,4 +594,46 @@ module Top(
         end
         endcase
     end
+    
+    
+`ifdef SIM
+    reg sim_debug_clk = 0;
+    reg sim_debug_cs = 0;
+    reg[7:0] sim_debug_di_shiftReg = 0;
+    
+    assign debug_clk = sim_debug_clk;
+    assign debug_cs = sim_debug_cs;
+    assign debug_di = sim_debug_di_shiftReg[7];
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        
+        wait (!sim_debug_clk);
+        sim_debug_cs = 1;
+        sim_debug_di_shiftReg = CmdLEDOn;
+        
+        repeat (8) begin
+            wait (sim_debug_clk);
+            wait (!sim_debug_clk);
+            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
+        end
+        
+        #1000000;
+        $finish;
+    end
+    
+    initial begin
+        forever begin
+            sim_debug_clk = 0;
+            #10;
+            sim_debug_clk = 1;
+            #10;
+        end
+    end
+`endif
+    
 endmodule
