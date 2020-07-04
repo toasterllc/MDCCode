@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.5.2">
+<eagle version="9.6.2">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -3249,7 +3249,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="28.178634375" y1="26.972259375" x2="25.043328125" y2="26.972259375" width="0.127" layer="16"/>
 <wire x1="24.4819875" y1="27.5336" x2="19.8882" y2="27.5336" width="0.127" layer="16"/>
 </signal>
-<signal name="PIX_CLK">
+<signal name="PIX_DCLK">
 <contactref element="U1" pad="F11"/>
 <wire x1="21.5424" y1="27.553" x2="24.355575" y2="27.553" width="0.127" layer="1"/>
 <wire x1="21.5284" y1="27.567" x2="21.5424" y2="27.553" width="0.127" layer="1"/>
