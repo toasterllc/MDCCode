@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.5.2">
+<eagle version="9.6.2">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -4492,7 +4492,7 @@ layer."</text>
 <label x="121.92" y="177.8" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="PIX_CLK" class="0">
+<net name="PIX_DCLK" class="0">
 <segment>
 <pinref part="U1" gate="B" pin="F11"/>
 <wire x1="116.84" y1="180.34" x2="121.92" y2="180.34" width="0.1524" layer="91"/>
