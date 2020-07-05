@@ -204,6 +204,102 @@ endmodule
 
 
 
+module I2CMaster(
+    parameter ClkFreq = 12000000    // `clk` frequency
+    parameter I2CClkFreq = 400000  // `i2c_clk` frequency
+)(
+    input wire          clk,
+    
+    // Command port
+    input wire          cmd_trigger,
+    input wire[6:0]     cmd_addr,
+    input wire          cmd_write,
+    input wire[7:0]     cmd_writeData,
+    output reg[7:0]     cmd_readData,
+    output reg          cmd_done = 0,
+    
+    // i2c port
+    output reg          i2c_clk = 0,
+    inout wire          i2c_data
+);
+    // Clocks() returns the number of clock cycles required for >= `t` nanoseconds to elapse.
+    // `sub` is subtracted from that value, with the result clipped to zero.
+    function [63:0] Clocks;
+        input [63:0] t;
+        input [63:0] sub;
+        
+        localparam NSecPerSec = 1000000000;
+        begin
+            Clocks = (t*ClkFreq+NSecPerSec-1)/NSecPerSec;
+            if (Clocks >= sub) Clocks = Clocks-sub;
+            else Clocks = 0;
+        end
+    endfunction
+    
+    //
+    // ClkFreq/I2CClkFreq
+    //
+    //
+    // Clocks(1000000000/(2*I2CClkFreq))
+    //
+    //
+    // // Clocks to wait for sensor to initialize (150k EXTCLKs)
+    // localparam InitClocks = Clocks(((150000*1000000000)/ExtClkFreq), 0);
+    //
+    // localparam I2CClocks = Clocks(80000000, 0);
+    //
+    
+    // Number of `clk` cycles for half of the `i2c_clk` cycle.
+    // In other words, this is how often we need to toggle `i2c_clk`.
+    localparam I2CHalfCycleClocks = Clocks(I2CClkFreq/2, 0);
+    
+    
+    
+    
+    
+    reg[1:0] state = 0;
+    reg i2c_dataOut = 0;
+    wire i2c_dataIn;
+    reg[] delay = 0;
+    
+    `ifdef SIM
+        // TODO: implement sim version 
+    `else
+        // For synthesis, we have to use a SB_IO_OD for the open-drain output
+        SB_IO_OD #(
+            .PIN_TYPE(6'b1010_01),
+        ) dqio (
+            .PACKAGE_PIN(i2c_data),
+            .OUTPUT_ENABLE(1),
+            .D_OUT_0(i2c_dataOut),
+            .D_IN_0(i2c_dataIn)
+        );
+    `endif
+    
+    always @(posedge clk) begin
+        case (state)
+        // Idle
+        0: begin
+            i2c_clk <= 1;
+            i2c_dataOut <= 1;
+            
+            state <= 1;
+        end
+        
+        // Accept command
+        1: begin
+            if (cmd_trigger) begin
+                // Start condition
+                i2c_dataOut <= 0;
+            end
+        end
+        endcase
+    end
+endmodule
+
+
+
+
 module PIXController #(
     parameter ExtClkFreq = 12000000,    // Image sensor's external clock frequency
     parameter ClkFreq = 12000000        // `clk` frequency
@@ -252,45 +348,46 @@ module PIXController #(
     reg[1:0] state = 0;
     reg[DelayWidth-1:0] delay = 0;
     always @(posedge clk) begin
-        if (delay) begin
-            delay <= delay-1;
+        case (state)
         
-        end else begin
-            case (state)
-            
-            // Wait for EXTCLK to settle
-            0: begin
-                pix_rst_ <= 1;
-                delay <= SettleClocks;
-                state <= 1;
-            end
-            
-            // Assert pix_rst_ for ResetClocks (1ms)
-            1: begin
+        // Wait for EXTCLK to settle
+        0: begin
+            pix_rst_ <= 1;
+            delay <= SettleClocks;
+            state <= 1;
+        end
+        
+        // Assert pix_rst_ for ResetClocks (1ms)
+        1: begin
+            if (delay) begin
+                delay <= delay-1;
+            end else begin
                 pix_rst_ <= 0;
                 delay <= ResetClocks;
                 state <= 2;
             end
-            
-            // Deassert pix_rst_ and wait InitClocks
-            2: begin
+        end
+        
+        // Deassert pix_rst_ and wait InitClocks
+        2: begin
+            if (delay) begin
+                delay <= delay-1;
+            end else begin
                 pix_rst_ <= 1;
-                counter <= InitClocks;
+                delay <= InitClocks;
                 state <= 3;
             end
-            
-            3: begin
-        
-                // - Write R0x3052 = 0xA114 to configure the internal register initialization process.
-                // - Write R0x304A = 0x0070 to start the internal register initialization process.
-                // - Wait 150,000 EXTCLK periods
-                // - Configure PLL, output, and image settings to desired values.
-                // - Wait 1ms for the PLL to lock.
-                // - Set streaming mode (R0x301A[2] = 1).
-        
-            end
-            endcase
         end
+        
+        3: begin
+            // - Write R0x3052 = 0xA114 to configure the internal register initialization process.
+            // - Write R0x304A = 0x0070 to start the internal register initialization process.
+            // - Wait 150,000 EXTCLK periods
+            // - Configure PLL, output, and image settings to desired values.
+            // - Wait 1ms for the PLL to lock.
+            // - Set streaming mode (R0x301A[2] = 1).
+        end
+        endcase
     end
 endmodule
 
