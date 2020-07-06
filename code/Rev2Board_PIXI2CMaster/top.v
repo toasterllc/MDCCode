@@ -645,7 +645,7 @@ module Top(
         
         // Write: 0x1234 = 0x5678
         0: begin
-            cmd_slaveAddr <= 7'h7f;
+            cmd_slaveAddr <= 7'h42;
             cmd_write <= 1;
             cmd_regAddr <= 16'h1234;
             cmd_writeData <= 16'h5678;
@@ -664,10 +664,10 @@ module Top(
         
         // Read: 0x1234
         2: begin
-            cmd_slaveAddr <= 7'h7f;
+            cmd_slaveAddr <= 7'h43;
             cmd_write <= 0;
             cmd_regAddr <= 16'habcd;
-            cmd_dataLen <= 2;
+            cmd_dataLen <= 1;
 
             state <= 3;
         end
@@ -675,7 +675,7 @@ module Top(
         // Wait for the I2C transaction to complete
         3: begin
             if (cmd_done) begin
-                $display("READ DATA: %x", cmd_readData);
+                $display("READ DATA: 0x%x\n", (cmd_dataLen==1 ? cmd_readData[7:0] : cmd_readData));
                 cmd_dataLen <= 0;
                 state <= 0;
             end
@@ -787,14 +787,13 @@ module Top(
                 if (i2cOK) begin
                     slaveAddr = dataIn[7:1];
                     dir = dataIn[0];
-                    $display("slave:0x%x dir:%d", slaveAddr, dir);
+                    // $display("slave:0x%x dir:%d", slaveAddr, dir);
                 end
                 
                 if (i2cOK) begin
                     // Read
                     if (dir) begin
                         $display("slave @ 0x%x", slaveAddr);
-                        $display("  READ: %x", regAddr);
                         
                         dataOut = 8'hCA;
                         WriteByte();
@@ -802,6 +801,9 @@ module Top(
                         if (i2cOK) begin
                             dataOut = 8'hFE;
                             WriteByte();
+                            $display("  READ: 0x%x (len=2)\n", regAddr);
+                        end else begin
+                            $display("  READ: 0x%x (len=1)\n", regAddr);
                         end
                     
                     // Write
@@ -838,9 +840,9 @@ module Top(
                         
                         $display("slave @ 0x%x", slaveAddr);
                         if (writeLen == 1) begin
-                            $display("  WRITE: 0x%x = 0x%x", regAddr, writeData[7:0]);
+                            $display("  WRITE: 0x%x = 0x%x\n", regAddr, writeData[7:0]);
                         end else if (writeLen == 2) begin
-                            $display("  WRITE: 0x%x = 0x%x", regAddr, writeData[15:0]);
+                            $display("  WRITE: 0x%x = 0x%x\n", regAddr, writeData[15:0]);
                         end
                     end
                 end
@@ -859,7 +861,7 @@ module Top(
         // Wait for ClockGen to start its clock
         wait(clk);
         
-        #10000000;
+        #1000000;
         $finish;
     end
 `endif
