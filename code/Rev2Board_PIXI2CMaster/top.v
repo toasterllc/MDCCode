@@ -1,7 +1,6 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 
-// TODO: communicate no ACK from slave to client (output that indicates success/failure?)
 module PIXI2CMaster #(
     parameter ClkFreq = 12000000,   // `clk` frequency
     parameter I2CClkFreq = 400000   // `i2c_clk` frequency
