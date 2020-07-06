@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 
+// TODO: communicate no ACK from slave to client (output that indicates success/failure?)
 module PIXI2CMaster #(
     parameter ClkFreq = 12000000,   // `clk` frequency
     parameter I2CClkFreq = 400000   // `i2c_clk` frequency
@@ -623,7 +624,7 @@ module Top(
     
 `ifdef SIM
     
-    reg[7:0] readData = 0;
+    reg[7:0] dataIn = 0;
     reg sdata = 1;
     assign pix_sdata = (!sdata ? 0 : 1'bz);
     
@@ -635,33 +636,35 @@ module Top(
     
     reg ack = 1;
     reg restart = 0;
-    task ReadByte;
-        reg[7:0] i;
+    
+    task LookForRestart;
         restart = 0;
-        readData = 0;
-        
-        for (i=0; i<8 && !restart; i++) begin
-            // Look for a start condition
-            if (pix_sclk && pix_sdata) begin
-                wait(!pix_sclk || !pix_sdata);
-                if (pix_sclk && !pix_sdata) begin
-                    // Got start condition
-                    restart = 1;
-                    wait(!pix_sclk);
-                end
-            
-            end else begin
+        if (pix_sclk && pix_sdata) begin
+            wait(!pix_sclk || !pix_sdata);
+            if (pix_sclk && !pix_sdata) begin
+                // Got restart condition
+                restart = 1;
                 wait(!pix_sclk);
             end
-            
-            if (!restart) begin
-                wait(pix_sclk);
-                readData = (readData<<1)|pix_sdata;
-            end
-        end
         
+        end else begin
+            wait(!pix_sclk);
+        end
+    endtask
+    
+    task ReadByte;
+        reg[7:0] i;
+        dataIn = 0;
+        
+        LookForRestart();
         if (!restart) begin
-            // Issue ACK
+            for (i=0; i<8; i++) begin
+                wait(!pix_sclk);
+                wait(pix_sclk);
+                dataIn = (dataIn<<1)|pix_sdata;
+            end
+            
+            // Send ACK
             wait(!pix_sclk);
             sdata = 0;
             ack = 0;
@@ -680,27 +683,48 @@ module Top(
             // Wait for start condition (SDA=1->0 while SCL=1)
             wait(pix_sclk & !pix_sdata);
             
-            
-            ReadByte();
-            slaveAddr = readData[7:1];
-            dir = readData[0];
-            
-            ReadByte();
-            regAddr[15:8] = readData;
-            
-            ReadByte();
-            regAddr[7:0] = readData;
-            
-            ReadByte();
-            writeData[15:8] = readData;
-            
-            ReadByte();
-            writeData[7:0] = readData;
-            
-            $display("slaveAddr: %x", slaveAddr);
-            $display("dir: %x", dir);
-            $display("regAddr: %x", regAddr);
-            $display("writeData: %x", writeData);
+            do begin
+                restart <= 0;
+                
+                if (!restart) begin
+                    ReadByte();
+                    slaveAddr = dataIn[7:1];
+                    dir = dataIn[0];
+                end
+                
+                if (!restart) begin
+                    ReadByte();
+                    regAddr[15:8] = dataIn;
+                end
+                
+                if (!restart) begin
+                    ReadByte();
+                    regAddr[7:0] = dataIn;
+                end
+                
+                if (!restart) begin
+                    // Read
+                    if (dir) begin
+                        $display("slave @ %x", slaveAddr);
+                        $display("  READ: %x", regAddr);
+                    
+                    // Write
+                    end else begin
+                        if (!restart) begin
+                            ReadByte();
+                            writeData[15:8] = dataIn;
+                        end
+                
+                        if (!restart) begin
+                            ReadByte();
+                            writeData[7:0] = dataIn;
+                        end
+                        
+                        $display("slave @ %x", slaveAddr);
+                        $display("  WRITE: %x = %x", regAddr, writeData);
+                    end
+                end
+            end while (restart);
             
             $finish;
         end
