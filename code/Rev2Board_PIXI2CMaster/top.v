@@ -69,14 +69,13 @@ module PIXI2CMaster #(
         assign i2c_data = (!dataOut ? 0 : 1'bz);
         assign dataIn = i2c_data;
     `else
-        // For synthesis, we have to use a SB_IO_OD for the open-drain output
-        SB_IO_OD #(
+        SB_IO #(
             .PIN_TYPE(6'b1010_01),
-        ) dqio (
-            .PACKAGEPIN(i2c_data),
-            .OUTPUTENABLE(1),
-            .DOUT0(dataOut),
-            .DIN0(dataIn)
+        ) sdaTri (
+            .PACKAGE_PIN(i2c_data),
+            .OUTPUT_ENABLE(dataOut==0),
+            .D_OUT_0(dataOut),
+            .D_IN_0(dataIn)
         );
     `endif
     
