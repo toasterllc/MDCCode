@@ -770,8 +770,6 @@ module Top(
         wait(pix_sclk);
         if (pix_sdata) begin
             i2cCondition = I2CConditionNACK;
-            wait(!pix_sclk);
-            wait(pix_sclk);
         end
         wait(!pix_sclk);
     endtask
@@ -801,14 +799,10 @@ module Top(
                         dataOut = 8'hCA;
                         WriteByte();
                         
-                        $display("YYY");
-                        
                         if (i2cOK) begin
-                            $display("XXX");
                             dataOut = 8'hFE;
                             WriteByte();
                         end
-                        $finish;
                     
                     // Write
                     end else begin
