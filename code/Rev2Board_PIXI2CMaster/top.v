@@ -8,13 +8,12 @@ module PIXI2CMaster #(
     input wire          clk,
     
     // Command port
-    input wire          cmd_trigger,
     input wire[6:0]     cmd_slaveAddr,
     input wire          cmd_write,
-    input wire[15:0]    cmd_addr,
+    input wire[15:0]    cmd_regAddr,
     input wire[15:0]    cmd_writeData,
     output reg[15:0]    cmd_readData = 0,
-    input wire          cmd_dataLen, // 0 (1 byte) or 1 (2 bytes)
+    input wire[1:0]     cmd_dataLen, // 0 (no command), 1 (1 byte), 2 (2 bytes)
     output reg          cmd_done = 0,
     
     // i2c port
@@ -54,15 +53,16 @@ module PIXI2CMaster #(
     
     
     
-    reg[1:0] state = 0;
-    reg[1:0] ackState = 0;
+    reg[7:0] state = 0;
+    reg[7:0] ackState = 0;
     reg[8:0] dataOutShiftReg = 0; // Low bit is sentinel
     wire dataOut = dataOutShiftReg[8];
     wire dataIn;
     reg[DelayWidth-1:0] delay = 0;
     
     `ifdef SIM
-        // TODO: implement sim version 
+        assign i2c_data = (!dataOut ? 0 : 1'bz);
+        assign dataIn = i2c_data;
     `else
         // For synthesis, we have to use a SB_IO_OD for the open-drain output
         SB_IO_OD #(
@@ -93,7 +93,6 @@ module PIXI2CMaster #(
             StateIdle: begin
                 i2c_clk <= 1;
                 dataOutShiftReg <= ~0;
-                // TODO: don't we actually want to wait a 1/2 cycle in this case?
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStart;
             end
@@ -106,7 +105,7 @@ module PIXI2CMaster #(
             // Issue start condition (SDA=1->0 while SCL=1),
             // Delay 1/4 cycle
             StateStart: begin
-                if (cmd_trigger) begin
+                if (cmd_dataLen) begin
                     dataOutShiftReg <= 0; // Start condition
                     delay <= I2CQuarterCycleDelay;
                     state <= StateStart+1;
@@ -186,52 +185,56 @@ module PIXI2CMaster #(
                 state <= StateShiftOut+5;
             end
             
-            // Check for ACK (SDA=0),
+            // Check for ACK (SDA=0) or NACK (SDA=1),
             // Delay 1/4 cycle
             StateShiftOut+5: begin
-                // Handle ACK
-                if (!dataIn) begin
-                    delay <= I2CQuarterCycleDelay;
-                    state <= ackState;
-                
-                // Handle NACK
-                end else begin
-                    delay <= I2CQuarterCycleDelay;
-                    state <= StateStop;
-                end
+                delay <= I2CQuarterCycleDelay;
+                state <= (!dataIn ? StateShiftOut+6 : StateShiftOut+7);
             end
             
-            
-            
-            
-            
-            
-            
+            // Handle ACK:
             // SCL=0,
-            // Delay 1/4 cycle
-            StateRegAddr: begin
+            // Delay 1/4 cycle,
+            // Go to `ackState`
+            StateShiftOut+6: begin
                 i2c_clk <= 0;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateRegAddr+1;
+                state <= ackState;
             end
             
+            // Handle NACK:
+            // SCL=0,
+            // Delay 1/4 cycle,
+            // Go to StateStop
+            StateShiftOut+7: begin
+                i2c_clk <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateStop;
+            end
+            
+            
+            
+            
+            
+            
+            
             // Shift out high 8 bits of address
-            StateRegAddr+1: begin
-                dataOutShiftReg <= {cmd_addr[15:8], 1'b1};
+            StateRegAddr: begin
+                dataOutShiftReg <= {cmd_regAddr[15:8], 1'b1};
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut;
-                ackState <= StateRegAddr+2;
+                ackState <= StateRegAddr+1;
             end
             
             // Shift out low 8 bits of address
-            StateRegAddr+2: begin
-                dataOutShiftReg <= {cmd_addr[7:0], 1'b1};
+            StateRegAddr+1: begin
+                dataOutShiftReg <= {cmd_regAddr[7:0], 1'b1};
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut;
                 if (cmd_write) begin
-                    ackState <= (cmd_dataLen ? StateWriteData : StateWriteData+1);
+                    ackState <= (cmd_dataLen==2 ? StateWriteData : StateWriteData+1);
                 end else begin
-                    ackState <= (cmd_dataLen ? StateReadData : StateReadData+1);
+                    ackState <= (cmd_dataLen==2 ? StateReadData : StateReadData+1);
                 end
             end
             
@@ -245,7 +248,7 @@ module PIXI2CMaster #(
                 dataOutShiftReg <= {cmd_writeData[15:8], 1'b1};
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut;
-                ackState <= (cmd_dataLen ? StateWriteData+1 : StateStop);
+                ackState <= StateWriteData+1;
             end
             
             // Shift out low 8 bits of data
@@ -260,31 +263,31 @@ module PIXI2CMaster #(
             
             
             
-            // SCL=0,
+            // SDA=0,
             // Delay 1/4 cycle
             StateStop: begin
-                i2c_clk <= 0;
+                dataOutShiftReg <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStop+1;
             end
             
-            // SDA=0,
+            // SCL=1,
             // Delay 1/4 cycle
             StateStop+1: begin
-                dataOutShiftReg <= 0;
+                i2c_clk <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStop+2;
             end
             
-            // SCL=1,
-            // Delay 1/4 cycle,
-            // Issue stop condition (SDA=0->1 while SCL=1) by going to StateIdle
+            // Issue stop condition (SDA=0->1 while SCL=1),
+            // Delay 1/4 cycle
             StateStop+2: begin
-                i2c_clk <= 1;
+                dataOutShiftReg <= ~0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStop+3;
             end
             
+            // Tell client we're done
             StateStop+3: begin
                 cmd_done <= 1;
                 state <= StateStop+4;
@@ -300,7 +303,15 @@ module PIXI2CMaster #(
     end
 endmodule
 
-
+// module Pullup(
+//     inout wire a
+// );
+//     always @* begin
+//         if (a == 1'bz) begin
+//             a = 1'b1;
+//         end
+//     end
+// endmodule
 
 
 
@@ -309,43 +320,174 @@ module Top(
     output reg[3:0]     led = 0,
     
     output wire         pix_sclk,
-    inout wire          pix_sdata
-);
-        //     // ====================
-        //     // Clock PLL (54.750 MHz)
-        //     // ====================
-        //     localparam ClkFreq = 54750000;
-        //     wire clk;
-        //     ClockGen #(
-        //         .FREQ(ClkFreq),
-        // .DIVR(0),
-        // .DIVF(72),
-        // .DIVQ(4),
-        // .FILTER_RANGE(1)
-        //     ) cg(.clk12mhz(clk12mhz), .clk(clk));
-        //
-        //     // I2CMaster #(
-        //     //     .ClkFreq(ClkFreq),
-        //     //     .I2CClkFreq(400000)
-        //     // ) i2cMaster(
-        //     //     clk(clk),
-        //     //
-        //     //     cmd_trigger(),
-        //     //     cmd_addr(),
-        //     //     cmd_write(),
-        //     //     cmd_writeData(),
-        //     //     cmd_readData(),
-        //     //     cmd_done(),
-        //     //
-        //     //     i2c_clk(pix_sclk),
-        //     //     i2c_data(pix_sdata)
-        //     // );
-        //     //
-        //
-        //     // ====================
-        //     // Main
-        //     // ====================
-        //     always @(posedge clk) begin
-        //     end
     
+`ifdef SIM
+    inout tri1          pix_sdata
+`else
+    inout wire          pix_sdata
+`endif
+);
+    // ====================
+    // Clock PLL (54.750 MHz)
+    // ====================
+    localparam ClkFreq = 54750000;
+    wire clk;
+    ClockGen #(
+        .FREQ(ClkFreq),
+        .DIVR(0),
+        .DIVF(72),
+        .DIVQ(4),
+        .FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    
+    
+    
+    
+    // ====================
+    // I2C Master
+    // ====================
+    reg[6:0]    cmd_slaveAddr = 0;
+    reg         cmd_write = 0;
+    reg[15:0]   cmd_regAddr = 0;
+    reg[15:0]   cmd_writeData = 0;
+    wire[15:0]  cmd_readData;
+    reg[1:0]    cmd_dataLen = 0;
+    wire        cmd_done;
+    
+    PIXI2CMaster #(
+        .ClkFreq(ClkFreq),
+        .I2CClkFreq(400000)
+    ) pixI2CMaster(
+        .clk(clk),
+        
+        .cmd_slaveAddr(cmd_slaveAddr),
+        .cmd_write(cmd_write),
+        .cmd_regAddr(cmd_regAddr),
+        .cmd_writeData(cmd_writeData),
+        .cmd_readData(cmd_readData),
+        .cmd_dataLen(cmd_dataLen),
+        .cmd_done(cmd_done),
+        
+        .i2c_clk(pix_sclk),
+        .i2c_data(pix_sdata)
+    );
+    
+    
+    
+    
+    
+    // ====================
+    // Main
+    // ====================
+    reg[3:0] state = 0;
+    always @(posedge clk) begin
+        case (state)
+        0: begin
+            cmd_slaveAddr <= 7'h7f;
+            cmd_write <= 1;
+            cmd_regAddr <= 16'h1234;
+            cmd_writeData <= 16'h5678;
+            cmd_dataLen <= 2;
+            
+            state <= 1;
+        end
+        
+        // Wait for the I2C transaction to complete
+        1: begin
+            if (cmd_done) begin
+                cmd_dataLen <= 0;
+                state <= 0;
+            end
+        end
+        endcase
+    end
+    
+    
+    
+    
+`ifdef SIM
+    
+    reg[7:0] readData = 0;
+    reg sdata = 1;
+    assign pix_sdata = (!sdata ? 0 : 1'bz);
+    
+    reg[6:0] slaveAddr = 0;
+    reg dir = 0;
+    
+    reg[15:0] regAddr = 0;
+    reg[15:0] writeData = 0;
+    
+    reg ack = 1;
+    
+    
+    
+    task ReadByte;
+        readData = 0;
+        repeat (8) begin
+            wait(!pix_sclk);
+            wait(pix_sclk);
+            readData = (readData<<1)|pix_sdata;
+        end
+        
+        // Issue ACK
+        wait(!pix_sclk);
+        sdata = 0;
+        ack = 0;
+        wait(pix_sclk);
+        wait(!pix_sclk);
+        sdata = 1;
+        ack = 1;
+    endtask
+    
+    
+    
+    
+    initial begin
+        forever begin
+            // Wait for idle condition (SDA=1 while SCL=1)
+            wait(pix_sclk & pix_sdata);
+        
+            // Wait for start condition (SDA=1->0 while SCL=1)
+            wait(pix_sclk & !pix_sdata);
+        
+
+            ReadByte();
+            slaveAddr = readData[7:1];
+            dir = readData[0];
+        
+            ReadByte();
+            regAddr[15:8] = readData;
+        
+            ReadByte();
+            regAddr[7:0] = readData;
+        
+            ReadByte();
+            writeData[15:8] = readData;
+        
+            ReadByte();
+            writeData[7:0] = readData;
+        
+            $display("slaveAddr: %x", slaveAddr);
+            $display("dir: %x", dir);
+            $display("regAddr: %x", regAddr);
+            $display("writeData: %x", writeData);
+            
+            $finish;
+        end
+    end
+    
+    
+    
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        
+        #10000000;
+        $finish;
+    end
+`endif
+
 endmodule
