@@ -55,8 +55,8 @@ module PIXI2CMaster #(
     
     
     
-    reg[7:0] state = 0;
-    reg[7:0] nextState = 0;
+    reg[5:0] state = 0;
+    reg[5:0] nextState = 0;
     reg ack = 0;
     reg[8:0] dataOutShiftReg = 0; // Low bit is sentinel
     wire dataOut = dataOutShiftReg[8];
@@ -81,15 +81,15 @@ module PIXI2CMaster #(
     
     
     localparam StateIdle = 0;
-    localparam StateStart = 20;
-    localparam StateShiftOut = 40;
-    localparam StateRegAddr = 60;
-    localparam StateWriteData = 80;
-    localparam StateReadData = 100;
-    localparam StateACK = 120;
-    localparam StateStopOK = 140;
-    localparam StateStopFail = 160;
-    localparam StateStop = 180;
+    localparam StateStart = 1;
+    localparam StateShiftOut = 4;
+    localparam StateRegAddr = 12;
+    localparam StateWriteData = 14;
+    localparam StateReadData = 16;
+    localparam StateACK = 25;
+    localparam StateStopOK = 29;
+    localparam StateStopFail = 30;
+    localparam StateStop = 31;
     always @(posedge clk) begin
         if (delay) begin
             delay <= delay-1;
@@ -597,7 +597,7 @@ module Top(
             cmd_slaveAddr <= 7'h43;
             cmd_write <= 0;
             cmd_regAddr <= 16'habcd;
-            cmd_dataLen <= 1;
+            cmd_dataLen <= 2;
 
             state <= 3;
         end
@@ -605,8 +605,7 @@ module Top(
         // Wait for the I2C transaction to complete
         3: begin
             if (cmd_done) begin
-                $display("Read: %s\n", (cmd_ok ? "success" : "failed"));
-                // $display("READ DATA: 0x%x\n", (cmd_dataLen==1 ? cmd_readData[7:0] : cmd_readData));
+                $display("Read: %s (data: 0x%x)\n", (cmd_ok ? "success" : "failed"), (cmd_dataLen==1 ? cmd_readData[7:0] : cmd_readData));
                 cmd_dataLen <= 0;
                 state <= 0;
             end
