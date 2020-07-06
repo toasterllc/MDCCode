@@ -584,7 +584,7 @@ module Top(
             cmd_write <= 1;
             cmd_regAddr <= 16'h1234;
             cmd_writeData <= 16'h5678;
-            cmd_dataLen <= 1;
+            cmd_dataLen <= 2;
             
             state <= 1;
         end
@@ -633,6 +633,7 @@ module Top(
     
     reg[15:0] regAddr = 0;
     reg[15:0] writeData = 0;
+    reg[1:0] writeLen = 0;
     
     reg ack = 1;
     
@@ -642,43 +643,62 @@ module Top(
     reg[1:0] i2cCondition = I2CConditionNone;
     wire i2cOK = (i2cCondition == I2CConditionNone);
     
-    task LookForI2CCondition;
-        i2cCondition = I2CConditionNone;
-        
-        // Check for restart condition
-        if (pix_sclk && pix_sdata) begin
-            wait(!pix_sclk || !pix_sdata);
-            if (pix_sclk && !pix_sdata) begin
-                // Got restart condition
-                i2cCondition = I2CConditionRestart;
-            end
-        
-        // Check for stop condition
-        end else if (pix_sclk && !pix_sdata) begin
-            wait(!pix_sclk || pix_sdata);
-            if (pix_sclk && pix_sdata) begin
-                // Got stop condition
-                i2cCondition = I2CConditionStop;
-            end
-        end
-        
-        wait(!pix_sclk);
-    endtask
+    // task LookForI2CCondition;
+    //     i2cCondition = I2CConditionNone;
+    //
+    //     // Check for restart condition
+    //     if (pix_sclk && pix_sdata) begin
+    //         wait(!pix_sclk || !pix_sdata);
+    //         if (pix_sclk && !pix_sdata) begin
+    //             // Got restart condition
+    //             i2cCondition = I2CConditionRestart;
+    //         end
+    //
+    //     // Check for stop condition
+    //     end else if (pix_sclk && !pix_sdata) begin
+    //         wait(!pix_sclk || pix_sdata);
+    //         if (pix_sclk && pix_sdata) begin
+    //             // Got stop condition
+    //             i2cCondition = I2CConditionStop;
+    //         end
+    //     end
+    //
+    //     wait(!pix_sclk);
+    // endtask
     
     task ReadByte;
         reg[7:0] i;
         dataIn = 0;
+        i2cCondition = I2CConditionNone;
         
-        LookForI2CCondition();
-        $display(" FFF ");
-        if (i2cOK) begin
-            $display(" FFF222 ");
-            for (i=0; i<8; i++) begin
-                wait(!pix_sclk);
-                wait(pix_sclk);
-                dataIn = (dataIn<<1)|pix_sdata;
-            end
+        wait(!pix_sclk);
+        
+        for (i=0; i<8 && i2cOK; i++) begin
+            wait(pix_sclk);
+            dataIn = (dataIn<<1)|pix_sdata;
             
+            if (!i) begin
+                // Check for i2c condition (restart or stop)
+                reg sdataBefore;
+                sdataBefore = pix_sdata;
+                
+                wait(!pix_sclk || pix_sdata!=sdataBefore);
+                if (pix_sclk) begin
+                    if (pix_sdata) begin
+                        // SDA=0->1 while SCL=1
+                        i2cCondition = I2CConditionStop;
+                    end else begin
+                        // SDA=1->0 while SCL=1
+                        i2cCondition = I2CConditionRestart;
+                    end
+                end
+            
+            end else begin
+                wait(!pix_sclk);
+            end
+        end
+        
+        if (i2cOK) begin
             // Send ACK
             wait(!pix_sclk);
             sdata = 0;
@@ -730,27 +750,27 @@ module Top(
                     // Write
                     end else begin
                         if (i2cOK) begin
-                            $display(" AAA ");
                             ReadByte();
                             if (i2cOK) begin
-                                $display(" AAA222 ");
                                 writeData[7:0] = dataIn;
+                                writeLen = 1;
                             end
                         end
                         
                         if (i2cOK) begin
-                            $display(" BBB111 ");
                             ReadByte();
                             if (i2cOK) begin
-                                $display(" BBB222 ");
                                 writeData = (writeData<<8)|dataIn;
+                                writeLen = 2;
                             end
                         end
                         
-                        $display(" CCC ");
-                        
-                        $display("slave @ %x", slaveAddr);
-                        $display("  WRITE: %x = %x", regAddr, writeData);
+                        $display("slave @ 0x%x", slaveAddr);
+                        if (writeLen == 1) begin
+                            $display("  WRITE: 0x%x = 0x%x", regAddr, writeData[7:0]);
+                        end else if (writeLen == 2) begin
+                            $display("  WRITE: 0x%x = 0x%x", regAddr, writeData[15:0]);
+                        end
                         $finish;
                     end
                 end
