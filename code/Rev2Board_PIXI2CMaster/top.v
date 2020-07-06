@@ -359,14 +359,34 @@ module PIXI2CMaster #(
                 // Check if we need to ACK a byte
                 if (dataInShiftReg[15:7] == 9'b00000000_1) begin
                     delay <= I2CQuarterCycleDelay;
-                    state <= StateReadData+8;
+                    state <= StateReadData+9;
                 
                 // Check if we're done shifting
                 end else if (dataInShiftReg[15]) begin
                     delay <= I2CQuarterCycleDelay;
-                    state <= StateReadData+11;
+                    state <= StateReadData+12;
+                
+                // Otherwise continue shifting
+                end else begin
+                    delay <= I2CQuarterCycleDelay;
+                    state <= StateReadData+8;
                 end
             end
+            
+            // SCL=0,
+            // Delay 1/4 cycle
+            StateReadData+8: begin
+                i2c_clk <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+5;
+            end
+            
+            
+            
+            
+            
+            
+            
             
             // ***
             // *** Issue ACK
@@ -374,27 +394,27 @@ module PIXI2CMaster #(
             
             // SCL=0,
             // Delay 1/4 cycle
-            StateReadData+8: begin
+            StateReadData+9: begin
                 i2c_clk <= 0;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateShiftOut+9;
+                state <= StateReadData+10;
             end
             
             // Issue ACK (SDA=0),
             // Delay 1/4 cycle
-            StateReadData+9: begin
+            StateReadData+10: begin
                 dataOutShiftReg <= 0;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateShiftOut+10;
+                state <= StateReadData+11;
             end
             
             // SCL=1,
             // Delay 1/4 cycle,
             // Continue shifting data
-            StateReadData+10: begin
+            StateReadData+11: begin
                 i2c_clk <= 1;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateShiftOut+7;
+                state <= StateReadData+7;
             end
             
             // ***
@@ -403,38 +423,38 @@ module PIXI2CMaster #(
             
             // SCL=0,
             // Delay 1/4 cycle
-            StateReadData+11: begin
+            StateReadData+12: begin
                 i2c_clk <= 0;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateShiftOut+12;
+                state <= StateReadData+13;
             end
             
             // Issue NACK,
             // Delay 1/4 cycle
-            StateReadData+12: begin
-                dataOutShiftReg <= ~0;
-                delay <= I2CQuarterCycleDelay;
-                state <= StateShiftOut+13;
-            end
-            
-            // SCL=1,
-            // Delay 1/4 cycle
             StateReadData+13: begin
-                i2c_clk <= 1;
+                dataOutShiftReg <= ~0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateReadData+14;
             end
             
+            // SCL=1,
             // Delay 1/4 cycle
             StateReadData+14: begin
+                i2c_clk <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateReadData+15;
+            end
+            
+            // Delay 1/4 cycle
+            StateReadData+15: begin
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+16;
             end
             
             // SCL=0,
             // Delay 1/4 cycle,
             // Go to StateStop
-            StateReadData+15: begin
+            StateReadData+16: begin
                 i2c_clk <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStop;
@@ -496,16 +516,6 @@ module PIXI2CMaster #(
         end
     end
 endmodule
-
-// module Pullup(
-//     inout wire a
-// );
-//     always @* begin
-//         if (a == 1'bz) begin
-//             a = 1'b1;
-//         end
-//     end
-// endmodule
 
 
 
@@ -593,28 +603,28 @@ module Top(
         1: begin
             if (cmd_done) begin
                 cmd_dataLen <= 0;
-                // state <= 2;
+                state <= 2;
             end
         end
         
-        // // Read: 0x1234
-        // 2: begin
-        //     cmd_slaveAddr <= 7'h7f;
-        //     cmd_write <= 0;
-        //     cmd_regAddr <= 16'h1234;
-        //     cmd_writeData <= 16'h5678;
-        //     cmd_dataLen <= 2;
-        //
-        //     state <= 3;
-        // end
-        //
-        // // Wait for the I2C transaction to complete
-        // 3: begin
-        //     if (cmd_done) begin
-        //         cmd_dataLen <= 0;
-        //         state <= 0;
-        //     end
-        // end
+        // Read: 0x1234
+        2: begin
+            cmd_slaveAddr <= 7'h7f;
+            cmd_write <= 0;
+            cmd_regAddr <= 16'habcd;
+            cmd_dataLen <= 2;
+
+            state <= 3;
+        end
+
+        // Wait for the I2C transaction to complete
+        3: begin
+            if (cmd_done) begin
+                $display("READ DATA: %x", cmd_readData);
+                cmd_dataLen <= 0;
+                state <= 0;
+            end
+        end
         
         endcase
     end
@@ -625,6 +635,7 @@ module Top(
 `ifdef SIM
     
     reg[7:0] dataIn = 0;
+    reg[7:0] dataOut = 0;
     reg sdata = 1;
     assign pix_sdata = (!sdata ? 0 : 1'bz);
     
@@ -640,31 +651,9 @@ module Top(
     localparam I2CConditionNone = 0;
     localparam I2CConditionRestart = 1;
     localparam I2CConditionStop = 2;
+    localparam I2CConditionNACK = 3;
     reg[1:0] i2cCondition = I2CConditionNone;
     wire i2cOK = (i2cCondition == I2CConditionNone);
-    
-    // task LookForI2CCondition;
-    //     i2cCondition = I2CConditionNone;
-    //
-    //     // Check for restart condition
-    //     if (pix_sclk && pix_sdata) begin
-    //         wait(!pix_sclk || !pix_sdata);
-    //         if (pix_sclk && !pix_sdata) begin
-    //             // Got restart condition
-    //             i2cCondition = I2CConditionRestart;
-    //         end
-    //
-    //     // Check for stop condition
-    //     end else if (pix_sclk && !pix_sdata) begin
-    //         wait(!pix_sclk || pix_sdata);
-    //         if (pix_sclk && pix_sdata) begin
-    //             // Got stop condition
-    //             i2cCondition = I2CConditionStop;
-    //         end
-    //     end
-    //
-    //     wait(!pix_sclk);
-    // endtask
     
     task ReadByte;
         reg[7:0] i;
@@ -672,30 +661,28 @@ module Top(
         i2cCondition = I2CConditionNone;
         
         wait(!pix_sclk);
-        
         for (i=0; i<8 && i2cOK; i++) begin
+            reg sdataBefore;
+            
             wait(pix_sclk);
             dataIn = (dataIn<<1)|pix_sdata;
             
-            if (!i) begin
-                // Check for i2c condition (restart or stop)
-                reg sdataBefore;
-                sdataBefore = pix_sdata;
-                
-                wait(!pix_sclk || pix_sdata!=sdataBefore);
-                if (pix_sclk) begin
-                    if (pix_sdata) begin
-                        // SDA=0->1 while SCL=1
-                        i2cCondition = I2CConditionStop;
-                    end else begin
-                        // SDA=1->0 while SCL=1
-                        i2cCondition = I2CConditionRestart;
-                    end
-                end
+            // Check for i2c condition (restart or stop)
+            sdataBefore = pix_sdata;
             
-            end else begin
-                wait(!pix_sclk);
+            // Wait for SCL 1->0, or for SDA to change while SCL=1
+            wait(!pix_sclk || pix_sdata!=sdataBefore);
+            if (pix_sclk) begin
+                if (pix_sdata) begin
+                    // SDA=0->1 while SCL=1
+                    i2cCondition = I2CConditionStop;
+                end else begin
+                    // SDA=1->0 while SCL=1
+                    i2cCondition = I2CConditionRestart;
+                end
             end
+            
+            wait(!pix_sclk);
         end
         
         if (i2cOK) begin
@@ -710,6 +697,27 @@ module Top(
         end
     endtask
     
+    task WriteByte;
+        reg[7:0] i;
+        for (i=0; i<8; i++) begin
+            wait(!pix_sclk);
+            sdata = dataOut[7-i];
+            wait(pix_sclk);
+        end
+        
+        wait(!pix_sclk);
+        sdata = 1;
+        
+        // Check for NACK
+        wait(pix_sclk);
+        if (sdata) begin
+            i2cCondition = I2CConditionNACK;
+            wait(!pix_sclk);
+            wait(pix_sclk);
+        end
+        wait(!pix_sclk);
+    endtask
+    
     initial begin
         forever begin
             // Wait for idle condition (SDA=1 while SCL=1)
@@ -719,36 +727,43 @@ module Top(
             wait(pix_sclk & !pix_sdata);
             
             do begin
+                ReadByte();
                 if (i2cOK) begin
-                    ReadByte();
-                    if (i2cOK) begin
-                        slaveAddr = dataIn[7:1];
-                        dir = dataIn[0];
-                    end
-                end
-                
-                if (i2cOK) begin
-                    ReadByte();
-                    if (i2cOK) begin
-                        regAddr[15:8] = dataIn;
-                    end
-                end
-                
-                if (i2cOK) begin
-                    ReadByte();
-                    if (i2cOK) begin
-                        regAddr[7:0] = dataIn;
-                    end
+                    slaveAddr = dataIn[7:1];
+                    dir = dataIn[0];
+                    // $display("slave:0x%x dir:%d", slaveAddr, dir);
                 end
                 
                 if (i2cOK) begin
                     // Read
                     if (dir) begin
-                        $display("slave @ %x", slaveAddr);
+                        $display("slave @ 0x%x", slaveAddr);
                         $display("  READ: %x", regAddr);
+                        
+                        dataOut = 8'hCA;
+                        WriteByte();
+                        
+                        if (i2cOK) begin
+                            dataOut = 8'hFE;
+                            WriteByte();
+                        end
                     
                     // Write
                     end else begin
+                        if (i2cOK) begin
+                            ReadByte();
+                            if (i2cOK) begin
+                                regAddr[15:8] = dataIn;
+                            end
+                        end
+                        
+                        if (i2cOK) begin
+                            ReadByte();
+                            if (i2cOK) begin
+                                regAddr[7:0] = dataIn;
+                            end
+                        end
+                        
                         if (i2cOK) begin
                             ReadByte();
                             if (i2cOK) begin
@@ -771,12 +786,11 @@ module Top(
                         end else if (writeLen == 2) begin
                             $display("  WRITE: 0x%x = 0x%x", regAddr, writeData[15:0]);
                         end
-                        $finish;
                     end
                 end
             end while (i2cCondition == I2CConditionRestart);
             
-            $finish;
+            // $finish;
         end
     end
     
