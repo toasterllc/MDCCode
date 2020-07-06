@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 
+// TODO: compact states and see if that reduces size/increases performance
 module PIXI2CMaster #(
     parameter ClkFreq = 12000000,   // `clk` frequency
     parameter I2CClkFreq = 400000   // `i2c_clk` frequency
@@ -72,10 +73,10 @@ module PIXI2CMaster #(
         SB_IO_OD #(
             .PIN_TYPE(6'b1010_01),
         ) dqio (
-            .PACKAGE_PIN(i2c_data),
-            .OUTPUT_ENABLE(1),
-            .D_OUT_0(dataOut),
-            .D_IN_0(dataIn)
+            .PACKAGEPIN(i2c_data),
+            .OUTPUTENABLE(1),
+            .DOUT0(dataOut),
+            .DIN0(dataIn)
         );
     `endif
     
