@@ -16,6 +16,7 @@ module PIXI2CMaster #(
     output wire[15:0]   cmd_readData,
     input wire[1:0]     cmd_dataLen, // 0 (no command), 1 (1 byte), 2 (2 bytes)
     output reg          cmd_done = 0,
+    output reg          cmd_ok = 0,
     
     // i2c port
     output reg          i2c_clk = 0,
@@ -86,8 +87,10 @@ module PIXI2CMaster #(
     localparam StateRegAddr = 60;
     localparam StateWriteData = 80;
     localparam StateReadData = 100;
-    localparam StateACKNACK = 120;
-    localparam StateStop = 140;
+    localparam StateACK = 120;
+    localparam StateStopOK = 140;
+    localparam StateStopFail = 160;
+    localparam StateStop = 180;
     always @(posedge clk) begin
         if (delay) begin
             delay <= delay-1;
@@ -232,7 +235,7 @@ module PIXI2CMaster #(
             StateShiftOut+7: begin
                 i2c_clk <= 0;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateStop;
+                state <= StateStopFail;
             end
             
             
@@ -282,7 +285,7 @@ module PIXI2CMaster #(
                 dataOutShiftReg <= {cmd_writeData[7:0], 1'b1};
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut;
-                nextState <= StateStop;
+                nextState <= StateStopOK;
             end
             
             
@@ -372,16 +375,16 @@ module PIXI2CMaster #(
                 // Check if we need to ACK a byte
                 if (dataInShiftReg[16:8] == 9'b0_00000001) begin
                     delay <= I2CQuarterCycleDelay;
-                    state <= StateACKNACK;
-                    ack <= 1; // Tell StateACKNACK to issue an ACK
-                    nextState <= StateReadData+5; // Tell StateACKNACK to go to StateReadData+5 after the ACK
+                    state <= StateACK;
+                    ack <= 1; // Tell StateACK to issue an ACK
+                    nextState <= StateReadData+5; // Tell StateACK to go to StateReadData+5 after the ACK
                 
                 // Check if we're done shifting
                 end else if (dataInShiftReg[16]) begin
                     delay <= I2CQuarterCycleDelay;
-                    state <= StateACKNACK;
-                    ack <= 0; // Tell StateACKNACK to issue a NACK
-                    nextState <= StateStop; // Tell StateACKNACK to go to StateStop after the NACK
+                    state <= StateACK;
+                    ack <= 0; // Tell StateACK to issue a NACK
+                    nextState <= StateStopOK; // Tell StateACK to go to StateStopOK after the NACK
                 
                 // Otherwise continue shifting
                 end else begin
@@ -407,29 +410,29 @@ module PIXI2CMaster #(
             
             // Issue ACK (SDA=0),
             // Delay 1/4 cycle
-            StateACKNACK: begin
+            StateACK: begin
                 dataOutShiftReg <= (ack ? 0 : ~0);
                 delay <= I2CQuarterCycleDelay;
-                state <= StateACKNACK+1;
+                state <= StateACK+1;
             end
             
             // SCL=1,
             // Delay 1/4 cycle,
-            StateACKNACK+1: begin
+            StateACK+1: begin
                 i2c_clk <= 1;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateACKNACK+2;
+                state <= StateACK+2;
             end
             
             // Delay 1/4 cycle,
-            StateACKNACK+2: begin
+            StateACK+2: begin
                 delay <= I2CQuarterCycleDelay;
-                state <= StateACKNACK+3;
+                state <= StateACK+3;
             end
             
             // SCL=0,
             // Delay 1/4 cycle
-            StateACKNACK+3: begin
+            StateACK+3: begin
                 i2c_clk <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= nextState;
@@ -523,46 +526,48 @@ module PIXI2CMaster #(
             
             
             
-            
-            
-            
-            
-            
-            
-            
+            // SDA=0,
+            // Delay 1/4 cycle
+            StateStopOK: begin
+                cmd_ok <= 1;
+                dataOutShiftReg <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateStop;
+            end
             
             // SDA=0,
             // Delay 1/4 cycle
-            StateStop: begin
+            StateStopFail: begin
+                cmd_ok <= 0;
                 dataOutShiftReg <= 0;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateStop+1;
+                state <= StateStop;
             end
             
             // SCL=1,
             // Delay 1/4 cycle
-            StateStop+1: begin
+            StateStop: begin
                 i2c_clk <= 1;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateStop+2;
+                state <= StateStop+1;
             end
             
             // Issue stop condition (SDA=0->1 while SCL=1),
             // Delay 1/4 cycle
-            StateStop+2: begin
+            StateStop+1: begin
                 dataOutShiftReg <= ~0;
                 delay <= I2CQuarterCycleDelay;
-                state <= StateStop+3;
+                state <= StateStop+2;
             end
             
             // Tell client we're done
-            StateStop+3: begin
+            StateStop+2: begin
                 cmd_done <= 1;
-                state <= StateStop+4;
+                state <= StateStop+3;
                 // No delay! We only want cmd_done=1 for one cycle.
             end
             
-            StateStop+4: begin
+            StateStop+3: begin
                 cmd_done <= 0;
                 state <= StateIdle;
             end
