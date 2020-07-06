@@ -617,6 +617,7 @@ module Top(
     wire[15:0]  cmd_readData;
     reg[1:0]    cmd_dataLen = 0;
     wire        cmd_done;
+    wire        cmd_ok;
     
     PIXI2CMaster #(
         .ClkFreq(ClkFreq),
@@ -632,6 +633,7 @@ module Top(
         .cmd_readData(cmd_readData),
         .cmd_dataLen(cmd_dataLen),
         .cmd_done(cmd_done),
+        .cmd_ok(cmd_ok),
         
         .i2c_clk(pix_sclk),
         .i2c_data(pix_sdata)
@@ -662,6 +664,7 @@ module Top(
         // Wait for the I2C transaction to complete
         1: begin
             if (cmd_done) begin
+                $display("Write: %s\n", (cmd_ok ? "success" : "failed"));
                 cmd_dataLen <= 0;
                 state <= 2;
             end
@@ -680,7 +683,8 @@ module Top(
         // Wait for the I2C transaction to complete
         3: begin
             if (cmd_done) begin
-                $display("READ DATA: 0x%x\n", (cmd_dataLen==1 ? cmd_readData[7:0] : cmd_readData));
+                $display("Read: %s\n", (cmd_ok ? "success" : "failed"));
+                // $display("READ DATA: 0x%x\n", (cmd_dataLen==1 ? cmd_readData[7:0] : cmd_readData));
                 cmd_dataLen <= 0;
                 state <= 0;
             end
