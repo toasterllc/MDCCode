@@ -12,7 +12,7 @@ module PIXI2CMaster #(
     input wire          cmd_write,
     input wire[15:0]    cmd_regAddr,
     input wire[15:0]    cmd_writeData,
-    output reg[15:0]    cmd_readData = 0,
+    output wire[15:0]   cmd_readData,
     input wire[1:0]     cmd_dataLen, // 0 (no command), 1 (1 byte), 2 (2 bytes)
     output reg          cmd_done = 0,
     
@@ -57,6 +57,8 @@ module PIXI2CMaster #(
     reg[7:0] ackState = 0;
     reg[8:0] dataOutShiftReg = 0; // Low bit is sentinel
     wire dataOut = dataOutShiftReg[8];
+    reg[15:0] dataInShiftReg = 0; // Low bit is sentinel
+    assign cmd_readData = dataInShiftReg;
     wire dataIn;
     reg[DelayWidth-1:0] delay = 0;
     
@@ -89,6 +91,7 @@ module PIXI2CMaster #(
         
         end else begin
             case (state)
+            
             // Idle (SDA=1, SCL=1)
             StateIdle: begin
                 i2c_clk <= 1;
@@ -96,6 +99,10 @@ module PIXI2CMaster #(
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStart;
             end
+            
+            
+            
+            
             
             
             
@@ -124,12 +131,25 @@ module PIXI2CMaster #(
             // SDA=first bit,
             // Delay 1/4 cycle
             // After ACK, state=StateRegAddr
+            // *** Note that dir=1 (write) on the initial transmission, even when reading.
+            // *** If we intent to read, we perform a second START condition after
+            // *** providing the slave address, and then provide the slave address/direction
+            // *** again. This second time is when provide dir=1 (read).
+            // *** See i2c docs for more information on how reads are performed.
             StateStart+2: begin
-                dataOutShiftReg <= {cmd_slaveAddr, !cmd_write, 1'b1};
+                dataOutShiftReg <= {cmd_slaveAddr, 1'b0 /* dir=0 (write, see comment above) */, 1'b1};
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut;
                 ackState <= StateRegAddr;
             end
+            
+            
+            
+            
+            
+            
+            
+            
             
             
             
@@ -243,6 +263,9 @@ module PIXI2CMaster #(
             
             
             
+            
+            
+            
             // Shift out high 8 bits of data
             StateWriteData: begin
                 dataOutShiftReg <= {cmd_writeData[15:8], 1'b1};
@@ -258,6 +281,175 @@ module PIXI2CMaster #(
                 state <= StateShiftOut;
                 ackState <= StateStop;
             end
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            // SDA=1,
+            // Delay 1/4 cycle,
+            StateReadData: begin
+                dataOutShiftReg <= ~0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+1;
+            end
+            
+            // SCL=1,
+            // Delay 1/4 cycle
+            StateReadData+1: begin
+                i2c_clk <= 1;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+2;
+            end
+            
+            // Issue repeated start condition (SDA=1->0 while SCL=1),
+            // Delay 1/4 cycle
+            StateReadData+2: begin
+                dataOutShiftReg <= 0; // Start condition
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+3;
+            end
+            
+            // SCL=0,
+            // Delay 1/4 cycle
+            StateReadData+3: begin
+                i2c_clk <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+4;
+            end
+            
+            // Shift out the slave address and direction (read), again.
+            // The only difference is this time we actually specify the read direction,
+            // whereas the first time we always specify the write direction. See comment
+            // in the StateStart state for more info.
+            StateReadData+4: begin
+                dataOutShiftReg <= {cmd_slaveAddr, 1'b1 /* dir=1 (read) */, 1'b1};
+                dataInShiftReg <= (cmd_dataLen==2 ? 1 : 1<<8); // Prepare dataInShiftReg with the sentinel
+                delay <= I2CQuarterCycleDelay;
+                state <= StateShiftOut;
+                ackState <= StateReadData+5;
+            end
+            
+            // Delay 1/4 cycle
+            StateReadData+5: begin
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+6;
+            end
+            
+            // SCL=1,
+            // Delay 1/4 cycle
+            StateReadData+6: begin
+                i2c_clk <= 1;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+7;
+            end
+            
+            // Read another bit
+            // Delay 1/4 cycle
+            StateReadData+7: begin
+                dataInShiftReg <= (dataInShiftReg<<1)|dataIn;
+                
+                // Check if we need to ACK a byte
+                if (dataInShiftReg[15:7] == 9'b00000000_1) begin
+                    delay <= I2CQuarterCycleDelay;
+                    state <= StateReadData+8;
+                
+                // Check if we're done shifting
+                end else if (dataInShiftReg[15]) begin
+                    delay <= I2CQuarterCycleDelay;
+                    state <= StateReadData+11;
+                end
+            end
+            
+            // ***
+            // *** Issue ACK
+            // ***
+            
+            // SCL=0,
+            // Delay 1/4 cycle
+            StateReadData+8: begin
+                i2c_clk <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateShiftOut+9;
+            end
+            
+            // Issue ACK (SDA=0),
+            // Delay 1/4 cycle
+            StateReadData+9: begin
+                dataOutShiftReg <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateShiftOut+10;
+            end
+            
+            // SCL=1,
+            // Delay 1/4 cycle,
+            // Continue shifting data
+            StateReadData+10: begin
+                i2c_clk <= 1;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateShiftOut+7;
+            end
+            
+            // ***
+            // *** Issue NACK, and go to StateStop
+            // ***
+            
+            // SCL=0,
+            // Delay 1/4 cycle
+            StateReadData+11: begin
+                i2c_clk <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateShiftOut+12;
+            end
+            
+            // Issue NACK,
+            // Delay 1/4 cycle
+            StateReadData+12: begin
+                dataOutShiftReg <= ~0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateShiftOut+13;
+            end
+            
+            // SCL=1,
+            // Delay 1/4 cycle
+            StateReadData+13: begin
+                i2c_clk <= 1;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+14;
+            end
+            
+            // Delay 1/4 cycle
+            StateReadData+14: begin
+                delay <= I2CQuarterCycleDelay;
+                state <= StateReadData+15;
+            end
+            
+            // SCL=0,
+            // Delay 1/4 cycle,
+            // Go to StateStop
+            StateReadData+15: begin
+                i2c_clk <= 0;
+                delay <= I2CQuarterCycleDelay;
+                state <= StateStop;
+            end
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             
             
             
@@ -298,6 +490,7 @@ module PIXI2CMaster #(
                 cmd_done <= 0;
                 state <= StateIdle;
             end
+            
             endcase
         end
     end
@@ -357,6 +550,7 @@ module Top(
     PIXI2CMaster #(
         .ClkFreq(ClkFreq),
         .I2CClkFreq(400000)
+    
     ) pixI2CMaster(
         .clk(clk),
         
@@ -382,6 +576,8 @@ module Top(
     reg[3:0] state = 0;
     always @(posedge clk) begin
         case (state)
+        
+        // Write: 0x1234 = 0x5678
         0: begin
             cmd_slaveAddr <= 7'h7f;
             cmd_write <= 1;
@@ -396,9 +592,29 @@ module Top(
         1: begin
             if (cmd_done) begin
                 cmd_dataLen <= 0;
+                state <= 2;
+            end
+        end
+        
+        // Read: 0x1234
+        2: begin
+            cmd_slaveAddr <= 7'h7f;
+            cmd_write <= 0;
+            cmd_regAddr <= 16'h1234;
+            cmd_writeData <= 16'h5678;
+            cmd_dataLen <= 2;
+            
+            state <= 3;
+        end
+        
+        // Wait for the I2C transaction to complete
+        3: begin
+            if (cmd_done) begin
+                cmd_dataLen <= 0;
                 state <= 0;
             end
         end
+        
         endcase
     end
     
@@ -439,34 +655,31 @@ module Top(
         ack = 1;
     endtask
     
-    
-    
-    
     initial begin
         forever begin
             // Wait for idle condition (SDA=1 while SCL=1)
             wait(pix_sclk & pix_sdata);
-        
+            
             // Wait for start condition (SDA=1->0 while SCL=1)
             wait(pix_sclk & !pix_sdata);
-        
-
+            
+            
             ReadByte();
             slaveAddr = readData[7:1];
             dir = readData[0];
-        
+            
             ReadByte();
             regAddr[15:8] = readData;
-        
+            
             ReadByte();
             regAddr[7:0] = readData;
-        
+            
             ReadByte();
             writeData[15:8] = readData;
-        
+            
             ReadByte();
             writeData[7:0] = readData;
-        
+            
             $display("slaveAddr: %x", slaveAddr);
             $display("dir: %x", dir);
             $display("regAddr: %x", regAddr);
