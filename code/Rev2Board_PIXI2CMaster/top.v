@@ -584,7 +584,7 @@ module Top(
             cmd_write <= 1;
             cmd_regAddr <= 16'h1234;
             cmd_writeData <= 16'h5678;
-            cmd_dataLen <= 2;
+            cmd_dataLen <= 1;
             
             state <= 1;
         end
@@ -593,28 +593,28 @@ module Top(
         1: begin
             if (cmd_done) begin
                 cmd_dataLen <= 0;
-                state <= 2;
+                // state <= 2;
             end
         end
         
-        // Read: 0x1234
-        2: begin
-            cmd_slaveAddr <= 7'h7f;
-            cmd_write <= 0;
-            cmd_regAddr <= 16'h1234;
-            cmd_writeData <= 16'h5678;
-            cmd_dataLen <= 2;
-            
-            state <= 3;
-        end
-        
-        // Wait for the I2C transaction to complete
-        3: begin
-            if (cmd_done) begin
-                cmd_dataLen <= 0;
-                state <= 0;
-            end
-        end
+        // // Read: 0x1234
+        // 2: begin
+        //     cmd_slaveAddr <= 7'h7f;
+        //     cmd_write <= 0;
+        //     cmd_regAddr <= 16'h1234;
+        //     cmd_writeData <= 16'h5678;
+        //     cmd_dataLen <= 2;
+        //
+        //     state <= 3;
+        // end
+        //
+        // // Wait for the I2C transaction to complete
+        // 3: begin
+        //     if (cmd_done) begin
+        //         cmd_dataLen <= 0;
+        //         state <= 0;
+        //     end
+        // end
         
         endcase
     end
@@ -635,29 +635,44 @@ module Top(
     reg[15:0] writeData = 0;
     
     reg ack = 1;
-    reg restart = 0;
     
-    task LookForRestart;
-        restart = 0;
+    localparam I2CConditionNone = 0;
+    localparam I2CConditionRestart = 1;
+    localparam I2CConditionStop = 2;
+    reg[1:0] i2cCondition = I2CConditionNone;
+    wire i2cOK = (i2cCondition == I2CConditionNone);
+    
+    task LookForI2CCondition;
+        i2cCondition = I2CConditionNone;
+        
+        // Check for restart condition
         if (pix_sclk && pix_sdata) begin
             wait(!pix_sclk || !pix_sdata);
             if (pix_sclk && !pix_sdata) begin
                 // Got restart condition
-                restart = 1;
-                wait(!pix_sclk);
+                i2cCondition = I2CConditionRestart;
             end
         
-        end else begin
-            wait(!pix_sclk);
+        // Check for stop condition
+        end else if (pix_sclk && !pix_sdata) begin
+            wait(!pix_sclk || pix_sdata);
+            if (pix_sclk && pix_sdata) begin
+                // Got stop condition
+                i2cCondition = I2CConditionStop;
+            end
         end
+        
+        wait(!pix_sclk);
     endtask
     
     task ReadByte;
         reg[7:0] i;
         dataIn = 0;
         
-        LookForRestart();
-        if (!restart) begin
+        LookForI2CCondition();
+        $display(" FFF ");
+        if (i2cOK) begin
+            $display(" FFF222 ");
             for (i=0; i<8; i++) begin
                 wait(!pix_sclk);
                 wait(pix_sclk);
@@ -684,25 +699,29 @@ module Top(
             wait(pix_sclk & !pix_sdata);
             
             do begin
-                restart <= 0;
-                
-                if (!restart) begin
+                if (i2cOK) begin
                     ReadByte();
-                    slaveAddr = dataIn[7:1];
-                    dir = dataIn[0];
+                    if (i2cOK) begin
+                        slaveAddr = dataIn[7:1];
+                        dir = dataIn[0];
+                    end
                 end
                 
-                if (!restart) begin
+                if (i2cOK) begin
                     ReadByte();
-                    regAddr[15:8] = dataIn;
+                    if (i2cOK) begin
+                        regAddr[15:8] = dataIn;
+                    end
                 end
                 
-                if (!restart) begin
+                if (i2cOK) begin
                     ReadByte();
-                    regAddr[7:0] = dataIn;
+                    if (i2cOK) begin
+                        regAddr[7:0] = dataIn;
+                    end
                 end
                 
-                if (!restart) begin
+                if (i2cOK) begin
                     // Read
                     if (dir) begin
                         $display("slave @ %x", slaveAddr);
@@ -710,21 +729,32 @@ module Top(
                     
                     // Write
                     end else begin
-                        if (!restart) begin
+                        if (i2cOK) begin
+                            $display(" AAA ");
                             ReadByte();
-                            writeData[15:8] = dataIn;
+                            if (i2cOK) begin
+                                $display(" AAA222 ");
+                                writeData[7:0] = dataIn;
+                            end
                         end
-                
-                        if (!restart) begin
+                        
+                        if (i2cOK) begin
+                            $display(" BBB111 ");
                             ReadByte();
-                            writeData[7:0] = dataIn;
+                            if (i2cOK) begin
+                                $display(" BBB222 ");
+                                writeData = (writeData<<8)|dataIn;
+                            end
                         end
+                        
+                        $display(" CCC ");
                         
                         $display("slave @ %x", slaveAddr);
                         $display("  WRITE: %x = %x", regAddr, writeData);
+                        $finish;
                     end
                 end
-            end while (restart);
+            end while (i2cCondition == I2CConditionRestart);
             
             $finish;
         end
