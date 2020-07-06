@@ -634,25 +634,42 @@ module Top(
     reg[15:0] writeData = 0;
     
     reg ack = 1;
-    
-    
-    
+    reg restart = 0;
     task ReadByte;
+        reg[7:0] i;
+        restart = 0;
         readData = 0;
-        repeat (8) begin
-            wait(!pix_sclk);
-            wait(pix_sclk);
-            readData = (readData<<1)|pix_sdata;
+        
+        for (i=0; i<8 && !restart; i++) begin
+            // Look for a start condition
+            if (pix_sclk && pix_sdata) begin
+                wait(!pix_sclk || !pix_sdata);
+                if (pix_sclk && !pix_sdata) begin
+                    // Got start condition
+                    restart = 1;
+                    wait(!pix_sclk);
+                end
+            
+            end else begin
+                wait(!pix_sclk);
+            end
+            
+            if (!restart) begin
+                wait(pix_sclk);
+                readData = (readData<<1)|pix_sdata;
+            end
         end
         
-        // Issue ACK
-        wait(!pix_sclk);
-        sdata = 0;
-        ack = 0;
-        wait(pix_sclk);
-        wait(!pix_sclk);
-        sdata = 1;
-        ack = 1;
+        if (!restart) begin
+            // Issue ACK
+            wait(!pix_sclk);
+            sdata = 0;
+            ack = 0;
+            wait(pix_sclk);
+            wait(!pix_sclk);
+            sdata = 1;
+            ack = 1;
+        end
     endtask
     
     initial begin
