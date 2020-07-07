@@ -26,33 +26,171 @@ public:
         CRST_   = 1<<7,
     };
     
-    enum class Cmd : uint8_t {
-        Nop         = 0x00,
-        LEDOff      = 0x80,
-        LEDOn       = 0x81,
-        ReadMem     = 0x82,
+    struct Msg {
+        enum class Type : uint8_t {
+            Nop             = 0x00,
+            SetLED          = 0x01,
+            ReadMem         = 0x02,
+            PixRegRead      = 0x03,
+            PixRegWrite     = 0x04,
+        };
+        
+        template <typename T>
+        static T* Cast(Msg* msg) {
+            if (msg->type == T{}.type) return (T*)msg;
+            return nullptr;
+        }
+        
+        Type type = Type::Nop;
+        uint8_t len = 0;
     };
     
-    struct Msg {
-        Cmd cmd = Cmd::Nop;
-        uint8_t* payload = nullptr;
-        uint8_t payloadLen = 0;
-        
-        std::string desc() const {
-            std::stringstream d;
-            
-            d << std::setfill('0') << std::setw(2);
-            
-            d << "Msg{\n";
-            d << "  cmd: 0x" << std::hex << (uintmax_t)cmd << "\n";
-            d << "  payload (len = " << std::dec << (uintmax_t)payloadLen << "): [ ";
-            for (size_t i=0; i<payloadLen; i++) {
-                d << std::hex << (uintmax_t)payload[i] << " ";
-            }
-            d << "]\n}\n\n";
-            return d.str();
-        }
+    struct MsgNop : Msg {
+        MsgNop() : Msg{.type=Type::Nop, .len=sizeof(*this)-sizeof(Msg)} {}
     };
+    
+    struct MsgSetLED : Msg {
+        MsgSetLED() : Msg{.type=Type::SetLED, .len=sizeof(*this)-sizeof(Msg)} {}
+        uint8_t on = 0;
+    };
+    
+    struct MsgReadMem : Msg {
+        MsgReadMem() : Msg{.type=Type::ReadMem, .len=0} {}
+        uint8_t* mem = nullptr;
+    };
+    
+    struct MsgPixRegRead : Msg {
+        MsgPixRegRead() : Msg{.type=Type::PixRegRead, .len=sizeof(*this)-sizeof(Msg)} {}
+        uint16_t addr = 0;
+        uint8_t width = 0;
+    };
+    
+    struct MsgPixRegWrite : Msg {
+        MsgPixRegWrite() : Msg{.type=Type::PixRegWrite, .len=sizeof(*this)-sizeof(Msg)} {}
+        uint16_t addr = 0;
+        uint16_t val = 0;
+        uint8_t width = 0;
+    };
+    
+    using MsgPtr = std::unique_ptr<Msg>;
+    
+    
+    
+//    enum class Op : uint8_t {
+//        Nop             = 0x00,
+//        
+//        SetLED          = 0x80,
+//        
+//        ReadMem         = 0x81,
+//        
+//        PixRegRead8     = 0x82,
+//        PixRegRead16    = 0x83,
+//        
+//        PixRegWrite8    = 0x84,
+//        PixRegWrite16   = 0x85,
+//    };
+//    
+//    
+//    
+//    struct Msg {
+//        Op op = Type::Nop;
+//        uint8_t payloadLen = 0;
+//    };
+//    
+//    struct SetLED : Msg {
+//        uint8_t on = 0;
+//    };
+//    
+//    struct ReadMem : Msg {
+//    };
+//    
+//    struct PixRegRead : Msg {
+//        uint16_t addr;
+//    };
+//    
+//    
+//    static_assert(sizeof(Cmd)==5, "sizeof(Cmd) must be 5 bytes");
+//    
+//    
+//    
+//    
+//    
+//    
+//    
+//    
+//    
+////    struct Cmd {
+////        Op op = Type::Nop;
+////        
+////        union {
+////            uint8_t payload[4];
+////            
+////            struct {
+////                bool on;
+////            } setLED;
+////            
+////            struct {
+////                uint16_t addr;
+////            } pixRegRead;
+////            
+////            struct {
+////                uint16_t addr;
+////                uint16_t val;
+////            } pixRegWrite;
+////        };
+////    } __attribute__((packed));
+////    static_assert(sizeof(Cmd)==5, "sizeof(Cmd) must be 5 bytes");
+//    
+//    
+//    
+//    
+//    
+//    
+//    
+//    
+//    
+//    struct Cmd {
+//        Op op = Type::Nop;
+//        
+//        union {
+//            uint8_t payload[4];
+//            
+//            struct {
+//                bool on;
+//            } setLED;
+//            
+//            struct {
+//                uint16_t addr;
+//            } pixRegRead;
+//            
+//            struct {
+//                uint16_t addr;
+//                uint16_t val;
+//            } pixRegWrite;
+//        };
+//    } __attribute__((packed));
+//    static_assert(sizeof(Cmd)==5, "sizeof(Cmd) must be 5 bytes");
+    
+//    struct Msg {
+//        Op op = Type::Nop;
+//        uint8_t* payload = nullptr;
+//        uint8_t payloadLen = 0;
+//        
+//        std::string desc() const {
+//            std::stringstream d;
+//            
+//            d << std::setfill('0') << std::setw(2);
+//            
+//            d << "Msg{\n";
+//            d << "  op: 0x" << std::hex << (uintmax_t)op << "\n";
+//            d << "  payload (len = " << std::dec << (uintmax_t)payloadLen << "): [ ";
+//            for (size_t i=0; i<payloadLen; i++) {
+//                d << std::hex << (uintmax_t)payload[i] << " ";
+//            }
+//            d << "]\n}\n\n";
+//            return d.str();
+//        }
+//    };
     
     struct PinConfig {
         Pin pin = (Pin)0;
@@ -154,25 +292,114 @@ public:
         });
     }
     
-    void write(const Cmd cmd) {
-        _write(std::vector<uint8_t>({(uint8_t)cmd}));
+    void write(const Msg& msg) {
+        const size_t msgSize = sizeof(msg)+msg.len;
+        uint8_t b[] = {0x31, (uint8_t)((msgSize-1)&0xFF), (uint8_t)(((msgSize-1)&0xFF00)>>8)};
+        _ftdiWrite(_ftdi, b, sizeof(b));
+        _ftdiWrite(_ftdi, (uint8_t*)&msg, msgSize);
+        
+        // Verify that we don't overflow _inPending
+        assert(SIZE_MAX-_inPending >= msgSize);
+        _inPending += msgSize;
     }
     
-    std::optional<Msg> _readMsg() {
+    MsgPtr _newMsg(Msg::Type type) {
+        using MsgType = Msg::Type;
+        switch (type) {
+        case MsgType::Nop:          return std::make_unique<Nop>();
+        case MsgType::SetLED:       return std::make_unique<SetLED>();
+        case MsgType::ReadMem:      return std::make_unique<ReadMem>();
+        case MsgType::PixRegRead:   return std::make_unique<PixRegRead>();
+        case MsgType::PixRegWrite:  return std::make_unique<PixRegWrite>();
+        default:                    return nullptr;
+        }
+    }
+    
+    MsgPtr _readMsg() {
         size_t off = _inOff;
         
         Msg msg;
-        if (_inLen-off < sizeof(msg.cmd)) return std::nullopt;
-        memcpy(&msg.cmd, _in+off, sizeof(msg.cmd));
-        off += sizeof(msg.cmd);
+        if (_inLen-off < sizeof(msg)) return nullptr;
+        memcpy(&msg, _in+off, sizeof(msg));
+        off += sizeof(msg);
         
-        if (_inLen-off < sizeof(msg.payloadLen)) return std::nullopt;
-        memcpy(&msg.payloadLen, _in+off, sizeof(msg.payloadLen));
-        off += sizeof(msg.payloadLen);
+        if (_inLen-off < msg.len) return nullptr;
         
-        if (_inLen-off < msg.payloadLen) return std::nullopt;
+        MsgPtr r = _newMsg(msg.type);
+        assert(r);
+        
+        // Verify that the incoming message has enough data to fill the type that it claims to be
+        assert(msg.len >= r->len);
+        
+        // Copy the payload into the message
+        memcpy(r.get()+sizeof(Msg), _in+off, r->len);
+        
+        // Handle special message types that contain variable amounts of data
+        if (Msg::Cast<>())
+        
+        switch (r->type) {
+        case Msg::Type::ReadMem: {
+            r->mem
+            break;
+        }
+        
+        default: {
+            break;
+        }}
+        
+        off += msg.len;
+        
+        
+        if ()
+        
+        using MsgType = Msg::Type;
+        MsgPtr r;
+        switch (msg.type) {
+        case MsgType::Nop:
+            assert(msg.len >= Nop::Len());
+        
+        case MsgType::SetLED:
+        case MsgType::ReadMem:
+        case MsgType::PixRegRead:
+        case MsgType::PixRegWrite:
+        default:
+        }
+        
+        
+        
+        
+        assert(r);
+        
+        // Verify that the 
+        
+        switch (msg.op) {
+        case Type::Nop: {
+            return std::make_unique<Nop>();
+        }
+        
+        case Type::SetLED: {
+            if ()
+            return std::make_unique<SetLED>();
+        }
+        
+        case Type::ReadMem: {
+            break;
+        }
+        
+        case Type::PixRegRead: {
+            break;
+        }
+        
+        case Type::PixRegWrite: {
+            break;
+        }
+        
+        default: {
+            return nullptr;
+        }}
+        
         msg.payload = _in+off;
-        off += msg.payloadLen;
+        off += msg.len;
         
         _inOff = off;
         return msg;
@@ -249,19 +476,6 @@ public:
         
         uint8_t b[] = {0x80, pinVals, pinDirs};
         _ftdiWrite(_ftdi, b, sizeof(b));
-    }
-    
-    void _write(const std::vector<uint8_t>& d) {
-        // Short-circuit if there's no data to write
-        if (d.empty()) return;
-        
-        uint8_t b[] = {0x31, (uint8_t)((d.size()-1)&0xFF), (uint8_t)(((d.size()-1)&0xFF00)>>8)};
-        _ftdiWrite(_ftdi, b, sizeof(b));
-        _ftdiWrite(_ftdi, d.data(), d.size());
-        
-        // Verify that we don't overflow _inPending
-        assert(SIZE_MAX-_inPending >= d.size());
-        _inPending += d.size();
     }
     
     static void _ftdiRead(struct ftdi_context& ftdi, uint8_t* d, const size_t len) {
