@@ -206,7 +206,7 @@ endmodule
 
 
 
-module PIXController #(
+module PixController #(
     parameter ExtClkFreq = 12000000,    // Image sensor's external clock frequency
     parameter ClkFreq = 12000000        // `clk` frequency
 )(

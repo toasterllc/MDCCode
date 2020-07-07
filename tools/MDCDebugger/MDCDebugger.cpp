@@ -27,13 +27,11 @@ public:
     };
     
     struct Msg {
-        enum class Type : uint8_t {
-            Nop             = 0x00,
-            SetLED          = 0x01,
-            ReadMem         = 0x02,
-            PixRegRead      = 0x03,
-            PixRegWrite     = 0x04,
-        };
+        template <typename T>
+        static std::unique_ptr<T> Cast(std::unique_ptr<Msg> msg) {
+            if (msg && msg->type == T{}.type) return std::unique_ptr<T>((T*)msg.release());
+            return nullptr;
+        }
         
         template <typename T>
         static T* Cast(Msg* msg) {
@@ -41,32 +39,48 @@ public:
             return nullptr;
         }
         
-        Type type = Type::Nop;
+        using Type = uint8_t;
+        Type type = 0;
         uint8_t len = 0;
     };
     
-    struct MsgNop : Msg {
-        MsgNop() : Msg{.type=Type::Nop, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct NopMsg : Msg {
+        NopMsg() : Msg{.type=0x00, .len=sizeof(*this)-sizeof(Msg)} {}
     };
     
-    struct MsgSetLED : Msg {
-        MsgSetLED() : Msg{.type=Type::SetLED, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct SetLEDMsg : Msg {
+        SetLEDMsg() : Msg{.type=0x01, .len=sizeof(*this)-sizeof(Msg)} {}
         uint8_t on = 0;
     };
     
-    struct MsgReadMem : Msg {
-        MsgReadMem() : Msg{.type=Type::ReadMem, .len=0} {}
+    struct ReadMemMsg : Msg {
+        ReadMemMsg() : Msg{.type=0x02, .len=0} {} // Special case `len` in this case
         uint8_t* mem = nullptr;
+        
+        std::string desc() const {
+            std::stringstream d;
+            
+            d << std::setfill('0') << std::setw(2);
+            
+            d << "ReadMemMsg{\n";
+            d << "  type: 0x" << std::hex << (uintmax_t)type << "\n";
+            d << "  payload (len = " << std::dec << (uintmax_t)len << "): [ ";
+            for (size_t i=0; i<len; i++) {
+                d << std::hex << (uintmax_t)mem[i] << " ";
+            }
+            d << "]\n}\n\n";
+            return d.str();
+        }
     };
     
-    struct MsgPixRegRead : Msg {
-        MsgPixRegRead() : Msg{.type=Type::PixRegRead, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct PixRegReadMsg : Msg {
+        PixRegReadMsg() : Msg{.type=0x03, .len=sizeof(*this)-sizeof(Msg)} {}
         uint16_t addr = 0;
         uint8_t width = 0;
     };
     
-    struct MsgPixRegWrite : Msg {
-        MsgPixRegWrite() : Msg{.type=Type::PixRegWrite, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct PixRegWriteMsg : Msg {
+        PixRegWriteMsg() : Msg{.type=0x04, .len=sizeof(*this)-sizeof(Msg)} {}
         uint16_t addr = 0;
         uint16_t val = 0;
         uint8_t width = 0;
@@ -304,110 +318,46 @@ public:
     }
     
     MsgPtr _newMsg(Msg::Type type) {
-        using MsgType = Msg::Type;
-        switch (type) {
-        case MsgType::Nop:          return std::make_unique<Nop>();
-        case MsgType::SetLED:       return std::make_unique<SetLED>();
-        case MsgType::ReadMem:      return std::make_unique<ReadMem>();
-        case MsgType::PixRegRead:   return std::make_unique<PixRegRead>();
-        case MsgType::PixRegWrite:  return std::make_unique<PixRegWrite>();
-        default:                    return nullptr;
-        }
+        if (type == NopMsg{}.type) return std::make_unique<NopMsg>();
+        if (type == SetLEDMsg{}.type) return std::make_unique<SetLEDMsg>();
+        if (type == ReadMemMsg{}.type) return std::make_unique<ReadMemMsg>();
+        if (type == PixRegReadMsg{}.type) return std::make_unique<PixRegReadMsg>();
+        if (type == PixRegWriteMsg{}.type) return std::make_unique<PixRegWriteMsg>();
+        return nullptr;
     }
     
     MsgPtr _readMsg() {
         size_t off = _inOff;
         
-        Msg msg;
-        if (_inLen-off < sizeof(msg)) return nullptr;
-        memcpy(&msg, _in+off, sizeof(msg));
-        off += sizeof(msg);
+        Msg header;
+        if (_inLen-off < sizeof(header)) return nullptr;
+        memcpy(&header, _in+off, sizeof(header));
+        off += sizeof(header);
         
-        if (_inLen-off < msg.len) return nullptr;
+        if (_inLen-off < header.len) return nullptr;
         
-        MsgPtr r = _newMsg(msg.type);
-        assert(r);
+        MsgPtr msg = _newMsg(header.type);
+        assert(msg);
         
         // Verify that the incoming message has enough data to fill the type that it claims to be
-        assert(msg.len >= r->len);
+        assert(header.len >= msg->len);
         
-        // Copy the payload into the message
-        memcpy(r.get()+sizeof(Msg), _in+off, r->len);
+        // Copy the payload into the message, but only the number of bytes that we expect the message to have.
+        memcpy(msg.get()+sizeof(Msg), _in+off, msg->len);
         
         // Handle special message types that contain variable amounts of data
-        if (Msg::Cast<>())
-        
-        switch (r->type) {
-        case Msg::Type::ReadMem: {
-            r->mem
-            break;
+        if (auto x = Msg::Cast<ReadMemMsg>(msg.get())) {
+            x->mem = _in+off;
         }
         
-        default: {
-            break;
-        }}
-        
-        off += msg.len;
-        
-        
-        if ()
-        
-        using MsgType = Msg::Type;
-        MsgPtr r;
-        switch (msg.type) {
-        case MsgType::Nop:
-            assert(msg.len >= Nop::Len());
-        
-        case MsgType::SetLED:
-        case MsgType::ReadMem:
-        case MsgType::PixRegRead:
-        case MsgType::PixRegWrite:
-        default:
-        }
-        
-        
-        
-        
-        assert(r);
-        
-        // Verify that the 
-        
-        switch (msg.op) {
-        case Type::Nop: {
-            return std::make_unique<Nop>();
-        }
-        
-        case Type::SetLED: {
-            if ()
-            return std::make_unique<SetLED>();
-        }
-        
-        case Type::ReadMem: {
-            break;
-        }
-        
-        case Type::PixRegRead: {
-            break;
-        }
-        
-        case Type::PixRegWrite: {
-            break;
-        }
-        
-        default: {
-            return nullptr;
-        }}
-        
-        msg.payload = _in+off;
-        off += msg.len;
-        
+        off += header.len;
         _inOff = off;
         return msg;
     }
     
-    Msg read(size_t maxReadLen=sizeof(_in)) {
-        auto msg = _readMsg();
-        if (msg) return *msg;
+    MsgPtr read(size_t maxReadLen=sizeof(_in)) {
+        MsgPtr msg = _readMsg();
+        if (msg) return msg;
         
         // We failed to compose a message, so we need to read more data
         // Move the remaining partial message at the end of the buffer (pointed
@@ -417,9 +367,8 @@ public:
         _inOff = 0;
         
         const size_t maxMsgLen =
-            sizeof(Msg::cmd) +
-            sizeof(Msg::payloadLen) +
-            std::numeric_limits<decltype(Msg::payloadLen)>::max();
+            sizeof(Msg) +
+            std::numeric_limits<decltype(Msg::len)>::max();
         
         // maxReadLen must be >= the maximum size of a single message (maxMsgLen).
         // Otherwise, we could fail to create a message after reading data into _in,
@@ -463,7 +412,7 @@ public:
         
         msg = _readMsg();
         assert(msg);
-        return *msg;
+        return msg;
     }
     
     void _setPins(std::vector<PinConfig> configs) {
@@ -514,7 +463,7 @@ static uint64_t TimeDurationMs(TimeInstant t1, TimeInstant t2) {
     return std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
 }
 
-static void PrintMsg(const MDCDevice::Msg& msg) {
+static void PrintMsg(const MDCDevice::ReadMemMsg& msg) {
     std::cout << msg.desc();
 }
 
@@ -522,42 +471,44 @@ int main() {
     const size_t RAMWordCount = 0x2000000;
     const size_t RAMWordSize = 2;
     const size_t RAMSize = RAMWordCount*RAMWordSize;
-    using Cmd = MDCDevice::Cmd;
     using Msg = MDCDevice::Msg;
+    using MsgPtr = MDCDevice::MsgPtr;
+    using ReadMemMsg = MDCDevice::ReadMemMsg;
     
     auto device = std::make_unique<MDCDevice>();
     
     printf("Running trials...\n");
     for (uint64_t trial=0;; trial++) {
 //        device->write(Cmd::LEDOn);
-        device->write(Cmd::ReadMem);
+        device->write(ReadMemMsg{});
         
         auto startTime = CurrentTime();
         size_t dataLen = 0;
         std::optional<uint16_t> lastVal;
         for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
-            Msg msg = device->read();
-            
-            if (!(msg.payloadLen % 2)) {
-                for (size_t i=0; i<msg.payloadLen; i+=2) {
-                    uint16_t val;
-                    memcpy(&val, msg.payload+i, sizeof(val));
-                    if (lastVal) {
-                        uint16_t expected = (uint16_t)(*lastVal+1);
-                        if (val != expected) {
-                            printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+            if (auto msgPtr = Msg::Cast<ReadMemMsg>(device->read())) {
+                const ReadMemMsg& msg = *msgPtr;
+                if (!(msg.len % 2)) {
+                    for (size_t i=0; i<msg.len; i+=2) {
+                        uint16_t val;
+                        memcpy(&val, msg.mem+i, sizeof(val));
+                        if (lastVal) {
+                            uint16_t expected = (uint16_t)(*lastVal+1);
+                            if (val != expected) {
+                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+                            }
                         }
+                        lastVal = val;
                     }
-                    lastVal = val;
+                } else {
+                    printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.len);
                 }
-            } else {
-                printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.payloadLen);
+                
+                dataLen += msg.len;
+    //            if (!(msgCount % 4000)) {
+    //                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
+    //            }
             }
-            
-            dataLen += msg.payloadLen;
-//            if (!(msgCount % 4000)) {
-//                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
-//            }
         }
         auto stopTime = CurrentTime();
         
