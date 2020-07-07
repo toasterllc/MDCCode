@@ -4,69 +4,64 @@
 `include "../SDRAMController.v"
 
 module Debug(
-    input wire          clk,
+    input wire              clk,
     
-    output wire[7:0]    cmd,
-    output wire         cmdReady,
-    input wire          cmdTrigger,
+    output reg[7:0]         msgIn[5:0] = 0,
+    output reg              msgIn_ready = 0,
+    input wire              msgIn_trigger,
     
-    input wire[7:0]     msg,
-    input wire[8:0]     msgLen,
-    output reg          msgTrigger = 0,
+    input wire[7:0]         msgOut,
+    input wire[8:0]         msgOut_len,
+    output reg              msgOut_trigger = 0,
     
-    input wire          debug_clk,
-    input wire          debug_cs,
-    input wire          debug_di,
-    output wire         debug_do
+    input wire              debug_clk,
+    input wire              debug_cs,
+    input wire              debug_di,
+    output wire             debug_do
 );
+    localparam MaxPayloadLen = 4; // Max payload length (bytes)
+    localparam MaxMsgLen = 2+MaxPayloadLen; // Max message length (bytes)
+    
     // ====================
     // In queue `inq`
     // ====================
-    reg inq_writeTrigger = 0;
-    reg[7:0] inq_writeData = 0;
-    wire inq_writeOK;
-    AFIFO #(.Width(8), .Size(8)) inq(
+    AFIFO #(.Width(MaxMsgLen*8), .Size(8)) inq(
         .rclk(clk),
-        .r(cmdTrigger),
-        .rd(cmd),
-        .rok(cmdReady),
+        .r(),
+        .rd(),
+        .rok(),
         
         .wclk(debug_clk),
-        .w(debug_cs && inq_writeTrigger),
-        .wd(inq_writeData),
-        .wok(inq_writeOK)
+        .w(),
+        .wd(),
+        .wok()
     );
     
     // ====================
     // Out queue `outq`
     // ====================
-    reg outq_readTrigger=0, outq_writeTrigger=0;
-    wire[7:0] outq_readData;
-    reg[7:0] outq_writeData = 0;
-    wire outq_readOK, outq_writeOK;
     AFIFO #(.Width(8), .Size(8)) outq(
         .rclk(debug_clk),
-        .r(debug_cs && outq_readTrigger),
-        .rd(outq_readData),
-        .rok(outq_readOK),
+        .r(),
+        .rd(),
+        .rok(),
         
         .wclk(clk),
-        .w(outq_writeTrigger),
-        .wd(outq_writeData),
-        .wok(outq_writeOK)
+        .w(),
+        .wd(),
+        .wok()
     );
     
     // ====================
     // Command+response handling
     // ====================
-    // assign msgTrigger = (msgLen && outq_writeTrigger && outq_writeOK);
     reg[1:0] msgState = 0;
     always @(posedge clk) begin
         case (msgState)
         // Send command (byte 0)
         0: begin
-            msgTrigger <= 0; // Necessary to clear the final msgTrigger=1 from state 2
-            if (msgLen) begin
+            msg_trigger <= 0; // Necessary to clear the final msg_trigger=1 from state 2
+            if (msg_len) begin
                 outq_writeData <= msg;
                 outq_writeTrigger <= 1;
                 msgState <= 1;
@@ -76,16 +71,16 @@ module Debug(
         // Send message length (byte 1)
         1: begin
             if (outq_writeOK) begin
-                outq_writeData <= msgLen-1;
+                outq_writeData <= msg_len-1;
                 outq_writeTrigger <= 1;
-                msgTrigger <= 1;
+                msg_trigger <= 1;
                 msgState <= 2;
             end
         end
         
         // Delay state while the next message byte is triggered
         2: begin
-            msgTrigger <= 0;
+            msg_trigger <= 0;
             if (outq_writeOK) begin
                 outq_writeTrigger <= 0;
                 msgState <= 3;
@@ -94,13 +89,13 @@ module Debug(
         
         // Send the message payload
         3: begin
-            if (msgLen) begin
+            if (msg_len) begin
                 outq_writeData <= msg;
                 outq_writeTrigger <= 1;
-                msgTrigger <= 1;
+                msg_trigger <= 1;
                 msgState <= 2;
             end else begin
-                msgTrigger <= 1;
+                msg_trigger <= 1;
                 msgState <= 0;
             end
         end
@@ -118,83 +113,117 @@ module Debug(
     // ====================
     // Data relay/shifting (debug_di->inq, outq->debug_do)
     // ====================
-    reg[1:0] inCmdState = 0;
-    reg[8:0] inCmd = 0; // High bit is the end-of-data sentinel, and isn't transmitted
-    reg[1:0] outMsgState = 0;
-    reg[8:0] outMsgShiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    assign debug_do = outMsgShiftReg[8];
+    reg[1:0] in_state = 0;
+    reg[1:0] in_substate = 0;
+    reg[8:0] in_shiftReg = 0; // High bit is the end-of-data sentinel, and isn't transmitted
+    reg[7:0] in_msgType = 0;
+    reg[7:0] in_payloadLen = 0;
+    reg[7:0] in_payloadCounter = 0;
+    reg[7:0] in_len = 0;
+    reg[1:0] out_state = 0;
+    reg[8:0] out_shiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    assign debug_do = out_shiftReg[8];
     always @(posedge debug_clk) begin
         if (debug_cs) begin
-            case (inCmdState)
+            case (in_state)
             0: begin
-                // Initialize `inCmd` as if it was originally initialized to 1,
+                // Initialize `in_shiftReg` as if it was originally initialized to 1,
                 // so that after the first clock it contains the sentinel and
                 // the first bit of data.
-                inCmd <= {1'b1, debug_di};
-                inCmdState <= 1;
+                in_shiftReg <= {1'b1, debug_di};
+                in_state <= 1;
             end
             
+            // if (inq_writeTrigger && !inq_writeOK) begin
+            //     // TODO: handle dropped bytes
+            // end
+            
+            
             1: begin
-                if (inq_writeTrigger && !inq_writeOK) begin
-                    // TODO: handle dropped commands
-                end
-                
-                if (inCmd[8]) begin
-                    // Only pass along non-zero commands.
-                    // Otherwise checking for data (by using 1-byte NOP commands) could produce
-                    // 2-byte output data (cmd=Nop, payloadLen=0), which would break the design.
-                    if (inCmd[7:0]) begin
-                        inq_writeTrigger <= 1;
-                        inq_writeData <= inCmd[7:0];
+                if (in_shiftReg[8]) begin
+                    in_shiftReg <= {1'b1, debug_di};
+                    
+                    case (in_substate)
+                    0: begin
+                        in_msgType <= in_shiftReg[7:0];
+                        in_substate <= 1;
                     end
-                    inCmd <= {1'b1, debug_di};
-                
+                    
+                    1: begin
+                        wire payloadLen = in_shiftReg[7:0];
+                        // TODO: handle payloadLen>MaxPayloadLen
+                        if (in_msgType) begin
+                            if (payloadLen) begin
+                                
+                            end else begin
+                                
+                            end
+                        
+                        end else begin
+                            // Nop -- ignore
+                            in_substate <= 0;
+                        end
+                        if (in_msgType && payloadLen<=MaxPayloadLen) begin
+                            if ()
+                            in_payloadLen <= payloadLen;
+                            in_substate <= 2;
+                        end
+                    end
+                    
+                    2: begin
+                        
+                    end
+                    endcase
+                    
+                    
+                    // inq_writeTrigger <= 1;
+                    // inq_writeData <= in_shiftReg[7:0];
                 end else begin
-                    inq_writeTrigger <= 0;
-                    inCmd <= (inCmd<<1)|debug_di;
+                    // inq_writeTrigger <= 0;
+                    in_shiftReg <= (in_shiftReg<<1)|debug_di;
                 end
             end
             endcase
             
-            case (outMsgState)
+            case (out_state)
             0: begin
-                // Initialize `outMsgShiftReg` as if it was originally initialized to 1,
+                // Initialize `out_shiftReg` as if it was originally initialized to 1,
                 // so that after the first clock cycle it contains the sentinel.
-                outMsgShiftReg <= 2'b10;
-                outMsgState <= 3;
+                out_shiftReg <= 2'b10;
+                out_state <= 3;
             end
             
             1: begin
-                outMsgShiftReg <= outMsgShiftReg<<1;
+                out_shiftReg <= out_shiftReg<<1;
                 outq_readTrigger <= 0;
                 
                 // If we successfully read a byte, shift it out
                 if (outq_readOK) begin
-                    outMsgShiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
-                    outMsgState <= 2;
+                    out_shiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
+                    out_state <= 2;
                 
                 // Otherwise shift out 2 zero bytes (cmd=Nop, payloadLen=0)
                 end else begin
-                    outMsgShiftReg <= 1;
-                    outMsgState <= 3;
+                    out_shiftReg <= 1;
+                    out_state <= 3;
                 end
             end
             
             // Continue shifting out a byte
             2: begin
-                outMsgShiftReg <= outMsgShiftReg<<1;
-                if (outMsgShiftReg[6:0] == 7'b1000000) begin
+                out_shiftReg <= out_shiftReg<<1;
+                if (out_shiftReg[6:0] == 7'b1000000) begin
                     outq_readTrigger <= 1;
-                    outMsgState <= 1;
+                    out_state <= 1;
                 end
             end
             
             // Shift out 2 zero bytes
             3: begin
-                outMsgShiftReg <= outMsgShiftReg<<1;
-                if (outMsgShiftReg[7:0] == 8'b10000000) begin
-                    outMsgShiftReg <= 1;
-                    outMsgState <= 2;
+                out_shiftReg <= out_shiftReg<<1;
+                if (out_shiftReg[7:0] == 8'b10000000) begin
+                    out_shiftReg <= 1;
+                    out_state <= 2;
                 end
             end
             endcase
@@ -206,96 +235,96 @@ endmodule
 
 
 
-module PixController #(
-    parameter ExtClkFreq = 12000000,    // Image sensor's external clock frequency
-    parameter ClkFreq = 12000000        // `clk` frequency
-)(
-    input wire          clk,
-    
-    output reg          pix_rst_,
-    
-    input wire          pix_dclk,
-    input wire[11:0]    pix_d,
-    input wire          pix_fv,
-    input wire          pix_lv,
-    
-    output wire         pix_sclk,
-    inout wire          pix_sdata
-);
-    // Clocks() returns the value to store in a counter, such that when
-    // the counter reaches 0, the given time has elapsed.
-    function [63:0] Clocks;
-        input [63:0] t;
-        input [63:0] sub;
-        begin
-            Clocks = (t*ClkFreq)/1000000000;
-            if (Clocks >= sub) Clocks = Clocks-sub;
-            else Clocks = 0;
-        end
-    endfunction
-    
-    function [63:0] Max;
-        input [63:0] a;
-        input [63:0] b;
-        Max = (a > b ? a : b);
-    endfunction
-    
-    // Clocks for EXTCLK to settle
-    // EXTCLK (the SiTime 12MHz clock) takes up to 150ms to settle,
-    // but ice40 configuration takes 70 ms, so we only need to wait 80 ms.
-    localparam SettleClocks = Clocks(80000000, 0);
-    // Clocks to assert pix_rst_ (1ms)
-    localparam ResetClocks = Clocks(1000000, 0);
-    // Clocks to wait for sensor to initialize (150k EXTCLKs)
-    localparam InitClocks = Clocks(((150000*1000000000)/ExtClkFreq), 0);
-    // Width of `delay`
-    localparam DelayWidth = Max(Max($clog2(SettleClocks+1), $clog2(ResetClocks+1)), $clog2(InitClocks+1));
-    
-    reg[1:0] state = 0;
-    reg[DelayWidth-1:0] delay = 0;
-    always @(posedge clk) begin
-        case (state)
-        
-        // Wait for EXTCLK to settle
-        0: begin
-            pix_rst_ <= 1;
-            delay <= SettleClocks;
-            state <= 1;
-        end
-        
-        // Assert pix_rst_ for ResetClocks (1ms)
-        1: begin
-            if (delay) begin
-                delay <= delay-1;
-            end else begin
-                pix_rst_ <= 0;
-                delay <= ResetClocks;
-                state <= 2;
-            end
-        end
-        
-        // Deassert pix_rst_ and wait InitClocks
-        2: begin
-            if (delay) begin
-                delay <= delay-1;
-            end else begin
-                pix_rst_ <= 1;
-                delay <= InitClocks;
-                state <= 3;
-            end
-        end
-        
-        3: begin
-            // - Write R0x3052 = 0xA114 to configure the internal register initialization process.
-            // - Write R0x304A = 0x0070 to start the internal register initialization process.
-            // - Wait 150,000 EXTCLK periods
-            // - Configure PLL, output, and image settings to desired values.
-            // - Wait 1ms for the PLL to lock.
-            // - Set streaming mode (R0x301A[2] = 1).
-        end
-        endcase
-    end
-endmodule
+// module PixController #(
+//     parameter ExtClkFreq = 12000000,    // Image sensor's external clock frequency
+//     parameter ClkFreq = 12000000        // `clk` frequency
+// )(
+//     input wire          clk,
+//
+//     output reg          pix_rst_,
+//
+//     input wire          pix_dclk,
+//     input wire[11:0]    pix_d,
+//     input wire          pix_fv,
+//     input wire          pix_lv,
+//
+//     output wire         pix_sclk,
+//     inout wire          pix_sdata
+// );
+//     // Clocks() returns the value to store in a counter, such that when
+//     // the counter reaches 0, the given time has elapsed.
+//     function [63:0] Clocks;
+//         input [63:0] t;
+//         input [63:0] sub;
+//         begin
+//             Clocks = (t*ClkFreq)/1000000000;
+//             if (Clocks >= sub) Clocks = Clocks-sub;
+//             else Clocks = 0;
+//         end
+//     endfunction
+//
+//     function [63:0] Max;
+//         input [63:0] a;
+//         input [63:0] b;
+//         Max = (a > b ? a : b);
+//     endfunction
+//
+//     // Clocks for EXTCLK to settle
+//     // EXTCLK (the SiTime 12MHz clock) takes up to 150ms to settle,
+//     // but ice40 configuration takes 70 ms, so we only need to wait 80 ms.
+//     localparam SettleClocks = Clocks(80000000, 0);
+//     // Clocks to assert pix_rst_ (1ms)
+//     localparam ResetClocks = Clocks(1000000, 0);
+//     // Clocks to wait for sensor to initialize (150k EXTCLKs)
+//     localparam InitClocks = Clocks(((150000*1000000000)/ExtClkFreq), 0);
+//     // Width of `delay`
+//     localparam DelayWidth = Max(Max($clog2(SettleClocks+1), $clog2(ResetClocks+1)), $clog2(InitClocks+1));
+//
+//     reg[1:0] state = 0;
+//     reg[DelayWidth-1:0] delay = 0;
+//     always @(posedge clk) begin
+//         case (state)
+//
+//         // Wait for EXTCLK to settle
+//         0: begin
+//             pix_rst_ <= 1;
+//             delay <= SettleClocks;
+//             state <= 1;
+//         end
+//
+//         // Assert pix_rst_ for ResetClocks (1ms)
+//         1: begin
+//             if (delay) begin
+//                 delay <= delay-1;
+//             end else begin
+//                 pix_rst_ <= 0;
+//                 delay <= ResetClocks;
+//                 state <= 2;
+//             end
+//         end
+//
+//         // Deassert pix_rst_ and wait InitClocks
+//         2: begin
+//             if (delay) begin
+//                 delay <= delay-1;
+//             end else begin
+//                 pix_rst_ <= 1;
+//                 delay <= InitClocks;
+//                 state <= 3;
+//             end
+//         end
+//
+//         3: begin
+//             // - Write R0x3052 = 0xA114 to configure the internal register initialization process.
+//             // - Write R0x304A = 0x0070 to start the internal register initialization process.
+//             // - Wait 150,000 EXTCLK periods
+//             // - Configure PLL, output, and image settings to desired values.
+//             // - Wait 1ms for the PLL to lock.
+//             // - Set streaming mode (R0x301A[2] = 1).
+//         end
+//         endcase
+//     end
+// endmodule
 
 
 
