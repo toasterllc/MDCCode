@@ -1,33 +1,29 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 `include "../AFIFO.v"
-`include "../SDRAMController.v"
+// `include "../SDRAMController.v"
 
 module Debug(
-    input wire                              clk,
+    input wire                      clk,
     
-    output wire[7:0]                        msgIn_type,
-    output wire[7:0]                        msgIn_payloadLen,
-    output wire[(MsgMaxPayloadLen*8)-1:0]   msgIn_payload,
-    output wire                             msgIn_ready,
-    input wire                              msgIn_trigger,
+    output wire[(MsgMaxLen*8)-1:0]  msgIn_data,
+    output wire                     msgIn_ready,
+    input wire                      msgIn_trigger,
     
-    input wire[7:0]                         msgOut_type,
-    input wire[7:0]                         msgOut_payloadLen,
-    input wire[7:0]                         msgOut_payload,
-    output reg                              msgOut_payloadTrigger = 0,
+    input wire[7:0]                 msgOut_type,
+    input wire[7:0]                 msgOut_payloadLen,
+    input wire[7:0]                 msgOut_payload,
+    output reg                      msgOut_payloadTrigger = 0,
     
-    input wire                              debug_clk,
-    input wire                              debug_di,
-    output wire                             debug_do
+    input wire                      debug_clk,
+    input wire                      debug_di,
+    output wire                     debug_do
 );
     localparam MsgHeaderLen = 2; // Message header length (bytes)
     localparam MsgMaxPayloadLen = 4; // Max payload length (bytes)
     localparam MsgMaxLen = MsgHeaderLen+MsgMaxPayloadLen;
     
-    assign msgIn_type = inq_readData[0*8+:8];
-    assign msgIn_payloadLen = inq_readData[1*8+:8];
-    assign msgIn_payload = inq_readData[2*8+:MsgMaxPayloadLen*8];
+    assign msgIn_data = inq_readData;
     assign msgIn_ready = inq_readOK;
     
     // ====================
@@ -191,12 +187,12 @@ module Debug(
                         2: serialIn_msg[(2+2)*8+:8] <= serialIn_byte;
                         3: serialIn_msg[(3+2)*8+:8] <= serialIn_byte;
                         endcase
-                        
-                        serialIn_payloadCounter <= serialIn_payloadCounter+1;
                     end
+                    serialIn_payloadCounter <= serialIn_payloadCounter+1;
                 end
             
             end else begin
+                // $display("Received message: msgType=%0d, payloadLen=%0d", serialIn_msgType, serialIn_payloadLen);
                 // Only transmit non-nop messages
                 if (serialIn_msgType) begin
                     inq_writeTrigger <= 1;
@@ -223,7 +219,7 @@ module Debug(
                 serialOut_byte <= {outq_readData, 1'b1}; // Add sentinel to the end
                 serialOut_state <= 2;
             
-            // Otherwise shift out 2 zero bytes (cmd=Nop, payloadLen=0)
+            // Otherwise shift out 2 zero bytes (msgType=Nop, payloadLen=0)
             end else begin
                 serialOut_byte <= 1;
                 serialOut_state <= 3;
@@ -367,326 +363,362 @@ module Top(
     input wire          debug_di,
     output wire         debug_do
 );
-//     // ====================
-//     // Clock PLL (54.750 MHz)
-//     // ====================
-//     localparam ClockFrequency = 54750000;
-//     wire clk;
-//     ClockGen #(
-//         .FREQ(ClockFrequency),
-//         .DIVR(0),
-//         .DIVF(72),
-//         .DIVQ(4),
-//         .FILTER_RANGE(1)
-//     ) cg(.clk12mhz(clk12mhz), .clk(clk));
-//
-//
-//
-//
-//
-//
-//
-//     // ====================
-//     // SDRAM controller
-//     // ====================
-//     localparam RAM_Size = 'h2000000;
-//     localparam RAM_AddrWidth = 25;
-//     localparam RAM_DataWidth = 16;
-//
-//     // RAM controller
-//     wire                    ram_cmdReady;
-//     reg                     ram_cmdTrigger = 0;
-//     reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
-//     reg                     ram_cmdWrite = 0;
-//     reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
-//     wire[RAM_DataWidth-1:0] ram_cmdReadData;
-//     wire                    ram_cmdReadDataValid;
-//
-//     SDRAMController #(
-//         .ClockFrequency(ClockFrequency)
-//     ) sdramController(
-//         .clk(clk),
-//
-//         .cmdReady(ram_cmdReady),
-//         .cmdTrigger(ram_cmdTrigger),
-//         .cmdAddr(ram_cmdAddr),
-//         .cmdWrite(ram_cmdWrite),
-//         .cmdWriteData(ram_cmdWriteData),
-//         .cmdReadData(ram_cmdReadData),
-//         .cmdReadDataValid(ram_cmdReadDataValid),
-//
-//         .ram_clk(ram_clk),
-//         .ram_cke(ram_cke),
-//         .ram_ba(ram_ba),
-//         .ram_a(ram_a),
-//         .ram_cs_(ram_cs_),
-//         .ram_ras_(ram_ras_),
-//         .ram_cas_(ram_cas_),
-//         .ram_we_(ram_we_),
-//         .ram_dqm(ram_dqm),
-//         .ram_dq(ram_dq)
-//     );
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//     // ====================
-//     // Debug I/O
-//     // ====================
-//     localparam CmdNop       = 8'h00;
-//     localparam CmdLEDOff    = 8'h80;
-//     localparam CmdLEDOn     = 8'h81;
-//     localparam CmdReadMem   = 8'h82;
-//
-//     wire[7:0] debug_cmd;
-//     wire debug_cmdReady;
-//     reg debug_cmdTrigger = 0;
-//
-//     reg[7:0] debug_msg = 0;
-//     reg[8:0] debug_msgLen = 0;
-//     wire debug_msgTrigger;
-//
-//     Debug debug(
-//         .clk(clk),
-//
-//         .cmd(debug_cmd),
-//         .cmdReady(debug_cmdReady),
-//         .cmdTrigger(debug_cmdTrigger),
-//
-//         .msg(debug_msg),
-//         .msgLen(debug_msgLen),
-//         .msgTrigger(debug_msgTrigger),
-//
-//         .debug_clk(debug_clk),
-//         .debug_cs(debug_cs),
-//         .debug_di(debug_di),
-//         .debug_do(debug_do)
-//     );
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//     // ====================
-//     // Main
-//     // ====================
-//     function [15:0] DataFromAddr;
-//         input [24:0] addr;
-//         // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-//         DataFromAddr = addr[15:0];
-//         // DataFromAddr = 16'hFFFF;
-//         // DataFromAddr = 16'h0000;
-//         // DataFromAddr = 16'h7832;
-//     endfunction
-//
-//     function [63:0] Min;
-//         input [63:0] a;
-//         input [63:0] b;
-//         Min = (a < b ? a : b);
-//     endfunction
-//
-//     reg[3:0] state = 0;
-//     reg[7:0] mem[255:0];
-//     reg[7:0] memLen = 0;
-//     reg[7:0] memCounter = 0;
-//     reg[7:0] memCounterRecv = 0;
-//
-//     reg[7:0] cmd = CmdNop;
-//     always @(posedge clk) begin
-//         case (state)
-//
-//         // Initialize the SDRAM
-//         0: begin
-//             if (!ram_cmdTrigger) begin
-//                 ram_cmdTrigger <= 1;
-//                 ram_cmdAddr <= 0;
-//                 ram_cmdWrite <= 1;
-//                 ram_cmdWriteData <= DataFromAddr(0);
-//
-//             end else if (ram_cmdReady) begin
-//                 ram_cmdAddr <= ram_cmdAddr+1;
-//                 ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-//
-//                 if (ram_cmdAddr == RAM_Size-1) begin
-//                     ram_cmdTrigger <= 0;
-//                     state <= 1;
-//                 end
-//             end
-//         end
-//
-//         // Accept new command
-//         1: begin
-//             debug_cmdTrigger <= 1;
-//             if (debug_cmdTrigger && debug_cmdReady) begin
-//                 debug_cmdTrigger <= 0;
-//                 cmd <= debug_cmd;
-//                 state <= 2;
-//             end
-//         end
-//
-//         // Handle new command
-//         2: begin
-//             // By default go to state 3 next
-//             state <= 3;
-//
-//             case (cmd)
-//             default: begin
-//                 debug_msg <= cmd;
-//                 debug_msgLen <= 255;
-//             end
-//
-//             CmdLEDOff: begin
-//                 led[0] <= 0;
-//                 debug_msg <= cmd;
-//                 debug_msgLen <= 255;
-//             end
-//
-//             CmdLEDOn: begin
-//                 led[0] <= 1;
-//                 debug_msg <= cmd;
-//                 debug_msgLen <= 255;
-//             end
-//
-//             CmdReadMem: begin
-//                 ram_cmdAddr <= 0;
-//                 ram_cmdWrite <= 0;
-//                 state <= 4;
-//             end
-//             endcase
-//         end
-//
-//         // Wait while the message is being sent
-//         3: begin
-//             if (debug_msgTrigger) begin
-//                 if (debug_msgLen) begin
-//                     debug_msg <= 8'hff-debug_msgLen+1;
-//                     debug_msgLen <= debug_msgLen-1;
-//                 end else begin
-//                     state <= 1;
-//                 end
-//             end
-//         end
-//
-//         // Start reading memory
-//         4: begin
-//             ram_cmdTrigger <= 1;
-//             memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-//             memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-//             memLen <= 8'h00;
-//             state <= 5;
-//         end
-//
-//         // Continue reading memory
-//         5: begin
-//             // Handle the read being accepted
-//             if (ram_cmdReady && memCounter) begin
-//                 ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
-//                 memCounter <= memCounter-1;
-//
-//                 // Stop reading
-//                 if (memCounter == 1) begin
-//                     ram_cmdTrigger <= 0;
-//                 end
-//             end
-//
-//             // Writing incoming data into `mem`
-//             if (ram_cmdReadDataValid) begin
-//                 mem[memLen] <= ram_cmdReadData[7:0];
-//                 mem[memLen+1] <= ram_cmdReadData[15:8];
-//                 memLen <= memLen+2;
-//                 memCounterRecv <= memCounterRecv-1;
-//
-//                 // Next state after we've received all the bytes
-//                 if (memCounterRecv == 1) begin
-//                     state <= 6;
-//                 end
-//             end
-//         end
-//
-//         // Start sending the data
-//         6: begin
-//             debug_msg <= CmdReadMem;
-//             debug_msgLen <= memLen+1;
-//             memCounter <= 0;
-//             state <= 7;
-//         end
-//
-//         // Send the data
-//         7: begin
-//             // Continue sending data
-//             if (debug_msgTrigger) begin
-//                 if (debug_msgLen) begin
-//                     debug_msg <= mem[memCounter];
-//                     debug_msgLen <= debug_msgLen-1;
-//                     memCounter <= memCounter+1;
-//                 end else begin
-//                     // We're finished with this chunk.
-//                     // Start on the next chunk, or stop if we've read everything.
-//                     if (ram_cmdAddr == 0) begin
-//                         state <= 1;
-//                     end else begin
-//                         state <= 4;
-//                     end
-//                 end
-//             end
-//         end
-//         endcase
-//     end
-//
-//
-// `ifdef SIM
-//     reg sim_debug_clk = 0;
-//     reg sim_debug_cs = 0;
-//     reg[7:0] sim_debug_di_shiftReg = 0;
-//
-//     assign debug_clk = sim_debug_clk;
-//     assign debug_cs = sim_debug_cs;
-//     assign debug_di = sim_debug_di_shiftReg[7];
-//     initial begin
-//         $dumpfile("top.vcd");
-//         $dumpvars(0, Top);
-//
-//         // Wait for ClockGen to start its clock
-//         wait(clk);
-//         #100;
-//
-//         wait (!sim_debug_clk);
-//         sim_debug_cs = 1;
-//         sim_debug_di_shiftReg = CmdLEDOn;
-//
-//         repeat (8) begin
-//             wait (sim_debug_clk);
-//             wait (!sim_debug_clk);
-//             sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
-//         end
-//
-//         #1000000;
-//         $finish;
-//     end
-//
-//     initial begin
-//         forever begin
-//             sim_debug_clk = 0;
-//             #10;
-//             sim_debug_clk = 1;
-//             #10;
-//         end
-//     end
-// `endif
+    // ====================
+    // Clock PLL (54.750 MHz)
+    // ====================
+    localparam ClockFrequency = 54750000;
+    wire clk;
+    ClockGen #(
+        .FREQ(ClockFrequency),
+        .DIVR(0),
+        .DIVF(72),
+        .DIVQ(4),
+        .FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(clk));
+
+
+
+
+
+
+    //
+    // // ====================
+    // // SDRAM controller
+    // // ====================
+    // localparam RAM_Size = 'h2000000;
+    // localparam RAM_AddrWidth = 25;
+    // localparam RAM_DataWidth = 16;
+    //
+    // // RAM controller
+    // wire                    ram_cmdReady;
+    // reg                     ram_cmdTrigger = 0;
+    // reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
+    // reg                     ram_cmdWrite = 0;
+    // reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
+    // wire[RAM_DataWidth-1:0] ram_cmdReadData;
+    // wire                    ram_cmdReadDataValid;
+    //
+    // SDRAMController #(
+    //     .ClockFrequency(ClockFrequency)
+    // ) sdramController(
+    //     .clk(clk),
+    //
+    //     .cmdReady(ram_cmdReady),
+    //     .cmdTrigger(ram_cmdTrigger),
+    //     .cmdAddr(ram_cmdAddr),
+    //     .cmdWrite(ram_cmdWrite),
+    //     .cmdWriteData(ram_cmdWriteData),
+    //     .cmdReadData(ram_cmdReadData),
+    //     .cmdReadDataValid(ram_cmdReadDataValid),
+    //
+    //     .ram_clk(ram_clk),
+    //     .ram_cke(ram_cke),
+    //     .ram_ba(ram_ba),
+    //     .ram_a(ram_a),
+    //     .ram_cs_(ram_cs_),
+    //     .ram_ras_(ram_ras_),
+    //     .ram_cas_(ram_cas_),
+    //     .ram_we_(ram_we_),
+    //     .ram_dqm(ram_dqm),
+    //     .ram_dq(ram_dq)
+    // );
+
+
+
+
+
+
+
+
+
+
+
+
+    // ====================
+    // Debug I/O
+    // ====================
+    localparam MsgType_Nop              = 8'h00;
+    localparam MsgType_SetLED           = 8'h01;
+    localparam MsgType_ReadMem          = 8'h02;
+    localparam MsgType_PixReadReg8      = 8'h03;
+    localparam MsgType_PixReadReg16     = 8'h04;
+    localparam MsgType_PixWriteReg8     = 8'h05;
+    localparam MsgType_PixWriteReg16    = 8'h06;
+    
+    wire[(6*8)-1:0] debug_msgIn_data;
+    wire debug_msgIn_ready;
+    reg debug_msgIn_trigger = 0;
+    
+    reg[7:0] debug_msgOut_type = 0;
+    reg[7:0] debug_msgOut_payloadLen = 0;
+    reg[7:0] debug_msgOut_payload = 0;
+    reg debug_msgOut_payloadTrigger;
+    Debug debug(
+        .clk(clk),
+        
+        .msgIn_data(debug_msgIn_data),
+        .msgIn_ready(debug_msgIn_ready),
+        .msgIn_trigger(debug_msgIn_trigger),
+        
+        .msgOut_type(debug_msgOut_type),
+        .msgOut_payloadLen(debug_msgOut_payloadLen),
+        .msgOut_payload(debug_msgOut_payload),
+        .msgOut_payloadTrigger(debug_msgOut_payloadTrigger),
+        
+        .debug_clk(debug_clk),
+        .debug_di(debug_di),
+        .debug_do(debug_do)
+    );
+    
+    // ====================
+    // Main
+    // ====================
+    // function [15:0] DataFromAddr;
+    //     input [24:0] addr;
+    //     // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+    //     DataFromAddr = addr[15:0];
+    //     // DataFromAddr = 16'hFFFF;
+    //     // DataFromAddr = 16'h0000;
+    //     // DataFromAddr = 16'h7832;
+    // endfunction
+    //
+    // function [63:0] Min;
+    //     input [63:0] a;
+    //     input [63:0] b;
+    //     Min = (a < b ? a : b);
+    // endfunction
+    
+    reg[3:0] state = 0;
+    reg[7:0] msgInType = 0;
+    reg[4*8-1:0] msgInPayload = 0;
+    reg[7:0] mem[255:0];
+    reg[7:0] memLen = 0;
+    reg[7:0] memCounter = 0;
+    reg[7:0] memCounterRecv = 0;
+    always @(posedge clk) begin
+        case (state)
+        
+        // Initialize the SDRAM
+        0: begin
+            // if (!ram_cmdTrigger) begin
+            //     ram_cmdTrigger <= 1;
+            //     ram_cmdAddr <= 0;
+            //     ram_cmdWrite <= 1;
+            //     ram_cmdWriteData <= DataFromAddr(0);
+            //
+            // end else if (ram_cmdReady) begin
+            //     ram_cmdAddr <= ram_cmdAddr+1;
+            //     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+            //
+            //     if (ram_cmdAddr == RAM_Size-1) begin
+            //         ram_cmdTrigger <= 0;
+            //         state <= 1;
+            //     end
+            // end
+            
+            state <= 1;
+        end
+        
+        // Accept new command
+        1: begin
+            debug_msgIn_trigger <= 1;
+            if (debug_msgIn_trigger && debug_msgIn_ready) begin
+                debug_msgIn_trigger <= 0;
+                
+                msgInType <= debug_msgIn_data[0*8+:8];
+                msgInPayload <= debug_msgIn_data[2*8+:4*8];
+                
+                state <= 2;
+            end
+        end
+        
+        // Handle new command
+        2: begin
+            // By default go to state 3 next
+            state <= 3;
+            
+            case (msgInType)
+            default: begin
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 255;
+                debug_msgOut_payload <= 0;
+            end
+            
+            MsgType_SetLED: begin
+                $display("Set LED: %0d", msgInPayload[0]);
+                led[0] <= msgInPayload[0];
+                
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 255;
+                debug_msgOut_payload <= 0;
+            end
+            
+            // CmdReadMem: begin
+            //     ram_cmdAddr <= 0;
+            //     ram_cmdWrite <= 0;
+            //     state <= 4;
+            // end
+            
+            MsgType_PixReadReg8: begin
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 255;
+                debug_msgOut_payload <= 0;
+            end
+            
+            MsgType_PixReadReg16: begin
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 255;
+                debug_msgOut_payload <= 0;
+            end
+            
+            MsgType_PixWriteReg8: begin
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 255;
+                debug_msgOut_payload <= 0;
+            end
+            
+            MsgType_PixWriteReg16: begin
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 255;
+                debug_msgOut_payload <= 0;
+            end
+            endcase
+        end
+        
+        // Wait while the message is being sent
+        3: begin
+            if (debug_msgOut_payloadTrigger) begin
+                if (debug_msgOut_payloadLen) begin
+                    debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
+                    debug_msgOut_payload <= debug_msgOut_payload+1;
+                end else begin
+                    state <= 1;
+                end
+            end
+        end
+        
+        // // Start reading memory
+        // 4: begin
+        //     ram_cmdTrigger <= 1;
+        //     memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+        //     memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+        //     memLen <= 8'h00;
+        //     state <= 5;
+        // end
+        //
+        // // Continue reading memory
+        // 5: begin
+        //     // Handle the read being accepted
+        //     if (ram_cmdReady && memCounter) begin
+        //         ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
+        //         memCounter <= memCounter-1;
+        //
+        //         // Stop reading
+        //         if (memCounter == 1) begin
+        //             ram_cmdTrigger <= 0;
+        //         end
+        //     end
+        //
+        //     // Writing incoming data into `mem`
+        //     if (ram_cmdReadDataValid) begin
+        //         mem[memLen] <= ram_cmdReadData[7:0];
+        //         mem[memLen+1] <= ram_cmdReadData[15:8];
+        //         memLen <= memLen+2;
+        //         memCounterRecv <= memCounterRecv-1;
+        //
+        //         // Next state after we've received all the bytes
+        //         if (memCounterRecv == 1) begin
+        //             state <= 6;
+        //         end
+        //     end
+        // end
+        //
+        // // Start sending the data
+        // 6: begin
+        //     debug_msg <= CmdReadMem;
+        //     debug_msgLen <= memLen+1;
+        //     memCounter <= 0;
+        //     state <= 7;
+        // end
+        //
+        // // Send the data
+        // 7: begin
+        //     // Continue sending data
+        //     if (debug_msgTrigger) begin
+        //         if (debug_msgLen) begin
+        //             debug_msg <= mem[memCounter];
+        //             debug_msgLen <= debug_msgLen-1;
+        //             memCounter <= memCounter+1;
+        //         end else begin
+        //             // We're finished with this chunk.
+        //             // Start on the next chunk, or stop if we've read everything.
+        //             if (ram_cmdAddr == 0) begin
+        //                 state <= 1;
+        //             end else begin
+        //                 state <= 4;
+        //             end
+        //         end
+        //     end
+        // end
+        endcase
+    end
+    
+    
+`ifdef SIM
+    reg sim_debug_clk = 0;
+    reg[7:0] sim_debug_di_shiftReg = 0;
+    
+    assign debug_clk = sim_debug_clk;
+    assign debug_di = sim_debug_di_shiftReg[7];
+    // assign debug_di = 1;
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        
+        wait (!sim_debug_clk);
+
+
+        sim_debug_di_shiftReg = MsgType_SetLED;
+        repeat (8) begin
+            wait (sim_debug_clk);
+            wait (!sim_debug_clk);
+            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
+        end
+
+        sim_debug_di_shiftReg = 1;
+        repeat (8) begin
+            wait (sim_debug_clk);
+            wait (!sim_debug_clk);
+            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
+        end
+        
+        sim_debug_di_shiftReg = 1;
+        repeat (8) begin
+            wait (sim_debug_clk);
+            wait (!sim_debug_clk);
+            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
+        end
+        
+        #10000;
+        $finish;
+    end
+
+    initial begin
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        
+        forever begin
+            sim_debug_clk = 0;
+            #10;
+            sim_debug_clk = 1;
+            #10;
+        end
+    end
+`endif
     
 endmodule

@@ -102,7 +102,7 @@ module Top(
 
             state <= 3;
         end
-
+        
         // Wait for the I2C transaction to complete
         3: begin
             if (cmd_done) begin
