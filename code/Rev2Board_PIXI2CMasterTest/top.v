@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
-`include "../PIXI2CMaster.v"
+`include "../PixI2CMaster.v"
 
 module Top(
     input wire          clk12mhz,
@@ -42,7 +42,7 @@ module Top(
     wire        cmd_done;
     wire        cmd_ok;
     
-    PIXI2CMaster #(
+    PixI2CMaster #(
         .ClkFreq(ClkFreq),
         .I2CClkFreq(400000)
     

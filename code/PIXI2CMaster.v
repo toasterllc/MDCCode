@@ -1,4 +1,4 @@
-module PIXI2CMaster #(
+module PixI2CMaster #(
     parameter ClkFreq = 12000000,   // `clk` frequency
     parameter I2CClkFreq = 400000   // `i2c_clk` frequency
 )(
