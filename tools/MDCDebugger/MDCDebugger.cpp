@@ -73,17 +73,28 @@ public:
         }
     };
     
-    struct PixRegReadMsg : Msg {
-        PixRegReadMsg() : Msg{.type=0x03, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct PixReadReg8Msg : Msg {
+        PixReadReg8Msg() : Msg{.type=0x03, .len=sizeof(*this)-sizeof(Msg)} {}
         uint16_t addr = 0;
-        uint8_t width = 0;
+        uint8_t val = 0;
     };
     
-    struct PixRegWriteMsg : Msg {
-        PixRegWriteMsg() : Msg{.type=0x04, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct PixReadReg16Msg : Msg {
+        PixReadReg16Msg() : Msg{.type=0x04, .len=sizeof(*this)-sizeof(Msg)} {}
         uint16_t addr = 0;
         uint16_t val = 0;
-        uint8_t width = 0;
+    };
+    
+    struct PixWriteReg8Msg : Msg {
+        PixWriteReg8Msg() : Msg{.type=0x05, .len=sizeof(*this)-sizeof(Msg)} {}
+        uint16_t addr = 0;
+        uint8_t val = 0;
+    };
+    
+    struct PixWriteReg16Msg : Msg {
+        PixWriteReg16Msg() : Msg{.type=0x06, .len=sizeof(*this)-sizeof(Msg)} {}
+        uint16_t addr = 0;
+        uint16_t val = 0;
     };
     
     using MsgPtr = std::unique_ptr<Msg>;
@@ -321,8 +332,10 @@ public:
         if (type == NopMsg{}.type) return std::make_unique<NopMsg>();
         if (type == SetLEDMsg{}.type) return std::make_unique<SetLEDMsg>();
         if (type == ReadMemMsg{}.type) return std::make_unique<ReadMemMsg>();
-        if (type == PixRegReadMsg{}.type) return std::make_unique<PixRegReadMsg>();
-        if (type == PixRegWriteMsg{}.type) return std::make_unique<PixRegWriteMsg>();
+        if (type == PixReadReg8Msg{}.type) return std::make_unique<PixReadReg8Msg>();
+        if (type == PixReadReg16Msg{}.type) return std::make_unique<PixReadReg16Msg>();
+        if (type == PixWriteReg8Msg{}.type) return std::make_unique<PixWriteReg8Msg>();
+        if (type == PixWriteReg8Msg{}.type) return std::make_unique<PixWriteReg8Msg>();
         return nullptr;
     }
     
