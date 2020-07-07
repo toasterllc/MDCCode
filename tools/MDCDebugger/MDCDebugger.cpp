@@ -490,49 +490,51 @@ int main() {
     
     auto device = std::make_unique<MDCDevice>();
     
-    printf("Running trials...\n");
-    for (uint64_t trial=0;; trial++) {
-//        device->write(Cmd::LEDOn);
-        device->write(ReadMemMsg{});
-        
-        auto startTime = CurrentTime();
-        size_t dataLen = 0;
-        std::optional<uint16_t> lastVal;
-        for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
-            if (auto msgPtr = Msg::Cast<ReadMemMsg>(device->read())) {
-                const ReadMemMsg& msg = *msgPtr;
-                if (!(msg.len % 2)) {
-                    for (size_t i=0; i<msg.len; i+=2) {
-                        uint16_t val;
-                        memcpy(&val, msg.mem+i, sizeof(val));
-                        if (lastVal) {
-                            uint16_t expected = (uint16_t)(*lastVal+1);
-                            if (val != expected) {
-                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
-                            }
-                        }
-                        lastVal = val;
-                    }
-                } else {
-                    printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.len);
-                }
-                
-                dataLen += msg.len;
-    //            if (!(msgCount % 4000)) {
-    //                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
-    //            }
-            }
-        }
-        auto stopTime = CurrentTime();
-        
-        if (dataLen != RAMSize) {
-            printf("  Error: data length mismatch: expected 0x%jx, got 0x%jx\n",
-                (uintmax_t)RAMSize, (uintmax_t)dataLen);
-        }
-        
-        printf("Trial complete | Trial: %06ju | Duration: %ju ms\n",
-            (uintmax_t)trial, (uintmax_t)TimeDurationMs(startTime, stopTime));
-    }
+    device->write(MDCDevice::SetLEDMsg{.on = true});
+    
+//    printf("Running trials...\n");
+//    for (uint64_t trial=0;; trial++) {
+////        device->write(Cmd::LEDOn);
+//        device->write(ReadMemMsg{});
+//        
+//        auto startTime = CurrentTime();
+//        size_t dataLen = 0;
+//        std::optional<uint16_t> lastVal;
+//        for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
+//            if (auto msgPtr = Msg::Cast<ReadMemMsg>(device->read())) {
+//                const ReadMemMsg& msg = *msgPtr;
+//                if (!(msg.len % 2)) {
+//                    for (size_t i=0; i<msg.len; i+=2) {
+//                        uint16_t val;
+//                        memcpy(&val, msg.mem+i, sizeof(val));
+//                        if (lastVal) {
+//                            uint16_t expected = (uint16_t)(*lastVal+1);
+//                            if (val != expected) {
+//                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+//                            }
+//                        }
+//                        lastVal = val;
+//                    }
+//                } else {
+//                    printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.len);
+//                }
+//                
+//                dataLen += msg.len;
+//    //            if (!(msgCount % 4000)) {
+//    //                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
+//    //            }
+//            }
+//        }
+//        auto stopTime = CurrentTime();
+//        
+//        if (dataLen != RAMSize) {
+//            printf("  Error: data length mismatch: expected 0x%jx, got 0x%jx\n",
+//                (uintmax_t)RAMSize, (uintmax_t)dataLen);
+//        }
+//        
+//        printf("Trial complete | Trial: %06ju | Duration: %ju ms\n",
+//            (uintmax_t)trial, (uintmax_t)TimeDurationMs(startTime, stopTime));
+//    }
     
     return 0;
 }
