@@ -73,13 +73,13 @@ public:
         }
         
         MsgHdr hdr{.type=0x00, .len=sizeof(*this)-sizeof(MsgHdr)};
-    };
+    } __attribute__((packed));
     
     struct SetLEDMsg {
         MsgHdr hdr{.type=0x01, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t on = 0;
 //        uint8_t payload[255];
-    };
+    } __attribute__((packed));
     
     struct ReadMemMsg {
         MsgHdr hdr{.type=0x02, .len=0}; // Special case `len` in this case
@@ -99,21 +99,21 @@ public:
             d << "]\n}\n\n";
             return d.str();
         }
-    };
+    } __attribute__((packed));
     
     struct PixReg8Msg {
         MsgHdr hdr{.type=0x03, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t write = 0;
         uint16_t addr = 0;
         uint8_t val = 0;
-    };
+    } __attribute__((packed));
     
     struct PixReg16Msg {
         MsgHdr hdr{.type=0x04, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t write = 0;
         uint16_t addr = 0;
-        uint8_t val = 0;
-    };
+        uint16_t val = 0;
+    } __attribute__((packed));
     
     using MsgPtr = std::unique_ptr<Msg>;
     
