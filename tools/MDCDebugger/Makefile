@@ -1,6 +1,6 @@
 NAME        = MDCDebugger
 OBJECTS     = MDCDebugger.o
-CXX         = g++
+CXX         = clang++
 CXXFLAGS    = -O2 -g -Wall -Wno-narrowing -std=c++17
 LFLAGS      = -lftdi1
 

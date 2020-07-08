@@ -15,46 +15,73 @@
 
 class MDCDevice {
 public:
-    enum class Pin : uint8_t {
-        CLK     = 1<<0,
-        DO      = 1<<1,
-        DI      = 1<<2,
-        UNUSED1 = 1<<3,
-        CS      = 1<<4,
-        UNUSED2 = 1<<5,
-        CDONE   = 1<<6,
-        CRST_   = 1<<7,
+    struct Pin {
+        uint8_t bit = 0;
+        uint8_t dir = 0;
+        uint8_t val = 0;
+        
+        uint8_t dirBit() const { return (dir ? bit : 0); }
+        uint8_t valBit() const { return (val ? bit : 0); }
+    };
+    
+    struct Pins {
+        Pin CLK     {.bit=1<<0, .dir=1, .val=0};
+        Pin DO      {.bit=1<<1, .dir=1, .val=0};
+        Pin DI      {.bit=1<<2, .dir=0, .val=0};
+        // Unused
+        Pin CS      {.bit=1<<4, .dir=1, .val=0};
+        // Unused
+        Pin CDONE   {.bit=1<<6, .dir=0, .val=0};
+        Pin CRST_   {.bit=1<<7, .dir=1, .val=1};
+    };
+    
+    using MsgType = uint8_t;
+    struct MsgHdr {
+        MsgType type = 0;
+        uint8_t len = 0;
     };
     
     struct Msg {
         template <typename T>
         static std::unique_ptr<T> Cast(std::unique_ptr<Msg> msg) {
-            if (msg && msg->type == T{}.type) return std::unique_ptr<T>((T*)msg.release());
+            if (msg && msg->hdr.type == T{}.hdr.type) return std::unique_ptr<T>((T*)msg.release());
             return nullptr;
         }
         
         template <typename T>
         static T* Cast(Msg* msg) {
-            if (msg->type == T{}.type) return (T*)msg;
+            if (msg->hdr.type == T{}.hdr.type) return (T*)msg;
             return nullptr;
         }
         
-        using Type = uint8_t;
-        Type type = 0;
-        uint8_t len = 0;
+        MsgHdr hdr{.type=0x00, .len=sizeof(*this)-sizeof(MsgHdr)};
     };
     
-    struct NopMsg : Msg {
-        NopMsg() : Msg{.type=0x00, .len=sizeof(*this)-sizeof(Msg)} {}
-    };
+//    struct Msg {
+//        template <typename T>
+//        static std::unique_ptr<T> Cast(std::unique_ptr<Msg> msg) {
+//            if (msg && msg->type == T{}.type) return std::unique_ptr<T>((T*)msg.release());
+//            return nullptr;
+//        }
+//        
+//        template <typename T>
+//        static T* Cast(Msg* msg) {
+//            if (msg->type == T{}.type) return (T*)msg;
+//            return nullptr;
+//        }
+//        
+//        using Type = uint8_t;
+//        Type type = 0;
+//        uint8_t len = 0;
+//    };
     
-    struct SetLEDMsg : Msg {
-        SetLEDMsg() : Msg{.type=0x01, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct SetLEDMsg {
+        MsgHdr hdr{.type=0x01, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t on = 0;
     };
     
-    struct ReadMemMsg : Msg {
-        ReadMemMsg() : Msg{.type=0x02, .len=0} {} // Special case `len` in this case
+    struct ReadMemMsg {
+        MsgHdr hdr{.type=0x02, .len=0}; // Special case `len` in this case
         uint8_t* mem = nullptr;
         
         std::string desc() const {
@@ -63,9 +90,9 @@ public:
             d << std::setfill('0') << std::setw(2);
             
             d << "ReadMemMsg{\n";
-            d << "  type: 0x" << std::hex << (uintmax_t)type << "\n";
-            d << "  payload (len = " << std::dec << (uintmax_t)len << "): [ ";
-            for (size_t i=0; i<len; i++) {
+            d << "  type: 0x" << std::hex << (uintmax_t)hdr.type << "\n";
+            d << "  payload (len = " << std::dec << (uintmax_t)hdr.len << "): [ ";
+            for (size_t i=0; i<hdr.len; i++) {
                 d << std::hex << (uintmax_t)mem[i] << " ";
             }
             d << "]\n}\n\n";
@@ -73,28 +100,18 @@ public:
         }
     };
     
-    struct PixReadReg8Msg : Msg {
-        PixReadReg8Msg() : Msg{.type=0x03, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct PixReg8Msg {
+        MsgHdr hdr{.type=0x03, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint8_t write = 0;
         uint16_t addr = 0;
         uint8_t val = 0;
     };
     
-    struct PixReadReg16Msg : Msg {
-        PixReadReg16Msg() : Msg{.type=0x04, .len=sizeof(*this)-sizeof(Msg)} {}
-        uint16_t addr = 0;
-        uint16_t val = 0;
-    };
-    
-    struct PixWriteReg8Msg : Msg {
-        PixWriteReg8Msg() : Msg{.type=0x05, .len=sizeof(*this)-sizeof(Msg)} {}
+    struct PixReg16Msg {
+        MsgHdr hdr{.type=0x04, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint8_t write = 0;
         uint16_t addr = 0;
         uint8_t val = 0;
-    };
-    
-    struct PixWriteReg16Msg : Msg {
-        PixWriteReg16Msg() : Msg{.type=0x06, .len=sizeof(*this)-sizeof(Msg)} {}
-        uint16_t addr = 0;
-        uint16_t val = 0;
     };
     
     using MsgPtr = std::unique_ptr<Msg>;
@@ -217,12 +234,6 @@ public:
 //        }
 //    };
     
-    struct PinConfig {
-        Pin pin = (Pin)0;
-        uint8_t dir = 0;
-        uint8_t val = 0;
-    };
-    
     MDCDevice() {
         int ir = ftdi_init(&_ftdi);
         assert(!ir);
@@ -295,7 +306,7 @@ public:
             if (!ir) break;
         }
         
-        _resetPinState();
+        _resetPins();
     }
     
     ~MDCDevice() {
@@ -305,20 +316,16 @@ public:
         ftdi_deinit(&_ftdi);
     }
     
-    void _resetPinState() {
-        // ## Reset our pin state
-        _setPins({
-            {.pin=Pin::CLK,     .dir=1,     .val=0},
-            {.pin=Pin::DO,      .dir=1,     .val=0},
-            {.pin=Pin::DI,      .dir=0,     .val=0},
-            {.pin=Pin::CS,      .dir=1,     .val=1},
-            {.pin=Pin::CDONE,   .dir=0,     .val=0},
-            {.pin=Pin::CRST_,   .dir=1,     .val=1},
-        });
+    void _resetPins() {
+        // ## Reset our pins states to make CLK=0 and CS=1
+        Pins pins;
+        pins.CS.val = 1;
+        _setPins(pins);
     }
     
-    void write(const Msg& msg) {
-        const size_t msgSize = sizeof(msg)+msg.len;
+    template <typename T>
+    void write(const T& msg) {
+        const size_t msgSize = sizeof(msg.hdr)+msg.hdr.len;
         uint8_t b[] = {0x31, (uint8_t)((msgSize-1)&0xFF), (uint8_t)(((msgSize-1)&0xFF00)>>8)};
         _ftdiWrite(_ftdi, b, sizeof(b));
         _ftdiWrite(_ftdi, (uint8_t*)&msg, msgSize);
@@ -328,42 +335,44 @@ public:
         _inPending += msgSize;
     }
     
-    MsgPtr _newMsg(Msg::Type type) {
-        if (type == NopMsg{}.type) return std::make_unique<NopMsg>();
-        if (type == SetLEDMsg{}.type) return std::make_unique<SetLEDMsg>();
-        if (type == ReadMemMsg{}.type) return std::make_unique<ReadMemMsg>();
-        if (type == PixReadReg8Msg{}.type) return std::make_unique<PixReadReg8Msg>();
-        if (type == PixReadReg16Msg{}.type) return std::make_unique<PixReadReg16Msg>();
-        if (type == PixWriteReg8Msg{}.type) return std::make_unique<PixWriteReg8Msg>();
-        if (type == PixWriteReg8Msg{}.type) return std::make_unique<PixWriteReg8Msg>();
+    template <typename T>
+    MsgPtr _newMsg() { return std::unique_ptr<Msg>((Msg*)new T{}); };
+    
+    MsgPtr _newMsg(MsgType type) {
+        if (type == Msg{}.hdr.type) return _newMsg<Msg>();
+        if (type == SetLEDMsg{}.hdr.type) return _newMsg<SetLEDMsg>();
+        if (type == ReadMemMsg{}.hdr.type) return _newMsg<ReadMemMsg>();
+        if (type == PixReg8Msg{}.hdr.type) return _newMsg<PixReg8Msg>();
+        if (type == PixReg16Msg{}.hdr.type) return _newMsg<PixReg16Msg>();
         return nullptr;
     }
     
     MsgPtr _readMsg() {
         size_t off = _inOff;
         
-        Msg header;
-        if (_inLen-off < sizeof(header)) return nullptr;
-        memcpy(&header, _in+off, sizeof(header));
-        off += sizeof(header);
+        MsgHdr hdr;
+        if (_inLen-off < sizeof(hdr)) return nullptr;
+        memcpy(&hdr, _in+off, sizeof(hdr));
+        off += sizeof(hdr);
         
-        if (_inLen-off < header.len) return nullptr;
+        if (_inLen-off < hdr.len) return nullptr;
         
-        MsgPtr msg = _newMsg(header.type);
+        MsgPtr msg = _newMsg(hdr.type);
         assert(msg);
         
         // Verify that the incoming message has enough data to fill the type that it claims to be
-        assert(header.len >= msg->len);
+        assert(hdr.len >= msg->hdr.len);
         
         // Copy the payload into the message, but only the number of bytes that we expect the message to have.
-        memcpy(msg.get()+sizeof(Msg), _in+off, msg->len);
+        memcpy(msg.get()+sizeof(MsgHdr), _in+off, msg->hdr.len);
         
-        // Handle special message types that contain variable amounts of data
-        if (auto x = Msg::Cast<ReadMemMsg>(msg.get())) {
-            x->mem = _in+off;
-        }
+        // TODO: fix
+//        // Handle special message types that contain variable amounts of data
+//        if (auto x = Msg::Cast<ReadMemMsg>(msg.get())) {
+//            x->mem = _in+off;
+//        }
         
-        off += header.len;
+        off += hdr.len;
         _inOff = off;
         return msg;
     }
@@ -380,8 +389,8 @@ public:
         _inOff = 0;
         
         const size_t maxMsgLen =
-            sizeof(Msg) +
-            std::numeric_limits<decltype(Msg::len)>::max();
+            sizeof(MsgHdr) +
+            std::numeric_limits<decltype(MsgHdr::len)>::max();
         
         // maxReadLen must be >= the maximum size of a single message (maxMsgLen).
         // Otherwise, we could fail to create a message after reading data into _in,
@@ -414,7 +423,7 @@ public:
             }
             
             // Reset pin state before performing mass read to ensure DO=0
-            _resetPinState();
+            _resetPins();
             _ftdiWrite(_ftdi, cmds, sizeof(cmds));
         }
         
@@ -428,13 +437,19 @@ public:
         return msg;
     }
     
-    void _setPins(std::vector<PinConfig> configs) {
-        uint8_t pinDirs = 0;
-        uint8_t pinVals = 0;
-        for (const PinConfig& c : configs) {
-            pinDirs = (pinDirs&(~(uint8_t)c.pin))|(c.dir ? (uint8_t)c.pin : 0);
-            pinVals = (pinVals&(~(uint8_t)c.pin))|(c.val ? (uint8_t)c.pin : 0);
-        }
+    void _setPins(const Pins& pins) {
+        const uint8_t pinDirs = pins.CLK.dirBit()   |
+                                pins.DO.dirBit()    |
+                                pins.DI.dirBit()    |
+                                pins.CS.dirBit()    |
+                                pins.CDONE.dirBit() |
+                                pins.CRST_.dirBit() ;
+        const uint8_t pinVals = pins.CLK.valBit()   |
+                                pins.DO.valBit()    |
+                                pins.DI.valBit()    |
+                                pins.CS.valBit()    |
+                                pins.CDONE.valBit() |
+                                pins.CRST_.valBit() ;
         
         uint8_t b[] = {0x80, pinVals, pinDirs};
         _ftdiWrite(_ftdi, b, sizeof(b));
@@ -444,6 +459,20 @@ public:
         for (size_t off=0; off<len;) {
             const size_t readLen = len-off;
             int ir = ftdi_read_data(&ftdi, d+off, (int)readLen);
+            
+//            if (ir > 0) {
+//                printf("====================\n");
+//                printf("Read:\n");
+//                for (size_t i=0; i<readLen; i++) {
+//                    uint8_t byte = *(d+off+i);
+////                    if (byte) {
+//                        printf("0x%x ", byte);
+////                    }
+//                }
+//                printf("\n");
+//                printf("====================\n");
+//            }
+            
             assert(ir>=0 && (size_t)ir<=readLen);
             off += ir;
         }
@@ -454,9 +483,11 @@ public:
         assert(ir>=0 && (size_t)ir==len);
     }
     
-private:
+//private:
+public:
     struct ftdi_context _ftdi;
-    uint8_t _in[0x100000]; // 1 MB
+    uint8_t _in[0x400];
+//    uint8_t _in[0x100000]; // 1 MB
     size_t _inOff = 0;
     size_t _inLen = 0;
     size_t _inPending = 0; // Number of bytes already available to be read via ftdi_read_data()
@@ -487,10 +518,82 @@ int main() {
     using Msg = MDCDevice::Msg;
     using MsgPtr = MDCDevice::MsgPtr;
     using ReadMemMsg = MDCDevice::ReadMemMsg;
+    using SetLEDMsg = MDCDevice::SetLEDMsg;
     
     auto device = std::make_unique<MDCDevice>();
     
-    device->write(MDCDevice::SetLEDMsg{.on = true});
+    
+    
+//    device->write(SetLEDMsg{.on = 0});
+//    printf("Wrote led=0\n");
+//    
+//    for (int i=0; i<10000; i++) {
+//        if (auto msgPtr = Msg::Cast<SetLEDMsg>(device->read())) {
+//            printf("Got SetLEDMsg\n");
+//            break;
+//        }
+//    }
+//    
+//    
+////    uint8_t b[] = {0x31, 0x02, 0x00, 0, 0, 0};
+////    MDCDevice::_ftdiWrite(device->_ftdi, b, sizeof(b));
+//    
+//    
+//    
+//    device->write(SetLEDMsg{.on = 0});
+//    printf("Wrote led=0\n");
+//    
+//    for (int i=0; i<10000; i++) {
+//        if (auto msgPtr = Msg::Cast<SetLEDMsg>(device->read())) {
+//            printf("Got SetLEDMsg\n");
+//            break;
+//        }
+//    }
+    
+//    device->write(SetLEDMsg{.on = 0});
+//    printf("Wrote led=0\n");
+//    for (int i=0; i<10000; i++) {
+//        if (auto msgPtr = Msg::Cast<SetLEDMsg>(device->read())) {
+//            printf("Got SetLEDMsg\n");
+//            break;
+//        }
+//    }
+    
+    
+    for (bool on=true;; on=!on) {
+        device->write(SetLEDMsg{.on = on});
+        printf("Wrote led=%d\n", on);
+        for (;;) {
+            if (auto msgPtr = Msg::Cast<SetLEDMsg>(device->read())) {
+                const SetLEDMsg& msg = *msgPtr;
+                printf("Got SetLEDMsg\n");
+                break;
+    //            if (!(msg.len % 2)) {
+    //                for (size_t i=0; i<msg.len; i+=2) {
+    //                    uint16_t val;
+    //                    memcpy(&val, msg.mem+i, sizeof(val));
+    //                    if (lastVal) {
+    //                        uint16_t expected = (uint16_t)(*lastVal+1);
+    //                        if (val != expected) {
+    //                            printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+    //                        }
+    //                    }
+    //                    lastVal = val;
+    //                }
+    //            } else {
+    //                printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.len);
+    //            }
+    //            
+    //            dataLen += msg.len;
+    //            if (!(msgCount % 4000)) {
+    //                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
+    //            }
+            }
+        }
+        usleep(100000);
+    }
+
+    
     
 //    printf("Running trials...\n");
 //    for (uint64_t trial=0;; trial++) {
