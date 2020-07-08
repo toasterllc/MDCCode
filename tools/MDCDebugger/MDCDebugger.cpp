@@ -507,13 +507,16 @@ static void readMem(const Args& args, MDCDevice& device) {
     
     device.write(ReadMemMsg{});
     size_t dataLen = 0;
-    for (; dataLen<RAMSize;) {
+    for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
         if (auto msgPtr = Msg::Cast<ReadMemMsg>(device.read())) {
             const auto& msg = *msgPtr;
             outputFile.write((char*)msg.mem, msg.hdr.len);
             if (!outputFile) throw std::runtime_error("failed to write to output file");
             
             dataLen += msg.hdr.len;
+            if (!(msgCount % 1000)) {
+                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
+            }
         }
     }
     
@@ -632,11 +635,16 @@ int main(int argc, const char* argv[]) {
     
     auto device = std::make_unique<MDCDevice>();
     
-    if (args.cmd == SetLEDCmd)          setLED(args, *device);
-    else if (args.cmd == ReadMemCmd)    readMem(args, *device);
-    else if (args.cmd == VerifyMemCmd)  verifyMem(args, *device);
-    else if (args.cmd == PixReg8Cmd)    pixReg8(args, *device);
-    else if (args.cmd == PixReg16Cmd)   pixReg16(args, *device);
+    try {
+        if (args.cmd == SetLEDCmd)          setLED(args, *device);
+        else if (args.cmd == ReadMemCmd)    readMem(args, *device);
+        else if (args.cmd == VerifyMemCmd)  verifyMem(args, *device);
+        else if (args.cmd == PixReg8Cmd)    pixReg8(args, *device);
+        else if (args.cmd == PixReg16Cmd)   pixReg16(args, *device);
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Failed: %s\n", e.what());
+        return 1;
+    }
     
     return 0;
 }
