@@ -569,12 +569,11 @@ module Top(
         Min = (a < b ? a : b);
     endfunction
     
-    // TODO: rebalance
-    localparam StateInit = 0;
-    localparam StateHandleMsg = 1;
-    localparam StateReadMem = 4;
-    localparam StatePixReg8 = 8;
-    localparam StatePixReg16 = ?;
+    localparam StateInit        = 0;    // +0
+    localparam StateHandleMsg   = 1;    // +2
+    localparam StateReadMem     = 4;    // +4
+    localparam StatePixReg8     = 9;    // +2
+    localparam StatePixReg16    = 12;   // +2
     
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
@@ -600,12 +599,18 @@ module Top(
 
                 if (ram_cmdAddr == RAM_Size-1) begin
                     ram_cmdTrigger <= 0;
-                    state <= 1;
+                    state <= StateHandleMsg;
                 end
             end
             
             // state <= 1;
         end
+        
+        
+        
+        
+        
+        
         
         // Accept new command
         StateHandleMsg: begin
@@ -616,14 +621,14 @@ module Top(
                 msgInType <= debug_msgIn_type;
                 msgInPayload <= debug_msgIn_payload;
                 
-                state <= 2;
+                state <= StateHandleMsg+1;
             end
         end
         
         // Handle new command
         StateHandleMsg+1: begin
-            // By default go to state 3 next
-            state <= 3;
+            // By default go to StateHandleMsg+2 next
+            state <= StateHandleMsg+2;
             
             case (msgInType)
             default: begin
@@ -638,7 +643,9 @@ module Top(
             end
             
             MsgType_SetLED: begin
-                state <= StateSetLED;
+                led[0] <= msgInPayload[0];
+                debug_msgOut_type <= MsgType_SetLED;
+                debug_msgOut_payloadLen <= 1;
             end
             
             MsgType_PixReg8: begin
@@ -651,79 +658,40 @@ module Top(
             endcase
         end
         
-        StateSetLED: begin
-            $display("Set LED: %0d", msgInPayload[0]);
-            led[0] <= msgInPayload[0];
-            debug_msgOut_type <= MsgType_SetLED;
-            debug_msgOut_payloadLen <= 1;
-            state <= StateSetLED+1;
-        end
-        
-        StateSetLED+1: begin
-            if (debug_msgOut_payloadTrigger) begin
-                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                case (debug_msgOut_payloadLen)
-                1: debug_msgOut_payload <= msgInPayload[0];
-                0: begin
-                    // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    debug_msgOut_type <= 0;
-                    state <= StateHandleMsg;
-                end
-                endcase
-            end
-        end
-        
-        
-        
         // Wait while the message is being sent
         StateHandleMsg+2: begin
             if (debug_msgOut_payloadTrigger) begin
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                case (debug_msgOut_payloadLen)
-                4: debug_msgOut_payload <= pix_i2c_cmd_write;
-                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
-                2: debug_msgOut_payload <= pix_i2c_cmd_regAddr[2*8+:8];
-                1: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
-                0: begin
+                debug_msgOut_payload <= 0;
+                if (!debug_msgOut_payloadLen) begin
                     // Clear `debug_msgOut_type` to prevent another message from being sent.
                     debug_msgOut_type <= 0;
                     state <= StateHandleMsg;
                 end
-                endcase
-            end
-            
-            
-            if (debug_msgOut_payloadTrigger) begin
-                
-                if (debug_msgOut_payloadLen) begin
-                    debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                    debug_msgOut_payload <= debug_msgOut_payload+1;
-                end else begin
-                    // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    debug_msgOut_type <= 0;
-                    state <= 1;
-                    
-                    // debug_msgOut_type <= msgInType;
-                    // debug_msgOut_payloadLen <= 255;
-                    // debug_msgOut_payload <= 0;
-                    
-                    // TODO: remove & uncomment above
-                    // state <= 2;
-                end
             end
         end
         
+        
+        
+        
+        
         // Start reading memory
         StateReadMem: begin
+            ram_cmdAddr <= 0;
+            ram_cmdWrite <= 0;
+            state <= StateReadMem+1;
+        end
+        
+        StateReadMem+1: begin
             ram_cmdTrigger <= 1;
             memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
             memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
             memLen <= 8'h00;
-            state <= 5;
+            state <= StateReadMem+2;
         end
         
         // Continue reading memory
-        StateReadMem+1: begin
+        StateReadMem+2: begin
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
                 ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
@@ -741,59 +709,63 @@ module Top(
                 mem[memLen+1] <= ram_cmdReadData[15:8];
                 memLen <= memLen+2;
                 memCounterRecv <= memCounterRecv-1;
-
+                
                 // Next state after we've received all the bytes
                 if (memCounterRecv == 1) begin
-                    state <= 6;
+                    state <= StateReadMem+3;
                 end
             end
         end
         
-        // TODO: fix to work with new msgOut state machine
         // Start sending the data
-        StateReadMem+2: begin
+        StateReadMem+3: begin
             debug_msgOut_type <= MsgType_ReadMem;
             debug_msgOut_payloadLen <= memLen;
-            debug_msgOut_payload <= mem[0];
-            memCounter <= 1;
-            state <= 7;
+            memCounter <= 0;
+            state <= StateReadMem+4;
         end
-
+        
         // Send the data
-        StateReadMem+3: begin
+        StateReadMem+4: begin
             // Continue sending data
             if (debug_msgOut_payloadTrigger) begin
+                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
+                
                 if (debug_msgOut_payloadLen) begin
-                    debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                     debug_msgOut_payload <= mem[memCounter];
                     memCounter <= memCounter+1;
+                
                 end else begin
                     // We're finished with this chunk.
                     // Clear `debug_msgOut_type` to prevent another message from being sent.
                     debug_msgOut_type <= 0;
+                    
                     // Start on the next chunk, or stop if we've read everything.
                     if (ram_cmdAddr == 0) begin
-                        state <= 1;
+                        state <= StateHandleMsg;
                     end else begin
-                        state <= 4;
+                        state <= StateReadMem+1;
                     end
                 end
             end
         end
         
+        
+        
+        
+        
+        
         StatePixReg8: begin
             pix_i2c_cmd_write <= msgInPayload[0];
             pix_i2c_cmd_regAddr <= msgInPayload[1*8+:16]; // Little endian address
-            // {msgInPayload[2*8+:8], msgInPayload[1*8+:16]}
             pix_i2c_cmd_writeData <= msgInPayload[3*8+:8];
             pix_i2c_cmd_dataLen <= 1;
-            
             state <= StatePixReg8+1;
         end
         
         StatePixReg8+1: begin
             if (pix_i2c_cmd_done) begin
-                pix_i2c_cmd_dataLen <= 0; // Clear command
+                pix_i2c_cmd_dataLen <= 0; // Clear i2c command to prevent it from executing
                 
                 debug_msgOut_type <= MsgType_PixReg8;
                 debug_msgOut_payloadLen <= 4;
@@ -808,6 +780,47 @@ module Top(
                 3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
                 2: debug_msgOut_payload <= pix_i2c_cmd_regAddr[2*8+:8];
                 1: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
+                0: begin
+                    // Clear `debug_msgOut_type` to prevent another message from being sent.
+                    debug_msgOut_type <= 0;
+                    state <= StateHandleMsg;
+                end
+                endcase
+            end
+        end
+        
+        
+        
+        
+        
+        
+        
+        StatePixReg16: begin
+            pix_i2c_cmd_write <= msgInPayload[0];
+            pix_i2c_cmd_regAddr <= msgInPayload[1*8+:16]; // Little endian address
+            pix_i2c_cmd_writeData <= msgInPayload[3*8+:16];
+            pix_i2c_cmd_dataLen <= 2;
+            state <= StatePixReg16+1;
+        end
+        
+        StatePixReg16+1: begin
+            if (pix_i2c_cmd_done) begin
+                pix_i2c_cmd_dataLen <= 0; // Clear i2c command to prevent it from executing
+                
+                debug_msgOut_type <= MsgType_PixReg16;
+                debug_msgOut_payloadLen <= 5;
+            end
+        end
+        
+        StatePixReg16+2: begin
+            if (debug_msgOut_payloadTrigger) begin
+                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
+                case (debug_msgOut_payloadLen)
+                5: debug_msgOut_payload <= pix_i2c_cmd_write;
+                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
+                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[2*8+:8];
+                2: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
+                1: debug_msgOut_payload <= pix_i2c_cmd_readData[1*8+:8];
                 0: begin
                     // Clear `debug_msgOut_type` to prevent another message from being sent.
                     debug_msgOut_type <= 0;
