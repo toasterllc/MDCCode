@@ -532,23 +532,23 @@ module Top(
         
         // Initialize the SDRAM
         0: begin
-            // if (!ram_cmdTrigger) begin
-            //     ram_cmdTrigger <= 1;
-            //     ram_cmdAddr <= 0;
-            //     ram_cmdWrite <= 1;
-            //     ram_cmdWriteData <= DataFromAddr(0);
-            //
-            // end else if (ram_cmdReady) begin
-            //     ram_cmdAddr <= ram_cmdAddr+1;
-            //     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-            //
-            //     if (ram_cmdAddr == RAM_Size-1) begin
-            //         ram_cmdTrigger <= 0;
-            //         state <= 1;
-            //     end
-            // end
+            if (!ram_cmdTrigger) begin
+                ram_cmdTrigger <= 1;
+                ram_cmdAddr <= 0;
+                ram_cmdWrite <= 1;
+                ram_cmdWriteData <= DataFromAddr(0);
+
+            end else if (ram_cmdReady) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
+                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+
+                if (ram_cmdAddr == RAM_Size-1) begin
+                    ram_cmdTrigger <= 0;
+                    state <= 1;
+                end
+            end
             
-            state <= 1;
+            // state <= 1;
         end
         
         // Accept new command
