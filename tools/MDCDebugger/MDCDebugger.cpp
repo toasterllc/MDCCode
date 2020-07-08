@@ -610,15 +610,15 @@ int main() {
                 const ReadMemMsg& msg = *msgPtr;
                 if (!(msg.hdr.len % 2)) {
                     for (size_t i=0; i<msg.hdr.len; i+=2) {
-//                        uint16_t val;
-//                        memcpy(&val, msg.mem+i, sizeof(val));
-//                        if (lastVal) {
-//                            uint16_t expected = (uint16_t)(*lastVal+1);
-//                            if (val != expected) {
-//                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
-//                            }
-//                        }
-//                        lastVal = val;
+                        uint16_t val;
+                        memcpy(&val, msg.mem+i, sizeof(val));
+                        if (lastVal) {
+                            uint16_t expected = (uint16_t)(*lastVal+1);
+                            if (val != expected) {
+                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+                            }
+                        }
+                        lastVal = val;
                     }
                 } else {
                     printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.hdr.len);
