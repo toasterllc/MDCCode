@@ -367,7 +367,7 @@ public:
         assert(msg);
         
         // Verify that the incoming message has enough data to fill the type that it claims to be
-        printf("hdr.len (%ju) >= msg->hdr.len (%ju)\n", (uintmax_t)hdr.len, (uintmax_t)msg->hdr.len);
+//        printf("hdr.len (%ju) >= msg->hdr.len (%ju)\n", (uintmax_t)hdr.len, (uintmax_t)msg->hdr.len);
         assert(hdr.len >= msg->hdr.len);
         
         // Copy the payload into the message, but only the number of bytes that we expect the message to have.
@@ -480,8 +480,8 @@ public:
 //private:
 public:
     struct ftdi_context _ftdi;
-    uint8_t _in[0x400];
-//    uint8_t _in[0x100000]; // 1 MB
+//    uint8_t _in[0x400];
+    uint8_t _in[0x100000]; // 1 MB
     size_t _inOff = 0;
     size_t _inLen = 0;
     size_t _inPending = 0; // Number of bytes already available to be read via ftdi_read_data()
@@ -610,24 +610,24 @@ int main() {
                 const ReadMemMsg& msg = *msgPtr;
                 if (!(msg.hdr.len % 2)) {
                     for (size_t i=0; i<msg.hdr.len; i+=2) {
-                        uint16_t val;
-                        memcpy(&val, msg.mem+i, sizeof(val));
-                        if (lastVal) {
-                            uint16_t expected = (uint16_t)(*lastVal+1);
-                            if (val != expected) {
-                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
-                            }
-                        }
-                        lastVal = val;
+//                        uint16_t val;
+//                        memcpy(&val, msg.mem+i, sizeof(val));
+//                        if (lastVal) {
+//                            uint16_t expected = (uint16_t)(*lastVal+1);
+//                            if (val != expected) {
+//                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+//                            }
+//                        }
+//                        lastVal = val;
                     }
                 } else {
                     printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.hdr.len);
                 }
                 
                 dataLen += msg.hdr.len;
-//                if (!(msgCount % 100)) {
-//                    printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
-//                }
+                if (!(msgCount % 1000)) {
+                    printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
+                }
             }
         }
         auto stopTime = CurrentTime();
