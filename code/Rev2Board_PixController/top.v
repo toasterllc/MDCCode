@@ -587,6 +587,9 @@ module Top(
         
         // Initialize the SDRAM
         StateInit: begin
+`ifdef SIM
+            state <= StateHandleMsg;
+`else
             if (!ram_cmdTrigger) begin
                 ram_cmdTrigger <= 1;
                 ram_cmdAddr <= 0;
@@ -602,8 +605,7 @@ module Top(
                     state <= StateHandleMsg;
                 end
             end
-            
-            // state <= StateHandleMsg;
+`endif
         end
         
         
@@ -757,6 +759,7 @@ module Top(
         
         
         StatePixReg8: begin
+            $display("MsgType_PixReg8{write=%0d, addr=%04x, data=%02x}", msgInPayload[0], msgInPayload[1*8+:16], msgInPayload[3*8+:8]);
             pix_i2c_cmd_write <= msgInPayload[0];
             pix_i2c_cmd_regAddr <= msgInPayload[1*8+:16]; // Little endian address
             pix_i2c_cmd_writeData <= msgInPayload[3*8+:8];
@@ -769,7 +772,8 @@ module Top(
                 pix_i2c_cmd_dataLen <= 0; // Clear i2c command to prevent it from executing
                 
                 debug_msgOut_type <= MsgType_PixReg8;
-                debug_msgOut_payloadLen <= 4;
+                debug_msgOut_payloadLen <= 5;
+                state <= StatePixReg8+2;
             end
         end
         
@@ -777,10 +781,11 @@ module Top(
             if (debug_msgOut_payloadTrigger) begin
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                 case (debug_msgOut_payloadLen)
-                4: debug_msgOut_payload <= pix_i2c_cmd_write;
-                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
-                2: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
-                1: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
+                5: debug_msgOut_payload <= pix_i2c_cmd_write;
+                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
+                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
+                2: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
+                1: debug_msgOut_payload <= pix_i2c_cmd_ok;
                 0: begin
                     // Clear `debug_msgOut_type` to prevent another message from being sent.
                     debug_msgOut_type <= 0;
@@ -797,6 +802,7 @@ module Top(
         
         
         StatePixReg16: begin
+            $display("MsgType_PixReg16{write=%0d, addr=%04x, data=%04x}", msgInPayload[0], msgInPayload[1*8+:16], msgInPayload[3*8+:16]);
             pix_i2c_cmd_write <= msgInPayload[0];
             pix_i2c_cmd_regAddr <= msgInPayload[1*8+:16]; // Little endian address
             pix_i2c_cmd_writeData <= msgInPayload[3*8+:16];
@@ -809,7 +815,8 @@ module Top(
                 pix_i2c_cmd_dataLen <= 0; // Clear i2c command to prevent it from executing
                 
                 debug_msgOut_type <= MsgType_PixReg16;
-                debug_msgOut_payloadLen <= 5;
+                debug_msgOut_payloadLen <= 6;
+                state <= StatePixReg16+2;
             end
         end
         
@@ -817,11 +824,12 @@ module Top(
             if (debug_msgOut_payloadTrigger) begin
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                 case (debug_msgOut_payloadLen)
-                5: debug_msgOut_payload <= pix_i2c_cmd_write;
-                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
-                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
-                2: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
-                1: debug_msgOut_payload <= pix_i2c_cmd_readData[1*8+:8];
+                6: debug_msgOut_payload <= pix_i2c_cmd_write;
+                5: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
+                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
+                3: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
+                2: debug_msgOut_payload <= pix_i2c_cmd_readData[1*8+:8];
+                1: debug_msgOut_payload <= pix_i2c_cmd_ok;
                 0: begin
                     // Clear `debug_msgOut_type` to prevent another message from being sent.
                     debug_msgOut_type <= 0;
@@ -842,6 +850,17 @@ module Top(
     assign debug_clk = sim_debug_clk;
     assign debug_cs = sim_debug_cs;
     assign debug_di = sim_debug_di_shiftReg[7];
+    
+    task WriteByte(input[7:0] b);
+        sim_debug_di_shiftReg = b;
+        repeat (8) begin
+            wait (sim_debug_clk);
+            wait (!sim_debug_clk);
+            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
+        end
+    endtask
+    
+    
     // assign debug_di = 1;
     initial begin
         $dumpfile("top.vcd");
@@ -854,29 +873,31 @@ module Top(
         wait (!sim_debug_clk);
         sim_debug_cs = 1;
         
-        // Message type
-        sim_debug_di_shiftReg = MsgType_SetLED;
-        repeat (8) begin
-            wait (sim_debug_clk);
-            wait (!sim_debug_clk);
-            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
-        end
+        // WriteByte(MsgType_SetLED);  // Message type
+        // WriteByte(8'h1);            // Payload length
+        // WriteByte(8'h1);            // Payload
         
-        // Payload length
-        sim_debug_di_shiftReg = 8'h1;
-        repeat (8) begin
-            wait (sim_debug_clk);
-            wait (!sim_debug_clk);
-            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
-        end
+        WriteByte(MsgType_PixReg8);     // Message type
+        WriteByte(8'h4);                // Payload length
+        WriteByte(8'h1);                // Payload0: write
+        WriteByte(8'h34);               // Payload1: addr0
+        WriteByte(8'h12);               // Payload2: addr1
+        WriteByte(8'h42);               // Payload3: value
+
+        WriteByte(MsgType_PixReg8);     // Message type
+        WriteByte(8'h4);                // Payload length
+        WriteByte(8'h0);                // Payload0: write
+        WriteByte(8'h34);               // Payload1: addr0
+        WriteByte(8'h12);               // Payload2: addr1
+        WriteByte(8'h42);               // Payload3: value
         
-        // Payload
-        sim_debug_di_shiftReg = 8'h1;
-        repeat (8) begin
-            wait (sim_debug_clk);
-            wait (!sim_debug_clk);
-            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
-        end
+        WriteByte(MsgType_PixReg16);    // Message type
+        WriteByte(8'h5);                // Payload length
+        WriteByte(8'h0);                // Payload0: write
+        WriteByte(8'h34);               // Payload1: addr0
+        WriteByte(8'h12);               // Payload2: addr1
+        WriteByte(8'hFE);               // Payload3: value0
+        WriteByte(8'hCA);               // Payload4: value1
         
         #1000000;
         $finish;
