@@ -577,7 +577,7 @@ module Top(
     
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
-    reg[4*8-1:0] msgInPayload = 0;
+    reg[5*8-1:0] msgInPayload = 0;
     reg[7:0] mem[255:0];
     reg[7:0] memLen = 0;
     reg[7:0] memCounter = 0;
@@ -603,7 +603,7 @@ module Top(
                 end
             end
             
-            // state <= 1;
+            // state <= StateHandleMsg;
         end
         
         
@@ -643,6 +643,7 @@ module Top(
             end
             
             MsgType_SetLED: begin
+                $display("MsgType_SetLED: %0d", msgInPayload[0]);
                 led[0] <= msgInPayload[0];
                 debug_msgOut_type <= MsgType_SetLED;
                 debug_msgOut_payloadLen <= 1;
@@ -777,8 +778,8 @@ module Top(
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                 case (debug_msgOut_payloadLen)
                 4: debug_msgOut_payload <= pix_i2c_cmd_write;
-                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
-                2: debug_msgOut_payload <= pix_i2c_cmd_regAddr[2*8+:8];
+                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
+                2: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
                 1: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
                 0: begin
                     // Clear `debug_msgOut_type` to prevent another message from being sent.
@@ -817,8 +818,8 @@ module Top(
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                 case (debug_msgOut_payloadLen)
                 5: debug_msgOut_payload <= pix_i2c_cmd_write;
-                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
-                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[2*8+:8];
+                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
+                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
                 2: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
                 1: debug_msgOut_payload <= pix_i2c_cmd_readData[1*8+:8];
                 0: begin
