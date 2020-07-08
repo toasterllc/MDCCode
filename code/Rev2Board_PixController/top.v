@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `include "../ClockGen.v"
 `include "../AFIFO.v"
-// `include "../SDRAMController.v"
+`include "../SDRAMController.v"
 
 module Debug(
     input wire                      clk,
@@ -415,47 +415,47 @@ module Top(
 
 
 
-    //
-    // // ====================
-    // // SDRAM controller
-    // // ====================
-    // localparam RAM_Size = 'h2000000;
-    // localparam RAM_AddrWidth = 25;
-    // localparam RAM_DataWidth = 16;
-    //
-    // // RAM controller
-    // wire                    ram_cmdReady;
-    // reg                     ram_cmdTrigger = 0;
-    // reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
-    // reg                     ram_cmdWrite = 0;
-    // reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
-    // wire[RAM_DataWidth-1:0] ram_cmdReadData;
-    // wire                    ram_cmdReadDataValid;
-    //
-    // SDRAMController #(
-    //     .ClockFrequency(ClockFrequency)
-    // ) sdramController(
-    //     .clk(clk),
-    //
-    //     .cmdReady(ram_cmdReady),
-    //     .cmdTrigger(ram_cmdTrigger),
-    //     .cmdAddr(ram_cmdAddr),
-    //     .cmdWrite(ram_cmdWrite),
-    //     .cmdWriteData(ram_cmdWriteData),
-    //     .cmdReadData(ram_cmdReadData),
-    //     .cmdReadDataValid(ram_cmdReadDataValid),
-    //
-    //     .ram_clk(ram_clk),
-    //     .ram_cke(ram_cke),
-    //     .ram_ba(ram_ba),
-    //     .ram_a(ram_a),
-    //     .ram_cs_(ram_cs_),
-    //     .ram_ras_(ram_ras_),
-    //     .ram_cas_(ram_cas_),
-    //     .ram_we_(ram_we_),
-    //     .ram_dqm(ram_dqm),
-    //     .ram_dq(ram_dq)
-    // );
+
+    // ====================
+    // SDRAM controller
+    // ====================
+    localparam RAM_Size = 'h2000000;
+    localparam RAM_AddrWidth = 25;
+    localparam RAM_DataWidth = 16;
+
+    // RAM controller
+    wire                    ram_cmdReady;
+    reg                     ram_cmdTrigger = 0;
+    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
+    reg                     ram_cmdWrite = 0;
+    reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
+    wire[RAM_DataWidth-1:0] ram_cmdReadData;
+    wire                    ram_cmdReadDataValid;
+
+    SDRAMController #(
+        .ClockFrequency(ClockFrequency)
+    ) sdramController(
+        .clk(clk),
+
+        .cmdReady(ram_cmdReady),
+        .cmdTrigger(ram_cmdTrigger),
+        .cmdAddr(ram_cmdAddr),
+        .cmdWrite(ram_cmdWrite),
+        .cmdWriteData(ram_cmdWriteData),
+        .cmdReadData(ram_cmdReadData),
+        .cmdReadDataValid(ram_cmdReadDataValid),
+
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
+    );
 
 
 
@@ -505,20 +505,20 @@ module Top(
     // ====================
     // Main
     // ====================
-    // function [15:0] DataFromAddr;
-    //     input [24:0] addr;
-    //     // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-    //     DataFromAddr = addr[15:0];
-    //     // DataFromAddr = 16'hFFFF;
-    //     // DataFromAddr = 16'h0000;
-    //     // DataFromAddr = 16'h7832;
-    // endfunction
-    //
-    // function [63:0] Min;
-    //     input [63:0] a;
-    //     input [63:0] b;
-    //     Min = (a < b ? a : b);
-    // endfunction
+    function [15:0] DataFromAddr;
+        input [24:0] addr;
+        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
+        DataFromAddr = addr[15:0];
+        // DataFromAddr = 16'hFFFF;
+        // DataFromAddr = 16'h0000;
+        // DataFromAddr = 16'h7832;
+    endfunction
+
+    function [63:0] Min;
+        input [63:0] a;
+        input [63:0] b;
+        Min = (a < b ? a : b);
+    endfunction
     
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
@@ -532,23 +532,23 @@ module Top(
         
         // Initialize the SDRAM
         0: begin
-            // if (!ram_cmdTrigger) begin
-            //     ram_cmdTrigger <= 1;
-            //     ram_cmdAddr <= 0;
-            //     ram_cmdWrite <= 1;
-            //     ram_cmdWriteData <= DataFromAddr(0);
-            //
-            // end else if (ram_cmdReady) begin
-            //     ram_cmdAddr <= ram_cmdAddr+1;
-            //     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-            //
-            //     if (ram_cmdAddr == RAM_Size-1) begin
-            //         ram_cmdTrigger <= 0;
-            //         state <= 1;
-            //     end
-            // end
+            if (!ram_cmdTrigger) begin
+                ram_cmdTrigger <= 1;
+                ram_cmdAddr <= 0;
+                ram_cmdWrite <= 1;
+                ram_cmdWriteData <= DataFromAddr(0);
+
+            end else if (ram_cmdReady) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
+                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+
+                if (ram_cmdAddr == RAM_Size-1) begin
+                    ram_cmdTrigger <= 0;
+                    state <= 1;
+                end
+            end
             
-            state <= 1;
+            // state <= 1;
         end
         
         // Accept new command
@@ -576,16 +576,10 @@ module Top(
                 debug_msgOut_payload <= 0;
             end
             
-            // CmdReadMem: begin
-            //     ram_cmdAddr <= 0;
-            //     ram_cmdWrite <= 0;
-            //     state <= 4;
-            // end
-            
             MsgType_ReadMem: begin
-                debug_msgOut_type <= msgInType;
-                debug_msgOut_payloadLen <= 255;
-                debug_msgOut_payload <= 255;
+                ram_cmdAddr <= 0;
+                ram_cmdWrite <= 0;
+                state <= 4;
             end
             
             MsgType_SetLED: begin
@@ -623,69 +617,69 @@ module Top(
             end
         end
         
-        // // Start reading memory
-        // 4: begin
-        //     ram_cmdTrigger <= 1;
-        //     memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-        //     memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-        //     memLen <= 8'h00;
-        //     state <= 5;
-        // end
-        //
-        // // Continue reading memory
-        // 5: begin
-        //     // Handle the read being accepted
-        //     if (ram_cmdReady && memCounter) begin
-        //         ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
-        //         memCounter <= memCounter-1;
-        //
-        //         // Stop reading
-        //         if (memCounter == 1) begin
-        //             ram_cmdTrigger <= 0;
-        //         end
-        //     end
-        //
-        //     // Writing incoming data into `mem`
-        //     if (ram_cmdReadDataValid) begin
-        //         mem[memLen] <= ram_cmdReadData[7:0];
-        //         mem[memLen+1] <= ram_cmdReadData[15:8];
-        //         memLen <= memLen+2;
-        //         memCounterRecv <= memCounterRecv-1;
-        //
-        //         // Next state after we've received all the bytes
-        //         if (memCounterRecv == 1) begin
-        //             state <= 6;
-        //         end
-        //     end
-        // end
-        //
-        // // Start sending the data
-        // 6: begin
-        //     debug_msg <= CmdReadMem;
-        //     debug_msgLen <= memLen+1;
-        //     memCounter <= 0;
-        //     state <= 7;
-        // end
-        //
-        // // Send the data
-        // 7: begin
-        //     // Continue sending data
-        //     if (debug_msgTrigger) begin
-        //         if (debug_msgLen) begin
-        //             debug_msg <= mem[memCounter];
-        //             debug_msgLen <= debug_msgLen-1;
-        //             memCounter <= memCounter+1;
-        //         end else begin
-        //             // We're finished with this chunk.
-        //             // Start on the next chunk, or stop if we've read everything.
-        //             if (ram_cmdAddr == 0) begin
-        //                 state <= 1;
-        //             end else begin
-        //                 state <= 4;
-        //             end
-        //         end
-        //     end
-        // end
+        // Start reading memory
+        4: begin
+            ram_cmdTrigger <= 1;
+            memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            memLen <= 8'h00;
+            state <= 5;
+        end
+
+        // Continue reading memory
+        5: begin
+            // Handle the read being accepted
+            if (ram_cmdReady && memCounter) begin
+                ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
+                memCounter <= memCounter-1;
+
+                // Stop reading
+                if (memCounter == 1) begin
+                    ram_cmdTrigger <= 0;
+                end
+            end
+
+            // Write incoming data into `mem`
+            if (ram_cmdReadDataValid) begin
+                mem[memLen] <= ram_cmdReadData[7:0];
+                mem[memLen+1] <= ram_cmdReadData[15:8];
+                memLen <= memLen+2;
+                memCounterRecv <= memCounterRecv-1;
+
+                // Next state after we've received all the bytes
+                if (memCounterRecv == 1) begin
+                    state <= 6;
+                end
+            end
+        end
+
+        // Start sending the data
+        6: begin
+            debug_msg <= CmdReadMem;
+            debug_msgLen <= memLen+1;
+            memCounter <= 0;
+            state <= 7;
+        end
+
+        // Send the data
+        7: begin
+            // Continue sending data
+            if (debug_msgTrigger) begin
+                if (debug_msgLen) begin
+                    debug_msg <= mem[memCounter];
+                    debug_msgLen <= debug_msgLen-1;
+                    memCounter <= memCounter+1;
+                end else begin
+                    // We're finished with this chunk.
+                    // Start on the next chunk, or stop if we've read everything.
+                    if (ram_cmdAddr == 0) begin
+                        state <= 1;
+                    end else begin
+                        state <= 4;
+                    end
+                end
+            end
+        end
         endcase
     end
     
