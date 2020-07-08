@@ -66,7 +66,7 @@ module PixI2CMaster #(
         assign dataIn = i2c_data;
     `else
         SB_IO #(
-            .PIN_TYPE(6'b1010_01),
+            .PIN_TYPE(6'b1010_01)
         ) sdaTri (
             .PACKAGE_PIN(i2c_data),
             .OUTPUT_ENABLE(dataOut==0),

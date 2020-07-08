@@ -184,7 +184,7 @@ module SDRAMController #(
         `else
             // For synthesis, we have to use a SB_IO for a tristate buffer
             SB_IO #(
-                .PIN_TYPE(6'b1010_01),
+                .PIN_TYPE(6'b1010_01)
             ) dqio (
                 .PACKAGE_PIN(ram_dq[i]),
                 .OUTPUT_ENABLE(writeDataValid),
