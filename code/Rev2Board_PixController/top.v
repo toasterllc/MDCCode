@@ -73,12 +73,11 @@ module Debug(
     // ====================
     // Message output / `clk` domain
     // ====================
-    reg[1:0] msgOut_state = 0;
+    reg[2:0] msgOut_state = 0;
     always @(posedge clk) begin
         case (msgOut_state)
         // Send message type (byte 0)
         0: begin
-            msgOut_payloadTrigger <= 0; // Necessary to clear the final msgOut_payloadTrigger=1 from state 2
             if (msgOut_type) begin
                 outq_writeData <= msgOut_type;
                 outq_writeTrigger <= 1;
@@ -104,7 +103,7 @@ module Debug(
                 msgOut_state <= 3;
             end else begin
                 msgOut_payloadTrigger <= 1;
-                msgOut_state <= 0;
+                msgOut_state <= 4;
             end
         end
         
@@ -113,8 +112,14 @@ module Debug(
             msgOut_payloadTrigger <= 0;
             if (outq_writeOK) begin
                 outq_writeTrigger <= 0;
-                msgOut_state <= 3;
+                msgOut_state <= 2;
             end
+        end
+        
+        // Delay state while client resets after we've finished consuming the whole payload
+        4: begin
+            msgOut_payloadTrigger <= 0;
+            msgOut_state <= 0;
         end
         endcase
     end
@@ -131,28 +136,29 @@ module Debug(
     // Serial IO / `debug_clk` domain
     // ====================
     reg[1:0] serialIn_state = 0;
-    reg[8:0] serialIn_byte = 0; // High bit is the end-of-data sentinel, and isn't transmitted
-    wire serialIn_byteReady = serialIn_byte[8];
+    reg[8:0] serialIn_shiftReg = 0; // High bit is the end-of-data sentinel, and isn't transmitted
+    wire[7:0] serialIn_byte = serialIn_shiftReg[7:0];
+    wire serialIn_byteReady = serialIn_shiftReg[8];
     reg[(MsgMaxLen*8)-1:0] serialIn_msg;
     wire[7:0] serialIn_msgType = serialIn_msg[0*8+:8];
     wire[7:0] serialIn_payloadLen = serialIn_msg[1*8+:8];
     reg[7:0] serialIn_payloadCounter = 0;
     reg[1:0] serialOut_state = 0;
-    reg[8:0] serialOut_byte = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    assign debug_do = serialOut_byte[8];
+    reg[8:0] serialOut_shiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
+    assign debug_do = serialOut_shiftReg[8];
     always @(posedge debug_clk) begin
         if (serialIn_byteReady) begin
-            serialIn_byte <= {1'b1, debug_di};
+            serialIn_shiftReg <= {1'b1, debug_di};
         end else begin
-            serialIn_byte <= (serialIn_byte<<1)|debug_di;
+            serialIn_shiftReg <= (serialIn_shiftReg<<1)|debug_di;
         end
         
         case (serialIn_state)
         0: begin
-            // Initialize `serialIn_byte` as if it was originally initialized to 1,
+            // Initialize `serialIn_shiftReg` as if it was originally initialized to 1,
             // so that after the first clock it contains the sentinel and
             // the first bit of data.
-            serialIn_byte <= {1'b1, debug_di};
+            serialIn_shiftReg <= {1'b1, debug_di};
             serialIn_state <= 1;
         end
         
@@ -163,8 +169,14 @@ module Debug(
         1: begin
             inq_writeTrigger <= 0; // Clear from state 3
             if (serialIn_byteReady) begin
-                serialIn_msg[0*8+:8] <= serialIn_byte;
-                serialIn_state <= 2;
+                // Only transition states if we have a valid message type.
+                // This way, new messages can occur at any byte boundary,
+                // instead of every other byte if we required both
+                // message type + payload length for every transmission.
+                if (serialIn_byte) begin
+                    serialIn_msg[0*8+:8] <= serialIn_byte;
+                    serialIn_state <= 2;
+                end
             end
         end
         
@@ -204,32 +216,32 @@ module Debug(
         
         case (serialOut_state)
         0: begin
-            // Initialize `serialOut_byte` as if it was originally initialized to 1,
+            // Initialize `serialOut_shiftReg` as if it was originally initialized to 1,
             // so that after the first clock cycle it contains the sentinel.
-            serialOut_byte <= 2'b10;
+            serialOut_shiftReg <= 2'b10;
             serialOut_state <= 3;
         end
         
         1: begin
-            serialOut_byte <= serialOut_byte<<1;
+            serialOut_shiftReg <= serialOut_shiftReg<<1;
             outq_readTrigger <= 0;
             
             // If we successfully read a byte, shift it out
             if (outq_readOK) begin
-                serialOut_byte <= {outq_readData, 1'b1}; // Add sentinel to the end
+                serialOut_shiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
                 serialOut_state <= 2;
             
             // Otherwise shift out 2 zero bytes (msgType=Nop, payloadLen=0)
             end else begin
-                serialOut_byte <= 1;
+                serialOut_shiftReg <= 1;
                 serialOut_state <= 3;
             end
         end
         
         // Continue shifting out a byte
         2: begin
-            serialOut_byte <= serialOut_byte<<1;
-            if (serialOut_byte[6:0] == 7'b1000000) begin
+            serialOut_shiftReg <= serialOut_shiftReg<<1;
+            if (serialOut_shiftReg[6:0] == 7'b1000000) begin
                 outq_readTrigger <= 1;
                 serialOut_state <= 1;
             end
@@ -237,9 +249,9 @@ module Debug(
         
         // Shift out 2 zero bytes
         3: begin
-            serialOut_byte <= serialOut_byte<<1;
-            if (serialOut_byte[7:0] == 8'b10000000) begin
-                serialOut_byte <= 1;
+            serialOut_shiftReg <= serialOut_shiftReg<<1;
+            if (serialOut_shiftReg[7:0] == 8'b10000000) begin
+                serialOut_shiftReg <= 1;
                 serialOut_state <= 2;
             end
         end
@@ -360,6 +372,7 @@ module Top(
     inout wire[15:0]    ram_dq,
     
     input wire          debug_clk,
+    input wire          debug_cs,
     input wire          debug_di,
     output wire         debug_do
 );
@@ -375,6 +388,27 @@ module Top(
         .DIVQ(4),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    
+    // Not ideal to AND with a clock, since it can cause the resulting clock signal
+    // to toggle anytime the other input changes.
+    // We'll be safe though as long as we only toggle debug_cs while the clock is
+    // low, which is our contract.
+    wire debug_clkFiltered = debug_clk&debug_cs;
+    // reg debug_clkFiltered = 0;
+    // always @(posedge debug_clk, negedge debug_cs) begin
+    //     if (!debug_cs) begin
+    //         debug_clkFiltered <= 0;
+    //     end else begin
+    //         debug_clkFiltered <= 1;
+    //     end
+    // end
+    
+    
+    // always @(posedge debug_clkFiltered) begin
+    //     led <= led+1;
+    // end
+
+
 
 
 
@@ -440,10 +474,8 @@ module Top(
     localparam MsgType_Nop              = 8'h00;
     localparam MsgType_SetLED           = 8'h01;
     localparam MsgType_ReadMem          = 8'h02;
-    localparam MsgType_PixReadReg8      = 8'h03;
-    localparam MsgType_PixReadReg16     = 8'h04;
-    localparam MsgType_PixWriteReg8     = 8'h05;
-    localparam MsgType_PixWriteReg16    = 8'h06;
+    localparam MsgType_PixReg8          = 8'h03;
+    localparam MsgType_PixReg16         = 8'h04;
     
     wire[(6*8)-1:0] debug_msgIn_data;
     wire debug_msgIn_ready;
@@ -465,7 +497,7 @@ module Top(
         .msgOut_payload(debug_msgOut_payload),
         .msgOut_payloadTrigger(debug_msgOut_payloadTrigger),
         
-        .debug_clk(debug_clk),
+        .debug_clk(debug_clkFiltered),
         .debug_di(debug_di),
         .debug_do(debug_do)
     );
@@ -544,40 +576,33 @@ module Top(
                 debug_msgOut_payload <= 0;
             end
             
-            MsgType_SetLED: begin
-                $display("Set LED: %0d", msgInPayload[0]);
-                led[0] <= msgInPayload[0];
-                
-                debug_msgOut_type <= msgInType;
-                debug_msgOut_payloadLen <= 255;
-                debug_msgOut_payload <= 0;
-            end
-            
             // CmdReadMem: begin
             //     ram_cmdAddr <= 0;
             //     ram_cmdWrite <= 0;
             //     state <= 4;
             // end
             
-            MsgType_PixReadReg8: begin
+            MsgType_ReadMem: begin
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 255;
+                debug_msgOut_payload <= 255;
+            end
+            
+            MsgType_SetLED: begin
+                // $display("Set LED: %0d", msgInPayload[0]);
+                led[0] <= msgInPayload[0];
+                debug_msgOut_type <= msgInType;
+                debug_msgOut_payloadLen <= 1;
+                debug_msgOut_payload <= msgInPayload[0];
+            end
+            
+            MsgType_PixReg8: begin
                 debug_msgOut_type <= msgInType;
                 debug_msgOut_payloadLen <= 255;
                 debug_msgOut_payload <= 0;
             end
             
-            MsgType_PixReadReg16: begin
-                debug_msgOut_type <= msgInType;
-                debug_msgOut_payloadLen <= 255;
-                debug_msgOut_payload <= 0;
-            end
-            
-            MsgType_PixWriteReg8: begin
-                debug_msgOut_type <= msgInType;
-                debug_msgOut_payloadLen <= 255;
-                debug_msgOut_payload <= 0;
-            end
-            
-            MsgType_PixWriteReg16: begin
+            MsgType_PixReg16: begin
                 debug_msgOut_type <= msgInType;
                 debug_msgOut_payloadLen <= 255;
                 debug_msgOut_payload <= 0;
@@ -590,8 +615,9 @@ module Top(
             if (debug_msgOut_payloadTrigger) begin
                 if (debug_msgOut_payloadLen) begin
                     debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                    debug_msgOut_payload <= debug_msgOut_payload+1;
+                    // debug_msgOut_payload <= debug_msgOut_payload+1;
                 end else begin
+                    debug_msgOut_type <= 0; // Clear message type to signal that there's no message to be sent
                     state <= 1;
                 end
             end
@@ -666,9 +692,11 @@ module Top(
     
 `ifdef SIM
     reg sim_debug_clk = 0;
+    reg sim_debug_cs = 0;
     reg[7:0] sim_debug_di_shiftReg = 0;
     
     assign debug_clk = sim_debug_clk;
+    assign debug_cs = sim_debug_cs;
     assign debug_di = sim_debug_di_shiftReg[7];
     // assign debug_di = 1;
     initial begin
@@ -680,8 +708,8 @@ module Top(
         #100;
         
         wait (!sim_debug_clk);
-
-
+        sim_debug_cs = 1;
+        
         sim_debug_di_shiftReg = MsgType_SetLED;
         repeat (8) begin
             wait (sim_debug_clk);
