@@ -33,6 +33,24 @@ public:
         // Unused
         Pin CDONE   {.bit=1<<6, .dir=0, .val=0};
         Pin CRST_   {.bit=1<<7, .dir=1, .val=1};
+        
+        uint8_t dirBits() const {
+            return  CLK.dirBit()    |
+                    DO.dirBit()     |
+                    DI.dirBit()     |
+                    CS.dirBit()     |
+                    CDONE.dirBit()  |
+                    CRST_.dirBit()  ;
+        }
+        
+        uint8_t valBits() const {
+            return  CLK.valBit()    |
+                    DO.valBit()     |
+                    DI.valBit()     |
+                    CS.valBit()     |
+                    CDONE.valBit()  |
+                    CRST_.valBit()  ;
+        }
     };
     
     using MsgType = uint8_t;
@@ -57,27 +75,10 @@ public:
         MsgHdr hdr{.type=0x00, .len=sizeof(*this)-sizeof(MsgHdr)};
     };
     
-//    struct Msg {
-//        template <typename T>
-//        static std::unique_ptr<T> Cast(std::unique_ptr<Msg> msg) {
-//            if (msg && msg->type == T{}.type) return std::unique_ptr<T>((T*)msg.release());
-//            return nullptr;
-//        }
-//        
-//        template <typename T>
-//        static T* Cast(Msg* msg) {
-//            if (msg->type == T{}.type) return (T*)msg;
-//            return nullptr;
-//        }
-//        
-//        using Type = uint8_t;
-//        Type type = 0;
-//        uint8_t len = 0;
-//    };
-    
     struct SetLEDMsg {
         MsgHdr hdr{.type=0x01, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t on = 0;
+//        uint8_t payload[255];
     };
     
     struct ReadMemMsg {
@@ -344,11 +345,16 @@ public:
         if (type == ReadMemMsg{}.hdr.type) return _newMsg<ReadMemMsg>();
         if (type == PixReg8Msg{}.hdr.type) return _newMsg<PixReg8Msg>();
         if (type == PixReg16Msg{}.hdr.type) return _newMsg<PixReg16Msg>();
+        printf("Unknown msg type: %ju\n", (uintmax_t)type);
         return nullptr;
     }
     
     MsgPtr _readMsg() {
+        // Find the first non-zero byte, denoting the first message
         size_t off = _inOff;
+        for (; off<_inLen; off++) {
+            if (_in[off]) break;
+        }
         
         MsgHdr hdr;
         if (_inLen-off < sizeof(hdr)) return nullptr;
@@ -361,16 +367,17 @@ public:
         assert(msg);
         
         // Verify that the incoming message has enough data to fill the type that it claims to be
+        printf("hdr.len (%ju) >= msg->hdr.len (%ju)\n", (uintmax_t)hdr.len, (uintmax_t)msg->hdr.len);
         assert(hdr.len >= msg->hdr.len);
         
         // Copy the payload into the message, but only the number of bytes that we expect the message to have.
-        memcpy(msg.get()+sizeof(MsgHdr), _in+off, msg->hdr.len);
+        memcpy(((uint8_t*)msg.get())+sizeof(MsgHdr), _in+off, msg->hdr.len);
         
-        // TODO: fix
-//        // Handle special message types that contain variable amounts of data
-//        if (auto x = Msg::Cast<ReadMemMsg>(msg.get())) {
-//            x->mem = _in+off;
-//        }
+        // Handle special message types that contain variable amounts of data
+        if (auto x = Msg::Cast<ReadMemMsg>(msg.get())) {
+            x->hdr.len = hdr.len;
+            x->mem = _in+off;
+        }
         
         off += hdr.len;
         _inOff = off;
@@ -438,20 +445,7 @@ public:
     }
     
     void _setPins(const Pins& pins) {
-        const uint8_t pinDirs = pins.CLK.dirBit()   |
-                                pins.DO.dirBit()    |
-                                pins.DI.dirBit()    |
-                                pins.CS.dirBit()    |
-                                pins.CDONE.dirBit() |
-                                pins.CRST_.dirBit() ;
-        const uint8_t pinVals = pins.CLK.valBit()   |
-                                pins.DO.valBit()    |
-                                pins.DI.valBit()    |
-                                pins.CS.valBit()    |
-                                pins.CDONE.valBit() |
-                                pins.CRST_.valBit() ;
-        
-        uint8_t b[] = {0x80, pinVals, pinDirs};
+        uint8_t b[] = {0x80, pins.valBits(), pins.dirBits()};
         _ftdiWrite(_ftdi, b, sizeof(b));
     }
     
@@ -466,7 +460,7 @@ public:
 //                for (size_t i=0; i<readLen; i++) {
 //                    uint8_t byte = *(d+off+i);
 ////                    if (byte) {
-//                        printf("0x%x ", byte);
+//                        printf("%02x ", byte);
 ////                    }
 //                }
 //                printf("\n");
@@ -560,84 +554,92 @@ int main() {
 //    }
     
     
-    for (bool on=true;; on=!on) {
-        device->write(SetLEDMsg{.on = on});
-        printf("Wrote led=%d\n", on);
-        for (;;) {
-            if (auto msgPtr = Msg::Cast<SetLEDMsg>(device->read())) {
-                const SetLEDMsg& msg = *msgPtr;
-                printf("Got SetLEDMsg\n");
-                break;
-    //            if (!(msg.len % 2)) {
-    //                for (size_t i=0; i<msg.len; i+=2) {
-    //                    uint16_t val;
-    //                    memcpy(&val, msg.mem+i, sizeof(val));
-    //                    if (lastVal) {
-    //                        uint16_t expected = (uint16_t)(*lastVal+1);
-    //                        if (val != expected) {
-    //                            printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
-    //                        }
-    //                    }
-    //                    lastVal = val;
-    //                }
-    //            } else {
-    //                printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.len);
-    //            }
-    //            
-    //            dataLen += msg.len;
-    //            if (!(msgCount % 4000)) {
-    //                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
-    //            }
-            }
-        }
-        usleep(100000);
-    }
-
-    
-    
-//    printf("Running trials...\n");
-//    for (uint64_t trial=0;; trial++) {
-////        device->write(Cmd::LEDOn);
-//        device->write(ReadMemMsg{});
-//        
-//        auto startTime = CurrentTime();
-//        size_t dataLen = 0;
-//        std::optional<uint16_t> lastVal;
-//        for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
-//            if (auto msgPtr = Msg::Cast<ReadMemMsg>(device->read())) {
-//                const ReadMemMsg& msg = *msgPtr;
-//                if (!(msg.len % 2)) {
-//                    for (size_t i=0; i<msg.len; i+=2) {
-//                        uint16_t val;
-//                        memcpy(&val, msg.mem+i, sizeof(val));
-//                        if (lastVal) {
-//                            uint16_t expected = (uint16_t)(*lastVal+1);
-//                            if (val != expected) {
-//                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
-//                            }
-//                        }
-//                        lastVal = val;
-//                    }
-//                } else {
-//                    printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.len);
-//                }
-//                
-//                dataLen += msg.len;
+//    for (bool on=true;; on=!on) {
+//        device->write(SetLEDMsg{.on = on});
+////        device->write(SetLEDMsg{.on = on});
+//        printf("Wrote led=%d\n", on);
+//        usleep(1000000);
+//        for (;;) {
+//            if (auto msgPtr = Msg::Cast<SetLEDMsg>(device->read())) {
+//                const SetLEDMsg& msg = *msgPtr;
+////                for (size_t i=0; i<sizeof(msg.payload); i++) {
+//////                    printf("%02x ", msg.payload[i]);
+////                    assert(msg.payload[i] == i);
+////                }
+//                printf("\n");
+//                printf("Got SetLEDMsg\n");
+//                break;
+//    //            if (!(msg.len % 2)) {
+//    //                for (size_t i=0; i<msg.len; i+=2) {
+//    //                    uint16_t val;
+//    //                    memcpy(&val, msg.mem+i, sizeof(val));
+//    //                    if (lastVal) {
+//    //                        uint16_t expected = (uint16_t)(*lastVal+1);
+//    //                        if (val != expected) {
+//    //                            printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+//    //                        }
+//    //                    }
+//    //                    lastVal = val;
+//    //                }
+//    //            } else {
+//    //                printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.len);
+//    //            }
+//    //            
+//    //            dataLen += msg.len;
 //    //            if (!(msgCount % 4000)) {
 //    //                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)totalDataLen);
 //    //            }
 //            }
 //        }
-//        auto stopTime = CurrentTime();
-//        
-//        if (dataLen != RAMSize) {
-//            printf("  Error: data length mismatch: expected 0x%jx, got 0x%jx\n",
-//                (uintmax_t)RAMSize, (uintmax_t)dataLen);
-//        }
-//        
-//        printf("Trial complete | Trial: %06ju | Duration: %ju ms\n",
-//            (uintmax_t)trial, (uintmax_t)TimeDurationMs(startTime, stopTime));
+////        usleep(100000);
 //    }
+//    return 0;
+
+    
+    
+    printf("Running trials...\n");
+    for (uint64_t trial=0;; trial++) {
+//        device->write(Cmd::LEDOn);
+        device->write(ReadMemMsg{});
+        
+        auto startTime = CurrentTime();
+        size_t dataLen = 0;
+        std::optional<uint16_t> lastVal;
+        for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
+            if (auto msgPtr = Msg::Cast<ReadMemMsg>(device->read())) {
+                const ReadMemMsg& msg = *msgPtr;
+                if (!(msg.hdr.len % 2)) {
+                    for (size_t i=0; i<msg.hdr.len; i+=2) {
+                        uint16_t val;
+                        memcpy(&val, msg.mem+i, sizeof(val));
+                        if (lastVal) {
+                            uint16_t expected = (uint16_t)(*lastVal+1);
+                            if (val != expected) {
+                                printf("  Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+                            }
+                        }
+                        lastVal = val;
+                    }
+                } else {
+                    printf("  Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.hdr.len);
+                }
+                
+                dataLen += msg.hdr.len;
+//                if (!(msgCount % 100)) {
+//                    printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
+//                }
+            }
+        }
+        auto stopTime = CurrentTime();
+        
+        if (dataLen != RAMSize) {
+            printf("  Error: data length mismatch: expected 0x%jx, got 0x%jx\n",
+                (uintmax_t)RAMSize, (uintmax_t)dataLen);
+        }
+        
+        printf("Trial complete | Trial: %06ju | Duration: %ju ms\n",
+            (uintmax_t)trial, (uintmax_t)TimeDurationMs(startTime, stopTime));
+    }
     
     return 0;
 }
