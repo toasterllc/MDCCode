@@ -4,7 +4,12 @@
 `include "../SDRAMController.v"
 `include "../PixI2CMaster.v"
 
-module Debug(
+module Debug #(
+    // Max payload length (bytes)
+    // *** Code needs to be updated below if this is changed!
+    // *** See serialIn_payloadCounter case statement.
+    parameter MsgMaxPayloadLen = 5
+)(
     input wire                              clk,
     
     output wire[7:0]                        msgIn_type,
@@ -23,7 +28,6 @@ module Debug(
     output wire                             debug_do
 );
     localparam MsgHeaderLen = 2; // Message header length (bytes)
-    localparam MsgMaxPayloadLen = 5; // Max payload length (bytes)
     localparam MsgMaxLen = MsgHeaderLen+MsgMaxPayloadLen;
     
     assign msgIn_type = inq_readData[0*8+:8];
