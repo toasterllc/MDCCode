@@ -106,6 +106,7 @@ public:
         uint8_t write = 0;
         uint16_t addr = 0;
         uint8_t val = 0;
+        uint8_t ok = 0;
     } __attribute__((packed));
     
     struct PixReg16Msg {
@@ -113,6 +114,7 @@ public:
         uint8_t write = 0;
         uint16_t addr = 0;
         uint16_t val = 0;
+        uint8_t ok = 0;
     } __attribute__((packed));
     
     using MsgPtr = std::unique_ptr<Msg>;
