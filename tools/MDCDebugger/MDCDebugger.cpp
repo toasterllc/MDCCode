@@ -79,8 +79,8 @@ public:
     
     struct SetLEDMsg {
         MsgHdr hdr{.type=0x01, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint8_t on = 0;
-//        uint8_t payload[255];
+//        uint8_t on = 0;
+        uint8_t payload[255];
     } __attribute__((packed));
     
     struct ReadMemMsg {
@@ -484,10 +484,29 @@ static Args parseArgs(int argc, const char* argv[]) {
 static void setLED(const Args& args, MDCDevice& device) {
     using SetLEDMsg = MDCDevice::SetLEDMsg;
     using Msg = MDCDevice::Msg;
-    device.write(SetLEDMsg{.on = args.on});
-    for (;;) {
+//    device.write(SetLEDMsg{.on = args.on});
+//    for (;;) {
+//        if (auto msgPtr = Msg::Cast<SetLEDMsg>(device.read())) {
+//            return;
+//        }
+//    }
+    
+    device.write(SetLEDMsg{});
+    for (size_t msgCount=0;;) {
         if (auto msgPtr = Msg::Cast<SetLEDMsg>(device.read())) {
-            return;
+            const auto& msg = *msgPtr;
+            for (size_t i=0; i<sizeof(msg.payload); i++) {
+                uint8_t val = msg.payload[i];
+                uint8_t expected = 255-i+1;
+                if (val != expected) {
+                    fprintf(stderr, "Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+                }
+            }
+            
+            msgCount++;
+            if (!(msgCount % 1000)) {
+                printf("Message count: %ju\n", (uintmax_t)msgCount);
+            }
         }
     }
 }
@@ -507,13 +526,15 @@ static void readMem(const Args& args, MDCDevice& device) {
     
     device.write(ReadMemMsg{});
     size_t dataLen = 0;
-    for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
+    for (size_t msgCount=0; dataLen<RAMSize;) {
         if (auto msgPtr = Msg::Cast<ReadMemMsg>(device.read())) {
             const auto& msg = *msgPtr;
             outputFile.write((char*)msg.mem, msg.hdr.len);
             if (!outputFile) throw std::runtime_error("failed to write to output file");
             
             dataLen += msg.hdr.len;
+            
+            msgCount++;
             if (!(msgCount % 1000)) {
                 printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
             }

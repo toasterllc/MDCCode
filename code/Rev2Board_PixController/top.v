@@ -560,11 +560,13 @@ module Top(
     // ====================
     function [15:0] DataFromAddr;
         input [24:0] addr;
+        // DataFromAddr = {addr[24:9]};
         // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
         DataFromAddr = addr[15:0];
         // DataFromAddr = 16'hFFFF;
         // DataFromAddr = 16'h0000;
         // DataFromAddr = 16'h7832;
+        // DataFromAddr = 16'hCAFE;
     endfunction
     
     function [63:0] Min;
@@ -582,10 +584,13 @@ module Top(
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
     reg[5*8-1:0] msgInPayload = 0;
-    reg[7:0] mem[255:0];
+    reg[15:0] memTmp = 0;
+    reg memTmpTrigger = 0;
+    reg[15:0] mem[127:0] /* synthesis syn_ramstyle="no_rw_check" */;
     reg[7:0] memLen = 0;
     reg[7:0] memCounter = 0;
     reg[7:0] memCounterRecv = 0;
+    reg[7:0] newCounter = 0;
     always @(posedge clk) begin
         case (state)
         
@@ -620,6 +625,7 @@ module Top(
         
         // Accept new command
         StateHandleMsg: begin
+            led[0] <= 1;
             debug_msgIn_trigger <= 1;
             if (debug_msgIn_trigger && debug_msgIn_ready) begin
                 debug_msgIn_trigger <= 0;
@@ -652,7 +658,7 @@ module Top(
                 $display("MsgType_SetLED: %0d", msgInPayload[0]);
                 led[0] <= msgInPayload[0];
                 debug_msgOut_type <= MsgType_SetLED;
-                debug_msgOut_payloadLen <= 1;
+                debug_msgOut_payloadLen <= 255;
             end
             
             MsgType_PixReg8: begin
@@ -669,11 +675,14 @@ module Top(
         StateHandleMsg+2: begin
             if (debug_msgOut_payloadTrigger) begin
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                debug_msgOut_payload <= 0;
+                debug_msgOut_payload <= debug_msgOut_payloadLen;
                 if (!debug_msgOut_payloadLen) begin
-                    // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    debug_msgOut_type <= 0;
-                    state <= StateHandleMsg;
+                    debug_msgOut_type <= MsgType_SetLED;
+                    debug_msgOut_payloadLen <= 255;
+                    
+                    // // Clear `debug_msgOut_type` to prevent another message from being sent.
+                    // debug_msgOut_type <= 0;
+                    // state <= StateHandleMsg;
                 end
             end
         end
@@ -709,12 +718,15 @@ module Top(
                     ram_cmdTrigger <= 0;
                 end
             end
-
-            // Write incoming data into `mem`
-            if (ram_cmdReadDataValid) begin
-                mem[memLen] <= ram_cmdReadData[7:0];
-                mem[memLen+1] <= ram_cmdReadData[15:8];
-                memLen <= memLen+2;
+            
+            if (memTmpTrigger) begin
+                memTmpTrigger <= 0;
+                
+                mem[memLen] <= memTmp;//memLen;
+                
+                // mem[memLen] <= memTmp[7:0];//memLen;
+                // mem[memLen+1] <= memTmp[15:8];//memLen+1;
+                memLen <= memLen+1;
                 memCounterRecv <= memCounterRecv-1;
                 
                 // Next state after we've received all the bytes
@@ -722,13 +734,19 @@ module Top(
                     state <= StateReadMem+3;
                 end
             end
+            
+            // Write incoming data into `memTmp`
+            if (ram_cmdReadDataValid) begin
+                memTmp <= ram_cmdReadData;
+                memTmpTrigger <= 1;
+            end
         end
         
         // Start sending the data
         StateReadMem+3: begin
             debug_msgOut_type <= MsgType_ReadMem;
-            debug_msgOut_payloadLen <= memLen;
-            memCounter <= 0;
+            debug_msgOut_payloadLen <= memLen<<1; // memLen*2 for the number of bytes
+            newCounter <= 0;
             state <= StateReadMem+4;
         end
         
@@ -739,8 +757,11 @@ module Top(
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                 
                 if (debug_msgOut_payloadLen) begin
-                    debug_msgOut_payload <= mem[memCounter];
-                    memCounter <= memCounter+1;
+                    if (!newCounter[0])
+                        debug_msgOut_payload <= mem[newCounter>>1][7:0]; // Low byte
+                    else
+                        debug_msgOut_payload <= mem[newCounter>>1][15:8]; // High byte
+                    newCounter <= newCounter+1;
                 
                 end else begin
                     // We're finished with this chunk.
