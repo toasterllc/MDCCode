@@ -53,6 +53,10 @@
 
 
 
+- add:
+      /* synthesis syn_ramstyle="no_rw_check" */
+    to AFIFO memories, to avoid unnecessary overhead
+
 - rewrite SDRAMController for smaller size/better performance
     - more pipelining if possible
     - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
