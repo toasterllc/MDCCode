@@ -51,6 +51,24 @@
 
 
 
+
+
+- rewrite SDRAMController for smaller size/better performance
+    - more pipelining if possible
+    - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
+
+- use tmp register for memory reads
+	this also looks like a good change -- the design is slightly faster, and uses fewer logic cells (1319 vs 1330)
+
+- change memory dimension to reg[15:0] mem[127:0]
+	this was a good change apparently, and substantially reduces the size of the design
+
+- using newCounter instead of memCounter
+
+
+
+
+
 - Rev2
     
     √ Renumber all components
