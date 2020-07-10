@@ -371,6 +371,24 @@ module SDRAMController #(
         // Handle init states
         end else case (substate)
             0: begin
+                ram_writeData <= 0;
+                savedCmdWriteData <= 0;
+                ram_dqm <= 0;
+                ram_cmd <= 0;
+                substate <= 0;
+                readDataValidShiftReg <= 0;
+                delayCounter <= 0;
+                refreshCounter <= 0;
+                state <= StateInit;
+                savedCmdAddr <= 0;
+                ram_ba <= 0;
+                ram_a <= 0;
+                didRefresh <= 0;
+                ram_cke <= 0;
+                savedCmdTrigger <= 0;
+                savedCmdWrite <= 0;
+                writeDataValid <= 0;
+                
                 // Initialize registers
                 ram_cke <= 0;
                 ram_dqm <= 2'b11;

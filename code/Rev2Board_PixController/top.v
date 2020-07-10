@@ -24,6 +24,7 @@ module Debug #(
     output reg                              msgOut_payloadTrigger = 0,
     
     input wire                              debug_clk,
+    input wire                              debug_cs,
     input wire                              debug_di,
     output wire                             debug_do
 );
@@ -52,7 +53,7 @@ module Debug #(
         .rd(inq_readData),
         .rok(inq_readOK),
         .wclk(inq_wclk),
-        .w(inq_writeTrigger),
+        .w(debug_cs && inq_writeTrigger),
         .wd(inq_writeData),
         .wok(inq_writeOK)
     );
@@ -69,7 +70,7 @@ module Debug #(
     reg[7:0] outq_writeData = 0;
     wire outq_writeOK;
     AFIFO #(.Width(8), .Size(8)) outq(
-        .rclk(outq_rclk),
+        .rclk(debug_cs && outq_rclk),
         .r(outq_readTrigger),
         .rd(outq_readData),
         .rok(outq_readOK),
@@ -93,7 +94,7 @@ module Debug #(
                 msgOut_state <= 1;
             end
         end
-        
+    
         // Send payload length (byte 1)
         1: begin
             if (outq_writeOK) begin
@@ -102,12 +103,12 @@ module Debug #(
                 msgOut_state <= 2;
             end
         end
-        
+    
         // Delay while payload length is written
         2: begin
             if (outq_writeOK) begin
                 outq_writeTrigger <= 0;
-                
+            
                 // Trigger the initial payload byte, or provide the final payload trigger,
                 // depending on whether there's payload data.
                 msgOut_payloadTrigger <= 1;
@@ -118,19 +119,19 @@ module Debug #(
                 end
             end
         end
-        
+    
         // Delay before returning to first state
         3: begin
             msgOut_payloadTrigger <= 0;
             msgOut_state <= 0;
         end
-        
+    
         // Delay while first payload byte is loaded
         4: begin
             msgOut_payloadTrigger <= 0;
             msgOut_state <= 5;
         end
-        
+    
         5: begin
             outq_writeData <= msgOut_payload;
             outq_writeTrigger <= 1;
@@ -141,7 +142,7 @@ module Debug #(
                 msgOut_state <= 7;
             end
         end
-        
+    
         // Delay while previous byte is written
         6: begin
             msgOut_payloadTrigger <= 0;
@@ -150,7 +151,7 @@ module Debug #(
                 msgOut_state <= 5;
             end
         end
-        
+    
         // Delay while final byte is written and client resets, before returning to first state
         7: begin
             msgOut_payloadTrigger <= 0;
@@ -185,107 +186,109 @@ module Debug #(
     reg[8:0] serialOut_shiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
     assign debug_do = serialOut_shiftReg[8];
     always @(posedge debug_clk) begin
-        if (serialIn_byteReady) begin
-            serialIn_shiftReg <= {1'b1, debug_di};
-        end else begin
-            serialIn_shiftReg <= (serialIn_shiftReg<<1)|debug_di;
-        end
-        
-        case (serialIn_state)
-        0: begin
-            // Initialize `serialIn_shiftReg` as if it was originally initialized to 1,
-            // so that after the first clock it contains the sentinel and
-            // the first bit of data.
-            serialIn_shiftReg <= {1'b1, debug_di};
-            serialIn_state <= 1;
-        end
-        
-        // if (inq_writeTrigger && !inq_writeOK) begin
-        //     // TODO: handle dropped bytes
-        // end
-        
-        1: begin
-            inq_writeTrigger <= 0; // Clear from state 3
+        if (debug_cs) begin
             if (serialIn_byteReady) begin
-                // Only transition states if we have a valid message type.
-                // This way, new messages can occur at any byte boundary,
-                // instead of every other byte if we required both
-                // message type + payload length for every transmission.
-                if (serialIn_byte) begin
-                    serialIn_msg[0*8+:8] <= serialIn_byte;
-                    serialIn_state <= 2;
-                end
-            end
-        end
-        
-        2: begin
-            if (serialIn_byteReady) begin
-                serialIn_msg[1*8+:8] <= serialIn_byte;
-                serialIn_payloadCounter <= 0;
-                serialIn_state <= 3;
-            end
-        end
-        
-        3: begin
-            if (serialIn_payloadCounter < serialIn_payloadLen) begin
-                if (serialIn_byteReady) begin
-                    // Only write while serialIn_payloadCounter < MsgMaxPayloadLen to prevent overflow.
-                    if (serialIn_payloadCounter < MsgMaxPayloadLen) begin
-                        case (serialIn_payloadCounter)
-                        0: serialIn_msg[(0+2)*8+:8] <= serialIn_byte;
-                        1: serialIn_msg[(1+2)*8+:8] <= serialIn_byte;
-                        2: serialIn_msg[(2+2)*8+:8] <= serialIn_byte;
-                        3: serialIn_msg[(3+2)*8+:8] <= serialIn_byte;
-                        4: serialIn_msg[(4+2)*8+:8] <= serialIn_byte;
-                        endcase
-                    end
-                    serialIn_payloadCounter <= serialIn_payloadCounter+1;
-                end
-            
+                serialIn_shiftReg <= {1'b1, debug_di};
             end else begin
-                // $display("Received message: msgType=%0d, payloadLen=%0d", serialIn_msgType, serialIn_payloadLen);
-                // Only transmit non-nop messages
-                if (serialIn_msgType) begin
-                    inq_writeTrigger <= 1;
-                end
+                serialIn_shiftReg <= (serialIn_shiftReg<<1)|debug_di;
+            end
+        
+            case (serialIn_state)
+            0: begin
+                // Initialize `serialIn_shiftReg` as if it was originally initialized to 1,
+                // so that after the first clock it contains the sentinel and
+                // the first bit of data.
+                serialIn_shiftReg <= {1'b1, debug_di};
                 serialIn_state <= 1;
             end
-        end
-        endcase
         
-        case (serialOut_state)
-        0: begin
-            // Initialize `serialOut_shiftReg` as if it was originally initialized to 1,
-            // so that after the first clock cycle it contains the sentinel.
-            serialOut_shiftReg <= 2'b10;
-            serialOut_state <= 2;
-        end
+            // if (inq_writeTrigger && !inq_writeOK) begin
+            //     // TODO: handle dropped bytes
+            // end
         
-        1: begin
-            serialOut_shiftReg <= serialOut_shiftReg<<1;
-            outq_readTrigger <= 0;
-            
-            // If we successfully read a byte, shift it out
-            if (outq_readOK) begin
-                serialOut_shiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
-            
-            // Otherwise shift out a zero byte
-            end else begin
-                serialOut_shiftReg <= {8'b0, 1'b1}; // Add sentinel to the end
+            1: begin
+                inq_writeTrigger <= 0; // Clear from state 3
+                if (serialIn_byteReady) begin
+                    // Only transition states if we have a valid message type.
+                    // This way, new messages can occur at any byte boundary,
+                    // instead of every other byte if we required both
+                    // message type + payload length for every transmission.
+                    if (serialIn_byte) begin
+                        serialIn_msg[0*8+:8] <= serialIn_byte;
+                        serialIn_state <= 2;
+                    end
+                end
             end
-            
-            serialOut_state <= 2;
-        end
         
-        // Continue shifting out a byte
-        2: begin
-            serialOut_shiftReg <= serialOut_shiftReg<<1;
-            if (serialOut_shiftReg[6:0] == 7'b1000000) begin
-                outq_readTrigger <= 1;
-                serialOut_state <= 1;
+            2: begin
+                if (serialIn_byteReady) begin
+                    serialIn_msg[1*8+:8] <= serialIn_byte;
+                    serialIn_payloadCounter <= 0;
+                    serialIn_state <= 3;
+                end
             end
+        
+            3: begin
+                if (serialIn_payloadCounter < serialIn_payloadLen) begin
+                    if (serialIn_byteReady) begin
+                        // Only write while serialIn_payloadCounter < MsgMaxPayloadLen to prevent overflow.
+                        if (serialIn_payloadCounter < MsgMaxPayloadLen) begin
+                            case (serialIn_payloadCounter)
+                            0: serialIn_msg[(0+2)*8+:8] <= serialIn_byte;
+                            1: serialIn_msg[(1+2)*8+:8] <= serialIn_byte;
+                            2: serialIn_msg[(2+2)*8+:8] <= serialIn_byte;
+                            3: serialIn_msg[(3+2)*8+:8] <= serialIn_byte;
+                            4: serialIn_msg[(4+2)*8+:8] <= serialIn_byte;
+                            endcase
+                        end
+                        serialIn_payloadCounter <= serialIn_payloadCounter+1;
+                    end
+            
+                end else begin
+                    // $display("Received message: msgType=%0d, payloadLen=%0d", serialIn_msgType, serialIn_payloadLen);
+                    // Only transmit non-nop messages
+                    if (serialIn_msgType) begin
+                        inq_writeTrigger <= 1;
+                    end
+                    serialIn_state <= 1;
+                end
+            end
+            endcase
+        
+            case (serialOut_state)
+            0: begin
+                // Initialize `serialOut_shiftReg` as if it was originally initialized to 1,
+                // so that after the first clock cycle it contains the sentinel.
+                serialOut_shiftReg <= 2'b10;
+                serialOut_state <= 2;
+            end
+        
+            1: begin
+                serialOut_shiftReg <= serialOut_shiftReg<<1;
+                outq_readTrigger <= 0;
+            
+                // If we successfully read a byte, shift it out
+                if (outq_readOK) begin
+                    serialOut_shiftReg <= {outq_readData, 1'b1}; // Add sentinel to the end
+            
+                // Otherwise shift out a zero byte
+                end else begin
+                    serialOut_shiftReg <= {8'b0, 1'b1}; // Add sentinel to the end
+                end
+            
+                serialOut_state <= 2;
+            end
+        
+            // Continue shifting out a byte
+            2: begin
+                serialOut_shiftReg <= serialOut_shiftReg<<1;
+                if (serialOut_shiftReg[6:0] == 7'b1000000) begin
+                    outq_readTrigger <= 1;
+                    serialOut_state <= 1;
+                end
+            end
+            endcase
         end
-        endcase
     end
 endmodule
 
@@ -414,23 +417,17 @@ module Top(
     output wire         debug_do
 );
     // ====================
-    // Clock PLL (50.250 MHz)
+    // Clock PLL (15.938 MHz)
     // ====================
-    localparam ClockFrequency = 45000000;
+    localparam ClockFrequency = 15938000;
     wire clk;
     ClockGen #(
         .FREQ(ClockFrequency),
         .DIVR(0),
-        .DIVF(59),
-        .DIVQ(4),
+        .DIVF(84),
+        .DIVQ(6),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk));
-    
-    // Not ideal to AND with a clock, since it can cause the resulting clock signal
-    // to toggle anytime the other input changes.
-    // We'll be safe though as long as we only toggle debug_cs while the clock is
-    // low, which is our contract.
-    wire debug_clkFiltered = debug_clk&debug_cs;
     
     
     
@@ -491,7 +488,7 @@ module Top(
     reg[15:0] pix_i2c_cmd_regAddr = 0;
     reg[15:0] pix_i2c_cmd_writeData = 0;
     wire[15:0] pix_i2c_cmd_readData;
-    reg[1:0] pix_i2c_cmd_dataLen;
+    reg[1:0] pix_i2c_cmd_dataLen = 0;
     wire pix_i2c_cmd_done;
     wire pix_i2c_cmd_ok;
     PixI2CMaster #(
@@ -550,7 +547,8 @@ module Top(
         .msgOut_payload(debug_msgOut_payload),
         .msgOut_payloadTrigger(debug_msgOut_payloadTrigger),
         
-        .debug_clk(debug_clkFiltered),
+        .debug_clk(debug_clk),
+        .debug_cs(debug_cs),
         .debug_di(debug_di),
         .debug_do(debug_do)
     );
@@ -575,11 +573,11 @@ module Top(
         Min = (a < b ? a : b);
     endfunction
     
-    localparam StateInit        = 0;    // +0
-    localparam StateHandleMsg   = 1;    // +2
-    localparam StateReadMem     = 4;    // +4
-    localparam StatePixReg8     = 9;    // +2
-    localparam StatePixReg16    = 12;   // +2
+    localparam StateInit        = 0;    // +1
+    localparam StateHandleMsg   = 2;    // +2
+    localparam StateReadMem     = 5;    // +4
+    localparam StatePixReg8     = 10;   // +2
+    localparam StatePixReg16    = 13;   // +2
     
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
@@ -597,7 +595,34 @@ module Top(
         
         // Initialize the SDRAM
         StateInit: begin
+            debug_msgIn_trigger <= 0;
+            debug_msgOut_payload <= 0;
+            debug_msgOut_payloadLen <= 0;
+            debug_msgOut_type <= 0;
+            lastMemTmp <= 0;
             led <= 0;
+            // mem <= 0;
+            memCounter <= 0;
+            memCounterRecv <= 0;
+            memLenA <= 0;
+            memTmp <= 0;
+            memTmpTrigger <= 0;
+            msgInPayload <= 0;
+            msgInType <= 0;
+            newCounter <= 0;
+            pix_i2c_cmd_dataLen <= 0;
+            pix_i2c_cmd_regAddr <= 0;
+            pix_i2c_cmd_write <= 0;
+            pix_i2c_cmd_writeData <= 0;
+            ram_cmdAddr <= 0;
+            ram_cmdTrigger <= 0;
+            ram_cmdWrite <= 0;
+            ram_cmdWriteData <= 0;
+            
+            state <= StateInit+1;
+        end
+        
+        StateInit+1: begin
 `ifdef SIM
             state <= StateHandleMsg;
 `else
