@@ -582,6 +582,7 @@ static void verifyMem(const Args& args, MDCDevice& device) {
             if (!(msgCount % 1000)) {
                 printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
             }
+            exit(0);
         }
     }
     auto stopTime = CurrentTime();

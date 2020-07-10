@@ -594,7 +594,7 @@ module Top(
                 mem[memLenA] <= memTmp;
                 memLenA <= memLenA+1;
                 
-                if (memTmp && memTmp!=(lastMemTmp+1'b1)) begin
+                if (memTmp && memTmp!=(lastMemTmp+2'b01)) begin
                     led[3] <= 1;
                 end
                 lastMemTmp <= memTmp;
@@ -619,36 +619,6 @@ module Top(
             debug_msgOut_payloadLen <= memLenA<<1; // memLenA*2 for the number of bytes
             newCounter <= 0;
             memLenA <= 0;
-            state <= StateReadMem+4;
-        end
-        
-        // Send the data
-        StateReadMem+4: begin
-            // Continue sending data
-            if (debug_msgOut_payloadTrigger) begin
-                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                
-                if (debug_msgOut_payloadLen) begin
-                    if (!newCounter[0])
-                        debug_msgOut_payload <= mem[memLenA][7:0]; // Low byte
-                    else
-                        debug_msgOut_payload <= mem[memLenA][15:8]; // High byte
-                    newCounter <= newCounter+1;
-                    memLenA <= (newCounter+1)>>1;
-                
-                end else begin
-                    // We're finished with this chunk.
-                    // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    debug_msgOut_type <= 0;
-                    
-                    // Start on the next chunk, or stop if we've read everything.
-                    if (ram_cmdAddr > 16'hFF) begin
-                        state <= StateHandleMsg;
-                    end else begin
-                        state <= StateReadMem+1;
-                    end
-                end
-            end
         end
         endcase
     end
