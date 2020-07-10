@@ -416,12 +416,12 @@ module Top(
     // ====================
     // Clock PLL (50.250 MHz)
     // ====================
-    localparam ClockFrequency = 50250000;
+    localparam ClockFrequency = 45000000;
     wire clk;
     ClockGen #(
         .FREQ(ClockFrequency),
         .DIVR(0),
-        .DIVF(66),
+        .DIVF(59),
         .DIVQ(4),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk));
@@ -587,10 +587,11 @@ module Top(
     reg[15:0] memTmp = 0;
     reg memTmpTrigger = 0;
     reg[15:0] mem[127:0] /* synthesis syn_ramstyle="no_rw_check" */;
-    reg[7:0] memLen = 0;
+    reg[7:0] memLenA = 0;
     reg[7:0] memCounter = 0;
     reg[7:0] memCounterRecv = 0;
     reg[7:0] newCounter = 0;
+    reg[15:0] lastWord = 0;
     always @(posedge clk) begin
         case (state)
         
@@ -695,6 +696,7 @@ module Top(
         StateReadMem: begin
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
+            lastWord <= 0;
             state <= StateReadMem+1;
         end
         
@@ -702,7 +704,7 @@ module Top(
             ram_cmdTrigger <= 1;
             memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
             memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-            memLen <= 8'h00;
+            memLenA <= 8'h00;
             state <= StateReadMem+2;
         end
         
@@ -722,8 +724,8 @@ module Top(
             if (memTmpTrigger) begin
                 memTmpTrigger <= 0;
                 
-                mem[memLen] <= memTmp;
-                memLen <= memLen+1;
+                mem[memLenA] <= memTmp;
+                memLenA <= memLenA+1;
                 
                 // Next state after we've received all the bytes
                 memCounterRecv <= memCounterRecv-1;
@@ -742,8 +744,9 @@ module Top(
         // Start sending the data
         StateReadMem+3: begin
             debug_msgOut_type <= MsgType_ReadMem;
-            debug_msgOut_payloadLen <= memLen<<1; // memLen*2 for the number of bytes
+            debug_msgOut_payloadLen <= memLenA<<1; // memLenA*2 for the number of bytes
             newCounter <= 0;
+            memLenA <= 0;
             state <= StateReadMem+4;
         end
         
@@ -755,10 +758,16 @@ module Top(
                 
                 if (debug_msgOut_payloadLen) begin
                     if (!newCounter[0])
-                        debug_msgOut_payload <= mem[newCounter>>1][7:0]; // Low byte
+                        debug_msgOut_payload <= mem[memLenA][7:0]; // Low byte
                     else
-                        debug_msgOut_payload <= mem[newCounter>>1][15:8]; // High byte
+                        debug_msgOut_payload <= mem[memLenA][15:8]; // High byte
                     newCounter <= newCounter+1;
+                    memLenA <= (newCounter+1)>>1;
+                    lastWord <= mem[memLenA];
+                    
+                    if (mem[memLenA]!=lastWord && mem[memLenA]!=(lastWord+1'b1)) begin
+                        led[3] <= 1;
+                    end
                 
                 end else begin
                     // We're finished with this chunk.

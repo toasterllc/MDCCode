@@ -79,7 +79,8 @@ module main();
         end
     endfunction
     
-    wire[7:0] a = 8'b00000000;
+    wire[15:0] a = 16'hFFFF;
+    wire[15:0] b = 16'h0000;
     
     // initial begin
     //     $display("%0d", Clocks(20, 0));
@@ -87,11 +88,15 @@ module main();
     // end
     
     initial begin
-        if (a[3:0]) begin
-            $display("TRUE");
-        end else begin
-            $display("FALSE");
-        end
+        // wire[15:0] lowbits;
+        $display("a = %x", a+1'b1);
+        // $display("a = %x", (({a+1[15:0]) == b));
+        
+        // if (a[3:0]) begin
+        //     $display("TRUE");
+        // end else begin
+        //     $display("FALSE");
+        // end
         $finish;
     end
 
