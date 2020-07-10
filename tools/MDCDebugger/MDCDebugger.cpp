@@ -340,16 +340,16 @@ public:
             int ir = ftdi_read_data(&ftdi, d+off, (int)readLen);
             
             if (ir > 0) {
-//                printf("====================\n");
-//                printf("Read:\n");
-//                for (size_t i=0; i<readLen; i++) {
-//                    uint8_t byte = *(d+off+i);
-////                    if (byte) {
-//                        printf("%02x ", byte);
-////                    }
-//                }
-//                printf("\n");
-//                printf("====================\n");
+                printf("====================\n");
+                printf("Read:\n");
+                for (size_t i=0; i<readLen; i++) {
+                    uint8_t byte = *(d+off+i);
+//                    if (byte) {
+                        printf("%02x ", byte);
+//                    }
+                }
+                printf("\n");
+                printf("====================\n");
             }
             
             assert(ir>=0 && (size_t)ir<=readLen);
