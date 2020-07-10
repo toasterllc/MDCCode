@@ -416,7 +416,11 @@ module Top(
     inout wire[15:0]    ram_dq,
     
     output wire         pix_i2c_clk,
+`ifdef SIM
+    inout tri1          pix_i2c_data,
+`else
     inout wire          pix_i2c_data,
+`endif
     
     input wire          debug_clk,
     input wire          debug_cs,
@@ -630,6 +634,9 @@ module Top(
         end
         
         StateInit+1: begin
+`ifdef SIM
+            state <= StateHandleMsg;
+`else
             if (!ram_cmdTrigger) begin
                 ram_cmdTrigger <= 1;
                 ram_cmdAddr <= 0;
@@ -645,6 +652,7 @@ module Top(
                     state <= StateHandleMsg;
                 end
             end
+`endif
         end
         
         
@@ -900,4 +908,81 @@ module Top(
         end
         endcase
     end
+    
+    
+`ifdef SIM
+    reg sim_debug_clk = 0;
+    reg sim_debug_cs = 0;
+    reg[7:0] sim_debug_di_shiftReg = 0;
+    
+    assign debug_clk = sim_debug_clk;
+    assign debug_cs = sim_debug_cs;
+    assign debug_di = sim_debug_di_shiftReg[7];
+    
+    task WriteByte(input[7:0] b);
+        sim_debug_di_shiftReg = b;
+        repeat (8) begin
+            wait (sim_debug_clk);
+            wait (!sim_debug_clk);
+            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
+        end
+    endtask
+    
+    
+    // assign debug_di = 1;
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        
+        wait (!sim_debug_clk);
+        sim_debug_cs = 1;
+        
+        // WriteByte(MsgType_SetLED);  // Message type
+        // WriteByte(8'h1);            // Payload length
+        // WriteByte(8'h1);            // Payload
+        
+        WriteByte(MsgType_PixReg8);     // Message type
+        WriteByte(8'h4);                // Payload length
+        WriteByte(8'h1);                // Payload0: write
+        WriteByte(8'h34);               // Payload1: addr0
+        WriteByte(8'h12);               // Payload2: addr1
+        WriteByte(8'h42);               // Payload3: value
+
+        WriteByte(MsgType_PixReg8);     // Message type
+        WriteByte(8'h4);                // Payload length
+        WriteByte(8'h0);                // Payload0: write
+        WriteByte(8'h34);               // Payload1: addr0
+        WriteByte(8'h12);               // Payload2: addr1
+        WriteByte(8'h42);               // Payload3: value
+        
+        WriteByte(MsgType_PixReg16);    // Message type
+        WriteByte(8'h5);                // Payload length
+        WriteByte(8'h0);                // Payload0: write
+        WriteByte(8'h34);               // Payload1: addr0
+        WriteByte(8'h12);               // Payload2: addr1
+        WriteByte(8'hFE);               // Payload3: value0
+        WriteByte(8'hCA);               // Payload4: value1
+        
+        #1000000;
+        $finish;
+    end
+    
+    initial begin
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        
+        forever begin
+            sim_debug_clk = 0;
+            #10;
+            sim_debug_clk = 1;
+            #10;
+        end
+    end
+`endif
+    
 endmodule
