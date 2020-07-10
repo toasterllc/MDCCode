@@ -2,7 +2,6 @@
 `include "../ClockGen.v"
 `include "../AFIFO.v"
 `include "../SDRAMController.v"
-`include "../PixI2CMaster.v"
 
 module Debug #(
     // Max payload length (bytes)
@@ -69,7 +68,7 @@ module Debug #(
     reg outq_writeTrigger = 0;
     reg[7:0] outq_writeData = 0;
     wire outq_writeOK;
-    AFIFO #(.Width(8), .Size(8)) outq(
+    AFIFO #(.Width(8), .Size(4)) outq(
         .rclk(outq_rclk),
         .r(debug_cs & outq_readTrigger),
         .rd(outq_readData),
@@ -502,25 +501,6 @@ module Top(
     reg[1:0] pix_i2c_cmd_dataLen = 0;
     wire pix_i2c_cmd_done;
     wire pix_i2c_cmd_ok;
-    PixI2CMaster #(
-        .ClkFreq(ClockFrequency),
-        .I2CClkFreq(400000)
-    ) pixI2CMaster(
-        .clk(clk),
-        
-        .cmd_slaveAddr(pix_i2c_cmd_slaveAddr),
-        .cmd_write(pix_i2c_cmd_write),
-        .cmd_regAddr(pix_i2c_cmd_regAddr),
-        .cmd_writeData(pix_i2c_cmd_writeData),
-        .cmd_readData(pix_i2c_cmd_readData),
-        .cmd_dataLen(pix_i2c_cmd_dataLen),
-        .cmd_done(pix_i2c_cmd_done),
-        .cmd_ok(pix_i2c_cmd_ok),
-        
-        .i2c_clk(pix_i2c_clk),
-        .i2c_data(pix_i2c_data)
-    );
-    
     
     
     
