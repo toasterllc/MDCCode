@@ -342,7 +342,7 @@ public:
             if (ir > 0) {
                 printf("====================\n");
                 printf("Read:\n");
-                for (size_t i=0; i<readLen; i++) {
+                for (size_t i=0; i<1024; i++) {
                     uint8_t byte = *(d+off+i);
 //                    if (byte) {
                         printf("%02x ", byte);
@@ -351,6 +351,7 @@ public:
                 printf("\n");
                 printf("====================\n");
             }
+            exit(0);
             
             assert(ir>=0 && (size_t)ir<=readLen);
             off += ir;
