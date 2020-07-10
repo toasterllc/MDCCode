@@ -552,52 +552,13 @@ module Top(
         
         // Handle new command
         StateHandleMsg+1: begin
-            // By default go to StateHandleMsg+2 next
-            state <= StateHandleMsg+2;
+            state <= StateHandleMsg;
             
             case (msgInType)
-            default: begin
-                debug_msgOut_type <= msgInType;
-                debug_msgOut_payloadLen <= 0;
-            end
-            
             MsgType_ReadMem: begin
-                ram_cmdAddr <= 0;
-                ram_cmdWrite <= 0;
                 state <= StateReadMem;
             end
-            
-            MsgType_SetLED: begin
-                $display("MsgType_SetLED: %0d", msgInPayload[0]);
-                led[0] <= msgInPayload[0];
-                debug_msgOut_type <= MsgType_SetLED;
-                debug_msgOut_payloadLen <= 255;
-            end
-            
-            MsgType_PixReg8: begin
-                state <= StatePixReg8;
-            end
-            
-            MsgType_PixReg16: begin
-                state <= StatePixReg16;
-            end
             endcase
-        end
-        
-        // Wait while the message is being sent
-        StateHandleMsg+2: begin
-            if (debug_msgOut_payloadTrigger) begin
-                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                debug_msgOut_payload <= debug_msgOut_payloadLen;
-                if (!debug_msgOut_payloadLen) begin
-                    debug_msgOut_type <= MsgType_SetLED;
-                    debug_msgOut_payloadLen <= 255;
-                    
-                    // // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    // debug_msgOut_type <= 0;
-                    // state <= StateHandleMsg;
-                end
-            end
         end
         
         
