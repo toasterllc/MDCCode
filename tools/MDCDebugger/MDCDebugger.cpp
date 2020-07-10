@@ -512,7 +512,7 @@ static void setLED(const Args& args, MDCDevice& device) {
     }
 }
 
-const size_t RAMWordCount = 0x2000000;
+const size_t RAMWordCount = 127*3;
 const size_t RAMWordSize = 2;
 const size_t RAMSize = RAMWordCount*RAMWordSize;
 

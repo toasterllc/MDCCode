@@ -648,7 +648,7 @@ module Top(
                     debug_msgOut_type <= 0;
                     
                     // Start on the next chunk, or stop if we've read everything.
-                    if (ram_cmdAddr == 0) begin
+                    if (ram_cmdAddr > 16'hFF) begin
                         state <= StateHandleMsg;
                     end else begin
                         state <= StateReadMem+1;
