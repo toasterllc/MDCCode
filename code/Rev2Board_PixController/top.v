@@ -615,10 +615,6 @@ module Top(
         
         // Start sending the data
         StateReadMem+3: begin
-            debug_msgOut_type <= MsgType_ReadMem;
-            debug_msgOut_payloadLen <= memLenA<<1; // memLenA*2 for the number of bytes
-            newCounter <= 0;
-            memLenA <= 0;
         end
         endcase
     end
