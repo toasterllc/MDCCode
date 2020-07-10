@@ -302,103 +302,6 @@ module Debug #(
     end
 endmodule
 
-
-
-
-
-// module PixController #(
-//     parameter ExtClkFreq = 12000000,    // Image sensor's external clock frequency
-//     parameter ClkFreq = 12000000        // `clk` frequency
-// )(
-//     input wire          clk,
-//
-//     output reg          pix_rst_,
-//
-//     input wire          pix_dclk,
-//     input wire[11:0]    pix_d,
-//     input wire          pix_fv,
-//     input wire          pix_lv,
-//
-//     output wire         pix_sclk,
-//     inout wire          pix_sdata
-// );
-//     // Clocks() returns the value to store in a counter, such that when
-//     // the counter reaches 0, the given time has elapsed.
-//     function [63:0] Clocks;
-//         input [63:0] t;
-//         input [63:0] sub;
-//         begin
-//             Clocks = (t*ClkFreq)/1000000000;
-//             if (Clocks >= sub) Clocks = Clocks-sub;
-//             else Clocks = 0;
-//         end
-//     endfunction
-//
-//     function [63:0] Max;
-//         input [63:0] a;
-//         input [63:0] b;
-//         Max = (a > b ? a : b);
-//     endfunction
-//
-//     // Clocks for EXTCLK to settle
-//     // EXTCLK (the SiTime 12MHz clock) takes up to 150ms to settle,
-//     // but ice40 configuration takes 70 ms, so we only need to wait 80 ms.
-//     localparam SettleClocks = Clocks(80000000, 0);
-//     // Clocks to assert pix_rst_ (1ms)
-//     localparam ResetClocks = Clocks(1000000, 0);
-//     // Clocks to wait for sensor to initialize (150k EXTCLKs)
-//     localparam InitClocks = Clocks(((150000*1000000000)/ExtClkFreq), 0);
-//     // Width of `delay`
-//     localparam DelayWidth = Max(Max($clog2(SettleClocks+1), $clog2(ResetClocks+1)), $clog2(InitClocks+1));
-//
-//     reg[1:0] state = 0;
-//     reg[DelayWidth-1:0] delay = 0;
-//     always @(posedge clk) begin
-//         case (state)
-//
-//         // Wait for EXTCLK to settle
-//         0: begin
-//             pix_rst_ <= 1;
-//             delay <= SettleClocks;
-//             state <= 1;
-//         end
-//
-//         // Assert pix_rst_ for ResetClocks (1ms)
-//         1: begin
-//             if (delay) begin
-//                 delay <= delay-1;
-//             end else begin
-//                 pix_rst_ <= 0;
-//                 delay <= ResetClocks;
-//                 state <= 2;
-//             end
-//         end
-//
-//         // Deassert pix_rst_ and wait InitClocks
-//         2: begin
-//             if (delay) begin
-//                 delay <= delay-1;
-//             end else begin
-//                 pix_rst_ <= 1;
-//                 delay <= InitClocks;
-//                 state <= 3;
-//             end
-//         end
-//
-//         3: begin
-//             // - Write R0x3052 = 0xA114 to configure the internal register initialization process.
-//             // - Write R0x304A = 0x0070 to start the internal register initialization process.
-//             // - Wait 150,000 EXTCLK periods
-//             // - Configure PLL, output, and image settings to desired values.
-//             // - Wait 1ms for the PLL to lock.
-//             // - Set streaming mode (R0x301A[2] = 1).
-//         end
-//         endcase
-//     end
-// endmodule
-
-
-
 module Top(
     input wire          clk12mhz,
     output reg[3:0]     led = 0,
@@ -415,11 +318,7 @@ module Top(
     inout wire[15:0]    ram_dq,
     
     output wire         pix_i2c_clk,
-`ifdef SIM
-    inout tri1          pix_i2c_data,
-`else
     inout wire          pix_i2c_data,
-`endif
     
     input wire          debug_clk,
     input wire          debug_cs,
@@ -614,9 +513,6 @@ module Top(
         end
         
         StateInit+1: begin
-`ifdef SIM
-            state <= StateHandleMsg;
-`else
             if (!ram_cmdTrigger) begin
                 ram_cmdTrigger <= 1;
                 ram_cmdAddr <= 0;
@@ -632,7 +528,6 @@ module Top(
                     state <= StateHandleMsg;
                 end
             end
-`endif
         end
         
         
@@ -800,169 +695,7 @@ module Top(
                 end
             end
         end
-        
-        
-        
-        
-        
-        
-        StatePixReg8: begin
-            $display("MsgType_PixReg8{write=%0d, addr=%04x, data=%02x}", msgInPayload[0], msgInPayload[1*8+:16], msgInPayload[3*8+:8]);
-            pix_i2c_cmd_write <= msgInPayload[0];
-            pix_i2c_cmd_regAddr <= msgInPayload[1*8+:16]; // Little endian address
-            pix_i2c_cmd_writeData <= msgInPayload[3*8+:8];
-            pix_i2c_cmd_dataLen <= 1;
-            state <= StatePixReg8+1;
-        end
-        
-        StatePixReg8+1: begin
-            if (pix_i2c_cmd_done) begin
-                pix_i2c_cmd_dataLen <= 0; // Clear i2c command to prevent it from executing
-                
-                debug_msgOut_type <= MsgType_PixReg8;
-                debug_msgOut_payloadLen <= 5;
-                state <= StatePixReg8+2;
-            end
-        end
-        
-        StatePixReg8+2: begin
-            if (debug_msgOut_payloadTrigger) begin
-                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                case (debug_msgOut_payloadLen)
-                5: debug_msgOut_payload <= pix_i2c_cmd_write;
-                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
-                3: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
-                2: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
-                1: debug_msgOut_payload <= pix_i2c_cmd_ok;
-                0: begin
-                    // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    debug_msgOut_type <= 0;
-                    state <= StateHandleMsg;
-                end
-                endcase
-            end
-        end
-        
-        
-        
-        
-        
-        
-        
-        StatePixReg16: begin
-            $display("MsgType_PixReg16{write=%0d, addr=%04x, data=%04x}", msgInPayload[0], msgInPayload[1*8+:16], msgInPayload[3*8+:16]);
-            pix_i2c_cmd_write <= msgInPayload[0];
-            pix_i2c_cmd_regAddr <= msgInPayload[1*8+:16]; // Little endian address
-            pix_i2c_cmd_writeData <= msgInPayload[3*8+:16];
-            pix_i2c_cmd_dataLen <= 2;
-            state <= StatePixReg16+1;
-        end
-        
-        StatePixReg16+1: begin
-            if (pix_i2c_cmd_done) begin
-                pix_i2c_cmd_dataLen <= 0; // Clear i2c command to prevent it from executing
-                
-                debug_msgOut_type <= MsgType_PixReg16;
-                debug_msgOut_payloadLen <= 6;
-                state <= StatePixReg16+2;
-            end
-        end
-        
-        StatePixReg16+2: begin
-            if (debug_msgOut_payloadTrigger) begin
-                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                case (debug_msgOut_payloadLen)
-                6: debug_msgOut_payload <= pix_i2c_cmd_write;
-                5: debug_msgOut_payload <= pix_i2c_cmd_regAddr[0*8+:8];
-                4: debug_msgOut_payload <= pix_i2c_cmd_regAddr[1*8+:8];
-                3: debug_msgOut_payload <= pix_i2c_cmd_readData[0*8+:8];
-                2: debug_msgOut_payload <= pix_i2c_cmd_readData[1*8+:8];
-                1: debug_msgOut_payload <= pix_i2c_cmd_ok;
-                0: begin
-                    // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    debug_msgOut_type <= 0;
-                    state <= StateHandleMsg;
-                end
-                endcase
-            end
-        end
         endcase
     end
-    
-    
-`ifdef SIM
-    reg sim_debug_clk = 0;
-    reg sim_debug_cs = 0;
-    reg[7:0] sim_debug_di_shiftReg = 0;
-    
-    assign debug_clk = sim_debug_clk;
-    assign debug_cs = sim_debug_cs;
-    assign debug_di = sim_debug_di_shiftReg[7];
-    
-    task WriteByte(input[7:0] b);
-        sim_debug_di_shiftReg = b;
-        repeat (8) begin
-            wait (sim_debug_clk);
-            wait (!sim_debug_clk);
-            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
-        end
-    endtask
-    
-    
-    // assign debug_di = 1;
-    initial begin
-        $dumpfile("top.vcd");
-        $dumpvars(0, Top);
-        
-        // Wait for ClockGen to start its clock
-        wait(clk);
-        #100;
-        
-        wait (!sim_debug_clk);
-        sim_debug_cs = 1;
-        
-        // WriteByte(MsgType_SetLED);  // Message type
-        // WriteByte(8'h1);            // Payload length
-        // WriteByte(8'h1);            // Payload
-        
-        WriteByte(MsgType_PixReg8);     // Message type
-        WriteByte(8'h4);                // Payload length
-        WriteByte(8'h1);                // Payload0: write
-        WriteByte(8'h34);               // Payload1: addr0
-        WriteByte(8'h12);               // Payload2: addr1
-        WriteByte(8'h42);               // Payload3: value
-
-        WriteByte(MsgType_PixReg8);     // Message type
-        WriteByte(8'h4);                // Payload length
-        WriteByte(8'h0);                // Payload0: write
-        WriteByte(8'h34);               // Payload1: addr0
-        WriteByte(8'h12);               // Payload2: addr1
-        WriteByte(8'h42);               // Payload3: value
-        
-        WriteByte(MsgType_PixReg16);    // Message type
-        WriteByte(8'h5);                // Payload length
-        WriteByte(8'h0);                // Payload0: write
-        WriteByte(8'h34);               // Payload1: addr0
-        WriteByte(8'h12);               // Payload2: addr1
-        WriteByte(8'hFE);               // Payload3: value0
-        WriteByte(8'hCA);               // Payload4: value1
-        
-        #1000000;
-        $finish;
-    end
-    
-    initial begin
-        // Wait for ClockGen to start its clock
-        wait(clk);
-        #100;
-        
-        forever begin
-            sim_debug_clk = 0;
-            #10;
-            sim_debug_clk = 1;
-            #10;
-        end
-    end
-`endif
     
 endmodule
