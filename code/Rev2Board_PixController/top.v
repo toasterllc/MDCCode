@@ -70,8 +70,8 @@ module Debug #(
     reg[7:0] outq_writeData = 0;
     wire outq_writeOK;
     AFIFO #(.Width(8), .Size(8)) outq(
-        .rclk(debug_cs && outq_rclk),
-        .r(outq_readTrigger),
+        .rclk(outq_rclk),
+        .r(debug_cs & outq_readTrigger),
         .rd(outq_readData),
         .rok(outq_readOK),
         .wclk(outq_wclk),
