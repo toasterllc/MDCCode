@@ -178,7 +178,7 @@ module Debug #(
     reg[8:0] serialIn_shiftReg = 0; // High bit is the end-of-data sentinel, and isn't transmitted
     wire[7:0] serialIn_byte = serialIn_shiftReg[7:0];
     wire serialIn_byteReady = serialIn_shiftReg[8];
-    reg[(MsgMaxLen*8)-1:0] serialIn_msg;
+    reg[(MsgMaxLen*8)-1:0] serialIn_msg = 0;
     wire[7:0] serialIn_msgType = serialIn_msg[0*8+:8];
     wire[7:0] serialIn_payloadLen = serialIn_msg[1*8+:8];
     reg[7:0] serialIn_payloadCounter = 0;
@@ -186,7 +186,18 @@ module Debug #(
     reg[8:0] serialOut_shiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
     assign debug_do = serialOut_shiftReg[8];
     always @(posedge debug_clk) begin
-        if (debug_cs) begin
+        if (!debug_cs) begin
+            serialIn_msg <= 0;
+            serialIn_payloadCounter <= 0;
+            serialIn_shiftReg <= 0;
+            serialIn_state <= 0;
+            serialOut_shiftReg <= 0;
+            serialOut_state <= 0;
+            
+            inq_writeTrigger <= 0;
+            outq_readTrigger <= 0;
+        
+        end else begin
             if (serialIn_byteReady) begin
                 serialIn_shiftReg <= {1'b1, debug_di};
             end else begin

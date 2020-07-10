@@ -339,7 +339,7 @@ public:
             const size_t readLen = len-off;
             int ir = ftdi_read_data(&ftdi, d+off, (int)readLen);
             
-//            if (ir > 0) {
+            if (ir > 0) {
 //                printf("====================\n");
 //                printf("Read:\n");
 //                for (size_t i=0; i<readLen; i++) {
@@ -350,7 +350,7 @@ public:
 //                }
 //                printf("\n");
 //                printf("====================\n");
-//            }
+            }
             
             assert(ir>=0 && (size_t)ir<=readLen);
             off += ir;
@@ -497,7 +497,7 @@ static void setLED(const Args& args, MDCDevice& device) {
             const auto& msg = *msgPtr;
             for (size_t i=0; i<sizeof(msg.payload); i++) {
                 uint8_t val = msg.payload[i];
-                uint8_t expected = 255-i+1;
+                uint8_t expected = 255-i;
                 if (val != expected) {
                     fprintf(stderr, "Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
                 }
