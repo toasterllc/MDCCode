@@ -457,12 +457,6 @@ module Top(
         // DataFromAddr = 16'hCAFE;
     endfunction
     
-    function [63:0] Min;
-        input [63:0] a;
-        input [63:0] b;
-        Min = (a < b ? a : b);
-    endfunction
-    
     localparam StateInit        = 0;    // +1
     localparam StateHandleMsg   = 2;    // +2
     localparam StateReadMem     = 5;    // +4
@@ -575,8 +569,8 @@ module Top(
         
         StateReadMem+1: begin
             ram_cmdTrigger <= 1;
-            memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-            memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            memCounter <= 8'h7F;
+            memCounterRecv <= 8'h7F;
             memLenA <= 8'h00;
             state <= StateReadMem+2;
         end
