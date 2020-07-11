@@ -404,20 +404,7 @@ module Top(
     wire debug_msgIn_ready;
     reg debug_msgIn_trigger = 0;
     
-    Debug debug(
-        .clk(clk),
-        
-        .msgIn_type(debug_msgIn_type),
-        .msgIn_payloadLen(debug_msgIn_payloadLen),
-        .msgIn_payload(debug_msgIn_payload),
-        .msgIn_ready(debug_msgIn_ready),
-        .msgIn_trigger(debug_msgIn_trigger),
-        
-        .debug_clk(debug_clk),
-        .debug_cs(debug_cs),
-        .debug_di(debug_di),
-        .debug_do(debug_do)
-    );
+    Debug debug();
     
     // ====================
     // Main
@@ -444,7 +431,6 @@ module Top(
         
         // Initialize the SDRAM
         StateInit: begin
-            debug_msgIn_trigger <= 0;
             lastReadData <= 0;
             led <= 0;
             memCounter <= 0;
