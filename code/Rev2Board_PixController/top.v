@@ -688,7 +688,7 @@ module Top(
                     ram_cmdAddr <= ram_cmdAddr+1'b1;
                     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1'b1);
                 
-                    if (ram_cmdAddr == RAM_Size-1'b1) begin
+                    if (ram_cmdAddr == 25'h1000) begin
                         ram_cmdTrigger <= 0;
                         state <= 2;
                     end
