@@ -317,9 +317,6 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq,
     
-    output wire         pix_i2c_clk,
-    inout wire          pix_i2c_data,
-    
     input wire          debug_clk,
     input wire          debug_cs,
     input wire          debug_di,
@@ -388,18 +385,6 @@ module Top(
     
     
     
-    // ====================
-    // I2C Master
-    // ====================
-    
-    wire[6:0] pix_i2c_cmd_slaveAddr = 7'h20;
-    reg pix_i2c_cmd_write = 0;
-    reg[15:0] pix_i2c_cmd_regAddr = 0;
-    reg[15:0] pix_i2c_cmd_writeData = 0;
-    wire[15:0] pix_i2c_cmd_readData;
-    reg[1:0] pix_i2c_cmd_dataLen = 0;
-    wire pix_i2c_cmd_done;
-    wire pix_i2c_cmd_ok;
     
     
     
@@ -494,10 +479,6 @@ module Top(
             msgInPayload <= 0;
             msgInType <= 0;
             newCounter <= 0;
-            pix_i2c_cmd_dataLen <= 0;
-            pix_i2c_cmd_regAddr <= 0;
-            pix_i2c_cmd_write <= 0;
-            pix_i2c_cmd_writeData <= 0;
             ram_cmdAddr <= 0;
             ram_cmdTrigger <= 0;
             ram_cmdWrite <= 0;
