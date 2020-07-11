@@ -446,9 +446,7 @@ module Top(
     reg[15:0] lastMemTmp = 0;
     reg memTmpTrigger = 0;
     reg[15:0] mem[127:0] /* synthesis syn_ramstyle="no_rw_check" */;
-    reg[7:0] memLenA = 0;
     reg[7:0] memCounter = 0;
-    reg[7:0] memCounterRecv = 0;
     reg[7:0] newCounter = 0;
     always @(posedge clk) begin
         case (state)
@@ -460,8 +458,6 @@ module Top(
             led <= 0;
             // mem <= 0;
             memCounter <= 0;
-            memCounterRecv <= 0;
-            memLenA <= 0;
             memTmp <= 0;
             memTmpTrigger <= 0;
             msgInPayload <= 0;
@@ -539,8 +535,6 @@ module Top(
         StateReadMem+1: begin
             ram_cmdTrigger <= 1;
             memCounter <= 8'h7F;
-            memCounterRecv <= 8'h7F;
-            memLenA <= 8'h00;
             state <= StateReadMem+2;
         end
         
