@@ -41,15 +41,6 @@ module ClockGen #(
         end else if (rst) begin
             rst_ <= rst_<<1;
         end
-    
-    // TODO: should we only output clk if locked==1? that way, if clients receive a clock, they know it's stable?
-    
-    // // Generate `rst`
-    // reg[15:0] rstCounter;
-    // always @(posedge clk)
-    //     if (!locked) rstCounter <= 0;
-    //     else if (rst) rstCounter <= rstCounter+1;
-    // assign rst = !(&rstCounter);
 endmodule
 
 module SDRAMController #(
@@ -667,44 +658,56 @@ module Top(
     reg[3:0] state = 0;
     reg[15:0] lastReadData = 0;
     reg[7:0] memCounter = 0;
+    reg[23:0] initDelay = 0;
     always @(posedge clk) begin
         case (state)
         
         // Initialize the SDRAM
         0: begin
-            if (!ram_cmdTrigger) begin
-                lastReadData <= 0;
-                led <= 0;
-                memCounter <= 0;
+            initDelay <= ~0;
+            state <= 1;
+        end
+        
+        // Initialize the SDRAM
+        1: begin
+            if (initDelay) begin
+                initDelay <= initDelay-1;
+            
+            end else begin
+                if (!ram_cmdTrigger) begin
+                    lastReadData <= 0;
+                    led <= 0;
+                    memCounter <= 0;
                 
-                ram_cmdTrigger <= 1;
-                ram_cmdAddr <= 0;
-                ram_cmdWrite <= 1;
-                ram_cmdWriteData <= DataFromAddr(0);
-
-            end else if (ram_cmdReady) begin
-                ram_cmdAddr <= ram_cmdAddr+1'b1;
-                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1'b1);
+                    ram_cmdTrigger <= 1;
+                    ram_cmdAddr <= 0;
+                    ram_cmdWrite <= 1;
+                    ram_cmdWriteData <= DataFromAddr(0);
                 
-                if (ram_cmdAddr == RAM_Size-1'b1) begin
-                    ram_cmdTrigger <= 0;
-                    state <= 1;
+                end else if (ram_cmdReady) begin
+                    ram_cmdAddr <= ram_cmdAddr+1'b1;
+                    ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1'b1);
+                
+                    if (ram_cmdAddr == RAM_Size-1'b1) begin
+                        ram_cmdTrigger <= 0;
+                        state <= 2;
+                    end
                 end
             end
         end
         
         // Start reading memory
-        1: begin
+        2: begin
             led[0] <= 1;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             ram_cmdTrigger <= 1;
             memCounter <= 8'h7F;
-            state <= 2;
+            state <= 3;
         end
         
         // Continue reading memory
-        2: begin
+        3: begin
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
                 ram_cmdAddr <= ram_cmdAddr+1'b1;
