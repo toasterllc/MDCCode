@@ -1,10 +1,82 @@
-`timescale 1ps/1ps
-
 `ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"
 `endif
 
+`timescale 1ps/1ps
 `define DO_REFRESH
+
+module ClockGen #(
+    // 100MHz by default
+    parameter FREQ=100000000,
+    parameter DIVR=0,
+    parameter DIVF=66,
+    parameter DIVQ=3,
+    parameter FILTER_RANGE=1
+)(
+    input wire clk12mhz,
+    output wire clk,
+    output wire rst
+);
+    wire locked;
+    wire pllClk;
+    assign clk = pllClk&locked;
+    
+`ifdef SIM
+    reg simClk;
+    reg[3:0] simLockedCounter;
+    assign pllClk = simClk;
+    assign locked = &simLockedCounter;
+    
+    initial begin
+        simClk = 0;
+        simLockedCounter = 0;
+        forever begin
+            #((1000000000000/FREQ)/2);
+            simClk = !simClk;
+            
+            if (!simClk & !locked) begin
+                simLockedCounter = simLockedCounter+1;
+            end
+        end
+    end
+
+`else
+    SB_PLL40_CORE #(
+		.FEEDBACK_PATH("SIMPLE"),
+		.DIVR(DIVR),
+		.DIVF(DIVF),
+		.DIVQ(DIVQ),
+		.FILTER_RANGE(FILTER_RANGE)
+    ) pll (
+		.LOCK(locked),
+		.RESETB(1'b1),
+		.BYPASS(1'b0),
+		.REFERENCECLK(clk12mhz),
+		.PLLOUTCORE(pllClk)
+    );
+`endif
+    
+    // Generate `rst`
+    reg init = 0;
+    reg[15:0] rst_;
+    assign rst = !rst_[$size(rst_)-1];
+    always @(posedge clk)
+        if (!init) begin
+            rst_ <= 1;
+            init <= 1;
+        end else if (rst) begin
+            rst_ <= rst_<<1;
+        end
+    
+    // TODO: should we only output clk if locked==1? that way, if clients receive a clock, they know it's stable?
+    
+    // // Generate `rst`
+    // reg[15:0] rstCounter;
+    // always @(posedge clk)
+    //     if (!locked) rstCounter <= 0;
+    //     else if (rst) rstCounter <= rstCounter+1;
+    // assign rst = !(&rstCounter);
+endmodule
 
 module SDRAMController #(
     parameter ClockFrequency = 12000000
@@ -76,11 +148,11 @@ module SDRAMController #(
     // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
     localparam DelayCounterWidth = Max($clog2(Clocks(T_RFC, 0)+1), $clog2(C_DQZ+1+1));
     
-`ifdef SIM
-    initial begin
-        $display("DelayCounterWidth: %0d", DelayCounterWidth);
-    end
-`endif
+// `ifdef SIM
+//     initial begin
+//         $display("DelayCounterWidth: %0d", DelayCounterWidth);
+//     end
+// `endif
     
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0)+1)-DelayCounterWidth;
@@ -493,56 +565,54 @@ module SDRAMController #(
                 Clocks(T_RP, 1)),
                 // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
                 // until precharging is complete.
-                Clocks(T_WR, 1))+1
+                Clocks(T_WR, 1))
             , StateRefresh);
             
             // if (ram_cmd != CmdNop) begin
             //     led <= 1;
             // end
-            
-            `ifdef SIM
-                $display("ram_cmd before refresh: %0d", ram_cmd);
-                // $display("DELAY MEOW: %0d %0d %0d %0d %0d %0d",
-                //     // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
-                //     // when we return to that command via StateHandleSaved after refreshing is complete.
-                //     Clocks(T_RC, 0),
-                //     // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
-                //     // when we return to that command via StateHandleSaved after refreshing is complete.
-                //     Clocks(T_RRD, 0),
-                //     // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
-                //     // since we're about to issue CmdPrechargeAll.
-                //     Clocks(T_RAS, 0),
-                //     // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
-                //     // when we return to that command via StateHandleSaved after refreshing is complete.
-                //     Clocks(T_RCD, 0),
-                //     // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
-                //     // until precharging is complete.
-                //     Clocks(T_RP, 0),
-                //     // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
-                //     // until precharging is complete.
-                //     Clocks(T_WR, 0)+0
-                // );
-            `endif
+            //
+            // `ifdef SIM
+            //     $display("ram_cmd before refresh: %0d", ram_cmd);
+            //     // $display("DELAY MEOW: %0d %0d %0d %0d %0d %0d",
+            //     //     // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
+            //     //     // when we return to that command via StateHandleSaved after refreshing is complete.
+            //     //     Clocks(T_RC, 0),
+            //     //     // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
+            //     //     // when we return to that command via StateHandleSaved after refreshing is complete.
+            //     //     Clocks(T_RRD, 0),
+            //     //     // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
+            //     //     // since we're about to issue CmdPrechargeAll.
+            //     //     Clocks(T_RAS, 0),
+            //     //     // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
+            //     //     // when we return to that command via StateHandleSaved after refreshing is complete.
+            //     //     Clocks(T_RCD, 0),
+            //     //     // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
+            //     //     // until precharging is complete.
+            //     //     Clocks(T_RP, 0),
+            //     //     // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
+            //     //     // until precharging is complete.
+            //     //     Clocks(T_WR, 0)+0
+            //     // );
+            // `endif
             
         // Handle Refresh states
         end else if (delayCounter == 0) begin
-            // if (!led) begin
-                case (substate)
-                0: begin
-                    PrechargeAll();
-                    // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
-                    NextSubstate(Clocks(T_RP, 0));
-                end
-            
-                1: begin
-                    ram_cmd <= CmdAutoRefresh;
-                    // Wait T_RFC (auto refresh time) to guarantee that the next command can
-                    // activate the same bank immediately
-                    StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
-                    didRefresh <= !didRefresh;
-                end
-                endcase
-            // end
+            case (substate)
+            0: begin
+                PrechargeAll();
+                // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
+                NextSubstate(Clocks(T_RP, 0));
+            end
+        
+            1: begin
+                ram_cmd <= CmdAutoRefresh;
+                // Wait T_RFC (auto refresh time) to guarantee that the next command can
+                // activate the same bank immediately
+                StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                didRefresh <= !didRefresh;
+            end
+            endcase
         end
     end endtask
     
@@ -622,20 +692,38 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    // reg[2:0] ledReg = 0;
-    // assign led[2:0] = ledReg[2:0];
-    
-`ifdef SIM
-    reg clk12mhz = 0;
-`endif
-    
+
+    `ifdef SIM
+        reg clk12mhz = 0;
+    `endif
+
+
     // ====================
-    // Clock PLL (15.938 MHz)
+    // 12 MHz CLOCK START
     // ====================
     // localparam ClockFrequency = 133000000; // test for simulation
     localparam ClockFrequency = 12000000;    // fails with icestorm
     // localparam ClockFrequency = 15938000;       // works with icestorm
     wire clk = clk12mhz;
+    // ====================
+    // 12 MHz CLOCK END
+    // ====================
+    
+    // // ====================
+    // // // PLL START
+    // // ====================
+    // localparam ClockFrequency = 15938000;       // works with icestorm
+    // wire clk;
+    // ClockGen #(
+    //     .FREQ(ClockFrequency),
+    //     .DIVR(0),
+    //     .DIVF(84),
+    //     .DIVQ(6),
+    //     .FILTER_RANGE(1)
+    // ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    // // ====================
+    // // // PLL END
+    // // ====================
     
     
     
