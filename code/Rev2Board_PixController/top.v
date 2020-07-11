@@ -315,12 +315,7 @@ module Top(
     output wire         ram_cas_,
     output wire         ram_we_,
     output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq,
-    
-    input wire          debug_clk,
-    input wire          debug_cs,
-    input wire          debug_di,
-    output wire         debug_do
+    inout wire[15:0]    ram_dq
 );
     // ====================
     // Clock PLL (15.938 MHz)
@@ -390,17 +385,9 @@ module Top(
     
     
     
-    // ====================
-    // Debug I/O
-    // ====================
     localparam MsgType_SetLED           = 8'h01;
     localparam MsgType_ReadMem          = 8'h02;
-    localparam MsgType_PixReg8          = 8'h03;
-    localparam MsgType_PixReg16         = 8'h04;
     
-    // ====================
-    // Main
-    // ====================
     function [15:0] DataFromAddr;
         input [24:0] addr;
         // DataFromAddr = {addr[24:9]};
