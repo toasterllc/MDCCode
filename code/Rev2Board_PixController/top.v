@@ -1,47 +1,10 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
-module ClockGen #(
-    // 100MHz by default
-    parameter FREQ=100000000,
-    parameter DIVR=0,
-    parameter DIVF=66,
-    parameter DIVQ=3,
-    parameter FILTER_RANGE=1
-)(
-    input wire clk12mhz,
-    output wire clk,
-    output wire rst
-);
-    wire locked;
-    wire pllClk;
-    assign clk = pllClk&locked;
-    
-    SB_PLL40_CORE #(
-		.FEEDBACK_PATH("SIMPLE"),
-		.DIVR(DIVR),
-		.DIVF(DIVF),
-		.DIVQ(DIVQ),
-		.FILTER_RANGE(FILTER_RANGE)
-    ) pll (
-		.LOCK(locked),
-		.RESETB(1'b1),
-		.BYPASS(1'b0),
-		.REFERENCECLK(clk12mhz),
-		.PLLOUTCORE(pllClk)
-    );
-    
-    // Generate `rst`
-    reg init = 0;
-    reg[15:0] rst_;
-    assign rst = !rst_[$size(rst_)-1];
-    always @(posedge clk)
-        if (!init) begin
-            rst_ <= 1;
-            init <= 1;
-        end else if (rst) begin
-            rst_ <= rst_<<1;
-        end
-endmodule
+`ifdef SIM
+`include "../mt48h32m16lf/mobile_sdr.v"
+`endif
+
+`define DO_REFRESH
 
 module SDRAMController #(
     parameter ClockFrequency = 12000000
@@ -66,6 +29,8 @@ module SDRAMController #(
     output wire[15:0] cmdReadData,          // Data read from address
     output wire cmdReadDataValid,           // `cmdReadData` is valid data
     output reg didRefresh = 0,
+    
+    // output reg led = 0,
     
     // RAM port
     output wire ram_clk,                    // Clock
@@ -110,6 +75,13 @@ module SDRAMController #(
     // At high clock speeds, Clocks(T_RFC, 0) is the largest delay stored in delayCounter.
     // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
     localparam DelayCounterWidth = Max($clog2(Clocks(T_RFC, 0)+1), $clog2(C_DQZ+1+1));
+    
+`ifdef SIM
+    initial begin
+        $display("DelayCounterWidth: %0d", DelayCounterWidth);
+    end
+`endif
+    
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
     localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0)+1)-DelayCounterWidth;
     localparam StateWidth = 3;
@@ -172,7 +144,9 @@ module SDRAMController #(
     // In other words, cmdReady==true when we're going to store the incoming command.
     assign cmdReady = (
         delayCounter==0 &&
+`ifdef DO_REFRESH
         refreshCounter!=0 &&
+`endif
         (state==StateIdle || state==StateRead || state==StateWrite));
     
     reg writeDataValid = 0;
@@ -206,6 +180,11 @@ module SDRAMController #(
     // Hook up cmdReadData/ram_writeData to ram_dq
     genvar i;
     for (i=0; i<16; i=i+1) begin
+        `ifdef SIM
+            // For simulation, use a normal tristate buffer
+            assign ram_dq[i] = (writeDataValid ? ram_writeData[i] : 1'bz);
+            assign cmdReadData[i] = ram_dq[i];
+        `else
             // For synthesis, we have to use a SB_IO for a tristate buffer
             SB_IO #(
                 .PIN_TYPE(6'b1010_01)
@@ -215,15 +194,29 @@ module SDRAMController #(
                 .D_OUT_0(ram_writeData[i]),
                 .D_IN_0(cmdReadData[i])
             );
+        `endif
     end
     
     task StartState(input integer delay, input integer newState); begin
+        // Verify that `delay` can fit in `delayCounter`
+        `ifdef SIM
+            if ($clog2(delay+1) > $bits(delayCounter)) begin
+                $error("delay (%0d) is too large to fit in delayCounter (max value: %0d)", delay, {$bits(delayCounter){1'b1}});
+            end
+        `endif
+        
         delayCounter <= delay;
         state <= newState;
         substate <= 0;
     end endtask
     
     task NextSubstate(input integer delay); begin
+        `ifdef SIM
+            if ($clog2(delay+1) > $bits(delayCounter)) begin
+                $error("delay (%0d) is too large to fit in delayCounter (max value: %0d)", delay, {$bits(delayCounter){1'b1}});
+            end
+        `endif
+        
         delayCounter <= delay;
         substate <= substate+1;
     end endtask
@@ -410,6 +403,7 @@ module SDRAMController #(
                 ram_dqm <= 2'b11;
                 ram_cmd <= CmdNop;
                 // Delay 200us
+                $display("init delay: %0d", Clocks(T_INIT, 0));
                 InitNextSubstate(Clocks(T_INIT, 0));
             end
             
@@ -477,7 +471,7 @@ module SDRAMController #(
     
     task HandleRefresh; begin
         // Initiate refresh when refreshCounter==0
-        if (refreshCounter == 0)
+        if (refreshCounter == 0) begin
             
             // We don't know what state we came from, so wait the most conservative amount of time.
             // -1 for each, because we spent a cycle in this state
@@ -499,26 +493,57 @@ module SDRAMController #(
                 Clocks(T_RP, 1)),
                 // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
                 // until precharging is complete.
-                Clocks(T_WR, 1))
+                Clocks(T_WR, 1))+1
             , StateRefresh);
             
-        // Handle Refresh states
-        else if (delayCounter == 0)
-            case (substate)
-            0: begin
-                PrechargeAll();
-                // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
-                NextSubstate(Clocks(T_RP, 0));
-            end
+            // if (ram_cmd != CmdNop) begin
+            //     led <= 1;
+            // end
             
-            1: begin
-                ram_cmd <= CmdAutoRefresh;
-                // Wait T_RFC (auto refresh time) to guarantee that the next command can
-                // activate the same bank immediately
-                StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
-                didRefresh <= !didRefresh;
-            end
-            endcase
+            `ifdef SIM
+                $display("ram_cmd before refresh: %0d", ram_cmd);
+                // $display("DELAY MEOW: %0d %0d %0d %0d %0d %0d",
+                //     // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
+                //     // when we return to that command via StateHandleSaved after refreshing is complete.
+                //     Clocks(T_RC, 0),
+                //     // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
+                //     // when we return to that command via StateHandleSaved after refreshing is complete.
+                //     Clocks(T_RRD, 0),
+                //     // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
+                //     // since we're about to issue CmdPrechargeAll.
+                //     Clocks(T_RAS, 0),
+                //     // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
+                //     // when we return to that command via StateHandleSaved after refreshing is complete.
+                //     Clocks(T_RCD, 0),
+                //     // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
+                //     // until precharging is complete.
+                //     Clocks(T_RP, 0),
+                //     // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
+                //     // until precharging is complete.
+                //     Clocks(T_WR, 0)+0
+                // );
+            `endif
+            
+        // Handle Refresh states
+        end else if (delayCounter == 0) begin
+            // if (!led) begin
+                case (substate)
+                0: begin
+                    PrechargeAll();
+                    // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
+                    NextSubstate(Clocks(T_RP, 0));
+                end
+            
+                1: begin
+                    ram_cmd <= CmdAutoRefresh;
+                    // Wait T_RFC (auto refresh time) to guarantee that the next command can
+                    // activate the same bank immediately
+                    StartState(Clocks(T_RFC, 0), (savedCmdTrigger ? StateHandleSaved : StateIdle));
+                    didRefresh <= !didRefresh;
+                end
+                endcase
+            // end
+        end
     end endtask
     
     task HandleCommand; begin
@@ -568,18 +593,23 @@ module SDRAMController #(
         else begin
             SetDefaultState();
             
+`ifdef DO_REFRESH
             // Refresh
             if (refreshCounter==0 || state==StateRefresh) HandleRefresh();
+            else
+`endif
             
             // Commands
-            else HandleCommand();
+            HandleCommand();
         end
     end
 endmodule
 
 module Top(
+`ifndef SIM
     input wire          clk12mhz,
-    output reg[3:0]     led = 0,
+`endif
+    output reg[3:0]     led,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -592,19 +622,20 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
+    // reg[2:0] ledReg = 0;
+    // assign led[2:0] = ledReg[2:0];
+    
+`ifdef SIM
+    reg clk12mhz = 0;
+`endif
+    
     // ====================
     // Clock PLL (15.938 MHz)
     // ====================
-    localparam ClockFrequency = 15938000;
-    wire clk;
-    ClockGen #(
-        .FREQ(ClockFrequency),
-        .DIVR(0),
-        .DIVF(84),
-        .DIVQ(6),
-        .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
-    
+    // localparam ClockFrequency = 133000000; // test for simulation
+    localparam ClockFrequency = 12000000;    // fails with icestorm
+    // localparam ClockFrequency = 15938000;       // works with icestorm
+    wire clk = clk12mhz;
     
     
     
@@ -637,7 +668,7 @@ module Top(
         .cmdWriteData(ram_cmdWriteData),
         .cmdReadData(ram_cmdReadData),
         .cmdReadDataValid(ram_cmdReadDataValid),
-
+        
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
         .ram_ba(ram_ba),
@@ -652,13 +683,14 @@ module Top(
     
     function [15:0] DataFromAddr;
         input [24:0] addr;
+        // DataFromAddr = 16'hCAFE;
         DataFromAddr = addr[15:0];
     endfunction
     
     reg[3:0] state = 0;
     reg[15:0] lastReadData = 0;
-    reg[7:0] memCounter = 0;
-    reg[23:0] initDelay = 0;
+    reg[24:0] memCounter = 0;
+    reg[7:0] initDelay = 0;
     always @(posedge clk) begin
         case (state)
         
@@ -687,8 +719,8 @@ module Top(
                 end else if (ram_cmdReady) begin
                     ram_cmdAddr <= ram_cmdAddr+1'b1;
                     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1'b1);
-                
-                    if (ram_cmdAddr == 25'h1000) begin
+                    
+                    if (ram_cmdAddr == RAM_Size-1) begin
                         ram_cmdTrigger <= 0;
                         state <= 2;
                     end
@@ -702,7 +734,7 @@ module Top(
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             ram_cmdTrigger <= 1;
-            memCounter <= 8'h7F;
+            memCounter <= RAM_Size-1'b1;
             state <= 3;
         end
         
@@ -720,14 +752,54 @@ module Top(
             end
             
             if (ram_cmdReadDataValid) begin
-                led[1] <= 1;
                 if (ram_cmdReadData && ram_cmdReadData!=(lastReadData+2'b01)) begin
-                    led[3] <= 1;
+                // if (ram_cmdReadData && ram_cmdReadData!=DataFromAddr(0)) begin
+                    led[1] <= 1;
+                    $display("BAD DATA RECEIVED");
                 end
                 lastReadData <= ram_cmdReadData;
             end
         end
         endcase
     end
+    
+`ifdef SIM
+    mobile_sdr sdram(
+        .clk(ram_clk),
+        .cke(ram_cke),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dq(ram_dq),
+        .dqm(ram_dqm)
+    );
+    
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+        #800000000;
+        // #10000000000;
+        $finish;
+    end
+    
+    function [63:0] CeilDiv;
+        input [63:0] n;
+        input [63:0] d;
+        begin
+            CeilDiv = (n+d-1)/d;
+        end
+    endfunction
+    
+    initial begin
+        clk12mhz = 0;
+        forever begin
+            #(CeilDiv(1000000000000, 2*ClockFrequency));
+            clk12mhz = !clk12mhz;
+        end
+    end
+`endif
     
 endmodule

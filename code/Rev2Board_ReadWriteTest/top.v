@@ -31,17 +31,18 @@ module Top(
         // DataFromAddr = 16'h7832;
     endfunction
     
-    // 24 MHz clock
-    localparam ClockFrequency = 24000000;
+    // // 24 MHz clock
+    localparam ClockFrequency = 12000000;
     wire clk;
     wire rst;
     ClockGen #(
         .FREQ(ClockFrequency),
-		.DIVR(0),
-		.DIVF(63),
-		.DIVQ(5),
-		.FILTER_RANGE(1)
+        .DIVR(0),
+        .DIVF(63),
+        .DIVQ(5),
+        .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst(rst));
+    // assign clk = clk12mhz;
     
     localparam AddrWidth = 25;
     localparam AddrCount = 'h2000000;
@@ -240,7 +241,7 @@ module Top(
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
-        #1000000000;
+        #10000000000;
         $finish;
     end
 `endif
