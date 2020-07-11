@@ -503,23 +503,18 @@ module Top(
         
         
         
-        
         // Start reading memory
         StateReadMem: begin
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
+            ram_cmdTrigger <= 1;
+            memCounter <= 8'h7F;
             lastMemTmp <= 0;
             state <= StateReadMem+1;
         end
         
-        StateReadMem+1: begin
-            ram_cmdTrigger <= 1;
-            memCounter <= 8'h7F;
-            state <= StateReadMem+2;
-        end
-        
         // Continue reading memory
-        StateReadMem+2: begin
+        StateReadMem+1: begin
             led[1] <= 1;
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
