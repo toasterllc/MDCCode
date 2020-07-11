@@ -76,19 +76,6 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    localparam MsgType_SetLED           = 8'h01;
-    localparam MsgType_ReadMem          = 8'h02;
-    
     function [15:0] DataFromAddr;
         input [24:0] addr;
         // DataFromAddr = {addr[24:9]};
@@ -152,7 +139,6 @@ module Top(
         
         // Continue reading memory
         StateReadMem+1: begin
-            led[1] <= 1;
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
                 ram_cmdAddr <= ram_cmdAddr+1'b1;
@@ -165,6 +151,7 @@ module Top(
             end
             
             if (ram_cmdReadDataValid) begin
+                led[1] <= 1;
                 if (ram_cmdReadData && ram_cmdReadData!=(lastReadData+2'b01)) begin
                     led[3] <= 1;
                 end
