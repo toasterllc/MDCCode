@@ -16,26 +16,6 @@ module ClockGen #(
     wire pllClk;
     assign clk = pllClk&locked;
     
-`ifdef SIM
-    reg simClk;
-    reg[3:0] simLockedCounter;
-    assign pllClk = simClk;
-    assign locked = &simLockedCounter;
-    
-    initial begin
-        simClk = 0;
-        simLockedCounter = 0;
-        forever begin
-            #((1000000000/FREQ)/2);
-            simClk = !simClk;
-            
-            if (!simClk & !locked) begin
-                simLockedCounter = simLockedCounter+1;
-            end
-        end
-    end
-
-`else
     SB_PLL40_CORE #(
 		.FEEDBACK_PATH("SIMPLE"),
 		.DIVR(DIVR),
@@ -49,7 +29,6 @@ module ClockGen #(
 		.REFERENCECLK(clk12mhz),
 		.PLLOUTCORE(pllClk)
     );
-`endif
     
     // Generate `rst`
     reg init = 0;
@@ -185,18 +164,6 @@ module SDRAMController #(
         end
     endfunction
     
-    // function [63:0] Clocks;
-    //     input [63:0] t;
-    //     input [63:0] sub;
-    //
-    //     reg [63:0] out;
-    //     out = (t*ClockFrequency)/1000000000;
-    //     if (out >= sub) out = out-sub;
-    //     else out = 0;
-    //
-    //     Clocks = out;
-    // endfunction
-    
     function [63:0] Max;
         input [63:0] a;
         input [63:0] b;
@@ -248,11 +215,6 @@ module SDRAMController #(
     // Hook up cmdReadData/ram_writeData to ram_dq
     genvar i;
     for (i=0; i<16; i=i+1) begin
-        `ifdef SIM
-            // For simulation, use a normal tristate buffer
-            assign ram_dq[i] = (writeDataValid ? ram_writeData[i] : 1'bz);
-            assign cmdReadData[i] = ram_dq[i];
-        `else
             // For synthesis, we have to use a SB_IO for a tristate buffer
             SB_IO #(
                 .PIN_TYPE(6'b1010_01)
@@ -262,17 +224,9 @@ module SDRAMController #(
                 .D_OUT_0(ram_writeData[i]),
                 .D_IN_0(cmdReadData[i])
             );
-        `endif
     end
     
     task StartState(input integer delay, input integer newState); begin
-        // Verify that `delay` can fit in `delayCounter`
-        `ifdef SIM
-            if ($clog2(delay+1) > $bits(delayCounter)) begin
-                $error("delay (%0d) is too large to fit in delayCounter (max value: %0d)", delay, {$bits(delayCounter){1'b1}});
-            end
-        `endif
-        
         delayCounter <= delay;
         state <= newState;
         substate <= 0;
@@ -729,10 +683,10 @@ module Top(
                 ram_cmdWriteData <= DataFromAddr(0);
 
             end else if (ram_cmdReady) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
-                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-
-                if (ram_cmdAddr == RAM_Size-1) begin
+                ram_cmdAddr <= ram_cmdAddr+1'b1;
+                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1'b1);
+                
+                if (ram_cmdAddr == RAM_Size-1'b1) begin
                     ram_cmdTrigger <= 0;
                     state <= 1;
                 end
