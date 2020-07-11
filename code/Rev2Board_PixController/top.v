@@ -440,8 +440,6 @@ module Top(
     localparam StatePixReg16    = 13;   // +2
     
     reg[3:0] state = 0;
-    reg[7:0] msgInType = 0;
-    reg[5*8-1:0] msgInPayload = 0;
     reg[15:0] memTmp = 0;
     reg[15:0] lastMemTmp = 0;
     reg memTmpTrigger = 0;
@@ -459,8 +457,6 @@ module Top(
             memCounter <= 0;
             memTmp <= 0;
             memTmpTrigger <= 0;
-            msgInPayload <= 0;
-            msgInType <= 0;
             newCounter <= 0;
             ram_cmdAddr <= 0;
             ram_cmdTrigger <= 0;
@@ -500,23 +496,8 @@ module Top(
             debug_msgIn_trigger <= 1;
             if (debug_msgIn_trigger && debug_msgIn_ready) begin
                 debug_msgIn_trigger <= 0;
-                
-                msgInType <= debug_msgIn_type;
-                msgInPayload <= debug_msgIn_payload;
-                
-                state <= StateHandleMsg+1;
-            end
-        end
-        
-        // Handle new command
-        StateHandleMsg+1: begin
-            state <= StateHandleMsg;
-            
-            case (msgInType)
-            MsgType_ReadMem: begin
                 state <= StateReadMem;
             end
-            endcase
         end
         
         
