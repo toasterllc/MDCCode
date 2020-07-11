@@ -404,10 +404,6 @@ module Top(
     wire debug_msgIn_ready;
     reg debug_msgIn_trigger = 0;
     
-    reg[7:0] debug_msgOut_type = 0;
-    reg[7:0] debug_msgOut_payloadLen = 0;
-    reg[7:0] debug_msgOut_payload = 0;
-    wire debug_msgOut_payloadTrigger;
     Debug debug(
         .clk(clk),
         
@@ -416,11 +412,6 @@ module Top(
         .msgIn_payload(debug_msgIn_payload),
         .msgIn_ready(debug_msgIn_ready),
         .msgIn_trigger(debug_msgIn_trigger),
-        
-        .msgOut_type(debug_msgOut_type),
-        .msgOut_payloadLen(debug_msgOut_payloadLen),
-        .msgOut_payload(debug_msgOut_payload),
-        .msgOut_payloadTrigger(debug_msgOut_payloadTrigger),
         
         .debug_clk(debug_clk),
         .debug_cs(debug_cs),
@@ -465,9 +456,6 @@ module Top(
         // Initialize the SDRAM
         StateInit: begin
             debug_msgIn_trigger <= 0;
-            debug_msgOut_payload <= 0;
-            debug_msgOut_payloadLen <= 0;
-            debug_msgOut_type <= 0;
             lastMemTmp <= 0;
             led <= 0;
             // mem <= 0;
