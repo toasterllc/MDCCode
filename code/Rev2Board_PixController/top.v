@@ -577,6 +577,7 @@ module Top(
         
         // Continue reading memory
         StateReadMem+2: begin
+            led[1] <= 1;
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
                 ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
@@ -588,28 +589,12 @@ module Top(
                 end
             end
             
-            if (memTmpTrigger) begin
-                memTmpTrigger <= 0;
-                
-                mem[memLenA] <= memTmp;
-                memLenA <= memLenA+1;
-                
-                if (memTmp && memTmp!=(lastMemTmp+2'b01)) begin
-                    led[3] <= 1;
-                end
-                lastMemTmp <= memTmp;
-                
-                // Next state after we've received all the bytes
-                memCounterRecv <= memCounterRecv-1;
-                if (memCounterRecv == 1) begin
-                    state <= StateReadMem+3;
-                end
-            end
-            
             // Write incoming data into `memTmp`
             if (ram_cmdReadDataValid) begin
-                memTmp <= ram_cmdReadData;
-                memTmpTrigger <= 1;
+                if (ram_cmdReadData && ram_cmdReadData!=(lastMemTmp+2'b01)) begin
+                    led[3] <= 1;
+                end
+                lastMemTmp <= ram_cmdReadData;
             end
         end
         
