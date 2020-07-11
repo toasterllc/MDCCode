@@ -445,7 +445,6 @@ module Top(
     reg[15:0] memTmp = 0;
     reg[15:0] lastMemTmp = 0;
     reg memTmpTrigger = 0;
-    reg[15:0] mem[127:0] /* synthesis syn_ramstyle="no_rw_check" */;
     reg[7:0] memCounter = 0;
     reg[7:0] newCounter = 0;
     always @(posedge clk) begin
