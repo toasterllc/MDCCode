@@ -398,12 +398,6 @@ module Top(
     localparam MsgType_PixReg8          = 8'h03;
     localparam MsgType_PixReg16         = 8'h04;
     
-    wire[7:0] debug_msgIn_type;
-    wire[7:0] debug_msgIn_payloadLen;
-    wire[5*8-1:0] debug_msgIn_payload;
-    wire debug_msgIn_ready;
-    reg debug_msgIn_trigger = 0;
-    
     // ====================
     // Main
     // ====================
