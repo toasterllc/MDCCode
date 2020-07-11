@@ -434,30 +434,20 @@ module Top(
     endfunction
     
     localparam StateInit        = 0;    // +1
-    localparam StateHandleMsg   = 2;    // +2
     localparam StateReadMem     = 5;    // +4
-    localparam StatePixReg8     = 10;   // +2
-    localparam StatePixReg16    = 13;   // +2
     
     reg[3:0] state = 0;
-    reg[15:0] memTmp = 0;
-    reg[15:0] lastMemTmp = 0;
-    reg memTmpTrigger = 0;
+    reg[15:0] lastReadData = 0;
     reg[7:0] memCounter = 0;
-    reg[7:0] newCounter = 0;
     always @(posedge clk) begin
         case (state)
         
         // Initialize the SDRAM
         StateInit: begin
             debug_msgIn_trigger <= 0;
-            lastMemTmp <= 0;
+            lastReadData <= 0;
             led <= 0;
-            // mem <= 0;
             memCounter <= 0;
-            memTmp <= 0;
-            memTmpTrigger <= 0;
-            newCounter <= 0;
             ram_cmdAddr <= 0;
             ram_cmdTrigger <= 0;
             ram_cmdWrite <= 0;
@@ -484,25 +474,6 @@ module Top(
             end
         end
         
-        
-        
-        
-        
-        
-        
-        // // Accept new command
-        // StateHandleMsg: begin
-        //     led[0] <= 1;
-        //     debug_msgIn_trigger <= 1;
-        //     if (debug_msgIn_trigger && debug_msgIn_ready) begin
-        //         debug_msgIn_trigger <= 0;
-        //         state <= StateReadMem;
-        //     end
-        // end
-        
-        
-        
-        
         // Start reading memory
         StateReadMem: begin
             led[0] <= 1;
@@ -510,7 +481,6 @@ module Top(
             ram_cmdWrite <= 0;
             ram_cmdTrigger <= 1;
             memCounter <= 8'h7F;
-            lastMemTmp <= 0;
             state <= StateReadMem+1;
         end
         
@@ -528,12 +498,11 @@ module Top(
                 end
             end
             
-            // Write incoming data into `memTmp`
             if (ram_cmdReadDataValid) begin
-                if (ram_cmdReadData && ram_cmdReadData!=(lastMemTmp+2'b01)) begin
+                if (ram_cmdReadData && ram_cmdReadData!=(lastReadData+2'b01)) begin
                     led[3] <= 1;
                 end
-                lastMemTmp <= ram_cmdReadData;
+                lastReadData <= ram_cmdReadData;
             end
         end
         endcase
