@@ -597,10 +597,6 @@ module Top(
                 lastMemTmp <= ram_cmdReadData;
             end
         end
-        
-        // Start sending the data
-        StateReadMem+3: begin
-        end
         endcase
     end
     
