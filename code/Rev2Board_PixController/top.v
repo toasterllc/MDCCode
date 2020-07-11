@@ -479,7 +479,7 @@ module Top(
 
                 if (ram_cmdAddr == RAM_Size-1) begin
                     ram_cmdTrigger <= 0;
-                    state <= StateHandleMsg;
+                    state <= StateReadMem;
                 end
             end
         end
@@ -490,21 +490,22 @@ module Top(
         
         
         
-        // Accept new command
-        StateHandleMsg: begin
-            led[0] <= 1;
-            debug_msgIn_trigger <= 1;
-            if (debug_msgIn_trigger && debug_msgIn_ready) begin
-                debug_msgIn_trigger <= 0;
-                state <= StateReadMem;
-            end
-        end
+        // // Accept new command
+        // StateHandleMsg: begin
+        //     led[0] <= 1;
+        //     debug_msgIn_trigger <= 1;
+        //     if (debug_msgIn_trigger && debug_msgIn_ready) begin
+        //         debug_msgIn_trigger <= 0;
+        //         state <= StateReadMem;
+        //     end
+        // end
         
         
         
         
         // Start reading memory
         StateReadMem: begin
+            led[0] <= 1;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             ram_cmdTrigger <= 1;
