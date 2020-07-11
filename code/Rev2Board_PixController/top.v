@@ -78,17 +78,8 @@ module Top(
     
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        // DataFromAddr = {addr[24:9]};
-        // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
         DataFromAddr = addr[15:0];
-        // DataFromAddr = 16'hFFFF;
-        // DataFromAddr = 16'h0000;
-        // DataFromAddr = 16'h7832;
-        // DataFromAddr = 16'hCAFE;
     endfunction
-    
-    localparam StateInit        = 0;    // +1
-    localparam StateReadMem     = 5;    // +4
     
     reg[3:0] state = 0;
     reg[15:0] lastReadData = 0;
@@ -97,20 +88,12 @@ module Top(
         case (state)
         
         // Initialize the SDRAM
-        StateInit: begin
-            lastReadData <= 0;
-            led <= 0;
-            memCounter <= 0;
-            ram_cmdAddr <= 0;
-            ram_cmdTrigger <= 0;
-            ram_cmdWrite <= 0;
-            ram_cmdWriteData <= 0;
-            
-            state <= StateInit+1;
-        end
-        
-        StateInit+1: begin
+        0: begin
             if (!ram_cmdTrigger) begin
+                lastReadData <= 0;
+                led <= 0;
+                memCounter <= 0;
+                
                 ram_cmdTrigger <= 1;
                 ram_cmdAddr <= 0;
                 ram_cmdWrite <= 1;
@@ -122,23 +105,23 @@ module Top(
 
                 if (ram_cmdAddr == RAM_Size-1) begin
                     ram_cmdTrigger <= 0;
-                    state <= StateReadMem;
+                    state <= 1;
                 end
             end
         end
         
         // Start reading memory
-        StateReadMem: begin
+        1: begin
             led[0] <= 1;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             ram_cmdTrigger <= 1;
             memCounter <= 8'h7F;
-            state <= StateReadMem+1;
+            state <= 2;
         end
         
         // Continue reading memory
-        StateReadMem+1: begin
+        2: begin
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
                 ram_cmdAddr <= ram_cmdAddr+1'b1;
