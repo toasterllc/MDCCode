@@ -580,7 +580,7 @@ module Top(
             led[1] <= 1;
             // Handle the read being accepted
             if (ram_cmdReady && memCounter) begin
-                ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
+                ram_cmdAddr <= ram_cmdAddr+1'b1;
                 
                 // Stop triggering when we've issued all the read commands
                 memCounter <= memCounter-1;
