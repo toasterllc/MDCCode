@@ -404,8 +404,6 @@ module Top(
     wire debug_msgIn_ready;
     reg debug_msgIn_trigger = 0;
     
-    Debug debug();
-    
     // ====================
     // Main
     // ====================
