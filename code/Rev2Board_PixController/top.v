@@ -3,90 +3,9 @@
 `endif
 
 `include "../SDRAMController.v"
+`include "../ClockGen.v"
 
 `timescale 1ps/1ps
-`define DO_REFRESH
-
-module ClockGen #(
-    // 100MHz by default
-    parameter FREQ=100000000,
-    parameter DIVR=0,
-    parameter DIVF=66,
-    parameter DIVQ=3,
-    parameter FILTER_RANGE=1
-)(
-    input wire clk12mhz,
-    output wire clk,
-    output wire rst
-);
-    wire locked;
-    wire pllClk;
-    assign clk = pllClk&locked;
-    
-    function [63:0] DivCeil;
-        input [63:0] n;
-        input [63:0] d;
-        begin
-            DivCeil = (n+d-1)/d;
-        end
-    endfunction
-    
-`ifdef SIM
-    reg simClk;
-    reg[3:0] simLockedCounter;
-    assign pllClk = simClk;
-    assign locked = &simLockedCounter;
-    
-    initial begin
-        simClk = 0;
-        simLockedCounter = 0;
-        forever begin
-            #(CeilDiv(1000000000000, 2*FREQ));
-            simClk = !simClk;
-            
-            if (!simClk & !locked) begin
-                simLockedCounter = simLockedCounter+1;
-            end
-        end
-    end
-
-`else
-    SB_PLL40_CORE #(
-		.FEEDBACK_PATH("SIMPLE"),
-		.DIVR(DIVR),
-		.DIVF(DIVF),
-		.DIVQ(DIVQ),
-		.FILTER_RANGE(FILTER_RANGE)
-    ) pll (
-		.LOCK(locked),
-		.RESETB(1'b1),
-		.BYPASS(1'b0),
-		.REFERENCECLK(clk12mhz),
-		.PLLOUTCORE(pllClk)
-    );
-`endif
-    
-    // Generate `rst`
-    reg init = 0;
-    reg[15:0] rst_;
-    assign rst = !rst_[$size(rst_)-1];
-    always @(posedge clk)
-        if (!init) begin
-            rst_ <= 1;
-            init <= 1;
-        end else if (rst) begin
-            rst_ <= rst_<<1;
-        end
-    
-    // TODO: should we only output clk if locked==1? that way, if clients receive a clock, they know it's stable?
-    
-    // // Generate `rst`
-    // reg[15:0] rstCounter;
-    // always @(posedge clk)
-    //     if (!locked) rstCounter <= 0;
-    //     else if (rst) rstCounter <= rstCounter+1;
-    // assign rst = !(&rstCounter);
-endmodule
 
 module Top(
 `ifndef SIM
@@ -113,8 +32,8 @@ module Top(
     // // ====================
     // // 1.5 MHz CLOCK START
     // // ====================
-    // // localparam ClockFrequency = 133000000; // test for simulation
-    // localparam ClockFrequency = 1500000;    // fails with icestorm
+    // // localparam ClkFreq = 133000000; // test for simulation
+    // localparam ClkFreq = 1500000;    // fails with icestorm
     // reg[2:0] clkDivider = 0;
     // wire clk = clkDivider[$size(clkDivider)-1];
     // always @(posedge clk12mhz) begin
@@ -124,32 +43,44 @@ module Top(
     // // 1.5 MHz CLOCK END
     // // ====================
     
+    
+    
+    
+    
     // // ====================
     // // 12 MHz CLOCK START
     // // ====================
-    // // localparam ClockFrequency = 133000000; // test for simulation
-    // localparam ClockFrequency = 12000000;    // fails with icestorm
-    // // localparam ClockFrequency = 15938000;       // works with icestorm
+    // // localparam ClkFreq = 133000000; // test for simulation
+    // localparam ClkFreq = 12000000;    // fails with icestorm
+    // // localparam ClkFreq = 15938000;       // works with icestorm
     // wire clk = clk12mhz;
     // // ====================
     // // 12 MHz CLOCK END
     // // ====================
     
+    
+    
+    
+    
+    
+    
     // ====================
-    // // PLL START
+    // // PLL CLOCK START
     // ====================
-    localparam PLLClockFrequency = 96000000;
+    localparam PLLClkFreq = 96000000;
     wire clk96mhz;
     ClockGen #(
-        .FREQ(PLLClockFrequency),
+        .FREQ(PLLClkFreq),
         .DIVR(0),
         .DIVF(63),
         .DIVQ(3),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk96mhz));
-    
-    localparam ClockFrequency = 48000000; // Frequency after clock divider
-    reg[0:0] clkDivider = 0;
+
+    localparam ClkDividerWidth = 3;
+    localparam ClkFreq = (PLLClkFreq >> ClkDividerWidth); // Frequency after clock divider
+    reg[ClkDividerWidth-1:0] clkDivider = 0;
+
     wire clk = clkDivider[$size(clkDivider)-1];
     always @(posedge clk96mhz) begin
         clkDivider <= clkDivider+1;
@@ -159,7 +90,9 @@ module Top(
     // ====================
     
     
-    
+`ifdef SIM
+    initial $display("ClkFreq: %0d", ClkFreq);
+`endif
     
     
     // ====================
@@ -171,7 +104,7 @@ module Top(
     // localparam RAM_EndAddr = RAM_Size-1;
     
     // localparam RAM_StartAddr = 25'h0000000;
-    // localparam RAM_EndAddr =   25'h1000000;
+    // localparam RAM_EndAddr =   25'h0001000;
     
     localparam RAM_StartAddr = 25'h0000000;
     localparam RAM_EndAddr =   RAM_Size-1;
@@ -188,7 +121,7 @@ module Top(
     wire                    ram_cmdReadDataValid;
 
     SDRAMController #(
-        .ClockFrequency(ClockFrequency)
+        .ClkFreq(ClkFreq)
     ) sdramController(
         .clk(clk),
 
@@ -296,10 +229,10 @@ module Top(
                 // Stop triggering when we've issued all the read commands
                 memCounter <= memCounter-1;
                 if (!memCounter) begin
-// `ifdef SIM
-//                     $display("Finished reading");
-//                     $finish;
-// `endif
+`ifdef SIM
+                    $display("Finished reading");
+                    // $finish;
+`endif
                     ram_cmdTrigger <= 0;
                 end
             end
@@ -310,7 +243,7 @@ module Top(
                     led[1] <= 1;
                     $display("BAD DATA RECEIVED: wanted %x, got %x", (lastReadData+2'b01), ram_cmdReadData);
                 end
-                $display("GOTDATA %x, ", ram_cmdReadData);
+                // $display("GOTDATA %x, ", ram_cmdReadData);
                 lastReadData <= ram_cmdReadData;
                 lastReadDataInit <= 1;
             end
@@ -340,18 +273,18 @@ module Top(
         // $finish;
     end
     
-    function [63:0] CeilDiv;
+    function [63:0] DivCeil;
         input [63:0] n;
         input [63:0] d;
         begin
-            CeilDiv = (n+d-1)/d;
+            DivCeil = (n+d-1)/d;
         end
     endfunction
     
     initial begin
         clk12mhz = 0;
         forever begin
-            #(CeilDiv(1000000000000, 2*12000000));
+            #(DivCeil(1000000000000, 2*12000000));
             clk12mhz = !clk12mhz;
         end
     end
