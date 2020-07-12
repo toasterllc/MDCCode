@@ -146,11 +146,11 @@ module Top(
     localparam RAM_DataWidth = 16;
     // localparam RAM_EndAddr = RAM_Size-1;
     
-    localparam RAM_StartAddr = 25'h0000000;
-    localparam RAM_EndAddr =   25'h0001000;
-    
     // localparam RAM_StartAddr = 25'h0000000;
-    // localparam RAM_EndAddr =   RAM_Size-1;
+    // localparam RAM_EndAddr =   25'h0001000;
+    
+    localparam RAM_StartAddr = 25'h0000000;
+    localparam RAM_EndAddr =   RAM_Size-1;
     
     // localparam RAM_StartAddr = 25'h0FF00;
     // localparam RAM_EndAddr =   25'h100FF;
@@ -200,7 +200,7 @@ module Top(
     reg[3:0] state = 0;
     reg[15:0] lastReadData = 0;
     reg[24:0] memCounter = 0;
-    reg[7:0] initDelay = 0;
+    reg[25:0] initDelay = 0;
     reg lastReadDataInit = 0;
     always @(posedge clk) begin
         case (state)
@@ -241,54 +241,10 @@ module Top(
                     if (ram_cmdAddr == RAM_EndAddr) begin
                         ram_cmdTrigger <= 0;
                         state <= 2;
+                        led[0] <= 1;
                         $display("Finished writing");
                     end
                 end
-            end
-        end
-        
-        // Start reading memory
-        2: begin
-            if (initDelay) begin
-                initDelay <= initDelay-1;
-            
-            end else begin
-                led[0] <= 1;
-                ram_cmdAddr <= RAM_StartAddr;
-                ram_cmdWrite <= 0;
-                ram_cmdTrigger <= 1;
-                // memCounter <= 16'h1000;
-                memCounter <= RAM_EndAddr-RAM_StartAddr;//-(4*16'h100);
-                state <= 3;
-            end
-        end
-        
-        // Continue reading memory
-        3: begin
-            // Handle the read being accepted
-            if (ram_cmdTrigger && ram_cmdReady) begin
-                ram_cmdAddr <= ram_cmdAddr+1'b1;
-                
-                // Stop triggering when we've issued all the read commands
-                memCounter <= memCounter-1;
-                if (!memCounter) begin
-`ifdef SIM
-                    $display("Finished reading");
-                    // $finish;
-`endif
-                    ram_cmdTrigger <= 0;
-                end
-            end
-            
-            if (ram_cmdReadDataValid) begin
-                // if (lastReadDataInit && ram_cmdReadData!=(lastReadData+2'b01)) begin
-                if (lastReadDataInit && ram_cmdReadData!==DataFromAddr(0)) begin
-                    led[1] <= 1;
-                    $display("BAD DATA RECEIVED: wanted %x, got %x", (lastReadData+2'b01), ram_cmdReadData);
-                end
-                // $display("GOTDATA %x, ", ram_cmdReadData);
-                lastReadData <= ram_cmdReadData;
-                lastReadDataInit <= 1;
             end
         end
         endcase
