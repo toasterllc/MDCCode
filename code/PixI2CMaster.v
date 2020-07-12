@@ -31,18 +31,18 @@ module PixI2CMaster #(
         end
     endfunction
     
-    function [63:0] CeilDiv;
+    function [63:0] DivCeil;
         input [63:0] n;
         input [63:0] d;
         begin
-            CeilDiv = (n+d-1)/d;
+            DivCeil = (n+d-1)/d;
         end
     endfunction
     
     // I2CQuarterCycleDelay: number of `clk` cycles for a quarter of the `i2c_clk` cycle to elapse.
-    // CeilDiv() is necessary to perform the quarter-cycle calculation, so that the
+    // DivCeil() is necessary to perform the quarter-cycle calculation, so that the
     // division is ceiled to the nearest nanosecond. (Ie -- slower than I2CClkFreq is OK, faster is not.)
-    localparam I2CQuarterCycleDelay = Delay(CeilDiv(1000000000, 4*I2CClkFreq), 0);
+    localparam I2CQuarterCycleDelay = Delay(DivCeil(1000000000, 4*I2CClkFreq), 0);
     
     // Width of `delay`
     localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);
