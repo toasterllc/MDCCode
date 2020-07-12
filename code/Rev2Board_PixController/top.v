@@ -23,6 +23,14 @@ module ClockGen #(
     wire pllClk;
     assign clk = pllClk&locked;
     
+    function [63:0] DivCeil;
+        input [63:0] n;
+        input [63:0] d;
+        begin
+            DivCeil = (n+d-1)/d;
+        end
+    endfunction
+    
 `ifdef SIM
     reg simClk;
     reg[3:0] simLockedCounter;
@@ -33,7 +41,7 @@ module ClockGen #(
         simClk = 0;
         simLockedCounter = 0;
         forever begin
-            #((1000000000000/FREQ)/2);
+            #(CeilDiv(1000000000000, 2*FREQ));
             simClk = !simClk;
             
             if (!simClk & !locked) begin
@@ -130,15 +138,22 @@ module Top(
     // ====================
     // // PLL START
     // ====================
-    localparam ClockFrequency = 15938000;       // works with icestorm
-    wire clk;
+    localparam PLLClockFrequency = 96000000;
+    wire clk96mhz;
     ClockGen #(
-        .FREQ(ClockFrequency),
+        .FREQ(PLLClockFrequency),
         .DIVR(0),
-        .DIVF(84),
-        .DIVQ(6),
+        .DIVF(63),
+        .DIVQ(3),
         .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    ) cg(.clk12mhz(clk12mhz), .clk(clk96mhz));
+    
+    localparam ClockFrequency = 48000000; // Frequency after clock divider
+    reg[0:0] clkDivider = 0;
+    wire clk = clkDivider[$size(clkDivider)-1];
+    always @(posedge clk96mhz) begin
+        clkDivider <= clkDivider+1;
+    end
     // ====================
     // // PLL END
     // ====================
@@ -199,10 +214,10 @@ module Top(
     
     function [15:0] DataFromAddr;
         input [24:0] addr;
-        DataFromAddr = 16'hFEED;
+        // DataFromAddr = 16'hFEED;
         // DataFromAddr = 16'hCAFF;
         // DataFromAddr = 16'hCAFE;
-        // DataFromAddr = addr[15:0];
+        DataFromAddr = addr[15:0];
     endfunction
     
     reg[3:0] state = 0;
@@ -290,8 +305,8 @@ module Top(
             end
             
             if (ram_cmdReadDataValid) begin
-                // if (lastReadDataInit && ram_cmdReadData!=(lastReadData+2'b01)) begin
-                if (lastReadDataInit && ram_cmdReadData!==DataFromAddr(0)) begin
+                if (lastReadDataInit && ram_cmdReadData!=(lastReadData+2'b01)) begin
+                // if (lastReadDataInit && ram_cmdReadData!==DataFromAddr(0)) begin
                     led[1] <= 1;
                     $display("BAD DATA RECEIVED: wanted %x, got %x", (lastReadData+2'b01), ram_cmdReadData);
                 end
