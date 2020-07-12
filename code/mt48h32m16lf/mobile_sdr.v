@@ -938,11 +938,11 @@ module mobile_sdr (
 
      task initialization_cmd_display;
      begin
-        if (DEBUG == 1'b1) begin
+        // if (DEBUG == 1'b1) begin
             if (initialization_state == 8) begin
                 $sformat (msg, " INIT : INITIALIZATION COMPLETE"); NOTE(msg);
             end
-        end
+        // end
      end
      endtask
 
@@ -1614,6 +1614,7 @@ module mobile_sdr (
 
     task self_refresh_cmd_func;
     begin
+        $display("HALLLA");
         erase_mem(pasr);
         tm_self_refresh      = $time ;
         ck_cntr_self_refresh = 0     ;

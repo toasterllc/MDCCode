@@ -66,9 +66,9 @@ module SDRAMController #(
     
     // At high clock speeds, Clocks(T_RFC, 0) is the largest delay stored in delayCounter.
     // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
-    localparam DelayCounterWidth = Max($clog2(Clocks(T_RFC, 0)+1), $clog2(C_DQZ+1+1));
+    localparam DelayCounterWidth = Max($clog2(Clocks(T_RFC, 0)+1), $clog2(C_DQZ+1+1))+10;
     // Size refreshCounter so it'll fit Clocks(T_INIT) when combined with delayCounter
-    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0)+1)-DelayCounterWidth;
+    localparam RefreshCounterWidth = $clog2(Clocks(T_INIT, 0)+1)+10;
     localparam StateWidth = 3;
     
     // initial begin
@@ -106,9 +106,32 @@ module SDRAMController #(
         input [63:0] t;
         input [63:0] sub;
         begin
-            Clocks = (t*ClockFrequency)/1000000000;
-            if (Clocks >= sub) Clocks = Clocks-sub;
-            else Clocks = 0;
+            // Clocks = 5;
+            
+            Clocks = ((t*ClockFrequency)/64'd1000000000)+10;
+            // if (Clocks >= sub) Clocks = Clocks-sub;
+            // else Clocks = 0;
+            //
+            // if (Clocks > 5) begin
+            //     $display("MEOWMIX Clocks > 5: %0d", Clocks);
+            // end
+            
+        end
+    endfunction
+    
+    function [63:0] Mult;
+        input [63:0] a;
+        input [63:0] b;
+        begin
+            Mult = a*b;
+        end
+    endfunction
+    
+    function [63:0] Div;
+        input [63:0] a;
+        input [63:0] b;
+        begin
+            Div = a/b;
         end
     endfunction
     
@@ -320,7 +343,8 @@ module SDRAMController #(
         
         // Update counters
         delayCounter <= (delayCounter!=0 ? delayCounter-1 : 0);
-        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Clocks(T_REFI, 1));
+        refreshCounter <= (refreshCounter!=0 ? refreshCounter-1 : Div(Mult(T_REFI, ClockFrequency), 1000000000));
+        
     end endtask
     
     task StartReadWrite(input write, input[`ADDR_WIDTH-1:0] addr); begin
@@ -389,27 +413,31 @@ module SDRAMController #(
                 savedCmdWrite <= 0;
                 writeDataValid <= 0;
                 
-                // Initialize registers
-                ram_cke <= 0;
-                ram_dqm <= 2'b11;
-                ram_cmd <= CmdNop;
-                // Delay 200us
-                InitNextSubstate(Clocks(T_INIT, 0));
+                InitNextSubstate(10);
             end
             
             1: begin
+                // Initialize registers
+                ram_cke <= 1;
+                ram_dqm <= 2'b11;
+                ram_cmd <= CmdNop;
+                // Delay 200us
+                InitNextSubstate(Div(Mult(T_INIT, ClockFrequency), 1000000000));
+            end
+            
+            2: begin
                 // Bring ram_cke high for a bit before issuing commands
                 ram_cke <= 1;
                 InitNextSubstate(10);
             end
             
-            2: begin
+            3: begin
                 // Precharge all banks
                 PrechargeAll();
                 InitNextSubstate(Clocks(T_RP, 0));
             end
             
-            3: begin
+            4: begin
                 // Autorefresh 1/2
                 ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC for autorefresh to complete
@@ -419,7 +447,7 @@ module SDRAMController #(
                 InitNextSubstate(Clocks(T_RFC, 0));
             end
             
-            4: begin
+            5: begin
                 // Autorefresh 2/2
                 ram_cmd <= CmdAutoRefresh;
                 // Wait T_RFC for autorefresh to complete
@@ -429,7 +457,7 @@ module SDRAMController #(
                 InitNextSubstate(Clocks(T_RFC, 0));
             end
             
-            5: begin
+            6: begin
                 // Set the operating mode of the SDRAM
                 ram_cmd <= CmdSetMode;
                 // ram_ba: reserved
@@ -441,7 +469,7 @@ module SDRAMController #(
                 InitNextSubstate(C_MRD-1);
             end
             
-            6: begin
+            7: begin
                 // Set the extended operating mode of the SDRAM (applies only to Winbond RAMs)
                 ram_cmd <= CmdSetMode;
                 // ram_ba: reserved
@@ -450,7 +478,11 @@ module SDRAMController #(
                 ram_a <= {    2'b0,                       2'b0,           3'b000};
                 
                 // Start the refresh timer
-                refreshCounter <= Clocks(T_REFI, 1);
+                refreshCounter <= Div(Mult(T_REFI, ClockFrequency), 1000000000);
+                // $display("ClockFrequency: %0d", ClockFrequency);
+                // $display("T_REFI: %0d", T_REFI);
+                // $display("T_REFI*ClockFrequency: %0d", Div(Mult(T_REFI, ClockFrequency), 1000000000));
+                // $display("REFRESH COUNTER: %0d", Div(Mult(T_REFI, ClockFrequency), 1000000000));
                 
                 // We need a delay of C_MRD clock cycles before issuing the next command.
                 // -1 clock cycle since we already burn one cycle getting to the next substate.
@@ -555,9 +587,10 @@ module SDRAMController #(
 `ifdef DO_REFRESH
             // Refresh
             if (refreshCounter==0 || state==StateRefresh) HandleRefresh();
+            else
 `endif
             // Commands
-            else HandleCommand();
+            HandleCommand();
         end
     end
 endmodule
