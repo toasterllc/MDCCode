@@ -47,14 +47,14 @@ module Top(
     
     
     
-    // // ====================
-    // // 12 MHz CLOCK START
-    // // ====================
-    // localparam ClkFreq = 12000000;    // fails with icestorm
-    // wire clk = clk12mhz;
-    // // ====================
-    // // 12 MHz CLOCK END
-    // // ====================
+    // ====================
+    // 12 MHz CLOCK START
+    // ====================
+    localparam ClkFreq = 12000000;    // fails with icestorm
+    wire clk = clk12mhz;
+    // ====================
+    // 12 MHz CLOCK END
+    // ====================
     
     
     
@@ -104,30 +104,30 @@ module Top(
     
     
     
-    // ====================
-    // PLL + CLOCK DIVIDER START
-    // ====================
-    localparam PLLClkFreq = 96000000;
-    wire clk96mhz;
-    ClockGen #(
-        .FREQ(PLLClkFreq),
-        .DIVR(0),
-        .DIVF(63),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk96mhz));
-    
-    localparam ClkDividerWidth = 1;
-    localparam ClkFreq = (PLLClkFreq >> ClkDividerWidth); // Frequency after clock divider
-    reg[ClkDividerWidth-1:0] clkDivider = 0;
-    
-    wire clk = clkDivider[ClkDividerWidth-1];
-    always @(posedge clk96mhz) begin
-        clkDivider <= clkDivider+1;
-    end
-    // ====================
-    // PLL + CLOCK DIVIDER START
-    // ====================
+    // // ====================
+    // // PLL + CLOCK DIVIDER START
+    // // ====================
+    // localparam PLLClkFreq = 96000000;
+    // wire clk96mhz;
+    // ClockGen #(
+    //     .FREQ(PLLClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(63),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) cg(.clk12mhz(clk12mhz), .clk(clk96mhz));
+    //
+    // localparam ClkDividerWidth = 1;
+    // localparam ClkFreq = (PLLClkFreq >> ClkDividerWidth); // Frequency after clock divider
+    // reg[ClkDividerWidth-1:0] clkDivider = 0;
+    //
+    // wire clk = clkDivider[ClkDividerWidth-1];
+    // always @(posedge clk96mhz) begin
+    //     clkDivider <= clkDivider+1;
+    // end
+    // // ====================
+    // // PLL + CLOCK DIVIDER START
+    // // ====================
 
     
     
@@ -146,11 +146,11 @@ module Top(
     localparam RAM_DataWidth = 16;
     // localparam RAM_EndAddr = RAM_Size-1;
     
-    // localparam RAM_StartAddr = 25'h0000000;
-    // localparam RAM_EndAddr =   25'h0001000;
-    
     localparam RAM_StartAddr = 25'h0000000;
-    localparam RAM_EndAddr =   RAM_Size-1;
+    localparam RAM_EndAddr =   25'h0001000;
+    
+    // localparam RAM_StartAddr = 25'h0000000;
+    // localparam RAM_EndAddr =   RAM_Size-1;
     
     // localparam RAM_StartAddr = 25'h0FF00;
     // localparam RAM_EndAddr =   25'h100FF;
