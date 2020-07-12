@@ -50,12 +50,52 @@ module Top(
     // // ====================
     // // 12 MHz CLOCK START
     // // ====================
-    // // localparam ClkFreq = 133000000; // test for simulation
     // localparam ClkFreq = 12000000;    // fails with icestorm
-    // // localparam ClkFreq = 15938000;       // works with icestorm
     // wire clk = clk12mhz;
     // // ====================
     // // 12 MHz CLOCK END
+    // // ====================
+    
+    
+    
+    
+    // // ====================
+    // // 12 MHz CLOCK + CLOCK GATE START
+    // // ====================
+    // localparam ClkFreq = 12000000;    // fails with icestorm
+    // reg[0:0] clkInit = 0;
+    // reg clockGate = 0;
+    // wire clk = clk12mhz & clockGate;
+    // always @(posedge clk12mhz) begin
+    //     if (!(&clkInit)) begin
+    //         clkInit <= clkInit+1;
+    //     end else begin
+    //         clockGate <= 1;
+    //     end
+    // end
+    // // ====================
+    // // 12 MHz CLOCK + CLOCK GATE  END
+    // // ====================
+    //
+    
+    
+    
+    
+    
+    
+    
+    // // ====================
+    // // 12 MHz CLOCK + CLOCK DIVIDER START
+    // // ====================
+    // localparam ClkDividerWidth = 1;
+    // localparam ClkFreq = (12000000 >> ClkDividerWidth); // Frequency after clock divider
+    // reg[ClkDividerWidth-1:0] clkDivider = 0;
+    // wire clk = clkDivider[ClkDividerWidth-1];
+    // always @(posedge clk12mhz) begin
+    //     clkDivider <= clkDivider+1;
+    // end
+    // // ====================
+    // // 12 MHz CLOCK + CLOCK DIVIDER END
     // // ====================
     
     
@@ -65,7 +105,7 @@ module Top(
     
     
     // ====================
-    // // PLL CLOCK START
+    // PLL + CLOCK DIVIDER START
     // ====================
     localparam PLLClkFreq = 96000000;
     wire clk96mhz;
@@ -76,18 +116,21 @@ module Top(
         .DIVQ(3),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk96mhz));
-
-    localparam ClkDividerWidth = 3;
+    
+    localparam ClkDividerWidth = 1;
     localparam ClkFreq = (PLLClkFreq >> ClkDividerWidth); // Frequency after clock divider
     reg[ClkDividerWidth-1:0] clkDivider = 0;
-
-    wire clk = clkDivider[$size(clkDivider)-1];
+    
+    wire clk = clkDivider[ClkDividerWidth-1];
     always @(posedge clk96mhz) begin
         clkDivider <= clkDivider+1;
     end
     // ====================
-    // // PLL END
+    // PLL + CLOCK DIVIDER START
     // ====================
+
+    
+    
     
     
 `ifdef SIM
@@ -149,8 +192,9 @@ module Top(
         input [24:0] addr;
         // DataFromAddr = 16'hFEED;
         // DataFromAddr = 16'hCAFF;
-        // DataFromAddr = 16'hCAFE;
-        DataFromAddr = addr[15:0];
+        DataFromAddr = 16'hCAFE;
+        // DataFromAddr = 16'b1 << 1;
+        // DataFromAddr = addr[15:0];
     endfunction
     
     reg[3:0] state = 0;
@@ -195,7 +239,6 @@ module Top(
                     // end
                     
                     if (ram_cmdAddr == RAM_EndAddr) begin
-                        initDelay <= initDelay <= ~0;
                         ram_cmdTrigger <= 0;
                         state <= 2;
                         $display("Finished writing");
@@ -238,8 +281,8 @@ module Top(
             end
             
             if (ram_cmdReadDataValid) begin
-                if (lastReadDataInit && ram_cmdReadData!=(lastReadData+2'b01)) begin
-                // if (lastReadDataInit && ram_cmdReadData!==DataFromAddr(0)) begin
+                // if (lastReadDataInit && ram_cmdReadData!=(lastReadData+2'b01)) begin
+                if (lastReadDataInit && ram_cmdReadData!==DataFromAddr(0)) begin
                     led[1] <= 1;
                     $display("BAD DATA RECEIVED: wanted %x, got %x", (lastReadData+2'b01), ram_cmdReadData);
                 end
