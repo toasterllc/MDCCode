@@ -11,7 +11,7 @@ module Top(
 `ifndef SIM
     input wire          clk12mhz,
 `endif
-    output reg[3:0]     led,
+    output reg[3:0]     led = 0,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -56,6 +56,31 @@ module Top(
     // 12 MHz CLOCK END
     // ====================
     
+    
+    // // ====================
+    // // 12 MHz CLOCK, INVERTED RAM_CLK START
+    // // ====================
+    // localparam ClkFreq = 12000000;
+    // wire clk = clk12mhz;
+    // wire ram_clk_;
+    // assign ram_clk = !ram_clk_;
+    // // ====================
+    // // 12 MHz CLOCK END
+    // // ====================
+    
+    
+    
+    
+    // // ====================
+    // // 12 MHz CLOCK INVERTED START
+    // // ====================
+    // localparam ClkFreq = 12000000;
+    // wire clk = !clk12mhz;
+    // wire ram_clk_;
+    // assign ram_clk = !ram_clk_;
+    // // ====================
+    // // 12 MHz CLOCK END
+    // // ====================
     
     
     
@@ -117,7 +142,7 @@ module Top(
     //     .FILTER_RANGE(1)
     // ) cg(.clk12mhz(clk12mhz), .clk(clk96mhz));
     //
-    // localparam ClkDividerWidth = 1;
+    // localparam ClkDividerWidth = 3;
     // localparam ClkFreq = (PLLClkFreq >> ClkDividerWidth); // Frequency after clock divider
     // reg[ClkDividerWidth-1:0] clkDivider = 0;
     //
@@ -177,6 +202,7 @@ module Top(
         .cmdReadDataValid(ram_cmdReadDataValid),
         
         .ram_clk(ram_clk),
+        // .ram_clk(ram_clk_),
         .ram_cke(ram_cke),
         .ram_ba(ram_ba),
         .ram_a(ram_a),
@@ -192,15 +218,15 @@ module Top(
         input [24:0] addr;
         // DataFromAddr = 16'hFEED;
         // DataFromAddr = 16'hCAFF;
-        DataFromAddr = 16'hCAFE;
+        // DataFromAddr = 16'hCAFE;
         // DataFromAddr = 16'b1 << 1;
-        // DataFromAddr = addr[15:0];
+        DataFromAddr = addr[15:0];
     endfunction
     
     reg[3:0] state = 0;
     reg[15:0] lastReadData = 0;
     reg[24:0] memCounter = 0;
-    reg[25:0] initDelay = 0;
+    reg[7:0] initDelay = 0;
     reg lastReadDataInit = 0;
     always @(posedge clk) begin
         case (state)
@@ -219,7 +245,7 @@ module Top(
             end else begin
                 if (!ram_cmdTrigger) begin
                     lastReadData <= 0;
-                    led <= 0;
+                    // led <= 0;
                     memCounter <= 0;
                 
                     ram_cmdTrigger <= 1;
@@ -231,17 +257,10 @@ module Top(
                     ram_cmdAddr <= ram_cmdAddr+1'b1;
                     ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1'b1);
                     
-                    // if (ram_cmdAddr == 16'h2000) begin
-                    //     ram_cmdTrigger <= 0;
-                    //     state <= 2;
-                    //
-                    //     $display("Finished writing");
-                    // end
-                    
                     if (ram_cmdAddr == RAM_EndAddr) begin
                         ram_cmdTrigger <= 0;
                         state <= 2;
-                        led[0] <= 1;
+                        // led[0] <= 1;
                         $display("Finished writing");
                     end
                 end
