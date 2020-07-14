@@ -47,14 +47,14 @@ module Top(
     
     
     
-    // ====================
-    // 12 MHz CLOCK START
-    // ====================
-    localparam ClkFreq = 12000000;    // fails with icestorm
-    wire clk = clk12mhz;
-    // ====================
-    // 12 MHz CLOCK END
-    // ====================
+    // // ====================
+    // // 12 MHz CLOCK START
+    // // ====================
+    // localparam ClkFreq = 12000000;    // fails with icestorm
+    // wire clk = clk12mhz;
+    // // ====================
+    // // 12 MHz CLOCK END
+    // // ====================
     
     
     // // ====================
@@ -153,6 +153,23 @@ module Top(
     // // ====================
     // // PLL + CLOCK DIVIDER START
     // // ====================
+    
+    
+    // ====================
+    // PLL START
+    // ====================
+    localparam ClkFreq = 24000000;
+    wire clk;
+    ClockGen #(
+        .FREQ(ClkFreq),
+        .DIVR(0),
+        .DIVF(63),
+        .DIVQ(5),
+        .FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    // ====================
+    // PLL END
+    // ====================
 
     
     
