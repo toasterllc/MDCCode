@@ -4,6 +4,23 @@
 `include "../SDRAMController.v"
 `include "../PixI2CMaster.v"
 
+module Delay #(
+    parameter Count = 1
+)(
+    input wire in,
+    output wire out
+);
+    wire[(Count*2)-1:0] bits /* synthesis syn_keep=1 */;
+    
+    assign bits[0] = !in;
+    assign out = bits[(Count*2)-1];
+    
+    genvar i;
+    for (i=1; i<Count*2; i=i+1) begin
+        assign bits[i] = !bits[i-1];
+    end
+endmodule
+
 module Debug #(
     // Max payload length (bytes)
     // *** Code needs to be updated below if this is changed!
@@ -417,14 +434,19 @@ module Top(
     // Clock PLL (50.250 MHz)
     // ====================
     localparam ClkFreq = 50250000;
-    wire clk;
+    wire pllClk;
     ClockGen #(
         .FREQ(ClkFreq),
         .DIVR(0),
         .DIVF(66),
         .DIVQ(4),
         .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
+    
+    assign ram_clk = pllClk;
+    
+    wire clk;
+    Delay #(.Count(1)) clkDelay(.in(pllClk), .out(clk));
     
     // Not ideal to AND with a clock, since it can cause the resulting clock signal
     // to toggle anytime the other input changes.
@@ -465,7 +487,7 @@ module Top(
         .cmdReadData(ram_cmdReadData),
         .cmdReadDataValid(ram_cmdReadDataValid),
 
-        .ram_clk(ram_clk),
+        // .ram_clk(ram_clk),
         .ram_cke(ram_cke),
         .ram_ba(ram_ba),
         .ram_a(ram_a),
@@ -565,6 +587,7 @@ module Top(
         // DataFromAddr = 16'hFFFF;
         // DataFromAddr = 16'h0000;
         // DataFromAddr = 16'h7832;
+        // DataFromAddr = 16'hCAFE;
     endfunction
     
     function [63:0] Min;
