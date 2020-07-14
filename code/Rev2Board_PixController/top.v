@@ -416,10 +416,10 @@ module Top(
     // ====================
     // Clock PLL (50.250 MHz)
     // ====================
-    localparam ClockFrequency = 50250000;
+    localparam ClkFreq = 50250000;
     wire clk;
     ClockGen #(
-        .FREQ(ClockFrequency),
+        .FREQ(ClkFreq),
         .DIVR(0),
         .DIVF(66),
         .DIVQ(4),
@@ -453,7 +453,7 @@ module Top(
     wire                    ram_cmdReadDataValid;
 
     SDRAMController #(
-        .ClockFrequency(ClockFrequency)
+        .ClkFreq(ClkFreq)
     ) sdramController(
         .clk(clk),
 
@@ -495,7 +495,7 @@ module Top(
     wire pix_i2c_cmd_done;
     wire pix_i2c_cmd_ok;
     PixI2CMaster #(
-        .ClkFreq(ClockFrequency),
+        .ClkFreq(ClkFreq),
         .I2CClkFreq(400000)
     ) pixI2CMaster(
         .clk(clk),
