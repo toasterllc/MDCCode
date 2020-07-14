@@ -18,19 +18,6 @@ module PixI2CMaster #(
     output reg          i2c_clk = 0,
     inout wire          i2c_data
 );
-    // Delay() returns the value to store in a counter, such that when
-    // the counter reaches 0, `t` nanoseconds has elapsed.
-    // `sub` is subtracted from that value, with the result clipped to zero.
-    function [63:0] Delay;
-        input [63:0] t;
-        input [63:0] sub;
-        begin
-            Delay = (t*ClkFreq)/1000000000;
-            if (Delay >= sub) Delay = Delay-sub;
-            else Delay = 0;
-        end
-    endfunction
-    
     function [63:0] DivCeil;
         input [63:0] n;
         input [63:0] d;
@@ -41,8 +28,9 @@ module PixI2CMaster #(
     
     // I2CQuarterCycleDelay: number of `clk` cycles for a quarter of the `i2c_clk` cycle to elapse.
     // DivCeil() is necessary to perform the quarter-cycle calculation, so that the
-    // division is ceiled to the nearest nanosecond. (Ie -- slower than I2CClkFreq is OK, faster is not.)
-    localparam I2CQuarterCycleDelay = Delay(DivCeil(1000000000, 4*I2CClkFreq), 0);
+    // division is ceiled to the nearest clock cycle. (Ie -- slower than I2CClkFreq is OK, faster is not.)
+    // -1 for the in the value that should be stored in a counter
+    localparam I2CQuarterCycleDelay = DivCeil(ClkFreq, 4*I2CClkFreq)-1;
     
     // Width of `delay`
     localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);

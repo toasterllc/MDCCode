@@ -938,11 +938,11 @@ module mobile_sdr (
 
      task initialization_cmd_display;
      begin
-        if (DEBUG == 1'b1) begin
+        // if (DEBUG == 1'b1) begin
             if (initialization_state == 8) begin
                 $sformat (msg, " INIT : INITIALIZATION COMPLETE"); NOTE(msg);
             end
-        end
+        // end
      end
      endtask
 
@@ -1245,7 +1245,7 @@ module mobile_sdr (
     begin
         if (active_bank[bank] == 1'b1) begin
             if ($time - tm_bank_activate[bank] < tRAS) begin
-                $sformat (msg, " ERROR: tRAS violation :  Bank = %d", bank); ERROR(ERR_tRAS, msg);
+                $sformat (msg, " ERROR: tRAS violation :  Bank = %d     bankActivateTime:%0d prechargeTime:%0d", bank, tm_bank_activate[bank], $time); ERROR(ERR_tRAS, msg);
             end
             if ($time - tm_write_dq[bank] < tWRm) begin
                 $sformat (msg, " ERROR: tWR violation :  Bank = %d", bank); ERROR(ERR_tWR, msg);
