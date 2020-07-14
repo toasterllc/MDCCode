@@ -7,6 +7,24 @@
 
 `timescale 1ps/1ps
 
+(* keep_hierarchy = 1 *)
+module Delay #(
+    parameter Count = 1
+)(
+    input wire in,
+    output wire out
+);
+    (* keep=1 *) wire[(Count*2)-1:0] bits /* synthesis syn_keep=1 */;
+    
+    assign bits[0] = !in;
+    assign out = bits[(Count*2)-1];
+    
+    genvar i;
+    for (i=1; i<Count*2; i=i+1) begin
+        assign bits[i] = !bits[i-1];
+    end
+endmodule
+
 module Top(
 `ifndef SIM
     input wire          clk12mhz,
@@ -30,7 +48,7 @@ module Top(
     `endif
     
     // // ====================
-    // // 1.5 MHz CLOCK START
+    // // START: 1.5 MHz CLOCK
     // // ====================
     // // localparam ClkFreq = 133000000; // test for simulation
     // localparam ClkFreq = 1500000;    // fails with icestorm
@@ -40,52 +58,87 @@ module Top(
     //     clkDivider <= clkDivider+1;
     // end
     // // ====================
-    // // 1.5 MHz CLOCK END
+    // // END: 1.5 MHz CLOCK
     // // ====================
     
     
     
     
     
+    // ====================
+    // START: 12 MHz DELAYED CLOCK, RAM_CLK UNDELAYED CLOCK
+    // ====================
+    localparam ClkFreq = 12000000;    // fails with icestorm
+    assign ram_clk = clk12mhz;
+    
+    wire clk;
+    (* keep_hierarchy=1 *)
+    Delay #(
+        .Count(2))
+    
+    clkDelay(
+        .in(clk12mhz),
+        .out(clk)
+    );
+    
+    // (* keep_hierarchy=1 *) wire clk_______     = !clk12mhz     /* synthesis syn_keep=1 */ ;
+    // (* keep_hierarchy=1 *) wire clk______      = !clk_______   /* synthesis syn_keep=1 */ ;
+    // (* keep_hierarchy=1 *) wire clk_____       = !clk______    /* synthesis syn_keep=1 */ ;
+    // (* keep_hierarchy=1 *) wire clk____        = !clk_____     /* synthesis syn_keep=1 */ ;
+    // (* keep_hierarchy=1 *) wire clk___         = !clk____      /* synthesis syn_keep=1 */ ;
+    // (* keep_hierarchy=1 *) wire clk__          = !clk___       /* synthesis syn_keep=1 */ ;
+    // (* keep_hierarchy=1 *) wire clk_           = !clk__        /* synthesis syn_keep=1 */ ;
+    // (* keep_hierarchy=1 *) wire clk            = !clk_         /* synthesis syn_keep=1 */ ;
+    // ====================
+    // END: 12 MHz CLOCK
+    // ====================
+    
+    
+    
+    
     // // ====================
-    // // 12 MHz CLOCK START
+    // // START: 12 MHz CLOCK
     // // ====================
     // localparam ClkFreq = 12000000;    // fails with icestorm
-    // wire clk = clk12mhz;
+    // assign ram_clk = clk12mhz;
+    // assign clk = clk12mhz;
     // // ====================
-    // // 12 MHz CLOCK END
+    // // END: 12 MHz CLOCK
     // // ====================
     
     
+    
+    
+    
     // // ====================
-    // // 12 MHz CLOCK, INVERTED RAM_CLK START
+    // // START: 12 MHz CLOCK, INVERTED RAM_CLK
     // // ====================
     // localparam ClkFreq = 12000000;
     // wire clk = clk12mhz;
     // wire ram_clk_;
     // assign ram_clk = !ram_clk_;
     // // ====================
-    // // 12 MHz CLOCK END
+    // // END: 12 MHz CLOCK
     // // ====================
     
     
     
     
     // // ====================
-    // // 12 MHz CLOCK INVERTED START
+    // // START: 12 MHz CLOCK INVERTED
     // // ====================
     // localparam ClkFreq = 12000000;
     // wire clk = !clk12mhz;
     // wire ram_clk_;
     // assign ram_clk = !ram_clk_;
     // // ====================
-    // // 12 MHz CLOCK END
+    // // END: 12 MHz CLOCK
     // // ====================
     
     
     
     // // ====================
-    // // 12 MHz CLOCK + CLOCK GATE START
+    // // START: 12 MHz CLOCK + CLOCK GATE
     // // ====================
     // localparam ClkFreq = 12000000;    // fails with icestorm
     // reg[0:0] clkInit = 0;
@@ -99,7 +152,7 @@ module Top(
     //     end
     // end
     // // ====================
-    // // 12 MHz CLOCK + CLOCK GATE  END
+    // // END: 12 MHz CLOCK + CLOCK GATE
     // // ====================
     //
     
@@ -110,7 +163,7 @@ module Top(
     
     
     // // ====================
-    // // 12 MHz CLOCK + CLOCK DIVIDER START
+    // // START: 12 MHz CLOCK + CLOCK DIVIDER
     // // ====================
     // localparam ClkDividerWidth = 1;
     // localparam ClkFreq = (12000000 >> ClkDividerWidth); // Frequency after clock divider
@@ -120,7 +173,7 @@ module Top(
     //     clkDivider <= clkDivider+1;
     // end
     // // ====================
-    // // 12 MHz CLOCK + CLOCK DIVIDER END
+    // // END: 12 MHz CLOCK + CLOCK DIVIDER
     // // ====================
     
     
@@ -130,7 +183,7 @@ module Top(
     
     
     // // ====================
-    // // PLL + CLOCK DIVIDER START
+    // // START: PLL + CLOCK DIVIDER
     // // ====================
     // localparam PLLClkFreq = 96000000;
     // wire clk96mhz;
@@ -151,26 +204,28 @@ module Top(
     //     clkDivider <= clkDivider+1;
     // end
     // // ====================
-    // // PLL + CLOCK DIVIDER START
+    // // END: PLL + CLOCK DIVIDER
     // // ====================
     
     
-    // ====================
-    // PLL START
-    // ====================
-    localparam ClkFreq = 24000000;
-    wire clk;
-    ClockGen #(
-        .FREQ(ClkFreq),
-        .DIVR(0),
-        .DIVF(63),
-        .DIVQ(5),
-        .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
-    // ====================
-    // PLL END
-    // ====================
-
+    
+    
+    // // ====================
+    // // START: PLL
+    // // ====================
+    // localparam ClkFreq = 24000000;
+    // wire clk;
+    // ClockGen #(
+    //     .FREQ(ClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(63),
+    //     .DIVQ(5),
+    //     .FILTER_RANGE(1)
+    // ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    // // ====================
+    // // END: PLL
+    // // ====================
+    
     
     
     
@@ -218,7 +273,7 @@ module Top(
         .cmdReadData(ram_cmdReadData),
         .cmdReadDataValid(ram_cmdReadDataValid),
         
-        .ram_clk(ram_clk),
+        // .ram_clk(ram_clk),
         // .ram_clk(ram_clk_),
         .ram_cke(ram_cke),
         .ram_ba(ram_ba),

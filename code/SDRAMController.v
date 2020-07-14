@@ -25,7 +25,7 @@ module SDRAMController #(
     output reg didRefresh = 0,
     
     // RAM port
-    output wire ram_clk,                    // Clock
+    // output wire ram_clk,                    // Clock
     output reg ram_cke = 0,                 // Clock enable
     output reg[`BANK_WIDTH-1:0] ram_ba = 0, // Bank address
     output reg[`ROW_WIDTH-1:0] ram_a = 0,   // Address
@@ -152,7 +152,7 @@ module SDRAMController #(
     wire[`COL_WIDTH-1:0] savedCmdAddrCol = savedCmdAddr[`COL_BITS];
     
     // ## SDRAM nets
-    assign ram_clk = clk;
+    // assign ram_clk = clk;
     assign ram_cs_ = 0;
     
     reg[2:0] ram_cmd = 0;
