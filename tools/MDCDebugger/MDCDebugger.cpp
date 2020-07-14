@@ -79,8 +79,8 @@ public:
     
     struct SetLEDMsg {
         MsgHdr hdr{.type=0x01, .len=sizeof(*this)-sizeof(MsgHdr)};
-//        uint8_t on = 0;
-        uint8_t payload[255];
+        uint8_t on = 0;
+//        uint8_t payload[255];
     } __attribute__((packed));
     
     struct ReadMemMsg {
@@ -342,7 +342,7 @@ public:
 //            if (ir > 0) {
 //                printf("====================\n");
 //                printf("Read:\n");
-//                for (size_t i=0; i<1024; i++) {
+//                for (size_t i=0; i<readLen; i++) {
 //                    uint8_t byte = *(d+off+i);
 ////                    if (byte) {
 //                        printf("%02x ", byte);
@@ -485,34 +485,15 @@ static Args parseArgs(int argc, const char* argv[]) {
 static void setLED(const Args& args, MDCDevice& device) {
     using SetLEDMsg = MDCDevice::SetLEDMsg;
     using Msg = MDCDevice::Msg;
-//    device.write(SetLEDMsg{.on = args.on});
-//    for (;;) {
-//        if (auto msgPtr = Msg::Cast<SetLEDMsg>(device.read())) {
-//            return;
-//        }
-//    }
-    
-    device.write(SetLEDMsg{});
-    for (size_t msgCount=0;;) {
+    device.write(SetLEDMsg{.on = args.on});
+    for (;;) {
         if (auto msgPtr = Msg::Cast<SetLEDMsg>(device.read())) {
-            const auto& msg = *msgPtr;
-            for (size_t i=0; i<sizeof(msg.payload); i++) {
-                uint8_t val = msg.payload[i];
-                uint8_t expected = 255-i;
-                if (val != expected) {
-                    fprintf(stderr, "Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
-                }
-            }
-            
-            msgCount++;
-            if (!(msgCount % 1000)) {
-                printf("Message count: %ju\n", (uintmax_t)msgCount);
-            }
+            return;
         }
     }
 }
 
-const size_t RAMWordCount = 127*3;
+const size_t RAMWordCount = 0x2000000;
 const size_t RAMWordSize = 2;
 const size_t RAMSize = RAMWordCount*RAMWordSize;
 
@@ -582,7 +563,6 @@ static void verifyMem(const Args& args, MDCDevice& device) {
             if (!(msgCount % 1000)) {
                 printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
             }
-            exit(0);
         }
     }
     auto stopTime = CurrentTime();
