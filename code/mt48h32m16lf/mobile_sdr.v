@@ -1614,7 +1614,6 @@ module mobile_sdr (
 
     task self_refresh_cmd_func;
     begin
-        $display("HALLLA");
         erase_mem(pasr);
         tm_self_refresh      = $time ;
         ck_cntr_self_refresh = 0     ;
