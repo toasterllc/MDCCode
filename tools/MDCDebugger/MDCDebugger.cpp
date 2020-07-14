@@ -351,6 +351,7 @@ public:
 //                printf("\n");
 //                printf("====================\n");
 //            }
+//            exit(0);
             
             assert(ir>=0 && (size_t)ir<=readLen);
             off += ir;
@@ -507,13 +508,15 @@ static void readMem(const Args& args, MDCDevice& device) {
     
     device.write(ReadMemMsg{});
     size_t dataLen = 0;
-    for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
+    for (size_t msgCount=0; dataLen<RAMSize;) {
         if (auto msgPtr = Msg::Cast<ReadMemMsg>(device.read())) {
             const auto& msg = *msgPtr;
             outputFile.write((char*)msg.mem, msg.hdr.len);
             if (!outputFile) throw std::runtime_error("failed to write to output file");
             
             dataLen += msg.hdr.len;
+            
+            msgCount++;
             if (!(msgCount % 1000)) {
                 printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
             }
@@ -531,8 +534,8 @@ static void verifyMem(const Args& args, MDCDevice& device) {
     using Msg = MDCDevice::Msg;
     device.write(ReadMemMsg{});
     
-    bool ok = true;
     auto startTime = CurrentTime();
+    uintmax_t errorCount = 0;
     size_t dataLen = 0;
     std::optional<uint16_t> lastVal;
     for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
@@ -546,14 +549,14 @@ static void verifyMem(const Args& args, MDCDevice& device) {
                         uint16_t expected = (uint16_t)(*lastVal+1);
                         if (val != expected) {
                             fprintf(stderr, "Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
-                            ok = false;
+                            errorCount++;
                         }
                     }
                     lastVal = val;
                 }
             } else {
                 fprintf(stderr, "Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.hdr.len);
-                ok = false;
+                errorCount++;
             }
             
             dataLen += msg.hdr.len;
@@ -567,13 +570,15 @@ static void verifyMem(const Args& args, MDCDevice& device) {
     if (dataLen != RAMSize) {
         fprintf(stderr, "Error: data length mismatch: expected 0x%jx, got 0x%jx\n",
             (uintmax_t)RAMSize, (uintmax_t)dataLen);
-        ok = false;
+        errorCount++;
     }
     
-    printf("Memory verification finished; duration: %ju ms\n",
-        (uintmax_t)TimeDurationMs(startTime, stopTime));
+    printf("Memory verification finished\n");
+    printf("  errors: %ju\n", (uintmax_t)errorCount);
+    printf("  data length: %ju bytes\n", (uintmax_t)dataLen);
+    printf("  duration: %ju ms\n", (uintmax_t)TimeDurationMs(startTime, stopTime));
     
-    if (!ok) throw std::runtime_error("memory verification failed");
+    if (errorCount) throw std::runtime_error("memory verification failed");
 }
 
 static void pixReg8(const Args& args, MDCDevice& device) {
