@@ -67,20 +67,29 @@ module main();
     //     $finish;
     // end
     
-    localparam ClockFrequency = 100000000;
+    // localparam ClockFrequency = 100000000;
+    //
+    // function [63:0] Clocks;
+    //     input [63:0] t;
+    //     input [63:0] sub;
+    //     begin
+    //         Clocks = (t*ClockFrequency)/1000000000;
+    //         if (Clocks >= sub) Clocks = Clocks-sub;
+    //         else Clocks = 0;
+    //     end
+    // endfunction
+    //
+    // wire[15:0] a = 16'hFFFF;
+    // wire[15:0] b = 16'h0000;
     
-    function [63:0] Clocks;
+    localparam ClkFreq = 50000000;
+    
+    function [63:0] Test;
         input [63:0] t;
-        input [63:0] sub;
         begin
-            Clocks = (t*ClockFrequency)/1000000000;
-            if (Clocks >= sub) Clocks = Clocks-sub;
-            else Clocks = 0;
+            $display("%0d", t);
         end
     endfunction
-    
-    wire[15:0] a = 16'hFFFF;
-    wire[15:0] b = 16'h0000;
     
     // initial begin
     //     $display("%0d", Clocks(20, 0));
@@ -88,8 +97,9 @@ module main();
     // end
     
     initial begin
+        Test(150*ClkFreq);
         // wire[15:0] lowbits;
-        $display("a = %x", a+1'b1);
+        // $display("a = %x", a+1'b1);
         // $display("a = %x", (({a+1[15:0]) == b));
         
         // if (a[3:0]) begin
