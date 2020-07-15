@@ -41,8 +41,8 @@ module Debug #(
     output reg                              msgOut_payloadTrigger = 0,
     
     input wire                              debug_clk,
-    input wire                              debug_di,
-    output wire                             debug_do
+    input wire                              debug_di
+    // output wire                             debug_do
 );
     localparam MsgHeaderLen = 2; // Message header length (bytes)
     localparam MsgMaxLen = MsgHeaderLen+MsgMaxPayloadLen;
@@ -200,7 +200,7 @@ module Debug #(
     reg[7:0] serialIn_payloadCounter = 0;
     reg[1:0] serialOut_state = 0;
     reg[8:0] serialOut_shiftReg = 0; // Low bit is the end-of-data sentinel, and isn't transmitted
-    assign debug_do = serialOut_shiftReg[8];
+    // assign debug_do = serialOut_shiftReg[8];
     always @(posedge debug_clk) begin
         if (serialIn_byteReady) begin
             serialIn_shiftReg <= {1'b1, debug_di};
@@ -405,30 +405,22 @@ endmodule
 
 module Top(
     input wire          clk12mhz,
-    output reg[3:0]     led = 0,
     
-    output wire         ram_clk,
-    output wire         ram_cke,
-    output wire[1:0]    ram_ba,
-    output wire[12:0]   ram_a,
-    output wire         ram_cs_,
-    output wire         ram_ras_,
-    output wire         ram_cas_,
-    output wire         ram_we_,
-    output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq,
-    
-    output wire         pix_i2c_clk,
-`ifdef SIM
-    inout tri1          pix_i2c_data,
-`else
-    inout wire          pix_i2c_data,
-`endif
+    output wire         clk_out,
+    output wire         asic_dataA,
+    output wire[1:0]    asic_dataB,
+    output wire[12:0]   asic_dataC,
+    output wire         asic_dataD,
+    output wire         asic_dataE,
+    output wire         asic_dataF,
+    output wire         asic_dataG,
+    output wire[1:0]    asic_dataH,
+    inout wire[15:0]    asic_dataI,
     
     input wire          debug_clk,
     input wire          debug_cs,
-    input wire          debug_di,
-    output wire         debug_do
+    input wire          debug_di
+    // output wire         debug_do
 );
     // ====================
     // Clock PLL (50.250 MHz)
@@ -443,10 +435,11 @@ module Top(
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
     
-    assign ram_clk = pllClk;
+    assign clk_out = pllClk;
     
-    wire clk;
-    Delay #(.Count(1)) clkDelay(.in(pllClk), .out(clk));
+    wire clk = pllClk;
+    // wire clk;
+    // Delay #(.Count(1)) clkDelay(.in(pllClk), .out(clk));
     
     // Not ideal to AND with a clock, since it can cause the resulting clock signal
     // to toggle anytime the other input changes.
@@ -466,37 +459,37 @@ module Top(
     localparam RAM_AddrWidth = 25;
     localparam RAM_DataWidth = 16;
     
-    wire                    ram_cmdReady;
-    reg                     ram_cmdTrigger = 0;
-    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
-    reg                     ram_cmdWrite = 0;
-    reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
-    wire[RAM_DataWidth-1:0] ram_cmdReadData;
-    wire                    ram_cmdReadDataValid;
+    wire                    asic_cmdReady;
+    reg                     asic_cmdTrigger = 0;
+    reg[RAM_AddrWidth-1:0]  asic_cmdAddr = 0;
+    reg                     asic_cmdWrite = 0;
+    reg[RAM_DataWidth-1:0]  asic_cmdWriteData = 0;
+    wire[RAM_DataWidth-1:0] asic_cmdReadData;
+    wire                    asic_cmdReadDataValid;
 
     SDRAMController #(
         .ClkFreq(ClkFreq)
     ) sdramController(
         .clk(clk),
 
-        .cmdReady(ram_cmdReady),
-        .cmdTrigger(ram_cmdTrigger),
-        .cmdAddr(ram_cmdAddr),
-        .cmdWrite(ram_cmdWrite),
-        .cmdWriteData(ram_cmdWriteData),
-        .cmdReadData(ram_cmdReadData),
-        .cmdReadDataValid(ram_cmdReadDataValid),
+        .cmdReady(asic_cmdReady),
+        .cmdTrigger(asic_cmdTrigger),
+        .cmdAddr(asic_cmdAddr),
+        .cmdWrite(asic_cmdWrite),
+        .cmdWriteData(asic_cmdWriteData),
+        .cmdReadData(asic_cmdReadData),
+        .cmdReadDataValid(asic_cmdReadDataValid),
 
-        // .ram_clk(ram_clk),
-        .ram_cke(ram_cke),
-        .ram_ba(ram_ba),
-        .ram_a(ram_a),
-        .ram_cs_(ram_cs_),
-        .ram_ras_(ram_ras_),
-        .ram_cas_(ram_cas_),
-        .ram_we_(ram_we_),
-        .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq)
+        // .clk_out(clk_out),
+        .ram_cke(asic_dataA),
+        .ram_ba(asic_dataB),
+        .ram_a(asic_dataC),
+        .ram_cs_(asic_dataD),
+        .ram_ras_(asic_dataE),
+        .ram_cas_(asic_dataF),
+        .ram_we_(asic_dataG),
+        .ram_dqm(asic_dataH),
+        .ram_dq(asic_dataI)
     );
     
     
@@ -531,8 +524,8 @@ module Top(
         .cmd_done(pix_i2c_cmd_done),
         .cmd_ok(pix_i2c_cmd_ok),
         
-        .i2c_clk(pix_i2c_clk),
-        .i2c_data(pix_i2c_data)
+        .i2c_clk(pix_i2c_clk)
+        // .i2c_data(pix_i2c_data)
     );
     
     
@@ -573,8 +566,8 @@ module Top(
         .msgOut_payloadTrigger(debug_msgOut_payloadTrigger),
         
         .debug_clk(debug_clkFiltered),
-        .debug_di(debug_di),
-        .debug_do(debug_do)
+        .debug_di(debug_di)
+        // .debug_do(debug_do)
     );
     
     // ====================
@@ -617,18 +610,18 @@ module Top(
 `ifdef SIM
             state <= StateHandleMsg;
 `else
-            if (!ram_cmdTrigger) begin
-                ram_cmdTrigger <= 1;
-                ram_cmdAddr <= 0;
-                ram_cmdWrite <= 1;
-                ram_cmdWriteData <= DataFromAddr(0);
+            if (!asic_cmdTrigger) begin
+                asic_cmdTrigger <= 1;
+                asic_cmdAddr <= 0;
+                asic_cmdWrite <= 1;
+                asic_cmdWriteData <= DataFromAddr(0);
 
-            end else if (ram_cmdReady) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
-                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+            end else if (asic_cmdReady) begin
+                asic_cmdAddr <= asic_cmdAddr+1;
+                asic_cmdWriteData <= DataFromAddr(asic_cmdAddr+1);
 
-                if (ram_cmdAddr == RAM_Size-1) begin
-                    ram_cmdTrigger <= 0;
+                if (asic_cmdAddr == RAM_Size-1) begin
+                    asic_cmdTrigger <= 0;
                     state <= StateHandleMsg;
                 end
             end
@@ -666,14 +659,14 @@ module Top(
             end
             
             MsgType_ReadMem: begin
-                ram_cmdAddr <= 0;
-                ram_cmdWrite <= 0;
+                asic_cmdAddr <= 0;
+                asic_cmdWrite <= 0;
                 state <= StateReadMem;
             end
             
             MsgType_SetLED: begin
                 $display("MsgType_SetLED: %0d", msgInPayload[0]);
-                led[0] <= msgInPayload[0];
+                // led[0] <= msgInPayload[0];
                 debug_msgOut_type <= MsgType_SetLED;
                 debug_msgOut_payloadLen <= 1;
             end
@@ -707,15 +700,15 @@ module Top(
         
         // Start reading memory
         StateReadMem: begin
-            ram_cmdAddr <= 0;
-            ram_cmdWrite <= 0;
+            asic_cmdAddr <= 0;
+            asic_cmdWrite <= 0;
             state <= StateReadMem+1;
         end
         
         StateReadMem+1: begin
-            ram_cmdTrigger <= 1;
-            memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-            memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            asic_cmdTrigger <= 1;
+            memCounter <= Min(8'h7F, RAM_Size-asic_cmdAddr);
+            memCounterRecv <= Min(8'h7F, RAM_Size-asic_cmdAddr);
             memLen <= 8'h00;
             state <= StateReadMem+2;
         end
@@ -723,20 +716,20 @@ module Top(
         // Continue reading memory
         StateReadMem+2: begin
             // Handle the read being accepted
-            if (ram_cmdReady && memCounter) begin
-                ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
+            if (asic_cmdReady && memCounter) begin
+                asic_cmdAddr <= (asic_cmdAddr+1)&(RAM_Size-1); // Prevent asic_cmdAddr from overflowing
                 memCounter <= memCounter-1;
 
                 // Stop reading
                 if (memCounter == 1) begin
-                    ram_cmdTrigger <= 0;
+                    asic_cmdTrigger <= 0;
                 end
             end
 
             // Write incoming data into `mem`
-            if (ram_cmdReadDataValid) begin
-                mem[memLen] <= ram_cmdReadData[7:0];
-                mem[memLen+1] <= ram_cmdReadData[15:8];
+            if (asic_cmdReadDataValid) begin
+                mem[memLen] <= asic_cmdReadData[7:0];
+                mem[memLen+1] <= asic_cmdReadData[15:8];
                 memLen <= memLen+2;
                 memCounterRecv <= memCounterRecv-1;
                 
@@ -771,7 +764,7 @@ module Top(
                     debug_msgOut_type <= 0;
                     
                     // Start on the next chunk, or stop if we've read everything.
-                    if (ram_cmdAddr == 0) begin
+                    if (asic_cmdAddr == 0) begin
                         state <= StateHandleMsg;
                     end else begin
                         state <= StateReadMem+1;
