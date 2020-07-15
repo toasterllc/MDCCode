@@ -126,7 +126,7 @@ module PixI2CMaster #(
             // *** again. This second time is when provide dir=1 (read).
             // *** See i2c docs for more information on how reads are performed.
             StateStart+2: begin
-                dataOutShiftReg <= {cmd_slaveAddr, 1'b0 /* dir=0 (write, see comment above) */, 1'b1};
+                dataOutShiftReg <= {cmd_slaveAddr, 1'b0 /* dir=0 (write, see comment above) */, 1'b1 /* sentinel */};
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut;
                 nextState <= StateRegAddr;
@@ -318,7 +318,7 @@ module PixI2CMaster #(
             // whereas the first time we always specify the write direction. See comment
             // in the StateStart state for more info.
             StateReadData+4: begin
-                dataOutShiftReg <= {cmd_slaveAddr, 1'b1 /* dir=1 (read) */, 1'b1};
+                dataOutShiftReg <= {cmd_slaveAddr, 1'b1 /* dir=1 (read) */, 1'b1  /* sentinel */};
                 dataInShiftReg <= (cmd_dataLen==2 ? 1 : 1<<8); // Prepare dataInShiftReg with the sentinel
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut;
