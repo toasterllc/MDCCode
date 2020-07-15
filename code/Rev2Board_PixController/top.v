@@ -310,96 +310,106 @@ endmodule
 
 
 
-// module PixController #(
-//     parameter ExtClkFreq = 12000000,    // Image sensor's external clock frequency
-//     parameter ClkFreq = 12000000        // `clk` frequency
-// )(
-//     input wire          clk,
-//
-//     output reg          pix_rst_,
-//
-//     input wire          pix_dclk,
-//     input wire[11:0]    pix_d,
-//     input wire          pix_fv,
-//     input wire          pix_lv,
-//
-//     output wire         pix_sclk,
-//     inout wire          pix_sdata
-// );
-//     // Clocks() returns the value to store in a counter, such that when
-//     // the counter reaches 0, the given time has elapsed.
-//     function [63:0] Clocks;
-//         input [63:0] t;
-//         input [63:0] sub;
-//         begin
-//             Clocks = (t*ClkFreq)/1000000000;
-//             if (Clocks >= sub) Clocks = Clocks-sub;
-//             else Clocks = 0;
-//         end
-//     endfunction
-//
-//     function [63:0] Max;
-//         input [63:0] a;
-//         input [63:0] b;
-//         Max = (a > b ? a : b);
-//     endfunction
-//
-//     // Clocks for EXTCLK to settle
-//     // EXTCLK (the SiTime 12MHz clock) takes up to 150ms to settle,
-//     // but ice40 configuration takes 70 ms, so we only need to wait 80 ms.
-//     localparam SettleClocks = Clocks(80000000, 0);
-//     // Clocks to assert pix_rst_ (1ms)
-//     localparam ResetClocks = Clocks(1000000, 0);
-//     // Clocks to wait for sensor to initialize (150k EXTCLKs)
-//     localparam InitClocks = Clocks(((150000*1000000000)/ExtClkFreq), 0);
-//     // Width of `delay`
-//     localparam DelayWidth = Max(Max($clog2(SettleClocks+1), $clog2(ResetClocks+1)), $clog2(InitClocks+1));
-//
-//     reg[1:0] state = 0;
-//     reg[DelayWidth-1:0] delay = 0;
-//     always @(posedge clk) begin
-//         case (state)
-//
-//         // Wait for EXTCLK to settle
-//         0: begin
-//             pix_rst_ <= 1;
-//             delay <= SettleClocks;
-//             state <= 1;
-//         end
-//
-//         // Assert pix_rst_ for ResetClocks (1ms)
-//         1: begin
-//             if (delay) begin
-//                 delay <= delay-1;
-//             end else begin
-//                 pix_rst_ <= 0;
-//                 delay <= ResetClocks;
-//                 state <= 2;
-//             end
-//         end
-//
-//         // Deassert pix_rst_ and wait InitClocks
-//         2: begin
-//             if (delay) begin
-//                 delay <= delay-1;
-//             end else begin
-//                 pix_rst_ <= 1;
-//                 delay <= InitClocks;
-//                 state <= 3;
-//             end
-//         end
-//
-//         3: begin
-//             // - Write R0x3052 = 0xA114 to configure the internal register initialization process.
-//             // - Write R0x304A = 0x0070 to start the internal register initialization process.
-//             // - Wait 150,000 EXTCLK periods
-//             // - Configure PLL, output, and image settings to desired values.
-//             // - Wait 1ms for the PLL to lock.
-//             // - Set streaming mode (R0x301A[2] = 1).
-//         end
-//         endcase
-//     end
-// endmodule
+module PixController #(
+    parameter ClkFreq = 12000000,       // `clk` frequency
+    parameter ExtClkFreq = 12000000     // Image sensor's external clock frequency
+)(
+    input wire          clk,
+
+    output reg          pix_rst_
+
+    // input wire          pix_dclk,
+    // input wire[11:0]    pix_d,
+    // input wire          pix_fv,
+    // input wire          pix_lv,
+    //
+    // output wire         pix_sclk,
+    // inout wire          pix_sdata
+);
+    function [63:0] DivCeil;
+        input [63:0] n;
+        input [63:0] d;
+        begin
+            DivCeil = (n+d-1)/d;
+        end
+    endfunction
+    
+    // Clocks() returns the minimum number of `ClkFreq` clock cycles
+    // for >= `t` nanoseconds to elapse. For example, if t=5ns, and
+    // the clock period is 3ns, Clocks(t=5,sub=0) will return 2.
+    // `sub` is subtracted from that value, with the result clipped to zero.
+    function [63:0] Clocks;
+        input [63:0] t;
+        input [63:0] sub;
+        begin
+            Clocks = DivCeil(t*ClkFreq, 1000000000);
+            if (Clocks >= sub) Clocks = Clocks-sub;
+            else Clocks = 0;
+        end
+    endfunction
+    
+    function [63:0] Max;
+        input [63:0] a;
+        input [63:0] b;
+        Max = (a > b ? a : b);
+    endfunction
+    
+    // Clocks for EXTCLK to settle
+    // EXTCLK (the SiTime 12MHz clock) takes up to 150ms to settle,
+    // but ice40 configuration takes 70 ms, so we only need to wait 80 ms.
+    localparam SettleDelay = Clocks(80000000, 0);
+    // Clocks to assert pix_rst_ (1ms)
+    localparam ResetDelay = Clocks(1000000, 0);
+    // Clocks to wait for sensor to initialize (150k EXTCLKs)
+    localparam InitDelay = Clocks(((150000*1000000000)/ExtClkFreq), 0);
+    // Width of `delay`
+    localparam DelayWidth = Max(Max($clog2(SettleDelay+1), $clog2(ResetDelay+1)), $clog2(InitDelay+1));
+    
+    reg[1:0] state = 0;
+    reg[DelayWidth-1:0] delay = 0;
+    always @(posedge clk) begin
+        case (state)
+        
+        // Wait for EXTCLK to settle
+        0: begin
+            pix_rst_ <= 1;
+            delay <= SettleDelay;
+            state <= 1;
+        end
+        
+        // Assert pix_rst_ for ResetDelay (1ms)
+        1: begin
+            if (delay) begin
+                delay <= delay-1;
+            end else begin
+                pix_rst_ <= 0;
+                delay <= ResetDelay;
+                state <= 2;
+            end
+        end
+        
+        // Deassert pix_rst_ and wait InitDelay
+        2: begin
+            if (delay) begin
+                delay <= delay-1;
+            end else begin
+                pix_rst_ <= 1;
+                delay <= InitDelay;
+                state <= 3;
+            end
+        end
+        
+        3: begin
+            // - Write R0x3052 = 0xA114 to configure the internal register initialization process.
+            // - Write R0x304A = 0x0070 to start the internal register initialization process.
+            // - Wait 150,000 EXTCLK periods
+            // - Configure PLL, output, and image settings to desired values.
+            // - Wait 1ms for the PLL to lock.
+            // - Set streaming mode (R0x301A[2] = 1).
+        end
+        endcase
+    end
+endmodule
 
 
 
@@ -418,6 +428,7 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq,
     
+    output wire         pix_rst_,
     output wire         pix_i2c_clk,
 `ifdef SIM
     inout tri1          pix_i2c_data,
@@ -501,11 +512,23 @@ module Top(
     
     
     
+    // // ====================
+    // // Pix Controller
+    // // ====================
+    //
+    // PixController #(
+    //     .ExtClkFreq(12000000),
+    //     .ClkFreq(ClkFreq)
+    // ) pixController(
+    //     .clk(clk),
+    //     .pix_rst_(pix_rst_)
+    // );
+    
     
     
     
     // ====================
-    // I2C Master
+    // Pix I2C Master
     // ====================
     
     wire[6:0] pix_i2c_cmd_slaveAddr = 7'h20;

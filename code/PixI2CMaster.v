@@ -121,7 +121,7 @@ module PixI2CMaster #(
             // Delay 1/4 cycle
             // After ACK, state=StateRegAddr
             // *** Note that dir=1 (write) on the initial transmission, even when reading.
-            // *** If we intent to read, we perform a second START condition after
+            // *** If we intend to read, we perform a second START condition after
             // *** providing the slave address, and then provide the slave address/direction
             // *** again. This second time is when provide dir=1 (read).
             // *** See i2c docs for more information on how reads are performed.
