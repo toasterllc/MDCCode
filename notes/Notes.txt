@@ -24,10 +24,24 @@
         https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
     
     - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
+    
+    - Rewrite SDRAMController for smaller size/better performance
+        - more pipelining if possible
+        - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
 
 
 
 - Rev3
+    
+    - Add:
+        /* synthesis syn_ramstyle="no_rw_check" */
+        to AFIFO memories, to avoid unnecessary overhead
+    
+    - Increase 'isolate' on power planes
+        - When we soldered a jumper resistor, We accidentally shorted 1V2/1V8 and ground due to little isolation between the polygon pour and SMD pad
+    
+    - Use thinner stencils
+        - It seems like we're using too much solder paste
     
     - Programmer: Fix USB jack model to the version that doesn't have plastic posts
     
@@ -43,31 +57,6 @@
                 "the AR0330CS uses SCLK as an input only and therefore never drives it LOW."
             - we'll save some power by not having a pullup burning power while driving the clock low
 
-
-
-
-
-
-
-
-
-
-
-- add:
-      /* synthesis syn_ramstyle="no_rw_check" */
-    to AFIFO memories, to avoid unnecessary overhead
-
-- rewrite SDRAMController for smaller size/better performance
-    - more pipelining if possible
-    - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
-
-- use tmp register for memory reads
-	this also looks like a good change -- the design is slightly faster, and uses fewer logic cells (1319 vs 1330)
-
-- change memory dimension to reg[15:0] mem[127:0]
-	this was a good change apparently, and substantially reduces the size of the design
-
-- using newCounter instead of memCounter
 
 
 
