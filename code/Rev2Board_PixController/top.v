@@ -610,8 +610,13 @@ module Top(
     reg[7:0] ramReadTakeoffCounter = 0;
     reg[7:0] ramReadLandCounter = 0;
     reg[15:0] mem[127:0];
-    reg[6:0] memAddr = 0;
     reg[7:0] memReadCounter = 0;
+    reg[6:0] memAddr; // Don't init with memAddr=0, otherwise Icestorm won't infer a RAM for `mem`
+    
+`ifdef SIM
+    initial memAddr = 0; // For simulation (see memAddr comment above)
+`endif
+    
     always @(posedge clk) begin
         case (state)
         
