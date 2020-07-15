@@ -24,10 +24,10 @@ mkdir -p "$proj/tmp"
 cd "$proj/tmp"
 
 # Synthesize the design from Verilog (.v -> .json)
-yosys -p "synth_ice40 -top Top -json top.json" ../top.v
+yosys -q -p "synth_ice40 -top Top -json top.json" ../top.v
 
 # Place and route the design ({top.json, pins.pcf} -> .asc)
-nextpnr-ice40 -v "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained
+nextpnr-ice40 "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained
 
 # Generate the bitstream file (.asc -> .bin)
 icepack top.asc top.bin
