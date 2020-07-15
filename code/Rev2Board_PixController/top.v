@@ -583,11 +583,11 @@ module Top(
     function [15:0] DataFromAddr;
         input [24:0] addr;
         // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-        DataFromAddr = addr[15:0];
+        // DataFromAddr = addr[15:0];
         // DataFromAddr = 16'hFFFF;
         // DataFromAddr = 16'h0000;
         // DataFromAddr = 16'h7832;
-        // DataFromAddr = 16'hCAFE;
+        DataFromAddr = 16'hCAFE;
     endfunction
     
     function [63:0] Min;
@@ -605,10 +605,13 @@ module Top(
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
     reg[5*8-1:0] msgInPayload = 0;
-    reg[7:0] mem[255:0];
-    reg[7:0] memLen = 0;
-    reg[7:0] memCounter = 0;
-    reg[7:0] memCounterRecv = 0;
+    reg[15:0] ramWord = 0;
+    reg ramWordTrigger = 0;
+    reg[7:0] ramReadTakeoffCounter = 0;
+    reg[7:0] ramReadLandCounter = 0;
+    reg[15:0] mem[127:0];
+    reg[6:0] memAddr = 0;
+    reg[7:0] memReadCounter = 0;
     always @(posedge clk) begin
         case (state)
         
@@ -714,44 +717,51 @@ module Top(
         
         StateReadMem+1: begin
             ram_cmdTrigger <= 1;
-            memCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-            memCounterRecv <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-            memLen <= 8'h00;
+            ramReadTakeoffCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            ramReadLandCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            memAddr <= 0;
             state <= StateReadMem+2;
         end
         
         // Continue reading memory
         StateReadMem+2: begin
             // Handle the read being accepted
-            if (ram_cmdReady && memCounter) begin
+            if (ram_cmdReady && ramReadTakeoffCounter) begin
                 ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
-                memCounter <= memCounter-1;
-
-                // Stop reading
-                if (memCounter == 1) begin
+                
+                // Stop triggering when we've issued all the read commands
+                ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
+                if (ramReadTakeoffCounter == 1) begin
                     ram_cmdTrigger <= 0;
                 end
             end
-
-            // Write incoming data into `mem`
-            if (ram_cmdReadDataValid) begin
-                mem[memLen] <= ram_cmdReadData[7:0];
-                mem[memLen+1] <= ram_cmdReadData[15:8];
-                memLen <= memLen+2;
-                memCounterRecv <= memCounterRecv-1;
+            
+            if (ramWordTrigger) begin
+                ramWordTrigger <= 0;
+                
+                mem[memAddr] <= ramWord;
+                memAddr <= memAddr+1;
                 
                 // Next state after we've received all the bytes
-                if (memCounterRecv == 1) begin
+                ramReadLandCounter <= ramReadLandCounter-1;
+                if (ramReadLandCounter == 1) begin
                     state <= StateReadMem+3;
                 end
+            end
+            
+            // Write incoming data into `ramWord`
+            if (ram_cmdReadDataValid) begin
+                ramWord <= ram_cmdReadData;
+                ramWordTrigger <= 1;
             end
         end
         
         // Start sending the data
         StateReadMem+3: begin
             debug_msgOut_type <= MsgType_ReadMem;
-            debug_msgOut_payloadLen <= memLen;
-            memCounter <= 0;
+            debug_msgOut_payloadLen <= memAddr<<1; // memAddr*2 for the number of bytes
+            memReadCounter <= 0;
+            memAddr <= 0;
             state <= StateReadMem+4;
         end
         
@@ -762,8 +772,12 @@ module Top(
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                 
                 if (debug_msgOut_payloadLen) begin
-                    debug_msgOut_payload <= mem[memCounter];
-                    memCounter <= memCounter+1;
+                    if (!memReadCounter[0])
+                        debug_msgOut_payload <= mem[memAddr][7:0]; // Low byte
+                    else
+                        debug_msgOut_payload <= mem[memAddr][15:8]; // High byte
+                    memReadCounter <= memReadCounter+1;
+                    memAddr <= (memReadCounter+1)>>1;
                 
                 end else begin
                     // We're finished with this chunk.
