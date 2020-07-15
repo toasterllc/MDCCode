@@ -512,17 +512,17 @@ module Top(
     
     
     
-    // // ====================
-    // // Pix Controller
-    // // ====================
-    //
-    // PixController #(
-    //     .ExtClkFreq(12000000),
-    //     .ClkFreq(ClkFreq)
-    // ) pixController(
-    //     .clk(clk),
-    //     .pix_rst_(pix_rst_)
-    // );
+    // ====================
+    // Pix Controller
+    // ====================
+
+    PixController #(
+        .ExtClkFreq(12000000),
+        .ClkFreq(ClkFreq)
+    ) pixController(
+        .clk(clk),
+        .pix_rst_(pix_rst_)
+    );
     
     
     
@@ -531,7 +531,9 @@ module Top(
     // Pix I2C Master
     // ====================
     
-    wire[6:0] pix_i2c_cmd_slaveAddr = 7'h20;
+    wire[6:0] pix_i2c_cmd_slaveAddr = 7'h10;    // 7-bit address
+                                                // 8-bit address is 0x20 (write) / 0x21 (read), per the datasheet,
+                                                // where the low bit is the transaction direction (write=0 / read=1)
     reg pix_i2c_cmd_write = 0;
     reg[15:0] pix_i2c_cmd_regAddr = 0;
     reg[15:0] pix_i2c_cmd_writeData = 0;
@@ -541,7 +543,7 @@ module Top(
     wire pix_i2c_cmd_ok;
     PixI2CMaster #(
         .ClkFreq(ClkFreq),
-        .I2CClkFreq(400000)
+        .I2CClkFreq(100000)
     ) pixI2CMaster(
         .clk(clk),
         
