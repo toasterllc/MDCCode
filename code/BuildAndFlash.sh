@@ -24,7 +24,7 @@ mkdir -p "$proj/tmp"
 cd "$proj/tmp"
 
 # Synthesize the design from Verilog (.v -> .json)
-yosys -q -p "synth_ice40 -top Top -json top.json" ../top.v
+yosys -p "synth_ice40 -top Top -json top.json" ../top.v
 
 # Place and route the design ({top.json, pins.pcf} -> .asc)
 nextpnr-ice40 "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained
