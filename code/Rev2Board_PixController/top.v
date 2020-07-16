@@ -371,12 +371,12 @@ module PixController #(
 )(
     input wire          clk,
     
-    input wire          frame_captureTrigger,   // Pulse for a single clock to trigger a new capture
-    output wire         frame_captureDone,      // Pulsed for a single clock to indicate that there
-                                                // are no more pixels in the requested frame
-    output wire[11:0]   frame_pixel,
-    output wire         frame_pixelReady,
-    input wire          frame_pixelTrigger,
+    input wire          capture_trigger,    // Pulse for a single clock to trigger a new capture
+    output wire         capture_done,       // Pulsed for a single clock to indicate that there
+                                            // are no more pixels in the requested frame
+    output wire[11:0]   pixel,
+    output wire         pixel_ready,
+    input wire          pixel_trigger,
     
     output reg          pix_rst_,
     input wire          pix_dclk,
@@ -475,10 +475,9 @@ module PixController #(
     
     
     reg pixq_capture = 0;
-    
     wire pixq_rclk = clk;
     wire pixq_readOK;
-    wire pixq_readTrigger = frame_pixelTrigger;
+    wire pixq_readTrigger = pixel_trigger;
     wire[15:0] pixq_readData;
     wire pixq_wclk = pix_dclk;
     wire pixq_writeTrigger = pix_lv && pixq_capture;
@@ -495,15 +494,15 @@ module PixController #(
         .wok(pixq_writeOK)
     );
     
-    assign frame_pixel[11:0] = pixq_readData[11:0];
-    assign frame_pixelReady = pixq_readOK;
+    assign pixel[11:0] = pixq_readData[11:0];
+    assign pixel_ready = pixq_readOK;
     
-    // Synchronize `frame_captureTrigger` pulse into `pix_dclk` domain
+    // Synchronize `capture_trigger` pulse into `pix_dclk` domain
     wire captureReqPulse;
-    SyncPulse sync1(.in_clk(clk), .in(frame_captureTrigger), .out_clk(pix_dclk), .out(captureReqPulse));
+    SyncPulse sync1(.in_clk(clk), .in(capture_trigger), .out_clk(pix_dclk), .out(captureReqPulse));
     
     // Synchronize `frameEnd` pulse into `clk` domain
-    SyncPulse sync2(.in_clk(pix_dclk), .in(frameEndPulse), .out_clk(clk), .out(frame_captureDone));
+    SyncPulse sync2(.in_clk(pix_dclk), .in(frameEndPulse), .out_clk(clk), .out(capture_done));
     
     reg captureReq = 0;
     reg lastFrameValid = 0;
@@ -597,7 +596,7 @@ module Top(
     
     
     // ====================
-    // SDRAM controller
+    // SDRAM Controller
     // ====================
     localparam RAM_Size = 'h2000000;
     localparam RAM_AddrWidth = 25;
@@ -641,18 +640,23 @@ module Top(
     // ====================
     // Pix Controller
     // ====================
-
+    reg pix_captureTrigger = 0;
+    wire pix_captureDone;
+    wire[11:0] pix_pixel;
+    wire pix_pixelReady;
+    reg pix_pixelTrigger = 0;
     PixController #(
         .ExtClkFreq(12000000),
         .ClkFreq(ClkFreq)
     ) pixController(
         .clk(clk),
         
-        .frame_captureTrigger(),
-        .frame_captureDone(),
-        .frame_pixel(),
-        .frame_pixelReady(),
-        .frame_pixelTrigger(),
+        .capture_trigger(pix_captureTrigger),
+        .capture_done(pix_captureDone),
+        
+        .pixel(pix_pixel),
+        .pixelReady(pix_pixelReady),
+        .pixelTrigger(pix_pixelTrigger),
         
         .pix_rst_(pix_rst_),
         .pix_dclk(pix_dclk),
@@ -761,6 +765,7 @@ module Top(
     localparam StateReadMem     = 4;    // +4
     localparam StatePixReg8     = 9;    // +2
     localparam StatePixReg16    = 12;   // +2
+    localparam StatePixCapture  = 15;
     
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
@@ -1044,6 +1049,182 @@ module Top(
                 endcase
             end
         end
+        
+        
+        
+        
+        StatePixCapture: begin
+            pix_captureTrigger <= 1;
+            state <= StatePixCapture+1;
+        end
+        
+        StatePixCapture+1: begin
+            pix_captureTrigger <= 0;
+            pix_pixelTrigger <= 1;
+            
+            ram_cmdAddr <= 0;
+            ram_cmdWrite <= 1;
+            
+            state <= StatePixCapture+2;
+        end
+        
+        StatePixCapture+2: begin
+            // Handle writing a pixel to RAM
+            if (ram_cmdTrigger && ram_cmdReady) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
+                ram_cmdTrigger <= 0;
+                
+                // If a pixel is in our overflow register, move it to `ram_cmdWriteData`
+                if (ramWordTrigger) begin
+                    ram_cmdWriteData <= ramWord;
+                    ram_cmdTrigger <= 1;
+                    ramWordTrigger <= 0;
+                    pix_pixelTrigger <= 1;
+                end
+            end
+            
+            // Handle reading a new pixel into `ram_cmdWriteData` or an overflow register
+            if (pix_pixelReady && pix_pixelTrigger) begin
+                // Store pixel in `ram_cmdWriteData` if it's free
+                if (!ram_cmdTrigger || ram_cmdReady) begin
+                    ram_cmdWriteData <= pix_pixel;
+                    ram_cmdTrigger <= 1;
+                
+                // Otherwise store the pixel in our overflow register and stall
+                // reading more pixels until the RAM catches up
+                end else begin
+                    ramWord <= pix_pixel;
+                    ramWordTrigger <= 1;
+                    pix_pixelTrigger <= 0;
+                end
+            end
+            
+            if (pix_captureDone) begin
+                led[3] <= 1;
+                state <= StateHandleMsg;
+            end
+            
+            
+            
+            
+            // if (ramWordTrigger) begin
+            //     if (!ram_cmdTrigger || ram_cmdReady) begin
+            //         ram_cmdWriteData <= ramWord;
+            //         ram_cmdTrigger <= 1;
+            //
+            //         // We consumed `ramWord`, ask for another pixel
+            //         ramWordTrigger <= 0;
+            //         pix_pixelTrigger <= 1;
+            //
+            //     end else begin
+            //         pix_pixelTrigger <= 0;
+            //     end
+            // end
+            //
+            //
+            //
+            //
+            //
+            // if (ram_cmdTrigger) begin
+            //     if (ram_cmdReady) begin
+            //
+            //         ram_cmdAddr <= ram_cmdAddr+1;
+            //         pix_pixelTrigger <= 1;
+            //     end else begin
+            //         pix_pixelTrigger <= 0;
+            //     end
+            // end
+            //
+            //
+            //
+            //
+            //
+            // if (ram_cmdReady && ram_cmdTrigger) begin
+            //     ram_cmdAddr <= ram_cmdAddr+1;
+            //     pix_pixelTrigger <= 1;
+            // end
+            //
+            // if (pix_captureDone) begin
+            //     state <= StatePixCapture+3;
+            // end
+            //
+            // // Handle the read being accepted
+            // if (ram_cmdReady && ram_cmdTrigger) begin
+            //     ram_cmdWriteData <= ramWord;
+            //     ram_cmdAddr <= ram_cmdAddr+1;
+            //
+            //     // Stop triggering when we've issued all the read commands
+            //     ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
+            //     if (ramReadTakeoffCounter == 1) begin
+            //         ram_cmdTrigger <= 0;
+            //     end
+            // end
+        end
+        
+        StatePixCapture+3: begin
+            
+        end
+        
+        
+        
+        
+        
+        
+        // .frame_captureTrigger(),
+        // .frame_captureDone(),
+        // .frame_pixel(),
+        // .frame_pixelReady(),
+        // .frame_pixelTrigger(),
+        
+        // // Start reading memory
+        // StateReadMem: begin
+        //     ram_cmdAddr <= 0;
+        //     ram_cmdWrite <= 0;
+        //     state <= StateReadMem+1;
+        // end
+        //
+        // StateReadMem+1: begin
+        //     ram_cmdTrigger <= 1;
+        //     ramReadTakeoffCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+        //     ramReadLandCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+        //     memAddr <= 0;
+        //     state <= StateReadMem+2;
+        // end
+        //
+        // // Continue reading memory
+        // StateReadMem+2: begin
+        //     // Handle the read being accepted
+        //     if (ram_cmdReady && ram_cmdTrigger) begin
+        //         ram_cmdAddr <= ram_cmdAddr+1;
+        //
+        //         // Stop triggering when we've issued all the read commands
+        //         ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
+        //         if (ramReadTakeoffCounter == 1) begin
+        //             ram_cmdTrigger <= 0;
+        //         end
+        //     end
+        //
+        //     if (ramWordTrigger) begin
+        //         ramWordTrigger <= 0;
+        //
+        //         mem[memAddr] <= ramWord;
+        //         memAddr <= memAddr+1;
+        //
+        //         // Next state after we've received all the bytes
+        //         ramReadLandCounter <= ramReadLandCounter-1;
+        //         if (ramReadLandCounter == 1) begin
+        //             state <= StateReadMem+3;
+        //         end
+        //     end
+        //
+        //     // Write incoming data into `ramWord`
+        //     if (ram_cmdReadDataValid) begin
+        //         ramWord <= ram_cmdReadData;
+        //         ramWordTrigger <= 1;
+        //     end
+        // end
+        
+        
         endcase
     end
     
