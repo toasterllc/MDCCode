@@ -501,7 +501,10 @@ module PixController #(
     wire captureReqPulse;
     SyncPulse sync1(.in_clk(clk), .in(capture_trigger), .out_clk(pix_dclk), .out(captureReqPulse));
     
-    // Synchronize `frameEnd` pulse into `clk` domain
+    // TODO: there's probably a race between draining the AFIFO pixels and the `capture_done`
+    // signal -- the `capture_done` can probably arrive before we're done draining the pixels...
+    
+    // Synchronize `frameEndPulse` pulse into `clk` domain
     SyncPulse sync2(.in_clk(pix_dclk), .in(frameEndPulse), .out_clk(clk), .out(capture_done));
     
     reg captureReq = 0;
@@ -1069,11 +1072,14 @@ module Top(
             
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 1;
+            ram_cmdTrigger <= 0;
             
             state <= StatePixCapture+2;
         end
         
         StatePixCapture+2: begin
+            led[3] <= 1;
+            
             // Handle writing a pixel to RAM
             if (ram_cmdTrigger && ram_cmdReady) begin
                 ram_cmdAddr <= ram_cmdAddr+1;
@@ -1104,20 +1110,29 @@ module Top(
                 end
             end
             
-            if (pix_captureDone) begin
-                led[3] <= !led[3];
-                
-                debug_msgOut_type <= MsgType_PixCapture;
-                debug_msgOut_payloadLen <= 0;
-                state <= StatePixCapture+3;
-            end
+            // if (pix_captureDone) begin
+            //     led[3] <= !led[3];
+            //
+            //     debug_msgOut_type <= MsgType_PixCapture;
+            //     debug_msgOut_payloadLen <= 4;
+            //     state <= StatePixCapture+3;
+            // end
         end
         
         StatePixCapture+3: begin
             if (debug_msgOut_payloadTrigger) begin
-                // Clear `debug_msgOut_type` to prevent another message from being sent.
-                debug_msgOut_type <= 0;
-                state <= StateHandleMsg;
+                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
+                case (debug_msgOut_payloadLen)
+                4: debug_msgOut_payload <= ram_cmdAddr[0*8+:8];
+                3: debug_msgOut_payload <= ram_cmdAddr[1*8+:8];
+                2: debug_msgOut_payload <= ram_cmdAddr[2*8+:8];
+                1: debug_msgOut_payload <= {7'b0, ram_cmdAddr[24]};
+                0: begin
+                    // Clear `debug_msgOut_type` to prevent another message from being sent.
+                    debug_msgOut_type <= 0;
+                    state <= StateHandleMsg;
+                end
+                endcase
             end
         end
         
