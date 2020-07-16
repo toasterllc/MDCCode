@@ -21,6 +21,61 @@ module Delay #(
     end
 endmodule
 
+
+// Sync:
+// Synchronizes an asynchronous signal into a clock domain
+module Sync(
+    input wire in,
+    
+    input wire out_clk,
+    output reg out = 0
+);
+    reg pipe = 0;
+    always @(posedge out_clk)
+        { out, pipe } <= { pipe, in };
+endmodule
+
+
+
+
+
+
+
+// SyncPulse:
+// Transmits a single-clock pulse across clock domains
+// Pulses can be dropped if they occur more rapidly than they can be acknowledged.
+module SyncPulse(
+    input wire in_clk,
+    input wire in,
+    
+    input wire out_clk,
+    output wire out
+);
+    reg in_req = 0;
+    wire in_ack;
+    wire idle = !in_req && !in_ack;
+    always @(posedge in_clk) begin
+    	if (idle && in)     in_req <= 1;
+    	else if (in_ack)    in_req <= 0;
+    end
+    
+    wire out_req;
+    Sync syncReq(.in(in_req), .out_clk(out_clk), .out(out_req));
+    Sync syncAck(.in(out_req), .out_clk(in_clk), .out(in_ack));
+    
+    reg out_lastReq = 0;
+    assign out = out_lastReq && !out_req; // Out pulse occurs upon negative edge of out_req.
+    always @(posedge out_clk) out_lastReq <= out_req;
+endmodule
+
+
+
+
+
+
+
+
+
 module Debug #(
     // Max payload length (bytes)
     // *** Code needs to be updated below if this is changed!
@@ -315,14 +370,20 @@ module PixController #(
     parameter ExtClkFreq = 12000000     // Image sensor's external clock frequency
 )(
     input wire          clk,
-
-    output reg          pix_rst_
-
-    // input wire          pix_dclk,
-    // input wire[11:0]    pix_d,
-    // input wire          pix_fv,
-    // input wire          pix_lv,
-    //
+    
+    input wire          frame_captureTrigger,   // Pulse for a single clock to trigger a new capture
+    output wire         frame_captureDone,      // Pulsed for a single clock to indicate that there
+                                                // are no more pixels in the requested frame
+    output wire[11:0]   frame_pixel,
+    output wire         frame_pixelReady,
+    input wire          frame_pixelTrigger,
+    
+    output reg          pix_rst_,
+    input wire          pix_dclk,
+    input wire[11:0]    pix_d,
+    input wire          pix_fv,
+    input wire          pix_lv,
+    
     // output wire         pix_sclk,
     // inout wire          pix_sdata
 );
@@ -409,6 +470,67 @@ module PixController #(
         end
         endcase
     end
+    
+    
+    
+    
+    reg pixq_capture = 0;
+    
+    wire pixq_rclk = clk;
+    wire pixq_readOK;
+    wire pixq_readTrigger = frame_pixelTrigger;
+    wire[15:0] pixq_readData;
+    wire pixq_wclk = pix_dclk;
+    wire pixq_writeTrigger = pix_lv && pixq_capture;
+    wire[15:0] pixq_writeData = pix_d;
+    wire pixq_writeOK;
+    AFIFO #(.Width(16), .Size(256)) pixq(
+        .rclk(pixq_rclk),
+        .r(pixq_readTrigger),
+        .rd(pixq_readData),
+        .rok(pixq_readOK),
+        .wclk(pixq_wclk),
+        .w(pixq_writeTrigger),
+        .wd(pixq_writeData),
+        .wok(pixq_writeOK)
+    );
+    
+    assign frame_pixel[11:0] = pixq_readData[11:0];
+    assign frame_pixelReady = pixq_readOK;
+    
+    // Synchronize `frame_captureTrigger` pulse into `pix_dclk` domain
+    wire captureReqPulse;
+    SyncPulse sync1(.in_clk(clk), .in(frame_captureTrigger), .out_clk(pix_dclk), .out(captureReqPulse));
+    
+    // Synchronize `frameEnd` pulse into `clk` domain
+    SyncPulse sync2(.in_clk(pix_dclk), .in(frameEndPulse), .out_clk(clk), .out(frame_captureDone));
+    
+    reg captureReq = 0;
+    reg lastFrameValid = 0;
+    reg frameEndPulse = 0;
+    always @(posedge pix_dclk) begin
+        // Frame start
+        if (!lastFrameValid && pix_fv) begin
+            pixq_capture <= captureReq;
+        
+        // Frame end
+        end else if (lastFrameValid && !pix_fv) begin
+            captureReq <= 0;
+            pixq_capture <= 0;
+            frameEndPulse <= 1;
+        end
+        
+        // Latch `captureReq` until we're ready to service it (at the start of a new frame)
+        if (captureReqPulse) captureReq <= 1;
+        // Reset frameEndPulse to ensure it's a single pulse
+        if (frameEndPulse) frameEndPulse <= 0;
+        // Remember `pix_fv`
+        lastFrameValid <= pix_fv;
+    end
+    
+    
+    
+    
 endmodule
 
 
@@ -428,7 +550,11 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq,
     
-    output wire         pix_rst_,
+    input wire          pix_dclk,
+    input wire[11:0]    pix_d,
+    input wire          pix_fv,
+    input wire          pix_lv,
+    input wire          pix_rst_,
     output wire         pix_i2c_clk,
 `ifdef SIM
     inout tri1          pix_i2c_data,
@@ -442,15 +568,15 @@ module Top(
     output wire         debug_do
 );
     // ====================
-    // Clock PLL (50.250 MHz)
+    // Clock PLL (81 MHz)
     // ====================
-    localparam ClkFreq = 50250000;
+    localparam ClkFreq = 81000000;
     wire pllClk;
     ClockGen #(
         .FREQ(ClkFreq),
         .DIVR(0),
-        .DIVF(66),
-        .DIVQ(4),
+        .DIVF(53),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
     
@@ -521,10 +647,19 @@ module Top(
         .ClkFreq(ClkFreq)
     ) pixController(
         .clk(clk),
-        .pix_rst_(pix_rst_)
+        
+        .frame_captureTrigger(),
+        .frame_captureDone(),
+        .frame_pixel(),
+        .frame_pixelReady(),
+        .frame_pixelTrigger(),
+        
+        .pix_rst_(pix_rst_),
+        .pix_dclk(pix_dclk),
+        .pix_d(pix_d),
+        .pix_fv(pix_fv),
+        .pix_lv(pix_lv)
     );
-    
-    
     
     
     // ====================
@@ -756,8 +891,8 @@ module Top(
         // Continue reading memory
         StateReadMem+2: begin
             // Handle the read being accepted
-            if (ram_cmdReady && ramReadTakeoffCounter) begin
-                ram_cmdAddr <= (ram_cmdAddr+1)&(RAM_Size-1); // Prevent ram_cmdAddr from overflowing
+            if (ram_cmdReady && ram_cmdTrigger) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
                 
                 // Stop triggering when we've issued all the read commands
                 ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
