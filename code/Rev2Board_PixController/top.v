@@ -655,8 +655,8 @@ module Top(
         .capture_done(pix_captureDone),
         
         .pixel(pix_pixel),
-        .pixelReady(pix_pixelReady),
-        .pixelTrigger(pix_pixelTrigger),
+        .pixel_ready(pix_pixelReady),
+        .pixel_trigger(pix_pixelTrigger),
         
         .pix_rst_(pix_rst_),
         .pix_dclk(pix_dclk),
@@ -765,7 +765,7 @@ module Top(
     localparam StateReadMem     = 4;    // +4
     localparam StatePixReg8     = 9;    // +2
     localparam StatePixReg16    = 12;   // +2
-    localparam StatePixCapture  = 15;
+    localparam StatePixCapture  = 15;   // +2
     
     reg[3:0] state = 0;
     reg[7:0] msgInType = 0;
@@ -1083,9 +1083,9 @@ module Top(
                 end
             end
             
-            // Handle reading a new pixel into `ram_cmdWriteData` or an overflow register
+            // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
             if (pix_pixelReady && pix_pixelTrigger) begin
-                // Store pixel in `ram_cmdWriteData` if it's free
+                // Store pixel in `ram_cmdWriteData` if it's available
                 if (!ram_cmdTrigger || ram_cmdReady) begin
                     ram_cmdWriteData <= pix_pixel;
                     ram_cmdTrigger <= 1;
@@ -1103,128 +1103,7 @@ module Top(
                 led[3] <= 1;
                 state <= StateHandleMsg;
             end
-            
-            
-            
-            
-            // if (ramWordTrigger) begin
-            //     if (!ram_cmdTrigger || ram_cmdReady) begin
-            //         ram_cmdWriteData <= ramWord;
-            //         ram_cmdTrigger <= 1;
-            //
-            //         // We consumed `ramWord`, ask for another pixel
-            //         ramWordTrigger <= 0;
-            //         pix_pixelTrigger <= 1;
-            //
-            //     end else begin
-            //         pix_pixelTrigger <= 0;
-            //     end
-            // end
-            //
-            //
-            //
-            //
-            //
-            // if (ram_cmdTrigger) begin
-            //     if (ram_cmdReady) begin
-            //
-            //         ram_cmdAddr <= ram_cmdAddr+1;
-            //         pix_pixelTrigger <= 1;
-            //     end else begin
-            //         pix_pixelTrigger <= 0;
-            //     end
-            // end
-            //
-            //
-            //
-            //
-            //
-            // if (ram_cmdReady && ram_cmdTrigger) begin
-            //     ram_cmdAddr <= ram_cmdAddr+1;
-            //     pix_pixelTrigger <= 1;
-            // end
-            //
-            // if (pix_captureDone) begin
-            //     state <= StatePixCapture+3;
-            // end
-            //
-            // // Handle the read being accepted
-            // if (ram_cmdReady && ram_cmdTrigger) begin
-            //     ram_cmdWriteData <= ramWord;
-            //     ram_cmdAddr <= ram_cmdAddr+1;
-            //
-            //     // Stop triggering when we've issued all the read commands
-            //     ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
-            //     if (ramReadTakeoffCounter == 1) begin
-            //         ram_cmdTrigger <= 0;
-            //     end
-            // end
         end
-        
-        StatePixCapture+3: begin
-            
-        end
-        
-        
-        
-        
-        
-        
-        // .frame_captureTrigger(),
-        // .frame_captureDone(),
-        // .frame_pixel(),
-        // .frame_pixelReady(),
-        // .frame_pixelTrigger(),
-        
-        // // Start reading memory
-        // StateReadMem: begin
-        //     ram_cmdAddr <= 0;
-        //     ram_cmdWrite <= 0;
-        //     state <= StateReadMem+1;
-        // end
-        //
-        // StateReadMem+1: begin
-        //     ram_cmdTrigger <= 1;
-        //     ramReadTakeoffCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-        //     ramReadLandCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-        //     memAddr <= 0;
-        //     state <= StateReadMem+2;
-        // end
-        //
-        // // Continue reading memory
-        // StateReadMem+2: begin
-        //     // Handle the read being accepted
-        //     if (ram_cmdReady && ram_cmdTrigger) begin
-        //         ram_cmdAddr <= ram_cmdAddr+1;
-        //
-        //         // Stop triggering when we've issued all the read commands
-        //         ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
-        //         if (ramReadTakeoffCounter == 1) begin
-        //             ram_cmdTrigger <= 0;
-        //         end
-        //     end
-        //
-        //     if (ramWordTrigger) begin
-        //         ramWordTrigger <= 0;
-        //
-        //         mem[memAddr] <= ramWord;
-        //         memAddr <= memAddr+1;
-        //
-        //         // Next state after we've received all the bytes
-        //         ramReadLandCounter <= ramReadLandCounter-1;
-        //         if (ramReadLandCounter == 1) begin
-        //             state <= StateReadMem+3;
-        //         end
-        //     end
-        //
-        //     // Write incoming data into `ramWord`
-        //     if (ram_cmdReadDataValid) begin
-        //         ramWord <= ram_cmdReadData;
-        //         ramWordTrigger <= 1;
-        //     end
-        // end
-        
-        
         endcase
     end
     
