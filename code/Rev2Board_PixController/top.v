@@ -711,6 +711,7 @@ module Top(
     localparam MsgType_ReadMem          = 8'h02;
     localparam MsgType_PixReg8          = 8'h03;
     localparam MsgType_PixReg16         = 8'h04;
+    localparam MsgType_PixCapture       = 8'h05;
     
     wire[7:0] debug_msgIn_type;
     wire[7:0] debug_msgIn_payloadLen;
@@ -765,7 +766,7 @@ module Top(
     localparam StateReadMem     = 4;    // +4
     localparam StatePixReg8     = 9;    // +2
     localparam StatePixReg16    = 12;   // +2
-    localparam StatePixCapture  = 15;   // +2
+    localparam StatePixCapture  = 15;   // +3
     
     reg[4:0] state = 0;
     reg[7:0] msgInType = 0;
@@ -857,6 +858,10 @@ module Top(
             
             MsgType_PixReg16: begin
                 state <= StatePixReg16;
+            end
+            
+            MsgType_PixCapture: begin
+                state <= StatePixCapture;
             end
             endcase
         end
@@ -1101,9 +1106,21 @@ module Top(
             
             if (pix_captureDone) begin
                 led[3] <= !led[3];
+                
+                debug_msgOut_type <= MsgType_PixCapture;
+                debug_msgOut_payloadLen <= 0;
+                state <= StatePixCapture+3;
+            end
+        end
+        
+        StatePixCapture+3: begin
+            if (debug_msgOut_payloadTrigger) begin
+                // Clear `debug_msgOut_type` to prevent another message from being sent.
+                debug_msgOut_type <= 0;
                 state <= StateHandleMsg;
             end
         end
+        
         endcase
     end
     

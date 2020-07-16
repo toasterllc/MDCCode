@@ -119,6 +119,10 @@ public:
         uint8_t ok = 0;
     } __attribute__((packed));
     
+    struct PixCaptureMsg {
+        MsgHdr hdr{.type=0x05, .len=sizeof(*this)-sizeof(MsgHdr)};
+    } __attribute__((packed));
+    
     using MsgPtr = std::unique_ptr<Msg>;
     
     MDCDevice() {
@@ -397,17 +401,19 @@ const Cmd ReadMemCmd = "readmem";
 const Cmd VerifyMemCmd = "verifymem";
 const Cmd PixReg8Cmd = "pixreg8";
 const Cmd PixReg16Cmd = "pixreg16";
+const Cmd PixCaptureCmd = "pixcapture";
 
 void printUsage() {
     using namespace std;
     cout << "MDCDebugger commands:\n";
-    cout << " " << SetLEDCmd    << " <0/1>\n";
-    cout << " " << ReadMemCmd   << " <file>\n";
-    cout << " " << VerifyMemCmd << "\n";
-    cout << " " << PixReg8Cmd   << " <addr>\n";
-    cout << " " << PixReg8Cmd   << " <addr>=<val8>\n";
-    cout << " " << PixReg16Cmd  << " <addr>\n";
-    cout << " " << PixReg16Cmd  << " <addr>=<val16>\n";
+    cout << " " << SetLEDCmd        << " <0/1>\n";
+    cout << " " << ReadMemCmd       << " <file>\n";
+    cout << " " << VerifyMemCmd     << "\n";
+    cout << " " << PixReg8Cmd       << " <addr>\n";
+    cout << " " << PixReg8Cmd       << " <addr>=<val8>\n";
+    cout << " " << PixReg16Cmd      << " <addr>\n";
+    cout << " " << PixReg16Cmd      << " <addr>=<val16>\n";
+    cout << " " << PixCaptureCmd    << "\n";
     cout << "\n";
 }
 
@@ -440,7 +446,7 @@ static RegOp parseRegOp(const std::string str) {
         uintmax_t val = strtoumax(parts[1].c_str(), nullptr, 0);
         if (val > UINT16_MAX) throw std::runtime_error("invalid register value");
         regOp.write = true;
-        regOp.val = addr;
+        regOp.val = val;
     }
     
     return regOp;
@@ -474,6 +480,8 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == PixReg16Cmd) {
         if (strs.size() < 2) throw std::runtime_error("no register specified");
         args.regOp = parseRegOp(strs[1]);
+    
+    } else if (args.cmd == PixCaptureCmd) {
     
     } else {
         throw std::runtime_error("invalid command");
@@ -627,6 +635,17 @@ static void pixReg16(const Args& args, MDCDevice& device) {
     }
 }
 
+static void pixCapture(const Args& args, MDCDevice& device) {
+    using PixCaptureMsg = MDCDevice::PixCaptureMsg;
+    using Msg = MDCDevice::Msg;
+    
+    device.write(PixCaptureMsg{});
+    
+    if (auto msgPtr = Msg::Cast<PixCaptureMsg>(device.read())) {
+        return;
+    }
+}
+
 int main(int argc, const char* argv[]) {
     Args args;
     try {
@@ -646,6 +665,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == VerifyMemCmd)  verifyMem(args, *device);
         else if (args.cmd == PixReg8Cmd)    pixReg8(args, *device);
         else if (args.cmd == PixReg16Cmd)   pixReg16(args, *device);
+        else if (args.cmd == PixCaptureCmd) pixCapture(args, *device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed: %s\n", e.what());
         return 1;
