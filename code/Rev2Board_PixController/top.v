@@ -382,7 +382,7 @@ module PixController #(
     input wire          pix_dclk,
     input wire[11:0]    pix_d,
     input wire          pix_fv,
-    input wire          pix_lv,
+    input wire          pix_lv
     
     // output wire         pix_sclk,
     // inout wire          pix_sdata
@@ -1100,7 +1100,7 @@ module Top(
             end
             
             if (pix_captureDone) begin
-                led[3] <= 1;
+                led[3] <= !led[3];
                 state <= StateHandleMsg;
             end
         end
