@@ -767,7 +767,7 @@ module Top(
     localparam StatePixReg16    = 12;   // +2
     localparam StatePixCapture  = 15;   // +2
     
-    reg[3:0] state = 0;
+    reg[4:0] state = 0;
     reg[7:0] msgInType = 0;
     reg[5*8-1:0] msgInPayload = 0;
     reg[15:0] ramWord = 0;
