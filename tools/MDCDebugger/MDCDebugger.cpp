@@ -121,6 +121,7 @@ public:
     
     struct PixCaptureMsg {
         MsgHdr hdr{.type=0x05, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint32_t addr = 0;
     } __attribute__((packed));
     
     using MsgPtr = std::unique_ptr<Msg>;
@@ -235,6 +236,7 @@ public:
         if (type == ReadMemMsg{}.hdr.type) return _newMsg<ReadMemMsg>();
         if (type == PixReg8Msg{}.hdr.type) return _newMsg<PixReg8Msg>();
         if (type == PixReg16Msg{}.hdr.type) return _newMsg<PixReg16Msg>();
+        if (type == PixCaptureMsg{}.hdr.type) return _newMsg<PixCaptureMsg>();
         printf("Unknown msg type: %ju\n", (uintmax_t)type);
         return nullptr;
     }
@@ -642,6 +644,8 @@ static void pixCapture(const Args& args, MDCDevice& device) {
     device.write(PixCaptureMsg{});
     
     if (auto msgPtr = Msg::Cast<PixCaptureMsg>(device.read())) {
+        const auto& msg = *msgPtr;
+        printf("Addr after capture: 0x%x\n", msg.addr);
         return;
     }
 }
