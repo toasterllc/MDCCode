@@ -33,6 +33,10 @@
 
 - Rev3
     
+    ClockGen:
+        Synchronize 'locked' signal with clock
+            https://stackoverflow.com/questions/38030768/icestick-yosys-using-the-global-set-reset-gsr
+    
     - Add:
         /* synthesis syn_ramstyle="no_rw_check" */
         to AFIFO memories, to avoid unnecessary overhead
