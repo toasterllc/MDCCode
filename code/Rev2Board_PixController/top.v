@@ -73,6 +73,22 @@ endmodule
 
 
 
+module Debouncer #(
+    parameter Width = 1
+)(
+    input wire clk,
+    input wire in,
+    output reg out = 0
+);
+    reg[Width-1:0] vals = 0;
+    always @(posedge clk) begin
+        vals <= (vals<<1)|in;
+        if (&vals)      out <= 1;
+        else if (!vals) out <= 0;
+    end
+endmodule
+
+
 
 
 
@@ -385,7 +401,7 @@ module PixController #(
     input wire          pix_fv,
     input wire          pix_lv,
     
-    output reg[3:0]     led = 0
+    output reg[3:0]     led = 0 /* synthesis syn_keep=1 */
     // output wire[3:0]     led
     
     // output wire         pix_sclk,
@@ -477,8 +493,12 @@ module PixController #(
         endcase
     end
     
-    
-    
+    // Debounce the `pix_fv`
+    // For some reason, `pix_fv` rapidly transitions between 0<->1 several
+    // times before settling on a new value.
+    wire frameValid;
+    wire lineValid = pix_lv;
+    Debouncer #(.Width(10)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
     
     reg pixq_capture = 0;
     wire pixq_rclk = clk;
@@ -486,7 +506,7 @@ module PixController #(
     wire pixq_readTrigger = pixel_trigger;
     wire[15:0] pixq_readData;
     wire pixq_wclk = pix_dclk;
-    wire pixq_writeTrigger = pix_lv && pixq_capture;
+    wire pixq_writeTrigger = lineValid && pixq_capture;
     wire[15:0] pixq_writeData = pix_d;
     wire pixq_writeOK;
     AFIFO #(.Width(16), .Size(256)) pixq(
@@ -519,7 +539,7 @@ module PixController #(
     
     reg captureReq = 0;
     reg lastFrameValid = 0;
-    reg init = 0;
+    reg init = 0 /* synthesis syn_keep=1 */;
     always @(posedge pix_dclk) begin
         if (!init) begin
             led <= 0;
@@ -527,7 +547,7 @@ module PixController #(
         end else begin
             // if (pixInitDone) begin
             // Frame start
-            if (!lastFrameValid && pix_fv) begin
+            if (!lastFrameValid && frameValid) begin
                 // if (captureReq) begin
                 //     pixq_capture <= 1;
                 // end
@@ -538,7 +558,7 @@ module PixController #(
                 // end
                 
             // Frame end
-            end else if (lastFrameValid && !pix_fv) begin
+            end else if (lastFrameValid && !frameValid) begin
                 // Only trigger the `capture_done` pulse if a capture was in progress
                 if (pixq_capture) begin
                     frameEndPulse <= 1;
@@ -549,41 +569,51 @@ module PixController #(
             if (captureReqPulse) captureReq <= 1;
             // Reset frameEndPulse to ensure it's a single pulse
             if (frameEndPulse) frameEndPulse <= 0;
-            // Remember `pix_fv`
-            lastFrameValid <= pix_fv;
+            // Remember `frameValid`
+            lastFrameValid <= frameValid;
             
-            // if (pix_fv && pix_lv) begin
-            // led[0] <= pix_fv && pix_lv;
+            if (pixq_capture && !pixq_writeOK) begin
+                led[0] <= 1;
+            end
+            
+            // if (pixq_capture) begin
+            //     led[0] <= 1;
             // end
             
-            if (pixq_capture && pix_fv && pix_lv) begin
-                led[0] <= 1;
-                // led <= led+1;
-                // led[1] <= pix_lv;
-                // led[2] <= pix_fv && pix_lv;
-            end
+            
+            
+            // if (frameValid && lineValid) begin
+            // led[0] <= frameValid && lineValid;
+            // end
+            
+            // if (pixq_capture && frameValid && !lineValid) begin
+            //     led[0] <= 1;
+            //     // led <= led+1;
+            //     // led[1] <= lineValid;
+            //     // led[2] <= frameValid && lineValid;
+            // end
+            
+            // led[1] <= frameValid && lineValid;
         
-            // led[1] <= pix_fv && pix_lv;
-        
-            // if (pix_fv) begin
+            // if (frameValid) begin
             //     led[0] <= 1;
             //     // if (pixq_writeTrigger) led[0] <= 1;
             // end
         
             // if (captureReq) led[0] <= 1;
         
-            // if (pix_fv && pix_lv) led[0] <= 1;
+            // if (frameValid && lineValid) led[0] <= 1;
         
         
-            // if (pix_lv) led <= led+1;
+            // if (lineValid) led <= led+1;
             // end
         end
     end
     
-    // assign led[0] = pix_fv;
-    // assign led[1] = pix_fv&&pix_lv;
-    // assign led[2] = pix_lv;
-    // assign led[3] = pixq_capture&&pix_fv&&pix_lv;
+    // assign led[0] = frameValid;
+    // assign led[1] = frameValid&&lineValid;
+    // assign led[2] = lineValid;
+    // assign led[3] = pixq_capture&&frameValid&&lineValid;
 endmodule
 
 
@@ -620,18 +650,44 @@ module Top(
     input wire          debug_di,
     output wire         debug_do
 );
+    // // ====================
+    // // Clock PLL (100.5 MHz)
+    // // ====================
+    // localparam ClkFreq = 100500000;
+    // wire pllClk;
+    // ClockGen #(
+    //     .FREQ(ClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(66),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
+    
     // ====================
-    // Clock PLL (81 MHz)
+    // Clock PLL (91.5 MHz)
     // ====================
-    localparam ClkFreq = 81000000;
+    localparam ClkFreq = 91500000;
     wire pllClk;
     ClockGen #(
         .FREQ(ClkFreq),
         .DIVR(0),
-        .DIVF(53),
+        .DIVF(60),
         .DIVQ(3),
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
+    
+    // // ====================
+    // // Clock PLL (81 MHz)
+    // // ====================
+    // localparam ClkFreq = 81000000;
+    // wire pllClk;
+    // ClockGen #(
+    //     .FREQ(ClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(53),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
     
     assign ram_clk = pllClk;
     
@@ -834,6 +890,7 @@ module Top(
     reg[15:0] mem[127:0];
     reg[7:0] memReadCounter = 0;
     reg[6:0] memAddr; // Don't init with memAddr=0, otherwise Icestorm won't infer a RAM for `mem`
+    reg captureDone = 0;
     
 `ifdef SIM
     initial memAddr = 0; // For simulation (see memAddr comment above)
@@ -1127,6 +1184,7 @@ module Top(
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 1;
             ram_cmdTrigger <= 0;
+            captureDone <= 0;
             
             state <= StatePixCapture+2;
         end
@@ -1134,43 +1192,63 @@ module Top(
         StatePixCapture+2: begin
             // led[3] <= 1;
             
-            // Handle writing a pixel to RAM
-            if (ram_cmdTrigger && ram_cmdReady) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
-                ram_cmdTrigger <= 0;
-                
-                // If a pixel is in our overflow register, move it to `ram_cmdWriteData`
-                if (ramWordTrigger) begin
-                    ram_cmdWriteData <= ramWord;
-                    ram_cmdTrigger <= 1;
-                    ramWordTrigger <= 0;
-                    pix_pixelTrigger <= 1;
-                end
-            end
-            
-            // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
+            // =========== START: DEBUG
             if (pix_pixelReady && pix_pixelTrigger) begin
-                // Store pixel in `ram_cmdWriteData` if it's available
-                if (!ram_cmdTrigger || ram_cmdReady) begin
-                    ram_cmdWriteData <= pix_pixel;
-                    ram_cmdTrigger <= 1;
-                
-                // Otherwise store the pixel in our overflow register and stall
-                // reading more pixels until the RAM catches up
-                end else begin
-                    ramWord <= pix_pixel;
-                    ramWordTrigger <= 1;
-                    pix_pixelTrigger <= 0;
-                end
+                ram_cmdAddr <= ram_cmdAddr+1;
             end
             
             if (pix_captureDone) begin
+                captureDone <= 1;
+            end
+            
+            if (!pix_pixelReady && captureDone) begin
                 // led[3] <= !led[3];
-
+                
                 debug_msgOut_type <= MsgType_PixCapture;
                 debug_msgOut_payloadLen <= 4;
                 state <= StatePixCapture+3;
             end
+            // =========== END: DEBUG
+            
+            
+            
+            // // Handle writing a pixel to RAM
+            // if (ram_cmdTrigger && ram_cmdReady) begin
+            //     ram_cmdAddr <= ram_cmdAddr+1;
+            //     ram_cmdTrigger <= 0;
+            //
+            //     // If a pixel is in our overflow register, move it to `ram_cmdWriteData`
+            //     if (ramWordTrigger) begin
+            //         ram_cmdWriteData <= ramWord;
+            //         ram_cmdTrigger <= 1;
+            //         ramWordTrigger <= 0;
+            //         pix_pixelTrigger <= 1;
+            //     end
+            // end
+            //
+            // // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
+            // if (pix_pixelReady && pix_pixelTrigger) begin
+            //     // Store pixel in `ram_cmdWriteData` if it's available
+            //     if (!ram_cmdTrigger || ram_cmdReady) begin
+            //         ram_cmdWriteData <= pix_pixel;
+            //         ram_cmdTrigger <= 1;
+            //
+            //     // Otherwise store the pixel in our overflow register and stall
+            //     // reading more pixels until the RAM catches up
+            //     end else begin
+            //         ramWord <= pix_pixel;
+            //         ramWordTrigger <= 1;
+            //         pix_pixelTrigger <= 0;
+            //     end
+            // end
+            //
+            // if (pix_captureDone) begin
+            //     // led[3] <= !led[3];
+            //
+            //     debug_msgOut_type <= MsgType_PixCapture;
+            //     debug_msgOut_payloadLen <= 4;
+            //     state <= StatePixCapture+3;
+            // end
         end
         
         StatePixCapture+3: begin
