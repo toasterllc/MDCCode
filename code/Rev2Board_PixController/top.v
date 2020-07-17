@@ -1,8 +1,9 @@
-`timescale 1ns/1ps
 `include "../ClockGen.v"
 `include "../AFIFO.v"
 `include "../SDRAMController.v"
 `include "../PixI2CMaster.v"
+
+`timescale 1ns/1ps
 
 module Delay #(
     parameter Count = 1
@@ -378,11 +379,14 @@ module PixController #(
     output wire         pixel_ready,
     input wire          pixel_trigger,
     
-    output reg          pix_rst_,
+    output reg          pix_rst_ = 0,
     input wire          pix_dclk,
     input wire[11:0]    pix_d,
     input wire          pix_fv,
-    input wire          pix_lv
+    input wire          pix_lv,
+    
+    output reg[3:0]     led = 0
+    // output wire[3:0]     led
     
     // output wire         pix_sclk,
     // inout wire          pix_sdata
@@ -428,6 +432,7 @@ module PixController #(
     
     reg[1:0] state = 0;
     reg[DelayWidth-1:0] delay = 0;
+    // reg initDone = 0;
     always @(posedge clk) begin
         case (state)
         
@@ -467,6 +472,7 @@ module PixController #(
             // - Configure PLL, output, and image settings to desired values.
             // - Wait 1ms for the PLL to lock.
             // - Set streaming mode (R0x301A[2] = 1).
+            // initDone <= 1;
         end
         endcase
     end
@@ -505,41 +511,86 @@ module PixController #(
     // signal -- the `capture_done` can probably arrive before we're done draining the pixels...
     
     // Synchronize `frameEndPulse` pulse into `clk` domain
+    reg frameEndPulse = 0;
     SyncPulse sync2(.in_clk(pix_dclk), .in(frameEndPulse), .out_clk(clk), .out(capture_done));
+    
+    // wire pixInitDone;
+    // Sync sync3(.in(initDone), .out_clk(pix_dclk), .out(pixInitDone));
     
     reg captureReq = 0;
     reg lastFrameValid = 0;
-    reg frameEndPulse = 0;
+    reg init = 0;
     always @(posedge pix_dclk) begin
-        // Frame start
-        if (!lastFrameValid && pix_fv) begin
-            pixq_capture <= captureReq;
+        if (!init) begin
+            led <= 0;
+            init <= 1;
+        end else begin
+            // if (pixInitDone) begin
+            // Frame start
+            if (!lastFrameValid && pix_fv) begin
+                // if (captureReq) begin
+                //     pixq_capture <= 1;
+                // end
+                pixq_capture <= captureReq;
+                captureReq <= 0;
+                // if (captureReq) begin
+                //     led <= led+1;
+                // end
+                
+            // Frame end
+            end else if (lastFrameValid && !pix_fv) begin
+                // Only trigger the `capture_done` pulse if a capture was in progress
+                if (pixq_capture) begin
+                    frameEndPulse <= 1;
+                end
+            end
+            
+            // Latch `captureReq` until we're ready to service it (at the start of a new frame)
+            if (captureReqPulse) captureReq <= 1;
+            // Reset frameEndPulse to ensure it's a single pulse
+            if (frameEndPulse) frameEndPulse <= 0;
+            // Remember `pix_fv`
+            lastFrameValid <= pix_fv;
+            
+            // if (pix_fv && pix_lv) begin
+            // led[0] <= pix_fv && pix_lv;
+            // end
+            
+            if (pixq_capture && pix_fv && pix_lv) begin
+                led[0] <= 1;
+                // led <= led+1;
+                // led[1] <= pix_lv;
+                // led[2] <= pix_fv && pix_lv;
+            end
         
-        // Frame end
-        end else if (lastFrameValid && !pix_fv) begin
-            captureReq <= 0;
-            pixq_capture <= 0;
-            frameEndPulse <= 1;
+            // led[1] <= pix_fv && pix_lv;
+        
+            // if (pix_fv) begin
+            //     led[0] <= 1;
+            //     // if (pixq_writeTrigger) led[0] <= 1;
+            // end
+        
+            // if (captureReq) led[0] <= 1;
+        
+            // if (pix_fv && pix_lv) led[0] <= 1;
+        
+        
+            // if (pix_lv) led <= led+1;
+            // end
         end
-        
-        // Latch `captureReq` until we're ready to service it (at the start of a new frame)
-        if (captureReqPulse) captureReq <= 1;
-        // Reset frameEndPulse to ensure it's a single pulse
-        if (frameEndPulse) frameEndPulse <= 0;
-        // Remember `pix_fv`
-        lastFrameValid <= pix_fv;
     end
     
-    
-    
-    
+    // assign led[0] = pix_fv;
+    // assign led[1] = pix_fv&&pix_lv;
+    // assign led[2] = pix_lv;
+    // assign led[3] = pixq_capture&&pix_fv&&pix_lv;
 endmodule
 
 
 
 module Top(
     input wire          clk12mhz,
-    output reg[3:0]     led = 0,
+    output wire[3:0]    led,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -556,7 +607,7 @@ module Top(
     input wire[11:0]    pix_d,
     input wire          pix_fv,
     input wire          pix_lv,
-    input wire          pix_rst_,
+    output wire         pix_rst_,
     output wire         pix_i2c_clk,
 `ifdef SIM
     inout tri1          pix_i2c_data,
@@ -665,7 +716,9 @@ module Top(
         .pix_dclk(pix_dclk),
         .pix_d(pix_d),
         .pix_fv(pix_fv),
-        .pix_lv(pix_lv)
+        .pix_lv(pix_lv),
+        
+        .led(led)
     );
     
     
@@ -850,7 +903,7 @@ module Top(
             
             MsgType_SetLED: begin
                 $display("MsgType_SetLED: %0d", msgInPayload[0]);
-                led[0] <= msgInPayload[0];
+                // led[0] <= msgInPayload[0];
                 debug_msgOut_type <= MsgType_SetLED;
                 debug_msgOut_payloadLen <= 1;
             end
@@ -1062,6 +1115,7 @@ module Top(
         
         
         StatePixCapture: begin
+            $display("StatePixCapture");
             pix_captureTrigger <= 1;
             state <= StatePixCapture+1;
         end
@@ -1078,7 +1132,7 @@ module Top(
         end
         
         StatePixCapture+2: begin
-            led[3] <= 1;
+            // led[3] <= 1;
             
             // Handle writing a pixel to RAM
             if (ram_cmdTrigger && ram_cmdReady) begin
@@ -1110,13 +1164,13 @@ module Top(
                 end
             end
             
-            // if (pix_captureDone) begin
-            //     led[3] <= !led[3];
-            //
-            //     debug_msgOut_type <= MsgType_PixCapture;
-            //     debug_msgOut_payloadLen <= 4;
-            //     state <= StatePixCapture+3;
-            // end
+            if (pix_captureDone) begin
+                // led[3] <= !led[3];
+
+                debug_msgOut_type <= MsgType_PixCapture;
+                debug_msgOut_payloadLen <= 4;
+                state <= StatePixCapture+3;
+            end
         end
         
         StatePixCapture+3: begin
@@ -1149,6 +1203,16 @@ module Top(
     assign debug_cs = sim_debug_cs;
     assign debug_di = sim_debug_di_shiftReg[7];
     
+    reg sim_pix_dclk = 0;
+    reg[11:0] sim_pix_d = 0;
+    reg sim_pix_fv = 0;
+    reg sim_pix_lv = 0;
+    
+    assign pix_dclk = sim_pix_dclk;
+    assign pix_d = sim_pix_d;
+    assign pix_fv = sim_pix_fv;
+    assign pix_lv = sim_pix_lv;
+    
     task WriteByte(input[7:0] b);
         sim_debug_di_shiftReg = b;
         repeat (8) begin
@@ -1158,47 +1222,108 @@ module Top(
         end
     endtask
     
+    initial begin
+        sim_pix_d <= 0;
+        sim_pix_fv <= 1;
+        sim_pix_lv <= 1;
+        #1000;
+        
+        repeat (3) begin
+            sim_pix_fv <= 1;
+            #100;
+            
+            repeat (8) begin
+                sim_pix_lv <= 1;
+                sim_pix_d <= 12'hCAF;
+                #1000;
+                sim_pix_lv <= 0;
+                #100;
+            end
+            
+            sim_pix_fv <= 0;
+            #1000;
+        end
+        
+        $finish;
+    end
     
-    // assign debug_di = 1;
+    
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
+    end
+    
+    // Assert chip select
+    initial begin
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        wait (!sim_debug_clk);
+        sim_debug_cs = 1;
+    end
+    
+    initial begin
+        // Wait for ClockGen to start its clock
+        wait(clk);
         
+        // Wait arbitrary amount of time
+        #1057;
+        wait(clk);
+        
+        WriteByte(MsgType_PixCapture);     // Message type
+        #1000000;
+    end
+    
+    // initial begin
+    //     // Wait for ClockGen to start its clock
+    //     wait(clk);
+    //     #100;
+    //
+    //     wait (!sim_debug_clk);
+    //     sim_debug_cs = 1;
+    //
+    //     // WriteByte(MsgType_SetLED);  // Message type
+    //     // WriteByte(8'h1);            // Payload length
+    //     // WriteByte(8'h1);            // Payload
+    //
+    //     WriteByte(MsgType_PixReg8);     // Message type
+    //     WriteByte(8'h4);                // Payload length
+    //     WriteByte(8'h1);                // Payload0: write
+    //     WriteByte(8'h34);               // Payload1: addr0
+    //     WriteByte(8'h12);               // Payload2: addr1
+    //     WriteByte(8'h42);               // Payload3: value
+    //
+    //     WriteByte(MsgType_PixReg8);     // Message type
+    //     WriteByte(8'h4);                // Payload length
+    //     WriteByte(8'h0);                // Payload0: write
+    //     WriteByte(8'h34);               // Payload1: addr0
+    //     WriteByte(8'h12);               // Payload2: addr1
+    //     WriteByte(8'h42);               // Payload3: value
+    //
+    //     WriteByte(MsgType_PixReg16);    // Message type
+    //     WriteByte(8'h5);                // Payload length
+    //     WriteByte(8'h0);                // Payload0: write
+    //     WriteByte(8'h34);               // Payload1: addr0
+    //     WriteByte(8'h12);               // Payload2: addr1
+    //     WriteByte(8'hFE);               // Payload3: value0
+    //     WriteByte(8'hCA);               // Payload4: value1
+    //
+    //     #1000000;
+    //     $finish;
+    // end
+    
+    initial begin
         // Wait for ClockGen to start its clock
         wait(clk);
         #100;
         
-        wait (!sim_debug_clk);
-        sim_debug_cs = 1;
-        
-        // WriteByte(MsgType_SetLED);  // Message type
-        // WriteByte(8'h1);            // Payload length
-        // WriteByte(8'h1);            // Payload
-        
-        WriteByte(MsgType_PixReg8);     // Message type
-        WriteByte(8'h4);                // Payload length
-        WriteByte(8'h1);                // Payload0: write
-        WriteByte(8'h34);               // Payload1: addr0
-        WriteByte(8'h12);               // Payload2: addr1
-        WriteByte(8'h42);               // Payload3: value
-
-        WriteByte(MsgType_PixReg8);     // Message type
-        WriteByte(8'h4);                // Payload length
-        WriteByte(8'h0);                // Payload0: write
-        WriteByte(8'h34);               // Payload1: addr0
-        WriteByte(8'h12);               // Payload2: addr1
-        WriteByte(8'h42);               // Payload3: value
-        
-        WriteByte(MsgType_PixReg16);    // Message type
-        WriteByte(8'h5);                // Payload length
-        WriteByte(8'h0);                // Payload0: write
-        WriteByte(8'h34);               // Payload1: addr0
-        WriteByte(8'h12);               // Payload2: addr1
-        WriteByte(8'hFE);               // Payload3: value0
-        WriteByte(8'hCA);               // Payload4: value1
-        
-        #1000000;
-        $finish;
+        forever begin
+            // 50 MHz dclk
+            sim_pix_dclk = 1;
+            #10;
+            sim_pix_dclk = 0;
+            #10;
+        end
     end
     
     initial begin
