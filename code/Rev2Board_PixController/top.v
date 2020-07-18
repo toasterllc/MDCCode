@@ -496,9 +496,9 @@ module PixController #(
     // Debounce the `pix_fv`
     // For some reason, `pix_fv` rapidly transitions between 0<->1 several
     // times before settling on a new value.
-    wire frameValid;
+    wire frameValid = pix_fv;
     wire lineValid = pix_lv;
-    Debouncer #(.Width(3)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
+    // Debouncer #(.Width(3)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
     
     reg pixq_capture = 0;
     wire pixq_rclk = clk;
@@ -507,9 +507,10 @@ module PixController #(
     wire[15:0] pixq_readData;
     wire pixq_wclk = pix_dclk;
     // wire pixq_writeTrigger = pix_fv && pix_lv && pixq_capture;
-    reg pixq_writeTrigger = 0;
-    // wire[15:0] pixq_writeData = pix_d;
-    reg[15:0] pixq_writeData = 0;
+    wire pixq_writeTrigger = pixq_capture && pix_lv;
+    // reg pixq_writeTrigger = 0;
+    wire[15:0] pixq_writeData = pix_d;
+    // reg[15:0] pixq_writeData = 0;
     wire pixq_writeOK;
     AFIFO #(.Width(16), .Size(256)) pixq(
         .rclk(pixq_rclk),
@@ -542,9 +543,10 @@ module PixController #(
     reg captureReq = 0;
     // reg lastFrameValid = 0;
     // reg init = 0 /* synthesis syn_keep=1 */;
-    reg[15:0] lineWidth = 0;
-    reg lastLineValid = 0;
+    // reg[15:0] lineWidth = 0;
+    // reg lastLineValid = 0;
     reg[2:0] pixState = 0;
+    reg[11:0] frameInvalidCounter = 0;
     always @(posedge pix_dclk) begin
         case (pixState)
         // Init
@@ -553,71 +555,184 @@ module PixController #(
             pixState <= 1;
         end
         
-        // Wait for a new frame to start
+        // Wait until a new frame starts
         1: begin
-            frameEndPulse <= 0; // Reset `frameEndPulse` from state 2
-            
-            // When a new frame starts, next state
+            frameEndPulse <= 0; // Reset `frameEndPulse` from state 3
+            frameInvalidCounter <= 0;
+            if (captureReqPulse) captureReq <= 1; // Latch `captureReqPulse` into `captureReq`
+            if (frameValid) pixState <= 2;
+        end
+        
+        // Wait until frame completes
+        2: begin
             if (frameValid) begin
-                // Consume `captureReq` and reset it
-                pixq_capture <= captureReq;
-                captureReq <= 0;
-                // Next state
-                pixState <= 2;
+                frameInvalidCounter <= 0;
+            
+            end else begin
+                // Start of a new frame
+                if (frameInvalidCounter >= 16) pixState <= 3;
+                frameInvalidCounter <= frameInvalidCounter+1;
             end
             
             if (captureReqPulse) captureReq <= 1; // Latch `captureReqPulse` into `captureReq`
         end
         
-        // Wait for the frame to end
-        2: begin
-            if (!frameValid) begin
-                // Trigger the `capture_done` pulse if a capture was in progress
-                if (pixq_capture) begin
-                    frameEndPulse <= 1;
-                end
-                
-                pixq_capture <= 0;
-                pixState <= 1;
-            end
+        // Handle frame completion
+        3: begin
+            // Trigger the `capture_done` pulse if a capture was in progress
+            if (pixq_capture) frameEndPulse <= 1;
+            
+            // Consume `captureReq` and reset it
+            pixq_capture <= captureReq;
+            captureReq <= 0;
             
             if (captureReqPulse) captureReq <= 1; // Latch `captureReqPulse` into `captureReq`
             
-            // START:DEBUG
-            // ## Debug signals
-            // Signal fifo overflow
-            if (pixq_capture && !pixq_writeOK) begin
-                led[0] <= 1;
-            end
-            
-            // Signal if lineValid=1 while frameValid=0
-            if (pixq_capture && lineValid && !frameValid) begin
-                led[1] <= 1;
-            end
-            
-            
-            
-            // ## Capture line lengths
-            // Reset pixq_writeTrigger
-            pixq_writeTrigger <= 0;
-            if (pixq_capture) begin
-                // lineValid 0->1
-                if (!lastLineValid && lineValid) begin
-                    pixq_writeData <= 1;
-                
-                // lineValid 1->1
-                end else if (lastLineValid && lineValid) begin
-                    pixq_writeData <= pixq_writeData+1;
-
-                // lineValid 1->0
-                end else if (!lineValid && lastLineValid) begin
-                    pixq_writeTrigger <= 1;
-                end
-            end
-            lastLineValid <= lineValid;
-            // END:DEBUG
+            pixState <= 1;
         end
         endcase
+        
+        // START:DEBUG
+        // Signal fifo overflow
+        if (pixq_capture && !pixq_writeOK) begin
+            led[0] <= 1;
+        end
+        
+        // Signal if lineValid=1 while frameValid=0
+        if (pixq_capture && lineValid && !frameValid) begin
+            led[1] <= 1;
+        end
+        // END:DEBUG
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        // case (pixState)
+        // // Init
+        // 0: begin
+        //     led <= 0;
+        //     pixState <= 1;
+        // end
+        //
+        // 1: begin
+        //     if (!frameValid) begin
+        //         frameInvalidCounter <= frameInvalidCounter+1;
+        //     end
+        //
+        //     // Next frame
+        //     if (frameInvalidCounter >= 16) begin
+        //
+        //     end
+        //
+        //
+        //     // ## Capture line lengths
+        //     // Reset pixq_writeTrigger
+        //     pixq_writeTrigger <= 0;
+        //     if (pixq_capture) begin
+        //         // lineValid 0->1
+        //         if (!lastLineValid && lineValid) begin
+        //             pixq_writeData <= 1;
+        //
+        //         // lineValid 1->1
+        //         end else if (lastLineValid && lineValid) begin
+        //             pixq_writeData <= pixq_writeData+1;
+        //
+        //         // lineValid 1->0
+        //         end else if (!lineValid && lastLineValid) begin
+        //             pixq_writeTrigger <= 1;
+        //         end
+        //     end
+        //     lastLineValid <= lineValid;
+        //     // END:DEBUG
+        // end
+        
+        
+        
+        
+        
+        
+        
+        // case (pixState)
+        // // Init
+        // 0: begin
+        //     led <= 0;
+        //     pixState <= 1;
+        // end
+        //
+        // // Wait for a new frame to start
+        // 1: begin
+        //     frameEndPulse <= 0; // Reset `frameEndPulse` from state 2
+        //
+        //     // When a new frame starts, next state
+        //     if (frameValid) begin
+        //         // Consume `captureReq` and reset it
+        //         pixq_capture <= captureReq;
+        //         captureReq <= 0;
+        //         // Next state
+        //         pixState <= 2;
+        //     end
+        //
+        //     if (captureReqPulse) captureReq <= 1; // Latch `captureReqPulse` into `captureReq`
+        // end
+        //
+        // // Wait for the frame to end
+        // 2: begin
+        //     if (!frameValid) begin
+        //         // Trigger the `capture_done` pulse if a capture was in progress
+        //         if (pixq_capture) begin
+        //             frameEndPulse <= 1;
+        //         end
+        //
+        //         pixq_capture <= 0;
+        //         pixState <= 1;
+        //     end
+        //
+        //     if (captureReqPulse) captureReq <= 1; // Latch `captureReqPulse` into `captureReq`
+        //
+        //     // START:DEBUG
+        //     // ## Debug signals
+        //     // Signal fifo overflow
+        //     if (pixq_capture && !pixq_writeOK) begin
+        //         led[0] <= 1;
+        //     end
+        //
+        //     // Signal if lineValid=1 while frameValid=0
+        //     if (pixq_capture && lineValid && !frameValid) begin
+        //         led[1] <= 1;
+        //     end
+        //
+        //
+        //
+        //     // ## Capture line lengths
+        //     // Reset pixq_writeTrigger
+        //     pixq_writeTrigger <= 0;
+        //     if (pixq_capture) begin
+        //         // lineValid 0->1
+        //         if (!lastLineValid && lineValid) begin
+        //             pixq_writeData <= 1;
+        //
+        //         // lineValid 1->1
+        //         end else if (lastLineValid && lineValid) begin
+        //             pixq_writeData <= pixq_writeData+1;
+        //
+        //         // lineValid 1->0
+        //         end else if (!lineValid && lastLineValid) begin
+        //             pixq_writeTrigger <= 1;
+        //         end
+        //     end
+        //     lastLineValid <= lineValid;
+        //     // END:DEBUG
+        // end
+        // endcase
         
         
         
@@ -1360,63 +1475,63 @@ module Top(
         StatePixCapture+2: begin
             // led[3] <= 1;
             
-            // // =========== START: DEBUG: merely count the number of sampled pixels
-            // if (pix_pixelReady && pix_pixelTrigger) begin
-            //     ram_cmdAddr <= ram_cmdAddr+1;
-            // end
-            //
-            // if (pix_captureDone) begin
-            //     captureDone <= 1;
-            // end
-            //
-            // if (!pix_pixelReady && captureDone) begin
-            //     // led[3] <= !led[3];
-            //
-            //     debug_msgOut_type <= MsgType_PixCapture;
-            //     debug_msgOut_payloadLen <= 4;
-            //     state <= StatePixCapture+3;
-            // end
-            // // =========== END: DEBUG
-            
-            
-            
-            // Handle writing a pixel to RAM
-            if (ram_cmdTrigger && ram_cmdReady) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
-                ram_cmdTrigger <= 0;
-
-                // If a pixel is in our overflow register, move it to `ram_cmdWriteData`
-                if (ramWordTrigger) begin
-                    ram_cmdWriteData <= ramWord;
-                    ram_cmdTrigger <= 1;
-                    ramWordTrigger <= 0;
-                    pix_pixelTrigger <= 1;
-                end
-            end
-            
-            // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
+            // =========== START: DEBUG: merely count the number of sampled pixels
             if (pix_pixelReady && pix_pixelTrigger) begin
-                // Store pixel in `ram_cmdWriteData` if it's available
-                if (!ram_cmdTrigger || ram_cmdReady) begin
-                    ram_cmdWriteData <= pix_pixel;
-                    ram_cmdTrigger <= 1;
-                    
-                // Otherwise store the pixel in our overflow register and stall
-                // reading more pixels until the RAM catches up
-                end else begin
-                    ramWord <= pix_pixel;
-                    ramWordTrigger <= 1;
-                    pix_pixelTrigger <= 0;
-                end
+                ram_cmdAddr <= ram_cmdAddr+1;
             end
-            
+
             if (pix_captureDone) begin
+                captureDone <= 1;
+            end
+
+            if (!pix_pixelReady && captureDone) begin
                 // led[3] <= !led[3];
 
                 debug_msgOut_type <= MsgType_PixCapture;
                 debug_msgOut_payloadLen <= 4;
                 state <= StatePixCapture+3;
             end
+            // =========== END: DEBUG
+            
+            
+            
+            // // Handle writing a pixel to RAM
+            // if (ram_cmdTrigger && ram_cmdReady) begin
+            //     ram_cmdAddr <= ram_cmdAddr+1;
+            //     ram_cmdTrigger <= 0;
+            //
+            //     // If a pixel is in our overflow register, move it to `ram_cmdWriteData`
+            //     if (ramWordTrigger) begin
+            //         ram_cmdWriteData <= ramWord;
+            //         ram_cmdTrigger <= 1;
+            //         ramWordTrigger <= 0;
+            //         pix_pixelTrigger <= 1;
+            //     end
+            // end
+            //
+            // // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
+            // if (pix_pixelReady && pix_pixelTrigger) begin
+            //     // Store pixel in `ram_cmdWriteData` if it's available
+            //     if (!ram_cmdTrigger || ram_cmdReady) begin
+            //         ram_cmdWriteData <= pix_pixel;
+            //         ram_cmdTrigger <= 1;
+            //
+            //     // Otherwise store the pixel in our overflow register and stall
+            //     // reading more pixels until the RAM catches up
+            //     end else begin
+            //         ramWord <= pix_pixel;
+            //         ramWordTrigger <= 1;
+            //         pix_pixelTrigger <= 0;
+            //     end
+            // end
+            //
+            // if (pix_captureDone) begin
+            //     // led[3] <= !led[3];
+            //
+            //     debug_msgOut_type <= MsgType_PixCapture;
+            //     debug_msgOut_payloadLen <= 4;
+            //     state <= StatePixCapture+3;
+            // end
         end
         
         StatePixCapture+3: begin
