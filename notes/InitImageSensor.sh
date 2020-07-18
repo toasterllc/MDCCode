@@ -24,6 +24,18 @@ sudo ./MDCDebugger pixreg16 0x302E=0x0004
 # Fastest = 0xFC10
 sudo ./MDCDebugger pixreg16 0x306E=0x9010
 
+# # Set the x-start address
+# # Default = 0x0006
+# sudo ./MDCDebugger pixreg16 0x3004=0x000e
+#
+# # Set the x-end address
+# # Default = 0x0905
+# sudo ./MDCDebugger pixreg16 0x3008=0x0900
+# 
+# # Set the y-end address
+# # Default = 0x058b
+# sudo ./MDCDebugger pixreg16 0x3006=0x007C
+
 # Implement "Recommended Default Register Changes and Sequencer"
 sudo ./MDCDebugger pixreg16 0x3ED2=0x0146
 sudo ./MDCDebugger pixreg16 0x3EDA=0x88BC
