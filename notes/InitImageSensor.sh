@@ -17,7 +17,7 @@ sudo ./MDCDebugger pixreg16 0x301A=0x10D8
 # Set pre_pll_clk_div=2
 # pre_pll_clk_div=2     ->  CLK_OP=98 MHz
 # pre_pll_clk_div=4     ->  CLK_OP=49 MHz
-sudo ./MDCDebugger pixreg16 0x302E=0x0002
+sudo ./MDCDebugger pixreg16 0x302E=0x0004
 
 # Set output slew rate
 # Default = 0x9010
