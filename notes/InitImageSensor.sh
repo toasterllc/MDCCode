@@ -20,9 +20,11 @@ sudo ./MDCDebugger pixreg16 0x301A=0x10D8
 sudo ./MDCDebugger pixreg16 0x302E=0x0004
 
 # Set output slew rate
-# Default = 0x9010
-# Fastest = 0xFC10
+# Slow              = 0x0010
+# Medium (default)  = 0x9010
+# Fast              = 0xFC10
 sudo ./MDCDebugger pixreg16 0x306E=0x9010
+# sudo ./MDCDebugger pixreg16 0x306E=0x4810
 
 # Set test_pattern_mode
 # 0: Normal operation (generate output data from pixel array)
@@ -33,16 +35,22 @@ sudo ./MDCDebugger pixreg16 0x306E=0x9010
 sudo ./MDCDebugger pixreg16 0x3070=0x0001
 
 # Set test_data_red
-sudo ./MDCDebugger pixreg16 0x3072=0xFFFF
+sudo ./MDCDebugger pixreg16 0x3072=0x0000
 
 # Set test_data_greenr
-sudo ./MDCDebugger pixreg16 0x3074=0xFFFF
+sudo ./MDCDebugger pixreg16 0x3074=0x0000
 
 # Set test_data_blue
-sudo ./MDCDebugger pixreg16 0x3076=0xFFFF
+sudo ./MDCDebugger pixreg16 0x3076=0x0000
 
 # Set test_data_greenb
-sudo ./MDCDebugger pixreg16 0x3078=0xFFFF
+sudo ./MDCDebugger pixreg16 0x3078=0x0000
+
+# Set row_speed
+# 0 cycle delay             = 0x0000
+# 1/2 cycle delay (default) = 0x0010
+# sudo ./MDCDebugger pixreg16 0x3028=0x0000
+sudo ./MDCDebugger pixreg16 0x3028=0x0010
 
 # # Set the x-start address
 # # Default = 0x0006
