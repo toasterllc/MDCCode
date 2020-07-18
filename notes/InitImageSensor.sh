@@ -24,6 +24,26 @@ sudo ./MDCDebugger pixreg16 0x302E=0x0004
 # Fastest = 0xFC10
 sudo ./MDCDebugger pixreg16 0x306E=0x9010
 
+# Set test_pattern_mode
+# 0: Normal operation (generate output data from pixel array)
+# 1: Solid color test pattern.
+# 2: Full color bar test pattern
+# 3: Fade-to-gray color bar test pattern
+# 256: Walking 1s test pattern (12 bit)
+sudo ./MDCDebugger pixreg16 0x3070=0x0001
+
+# Set test_data_red
+sudo ./MDCDebugger pixreg16 0x3072=0xFFFF
+
+# Set test_data_greenr
+sudo ./MDCDebugger pixreg16 0x3074=0xFFFF
+
+# Set test_data_blue
+sudo ./MDCDebugger pixreg16 0x3076=0xFFFF
+
+# Set test_data_greenb
+sudo ./MDCDebugger pixreg16 0x3078=0xFFFF
+
 # # Set the x-start address
 # # Default = 0x0006
 # sudo ./MDCDebugger pixreg16 0x3004=0x000e
