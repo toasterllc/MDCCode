@@ -1475,63 +1475,63 @@ module Top(
         StatePixCapture+2: begin
             // led[3] <= 1;
             
-            // =========== START: DEBUG: merely count the number of sampled pixels
-            if (pix_pixelReady && pix_pixelTrigger) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
-            end
-
-            if (pix_captureDone) begin
-                captureDone <= 1;
-            end
-
-            if (!pix_pixelReady && captureDone) begin
-                // led[3] <= !led[3];
-
-                debug_msgOut_type <= MsgType_PixCapture;
-                debug_msgOut_payloadLen <= 4;
-                state <= StatePixCapture+3;
-            end
-            // =========== END: DEBUG
-            
-            
-            
-            // // Handle writing a pixel to RAM
-            // if (ram_cmdTrigger && ram_cmdReady) begin
-            //     ram_cmdAddr <= ram_cmdAddr+1;
-            //     ram_cmdTrigger <= 0;
-            //
-            //     // If a pixel is in our overflow register, move it to `ram_cmdWriteData`
-            //     if (ramWordTrigger) begin
-            //         ram_cmdWriteData <= ramWord;
-            //         ram_cmdTrigger <= 1;
-            //         ramWordTrigger <= 0;
-            //         pix_pixelTrigger <= 1;
-            //     end
-            // end
-            //
-            // // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
+            // // =========== START: DEBUG: merely count the number of sampled pixels
             // if (pix_pixelReady && pix_pixelTrigger) begin
-            //     // Store pixel in `ram_cmdWriteData` if it's available
-            //     if (!ram_cmdTrigger || ram_cmdReady) begin
-            //         ram_cmdWriteData <= pix_pixel;
-            //         ram_cmdTrigger <= 1;
-            //
-            //     // Otherwise store the pixel in our overflow register and stall
-            //     // reading more pixels until the RAM catches up
-            //     end else begin
-            //         ramWord <= pix_pixel;
-            //         ramWordTrigger <= 1;
-            //         pix_pixelTrigger <= 0;
-            //     end
+            //     ram_cmdAddr <= ram_cmdAddr+1;
             // end
             //
             // if (pix_captureDone) begin
+            //     captureDone <= 1;
+            // end
+            //
+            // if (!pix_pixelReady && captureDone) begin
             //     // led[3] <= !led[3];
             //
             //     debug_msgOut_type <= MsgType_PixCapture;
             //     debug_msgOut_payloadLen <= 4;
             //     state <= StatePixCapture+3;
             // end
+            // // =========== END: DEBUG
+            
+            
+            
+            // Handle writing a pixel to RAM
+            if (ram_cmdTrigger && ram_cmdReady) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
+                ram_cmdTrigger <= 0;
+                
+                // If a pixel is in our overflow register, move it to `ram_cmdWriteData`
+                if (ramWordTrigger) begin
+                    ram_cmdWriteData <= ramWord;
+                    ram_cmdTrigger <= 1;
+                    ramWordTrigger <= 0;
+                    pix_pixelTrigger <= 1;
+                end
+            end
+            
+            // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
+            if (pix_pixelReady && pix_pixelTrigger) begin
+                // Store pixel in `ram_cmdWriteData` if it's available
+                if (!ram_cmdTrigger || ram_cmdReady) begin
+                    ram_cmdWriteData <= pix_pixel;
+                    ram_cmdTrigger <= 1;
+                
+                // Otherwise store the pixel in our overflow register and stall
+                // reading more pixels until the RAM catches up
+                end else begin
+                    ramWord <= pix_pixel;
+                    ramWordTrigger <= 1;
+                    pix_pixelTrigger <= 0;
+                end
+            end
+            
+            if (pix_captureDone) begin
+                // led[3] <= !led[3];
+                
+                debug_msgOut_type <= MsgType_PixCapture;
+                debug_msgOut_payloadLen <= 4;
+                state <= StatePixCapture+3;
+            end
         end
         
         StatePixCapture+3: begin
