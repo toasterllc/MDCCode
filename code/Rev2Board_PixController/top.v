@@ -496,9 +496,9 @@ module PixController #(
     // Debounce the `pix_fv`
     // For some reason, `pix_fv` rapidly transitions between 0<->1 several
     // times before settling on a new value.
-    wire frameValid = pix_fv;
+    wire frameValid;
     wire lineValid = pix_lv;
-    // Debouncer #(.Width(3)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
+    Debouncer #(.Width(3)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
     
     reg pixq_capture = 0;
     wire pixq_rclk = clk;
