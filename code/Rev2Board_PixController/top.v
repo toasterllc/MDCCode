@@ -493,12 +493,36 @@ module PixController #(
         endcase
     end
     
-    // Debounce the `pix_fv`
-    // For some reason, `pix_fv` rapidly transitions between 0<->1 several
-    // times before settling on a new value.
-    wire frameValid = pix_fv;
-    wire lineValid = pix_lv;
-    // Debouncer #(.Width(3)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    reg[11:0] pixelData = 0;
+    reg frameValid = 0;
+    reg lineValid = 0;
+    always @(posedge pix_dclk) begin
+        pixelData <= pix_d;
+        frameValid <= pix_fv;
+        lineValid <= pix_lv;
+    end
+    
+    // // Debounce the `pix_fv`
+    // // For some reason, `pix_fv` rapidly transitions between 0<->1 several
+    // // times before settling on a new value.
+    // wire frameValid = pix_fv;
+    // wire lineValid = pix_lv;
+    // // Debouncer #(.Width(3)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
     
     reg pixq_capture = 0;
     wire pixq_rclk = clk;
@@ -507,9 +531,9 @@ module PixController #(
     wire[15:0] pixq_readData;
     wire pixq_wclk = pix_dclk;
     // wire pixq_writeTrigger = pix_fv && pix_lv && pixq_capture;
-    wire pixq_writeTrigger = pixq_capture && pix_lv;
+    wire pixq_writeTrigger = pixq_capture && lineValid;
     // reg pixq_writeTrigger = 0;
-    wire[15:0] pixq_writeData = pix_d;
+    wire[15:0] pixq_writeData = pixelData;
     // reg[15:0] pixq_writeData = 0;
     wire pixq_writeOK;
     AFIFO #(.Width(16), .Size(256)) pixq(
