@@ -556,9 +556,13 @@ static void verifyMem(const Args& args, MDCDevice& device) {
                     uint16_t val;
                     memcpy(&val, msg.mem+i, sizeof(val));
                     if (lastVal) {
-                        uint16_t expected = (uint16_t)(*lastVal+1);
-                        if (val != expected) {
-                            fprintf(stderr, "Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+//                        uint16_t expected = (uint16_t)(*lastVal+1);
+//                        if (val != expected) {
+//                            fprintf(stderr, "Error: value mismatch: expected 0x%jx, got 0x%jx\n", (uintmax_t)expected, (uintmax_t)val);
+//                            errorCount++;
+//                        }
+                        if (val!=0 && val!=0xCAFE) {
+                            fprintf(stderr, "Error: value mismatch: got 0x%jx\n", (uintmax_t)val);
                             errorCount++;
                         }
                     }

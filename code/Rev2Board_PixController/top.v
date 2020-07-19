@@ -396,7 +396,7 @@ module PixController #(
     input wire          pixel_trigger,
     
     output reg          pix_rst_ = 0,
-    input wire          pix_dclk,
+    input wire          pix_dclk_,
     input wire[11:0]    pix_d,
     input wire          pix_fv,
     input wire          pix_lv,
@@ -504,9 +504,18 @@ module PixController #(
     
     
     
+    // wire[11:0] pix_d_delayed;
+    // genvar i;
+    // for (i=0; i<$size(pix_d_delayed); i=i+1) begin
+    //     Delay #(.Count(1)) pix_d_delay(.in(pix_d[i]), .out(pix_d_delayed[i]));
+    // end
     
     
     
+    // wire pix_dclk;
+    // Delay #(.Count(6)) pix_dclkDelay(.in(pix_dclk_), .out(pix_dclk));
+    
+    wire pix_dclk = pix_dclk_;
     
     reg[11:0] pixelData = 0;
     reg frameValid = 0;
@@ -546,6 +555,10 @@ module PixController #(
         .wd(pixq_writeData),
         .wok(pixq_writeOK)
     );
+    
+    // always @(posedge pix_dclk) begin
+    //     pixq_writeData <= pixq_writeData+1;
+    // end
     
     assign pixel[11:0] = pixq_readData[11:0];
     assign pixel_ready = pixq_readOK;
@@ -1076,7 +1089,7 @@ module Top(
         .pixel_trigger(pix_pixelTrigger),
         
         .pix_rst_(pix_rst_),
-        .pix_dclk(pix_dclk),
+        .pix_dclk_(pix_dclk),
         .pix_d(pix_d),
         .pix_fv(pix_fv),
         .pix_lv(pix_lv),
