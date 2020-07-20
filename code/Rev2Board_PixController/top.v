@@ -519,6 +519,7 @@ module PixController #(
     reg frameValid = 0;
     reg lineValid = 0;
     always @(posedge pix_dclk) begin
+        // pixelData <= pix_d_delayed;
         pixelData <= pix_d;
         frameValid <= pix_fv;
         lineValid <= pix_lv;
@@ -636,6 +637,11 @@ module PixController #(
         // Signal if lineValid=1 while frameValid=0
         if (pixq_capture && lineValid && !frameValid) begin
             led[1] <= 1;
+        end
+        
+        // Signal invalid pixel
+        if (pixq_capture && lineValid && pixelData!=12'hFFF) begin
+            led[2] <= 1;
         end
         // END:DEBUG
         
