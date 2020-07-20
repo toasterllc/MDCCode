@@ -401,7 +401,7 @@ module PixController #(
     input wire          pix_fv,
     input wire          pix_lv,
     
-    output reg[3:0]     led = 0 /* synthesis syn_keep=1 */
+    // output reg[3:0]     led = 0 /* synthesis syn_keep=1 */
     // output wire[3:0]     led
     
     // output wire         pix_sclk,
@@ -515,12 +515,13 @@ module PixController #(
     // wire pix_dclk;
     // Delay #(.Count(6)) pix_dclkDelay(.in(pix_dclk_), .out(pix_dclk));
     
-    reg[11:0] pixelData = 0;
+    reg[11:0] pixelData = 0 /* synthesis syn_keep=1 */;
     reg frameValid = 0;
     reg lineValid = 0;
     always @(posedge pix_dclk) begin
         // pixelData <= pix_d_delayed;
-        pixelData <= pix_d;
+        pixelData <= 12'hFFF;
+        // pixelData <= pix_d;
         frameValid <= pix_fv;
         lineValid <= pix_lv;
     end
@@ -544,7 +545,7 @@ module PixController #(
     wire[15:0] pixq_writeData = pixelData;
     // reg[15:0] pixq_writeData = 0;
     wire pixq_writeOK;
-    AFIFO #(.Width(16), .Size(256)) pixq(
+    AFIFO #(.Width(16), .Size(8)) pixq(
         .rclk(pixq_rclk),
         .r(pixq_readTrigger),
         .rd(pixq_readData),
@@ -587,7 +588,7 @@ module PixController #(
         case (pixState)
         // Init
         0: begin
-            led <= 0;
+            // led <= 0;
             pixState <= 1;
         end
         
@@ -631,17 +632,17 @@ module PixController #(
         // START:DEBUG
         // Signal fifo overflow
         if (pixq_capture && !pixq_writeOK) begin
-            led[0] <= 1;
+            // led[0] <= 1;
         end
         
         // Signal if lineValid=1 while frameValid=0
         if (pixq_capture && lineValid && !frameValid) begin
-            led[1] <= 1;
+            // led[1] <= 1;
         end
         
         // Signal invalid pixel
         if (pixq_capture && lineValid && pixelData!=12'hFFF) begin
-            led[2] <= 1;
+            // led[2] <= 1;
         end
         // END:DEBUG
         
@@ -944,7 +945,7 @@ endmodule
 
 module Top(
     input wire          clk12mhz,
-    output wire[3:0]    led,
+    output reg[3:0]     led = 0  /* synthesis syn_keep=1 */,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -1098,7 +1099,7 @@ module Top(
         .pix_fv(pix_fv),
         .pix_lv(pix_lv),
         
-        .led(led)
+        // .led(led)
     );
     
     
@@ -1225,6 +1226,7 @@ module Top(
         
         // Initialize the SDRAM
         StateInit: begin
+            led <= 0;
 `ifdef SIM
             state <= StateHandleMsg;
 `else
@@ -1552,6 +1554,10 @@ module Top(
             
             // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
             if (pix_pixelReady && pix_pixelTrigger) begin
+                if (pix_pixel != 12'hFFF) begin
+                    led[3] <= 1;
+                end
+                
                 // Store pixel in `ram_cmdWriteData` if it's available
                 if (!ram_cmdTrigger || ram_cmdReady) begin
                     ram_cmdWriteData <= pix_pixel;
