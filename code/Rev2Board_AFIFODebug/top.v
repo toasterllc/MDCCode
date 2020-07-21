@@ -44,6 +44,11 @@ module Top(
     reg writeTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[15:0] writeData = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[11:0] writeDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    
+    // // ======================
+    // // From ../AFIFO_cliff.v
+    // // WORKS
+    // // ======================
     // afifo #(.DSIZE(16), .ASIZE(8)) q(
     //     .i_wclk(writeClk),
     //     .i_wr(writeTrigger),
@@ -56,6 +61,10 @@ module Top(
     //     .o_rempty_(readDataReady)
     // );
     
+    // // ======================
+    // // From ../AFIFO_cliff2.v
+    // // BROKEN
+    // // ======================
     // wire readDataReady_;
     // assign readDataReady = !readDataReady_;
     // afifo2 #(.DSIZE(16), .ASIZE(8)) q(
@@ -69,7 +78,12 @@ module Top(
     //     .rdata(readData),
     //     .rempty(readDataReady_)
     // );
+
     
+    // ======================
+    // From ../AFIFO.v
+    // WORKS WITH MODIFICATION
+    // ======================
     AFIFO #(.Width(16), .Size(256)) q(
         .rclk(readClk),
         .r(readTrigger),
@@ -90,22 +104,38 @@ module Top(
         
         end else begin
             writeTrigger <= 1;
-            writeData <= 16'hFFFF;
+            // writeData <= 16'hFFFF;
+            writeData <= writeData+1'b1;
         end
     end
     
-    reg[15:0] readCounter = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    // reg[15:0] readCounter = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    reg[15:0] lastReadData = 0;
+    reg readInit = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     always @(posedge readClk) begin
         if (!(&readDelay)) begin
             readDelay <= readDelay+1;
             readTrigger <= 0;
             led <= 0;
+            readInit <= 0;
         
         end else begin
             readTrigger <= 1;
             
             if (readDataReady && readTrigger) begin
-                readCounter <= readCounter+1;
+                readInit <= 1;
+                lastReadData <= readData;
+                
+                if (readInit) begin
+                    // if (readData != 16'hFFFF) begin
+                    //     led[0] <= 1;
+                    // end
+                    
+                    if (readData != (lastReadData+1'b1)) begin
+                        led[0] <= 1;
+                    end
+                end
+                // readCounter <= readCounter+1;
                 
                 // if (!led) begin
                 //     if (readData != 16'hFFFF) begin
@@ -125,33 +155,33 @@ module Top(
                 
                 
                 
-                if (!led[2:0]) begin
-                    if (readData == 16'h0000) begin
-                        $display("GOT DATA 0000");
-                        // led <= readCounter;
-                        led[0] <= 1;
-                    end else if (readData == 16'hFFFF) begin
-                        // $display("GOT DATA FFFF");
-                        led[3] <= 1;
-                    end else begin
-                        $display("GOT DATA XXXX");
-                        
-                        // if (&(readData[3:0]))
-                        //     led[0] <= 1;
-                        //
-                        // if (&(readData[7:4]))
-                        //     led[1] <= 1;
-                        //
-                        // if (&(readData[11:8]))
-                        //     led[2] <= 1;
-                        //
-                        // if (&(readData[15:12]))
-                        //     led[3] <= 1;
-                        led[1] <= 1;
-                        
-                        // led <= readCounter;
-                    end
-                end
+                // if (!led[2:0]) begin
+                //     if (readData == 16'h0000) begin
+                //         $display("GOT DATA 0000");
+                //         // led <= readCounter;
+                //         led[0] <= 1;
+                //     end else if (readData == 16'hFFFF) begin
+                //         // $display("GOT DATA FFFF");
+                //         led[3] <= 1;
+                //     end else begin
+                //         $display("GOT DATA XXXX");
+                //
+                //         // if (&(readData[3:0]))
+                //         //     led[0] <= 1;
+                //         //
+                //         // if (&(readData[7:4]))
+                //         //     led[1] <= 1;
+                //         //
+                //         // if (&(readData[11:8]))
+                //         //     led[2] <= 1;
+                //         //
+                //         // if (&(readData[15:12]))
+                //         //     led[3] <= 1;
+                //         led[1] <= 1;
+                //
+                //         // led <= readCounter;
+                //     end
+                // end
             end
         end
     end
@@ -174,7 +204,7 @@ module Top(
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
 
-        #1000000;
+        #10000000;
         $finish;
     end
 `endif
