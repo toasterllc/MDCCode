@@ -37,7 +37,7 @@ module AFIFO #(
     
     reg[1:0] rokReg = 0;
     always @(posedge rclk, negedge arok)
-        // TODO: ensure that before the first clock, rok==true so outside entities don't think they can read
+        // TODO: ensure that before the first clock, rok==false so outside entities don't think they can read
         if (!arok) rokReg <= 2'b00;
         else rokReg <= (rokReg<<1)|1'b1;
     
