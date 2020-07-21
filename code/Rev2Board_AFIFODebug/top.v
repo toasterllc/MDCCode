@@ -1,6 +1,7 @@
 `include "../ClockGen.v"
 `include "../AFIFO.v"
 // `include "../AFIFO_cliff.v"
+// `include "../AFIFO_cliff2.v"
 
 `timescale 1ns/1ps
 
@@ -55,7 +56,21 @@ module Top(
     //     .o_rempty_(readDataReady)
     // );
     
-    AFIFO #(.Width(16), .Size(238)) q(
+    // wire readDataReady_;
+    // assign readDataReady = !readDataReady_;
+    // afifo2 #(.DSIZE(16), .ASIZE(8)) q(
+    //     .wclk(writeClk),
+    //     .winc(writeTrigger),
+    //     .wdata(writeData),
+    //     .wfull(),
+    //
+    //     .rclk(readClk),
+    //     .rinc(readTrigger),
+    //     .rdata(readData),
+    //     .rempty(readDataReady_)
+    // );
+    
+    AFIFO #(.Width(16), .Size(256)) q(
         .rclk(readClk),
         .r(readTrigger),
         .rd(readData),
@@ -154,15 +169,14 @@ module Top(
     //         #42;
     //     end
     // end
-    
-    // initial begin
-    //     // $dumpfile("top.vcd");
-    //     // $dumpvars(0, Top);
-    //
-    //     // #10000000;
-    //     // $finish;
-    // end
-    
+
+    initial begin
+        $dumpfile("top.vcd");
+        $dumpvars(0, Top);
+
+        #1000000;
+        $finish;
+    end
 `endif
    
     
