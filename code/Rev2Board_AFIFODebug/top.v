@@ -3,124 +3,86 @@
 
 `timescale 1ns/1ps
 
-
-
-
-module PixController #(
-    parameter ClkFreq = 12000000,       // `clk` frequency
-    parameter ExtClkFreq = 12000000     // Image sensor's external clock frequency
-)(
-    input wire          clk,
-    output wire[11:0]   pixel,
-    output wire         pixel_ready,
-    input wire          pixel_trigger,
-    input wire          pix_dclk
-);
-    reg[11:0] pixelData = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    reg frameValid = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    reg lineValid = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    always @(posedge pix_dclk) begin
-        pixelData <= 12'hFFF;
-        frameValid <= 1;
-        lineValid <= 1;
-    end
-    
-    wire pixq_rclk = clk;
-    wire pixq_readOK;
-    wire pixq_readTrigger = pixel_trigger;
-    wire[15:0] pixq_readData;
-    wire pixq_wclk = pix_dclk;
-    wire pixq_writeTrigger = frameValid && lineValid;
-    wire[15:0] pixq_writeData = pixelData;
-    wire pixq_writeOK;
-    AFIFO #(.Width(16), .Size(256)) pixq(
-        .rclk(pixq_rclk),
-        .r(pixq_readTrigger),
-        .rd(pixq_readData),
-        .rok(pixq_readOK),
-        .wclk(pixq_wclk),
-        .w(pixq_writeTrigger),
-        .wd(pixq_writeData),
-        .wok(pixq_writeOK)
-    );
-    
-    assign pixel[11:0] = pixq_readData[11:0];
-    assign pixel_ready = pixq_readOK;
-endmodule
-
-
-
 module Top(
     input wire          clk12mhz,
     output reg[3:0]     led = 0 /* synthesis syn_keep=1 */
 );
     // ====================
+    // Clock PLL (48.75 MHz)
+    // ====================
+    localparam WriteClkFreq = 48750000;
+    wire writeClk;
+    ClockGen #(
+        .FREQ(WriteClkFreq),
+        .DIVR(0),
+        .DIVF(64),
+        .DIVQ(4),
+        .FILTER_RANGE(1)
+    ) writeClockGen(.clk12mhz(clk12mhz), .clk(writeClk));
+    
+    
+    // ====================
     // Clock PLL (81 MHz)
     // ====================
-    localparam ClkFreq = 81000000;
-    wire clk;
+    localparam ReadClkFreq = 81000000;
+    wire readClk;
     ClockGen #(
-        .FREQ(ClkFreq),
+        .FREQ(ReadClkFreq),
         .DIVR(0),
         .DIVF(53),
         .DIVQ(3),
         .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
+    ) readClockGen(.clk12mhz(clk12mhz), .clk(readClk));
     
+    reg readTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    wire[15:0] readData;
+    wire readDataReady;
+    reg[11:0] readDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     
-    
-    
-    
-    
-    
-    
-    // ====================
-    // Pix Controller
-    // ====================
-    wire[11:0] pix_pixel;
-    wire pix_pixelReady;
-    reg pix_pixelTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    PixController #(
-        .ExtClkFreq(12000000),
-        .ClkFreq(ClkFreq)
-    ) pixController(
-        .clk(clk),
+    reg writeTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    reg[15:0] writeData = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    reg[11:0] writeDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    AFIFO #(.Width(16), .Size(256)) pixq(
+        .rclk(readClk),
+        .r(readTrigger),
+        .rd(readData),
+        .rok(readDataReady),
         
-        .pixel(pix_pixel),
-        .pixel_ready(pix_pixelReady),
-        .pixel_trigger(pix_pixelTrigger),
-        .pix_dclk(clk12mhz)
-        
-        // .led(led)
+        .wclk(writeClk),
+        .w(writeTrigger),
+        .wd(writeData),
+        .wok()
     );
     
-    reg[11:0] delay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    always @(posedge clk) begin
-        if (!(&delay)) begin
-            delay <= delay+1;
+    always @(posedge writeClk) begin
+        if (!(&writeDelay)) begin
+            writeDelay <= writeDelay+1;
+            writeTrigger <= 0;
+            writeData <= 0;
+        
+        end else begin
+            writeTrigger <= 1;
+            writeData <= 16'hFFFF;
+        end
+    end
+    
+    always @(posedge readClk) begin
+        if (!(&readDelay)) begin
+            readDelay <= readDelay+1;
+            readTrigger <= 0;
             led <= 0;
         
         end else begin
-            pix_pixelTrigger <= 1;
-            // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
-            if (pix_pixelReady && pix_pixelTrigger) begin
-                
-                if (pix_pixel == 12'h000) begin
-                    led <= led+1'b1;
+            readTrigger <= 1;
+            
+            if (readData && readTrigger) begin
+                if (readData == 16'h0000) begin
+                    led[0] <= 1;
+                end else if (readData == 16'hFFFF) begin
+                    led[1] <= 1;
+                end else begin
+                    led[2] <= 1;
                 end
-                
-                // if (pix_pixel == 12'h000) begin
-                //     $display("GOT 000");
-                //     led[0] <= 1;
-                //
-                // end else if (pix_pixel == 12'hFFF) begin
-                //     // $display("GOT 111");
-                //     led[1] <= 1;
-                //
-                // end else begin
-                //     $display("GOT ???");
-                //     led[2] <= 1;
-                // end
             end
         end
     end
