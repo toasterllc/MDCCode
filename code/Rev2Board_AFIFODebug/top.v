@@ -5,32 +5,32 @@
 
 module Top(
     input wire          clk12mhz,
-    output reg[3:0]     led = 0 /* synthesis syn_keep=1 */
+    output reg[3:0]     led = 0 /* synthesis syn_preserve=1 syn_keep=1 */
 );
     // ====================
-    // Clock PLL (48.75 MHz)
+    // Clock PLL (33 MHz)
     // ====================
-    localparam WriteClkFreq = 48750000;
+    localparam WriteClkFreq = 33000000;
     wire writeClk;
     ClockGen #(
         .FREQ(WriteClkFreq),
         .DIVR(0),
-        .DIVF(64),
-        .DIVQ(4),
+        .DIVF(87),
+        .DIVQ(5),
         .FILTER_RANGE(1)
     ) writeClockGen(.clk12mhz(clk12mhz), .clk(writeClk));
     
     
     // ====================
-    // Clock PLL (81 MHz)
+    // Clock PLL (48 MHz)
     // ====================
-    localparam ReadClkFreq = 81000000;
+    localparam ReadClkFreq = 42750000;
     wire readClk;
     ClockGen #(
         .FREQ(ReadClkFreq),
         .DIVR(0),
-        .DIVF(53),
-        .DIVQ(3),
+        .DIVF(56),
+        .DIVQ(4),
         .FILTER_RANGE(1)
     ) readClockGen(.clk12mhz(clk12mhz), .clk(readClk));
     
@@ -76,32 +76,50 @@ module Top(
         end else begin
             readTrigger <= 1;
             
-            if (readData && readTrigger) begin
+            if (readDataReady && readTrigger) begin
                 readCounter <= readCounter+1;
+                
+                // if (!led) begin
+                //     if (readData != 16'hFFFF) begin
+                //         if (&(readData[3:0]))
+                //             led[0] <= 1;
+                //
+                //         if (&(readData[7:4]))
+                //             led[1] <= 1;
+                //
+                //         if (&(readData[11:8]))
+                //             led[2] <= 1;
+                //
+                //         if (&(readData[15:12]))
+                //             led[3] <= 1;
+                //     end
+                // end
+                
+                
                 
                 if (!led) begin
                     if (readData == 16'h0000) begin
                         $display("GOT DATA 0000");
                         // led <= readCounter;
-                        // led[0] <= 1;
+                        led[0] <= 1;
                     end else if (readData == 16'hFFFF) begin
                         // $display("GOT DATA FFFF");
                         // led[1] <= 1;
                     end else begin
                         $display("GOT DATA XXXX");
                         
-                        if (&readData[3:0])
-                            led[0] <= 1;
-                        
-                        if (&readData[7:4])
-                            led[1] <= 1;
-                        
-                        if (&readData[11:8])
-                            led[2] <= 1;
-                        
-                        if (&readData[15:12])
-                            led[3] <= 1;
-
+                        // if (&(readData[3:0]))
+                        //     led[0] <= 1;
+                        //
+                        // if (&(readData[7:4]))
+                        //     led[1] <= 1;
+                        //
+                        // if (&(readData[11:8]))
+                        //     led[2] <= 1;
+                        //
+                        // if (&(readData[15:12]))
+                        //     led[3] <= 1;
+                        led[2] <= 1;
                         
                         // led <= readCounter;
                     end
