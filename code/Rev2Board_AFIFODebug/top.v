@@ -1,5 +1,6 @@
 `include "../ClockGen.v"
 `include "../AFIFO.v"
+// `include "../AFIFO_cliff.v"
 
 `timescale 1ns/1ps
 
@@ -37,17 +38,29 @@ module Top(
     reg readTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     wire[15:0] readData;
     wire readDataReady;
-    reg[9:0] readDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    reg[10:0] readDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     
     reg writeTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[15:0] writeData = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[11:0] writeDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    AFIFO #(.Width(16), .Size(128)) pixq(
+    // afifo #(.DSIZE(16), .ASIZE(8)) q(
+    //     .i_wclk(writeClk),
+    //     .i_wr(writeTrigger),
+    //     .i_wdata(writeData),
+    //     .o_wfull(),
+    //
+    //     .i_rclk(readClk),
+    //     .i_rd(readTrigger),
+    //     .o_rdata(readData),
+    //     .o_rempty_(readDataReady)
+    // );
+    
+    AFIFO #(.Width(16), .Size(238)) q(
         .rclk(readClk),
         .r(readTrigger),
         .rd(readData),
         .rok(readDataReady),
-        
+
         .wclk(writeClk),
         .w(writeTrigger),
         .wd(writeData),
@@ -97,14 +110,14 @@ module Top(
                 
                 
                 
-                if (!led) begin
+                if (!led[2:0]) begin
                     if (readData == 16'h0000) begin
                         $display("GOT DATA 0000");
                         // led <= readCounter;
                         led[0] <= 1;
                     end else if (readData == 16'hFFFF) begin
                         // $display("GOT DATA FFFF");
-                        // led[1] <= 1;
+                        led[3] <= 1;
                     end else begin
                         $display("GOT DATA XXXX");
                         
@@ -119,7 +132,7 @@ module Top(
                         //
                         // if (&(readData[15:12]))
                         //     led[3] <= 1;
-                        led[2] <= 1;
+                        led[1] <= 1;
                         
                         // led <= readCounter;
                     end
