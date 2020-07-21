@@ -46,18 +46,18 @@ module async_cmp(aempty_n, afull_n, wptr, rptr);
     parameter N = ADDRSIZE-1;
     output aempty_n, afull_n;
     input [N:0] wptr, rptr;
-    reg direction = 0;
+    reg dir = 0;
     wire dirset = (wptr[N]^rptr[N-1]) & ~(wptr[N-1]^rptr[N]);
     wire dirclr = (~(wptr[N]^rptr[N-1]) & (wptr[N-1]^rptr[N]));
     // always @(posedge high or negedge dirset_n or negedge dirclr_n)
-    //     if (!dirclr_n) direction <= 1'b0;
-    //     else if (!dirset_n) direction <= 1'b1;
-    //     else direction <= high;
+    //     if (!dirclr_n) dir <= 1'b0;
+    //     else if (!dirset_n) dir <= 1'b1;
+    //     else dir <= high;
     always @(posedge dirclr, posedge dirset)
-        if (dirclr) direction <= 1'b0;
-        else direction <= 1'b1;
-    assign aempty_n = ~((wptr == rptr) && !direction);
-    assign afull_n = ~((wptr == rptr) && direction);
+        if (dirclr) dir <= 1'b0;
+        else dir <= 1'b1;
+    assign aempty_n = ~((wptr == rptr) && !dir);
+    assign afull_n = ~((wptr == rptr) && dir);
 endmodule
 
 
@@ -68,20 +68,20 @@ endmodule
 //     output aempty_n, afull_n;
 //     input [N:0] wptr, rptr;
 //     input wrst_n;
-//     reg direction;
+//     reg dir;
 //
 //     wire high = 1'b1;
 //     wire dirset_n = ~( (wptr[N]^rptr[N-1]) & ~(wptr[N-1]^rptr[N]));
 //     wire dirclr_n = ~((~(wptr[N]^rptr[N-1]) & (wptr[N-1]^rptr[N])) | ~wrst_n);
 //     // always @(posedge high or negedge dirset_n or negedge dirclr_n)
-//     //     if (!dirclr_n) direction <= 1'b0;
-//     //     else if (!dirset_n) direction <= 1'b1;
-//     //     else direction <= high;
+//     //     if (!dirclr_n) dir <= 1'b0;
+//     //     else if (!dirset_n) dir <= 1'b1;
+//     //     else dir <= high;
 //     always @(negedge dirset_n or negedge dirclr_n)
-//         if (!dirclr_n) direction <= 1'b0;
-//         else direction <= 1'b1;
-//     assign aempty_n = ~((wptr == rptr) && !direction);
-//     assign afull_n = ~((wptr == rptr) && direction);
+//         if (!dirclr_n) dir <= 1'b0;
+//         else dir <= 1'b1;
+//     assign aempty_n = ~((wptr == rptr) && !dir);
+//     assign afull_n = ~((wptr == rptr) && dir);
 // endmodule
 
 
@@ -91,19 +91,19 @@ endmodule
 //     parameter N = ADDRSIZE-1;
 //     output aempty_n, afull_n;
 //     input [N:0] wptr, rptr;
-//     reg direction;
+//     reg dir;
 //
 //     wire dirset = (wptr[N]^rptr[N-1]) & ~(wptr[N-1]^rptr[N]);
 //     wire dirclr = (~(wptr[N]^rptr[N-1]) & (wptr[N-1]^rptr[N]));
 //     always @(posedge dirclr or posedge dirset)
-//         if (dirclr) direction <= 1'b0;
-//         else direction <= 1'b1;
+//         if (dirclr) dir <= 1'b0;
+//         else dir <= 1'b1;
 //
 //     //always @(negedge dirset_n or negedge dirclr_n)
-//     //if (!dirclr_n) direction <= 1'b0;
-//     //else direction <= 1'b1;
-//     assign aempty_n = ~((wptr == rptr) && !direction);
-//     assign afull_n = ~((wptr == rptr) && direction);
+//     //if (!dirclr_n) dir <= 1'b0;
+//     //else dir <= 1'b1;
+//     assign aempty_n = ~((wptr == rptr) && !dir);
+//     assign afull_n = ~((wptr == rptr) && dir);
 // endmodule
 
 
