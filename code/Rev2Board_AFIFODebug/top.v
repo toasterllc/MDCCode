@@ -37,12 +37,12 @@ module Top(
     reg readTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     wire[15:0] readData;
     wire readDataReady;
-    reg[11:0] readDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    reg[9:0] readDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     
     reg writeTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[15:0] writeData = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[11:0] writeDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    AFIFO #(.Width(16), .Size(256)) pixq(
+    AFIFO #(.Width(16), .Size(128)) pixq(
         .rclk(readClk),
         .r(readTrigger),
         .rd(readData),
@@ -66,6 +66,7 @@ module Top(
         end
     end
     
+    reg[15:0] readCounter = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     always @(posedge readClk) begin
         if (!(&readDelay)) begin
             readDelay <= readDelay+1;
@@ -76,35 +77,60 @@ module Top(
             readTrigger <= 1;
             
             if (readData && readTrigger) begin
-                if (readData == 16'h0000) begin
-                    led[0] <= 1;
-                end else if (readData == 16'hFFFF) begin
-                    led[1] <= 1;
-                end else begin
-                    led[2] <= 1;
+                readCounter <= readCounter+1;
+                
+                if (!led) begin
+                    if (readData == 16'h0000) begin
+                        $display("GOT DATA 0000");
+                        // led <= readCounter;
+                        // led[0] <= 1;
+                    end else if (readData == 16'hFFFF) begin
+                        // $display("GOT DATA FFFF");
+                        // led[1] <= 1;
+                    end else begin
+                        $display("GOT DATA XXXX");
+                        
+                        if (&readData[3:0])
+                            led[0] <= 1;
+                        
+                        if (&readData[7:4])
+                            led[1] <= 1;
+                        
+                        if (&readData[11:8])
+                            led[2] <= 1;
+                        
+                        if (&readData[15:12])
+                            led[3] <= 1;
+
+                        
+                        // led <= readCounter;
+                    end
                 end
             end
         end
     end
     
 `ifdef SIM
-    reg sim_clk12mhz = 0;
-    assign clk12mhz = sim_clk12mhz;
+    // reg sim_clk12mhz = 0;
+    // assign clk12mhz = sim_clk12mhz;
+    //
+    // initial begin
+    //     forever begin
+    //         #($urandom % 42);
+    //         sim_clk12mhz = 0;
+    //         #42;
+    //         sim_clk12mhz = 1;
+    //         #42;
+    //     end
+    // end
     
-    initial begin
-        forever begin
-            #($urandom % 42);
-            sim_clk12mhz = 0;
-            #42;
-            sim_clk12mhz = 1;
-            #42;
-        end
-    end
-    
-    initial begin
-        $dumpfile("top.vcd");
-        $dumpvars(0, Top);
-    end    
+    // initial begin
+    //     // $dumpfile("top.vcd");
+    //     // $dumpvars(0, Top);
+    //
+    //     // #10000000;
+    //     // $finish;
+    // end
     
 `endif
    
