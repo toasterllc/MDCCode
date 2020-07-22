@@ -1,6 +1,6 @@
 `include "../ClockGen.v"
-`include "../AFIFO.v"
-// `include "../AFIFO_cliff.v"
+// `include "../AFIFO.v"
+`include "../AFIFO_cliff.v"
 // `include "../AFIFO_cliff2.v"
 
 `timescale 1ns/1ps
@@ -154,23 +154,23 @@ module Top(
     reg[11:0] writeDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     wire writeOK;
     
-    // // ======================
-    // // From ../AFIFO_cliff.v
-    // // WORKS
-    // // ======================
-    // wire writeOK_;
-    // assign writeOK = !writeOK_;
-    // afifo #(.DSIZE(16), .ASIZE(8)) q(
-    //     .i_wclk(writeClk),
-    //     .i_wr(writeTrigger),
-    //     .i_wdata(writeData),
-    //     .o_wfull(writeOK_),
-    //
-    //     .i_rclk(readClk),
-    //     .i_rd(readTrigger),
-    //     .o_rdata(readData),
-    //     .o_rempty_(readDataReady)
-    // );
+    // ======================
+    // From ../AFIFO_cliff.v
+    // WORKS
+    // ======================
+    wire writeOK_;
+    assign writeOK = !writeOK_;
+    afifo #(.DSIZE(16), .ASIZE(8)) q(
+        .i_wclk(writeClk),
+        .i_wr(writeTrigger),
+        .i_wdata(writeData),
+        .o_wfull(writeOK_),
+
+        .i_rclk(readClk),
+        .i_rd(readTrigger),
+        .o_rdata(readData),
+        .o_rempty_(readDataReady)
+    );
     
     // // ======================
     // // From ../AFIFO_cliff2.v
@@ -191,21 +191,21 @@ module Top(
     // );
     
     
-    // ======================
-    // From ../AFIFO.v
-    // WORKS WITH MODIFICATION
-    // ======================
-    AFIFO #(.Width(16), .Size(256)) q(
-        .rclk(readClk),
-        .rtrigger(readTrigger),
-        .rdata(readData),
-        .rok(readDataReady),
-
-        .wclk(writeClk),
-        .wtrigger(writeTrigger),
-        .wdata(writeData),
-        .wok(writeOK)
-    );
+    // // ======================
+    // // From ../AFIFO.v
+    // // WORKS WITH MODIFICATION
+    // // ======================
+    // AFIFO #(.Width(16), .Size(256)) q(
+    //     .rclk(readClk),
+    //     .rtrigger(readTrigger),
+    //     .rdata(readData),
+    //     .rok(readDataReady),
+    //
+    //     .wclk(writeClk),
+    //     .wtrigger(writeTrigger),
+    //     .wdata(writeData),
+    //     .wok(writeOK)
+    // );
     
     always @(posedge writeClk) begin
         if (!(&writeDelay)) begin
