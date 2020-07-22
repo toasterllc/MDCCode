@@ -14,7 +14,7 @@ module AFIFO #(
     input wire[Width-1:0] wdata,    // Write data
     output wire wok                 // Write OK (space available -- not full)
 );
-    localparam N = $clog2(Size)-1;
+    localparam N = $clog2(Size);
     reg[Width-1:0] mem[Size-1:0];
     
     // ====================
@@ -42,7 +42,7 @@ module AFIFO #(
         if (!arok) rokReg <= 2'b00;
         else rokReg <= (rokReg<<1)|1'b1;
     
-    assign rdata = mem[rbaddr];
+    assign rdata = mem[rbaddr[N-1:0]];
     assign rok = rokReg[1];
     
     // ====================
@@ -53,7 +53,7 @@ module AFIFO #(
     always @(posedge wclk) begin
         wgaddrDelayed <= wgaddr;
         if (wtrigger & wok) begin
-            mem[wbaddr] <= wdata;
+            mem[wbaddr[N-1:0]] <= wdata;
             wbaddr <= wbaddrNext;
             wgaddr <= (wbaddrNext>>1)^wbaddrNext;
         end
@@ -66,41 +66,41 @@ module AFIFO #(
     
     assign wok = !wokReg_[1];
     
-    // // ====================
-    // // Async signal generation
-    // // ====================
-    // wire rempty = (rgaddr == wgaddrDelayed);
-    // wire wfull = (wgaddr == {~rgaddrDelayed[N:N-1], rgaddrDelayed[N-2:0]});
-    //
-    // wire arok = !rempty; // Read OK == !empty
-    // wire awok = !wfull; // Write OK == !full
+    // ====================
+    // Async signal generation
+    // ====================
+    wire rempty = (rgaddr == wgaddrDelayed);
+    wire wfull = (wgaddr == {~rgaddrDelayed[N:N-1], rgaddrDelayed[N-2:0]});
     
-    reg dir = 0;
-    wire arok = (rgaddr!=wgaddrDelayed) || dir; // Read OK == not empty
-    wire awok = (rgaddrDelayed!=wgaddr) || !dir; // Write OK == not full
-
-    // ICESTORM: WORKS
-    // ICECUBE: WORKS
-    wire dirclr = (rgaddrDelayed[N]!=wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]==wgaddrDelayed[N]);
-    wire dirset = (rgaddrDelayed[N]==wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]!=wgaddrDelayed[N]);
-
-    // // ICESTORM: WORKS
+    wire arok = !rempty; // Read OK == !empty
+    wire awok = !wfull; // Write OK == !full
+    
+    // reg dir = 0;
+    // wire arok = (rgaddr!=wgaddrDelayed) || dir; // Read OK == not empty
+    // wire awok = (rgaddrDelayed!=wgaddr) || !dir; // Write OK == not full
+    //
+    // // ICESTORM: USED TO WORK, NOW FAILS (WFAST, RSLOW)
     // // ICECUBE: WORKS
-    // wire dirclr = (rgaddr[N]!=wgaddrDelayed[N-1]) && (rgaddr[N-1]==wgaddrDelayed[N]);
-    // wire dirset = (rgaddrDelayed[N]==wgaddr[N-1]) && (rgaddrDelayed[N-1]!=wgaddr[N]);
-
-    // // ICESTORM: FAILS (WFAST, RSLOW)
-    // // ICECUBE: WORKS
-    // wire dirclr = (rgaddrDelayed[N]!=wgaddr[N-1]) && (rgaddrDelayed[N-1]==wgaddr[N]);
-    // wire dirset = (rgaddr[N]==wgaddrDelayed[N-1]) && (rgaddr[N-1]!=wgaddrDelayed[N]);
-
-    // // ICESTORM: FAILS (WFAST, RSLOW)
-    // // ICECUBE: WORKS
-    // wire dirclr = (rgaddr[N]!=wgaddr[N-1]) && (rgaddr[N-1]==wgaddr[N]);
-    // wire dirset = (rgaddr[N]==wgaddr[N-1]) && (rgaddr[N-1]!=wgaddr[N]);
-
-    always @(posedge dirclr, posedge dirset) begin
-        if (dirclr) dir <= 0;
-        else dir <= 1;
-    end
+    // wire dirclr = (rgaddrDelayed[N]!=wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]==wgaddrDelayed[N]);
+    // wire dirset = (rgaddrDelayed[N]==wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]!=wgaddrDelayed[N]);
+    //
+    // // // ICESTORM: WORKS
+    // // // ICECUBE: WORKS
+    // // wire dirclr = (rgaddr[N]!=wgaddrDelayed[N-1]) && (rgaddr[N-1]==wgaddrDelayed[N]);
+    // // wire dirset = (rgaddrDelayed[N]==wgaddr[N-1]) && (rgaddrDelayed[N-1]!=wgaddr[N]);
+    //
+    // // // ICESTORM: FAILS (WFAST, RSLOW)
+    // // // ICECUBE: WORKS
+    // // wire dirclr = (rgaddrDelayed[N]!=wgaddr[N-1]) && (rgaddrDelayed[N-1]==wgaddr[N]);
+    // // wire dirset = (rgaddr[N]==wgaddrDelayed[N-1]) && (rgaddr[N-1]!=wgaddrDelayed[N]);
+    //
+    // // // ICESTORM: FAILS (WFAST, RSLOW)
+    // // // ICECUBE: WORKS
+    // // wire dirclr = (rgaddr[N]!=wgaddr[N-1]) && (rgaddr[N-1]==wgaddr[N]);
+    // // wire dirset = (rgaddr[N]==wgaddr[N-1]) && (rgaddr[N-1]!=wgaddr[N]);
+    //
+    // always @(posedge dirclr, posedge dirset) begin
+    //     if (dirclr) dir <= 0;
+    //     else dir <= 1;
+    // end
 endmodule
