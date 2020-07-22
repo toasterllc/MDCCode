@@ -38,8 +38,8 @@ module AFIFO #(
     end
     
     reg[1:0] rokReg = 0;
-    always @(posedge rclk, negedge asyncReadOK)
-        if (!asyncReadOK) rokReg <= 2'b00;
+    always @(posedge rclk, negedge arok)
+        if (!arok) rokReg <= 2'b00;
         else rokReg <= (rokReg<<1)|1'b1;
     
     assign rdata = mem[rbaddr];
@@ -60,8 +60,8 @@ module AFIFO #(
     end
     
     reg[1:0] wokReg_ = 0; // Inverted logic so we come out of reset with wok==true
-    always @(posedge wclk, negedge asyncWriteOK)
-        if (!asyncWriteOK) wokReg_ <= 2'b11;
+    always @(posedge wclk, negedge awok)
+        if (!awok) wokReg_ <= 2'b11;
         else wokReg_ <= (wokReg_<<1)|1'b0;
     
     assign wok = !wokReg_[1];
@@ -69,16 +69,20 @@ module AFIFO #(
     // ====================
     // Async signal generation
     // ====================
-    wire rempty = (rgaddr == wgaddrDelayed);
-	wire wfull = (wgaddr == {~rgaddrDelayed[N:N-1], rgaddrDelayed[N-2:0]});
+    // wire rempty = (rgaddr == wgaddrDelayed);
+    // wire wfull = (wgaddr == {~rgaddrDelayed[N:N-1], rgaddrDelayed[N-2:0]});
+    //
+    // wire arok = !rempty; // Read OK == !empty
+    // wire awok = !wfull; // Write OK == !full
     
-    wire asyncReadOK = !rempty; // Read OK == !empty
-    wire asyncWriteOK = !wfull; // Write OK == !full
+    reg dir = 0;
+    wire arok = (rgaddr!=wgaddrDelayed) || dir; // Read OK == not empty
+    wire awok = (rgaddrDelayed!=wgaddr) || !dir; // Write OK == not full
     
-    // // ICESTORM: WORKS
-    // // ICECUBE: WORKS
-    // wire dirclr = (rgaddrDelayed[N]!=wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]==wgaddrDelayed[N]);
-    // wire dirset = (rgaddrDelayed[N]==wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]!=wgaddrDelayed[N]);
+    // ICESTORM: WORKS
+    // ICECUBE: WORKS
+    wire dirclr = (rgaddrDelayed[N]!=wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]==wgaddrDelayed[N]);
+    wire dirset = (rgaddrDelayed[N]==wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]!=wgaddrDelayed[N]);
     
     // // ICESTORM: WORKS
     // // ICECUBE: WORKS
@@ -95,22 +99,8 @@ module AFIFO #(
     // wire dirclr = (rgaddr[N]!=wgaddr[N-1]) && (rgaddr[N-1]==wgaddr[N]);
     // wire dirset = (rgaddr[N]==wgaddr[N-1]) && (rgaddr[N-1]!=wgaddr[N]);
 
-    // dirclr
-    // R: 11  10  01  00
-    // W: 10  00  11  01
-
-
-
-    // always @(posedge dirclr, posedge dirset)
-    //     if (dirclr) dir <= 0;
-    //     else dir <= 1;
-    
-    
-    // wire dirset_n = ~( (wgaddr[N]^rgaddr[N-1]) & ~(wgaddr[N-1]^rgaddr[N]));
-    // wire dirclr_n = ~((~(wgaddr[N]^rgaddr[N-1]) & (wgaddr[N-1]^rgaddr[N])));
-    // // wire high = 1'b1;
-    //
-    // always @(negedge dirset_n or negedge dirclr_n)
-    //     if (!dirclr_n) dir <= 0;
-    //     else dir <= 1;
+    always @(posedge dirclr, posedge dirset) begin
+        if (dirclr) dir <= 0;
+        else dir <= 1;
+    end
 endmodule
