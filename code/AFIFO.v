@@ -37,7 +37,6 @@ module AFIFO #(
     
     reg[1:0] rokReg = 0;
     always @(posedge rclk, negedge arok)
-        // TODO: ensure that before the first clock, rok==false so outside entities don't think they can read
         if (!arok) rokReg <= 2'b00;
         else rokReg <= (rokReg<<1)|1'b1;
     
@@ -47,16 +46,14 @@ module AFIFO #(
     // ====================
     // Write handling
     // ====================
-    reg[N:0] wbaddr = 0; // Write address (binary)
-    reg[N:0] wgaddr = 0; // Write address (gray)
-    reg[N:0] wgaddrNext = 0; // Write address (next gray)
+    reg[N:0] wbaddr=0, wgaddr=0, wgaddrDelayed=0; // Write address (binary, gray, gray delayed)
     wire[N:0] wbaddrNext = wbaddr+1'b1;
     always @(posedge wclk) begin
-        wgaddr <= wgaddrNext;
+        wgaddrDelayed <= wgaddr;
         if (w & wok) begin
             mem[wbaddr] <= wd;
             wbaddr <= wbaddrNext;
-            wgaddrNext <= (wbaddrNext>>1)^wbaddrNext;
+            wgaddr <= (wbaddrNext>>1)^wbaddrNext;
         end
     end
     
@@ -71,10 +68,10 @@ module AFIFO #(
     // Async signal generation
     // ====================
     reg dir = 0;
-    wire arok = (rgaddr!=wgaddr) || dir; // Read OK == not empty
-    wire awok = (rgaddr!=wgaddrNext) || !dir; // Write OK == not full
-    wire dirclr = (rgaddr[N]!=wgaddrNext[N-1]) & (rgaddr[N-1]==wgaddrNext[N]);
-    wire dirset = (rgaddr[N]==wgaddrNext[N-1]) & (rgaddr[N-1]!=wgaddrNext[N]);
+    wire arok = (rgaddr!=wgaddrDelayed) || dir; // Read OK == not empty
+    wire awok = (rgaddr!=wgaddr) || !dir; // Write OK == not full
+    wire dirclr = (rgaddr[N]!=wgaddr[N-1]) & (rgaddr[N-1]==wgaddr[N]);
+    wire dirset = (rgaddr[N]==wgaddr[N-1]) & (rgaddr[N-1]!=wgaddr[N]);
     always @(posedge dirclr, posedge dirset)
         if (dirclr) dir <= 0;
         else dir <= 1;
