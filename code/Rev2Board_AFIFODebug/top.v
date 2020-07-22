@@ -5,36 +5,144 @@
 
 `timescale 1ns/1ps
 
+`define WFAST
+`define RSLOW
+
+// `define WSLOW
+// `define RFAST
+
 module Top(
     input wire          clk12mhz,
     output reg[3:0]     led = 0 /* synthesis syn_preserve=1 syn_keep=1 */
 );
+`ifdef WFAST
     // ====================
-    // Clock PLL (33 MHz)
+    // Clock PLL (100.500 MHz)
     // ====================
-    localparam WriteClkFreq = 33000000;
+    localparam WriteClkFreq = 100500000;
     wire writeClk;
     ClockGen #(
         .FREQ(WriteClkFreq),
         .DIVR(0),
-        .DIVF(87),
-        .DIVQ(5),
+        .DIVF(66),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) writeClockGen(.clk12mhz(clk12mhz), .clk(writeClk));
+`endif
+    
+    // // ====================
+    // // Clock PLL (44.250 MHz)
+    // // ====================
+    // localparam WriteClkFreq = 44250000;
+    // wire writeClk;
+    // ClockGen #(
+    //     .FREQ(WriteClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(58),
+    //     .DIVQ(4),
+    //     .FILTER_RANGE(1)
+    // ) writeClockGen(.clk12mhz(clk12mhz), .clk(writeClk));
+    
+    // // ====================
+    // // Clock PLL (42.75 MHz)
+    // // ====================
+    // localparam WriteClkFreq = 42750000;
+    // wire writeClk;
+    // ClockGen #(
+    //     .FREQ(WriteClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(56),
+    //     .DIVQ(4),
+    //     .FILTER_RANGE(1)
+    // ) writeClockGen(.clk12mhz(clk12mhz), .clk(writeClk));
     
     
+    // // ====================
+    // // Clock PLL (33 MHz)
+    // // ====================
+    // localparam WriteClkFreq = 33000000;
+    // wire writeClk;
+    // ClockGen #(
+    //     .FREQ(WriteClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(87),
+    //     .DIVQ(5),
+    //     .FILTER_RANGE(1)
+    // ) writeClockGen(.clk12mhz(clk12mhz), .clk(writeClk));
+    
+    
+`ifdef WSLOW
     // ====================
-    // Clock PLL (48 MHz)
+    // Clock PLL (15.938 MHz)
     // ====================
-    localparam ReadClkFreq = 42750000;
+    localparam WriteClkFreq = 15938000;
+    wire writeClk;
+    ClockGen #(
+        .FREQ(WriteClkFreq),
+        .DIVR(0),
+        .DIVF(84),
+        .DIVQ(6),
+        .FILTER_RANGE(1)
+    ) writeClockGen(.clk12mhz(clk12mhz), .clk(writeClk));
+`endif
+    
+    
+    
+    
+    
+    
+    
+    
+    
+`ifdef RFAST
+    // ====================
+    // Clock PLL (100.500 MHz)
+    // ====================
+    localparam ReadClkFreq = 100500000;
     wire readClk;
     ClockGen #(
         .FREQ(ReadClkFreq),
         .DIVR(0),
-        .DIVF(56),
-        .DIVQ(4),
+        .DIVF(66),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) readClockGen(.clk12mhz(clk12mhz), .clk(readClk));
+`endif
+    
+    // // ====================
+    // // Clock PLL (42.75 MHz)
+    // // ====================
+    // localparam ReadClkFreq = 42750000;
+    // wire readClk;
+    // ClockGen #(
+    //     .FREQ(ReadClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(56),
+    //     .DIVQ(4),
+    //     .FILTER_RANGE(1)
+    // ) readClockGen(.clk12mhz(clk12mhz), .clk(readClk));
+
+`ifdef RSLOW
+    // ====================
+    // Clock PLL (15.938 MHz)
+    // ====================
+    localparam ReadClkFreq = 15938000;
+    wire readClk;
+    ClockGen #(
+        .FREQ(ReadClkFreq),
+        .DIVR(0),
+        .DIVF(84),
+        .DIVQ(6),
+        .FILTER_RANGE(1)
+    ) readClockGen(.clk12mhz(clk12mhz), .clk(readClk));
+`endif
+    
+    
+    
+    
+    
+    
+    
     
     reg readTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     wire[15:0] readData;
@@ -44,16 +152,19 @@ module Top(
     reg writeTrigger = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[15:0] writeData = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[11:0] writeDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    wire writeOK;
     
     // // ======================
     // // From ../AFIFO_cliff.v
     // // WORKS
     // // ======================
+    // wire writeOK_;
+    // assign writeOK = !writeOK_;
     // afifo #(.DSIZE(16), .ASIZE(8)) q(
     //     .i_wclk(writeClk),
     //     .i_wr(writeTrigger),
     //     .i_wdata(writeData),
-    //     .o_wfull(),
+    //     .o_wfull(writeOK_),
     //
     //     .i_rclk(readClk),
     //     .i_rd(readTrigger),
@@ -78,7 +189,7 @@ module Top(
     //     .rdata(readData),
     //     .rempty(readDataReady_)
     // );
-
+    
     
     // ======================
     // From ../AFIFO.v
@@ -86,14 +197,14 @@ module Top(
     // ======================
     AFIFO #(.Width(16), .Size(256)) q(
         .rclk(readClk),
-        .r(readTrigger),
-        .rd(readData),
+        .rtrigger(readTrigger),
+        .rdata(readData),
         .rok(readDataReady),
 
         .wclk(writeClk),
-        .w(writeTrigger),
-        .wd(writeData),
-        .wok()
+        .wtrigger(writeTrigger),
+        .wdata(writeData),
+        .wok(writeOK)
     );
     
     always @(posedge writeClk) begin
@@ -104,37 +215,77 @@ module Top(
         
         end else begin
             writeTrigger <= 1;
-            // writeData <= 16'hFFFF;
-            writeData <= writeData+1'b1;
+            if (writeTrigger && writeOK) begin
+                writeData <= writeData+2'b01;
+            end
         end
+        
+        // end else begin
+        //     writeTrigger <= 1;
+        //     writeData <= 16'hFFFF;
+        // end
     end
     
     // reg[15:0] readCounter = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[15:0] lastReadData = 0;
-    reg readInit = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    reg[15:0] lastReadData2 = 0;
+    reg[1:0] readState = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     always @(posedge readClk) begin
         if (!(&readDelay)) begin
             readDelay <= readDelay+1;
             readTrigger <= 0;
             led <= 0;
-            readInit <= 0;
         
         end else begin
             readTrigger <= 1;
             
-            if (readDataReady && readTrigger) begin
-                readInit <= 1;
-                lastReadData <= readData;
+            if (readTrigger && readDataReady) begin
+            
+                // if (readData != 16'hFFFF) begin
+                //     led[0] <= 1;
+                // end
                 
-                if (readInit) begin
-                    // if (readData != 16'hFFFF) begin
-                    //     led[0] <= 1;
-                    // end
+                case (readState)
+                0: begin
+                    readState <= 1;
+                    lastReadData <= readData;
+                    lastReadData2 <= lastReadData;
+                end
+                
+                1: begin
+                    readState <= 2;
+                    lastReadData <= readData;
+                    lastReadData2 <= lastReadData;
+                end
+                
+                2: begin
+                    lastReadData <= readData;
+                    lastReadData2 <= lastReadData;
                     
-                    if (readData != (lastReadData+1'b1)) begin
-                        led[0] <= 1;
+                    if (lastReadData != (lastReadData2+1'b1)) begin
+                        led <= 4'b1111;
+                        // readState <= 3;
                     end
                 end
+                
+                // 3: begin
+                //     // led <= 4'b1000;
+                //     // led <= 4'b1110;
+                // end
+                endcase
+                
+                // if (!readInit) begin
+                //     readInit <= 1;
+                // end
+                //
+                // readInit <= 1;
+                //
+                // if (readInit) begin
+                //     if (lastReadData != (lastReadData+1'b1)) begin
+                //         led[1] <= 1;
+                //     end
+                // end
+                
                 // readCounter <= readCounter+1;
                 
                 // if (!led) begin
@@ -204,7 +355,7 @@ module Top(
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
 
-        #10000000;
+        #1000000;
         $finish;
     end
 `endif
