@@ -22,18 +22,20 @@ module AFIFO #(
     // ====================
     // Don't init rbaddr=0, since that breaks RAM inference with Icestorm,
     // since it thinks rbaddr is async instead of being clocked by rclk
-    reg[N:0] rbaddr, rgaddr=0; // Read addresses (binary, gray)
+    reg[N:0] rbaddr, rgaddr=0, rgaddrDelayed=0; // Read addresses (binary, gray)
     
 `ifdef SIM
     initial rbaddr = 0; // For simulation (see rbaddr comment above)
 `endif
     
     wire[N:0] rbaddrNext = rbaddr+1'b1;
-    always @(posedge rclk)
+    always @(posedge rclk) begin
+        rgaddrDelayed <= rgaddr;
         if (rtrigger & rok) begin
             rbaddr <= rbaddrNext;
             rgaddr <= (rbaddrNext>>1)^rbaddrNext;
         end
+    end
     
     reg[1:0] rokReg = 0;
     always @(posedge rclk, negedge arok)
@@ -68,11 +70,52 @@ module AFIFO #(
     // Async signal generation
     // ====================
     reg dir = 0;
+    // Use `wgaddrDelayed` to generate the `arok` signal. By using `wgaddrDelayed`
+    // instead of `wgaddr`, we prevent the possibility of reading from the
+    // RAM word while it's still being written, which is a possibility when
+    // the FIFO is transitioning from 0 -> 1 elements. `wgaddrDelayed`
+    // is delayed 1 clock cycle (in the write clock domain), so we're guaranteed
+    // that the write is complete by the time we observe `wgaddrDelayed` having
+    // changed.
     wire arok = (rgaddr!=wgaddrDelayed) || dir; // Read OK == not empty
-    wire awok = (rgaddr!=wgaddr) || !dir; // Write OK == not full
-    wire dirclr = (rgaddr[N]!=wgaddr[N-1]) & (rgaddr[N-1]==wgaddr[N]);
-    wire dirset = (rgaddr[N]==wgaddr[N-1]) & (rgaddr[N-1]!=wgaddr[N]);
+    wire awok = (rgaddrDelayed!=wgaddr) || !dir; // Write OK == not full
+    
+    // // ICESTORM: WORKS
+    // // ICECUBE: WORKS
+    // wire dirclr = (rgaddrDelayed[N]!=wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]==wgaddrDelayed[N]);
+    // wire dirset = (rgaddrDelayed[N]==wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]!=wgaddrDelayed[N]);
+    
+    // // ICESTORM: WORKS
+    // // ICECUBE: WORKS
+    // wire dirclr = (rgaddr[N]!=wgaddrDelayed[N-1]) && (rgaddr[N-1]==wgaddrDelayed[N]);
+    // wire dirset = (rgaddrDelayed[N]==wgaddr[N-1]) && (rgaddrDelayed[N-1]!=wgaddr[N]);
+    
+    // // ICESTORM: FAILS (WFAST, RSLOW)
+    // // ICECUBE: WORKS
+    // wire dirclr = (rgaddrDelayed[N]!=wgaddr[N-1]) && (rgaddrDelayed[N-1]==wgaddr[N]);
+    // wire dirset = (rgaddr[N]==wgaddrDelayed[N-1]) && (rgaddr[N-1]!=wgaddrDelayed[N]);
+    
+    // ICESTORM: FAILS (WFAST, RSLOW)
+    // ICECUBE: WORKS
+    wire dirclr = (rgaddr[N]!=wgaddr[N-1]) && (rgaddr[N-1]==wgaddr[N]);
+    wire dirset = (rgaddr[N]==wgaddr[N-1]) && (rgaddr[N-1]!=wgaddr[N]);
+
+    // dirclr
+    // R: 11  10  01  00
+    // W: 10  00  11  01
+
+
+
     always @(posedge dirclr, posedge dirset)
         if (dirclr) dir <= 0;
         else dir <= 1;
+    
+    
+    // wire dirset_n = ~( (wgaddr[N]^rgaddr[N-1]) & ~(wgaddr[N-1]^rgaddr[N]));
+    // wire dirclr_n = ~((~(wgaddr[N]^rgaddr[N-1]) & (wgaddr[N-1]^rgaddr[N])));
+    // // wire high = 1'b1;
+    //
+    // always @(negedge dirset_n or negedge dirclr_n)
+    //     if (!dirclr_n) dir <= 0;
+    //     else dir <= 1;
 endmodule
