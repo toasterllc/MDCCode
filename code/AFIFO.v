@@ -66,9 +66,9 @@ module AFIFO #(
     
     assign wok = !wokReg_[1];
     
-    // ====================
-    // Async signal generation
-    // ====================
+    // // ====================
+    // // Async signal generation
+    // // ====================
     // wire rempty = (rgaddr == wgaddrDelayed);
     // wire wfull = (wgaddr == {~rgaddrDelayed[N:N-1], rgaddrDelayed[N-2:0]});
     //
@@ -78,22 +78,22 @@ module AFIFO #(
     reg dir = 0;
     wire arok = (rgaddr!=wgaddrDelayed) || dir; // Read OK == not empty
     wire awok = (rgaddrDelayed!=wgaddr) || !dir; // Write OK == not full
-    
+
     // ICESTORM: WORKS
     // ICECUBE: WORKS
     wire dirclr = (rgaddrDelayed[N]!=wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]==wgaddrDelayed[N]);
     wire dirset = (rgaddrDelayed[N]==wgaddrDelayed[N-1]) && (rgaddrDelayed[N-1]!=wgaddrDelayed[N]);
-    
+
     // // ICESTORM: WORKS
     // // ICECUBE: WORKS
     // wire dirclr = (rgaddr[N]!=wgaddrDelayed[N-1]) && (rgaddr[N-1]==wgaddrDelayed[N]);
     // wire dirset = (rgaddrDelayed[N]==wgaddr[N-1]) && (rgaddrDelayed[N-1]!=wgaddr[N]);
-    
+
     // // ICESTORM: FAILS (WFAST, RSLOW)
     // // ICECUBE: WORKS
     // wire dirclr = (rgaddrDelayed[N]!=wgaddr[N-1]) && (rgaddrDelayed[N-1]==wgaddr[N]);
     // wire dirset = (rgaddr[N]==wgaddrDelayed[N-1]) && (rgaddr[N-1]!=wgaddrDelayed[N]);
-    
+
     // // ICESTORM: FAILS (WFAST, RSLOW)
     // // ICECUBE: WORKS
     // wire dirclr = (rgaddr[N]!=wgaddr[N-1]) && (rgaddr[N-1]==wgaddr[N]);
