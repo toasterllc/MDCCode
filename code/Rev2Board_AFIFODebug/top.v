@@ -5,11 +5,11 @@
 
 `timescale 1ns/1ps
 
-`define WFAST
-`define RSLOW
+// `define WFAST
+// `define RSLOW
 
-// `define WSLOW
-// `define RFAST
+`define WSLOW
+`define RFAST
 
 module Top(
     input wire          clk12mhz,
@@ -227,8 +227,8 @@ module Top(
     end
     
     // reg[15:0] readCounter = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
-    reg[15:0] lastReadData = 0;
-    reg[15:0] lastReadData2 = 0;
+    reg[15:0] lastReadData = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
+    reg[15:0] lastReadData2 = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     reg[1:0] readState = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     always @(posedge readClk) begin
         if (!(&readDelay)) begin
@@ -263,6 +263,7 @@ module Top(
                     lastReadData2 <= lastReadData;
                     
                     if (lastReadData != (lastReadData2+1'b1)) begin
+                        // led[2] <= 1;
                         led <= 4'b1111;
                         // readState <= 3;
                     end
