@@ -4,15 +4,15 @@ module AFIFO #(
     parameter Width=12,
     parameter Size=4 // Must be a power of 2 and >=4
 )(
-    input wire rclk,            // Read clock
-    input wire r,               // Read trigger
-    output wire[Width-1:0] rd,  // Read data
-    output wire rok,            // Read OK (data available -- not empty)
+    input wire rclk,                // Read clock
+    input wire rtrigger,            // Read trigger
+    output wire[Width-1:0] rdata,   // Read data
+    output wire rok,                // Read OK (data available -- not empty)
     
-    input wire wclk,            // Write clock
-    input wire w,               // Write trigger
-    input wire[Width-1:0] wd,   // Write data
-    output wire wok             // Write OK (space available -- not full)
+    input wire wclk,                // Write clock
+    input wire wtrigger,            // Write trigger
+    input wire[Width-1:0] wdata,    // Write data
+    output wire wok                 // Write OK (space available -- not full)
 );
     localparam N = $clog2(Size)-1;
     reg[Width-1:0] mem[Size-1:0];
@@ -30,7 +30,7 @@ module AFIFO #(
     
     wire[N:0] rbaddrNext = rbaddr+1'b1;
     always @(posedge rclk)
-        if (r & rok) begin
+        if (rtrigger & rok) begin
             rbaddr <= rbaddrNext;
             rgaddr <= (rbaddrNext>>1)^rbaddrNext;
         end
@@ -40,7 +40,7 @@ module AFIFO #(
         if (!arok) rokReg <= 2'b00;
         else rokReg <= (rokReg<<1)|1'b1;
     
-    assign rd = mem[rbaddr];
+    assign rdata = mem[rbaddr];
     assign rok = rokReg[1];
     
     // ====================
@@ -50,8 +50,8 @@ module AFIFO #(
     wire[N:0] wbaddrNext = wbaddr+1'b1;
     always @(posedge wclk) begin
         wgaddrDelayed <= wgaddr;
-        if (w & wok) begin
-            mem[wbaddr] <= wd;
+        if (wtrigger & wok) begin
+            mem[wbaddr] <= wdata;
             wbaddr <= wbaddrNext;
             wgaddr <= (wbaddrNext>>1)^wbaddrNext;
         end
