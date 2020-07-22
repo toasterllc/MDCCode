@@ -1,15 +1,16 @@
 `include "../ClockGen.v"
-// `include "../AFIFO.v"
-`include "../AFIFO_cliff.v"
+`include "../AFIFO.v"
+// `include "../AFIFO_cliff.v"
 // `include "../AFIFO_cliff2.v"
+// `include "../AFIFO_zipcpu.v"
 
 `timescale 1ns/1ps
 
-// `define WFAST
-// `define RSLOW
+`define WFAST
+`define RSLOW
 
-`define WSLOW
-`define RFAST
+// `define WSLOW
+// `define RFAST
 
 module Top(
     input wire          clk12mhz,
@@ -154,23 +155,23 @@ module Top(
     reg[11:0] writeDelay = 0 /* synthesis syn_preserve=1 syn_keep=1 */;
     wire writeOK;
     
-    // ======================
-    // From ../AFIFO_cliff.v
-    // WORKS
-    // ======================
-    wire writeOK_;
-    assign writeOK = !writeOK_;
-    afifo #(.DSIZE(16), .ASIZE(8)) q(
-        .i_wclk(writeClk),
-        .i_wr(writeTrigger),
-        .i_wdata(writeData),
-        .o_wfull(writeOK_),
-
-        .i_rclk(readClk),
-        .i_rd(readTrigger),
-        .o_rdata(readData),
-        .o_rempty_(readDataReady)
-    );
+    // // ======================
+    // // From ../AFIFO_cliff.v / ../AFIFO_zipcpu.v
+    // // WORKS
+    // // ======================
+    // wire writeOK_;
+    // assign writeOK = !writeOK_;
+    // afifo #(.DSIZE(16), .ASIZE(8)) q(
+    //     .i_wclk(writeClk),
+    //     .i_wr(writeTrigger),
+    //     .i_wdata(writeData),
+    //     .o_wfull(writeOK_),
+    //
+    //     .i_rclk(readClk),
+    //     .i_rd(readTrigger),
+    //     .o_rdata(readData),
+    //     .o_rempty_(readDataReady)
+    // );
     
     // // ======================
     // // From ../AFIFO_cliff2.v
@@ -190,23 +191,22 @@ module Top(
     //     .rempty(readDataReady_)
     // );
     
-    
-    // // ======================
-    // // From ../AFIFO.v
-    // // WORKS WITH MODIFICATION
-    // // ======================
-    // AFIFO #(.Width(16), .Size(256)) q(
-    //     .rclk(readClk),
-    //     .rtrigger(readTrigger),
-    //     .rdata(readData),
-    //     .rok(readDataReady),
-    //
-    //     .wclk(writeClk),
-    //     .wtrigger(writeTrigger),
-    //     .wdata(writeData),
-    //     .wok(writeOK)
-    // );
-    
+    // ======================
+    // From ../AFIFO.v
+    // WORKS WITH MODIFICATION
+    // ======================
+    AFIFO #(.Width(16), .Size(256)) q(
+        .rclk(readClk),
+        .rtrigger(readTrigger),
+        .rdata(readData),
+        .rok(readDataReady),
+
+        .wclk(writeClk),
+        .wtrigger(writeTrigger),
+        .wdata(writeData),
+        .wok(writeOK)
+    );
+
     always @(posedge writeClk) begin
         if (!(&writeDelay)) begin
             writeDelay <= writeDelay+1;
@@ -267,6 +267,12 @@ module Top(
                         led <= 4'b1111;
                         // readState <= 3;
                     end
+                    
+                    // if (readData != (lastReadData+1'b1)) begin
+                    //     // led[2] <= 1;
+                    //     led <= 4'b1111;
+                    //     // readState <= 3;
+                    // end
                 end
                 
                 // 3: begin
