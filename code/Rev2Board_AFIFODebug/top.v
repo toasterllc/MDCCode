@@ -269,15 +269,16 @@ module Top(
                     end
                     
                     // if (readData != (lastReadData+1'b1)) begin
-                    //     // led[2] <= 1;
+                    //     // led[0] <= 1;
                     //     led <= 4'b1111;
                     //     // readState <= 3;
                     // end
                 end
                 
                 // 3: begin
+                //
                 //     // led <= 4'b1000;
-                //     // led <= 4'b1110;
+                //     led <= 4'b1110;
                 // end
                 endcase
                 
