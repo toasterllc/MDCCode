@@ -68,22 +68,26 @@ public:
         MsgHdr hdr{.type=0x00, .len=sizeof(*this)-sizeof(MsgHdr)};
     } __attribute__((packed));
     
-    struct SetLEDMsg {
+    struct LEDSetMsg {
         MsgHdr hdr{.type=0x01, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t on = 0;
 //        uint8_t payload[255];
     } __attribute__((packed));
     
-    struct ReadMemMsg {
-        MsgHdr hdr{.type=0x02, .len=0}; // Special case `len` in this case
-        uint8_t* mem = nullptr;
+    struct MemReadMsg {
+        MsgHdr hdr{.type=0x02, .len=sizeof(*this)-sizeof(MsgHdr)};
+    } __attribute__((packed));
+    
+    struct MemDataMsg {
+        MsgHdr hdr{.type=0x03, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint16_t mem[0x7F];
         
         std::string desc() const {
             std::stringstream d;
             
             d << std::setfill('0') << std::setw(2);
             
-            d << "ReadMemMsg{\n";
+            d << "MemReadMsg{\n";
             d << "  type: 0x" << std::hex << (uintmax_t)hdr.type << "\n";
             d << "  payload (len = " << std::dec << (uintmax_t)hdr.len << "): [ ";
             for (size_t i=0; i<hdr.len; i++) {
@@ -95,7 +99,7 @@ public:
     } __attribute__((packed));
     
     struct PixReg8Msg {
-        MsgHdr hdr{.type=0x03, .len=sizeof(*this)-sizeof(MsgHdr)};
+        MsgHdr hdr{.type=0x04, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t write = 0;
         uint16_t addr = 0;
         uint8_t val = 0;
@@ -103,7 +107,7 @@ public:
     } __attribute__((packed));
     
     struct PixReg16Msg {
-        MsgHdr hdr{.type=0x04, .len=sizeof(*this)-sizeof(MsgHdr)};
+        MsgHdr hdr{.type=0x05, .len=sizeof(*this)-sizeof(MsgHdr)};
         uint8_t write = 0;
         uint16_t addr = 0;
         uint16_t val = 0;
@@ -111,8 +115,18 @@ public:
     } __attribute__((packed));
     
     struct PixCaptureMsg {
-        MsgHdr hdr{.type=0x05, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint8_t* mem = nullptr;
+        MsgHdr hdr{.type=0x06, .len=sizeof(*this)-sizeof(MsgHdr)};
+    } __attribute__((packed));
+    
+    struct PixSizeMsg {
+        MsgHdr hdr{.type=0x07, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint16_t width = 0;
+        uint16_t height = 0;
+    } __attribute__((packed));
+    
+    struct PixDataMsg {
+        MsgHdr hdr{.type=0x08, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint16_t mem[0x7F];
     } __attribute__((packed));
     
     using MsgPtr = std::unique_ptr<Msg>;
@@ -223,11 +237,14 @@ public:
     
     MsgPtr _newMsg(MsgType type) {
         if (type == Msg{}.hdr.type) return _newMsg<Msg>();
-        if (type == SetLEDMsg{}.hdr.type) return _newMsg<SetLEDMsg>();
-        if (type == ReadMemMsg{}.hdr.type) return _newMsg<ReadMemMsg>();
+        if (type == LEDSetMsg{}.hdr.type) return _newMsg<LEDSetMsg>();
+        if (type == MemReadMsg{}.hdr.type) return _newMsg<MemReadMsg>();
+        if (type == MemDataMsg{}.hdr.type) return _newMsg<MemDataMsg>();
         if (type == PixReg8Msg{}.hdr.type) return _newMsg<PixReg8Msg>();
         if (type == PixReg16Msg{}.hdr.type) return _newMsg<PixReg16Msg>();
         if (type == PixCaptureMsg{}.hdr.type) return _newMsg<PixCaptureMsg>();
+        if (type == PixSizeMsg{}.hdr.type) return _newMsg<PixSizeMsg>();
+        if (type == PixDataMsg{}.hdr.type) return _newMsg<PixDataMsg>();
         printf("Unknown msg type: %ju\n", (uintmax_t)type);
         return nullptr;
     }
@@ -249,16 +266,6 @@ public:
         
         // Copy the payload into the message, but only the number of bytes that we expect the message to have.
         memcpy(((uint8_t*)msg.get())+sizeof(MsgHdr), _in+off, msg->hdr.len);
-        
-        // Handle special message types that contain variable amounts of data
-        if (auto x = Msg::Cast<ReadMemMsg>(msg.get())) {
-            x->hdr.len = hdr.len;
-            x->mem = _in+off;
-        
-        } else if (auto x = Msg::Cast<PixCaptureMsg>(msg.get())) {
-            x->hdr.len = hdr.len;
-            x->mem = _in+off;
-        }
         
         off += hdr.len;
         _inOff = off;
