@@ -1039,7 +1039,7 @@ module Top(
     
     wire                    ram_cmdReady;
     reg                     ram_cmdTrigger = 0;
-    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
+    reg[RAM_AddrWidth:0]    ram_cmdAddr = 0; // RAM_AddrWidth+1 bits to prevent wrapping to 0 upon overflow (see memReadLastAddr)
     reg                     ram_cmdWrite = 0;
     reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
     wire[RAM_DataWidth-1:0] ram_cmdReadData;
@@ -1185,11 +1185,11 @@ module Top(
     function [15:0] DataFromAddr;
         input [24:0] addr;
         // DataFromAddr = {7'h55, addr[24:16]} ^ ~(addr[15:0]);
-        // DataFromAddr = addr[15:0];
+        DataFromAddr = addr[15:0];
         // DataFromAddr = 16'hFFFF;
         // DataFromAddr = 16'h0000;
         // DataFromAddr = 16'h7832;
-        DataFromAddr = 16'hCAFE;
+        // DataFromAddr = 16'hCAFE;
     endfunction
     
     function [63:0] Min;
@@ -1205,6 +1205,8 @@ module Top(
     localparam StatePixReg16    = 12;   // +2
     localparam StatePixCapture  = 15;   // +3
     
+    localparam Pix_PixelCount = 'h2D9000;
+    
     reg[4:0] state = 0;
     reg[7:0] msgInType = 0;
     reg[5*8-1:0] msgInPayload = 0;
@@ -1215,6 +1217,7 @@ module Top(
     reg[15:0] mem[127:0];
     reg[7:0] memReadCounter = 0;
     reg[RAM_AddrWidth-1:0] memReadLastAddr = 0;
+    reg[7:0] memReadMsgOutType = 0;
     reg[6:0] memAddr; // Don't init with memAddr=0, otherwise Icestorm won't infer a RAM for `mem`
     reg captureDone = 0;
     
@@ -1228,26 +1231,26 @@ module Top(
         // Initialize the SDRAM
         StateInit: begin
             led <= 0;
+            // state <= StateHandleMsg;
+`ifdef SIM
             state <= StateHandleMsg;
-// `ifdef SIM
-//             state <= StateHandleMsg;
-// `else
-//             if (!ram_cmdTrigger) begin
-//                 ram_cmdTrigger <= 1;
-//                 ram_cmdAddr <= 0;
-//                 ram_cmdWrite <= 1;
-//                 ram_cmdWriteData <= DataFromAddr(0);
-//
-//             end else if (ram_cmdReady) begin
-//                 ram_cmdAddr <= ram_cmdAddr+1;
-//                 ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-//
-//                 if (ram_cmdAddr == RAM_Size-1) begin
-//                     ram_cmdTrigger <= 0;
-//                     state <= StateHandleMsg;
-//                 end
-//             end
-// `endif
+`else
+            if (!ram_cmdTrigger) begin
+                ram_cmdTrigger <= 1;
+                ram_cmdAddr <= 0;
+                ram_cmdWrite <= 1;
+                ram_cmdWriteData <= DataFromAddr(0);
+
+            end else if (ram_cmdReady) begin
+                ram_cmdAddr <= ram_cmdAddr+1;
+                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+
+                if (ram_cmdAddr == RAM_Size-1) begin
+                    ram_cmdTrigger <= 0;
+                    state <= StateHandleMsg;
+                end
+            end
+`endif
         end
         
         
@@ -1281,8 +1284,8 @@ module Top(
             end
             
             MsgType_ReadMem: begin
-                ram_cmdAddr <= 0;
-                ram_cmdWrite <= 0;
+                memReadLastAddr <= RAM_Size-1;
+                memReadMsgOutType <= MsgType_ReadMem;
                 state <= StateReadMem;
             end
             
@@ -1326,7 +1329,6 @@ module Top(
         
         // Start reading memory
         StateReadMem: begin
-            memReadLastAddr <= RAM_Size-1;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             state <= StateReadMem+1;
@@ -1344,14 +1346,12 @@ module Top(
         StateReadMem+2: begin
             // Handle the read being accepted
             if (ram_cmdReady && ram_cmdTrigger) begin
-                // Stop reading if we just read the last address we care about,
-                // or we hit the max number of words for 1 message
-                if (ram_cmdAddr==memReadLastAddr || ramReadTakeoffCounter==1) begin
-                    ram_cmdTrigger <= 0;
+                ram_cmdAddr <= ram_cmdAddr+1;
                 
-                end else begin
-                    ram_cmdAddr <= ram_cmdAddr+1;
-                    ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
+                // Stop triggering when we've issued all the read commands
+                ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
+                if (ramReadTakeoffCounter == 1) begin
+                    ram_cmdTrigger <= 0;
                 end
             end
             
@@ -1362,10 +1362,9 @@ module Top(
                 memAddr <= memAddr+1;
                 
                 // Next state after we've received all the bytes
-                if (!ram_cmdTrigger && ramReadLandCounter==ramReadTakeoffCounter) begin
+                ramReadLandCounter <= ramReadLandCounter-1;
+                if (ramReadLandCounter == 1) begin
                     state <= StateReadMem+3;
-                end else begin
-                    ramReadLandCounter <= ramReadLandCounter-1;
                 end
             end
             
@@ -1378,7 +1377,7 @@ module Top(
         
         // Start sending the data
         StateReadMem+3: begin
-            debug_msgOut_type <= MsgType_ReadMem;
+            debug_msgOut_type <= memReadMsgOutType;
             debug_msgOut_payloadLen <= memAddr<<1; // memAddr*2 for the number of bytes
             memReadCounter <= 0;
             memAddr <= 0;
@@ -1405,7 +1404,7 @@ module Top(
                     debug_msgOut_type <= 0;
                     
                     // Start on the next chunk, or stop if we've read everything.
-                    if (ram_cmdAddr == memReadLastAddr) begin
+                    if (ram_cmdAddr > memReadLastAddr) begin
                         state <= StateHandleMsg;
                     end else begin
                         state <= StateReadMem+1;
@@ -1580,28 +1579,15 @@ module Top(
             
             if (pix_captureDone) begin
                 // led[3] <= !led[3];
-                
-                debug_msgOut_type <= MsgType_PixCapture;
-                debug_msgOut_payloadLen <= 4;
                 state <= StatePixCapture+3;
             end
         end
         
         StatePixCapture+3: begin
-            if (debug_msgOut_payloadTrigger) begin
-                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
-                case (debug_msgOut_payloadLen)
-                4: debug_msgOut_payload <= ram_cmdAddr[0*8+:8];
-                3: debug_msgOut_payload <= ram_cmdAddr[1*8+:8];
-                2: debug_msgOut_payload <= ram_cmdAddr[2*8+:8];
-                1: debug_msgOut_payload <= {7'b0, ram_cmdAddr[24]};
-                0: begin
-                    // Clear `debug_msgOut_type` to prevent another message from being sent.
-                    debug_msgOut_type <= 0;
-                    state <= StateHandleMsg;
-                end
-                endcase
-            end
+            // Send the image
+            memReadLastAddr <= Pix_PixelCount-1;
+            memReadMsgOutType <= MsgType_PixCapture;
+            state <= StateReadMem;
         end
         
         endcase
