@@ -23,6 +23,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		552E7D5D24C9647600438AAF /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MDCDevice.h; path = ../Shared/MDCDevice.h; sourceTree = "<group>"; };
 		55746C6823FB58BD00DA8CD8 /* MDCDebugger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCDebugger; sourceTree = BUILT_PRODUCTS_DIR; };
 		55746C7223FB5F0200DA8CD8 /* MDCDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MDCDebugger.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -41,6 +42,7 @@
 		55746C5F23FB58BD00DA8CD8 = {
 			isa = PBXGroup;
 			children = (
+				552E7D5D24C9647600438AAF /* MDCDevice.h */,
 				55746C7223FB5F0200DA8CD8 /* MDCDebugger.cpp */,
 				55746C6923FB58BD00DA8CD8 /* Products */,
 			);
