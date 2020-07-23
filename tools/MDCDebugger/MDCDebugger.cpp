@@ -530,10 +530,14 @@ static void readMem(const Args& args, MDCDevice& device) {
     for (size_t msgCount=0; dataLen<RAMSize;) {
         if (auto msgPtr = Msg::Cast<ReadMemMsg>(device.read())) {
             const auto& msg = *msgPtr;
-            outputFile.write((char*)msg.mem, msg.hdr.len);
+            // Cap `chunkLen` to prevent going past RAMSize.
+            // Currently the device sends data in it 127-word chunks without bounds-checks,
+            // so there will be trailing data if it didn't fall on a 127-word boundary.
+            const size_t chunkLen = std::min((size_t)msg.hdr.len, RAMSize-dataLen);
+            outputFile.write((char*)msg.mem, chunkLen);
             if (!outputFile) throw std::runtime_error("failed to write to output file");
             
-            dataLen += msg.hdr.len;
+            dataLen += chunkLen;
             
             msgCount++;
             if (!(msgCount % 1000)) {
@@ -542,10 +546,10 @@ static void readMem(const Args& args, MDCDevice& device) {
         }
     }
     
-    if (dataLen != RAMSize) {
-        throw std::runtime_error("data length mismatch: expected "
-            + std::to_string(RAMSize) + ", got " + std::to_string(dataLen));
-    }
+//    if (dataLen != RAMSize) {
+//        throw std::runtime_error("data length mismatch: expected "
+//            + std::to_string(RAMSize) + ", got " + std::to_string(dataLen));
+//    }
 }
 
 static void verifyMem(const Args& args, MDCDevice& device) {
@@ -561,7 +565,11 @@ static void verifyMem(const Args& args, MDCDevice& device) {
         if (auto msgPtr = Msg::Cast<ReadMemMsg>(device.read())) {
             const auto& msg = *msgPtr;
             if (!(msg.hdr.len % 2)) {
-                for (size_t i=0; i<msg.hdr.len; i+=2) {
+                // Cap `chunkLen` to prevent going past RAMSize.
+                // Currently the device sends data in it 127-word chunks without bounds-checks,
+                // so there will be trailing data if it didn't fall on a 127-word boundary.
+                const size_t chunkLen = std::min((size_t)msg.hdr.len, RAMSize-dataLen);
+                for (size_t i=0; i<chunkLen; i+=2) {
                     uint16_t val;
                     memcpy(&val, msg.mem+i, sizeof(val));
                     if (lastVal) {
@@ -573,14 +581,15 @@ static void verifyMem(const Args& args, MDCDevice& device) {
                     }
                     lastVal = val;
                 }
+                
+                dataLen += chunkLen;
+                if (!(msgCount % 1000)) {
+                    printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
+                }
             } else {
                 fprintf(stderr, "Error: payload length invalid: expected even, got odd (0x%ju)\n", (uintmax_t)msg.hdr.len);
                 errorCount++;
-            }
-            
-            dataLen += msg.hdr.len;
-            if (!(msgCount % 1000)) {
-                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
+                break;
             }
         }
     }
@@ -660,21 +669,20 @@ static void pixCapture(const Args& args, MDCDevice& device) {
     for (size_t msgCount=0; dataLen<ImageSize;) {
         if (auto msgPtr = Msg::Cast<PixCaptureMsg>(device.read())) {
             const auto& msg = *msgPtr;
-            outputFile.write((char*)msg.mem, msg.hdr.len);
+            // Cap `chunkLen` to prevent going past ImageSize.
+            // Currently the device sends data in it 127-word chunks without bounds-checks,
+            // so there will be trailing data if it didn't fall on a 127-word boundary.
+            const size_t chunkLen = std::min((size_t)msg.hdr.len, ImageSize-dataLen);
+            outputFile.write((char*)msg.mem, chunkLen);
             if (!outputFile) throw std::runtime_error("failed to write to output file");
             
-            dataLen += msg.hdr.len;
+            dataLen += chunkLen;
             
             msgCount++;
             if (!(msgCount % 1000)) {
                 printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
             }
         }
-    }
-    
-    if (dataLen != ImageSize) {
-        throw std::runtime_error("data length mismatch: expected "
-            + std::to_string(ImageSize) + ", got " + std::to_string(dataLen));
     }
 }
 
