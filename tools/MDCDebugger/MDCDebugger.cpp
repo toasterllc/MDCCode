@@ -30,7 +30,7 @@ static uint64_t TimeDurationMs(TimeInstant t1, TimeInstant t2) {
     return std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
 }
 
-static void PrintMsg(const MDCDevice::ReadMemMsg& msg) {
+static void PrintMsg(const MDCDevice::MemDataMsg& msg) {
     std::cout << msg.desc();
 }
 
@@ -132,11 +132,11 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void setLED(const Args& args, MDCDevice& device) {
-    using SetLEDMsg = MDCDevice::SetLEDMsg;
+    using LEDSetMsg = MDCDevice::LEDSetMsg;
     using Msg = MDCDevice::Msg;
-    device.write(SetLEDMsg{.on = args.on});
+    device.write(LEDSetMsg{.on = args.on});
     for (;;) {
-        if (auto msgPtr = Msg::Cast<SetLEDMsg>(device.read())) {
+        if (auto msgPtr = Msg::Cast<LEDSetMsg>(device.read())) {
             return;
         }
     }
@@ -145,12 +145,10 @@ static void setLED(const Args& args, MDCDevice& device) {
 const size_t RAMWordCount = 0x2000000;
 const size_t RAMWordSize = 2;
 const size_t RAMSize = RAMWordCount*RAMWordSize;
-const size_t ImagePixelCount = 2304*1296;
-const size_t ImagePixelSize = 2;
-const size_t ImageSize = ImagePixelCount*ImagePixelSize;
 
 static void readMem(const Args& args, MDCDevice& device) {
-    using ReadMemMsg = MDCDevice::ReadMemMsg;
+    using MemReadMsg = MDCDevice::MemReadMsg;
+    using MemDataMsg = MDCDevice::MemDataMsg;
     using Msg = MDCDevice::Msg;
     
     std::ofstream outputFile(args.filePath.c_str(), std::ofstream::out|std::ofstream::binary|std::ofstream::trunc);
@@ -158,10 +156,10 @@ static void readMem(const Args& args, MDCDevice& device) {
         throw std::runtime_error("failed to open output file: " + args.filePath);
     }
     
-    device.write(ReadMemMsg{});
+    device.write(MemReadMsg{});
     size_t dataLen = 0;
     for (size_t msgCount=0; dataLen<RAMSize;) {
-        if (auto msgPtr = Msg::Cast<ReadMemMsg>(device.read())) {
+        if (auto msgPtr = Msg::Cast<MemDataMsg>(device.read())) {
             const auto& msg = *msgPtr;
             // Cap `chunkLen` to prevent going past RAMSize.
             // Currently the device sends data in it 127-word chunks without bounds-checks,
@@ -186,16 +184,17 @@ static void readMem(const Args& args, MDCDevice& device) {
 }
 
 static void verifyMem(const Args& args, MDCDevice& device) {
-    using ReadMemMsg = MDCDevice::ReadMemMsg;
+    using MemReadMsg = MDCDevice::MemReadMsg;
+    using MemDataMsg = MDCDevice::MemDataMsg;
     using Msg = MDCDevice::Msg;
-    device.write(ReadMemMsg{});
+    device.write(MemReadMsg{});
     
     auto startTime = CurrentTime();
     uintmax_t errorCount = 0;
     size_t dataLen = 0;
     std::optional<uint16_t> lastVal;
     for (size_t msgCount=0; dataLen<RAMSize; msgCount++) {
-        if (auto msgPtr = Msg::Cast<ReadMemMsg>(device.read())) {
+        if (auto msgPtr = Msg::Cast<MemDataMsg>(device.read())) {
             const auto& msg = *msgPtr;
             if (!(msg.hdr.len % 2)) {
                 // Cap `chunkLen` to prevent going past RAMSize.
@@ -288,8 +287,12 @@ static void pixReg16(const Args& args, MDCDevice& device) {
     }
 }
 
+const size_t ImagePixelSize = 2;
+
 static void pixCapture(const Args& args, MDCDevice& device) {
     using PixCaptureMsg = MDCDevice::PixCaptureMsg;
+    using PixSizeMsg = MDCDevice::PixSizeMsg;
+    using PixDataMsg = MDCDevice::PixDataMsg;
     using Msg = MDCDevice::Msg;
     
     std::ofstream outputFile(args.filePath.c_str(), std::ofstream::out|std::ofstream::binary|std::ofstream::trunc);
@@ -298,9 +301,29 @@ static void pixCapture(const Args& args, MDCDevice& device) {
     }
     
     device.write(PixCaptureMsg{});
+    
+    // Get the image size
+    uint32_t imageWidth = 0;
+    uint32_t imageHeight = 0;
+    if (auto msgPtr = Msg::Cast<PixSizeMsg>(device.read())) {
+        const auto& msg = *msgPtr;
+        imageWidth = msg.width;
+        imageHeight = msg.height;
+    
+    } else abort();
+    
+    const uint32_t ImagePixelCount = imageWidth*imageHeight;
+    const size_t ImageSize = ImagePixelCount*ImagePixelSize;
+    
+    printf("Image stats:\n");
+    printf("  Width: %ju\n", (uintmax_t)imageWidth);
+    printf("  Height: %ju\n", (uintmax_t)imageHeight);
+    printf("  Size: %ju bytes\n", (uintmax_t)ImageSize);
+    printf("\n");
+    
     size_t dataLen = 0;
     for (size_t msgCount=0; dataLen<ImageSize;) {
-        if (auto msgPtr = Msg::Cast<PixCaptureMsg>(device.read())) {
+        if (auto msgPtr = Msg::Cast<PixDataMsg>(device.read())) {
             const auto& msg = *msgPtr;
             // Cap `chunkLen` to prevent going past ImageSize.
             // Currently the device sends data in it 127-word chunks without bounds-checks,

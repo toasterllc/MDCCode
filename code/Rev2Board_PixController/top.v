@@ -373,6 +373,12 @@ module PixController #(
     input wire          capture_trigger,    // Pulse for a single clock to trigger a new capture
     output wire         capture_done,       // Pulsed for a single clock to indicate that there
                                             // are no more pixels in the requested frame
+    // TODO: `capture_frameWidth`/`capture_frameHeight` are written in the `pix_dclk` domain,
+    //       but read from the `clk` domain. That should be OK though because its value
+    //       should remain constant...
+    output reg[11:0]    capture_frameWidth = 0,
+    output reg[11:0]    capture_frameHeight = 0,
+    
     output wire[11:0]   pixel,
     output wire         pixel_ready,
     input wire          pixel_trigger,
@@ -498,14 +504,35 @@ module PixController #(
     // Delay #(.Count(6)) pix_dclkDelay(.in(pix_dclk_), .out(pix_dclk));
     
     reg[11:0] pixelData = 0 /* synthesis syn_keep=1 */;
+    reg[11:0] frameWidth = 0;
+    reg[11:0] frameHeight = 0;
     reg frameValid = 0;
     reg lineValid = 0;
+    reg lastFrameValid = 0;
+    reg lastLineValid = 0;
     always @(posedge pix_dclk) begin
         // pixelData <= pix_d_delayed;
         // pixelData <= 12'hFFF;
         pixelData <= pix_d;
         frameValid <= pix_fv;
         lineValid <= pix_lv;
+        
+        lastFrameValid <= frameValid;
+        lastLineValid <= lineValid;
+        
+        if (!lastFrameValid && frameValid) begin
+            frameHeight <= 0;
+        end else if (lastFrameValid && !frameValid) begin
+            capture_frameWidth <= frameWidth;
+            capture_frameHeight <= frameHeight;
+        end
+        
+        if (!lastLineValid && lineValid) begin
+            frameWidth <= 1;
+            frameHeight <= frameHeight+1;
+        end else if (lineValid) begin
+            frameWidth <= frameWidth+1;
+        end
     end
     
     reg pixq_capture = 0;
@@ -920,7 +947,7 @@ endmodule
 
 module Top(
     input wire          clk12mhz,
-    output reg[3:0]     led = 0  /* synthesis syn_keep=1 */,
+    output wire[3:0]     led  /* synthesis syn_keep=1 */,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -1027,7 +1054,7 @@ module Top(
 
         .cmdReady(ram_cmdReady),
         .cmdTrigger(ram_cmdTrigger),
-        .cmdAddr(ram_cmdAddr),
+        .cmdAddr(ram_cmdAddr[RAM_AddrWidth-1:0]),
         .cmdWrite(ram_cmdWrite),
         .cmdWriteData(ram_cmdWriteData),
         .cmdReadData(ram_cmdReadData),
@@ -1052,6 +1079,8 @@ module Top(
     // ====================
     reg pix_captureTrigger = 0;
     wire pix_captureDone;
+    wire[11:0] pix_captureFrameWidth;
+    wire[11:0] pix_captureFrameHeight;
     wire[11:0] pix_pixel;
     wire pix_pixelReady;
     reg pix_pixelTrigger = 0;
@@ -1063,6 +1092,8 @@ module Top(
         
         .capture_trigger(pix_captureTrigger),
         .capture_done(pix_captureDone),
+        .capture_frameWidth(pix_captureFrameWidth),
+        .capture_frameHeight(pix_captureFrameHeight),
         
         .pixel(pix_pixel),
         .pixel_ready(pix_pixelReady),
@@ -1077,6 +1108,8 @@ module Top(
         // .led(led)
     );
     
+    // assign led[0] = (pix_captureFrameWidth == 12'h900);
+    // assign led[1] = (pix_captureFrameHeight == 12'h510);
     
     // ====================
     // Pix I2C Master
@@ -1119,11 +1152,14 @@ module Top(
     // ====================
     // Debug I/O
     // ====================
-    localparam MsgType_SetLED           = 8'h01;
-    localparam MsgType_ReadMem          = 8'h02;
-    localparam MsgType_PixReg8          = 8'h03;
-    localparam MsgType_PixReg16         = 8'h04;
-    localparam MsgType_PixCapture       = 8'h05;
+    localparam MsgType_LEDSet           = 8'h01;
+    localparam MsgType_MemRead          = 8'h02;
+    localparam MsgType_MemData          = 8'h03;
+    localparam MsgType_PixReg8          = 8'h04;
+    localparam MsgType_PixReg16         = 8'h05;
+    localparam MsgType_PixCapture       = 8'h06;
+    localparam MsgType_PixSize          = 8'h07;
+    localparam MsgType_PixData          = 8'h08;
     
     wire[7:0] debug_msgIn_type;
     wire[7:0] debug_msgIn_payloadLen;
@@ -1175,10 +1211,10 @@ module Top(
     
     localparam StateInit        = 0;    // +0
     localparam StateHandleMsg   = 1;    // +2
-    localparam StateReadMem     = 4;    // +4
+    localparam StateMemRead     = 4;    // +4
     localparam StatePixReg8     = 9;    // +2
     localparam StatePixReg16    = 12;   // +2
-    localparam StatePixCapture  = 15;   // +3
+    localparam StatePixCapture  = 15;   // +5
     
     localparam Pix_PixelCount = 'h2D9000;
     
@@ -1205,7 +1241,7 @@ module Top(
         
         // Initialize the SDRAM
         StateInit: begin
-            led <= 0;
+            // led <= 0;
             // state <= StateHandleMsg;
 `ifdef SIM
             state <= StateHandleMsg;
@@ -1258,16 +1294,16 @@ module Top(
                 debug_msgOut_payloadLen <= 0;
             end
             
-            MsgType_ReadMem: begin
+            MsgType_MemRead: begin
                 memReadLastAddr <= RAM_Size-1;
-                memReadMsgOutType <= MsgType_ReadMem;
-                state <= StateReadMem;
+                memReadMsgOutType <= MsgType_MemRead;
+                state <= StateMemRead;
             end
             
-            MsgType_SetLED: begin
-                $display("MsgType_SetLED: %0d", msgInPayload[0]);
+            MsgType_LEDSet: begin
+                $display("MsgType_LEDSet: %0d", msgInPayload[0]);
                 // led[0] <= msgInPayload[0];
-                debug_msgOut_type <= MsgType_SetLED;
+                debug_msgOut_type <= MsgType_LEDSet;
                 debug_msgOut_payloadLen <= 1;
             end
             
@@ -1303,22 +1339,22 @@ module Top(
         
         
         // Start reading memory
-        StateReadMem: begin
+        StateMemRead: begin
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
-            state <= StateReadMem+1;
+            state <= StateMemRead+1;
         end
         
-        StateReadMem+1: begin
+        StateMemRead+1: begin
             ram_cmdTrigger <= 1;
             ramReadTakeoffCounter <= 8'h7F;
             ramReadLandCounter <= 8'h7F;
             memAddr <= 0;
-            state <= StateReadMem+2;
+            state <= StateMemRead+2;
         end
         
         // Continue reading memory
-        StateReadMem+2: begin
+        StateMemRead+2: begin
             // Handle the read being accepted
             if (ram_cmdReady && ram_cmdTrigger) begin
                 ram_cmdAddr <= ram_cmdAddr+1;
@@ -1339,7 +1375,7 @@ module Top(
                 // Next state after we've received all the bytes
                 ramReadLandCounter <= ramReadLandCounter-1;
                 if (ramReadLandCounter == 1) begin
-                    state <= StateReadMem+3;
+                    state <= StateMemRead+3;
                 end
             end
             
@@ -1351,16 +1387,16 @@ module Top(
         end
         
         // Start sending the data
-        StateReadMem+3: begin
+        StateMemRead+3: begin
             debug_msgOut_type <= memReadMsgOutType;
             debug_msgOut_payloadLen <= memAddr<<1; // memAddr*2 for the number of bytes
             memReadCounter <= 0;
             memAddr <= 0;
-            state <= StateReadMem+4;
+            state <= StateMemRead+4;
         end
         
         // Send the data
-        StateReadMem+4: begin
+        StateMemRead+4: begin
             // Continue sending data
             if (debug_msgOut_payloadTrigger) begin
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
@@ -1382,7 +1418,7 @@ module Top(
                     if (ram_cmdAddr > memReadLastAddr) begin
                         state <= StateHandleMsg;
                     end else begin
-                        state <= StateReadMem+1;
+                        state <= StateMemRead+1;
                     end
                 end
             end
@@ -1558,11 +1594,36 @@ module Top(
             end
         end
         
+        // Send MsgType_PixSize message
         StatePixCapture+3: begin
-            // Send the image
+            debug_msgOut_type <= MsgType_PixSize;
+            debug_msgOut_payloadLen <= 4;
+            state <= StatePixCapture+4;
+        end
+        
+        // Send MsgType_PixSize payload
+        StatePixCapture+4: begin
+            if (debug_msgOut_payloadTrigger) begin
+                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
+                case (debug_msgOut_payloadLen)
+                4: debug_msgOut_payload <= pix_captureFrameWidth[7:0];
+                3: debug_msgOut_payload <= {4'b0, pix_captureFrameWidth[11:8]};
+                2: debug_msgOut_payload <= pix_captureFrameHeight[7:0];
+                1: debug_msgOut_payload <= {4'b0, pix_captureFrameHeight[11:8]};
+                0: begin
+                    // Clear `debug_msgOut_type` to prevent another message from being sent.
+                    debug_msgOut_type <= 0;
+                    state <= StatePixCapture+5;
+                end
+                endcase
+            end
+        end
+        
+        // Send MsgType_PixData message / payload
+        StatePixCapture+5: begin
             memReadLastAddr <= Pix_PixelCount-1;
-            memReadMsgOutType <= MsgType_PixCapture;
-            state <= StateReadMem;
+            memReadMsgOutType <= MsgType_PixData;
+            state <= StateMemRead;
         end
         
         endcase
@@ -1657,7 +1718,7 @@ module Top(
     //     wait (!sim_debug_clk);
     //     sim_debug_cs = 1;
     //
-    //     // WriteByte(MsgType_SetLED);  // Message type
+    //     // WriteByte(MsgType_LEDSet);  // Message type
     //     // WriteByte(8'h1);            // Payload length
     //     // WriteByte(8'h1);            // Payload
     //
