@@ -399,7 +399,7 @@ module PixController #(
     input wire          pix_dclk,
     input wire[11:0]    pix_d,
     input wire          pix_fv,
-    input wire          pix_lv,
+    input wire          pix_lv
     
     // output reg[3:0]     led = 0 /* synthesis syn_keep=1 */
     // output wire[3:0]     led
@@ -1039,7 +1039,7 @@ module Top(
     
     wire                    ram_cmdReady;
     reg                     ram_cmdTrigger = 0;
-    reg[RAM_AddrWidth:0]    ram_cmdAddr = 0; // RAM_AddrWidth+1 bits to prevent wrapping to 0 upon overflow (see memReadLen)
+    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
     reg                     ram_cmdWrite = 0;
     reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
     wire[RAM_DataWidth-1:0] ram_cmdReadData;
@@ -1097,7 +1097,7 @@ module Top(
         .pix_dclk(pix_dclk),
         .pix_d(pix_d),
         .pix_fv(pix_fv),
-        .pix_lv(pix_lv),
+        .pix_lv(pix_lv)
         
         // .led(led)
     );
@@ -1214,7 +1214,7 @@ module Top(
     reg[7:0] ramReadLandCounter = 0;
     reg[15:0] mem[127:0];
     reg[7:0] memReadCounter = 0;
-    reg[RAM_AddrWidth:0] memReadLen = 0; // RAM_AddrWidth+1 bits so we can hold RAM_Size
+    reg[RAM_AddrWidth-1:0] memReadLastAddr = 0;
     reg[6:0] memAddr; // Don't init with memAddr=0, otherwise Icestorm won't infer a RAM for `mem`
     reg captureDone = 0;
     
@@ -1326,7 +1326,7 @@ module Top(
         
         // Start reading memory
         StateReadMem: begin
-            memReadLen <= RAM_Size;
+            memReadLastAddr <= RAM_Size-1;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             state <= StateReadMem+1;
@@ -1344,12 +1344,14 @@ module Top(
         StateReadMem+2: begin
             // Handle the read being accepted
             if (ram_cmdReady && ram_cmdTrigger) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
-                
-                // Stop triggering when we've issued all the read commands
-                ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
-                if (ramReadTakeoffCounter == 1) begin
+                // Stop reading if we just read the last address we care about,
+                // or we hit the max number of words for 1 message
+                if (ram_cmdAddr==memReadLastAddr || ramReadTakeoffCounter==1) begin
                     ram_cmdTrigger <= 0;
+                
+                end else begin
+                    ram_cmdAddr <= ram_cmdAddr+1;
+                    ramReadTakeoffCounter <= ramReadTakeoffCounter-1;
                 end
             end
             
@@ -1360,9 +1362,10 @@ module Top(
                 memAddr <= memAddr+1;
                 
                 // Next state after we've received all the bytes
-                ramReadLandCounter <= ramReadLandCounter-1;
-                if (ramReadLandCounter == 1) begin
+                if (!ram_cmdTrigger && ramReadLandCounter==ramReadTakeoffCounter) begin
                     state <= StateReadMem+3;
+                end else begin
+                    ramReadLandCounter <= ramReadLandCounter-1;
                 end
             end
             
@@ -1402,7 +1405,7 @@ module Top(
                     debug_msgOut_type <= 0;
                     
                     // Start on the next chunk, or stop if we've read everything.
-                    if (ram_cmdAddr >= memReadLen) begin
+                    if (ram_cmdAddr == memReadLastAddr) begin
                         state <= StateHandleMsg;
                     end else begin
                         state <= StateReadMem+1;
