@@ -28,32 +28,32 @@ sudo ./MDCDebugger pixreg16 0x302E=0x0004
 # sudo ./MDCDebugger pixreg16 0x306E=0x4810
 # sudo ./MDCDebugger pixreg16 0x306E=0xFC10
 
-# # Set test_data_red
-# sudo ./MDCDebugger pixreg16 0x3072=0x0B2A   # AAA
-#
-# # Set test_data_greenr
-# sudo ./MDCDebugger pixreg16 0x3074=0x0C3B   # BBB
-#
-# # Set test_data_blue
-# sudo ./MDCDebugger pixreg16 0x3076=0x0D4C   # CCC
-#
-# # Set test_data_greenb
-# sudo ./MDCDebugger pixreg16 0x3078=0x0E5D   # DDD
-
-
-
-
 # Set test_data_red
-sudo ./MDCDebugger pixreg16 0x3072=0x0FFF   # FFF
+sudo ./MDCDebugger pixreg16 0x3072=0x0B2A   # AAA
 
 # Set test_data_greenr
-sudo ./MDCDebugger pixreg16 0x3074=0x0FFF   # FFF
+sudo ./MDCDebugger pixreg16 0x3074=0x0C3B   # BBB
 
 # Set test_data_blue
-sudo ./MDCDebugger pixreg16 0x3076=0x0FFF   # FFF
+sudo ./MDCDebugger pixreg16 0x3076=0x0D4C   # CCC
 
 # Set test_data_greenb
-sudo ./MDCDebugger pixreg16 0x3078=0x0FFF   # FFF
+sudo ./MDCDebugger pixreg16 0x3078=0x0E5D   # DDD
+
+
+
+
+# # Set test_data_red
+# sudo ./MDCDebugger pixreg16 0x3072=0x0FFF   # FFF
+#
+# # Set test_data_greenr
+# sudo ./MDCDebugger pixreg16 0x3074=0x0FFF   # FFF
+#
+# # Set test_data_blue
+# sudo ./MDCDebugger pixreg16 0x3076=0x0FFF   # FFF
+#
+# # Set test_data_greenb
+# sudo ./MDCDebugger pixreg16 0x3078=0x0FFF   # FFF
 
 
 
@@ -67,8 +67,8 @@ sudo ./MDCDebugger pixreg16 0x3078=0x0FFF   # FFF
 # 2: Full color bar test pattern
 # 3: Fade-to-gray color bar test pattern
 # 256: Walking 1s test pattern (12 bit)
-# sudo ./MDCDebugger pixreg16 0x3070=0x0000       # Normal operation
-sudo ./MDCDebugger pixreg16 0x3070=0x0001       # Solid color
+sudo ./MDCDebugger pixreg16 0x3070=0x0000       # Normal operation
+# sudo ./MDCDebugger pixreg16 0x3070=0x0001       # Solid color
 # sudo ./MDCDebugger pixreg16 0x3070=0x0002       # Color bars
 # sudo ./MDCDebugger pixreg16 0x3070=0x0003       # Fade-to-gray
 # sudo ./MDCDebugger pixreg16 0x3070=0x0100       # Walking 1s

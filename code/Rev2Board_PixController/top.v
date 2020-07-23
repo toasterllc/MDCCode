@@ -137,12 +137,12 @@ module Debug #(
     wire inq_writeOK;
     AFIFO #(.Width(MsgMaxLen*8), .Size(4)) inq(
         .rclk(inq_rclk),
-        .r(inq_readTrigger),
-        .rd(inq_readData),
+        .rtrigger(inq_readTrigger),
+        .rdata(inq_readData),
         .rok(inq_readOK),
         .wclk(inq_wclk),
-        .w(inq_writeTrigger),
-        .wd(inq_writeData),
+        .wtrigger(inq_writeTrigger),
+        .wdata(inq_writeData),
         .wok(inq_writeOK)
     );
     
@@ -159,12 +159,12 @@ module Debug #(
     wire outq_writeOK;
     AFIFO #(.Width(8), .Size(8)) outq(
         .rclk(outq_rclk),
-        .r(outq_readTrigger),
-        .rd(outq_readData),
+        .rtrigger(outq_readTrigger),
+        .rdata(outq_readData),
         .rok(outq_readOK),
         .wclk(outq_wclk),
-        .w(outq_writeTrigger),
-        .wd(outq_writeData),
+        .wtrigger(outq_writeTrigger),
+        .wdata(outq_writeData),
         .wok(outq_writeOK)
     );
     
@@ -520,8 +520,8 @@ module PixController #(
     reg lineValid = 0;
     always @(posedge pix_dclk) begin
         // pixelData <= pix_d_delayed;
-        pixelData <= 12'hFFF;
-        // pixelData <= pix_d;
+        // pixelData <= 12'hFFF;
+        pixelData <= pix_d;
         frameValid <= pix_fv;
         lineValid <= pix_lv;
     end
@@ -545,14 +545,14 @@ module PixController #(
     wire[15:0] pixq_writeData = pixelData;
     // reg[15:0] pixq_writeData = 0;
     wire pixq_writeOK;
-    AFIFO #(.Width(16), .Size(8)) pixq(
+    AFIFO #(.Width(16), .Size(256)) pixq(
         .rclk(pixq_rclk),
-        .r(pixq_readTrigger),
-        .rd(pixq_readData),
+        .rtrigger(pixq_readTrigger),
+        .rdata(pixq_readData),
         .rok(pixq_readOK),
         .wclk(pixq_wclk),
-        .w(pixq_writeTrigger),
-        .wd(pixq_writeData),
+        .wtrigger(pixq_writeTrigger),
+        .wdata(pixq_writeData),
         .wok(pixq_writeOK)
     );
     
@@ -1554,9 +1554,9 @@ module Top(
             
             // Handle reading a new pixel into `ram_cmdWriteData`, or an overflow register
             if (pix_pixelReady && pix_pixelTrigger) begin
-                if (pix_pixel != 12'hFFF) begin
-                    led[3] <= 1;
-                end
+                // if (pix_pixel != 12'hFFF) begin
+                //     led[3] <= 1;
+                // end
                 
                 // Store pixel in `ram_cmdWriteData` if it's available
                 if (!ram_cmdTrigger || ram_cmdReady) begin
