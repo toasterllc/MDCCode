@@ -73,24 +73,6 @@ endmodule
 
 
 
-module Debouncer #(
-    parameter Width = 1
-)(
-    input wire clk,
-    input wire in,
-    output reg out = 0
-);
-    reg[Width-1:0] vals = 0;
-    always @(posedge clk) begin
-        vals <= (vals<<1)|in;
-        if (&vals)      out <= 1;
-        else if (!vals) out <= 0;
-    end
-endmodule
-
-
-
-
 
 
 module Debug #(
@@ -525,13 +507,6 @@ module PixController #(
         frameValid <= pix_fv;
         lineValid <= pix_lv;
     end
-    
-    // // Debounce the `pix_fv`
-    // // For some reason, `pix_fv` rapidly transitions between 0<->1 several
-    // // times before settling on a new value.
-    // wire frameValid = pix_fv;
-    // wire lineValid = pix_lv;
-    // // Debouncer #(.Width(3)) debounce(.clk(pix_dclk), .in(pix_fv), .out(frameValid));
     
     reg pixq_capture = 0;
     wire pixq_rclk = clk;

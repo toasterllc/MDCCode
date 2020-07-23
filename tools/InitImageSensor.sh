@@ -21,8 +21,17 @@ sleep .2
 # Set pre_pll_clk_div=2
 # pre_pll_clk_div=2     ->  CLK_OP=98 MHz
 # pre_pll_clk_div=4     ->  CLK_OP=49 MHz
-"$MDCDebugger" pixreg16 0x302E=0x0004
-# "$MDCDebugger" pixreg16 0x302E=0x0002
+# "$MDCDebugger" pixreg16 0x302E=0x0002     # /2
+# "$MDCDebugger" pixreg16 0x302E=0x0004     # /4 (Default)
+# "$MDCDebugger" pixreg16 0x302E=0x003F     # /63
+
+# Set pll_multiplier
+# "$MDCDebugger" pixreg16 0x3030=0x0062     # *98 (Default)
+# "$MDCDebugger" pixreg16 0x3030=0x0031     # *49
+
+# Set vt_pix_clk_div
+# "$MDCDebugger" pixreg16 0x302A=0x0006     # /6 (Default)
+# "$MDCDebugger" pixreg16 0x302A=0x001F     # /31
 
 # Set output slew rate
 # Slow              = 0x0010
