@@ -1039,7 +1039,7 @@ module Top(
     
     wire                    ram_cmdReady;
     reg                     ram_cmdTrigger = 0;
-    reg[RAM_AddrWidth-1:0]  ram_cmdAddr = 0;
+    reg[RAM_AddrWidth:0]    ram_cmdAddr = 0; // RAM_AddrWidth+1 bits to prevent wrapping to 0 upon overflow (see memReadLen)
     reg                     ram_cmdWrite = 0;
     reg[RAM_DataWidth-1:0]  ram_cmdWriteData = 0;
     wire[RAM_DataWidth-1:0] ram_cmdReadData;
@@ -1214,6 +1214,7 @@ module Top(
     reg[7:0] ramReadLandCounter = 0;
     reg[15:0] mem[127:0];
     reg[7:0] memReadCounter = 0;
+    reg[RAM_AddrWidth:0] memReadLen = 0; // RAM_AddrWidth+1 bits so we can hold RAM_Size
     reg[6:0] memAddr; // Don't init with memAddr=0, otherwise Icestorm won't infer a RAM for `mem`
     reg captureDone = 0;
     
@@ -1227,25 +1228,26 @@ module Top(
         // Initialize the SDRAM
         StateInit: begin
             led <= 0;
-`ifdef SIM
             state <= StateHandleMsg;
-`else
-            if (!ram_cmdTrigger) begin
-                ram_cmdTrigger <= 1;
-                ram_cmdAddr <= 0;
-                ram_cmdWrite <= 1;
-                ram_cmdWriteData <= DataFromAddr(0);
-
-            end else if (ram_cmdReady) begin
-                ram_cmdAddr <= ram_cmdAddr+1;
-                ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
-
-                if (ram_cmdAddr == RAM_Size-1) begin
-                    ram_cmdTrigger <= 0;
-                    state <= StateHandleMsg;
-                end
-            end
-`endif
+// `ifdef SIM
+//             state <= StateHandleMsg;
+// `else
+//             if (!ram_cmdTrigger) begin
+//                 ram_cmdTrigger <= 1;
+//                 ram_cmdAddr <= 0;
+//                 ram_cmdWrite <= 1;
+//                 ram_cmdWriteData <= DataFromAddr(0);
+//
+//             end else if (ram_cmdReady) begin
+//                 ram_cmdAddr <= ram_cmdAddr+1;
+//                 ram_cmdWriteData <= DataFromAddr(ram_cmdAddr+1);
+//
+//                 if (ram_cmdAddr == RAM_Size-1) begin
+//                     ram_cmdTrigger <= 0;
+//                     state <= StateHandleMsg;
+//                 end
+//             end
+// `endif
         end
         
         
@@ -1324,6 +1326,7 @@ module Top(
         
         // Start reading memory
         StateReadMem: begin
+            memReadLen <= RAM_Size;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             state <= StateReadMem+1;
@@ -1331,8 +1334,8 @@ module Top(
         
         StateReadMem+1: begin
             ram_cmdTrigger <= 1;
-            ramReadTakeoffCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
-            ramReadLandCounter <= Min(8'h7F, RAM_Size-ram_cmdAddr);
+            ramReadTakeoffCounter <= 8'h7F;
+            ramReadLandCounter <= 8'h7F;
             memAddr <= 0;
             state <= StateReadMem+2;
         end
@@ -1399,7 +1402,7 @@ module Top(
                     debug_msgOut_type <= 0;
                     
                     // Start on the next chunk, or stop if we've read everything.
-                    if (ram_cmdAddr == 0) begin
+                    if (ram_cmdAddr >= memReadLen) begin
                         state <= StateHandleMsg;
                     end else begin
                         state <= StateReadMem+1;
