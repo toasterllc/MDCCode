@@ -1215,7 +1215,6 @@ module Top(
     reg[15:0] mem[127:0];
     reg[7:0] memReadCounter = 0;
     reg[RAM_AddrWidth-1:0] memReadLastAddr = 0;
-    reg memReadDone = 0;
     reg[6:0] memAddr; // Don't init with memAddr=0, otherwise Icestorm won't infer a RAM for `mem`
     reg captureDone = 0;
     
@@ -1328,7 +1327,6 @@ module Top(
         // Start reading memory
         StateReadMem: begin
             memReadLastAddr <= RAM_Size-1;
-            memReadDone <= 0;
             ram_cmdAddr <= 0;
             ram_cmdWrite <= 0;
             state <= StateReadMem+1;
@@ -1348,11 +1346,7 @@ module Top(
             if (ram_cmdReady && ram_cmdTrigger) begin
                 // Stop reading if we just read the last address we care about,
                 // or we hit the max number of words for 1 message
-                if (ram_cmdAddr == memReadLastAddr) begin
-                    memReadDone <= 1;
-                    ram_cmdTrigger <= 0;
-                
-                end else if (ramReadTakeoffCounter == 1) begin
+                if (ram_cmdAddr==memReadLastAddr || ramReadTakeoffCounter==1) begin
                     ram_cmdTrigger <= 0;
                 
                 end else begin
@@ -1411,7 +1405,7 @@ module Top(
                     debug_msgOut_type <= 0;
                     
                     // Start on the next chunk, or stop if we've read everything.
-                    if (memReadDone) begin
+                    if (ram_cmdAddr == memReadLastAddr) begin
                         state <= StateHandleMsg;
                     end else begin
                         state <= StateReadMem+1;
