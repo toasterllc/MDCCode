@@ -121,7 +121,7 @@ public:
     
     struct PixCaptureMsg {
         MsgHdr hdr{.type=0x05, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint32_t addr = 0;
+        uint8_t* mem = nullptr;
     } __attribute__((packed));
     
     using MsgPtr = std::unique_ptr<Msg>;
@@ -266,6 +266,10 @@ public:
         
         // Handle special message types that contain variable amounts of data
         if (auto x = Msg::Cast<ReadMemMsg>(msg.get())) {
+            x->hdr.len = hdr.len;
+            x->mem = _in+off;
+        
+        } else if (auto x = Msg::Cast<PixCaptureMsg>(msg.get())) {
             x->hdr.len = hdr.len;
             x->mem = _in+off;
         }
@@ -415,7 +419,7 @@ void printUsage() {
     cout << " " << PixReg8Cmd       << " <addr>=<val8>\n";
     cout << " " << PixReg16Cmd      << " <addr>\n";
     cout << " " << PixReg16Cmd      << " <addr>=<val16>\n";
-    cout << " " << PixCaptureCmd    << "\n";
+    cout << " " << PixCaptureCmd    << " <file>\n";
     cout << "\n";
 }
 
@@ -484,6 +488,8 @@ static Args parseArgs(int argc, const char* argv[]) {
         args.regOp = parseRegOp(strs[1]);
     
     } else if (args.cmd == PixCaptureCmd) {
+        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        args.filePath = strs[1];
     
     } else {
         throw std::runtime_error("invalid command");
@@ -506,6 +512,9 @@ static void setLED(const Args& args, MDCDevice& device) {
 const size_t RAMWordCount = 0x2000000;
 const size_t RAMWordSize = 2;
 const size_t RAMSize = RAMWordCount*RAMWordSize;
+const size_t ImagePixelCount = 2304*1296;
+const size_t ImagePixelSize = 2;
+const size_t ImageSize = ImagePixelCount*ImagePixelSize;
 
 static void readMem(const Args& args, MDCDevice& device) {
     using ReadMemMsg = MDCDevice::ReadMemMsg;
@@ -641,12 +650,31 @@ static void pixCapture(const Args& args, MDCDevice& device) {
     using PixCaptureMsg = MDCDevice::PixCaptureMsg;
     using Msg = MDCDevice::Msg;
     
-    device.write(PixCaptureMsg{});
+    std::ofstream outputFile(args.filePath.c_str(), std::ofstream::out|std::ofstream::binary|std::ofstream::trunc);
+    if (!outputFile) {
+        throw std::runtime_error("failed to open output file: " + args.filePath);
+    }
     
-    if (auto msgPtr = Msg::Cast<PixCaptureMsg>(device.read())) {
-        const auto& msg = *msgPtr;
-        printf("Addr after capture: 0x%x\n", msg.addr);
-        return;
+    device.write(PixCaptureMsg{});
+    size_t dataLen = 0;
+    for (size_t msgCount=0; dataLen<ImageSize;) {
+        if (auto msgPtr = Msg::Cast<PixCaptureMsg>(device.read())) {
+            const auto& msg = *msgPtr;
+            outputFile.write((char*)msg.mem, msg.hdr.len);
+            if (!outputFile) throw std::runtime_error("failed to write to output file");
+            
+            dataLen += msg.hdr.len;
+            
+            msgCount++;
+            if (!(msgCount % 1000)) {
+                printf("Message count: %ju, data length: %ju\n", (uintmax_t)msgCount, (uintmax_t)dataLen);
+            }
+        }
+    }
+    
+    if (dataLen != ImageSize) {
+        throw std::runtime_error("data length mismatch: expected "
+            + std::to_string(ImageSize) + ", got " + std::to_string(dataLen));
     }
 }
 
