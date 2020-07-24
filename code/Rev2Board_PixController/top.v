@@ -1621,7 +1621,7 @@ module Top(
         
         // Send MsgType_PixData message / payload
         StatePixCapture+5: begin
-            memReadLastAddr <= Pix_PixelCount-1;
+            memReadLastAddr <= (pix_captureFrameWidth*pix_captureFrameHeight)-1;
             memReadMsgOutType <= MsgType_PixData;
             state <= StateMemRead;
         end

@@ -374,8 +374,9 @@ public:
 public:
     struct ftdi_context _ftdi;
 //    uint8_t _in[0x400];
-    uint8_t _in[0x80000]; // 4 MB
-//    uint8_t _in[0x100000]; // 1 MB
+//    uint8_t _in[0x80000]; // 4 MB
+    uint8_t _in[0x100000]; // 1 MB
+//    uint8_t _in[0x40000];
 //    uint8_t _in[0x10000];
     size_t _inOff = 0;
     size_t _inLen = 0;

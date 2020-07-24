@@ -53,7 +53,7 @@ sleep .2
 # "$MDCDebugger" pixreg16 0x3076=0x0D4C   # CCC
 #
 # # Set test_data_greenb
-# "$MDCDebugger" pixreg16 0x3078=0x0E5D   # DDD
+# "$MDCDebugger" pixreg16 0x3078=0x0C3B   # BBB
 
 
 # # Set test_data_red
@@ -114,20 +114,20 @@ sleep .2
 # # "$MDCDebugger" pixreg16 0x3004=0x0006       # Default
 # "$MDCDebugger" pixreg16 0x3004=0x0010
 #
-# # Set the x-end address
-# # Default = 0x0905
-# # "$MDCDebugger" pixreg16 0x3008=0x0905       # Default
-# "$MDCDebugger" pixreg16 0x3008=0x0060
+# Set the x-end address
+# Default = 0x0905
+# "$MDCDebugger" pixreg16 0x3008=0x0905       # Default
+# "$MDCDebugger" pixreg16 0x3008=0x01B1
 #
 # # Set the y-start address
 # # Default = 0x007C
 # # "$MDCDebugger" pixreg16 0x3002=0x007C       # Default
 # "$MDCDebugger" pixreg16 0x3002=0x007C
 #
-# # Set the y-end address
-# # Default = 0x058b
-# # "$MDCDebugger" pixreg16 0x3006=0x058b       # Default
-# "$MDCDebugger" pixreg16 0x3006=0x00CC
+# Set the y-end address
+# Default = 0x058b
+# "$MDCDebugger" pixreg16 0x3006=0x058b       # Default
+# "$MDCDebugger" pixreg16 0x3006=0x016B
 
 # Implement "Recommended Default Register Changes and Sequencer"
 "$MDCDebugger" pixreg16 0x3ED2=0x0146

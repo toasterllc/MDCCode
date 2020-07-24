@@ -35,9 +35,9 @@ static void PrintMsg(const MDCDevice::MemDataMsg& msg) {
 }
 
 using Cmd = std::string;
-const Cmd SetLEDCmd = "setled";
-const Cmd ReadMemCmd = "readmem";
-const Cmd VerifyMemCmd = "verifymem";
+const Cmd LEDSetCmd = "ledset";
+const Cmd MemReadCmd = "memread";
+const Cmd MemVerifyCmd = "memverify";
 const Cmd PixReg8Cmd = "pixreg8";
 const Cmd PixReg16Cmd = "pixreg16";
 const Cmd PixCaptureCmd = "pixcapture";
@@ -45,9 +45,9 @@ const Cmd PixCaptureCmd = "pixcapture";
 void printUsage() {
     using namespace std;
     cout << "MDCDebugger commands:\n";
-    cout << " " << SetLEDCmd        << " <0/1>\n";
-    cout << " " << ReadMemCmd       << " <file>\n";
-    cout << " " << VerifyMemCmd     << "\n";
+    cout << " " << LEDSetCmd        << " <0/1>\n";
+    cout << " " << MemReadCmd       << " <file>\n";
+    cout << " " << MemVerifyCmd     << "\n";
     cout << " " << PixReg8Cmd       << " <addr>\n";
     cout << " " << PixReg8Cmd       << " <addr>=<val8>\n";
     cout << " " << PixReg16Cmd      << " <addr>\n";
@@ -99,15 +99,15 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = strs[0];
     
-    if (args.cmd == SetLEDCmd) {
+    if (args.cmd == LEDSetCmd) {
         if (strs.size() < 2) throw std::runtime_error("on/off state not specified");
         args.on = atoi(strs[1].c_str());
     
-    } else if (args.cmd == ReadMemCmd) {
+    } else if (args.cmd == MemReadCmd) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
         args.filePath = strs[1];
     
-    } else if (args.cmd == VerifyMemCmd) {
+    } else if (args.cmd == MemVerifyCmd) {
     
     } else if (args.cmd == PixReg8Cmd) {
         if (strs.size() < 2) throw std::runtime_error("no register specified");
@@ -131,7 +131,7 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
-static void setLED(const Args& args, MDCDevice& device) {
+static void ledSet(const Args& args, MDCDevice& device) {
     using LEDSetMsg = MDCDevice::LEDSetMsg;
     using Msg = MDCDevice::Msg;
     device.write(LEDSetMsg{.on = args.on});
@@ -146,7 +146,7 @@ const size_t RAMWordCount = 0x2000000;
 const size_t RAMWordSize = 2;
 const size_t RAMSize = RAMWordCount*RAMWordSize;
 
-static void readMem(const Args& args, MDCDevice& device) {
+static void memRead(const Args& args, MDCDevice& device) {
     using MemReadMsg = MDCDevice::MemReadMsg;
     using MemDataMsg = MDCDevice::MemDataMsg;
     using Msg = MDCDevice::Msg;
@@ -183,7 +183,7 @@ static void readMem(const Args& args, MDCDevice& device) {
 //    }
 }
 
-static void verifyMem(const Args& args, MDCDevice& device) {
+static void memVerify(const Args& args, MDCDevice& device) {
     using MemReadMsg = MDCDevice::MemReadMsg;
     using MemDataMsg = MDCDevice::MemDataMsg;
     using Msg = MDCDevice::Msg;
@@ -356,9 +356,9 @@ int main(int argc, const char* argv[]) {
     auto device = std::make_unique<MDCDevice>();
     
     try {
-        if (args.cmd == SetLEDCmd)          setLED(args, *device);
-        else if (args.cmd == ReadMemCmd)    readMem(args, *device);
-        else if (args.cmd == VerifyMemCmd)  verifyMem(args, *device);
+        if (args.cmd == LEDSetCmd)          ledSet(args, *device);
+        else if (args.cmd == MemReadCmd)    memRead(args, *device);
+        else if (args.cmd == MemVerifyCmd)  memVerify(args, *device);
         else if (args.cmd == PixReg8Cmd)    pixReg8(args, *device);
         else if (args.cmd == PixReg16Cmd)   pixReg16(args, *device);
         else if (args.cmd == PixCaptureCmd) pixCapture(args, *device);
