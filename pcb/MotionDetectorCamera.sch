@@ -694,6 +694,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="F2" x="-1.625" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
 <smd name="F1" x="-2.275" y="-0.975" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
 <smd name="H1" x="-2.275" y="-2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
+<polygon width="0.05" layer="21">
+<vertex x="-1.9875" y="2.7763"/>
+<vertex x="-1.9875" y="-2.3167"/>
+<vertex x="1.4075" y="-2.3167"/>
+<vertex x="1.4075" y="2.7763"/>
+</polygon>
 </package>
 <package name="SIT8021">
 <smd name="1" x="-0.205" y="0.5" dx="0.25" dy="0.25" layer="1" roundness="100" rot="R270" cream="no"/>
@@ -4481,18 +4487,6 @@ layer."</text>
 <wire x1="83.82" y1="251.46" x2="101.6" y2="251.46" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$87" class="0">
-<segment>
-<pinref part="U1" gate="B" pin="B11"/>
-<wire x1="119.38" y1="208.28" x2="121.92" y2="208.28" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$89" class="0">
-<segment>
-<pinref part="U1" gate="B" pin="D9"/>
-<wire x1="119.38" y1="203.2" x2="121.92" y2="203.2" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="PIX_LV" class="0">
 <segment>
 <pinref part="U8" gate="B" pin="LINE_VALID"/>
@@ -4661,78 +4655,6 @@ layer."</text>
 <wire x1="581.66" y1="99.06" x2="579.12" y2="99.06" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$122" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="L5"/>
-<wire x1="167.64" y1="198.12" x2="170.18" y2="198.12" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$123" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="L7"/>
-<wire x1="167.64" y1="195.58" x2="170.18" y2="195.58" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$124" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="L8"/>
-<wire x1="167.64" y1="193.04" x2="170.18" y2="193.04" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$128" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="K6"/>
-<wire x1="167.64" y1="182.88" x2="170.18" y2="182.88" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$129" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="K7"/>
-<wire x1="167.64" y1="180.34" x2="170.18" y2="180.34" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$130" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="J3"/>
-<wire x1="167.64" y1="177.8" x2="170.18" y2="177.8" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$131" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="J4"/>
-<wire x1="167.64" y1="175.26" x2="170.18" y2="175.26" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$133" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="J7"/>
-<wire x1="167.64" y1="170.18" x2="170.18" y2="170.18" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$999" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="J8"/>
-<wire x1="167.64" y1="167.64" x2="170.18" y2="167.64" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$135" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="H7"/>
-<wire x1="167.64" y1="165.1" x2="170.18" y2="165.1" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$136" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="H9"/>
-<wire x1="167.64" y1="162.56" x2="170.18" y2="162.56" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$163" class="0">
-<segment>
-<pinref part="U1" gate="E" pin="VPP_FAST_B10"/>
-<wire x1="116.84" y1="83.82" x2="111.76" y2="83.82" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="VCCPLL0" class="0">
 <segment>
 <pinref part="R3" gate="G$1" pin="1"/>
@@ -4767,42 +4689,6 @@ layer."</text>
 <pinref part="U1" gate="E" pin="VCCPLL1_C6"/>
 <wire x1="116.84" y1="78.74" x2="111.76" y2="78.74" width="0.1524" layer="91"/>
 <label x="110.998" y="78.74" size="1.778" layer="95" rot="MR0"/>
-</segment>
-</net>
-<net name="N$60" class="0">
-<segment>
-<pinref part="U1" gate="A" pin="A10"/>
-<wire x1="63.5" y1="185.42" x2="66.04" y2="185.42" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$61" class="0">
-<segment>
-<pinref part="U1" gate="A" pin="A11"/>
-<wire x1="63.5" y1="182.88" x2="66.04" y2="182.88" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$83" class="0">
-<segment>
-<pinref part="U1" gate="A" pin="C8"/>
-<wire x1="63.5" y1="160.02" x2="66.04" y2="160.02" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$84" class="0">
-<segment>
-<pinref part="U1" gate="A" pin="C9"/>
-<wire x1="63.5" y1="157.48" x2="66.04" y2="157.48" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$268" class="0">
-<segment>
-<pinref part="U1" gate="D" pin="H3"/>
-<wire x1="231.14" y1="154.94" x2="233.68" y2="154.94" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$271" class="0">
-<segment>
-<pinref part="U1" gate="D" pin="K1"/>
-<wire x1="231.14" y1="147.32" x2="233.68" y2="147.32" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="FLASH_PULLUP" class="0">
@@ -4896,18 +4782,6 @@ layer."</text>
 <pinref part="U4" gate="G$1" pin="EN"/>
 <wire x1="215.9" y1="251.46" x2="213.36" y2="251.46" width="0.1524" layer="91"/>
 <label x="213.36" y="251.46" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
-<net name="N$10" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="L4"/>
-<wire x1="167.64" y1="200.66" x2="170.18" y2="200.66" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$24" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="K5"/>
-<wire x1="167.64" y1="185.42" x2="170.18" y2="185.42" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SD_D3" class="0">
