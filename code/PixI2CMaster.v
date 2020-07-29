@@ -29,7 +29,7 @@ module PixI2CMaster #(
     // I2CQuarterCycleDelay: number of `clk` cycles for a quarter of the `i2c_clk` cycle to elapse.
     // DivCeil() is necessary to perform the quarter-cycle calculation, so that the
     // division is ceiled to the nearest clock cycle. (Ie -- slower than I2CClkFreq is OK, faster is not.)
-    // -1 for the in the value that should be stored in a counter
+    // -1 for the value that should be stored in a counter.
     localparam I2CQuarterCycleDelay = DivCeil(ClkFreq, 4*I2CClkFreq)-1;
     
     // Width of `delay`
