@@ -611,7 +611,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1" y="1.05"/>
 </polygon>
 </package>
-<package name="AR0330CS1C12SPKA0" urn="urn:adsk.eagle:footprint:18794472/1" locally_modified="yes">
+<package name="ON-AR0330CS1C12SPKA0" urn="urn:adsk.eagle:footprint:18794472/1" locally_modified="yes">
 <description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
 &lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
 <smd name="A1" x="-2.275" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
@@ -844,7 +844,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
 &lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
 <packageinstances>
-<packageinstance name="AR0330CS1C12SPKA0"/>
+<packageinstance name="ON-AR0330CS1C12SPKA0"/>
 </packageinstances>
 </package3d>
 <package3d name="RESC3225X70N" urn="urn:adsk.eagle:package:17955780/1" type="model">
@@ -1237,7 +1237,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="1.27" y="0.762" size="1.778" layer="95">&gt;NAME</text>
 <text x="0.254" y="-15.24" size="1.778" layer="95">&gt;PN</text>
 </symbol>
-<symbol name="AR0330CS1C12SPKA0-A">
+<symbol name="ON-AR0330CS1C12SPKA0-A">
 <wire x1="0" y1="0" x2="0" y2="-27.94" width="0.254" layer="94"/>
 <wire x1="0" y1="-27.94" x2="17.78" y2="-27.94" width="0.254" layer="94"/>
 <wire x1="17.78" y1="-27.94" x2="17.78" y2="0" width="0.254" layer="94"/>
@@ -1254,7 +1254,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="VDD_MIPI" x="-2.54" y="-20.32" visible="pin" length="short"/>
 <pin name="VDD_PLL" x="-2.54" y="-22.86" visible="pin" length="short"/>
 </symbol>
-<symbol name="AR0330CS1C12SPKA0-B">
+<symbol name="ON-AR0330CS1C12SPKA0-B">
 <pin name="CLK_N" x="-2.54" y="-25.4" visible="pin" length="short"/>
 <pin name="CLK_P" x="-2.54" y="-27.94" visible="pin" length="short"/>
 <pin name="DATA2_N" x="-2.54" y="-30.48" visible="pin" length="short"/>
@@ -1856,14 +1856,14 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="AR0330CS1C12SPKA0" prefix="U">
+<deviceset name="ON-AR0330CS1C12SPKA0" prefix="U">
 <description>3.4 Megapixel CMOS Image Sensor</description>
 <gates>
-<gate name="A" symbol="AR0330CS1C12SPKA0-A" x="0" y="0"/>
-<gate name="B" symbol="AR0330CS1C12SPKA0-B" x="30.48" y="0"/>
+<gate name="A" symbol="ON-AR0330CS1C12SPKA0-A" x="0" y="0"/>
+<gate name="B" symbol="ON-AR0330CS1C12SPKA0-B" x="30.48" y="0"/>
 </gates>
 <devices>
-<device name="" package="AR0330CS1C12SPKA0">
+<device name="" package="ON-AR0330CS1C12SPKA0">
 <connects>
 <connect gate="A" pin="AGND" pad="A3 B5"/>
 <connect gate="A" pin="DGND" pad="B4 B6 C4 C5 C6 D4 E6 G1 H2 H3"/>
@@ -2343,7 +2343,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="U7" library="EagleLibrary" deviceset="W25Q80EWUXIE" device="" package3d_urn="urn:adsk.eagle:package:18792578/1">
 <attribute name="PN" value="W25Q80EWUXIETR"/>
 </part>
-<part name="U8" library="EagleLibrary" deviceset="AR0330CS1C12SPKA0" device="" package3d_urn="urn:adsk.eagle:package:18794457/1">
+<part name="U8" library="EagleLibrary" deviceset="ON-AR0330CS1C12SPKA0" device="" package3d_urn="urn:adsk.eagle:package:18794457/1">
 <attribute name="PN" value="AR0330CS1C12SPKA0-CP2"/>
 </part>
 <part name="C32" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">

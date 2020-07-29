@@ -623,7 +623,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1" y="1.05"/>
 </polygon>
 </package>
-<package name="AR0330CS1C12SPKA0" urn="urn:adsk.eagle:footprint:18794472/1" locally_modified="yes">
+<package name="ON-AR0330CS1C12SPKA0" urn="urn:adsk.eagle:footprint:18794472/1" locally_modified="yes">
 <description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
 &lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
 <smd name="A1" x="-2.275" y="2.275" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no" cream="no"/>
@@ -815,7 +815,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
 &lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
 <packageinstances>
-<packageinstance name="AR0330CS1C12SPKA0"/>
+<packageinstance name="ON-AR0330CS1C12SPKA0"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -1353,7 +1353,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="22.569740625" y="14.345921875" size="0.762" layer="25" font="vector" rot="R90"/>
 <attribute name="PN" value="W25Q80EWUXIETR" x="20.574" y="15.875" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="U8" library="EagleLibrary" package="AR0330CS1C12SPKA0" package3d_urn="urn:adsk.eagle:package:18794457/1" value="AR0330CS1C12SPKA0" x="29.083" y="27.2288" smashed="yes">
+<element name="U8" library="EagleLibrary" package="ON-AR0330CS1C12SPKA0" package3d_urn="urn:adsk.eagle:package:18794457/1" value="ON-AR0330CS1C12SPKA0" x="29.083" y="27.2288" smashed="yes">
 <attribute name="MFG" value="ON Semiconductor" x="29.083" y="27.2288" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="26.037" y="30.6479" size="1.27" layer="25" font="vector"/>
 <attribute name="PN" value="AR0330CS1C12SPKA0-CP2" x="29.083" y="27.2288" size="1.778" layer="27" display="off"/>
