@@ -2520,17 +2520,17 @@ layer."</text>
 <attribute name="MFG" x="83.82" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="83.82" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="L1" gate="G$1" x="144.78" y="266.7" smashed="yes">
+<instance part="L1" gate="G$1" x="137.16" y="266.7" smashed="yes">
+<attribute name="MFG1" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG3" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG4" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN1" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN3" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN4" x="137.16" y="266.7" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="137.16" y="271.78" size="1.778" layer="95"/>
 <attribute name="VALUE" x="137.16" y="269.24" size="1.778" layer="96"/>
-<attribute name="MFG1" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="MFG2" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="MFG3" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="MFG4" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN1" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN2" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN3" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN4" x="144.78" y="266.7" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C21" gate="G$1" x="210.82" y="264.16" smashed="yes">
 <attribute name="NAME" x="204.47" y="263.779" size="1.778" layer="95"/>
@@ -2542,17 +2542,17 @@ layer."</text>
 <attribute name="PN2" x="231.14" y="261.62" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="218.515" y="272.6719" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
-<instance part="L2" gate="G$1" x="259.08" y="266.7" smashed="yes">
+<instance part="L2" gate="G$1" x="251.46" y="266.7" smashed="yes">
+<attribute name="MFG1" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG3" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="MFG4" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN1" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN3" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
+<attribute name="PN4" x="251.46" y="266.7" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="251.46" y="271.78" size="1.778" layer="95"/>
 <attribute name="VALUE" x="251.46" y="269.24" size="1.778" layer="96"/>
-<attribute name="MFG1" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="MFG2" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="MFG3" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="MFG4" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN1" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN2" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN3" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="PN4" x="259.08" y="266.7" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U6" gate="G$1" x="335.28" y="256.54" smashed="yes">
 <attribute name="NAME" x="325.12" y="238.506" size="1.778" layer="95"/>
@@ -2582,17 +2582,17 @@ layer."</text>
 <attribute name="VALUE" x="368.554" y="259.461" size="1.778" layer="96"/>
 <attribute name="MFG" x="373.38" y="259.08" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="L3" gate="G$1" x="335.28" y="284.48" smashed="yes">
+<instance part="L3" gate="G$1" x="327.66" y="284.48" smashed="yes">
+<attribute name="MFG1" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="MFG3" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="MFG4" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN1" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN3" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
+<attribute name="PN4" x="327.66" y="284.48" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="327.66" y="289.56" size="1.778" layer="95"/>
 <attribute name="VALUE" x="327.66" y="287.02" size="1.778" layer="96"/>
-<attribute name="MFG1" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
-<attribute name="MFG2" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
-<attribute name="MFG3" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
-<attribute name="MFG4" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
-<attribute name="PN1" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
-<attribute name="PN2" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
-<attribute name="PN3" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
-<attribute name="PN4" x="335.28" y="284.48" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R18" gate="G$1" x="383.54" y="261.62" smashed="yes" rot="R90">
 <attribute name="NAME" x="379.73" y="259.08" size="1.778" layer="95" rot="R90"/>
@@ -3623,7 +3623,7 @@ layer."</text>
 <net name="N$5" class="0">
 <segment>
 <pinref part="U2" gate="G$1" pin="SW"/>
-<wire x1="132.08" y1="266.7" x2="144.78" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="266.7" x2="137.16" y2="266.7" width="0.1524" layer="91"/>
 <pinref part="L1" gate="G$1" pin="1"/>
 </segment>
 </net>
@@ -3675,7 +3675,7 @@ layer."</text>
 <net name="N$4" class="0">
 <segment>
 <pinref part="U4" gate="G$1" pin="SW"/>
-<wire x1="246.38" y1="266.7" x2="259.08" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="246.38" y1="266.7" x2="251.46" y2="266.7" width="0.1524" layer="91"/>
 <pinref part="L2" gate="G$1" pin="1"/>
 </segment>
 </net>
@@ -3749,15 +3749,14 @@ layer."</text>
 <pinref part="U6" gate="G$1" pin="L1"/>
 <wire x1="330.2" y1="279.4" x2="327.66" y2="279.4" width="0.1524" layer="91"/>
 <pinref part="L3" gate="G$1" pin="1"/>
-<wire x1="327.66" y1="279.4" x2="335.28" y2="284.48" width="0.1524" layer="91"/>
+<wire x1="327.66" y1="279.4" x2="327.66" y2="284.48" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$13" class="0">
 <segment>
 <pinref part="U6" gate="G$1" pin="L2"/>
-<wire x1="340.36" y1="279.4" x2="342.9" y2="279.4" width="0.1524" layer="91"/>
 <pinref part="L3" gate="G$1" pin="2"/>
-<wire x1="342.9" y1="279.4" x2="347.98" y2="284.48" width="0.1524" layer="91"/>
+<wire x1="340.36" y1="279.4" x2="340.36" y2="284.48" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$11" class="0">
@@ -4430,7 +4429,7 @@ layer."</text>
 <pinref part="R6" gate="G$1" pin="2"/>
 <pinref part="U2" gate="G$1" pin="VOS"/>
 <pinref part="C18" gate="G$1" pin="1"/>
-<wire x1="154.94" y1="266.7" x2="157.48" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="154.94" y1="266.7" x2="149.86" y2="266.7" width="0.1524" layer="91"/>
 <wire x1="132.08" y1="259.08" x2="154.94" y2="259.08" width="0.1524" layer="91"/>
 <wire x1="154.94" y1="266.7" x2="154.94" y2="259.08" width="0.1524" layer="91"/>
 <junction x="154.94" y="266.7"/>
@@ -4438,6 +4437,7 @@ layer."</text>
 <pinref part="TP3" gate="G$1" pin="SIGNAL"/>
 <wire x1="154.94" y1="274.32" x2="154.94" y2="266.7" width="0.1524" layer="91"/>
 <junction x="154.94" y="266.7"/>
+<wire x1="157.48" y1="266.7" x2="154.94" y2="266.7" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$8" class="0">
@@ -4448,12 +4448,13 @@ layer."</text>
 <pinref part="L2" gate="G$1" pin="2"/>
 <junction x="269.24" y="266.7"/>
 <pinref part="C23" gate="G$1" pin="1"/>
-<wire x1="269.24" y1="266.7" x2="271.78" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="269.24" y1="266.7" x2="264.16" y2="266.7" width="0.1524" layer="91"/>
 <wire x1="269.24" y1="266.7" x2="269.24" y2="259.08" width="0.1524" layer="91"/>
 <junction x="269.24" y="266.7"/>
 <pinref part="U4" gate="G$1" pin="VOS"/>
 <wire x1="269.24" y1="259.08" x2="246.38" y2="259.08" width="0.1524" layer="91"/>
 <junction x="269.24" y="259.08"/>
+<wire x1="271.78" y1="266.7" x2="269.24" y2="266.7" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$18" class="0">
