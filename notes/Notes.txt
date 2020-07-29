@@ -1,12 +1,4 @@
 - Future
-
-    - Re-implement power supplies
-        - Use Webench to optimize efficiency
-        - Use better capacitors by focusing on DC bias
-        - Improve layout -- use the largest IO traces possible
-    
-    - Add inrush current protection to MDC Programmer board
-        - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
     
     - Length match traces going to RAM
     
@@ -30,14 +22,9 @@
         - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
 
 
-
 - Todo
     
     - Re-consider the timing of signals driving the SDRAM. Instead of adding a delay, change the signals on the negative clock edge.
-    
-    - Add lens to board
-    
-    - Add FTDI chip to board
     
     - Figure out what yosys changes are needed to infer a BRAM correctly. currently we modified /usr/local/share/yosys/ice40/brams.txt:
                 bram $__ICE40_RAM4K_M0
@@ -62,6 +49,23 @@
     - Add:
         /* synthesis syn_ramstyle="no_rw_check" */
         to AFIFO memories, to avoid unnecessary overhead
+
+
+
+
+- Rev3 board
+
+    - Add lens to board
+    
+    - Add FTDI chip to board
+    
+    - Re-implement power supplies
+        - Use Webench to optimize efficiency
+        - Use better capacitors by focusing on DC bias
+        - Improve layout -- use the largest IO traces possible
+    
+    - Add inrush current protection to MDC Programmer board
+        - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
     
     - Increase 'isolate' on power planes
         - When we soldered a jumper resistor, We accidentally shorted 1V2/1V8 and ground due to little isolation between the polygon pour and SMD pad
@@ -88,7 +92,8 @@
 
 
 
-- Rev2
+
+√ Rev2
     
     √ Renumber all components
     
