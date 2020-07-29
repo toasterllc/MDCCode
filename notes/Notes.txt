@@ -31,9 +31,15 @@
 
 
 
-- Rev3
+- Todo
     
-    Figure out what yosys changes are needed to infer a BRAM correctly. currently we modified /usr/local/share/yosys/ice40/brams.txt:
+    - Re-consider the timing of signals driving the SDRAM. Instead of adding a delay, change the signals on the negative clock edge.
+    
+    - Add lens to board
+    
+    - Add FTDI chip to board
+    
+    - Figure out what yosys changes are needed to infer a BRAM correctly. currently we modified /usr/local/share/yosys/ice40/brams.txt:
                 bram $__ICE40_RAM4K_M0
                   init 1
                   abits 8
@@ -49,7 +55,7 @@
                 ...
         
     
-    ClockGen:
+    - ClockGen:
         Synchronize 'locked' signal with clock
             https://stackoverflow.com/questions/38030768/icestick-yosys-using-the-global-set-reset-gsr
     
