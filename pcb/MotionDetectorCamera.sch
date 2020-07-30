@@ -802,6 +802,44 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="1.651" y="-0.254"/>
 </polygon>
 </package>
+<package name="S-MOUNT-LENS-HOLDER">
+<description>Chip, 3.20 X 2.50 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
+<text x="-10.956" y="11.2871" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<pad name="1" x="-10.9982" y="0" drill="1.778"/>
+<pad name="2" x="10.9982" y="0" drill="1.778"/>
+<circle x="-10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
+<circle x="10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
+<circle x="0" y="0" radius="6.858" width="0.05" layer="21"/>
+<polygon width="0.127" layer="39">
+<vertex x="-10.668" y="10.668"/>
+<vertex x="-10.668" y="-10.668"/>
+<vertex x="-8.636" y="-10.668"/>
+<vertex x="-8.636" y="10.668"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="8.636" y="10.668"/>
+<vertex x="8.636" y="-10.668"/>
+<vertex x="10.668" y="-10.668"/>
+<vertex x="10.668" y="10.668"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="-10.668" y="8.636"/>
+<vertex x="10.668" y="8.636"/>
+<vertex x="10.668" y="10.668"/>
+<vertex x="-10.668" y="10.668"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="-10.668" y="-10.668"/>
+<vertex x="10.668" y="-10.668"/>
+<vertex x="10.668" y="-8.636"/>
+<vertex x="-10.668" y="-8.636"/>
+</polygon>
+<wire x1="-10.9982" y1="10.9982" x2="10.9982" y2="10.9982" width="0.05" layer="21"/>
+<wire x1="10.9982" y1="10.9982" x2="10.9982" y2="-10.9982" width="0.05" layer="21"/>
+<wire x1="10.9982" y1="-10.9982" x2="-10.9982" y2="-10.9982" width="0.05" layer="21"/>
+<wire x1="-10.9982" y1="-10.9982" x2="-10.9982" y2="10.9982" width="0.05" layer="21"/>
+</package>
 </packages>
 <packages3d>
 <package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
@@ -1331,6 +1369,17 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <circle x="6.35" y="0" radius="1.27" width="0.254" layer="94"/>
 <pin name="X" x="0" y="0" visible="off" length="middle"/>
 <text x="0" y="2.54" size="1.778" layer="95">&gt;NAME</text>
+</symbol>
+<symbol name="S-MOUNT-LENS-HOLDER">
+<wire x1="0" y1="0" x2="0" y2="-25.4" width="0.254" layer="94"/>
+<wire x1="0" y1="-25.4" x2="25.4" y2="-25.4" width="0.254" layer="94"/>
+<wire x1="25.4" y1="-25.4" x2="25.4" y2="0" width="0.254" layer="94"/>
+<wire x1="25.4" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<text x="0" y="-27.94" size="1.778" layer="95">S-Mount Lens Holder</text>
+<text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
+<circle x="12.7" y="-12.7" radius="7.184203125" width="0.254" layer="94"/>
+<pin name="GND1" x="-2.54" y="-22.86" visible="pin" length="short"/>
+<pin name="GND2" x="27.94" y="-22.86" visible="pin" length="short" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1987,6 +2036,22 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="S-MOUNT-LENS-HOLDER" prefix="J">
+<gates>
+<gate name="G$1" symbol="S-MOUNT-LENS-HOLDER" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="S-MOUNT-LENS-HOLDER">
+<connects>
+<connect gate="G$1" pin="GND1" pad="1"/>
+<connect gate="G$1" pin="GND2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -2443,6 +2508,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="TP6" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP8" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP9" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
+<part name="J2" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -3028,6 +3094,9 @@ layer."</text>
 <instance part="TP9" gate="G$1" x="563.88" y="66.04" smashed="yes">
 <attribute name="NAME" x="564.134" y="66.548" size="1.778" layer="95"/>
 </instance>
+<instance part="J2" gate="G$1" x="497.84" y="25.4" smashed="yes">
+<attribute name="NAME" x="497.84" y="26.162" size="1.778" layer="95"/>
+</instance>
 </instances>
 <busses>
 <bus name="RAM_A[0..12]">
@@ -3603,6 +3672,16 @@ layer."</text>
 <pinref part="C20" gate="G$1" pin="2"/>
 <wire x1="182.88" y1="78.74" x2="193.04" y2="78.74" width="0.1524" layer="91"/>
 <label x="182.88" y="78.232" size="1.778" layer="95" align="top-left"/>
+</segment>
+<segment>
+<pinref part="J2" gate="G$1" pin="GND1"/>
+<wire x1="495.3" y1="2.54" x2="492.76" y2="2.54" width="0.1524" layer="91"/>
+<label x="492.76" y="2.54" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="J2" gate="G$1" pin="GND2"/>
+<wire x1="525.78" y1="2.54" x2="528.32" y2="2.54" width="0.1524" layer="91"/>
+<label x="528.32" y="2.54" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="CLK12MHZ" class="0">
