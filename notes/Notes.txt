@@ -54,10 +54,18 @@
 
 
 - Rev3 board
-
-    - Add lens to board
+    - Add additional SD card parts so we can use non-A2 cards
+        *** See SDCardInterfaceParts.txt ***
     
-    - Add FTDI chip to board
+    - Add STM32F730I8 to handle:
+        - USB High-Speed comms with computer
+        - Program ice40
+        - Read/write to SD card via ice40 (via SDIO interface -- ice40 will emulate an SD card, and we'll add custom commands)
+        - Stream images from image sensor
+        - Read/write image sensor registers
+        *** See USBChipNotes.txt for more info ***
+    
+    - Add lens/mount to board
     
     - Re-implement power supplies
         - Use Webench to optimize efficiency
