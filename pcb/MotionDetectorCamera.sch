@@ -2797,11 +2797,11 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 to 1V8 for ICE_PRG_CDONE</text>
 <text x="81.28" y="60.96" size="1.778" layer="95" align="bottom-right">GNDPLL should not be connected to GND!</text>
 <text x="81.28" y="40.64" size="1.778" layer="95" align="bottom-right">GNDPLL should not be connected to GND!</text>
-<text x="459.74" y="152.4" size="1.778" layer="91" align="bottom-right">VAA Bypassing</text>
-<text x="459.74" y="134.62" size="1.778" layer="91" align="bottom-right">VAA_PIX Bypassing</text>
-<text x="459.74" y="109.22" size="1.778" layer="91" align="bottom-right">VDD Bypassing</text>
-<text x="459.74" y="81.28" size="1.778" layer="91" align="bottom-right">VDD_IO Bypassing</text>
-<text x="459.74" y="66.04" size="1.778" layer="91" align="bottom-right">VDD_PLL Bypassing</text>
+<text x="459.74" y="152.4" size="1.778" layer="95" align="bottom-right">VAA Bypassing</text>
+<text x="459.74" y="134.62" size="1.778" layer="95" align="bottom-right">VAA_PIX Bypassing</text>
+<text x="459.74" y="109.22" size="1.778" layer="95" align="bottom-right">VDD Bypassing</text>
+<text x="459.74" y="81.28" size="1.778" layer="95" align="bottom-right">VDD_IO Bypassing</text>
+<text x="459.74" y="66.04" size="1.778" layer="95" align="bottom-right">VDD_PLL Bypassing</text>
 <text x="198.12" y="248.92" size="0.762" layer="95" align="top-left">Gate 1V8 by 2V8 power-good signal,
 because the 2V8 must be powered
 before 1V8, because:
