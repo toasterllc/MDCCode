@@ -54,6 +54,8 @@
 
 
 - Rev3 board
+    - Add lens/mount to board
+    
     - Add additional SD card parts so we can use non-A2 cards
         *** See SDCardInterfaceParts.txt ***
     
@@ -65,23 +67,20 @@
         - Read/write image sensor registers
         *** See USBChipNotes.txt for more info ***
     
-    - Add lens/mount to board
+    - Add USB ESD protection chip
+    
+    - Add USB inrush protection
     
     - Re-implement power supplies
         - Use Webench to optimize efficiency
         - Use better capacitors by focusing on DC bias
         - Improve layout -- use the largest IO traces possible
     
-    - Add inrush current protection to MDC Programmer board
-        - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
-    
     - Increase 'isolate' on power planes
         - When we soldered a jumper resistor, We accidentally shorted 1V2/1V8 and ground due to little isolation between the polygon pour and SMD pad
     
     - Use thinner stencils
         - It seems like we're using too much solder paste
-    
-    - Programmer: Fix USB jack model to the version that doesn't have plastic posts
     
     - Improve current sense resistor
         - Use low-tempco resistor
@@ -94,6 +93,14 @@
                 "the pull-up resistor is not required if the controller drives a valid logic level on SCLK at all times."
                 "the AR0330CS uses SCLK as an input only and therefore never drives it LOW."
             - we'll save some power by not having a pullup burning power while driving the clock low
+    
+    - Programmer board
+        - We may not need the programmer anymore though?
+        
+        - Add inrush current protection to MDC Programmer board
+            - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
+        
+        - Fix USB jack model to the version that doesn't have plastic posts
 
 
 
