@@ -22,6 +22,10 @@
         - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
 
 
+
+
+
+
 - Todo
     
     - Re-consider the timing of signals driving the SDRAM. Instead of adding a delay, change the signals on the negative clock edge.
@@ -49,6 +53,9 @@
     - Add:
         /* synthesis syn_ramstyle="no_rw_check" */
         to AFIFO memories, to avoid unnecessary overhead
+
+
+
 
 
 
