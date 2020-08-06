@@ -62,6 +62,8 @@
 
 - Rev3 board
     
+    - Make sure image sensor is centered within lens
+    
     - Add lens/mount to board
     
     - Add additional SD card parts so we can use non-A2 cards
