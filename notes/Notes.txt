@@ -61,6 +61,9 @@
 
 
 - Rev3 board
+    - Change external clocks to 24 MHz (SIT8021AI-J4-18S-24.000000E)
+        - Since 24 MHz clocks are more widely available
+    
     - Add lens/mount to board
     
     - Add additional SD card parts so we can use non-A2 cards
@@ -73,6 +76,15 @@
         - Stream images from image sensor
         - Read/write image sensor registers
         *** See USBChipNotes.txt for more info ***
+        
+        - Break out BOOT0 pin
+        - Break out NRST pin
+        - Add separate clock to drive STM32
+        - Connnect 2xQuadSPI to ice40
+    
+    - Add LEDs for STM32 debugging
+    
+    - Expose ice40 ICE_PRG lines to header in case STM32 programming is broken for some reason
     
     - Add USB ESD protection chip
     
