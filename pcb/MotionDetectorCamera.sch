@@ -565,52 +565,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="4" y="4.5"/>
 </polygon>
 </package>
-<package name="SOLDER-JUMPER">
-<description>Chip, 1.00 X 0.50 X 0.50 mm body
-&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
-<smd name="1" x="-0.4" y="0" dx="0.65" dy="0.6" layer="1" cream="no"/>
-<smd name="2" x="0.4" y="0" dx="0.65" dy="0.6" layer="1" cream="no"/>
-<text x="-0.754" y="0.556" size="0.508" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
-<wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
-<wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
-<wire x1="0.85" y1="0.4" x2="-0.85" y2="0.4" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-0.85" y="0.4"/>
-<vertex x="-0.85" y="-0.4"/>
-<vertex x="0.85" y="-0.4"/>
-<vertex x="0.85" y="0.4"/>
-</polygon>
-</package>
-<package name="W25Q80EWUXIE" urn="urn:adsk.eagle:footprint:18792594/1" locally_modified="yes">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.80 mm body, 1.60 X 0.20 mm thermal pad
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.80 mm and thermal pad size 1.60 X 0.20 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4206" y="0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="2" x="-1.4206" y="0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="3" x="-1.4206" y="-0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="4" x="-1.4206" y="-0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="5" x="1.4206" y="-0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="6" x="1.4206" y="-0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="7" x="1.4206" y="0.25" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="8" x="1.4206" y="0.75" dx="0.888" dy="0.27" layer="1" roundness="100"/>
-<smd name="9" x="0" y="0" dx="0.2" dy="1.6" layer="1" thermals="no"/>
-<text x="-1.630678125" y="1.179259375" size="0.762" layer="25" font="vector">&gt;NAME</text>
-<wire x1="1.55" y1="-1.05" x2="-1.55" y2="-1.05" width="0.05" layer="21"/>
-<wire x1="-1.55" y1="-1.05" x2="-1.55" y2="1.05" width="0.05" layer="21"/>
-<wire x1="-1.55" y1="1.05" x2="1.55" y2="1.05" width="0.05" layer="21"/>
-<wire x1="1.55" y1="1.05" x2="1.55" y2="-1.05" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="1.55" y="-1.05"/>
-<vertex x="-1.55" y="-1.05"/>
-<vertex x="-1.55" y="1.05"/>
-<vertex x="1.55" y="1.05"/>
-</polygon>
-<polygon width="0.05" layer="21">
-<vertex x="-1.55" y="1.05"/>
-<vertex x="-1.55" y="0.5"/>
-<vertex x="-1" y="1.05"/>
-</polygon>
-</package>
 <package name="ON-AR0330CS1C12SPKA0" urn="urn:adsk.eagle:footprint:18794472/1" locally_modified="yes">
 <description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
 &lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
@@ -1188,13 +1142,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <packageinstance name="LATTICE-ICE40HX4K-BG121"/>
 </packageinstances>
 </package3d>
-<package3d name="SON50P300X200X80-9T20X160N" urn="urn:adsk.eagle:package:18792578/1" type="model">
-<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.80 mm body, 1.60 X 0.20 mm thermal pad
-&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.80 mm and thermal pad size 1.60 X 0.20 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="W25Q80EWUXIE"/>
-</packageinstances>
-</package3d>
 <package3d name="BGA64C65P8X8_664X627X100N" urn="urn:adsk.eagle:package:18794457/1" type="model">
 <description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
 &lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
@@ -1590,35 +1537,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="UDQM" x="15.24" y="-33.02" length="middle" rot="R180"/>
 <text x="-7.62" y="37.846" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="-7.62" y="-36.322" size="1.778" layer="95" align="top-left">&gt;PN</text>
-</symbol>
-<symbol name="JUMPER">
-<wire x1="-2.54" y1="0" x2="-2.54" y2="1.27" width="0.1524" layer="94"/>
-<wire x1="-2.54" y1="2.54" x2="-2.54" y2="1.27" width="0.4064" layer="94"/>
-<wire x1="0" y1="0" x2="0" y2="1.27" width="0.1524" layer="94"/>
-<wire x1="0" y1="2.54" x2="0" y2="1.27" width="0.4064" layer="94"/>
-<wire x1="-3.175" y1="0" x2="0.635" y2="0" width="0.4064" layer="94"/>
-<wire x1="0.635" y1="0" x2="0.635" y2="0.635" width="0.4064" layer="94"/>
-<wire x1="0.635" y1="0.635" x2="-3.175" y2="0.635" width="0.4064" layer="94"/>
-<wire x1="-3.175" y1="0.635" x2="-3.175" y2="0" width="0.4064" layer="94"/>
-<text x="-3.81" y="5.08" size="1.778" layer="95" align="top-left">&gt;NAME</text>
-<pin name="1" x="-2.54" y="-2.54" visible="pad" length="short" rot="R90"/>
-<pin name="2" x="0" y="-2.54" visible="pad" length="short" rot="R90"/>
-</symbol>
-<symbol name="W25Q80EWUXIE">
-<wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
-<wire x1="0" y1="-12.7" x2="20.32" y2="-12.7" width="0.254" layer="94"/>
-<wire x1="20.32" y1="-12.7" x2="20.32" y2="0" width="0.254" layer="94"/>
-<wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="CS_" x="-5.08" y="-2.54" length="middle"/>
-<pin name="DO" x="-5.08" y="-5.08" length="middle"/>
-<pin name="WP_" x="-5.08" y="-7.62" length="middle"/>
-<pin name="GND" x="-5.08" y="-10.16" length="middle"/>
-<pin name="VDD" x="25.4" y="-2.54" length="middle" rot="R180"/>
-<pin name="HOLD_" x="25.4" y="-5.08" length="middle" rot="R180"/>
-<pin name="CLK" x="25.4" y="-7.62" length="middle" rot="R180"/>
-<pin name="DI" x="25.4" y="-10.16" length="middle" rot="R180"/>
-<text x="1.27" y="0.762" size="1.778" layer="95">&gt;NAME</text>
-<text x="0.254" y="-15.24" size="1.778" layer="95">&gt;PN</text>
 </symbol>
 <symbol name="ON-AR0330CS1C12SPKA0-A">
 <wire x1="0" y1="0" x2="0" y2="-27.94" width="0.254" layer="94"/>
@@ -2561,51 +2479,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="SOLDER-JUMPER" prefix="J">
-<gates>
-<gate name="G$1" symbol="JUMPER" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="SOLDER-JUMPER">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="W25Q80EWUXIE" prefix="U">
-<description>Winbond 8 Mbit SPI Flash</description>
-<gates>
-<gate name="G$1" symbol="W25Q80EWUXIE" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="W25Q80EWUXIE">
-<connects>
-<connect gate="G$1" pin="CLK" pad="6"/>
-<connect gate="G$1" pin="CS_" pad="1"/>
-<connect gate="G$1" pin="DI" pad="5"/>
-<connect gate="G$1" pin="DO" pad="2"/>
-<connect gate="G$1" pin="GND" pad="4 9"/>
-<connect gate="G$1" pin="HOLD_" pad="7"/>
-<connect gate="G$1" pin="VDD" pad="8"/>
-<connect gate="G$1" pin="WP_" pad="3"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:18792578/1"/>
-</package3dinstances>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Winbond"/>
-<attribute name="PN" value="W25Q80EWUXIE"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="ON-AR0330CS1C12SPKA0" prefix="U">
 <description>3.4 Megapixel CMOS Image Sensor</description>
 <gates>
@@ -3394,18 +3267,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW040210K0FKEDC"/>
-</part>
-<part name="C30" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM188R61A106KE69D"/>
-</part>
-<part name="C31" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM155R61H104KE19D"/>
-</part>
 <part name="TC1" library="EagleLibrary" deviceset="TC2050-NL" device=""/>
 <part name="C13" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -3422,14 +3283,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="C17" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
-</part>
-<part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW040210K0FKEDC"/>
-</part>
-<part name="J1" library="EagleLibrary" deviceset="SOLDER-JUMPER" device=""/>
-<part name="U7" library="EagleLibrary" deviceset="W25Q80EWUXIE" device="" package3d_urn="urn:adsk.eagle:package:18792578/1">
-<attribute name="PN" value="W25Q80EWUXIETR"/>
 </part>
 <part name="U8" library="EagleLibrary" deviceset="ON-AR0330CS1C12SPKA0" device="" package3d_urn="urn:adsk.eagle:package:18794457/1">
 <attribute name="PN" value="AR0330CS1C12SPKA0-CP2"/>
@@ -7195,132 +7048,10 @@ SD_CMD = Z
 <plain>
 </plain>
 <instances>
-<instance part="R17" gate="G$1" x="43.18" y="-17.78" smashed="yes" rot="R180">
-<attribute name="NAME" x="45.72" y="-21.59" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="45.72" y="-19.05" size="1.778" layer="96" rot="R180"/>
-<attribute name="MFG" x="43.18" y="-17.78" size="1.778" layer="96" rot="R180" display="off"/>
-<attribute name="PN" x="43.18" y="-17.78" size="1.778" layer="96" rot="R180" display="off"/>
-</instance>
-<instance part="C30" gate="G$1" x="48.26" y="15.24" smashed="yes">
-<attribute name="NAME" x="41.656" y="14.605" size="1.778" layer="95"/>
-<attribute name="VALUE" x="41.656" y="12.065" size="1.778" layer="96"/>
-<attribute name="MFG" x="48.26" y="15.24" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="48.26" y="15.24" size="1.778" layer="96" display="off"/>
-</instance>
-<instance part="C31" gate="G$1" x="58.42" y="15.24" smashed="yes">
-<attribute name="PN" x="58.42" y="15.24" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="61.468" y="15.113" size="1.778" layer="95"/>
-<attribute name="VALUE" x="61.468" y="12.573" size="1.778" layer="96"/>
-<attribute name="MFG" x="58.42" y="15.24" size="1.778" layer="96" display="off"/>
-</instance>
-<instance part="R15" gate="G$1" x="27.94" y="10.16" smashed="yes" rot="R90">
-<attribute name="NAME" x="29.972" y="12.192" size="1.778" layer="95"/>
-<attribute name="VALUE" x="29.972" y="9.652" size="1.778" layer="96"/>
-<attribute name="MFG" x="27.94" y="10.16" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="27.94" y="10.16" size="1.778" layer="96" rot="R90" display="off"/>
-</instance>
-<instance part="J1" gate="G$1" x="25.4" y="5.08" smashed="yes">
-<attribute name="NAME" x="22.098" y="7.112" size="1.778" layer="95" rot="R180" align="top-left"/>
-</instance>
-<instance part="U7" gate="G$1" x="33.02" y="5.08" smashed="yes">
-<attribute name="NAME" x="34.29" y="5.842" size="1.778" layer="95"/>
-<attribute name="PN" x="33.274" y="-10.16" size="1.778" layer="95"/>
-</instance>
 </instances>
 <busses>
 </busses>
 <nets>
-<net name="1V8" class="0">
-<segment>
-<pinref part="R17" gate="G$1" pin="2"/>
-<wire x1="38.1" y1="-17.78" x2="35.56" y2="-17.78" width="0.1524" layer="91"/>
-<label x="35.56" y="-17.78" size="1.778" layer="95"/>
-</segment>
-<segment>
-<wire x1="58.42" y1="2.54" x2="60.96" y2="2.54" width="0.1524" layer="91"/>
-<label x="60.96" y="2.54" size="1.778" layer="95"/>
-<pinref part="U7" gate="G$1" pin="VDD"/>
-</segment>
-<segment>
-<pinref part="C30" gate="G$1" pin="1"/>
-<pinref part="C31" gate="G$1" pin="1"/>
-<wire x1="48.26" y1="17.78" x2="58.42" y2="17.78" width="0.1524" layer="91"/>
-<label x="48.514" y="18.542" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="R15" gate="G$1" pin="2"/>
-<wire x1="27.94" y1="15.24" x2="27.94" y2="17.78" width="0.1524" layer="91"/>
-<label x="27.94" y="17.78" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="GND" class="0">
-<segment>
-<wire x1="27.94" y1="-5.08" x2="25.4" y2="-5.08" width="0.1524" layer="91"/>
-<label x="25.4" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U7" gate="G$1" pin="GND"/>
-</segment>
-<segment>
-<pinref part="C30" gate="G$1" pin="2"/>
-<pinref part="C31" gate="G$1" pin="2"/>
-<wire x1="48.26" y1="10.16" x2="58.42" y2="10.16" width="0.1524" layer="91"/>
-<label x="48.514" y="7.874" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_PRG_DO" class="0">
-<segment>
-<wire x1="58.42" y1="-5.08" x2="60.96" y2="-5.08" width="0.1524" layer="91"/>
-<label x="60.96" y="-5.08" size="1.778" layer="95"/>
-<pinref part="U7" gate="G$1" pin="DI"/>
-</segment>
-</net>
-<net name="ICE_PRG_DI" class="0">
-<segment>
-<wire x1="27.94" y1="0" x2="25.4" y2="0" width="0.1524" layer="91"/>
-<label x="25.4" y="0" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U7" gate="G$1" pin="DO"/>
-</segment>
-</net>
-<net name="ICE_PRG_CLK" class="0">
-<segment>
-<wire x1="58.42" y1="-2.54" x2="60.96" y2="-2.54" width="0.1524" layer="91"/>
-<label x="60.96" y="-2.54" size="1.778" layer="95"/>
-<pinref part="U7" gate="G$1" pin="CLK"/>
-</segment>
-</net>
-<net name="ICE_PRG_CS_" class="0">
-<segment>
-<pinref part="J1" gate="G$1" pin="1"/>
-<wire x1="22.86" y1="2.54" x2="20.32" y2="2.54" width="0.1524" layer="91"/>
-<label x="20.32" y="2.54" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
-<net name="FLASH_PULLUP" class="0">
-<segment>
-<pinref part="R17" gate="G$1" pin="1"/>
-<wire x1="48.26" y1="-17.78" x2="50.8" y2="-17.78" width="0.1524" layer="91"/>
-<label x="50.8" y="-17.78" size="1.778" layer="95"/>
-</segment>
-<segment>
-<wire x1="27.94" y1="-2.54" x2="25.4" y2="-2.54" width="0.1524" layer="91"/>
-<label x="7.62" y="-2.54" size="1.778" layer="95"/>
-<pinref part="U7" gate="G$1" pin="WP_"/>
-</segment>
-<segment>
-<wire x1="58.42" y1="0" x2="60.96" y2="0" width="0.1524" layer="91"/>
-<label x="60.96" y="0" size="1.778" layer="95"/>
-<pinref part="U7" gate="G$1" pin="HOLD_"/>
-</segment>
-</net>
-<net name="N$3" class="0">
-<segment>
-<pinref part="J1" gate="G$1" pin="2"/>
-<pinref part="R15" gate="G$1" pin="1"/>
-<wire x1="27.94" y1="2.54" x2="27.94" y2="5.08" width="0.1524" layer="91"/>
-<wire x1="25.4" y1="2.54" x2="27.94" y2="2.54" width="0.1524" layer="91"/>
-<pinref part="U7" gate="G$1" pin="CS_"/>
-<junction x="27.94" y="2.54"/>
-</segment>
-</net>
 </nets>
 </sheet>
 <sheet>
