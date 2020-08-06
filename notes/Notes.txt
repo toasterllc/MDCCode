@@ -61,8 +61,6 @@
 
 
 - Rev3 board
-    - Change external clocks to 24 MHz (SIT8021AI-J4-18S-24.000000E)
-        - Since 24 MHz clocks are more widely available
     
     - Add lens/mount to board
     
@@ -120,6 +118,11 @@
             - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
         
         - Fix USB jack model to the version that doesn't have plastic posts
+    
+    
+    
+    √ Change external clocks to 24 MHz (SIT8021AI-J4-18S-24.000000E)
+        Since 24 MHz clocks are more widely available
 
 
 
