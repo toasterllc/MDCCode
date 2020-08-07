@@ -59,12 +59,14 @@
 
 
 
+- Rev3 board finalization checklist
+    - Verify that image sensor is centered within lens
+        - Use offset defined in AR0330CS-old.pdf
+    
+    - Follow BoardFinalizationChecklist.txt
+
 
 - Rev3 board
-    
-    - Make sure image sensor is centered within lens
-    
-    - Add lens/mount to board
     
     - Add additional SD card parts so we can use non-A2 cards
         *** See SDCardInterfaceParts.txt ***
@@ -122,6 +124,15 @@
         - Fix USB jack model to the version that doesn't have plastic posts
     
     
+    
+    
+    √ Add STM32 debug header
+    
+    √ Add ICE40 debug header
+    
+    √ Center image sensor within lens
+    
+    √ Add lens/mount to board
     
     √ Change external clocks to 24 MHz (SIT8021AI-J4-18S-24.000000E)
         Since 24 MHz clocks are more widely available
