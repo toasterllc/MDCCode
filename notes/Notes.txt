@@ -79,10 +79,13 @@
         - Read/write image sensor registers
         *** See USBChipNotes.txt for more info ***
         
-        - Break out BOOT0 pin
-        - Break out NRST pin
         - Add separate clock to drive STM32
         - Connnect 2xQuadSPI to ice40
+    
+    - Route STM32 BOOT0 pin to header
+    - Route STM32 NRST pin to header
+    
+    - Expand trace width of power nets
     
     - Add LEDs for STM32 debugging
     
@@ -125,6 +128,8 @@
     
     
     
+    √ Route ICE40 CRST_ to STM32 GPIO
+    √ Route ICE40 CDONE to STM32 GPIO
     
     √ Add STM32 debug header
     
