@@ -99,7 +99,9 @@
     - Route STM32 BOOT0 pin to header
     - Route STM32 NRST pin to header
     
-    - Expand trace width of power nets
+    - Expand STM32 trace width of power nets
+    
+    - Expand ice40 trace width of power nets
     
     - Add LEDs for STM32 debugging
     

@@ -6918,6 +6918,11 @@ SD_CMD = Z
 <wire x1="78.74" y1="-142.24" x2="81.28" y2="-142.24" width="0.1524" layer="91"/>
 <label x="81.28" y="-142.24" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="H1" gate="G$1" pin="10"/>
+<wire x1="238.76" y1="-99.06" x2="241.3" y2="-99.06" width="0.1524" layer="91"/>
+<label x="241.3" y="-99.06" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="1V8" class="0">
 <segment>
@@ -7067,6 +7072,11 @@ SD_CMD = Z
 <junction x="99.06" y="-144.78"/>
 <label x="101.6" y="-144.78" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="H1" gate="G$1" pin="7"/>
+<wire x1="226.06" y1="-96.52" x2="223.52" y2="-96.52" width="0.1524" layer="91"/>
+<label x="223.52" y="-96.52" size="1.778" layer="95" align="bottom-right"/>
+</segment>
 </net>
 <net name="STM_BOOT" class="0">
 <segment>
@@ -7076,6 +7086,11 @@ SD_CMD = Z
 <label x="119.38" y="-139.7" size="1.778" layer="95"/>
 <wire x1="116.84" y1="-139.7" x2="119.38" y2="-139.7" width="0.1524" layer="91"/>
 <junction x="116.84" y="-139.7"/>
+</segment>
+<segment>
+<pinref part="H1" gate="G$1" pin="8"/>
+<wire x1="238.76" y1="-96.52" x2="241.3" y2="-96.52" width="0.1524" layer="91"/>
+<label x="241.3" y="-96.52" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="USB_D-" class="0">
@@ -7112,12 +7127,22 @@ SD_CMD = Z
 <wire x1="27.94" y1="-45.72" x2="30.48" y2="-45.72" width="0.1524" layer="91"/>
 <label x="30.48" y="-45.72" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="H1" gate="G$1" pin="1"/>
+<wire x1="226.06" y1="-88.9" x2="223.52" y2="-88.9" width="0.1524" layer="91"/>
+<label x="223.52" y="-88.9" size="1.778" layer="95" align="bottom-right"/>
+</segment>
 </net>
 <net name="STM_SWCLK" class="0">
 <segment>
 <pinref part="U13" gate="A" pin="PA14_A14"/>
 <wire x1="27.94" y1="-48.26" x2="30.48" y2="-48.26" width="0.1524" layer="91"/>
 <label x="30.48" y="-48.26" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="H1" gate="G$1" pin="2"/>
+<wire x1="238.76" y1="-88.9" x2="241.3" y2="-88.9" width="0.1524" layer="91"/>
+<label x="241.3" y="-88.9" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_SPI_D0" class="0">
@@ -7240,12 +7265,22 @@ SD_CMD = Z
 <wire x1="269.24" y1="-45.72" x2="269.24" y2="-43.18" width="0.1524" layer="91"/>
 <label x="269.24" y="-43.18" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U13" gate="E" pin="PE12_R10"/>
+<wire x1="27.94" y1="-104.14" x2="30.48" y2="-104.14" width="0.1524" layer="91"/>
+<label x="30.48" y="-104.14" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="STM_LED1" class="0">
 <segment>
 <pinref part="LED6" gate="G$1" pin="A"/>
 <wire x1="251.46" y1="-45.72" x2="251.46" y2="-43.18" width="0.1524" layer="91"/>
 <label x="251.46" y="-43.18" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="U13" gate="E" pin="PE15_R11"/>
+<wire x1="27.94" y1="-111.76" x2="30.48" y2="-111.76" width="0.1524" layer="91"/>
+<label x="30.48" y="-111.76" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="STM_LED2" class="0">
@@ -7254,12 +7289,22 @@ SD_CMD = Z
 <wire x1="233.68" y1="-45.72" x2="233.68" y2="-43.18" width="0.1524" layer="91"/>
 <label x="233.68" y="-43.18" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U13" gate="B" pin="PB10_R12"/>
+<wire x1="68.58" y1="-38.1" x2="71.12" y2="-38.1" width="0.1524" layer="91"/>
+<label x="71.12" y="-38.1" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="STM_LED3" class="0">
 <segment>
 <pinref part="LED8" gate="G$1" pin="A"/>
 <wire x1="215.9" y1="-45.72" x2="215.9" y2="-43.18" width="0.1524" layer="91"/>
 <label x="215.9" y="-43.18" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="U13" gate="B" pin="PB11_R13"/>
+<wire x1="68.58" y1="-40.64" x2="71.12" y2="-40.64" width="0.1524" layer="91"/>
+<label x="71.12" y="-40.64" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_CDONE" class="0">
@@ -7274,6 +7319,13 @@ SD_CMD = Z
 <pinref part="U13" gate="I" pin="PI6_C3"/>
 <wire x1="27.94" y1="-154.94" x2="30.48" y2="-154.94" width="0.1524" layer="91"/>
 <label x="30.48" y="-154.94" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="VDDIN" class="0">
+<segment>
+<pinref part="H1" gate="G$1" pin="9"/>
+<wire x1="226.06" y1="-99.06" x2="223.52" y2="-99.06" width="0.1524" layer="91"/>
+<label x="223.52" y="-99.06" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 </nets>
