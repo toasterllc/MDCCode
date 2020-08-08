@@ -1,5 +1,12 @@
 - Future
     
+    - Figure out battery power supply
+        - How many batteries?
+        - What battery voltage range? .8-1.7V per battery?
+        - Optimize efficiency
+        - Use Webench to optimize efficiency, if it supports the power ICs that we choose
+            - Note that Webench doesn't support all available TI ICs, eg TPS61200
+    
     - Length match traces going to RAM
     
     - Length match traces going to image sensor
@@ -63,10 +70,17 @@
     - Verify that image sensor is centered within lens
         - Use offset defined in AR0330CS-old.pdf
     
+    - Verify that ice40 programming pins are connected to the right pins on STM32
+    
     - Follow BoardFinalizationChecklist.txt
 
 
+
+
 - Rev3 board
+    
+    - Re-implement layout of power supplies
+        - Use the largest IO traces possible
     
     - Add additional SD card parts so we can use non-A2 cards
         *** See SDCardInterfaceParts.txt ***
@@ -94,11 +108,6 @@
     - Add USB ESD protection chip
     
     - Add USB inrush protection
-    
-    - Re-implement power supplies
-        - Use Webench to optimize efficiency
-        - Use better capacitors by focusing on DC bias
-        - Improve layout -- use the largest IO traces possible
     
     - Increase 'isolate' on power planes
         - When we soldered a jumper resistor, We accidentally shorted 1V2/1V8 and ground due to little isolation between the polygon pour and SMD pad
