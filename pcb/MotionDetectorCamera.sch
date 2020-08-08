@@ -5063,40 +5063,10 @@ to 1V8 for ICE_PRG_CDONE</text>
 <wire x1="149.86" y1="30.48" x2="152.4" y2="30.48" width="0.1524" layer="91"/>
 <label x="152.4" y="30.48" size="1.778" layer="95"/>
 </segment>
-</net>
-<net name="ICE_SD_CMD" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="K3"/>
-<wire x1="149.86" y1="48.26" x2="152.4" y2="48.26" width="0.1524" layer="91"/>
-<label x="152.4" y="48.26" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_SD_DAT0" class="0">
 <segment>
 <pinref part="U1" gate="C" pin="L3"/>
 <wire x1="149.86" y1="60.96" x2="152.4" y2="60.96" width="0.1524" layer="91"/>
 <label x="152.4" y="60.96" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_SD_DAT1" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="K4"/>
-<wire x1="149.86" y1="45.72" x2="152.4" y2="45.72" width="0.1524" layer="91"/>
-<label x="152.4" y="45.72" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_SD_DAT2" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="L1"/>
-<wire x1="149.86" y1="66.04" x2="152.4" y2="66.04" width="0.1524" layer="91"/>
-<label x="152.4" y="66.04" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_SD_DAT3" class="0">
-<segment>
-<pinref part="U1" gate="C" pin="L2"/>
-<wire x1="149.86" y1="63.5" x2="152.4" y2="63.5" width="0.1524" layer="91"/>
-<label x="152.4" y="63.5" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$23" class="0">
@@ -5180,6 +5150,34 @@ to 1V8 for ICE_PRG_CDONE</text>
 <pinref part="U1" gate="C" pin="L7"/>
 <wire x1="149.86" y1="53.34" x2="152.4" y2="53.34" width="0.1524" layer="91"/>
 <label x="152.4" y="53.34" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_SD_DAT1" class="0">
+<segment>
+<pinref part="U1" gate="C" pin="L1"/>
+<wire x1="149.86" y1="66.04" x2="152.4" y2="66.04" width="0.1524" layer="91"/>
+<label x="152.4" y="66.04" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_SD_DAT2" class="0">
+<segment>
+<pinref part="U1" gate="C" pin="K4"/>
+<wire x1="149.86" y1="45.72" x2="152.4" y2="45.72" width="0.1524" layer="91"/>
+<label x="152.4" y="45.72" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_SD_DAT0" class="0">
+<segment>
+<pinref part="U1" gate="C" pin="L2"/>
+<wire x1="149.86" y1="63.5" x2="152.4" y2="63.5" width="0.1524" layer="91"/>
+<label x="152.4" y="63.5" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_SD_CMD" class="0">
+<segment>
+<pinref part="U1" gate="C" pin="K3"/>
+<wire x1="149.86" y1="48.26" x2="152.4" y2="48.26" width="0.1524" layer="91"/>
+<label x="152.4" y="48.26" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
