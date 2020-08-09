@@ -7163,11 +7163,11 @@ SD_CMD = Z
 <segment>
 <pinref part="X2" gate="G$1" pin="OUT"/>
 <wire x1="259.08" y1="-22.86" x2="261.62" y2="-22.86" width="0.1524" layer="91"/>
+<label x="264.16" y="-22.86" size="1.778" layer="95"/>
 <pinref part="TP10" gate="G$1" pin="X"/>
 <wire x1="261.62" y1="-22.86" x2="264.16" y2="-22.86" width="0.1524" layer="91"/>
 <wire x1="261.62" y1="-22.86" x2="261.62" y2="-20.32" width="0.1524" layer="91"/>
 <junction x="261.62" y="-22.86"/>
-<label x="264.16" y="-22.86" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U13" gate="H" pin="PH0_G1"/>
