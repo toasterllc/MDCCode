@@ -72,18 +72,19 @@
 
 
 
-- Rev3 board finalization checklist
-    - Verify that image sensor is centered within lens
-        - Use offset defined in AR0330CS-old.pdf
-    
-    - Verify that ice40 programming pins are connected to the right pins on STM32 so that single-SPI works to program ice40
-    
-    - Follow BoardFinalizationChecklist.txt
-
-
 
 
 - Rev3 board
+    
+    - Fix USB jack model to the version that doesn't have plastic posts
+    
+    - Rev3 board finalization
+        - Verify that image sensor is centered within lens
+            - Use offset defined in AR0330CS-old.pdf
+    
+        - Verify that ice40 programming pins are connected to the right pins on STM32 so that single-SPI works to program ice40
+    
+        - Follow BoardFinalizationChecklist.txt
     
     - Fill in missing part numbers
     
