@@ -29,6 +29,10 @@
         - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
     
     - Add USB inrush protection
+    
+    - Improve current sense resistor
+        - Use low-tempco resistor
+        - Change value to .2Ω or .1Ω (depending on current range)
 
 
 
@@ -81,6 +85,8 @@
 
 - Rev3 board
     
+    - Fill in missing part numbers
+    
     - Verify that we don't have any more 1V2/1V8/2V8 supply wires -- they should all be polygons now
     
     ? Expose individual headers for ice40 ICE_PRG lines (di, cs_, clk, crst_, cdone),
@@ -95,19 +101,16 @@
     - Use thinner stencils
         - It seems like we're using too much solder paste
     
-    - Improve current sense resistor
-        - Use low-tempco resistor
-        - Change value to .2Ω or .1Ω (depending on current range)
     
-    - Add proper image sensor i2c pullups:
+    
+    
+    √ Add proper image sensor i2c pullups:
         - PIX_SDATA: needs a 1.5k-4.7k pullup according to AR0330CS datasheet
         - PIX_SCLK: doesn't need a pullup since we'll always drive it from the master
             - from the AR0330CS datasheet:
                 "the pull-up resistor is not required if the controller drives a valid logic level on SCLK at all times."
                 "the AR0330CS uses SCLK as an input only and therefore never drives it LOW."
             - we'll save some power by not having a pullup burning power while driving the clock low
-    
-    
     
     √ Add pullup resistor to ice40 CDONE, since we no longer have a programmer board
     
