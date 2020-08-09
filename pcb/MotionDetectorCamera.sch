@@ -1545,7 +1545,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="OUT" x="17.78" y="-5.08" visible="pin" length="short" function="clk" rot="R180"/>
 <pin name="EN_" x="-2.54" y="-7.62" visible="pin" length="short" direction="in"/>
 <pin name="VDD" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
+<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="0" y="-12.7" size="1.778" layer="95">&gt;PN</text>
 </symbol>
 <symbol name="MICROSD-SOCKET">
