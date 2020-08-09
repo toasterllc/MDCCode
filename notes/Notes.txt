@@ -27,7 +27,8 @@
     - Rewrite SDRAMController for smaller size/better performance
         - more pipelining if possible
         - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
-
+    
+    - Add USB inrush protection
 
 
 
@@ -92,8 +93,6 @@
     - Add USB connector to STM32
     
     - Add USB ESD protection chip
-    
-    - Add USB inrush protection
     
     - Use thinner stencils
         - It seems like we're using too much solder paste
