@@ -79,6 +79,8 @@
 
 - Rev3 board
     
+    - Add USB connector
+    
     - Re-implement layout of power supplies
         - Use the largest IO traces possible
     
