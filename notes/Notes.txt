@@ -83,8 +83,6 @@
     
     - Verify that we don't have any more 1V2/1V8/2V8 supply wires -- they should all be polygons now
     
-    - Add pullup resistor to ice40 CDONE, since we no longer have a programmer board
-    
     ? Expose individual headers for ice40 ICE_PRG lines (di, cs_, clk, crst_, cdone),
       in case STM32 programming is broken for some reason
     
@@ -110,6 +108,8 @@
             - we'll save some power by not having a pullup burning power while driving the clock low
     
     
+    
+    √ Add pullup resistor to ice40 CDONE, since we no longer have a programmer board
     
     √ Expand STM32 trace width of power nets
     
