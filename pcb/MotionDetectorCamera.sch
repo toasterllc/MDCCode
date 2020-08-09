@@ -144,6 +144,23 @@
 <package name="0805" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
 <description>Chip, 2.00 X 1.25 X 0.70 mm body
 &lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
+<smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
+<smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
+<text x="-1.469" y="1.0007" size="0.762" layer="25" font="vector">&gt;NAME</text>
+<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="21"/>
+<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="21"/>
+<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="21"/>
+<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-1.56" y="0.84"/>
+<vertex x="-1.56" y="-0.84"/>
+<vertex x="1.56" y="-0.84"/>
+<vertex x="1.56" y="0.84"/>
+</polygon>
+</package>
+<package name="0805@1" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
+<description>Chip, 2.00 X 1.25 X 0.70 mm body
+&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1" cream="no"/>
 <smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1" cream="no"/>
 <text x="-1.469" y="1.0007" size="0.762" layer="25" font="vector">&gt;NAME</text>
@@ -171,6 +188,23 @@
 </polygon>
 </package>
 <package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
+<description>Chip, 3.20 X 1.60 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
+<smd name="2" x="1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
+<text x="-2.068" y="1.1737" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<wire x1="-2.16" y1="1.01" x2="-2.16" y2="-1.01" width="0.05" layer="21"/>
+<wire x1="-2.16" y1="-1.01" x2="2.16" y2="-1.01" width="0.05" layer="21"/>
+<wire x1="2.16" y1="-1.01" x2="2.16" y2="1.01" width="0.05" layer="21"/>
+<wire x1="2.16" y1="1.01" x2="-2.16" y2="1.01" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-2.16" y="1.01"/>
+<vertex x="-2.16" y="-1.01"/>
+<vertex x="2.16" y="-1.01"/>
+<vertex x="2.16" y="1.01"/>
+</polygon>
+</package>
+<package name="1206@1" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
 <description>Chip, 3.20 X 1.60 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1" cream="no"/>
@@ -642,7 +676,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100" cream="no"/>
 <text x="0" y="0.327" size="0.508" layer="25" font="vector" align="bottom-center">&gt;NAME</text>
 </package>
-<package name="1210" urn="urn:adsk.eagle:footprint:17955894/1" locally_modified="yes">
+<package name="1210@1" urn="urn:adsk.eagle:footprint:17955894/1" locally_modified="yes">
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-1.4754" y="0" dx="1.1646" dy="2.7153" layer="1" cream="no"/>
@@ -1091,6 +1125,23 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="1" x="-2.425" y="4" dx="2.85" dy="1" layer="1" roundness="40"/>
 <smd name="2" x="2.425" y="4" dx="2.85" dy="1" layer="1" roundness="40"/>
 </package>
+<package name="1210" urn="urn:adsk.eagle:footprint:17955894/1" locally_modified="yes">
+<description>Chip, 3.20 X 2.50 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="2.7153" layer="1"/>
+<smd name="2" x="1.4754" y="0" dx="1.1646" dy="2.7153" layer="1"/>
+<text x="-2.068" y="1.6737" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<wire x1="-2.16" y1="1.46" x2="-2.16" y2="-1.46" width="0.05" layer="21"/>
+<wire x1="-2.16" y1="-1.46" x2="2.16" y2="-1.46" width="0.05" layer="21"/>
+<wire x1="2.16" y1="-1.46" x2="2.16" y2="1.46" width="0.05" layer="21"/>
+<wire x1="2.16" y1="1.46" x2="-2.16" y2="1.46" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-2.16" y="1.46"/>
+<vertex x="-2.16" y="-1.46"/>
+<vertex x="2.16" y="-1.46"/>
+<vertex x="2.16" y="1.46"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
@@ -1114,11 +1165,25 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <packageinstance name="0805"/>
 </packageinstances>
 </package3d>
+<package3d name="RESC2012X70N" urn="urn:adsk.eagle:package:17080181@1/1" type="model">
+<description>Chip, 2.00 X 1.25 X 0.70 mm body
+&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="0805@1"/>
+</packageinstances>
+</package3d>
 <package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198/1" type="model">
 <description>Chip, 3.20 X 1.60 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="1206"/>
+</packageinstances>
+</package3d>
+<package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198@1/1" type="model">
+<description>Chip, 3.20 X 1.60 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="1206@1"/>
 </packageinstances>
 </package3d>
 <package3d name="BGA121C80P11X11_900X900X100N" urn="urn:adsk.eagle:package:16997455/1" type="model">
@@ -1135,11 +1200,11 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <packageinstance name="ON-AR0330CS1C12SPKA0"/>
 </packageinstances>
 </package3d>
-<package3d name="RESC3225X70N" urn="urn:adsk.eagle:package:17955780/1" type="model">
+<package3d name="RESC3225X70N" urn="urn:adsk.eagle:package:17955780@1/1" type="model">
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
 <packageinstances>
-<packageinstance name="1210"/>
+<packageinstance name="1210@1"/>
 </packageinstances>
 </package3d>
 <package3d name="QFN40P260X180X55-16N" urn="urn:adsk.eagle:package:22413655/1" type="model">
@@ -1175,6 +1240,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;Chip package with body size 2.00 X 1.60 X 1.20 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="0806"/>
+</packageinstances>
+</package3d>
+<package3d name="RESC3225X70N" urn="urn:adsk.eagle:package:17955780/1" type="model">
+<description>Chip, 3.20 X 2.50 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="1210"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -2018,37 +2090,37 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <technology name=""/>
 </technologies>
 </device>
-<device name="0805" package="0805">
+<device name="0805" package="0805@1">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181@1/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1206" package="1206">
+<device name="1206" package="1206@1">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198@1/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1210" package="1210">
+<device name="1210" package="1210@1">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17955780/1"/>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17955780@1/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
@@ -2902,37 +2974,37 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <technology name=""/>
 </technologies>
 </device>
-<device name="0805" package="0805">
+<device name="0805" package="0805@1">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181@1/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1206" package="1206">
+<device name="1206" package="1206@1">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198@1/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1210" package="1210">
+<device name="1210" package="1210@1">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17955780/1"/>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:17955780@1/1"/>
 </package3dinstances>
 <technologies>
 <technology name=""/>
@@ -3064,7 +3136,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C28" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
+<part name="C28" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181@1/1" value="22u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3074,7 +3146,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM219R61C226ME15L"/>
 </part>
-<part name="C29" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="22u">
+<part name="C29" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181@1/1" value="22u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3349,25 +3421,25 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
 <part name="TP6" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP8" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
@@ -3377,21 +3449,21 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="U10" library="EagleLibrary" deviceset="NXP-NTB0102" device="" package3d_urn="urn:adsk.eagle:package:22413725/1"/>
 <part name="U11" library="EagleLibrary" deviceset="ON-NLAS3157" device="" package3d_urn="urn:adsk.eagle:package:22413872/1"/>
 <part name="U12" library="EagleLibrary" deviceset="ON-NLAS3157" device="" package3d_urn="urn:adsk.eagle:package:22413872/1"/>
-<part name="R24" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R24" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R26" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R26" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R27" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<part name="R27" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
 <part name="U13" library="EagleLibrary" deviceset="STM-STM32F730" device="" package3d_urn="urn:adsk.eagle:package:22433285/1"/>
 <part name="C44" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
