@@ -33,7 +33,7 @@
 
 
 
-- Todo
+- Verilog Todo
     
     - Re-consider the timing of signals driving the SDRAM. Instead of adding a delay, change the signals on the negative clock edge.
     
@@ -66,11 +66,12 @@
 
 
 
+
 - Rev3 board finalization checklist
     - Verify that image sensor is centered within lens
         - Use offset defined in AR0330CS-old.pdf
     
-    - Verify that ice40 programming pins are connected to the right pins on STM32
+    - Verify that ice40 programming pins are connected to the right pins on STM32 so that single-SPI works to program ice40
     
     - Follow BoardFinalizationChecklist.txt
 
@@ -79,44 +80,20 @@
 
 - Rev3 board
     
-    - Meander SDIO lines
+    - Verify that we don't have any more 1V2/1V8/2V8 supply wires -- they should all be polygons now
     
-    - Add USB connector
+    - Add pullup resistor to ice40 CDONE, since we no longer have a programmer board
     
-    - Re-implement layout of power supplies
-        - Use the largest IO traces possible
+    ? Expose individual headers for ice40 ICE_PRG lines (di, cs_, clk, crst_, cdone),
+      in case STM32 programming is broken for some reason
     
-    - Add additional SD card parts so we can use non-A2 cards
-        *** See SDCardInterfaceParts.txt ***
+    - Length-match SDIO lines
     
-    - Add STM32F730I8 to handle:
-        - USB High-Speed comms with computer
-        - Program ice40
-        - Read/write to SD card via ice40 (via SDIO interface -- ice40 will emulate an SD card, and we'll add custom commands)
-        - Stream images from image sensor
-        - Read/write image sensor registers
-        *** See USBChipNotes.txt for more info ***
-        
-        - Add separate clock to drive STM32
-        - Connnect 2xQuadSPI to ice40
-    
-    - Route STM32 BOOT0 pin to header
-    - Route STM32 NRST pin to header
-    
-    - Expand STM32 trace width of power nets
-    
-    - Expand ice40 trace width of power nets
-    
-    - Add LEDs for STM32 debugging
-    
-    - Expose ice40 ICE_PRG lines to header in case STM32 programming is broken for some reason
+    - Add USB connector to STM32
     
     - Add USB ESD protection chip
     
     - Add USB inrush protection
-    
-    - Increase 'isolate' on power planes
-        - When we soldered a jumper resistor, We accidentally shorted 1V2/1V8 and ground due to little isolation between the polygon pour and SMD pad
     
     - Use thinner stencils
         - It seems like we're using too much solder paste
@@ -133,15 +110,36 @@
                 "the AR0330CS uses SCLK as an input only and therefore never drives it LOW."
             - we'll save some power by not having a pullup burning power while driving the clock low
     
-    - Programmer board
-        - We may not need the programmer anymore though?
-        
-        - Add inrush current protection to MDC Programmer board
-            - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
-        
-        - Fix USB jack model to the version that doesn't have plastic posts
     
     
+    √ Expand STM32 trace width of power nets
+    
+    √ Expand ice40 trace width of power nets
+    
+    √ Add LEDs for STM32 debugging
+    
+    √ Add STM32F730I8 to handle:
+        √ USB High-Speed comms with computer
+        √ Program ice40 via 6 lines (SPI_SI, SPI_SO, SPI_SS_B, SPI_SCK, CDONE, CRESET_B)
+        - Read/write to SD card via ice40 (via QUADSPI interface)
+        - Stream images from image sensor (via QUADSPI interface)
+        - Read/write image sensor registers (via QUADSPI interface)
+        *** See USBChipNotes.txt for more info ***
+        
+        √ Add separate clock to drive STM32
+        √ Connnect 2xQuadSPI to ice40
+    
+    √ Route STM32 BOOT0 pin to header
+    √ Route STM32 NRST pin to header
+    
+    √ Increase 'isolate' on power planes
+        - When we soldered a jumper resistor, We accidentally shorted 1V2/1V8 and ground due to little isolation between the polygon pour and SMD pad
+    
+    √ Add additional SD card parts so we can use non-A2 cards
+        *** See SDCardInterfaceParts.txt ***
+    
+    √ Re-implement layout of power supplies
+        √ Use the largest wire traces possible
     
     √ Route ICE40 CRST_ to STM32 GPIO
     √ Route ICE40 CDONE to STM32 GPIO
@@ -159,6 +157,17 @@
 
 
 
+
+
+
+
+- Programmer board todo
+    - We may not need the programmer anymore though?
+    
+    - Add inrush current protection to MDC Programmer board
+        - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
+    
+    - Fix USB jack model to the version that doesn't have plastic posts
 
 
 
