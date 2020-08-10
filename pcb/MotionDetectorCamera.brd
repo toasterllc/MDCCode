@@ -156,23 +156,6 @@ Rev 3</text>
 <package name="0805" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
 <description>Chip, 2.00 X 1.25 X 0.70 mm body
 &lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
-<smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
-<text x="-1.469" y="1.0007" size="0.762" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="21"/>
-<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="21"/>
-<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="21"/>
-<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-1.56" y="0.84"/>
-<vertex x="-1.56" y="-0.84"/>
-<vertex x="1.56" y="-0.84"/>
-<vertex x="1.56" y="0.84"/>
-</polygon>
-</package>
-<package name="0805@1" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1" cream="no"/>
 <smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1" cream="no"/>
 <text x="-1.469" y="1.0007" size="0.762" layer="25" font="vector">&gt;NAME</text>
@@ -202,8 +185,8 @@ Rev 3</text>
 <package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
 <description>Chip, 3.20 X 1.60 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
-<smd name="2" x="1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
+<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1" cream="no"/>
+<smd name="2" x="1.4754" y="0" dx="1.1646" dy="1.8153" layer="1" cream="no"/>
 <text x="-2.068" y="1.1737" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-2.16" y1="1.01" x2="-2.16" y2="-1.01" width="0.05" layer="21"/>
 <wire x1="-2.16" y1="-1.01" x2="2.16" y2="-1.01" width="0.05" layer="21"/>
@@ -214,6 +197,18 @@ Rev 3</text>
 <vertex x="-2.16" y="-1.01"/>
 <vertex x="2.16" y="-1.01"/>
 <vertex x="2.16" y="1.01"/>
+</polygon>
+<polygon width="0.127" layer="31">
+<vertex x="-1.778" y="0.508"/>
+<vertex x="-1.778" y="-0.508"/>
+<vertex x="-1.016" y="-0.508"/>
+<vertex x="-1.016" y="0.508"/>
+</polygon>
+<polygon width="0.127" layer="31">
+<vertex x="1.016" y="0.508"/>
+<vertex x="1.016" y="-0.508"/>
+<vertex x="1.778" y="-0.508"/>
+<vertex x="1.778" y="0.508"/>
 </polygon>
 </package>
 <package name="LATTICE-ICE40HX4K-BG121" urn="urn:adsk.eagle:footprint:16997456/1" locally_modified="yes">
@@ -1068,92 +1063,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="2" x="2.425" y="4" dx="2.85" dy="1" layer="1" roundness="40"/>
 </package>
 </packages>
-<packages3d>
-<package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
-<description>Chip, 1.00 X 0.50 X 0.50 mm body
-&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0402"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC1608X70N" urn="urn:adsk.eagle:package:17080173/1" type="model">
-<description>Chip, 1.60 X 0.80 X 0.70 mm body
-&lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0603"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC2012X70N" urn="urn:adsk.eagle:package:17080181/1" type="model">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0805"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC2012X70N" urn="urn:adsk.eagle:package:17080181@1/1" type="model">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0805@1"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198/1" type="model">
-<description>Chip, 3.20 X 1.60 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="1206"/>
-</packageinstances>
-</package3d>
-<package3d name="BGA121C80P11X11_900X900X100N" urn="urn:adsk.eagle:package:16997455/1" type="model">
-<description>121-BGA, collapsing, 0.80 mm pitch, 9.00 X 9.00 X 1.00 mm body
-&lt;p&gt;121-pin collapsing BGA package with 0.80 mm col pitch and 0.80 mm row pitch with body size 9.00 X 9.00 X 1.00 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="LATTICE-ICE40HX4K-BG121"/>
-</packageinstances>
-</package3d>
-<package3d name="BGA64C65P8X8_664X627X100N" urn="urn:adsk.eagle:package:18794457/1" type="model">
-<description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
-&lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="ON-AR0330CS1C12SPKA0"/>
-</packageinstances>
-</package3d>
-<package3d name="QFN40P260X180X55-16N" urn="urn:adsk.eagle:package:22413655/1" type="model">
-<description>16-QFN, 0.40 mm pitch, 2.60 X 1.80 X 0.55 mm body
-&lt;p&gt;16-pin QFN package with 0.40 mm pitch with body size 2.60 X 1.80 X 0.55 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="TI-TMUX1574RSVR"/>
-</packageinstances>
-</package3d>
-<package3d name="DFN100X135X50-4N" urn="urn:adsk.eagle:package:22413725/1" type="model">
-<description>DFN4, 1.00 X 1.35 X 0.50 mm body
-&lt;p&gt;DFN4 package with body size 1.00 X 1.35 X 0.50 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="NXP-NTB0102GF"/>
-</packageinstances>
-</package3d>
-<package3d name="SON35P100X100X40-6N" urn="urn:adsk.eagle:package:22413872/1" type="model">
-<description>6-SON (DFN), 0.35 mm pitch, 1.00 X 1.00 X 0.40 mm body
-&lt;p&gt;6-pin SON (DFN) package with 0.35 mm pitch with body size 1.00 X 1.00 X 0.40 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="ON-NLAS3157MX3TCG"/>
-</packageinstances>
-</package3d>
-<package3d name="BGA225C65P15X15_1000X1000X60N" urn="urn:adsk.eagle:package:22433285/1" type="model">
-<description>225-BGA, collapsing, 0.65 mm pitch, 10.00 X 10.00 X 0.60 mm body
-&lt;p&gt;225-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 10.00 X 10.00 X 0.60 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="STM-STM32F730I8"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC2016X120N" urn="urn:adsk.eagle:package:22485740/1" type="model">
-<description>Chip, 2.00 X 1.60 X 1.20 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.60 X 1.20 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0806"/>
-</packageinstances>
-</package3d>
-</packages3d>
 </library>
 </libraries>
 <attributes>
@@ -1342,87 +1251,87 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </pass>
 </autorouter>
 <elements>
-<element name="C22" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="24.9148" y="29.4894" smashed="yes" rot="MR0">
+<element name="C22" library="EagleLibrary" package="0402" value="10n" x="24.9148" y="29.4894" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="25.3916" y="28.4712" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C24" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="6.9216" y="37.0078" smashed="yes" rot="MR45">
+<element name="C24" library="EagleLibrary" package="0603" value="10u" x="6.9216" y="37.0078" smashed="yes" rot="MR45">
 <attribute name="MFG" value="Murata" x="6.9216" y="37.0078" size="1.778" layer="28" rot="MR45" display="off"/>
 <attribute name="NAME" x="5.06101875" y="37.970365625" size="0.508" layer="26" font="vector" rot="MR135"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="6.9216" y="37.0078" size="1.778" layer="28" rot="MR45" display="off"/>
 </element>
-<element name="C25" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="8.598" y="35.052" smashed="yes" rot="MR225">
+<element name="C25" library="EagleLibrary" package="0402" value="100n" x="8.598" y="35.052" smashed="yes" rot="MR225">
 <attribute name="MFG" value="Murata" x="8.598" y="35.052" size="1.778" layer="28" rot="MR225" display="off"/>
 <attribute name="NAME" x="7.887040625" y="35.07951875" size="0.508" layer="26" font="vector" rot="MR225"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="73.25583125" y="44.03224375" size="1.778" layer="28" rot="MR225" display="off"/>
 </element>
-<element name="C1" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="22.7076" y="23.2664" smashed="yes" rot="MR180">
+<element name="C1" library="EagleLibrary" package="0402" value="100n" x="22.7076" y="23.2664" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="22.7076" y="23.2664" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="21.8498" y="24.2592" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="69.6976" y="75.3364" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C2" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="22.7076" y="22.4028" smashed="yes" rot="MR180">
+<element name="C2" library="EagleLibrary" package="0402" value="10n" x="22.7076" y="22.4028" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="22.7076" y="22.4028" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="21.9006" y="21.8462" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="22.7076" y="22.4028" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C8" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="22.6822" y="32.3088" smashed="yes" rot="MR180">
+<element name="C8" library="EagleLibrary" package="0402" value="100n" x="22.6822" y="32.3088" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="22.6822" y="32.3088" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="21.0798" y="32.1114" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="74.7522" y="84.3788" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C12" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="22.6822" y="33.185096875" smashed="yes" rot="MR180">
+<element name="C12" library="EagleLibrary" package="0402" value="10n" x="22.6822" y="33.185096875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="22.6822" y="33.185096875" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="21.037" y="33.009496875" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="22.6822" y="33.185096875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C16" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="24.2444" y="39.7483625" smashed="yes" rot="MR0">
+<element name="C16" library="EagleLibrary" package="0603" value="10u" x="24.2444" y="39.7483625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="24.2444" y="39.7483625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="24.0412" y="38.5545625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="24.2444" y="39.7483625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C5" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="10.8458" y="22.7584" smashed="yes" rot="MR0">
+<element name="C5" library="EagleLibrary" package="0402" value="100n" x="10.8458" y="22.7584" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="10.8458" y="22.7584" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="10.967" y="22.2736" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="-8.2042" y="-31.8516" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C7" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="10.8458" y="23.622" smashed="yes" rot="MR0">
+<element name="C7" library="EagleLibrary" package="0402" value="10n" x="10.8458" y="23.622" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="10.8458" y="23.622" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="10.0272" y="24.6358" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="10.8458" y="23.622" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C18" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="22.5552" y="38.4657625" smashed="yes" rot="MR0">
+<element name="C18" library="EagleLibrary" package="0603" value="10u" x="22.5552" y="38.4657625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="22.5552" y="38.4657625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="23.8506" y="37.2719625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="22.5552" y="38.4657625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C26" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="10.5792" y="33.3756" smashed="yes" rot="MR45">
+<element name="C26" library="EagleLibrary" package="0603" value="10u" x="10.5792" y="33.3756" smashed="yes" rot="MR45">
 <attribute name="MFG" value="Murata" x="10.5792" y="33.3756" size="1.778" layer="28" rot="MR45" display="off"/>
 <attribute name="NAME" x="11.221421875" y="31.835353125" size="0.508" layer="26" font="vector" rot="MR135"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="10.5792" y="33.3756" size="1.778" layer="28" rot="MR45" display="off"/>
 </element>
-<element name="C27" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="9.3346" y="35.7886" smashed="yes" rot="MR225">
+<element name="C27" library="EagleLibrary" package="0402" value="100n" x="9.3346" y="35.7886" smashed="yes" rot="MR225">
 <attribute name="MFG" value="Murata" x="9.3346" y="35.7886" size="1.778" layer="28" rot="MR225" display="off"/>
 <attribute name="NAME" x="9.614240625" y="36.93371875" size="0.508" layer="26" font="vector" rot="MR225"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="72.196390625" y="50.15700625" size="1.778" layer="28" rot="MR225" display="off"/>
 </element>
-<element name="C21" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="33.025178125" y="39.4716" smashed="yes" rot="MR0">
+<element name="C21" library="EagleLibrary" package="0603" value="10u" x="33.025178125" y="39.4716" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="33.025178125" y="39.4716" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="32.847378125" y="40.2336" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="33.025178125" y="39.4716" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C23" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="31.297978125" y="38.2016" smashed="yes" rot="MR0">
+<element name="C23" library="EagleLibrary" package="0603" value="10u" x="31.297978125" y="38.2016" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="31.297978125" y="38.2016" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="31.120178125" y="38.9128" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="31.297978125" y="38.2016" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C28" library="EagleLibrary" package="0805@1" package3d_urn="urn:adsk.eagle:package:17080181@1/1" value="22u" x="49.1998" y="5.6642" smashed="yes" rot="MR180">
+<element name="C28" library="EagleLibrary" package="0805" value="22u" x="49.1998" y="5.6642" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="49.1998" y="5.6642" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="49.5554" y="7.112" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM219R61C226ME15L" x="49.1998" y="5.6642" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C29" library="EagleLibrary" package="0805@1" package3d_urn="urn:adsk.eagle:package:17080181@1/1" value="22u" x="49.7078" y="10.5918" smashed="yes" rot="MR180">
+<element name="C29" library="EagleLibrary" package="0805" value="22u" x="49.7078" y="10.5918" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="49.7078" y="10.5918" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="51.3842" y="10.033" size="0.635" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="GRM219R61C226ME15L" x="99.2378" y="52.5018" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -1447,57 +1356,57 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="2.066378125" y="26.3398" size="0.508" layer="26" font="vector" rot="MR0" align="bottom-right"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="3.171378125" y="25.93703125" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R5" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="20.482621875" y="23.205440625" smashed="yes" rot="MR0">
+<element name="R5" library="EagleLibrary" package="0402" value="10k" x="20.482621875" y="23.205440625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Vishay" x="22.260621875" y="23.205440625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="20.381021875" y="23.713440625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CRCW040210K0FKEDC" x="22.260621875" y="23.205440625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R14" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="9.8204" y="25.1206" smashed="yes" rot="MR0">
+<element name="R14" library="EagleLibrary" package="0402" value="1.8k" x="9.8204" y="25.1206" smashed="yes" rot="MR0">
 <attribute name="MFG" value="TE Connectivity" x="9.8204" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="9.1266" y="24.0764" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CRGP0402F1K8" x="9.8204" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R16" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="7.516259375" y="25.1206" smashed="yes" rot="MR0">
+<element name="R16" library="EagleLibrary" package="0402" value="1.8k" x="7.516259375" y="25.1206" smashed="yes" rot="MR0">
 <attribute name="MFG" value="TE Connectivity" x="7.516259375" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="8.346459375" y="24.0764" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CRGP0402F1K8" x="7.516259375" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R20" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="5.21211875" y="25.1206" smashed="yes" rot="MR0">
+<element name="R20" library="EagleLibrary" package="0402" value="1.8k" x="5.21211875" y="25.1206" smashed="yes" rot="MR0">
 <attribute name="MFG" value="TE Connectivity" x="5.21211875" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="6.04231875" y="24.0764" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CRGP0402F1K8" x="5.21211875" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R22" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="2.907978125" y="25.1206" smashed="yes" rot="MR0">
+<element name="R22" library="EagleLibrary" package="0402" value="1.8k" x="2.907978125" y="25.1206" smashed="yes" rot="MR0">
 <attribute name="MFG" value="TE Connectivity" x="2.907978125" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="4.0132" y="24.3304" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CRGP0402F1K8" x="2.907978125" y="25.1206" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R6" library="EagleLibrary" package="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0" x="22.56028125" y="34.846221875" smashed="yes" rot="MR180">
+<element name="R6" library="EagleLibrary" package="0805" value="0" x="22.56028125" y="34.846221875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Vishay" x="22.56028125" y="34.846221875" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="20.80768125" y="35.430421875" size="0.635" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="CRCW08050000Z0EAC" x="22.56028125" y="34.846221875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R12" library="EagleLibrary" package="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0" x="31.2826375" y="34.569359375" smashed="yes" rot="MR180">
+<element name="R12" library="EagleLibrary" package="0805" value="0" x="31.2826375" y="34.569359375" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Vishay" x="31.2826375" y="34.569359375" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="33.6448375" y="35.331359375" size="0.635" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="CRCW08050000Z0EAC" x="31.2826375" y="34.569359375" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R21" library="EagleLibrary" package="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0" x="47.4878" y="12.4206" smashed="yes" rot="MR180">
+<element name="R21" library="EagleLibrary" package="0805" value="0" x="47.4878" y="12.4206" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Vishay" x="47.4878" y="12.4206" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="49.3166" y="13.3604" size="0.635" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CRCW08050000Z0EAC" x="47.4878" y="12.4206" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R1" library="EagleLibrary" package="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1" x="37.719" y="7.95748125" smashed="yes" rot="MR90">
+<element name="R1" library="EagleLibrary" package="1206" value="1" x="37.719" y="7.95748125" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Vishay" x="37.719" y="7.95748125" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="38.8874" y="5.79848125" size="0.635" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="CRCW12061R00FKEA" x="37.719" y="7.95748125" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="R18" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="422k" x="46.7996" y="9.398" smashed="yes" rot="MR90">
+<element name="R18" library="EagleLibrary" package="0402" value="422k" x="46.7996" y="9.398" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Bourns" x="46.7996" y="9.398" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="46.2408" y="10.0076" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="CR0402-FX-4223GLF" x="46.7996" y="9.398" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="R19" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="91k" x="45.936" y="8.4582" smashed="yes" rot="MR90">
+<element name="R19" library="EagleLibrary" package="0402" value="91k" x="45.936" y="8.4582" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Bourns" x="45.936" y="8.4582" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="44.92761875" y="9.022078125" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="CR0402-FX-9102GLF" x="45.936" y="8.4582" size="1.778" layer="28" rot="MR90" display="off"/>
@@ -1522,137 +1431,137 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="2.763984375" y="36.00194375" size="1.016" layer="25" font="vector" rot="R45"/>
 <attribute name="PN" value="W989D6DBGX6I" x="8.97355625" y="35.474409375" size="1.778" layer="27" rot="R45" display="off"/>
 </element>
-<element name="U1" library="EagleLibrary" package="LATTICE-ICE40HX4K-BG121" package3d_urn="urn:adsk.eagle:package:16997455/1" value="LATTICE-ICE40HX4K-BG121" x="17.2744" y="27.313" smashed="yes">
+<element name="U1" library="EagleLibrary" package="LATTICE-ICE40HX4K-BG121" value="LATTICE-ICE40HX4K-BG121" x="17.2744" y="27.313" smashed="yes">
 <attribute name="MFG" value="Lattice" x="17.2744" y="27.313" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="21.89211875" y="31.967940625" size="1.016" layer="25" font="vector" align="bottom-right"/>
 <attribute name="PN" value="ICE40HX4K-BG121" x="17.2744" y="27.313" size="1.778" layer="27" display="off"/>
 </element>
-<element name="C6" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="23.114" y="31.242" smashed="yes" rot="MR180">
+<element name="C6" library="EagleLibrary" package="0402" value="100n" x="23.114" y="31.242" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="23.114" y="31.242" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="21.4862" y="31.0446" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="23.114" y="31.242" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C9" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="23.114" y="30.2006" smashed="yes" rot="MR180">
+<element name="C9" library="EagleLibrary" package="0402" value="10n" x="23.114" y="30.2006" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="22.1292" y="30.3552" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R3" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100" x="15.735296875" y="24.25191875" smashed="yes" rot="MR90">
+<element name="R3" library="EagleLibrary" package="0402" value="100" x="15.735296875" y="24.25191875" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Bourns" x="15.930875" y="24.884375" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="16.946875" y="25.697175" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="CR0402AJW-101GAS" x="15.930875" y="24.884375" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="C4" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="17.645378125" y="22.90571875" smashed="yes" rot="MR270">
+<element name="C4" library="EagleLibrary" package="0603" value="10u" x="17.645378125" y="22.90571875" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="17.630140625" y="22.265640625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="17.096740625" y="20.792440625" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="17.630140625" y="22.265640625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C11" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="16.591278125" y="23.390859375" smashed="yes" rot="MR270">
+<element name="C11" library="EagleLibrary" package="0402" value="100n" x="16.591278125" y="23.390859375" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="16.576040625" y="22.75078125" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="16.150040625" y="20.67018125" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="18.608040625" y="22.75078125" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="R2" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100" x="17.129759375" y="32.471359375" smashed="yes" rot="MR0">
+<element name="R2" library="EagleLibrary" package="0402" value="100" x="17.129759375" y="32.471359375" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Bourns" x="17.129759375" y="32.471359375" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="16.291559375" y="33.461959375" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CR0402AJW-101GAS" x="17.129759375" y="32.471359375" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C3" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="16.9443375" y="31.40201875" smashed="yes" rot="MR0">
+<element name="C3" library="EagleLibrary" package="0603" value="10u" x="16.9443375" y="31.40201875" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="16.9443375" y="31.40201875" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="18.9255375" y="31.65601875" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="16.9443375" y="31.40201875" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C10" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="17.139921875" y="30.35045625" smashed="yes" rot="MR0">
+<element name="C10" library="EagleLibrary" package="0402" value="100n" x="17.139921875" y="30.35045625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="17.139921875" y="30.35045625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="16.172521875" y="30.07685625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="17.139921875" y="28.31845625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C13" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="16.4846" y="28.575" smashed="yes" rot="MR180">
+<element name="C13" library="EagleLibrary" package="0402" value="100n" x="16.4846" y="28.575" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="16.4846" y="28.575" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="15.5274" y="29.5938" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="16.4846" y="28.4988" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C15" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="16.4846" y="27.6098" smashed="yes" rot="MR180">
+<element name="C15" library="EagleLibrary" package="0402" value="100n" x="16.4846" y="27.6098" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="16.4846" y="27.6098" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="17.0406" y="26.6526" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="16.4846" y="27.5336" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C14" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="18.4658" y="28.0924" smashed="yes" rot="MR270">
+<element name="C14" library="EagleLibrary" package="0402" value="10n" x="18.4658" y="28.0924" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="18.4658" y="28.0924" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="18.7734" y="27.1192" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="18.4658" y="28.0924" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C17" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="16.0274" y="26.2382" smashed="yes" rot="MR270">
+<element name="C17" library="EagleLibrary" package="0402" value="10n" x="16.0274" y="26.2382" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="16.0274" y="26.2382" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="16.6088" y="24.7984" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="16.0274" y="26.2382" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="U8" library="EagleLibrary" package="ON-AR0330CS1C12SPKA0" package3d_urn="urn:adsk.eagle:package:18794457/1" value="ON-AR0330CS1C12SPKA0" x="42.418" y="26.9748" smashed="yes">
+<element name="U8" library="EagleLibrary" package="ON-AR0330CS1C12SPKA0" value="ON-AR0330CS1C12SPKA0" x="42.418" y="26.9748" smashed="yes">
 <attribute name="MFG" value="ON Semiconductor" x="42.418" y="26.9748" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="39.372" y="30.3939" size="1.27" layer="25" font="vector"/>
 <attribute name="PN" value="AR0330CS1C12SPKA0-CP2" x="42.418" y="26.9748" size="1.778" layer="27" display="off"/>
 </element>
-<element name="C32" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="40.083740625" y="31.574740625" smashed="yes" rot="MR180">
+<element name="C32" library="EagleLibrary" package="0603" value="10u" x="40.083740625" y="31.574740625" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="40.083740625" y="31.574740625" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="39.456740625" y="33.177740625" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="40.083740625" y="31.574740625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C38" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="40.591740625" y="30.507940625" smashed="yes" rot="MR180">
+<element name="C38" library="EagleLibrary" package="0402" value="100n" x="40.591740625" y="30.507940625" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="40.591740625" y="30.507940625" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="39.888540625" y="29.443940625" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="40.591740625" y="30.507940625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C33" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="42.877740625" y="31.574740625" smashed="yes" rot="MR0">
+<element name="C33" library="EagleLibrary" package="0603" value="10u" x="42.877740625" y="31.574740625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="42.877740625" y="31.574740625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="43.377740625" y="32.689540625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="42.877740625" y="31.574740625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C39" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="42.369740625" y="30.507940625" smashed="yes" rot="MR0">
+<element name="C39" library="EagleLibrary" package="0402" value="100n" x="42.369740625" y="30.507940625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="42.369740625" y="30.507940625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="43.072940625" y="28.981140625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="42.369740625" y="30.507940625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C34" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="45.9232" y="30.2006" smashed="yes" rot="MR180">
+<element name="C34" library="EagleLibrary" package="0603" value="10u" x="45.9232" y="30.2006" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="45.9232" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="46.109" y="31.448" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="45.9232" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C40" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="45.4177375" y="29.1338" smashed="yes" rot="MR180">
+<element name="C40" library="EagleLibrary" package="0402" value="100n" x="45.4177375" y="29.1338" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="45.4177375" y="29.1338" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="46.9497375" y="29.289" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="45.4177375" y="29.1338" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C36" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="44.7802" y="27.2034" smashed="yes" rot="MR180">
+<element name="C36" library="EagleLibrary" package="0603" value="10u" x="44.7802" y="27.2034" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="44.7802" y="27.2034" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="46.403" y="26.7542" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="44.7802" y="27.2034" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C42" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="44.0436" y="24.9936" smashed="yes" rot="MR0">
+<element name="C42" library="EagleLibrary" package="0402" value="100n" x="44.0436" y="24.9936" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="44.0436" y="24.9936" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="45.1024" y="23.9748" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="44.0436" y="24.9936" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C37" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="47.0408" y="25.3238" smashed="yes" rot="MR270">
+<element name="C37" library="EagleLibrary" package="0603" value="10u" x="47.0408" y="25.3238" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="47.0408" y="25.3238" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="48.2882" y="26.5858" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="47.0408" y="25.3238" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C43" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="45.974" y="25.3238" smashed="yes" rot="MR270">
+<element name="C43" library="EagleLibrary" package="0402" value="100n" x="45.974" y="25.3238" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="45.974" y="25.3238" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="46.1546" y="23.741" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="45.974" y="25.3238" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="R23" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="45.5168" y="28.2702" smashed="yes" rot="MR180">
+<element name="R23" library="EagleLibrary" package="0402" value="10k" x="45.5168" y="28.2702" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Vishay" x="45.5168" y="28.2702" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="46.998" y="28.4508" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CRCW040210K0FKEDC" x="45.5168" y="28.2702" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C35" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="40.0812" y="23.0378" smashed="yes" rot="MR0">
+<element name="C35" library="EagleLibrary" package="0603" value="10u" x="40.0812" y="23.0378" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="40.0812" y="23.0378" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="41.4094" y="21.8694" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="40.0812" y="23.0378" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C41" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="37.970459375" y="24.770075" smashed="yes" rot="MR0">
+<element name="C41" library="EagleLibrary" package="0402" value="100n" x="37.970459375" y="24.770075" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="37.970459375" y="24.770075" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="36.997259375" y="24.513275" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="37.970459375" y="24.770075" size="1.778" layer="28" rot="MR0" display="off"/>
@@ -1662,7 +1571,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="23.970840625" y="30.4722" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="SIT8021AI-J4-18S-24.000000E" x="24.6126" y="29.580840625" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R13" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="47.6758" y="10.6426" smashed="yes" rot="MR270">
+<element name="R13" library="EagleLibrary" package="0402" value="10k" x="47.6758" y="10.6426" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Vishay" x="47.6758" y="10.6426" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="47.9326" y="9.6694" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="CRCW040210K0FKEDC" x="47.6758" y="10.6426" size="1.778" layer="28" rot="MR270" display="off"/>
@@ -1672,37 +1581,37 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="13.0658" y="3.3587" size="1.27" layer="25" font="vector"/>
 <attribute name="PN" value="105162-0001" x="3.9116" y="12.8524" size="1.778" layer="27" display="off"/>
 </element>
-<element name="C19" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u" x="9.10081875" y="14.26718125" smashed="yes" rot="MR0">
+<element name="C19" library="EagleLibrary" package="0603" value="10u" x="9.10081875" y="14.26718125" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="9.10081875" y="14.26718125" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="11.67361875" y="13.96238125" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM188R61A106KE69D" x="9.10081875" y="14.26718125" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C20" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="9.0932" y="13.1826" smashed="yes" rot="MR0">
+<element name="C20" library="EagleLibrary" package="0402" value="100n" x="9.0932" y="13.1826" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="9.0932" y="13.1826" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="11.1934" y="12.9258" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="9.0932" y="13.1826" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R7" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="13.8614125" y="20.0431375" smashed="yes" rot="MR90">
+<element name="R7" library="EagleLibrary" package="0402" value="56k" x="13.8614125" y="20.0431375" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Yageo" x="13.8614125" y="20.0431375" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="13.7570125" y="18.3667375" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="13.8614125" y="20.0431375" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="R8" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="11.7348" y="20.0507625" smashed="yes" rot="MR90">
+<element name="R8" library="EagleLibrary" package="0402" value="56k" x="11.7348" y="20.0507625" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Yageo" x="11.7348" y="20.0507625" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="11.8082" y="18.3489625" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="11.7348" y="20.0507625" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="R9" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="12.832075" y="20.066" smashed="yes" rot="MR90">
+<element name="R9" library="EagleLibrary" package="0402" value="56k" x="12.832075" y="20.066" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Yageo" x="12.832075" y="20.066" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="12.575275" y="18.3134" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="12.832075" y="20.066" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="R10" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="16.17345" y="19.558" smashed="yes" rot="MR90">
+<element name="R10" library="EagleLibrary" package="0402" value="56k" x="16.17345" y="19.558" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Yageo" x="16.17345" y="19.558" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="15.76425" y="17.4244" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="16.17345" y="19.558" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="R11" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="15.160940625" y="20.050759375" smashed="yes" rot="MR90">
+<element name="R11" library="EagleLibrary" package="0402" value="56k" x="15.160940625" y="20.050759375" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Yageo" x="15.160940625" y="20.050759375" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="14.904140625" y="17.917159375" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="15.160940625" y="20.050759375" size="1.778" layer="28" rot="MR90" display="off"/>
@@ -1719,166 +1628,166 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="J2" library="EagleLibrary" package="S-MOUNT-LENS-HOLDER" value="S-MOUNT-LENS-HOLDER" x="42.128" y="27.2046" smashed="yes" rot="R90">
 <attribute name="NAME" x="30.8409" y="16.2486" size="1.27" layer="25" font="vector" rot="R90"/>
 </element>
-<element name="U9" library="EagleLibrary" package="TI-TMUX1574RSVR" package3d_urn="urn:adsk.eagle:package:22413655/1" value="TI-TMUX1574" x="9.6266" y="6.0706" smashed="yes" rot="MR180">
+<element name="U9" library="EagleLibrary" package="TI-TMUX1574RSVR" value="TI-TMUX1574" x="9.6266" y="6.0706" smashed="yes" rot="MR180">
 <attribute name="MFG" value="TI" x="9.6266" y="9.8806" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="8.73251875" y="4.17421875" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="TMUX1574RSVR" x="9.6266" y="9.8806" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="U10" library="EagleLibrary" package="NXP-NTB0102GF" package3d_urn="urn:adsk.eagle:package:22413725/1" value="NXP-NTB0102" x="9.5504" y="10.8458" smashed="yes" rot="MR0">
+<element name="U10" library="EagleLibrary" package="NXP-NTB0102GF" value="NXP-NTB0102" x="9.5504" y="10.8458" smashed="yes" rot="MR0">
 <attribute name="MFG" value="NXP" x="9.5504" y="10.8458" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="10.0624" y="11.6748" size="0.635" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="NTB0102GF" x="9.5504" y="10.8458" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="U11" library="EagleLibrary" package="ON-NLAS3157MX3TCG" package3d_urn="urn:adsk.eagle:package:22413872/1" value="ON-NLAS3157" x="7.32281875" y="10.8813625" smashed="yes" rot="MR270">
+<element name="U11" library="EagleLibrary" package="ON-NLAS3157MX3TCG" value="ON-NLAS3157" x="7.32281875" y="10.8813625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="ON Semiconductor" x="7.32281875" y="10.8813625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="6.710396875" y="11.37154375" size="0.635" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="NLAS3157MX3TCG" x="7.32281875" y="10.8813625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="U12" library="EagleLibrary" package="ON-NLAS3157MX3TCG" package3d_urn="urn:adsk.eagle:package:22413872/1" value="ON-NLAS3157" x="13.4366" y="11.11758125" smashed="yes" rot="MR270">
+<element name="U12" library="EagleLibrary" package="ON-NLAS3157MX3TCG" value="ON-NLAS3157" x="13.4366" y="11.11758125" smashed="yes" rot="MR270">
 <attribute name="MFG" value="ON Semiconductor" x="13.4366" y="11.11758125" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="12.824178125" y="11.6077625" size="0.635" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="NLAS3157MX3TCG" x="13.4366" y="11.11758125" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="R24" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="7.38631875" y="5.077459375" smashed="yes" rot="MR0">
+<element name="R24" library="EagleLibrary" package="0402" value="56k" x="7.38631875" y="5.077459375" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Yageo" x="7.38631875" y="8.887459375" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="8.14031875" y="5.633459375" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="7.38631875" y="8.887459375" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R25" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="7.3406" y="6.985" smashed="yes" rot="MR0">
+<element name="R25" library="EagleLibrary" package="0402" value="56k" x="7.3406" y="6.985" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Yageo" x="7.3406" y="10.795" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="8.0946" y="7.541" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="7.3406" y="10.795" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R26" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="12.47901875" y="6.23061875" smashed="yes" rot="MR180">
+<element name="R26" library="EagleLibrary" package="0402" value="56k" x="12.47901875" y="6.23061875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Yageo" x="12.47901875" y="10.04061875" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="11.72501875" y="5.67461875" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="12.47901875" y="10.04061875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R27" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k" x="11.521440625" y="7.70128125" smashed="yes" rot="MR180">
+<element name="R27" library="EagleLibrary" package="0402" value="56k" x="11.521440625" y="7.70128125" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Yageo" x="11.521440625" y="11.51128125" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="10.767440625" y="7.14528125" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="RC0402FR-0756KL" x="11.521440625" y="11.51128125" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="U13" library="EagleLibrary" package="STM-STM32F730I8" package3d_urn="urn:adsk.eagle:package:22433285/1" value="STM-STM32F730" x="25.4254" y="16.6624" smashed="yes">
+<element name="U13" library="EagleLibrary" package="STM-STM32F730I8" value="STM-STM32F730" x="25.4254" y="16.6624" smashed="yes">
 <attribute name="MFG" value="STMicroelectronics" x="25.4254" y="16.6624" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="20.5994" y="21.9414" size="1.27" layer="25" font="vector"/>
 <attribute name="PN" value="STM32F730I8" x="25.4254" y="16.6624" size="1.778" layer="27" display="off"/>
 </element>
-<element name="C44" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="23.19781875" y="18.6410625" smashed="yes" rot="MR270">
+<element name="C44" library="EagleLibrary" package="0402" value="100n" x="23.19781875" y="18.6410625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="23.19781875" y="18.6410625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="22.64181875" y="19.3950625" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="23.19781875" y="18.6410625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C45" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="24.886921875" y="18.4658" smashed="yes" rot="MR270">
+<element name="C45" library="EagleLibrary" package="0402" value="100n" x="24.886921875" y="18.4658" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="24.886921875" y="18.4658" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="24.330921875" y="19.2198" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="24.886921875" y="18.4658" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C46" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="25.7556" y="18.4658" smashed="yes" rot="MR270">
+<element name="C46" library="EagleLibrary" package="0402" value="100n" x="25.7556" y="18.4658" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="25.7556" y="18.4658" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="25.7556" y="18.4658" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C47" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="21.24201875" y="18.313403125" smashed="yes" rot="MR0">
+<element name="C47" library="EagleLibrary" package="0402" value="100n" x="21.24201875" y="18.313403125" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="21.24201875" y="18.313403125" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="21.99601875" y="18.869403125" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="21.24201875" y="18.313403125" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C48" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="30.11169375" y="17.70888125" smashed="yes" rot="MR180">
+<element name="C48" library="EagleLibrary" package="0402" value="100n" x="30.11169375" y="17.70888125" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="30.11169375" y="17.70888125" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="29.35769375" y="17.15288125" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="30.11169375" y="17.70888125" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C49" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="21.39188125" y="16.842740625" smashed="yes" rot="MR0">
+<element name="C49" library="EagleLibrary" package="0402" value="100n" x="21.39188125" y="16.842740625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="21.39188125" y="16.842740625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="22.14588125" y="17.398740625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="21.39188125" y="16.842740625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C50" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="27.6733" y="14.531340625" smashed="yes" rot="MR270">
+<element name="C50" library="EagleLibrary" package="0402" value="100n" x="27.6733" y="14.531340625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="27.6733" y="14.531340625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="27.1173" y="15.285340625" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="27.6733" y="14.531340625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C51" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="28.59278125" y="14.531340625" smashed="yes" rot="MR270">
+<element name="C51" library="EagleLibrary" package="0402" value="100n" x="28.59278125" y="14.531340625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="30.90418125" y="16.817340625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="28.03678125" y="15.285340625" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="30.90418125" y="16.817340625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C52" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="23.8531375" y="14.828521875" smashed="yes" rot="MR180">
+<element name="C52" library="EagleLibrary" package="0402" value="100n" x="23.8531375" y="14.828521875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="23.8531375" y="17.139921875" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="23.0991375" y="14.272521875" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="23.8531375" y="17.139921875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C53" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="26.7335" y="11.940540625" smashed="yes" rot="MR270">
+<element name="C53" library="EagleLibrary" package="0402" value="100n" x="26.7335" y="11.940540625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="31.3563" y="14.226540625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="26.1775" y="12.694540625" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="31.3563" y="14.226540625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C54" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="25.003759375" y="11.945621875" smashed="yes" rot="MR270">
+<element name="C54" library="EagleLibrary" package="0402" value="100n" x="25.003759375" y="11.945621875" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="29.626559375" y="11.945621875" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="24.447759375" y="12.699621875" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="29.626559375" y="11.945621875" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C55" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="25.864825" y="11.948159375" smashed="yes" rot="MR270">
+<element name="C55" library="EagleLibrary" package="0402" value="100n" x="25.864825" y="11.948159375" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="32.799025" y="14.234159375" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="25.308825" y="12.702159375" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="32.799025" y="14.234159375" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C56" library="EagleLibrary" package="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="4.7u" x="26.8122375" y="17.962878125" smashed="yes" rot="MR270">
+<element name="C56" library="EagleLibrary" package="0603" value="4.7u" x="26.8122375" y="17.962878125" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Taiyo Yuden" x="26.8122375" y="17.962878125" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="26.2562375" y="18.716878125" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="LMK107BJ475KA-T" x="26.8122375" y="17.962878125" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C57" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="2.2u" x="26.7055625" y="15.687040625" smashed="yes" rot="MR90">
+<element name="C57" library="EagleLibrary" package="0402" value="2.2u" x="26.7055625" y="15.687040625" smashed="yes" rot="MR90">
 <attribute name="MFG" value="AVX" x="26.7055625" y="15.687040625" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="27.2615625" y="14.933040625" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="0402ZD225MAT2A" x="26.7055625" y="15.687040625" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="C58" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="2.2u" x="28.3845" y="19.400521875" smashed="yes" rot="MR90">
+<element name="C58" library="EagleLibrary" package="0402" value="2.2u" x="28.3845" y="19.400521875" smashed="yes" rot="MR90">
 <attribute name="MFG" value="AVX" x="28.3845" y="19.400521875" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="28.9405" y="18.646521875" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="0402ZD225MAT2A" x="28.3845" y="19.400521875" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="C59" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="19.425921875" y="11.874496875" smashed="yes" rot="R180">
+<element name="C59" library="EagleLibrary" package="0402" value="100n" x="19.425921875" y="11.874496875" smashed="yes" rot="R180">
 <attribute name="MFG" value="Murata" x="19.425921875" y="11.874496875" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="20.179921875" y="11.318496875" size="0.508" layer="25" font="vector" rot="R180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="19.425921875" y="11.874496875" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="C60" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1u" x="20.279359375" y="11.015975" smashed="yes" rot="R180">
+<element name="C60" library="EagleLibrary" package="0402" value="1u" x="20.279359375" y="11.015975" smashed="yes" rot="R180">
 <attribute name="MFG" value="Taiyo Yuden" x="20.279359375" y="11.015975" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="21.033359375" y="10.459975" size="0.508" layer="25" font="vector" rot="R180"/>
 <attribute name="PN" value="EMK105BJ105MVHF" x="20.279359375" y="11.015975" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="C65" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="30.114240625" y="16.835121875" smashed="yes" rot="MR180">
+<element name="C65" library="EagleLibrary" package="0402" value="100n" x="30.114240625" y="16.835121875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="30.114240625" y="16.835121875" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="29.360240625" y="16.279121875" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="30.114240625" y="16.835121875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C66" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1u" x="30.114240625" y="15.96898125" smashed="yes" rot="MR180">
+<element name="C66" library="EagleLibrary" package="0402" value="1u" x="30.114240625" y="15.96898125" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Taiyo Yuden" x="30.114240625" y="15.96898125" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="29.360240625" y="15.41298125" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="EMK105BJ105MVHF" x="30.114240625" y="15.96898125" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C67" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="2.2u" x="29.6672" y="13.893796875" smashed="yes" rot="MR270">
+<element name="C67" library="EagleLibrary" package="0402" value="2.2u" x="29.6672" y="13.893796875" smashed="yes" rot="MR270">
 <attribute name="MFG" value="AVX" x="29.6672" y="13.893796875" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="29.1112" y="14.647796875" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="0402ZD225MAT2A" x="29.6672" y="13.893796875" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="R28" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="3k" x="31.391865625" y="15.699740625" smashed="yes" rot="R180">
+<element name="R28" library="EagleLibrary" package="0402" value="3k" x="31.391865625" y="15.699740625" smashed="yes" rot="R180">
 <attribute name="MFG" value="" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="32.145865625" y="15.143740625" size="0.508" layer="25" font="vector" rot="R180"/>
 <attribute name="PN" value="" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="C68" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="19.9136" y="14.6913625" smashed="yes" rot="R270">
+<element name="C68" library="EagleLibrary" package="0402" value="100n" x="19.9136" y="14.6913625" smashed="yes" rot="R270">
 <attribute name="MFG" value="Murata" x="19.6596" y="14.1833625" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="20.2156" y="14.9373625" size="0.508" layer="25" font="vector" rot="R270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="19.6596" y="14.1833625" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="R31" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="24.50591875" y="17.078959375" smashed="yes" rot="MR0">
+<element name="R31" library="EagleLibrary" package="0402" value="10k" x="24.50591875" y="17.078959375" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Vishay" x="24.50591875" y="17.078959375" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="25.25991875" y="17.634959375" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CRCW040210K0FKEDC" x="24.50591875" y="17.078959375" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C61" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n" x="18.0594" y="16.9672" smashed="yes" rot="MR0">
+<element name="C61" library="EagleLibrary" package="0402" value="10n" x="18.0594" y="16.9672" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="18.0594" y="19.7866" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="18.8134" y="17.5232" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="18.0594" y="19.7866" size="1.778" layer="28" rot="MR0" display="off"/>
@@ -1891,17 +1800,17 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="TP10" library="EagleLibrary" package="TEST-POINT" value="TEST-POINT" x="19.951703125" y="17.627596875" smashed="yes" rot="MR180">
 <attribute name="NAME" x="19.951703125" y="17.300596875" size="0.508" layer="26" font="vector" rot="MR180" align="bottom-center"/>
 </element>
-<element name="L4" library="EagleLibrary" package="0806" package3d_urn="urn:adsk.eagle:package:22485740/1" value="470n" x="24.2824" y="36.7639625" smashed="yes" rot="MR0">
+<element name="L4" library="EagleLibrary" package="0806" value="470n" x="24.2824" y="36.7639625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="24.2824" y="36.7639625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="25.7854" y="37.8776625" size="0.762" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="DFE201612E-R47M=P2" x="24.2824" y="36.7639625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="L1" library="EagleLibrary" package="0806" package3d_urn="urn:adsk.eagle:package:22485740/1" value="470n" x="33.063178125" y="36.4998" smashed="yes" rot="MR0">
+<element name="L1" library="EagleLibrary" package="0806" value="470n" x="33.063178125" y="36.4998" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="33.063178125" y="36.4998" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="35.759978125" y="35.5053" size="0.762" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="DFE201612E-R47M=P2" x="33.063178125" y="36.4998" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="L2" library="EagleLibrary" package="0806" package3d_urn="urn:adsk.eagle:package:22485740/1" value="470n" x="50.7238" y="8.128" smashed="yes" rot="MR90">
+<element name="L2" library="EagleLibrary" package="0806" value="470n" x="50.7238" y="8.128" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Murata" x="50.7238" y="8.128" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="51.8375" y="6.625" size="0.762" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="DFE201612E-R47M=P2" x="50.7238" y="8.128" size="1.778" layer="28" rot="MR90" display="off"/>
@@ -1926,22 +1835,22 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="27.6607" y="10.3198" size="0.508" layer="26" font="vector" rot="MR0" align="bottom-right"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="28.702" y="10.414" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R4" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="21.702503125" y="9.0932" smashed="yes" rot="MR180">
+<element name="R4" library="EagleLibrary" package="0402" value="1.8k" x="21.702503125" y="9.0932" smashed="yes" rot="MR180">
 <attribute name="MFG" value="TE Connectivity" x="21.702503125" y="18.2372" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="20.948503125" y="8.5372" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CRGP0402F1K8" x="21.702503125" y="18.2372" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R15" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="24.03566875" y="9.0932" smashed="yes" rot="MR180">
+<element name="R15" library="EagleLibrary" package="0402" value="1.8k" x="24.03566875" y="9.0932" smashed="yes" rot="MR180">
 <attribute name="MFG" value="TE Connectivity" x="21.74966875" y="20.7772" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="23.28166875" y="8.5372" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CRGP0402F1K8" x="21.74966875" y="20.7772" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R17" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="26.368834375" y="9.0932" smashed="yes" rot="MR180">
+<element name="R17" library="EagleLibrary" package="0402" value="1.8k" x="26.368834375" y="9.0932" smashed="yes" rot="MR180">
 <attribute name="MFG" value="TE Connectivity" x="21.796834375" y="23.3172" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="25.614834375" y="8.5372" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CRGP0402F1K8" x="21.796834375" y="23.3172" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R32" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k" x="28.702" y="9.0932" smashed="yes" rot="MR180">
+<element name="R32" library="EagleLibrary" package="0402" value="1.8k" x="28.702" y="9.0932" smashed="yes" rot="MR180">
 <attribute name="MFG" value="TE Connectivity" x="28.702" y="23.3172" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="27.948" y="8.5372" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CRGP0402F1K8" x="28.702" y="23.3172" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -1951,37 +1860,37 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="39.062" y="20.3693" size="1.016" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="1-2314844-0" x="35.306" y="15.24" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C30" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="10.556240625" y="10.896596875" smashed="yes" rot="MR90">
+<element name="C30" library="EagleLibrary" package="0402" value="100n" x="10.556240625" y="10.896596875" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Murata" x="10.556240625" y="10.896596875" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="11.112240625" y="10.142596875" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="10.556240625" y="10.896596875" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="C31" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="8.3464375" y="10.391140625" smashed="yes" rot="MR270">
+<element name="C31" library="EagleLibrary" package="0402" value="100n" x="8.3464375" y="10.391140625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="8.3464375" y="10.391140625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="7.7904375" y="11.145140625" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="8.3464375" y="10.391140625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C62" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="6.33984375" y="10.317478125" smashed="yes" rot="MR270">
+<element name="C62" library="EagleLibrary" package="0402" value="100n" x="6.33984375" y="10.317478125" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="6.33984375" y="10.317478125" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="5.78384375" y="11.071478125" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="6.33984375" y="10.317478125" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="C63" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="11.925303125" y="11.31315625" smashed="yes" rot="MR0">
+<element name="C63" library="EagleLibrary" package="0402" value="100n" x="11.925303125" y="11.31315625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="11.925303125" y="11.31315625" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="12.679303125" y="11.86915625" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="11.925303125" y="11.31315625" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="C64" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n" x="10.398759375" y="3.393440625" smashed="yes" rot="MR180">
+<element name="C64" library="EagleLibrary" package="0402" value="100n" x="10.398759375" y="3.393440625" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="10.398759375" y="7.203440625" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="9.644759375" y="2.837440625" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="10.398759375" y="7.203440625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R29" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k" x="19.286221875" y="18.8950625" smashed="yes" rot="R90">
+<element name="R29" library="EagleLibrary" package="0402" value="10k" x="19.286221875" y="18.8950625" smashed="yes" rot="R90">
 <attribute name="MFG" value="Vishay" x="19.286221875" y="18.8950625" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="18.730221875" y="18.1410625" size="0.508" layer="25" font="vector" rot="R90"/>
 <attribute name="PN" value="CRCW040210K0FKEDC" x="19.286221875" y="18.8950625" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R30" library="EagleLibrary" package="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="4.7k" x="38.249859375" y="27.805378125" smashed="yes">
+<element name="R30" library="EagleLibrary" package="0402" value="4.7k" x="38.249859375" y="27.805378125" smashed="yes">
 <attribute name="MFG" value="" x="38.249859375" y="27.805378125" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="37.495859375" y="28.361378125" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="" x="38.249859375" y="27.805378125" size="1.778" layer="27" display="off"/>
@@ -2061,6 +1970,27 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="24.927559375" y="40.695884375" extent="1-16" drill="0.381"/>
 <via x="25.808940625" y="40.64" extent="1-16" drill="0.381"/>
 <via x="25.9461" y="39.6113" extent="1-16" drill="0.381"/>
+<wire x1="33.799778125" y1="39.4716" x2="33.469578125" y2="38.3766" width="0" layer="19" extent="16-16"/>
+<wire x1="34.7091" y1="39.3725375" x2="33.799778125" y2="39.4716" width="0" layer="19" extent="16-16"/>
+<wire x1="33.685478125" y1="40.40378125" x2="33.799778125" y2="39.4716" width="0" layer="19" extent="16-16"/>
+<wire x1="34.691321875" y1="40.297096875" x2="34.7091" y2="39.3725375" width="0" layer="19" extent="1-1"/>
+<wire x1="25.9461" y1="39.6113" x2="33.469578125" y2="38.3766" width="0" layer="19" extent="16-16"/>
+<wire x1="25.019" y1="39.7483625" x2="25.9461" y2="39.6113" width="0" layer="19" extent="16-16"/>
+<wire x1="24.927559375" y1="40.695884375" x2="25.019" y2="39.7483625" width="0" layer="19" extent="16-16"/>
+<wire x1="25.808940625" y1="40.64" x2="24.927559375" y2="40.695884375" width="0" layer="19" extent="1-1"/>
+<wire x1="24.6888" y1="38.6407625" x2="25.019" y2="39.7483625" width="0" layer="19" extent="16-16"/>
+<wire x1="25.0952" y1="38.2907625" x2="24.6888" y2="38.6407625" width="0" layer="19" extent="16-16"/>
+<wire x1="37.719" y1="6.48208125" x2="33.469578125" y2="38.3766" width="0" layer="19" extent="16-16"/>
+<wire x1="37.72661875" y1="5.4102" x2="37.719" y2="6.48208125" width="0" layer="19" extent="16-16"/>
+<wire x1="38.346378125" y1="5.4102" x2="37.72661875" y2="5.4102" width="0" layer="19" extent="1-1"/>
+<wire x1="37.101778125" y1="5.4102" x2="37.72661875" y2="5.4102" width="0" layer="19" extent="1-1"/>
+<wire x1="47.246540625" y1="5.509259375" x2="38.346378125" y2="5.4102" width="0" layer="19" extent="1-1"/>
+<wire x1="47.246540625" y1="6.223" x2="47.246540625" y2="5.509259375" width="0" layer="19" extent="1-1"/>
+<wire x1="47.246540625" y1="4.795515625" x2="47.246540625" y2="5.509259375" width="0" layer="19" extent="1-1"/>
+<wire x1="48.3244" y1="5.6642" x2="47.246540625" y2="5.509259375" width="0" layer="19" extent="16-16"/>
+<wire x1="47.8854" y1="7.3026" x2="47.246540625" y2="6.223" width="0" layer="19" extent="16-16"/>
+<wire x1="48.2854" y1="7.3026" x2="47.8854" y2="7.3026" width="0" layer="19" extent="16-16"/>
+<wire x1="48.6854" y1="7.3026" x2="48.2854" y2="7.3026" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="1V8">
 <contactref element="C24" pad="1"/>
@@ -2605,6 +2535,159 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="37.076378125" y="27.670759375" extent="1-16" drill="0.254"/>
 <wire x1="37.817359375" y1="27.805378125" x2="37.682740625" y2="27.670759375" width="0.127" layer="1"/>
 <wire x1="37.682740625" y1="27.670759375" x2="37.076378125" y2="27.670759375" width="0.127" layer="1"/>
+<wire x1="44.9852375" y1="29.1338" x2="45.9493" y2="28.2702" width="0" layer="19" extent="16-16"/>
+<wire x1="44.693" y1="29.2498" x2="44.9852375" y2="29.1338" width="0" layer="19" extent="1-16"/>
+<wire x1="44.043" y1="29.2498" x2="44.693" y2="29.2498" width="0" layer="19" extent="1-1"/>
+<wire x1="44.26398125" y1="29.753559375" x2="44.043" y2="29.2498" width="0" layer="19" extent="1-1"/>
+<wire x1="45.1486" y1="30.2006" x2="44.26398125" y2="29.753559375" width="0" layer="19" extent="16-16"/>
+<wire x1="44.0056" y1="27.2034" x2="44.043" y2="29.2498" width="0" layer="19" extent="1-16"/>
+<wire x1="43.393" y1="27.2998" x2="43.779359375" y2="26.977159375" width="0" layer="19" extent="1-16"/>
+<wire x1="43.068425" y1="26.977159375" x2="43.393" y2="27.2998" width="0" layer="19" extent="1-1"/>
+<wire x1="42.743" y1="27.2998" x2="43.068425" y2="26.977159375" width="0" layer="19" extent="1-1"/>
+<wire x1="42.743" y1="26.6498" x2="43.068425" y2="26.977159375" width="0" layer="19" extent="1-1"/>
+<wire x1="43.393" y1="25.9998" x2="42.743" y2="26.6498" width="0" layer="19" extent="1-1"/>
+<wire x1="43.065159375" y1="25.671959375" x2="43.393" y2="25.9998" width="0" layer="19" extent="1-1"/>
+<wire x1="44.365159375" y1="25.677640625" x2="43.393" y2="25.9998" width="0" layer="19" extent="1-1"/>
+<wire x1="44.693" y1="25.3498" x2="44.365159375" y2="25.677640625" width="0" layer="19" extent="1-1"/>
+<wire x1="44.4761" y1="24.9936" x2="44.693" y2="25.3498" width="0" layer="19" extent="1-16"/>
+<wire x1="42.743" y1="24.6998" x2="43.065159375" y2="25.671959375" width="0" layer="19" extent="1-1"/>
+<wire x1="42.47811875" y1="24.3136" x2="42.743" y2="24.6998" width="0" layer="19" extent="1-1"/>
+<wire x1="41.7957" y1="22.9209625" x2="42.47811875" y2="24.3136" width="0" layer="19" extent="1-1"/>
+<wire x1="40.8558" y1="23.0378" x2="41.7957" y2="22.9209625" width="0" layer="19" extent="16-16"/>
+<wire x1="40.909240625" y1="22.098" x2="40.8558" y2="23.0378" width="0" layer="19" extent="16-16"/>
+<wire x1="40.793" y1="27.2998" x2="42.743" y2="27.2998" width="0" layer="19" extent="1-1"/>
+<wire x1="40.46981875" y1="27.6225" x2="40.793" y2="27.2998" width="0" layer="19" extent="1-1"/>
+<wire x1="40.143" y1="28.5998" x2="40.46981875" y2="27.6225" width="0" layer="19" extent="1-1"/>
+<wire x1="39.6748" y1="28.5998" x2="40.143" y2="28.5998" width="0" layer="19" extent="1-1"/>
+<wire x1="40.793" y1="25.3498" x2="40.793" y2="27.2998" width="0" layer="19" extent="1-1"/>
+<wire x1="40.46981875" y1="25.02661875" x2="40.793" y2="25.3498" width="0" layer="19" extent="1-1"/>
+<wire x1="39.1693375" y1="24.7777" x2="40.46981875" y2="25.02661875" width="0" layer="19" extent="1-1"/>
+<wire x1="38.402959375" y1="24.770075" x2="39.1693375" y2="24.7777" width="0" layer="19" extent="16-16"/>
+<wire x1="37.817359375" y1="27.805378125" x2="39.6748" y2="28.5998" width="0" layer="19" extent="1-1"/>
+<wire x1="30.4072375" y1="34.569359375" x2="37.076378125" y2="27.670759375" width="0" layer="19" extent="16-16"/>
+<wire x1="29.354778125" y1="34.584640625" x2="30.4072375" y2="34.569359375" width="0" layer="19" extent="16-16"/>
+<wire x1="29.354778125" y1="35.306" x2="29.354778125" y2="34.584640625" width="0" layer="19" extent="1-1"/>
+<wire x1="29.354778125" y1="33.86328125" x2="29.354778125" y2="34.584640625" width="0" layer="19" extent="1-1"/>
+<wire x1="26.159459375" y1="29.862778125" x2="29.354778125" y2="33.86328125" width="0" layer="19" extent="1-1"/>
+<wire x1="25.3473" y1="29.4894" x2="26.159459375" y2="29.862778125" width="0" layer="19" extent="16-16"/>
+<wire x1="25.1126" y1="29.785840625" x2="25.3473" y2="29.4894" width="0" layer="19" extent="1-16"/>
+<wire x1="22.2497" y1="32.3088" x2="25.1126" y2="29.785840625" width="0" layer="19" extent="1-16"/>
+<wire x1="21.4376" y1="32.514540625" x2="22.2497" y2="32.3088" width="0" layer="19" extent="16-16"/>
+<wire x1="21.4376" y1="33.185096875" x2="21.4376" y2="32.514540625" width="0" layer="19" extent="1-1"/>
+<wire x1="22.2497" y1="33.185096875" x2="21.4376" y2="33.185096875" width="0" layer="19" extent="16-16"/>
+<wire x1="19.2786" y1="27.7114" x2="21.4376" y2="32.514540625" width="0" layer="19" extent="1-1"/>
+<wire x1="18.8744" y1="27.313" x2="19.2786" y2="27.7114" width="0" layer="19" extent="1-1"/>
+<wire x1="17.675859375" y1="28.54198125" x2="18.8744" y2="27.313" width="0" layer="19" extent="1-1"/>
+<wire x1="17.2744" y1="28.913" x2="17.675859375" y2="28.54198125" width="0" layer="19" extent="1-1"/>
+<wire x1="15.6744" y1="28.113" x2="17.2744" y2="28.913" width="0" layer="19" extent="1-1"/>
+<wire x1="15.2781" y1="28.5242" x2="15.6744" y2="28.113" width="0" layer="19" extent="1-1"/>
+<wire x1="16.0521" y1="27.6098" x2="15.6744" y2="28.113" width="0" layer="19" extent="1-16"/>
+<wire x1="16.0274" y1="26.6707" x2="16.0521" y2="27.6098" width="0" layer="19" extent="16-16"/>
+<wire x1="15.6744" y1="26.513" x2="16.0274" y2="26.6707" width="0" layer="19" extent="1-16"/>
+<wire x1="15.2781" y1="26.924" x2="15.6744" y2="26.513" width="0" layer="19" extent="1-1"/>
+<wire x1="17.2744" y1="25.713" x2="16.0274" y2="26.6707" width="0" layer="19" extent="1-16"/>
+<wire x1="17.703803125" y1="25.354278125" x2="17.2744" y2="25.713" width="0" layer="19" extent="1-1"/>
+<wire x1="20.915121875" y1="23.205440625" x2="17.703803125" y2="25.354278125" width="0" layer="19" extent="16-16"/>
+<wire x1="21.2744" y1="23.313" x2="20.915121875" y2="23.205440625" width="0" layer="19" extent="1-16"/>
+<wire x1="21.61031875" y1="23.69311875" x2="21.2744" y2="23.313" width="0" layer="19" extent="1-1"/>
+<wire x1="21.600159375" y1="22.819359375" x2="21.2744" y2="23.313" width="0" layer="19" extent="1-1"/>
+<wire x1="22.2751" y1="23.2664" x2="21.61031875" y2="23.69311875" width="0" layer="19" extent="16-16"/>
+<wire x1="22.2751" y1="22.4028" x2="21.600159375" y2="22.819359375" width="0" layer="19" extent="16-16"/>
+<wire x1="21.846540625" y1="20.23871875" x2="22.2751" y2="22.4028" width="0" layer="19" extent="16-16"/>
+<wire x1="20.8754" y1="19.9124" x2="21.846540625" y2="20.23871875" width="0" layer="19" extent="1-1"/>
+<wire x1="23.4754" y1="19.9124" x2="21.846540625" y2="20.23871875" width="0" layer="19" extent="1-1"/>
+<wire x1="23.7998" y1="20.235396875" x2="23.4754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.1254" y1="19.9124" x2="23.7998" y2="20.235396875" width="0" layer="19" extent="1-1"/>
+<wire x1="23.7998" y1="19.592053125" x2="23.4754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.450040625" y1="19.592053125" x2="24.1254" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.7754" y1="19.9124" x2="24.450040625" y2="19.592053125" width="0" layer="19" extent="1-1"/>
+<wire x1="24.45434375" y1="20.2379375" x2="24.7754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.10028125" y1="19.5895125" x2="24.7754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.4254" y1="19.9124" x2="25.10028125" y2="19.5895125" width="0" layer="19" extent="1-1"/>
+<wire x1="25.750159375" y1="20.2345" x2="25.4254" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="26.0754" y1="19.9124" x2="25.750159375" y2="20.2345" width="0" layer="19" extent="1-1"/>
+<wire x1="26.398221875" y1="20.239578125" x2="26.0754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="26.400759375" y1="19.5895125" x2="26.0754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.750521875" y1="19.584434375" x2="25.4254" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.100159375" y1="20.239578125" x2="24.7754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.7556" y1="18.8983" x2="25.750521875" y2="19.584434375" width="0" layer="19" extent="16-16"/>
+<wire x1="24.886921875" y1="18.8983" x2="25.10028125" y2="19.5895125" width="0" layer="19" extent="16-16"/>
+<wire x1="23.19781875" y1="19.0735625" x2="23.7998" y2="19.592053125" width="0" layer="19" extent="16-16"/>
+<wire x1="26.8122375" y1="18.737478125" x2="26.400759375" y2="19.5895125" width="0" layer="19" extent="16-16"/>
+<wire x1="22.505115625" y1="18.287640625" x2="23.19781875" y2="19.0735625" width="0" layer="19" extent="16-16"/>
+<wire x1="22.1754" y1="17.9624" x2="22.505115625" y2="18.287640625" width="0" layer="19" extent="1-1"/>
+<wire x1="22.5000375" y1="17.6374" x2="22.1754" y2="17.9624" width="0" layer="19" extent="1-1"/>
+<wire x1="22.1754" y1="17.3124" x2="22.5000375" y2="17.6374" width="0" layer="19" extent="1-1"/>
+<wire x1="22.499321875" y1="16.987521875" x2="22.1754" y2="17.3124" width="0" layer="19" extent="1-1"/>
+<wire x1="21.82438125" y1="16.842740625" x2="22.1754" y2="17.3124" width="0" layer="19" extent="1-16"/>
+<wire x1="21.67451875" y1="18.313403125" x2="22.1754" y2="17.9624" width="0" layer="19" extent="1-16"/>
+<wire x1="22.8254" y1="15.3624" x2="22.499321875" y2="16.987521875" width="0" layer="19" extent="1-1"/>
+<wire x1="23.29688125" y1="15.506703125" x2="22.8254" y2="15.3624" width="0" layer="19" extent="1-1"/>
+<wire x1="23.4206375" y1="14.828521875" x2="23.29688125" y2="15.506703125" width="0" layer="19" extent="16-16"/>
+<wire x1="19.286221875" y1="18.4625625" x2="20.8754" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="19.2532" y1="16.931640625" x2="19.2532" y2="17.566640625" width="0" layer="19" extent="1-1"/>
+<wire x1="18.5848" y1="17.7528" x2="19.2532" y2="17.566640625" width="0" layer="19" extent="16-16"/>
+<wire x1="18.4919" y1="16.9672" x2="19.2532" y2="16.931640625" width="0" layer="19" extent="16-16"/>
+<wire x1="28.6754" y1="17.3124" x2="26.8122375" y2="18.737478125" width="0" layer="19" extent="1-16"/>
+<wire x1="28.99918125" y1="16.98498125" x2="28.6754" y2="17.3124" width="0" layer="19" extent="1-1"/>
+<wire x1="28.6754" y1="16.6624" x2="28.99918125" y2="16.98498125" width="0" layer="19" extent="1-1"/>
+<wire x1="29.001721875" y1="16.337278125" x2="28.6754" y2="16.6624" width="0" layer="19" extent="1-1"/>
+<wire x1="28.6754" y1="16.0124" x2="29.001721875" y2="16.337278125" width="0" layer="19" extent="1-1"/>
+<wire x1="29.001721875" y1="17.63521875" x2="28.6754" y2="17.3124" width="0" layer="19" extent="1-1"/>
+<wire x1="28.999178125" y1="15.689578125" x2="28.6754" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="28.3504" y1="15.68171875" x2="28.6754" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="28.0254" y1="16.0124" x2="28.3504" y2="15.68171875" width="0" layer="19" extent="1-1"/>
+<wire x1="27.662540625" y1="15.649540625" x2="28.0254" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="29.67919375" y1="17.70888125" x2="29.001721875" y2="17.63521875" width="0" layer="19" extent="16-16"/>
+<wire x1="27.6733" y1="14.963840625" x2="27.662540625" y2="15.649540625" width="0" layer="19" extent="16-16"/>
+<wire x1="29.681740625" y1="16.835121875" x2="28.99918125" y2="16.98498125" width="0" layer="19" extent="16-16"/>
+<wire x1="29.681740625" y1="15.96898125" x2="28.999178125" y2="15.689578125" width="0" layer="19" extent="16-16"/>
+<wire x1="28.59278125" y1="14.963840625" x2="28.3504" y2="15.68171875" width="0" layer="19" extent="16-16"/>
+<wire x1="26.7254" y1="13.4124" x2="27.6733" y2="14.963840625" width="0" layer="19" extent="1-16"/>
+<wire x1="26.4004" y1="13.08171875" x2="26.7254" y2="13.4124" width="0" layer="19" extent="1-1"/>
+<wire x1="26.0754" y1="13.4124" x2="26.4004" y2="13.08171875" width="0" layer="19" extent="1-1"/>
+<wire x1="25.750403125" y1="13.090303125" x2="26.0754" y2="13.4124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.4254" y1="13.4124" x2="25.750403125" y2="13.090303125" width="0" layer="19" extent="1-1"/>
+<wire x1="25.09471875" y1="13.0874" x2="25.4254" y2="13.4124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.003759375" y1="12.378121875" x2="25.09471875" y2="13.0874" width="0" layer="19" extent="16-16"/>
+<wire x1="25.864825" y1="12.380659375" x2="25.750403125" y2="13.090303125" width="0" layer="19" extent="16-16"/>
+<wire x1="26.7335" y1="12.373040625" x2="26.4004" y2="13.08171875" width="0" layer="19" extent="16-16"/>
+<wire x1="20.8754" y1="12.7624" x2="22.8254" y2="15.3624" width="0" layer="19" extent="1-1"/>
+<wire x1="20.8754" y1="12.1124" x2="20.8754" y2="12.7624" width="0" layer="19" extent="1-1"/>
+<wire x1="19.9923375" y1="12.6365" x2="20.8754" y2="12.7624" width="0" layer="19" extent="1-1"/>
+<wire x1="19.858421875" y1="11.874496875" x2="19.9923375" y2="12.6365" width="0" layer="19" extent="1-1"/>
+<wire x1="20.711859375" y1="11.015975" x2="20.8754" y2="12.1124" width="0" layer="19" extent="1-1"/>
+<wire x1="21.501096875" y1="11.03121875" x2="20.711859375" y2="11.015975" width="0" layer="19" extent="1-1"/>
+<wire x1="16.17345" y1="19.9905" x2="18.5848" y2="17.7528" width="0" layer="19" extent="16-16"/>
+<wire x1="15.160940625" y1="20.483259375" x2="16.11121875" y2="20.67051875" width="0" layer="19" extent="16-16"/>
+<wire x1="13.84808125" y1="21.224240625" x2="15.074903125" y2="21.173440625" width="0" layer="19" extent="1-1"/>
+<wire x1="12.83208125" y1="21.224240625" x2="13.84808125" y2="21.224240625" width="0" layer="19" extent="1-1"/>
+<wire x1="11.7348" y1="20.4832625" x2="12.832075" y2="20.4985" width="0" layer="19" extent="16-16"/>
+<wire x1="12.133578125" y1="33.167321875" x2="15.2781" y2="28.5242" width="0" layer="19" extent="1-1"/>
+<wire x1="11.630659375" y1="33.71088125" x2="12.133578125" y2="33.167321875" width="0" layer="19" extent="1-1"/>
+<wire x1="11.126925" y1="32.827875" x2="11.630659375" y2="33.71088125" width="0" layer="19" extent="16-16"/>
+<wire x1="12.92098125" y1="35.47618125" x2="11.630659375" y2="33.71088125" width="0" layer="19" extent="1-1"/>
+<wire x1="13.4990375" y1="35.474409375" x2="12.92098125" y2="35.47618125" width="0" layer="19" extent="1-1"/>
+<wire x1="10.104925" y1="36.605778125" x2="12.92098125" y2="35.47618125" width="0" layer="19" extent="1-1"/>
+<wire x1="10.0965" y1="37.16528125" x2="10.104925" y2="36.605778125" width="0" layer="19" extent="1-1"/>
+<wire x1="9.028778125" y1="36.094421875" x2="10.104925" y2="36.605778125" width="0" layer="19" extent="1-16"/>
+<wire x1="8.397240625" y1="36.890959375" x2="9.028778125" y2="36.094421875" width="0" layer="19" extent="16-16"/>
+<wire x1="7.8867" y1="37.4040375" x2="8.397240625" y2="36.890959375" width="0" layer="19" extent="1-1"/>
+<wire x1="8.97355625" y1="37.73715" x2="8.397240625" y2="36.890959375" width="0" layer="19" extent="1-1"/>
+<wire x1="8.97381875" y1="38.287959375" x2="8.97355625" y2="37.73715" width="0" layer="19" extent="1-1"/>
+<wire x1="7.469325" y1="36.460075" x2="8.397240625" y2="36.890959375" width="0" layer="19" extent="16-16"/>
+<wire x1="8.292178125" y1="35.357821875" x2="9.028778125" y2="36.094421875" width="0" layer="19" extent="16-16"/>
+<wire x1="7.276496875" y1="34.908721875" x2="8.292178125" y2="35.357821875" width="0" layer="19" extent="1-16"/>
+<wire x1="6.708140625" y1="34.93008125" x2="7.276496875" y2="34.908721875" width="0" layer="19" extent="1-1"/>
+<wire x1="6.145128125" y1="36.04009375" x2="6.708140625" y2="34.93008125" width="0" layer="19" extent="1-1"/>
+<wire x1="5.5499" y1="36.0553" x2="6.145128125" y2="36.04009375" width="0" layer="19" extent="1-1"/>
+<wire x1="7.842184375" y1="38.868521875" x2="8.97381875" y2="38.287959375" width="0" layer="19" extent="1-1"/>
+<wire x1="7.688578125" y1="39.451278125" x2="7.842184375" y2="38.868521875" width="0" layer="19" extent="1-1"/>
+<wire x1="8.97355625" y1="39.999890625" x2="7.688578125" y2="39.451278125" width="0" layer="19" extent="1-1"/>
+<wire x1="9.502140625" y1="40.286940625" x2="8.97355625" y2="39.999890625" width="0" layer="19" extent="1-1"/>
+<wire x1="11.305540625" y1="10.51051875" x2="19.858421875" y2="11.874496875" width="0" layer="19" extent="1-1"/>
+<wire x1="10.556240625" y1="10.464096875" x2="11.305540625" y2="10.51051875" width="0" layer="19" extent="16-16"/>
+<wire x1="9.8254" y1="10.6708" x2="10.556240625" y2="10.464096875" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="GND">
 <contactref element="U2" pad="C1"/>
@@ -3158,6 +3241,268 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="23.510240625" y="18.52168125"/>
 </polygon>
 <via x="47.675803125" y="29.8323" extent="1-16" drill="0.381"/>
+<wire x1="42.1006" y1="32.4866" x2="42.128" y2="38.2028" width="0" layer="19" extent="1-1"/>
+<wire x1="42.103140625" y1="31.574740625" x2="42.1006" y2="32.4866" width="0" layer="19" extent="16-16"/>
+<wire x1="41.937240625" y1="30.507940625" x2="42.103140625" y2="31.574740625" width="0" layer="19" extent="16-16"/>
+<wire x1="41.4528" y1="29.778959375" x2="41.937240625" y2="30.507940625" width="0" layer="19" extent="16-16"/>
+<wire x1="41.443" y1="29.2498" x2="41.4528" y2="29.778959375" width="0" layer="19" extent="1-1"/>
+<wire x1="41.024240625" y1="30.507940625" x2="41.4528" y2="29.778959375" width="0" layer="19" extent="16-16"/>
+<wire x1="42.093" y1="28.5998" x2="41.443" y2="29.2498" width="0" layer="19" extent="1-1"/>
+<wire x1="42.418" y1="28.2702" x2="42.093" y2="28.5998" width="0" layer="19" extent="1-1"/>
+<wire x1="42.743" y1="27.9498" x2="42.418" y2="28.2702" width="0" layer="19" extent="1-1"/>
+<wire x1="42.093" y1="27.9498" x2="42.418" y2="28.2702" width="0" layer="19" extent="1-1"/>
+<wire x1="42.743" y1="28.5998" x2="42.418" y2="28.2702" width="0" layer="19" extent="1-1"/>
+<wire x1="43.068240625" y1="28.27781875" x2="42.743" y2="28.5998" width="0" layer="19" extent="1-1"/>
+<wire x1="43.393" y1="28.5998" x2="43.068240625" y2="28.27781875" width="0" layer="19" extent="1-1"/>
+<wire x1="43.71848125" y1="28.27781875" x2="43.393" y2="28.5998" width="0" layer="19" extent="1-1"/>
+<wire x1="44.043" y1="28.5998" x2="43.71848125" y2="28.27781875" width="0" layer="19" extent="1-1"/>
+<wire x1="43.393" y1="27.9498" x2="43.068240625" y2="28.27781875" width="0" layer="19" extent="1-1"/>
+<wire x1="42.418" y1="27.6225" x2="42.743" y2="27.9498" width="0" layer="19" extent="1-1"/>
+<wire x1="42.093" y1="27.2998" x2="42.418" y2="27.6225" width="0" layer="19" extent="1-1"/>
+<wire x1="40.858340625" y1="31.574740625" x2="41.024240625" y2="30.507940625" width="0" layer="19" extent="16-16"/>
+<wire x1="40.8558" y1="32.4866" x2="40.858340625" y2="31.574740625" width="0" layer="19" extent="16-16"/>
+<wire x1="43.393" y1="26.6498" x2="43.393" y2="27.9498" width="0" layer="19" extent="1-1"/>
+<wire x1="43.718478125" y1="26.3271" x2="43.393" y2="26.6498" width="0" layer="19" extent="1-1"/>
+<wire x1="43.71345" y1="25.67366875" x2="43.718478125" y2="26.3271" width="0" layer="19" extent="1-1"/>
+<wire x1="43.71345" y1="25.09595" x2="43.71345" y2="25.67366875" width="0" layer="19" extent="16-16"/>
+<wire x1="40.143" y1="27.9498" x2="41.443" y2="29.2498" width="0" layer="19" extent="1-1"/>
+<wire x1="39.7764" y1="27.6704" x2="40.143" y2="27.9498" width="0" layer="19" extent="1-1"/>
+<wire x1="41.768540625" y1="25.029940625" x2="43.6111" y2="24.9936" width="0" layer="19" extent="16-16"/>
+<wire x1="41.443" y1="24.6998" x2="41.768540625" y2="25.029940625" width="0" layer="19" extent="1-1"/>
+<wire x1="40.793" y1="24.6998" x2="41.443" y2="24.6998" width="0" layer="19" extent="1-1"/>
+<wire x1="40.4316" y1="24.3384" x2="40.793" y2="24.6998" width="0" layer="19" extent="1-1"/>
+<wire x1="40.143" y1="25.3498" x2="40.793" y2="24.6998" width="0" layer="19" extent="1-1"/>
+<wire x1="39.807" y1="25.0138" x2="40.143" y2="25.3498" width="0" layer="19" extent="1-1"/>
+<wire x1="39.3066" y1="23.0378" x2="40.4316" y2="24.3384" width="0" layer="19" extent="16-16"/>
+<wire x1="38.33368125" y1="22.905721875" x2="39.078" y2="23.2664" width="0" layer="19" extent="16-16"/>
+<wire x1="39.3065" y1="22.05228125" x2="39.3066" y2="23.0378" width="0" layer="19" extent="16-16"/>
+<wire x1="45.8502375" y1="29.1338" x2="44.043" y2="28.5998" width="0" layer="19" extent="1-16"/>
+<wire x1="46.639478125" y1="29.098240625" x2="45.8502375" y2="29.1338" width="0" layer="19" extent="16-16"/>
+<wire x1="46.6978" y1="30.2006" x2="46.639478125" y2="29.098240625" width="0" layer="19" extent="16-16"/>
+<wire x1="47.6732625" y1="30.54858125" x2="46.6978" y2="30.2006" width="0" layer="19" extent="16-16"/>
+<wire x1="47.675803125" y1="29.8323" x2="47.6732625" y2="30.54858125" width="0" layer="19" extent="1-1"/>
+<wire x1="45.5548" y1="27.2034" x2="45.8502375" y2="29.1338" width="0" layer="19" extent="16-16"/>
+<wire x1="37.537959375" y1="24.770075" x2="38.33368125" y2="22.905721875" width="0" layer="19" extent="16-16"/>
+<wire x1="36.769040625" y1="24.762459375" x2="37.537959375" y2="24.770075" width="0" layer="19" extent="16-16"/>
+<wire x1="45.974" y1="24.8913" x2="43.71345" y2="25.09595" width="0" layer="19" extent="16-16"/>
+<wire x1="45.974" y1="24.13" x2="45.974" y2="24.8913" width="0" layer="19" extent="16-16"/>
+<wire x1="47.0408" y1="24.5492" x2="45.974" y2="24.8913" width="0" layer="19" extent="16-16"/>
+<wire x1="48.006" y1="24.892" x2="47.0408" y2="24.5492" width="0" layer="19" extent="16-16"/>
+<wire x1="48.006" y1="24.13" x2="48.006" y2="24.892" width="0" layer="19" extent="1-1"/>
+<wire x1="35.6743" y1="38.7121375" x2="42.128" y2="38.2028" width="0" layer="19" extent="1-1"/>
+<wire x1="33.875978125" y1="38.3766" x2="35.6743" y2="38.7121375" width="0" layer="19" extent="16-16"/>
+<wire x1="33.063178125" y1="38.3766" x2="33.875978125" y2="38.3766" width="0" layer="19" extent="16-16"/>
+<wire x1="32.250578125" y1="39.4716" x2="33.063178125" y2="38.3766" width="0" layer="19" extent="16-16"/>
+<wire x1="31.320740625" y1="39.29888125" x2="32.250578125" y2="39.4716" width="0" layer="19" extent="16-16"/>
+<wire x1="31.320740625" y1="40.020240625" x2="31.320740625" y2="39.29888125" width="0" layer="19" extent="1-1"/>
+<wire x1="30.523378125" y1="38.2016" x2="31.320740625" y2="39.29888125" width="0" layer="19" extent="16-16"/>
+<wire x1="29.54781875" y1="38.547040625" x2="30.523378125" y2="38.2016" width="0" layer="19" extent="16-16"/>
+<wire x1="29.54781875" y1="37.8231375" x2="29.54781875" y2="38.547040625" width="0" layer="19" extent="1-1"/>
+<wire x1="26.385521875" y1="38.719759375" x2="29.54781875" y2="38.547040625" width="0" layer="19" extent="1-1"/>
+<wire x1="25.0952" y1="38.6407625" x2="26.385521875" y2="38.719759375" width="0" layer="19" extent="16-16"/>
+<wire x1="24.2824" y1="38.6407625" x2="25.0952" y2="38.6407625" width="0" layer="19" extent="16-16"/>
+<wire x1="23.4698" y1="39.7483625" x2="24.2824" y2="38.6407625" width="0" layer="19" extent="16-16"/>
+<wire x1="22.557740625" y1="39.53764375" x2="23.4698" y2="39.7483625" width="0" layer="19" extent="16-16"/>
+<wire x1="22.557740625" y1="40.259003125" x2="22.557740625" y2="39.53764375" width="0" layer="19" extent="1-1"/>
+<wire x1="21.7806" y1="38.4657625" x2="22.557740625" y2="39.53764375" width="0" layer="19" extent="16-16"/>
+<wire x1="23.876" y1="33.235896875" x2="24.2824" y2="38.6407625" width="0" layer="19" extent="16-16"/>
+<wire x1="23.1147" y1="33.185096875" x2="23.876" y2="33.235896875" width="0" layer="19" extent="16-16"/>
+<wire x1="23.1147" y1="32.3088" x2="23.1147" y2="33.185096875" width="0" layer="19" extent="16-16"/>
+<wire x1="23.876" y1="32.3088" x2="23.1147" y2="32.3088" width="0" layer="19" extent="16-16"/>
+<wire x1="23.5465" y1="31.242" x2="23.876" y2="32.3088" width="0" layer="19" extent="16-16"/>
+<wire x1="24.3713" y1="30.700978125" x2="23.5465" y2="31.242" width="0" layer="19" extent="16-16"/>
+<wire x1="23.5465" y1="30.2006" x2="24.3713" y2="30.700978125" width="0" layer="19" extent="16-16"/>
+<wire x1="23.581359375" y1="29.49448125" x2="23.5465" y2="30.2006" width="0" layer="19" extent="16-16"/>
+<wire x1="24.1126" y1="29.375840625" x2="23.581359375" y2="29.49448125" width="0" layer="19" extent="1-1"/>
+<wire x1="24.4094" y1="29.5623" x2="24.1126" y2="29.375840625" width="0" layer="19" extent="1-16"/>
+<wire x1="24.1126" y1="29.785840625" x2="24.4094" y2="29.5623" width="0" layer="19" extent="1-16"/>
+<wire x1="18.4658" y1="27.6599" x2="23.581359375" y2="29.49448125" width="0" layer="19" extent="16-16"/>
+<wire x1="18.0744" y1="27.313" x2="18.4658" y2="27.6599" width="0" layer="19" extent="1-16"/>
+<wire x1="17.6784" y1="27.7114" x2="18.0744" y2="27.313" width="0" layer="19" extent="1-1"/>
+<wire x1="17.6784" y1="26.924" x2="18.0744" y2="27.313" width="0" layer="19" extent="1-1"/>
+<wire x1="17.2744" y1="27.313" x2="17.6784" y2="26.924" width="0" layer="19" extent="1-1"/>
+<wire x1="16.9171" y1="27.6098" x2="17.2744" y2="27.313" width="0" layer="19" extent="1-16"/>
+<wire x1="16.4744" y1="27.313" x2="16.9171" y2="27.6098" width="0" layer="19" extent="1-16"/>
+<wire x1="16.8656" y1="26.924" x2="16.4744" y2="27.313" width="0" layer="19" extent="1-1"/>
+<wire x1="18.0744" y1="28.113" x2="17.6784" y2="27.7114" width="0" layer="19" extent="1-1"/>
+<wire x1="17.2744" y1="28.113" x2="17.6784" y2="27.7114" width="0" layer="19" extent="1-1"/>
+<wire x1="18.0744" y1="26.513" x2="17.6784" y2="26.924" width="0" layer="19" extent="1-1"/>
+<wire x1="16.9171" y1="28.575" x2="17.2744" y2="28.113" width="0" layer="19" extent="1-16"/>
+<wire x1="16.4744" y1="26.513" x2="16.8656" y2="26.924" width="0" layer="19" extent="1-1"/>
+<wire x1="16.8656" y1="26.1112" x2="16.4744" y2="26.513" width="0" layer="19" extent="1-1"/>
+<wire x1="16.4744" y1="25.713" x2="16.8656" y2="26.1112" width="0" layer="19" extent="1-1"/>
+<wire x1="16.0274" y1="25.8057" x2="16.4744" y2="25.713" width="0" layer="19" extent="1-16"/>
+<wire x1="17.2744" y1="26.513" x2="17.6784" y2="26.924" width="0" layer="19" extent="1-1"/>
+<wire x1="16.4744" y1="28.113" x2="16.9171" y2="28.575" width="0" layer="19" extent="1-16"/>
+<wire x1="15.0866" y1="19.9124" x2="16.4744" y2="25.713" width="0" layer="19" extent="1-1"/>
+<wire x1="15.0866" y1="17.3024" x2="15.0866" y2="19.9124" width="0" layer="19" extent="1-1"/>
+<wire x1="17.5848" y1="17.7528" x2="15.0866" y2="17.3024" width="0" layer="19" extent="1-16"/>
+<wire x1="17.5848" y1="18.1628" x2="17.5848" y2="17.7528" width="0" layer="19" extent="16-16"/>
+<wire x1="17.5806125" y1="18.823940625" x2="17.5848" y2="18.1628" width="0" layer="19" extent="16-16"/>
+<wire x1="17.6269" y1="16.9672" x2="17.5848" y2="17.7528" width="0" layer="19" extent="16-16"/>
+<wire x1="17.585690625" y1="16.192503125" x2="17.6269" y2="16.9672" width="0" layer="19" extent="16-16"/>
+<wire x1="20.13711875" y1="16.81988125" x2="17.6269" y2="16.9672" width="0" layer="19" extent="16-16"/>
+<wire x1="20.95938125" y1="16.842740625" x2="20.13711875" y2="16.81988125" width="0" layer="19" extent="16-16"/>
+<wire x1="21.5254" y1="17.3124" x2="20.95938125" y2="16.842740625" width="0" layer="19" extent="1-16"/>
+<wire x1="21.85161875" y1="17.6403" x2="21.5254" y2="17.3124" width="0" layer="19" extent="1-1"/>
+<wire x1="21.5254" y1="17.9624" x2="21.85161875" y2="17.6403" width="0" layer="19" extent="1-1"/>
+<wire x1="20.80951875" y1="18.313403125" x2="21.5254" y2="17.9624" width="0" layer="19" extent="1-16"/>
+<wire x1="20.12441875" y1="18.453103125" x2="20.80951875" y2="18.313403125" width="0" layer="19" extent="16-16"/>
+<wire x1="23.238459375" y1="17.526" x2="21.85161875" y2="17.6403" width="0" layer="19" extent="1-1"/>
+<wire x1="23.19781875" y1="18.2085625" x2="23.238459375" y2="17.526" width="0" layer="19" extent="16-16"/>
+<wire x1="24.1254" y1="17.3124" x2="23.238459375" y2="17.526" width="0" layer="19" extent="1-1"/>
+<wire x1="24.1254" y1="17.9624" x2="24.1254" y2="17.3124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.7754" y1="17.9624" x2="24.1254" y2="17.9624" width="0" layer="19" extent="1-1"/>
+<wire x1="24.886921875" y1="18.0333" x2="24.7754" y2="17.9624" width="0" layer="19" extent="1-16"/>
+<wire x1="25.4254" y1="17.9624" x2="24.886921875" y2="18.0333" width="0" layer="19" extent="1-16"/>
+<wire x1="25.7556" y1="18.0333" x2="25.4254" y2="17.9624" width="0" layer="19" extent="1-16"/>
+<wire x1="26.0754" y1="17.9624" x2="25.7556" y2="18.0333" width="0" layer="19" extent="1-16"/>
+<wire x1="26.7254" y1="17.9624" x2="26.0754" y2="17.9624" width="0" layer="19" extent="1-1"/>
+<wire x1="26.7254" y1="17.3124" x2="26.7254" y2="17.9624" width="0" layer="19" extent="1-1"/>
+<wire x1="26.8122375" y1="17.188278125" x2="26.7254" y2="17.3124" width="0" layer="19" extent="1-16"/>
+<wire x1="26.7254" y1="16.6624" x2="26.8122375" y2="17.188278125" width="0" layer="19" extent="1-16"/>
+<wire x1="26.7055625" y1="16.119540625" x2="26.7254" y2="16.6624" width="0" layer="19" extent="1-16"/>
+<wire x1="26.7254" y1="16.0124" x2="26.7055625" y2="16.119540625" width="0" layer="19" extent="1-16"/>
+<wire x1="26.0754" y1="16.0124" x2="26.7055625" y2="16.119540625" width="0" layer="19" extent="1-16"/>
+<wire x1="25.750521875" y1="15.69211875" x2="26.0754" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.4254" y1="16.0124" x2="25.750521875" y2="15.69211875" width="0" layer="19" extent="1-1"/>
+<wire x1="25.74798125" y1="16.33981875" x2="25.4254" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.4254" y1="16.6624" x2="25.74798125" y2="16.33981875" width="0" layer="19" extent="1-1"/>
+<wire x1="26.0754" y1="16.6624" x2="25.74798125" y2="16.33981875" width="0" layer="19" extent="1-1"/>
+<wire x1="25.753059375" y1="16.98751875" x2="26.0754" y2="16.6624" width="0" layer="19" extent="1-1"/>
+<wire x1="26.0754" y1="17.3124" x2="25.753059375" y2="16.98751875" width="0" layer="19" extent="1-1"/>
+<wire x1="25.097740625" y1="16.334740625" x2="25.4254" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.7754" y1="16.6624" x2="25.097740625" y2="16.334740625" width="0" layer="19" extent="1-1"/>
+<wire x1="24.7754" y1="16.0124" x2="25.097740625" y2="16.334740625" width="0" layer="19" extent="1-1"/>
+<wire x1="24.93841875" y1="17.078959375" x2="24.7754" y2="16.6624" width="0" layer="19" extent="1-16"/>
+<wire x1="24.7754" y1="17.3124" x2="24.93841875" y2="17.078959375" width="0" layer="19" extent="1-16"/>
+<wire x1="25.4254" y1="17.3124" x2="25.753059375" y2="16.98751875" width="0" layer="19" extent="1-1"/>
+<wire x1="25.4254" y1="15.3624" x2="25.750521875" y2="15.69211875" width="0" layer="19" extent="1-1"/>
+<wire x1="26.0754" y1="15.3624" x2="25.750521875" y2="15.69211875" width="0" layer="19" extent="1-1"/>
+<wire x1="26.7254" y1="15.3624" x2="26.7254" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.1254" y1="16.6624" x2="24.1254" y2="17.3124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.1254" y1="16.0124" x2="24.7754" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.1254" y1="15.3624" x2="24.1254" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="24.2856375" y1="14.828521875" x2="24.1254" y2="15.3624" width="0" layer="19" extent="1-16"/>
+<wire x1="24.7754" y1="15.3624" x2="24.7754" y2="16.0124" width="0" layer="19" extent="1-1"/>
+<wire x1="25.02408125" y1="14.4500625" x2="24.2856375" y2="14.828521875" width="0" layer="19" extent="16-16"/>
+<wire x1="25.4254" y1="14.0624" x2="25.02408125" y2="14.4500625" width="0" layer="19" extent="1-1"/>
+<wire x1="26.0754" y1="14.0624" x2="25.4254" y2="14.0624" width="0" layer="19" extent="1-1"/>
+<wire x1="27.69108125" y1="16.9926" x2="26.8122375" y2="17.188278125" width="0" layer="19" extent="16-16"/>
+<wire x1="28.0254" y1="17.3124" x2="27.69108125" y2="16.9926" width="0" layer="19" extent="1-1"/>
+<wire x1="28.0254" y1="16.6624" x2="27.69108125" y2="16.9926" width="0" layer="19" extent="1-1"/>
+<wire x1="28.0254" y1="17.9624" x2="28.0254" y2="17.3124" width="0" layer="19" extent="1-1"/>
+<wire x1="23.4754" y1="19.2624" x2="23.19781875" y2="18.2085625" width="0" layer="19" extent="1-16"/>
+<wire x1="24.7754" y1="19.2624" x2="24.886921875" y2="18.0333" width="0" layer="19" extent="1-16"/>
+<wire x1="25.4254" y1="19.2624" x2="24.7754" y2="19.2624" width="0" layer="19" extent="1-1"/>
+<wire x1="26.0754" y1="19.2624" x2="25.4254" y2="19.2624" width="0" layer="19" extent="1-1"/>
+<wire x1="22.8254" y1="14.7124" x2="24.1254" y2="15.3624" width="0" layer="19" extent="1-1"/>
+<wire x1="27.6733" y1="14.098840625" x2="26.7254" y2="15.3624" width="0" layer="19" extent="1-16"/>
+<wire x1="28.59278125" y1="14.098840625" x2="27.6733" y2="14.098840625" width="0" layer="19" extent="16-16"/>
+<wire x1="29.6672" y1="13.461296875" x2="28.59278125" y2="14.098840625" width="0" layer="19" extent="16-16"/>
+<wire x1="28.3845" y1="19.833021875" x2="28.0254" y2="17.9624" width="0" layer="19" extent="1-16"/>
+<wire x1="20.8754" y1="14.0624" x2="22.8254" y2="14.7124" width="0" layer="19" extent="1-1"/>
+<wire x1="20.8754" y1="13.4124" x2="20.8754" y2="14.0624" width="0" layer="19" extent="1-1"/>
+<wire x1="19.95678125" y1="13.4239" x2="20.8754" y2="13.4124" width="0" layer="19" extent="1-1"/>
+<wire x1="19.9136" y1="14.2588625" x2="19.95678125" y2="13.4239" width="0" layer="19" extent="1-1"/>
+<wire x1="18.993421875" y1="11.874496875" x2="19.95678125" y2="13.4239" width="0" layer="19" extent="1-1"/>
+<wire x1="18.206721875" y1="11.861796875" x2="18.993421875" y2="11.874496875" width="0" layer="19" extent="1-1"/>
+<wire x1="19.044921875" y1="11.023596875" x2="18.993421875" y2="11.874496875" width="0" layer="19" extent="1-1"/>
+<wire x1="19.846859375" y1="11.015975" x2="19.044921875" y2="11.023596875" width="0" layer="19" extent="1-1"/>
+<wire x1="30.54419375" y1="17.70888125" x2="28.0254" y2="17.9624" width="0" layer="19" extent="1-16"/>
+<wire x1="30.546740625" y1="16.835121875" x2="30.54419375" y2="17.70888125" width="0" layer="19" extent="16-16"/>
+<wire x1="30.546740625" y1="15.96898125" x2="30.546740625" y2="16.835121875" width="0" layer="19" extent="16-16"/>
+<wire x1="31.824365625" y1="15.699740625" x2="30.546740625" y2="15.96898125" width="0" layer="19" extent="1-16"/>
+<wire x1="25.864825" y1="11.515659375" x2="26.0754" y2="14.0624" width="0" layer="19" extent="1-16"/>
+<wire x1="26.7335" y1="11.508040625" x2="25.864825" y2="11.515659375" width="0" layer="19" extent="16-16"/>
+<wire x1="25.003759375" y1="11.513121875" x2="25.864825" y2="11.515659375" width="0" layer="19" extent="16-16"/>
+<wire x1="26.801334375" y1="9.0932" x2="26.7335" y2="11.508040625" width="0" layer="19" extent="16-16"/>
+<wire x1="26.896059375" y1="8.354059375" x2="26.801334375" y2="9.0932" width="0" layer="19" extent="16-16"/>
+<wire x1="29.21" y1="8.354059375" x2="26.896059375" y2="8.354059375" width="0" layer="19" extent="1-1"/>
+<wire x1="29.1345" y1="9.0932" x2="29.21" y2="8.354059375" width="0" layer="19" extent="16-16"/>
+<wire x1="24.46816875" y1="9.0932" x2="26.801334375" y2="9.0932" width="0" layer="19" extent="16-16"/>
+<wire x1="24.4856" y1="8.354059375" x2="24.46816875" y2="9.0932" width="0" layer="19" extent="16-16"/>
+<wire x1="22.1742" y1="8.354059375" x2="24.4856" y2="8.354059375" width="0" layer="19" extent="1-1"/>
+<wire x1="22.135003125" y1="9.0932" x2="22.1742" y2="8.354059375" width="0" layer="19" extent="16-16"/>
+<wire x1="31.8008" y1="10.287" x2="29.1345" y2="9.0932" width="0" layer="19" extent="16-16"/>
+<wire x1="32.766" y1="10.287" x2="31.8008" y2="10.287" width="0" layer="19" extent="1-1"/>
+<wire x1="32.881" y1="11.24" x2="32.766" y2="10.287" width="0" layer="19" extent="16-16"/>
+<wire x1="33.782" y1="10.287" x2="32.766" y2="10.287" width="0" layer="19" extent="1-1"/>
+<wire x1="23.1401" y1="22.4028" x2="23.4754" y2="19.2624" width="0" layer="19" extent="1-16"/>
+<wire x1="23.90648125" y1="22.3926375" x2="23.1401" y2="22.4028" width="0" layer="19" extent="16-16"/>
+<wire x1="23.8887" y1="23.1419375" x2="23.90648125" y2="22.3926375" width="0" layer="19" extent="1-1"/>
+<wire x1="23.1401" y1="23.2664" x2="23.8887" y2="23.1419375" width="0" layer="19" extent="16-16"/>
+<wire x1="13.4366" y1="10.61698125" x2="18.206721875" y2="11.861796875" width="0" layer="19" extent="16-16"/>
+<wire x1="13.6525" y1="9.898378125" x2="13.4366" y2="10.61698125" width="0" layer="19" extent="16-16"/>
+<wire x1="11.492803125" y1="11.31315625" x2="13.4366" y2="10.61698125" width="0" layer="19" extent="16-16"/>
+<wire x1="11.4554" y1="11.996428125" x2="11.492803125" y2="11.31315625" width="0" layer="19" extent="16-16"/>
+<wire x1="10.556240625" y1="11.329096875" x2="11.492803125" y2="11.31315625" width="0" layer="19" extent="16-16"/>
+<wire x1="9.8254" y1="11.0208" x2="10.556240625" y2="11.329096875" width="0" layer="19" extent="16-16"/>
+<wire x1="8.3464375" y1="9.958640625" x2="9.8254" y2="11.0208" width="0" layer="19" extent="16-16"/>
+<wire x1="8.3667625" y1="9.27354375" x2="8.3464375" y2="9.958640625" width="0" layer="19" extent="16-16"/>
+<wire x1="7.32281875" y1="10.3807625" x2="8.3464375" y2="9.958640625" width="0" layer="19" extent="16-16"/>
+<wire x1="7.254240625" y1="9.6647" x2="7.32281875" y2="10.3807625" width="0" layer="19" extent="16-16"/>
+<wire x1="6.33984375" y1="9.884978125" x2="7.254240625" y2="9.6647" width="0" layer="19" extent="16-16"/>
+<wire x1="6.129021875" y1="9.21004375" x2="6.33984375" y2="9.884978125" width="0" layer="19" extent="16-16"/>
+<wire x1="9.2989375" y1="8.06704375" x2="8.3667625" y2="9.27354375" width="0" layer="19" extent="1-1"/>
+<wire x1="9.4266" y1="7.3157" x2="9.2989375" y2="8.06704375" width="0" layer="19" extent="16-16"/>
+<wire x1="7.44981875" y1="12.4206" x2="7.32281875" y2="10.3807625" width="0" layer="19" extent="16-16"/>
+<wire x1="8.171175" y1="12.4206" x2="7.44981875" y2="12.4206" width="0" layer="19" extent="1-1"/>
+<wire x1="8.6607" y1="13.1826" x2="8.171175" y2="12.4206" width="0" layer="19" extent="16-16"/>
+<wire x1="7.8116" y1="13.3524" x2="8.6607" y2="13.1826" width="0" layer="19" extent="1-16"/>
+<wire x1="8.32621875" y1="14.26718125" x2="7.8116" y2="13.3524" width="0" layer="19" extent="1-16"/>
+<wire x1="10.2266" y1="4.8255" x2="9.4266" y2="7.3157" width="0" layer="19" extent="16-16"/>
+<wire x1="10.721340625" y1="4.97331875" x2="10.2266" y2="4.8255" width="0" layer="19" extent="16-16"/>
+<wire x1="10.721340625" y1="4.384040625" x2="10.721340625" y2="4.97331875" width="0" layer="19" extent="1-1"/>
+<wire x1="10.831259375" y1="3.393440625" x2="10.721340625" y2="4.384040625" width="0" layer="19" extent="16-16"/>
+<wire x1="11.51381875" y1="3.3782" x2="10.831259375" y2="3.393440625" width="0" layer="19" extent="16-16"/>
+<wire x1="4.4366" y1="16.1574" x2="8.32621875" y2="14.26718125" width="0" layer="19" extent="1-16"/>
+<wire x1="4.4366" y1="19.3424" x2="4.4366" y2="16.1574" width="0" layer="19" extent="1-1"/>
+<wire x1="4.572" y1="24.384" x2="4.4366" y2="19.3424" width="0" layer="19" extent="1-1"/>
+<wire x1="4.77961875" y1="25.1206" x2="4.572" y2="24.384" width="0" layer="19" extent="16-16"/>
+<wire x1="2.475478125" y1="25.1206" x2="4.572" y2="24.384" width="0" layer="19" extent="16-16"/>
+<wire x1="2.286" y1="24.384" x2="2.475478125" y2="25.1206" width="0" layer="19" extent="16-16"/>
+<wire x1="7.083759375" y1="25.1206" x2="4.77961875" y2="25.1206" width="0" layer="19" extent="16-16"/>
+<wire x1="7.112" y1="24.384" x2="7.083759375" y2="25.1206" width="0" layer="19" extent="16-16"/>
+<wire x1="9.3879" y1="25.1206" x2="7.083759375" y2="25.1206" width="0" layer="19" extent="16-16"/>
+<wire x1="9.652" y1="23.622" x2="9.3879" y2="25.1206" width="0" layer="19" extent="16-16"/>
+<wire x1="10.4133" y1="23.622" x2="9.652" y2="23.622" width="0" layer="19" extent="16-16"/>
+<wire x1="9.652" y1="22.86" x2="9.652" y2="23.622" width="0" layer="19" extent="1-1"/>
+<wire x1="10.4133" y1="22.7584" x2="9.652" y2="22.86" width="0" layer="19" extent="16-16"/>
+<wire x1="8.973553125" y1="30.948925" x2="9.3879" y2="25.1206" width="0" layer="19" extent="1-16"/>
+<wire x1="8.9814375" y1="31.5087" x2="8.973553125" y2="30.948925" width="0" layer="19" extent="1-1"/>
+<wire x1="10.031478125" y1="33.923321875" x2="8.9814375" y2="31.5087" width="0" layer="19" extent="16-16"/>
+<wire x1="10.48258125" y1="34.871659375" x2="10.031478125" y2="33.923321875" width="0" layer="19" extent="16-16"/>
+<wire x1="11.02868125" y1="34.376359375" x2="10.48258125" y2="34.871659375" width="0" layer="19" extent="1-1"/>
+<wire x1="9.640425" y1="35.482775" x2="10.48258125" y2="34.871659375" width="0" layer="19" extent="16-16"/>
+<wire x1="8.903825" y1="34.746175" x2="9.640425" y2="35.482775" width="0" layer="19" extent="16-16"/>
+<wire x1="7.842184375" y1="34.3430375" x2="8.903825" y2="34.746175" width="0" layer="19" extent="1-16"/>
+<wire x1="7.29488125" y1="34.343340625" x2="7.842184375" y2="34.3430375" width="0" layer="19" extent="1-1"/>
+<wire x1="6.7108125" y1="35.474409375" x2="7.29488125" y2="34.343340625" width="0" layer="19" extent="1-1"/>
+<wire x1="6.15188125" y1="35.481259375" x2="6.7108125" y2="35.474409375" width="0" layer="19" extent="1-1"/>
+<wire x1="5.579440625" y1="36.605778125" x2="6.15188125" y2="35.481259375" width="0" layer="19" extent="1-1"/>
+<wire x1="5.184140625" y1="37.07638125" x2="5.579440625" y2="36.605778125" width="0" layer="19" extent="1-1"/>
+<wire x1="6.373878125" y1="37.555521875" x2="5.579440625" y2="36.605778125" width="0" layer="19" extent="1-16"/>
+<wire x1="7.19328125" y1="38.064440625" x2="6.373878125" y2="37.555521875" width="0" layer="19" extent="16-16"/>
+<wire x1="6.697978125" y1="38.580059375" x2="7.19328125" y2="38.064440625" width="0" layer="19" extent="1-1"/>
+<wire x1="8.40786875" y1="38.302834375" x2="7.19328125" y2="38.064440625" width="0" layer="19" extent="1-1"/>
+<wire x1="8.382" y1="38.862" x2="8.40786875" y2="38.302834375" width="0" layer="19" extent="1-1"/>
+<wire x1="9.5402375" y1="37.721540625" x2="8.40786875" y2="38.302834375" width="0" layer="19" extent="1-1"/>
+<wire x1="9.539240625" y1="37.171465625" x2="9.5402375" y2="37.721540625" width="0" layer="19" extent="1-1"/>
+<wire x1="4.448071875" y1="35.474409375" x2="5.579440625" y2="36.605778125" width="0" layer="19" extent="1-1"/>
+<wire x1="4.168140625" y1="35.003740625" x2="4.448071875" y2="35.474409375" width="0" layer="19" extent="1-1"/>
+<wire x1="42.128" y1="16.2064" x2="39.3065" y2="22.05228125" width="0" layer="19" extent="1-1"/>
+<wire x1="45.936" y1="8.0257" x2="42.128" y2="16.2064" width="0" layer="19" extent="16-16"/>
+<wire x1="45.9232" y1="7.239" x2="45.936" y2="8.0257" width="0" layer="19" extent="16-16"/>
+<wire x1="47.012859375" y1="6.99008125" x2="45.9232" y2="7.239" width="0" layer="19" extent="1-1"/>
+<wire x1="47.8854" y1="8.1026" x2="47.8854" y2="7.7026" width="0" layer="19" extent="16-16"/>
+<wire x1="48.2854" y1="8.1026" x2="47.8854" y2="8.1026" width="0" layer="19" extent="16-16"/>
+<wire x1="50.0752" y1="5.6642" x2="49.39791875" y2="8.1026" width="0" layer="19" extent="16-16"/>
+<wire x1="51.1302" y1="5.6642" x2="50.0752" y2="5.6642" width="0" layer="19" extent="16-16"/>
+<wire x1="50.1142" y1="4.445" x2="50.0752" y2="5.6642" width="0" layer="19" extent="16-16"/>
+<wire x1="50.5832" y1="10.5918" x2="49.39791875" y2="8.1026" width="0" layer="19" extent="16-16"/>
+<wire x1="51.6382" y1="10.668" x2="50.5832" y2="10.5918" width="0" layer="19" extent="16-16"/>
+<wire x1="50.927" y1="11.8618" x2="50.5832" y2="10.5918" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="ICE_PIX_CLK24MHZ">
 <contactref element="U8" pad="D7"/>
@@ -3287,6 +3632,27 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="20.591778125" y="35.5447625" extent="1-16" drill="0.381"/>
 <via x="20.591778125" y="34.823403125" extent="1-16" drill="0.381"/>
 <via x="20.591778125" y="34.10204375" extent="1-16" drill="0.381"/>
+<wire x1="20.591778125" y1="34.823403125" x2="21.68488125" y2="34.846221875" width="0" layer="19" extent="16-16"/>
+<wire x1="20.591778125" y1="35.5447625" x2="20.591778125" y2="34.823403125" width="0" layer="19" extent="1-1"/>
+<wire x1="20.591778125" y1="34.10204375" x2="20.591778125" y2="34.823403125" width="0" layer="19" extent="1-1"/>
+<wire x1="16.70558125" y1="33.169859375" x2="20.591778125" y2="34.10204375" width="0" layer="19" extent="1-1"/>
+<wire x1="16.697259375" y1="32.471359375" x2="16.70558125" y2="33.169859375" width="0" layer="19" extent="16-16"/>
+<wire x1="15.280640625" y1="29.382721875" x2="16.697259375" y2="32.471359375" width="0" layer="19" extent="16-16"/>
+<wire x1="15.6744" y1="28.913" x2="15.280640625" y2="29.382721875" width="0" layer="19" extent="1-1"/>
+<wire x1="16.0521" y1="28.575" x2="15.6744" y2="28.913" width="0" layer="19" extent="1-16"/>
+<wire x1="18.4658" y1="28.5249" x2="16.0521" y2="28.575" width="0" layer="19" extent="16-16"/>
+<wire x1="18.8744" y1="28.913" x2="18.4658" y2="28.5249" width="0" layer="19" extent="1-16"/>
+<wire x1="19.2786" y1="29.3116" x2="18.8744" y2="28.913" width="0" layer="19" extent="1-1"/>
+<wire x1="19.2786" y1="26.1112" x2="18.4658" y2="28.5249" width="0" layer="19" extent="16-16"/>
+<wire x1="18.8744" y1="25.713" x2="19.2786" y2="26.1112" width="0" layer="19" extent="1-1"/>
+<wire x1="15.2781" y1="26.1112" x2="16.0521" y2="28.575" width="0" layer="19" extent="16-16"/>
+<wire x1="15.6744" y1="25.713" x2="15.2781" y2="26.1112" width="0" layer="19" extent="1-1"/>
+<wire x1="15.280640625" y1="25.359359375" x2="15.6744" y2="25.713" width="0" layer="19" extent="1-1"/>
+<wire x1="15.735296875" y1="24.68441875" x2="15.280640625" y2="25.359359375" width="0" layer="19" extent="16-16"/>
+<wire x1="12.065" y1="23.599140625" x2="15.280640625" y2="25.359359375" width="0" layer="19" extent="1-1"/>
+<wire x1="11.2783" y1="23.622" x2="12.065" y2="23.599140625" width="0" layer="19" extent="16-16"/>
+<wire x1="12.07008125" y1="22.755859375" x2="12.065" y2="23.599140625" width="0" layer="19" extent="1-1"/>
+<wire x1="11.2783" y1="22.7584" x2="12.07008125" y2="22.755859375" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$4">
 <contactref element="U4" pad="B2"/>
@@ -3512,6 +3878,58 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="12.91151875" y1="6.23061875" x2="13.591540625" y2="6.23061875" width="0.127" layer="16"/>
 <wire x1="11.953940625" y1="7.70128125" x2="11.953940625" y2="7.9991625" width="0.127" layer="16"/>
 <wire x1="11.953940625" y1="7.9991625" x2="12.3571" y2="8.402321875" width="0.127" layer="16"/>
+<wire x1="43.6498" y1="32.4866" x2="43.652340625" y2="31.574740625" width="0" layer="19" extent="16-16"/>
+<wire x1="42.802240625" y1="30.507940625" x2="43.652340625" y2="31.574740625" width="0" layer="19" extent="16-16"/>
+<wire x1="42.7404625" y1="29.77641875" x2="42.802240625" y2="30.507940625" width="0" layer="19" extent="16-16"/>
+<wire x1="42.743" y1="29.2498" x2="42.7404625" y2="29.77641875" width="0" layer="19" extent="1-1"/>
+<wire x1="43.37038125" y1="29.778959375" x2="42.7404625" y2="29.77641875" width="0" layer="19" extent="1-1"/>
+<wire x1="43.393" y1="29.2498" x2="43.37038125" y2="29.778959375" width="0" layer="19" extent="1-1"/>
+<wire x1="40.143" y1="29.2498" x2="42.743" y2="29.2498" width="0" layer="19" extent="1-1"/>
+<wire x1="40.1505" y1="29.7751" x2="40.143" y2="29.2498" width="0" layer="19" extent="1-1"/>
+<wire x1="40.159240625" y1="30.507940625" x2="40.1505" y2="29.7751" width="0" layer="19" extent="16-16"/>
+<wire x1="39.309140625" y1="30.6451" x2="40.159240625" y2="30.507940625" width="0" layer="19" extent="16-16"/>
+<wire x1="39.309140625" y1="31.574740625" x2="39.309140625" y2="30.6451" width="0" layer="19" extent="16-16"/>
+<wire x1="39.3066" y1="32.4866" x2="39.309140625" y2="31.574740625" width="0" layer="19" extent="16-16"/>
+<wire x1="44.693" y1="25.9998" x2="43.393" y2="29.2498" width="0" layer="19" extent="1-1"/>
+<wire x1="45.2374" y1="25.9998" x2="44.693" y2="25.9998" width="0" layer="19" extent="1-1"/>
+<wire x1="45.974" y1="25.7563" x2="45.2374" y2="25.9998" width="0" layer="19" extent="16-16"/>
+<wire x1="47.0408" y1="26.0984" x2="45.974" y2="25.7563" width="0" layer="19" extent="16-16"/>
+<wire x1="47.990759375" y1="25.765759375" x2="47.0408" y2="26.0984" width="0" layer="19" extent="16-16"/>
+<wire x1="48.003459375" y1="26.4668" x2="47.990759375" y2="25.765759375" width="0" layer="19" extent="1-1"/>
+<wire x1="44.693" y1="24.6998" x2="44.693" y2="25.9998" width="0" layer="19" extent="1-1"/>
+<wire x1="45.212" y1="24.6998" x2="44.693" y2="24.6998" width="0" layer="19" extent="1-1"/>
+<wire x1="43.645240625" y1="24.290440625" x2="44.693" y2="24.6998" width="0" layer="19" extent="1-1"/>
+<wire x1="43.393" y1="24.6998" x2="43.645240625" y2="24.290440625" width="0" layer="19" extent="1-1"/>
+<wire x1="45.562521875" y1="13.1419625" x2="43.645240625" y2="24.290440625" width="0" layer="19" extent="1-1"/>
+<wire x1="45.562521875" y1="12.428221875" x2="45.562521875" y2="13.1419625" width="0" layer="19" extent="1-1"/>
+<wire x1="45.562521875" y1="11.714478125" x2="45.562521875" y2="12.428221875" width="0" layer="19" extent="1-1"/>
+<wire x1="46.6124" y1="12.4206" x2="45.562521875" y2="12.428221875" width="0" layer="19" extent="16-16"/>
+<wire x1="22.6815" y1="31.242" x2="39.309140625" y2="30.6451" width="0" layer="19" extent="16-16"/>
+<wire x1="21.87448125" y1="31.257240625" x2="22.6815" y2="31.242" width="0" layer="19" extent="16-16"/>
+<wire x1="22.6815" y1="30.2006" x2="22.6815" y2="31.242" width="0" layer="19" extent="16-16"/>
+<wire x1="21.88971875" y1="30.18028125" x2="22.5324" y2="30.099" width="0" layer="19" extent="16-16"/>
+<wire x1="20.962653125" y1="30.1117" x2="21.88971875" y2="30.18028125" width="0" layer="19" extent="1-1"/>
+<wire x1="9.87541875" y1="14.26718125" x2="20.4744" y2="29.713" width="0" layer="19" extent="1-16"/>
+<wire x1="10.0116" y1="13.3524" x2="9.87541875" y2="14.26718125" width="0" layer="19" extent="1-16"/>
+<wire x1="9.5257" y1="13.1826" x2="10.0116" y2="13.3524" width="0" layer="19" extent="1-16"/>
+<wire x1="9.6774" y1="12.44091875" x2="9.5257" y2="13.1826" width="0" layer="19" extent="16-16"/>
+<wire x1="10.29461875" y1="12.42821875" x2="9.6774" y2="12.44091875" width="0" layer="19" extent="1-1"/>
+<wire x1="8.58011875" y1="11.49604375" x2="9.6774" y2="12.44091875" width="0" layer="19" extent="1-1"/>
+<wire x1="8.3464375" y1="10.823640625" x2="8.58011875" y2="11.49604375" width="0" layer="19" extent="16-16"/>
+<wire x1="9.2754" y1="11.0208" x2="8.58011875" y2="11.49604375" width="0" layer="19" extent="16-16"/>
+<wire x1="6.97281875" y1="11.3819625" x2="8.3464375" y2="10.823640625" width="0" layer="19" extent="16-16"/>
+<wire x1="6.51001875" y1="11.43761875" x2="6.97281875" y2="11.3819625" width="0" layer="19" extent="16-16"/>
+<wire x1="6.33984375" y1="10.749978125" x2="6.51001875" y2="11.43761875" width="0" layer="19" extent="16-16"/>
+<wire x1="12.357803125" y1="11.31315625" x2="10.29461875" y2="12.42821875" width="0" layer="19" extent="16-16"/>
+<wire x1="12.6365" y1="11.9710125" x2="12.357803125" y2="11.31315625" width="0" layer="19" extent="16-16"/>
+<wire x1="13.0866" y1="11.61818125" x2="12.6365" y2="11.9710125" width="0" layer="19" extent="16-16"/>
+<wire x1="12.3571" y1="8.402321875" x2="12.357803125" y2="11.31315625" width="0" layer="19" extent="16-16"/>
+<wire x1="12.91151875" y1="6.23061875" x2="11.953940625" y2="7.70128125" width="0" layer="19" extent="16-16"/>
+<wire x1="9.8266" y1="4.8255" x2="12.91151875" y2="6.23061875" width="0" layer="19" extent="16-16"/>
+<wire x1="9.8425" y1="4.056378125" x2="9.8266" y2="4.8255" width="0" layer="19" extent="16-16"/>
+<wire x1="9.966259375" y1="3.393440625" x2="9.8425" y2="4.056378125" width="0" layer="19" extent="16-16"/>
+<wire x1="6.95381875" y1="5.077459375" x2="9.8266" y2="4.8255" width="0" layer="19" extent="16-16"/>
+<wire x1="6.9081" y1="6.985" x2="6.95381875" y2="5.077459375" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$12">
 <contactref element="U6" pad="B2"/>
@@ -4295,6 +4713,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="39.215059375" y="8.773165625"/>
 <vertex x="39.215059375" y="11.938"/>
 </polygon>
+<wire x1="37.719" y1="9.43288125" x2="37.731" y2="11.24" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$16">
 <contactref element="R6" pad="2"/>
@@ -4311,6 +4730,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="24.2062" y="38.1609625"/>
 <vertex x="24.3586" y="38.1609625"/>
 </polygon>
+<wire x1="23.3298" y1="38.4657625" x2="24.2824" y2="38.2907625" width="0" layer="19" extent="16-16"/>
+<wire x1="23.4225" y1="36.7639625" x2="23.3298" y2="38.4657625" width="0" layer="19" extent="16-16"/>
+<wire x1="23.43568125" y1="34.846221875" x2="23.4225" y2="36.7639625" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$8">
 <contactref element="R12" pad="2"/>
@@ -4327,6 +4749,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="32.986978125" y="37.8206"/>
 <vertex x="33.164778125" y="37.8206"/>
 </polygon>
+<wire x1="33.063178125" y1="38.0266" x2="32.072578125" y2="38.2016" width="0" layer="19" extent="16-16"/>
+<wire x1="32.203278125" y1="36.4998" x2="32.072578125" y2="38.2016" width="0" layer="19" extent="16-16"/>
+<wire x1="32.1580375" y1="34.569359375" x2="32.203278125" y2="36.4998" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$18">
 <contactref element="U6" pad="E2"/>
@@ -4346,6 +4771,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="46.4312" y="9.525"/>
 </polygon>
 <wire x1="48.2854" y1="8.9026" x2="48.6854" y2="8.9026" width="0.254" layer="16"/>
+<wire x1="47.6758" y1="11.0751" x2="48.8324" y2="10.5918" width="0" layer="19" extent="16-16"/>
+<wire x1="48.3632" y1="12.4206" x2="47.6758" y2="11.0751" width="0" layer="19" extent="16-16"/>
+<wire x1="46.7996" y1="9.8305" x2="47.6758" y2="11.0751" width="0" layer="19" extent="16-16"/>
+<wire x1="48.6854" y1="8.9026" x2="48.8324" y2="10.5918" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="PIX_LV">
 <contactref element="U8" pad="C3"/>
@@ -5243,11 +5672,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 </compatibility>
 </eagle>
