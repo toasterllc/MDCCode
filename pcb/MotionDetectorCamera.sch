@@ -362,7 +362,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="1.075" y="0.33"/>
 </polygon>
 </package>
-<package name="TPS63805YFFR">
+<package name="TI-TPS63805YFFR">
 <smd name="A1" x="-0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
 <smd name="A2" x="0" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
 <smd name="A3" x="0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
@@ -395,7 +395,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.8" y="1.2"/>
 </polygon>
 </package>
-<package name="TPS6280XYKAR">
+<package name="TI-TPS6280XYKAR">
 <smd name="A1" x="-0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
 <smd name="A2" x="0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
 <smd name="B1" x="-0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
@@ -1314,7 +1314,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-2.413" y="-2.921"/>
 </polygon>
 </symbol>
-<symbol name="TPS63805YFF">
+<symbol name="TI-TPS63805YFF">
 <wire x1="20.32" y1="0" x2="20.32" y2="-33.02" width="0.254" layer="94"/>
 <wire x1="20.32" y1="-33.02" x2="0" y2="-33.02" width="0.254" layer="94"/>
 <wire x1="0" y1="-33.02" x2="0" y2="0" width="0.254" layer="94"/>
@@ -1332,7 +1332,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="0" y="-35.56" size="1.778" layer="95">&gt;PN</text>
 </symbol>
-<symbol name="TPS6280XYKA">
+<symbol name="TI-TPS6280XYKA">
 <wire x1="0" y1="0" x2="0" y2="-25.4" width="0.254" layer="94"/>
 <wire x1="0" y1="-25.4" x2="25.4" y2="-25.4" width="0.254" layer="94"/>
 <wire x1="25.4" y1="-25.4" x2="25.4" y2="0" width="0.254" layer="94"/>
@@ -2170,10 +2170,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <deviceset name="TI-TPS63805YFFR" prefix="U">
 <description>Buck-Boost Converter</description>
 <gates>
-<gate name="G$1" symbol="TPS63805YFF" x="0" y="0"/>
+<gate name="G$1" symbol="TI-TPS63805YFF" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="TPS63805YFFR">
+<device name="" package="TI-TPS63805YFFR">
 <connects>
 <connect gate="G$1" pin="AGND" pad="C1"/>
 <connect gate="G$1" pin="EN" pad="A1"/>
@@ -2198,10 +2198,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <deviceset name="TI-TPS6280XYKAR" prefix="U">
 <description>Step-Down Converter</description>
 <gates>
-<gate name="G$1" symbol="TPS6280XYKA" x="0" y="0"/>
+<gate name="G$1" symbol="TI-TPS6280XYKA" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="TPS6280XYKAR">
+<device name="" package="TI-TPS6280XYKAR">
 <connects>
 <connect gate="G$1" pin="EN" pad="C2"/>
 <connect gate="G$1" pin="GND" pad="A1"/>
