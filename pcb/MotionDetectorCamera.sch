@@ -144,23 +144,6 @@
 <package name="0805" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
 <description>Chip, 2.00 X 1.25 X 0.70 mm body
 &lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
-<smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1"/>
-<text x="-1.469" y="1.0007" size="0.762" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-1.56" y1="0.84" x2="-1.56" y2="-0.84" width="0.05" layer="21"/>
-<wire x1="-1.56" y1="-0.84" x2="1.56" y2="-0.84" width="0.05" layer="21"/>
-<wire x1="1.56" y1="-0.84" x2="1.56" y2="0.84" width="0.05" layer="21"/>
-<wire x1="1.56" y1="0.84" x2="-1.56" y2="0.84" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-1.56" y="0.84"/>
-<vertex x="-1.56" y="-0.84"/>
-<vertex x="1.56" y="-0.84"/>
-<vertex x="1.56" y="0.84"/>
-</polygon>
-</package>
-<package name="0805@1" urn="urn:adsk.eagle:footprint:17080195/1" locally_modified="yes">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-0.8754" y="0" dx="1.1646" dy="1.4653" layer="1" cream="no"/>
 <smd name="2" x="0.8754" y="0" dx="1.1646" dy="1.4653" layer="1" cream="no"/>
 <text x="-1.469" y="1.0007" size="0.762" layer="25" font="vector">&gt;NAME</text>
@@ -188,23 +171,6 @@
 </polygon>
 </package>
 <package name="1206" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
-<description>Chip, 3.20 X 1.60 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
-<smd name="2" x="1.4754" y="0" dx="1.1646" dy="1.8153" layer="1"/>
-<text x="-2.068" y="1.1737" size="1.016" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-2.16" y1="1.01" x2="-2.16" y2="-1.01" width="0.05" layer="21"/>
-<wire x1="-2.16" y1="-1.01" x2="2.16" y2="-1.01" width="0.05" layer="21"/>
-<wire x1="2.16" y1="-1.01" x2="2.16" y2="1.01" width="0.05" layer="21"/>
-<wire x1="2.16" y1="1.01" x2="-2.16" y2="1.01" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-2.16" y="1.01"/>
-<vertex x="-2.16" y="-1.01"/>
-<vertex x="2.16" y="-1.01"/>
-<vertex x="2.16" y="1.01"/>
-</polygon>
-</package>
-<package name="1206@1" urn="urn:adsk.eagle:footprint:17080199/1" locally_modified="yes">
 <description>Chip, 3.20 X 1.60 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
 <smd name="1" x="-1.4754" y="0" dx="1.1646" dy="1.8153" layer="1" cream="no"/>
@@ -676,47 +642,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100" cream="no"/>
 <text x="0" y="0.327" size="0.508" layer="25" font="vector" align="bottom-center">&gt;NAME</text>
 </package>
-<package name="1210@1" urn="urn:adsk.eagle:footprint:17955894/1" locally_modified="yes">
-<description>Chip, 3.20 X 2.50 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="2.7153" layer="1" cream="no"/>
-<smd name="2" x="1.4754" y="0" dx="1.1646" dy="2.7153" layer="1" cream="no"/>
-<text x="-2.068" y="1.6737" size="1.016" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-2.16" y1="1.46" x2="-2.16" y2="-1.46" width="0.05" layer="21"/>
-<wire x1="-2.16" y1="-1.46" x2="2.16" y2="-1.46" width="0.05" layer="21"/>
-<wire x1="2.16" y1="-1.46" x2="2.16" y2="1.46" width="0.05" layer="21"/>
-<wire x1="2.16" y1="1.46" x2="-2.16" y2="1.46" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-2.16" y="1.46"/>
-<vertex x="-2.16" y="-1.46"/>
-<vertex x="2.16" y="-1.46"/>
-<vertex x="2.16" y="1.46"/>
-</polygon>
-<polygon width="0.127" layer="31">
-<vertex x="-1.651" y="1.016"/>
-<vertex x="-1.651" y="0.254"/>
-<vertex x="-1.143" y="0.254"/>
-<vertex x="-1.143" y="1.016"/>
-</polygon>
-<polygon width="0.127" layer="31">
-<vertex x="-1.651" y="-0.254"/>
-<vertex x="-1.651" y="-1.016"/>
-<vertex x="-1.143" y="-1.016"/>
-<vertex x="-1.143" y="-0.254"/>
-</polygon>
-<polygon width="0.127" layer="31">
-<vertex x="1.143" y="1.016"/>
-<vertex x="1.143" y="0.254"/>
-<vertex x="1.651" y="0.254"/>
-<vertex x="1.651" y="1.016"/>
-</polygon>
-<polygon width="0.127" layer="31">
-<vertex x="1.143" y="-0.254"/>
-<vertex x="1.143" y="-1.016"/>
-<vertex x="1.651" y="-1.016"/>
-<vertex x="1.651" y="-0.254"/>
-</polygon>
-</package>
 <package name="S-MOUNT-LENS-HOLDER">
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
@@ -1128,8 +1053,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package name="1210" urn="urn:adsk.eagle:footprint:17955894/1" locally_modified="yes">
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
-<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="2.7153" layer="1"/>
-<smd name="2" x="1.4754" y="0" dx="1.1646" dy="2.7153" layer="1"/>
+<smd name="1" x="-1.4754" y="0" dx="1.1646" dy="2.7153" layer="1" cream="no"/>
+<smd name="2" x="1.4754" y="0" dx="1.1646" dy="2.7153" layer="1" cream="no"/>
 <text x="-2.068" y="1.6737" size="1.016" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-2.16" y1="1.46" x2="-2.16" y2="-1.46" width="0.05" layer="21"/>
 <wire x1="-2.16" y1="-1.46" x2="2.16" y2="-1.46" width="0.05" layer="21"/>
@@ -1141,115 +1066,32 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="2.16" y="-1.46"/>
 <vertex x="2.16" y="1.46"/>
 </polygon>
+<polygon width="0.127" layer="31">
+<vertex x="-1.651" y="1.016"/>
+<vertex x="-1.651" y="0.254"/>
+<vertex x="-1.143" y="0.254"/>
+<vertex x="-1.143" y="1.016"/>
+</polygon>
+<polygon width="0.127" layer="31">
+<vertex x="-1.651" y="-0.254"/>
+<vertex x="-1.651" y="-1.016"/>
+<vertex x="-1.143" y="-1.016"/>
+<vertex x="-1.143" y="-0.254"/>
+</polygon>
+<polygon width="0.127" layer="31">
+<vertex x="1.143" y="1.016"/>
+<vertex x="1.143" y="0.254"/>
+<vertex x="1.651" y="0.254"/>
+<vertex x="1.651" y="1.016"/>
+</polygon>
+<polygon width="0.127" layer="31">
+<vertex x="1.143" y="-0.254"/>
+<vertex x="1.143" y="-1.016"/>
+<vertex x="1.651" y="-1.016"/>
+<vertex x="1.651" y="-0.254"/>
+</polygon>
 </package>
 </packages>
-<packages3d>
-<package3d name="RESC1005X50N" urn="urn:adsk.eagle:package:17080064/1" type="model">
-<description>Chip, 1.00 X 0.50 X 0.50 mm body
-&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0402"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC1608X70N" urn="urn:adsk.eagle:package:17080173/1" type="model">
-<description>Chip, 1.60 X 0.80 X 0.70 mm body
-&lt;p&gt;Chip package with body size 1.60 X 0.80 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0603"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC2012X70N" urn="urn:adsk.eagle:package:17080181/1" type="model">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0805"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC2012X70N" urn="urn:adsk.eagle:package:17080181@1/1" type="model">
-<description>Chip, 2.00 X 1.25 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.25 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0805@1"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198/1" type="model">
-<description>Chip, 3.20 X 1.60 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="1206"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC3216X70N" urn="urn:adsk.eagle:package:17080198@1/1" type="model">
-<description>Chip, 3.20 X 1.60 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 1.60 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="1206@1"/>
-</packageinstances>
-</package3d>
-<package3d name="BGA121C80P11X11_900X900X100N" urn="urn:adsk.eagle:package:16997455/1" type="model">
-<description>121-BGA, collapsing, 0.80 mm pitch, 9.00 X 9.00 X 1.00 mm body
-&lt;p&gt;121-pin collapsing BGA package with 0.80 mm col pitch and 0.80 mm row pitch with body size 9.00 X 9.00 X 1.00 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="LATTICE-ICE40HX4K-BG121"/>
-</packageinstances>
-</package3d>
-<package3d name="BGA64C65P8X8_664X627X100N" urn="urn:adsk.eagle:package:18794457/1" type="model">
-<description>64-BGA, collapsing, 0.65 mm pitch, 6.65 X 6.28 X 1.00 mm body
-&lt;p&gt;64-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 6.65 X 6.28 X 1.00 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="ON-AR0330CS1C12SPKA0"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC3225X70N" urn="urn:adsk.eagle:package:17955780@1/1" type="model">
-<description>Chip, 3.20 X 2.50 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="1210@1"/>
-</packageinstances>
-</package3d>
-<package3d name="QFN40P260X180X55-16N" urn="urn:adsk.eagle:package:22413655/1" type="model">
-<description>16-QFN, 0.40 mm pitch, 2.60 X 1.80 X 0.55 mm body
-&lt;p&gt;16-pin QFN package with 0.40 mm pitch with body size 2.60 X 1.80 X 0.55 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="TI-TMUX1574RSVR"/>
-</packageinstances>
-</package3d>
-<package3d name="DFN100X135X50-4N" urn="urn:adsk.eagle:package:22413725/1" type="model">
-<description>DFN4, 1.00 X 1.35 X 0.50 mm body
-&lt;p&gt;DFN4 package with body size 1.00 X 1.35 X 0.50 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="NXP-NTB0102GF"/>
-</packageinstances>
-</package3d>
-<package3d name="SON35P100X100X40-6N" urn="urn:adsk.eagle:package:22413872/1" type="model">
-<description>6-SON (DFN), 0.35 mm pitch, 1.00 X 1.00 X 0.40 mm body
-&lt;p&gt;6-pin SON (DFN) package with 0.35 mm pitch with body size 1.00 X 1.00 X 0.40 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="ON-NLAS3157MX3TCG"/>
-</packageinstances>
-</package3d>
-<package3d name="BGA225C65P15X15_1000X1000X60N" urn="urn:adsk.eagle:package:22433285/1" type="model">
-<description>225-BGA, collapsing, 0.65 mm pitch, 10.00 X 10.00 X 0.60 mm body
-&lt;p&gt;225-pin collapsing BGA package with 0.65 mm col pitch and 0.65 mm row pitch with body size 10.00 X 10.00 X 0.60 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="STM-STM32F730I8"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC2016X120N" urn="urn:adsk.eagle:package:22485740/1" type="model">
-<description>Chip, 2.00 X 1.60 X 1.20 mm body
-&lt;p&gt;Chip package with body size 2.00 X 1.60 X 1.20 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="0806"/>
-</packageinstances>
-</package3d>
-<package3d name="RESC3225X70N" urn="urn:adsk.eagle:package:17955780/1" type="model">
-<description>Chip, 3.20 X 2.50 X 0.70 mm body
-&lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="1210"/>
-</packageinstances>
-</package3d>
-</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -2071,9 +1913,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2083,45 +1922,33 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="0805" package="0805@1">
+<device name="0805" package="0805">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181@1/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1206" package="1206@1">
+<device name="1206" package="1206">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198@1/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1210" package="1210@1">
+<device name="1210" package="1210">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17955780@1/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2138,9 +1965,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2150,9 +1974,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2162,9 +1983,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2174,9 +1992,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2186,9 +2001,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17955780/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2329,9 +2141,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="E" pin="VPP_2V5_C10" pad="C10"/>
 <connect gate="E" pin="VPP_FAST_B10" pad="B10"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:16997455/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Lattice"/>
@@ -2531,9 +2340,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="B" pin="TEST" pad="B7"/>
 <connect gate="B" pin="TRIGGER" pad="C7"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:18794457/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="ON Semiconductor"/>
@@ -2647,9 +2453,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="SEL" pad="15"/>
 <connect gate="G$1" pin="VDD" pad="14"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:22413655/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="TI"/>
@@ -2675,9 +2478,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="VCCA" pad="3"/>
 <connect gate="G$1" pin="VCCB" pad="7"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:22413725/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="NXP"/>
@@ -2701,9 +2501,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="S" pad="6"/>
 <connect gate="G$1" pin="VCC" pad="1"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:22413872/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="ON Semiconductor"/>
@@ -2933,9 +2730,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="L" pin="VSS_M8" pad="M8"/>
 <connect gate="L" pin="VSS_M9" pad="M9"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:22433285/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="STMicroelectronics"/>
@@ -2955,9 +2749,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080064/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -2967,45 +2758,33 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080173/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="0805" package="0805@1">
+<device name="0805" package="0805">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080181@1/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1206" package="1206@1">
+<device name="1206" package="1206">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17080198@1/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
 </device>
-<device name="1210" package="1210@1">
+<device name="1210" package="1210">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:17955780@1/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -3015,9 +2794,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:22485740/1"/>
-</package3dinstances>
 <technologies>
 <technology name=""/>
 </technologies>
@@ -3063,7 +2839,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </class>
 </classes>
 <parts>
-<part name="C22" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C22" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3089,7 +2865,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="OSRAM"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
-<part name="C16" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C16" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3102,7 +2878,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="U2" library="EagleLibrary" deviceset="TI-TPS6280XYKAR" device="">
 <attribute name="PN" value="TPS62801YKAR"/>
 </part>
-<part name="C21" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C21" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3116,7 +2892,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="TPS62802YKAR"/>
 </part>
 <part name="U6" library="EagleLibrary" deviceset="TI-TPS63805YFFR" device=""/>
-<part name="C18" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C18" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3126,7 +2902,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C23" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C23" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3136,7 +2912,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C28" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181@1/1" value="22u">
+<part name="C28" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="22u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3146,7 +2922,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM219R61C226ME15L"/>
 </part>
-<part name="C29" library="EagleLibrary" deviceset="CAPACITOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181@1/1" value="22u">
+<part name="C29" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="22u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3156,16 +2932,16 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM219R61C226ME15L"/>
 </part>
-<part name="R18" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="422k">
+<part name="R18" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="422k">
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402-FX-4223GLF"/>
 </part>
-<part name="R19" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="91k">
+<part name="R19" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="91k">
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402-FX-9102GLF"/>
 </part>
 <part name="U5" library="EagleLibrary" deviceset="W989D6DBGX6I" device=""/>
-<part name="C24" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C24" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3175,7 +2951,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C25" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C25" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3185,7 +2961,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C1" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C1" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3195,7 +2971,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C2" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C2" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3205,7 +2981,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="C8" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C8" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3215,7 +2991,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C12" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C12" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3225,7 +3001,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="C5" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C5" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3235,7 +3011,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C7" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C7" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3245,7 +3021,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="C26" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C26" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3255,7 +3031,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -3265,179 +3041,179 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
-<part name="R14" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R14" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
-<part name="R16" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R16" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
-<part name="R20" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R20" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
-<part name="R22" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R22" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
-<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="1206" package3d_urn="urn:adsk.eagle:package:17080198/1" value="1">
+<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="1206" value="1">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW12061R00FKEA"/>
 </part>
-<part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0">
+<part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW08050000Z0EAC"/>
 </part>
-<part name="R12" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0">
+<part name="R12" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW08050000Z0EAC"/>
 </part>
-<part name="R21" library="EagleLibrary" deviceset="RESISTOR" device="0805" package3d_urn="urn:adsk.eagle:package:17080181/1" value="0">
+<part name="R21" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW08050000Z0EAC"/>
 </part>
-<part name="U1" library="EagleLibrary" deviceset="LATTICE-ICE40HX4K-BG121" device="" package3d_urn="urn:adsk.eagle:package:16997455/1"/>
-<part name="C6" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="U1" library="EagleLibrary" deviceset="LATTICE-ICE40HX4K-BG121" device=""/>
+<part name="C6" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C9" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C9" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100">
+<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402AJW-101GAS"/>
 </part>
-<part name="C4" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C4" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C11" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C11" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100">
+<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402AJW-101GAS"/>
 </part>
-<part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C10" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C10" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C13" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C13" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C15" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C15" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C14" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C14" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="C17" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C17" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="U8" library="EagleLibrary" deviceset="ON-AR0330CS1C12SPKA0" device="" package3d_urn="urn:adsk.eagle:package:18794457/1">
+<part name="U8" library="EagleLibrary" deviceset="ON-AR0330CS1C12SPKA0" device="">
 <attribute name="PN" value="AR0330CS1C12SPKA0-CP2"/>
 </part>
-<part name="C32" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C32" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C38" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C38" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C33" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C33" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C39" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C39" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C34" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C34" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C40" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C40" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C36" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C36" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C42" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C42" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C37" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C37" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C43" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C43" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R23" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<part name="R23" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
-<part name="C35" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C35" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C41" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C41" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="X1" library="EagleLibrary" deviceset="SITIME-SIT8021" device="">
 <attribute name="PN" value="SIT8021AI-J4-18S-24.000000E"/>
 </part>
-<part name="R13" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<part name="R13" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
 <part name="U3" library="EagleLibrary" deviceset="MICROSD-SOCKET" device=""/>
-<part name="C19" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="10u">
+<part name="C19" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM188R61A106KE69D"/>
 </part>
-<part name="C20" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C20" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
@@ -3445,120 +3221,120 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="TP8" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP9" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="J2" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device=""/>
-<part name="U9" library="EagleLibrary" deviceset="TI-TMUX1574" device="" package3d_urn="urn:adsk.eagle:package:22413655/1"/>
-<part name="U10" library="EagleLibrary" deviceset="NXP-NTB0102" device="" package3d_urn="urn:adsk.eagle:package:22413725/1"/>
-<part name="U11" library="EagleLibrary" deviceset="ON-NLAS3157" device="" package3d_urn="urn:adsk.eagle:package:22413872/1"/>
-<part name="U12" library="EagleLibrary" deviceset="ON-NLAS3157" device="" package3d_urn="urn:adsk.eagle:package:22413872/1"/>
-<part name="R24" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="U9" library="EagleLibrary" deviceset="TI-TMUX1574" device=""/>
+<part name="U10" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
+<part name="U11" library="EagleLibrary" deviceset="ON-NLAS3157" device=""/>
+<part name="U12" library="EagleLibrary" deviceset="ON-NLAS3157" device=""/>
+<part name="R24" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R26" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R26" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="R27" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="56k">
+<part name="R27" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="U13" library="EagleLibrary" deviceset="STM-STM32F730" device="" package3d_urn="urn:adsk.eagle:package:22433285/1"/>
-<part name="C44" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="U13" library="EagleLibrary" deviceset="STM-STM32F730" device=""/>
+<part name="C44" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C45" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C45" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C46" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C46" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C47" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C47" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C48" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C48" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C49" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C49" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C50" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C50" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C51" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C51" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C52" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C52" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C53" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C53" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C54" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C54" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C55" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C55" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C56" library="EagleLibrary" deviceset="CAPACITOR" device="0603" package3d_urn="urn:adsk.eagle:package:17080173/1" value="4.7u">
+<part name="C56" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="4.7u">
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="LMK107BJ475KA-T"/>
 </part>
-<part name="C57" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="2.2u">
+<part name="C57" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
 <attribute name="MFG" value="AVX"/>
 <attribute name="PN" value="0402ZD225MAT2A"/>
 </part>
-<part name="C58" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="2.2u">
+<part name="C58" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
 <attribute name="MFG" value="AVX"/>
 <attribute name="PN" value="0402ZD225MAT2A"/>
 </part>
-<part name="C59" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C59" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C60" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1u">
+<part name="C60" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="1u">
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="EMK105BJ105MVHF"/>
 </part>
-<part name="C65" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C65" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C66" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1u">
+<part name="C66" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="1u">
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="EMK105BJ105MVHF"/>
 </part>
-<part name="C67" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="2.2u">
+<part name="C67" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
 <attribute name="MFG" value="AVX"/>
 <attribute name="PN" value="0402ZD225MAT2A"/>
 </part>
-<part name="R28" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="3k">
+<part name="R28" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="3k">
 <attribute name="MFG" value=""/>
 <attribute name="PN" value=""/>
 </part>
-<part name="C68" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C68" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R31" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<part name="R31" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
-<part name="C61" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10n">
+<part name="C61" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
@@ -3566,15 +3342,15 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="SIT8021AI-J4-18S-24.000000E"/>
 </part>
 <part name="TP10" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="L4" library="EagleLibrary" deviceset="INDUCTOR" device="0806" package3d_urn="urn:adsk.eagle:package:22485740/1" value="470n">
+<part name="L4" library="EagleLibrary" deviceset="INDUCTOR" device="0806" value="470n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="DFE201612E-R47M=P2"/>
 </part>
-<part name="L1" library="EagleLibrary" deviceset="INDUCTOR" device="0806" package3d_urn="urn:adsk.eagle:package:22485740/1" value="470n">
+<part name="L1" library="EagleLibrary" deviceset="INDUCTOR" device="0806" value="470n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="DFE201612E-R47M=P2"/>
 </part>
-<part name="L2" library="EagleLibrary" deviceset="INDUCTOR" device="0806" package3d_urn="urn:adsk.eagle:package:22485740/1" value="470n">
+<part name="L2" library="EagleLibrary" deviceset="INDUCTOR" device="0806" value="470n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="DFE201612E-R47M=P2"/>
 </part>
@@ -3594,48 +3370,48 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="OSRAM"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
-<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
-<part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
-<part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
-<part name="R32" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="1.8k">
+<part name="R32" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
 <part name="H1" library="EagleLibrary" deviceset="HEADER-2X5" device=""/>
-<part name="C30" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C30" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C31" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C31" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C62" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C62" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C63" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C63" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C64" library="EagleLibrary" deviceset="CAPACITOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="100n">
+<part name="C64" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R29" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="10k">
+<part name="R29" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
-<part name="R30" library="EagleLibrary" deviceset="RESISTOR" device="0402" package3d_urn="urn:adsk.eagle:package:17080064/1" value="4.7k">
+<part name="R30" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="4.7k">
 <attribute name="MFG" value=""/>
 <attribute name="PN" value=""/>
 </part>
@@ -7394,11 +7170,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 
