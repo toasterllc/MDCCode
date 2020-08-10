@@ -5041,9 +5041,9 @@ layer."</text>
 </net>
 <net name="ICE_SPI_D2" class="0">
 <segment>
-<pinref part="U1" gate="C" pin="J8"/>
-<wire x1="149.86" y1="25.4" x2="152.4" y2="25.4" width="0.1524" layer="91"/>
-<label x="152.4" y="25.4" size="1.778" layer="95"/>
+<wire x1="149.86" y1="53.34" x2="152.4" y2="53.34" width="0.1524" layer="91"/>
+<label x="152.4" y="53.34" size="1.778" layer="95"/>
+<pinref part="U1" gate="C" pin="L7"/>
 </segment>
 </net>
 <net name="ICE_SPI_D7" class="0">
@@ -5076,9 +5076,9 @@ layer."</text>
 </net>
 <net name="ICE_SPI_D3" class="0">
 <segment>
-<pinref part="U1" gate="C" pin="L7"/>
-<wire x1="149.86" y1="53.34" x2="152.4" y2="53.34" width="0.1524" layer="91"/>
-<label x="152.4" y="53.34" size="1.778" layer="95"/>
+<wire x1="149.86" y1="40.64" x2="152.4" y2="40.64" width="0.1524" layer="91"/>
+<label x="152.4" y="40.64" size="1.778" layer="95"/>
+<pinref part="U1" gate="C" pin="K6"/>
 </segment>
 </net>
 <net name="ICE_SD_DAT1" class="0">
@@ -7200,9 +7200,9 @@ SD_CMD = Z
 </net>
 <net name="ICE_SPI_D2" class="0">
 <segment>
-<pinref part="U13" gate="E" pin="PE2_A2"/>
-<wire x1="27.94" y1="-78.74" x2="30.48" y2="-78.74" width="0.1524" layer="91"/>
-<label x="30.48" y="-78.74" size="1.778" layer="95"/>
+<pinref part="U13" gate="F" pin="PF7_K1"/>
+<wire x1="68.58" y1="-91.44" x2="71.12" y2="-91.44" width="0.1524" layer="91"/>
+<label x="71.12" y="-91.44" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_SPI_CS_" class="0">
