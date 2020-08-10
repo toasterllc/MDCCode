@@ -78,6 +78,8 @@
     
     - Add vias around SD socket GND connectors
     
+    - Add vias around USB connector GND pads
+    
     - Fix USB jack model to the version that doesn't have plastic posts
     
     - Rev3 board finalization
