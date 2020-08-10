@@ -3126,15 +3126,15 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="CR0402-FX-9102GLF"/>
 </part>
 <part name="U5" library="EagleLibrary" deviceset="W989D6DBGX6I" device=""/>
-<part name="C24" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C24" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="KEMET"/>
+<attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
 <part name="C25" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
@@ -3206,15 +3206,15 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
-<part name="C26" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C26" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM188R61A106KE69D"/>
+<attribute name="MFG" value="KEMET"/>
+<attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
 <part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
@@ -3314,7 +3314,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="U8" library="EagleLibrary" deviceset="ON-AR0330CS1C12SPKA0" device="">
 <attribute name="PN" value="AR0330CS1C12SPKA0-CP2"/>
 </part>
-<part name="C32" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C32" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
@@ -3322,7 +3322,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C33" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C33" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
@@ -3330,7 +3330,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C34" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C34" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
@@ -3338,7 +3338,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C36" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C36" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
@@ -3346,7 +3346,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C37" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C37" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
@@ -3358,7 +3358,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
-<part name="C35" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
+<part name="C35" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
@@ -3374,9 +3374,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
 <part name="U3" library="EagleLibrary" deviceset="MICROSD-SOCKET" device=""/>
-<part name="C19" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM188R61A106KE69D"/>
+<part name="C19" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
+<attribute name="MFG" value="KEMET"/>
+<attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
 <part name="C20" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
