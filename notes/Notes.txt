@@ -84,6 +84,8 @@
         
         - Follow BoardFinalizationChecklist.txt
     
+    - Verify that vias are fully covered after upgrading capacitors
+    
     - Fill in missing part numbers
     
     ? Expose individual headers for ice40 ICE_PRG lines (di, cs_, clk, crst_, cdone),
