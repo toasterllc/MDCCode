@@ -2240,8 +2240,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <polygon width="0.127" layer="16" thermals="no" rank="2">
 <vertex x="27.386278125" y="17.7677375"/>
 <vertex x="27.386278125" y="14.709140625"/>
-<vertex x="30.248859375" y="14.709140625"/>
-<vertex x="30.248859375" y="18.288"/>
+<vertex x="30.020259375" y="14.709140625"/>
+<vertex x="30.020259375" y="18.288"/>
 <vertex x="28.966159375" y="18.288"/>
 <vertex x="28.966159375" y="17.77564375"/>
 </polygon>
@@ -2509,10 +2509,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="11.630659375" y="33.71088125" extent="1-16" drill="0.381"/>
 <via x="12.133578125" y="33.167321875" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="16" thermals="no">
-<vertex x="6.468109375" y="36.440109375"/>
-<vertex x="8.1318125" y="34.7764125"/>
-<vertex x="9.5415125" y="36.1861125"/>
-<vertex x="7.877809375" y="37.849809375"/>
+<vertex x="6.222996875" y="36.194996875"/>
+<vertex x="7.8867" y="34.5313"/>
+<vertex x="9.914890625" y="36.559490625"/>
+<vertex x="8.2511875" y="38.2231875"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="10.38733125" y="32.774890625"/>
@@ -2602,6 +2602,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="40.308528125" y="24.992328125" curve="-90"/>
 <vertex x="40.7162" y="25.4"/>
 </polygon>
+<via x="9.568178125" y="36.60648125" extent="1-16" drill="0.254"/>
+<via x="7.820659375" y="34.884359375" extent="1-16" drill="0.254"/>
 </signal>
 <signal name="GND">
 <contactref element="U2" pad="C1"/>
@@ -2665,7 +2667,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="23.90648125" y="22.3926375" extent="1-16" drill="0.381"/>
 <via x="23.581359375" y="29.49448125" extent="1-16" drill="0.254"/>
-<via x="24.3713" y="30.700978125" extent="1-16" drill="0.381"/>
+<via x="24.3713" y="30.446978125" extent="1-16" drill="0.381"/>
 <via x="23.876" y="32.3088" extent="1-16" drill="0.381"/>
 <via x="23.876" y="33.235896875" extent="1-16" drill="0.381"/>
 <via x="23.8887" y="23.1419375" extent="1-16" drill="0.381"/>
@@ -3044,8 +3046,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="24.196040625" y="29.85008125"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
-<vertex x="5.452109375" y="37.710109375"/>
-<vertex x="6.39318125" y="36.769040625"/>
+<vertex x="4.827271875" y="37.085271875"/>
+<vertex x="5.76834375" y="36.144203125"/>
 <vertex x="7.716521875" y="38.09238125"/>
 <vertex x="6.77545" y="39.03345"/>
 </polygon>
@@ -3054,10 +3056,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="10.48258125" y="34.871659375" extent="1-16" drill="0.381"/>
 <via x="11.02868125" y="34.376359375" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="16" thermals="no">
-<vertex x="8.44041875" y="34.7218"/>
-<vertex x="10.12698125" y="33.035240625"/>
-<vertex x="11.450321875" y="34.35858125"/>
-<vertex x="9.763759375" y="36.045140625"/>
+<vertex x="8.060690625" y="34.342071875"/>
+<vertex x="9.747253125" y="32.6555125"/>
+<vertex x="11.77798125" y="34.686240625"/>
+<vertex x="10.09141875" y="36.3728"/>
 </polygon>
 <via x="5.184140625" y="37.07638125" extent="1-16" drill="0.381" diameter="0.254"/>
 <via x="6.15188125" y="35.481259375" extent="1-16" drill="0.254" diameter="0.254"/>
@@ -3159,6 +3161,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="30.48" y="11.684"/>
 <vertex x="30.48" y="21.719540625"/>
 </polygon>
+<via x="27.6987" y="20.233640625" extent="1-16" drill="0.254"/>
+<via x="24.3713" y="31.208978125" extent="1-16" drill="0.381"/>
+<via x="20.8026" y="38.851840625" extent="1-16" drill="0.381"/>
+<via x="20.8026" y="38.1127" extent="1-16" drill="0.381"/>
+<via x="24.239221875" y="11.460478125" extent="1-16" drill="0.381"/>
+<via x="8.376921875" y="34.31031875" extent="1-16" drill="0.254"/>
+<via x="10.132059375" y="36.065459375" extent="1-16" drill="0.254"/>
+<via x="30.939740625" y="18.458178125" extent="1-16" drill="0.381"/>
+<via x="30.866078125" y="14.91488125" extent="1-16" drill="0.381"/>
 </signal>
 <signal name="ICE_PIX_CLK24MHZ">
 <contactref element="U8" pad="D7"/>
