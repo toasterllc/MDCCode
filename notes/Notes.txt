@@ -89,7 +89,9 @@
     ? Expose individual headers for ice40 ICE_PRG lines (di, cs_, clk, crst_, cdone),
       in case STM32 programming is broken for some reason
     
-    - Length-match SDIO lines
+    - Length-match SDIO lines to SD card
+    
+    - Length-match QUADSPI lines to STM32
     
     - Use thinner stencils
         - It seems like we're using too much solder paste
