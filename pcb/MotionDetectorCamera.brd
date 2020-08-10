@@ -374,7 +374,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="1.075" y="0.33"/>
 </polygon>
 </package>
-<package name="TPS63805YFFR">
+<package name="TI-TPS63805YFFR">
 <smd name="A1" x="-0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
 <smd name="A2" x="0" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
 <smd name="A3" x="0.4" y="0.8" dx="0.23" dy="0.23" layer="1" roundness="100" cream="no"/>
@@ -407,7 +407,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.8" y="1.2"/>
 </polygon>
 </package>
-<package name="TPS6280XYKAR">
+<package name="TI-TPS6280XYKAR">
 <smd name="A1" x="-0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
 <smd name="A2" x="0.175" y="0.4064" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
 <smd name="B1" x="-0.175" y="0" dx="0.2" dy="0.2" layer="1" roundness="100" cream="no"/>
@@ -1411,17 +1411,17 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="44.92761875" y="9.022078125" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="CR0402-FX-9102GLF" x="45.936" y="8.4582" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="U2" library="EagleLibrary" package="TPS6280XYKAR" value="TI-TPS6280XYKAR" x="24.6888" y="38.4657625" smashed="yes" rot="MR270">
+<element name="U2" library="EagleLibrary" package="TI-TPS6280XYKAR" value="TI-TPS6280XYKAR" x="24.6888" y="38.4657625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Texas Instruments" x="24.6888" y="38.4657625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="24.992321875" y="37.939353125" size="0.508" layer="26" font="vector" rot="SMR270"/>
 <attribute name="PN" value="TPS62801YKAR" x="24.6888" y="38.4657625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="U4" library="EagleLibrary" package="TPS6280XYKAR" value="TI-TPS6280XYKAR" x="33.469578125" y="38.2016" smashed="yes" rot="MR270">
+<element name="U4" library="EagleLibrary" package="TI-TPS6280XYKAR" value="TI-TPS6280XYKAR" x="33.469578125" y="38.2016" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Texas Instruments" x="33.469578125" y="38.2016" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="34.3515875" y="38.665140625" size="0.508" layer="26" font="vector" rot="SMR180"/>
 <attribute name="PN" value="TPS62802YKAR" x="85.539578125" y="8.9916" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="U6" library="EagleLibrary" package="TPS63805YFFR" value="TI-TPS63805YFFR" x="48.2854" y="8.1026" smashed="yes" rot="MR180">
+<element name="U6" library="EagleLibrary" package="TI-TPS63805YFFR" value="TI-TPS63805YFFR" x="48.2854" y="8.1026" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Texas Instruments" x="48.2854" y="8.1026" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="50.09898125" y="8.56668125" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="TPS63805YFFR" x="48.2854" y="8.1026" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -3535,6 +3535,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="25.6286" y="37.6021625"/>
 <vertex x="25.6286" y="35.9003625"/>
 </polygon>
+<wire x1="25.1423" y1="36.7639625" x2="24.6888" y2="38.2907625" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="1V2">
 <contactref element="C7" pad="1"/>
@@ -3665,6 +3666,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="34.460178125" y="37.338"/>
 <vertex x="34.460178125" y="35.6362"/>
 </polygon>
+<wire x1="33.923078125" y1="36.4998" x2="33.469578125" y2="38.0266" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="2V8">
 <contactref element="R21" pad="1"/>
@@ -3942,6 +3944,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="51.5874" y="7.5946"/>
 </polygon>
 <wire x1="48.2854" y1="7.7026" x2="48.6854" y2="7.7026" width="0.254" layer="16"/>
+<wire x1="50.7238" y1="7.2681" x2="48.6854" y2="7.7026" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$13">
 <contactref element="U6" pad="D2"/>
@@ -3954,6 +3957,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="51.6128" y="8.3058"/>
 </polygon>
 <wire x1="48.2854" y1="8.5026" x2="48.6854" y2="8.5026" width="0.254" layer="16"/>
+<wire x1="48.6854" y1="8.5026" x2="50.7238" y2="8.9879" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$11">
 <contactref element="R18" pad="1"/>
@@ -3968,6 +3972,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="45.6438" y="9.271"/>
 <vertex x="47.1424" y="9.271"/>
 </polygon>
+<wire x1="46.7996" y1="8.9655" x2="45.936" y2="8.8907" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="GNDPLL1">
 <contactref element="C3" pad="2"/>
