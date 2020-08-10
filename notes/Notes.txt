@@ -76,12 +76,6 @@
 
 - Rev3 board
     
-    - Add vias around SD socket GND connectors
-    
-    - Add vias around USB connector GND pads
-    
-    - Fix USB jack model to the version that doesn't have plastic posts
-    
     - Rev3 board finalization
         - Verify that image sensor is centered within lens
             - Use offset defined in AR0330CS-old.pdf
@@ -99,15 +93,22 @@
     
     - Length-match SDIO lines
     
-    - Add USB connector to STM32
-    
-    - Add USB ESD protection chip
-    
     - Use thinner stencils
         - It seems like we're using too much solder paste
     
     
     
+    
+    √ Fix USB jack model to the version that doesn't have plastic posts
+        Good part number: 10033526-N3222MLF
+    
+    √ Add USB connector to STM32
+    
+    √ Add USB ESD protection chip
+    
+    √ Add vias around SD socket GND connectors
+    
+    √ Add vias around USB connector GND pads
     
     √ Add proper image sensor i2c pullups:
         - PIX_SDATA: needs a 1.5k-4.7k pullup according to AR0330CS datasheet
@@ -174,7 +175,8 @@
     - Add inrush current protection to MDC Programmer board
         - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
     
-    - Fix USB jack model to the version that doesn't have plastic posts
+    √ Fix USB jack model to the version that doesn't have plastic posts
+        Good part number: 10033526-N3222MLF
 
 
 
