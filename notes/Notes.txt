@@ -86,8 +86,6 @@
     
     - Fill in missing part numbers
     
-    - Verify that we don't have any more 1V2/1V8/2V8 supply wires -- they should all be polygons now
-    
     ? Expose individual headers for ice40 ICE_PRG lines (di, cs_, clk, crst_, cdone),
       in case STM32 programming is broken for some reason
     
@@ -98,6 +96,7 @@
     
     
     
+    √ Remove extraneous 1V2/1V8/2V8 supply wires -- they should all be polygons now
     
     √ Fix USB jack model to the version that doesn't have plastic posts
         Good part number: 10033526-N3222MLF
