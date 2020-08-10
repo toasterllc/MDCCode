@@ -9,7 +9,7 @@
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
-<layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
+<layer number="2" name="Ground" color="16" fill="1" visible="yes" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
 <layer number="5" name="Route5" color="19" fill="1" visible="no" active="no"/>
@@ -22,40 +22,40 @@
 <layer number="12" name="Route12" color="20" fill="1" visible="no" active="no"/>
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
-<layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
+<layer number="15" name="Power" color="42" fill="1" visible="yes" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
 <layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
 <layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
 <layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
-<layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
 <layer number="51" name="tDocu" color="7" fill="1" visible="no" active="yes"/>
@@ -2257,10 +2257,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="19.56308125" y="12.954"/>
 </polygon>
 <via x="28.999178125" y="15.689578125" extent="1-16" drill="0.254" diameter="0.254"/>
-<polygon width="0.127" layer="1" thermals="no" rank="2">
+<polygon width="0.127" layer="1" thermals="no">
 <vertex x="23.35021875" y="20.4724"/>
-<vertex x="23.35021875" y="19.71548125"/>
-<vertex x="27.432" y="19.71548125"/>
+<vertex x="23.35021875" y="19.4818"/>
+<vertex x="27.432" y="19.4818"/>
 <vertex x="27.432" y="20.4724"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
@@ -2398,12 +2398,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="21.181059375" y="22.606"/>
 <vertex x="21.816059375" y="22.606"/>
 <vertex x="21.816059375" y="23.876"/>
-</polygon>
-<polygon width="0.127" layer="1" thermals="no" rank="2">
-<vertex x="40.180259375" y="25.394921875"/>
-<vertex x="40.180259375" y="24.7751625"/>
-<vertex x="40.894" y="24.7751625"/>
-<vertex x="40.894" y="25.394921875"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="38.1381" y="25.0317"/>
@@ -2601,6 +2595,13 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="37.076378125" y="27.670759375" extent="1-16" drill="0.254"/>
 <wire x1="37.817359375" y1="27.805378125" x2="37.682740625" y2="27.670759375" width="0.127" layer="1"/>
 <wire x1="37.682740625" y1="27.670759375" x2="37.076378125" y2="27.670759375" width="0.127" layer="1"/>
+<polygon width="0.127" layer="1" thermals="no">
+<vertex x="40.894" y="25.4"/>
+<vertex x="40.894" y="25.2704625" curve="-90"/>
+<vertex x="40.462196875" y="24.838659375" curve="-90"/>
+<vertex x="40.308528125" y="24.992328125" curve="-90"/>
+<vertex x="40.7162" y="25.4"/>
+</polygon>
 </signal>
 <signal name="GND">
 <contactref element="U2" pad="C1"/>
@@ -2704,16 +2705,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="43.068240625" y="28.27781875" extent="1-16" drill="0.254"/>
 <via x="43.71848125" y="28.27781875" extent="1-16" drill="0.254"/>
 <via x="42.418" y="27.6225" extent="1-16" drill="0.254"/>
-<polygon width="0.127" layer="1">
-<vertex x="41.7576" y="28.8036"/>
-<vertex x="41.7576" y="27.3304"/>
-<vertex x="42.4459375" y="26.6420625"/>
-<vertex x="42.4459375" y="27.597103125"/>
-<vertex x="43.908978125" y="27.597103125"/>
-<vertex x="43.908978125" y="28.084778125"/>
-<vertex x="44.2976" y="28.4734"/>
-<vertex x="44.2976" y="28.8036"/>
-</polygon>
 <via x="43.718478125" y="26.3271" extent="1-16" drill="0.254"/>
 <wire x1="43.393" y1="26.6498" x2="43.395778125" y2="26.6498" width="0.2032" layer="1"/>
 <via x="41.768540625" y="25.029940625" extent="1-16" drill="0.254"/>
@@ -2859,8 +2850,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="47.8854" y1="7.7026" x2="47.725378125" y2="7.7026" width="0.254" layer="16"/>
 <wire x1="47.725378125" y1="7.7026" x2="47.012859375" y2="6.99008125" width="0.254" layer="16"/>
 <via x="50.927" y="11.8618" extent="1-16" drill="0.381"/>
-<via x="51.6382" y="10.668" extent="1-16" drill="0.381"/>
-<via x="51.1302" y="5.6642" extent="1-16" drill="0.381"/>
+<via x="51.6382" y="11.176" extent="1-16" drill="0.381"/>
+<via x="51.1302" y="5.9182" extent="1-16" drill="0.381"/>
 <via x="50.1142" y="4.445" extent="1-16" drill="0.381"/>
 <via x="45.9232" y="7.239" extent="1-16" drill="0.381"/>
 <contactref element="R4" pad="2"/>
@@ -2985,22 +2976,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="19.95678125" y="13.4239" extent="1-16" drill="0.381"/>
 <via x="21.85161875" y="17.6403" extent="1-16" drill="0.254"/>
-<polygon width="0.127" layer="1" thermals="no" rank="2">
-<vertex x="21.336" y="18.034"/>
-<vertex x="21.336" y="17.272"/>
-<vertex x="21.844" y="17.272"/>
-<vertex x="21.844" y="17.465040625"/>
-<vertex x="22.115778125" y="17.465040625"/>
-<vertex x="22.115778125" y="17.802859375"/>
-<vertex x="21.844" y="17.802859375"/>
-<vertex x="21.844" y="18.034"/>
-</polygon>
-<polygon width="0.127" layer="1" thermals="no">
-<vertex x="23.114" y="19.6088"/>
-<vertex x="23.114" y="16.413475"/>
-<vertex x="27.9679375" y="16.413475"/>
-<vertex x="27.9679375" y="19.6088"/>
-</polygon>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="15.748" y="26.0223"/>
 <vertex x="15.748" y="25.50668125"/>
@@ -3026,36 +3001,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="2.286" y="24.384" extent="1-16" drill="0.381"/>
 <via x="4.572" y="24.384" extent="1-16" drill="0.381"/>
 <via x="7.112" y="24.384" extent="1-16" drill="0.381"/>
-<polygon width="0.127" layer="1" thermals="no">
-<vertex x="40.0431" y="24.59990625"/>
-<vertex x="40.0431" y="24.086821875"/>
-<vertex x="40.894" y="24.086821875"/>
-<vertex x="40.894" y="24.59990625"/>
-</polygon>
-<polygon width="0.127" layer="1" thermals="no">
-<vertex x="39.6138375" y="25.417784375"/>
-<vertex x="39.6138375" y="24.08428125"/>
-<vertex x="40.053259375" y="24.08428125"/>
-<vertex x="40.053259375" y="25.417784375"/>
-</polygon>
 <via x="36.769040625" y="24.762459375" extent="1-16" drill="0.381"/>
-<polygon width="0.127" layer="1" thermals="no">
-<vertex x="41.402" y="25.212040625"/>
-<vertex x="41.402" y="24.638"/>
-<vertex x="41.976040625" y="24.638"/>
-<vertex x="41.976040625" y="25.212040625"/>
-</polygon>
 <polygon width="0.127" layer="16">
 <vertex x="43.3324" y="25.83941875"/>
 <vertex x="43.3324" y="24.7396"/>
 <vertex x="43.888659375" y="24.7396"/>
 <vertex x="43.888659375" y="25.83941875"/>
-</polygon>
-<polygon width="0.127" layer="1" thermals="no" rank="2">
-<vertex x="43.31208125" y="26.743659375"/>
-<vertex x="43.31208125" y="26.14168125"/>
-<vertex x="43.89881875" y="26.14168125"/>
-<vertex x="43.89881875" y="26.743659375"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="40.41648125" y="32.74821875"/>
@@ -3067,23 +3018,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="42.5323" y="31.092140625"/>
 <vertex x="42.5323" y="32.74821875"/>
 </polygon>
-<polygon width="0.127" layer="1" thermals="no">
-<vertex x="41.19371875" y="30.0609"/>
-<vertex x="41.19371875" y="29.161740625"/>
-<vertex x="41.739821875" y="29.161740625"/>
-<vertex x="41.739821875" y="30.0609"/>
-</polygon>
 <via x="45.974" y="24.13" extent="1-16" drill="0.35"/>
 <via x="48.006" y="24.13" extent="1-16" drill="0.35"/>
 <via x="48.006" y="24.892" extent="1-16" drill="0.35"/>
 <via x="39.3065" y="22.05228125" extent="1-16" drill="0.35"/>
 <via x="38.33368125" y="22.905721875" extent="1-16" drill="0.35"/>
-<polygon width="0.127" layer="1" thermals="no" rank="2">
-<vertex x="39.60368125" y="27.995878125"/>
-<vertex x="39.60368125" y="27.49041875"/>
-<vertex x="40.185340625" y="27.49041875"/>
-<vertex x="40.185340625" y="27.995878125"/>
-</polygon>
 <via x="31.320740625" y="40.020240625" extent="1-16" drill="0.381"/>
 <via x="29.54781875" y="38.547040625" extent="1-16" drill="0.381"/>
 <via x="29.54781875" y="37.8231375" extent="1-16" drill="0.381"/>
@@ -3195,15 +3134,31 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="32.608521875" y="16.240759375" extent="1-16" drill="0.35"/>
 <via x="22.49931875" y="14.386559375" extent="1-16" drill="0.254"/>
-<polygon width="0.127" layer="1" thermals="no">
-<vertex x="22.9489" y="14.815815625"/>
-<vertex x="22.098" y="14.815815625"/>
-<vertex x="22.098" y="13.97"/>
-<vertex x="22.9489" y="13.97"/>
-</polygon>
 <via x="27.6606" y="18.321021875" extent="1-16" drill="0.254"/>
 <via x="27.6733" y="18.9103" extent="1-16" drill="0.254"/>
 <via x="27.67838125" y="17.655540625" extent="1-16" drill="0.254"/>
+<polygon width="0.127" layer="16" thermals="no" rank="4">
+<vertex x="20.32" y="21.719540625"/>
+<vertex x="20.32" y="11.684"/>
+<vertex x="30.48" y="11.684"/>
+<vertex x="30.48" y="21.719540625"/>
+</polygon>
+<polygon width="0.127" layer="1" thermals="no" rank="3">
+<vertex x="39.27348125" y="30.330140625"/>
+<vertex x="39.27348125" y="23.65501875"/>
+<vertex x="45.55998125" y="23.65501875"/>
+<vertex x="45.55998125" y="30.330140625"/>
+</polygon>
+<via x="51.6636" y="10.2108" extent="1-16" drill="0.381"/>
+<via x="51.1302" y="5.1562" extent="1-16" drill="0.381"/>
+<via x="30.734" y="13.462" extent="1-16" drill="0.254"/>
+<via x="28.351478125" y="13.08861875" extent="1-16" drill="0.254"/>
+<polygon width="0.127" layer="1" thermals="no" rank="4">
+<vertex x="20.32" y="21.719540625"/>
+<vertex x="20.32" y="11.684"/>
+<vertex x="30.48" y="11.684"/>
+<vertex x="30.48" y="21.719540625"/>
+</polygon>
 </signal>
 <signal name="ICE_PIX_CLK24MHZ">
 <contactref element="U8" pad="D7"/>
@@ -3506,7 +3461,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="39.791640625" y="32.7152"/>
 <vertex x="39.791640625" y="30.73908125"/>
 </polygon>
-<polygon width="0.127" layer="1">
+<polygon width="0.127" layer="1" thermals="no">
 <vertex x="39.878" y="30.030421875"/>
 <vertex x="39.878" y="29.179521875"/>
 <vertex x="40.386" y="29.179521875"/>
@@ -5002,13 +4957,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="28.702" y="18.034"/>
 <vertex x="28.702" y="19.15668125"/>
 </polygon>
-<polygon width="0.127" layer="1" thermals="no" rank="2">
-<vertex x="28.15081875" y="18.542"/>
-<vertex x="28.15081875" y="17.960340625"/>
-<vertex x="28.722315625" y="17.960340625"/>
-<vertex x="28.722315625" y="18.542"/>
-</polygon>
 <via x="28.348940625" y="18.288" extent="1-16" drill="0.254"/>
+<polygon width="0.127" layer="1" thermals="no">
+<vertex x="28.681559375" y="17.815725"/>
+<vertex x="28.092575" y="18.28095"/>
+<vertex x="28.384225" y="18.523990625"/>
+<vertex x="28.60548125" y="18.336259375"/>
+<vertex x="28.747503125" y="18.000365625"/>
+</polygon>
 </signal>
 <signal name="STM_RST_">
 <contactref element="U13" pad="J1"/>
@@ -5039,10 +4995,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="24.1254" y1="18.73368125" x2="24.1254" y2="19.2624" width="0.127" layer="1"/>
 <wire x1="24.07341875" y1="17.078959375" x2="24.077309375" y2="17.07506875" width="0.127" layer="16"/>
 <wire x1="24.077309375" y1="17.07506875" x2="24.077309375" y2="16.38489375" width="0.127" layer="16"/>
-<wire x1="24.077309375" y1="16.38489375" x2="27.576784375" y2="12.88541875" width="0.127" layer="16"/>
+<wire x1="24.077309375" y1="16.38489375" x2="27.843484375" y2="12.61871875" width="0.127" layer="16"/>
 <contactref element="H1" pad="8"/>
-<wire x1="32.52641875" y1="12.88541875" x2="32.881" y2="13.24" width="0.127" layer="16"/>
-<wire x1="27.576784375" y1="12.88541875" x2="32.52641875" y2="12.88541875" width="0.127" layer="16"/>
+<wire x1="32.25971875" y1="12.61871875" x2="32.881" y2="13.24" width="0.127" layer="16"/>
+<wire x1="27.843484375" y1="12.61871875" x2="32.25971875" y2="12.61871875" width="0.127" layer="16"/>
 </signal>
 <signal name="USB_D-">
 <contactref element="U13" pad="R14"/>
