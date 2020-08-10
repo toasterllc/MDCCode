@@ -2562,7 +2562,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MFG" value="TI"/>
+<attribute name="MFG" value="Texas Instruments"/>
 <attribute name="PN" value="TMUX1574RSVR"/>
 </technology>
 </technologies>
@@ -3425,7 +3425,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="TP6" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP8" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP9" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="J2" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device=""/>
+<part name="J2" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device="">
+<attribute name="MFG" value="Marshall Electronics"/>
+<attribute name="PN" value="V-LH4"/>
+</part>
 <part name="U9" library="EagleLibrary" deviceset="TI-TMUX1574" device=""/>
 <part name="U10" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
 <part name="U11" library="EagleLibrary" deviceset="ON-NLAS3157" device=""/>
@@ -3528,8 +3531,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="0402ZD225MAT2A"/>
 </part>
 <part name="R28" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="3k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="AC0402FR-073KL"/>
 </part>
 <part name="C68" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -3617,8 +3620,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
 <part name="R30" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="4.7k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PN" value="CRCW04024K70FKEDC"/>
 </part>
 <part name="J3" library="EagleLibrary" deviceset="MINI-USB-JACK" device=""/>
 <part name="FB10" library="EagleLibrary" deviceset="FERRITE-BEAD" device="0402" value="FERRITE-BEAD0402">
@@ -5229,6 +5232,8 @@ layer."</text>
 </instance>
 <instance part="J2" gate="G$1" x="134.62" y="-5.08" smashed="yes">
 <attribute name="NAME" x="134.62" y="-4.318" size="1.778" layer="95"/>
+<attribute name="MFG" x="134.62" y="-5.08" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="134.62" y="-5.08" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R30" gate="G$1" x="116.84" y="50.8" smashed="yes" rot="R270">
 <attribute name="NAME" x="115.062" y="51.054" size="1.778" layer="95" align="bottom-right"/>
@@ -6465,6 +6470,7 @@ SD_CMD = Z
 <wire x1="48.26" y1="-251.46" x2="81.28" y2="-251.46" width="0.1524" layer="95"/>
 <wire x1="81.28" y1="-251.46" x2="81.28" y2="-233.68" width="0.1524" layer="95"/>
 <wire x1="81.28" y1="-233.68" x2="48.26" y2="-233.68" width="0.1524" layer="95"/>
+<text x="83.312" y="-163.322" size="1.27" layer="95" align="top-left">≤ 1%</text>
 </plain>
 <instances>
 <instance part="U13" gate="A" x="7.62" y="-10.16" smashed="yes">
@@ -6629,11 +6635,11 @@ SD_CMD = Z
 <attribute name="VALUE" x="70.866" y="-244.221" size="1.778" layer="96"/>
 <attribute name="MFG" x="68.58" y="-241.3" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C67" gate="G$1" x="88.9" y="-154.94" smashed="yes">
-<attribute name="PN" x="88.9" y="-154.94" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="91.186" y="-155.321" size="1.778" layer="95"/>
-<attribute name="VALUE" x="91.186" y="-157.861" size="1.778" layer="96"/>
-<attribute name="MFG" x="88.9" y="-154.94" size="1.778" layer="96" display="off"/>
+<instance part="C67" gate="G$1" x="91.44" y="-154.94" smashed="yes">
+<attribute name="PN" x="91.44" y="-154.94" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="93.726" y="-155.321" size="1.778" layer="95"/>
+<attribute name="VALUE" x="93.726" y="-157.861" size="1.778" layer="96"/>
+<attribute name="MFG" x="91.44" y="-154.94" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R28" gate="G$1" x="81.28" y="-160.02" smashed="yes" rot="R90">
 <attribute name="NAME" x="83.058" y="-158.242" size="1.778" layer="95" align="top-left"/>
@@ -6641,17 +6647,17 @@ SD_CMD = Z
 <attribute name="MFG" x="81.28" y="-160.02" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="81.28" y="-160.02" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="C68" gate="G$1" x="99.06" y="-147.32" smashed="yes">
-<attribute name="PN" x="99.06" y="-147.32" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="101.346" y="-147.701" size="1.778" layer="95"/>
-<attribute name="VALUE" x="101.346" y="-150.241" size="1.778" layer="96"/>
-<attribute name="MFG" x="99.06" y="-147.32" size="1.778" layer="96" display="off"/>
+<instance part="C68" gate="G$1" x="101.6" y="-147.32" smashed="yes">
+<attribute name="PN" x="101.6" y="-147.32" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="103.886" y="-147.701" size="1.778" layer="95"/>
+<attribute name="VALUE" x="103.886" y="-150.241" size="1.778" layer="96"/>
+<attribute name="MFG" x="101.6" y="-147.32" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R31" gate="G$1" x="116.84" y="-144.78" smashed="yes" rot="R90">
-<attribute name="NAME" x="118.364" y="-142.748" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="118.364" y="-145.288" size="1.778" layer="96" align="top-left"/>
-<attribute name="MFG" x="116.84" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="116.84" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
+<instance part="R31" gate="G$1" x="119.38" y="-144.78" smashed="yes" rot="R90">
+<attribute name="NAME" x="120.904" y="-142.748" size="1.778" layer="95" align="top-left"/>
+<attribute name="VALUE" x="120.904" y="-145.288" size="1.778" layer="96" align="top-left"/>
+<attribute name="MFG" x="119.38" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="119.38" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C61" gate="G$1" x="226.06" y="-22.86" smashed="yes">
 <attribute name="NAME" x="222.758" y="-22.987" size="1.778" layer="95" align="bottom-right"/>
@@ -6901,8 +6907,8 @@ SD_CMD = Z
 </segment>
 <segment>
 <pinref part="C67" gate="G$1" pin="2"/>
-<wire x1="88.9" y1="-160.02" x2="88.9" y2="-162.56" width="0.1524" layer="91"/>
-<label x="88.9" y="-162.56" size="1.778" layer="95"/>
+<wire x1="91.44" y1="-160.02" x2="91.44" y2="-162.56" width="0.1524" layer="91"/>
+<label x="91.44" y="-162.56" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R28" gate="G$1" pin="1"/>
@@ -6911,13 +6917,13 @@ SD_CMD = Z
 </segment>
 <segment>
 <pinref part="C68" gate="G$1" pin="2"/>
-<wire x1="99.06" y1="-152.4" x2="99.06" y2="-154.94" width="0.1524" layer="91"/>
-<label x="99.06" y="-154.94" size="1.778" layer="95" align="top-left"/>
+<wire x1="101.6" y1="-152.4" x2="101.6" y2="-154.94" width="0.1524" layer="91"/>
+<label x="101.6" y="-154.94" size="1.778" layer="95" align="top-left"/>
 </segment>
 <segment>
 <pinref part="R31" gate="G$1" pin="1"/>
-<wire x1="116.84" y1="-149.86" x2="116.84" y2="-152.4" width="0.1524" layer="91"/>
-<label x="116.84" y="-152.4" size="1.778" layer="95" align="top-left"/>
+<wire x1="119.38" y1="-149.86" x2="119.38" y2="-152.4" width="0.1524" layer="91"/>
+<label x="119.38" y="-152.4" size="1.778" layer="95" align="top-left"/>
 </segment>
 <segment>
 <pinref part="X2" gate="G$1" pin="GND"/>
@@ -7105,11 +7111,11 @@ SD_CMD = Z
 <net name="STM_RST_" class="0">
 <segment>
 <pinref part="U13" gate="J" pin="NRST_J1"/>
-<wire x1="78.74" y1="-144.78" x2="99.06" y2="-144.78" width="0.1524" layer="91"/>
+<wire x1="78.74" y1="-144.78" x2="101.6" y2="-144.78" width="0.1524" layer="91"/>
 <pinref part="C68" gate="G$1" pin="1"/>
-<wire x1="99.06" y1="-144.78" x2="101.6" y2="-144.78" width="0.1524" layer="91"/>
-<junction x="99.06" y="-144.78"/>
-<label x="101.6" y="-144.78" size="1.778" layer="95"/>
+<wire x1="101.6" y1="-144.78" x2="104.14" y2="-144.78" width="0.1524" layer="91"/>
+<junction x="101.6" y="-144.78"/>
+<label x="104.14" y="-144.78" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="H1" gate="G$1" pin="7"/>
@@ -7121,10 +7127,10 @@ SD_CMD = Z
 <segment>
 <pinref part="U13" gate="J" pin="BOOT0_D6"/>
 <pinref part="R31" gate="G$1" pin="2"/>
-<wire x1="78.74" y1="-139.7" x2="116.84" y2="-139.7" width="0.1524" layer="91"/>
-<label x="119.38" y="-139.7" size="1.778" layer="95"/>
-<wire x1="116.84" y1="-139.7" x2="119.38" y2="-139.7" width="0.1524" layer="91"/>
-<junction x="116.84" y="-139.7"/>
+<wire x1="78.74" y1="-139.7" x2="119.38" y2="-139.7" width="0.1524" layer="91"/>
+<label x="121.92" y="-139.7" size="1.778" layer="95"/>
+<wire x1="119.38" y1="-139.7" x2="121.92" y2="-139.7" width="0.1524" layer="91"/>
+<junction x="119.38" y="-139.7"/>
 </segment>
 <segment>
 <pinref part="H1" gate="G$1" pin="8"/>
@@ -7157,7 +7163,7 @@ SD_CMD = Z
 <segment>
 <pinref part="C67" gate="G$1" pin="1"/>
 <pinref part="U13" gate="J" pin="VDD12OTGHS_J14"/>
-<wire x1="88.9" y1="-152.4" x2="78.74" y2="-152.4" width="0.1524" layer="91"/>
+<wire x1="91.44" y1="-152.4" x2="78.74" y2="-152.4" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="STM_SWDIO" class="0">

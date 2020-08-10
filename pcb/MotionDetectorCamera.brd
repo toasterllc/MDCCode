@@ -1697,10 +1697,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="25.0444" y="28.4956" size="0.508" layer="25" font="vector" align="bottom-center"/>
 </element>
 <element name="J2" library="EagleLibrary" package="S-MOUNT-LENS-HOLDER" value="S-MOUNT-LENS-HOLDER" x="42.128" y="27.2046" smashed="yes" rot="R90">
+<attribute name="MFG" value="Marshall Electronics" x="42.128" y="27.2046" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="30.8409" y="16.2486" size="1.27" layer="25" font="vector" rot="R90"/>
+<attribute name="PN" value="V-LH4" x="42.128" y="27.2046" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="U9" library="EagleLibrary" package="TI-TMUX1574RSVR" value="TI-TMUX1574" x="9.6266" y="6.0706" smashed="yes" rot="MR180">
-<attribute name="MFG" value="TI" x="9.6266" y="9.8806" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Texas Instruments" x="9.6266" y="9.8806" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="8.73251875" y="4.17421875" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="TMUX1574RSVR" x="9.6266" y="9.8806" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
@@ -1844,9 +1846,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="0402ZD225MAT2A" x="29.6672" y="13.893796875" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="R28" library="EagleLibrary" package="0402" value="3k" x="31.391865625" y="15.699740625" smashed="yes" rot="R180">
-<attribute name="MFG" value="" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="MFG" value="Yageo" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="32.145865625" y="15.143740625" size="0.508" layer="25" font="vector" rot="R180"/>
-<attribute name="PN" value="" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="AC0402FR-073KL" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C68" library="EagleLibrary" package="0402" value="100n" x="19.9136" y="14.6913625" smashed="yes" rot="R270">
 <attribute name="MFG" value="Murata" x="19.6596" y="14.1833625" size="1.778" layer="27" rot="R270" display="off"/>
@@ -1962,9 +1964,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="CRCW040210K0FKEDC" x="19.4665625" y="18.8950625" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="R30" library="EagleLibrary" package="0402" value="4.7k" x="38.249859375" y="27.805378125" smashed="yes">
-<attribute name="MFG" value="" x="38.249859375" y="27.805378125" size="1.778" layer="27" display="off"/>
+<attribute name="MFG" value="Vishay" x="38.249859375" y="27.805378125" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="37.495859375" y="28.361378125" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="" x="38.249859375" y="27.805378125" size="1.778" layer="27" display="off"/>
+<attribute name="PN" value="CRCW04024K70FKEDC" x="38.249859375" y="27.805378125" size="1.778" layer="27" display="off"/>
 </element>
 <element name="J3" library="EagleLibrary" package="AMPHENOLFCI-10033526-N3222MLF" value="MINI-USB-JACK" x="35.56" y="5.207" smashed="yes">
 <attribute name="MFG" value="Amphenol FCI" x="24.384" y="16.891" size="1.778" layer="27" display="off"/>
