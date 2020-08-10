@@ -7383,7 +7383,7 @@ Ferrite bead specs:
 </plain>
 <instances>
 <instance part="J3" gate="G$1" x="5.08" y="-5.08" smashed="yes">
-<attribute name="NAME" x="5.08" y="-4.318" size="1.778" layer="95"/>
+<attribute name="NAME" x="5.08" y="-2.54" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="FB10" gate="G$1" x="43.18" y="-7.62" smashed="yes">
 <attribute name="NAME" x="43.18" y="-5.08" size="1.778" layer="95"/>
