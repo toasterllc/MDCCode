@@ -74,7 +74,24 @@
 
 - Rev3 board
     
-    - Follow BoardFinalizationChecklist.txt
+    - Follow BoardFinalizationChecklist.txt:
+        √ Schematic: Verify that all parts have the correct footprint
+        - Schematic: Renumber parts based on schematic so that part numbers are organized
+        - Schematic: Export BOM and make sure all part numbers look good on Mouser
+        - Layout: Ensure isolation on top/bottom layers is >= 10 mil
+          In the past we've had issues with solder bridging across a component's pad to the surrounding ground plane
+        - Layout: Ensure all silkscreen labels are >= 20 mil (for readability)
+        - Layout: Ensure silkscreen labels are unobscured
+        - Layout: Add GND vias throughout board
+        - Layout: Make sure there are no GNDX nets (which appear when copying vias)
+        - Layout: Make sure vias are tented
+        - Layout: Miter board corners
+        - Layout: Update RevX text on board
+        - Order parts
+        - Order boards
+        - Order stencils
+          - Use 3 mil thickness (4 mil seems to apply solder that's too thick)
+
     
     - Use thinner stencils
         - It seems like we're using too much solder paste
