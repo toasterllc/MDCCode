@@ -84,7 +84,7 @@
         √ Layout: Ensure silkscreen labels are unobscured
         √ Layout: Add GND vias throughout board
         √ Layout: Make sure there are no GNDX nets (which appear when copying vias)
-        - Layout: Make sure vias are tented
+        √ Layout: Make sure vias are tented
         √ Layout: Make sure top/bottom cream layers look sane
         √ Layout: Make sure pins of BGA chips don't have cream applied
         √ Layout: Miter board corners
