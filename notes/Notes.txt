@@ -17,16 +17,10 @@
     
     - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
     
-    - Upgrade capacitors by derating them based on applied DC voltage
-    
     - Add ESD suppression to MDC Programmer board. See FTDI docs, "2.2.1 Electrostatic Protection":
         https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
     
     - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
-    
-    - Rewrite SDRAMController for smaller size/better performance
-        - more pipelining if possible
-        - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
     
     - Add USB inrush protection
     
@@ -38,7 +32,11 @@
 
 
 
-- Verilog Todo
+- Verilog
+    
+    - Rewrite SDRAMController for smaller size/better performance
+        - more pipelining if possible
+        - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
     
     - Re-consider the timing of signals driving the SDRAM. Instead of adding a delay, change the signals on the negative clock edge.
     
@@ -84,17 +82,20 @@
         
         - Follow BoardFinalizationChecklist.txt
     
-    - Verify that vias are fully covered after upgrading capacitors
-    
-    - Fill in missing part numbers
-    
-    ? Expose individual headers for ice40 ICE_PRG lines (di, cs_, clk, crst_, cdone),
-      in case STM32 programming is broken for some reason
-    
     - Use thinner stencils
         - It seems like we're using too much solder paste
     
     
+    
+    
+    √ Upgrade capacitors by derating them based on applied DC voltage
+    
+    √ Verify that vias are fully covered after upgrading capacitors
+    
+    √ Expose individual headers for ice40 ICE_PRG lines (ICE_SPI_D0, ICE_SPI_CS_, ICE_SPI_CLK, ICE_CRST_, ICE_CDONE),
+      in case STM32 programming is broken for some reason
+    
+    √ Fill in missing part numbers
     
     √ Length-match QUADSPI lines to STM32
     
