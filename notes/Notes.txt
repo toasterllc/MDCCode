@@ -82,11 +82,11 @@
           In the past we've had issues with solder bridging across a component's pad to the surrounding ground plane
         √ Layout: Ensure all silkscreen labels are >= 20 mil (for readability)
         √ Layout: Ensure silkscreen labels are unobscured
-        - Layout: Add GND vias throughout board
-        - Layout: Make sure there are no GNDX nets (which appear when copying vias)
+        √ Layout: Add GND vias throughout board
+        √ Layout: Make sure there are no GNDX nets (which appear when copying vias)
         - Layout: Make sure vias are tented
-        - Layout: Miter board corners
-        - Layout: Update RevX text on board
+        √ Layout: Miter board corners
+        √ Layout: Update RevX text on board
         - Order parts
         - Order boards
         - Order stencils
