@@ -3410,7 +3410,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="V-LH4"/>
 </part>
 <part name="U11" library="EagleLibrary" deviceset="TI-TMUX1574" device=""/>
-<part name="U7" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
+<part name="U7" library="EagleLibrary" deviceset="NXP-NTB0102" device="">
+<attribute name="PN" value="NTB0102GF,115"/>
+</part>
 <part name="U8" library="EagleLibrary" deviceset="ON-NLAS3157" device=""/>
 <part name="U10" library="EagleLibrary" deviceset="ON-NLAS3157" device=""/>
 <part name="R23" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
@@ -3429,7 +3431,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
-<part name="U12" library="EagleLibrary" deviceset="STM-STM32F730" device=""/>
+<part name="U12" library="EagleLibrary" deviceset="STM-STM32F730" device="">
+<attribute name="PN" value="STM32F730I8K6"/>
+</part>
 <part name="C54" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>

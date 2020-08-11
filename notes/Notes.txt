@@ -76,9 +76,9 @@
     
     - Follow BoardFinalizationChecklist.txt:
         √ Schematic: Verify that all parts have the correct footprint
-        - Schematic: Renumber parts based on schematic so that part numbers are organized
-        - Schematic: Export BOM and make sure all part numbers look good on Mouser
-        - Layout: Ensure isolation on top/bottom layers is >= 10 mil
+        √ Schematic: Renumber parts based on schematic so that part numbers are organized
+        √ Schematic: Export BOM and make sure all part numbers look good on Mouser
+        √ Layout: Ensure isolation on top/bottom layers is >= 10 mil
           In the past we've had issues with solder bridging across a component's pad to the surrounding ground plane
         - Layout: Ensure all silkscreen labels are >= 20 mil (for readability)
         - Layout: Ensure silkscreen labels are unobscured

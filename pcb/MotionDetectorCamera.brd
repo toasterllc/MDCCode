@@ -1699,7 +1699,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="U7" library="EagleLibrary" package="NXP-NTB0102GF" value="NXP-NTB0102" x="9.5504" y="10.8458" smashed="yes" rot="MR0">
 <attribute name="MFG" value="NXP" x="9.5504" y="10.8458" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="10.0624" y="11.6748" size="0.635" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="NTB0102GF" x="9.5504" y="10.8458" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="PN" value="NTB0102GF,115" x="9.5504" y="10.8458" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="U8" library="EagleLibrary" package="ON-NLAS3157MX3TCG" value="ON-NLAS3157" x="7.32281875" y="10.8813625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="ON Semiconductor" x="7.32281875" y="10.8813625" size="1.778" layer="28" rot="MR270" display="off"/>
@@ -1734,7 +1734,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="U12" library="EagleLibrary" package="STM-STM32F730I8" value="STM-STM32F730" x="25.4254" y="16.6624" smashed="yes">
 <attribute name="MFG" value="STMicroelectronics" x="25.4254" y="16.6624" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="20.5994" y="21.9414" size="1.27" layer="25" font="vector"/>
-<attribute name="PN" value="STM32F730I8" x="25.4254" y="16.6624" size="1.778" layer="27" display="off"/>
+<attribute name="PN" value="STM32F730I8K6" x="25.4254" y="16.6624" size="1.778" layer="27" display="off"/>
 </element>
 <element name="C54" library="EagleLibrary" package="0402" value="100n" x="23.19781875" y="18.6410625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="23.19781875" y="18.6410625" size="1.778" layer="28" rot="MR270" display="off"/>
