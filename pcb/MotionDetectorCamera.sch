@@ -3275,9 +3275,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402AJW-101GAS"/>
 </part>
-<part name="C4" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM188R61A106KE69D"/>
+<part name="C4" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
+<attribute name="MFG" value="KEMET"/>
+<attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
 <part name="C11" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -3287,9 +3287,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402AJW-101GAS"/>
 </part>
-<part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0603" value="10u">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM188R61A106KE69D"/>
+<part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
+<attribute name="MFG" value="KEMET"/>
+<attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
 <part name="C10" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
