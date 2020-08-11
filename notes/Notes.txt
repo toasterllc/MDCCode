@@ -74,7 +74,7 @@
 
 - Rev3 board
     
-    - Follow BoardFinalizationChecklist.txt:
+    √ Follow BoardFinalizationChecklist.txt:
         √ Schematic: Verify that all parts have the correct footprint
         √ Schematic: Renumber parts based on schematic so that part numbers are organized
         √ Schematic: Export BOM and make sure all part numbers look good on Mouser
@@ -89,17 +89,10 @@
         √ Layout: Make sure pins of BGA chips don't have cream applied
         √ Layout: Miter board corners
         √ Layout: Update RevX text on board
-        - Order parts
-        - Order boards
-        - Order stencils
-          - Use 3 mil thickness (4 mil seems to apply solder that's too thick)
-
-    
-    - Use thinner stencils
-        - It seems like we're using too much solder paste
-    
-    
-    
+        √ Order boards
+        √ Order stencils
+          Use 3 mil thickness (4 mil seems to apply solder that's too thick)
+        √ Order parts
     
     √ Verify that image sensor is centered within lens
         Use offset defined in AR0330CS-old.pdf
