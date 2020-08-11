@@ -5387,9 +5387,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="J2" pad="D-"/>
 <contactref element="U13" pad="2"/>
 <wire x1="34.76" y1="8.057" x2="34.76" y2="9.436" width="0.1524" layer="1"/>
-<wire x1="34.452559375" y1="9.743440625" x2="30.540959375" y2="9.743440625" width="0.1524" layer="1"/>
-<wire x1="30.540959375" y1="9.743440625" x2="29.3254" y2="10.959" width="0.1524" layer="1"/>
-<wire x1="29.3254" y1="10.959" x2="29.3254" y2="12.1124" width="0.1524" layer="1"/>
+<wire x1="34.452559375" y1="9.743440625" x2="30.259021875" y2="9.743440625" width="0.1524" layer="1"/>
+<wire x1="30.259021875" y1="9.743440625" x2="29.3254" y2="10.6770625" width="0.1524" layer="1"/>
+<wire x1="29.3254" y1="10.6770625" x2="29.3254" y2="12.1124" width="0.1524" layer="1"/>
 <wire x1="34.76" y1="9.436" x2="34.452559375" y2="9.743440625" width="0.1524" layer="1"/>
 <via x="34.757359375" y="6.5024" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="1" thermals="no">
@@ -5404,6 +5404,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="35.052" y="6.22808125"/>
 <vertex x="35.052" y="7.874"/>
 </polygon>
+<wire x1="34.76" y1="8.057" x2="34.90721875" y2="7.510984375" width="0" layer="19" extent="1-16"/>
+<wire x1="34.757359375" y1="6.5024" x2="34.90721875" y2="7.510984375" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="USB_D+">
 <contactref element="U12" pad="R15"/>
