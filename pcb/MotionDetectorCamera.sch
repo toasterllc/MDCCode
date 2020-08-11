@@ -652,28 +652,28 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <circle x="10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="6.858" width="0.05" layer="21"/>
 <polygon width="0.127" layer="39">
-<vertex x="-10.668" y="10.668"/>
-<vertex x="-10.668" y="-10.668"/>
-<vertex x="-8.636" y="-10.668"/>
-<vertex x="-8.636" y="10.668"/>
+<vertex x="-10.9728" y="10.9728"/>
+<vertex x="-10.9728" y="-10.9728"/>
+<vertex x="-8.636" y="-10.9728"/>
+<vertex x="-8.636" y="10.9728"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="8.636" y="10.668"/>
-<vertex x="8.636" y="-10.668"/>
-<vertex x="10.668" y="-10.668"/>
-<vertex x="10.668" y="10.668"/>
+<vertex x="8.636" y="10.9728"/>
+<vertex x="8.636" y="-10.9728"/>
+<vertex x="10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="10.9728"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.668" y="8.636"/>
-<vertex x="10.668" y="8.636"/>
-<vertex x="10.668" y="10.668"/>
-<vertex x="-10.668" y="10.668"/>
+<vertex x="-10.9728" y="8.636"/>
+<vertex x="10.9728" y="8.636"/>
+<vertex x="10.9728" y="10.9728"/>
+<vertex x="-10.9728" y="10.9728"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.668" y="-10.668"/>
-<vertex x="10.668" y="-10.668"/>
-<vertex x="10.668" y="-8.636"/>
-<vertex x="-10.668" y="-8.636"/>
+<vertex x="-10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="-8.636"/>
+<vertex x="-10.9728" y="-8.636"/>
 </polygon>
 <wire x1="-10.9982" y1="10.9982" x2="10.9982" y2="10.9982" width="0.05" layer="21"/>
 <wire x1="10.9982" y1="10.9982" x2="10.9982" y2="-10.9982" width="0.05" layer="21"/>

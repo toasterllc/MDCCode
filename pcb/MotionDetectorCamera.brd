@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
+<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="no" altdistance="0.001" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="yes" active="yes"/>
@@ -664,28 +664,28 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <circle x="10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="6.858" width="0.05" layer="21"/>
 <polygon width="0.127" layer="39">
-<vertex x="-10.668" y="10.668"/>
-<vertex x="-10.668" y="-10.668"/>
-<vertex x="-8.636" y="-10.668"/>
-<vertex x="-8.636" y="10.668"/>
+<vertex x="-10.9728" y="10.9728"/>
+<vertex x="-10.9728" y="-10.9728"/>
+<vertex x="-8.636" y="-10.9728"/>
+<vertex x="-8.636" y="10.9728"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="8.636" y="10.668"/>
-<vertex x="8.636" y="-10.668"/>
-<vertex x="10.668" y="-10.668"/>
-<vertex x="10.668" y="10.668"/>
+<vertex x="8.636" y="10.9728"/>
+<vertex x="8.636" y="-10.9728"/>
+<vertex x="10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="10.9728"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.668" y="8.636"/>
-<vertex x="10.668" y="8.636"/>
-<vertex x="10.668" y="10.668"/>
-<vertex x="-10.668" y="10.668"/>
+<vertex x="-10.9728" y="8.636"/>
+<vertex x="10.9728" y="8.636"/>
+<vertex x="10.9728" y="10.9728"/>
+<vertex x="-10.9728" y="10.9728"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.668" y="-10.668"/>
-<vertex x="10.668" y="-10.668"/>
-<vertex x="10.668" y="-8.636"/>
-<vertex x="-10.668" y="-8.636"/>
+<vertex x="-10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="-8.636"/>
+<vertex x="-10.9728" y="-8.636"/>
 </polygon>
 <wire x1="-10.9982" y1="10.9982" x2="10.9982" y2="10.9982" width="0.05" layer="21"/>
 <wire x1="10.9982" y1="10.9982" x2="10.9982" y2="-10.9982" width="0.05" layer="21"/>
@@ -1835,10 +1835,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="29.1112" y="14.647796875" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="0402ZD225MAT2A" x="29.6672" y="13.893796875" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="R28" library="EagleLibrary" package="0402" value="3k" x="31.391865625" y="16.0147" smashed="yes" rot="R180">
-<attribute name="MFG" value="Yageo" x="31.391865625" y="16.0147" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="32.145865625" y="15.4587" size="0.508" layer="25" font="vector" rot="R180"/>
-<attribute name="PN" value="AC0402FR-073KL" x="31.391865625" y="16.0147" size="1.778" layer="27" rot="R180" display="off"/>
+<element name="R28" library="EagleLibrary" package="0402" value="3k" x="31.391865625" y="15.6147" smashed="yes" rot="R180">
+<attribute name="MFG" value="Yageo" x="31.391865625" y="15.6147" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="NAME" x="32.145865625" y="15.0587" size="0.508" layer="25" font="vector" rot="R180"/>
+<attribute name="PN" value="AC0402FR-073KL" x="31.391865625" y="15.6147" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C68" library="EagleLibrary" package="0402" value="100n" x="19.9136" y="14.6913625" smashed="yes" rot="R270">
 <attribute name="MFG" value="Murata" x="19.6596" y="14.1833625" size="1.778" layer="27" rot="R270" display="off"/>
@@ -3167,7 +3167,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="8.376921875" y="34.31031875" extent="1-16" drill="0.254"/>
 <via x="10.132059375" y="36.065459375" extent="1-16" drill="0.254"/>
 <via x="30.939740625" y="18.458178125" extent="1-16" drill="0.381"/>
-<via x="30.866078125" y="14.91488125" extent="1-16" drill="0.381"/>
+<via x="30.866078125" y="14.71488125" extent="1-16" drill="0.381"/>
 <via x="47.49291875" y="27.406596875" extent="1-16" drill="0.381"/>
 <via x="41.8592" y="29.778959375" extent="1-16" drill="0.381"/>
 <via x="17.3355" y="18.714721875" extent="1-16" drill="0.254"/>
@@ -5418,8 +5418,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="N$10">
 <contactref element="R28" pad="2"/>
 <contactref element="U13" pad="J15"/>
-<wire x1="30.959365625" y1="16.0147" x2="30.957065625" y2="16.0124" width="0.127" layer="1"/>
-<wire x1="30.957065625" y1="16.0124" x2="29.9754" y2="16.0124" width="0.127" layer="1"/>
+<wire x1="30.959365625" y1="15.6147" x2="30.561665625" y2="16.0124" width="0.127" layer="1"/>
+<wire x1="30.561665625" y1="16.0124" x2="29.9754" y2="16.0124" width="0.127" layer="1"/>
 </signal>
 <signal name="N$25">
 <contactref element="C67" pad="1"/>
