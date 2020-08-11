@@ -1835,10 +1835,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="29.1112" y="14.647796875" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="0402ZD225MAT2A" x="29.6672" y="13.893796875" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="R28" library="EagleLibrary" package="0402" value="3k" x="31.391865625" y="15.699740625" smashed="yes" rot="R180">
-<attribute name="MFG" value="Yageo" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="32.145865625" y="15.143740625" size="0.508" layer="25" font="vector" rot="R180"/>
-<attribute name="PN" value="AC0402FR-073KL" x="31.391865625" y="15.699740625" size="1.778" layer="27" rot="R180" display="off"/>
+<element name="R28" library="EagleLibrary" package="0402" value="3k" x="31.391865625" y="16.0147" smashed="yes" rot="R180">
+<attribute name="MFG" value="Yageo" x="31.391865625" y="16.0147" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="NAME" x="32.145865625" y="15.4587" size="0.508" layer="25" font="vector" rot="R180"/>
+<attribute name="PN" value="AC0402FR-073KL" x="31.391865625" y="16.0147" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C68" library="EagleLibrary" package="0402" value="100n" x="19.9136" y="14.6913625" smashed="yes" rot="R270">
 <attribute name="MFG" value="Murata" x="19.6596" y="14.1833625" size="1.778" layer="27" rot="R270" display="off"/>
@@ -5418,8 +5418,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="N$10">
 <contactref element="R28" pad="2"/>
 <contactref element="U13" pad="J15"/>
-<wire x1="30.959365625" y1="15.699740625" x2="30.64670625" y2="16.0124" width="0.127" layer="1"/>
-<wire x1="30.64670625" y1="16.0124" x2="29.9754" y2="16.0124" width="0.127" layer="1"/>
+<wire x1="30.959365625" y1="16.0147" x2="30.957065625" y2="16.0124" width="0.127" layer="1"/>
+<wire x1="30.957065625" y1="16.0124" x2="29.9754" y2="16.0124" width="0.127" layer="1"/>
 </signal>
 <signal name="N$25">
 <contactref element="C67" pad="1"/>
