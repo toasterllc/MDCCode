@@ -74,19 +74,16 @@
 
 - Rev3 board
     
-    - Rev3 board finalization
-        - Verify that image sensor is centered within lens
-            - Use offset defined in AR0330CS-old.pdf
-        
-        - Verify that all STM32 pins are connected correctly
-        
-        - Follow BoardFinalizationChecklist.txt
+    - Verify that image sensor is centered within lens
+        - Use offset defined in AR0330CS-old.pdf
+    
+    - Follow BoardFinalizationChecklist.txt
     
     - Use thinner stencils
         - It seems like we're using too much solder paste
     
     
-    
+    √ Verify that all STM32 pins are connected correctly
     
     √ Upgrade capacitors by derating them based on applied DC voltage
     
