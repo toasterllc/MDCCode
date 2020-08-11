@@ -3218,6 +3218,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="21.844" y="22.717759375"/>
 <vertex x="21.844" y="31.8795375"/>
 </polygon>
+<via x="30.226" y="29.972" extent="1-16" drill="0.381"/>
+<via x="30.226" y="24.638" extent="1-16" drill="0.381"/>
+<via x="19.05" y="4.572" extent="1-16" drill="0.381"/>
+<via x="50.8" y="40.386" extent="1-16" drill="0.381"/>
+<via x="3.81" y="40.132" extent="1-16" drill="0.381"/>
+<via x="3.81" y="3.81" extent="1-16" drill="0.381"/>
 </signal>
 <signal name="ICE_PIX_CLK24MHZ">
 <contactref element="U5" pad="D7"/>
