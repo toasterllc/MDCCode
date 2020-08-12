@@ -6040,7 +6040,7 @@ below the chip.</text>
 <sheet>
 <description>SD Card</description>
 <plain>
-<text x="71.12" y="-124.46" size="1.016" layer="95" align="top-left">• Init mode (ICE_SD_INIT = 1)
+<text x="71.12" y="-142.24" size="1.016" layer="95" align="top-left">• Init mode (ICE_SD_INIT = 1)
 SD_DATX = 2.8V (via pullup)
 
 • Fast mode (ICE_SD_INIT = 0)
