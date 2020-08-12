@@ -1,0 +1,89 @@
+# Open questions
+
+    - What frequency can we drive CLK at while initializing it? The LVI addendum says "host can start card communication in SDR12 mode from the start of initialization", but Physical Layer Simplified Specification says "During the card identification process, the card shall operate in the SD clock frequency of the identification clock rate fOD" (page 35), where fOD=[100,400] kHZ.
+
+    - What's the difference between programming/erasing/writing?
+        "As soon as the data transfer is completed, the card will exit the data write
+        state and move either to the Programming State (transfer is successful) or
+        Transfer State (transfer failed)."
+        
+        "The card may provide buffering for block write. This means that the next block
+        can be sent to the card while the previous is being programmed."
+        
+        "If all write buffers are full, and as long as the card is in Programming State
+        (see SD Memory Card state diagram Figure 4-13 ), the DAT0 line will be kept low (BUSY)."
+        -- Page 44
+        
+        
+    
+
+
+# Init sequence for A2 cards
+
+    CMD0        # GO_IDLE_STATE                         Go idle
+        State: X -> Idle
+    
+    CMD8        # SEND_IF_COND                          Send Interface Condition Command
+        State: Idle -> Idle
+    
+    (CMD55)     # APP_CMD                               App-specific command follows
+    ACMD41      # SD_SEND_OP_COND                       Initialization Command
+        State: Idle -> Ready
+    
+    CMD2        # ALL_SEND_CID                          Get card identification number (CID)
+        State: Ready -> Identification
+    
+    CMD3        # SEND_RELATIVE_ADDR                    Ask the card to publish a new relative address (RCA)
+        State: Identification -> Standby
+    
+    CMD7        # SELECT_CARD/DESELECT_CARD             
+        State: Standby -> Transfer
+    
+    (CMD55)     # APP_CMD                               App-specific command follows
+    ACMD6       # SET_BUS_WIDTH                         Defines the data bus width ('00'=1bit or '10'=4 bits bus)
+    
+    CMD6        # Switch to SDR=50 or SDR=SDR104
+    
+    
+
+# Switch to UHS-I mode
+# Page 19
+# All this shouldn't be necessary since the LVI addendum says:
+#       low voltage signaling interface in SD mode (called
+#       "LVS interface") that starts in 1.8V signaling UHS-I
+#       mode without going through 3.3V signaling, that is
+#       host can start card communication in SDR12 mode from
+#       the start of initialization and skips Voltage Switch
+#       Sequence (CMD11)"
+
+    CMD0        # GO_IDLE_STATE                         Go idle
+    CMD8        # SEND_IF_COND                          Send Interface Condition Command
+    (CMD55)     # APP_CMD                               App-specific command follows
+    ACMD41      # SD_SEND_OP_COND                       Send operating condition
+    CMD11       # VOLTAGE_SWITCH                        Voltage Switch Command
+    CMD2        # ALL_SEND_CID                          Get card identification number (CID)
+    CMD3        # SEND_RELATIVE_ADDR                    Ask the card to publish a new relative address (RCA)
+    CMD7        # SELECT_CARD/DESELECT_CARD             
+    CMD42       # LOCK_UNLOCK                           Set/reset password, or lock/unlock the card
+    (CMD55)     # APP_CMD                               App-specific command follows
+    ACMD6       # SET_BUS_WIDTH                         Defines the data bus width ('00'=1bit or '10'=4 bits bus)
+    CMD6        # Switch to SDR=50 or SDR=SDR104
+    CMD19
+
+
+# UHS-I Host Initialization
+# Page 40
+    CMD0
+    CMD8
+    (CMD55)
+    ACMD41
+    CMD11
+    CMD2
+    CMD3
+    CMD7
+    CMD42
+    (CMD55)
+    ACMD6
+    CMD6 (Driver Strength)
+    CMD6 (Power Limit)
+    CMD19 (Tuning)
