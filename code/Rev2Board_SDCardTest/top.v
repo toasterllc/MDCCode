@@ -1,6 +1,10 @@
 `include "../ClockGen.v"
 `include "../AFIFO.v"
 
+`ifdef SIM
+`include "/usr/local/share/yosys/ice40/cells_sim.v"
+`endif
+
 `timescale 1ns/1ps
 
 module Debug #(
@@ -289,16 +293,32 @@ module Debug #(
 endmodule
 
 
+module CRC7(
+    input wire clk,
+    input wire en,
+    input din,
+    output wire[6:0] dout
+);
+    reg[6:0] d = 0;
+    wire dx = din ^ d[6];
+    wire[6:0] dnext = { dx, d[0], d[1], d[2]^dx, d[3], d[4], d[5] };
+    assign dout = dnext;
+    
+    always @(posedge clk)
+        d <= (!en ? 0 : dnext);
+endmodule
+
 
 module SDCardController #(
     parameter ClkFreq = 12000000,       // `clk` frequency
     parameter SDClkMaxFreq = 400000     // max `sd_clk` frequency
 )(
-    input wire          clk12mhz,
+    input wire          clk,
     
     // Command port
     input wire          cmd_trigger,
-    input wire[5:0]     cmd_cmd,
+    input wire[5:0]     cmd_idx,
+    input wire[31:0]    cmd_arg,
     output wire[135:0]  cmd_resp,
     output reg          cmd_done = 0,
     
@@ -319,29 +339,86 @@ module SDCardController #(
     reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
     assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
     
-    reg dataOutActive = 0;
-    reg dataOut[3:0] = 0;
-    wire dataIn[3:0];
-    genvar i;
-    for (i=0; i<4; i=i+1) begin
-        `ifdef SIM
-            
-        `else
-            // For synthesis, we have to use a SB_IO for a tristate buffer
-            SB_IO #(
-                .PIN_TYPE(6'b1010_01)
-            ) dqio (
-                .PACKAGE_PIN(sd_dat[i]),
-                .OUTPUT_ENABLE(dataOutActive),
-                .D_OUT_0(dataOut[i]),
-                .D_IN_0(dataIn[i])
-            );
-        `endif
+    always @(posedge clk) begin
+        sdClkDivider <= sdClkDivider+1;
     end
     
+    localparam CmdOutRegWidth = 41;
+    reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
+    wire cmdOut = cmdOutReg[CmdOutRegWidth-1];
+    reg cmdOutActive = 0;
+    wire cmdOutDone = !cmdOutReg[CmdOutRegWidth-3:0];
+    wire cmdIn;
     
+    wire[6:0] cmdCRC;
+    CRC7 crc7(
+        .clk(sd_clk),
+        .en(cmdOutActive),
+        .din(cmdOut),
+        .dout(cmdCRC)
+    );
+    
+    SB_IO #(
+        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+        .NEG_TRIGGER(1'b1)
+    ) sbio (
+        .PACKAGE_PIN(sd_cmd),
+        .OUTPUT_ENABLE(cmdOutActive),
+        .OUTPUT_CLK(sd_clk),
+        .D_OUT_0(cmdOut),
+        .D_IN_0(cmdIn)
+    );
+    
+    reg[3:0] dataOut = 0;
+    reg dataOutActive = 0;
+    wire[3:0] dataIn;
+    genvar i;
+    for (i=0; i<4; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+            .NEG_TRIGGER(1'b1)
+        ) sbio (
+            .PACKAGE_PIN(sd_dat[i]),
+            .OUTPUT_ENABLE(dataOutActive),
+            .OUTPUT_CLK(sd_clk),
+            .D_OUT_0(dataOut[i]),
+            .D_IN_0(dataIn[i])
+        );
+    end
+    
+    reg[5:0] state = 0;
+    localparam StateInit = 0;
     
     always @(posedge sd_clk) begin
+        case (state)
+        
+        StateInit: begin
+            cmdOutReg <= {2'b01, cmd_idx, cmd_arg, 1'b1};
+            cmdOutActive <= 1;
+            state <= StateInit+1;
+        end
+        
+        StateInit+1: begin
+            if (!cmdOutDone) begin
+                cmdOutReg <= cmdOutReg<<1;
+            
+            end else begin
+                // If this was the last bit, send the CRC next
+                cmdOutReg <= {cmdCRC, 1'b1, 33'b0};
+                state <= StateInit+2;
+            end
+        end
+        
+        StateInit+2: begin
+            cmdOutReg <= cmdOutReg<<1;
+            
+            // Check if this was the last bit to send
+            if (cmdOutDone) begin
+                cmdOutActive <= 0;
+                state <= StateInit;
+            end
+        end
+        endcase
     end
     
 endmodule
@@ -352,6 +429,10 @@ endmodule
 module Top(
     input wire          clk12mhz,
     output reg[3:0]     led = 0  /* synthesis syn_keep=1 */,
+    
+    output wire         sd_clk,
+    inout wire          sd_cmd,
+    inout wire[3:0]     sd_dat,
     
     input wire          debug_clk,
     input wire          debug_cs,
@@ -405,6 +486,26 @@ module Top(
     
     
     
+    
+    // ====================
+    // SD Card Controller
+    // ====================
+    SDCardController #(
+        .ClkFreq(ClkFreq),
+        .SDClkMaxFreq(400000)
+    ) sdctrl(
+        .clk(clk),
+        
+        .cmd_trigger(),
+        .cmd_idx(6'b0),
+        .cmd_arg(32'b0),
+        .cmd_resp(),
+        .cmd_done(),
+        
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat)
+    );
     
     
     
@@ -550,148 +651,14 @@ module Top(
     
     
 `ifdef SIM
-    reg sim_debug_clk = 0;
-    reg sim_debug_cs = 0;
-    reg[7:0] sim_debug_di_shiftReg = 0;
-    
-    assign debug_clk = sim_debug_clk;
-    assign debug_cs = sim_debug_cs;
-    assign debug_di = sim_debug_di_shiftReg[7];
-    
-    reg sim_pix_dclk = 0;
-    reg[11:0] sim_pix_d = 0;
-    reg sim_pix_fv = 0;
-    reg sim_pix_lv = 0;
-    
-    assign pix_dclk = sim_pix_dclk;
-    assign pix_d = sim_pix_d;
-    assign pix_fv = sim_pix_fv;
-    assign pix_lv = sim_pix_lv;
-    
-    task WriteByte(input[7:0] b);
-        sim_debug_di_shiftReg = b;
-        repeat (8) begin
-            wait (sim_debug_clk);
-            wait (!sim_debug_clk);
-            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
-        end
-    endtask
-    
-    initial begin
-        sim_pix_d <= 0;
-        sim_pix_fv <= 1;
-        sim_pix_lv <= 1;
-        #1000;
-        
-        repeat (3) begin
-            sim_pix_fv <= 1;
-            #100;
-            
-            repeat (8) begin
-                sim_pix_lv <= 1;
-                sim_pix_d <= 12'hCAF;
-                #1000;
-                sim_pix_lv <= 0;
-                #100;
-            end
-            
-            sim_pix_fv <= 0;
-            #1000;
-        end
-        
-        $finish;
-    end
-    
-    
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
     end
     
-    // Assert chip select
     initial begin
-        // Wait for ClockGen to start its clock
-        wait(clk);
-        #100;
-        wait (!sim_debug_clk);
-        sim_debug_cs = 1;
-    end
-    
-    initial begin
-        // Wait for ClockGen to start its clock
-        wait(clk);
-        
-        // Wait arbitrary amount of time
-        #1057;
-        wait(clk);
-        
-        WriteByte(MsgType_PixCapture);     // Message type
         #1000000;
-    end
-    
-    // initial begin
-    //     // Wait for ClockGen to start its clock
-    //     wait(clk);
-    //     #100;
-    //
-    //     wait (!sim_debug_clk);
-    //     sim_debug_cs = 1;
-    //
-    //     // WriteByte(MsgType_LEDSet);  // Message type
-    //     // WriteByte(8'h1);            // Payload length
-    //     // WriteByte(8'h1);            // Payload
-    //
-    //     WriteByte(MsgType_PixReg8);     // Message type
-    //     WriteByte(8'h4);                // Payload length
-    //     WriteByte(8'h1);                // Payload0: write
-    //     WriteByte(8'h34);               // Payload1: addr0
-    //     WriteByte(8'h12);               // Payload2: addr1
-    //     WriteByte(8'h42);               // Payload3: value
-    //
-    //     WriteByte(MsgType_PixReg8);     // Message type
-    //     WriteByte(8'h4);                // Payload length
-    //     WriteByte(8'h0);                // Payload0: write
-    //     WriteByte(8'h34);               // Payload1: addr0
-    //     WriteByte(8'h12);               // Payload2: addr1
-    //     WriteByte(8'h42);               // Payload3: value
-    //
-    //     WriteByte(MsgType_PixReg16);    // Message type
-    //     WriteByte(8'h5);                // Payload length
-    //     WriteByte(8'h0);                // Payload0: write
-    //     WriteByte(8'h34);               // Payload1: addr0
-    //     WriteByte(8'h12);               // Payload2: addr1
-    //     WriteByte(8'hFE);               // Payload3: value0
-    //     WriteByte(8'hCA);               // Payload4: value1
-    //
-    //     #1000000;
-    //     $finish;
-    // end
-    
-    initial begin
-        // Wait for ClockGen to start its clock
-        wait(clk);
-        #100;
-        
-        forever begin
-            // 50 MHz dclk
-            sim_pix_dclk = 1;
-            #10;
-            sim_pix_dclk = 0;
-            #10;
-        end
-    end
-    
-    initial begin
-        // Wait for ClockGen to start its clock
-        wait(clk);
-        #100;
-        
-        forever begin
-            sim_debug_clk = 0;
-            #10;
-            sim_debug_clk = 1;
-            #10;
-        end
+        $finish;
     end
 `endif
     
