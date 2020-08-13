@@ -1600,7 +1600,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="0" y1="0" x2="20.32" y2="0" width="0.254" layer="94"/>
 <wire x1="20.32" y1="0" x2="20.32" y2="-22.86" width="0.254" layer="94"/>
 <wire x1="20.32" y1="-22.86" x2="0" y2="-22.86" width="0.254" layer="94"/>
-<text x="0" y="-22.86" size="1.778" layer="95" align="top-left">&gt;PN</text>
+<text x="0" y="-25.4" size="1.778" layer="95">&gt;PN</text>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <pin name="B1" x="22.86" y="-15.24" visible="pin" length="short" rot="R180"/>
 <pin name="OE" x="-2.54" y="-10.16" visible="pin" length="short"/>
@@ -1609,7 +1609,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="A2" x="-2.54" y="-20.32" visible="pin" length="short"/>
 <pin name="B2" x="22.86" y="-20.32" visible="pin" length="short" rot="R180"/>
 <pin name="VCCB" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
-<text x="0" y="-25.4" size="1.778" layer="95" align="top-left">Level Shifter</text>
+<text x="0" y="-27.94" size="1.778" layer="95">Level Shifter</text>
 </symbol>
 <symbol name="ON-NLAS3157">
 <wire x1="0" y1="0" x2="0" y2="-20.32" width="0.254" layer="94"/>
@@ -6117,8 +6117,8 @@ SD_CMD = Z
 <attribute name="NAME" x="137.16" y="-127" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="U7" gate="G$1" x="137.16" y="-2.54" smashed="yes">
-<attribute name="PN" x="137.16" y="-26.162" size="1.778" layer="95" align="top-left"/>
-<attribute name="NAME" x="137.16" y="-0.254" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="137.16" y="-27.94" size="1.778" layer="95"/>
+<attribute name="NAME" x="137.16" y="0" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="U8" gate="G$1" x="139.7" y="-53.34" smashed="yes">
 <attribute name="NAME" x="139.7" y="-50.8" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
