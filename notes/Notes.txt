@@ -1,5 +1,9 @@
 - Future
     
+    - If SD card initialization communication doesn't work, consider switching from NTB0102GF -> NTS0102GF.
+      NTS0102GF is better suited for open-drain usage, which might apply to us since we're using pull-up resistors.
+      The downside is that NTS0102GF has more capacitance on its IO lines (11pF typical, while NTB0102GF is 7.5 pF typical).
+    
     - Figure out battery power supply
         - How many batteries?
         - What battery voltage range? .8-1.7V per battery?
@@ -34,11 +38,19 @@
 
 - Verilog
     
+    - Rev3: Update Verilog to assume a 24MHz input clock
+    
+    - Rev3: Re-export pins from Eagle to create pins.pcf, since nets moved around
+    
+    - Consider registering SB_IO inputs -- might speed up design? (via SB_IO.PIN_TYPE)
+      
+    - ADD attribute to AFIFO to prevent overhead:
+       /* synthesis syn_ramstyle="no_rw_check" */
+    
     - Rewrite SDRAMController for smaller size/better performance
         - more pipelining if possible
         - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
-    
-    - Re-consider the timing of signals driving the SDRAM. Instead of adding a delay, change the signals on the negative clock edge.
+        - change outputs on negative edge, sample inputs on positive edge
     
     - Figure out what yosys changes are needed to infer a BRAM correctly. currently we modified /usr/local/share/yosys/ice40/brams.txt:
                 bram $__ICE40_RAM4K_M0
@@ -54,7 +66,6 @@
                   clkpol 2  3
                 endbram
                 ...
-        
     
     - ClockGen:
         Synchronize 'locked' signal with clock
