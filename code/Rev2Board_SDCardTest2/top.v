@@ -69,11 +69,11 @@ module SDCardController #(
     // end
     assign sd_clk = clk;
     
-    localparam CmdOutRegWidth = 41;
+    localparam CmdOutRegWidth = 40;
     reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
     wire cmdOut = cmdOutReg[CmdOutRegWidth-1];
     reg cmdOutActive = 0;
-    wire cmdOutDone = !cmdOutReg[CmdOutRegWidth-3:0];
+    reg[5:0] cmdOutCounter = 0;
     wire cmdIn;
     
     wire[6:0] cmdCRC;
@@ -119,40 +119,33 @@ module SDCardController #(
     localparam StateIdle = 4;
     
     always @(posedge sd_clk) begin
-        case (state)
+        cmdOutReg <= cmdOutReg<<1;
+        cmdOutCounter <= cmdOutCounter-1;
         
+        case (state)
         StateInit: begin
-            cmdOutReg <= {2'b01, cmd_idx, cmd_arg, 1'b1};
+            cmdOutReg <= {2'b01, cmd_idx, cmd_arg};
+            cmdOutCounter <= 40;
             cmdOutActive <= 1;
             state <= StateInit+1;
         end
         
         StateInit+1: begin
-            if (!cmdOutDone) begin
-                cmdOutReg <= cmdOutReg<<1;
-            
-            end else begin
-                // If this was the last command bit, send the CRC, followed by the '1' end bit
-                cmdOutReg <= {cmdCRC, 1'b1, 1'b1, 32'b0};
+            if (cmdOutCounter == 1) begin
+                // If this was the last bit, send the CRC, followed by the '1' end bit
+                cmdOutReg <= {cmdCRC, 1'b1, 32'b0};
+                cmdOutCounter <= 8;
                 state <= StateInit+2;
             end
         end
         
         StateInit+2: begin
-            cmdOutReg <= cmdOutReg<<1;
-            
-            // Check if this was the last bit to send
-            if (cmdOutDone) begin
+            if (cmdOutCounter == 1) begin
+                // If this was the last bit, wrap up
                 cmdOutActive <= 0;
                 state <= StateIdle;
-                // state <= StateInit+3;
             end
         end
-        
-        // StateInit+3: begin
-        //     cmdOutActive <= 0;
-        //     state <= StateIdle;
-        // end
         
         StateIdle: begin
         end
@@ -170,11 +163,11 @@ endmodule
 
 module Top(
     input wire          clk12mhz,
-    output reg[3:0]     led = 0  /* synthesis syn_keep=1 */,
+    output reg[3:0]     led = 0 /* synthesis syn_keep=1 */,
     
-    output wire         sd_clk,
-    inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat
+    output wire         sd_clk  /* synthesis syn_keep=1 */,
+    inout wire          sd_cmd  /* synthesis syn_keep=1 */,
+    inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */
 );
     // // ====================
     // // Clock PLL (100.5 MHz)
