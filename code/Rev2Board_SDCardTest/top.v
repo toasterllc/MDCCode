@@ -293,6 +293,56 @@ module Debug #(
 endmodule
 
 
+// module CRC7(
+//     input wire clk,
+//     input wire en,
+//     input din,
+//     output wire[6:0] dout
+// );
+//     reg[6:0] d = 0;
+//     wire dx = din ^ d[6];
+//     wire[6:0] dnext = { dx, d[0], d[1], d[2]^dx, d[3], d[4], d[5] };
+//     assign dout = dnext;
+//
+//     always @(posedge clk)
+//         d <= (!en ? 0 : dnext);
+// endmodule
+
+// module CRC7(
+//     input wire clk,
+//     input wire en,
+//     input din,
+//     output reg[6:0] dout = 0
+// );
+//     wire dx = din ^ dout[6];
+//     always @(posedge clk) begin
+//         if (!en) begin
+//             dout <= 0;
+//
+//         end else begin
+//             dout[0] <= dx;
+//             dout[1] <= dout[0];
+//             dout[2] <= dout[1];
+//             dout[3] <= dout[2] ^ dx;
+//             dout[4] <= dout[3];
+//             dout[5] <= dout[4];
+//             dout[6] <= dout[5];
+//         end
+//     end
+//
+//     wire[6:0] doutNext = {
+//         dout[5],
+//         dout[4],
+//         dout[3],
+//         dout[2] ^ dx,
+//         dout[1],
+//         dout[0],
+//         dx
+//     };
+// endmodule
+
+
+
 module CRC7(
     input wire clk,
     input wire en,
@@ -301,9 +351,8 @@ module CRC7(
 );
     reg[6:0] d = 0;
     wire dx = din ^ d[6];
-    wire[6:0] dnext = { dx, d[0], d[1], d[2]^dx, d[3], d[4], d[5] };
+    wire[6:0] dnext = { d[5], d[4], d[3], d[2] ^ dx, d[1], d[0], dx };
     assign dout = dnext;
-    
     always @(posedge clk)
         d <= (!en ? 0 : dnext);
 endmodule
@@ -360,6 +409,7 @@ module SDCardController #(
     
     SB_IO #(
         .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
         .NEG_TRIGGER(1'b1)
     ) sbio (
         .PACKAGE_PIN(sd_cmd),
@@ -376,6 +426,7 @@ module SDCardController #(
     for (i=0; i<4; i=i+1) begin
         SB_IO #(
             .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+            // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
             .NEG_TRIGGER(1'b1)
         ) sbio (
             .PACKAGE_PIN(sd_dat[i]),
@@ -387,7 +438,8 @@ module SDCardController #(
     end
     
     reg[5:0] state = 0;
-    localparam StateInit = 0;
+    localparam StateInit = 0;   // +3
+    localparam StateIdle = 4;
     
     always @(posedge sd_clk) begin
         case (state)
@@ -403,8 +455,8 @@ module SDCardController #(
                 cmdOutReg <= cmdOutReg<<1;
             
             end else begin
-                // If this was the last bit, send the CRC next
-                cmdOutReg <= {cmdCRC, 1'b1, 33'b0};
+                // If this was the last command bit, send the CRC, followed by the '1' end bit
+                cmdOutReg <= {cmdCRC, 1'b1, 1'b1, 32'b0};
                 state <= StateInit+2;
             end
         end
@@ -415,8 +467,17 @@ module SDCardController #(
             // Check if this was the last bit to send
             if (cmdOutDone) begin
                 cmdOutActive <= 0;
-                state <= StateInit;
+                state <= StateIdle;
+                // state <= StateInit+3;
             end
+        end
+        
+        // StateInit+3: begin
+        //     cmdOutActive <= 0;
+        //     state <= StateIdle;
+        // end
+        
+        StateIdle: begin
         end
         endcase
     end
