@@ -3,12 +3,6 @@
 
 `timescale 1ns/1ps
 
-
-
-
-
-
-
 module Debug #(
     // Max payload length (bytes)
     // *** Code needs to be updated below if this is changed!
@@ -296,14 +290,34 @@ endmodule
 
 
 
-module SDCardController(
+module SDCardController #(
+    parameter ClkFreq = 12000000,       // `clk` frequency
+    parameter SDClkMaxFreq = 400000     // max `sd_clk` frequency
+)(
     input wire          clk12mhz,
+    
+    // Command port
+    input wire          cmd_trigger,
+    input wire[5:0]     cmd_cmd,
+    output wire[135:0]  cmd_resp,
+    output reg          cmd_done = 0,
     
     // SDIO port
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat
 );
+    function [63:0] DivCeil;
+        input [63:0] n;
+        input [63:0] d;
+        begin
+            DivCeil = (n+d-1)/d;
+        end
+    endfunction
+    
+    localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
+    reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
+    assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
     
     reg dataOutActive = 0;
     reg dataOut[3:0] = 0;
@@ -323,6 +337,11 @@ module SDCardController(
                 .D_IN_0(dataIn[i])
             );
         `endif
+    end
+    
+    
+    
+    always @(posedge sd_clk) begin
     end
     
 endmodule
