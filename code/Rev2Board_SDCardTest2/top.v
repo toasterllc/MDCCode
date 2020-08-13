@@ -60,14 +60,14 @@ module SDCardController #(
         end
     endfunction
     
-    // localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
-    // reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
-    // assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
-    //
-    // always @(posedge clk) begin
-    //     sdClkDivider <= sdClkDivider+1;
-    // end
-    assign sd_clk = clk;
+    localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
+    reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
+    assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
+
+    always @(posedge clk) begin
+        sdClkDivider <= sdClkDivider+1;
+    end
+    // assign sd_clk = clk;
     
     localparam CmdOutRegWidth = 40;
     reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
@@ -219,7 +219,7 @@ module Top(
         .clk(clk),
         
         .cmd_trigger(),
-        .cmd_idx(6'b0),
+        .cmd_idx(6'b010001),
         .cmd_arg(32'b0),
         .cmd_resp(),
         .cmd_done(),
