@@ -13,24 +13,6 @@
 
 
 
-module CRC7(
-    input wire clk,
-    input wire en,
-    input din,
-    output wire[6:0] dout
-);
-    reg[6:0] d = 0;
-    wire dx = din ^ d[6];
-    wire[6:0] dnext = { d[5], d[4], d[3], d[2] ^ dx, d[1], d[0], dx };
-    assign dout = dnext;
-    always @(posedge clk)
-        d <= (!en ? 0 : dnext);
-endmodule
-
-
-
-
-
 
 
 
@@ -101,7 +83,7 @@ module Top(
             sd_cmd_trigger <= 0;
             if (sd_cmd_done) begin
                 `ifdef SIM
-                    $display("Received response: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
+                    $display("Received response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
                         sd_cmd_resp,
                         sd_cmd_resp[135:134],   // preamble
                         sd_cmd_resp[133:128],   // index
@@ -145,7 +127,7 @@ module Top(
     //
     //         wait(clk & sd_cmd_done);
     //
-    //         $display("Got response: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
+    //         $display("Got response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
     //             sd_cmd_resp,
     //             sd_cmd_resp[135:134],   // preamble
     //             sd_cmd_resp[133:128],   // index
@@ -179,7 +161,7 @@ module Top(
                     wait(sd_clk);
                 end
                 
-                $display("Received command: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
+                $display("Received command: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
                     sim_cmdIn,
                     sim_cmdIn[47:46],   // preamble
                     sim_cmdIn[45:40],   // index

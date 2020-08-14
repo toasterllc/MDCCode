@@ -1,5 +1,6 @@
 `include "../ClockGen.v"
 `include "../AFIFO.v"
+`include "../SDCardController.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -246,7 +247,7 @@ module Debug #(
                 end
             
             end else begin
-                // $display("Received message: msgType=%0d, payloadLen=%0d", serialIn_msgType, serialIn_payloadLen);
+                $display("Received message: msgType=%0d, payloadLen=%0d", serialIn_msgType, serialIn_payloadLen);
                 // Only transmit non-nop messages
                 if (serialIn_msgType) begin
                     inq_writeTrigger <= 1;
@@ -293,198 +294,6 @@ module Debug #(
 endmodule
 
 
-// module CRC7(
-//     input wire clk,
-//     input wire en,
-//     input din,
-//     output wire[6:0] dout
-// );
-//     reg[6:0] d = 0;
-//     wire dx = din ^ d[6];
-//     wire[6:0] dnext = { dx, d[0], d[1], d[2]^dx, d[3], d[4], d[5] };
-//     assign dout = dnext;
-//
-//     always @(posedge clk)
-//         d <= (!en ? 0 : dnext);
-// endmodule
-
-// module CRC7(
-//     input wire clk,
-//     input wire en,
-//     input din,
-//     output reg[6:0] dout = 0
-// );
-//     wire dx = din ^ dout[6];
-//     always @(posedge clk) begin
-//         if (!en) begin
-//             dout <= 0;
-//
-//         end else begin
-//             dout[0] <= dx;
-//             dout[1] <= dout[0];
-//             dout[2] <= dout[1];
-//             dout[3] <= dout[2] ^ dx;
-//             dout[4] <= dout[3];
-//             dout[5] <= dout[4];
-//             dout[6] <= dout[5];
-//         end
-//     end
-//
-//     wire[6:0] doutNext = {
-//         dout[5],
-//         dout[4],
-//         dout[3],
-//         dout[2] ^ dx,
-//         dout[1],
-//         dout[0],
-//         dx
-//     };
-// endmodule
-
-
-
-module CRC7(
-    input wire clk,
-    input wire en,
-    input din,
-    output wire[6:0] dout
-);
-    reg[6:0] d = 0;
-    wire dx = din ^ d[6];
-    wire[6:0] dnext = { d[5], d[4], d[3], d[2] ^ dx, d[1], d[0], dx };
-    assign dout = dnext;
-    always @(posedge clk)
-        d <= (!en ? 0 : dnext);
-endmodule
-
-
-module SDCardController #(
-    parameter ClkFreq = 12000000,       // `clk` frequency
-    parameter SDClkMaxFreq = 400000     // max `sd_clk` frequency
-)(
-    input wire          clk,
-    
-    // Command port
-    input wire          cmd_trigger,
-    input wire[5:0]     cmd_idx,
-    input wire[31:0]    cmd_arg,
-    output wire[135:0]  cmd_resp,
-    output reg          cmd_done = 0,
-    
-    // SDIO port
-    output wire         sd_clk,
-    inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat
-);
-    function [63:0] DivCeil;
-        input [63:0] n;
-        input [63:0] d;
-        begin
-            DivCeil = (n+d-1)/d;
-        end
-    endfunction
-    
-    localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
-    reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
-    assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
-    
-    always @(posedge clk) begin
-        sdClkDivider <= sdClkDivider+1;
-    end
-    
-    localparam CmdOutRegWidth = 41;
-    reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
-    wire cmdOut = cmdOutReg[CmdOutRegWidth-1];
-    reg cmdOutActive = 0;
-    wire cmdOutDone = !cmdOutReg[CmdOutRegWidth-3:0];
-    wire cmdIn;
-    
-    wire[6:0] cmdCRC;
-    CRC7 crc7(
-        .clk(sd_clk),
-        .en(cmdOutActive),
-        .din(cmdOut),
-        .dout(cmdCRC)
-    );
-    
-    SB_IO #(
-        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
-        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
-        .NEG_TRIGGER(1'b1)
-    ) sbio (
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_ENABLE(cmdOutActive),
-        .OUTPUT_CLK(sd_clk),
-        .D_OUT_0(cmdOut),
-        .D_IN_0(cmdIn)
-    );
-    
-    reg[3:0] dataOut = 0;
-    reg dataOutActive = 0;
-    wire[3:0] dataIn;
-    genvar i;
-    for (i=0; i<4; i=i+1) begin
-        SB_IO #(
-            .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
-            // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
-            .NEG_TRIGGER(1'b1)
-        ) sbio (
-            .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_ENABLE(dataOutActive),
-            .OUTPUT_CLK(sd_clk),
-            .D_OUT_0(dataOut[i]),
-            .D_IN_0(dataIn[i])
-        );
-    end
-    
-    reg[5:0] state = 0;
-    localparam StateInit = 0;   // +3
-    localparam StateIdle = 4;
-    
-    always @(posedge sd_clk) begin
-        case (state)
-        
-        StateInit: begin
-            cmdOutReg <= {2'b01, cmd_idx, cmd_arg, 1'b1};
-            cmdOutActive <= 1;
-            state <= StateInit+1;
-        end
-        
-        StateInit+1: begin
-            if (!cmdOutDone) begin
-                cmdOutReg <= cmdOutReg<<1;
-            
-            end else begin
-                // If this was the last command bit, send the CRC, followed by the '1' end bit
-                cmdOutReg <= {cmdCRC, 1'b1, 1'b1, 32'b0};
-                state <= StateInit+2;
-            end
-        end
-        
-        StateInit+2: begin
-            cmdOutReg <= cmdOutReg<<1;
-            
-            // Check if this was the last bit to send
-            if (cmdOutDone) begin
-                cmdOutActive <= 0;
-                state <= StateIdle;
-                // state <= StateInit+3;
-            end
-        end
-        
-        // StateInit+3: begin
-        //     cmdOutActive <= 0;
-        //     state <= StateIdle;
-        // end
-        
-        StateIdle: begin
-        end
-        endcase
-    end
-    
-endmodule
-
-
 
 
 module Top(
@@ -492,7 +301,11 @@ module Top(
     output reg[3:0]     led = 0  /* synthesis syn_keep=1 */,
     
     output wire         sd_clk,
-    inout wire          sd_cmd,
+`ifdef SIM
+    inout tri1          sd_cmd,
+`else
+    inout wire          sd_cmd  /* synthesis syn_keep=1 */,
+`endif
     inout wire[3:0]     sd_dat,
     
     input wire          debug_clk,
@@ -551,17 +364,18 @@ module Top(
     // ====================
     // SD Card Controller
     // ====================
-    SDCardController #(
-        .ClkFreq(ClkFreq),
-        .SDClkMaxFreq(400000)
-    ) sdctrl(
-        .clk(clk),
+    reg         sd_cmd_trigger = 0;
+    reg[37:0]   sd_cmd_cmd = 0;
+    wire[135:0] sd_cmd_resp;
+    wire        sd_cmd_done;
+    SDCardController sdctrl(
+        .clk12mhz(clk12mhz),
         
-        .cmd_trigger(),
-        .cmd_idx(6'b0),
-        .cmd_arg(32'b0),
-        .cmd_resp(),
-        .cmd_done(),
+        .cmd_clk(clk),
+        .cmd_trigger(sd_cmd_trigger),
+        .cmd_cmd(sd_cmd_cmd),
+        .cmd_resp(sd_cmd_resp),
+        .cmd_done(sd_cmd_done),
         
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
@@ -579,13 +393,18 @@ module Top(
     // Debug I/O
     // ====================
     localparam MsgType_LEDSet           = 8'h01;
+    
     localparam MsgType_MemRead          = 8'h02;
     localparam MsgType_MemData          = 8'h03;
+    
     localparam MsgType_PixReg8          = 8'h04;
     localparam MsgType_PixReg16         = 8'h05;
     localparam MsgType_PixCapture       = 8'h06;
     localparam MsgType_PixSize          = 8'h07;
     localparam MsgType_PixData          = 8'h08;
+    
+    localparam MsgType_SDCmd            = 8'h09;
+    localparam MsgType_SDResp           = 8'h0A;
     
     wire[7:0] debug_msgIn_type;
     wire[7:0] debug_msgIn_payloadLen;
@@ -637,11 +456,7 @@ module Top(
     
     localparam StateInit        = 0;    // +0
     localparam StateHandleMsg   = 1;    // +2
-    localparam StateMemRead     = 4;    // +4
-    localparam StatePixReg8     = 9;    // +2
-    localparam StatePixReg16    = 12;   // +2
-    localparam StatePixCapture  = 15;   // +5
-    
+    localparam StateSDCmd       = 4;    // +2
     reg[4:0] state = 0;
     reg[7:0] msgInType = 0;
     reg[5*8-1:0] msgInPayload = 0;
@@ -650,7 +465,7 @@ module Top(
         case (state)
         
         // Initialize the SDRAM
-        StateInit: begin
+        StateInit+0: begin
             led <= 0;
             state <= StateHandleMsg;
         end
@@ -662,7 +477,7 @@ module Top(
         
         
         // Accept new command
-        StateHandleMsg: begin
+        StateHandleMsg+0: begin
             debug_msgIn_trigger <= 1;
             if (debug_msgIn_trigger && debug_msgIn_ready) begin
                 debug_msgIn_trigger <= 0;
@@ -686,11 +501,18 @@ module Top(
             end
             
             MsgType_LEDSet: begin
-                $display("MsgType_LEDSet: %0d", msgInPayload[0]);
+                `ifdef SIM
+                    $display("MsgType_LEDSet: %0d", msgInPayload[0]);
+                `endif
                 led[0] <= msgInPayload[0];
                 debug_msgOut_type <= MsgType_LEDSet;
                 debug_msgOut_payloadLen <= 1;
             end
+            
+            MsgType_SDCmd: begin
+                state <= StateSDCmd+0;
+            end
+            
             endcase
         end
         
@@ -707,20 +529,241 @@ module Top(
             end
         end
         
+        StateSDCmd+0: begin
+            sd_cmd_cmd <= {
+                msgInPayload[5:0],      // command
+                // msgInPayload[8:39],   // arg0
+                msgInPayload[1*8+:8],   // arg0
+                msgInPayload[2*8+:8],   // arg1
+                msgInPayload[3*8+:8],   // arg2
+                msgInPayload[4*8+:8]    // arg3
+            };
+            sd_cmd_trigger <= 1;
+            state <= StateSDCmd+1;
+        end
+        
+        StateSDCmd+1: begin
+            sd_cmd_trigger <= 0;
+            // Wait until the SD command is complete
+            if (sd_cmd_done) begin
+                `ifdef SIM
+                    $display("SD command completed, sending response back to host: %b", sd_cmd_resp);
+                `endif
+                debug_msgOut_type <= MsgType_SDResp;
+                debug_msgOut_payloadLen <= 18;
+                state <= StateSDCmd+2;
+            end
+        end
+        
+        StateSDCmd+2: begin
+            // Send the SD command response back to the host
+            if (debug_msgOut_payloadTrigger) begin
+                debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
+                case (debug_msgOut_payloadLen)
+                18: debug_msgOut_payload <= 1; // status
+                17: debug_msgOut_payload <= sd_cmd_resp[(17*8)-1-:8];
+                16: debug_msgOut_payload <= sd_cmd_resp[(16*8)-1-:8];
+                15: debug_msgOut_payload <= sd_cmd_resp[(15*8)-1-:8];
+                14: debug_msgOut_payload <= sd_cmd_resp[(14*8)-1-:8];
+                13: debug_msgOut_payload <= sd_cmd_resp[(13*8)-1-:8];
+                12: debug_msgOut_payload <= sd_cmd_resp[(12*8)-1-:8];
+                11: debug_msgOut_payload <= sd_cmd_resp[(11*8)-1-:8];
+                10: debug_msgOut_payload <= sd_cmd_resp[(10*8)-1-:8];
+                 9:  debug_msgOut_payload <= sd_cmd_resp[(9*8)-1-:8];
+                 8:  debug_msgOut_payload <= sd_cmd_resp[(8*8)-1-:8];
+                 7:  debug_msgOut_payload <= sd_cmd_resp[(7*8)-1-:8];
+                 6:  debug_msgOut_payload <= sd_cmd_resp[(6*8)-1-:8];
+                 5:  debug_msgOut_payload <= sd_cmd_resp[(5*8)-1-:8];
+                 4:  debug_msgOut_payload <= sd_cmd_resp[(4*8)-1-:8];
+                 3:  debug_msgOut_payload <= sd_cmd_resp[(3*8)-1-:8];
+                 2:  debug_msgOut_payload <= sd_cmd_resp[(2*8)-1-:8];
+                 1:  debug_msgOut_payload <= sd_cmd_resp[(1*8)-1-:8];
+                 0: begin
+                    // Clear `debug_msgOut_type` to prevent another message from being sent.
+                    debug_msgOut_type <= 0;
+                    state <= StateHandleMsg;
+                end
+                endcase
+            end
+        end
+        
         endcase
     end
     
     
+// `ifdef SIM
+//     initial begin
+//         $dumpfile("top.vcd");
+//         $dumpvars(0, Top);
+//     end
+//
+//     initial begin
+//         #1000000;
+//         $finish;
+//     end
+// `endif
+    
+    
+    
+    
+    
+    
 `ifdef SIM
+    reg sim_debug_clk = 0;
+    reg sim_debug_cs = 0;
+    reg[7:0] sim_debug_di_shiftReg = 0;
+    
+    assign debug_clk = sim_debug_clk;
+    assign debug_cs = sim_debug_cs;
+    assign debug_di = sim_debug_di_shiftReg[7];
+    
+    reg sim_pix_dclk = 0;
+    reg[11:0] sim_pix_d = 0;
+    reg sim_pix_fv = 0;
+    reg sim_pix_lv = 0;
+    
+    assign pix_dclk = sim_pix_dclk;
+    assign pix_d = sim_pix_d;
+    assign pix_fv = sim_pix_fv;
+    assign pix_lv = sim_pix_lv;
+    
+    task WriteByte(input[7:0] b);
+        sim_debug_di_shiftReg = b;
+        repeat (8) begin
+            wait (sim_debug_clk);
+            wait (!sim_debug_clk);
+            sim_debug_di_shiftReg = sim_debug_di_shiftReg<<1;
+        end
+    endtask
+    
+    
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
     end
     
     initial begin
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        
+        wait (!sim_debug_clk);
+        sim_debug_cs = 1;
+        
+        WriteByte(MsgType_SDCmd);   // Message type
+        WriteByte(8'h5);            // Payload length
+        WriteByte(8'h01);           // Payload0: command
+        WriteByte(8'h42);           // Payload1: arg0
+        WriteByte(8'h43);           // Payload2: arg1
+        WriteByte(8'h44);           // Payload3: arg2
+        WriteByte(8'h45);           // Payload4: arg3
+        
+        // WriteByte(MsgType_LEDSet);  // Message type
+        // WriteByte(8'h1);            // Payload length
+        // WriteByte(8'h1);            // Payload
+        
+        // WriteByte(MsgType_PixReg8);     // Message type
+        // WriteByte(8'h4);                // Payload length
+        // WriteByte(8'h1);                // Payload0: write
+        // WriteByte(8'h34);               // Payload1: addr0
+        // WriteByte(8'h12);               // Payload2: addr1
+        // WriteByte(8'h42);               // Payload3: value
+        //
+        // WriteByte(MsgType_PixReg8);     // Message type
+        // WriteByte(8'h4);                // Payload length
+        // WriteByte(8'h0);                // Payload0: write
+        // WriteByte(8'h34);               // Payload1: addr0
+        // WriteByte(8'h12);               // Payload2: addr1
+        // WriteByte(8'h42);               // Payload3: value
+        //
+        // WriteByte(MsgType_PixReg16);    // Message type
+        // WriteByte(8'h5);                // Payload length
+        // WriteByte(8'h0);                // Payload0: write
+        // WriteByte(8'h34);               // Payload1: addr0
+        // WriteByte(8'h12);               // Payload2: addr1
+        // WriteByte(8'hFE);               // Payload3: value0
+        // WriteByte(8'hCA);               // Payload4: value1
+        
         #1000000;
         $finish;
     end
+    
+    // ====================
+    // sim_debug_clk driver
+    // ====================
+    initial begin
+        // Wait for ClockGen to start its clock
+        wait(clk);
+        #100;
+        
+        forever begin
+            sim_debug_clk = 0;
+            #10;
+            sim_debug_clk = 1;
+            #10;
+        end
+    end
+    
+    
+    
+    
+    
+    
+    
+    // ====================
+    // SD card emulator
+    //   Receive commands, issue responses
+    // ====================
+    reg[47:0] sim_cmdIn = 0;
+    reg[47:0] sim_respOut = 0;
+    reg sim_cmdOut = 1'bz;
+    assign sd_cmd = sim_cmdOut;
+    
+    initial begin
+        forever begin
+            wait(sd_clk);
+            
+            if (!sd_cmd) begin
+                // Receive command
+                reg[7:0] i;
+                for (i=0; i<48; i++) begin
+                    sim_cmdIn = (sim_cmdIn<<1)|sd_cmd;
+                    wait(!sd_clk);
+                    wait(sd_clk);
+                end
+                
+                $display("Received command: %b [ preamble: %b, index: %0d, arg: 0x%x, crc: %b, stop: %b ]",
+                    sim_cmdIn,
+                    sim_cmdIn[47:46],   // preamble
+                    sim_cmdIn[45:40],   // index
+                    sim_cmdIn[39:8],    // arg
+                    sim_cmdIn[7:1],     // crc
+                    sim_cmdIn[0],       // stop bit
+                );
+                
+                // Issue response
+                sim_respOut = {47'b0, 1'b1};
+                $display("Sending response: %b", sim_respOut);
+                for (i=0; i<48; i++) begin
+                    wait(!sd_clk);
+                    sim_cmdOut = sim_respOut[47];
+                    sim_respOut = sim_respOut<<1;
+                    wait(sd_clk);
+                end
+                wait(!sd_clk);
+                sim_cmdOut = 1'bz;
+            end
+            
+            wait(!sd_clk);
+        end
+    end
+    
+    
+    
 `endif
+    
+    
+    
+    
     
 endmodule

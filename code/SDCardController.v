@@ -1,3 +1,19 @@
+`include "../MsgChannel.v"
+
+module CRC7(
+    input wire clk,
+    input wire en,
+    input din,
+    output wire[6:0] dout
+);
+    reg[6:0] d = 0;
+    wire dx = din ^ d[6];
+    wire[6:0] dnext = { d[5], d[4], d[3], d[2] ^ dx, d[1], d[0], dx };
+    assign dout = dnext;
+    always @(posedge clk)
+        d <= (!en ? 0 : dnext);
+endmodule
+
 module SDCardController(
     input wire          clk12mhz,
     
@@ -49,6 +65,7 @@ module SDCardController(
     // ====================
     reg int_done = 0;
     reg[135:0] int_resp = 0;
+    reg int_respExpected = 0;
     MsgChannel #(
         .MsgLen(136)
     ) respChannel(
@@ -98,6 +115,7 @@ module SDCardController(
     localparam StateIdle    = 0;   // +0
     localparam StateCmd     = 1;   // +1
     localparam StateResp    = 3;   // +1
+    localparam StateDone    = 5;   // +0
     reg[5:0] int_state = 0;
     always @(posedge int_clk) begin
         int_cmdOutReg <= int_cmdOutReg<<1;
@@ -109,8 +127,17 @@ module SDCardController(
             int_done <= 0; // Reset from previous state
             
             if (int_trigger) begin
+                `ifdef SIM
+                    $display("[SDCardController] Sending SD command: %b [ cmd: %0d, arg: 0x%x ]",
+                        int_cmd,
+                        int_cmd[37:32],     // command
+                        int_cmd[31:0]       // arg
+                    );
+                `endif
+                
                 int_cmdOutReg <= {2'b01, int_cmd};
                 int_cmdOutActive <= 1;
+                int_respExpected <= |int_cmd[37:32];
                 int_counter <= 40;
                 int_state <= StateCmd;
             end
@@ -129,7 +156,7 @@ module SDCardController(
             if (int_counter == 1) begin
                 // If this was the last bit, wrap up
                 int_cmdOutActive <= 0;
-                int_state <= StateResp;
+                int_state <= (int_respExpected ? StateResp : StateDone);
             end
         end
         
@@ -144,9 +171,13 @@ module SDCardController(
         StateResp+1: begin
             if (int_counter == 1) begin
                 // If this was the last bit, wrap up
-                int_done <= 1;
-                int_state <= StateIdle;
+                int_state <= StateDone;
             end
+        end
+        
+        StateDone: begin
+            int_done <= 1;
+            int_state <= StateIdle;
         end
         endcase
     end
