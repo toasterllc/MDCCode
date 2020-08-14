@@ -129,6 +129,18 @@ public:
         uint16_t mem[0x7F];
     } __attribute__((packed));
     
+    struct SDCmdMsg {
+        MsgHdr hdr{.type=0x09, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint8_t cmd = 0;
+        uint8_t arg[4] = {};
+    } __attribute__((packed));
+    
+    struct SDRespMsg {
+        MsgHdr hdr{.type=0x0A, .len=sizeof(*this)-sizeof(MsgHdr)};
+        uint8_t ok = 0;
+        uint8_t resp[17] = {};
+    } __attribute__((packed));
+    
     using MsgPtr = std::unique_ptr<Msg>;
     
     MDCDevice() {
@@ -245,6 +257,8 @@ public:
         if (type == PixCaptureMsg{}.hdr.type) return _newMsg<PixCaptureMsg>();
         if (type == PixSizeMsg{}.hdr.type) return _newMsg<PixSizeMsg>();
         if (type == PixDataMsg{}.hdr.type) return _newMsg<PixDataMsg>();
+        if (type == SDCmdMsg{}.hdr.type) return _newMsg<SDCmdMsg>();
+        if (type == SDRespMsg{}.hdr.type) return _newMsg<SDRespMsg>();
         printf("Unknown msg type: %ju\n", (uintmax_t)type);
         return nullptr;
     }

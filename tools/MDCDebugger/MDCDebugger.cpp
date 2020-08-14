@@ -41,6 +41,7 @@ const Cmd MemVerifyCmd = "memverify";
 const Cmd PixReg8Cmd = "pixreg8";
 const Cmd PixReg16Cmd = "pixreg16";
 const Cmd PixCaptureCmd = "pixcapture";
+const Cmd SDCmdCmd = "sdcmd";
 
 void printUsage() {
     using namespace std;
@@ -53,6 +54,7 @@ void printUsage() {
     cout << " " << PixReg16Cmd      << " <addr>\n";
     cout << " " << PixReg16Cmd      << " <addr>=<val16>\n";
     cout << " " << PixCaptureCmd    << " <file>\n";
+    cout << " " << SDCmdCmd         << " <cmd> <arg32>\n";
     cout << "\n";
 }
 
@@ -62,11 +64,17 @@ struct RegOp {
     uint16_t val = 0;
 };
 
+struct SDCmd {
+    uint8_t cmd = 0;
+    uint8_t arg[4] = {};
+};
+
 struct Args {
     Cmd cmd;
     bool on = false;
     std::string filePath;
     RegOp regOp;
+    SDCmd sdCmd;
 };
 
 static RegOp parseRegOp(const std::string str) {
@@ -123,6 +131,16 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == PixCaptureCmd) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
         args.filePath = strs[1];
+    
+    } else if (args.cmd == SDCmdCmd) {
+        if (strs.size() < 3) throw std::runtime_error("cmd/arg not specified");
+        args.sdCmd.cmd = atoi(strs[1].c_str());
+        
+        uint32_t sdCmdArg = (uint32_t)strtoumax(strs[2].c_str(), nullptr, 0);
+        args.sdCmd.arg[0] = (uint8_t)((sdCmdArg&0xFF000000)>>24);
+        args.sdCmd.arg[1] = (uint8_t)((sdCmdArg&0x00FF0000)>>16);
+        args.sdCmd.arg[2] = (uint8_t)((sdCmdArg&0x0000FF00)>>8);
+        args.sdCmd.arg[3] = (uint8_t)((sdCmdArg&0x000000FF)>>0);
     
     } else {
         throw std::runtime_error("invalid command");
@@ -342,6 +360,32 @@ static void pixCapture(const Args& args, MDCDevice& device) {
     }
 }
 
+static void sdCmd(const Args& args, MDCDevice& device) {
+    using SDCmdMsg = MDCDevice::SDCmdMsg;
+    using SDRespMsg = MDCDevice::SDRespMsg;
+    using Msg = MDCDevice::Msg;
+    
+    device.write(SDCmdMsg{
+        .cmd = args.sdCmd.cmd,
+        .arg = {args.sdCmd.arg[0], args.sdCmd.arg[1], args.sdCmd.arg[2], args.sdCmd.arg[3]},
+    });
+    
+    if (auto msgPtr = Msg::Cast<SDRespMsg>(device.read())) {
+        const auto& msg = *msgPtr;
+        if (msg.ok) {
+            printf("SD card response:\n");
+            for (size_t i=0; i<sizeof(msg.resp)/sizeof(*msg.resp); i++) {
+                printf("%jx ", (uintmax_t)msg.resp[i]);
+            }
+            printf("\n");
+        
+        } else {
+            throw std::runtime_error("SD command failed");
+        }
+        return;
+    }
+}
+
 int main(int argc, const char* argv[]) {
     Args args;
     try {
@@ -362,6 +406,8 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == PixReg8Cmd)    pixReg8(args, *device);
         else if (args.cmd == PixReg16Cmd)   pixReg16(args, *device);
         else if (args.cmd == PixCaptureCmd) pixCapture(args, *device);
+        else if (args.cmd == SDCmdCmd)      sdCmd(args, *device);
+    
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed: %s\n", e.what());
         return 1;

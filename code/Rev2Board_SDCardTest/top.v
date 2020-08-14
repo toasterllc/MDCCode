@@ -560,7 +560,7 @@ module Top(
             if (debug_msgOut_payloadTrigger) begin
                 debug_msgOut_payloadLen <= debug_msgOut_payloadLen-1;
                 case (debug_msgOut_payloadLen)
-                18: debug_msgOut_payload <= 1; // status
+                18: debug_msgOut_payload <= 1; // ok
                 17: debug_msgOut_payload <= sd_cmd_resp[(17*8)-1-:8];
                 16: debug_msgOut_payload <= sd_cmd_resp[(16*8)-1-:8];
                 15: debug_msgOut_payload <= sd_cmd_resp[(15*8)-1-:8];
