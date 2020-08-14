@@ -49,37 +49,134 @@ endmodule
 
 
 
-// SyncPulse
+// // SyncPulse
+// //   Transmits a single-clock pulse across clock domains.
+// //   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
+// module SyncPulse(
+//     input wire in_clk,
+//     input wire in_pulse,
+//
+//     input wire out_clk,
+//     output wire out_pulse
+// );
+//     reg in_req = 0;
+//     wire in_ack;
+//     wire idle = !in_req & !in_ack;
+//     always @(posedge in_clk) begin
+//         if (idle & in_pulse)   in_req <= 1;
+//         else if (in_ack)        in_req <= 0;
+//     end
+//
+//     reg pipe1 = 0;
+//     always @(posedge out_clk)
+//         { out_req, pipe1 } <= { pipe1, in_req };
+//
+//     reg pipe2 = 0;
+//     always @(posedge in_clk)
+//         { in_ack, pipe2 } <= { pipe2, out_req };
+//
+//     reg out_lastReq = 0;
+//     always @(posedge out_clk)
+//         out_lastReq <= out_req;
+//
+//     assign out_pulse = out_lastReq & !out_req; // Out pulse occurs upon negative edge of out_req.
+// endmodule
+
+
+
+
+
+// // MsgChannel
+// //   Transmits a single-clock pulse across clock domains.
+// //   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
+// module MsgChannel #(
+//         parameter MsgLen = 8,
+//     )(
+//         input wire              in_clk,
+//         input wire              in_trigger,
+//         input wire[MsgLen-1:0]  in_msg,
+//
+//         input wire              out_clk,
+//         output reg              out_trigger = 0,
+//         output reg[MsgLen-1:0]  out_msg = 0
+//     );
+//     reg in_req = 0;
+//     reg[MsgLen-1:0] in_tmpMsg = 0;
+//     wire in_ack;
+//     wire in_idle = !in_req & !in_ack;
+//     always @(posedge in_clk) begin
+//         if (in_idle & in_trigger) begin
+//             in_req <= 1;
+//             out_msg <= in_msg;
+//
+//         end else if (in_ack)
+//             in_req <= 0;
+//     end
+//
+//     reg tmp1 = 0;
+//     always @(posedge out_clk)
+//         { out_req, tmp1 } <= { tmp1, in_req };
+//
+//     reg tmp2 = 0;
+//     always @(posedge in_clk)
+//         { in_ack, tmp2 } <= { tmp2, out_req };
+//
+//     reg out_lastReq = 0;
+//     always @(posedge out_clk) begin
+//         out_lastReq <= out_req;
+//         out_trigger <= (!out_lastReq & out_req); // Trigger on positive edge of `out_req`
+//     end
+// endmodule
+
+
+
+
+
+
+
+// MsgChannel
 //   Transmits a single-clock pulse across clock domains.
 //   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
-module SyncPulse(
-    input wire in_clk,
-    input wire in_pulse,
+module MsgChannel #(
+    parameter MsgLen = 8,
+)(
+    input wire              in_clk,
+    input wire              in_trigger,
+    input wire[MsgLen-1:0]  in_msg,
     
-    input wire out_clk,
-    output wire out_pulse
+    input wire              out_clk,
+    output wire             out_trigger,
+    output reg[MsgLen-1:0]  out_msg = 0
 );
     reg in_req = 0;
+    reg[MsgLen-1:0] in_tmpMsg = 0;
     wire in_ack;
-    wire idle = !in_req && !in_ack;
+    wire in_idle = !in_req & !in_ack;
     always @(posedge in_clk) begin
-    	if (idle && in_pulse)   in_req <= 1;
-    	else if (in_ack)        in_req <= 0;
+        if (in_idle & in_trigger) begin
+            in_req <= 1;
+            out_msg <= in_msg; // Synchronization is handled by our logic
+        
+        end else if (in_ack)
+            in_req <= 0;
     end
     
-    reg pipe1 = 0;
+    reg tmp1 = 0;
     always @(posedge out_clk)
-        { out_req, pipe1 } <= { pipe1, in_req };
+        { out_req, tmp1 } <= { tmp1, in_req };
     
-    reg pipe2 = 0;
+    reg tmp2 = 0;
     always @(posedge in_clk)
-        { in_ack, pipe2 } <= { pipe2, out_req };
+        { in_ack, tmp2 } <= { tmp2, out_req };
     
     reg out_lastReq = 0;
     always @(posedge out_clk)
         out_lastReq <= out_req;
     
-    assign out_pulse = out_lastReq && !out_req; // Out pulse occurs upon negative edge of out_req.
+    always @(posedge out_clk)
+        out_trigger <= !out_lastReq & out_req; // Our pulse occurs upon the positive edge of out_req.
+    
+    assign out_trigger = !out_lastReq & out_req; // Our pulse occurs upon the positive edge of out_req.
 endmodule
 
 
