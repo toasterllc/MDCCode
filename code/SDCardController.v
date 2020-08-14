@@ -1,0 +1,191 @@
+module SDCardController(
+    input wire          clk12mhz,
+    
+    // Command port
+    input wire          cmd_clk,
+    input wire          cmd_trigger,
+    input wire[37:0]    cmd_cmd,
+    output wire[135:0]  cmd_resp,
+    output wire         cmd_done,
+    
+    // SDIO port
+    output wire         sd_clk,
+    inout wire          sd_cmd,
+    inout wire[3:0]     sd_dat
+);
+    // ====================
+    // Internal clock (96 MHz)
+    // ====================
+    localparam IntClkFreq = 96000000;
+    wire int_clk;
+    ClockGen #(
+        .FREQ(IntClkFreq),
+        .DIVR(0),
+        .DIVF(63),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(int_clk));
+    
+    // ====================
+    // Synchronization
+    //   {cmd_trigger, cmd_cmd} -> {int_trigger, int_cmd}
+    // ====================
+    wire int_trigger;
+    wire[37:0] int_cmd;
+    MsgChannel #(
+        .MsgLen(38)
+    ) cmdChannel(
+        .in_clk(cmd_clk),
+        .in_trigger(cmd_trigger),
+        .in_msg(cmd_cmd),
+        .out_clk(int_clk),
+        .out_trigger(int_trigger),
+        .out_msg(int_cmd)
+    );
+    
+    // ====================
+    // Synchronization
+    //   {int_done, int_resp} -> {cmd_done, cmd_resp}
+    // ====================
+    reg int_done = 0;
+    reg[135:0] int_resp = 0;
+    MsgChannel #(
+        .MsgLen(136)
+    ) respChannel(
+        .in_clk(int_clk),
+        .in_trigger(int_done),
+        .in_msg(int_resp),
+        .out_clk(cmd_clk),
+        .out_trigger(cmd_done),
+        .out_msg(cmd_resp)
+    );
+    
+    reg[39:0] int_cmdOutReg = 0;
+    wire int_cmdOut = int_cmdOutReg[39];
+    reg int_cmdOutActive = 0;
+    wire int_cmdIn;
+    reg[7:0] int_counter = 0;
+    
+    // ====================
+    // `sd_cmd` IO Pin
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+        .NEG_TRIGGER(1'b1)
+    ) sbio (
+        .PACKAGE_PIN(sd_cmd),
+        .OUTPUT_CLK(int_clk),
+        .OUTPUT_ENABLE(int_cmdOutActive),
+        .D_OUT_0(int_cmdOut),
+        .D_IN_0(int_cmdIn)
+    );
+    
+    // ====================
+    // CRC
+    // ====================
+    wire[6:0] int_cmdCRC;
+    CRC7 crc7(
+        .clk(int_clk),
+        .en(int_cmdOutActive),
+        .din(int_cmdOut),
+        .dout(int_cmdCRC)
+    );
+    
+    // ====================
+    // State Machine
+    // ====================
+    localparam StateIdle    = 0;   // +0
+    localparam StateCmd     = 1;   // +1
+    localparam StateResp    = 3;   // +1
+    reg[5:0] int_state = 0;
+    always @(posedge int_clk) begin
+        int_cmdOutReg <= int_cmdOutReg<<1;
+        int_counter <= int_counter-1;
+        int_resp <= (int_resp<<1)|int_cmdIn;
+        
+        case (int_state)
+        StateIdle: begin
+            int_done <= 0; // Reset from previous state
+            
+            if (int_trigger) begin
+                int_cmdOutReg <= {2'b01, int_cmd};
+                int_cmdOutActive <= 1;
+                int_counter <= 40;
+                int_state <= StateCmd;
+            end
+        end
+        
+        StateCmd: begin
+            if (int_counter == 1) begin
+                // If this was the last bit, send the CRC, followed by the '1' end bit
+                int_cmdOutReg <= {int_cmdCRC, 1'b1, 32'b0};
+                int_counter <= 8;
+                int_state <= StateCmd+1;
+            end
+        end
+        
+        StateCmd+1: begin
+            if (int_counter == 1) begin
+                // If this was the last bit, wrap up
+                int_cmdOutActive <= 0;
+                int_state <= StateResp;
+            end
+        end
+        
+        StateResp: begin
+            // Wait for the response to start
+            if (!int_cmdIn) begin
+                int_counter <= 135;
+                int_state <= StateResp+1;
+            end
+        end
+        
+        StateResp+1: begin
+            if (int_counter == 1) begin
+                // If this was the last bit, wrap up
+                int_done <= 1;
+                int_state <= StateIdle;
+            end
+        end
+        endcase
+    end
+    
+    assign sd_clk = int_clk;
+    
+    // function [63:0] DivCeil;
+    //     input [63:0] n;
+    //     input [63:0] d;
+    //     begin
+    //         DivCeil = (n+d-1)/d;
+    //     end
+    // endfunction
+    //
+    // localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
+    // reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
+    // assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
+    //
+    // always @(posedge clk) begin
+    //     sdClkDivider <= sdClkDivider+1;
+    // end
+    // assign sd_clk = clk;
+    
+    // reg[3:0] dataOut = 0;
+    // reg dataOutActive = 0;
+    // wire[3:0] dataIn;
+    // genvar i;
+    // for (i=0; i<4; i=i+1) begin
+    //     SB_IO #(
+    //         .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+    //         // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+    //         .NEG_TRIGGER(1'b1)
+    //     ) sbio (
+    //         .PACKAGE_PIN(sd_dat[i]),
+    //         .OUTPUT_CLK(intClk),
+    //         .OUTPUT_ENABLE(dataOutActive),
+    //         .D_OUT_0(dataOut[i]),
+    //         .D_IN_0(dataIn[i])
+    //     );
+    // end
+    
+endmodule
