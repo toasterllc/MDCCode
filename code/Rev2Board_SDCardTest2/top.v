@@ -42,8 +42,7 @@ module SDCardController #(
     
     // Command port
     input wire          cmd_trigger,
-    input wire[5:0]     cmd_idx,
-    input wire[31:0]    cmd_arg,
+    input wire[37:0]    cmd_cmd,
     output wire[135:0]  cmd_resp,
     output reg          cmd_done = 0,
     
@@ -63,7 +62,7 @@ module SDCardController #(
     localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
     reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
     assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
-
+    
     always @(posedge clk) begin
         sdClkDivider <= sdClkDivider+1;
     end
@@ -73,8 +72,11 @@ module SDCardController #(
     reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
     wire cmdOut = cmdOutReg[CmdOutRegWidth-1];
     reg cmdOutActive = 0;
-    reg[5:0] cmdOutCounter = 0;
     wire cmdIn;
+    reg[7:0] counter = 0;
+    
+    reg[135:0] resp = 0;
+    assign cmd_resp = resp;
     
     wire[6:0] cmdCRC;
     CRC7 crc7(
@@ -115,39 +117,58 @@ module SDCardController #(
     end
     
     reg[5:0] state = 0;
-    localparam StateInit = 0;   // +3
-    localparam StateIdle = 4;
+    localparam StateIdle    = 0;   // +0
+    localparam StateCmd     = 1;   // +1
+    localparam StateResp    = 3;   // +1
     
     always @(posedge sd_clk) begin
         cmdOutReg <= cmdOutReg<<1;
-        cmdOutCounter <= cmdOutCounter-1;
+        counter <= counter-1;
+        resp <= (resp<<1)|cmdIn;
         
         case (state)
-        StateInit: begin
-            cmdOutReg <= {2'b01, cmd_idx, cmd_arg};
-            cmdOutCounter <= 40;
-            cmdOutActive <= 1;
-            state <= StateInit+1;
+        StateIdle: begin
+            cmd_done <= 0; // Reset from last state
+            
+            if (cmd_trigger) begin
+                cmdOutReg <= {2'b01, cmd_cmd};
+                cmdOutActive <= 1;
+                counter <= 40;
+                state <= StateCmd;
+            end
         end
         
-        StateInit+1: begin
-            if (cmdOutCounter == 1) begin
+        StateCmd: begin
+            if (counter == 1) begin
                 // If this was the last bit, send the CRC, followed by the '1' end bit
                 cmdOutReg <= {cmdCRC, 1'b1, 32'b0};
-                cmdOutCounter <= 8;
-                state <= StateInit+2;
+                counter <= 8;
+                state <= StateCmd+1;
             end
         end
         
-        StateInit+2: begin
-            if (cmdOutCounter == 1) begin
+        StateCmd+1: begin
+            if (counter == 1) begin
                 // If this was the last bit, wrap up
                 cmdOutActive <= 0;
-                state <= StateIdle;
+                state <= StateResp;
             end
         end
         
-        StateIdle: begin
+        StateResp: begin
+            // Wait for the response to start
+            if (!cmdIn) begin
+                counter <= 135;
+                state <= StateResp+1;
+            end
+        end
+        
+        StateResp+1: begin
+            if (counter == 1) begin
+                // If this was the last bit, wrap up
+                cmd_done <= 1;
+                state <= StateIdle;
+            end
         end
         endcase
     end
@@ -166,7 +187,13 @@ module Top(
     output reg[3:0]     led = 0 /* synthesis syn_keep=1 */,
     
     output wire         sd_clk  /* synthesis syn_keep=1 */,
+    
+`ifdef SIM
+    inout tri1          sd_cmd,
+`else
     inout wire          sd_cmd  /* synthesis syn_keep=1 */,
+`endif
+    
     inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */
 );
     // // ====================
@@ -212,17 +239,20 @@ module Top(
     // ====================
     // SD Card Controller
     // ====================
+    reg         sd_cmd_trigger = 0;
+    reg[37:0]   sd_cmd_cmd = 0;
+    wire[135:0] sd_cmd_resp;
+    wire        sd_cmd_done;
     SDCardController #(
         .ClkFreq(ClkFreq),
         .SDClkMaxFreq(400000)
     ) sdctrl(
         .clk(clk),
         
-        .cmd_trigger(),
-        .cmd_idx(6'b010001),
-        .cmd_arg(32'b0),
-        .cmd_resp(),
-        .cmd_done(),
+        .cmd_trigger(sd_cmd_trigger),
+        .cmd_cmd(sd_cmd_cmd),
+        .cmd_resp(sd_cmd_resp),
+        .cmd_done(sd_cmd_done),
         
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
@@ -235,10 +265,86 @@ module Top(
         $dumpvars(0, Top);
     end
     
+    
+    
+    // initial begin
+    //     #1000000;
+    //     $finish;
+    // end
+    
     initial begin
-        #1000000;
+        #10000;
+        wait(!sd_clk);
+        
+        sd_cmd_trigger = 1;
+        sd_cmd_cmd = {6'b000000, 32'b0};
+        wait(sd_clk);
+        #100;
+        sd_cmd_trigger = 0;
+        
+        wait(sd_clk & sd_cmd_done);
+        
+        $display("Got response: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
+            sd_cmd_resp,
+            sd_cmd_resp[135:134],   // preamble
+            sd_cmd_resp[133:128],   // index
+            sd_cmd_resp[127:96],    // arg
+            sd_cmd_resp[95:89],     // crc
+            sd_cmd_resp[88],       // stop bit
+        );
+        
+        #10000;
         $finish;
     end
+    
+    // SD card emulator
+    // Handle receiving commands and providing responses
+    reg[47:0] sim_cmdIn = 0;
+    reg[47:0] sim_respOut = 0;
+    reg sim_cmdOut = 1'bz;
+    assign sd_cmd = sim_cmdOut;
+    
+    initial begin
+        forever begin
+            wait(sd_clk);
+            
+            if (!sd_cmd) begin
+                // Receive incoming command
+                reg[7:0] i;
+                for (i=0; i<48; i++) begin
+                    sim_cmdIn = (sim_cmdIn<<1)|sd_cmd;
+                    wait(!sd_clk);
+                    wait(sd_clk);
+                end
+                
+                $display("Received command: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
+                    sim_cmdIn,
+                    sim_cmdIn[47:46],   // preamble
+                    sim_cmdIn[45:40],   // index
+                    sim_cmdIn[39:8],    // arg
+                    sim_cmdIn[7:1],     // crc
+                    sim_cmdIn[0],       // stop bit
+                );
+                
+                // Issue response
+                sim_respOut = {47'b0, 1'b1};
+                $display("Sending response: %b", sim_respOut);
+                for (i=0; i<48; i++) begin
+                    wait(!sd_clk);
+                    sim_cmdOut = sim_respOut[47];
+                    sim_respOut = sim_respOut<<1;
+                    wait(sd_clk);
+                end
+                wait(!sd_clk);
+                sim_cmdOut = 1'bz;
+                
+                $display("  -> Sent");
+            end
+            
+            wait(!sd_clk);
+        end
+    end
+    
 `endif
     
 endmodule
