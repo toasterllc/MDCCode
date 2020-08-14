@@ -27,7 +27,6 @@ endmodule
 // Synchronizes an asynchronous signal into a clock domain
 module Sync(
     input wire in,
-    
     input wire out_clk,
     output reg out = 0
 );

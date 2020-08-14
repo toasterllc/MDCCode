@@ -31,6 +31,60 @@ endmodule
 
 
 
+// Sync:
+// Synchronizes an asynchronous signal into a clock domain
+module Sync(
+    input wire in,
+    input wire out_clk,
+    output reg out = 0
+);
+    reg pipe = 0;
+    always @(posedge out_clk)
+        { out, pipe } <= { pipe, in };
+endmodule
+
+
+
+
+
+
+
+// SyncPulse
+//   Transmits a single-clock pulse across clock domains.
+//   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
+module SyncPulse(
+    input wire in_clk,
+    input wire in_pulse,
+    
+    input wire out_clk,
+    output wire out_pulse
+);
+    reg in_req = 0;
+    wire in_ack;
+    wire idle = !in_req && !in_ack;
+    always @(posedge in_clk) begin
+    	if (idle && in_pulse)   in_req <= 1;
+    	else if (in_ack)        in_req <= 0;
+    end
+    
+    reg pipe1 = 0;
+    always @(posedge out_clk)
+        { out_req, pipe1 } <= { pipe1, in_req };
+    
+    reg pipe2 = 0;
+    always @(posedge in_clk)
+        { in_ack, pipe2 } <= { pipe2, out_req };
+    
+    reg out_lastReq = 0;
+    always @(posedge out_clk)
+        out_lastReq <= out_req;
+    
+    assign out_pulse = out_lastReq && !out_req; // Out pulse occurs upon negative edge of out_req.
+endmodule
+
+
+
+
 
 
 
@@ -38,90 +92,41 @@ module SDCardController #(
     parameter ClkFreq = 12000000,       // `clk` frequency
     parameter SDClkMaxFreq = 400000     // max `sd_clk` frequency
 )(
-    input wire          clk,
+    input wire          clk12mhz,
     
     // Command port
+    input wire          cmd_clk,
     input wire          cmd_trigger,
     input wire[37:0]    cmd_cmd,
     output wire[135:0]  cmd_resp,
-    output reg          cmd_done = 0,
+    output wire         cmd_done,
     
     // SDIO port
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat
 );
-    function [63:0] DivCeil;
-        input [63:0] n;
-        input [63:0] d;
-        begin
-            DivCeil = (n+d-1)/d;
-        end
-    endfunction
+    // Internal clock (96 MHz)
+    localparam IntClkFreq = 96000000;
+    wire int_clk;
+    ClockGen #(
+        .FREQ(IntClkFreq),
+        .DIVR(0),
+        .DIVF(63),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(int_clk));
     
-    localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
-    reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
-    assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
-    
-    always @(posedge clk) begin
-        sdClkDivider <= sdClkDivider+1;
-    end
-    // assign sd_clk = clk;
-    
-    localparam CmdOutRegWidth = 40;
-    reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
-    wire cmdOut = cmdOutReg[CmdOutRegWidth-1];
-    reg cmdOutActive = 0;
-    wire cmdIn;
-    reg[7:0] counter = 0;
-    
-    reg[135:0] resp = 0;
-    assign cmd_resp = resp;
-    
-    wire[6:0] cmdCRC;
-    CRC7 crc7(
-        .clk(sd_clk),
-        .en(cmdOutActive),
-        .din(cmdOut),
-        .dout(cmdCRC)
+    // `cmd_trigger` synchronizer into internal (int_) clock domain
+    wire int_trigger;
+    SyncPulse sp(
+        .in_clk(cmd_clk),
+        .in_pulse(cmd_trigger),
+        .out_clk(int_clk),
+        .out_pulse(int_trigger)
     );
     
-    SB_IO #(
-        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
-        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
-        .NEG_TRIGGER(1'b1)
-    ) sbio (
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_ENABLE(cmdOutActive),
-        .OUTPUT_CLK(sd_clk),
-        .D_OUT_0(cmdOut),
-        .D_IN_0(cmdIn)
-    );
-    
-    reg[3:0] dataOut = 0;
-    reg dataOutActive = 0;
-    wire[3:0] dataIn;
-    genvar i;
-    for (i=0; i<4; i=i+1) begin
-        SB_IO #(
-            .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
-            // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
-            .NEG_TRIGGER(1'b1)
-        ) sbio (
-            .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_ENABLE(dataOutActive),
-            .OUTPUT_CLK(sd_clk),
-            .D_OUT_0(dataOut[i]),
-            .D_IN_0(dataIn[i])
-        );
-    end
-    
-    reg[5:0] state = 0;
-    localparam StateIdle    = 0;   // +0
-    localparam StateCmd     = 1;   // +1
-    localparam StateResp    = 3;   // +1
-    
-    always @(posedge sd_clk) begin
+    always @(posedge int_clk) begin
         cmdOutReg <= cmdOutReg<<1;
         counter <= counter-1;
         resp <= (resp<<1)|cmdIn;
@@ -171,6 +176,79 @@ module SDCardController #(
             end
         end
         endcase
+    end
+    
+    // function [63:0] DivCeil;
+    //     input [63:0] n;
+    //     input [63:0] d;
+    //     begin
+    //         DivCeil = (n+d-1)/d;
+    //     end
+    // endfunction
+    //
+    // localparam SDClkDividerWidth = $clog2(DivCeil(ClkFreq, SDClkMaxFreq));
+    // reg[SDClkDividerWidth-1:0] sdClkDivider = 0;
+    // assign sd_clk = sdClkDivider[SDClkDividerWidth-1];
+    //
+    // always @(posedge clk) begin
+    //     sdClkDivider <= sdClkDivider+1;
+    // end
+    // assign sd_clk = clk;
+    
+    localparam CmdOutRegWidth = 40;
+    reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
+    wire cmdOut = cmdOutReg[CmdOutRegWidth-1];
+    reg cmdOutActive = 0;
+    wire cmdIn;
+    reg[7:0] counter = 0;
+    
+    reg[135:0] resp = 0;
+    assign cmd_resp = resp;
+    
+    wire[6:0] cmdCRC;
+    CRC7 crc7(
+        .clk(intClk),
+        .en(cmdOutActive),
+        .din(cmdOut),
+        .dout(cmdCRC)
+    );
+    
+    SB_IO #(
+        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+        .NEG_TRIGGER(1'b1)
+    ) sbio (
+        .PACKAGE_PIN(sd_cmd),
+        .OUTPUT_ENABLE(cmdOutActive),
+        .OUTPUT_CLK(intClk),
+        .D_OUT_0(cmdOut),
+        .D_IN_0(cmdIn)
+    );
+    
+    reg[3:0] dataOut = 0;
+    reg dataOutActive = 0;
+    wire[3:0] dataIn;
+    genvar i;
+    for (i=0; i<4; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+            // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+            .NEG_TRIGGER(1'b1)
+        ) sbio (
+            .PACKAGE_PIN(sd_dat[i]),
+            .OUTPUT_ENABLE(dataOutActive),
+            .OUTPUT_CLK(intClk),
+            .D_OUT_0(dataOut[i]),
+            .D_IN_0(dataIn[i])
+        );
+    end
+    
+    reg[5:0] state = 0;
+    localparam StateIdle    = 0;   // +0
+    localparam StateCmd     = 1;   // +1
+    localparam StateResp    = 3;   // +1
+    
+    always @(posedge intClk) begin
     end
     
 endmodule
