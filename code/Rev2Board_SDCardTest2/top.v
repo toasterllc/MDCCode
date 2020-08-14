@@ -1,4 +1,5 @@
 `include "../ClockGen.v"
+`include "../MsgChannel.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -28,167 +29,7 @@ endmodule
 
 
 
-
-
-
-// Sync:
-// Synchronizes an asynchronous signal into a clock domain
-module Sync(
-    input wire in,
-    input wire out_clk,
-    output reg out = 0
-);
-    reg pipe = 0;
-    always @(posedge out_clk)
-        { out, pipe } <= { pipe, in };
-endmodule
-
-
-
-
-
-
-
-// // SyncPulse
-// //   Transmits a single-clock pulse across clock domains.
-// //   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
-// module SyncPulse(
-//     input wire in_clk,
-//     input wire in_pulse,
-//
-//     input wire out_clk,
-//     output wire out_pulse
-// );
-//     reg in_req = 0;
-//     wire in_ack;
-//     wire idle = !in_req & !in_ack;
-//     always @(posedge in_clk) begin
-//         if (idle & in_pulse)   in_req <= 1;
-//         else if (in_ack)        in_req <= 0;
-//     end
-//
-//     reg pipe1 = 0;
-//     always @(posedge out_clk)
-//         { out_req, pipe1 } <= { pipe1, in_req };
-//
-//     reg pipe2 = 0;
-//     always @(posedge in_clk)
-//         { in_ack, pipe2 } <= { pipe2, out_req };
-//
-//     reg out_lastReq = 0;
-//     always @(posedge out_clk)
-//         out_lastReq <= out_req;
-//
-//     assign out_pulse = out_lastReq & !out_req; // Out pulse occurs upon negative edge of out_req.
-// endmodule
-
-
-
-
-
-// // MsgChannel
-// //   Transmits a single-clock pulse across clock domains.
-// //   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
-// module MsgChannel #(
-//         parameter MsgLen = 8,
-//     )(
-//         input wire              in_clk,
-//         input wire              in_trigger,
-//         input wire[MsgLen-1:0]  in_msg,
-//
-//         input wire              out_clk,
-//         output reg              out_trigger = 0,
-//         output reg[MsgLen-1:0]  out_msg = 0
-//     );
-//     reg in_req = 0;
-//     reg[MsgLen-1:0] in_tmpMsg = 0;
-//     wire in_ack;
-//     wire in_idle = !in_req & !in_ack;
-//     always @(posedge in_clk) begin
-//         if (in_idle & in_trigger) begin
-//             in_req <= 1;
-//             out_msg <= in_msg;
-//
-//         end else if (in_ack)
-//             in_req <= 0;
-//     end
-//
-//     reg tmp1 = 0;
-//     always @(posedge out_clk)
-//         { out_req, tmp1 } <= { tmp1, in_req };
-//
-//     reg tmp2 = 0;
-//     always @(posedge in_clk)
-//         { in_ack, tmp2 } <= { tmp2, out_req };
-//
-//     reg out_lastReq = 0;
-//     always @(posedge out_clk) begin
-//         out_lastReq <= out_req;
-//         out_trigger <= (!out_lastReq & out_req); // Trigger on positive edge of `out_req`
-//     end
-// endmodule
-
-
-
-
-
-
-
-// MsgChannel
-//   Transmits a single-clock pulse across clock domains.
-//   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
-module MsgChannel #(
-    parameter MsgLen = 8,
-)(
-    input wire              in_clk,
-    input wire              in_trigger,
-    input wire[MsgLen-1:0]  in_msg,
-    
-    input wire              out_clk,
-    output wire             out_trigger,
-    output reg[MsgLen-1:0]  out_msg = 0
-);
-    reg in_req = 0;
-    reg[MsgLen-1:0] in_tmpMsg = 0;
-    wire in_ack;
-    wire in_idle = !in_req & !in_ack;
-    always @(posedge in_clk) begin
-        if (in_idle & in_trigger) begin
-            in_req <= 1;
-            out_msg <= in_msg; // Synchronization is handled by our logic
-        
-        end else if (in_ack)
-            in_req <= 0;
-    end
-    
-    reg tmp1 = 0;
-    always @(posedge out_clk)
-        { out_req, tmp1 } <= { tmp1, in_req };
-    
-    reg tmp2 = 0;
-    always @(posedge in_clk)
-        { in_ack, tmp2 } <= { tmp2, out_req };
-    
-    reg out_lastReq = 0;
-    always @(posedge out_clk)
-        out_lastReq <= out_req;
-    
-    always @(posedge out_clk)
-        out_trigger <= !out_lastReq & out_req; // Our pulse occurs upon the positive edge of out_req.
-    
-    assign out_trigger = !out_lastReq & out_req; // Our pulse occurs upon the positive edge of out_req.
-endmodule
-
-
-
-
-
-
-
-module SDCardController #(
-    parameter ClkFreq = 12000000,       // `clk` frequency
-    parameter SDClkMaxFreq = 400000     // max `sd_clk` frequency
-)(
+module SDCardController(
     input wire          clk12mhz,
     
     // Command port
@@ -203,7 +44,9 @@ module SDCardController #(
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat
 );
+    // ====================
     // Internal clock (96 MHz)
+    // ====================
     localparam IntClkFreq = 96000000;
     wire int_clk;
     ClockGen #(
@@ -214,66 +57,132 @@ module SDCardController #(
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(int_clk));
     
-    // `cmd_trigger` synchronizer into internal (int_) clock domain
+    // ====================
+    // Synchronization
+    //   {cmd_trigger, cmd_cmd} -> {int_trigger, int_cmd}
+    // ====================
     wire int_trigger;
-    SyncPulse sp(
+    wire[37:0] int_cmd;
+    MsgChannel #(
+        .MsgLen(38)
+    ) cmdChannel(
         .in_clk(cmd_clk),
-        .in_pulse(cmd_trigger),
+        .in_trigger(cmd_trigger),
+        .in_msg(cmd_cmd),
         .out_clk(int_clk),
-        .out_pulse(int_trigger)
+        .out_trigger(int_trigger),
+        .out_msg(int_cmd)
     );
     
+    // ====================
+    // Synchronization
+    //   {int_done, int_resp} -> {cmd_done, cmd_resp}
+    // ====================
+    reg int_done = 0;
+    reg[135:0] int_resp = 0;
+    MsgChannel #(
+        .MsgLen(136)
+    ) respChannel(
+        .in_clk(int_clk),
+        .in_trigger(int_done),
+        .in_msg(int_resp),
+        .out_clk(cmd_clk),
+        .out_trigger(cmd_done),
+        .out_msg(cmd_resp)
+    );
+    
+    reg[39:0] int_cmdOutReg = 0;
+    wire int_cmdOut = int_cmdOutReg[39];
+    reg int_cmdOutActive = 0;
+    wire int_cmdIn;
+    reg[7:0] int_counter = 0;
+    
+    // ====================
+    // `sd_cmd` IO Pin
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+        .NEG_TRIGGER(1'b1)
+    ) sbio (
+        .PACKAGE_PIN(sd_cmd),
+        .OUTPUT_CLK(int_clk),
+        .OUTPUT_ENABLE(int_cmdOutActive),
+        .D_OUT_0(int_cmdOut),
+        .D_IN_0(int_cmdIn)
+    );
+    
+    // ====================
+    // CRC
+    // ====================
+    wire[6:0] int_cmdCRC;
+    CRC7 crc7(
+        .clk(int_clk),
+        .en(int_cmdOutActive),
+        .din(int_cmdOut),
+        .dout(int_cmdCRC)
+    );
+    
+    // ====================
+    // State Machine
+    // ====================
+    localparam StateIdle    = 0;   // +0
+    localparam StateCmd     = 1;   // +1
+    localparam StateResp    = 3;   // +1
+    reg[5:0] int_state = 0;
     always @(posedge int_clk) begin
-        cmdOutReg <= cmdOutReg<<1;
-        counter <= counter-1;
-        resp <= (resp<<1)|cmdIn;
+        int_cmdOutReg <= int_cmdOutReg<<1;
+        int_counter <= int_counter-1;
+        int_resp <= (int_resp<<1)|int_cmdIn;
         
-        case (state)
+        case (int_state)
         StateIdle: begin
-            cmd_done <= 0; // Reset from last state
+            int_done <= 0; // Reset from previous state
             
-            if (cmd_trigger) begin
-                cmdOutReg <= {2'b01, cmd_cmd};
-                cmdOutActive <= 1;
-                counter <= 40;
-                state <= StateCmd;
+            if (int_trigger) begin
+                int_cmdOutReg <= {2'b01, int_cmd};
+                int_cmdOutActive <= 1;
+                int_counter <= 40;
+                int_state <= StateCmd;
             end
         end
         
         StateCmd: begin
-            if (counter == 1) begin
+            if (int_counter == 1) begin
                 // If this was the last bit, send the CRC, followed by the '1' end bit
-                cmdOutReg <= {cmdCRC, 1'b1, 32'b0};
-                counter <= 8;
-                state <= StateCmd+1;
+                int_cmdOutReg <= {int_cmdCRC, 1'b1, 32'b0};
+                int_counter <= 8;
+                int_state <= StateCmd+1;
             end
         end
         
         StateCmd+1: begin
-            if (counter == 1) begin
+            if (int_counter == 1) begin
                 // If this was the last bit, wrap up
-                cmdOutActive <= 0;
-                state <= StateResp;
+                int_cmdOutActive <= 0;
+                int_state <= StateResp;
             end
         end
         
         StateResp: begin
             // Wait for the response to start
-            if (!cmdIn) begin
-                counter <= 135;
-                state <= StateResp+1;
+            if (!int_cmdIn) begin
+                int_counter <= 135;
+                int_state <= StateResp+1;
             end
         end
         
         StateResp+1: begin
-            if (counter == 1) begin
+            if (int_counter == 1) begin
                 // If this was the last bit, wrap up
-                cmd_done <= 1;
-                state <= StateIdle;
+                int_done <= 1;
+                int_state <= StateIdle;
             end
         end
         endcase
     end
+    
+    assign sd_clk = int_clk;
     
     // function [63:0] DivCeil;
     //     input [63:0] n;
@@ -292,61 +201,23 @@ module SDCardController #(
     // end
     // assign sd_clk = clk;
     
-    localparam CmdOutRegWidth = 40;
-    reg[CmdOutRegWidth-1:0] cmdOutReg = 0;
-    wire cmdOut = cmdOutReg[CmdOutRegWidth-1];
-    reg cmdOutActive = 0;
-    wire cmdIn;
-    reg[7:0] counter = 0;
-    
-    reg[135:0] resp = 0;
-    assign cmd_resp = resp;
-    
-    wire[6:0] cmdCRC;
-    CRC7 crc7(
-        .clk(intClk),
-        .en(cmdOutActive),
-        .din(cmdOut),
-        .dout(cmdCRC)
-    );
-    
-    SB_IO #(
-        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
-        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
-        .NEG_TRIGGER(1'b1)
-    ) sbio (
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_ENABLE(cmdOutActive),
-        .OUTPUT_CLK(intClk),
-        .D_OUT_0(cmdOut),
-        .D_IN_0(cmdIn)
-    );
-    
-    reg[3:0] dataOut = 0;
-    reg dataOutActive = 0;
-    wire[3:0] dataIn;
-    genvar i;
-    for (i=0; i<4; i=i+1) begin
-        SB_IO #(
-            .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
-            // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
-            .NEG_TRIGGER(1'b1)
-        ) sbio (
-            .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_ENABLE(dataOutActive),
-            .OUTPUT_CLK(intClk),
-            .D_OUT_0(dataOut[i]),
-            .D_IN_0(dataIn[i])
-        );
-    end
-    
-    reg[5:0] state = 0;
-    localparam StateIdle    = 0;   // +0
-    localparam StateCmd     = 1;   // +1
-    localparam StateResp    = 3;   // +1
-    
-    always @(posedge intClk) begin
-    end
+    // reg[3:0] dataOut = 0;
+    // reg dataOutActive = 0;
+    // wire[3:0] dataIn;
+    // genvar i;
+    // for (i=0; i<4; i=i+1) begin
+    //     SB_IO #(
+    //         .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+    //         // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+    //         .NEG_TRIGGER(1'b1)
+    //     ) sbio (
+    //         .PACKAGE_PIN(sd_dat[i]),
+    //         .OUTPUT_CLK(intClk),
+    //         .OUTPUT_ENABLE(dataOutActive),
+    //         .D_OUT_0(dataOut[i]),
+    //         .D_IN_0(dataIn[i])
+    //     );
+    // end
     
 endmodule
 
@@ -371,32 +242,6 @@ module Top(
     
     inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */
 );
-    // // ====================
-    // // Clock PLL (100.5 MHz)
-    // // ====================
-    // localparam ClkFreq = 100500000;
-    // wire pllClk;
-    // ClockGen #(
-    //     .FREQ(ClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(66),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(1)
-    // ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
-    
-    // // ====================
-    // // Clock PLL (91.5 MHz)
-    // // ====================
-    // localparam ClkFreq = 91500000;
-    // wire pllClk;
-    // ClockGen #(
-    //     .FREQ(ClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(60),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(1)
-    // ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
-    
     // ====================
     // Clock PLL (81 MHz)
     // ====================
@@ -418,12 +263,10 @@ module Top(
     reg[37:0]   sd_cmd_cmd = 0;
     wire[135:0] sd_cmd_resp;
     wire        sd_cmd_done;
-    SDCardController #(
-        .ClkFreq(ClkFreq),
-        .SDClkMaxFreq(400000)
-    ) sdctrl(
-        .clk(clk),
+    SDCardController sdctrl(
+        .clk12mhz(clk12mhz),
         
+        .cmd_clk(clk),
         .cmd_trigger(sd_cmd_trigger),
         .cmd_cmd(sd_cmd_cmd),
         .cmd_resp(sd_cmd_resp),
@@ -433,6 +276,39 @@ module Top(
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat)
     );
+    
+    reg state = 0;
+    always @(posedge clk) begin
+        case (state)
+        0: begin
+            sd_cmd_trigger <= 1;
+            sd_cmd_cmd <= {6'b000000, 32'b0};
+            state <= 1;
+            
+            `ifdef SIM
+                $display("Sending SD command: %b", sd_cmd_cmd);
+            `endif
+        end
+        
+        1: begin
+            sd_cmd_trigger <= 0;
+            if (sd_cmd_done) begin
+                `ifdef SIM
+                    $display("Received response: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
+                        sd_cmd_resp,
+                        sd_cmd_resp[135:134],   // preamble
+                        sd_cmd_resp[133:128],   // index
+                        sd_cmd_resp[127:96],    // arg
+                        sd_cmd_resp[95:89],     // crc
+                        sd_cmd_resp[88],        // stop bit
+                    );
+                `endif
+                
+                state <= 0;
+            end
+        end
+        endcase
+    end
     
 `ifdef SIM
     initial begin
@@ -447,33 +323,37 @@ module Top(
     //     $finish;
     // end
     
-    initial begin
-        #10000;
-        wait(!sd_clk);
-        
-        sd_cmd_trigger = 1;
-        sd_cmd_cmd = {6'b000000, 32'b0};
-        wait(sd_clk);
-        #100;
-        sd_cmd_trigger = 0;
-        
-        wait(sd_clk & sd_cmd_done);
-        
-        $display("Got response: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
-            sd_cmd_resp,
-            sd_cmd_resp[135:134],   // preamble
-            sd_cmd_resp[133:128],   // index
-            sd_cmd_resp[127:96],    // arg
-            sd_cmd_resp[95:89],     // crc
-            sd_cmd_resp[88],       // stop bit
-        );
-        
-        #10000;
-        $finish;
-    end
+    // ====================
+    // SD host emulator
+    //   Send commands, receive responses
+    // ====================
+    // initial begin
+    //     forever begin
+    //         wait(!clk);
+    //         sd_cmd_trigger = 1;
+    //         sd_cmd_cmd = {6'b000000, 32'b0};
+    //         wait(clk);
+    //         #100;
+    //         sd_cmd_trigger = 0;
+    //
+    //         wait(clk & sd_cmd_done);
+    //
+    //         $display("Got response: %b [preamble: %b, index: %0d, arg: %x, crc: %b, stop: %b]",
+    //             sd_cmd_resp,
+    //             sd_cmd_resp[135:134],   // preamble
+    //             sd_cmd_resp[133:128],   // index
+    //             sd_cmd_resp[127:96],    // arg
+    //             sd_cmd_resp[95:89],     // crc
+    //             sd_cmd_resp[88],       // stop bit
+    //         );
+    //     end
+    //     $finish;
+    // end
     
+    // ====================
     // SD card emulator
-    // Handle receiving commands and providing responses
+    //   Receive commands, issue responses
+    // ====================
     reg[47:0] sim_cmdIn = 0;
     reg[47:0] sim_respOut = 0;
     reg sim_cmdOut = 1'bz;
@@ -484,7 +364,7 @@ module Top(
             wait(sd_clk);
             
             if (!sd_cmd) begin
-                // Receive incoming command
+                // Receive command
                 reg[7:0] i;
                 for (i=0; i<48; i++) begin
                     sim_cmdIn = (sim_cmdIn<<1)|sd_cmd;
@@ -512,8 +392,6 @@ module Top(
                 end
                 wait(!sd_clk);
                 sim_cmdOut = 1'bz;
-                
-                $display("  -> Sent");
             end
             
             wait(!sd_clk);
