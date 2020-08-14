@@ -43,8 +43,8 @@
 
 
 // MsgChannel
-//   Transmits a single-clock pulse across clock domains.
-//   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
+//   Transmits a message+trigger signal across clock domains.
+//   Messages are dropped if they're sent faster than they can be consumed.
 module MsgChannel #(
     parameter MsgLen = 8
 )(
