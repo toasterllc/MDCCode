@@ -170,7 +170,7 @@ module Top(
                 );
                 
                 // Issue response if needed
-                if (|sim_cmdIn[45:40]) begin
+                if (sim_cmdIn[45:40]) begin
                     sim_respOut = {47'b0, 1'b1};
                     $display("Sending response: %b", sim_respOut);
                     for (i=0; i<48; i++) begin
