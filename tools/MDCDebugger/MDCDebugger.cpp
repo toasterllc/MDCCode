@@ -447,11 +447,148 @@ static uint64_t getBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t
     return r;
 }
 
-struct SDRespR1 {
-    uint8_t d[6];
-    
-    std::string desc() const {
-        char str[256];
+//struct SDRespR1 {
+//    uint8_t d[6];
+//    
+//    std::string desc() const {
+//        char str[256];
+//        snprintf(str, sizeof(str),
+//            "R1{\n"
+//            "  start:           0x %02jx\n"
+//            "  cmd:             %ju\n"
+//            "  status:          0x %08jx\n"
+//            "  crc:             0x %02jx\n"
+//            "  end:             0x %02jx\n"
+//            "}",
+//            (uintmax_t)getBits(std::vector<uint8_t>(d, d+sizeof(d)), 47, 46),
+//            (uintmax_t)getBits(d, 45, 40),
+//            (uintmax_t)getBits(d, 39, 8),
+//            (uintmax_t)getBits(d, 7, 1),
+//            (uintmax_t)getBits(d, 0, 0)
+//        );
+//        return str;
+//    }
+//} __attribute__((packed));
+//
+//struct SDRespR2 {
+//    uint8_t d[17];
+//    
+//    std::string desc() const {
+//        char str[256];
+//        snprintf(str, sizeof(str),
+//            "R2{\n"
+//            "  start:           0x %02jx\n"
+//            "  reserved:        0x %02jx\n"
+//            "  cid0:            0x %08jx\n"
+//            "  cid1:            0x %08jx\n"
+//            "  end:             0x %02jx\n"
+//            "}",
+//            (uintmax_t)getBits(d, 135, 134),
+//            (uintmax_t)getBits(d, 133, 128),
+//            (uintmax_t)getBits(d, 127, 64),
+//            (uintmax_t)getBits(d, 63, 1),
+//            (uintmax_t)getBits(d, 0, 0)
+//        );
+//        return str;
+//    }
+//} __attribute__((packed));
+//
+//struct SDRespR3 {
+//    uint8_t d[6];
+//    
+//    std::string desc() const {
+//        char str[256];
+//        snprintf(str, sizeof(str),
+//            "R3{\n"
+//            "  start:           0x %02jx\n"
+//            "  reserved0:       0x %02jx\n"
+//            "  ocr:             0x %08jx\n"
+//            "  reserved1:       0x %02jx\n"
+//            "  end:             0x %02jx\n"
+//            "}",
+//            (uintmax_t)getBits(d, 47, 46),
+//            (uintmax_t)getBits(d, 45, 40)
+//            (uintmax_t)getBits(d, 39, 8),
+//            (uintmax_t)getBits(d, 7, 1),
+//            (uintmax_t)getBits(d, 0, 0)
+//        );
+//        return str;
+//    }
+//} __attribute__((packed));
+//
+//struct SDRespR6 {
+//    uint8_t d[6];
+//    
+//    std::string desc() const {
+//        char str[256];
+//        snprintf(str, sizeof(str),
+//            "R6{\n"
+//            "  start:           0x %02jx\n"
+//            "  cmd:             0x %02jx\n"
+//            "  newRCA:          0x %04jx\n"
+//            "  status:          0x %04jx\n"
+//            "  crc:             0x %02jx\n"
+//            "  end:             0x %02jx\n"
+//            "}",
+//            (uintmax_t)getBits(d, 47, 46),
+//            (uintmax_t)getBits(d, 45, 40),
+//            (uintmax_t)getBits(d, 39, 24),
+//            (uintmax_t)getBits(d, 23, 8),
+//            (uintmax_t)getBits(d, 7, 1),
+//            (uintmax_t)getBits(d, 0, 0),
+//        );
+//        return str;
+//    }
+//} __attribute__((packed));
+//
+//struct SDRespR7 {
+//    uint8_t d[6];
+//    
+//    std::string desc() const {
+//        char str[256];
+//        snprintf(str, sizeof(str),
+//            "R7{\n"
+//            "  start:           0x %02jx\n"
+//            "  cmd:             %ju\n"
+//            "  reserved:        0x %06jx\n"
+//            "  pcie:            0x %02jx\n"
+//            "  voltage:         0x %02jx\n"
+//            "  checkPattern:    0x %02jx\n"
+//            "  crc:             0x %02jx\n"
+//            "  end:             0x %02jx\n"
+//            "}",
+//            (uintmax_t)getBits(d, 47, 46),
+//            (uintmax_t)getBits(d, 45, 40),
+//            (uintmax_t)getBits(d, 39, 22),
+//            (uintmax_t)getBits(d, 21, 20),
+//            (uintmax_t)getBits(d, 19, 16),
+//            (uintmax_t)getBits(d, 15, 8),
+//            (uintmax_t)getBits(d, 7, 1),
+//            (uintmax_t)getBits(d, 0, 0)
+//        );
+//        return str;
+//    }
+//} __attribute__((packed));
+//
+//template <typename T>
+//std::string stringFromResp(const MDCDevice::SDRespMsg& respMsg) {
+//    T resp;
+//    assert(sizeof(respMsg.resp) >= sizeof(resp));
+//    memcpy(&resp, respMsg.resp, sizeof(resp));
+//    return resp.desc();
+//}
+
+template<typename T, int size>
+int GetArrLength(T(&)[size]){return size;}
+
+#define bits(start, stop)   \
+    (uintmax_t)getBits(respMsg.resp, sizeof(respMsg.resp)/sizeof(*respMsg.resp), start, stop)
+
+static std::string stringFromResp(uint8_t respType, const MDCDevice::SDRespMsg& respMsg) {
+    char str[256];
+    switch (respType) {
+    default: return "";
+    case 1:
         snprintf(str, sizeof(str),
             "R1{\n"
             "  start:           0x %02jx\n"
@@ -460,21 +597,11 @@ struct SDRespR1 {
             "  crc:             0x %02jx\n"
             "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)getBits(std::vector<uint8_t>(d, d+sizeof(d)), 47, 46),
-            (uintmax_t)getBits(d, 45, 40),
-            (uintmax_t)getBits(d, 39, 8),
-            (uintmax_t)getBits(d, 7, 1),
-            (uintmax_t)getBits(d, 0, 0)
+            bits(47,46), bits(45,40), bits(39,8), bits(7,1), bits(0,0)
         );
-        return str;
-    }
-} __attribute__((packed));
-
-struct SDRespR2 {
-    uint8_t d[17];
+        break;
     
-    std::string desc() const {
-        char str[256];
+    case 2:
         snprintf(str, sizeof(str),
             "R2{\n"
             "  start:           0x %02jx\n"
@@ -483,21 +610,11 @@ struct SDRespR2 {
             "  cid1:            0x %08jx\n"
             "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)getBits(d, 135, 134),
-            (uintmax_t)getBits(d, 133, 128),
-            (uintmax_t)getBits(d, 127, 64),
-            (uintmax_t)getBits(d, 63, 1),
-            (uintmax_t)getBits(d, 0, 0)
+            bits(135,134), bits(133,128), bits(127,64), bits(63,1), bits(0,0)
         );
-        return str;
-    }
-} __attribute__((packed));
-
-struct SDRespR3 {
-    uint8_t d[6];
+        break;
     
-    std::string desc() const {
-        char str[256];
+    case 3:
         snprintf(str, sizeof(str),
             "R3{\n"
             "  start:           0x %02jx\n"
@@ -506,21 +623,11 @@ struct SDRespR3 {
             "  reserved1:       0x %02jx\n"
             "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)getBits(d, 47, 46),
-            (uintmax_t)getBits(d, 45, 40)
-            (uintmax_t)getBits(d, 39, 8),
-            (uintmax_t)getBits(d, 7, 1),
-            (uintmax_t)getBits(d, 0, 0)
+            bits(47, 46), bits(45, 40), bits(39, 8), bits(7, 1), bits(0, 0)
         );
-        return str;
-    }
-} __attribute__((packed));
-
-struct SDRespR6 {
-    uint8_t d[6];
+        break;
     
-    std::string desc() const {
-        char str[256];
+    case 6:
         snprintf(str, sizeof(str),
             "R6{\n"
             "  start:           0x %02jx\n"
@@ -530,22 +637,11 @@ struct SDRespR6 {
             "  crc:             0x %02jx\n"
             "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)getBits(d, 47, 46),
-            (uintmax_t)getBits(d, 45, 40),
-            (uintmax_t)getBits(d, 39, 24),
-            (uintmax_t)getBits(d, 23, 8),
-            (uintmax_t)getBits(d, 7, 1),
-            (uintmax_t)getBits(d, 0, 0),
+            bits(47, 46), bits(45, 40), bits(39, 24), bits(23, 8), bits(7, 1), bits(0, 0)
         );
-        return str;
-    }
-} __attribute__((packed));
-
-struct SDRespR7 {
-    uint8_t d[6];
+        break;
     
-    std::string desc() const {
-        char str[256];
+    case 7:
         snprintf(str, sizeof(str),
             "R7{\n"
             "  start:           0x %02jx\n"
@@ -557,36 +653,12 @@ struct SDRespR7 {
             "  crc:             0x %02jx\n"
             "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)getBits(d, 47, 46),
-            (uintmax_t)getBits(d, 45, 40),
-            (uintmax_t)getBits(d, 39, 22),
-            (uintmax_t)getBits(d, 21, 20),
-            (uintmax_t)getBits(d, 19, 16),
-            (uintmax_t)getBits(d, 15, 8),
-            (uintmax_t)getBits(d, 7, 1),
-            (uintmax_t)getBits(d, 0, 0)
+            bits(47, 46), bits(45, 40), bits(39, 22), bits(21, 20),
+            bits(19, 16), bits(15, 8), bits(7, 1),bits(0, 0)
         );
-        return str;
+        break;
     }
-} __attribute__((packed));
-
-template <typename T>
-std::string stringFromResp(const MDCDevice::SDRespMsg& respMsg) {
-    T resp;
-    assert(sizeof(respMsg.resp) >= sizeof(resp));
-    memcpy(&resp, respMsg.resp, sizeof(resp));
-    return resp.desc();
-}
-
-static std::string stringFromResp(uint8_t respType, const MDCDevice::SDRespMsg& respMsg) {
-    switch (respType) {
-    default: return "";
-    case 1: return stringFromResp<SDRespR1>(respMsg);
-    case 2: return stringFromResp<SDRespR2>(respMsg);
-    case 3: return stringFromResp<SDRespR3>(respMsg);
-    case 6: return stringFromResp<SDRespR6>(respMsg);
-    case 7: return stringFromResp<SDRespR7>(respMsg);
-    }
+    return str;
 }
 
 static void sdCmd(const Args& args, MDCDevice& device) {
@@ -624,8 +696,8 @@ static void sdCmd(const Args& args, MDCDevice& device) {
 }
 
 int main(int argc, const char* argv[]) {
-//    uint8_t bytes[] = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    uint64_t bits = getBits({0x37, 0x00, 0xFF, 0x01, 0x20, 0x83, 0xff, 0x80, 0xff, 0x80, 0xff, 0x80, 0xff, 0x80, 0xff, 0x80, 0xff}, 135, 72);
+    uint8_t bytes[] = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    uint64_t bits = getBits(bytes, sizeof(bytes), 135, 72);
     printf("0x%jx\n", (uintmax_t)bits);
     exit(0);
     
