@@ -32,15 +32,33 @@ module SDCardController(
     // ====================
     // Internal clock (96 MHz)
     // ====================
-    localparam IntClkFreq = 96000000;
-    wire int_clk;
+    localparam PllClkFreq = 96000000;
+    wire pllClk;
     ClockGen #(
-        .FREQ(IntClkFreq),
+        .FREQ(PllClkFreq),
         .DIVR(0),
         .DIVF(63),
         .DIVQ(3),
         .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(int_clk));
+    ) cg(.clk12mhz(clk12mhz), .clk(pllClk));
+    
+    function [63:0] DivCeil;
+        input [63:0] n;
+        input [63:0] d;
+        begin
+            DivCeil = (n+d-1)/d;
+        end
+    endfunction
+    
+    localparam ClkDividerWidth = $clog2(DivCeil(PllClkFreq, 400000));
+    reg[ClkDividerWidth-1:0] clkDivider = 0;
+    always @(posedge pllClk)
+        clkDivider <= clkDivider+1;
+    
+    // wire int_clk = pllClk;
+    wire int_clk = clkDivider[ClkDividerWidth-1];
+    
+    assign sd_clk = int_clk;
     
     // ====================
     // Synchronization
@@ -181,8 +199,6 @@ module SDCardController(
         end
         endcase
     end
-    
-    assign sd_clk = int_clk;
     
     // function [63:0] DivCeil;
     //     input [63:0] n;

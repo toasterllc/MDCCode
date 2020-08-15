@@ -652,7 +652,7 @@ module Top(
         
         WriteByte(MsgType_SDCmd);   // Message type
         WriteByte(8'h5);            // Payload length
-        WriteByte(8'h01);           // Payload0: command
+        WriteByte(8'h00);           // Payload0: command
         WriteByte(8'h42);           // Payload1: arg0
         WriteByte(8'h43);           // Payload2: arg1
         WriteByte(8'h44);           // Payload3: arg2
@@ -732,7 +732,7 @@ module Top(
                     wait(sd_clk);
                 end
                 
-                $display("Received command: %b [ preamble: %b, index: %0d, arg: 0x%x, crc: %b, stop: %b ]",
+                $display("Received command: %b [ preamble: %b, cmd: %0d, arg: 0x%x, crc: %b, stop: %b ]",
                     sim_cmdIn,
                     sim_cmdIn[47:46],   // preamble
                     sim_cmdIn[45:40],   // index
