@@ -436,12 +436,12 @@ static uint64_t getBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t
     assert(start >= end);
     uint64_t r = 0;
     uint8_t leftByteIdx = len-(start/8)-1;
-    uint8_t leftByteMask = (1<<(((start%8))+1))-1;
+    uint8_t leftByteMask = (1<<((start%8)+1))-1;
     uint8_t rightByteIdx = len-(end/8)-1;
     uint8_t rightByteMask = ~((1<<(end%8))-1);
     for (uint8_t i=leftByteIdx; i<=rightByteIdx; i++) {
-        if (i == leftByteIdx) r = bytes[i]&leftByteMask;
-        else if (i == rightByteIdx) r = (r<<(8-(end%8))) | ((bytes[i]&rightByteMask)>>(end%8));
+        if (i == rightByteIdx) r = (r<<(8-(end%8))) | ((bytes[i]&rightByteMask)>>(end%8));
+        else if (i == leftByteIdx) r = bytes[i]&leftByteMask;
         else r = (r<<8) | bytes[i];
     }
     return r;
@@ -578,9 +578,6 @@ static uint64_t getBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t
 //    return resp.desc();
 //}
 
-template<typename T, int size>
-int GetArrLength(T(&)[size]){return size;}
-
 #define bits(start, stop)   \
     (uintmax_t)getBits(respMsg.resp, sizeof(respMsg.resp)/sizeof(*respMsg.resp), start, stop)
 
@@ -696,17 +693,19 @@ static void sdCmd(const Args& args, MDCDevice& device) {
 }
 
 int main(int argc, const char* argv[]) {
-    uint8_t bytes[] = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    uint64_t bits = getBits(bytes, sizeof(bytes), 135, 72);
-    printf("0x%jx\n", (uintmax_t)bits);
-    exit(0);
-    
-//    MDCDevice::SDRespMsg resp = {
-//        .ok = 1,
-//        .resp = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-//    };
-//    std::cout << stringFromResp<SDRespR1>(resp);
+//    uint8_t bytes[] = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+//    printf("%d\n", GetArrLength(bytes));
 //    exit(0);
+//    uint64_t bits = getBits(bytes, sizeof(bytes), 135, 72);
+//    printf("0x%jx\n", (uintmax_t)bits);
+//    exit(0);
+    
+    MDCDevice::SDRespMsg resp = {
+        .ok = 1,
+        .resp = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+    };
+    std::cout << stringFromResp(1, resp);
+    exit(0);
     
     Args args;
     try {
