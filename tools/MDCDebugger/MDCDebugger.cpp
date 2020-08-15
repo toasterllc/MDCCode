@@ -441,14 +441,14 @@ struct SDRespR1 {
     std::string desc() const {
         char str[128];
         snprintf(str, sizeof(str),
-            "R7{\n"
-            "  start:           0x %02" PRIx64 "\n"
-            "  cmd:             %" PRId64 "\n"
-            "  status:          0x %08" PRIx64 "\n"
-            "  crc:             0x %02" PRIx64 "\n"
-            "  stop:            0x %02" PRIx64 "\n"
+            "R1{\n"
+            "  start:           0x %02jx\n"
+            "  cmd:             %jd\n"
+            "  status:          0x %08jx\n"
+            "  crc:             0x %02jx\n"
+            "  stop:            0x %02jx\n"
             "}",
-            start, cmd, status, crc, stop
+            (uintmax_t)start, (intmax_t)cmd, (uintmax_t)status, (uintmax_t)crc, (uintmax_t)stop
         );
         return str;
     }
@@ -464,14 +464,65 @@ struct SDRespR2 {
     std::string desc() const {
         char str[128];
         snprintf(str, sizeof(str),
-            "R7{\n"
-            "  start:           0x %02" PRIx64 "\n"
-            "  reserved:        0x %02" PRIx64 "\n"
-            "  cid0:            0x %08" PRIx64 "\n"
-            "  cid1:            0x %08" PRIx64 "\n"
-            "  stop:            0x %02" PRIx64 "\n"
+            "R2{\n"
+            "  start:           0x %02jx\n"
+            "  reserved:        0x %02jx\n"
+            "  cid0:            0x %08jx\n"
+            "  cid1:            0x %08jx\n"
+            "  stop:            0x %02jx\n"
             "}",
-            start, reserved, cid0, cid1, stop
+            (uintmax_t)start, (uintmax_t)reserved, (uintmax_t)cid0,
+            (uintmax_t)cid1, (uintmax_t)stop
+        );
+        return str;
+    }
+} __attribute__((packed));
+
+struct SDRespR3 {
+    uint64_t start          : 2;
+    uint64_t reserved0      : 6;
+    uint64_t ocr            : 32;
+    uint64_t reserved1      : 7;
+    uint64_t stop           : 1;
+    
+    std::string desc() const {
+        char str[128];
+        snprintf(str, sizeof(str),
+            "R3{\n"
+            "  start:           0x %02jx\n"
+            "  reserved0:       0x %02jx\n"
+            "  ocr:             0x %08jx\n"
+            "  reserved1:       0x %02jx\n"
+            "  stop:            0x %02jx\n"
+            "}",
+            (uintmax_t)start, (uintmax_t)reserved0, (uintmax_t)ocr,
+            (uintmax_t)reserved1, (uintmax_t)stop
+        );
+        return str;
+    }
+} __attribute__((packed));
+
+struct SDRespR6 {
+    uint64_t start          : 2;
+    uint64_t cmd            : 6;
+    uint64_t newRCA         : 16;
+    uint64_t status         : 16;
+    uint64_t crc            : 7;
+    uint64_t stop           : 1;
+    
+    std::string desc() const {
+        char str[128];
+        snprintf(str, sizeof(str),
+            "R6{\n"
+            "  start:           0x %02jx\n"
+            "  cmd:             0x %02jx\n"
+            "  newRCA:          0x %04jx\n"
+            "  status:          0x %04jx\n"
+            "  crc:             0x %02jx\n"
+            "  stop:            0x %02jx\n"
+            "}",
+            (uintmax_t)start, (uintmax_t)cmd, (uintmax_t)newRCA,
+            (uintmax_t)status, (uintmax_t)crc, (uintmax_t)stop
         );
         return str;
     }
@@ -491,16 +542,18 @@ struct SDRespR7 {
         char str[128];
         snprintf(str, sizeof(str),
             "R7{\n"
-            "  start:           0x %02" PRIx64 "\n"
-            "  cmd:             %" PRId64 "\n"
-            "  reserved:        0x %06" PRIx64 "\n"
-            "  pcie:            0x %02" PRIx64 "\n"
-            "  voltage:         0x %02" PRIx64 "\n"
-            "  checkPattern:    0x %02" PRIx64 "\n"
-            "  crc:             0x %02" PRIx64 "\n"
-            "  stop:            0x %02" PRIx64 "\n"
+            "  start:           0x %02jx\n"
+            "  cmd:             %jd\n"
+            "  reserved:        0x %06jx\n"
+            "  pcie:            0x %02jx\n"
+            "  voltage:         0x %02jx\n"
+            "  checkPattern:    0x %02jx\n"
+            "  crc:             0x %02jx\n"
+            "  stop:            0x %02jx\n"
             "}",
-            start, cmd, reserved, pcie, voltage, checkPattern, crc, stop
+            (uintmax_t)start, (intmax_t)cmd, (uintmax_t)reserved,
+            (uintmax_t)pcie, (uintmax_t)voltage, (uintmax_t)checkPattern,
+            (uintmax_t)crc, (uintmax_t)stop
         );
         return str;
     }
