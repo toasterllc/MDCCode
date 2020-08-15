@@ -431,87 +431,96 @@ static void pixCapture(const Args& args, MDCDevice& device) {
 //    }
 //}
 
+static uint64_t getBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
+    assert(start < len*8);
+    assert(start >= end);
+    uint64_t r = 0;
+    uint8_t leftByteIdx = len-(start/8)-1;
+    uint8_t leftByteMask = (1<<(((start%8))+1))-1;
+    uint8_t rightByteIdx = len-(end/8)-1;
+    uint8_t rightByteMask = ~((1<<(end%8))-1);
+    for (uint8_t i=leftByteIdx; i<=rightByteIdx; i++) {
+        if (i == leftByteIdx) r = bytes[i]&leftByteMask;
+        else if (i == rightByteIdx) r = (r<<(8-(end%8))) | ((bytes[i]&rightByteMask)>>(end%8));
+        else r = (r<<8) | bytes[i];
+    }
+    return r;
+}
+
 struct SDRespR1 {
-    uint64_t start          : 2;
-    uint64_t cmd            : 6;
-    uint64_t status         : 32;
-    uint64_t crc            : 7;
-    uint64_t stop           : 1;
+    uint8_t d[6];
     
     std::string desc() const {
-        char str[128];
+        char str[256];
         snprintf(str, sizeof(str),
             "R1{\n"
             "  start:           0x %02jx\n"
-            "  cmd:             %jd\n"
+            "  cmd:             %ju\n"
             "  status:          0x %08jx\n"
             "  crc:             0x %02jx\n"
-            "  stop:            0x %02jx\n"
+            "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)start, (intmax_t)cmd, (uintmax_t)status, (uintmax_t)crc, (uintmax_t)stop
+            (uintmax_t)getBits(std::vector<uint8_t>(d, d+sizeof(d)), 47, 46),
+            (uintmax_t)getBits(d, 45, 40),
+            (uintmax_t)getBits(d, 39, 8),
+            (uintmax_t)getBits(d, 7, 1),
+            (uintmax_t)getBits(d, 0, 0)
         );
         return str;
     }
 } __attribute__((packed));
 
 struct SDRespR2 {
-    uint64_t start          : 2;
-    uint64_t reserved       : 6;
-    uint64_t cid0           : 64;
-    uint64_t cid1           : 63;
-    uint64_t stop           : 1;
+    uint8_t d[17];
     
     std::string desc() const {
-        char str[128];
+        char str[256];
         snprintf(str, sizeof(str),
             "R2{\n"
             "  start:           0x %02jx\n"
             "  reserved:        0x %02jx\n"
             "  cid0:            0x %08jx\n"
             "  cid1:            0x %08jx\n"
-            "  stop:            0x %02jx\n"
+            "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)start, (uintmax_t)reserved, (uintmax_t)cid0,
-            (uintmax_t)cid1, (uintmax_t)stop
+            (uintmax_t)getBits(d, 135, 134),
+            (uintmax_t)getBits(d, 133, 128),
+            (uintmax_t)getBits(d, 127, 64),
+            (uintmax_t)getBits(d, 63, 1),
+            (uintmax_t)getBits(d, 0, 0)
         );
         return str;
     }
 } __attribute__((packed));
 
 struct SDRespR3 {
-    uint64_t start          : 2;
-    uint64_t reserved0      : 6;
-    uint64_t ocr            : 32;
-    uint64_t reserved1      : 7;
-    uint64_t stop           : 1;
+    uint8_t d[6];
     
     std::string desc() const {
-        char str[128];
+        char str[256];
         snprintf(str, sizeof(str),
             "R3{\n"
             "  start:           0x %02jx\n"
             "  reserved0:       0x %02jx\n"
             "  ocr:             0x %08jx\n"
             "  reserved1:       0x %02jx\n"
-            "  stop:            0x %02jx\n"
+            "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)start, (uintmax_t)reserved0, (uintmax_t)ocr,
-            (uintmax_t)reserved1, (uintmax_t)stop
+            (uintmax_t)getBits(d, 47, 46),
+            (uintmax_t)getBits(d, 45, 40)
+            (uintmax_t)getBits(d, 39, 8),
+            (uintmax_t)getBits(d, 7, 1),
+            (uintmax_t)getBits(d, 0, 0)
         );
         return str;
     }
 } __attribute__((packed));
 
 struct SDRespR6 {
-    uint64_t start          : 2;
-    uint64_t cmd            : 6;
-    uint64_t newRCA         : 16;
-    uint64_t status         : 16;
-    uint64_t crc            : 7;
-    uint64_t stop           : 1;
+    uint8_t d[6];
     
     std::string desc() const {
-        char str[128];
+        char str[256];
         snprintf(str, sizeof(str),
             "R6{\n"
             "  start:           0x %02jx\n"
@@ -519,48 +528,50 @@ struct SDRespR6 {
             "  newRCA:          0x %04jx\n"
             "  status:          0x %04jx\n"
             "  crc:             0x %02jx\n"
-            "  stop:            0x %02jx\n"
+            "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)start, (uintmax_t)cmd, (uintmax_t)newRCA,
-            (uintmax_t)status, (uintmax_t)crc, (uintmax_t)stop
+            (uintmax_t)getBits(d, 47, 46),
+            (uintmax_t)getBits(d, 45, 40),
+            (uintmax_t)getBits(d, 39, 24),
+            (uintmax_t)getBits(d, 23, 8),
+            (uintmax_t)getBits(d, 7, 1),
+            (uintmax_t)getBits(d, 0, 0),
         );
         return str;
     }
 } __attribute__((packed));
 
 struct SDRespR7 {
-    uint64_t start          : 2;
-    uint64_t cmd            : 6;
-    uint64_t reserved       : 18;
-    uint64_t pcie           : 2;
-    uint64_t voltage        : 4;
-    uint64_t checkPattern   : 8;
-    uint64_t crc            : 7;
-    uint64_t stop           : 1;
+    uint8_t d[6];
     
     std::string desc() const {
-        char str[128];
+        char str[256];
         snprintf(str, sizeof(str),
             "R7{\n"
             "  start:           0x %02jx\n"
-            "  cmd:             %jd\n"
+            "  cmd:             %ju\n"
             "  reserved:        0x %06jx\n"
             "  pcie:            0x %02jx\n"
             "  voltage:         0x %02jx\n"
             "  checkPattern:    0x %02jx\n"
             "  crc:             0x %02jx\n"
-            "  stop:            0x %02jx\n"
+            "  end:             0x %02jx\n"
             "}",
-            (uintmax_t)start, (intmax_t)cmd, (uintmax_t)reserved,
-            (uintmax_t)pcie, (uintmax_t)voltage, (uintmax_t)checkPattern,
-            (uintmax_t)crc, (uintmax_t)stop
+            (uintmax_t)getBits(d, 47, 46),
+            (uintmax_t)getBits(d, 45, 40),
+            (uintmax_t)getBits(d, 39, 22),
+            (uintmax_t)getBits(d, 21, 20),
+            (uintmax_t)getBits(d, 19, 16),
+            (uintmax_t)getBits(d, 15, 8),
+            (uintmax_t)getBits(d, 7, 1),
+            (uintmax_t)getBits(d, 0, 0)
         );
         return str;
     }
 } __attribute__((packed));
 
 template <typename T>
-std::string stringFromResp(uint8_t respType, const MDCDevice::SDRespMsg& respMsg) {
+std::string stringFromResp(const MDCDevice::SDRespMsg& respMsg) {
     T resp;
     assert(sizeof(respMsg.resp) >= sizeof(resp));
     memcpy(&resp, respMsg.resp, sizeof(resp));
@@ -570,11 +581,11 @@ std::string stringFromResp(uint8_t respType, const MDCDevice::SDRespMsg& respMsg
 static std::string stringFromResp(uint8_t respType, const MDCDevice::SDRespMsg& respMsg) {
     switch (respType) {
     default: return "";
-    case 1: return stringFromResp<SDRespR1>(respType, respMsg);
-    case 2: return stringFromResp<SDRespR2>(respType, respMsg);
-    case 3: return stringFromResp<SDRespR3>(respType, respMsg);
-    case 6: return stringFromResp<SDRespR6>(respType, respMsg);
-    case 7: return stringFromResp<SDRespR7>(respType, respMsg);
+    case 1: return stringFromResp<SDRespR1>(respMsg);
+    case 2: return stringFromResp<SDRespR2>(respMsg);
+    case 3: return stringFromResp<SDRespR3>(respMsg);
+    case 6: return stringFromResp<SDRespR6>(respMsg);
+    case 7: return stringFromResp<SDRespR7>(respMsg);
     }
 }
 
@@ -583,6 +594,7 @@ static void sdCmd(const Args& args, MDCDevice& device) {
     using SDRespMsg = MDCDevice::SDRespMsg;
     using Msg = MDCDevice::Msg;
     
+    printf("Sending CMD%ju\n", (uintmax_t)args.sdCmd.cmd);
     device.write(SDCmdMsg{
         .cmd = args.sdCmd.cmd,
         .arg = {args.sdCmd.arg[0], args.sdCmd.arg[1], args.sdCmd.arg[2], args.sdCmd.arg[3]},
@@ -591,17 +603,18 @@ static void sdCmd(const Args& args, MDCDevice& device) {
     if (auto msgPtr = Msg::Cast<SDRespMsg>(device.read())) {
         const auto& msg = *msgPtr;
         if (msg.ok) {
-            printf("SD card response:\n");
+            std::cout << "Response:\n";
             for (const auto& b : msg.resp) {
                 printf("%02jx ", (uintmax_t)b);
             }
-            printf("\n");
+            std::cout << "\n";
             
             // Print the parsed response
             std::string respStr = stringFromResp(args.sdCmd.respType, msg);
             if (!respStr.empty()) {
-                std::cout << respStr << "\n\n";
+                std::cout << respStr << "\n";
             }
+            std::cout << "\n";
         
         } else {
             throw std::runtime_error("SD command failed");
@@ -611,6 +624,18 @@ static void sdCmd(const Args& args, MDCDevice& device) {
 }
 
 int main(int argc, const char* argv[]) {
+//    uint8_t bytes[] = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    uint64_t bits = getBits({0x37, 0x00, 0xFF, 0x01, 0x20, 0x83, 0xff, 0x80, 0xff, 0x80, 0xff, 0x80, 0xff, 0x80, 0xff, 0x80, 0xff}, 135, 72);
+    printf("0x%jx\n", (uintmax_t)bits);
+    exit(0);
+    
+//    MDCDevice::SDRespMsg resp = {
+//        .ok = 1,
+//        .resp = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+//    };
+//    std::cout << stringFromResp<SDRespR1>(resp);
+//    exit(0);
+    
     Args args;
     try {
         args = parseArgs(argc-1, argv+1);
