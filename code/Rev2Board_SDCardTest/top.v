@@ -652,7 +652,7 @@ module Top(
         
         WriteByte(MsgType_SDCmd);   // Message type
         WriteByte(8'h5);            // Payload length
-        WriteByte(8'h00);           // Payload0: command
+        WriteByte(8'h01);           // Payload0: command
         WriteByte(8'h42);           // Payload1: arg0
         WriteByte(8'h43);           // Payload2: arg1
         WriteByte(8'h44);           // Payload3: arg2
@@ -742,7 +742,7 @@ module Top(
                 );
                 
                 // Issue response
-                sim_respOut = {47'b0, 1'b1};
+                sim_respOut = {2'b00, {45{1'b1}}, 1'b1};
                 $display("Sending response: %b", sim_respOut);
                 for (i=0; i<48; i++) begin
                     wait(!sd_clk);

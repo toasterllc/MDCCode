@@ -133,7 +133,6 @@ module SDCardController(
     localparam StateIdle    = 0;   // +0
     localparam StateCmd     = 1;   // +1
     localparam StateResp    = 3;   // +1
-    localparam StateDone    = 5;   // +0
     reg[5:0] int_state = 0;
     always @(posedge int_clk) begin
         int_cmdOutReg <= int_cmdOutReg<<1;
@@ -174,7 +173,13 @@ module SDCardController(
             if (int_counter == 1) begin
                 // If this was the last bit, wrap up
                 int_cmdOutActive <= 0;
-                int_state <= (int_respExpected ? StateResp : StateDone);
+                if (int_respExpected) begin
+                    int_state <= StateResp;
+                
+                end else begin
+                    int_done <= 1;
+                    int_state <= StateIdle;
+                end
             end
         end
         
@@ -189,13 +194,9 @@ module SDCardController(
         StateResp+1: begin
             if (int_counter == 1) begin
                 // If this was the last bit, wrap up
-                int_state <= StateDone;
+                int_done <= 1;
+                int_state <= StateIdle;
             end
-        end
-        
-        StateDone: begin
-            int_done <= 1;
-            int_state <= StateIdle;
         end
         endcase
     end
