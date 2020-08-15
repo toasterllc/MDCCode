@@ -1,5 +1,4 @@
 `include "../ClockGen.v"
-`include "../MsgChannel.v"
 `include "../SDCardController.v"
 
 `ifdef SIM
@@ -164,20 +163,22 @@ module Top(
                 $display("Received command: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
                     sim_cmdIn,
                     sim_cmdIn[47:46],   // preamble
-                    sim_cmdIn[45:40],   // index
+                    sim_cmdIn[45:40],   // cmd
                     sim_cmdIn[39:8],    // arg
                     sim_cmdIn[7:1],     // crc
                     sim_cmdIn[0],       // stop bit
                 );
                 
-                // Issue response
-                sim_respOut = {47'b0, 1'b1};
-                $display("Sending response: %b", sim_respOut);
-                for (i=0; i<48; i++) begin
-                    wait(!sd_clk);
-                    sim_cmdOut = sim_respOut[47];
-                    sim_respOut = sim_respOut<<1;
-                    wait(sd_clk);
+                // Issue response if needed
+                if (|sim_cmdIn[45:40]) begin
+                    sim_respOut = {47'b0, 1'b1};
+                    $display("Sending response: %b", sim_respOut);
+                    for (i=0; i<48; i++) begin
+                        wait(!sd_clk);
+                        sim_cmdOut = sim_respOut[47];
+                        sim_respOut = sim_respOut<<1;
+                        wait(sd_clk);
+                    end
                 end
                 wait(!sd_clk);
                 sim_cmdOut = 1'bz;

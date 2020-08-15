@@ -18,5 +18,5 @@ cp ../top.v top.v
 
 # Simulate!
 rm -f top.vvp
-iverilog "-I./.." -DSIM -o top.vvp -g2012 top.v
+iverilog "-I./.." "-I./../.." -DSIM -o top.vvp -g2012 top.v
 ./top.vvp

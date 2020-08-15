@@ -1,4 +1,4 @@
-`include "../MsgChannel.v"
+`include "MsgChannel.v"
 
 module CRC7(
     input wire clk,
