@@ -43,17 +43,20 @@
         State: Identification -> Standby
         Response: R6 (48 bits)
     
-    CMD7        # SELECT_CARD/DESELECT_CARD             
+    CMD7        # SELECT_CARD/DESELECT_CARD
         State: Standby -> Transfer
         Response: R1b (48 bits)
     
     (CMD55)     # APP_CMD                               App-specific command follows
+        State: no change
         Response: R1 (48 bits)
     
     ACMD6       # SET_BUS_WIDTH                         Defines the data bus width ('00'=1bit or '10'=4 bits bus)
+        State: Transfer -> Transfer
         Response: R1 (48 bits)
     
     CMD6        # Switch to SDR=50 or SDR=SDR104
+        State: Transfer -> Data
         Response: R1 (48 bits)
     
     

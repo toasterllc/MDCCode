@@ -117,6 +117,24 @@ module SDCardController(
     );
     
     // ====================
+    // `sd_dat` IO Pins
+    // ====================
+    genvar i;
+    for (i=0; i<4; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+            // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+            .NEG_TRIGGER(1'b1)
+        ) sbio (
+            .PACKAGE_PIN(sd_dat[i]),
+            .OUTPUT_CLK(int_clk),
+            .OUTPUT_ENABLE(0),
+            .D_OUT_0(),
+            .D_IN_0()
+        );
+    end
+    
+    // ====================
     // CRC
     // ====================
     wire[6:0] int_cmdCRC;

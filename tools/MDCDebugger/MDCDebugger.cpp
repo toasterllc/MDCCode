@@ -384,7 +384,7 @@ public:
     }
     virtual ~SDResp() {}
     
-    uint64_t getBits(uint8_t start, uint8_t end) const {
+    virtual uint64_t getBits(uint8_t start, uint8_t end) const {
         size_t len = respLen();
         assert(_dataLen >= len);
         assert(start < len*8);
@@ -401,8 +401,8 @@ public:
             if (i == rightByteIdx)  tmp &= rightByteMask;
             // Make space for the incoming bits
             if (i == rightByteIdx) {
-                tmp >>= end%8;
-                r <<= end%8;
+                tmp >>= end%8; // Shift right the number of unused bits
+                r <<= 8-(end%8); // Shift left the number of used bits
             } else {
                 r <<= 8;
             }
@@ -412,7 +412,7 @@ public:
         return r;
     }
     
-    uint8_t calcCRC() const {
+    virtual uint8_t calcCRC() const {
         const size_t len = respLen();
         std::bitset<7> r;
         uint8_t din = 0;
@@ -474,7 +474,7 @@ private:
 class SDRespR1 : public SDResp {
 public:
     using SDResp::SDResp;
-    size_t respLen() const override { return 6; }
+    virtual size_t respLen() const override { return 6; }
     
     uint64_t start()    const { return getBits(47,46); }
     uint64_t cmd()      const { return getBits(45,40); }
@@ -482,10 +482,10 @@ public:
     uint64_t crc()      const { return getBits(7,1); }
     uint64_t end()      const { return getBits(0,0); }
     
-    std::string desc() const override {
+    virtual std::string desc() const override {
         const uint64_t gotCRC = crc();
         const uint64_t wantCRC = calcCRC();
-        char str[256];
+        char str[512];
         snprintf(str, sizeof(str),
             "R1{\n"
             "  start:           0x %02" PRIx64 "\n"
@@ -503,7 +503,7 @@ public:
 class SDRespR2 : public SDResp {
 public:
     using SDResp::SDResp;
-    size_t respLen() const override { return 17; }
+    virtual size_t respLen() const override { return 17; }
     
     uint64_t start()        const { return getBits(135,134); }
     uint64_t reserved()     const { return getBits(133,128); }
@@ -511,14 +511,14 @@ public:
     uint64_t cid1()         const { return getBits(63,1); }
     uint64_t end()          const { return getBits(0,0); }
     
-    std::string desc() const override {
-        char str[256];
+    virtual std::string desc() const override {
+        char str[512];
         snprintf(str, sizeof(str),
             "R2{\n"
             "  start:           0x %02" PRIx64 "\n"
             "  reserved:        0x %02" PRIx64 "\n"
-            "  cid0:            0x %08" PRIx64 "\n"
-            "  cid1:            0x %08" PRIx64 "\n"
+            "  cid0:            0x %016" PRIx64 "\n"
+            "  cid1:            0x %016" PRIx64 "\n"
             "  end:             0x %02" PRIx64 "\n"
             "}",
             start(), reserved(), cid0(), cid1(), end()
@@ -530,25 +530,41 @@ public:
 class SDRespR3 : public SDResp {
 public:
     using SDResp::SDResp;
-    size_t respLen() const override { return 6; }
+    virtual size_t respLen() const override { return 6; }
+    virtual uint8_t calcCRC() const override { return 0x7f; }
     
     uint64_t start()        const { return getBits(47,46); }
-    uint64_t reserved0()    const { return getBits(45,40); }
-    uint64_t ocr()          const { return getBits(39,8); }
-    uint64_t reserved1()    const { return getBits(7,1); }
+    uint64_t cmd()          const { return getBits(45,40); }
+    uint64_t busy()         const { return getBits(39,39); }
+    uint64_t ccs()          const { return getBits(38,38); }
+    uint64_t uhsII()        const { return getBits(37,37); }
+    uint64_t reserved0()    const { return getBits(36,33); }
+    uint64_t s18a()         const { return getBits(32,32); }
+    uint64_t ocr()          const { return getBits(31,16); }
+    uint64_t reserved1()    const { return getBits(15,8); }
+    uint64_t crc()          const { return getBits(7,1); }
     uint64_t end()          const { return getBits(0,0); }
     
-    std::string desc() const override {
-        char str[256];
+    virtual std::string desc() const override {
+        const uint64_t gotCRC = crc();
+        const uint64_t wantCRC = calcCRC();
+        char str[512];
         snprintf(str, sizeof(str),
             "R3{\n"
             "  start:           0x %02" PRIx64 "\n"
+            "  cmd:             CMD%" PRId64 "\n"
+            "  busy:            0x %02" PRIx64 "\n"
+            "  ccs:             0x %02" PRIx64 "\n"
+            "  uhsII:           0x %02" PRIx64 "\n"
             "  reserved0:       0x %02" PRIx64 "\n"
-            "  ocr:             0x %08" PRIx64 "\n"
+            "  s18a:            0x %02" PRIx64 "\n"
+            "  ocr:             0x %04" PRIx64 "\n"
             "  reserved1:       0x %02" PRIx64 "\n"
+            "  crc:             0x %02" PRIx64 " %s\n"
             "  end:             0x %02" PRIx64 "\n"
             "}",
-            start(), reserved0(), ocr(), reserved1(), end()
+            start(), cmd(), busy(), ccs(), uhsII(), reserved0(), s18a(),
+            ocr(), reserved1(), gotCRC, crcValidStr(gotCRC, wantCRC), end()
         );
         return str;
     }
@@ -557,7 +573,7 @@ public:
 class SDRespR6 : public SDResp {
 public:
     using SDResp::SDResp;
-    size_t respLen() const override { return 6; }
+    virtual size_t respLen() const override { return 6; }
     
     uint64_t start()        const { return getBits(47,46); }
     uint64_t cmd()          const { return getBits(45,40); }
@@ -566,10 +582,10 @@ public:
     uint64_t crc()          const { return getBits(7,1); }
     uint64_t end()          const { return getBits(0,0); }
     
-    std::string desc() const override {
+    virtual std::string desc() const override {
         const uint64_t gotCRC = crc();
         const uint64_t wantCRC = calcCRC();
-        char str[256];
+        char str[512];
         snprintf(str, sizeof(str),
             "R6{\n"
             "  start:           0x %02" PRIx64 "\n"
@@ -588,7 +604,7 @@ public:
 class SDRespR7 : public SDResp {
 public:
     using SDResp::SDResp;
-    size_t respLen() const override { return 6; }
+    virtual size_t respLen() const override { return 6; }
     
     uint64_t start()            const { return getBits(47,46); }
     uint64_t cmd()              const { return getBits(45,40); }
@@ -599,10 +615,10 @@ public:
     uint64_t crc()              const { return getBits(7,1); }
     uint64_t end()              const { return getBits(0,0); }
     
-    std::string desc() const override {
+    virtual std::string desc() const override {
         const uint64_t gotCRC = crc();
         const uint64_t wantCRC = calcCRC();
-        char str[256];
+        char str[512];
         snprintf(str, sizeof(str),
             "R7{\n"
             "  start:           0x %02" PRIx64 "\n"
@@ -669,6 +685,15 @@ static void sdCmd(const Args& args, MDCDevice& device) {
 }
 
 int main(int argc, const char* argv[]) {
+//    const uint8_t bytes[] = {0x3f, 0x00, 0xff, 0x80, 0x80, 0xff};
+//    auto respPtr = sdRespFromData(3, bytes, sizeof(bytes));
+//    if (respPtr) {
+//        // Print the parsed response
+//        std::cout << respPtr->desc() << "\n";
+//    }
+//    std::cout << "\n";
+//    exit(0);
+//    
 //    const uint8_t bytes[] = {0x08, 0x00, 0x00, 0x01, 0xaa, 0x13, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 ////    auto respPtr = sdRespFromData(7, bytes, sizeof(bytes));
 //    
