@@ -451,13 +451,48 @@ public:
         const uint8_t rightByteMask = ~((1<<(end%8))-1);
         uint64_t r = 0;
         for (uint8_t i=leftByteIdx; i<=rightByteIdx; i++) {
-            if (i==leftByteIdx && i==rightByteIdx)
-                r = (r<<(8-(end%8))) | ((_data[i]&(leftByteMask&rightByteMask))>>(end%8));
-            else if (i == leftByteIdx)
-                r = _data[i]&leftByteMask;
-            else if (i == rightByteIdx)
-                r = (r<<(8-(end%8))) | ((_data[i]&rightByteMask)>>(end%8));
-            else r = (r<<8) | _data[i];
+            uint8_t tmp = _data[i];
+            // Mask-out bits we don't want
+            if (i == leftByteIdx)   tmp &= leftByteMask;
+            if (i == rightByteIdx)  tmp &= rightByteMask;
+            // Make space for the incoming bits
+            if (i == rightByteIdx) {
+                tmp >>= end%8;
+                r <<= end%8;
+            } else {
+                r <<= 8;
+            }
+            // Or the bits into place
+            r |= tmp;
+            
+//            uint8_t tmp = _data[i];
+//            if (i == leftByteIdx)
+//                tmp &= leftByteMask;
+//            if (i == rightByteIdx) {
+//                tmp &= rightByteMask;
+//                tmp >>= end%8;
+//                r <<= 8-(end%8);
+//            } else {
+//                r <== 8;
+//            }
+//            r |= tmp;
+            
+//            if (i==leftByteIdx && i==rightByteIdx)
+//                r = (r<<(8-(end%8))) | ((_data[i]&(leftByteMask&rightByteMask))>>(end%8));
+//            else if (i == leftByteIdx)
+//                r = _data[i]&leftByteMask;
+//            else if (i == rightByteIdx)
+//                r = (r<<(8-(end%8))) | ((_data[i]&rightByteMask)>>(end%8));
+//            else r = (r<<8) | _data[i];
+//            
+//            
+//            if (i==leftByteIdx && i==rightByteIdx)
+//                r = (r<<(8-(end%8))) | ((_data[i]&(leftByteMask&rightByteMask))>>(end%8));
+//            else if (i == leftByteIdx)
+//                r = _data[i]&leftByteMask;
+//            else if (i == rightByteIdx)
+//                r = (r<<(8-(end%8))) | ((_data[i]&rightByteMask)>>(end%8));
+//            else r = (r<<8) | _data[i];
         }
         return r;
     }
@@ -502,7 +537,7 @@ public:
         snprintf(str, sizeof(str),
             "R1{\n"
             "  start:           0x %02" PRIx64 "\n"
-            "  cmd:             %" PRId64 "\n"
+            "  cmd:             CMD%" PRId64 "\n"
             "  status:          0x %08" PRIx64 "\n"
             "  crc:             0x %02" PRIx64 "\n"
             "  end:             0x %02" PRIx64 "\n"
@@ -584,7 +619,7 @@ public:
         snprintf(str, sizeof(str),
             "R6{\n"
             "  start:           0x %02" PRIx64 "\n"
-            "  cmd:             0x %02" PRIx64 "\n"
+            "  cmd:             CMD%" PRId64 "\n"
             "  newRCA:          0x %04" PRIx64 "\n"
             "  status:          0x %04" PRIx64 "\n"
             "  crc:             0x %02" PRIx64 "\n"
@@ -615,7 +650,7 @@ public:
         snprintf(str, sizeof(str),
             "R7{\n"
             "  start:           0x %02" PRIx64 "\n"
-            "  cmd:             %" PRId64 "\n"
+            "  cmd:             CMD%" PRId64 "\n"
             "  reserved:        0x %06" PRIx64 "\n"
             "  pcie:            0x %02" PRIx64 "\n"
             "  voltage:         0x %02" PRIx64 "\n"
@@ -904,7 +939,7 @@ static void sdCmd(const Args& args, MDCDevice& device) {
 
 int main(int argc, const char* argv[]) {
 //    uint8_t bytes[] = {0x37, 0x00, 0x00, 0x01, 0x20, 0x83, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-//    auto respPtr = sdRespFromData(1, bytes, sizeof(bytes));
+//    auto respPtr = sdRespFromData(7, bytes, sizeof(bytes));
 //    if (respPtr) {
 //        // Print the parsed response
 //        std::cout << respPtr->desc() << "\n";
