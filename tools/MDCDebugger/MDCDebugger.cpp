@@ -412,6 +412,57 @@ public:
         return r;
     }
     
+    uint8_t calcCRC() const {
+        const size_t len = respLen();
+        std::bitset<7> r;
+        uint8_t din = 0;
+        for (size_t i=0; i<(len-1)*8; i++) {
+            if (!(i % 8)) din = _data[i/8];
+            const bool dinBit = din&0x80;
+            const uint8_t r0 = r[6]^dinBit;
+            const uint8_t r3 = r[2]^r[6]^dinBit;
+            r <<= 1;
+            r[0] = r0;
+            r[3] = r3;
+            din <<= 1;
+        }
+        return r.to_ulong();
+    }
+    
+    static const char* crcValidStr(uint8_t x, uint8_t y) {
+        return (x==y ? "✅" : "❌");
+    }
+    
+    
+//    uint8_t calculatedCRC() const {
+//        const size_t len = respLen();
+//        uint8_t r = 0;
+//        uint8_t din = 0;
+//        for (size_t i=0; i<len*8; i++) {
+//            if (!(i % 8)) {
+//                din = _data[i/8];
+//            }
+//            r <<= 1;
+//            
+//            
+//            r |= din&1;
+//            
+////            din&1
+//            
+//            { d[5], d[4], d[3], d[2]^d[6]^din, d[1], d[0], d[6]^din }
+//            
+////            uint8_t dx = (din&1)^((r&0x40)>>6);
+//        }
+//        return r&0x7F;
+//        
+////        reg[6:0] d = 0;
+////        wire dx = din ^ d[6];
+////        wire[6:0] dnext = { d[5], d[4], d[3], d[2] ^ dx, d[1], d[0], dx };
+////        assign dout = dnext;
+////        always @(posedge clk)
+////            d <= (!en ? 0 : dnext);
+//    }
+    
     virtual size_t respLen() const = 0;
     virtual std::string desc() const = 0;
 
@@ -432,16 +483,18 @@ public:
     uint64_t end()      const { return getBits(0,0); }
     
     std::string desc() const override {
+        const uint64_t gotCRC = crc();
+        const uint64_t wantCRC = calcCRC();
         char str[256];
         snprintf(str, sizeof(str),
             "R1{\n"
             "  start:           0x %02" PRIx64 "\n"
             "  cmd:             CMD%" PRId64 "\n"
             "  status:          0x %08" PRIx64 "\n"
-            "  crc:             0x %02" PRIx64 "\n"
+            "  crc:             0x %02" PRIx64 " %s\n"
             "  end:             0x %02" PRIx64 "\n"
             "}",
-            start(), cmd(), status(), crc(), end()
+            start(), cmd(), status(), gotCRC, crcValidStr(gotCRC, wantCRC), end()
         );
         return str;
     }
@@ -514,6 +567,8 @@ public:
     uint64_t end()          const { return getBits(0,0); }
     
     std::string desc() const override {
+        const uint64_t gotCRC = crc();
+        const uint64_t wantCRC = calcCRC();
         char str[256];
         snprintf(str, sizeof(str),
             "R6{\n"
@@ -521,10 +576,10 @@ public:
             "  cmd:             CMD%" PRId64 "\n"
             "  newRCA:          0x %04" PRIx64 "\n"
             "  status:          0x %04" PRIx64 "\n"
-            "  crc:             0x %02" PRIx64 "\n"
+            "  crc:             0x %02" PRIx64 " %s\n"
             "  end:             0x %02" PRIx64 "\n"
             "}",
-            start(), cmd(), newRCA(), status(), crc(), end()
+            start(), cmd(), newRCA(), status(), gotCRC, crcValidStr(gotCRC, wantCRC), end()
         );
         return str;
     }
@@ -545,6 +600,8 @@ public:
     uint64_t end()              const { return getBits(0,0); }
     
     std::string desc() const override {
+        const uint64_t gotCRC = crc();
+        const uint64_t wantCRC = calcCRC();
         char str[256];
         snprintf(str, sizeof(str),
             "R7{\n"
@@ -554,10 +611,11 @@ public:
             "  pcie:            0x %02" PRIx64 "\n"
             "  voltage:         0x %02" PRIx64 "\n"
             "  checkPattern:    0x %02" PRIx64 "\n"
-            "  crc:             0x %02" PRIx64 "\n"
+            "  crc:             0x %02" PRIx64 " %s\n"
             "  end:             0x %02" PRIx64 "\n"
             "}",
-            start(), cmd(), reserved(), pcie(), voltage(), checkPattern(), crc(), end()
+            start(), cmd(), reserved(), pcie(), voltage(), checkPattern(),
+            gotCRC, crcValidStr(gotCRC, wantCRC), end()
         );
         return str;
     }
@@ -611,6 +669,27 @@ static void sdCmd(const Args& args, MDCDevice& device) {
 }
 
 int main(int argc, const char* argv[]) {
+//    const uint8_t bytes[] = {0x08, 0x00, 0x00, 0x01, 0xaa, 0x13, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+////    auto respPtr = sdRespFromData(7, bytes, sizeof(bytes));
+//    
+//    std::cout << "Response:\n";
+//    for (const auto& b : bytes) {
+//        printf("%02jx ", (uintmax_t)b);
+//    }
+//    std::cout << "\n";
+//    
+//    // Parse our response
+//    auto respPtr = sdRespFromData(7, bytes, sizeof(bytes));
+//    if (respPtr) {
+//        // Print the parsed response
+//        std::cout << respPtr->desc() << "\n";
+//    }
+//    std::cout << "\n";
+//    
+//    printf("calculated crc: 0x%x %s\n", respPtr->calcCRC(), respPtr->crcValidStr());
+//    
+//    exit(0);
+    
     Args args;
     try {
         args = parseArgs(argc-1, argv+1);
