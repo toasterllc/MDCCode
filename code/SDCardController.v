@@ -4,7 +4,7 @@ module CRC7(
     input wire clk,
     input wire en,
     input din,
-    output reg[6:0] dout,
+    output wire[6:0] dout,
     output wire[6:0] doutNext
 );
     reg[6:0] d = 0;
@@ -233,7 +233,9 @@ module SDCardController(
             StateRespIn+1: begin
                 int_outClkSlow <= 1;
                 if (!int_cmdIn) begin
-                    $display("StateRespIn: response started");
+                    `ifdef SIM
+                        $display("StateRespIn: response started");
+                    `endif
                     int_delay <= OutClkSlowHalfCycleDelay;
                     int_state <= StateRespIn+2;
                 
@@ -257,14 +259,18 @@ module SDCardController(
                 
                 // Valid transmission bit
                 if (!int_cmdIn) begin
-                    $display("StateRespIn: transmission bit valid");
+                    `ifdef SIM
+                        $display("StateRespIn: transmission bit valid");
+                    `endif
                     int_delay <= OutClkSlowHalfCycleDelay;
                     int_state <= StateRespIn+4;
                 
                 // Invalid transmission bit
                 end else begin
-                    $display("StateRespIn: transmission bit invalid");
-                    // TODO: what do we do now?
+                    `ifdef SIM
+                        $display("StateRespIn: transmission bit invalid");
+                    `endif
+                    // TODO: handle bad response
                 end
             end
             
@@ -326,13 +332,17 @@ module SDCardController(
             StateRespIn+8: begin
                 // CRC is valid: clock-in and check stop bit
                 if (int_respInExpectedCRC == int_resp[6:0]) begin
-                    $display("StateRespIn: CRC valid");
+                    `ifdef SIM
+                        $display("StateRespIn: CRC valid");
+                    `endif
                     int_state <= StateRespIn+9;
                 
                 // CRC is invalid
                 end else begin
-                    $display("StateRespIn: CRC invalid");
-                    // TODO: what do we do now?
+                    `ifdef SIM
+                        $display("StateRespIn: CRC invalid");
+                    `endif
+                    // TODO: handle bad response
                 end
             end
             
@@ -349,14 +359,18 @@ module SDCardController(
                 
                 // Correct stop bit: we're finished receiving the response
                 if (int_cmdIn) begin
-                    $display("StateRespIn: stop bit valid");
+                    `ifdef SIM
+                        $display("StateRespIn: stop bit valid");
+                    `endif
                     int_delay <= OutClkSlowHalfCycleDelay;
                     int_state <= int_nextState;
                 
                 // Incorrect stop bit:
-                // TODO: what do we do now?
+                // TODO: handle bad response
                 end else begin
-                    $display("StateRespIn: stop bit invalid");
+                    `ifdef SIM
+                        $display("StateRespIn: stop bit invalid");
+                    `endif
                 end
             end
             
