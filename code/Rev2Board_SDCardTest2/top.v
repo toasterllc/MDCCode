@@ -54,49 +54,43 @@ module Top(
     SDCardController sdctrl(
         .clk12mhz(clk12mhz),
         
-        .cmd_clk(clk),
-        .cmd_trigger(sd_cmd_trigger),
-        .cmd_cmd(sd_cmd_cmd),
-        .cmd_resp(sd_cmd_resp),
-        .cmd_done(sd_cmd_done),
-        
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat)
     );
     
-    reg state = 0;
-    always @(posedge clk) begin
-        case (state)
-        0: begin
-            sd_cmd_trigger <= 1;
-            sd_cmd_cmd <= {6'b000000, 32'b0};
-            state <= 1;
-            
-            `ifdef SIM
-                $display("Sending SD command: %b", sd_cmd_cmd);
-            `endif
-        end
-        
-        1: begin
-            sd_cmd_trigger <= 0;
-            if (sd_cmd_done) begin
-                `ifdef SIM
-                    $display("Received response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
-                        sd_cmd_resp,
-                        sd_cmd_resp[135:134],   // preamble
-                        sd_cmd_resp[133:128],   // index
-                        sd_cmd_resp[127:96],    // arg
-                        sd_cmd_resp[95:89],     // crc
-                        sd_cmd_resp[88],        // stop bit
-                    );
-                `endif
-                
-                state <= 0;
-            end
-        end
-        endcase
-    end
+    // reg state = 0;
+    // always @(posedge clk) begin
+    //     case (state)
+    //     0: begin
+    //         sd_cmd_trigger <= 1;
+    //         sd_cmd_cmd <= {6'b000000, 32'b0};
+    //         state <= 1;
+    //
+    //         `ifdef SIM
+    //             $display("Sending SD command: %b", sd_cmd_cmd);
+    //         `endif
+    //     end
+    //
+    //     1: begin
+    //         sd_cmd_trigger <= 0;
+    //         if (sd_cmd_done) begin
+    //             `ifdef SIM
+    //                 $display("Received response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
+    //                     sd_cmd_resp,
+    //                     sd_cmd_resp[135:134],   // preamble
+    //                     sd_cmd_resp[133:128],   // index
+    //                     sd_cmd_resp[127:96],    // arg
+    //                     sd_cmd_resp[95:89],     // crc
+    //                     sd_cmd_resp[88],        // stop bit
+    //                 );
+    //             `endif
+    //
+    //             state <= 0;
+    //         end
+    //     end
+    //     endcase
+    // end
     
 `ifdef SIM
     initial begin

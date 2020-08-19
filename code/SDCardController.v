@@ -1,5 +1,3 @@
-`include "MsgChannel.v"
-
 `define FITS(container, value) ($size(container) >= $clog2(value+64'b1));
 
 module CRC7(
@@ -18,13 +16,6 @@ endmodule
 
 module SDCardController(
     input wire          clk12mhz,
-    
-    // Command port
-    input wire          cmd_clk,
-    input wire          cmd_trigger,
-    input wire[37:0]    cmd_cmd,
-    output wire[135:0]  cmd_resp,
-    output wire         cmd_done,
     
     // SDIO port
     output wire         sd_clk,
@@ -66,41 +57,6 @@ module SDCardController(
     wire int_outClk = (int_outClkFastMode ? int_outClkFast : int_outClkSlow);
     assign sd_clk = int_outClk;
     
-    // ====================
-    // Synchronization
-    //   {cmd_trigger, cmd_cmd} -> {int_trigger, int_cmd}
-    // ====================
-    wire int_trigger;
-    wire[37:0] int_cmd;
-    MsgChannel #(
-        .MsgLen(38)
-    ) cmdChannel(
-        .in_clk(cmd_clk),
-        .in_trigger(cmd_trigger),
-        .in_msg(cmd_cmd),
-        .out_clk(int_clk),
-        .out_trigger(int_trigger),
-        .out_msg(int_cmd)
-    );
-    
-    // ====================
-    // Synchronization
-    //   {int_done, int_resp} -> {cmd_done, cmd_resp}
-    // ====================
-    reg int_done = 0;
-    reg[135:0] int_resp = 0;
-    reg int_respExpected = 0;
-    MsgChannel #(
-        .MsgLen(136)
-    ) respChannel(
-        .in_clk(int_clk),
-        .in_trigger(int_done),
-        .in_msg(int_resp),
-        .out_clk(cmd_clk),
-        .out_trigger(cmd_done),
-        .out_msg(cmd_resp)
-    );
-    
     reg[39:0] int_cmdOutReg = 0;
     wire int_cmdOut = int_cmdOutReg[39];
     reg int_cmdOutActive = 0;
@@ -108,8 +64,9 @@ module SDCardController(
     reg[7:0] int_counter = 0;
     reg[7:0] int_delay = 0; // TODO: experiment with making this a free-running base-2 countdown -- should make our max speed faster
     
-    Verify that `SDClkSlowHalfCycleDelay` fits in int_counter
-    assert(`FITS(int_delay, SDClkSlowHalfCycleDelay));
+    // Verify that `OutClkSlowHalfCycleDelay` fits in int_counter
+    // TODO:
+    // assert(`FITS(int_delay, OutClkSlowHalfCycleDelay));
     
     // ====================
     // `sd_cmd` IO Pin
@@ -138,7 +95,7 @@ module SDCardController(
         ) sbio (
             .PACKAGE_PIN(sd_dat[i]),
             .OUTPUT_CLK(int_clk),
-            .OUTPUT_ENABLE(0),
+            .OUTPUT_ENABLE(1'b0),
             .D_OUT_0(),
             .D_IN_0()
         );
@@ -148,252 +105,149 @@ module SDCardController(
     // CRC
     // ====================
     wire[6:0] int_cmdCRC;
-    CRC7 crc7(
+    CRC7 cmdCRC(
         .clk(int_outClk),
         .en(int_cmdOutActive),
         .din(int_cmdOut),
         .dout(int_cmdCRC)
     );
     
+    wire[6:0] int_respCRC;
+    CRC7 respCRC(
+        .clk(),
+        .en(),
+        .din(),
+        .dout()
+    );
+    
     // ====================
     // State Machine
     // ====================
-    localparam StateInit_Init       = 0;   // +0
-    localparam StateInit_CmdOut     = 0;   // +0
-    localparam StateInit_CRCOut     = 0;   // +0
+    localparam StateInit       = 0;   // +3
+    localparam StateCmdOut     = 4;   // +2
+    localparam StateRespIn     = 7;   // +3
     
-    localparam StateIdle    = 0;   // +0
-    localparam StateCmd     = 1;   // +1
-    localparam StateResp    = 3;   // +1
+    localparam CMD0 =   6'd0;      // GO_IDLE_STATE
+    localparam CMD2 =   6'd2;      // ALL_SEND_CID
+    localparam CMD3 =   6'd3;      // SEND_RELATIVE_ADDR
+    localparam CMD6 =   6'd6;      // SWITCH_FUNC
+    localparam CMD7 =   6'd7;      // SELECT_CARD/DESELECT_CARD
+    localparam CMD8 =   6'd8;      // SEND_IF_COND
+    localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
+    localparam CMD55 =  6'd55;     // APP_CMD
     
-    localparam CMD0 =   0;      // GO_IDLE_STATE
-    localparam CMD2 =   2;      // ALL_SEND_CID
-    localparam CMD3 =   3;      // SEND_RELATIVE_ADDR
-    localparam CMD6 =   6;      // SWITCH_FUNC
-    localparam CMD7 =   7;      // SELECT_CARD/DESELECT_CARD
-    localparam CMD8 =   8;      // SEND_IF_COND
-    localparam CMD41 =  41;     // SD_SEND_OP_COND
-    localparam CMD55 =  55;     // APP_CMD
-    
-    reg initDone = 0;
     reg[5:0] int_state = 0;
     reg[5:0] int_nextState = 0;
+    reg[135:0] int_resp = 0;
+    reg int_cmdOutNeedCRC = 0;
     always @(posedge int_clk) begin
-        if (!initDone) begin
-            if (int_delay) int_delay <= int_delay-1;
-            else begin
-                case (int_state)
-                StateInit_Init: begin
-                    int_cmdOutReg <= {2'b01, CMD0, 32'h00000000};
-                    int_state <= StateInit_CmdOut;
-                    int_nextState <= StateInit_Init+1;
-                end
-                
-                StateInit_Init+1: begin
-                    int_cmdOutReg <= {2'b01, CMD8, 32'h000001AA};
-                    int_state <= StateInit_CmdOut;
-                    int_nextState <= StateInit_Init+2;
-                end
-                
-                StateInit_Init+2: begin
-                    int_state <= StateInit_RespIn;
-                    int_nextState <= StateInit_Init+3;
-                end
-                
-                StateInit_Init+3: begin
-                    
-                end
-                
-                
-                
-                
-                StateInit_CmdOut: begin
-                    int_outClkSlow <= 0;
-                    int_cmdOutActive <= 1;
-                    int_counter <= 40;
-                    int_delay <= SDClkSlowHalfCycleDelay;
-                    int_state <= StateInit_CmdOut+1;
-                end
-                
-                StateInit_CmdOut+1: begin
-                    int_outClkSlow <= 1;
-                    int_delay <= SDClkSlowHalfCycleDelay;
-                    int_state <= StateInit_CmdOut+2;
-                end
-                
-                StateInit_CmdOut+2: begin
-                    int_outClkSlow <= 0;
-                    
-                    if (int_counter == 1) begin
-                        int_state <= StateInit_CRCOut;
-                    
-                    end else begin
-                        int_cmdOutReg <= int_cmdOutReg<<1;
-                        int_counter <= int_counter-1;
-                        int_delay <= SDClkSlowHalfCycleDelay;
-                        int_state <= StateInit_CmdOut;
-                    end
-                end
-                
-                
-                
-                
-                
-                
-                
-                StateInit_CRCOut: begin
-                    int_cmdOutReg <= {int_cmdCRC, 1'b1, 32'b0};
-                    int_counter <= 8;
-                    int_delay <= SDClkSlowHalfCycleDelay;
-                    int_state <= StateInit_CRCOut+1;
-                end
-                
-                StateInit_CRCOut+1: begin
-                    int_outClkSlow <= 1;
-                    int_delay <= SDClkSlowHalfCycleDelay;
-                    int_state <= StateInit_CRCOut+2;
-                end
-                
-                StateInit_CRCOut+2: begin
-                    int_outClkSlow <= 0;
-                    
-                    if (int_counter == 1) begin
-                        int_delay <= SDClkSlowHalfCycleDelay;
-                        int_state <= int_nextState;
-                    
-                    end else begin
-                        int_cmdOutReg <= int_cmdOutReg<<1;
-                        int_counter <= int_counter-1;
-                        int_delay <= SDClkSlowHalfCycleDelay;
-                        int_state <= StateInit_CRCOut+1;
-                    end
-                end
-                
-                
-                
-                
-                StateInit_RespIn: begin
-                    int_outClkSlow <= 0;
-                    int_cmdOutActive <= 0;
-                    int_delay <= SDClkSlowHalfCycleDelay;
-                    int_state <= StateInit_RespIn+1;
-                end
-                
-                StateInit_RespIn+1: begin
-                    
-                end
-                
-                
-                
-                endcase
-            end
-        
-        end else begin
-            int_cmdOutReg <= int_cmdOutReg<<1;
-            int_counter <= int_counter-1;
-            int_resp <= (int_resp<<1)|int_cmdIn;
-            
+        if (int_delay) int_delay <= int_delay-1;
+        else begin
             case (int_state)
-            StateIdle: begin
-                int_done <= 0; // Reset from previous state
-                
-                if (int_trigger) begin
-                    `ifdef SIM
-                        $display("[SDCardController] Sending SD command: %b [ cmd: %0d, arg: 0x%x ]",
-                            int_cmd,
-                            int_cmd[37:32],     // command
-                            int_cmd[31:0]       // arg
-                        );
-                    `endif
-                    
-                    int_cmdOutReg <= {2'b01, int_cmd};
-                    int_cmdOutActive <= 1;
-                    int_respExpected <= |int_cmd[37:32];
-                    int_counter <= 40;
-                    int_state <= StateCmd;
-                end
+            StateInit: begin
+                int_cmdOutReg <= {2'b01, CMD0, 32'h00000000};
+                int_cmdOutNeedCRC <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+1;
             end
             
-            StateCmd: begin
-                if (int_counter == 1) begin
-                    // If this was the last bit, send the CRC, followed by the '1' end bit
+            StateInit+1: begin
+                int_cmdOutReg <= {2'b01, CMD8, 32'h000001AA};
+                int_cmdOutNeedCRC <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+2;
+            end
+            
+            StateInit+2: begin
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+3;
+                int_counter <= 48;
+            end
+            
+            
+            
+            
+            StateCmdOut: begin
+                int_outClkSlow <= 0;
+                int_cmdOutActive <= 1;
+                int_counter <= 40;
+                int_delay <= OutClkSlowHalfCycleDelay;
+                int_state <= StateCmdOut+1;
+            end
+            
+            StateCmdOut+1: begin
+                int_outClkSlow <= 1;
+                int_delay <= OutClkSlowHalfCycleDelay;
+                int_state <= StateCmdOut+2;
+            end
+            
+            StateCmdOut+2: begin
+                int_outClkSlow <= 0;
+                
+                if (int_counter != 1) begin
+                    int_cmdOutReg <= int_cmdOutReg<<1;
+                    int_counter <= int_counter-1;
+                    int_delay <= OutClkSlowHalfCycleDelay;
+                    int_state <= StateCmdOut+1;
+                
+                end else if (int_cmdOutNeedCRC) begin
+                    int_cmdOutNeedCRC <= 0;
                     int_cmdOutReg <= {int_cmdCRC, 1'b1, 32'b0};
                     int_counter <= 8;
-                    int_state <= StateCmd+1;
-                end
-            end
-            
-            StateCmd+1: begin
-                if (int_counter == 1) begin
-                    // If this was the last bit, wrap up
+                    int_delay <= OutClkSlowHalfCycleDelay;
+                    int_state <= StateCmdOut+1;
+                
+                end else begin
                     int_cmdOutActive <= 0;
-                    if (int_respExpected) begin
-                        int_state <= StateResp;
-                    
-                    end else begin
-                        int_done <= 1;
-                        int_state <= StateIdle;
-                    end
+                    int_state <= int_nextState;
                 end
             end
             
-            StateResp: begin
-                // Wait for the response to start
+            
+            
+            
+            StateRespIn: begin
+                int_outClkSlow <= 0;
+                int_delay <= OutClkSlowHalfCycleDelay;
+                int_state <= StateRespIn+1;
+            end
+            
+            StateRespIn+1: begin
+                int_outClkSlow <= 1;
                 if (!int_cmdIn) begin
-                    int_counter <= 135;
-                    int_state <= StateResp+1;
+                    int_state <= StateRespIn+2;
+                
+                end else begin
+                    int_delay <= OutClkSlowHalfCycleDelay;
+                    int_state <= StateRespIn;
                 end
             end
             
-            StateResp+1: begin
-                if (int_counter == 1) begin
-                    // If this was the last bit, wrap up
-                    int_done <= 1;
-                    int_state <= StateIdle;
+            StateRespIn+2: begin
+                int_outClkSlow <= 1;
+                int_resp <= (int_resp<<1)|int_cmdIn;
+                
+                if (int_counter != 1) begin
+                    int_counter <= int_counter-1;
+                    int_delay <= OutClkSlowHalfCycleDelay;
+                    int_state <= StateRespIn+3;
+                
+                end else begin
+                    int_delay <= OutClkSlowHalfCycleDelay;
+                    int_state <= int_nextState;
                 end
             end
+            
+            StateRespIn+3: begin
+                int_outClkSlow <= 0;
+                int_delay <= OutClkSlowHalfCycleDelay;
+                int_state <= StateRespIn+2;
+            end
+            
+            
+            
             endcase
         end
-        
-        
-        case (int_initState)
-        InitStateInit: begin
-            int_cmdOutReg <= {2'b01, CMD0, 32'b0};
-            int_cmdOutActive <= 1;
-            int_initState <= InitStateInit+1;
-        end
-        
-        InitStateShiftOut: begin
-            if (int_delay) begin
-                int_delay <= int_delay-1;
-            
-            end else begin
-                int_outClkSlow <= !int_outClkSlow;
-                int_cmdOutReg <= int_cmdOutReg<<1;
-                
-                int_cmdOutReg <= {2'b01, CMD0, 32'b0};
-                int_cmdOutActive <= 1;
-                int_initState <= InitStateInit+1;
-            end
-        end
-        
-        InitStateShiftOut: begin
-            if (int_delay) begin
-                int_delay <= int_delay-1;
-            
-            end else begin
-                int_outClkSlow <= !int_outClkSlow;
-                int_cmdOutReg <= int_cmdOutReg<<1;
-                
-                int_cmdOutReg <= {2'b01, CMD0, 32'b0};
-                int_cmdOutActive <= 1;
-                int_initState <= InitStateInit+1;
-            end
-        end
-        
-        InitStateDone: begin
-        end
-        endcase
     end
     
     // function [63:0] DivCeil;
