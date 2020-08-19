@@ -139,19 +139,19 @@ module Top(
     reg[47:0] sim_cmdIn = 0;
     reg[47:0] sim_respOut = 0;
     reg sim_cmdOut = 1'bz;
+    reg[7:0] sim_debug = 0;
     assign sd_cmd = sim_cmdOut;
     
     initial begin
         forever begin
             wait(sd_clk);
-            
             if (!sd_cmd) begin
                 // Receive command
                 reg[7:0] i;
                 for (i=0; i<48; i++) begin
+                    wait(sd_clk);
                     sim_cmdIn = (sim_cmdIn<<1)|sd_cmd;
                     wait(!sd_clk);
-                    wait(sd_clk);
                 end
                 
                 $display("Received command: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
@@ -177,7 +177,6 @@ module Top(
                 wait(!sd_clk);
                 sim_cmdOut = 1'bz;
             end
-            
             wait(!sd_clk);
         end
     end

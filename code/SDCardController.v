@@ -2,16 +2,19 @@
 
 module CRC7(
     input wire clk,
-    input wire en,
+    input wire rst_,
     input din,
-    output wire[6:0] dout
+    output reg[6:0] dout,
+    output wire[6:0] dout2
 );
     reg[6:0] d = 0;
     wire dx = din ^ d[6];
     wire[6:0] dnext = { d[5], d[4], d[3], d[2] ^ dx, d[1], d[0], dx };
-    assign dout = dnext;
-    always @(posedge clk)
-        d <= (!en ? 0 : dnext);
+    assign dout = d;
+    assign dout2 = dnext;
+    always @(posedge clk, negedge rst_)
+        if (!rst_) d <= 0;
+        else d <= dnext;
 endmodule
 
 module SDCardController(
@@ -107,7 +110,7 @@ module SDCardController(
     wire[6:0] int_cmdCRC;
     CRC7 cmdCRC(
         .clk(int_outClk),
-        .en(int_cmdOutActive),
+        .rst_(int_cmdOutActive),
         .din(int_cmdOut),
         .dout(int_cmdCRC)
     );
@@ -115,7 +118,7 @@ module SDCardController(
     wire[6:0] int_respCRC;
     CRC7 respCRC(
         .clk(),
-        .en(),
+        .rst_(),
         .din(),
         .dout()
     );
@@ -132,9 +135,12 @@ module SDCardController(
     localparam CMD3 =   6'd3;      // SEND_RELATIVE_ADDR
     localparam CMD6 =   6'd6;      // SWITCH_FUNC
     localparam CMD7 =   6'd7;      // SELECT_CARD/DESELECT_CARD
-    localparam CMD8 =   6'd8;      // SEND_IF_COND
+    localparam CMD8 =   6'd17;      // SEND_IF_COND
     localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
     localparam CMD55 =  6'd55;     // APP_CMD
+    
+    // TODO: we should add dummy cycles between all our commands, just to be safe
+    // TODO: there are certain commands that require dummy cycles at the end!
     
     reg[5:0] int_state = 0;
     reg[5:0] int_nextState = 0;
@@ -152,7 +158,7 @@ module SDCardController(
             end
             
             StateInit+1: begin
-                int_cmdOutReg <= {2'b01, CMD8, 32'h000001AA};
+                int_cmdOutReg <= {2'b01, CMD8, 32'h00000000};
                 int_cmdOutNeedCRC <= 1;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+2;
