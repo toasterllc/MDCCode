@@ -28,10 +28,10 @@ module SDCardController(
     // ====================
     // Internal clock (96 MHz)
     // ====================
-    localparam ClkFreq = 96000000;
+    localparam Int_ClkFreq = 96000000;
     wire int_clk;
     ClockGen #(
-        .FREQ(ClkFreq),
+        .FREQ(Int_ClkFreq),
         .DIVR(0),
         .DIVF(63),
         .DIVQ(3),
@@ -46,26 +46,24 @@ module SDCardController(
         end
     endfunction
     
-    localparam OutClkSlowFreq = 400000;
-    // OutClkSlowHalfCycleDelay: number of `int_clk` cycles for a half `sd_clk`
-    // cycle to elapse. DivCeil() is necessary to perform the half-cycle
-    // calculation, so that the division is ceiled to the nearest clock
-    // cycle. (Ie -- slower than OutClkSlowFreq is OK, faster is not.)
-    // -1 for the value that should be stored in a counter.
-    localparam OutClkSlowHalfCycleDelay = DivCeil(ClkFreq, 2*OutClkSlowFreq)-1;
+    localparam Int_OutClk_SlowFreq = 400000;
+    localparam Int_OutClk_DividerWidth = $clog2(DivCeil(Int_ClkFreq, Int_OutClk_SlowFreq));
+    reg[Int_OutClk_DividerWidth-1:0] int_outClk_divider = 0;
+    always @(posedge int_clk)
+        int_outClk_divider <= int_outClk_divider+1;
     
-    reg int_outClkFastMode = 0;
-    wire int_outClkFast = int_clk;
-    reg int_outClkSlow = 0;
-    wire int_outClk = (int_outClkFastMode ? int_outClkFast : int_outClkSlow);
+    reg int_outClk_fastMode = 0;
+    wire int_outClk_fast = int_clk;
+    wire int_outClk_slow = int_outClk_divider[Int_OutClk_DividerWidth-1];
+    reg int_outClk_slowLast = 0;
+    wire int_outClk = (int_outClk_fastMode ? int_outClk_fast : int_outClk_slow);
     assign sd_clk = int_outClk;
     
-    reg[39:0] int_cmdOutReg = 0;
-    wire int_cmdOut = int_cmdOutReg[39];
+    reg[47:0] int_cmdOutReg = 0;
+    wire int_cmdOut = int_cmdOutReg[47];
     reg int_cmdOutActive = 0;
     wire int_cmdIn;
     reg[7:0] int_counter = 0;
-    reg[7:0] int_delay = 0; // TODO: experiment with making this a free-running base-2 countdown -- should make our max speed faster
     
     // Verify that `OutClkSlowHalfCycleDelay` fits in int_counter
     // TODO:
@@ -110,7 +108,7 @@ module SDCardController(
     wire[6:0] int_cmdOutCRC;
     reg int_cmdOutCRCEn = 0;
     CRC7 cmdCRC(
-        .clk(int_outClk),
+        .clk(int_outClk_slow),
         .en(int_cmdOutCRCEn),
         .din(int_cmdOut),
         .dout(int_cmdOutCRC)
@@ -119,7 +117,7 @@ module SDCardController(
     wire[6:0] int_cmdInCRC;
     reg int_cmdInCRCEn = 0;
     CRC7 respCRC(
-        .clk(int_outClk),
+        .clk(int_outClk_slow),
         .en(int_cmdInCRCEn),
         .din(int_cmdIn),
         .doutNext(int_cmdInCRC)
@@ -130,7 +128,7 @@ module SDCardController(
     // ====================
     localparam StateInit       = 0;   // +3
     localparam StateCmdOut     = 4;   // +2
-    localparam StateRespIn     = 7;   // +9
+    // localparam StateRespIn     = 7;   // +9
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -144,35 +142,43 @@ module SDCardController(
     // TODO: we should add dummy cycles between all our commands, just to be safe
     // TODO: there are certain commands that require dummy cycles at the end!
     
+    // TODO: try using strategy where a counter automatically toggles int_outClkSlow
+    
     reg[5:0] int_state = 0;
     reg[5:0] int_nextState = 0;
     reg[135:0] int_resp = 0;
-    reg int_cmdOutNeedCRC = 0;
     reg int_respInCheckCRC = 0;
     reg[6:0] int_respInExpectedCRC = 0;
     always @(posedge int_clk) begin
-        if (int_delay) int_delay <= int_delay-1;
-        else begin
+        int_outClk_slowLast <= int_outClk_slow;
+        if (int_outClk_slowLast && !int_outClk_slow) begin
+            int_cmdOutReg <= int_cmdOutReg<<1;
+            int_counter <= int_counter-1;
+            
             case (int_state)
             StateInit: begin
-                int_cmdOutReg <= {2'b01, CMD0, 32'h00000000};
-                int_cmdOutNeedCRC <= 1;
+                int_cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
+                int_counter <= 48;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+1;
             end
             
             StateInit+1: begin
-                int_cmdOutReg <= {2'b01, CMD8, 32'h00000000};
-                int_cmdOutNeedCRC <= 1;
+                int_cmdOutReg <= {2'b01, CMD8, 32'h00000000, 7'b0, 1'b1};
+                int_counter <= 48;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+2;
             end
             
             StateInit+2: begin
-                int_state <= StateRespIn;
-                int_counter <= 38;
-                int_respInCheckCRC <= 1;
-                int_nextState <= StateInit+3;
+                // int_state <= StateRespIn;
+                // int_counter <= 38;
+                // int_respInCheckCRC <= 1;
+                // int_nextState <= StateInit+3;
             end
             
             StateInit+3: begin
@@ -181,40 +187,14 @@ module SDCardController(
             
             
             
+            
             StateCmdOut: begin
-                int_outClkSlow <= 0;
-                int_cmdOutActive <= 1;
-                int_cmdOutCRCEn <= 1; // Enable CRC for int_cmdOut
-                int_counter <= 40;
-                int_delay <= OutClkSlowHalfCycleDelay;
-                int_state <= StateCmdOut+1;
-            end
-            
-            StateCmdOut+1: begin
-                int_outClkSlow <= 1;
-                int_delay <= OutClkSlowHalfCycleDelay;
-                int_state <= StateCmdOut+2;
-            end
-            
-            StateCmdOut+2: begin
-                int_outClkSlow <= 0;
+                if (int_cmdOutCRCEn & int_counter==9) begin
+                    int_cmdOutReg[47:41] <= int_cmdOutCRC;
                 
-                if (int_counter != 1) begin
-                    int_cmdOutReg <= int_cmdOutReg<<1;
-                    int_counter <= int_counter-1;
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateCmdOut+1;
-                
-                end else if (int_cmdOutNeedCRC) begin
-                    int_cmdOutNeedCRC <= 0;
-                    int_cmdOutReg <= {int_cmdOutCRC, 1'b1, 32'b0};
-                    int_counter <= 8;
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateCmdOut+1;
-                
-                end else begin
+                end else if (int_counter == 1) begin
                     int_cmdOutActive <= 0;
-                    int_cmdOutCRCEn <= 0; // Disable CRC for int_cmdOut
+                    int_cmdOutCRCEn <= 0;
                     int_state <= int_nextState;
                 end
             end
@@ -222,196 +202,133 @@ module SDCardController(
             
             
             
-            StateRespIn: begin
-                int_outClkSlow <= 0;
-                int_cmdInCRCEn <= 1;
-                int_delay <= OutClkSlowHalfCycleDelay;
-                int_state <= StateRespIn+1;
-            end
-            
-            // Wait for response to start
-            StateRespIn+1: begin
-                int_outClkSlow <= 1;
-                if (!int_cmdIn) begin
-                    `ifdef SIM
-                        $display("StateRespIn: response started");
-                    `endif
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn+2;
-                
-                end else begin
-                    int_cmdInCRCEn <= 0; // Reset the CRC since it should only begin when the message starts
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn;
-                end
-            end
-            
-            // Clock in transmission bit (=0 when coming from SD card)
-            StateRespIn+2: begin
-                int_outClkSlow <= 0;
-                int_delay <= OutClkSlowHalfCycleDelay;
-                int_state <= StateRespIn+3;
-            end
-            
-            StateRespIn+3: begin
-                int_outClkSlow <= 1;
-                int_resp <= (int_resp<<1)|int_cmdIn;
-                
-                // Valid transmission bit
-                if (!int_cmdIn) begin
-                    `ifdef SIM
-                        $display("StateRespIn: transmission bit valid");
-                    `endif
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn+4;
-                
-                // Invalid transmission bit
-                end else begin
-                    `ifdef SIM
-                        $display("StateRespIn: transmission bit invalid");
-                    `endif
-                    // TODO: handle bad response
-                end
-            end
-            
-            // Clock in response
-            StateRespIn+4: begin
-                int_outClkSlow <= 0;
-                int_delay <= OutClkSlowHalfCycleDelay;
-                int_state <= StateRespIn+5;
-            end
-            
-            StateRespIn+5: begin
-                int_outClkSlow <= 1;
-                int_resp <= (int_resp<<1)|int_cmdIn;
-                
-                // Continue clocking in response
-                if (int_counter != 1) begin
-                    int_counter <= int_counter-1;
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn+4;
-                
-                // Clock-in CRC if requested
-                end else if (int_respInCheckCRC) begin
-                    int_respInCheckCRC <= 0;
-                    int_respInExpectedCRC <= int_cmdInCRC;
-                    int_counter <= 7;
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn+6;
-                
-                // Clock-in stop bit
-                end else begin
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn+9;
-                end
-            end
-            
-            // Clock-in and check CRC
-            StateRespIn+6: begin
-                int_outClkSlow <= 0;
-                int_delay <= OutClkSlowHalfCycleDelay;
-                int_state <= StateRespIn+7;
-            end
-            
-            StateRespIn+7: begin
-                int_outClkSlow <= 1;
-                int_resp <= (int_resp<<1)|int_cmdIn;
-                
-                // Continue clocking-in CRC
-                if (int_counter != 1) begin
-                    int_counter <= int_counter-1;
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn+6;
-                
-                end else begin
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= StateRespIn+8;
-                end
-            end
-            
-            StateRespIn+8: begin
-                // CRC is valid: clock-in and check stop bit
-                if (int_respInExpectedCRC == int_resp[6:0]) begin
-                    `ifdef SIM
-                        $display("StateRespIn: CRC valid");
-                    `endif
-                    int_state <= StateRespIn+9;
-                
-                // CRC is invalid
-                end else begin
-                    `ifdef SIM
-                        $display("StateRespIn: CRC invalid");
-                    `endif
-                    // TODO: handle bad response
-                end
-            end
-            
-            // Clock-in and check stop bit
-            StateRespIn+9: begin
-                int_outClkSlow <= 0;
-                int_delay <= OutClkSlowHalfCycleDelay;
-                int_state <= StateRespIn+10;
-            end
-            
-            StateRespIn+10: begin
-                int_outClkSlow <= 1;
-                int_resp <= (int_resp<<1)|int_cmdIn;
-                
-                // Correct stop bit: we're finished receiving the response
-                if (int_cmdIn) begin
-                    `ifdef SIM
-                        $display("StateRespIn: stop bit valid");
-                    `endif
-                    int_delay <= OutClkSlowHalfCycleDelay;
-                    int_state <= int_nextState;
-                
-                // Incorrect stop bit:
-                // TODO: handle bad response
-                end else begin
-                    `ifdef SIM
-                        $display("StateRespIn: stop bit invalid");
-                    `endif
-                end
-            end
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            // StateRespIn+2: begin
-            //     int_outClkSlow <= 1;
-            //     int_resp <= (int_resp<<1)|int_cmdIn;
+            // StateRespIn: begin
+            //     int_cmdInCRCEn <= 1;
+            //     int_state <= StateRespIn+1;
+            // end
             //
-            //     if (int_counter != 1) begin
-            //         int_counter <= int_counter-1;
-            //         int_delay <= OutClkSlowHalfCycleDelay;
-            //         int_state <= StateRespIn+3;
-            //
-            //     end else if (int_respInCheckCRC) begin
-            //         int_respInCheckCRC <= 0;
-            //         int_respInExpectedCRC <= int_cmdInCRC;
-            //         int_delay <= OutClkSlowHalfCycleDelay;
-            //         int_state <= StateCmdOut+3;
+            // // Wait for response to start
+            // StateRespIn+1: begin
+            //     if (!int_cmdIn) begin
+            //         `ifdef SIM
+            //             $display("StateRespIn: response started");
+            //         `endif
+            //         int_state <= StateRespIn+2;
             //
             //     end else begin
-            //         int_delay <= OutClkSlowHalfCycleDelay;
-            //         int_state <= int_nextState;
+            //         int_cmdInCRCEn <= 0; // Reset the CRC since it should only begin when the message starts
+            //         int_state <= StateRespIn;
             //     end
             // end
             //
-            // StateRespIn+3: begin
-            //     int_outClkSlow <= 0;
-            //     int_delay <= OutClkSlowHalfCycleDelay;
-            //     int_state <= StateRespIn+2;
+            // // Clock in transmission bit (=0 when coming from SD card)
+            // StateRespIn+2: begin
+            //     int_state <= StateRespIn+3;
             // end
-            
-            
-            
+            //
+            // StateRespIn+3: begin
+            //     int_resp <= (int_resp<<1)|int_cmdIn;
+            //
+            //     // Valid transmission bit
+            //     if (!int_cmdIn) begin
+            //         `ifdef SIM
+            //             $display("StateRespIn: transmission bit valid");
+            //         `endif
+            //         int_state <= StateRespIn+4;
+            //
+            //     // Invalid transmission bit
+            //     end else begin
+            //         `ifdef SIM
+            //             $display("StateRespIn: transmission bit invalid");
+            //         `endif
+            //         // TODO: handle bad response
+            //     end
+            // end
+            //
+            // // Clock in response
+            // StateRespIn+4: begin
+            //     int_state <= StateRespIn+5;
+            // end
+            //
+            // StateRespIn+5: begin
+            //     int_resp <= (int_resp<<1)|int_cmdIn;
+            //
+            //     // Continue clocking in response
+            //     if (int_counter != 1) begin
+            //         int_counter <= int_counter-1;
+            //         int_state <= StateRespIn+4;
+            //
+            //     // Clock-in CRC if requested
+            //     end else if (int_respInCheckCRC) begin
+            //         int_respInCheckCRC <= 0;
+            //         int_respInExpectedCRC <= int_cmdInCRC;
+            //         int_counter <= 7;
+            //         int_state <= StateRespIn+6;
+            //
+            //     // Clock-in stop bit
+            //     end else begin
+            //         int_state <= StateRespIn+9;
+            //     end
+            // end
+            //
+            // // Clock-in and check CRC
+            // StateRespIn+6: begin
+            //     int_state <= StateRespIn+7;
+            // end
+            //
+            // StateRespIn+7: begin
+            //     int_resp <= (int_resp<<1)|int_cmdIn;
+            //
+            //     // Continue clocking-in CRC
+            //     if (int_counter != 1) begin
+            //         int_counter <= int_counter-1;
+            //         int_state <= StateRespIn+6;
+            //
+            //     end else begin
+            //         int_state <= StateRespIn+8;
+            //     end
+            // end
+            //
+            // StateRespIn+8: begin
+            //     // CRC is valid: clock-in and check stop bit
+            //     if (int_respInExpectedCRC == int_resp[6:0]) begin
+            //         `ifdef SIM
+            //             $display("StateRespIn: CRC valid");
+            //         `endif
+            //         int_state <= StateRespIn+9;
+            //
+            //     // CRC is invalid
+            //     end else begin
+            //         `ifdef SIM
+            //             $display("StateRespIn: CRC invalid");
+            //         `endif
+            //         // TODO: handle bad response
+            //     end
+            // end
+            //
+            // // Clock-in and check stop bit
+            // StateRespIn+9: begin
+            //     int_state <= StateRespIn+10;
+            // end
+            //
+            // StateRespIn+10: begin
+            //     int_resp <= (int_resp<<1)|int_cmdIn;
+            //
+            //     // Correct stop bit: we're finished receiving the response
+            //     if (int_cmdIn) begin
+            //         `ifdef SIM
+            //             $display("StateRespIn: stop bit valid");
+            //         `endif
+            //         int_state <= int_nextState;
+            //
+            //     // Incorrect stop bit:
+            //     // TODO: handle bad response
+            //     end else begin
+            //         `ifdef SIM
+            //             $display("StateRespIn: stop bit invalid");
+            //         `endif
+            //     end
+            // end
             endcase
         end
     end
