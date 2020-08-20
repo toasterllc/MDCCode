@@ -67,7 +67,6 @@ module SDCardController(
     reg[135:0] int_cmdInReg = 0;
     wire int_cmdIn;
     reg[7:0] int_cmdInCounter = 0;
-    reg int_cmdInActive = 0;
     
     // Verify that `OutClkSlowHalfCycleDelay` fits in int_counter
     // TODO:
@@ -156,21 +155,19 @@ module SDCardController(
         int_outClk_slowLast <= int_outClk_slow;
         
         if (!int_outClk_slowLast && int_outClk_slow) begin
-            if (int_cmdInActive) begin
-                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
-                int_cmdInCounter <= int_cmdInCounter-1;
-            end
+            int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
+            int_cmdInCounter <= int_cmdInCounter-1;
         end
         
         if (int_outClk_slowLast && !int_outClk_slow) begin
-            if (int_cmdOutActive) begin
-                int_cmdOutReg <= int_cmdOutReg<<1;
-                int_cmdOutCounter <= int_cmdOutCounter-1;
-            end
+            int_cmdOutReg <= int_cmdOutReg<<1;
+            int_cmdOutCounter <= int_cmdOutCounter-1;
             
             case (int_state)
             StateInit: begin
                 int_cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
+                int_cmdOutCounter <= 48;
+                int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+1;
@@ -178,34 +175,28 @@ module SDCardController(
             
             StateInit+1: begin
                 int_cmdOutReg <= {2'b01, CMD8, 32'h00000000, 7'b0, 1'b1};
+                int_cmdOutCounter <= 48;
+                int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+2;
             end
             
             StateInit+2: begin
-                int_cmdInCounter <= 48;
-                int_respInCheckCRC <= 1;
-                int_state <= StateRespIn;
-                int_nextState <= StateInit+3;
+                // int_cmdInCounter <= 48;
+                // int_respInCheckCRC <= 1;
+                // int_state <= StateRespIn;
+                // int_nextState <= StateInit+3;
             end
             
             StateInit+3: begin
             end
             
-            
-            
             StateCmdOut: begin
-                int_cmdOutCounter <= 48;
-                int_cmdOutActive <= 1;
-                int_state <= StateCmdOut+1;
-            end
-            
-            StateCmdOut+1: begin
                 if (int_cmdOutCRCEn & int_cmdOutCounter==9) begin
                     int_cmdOutReg[47:41] <= int_cmdOutCRC;
                 
-                end else if (int_counter == 1) begin
+                end else if (int_cmdOutCounter == 1) begin
                     int_cmdOutActive <= 0;
                     int_cmdOutCRCEn <= 0;
                     int_state <= int_nextState;
@@ -215,20 +206,20 @@ module SDCardController(
             
             
             
-            StateRespIn: begin
-                if (!int_cmdInReg[0]) begin
-                    
-                end
-                
-                if (int_cmdOutCRCEn & int_counter==9) begin
-                    int_cmdOutReg[47:41] <= int_cmdOutCRC;
-                
-                end else if (int_counter == 1) begin
-                    int_cmdOutActive <= 0;
-                    int_cmdOutCRCEn <= 0;
-                    int_state <= int_nextState;
-                end
-            end
+            // StateRespIn: begin
+            //     if (!int_cmdInReg[0]) begin
+            //
+            //     end
+            //
+            //     if (int_cmdOutCRCEn & int_counter==9) begin
+            //         int_cmdOutReg[47:41] <= int_cmdOutCRC;
+            //
+            //     end else if (int_counter == 1) begin
+            //         int_cmdOutActive <= 0;
+            //         int_cmdOutCRCEn <= 0;
+            //         int_state <= int_nextState;
+            //     end
+            // end
             
             
             
