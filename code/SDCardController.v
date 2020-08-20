@@ -68,7 +68,6 @@ module SDCardController(
     
     reg[135:0] int_cmdInReg = 0;
     wire int_cmdIn;
-    reg int_cmdInCached = 0;
     reg[7:0] int_cmdInCounter = 0;
     reg int_cmdInActive = 0;
     
@@ -163,9 +162,10 @@ module SDCardController(
         
         // Posedge
         if (!int_outClk_slowLast && int_outClk_slow) begin
-            int_cmdInCached <= int_cmdIn;
-            if (int_cmdInCounter && int_cmdInActive) begin
-                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdInCached;
+            if (int_cmdInCounter) begin
+                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
+            end
+            if (int_cmdInActive) begin
                 int_cmdInCounter <= int_cmdInCounter-1;
             end
         end
@@ -191,7 +191,7 @@ module SDCardController(
                 int_cmdOutCounter <= 47;
                 int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
-                int_cmdInCounter <= 48;
+                int_cmdInCounter <= 47;
                 int_respCheckCRC <= 1;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+2;
@@ -220,15 +220,17 @@ module SDCardController(
             
             // Wait for response to start
             StateRespIn: begin
-                if (!int_cmdInCached) begin
+                // $display("AAA %b", int_cmdInReg);
+                if (!int_cmdInReg[0]) begin
                     int_cmdInActive <= 1;
                     int_cmdInCRCEn <= 1;
                     int_state <= StateRespIn+1;
                 end
             end
-
+            
             // Check transmission bit
             StateRespIn+1: begin
+                // $display("AAA %b", int_cmdInReg);
                 if (int_cmdInReg[0]) begin
                     // TODO: handle bad response
                     `ifdef SIM
@@ -250,14 +252,9 @@ module SDCardController(
             end
             
             StateRespIn+3: begin
-                int_crcOK <= int_respInExpectedCRC===int_cmdInReg[7:1];
-                $display("CRC: %b %b", int_respInExpectedCRC, int_cmdInReg);
-                int_state <= StateRespIn+4;
-            end
-            
-            StateRespIn+4: begin
                 // Check for a bad CRC, or a bad stop bit
-                if ((int_respCheckCRC && !int_crcOK) || !int_cmdInReg[0]) begin
+                $display("CRC: %b %b", int_respInExpectedCRC, int_cmdInReg);
+                if ((int_respCheckCRC && int_respInExpectedCRC!==int_cmdInReg[7:1]) || !int_cmdInReg[0]) begin
                     // TODO: handle bad response
                     `ifdef SIM
                         $display("Bad CRC or stop bit");
