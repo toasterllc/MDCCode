@@ -135,9 +135,10 @@ module SDCardController(
     // ====================
     // State Machine
     // ====================
-    localparam StateInit       = 0;     // +22
-    localparam StateCmdOut     = 23;    // +0
-    localparam StateRespIn     = 24;    // +3
+    localparam StateInit        = 0;     // +22
+    localparam StateCmdOut      = 23;    // +0
+    localparam StateRespIn      = 24;    // +3
+    localparam StateError       = 28;    // +0
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -153,9 +154,11 @@ module SDCardController(
     
     // TODO: try using strategy where a counter automatically toggles int_outClkSlow
     
-    // TODO: try switching to a single counter (int_counter), instead of cmdInCounter, cmdOutCounter
-    
     // TODO: try merging counters
+    
+    // TODO: try switching back to strategy where we control output clock manually
+    
+    // TODO: try checking int_respCheckCRC using a shift register
     
     reg[5:0] int_state = 0;
     reg[5:0] int_nextState = 0;
@@ -219,7 +222,7 @@ module SDCardController(
                 //   it shall not return response and stays in Idle state."
                 
                 // Verify check pattern is what we supplied
-                if (int_cmdInReg[15:8] !== 8'hAA) int_state <= StateInit;
+                if (int_cmdInReg[15:8] !== 8'hAA) int_state <= StateError;
                 else int_state <= StateInit+4;
             end
             
@@ -266,13 +269,13 @@ module SDCardController(
             
             StateInit+8: begin
                 // Verify the command is all 1's
-                if (int_cmdInReg[45:40] !== 6'b111111) int_state <= StateInit;
+                if (int_cmdInReg[45:40] !== 6'b111111) int_state <= StateError;
                 // Verify CRC is all 1's
-                else if (int_cmdInReg[7:1] !== 7'b1111111) int_state <= StateInit;
+                else if (int_cmdInReg[7:1] !== 7'b1111111) int_state <= StateError;
                 // Retry AMCD41 if the card wasn't ready (busy)
                 else if (int_cmdInReg[39] !== 1'b1) int_state <= StateInit+4;
                 // Check that the 1.8V transition was accepted (s18a)
-                else if (int_cmdInReg[32] !== 1'b1) int_state <= StateInit;
+                else if (int_cmdInReg[32] !== 1'b1) int_state <= StateError;
                 // Otherwise, proceed
                 else int_state <= StateInit+9;
             end
@@ -439,8 +442,8 @@ module SDCardController(
                 if (int_cmdInStaged[0]) begin
                     $display("[SD HOST] BAD TRANSMISSION BIT");
                     // $finish;
-                    int_cmdInActive <= 0;
-                    int_state <= StateInit;
+                    // int_cmdInActive <= 0; // TODO: we probably need this to reset the CRC
+                    int_state <= StateError;
                 
                 end else begin
                     int_cmdInCRCEn <= 1;
@@ -474,7 +477,7 @@ module SDCardController(
                 if ((int_respCheckCRC && int_respInExpectedCRC!==int_cmdInReg[7:1]) || !int_cmdInReg[0]) begin
                     $display("[SD HOST] ***** BAD CRC *****");
                     // $finish;
-                    int_state <= StateInit;
+                    int_state <= StateError;
                 end else begin
                     int_state <= int_nextState;
                 end
@@ -498,6 +501,12 @@ module SDCardController(
                 //
                 //     int_state <= int_nextState;
                 // end
+            end
+            
+            StateError: begin
+                int_cmdOutActive <= 0;
+                int_cmdInActive <= 0;
+                int_state <= StateInit;
             end
             
             
