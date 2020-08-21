@@ -157,7 +157,7 @@ module SDCardController(
         int_outClk_slowLast <= int_outClk_slow;
         
         if (!int_outClk_slowLast && int_outClk_slow) begin
-            if (int_cmdInCounter > 1) begin
+            if (int_cmdInCounter) begin
                 int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
                 int_cmdInCounter <= int_cmdInCounter-1;
             end
@@ -170,7 +170,7 @@ module SDCardController(
             case (int_state)
             StateInit: begin
                 int_cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
-                int_cmdOutCounter <= 48;
+                int_cmdOutCounter <= 47;
                 int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
                 int_state <= StateCmdOut;
@@ -178,8 +178,8 @@ module SDCardController(
             end
             
             StateInit+1: begin
-                int_cmdOutReg <= {2'b01, CMD8, 32'h00000000, 7'b0, 1'b1};
-                int_cmdOutCounter <= 48;
+                int_cmdOutReg <= {2'b01, 6'd17, 32'h00000000, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
                 int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
                 int_state <= StateCmdOut;
@@ -187,7 +187,8 @@ module SDCardController(
             end
             
             StateInit+2: begin
-                int_cmdInCounter <= 48;
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 1;
                 int_state <= StateRespIn;
                 int_nextState <= StateInit+3;
             end
@@ -196,10 +197,10 @@ module SDCardController(
             end
             
             StateCmdOut: begin
-                if (int_cmdOutCRCEn & int_cmdOutCounter==9) begin
+                if (int_cmdOutCRCEn && int_cmdOutCounter==8) begin
                     int_cmdOutReg[47:41] <= int_cmdOutCRC;
                 
-                end else if (int_cmdOutCounter == 1) begin
+                end else if (!int_cmdOutCounter) begin
                     int_cmdOutActive <= 0;
                     int_cmdOutCRCEn <= 0;
                     int_state <= int_nextState;
