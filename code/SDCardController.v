@@ -66,9 +66,8 @@ module SDCardController(
     
     reg[135:0] int_cmdInReg = 0;
     wire int_cmdIn;
-    reg int_cmdInStaged = 0;
-    reg[7:0] int_cmdInCounter = 0;
     reg int_cmdInActive = 0;
+    reg[7:0] int_cmdInCounter = 0;
     
     // Verify that `OutClkSlowHalfCycleDelay` fits in int_counter
     // TODO:
@@ -123,7 +122,7 @@ module SDCardController(
     reg int_cmdInCRCEn = 0;
     CRC7 cmdInCRC(
         .clk(int_outClk_slow),
-        .en(int_cmdInCRCEn),
+        .en(int_cmdInActive),
         .din(int_cmdInReg[0]),
         .dout(int_cmdInCRC)
     );
@@ -159,10 +158,11 @@ module SDCardController(
         int_outClk_slowLast <= int_outClk_slow;
         
         if (!int_outClk_slowLast && int_outClk_slow) begin
-            int_cmdInStaged <= int_cmdIn;
-            if (int_cmdInActive) begin
-                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdInStaged;
+            // TODO: we can optimize this logic, so that on the initial int_cmdIn==0, we don't need to shift int_cmdInReg
+            if (!int_cmdIn || int_cmdInActive) begin
+                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
                 int_cmdInCounter <= int_cmdInCounter-1;
+                int_cmdInActive <= 1;
             end
         end
         
@@ -191,6 +191,7 @@ module SDCardController(
             
             StateInit+2: begin
                 int_cmdInCounter <= 47;
+                int_cmdInActive <= 0;
                 int_respCheckCRC <= 1;
                 int_state <= StateRespIn;
                 int_nextState <= StateInit+3;
@@ -210,25 +211,18 @@ module SDCardController(
                 end
             end
             
-            // Wait for response to start
+            // Wait for response to end
             StateRespIn: begin
-                if (!int_cmdInStaged) begin
-                    int_cmdInActive <= 1;
-                    int_cmdInCRCEn <= 1;
+                if (int_cmdInCounter == 7) begin
+                    int_respInExpectedCRC <= int_cmdInCRC;
+                
+                end else if (!int_cmdInCounter) begin
+                    int_cmdInActive <= 0;
                     int_state <= StateRespIn+1;
                 end
             end
             
             StateRespIn+1: begin
-                if (int_cmdInCounter == 7) begin
-                    int_respInExpectedCRC <= int_cmdInCRC;
-                end else if (!int_cmdInCounter) begin
-                    int_cmdInActive <= 0;
-                    int_state <= StateRespIn+3;
-                end
-            end
-            
-            StateRespIn+3: begin
                 $display("Response: %b", int_cmdInReg);
                 $display("int_respInExpectedCRC: %b", int_respInExpectedCRC);
                 $display("int_cmdInReg: %b", int_cmdInReg);
