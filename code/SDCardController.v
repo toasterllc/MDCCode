@@ -61,9 +61,8 @@ module SDCardController(
     wire int_outClk = (int_outClk_fastMode ? int_outClk_fast : int_outClk_slow);
     assign sd_clk = int_outClk;
     
-    reg[47:0] int_cmdOutReg = 0;
+    reg[95:0] int_cmdOutReg = 0;
     wire int_cmdOut = int_cmdOutReg[47];
-    reg[7:0] int_cmdOutCounter = 0;
     reg int_cmdOutActive = 0;
     
     reg[135:0] int_cmdInReg = 0;
@@ -153,35 +152,30 @@ module SDCardController(
     
     // TODO: try getting rid of int_cmdOutCounter and just looking at a sentinel. in the past though this made things slower didnt it? also try using a separate shift register
     
-    localparam RespLen0     = 0;
-    localparam RespLen48    = 1;
-    localparam RespLen136   = 2;
+    localparam RespLen0     = 3'b001;
+    localparam RespLen48    = 3'b010;
+    localparam RespLen136   = 3'b100;
     
     reg[5:0] int_state = 0;
     reg[5:0] int_nextState = 0;
     reg[6:0] int_respInExpectedCRC = 0;
     reg int_respCheckCRC = 0;
-    reg[1:0] int_respLen = 0;
+    reg[2:0] int_respLen = 0;
     always @(posedge int_clk) begin
         int_outClk_slowLast <= int_outClk_slow;
         
         // Posedge
         if (!int_outClk_slowLast && int_outClk_slow) begin
-            if (int_cmdInActive)
-                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
-            else
-                int_cmdInReg <= ~0;
+            int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
         end
         
         // Negedge
         if (int_outClk_slowLast && !int_outClk_slow) begin
             int_cmdOutReg <= int_cmdOutReg<<1;
-            int_cmdOutCounter <= int_cmdOutCounter-1;
             
             case (int_state)
             StateInit: begin
-                int_cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
-                int_cmdOutCounter <= 47;
+                int_cmdOutReg <= {{48{1'b1}}, 2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
                 int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
                 int_respLen <= RespLen0;
@@ -190,8 +184,7 @@ module SDCardController(
             end
             
             StateInit+1: begin
-                int_cmdOutReg <= {2'b01, 6'd17, 32'h00000000, 7'b0, 1'b1};
-                int_cmdOutCounter <= 47;
+                int_cmdOutReg <= {{48{1'b1}}, 2'b01, 6'd17, 32'h00000000, 7'b0, 1'b1};
                 int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
                 int_respLen <= RespLen48;
@@ -210,10 +203,11 @@ module SDCardController(
             end
             
             StateCmdOut: begin
-                if (int_cmdOutCRCEn & int_cmdOutCounter==8) begin
+                
+                if (int_cmdOutCRCEn & (int_cmdOutReg[95:86]==10'b1111111110)) begin
                     int_cmdOutReg[47:41] <= int_cmdOutCRC;
                 
-                end else if (!int_cmdOutCounter) begin
+                end else if (!int_cmdOutReg[94]) begin
                     int_cmdOutActive <= 0;
                     int_cmdOutCRCEn <= 0;
                     int_cmdInActive <= 1;
