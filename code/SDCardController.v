@@ -62,15 +62,14 @@ module SDCardController(
     assign sd_clk = int_outClk;
     
     reg[47:0] int_cmdOutReg = 0;
-    reg [7:0] int_cmdOutCounter = 0;
     wire int_cmdOut = int_cmdOutReg[47];
     reg int_cmdOutActive = 0;
     
     reg[135:0] int_cmdInReg = 0;
     reg int_cmdInStaged = 0;
-    reg [7:0] int_cmdInCounter = 0;
     wire int_cmdIn;
     reg int_cmdInActive = 0;
+    reg [7:0] int_counter = 0;
     
     // Verify that `OutClkSlowHalfCycleDelay` fits in int_counter
     // TODO:
@@ -171,36 +170,33 @@ module SDCardController(
             int_cmdInStaged <= int_cmdIn;
             if (int_cmdInActive) begin
                 int_cmdInReg <= (int_cmdInReg<<1)|int_cmdInStaged;
-                int_cmdInCounter <= int_cmdInCounter-1;
             end
         end
         
         // Negedge
         if (int_outClk_slowLast && !int_outClk_slow) begin
             int_cmdOutReg <= int_cmdOutReg<<1;
-            int_cmdOutCounter <= int_cmdOutCounter-1;
+            int_counter <= int_counter-1;
             
             case (int_state)
             StateInit: begin
                 int_cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
-                int_cmdOutCounter <= 47;
+                int_counter <= 47;
                 int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
-                int_cmdInCounter <= 0;
-                int_respCheckCRC <= 0;
                 int_respLen <= RespLen0;
+                int_respCheckCRC <= 0;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+1;
             end
             
             StateInit+1: begin
                 int_cmdOutReg <= {2'b01, 6'd17, 32'h00000000, 7'b0, 1'b1};
-                int_cmdOutCounter <= 47;
+                int_counter <= 47;
                 int_cmdOutActive <= 1;
                 int_cmdOutCRCEn <= 1;
-                int_cmdInCounter <= 47;
-                int_respCheckCRC <= 1;
                 int_respLen <= RespLen48;
+                int_respCheckCRC <= 1;
                 int_state <= StateCmdOut;
                 int_nextState <= StateInit+2;
             end
@@ -213,10 +209,10 @@ module SDCardController(
             end
             
             StateCmdOut: begin
-                if (int_cmdOutCRCEn && (int_cmdOutCounter==8)) begin
+                if (int_cmdOutCRCEn && (int_counter==8)) begin
                     int_cmdOutReg[47:41] <= int_cmdOutCRC;
                 
-                end else if (!int_cmdOutCounter) begin
+                end else if (!int_counter) begin
                     int_cmdOutActive <= 0;
                     int_cmdOutCRCEn <= 0;
                     int_state <= StateRespIn;
@@ -225,37 +221,41 @@ module SDCardController(
             
             // Wait for the response to start
             StateRespIn: begin
+                if (!int_cmdInActive) begin
+                    case (int_respLen)
+                    RespLen48: int_counter <= 46;
+                    RespLen136: int_counter <= 134;
+                    endcase
+                end
+                
                 if (!int_cmdInStaged) int_cmdInActive <= 1;
-                if (int_cmdInCounter == 6) int_respInExpectedCRC <= int_cmdInCRC;
-                if (!int_cmdInCounter) int_state <= StateRespIn+1;
+                if (int_counter == 6) int_respInExpectedCRC <= int_cmdInCRC;
+                if (!int_counter) int_state <= StateRespIn+1;
             end
             
             StateRespIn+1: begin
-                case (int_respLen)
-                RespLen48: begin
-                    if (!(!int_cmdInReg[47] && !int_cmdInReg[46] && int_cmdInReg[0])) begin
-                        $display("Bad start/transmission/stop bits");
-                    end
-                    
-                    if (int_respCheckCRC && int_cmdInReg[7:1]!==int_respInExpectedCRC) begin
-                        $display("Bad CRC");
-                    end
-                end
-                
-                RespLen136: begin
-                    if (!(!int_cmdInReg[135] && !int_cmdInReg[134] && int_cmdInReg[0])) begin
-                        $display("Bad start/transmission/stop bits");
-                    end
-                    
-                    if (int_respCheckCRC && int_cmdInReg[7:1]!==int_respInExpectedCRC) begin
-                        $display("Bad CRC");
-                    end
-                end
-                endcase
-                
+                $display("Got response: %b", int_cmdInReg);
                 int_cmdInActive <= 0;
                 int_state <= int_nextState;
-                $display("Got response: %b", int_cmdInReg);
+                
+                case (int_respLen)
+                RespLen48:
+                    if (int_cmdInReg[47] || int_cmdInReg[46] || !int_cmdInReg[0]) begin
+                        $display("Bad start/transmission/stop bit");
+                        int_state <= StateInit;
+                    end
+                
+                RespLen136:
+                    if (int_cmdInReg[135] || int_cmdInReg[134] || !int_cmdInReg[0]) begin
+                        $display("Bad start/transmission/stop bit");
+                    end
+                endcase
+                
+                // Check CRC if necessary
+                if (int_respCheckCRC && int_cmdInReg[7:1]!==int_respInExpectedCRC) begin
+                    $display("Bad CRC");
+                    int_state <= StateInit;
+                end
             end
             
             // // Wait for response to start
