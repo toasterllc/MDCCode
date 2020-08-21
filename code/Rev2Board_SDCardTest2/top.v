@@ -165,6 +165,18 @@ module Top(
                 
                 // Issue response if needed
                 if (sim_cmdIn[45:40]) begin
+                    // wait(sd_clk);
+                    // wait(!sd_clk);
+                    //
+                    // wait(sd_clk);
+                    // wait(!sd_clk);
+                    //
+                    // wait(sd_clk);
+                    // wait(!sd_clk);
+                    //
+                    // wait(sd_clk);
+                    // wait(!sd_clk);
+                    
                     // sim_respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
                     sim_respOut = {2'b00, 6'b010001, 32'b00000000000000000000100100000000, 7'b0110011, 1'b1};
                     $display("Sending response: %b", sim_respOut);
