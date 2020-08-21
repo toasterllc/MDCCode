@@ -1,0 +1,142 @@
+dave@kmbp MDCDebugger % ../InitSDCard.sh     
+Sending CMD0
+Response:
+ff ff ff ff ff ff ff ff ff ff ff 40 00 00 00 00 95 
+
+Sending CMD8
+Response:
+08 00 00 01 aa 13 ff ff ff ff ff ff ff ff ff ff ff 
+R7{
+  start:           0x 00
+  cmd:             CMD8
+  reserved:        0x 000000
+  pcie:            0x 00
+  voltage:         0x 01
+  checkPattern:    0x aa
+  crc:             0x 09 ✅
+  end:             0x 01
+}
+
+Sending CMD55
+Response:
+37 00 00 01 20 83 ff ff ff ff ff ff ff ff ff ff ff 
+R1{
+  start:           0x 00
+  cmd:             CMD55
+  status:          0x 00000120
+  crc:             0x 41 ✅
+  end:             0x 01
+}
+
+Sending CMD41
+Response:
+3f 00 ff 80 80 ff ff ff ff ff ff ff ff ff ff ff ff 
+R3{
+  start:           0x 00
+  cmd:             CMD63
+  busy:            0x 00
+  ccs:             0x 00
+  uhsII:           0x 00
+  reserved0:       0x 00
+  s18a:            0x 00
+  ocr:             0x ff80
+  reserved1:       0x 80
+  crc:             0x 7f ✅
+  end:             0x 01
+}
+
+Sending CMD55
+Response:
+37 00 00 01 20 83 ff ff ff ff ff ff ff ff ff ff ff 
+R1{
+  start:           0x 00
+  cmd:             CMD55
+  status:          0x 00000120
+  crc:             0x 41 ✅
+  end:             0x 01
+}
+
+Sending CMD41
+Response:
+3f c1 ff 80 80 ff ff ff ff ff ff ff ff ff ff ff ff 
+R3{
+  start:           0x 00
+  cmd:             CMD63
+  busy:            0x 01
+  ccs:             0x 01
+  uhsII:           0x 00
+  reserved0:       0x 00
+  s18a:            0x 01
+  ocr:             0x ff80
+  reserved1:       0x 80
+  crc:             0x 7f ✅
+  end:             0x 01
+}
+
+Sending CMD2
+Response:
+3f 03 53 44 53 52 31 32 38 80 8b b7 9d 66 01 46 77 
+R2{
+  start:           0x 00
+  reserved:        0x 3f
+  cid0:            0x 0353445352313238
+  cid1:            0x 4045dbceb300a33b
+  end:             0x 01
+}
+
+Sending CMD3
+Response:
+03 aa aa 05 20 d1 ff ff ff ff ff ff ff ff ff ff ff 
+R6{
+  start:           0x 00
+  cmd:             CMD3
+  newRCA:          0x aaaa
+  status:          0x 0520
+  crc:             0x 68 ✅
+  end:             0x 01
+}
+
+Sending CMD7
+Response:
+07 00 00 07 00 75 ff ff ff ff ff ff ff ff ff ff ff 
+R1{
+  start:           0x 00
+  cmd:             CMD7
+  status:          0x 00000700
+  crc:             0x 3a ✅
+  end:             0x 01
+}
+
+Sending CMD55
+Response:
+37 00 00 09 20 33 ff ff ff ff ff ff ff ff ff ff ff 
+R1{
+  start:           0x 00
+  cmd:             CMD55
+  status:          0x 00000920
+  crc:             0x 19 ✅
+  end:             0x 01
+}
+
+Sending CMD6
+Response:
+06 00 00 09 20 b9 ff ff ff ff ff ff ff ff ff ff ff 
+R1{
+  start:           0x 00
+  cmd:             CMD6
+  status:          0x 00000920
+  crc:             0x 5c ✅
+  end:             0x 01
+}
+
+Sending CMD6
+Response:
+06 00 00 09 00 dd ff ff ff ff ff ff ff ff ff ff ff 
+R1{
+  start:           0x 00
+  cmd:             CMD6
+  status:          0x 00000900
+  crc:             0x 6e ✅
+  end:             0x 01
+}
+
