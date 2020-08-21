@@ -67,6 +67,7 @@ module SDCardController(
     reg int_cmdOutActive = 0;
     
     reg[135:0] int_cmdInReg = 0;
+    reg int_cmdInStaged = 0;
     reg [7:0] int_cmdInCounter = 0;
     wire int_cmdIn;
     reg int_cmdInActive = 0;
@@ -132,9 +133,9 @@ module SDCardController(
     // ====================
     // State Machine
     // ====================
-    localparam StateInit       = 0;   // +3
-    localparam StateCmdOut     = 4;   // +0
-    localparam StateRespIn     = 5;   // +1
+    localparam StateInit       = 0;   // +2
+    localparam StateCmdOut     = 3;   // +0
+    localparam StateRespIn     = 4;   // +1
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -163,8 +164,11 @@ module SDCardController(
         
         // Posedge
         if (!int_outClk_slowLast && int_outClk_slow) begin
-            int_cmdInReg <= (int_cmdInReg<<1)|int_cmdIn;
-            if (int_cmdInActive) int_cmdInCounter <= int_cmdInCounter-1;
+            int_cmdInStaged <= int_cmdIn;
+            if (int_cmdInActive) begin
+                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdInStaged;
+                int_cmdInCounter <= int_cmdInCounter-1;
+            end
         end
         
         // Negedge
@@ -200,9 +204,6 @@ module SDCardController(
                 // int_nextState <= StateInit+3;
             end
             
-            StateInit+3: begin
-            end
-            
             StateCmdOut: begin
                 if (int_cmdOutCRCEn && (int_cmdOutCounter==8)) begin
                     int_cmdOutReg[47:41] <= int_cmdOutCRC;
@@ -216,7 +217,7 @@ module SDCardController(
             
             // Wait for the response to start
             StateRespIn: begin
-                if (!int_cmdInReg[0]) int_cmdInActive <= 1;
+                if (!int_cmdInStaged) int_cmdInActive <= 1;
                 if (!int_cmdInCounter) int_state <= StateRespIn+1;
             end
             
