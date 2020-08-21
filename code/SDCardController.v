@@ -123,17 +123,21 @@ module SDCardController(
     reg int_cmdInCRCEn = 0;
     CRC7 cmdInCRC(
         .clk(int_outClk_slow),
-        .en(int_cmdInActive),
+        .en(int_cmdInCRCEn),
         .din(int_cmdInReg[0]),
         .dout(int_cmdInCRC)
     );
     
+    // always @(posedge int_outClk_slow) begin
+    //     if (int_cmdInActive) $display("CRC %b", int_cmdInReg[0]);
+    // end
+    
     // ====================
     // State Machine
     // ====================
-    localparam StateInit       = 0;   // +3
-    localparam StateCmdOut     = 4;   // +0
-    localparam StateRespIn     = 5;   // +1
+    localparam StateInit       = 0;     // +22
+    localparam StateCmdOut     = 23;    // +0
+    localparam StateRespIn     = 24;    // +3
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -157,23 +161,29 @@ module SDCardController(
     reg[5:0] int_nextState = 0;
     reg[6:0] int_respInExpectedCRC = 0;
     reg int_respCheckCRC = 0;
+    reg[15:0] int_sdRCA = 0;
     always @(posedge int_clk) begin
         int_outClk_slowLast <= int_outClk_slow;
         
         if (!int_outClk_slowLast && int_outClk_slow) begin
             int_cmdInStaged <= int_cmdInStaged<<1|int_cmdIn;
-            if (int_cmdInActive) begin
-                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdInStaged[1];
-                int_cmdInCounter <= int_cmdInCounter-1;
-            end
         end
         
         if (int_outClk_slowLast && !int_outClk_slow) begin
             int_cmdOutReg <= int_cmdOutReg<<1;
             int_cmdOutCounter <= int_cmdOutCounter-1;
             
+            if (int_cmdInActive) begin
+                int_cmdInReg <= (int_cmdInReg<<1)|int_cmdInStaged[1];
+                int_cmdInCounter <= int_cmdInCounter-1;
+            end
+            
             case (int_state)
+            // ====================
+            // CMD0
+            // ====================
             StateInit: begin
+                $display("[SD HOST] Sending CMD0");
                 int_cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
                 int_cmdOutCounter <= 47;
                 int_cmdOutActive <= 1;
@@ -182,7 +192,11 @@ module SDCardController(
                 int_nextState <= StateInit+1;
             end
             
+            // ====================
+            // CMD8
+            // ====================
             StateInit+1: begin
+                $display("[SD HOST] Sending CMD8");
                 int_cmdOutReg <= {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1};
                 int_cmdOutCounter <= 47;
                 int_cmdOutActive <= 1;
@@ -193,7 +207,6 @@ module SDCardController(
             
             StateInit+2: begin
                 int_cmdInCounter <= 47;
-                int_cmdInActive <= 0;
                 int_respCheckCRC <= 1;
                 int_state <= StateRespIn;
                 int_nextState <= StateInit+3;
@@ -210,9 +223,189 @@ module SDCardController(
                 else int_state <= StateInit+4;
             end
             
+            // ====================
+            // ACMD41 (CMD55, CMD41)
+            // ====================
             StateInit+4: begin
-                
+                $display("[SD HOST] Sending ACMD41");
+                int_cmdOutReg <= {2'b01, CMD55, 32'h00000000, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+5;
             end
+            
+            StateInit+5: begin
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 1;
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+6;
+            end
+            
+            StateInit+6: begin
+                // ACMD41
+                //   HCS = 1 (SDHC/SDXC supported)
+                //   XPC = 1 (maximum performance)
+                //   S18R = 1 (switch to 1.8V signal voltage)
+                //   Vdd Voltage Window = 0x8000 = 2.7-2.8V ("OCR Register Definition")
+                int_cmdOutReg <= {2'b01, CMD41, 32'h51008000, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+7;
+            end
+            
+            StateInit+7: begin
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 0; // CRC is all 1's for ACMD41 response
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+8;
+            end
+            
+            StateInit+8: begin
+                // Verify the command is all 1's
+                if (int_cmdInReg[45:40] !== 6'b111111) int_state <= StateInit;
+                // Verify CRC is all 1's
+                else if (int_cmdInReg[7:1] !== 7'b1111111) int_state <= StateInit;
+                // Retry AMCD41 if the card wasn't ready (busy)
+                else if (int_cmdInReg[39] !== 1'b1) int_state <= StateInit+4;
+                // Check that the 1.8V transition was accepted (s18a)
+                else if (int_cmdInReg[32] !== 1'b1) int_state <= StateInit;
+                // Otherwise, proceed
+                else int_state <= StateInit+9;
+            end
+            
+            // ====================
+            // CMD2
+            // ====================
+            StateInit+9: begin
+                $display("[SD HOST] Sending CMD2");
+                int_cmdOutReg <= {2'b01, CMD2, 32'h00000000, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+10;
+            end
+            
+            StateInit+10: begin
+                int_cmdInCounter <= 135;
+                int_respCheckCRC <= 0; // CMD2 response doesn't have CRC
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+11;
+            end
+            
+            // ====================
+            // CMD3
+            // ====================
+            StateInit+11: begin
+                $display("[SD HOST] Sending CMD3");
+                int_cmdOutReg <= {2'b01, CMD3, 32'h00000000, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+12;
+            end
+            
+            StateInit+12: begin
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 1;
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+13;
+            end
+            
+            StateInit+13: begin
+                int_sdRCA <= int_cmdInReg[39:24];
+                int_state <= StateInit+14;
+            end
+            
+            // ====================
+            // CMD7
+            // ====================
+            StateInit+14: begin
+                $display("[SD HOST] Sending CMD7");
+                int_cmdOutReg <= {2'b01, CMD7, {int_sdRCA, 16'b0}, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+15;
+            end
+            
+            StateInit+15: begin
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 1;
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+16;
+            end
+            
+            // ====================
+            // ACMD6 (CMD55, CMD6)
+            // ====================
+            StateInit+16: begin
+                $display("[SD HOST] Sending ACMD6");
+                int_cmdOutReg <= {2'b01, CMD55, {int_sdRCA, 16'b0}, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+17;
+            end
+            
+            StateInit+17: begin
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 1;
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+18;
+            end
+            
+            StateInit+18: begin
+                // ACMD6
+                //   Bus width = 2 (width = 4 bits)
+                int_cmdOutReg <= {2'b01, CMD6, 32'h00000002, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+19;
+            end
+            
+            StateInit+19: begin
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 1;
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+20;
+            end
+            
+            // ====================
+            // CMD6
+            // ====================
+            StateInit+20: begin
+                $display("[SD HOST] Sending CMD6");
+                int_cmdOutReg <= {2'b01, CMD6, 32'b0, 7'b0, 1'b1};
+                int_cmdOutCounter <= 47;
+                int_cmdOutActive <= 1;
+                int_cmdOutCRCEn <= 1;
+                int_state <= StateCmdOut;
+                int_nextState <= StateInit+21;
+            end
+            
+            StateInit+21: begin
+                int_cmdInCounter <= 47;
+                int_respCheckCRC <= 1;
+                int_state <= StateRespIn;
+                int_nextState <= StateInit+22;
+            end
+            
+            StateInit+22: begin
+                $display("[SD HOST] ***** DONE *****");
+                // $finish;
+            end
+            
+            
             
             
             
@@ -232,23 +425,59 @@ module SDCardController(
                 end
             end
             
-            // Wait for response to end
+            // Wait for response to start
             // TODO: handle never receiving a response
             StateRespIn: begin
-                if (!int_cmdInStaged) int_cmdInActive <= 1;
-                if (int_cmdInCounter == 6) int_respInExpectedCRC <= int_cmdInCRC;
-                if (!int_cmdInCounter) int_state <= StateRespIn+1;
+                if (!int_cmdInStaged[0]) begin
+                    int_cmdInActive <= 1;
+                    int_state <= StateRespIn+1;
+                end
             end
             
+            // Check transmission bit
             StateRespIn+1: begin
-                int_cmdInActive <= 0;
-                int_cmdInCRCEn <= 0;
+                if (int_cmdInStaged[0]) begin
+                    $display("[SD HOST] BAD TRANSMISSION BIT");
+                    // $finish;
+                    int_cmdInActive <= 0;
+                    int_state <= StateInit;
+                
+                end else begin
+                    int_cmdInCRCEn <= 1;
+                    int_state <= StateRespIn+2;
+                end
+            end
+            
+            // Wait for response to end
+            StateRespIn+2: begin
+                if (int_cmdInCounter == 7) int_respInExpectedCRC <= int_cmdInCRC;
+                if (!int_cmdInCounter) begin
+                    int_cmdInActive <= 0;
+                    int_cmdInCRCEn <= 0;
+                    int_state <= StateRespIn+3;
+                end
+            end
+            
+            
+            // StateRespIn: begin
+            //     if (!int_cmdInStaged[1:0]) int_cmdInActive <= 1;
+            //     if (int_cmdInCounter == 7) int_respInExpectedCRC <= int_cmdInCRC;
+            //     if (!int_cmdInCounter) int_state <= StateRespIn+1;
+            // end
+            
+            StateRespIn+3: begin
+                // int_cmdInStaged <= ~0;
+                
+                $display("[SD HOST] Received response: %b [our CRC: %b, their CRC: %b]", int_cmdInReg, int_respInExpectedCRC, int_cmdInReg[7:1]);
                 
                 // Verify that the CRC is OK (if requested), and that the stop bit is OK
-                if ((int_respCheckCRC && int_respInExpectedCRC!==int_cmdInReg[7:1]) || !int_cmdInReg[0])
+                if ((int_respCheckCRC && int_respInExpectedCRC!==int_cmdInReg[7:1]) || !int_cmdInReg[0]) begin
+                    $display("[SD HOST] ***** BAD CRC *****");
+                    // $finish;
                     int_state <= StateInit;
-                else
+                end else begin
                     int_state <= int_nextState;
+                end
                 
                 // $display("Response: %b", int_cmdInReg);
                 // $display("int_respInExpectedCRC: %b", int_respInExpectedCRC);
