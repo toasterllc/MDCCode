@@ -1,21 +1,21 @@
 // Is there a minimum number of cycles after a command that we need to wait, before issuing another command?
 //   Yes -- 8 cycles (N_CC)
+//     -> Implemented
 //
 // Is there a minimum number of cycles after a response that we need to wait, before issuing another command?
 //   Yes -- 8 cycles (N_RC)
-// 
+//     -> Implemented
+//
 // For A2 cards: what procedure do we use to transition to 1.8V signaling?
-//   TODO: Stop requesting 1.8V voltage change via ACMD41 -- we should already be in 1.8V signalling
-//   TODO: Don't issue CMD11
-//   
+//   Try doing nothing
+//     -> Implemented
 //
 // For non-A2 cards: what procedure do we use to transition to 1.8V signaling?
 //   See Section 4.2.4 (SD-Init-ACMD41.pdf)
 //
-// What procedure do we use to transition to a faster clock?
-
-
-`define FITS(container, value) ($size(container) >= $clog2(value+64'b1));
+// TODO: What procedure do we use to transition to a faster clock?
+//
+// TODO: handle never receiving a response from the card
 
 module CRC7(
     input wire clk,
@@ -189,9 +189,9 @@ module SDCardInitializer(
             // ACMD41
             //   HCS = 1 (SDHC/SDXC supported)
             //   XPC = 1 (maximum performance)
-            //   S18R = 1 (switch to 1.8V signal voltage)
+            //   S18R = 0 (don't switch to 1.8V signal voltage -- for A2 cards we shouldn't need to)
             //   Vdd Voltage Window = 0x8000 = 2.7-2.8V ("OCR Register Definition")
-            cmdOutReg <= {2'b01, CMD41, 32'h51008000, 7'b0, 1'b1};
+            cmdOutReg <= {2'b01, CMD41, 32'h50008000, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 0; // CRC is all 1's for ACMD41 response, so don't verify the CRC is correct
             state <= StateCmdOut;
@@ -205,9 +205,8 @@ module SDCardInitializer(
             else if (cmdInReg[7:1] !== 7'b1111111) state <= StateError;
             // Retry AMCD41 if the card wasn't ready (busy)
             else if (cmdInReg[39] !== 1'b1) state <= StateInit+3;
-            // Check that the 1.8V transition was accepted (s18a)
-            // TODO: remove for A2 cards
-            else if (cmdInReg[32] !== 1'b1) state <= StateError;
+            // Verify that we continuing with current signalling voltage (s18a)
+            else if (cmdInReg[32] !== 1'b0) state <= StateError;
             // Otherwise, proceed
             else state <= StateInit+6;
         end
@@ -329,7 +328,6 @@ module SDCardInitializer(
         
         // Wait for response to start
         // TODO: handle never receiving a response
-        // TODO: can we merge cmdInActive/cmdInCRCEn? We may need to change the crc to use cmdInStaged[1] instead though.
         StateRespIn: begin
             if (!cmdInStaged[0]) begin
                 cmdInActive <= 1;
@@ -397,6 +395,8 @@ module SDCardInitializer(
         
         
         StateError: begin
+            $display("[SD HOST] ***** ERROR *****");
+            
             cmdOutActive <= 0;
             cmdOutCRCEn <= 0;
             cmdInActive <= 0;

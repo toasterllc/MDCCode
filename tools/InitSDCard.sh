@@ -23,9 +23,9 @@ for i in {1..2}; do
     #   State: Idle -> Ready
     #   HCS = 1 (SDHC/SDXC supported)
     #   XPC = 1 (maximum performance)
-    #   S18R = 1 (switch to 1.8V signal voltage)
+    #   S18R = 0 (continue with current signalling voltage -- for A2 cards hopefully we don't need to do anything else?)
     #   Vdd Voltage Window = 0x8000 = 2.7-2.8V ("OCR Register Definition")
-    "$MDCDebugger" sdcmd CMD41 0x51008000 R3
+    "$MDCDebugger" sdcmd CMD41 0x50008000 R3
 done
 
 
@@ -46,12 +46,12 @@ done
 #   State: no change
 "$MDCDebugger" sdcmd CMD55 0xAAAA0000 R1
 
-# ACMD6 (SET_BUS_WIDTH: set bus width)
+# ACMD6 (SET_BUS_WIDTH: set bus width to 4 bits)
 #   State: Transfer -> Transfer
 #   Bus width = 2 (width = 4 bits)
 "$MDCDebugger" sdcmd CMD6 0x00000002 R1
 
-# CMD6 (SWITCH_FUNC)
+# CMD6 (SWITCH_FUNC: switch to SDR104)
 #   State: Transfer -> Data
 #   Mode = 1 (switch function)
 #   Group 6 (Reserved)          = 0xF (no change)
