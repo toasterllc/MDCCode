@@ -134,7 +134,7 @@ module Top(
                     CMD8:       begin sim_respOut=136'h08000001aa13ffffffffffffffffffffff; sim_respLen=48;  end
                     ACMD41:     begin
                         if ($urandom % 2)   sim_respOut=136'h3f00ff8080ffffffffffffffffffffffff;
-                        else                sim_respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
+                        else                sim_respOut=136'h3fc0ff8080ffffffffffffffffffffffff;
                         sim_respLen=48;
                     end
                     CMD55:      begin sim_respOut=136'h370000012083ffffffffffffffffffffff; sim_respLen=48;  end
