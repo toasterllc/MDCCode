@@ -20,15 +20,17 @@ module Top(
 `ifndef SIM
     input wire          clk12mhz,
 `endif
-    output reg[3:0]     led = 0 /* synthesis syn_keep=1 */,
     
     output wire         sd_clk  /* synthesis syn_keep=1 */,
     inout wire          sd_cmd  /* synthesis syn_keep=1 */,
-    inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */
+    inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */,
+    
+    output wire[3:0]    led     /* synthesis syn_keep=1 */
 );
 `ifdef SIM
     reg clk12mhz = 0;
 `endif
+    
     // ====================
     // SD Card Initializer
     // ====================
@@ -40,7 +42,9 @@ module Top(
         .sd_clk(sd_clk),
         .sd_cmdIn(sd_cmdIn),
         .sd_cmdOut(sd_cmdOut),
-        .sd_cmdOutActive(sd_cmdOutActive)
+        .sd_cmdOutActive(sd_cmdOutActive),
+        
+        .led(led)
     );
     
     // ====================

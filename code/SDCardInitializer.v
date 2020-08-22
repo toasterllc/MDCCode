@@ -7,8 +7,7 @@
 //     -> Implemented
 //
 // For A2 cards: what procedure do we use to transition to 1.8V signaling?
-//   Try doing nothing
-//     -> Implemented
+//   Doing nothing doesn't work -- SD card doesn't use 1.8V signalling
 //
 // For non-A2 cards: what procedure do we use to transition to 1.8V signaling?
 //   See Section 4.2.4 (SD-Init-ACMD41.pdf)
@@ -41,7 +40,9 @@ module SDCardInitializer(
     output wire         sd_clk,
     input wire          sd_cmdIn,
     output wire         sd_cmdOut,
-    output wire         sd_cmdOutActive
+    output wire         sd_cmdOutActive,
+    
+    output reg[3:0]     led = 0
 );
     // ====================
     // Internal clock (400 kHz)
@@ -143,6 +144,8 @@ module SDCardInitializer(
         // ====================
         StateInit: begin
             $display("[SD HOST] Sending CMD0");
+            led <= 4'b0000;
+            
             cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 0;
             respCheckCRC <= 0;
@@ -295,6 +298,7 @@ module SDCardInitializer(
         end
         
         StateInit+13: begin
+            led <= 4'b0001;
             $display("[SD HOST] ***** DONE *****");
             // $finish;
         end
@@ -397,16 +401,18 @@ module SDCardInitializer(
         StateError: begin
             $display("[SD HOST] ***** ERROR *****");
             
-            cmdOutActive <= 0;
-            cmdOutCRCEn <= 0;
-            cmdInActive <= 0;
-            cmdInCRCEn <= 0;
+            led <= 4'b1111;
             
-            // Since we don't know what state we came from, use our delay state to ensure
-            // that N_RC/N_CC are met.
-            // See StateDelay for more info.
-            nextState <= StateInit;
-            state <= StateDelay;
+            // cmdOutActive <= 0;
+            // cmdOutCRCEn <= 0;
+            // cmdInActive <= 0;
+            // cmdInCRCEn <= 0;
+            //
+            // // Since we don't know what state we came from, use our delay state to ensure
+            // // that N_RC/N_CC are met.
+            // // See StateDelay for more info.
+            // nextState <= StateInit;
+            // state <= StateDelay;
         end
         endcase
     end
