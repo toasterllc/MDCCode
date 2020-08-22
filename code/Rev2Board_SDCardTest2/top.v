@@ -17,38 +17,20 @@
 
 
 module Top(
-`ifdef SIM
-    output reg          clk12mhz = 0,
-`else
+`ifndef SIM
     input wire          clk12mhz,
 `endif
     output reg[3:0]     led = 0 /* synthesis syn_keep=1 */,
     
     output wire         sd_clk  /* synthesis syn_keep=1 */,
-    
-`ifdef SIM
-    inout tri1          sd_cmd,
-`else
     inout wire          sd_cmd  /* synthesis syn_keep=1 */,
-`endif
-    
     inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */
 );
+`ifdef SIM
+    reg clk12mhz = 0;
+`endif
     // ====================
-    // Clock PLL (81 MHz)
-    // ====================
-    localparam ClkFreq = 81000000;
-    wire clk;
-    ClockGen #(
-        .FREQ(ClkFreq),
-        .DIVR(0),
-        .DIVF(53),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
-    
-    // ====================
-    // SD Card Controller
+    // SD Card Initializer
     // ====================
     wire sd_cmdIn;
     wire sd_cmdOut;
@@ -64,22 +46,36 @@ module Top(
     // ====================
     // `sd_cmd` IO Pin
     // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
-        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
-        .NEG_TRIGGER(1'b1)
-    ) pin (
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_CLK(clk),
-        .OUTPUT_ENABLE(sd_cmdOutActive),
-        .D_OUT_0(sd_cmdOut),
-        .D_IN_0(sd_cmdIn)
-    );
+    `ifdef SIM
+        // There's a bug in the SB_IO Verilog model that requires `D_OUT_0` to
+        // toggle several times before SB_IO's output becomes non-X (don't care).
+        // So just implement the logic ourselves for simulation.
+        assign sd_cmd = (sd_cmdOutActive ? sd_cmdOut : 1'bz);
+        assign sd_cmdIn = sd_cmd;
+    `else
+        SB_IO #(
+            .PIN_TYPE(6'b1010_01)
+        ) dqio (
+            .PACKAGE_PIN(sd_cmd),
+            .OUTPUT_ENABLE(sd_cmdOutActive),
+            .D_OUT_0(sd_cmdOut),
+            .D_IN_0(sd_cmdIn)
+        );
+    `endif
     
 `ifdef SIM
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
+    end
+    
+    initial begin
+        forever begin
+            clk12mhz = 0;
+            #42;
+            clk12mhz = 1;
+            #42;
+        end
     end
     
     // ====================
@@ -105,15 +101,6 @@ module Top(
     localparam CMD8     = {1'b0, 6'd8};     // SEND_IF_COND
     localparam ACMD41   = {1'b1, 6'd41};    // SD_SEND_OP_COND
     localparam CMD55    = {1'b0, 6'd55};    // APP_CMD
-    
-    initial begin
-        forever begin
-            clk12mhz = 0;
-            #42;
-            clk12mhz = 1;
-            #42;
-        end
-    end
     
     initial begin
         forever begin
