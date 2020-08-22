@@ -1,5 +1,5 @@
 `include "../ClockGen.v"
-`include "../SDCardController.v"
+`include "../SDCardInitializer.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -17,7 +17,11 @@
 
 
 module Top(
+`ifdef SIM
+    output reg          clk12mhz = 0,
+`else
     input wire          clk12mhz,
+`endif
     output reg[3:0]     led = 0 /* synthesis syn_keep=1 */,
     
     output wire         sd_clk  /* synthesis syn_keep=1 */,
@@ -43,94 +47,40 @@ module Top(
         .FILTER_RANGE(1)
     ) cg(.clk12mhz(clk12mhz), .clk(clk));
     
-    
     // ====================
     // SD Card Controller
     // ====================
-    reg         sd_cmd_trigger = 0;
-    reg[37:0]   sd_cmd_cmd = 0;
-    wire[135:0] sd_cmd_resp;
-    wire        sd_cmd_done;
-    SDCardController sdctrl(
+    wire sd_cmdIn;
+    wire sd_cmdOut;
+    wire sd_cmdOutActive;
+    SDCardInitializer sdinit(
         .clk12mhz(clk12mhz),
-        
         .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
+        .sd_cmdIn(sd_cmdIn),
+        .sd_cmdOut(sd_cmdOut),
+        .sd_cmdOutActive(sd_cmdOutActive)
     );
     
-    // reg state = 0;
-    // always @(posedge clk) begin
-    //     case (state)
-    //     0: begin
-    //         sd_cmd_trigger <= 1;
-    //         sd_cmd_cmd <= {6'b000000, 32'b0};
-    //         state <= 1;
-    //
-    //         `ifdef SIM
-    //             $display("Sending SD command: %b", sd_cmd_cmd);
-    //         `endif
-    //     end
-    //
-    //     1: begin
-    //         sd_cmd_trigger <= 0;
-    //         if (sd_cmd_done) begin
-    //             `ifdef SIM
-    //                 $display("Received response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
-    //                     sd_cmd_resp,
-    //                     sd_cmd_resp[135:134],   // preamble
-    //                     sd_cmd_resp[133:128],   // index
-    //                     sd_cmd_resp[127:96],    // arg
-    //                     sd_cmd_resp[95:89],     // crc
-    //                     sd_cmd_resp[88],        // stop bit
-    //                 );
-    //             `endif
-    //
-    //             state <= 0;
-    //         end
-    //     end
-    //     endcase
-    // end
+    // ====================
+    // `sd_cmd` IO Pin
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b1101_01), // Output=registered, OutputEnable=registered, input=direct
+        // .PIN_TYPE(6'b1001_01), // Output=registered, OutputEnable=unregistered, input=direct
+        .NEG_TRIGGER(1'b1)
+    ) pin (
+        .PACKAGE_PIN(sd_cmd),
+        .OUTPUT_CLK(clk),
+        .OUTPUT_ENABLE(sd_cmdOutActive),
+        .D_OUT_0(sd_cmdOut),
+        .D_IN_0(sd_cmdIn)
+    );
     
 `ifdef SIM
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
     end
-    
-    
-    
-    // initial begin
-    //     #1000000;
-    //     $finish;
-    // end
-    
-    // ====================
-    // SD host emulator
-    //   Send commands, receive responses
-    // ====================
-    // initial begin
-    //     forever begin
-    //         wait(!clk);
-    //         sd_cmd_trigger = 1;
-    //         sd_cmd_cmd = {6'b000000, 32'b0};
-    //         wait(clk);
-    //         #100;
-    //         sd_cmd_trigger = 0;
-    //
-    //         wait(clk & sd_cmd_done);
-    //
-    //         $display("Got response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
-    //             sd_cmd_resp,
-    //             sd_cmd_resp[135:134],   // preamble
-    //             sd_cmd_resp[133:128],   // index
-    //             sd_cmd_resp[127:96],    // arg
-    //             sd_cmd_resp[95:89],     // crc
-    //             sd_cmd_resp[88],       // stop bit
-    //         );
-    //     end
-    //     $finish;
-    // end
     
     // ====================
     // SD card emulator
@@ -156,6 +106,14 @@ module Top(
     localparam ACMD41   = {1'b1, 6'd41};    // SD_SEND_OP_COND
     localparam CMD55    = {1'b0, 6'd55};    // APP_CMD
     
+    initial begin
+        forever begin
+            clk12mhz = 0;
+            #42;
+            clk12mhz = 1;
+            #42;
+        end
+    end
     
     initial begin
         forever begin

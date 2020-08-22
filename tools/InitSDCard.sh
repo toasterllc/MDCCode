@@ -48,8 +48,16 @@ done
 
 # ACMD6 (SET_BUS_WIDTH: set bus width)
 #   State: Transfer -> Transfer
-"$MDCDebugger" sdcmd CMD6 0x00000000 R1
+#   Bus width = 2 (width = 4 bits)
+"$MDCDebugger" sdcmd CMD6 0x00000002 R1
 
 # CMD6 (SWITCH_FUNC)
 #   State: Transfer -> Data
-"$MDCDebugger" sdcmd CMD6 0x00000000 R1
+#   Mode = 1 (switch function)
+#   Group 6 (Reserved)          = 0xF (no change)
+#   Group 5 (Reserved)          = 0xF (no change)
+#   Group 4 (Current Limit)     = 0xF (no change)
+#   Group 3 (Driver Strength)   = 0xF (no change)
+#   Group 2 (Command System)    = 0xF (no change)
+#   Group 1 (Access Mode)       = 0x3 (SDR104)
+"$MDCDebugger" sdcmd CMD6 0x80FFFFF3 R1
