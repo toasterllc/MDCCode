@@ -39,10 +39,12 @@ module Top(
     wire sd_cmdOutActive;
     SDCardInitializer sdinit(
         .clk12mhz(clk12mhz),
+        
         .sd_clk(sd_clk),
         .sd_cmdIn(sd_cmdIn),
         .sd_cmdOut(sd_cmdOut),
         .sd_cmdOutActive(sd_cmdOutActive),
+        .sd_dat(sd_dat),
         
         .led(led)
     );

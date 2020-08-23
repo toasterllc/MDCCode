@@ -41,6 +41,7 @@ module SDCardInitializer(
     input wire          sd_cmdIn,
     output wire         sd_cmdOut,
     output wire         sd_cmdOutActive,
+    input wire[3:0]     sd_dat,
     
     output reg[3:0]     led = 0
 );
@@ -56,12 +57,19 @@ module SDCardInitializer(
     endfunction
     
     localparam ClkFreq = 400000;
-    localparam clkDividerWidth = $clog2(DivCeil(12000000, ClkFreq));
-    reg[clkDividerWidth-1:0] clkDivider = 0;
-    always @(posedge clk12mhz)
-        clkDivider <= clkDivider+1;
+    localparam ClkDividerWidth = $clog2(DivCeil(12000000, ClkFreq));
+    reg[ClkDividerWidth-1:0] clkDivider = 0;
+    wire clk = clkDivider[ClkDividerWidth-1];
     
-    wire clk = clkDivider[clkDividerWidth-1];
+    localparam ClkDisableDelay = ((5*12000000)/1000)-1;
+    localparam ClkDisableCounterWidth = $clog2(ClkDisableDelay+1);
+    reg[ClkDisableCounterWidth-1:0] clkDisableCounter = 0;
+    reg clkDisable = 0;
+    
+    always @(posedge clk12mhz)
+        if (clkDisableCounter) clkDisableCounter <= clkDisableCounter-1;
+        else if (clkDisable) clkDisableCounter <= ClkDisableDelay;
+        else clkDivider <= clkDivider+1;
     
     reg[47:0] cmdOutReg = 0;
     reg[7:0] cmdOutCounter = 0;
@@ -100,11 +108,11 @@ module SDCardInitializer(
     // ====================
     // State Machine
     // ====================
-    localparam StateInit        = 0;     // +13
-    localparam StateCmdOut      = 14;    // +1
-    localparam StateRespIn      = 16;    // +3
-    localparam StateDelay       = 20;    // +1
-    localparam StateError       = 22;    // +0
+    localparam StateInit        = 0;     // +16
+    localparam StateCmdOut      = 17;    // +1
+    localparam StateRespIn      = 19;    // +3
+    localparam StateDelay       = 23;    // +1
+    localparam StateError       = 25;    // +0
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -112,6 +120,7 @@ module SDCardInitializer(
     localparam CMD6 =   6'd6;      // SWITCH_FUNC
     localparam CMD7 =   6'd7;      // SELECT_CARD/DESELECT_CARD
     localparam CMD8 =   6'd8;      // SEND_IF_COND
+    localparam CMD11 =  6'd11;     // VOLTAGE_SWITCH
     localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
     localparam CMD55 =  6'd55;     // APP_CMD
     
@@ -215,52 +224,49 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD2
+        // CMD11
         // ====================
         StateInit+6: begin
+            $display("[SD HOST] Sending CMD11");
+            cmdOutReg <= {2'b01, CMD11, 32'h00000000, 7'b0, 1'b1};
+            cmdInCounter <= 47;
+            respCheckCRC <= 1;
+            state <= StateCmdOut;
+            nextState <= StateInit+7;
+        end
+        
+        // After we get the respone, disable the clock for `ClkDisableDelay` clk12mhz cycles
+        StateInit+7: begin
+            clkDisable <= 1;
+            state <= StateInit+8;
+        end
+        
+        // After the delay, continue once the SD card lets go of the DAT lines
+        // See Section 4.2.4.2
+        StateInit+8: begin
+            if (sd_dat[0]) begin
+                state <= StateInit+9;
+            end
+        end
+        
+        // ====================
+        // CMD2
+        // ====================
+        StateInit+9: begin
             $display("[SD HOST] Sending CMD2");
             cmdOutReg <= {2'b01, CMD2, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 135;
             respCheckCRC <= 0; // CMD2 response doesn't have CRC, so don't check it
             state <= StateCmdOut;
-            nextState <= StateInit+7;
+            nextState <= StateInit+10;
         end
         
         // ====================
         // CMD3
         // ====================
-        StateInit+7: begin
+        StateInit+10: begin
             $display("[SD HOST] Sending CMD3");
             cmdOutReg <= {2'b01, CMD3, 32'h00000000, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+8;
-        end
-        
-        StateInit+8: begin
-            sdRCA <= cmdInReg[39:24];
-            state <= StateInit+9;
-        end
-        
-        // ====================
-        // CMD7
-        // ====================
-        StateInit+9: begin
-            $display("[SD HOST] Sending CMD7");
-            cmdOutReg <= {2'b01, CMD7, {sdRCA, 16'b0}, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+10;
-        end
-        
-        // ====================
-        // ACMD6 (CMD55, CMD6)
-        // ====================
-        StateInit+10: begin
-            $display("[SD HOST] Sending ACMD6");
-            cmdOutReg <= {2'b01, CMD55, {sdRCA, 16'b0}, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
@@ -268,19 +274,48 @@ module SDCardInitializer(
         end
         
         StateInit+11: begin
+            sdRCA <= cmdInReg[39:24];
+            state <= StateInit+12;
+        end
+        
+        // ====================
+        // CMD7
+        // ====================
+        StateInit+12: begin
+            $display("[SD HOST] Sending CMD7");
+            cmdOutReg <= {2'b01, CMD7, {sdRCA, 16'b0}, 7'b0, 1'b1};
+            cmdInCounter <= 47;
+            respCheckCRC <= 1;
+            state <= StateCmdOut;
+            nextState <= StateInit+13;
+        end
+        
+        // ====================
+        // ACMD6 (CMD55, CMD6)
+        // ====================
+        StateInit+13: begin
+            $display("[SD HOST] Sending ACMD6");
+            cmdOutReg <= {2'b01, CMD55, {sdRCA, 16'b0}, 7'b0, 1'b1};
+            cmdInCounter <= 47;
+            respCheckCRC <= 1;
+            state <= StateCmdOut;
+            nextState <= StateInit+14;
+        end
+        
+        StateInit+14: begin
             // ACMD6
             //   Bus width = 2 (width = 4 bits)
             cmdOutReg <= {2'b01, CMD6, 32'h00000002, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
-            nextState <= StateInit+12;
+            nextState <= StateInit+15;
         end
         
         // ====================
         // CMD6
         // ====================
-        StateInit+12: begin
+        StateInit+15: begin
             // CMD6
             //   Mode = 1 (switch function)
             //   Group 6 (Reserved)          = 0xF (no change)
@@ -294,10 +329,10 @@ module SDCardInitializer(
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
-            nextState <= StateInit+13;
+            nextState <= StateInit+16;
         end
         
-        StateInit+13: begin
+        StateInit+16: begin
             led <= 4'b0001;
             $display("[SD HOST] ***** DONE *****");
             // $finish;
