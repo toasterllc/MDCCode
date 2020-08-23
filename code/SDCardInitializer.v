@@ -7,7 +7,7 @@
 //     -> Implemented
 //
 // For A2 cards: what procedure do we use to transition to 1.8V signaling?
-//   Doing nothing doesn't work -- SD card doesn't use 1.8V signalling
+//   Doing nothing doesn't work -- SD card doesn't use 1.8V signaling
 //
 // For non-A2 cards: what procedure do we use to transition to 1.8V signaling?
 //   See Section 4.2.4 (SD-Init-ACMD41.pdf)
@@ -115,8 +115,8 @@ module SDCardInitializer(
     localparam StateInit        = 0;     // +16
     localparam StateCmdOut      = 17;    // +1
     localparam StateRespIn      = 19;    // +3
-    localparam StateDelay       = 23;    // +1
-    localparam StateError       = 25;    // +0
+    localparam StateDelay       = 23;    // +0
+    localparam StateError       = 24;    // +0
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -209,9 +209,9 @@ module SDCardInitializer(
             // ACMD41
             //   HCS = 1 (SDHC/SDXC supported)
             //   XPC = 1 (maximum performance)
-            //   S18R = 0 (don't switch to 1.8V signal voltage -- for A2 cards we shouldn't need to)
+            //   S18R = 1 (switch to 1.8V signal voltage)
             //   Vdd Voltage Window = 0x8000 = 2.7-2.8V ("OCR Register Definition")
-            cmdOutReg <= {2'b01, CMD41, 32'h50008000, 7'b0, 1'b1};
+            cmdOutReg <= {2'b01, CMD41, 32'h51008000, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 0; // CRC is all 1's for ACMD41 response, so don't verify the CRC is correct
             state <= StateCmdOut;
@@ -225,8 +225,8 @@ module SDCardInitializer(
             else if (cmdInReg[7:1] !== 7'b1111111) state <= StateError;
             // Retry AMCD41 if the card wasn't ready (busy)
             else if (cmdInReg[39] !== 1'b1) state <= StateInit+3;
-            // Verify that we continuing with current signalling voltage (s18a)
-            else if (cmdInReg[32] !== 1'b0) state <= StateError;
+            // Verify that we can switch to 1.8V signaling voltage (s18a)
+            else if (cmdInReg[32] !== 1'b1) state <= StateError;
             // Otherwise, proceed
             else state <= StateInit+6;
         end
@@ -235,6 +235,7 @@ module SDCardInitializer(
         // CMD11
         // ====================
         StateInit+6: begin
+            // state <= StateInit+9;
             $display("[SD HOST] Sending CMD11");
             cmdOutReg <= {2'b01, CMD11, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 47;
@@ -248,7 +249,7 @@ module SDCardInitializer(
             clkEn_ <= 1;
             delayCounter <= ClkDisableDelay;
             nextState <= StateInit+8;
-            state <= StateDelay+1;
+            state <= StateDelay;
         end
         
         // After the delay, continue once the SD card lets go of the DAT lines
@@ -372,6 +373,7 @@ module SDCardInitializer(
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
                 cmdOutCRCEn <= 0;
+                delayCounter <= 7;
                 state <= (cmdInCounter ? StateRespIn : StateDelay);
             end
         end
@@ -418,8 +420,10 @@ module SDCardInitializer(
                 // $finish;
                 state <= StateError;
             
-            end else
+            end else begin
+                delayCounter <= 7;
                 state <= StateDelay;
+            end
         end
         
         
@@ -430,11 +434,6 @@ module SDCardInitializer(
         // before another command is issued.
         // See section 4.12, timing values N_RC and N_CC.
         StateDelay: begin
-            delayCounter <= 7;
-            state <= StateDelay+1;
-        end
-        
-        StateDelay+1: begin
             if (!delayCounter) state <= nextState;
         end
         
