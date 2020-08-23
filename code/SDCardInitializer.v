@@ -15,6 +15,7 @@
 // TODO: What procedure do we use to transition to a faster clock?
 //
 // TODO: handle never receiving a response from the card
+//   according to 4.12.4 , the max number of cycles for a response to start is 64
 
 `define stringify(x) `"x```"
 `define fits(container, value) ($size(container) >= $clog2(value+64'b1))
