@@ -157,7 +157,9 @@ module SDCardInitializer(
         
         case (state)
         // ====================
-        // CMD0
+        // CMD0 | GO_IDLE_STATE
+        //   State: X -> Idle
+        //   Go to idle state
         // ====================
         StateInit: begin
             $display("[SD HOST] Sending CMD0");
@@ -171,7 +173,9 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD8
+        // CMD8 | SEND_IF_COND
+        //   State: Idle -> Idle
+        //   Send interface condition
         // ====================
         StateInit+1: begin
             $display("[SD HOST] Sending CMD8");
@@ -194,7 +198,9 @@ module SDCardInitializer(
         end
 
         // ====================
-        // ACMD41 (CMD55, CMD41)
+        // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
+        //   State: Idle -> Ready
+        //   Initialize
         // ====================
         StateInit+3: begin
             $display("[SD HOST] Sending ACMD41");
@@ -232,7 +238,9 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD11
+        // CMD11 | VOLTAGE_SWITCH
+        //   State: Ready -> Ready
+        //   Switch to 1.8V signaling voltage
         // ====================
         StateInit+6: begin
             // state <= StateInit+9;
@@ -262,7 +270,9 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD2
+        // CMD2 | ALL_SEND_CID
+        //   State: Ready -> Identification
+        //   Get card identification number (CID)
         // ====================
         StateInit+9: begin
             $display("[SD HOST] Sending CMD2");
@@ -274,7 +284,9 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD3
+        // CMD3 | SEND_RELATIVE_ADDR
+        //   State: Identification -> Standby
+        //   Publish a new relative address (RCA)
         // ====================
         StateInit+10: begin
             $display("[SD HOST] Sending CMD3");
@@ -291,7 +303,9 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD7
+        // CMD7 | SELECT_CARD/DESELECT_CARD
+        //   State: Standby -> Transfer
+        //   Select card
         // ====================
         StateInit+12: begin
             $display("[SD HOST] Sending CMD7");
@@ -303,7 +317,9 @@ module SDCardInitializer(
         end
         
         // ====================
-        // ACMD6 (CMD55, CMD6)
+        // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
+        //   State: Transfer -> Transfer
+        //   Set bus width to 4 bits
         // ====================
         StateInit+13: begin
             $display("[SD HOST] Sending ACMD6");
@@ -325,7 +341,9 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD6
+        // CMD6 | SWITCH_FUNC
+        //   State: Transfer -> Data
+        //   Switch to SDR104
         // ====================
         StateInit+15: begin
             // CMD6
