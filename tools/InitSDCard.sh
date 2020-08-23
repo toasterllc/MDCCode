@@ -13,6 +13,7 @@ MDCDebugger="$dir/MDCDebugger/MDCDebugger"
 #   Voltage level = 2.7-3.6V
 #   Check pattern = 10101010 (spec: "It is recommended to use '10101010b' for the 'check pattern'")
 "$MDCDebugger" sdcmd CMD8 0x000001AA R7
+# "$MDCDebugger" sdcmd CMD8 0x000002A5 R7     # This should work if we're in 1.8V signalling mode
 
 for i in {1..2}; do
     # CMD55 (APP_CMD: app-specific command follows)
@@ -26,6 +27,7 @@ for i in {1..2}; do
     #   S18R = 1 (switch to 1.8V signal voltage)
     #   Vdd Voltage Window = 0x8000 = 2.7-2.8V ("OCR Register Definition")
     "$MDCDebugger" sdcmd CMD41 0x51008000 R3
+    # "$MDCDebugger" sdcmd CMD41 0x50008000 R3
 done
 
 
