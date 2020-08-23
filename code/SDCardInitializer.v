@@ -64,12 +64,12 @@ module SDCardInitializer(
     localparam ClkDisableDelay = ((5*12000000)/1000)-1;
     localparam ClkDisableCounterWidth = $clog2(ClkDisableDelay+1);
     reg[ClkDisableCounterWidth-1:0] clkDisableCounter = 0;
-    reg clkDisable = 0;
-    
-    always @(posedge clk12mhz)
-        if (clkDisableCounter) clkDisableCounter <= clkDisableCounter-1;
-        else if (clkDisable) clkDisableCounter <= ClkDisableDelay;
-        else clkDivider <= clkDivider+1;
+    // reg clkDisable = 0;
+    //
+    // always @(posedge clk12mhz)
+    //     if (clkDisableCounter) clkDisableCounter <= clkDisableCounter-1;
+    //     else if (clkDisable) clkDisableCounter <= ClkDisableDelay;
+    //     else clkDivider <= clkDivider+1;
     
     reg[47:0] cmdOutReg = 0;
     reg[7:0] cmdOutCounter = 0;
@@ -131,324 +131,337 @@ module SDCardInitializer(
     reg[15:0] sdRCA = 0;
     reg[2:0] delayCounter = 0;
     
-    always @(posedge clk)
-        cmdInStaged <= cmdInStaged<<1|sd_cmdIn;
-    
-    always @(negedge clk) begin
-        if (cmdOutActive) begin
-            cmdOutReg <= cmdOutReg<<1;
-            cmdOutCounter <= cmdOutCounter-1;
+    reg lastClk = 0;
+    always @(posedge clk12mhz) begin
+        if (clkDisableCounter) begin
+            clkDisableCounter <= clkDisableCounter-1;
+        
+        end else begin
+            clkDivider <= clkDivider+1;
+            lastClk <= clk;
         end
         
-        if (cmdInActive) begin
-            cmdInReg <= (cmdInReg<<1)|cmdInStaged[1];
-            cmdInCounter <= cmdInCounter-1;
+        // Posedge
+        if (clk!=lastClk && clk) begin
+            cmdInStaged <= cmdInStaged<<1|sd_cmdIn;
         end
         
-        delayCounter <= delayCounter-1;
-        
-        case (state)
-        // ====================
-        // CMD0
-        // ====================
-        StateInit: begin
-            $display("[SD HOST] Sending CMD0");
-            led <= 4'b0000;
-            
-            cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
-            cmdInCounter <= 0;
-            respCheckCRC <= 0;
-            state <= StateCmdOut;
-            nextState <= StateInit+1;
-        end
-        
-        // ====================
-        // CMD8
-        // ====================
-        StateInit+1: begin
-            $display("[SD HOST] Sending CMD8");
-            cmdOutReg <= {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+2;
-        end
-        
-        StateInit+2: begin
-            // We don't need to verify the voltage in the response, since the card doesn't
-            // respond if it doesn't support the voltage in CMD8 command:
-            //   "If the card does not support the host supply voltage,
-            //   it shall not return response and stays in Idle state."
-            
-            // Verify check pattern is what we supplied
-            if (cmdInReg[15:8] !== 8'hAA) state <= StateError;
-            else state <= StateInit+3;
-        end
-        
-        // ====================
-        // ACMD41 (CMD55, CMD41)
-        // ====================
-        StateInit+3: begin
-            $display("[SD HOST] Sending ACMD41");
-            cmdOutReg <= {2'b01, CMD55, 32'h00000000, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+4;
-        end
-        
-        StateInit+4: begin
-            // ACMD41
-            //   HCS = 1 (SDHC/SDXC supported)
-            //   XPC = 1 (maximum performance)
-            //   S18R = 0 (don't switch to 1.8V signal voltage -- for A2 cards we shouldn't need to)
-            //   Vdd Voltage Window = 0x8000 = 2.7-2.8V ("OCR Register Definition")
-            cmdOutReg <= {2'b01, CMD41, 32'h50008000, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 0; // CRC is all 1's for ACMD41 response, so don't verify the CRC is correct
-            state <= StateCmdOut;
-            nextState <= StateInit+5;
-        end
-        
-        StateInit+5: begin
-            // Verify the command is all 1's
-            if (cmdInReg[45:40] !== 6'b111111) state <= StateError;
-            // Verify CRC is all 1's
-            else if (cmdInReg[7:1] !== 7'b1111111) state <= StateError;
-            // Retry AMCD41 if the card wasn't ready (busy)
-            else if (cmdInReg[39] !== 1'b1) state <= StateInit+3;
-            // Verify that we continuing with current signalling voltage (s18a)
-            else if (cmdInReg[32] !== 1'b0) state <= StateError;
-            // Otherwise, proceed
-            else state <= StateInit+6;
-        end
-        
-        // ====================
-        // CMD11
-        // ====================
-        StateInit+6: begin
-            $display("[SD HOST] Sending CMD11");
-            cmdOutReg <= {2'b01, CMD11, 32'h00000000, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+7;
-        end
-        
-        // After we get the respone, disable the clock for `ClkDisableDelay` clk12mhz cycles
-        StateInit+7: begin
-            clkDisable <= 1;
-            state <= StateInit+8;
-        end
-        
-        // After the delay, continue once the SD card lets go of the DAT lines
-        // See Section 4.2.4.2
-        StateInit+8: begin
-            if (sd_dat[0]) begin
-                state <= StateInit+9;
+        // Negedge
+        if (clk!=lastClk && !clk) begin
+            if (cmdOutActive) begin
+                cmdOutReg <= cmdOutReg<<1;
+                cmdOutCounter <= cmdOutCounter-1;
             end
-        end
+            
+            if (cmdInActive) begin
+                cmdInReg <= (cmdInReg<<1)|cmdInStaged[1];
+                cmdInCounter <= cmdInCounter-1;
+            end
+            
+            delayCounter <= delayCounter-1;
+            
+            case (state)
+            // ====================
+            // CMD0
+            // ====================
+            StateInit: begin
+                $display("[SD HOST] Sending CMD0");
+                led <= 4'b0000;
+                
+                cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
+                cmdInCounter <= 0;
+                respCheckCRC <= 0;
+                state <= StateCmdOut;
+                nextState <= StateInit+1;
+            end
+            
+            // ====================
+            // CMD8
+            // ====================
+            StateInit+1: begin
+                $display("[SD HOST] Sending CMD8");
+                cmdOutReg <= {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+2;
+            end
+            
+            StateInit+2: begin
+                // We don't need to verify the voltage in the response, since the card doesn't
+                // respond if it doesn't support the voltage in CMD8 command:
+                //   "If the card does not support the host supply voltage,
+                //   it shall not return response and stays in Idle state."
+                
+                // Verify check pattern is what we supplied
+                if (cmdInReg[15:8] !== 8'hAA) state <= StateError;
+                else state <= StateInit+3;
+            end
+            
+            // ====================
+            // ACMD41 (CMD55, CMD41)
+            // ====================
+            StateInit+3: begin
+                $display("[SD HOST] Sending ACMD41");
+                cmdOutReg <= {2'b01, CMD55, 32'h00000000, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+4;
+            end
+            
+            StateInit+4: begin
+                // ACMD41
+                //   HCS = 1 (SDHC/SDXC supported)
+                //   XPC = 1 (maximum performance)
+                //   S18R = 0 (don't switch to 1.8V signal voltage -- for A2 cards we shouldn't need to)
+                //   Vdd Voltage Window = 0x8000 = 2.7-2.8V ("OCR Register Definition")
+                cmdOutReg <= {2'b01, CMD41, 32'h50008000, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 0; // CRC is all 1's for ACMD41 response, so don't verify the CRC is correct
+                state <= StateCmdOut;
+                nextState <= StateInit+5;
+            end
+            
+            StateInit+5: begin
+                // Verify the command is all 1's
+                if (cmdInReg[45:40] !== 6'b111111) state <= StateError;
+                // Verify CRC is all 1's
+                else if (cmdInReg[7:1] !== 7'b1111111) state <= StateError;
+                // Retry AMCD41 if the card wasn't ready (busy)
+                else if (cmdInReg[39] !== 1'b1) state <= StateInit+3;
+                // Verify that we continuing with current signalling voltage (s18a)
+                else if (cmdInReg[32] !== 1'b0) state <= StateError;
+                // Otherwise, proceed
+                else state <= StateInit+6;
+            end
+            
+            // ====================
+            // CMD11
+            // ====================
+            StateInit+6: begin
+                $display("[SD HOST] Sending CMD11");
+                cmdOutReg <= {2'b01, CMD11, 32'h00000000, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+7;
+            end
+            
+            // After we get the respone, disable the clock for `ClkDisableDelay` clk12mhz cycles
+            StateInit+7: begin
+                clkDisableCounter <= ClkDisableDelay;
+                state <= StateInit+8;
+            end
+            
+            // After the delay, continue once the SD card lets go of the DAT lines
+            // See Section 4.2.4.2
+            StateInit+8: begin
+                if (sd_dat[0]) begin
+                    state <= StateInit+9;
+                end
+            end
+            
+            // ====================
+            // CMD2
+            // ====================
+            StateInit+9: begin
+                $display("[SD HOST] Sending CMD2");
+                cmdOutReg <= {2'b01, CMD2, 32'h00000000, 7'b0, 1'b1};
+                cmdInCounter <= 135;
+                respCheckCRC <= 0; // CMD2 response doesn't have CRC, so don't check it
+                state <= StateCmdOut;
+                nextState <= StateInit+10;
+            end
         
-        // ====================
-        // CMD2
-        // ====================
-        StateInit+9: begin
-            $display("[SD HOST] Sending CMD2");
-            cmdOutReg <= {2'b01, CMD2, 32'h00000000, 7'b0, 1'b1};
-            cmdInCounter <= 135;
-            respCheckCRC <= 0; // CMD2 response doesn't have CRC, so don't check it
-            state <= StateCmdOut;
-            nextState <= StateInit+10;
-        end
+            // ====================
+            // CMD3
+            // ====================
+            StateInit+10: begin
+                $display("[SD HOST] Sending CMD3");
+                cmdOutReg <= {2'b01, CMD3, 32'h00000000, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+11;
+            end
         
-        // ====================
-        // CMD3
-        // ====================
-        StateInit+10: begin
-            $display("[SD HOST] Sending CMD3");
-            cmdOutReg <= {2'b01, CMD3, 32'h00000000, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+11;
-        end
+            StateInit+11: begin
+                sdRCA <= cmdInReg[39:24];
+                state <= StateInit+12;
+            end
         
-        StateInit+11: begin
-            sdRCA <= cmdInReg[39:24];
-            state <= StateInit+12;
-        end
+            // ====================
+            // CMD7
+            // ====================
+            StateInit+12: begin
+                $display("[SD HOST] Sending CMD7");
+                cmdOutReg <= {2'b01, CMD7, {sdRCA, 16'b0}, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+13;
+            end
         
-        // ====================
-        // CMD7
-        // ====================
-        StateInit+12: begin
-            $display("[SD HOST] Sending CMD7");
-            cmdOutReg <= {2'b01, CMD7, {sdRCA, 16'b0}, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+13;
-        end
+            // ====================
+            // ACMD6 (CMD55, CMD6)
+            // ====================
+            StateInit+13: begin
+                $display("[SD HOST] Sending ACMD6");
+                cmdOutReg <= {2'b01, CMD55, {sdRCA, 16'b0}, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+14;
+            end
         
-        // ====================
-        // ACMD6 (CMD55, CMD6)
-        // ====================
-        StateInit+13: begin
-            $display("[SD HOST] Sending ACMD6");
-            cmdOutReg <= {2'b01, CMD55, {sdRCA, 16'b0}, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+14;
-        end
+            StateInit+14: begin
+                // ACMD6
+                //   Bus width = 2 (width = 4 bits)
+                cmdOutReg <= {2'b01, CMD6, 32'h00000002, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+15;
+            end
         
-        StateInit+14: begin
-            // ACMD6
-            //   Bus width = 2 (width = 4 bits)
-            cmdOutReg <= {2'b01, CMD6, 32'h00000002, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+15;
-        end
-        
-        // ====================
-        // CMD6
-        // ====================
-        StateInit+15: begin
+            // ====================
             // CMD6
-            //   Mode = 1 (switch function)
-            //   Group 6 (Reserved)          = 0xF (no change)
-            //   Group 5 (Reserved)          = 0xF (no change)
-            //   Group 4 (Current Limit)     = 0xF (no change)
-            //   Group 3 (Driver Strength)   = 0xF (no change)
-            //   Group 2 (Command System)    = 0xF (no change)
-            //   Group 1 (Access Mode)       = 0x3 (SDR104)
-            $display("[SD HOST] Sending CMD6");
-            cmdOutReg <= {2'b01, CMD6, 32'h80FFFFF3, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+16;
-        end
-        
-        StateInit+16: begin
-            led <= 4'b0001;
-            $display("[SD HOST] ***** DONE *****");
-            // $finish;
-        end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        StateCmdOut: begin
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            cmdOutCRCEn <= 1;
-            state <= StateCmdOut+1;
-        end
-        
-        StateCmdOut+1: begin
-            if (cmdOutCRCEn && cmdOutCounter==8)
-                cmdOutReg[47:41] <= cmdOutCRC;
-                // cmdOutReg[47:41] <= 7'b1111110;
-            
-            if (!cmdOutCounter) begin
-                cmdOutActive <= 0;
-                cmdOutCRCEn <= 0;
-                state <= (cmdInCounter ? StateRespIn : StateDelay);
+            // ====================
+            StateInit+15: begin
+                // CMD6
+                //   Mode = 1 (switch function)
+                //   Group 6 (Reserved)          = 0xF (no change)
+                //   Group 5 (Reserved)          = 0xF (no change)
+                //   Group 4 (Current Limit)     = 0xF (no change)
+                //   Group 3 (Driver Strength)   = 0xF (no change)
+                //   Group 2 (Command System)    = 0xF (no change)
+                //   Group 1 (Access Mode)       = 0x3 (SDR104)
+                $display("[SD HOST] Sending CMD6");
+                cmdOutReg <= {2'b01, CMD6, 32'h80FFFFF3, 7'b0, 1'b1};
+                cmdInCounter <= 47;
+                respCheckCRC <= 1;
+                state <= StateCmdOut;
+                nextState <= StateInit+16;
             end
-        end
         
-        // Wait for response to start
-        // TODO: handle never receiving a response
-        StateRespIn: begin
-            if (!cmdInStaged[0]) begin
-                cmdInActive <= 1;
-                state <= StateRespIn+1;
-            end
-        end
-        
-        // Check transmission bit
-        StateRespIn+1: begin
-            if (cmdInStaged[0]) begin
-                $display("[SD HOST] BAD TRANSMISSION BIT");
+            StateInit+16: begin
+                led <= 4'b0001;
+                $display("[SD HOST] ***** DONE *****");
                 // $finish;
-                state <= StateError;
-            
-            end else begin
-                cmdInCRCEn <= 1;
-                state <= StateRespIn+2;
             end
-        end
-        
-        // Wait for response to end
-        StateRespIn+2: begin
-            if (cmdInCounter == 7) respInExpectedCRC <= cmdInCRC;
-            if (!cmdInCounter) begin
-                cmdInActive <= 0;
-                cmdInCRCEn <= 0;
-                state <= StateRespIn+3;
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            StateCmdOut: begin
+                cmdOutCounter <= 47;
+                cmdOutActive <= 1;
+                cmdOutCRCEn <= 1;
+                state <= StateCmdOut+1;
             end
-        end
-        
-        StateRespIn+3: begin
-            // cmdInStaged <= ~0;
             
-            $display("[SD HOST] Received response: %b [respCheckCRC: %b, our CRC: %b, their CRC: %b]", cmdInReg, respCheckCRC, respInExpectedCRC, cmdInReg[7:1]);
+            StateCmdOut+1: begin
+                if (cmdOutCRCEn && cmdOutCounter==8)
+                    cmdOutReg[47:41] <= cmdOutCRC;
+                    // cmdOutReg[47:41] <= 7'b1111110;
+                
+                if (!cmdOutCounter) begin
+                    cmdOutActive <= 0;
+                    cmdOutCRCEn <= 0;
+                    state <= (cmdInCounter ? StateRespIn : StateDelay);
+                end
+            end
             
-            // Verify that the CRC is OK (if requested), and that the stop bit is OK
-            if ((respCheckCRC && respInExpectedCRC!==cmdInReg[7:1]) || !cmdInReg[0]) begin
-                $display("[SD HOST] ***** BAD CRC *****");
-                // $finish;
-                state <= StateError;
+            // Wait for response to start
+            StateRespIn: begin
+                if (!cmdInStaged[0]) begin
+                    cmdInActive <= 1;
+                    state <= StateRespIn+1;
+                end
+            end
             
-            end else
-                state <= StateDelay;
-        end
-        
-        
-        
-        
-        // Delay state
-        // The SD spec requires 8 cycles after a command or after a response,
-        // before another command is issued.
-        // See section 4.12, timing values N_RC and N_CC.
-        StateDelay: begin
-            delayCounter <= 7;
-            state <= StateDelay+1;
-        end
-        
-        StateDelay+1: begin
-            if (!delayCounter) state <= nextState;
-        end
-        
-        
-        
-        
-        
-        
-        StateError: begin
-            $display("[SD HOST] ***** ERROR *****");
+            // Check transmission bit
+            StateRespIn+1: begin
+                if (cmdInStaged[0]) begin
+                    $display("[SD HOST] BAD TRANSMISSION BIT");
+                    // $finish;
+                    state <= StateError;
+                    
+                end else begin
+                    cmdInCRCEn <= 1;
+                    state <= StateRespIn+2;
+                end
+            end
             
-            led <= 4'b1111;
+            // Wait for response to end
+            StateRespIn+2: begin
+                if (cmdInCounter == 7) respInExpectedCRC <= cmdInCRC;
+                if (!cmdInCounter) begin
+                    cmdInActive <= 0;
+                    cmdInCRCEn <= 0;
+                    state <= StateRespIn+3;
+                end
+            end
             
-            // cmdOutActive <= 0;
-            // cmdOutCRCEn <= 0;
-            // cmdInActive <= 0;
-            // cmdInCRCEn <= 0;
-            //
-            // // Since we don't know what state we came from, use our delay state to ensure
-            // // that N_RC/N_CC are met.
-            // // See StateDelay for more info.
-            // nextState <= StateInit;
-            // state <= StateDelay;
+            StateRespIn+3: begin
+                // cmdInStaged <= ~0;
+                
+                $display("[SD HOST] Received response: %b [respCheckCRC: %b, our CRC: %b, their CRC: %b]", cmdInReg, respCheckCRC, respInExpectedCRC, cmdInReg[7:1]);
+                
+                // Verify that the CRC is OK (if requested), and that the stop bit is OK
+                if ((respCheckCRC && respInExpectedCRC!==cmdInReg[7:1]) || !cmdInReg[0]) begin
+                    $display("[SD HOST] ***** BAD CRC *****");
+                    // $finish;
+                    state <= StateError;
+                
+                end else
+                    state <= StateDelay;
+            end
+            
+            
+            
+            
+            // Delay state
+            // The SD spec requires 8 cycles after a command or after a response,
+            // before another command is issued.
+            // See section 4.12, timing values N_RC and N_CC.
+            StateDelay: begin
+                delayCounter <= 7;
+                state <= StateDelay+1;
+            end
+            
+            StateDelay+1: begin
+                if (!delayCounter) state <= nextState;
+            end
+            
+            
+            
+            
+            
+            
+            StateError: begin
+                $display("[SD HOST] ***** ERROR *****");
+                
+                led <= 4'b1111;
+                
+                // cmdOutActive <= 0;
+                // cmdOutCRCEn <= 0;
+                // cmdInActive <= 0;
+                // cmdInCRCEn <= 0;
+                //
+                // // Since we don't know what state we came from, use our delay state to ensure
+                // // that N_RC/N_CC are met.
+                // // See StateDelay for more info.
+                // nextState <= StateInit;
+                // state <= StateDelay;
+            end
+            endcase
         end
-        endcase
     end
 endmodule

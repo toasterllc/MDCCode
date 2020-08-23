@@ -22,8 +22,13 @@ module Top(
 `endif
     
     output wire         sd_clk  /* synthesis syn_keep=1 */,
+`ifndef SIM
     inout wire          sd_cmd  /* synthesis syn_keep=1 */,
     inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */,
+`else
+    inout tri1          sd_cmd,
+    inout tri1[3:0]     sd_dat,
+`endif
     
     output wire[3:0]    led     /* synthesis syn_keep=1 */
 );
@@ -92,11 +97,16 @@ module Top(
     wire[5:0] sim_cmdIndex = sim_cmdIn[45:40];
     reg[135:0] sim_respOut = 0;
     reg[7:0] sim_respLen = 0;
+    
     reg sim_cmdOut = 1'bz;
+    assign sd_cmd = sim_cmdOut;
+    
     reg[7:0] sim_debug = 0;
     reg sim_acmd = 0;
     wire[6:0] sim_cmd = {sim_acmd, sim_cmdIndex};
-    assign sd_cmd = sim_cmdOut;
+    
+    reg[3:0] sim_datOut = 4'bzzzz;
+    assign sd_dat = sim_datOut;
     
     localparam CMD0     = {1'b0, 6'd0};     // GO_IDLE_STATE
     localparam CMD2     = {1'b0, 6'd2};     // ALL_SEND_CID
@@ -105,6 +115,7 @@ module Top(
     localparam ACMD6    = {1'b1, 6'd6};     // SWITCH_FUNC
     localparam CMD7     = {1'b0, 6'd7};     // SELECT_CARD/DESELECT_CARD
     localparam CMD8     = {1'b0, 6'd8};     // SEND_IF_COND
+    localparam CMD11    = {1'b0, 6'd11};    // VOLTAGE_SWITCH
     localparam ACMD41   = {1'b1, 6'd41};    // SD_SEND_OP_COND
     localparam CMD55    = {1'b0, 6'd55};    // APP_CMD
     
@@ -114,6 +125,8 @@ module Top(
             if (!sd_cmd) begin
                 // Receive command
                 reg[7:0] i;
+                reg[7:0] count;
+                
                 for (i=0; i<48; i++) begin
                     wait(sd_clk);
                     sim_cmdIn = (sim_cmdIn<<1)|sd_cmd;
@@ -138,6 +151,7 @@ module Top(
                     ACMD6:      begin sim_respOut=136'h0600000920b9ffffffffffffffffffffff; sim_respLen=48;  end
                     CMD7:       begin sim_respOut=136'h070000070075ffffffffffffffffffffff; sim_respLen=48;  end
                     CMD8:       begin sim_respOut=136'h08000001aa13ffffffffffffffffffffff; sim_respLen=48;  end
+                    CMD11:      begin sim_respOut=136'h0B0000070081ffffffffffffffffffffff; sim_respLen=48;  end
                     ACMD41:     begin
                         if ($urandom % 2)   sim_respOut=136'h3f00ff8080ffffffffffffffffffffffff;
                         else                sim_respOut=136'h3fc0ff8080ffffffffffffffffffffffff;
@@ -147,17 +161,12 @@ module Top(
                     default:    begin  $display("[SD CARD] BAD COMMAND: %b", sim_cmd); $finish; end
                     endcase
                     
-                    wait(sd_clk);
-                    wait(!sd_clk);
-
-                    wait(sd_clk);
-                    wait(!sd_clk);
-
-                    wait(sd_clk);
-                    wait(!sd_clk);
-
-                    wait(sd_clk);
-                    wait(!sd_clk);
+                    // Wait a random number of clocks before providing response
+                    count = $urandom%10;
+                    for (i=0; i<count; i++) begin
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                    end
                     
                     // sim_respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
                     $display("[SD CARD] Sending response: %b", sim_respOut);
@@ -170,6 +179,23 @@ module Top(
                 end
                 wait(!sd_clk);
                 sim_cmdOut = 1'bz;
+                
+                if (sim_cmd == CMD11) begin
+                    // Drive CMD/DAT lines low
+                    sim_cmdOut = 0;
+                    sim_datOut = 0;
+                    // Wait 5ms
+                    #(5*1000000);
+                    // Let go of CMD line
+                    sim_cmdOut = 1'bz;
+                    // Wait 1ms
+                    #(1*1000000);
+                    // Let go of DAT lines
+                    sim_datOut = 4'bz;
+                
+                    // #100000;
+                    // $finish;
+                end
                 
                 // Note whether the next command is an application-specific command
                 sim_acmd = (sim_cmdIndex==55);
