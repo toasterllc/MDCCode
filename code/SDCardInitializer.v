@@ -17,42 +17,19 @@
 // TODO: handle never receiving a response from the card
 //   according to 4.12.4 , the max number of cycles for a response to start is 64
 
-`define stringify(x) `"x```"
-`define fits(container, value) ($size(container) >= $clog2(value+64'b1))
-`ifdef SIM
-    `define assert(cond) do if (!(cond)) begin $error("Assertion failed: %s (%s:%0d)", `stringify(cond), `__FILE__, `__LINE__); $finish; end while (0)
-`else
-    `define assert(cond)
-`endif
-
-module CRC7(
-    input wire clk,
-    input wire en,
-    input din,
-    output wire[6:0] dout,
-    output wire[6:0] doutNext
-);
-    reg[6:0] d = 0;
-    wire dx = din ^ d[6];
-    wire[6:0] dnext = { d[5], d[4], d[3], d[2] ^ dx, d[1], d[0], dx };
-    always @(posedge clk, negedge en)
-        if (!en) d <= 0;
-        else d <= dnext;
-    assign dout = d;
-    assign doutNext = dnext;
-endmodule
+`include "Util.v"
+`include "CRC7.v"
 
 module SDCardInitializer(
     input wire          clk12mhz,
+    output reg          done = 0,
     
     // SDIO port
     output wire         sd_clk,
     input wire          sd_cmdIn,
     output wire         sd_cmdOut,
     output wire         sd_cmdOutActive,
-    input wire[3:0]     sd_dat,
-    
-    output reg[3:0]     led = 0
+    input wire[3:0]     sd_dat
 );
     // ====================
     // Internal clock (400 kHz)
@@ -164,8 +141,6 @@ module SDCardInitializer(
         // ====================
         StateInit: begin
             $display("[SD HOST] Sending CMD0");
-            led <= 4'b0000;
-            
             cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 0;
             respCheckCRC <= 0;
@@ -364,8 +339,8 @@ module SDCardInitializer(
         end
         
         StateInit+16: begin
-            led <= 4'b0001;
             $display("[SD HOST] ***** DONE *****");
+            done <= 1;
             // $finish;
         end
         
@@ -463,19 +438,17 @@ module SDCardInitializer(
         
         StateError: begin
             $display("[SD HOST] ***** ERROR *****");
+            cmdOutActive <= 0;
+            cmdOutCRCEn <= 0;
+            cmdInActive <= 0;
+            cmdInCRCEn <= 0;
             
-            led <= 4'b1111;
-            
-            // cmdOutActive <= 0;
-            // cmdOutCRCEn <= 0;
-            // cmdInActive <= 0;
-            // cmdInCRCEn <= 0;
-            //
-            // // Since we don't know what state we came from, use our delay state to ensure
-            // // that N_RC/N_CC are met.
-            // // See StateDelay for more info.
-            // nextState <= StateInit;
-            // state <= StateDelay;
+            // Since we don't know what state we came from, use our delay state to ensure
+            // that N_RC/N_CC are met.
+            // See StateDelay for more info.
+            delayCounter <= 7;
+            nextState <= StateInit;
+            state <= StateDelay;
         end
         endcase
     end
