@@ -7,31 +7,21 @@
 `endif
 
 module SDCardController(
-    input wire          clk12mhz,
+    input wire          clk,
     
-    
+    // Command port
+    input wire          cmd_trigger,
+    input wire          cmd_write,
+    input wire[31:0]    cmd_addr,       // (2^31)*512 == 256 GB
+    input wire[13:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
+    output wire[15:0]   cmd_dataOut,
+    output wire[13:0]   cmd_dataOutLen,
     
     // SDIO port
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat
 );
-    // ====================
-    // Clock (120 MHz)
-    // ====================
-    wire clk;
-    ClockGen #(
-        .FREQ(120000000),
-		.DIVR(0),
-		.DIVF(79),
-		.DIVQ(3),
-		.FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk), .rst());
-    
-    
-    
-    
-    
     // ====================
     // Pin: sd_clk
     // ====================
@@ -41,8 +31,8 @@ module SDCardController(
     // Pin: sd_cmd
     // ====================
     wire sd_cmdIn;
-    reg sd_cmdOut = 0;
-    reg sd_cmdOutActive = 0;
+    reg sd_cmdOut = cmdOut;
+    wire sd_cmdOutActive = cmdOutActive;
     SB_IO #(
         .PIN_TYPE(6'b1101_01),      // Output=PIN_OUTPUT_REGISTERED_ENABLE_REGISTERED, Input=PIN_INPUT
         .NEG_TRIGGER(1'b1)
@@ -118,8 +108,84 @@ module SDCardController(
     // ====================
     // State Machine
     // ====================
+    localparam StateIdle        = 0;    // +0
+    localparam StateWrite       = 1;    // +0
+    localparam StateRead        = 2;    // +0
+    reg[1:0] state = 0;
+    
+    localparam CMD0 =   6'd0;       // GO_IDLE_STATE
+    localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
+    localparam CMD55 =  6'd55;      // APP_CMD
+    
+    reg cmdInActive = 0;
+    wire cmdIn = sd_cmdIn;
+    
+    reg cmdOutActive = 0;
+    reg[47:0] cmdOutReg = 0;
+    wire cmdOut = cmdOutReg[47];
+    reg[5:0] cmdOutCounter = 0;
+    
+    reg[31:0] cmdAddr = 0;
+    reg[13:0] cmdLen = 0;
+    
     always @(posedge clk) begin
-        sd_cmdOutActive <= 1;
-        sd_cmdOut <= !sd_cmdOut;
+        cmdOutReg <= cmdOutReg<<1;
+        cmdOutCounter <= cmdOutCounter-1;
+        
+        if (cmdInActive) begin
+            cmdInReg <= (cmdInReg<<1)|cmdIn;
+            cmdInCounter <= cmdInCounter-1;
+        end
+        
+        case (state)
+        StateIdle: begin
+            if (cmd_trigger) begin
+                cmdAddr <= cmd_addr;
+                cmdLen <= cmd_len;
+                state <= (cmd_write ? StateWrite : StateRead);
+            end
+        end
+        
+        
+        
+        
+        
+        StateWrite: begin
+            
+        end
+        
+        
+        
+        
+        
+        
+        
+        StateRead: begin
+            cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            state <= StateRead+1;
+        end
+        
+        StateRead+1: begin
+            if (!cmdOutCounter) begin
+                cmdOutActive <= 0;
+                state <= StateRead+2;
+            end
+        end
+        
+        StateRead+2: begin
+            // Wait for response
+            if (!cmdInStaged[0]) begin
+                cmdInActive <= 1;
+                state <= StateRespIn+1;
+            end
+            
+            if (!cmdOutCounter) begin
+                cmdOutActive <= 0;
+                state <= StateRead+2;
+            end
+        end
+        endcase
     end
 endmodule

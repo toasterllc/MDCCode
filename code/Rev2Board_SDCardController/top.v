@@ -12,7 +12,15 @@ module Top(
     // SD Card Controller
     // ====================
     SDCardController sdcontroller(
-        .clk12mhz(clk12mhz),
+        .clk(clk),
+        
+        .cmd_trigger(),
+        .cmd_write(),
+        .cmd_addr(),
+        .cmd_len(),
+        .cmd_dataOut(),
+        .cmd_dataOutLen(),
+        
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat)

@@ -13,6 +13,10 @@
 //   See Section 4.2.4 (SD-Init-ACMD41.pdf)
 //
 // TODO: What procedure do we use to transition to a faster clock?
+//   "CMD6 function switching period is within 8 clocks after the end bit of status data. When CMD6 changes
+//   the bus behavior (i.e. access mode), the host is allowed to use the new functions (increase/decrease
+//   CLK frequency beyond the current max CLK frequency), at least 8 clocks after at the end of the switch
+//   command transaction (see Figure 4-14)."
 //
 // TODO: handle never receiving a response from the card
 //   according to 4.12.4 , the max number of cycles for a response to start is 64
