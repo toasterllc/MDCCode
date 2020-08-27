@@ -153,8 +153,8 @@ module SDCardController(
     reg[15:0] datInReg = 0;
     reg[3:0] datInCounter = 0;
     reg[9:0] blockCounter = 0;
-    // reg[47:0] resp = 0;
-    // reg respLoad = 0;
+    reg[47:0] resp = 0;
+    reg respLoad = 0;
     
     reg cmdOutActive = 0;
     reg[47:0] cmdOutReg = 0;
@@ -168,9 +168,9 @@ module SDCardController(
         cmdOutReg <= cmdOutReg<<1;
         cmdOutCounter <= cmdOutCounter-1;
         
-        if (cmdInReg[47]) begin
-            cmdInReg <= (cmdInReg<<1)|cmdIn;
-        end
+        // if (cmdInReg[47]) begin
+            cmdInReg <= (cmdInReg<<1)|(cmdOutActive ? 1'b1 : cmdIn);
+        // end
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
         datInCounter <= datInCounter-1;
@@ -184,10 +184,10 @@ module SDCardController(
         
         blockCounter <= blockCounter-1;
         
-        // if (respLoad && !cmdInReg[47]) begin
-        //     resp <= cmdInReg;
-        //     respLoad <= 0;
-        // end
+        if (respLoad && !cmdInReg[47]) begin
+            resp <= cmdInReg;
+            respLoad <= 0;
+        end
         
         case (state)
         StateIdle: begin
@@ -221,9 +221,8 @@ module SDCardController(
         
         StateRead+1: begin
             if (!cmdOutCounter) begin
-                // respLoad <= 1;
+                respLoad <= 1;
                 cmdOutActive <= 0;
-                cmdInReg <= {48{1'b1}};
                 state <= StateRead+2;
             end
         end
@@ -285,7 +284,7 @@ module SDCardController(
         end
         
         StateRead+7: begin
-            if (cmdInReg[47] || cmdInReg[46] || !cmdInReg[0]) begin
+            if (resp[47] || resp[46] || !resp[0]) begin
                 $display("BAD START/TRANSMISSION/STOP BITS ❌");
                 // TODO: handle error
             
