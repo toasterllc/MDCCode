@@ -19,12 +19,12 @@ module Top();
         end
     end
     
-    reg crc_en = 0;
+    reg crc_rst_ = 0;
     reg crc_din = 0;
     wire[15:0] crc_dout;
     CRC16 crc(
         .clk(clk),
-        .en(crc_en),
+        .rst_(crc_rst_),
         .din(crc_din),
         .dout(crc_dout),
         .doutNext()
@@ -34,7 +34,7 @@ module Top();
     initial begin
         #1000;
         wait(!clk);
-        crc_en = 1;
+        crc_rst_ = 1;
         crc_din = 1;
         wait(clk);
         

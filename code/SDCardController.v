@@ -78,12 +78,12 @@ module SDCardController(
     // ====================
     // CRC for sd_dat[3:0]
     // ====================
-    reg datInCRCEn = 0;
+    reg datInCRCRst_ = 0;
     wire[15:0] datInCRC[3:0];
     for (i=0; i<4; i=i+1) begin
         CRC16 crc16(
             .clk(clk),
-            .en(datInCRCEn),
+            .rst_(datInCRCRst_),
             .din(datInReg[4+i]),
             .dout(datInCRC[i]),
             .doutNext()
@@ -235,9 +235,9 @@ module SDCardController(
         end
         
         StateRead+3: begin
+            datInCRCRst_ <= 1;
             datInCounter <= 2;
             blockCounter <= 1023;
-            datInCRCEn <= 1;
             state <= StateRead+4;
         end
         
@@ -256,6 +256,7 @@ module SDCardController(
         
         // Remember the CRC we calculated
         StateRead+5: begin
+            datInCRCRst_ <= 0;
             datIn3CRCReg <= datInCRC[3];
             datIn2CRCReg <= datInCRC[2];
             datIn1CRCReg <= datInCRC[1];
@@ -265,6 +266,7 @@ module SDCardController(
         
         // Check CRC for each DAT line
         StateRead+6: begin
+            $display("EXPECTED CRCs: %h, %h, %h, %h", datIn3CRCReg, datIn2CRCReg, datIn1CRCReg, datIn0CRCReg);
             // $display("Our CRC: %h", datIn3CRCReg);
             // Handle invalid CRC
             if (datIn3CRCReg[15]!==datInReg[11] ||

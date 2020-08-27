@@ -22,7 +22,7 @@ module Top(
     inout wire[3:0]     sd_dat  /* synthesis syn_keep=1 */,
 `endif
     
-    output wire[3:0]    led
+    output reg[3:0]    led = 0
 );
 `ifdef SIM
     reg clk12mhz = 0;
@@ -38,7 +38,7 @@ module Top(
     wire[15:0] sd_dataOut;
     wire sd_dataOut_valid;
     
-    assign led = sd_dataOut[3:0];
+    // assign led = sd_dataOut[3:0];
 
     SDCardController sdcontroller(
         .clk(clk12mhz),
@@ -62,6 +62,10 @@ module Top(
     always @(posedge clk12mhz) begin
         sd_cmd_trigger <= 1;
         sd_cmd_write <= 0;
+        
+        if (sd_dataOut_valid) begin
+            led <= sd_dataOut;
+        end
     end
     
     // assign led = {counter[21:19], counter[0]};
@@ -112,18 +116,40 @@ module Top(
     wire[6:0] sim_cmd = {sim_acmd, sim_cmdIndex};
     
     // localparam READ_DATA = {{4092{1'b0}}, 4'b1111};
-    localparam PAYLOAD_DATA = {4096{1'b1}};
+    // localparam PAYLOAD_DATA = {4096{1'b1}};
+    localparam PAYLOAD_DATA = {128{32'h42434445}};
     localparam CRC_DATA = 16'hEDA9;
     reg[3:0] sim_datOut = 4'bzzzz;
     reg[4095:0] sim_payloadDataReg = 0;
     reg[15:0] sim_crcDataReg = 0;
     assign sd_dat = sim_datOut;
     
+    
+    
+    reg sim_crcRst_ = 0;
+    wire[15:0] sim_crc[3:0];
+    reg[15:0] sim_crcReg[3:0];
+    genvar geni;
+    for (geni=0; geni<4; geni=geni+1) begin
+        CRC16 crc(
+            .clk(sd_clk),
+            .rst_(sim_crcRst_),
+            .din(sd_dat[geni]),
+            .dout(),
+            .doutNext(sim_crc[geni])
+        );
+    end
+    
+    
+    
+    
     localparam CMD0     = {1'b0, 6'd0};     // GO_IDLE_STATE
-    localparam CMD18    = {1'b0, 6'd18};    // GO_IDLE_STATE
+    localparam CMD18    = {1'b0, 6'd18};
     
     initial begin
         forever begin
+            sim_crcRst_ = 0;
+            
             wait(sd_clk);
             if (!sd_cmd) begin
                 // Receive command
@@ -179,6 +205,9 @@ module Top(
                     sim_datOut = 4'b0000;
                     wait(sd_clk);
                     
+                    wait(!sd_clk);
+                    sim_crcRst_ = 1;
+                    
                     // Shift out data
                     repeat (1) begin
                         sim_payloadDataReg = PAYLOAD_DATA;
@@ -192,12 +221,26 @@ module Top(
                         end
                     end
                     
+                    sim_crcReg[3] = sim_crc[3];
+                    sim_crcReg[2] = sim_crc[2];
+                    sim_crcReg[1] = sim_crc[1];
+                    sim_crcReg[0] = sim_crc[0];
+                    
+                    // $display("[SD CARD] CRC3: %h", sim_crc[3]);
+                    // $display("[SD CARD] CRC2: %h", sim_crc[2]);
+                    // $display("[SD CARD] CRC1: %h", sim_crc[1]);
+                    // $display("[SD CARD] CRC0: %h", sim_crc[0]);
+                    
                     // Shift out CRC
                     sim_crcDataReg = CRC_DATA;
                     repeat (16) begin
                         wait(!sd_clk);
-                        sim_datOut = {4{sim_crcDataReg[15]}};
-                        sim_crcDataReg = sim_crcDataReg<<1;
+                        sim_datOut = {sim_crcReg[3][15], sim_crcReg[2][15], sim_crcReg[1][15], sim_crcReg[0][15]};
+                        
+                        sim_crcReg[3] = sim_crcReg[3]<<1;
+                        sim_crcReg[2] = sim_crcReg[2]<<1;
+                        sim_crcReg[1] = sim_crcReg[1]<<1;
+                        sim_crcReg[0] = sim_crcReg[0]<<1;
                         wait(sd_clk);
                     end
                     
