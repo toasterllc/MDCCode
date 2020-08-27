@@ -1,6 +1,5 @@
 `include "Util.v"
 `include "CRC7.v"
-`include "ClockGen.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -12,10 +11,12 @@ module SDCardController(
     // Command port
     input wire          cmd_trigger,
     input wire          cmd_write,
-    input wire[31:0]    cmd_addr,       // (2^31)*512 == 256 GB
+    input wire[31:0]    cmd_addr,       // (2^32)*512 == 2 TB
     input wire[13:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
-    output wire[15:0]   cmd_dataOut,
-    output wire[13:0]   cmd_dataOutLen,
+    
+    // Data-out port
+    output reg[15:0]    dataOut = 0,
+    output reg          dataOut_valid = 0,
     
     // SDIO port
     output wire         sd_clk,
@@ -31,7 +32,7 @@ module SDCardController(
     // Pin: sd_cmd
     // ====================
     wire sd_cmdIn;
-    reg sd_cmdOut = cmdOut;
+    wire sd_cmdOut = cmdOut;
     wire sd_cmdOutActive = cmdOutActive;
     SB_IO #(
         .PIN_TYPE(6'b1101_01),      // Output=PIN_OUTPUT_REGISTERED_ENABLE_REGISTERED, Input=PIN_INPUT
@@ -67,58 +68,25 @@ module SDCardController(
     
     
     
-    
-    // // ====================
-    // // SD Card Initializer
-    // // ====================
-    // wire init_done;
-    // wire init_sd_clk;
-    // wire init_sd_cmdIn = sd_cmdIn;
-    // wire init_sd_cmdOut;
-    // wire init_sd_cmdOutActive;
-    // wire[3:0] init_sd_dat = sd_datIn;
-    // SDCardInitializer sdinit(
-    //     .clk12mhz(clk12mhz),
-    //     .done(init_done),
-    //
-    //     .sd_clk(init_sd_clk),
-    //     .sd_cmdIn(init_sd_cmdIn),
-    //     .sd_cmdOut(init_sd_cmdOut),
-    //     .sd_cmdOutActive(init_sd_cmdOutActive),
-    //     .sd_dat(init_sd_dat)
-    // );
-    //
-    //
-    //
-    //
-    //
-    // // ====================
-    // // `initDone` synchronizer
-    // // ====================
-    // reg initDone=0, initDoneTmp=0;
-    // always @(negedge clk)
-    //     {initDone, initDoneTmp} <= {initDoneTmp, init_done};
-    
-    
-    
-    
-    
-    
-    
     // ====================
     // State Machine
     // ====================
     localparam StateIdle        = 0;    // +0
     localparam StateWrite       = 1;    // +0
-    localparam StateRead        = 2;    // +0
-    reg[1:0] state = 0;
+    localparam StateRead        = 2;    // +4
+    reg[3:0] state = 0;
     
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
     localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
     localparam CMD55 =  6'd55;      // APP_CMD
     
-    reg cmdInActive = 0;
+    reg[47:0] cmdInReg = 0;
     wire cmdIn = sd_cmdIn;
+    wire[3:0] datIn = sd_datIn;
+    reg[15:0] datInReg = 0;
+    reg[2:0] datInCounter = 0;
+    reg[7:0] blockCounter = 0;
+    reg[47:0] resp = 0;
     
     reg cmdOutActive = 0;
     reg[47:0] cmdOutReg = 0;
@@ -132,10 +100,10 @@ module SDCardController(
         cmdOutReg <= cmdOutReg<<1;
         cmdOutCounter <= cmdOutCounter-1;
         
-        if (cmdInActive) begin
-            cmdInReg <= (cmdInReg<<1)|cmdIn;
-            cmdInCounter <= cmdInCounter-1;
-        end
+        cmdInReg <= (cmdInReg<<1)|(cmdOutActive ? 1'b1 : cmdIn);
+        
+        datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
+        datInCounter <= datInCounter-1;
         
         case (state)
         StateIdle: begin
@@ -175,15 +143,48 @@ module SDCardController(
         end
         
         StateRead+2: begin
-            // Wait for response
-            if (!cmdInStaged[0]) begin
-                cmdInActive <= 1;
-                state <= StateRespIn+1;
+            // // Wait for response to complete
+            // if (!cmdInReg[47]) begin
+            //     resp <= cmdInReg;
+            // end
+            if (!datInReg[0]) begin
+                state <= StateRead+3;
             end
+        end
+        
+        StateRead+3: begin
+            datInCounter <= 2;
+            blockCounter <= 255;
+            state <= StateRead+4;
+        end
+        
+        StateRead+4: begin
+            dataOut_valid <= 0; // Reset by default
             
-            if (!cmdOutCounter) begin
-                cmdOutActive <= 0;
-                state <= StateRead+2;
+            if (!blockCounter) begin
+                datInCounter <= 7;
+                state <= StateRead+5;
+            
+            end else if (!datInCounter) begin
+                datInCounter <= 3;
+                dataOut <= datInReg;
+                dataOut_valid <= 1;
+                blockCounter <= blockCounter-1;
+            end
+        end
+        
+        StateRead+5: begin
+            if (!datInCounter) begin
+                state <= StateRead+6;
+            end
+        end
+        
+        StateRead+6: begin
+            if (resp[47] || resp[46] || !resp[0]) begin
+                // TODO: handle error
+            
+            end else begin
+                state <= StateIdle;
             end
         end
         endcase
