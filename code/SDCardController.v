@@ -154,6 +154,7 @@ module SDCardController(
     reg[3:0] datInCounter = 0;
     reg[8:0] blockCounter = 0;
     reg[47:0] resp = 0;
+    reg respLoad = 0;
     
     reg cmdOutActive = 0;
     reg[47:0] cmdOutReg = 0;
@@ -176,6 +177,13 @@ module SDCardController(
         datIn2CRCReg <= datIn2CRCReg<<1;
         datIn1CRCReg <= datIn1CRCReg<<1;
         datIn0CRCReg <= datIn0CRCReg<<1;
+        
+        dataOut_valid <= 0; // Reset by default
+        
+        if (respLoad && !cmdInReg[47]) begin
+            resp <= cmdInReg;
+            respLoad <= 0;
+        end
         
         case (state)
         StateIdle: begin
@@ -209,16 +217,13 @@ module SDCardController(
         
         StateRead+1: begin
             if (!cmdOutCounter) begin
+                respLoad <= 1;
                 cmdOutActive <= 0;
                 state <= StateRead+2;
             end
         end
         
         StateRead+2: begin
-            // // Wait for response to complete
-            // if (!cmdInReg[47]) begin
-            //     resp <= cmdInReg;
-            // end
             if (!datInReg[0]) begin
                 state <= StateRead+3;
             end
@@ -232,8 +237,6 @@ module SDCardController(
         end
         
         StateRead+4: begin
-            dataOut_valid <= 0; // Reset by default
-            
             if (!blockCounter) begin
                 datInCounter <= 16;
                 state <= StateRead+5;
@@ -246,6 +249,7 @@ module SDCardController(
             end
         end
         
+        // Remember the CRC we calculated
         StateRead+5: begin
             datIn3CRCReg <= datInCRC[3];
             datIn2CRCReg <= datInCRC[2];
@@ -254,21 +258,14 @@ module SDCardController(
             state <= StateRead+6;
         end
         
+        // Check CRC for each DAT line
         StateRead+6: begin
-            if (datIn3CRCReg[15] !== datInReg[11]) begin
-                $display("Invalid CRC 3");
-            end
-            
-            if (datIn2CRCReg[15] !== datInReg[10]) begin
-                $display("Invalid CRC 2");
-            end
-            
-            if (datIn1CRCReg[15] !== datInReg[9]) begin
-                $display("Invalid CRC 1");
-            end
-            
-            if (datIn0CRCReg[15] !== datInReg[8]) begin
-                $display("Invalid CRC 0");
+            // Handle invalid CRC
+            if (datIn3CRCReg[15]!==datInReg[11] ||
+                datIn2CRCReg[15]!==datInReg[10] ||
+                datIn1CRCReg[15]!==datInReg[9]  ||
+                datIn0CRCReg[15]!==datInReg[8]  ) begin
+                $display("Invalid CRC");
             end
             
             if (!datInCounter) begin
