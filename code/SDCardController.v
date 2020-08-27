@@ -1,5 +1,6 @@
 `include "Util.v"
 `include "CRC7.v"
+`include "CRC16.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -28,6 +29,9 @@ module SDCardController(
     // ====================
     assign sd_clk = clk;
     
+    
+    
+    
     // ====================
     // Pin: sd_cmd
     // ====================
@@ -44,6 +48,9 @@ module SDCardController(
         .D_OUT_0(sd_cmdOut),
         .D_IN_0(sd_cmdIn)
     );
+    
+    
+    
     
     // ====================
     // Pin: sd_dat
@@ -69,6 +76,66 @@ module SDCardController(
     
     
     // ====================
+    // CRC for sd_dat[3:0]
+    // ====================
+    reg datInCRCEn = 0;
+    wire[15:0] datInCRC[3:0];
+    for (i=0; i<4; i=i+1) begin
+        CRC16 crc16(
+            .clk(clk),
+            .en(datInCRCEn),
+            .din(datInReg[4+i]),
+            .dout(datInCRC[i]),
+            .doutNext()
+        );
+    end
+    
+    reg[15:0] datIn3CRCReg = 0;
+    reg[15:0] datIn2CRCReg = 0;
+    reg[15:0] datIn1CRCReg = 0;
+    reg[15:0] datIn0CRCReg = 0;
+    
+    // wire[15:0] datInCRC3;
+    // CRC16 crc16_3(
+    //     .clk(clk),
+    //     .en(datInCRCEn),
+    //     .din(datInReg[3]),
+    //     .dout(datInCRC3),
+    //     .doutNext()
+    // );
+    //
+    // wire[15:0] datInCRC2;
+    // CRC16 crc16_2(
+    //     .clk(clk),
+    //     .en(datInCRCEn),
+    //     .din(datInReg[2]),
+    //     .dout(datInCRC2),
+    //     .doutNext()
+    // );
+    //
+    // wire[15:0] datInCRC1;
+    // CRC16 crc16_1(
+    //     .clk(clk),
+    //     .en(datInCRCEn),
+    //     .din(datInReg[1]),
+    //     .dout(datInCRC1),
+    //     .doutNext()
+    // );
+    //
+    // wire[15:0] datInCRC0;
+    // CRC16 crc16_0(
+    //     .clk(clk),
+    //     .en(datInCRCEn),
+    //     .din(datInReg[0]),
+    //     .dout(datInCRC0),
+    //     .doutNext()
+    // );
+    
+    
+    
+    
+    
+    // ====================
     // State Machine
     // ====================
     localparam StateIdle        = 0;    // +0
@@ -84,8 +151,8 @@ module SDCardController(
     wire cmdIn = sd_cmdIn;
     wire[3:0] datIn = sd_datIn;
     reg[15:0] datInReg = 0;
-    reg[2:0] datInCounter = 0;
-    reg[7:0] blockCounter = 0;
+    reg[3:0] datInCounter = 0;
+    reg[8:0] blockCounter = 0;
     reg[47:0] resp = 0;
     
     reg cmdOutActive = 0;
@@ -104,6 +171,11 @@ module SDCardController(
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
         datInCounter <= datInCounter-1;
+        
+        datIn3CRCReg <= datIn3CRCReg<<1;
+        datIn2CRCReg <= datIn2CRCReg<<1;
+        datIn1CRCReg <= datIn1CRCReg<<1;
+        datIn0CRCReg <= datIn0CRCReg<<1;
         
         case (state)
         StateIdle: begin
@@ -154,7 +226,8 @@ module SDCardController(
         
         StateRead+3: begin
             datInCounter <= 2;
-            blockCounter <= 255;
+            blockCounter <= 256;
+            datInCRCEn <= 1;
             state <= StateRead+4;
         end
         
@@ -162,7 +235,7 @@ module SDCardController(
             dataOut_valid <= 0; // Reset by default
             
             if (!blockCounter) begin
-                datInCounter <= 7;
+                datInCounter <= 16;
                 state <= StateRead+5;
             
             end else if (!datInCounter) begin
@@ -174,12 +247,36 @@ module SDCardController(
         end
         
         StateRead+5: begin
-            if (!datInCounter) begin
-                state <= StateRead+6;
-            end
+            datIn3CRCReg <= datInCRC[3];
+            datIn2CRCReg <= datInCRC[2];
+            datIn1CRCReg <= datInCRC[1];
+            datIn0CRCReg <= datInCRC[0];
+            state <= StateRead+6;
         end
         
         StateRead+6: begin
+            if (datIn3CRCReg[15] !== datInReg[11]) begin
+                $display("Invalid CRC 3");
+            end
+            
+            if (datIn3CRCReg[15] !== datInReg[10]) begin
+                $display("Invalid CRC 2");
+            end
+            
+            if (datIn3CRCReg[15] !== datInReg[9]) begin
+                $display("Invalid CRC 1");
+            end
+            
+            if (datIn3CRCReg[15] !== datInReg[8]) begin
+                $display("Invalid CRC 0");
+            end
+            
+            if (!datInCounter) begin
+                state <= StateRead+7;
+            end
+        end
+        
+        StateRead+7: begin
             if (resp[47] || resp[46] || !resp[0]) begin
                 // TODO: handle error
             

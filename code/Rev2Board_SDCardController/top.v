@@ -4,6 +4,10 @@
 `timescale 1ns/1ps
 
 module Top(
+`ifndef SIM
+    input wire          clk12mhz,
+`endif
+
     output wire         sd_clk  /* synthesis syn_keep=1 */,
     
 `ifdef SIM
@@ -20,7 +24,9 @@ module Top(
     
     output wire[3:0]    led
 );
+`ifdef SIM
     reg clk12mhz = 0;
+`endif
     
     // ====================
     // SD Card Controller
@@ -31,6 +37,8 @@ module Top(
     reg[13:0] sd_cmd_len = 0;
     wire[15:0] sd_dataOut;
     wire sd_dataOut_valid;
+    
+    assign led = sd_dataOut[3:0];
 
     SDCardController sdcontroller(
         .clk(clk12mhz),
@@ -103,11 +111,13 @@ module Top(
     reg sim_acmd = 0;
     wire[6:0] sim_cmd = {sim_acmd, sim_cmdIndex};
     
-    localparam READ_DATA = {8'h42, 8'h43, 8'h44, 8'h45};
+    // localparam READ_DATA = {{4092{1'b0}}, 4'b1111};
+    localparam PAYLOAD_DATA = {4096{1'b1}};
+    localparam CRC_DATA = 16'hEDA9;
     reg[3:0] sim_datOut = 4'bzzzz;
-    reg[31:0] sim_readDataReg = 0;
+    reg[4095:0] sim_payloadDataReg = 0;
+    reg[15:0] sim_crcDataReg = 0;
     assign sd_dat = sim_datOut;
-    
     
     localparam CMD0     = {1'b0, 6'd0};     // GO_IDLE_STATE
     localparam CMD18    = {1'b0, 6'd18};    // GO_IDLE_STATE
@@ -170,28 +180,30 @@ module Top(
                     wait(sd_clk);
                     
                     // Shift out data
-                    repeat (128) begin
-                        sim_readDataReg = READ_DATA;
-                        $display("[SD CARD] Sending data: %h", sim_readDataReg);
+                    repeat (1) begin
+                        sim_payloadDataReg = PAYLOAD_DATA;
+                        $display("[SD CARD] Sending data: %h", sim_payloadDataReg);
                         
-                        repeat (8) begin
+                        repeat (1024) begin
                             wait(!sd_clk);
-                            sim_datOut = sim_readDataReg[31:28];
-                            sim_readDataReg = sim_readDataReg<<4;
+                            sim_datOut = sim_payloadDataReg[4095:4092];
+                            sim_payloadDataReg = sim_payloadDataReg<<4;
                             wait(sd_clk);
                         end
                     end
                     
                     // Shift out CRC
-                    repeat (7) begin
+                    sim_crcDataReg = CRC_DATA;
+                    repeat (16) begin
                         wait(!sd_clk);
-                        sim_datOut = 4'b1111;
+                        sim_datOut = {4{sim_crcDataReg[15]}};
+                        sim_crcDataReg = sim_crcDataReg<<1;
                         wait(sd_clk);
                     end
                     
                     // End bit
                     wait(!sd_clk);
-                    sim_datOut = 4'b0000;
+                    sim_datOut = 4'b1111;
                     wait(sd_clk);
                     
                     // Stop driving DAT lines
