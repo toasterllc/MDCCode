@@ -105,7 +105,7 @@ module Top(
     // ====================
     reg[47:0] sim_cmdIn = 0;
     wire[5:0] sim_cmdIndex = sim_cmdIn[45:40];
-    reg[135:0] sim_respOut = 0;
+    reg[47:0] sim_respOut = 0;
     reg[7:0] sim_respLen = 0;
     
     reg sim_cmdOut = 1'bz;
@@ -126,14 +126,31 @@ module Top(
     
     
     
-    reg sim_crcRst_ = 0;
+    // ====================
+    // CRC (CMD)
+    // ====================
+    reg sim_cmdInCRCRst_ = 0;
+    wire[6:0] sim_cmdInCRC;
+    reg[6:0] sim_ourCRC = 0;
+    CRC7 crc7(
+        .clk(sd_clk),
+        .rst_(sim_cmdInCRCRst_),
+        .din(sim_cmdIn[0]),
+        .dout(),
+        .doutNext(sim_cmdInCRC)
+    );
+    
+    // ====================
+    // CRC (DAT[3:0])
+    // ====================
+    reg sim_datCRCRst_ = 0;
     wire[15:0] sim_crc[3:0];
     reg[15:0] sim_crcReg[3:0];
     genvar geni;
     for (geni=0; geni<4; geni=geni+1) begin
-        CRC16 crc(
+        CRC16 crc16(
             .clk(sd_clk),
-            .rst_(sim_crcRst_),
+            .rst_(sim_datCRCRst_),
             .din(sd_dat[geni]),
             .dout(),
             .doutNext(sim_crc[geni])
@@ -148,7 +165,8 @@ module Top(
     
     initial begin
         forever begin
-            sim_crcRst_ = 0;
+            sim_cmdInCRCRst_ = 0;
+            sim_datCRCRst_ = 0;
             
             wait(sd_clk);
             if (!sd_cmd) begin
@@ -156,10 +174,20 @@ module Top(
                 reg[7:0] i;
                 reg[7:0] count;
                 
+                // Start calculating CRC for incoming command
+                sim_cmdInCRCRst_ = 1;
+                
                 for (i=0; i<48; i++) begin
                     wait(sd_clk);
                     sim_cmdIn = (sim_cmdIn<<1)|sd_cmd;
                     wait(!sd_clk);
+                    
+                    if (i == 39) begin
+                        // $display("[SD CARD] MEOW CRC: %b", sim_cmdInCRC);
+                        // $finish;
+                        sim_ourCRC = sim_cmdInCRC;
+                        sim_cmdInCRCRst_ = 0;
+                    end
                 end
                 
                 $display("[SD CARD] Received command: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
@@ -171,11 +199,17 @@ module Top(
                     sim_cmdIn[0],       // stop bit
                 );
                 
+                if (sim_cmdIn[7:1] === sim_ourCRC) begin
+                    $display("[SD CARD] ^^^ CRC Valid ✅");
+                end else begin
+                    $display("[SD CARD] ^^^ Bad CRC: ours=%b, theirs=%b ❌", sim_ourCRC, sim_cmdIn[7:1]);
+                end
+                
                 // Issue response if needed
                 if (sim_cmdIndex) begin
                     case (sim_cmd)
                     // TODO: make this a real CMD18 response. right now it's a CMD3 response.
-                    CMD18:      begin sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff; sim_respLen=48;  end
+                    CMD18:      begin sim_respOut=48'h03aaaa0520d1; sim_respLen=48;  end
                     default:    begin  $display("[SD CARD] BAD COMMAND: %b", sim_cmd); $finish; end
                     endcase
                     
@@ -190,7 +224,7 @@ module Top(
                     $display("[SD CARD] Sending response: %b", sim_respOut);
                     for (i=0; i<sim_respLen; i++) begin
                         wait(!sd_clk);
-                        sim_cmdOut = sim_respOut[135];
+                        sim_cmdOut = sim_respOut[47];
                         sim_respOut = sim_respOut<<1;
                         wait(sd_clk);
                     end
@@ -206,7 +240,7 @@ module Top(
                     wait(sd_clk);
                     
                     wait(!sd_clk);
-                    sim_crcRst_ = 1;
+                    sim_datCRCRst_ = 1;
                     
                     // Shift out data
                     repeat (1) begin
