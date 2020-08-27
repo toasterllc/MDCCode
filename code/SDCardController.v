@@ -152,9 +152,9 @@ module SDCardController(
     wire[3:0] datIn = sd_datIn;
     reg[15:0] datInReg = 0;
     reg[3:0] datInCounter = 0;
-    reg[8:0] blockCounter = 0;
-    reg[47:0] resp = 0;
-    reg respLoad = 0;
+    reg[9:0] blockCounter = 0;
+    // reg[47:0] resp = 0;
+    // reg respLoad = 0;
     
     reg cmdOutActive = 0;
     reg[47:0] cmdOutReg = 0;
@@ -168,7 +168,9 @@ module SDCardController(
         cmdOutReg <= cmdOutReg<<1;
         cmdOutCounter <= cmdOutCounter-1;
         
-        cmdInReg <= (cmdInReg<<1)|(cmdOutActive ? 1'b1 : cmdIn);
+        if (cmdInReg[47]) begin
+            cmdInReg <= (cmdInReg<<1)|cmdIn;
+        end
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
         datInCounter <= datInCounter-1;
@@ -180,10 +182,12 @@ module SDCardController(
         
         dataOut_valid <= 0; // Reset by default
         
-        if (respLoad && !cmdInReg[47]) begin
-            resp <= cmdInReg;
-            respLoad <= 0;
-        end
+        blockCounter <= blockCounter-1;
+        
+        // if (respLoad && !cmdInReg[47]) begin
+        //     resp <= cmdInReg;
+        //     respLoad <= 0;
+        // end
         
         case (state)
         StateIdle: begin
@@ -217,8 +221,9 @@ module SDCardController(
         
         StateRead+1: begin
             if (!cmdOutCounter) begin
-                respLoad <= 1;
+                // respLoad <= 1;
                 cmdOutActive <= 0;
+                cmdInReg <= {48{1'b1}};
                 state <= StateRead+2;
             end
         end
@@ -231,21 +236,21 @@ module SDCardController(
         
         StateRead+3: begin
             datInCounter <= 2;
-            blockCounter <= 256;
+            blockCounter <= 1023;
             datInCRCEn <= 1;
             state <= StateRead+4;
         end
         
         StateRead+4: begin
-            if (!blockCounter) begin
-                datInCounter <= 16;
-                state <= StateRead+5;
-            
-            end else if (!datInCounter) begin
+            if (!datInCounter) begin
                 datInCounter <= 3;
                 dataOut <= datInReg;
                 dataOut_valid <= 1;
-                blockCounter <= blockCounter-1;
+            end
+            
+            if (!blockCounter) begin
+                datInCounter <= 16;
+                state <= StateRead+5;
             end
         end
         
@@ -260,12 +265,16 @@ module SDCardController(
         
         // Check CRC for each DAT line
         StateRead+6: begin
+            // $display("Our CRC: %h", datIn3CRCReg);
             // Handle invalid CRC
             if (datIn3CRCReg[15]!==datInReg[11] ||
                 datIn2CRCReg[15]!==datInReg[10] ||
                 datIn1CRCReg[15]!==datInReg[9]  ||
                 datIn0CRCReg[15]!==datInReg[8]  ) begin
-                $display("Invalid CRC");
+                // TODO: handle error
+                $display("CRC BAD ❌");
+            end else begin
+                $display("CRC GOOD");
             end
             
             if (!datInCounter) begin
@@ -274,12 +283,16 @@ module SDCardController(
         end
         
         StateRead+7: begin
-            if (resp[47] || resp[46] || !resp[0]) begin
+            if (cmdInReg[47] || cmdInReg[46] || !cmdInReg[0]) begin
+                $display("BAD START/TRANSMISSION/STOP BITS ❌");
                 // TODO: handle error
             
             end else begin
                 state <= StateIdle;
             end
+            
+            // $display("DONE");
+            // $finish;
         end
         endcase
     end
