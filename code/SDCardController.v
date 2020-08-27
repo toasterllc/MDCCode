@@ -259,15 +259,15 @@ module SDCardController(
                 $display("Invalid CRC 3");
             end
             
-            if (datIn3CRCReg[15] !== datInReg[10]) begin
+            if (datIn2CRCReg[15] !== datInReg[10]) begin
                 $display("Invalid CRC 2");
             end
             
-            if (datIn3CRCReg[15] !== datInReg[9]) begin
+            if (datIn1CRCReg[15] !== datInReg[9]) begin
                 $display("Invalid CRC 1");
             end
             
-            if (datIn3CRCReg[15] !== datInReg[8]) begin
+            if (datIn0CRCReg[15] !== datInReg[8]) begin
                 $display("Invalid CRC 0");
             end
             
