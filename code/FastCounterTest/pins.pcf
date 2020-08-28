@@ -34,7 +34,7 @@ set_io a[15]        D7      -pullup no
 # set_io b[12]        G1      -pullup no
 # set_io b[13]        G2      -pullup no
 # set_io b[14]        H1      -pullup no
-# set_io b[15]        H2      -pullup no
+# set_io b[15]        H2      -pullupno
 
 set_io out[00]      L10     -pullup no
 set_io out[01]      K10     -pullup no
