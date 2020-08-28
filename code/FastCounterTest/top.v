@@ -33,7 +33,7 @@ module ShiftAdder #(
     parameter N = 4
 )(
     input wire clk,
-    input wire rst_,
+    input wire load_,
     input wire[W-1:0] a,
     input wire[W-1:0] b,
     output reg[W-1:0] sum = 0,
@@ -43,22 +43,14 @@ module ShiftAdder #(
     reg[W-1:0] aReg = 0;
     reg[W-1:0] bReg = 0;
     reg cin = 0;
-    wire[N-1:0] sumPart;
-    wire cout;
     
-    Adder #(
-        .N(N)
-    ) adder(
-        .a(aReg[N-1:0]),
-        .b(bReg[N-1:0]),
-        .cin(cin),
-        .sum(sumPart),
-        .cout(cout)
-    );
+    wire[N:0] s = aReg[N-1:0] + bReg[N-1:0] + cin;
+    wire[N-1:0] sumPart = s[N-1:0];
+    wire cout = s[N];
     
     assign done = doneReg[W/N];
     always @(posedge clk) begin
-        if (!rst_) begin
+        if (!load_) begin
             doneReg <= 1;
             aReg <= a;
             bReg <= b;
@@ -87,10 +79,10 @@ module Top(
 `ifdef SIM
     reg clk12mhz = 0;
 `endif
-    localparam W = 64;
-    localparam N = 2;
+    localparam W = 32;
+    localparam N = 4;
     
-    reg rst_ = 0;
+    reg load_ = 0;
     wire done;
     reg[W-1:0] acum = 0;
     wire[W-1:0] sum;
@@ -100,7 +92,7 @@ module Top(
         .N(N)
     ) adder(
         .clk(clk12mhz),
-        .rst_(rst_),
+        .load_(load_),
         .a(acum),
         .b(a),
         .sum(sum),
@@ -108,9 +100,9 @@ module Top(
     );
 
     always @(posedge clk12mhz) begin
-        if (!rst_) rst_ <= 1;
+        if (!load_) load_ <= 1;
         else if (done) begin
-            rst_ <= 0;
+            load_ <= 0;
             acum <= sum;
         end
         $display("acum: %b", acum);
@@ -255,9 +247,9 @@ module Top(
         end
     end
     
-    initial begin
-        #10000;
-        $finish;
-    end
+    // initial begin
+    //     #10000;
+    //     $finish;
+    // end
 `endif
 endmodule
