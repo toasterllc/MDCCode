@@ -2,42 +2,61 @@
 
 `timescale 1ns/1ps
 
-module Adder4(
-    input wire[3:0] a,
-    input wire[3:0] b,
+module Adder #(
+    parameter N = 4
+)(
+    input wire[N-1:0] a,
+    input wire[N-1:0] b,
     input wire cin,
-    output wire[3:0] sum,
+    output wire[N-1:0] sum,
     output wire cout
 );
-    wire[4:0] s = a+b+cin;
-    assign sum = s[3:0];
-    assign cout = s[4];
+    wire[N:0] s = a+b+cin;
+    assign sum = s[N-1:0];
+    assign cout = s[N];
 endmodule
 
-module ShiftAdder4(
+// module Adder4(
+//     input wire[3:0] a,
+//     input wire[3:0] b,
+//     input wire cin,
+//     output wire[3:0] sum,
+//     output wire cout
+// );
+//     wire[4:0] s = a+b+cin;
+//     assign sum = s[3:0];
+//     assign cout = s[4];
+// endmodule
+
+module ShiftAdder #(
+    parameter W = 16,
+    parameter N = 4
+)(
     input wire clk,
     input wire rst_,
-    input wire[15:0] a,
-    input wire[15:0] b,
-    output reg[15:0] sum = 0,
+    input wire[W-1:0] a,
+    input wire[W-1:0] b,
+    output reg[W-1:0] sum = 0,
     output wire done
 );
-    reg[4:0] doneReg = 0;
-    reg[15:0] aReg = 0;
-    reg[15:0] bReg = 0;
+    reg[W/N:0] doneReg = 0;
+    reg[W-1:0] aReg = 0;
+    reg[W-1:0] bReg = 0;
     reg cin = 0;
-    wire[3:0] sum4;
+    wire[N-1:0] sumPart;
     wire cout;
     
-    Adder4 adder(
-        .a(aReg[3:0]),
-        .b(bReg[3:0]),
+    Adder #(
+        .N(N)
+    ) adder(
+        .a(aReg[N-1:0]),
+        .b(bReg[N-1:0]),
         .cin(cin),
-        .sum(sum4),
+        .sum(sumPart),
         .cout(cout)
     );
     
-    assign done = doneReg[4];
+    assign done = doneReg[W/N];
     always @(posedge clk) begin
         if (!rst_) begin
             doneReg <= 1;
@@ -47,10 +66,10 @@ module ShiftAdder4(
         
         end else begin
             doneReg <= doneReg<<1;
-            aReg <= aReg>>4;
-            bReg <= bReg>>4;
+            aReg <= aReg>>N;
+            bReg <= bReg>>N;
             cin <= cout;
-            sum <= {sum4, sum[15:4]};
+            sum <= {sumPart, sum[W-1:N]};
         end
     end
 endmodule
@@ -68,13 +87,18 @@ module Top(
 `ifdef SIM
     reg clk12mhz = 0;
 `endif
+    localparam W = 64;
+    localparam N = 2;
     
     reg rst_ = 0;
     wire done;
-    reg[15:0] acum = 0;
-    wire[15:0] sum;
-    assign out = acum;
-    ShiftAdder4 adder(
+    reg[W-1:0] acum = 0;
+    wire[W-1:0] sum;
+    assign out = acum[W-1 : W-16-1];
+    ShiftAdder #(
+        .W(W),
+        .N(N)
+    ) adder(
         .clk(clk12mhz),
         .rst_(rst_),
         .a(acum),
@@ -94,8 +118,8 @@ module Top(
 
     
     
-    // reg[15:0] acum = 0;
-    // assign out = acum;
+    // reg[W-1:0] acum = 0;
+    // assign out = acum[W-1 : W-16-1];
     // always @(posedge clk12mhz) begin
     //     acum <= acum+a;
     //     $display("acum: %b", acum);
