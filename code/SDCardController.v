@@ -84,13 +84,20 @@ module SDCardController(
     // ====================
     localparam StateIdle        = 0;    // +0
     localparam StateWrite       = 1;    // +0
-    localparam StateRead        = 2;    // +4
+    localparam StateRead        = 2;    // +3
     reg[3:0] state = 0;
+    
+    localparam DatStateIdle     = 0;    // +0
+    localparam DatStateIn       = 1;    // +4
+    localparam DatStateDone     = 6;    // +0
+    localparam DatStateError    = 7;    // +0
+    reg[3:0] datState = 0;
     
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
     localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
     localparam CMD55 =  6'd55;      // APP_CMD
     
+    reg cmdInStaged = 0;
     reg[47:0] cmdInReg = 0;
     wire cmdIn = sd_cmdIn;
     wire[3:0] datIn = sd_datIn;
@@ -112,10 +119,22 @@ module SDCardController(
     
     
     // ====================
-    // CRC (CMD)
+    // CRC (CMD in)
+    // ====================
+    // wire[6:0] cmdInCRC;
+    // CRC7 CRC7_cmdIn(
+    //     .clk(clk),
+    //     .rst_(cmdInActive),
+    //     .din(cmdInReg[47]),
+    //     .dout(),
+    //     .doutNext(cmdOutCRC)
+    // );
+    
+    // ====================
+    // CRC (CMD out)
     // ====================
     wire[6:0] cmdOutCRC;
-    CRC7 crc7(
+    CRC7 CRC7_cmdOut(
         .clk(clk),
         .rst_(cmdOutActive),
         .din(cmdOutReg[47]),
@@ -154,6 +173,7 @@ module SDCardController(
         cmdOutReg <= cmdOutReg<<1;
         cmdOutCounter <= cmdOutCounter-1;
         
+        cmdInStaged <= cmdIn;
         cmdInReg <= (cmdInReg<<1)|(cmdOutActive ? 1'b1 : cmdIn);
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
@@ -172,6 +192,88 @@ module SDCardController(
             resp <= cmdInReg;
             respLoad <= 0;
         end
+        
+        
+        
+        
+        case (datState)
+        DatStateIdle: begin
+        end
+        
+        DatStateIn: begin
+            if (!datInReg[0]) begin
+                datState <= DatStateIn+1;
+            end
+        end
+        
+        DatStateIn+1: begin
+            datInCRCRst_ <= 1;
+            datInCounter <= 2;
+            blockCounter <= 1023;
+            datState <= DatStateIn+2;
+        end
+        
+        DatStateIn+2: begin
+            if (!datInCounter) begin
+                datInCounter <= 3;
+                dataOut <= datInReg;
+                dataOut_valid <= 1;
+            end
+            
+            if (!blockCounter) begin
+                datInCounter <= 16;
+                datState <= DatStateIn+3;
+            end
+        end
+        
+        // Remember the CRC we calculated
+        DatStateIn+3: begin
+            datInCRCRst_ <= 0;
+            datIn3CRCReg <= datInCRC[3];
+            datIn2CRCReg <= datInCRC[2];
+            datIn1CRCReg <= datInCRC[1];
+            datIn0CRCReg <= datInCRC[0];
+            datState <= DatStateIn+4;
+            $display("[SD HOST] Received CRCs: %b %b %b %b", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
+        end
+        
+        // Check CRC for each DAT line
+        DatStateIn+4: begin
+            // $display("EXPECTED CRCs: %h, %h, %h, %h", datIn3CRCReg, datIn2CRCReg, datIn1CRCReg, datIn0CRCReg);
+            // $display("Our CRC: %h", datIn3CRCReg);
+            // Handle invalid CRC
+            if (datIn3CRCReg[15]!==datInReg[11] ||
+                datIn2CRCReg[15]!==datInReg[10] ||
+                datIn1CRCReg[15]!==datInReg[9]  ||
+                datIn0CRCReg[15]!==datInReg[8]  ) begin
+                // TODO: handle error
+                $display("[SD HOST] Bad CRC ❌");
+                datState <= DatStateError;
+            
+            end else if (datInCounter) begin
+                $display("[SD HOST] CRC bit valid ✅");
+            
+            end else begin
+                datState <= DatStateDone;
+            end 
+        end
+        
+        DatStateDone: begin
+        end
+        
+        DatStateError: begin
+        end
+        endcase
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         case (state)
         StateIdle: begin
@@ -211,77 +313,31 @@ module SDCardController(
             end else if (!cmdOutCounter) begin
                 respLoad <= 1;
                 cmdOutActive <= 0;
+                datState <= DatStateIn;
                 state <= StateRead+2;
             end
         end
         
         StateRead+2: begin
-            if (!datInReg[0]) begin
+            if (datState == DatStateDone) begin
                 state <= StateRead+3;
+            end
+            
+            if (datState == DatStateError) begin
+                // TODO: handle error
             end
         end
         
         StateRead+3: begin
-            datInCRCRst_ <= 1;
-            datInCounter <= 2;
-            blockCounter <= 1023;
-            state <= StateRead+4;
-        end
-        
-        StateRead+4: begin
-            if (!datInCounter) begin
-                datInCounter <= 3;
-                dataOut <= datInReg;
-                dataOut_valid <= 1;
-            end
-            
-            if (!blockCounter) begin
-                datInCounter <= 16;
-                state <= StateRead+5;
-            end
-        end
-        
-        // Remember the CRC we calculated
-        StateRead+5: begin
-            datInCRCRst_ <= 0;
-            datIn3CRCReg <= datInCRC[3];
-            datIn2CRCReg <= datInCRC[2];
-            datIn1CRCReg <= datInCRC[1];
-            datIn0CRCReg <= datInCRC[0];
-            state <= StateRead+6;
-            $display("[SD HOST] Received CRCs: %b %b %b %b", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
-        end
-        
-        // Check CRC for each DAT line
-        StateRead+6: begin
-            // $display("EXPECTED CRCs: %h, %h, %h, %h", datIn3CRCReg, datIn2CRCReg, datIn1CRCReg, datIn0CRCReg);
-            // $display("Our CRC: %h", datIn3CRCReg);
-            // Handle invalid CRC
-            if (datIn3CRCReg[15]!==datInReg[11] ||
-                datIn2CRCReg[15]!==datInReg[10] ||
-                datIn1CRCReg[15]!==datInReg[9]  ||
-                datIn0CRCReg[15]!==datInReg[8]  ) begin
-                // TODO: handle error
-                $display("[SD HOST] Bad CRC ❌");
-            end else begin
-                $display("[SD HOST] CRC bit valid ✅");
-            end
-            
-            if (!datInCounter) begin
-                state <= StateRead+7;
-            end
-        end
-        
-        StateRead+7: begin
             if (resp[47] || resp[46] || !resp[0]) begin
                 $display("[SD HOST] Bad start/stop/transmission bit ❌");
                 // TODO: handle error
-            
+
             end else begin
                 $display("[SD HOST] Finished reading data");
                 state <= StateIdle;
             end
-            
+
             // $display("DONE");
             // $finish;
         end
