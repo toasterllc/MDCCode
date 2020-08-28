@@ -84,8 +84,15 @@ module SDCardController(
     // ====================
     localparam StateIdle        = 0;    // +0
     localparam StateWrite       = 1;    // +0
-    localparam StateRead        = 2;    // +3
+    localparam StateRead        = 2;    // +2
+    localparam StateError       = 5;    // +0
     reg[3:0] state = 0;
+    
+    localparam RespStateIdle    = 0;    // +0
+    localparam RespStateIn      = 1;    // +3
+    localparam RespStateDone    = 5;    // +0
+    localparam RespStateError   = 6;    // +0
+    reg[3:0] respState = 0;
     
     localparam DatStateIdle     = 0;    // +0
     localparam DatStateIn       = 1;    // +4
@@ -105,7 +112,7 @@ module SDCardController(
     reg[3:0] datInCounter = 0;
     reg[9:0] blockCounter = 0;
     reg[47:0] resp = 0;
-    reg respLoad = 0;
+    // reg respLoad = 0;
     
     reg cmdOutActive = 0;
     reg[47:0] cmdOutReg = 0;
@@ -121,14 +128,17 @@ module SDCardController(
     // ====================
     // CRC (CMD in)
     // ====================
-    // wire[6:0] cmdInCRC;
-    // CRC7 CRC7_cmdIn(
-    //     .clk(clk),
-    //     .rst_(cmdInActive),
-    //     .din(cmdInReg[47]),
-    //     .dout(),
-    //     .doutNext(cmdOutCRC)
-    // );
+    wire[6:0] cmdInCRC;
+    reg cmdInCRCRst_ = 0;
+    CRC7 CRC7_cmdIn(
+        .clk(clk),
+        .rst_(cmdInCRCRst_),
+        .din(cmdInReg[0]),
+        .dout(),
+        .doutNext(cmdInCRC)
+    );
+    
+    reg[6:0] cmdInCRCReg = 0;
     
     // ====================
     // CRC (CMD out)
@@ -173,12 +183,13 @@ module SDCardController(
         cmdOutReg <= cmdOutReg<<1;
         cmdOutCounter <= cmdOutCounter-1;
         
-        cmdInStaged <= cmdIn;
-        cmdInReg <= (cmdInReg<<1)|(cmdOutActive ? 1'b1 : cmdIn);
+        cmdInStaged <= (cmdOutActive ? 1'b1 : cmdIn);
+        cmdInReg <= (cmdInReg<<1)|cmdInStaged;
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
         datInCounter <= datInCounter-1;
         
+        cmdInCRCReg <= cmdInCRCReg<<1;
         datIn3CRCReg <= datIn3CRCReg<<1;
         datIn2CRCReg <= datIn2CRCReg<<1;
         datIn1CRCReg <= datIn1CRCReg<<1;
@@ -188,10 +199,74 @@ module SDCardController(
         
         blockCounter <= blockCounter-1;
         
-        if (respLoad && !cmdInReg[47]) begin
-            resp <= cmdInReg;
-            respLoad <= 0;
+        // if (respLoad && !cmdInReg[47]) begin
+        //     resp <= cmdInReg;
+        //     respLoad <= 0;
+        // end
+        
+        
+        
+        
+        
+        
+        case (respState)
+        RespStateIdle: begin
         end
+        
+        RespStateIn: begin
+            cmdInCRCRst_ <= 0; // Keep CRC in reset until the response starts
+            if (!cmdInStaged) begin
+                cmdInCRCRst_ <= 1;
+                respState <= RespStateIn+1;
+            end
+        end
+        
+        RespStateIn+1: begin
+            if (!cmdInReg[39]) begin
+                // $display("MEOW cmdInCRC: %b", cmdInCRC);
+                cmdInCRCReg <= cmdInCRC;
+                respState <= RespStateIn+2;
+            end
+        end
+        
+        RespStateIn+2: begin
+            // $display("HALLA cmdInCRCReg / cmdInReg: %b / %b", cmdInCRCReg, cmdInReg);
+            if (!cmdInReg[47]) begin
+                // $display("MEOW resp: %b", cmdInReg);
+                resp <= cmdInReg;
+                respState <= RespStateIn+3;
+            
+            end else if (cmdInCRCReg[6] !== cmdInReg[0]) begin
+                $display("[SD HOST] Response: CRC bit invalid ❌");
+                respState <= RespStateError;
+            
+            end else begin
+                $display("[SD HOST] Response: CRC bit valid ✅");
+            end
+        end
+        
+        RespStateIn+3: begin
+            // Check transmission and stop bits
+            if (resp[46] || !resp[0]) begin
+                $display("[SD HOST] Response: bad transmission/stop bit ❌");
+                respState <= RespStateError;
+            
+            end else begin
+                $display("[SD HOST] Response: done ✅");
+                respState <= RespStateDone;
+            end
+        end
+        
+        RespStateDone: begin
+        end
+        
+        RespStateError: begin
+        end
+        endcase
+        
+        
+        
+        
         
         
         
@@ -234,7 +309,7 @@ module SDCardController(
             datIn1CRCReg <= datInCRC[1];
             datIn0CRCReg <= datInCRC[0];
             datState <= DatStateIn+4;
-            $display("[SD HOST] Received CRCs: %b %b %b %b", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
+            $display("[SD HOST] DAT: received CRCs: %b %b %b %b", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
         end
         
         // Check CRC for each DAT line
@@ -246,16 +321,15 @@ module SDCardController(
                 datIn2CRCReg[15]!==datInReg[10] ||
                 datIn1CRCReg[15]!==datInReg[9]  ||
                 datIn0CRCReg[15]!==datInReg[8]  ) begin
-                // TODO: handle error
-                $display("[SD HOST] Bad CRC ❌");
+                $display("[SD HOST] DAT: CRC bit invalid ❌");
                 datState <= DatStateError;
             
-            end else if (datInCounter) begin
-                $display("[SD HOST] CRC bit valid ✅");
-            
             end else begin
-                datState <= DatStateDone;
-            end 
+                $display("[SD HOST] DAT: CRC bit valid ✅");
+                if (!datInCounter) begin
+                    datState <= DatStateDone;
+                end
+            end
         end
         
         DatStateDone: begin
@@ -284,19 +358,8 @@ module SDCardController(
             end
         end
         
-        
-        
-        
-        
         StateWrite: begin
-            
         end
-        
-        
-        
-        
-        
-        
         
         StateRead: begin
             $display("[SD HOST] Sending read data: %b", {2'b01, CMD18, cmdAddr, 7'bXXXXXXX, 1'b1});
@@ -311,34 +374,25 @@ module SDCardController(
                 cmdOutReg[47:41] <= cmdOutCRC;
             
             end else if (!cmdOutCounter) begin
-                respLoad <= 1;
                 cmdOutActive <= 0;
+                respState <= RespStateIn;
                 datState <= DatStateIn;
                 state <= StateRead+2;
             end
         end
         
         StateRead+2: begin
-            if (datState == DatStateDone) begin
-                state <= StateRead+3;
-            end
+            if (respState===RespStateError || datState===DatStateError) begin
+                state <= StateError;
             
-            if (datState == DatStateError) begin
-                // TODO: handle error
-            end
-        end
-        
-        StateRead+3: begin
-            if (resp[47] || resp[46] || !resp[0]) begin
-                $display("[SD HOST] Bad start/stop/transmission bit ❌");
-                // TODO: handle error
-
-            end else begin
+            end else if (respState===RespStateDone && datState===DatStateDone) begin
                 $display("[SD HOST] Finished reading data");
                 state <= StateIdle;
             end
-
-            // $display("DONE");
+        end
+        
+        StateError: begin
+            $display("[SD HOST] Error ❌");
             // $finish;
         end
         endcase

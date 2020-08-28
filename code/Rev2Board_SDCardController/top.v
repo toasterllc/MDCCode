@@ -221,7 +221,15 @@ module Top(
                     end
                     
                     // sim_respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
-                    $display("[SD CARD] Sending response: %b", sim_respOut);
+                    $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, stop: %b ]",
+                        sim_respOut,
+                        sim_respOut[47:46],     // preamble
+                        sim_respOut[45:40],     // cmd
+                        sim_respOut[39:8],      // arg
+                        sim_respOut[7:1],       // crc
+                        sim_respOut[0],         // stop bit
+                    );
+                    
                     for (i=0; i<sim_respLen; i++) begin
                         wait(!sd_clk);
                         sim_cmdOut = sim_respOut[47];
