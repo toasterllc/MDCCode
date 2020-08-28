@@ -1,0 +1,54 @@
+# Rev2 board / ICE40HX4K-BG121
+set_io clk12mhz     C11     -pullup no
+set_io test         F10     -pullup no
+
+set_io a[00]        D5      -pullup no
+set_io a[01]        A3      -pullup no
+set_io a[02]        A2      -pullup no
+set_io a[03]        A1      -pullup no
+set_io a[04]        B1      -pullup no
+set_io a[05]        C2      -pullup no
+set_io a[06]        C4      -pullup no
+set_io a[07]        D2      -pullup no
+set_io a[08]        C1      -pullup no
+set_io a[09]        C3      -pullup no
+set_io a[10]        B2      -pullup no
+set_io a[11]        E2      -pullup no
+set_io a[12]        D1      -pullup no
+set_io a[13]        C7      -pullup no
+set_io a[14]        A4      -pullup no
+set_io a[15]        D7      -pullup no
+
+# set_io b[00]        D3      -pullup no
+# set_io b[01]        F2      -pullup no
+# set_io b[02]        B3      -pullup no
+# set_io b[03]        B9      -pullup no
+# set_io b[04]        B8      -pullup no
+# set_io b[05]        A9      -pullup no
+# set_io b[06]        B7      -pullup no
+# set_io b[07]        A8      -pullup no
+# set_io b[08]        B6      -pullup no
+# set_io b[09]        A7      -pullup no
+# set_io b[10]        B5      -pullup no
+# set_io b[11]        F1      -pullup no
+# set_io b[12]        G1      -pullup no
+# set_io b[13]        G2      -pullup no
+# set_io b[14]        H1      -pullup no
+# set_io b[15]        H2      -pullup no
+
+set_io out[00]      L10     -pullup no
+set_io out[01]      K10     -pullup no
+set_io out[02]      J9      -pullup no
+set_io out[03]      K9      -pullup no
+set_io out[04]      G3      -pullup no
+set_io out[05]      F4      -pullup no
+set_io out[06]      F3      -pullup no
+set_io out[07]      E3      -pullup no
+set_io out[08]      F11     -pullup no
+set_io out[09]      K11     -pullup no
+set_io out[10]      J10     -pullup no
+set_io out[11]      J11     -pullup no
+set_io out[12]      H11     -pullup no
+set_io out[13]      G11     -pullup no
+set_io out[14]      H10     -pullup no
+set_io out[15]      G9      -pullup no
