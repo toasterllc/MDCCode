@@ -1,6 +1,7 @@
 `include "Util.v"
 `include "CRC7.v"
 `include "CRC16.v"
+`include "ShiftAdder.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -13,7 +14,7 @@ module SDCardController(
     input wire          cmd_trigger,
     input wire          cmd_write,
     input wire[31:0]    cmd_addr,       // (2^32)*512 == 2 TB
-    input wire[13:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
+    input wire[15:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
     
     // Data-out port
     output reg[15:0]    dataOut = 0,
@@ -123,7 +124,17 @@ module SDCardController(
     reg[5:0] cmdOutCounter = 0;
     
     reg[31:0] cmdAddr = 0;
-    reg[2:0] cmdLen = 0;
+    reg[15:0] cmdLen = 0;
+    wire[15:0] cmdLenNext;
+    ShiftAdder #(
+        .W(16),
+        .N(1)
+    ) adder(
+        .clk(clk),
+        .a(cmdLen),
+        .b(1),
+        .sum(cmdLenNext)
+    );
     
     
     
@@ -377,7 +388,6 @@ module SDCardController(
         // TODO: have a watchdog countdown to ensure that we get a response
         StateRead+1: begin
             datState <= DatStateIn;
-            cmdLen <= cmdLen-1;
             state <= StateRead+2;
         end
         
@@ -388,7 +398,7 @@ module SDCardController(
             end else if (datState === DatStateDone) begin
                 $display("[SD HOST] Finished reading block");
                 
-                if (cmdLen) begin
+                if (cmdLenNext) begin
                     state <= StateRead+1;
                 end else begin
                     state <= StateStop;
