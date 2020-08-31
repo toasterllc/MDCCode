@@ -84,8 +84,9 @@ module SDCardController(
     // ====================
     localparam StateIdle        = 0;    // +0
     localparam StateWrite       = 1;    // +0
-    localparam StateRead        = 2;    // +2
-    localparam StateError       = 5;    // +0
+    localparam StateRead        = 2;    // +3
+    localparam StateStop        = 6;    // +2
+    localparam StateError       = 9;    // +0
     reg[3:0] state = 0;
     
     localparam RespStateIdle    = 0;    // +0
@@ -101,8 +102,8 @@ module SDCardController(
     reg[3:0] datState = 0;
     
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
+    localparam CMD12 =  6'd12;      // STOP_TRANSMISSION
     localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
-    localparam CMD55 =  6'd55;      // APP_CMD
     
     reg cmdInStaged = 0;
     reg[47:0] cmdInReg = 0;
@@ -309,7 +310,7 @@ module SDCardController(
             datIn1CRCReg <= datInCRC[1];
             datIn0CRCReg <= datInCRC[0];
             datState <= DatStateIn+4;
-            $display("[SD HOST] DAT: received CRCs: %b %b %b %b", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
+            $display("[SD HOST] DAT: calculated CRCs: %b %b %b %b", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
         end
         
         // Check CRC for each DAT line
@@ -362,7 +363,7 @@ module SDCardController(
         end
         
         StateRead: begin
-            $display("[SD HOST] Sending read data: %b", {2'b01, CMD18, cmdAddr, 7'bXXXXXXX, 1'b1});
+            $display("[SD HOST] Sending read data command: %b", {2'b01, CMD18, cmdAddr, 7'bXXXXXXX, 1'b1});
             cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -385,8 +386,50 @@ module SDCardController(
             if (respState===RespStateError || datState===DatStateError) begin
                 state <= StateError;
             
-            end else if (respState===RespStateDone && datState===DatStateDone) begin
-                $display("[SD HOST] Finished reading data");
+            end else if (datState === DatStateDone) begin
+                $display("[SD HOST] Finished reading block");
+                state <= StateRead+3;
+            end
+        end
+        
+        // TODO: check that respState==RespStateDone
+        // TODO: have a watchdog countdown to ensure that we get a response
+        StateRead+3: begin
+            if (cmdLen) begin
+                datState <= DatStateIn;
+                cmdLen <= cmdLen-1;
+                state <= StateRead+2;
+            
+            end else begin
+                state <= StateStop;
+            end
+        end
+        
+        StateStop: begin
+            $display("[SD HOST] Sending stop command: %b", {2'b01, CMD12, 32'b0, 7'bXXXXXXX, 1'b1});
+            cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            state <= StateStop+1;
+        end
+        
+        StateStop+1: begin
+            if (cmdOutCounter == 8) begin
+                cmdOutReg[47:41] <= cmdOutCRC;
+            
+            end else if (!cmdOutCounter) begin
+                cmdOutActive <= 0;
+                respState <= RespStateIn;
+                state <= StateStop+2;
+            end
+        end
+        
+        StateStop+2: begin
+            if (respState === RespStateError) begin
+                state <= StateError;
+            
+            end else if (respState === RespStateDone) begin
+                $display("[SD HOST] Stop command complete");
                 state <= StateIdle;
             end
         end
