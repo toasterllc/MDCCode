@@ -125,16 +125,16 @@ module SDCardController(
     
     reg[31:0] cmdAddr = 0;
     reg[15:0] cmdLen = 0;
-    wire[15:0] cmdLenNext;
-    ShiftAdder #(
-        .W(16),
-        .N(1)
-    ) adder(
-        .clk(clk),
-        .a(cmdLen),
-        .b(1),
-        .sum(cmdLenNext)
-    );
+    // wire[15:0] cmdLenNext;
+    // ShiftAdder #(
+    //     .W(16),
+    //     .N(2)
+    // ) adder(
+    //     .clk(clk),
+    //     .a(cmdLen),
+    //     .b(-16'd1),
+    //     .sum(cmdLenNext)
+    // );
     
     
     
@@ -388,6 +388,7 @@ module SDCardController(
         // TODO: have a watchdog countdown to ensure that we get a response
         StateRead+1: begin
             datState <= DatStateIn;
+            cmdLen <= cmdLen-1;
             state <= StateRead+2;
         end
         
@@ -395,10 +396,10 @@ module SDCardController(
             if (respState===RespStateError || datState===DatStateError) begin
                 state <= StateError;
             
-            end else if (datState === DatStateDone) begin
+            end else if (respState===RespStateDone && datState===DatStateDone) begin
                 $display("[SD HOST] Finished reading block");
                 
-                if (cmdLenNext) begin
+                if (cmdLen) begin
                     state <= StateRead+1;
                 end else begin
                     state <= StateStop;
