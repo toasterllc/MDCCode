@@ -84,10 +84,12 @@ module SDCardController(
     // ====================
     localparam StateIdle        = 0;    // +0
     localparam StateWrite       = 1;    // +0
-    localparam StateRead        = 2;    // +3
-    localparam StateStop        = 6;    // +2
-    localparam StateError       = 9;    // +0
+    localparam StateRead        = 2;    // +2
+    localparam StateCmdOut      = 5;    // +0
+    localparam StateStop        = 6;    // +1
+    localparam StateError       = 8;    // +0
     reg[3:0] state = 0;
+    reg[3:0] nextState = 0;
     
     localparam RespStateIdle    = 0;    // +0
     localparam RespStateIn      = 1;    // +3
@@ -121,7 +123,7 @@ module SDCardController(
     reg[5:0] cmdOutCounter = 0;
     
     reg[31:0] cmdAddr = 0;
-    reg[13:0] cmdLen = 0;
+    reg[2:0] cmdLen = 0;
     
     
     
@@ -367,19 +369,16 @@ module SDCardController(
             cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
-            state <= StateRead+1;
+            state <= StateCmdOut;
+            nextState <= StateRead+1;
         end
         
+        // TODO: check that respState==RespStateDone
+        // TODO: have a watchdog countdown to ensure that we get a response
         StateRead+1: begin
-            if (cmdOutCounter == 8) begin
-                cmdOutReg[47:41] <= cmdOutCRC;
-            
-            end else if (!cmdOutCounter) begin
-                cmdOutActive <= 0;
-                respState <= RespStateIn;
-                datState <= DatStateIn;
-                state <= StateRead+2;
-            end
+            datState <= DatStateIn;
+            cmdLen <= cmdLen-1;
+            state <= StateRead+2;
         end
         
         StateRead+2: begin
@@ -388,43 +387,42 @@ module SDCardController(
             
             end else if (datState === DatStateDone) begin
                 $display("[SD HOST] Finished reading block");
-                state <= StateRead+3;
+                
+                if (cmdLen) begin
+                    state <= StateRead+1;
+                end else begin
+                    state <= StateStop;
+                end
             end
         end
         
-        // TODO: check that respState==RespStateDone
-        // TODO: have a watchdog countdown to ensure that we get a response
-        StateRead+3: begin
-            if (cmdLen) begin
-                datState <= DatStateIn;
-                cmdLen <= cmdLen-1;
-                state <= StateRead+2;
-            
-            end else begin
-                state <= StateStop;
-            end
-        end
         
-        StateStop: begin
-            $display("[SD HOST] Sending stop command: %b", {2'b01, CMD12, 32'b0, 7'bXXXXXXX, 1'b1});
-            cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            state <= StateStop+1;
-        end
         
-        StateStop+1: begin
+        StateCmdOut: begin
             if (cmdOutCounter == 8) begin
                 cmdOutReg[47:41] <= cmdOutCRC;
             
             end else if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
                 respState <= RespStateIn;
-                state <= StateStop+2;
+                state <= nextState;
             end
         end
         
-        StateStop+2: begin
+        
+        
+        
+        
+        StateStop: begin
+            $display("[SD HOST] Sending stop command: %b", {2'b01, CMD12, 32'b0, 7'bXXXXXXX, 1'b1});
+            cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            state <= StateCmdOut;
+            nextState <= StateStop+1;
+        end
+        
+        StateStop+1: begin
             if (respState === RespStateError) begin
                 state <= StateError;
             
@@ -433,6 +431,7 @@ module SDCardController(
                 state <= StateIdle;
             end
         end
+        
         
         StateError: begin
             $display("[SD HOST] Error ❌");
