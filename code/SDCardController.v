@@ -72,7 +72,7 @@ module SDCardController(
     // Pin: sd_dat
     // ====================
     wire[3:0] sd_datIn;
-    reg[3:0] sd_datOut = 0;
+    wire[3:0] sd_datOut = datOutReg[19:16];
     wire sd_datOutActive = datOutActive;
     genvar i;
     for (i=0; i<4; i=i+1) begin
@@ -131,6 +131,8 @@ module SDCardController(
     wire[3:0] datIn = sd_datIn;
     reg[15:0] datInReg = 0;
     reg[3:0] datInCounter = 0;
+    reg[19:0] datOutReg = 0;
+    reg[3:0] datOutCounter = 0;
     reg[9:0] blockCounter = 0;
     reg[47:0] resp = 0;
     reg datOutActive = 0;
@@ -223,6 +225,9 @@ module SDCardController(
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
         datInCounter <= datInCounter-1;
+        
+        datOutReg <= datOutReg<<4;
+        datOutCounter <= datOutCounter-1;
         
         cmdInCRCReg <= cmdInCRCReg<<1;
         datIn3CRCReg <= datIn3CRCReg<<1;
@@ -327,7 +332,6 @@ module SDCardController(
             end
             
             if (!blockCounter) begin
-                datInCounter <= 16;
                 datState <= DatStateIn+3;
             end
         end
@@ -339,6 +343,7 @@ module SDCardController(
             datIn2CRCReg <= datInCRC[2];
             datIn1CRCReg <= datInCRC[1];
             datIn0CRCReg <= datInCRC[0];
+            datInCounter <= 15;
             datState <= DatStateIn+4;
             $display("[SD HOST] DAT: calculated CRCs: %b %b %b %b", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
         end
@@ -416,7 +421,28 @@ module SDCardController(
         
         StateWrite+3: begin
             // TODO: ensure that N_WR is met (write data starts a minimum of 2 cycles after response end)
+            datOutReg <= {4'b0, dataIn};
+            datOutActive <= 1;
+            dataIn_accepted <= 1;
+            datOutCounter <= 3;
+            blockCounter <= 1023;
+            state <= StateWrite+4;
+        end
+        
+        StateWrite+4: begin
+            if (!datOutCounter) begin
+                datOutReg <= {dataIn, 4'b0};
+                dataIn_accepted <= 1;
+            end
             
+            if (!blockCounter) begin
+                if (cmd_trigger) begin
+                    state <= StateWrite+3;
+                end else begin
+                    state <= StateStop;
+                end
+                cmd_accepted <= 1;
+            end
         end
         
         
