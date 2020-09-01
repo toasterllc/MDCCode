@@ -66,7 +66,7 @@ module Top(
         0: begin
             sd_cmd_trigger <= 1;
             // sd_cmd_len <= 2;
-            sd_cmd_write <= 0;
+            sd_cmd_write <= 1;
             
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Controller accepted command (#1)");

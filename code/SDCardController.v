@@ -91,10 +91,10 @@ module SDCardController(
     // State Machine Registers
     // ====================
     localparam StateIdle        = 0;    // +0
-    localparam StateWrite       = 1;    // +0
-    localparam StateRead        = 2;    // +2
-    localparam StateCmdOut      = 5;    // +0
-    localparam StateStop        = 6;    // +1
+    localparam StateWrite       = 1;    // +2
+    localparam StateRead        = 4;    // +2
+    localparam StateCmdOut      = 7;    // +1
+    localparam StateStop        = 9;    // +0
     reg[3:0] state = 0;
     reg[3:0] nextState = 0;
     
@@ -113,6 +113,8 @@ module SDCardController(
     localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
     localparam CMD55 =  6'd55;      // APP_CMD
     
+    localparam ACMD23 = 6'd23;      // SET_WR_BLK_ERASE_COUNT
+    
     reg cmdInStaged = 0;
     reg[47:0] cmdInReg = 0;
     wire cmdIn = sd_cmdIn;
@@ -127,6 +129,7 @@ module SDCardController(
     reg[47:0] cmdOutReg = 0;
     wire cmdOut = cmdOutReg[47];
     reg[5:0] cmdOutCounter = 0;
+    reg cmdOutRespWait = 0;
     
     reg[31:0] cmdAddr = 0;
     reg[22:0] cmdWriteLen = 0;
@@ -376,19 +379,46 @@ module SDCardController(
         end
         
         StateWrite: begin
-            // $display("[SD HOST] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
-            // cmdOutReg <= {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1};
-            // cmdOutCounter <= 47;
-            // cmdOutActive <= 1;
-            // state <= StateCmdOut;
-            // nextState <= StateWrite+1;
+            $display("[SD HOST] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
+            cmdOutReg <= {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            cmdOutRespWait <= 1;
+            state <= StateCmdOut;
+            nextState <= StateWrite+1;
         end
+        
+        StateWrite+1: begin
+            $display("[SD HOST] Sending ACMD23 (SET_WR_BLK_ERASE_COUNT): %b", {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1});
+            cmdOutReg <= {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            cmdOutRespWait <= 1;
+            state <= StateCmdOut;
+            nextState <= StateWrite+2;
+        end
+        
+        StateWrite+2: begin
+            $display("[SD HOST] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
+            cmdOutReg <= {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            cmdOutRespWait <= 1;
+            state <= StateCmdOut;
+            nextState <= StateWrite+1;
+        end
+        
+        
+        
+        
+        
         
         StateRead: begin
             $display("[SD HOST] Sending CMD18 (READ_MULTIPLE_BLOCK): %b", {2'b01, CMD18, cmdAddr, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
+            cmdOutRespWait <= 0; // Don't wait for response before transitioning to `StateRead+1`
             state <= StateCmdOut;
             nextState <= StateRead+1;
         end
@@ -423,6 +453,16 @@ module SDCardController(
             end else if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
                 respState <= RespStateIn;
+                if (cmdOutRespWait) begin
+                    state <= StateCmdOut+1;
+                end else begin
+                    state <= nextState;
+                end
+            end
+        end
+        
+        StateCmdOut+1: begin
+            if (respState === RespStateDone) begin
                 state <= nextState;
             end
         end
@@ -436,15 +476,9 @@ module SDCardController(
             cmdOutReg <= {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
+            cmdOutRespWait <= 1;
             state <= StateCmdOut;
-            nextState <= StateStop+1;
-        end
-        
-        StateStop+1: begin
-            if (respState === RespStateDone) begin
-                $display("[SD HOST] Stop command complete");
-                state <= StateIdle;
-            end
+            nextState <= StateIdle;
         end
         endcase
     end
