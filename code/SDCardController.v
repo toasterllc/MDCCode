@@ -24,6 +24,10 @@ module SDCardController(
     output reg[15:0]    dataOut = 0,
     output reg          dataOut_valid = 0,
     
+    // Data-in port
+    input wire[15:0]    dataIn,
+    output reg          dataIn_accepted = 0,
+    
     // Error port
     output reg          err = 0,
     
@@ -111,6 +115,7 @@ module SDCardController(
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
     localparam CMD12 =  6'd12;      // STOP_TRANSMISSION
     localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
+    localparam CMD25 =  6'd25;      // WRITE_MULTIPLE_BLOCK
     localparam CMD55 =  6'd55;      // APP_CMD
     
     localparam ACMD23 = 6'd23;      // SET_WR_BLK_ERASE_COUNT
@@ -118,9 +123,13 @@ module SDCardController(
     reg cmdInStaged = 0;
     reg[47:0] cmdInReg = 0;
     wire cmdIn = sd_cmdIn;
+    
     wire[3:0] datIn = sd_datIn;
     reg[15:0] datInReg = 0;
     reg[3:0] datInCounter = 0;
+    
+    
+    
     reg[9:0] blockCounter = 0;
     reg[47:0] resp = 0;
     // reg respLoad = 0;
@@ -218,8 +227,10 @@ module SDCardController(
         datIn1CRCReg <= datIn1CRCReg<<1;
         datIn0CRCReg <= datIn0CRCReg<<1;
         
-        cmd_accepted <= 0; // Reset by default to create a pulse
-        dataOut_valid <= 0; // Reset by default to create a pulse
+        // Reset by default to create a pulse
+        cmd_accepted <= 0;
+        dataOut_valid <= 0;
+        dataIn_accepted <= 0;
         
         blockCounter <= blockCounter-1;
         
@@ -387,7 +398,7 @@ module SDCardController(
             state <= StateCmdOut;
             nextState <= StateWrite+1;
         end
-
+        
         StateWrite+1: begin
             $display("[SD HOST] Sending ACMD23 (SET_WR_BLK_ERASE_COUNT): %b", {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1};
@@ -399,13 +410,18 @@ module SDCardController(
         end
         
         StateWrite+2: begin
-            $display("[SD HOST] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1};
+            $display("[SD HOST] Sending CMD25 (WRITE_MULTIPLE_BLOCK): %b", {2'b01, CMD25, cmdAddr, 7'b0, 1'b1});
+            cmdOutReg <= {2'b01, CMD25, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 1;
             state <= StateCmdOut;
-            nextState <= StateWrite+1;
+            nextState <= StateWrite+3;
+        end
+        
+        StateWrite+3: begin
+            // TODO: ensure that N_WR is met (write data starts a minimum of 2 cycles after response end)
+            
         end
         
         
