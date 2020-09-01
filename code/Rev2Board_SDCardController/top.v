@@ -24,9 +24,15 @@ module Top(
     
     output reg[3:0]    led = 0
 );
-`ifdef SIM
-    reg clk12mhz = 0;
-`endif
+    // 180 MHz clock
+    wire clk;
+    ClockGen #(
+        .FREQ(180000000),
+		.DIVR(0),
+		.DIVF(59),
+		.DIVQ(2),
+		.FILTER_RANGE(1)
+    ) cg(.clk12mhz(clk12mhz), .clk(clk));
     
     // ====================
     // SD Card Controller
@@ -41,7 +47,7 @@ module Top(
     // assign led = sd_dataOut[3:0];
     
     SDCardController sdcontroller(
-        .clk(clk12mhz),
+        .clk(clk),
         
         // Command port
         .cmd_trigger(sd_cmd_trigger),
@@ -61,7 +67,7 @@ module Top(
     );
     
     reg[2:0] state = 0;
-    always @(posedge clk12mhz) begin
+    always @(posedge clk) begin
         case (state)
         0: begin
             sd_cmd_trigger <= 1;
@@ -123,7 +129,7 @@ module Top(
     
     // assign led = {counter[21:19], counter[0]};
     // reg[21:0] counter;
-    // always @(posedge clk12mhz) begin
+    // always @(posedge clk) begin
     //     counter <= counter+1;
     // end
     
@@ -131,15 +137,6 @@ module Top(
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
-    end
-    
-    initial begin
-        forever begin
-            clk12mhz = 0;
-            #42;
-            clk12mhz = 1;
-            #42;
-        end
     end
     
     initial begin
