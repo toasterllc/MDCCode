@@ -66,30 +66,52 @@ module Top(
         0: begin
             sd_cmd_trigger <= 1;
             // sd_cmd_len <= 2;
-            sd_cmd_write <= 1;
+            sd_cmd_write <= 0;
             
+            // Read 1 block
             if (sd_cmd_accepted) begin
-                $display("[SD HOST] Controller accepted command (#1)");
+                $display("[SD HOST] Read 1 block accepted");
                 state <= 1;
             end
         end
         
         1: begin
+            // Read 1 block
             if (sd_cmd_accepted) begin
-                $display("[SD HOST] Controller accepted command (#2)");
+                $display("[SD HOST] Read 1 block accepted (#2)");
                 state <= 2;
             end
         end
         
         2: begin
+            // Stop reading
             sd_cmd_trigger <= 0;
             if (sd_cmd_accepted) begin
-                $display("[SD HOST] Controller accepted command (#3)");
+                $display("[SD HOST] Stop reading accepted");
                 state <= 3;
             end
         end
         
         3: begin
+            // Write 1 block
+            sd_cmd_trigger <= 1;
+            sd_cmd_write <= 1;
+            if (sd_cmd_accepted) begin
+                $display("[SD HOST] Write 1 block accepted");
+                state <= 4;
+            end
+        end
+        
+        4: begin
+            // Stop writing
+            sd_cmd_trigger <= 0;
+            if (sd_cmd_accepted) begin
+                $display("[SD HOST] Stop writing accepted");
+                state <= 5;
+            end
+        end
+        
+        5: begin
         end
         endcase
         
@@ -292,7 +314,7 @@ module Top(
             sim_datCRCRst_ = 0;
             wait(sd_clk);
             if (sim_sendData) begin
-                reg[15:0] i = 0;
+                reg[15:0] i;
                 
                 // Start bit
                 wait(!sd_clk);
