@@ -16,6 +16,7 @@ module SDCardController(
     input wire          cmd_trigger,
     output reg          cmd_accepted = 0,
     input wire          cmd_write,
+    input wire[22:0]    cmd_writeLen,
     input wire[31:0]    cmd_addr,       // (2^32)*512 == 2 TB
     // input wire[13:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
     
@@ -110,6 +111,7 @@ module SDCardController(
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
     localparam CMD12 =  6'd12;      // STOP_TRANSMISSION
     localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
+    localparam CMD55 =  6'd55;      // APP_CMD
     
     reg cmdInStaged = 0;
     reg[47:0] cmdInReg = 0;
@@ -127,6 +129,7 @@ module SDCardController(
     reg[5:0] cmdOutCounter = 0;
     
     reg[31:0] cmdAddr = 0;
+    reg[22:0] cmdWriteLen = 0;
     // reg[13:0] cmdLen = 0;
     // wire[13:0] cmdLenNext = cmdLen-1;
     // ShiftAdder #(
@@ -371,6 +374,7 @@ module SDCardController(
         StateIdle: begin
             if (cmd_trigger) begin
                 cmdAddr <= cmd_addr;
+                cmdWriteLen <= cmd_writeLen;
                 // cmdLen <= cmd_len;
                 cmd_accepted <= 1;
                 state <= (cmd_write ? StateWrite : StateRead);
@@ -378,10 +382,16 @@ module SDCardController(
         end
         
         StateWrite: begin
+            // $display("[SD HOST] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
+            // cmdOutReg <= {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1};
+            // cmdOutCounter <= 47;
+            // cmdOutActive <= 1;
+            // state <= StateCmdOut;
+            // nextState <= StateWrite+1;
         end
         
         StateRead: begin
-            $display("[SD HOST] Sending read data command: %b", {2'b01, CMD18, cmdAddr, 7'bXXXXXXX, 1'b1});
+            $display("[SD HOST] Sending CMD18 (READ_MULTIPLE_BLOCK): %b", {2'b01, CMD18, cmdAddr, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -431,8 +441,8 @@ module SDCardController(
         
         
         StateStop: begin
-            $display("[SD HOST] Sending stop command: %b", {2'b01, CMD12, 32'b0, 7'bXXXXXXX, 1'b1});
-            cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
+            $display("[SD HOST] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
+            cmdOutReg <= {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             state <= StateCmdOut;
