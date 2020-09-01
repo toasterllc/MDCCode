@@ -24,6 +24,9 @@ module SDCardController(
     output reg[15:0]    dataOut = 0,
     output reg          dataOut_valid = 0,
     
+    // Error port
+    output reg          err = 0,
+    
     // SDIO port
     output wire         sd_clk,
     inout wire          sd_cmd,
@@ -92,20 +95,17 @@ module SDCardController(
     localparam StateRead        = 2;    // +2
     localparam StateCmdOut      = 5;    // +0
     localparam StateStop        = 6;    // +1
-    localparam StateError       = 8;    // +0
     reg[3:0] state = 0;
     reg[3:0] nextState = 0;
     
     localparam RespStateIdle    = 0;    // +0
     localparam RespStateIn      = 1;    // +3
     localparam RespStateDone    = 5;    // +0
-    localparam RespStateError   = 6;    // +0
     reg[3:0] respState = 0;
     
     localparam DatStateIdle     = 0;    // +0
     localparam DatStateIn       = 1;    // +4
     localparam DatStateDone     = 6;    // +0
-    localparam DatStateError    = 7;    // +0
     reg[3:0] datState = 0;
     
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
@@ -259,7 +259,7 @@ module SDCardController(
             
             end else if (cmdInCRCReg[6] !== cmdInReg[0]) begin
                 $display("[SD HOST] Response: CRC bit invalid ❌");
-                respState <= RespStateError;
+                err <= 1;
             
             end else begin
                 $display("[SD HOST] Response: CRC bit valid ✅");
@@ -270,18 +270,15 @@ module SDCardController(
             // Check transmission and stop bits
             if (resp[46] || !resp[0]) begin
                 $display("[SD HOST] Response: bad transmission/stop bit ❌");
-                respState <= RespStateError;
-            
+                err <= 1;
             end else begin
                 $display("[SD HOST] Response: done ✅");
-                respState <= RespStateDone;
             end
+            
+            respState <= RespStateDone;
         end
         
         RespStateDone: begin
-        end
-        
-        RespStateError: begin
         end
         endcase
         
@@ -343,7 +340,7 @@ module SDCardController(
                 datIn1CRCReg[15]!==datInReg[9]  ||
                 datIn0CRCReg[15]!==datInReg[8]  ) begin
                 $display("[SD HOST] DAT: CRC bit invalid ❌");
-                datState <= DatStateError;
+                err <= 1;
             
             end else begin
                 $display("[SD HOST] DAT: CRC bit valid ✅");
@@ -354,9 +351,6 @@ module SDCardController(
         end
         
         DatStateDone: begin
-        end
-        
-        DatStateError: begin
         end
         endcase
         
@@ -408,10 +402,7 @@ module SDCardController(
         end
         
         StateRead+2: begin
-            if (respState===RespStateError || datState===DatStateError) begin
-                state <= StateError;
-            
-            end else if (respState===RespStateDone && datState===DatStateDone) begin
+            if (respState===RespStateDone && datState===DatStateDone) begin
                 $display("[SD HOST] Finished reading block");
                 
                 if (cmd_trigger) begin
@@ -450,19 +441,10 @@ module SDCardController(
         end
         
         StateStop+1: begin
-            if (respState === RespStateError) begin
-                state <= StateError;
-            
-            end else if (respState === RespStateDone) begin
+            if (respState === RespStateDone) begin
                 $display("[SD HOST] Stop command complete");
                 state <= StateIdle;
             end
-        end
-        
-        
-        StateError: begin
-            $display("[SD HOST] Error ❌");
-            // $finish;
         end
         endcase
     end
