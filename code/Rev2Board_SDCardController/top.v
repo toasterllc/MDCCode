@@ -69,18 +69,27 @@ module Top(
             sd_cmd_write <= 0;
             
             if (sd_cmd_accepted) begin
+                $display("[SD HOST] Controller accepted command (#1)");
                 state <= 1;
             end
         end
         
         1: begin
-            sd_cmd_trigger <= 0;
             if (sd_cmd_accepted) begin
+                $display("[SD HOST] Controller accepted command (#2)");
                 state <= 2;
             end
         end
         
         2: begin
+            sd_cmd_trigger <= 0;
+            if (sd_cmd_accepted) begin
+                $display("[SD HOST] Controller accepted command (#3)");
+                state <= 3;
+            end
+        end
+        
+        3: begin
         end
         endcase
         
