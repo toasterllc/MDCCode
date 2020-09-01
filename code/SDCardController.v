@@ -7,14 +7,17 @@
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
 `endif
 
+// TODO: we may want to add support for partial reads, so we don't have to read a full block if the client only wants a few bytes
+
 module SDCardController(
     input wire          clk,
     
     // Command port
     input wire          cmd_trigger,
+    output reg          cmd_accepted = 0,
     input wire          cmd_write,
     input wire[31:0]    cmd_addr,       // (2^32)*512 == 2 TB
-    input wire[15:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
+    // input wire[13:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
     
     // Data-out port
     output reg[15:0]    dataOut = 0,
@@ -124,15 +127,15 @@ module SDCardController(
     reg[5:0] cmdOutCounter = 0;
     
     reg[31:0] cmdAddr = 0;
-    reg[15:0] cmdLen = 0;
-    // wire[15:0] cmdLenNext;
+    // reg[13:0] cmdLen = 0;
+    // wire[13:0] cmdLenNext = cmdLen-1;
     // ShiftAdder #(
-    //     .W(16),
-    //     .N(2)
+    //     .W(13),
+    //     .N(1)
     // ) adder(
     //     .clk(clk),
     //     .a(cmdLen),
-    //     .b(-16'd1),
+    //     .b(-13'd1),
     //     .sum(cmdLenNext)
     // );
     
@@ -209,7 +212,8 @@ module SDCardController(
         datIn1CRCReg <= datIn1CRCReg<<1;
         datIn0CRCReg <= datIn0CRCReg<<1;
         
-        dataOut_valid <= 0; // Reset by default
+        cmd_accepted <= 0; // Reset by default to create a pulse
+        dataOut_valid <= 0; // Reset by default to create a pulse
         
         blockCounter <= blockCounter-1;
         
@@ -367,7 +371,8 @@ module SDCardController(
         StateIdle: begin
             if (cmd_trigger) begin
                 cmdAddr <= cmd_addr;
-                cmdLen <= cmd_len;
+                // cmdLen <= cmd_len;
+                cmd_accepted <= 1;
                 state <= (cmd_write ? StateWrite : StateRead);
             end
         end
@@ -388,7 +393,7 @@ module SDCardController(
         // TODO: have a watchdog countdown to ensure that we get a response
         StateRead+1: begin
             datState <= DatStateIn;
-            cmdLen <= cmdLen-1;
+            // cmdLen <= cmdLenNext;
             state <= StateRead+2;
         end
         
@@ -399,11 +404,12 @@ module SDCardController(
             end else if (respState===RespStateDone && datState===DatStateDone) begin
                 $display("[SD HOST] Finished reading block");
                 
-                if (cmdLen) begin
+                if (cmd_trigger) begin
                     state <= StateRead+1;
                 end else begin
                     state <= StateStop;
                 end
+                cmd_accepted <= 1;
             end
         end
         

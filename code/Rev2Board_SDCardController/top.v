@@ -33,21 +33,22 @@ module Top(
     // ====================
     reg sd_cmd_trigger = 0;
     reg sd_cmd_write = 0;
-    reg[31:0] sd_cmd_addr = 0;
-    reg[13:0] sd_cmd_len = 0;
+    reg[7:0] sd_cmd_addr = 0;
+    // reg[13:0] sd_cmd_len = 0;
     wire[15:0] sd_dataOut;
     wire sd_dataOut_valid;
     
     // assign led = sd_dataOut[3:0];
-
+    
     SDCardController sdcontroller(
         .clk(clk12mhz),
         
         // Command port
         .cmd_trigger(sd_cmd_trigger),
+        .cmd_accepted(sd_cmd_accepted),
         .cmd_write(sd_cmd_write),
         .cmd_addr(sd_cmd_addr),
-        .cmd_len(sd_cmd_len),
+        // .cmd_len(sd_cmd_len),
         
         // Data-out port
         .dataOut(sd_dataOut),
@@ -58,14 +59,33 @@ module Top(
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat)
     );
-
+    
+    reg[2:0] state = 0;
     always @(posedge clk12mhz) begin
-        sd_cmd_trigger <= 1;
-        sd_cmd_addr <= 0;
-        sd_cmd_len <= 2;
-        sd_cmd_write <= 0;
+        case (state)
+        0: begin
+            sd_cmd_trigger <= 1;
+            // sd_cmd_len <= 2;
+            sd_cmd_write <= 0;
+            
+            if (sd_cmd_accepted) begin
+                state <= 1;
+            end
+        end
+        
+        1: begin
+            sd_cmd_trigger <= 0;
+            if (sd_cmd_accepted) begin
+                state <= 2;
+            end
+        end
+        
+        2: begin
+        end
+        endcase
         
         if (sd_dataOut_valid) begin
+            $display("GOT DATA: %h", sd_dataOut);
             led <= sd_dataOut;
         end
     end
