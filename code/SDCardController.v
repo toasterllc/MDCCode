@@ -208,15 +208,10 @@ module SDCardController(
         );
     end
     
-    reg[15:0] datOut3CRCReg = 0;
-    reg[15:0] datOut2CRCReg = 0;
-    reg[15:0] datOut1CRCReg = 0;
-    reg[15:0] datOut0CRCReg = 0;
-    
-    reg[15:0] datIn3CRCReg = 0;
-    reg[15:0] datIn2CRCReg = 0;
-    reg[15:0] datIn1CRCReg = 0;
-    reg[15:0] datIn0CRCReg = 0;
+    reg[15:0] dat3CRCReg = 0;
+    reg[15:0] dat2CRCReg = 0;
+    reg[15:0] dat1CRCReg = 0;
+    reg[15:0] dat0CRCReg = 0;
     
     
     
@@ -238,15 +233,15 @@ module SDCardController(
         
         cmdCRCReg <= cmdCRCReg<<1;
         
-        datOut3CRCReg <= datOut3CRCReg<<1;
-        datOut2CRCReg <= datOut2CRCReg<<1;
-        datOut1CRCReg <= datOut1CRCReg<<1;
-        datOut0CRCReg <= datOut0CRCReg<<1;
+        dat3CRCReg <= dat3CRCReg<<1;
+        dat2CRCReg <= dat2CRCReg<<1;
+        dat1CRCReg <= dat1CRCReg<<1;
+        dat0CRCReg <= dat0CRCReg<<1;
         
-        datIn3CRCReg <= datIn3CRCReg<<1;
-        datIn2CRCReg <= datIn2CRCReg<<1;
-        datIn1CRCReg <= datIn1CRCReg<<1;
-        datIn0CRCReg <= datIn0CRCReg<<1;
+        dat3CRCReg <= dat3CRCReg<<1;
+        dat2CRCReg <= dat2CRCReg<<1;
+        dat1CRCReg <= dat1CRCReg<<1;
+        dat0CRCReg <= dat0CRCReg<<1;
         
         // Reset by default to create a pulse
         cmd_accepted <= 0;
@@ -357,10 +352,10 @@ module SDCardController(
         // Output CRCs
         DatOutState_Go+2: begin
             $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datCRCNext[3], datCRCNext[2], datCRCNext[1], datCRCNext[0]);
-            datOut3CRCReg <= datCRCNext[3];
-            datOut2CRCReg <= datCRCNext[2];
-            datOut1CRCReg <= datCRCNext[1];
-            datOut0CRCReg <= datCRCNext[0];
+            dat3CRCReg <= datCRCNext[3];
+            dat2CRCReg <= datCRCNext[2];
+            dat1CRCReg <= datCRCNext[1];
+            dat0CRCReg <= datCRCNext[0];
             datOutState <= DatOutState_Go+3;
             datOutCounter <= 15;
             // $display("[SD CTRL] DatOut: output CRCs");
@@ -369,10 +364,10 @@ module SDCardController(
         // TODO: try loading datOutReg entirely so we only do this 4 times instead of 16
         DatOutState_Go+3: begin
             datOutReg <= {
-                datOut3CRCReg[15],
-                datOut2CRCReg[15],
-                datOut1CRCReg[15],
-                datOut0CRCReg[15],
+                dat3CRCReg[15],
+                dat2CRCReg[15],
+                dat1CRCReg[15],
+                dat0CRCReg[15],
                 16'b0
             };
             
@@ -467,10 +462,10 @@ module SDCardController(
         // Remember the CRC we calculated
         DatInState_Go+3: begin
             datCRCRst_ <= 0;
-            datIn3CRCReg <= datCRC[3];
-            datIn2CRCReg <= datCRC[2];
-            datIn1CRCReg <= datCRC[1];
-            datIn0CRCReg <= datCRC[0];
+            dat3CRCReg <= datCRC[3];
+            dat2CRCReg <= datCRC[2];
+            dat1CRCReg <= datCRC[1];
+            dat0CRCReg <= datCRC[0];
             datInCounter <= 15;
             datInState <= DatInState_Go+4;
             $display("[SD CTRL] DAT: calculated CRCs: %h %h %h %h", datCRC[3], datCRC[2], datCRC[1], datCRC[0]);
@@ -478,13 +473,13 @@ module SDCardController(
         
         // Check CRC for each DAT line
         DatInState_Go+4: begin
-            // $display("EXPECTED CRCs: %h, %h, %h, %h", datIn3CRCReg, datIn2CRCReg, datIn1CRCReg, datIn0CRCReg);
-            // $display("Our CRC: %h", datIn3CRCReg);
+            // $display("EXPECTED CRCs: %h, %h, %h, %h", dat3CRCReg, dat2CRCReg, dat1CRCReg, dat0CRCReg);
+            // $display("Our CRC: %h", dat3CRCReg);
             // Handle invalid CRC
-            if (datIn3CRCReg[15]!==datInReg[11] ||
-                datIn2CRCReg[15]!==datInReg[10] ||
-                datIn1CRCReg[15]!==datInReg[9]  ||
-                datIn0CRCReg[15]!==datInReg[8]  ) begin
+            if (dat3CRCReg[15]!==datInReg[11] ||
+                dat2CRCReg[15]!==datInReg[10] ||
+                dat1CRCReg[15]!==datInReg[9]  ||
+                dat0CRCReg[15]!==datInReg[8]  ) begin
                 $display("[SD CTRL] DAT: CRC bit invalid ❌");
                 err <= 1;
             
