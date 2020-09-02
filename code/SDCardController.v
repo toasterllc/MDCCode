@@ -169,10 +169,10 @@ module SDCardController(
     
     reg cmdOutActive = 0;
     reg[47:0] cmdOutReg = 0;
-    reg[5:0] cmdOutCmd = 0;
-    reg[31:0] cmdOutArg = 0;
     wire cmdOut = cmdOutReg[47];
     reg[5:0] cmdOutCounter = 0;
+    reg[5:0] cmdOutCmd = 0;
+    reg[31:0] cmdOutArg = 0;
     
     reg[31:0] cmdAddr = 0;
     reg[22:0] cmdWriteLen = 0;
@@ -452,37 +452,31 @@ module SDCardController(
         // TODO: see if we can remove the cmdOut-handling states entirely, and put the logic in the global area above
         StateWrite: begin
             $display("[SD CTRL] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD55, 32'b0, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            // cmdOutReg <= {2'b01, CMD55, 32'b0, 7'b0, 1'b1};
+            cmdOutCmd <= CMD55;
             state <= StateCmdOut;
             nextState <= StateWrite+1;
         end
         
         StateWrite+1: begin
+            // state <= StateWrite+2;
             $display("[SD CTRL] Sending ACMD23 (SET_WR_BLK_ERASE_COUNT): %b", {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, ACMD23, {9'b0, cmdWriteLen}, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            // cmdOutReg <= {2'b01, ACMD23, {9'b0, cmdWriteLen}, 7'b0, 1'b1};
+            cmdOutCmd <= ACMD23;
             state <= StateCmdOut;
             nextState <= StateWrite+2;
         end
         
         StateWrite+2: begin
+            // state <= StateWrite+3;
             $display("[SD CTRL] Sending CMD25 (WRITE_MULTIPLE_BLOCK): %b", {2'b01, CMD25, cmdAddr, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD25, cmdAddr, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            // cmdOutReg <= {2'b01, CMD25, cmdAddr, 7'b0, 1'b1};
+            cmdOutCmd <= CMD25;
             state <= StateCmdOut;
             nextState <= StateWrite+3;
         end
         
         StateWrite+3: begin
-            // datOutState <= DatOutState_Go;
-            state <= StateWrite+4;
-        end
-        
-        StateWrite+4: begin
             // if (datOutState === DatOutState_Done) begin
                 $display("[SD CTRL] Finished writing block");
                 if (cmd_trigger) begin
@@ -497,17 +491,22 @@ module SDCardController(
         
         
         
-        
-        
         StateCmdOut: begin
-            if (!cmdOutCounter) begin
-                cmdOutActive <= 0;
-                respState <= RespState_Go;
-                state <= StateCmdOut+1;
-            end
+            cmdOutReg <= {2'b01, cmdOutCmd, cmdOutArg, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            state <= StateCmdOut+1;
         end
         
         StateCmdOut+1: begin
+            if (!cmdOutCounter) begin
+                cmdOutActive <= 0;
+                respState <= RespState_Go;
+                state <= StateCmdOut+2;
+            end
+        end
+        
+        StateCmdOut+2: begin
             if (respState === RespState_Done) begin
                 state <= nextState;
             end
@@ -519,9 +518,9 @@ module SDCardController(
         
         StateStop: begin
             $display("[SD CTRL] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            // cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
+            // cmdOutCounter <= 47;
+            // cmdOutActive <= 1;
             state <= StateCmdOut;
             nextState <= StateStop+1;
         end
