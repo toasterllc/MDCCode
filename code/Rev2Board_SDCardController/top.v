@@ -41,7 +41,7 @@ module Top(
     reg sd_cmd_write = 0;
     reg[22:0] sd_cmd_writeLen = 0;
     reg[7:0] sd_cmd_addr = 0;
-    reg[15:0] sd_dataIn = 16'h0000;
+    reg[15:0] sd_dataIn = 16'hFFFF;
     wire sd_dataIn_accepted;
     wire[15:0] sd_dataOut;
     wire sd_dataOut_valid;
