@@ -120,10 +120,10 @@ module SDCardController(
     // State Machine Registers
     // ====================
     localparam StateIdle        = 0;    // +0
-    localparam StateWrite       = 1;    // +4
+    localparam StateWrite       = 1;    // +3
     // localparam StateRead        = 6;    // +2
-    localparam StateCmdOut      = 9;    // +1
-    localparam StateStop        = 11;   // +0
+    localparam StateCmdOut      = 5;    // +9
+    localparam StateStop        = 15;   // +0
     reg[3:0] state = 0;
     reg[3:0] nextState = 0;
     
@@ -168,8 +168,7 @@ module SDCardController(
     reg[9:0] datBlockCounter = 0;
     
     reg cmdOutActive = 0;
-    reg[47:0] cmdOutReg = 0;
-    wire cmdOut = cmdOutReg[47];
+    reg cmdOut = 0;
     reg[5:0] cmdOutCounter = 0;
     reg[5:0] cmdOutCmd = 0;
     reg[31:0] cmdOutArg = 0;
@@ -491,13 +490,80 @@ module SDCardController(
         
         
         
+        // StateCmdOut: begin
+        //     cmdOut <= 0;
+        //     state <= StateCmdOut+1;
+        // end
+        //
+        // StateCmdOut+1: begin
+        //     cmdOut <= 1;
+        //     cmdOutCounter <= 5;
+        //     state <= StateCmdOut+2;
+        // end
+        //
+        // StateCmdOut+2: begin
+        //     cmdOut <= cmdOutCmd[5];
+        //     cmdOutCmd <= cmdOutCmd<<1;
+        //     if (!cmdOutCounter) begin
+        //         cmdOutCounter <= 31;
+        //         state <= StateCmdOut+3;
+        //     end
+        // end
+        //
+        // StateCmdOut+3: begin
+        //     cmdOut <= cmdOutArg[31];
+        //     cmdOutArg <= cmdOutArg<<1;
+        //     if (!cmdOutCounter) begin
+        //         state <= StateCmdOut+4;
+        //     end
+        // end
+        //
+        // StateCmdOut+4: begin
+        //     cmdOut <= cmdCRC[6];
+        //     cmdCRCReg <= cmdCRC<<1;
+        //     cmdOutCounter <= 6;
+        //     state <= StateCmdOut+5;
+        // end
+        //
+        // StateCmdOut+5: begin
+        //     cmdOut <= cmdCRCReg[6];
+        //     cmdCRCReg <= cmdCRCReg<<1;
+        //     if (!cmdOutCounter) begin
+        //         state <= StateCmdOut+6;
+        //     end
+        // end
+        //
+        // StateCmdOut+6: begin
+        //     cmdOut <= 1;
+        //     state <= StateCmdOut+7;
+        // end
+        //
+        // StateCmdOut+7: begin
+        //     cmdOutActive <= 0;
+        //     state <= StateCmdOut+8;
+        // end
+        //
+        // StateCmdOut+8: begin
+        //     respState <= RespState_Go;
+        //     state <= StateCmdOut+9;
+        // end
+        //
+        // StateCmdOut+9: begin
+        //     if (respState === RespState_Done) begin
+        //         state <= nextState;
+        //     end
+        // end
+        
+        
+        
+        
         StateCmdOut: begin
             cmdOutReg <= {2'b01, cmdOutCmd, cmdOutArg, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             state <= StateCmdOut+1;
         end
-        
+
         StateCmdOut+1: begin
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
@@ -505,7 +571,7 @@ module SDCardController(
                 state <= StateCmdOut+2;
             end
         end
-        
+
         StateCmdOut+2: begin
             if (respState === RespState_Done) begin
                 state <= nextState;
@@ -521,6 +587,7 @@ module SDCardController(
             // cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
             // cmdOutCounter <= 47;
             // cmdOutActive <= 1;
+            cmdOutCmd <= CMD12;
             state <= StateCmdOut;
             nextState <= StateStop+1;
         end
