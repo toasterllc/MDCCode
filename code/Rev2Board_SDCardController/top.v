@@ -88,7 +88,7 @@ module Top(
                 state <= 1;
             end
         end
-        
+
         1: begin
             sd_cmd_trigger <= 0;
             if (sd_cmd_accepted) begin
@@ -98,7 +98,7 @@ module Top(
             end
         end
         endcase
-        
+
         if (sd_dataOut_valid) begin
             $display("[SD HOST] Got read data: %h", sd_dataOut);
             led <= sd_dataOut;
@@ -147,29 +147,30 @@ module Top(
                 state <= 4;
             end
         end
-
+        
         4: begin
             if (sd_dataIn_accepted) begin
                 sd_dataIn <= ~sd_dataIn;
             end
-
+            
             // Wait until write is accepted
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Write accepted (#2)");
                 state <= 5;
             end
         end
-
+        
         5: begin
             if (sd_dataIn_accepted) begin
                 sd_dataIn <= ~sd_dataIn;
             end
-
+            
             // Stop writing
             sd_cmd_trigger <= 0;
             // Wait until stop is accepted
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Stop accepted");
+                $display("[SD HOST] DONE ✅");
                 state <= 6;
             end
         end
@@ -388,6 +389,7 @@ module Top(
             wait(sd_clk);
             if (sim_recvWriteData) begin
                 reg[15:0] i;
+                reg[7:0] count;
                 
                 // Wait for start bit
                 while (sd_dat[0] && sim_recvWriteData) begin
@@ -479,6 +481,57 @@ module Top(
                         $display("[SD CARD] DAT0: End bit OK ✅");
                     end
                     wait(!sd_clk);
+                end
+                
+                // Send CRC status token
+                if (sim_recvWriteData) begin
+                    // Wait 2 cycles before sending CRC status
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    sim_datOut = 4'b0000;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    sim_datOut = 4'b0000;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    sim_datOut = 4'b0001;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    sim_datOut = 4'b0000;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    sim_datOut = 4'b0001;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    // Send busy signal for a random number of cycles
+                    count = $urandom%10;
+                    if (count) begin
+                        // Start bit
+                        sim_datOut = 4'b0000;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        for (i=0; i<count; i++) begin
+                            wait(sd_clk);
+                            wait(!sd_clk);
+                        end
+                        
+                        // End bit
+                        sim_datOut = 4'b0001;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                    end
+                    
+                    sim_datOut = 4'bzzzz;
                 end
                 
                 sim_datCRCRst_ = 0;
