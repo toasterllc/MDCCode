@@ -73,15 +73,24 @@ module Top(
         .sd_dat(sd_dat)
     );
     
-    reg[3:0] state = 0;
+    localparam StateGo = 0;
+    localparam StateStop = 1;
+    reg[1:0] state = 0;
+    reg init = 0;
     
     // ====================
     // State Machine
     //   Toggle between reading/writing blocks
     // ====================
     always @(posedge clk) begin
-        case (state)
-        0: begin
+        if (!init) begin
+            init <= 1;
+            state <= 0;
+            state[StateGo] <= 1;
+        end
+        
+        case (1'b1)
+        state[StateGo]: begin
             sd_cmd_trigger <= 1;
             if (sd_cmd_accepted) begin
                 if (sd_cmd_write) begin
@@ -89,16 +98,18 @@ module Top(
                 end else begin
                     $display("[SD HOST] Read accepted");
                 end
-                state <= 1;
+                state <= 0;
+                state[StateStop] <= 1;
             end
         end
         
-        1: begin
+        state[StateStop]: begin
             sd_cmd_trigger <= 0;
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Stop accepted");
                 sd_cmd_write <= !sd_cmd_write;
                 state <= 0;
+                state[StateGo] <= 1;
             end
         end
         endcase
