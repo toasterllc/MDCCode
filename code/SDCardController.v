@@ -22,8 +22,11 @@
 // TODO: try merging datOutCounter/datInCounter
 
 
+
+
+
 // TODO: try merging datBlockCounter/datBlockCounter
-//   X didn't show a clear improvement
+//   √
 
 // TODO: try merging datOutActive/datOutCRCRst_
 //   √
@@ -181,7 +184,7 @@ module SDCardController(
     // ====================
     wire[6:0] cmdCRC;
     reg cmdCRCRst_ = 0;
-    CRC7 CRC7_cmdIn(
+    CRC7 CRC7_cmd(
         .clk(clk),
         .rst_(cmdCRCRst_),
         .din((cmdOutActive ? cmdOutReg[47] : cmdInReg[0])),
