@@ -11,13 +11,19 @@
 
 // TODO: for perf, try removing StateCmdOut state (the way we used to have it) so that the calling state sets up the registers.
 
-// TODO: try merging datInBlockCounter/datOutBlockCounter
-
 // TODO: try merging datIn/datOut CRC modules
 
 // TODO: for CRC16_datOut, try using dout instead of doutNext. we'll need to add another cycle of latency to do that though
 
 // TODO: try merging datOutActive/datOutCRCRst_
+//   √
+
+
+
+
+
+// TODO: try merging datInBlockCounter/datOutBlockCounter
+//   X merging doesn't show a clear improvement
 
 module SDCardController(
     input wire          clk,
@@ -209,12 +215,11 @@ module SDCardController(
     // ====================
     // CRC (DAT out)
     // ====================
-    reg datOutCRCRst_ = 0;
     wire[15:0] datOutCRC[3:0];
     for (i=0; i<4; i=i+1) begin
         CRC16 CRC16_datOut(
             .clk(clk),
-            .rst_(datOutCRCRst_),
+            .rst_(datOutActive),
             .din(datOutReg[12+i]),
             .dout(),
             .doutNext(datOutCRC[i])
@@ -374,7 +379,6 @@ module SDCardController(
         
         DatOutState_Go+1: begin
             datOutActive <= 1;
-            datOutCRCRst_ <= 1;
             if (!datOutBlockCounter) begin
                 datOutState <= DatOutState_Go+2;
             
@@ -388,7 +392,6 @@ module SDCardController(
         // Output CRCs
         DatOutState_Go+2: begin
             $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datOutCRC[3], datOutCRC[2], datOutCRC[1], datOutCRC[0]);
-            datOutCRCRst_ <= 0;
             datOut3CRCReg <= datOutCRC[3];
             datOut2CRCReg <= datOutCRC[2];
             datOut1CRCReg <= datOutCRC[1];
@@ -590,7 +593,6 @@ module SDCardController(
                 if (cmd_trigger) begin
                     state <= StateWrite+3;
                 end else begin
-                    // TODO: we probably need a different version of StateStop for writing, since we need to check the busy signal while the card is programming
                     state <= StateStop;
                 end
                 cmd_accepted <= 1;
