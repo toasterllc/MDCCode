@@ -363,9 +363,9 @@ module SDCardController(
         end
         
         DatOutState_Go: begin
-            $display("[SD CTRL] DAT OUT: started");
+            $display("[SD CTRL] DatOut: started");
             // TODO: ensure that N_WR is met (write data starts a minimum of 2 cycles after response end)
-            // $display("[SD CTRL] DAT OUT: wrote 16 bits");
+            // $display("[SD CTRL] DatOut: wrote 16 bits");
             datOutReg <= 0;
             datOutCounter <= 0;
             datOutBlockCounter <= 1023;
@@ -387,7 +387,7 @@ module SDCardController(
         
         // Output CRCs
         DatOutState_Go+2: begin
-            $display("[SD CTRL] DAT OUT: CRCs: %h %h %h %h", datOutCRC[3], datOutCRC[2], datOutCRC[1], datOutCRC[0]);
+            $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datOutCRC[3], datOutCRC[2], datOutCRC[1], datOutCRC[0]);
             datOutCRCRst_ <= 0;
             datOut3CRCReg <= datOutCRC[3];
             datOut2CRCReg <= datOutCRC[2];
@@ -395,7 +395,7 @@ module SDCardController(
             datOut0CRCReg <= datOutCRC[0];
             datOutState <= DatOutState_Go+3;
             datOutCounter <= 15;
-            // $display("[SD CTRL] DAT OUT: output CRCs");
+            // $display("[SD CTRL] DatOut: output CRCs");
         end
         
         // TODO: try loading datOutReg entirely so we only do this 4 times instead of 16
@@ -430,10 +430,10 @@ module SDCardController(
             if (!datOutCounter) begin
                 // 5 bits: start bit, CRC status, end bit
                 if (datInCRCStatus !== 5'b0_010_1) begin
-                    $display("[SD CTRL] DAT OUT: CRC status invalid ❌");
+                    $display("[SD CTRL] DatOut: CRC status invalid ❌");
                     err <= 1;
                 end else begin
-                    $display("[SD CTRL] DAT OUT: CRC status valid ✅");
+                    $display("[SD CTRL] DatOut: CRC status valid ✅");
                 end
                 datOutState <= DatOutState_Go+7;
             end
@@ -442,8 +442,10 @@ module SDCardController(
         // Wait until the card stops being busy (busy == DAT0 low)
         DatOutState_Go+7: begin
             if (datInReg[0]) begin
-                $display("[SD CTRL] DAT OUT: card ready");
+                $display("[SD CTRL] DatOut: Card ready");
                 datOutState <= DatOutState_Done;
+            end else begin
+                $display("[SD CTRL] DatOut: Card busy");
             end
         end
         
@@ -669,7 +671,20 @@ module SDCardController(
             cmdOutCmd <= CMD12;
             cmdOutRespWait <= 1;
             state <= StateCmdOut;
-            nextState <= StateIdle;
+            nextState <= StateStop+1;
+        end
+        
+        // Wait for the card to not be busy (DAT0=1).
+        // This is only needed for writing, since the card starts
+        // programming upon receipt of the stop command.
+        // The card doesn't signal busy in the case of reading.
+        StateStop+1: begin
+            if (datInReg[0]) begin
+                $display("[SD CTRL] StateStop: Card ready");
+                state <= StateIdle;
+            end else begin
+                $display("[SD CTRL] StateStop: Card busy");
+            end
         end
         endcase
     end

@@ -74,7 +74,7 @@ module Top(
     );
     
     reg[3:0] state = 0;
-`ifndef SIM
+`ifdef SIM
     always @(posedge clk) begin
         case (state)
         0: begin
@@ -106,7 +106,7 @@ module Top(
     end
 `endif
 
-`ifdef SIM
+`ifndef SIM
     always @(posedge clk) begin
         case (state)
         0: begin
@@ -242,6 +242,9 @@ module Top(
     localparam ACMD23   = {1'b1, 6'd23};    // SET_WR_BLK_ERASE_COUNT
     
     initial begin
+        reg halla;
+        halla = 0;
+        
         forever begin
             sim_cmdInCRCRst_ = 0;
             
@@ -250,6 +253,9 @@ module Top(
                 // Receive command
                 reg[7:0] i;
                 reg[7:0] count;
+                reg signalBusy;
+                
+                signalBusy = 0;
                 
                 // Start calculating CRC for incoming command
                 sim_cmdInCRCRst_ = 1;
@@ -298,6 +304,19 @@ module Top(
                     default:    begin  $display("[SD CARD] BAD COMMAND: CMD%0d", sim_cmd); $finish; end
                     endcase
                     
+                    // Signal busy (DAT=0) if we were previously writing,
+                    // and we received the stop command
+                    signalBusy = (sim_cmdIndex===12 && sim_recvWriteData);
+                    if (signalBusy) begin
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        sim_datOut[0] = 0;
+                    end
+                    
                     // Wait a random number of clocks before providing response
                     count = $urandom%10;
                     for (i=0; i<count; i++) begin
@@ -327,7 +346,7 @@ module Top(
                 
                 // Note whether the next command is an application-specific command
                 sim_acmd = (sim_cmdIndex==55);
-                
+                // TODO: if we were writing, signal busy for a random number of cycles
                 if (sim_cmdIndex == 12) begin
                     sim_recvWriteData = 0;
                     sim_sendReadData = 0;
@@ -335,6 +354,18 @@ module Top(
                     sim_recvWriteData = 1;
                 end else if (sim_cmdIndex == 18) begin
                     sim_sendReadData = 1;
+                end
+                
+                // Stop signaling busy, if we were signaling busy
+                if (signalBusy) begin
+                    // Wait a random number of clocks before de-asserting busy
+                    count = $urandom%10;
+                    for (i=0; i<count; i++) begin
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                    end
+                    
+                    sim_datOut[0] = 1'bz;
                 end
             end
             wait(!sd_clk);
