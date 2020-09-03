@@ -107,8 +107,8 @@ module SDCardController(
     localparam StateIdle        = 0;    // +0
     localparam StateWrite       = 1;    // +4
     localparam StateRead        = 6;    // +2
-    localparam StateCmdOut      = 9;    // +2
-    localparam StateStop        = 12;   // +0
+    localparam StateStop        = 9;    // +1
+    localparam StateCmdOut      = 11;   // +2
     reg[3:0] state = 0;
     reg[3:0] nextState = 0;
     
@@ -618,6 +618,33 @@ module SDCardController(
         
         
         
+        
+        
+        StateStop: begin
+            $display("[SD CTRL] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
+            cmdOutCmd <= CMD12;
+            cmdOutRespWait <= 1;
+            state <= StateCmdOut;
+            nextState <= StateStop+1;
+        end
+        
+        // Wait for the card to not be busy (DAT0=1).
+        // This is only needed for writing, since the card starts
+        // programming upon receipt of the stop command.
+        // The card doesn't signal busy in the case of reading.
+        StateStop+1: begin
+            if (datInReg[0]) begin
+                $display("[SD CTRL] StateStop: Card ready");
+                state <= StateIdle;
+            end else begin
+                $display("[SD CTRL] StateStop: Card busy");
+            end
+        end
+        
+        
+        
+        
+        
         StateCmdOut: begin
             cmdOutReg <= {2'b01, cmdOutCmd, cmdOutArg, 7'b0, 1'b1};
             cmdOutCounter <= 47;
@@ -643,31 +670,6 @@ module SDCardController(
         StateCmdOut+2: begin
             if (respState === RespState_Done) begin
                 state <= nextState;
-            end
-        end
-        
-        
-        
-        
-        
-        StateStop: begin
-            $display("[SD CTRL] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
-            cmdOutCmd <= CMD12;
-            cmdOutRespWait <= 1;
-            state <= StateCmdOut;
-            nextState <= StateStop+1;
-        end
-        
-        // Wait for the card to not be busy (DAT0=1).
-        // This is only needed for writing, since the card starts
-        // programming upon receipt of the stop command.
-        // The card doesn't signal busy in the case of reading.
-        StateStop+1: begin
-            if (datInReg[0]) begin
-                $display("[SD CTRL] StateStop: Card ready");
-                state <= StateIdle;
-            end else begin
-                $display("[SD CTRL] StateStop: Card busy");
             end
         end
         endcase
