@@ -158,7 +158,6 @@ module SDCardController(
     reg[31:0] cmdOutArg = 0;
     wire cmdOut = cmdOutReg[47];
     reg[5:0] cmdOutCounter = 0;
-    reg cmdOutRespWait = 0;
     
     reg[31:0] cmdAddr = 0;
     reg[22:0] cmdWriteLen = 0;
@@ -542,7 +541,6 @@ module SDCardController(
             cmdOutReg <= {2'b01, CMD55, 32'b0, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
-            cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+1;
         end
@@ -552,7 +550,6 @@ module SDCardController(
             cmdOutReg <= {2'b01, ACMD23, {9'b0, cmdWriteLen}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
-            cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+2;
         end
@@ -562,7 +559,6 @@ module SDCardController(
             cmdOutReg <= {2'b01, CMD25, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
-            cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+3;
         end
@@ -595,7 +591,6 @@ module SDCardController(
             cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
-            cmdOutRespWait <= 0; // Don't wait for response before transitioning to `StateRead+1`
             state <= StateCmdOut;
             nextState <= StateRead+1;
         end
@@ -630,7 +625,6 @@ module SDCardController(
             cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
-            cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateStop+1;
         end
@@ -660,11 +654,7 @@ module SDCardController(
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
                 respState <= RespState_Go;
-                if (cmdOutRespWait) begin
-                    state <= StateCmdOut+1;
-                end else begin
-                    state <= nextState;
-                end
+                state <= (nextState===StateRead+1 ? StateRead+1 : StateCmdOut+1);
             end
         end
         
