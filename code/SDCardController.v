@@ -11,7 +11,7 @@
 
 // TODO: for perf, try removing StateCmdOut state (the way we used to have it) so that the calling state sets up the registers.
 
-// TODO: try merging datInBlockCounter/datOutBlockCounter
+// TODO: try merging datBlockCounter/datBlockCounter
 
 // TODO: try merging datIn/datOut CRC modules
 
@@ -144,13 +144,13 @@ module SDCardController(
     wire[3:0] datIn = sd_datIn;
     reg[19:0] datInReg = 0; // TODO: try switching back to 15:0. we added 4 more bits for checking CRC status token (which is 5 bits total)
     wire[4:0] datInCRCStatus = {datInReg[16], datInReg[12], datInReg[8], datInReg[4], datInReg[0]};
-    reg[9:0] datInBlockCounter = 0;
     reg[3:0] datInCounter = 0;
     
     reg[19:0] datOutReg = 0;
-    reg[9:0] datOutBlockCounter = 0;
     reg[3:0] datOutCounter = 0;
     reg datOutActive = 0;
+    
+    reg[9:0] datBlockCounter = 0;
     
     reg cmdOutActive = 0;
     reg[47:0] cmdOutReg = 0;
@@ -269,8 +269,7 @@ module SDCardController(
         dataOut_valid <= 0;
         dataIn_accepted <= 0;
         
-        datInBlockCounter <= datInBlockCounter-1;
-        datOutBlockCounter <= datOutBlockCounter-1;
+        datBlockCounter <= datBlockCounter-1;
         
         
         
@@ -353,14 +352,14 @@ module SDCardController(
             // $display("[SD CTRL] DatOut: wrote 16 bits");
             datOutReg <= 0;
             datOutCounter <= 0;
-            datOutBlockCounter <= 1023;
+            datBlockCounter <= 1023;
             datOutState <= DatOutState_Go+1;
         end
         
         DatOutState_Go+1: begin
             datOutActive <= 1;
             datCRCRst_ <= 1;
-            if (!datOutBlockCounter) begin
+            if (!datBlockCounter) begin
                 datOutState <= DatOutState_Go+2;
             
             end else if (!datOutCounter) begin
@@ -464,7 +463,7 @@ module SDCardController(
         DatInState_Go+1: begin
             datCRCRst_ <= 1;
             datInCounter <= 2;
-            datInBlockCounter <= 1023;
+            datBlockCounter <= 1023;
             datInState <= DatInState_Go+2;
         end
         
@@ -475,7 +474,7 @@ module SDCardController(
                 dataOut_valid <= 1;
             end
             
-            if (!datInBlockCounter) begin
+            if (!datBlockCounter) begin
                 datInState <= DatInState_Go+3;
             end
         end
