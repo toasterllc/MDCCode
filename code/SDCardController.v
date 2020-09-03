@@ -122,8 +122,8 @@ module SDCardController(
     localparam StateIdle        = 0;    // +0
     localparam StateWrite       = 1;    // +3
     // localparam StateRead        = 6;    // +2
-    localparam StateCmdOut      = 5;    // +9
-    localparam StateStop        = 15;   // +0
+    localparam StateCmdOut      = 5;    // +2
+    localparam StateStop        = 8;   // +1
     reg[3:0] state = 0;
     reg[3:0] nextState = 0;
     
@@ -168,11 +168,13 @@ module SDCardController(
     reg[9:0] datBlockCounter = 0;
     
     reg cmdOutActive = 0;
-    reg cmdOut = 0;
+    reg[47:0] cmdOutReg = 0;
+    wire cmdOut = cmdOutReg[47];
     reg[5:0] cmdOutCounter = 0;
     reg[5:0] cmdOutCmd = 0;
     reg[31:0] cmdOutArg = 0;
     
+    reg cmdTrigger = 0;
     reg[31:0] cmdAddr = 0;
     reg[22:0] cmdWriteLen = 0;
     
@@ -223,9 +225,13 @@ module SDCardController(
     always @(posedge clk) begin
         cmdOutReg <= cmdOutReg<<1;
         cmdOutCounter <= cmdOutCounter-1;
-        if (cmdOutCounter === 8) begin
-            cmdOutReg[47:41] <= cmdCRC;
-        end
+        // if (cmdOutCounter === 8) begin
+        //     cmdOutReg[47:41] <= cmdCRC;
+        // end
+        
+        cmdTrigger <= cmd_trigger;
+        cmdAddr <= cmd_addr;
+        cmdWriteLen <= cmd_writeLen;
         
         cmdInStaged <= (cmdOutActive ? 1'b1 : cmdIn);
         cmdInReg <= (cmdInReg<<1)|cmdInStaged;
@@ -439,11 +445,7 @@ module SDCardController(
         
         case (state)
         StateIdle: begin
-            if (cmd_trigger) begin
-                cmdAddr <= cmd_addr;
-                cmdWriteLen <= cmd_writeLen;
-                // cmdLen <= cmd_len;
-                cmd_accepted <= 1;
+            if (cmdTrigger) begin
                 state <= StateWrite;
             end
         end
@@ -476,15 +478,16 @@ module SDCardController(
         end
         
         StateWrite+3: begin
-            // if (datOutState === DatOutState_Done) begin
-                $display("[SD CTRL] Finished writing block");
-                if (cmd_trigger) begin
-                    state <= StateWrite+3;
-                end else begin
-                    state <= StateStop;
-                end
-                cmd_accepted <= 1;
-            // end
+            state <= StateStop;
+            // // if (datOutState === DatOutState_Done) begin
+            //     $display("[SD CTRL] Finished writing block");
+            //     if (cmd_trigger) begin
+            //         state <= StateWrite+3;
+            //     end else begin
+            //         state <= StateStop;
+            //     end
+            //     cmd_accepted <= 1;
+            // // end
         end
         
         
@@ -563,15 +566,19 @@ module SDCardController(
             cmdOutActive <= 1;
             state <= StateCmdOut+1;
         end
-
+        
         StateCmdOut+1: begin
+            if (cmdOutCounter === 8) begin
+                cmdOutReg[47:41] <= cmdCRC;
+            end
+            
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
                 respState <= RespState_Go;
                 state <= StateCmdOut+2;
             end
         end
-
+        
         StateCmdOut+2: begin
             if (respState === RespState_Done) begin
                 state <= nextState;
