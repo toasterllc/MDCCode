@@ -9,16 +9,6 @@
 
 // TODO: we may want to add support for partial reads, so we don't have to read a full block if the client only wants a few bytes
 
-// TODO: for perf, try removing StateCmdOut state (the way we used to have it) so that the calling state sets up the registers.
-
-// TODO: try merging datBlockCounter/datBlockCounter
-
-// TODO: try merging datIn/datOut CRC modules
-
-// TODO: for CRC16_datOut, try using dout instead of doutNext. we'll need to add another cycle of latency to do that though
-
-// TODO: try merging datOutActive/datOutCRCRst_
-
 module SDCardController(
     input wire          clk,
     
@@ -142,7 +132,7 @@ module SDCardController(
     reg[47:0] resp = 0;
     
     wire[3:0] datIn = sd_datIn;
-    reg[19:0] datInReg = 0; // TODO: try switching back to 15:0. we added 4 more bits for checking CRC status token (which is 5 bits total)
+    reg[19:0] datInReg = 0;
     wire[4:0] datInCRCStatus = {datInReg[16], datInReg[12], datInReg[8], datInReg[4], datInReg[0]};
     reg[3:0] datInCounter = 0;
     
@@ -162,17 +152,6 @@ module SDCardController(
     
     reg[31:0] cmdAddr = 0;
     reg[22:0] cmdWriteLen = 0;
-    // reg[13:0] cmdLen = 0;
-    // wire[13:0] cmdLenNext = cmdLen-1;
-    // ShiftAdder #(
-    //     .W(13),
-    //     .N(1)
-    // ) adder(
-    //     .clk(clk),
-    //     .a(cmdLen),
-    //     .b(-13'd1),
-    //     .sum(cmdLenNext)
-    // );
     
     
     
@@ -349,7 +328,6 @@ module SDCardController(
         DatOutState_Go: begin
             $display("[SD CTRL] DatOut: started");
             // TODO: ensure that N_WR is met (write data starts a minimum of 2 cycles after response end)
-            // $display("[SD CTRL] DatOut: wrote 16 bits");
             datOutReg <= 0;
             datOutCounter <= 0;
             datBlockCounter <= 1023;
@@ -382,7 +360,7 @@ module SDCardController(
             // $display("[SD CTRL] DatOut: output CRCs");
         end
         
-        // TODO: try loading datOutReg entirely so we only do this 4 times instead of 16
+        // TODO: for perf, try loading datOutReg entirely so we only do this 4 times instead of 16
         DatOutState_Go+3: begin
             datOutReg <= {
                 datOut3CRCReg[15],
@@ -531,7 +509,6 @@ module SDCardController(
             if (cmd_trigger) begin
                 cmdAddr <= cmd_addr;
                 cmdWriteLen <= cmd_writeLen;
-                // cmdLen <= cmd_len;
                 cmd_accepted <= 1;
                 state <= (cmd_write ? StateWrite : StateRead);
             end
@@ -539,6 +516,7 @@ module SDCardController(
         
         StateWrite: begin
             $display("[SD CTRL] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
+            // TODO: the argument needs to be the card's RCA
             cmdOutReg <= {2'b01, CMD55, 32'b0, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -578,7 +556,6 @@ module SDCardController(
                 if (cmd_trigger) begin
                     state <= StateWrite+3;
                 end else begin
-                    // TODO: we probably need a different version of StateStop for writing, since we need to check the busy signal while the card is programming
                     state <= StateStop;
                 end
                 cmd_accepted <= 1;
@@ -600,11 +577,9 @@ module SDCardController(
             nextState <= StateRead+1;
         end
         
-        // TODO: check that respState==RespState_Done
         // TODO: have a watchdog countdown to ensure that we get a response
         StateRead+1: begin
             datInState <= DatInState_Go;
-            // cmdLen <= cmdLenNext;
             state <= StateRead+2;
         end
         
