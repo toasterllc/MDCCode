@@ -322,7 +322,8 @@ module Top(
                     end
                     
                     // Wait a random number of clocks before providing response
-                    count = $urandom%10;
+                    count = ($urandom%10)+1;
+                    $display("[SD CARD] Response: delaying %0d clocks", count);
                     for (i=0; i<count; i++) begin
                         wait(sd_clk);
                         wait(!sd_clk);
