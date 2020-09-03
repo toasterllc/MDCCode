@@ -78,7 +78,7 @@ module SDCardController(
     // Pin: sd_dat
     // ====================
     wire[3:0] sd_datIn;
-    wire[3:0] sd_datOut = datOutReg[19:16];
+    wire[3:0] sd_datOut = datOutReg[23:20];
     wire sd_datOutActive = datOutActive;
     genvar i;
     for (i=0; i<4; i=i+1) begin
@@ -118,8 +118,8 @@ module SDCardController(
     reg[3:0] respState = 0;
     
     localparam DatOutState_Idle = 0;    // +0
-    localparam DatOutState_Go   = 1;    // +7
-    localparam DatOutState_Done = 9;    // +0
+    localparam DatOutState_Go   = 1;    // +8
+    localparam DatOutState_Done = 10;   // +0
     reg[3:0] datOutState = 0;
     
     localparam DatInState_Idle  = 0;    // +0
@@ -146,7 +146,7 @@ module SDCardController(
     wire[4:0] datInCRCStatus = {datInReg[16], datInReg[12], datInReg[8], datInReg[4], datInReg[0]};
     reg[3:0] datInCounter = 0;
     
-    reg[19:0] datOutReg = 0;
+    reg[23:0] datOutReg = 0;
     reg[3:0] datOutCounter = 0;
     reg datOutActive = 0;
     
@@ -209,15 +209,15 @@ module SDCardController(
     // CRC (DAT)
     // ====================
     wire[15:0] datCRC[3:0];
-    wire[15:0] datCRCNext[3:0];
     reg datCRCRst_ = 0;
+    reg datCRCDatOut = 0;
     for (i=0; i<4; i=i+1) begin
         CRC16 CRC16_dat(
             .clk(clk),
             .rst_(datCRCRst_),
-            .din(datOutActive ? datOutReg[12+i] : datInReg[4+i]),
+            .din(datCRCDatOut ? datOutReg[12+i] : datInReg[4+i]),
             .dout(datCRC[i]),
-            .doutNext(datCRCNext[i])
+            .doutNext()
         );
      end
     
@@ -349,17 +349,27 @@ module SDCardController(
             $display("[SD CTRL] DatOut: started");
             // TODO: ensure that N_WR is met (write data starts a minimum of 2 cycles after response end)
             // $display("[SD CTRL] DatOut: wrote 16 bits");
-            datOutReg <= 0;
-            datOutCounter <= 0;
+            datOutCounter <= 3;
             datBlockCounter <= 1023;
+            
+            datCRCRst_ <= 1;
+            datCRCDatOut <= 1;
+            
+            datOutReg <= dataIn;
+            dataIn_accepted <= 1;
+            
             datOutState <= DatOutState_Go+1;
         end
         
         DatOutState_Go+1: begin
             datOutActive <= 1;
-            datCRCRst_ <= 1;
+            datOutState <= DatOutState_Go+2;
+        end
+        
+        DatOutState_Go+2: begin
+            // $display("[SD CTRL] DatOut: datBlockCounter: %0d", datBlockCounter);
             if (!datBlockCounter) begin
-                datOutState <= DatOutState_Go+2;
+                datOutState <= DatOutState_Go+3;
             
             end else if (!datOutCounter) begin
                 datOutCounter <= 3;
@@ -369,61 +379,61 @@ module SDCardController(
         end
         
         // Output CRCs
-        DatOutState_Go+2: begin
-            $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datCRCNext[3], datCRCNext[2], datCRCNext[1], datCRCNext[0]);
+        DatOutState_Go+3: begin
+            $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datCRC[3], datCRC[2], datCRC[1], datCRC[0]);
             datCRCRst_ <= 0;
-            datOut3CRCReg <= datCRCNext[3];
-            datOut2CRCReg <= datCRCNext[2];
-            datOut1CRCReg <= datCRCNext[1];
-            datOut0CRCReg <= datCRCNext[0];
-            datOutState <= DatOutState_Go+3;
+            datOut3CRCReg <= datCRC[3];
+            datOut2CRCReg <= datCRC[2];
+            datOut1CRCReg <= datCRC[1];
+            datOut0CRCReg <= datCRC[0];
+            datOutState <= DatOutState_Go+4;
             datOutCounter <= 15;
             // $display("[SD CTRL] DatOut: output CRCs");
         end
         
         // TODO: try loading datOutReg entirely so we only do this 4 times instead of 16
-        DatOutState_Go+3: begin
+        DatOutState_Go+4: begin
             datOutReg <= {
                 datOut3CRCReg[15],
                 datOut2CRCReg[15],
                 datOut1CRCReg[15],
                 datOut0CRCReg[15],
-                16'b0
+                20'b0
             };
             
             if (!datOutCounter) begin
-                datOutState <= DatOutState_Go+4;
+                datOutState <= DatOutState_Go+5;
             end
         end
         
         // End bit
-        DatOutState_Go+4: begin
-            datOutReg <= {20{1'b1}};
-            datOutState <= DatOutState_Go+5;
-        end
-        
         DatOutState_Go+5: begin
-            datOutActive <= 0;
-            datOutCounter <= 7;
+            datOutReg[23:20] <= 4'b1111;
             datOutState <= DatOutState_Go+6;
         end
         
-        // Check CRC status token
         DatOutState_Go+6: begin
+            datOutActive <= 0;
+            datOutCounter <= 7;
+            datOutState <= DatOutState_Go+7;
+        end
+        
+        // Check CRC status token
+        DatOutState_Go+7: begin
             if (!datOutCounter) begin
                 // 5 bits: start bit, CRC status, end bit
                 if (datInCRCStatus !== 5'b0_010_1) begin
-                    $display("[SD CTRL] DatOut: CRC status invalid ❌");
+                    $display("[SD CTRL] DatOut: CRC status invalid: %b ❌", datInReg);
                     err <= 1;
                 end else begin
                     $display("[SD CTRL] DatOut: CRC status valid ✅");
                 end
-                datOutState <= DatOutState_Go+7;
+                datOutState <= DatOutState_Go+8;
             end
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        DatOutState_Go+7: begin
+        DatOutState_Go+8: begin
             if (datInReg[0]) begin
                 $display("[SD CTRL] DatOut: Card ready");
                 datOutState <= DatOutState_Done;
@@ -461,6 +471,7 @@ module SDCardController(
         
         DatInState_Go+1: begin
             datCRCRst_ <= 1;
+            datCRCDatOut <= 0;
             datInCounter <= 2;
             datBlockCounter <= 1023;
             datInState <= DatInState_Go+2;
