@@ -207,40 +207,25 @@ module SDCardController(
     
     
     // ====================
-    // CRC (DAT out)
+    // CRC (DAT)
     // ====================
-    reg datOutCRCRst_ = 0;
-    wire[15:0] datOutCRC[3:0];
+    wire[15:0] datCRC[3:0];
+    wire[15:0] datCRCNext[3:0];
+    reg datCRCRst_ = 0;
     for (i=0; i<4; i=i+1) begin
-        CRC16 CRC16_datOut(
+        CRC16 CRC16_dat(
             .clk(clk),
-            .rst_(datOutCRCRst_),
-            .din(datOutReg[12+i]),
-            .dout(),
-            .doutNext(datOutCRC[i])
+            .rst_(datCRCRst_),
+            .din(datOutActive ? datOutReg[12+i] : datInReg[4+i]),
+            .dout(datCRC[i]),
+            .doutNext(datCRCNext[i])
         );
-    end
+     end
     
     reg[15:0] datOut3CRCReg = 0;
     reg[15:0] datOut2CRCReg = 0;
     reg[15:0] datOut1CRCReg = 0;
     reg[15:0] datOut0CRCReg = 0;
-    
-    
-    // ====================
-    // CRC (DAT in)
-    // ====================
-    reg datInCRCRst_ = 0;
-    wire[15:0] datInCRC[3:0];
-    for (i=0; i<4; i=i+1) begin
-        CRC16 CRC16_datIn(
-            .clk(clk),
-            .rst_(datInCRCRst_),
-            .din(datInReg[4+i]),
-            .dout(datInCRC[i]),
-            .doutNext()
-        );
-    end
     
     reg[15:0] datIn3CRCReg = 0;
     reg[15:0] datIn2CRCReg = 0;
@@ -374,7 +359,7 @@ module SDCardController(
         
         DatOutState_Go+1: begin
             datOutActive <= 1;
-            datOutCRCRst_ <= 1;
+            datCRCRst_ <= 1;
             if (!datOutBlockCounter) begin
                 datOutState <= DatOutState_Go+2;
             
@@ -387,12 +372,12 @@ module SDCardController(
         
         // Output CRCs
         DatOutState_Go+2: begin
-            $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datOutCRC[3], datOutCRC[2], datOutCRC[1], datOutCRC[0]);
-            datOutCRCRst_ <= 0;
-            datOut3CRCReg <= datOutCRC[3];
-            datOut2CRCReg <= datOutCRC[2];
-            datOut1CRCReg <= datOutCRC[1];
-            datOut0CRCReg <= datOutCRC[0];
+            $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datCRCNext[3], datCRCNext[2], datCRCNext[1], datCRCNext[0]);
+            datCRCRst_ <= 0;
+            datOut3CRCReg <= datCRCNext[3];
+            datOut2CRCReg <= datCRCNext[2];
+            datOut1CRCReg <= datCRCNext[1];
+            datOut0CRCReg <= datCRCNext[0];
             datOutState <= DatOutState_Go+3;
             datOutCounter <= 15;
             // $display("[SD CTRL] DatOut: output CRCs");
@@ -477,7 +462,7 @@ module SDCardController(
         end
         
         DatInState_Go+1: begin
-            datInCRCRst_ <= 1;
+            datCRCRst_ <= 1;
             datInCounter <= 2;
             datInBlockCounter <= 1023;
             datInState <= DatInState_Go+2;
@@ -497,14 +482,14 @@ module SDCardController(
         
         // Remember the CRC we calculated
         DatInState_Go+3: begin
-            datInCRCRst_ <= 0;
-            datIn3CRCReg <= datInCRC[3];
-            datIn2CRCReg <= datInCRC[2];
-            datIn1CRCReg <= datInCRC[1];
-            datIn0CRCReg <= datInCRC[0];
+            datCRCRst_ <= 0;
+            datIn3CRCReg <= datCRC[3];
+            datIn2CRCReg <= datCRC[2];
+            datIn1CRCReg <= datCRC[1];
+            datIn0CRCReg <= datCRC[0];
             datInCounter <= 15;
             datInState <= DatInState_Go+4;
-            $display("[SD CTRL] DAT: calculated CRCs: %h %h %h %h", datInCRC[3], datInCRC[2], datInCRC[1], datInCRC[0]);
+            $display("[SD CTRL] DAT: calculated CRCs: %h %h %h %h", datCRC[3], datCRC[2], datCRC[1], datCRC[0]);
         end
         
         // Check CRC for each DAT line
