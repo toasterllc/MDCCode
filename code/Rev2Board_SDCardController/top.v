@@ -57,7 +57,7 @@ module Top(
         .cmd_write(sd_cmd_write),
         .cmd_writeLen(sd_cmd_writeLen),
         .cmd_addr(32'b0|sd_cmd_addr),
-        // .cmd_len(sd_cmd_len),
+        .cmd_rca(16'b0),
         
         // Data-in port
         .dataIn(sd_dataIn),

@@ -18,6 +18,7 @@ module SDCardController(
     input wire          cmd_write,
     input wire[22:0]    cmd_writeLen,
     input wire[31:0]    cmd_addr,       // (2^32)*512 == 2 TB
+    input wire[15:0]    cmd_rca,
     // input wire[13:0]    cmd_len,        // (2^14)*512 == 8 MB max transfer size
     
     // Data-out port
@@ -517,7 +518,7 @@ module SDCardController(
         StateWrite: begin
             $display("[SD CTRL] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
             // TODO: the argument needs to be the card's RCA
-            cmdOutReg <= {2'b01, CMD55, 32'b0, 7'b0, 1'b1};
+            cmdOutReg <= {2'b01, CMD55, {cmd_rca, 16'b0}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 1;
@@ -553,11 +554,7 @@ module SDCardController(
         StateWrite+4: begin
             if (datOutState === DatOutState_Done) begin
                 $display("[SD CTRL] Finished writing block");
-                if (cmd_trigger) begin
-                    state <= StateWrite+3;
-                end else begin
-                    state <= StateStop;
-                end
+                state <= (cmd_trigger ? StateWrite+3 : StateStop);
                 cmd_accepted <= 1;
             end
         end
@@ -586,12 +583,7 @@ module SDCardController(
         StateRead+2: begin
             if (respState===RespState_Done && datInState===DatInState_Done) begin
                 $display("[SD CTRL] Finished reading block");
-                
-                if (cmd_trigger) begin
-                    state <= StateRead+1;
-                end else begin
-                    state <= StateStop;
-                end
+                state <= (cmd_trigger ? StateRead+1 : StateStop);
                 cmd_accepted <= 1;
             end
         end
