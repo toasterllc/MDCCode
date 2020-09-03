@@ -1,4 +1,6 @@
+`include "../Util.v"
 `include "../ClockGen.v"
+`include "../CRC7.v"
 `include "../SDCardInitializer.v"
 
 `ifdef SIM
@@ -49,9 +51,7 @@ module Top(
         .sd_cmdIn(sd_cmdIn),
         .sd_cmdOut(sd_cmdOut),
         .sd_cmdOutActive(sd_cmdOutActive),
-        .sd_dat(sd_dat),
-        
-        .led(led)
+        .sd_dat(sd_dat)
     );
     
     // ====================
@@ -153,8 +153,14 @@ module Top(
                     CMD8:       begin sim_respOut=136'h08000001aa13ffffffffffffffffffffff; sim_respLen=48;  end
                     CMD11:      begin sim_respOut=136'h0B0000070081ffffffffffffffffffffff; sim_respLen=48;  end
                     ACMD41:     begin
-                        if ($urandom % 2)   sim_respOut=136'h3f00ff8080ffffffffffffffffffffffff;
-                        else                sim_respOut=136'h3fc0ff8080ffffffffffffffffffffffff;
+                        if ($urandom % 2) begin
+                            $display("[SD CARD] ACMD41: card busy");
+                            sim_respOut=136'h3f00ff8080ffffffffffffffffffffffff;
+                        end
+                        else begin
+                            $display("[SD CARD] ACMD41: card ready");
+                            sim_respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
+                        end
                         sim_respLen=48;
                     end
                     CMD55:      begin sim_respOut=136'h370000012083ffffffffffffffffffffff; sim_respLen=48;  end

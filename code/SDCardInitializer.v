@@ -21,8 +21,9 @@
 // TODO: handle never receiving a response from the card
 //   according to 4.12.4 , the max number of cycles for a response to start is 64
 
-`include "Util.v"
-`include "CRC7.v"
+// TODO: expose error state to clients
+//   sit in the error state and wait for a power cycle?
+//   or have the ability to clear the error and start over?
 
 module SDCardInitializer(
     input wire          clk12mhz,
@@ -74,19 +75,19 @@ module SDCardInitializer(
     // CRC
     // ====================
     wire[6:0] cmdOutCRC;
-    reg cmdOutCRCEn = 0;
+    reg cmdOutCRCRst_ = 0;
     CRC7 crc1(
         .clk(clk),
-        .en(cmdOutCRCEn),
+        .rst_(cmdOutCRCRst_),
         .din(cmdOutReg[47]),
         .dout(cmdOutCRC)
     );
     
     wire[6:0] cmdInCRC;
-    reg cmdInCRCEn = 0;
+    reg cmdInCRCRst_ = 0;
     CRC7 crc2(
         .clk(clk),
-        .en(cmdInCRCEn),
+        .rst_(cmdInCRCRst_),
         .din(cmdInReg[0]),
         .dout(cmdInCRC)
     );
@@ -206,13 +207,25 @@ module SDCardInitializer(
 
         StateInit+5: begin
             // Verify the command is all 1's
-            if (cmdInReg[45:40] !== 6'b111111) state <= StateError;
+            if (cmdInReg[45:40] !== 6'b111111) begin
+                $display("[SD HOST] Bad command: %b", cmdInReg[45:40]);
+                $finish;
+                state <= StateError;
+            end
             // Verify CRC is all 1's
-            else if (cmdInReg[7:1] !== 7'b1111111) state <= StateError;
+            else if (cmdInReg[7:1] !== 7'b1111111) begin
+                $display("[SD HOST] Bad CRC: %b", cmdInReg[7:1]);
+                $finish;
+                state <= StateError;
+            end
             // Retry AMCD41 if the card wasn't ready (busy)
             else if (cmdInReg[39] !== 1'b1) state <= StateInit+3;
             // Verify that we can switch to 1.8V signaling voltage (s18a)
-            else if (cmdInReg[32] !== 1'b1) state <= StateError;
+            else if (cmdInReg[32] !== 1'b1) begin
+                $display("[SD HOST] Bad s18a: %b", cmdInReg[32]);
+                $finish;
+                state <= StateError;
+            end
             // Otherwise, proceed
             else state <= StateInit+6;
         end
@@ -234,6 +247,7 @@ module SDCardInitializer(
         
         // After we get the respone, disable the clock for `ClkDisableDelay` clk12mhz cycles
         StateInit+7: begin
+            $display("[SD HOST] Disabling clock for %0d cycles", ClkDisableDelay+1);
             clkEn_ <= 1;
             delayCounter <= ClkDisableDelay;
             nextState <= StateInit+8;
@@ -243,6 +257,7 @@ module SDCardInitializer(
         // After the delay, continue once the SD card lets go of the DAT lines
         // See Section 4.2.4.2
         StateInit+8: begin
+            $display("[SD HOST] Enabling clock and waiting for SD card to be ready");
             clkEn_ <= 0;
             if (sd_dat[0]) begin
                 state <= StateInit+9;
@@ -359,18 +374,18 @@ module SDCardInitializer(
         StateCmdOut: begin
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
-            cmdOutCRCEn <= 1;
+            cmdOutCRCRst_ <= 1;
             state <= StateCmdOut+1;
         end
         
         StateCmdOut+1: begin
-            if (cmdOutCRCEn && cmdOutCounter==8)
+            if (cmdOutCounter === 8) begin
                 cmdOutReg[47:41] <= cmdOutCRC;
-                // cmdOutReg[47:41] <= 7'b1111110;
+            end
             
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
-                cmdOutCRCEn <= 0;
+                cmdOutCRCRst_ <= 0;
                 delayCounter <= 7;
                 state <= (cmdInCounter ? StateRespIn : StateDelay);
             end
@@ -392,17 +407,17 @@ module SDCardInitializer(
                 state <= StateError;
                 
             end else begin
-                cmdInCRCEn <= 1;
+                cmdInCRCRst_ <= 1;
                 state <= StateRespIn+2;
             end
         end
         
         // Wait for response to end
         StateRespIn+2: begin
-            if (cmdInCounter == 7) respInExpectedCRC <= cmdInCRC;
+            if (cmdInCounter === 7) respInExpectedCRC <= cmdInCRC;
             if (!cmdInCounter) begin
                 cmdInActive <= 0;
-                cmdInCRCEn <= 0;
+                cmdInCRCRst_ <= 0;
                 state <= StateRespIn+3;
             end
         end
@@ -442,10 +457,11 @@ module SDCardInitializer(
         
         StateError: begin
             $display("[SD HOST] ***** ERROR *****");
+            $finish;
             cmdOutActive <= 0;
-            cmdOutCRCEn <= 0;
+            cmdOutCRCRst_ <= 0;
             cmdInActive <= 0;
-            cmdInCRCEn <= 0;
+            cmdInCRCRst_ <= 0;
             
             // Since we don't know what state we came from, use our delay state to ensure
             // that N_RC/N_CC are met.
