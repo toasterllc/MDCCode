@@ -270,6 +270,8 @@ module Top(
                     wait(!sd_clk);
                     
                     if (i == 39) begin
+                        // $display("[SD CARD] MEOW CRC: %b", sim_cmdInCRC);
+                        // $finish;
                         sim_ourCRC = sim_cmdInCRC;
                         sim_cmdInCRCRst_ = 0;
                     end
@@ -435,7 +437,6 @@ module Top(
                 sim_datCRCRst_ = 1;
                 
                 for (i=0; i<1024 && sim_recvWriteData; i++) begin
-                    // $display("[SD CARD] Receiving write data (nibble %0d)", i);
                     wait(sd_clk);
                     sim_payloadDataReg = (sim_payloadDataReg<<4)|sd_dat[3:0];
                     wait(!sd_clk);
@@ -520,7 +521,6 @@ module Top(
                 
                 // Send CRC status token
                 if (sim_recvWriteData) begin
-                    $display("[SD CARD] Sending CRC status");
                     // Wait 2 cycles before sending CRC status
                     wait(sd_clk);
                     wait(!sd_clk);
