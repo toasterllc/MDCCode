@@ -178,31 +178,19 @@ module SDCardController(
     
     
     // ====================
-    // CRC (CMD in)
+    // CRC (CMD)
     // ====================
-    wire[6:0] cmdInCRC;
-    reg cmdInCRCRst_ = 0;
+    wire[6:0] cmdCRC;
+    reg cmdCRCRst_ = 0;
     CRC7 CRC7_cmdIn(
         .clk(clk),
-        .rst_(cmdInCRCRst_),
-        .din(cmdInReg[0]),
+        .rst_(cmdCRCRst_),
+        .din(cmdOutActive ? cmdOutReg[47] : cmdInReg[0]),
         .dout(),
-        .doutNext(cmdInCRC)
+        .doutNext(cmdCRC)
     );
     
-    reg[6:0] cmdInCRCReg = 0;
-    
-    // ====================
-    // CRC (CMD out)
-    // ====================
-    wire[6:0] cmdOutCRC;
-    CRC7 CRC7_cmdOut(
-        .clk(clk),
-        .rst_(cmdOutActive),
-        .din(cmdOutReg[47]),
-        .dout(),
-        .doutNext(cmdOutCRC)
-    );
+    reg[6:0] cmdCRCReg = 0;
     
     
     
@@ -252,7 +240,7 @@ module SDCardController(
         datOutReg <= datOutReg<<4;
         datOutCounter <= datOutCounter-1;
         
-        cmdInCRCReg <= cmdInCRCReg<<1;
+        cmdCRCReg <= cmdCRCReg<<1;
         
         datOut3CRCReg <= datOut3CRCReg<<1;
         datOut2CRCReg <= datOut2CRCReg<<1;
@@ -282,29 +270,29 @@ module SDCardController(
         end
         
         RespState_Go: begin
-            cmdInCRCRst_ <= 0; // Keep CRC in reset until the response starts
             if (!cmdInStaged) begin
-                cmdInCRCRst_ <= 1;
+                cmdCRCRst_ <= 1;
                 respState <= RespState_Go+1;
             end
         end
         
         RespState_Go+1: begin
             if (!cmdInReg[39]) begin
-                // $display("MEOW cmdInCRC: %b", cmdInCRC);
-                cmdInCRCReg <= cmdInCRC;
+                // $display("MEOW cmdCRC: %b", cmdCRC);
+                cmdCRCRst_ <= 0;
+                cmdCRCReg <= cmdCRC;
                 respState <= RespState_Go+2;
             end
         end
         
         RespState_Go+2: begin
-            // $display("HALLA cmdInCRCReg / cmdInReg: %b / %b", cmdInCRCReg, cmdInReg);
+            // $display("HALLA cmdCRCReg / cmdInReg: %b / %b", cmdCRCReg, cmdInReg);
             if (!cmdInReg[47]) begin
                 // $display("MEOW resp: %b", cmdInReg);
                 resp <= cmdInReg;
                 respState <= RespState_Go+3;
             
-            end else if (cmdInCRCReg[6] !== cmdInReg[0]) begin
+            end else if (cmdCRCReg[6] !== cmdInReg[0]) begin
                 $display("[SD CTRL] Response: CRC bit invalid ❌");
                 err <= 1;
             
@@ -543,6 +531,7 @@ module SDCardController(
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 1;
+            cmdCRCRst_ <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+1;
         end
@@ -553,6 +542,7 @@ module SDCardController(
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 1;
+            cmdCRCRst_ <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+2;
         end
@@ -563,6 +553,7 @@ module SDCardController(
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 1;
+            cmdCRCRst_ <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+3;
         end
@@ -596,6 +587,7 @@ module SDCardController(
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 0; // Don't wait for response before transitioning to `StateRead+1`
+            cmdCRCRst_ <= 1;
             state <= StateCmdOut;
             nextState <= StateRead+1;
         end
@@ -631,6 +623,7 @@ module SDCardController(
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 1;
+            cmdCRCRst_ <= 1;
             state <= StateCmdOut;
             nextState <= StateStop+1;
         end
@@ -654,17 +647,14 @@ module SDCardController(
         
         StateCmdOut: begin
             if (cmdOutCounter == 8) begin
-                cmdOutReg[47:41] <= cmdOutCRC;
+                cmdOutReg[47:41] <= cmdCRC;
             end
             
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
+                cmdCRCRst_ <= 0;
                 respState <= RespState_Go;
-                if (cmdOutRespWait) begin
-                    state <= StateCmdOut+1;
-                end else begin
-                    state <= nextState;
-                end
+                state <= (cmdOutRespWait ? StateCmdOut+1 : nextState);
             end
         end
         
