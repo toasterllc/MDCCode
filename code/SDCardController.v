@@ -120,12 +120,14 @@ module SDCardController(
     // State Machine Registers
     // ====================
     localparam StateIdle        = 0;    // +0
-    localparam StateWrite       = 1;    // +4
-    localparam StateRead        = 6;    // +2
-    localparam StateCmdOut      = 9;    // +1
-    localparam StateStop        = 11;   // +0
-    reg[3:0] state = 0;
-    reg[3:0] nextState = 0;
+    localparam StateWrite       = 1;    // +5
+    localparam StateRead        = 7;    // +3
+    localparam StateStop        = 11;   // +1
+    localparam StateCmdOut      = 13;   // +4
+    localparam StateLast        = 17;   // +3
+    reg[4:0] state = 0;
+    reg[4:0] nextState = 0;
+    initial `assert(`fits(state, StateLast));
     
     localparam RespState_Idle   = 0;    // +0
     localparam RespState_Go     = 1;    // +3
@@ -173,8 +175,8 @@ module SDCardController(
     reg[31:0] cmdOutArg = 0;
     wire cmdOut = cmdOutReg[47];
     reg[5:0] cmdOutCounter = 0;
-    reg cmdOutRespWait = 0;
     
+    reg cmdWrite = 0;
     reg[31:0] cmdAddr = 0;
     reg[22:0] cmdWriteLen = 0;
     
@@ -183,7 +185,7 @@ module SDCardController(
     // CRC (CMD in)
     // ====================
     wire[6:0] cmdCRC;
-    reg cmdCRCRst_ = 0;
+    wire cmdCRCRst_ = (state===StateCmdOut+1 || respState===RespState_Go+1);
     CRC7 CRC7_cmd(
         .clk(clk),
         .rst_(cmdCRCRst_),
@@ -216,7 +218,6 @@ module SDCardController(
     reg[15:0] dat2CRCReg = 0;
     reg[15:0] dat1CRCReg = 0;
     reg[15:0] dat0CRCReg = 0;
-    
     
     
     // ====================
@@ -262,24 +263,21 @@ module SDCardController(
         
         RespState_Go: begin
             if (!cmdInStaged) begin
-                cmdCRCRst_ <= 1;
                 respState <= RespState_Go+1;
             end
         end
         
         RespState_Go+1: begin
             if (!cmdInReg[39]) begin
-                // $display("MEOW cmdCRC: %b", cmdCRC);
-                cmdCRCRst_ <= 0;
+                $display("[SD CTRL] Response: Our CRC: %b", cmdCRC);
                 cmdCRCReg <= cmdCRC;
                 respState <= RespState_Go+2;
             end
         end
         
         RespState_Go+2: begin
-            // $display("HALLA cmdCRCReg / cmdInReg: %b / %b", cmdCRCReg, cmdInReg);
             if (!cmdInReg[47]) begin
-                // $display("MEOW resp: %b", cmdInReg);
+                $display("[SD CTRL] Response: Their CRC: %b (%b)", cmdInReg[7:1], cmdInReg);
                 resp <= cmdInReg;
                 respState <= RespState_Go+3;
             
@@ -511,7 +509,6 @@ module SDCardController(
             if (cmd_trigger) begin
                 cmdAddr <= cmd_addr;
                 cmdWriteLen <= cmd_writeLen;
-                // cmdLen <= cmd_len;
                 cmd_accepted <= 1;
                 state <= (cmd_write ? StateWrite : StateRead);
             end
@@ -519,33 +516,23 @@ module SDCardController(
         
         StateWrite: begin
             $display("[SD CTRL] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD55, 32'b0, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            cmdCRCRst_ <= 1;
-            cmdOutRespWait <= 1;
+            cmdOutCmd <= CMD55;
             state <= StateCmdOut;
             nextState <= StateWrite+1;
         end
         
         StateWrite+1: begin
             $display("[SD CTRL] Sending ACMD23 (SET_WR_BLK_ERASE_COUNT): %b", {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, ACMD23, {9'b0, cmdWriteLen}, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            cmdCRCRst_ <= 1;
-            cmdOutRespWait <= 1;
+            cmdOutCmd <= ACMD23;
+            cmdOutArg <= {9'b0, cmdWriteLen};
             state <= StateCmdOut;
             nextState <= StateWrite+2;
         end
         
         StateWrite+2: begin
             $display("[SD CTRL] Sending CMD25 (WRITE_MULTIPLE_BLOCK): %b", {2'b01, CMD25, cmdAddr, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD25, cmdAddr, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            cmdCRCRst_ <= 1;
-            cmdOutRespWait <= 1;
+            cmdOutCmd <= CMD25;
+            cmdOutArg <= cmdAddr;
             state <= StateCmdOut;
             nextState <= StateWrite+3;
         end
@@ -558,11 +545,7 @@ module SDCardController(
         StateWrite+4: begin
             if (datOutState === DatOutState_Done) begin
                 $display("[SD CTRL] Finished writing block");
-                if (cmd_trigger) begin
-                    state <= StateWrite+3;
-                end else begin
-                    state <= StateStop;
-                end
+                state <= (cmd_trigger ? StateWrite+3 : StateStop);
                 cmd_accepted <= 1;
             end
         end
@@ -574,11 +557,8 @@ module SDCardController(
         
         StateRead: begin
             $display("[SD CTRL] Sending CMD18 (READ_MULTIPLE_BLOCK): %b", {2'b01, CMD18, cmdAddr, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            cmdCRCRst_ <= 1;
-            cmdOutRespWait <= 0; // Don't wait for response before transitioning to `StateRead+1`
+            cmdOutCmd <= CMD18;
+            cmdOutArg <= cmdAddr;
             state <= StateCmdOut;
             nextState <= StateRead+1;
         end
@@ -587,44 +567,14 @@ module SDCardController(
         // TODO: have a watchdog countdown to ensure that we get a response
         StateRead+1: begin
             datInState <= DatInState_Go;
-            // cmdLen <= cmdLenNext;
             state <= StateRead+2;
         end
         
         StateRead+2: begin
             if (respState===RespState_Done && datInState===DatInState_Done) begin
                 $display("[SD CTRL] Finished reading block");
-                
-                if (cmd_trigger) begin
-                    state <= StateRead+1;
-                end else begin
-                    state <= StateStop;
-                end
+                state <= (cmd_trigger ? StateRead+1 : StateStop);
                 cmd_accepted <= 1;
-            end
-        end
-        
-        
-        
-        StateCmdOut: begin
-            if (cmdOutCounter == 8) begin
-                cmdOutReg[47:41] <= cmdCRC;
-            
-            end else if (!cmdOutCounter) begin
-                cmdOutActive <= 0;
-                cmdCRCRst_ <= 0;
-                respState <= RespState_Go;
-                if (cmdOutRespWait) begin
-                    state <= StateCmdOut+1;
-                end else begin
-                    state <= nextState;
-                end
-            end
-        end
-        
-        StateCmdOut+1: begin
-            if (respState === RespState_Done) begin
-                state <= nextState;
             end
         end
         
@@ -634,11 +584,7 @@ module SDCardController(
         
         StateStop: begin
             $display("[SD CTRL] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            cmdCRCRst_ <= 1;
-            cmdOutRespWait <= 1;
+            cmdOutCmd <= CMD12;
             state <= StateCmdOut;
             nextState <= StateStop+1;
         end
@@ -653,6 +599,35 @@ module SDCardController(
                 state <= StateIdle;
             end else begin
                 $display("[SD CTRL] StateStop: Card busy");
+            end
+        end
+        
+        
+        
+        
+        StateCmdOut: begin
+            cmdOutReg <= {2'b01, cmdOutCmd, cmdOutArg, 7'b0, 1'b1};
+            cmdOutCounter <= 47;
+            cmdOutActive <= 1;
+            state <= StateCmdOut+1;
+        end
+        
+        StateCmdOut+1: begin
+            case (cmdOutCounter)
+            8: cmdOutReg[47:41] <= cmdCRC;
+            0: state <= StateCmdOut+2;
+            endcase
+        end
+        
+        StateCmdOut+2: begin
+            cmdOutActive <= 0;
+            respState <= RespState_Go;
+            state <= (nextState===StateRead+1 ? StateRead+1 : StateCmdOut+3);
+        end
+        
+        StateCmdOut+3: begin
+            if (respState === RespState_Done) begin
+                state <= nextState;
             end
         end
         endcase
