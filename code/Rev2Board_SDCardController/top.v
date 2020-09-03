@@ -1,5 +1,14 @@
-`include "../SDCardController.v"
+`include "../Util.v"
 `include "../ClockGen.v"
+`include "../CRC7.v"
+`include "../CRC16.v"
+`include "../SDCardController.v"
+`include "../SDCardControllerCore.v"
+`include "../SDCardInitializer.v"
+
+`ifdef SIM
+`include "/usr/local/share/yosys/ice40/cells_sim.v"
+`endif
 
 `timescale 1ns/1ps
 
@@ -24,16 +33,6 @@ module Top(
     
     output reg[3:0]    led = 0
 );
-    // 180 MHz clock
-    wire clk;
-    ClockGen #(
-        .FREQ(180000000),
-		.DIVR(0),
-		.DIVF(59),
-		.DIVQ(2),
-		.FILTER_RANGE(1)
-    ) cg(.clk12mhz(clk12mhz), .clk(clk));
-    
     // ====================
     // SD Card Controller
     // ====================
@@ -41,15 +40,15 @@ module Top(
     reg sd_cmd_write = 0;
     reg[22:0] sd_cmd_writeLen = 0;
     reg[7:0] sd_cmd_addr = 0;
-    reg[15:0] sd_dataIn = 16'hFFFF;
-    wire sd_dataIn_accepted;
     wire[15:0] sd_dataOut;
     wire sd_dataOut_valid;
-    
-    // assign led = sd_dataOut[3:0];
+    reg[15:0] sd_dataIn = 16'hFFFF;
+    wire sd_dataIn_accepted;
+    wire err;
     
     SDCardController sdcontroller(
-        .clk(clk),
+        .clk12mhz(clk12mhz),
+        .clk(clk), // FIXME: remove once we have our own clock and SDCardController has its CDC logic in place
         
         // Command port
         .cmd_trigger(sd_cmd_trigger),
@@ -57,15 +56,16 @@ module Top(
         .cmd_write(sd_cmd_write),
         .cmd_writeLen(sd_cmd_writeLen),
         .cmd_addr(32'b0|sd_cmd_addr),
-        .cmd_rca(16'b0),
+        
+        // Data-out port
+        .dataOut(sd_dataOut),
+        .dataOut_valid(sd_dataOut_valid),
         
         // Data-in port
         .dataIn(sd_dataIn),
         .dataIn_accepted(sd_dataIn_accepted),
         
-        // Data-out port
-        .dataOut(sd_dataOut),
-        .dataOut_valid(sd_dataOut_valid),
+        .err(err),
         
         // SD port
         .sd_clk(sd_clk),
