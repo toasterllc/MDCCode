@@ -58,7 +58,7 @@ module Top(
     wire sd_dataIn_accepted;
     wire err;
     
-    SDCardController sdcontroller(
+    SDCardController SDCardController(
         .clk12mhz(clk12mhz),
         .clk(clk), // FIXME: remove once we have our own clock and SDCardController has its CDC logic in place
         

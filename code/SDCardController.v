@@ -44,18 +44,14 @@ module SDCardController(
     // ====================
     // Pin: sd_clk
     // ====================
-    // Synchronize `sd_init_done` into `clk` domain
-    reg initDone=0, initDoneTmp=0;
-    always @(negedge clk)
-        {initDone, initDoneTmp} <= {initDoneTmp, sd_init_done};
-    assign sd_clk = (initDone ? clk : sd_init_clk);
+    assign sd_clk = (initDone ? clk : init_sd_clk);
     
     // ====================
     // Pin: sd_cmd
     // ====================
     wire sd_cmdIn;
-    wire sd_cmdOut;
-    wire sd_cmdOutActive;
+    wire sd_cmdOut = (initDone ? core_sd_cmdOut : init_sd_cmdOut);
+    wire sd_cmdOutActive = (initDone ? core_sd_cmdOutActive : init_sd_cmdOutActive);
     SB_IO #(
         .PIN_TYPE(6'b1101_01),      // Output=PIN_OUTPUT_REGISTERED_ENABLE_REGISTERED, Input=PIN_INPUT
         .NEG_TRIGGER(1'b1)
@@ -74,8 +70,8 @@ module SDCardController(
     // Pin: sd_dat
     // ====================
     wire[3:0] sd_datIn;
-    wire[3:0] sd_datOut;
-    wire sd_datOutActive;
+    wire[3:0] sd_datOut = core_sd_datOut;
+    wire sd_datOutActive = core_sd_datOutActive;
     genvar i;
     for (i=0; i<4; i=i+1) begin
         SB_IO #(
@@ -92,27 +88,38 @@ module SDCardController(
     
     
     
-    wire sd_init_done;
-    wire sd_init_clk;
-    wire sd_init_cmdIn = sd_cmdIn;
-    wire sd_init_cmdOut;
-    wire sd_init_cmdOutActive;
-    wire[3:0] sd_init_datIn = sd_init_datIn;
+    // ====================
+    // SD Card Initializer
+    // ====================
+    wire init_done;
+    wire init_sd_clk;
+    wire init_sd_cmdIn = sd_cmdIn;
+    wire init_sd_cmdOut;
+    wire init_sd_cmdOutActive;
+    wire[3:0] init_sd_datIn = sd_datIn;
     SDCardInitializer SDCardInitializer(
         .clk12mhz(clk12mhz),
-        .done(sd_init_done),
+        .done(init_done),
         
-        .sd_clk(sd_init_clk),
-        .sd_cmdIn(sd_init_cmdIn),
-        .sd_cmdOut(sd_init_cmdOut),
-        .sd_cmdOutActive(sd_init_cmdOutActive),
-        .sd_datIn(sd_init_datIn)
+        .sd_clk(init_sd_clk),
+        .sd_cmdIn(init_sd_cmdIn),
+        .sd_cmdOut(init_sd_cmdOut),
+        .sd_cmdOutActive(init_sd_cmdOutActive),
+        .sd_datIn(init_sd_datIn)
     );
     
     
     
     
-    
+    // ====================
+    // SD Card Controller Core
+    // ====================
+    wire core_sd_cmdIn = sd_cmdIn;
+    wire core_sd_cmdOut;
+    wire core_sd_cmdOutActive;
+    wire[3:0] core_sd_datIn = sd_datIn;
+    wire[3:0] core_sd_datOut;
+    wire core_sd_datOutActive;
     // SDCardControllerCore SDCardControllerCore(
     //     .clk(clk),
     //
@@ -131,13 +138,23 @@ module SDCardController(
     //
     //     .err(err),
     //
-    //     .sd_cmdIn(sd_cmdIn),
-    //     .sd_cmdOut(sd_cmdOut),
-    //     .sd_cmdOutActive(sd_cmdOutActive),
-    //     .sd_datIn(sd_datIn),
-    //     .sd_datOut(sd_datOut),
-    //     .sd_datOutActive(sd_datOutActive)
+    //     .sd_cmdIn(core_sd_cmdIn),
+    //     .sd_cmdOut(core_sd_cmdOut),
+    //     .sd_cmdOutActive(core_sd_cmdOutActive),
+    //     .sd_datIn(core_sd_datIn),
+    //     .sd_datOut(core_sd_datOut),
+    //     .sd_datOutActive(core_sd_datOutActive)
     // );
+    
+    
+    // ====================
+    // Logic
+    // ====================
+    
+    // Synchronize `init_done` into `clk` domain
+    reg initDone=0, initDoneTmp=0;
+    always @(negedge clk)
+        {initDone, initDoneTmp} <= {initDoneTmp, init_done};
     
     
 endmodule
