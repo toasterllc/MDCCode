@@ -33,6 +33,18 @@ module Top(
     
     output reg[3:0]    led = 0
 );
+`ifdef SIM
+    reg clk12mhz = 0;
+    initial begin
+        forever begin
+            clk12mhz = 0;
+            #42;
+            clk12mhz = 1;
+            #42;
+        end
+    end
+`endif
+    
     // ====================
     // SD Card Controller
     // ====================

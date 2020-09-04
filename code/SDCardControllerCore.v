@@ -155,6 +155,7 @@ module SDCardControllerCore(
     wire[15:0] datCRC[3:0];
     wire[15:0] datCRCNext[3:0];
     reg datCRCRst_ = 0;
+    genvar i;
     for (i=0; i<4; i=i+1) begin
         CRC16 CRC16_dat(
             .clk(clk),

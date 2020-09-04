@@ -40,9 +40,15 @@ module SDCardController(
     ) ClockGen(.clk12mhz(clk12mhz), .clk(clk));
     
     
-    assign sd_clk = clk; // FIXME: once we add SDCardInitializer, this should have some logic to switch the clock
     
-    
+    // ====================
+    // Pin: sd_clk
+    // ====================
+    // Synchronize `sd_init_done` into `clk` domain
+    reg initDone=0, initDoneTmp=0;
+    always @(negedge clk)
+        {initDone, initDoneTmp} <= {initDoneTmp, sd_init_done};
+    assign sd_clk = (initDone ? clk : sd_init_clk);
     
     // ====================
     // Pin: sd_cmd
@@ -86,32 +92,52 @@ module SDCardController(
     
     
     
-    
-    SDCardControllerCore SDCardControllerCore(
-        .clk(clk),
+    wire sd_init_done;
+    wire sd_init_clk;
+    wire sd_init_cmdIn = sd_cmdIn;
+    wire sd_init_cmdOut;
+    wire sd_init_cmdOutActive;
+    wire[3:0] sd_init_datIn = sd_init_datIn;
+    SDCardInitializer SDCardInitializer(
+        .clk12mhz(clk12mhz),
+        .done(sd_init_done),
         
-        .cmd_trigger(cmd_trigger),
-        .cmd_accepted(cmd_accepted),
-        .cmd_write(cmd_write),
-        .cmd_writeLen(cmd_writeLen),
-        .cmd_addr(cmd_addr),
-        .cmd_rca(16'b0), // FIXME: hook to up to SDCardInitializer output
-        
-        .dataOut(dataOut),
-        .dataOut_valid(dataOut_valid),
-        
-        .dataIn(dataIn),
-        .dataIn_accepted(dataIn_accepted),
-        
-        .err(err),
-        
-        .sd_cmdIn(sd_cmdIn),
-        .sd_cmdOut(sd_cmdOut),
-        .sd_cmdOutActive(sd_cmdOutActive),
-        .sd_datIn(sd_datIn),
-        .sd_datOut(sd_datOut),
-        .sd_datOutActive(sd_datOutActive)
+        .sd_clk(sd_init_clk),
+        .sd_cmdIn(sd_init_cmdIn),
+        .sd_cmdOut(sd_init_cmdOut),
+        .sd_cmdOutActive(sd_init_cmdOutActive),
+        .sd_datIn(sd_init_datIn)
     );
+    
+    
+    
+    
+    
+    // SDCardControllerCore SDCardControllerCore(
+    //     .clk(clk),
+    //
+    //     .cmd_trigger(cmd_trigger),
+    //     .cmd_accepted(cmd_accepted),
+    //     .cmd_write(cmd_write),
+    //     .cmd_writeLen(cmd_writeLen),
+    //     .cmd_addr(cmd_addr),
+    //     .cmd_rca(16'b0), // FIXME: hook to up to SDCardInitializer output
+    //
+    //     .dataOut(dataOut),
+    //     .dataOut_valid(dataOut_valid),
+    //
+    //     .dataIn(dataIn),
+    //     .dataIn_accepted(dataIn_accepted),
+    //
+    //     .err(err),
+    //
+    //     .sd_cmdIn(sd_cmdIn),
+    //     .sd_cmdOut(sd_cmdOut),
+    //     .sd_cmdOutActive(sd_cmdOutActive),
+    //     .sd_datIn(sd_datIn),
+    //     .sd_datOut(sd_datOut),
+    //     .sd_datOutActive(sd_datOutActive)
+    // );
     
     
 endmodule
