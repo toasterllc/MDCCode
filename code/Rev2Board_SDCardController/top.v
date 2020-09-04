@@ -216,7 +216,7 @@ module Top(
     end
     
     initial begin
-        #1000000;
+        #100000000;
         $finish;
     end
     
@@ -230,9 +230,12 @@ module Top(
     //   Receive commands, issue responses
     // ====================
     reg[47:0] sim_cmdIn = 0;
+    wire[15:0] sim_cmdInRCA = sim_cmdIn[39:24];
     wire[5:0] sim_cmdIndex = sim_cmdIn[45:40];
-    reg[47:0] sim_respOut = 0;
+    reg[135:0] sim_respOut = 0;
     reg[7:0] sim_respLen = 0;
+    
+    reg[15:0] sim_rca = 16'h0000;
     
     reg sim_cmdOut = 1'bz;
     assign sd_cmd = sim_cmdOut;
@@ -240,8 +243,8 @@ module Top(
     reg sim_acmd = 0;
     wire[6:0] sim_cmd = {sim_acmd, sim_cmdIndex};
     
-    localparam PAYLOAD_DATA = {4096{1'b1}};
-    // localparam PAYLOAD_DATA = {128{32'h42434445}};
+    // localparam PAYLOAD_DATA = {4096{1'b1}};
+    localparam PAYLOAD_DATA = {128{32'h42434445}};
     reg[3:0] sim_datOut = 4'bzzzz;
     reg[4095:0] sim_payloadDataReg = 0;
     assign sd_dat = sim_datOut;
@@ -249,13 +252,23 @@ module Top(
     reg sim_recvWriteData = 0;
     reg sim_sendReadData = 0;
     
+    
     localparam CMD0     = {1'b0, 6'd0};     // GO_IDLE_STATE
+    localparam CMD2     = {1'b0, 6'd2};     // ALL_SEND_CID
+    localparam CMD3     = {1'b0, 6'd3};     // SEND_RELATIVE_ADDR
+    localparam CMD6     = {1'b0, 6'd6};     // SWITCH_FUNC
+    localparam CMD7     = {1'b0, 6'd7};     // SELECT_CARD/DESELECT_CARD
+    localparam CMD8     = {1'b0, 6'd8};     // SEND_IF_COND
+    localparam CMD11    = {1'b0, 6'd11};    // VOLTAGE_SWITCH
     localparam CMD12    = {1'b0, 6'd12};    // STOP_TRANSMISSION
     localparam CMD18    = {1'b0, 6'd18};    // READ_MULTIPLE_BLOCK
     localparam CMD25    = {1'b0, 6'd25};    // WRITE_MULTIPLE_BLOCK
     localparam CMD55    = {1'b0, 6'd55};    // APP_CMD
     
+    localparam ACMD6    = {1'b1, 6'd6};     // SWITCH_FUNC
     localparam ACMD23   = {1'b1, 6'd23};    // SET_WR_BLK_ERASE_COUNT
+    localparam ACMD41   = {1'b1, 6'd41};    // SD_SEND_OP_COND
+
     
     initial begin
         reg halla;
@@ -307,17 +320,96 @@ module Top(
                 // Issue response if needed
                 if (sim_cmdIndex) begin
                     case (sim_cmd)
-                    // TODO: make this a real CMD12 response. right now it's a CMD3 response.
-                    CMD12:      begin sim_respOut=48'h03aaaa0520d1; sim_respLen=48;  end
-                    // TODO: make this a real CMD18 response. right now it's a CMD3 response.
-                    CMD18:      begin sim_respOut=48'h03aaaa0520d1; sim_respLen=48;  end
-                    // TODO: make this a real CMD18 response. right now it's a CMD3 response.
-                    CMD25:      begin sim_respOut=48'h03aaaa0520d1; sim_respLen=48;  end
-                    // TODO: make this a real CMD55 response. right now it's a CMD3 response.
-                    CMD55:      begin sim_respOut=48'h03aaaa0520d1; sim_respLen=48;  end
-                    // TODO: make this a real ACMD23 response. right now it's a CMD3 response.
-                    ACMD23:     begin sim_respOut=48'h03aaaa0520d1; sim_respLen=48;  end
-                    default:    begin  $display("[SD CARD] BAD COMMAND: CMD%0d", sim_cmd); $finish; end
+                    
+                    CMD2: begin
+                        sim_respOut=136'h3f0353445352313238808bb79d66014677;
+                        sim_respLen=136;
+                    end
+                    
+                    CMD3: begin
+                        sim_rca = 16'hAAAA;
+                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD6: begin
+                        sim_respOut=136'h0600000900ddffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD7: begin
+                        if (sim_cmdInRCA !== sim_rca) begin
+                            $display("[SD CARD] Bad RCA received with CMD%0d: %h ❌", sim_cmdIndex, sim_cmdInRCA);
+                            $finish;
+                        end
+                        sim_respOut=136'h070000070075ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD8: begin
+                        sim_respOut=136'h08000001aa13ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD11: begin
+                        sim_respOut=136'h0B0000070081ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD12: begin
+                        // TODO: make this a real CMD12 response. right now it's a CMD3 response.
+                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD18: begin
+                        // TODO: make this a real CMD18 response. right now it's a CMD3 response.
+                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD25: begin
+                        // TODO: make this a real CMD18 response. right now it's a CMD3 response.
+                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    CMD55: begin
+                        if (sim_cmdInRCA !== sim_rca) begin
+                            $display("[SD CARD] Bad RCA received with CMD%0d: %h ❌", sim_cmdIndex, sim_cmdInRCA);
+                            $finish;
+                        end
+                        sim_respOut=136'h370000012083ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    ACMD6: begin
+                        sim_respOut=136'h0600000920b9ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    ACMD23: begin
+                        // TODO: make this a real ACMD23 response. right now it's a CMD3 response.
+                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
+                    ACMD41: begin
+                        if ($urandom % 2) begin
+                            $display("[SD CARD] ACMD41: card busy");
+                            sim_respOut=136'h3f00ff8080ffffffffffffffffffffffff;
+                        end
+                        else begin
+                            $display("[SD CARD] ACMD41: card ready");
+                            sim_respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
+                        end
+                        sim_respLen=48;
+                    end
+                    
+                    default: begin
+                        $display("[SD CARD] BAD COMMAND: CMD%0d", sim_cmd);
+                        $finish;
+                    end
                     endcase
                     
                     // Signal busy (DAT=0) if we were previously writing,
@@ -344,16 +436,16 @@ module Top(
                     // sim_respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
                     $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
                         sim_respOut,
-                        sim_respOut[47:46],     // preamble
-                        sim_respOut[45:40],     // cmd
-                        sim_respOut[39:8],      // arg
-                        sim_respOut[7:1],       // crc
-                        sim_respOut[0],         // end bit
+                        sim_respOut[135 : 134], // preamble
+                        sim_respOut[133 : 128], // cmd
+                        sim_respOut[127 :  96], // arg
+                        sim_respOut[95  :  89], // crc
+                        sim_respOut[88],        // end bit
                     );
                     
                     for (i=0; i<sim_respLen; i++) begin
                         wait(!sd_clk);
-                        sim_cmdOut = sim_respOut[47];
+                        sim_cmdOut = sim_respOut[135];
                         sim_respOut = sim_respOut<<1;
                         wait(sd_clk);
                     end
@@ -361,17 +453,34 @@ module Top(
                 wait(!sd_clk);
                 sim_cmdOut = 1'bz;
                 
-                // Note whether the next command is an application-specific command
-                sim_acmd = (sim_cmdIndex==55);
-                // TODO: if we were writing, signal busy for a random number of cycles
-                if (sim_cmdIndex == 12) begin
+                case (sim_cmd)
+                CMD11: begin
+                    // Drive CMD/DAT lines low
+                    sim_cmdOut = 0;
+                    sim_datOut = 0;
+                    // Wait 5ms
+                    #(5*1000000);
+                    // Let go of CMD line
+                    sim_cmdOut = 1'bz;
+                    // Wait 1ms
+                    #(1*1000000);
+                    // Let go of DAT lines
+                    sim_datOut = 4'bzzzz;
+                end
+                
+                CMD12: begin
                     sim_recvWriteData = 0;
                     sim_sendReadData = 0;
-                end else if (sim_cmdIndex == 25) begin
-                    sim_recvWriteData = 1;
-                end else if (sim_cmdIndex == 18) begin
+                end
+                
+                CMD18: begin
                     sim_sendReadData = 1;
                 end
+                
+                CMD25: begin
+                    sim_recvWriteData = 1;
+                end
+                endcase
                 
                 // Stop signaling busy, if we were signaling busy
                 if (signalBusy) begin
@@ -384,6 +493,9 @@ module Top(
                     
                     sim_datOut[0] = 1'bz;
                 end
+                
+                // Note whether the next command is an application-specific command
+                sim_acmd = (sim_cmdIndex==55);
             end
             wait(!sd_clk);
         end

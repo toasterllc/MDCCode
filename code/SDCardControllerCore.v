@@ -4,6 +4,7 @@
 
 module SDCardControllerCore(
     input wire          clk,
+    input wire[15:0]    rca,
     
     // Command port
     input wire          cmd_trigger,
@@ -11,7 +12,6 @@ module SDCardControllerCore(
     input wire          cmd_write,
     input wire[22:0]    cmd_writeLen,
     input wire[31:0]    cmd_addr,
-    input wire[15:0]    cmd_rca,
     
     // Data-in port
     input wire[15:0]    dataIn,
@@ -481,8 +481,7 @@ module SDCardControllerCore(
         
         StateWrite: begin
             $display("[SD CTRL] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
-            // TODO: the argument needs to be the card's RCA
-            cmdOutReg <= {2'b01, CMD55, {cmd_rca, 16'b0}, 7'b0, 1'b1};
+            cmdOutReg <= {2'b01, CMD55, {rca, 16'b0}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
             cmdOutRespWait <= 1;

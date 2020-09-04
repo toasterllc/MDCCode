@@ -27,6 +27,7 @@
 
 module SDCardInitializer(
     input wire          clk12mhz,
+    output reg[15:0]    rca = 0,
     output reg          done = 0,
     
     // SDIO port
@@ -115,7 +116,6 @@ module SDCardInitializer(
     reg[5:0] nextState = 0;
     reg[6:0] respInExpectedCRC = 0;
     reg respCheckCRC = 0;
-    reg[15:0] sdRCA = 0;
     
     localparam ClkDisableDelay = ((5*ClkFreq)/1000)-1;
     reg[10:0] delayCounter = 0;
@@ -257,10 +257,13 @@ module SDCardInitializer(
         // After the delay, continue once the SD card lets go of the DAT lines
         // See Section 4.2.4.2
         StateInit+8: begin
-            $display("[SD HOST] Enabling clock and waiting for SD card to be ready");
+            if (clkEn_) $display("[SD HOST] Enabling clock and waiting for card ready...");
             clkEn_ <= 0;
             if (sd_datIn[0]) begin
+                $display("[SD HOST] Card ready");
                 state <= StateInit+9;
+            end else begin
+                $display("[SD HOST] Card busy");
             end
         end
         
@@ -293,7 +296,7 @@ module SDCardInitializer(
         end
         
         StateInit+11: begin
-            sdRCA <= cmdInReg[39:24];
+            rca <= cmdInReg[39:24];
             state <= StateInit+12;
         end
         
@@ -304,7 +307,7 @@ module SDCardInitializer(
         // ====================
         StateInit+12: begin
             $display("[SD HOST] Sending CMD7");
-            cmdOutReg <= {2'b01, CMD7, {sdRCA, 16'b0}, 7'b0, 1'b1};
+            cmdOutReg <= {2'b01, CMD7, {rca, 16'b0}, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
@@ -318,7 +321,7 @@ module SDCardInitializer(
         // ====================
         StateInit+13: begin
             $display("[SD HOST] Sending ACMD6");
-            cmdOutReg <= {2'b01, CMD55, {sdRCA, 16'b0}, 7'b0, 1'b1};
+            cmdOutReg <= {2'b01, CMD55, {rca, 16'b0}, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
@@ -367,7 +370,7 @@ module SDCardInitializer(
         end
         
         StateInit+17: begin
-            $display("[SD HOST] *** DONE ***");
+            if (!done) $display("[SD HOST] *** DONE ***");
             done <= 1;
         end
         

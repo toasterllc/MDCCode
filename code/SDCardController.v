@@ -92,6 +92,7 @@ module SDCardController(
     // SD Card Initializer
     // ====================
     wire init_done;
+    wire[15:0] init_rca;
     wire init_sd_clk;
     wire init_sd_cmdIn = sd_cmdIn;
     wire init_sd_cmdOut;
@@ -99,6 +100,7 @@ module SDCardController(
     wire[3:0] init_sd_datIn = sd_datIn;
     SDCardInitializer SDCardInitializer(
         .clk12mhz(clk12mhz),
+        .rca(init_rca),
         .done(init_done),
         
         .sd_clk(init_sd_clk),
@@ -114,43 +116,47 @@ module SDCardController(
     // ====================
     // SD Card Controller Core
     // ====================
+    wire core_cmd_trigger = cmd_trigger && initDone;
+    wire[15:0] core_rca = init_rca;
     wire core_sd_cmdIn = sd_cmdIn;
     wire core_sd_cmdOut;
     wire core_sd_cmdOutActive;
     wire[3:0] core_sd_datIn = sd_datIn;
     wire[3:0] core_sd_datOut;
     wire core_sd_datOutActive;
-    // SDCardControllerCore SDCardControllerCore(
-    //     .clk(clk),
-    //
-    //     .cmd_trigger(cmd_trigger),
-    //     .cmd_accepted(cmd_accepted),
-    //     .cmd_write(cmd_write),
-    //     .cmd_writeLen(cmd_writeLen),
-    //     .cmd_addr(cmd_addr),
-    //     .cmd_rca(16'b0), // FIXME: hook to up to SDCardInitializer output
-    //
-    //     .dataOut(dataOut),
-    //     .dataOut_valid(dataOut_valid),
-    //
-    //     .dataIn(dataIn),
-    //     .dataIn_accepted(dataIn_accepted),
-    //
-    //     .err(err),
-    //
-    //     .sd_cmdIn(core_sd_cmdIn),
-    //     .sd_cmdOut(core_sd_cmdOut),
-    //     .sd_cmdOutActive(core_sd_cmdOutActive),
-    //     .sd_datIn(core_sd_datIn),
-    //     .sd_datOut(core_sd_datOut),
-    //     .sd_datOutActive(core_sd_datOutActive)
-    // );
+    SDCardControllerCore SDCardControllerCore(
+        .clk(clk),
+        .rca(core_rca),
+        
+        .cmd_trigger(core_cmd_trigger),
+        .cmd_accepted(cmd_accepted),
+        .cmd_write(cmd_write),
+        .cmd_writeLen(cmd_writeLen),
+        .cmd_addr(cmd_addr),
+        
+        .dataOut(dataOut),
+        .dataOut_valid(dataOut_valid),
+        
+        .dataIn(dataIn),
+        .dataIn_accepted(dataIn_accepted),
+        
+        .err(err),
+        
+        .sd_cmdIn(core_sd_cmdIn),
+        .sd_cmdOut(core_sd_cmdOut),
+        .sd_cmdOutActive(core_sd_cmdOutActive),
+        .sd_datIn(core_sd_datIn),
+        .sd_datOut(core_sd_datOut),
+        .sd_datOutActive(core_sd_datOutActive)
+    );
+    
+    
+    
     
     
     // ====================
     // Logic
     // ====================
-    
     // Synchronize `init_done` into `clk` domain
     reg initDone=0, initDoneTmp=0;
     always @(negedge clk)
