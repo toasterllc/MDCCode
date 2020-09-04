@@ -88,6 +88,11 @@ module SDCardController(
     
     
     
+    // wire init_done = 1;
+    // wire init_sd_clk = 0;
+    // wire init_sd_cmdOut = 0;
+    // wire init_sd_cmdOutActive = 0;
+    // wire[15:0] init_rca = 0;
     // ====================
     // SD Card Initializer
     // ====================
@@ -102,14 +107,14 @@ module SDCardController(
         .clk12mhz(clk12mhz),
         .rca(init_rca),
         .done(init_done),
-        
+
         .sd_clk(init_sd_clk),
         .sd_cmdIn(init_sd_cmdIn),
         .sd_cmdOut(init_sd_cmdOut),
         .sd_cmdOutActive(init_sd_cmdOutActive),
         .sd_datIn(init_sd_datIn)
     );
-    
+
     
     
     

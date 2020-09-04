@@ -235,16 +235,13 @@ module SDCardControllerCore(
         
         RespState_Go+1: begin
             if (!cmdInReg[39]) begin
-                // $display("MEOW cmdInCRC: %b", cmdInCRC);
                 cmdInCRCReg <= cmdInCRC;
                 respState <= RespState_Go+2;
             end
         end
         
         RespState_Go+2: begin
-            // $display("HALLA cmdInCRCReg / cmdInReg: %b / %b", cmdInCRCReg, cmdInReg);
             if (!cmdInReg[47]) begin
-                // $display("MEOW resp: %b", cmdInReg);
                 resp <= cmdInReg;
                 respState <= RespState_Go+3;
             
@@ -322,7 +319,6 @@ module SDCardControllerCore(
             datOut0CRCReg <= datCRCNext[0];
             datOutState <= DatOutState_Go+3;
             datOutCounter <= 15;
-            // $display("[SD CTRL] DatOut: output CRCs");
         end
         
         // TODO: for perf, try loading datOutReg entirely so we only do this 4 times instead of 16
@@ -436,8 +432,6 @@ module SDCardControllerCore(
         
         // Check CRC for each DAT line
         DatInState_Go+4: begin
-            // $display("EXPECTED CRCs: %h, %h, %h, %h", datIn3CRCReg, datIn2CRCReg, datIn1CRCReg, datIn0CRCReg);
-            // $display("Our CRC: %h", datIn3CRCReg);
             // Handle invalid CRC
             if (datIn3CRCReg[15]!==datInReg[11] ||
                 datIn2CRCReg[15]!==datInReg[10] ||

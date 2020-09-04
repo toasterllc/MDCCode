@@ -40,7 +40,7 @@ module Top(
     
     initial begin
         #100000000;
-        $finish;
+        `finish;
     end
     
     initial begin

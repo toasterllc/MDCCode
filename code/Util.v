@@ -7,3 +7,9 @@
 `else
     `define assert(cond)
 `endif
+
+`ifdef SIM
+    `define finish $finish
+`else
+    `define finish
+`endif

@@ -209,13 +209,13 @@ module SDCardInitializer(
             // Verify the command is all 1's
             if (cmdInReg[45:40] !== 6'b111111) begin
                 $display("[SD HOST] Bad command: %b", cmdInReg[45:40]);
-                $finish;
+                `finish;
                 state <= StateError;
             end
             // Verify CRC is all 1's
             else if (cmdInReg[7:1] !== 7'b1111111) begin
                 $display("[SD HOST] Bad CRC: %b", cmdInReg[7:1]);
-                $finish;
+                `finish;
                 state <= StateError;
             end
             // Retry AMCD41 if the card wasn't ready (busy)
@@ -223,7 +223,7 @@ module SDCardInitializer(
             // Verify that we can switch to 1.8V signaling voltage (s18a)
             else if (cmdInReg[32] !== 1'b1) begin
                 $display("[SD HOST] Bad s18a: %b", cmdInReg[32]);
-                $finish;
+                `finish;
                 state <= StateError;
             end
             // Otherwise, proceed
@@ -414,7 +414,6 @@ module SDCardInitializer(
         StateRespIn+1: begin
             if (cmdInStaged[0]) begin
                 $display("[SD HOST] BAD TRANSMISSION BIT");
-                // $finish;
                 state <= StateError;
                 
             end else begin
@@ -441,7 +440,6 @@ module SDCardInitializer(
             // Verify that the CRC is OK (if requested), and that the stop bit is OK
             if ((respCheckCRC && respInExpectedCRC!==cmdInReg[7:1]) || !cmdInReg[0]) begin
                 $display("[SD HOST] ***** BAD CRC *****");
-                // $finish;
                 state <= StateError;
             
             end else begin
@@ -468,7 +466,7 @@ module SDCardInitializer(
         
         StateError: begin
             $display("[SD HOST] ***** ERROR *****");
-            $finish;
+            `finish;
             cmdOutActive <= 0;
             cmdOutCRCRst_ <= 0;
             cmdInActive <= 0;

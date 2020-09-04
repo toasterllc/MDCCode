@@ -72,8 +72,6 @@ module SDCardSim(
                     wait(!sd_clk);
                     
                     if (i == 39) begin
-                        // $display("[SD CARD] MEOW CRC: %b", sim_cmdInCRC);
-                        // $finish;
                         sim_ourCRC = sim_cmdInCRC;
                         sim_cmdInCRCRst_ = 0;
                     end
@@ -117,7 +115,7 @@ module SDCardSim(
                     CMD7: begin
                         if (sim_cmdInRCA !== sim_rca) begin
                             $display("[SD CARD] Bad RCA received with CMD%0d: %h ❌", sim_cmdIndex, sim_cmdInRCA);
-                            $finish;
+                            `finish;
                         end
                         sim_respOut=136'h070000070075ffffffffffffffffffffff;
                         sim_respLen=48;
@@ -154,7 +152,7 @@ module SDCardSim(
                     CMD55: begin
                         if (sim_cmdInRCA !== sim_rca) begin
                             $display("[SD CARD] Bad RCA received with CMD%0d: %h ❌", sim_cmdIndex, sim_cmdInRCA);
-                            $finish;
+                            `finish;
                         end
                         sim_respOut=136'h370000012083ffffffffffffffffffffff;
                         sim_respLen=48;
@@ -185,7 +183,7 @@ module SDCardSim(
                     
                     default: begin
                         $display("[SD CARD] BAD COMMAND: CMD%0d", sim_cmd);
-                        $finish;
+                        `finish;
                     end
                     endcase
                     
