@@ -25,7 +25,9 @@ module SDCardController(
     // SDIO port
     output wire         sd_clk,
     inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat
+    inout wire[3:0]     sd_dat,
+    
+    output wire[3:0]    led
 );
     // ====================
     // 180 MHz Clock PLL
@@ -52,16 +54,19 @@ module SDCardController(
     wire sd_cmdIn;
     wire sd_cmdOut = (initDone ? core_sd_cmdOut : init_sd_cmdOut);
     wire sd_cmdOutActive = (initDone ? core_sd_cmdOutActive : init_sd_cmdOutActive);
-    SB_IO #(
-        .PIN_TYPE(6'b1101_01),      // Output=PIN_OUTPUT_REGISTERED_ENABLE_REGISTERED, Input=PIN_INPUT
-        .NEG_TRIGGER(1'b1)
-    ) SB_IO (
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_CLK(clk),
-        .OUTPUT_ENABLE(sd_cmdOutActive),
-        .D_OUT_0(sd_cmdOut),
-        .D_IN_0(sd_cmdIn)
-    );
+    `ifdef SIM
+        assign sd_cmd = (sd_cmdOutActive ? sd_cmdOut : 1'bz);
+        assign sd_cmdIn = sd_cmd;
+    `else
+        SB_IO #(
+            .PIN_TYPE(6'b1010_01)
+        ) SB_IO (
+            .PACKAGE_PIN(sd_cmd),
+            .OUTPUT_ENABLE(sd_cmdOutActive),
+            .D_OUT_0(sd_cmdOut),
+            .D_IN_0(sd_cmdIn)
+        );
+    `endif
     
     
     
@@ -74,16 +79,19 @@ module SDCardController(
     wire sd_datOutActive = core_sd_datOutActive;
     genvar i;
     for (i=0; i<4; i=i+1) begin
-        SB_IO #(
-            .PIN_TYPE(6'b1101_01),      // Output=PIN_OUTPUT_REGISTERED_ENABLE_REGISTERED, Input=PIN_INPUT
-            .NEG_TRIGGER(1'b1)
-        ) SB_IO (
-            .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_CLK(clk),
-            .OUTPUT_ENABLE(sd_datOutActive),
-            .D_OUT_0(sd_datOut[i]),
-            .D_IN_0(sd_datIn[i])
-        );
+        `ifdef SIM
+            assign sd_dat[i] = (sd_datOutActive ? sd_datOut[i] : 1'bz);
+            assign sd_datIn[i] = sd_dat[i];
+        `else
+            SB_IO #(
+                .PIN_TYPE(6'b1010_01)
+            ) SB_IO (
+                .PACKAGE_PIN(sd_dat[i]),
+                .OUTPUT_ENABLE(sd_datOutActive),
+                .D_OUT_0(sd_datOut[i]),
+                .D_IN_0(sd_datIn[i])
+            );
+        `endif
     end
     
     
@@ -166,6 +174,7 @@ module SDCardController(
     reg initDone=0, initDoneTmp=0;
     always @(negedge clk)
         {initDone, initDoneTmp} <= {initDoneTmp, init_done};
+    assign led[0] = initDone;
     
     
 endmodule

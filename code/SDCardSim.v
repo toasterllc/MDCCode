@@ -90,6 +90,7 @@ module SDCardSim(
                     $display("[SD CARD] ^^^ CRC Valid ✅");
                 end else begin
                     $display("[SD CARD] ^^^ Bad CRC: ours=%b, theirs=%b ❌", sim_ourCRC, sim_cmdIn[7:1]);
+                    `finish;
                 end
                 
                 // Issue response if needed

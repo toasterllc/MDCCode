@@ -18,11 +18,11 @@
 
 module Top(
 `ifndef SIM
-    input wire          clk12mhz,
-    output wire         sd_clk,
-    inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat,
-    output reg[3:0]     led = 0
+    input wire          clk12mhz    /* synthesis syn_keep=1 */,
+    output wire         sd_clk      /* synthesis syn_keep=1 */,
+    inout wire          sd_cmd      /* synthesis syn_keep=1 */,
+    inout wire[3:0]     sd_dat      /* synthesis syn_keep=1 */,
+    output wire[3:0]    led         /* synthesis syn_keep=1 */
 `endif
 );
     
@@ -31,7 +31,7 @@ module Top(
     wire        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
-    reg[3:0]    led = 0;
+    wire[3:0]   led;
     
     initial begin
         $dumpfile("top.vcd");
@@ -62,13 +62,15 @@ module Top(
     // ====================
     // SD Card Controller
     // ====================
+    wire clk; // FIXME: remove once we have our own clock and SDCardController has its CDC logic in place
     reg sd_cmd_trigger = 0;
+    wire sd_cmd_accepted;
     reg sd_cmd_write = 0;
     reg[22:0] sd_cmd_writeLen = 0;
     reg[7:0] sd_cmd_addr = 0;
     wire[15:0] sd_dataOut;
     wire sd_dataOut_valid;
-    reg[15:0] sd_dataIn = 16'hFFFF;
+    reg[15:0] sd_dataIn = 16'h1234;
     wire sd_dataIn_accepted;
     wire err;
     
@@ -96,7 +98,9 @@ module Top(
         // SD port
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
+        .sd_dat(sd_dat),
+        
+        .led(led)
     );
     
     // ====================
@@ -104,36 +108,31 @@ module Top(
     // ====================
     reg[3:0] state = 0;
     
-    // Toggle between reading/writing blocks
-    always @(posedge clk) begin
-        case (state)
-        0: begin
-            sd_cmd_trigger <= 1;
-            if (sd_cmd_accepted) begin
-                if (sd_cmd_write) begin
-                    $display("[SD HOST] Write accepted");
-                end else begin
-                    $display("[SD HOST] Read accepted");
-                end
-                state <= 1;
-            end
-        end
-        
-        1: begin
-            sd_cmd_trigger <= 0;
-            if (sd_cmd_accepted) begin
-                $display("[SD HOST] Stop accepted");
-                sd_cmd_write <= !sd_cmd_write;
-                state <= 0;
-            end
-        end
-        endcase
-        
-        if (sd_dataOut_valid) begin
-            $display("[SD HOST] Got read data: %h", sd_dataOut);
-            led <= sd_dataOut;
-        end
-    end
+    // // Toggle between reading/writing blocks
+    // always @(posedge clk) begin
+    //     case (state)
+    //     0: begin
+    //         sd_cmd_trigger <= 1;
+    //         if (sd_cmd_accepted) begin
+    //             if (sd_cmd_write) begin
+    //                 $display("[SD HOST] Write accepted");
+    //             end else begin
+    //                 $display("[SD HOST] Read accepted");
+    //             end
+    //             state <= 1;
+    //         end
+    //     end
+    //
+    //     1: begin
+    //         sd_cmd_trigger <= 0;
+    //         if (sd_cmd_accepted) begin
+    //             $display("[SD HOST] Stop accepted");
+    //             sd_cmd_write <= !sd_cmd_write;
+    //             state <= 0;
+    //         end
+    //     end
+    //     endcase
+    // end
     
     // // Read 2 blocks, write 2 blocks
     // always @(posedge clk) begin
