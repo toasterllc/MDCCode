@@ -34,7 +34,7 @@ module SDCardInitializer(
     input wire          sd_cmdIn,
     output wire         sd_cmdOut,
     output wire         sd_cmdOutActive,
-    input wire[3:0]     sd_dat
+    input wire[3:0]     sd_datIn
 );
     // ====================
     // Internal clock (400 kHz)
@@ -95,11 +95,11 @@ module SDCardInitializer(
     // ====================
     // State Machine
     // ====================
-    localparam StateInit        = 0;     // +16
-    localparam StateCmdOut      = 17;    // +1
-    localparam StateRespIn      = 19;    // +3
-    localparam StateDelay       = 23;    // +0
-    localparam StateError       = 24;    // +0
+    localparam StateInit        = 0;     // +17
+    localparam StateCmdOut      = 18;    // +1
+    localparam StateRespIn      = 20;    // +3
+    localparam StateDelay       = 24;    // +0
+    localparam StateError       = 25;    // +0
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -259,7 +259,7 @@ module SDCardInitializer(
         StateInit+8: begin
             $display("[SD HOST] Enabling clock and waiting for SD card to be ready");
             clkEn_ <= 0;
-            if (sd_dat[0]) begin
+            if (sd_datIn[0]) begin
                 state <= StateInit+9;
             end
         end
@@ -357,10 +357,18 @@ module SDCardInitializer(
             nextState <= StateInit+16;
         end
         
+        // Disable the clock 8 cycles before we signal that we're done
         StateInit+16: begin
-            $display("[SD HOST] ***** DONE *****");
+            $display("[SD HOST] Disabling clock");
+            clkEn_ <= 1;
+            delayCounter <= 7;
+            nextState <= StateInit+17;
+            state <= StateDelay;
+        end
+        
+        StateInit+17: begin
+            $display("[SD HOST] *** DONE ***");
             done <= 1;
-            // $finish;
         end
         
         

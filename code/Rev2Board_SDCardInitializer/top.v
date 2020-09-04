@@ -51,7 +51,7 @@ module Top(
         .sd_cmdIn(sd_cmdIn),
         .sd_cmdOut(sd_cmdOut),
         .sd_cmdOutActive(sd_cmdOutActive),
-        .sd_dat(sd_dat)
+        .sd_datIn(sd_dat)
     );
     
     // ====================
