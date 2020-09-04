@@ -20,12 +20,12 @@ module Top();
     end
     
     reg crc_rst_ = 0;
-    reg crc_din = 0;
+    reg[1023:0] crc_din = {1024{1'b1}};
     wire[15:0] crc_dout;
     CRC16 crc(
         .clk(clk),
         .rst_(crc_rst_),
-        .din(crc_din),
+        .din(crc_din[1023]),
         .dout(crc_dout),
         .doutNext()
     );
@@ -35,13 +35,13 @@ module Top();
         #1000;
         wait(!clk);
         crc_rst_ = 1;
-        crc_din = 1;
-        wait(clk);
         
         repeat (1024) begin
-            wait(!clk);
-            $display("CRC: %h", crc_dout);
             wait(clk);
+            wait(!clk);
+            crc_din = crc_din<<1;
+            
+            $display("CRC: %h", crc_dout);
         end
         
         #1000;
