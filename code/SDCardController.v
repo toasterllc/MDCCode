@@ -182,7 +182,7 @@ module SDCardController(
         .sd_datOut(core_sd_datOut),
         .sd_datOutActive(core_sd_datOutActive),
         
-        .led(led[3:2])
+        .led(led)
     );
     
     
@@ -197,7 +197,7 @@ module SDCardController(
     always @(negedge clk)
         {initDone, initDoneTmp} <= {initDoneTmp, init_done};
     
-    assign led[0] = initDone;
+    // assign led[0] = initDone;
     // assign led[1] = err;
     
     

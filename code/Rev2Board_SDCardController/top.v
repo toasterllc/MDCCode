@@ -108,30 +108,30 @@ module Top(
     // ====================
     reg[3:0] state = 0;
     
-    // // Read a single block
-    // always @(posedge clk) begin
-    //     case (state)
-    //     0: begin
-    //         sd_cmd_trigger <= 1;
-    //         sd_cmd_write <= 0;
-    //         if (sd_cmd_accepted) begin
-    //             $display("[SD HOST] Read accepted");
-    //             state <= 1;
-    //         end
-    //     end
-    //
-    //     1: begin
-    //         sd_cmd_trigger <= 0;
-    //         if (sd_cmd_accepted) begin
-    //             $display("[SD HOST] Stop accepted");
-    //         end
-    //     end
-    //     endcase
-    //
-    //     if (sd_dataOut_valid) begin
-    //         $display("[SD HOST] Got read data: %h", sd_dataOut);
-    //     end
-    // end
+    // Read a single block
+    always @(posedge clk) begin
+        case (state)
+        0: begin
+            sd_cmd_trigger <= 1;
+            sd_cmd_write <= 0;
+            if (sd_cmd_accepted) begin
+                $display("[SD HOST] Read accepted");
+                state <= 1;
+            end
+        end
+
+        1: begin
+            sd_cmd_trigger <= 0;
+            if (sd_cmd_accepted) begin
+                $display("[SD HOST] Stop accepted");
+            end
+        end
+        endcase
+
+        if (sd_dataOut_valid) begin
+            $display("[SD HOST] Got read data: %h", sd_dataOut);
+        end
+    end
     
     
     

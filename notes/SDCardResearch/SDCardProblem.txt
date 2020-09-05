@@ -1,0 +1,34 @@
+* Potential problems
+
+- We're likely receiving 512 status bits on the DAT lines as a response to the CMD6 that occurs at the end of initialization:
+
+    "As a response to CMD6, the SD Memory Card will send R1 response on the CMD line and 512 bits of status on the DAT lines.
+    From the SD bus transaction point of view, this is a standard single block read transaction and the time out value of this
+    command is 100 ms, the same as in read command. If CRC error occurs on the status data, the host should issue a power cycle.
+
+    CMD6 function switching period is within 8 clocks after the end bit of status data. When CMD6 changes the bus behavior
+    (i.e. access mode), the host is allowed to use the new functions (increase/decrease CLK frequency beyond the current max
+    CLK frequency), at least 8 clocks after at the end of the switch command transaction (see Figure 4-14)."
+    
+    To fix this, we should:
+    
+        - Wait for start bit on the DAT lines
+        - Count 128 bits payload + 16 bits CRC + 1 end bit
+        - Check that switch function was successful by looking at the appropriate bit in the returned status (SDR104 = bit 0x3 of function group 1)
+        - Count 8 more cycles ("host is allowed to use the new functions ... at least 8 clocks after at the end of the switch command transaction")
+        - Check CRC?
+            - To do that correctly we'd need 4x CRC16's, which feels like overkill for the initialization module. Ignore CRC check for this part?
+
+
+
+
+
+start bit
+128 bits of status data per DAT line (128*4=512 bits total)
+16 bits CRC
+end bit
+
+- DAT CRC might include start bit? currently we're excluding the start bit from the CRC calculation
+    X This can't be it, because including the preceeding 0 wouldn't change the CRC value
+
+the simulation starts the DAT response after the command response is complete. related to the DAT response starting before/during the command response?

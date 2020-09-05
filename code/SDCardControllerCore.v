@@ -32,7 +32,7 @@ module SDCardControllerCore(
     output wire[3:0]    sd_datOut,
     output wire         sd_datOutActive,
     
-    output reg[3:2]     led = 0
+    output reg[3:0]     led
 );
     // ====================
     // sd_cmd
@@ -227,6 +227,7 @@ module SDCardControllerCore(
         
         case (respState)
         RespState_Idle: begin
+            led[0] <= 0;
         end
         
         RespState_Go: begin
@@ -238,6 +239,7 @@ module SDCardControllerCore(
         end
         
         RespState_Go+1: begin
+            led[0] <= 1;
             if (!cmdInReg[39]) begin
                 cmdInCRCReg <= cmdInCRC;
                 respState <= RespState_Go+2;
@@ -394,6 +396,7 @@ module SDCardControllerCore(
         
         case (datInState)
         DatInState_Idle: begin
+            led[1] <= 0;
         end
         
         DatInState_Go: begin
@@ -404,6 +407,7 @@ module SDCardControllerCore(
         end
         
         DatInState_Go+1: begin
+            led[1] <= 1;
             datCRCRst_ <= 1;
             datInCounter <= 2;
             datBlockCounter <= 1023;
@@ -440,9 +444,9 @@ module SDCardControllerCore(
         
         // Check CRC for each DAT line
         DatInState_Go+4: begin
-            if (debugCounter === 881) begin
-                led[3] <= 1;
-            end
+            // if (debugCounter === 881) begin
+            //     led[3] <= 1;
+            // end
             
             // if (datIn2CRCReg[15]!==datInReg[10]) begin
             //     $display("[SD CTRL] DAT2: CRC bit invalid ❌");
@@ -465,7 +469,6 @@ module SDCardControllerCore(
                 datIn1CRCReg[15]!==datInReg[9]  ||
                 datIn0CRCReg[15]!==datInReg[8]  ) begin
                 $display("[SD CTRL] DAT: CRC bit invalid ❌");
-                // led[3] <= 1;
                 err <= 1;
                 
             end else begin
