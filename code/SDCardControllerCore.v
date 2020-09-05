@@ -30,7 +30,9 @@ module SDCardControllerCore(
     output wire         sd_cmdOutActive,
     input wire[3:0]     sd_datIn,
     output wire[3:0]    sd_datOut,
-    output wire         sd_datOutActive
+    output wire         sd_datOutActive,
+    
+    output reg[3:2]     led = 0
 );
     // ====================
     // sd_cmd
@@ -76,8 +78,8 @@ module SDCardControllerCore(
     reg[3:0] datOutState = 0;
     
     localparam DatInState_Idle  = 0;    // +0
-    localparam DatInState_Go    = 1;    // +4
-    localparam DatInState_Done  = 6;    // +0
+    localparam DatInState_Go    = 1;    // +5
+    localparam DatInState_Done  = 7;    // +0
     reg[3:0] datInState = 0;
     
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
@@ -442,14 +444,29 @@ module SDCardControllerCore(
             
             end else begin
                 $display("[SD CTRL] DAT: CRC bit valid ✅");
-                if (!datInCounter) begin
-                    $display("[SD CTRL] DAT IN: finished");
-                    datInState <= DatInState_Done;
-                end
+            end
+            
+            if (!datInCounter) begin
+                datInState <= DatInState_Go+5;
             end
         end
         
+        // Check end bit
+        DatInState_Go+5: begin
+            if (datInReg[11:8] !== 4'b1111) begin
+                $display("[SD CTRL] DAT: end bit invalid ❌");
+                err <= 1;
+            end else begin
+                led[3] <= 1;
+                $display("[SD CTRL] DAT: end bit valid ✅");
+            end
+            
+            $display("[SD CTRL] DAT IN: finished");
+            datInState <= DatInState_Done;
+        end
+        
         DatInState_Done: begin
+            `finish;
         end
         endcase
         
