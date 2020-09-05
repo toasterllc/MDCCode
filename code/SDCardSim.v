@@ -15,6 +15,7 @@ module SDCardSim(
     reg[7:0] sim_respLen = 0;
     
     reg[15:0] sim_rca = 16'h0000;
+    reg[31:0] sim_blockLen = 64;
     
     reg sim_cmdOut = 1'bz;
     assign sd_cmd = sim_cmdOut;
@@ -22,8 +23,8 @@ module SDCardSim(
     reg sim_acmd = 0;
     wire[6:0] sim_cmd = {sim_acmd, sim_cmdInIndex};
     
-    localparam PAYLOAD_DATA = {4096{1'b0}};
-    // localparam PAYLOAD_DATA = {4096{1'b1}};
+    // localparam PAYLOAD_DATA = {4096{1'b0}};
+    localparam PAYLOAD_DATA = {4096{1'b1}};
     // localparam PAYLOAD_DATA = {128{32'h42434445}};
     // localparam PAYLOAD_DATA = {128{32'hFF00FF00}};
     reg[3:0] sim_datOut = 4'bzzzz;
@@ -42,6 +43,7 @@ module SDCardSim(
     localparam CMD8     = {1'b0, 6'd8};     // SEND_IF_COND
     localparam CMD11    = {1'b0, 6'd11};    // VOLTAGE_SWITCH
     localparam CMD12    = {1'b0, 6'd12};    // STOP_TRANSMISSION
+    localparam CMD16    = {1'b0, 6'd16};    // SET_BLOCKLEN
     localparam CMD18    = {1'b0, 6'd18};    // READ_MULTIPLE_BLOCK
     localparam CMD25    = {1'b0, 6'd25};    // WRITE_MULTIPLE_BLOCK
     localparam CMD55    = {1'b0, 6'd55};    // APP_CMD
@@ -141,6 +143,13 @@ module SDCardSim(
                         sim_respLen=48;
                     end
                     
+                    CMD16: begin
+                        // TODO: make this a real CMD16 response. right now it's a CMD3 response.
+                        sim_blockLen = sim_cmdInArg;
+                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        sim_respLen=48;
+                    end
+                    
                     CMD18: begin
                         // TODO: make this a real CMD18 response. right now it's a CMD3 response.
                         sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
@@ -148,7 +157,7 @@ module SDCardSim(
                     end
                     
                     CMD25: begin
-                        // TODO: make this a real CMD18 response. right now it's a CMD3 response.
+                        // TODO: make this a real CMD25 response. right now it's a CMD3 response.
                         sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
                         sim_respLen=48;
                     end
@@ -343,7 +352,7 @@ module SDCardSim(
                 
                 sim_datCRCRst_ = 1;
                 
-                for (i=0; i<1024 && sim_recvWriteData; i++) begin
+                for (i=0; i<(sim_blockLen*8)/4 && sim_recvWriteData; i++) begin
                     wait(sd_clk);
                     sim_payloadDataReg = (sim_payloadDataReg<<4)|sd_dat[3:0];
                     wait(!sd_clk);
@@ -505,31 +514,31 @@ module SDCardSim(
                 wait(!sd_clk);
                 sim_datCRCRst_ = 1;
 
-                // // Shift out data
-                // sim_payloadDataReg = PAYLOAD_DATA;
-                // $display("[SD CARD] Sending read data: %h", sim_payloadDataReg);
-                //
-                // for (i=0; i<1024 && sim_sendReadData; i++) begin
-                //     wait(!sd_clk);
-                //     sim_datOut = sim_payloadDataReg[4095:4092];
-                //     sim_payloadDataReg = sim_payloadDataReg<<4;
-                //     wait(sd_clk);
-                // end
-                
                 // Shift out data
-                $display("[SD CARD] Sending read data");
+                sim_payloadDataReg = PAYLOAD_DATA;
+                $display("[SD CARD] Sending read data: %h", sim_payloadDataReg);
                 
-                for (i=0; i<128 && sim_sendReadData; i++) begin
-                    datOutReg = i;
-                    for (ii=0; ii<8 && sim_sendReadData; ii++) begin
-                        // $display("[SD CARD] Sending bit: %b", sim_datOut);
-                        wait(!sd_clk);
-                        sim_datOut = {4{datOutReg[7]}};
-                        wait(sd_clk);
-                        
-                        datOutReg = datOutReg<<1;
-                    end
+                for (i=0; i<(sim_blockLen*8)/4 && sim_sendReadData; i++) begin
+                    wait(!sd_clk);
+                    sim_datOut = sim_payloadDataReg[4095:4092];
+                    sim_payloadDataReg = sim_payloadDataReg<<4;
+                    wait(sd_clk);
                 end
+                
+                // // Shift out data
+                // $display("[SD CARD] Sending read data");
+                //
+                // for (i=0; i<16 && sim_sendReadData; i++) begin
+                //     datOutReg = i;
+                //     for (ii=0; ii<8 && sim_sendReadData; ii++) begin
+                //         // $display("[SD CARD] Sending bit: %b", sim_datOut);
+                //         wait(!sd_clk);
+                //         sim_datOut = {4{datOutReg[7]}};
+                //         wait(sd_clk);
+                //
+                //         datOutReg = datOutReg<<1;
+                //     end
+                // end
                 
                 if (sim_sendReadData) begin
                     // sim_ourCRCReg[3] = 16'b1010_1010_1010_XXXX;
