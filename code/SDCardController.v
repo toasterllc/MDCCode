@@ -27,19 +27,39 @@ module SDCardController(
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
     
-    output wire[3:0]    led
+    output wire[3:0]    led     // FIXME: remove
 );
+        //     // ====================
+        //     // 18 MHz Clock PLL
+        //     // ====================
+        //     // wire clk;   // FIXME: uncomment when we remove the `clk` output port
+        //     ClockGen #(
+        //         .FREQ(18000000),
+        // .DIVR(0),
+        // .DIVF(47),
+        // .DIVQ(5),
+        // .FILTER_RANGE(1)
+        //     ) ClockGen(.clk12mhz(clk12mhz), .clk(pllClk));
+        //
+    
     // ====================
-    // 180 MHz Clock PLL
+    // Internal clock (400 kHz)
     // ====================
-    // wire clk;   // FIXME: uncomment when we remove the `clk` output port
-    ClockGen #(
-        .FREQ(180000000),
-		.DIVR(0),
-		.DIVF(59),
-		.DIVQ(2),
-		.FILTER_RANGE(1)
-    ) ClockGen(.clk12mhz(clk12mhz), .clk(clk));
+    function [63:0] DivCeil;
+        input [63:0] n;
+        input [63:0] d;
+        begin
+            DivCeil = (n+d-1)/d;
+        end
+    endfunction
+    
+    localparam ClkFreq = 100000;
+    localparam ClkDividerWidth = $clog2(DivCeil(12000000, ClkFreq));
+    reg[ClkDividerWidth-1:0] clkDivider = 0;
+    assign clk = clkDivider[ClkDividerWidth-1];
+    always @(posedge clk12mhz) begin
+        clkDivider <= clkDivider-1;
+    end
     
     
     
@@ -160,7 +180,9 @@ module SDCardController(
         .sd_cmdOutActive(core_sd_cmdOutActive),
         .sd_datIn(core_sd_datIn),
         .sd_datOut(core_sd_datOut),
-        .sd_datOutActive(core_sd_datOutActive)
+        .sd_datOutActive(core_sd_datOutActive),
+        
+        .led(led[3:2])
     );
     
     
@@ -174,7 +196,9 @@ module SDCardController(
     reg initDone=0, initDoneTmp=0;
     always @(negedge clk)
         {initDone, initDoneTmp} <= {initDoneTmp, init_done};
+    
     assign led[0] = initDone;
+    // assign led[1] = err;
     
     
 endmodule
