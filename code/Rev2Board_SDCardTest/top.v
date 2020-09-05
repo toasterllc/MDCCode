@@ -1,6 +1,6 @@
 `include "../ClockGen.v"
 `include "../AFIFO.v"
-`include "../SDCardController.v"
+`include "SDCardTestController.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -368,7 +368,7 @@ module Top(
     reg[37:0]   sd_cmd_cmd = 0;
     wire[135:0] sd_cmd_resp;
     wire        sd_cmd_done;
-    SDCardController sdctrl(
+    SDCardTestController sdctrl(
         .clk12mhz(clk12mhz),
         
         .cmd_clk(clk),
