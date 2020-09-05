@@ -96,11 +96,11 @@ module SDCardInitializer(
     // ====================
     // State Machine
     // ====================
-    localparam StateInit        = 0;     // +18
-    localparam StateCmdOut      = 19;    // +1
-    localparam StateRespIn      = 21;    // +3
-    localparam StateDelay       = 25;    // +0
-    localparam StateError       = 26;    // +0
+    localparam StateInit        = 0;     // +17
+    localparam StateCmdOut      = 18;    // +1
+    localparam StateRespIn      = 20;    // +3
+    localparam StateDelay       = 24;    // +0
+    localparam StateError       = 25;    // +0
     
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
@@ -108,7 +108,6 @@ module SDCardInitializer(
     localparam CMD6 =   6'd6;      // SWITCH_FUNC
     localparam CMD7 =   6'd7;      // SELECT_CARD/DESELECT_CARD
     localparam CMD8 =   6'd8;      // SEND_IF_COND
-    localparam CMD16 =  6'd16;     // SET_BLOCKLEN
     localparam CMD11 =  6'd11;     // VOLTAGE_SWITCH
     localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
     localparam CMD55 =  6'd55;     // APP_CMD
@@ -316,45 +315,27 @@ module SDCardInitializer(
         end
         
         // ====================
-        // CMD16 | SET_BLOCKLEN
+        // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
         //   State: Transfer -> Transfer
-        //   Set block length
-        //
-        //   This shouldn't be necessary since the SD spec clearly says the
-        //   card should default to BlockLen=512bytes. However without this
-        //   command our test card outputs BlockLen=64bytes.
+        //   Set bus width to 4 bits
         // ====================
         StateInit+13: begin
-            $display("[SD HOST] Sending CMD16");
-            cmdOutReg <= {2'b01, CMD16, 32'd512, 7'b0, 1'b1};
+            $display("[SD HOST] Sending ACMD6");
+            cmdOutReg <= {2'b01, CMD55, {rca, 16'b0}, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
             nextState <= StateInit+14;
         end
         
-        // ====================
-        // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
-        //   State: Transfer -> Transfer
-        //   Set bus width to 4 bits
-        // ====================
         StateInit+14: begin
-            $display("[SD HOST] Sending ACMD6");
-            cmdOutReg <= {2'b01, CMD55, {rca, 16'b0}, 7'b0, 1'b1};
-            cmdInCounter <= 47;
-            respCheckCRC <= 1;
-            state <= StateCmdOut;
-            nextState <= StateInit+15;
-        end
-        
-        StateInit+15: begin
             // ACMD6
             //   Bus width = 2 (width = 4 bits)
             cmdOutReg <= {2'b01, CMD6, 32'h00000002, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
-            nextState <= StateInit+16;
+            nextState <= StateInit+15;
         end
         
         // ====================
@@ -362,7 +343,7 @@ module SDCardInitializer(
         //   State: Transfer -> Data
         //   Switch to SDR104
         // ====================
-        StateInit+16: begin
+        StateInit+15: begin
             // CMD6
             //   Mode = 1 (switch function)
             //   Group 6 (Reserved)          = 0xF (no change)
@@ -376,19 +357,19 @@ module SDCardInitializer(
             cmdInCounter <= 47;
             respCheckCRC <= 1;
             state <= StateCmdOut;
-            nextState <= StateInit+17;
+            nextState <= StateInit+16;
         end
         
         // Disable the clock 8 cycles before we signal that we're done
-        StateInit+17: begin
+        StateInit+16: begin
             $display("[SD HOST] Disabling clock");
             clkEn_ <= 1;
             delayCounter <= 7;
-            nextState <= StateInit+18;
+            nextState <= StateInit+17;
             state <= StateDelay;
         end
         
-        StateInit+18: begin
+        StateInit+17: begin
             if (!done) $display("[SD HOST] *** DONE ***");
             done <= 1;
         end
