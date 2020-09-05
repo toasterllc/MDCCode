@@ -178,6 +178,8 @@ module SDCardControllerCore(
     reg[15:0] datIn1CRCReg = 0;
     reg[15:0] datIn0CRCReg = 0;
     
+    reg[9:0] debugCounter = 0;
+    
     
     
     
@@ -409,6 +411,10 @@ module SDCardControllerCore(
         end
         
         DatInState_Go+2: begin
+            if (!datInReg[3] || !datInReg[2] || !datInReg[1] || !datInReg[0]) begin
+                debugCounter <= datBlockCounter;
+            end
+            
             if (!datInCounter) begin
                 datInCounter <= 3;
                 dataOut <= datInReg;
@@ -434,14 +440,34 @@ module SDCardControllerCore(
         
         // Check CRC for each DAT line
         DatInState_Go+4: begin
+            if (debugCounter === 881) begin
+                led[3] <= 1;
+            end
+            
+            // if (datIn2CRCReg[15]!==datInReg[10]) begin
+            //     $display("[SD CTRL] DAT2: CRC bit invalid ❌");
+            //     err <= 1;
+            // end
+            //
+            // if (datIn1CRCReg[15]!==datInReg[9]) begin
+            //     $display("[SD CTRL] DAT1: CRC bit invalid ❌");
+            //     err <= 1;
+            // end
+            //
+            // if (datIn0CRCReg[15]!==datInReg[8]) begin;
+            //     $display("[SD CTRL] DAT0: CRC bit invalid ❌");
+            //     err <= 1;
+            // end
+            
             // Handle invalid CRC
             if (datIn3CRCReg[15]!==datInReg[11] ||
                 datIn2CRCReg[15]!==datInReg[10] ||
                 datIn1CRCReg[15]!==datInReg[9]  ||
                 datIn0CRCReg[15]!==datInReg[8]  ) begin
                 $display("[SD CTRL] DAT: CRC bit invalid ❌");
+                // led[3] <= 1;
                 err <= 1;
-            
+                
             end else begin
                 $display("[SD CTRL] DAT: CRC bit valid ✅");
             end
@@ -457,7 +483,6 @@ module SDCardControllerCore(
                 $display("[SD CTRL] DAT: end bit invalid ❌");
                 err <= 1;
             end else begin
-                led[3] <= 1;
                 $display("[SD CTRL] DAT: end bit valid ✅");
             end
             
