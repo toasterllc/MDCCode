@@ -66,11 +66,11 @@ module Top(
     reg sd_cmd_trigger = 0;
     wire sd_cmd_accepted;
     reg sd_cmd_write = 0;
-    reg[22:0] sd_cmd_writeLen = 0;
+    wire[22:0] sd_cmd_writeLen = 1;
     reg[7:0] sd_cmd_addr = 0;
     wire[15:0] sd_dataOut;
     wire sd_dataOut_valid;
-    reg[15:0] sd_dataIn = 16'h1234;
+    wire[15:0] sd_dataIn = 16'h1234;
     wire sd_dataIn_accepted;
     wire err;
     
@@ -107,6 +107,54 @@ module Top(
     // State Machine
     // ====================
     reg[3:0] state = 0;
+    
+    // Read a single block
+    always @(posedge clk) begin
+        case (state)
+        0: begin
+            sd_cmd_trigger <= 1;
+            sd_cmd_write <= 0;
+            if (sd_cmd_accepted) begin
+                $display("[SD HOST] Read accepted");
+                state <= 1;
+            end
+        end
+
+        1: begin
+            sd_cmd_trigger <= 0;
+            if (sd_cmd_accepted) begin
+                $display("[SD HOST] Stop accepted");
+            end
+        end
+        endcase
+        
+        if (sd_dataOut_valid) begin
+            $display("[SD HOST] Got read data: %h", sd_dataOut);
+        end
+    end
+    
+    
+    
+    // // Write a single block
+    // always @(posedge clk) begin
+    //     case (state)
+    //     0: begin
+    //         sd_cmd_trigger <= 1;
+    //         sd_cmd_write <= 1;
+    //         if (sd_cmd_accepted) begin
+    //             $display("[SD HOST] Write accepted");
+    //             state <= 1;
+    //         end
+    //     end
+    //
+    //     1: begin
+    //         sd_cmd_trigger <= 0;
+    //         if (sd_cmd_accepted) begin
+    //             $display("[SD HOST] Stop accepted");
+    //         end
+    //     end
+    //     endcase
+    // end
     
     // // Toggle between reading/writing blocks
     // always @(posedge clk) begin
