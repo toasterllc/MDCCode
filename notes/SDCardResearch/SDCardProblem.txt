@@ -14,10 +14,17 @@
     
         - Wait for start bit on the DAT lines
         - Count 128 bits payload + 16 bits CRC + 1 end bit
-        - Check that switch function was successful by looking at the appropriate bit in the returned status (SDR104 = bit 0x3 of function group 1)
-        - Count 8 more cycles ("host is allowed to use the new functions ... at least 8 clocks after at the end of the switch command transaction")
+        - Check that switch function was successful by looking at the appropriate bit in the returned status
+          (SDR104 = bit 0x3 of function group 1)
+        - Count 8 more cycles ("host is allowed to use the new functions ... at least 8 clocks after at the
+          end of the switch command transaction")
         - Check CRC?
-            - To do that correctly we'd need 4x CRC16's, which feels like overkill for the initialization module. Ignore CRC check for this part?
+            - To do that correctly we'd need 4x CRC16's, which feels like overkill for the initialization
+              module. Ignore CRC check for this part?
+            
+    Considerations
+        - Are we guaranteed that the status output on the DAT lines occurs after the response is received?
+          If not we need to start listening from the DAT output before we receive the response.
 
 
 
