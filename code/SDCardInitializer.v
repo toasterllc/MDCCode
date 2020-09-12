@@ -21,10 +21,6 @@
 // TODO: handle never receiving a response from the card
 //   according to 4.12.4 , the max number of cycles for a response to start is 64
 
-// TODO: expose error state to clients
-//   sit in the error state and wait for a power cycle?
-//   or have the ability to clear the error and start over?
-
 module SDCardInitializer(
     input wire          clk12mhz,
     output reg[15:0]    rca = 0,
@@ -209,7 +205,7 @@ module SDCardInitializer(
         // Check end bit
         DatInState_Go+2: begin
             if (datInReg !== 4'b1111) begin
-                // TODO: expose error status
+                err <= 1;
                 $display("[SD INIT] DAT: end bit invalid: %b ❌", datInReg);
                 `finish;
             end else begin
@@ -240,6 +236,29 @@ module SDCardInitializer(
         //   Go to idle state
         // ====================
         StateInit: begin
+            // TODO: This is necessary for icecube synthesis.
+            // Try using an `initial` block though.
+            done <= 0;
+            err <= 0;
+            rca <= 0;
+            clkEn_ <= 0;
+            cmdInActive <= 0;
+            cmdInCRCRst_ <= 0;
+            cmdOutActive <= 0;
+            cmdOutCRCRst_ <= 0;
+            respCheckCRC <= 0;
+            delayCounter <= 0;
+            cmdInReg <= 0;
+            datInCMD6FnGrp1 <= 0;
+            datInState <= 0;
+            cmdOutReg <= 0;
+            nextState <= 0;
+            state <= 0;
+            respInExpectedCRC <= 0;
+            cmdInCounter <= 0;
+            cmdOutCounter <= 0;
+            datInCounter <= 0;
+            
             $display("[SD INIT] Sending CMD0");
             cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 0;
@@ -305,25 +324,25 @@ module SDCardInitializer(
         StateInit+5: begin
             // Verify the command is all 1's
             if (cmdInReg[45:40] !== 6'b111111) begin
+                err <= 1;
                 $display("[SD INIT] Bad command: %b", cmdInReg[45:40]);
                 `finish;
-                err <= 1;
             end
             
             // Verify CRC is all 1's
             if (cmdInReg[7:1] !== 7'b1111111) begin
+                err <= 1;
                 $display("[SD INIT] Bad CRC: %b", cmdInReg[7:1]);
                 `finish;
-                err <= 1;
             end
             
             // Proceed if the card is ready
             if (cmdInReg[39] === 1'b1) begin
                 // Verify that we can switch to 1.8V signaling voltage (s18a)
                 if (cmdInReg[32] !== 1'b1) begin
+                    err <= 1;
                     $display("[SD INIT] Bad s18a: %b", cmdInReg[32]);
                     `finish;
-                    err <= 1;
                 end
                 
                 // Otherwise, proceed
@@ -469,7 +488,7 @@ module SDCardInitializer(
         StateInit+16: begin
             if (datInState === DatInState_Done) begin
                 if (datInCMD6FnGrp1 !== 4'h3) begin
-                    // TODO: signal error
+                    err <= 1;
                     $display("[SD INIT] CMD6 status: function group 1 invalid: %b ❌", datInCMD6FnGrp1);
                     `finish;
                 end else begin
@@ -564,16 +583,16 @@ module SDCardInitializer(
             
             // Verify that the CRC is OK (if requested)
             if ((respCheckCRC && respInExpectedCRC!==cmdInReg[7:1])) begin
+                err <= 1;
                 $display("[SD INIT] Bad CRC ❌");
                 `finish;
-                err <= 1;
             end
             
             // Verify that the stop bit is OK
             if (!cmdInReg[0]) begin
+                err <= 1;
                 $display("[SD INIT] Bad stop bit ❌");
                 `finish;
-                err <= 1;
             end
             
             // The SD spec requires 8 cycles after a command or after a response,
