@@ -124,8 +124,6 @@ module Top(
         .sd_cmdIn(init_sd_cmdIn),
         .sd_cmdOut(init_sd_cmdOut),
         .sd_cmdOutActive(init_sd_cmdOutActive),
-        .sd_datIn(init_sd_datIn),
-        
-        .led(led)
+        .sd_datIn(init_sd_datIn)
     );
 endmodule

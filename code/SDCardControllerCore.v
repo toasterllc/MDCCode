@@ -227,7 +227,6 @@ module SDCardControllerCore(
         
         case (respState)
         RespState_Idle: begin
-            led[0] <= 0;
         end
         
         RespState_Go: begin
@@ -239,7 +238,6 @@ module SDCardControllerCore(
         end
         
         RespState_Go+1: begin
-            led[0] <= 1;
             if (!cmdInReg[39]) begin
                 cmdInCRCReg <= cmdInCRC;
                 respState <= RespState_Go+2;
@@ -252,21 +250,21 @@ module SDCardControllerCore(
                 respState <= RespState_Go+3;
             
             end else if (cmdInCRCReg[6] !== cmdInReg[0]) begin
-                $display("[SD CTRL] Response: CRC bit invalid ❌");
+                $display("[SD CORE] Response: CRC bit invalid ❌");
                 err <= 1;
             
             end else begin
-                $display("[SD CTRL] Response: CRC bit valid ✅");
+                $display("[SD CORE] Response: CRC bit valid ✅");
             end
         end
         
         RespState_Go+3: begin
             // Check transmission and stop bits
             if (resp[46] || !resp[0]) begin
-                $display("[SD CTRL] Response: bad transmission/stop bit ❌");
+                $display("[SD CORE] Response: bad transmission/stop bit ❌");
                 err <= 1;
             end else begin
-                $display("[SD CTRL] Response: done ✅");
+                $display("[SD CORE] Response: done ✅");
             end
             
             respState <= RespState_Done;
@@ -294,7 +292,7 @@ module SDCardControllerCore(
         end
         
         DatOutState_Go: begin
-            $display("[SD CTRL] DatOut: started");
+            $display("[SD CORE] DatOut: started");
             // TODO: ensure that N_WR is met (write data starts a minimum of 2 cycles after response end)
             datOutReg <= 0;
             datOutCounter <= 0;
@@ -317,7 +315,7 @@ module SDCardControllerCore(
         
         // Output CRCs
         DatOutState_Go+2: begin
-            $display("[SD CTRL] DatOut: CRCs: %h %h %h %h", datCRCNext[3], datCRCNext[2], datCRCNext[1], datCRCNext[0]);
+            $display("[SD CORE] DatOut: CRCs: %h %h %h %h", datCRCNext[3], datCRCNext[2], datCRCNext[1], datCRCNext[0]);
             datCRCRst_ <= 0;
             datOut3CRCReg <= datCRCNext[3];
             datOut2CRCReg <= datCRCNext[2];
@@ -359,10 +357,10 @@ module SDCardControllerCore(
             if (!datOutCounter) begin
                 // 5 bits: start bit, CRC status, end bit
                 if (datInCRCStatus !== 5'b0_010_1) begin
-                    $display("[SD CTRL] DatOut: CRC status invalid ❌");
+                    $display("[SD CORE] DatOut: CRC status invalid ❌");
                     err <= 1;
                 end else begin
-                    $display("[SD CTRL] DatOut: CRC status valid ✅");
+                    $display("[SD CORE] DatOut: CRC status valid ✅");
                 end
                 datOutState <= DatOutState_Go+7;
             end
@@ -371,10 +369,10 @@ module SDCardControllerCore(
         // Wait until the card stops being busy (busy == DAT0 low)
         DatOutState_Go+7: begin
             if (datInReg[0]) begin
-                $display("[SD CTRL] DatOut: Card ready");
+                $display("[SD CORE] DatOut: Card ready");
                 datOutState <= DatOutState_Done;
             end else begin
-                $display("[SD CTRL] DatOut: Card busy");
+                $display("[SD CORE] DatOut: Card busy");
             end
         end
         
@@ -396,18 +394,17 @@ module SDCardControllerCore(
         
         case (datInState)
         DatInState_Idle: begin
-            led[1] <= 0;
+            led <= 0;
         end
         
         DatInState_Go: begin
             if (!datInReg[0]) begin
-                $display("[SD CTRL] DAT IN: started");
+                $display("[SD CORE] DAT IN: started");
                 datInState <= DatInState_Go+1;
             end
         end
         
         DatInState_Go+1: begin
-            led[1] <= 1;
             datCRCRst_ <= 1;
             datInCounter <= 2;
             datBlockCounter <= 1023;
@@ -439,40 +436,22 @@ module SDCardControllerCore(
             datIn0CRCReg <= datCRC[0];
             datInCounter <= 15;
             datInState <= DatInState_Go+4;
-            $display("[SD CTRL] DAT: calculated CRCs: %h %h %h %h", datCRC[3], datCRC[2], datCRC[1], datCRC[0]);
+            $display("[SD CORE] DAT: calculated CRCs: %h %h %h %h", datCRC[3], datCRC[2], datCRC[1], datCRC[0]);
         end
         
         // Check CRC for each DAT line
         DatInState_Go+4: begin
-            // if (debugCounter === 881) begin
-            //     led[3] <= 1;
-            // end
-            
-            // if (datIn2CRCReg[15]!==datInReg[10]) begin
-            //     $display("[SD CTRL] DAT2: CRC bit invalid ❌");
-            //     err <= 1;
-            // end
-            //
-            // if (datIn1CRCReg[15]!==datInReg[9]) begin
-            //     $display("[SD CTRL] DAT1: CRC bit invalid ❌");
-            //     err <= 1;
-            // end
-            //
-            // if (datIn0CRCReg[15]!==datInReg[8]) begin;
-            //     $display("[SD CTRL] DAT0: CRC bit invalid ❌");
-            //     err <= 1;
-            // end
-            
             // Handle invalid CRC
             if (datIn3CRCReg[15]!==datInReg[11] ||
                 datIn2CRCReg[15]!==datInReg[10] ||
                 datIn1CRCReg[15]!==datInReg[9]  ||
-                datIn0CRCReg[15]!==datInReg[8]  ) begin
-                $display("[SD CTRL] DAT: CRC bit invalid ❌");
+                datIn0CRCReg[15]!==datInReg[8]   ) begin
+                $display("[SD CORE] DAT: CRC bit invalid ❌");
                 err <= 1;
                 
             end else begin
-                $display("[SD CTRL] DAT: CRC bit valid ✅");
+                led[0] <= 1;
+                $display("[SD CORE] DAT: CRC bit valid ✅");
             end
             
             if (!datInCounter) begin
@@ -483,17 +462,19 @@ module SDCardControllerCore(
         // Check end bit
         DatInState_Go+5: begin
             if (datInReg[11:8] !== 4'b1111) begin
-                $display("[SD CTRL] DAT: end bit invalid ❌");
+                $display("[SD CORE] DAT: end bit invalid ❌");
                 err <= 1;
             end else begin
-                $display("[SD CTRL] DAT: end bit valid ✅");
+                led[1] <= 1;
+                $display("[SD CORE] DAT: end bit valid ✅");
             end
             
-            $display("[SD CTRL] DAT IN: finished");
+            $display("[SD CORE] DAT IN: finished");
             datInState <= DatInState_Done;
         end
         
         DatInState_Done: begin
+            led[2] <= 1;
             `finish;
         end
         endcase
@@ -519,7 +500,7 @@ module SDCardControllerCore(
         end
         
         StateWrite: begin
-            $display("[SD CTRL] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
+            $display("[SD CORE] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD55, {rca, 16'b0}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -529,7 +510,7 @@ module SDCardControllerCore(
         end
         
         StateWrite+1: begin
-            $display("[SD CTRL] Sending ACMD23 (SET_WR_BLK_ERASE_COUNT): %b", {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1});
+            $display("[SD CORE] Sending ACMD23 (SET_WR_BLK_ERASE_COUNT): %b", {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, ACMD23, {9'b0, cmdWriteLen}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -539,7 +520,7 @@ module SDCardControllerCore(
         end
         
         StateWrite+2: begin
-            $display("[SD CTRL] Sending CMD25 (WRITE_MULTIPLE_BLOCK): %b", {2'b01, CMD25, cmdAddr, 7'b0, 1'b1});
+            $display("[SD CORE] Sending CMD25 (WRITE_MULTIPLE_BLOCK): %b", {2'b01, CMD25, cmdAddr, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD25, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -555,7 +536,7 @@ module SDCardControllerCore(
         
         StateWrite+4: begin
             if (datOutState === DatOutState_Done) begin
-                $display("[SD CTRL] Finished writing block");
+                $display("[SD CORE] Finished writing block");
                 state <= (cmd_trigger ? StateWrite+3 : StateStop);
                 cmd_accepted <= 1;
             end
@@ -567,7 +548,7 @@ module SDCardControllerCore(
         
         
         StateRead: begin
-            $display("[SD CTRL] Sending CMD18 (READ_MULTIPLE_BLOCK): %b", {2'b01, CMD18, cmdAddr, 7'b0, 1'b1});
+            $display("[SD CORE] Sending CMD18 (READ_MULTIPLE_BLOCK): %b", {2'b01, CMD18, cmdAddr, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -584,7 +565,7 @@ module SDCardControllerCore(
         
         StateRead+2: begin
             if (respState===RespState_Done && datInState===DatInState_Done) begin
-                $display("[SD CTRL] Finished reading block");
+                $display("[SD CORE] Finished reading block");
                 state <= (cmd_trigger ? StateRead+1 : StateStop);
                 cmd_accepted <= 1;
             end
@@ -595,7 +576,7 @@ module SDCardControllerCore(
         
         
         StateStop: begin
-            $display("[SD CTRL] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
+            $display("[SD CORE] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
             cmdOutCounter <= 47;
             cmdOutActive <= 1;
@@ -610,10 +591,10 @@ module SDCardControllerCore(
         // The card doesn't signal busy in the case of reading.
         StateStop+1: begin
             if (datInReg[0]) begin
-                $display("[SD CTRL] StateStop: Card ready");
+                $display("[SD CORE] StateStop: Card ready");
                 state <= StateIdle;
             end else begin
-                $display("[SD CTRL] StateStop: Card busy");
+                $display("[SD CORE] StateStop: Card busy");
             end
         end
         
