@@ -35,7 +35,9 @@ module SDCardInitializer(
     input wire          sd_cmdIn,
     output wire         sd_cmdOut,
     output wire         sd_cmdOutActive,
-    input wire[3:0]     sd_datIn
+    input wire[3:0]     sd_datIn,
+    
+    output reg[3:0]     led = 0
 );
     // ====================
     // Internal clock (400 kHz)
@@ -118,8 +120,8 @@ module SDCardInitializer(
     reg respCheckCRC = 0;
     
     localparam ClkDisableDelay = ((5*ClkFreq)/1000)-1;
-    reg[10:0] delayCounter = 0;
-    initial `assert(`fits(delayCounter, ClkDisableDelay));
+    reg[10:0] counter = 0;
+    initial `assert(`fits(counter, ClkDisableDelay));
     
     always @(posedge clk) begin
         cmdInStaged <= cmdInStaged<<1|sd_cmdIn;
@@ -136,7 +138,7 @@ module SDCardInitializer(
             cmdInCounter <= cmdInCounter-1;
         end
         
-        delayCounter <= delayCounter-1;
+        counter <= counter-1;
         
         case (state)
         // ====================
@@ -148,7 +150,6 @@ module SDCardInitializer(
             $display("[SD HOST] Sending CMD0");
             cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 0;
-            respCheckCRC <= 0;
             state <= StateCmdOut;
             nextState <= StateInit+1;
         end
@@ -249,7 +250,7 @@ module SDCardInitializer(
         StateInit+7: begin
             $display("[SD HOST] Disabling clock for %0d cycles", ClkDisableDelay+1);
             clkEn_ <= 1;
-            delayCounter <= ClkDisableDelay;
+            counter <= ClkDisableDelay;
             nextState <= StateInit+8;
             state <= StateDelay;
         end
@@ -364,7 +365,7 @@ module SDCardInitializer(
         StateInit+16: begin
             $display("[SD HOST] Disabling clock");
             clkEn_ <= 1;
-            delayCounter <= 7;
+            counter <= 7;
             nextState <= StateInit+17;
             state <= StateDelay;
         end
@@ -397,7 +398,7 @@ module SDCardInitializer(
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
                 cmdOutCRCRst_ <= 0;
-                delayCounter <= 7;
+                counter <= 7;
                 state <= (cmdInCounter ? StateRespIn : StateDelay);
             end
         end
@@ -443,7 +444,7 @@ module SDCardInitializer(
                 state <= StateError;
             
             end else begin
-                delayCounter <= 7;
+                counter <= 7;
                 state <= StateDelay;
             end
         end
@@ -456,7 +457,7 @@ module SDCardInitializer(
         // before another command is issued.
         // See section 4.12, timing values N_RC and N_CC.
         StateDelay: begin
-            if (!delayCounter) state <= nextState;
+            if (!counter) state <= nextState;
         end
         
         
@@ -475,7 +476,7 @@ module SDCardInitializer(
             // Since we don't know what state we came from, use our delay state to ensure
             // that N_RC/N_CC are met.
             // See StateDelay for more info.
-            delayCounter <= 7;
+            counter <= 7;
             nextState <= StateInit;
             state <= StateDelay;
         end
