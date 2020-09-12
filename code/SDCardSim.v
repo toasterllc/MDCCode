@@ -567,7 +567,6 @@ module SDCardSim(
     // ====================
     // Handle reading from the card
     // ====================
-    // TODO: start response data while command response is still being sent
     initial begin
         forever begin
             wait(sd_clk);

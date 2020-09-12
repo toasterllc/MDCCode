@@ -289,6 +289,7 @@ module SDCardControllerCore(
         
         case (datOutState)
         DatOutState_Idle: begin
+            led <= 0;
         end
         
         DatOutState_Go: begin
@@ -342,6 +343,7 @@ module SDCardControllerCore(
         
         // End bit
         DatOutState_Go+4: begin
+            led[0] <= 1;
             datOutReg <= {20{1'b1}};
             datOutState <= DatOutState_Go+5;
         end
@@ -360,6 +362,7 @@ module SDCardControllerCore(
                     $display("[SD CORE] DatOut: CRC status invalid ❌");
                     err <= 1;
                 end else begin
+                    led[1] <= 1;
                     $display("[SD CORE] DatOut: CRC status valid ✅");
                 end
                 datOutState <= DatOutState_Go+7;
@@ -369,6 +372,7 @@ module SDCardControllerCore(
         // Wait until the card stops being busy (busy == DAT0 low)
         DatOutState_Go+7: begin
             if (datInReg[0]) begin
+                led[2] <= 1;
                 $display("[SD CORE] DatOut: Card ready");
                 datOutState <= DatOutState_Done;
             end else begin
@@ -394,7 +398,6 @@ module SDCardControllerCore(
         
         case (datInState)
         DatInState_Idle: begin
-            led <= 0;
         end
         
         DatInState_Go: begin
@@ -450,7 +453,6 @@ module SDCardControllerCore(
                 err <= 1;
                 
             end else begin
-                led[0] <= 1;
                 $display("[SD CORE] DAT: CRC bit valid ✅");
             end
             
@@ -465,7 +467,6 @@ module SDCardControllerCore(
                 $display("[SD CORE] DAT: end bit invalid ❌");
                 err <= 1;
             end else begin
-                led[1] <= 1;
                 $display("[SD CORE] DAT: end bit valid ✅");
             end
             
@@ -474,7 +475,6 @@ module SDCardControllerCore(
         end
         
         DatInState_Done: begin
-            led[2] <= 1;
             `finish;
         end
         endcase
