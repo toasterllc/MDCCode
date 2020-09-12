@@ -7,34 +7,34 @@ module SDCardSim(
     // SD card emulator
     //   Receive commands, issue responses
     // ====================
-    reg[47:0] sim_cmdIn = 0;
-    reg[1:0] sim_cmdIn_preamble = 0;
-    reg[5:0] sim_cmdIn_cmdIndex = 0;
-    reg[31:0] sim_cmdIn_arg = 0;
-    reg[6:0] sim_cmdIn_theirCRC = 0;
-    reg[0:0] sim_cmdIn_endBit = 0;
-    reg[15:0] sim_cmdIn_rca = 0;
-    reg[135:0] sim_respOut = 0;
-    reg[7:0] sim_respLen = 0;
+    reg[47:0] cmdIn = 0;
+    reg[1:0] cmdIn_preamble = 0;
+    reg[5:0] cmdIn_cmdIndex = 0;
+    reg[31:0] cmdIn_arg = 0;
+    reg[6:0] cmdIn_theirCRC = 0;
+    reg[0:0] cmdIn_endBit = 0;
+    reg[15:0] cmdIn_rca = 0;
+    reg[135:0] respOut = 0;
+    reg[7:0] respLen = 0;
     
-    reg[15:0] sim_rca = 16'h0000;
+    reg[15:0] rca = 16'h0000;
     
-    reg sim_cmdOut = 1'bz;
-    assign sd_cmd = sim_cmdOut;
+    reg cmdOut = 1'bz;
+    assign sd_cmd = cmdOut;
     
-    reg sim_acmd = 0;
-    wire[6:0] sim_cmd = {sim_acmd, sim_cmdIn_cmdIndex};
+    reg acmd = 0;
+    wire[6:0] cmd = {acmd, cmdIn_cmdIndex};
     
     localparam PAYLOAD_DATA = {4096{1'b0}};
     // localparam PAYLOAD_DATA = {4096{1'b1}};
     // localparam PAYLOAD_DATA = {128{32'h42434445}};
     // localparam PAYLOAD_DATA = {128{32'hFF00FF00}};
-    reg[3:0] sim_datOut = 4'bzzzz;
-    reg[4095:0] sim_payloadDataReg = 0;
-    assign sd_dat = sim_datOut;
+    reg[3:0] datOut = 4'bzzzz;
+    reg[4095:0] payloadDataReg = 0;
+    assign sd_dat = datOut;
     
-    reg sim_recvWriteData = 0;
-    reg sim_sendReadData = 0;
+    reg recvWriteData = 0;
+    reg sendReadData = 0;
     
     
     localparam CMD0     = {1'b0, 6'd0};     // GO_IDLE_STATE
@@ -54,7 +54,7 @@ module SDCardSim(
     localparam ACMD41   = {1'b1, 6'd41};    // SD_SEND_OP_COND
     
     always @(posedge sd_clk) begin
-        sim_cmdIn <= (sim_cmdIn<<1)|sd_cmd;
+        cmdIn <= (cmdIn<<1)|sd_cmd;
     end
     
     
@@ -64,14 +64,14 @@ module SDCardSim(
     // ====================
     // CRC (CMD)
     // ====================
-    reg sim_cmdIn_ourCRC_rst_ = 0;
-    wire[6:0] sim_cmdIn_ourCRC;
-    reg[6:0] sim_cmdIn_ourCRCReg = 0;
+    reg cmdIn_ourCRC_rst_ = 0;
+    wire[6:0] cmdIn_ourCRC;
+    reg[6:0] cmdIn_ourCRCReg = 0;
     CRC7 CRC7_cmdIn(
         .clk(sd_clk),
-        .rst_(sim_cmdIn_ourCRC_rst_),
-        .din(sim_cmdIn[0]),
-        .dout(sim_cmdIn_ourCRC),
+        .rst_(cmdIn_ourCRC_rst_),
+        .din(cmdIn[0]),
+        .dout(cmdIn_ourCRC),
         .doutNext()
     );
     
@@ -81,19 +81,19 @@ module SDCardSim(
     // ====================
     // CRC (DAT[3:0])
     // ====================
-    reg sim_dat_crcRst_ = 0;
-    wire[15:0] sim_dat_crc[3:0];
-    wire[15:0] sim_dat_crcNext[3:0];
-    reg[15:0] sim_dat_ourCRCReg[3:0];
-    reg[15:0] sim_dat_theirCRCReg[3:0];
+    reg dat_crcRst_ = 0;
+    wire[15:0] dat_crc[3:0];
+    wire[15:0] dat_crcNext[3:0];
+    reg[15:0] dat_ourCRCReg[3:0];
+    reg[15:0] dat_theirCRCReg[3:0];
     genvar geni;
     for (geni=0; geni<4; geni=geni+1) begin
         CRC16 crc16(
             .clk(sd_clk),
-            .rst_(sim_dat_crcRst_),
+            .rst_(dat_crcRst_),
             .din(sd_dat[geni]),
-            .dout(sim_dat_crc[geni]),
-            .doutNext(sim_dat_crcNext[geni])
+            .dout(dat_crc[geni]),
+            .doutNext(dat_crcNext[geni])
         );
     end
     
@@ -106,7 +106,7 @@ module SDCardSim(
         halla = 0;
         
         forever begin
-            sim_cmdIn_ourCRC_rst_ = 0;
+            cmdIn_ourCRC_rst_ = 0;
             
             wait(sd_clk);
             if (!sd_cmd) begin
@@ -119,153 +119,153 @@ module SDCardSim(
                 signalBusy = 0;
                 
                 // Start calculating CRC for incoming command
-                sim_cmdIn_ourCRC_rst_ = 1;
+                cmdIn_ourCRC_rst_ = 1;
                 
                 for (i=0; i<47; i++) begin
                     wait(sd_clk);
                     wait(!sd_clk);
                     if (i == 39) begin
-                        sim_cmdIn_ourCRCReg = sim_cmdIn_ourCRC;
-                        sim_cmdIn_ourCRC_rst_ = 0;
+                        cmdIn_ourCRCReg = cmdIn_ourCRC;
+                        cmdIn_ourCRC_rst_ = 0;
                     end
                 end
                 
                 // Remember our command index/argument/RCA
-                sim_cmdIn_preamble = sim_cmdIn[47:46];
-                sim_cmdIn_cmdIndex = sim_cmdIn[45:40];
-                sim_cmdIn_arg = sim_cmdIn[39:8];
-                sim_cmdIn_theirCRC = sim_cmdIn[7:1];
-                sim_cmdIn_rca = sim_cmdIn_arg[31:16];
-                sim_cmdIn_endBit = sim_cmdIn[0];
+                cmdIn_preamble = cmdIn[47:46];
+                cmdIn_cmdIndex = cmdIn[45:40];
+                cmdIn_arg = cmdIn[39:8];
+                cmdIn_theirCRC = cmdIn[7:1];
+                cmdIn_rca = cmdIn_arg[31:16];
+                cmdIn_endBit = cmdIn[0];
                 
                 $display("[SD CARD] Received command: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
-                    sim_cmdIn,
-                    sim_cmdIn_preamble,     // preamble
-                    sim_cmdIn_cmdIndex,     // cmd
-                    sim_cmdIn_arg,          // arg
-                    sim_cmdIn_theirCRC,     // crc
-                    sim_cmdIn_endBit,       // end bit
+                    cmdIn,
+                    cmdIn_preamble,     // preamble
+                    cmdIn_cmdIndex,     // cmd
+                    cmdIn_arg,          // arg
+                    cmdIn_theirCRC,     // crc
+                    cmdIn_endBit,       // end bit
                 );
                 
-                if (sim_cmdIn_preamble !== 2'b01) begin
-                    $display("[SD CARD] Bad preamble: %b ❌", sim_cmdIn_preamble);
+                if (cmdIn_preamble !== 2'b01) begin
+                    $display("[SD CARD] Bad preamble: %b ❌", cmdIn_preamble);
                     `finish;
                 end
                 
-                if (sim_cmdIn_theirCRC === sim_cmdIn_ourCRCReg) begin
+                if (cmdIn_theirCRC === cmdIn_ourCRCReg) begin
                     $display("[SD CARD] ^^^ CRC Valid ✅");
                 end else begin
-                    $display("[SD CARD] ^^^ Bad CRC: ours=%b, theirs=%b ❌", sim_cmdIn_ourCRCReg, sim_cmdIn[7:1]);
+                    $display("[SD CARD] ^^^ Bad CRC: ours=%b, theirs=%b ❌", cmdIn_ourCRCReg, cmdIn[7:1]);
                     `finish;
                 end
                 
-                if (sim_cmdIn_endBit !== 1'b1) begin
-                    $display("[SD CARD] Bad end bit: %b ❌", sim_cmdIn_endBit);
+                if (cmdIn_endBit !== 1'b1) begin
+                    $display("[SD CARD] Bad end bit: %b ❌", cmdIn_endBit);
                     `finish;
                 end
                 
                 // Issue response if needed
-                if (sim_cmdIn_cmdIndex) begin
-                    case (sim_cmd)
+                if (cmdIn_cmdIndex) begin
+                    case (cmd)
                     
                     CMD2: begin
-                        sim_respOut=136'h3f0353445352313238808bb79d66014677;
-                        sim_respLen=136;
+                        respOut=136'h3f0353445352313238808bb79d66014677;
+                        respLen=136;
                     end
                     
                     CMD3: begin
-                        sim_rca = 16'hAAAA;
-                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        rca = 16'hAAAA;
+                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD6: begin
-                        sim_respOut=136'h0600000900ddffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h0600000900ddffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD7: begin
-                        if (sim_cmdIn_rca !== sim_rca) begin
-                            $display("[SD CARD] CMD7: Bad RCA received: %h ❌", sim_cmdIn_rca);
+                        if (cmdIn_rca !== rca) begin
+                            $display("[SD CARD] CMD7: Bad RCA received: %h ❌", cmdIn_rca);
                             `finish;
                         end
-                        sim_respOut=136'h070000070075ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h070000070075ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD8: begin
-                        sim_respOut=136'h08000001aa13ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h08000001aa13ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD11: begin
-                        sim_respOut=136'h0B0000070081ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h0B0000070081ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD12: begin
                         // TODO: make this a real CMD12 response. right now it's a CMD3 response.
-                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD18: begin
                         // TODO: make this a real CMD18 response. right now it's a CMD3 response.
-                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD25: begin
                         // TODO: make this a real CMD18 response. right now it's a CMD3 response.
-                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     CMD55: begin
-                        if (sim_cmdIn_rca !== sim_rca) begin
-                            $display("[SD CARD] CMD55: Bad RCA received: %h ❌", sim_cmdIn_rca);
+                        if (cmdIn_rca !== rca) begin
+                            $display("[SD CARD] CMD55: Bad RCA received: %h ❌", cmdIn_rca);
                             `finish;
                         end
-                        sim_respOut=136'h370000012083ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h370000012083ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     ACMD6: begin
-                        sim_respOut=136'h0600000920b9ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h0600000920b9ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     ACMD23: begin
-                        if (!sim_cmdIn_arg[22:0]) begin
+                        if (!cmdIn_arg[22:0]) begin
                             $display("[SD CARD] ACMD23: Zero block count received ❌");
                             `finish;
                         end
                         // TODO: make this a real ACMD23 response. right now it's a CMD3 response.
-                        sim_respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        sim_respLen=48;
+                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                        respLen=48;
                     end
                     
                     ACMD41: begin
                         if ($urandom % 2) begin
                             $display("[SD CARD] ACMD41: card busy");
-                            sim_respOut=136'h3f00ff8080ffffffffffffffffffffffff;
+                            respOut=136'h3f00ff8080ffffffffffffffffffffffff;
                         end
                         else begin
                             $display("[SD CARD] ACMD41: card ready");
-                            sim_respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
+                            respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
                         end
-                        sim_respLen=48;
+                        respLen=48;
                     end
                     
                     default: begin
-                        $display("[SD CARD] BAD COMMAND: CMD%0d", sim_cmdIn_cmdIndex);
+                        $display("[SD CARD] BAD COMMAND: CMD%0d", cmdIn_cmdIndex);
                         `finish;
                     end
                     endcase
                     
                     // Signal busy (DAT=0) if we were previously writing,
                     // and we received the stop command
-                    signalBusy = (sim_cmdIn_cmdIndex===12 && sim_recvWriteData);
+                    signalBusy = (cmdIn_cmdIndex===12 && recvWriteData);
                     if (signalBusy) begin
                         wait(sd_clk);
                         wait(!sd_clk);
@@ -273,7 +273,7 @@ module SDCardSim(
                         wait(sd_clk);
                         wait(!sd_clk);
                         
-                        sim_datOut[0] = 0;
+                        datOut[0] = 0;
                     end
                     
                     // Wait a random number of clocks before providing response
@@ -284,52 +284,52 @@ module SDCardSim(
                         wait(!sd_clk);
                     end
                     
-                    // sim_respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
+                    // respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
                     $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
-                        sim_respOut,
-                        sim_respOut[135 : 134], // preamble
-                        sim_respOut[133 : 128], // cmd
-                        sim_respOut[127 :  96], // arg
-                        sim_respOut[95  :  89], // crc
-                        sim_respOut[88],        // end bit
+                        respOut,
+                        respOut[135 : 134], // preamble
+                        respOut[133 : 128], // cmd
+                        respOut[127 :  96], // arg
+                        respOut[95  :  89], // crc
+                        respOut[88],        // end bit
                     );
                     
-                    for (i=0; i<sim_respLen; i++) begin
+                    for (i=0; i<respLen; i++) begin
                         wait(!sd_clk);
-                        sim_cmdOut = sim_respOut[135];
-                        sim_respOut = sim_respOut<<1;
+                        cmdOut = respOut[135];
+                        respOut = respOut<<1;
                         wait(sd_clk);
                     end
                 end
                 wait(!sd_clk);
-                sim_cmdOut = 1'bz;
+                cmdOut = 1'bz;
                 
-                case (sim_cmd)
+                case (cmd)
                 CMD11: begin
                     // Drive CMD/DAT lines low
-                    sim_cmdOut = 0;
-                    sim_datOut = 0;
+                    cmdOut = 0;
+                    datOut = 0;
                     // Wait 5ms
                     #(5*1000000);
                     // Let go of CMD line
-                    sim_cmdOut = 1'bz;
+                    cmdOut = 1'bz;
                     // Wait 1ms
                     #(1*1000000);
                     // Let go of DAT lines
-                    sim_datOut = 4'bzzzz;
+                    datOut = 4'bzzzz;
                 end
                 
                 CMD12: begin
-                    sim_recvWriteData = 0;
-                    sim_sendReadData = 0;
+                    recvWriteData = 0;
+                    sendReadData = 0;
                 end
                 
                 CMD18: begin
-                    sim_sendReadData = 1;
+                    sendReadData = 1;
                 end
                 
                 CMD25: begin
-                    sim_recvWriteData = 1;
+                    recvWriteData = 1;
                 end
                 endcase
                 
@@ -342,11 +342,11 @@ module SDCardSim(
                         wait(!sd_clk);
                     end
                     
-                    sim_datOut[0] = 1'bz;
+                    datOut[0] = 1'bz;
                 end
                 
                 // Note whether the next command is an application-specific command
-                sim_acmd = (sim_cmdIn_cmdIndex==55);
+                acmd = (cmdIn_cmdIndex==55);
             end
             wait(!sd_clk);
         end
@@ -362,75 +362,75 @@ module SDCardSim(
     initial begin
         forever begin
             wait(sd_clk);
-            if (sim_recvWriteData) begin
+            if (recvWriteData) begin
                 reg[15:0] i;
                 reg[7:0] count;
                 
                 // Wait for start bit
-                while (sd_dat[0] && sim_recvWriteData) begin
+                while (sd_dat[0] && recvWriteData) begin
                     wait(!sd_clk);
                     wait(sd_clk);
                 end
                 wait(!sd_clk);
                 
-                sim_dat_crcRst_ = 1;
+                dat_crcRst_ = 1;
                 
-                for (i=0; i<1024 && sim_recvWriteData; i++) begin
+                for (i=0; i<1024 && recvWriteData; i++) begin
                     wait(sd_clk);
-                    sim_payloadDataReg = (sim_payloadDataReg<<4)|sd_dat[3:0];
+                    payloadDataReg = (payloadDataReg<<4)|sd_dat[3:0];
                     wait(!sd_clk);
                 end
                 
-                if (sim_recvWriteData) begin
-                    $display("[SD CARD] Received write data: %h", sim_payloadDataReg);
+                if (recvWriteData) begin
+                    $display("[SD CARD] Received write data: %h", payloadDataReg);
                 end
                 
-                if (sim_recvWriteData) begin
-                    sim_dat_ourCRCReg[3] = sim_dat_crc[3];
-                    sim_dat_ourCRCReg[2] = sim_dat_crc[2];
-                    sim_dat_ourCRCReg[1] = sim_dat_crc[1];
-                    sim_dat_ourCRCReg[0] = sim_dat_crc[0];
-                    sim_dat_crcRst_ = 0;
+                if (recvWriteData) begin
+                    dat_ourCRCReg[3] = dat_crc[3];
+                    dat_ourCRCReg[2] = dat_crc[2];
+                    dat_ourCRCReg[1] = dat_crc[1];
+                    dat_ourCRCReg[0] = dat_crc[0];
+                    dat_crcRst_ = 0;
                 end
                 
-                for (i=0; i<16 && sim_recvWriteData; i++) begin
+                for (i=0; i<16 && recvWriteData; i++) begin
                     wait(sd_clk);
-                    sim_dat_theirCRCReg[3] = (sim_dat_theirCRCReg[3]<<1)|sd_dat[3];
-                    sim_dat_theirCRCReg[2] = (sim_dat_theirCRCReg[2]<<1)|sd_dat[2];
-                    sim_dat_theirCRCReg[1] = (sim_dat_theirCRCReg[1]<<1)|sd_dat[1];
-                    sim_dat_theirCRCReg[0] = (sim_dat_theirCRCReg[0]<<1)|sd_dat[0];
+                    dat_theirCRCReg[3] = (dat_theirCRCReg[3]<<1)|sd_dat[3];
+                    dat_theirCRCReg[2] = (dat_theirCRCReg[2]<<1)|sd_dat[2];
+                    dat_theirCRCReg[1] = (dat_theirCRCReg[1]<<1)|sd_dat[1];
+                    dat_theirCRCReg[0] = (dat_theirCRCReg[0]<<1)|sd_dat[0];
                     wait(!sd_clk);
                 end
                 
                 // Check CRCs
-                if (sim_recvWriteData) begin
-                    if (sim_dat_ourCRCReg[3] !== sim_dat_theirCRCReg[3]) begin
-                        $display("[SD CARD] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", sim_dat_ourCRCReg[3], sim_dat_theirCRCReg[3]);
+                if (recvWriteData) begin
+                    if (dat_ourCRCReg[3] !== dat_theirCRCReg[3]) begin
+                        $display("[SD CARD] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                     end else begin
-                        $display("[SD CARD] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", sim_dat_ourCRCReg[3], sim_dat_theirCRCReg[3]);
+                        $display("[SD CARD] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                     end
                     
-                    if (sim_dat_ourCRCReg[2] !== sim_dat_theirCRCReg[2]) begin
-                        $display("[SD CARD] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", sim_dat_ourCRCReg[2], sim_dat_theirCRCReg[2]);
+                    if (dat_ourCRCReg[2] !== dat_theirCRCReg[2]) begin
+                        $display("[SD CARD] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                     end else begin
-                        $display("[SD CARD] DAT2: CRC Valid (ours=%h, theirs=%h) ✅", sim_dat_ourCRCReg[2], sim_dat_theirCRCReg[2]);
+                        $display("[SD CARD] DAT2: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                     end
                     
-                    if (sim_dat_ourCRCReg[1] !== sim_dat_theirCRCReg[1]) begin
-                        $display("[SD CARD] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", sim_dat_ourCRCReg[1], sim_dat_theirCRCReg[1]);
+                    if (dat_ourCRCReg[1] !== dat_theirCRCReg[1]) begin
+                        $display("[SD CARD] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                     end else begin
-                        $display("[SD CARD] DAT1: CRC Valid (ours=%h, theirs=%h) ✅", sim_dat_ourCRCReg[1], sim_dat_theirCRCReg[1]);
+                        $display("[SD CARD] DAT1: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                     end
                     
-                    if (sim_dat_ourCRCReg[0] !== sim_dat_theirCRCReg[0]) begin
-                        $display("[SD CARD] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", sim_dat_ourCRCReg[0], sim_dat_theirCRCReg[0]);
+                    if (dat_ourCRCReg[0] !== dat_theirCRCReg[0]) begin
+                        $display("[SD CARD] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[0], dat_theirCRCReg[0]);
                     end else begin
-                        $display("[SD CARD] DAT0: CRC Valid (ours=%h, theirs=%h) ✅", sim_dat_ourCRCReg[0], sim_dat_theirCRCReg[0]);
+                        $display("[SD CARD] DAT0: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[0], dat_theirCRCReg[0]);
                     end
                 end
                 
                 // Check end bits
-                if (sim_recvWriteData) begin
+                if (recvWriteData) begin
                     wait(sd_clk);
                     if (!sd_dat[3]) begin
                         $display("[SD CARD] DAT3: Bad end bit: %b ❌", sd_dat[3]);
@@ -459,7 +459,7 @@ module SDCardSim(
                 end
                 
                 // Send CRC status token
-                if (sim_recvWriteData) begin
+                if (recvWriteData) begin
                     // Wait 2 cycles before sending CRC status
                     wait(sd_clk);
                     wait(!sd_clk);
@@ -467,23 +467,23 @@ module SDCardSim(
                     wait(sd_clk);
                     wait(!sd_clk);
                     
-                    sim_datOut = 4'b0000;
+                    datOut = 4'b0000;
                     wait(sd_clk);
                     wait(!sd_clk);
                     
-                    sim_datOut = 4'b0000;
+                    datOut = 4'b0000;
                     wait(sd_clk);
                     wait(!sd_clk);
                     
-                    sim_datOut = 4'b0001;
+                    datOut = 4'b0001;
                     wait(sd_clk);
                     wait(!sd_clk);
                     
-                    sim_datOut = 4'b0000;
+                    datOut = 4'b0000;
                     wait(sd_clk);
                     wait(!sd_clk);
                     
-                    sim_datOut = 4'b0001;
+                    datOut = 4'b0001;
                     wait(sd_clk);
                     wait(!sd_clk);
                     
@@ -491,7 +491,7 @@ module SDCardSim(
                     count = $urandom%10;
                     if (count) begin
                         // Start bit
-                        sim_datOut = 4'b0000;
+                        datOut = 4'b0000;
                         wait(sd_clk);
                         wait(!sd_clk);
                         
@@ -501,15 +501,15 @@ module SDCardSim(
                         end
                         
                         // End bit
-                        sim_datOut = 4'b0001;
+                        datOut = 4'b0001;
                         wait(sd_clk);
                         wait(!sd_clk);
                     end
                     
-                    sim_datOut = 4'bzzzz;
+                    datOut = 4'bzzzz;
                 end
                 
-                sim_dat_crcRst_ = 0;
+                dat_crcRst_ = 0;
             end
 
             wait(!sd_clk);
@@ -527,84 +527,84 @@ module SDCardSim(
     initial begin
         forever begin
             wait(sd_clk);
-            if (sim_sendReadData) begin
+            if (sendReadData) begin
                 reg[15:0] i;
                 reg[15:0] ii;
                 reg[7:0] datOutReg;
                 
                 // Start bit
                 wait(!sd_clk);
-                sim_datOut = 4'b0000;
+                datOut = 4'b0000;
                 wait(sd_clk);
                 
                 wait(!sd_clk);
-                sim_dat_crcRst_ = 1;
+                dat_crcRst_ = 1;
 
                 // // Shift out data
-                // sim_payloadDataReg = PAYLOAD_DATA;
-                // $display("[SD CARD] Sending read data: %h", sim_payloadDataReg);
+                // payloadDataReg = PAYLOAD_DATA;
+                // $display("[SD CARD] Sending read data: %h", payloadDataReg);
                 //
-                // for (i=0; i<1024 && sim_sendReadData; i++) begin
+                // for (i=0; i<1024 && sendReadData; i++) begin
                 //     wait(!sd_clk);
-                //     sim_datOut = sim_payloadDataReg[4095:4092];
-                //     sim_payloadDataReg = sim_payloadDataReg<<4;
+                //     datOut = payloadDataReg[4095:4092];
+                //     payloadDataReg = payloadDataReg<<4;
                 //     wait(sd_clk);
                 // end
                 
                 // Shift out data
                 $display("[SD CARD] Sending read data");
                 
-                for (i=0; i<128 && sim_sendReadData; i++) begin
+                for (i=0; i<128 && sendReadData; i++) begin
                     datOutReg = i;
-                    for (ii=0; ii<8 && sim_sendReadData; ii++) begin
-                        // $display("[SD CARD] Sending bit: %b", sim_datOut);
+                    for (ii=0; ii<8 && sendReadData; ii++) begin
+                        // $display("[SD CARD] Sending bit: %b", datOut);
                         wait(!sd_clk);
-                        sim_datOut = {4{datOutReg[7]}};
+                        datOut = {4{datOutReg[7]}};
                         wait(sd_clk);
                         
                         datOutReg = datOutReg<<1;
                     end
                 end
                 
-                if (sim_sendReadData) begin
-                    // sim_dat_ourCRCReg[3] = 16'b1010_1010_1010_XXXX;
-                    // sim_dat_ourCRCReg[2] = 16'b1010_1010_1010_XXXX;
-                    // sim_dat_ourCRCReg[1] = 16'b1010_1010_1010_XXXX;
-                    // sim_dat_ourCRCReg[0] = 16'b1010_1010_1010_XXXX;
+                if (sendReadData) begin
+                    // dat_ourCRCReg[3] = 16'b1010_1010_1010_XXXX;
+                    // dat_ourCRCReg[2] = 16'b1010_1010_1010_XXXX;
+                    // dat_ourCRCReg[1] = 16'b1010_1010_1010_XXXX;
+                    // dat_ourCRCReg[0] = 16'b1010_1010_1010_XXXX;
                     
-                    sim_dat_ourCRCReg[3] = sim_dat_crcNext[3];
-                    sim_dat_ourCRCReg[2] = sim_dat_crcNext[2];
-                    sim_dat_ourCRCReg[1] = sim_dat_crcNext[1];
-                    sim_dat_ourCRCReg[0] = sim_dat_crcNext[0];
+                    dat_ourCRCReg[3] = dat_crcNext[3];
+                    dat_ourCRCReg[2] = dat_crcNext[2];
+                    dat_ourCRCReg[1] = dat_crcNext[1];
+                    dat_ourCRCReg[0] = dat_crcNext[0];
                     
-                    $display("[SD CARD] CRC3: %h", sim_dat_ourCRCReg[3]);
-                    $display("[SD CARD] CRC2: %h", sim_dat_ourCRCReg[2]);
-                    $display("[SD CARD] CRC1: %h", sim_dat_ourCRCReg[1]);
-                    $display("[SD CARD] CRC0: %h", sim_dat_ourCRCReg[0]);
+                    $display("[SD CARD] CRC3: %h", dat_ourCRCReg[3]);
+                    $display("[SD CARD] CRC2: %h", dat_ourCRCReg[2]);
+                    $display("[SD CARD] CRC1: %h", dat_ourCRCReg[1]);
+                    $display("[SD CARD] CRC0: %h", dat_ourCRCReg[0]);
                     
                     // Shift out CRC
-                    for (i=0; i<16 && sim_sendReadData; i++) begin
+                    for (i=0; i<16 && sendReadData; i++) begin
                         wait(!sd_clk);
-                        sim_datOut = {sim_dat_ourCRCReg[3][15], sim_dat_ourCRCReg[2][15], sim_dat_ourCRCReg[1][15], sim_dat_ourCRCReg[0][15]};
+                        datOut = {dat_ourCRCReg[3][15], dat_ourCRCReg[2][15], dat_ourCRCReg[1][15], dat_ourCRCReg[0][15]};
                         
-                        sim_dat_ourCRCReg[3] = sim_dat_ourCRCReg[3]<<1;
-                        sim_dat_ourCRCReg[2] = sim_dat_ourCRCReg[2]<<1;
-                        sim_dat_ourCRCReg[1] = sim_dat_ourCRCReg[1]<<1;
-                        sim_dat_ourCRCReg[0] = sim_dat_ourCRCReg[0]<<1;
+                        dat_ourCRCReg[3] = dat_ourCRCReg[3]<<1;
+                        dat_ourCRCReg[2] = dat_ourCRCReg[2]<<1;
+                        dat_ourCRCReg[1] = dat_ourCRCReg[1]<<1;
+                        dat_ourCRCReg[0] = dat_ourCRCReg[0]<<1;
                         wait(sd_clk);
                     end
                 end
                 
-                sim_dat_crcRst_ = 0;
+                dat_crcRst_ = 0;
                 
                 // End bit
                 wait(!sd_clk);
-                sim_datOut = 4'b1111;
+                datOut = 4'b1111;
                 wait(sd_clk);
                 
                 // Stop driving DAT lines
                 wait(!sd_clk);
-                sim_datOut = 4'bzzzz;
+                datOut = 4'bzzzz;
                 wait(sd_clk);
                 
                 wait(!sd_clk);
