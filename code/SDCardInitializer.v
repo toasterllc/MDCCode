@@ -242,6 +242,8 @@ module SDCardInitializer(
         //   Go to idle state
         // ====================
         StateInit: begin
+            led <= 0;
+            
             $display("[SD INIT] Sending CMD0");
             cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 0;
@@ -440,6 +442,7 @@ module SDCardInitializer(
         //   Switch to SDR104
         // ====================
         StateInit+15: begin
+            led[0] <= 1;
             // CMD6
             //   Mode = 1 (switch function)
             //   Group 6 (Reserved)          = 0xF (no change)
@@ -464,6 +467,7 @@ module SDCardInitializer(
                     $display("[SD INIT] CMD6 status: function group 1 invalid: %b ❌", datInCMD6FnGrp1);
                     `finish;
                 end else begin
+                    led[1] <= 1;
                     $display("[SD INIT] CMD6 status: function group 1 valid ✅");
                 end
                 state <= StateInit+17;
@@ -472,6 +476,7 @@ module SDCardInitializer(
         
         // Disable the clock 8 cycles before we signal that we're done
         StateInit+17: begin
+            led[2] <= 1;
             $display("[SD INIT] Disabling clock");
             clkEn_ <= 1;
             delayCounter <= 7;
@@ -482,6 +487,7 @@ module SDCardInitializer(
         StateInit+18: begin
             if (!done) $display("[SD INIT] *** INIT DONE ***");
             done <= 1;
+            led[3] <= 1;
         end
         
         
