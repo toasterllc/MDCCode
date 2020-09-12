@@ -29,6 +29,7 @@ module SDCardInitializer(
     input wire          clk12mhz,
     output reg[15:0]    rca = 0,
     output reg          done = 0,
+    output reg          err = 0,
     
     // SDIO port
     output wire         sd_clk,
@@ -90,7 +91,6 @@ module SDCardInitializer(
     localparam StateCmdOut      = 19;    // +1
     localparam StateRespIn      = 21;    // +3
     localparam StateDelay       = 25;    // +0
-    localparam StateError       = 26;    // +0
     reg[5:0] state = 0;
     reg[5:0] nextState = 0;
     
@@ -268,8 +268,11 @@ module SDCardInitializer(
             //   it shall not return response and stays in Idle state."
 
             // Verify check pattern is what we supplied
-            if (cmdInReg[15:8] !== 8'hAA) state <= StateError;
-            else state <= StateInit+3;
+            if (cmdInReg[15:8] !== 8'hAA) begin
+                err <= 1;
+            end
+            
+            state <= StateInit+3;
         end
 
         // ====================
@@ -304,24 +307,32 @@ module SDCardInitializer(
             if (cmdInReg[45:40] !== 6'b111111) begin
                 $display("[SD INIT] Bad command: %b", cmdInReg[45:40]);
                 `finish;
-                state <= StateError;
+                err <= 1;
             end
+            
             // Verify CRC is all 1's
-            else if (cmdInReg[7:1] !== 7'b1111111) begin
+            if (cmdInReg[7:1] !== 7'b1111111) begin
                 $display("[SD INIT] Bad CRC: %b", cmdInReg[7:1]);
                 `finish;
-                state <= StateError;
+                err <= 1;
             end
-            // Retry AMCD41 if the card wasn't ready (busy)
-            else if (cmdInReg[39] !== 1'b1) state <= StateInit+3;
-            // Verify that we can switch to 1.8V signaling voltage (s18a)
-            else if (cmdInReg[32] !== 1'b1) begin
-                $display("[SD INIT] Bad s18a: %b", cmdInReg[32]);
-                `finish;
-                state <= StateError;
+            
+            // Proceed if the card is ready
+            if (cmdInReg[39] === 1'b1) begin
+                // Verify that we can switch to 1.8V signaling voltage (s18a)
+                if (cmdInReg[32] !== 1'b1) begin
+                    $display("[SD INIT] Bad s18a: %b", cmdInReg[32]);
+                    `finish;
+                    err <= 1;
+                end
+                
+                // Otherwise, proceed
+                state <= StateInit+6;
+            
+            // Otherwise, retry AMCD41 since the card was busy
+            end else begin
+                state <= StateInit+3;
             end
-            // Otherwise, proceed
-            else state <= StateInit+6;
         end
         
         // ====================
@@ -478,7 +489,7 @@ module SDCardInitializer(
         end
         
         StateInit+18: begin
-            if (!done) $display("[SD INIT] *** INIT DONE ***");
+            if (!done) $display("[SD INIT] *** Init done ***");
             done <= 1;
         end
         
@@ -529,13 +540,12 @@ module SDCardInitializer(
         // Check transmission bit
         StateRespIn+1: begin
             if (cmdInStaged[0]) begin
-                $display("[SD INIT] BAD TRANSMISSION BIT");
-                state <= StateError;
-                
-            end else begin
-                cmdInCRCRst_ <= 1;
-                state <= StateRespIn+2;
+                $display("[SD INIT] Bad transmission bit ❌");
+                err <= 1;
             end
+            
+            cmdInCRCRst_ <= 1;
+            state <= StateRespIn+2;
         end
         
         // Wait for response to end
@@ -550,21 +560,27 @@ module SDCardInitializer(
         
         StateRespIn+3: begin
             // cmdInStaged <= ~0;
-            
             $display("[SD INIT] Received response: %b [respCheckCRC: %b, our CRC: %b, their CRC: %b]", cmdInReg, respCheckCRC, respInExpectedCRC, cmdInReg[7:1]);
             
-            // Verify that the CRC is OK (if requested), and that the stop bit is OK
-            if ((respCheckCRC && respInExpectedCRC!==cmdInReg[7:1]) || !cmdInReg[0]) begin
-                $display("[SD INIT] ***** BAD CRC *****");
-                state <= StateError;
-            
-            end else begin
-                // The SD spec requires 8 cycles after a command or after a response,
-                // before another command is issued.
-                // See section 4.12, timing values N_RC and N_CC.
-                delayCounter <= 7;
-                state <= StateDelay;
+            // Verify that the CRC is OK (if requested)
+            if ((respCheckCRC && respInExpectedCRC!==cmdInReg[7:1])) begin
+                $display("[SD INIT] Bad CRC ❌");
+                `finish;
+                err <= 1;
             end
+            
+            // Verify that the stop bit is OK
+            if (!cmdInReg[0]) begin
+                $display("[SD INIT] Bad stop bit ❌");
+                `finish;
+                err <= 1;
+            end
+            
+            // The SD spec requires 8 cycles after a command or after a response,
+            // before another command is issued.
+            // See section 4.12, timing values N_RC and N_CC.
+            delayCounter <= 7;
+            state <= StateDelay;
         end
         
         
@@ -573,27 +589,6 @@ module SDCardInitializer(
         // Delay state
         StateDelay: begin
             if (!delayCounter) state <= nextState;
-        end
-        
-        
-        
-        
-        
-        
-        StateError: begin
-            $display("[SD INIT] ***** ERROR *****");
-            `finish;
-            cmdOutActive <= 0;
-            cmdOutCRCRst_ <= 0;
-            cmdInActive <= 0;
-            cmdInCRCRst_ <= 0;
-            
-            // Since we don't know what state we came from, use our delay state to ensure
-            // that N_RC/N_CC are met.
-            // See StateDelay for more info.
-            delayCounter <= 7;
-            nextState <= StateInit;
-            state <= StateDelay;
         end
         endcase
     end

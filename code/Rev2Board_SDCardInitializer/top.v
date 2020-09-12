@@ -104,7 +104,7 @@ module Top(
         `endif
     end
     
-    
+    assign led[3:2] = 0;
     
     // ====================
     // SD Card Initializer
@@ -118,7 +118,8 @@ module Top(
     SDCardInitializer SDCardInitializer(
         .clk12mhz(clk12mhz),
         .rca(init_rca),
-        .done(),
+        .done(led[0]),
+        .err(led[1]),
 
         .sd_clk(init_sd_clk),
         .sd_cmdIn(init_sd_cmdIn),
