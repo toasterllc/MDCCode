@@ -87,7 +87,6 @@ module Top(
     // Pin: sd_dat
     // ====================
     wire[3:0] sd_datIn;
-    wire[3:0] sd_datOut;
     genvar i;
     for (i=0; i<4; i=i+1) begin
         `ifdef SIM
@@ -99,7 +98,7 @@ module Top(
             ) SB_IO (
                 .PACKAGE_PIN(sd_dat[i]),
                 .OUTPUT_ENABLE(0),
-                .D_OUT_0(sd_datOut[i]),
+                .D_OUT_0(),
                 .D_IN_0(sd_datIn[i])
             );
         `endif
