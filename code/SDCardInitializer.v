@@ -59,6 +59,60 @@ module SDCardInitializer(
         clkDivider <= clkDivider-1;
     end
     
+    
+    
+    
+    
+    // ====================
+    // sd_clk
+    // ====================
+    assign sd_clk = clk && !clkEn_;
+    
+    
+    
+    
+    // ====================
+    // sd_cmd
+    // ====================
+    assign sd_cmdOut = cmdOutReg[47];
+    assign sd_cmdOutActive = cmdOutActive;
+    
+    
+    
+    
+    // ====================
+    // State Machine Registers
+    // ====================
+    localparam DatInState_Idle  = 0;    // +0
+    localparam DatInState_Go    = 1;    // +2
+    localparam DatInState_Done  = 4;    // +0
+    reg[3:0] datInState = 0;
+    
+    localparam StateInit        = 0;     // +18
+    localparam StateCmdOut      = 19;    // +1
+    localparam StateRespIn      = 21;    // +3
+    localparam StateDelay       = 25;    // +0
+    localparam StateError       = 26;    // +0
+    reg[5:0] state = 0;
+    reg[5:0] nextState = 0;
+    
+    localparam CMD0 =   6'd0;      // GO_IDLE_STATE
+    localparam CMD2 =   6'd2;      // ALL_SEND_CID
+    localparam CMD3 =   6'd3;      // SEND_RELATIVE_ADDR
+    localparam CMD6 =   6'd6;      // SWITCH_FUNC
+    localparam CMD7 =   6'd7;      // SELECT_CARD/DESELECT_CARD
+    localparam CMD8 =   6'd8;      // SEND_IF_COND
+    localparam CMD11 =  6'd11;     // VOLTAGE_SWITCH
+    localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
+    localparam CMD55 =  6'd55;     // APP_CMD
+    
+    reg[6:0] respInExpectedCRC = 0;
+    reg respCheckCRC = 0;
+    
+    localparam ClkDisableDelay = ((5*ClkFreq)/1000)-1;
+    reg[10:0] delayCounter = 0;
+    initial `assert(`fits(delayCounter, ClkDisableDelay));
+    
     reg[47:0] cmdOutReg = 0;
     reg[7:0] cmdOutCounter = 0;
     reg cmdOutActive = 0;
@@ -68,11 +122,12 @@ module SDCardInitializer(
     reg cmdInActive = 0;
     reg[7:0] cmdInCounter = 0;
     
+    reg[3:0] datInReg = 0;
+    reg[7:0] datInCounter = 0;
+    reg[3:0] datInCMD6FnGrp1 = 0;
+    
     reg clkEn_ = 0;
     
-    assign sd_clk = clk && !clkEn_;
-    assign sd_cmdOut = cmdOutReg[47];
-    assign sd_cmdOutActive = cmdOutActive;
     
     // ====================
     // CRC
@@ -95,36 +150,17 @@ module SDCardInitializer(
         .dout(cmdInCRC)
     );
     
+    
+    
+    
+    
+    
     // ====================
     // State Machine
     // ====================
-    localparam StateInit        = 0;     // +17
-    localparam StateCmdOut      = 18;    // +1
-    localparam StateRespIn      = 20;    // +3
-    localparam StateDelay       = 24;    // +0
-    localparam StateError       = 25;    // +0
-    
-    localparam CMD0 =   6'd0;      // GO_IDLE_STATE
-    localparam CMD2 =   6'd2;      // ALL_SEND_CID
-    localparam CMD3 =   6'd3;      // SEND_RELATIVE_ADDR
-    localparam CMD6 =   6'd6;      // SWITCH_FUNC
-    localparam CMD7 =   6'd7;      // SELECT_CARD/DESELECT_CARD
-    localparam CMD8 =   6'd8;      // SEND_IF_COND
-    localparam CMD11 =  6'd11;     // VOLTAGE_SWITCH
-    localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
-    localparam CMD55 =  6'd55;     // APP_CMD
-    
-    reg[5:0] state = 0;
-    reg[5:0] nextState = 0;
-    reg[6:0] respInExpectedCRC = 0;
-    reg respCheckCRC = 0;
-    
-    localparam ClkDisableDelay = ((5*ClkFreq)/1000)-1;
-    reg[10:0] counter = 0;
-    initial `assert(`fits(counter, ClkDisableDelay));
-    
     always @(posedge clk) begin
         cmdInStaged <= cmdInStaged<<1|sd_cmdIn;
+        datInReg <= {sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
     end
     
     always @(negedge clk) begin
@@ -138,7 +174,66 @@ module SDCardInitializer(
             cmdInCounter <= cmdInCounter-1;
         end
         
-        counter <= counter-1;
+        datInCounter <= datInCounter-1;
+        delayCounter <= delayCounter-1;
+        
+        
+        
+        
+        
+        
+        
+        
+        case (datInState)
+        DatInState_Idle: begin
+        end
+        
+        // Wait for the start bit
+        DatInState_Go: begin
+            if (!datInReg[0]) begin
+                $display("[SD INIT] DAT IN: started");
+                datInCounter <= 128+16-1; // 128 bits payload + 16 bits CRC
+                datInState <= DatInState_Go+1;
+            end
+        end
+        
+        DatInState_Go+1: begin
+            // Note the function group 1 from the CMD6 status
+            if (datInCounter === 8'd110) begin
+                datInCMD6FnGrp1 <= datInReg;
+            end
+            
+            if (!datInCounter) begin
+                datInState <= DatInState_Go+2;
+            end
+        end
+        
+        // Check end bit
+        DatInState_Go+2: begin
+            if (datInReg !== 4'b1111) begin
+                // TODO: expose error status
+                $display("[SD INIT] DAT: end bit invalid: %b ❌", datInReg);
+                `finish;
+            end else begin
+                $display("[SD INIT] DAT: end bit valid ✅");
+            end
+            
+            $display("[SD INIT] DAT IN: finished");
+            datInState <= DatInState_Done;
+        end
+        
+        DatInState_Done: begin
+        end
+        endcase
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         case (state)
         // ====================
@@ -147,7 +242,7 @@ module SDCardInitializer(
         //   Go to idle state
         // ====================
         StateInit: begin
-            $display("[SD HOST] Sending CMD0");
+            $display("[SD INIT] Sending CMD0");
             cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 0;
             state <= StateCmdOut;
@@ -160,7 +255,7 @@ module SDCardInitializer(
         //   Send interface condition
         // ====================
         StateInit+1: begin
-            $display("[SD HOST] Sending CMD8");
+            $display("[SD INIT] Sending CMD8");
             cmdOutReg <= {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
@@ -185,7 +280,7 @@ module SDCardInitializer(
         //   Initialize
         // ====================
         StateInit+3: begin
-            $display("[SD HOST] Sending ACMD41");
+            $display("[SD INIT] Sending ACMD41");
             cmdOutReg <= {2'b01, CMD55, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
@@ -209,13 +304,13 @@ module SDCardInitializer(
         StateInit+5: begin
             // Verify the command is all 1's
             if (cmdInReg[45:40] !== 6'b111111) begin
-                $display("[SD HOST] Bad command: %b", cmdInReg[45:40]);
+                $display("[SD INIT] Bad command: %b", cmdInReg[45:40]);
                 `finish;
                 state <= StateError;
             end
             // Verify CRC is all 1's
             else if (cmdInReg[7:1] !== 7'b1111111) begin
-                $display("[SD HOST] Bad CRC: %b", cmdInReg[7:1]);
+                $display("[SD INIT] Bad CRC: %b", cmdInReg[7:1]);
                 `finish;
                 state <= StateError;
             end
@@ -223,7 +318,7 @@ module SDCardInitializer(
             else if (cmdInReg[39] !== 1'b1) state <= StateInit+3;
             // Verify that we can switch to 1.8V signaling voltage (s18a)
             else if (cmdInReg[32] !== 1'b1) begin
-                $display("[SD HOST] Bad s18a: %b", cmdInReg[32]);
+                $display("[SD INIT] Bad s18a: %b", cmdInReg[32]);
                 `finish;
                 state <= StateError;
             end
@@ -238,7 +333,7 @@ module SDCardInitializer(
         // ====================
         StateInit+6: begin
             // state <= StateInit+9;
-            $display("[SD HOST] Sending CMD11");
+            $display("[SD INIT] Sending CMD11");
             cmdOutReg <= {2'b01, CMD11, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
@@ -248,9 +343,9 @@ module SDCardInitializer(
         
         // After we get the respone, disable the clock for `ClkDisableDelay` clk12mhz cycles
         StateInit+7: begin
-            $display("[SD HOST] Disabling clock for %0d cycles", ClkDisableDelay+1);
+            $display("[SD INIT] Disabling clock for %0d cycles", ClkDisableDelay+1);
             clkEn_ <= 1;
-            counter <= ClkDisableDelay;
+            delayCounter <= ClkDisableDelay;
             nextState <= StateInit+8;
             state <= StateDelay;
         end
@@ -258,13 +353,13 @@ module SDCardInitializer(
         // After the delay, continue once the SD card lets go of the DAT lines
         // See Section 4.2.4.2
         StateInit+8: begin
-            if (clkEn_) $display("[SD HOST] Enabling clock and waiting for card ready...");
+            if (clkEn_) $display("[SD INIT] Enabling clock and waiting for card ready...");
             clkEn_ <= 0;
             if (sd_datIn[0]) begin
-                $display("[SD HOST] Card ready");
+                $display("[SD INIT] Card ready");
                 state <= StateInit+9;
             end else begin
-                $display("[SD HOST] Card busy");
+                $display("[SD INIT] Card busy");
             end
         end
         
@@ -274,7 +369,7 @@ module SDCardInitializer(
         //   Get card identification number (CID)
         // ====================
         StateInit+9: begin
-            $display("[SD HOST] Sending CMD2");
+            $display("[SD INIT] Sending CMD2");
             cmdOutReg <= {2'b01, CMD2, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 135;
             respCheckCRC <= 0; // CMD2 response doesn't have CRC, so don't check it
@@ -288,7 +383,7 @@ module SDCardInitializer(
         //   Publish a new relative address (RCA)
         // ====================
         StateInit+10: begin
-            $display("[SD HOST] Sending CMD3");
+            $display("[SD INIT] Sending CMD3");
             cmdOutReg <= {2'b01, CMD3, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
@@ -307,7 +402,7 @@ module SDCardInitializer(
         //   Select card
         // ====================
         StateInit+12: begin
-            $display("[SD HOST] Sending CMD7");
+            $display("[SD INIT] Sending CMD7");
             cmdOutReg <= {2'b01, CMD7, {rca, 16'b0}, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
@@ -321,7 +416,7 @@ module SDCardInitializer(
         //   Set bus width to 4 bits
         // ====================
         StateInit+13: begin
-            $display("[SD HOST] Sending ACMD6");
+            $display("[SD INIT] Sending ACMD6");
             cmdOutReg <= {2'b01, CMD55, {rca, 16'b0}, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
@@ -353,25 +448,39 @@ module SDCardInitializer(
             //   Group 3 (Driver Strength)   = 0xF (no change)
             //   Group 2 (Command System)    = 0xF (no change)
             //   Group 1 (Access Mode)       = 0x3 (SDR104)
-            $display("[SD HOST] Sending CMD6");
+            $display("[SD INIT] Sending CMD6");
             cmdOutReg <= {2'b01, CMD6, 32'h80FFFFF3, 7'b0, 1'b1};
             cmdInCounter <= 47;
             respCheckCRC <= 1;
+            datInState <= DatInState_Go;
             state <= StateCmdOut;
             nextState <= StateInit+16;
         end
         
-        // Disable the clock 8 cycles before we signal that we're done
         StateInit+16: begin
-            $display("[SD HOST] Disabling clock");
+            if (datInState === DatInState_Done) begin
+                if (datInCMD6FnGrp1 !== 4'h3) begin
+                    // TODO: signal error
+                    $display("[SD INIT] CMD6 status: function group 1 invalid: %b ❌", datInCMD6FnGrp1);
+                    `finish;
+                end else begin
+                    $display("[SD INIT] CMD6 status: function group 1 valid ✅");
+                end
+                state <= StateInit+17;
+            end
+        end
+        
+        // Disable the clock 8 cycles before we signal that we're done
+        StateInit+17: begin
+            $display("[SD INIT] Disabling clock");
             clkEn_ <= 1;
-            counter <= 7;
-            nextState <= StateInit+17;
+            delayCounter <= 7;
+            nextState <= StateInit+18;
             state <= StateDelay;
         end
         
-        StateInit+17: begin
-            if (!done) $display("[SD HOST] *** DONE ***");
+        StateInit+18: begin
+            if (!done) $display("[SD INIT] *** INIT DONE ***");
             done <= 1;
         end
         
@@ -398,10 +507,18 @@ module SDCardInitializer(
             if (!cmdOutCounter) begin
                 cmdOutActive <= 0;
                 cmdOutCRCRst_ <= 0;
-                counter <= 7;
+                // The SD spec requires 8 cycles after a command or after a response,
+                // before another command is issued.
+                // See section 4.12, timing values N_RC and N_CC.
+                delayCounter <= 7;
                 state <= (cmdInCounter ? StateRespIn : StateDelay);
             end
         end
+        
+        
+        
+        
+        
         
         // Wait for response to start
         StateRespIn: begin
@@ -414,7 +531,7 @@ module SDCardInitializer(
         // Check transmission bit
         StateRespIn+1: begin
             if (cmdInStaged[0]) begin
-                $display("[SD HOST] BAD TRANSMISSION BIT");
+                $display("[SD INIT] BAD TRANSMISSION BIT");
                 state <= StateError;
                 
             end else begin
@@ -436,15 +553,18 @@ module SDCardInitializer(
         StateRespIn+3: begin
             // cmdInStaged <= ~0;
             
-            $display("[SD HOST] Received response: %b [respCheckCRC: %b, our CRC: %b, their CRC: %b]", cmdInReg, respCheckCRC, respInExpectedCRC, cmdInReg[7:1]);
+            $display("[SD INIT] Received response: %b [respCheckCRC: %b, our CRC: %b, their CRC: %b]", cmdInReg, respCheckCRC, respInExpectedCRC, cmdInReg[7:1]);
             
             // Verify that the CRC is OK (if requested), and that the stop bit is OK
             if ((respCheckCRC && respInExpectedCRC!==cmdInReg[7:1]) || !cmdInReg[0]) begin
-                $display("[SD HOST] ***** BAD CRC *****");
+                $display("[SD INIT] ***** BAD CRC *****");
                 state <= StateError;
             
             end else begin
-                counter <= 7;
+                // The SD spec requires 8 cycles after a command or after a response,
+                // before another command is issued.
+                // See section 4.12, timing values N_RC and N_CC.
+                delayCounter <= 7;
                 state <= StateDelay;
             end
         end
@@ -453,11 +573,8 @@ module SDCardInitializer(
         
         
         // Delay state
-        // The SD spec requires 8 cycles after a command or after a response,
-        // before another command is issued.
-        // See section 4.12, timing values N_RC and N_CC.
         StateDelay: begin
-            if (!counter) state <= nextState;
+            if (!delayCounter) state <= nextState;
         end
         
         
@@ -466,7 +583,7 @@ module SDCardInitializer(
         
         
         StateError: begin
-            $display("[SD HOST] ***** ERROR *****");
+            $display("[SD INIT] ***** ERROR *****");
             `finish;
             cmdOutActive <= 0;
             cmdOutCRCRst_ <= 0;
@@ -476,7 +593,7 @@ module SDCardInitializer(
             // Since we don't know what state we came from, use our delay state to ensure
             // that N_RC/N_CC are met.
             // See StateDelay for more info.
-            counter <= 7;
+            delayCounter <= 7;
             nextState <= StateInit;
             state <= StateDelay;
         end

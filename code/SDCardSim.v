@@ -111,8 +111,8 @@ module SDCardSim(
             wait(sd_clk);
             if (!sd_cmd) begin
                 // Receive command
-                reg[7:0] i;
-                reg[7:0] count;
+                reg[10:0] i;
+                reg[10:0] count;
                 reg signalBusy;
                 
                 wait(!sd_clk);
@@ -265,7 +265,7 @@ module SDCardSim(
                     
                     // Signal busy (DAT=0) if we were previously writing,
                     // and we received the stop command
-                    signalBusy = (cmdIn_cmdIndex===12 && recvWriteData);
+                    signalBusy = (cmd===CMD12 && recvWriteData);
                     if (signalBusy) begin
                         wait(sd_clk);
                         wait(!sd_clk);
@@ -294,10 +294,17 @@ module SDCardSim(
                         respOut[88],        // end bit
                     );
                     
+                    count = ($urandom%respLen);
                     for (i=0; i<respLen; i++) begin
                         wait(!sd_clk);
                         cmdOut = respOut[135];
                         respOut = respOut<<1;
+                        
+                        // Start sending the data on the DAT lines after a random number of cycles
+                        if (cmd===CMD18 && i===count) begin
+                            sendReadData = 1;
+                        end
+                        
                         wait(sd_clk);
                     end
                 end
@@ -305,6 +312,40 @@ module SDCardSim(
                 cmdOut = 1'bz;
                 
                 case (cmd)
+                CMD6: begin
+                    reg[511:0] datOutReg = 512'h00000000_00000000_00000000_00000000_03000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
+                    
+                    // Start bit
+                    datOut = 4'b0000;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    // Payload
+                    for (i=0; i<128; i++) begin
+                        datOut = datOutReg[511:508];
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        datOutReg = datOutReg<<4;
+                    end
+                    
+                    // CRC
+                    for (i=0; i<16; i++) begin
+                        datOut = 4'b0000;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                    end
+                    
+                    // End bit
+                    datOut = 4'b1111;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    // Let go of DAT lines
+                    datOut = 4'bzzzz;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                end
+                
                 CMD11: begin
                     // Drive CMD/DAT lines low
                     cmdOut = 0;
@@ -325,7 +366,8 @@ module SDCardSim(
                 end
                 
                 CMD18: begin
-                    sendReadData = 1;
+                    // sendReadData=1 should have occurred above
+                    `assert(sendReadData);
                 end
                 
                 CMD25: begin
