@@ -25,19 +25,17 @@ module SDCardController(
     // SDIO port
     output wire         sd_clk,
     inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat,
-    
-    output wire[3:0]    led     // FIXME: remove
+    inout wire[3:0]     sd_dat
 );
     // // ====================
     // // 18 MHz Clock PLL
     // // ====================
-    // // wire pllClk;   // FIXME: uncomment when we remove the `clk` output port
+    // // wire clk;   // FIXME: uncomment when we remove the `clk` output port
     // ClockGen #(
-    //     .FREQ(18000000),
+    //     .FREQ(60000000),
     //     .DIVR(0),
-    //     .DIVF(47),
-    //     .DIVQ(5),
+    //     .DIVF(79),
+    //     .DIVQ(4),
     //     .FILTER_RANGE(1)
     // ) ClockGen(.clk12mhz(clk12mhz), .clk(clk));
 
@@ -180,9 +178,7 @@ module SDCardController(
         .sd_cmdOutActive(core_sd_cmdOutActive),
         .sd_datIn(core_sd_datIn),
         .sd_datOut(core_sd_datOut),
-        .sd_datOutActive(core_sd_datOutActive),
-        
-        .led(led)
+        .sd_datOutActive(core_sd_datOutActive)
     );
     
     
@@ -196,9 +192,4 @@ module SDCardController(
     reg initDone=0, initDoneTmp=0;
     always @(negedge clk)
         {initDone, initDoneTmp} <= {initDoneTmp, init_done};
-    
-    // assign led[0] = initDone;
-    // assign led[1] = err;
-    
-    
 endmodule

@@ -30,9 +30,7 @@ module SDCardControllerCore(
     output wire         sd_cmdOutActive,
     input wire[3:0]     sd_datIn,
     output wire[3:0]    sd_datOut,
-    output wire         sd_datOutActive,
-    
-    output reg[3:0]     led
+    output wire         sd_datOutActive
 );
     // ====================
     // sd_cmd
@@ -289,7 +287,6 @@ module SDCardControllerCore(
         
         case (datOutState)
         DatOutState_Idle: begin
-            led <= 0;
         end
         
         DatOutState_Go: begin
@@ -343,7 +340,6 @@ module SDCardControllerCore(
         
         // End bit
         DatOutState_Go+4: begin
-            led[0] <= 1;
             datOutReg <= {20{1'b1}};
             datOutState <= DatOutState_Go+5;
         end
@@ -362,7 +358,6 @@ module SDCardControllerCore(
                     $display("[SD CORE] DatOut: CRC status invalid ❌");
                     err <= 1;
                 end else begin
-                    led[1] <= 1;
                     $display("[SD CORE] DatOut: CRC status valid ✅");
                 end
                 datOutState <= DatOutState_Go+7;
@@ -372,7 +367,6 @@ module SDCardControllerCore(
         // Wait until the card stops being busy (busy == DAT0 low)
         DatOutState_Go+7: begin
             if (datInReg[0]) begin
-                led[2] <= 1;
                 $display("[SD CORE] DatOut: Card ready");
                 datOutState <= DatOutState_Done;
             end else begin

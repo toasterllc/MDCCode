@@ -22,7 +22,7 @@ module Top(
     output wire         sd_clk      /* synthesis syn_keep=1 */,
     inout wire          sd_cmd      /* synthesis syn_keep=1 */,
     inout wire[3:0]     sd_dat      /* synthesis syn_keep=1 */,
-    output wire[3:0]    led         /* synthesis syn_keep=1 */
+    output reg[3:0]     led = 0     /* synthesis syn_keep=1 */
 `endif
 );
     
@@ -31,7 +31,7 @@ module Top(
     wire        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
-    wire[3:0]   led;
+    reg[3:0]    led = 0;
     
     initial begin
         $dumpfile("top.vcd");
@@ -98,9 +98,7 @@ module Top(
         // SD port
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat),
-        
-        .led(led)
+        .sd_dat(sd_dat)
     );
     
     // ====================
@@ -112,6 +110,8 @@ module Top(
     always @(posedge clk) begin
         case (state)
         0: begin
+            led <= 0;
+            
             sd_cmd_trigger <= 1;
             sd_cmd_write <= 0;
             if (sd_cmd_accepted) begin
@@ -130,7 +130,18 @@ module Top(
 
         if (sd_dataOut_valid) begin
             $display("[SD HOST] Got read data: %h", sd_dataOut);
+            led[0] <= 1;
+            
+            if (sd_dataOut === sd_dataIn) begin
+                led[1] <= 1;
+            end
+            
+            if (sd_dataOut !== sd_dataIn) begin
+                led[2] <= 1;
+            end
         end
+        
+        if (err) led[3] <= 1;
     end
     
     
