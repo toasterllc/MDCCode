@@ -13,6 +13,8 @@
 module Top(
 `ifndef SIM
     input wire          clk12mhz    /* synthesis syn_keep=1 */,
+    input wire          rst_,
+    
     output wire         sd_clk      /* synthesis syn_keep=1 */,
     inout wire          sd_cmd      /* synthesis syn_keep=1 */,
     inout wire[3:0]     sd_dat      /* synthesis syn_keep=1 */,
@@ -117,6 +119,8 @@ module Top(
     wire[3:0] init_sd_datIn = sd_datIn;
     SDCardInitializer SDCardInitializer(
         .clk12mhz(clk12mhz),
+        .rst_(rst_),
+        
         .rca(init_rca),
         .done(led[0]),
         .err(led[1]),
