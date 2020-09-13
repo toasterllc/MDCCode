@@ -50,8 +50,14 @@ module SDCardInitializer(
     reg[ClkDividerWidth-1:0] clkDivider = 0;
     wire clk = clkDivider[ClkDividerWidth-1];
     
+    reg rstDone2 = 0;
     always @(posedge clk12mhz) begin
-        clkDivider <= clkDivider-1;
+        if (!rstDone2) begin
+            clkDivider <= 0;
+            rstDone2 <= 1;
+        end else begin
+            clkDivider <= clkDivider+1;
+        end
     end
     
     

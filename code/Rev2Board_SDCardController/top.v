@@ -18,11 +18,11 @@
 
 module Top(
 `ifndef SIM
-    input wire          clk12mhz    /* synthesis syn_keep=1 */,
-    output wire         sd_clk      /* synthesis syn_keep=1 */,
-    inout wire          sd_cmd      /* synthesis syn_keep=1 */,
-    inout wire[3:0]     sd_dat      /* synthesis syn_keep=1 */,
-    output reg[3:0]     led = 0     /* synthesis syn_keep=1 */
+    input wire          clk12mhz,
+    output wire         sd_clk,
+    inout wire          sd_cmd,
+    inout wire[3:0]     sd_dat,
+    output reg[3:0]     led = 0
 `endif
 );
     
@@ -39,7 +39,7 @@ module Top(
     end
     
     initial begin
-        #100000000;
+        #200000000;
         `finish;
     end
     
@@ -74,6 +74,7 @@ module Top(
     wire sd_dataIn_accepted;
     wire err;
     
+    wire idone;
     SDCardController SDCardController(
         .clk12mhz(clk12mhz),
         .clk(clk), // FIXME: remove once we have our own clock and SDCardController has its CDC logic in place
@@ -98,29 +99,37 @@ module Top(
         // SD port
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
+        .sd_dat(sd_dat),
+        
+        .idone(idone)
     );
     
     // ====================
     // State Machine
     // ====================
-    reg[3:0] state = 0;
+    reg[2:0] state = 0;
     
     // Read a single block
     always @(posedge clk) begin
         case (state)
         0: begin
             led <= 0;
-            
+            sd_cmd_trigger <= 0;
+            sd_cmd_write <= 0;
+            sd_cmd_addr <= 0;
+            state <= 1;
+        end
+        
+        1: begin
             sd_cmd_trigger <= 1;
             sd_cmd_write <= 0;
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Read accepted");
-                state <= 1;
+                state <= 2;
             end
         end
-
-        1: begin
+        
+        2: begin
             sd_cmd_trigger <= 0;
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Stop accepted");
@@ -131,17 +140,18 @@ module Top(
         if (sd_dataOut_valid) begin
             $display("[SD HOST] Got read data: %h", sd_dataOut);
             led[0] <= 1;
-            
+
             if (sd_dataOut === sd_dataIn) begin
                 led[1] <= 1;
             end
-            
+
             if (sd_dataOut !== sd_dataIn) begin
                 led[2] <= 1;
             end
         end
-        
-        if (err) led[3] <= 1;
+
+        // if (idone) led[3] <= 1;
+        // if (err) led[3] <= 1;
     end
     
     

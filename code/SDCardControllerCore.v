@@ -469,7 +469,6 @@ module SDCardControllerCore(
         end
         
         DatInState_Done: begin
-            `finish;
         end
         endcase
         
@@ -485,6 +484,47 @@ module SDCardControllerCore(
         
         case (state)
         StateIdle: begin
+        
+            cmd_accepted <= 0;
+            dataIn_accepted <= 0;
+            dataOut_valid <= 0;
+            err <= 0;
+            dataOut <= 0;
+            cmdInCRCRst_ <= 0;
+            cmdInStaged <= 0;
+            cmdOutActive <= 0;
+            cmdOutRespWait <= 0;
+            datCRCRst_ <= 0;
+            datOutActive <= 0;
+            datIn0CRCReg <= 0;
+            datIn1CRCReg <= 0;
+            datIn2CRCReg <= 0;
+            datIn3CRCReg <= 0;
+            datOut0CRCReg <= 0;
+            datOut1CRCReg <= 0;
+            datOut2CRCReg <= 0;
+            datOut3CRCReg <= 0;
+            datInReg <= 0;
+            datOutReg <= 0;
+            cmdWriteLen <= 0;
+            cmdAddr <= 0;
+            cmdOutArg <= 0;
+            datInCounter <= 0;
+            datInState <= 0;
+            datOutCounter <= 0;
+            datOutState <= 0;
+            nextState <= 0;
+            respState <= 0;
+            state <= 0;
+            cmdInReg <= 0;
+            cmdOutReg <= 0;
+            resp <= 0;
+            cmdOutCmd <= 0;
+            cmdOutCounter <= 0;
+            cmdInCRCReg <= 0;
+            datBlockCounter <= 0;
+            debugCounter <= 0;
+            
             if (cmd_trigger) begin
                 cmdAddr <= cmd_addr;
                 cmdWriteLen <= cmd_writeLen;
