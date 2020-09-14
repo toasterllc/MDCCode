@@ -75,11 +75,6 @@ module SDCardControllerCore(
     localparam DatOutState_Done = 9;    // +0
     reg[3:0] datOutState = 0;
     
-    localparam DatInState_Idle  = 0;    // +0
-    localparam DatInState_Go    = 1;    // +5
-    localparam DatInState_Done  = 7;    // +0
-    reg[3:0] datInState = 0;
-    
     localparam CMD0 =   6'd0;       // GO_IDLE_STATE
     localparam CMD12 =  6'd12;      // STOP_TRANSMISSION
     localparam CMD18 =  6'd18;      // READ_MULTIPLE_BLOCK
@@ -390,89 +385,6 @@ module SDCardControllerCore(
         
         
         
-        case (datInState)
-        DatInState_Idle: begin
-        end
-        
-        DatInState_Go: begin
-            if (!datInReg[0]) begin
-                $display("[SD CORE] DAT IN: started");
-                datInState <= DatInState_Go+1;
-            end
-        end
-        
-        DatInState_Go+1: begin
-            datCRCRst_ <= 1;
-            datInCounter <= 2;
-            datBlockCounter <= 1023;
-            datInState <= DatInState_Go+2;
-        end
-        
-        DatInState_Go+2: begin
-            if (!datInReg[3] || !datInReg[2] || !datInReg[1] || !datInReg[0]) begin
-                debugCounter <= datBlockCounter;
-            end
-            
-            if (!datInCounter) begin
-                datInCounter <= 3;
-                dataOut <= datInReg;
-                dataOut_valid <= 1;
-            end
-            
-            if (!datBlockCounter) begin
-                datInState <= DatInState_Go+3;
-            end
-        end
-        
-        // Remember the CRC we calculated
-        DatInState_Go+3: begin
-            datCRCRst_ <= 0;
-            datIn3CRCReg <= datCRC[3];
-            datIn2CRCReg <= datCRC[2];
-            datIn1CRCReg <= datCRC[1];
-            datIn0CRCReg <= datCRC[0];
-            datInCounter <= 15;
-            datInState <= DatInState_Go+4;
-            $display("[SD CORE] DAT: calculated CRCs: %h %h %h %h", datCRC[3], datCRC[2], datCRC[1], datCRC[0]);
-        end
-        
-        // Check CRC for each DAT line
-        DatInState_Go+4: begin
-            // Handle invalid CRC
-            if (datIn3CRCReg[15]!==datInReg[11] ||
-                datIn2CRCReg[15]!==datInReg[10] ||
-                datIn1CRCReg[15]!==datInReg[9]  ||
-                datIn0CRCReg[15]!==datInReg[8]   ) begin
-                $display("[SD CORE] DAT: CRC bit invalid ❌");
-                err <= 1;
-                
-            end else begin
-                $display("[SD CORE] DAT: CRC bit valid ✅");
-            end
-            
-            if (!datInCounter) begin
-                datInState <= DatInState_Go+5;
-            end
-        end
-        
-        // Check end bit
-        DatInState_Go+5: begin
-            if (datInReg[11:8] !== 4'b1111) begin
-                $display("[SD CORE] DAT: end bit invalid ❌");
-                err <= 1;
-            end else begin
-                $display("[SD CORE] DAT: end bit valid ✅");
-            end
-            
-            $display("[SD CORE] DAT IN: finished");
-            datInState <= DatInState_Done;
-        end
-        
-        DatInState_Done: begin
-        end
-        endcase
-        
-        
         
         
         
@@ -484,52 +396,11 @@ module SDCardControllerCore(
         
         case (state)
         StateIdle: begin
-        
-            cmd_accepted <= 0;
-            dataIn_accepted <= 0;
-            dataOut_valid <= 0;
-            err <= 0;
-            dataOut <= 0;
-            cmdInCRCRst_ <= 0;
-            cmdInStaged <= 0;
-            cmdOutActive <= 0;
-            cmdOutRespWait <= 0;
-            datCRCRst_ <= 0;
-            datOutActive <= 0;
-            datIn0CRCReg <= 0;
-            datIn1CRCReg <= 0;
-            datIn2CRCReg <= 0;
-            datIn3CRCReg <= 0;
-            datOut0CRCReg <= 0;
-            datOut1CRCReg <= 0;
-            datOut2CRCReg <= 0;
-            datOut3CRCReg <= 0;
-            datInReg <= 0;
-            datOutReg <= 0;
-            cmdWriteLen <= 0;
-            cmdAddr <= 0;
-            cmdOutArg <= 0;
-            datInCounter <= 0;
-            datInState <= 0;
-            datOutCounter <= 0;
-            datOutState <= 0;
-            nextState <= 0;
-            respState <= 0;
-            state <= 0;
-            cmdInReg <= 0;
-            cmdOutReg <= 0;
-            resp <= 0;
-            cmdOutCmd <= 0;
-            cmdOutCounter <= 0;
-            cmdInCRCReg <= 0;
-            datBlockCounter <= 0;
-            debugCounter <= 0;
-            
             if (cmd_trigger) begin
                 cmdAddr <= cmd_addr;
                 cmdWriteLen <= cmd_writeLen;
                 cmd_accepted <= 1;
-                state <= (cmd_write ? StateWrite : StateRead);
+                state <= StateWrite;
             end
         end
         
@@ -572,35 +443,6 @@ module SDCardControllerCore(
             if (datOutState === DatOutState_Done) begin
                 $display("[SD CORE] Finished writing block");
                 state <= (cmd_trigger ? StateWrite+3 : StateStop);
-                cmd_accepted <= 1;
-            end
-        end
-        
-        
-        
-        
-        
-        
-        StateRead: begin
-            $display("[SD CORE] Sending CMD18 (READ_MULTIPLE_BLOCK): %b", {2'b01, CMD18, cmdAddr, 7'b0, 1'b1});
-            cmdOutReg <= {2'b01, CMD18, cmdAddr, 7'b0, 1'b1};
-            cmdOutCounter <= 47;
-            cmdOutActive <= 1;
-            cmdOutRespWait <= 0; // Don't wait for response before transitioning to `StateRead+1`
-            state <= StateCmdOut;
-            nextState <= StateRead+1;
-        end
-        
-        // TODO: have a watchdog countdown to ensure that we get a response
-        StateRead+1: begin
-            datInState <= DatInState_Go;
-            state <= StateRead+2;
-        end
-        
-        StateRead+2: begin
-            if (respState===RespState_Done && datInState===DatInState_Done) begin
-                $display("[SD CORE] Finished reading block");
-                state <= (cmd_trigger ? StateRead+1 : StateStop);
                 cmd_accepted <= 1;
             end
         end
