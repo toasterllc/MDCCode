@@ -9,7 +9,6 @@ module SDCardControllerCore(
     // Command port
     input wire          cmd_trigger,
     output reg          cmd_accepted = 0,
-    input wire          cmd_write,
     input wire[22:0]    cmd_writeLen,
     input wire[31:0]    cmd_addr,
     
@@ -89,7 +88,6 @@ module SDCardControllerCore(
     
     reg[19:0] datInReg = 0;
     wire[4:0] datInCRCStatus = {datInReg[16], datInReg[12], datInReg[8], datInReg[4], datInReg[0]};
-    reg[3:0] datInCounter = 0;
     
     reg[19:0] datOutReg = 0;
     reg[3:0] datOutCounter = 0;
@@ -148,16 +146,15 @@ module SDCardControllerCore(
     // CRC (DAT)
     // ====================
     wire[15:0] datCRC[3:0];
-    wire[15:0] datCRCNext[3:0];
     reg datCRCRst_ = 0;
     genvar i;
     for (i=0; i<4; i=i+1) begin
         CRC16 CRC16_dat(
             .clk(clk),
             .rst_(datCRCRst_),
-            .din(datOutActive ? datOutReg[12+i] : datInReg[4+i]),
-            .dout(datCRC[i]),
-            .doutNext(datCRCNext[i])
+            .din(datOutReg[12+i]),
+            .dout(),
+            .doutNext(datCRC[i])
         );
      end
     
@@ -170,8 +167,6 @@ module SDCardControllerCore(
     reg[15:0] datIn2CRCReg = 0;
     reg[15:0] datIn1CRCReg = 0;
     reg[15:0] datIn0CRCReg = 0;
-    
-    reg[9:0] debugCounter = 0;
     
     
     
@@ -188,7 +183,6 @@ module SDCardControllerCore(
         cmdInReg <= (cmdInReg<<1)|cmdInStaged;
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
-        datInCounter <= datInCounter-1;
         
         datOutReg <= datOutReg<<4;
         datOutCounter <= datOutCounter-1;
@@ -308,12 +302,12 @@ module SDCardControllerCore(
         
         // Output CRCs
         DatOutState_Go+2: begin
-            $display("[SD CORE] DatOut: CRCs: %h %h %h %h", datCRCNext[3], datCRCNext[2], datCRCNext[1], datCRCNext[0]);
+            $display("[SD CORE] DatOut: CRCs: %h %h %h %h", datCRC[3], datCRC[2], datCRC[1], datCRC[0]);
             datCRCRst_ <= 0;
-            datOut3CRCReg <= datCRCNext[3];
-            datOut2CRCReg <= datCRCNext[2];
-            datOut1CRCReg <= datCRCNext[1];
-            datOut0CRCReg <= datCRCNext[0];
+            datOut3CRCReg <= datCRC[3];
+            datOut2CRCReg <= datCRC[2];
+            datOut1CRCReg <= datCRC[1];
+            datOut0CRCReg <= datCRC[0];
             datOutState <= DatOutState_Go+3;
             datOutCounter <= 15;
         end

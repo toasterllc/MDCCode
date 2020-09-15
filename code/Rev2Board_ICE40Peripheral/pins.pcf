@@ -1,4 +1,6 @@
 # Rev2 board / ICE40HX4K-BG121
+set_io clk12mhz         C11     -pullup no
+
 set_io sd_clk           J5      -pullup no
 set_io sd_cmd           K3      -pullup no
 set_io sd_dat[0]        L3      -pullup no

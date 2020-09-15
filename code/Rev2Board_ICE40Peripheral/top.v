@@ -16,7 +16,8 @@
 
 module Top(
 `ifndef SIM
-    input wire          sd_clk,
+    input wire          clk12mhz,
+    output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
     output reg[3:0]     led = 0
@@ -24,7 +25,8 @@ module Top(
 );
     
 `ifdef SIM
-    reg         sd_clk;
+    reg         clk12mhz = 0;
+    wire        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
     reg[3:0]    led = 0;
@@ -41,9 +43,9 @@ module Top(
     
     initial begin
         forever begin
-            sd_clk = 0;
+            clk12mhz = 0;
             #42;
-            sd_clk = 1;
+            clk12mhz = 1;
             #42;
         end
     end
@@ -61,7 +63,6 @@ module Top(
     // ====================
     reg sd_cmd_trigger = 0;
     wire sd_cmd_accepted;
-    reg sd_cmd_write = 0;
     wire[22:0] sd_cmd_writeLen = 1;
     reg[7:0] sd_cmd_addr = 0;
     wire[15:0] sd_dataOut;
@@ -69,6 +70,35 @@ module Top(
     wire[15:0] sd_dataIn = 16'h1234;
     wire sd_dataIn_accepted;
     wire sd_err;
+    
+    
+    
+    
+    
+    // // ====================
+    // // 180 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(180000000),
+    //     .DIVR(0),
+    //     .DIVF(59),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    
+    
+    // ====================
+    // 18 MHz Clock PLL
+    // ====================
+    ClockGen #(
+        .FREQ(180000000),
+        .DIVR(0),
+        .DIVF(47),
+        .DIVQ(5),
+        .FILTER_RANGE(1)
+    ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
     
     
     
@@ -84,7 +114,7 @@ module Top(
         assign sd_cmdIn = sd_cmd;
     `else
         SB_IO #(
-                .PIN_TYPE(6'b1101_00)
+            .PIN_TYPE(6'b1101_00)
         ) SB_IO (
             .INPUT_CLK(sd_clk),
             .OUTPUT_CLK(sd_clk),
@@ -136,7 +166,6 @@ module Top(
         // Command port
         .cmd_trigger(sd_cmd_trigger),
         .cmd_accepted(sd_cmd_accepted),
-        .cmd_write(sd_cmd_write),
         .cmd_writeLen(sd_cmd_writeLen),
         .cmd_addr(32'b0|sd_cmd_addr),
         
@@ -161,22 +190,20 @@ module Top(
     // ====================
     // State Machine
     // ====================
-    reg[2:0] state = 0;
+    reg[1:0] state = 0;
     
     // Read a single block
     always @(posedge sd_clk) begin
         case (state)
         0: begin
-            // led <= 0;
+            led <= 0;
             sd_cmd_trigger <= 0;
-            sd_cmd_write <= 0;
             sd_cmd_addr <= 0;
             state <= 1;
         end
         
         1: begin
             sd_cmd_trigger <= 1;
-            sd_cmd_write <= 0;
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Read accepted");
                 state <= 2;
@@ -187,25 +214,16 @@ module Top(
             sd_cmd_trigger <= 0;
             if (sd_cmd_accepted) begin
                 $display("[SD HOST] Stop accepted");
+                state <= 3;
             end
         end
+        
+        3: begin
+            led[0] <= 1;
+        end
         endcase
-
-        // if (sd_dataOut_valid) begin
-        //     $display("[SD HOST] Got read data: %h", sd_dataOut);
-        //     led[0] <= 1;
-        //
-        //     if (sd_dataOut === sd_dataIn) begin
-        //         led[1] <= 1;
-        //     end
-        //
-        //     if (sd_dataOut !== sd_dataIn) begin
-        //         led[2] <= 1;
-        //     end
-        // end
-
-        // if (idone) led[3] <= 1;
-        // if (err) led[3] <= 1;
+        
+        if (sd_err) led[3] <= 1;
     end
     
     
