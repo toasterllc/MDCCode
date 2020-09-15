@@ -50,14 +50,8 @@ module SDCardInitializer(
     reg[ClkDividerWidth-1:0] clkDivider = 0;
     wire clk = clkDivider[ClkDividerWidth-1];
     
-    reg rstDone2 = 0;
     always @(posedge clk12mhz) begin
-        if (!rstDone2) begin
-            clkDivider <= 0;
-            rstDone2 <= 1;
-        end else begin
-            clkDivider <= clkDivider+1;
-        end
+        clkDivider <= clkDivider+1;
     end
     
     
@@ -76,7 +70,7 @@ module SDCardInitializer(
     // sd_cmd
     // ====================
     assign sd_cmdOut = cmdOutReg[47];
-    assign sd_cmdOutActive = cmdOutActive;
+    assign sd_cmdOutActive = cmdOutActive[0];
     
     
     
@@ -115,7 +109,7 @@ module SDCardInitializer(
     
     reg[47:0] cmdOutReg = 0;
     reg[7:0] cmdOutCounter = 0;
-    reg cmdOutActive = 0;
+    reg[2:0] cmdOutActive = 0;
     
     reg[135:0] cmdInReg = 0;
     reg[1:0] cmdInStaged = 0;
@@ -159,15 +153,17 @@ module SDCardInitializer(
     // State Machine
     // ====================
     always @(posedge clk) begin
-        cmdInStaged <= cmdInStaged<<1|sd_cmdIn;
+        cmdInStaged <= cmdInStaged<<1|(!cmdOutActive[2] ? sd_cmdIn : 1'b1);
         datInReg <= {sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
     end
     
     always @(negedge clk) begin
-        if (cmdOutActive) begin
+        if (cmdOutActive[0]) begin
             cmdOutReg <= cmdOutReg<<1;
             cmdOutCounter <= cmdOutCounter-1;
         end
+        
+        cmdOutActive <= (cmdOutActive<<1)|cmdOutActive[0];
         
         if (cmdInActive) begin
             cmdInReg <= (cmdInReg<<1)|cmdInStaged[1];
@@ -244,27 +240,6 @@ module SDCardInitializer(
         StateInit: begin
             // TODO: This is necessary for icecube synthesis.
             // Try using an `initial` block though.
-            done <= 0;
-            err <= 0;
-            rca <= 0;
-            clkEn_ <= 0;
-            cmdInActive <= 0;
-            cmdInCRCRst_ <= 0;
-            cmdOutActive <= 0;
-            cmdOutCRCRst_ <= 0;
-            respCheckCRC <= 0;
-            delayCounter <= 0;
-            cmdInReg <= 0;
-            datInCMD6FnGrp1 <= 0;
-            datInState <= 0;
-            cmdOutReg <= 0;
-            nextState <= 0;
-            state <= 0;
-            respInExpectedCRC <= 0;
-            cmdInCounter <= 0;
-            cmdOutCounter <= 0;
-            datInCounter <= 0;
-            
             $display("[SD INIT] Sending CMD0");
             cmdOutReg <= {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1};
             cmdInCounter <= 0;
@@ -528,7 +503,7 @@ module SDCardInitializer(
         
         StateCmdOut: begin
             cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            cmdOutActive[0] <= 1;
             cmdOutCRCRst_ <= 1;
             state <= StateCmdOut+1;
         end
@@ -539,7 +514,7 @@ module SDCardInitializer(
             end
             
             if (!cmdOutCounter) begin
-                cmdOutActive <= 0;
+                cmdOutActive[0] <= 0;
                 cmdOutCRCRst_ <= 0;
                 // The SD spec requires 8 cycles after a command or after a response,
                 // before another command is issued.
@@ -565,7 +540,8 @@ module SDCardInitializer(
         // Check transmission bit
         StateRespIn+1: begin
             if (cmdInStaged[0]) begin
-                $display("[SD INIT] Bad transmission bit ❌");
+                $display("[SD INIT] Bad transmission bit: %b ❌", cmdInReg);
+                `finish;
                 err <= 1;
             end
             
