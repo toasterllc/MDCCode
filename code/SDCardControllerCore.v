@@ -36,7 +36,7 @@ module SDCardControllerCore(
     // ====================
     wire cmdIn = sd_cmdIn;
     assign sd_cmdOut = cmdOut;
-    assign sd_cmdOutActive = cmdOutActive;
+    assign sd_cmdOutActive = cmdOutActive[0];
     
     
     
@@ -95,7 +95,7 @@ module SDCardControllerCore(
     
     reg[9:0] datBlockCounter = 0;
     
-    reg cmdOutActive = 0;
+    reg[2:0] cmdOutActive = 0; // SB_IO registers `cmdOutActive`, so cmdOutActive[2] reflects the actual state
     reg[47:0] cmdOutReg = 0;
     reg[5:0] cmdOutCmd = 0;
     reg[31:0] cmdOutArg = 0;
@@ -134,7 +134,7 @@ module SDCardControllerCore(
     wire[6:0] cmdOutCRC;
     CRC7 CRC7_cmdOut(
         .clk(clk),
-        .rst_(cmdOutActive),
+        .rst_(cmdOutActive[0]),
         .din(cmdOutReg[47]),
         .dout(),
         .doutNext(cmdOutCRC)
@@ -178,8 +178,9 @@ module SDCardControllerCore(
     always @(posedge clk) begin
         cmdOutReg <= cmdOutReg<<1;
         cmdOutCounter <= cmdOutCounter-1;
+        cmdOutActive <= (cmdOutActive<<1)|cmdOutActive[0];
         
-        cmdInStaged <= (cmdOutActive ? 1'b1 : cmdIn);
+        cmdInStaged <= (cmdOutActive[2] ? 1'b1 : cmdIn);
         cmdInReg <= (cmdInReg<<1)|cmdInStaged;
         
         datInReg <= (datInReg<<4)|{datIn[3], datIn[2], datIn[1], datIn[0]};
@@ -233,12 +234,15 @@ module SDCardControllerCore(
         
         RespState_Go+2: begin
             if (!cmdInReg[47]) begin
+                $display("[SD CORE] Got response: %b", cmdInReg);
                 resp <= cmdInReg;
                 respState <= RespState_Go+3;
             
             end else if (cmdInCRCReg[6] !== cmdInReg[0]) begin
                 $display("[SD CORE] Response: CRC bit invalid ❌");
+                $display("[SD CORE] Response so far: %b", cmdInReg);
                 err <= 1;
+                `finish;
             
             end else begin
                 $display("[SD CORE] Response: CRC bit valid ✅");
@@ -335,7 +339,7 @@ module SDCardControllerCore(
         
         DatOutState_Go+5: begin
             datOutActive <= 0;
-            datOutCounter <= 7;
+            datOutCounter <= 9;
             datOutState <= DatOutState_Go+6;
         end
         
@@ -344,7 +348,7 @@ module SDCardControllerCore(
             if (!datOutCounter) begin
                 // 5 bits: start bit, CRC status, end bit
                 if (datInCRCStatus !== 5'b0_010_1) begin
-                    $display("[SD CORE] DatOut: CRC status invalid ❌");
+                    $display("[SD CORE] DatOut: CRC status invalid: %b ❌", datInCRCStatus);
                     err <= 1;
                 end else begin
                     $display("[SD CORE] DatOut: CRC status valid ✅");
@@ -402,7 +406,7 @@ module SDCardControllerCore(
             $display("[SD CORE] Sending CMD55 (APP_CMD): %b", {2'b01, CMD55, {32{1'b0}}, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD55, {rca, 16'b0}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            cmdOutActive[0] <= 1;
             cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+1;
@@ -412,7 +416,7 @@ module SDCardControllerCore(
             $display("[SD CORE] Sending ACMD23 (SET_WR_BLK_ERASE_COUNT): %b", {2'b01, ACMD23, 9'b0, cmdWriteLen, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, ACMD23, {9'b0, cmdWriteLen}, 7'b0, 1'b1};
             cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            cmdOutActive[0] <= 1;
             cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+2;
@@ -422,7 +426,7 @@ module SDCardControllerCore(
             $display("[SD CORE] Sending CMD25 (WRITE_MULTIPLE_BLOCK): %b", {2'b01, CMD25, cmdAddr, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD25, cmdAddr, 7'b0, 1'b1};
             cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            cmdOutActive[0] <= 1;
             cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateWrite+3;
@@ -449,7 +453,7 @@ module SDCardControllerCore(
             $display("[SD CORE] Sending CMD12 (STOP_TRANSMISSION): %b", {2'b01, CMD12, {32{1'b0}}, 7'b0, 1'b1});
             cmdOutReg <= {2'b01, CMD12, 32'b0, 7'b0, 1'b1};
             cmdOutCounter <= 47;
-            cmdOutActive <= 1;
+            cmdOutActive[0] <= 1;
             cmdOutRespWait <= 1;
             state <= StateCmdOut;
             nextState <= StateStop+1;
@@ -478,7 +482,7 @@ module SDCardControllerCore(
             end
             
             if (!cmdOutCounter) begin
-                cmdOutActive <= 0;
+                cmdOutActive[0] <= 0;
                 respState <= RespState_Go;
                 if (cmdOutRespWait) begin
                     state <= StateCmdOut+1;

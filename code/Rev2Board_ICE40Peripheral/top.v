@@ -88,16 +88,108 @@ module Top(
     
     
     
+    // // ====================
+    // // 18 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(18000000),
+    //     .DIVR(0),
+    //     .DIVF(47),
+    //     .DIVQ(5),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    // // ====================
+    // // 72 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(72000000),
+    //     .DIVR(0),
+    //     .DIVF(47),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    // // ====================
+    // // 96 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(72000000),
+    //     .DIVR(0),
+    //     .DIVF(63),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    // // ====================
+    // // 120 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(120000000),
+    //     .DIVR(0),
+    //     .DIVF(79),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    // // ====================
+    // // 144 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(144000000),
+    //     .DIVR(0),
+    //     .DIVF(47),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    // // ====================
+    // // 168 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(168000000),
+    //     .DIVR(0),
+    //     .DIVF(55),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    
     // ====================
-    // 18 MHz Clock PLL
+    // 174 MHz Clock PLL
     // ====================
     ClockGen #(
-        .FREQ(180000000),
+        .FREQ(174000000),
         .DIVR(0),
-        .DIVF(47),
-        .DIVQ(5),
+        .DIVF(57),
+        .DIVQ(2),
         .FILTER_RANGE(1)
     ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    
+    
+    // // ====================
+    // // 177 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(177000000),
+    //     .DIVR(0),
+    //     .DIVF(58),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    
+    
+    // // ====================
+    // // 180 MHz Clock PLL
+    // // ====================
+    // ClockGen #(
+    //     .FREQ(180000000),
+    //     .DIVR(0),
+    //     .DIVF(59),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
     
     
     
@@ -109,10 +201,10 @@ module Top(
     wire sd_cmdIn;
     wire sd_cmdOut;
     wire sd_cmdOutActive;
-    `ifdef SIM
-        assign sd_cmd = (sd_cmdOutActive ? sd_cmdOut : 1'bz);
-        assign sd_cmdIn = sd_cmd;
-    `else
+    // `ifdef SIM
+    //     assign sd_cmd = (sd_cmdOutActive ? sd_cmdOut : 1'bz);
+    //     assign sd_cmdIn = sd_cmd;
+    // `else
         SB_IO #(
             .PIN_TYPE(6'b1101_00)
         ) SB_IO (
@@ -123,7 +215,7 @@ module Top(
             .D_OUT_0(sd_cmdOut),
             .D_IN_0(sd_cmdIn)
         );
-    `endif
+    // `endif
     
     
     
@@ -136,10 +228,10 @@ module Top(
     wire sd_datOutActive;
     genvar i;
     for (i=0; i<4; i=i+1) begin
-        `ifdef SIM
-            assign sd_dat[i] = (sd_datOutActive ? sd_datOut[i] : 1'bz);
-            assign sd_datIn[i] = sd_dat[i];
-        `else
+        // `ifdef SIM
+        //     assign sd_dat[i] = (sd_datOutActive ? sd_datOut[i] : 1'bz);
+        //     assign sd_datIn[i] = sd_dat[i];
+        // `else
             SB_IO #(
                 .PIN_TYPE(6'b1101_00)
             ) SB_IO (
@@ -150,7 +242,7 @@ module Top(
                 .D_OUT_0(sd_datOut[i]),
                 .D_IN_0(sd_datIn[i])
             );
-        `endif
+        // `endif
     end
 
     
@@ -203,9 +295,10 @@ module Top(
         end
         
         1: begin
+            led[0] <= 1;
             sd_cmd_trigger <= 1;
             if (sd_cmd_accepted) begin
-                $display("[SD HOST] Read accepted");
+                $display("[SD HOST] Write accepted");
                 state <= 2;
             end
         end
@@ -219,7 +312,7 @@ module Top(
         end
         
         3: begin
-            led[0] <= 1;
+            led[1] <= 1;
         end
         endcase
         
