@@ -151,6 +151,7 @@ module Top(
     
     wire sd_cmdIn;
     reg[47:0] sd_resp = 0;
+    reg sd_cmdOutDone = 0;
     reg sd_respReady = 0;
     reg sd_respCRCOK = 0;
     
@@ -248,6 +249,7 @@ module Top(
             end else begin
                 sd_respCRCOK <= 0;
                 $display("[CTRL] Response: bad CRC bit (wanted: %b, got: %b) ❌", sd_respExpectedCRC[6], sd_shiftReg[1]);
+                // `finish;
             end
             
             if (!sd_shiftReg[47]) begin
@@ -269,6 +271,7 @@ module Top(
                 sd_counter <= 47;
                 sd_cmdOutCRCRst_ <= 1;
                 sd_respState <= 0;
+                sd_cmdOutDone <= 0;
                 sd_respReady <= 0;
                 sd_cmdOutState <= 1;
             end
@@ -283,6 +286,7 @@ module Top(
                 sd_cmdOutActive[0] <= 0;
                 sd_cmdOutCRCRst_ <= 0;
                 sd_cmdOutState <= 0;
+                sd_cmdOutDone <= 1;
                 sd_respState <= 1;
             end
         end
@@ -301,6 +305,10 @@ module Top(
     reg ctrl_sdRespReady=0, ctrl_sdRespReadyTmp=0;
     always @(posedge ctrl_clk)
         {ctrl_sdRespReady, ctrl_sdRespReadyTmp} <= {ctrl_sdRespReadyTmp, sd_respReady};
+    
+    reg ctrl_sdCmdOutDone=0, ctrl_sdCmdOutDoneTmp=0;
+    always @(posedge ctrl_clk)
+        {ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneTmp} <= {ctrl_sdCmdOutDoneTmp, sd_cmdOutDone};
     
     reg[1:0] ctrl_state = 0;
     always @(posedge ctrl_clk) begin
@@ -327,20 +335,23 @@ module Top(
         2: begin
             $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_cmdCmd, ctrl_cmdArg);
             case (ctrl_cmdCmd)
+            // Set SD clock source
             0: begin
                 $display("[CTRL] Set SD clock source: %0d", ctrl_cmdArg[1:0]);
                 ctrl_sdClkSlow <= ctrl_cmdArg[0];
                 ctrl_sdClkFast <= ctrl_cmdArg[1];
             end
             
+            // Clock out SD command
             1: begin
                 $display("[CTRL] Clock out SD command to SD card: %0d", ctrl_dinReg);
                 ctrl_cmdOutTrigger <= !ctrl_cmdOutTrigger;
             end
             
+            // Get SD status / response
             2: begin
                 $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
-                ctrl_doutReg <= {1'b0, 14'b0, ctrl_sdRespReady, sd_respCRCOK, sd_resp};
+                ctrl_doutReg <= {1'b0, 13'b0, sd_cmdOutDone, ctrl_sdRespReady, sd_respCRCOK, sd_resp};
             end
             endcase
             
@@ -426,7 +437,7 @@ module Testbench();
     
     initial begin
         reg[15:0] i, ii;
-        reg sdResp;
+        reg sdDone;
         ctrl_diReg = ~0;
         
         wait(ctrl_clk);
@@ -451,11 +462,36 @@ module Testbench();
             wait(!ctrl_clk);
         end
         
-        for (i=0; i<2000; i++) begin
+        for (i=0; i<128; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
         
+        // Wait for SD command to be sent
+        sdDone = 0;
+        while (!sdDone) begin
+            ctrl_diReg = {1'b0, 4'd2, 60'b0};
+            for (i=0; i<65; i++) begin
+                wait(ctrl_clk);
+                wait(!ctrl_clk);
+            end
+
+            // Wait for response to start
+            while (ctrl_doReg[0]) begin
+                wait(ctrl_clk);
+                wait(!ctrl_clk);
+            end
+
+            // Load the full response
+            for (i=0; i<64; i++) begin
+                wait(ctrl_clk);
+                wait(!ctrl_clk);
+            end
+
+            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg[50], ctrl_doReg[49], ctrl_doReg[48], ctrl_doReg[47:0]);
+            sdDone = ctrl_doReg[50];
+        end
+
         // Send SD CMD8
         ctrl_diReg = {1'b0, 4'd1, 12'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}};
         for (i=0; i<65; i++) begin
@@ -467,31 +503,55 @@ module Testbench();
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
-        
-        // Get SD card response
-        sdResp = 0;
-        while (!sdResp) begin
+
+        // Wait for SD command to be sent
+        sdDone = 0;
+        while (!sdDone) begin
             ctrl_diReg = {1'b0, 4'd2, 60'b0};
             for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
-            
+
             // Wait for response to start
             while (ctrl_doReg[0]) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
-            
+
             // Load the full response
             for (i=0; i<64; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
-            
-            sdResp = ctrl_doReg[49];
-            
-            $display("Got respone: %b (SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg[49], ctrl_doReg[48], ctrl_doReg[47:0]);
+
+            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg[50], ctrl_doReg[49], ctrl_doReg[48], ctrl_doReg[47:0]);
+            sdDone = ctrl_doReg[50];
+        end
+
+        // Get SD card response
+        sdDone = 0;
+        while (!sdDone) begin
+            ctrl_diReg = {1'b0, 4'd2, 60'b0};
+            for (i=0; i<65; i++) begin
+                wait(ctrl_clk);
+                wait(!ctrl_clk);
+            end
+
+            // Wait for response to start
+            while (ctrl_doReg[0]) begin
+                wait(ctrl_clk);
+                wait(!ctrl_clk);
+            end
+
+            // Load the full response
+            for (i=0; i<64; i++) begin
+                wait(ctrl_clk);
+                wait(!ctrl_clk);
+            end
+
+            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg[50], ctrl_doReg[49], ctrl_doReg[48], ctrl_doReg[47:0]);
+            sdDone = ctrl_doReg[49];
         end
     end
 endmodule
