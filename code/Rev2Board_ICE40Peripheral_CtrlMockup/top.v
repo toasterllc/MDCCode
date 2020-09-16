@@ -504,31 +504,6 @@ module Testbench();
             wait(!ctrl_clk);
         end
 
-        // Wait for SD command to be sent
-        sdDone = 0;
-        while (!sdDone) begin
-            ctrl_diReg = {1'b0, 4'd2, 60'b0};
-            for (i=0; i<65; i++) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // Wait for response to start
-            while (ctrl_doReg[0]) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // Load the full response
-            for (i=0; i<64; i++) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg[50], ctrl_doReg[49], ctrl_doReg[48], ctrl_doReg[47:0]);
-            sdDone = ctrl_doReg[50];
-        end
-
         // Get SD card response
         sdDone = 0;
         while (!sdDone) begin
