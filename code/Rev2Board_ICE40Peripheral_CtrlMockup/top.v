@@ -94,10 +94,10 @@ module Top(
     
     reg ctrl_dinActive = 0;
     reg[63:0] ctrl_dinReg = 0;
-    wire[3:0] ctrl_cmdCmd = ctrl_dinReg[63:60];
-    wire[59:0] ctrl_cmdArg = ctrl_dinReg[59:0];
+    wire[6:0] ctrl_cmdCmd = ctrl_dinReg[62:56];
+    wire[55:0] ctrl_cmdArg = ctrl_dinReg[55:0];
     
-    reg[64:0] ctrl_doutReg = 0;
+    reg[63:0] ctrl_doutReg = 0;
     
     reg[6:0] ctrl_counter = 0;
     reg ctrl_sdClkSlow = 0;
@@ -138,7 +138,8 @@ module Top(
     // ====================
     wire ctrlDI;
     SB_IO #(
-        .PIN_TYPE(6'b0000_00)
+        .PIN_TYPE(6'b0000_00),
+        .PULLUP(1'b1)
     ) SB_IO_ctrl_clk (
         .INPUT_CLK(ctrl_clk),
         .PACKAGE_PIN(ctrl_di),
@@ -151,12 +152,13 @@ module Top(
     // Pin: ctrl_do
     // ====================
     SB_IO #(
-        .PIN_TYPE(6'b1101_01)
+        .PIN_TYPE(6'b1101_01),
+        .PULLUP(1'b1)
     ) SB_IO_ctrl_do (
         .OUTPUT_CLK(ctrl_clk),
         .PACKAGE_PIN(ctrl_do),
         .OUTPUT_ENABLE(1'b1),
-        .D_OUT_0(ctrl_doutReg[64])
+        .D_OUT_0(ctrl_doutReg[63])
     );
     
     
@@ -333,13 +335,13 @@ module Top(
     
     reg[1:0] ctrl_state = 0;
     always @(posedge ctrl_clk) begin
-        if (ctrl_dinActive) ctrl_dinReg <= (ctrl_dinReg<<1)|ctrlDI;
+        if (ctrl_dinActive) ctrl_dinReg <= ctrl_dinReg<<1|ctrlDI;
         ctrl_counter <= ctrl_counter-1;
         ctrl_doutReg <= ctrl_doutReg<<1|1'b1;
         
         case (ctrl_state)
         0: begin
-            ctrl_counter <= 63;
+            ctrl_counter <= 62;
             if (!ctrlDI) begin
                 ctrl_dinActive <= 1;
                 ctrl_state <= 1;
@@ -458,14 +460,14 @@ module Testbench();
     localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
     localparam CMD55 =  6'd55;     // APP_CMD
     
-    reg[64:0] ctrl_diReg;
-    reg[64:0] ctrl_doReg;
+    reg[63:0] ctrl_diReg;
+    reg[63:0] ctrl_doReg;
     always @(posedge ctrl_clk) begin
         ctrl_diReg <= ctrl_diReg<<1|1'b1;
         ctrl_doReg <= ctrl_doReg<<1|ctrl_do;
     end
     
-    assign ctrl_di = ctrl_diReg[64];
+    assign ctrl_di = ctrl_diReg[63];
     
     initial begin
         reg[15:0] i, ii;
@@ -476,7 +478,7 @@ module Testbench();
         wait(!ctrl_clk);
         
         // Set SD clock source = 400 kHz
-        ctrl_diReg = {1'b0, 4'd1, 60'b01};
+        ctrl_diReg = {1'b0, 7'd1, 56'b01};
         for (i=0; i<65; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
@@ -488,7 +490,7 @@ module Testbench();
         end
         
         // Send SD CMD0
-        ctrl_diReg = {1'b0, 4'd2, 12'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}};
+        ctrl_diReg = {1'b0, 7'd2, 8'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}};
         for (i=0; i<65; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
@@ -502,7 +504,7 @@ module Testbench();
         // Wait for SD command to be sent
         sdDone = 0;
         while (!sdDone) begin
-            ctrl_diReg = {1'b0, 4'd3, 60'b0};
+            ctrl_diReg = {1'b0, 7'd3, 56'b0};
             for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
@@ -515,7 +517,7 @@ module Testbench();
             end
 
             // Load the full response
-            for (i=0; i<64; i++) begin
+            for (i=0; i<63; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
@@ -525,7 +527,7 @@ module Testbench();
         end
 
         // Send SD CMD8
-        ctrl_diReg = {1'b0, 4'd2, 12'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}};
+        ctrl_diReg = {1'b0, 7'd2, 8'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}};
         for (i=0; i<65; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
@@ -539,7 +541,7 @@ module Testbench();
         // Get SD card response
         sdDone = 0;
         while (!sdDone) begin
-            ctrl_diReg = {1'b0, 4'd3, 60'b0};
+            ctrl_diReg = {1'b0, 7'd3, 56'b0};
             for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
@@ -552,7 +554,7 @@ module Testbench();
             end
 
             // Load the full response
-            for (i=0; i<64; i++) begin
+            for (i=0; i<63; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end

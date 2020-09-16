@@ -9,8 +9,8 @@ set_io sd_dat[2]        L1      -pullup no
 set_io sd_dat[3]        L2      -pullup no
 
 set_io ctrl_clk         L10     -pullup no
-set_io ctrl_di          J9      -pullup no
-set_io ctrl_do          K9      -pullup no
+set_io ctrl_di          J9
+set_io ctrl_do          K9
 
 set_io led[0]           G3      -pullup no
 set_io led[1]           F4      -pullup no
