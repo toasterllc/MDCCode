@@ -148,9 +148,10 @@ module Top(
     
     wire sd_cmdIn;
     reg[47:0] sd_respReg = 0;
+    reg[47:0] sd_respCached = 0;
     
     reg[5:0] sd_cmdOutCounter = 0;
-    reg[5:0] sd_respCounter = 0;
+    // reg[5:0] sd_respCounter = 0;
     
     reg ctrl_ctrl2sd_cmdOutTrigger = 0;
     wire sd_ctrl2sd_cmdOutTrigger;
@@ -222,11 +223,8 @@ module Top(
     always @(posedge sd_clk) begin
         sd_cmdOutReg <= sd_cmdOutReg<<1;
         sd_cmdOutCounter <= sd_cmdOutCounter-1;
-        
-        if (sd_respCounter) begin
-            sd_respReg <= (sd_respReg<<1)|sd_cmdIn;
-            sd_respCounter <= sd_respCounter-1;
-        end
+        sd_respReg <= (sd_respReg<<1)|(sd_cmdOutActive ? 1'b1 : sd_cmdIn);
+        // sd_respCounter <= sd_respCounter-1;
         
         case (sd_respState)
         0: begin
@@ -234,13 +232,14 @@ module Top(
         
         1: begin
             if (!sd_cmdIn) begin
-                sd_respCounter <= 47;
+                // sd_respCounter <= 47;
                 sd_respState <= 2;
             end
         end
         
         2: begin
-            if (!sd_respCounter) begin
+            if (!sd_respReg[47]) begin
+                sd_respCached <= sd_respReg;
                 sd_sd2ctrl_respTrigger <= 1;
                 sd_respState <= 0;
             end
@@ -325,7 +324,7 @@ module Top(
             2: begin
                 $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
                 // TODO: include ctrl_sdRespReady with response so the master can tell whether we've gotten the response yet
-                ctrl_doutReg <= sd_respReg;
+                ctrl_doutReg <= sd_respCached;
             end
             endcase
             
