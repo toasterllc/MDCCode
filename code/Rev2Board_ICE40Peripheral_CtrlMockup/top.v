@@ -14,6 +14,40 @@
 
 `timescale 1ns/1ps
 
+
+
+// SyncPulse
+//   Transmits a pulse signal across clock domains.
+//   Pulses are dropped if they're sent faster than they can be consumed.
+module SyncPulse(
+    input wire              in_clk,
+    input wire              in_trigger,
+    input wire              out_clk,
+    output wire             out_trigger
+);
+    reg in_req = 0;
+    reg in_ack = 0;
+    wire in_idle = !in_req & !in_ack;
+    always @(posedge in_clk)
+        if (in_idle & in_trigger) begin
+            in_req <= 1;
+
+        end else if (in_ack)
+            in_req <= 0;
+
+    reg out_req=0, out_req2=0;
+    reg tmp1 = 0;
+    always @(posedge out_clk)
+        { out_req2, out_req, tmp1 } <= { out_req, tmp1, in_req };
+
+    reg tmp2 = 0;
+    always @(posedge in_clk)
+        { in_ack, tmp2 } <= { tmp2, out_req };
+
+    assign out_trigger = !out_req2 & out_req; // Trigger pulse occurs upon the positive edge of `out_req`.
+endmodule
+
+
 module Top(
     input wire          clk12mhz,
     
@@ -119,14 +153,10 @@ module Top(
     reg[5:0] sd_respCounter = 0;
     
     reg ctrl_ctrl2sd_cmdOutTrigger = 0;
-    wire[47:0] ctrl_ctrl2sd_cmdOut = ctrl_cmdArg[47:0];
     wire sd_ctrl2sd_cmdOutTrigger;
-    wire[47:0] sd_ctrl2sd_cmdOut;
     
     reg sd_sd2ctrl_respTrigger = 0;
-    wire[47:0] sd_sd2ctrl_resp = sd_respReg;
     wire ctrl_sd2ctrl_respTrigger;
-    wire[47:0] ctrl_sd2ctrl_resp;
     
     reg[63:0] ctrl_dinReg = 0;
     wire[3:0] ctrl_cmdCmd = ctrl_dinReg[63:60];
@@ -172,28 +202,19 @@ module Top(
     // ====================
     // SD State Machine
     // ====================
-    MsgChannel #(
-        .MsgLen(48)
-    ) MsgChannel_ctrl2sd (
+    
+    SyncPulse SyncPulse_ctrl2sd (
         .in_clk(ctrl_clk),
         .in_trigger(ctrl_ctrl2sd_cmdOutTrigger),
-        .in_msg(ctrl_ctrl2sd_cmdOut),
-        
         .out_clk(sd_clk),
-        .out_trigger(sd_ctrl2sd_cmdOutTrigger),
-        .out_msg(sd_ctrl2sd_cmdOut)
+        .out_trigger(sd_ctrl2sd_cmdOutTrigger)
     );
     
-    MsgChannel #(
-        .MsgLen(48)
-    ) MsgChannel_sd2ctrl (
+    SyncPulse SyncPulse_sd2ctrl (
         .in_clk(sd_clk),
         .in_trigger(sd_sd2ctrl_respTrigger),
-        .in_msg(sd_sd2ctrl_resp),
-        
         .out_clk(ctrl_clk),
-        .out_trigger(ctrl_sd2ctrl_respTrigger),
-        .out_msg(ctrl_sd2ctrl_resp)
+        .out_trigger(ctrl_sd2ctrl_respTrigger)
     );
     
     reg[1:0] sd_cmdOutState = 0;
@@ -214,6 +235,13 @@ module Top(
         1: begin
             if (!sd_cmdIn) begin
                 sd_respCounter <= 47;
+                sd_respState <= 2;
+            end
+        end
+        
+        2: begin
+            if (!sd_respCounter) begin
+                sd_sd2ctrl_respTrigger <= 1;
                 sd_respState <= 0;
             end
         end
@@ -223,7 +251,7 @@ module Top(
         0: begin
             if (sd_ctrl2sd_cmdOutTrigger) begin
                 sd_cmdOutActive <= 1;
-                sd_cmdOutReg <= sd_ctrl2sd_cmdOut;
+                sd_cmdOutReg <= ctrl_dinReg;
                 sd_cmdOutCounter <= 47;
                 sd_cmdOutCRCRst_ <= 1;
                 sd_cmdOutState <= 1;
@@ -244,6 +272,8 @@ module Top(
         end
         endcase
     end
+    
+    
     
     
     
