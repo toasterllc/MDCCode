@@ -161,7 +161,7 @@ module SDCardSim(
                 
                 if (cmdIn_endBit !== 1'b1) begin
                     $display("[SD CARD] Bad end bit: %b ❌", cmdIn_endBit);
-                    `finish;
+                    // `finish;
                 end
                 
                 // Issue response if needed
