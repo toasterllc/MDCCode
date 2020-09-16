@@ -68,6 +68,45 @@ module Top(
     endfunction
     
     
+    
+    // ====================
+    // Registers
+    // ====================
+    reg[47:0] sd_shiftReg = 0;
+    reg[2:0] sd_cmdOutActive = 0;
+    wire[6:0] sd_cmdOutCRC;
+    reg sd_cmdOutCRCRst_ = 0;
+    wire[6:0] sd_respCRC;
+    reg[6:0] sd_respExpectedCRC = 0;
+    reg sd_respCRCRst_ = 0;
+    
+    wire[3:0] sd_datIn;
+    reg[3:0] sd_datOut = 0;
+    reg sd_datOutActive = 0;
+    
+    wire sd_cmdIn;
+    reg[47:0] sd_resp = 0;
+    reg sd_cmdOutDone = 0;
+    reg sd_respReady = 0;
+    reg sd_respCRCOK = 0;
+    
+    reg[5:0] sd_counter = 0;
+    
+    reg ctrl_dinActive = 0;
+    reg[63:0] ctrl_dinReg = 0;
+    wire[3:0] ctrl_cmdCmd = ctrl_dinReg[63:60];
+    wire[59:0] ctrl_cmdArg = ctrl_dinReg[59:0];
+    
+    reg[64:0] ctrl_doutReg = 0;
+    
+    reg[6:0] ctrl_counter = 0;
+    reg ctrl_sdClkSlow = 0;
+    reg ctrl_sdClkFast = 0;
+    
+    reg ctrl_cmdOutTrigger = 0;
+    
+    
+    
     // ====================
     // Fast Clock (180 MHz)
     // ====================
@@ -137,41 +176,6 @@ module Top(
     
     
     
-    
-    // ====================
-    // Registers
-    // ====================
-    reg[47:0] sd_shiftReg = 0;
-    reg[2:0] sd_cmdOutActive = 0;
-    wire[6:0] sd_cmdOutCRC;
-    reg sd_cmdOutCRCRst_ = 0;
-    wire[6:0] sd_respCRC;
-    reg[6:0] sd_respExpectedCRC = 0;
-    reg sd_respCRCRst_ = 0;
-    
-    wire sd_cmdIn;
-    reg[47:0] sd_resp = 0;
-    reg sd_cmdOutDone = 0;
-    reg sd_respReady = 0;
-    reg sd_respCRCOK = 0;
-    
-    reg[5:0] sd_counter = 0;
-    
-    reg ctrl_dinActive = 0;
-    reg[63:0] ctrl_dinReg = 0;
-    wire[3:0] ctrl_cmdCmd = ctrl_dinReg[63:60];
-    wire[59:0] ctrl_cmdArg = ctrl_dinReg[59:0];
-    
-    reg[64:0] ctrl_doutReg = 0;
-    
-    reg[6:0] ctrl_counter = 0;
-    reg ctrl_sdClkSlow = 0;
-    reg ctrl_sdClkFast = 0;
-    
-    reg ctrl_cmdOutTrigger = 0;
-    
-    
-    
     // ====================
     // Pin: sd_cmd
     // ====================
@@ -185,6 +189,23 @@ module Top(
         .D_OUT_0(sd_shiftReg[47]),
         .D_IN_0(sd_cmdIn)
     );
+    
+    // ====================
+    // Pin: sd_dat[3:0]
+    // ====================
+    genvar i;
+    for (i=0; i<4; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_00)
+        ) SB_IO (
+            .INPUT_CLK(sd_clk),
+            .OUTPUT_CLK(sd_clk),
+            .PACKAGE_PIN(sd_dat[i]),
+            .OUTPUT_ENABLE(sd_datOutActive),
+            .D_OUT_0(sd_datOut[i]),
+            .D_IN_0(sd_datIn[i])
+        );
+    end
     
     
     
@@ -352,6 +373,12 @@ module Top(
             2: begin
                 $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
                 ctrl_doutReg <= {1'b0, 13'b0, sd_cmdOutDone, ctrl_sdRespReady, sd_respCRCOK, sd_resp};
+            end
+            
+            // Read SD DAT lines
+            3: begin
+                $display("[CTRL] Read SD DAT lines");
+                ctrl_doutReg <= {1'b0, 60'b0, sd_datIn};
             end
             endcase
             
