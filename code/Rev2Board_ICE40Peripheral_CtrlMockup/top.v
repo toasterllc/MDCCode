@@ -356,27 +356,32 @@ module Top(
         2: begin
             $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_cmdCmd, ctrl_cmdArg);
             case (ctrl_cmdCmd)
-            // Set SD clock source
+            // Echo
             0: begin
+                ctrl_doutReg <= {1'b0, ctrl_dinReg};
+            end
+            
+            // Set SD clock source
+            1: begin
                 $display("[CTRL] Set SD clock source: %0d", ctrl_cmdArg[1:0]);
                 ctrl_sdClkSlow <= ctrl_cmdArg[0];
                 ctrl_sdClkFast <= ctrl_cmdArg[1];
             end
             
             // Clock out SD command
-            1: begin
+            2: begin
                 $display("[CTRL] Clock out SD command to SD card: %0d", ctrl_dinReg);
                 ctrl_cmdOutTrigger <= !ctrl_cmdOutTrigger;
             end
             
             // Get SD status / response
-            2: begin
+            3: begin
                 $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
                 ctrl_doutReg <= {1'b0, 13'b0, sd_cmdOutDone, ctrl_sdRespReady, sd_respCRCOK, sd_resp};
             end
             
             // Read SD DAT lines
-            3: begin
+            4: begin
                 $display("[CTRL] Read SD DAT lines");
                 ctrl_doutReg <= {1'b0, 60'b0, sd_datIn};
             end
@@ -471,7 +476,7 @@ module Testbench();
         wait(!ctrl_clk);
         
         // Set SD clock source = 400 kHz
-        ctrl_diReg = {1'b0, 4'd0, 60'b01};
+        ctrl_diReg = {1'b0, 4'd1, 60'b01};
         for (i=0; i<65; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
@@ -483,7 +488,7 @@ module Testbench();
         end
         
         // Send SD CMD0
-        ctrl_diReg = {1'b0, 4'd1, 12'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}};
+        ctrl_diReg = {1'b0, 4'd2, 12'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}};
         for (i=0; i<65; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
@@ -497,7 +502,7 @@ module Testbench();
         // Wait for SD command to be sent
         sdDone = 0;
         while (!sdDone) begin
-            ctrl_diReg = {1'b0, 4'd2, 60'b0};
+            ctrl_diReg = {1'b0, 4'd3, 60'b0};
             for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
@@ -520,7 +525,7 @@ module Testbench();
         end
 
         // Send SD CMD8
-        ctrl_diReg = {1'b0, 4'd1, 12'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}};
+        ctrl_diReg = {1'b0, 4'd2, 12'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}};
         for (i=0; i<65; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
@@ -534,7 +539,7 @@ module Testbench();
         // Get SD card response
         sdDone = 0;
         while (!sdDone) begin
-            ctrl_diReg = {1'b0, 4'd2, 60'b0};
+            ctrl_diReg = {1'b0, 4'd3, 60'b0};
             for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
