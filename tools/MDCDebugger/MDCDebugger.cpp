@@ -56,14 +56,11 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void echo(const Args& args, MDCDevice& device) {
-    using EchoMsg = MDCDevice::EchoMsg;
     using Msg = MDCDevice::Msg;
-    device.write(EchoMsg{.on = args.on});
-    for (;;) {
-        if (auto msgPtr = Msg::Cast<EchoMsg>(device.read())) {
-            return;
-        }
-    }
+    using Resp = MDCDevice::Resp;
+    device.write(Msg{.type=0, .payload={1,2,3}});
+    Resp resp = device.read();
+    printf("Response: %d %d %d %d\n", resp.payload[0], resp.payload[1], resp.payload[2], resp.payload[3]);
 }
 
 int main(int argc, const char* argv[]) {
@@ -89,3 +86,49 @@ int main(int argc, const char* argv[]) {
     
     return 0;
 }
+
+//
+//// Left shift array of bytes of `n` bits
+//#include <unistd.h>
+//#include <stdint.h>
+//#include <assert.h>
+//#include <stdio.h>
+//
+//// Left shift array of bytes by `n` bits
+//static void lshift(uint8_t* bytes, size_t len, uint8_t n) {
+//    assert(n <= 8);
+//    const uint8_t mask = ~((1<<(8-n))-1);
+//    uint8_t l = 0;
+//    for (size_t i=len; i; i--) {
+//        uint8_t& b = bytes[i-1];
+//        // Remember the high bits that we're losing by left-shifting,
+//        // which will become the next byte's low bits.
+//        const uint8_t h = b&mask;
+//        b <<= n;
+//        b |= l;
+//        l = h>>(8-n);
+//    }
+//}
+//
+//int main(int argc, const char* argv[]) {
+//    uint8_t b[] = {1,2,3};
+//    lshift(b, sizeof(b), 8);
+//    for (const auto& x : b) {
+//        printf("%02x ", x);
+//    }
+//    printf("\n");
+////    lshift
+//    return 0;
+//}
+
+//
+//#include <unistd.h>
+//#include <stdint.h>
+//#include <assert.h>
+//#include <stdio.h>
+//#include <strings.h>
+//
+//int main(int argc, const char* argv[]) {
+//    printf("%d\n", 8-fls(~0xFF));
+//    return 0;
+//}

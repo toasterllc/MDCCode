@@ -6,141 +6,168 @@
 #include <sstream>
 #include <iomanip>
 
-std::vector<uint8_t> getBits(const uint8_t* bytes, size_t len, uint64_t start, uint64_t end) {
-    assert(start < len*8);
-    assert(start >= end);
-    
-    const uint8_t rshift = end%8;
-    const uint8_t rshiftMask = (1<<rshift)-1;
-    const uint8_t lshift = 8-rshift;
-    const size_t leftByteIdx = len-(start/8)-1;
-    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
-    const size_t rightByteIdx = len-(end/8)-1;
-    std::vector<uint8_t> r;
-    // Collect the bytes
-    for (size_t i=rightByteIdx;; i--) {
-        r.push_back(bytes[i]);
-        if (i == leftByteIdx) break;
+// Left shift array of bytes by `n` bits
+static void lshift(uint8_t* bytes, size_t len, uint8_t n) {
+    assert(n <= 8);
+    const uint8_t mask = ~((1<<(8-n))-1);
+    uint8_t l = 0;
+    for (size_t i=len; i; i--) {
+        uint8_t& b = bytes[i-1];
+        // Remember the high bits that we're losing by left-shifting,
+        // which will become the next byte's low bits.
+        const uint8_t h = b&mask;
+        b <<= n;
+        b |= l;
+        l = h>>(8-n);
     }
-    
-    // Enforce `leftByteMask`
-    r.back() &= leftByteMask;
-    
-    // Right-shift the bits by `rshift`
-    uint8_t h = 0;
-    for (auto i=r.rbegin(); i!=r.rend(); i++) {
-        // Remember the low bits that we're losing by right-shifting,
-        // which will become the next byte's high bits
-        const uint8_t l = (*i)&rshiftMask;
-        *i >>= rshift;
-        *i |= h;
-        h = l<<lshift;
+}
+
+// Returns of the index (0-7) of the most significant zero,
+// or `nullopt` if there are no zeroes.
+static std::optional<uint8_t> msz(uint8_t x) {
+    for (uint8_t i=0; i<8; i++) {
+        const uint8_t pos = 7-i;
+        if (!(x & (1<<pos))) return pos;
     }
-    
-    // Throw out extra byte if needed
-    const size_t byteCount = ((start-end)/8)+1;
-    if (r.size() > byteCount) r.pop_back();
-    return r;
-    
-    
+    return std::nullopt;
+}
+
+
+//std::vector<uint8_t> getBits(const uint8_t* bytes, size_t len, uint64_t start, uint64_t end) {
+//    assert(start < len*8);
+//    assert(start >= end);
+//    
+//    const uint8_t rshift = end%8;
+//    const uint8_t rshiftMask = (1<<rshift)-1;
+//    const uint8_t lshift = 8-rshift;
+//    const size_t leftByteIdx = len-(start/8)-1;
+//    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
+//    const size_t rightByteIdx = len-(end/8)-1;
+//    std::vector<uint8_t> r;
+//    // Collect the bytes
+//    for (size_t i=rightByteIdx;; i--) {
+//        r.push_back(bytes[i]);
+//        if (i == leftByteIdx) break;
+//    }
+//    
+//    // Enforce `leftByteMask`
+//    r.back() &= leftByteMask;
+//    
+//    // Right-shift the bits by `rshift`
+//    uint8_t h = 0;
+//    for (auto i=r.rbegin(); i!=r.rend(); i++) {
+//        // Remember the low bits that we're losing by right-shifting,
+//        // which will become the next byte's high bits
+//        const uint8_t l = (*i)&rshiftMask;
+//        *i >>= rshift;
+//        *i |= h;
+//        h = l<<lshift;
+//    }
+//    
+//    // Throw out extra byte if needed
+//    const size_t byteCount = ((start-end)/8)+1;
+//    if (r.size() > byteCount) r.pop_back();
+//    return r;
 //    
 //    
-//    
-//    
-////    uint8_t b = 0;
-////    for (auto i=r.rbegin(); i!=r.rend(); i++) {
-////        const uint8_t highBits = b<<lshift;
-////        const uint8_t lowBits = (*i)>>rshift;
-////        *i = highBits|lowBits;
-////        b = 
-////        b<<lshift
-////        *i >>= rshift;
-////        b = (*i)&;
-////    }
-//    
+////    
+////    
+////    
+////    
+//////    uint8_t b = 0;
+//////    for (auto i=r.rbegin(); i!=r.rend(); i++) {
+//////        const uint8_t highBits = b<<lshift;
+//////        const uint8_t lowBits = (*i)>>rshift;
+//////        *i = highBits|lowBits;
+//////        b = 
+//////        b<<lshift
+//////        *i >>= rshift;
+//////        b = (*i)&;
+//////    }
+////    
+//////    for (size_t i=rightByteIdx;; i--) {
+//////        uint8_t b = bytes[i];
+//////        const uint8_t bnMask = (i-1==leftByteIdx ? leftByteMask : 0xFF);
+//////        uin8t_t bn = bytes[i-1]&bnMask;
+//////        b = (b>>rshift) | (bn<<lshift);
+//////        r.push_back(b);
+//////        if (i-1 == leftByteIdx) break;
+//////    }
+////    
+////    std::optional<uint8_t> pb;
 ////    for (size_t i=rightByteIdx;; i--) {
-////        uint8_t b = bytes[i];
+////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+////        const uint8_t b = bytes[i]&mask;
+////        if (pb) r.push_back((b<<lshift)|(*pb>>rshift));
+////        pb = b;
+////        if (i == leftByteIdx) break;
+////    }
+////    
+////    
+////    uint8_t l = 0;
+////    uint8_t r = 0;
+////    for (size_t i=rightByteIdx;; i--) {
+////        
+////        
+////        
+////        
+////        r >>= rshift;
+////        
+////        
+////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+////        const uint8_t b = (r>>rshift) | (l<<lshift);
+////        vec.push_back(b);
+////        r = l;
+////        l = bytes[i];
+////        
+////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+////        b >>= rshift;
+////        b |= (bytes[i]&mask)<<lshift
+////        
+////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+////        b |= 
+////        
+////        b = (bytes[i]&mask)<<lshift;
+////        
+////        
+////        
 ////        const uint8_t bnMask = (i-1==leftByteIdx ? leftByteMask : 0xFF);
 ////        uin8t_t bn = bytes[i-1]&bnMask;
 ////        b = (b>>rshift) | (bn<<lshift);
 ////        r.push_back(b);
 ////        if (i-1 == leftByteIdx) break;
 ////    }
-//    
-//    std::optional<uint8_t> pb;
-//    for (size_t i=rightByteIdx;; i--) {
-//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-//        const uint8_t b = bytes[i]&mask;
-//        if (pb) r.push_back((b<<lshift)|(*pb>>rshift));
-//        pb = b;
-//        if (i == leftByteIdx) break;
-//    }
-//    
-//    
-//    uint8_t l = 0;
-//    uint8_t r = 0;
-//    for (size_t i=rightByteIdx;; i--) {
-//        
-//        
-//        
-//        
-//        r >>= rshift;
-//        
-//        
-//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-//        const uint8_t b = (r>>rshift) | (l<<lshift);
-//        vec.push_back(b);
-//        r = l;
-//        l = bytes[i];
-//        
-//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-//        b >>= rshift;
-//        b |= (bytes[i]&mask)<<lshift
-//        
-//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-//        b |= 
-//        
-//        b = (bytes[i]&mask)<<lshift;
-//        
-//        
-//        
-//        const uint8_t bnMask = (i-1==leftByteIdx ? leftByteMask : 0xFF);
-//        uin8t_t bn = bytes[i-1]&bnMask;
-//        b = (b>>rshift) | (bn<<lshift);
-//        r.push_back(b);
-//        if (i-1 == leftByteIdx) break;
-//    }
-//    
-//    
-//    return r;
-//    
-//    
-//    
-////    assert(start < len*8);
-////    assert(start >= end);
-////    const size_t leftByteIdx = len-(start/8)-1;
-////    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
-////    const size_t rightByteIdx = len-(end/8)-1;
-////    const uint8_t rightByteMask = ~((1<<(end%8))-1);
-////    std::vector<uint8_t> r(((end-start)/8)+1);
-////    uint8_t tmp = 0;
-////    for (size_t i=leftByteIdx; i<=rightByteIdx; i++) {
-////        uint8_t tmp = bytes[i];
-////        // Mask-out bits we don't want
-////        if (i == leftByteIdx)   tmp &= leftByteMask;
-////        if (i == rightByteIdx)  tmp &= rightByteMask;
-////        // Make space for the incoming bits
-////        if (i == rightByteIdx) {
-////            tmp >>= end%8; // Shift right the number of unused bits
-////            r <<= 8-(end%8); // Shift left the number of used bits
-////        } else {
-////            r <<= 8;
-////        }
-////        // Or the bits into place
-////        r |= tmp;
-////    }
+////    
+////    
 ////    return r;
-}
+////    
+////    
+////    
+//////    assert(start < len*8);
+//////    assert(start >= end);
+//////    const size_t leftByteIdx = len-(start/8)-1;
+//////    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
+//////    const size_t rightByteIdx = len-(end/8)-1;
+//////    const uint8_t rightByteMask = ~((1<<(end%8))-1);
+//////    std::vector<uint8_t> r(((end-start)/8)+1);
+//////    uint8_t tmp = 0;
+//////    for (size_t i=leftByteIdx; i<=rightByteIdx; i++) {
+//////        uint8_t tmp = bytes[i];
+//////        // Mask-out bits we don't want
+//////        if (i == leftByteIdx)   tmp &= leftByteMask;
+//////        if (i == rightByteIdx)  tmp &= rightByteMask;
+//////        // Make space for the incoming bits
+//////        if (i == rightByteIdx) {
+//////            tmp >>= end%8; // Shift right the number of unused bits
+//////            r <<= 8-(end%8); // Shift left the number of used bits
+//////        } else {
+//////            r <<= 8;
+//////        }
+//////        // Or the bits into place
+//////        r |= tmp;
+//////    }
+//////    return r;
+//}
 
 
 class MDCDevice {
@@ -332,7 +359,9 @@ public:
     
     Resp read() {
         Resp resp;
-        uint8_t respBuf[sizeof(resp)+1];
+        uint8_t respBuf[sizeof(resp)+1]; // +1 since the response can start at any bit within
+                                         // a byte, so we need an extra byte to make sure we
+                                         // can fit the full response.
         size_t respBufLen = 0;
         
         // Read from FTDI until we fill up `respBuf`
@@ -359,10 +388,12 @@ public:
                     }
                 }
             } else {
+                // Response already started, so the continuation of the
+                // data is at the beginning of `buf`
                 bufOff = 0;
             }
             
-            // Copy new bytes into `respBuf`
+            // If the response started, copy new bytes into `respBuf`
             if (bufOff) {
                 const size_t copyLen = std::min(sizeof(respBuf)-respBufLen, sizeof(buf)-*bufOff);
                 memcpy(respBuf+respBufLen, buf+*bufOff, copyLen);
@@ -370,8 +401,16 @@ public:
             }
         }
         
-        uint8_t startBit = fls(~respBuf[0]);
-        getBits(respBuf, sizeof(respBuf), , );
+        // Find the start bit
+        const auto mszIdx = msz(respBuf[0]);
+        assert(mszIdx); // Our logic guarantees a zero
+        // Calculate the number of bits we need to shift over
+        const uint8_t shiftn = 8-*mszIdx;
+        // Left-shift the buffer to remove the start bit
+        lshift(respBuf, sizeof(respBuf), shiftn);
+        // Copy the shifted bits into `resp`
+        memcpy(&resp, respBuf, sizeof(resp));
+        return resp;
     }
     
     void _setPins(const Pins& pins) {
