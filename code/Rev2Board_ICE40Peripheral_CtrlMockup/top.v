@@ -93,11 +93,11 @@ module Top(
     reg[5:0] sd_counter = 0;
     
     reg ctrl_dinActive = 0;
-    reg[63:0] ctrl_dinReg = 0;
-    wire[6:0] ctrl_cmdCmd = ctrl_dinReg[62:56];
-    wire[55:0] ctrl_cmdArg = ctrl_dinReg[55:0];
+    reg[65:0] ctrl_dinReg = 0;
+    wire[7:0] ctrl_cmdCmd = ctrl_dinReg[64:57];
+    wire[55:0] ctrl_cmdArg = ctrl_dinReg[56:1];
     
-    reg[63:0] ctrl_doutReg = 0;
+    reg[65:0] ctrl_doutReg = 0;
     
     reg[6:0] ctrl_counter = 0;
     reg ctrl_sdClkSlow = 0;
@@ -158,7 +158,7 @@ module Top(
         .OUTPUT_CLK(ctrl_clk),
         .PACKAGE_PIN(ctrl_do),
         .OUTPUT_ENABLE(1'b1),
-        .D_OUT_0(ctrl_doutReg[63])
+        .D_OUT_0(ctrl_doutReg[65])
     );
     
     
@@ -290,7 +290,7 @@ module Top(
         0: begin
             if (sd_cmdOutTrigger) begin
                 sd_cmdOutActive[0] <= 1;
-                sd_shiftReg <= ctrl_dinReg;
+                sd_shiftReg <= ctrl_cmdArg;
                 sd_counter <= 47;
                 sd_cmdOutCRCRst_ <= 1;
                 sd_respState <= 0;
@@ -341,7 +341,7 @@ module Top(
         
         case (ctrl_state)
         0: begin
-            ctrl_counter <= 62;
+            ctrl_counter <= 64;
             if (!ctrlDI) begin
                 ctrl_dinActive <= 1;
                 ctrl_state <= 1;
@@ -360,7 +360,7 @@ module Top(
             case (ctrl_cmdCmd)
             // Echo
             0: begin
-                ctrl_doutReg <= {1'b0, ctrl_dinReg};
+                ctrl_doutReg <= {1'b0, 8'b0, ctrl_cmdArg, 1'b1};
             end
             
             // Set SD clock source
@@ -379,13 +379,13 @@ module Top(
             // Get SD status / response
             3: begin
                 $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
-                ctrl_doutReg <= {1'b0, 13'b0, sd_cmdOutDone, ctrl_sdRespReady, sd_respCRCOK, sd_resp};
+                ctrl_doutReg <= {1'b0, 13'b0, sd_cmdOutDone, ctrl_sdRespReady, sd_respCRCOK, sd_resp, 1'b1};
             end
             
             // Read SD DAT lines
             4: begin
                 $display("[CTRL] Read SD DAT lines");
-                ctrl_doutReg <= {1'b0, 60'b0, sd_datIn};
+                ctrl_doutReg <= {1'b0, 60'b0, sd_datIn, 1'b1};
             end
             endcase
             
@@ -450,6 +450,9 @@ module Testbench();
         end
     end
     
+    localparam START =  1'b0;
+    localparam END =    1'b1;
+    
     localparam CMD0 =   6'd0;      // GO_IDLE_STATE
     localparam CMD2 =   6'd2;      // ALL_SEND_CID
     localparam CMD3 =   6'd3;      // SEND_RELATIVE_ADDR
@@ -460,14 +463,16 @@ module Testbench();
     localparam CMD41 =  6'd41;     // SD_SEND_OP_COND
     localparam CMD55 =  6'd55;     // APP_CMD
     
-    reg[63:0] ctrl_diReg;
-    reg[63:0] ctrl_doReg;
+    reg[65:0] ctrl_diReg;
+    reg[65:0] ctrl_doReg;
+    wire[63:0] ctrl_doReg_payload = ctrl_doReg[64:1];
+    
     always @(posedge ctrl_clk) begin
         ctrl_diReg <= ctrl_diReg<<1|1'b1;
         ctrl_doReg <= ctrl_doReg<<1|ctrl_do;
     end
     
-    assign ctrl_di = ctrl_diReg[63];
+    assign ctrl_di = ctrl_diReg[65];
     
     initial begin
         reg[15:0] i, ii;
@@ -478,8 +483,8 @@ module Testbench();
         wait(!ctrl_clk);
         
         // Set SD clock source = 400 kHz
-        ctrl_diReg = {1'b0, 7'd1, 56'b01};
-        for (i=0; i<65; i++) begin
+        ctrl_diReg = {START, 8'd1, 56'b01, END};
+        for (i=0; i<66; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
@@ -490,8 +495,8 @@ module Testbench();
         end
         
         // Send SD CMD0
-        ctrl_diReg = {1'b0, 7'd2, 8'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}};
-        for (i=0; i<65; i++) begin
+        ctrl_diReg = {START, 8'd2, 8'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}, END};
+        for (i=0; i<66; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
@@ -504,8 +509,8 @@ module Testbench();
         // Wait for SD command to be sent
         sdDone = 0;
         while (!sdDone) begin
-            ctrl_diReg = {1'b0, 7'd3, 56'b0};
-            for (i=0; i<65; i++) begin
+            ctrl_diReg = {START, 8'd3, 56'b0, END};
+            for (i=0; i<66; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
@@ -515,24 +520,24 @@ module Testbench();
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
-
+            
             // Load the full response
-            for (i=0; i<63; i++) begin
+            for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
 
-            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg[50], ctrl_doReg[49], ctrl_doReg[48], ctrl_doReg[47:0]);
-            sdDone = ctrl_doReg[50];
+            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg_payload[50], ctrl_doReg_payload[49], ctrl_doReg_payload[48], ctrl_doReg_payload[47:0]);
+            sdDone = ctrl_doReg_payload[50];
         end
 
         // Send SD CMD8
-        ctrl_diReg = {1'b0, 7'd2, 8'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}};
-        for (i=0; i<65; i++) begin
+        ctrl_diReg = {START, 8'd2, 8'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}, END};
+        for (i=0; i<66; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
-        
+
         for (i=0; i<128; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
@@ -541,8 +546,8 @@ module Testbench();
         // Get SD card response
         sdDone = 0;
         while (!sdDone) begin
-            ctrl_diReg = {1'b0, 7'd3, 56'b0};
-            for (i=0; i<65; i++) begin
+            ctrl_diReg = {START, 8'd3, 56'b0, END};
+            for (i=0; i<66; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
@@ -554,13 +559,13 @@ module Testbench();
             end
 
             // Load the full response
-            for (i=0; i<63; i++) begin
+            for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
 
-            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg[50], ctrl_doReg[49], ctrl_doReg[48], ctrl_doReg[47:0]);
-            sdDone = ctrl_doReg[49];
+            $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg_payload[50], ctrl_doReg_payload[49], ctrl_doReg_payload[48], ctrl_doReg_payload[47:0]);
+            sdDone = ctrl_doReg_payload[49];
         end
     end
 endmodule

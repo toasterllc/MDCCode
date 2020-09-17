@@ -32,144 +32,6 @@ static std::optional<uint8_t> msz(uint8_t x) {
     return std::nullopt;
 }
 
-
-//std::vector<uint8_t> getBits(const uint8_t* bytes, size_t len, uint64_t start, uint64_t end) {
-//    assert(start < len*8);
-//    assert(start >= end);
-//    
-//    const uint8_t rshift = end%8;
-//    const uint8_t rshiftMask = (1<<rshift)-1;
-//    const uint8_t lshift = 8-rshift;
-//    const size_t leftByteIdx = len-(start/8)-1;
-//    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
-//    const size_t rightByteIdx = len-(end/8)-1;
-//    std::vector<uint8_t> r;
-//    // Collect the bytes
-//    for (size_t i=rightByteIdx;; i--) {
-//        r.push_back(bytes[i]);
-//        if (i == leftByteIdx) break;
-//    }
-//    
-//    // Enforce `leftByteMask`
-//    r.back() &= leftByteMask;
-//    
-//    // Right-shift the bits by `rshift`
-//    uint8_t h = 0;
-//    for (auto i=r.rbegin(); i!=r.rend(); i++) {
-//        // Remember the low bits that we're losing by right-shifting,
-//        // which will become the next byte's high bits
-//        const uint8_t l = (*i)&rshiftMask;
-//        *i >>= rshift;
-//        *i |= h;
-//        h = l<<lshift;
-//    }
-//    
-//    // Throw out extra byte if needed
-//    const size_t byteCount = ((start-end)/8)+1;
-//    if (r.size() > byteCount) r.pop_back();
-//    return r;
-//    
-//    
-////    
-////    
-////    
-////    
-//////    uint8_t b = 0;
-//////    for (auto i=r.rbegin(); i!=r.rend(); i++) {
-//////        const uint8_t highBits = b<<lshift;
-//////        const uint8_t lowBits = (*i)>>rshift;
-//////        *i = highBits|lowBits;
-//////        b = 
-//////        b<<lshift
-//////        *i >>= rshift;
-//////        b = (*i)&;
-//////    }
-////    
-//////    for (size_t i=rightByteIdx;; i--) {
-//////        uint8_t b = bytes[i];
-//////        const uint8_t bnMask = (i-1==leftByteIdx ? leftByteMask : 0xFF);
-//////        uin8t_t bn = bytes[i-1]&bnMask;
-//////        b = (b>>rshift) | (bn<<lshift);
-//////        r.push_back(b);
-//////        if (i-1 == leftByteIdx) break;
-//////    }
-////    
-////    std::optional<uint8_t> pb;
-////    for (size_t i=rightByteIdx;; i--) {
-////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-////        const uint8_t b = bytes[i]&mask;
-////        if (pb) r.push_back((b<<lshift)|(*pb>>rshift));
-////        pb = b;
-////        if (i == leftByteIdx) break;
-////    }
-////    
-////    
-////    uint8_t l = 0;
-////    uint8_t r = 0;
-////    for (size_t i=rightByteIdx;; i--) {
-////        
-////        
-////        
-////        
-////        r >>= rshift;
-////        
-////        
-////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-////        const uint8_t b = (r>>rshift) | (l<<lshift);
-////        vec.push_back(b);
-////        r = l;
-////        l = bytes[i];
-////        
-////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-////        b >>= rshift;
-////        b |= (bytes[i]&mask)<<lshift
-////        
-////        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
-////        b |= 
-////        
-////        b = (bytes[i]&mask)<<lshift;
-////        
-////        
-////        
-////        const uint8_t bnMask = (i-1==leftByteIdx ? leftByteMask : 0xFF);
-////        uin8t_t bn = bytes[i-1]&bnMask;
-////        b = (b>>rshift) | (bn<<lshift);
-////        r.push_back(b);
-////        if (i-1 == leftByteIdx) break;
-////    }
-////    
-////    
-////    return r;
-////    
-////    
-////    
-//////    assert(start < len*8);
-//////    assert(start >= end);
-//////    const size_t leftByteIdx = len-(start/8)-1;
-//////    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
-//////    const size_t rightByteIdx = len-(end/8)-1;
-//////    const uint8_t rightByteMask = ~((1<<(end%8))-1);
-//////    std::vector<uint8_t> r(((end-start)/8)+1);
-//////    uint8_t tmp = 0;
-//////    for (size_t i=leftByteIdx; i<=rightByteIdx; i++) {
-//////        uint8_t tmp = bytes[i];
-//////        // Mask-out bits we don't want
-//////        if (i == leftByteIdx)   tmp &= leftByteMask;
-//////        if (i == rightByteIdx)  tmp &= rightByteMask;
-//////        // Make space for the incoming bits
-//////        if (i == rightByteIdx) {
-//////            tmp >>= end%8; // Shift right the number of unused bits
-//////            r <<= 8-(end%8); // Shift left the number of used bits
-//////        } else {
-//////            r <<= 8;
-//////        }
-//////        // Or the bits into place
-//////        r |= tmp;
-//////    }
-//////    return r;
-//}
-
-
 class MDCDevice {
 public:
     struct Pin {
@@ -183,7 +45,7 @@ public:
     
     struct Pins {
         Pin CLK     {.bit=1<<0, .dir=1, .val=0};
-        Pin DO      {.bit=1<<1, .dir=1, .val=0};
+        Pin DO      {.bit=1<<1, .dir=1, .val=1};
         Pin DI      {.bit=1<<2, .dir=0, .val=0};
         // Unused
         Pin CS      {.bit=1<<4, .dir=1, .val=0};
@@ -261,10 +123,6 @@ public:
         ir = ftdi_set_latency_timer(&_ftdi, 16);
         assert(!ir);
         
-//        // Set FTDI mode to MPSSE
-//        ir = ftdi_set_bitmode(&_ftdi, 0xFF, 0);
-//        assert(!ir);
-        
         // Set FTDI mode to MPSSE
         ir = ftdi_set_bitmode(&_ftdi, 0xFF, BITMODE_MPSSE);
         assert(!ir);
@@ -307,9 +165,7 @@ public:
     
     void _resetPins() {
         // ## Reset our pins states to make CLK=0 and CS=1
-        Pins pins;
-        pins.CS.val = 1;
-        _setPins(pins);
+        _setPins(Pins{});
     }
     
     void write(const Msg& msg) {
@@ -333,29 +189,6 @@ public:
             _ftdiWrite(_ftdi, b, sizeof(b));
         }
     }
-    
-//    RespPtr _readResp() {
-//        size_t off = _inOff;
-//        Resp resp;
-//        if (_inLen-off < sizeof(resp)) return nullptr;
-//        memcpy(&resp, _in+off, sizeof(resp));
-//        off += sizeof(resp);
-//        
-//        if (_inLen-off < hdr.len) return nullptr;
-//        
-//        MsgPtr msg = _newMsg(hdr.type);
-//        assert(msg);
-//        
-//        // Verify that the incoming message has enough data to fill the type that it claims to be
-//        assert(hdr.len >= msg->hdr.len);
-//        
-//        // Copy the payload into the message, but only the number of bytes that we expect the message to have.
-//        memcpy(((uint8_t*)msg.get())+sizeof(MsgHdr), _in+off, msg->hdr.len);
-//        
-//        off += hdr.len;
-//        _inOff = off;
-//        return msg;
-//    }
     
     Resp read() {
         Resp resp;
@@ -422,21 +255,6 @@ public:
         for (size_t off=0; off<len;) {
             const size_t readLen = len-off;
             int ir = ftdi_read_data(&ftdi, d+off, (int)readLen);
-            
-//            if (ir > 0) {
-//                printf("====================\n");
-//                printf("Read:\n");
-//                for (size_t i=0; i<readLen; i++) {
-//                    uint8_t byte = *(d+off+i);
-////                    if (byte) {
-//                        printf("%02x ", byte);
-////                    }
-//                }
-//                printf("\n");
-//                printf("====================\n");
-//            }
-//            exit(0);
-            
             assert(ir>=0 && (size_t)ir<=readLen);
             off += ir;
         }
@@ -447,7 +265,6 @@ public:
         assert(ir>=0 && (size_t)ir==len);
     }
     
-//private:
-public:
+private:
     struct ftdi_context _ftdi;
 };
