@@ -360,7 +360,7 @@ module Top(
             case (ctrl_cmdCmd)
             // Echo
             0: begin
-                ctrl_doutReg <= {1'b0, 8'b0, ctrl_cmdArg, 1'b1};
+                ctrl_doutReg <= {1'b0, ctrl_cmdArg, 8'b0, 1'b1};
             end
             
             // Set SD clock source

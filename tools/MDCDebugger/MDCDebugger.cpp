@@ -58,9 +58,15 @@ static Args parseArgs(int argc, const char* argv[]) {
 static void echo(const Args& args, MDCDevice& device) {
     using Msg = MDCDevice::Msg;
     using Resp = MDCDevice::Resp;
-    device.write(Msg{.type=0, .payload={1,2,3}});
+    
+    Msg msg{.type = 0};
+    memcpy(msg.payload, args.str.c_str(), std::min(sizeof(msg.payload), args.str.length()));
+    msg.payload[sizeof(msg.payload)-1] = 0; // Ensure that string is null-terminated
+    device.write(msg);
+    
     Resp resp = device.read();
-    printf("Response: %d %d %d %d\n", resp.payload[0], resp.payload[1], resp.payload[2], resp.payload[3]);
+    resp.payload[sizeof(resp.payload)-1] = 0; // Ensure that response string is null-terminated
+    printf("Response: %s\n", resp.payload);
 }
 
 int main(int argc, const char* argv[]) {

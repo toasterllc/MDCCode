@@ -154,6 +154,23 @@ public:
         }
         
         _resetPins();
+        
+        // Wait until MDC is ready, as indicated by it outputting all 1's
+        bool ready = false;
+        do {
+            uint8_t buf[512];
+            _mdcRead(_ftdi, buf, sizeof(buf));
+            ready = true;
+            for (uint8_t b : buf) {
+                if (b != 0xFF) {
+                    printf("MDC not ready...\n");
+                    ready = false;
+                    break;
+                }
+            }
+        } while (!ready);
+        
+        printf("MDC ready!\n");
     }
     
     ~MDCDevice() {
@@ -185,7 +202,7 @@ public:
         
         // End bit (clock out a single 1)
         {
-            uint8_t b[] = {0x13, 0x00, 0x80};
+            uint8_t b[] = {0x13, 0x00, 0xFF};
             _ftdiWrite(_ftdi, b, sizeof(b));
         }
     }
@@ -197,32 +214,26 @@ public:
                                          // can fit the full response.
         size_t respBufLen = 0;
         
-        // Read from FTDI until we fill up `respBuf`
+        // Read from FTDI until we get the start bit, and fill up `respBuf`
         while (respBufLen < sizeof(respBuf)) {
             uint8_t buf[512];
+            _mdcRead(_ftdi, buf, sizeof(buf));
             
-            // Tell FTDI to clock in bytes to fill `buf`
-            {
-                const size_t len = sizeof(buf);
-                const uint8_t b[] = {0x20, (uint8_t)((len-1)&0xFF), (uint8_t)(((len-1)&0xFF00)>>8)};
-                _ftdiWrite(_ftdi, b, sizeof(b));
-            }
-            
-            // Get the bytes from FTDI
-            _ftdiRead(_ftdi, buf, sizeof(buf));
-            
-            // Find the start byte
             std::optional<size_t> bufOff;
             if (!respBufLen) {
+                printf("Searching for response start bit...\n");
+                // Response hasn't started yet
+                // Find the byte in `buf` containing the start bit
                 for (size_t i=0; i<sizeof(buf); i++) {
                     if (buf[i] != 0xFF) {
                         bufOff = i;
                         break;
                     }
                 }
+            
             } else {
-                // Response already started, so the continuation of the
-                // data is at the beginning of `buf`
+                // Response already started
+                // The continuation of the data is at the beginning of `buf`
                 bufOff = 0;
             }
             
@@ -234,10 +245,10 @@ public:
             }
         }
         
-        // Find the start bit
+        // Find the index of start bit in `respBuf`
         const auto mszIdx = msz(respBuf[0]);
         assert(mszIdx); // Our logic guarantees a zero
-        // Calculate the number of bits we need to shift over
+        // Calculate the number of bits we need to shift left
         const uint8_t shiftn = 8-*mszIdx;
         // Left-shift the buffer to remove the start bit
         lshift(respBuf, sizeof(respBuf), shiftn);
@@ -249,6 +260,15 @@ public:
     void _setPins(const Pins& pins) {
         uint8_t b[] = {0x80, pins.valBits(), pins.dirBits()};
         _ftdiWrite(_ftdi, b, sizeof(b));
+    }
+    
+    static void _mdcRead(struct ftdi_context& ftdi, uint8_t* buf, uint16_t len) {
+        // Tell FTDI to clock in bytes to fill `buf`
+        const uint8_t b[] = {0x20, (uint8_t)((len-1)&0xFF), (uint8_t)(((len-1)&0xFF00)>>8)};
+        _ftdiWrite(ftdi, b, sizeof(b));
+        
+        // Get the bytes from FTDI
+        _ftdiRead(ftdi, buf, len);
     }
     
     static void _ftdiRead(struct ftdi_context& ftdi, uint8_t* d, const size_t len) {
