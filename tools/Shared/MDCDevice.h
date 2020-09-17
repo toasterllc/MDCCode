@@ -6,6 +6,143 @@
 #include <sstream>
 #include <iomanip>
 
+std::vector<uint8_t> getBits(const uint8_t* bytes, size_t len, uint64_t start, uint64_t end) {
+    assert(start < len*8);
+    assert(start >= end);
+    
+    const uint8_t rshift = end%8;
+    const uint8_t rshiftMask = (1<<rshift)-1;
+    const uint8_t lshift = 8-rshift;
+    const size_t leftByteIdx = len-(start/8)-1;
+    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
+    const size_t rightByteIdx = len-(end/8)-1;
+    std::vector<uint8_t> r;
+    // Collect the bytes
+    for (size_t i=rightByteIdx;; i--) {
+        r.push_back(bytes[i]);
+        if (i == leftByteIdx) break;
+    }
+    
+    // Enforce `leftByteMask`
+    r.back() &= leftByteMask;
+    
+    // Right-shift the bits by `rshift`
+    uint8_t h = 0;
+    for (auto i=r.rbegin(); i!=r.rend(); i++) {
+        // Remember the low bits that we're losing by right-shifting,
+        // which will become the next byte's high bits
+        const uint8_t l = (*i)&rshiftMask;
+        *i >>= rshift;
+        *i |= h;
+        h = l<<lshift;
+    }
+    
+    // Throw out extra byte if needed
+    const size_t byteCount = ((start-end)/8)+1;
+    if (r.size() > byteCount) r.pop_back();
+    return r;
+    
+    
+//    
+//    
+//    
+//    
+////    uint8_t b = 0;
+////    for (auto i=r.rbegin(); i!=r.rend(); i++) {
+////        const uint8_t highBits = b<<lshift;
+////        const uint8_t lowBits = (*i)>>rshift;
+////        *i = highBits|lowBits;
+////        b = 
+////        b<<lshift
+////        *i >>= rshift;
+////        b = (*i)&;
+////    }
+//    
+////    for (size_t i=rightByteIdx;; i--) {
+////        uint8_t b = bytes[i];
+////        const uint8_t bnMask = (i-1==leftByteIdx ? leftByteMask : 0xFF);
+////        uin8t_t bn = bytes[i-1]&bnMask;
+////        b = (b>>rshift) | (bn<<lshift);
+////        r.push_back(b);
+////        if (i-1 == leftByteIdx) break;
+////    }
+//    
+//    std::optional<uint8_t> pb;
+//    for (size_t i=rightByteIdx;; i--) {
+//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+//        const uint8_t b = bytes[i]&mask;
+//        if (pb) r.push_back((b<<lshift)|(*pb>>rshift));
+//        pb = b;
+//        if (i == leftByteIdx) break;
+//    }
+//    
+//    
+//    uint8_t l = 0;
+//    uint8_t r = 0;
+//    for (size_t i=rightByteIdx;; i--) {
+//        
+//        
+//        
+//        
+//        r >>= rshift;
+//        
+//        
+//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+//        const uint8_t b = (r>>rshift) | (l<<lshift);
+//        vec.push_back(b);
+//        r = l;
+//        l = bytes[i];
+//        
+//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+//        b >>= rshift;
+//        b |= (bytes[i]&mask)<<lshift
+//        
+//        const uint8_t mask = (i==leftByteIdx ? leftByteMask : 0xFF);
+//        b |= 
+//        
+//        b = (bytes[i]&mask)<<lshift;
+//        
+//        
+//        
+//        const uint8_t bnMask = (i-1==leftByteIdx ? leftByteMask : 0xFF);
+//        uin8t_t bn = bytes[i-1]&bnMask;
+//        b = (b>>rshift) | (bn<<lshift);
+//        r.push_back(b);
+//        if (i-1 == leftByteIdx) break;
+//    }
+//    
+//    
+//    return r;
+//    
+//    
+//    
+////    assert(start < len*8);
+////    assert(start >= end);
+////    const size_t leftByteIdx = len-(start/8)-1;
+////    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
+////    const size_t rightByteIdx = len-(end/8)-1;
+////    const uint8_t rightByteMask = ~((1<<(end%8))-1);
+////    std::vector<uint8_t> r(((end-start)/8)+1);
+////    uint8_t tmp = 0;
+////    for (size_t i=leftByteIdx; i<=rightByteIdx; i++) {
+////        uint8_t tmp = bytes[i];
+////        // Mask-out bits we don't want
+////        if (i == leftByteIdx)   tmp &= leftByteMask;
+////        if (i == rightByteIdx)  tmp &= rightByteMask;
+////        // Make space for the incoming bits
+////        if (i == rightByteIdx) {
+////            tmp >>= end%8; // Shift right the number of unused bits
+////            r <<= 8-(end%8); // Shift left the number of used bits
+////        } else {
+////            r <<= 8;
+////        }
+////        // Or the bits into place
+////        r |= tmp;
+////    }
+////    return r;
+}
+
+
 class MDCDevice {
 public:
     struct Pin {
@@ -47,101 +184,17 @@ public:
     };
     
     using MsgType = uint8_t;
-    struct MsgHdr {
+    struct Msg {
         MsgType type = 0;
-        uint8_t len = 0;
+        uint8_t payload[7];
     };
     
-    struct Msg {
-        template <typename T>
-        static std::unique_ptr<T> Cast(std::unique_ptr<Msg> msg) {
-            if (msg && msg->hdr.type == T{}.hdr.type) return std::unique_ptr<T>((T*)msg.release());
-            return nullptr;
-        }
-        
-        template <typename T>
-        static T* Cast(Msg* msg) {
-            if (msg->hdr.type == T{}.hdr.type) return (T*)msg;
-            return nullptr;
-        }
-        
-        MsgHdr hdr{.type=0x00, .len=sizeof(*this)-sizeof(MsgHdr)};
-    } __attribute__((packed));
-    
-    struct LEDSetMsg {
-        MsgHdr hdr{.type=0x01, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint8_t on = 0;
-//        uint8_t payload[255];
-    } __attribute__((packed));
-    
-    struct MemReadMsg {
-        MsgHdr hdr{.type=0x02, .len=sizeof(*this)-sizeof(MsgHdr)};
-    } __attribute__((packed));
-    
-    struct MemDataMsg {
-        MsgHdr hdr{.type=0x03, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint16_t mem[0x7F];
-        
-        std::string desc() const {
-            std::stringstream d;
-            
-            d << std::setfill('0') << std::setw(2);
-            
-            d << "MemReadMsg{\n";
-            d << "  type: 0x" << std::hex << (uintmax_t)hdr.type << "\n";
-            d << "  payload (len = " << std::dec << (uintmax_t)hdr.len << "): [ ";
-            for (size_t i=0; i<hdr.len; i++) {
-                d << std::hex << (uintmax_t)mem[i] << " ";
-            }
-            d << "]\n}\n\n";
-            return d.str();
-        }
-    } __attribute__((packed));
-    
-    struct PixReg8Msg {
-        MsgHdr hdr{.type=0x04, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint8_t write = 0;
-        uint16_t addr = 0;
-        uint8_t val = 0;
-        uint8_t ok = 0;
-    } __attribute__((packed));
-    
-    struct PixReg16Msg {
-        MsgHdr hdr{.type=0x05, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint8_t write = 0;
-        uint16_t addr = 0;
-        uint16_t val = 0;
-        uint8_t ok = 0;
-    } __attribute__((packed));
-    
-    struct PixCaptureMsg {
-        MsgHdr hdr{.type=0x06, .len=sizeof(*this)-sizeof(MsgHdr)};
-    } __attribute__((packed));
-    
-    struct PixSizeMsg {
-        MsgHdr hdr{.type=0x07, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint16_t width = 0;
-        uint16_t height = 0;
-    } __attribute__((packed));
-    
-    struct PixDataMsg {
-        MsgHdr hdr{.type=0x08, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint16_t mem[0x7F];
-    } __attribute__((packed));
-    
-    struct SDCmdMsg {
-        MsgHdr hdr{.type=0x09, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint8_t cmd = 0;
-        uint8_t arg[4] = {};
-    } __attribute__((packed));
-    
-    struct SDRespMsg {
-        MsgHdr hdr{.type=0x0A, .len=sizeof(*this)-sizeof(MsgHdr)};
-        uint8_t ok = 0;
-        uint8_t resp[17] = {};
-    } __attribute__((packed));
+    struct Resp {
+        uint8_t payload[8];
+    };
     
     using MsgPtr = std::unique_ptr<Msg>;
+    using RespPtr = std::unique_ptr<Resp>;
     
     MDCDevice() {
         int ir = ftdi_init(&_ftdi);
@@ -232,122 +285,93 @@ public:
         _setPins(pins);
     }
     
-    template <typename T>
-    void write(const T& msg) {
-        const size_t msgSize = sizeof(msg.hdr)+msg.hdr.len;
-        uint8_t b[] = {0x31, (uint8_t)((msgSize-1)&0xFF), (uint8_t)(((msgSize-1)&0xFF00)>>8)};
-        _ftdiWrite(_ftdi, b, sizeof(b));
-        _ftdiWrite(_ftdi, (uint8_t*)&msg, msgSize);
-        
-        // Verify that we don't overflow _inPending
-        assert(SIZE_MAX-_inPending >= msgSize);
-        _inPending += msgSize;
-    }
-    
-    template <typename T>
-    MsgPtr _newMsg() { return std::unique_ptr<Msg>((Msg*)new T{}); };
-    
-    MsgPtr _newMsg(MsgType type) {
-        if (type == Msg{}.hdr.type) return _newMsg<Msg>();
-        if (type == LEDSetMsg{}.hdr.type) return _newMsg<LEDSetMsg>();
-        if (type == MemReadMsg{}.hdr.type) return _newMsg<MemReadMsg>();
-        if (type == MemDataMsg{}.hdr.type) return _newMsg<MemDataMsg>();
-        if (type == PixReg8Msg{}.hdr.type) return _newMsg<PixReg8Msg>();
-        if (type == PixReg16Msg{}.hdr.type) return _newMsg<PixReg16Msg>();
-        if (type == PixCaptureMsg{}.hdr.type) return _newMsg<PixCaptureMsg>();
-        if (type == PixSizeMsg{}.hdr.type) return _newMsg<PixSizeMsg>();
-        if (type == PixDataMsg{}.hdr.type) return _newMsg<PixDataMsg>();
-        if (type == SDCmdMsg{}.hdr.type) return _newMsg<SDCmdMsg>();
-        if (type == SDRespMsg{}.hdr.type) return _newMsg<SDRespMsg>();
-        printf("Unknown msg type: %ju\n", (uintmax_t)type);
-        return nullptr;
-    }
-    
-    MsgPtr _readMsg() {
-        size_t off = _inOff;
-        MsgHdr hdr;
-        if (_inLen-off < sizeof(hdr)) return nullptr;
-        memcpy(&hdr, _in+off, sizeof(hdr));
-        off += sizeof(hdr);
-        
-        if (_inLen-off < hdr.len) return nullptr;
-        
-        MsgPtr msg = _newMsg(hdr.type);
-        assert(msg);
-        
-        // Verify that the incoming message has enough data to fill the type that it claims to be
-        assert(hdr.len >= msg->hdr.len);
-        
-        // Copy the payload into the message, but only the number of bytes that we expect the message to have.
-        memcpy(((uint8_t*)msg.get())+sizeof(MsgHdr), _in+off, msg->hdr.len);
-        
-        off += hdr.len;
-        _inOff = off;
-        return msg;
-    }
-    
-    MsgPtr read(size_t maxReadLen=sizeof(_in)) {
-        for (;;) {
-            // Find the first non-zero byte, denoting the first message
-            for (; _inOff<_inLen; _inOff++) {
-                if (_in[_inOff]) break;
-            }
-            
-            // Attempt to read a message
-            MsgPtr msg = _readMsg();
-            if (msg) return msg;
-            
-            // We failed to compose a message, so we need to read more data
-            // Move the remaining partial message at the end of the buffer (pointed
-            // to by `off`) to the beginning of the buffer.
-            memmove(_in, _in+_inOff, _inLen-_inOff);
-            _inLen -= _inOff;
-            _inOff = 0;
-            
-            const size_t maxMsgLen =
-                sizeof(MsgHdr) +
-                std::numeric_limits<decltype(MsgHdr::len)>::max();
-            
-            // maxReadLen must be >= the maximum size of a single message (maxMsgLen).
-            // Otherwise, we could fail to create a message after reading data into _in,
-            // due to not enough data being available.
-            maxReadLen = std::max(maxMsgLen, maxReadLen);
-            
-            // readLen = amount of data to read
-            const size_t readLen = std::min(maxReadLen, sizeof(_in)-_inLen);
-            // Subtract the number of pending bytes from the number of bytes
-            // that we clock out (and clipping to 0).
-            const size_t clockOutLen = readLen-std::min(readLen, _inPending);
-            
-            // Clock out more bytes if needed
-            if (clockOutLen) {
-                // Create FTDI command to fill the remainder of `buf` with data
-                const size_t chunkSize = 0x10000; // Max read size for a single 0x20 command
-                const size_t chunks = clockOutLen/chunkSize;
-                const size_t rem = clockOutLen%chunkSize;
-                uint8_t cmds[(3*chunks) + (rem?3:0)];
-                for (size_t i=0; i<chunks; i++) {
-                    cmds[(i*3)+0] = 0x20;
-                    cmds[(i*3)+1] = 0xFF;
-                    cmds[(i*3)+2] = 0xFF;
-                }
-                
-                if (rem) {
-                    cmds[sizeof(cmds)-3] = 0x20;
-                    cmds[sizeof(cmds)-2] = (uint8_t)((rem-1)&0xFF);
-                    cmds[sizeof(cmds)-1] = (uint8_t)(((rem-1)&0xFF00)>>8);
-                }
-                
-                // Reset pin state before performing mass read to ensure DO=0
-                _resetPins();
-                _ftdiWrite(_ftdi, cmds, sizeof(cmds));
-            }
-            
-            // Read bytes to fill up _in
-            _ftdiRead(_ftdi, _in+_inLen, readLen);
-            _inLen += readLen;
-            _inPending -= std::min(_inPending, readLen);
+    void write(const Msg& msg) {
+        // Start bit (clock out a single 0)
+        {
+            uint8_t b[] = {0x13, 0x00, 0x00};
+            _ftdiWrite(_ftdi, b, sizeof(b));
         }
+        
+        // Message payload
+        {
+            const size_t msgLen = sizeof(msg);
+            const uint8_t b[] = {0x11, (uint8_t)((msgLen-1)&0xFF), (uint8_t)(((msgLen-1)&0xFF00)>>8)};
+            _ftdiWrite(_ftdi, b, sizeof(b));
+            _ftdiWrite(_ftdi, (uint8_t*)&msg, msgLen);
+        }
+        
+        // End bit (clock out a single 1)
+        {
+            uint8_t b[] = {0x13, 0x00, 0x80};
+            _ftdiWrite(_ftdi, b, sizeof(b));
+        }
+    }
+    
+//    RespPtr _readResp() {
+//        size_t off = _inOff;
+//        Resp resp;
+//        if (_inLen-off < sizeof(resp)) return nullptr;
+//        memcpy(&resp, _in+off, sizeof(resp));
+//        off += sizeof(resp);
+//        
+//        if (_inLen-off < hdr.len) return nullptr;
+//        
+//        MsgPtr msg = _newMsg(hdr.type);
+//        assert(msg);
+//        
+//        // Verify that the incoming message has enough data to fill the type that it claims to be
+//        assert(hdr.len >= msg->hdr.len);
+//        
+//        // Copy the payload into the message, but only the number of bytes that we expect the message to have.
+//        memcpy(((uint8_t*)msg.get())+sizeof(MsgHdr), _in+off, msg->hdr.len);
+//        
+//        off += hdr.len;
+//        _inOff = off;
+//        return msg;
+//    }
+    
+    Resp read() {
+        Resp resp;
+        uint8_t respBuf[sizeof(resp)+1];
+        size_t respBufLen = 0;
+        
+        // Read from FTDI until we fill up `respBuf`
+        while (respBufLen < sizeof(respBuf)) {
+            uint8_t buf[512];
+            
+            // Tell FTDI to clock in bytes to fill `buf`
+            {
+                const size_t len = sizeof(buf);
+                const uint8_t b[] = {0x20, (uint8_t)((len-1)&0xFF), (uint8_t)(((len-1)&0xFF00)>>8)};
+                _ftdiWrite(_ftdi, b, sizeof(b));
+            }
+            
+            // Get the bytes from FTDI
+            _ftdiRead(_ftdi, buf, sizeof(buf));
+            
+            // Find the start byte
+            std::optional<size_t> bufOff;
+            if (!respBufLen) {
+                for (size_t i=0; i<sizeof(buf); i++) {
+                    if (buf[i] != 0xFF) {
+                        bufOff = i;
+                        break;
+                    }
+                }
+            } else {
+                bufOff = 0;
+            }
+            
+            // Copy new bytes into `respBuf`
+            if (bufOff) {
+                const size_t copyLen = std::min(sizeof(respBuf)-respBufLen, sizeof(buf)-*bufOff);
+                memcpy(respBuf+respBufLen, buf+*bufOff, copyLen);
+                respBufLen += copyLen;
+            }
+        }
+        
+        uint8_t startBit = fls(~respBuf[0]);
+        getBits(respBuf, sizeof(respBuf), , );
     }
     
     void _setPins(const Pins& pins) {
@@ -387,12 +411,4 @@ public:
 //private:
 public:
     struct ftdi_context _ftdi;
-//    uint8_t _in[0x400];
-//    uint8_t _in[0x80000]; // 4 MB
-    uint8_t _in[0x100000]; // 1 MB
-//    uint8_t _in[0x40000];
-//    uint8_t _in[0x10000];
-    size_t _inOff = 0;
-    size_t _inLen = 0;
-    size_t _inPending = 0; // Number of bytes already available to be read via ftdi_read_data()
 };
