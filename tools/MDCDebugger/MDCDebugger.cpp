@@ -56,101 +56,219 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void echo(const Args& args, MDCDevice& device) {
-    using Msg = MDCDevice::Msg;
-    using Cmd = Msg::Cmd;
-    using Resp = MDCDevice::Resp;
+    using MDC = MDCDevice;
+    using EchoMsg = MDC::EchoMsg;
+    using EchoResp = MDC::EchoResp;
     
-    Msg msg{.cmd = Cmd::Echo};
-    memcpy(msg.payload, args.str.c_str(), std::min(sizeof(msg.payload), args.str.length()));
-    msg.payload[sizeof(msg.payload)-1] = 0; // Ensure that string is null-terminated
-    device.write(msg);
+    device.write(EchoMsg(args.str.c_str()));
     
-    Resp resp = device.read();
-    resp.payload[sizeof(resp.payload)-1] = 0; // Ensure that response string is null-terminated
-    printf("Response: %s\n", resp.payload);
+    auto resp = device.read<EchoResp>();
+    printf("Response: %s\n", resp.msg());
+}
+
+static void sendSDCmd(MDCDevice& d, uint8_t sdCmd, uint32_t sdArg) {
+    using MDC = MDCDevice;
+    using SDSendCmdMsg = MDC::SDSendCmdMsg;
+    using SDGetStatusMsg = MDC::SDGetStatusMsg;
+    using SDGetStatusResp = MDC::SDGetStatusResp;
+    d.write(SDSendCmdMsg(sdCmd, sdArg));
+    
+    // Wait for command to be sent
+    for (;;) {
+        d.write(SDGetStatusMsg());
+        auto resp = d.read<SDGetStatusResp>();
+        if (resp.sdCommandSent()) break;
+    }
+}
+
+static MDCDevice::SDGetStatusResp getSDStatus(MDCDevice& d) {
+    using MDC = MDCDevice;
+    using SDGetStatusMsg = MDC::SDGetStatusMsg;
+    using SDGetStatusResp = MDC::SDGetStatusResp;
+    d.write(SDGetStatusMsg());
+    return d.read<SDGetStatusResp>();
+}
+
+static MDCDevice::SDGetStatusResp getSDResp(MDCDevice& d) {
+    for (;;) {
+        auto status = getSDStatus(d);
+        if (status.sdRespReady()) return status;
+    }
 }
 
 int main(int argc, const char* argv[]) {
-//    using Msg = MDCDevice::Msg;
-//    using Cmd = Msg::Cmd;
-//    using Resp = MDCDevice::Resp;
-//    auto devicePtr = std::make_unique<MDCDevice>();
-//    MDCDevice& device = *devicePtr;
-//    
-//    // SD clock = 400 kHz
-//    {
-//        Msg msg{.cmd=Cmd::SDSetClockSource, .payload={0,0,0,0,0,0,1}};
-//        device.write(msg);
-//    }
-//    
-//    // Issue SD CMD0
-//    {
-//        printf("Sending SD CMD0\n");
-//        {
-//            Msg msg{.cmd=Cmd::SDSendCmd, .payload={0, 0x40,0x00,0x00,0x00,0x00,0x01}};
-//            device.write(msg);
-//        }
-//        
-//        // Wait for command to be sent
-//        printf("  -> Waiting for SD command to be sent...\n");
-//        for (;;) {
-//            Msg msg{.cmd=Cmd::SDGetStatus, .payload={}};
-//            device.write(msg);
-//            Resp resp = device.read();
-//            bool sdCommandSent = getBits(resp.payload, sizeof(resp.payload), 50, 50);
-//            bool sdRespReady = getBits(resp.payload, sizeof(resp.payload), 49, 49);
-//            bool sdRespCRCOK = getBits(resp.payload, sizeof(resp.payload), 48, 48);
-//            printf("sdCommandSent:%d sdRespReady:%d sdRespCRCOK:%d\n", sdCommandSent, sdRespReady, sdRespCRCOK);
-//            if (sdCommandSent) break;
-//        }
-//        printf("  -> Done\n");
-//    }
-//    
-//    // Issue SD CMD8
-//    {
-//        printf("Sending SD CMD8\n");
-//        {
-//            Msg msg{.cmd=Cmd::SDSendCmd, .payload={0, 0x48,0x00,0x00,0x01,0xAA,0x01}};
-//            device.write(msg);
-//        }
-//        
-//        // Wait for command to be sent
-//        printf("  -> Waiting for SD response...\n");
-//        for (;;) {
-//            Msg msg{.cmd=Cmd::SDGetStatus, .payload={}};
-//            device.write(msg);
-//            Resp resp = device.read();
-//            bool sdCommandSent = getBits(resp.payload, sizeof(resp.payload), 50, 50);
-//            bool sdRespReady = getBits(resp.payload, sizeof(resp.payload), 49, 49);
-//            bool sdRespCRCOK = getBits(resp.payload, sizeof(resp.payload), 48, 48);
-//            uint64_t sdResp = getBits(resp.payload, sizeof(resp.payload), 47, 0);
-//            printf("sdCommandSent:%d sdRespReady:%d sdRespCRCOK:%d sdResp:%012jx\n", sdCommandSent, sdRespReady, sdRespCRCOK, (uintmax_t)sdResp);
-//            if (sdRespReady) break;
-//        }
-//        printf("  -> Done...\n");
-//    }
-//    
-//    return 0;
+    using MDC = MDCDevice;
+    using SDSetClkSrcMsg = MDC::SDSetClkSrcMsg;
+    using SDSendCmdMsg = MDC::SDSendCmdMsg;
+    using SDGetStatusMsg = MDC::SDGetStatusMsg;
+    using SDGetStatusResp = MDC::SDGetStatusResp;
+    using Resp = MDC::Resp;
+    auto devicePtr = std::make_unique<MDCDevice>();
+    MDCDevice& device = *devicePtr;
     
-    Args args;
-    try {
-        args = parseArgs(argc-1, argv+1);
-    
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
-        printUsage();
-        return 1;
+    // SD clock source = 400 kHz
+    {
+        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
     }
     
-    auto device = std::make_unique<MDCDevice>();
+    // Issue SD CMD0
+    {
+        printf("Sending SD CMD0\n");
+        sendSDCmd(device, 0, 0);
+        printf("-> Done\n\n");
+    }
     
-    try {
-        if (args.cmd == EchoCmd)            echo(args, *device);
+    // Issue SD CMD8
+    {
+        printf("Sending SD CMD8\n");
+        sendSDCmd(device, 8, 0x000001AA);
+        auto resp = getSDResp(device);
+        assert(resp.sdRespCRCOK());
+        assert(resp.getBits(15,8) == 0xAA); // Verify the response pattern is what we sent
+        printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+    }
     
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Failed: %s\n", e.what());
-        return 1;
+    // Issue SD ACMD41
+    {
+        for (;;) {
+            printf("Sending SD ACMD41\n");
+            // CMD55
+            {
+                sendSDCmd(device, 55, 0x00000000);
+                auto resp = getSDResp(device);
+                assert(resp.sdRespCRCOK());
+            }
+            
+            // CMD41
+            {
+                sendSDCmd(device, 41, 0x51008000);
+                auto resp = getSDResp(device);
+                // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
+                assert(resp.getBits(45,40) == 0x3F); // Command should be 6'b111111
+                assert(resp.getBits(7,1) == 0x7F); // CRC should be 7'b1111111
+                // Check if card is ready. If it's not, retry ACMD41.
+                if (!resp.getBits(39, 39)) {
+                    printf("-> Card busy (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+                    continue;
+                }
+                assert(resp.getBits(32, 32)); // Verify that card can switch to 1.8V
+                
+                printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+                break;
+            }
+        }
+    }
+    
+    // Issue SD CMD11
+    {
+        printf("Sending SD CMD11\n");
+        sendSDCmd(device, 11, 0x00000000);
+        auto resp = getSDResp(device);
+        assert(resp.sdRespCRCOK());
+        printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+    }
+    
+    // Disable SD clock for 5ms (SD clock source = none)
+    {
+        printf("Disabling SD clock for 5ms\n");
+        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+        usleep(5000);
+        printf("-> Done\n\n");
+    }
+    
+    // Re-enable the SD clock
+    {
+        printf("Enabling SD clock\n");
+        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
+        printf("-> Done\n\n");
+    }
+    
+    // Wait for SD card to release DAT[0] line to indicate it's ready
+    {
+        printf("Waiting for SD card to be ready...\n");
+        for (;;) {
+            auto status = getSDStatus(device);
+            if (status.sdDat() & 0x1) break;
+            printf("-> Busy...\n\n");
+        }
+        printf("-> Ready\n\n");
+    }
+    
+    // Issue SD CMD2
+    {
+        printf("Sending SD CMD2\n");
+        sendSDCmd(device, 2, 0x00000000);
+        auto resp = getSDResp(device);
+        // Wait 1ms extra to allow the SD card to finish responding.
+        // The SD card response to CMD2 is 136 bits (instead of the typical 48 bits),
+        // so the SD card will still be responding at the time that the ice40 thinks
+        // that the response is complete.
+        usleep(1);
+        printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+    }
+    
+    // Issue SD CMD3
+    uint16_t rca = 0;
+    {
+        printf("Sending SD CMD3\n");
+        sendSDCmd(device, 3, 0x00000000);
+        auto resp = getSDResp(device);
+        assert(resp.sdRespCRCOK());
+        // Get the card's RCA from the response
+        rca = resp.getBits(39, 24);
+        printf("-> Done (response: 0x%012jx, rca: %04jx)\n\n", (uintmax_t)resp.sdResp(), (uintmax_t)rca);
+    }
+    
+    // Issue SD CMD7
+    {
+        printf("Sending SD CMD7\n");
+        sendSDCmd(device, 7, ((uint32_t)rca)<<16);
+        auto resp = getSDResp(device);
+        assert(resp.sdRespCRCOK());
+        printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+    }
+    
+    // Issue SD ACMD6
+    {
+        printf("Sending SD ACMD6\n");
+        
+        // CMD55
+        {
+            sendSDCmd(device, 55, ((uint32_t)rca)<<16);
+            auto resp = getSDResp(device);
+            assert(resp.sdRespCRCOK());
+        }
+        
+        // CMD6
+        {
+            sendSDCmd(device, 6, 0x00000002);
+            auto resp = getSDResp(device);
+            assert(resp.sdRespCRCOK());
+            printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+        }
     }
     
     return 0;
+    
+//    Args args;
+//    try {
+//        args = parseArgs(argc-1, argv+1);
+//    
+//    } catch (const std::exception& e) {
+//        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
+//        printUsage();
+//        return 1;
+//    }
+//    
+//    auto device = std::make_unique<MDCDevice>();
+//    
+//    try {
+//        if (args.cmd == EchoCmd)            echo(args, *device);
+//    
+//    } catch (const std::exception& e) {
+//        fprintf(stderr, "Failed: %s\n", e.what());
+//        return 1;
+//    }
+//    
+//    return 0;
 }

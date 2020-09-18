@@ -240,8 +240,9 @@ module Top(
     
     reg[1:0] sd_cmdOutState = 0;
     reg[1:0] sd_respState = 0;
+    wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
     always @(posedge sd_clk) begin
-        sd_shiftReg <= (sd_shiftReg<<1)|(sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
+        sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
         sd_counter <= sd_counter-1;
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
         sd_respExpectedCRC <= sd_respExpectedCRC<<1;
@@ -253,7 +254,7 @@ module Top(
         1: begin
             sd_respCRCRst_ <= 0;
             sd_respCRCOK <= 1;
-            if (!sd_cmdIn) begin
+            if (!sd_cmdInStaged) begin
                 sd_respCRCRst_ <= 1;
                 sd_respState <= 2;
             end
@@ -268,10 +269,10 @@ module Top(
         
         3: begin
             if (sd_respExpectedCRC[6] === sd_shiftReg[1]) begin
-                $display("[CTRL] Response: Good CRC bit ✅");
+                $display("[CTRL] Response: Good CRC bit (wanted: %b, got: %b) ✅", sd_respExpectedCRC[6], sd_shiftReg[1]);
             end else begin
                 sd_respCRCOK <= 0;
-                $display("[CTRL] Response: bad CRC bit (wanted: %b, got: %b) ❌", sd_respExpectedCRC[6], sd_shiftReg[1]);
+                $display("[CTRL] Response: Bad CRC bit (wanted: %b, got: %b) ❌", sd_respExpectedCRC[6], sd_shiftReg[1]);
                 // `finish;
             end
             
@@ -336,10 +337,10 @@ module Top(
     localparam Msg_StartBit = 1'b0;
     localparam Msg_EndBit   = 1'b1;
     
-    localparam MsgCmd_Echo              = 8'd0;
-    localparam MsgCmd_SDSetClockSource  = 8'd1;
-    localparam MsgCmd_SDSendCmd         = 8'd2;
-    localparam MsgCmd_SDGetStatus       = 8'd3;
+    localparam MsgCmd_Echo              = 8'h00;
+    localparam MsgCmd_SDSetClkSrc       = 8'h01;
+    localparam MsgCmd_SDSendCmd         = 8'h02;
+    localparam MsgCmd_SDGetStatus       = 8'h03;
     
     reg[1:0] ctrl_state = 0;
     always @(posedge ctrl_clk) begin
@@ -364,7 +365,7 @@ module Top(
         end
         
         2: begin
-            $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgCmd, ctrl_msgArg);
+            // $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgCmd, ctrl_msgArg);
             case (ctrl_msgCmd)
             // Echo
             MsgCmd_Echo: begin
@@ -372,7 +373,7 @@ module Top(
             end
             
             // Set SD clock source
-            MsgCmd_SDSetClockSource: begin
+            MsgCmd_SDSetClkSrc: begin
                 $display("[CTRL] Set SD clock source: %0d", ctrl_msgArg[1:0]);
                 ctrl_sdClkSlow <= ctrl_msgArg[0];
                 ctrl_sdClkFast <= ctrl_msgArg[1];
@@ -386,7 +387,7 @@ module Top(
             
             // Get SD status / response
             MsgCmd_SDGetStatus: begin
-                $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
+                // $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
                 // We don't need synchronizers for sd_respCRCOK / sd_resp, because
                 // they're guarded by `ctrl_sdRespReady`, which is synchronized.
                 // Ie, sd_respCRCOK and sd_resp should be ignored unless ctrl_sdRespReady=1.
@@ -413,12 +414,12 @@ module Testbench();
     reg         clk12mhz;
     
     reg         ctrl_clk;
-    wire        ctrl_di;
-    wire        ctrl_do;
+    tri1        ctrl_di;
+    tri1        ctrl_do;
     
     wire        sd_clk;
-    wire        sd_cmd;
-    wire[3:0]   sd_dat;
+    tri1        sd_cmd;
+    tri1[3:0]   sd_dat;
     
     Top Top(.*);
     

@@ -100,29 +100,91 @@ public:
     };
     
     struct Msg {
-        enum class Cmd : uint8_t {
-            Echo              = 0,
-            SDSetClockSource  = 1,
-            SDSendCmd         = 2,
-            SDGetStatus       = 3,
-        };
+//        enum class Cmd : uint8_t {
+//            Echo              = 0,
+//            SDSetClkSrc       = 1,
+//            SDSendCmd         = 2,
+//            SDGetStatus       = 3,
+//        };
         
-        Cmd cmd = Cmd::Echo;
-        uint8_t payload[7];
+        uint8_t cmd = 0;
+        uint8_t payload[7] = {};
     } __attribute__((packed));
-    
-//    struct EchoMsg {
-//        Msg msg{.type=0x00};
-//        uint8_t(& text)[7] = msg.payload;
-//    } __attribute__((packed));
-//    
-//    struct SetSDClockSourceMsg {
-//        Msg msg{.type=0x01};
-//        uint8_t(& text)[7] = msg.payload;
-//    } __attribute__((packed));
     
     struct Resp {
         uint8_t payload[8];
+        uint64_t getBits(uint8_t start, uint8_t end) const {
+            return ::getBits(payload, sizeof(payload), start, end);
+        }
+    };
+    
+    struct EchoMsg : Msg {
+        EchoMsg(const char* msg) {
+            cmd = 0x00;
+            memcpy(payload, msg, std::min(sizeof(payload), strlen(msg)));
+        }
+    };
+    
+    struct EchoResp : Resp {
+        const char* msg() const {
+            // Verify that the string is null-terminated
+            bool nt = false;
+            for (uint8_t b : payload) {
+                if (!b) {
+                    nt = true;
+                    break;
+                }
+            }
+            if (!nt) return nullptr;
+            return (const char*)payload;
+        }
+    };
+    
+    struct SDSetClkSrcMsg : Msg {
+        enum class ClkSrc : uint8_t {
+            None    = 0,
+            Slow    = 1<<0,
+            Fast    = 1<<1,
+        };
+        
+        SDSetClkSrcMsg(ClkSrc src) {
+            cmd = 0x01;
+            payload[0] = 0x00;
+            payload[1] = 0x00;
+            payload[2] = 0x00;
+            payload[3] = 0x00;
+            payload[4] = 0x00;
+            payload[5] = 0x00;
+            payload[6] = (uint8_t)src;
+        }
+    };
+    
+    struct SDSendCmdMsg : Msg {
+        SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg) {
+            assert((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
+            cmd = 0x02;
+            payload[0] = 0x00;
+            payload[1] = 0x40|sdCmd; // Start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
+            payload[2] = (sdArg&0xFF000000)>>24;
+            payload[3] = (sdArg&0x00FF0000)>>16;
+            payload[4] = (sdArg&0x0000FF00)>> 8;
+            payload[5] = (sdArg&0x000000FF)>> 0;
+            payload[6] = 0x01; // End bit (1'b1)
+        }
+    };
+    
+    struct SDGetStatusMsg : Msg {
+        SDGetStatusMsg() {
+            cmd = 0x03;
+        }
+    };
+    
+    struct SDGetStatusResp : Resp {
+        uint8_t sdDat() const { return getBits(54, 51); }
+        bool sdCommandSent() const { return getBits(50, 50); }
+        bool sdRespReady() const { return getBits(49, 49); }
+        bool sdRespCRCOK() const { return getBits(48, 48); }
+        uint64_t sdResp() const { return getBits(47, 0); }
     };
     
     using MsgPtr = std::unique_ptr<Msg>;
@@ -258,8 +320,9 @@ public:
         }
     }
     
-    Resp read() {
-        Resp resp;
+    template <typename T>
+    T read() {
+        T resp;
         uint8_t respBuf[sizeof(resp)+1]; // +1 since the response can start at any bit within
                                          // a byte, so we need an extra byte to make sure we
                                          // can fit the full response.
@@ -272,7 +335,6 @@ public:
             
             std::optional<size_t> bufOff;
             if (!respBufLen) {
-                printf("Searching for response start bit...\n");
                 // Response hasn't started yet
                 // Find the byte in `buf` containing the start bit
                 for (size_t i=0; i<sizeof(buf); i++) {
