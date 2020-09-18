@@ -3,6 +3,7 @@
 `include "../MsgChannel.v"
 `include "../CRC7.v"
 `include "../CRC16.v"
+`include "../AFIFO.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -14,39 +15,24 @@
 
 `timescale 1ns/1ps
 
-
-
-// SyncPulse
-//   Transmits a pulse signal across clock domains.
-//   Pulses are dropped if they're sent faster than they can be consumed.
-module SyncPulse(
-    input wire              in_clk,
-    input wire              in_trigger,
-    input wire              out_clk,
-    output wire             out_trigger
+module Mem(
+    input wire wclk,
+    input wire wen,
+    input wire[7:0] waddr,
+    input wire[15:0] wdata,
+    
+    input wire rclk,
+    input wire ren,
+    input wire[7:0] raddr,
+    output reg[15:0] rdata = 0
 );
-    reg in_req = 0;
-    reg in_ack = 0;
-    wire in_idle = !in_req & !in_ack;
-    always @(posedge in_clk)
-        if (in_idle & in_trigger) begin
-            in_req <= 1;
-
-        end else if (in_ack)
-            in_req <= 0;
-
-    reg out_req=0, out_req2=0;
-    reg tmp1 = 0;
-    always @(posedge out_clk)
-        { out_req2, out_req, tmp1 } <= { out_req, tmp1, in_req };
-
-    reg tmp2 = 0;
-    always @(posedge in_clk)
-        { in_ack, tmp2 } <= { tmp2, out_req };
-
-    assign out_trigger = !out_req2 & out_req; // Trigger pulse occurs upon the positive edge of `out_req`.
+    reg[15:0] mem[255:0];
+    always @(posedge wclk)
+        if (wen) mem[waddr] <= wdata;
+    
+    always @(posedge rclk)
+        if (ren) rdata <= mem[raddr];
 endmodule
-
 
 module Top(
     input wire          clk12mhz,
@@ -91,6 +77,7 @@ module Top(
     reg sd_respCRCOK = 0;
     
     reg[5:0] sd_counter = 0;
+    reg[1:0] sd_datOutCounter = 0;
     
     reg ctrl_dinActive = 0;
     reg[65:0] ctrl_dinReg = 0;
@@ -104,6 +91,7 @@ module Top(
     reg ctrl_sdClkFast = 0;
     
     reg ctrl_sdCmdOutTrigger = 0;
+    reg ctrl_sdDatOutTrigger = 0;
     
     
     // // ====================
@@ -253,6 +241,30 @@ module Top(
         .dout(sd_respCRC)
     );
     
+    reg mem_wen;
+    reg[7:0] mem_waddr;
+    reg[15:0] mem_wdata;
+    
+    reg[7:0] mem_raddr;
+    wire[15:0] mem_rdata;
+    Mem Mem(
+        .wclk(clk12mhz),
+        .wen(mem_wen),
+        .waddr(mem_waddr),
+        .wdata(mem_wdata),
+        
+        .rclk(sd_clk),
+        .ren(1'b1),
+        .raddr(mem_raddr),
+        .rdata(mem_rdata)
+    );
+    
+    always @(posedge clk12mhz) begin
+        mem_wen <= 1;
+        mem_waddr <= mem_waddr+1;
+        mem_wdata <= mem_waddr;
+    end
+    
     // ====================
     // SD State Machine
     // ====================
@@ -262,14 +274,45 @@ module Top(
     always @(posedge sd_clk)
         sd_cmdOutTriggerTmp <= (sd_cmdOutTriggerTmp<<1)|ctrl_sdCmdOutTrigger;
     
-    reg[1:0] sd_cmdOutState = 0;
+    reg[1:0] sd_datOutTrigger = 0;
+    always @(posedge sd_clk)
+        sd_datOutTrigger <= (sd_datOutTrigger<<1)|ctrl_sdDatOutTrigger;
+    
+    reg[15:0] sd_memReg = 0;
+    
+    reg[1:0] sd_datOutState = 0;
     reg[1:0] sd_respState = 0;
+    reg[1:0] sd_cmdOutState = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
     always @(posedge sd_clk) begin
         sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
         sd_counter <= sd_counter-1;
+        sd_datOutCounter <= sd_datOutCounter-1;
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
         sd_respExpectedCRC <= sd_respExpectedCRC<<1;
+        sd_memReg <= sd_memReg>>4;
+        
+        if (!sd_datOutCounter) begin
+            sd_memReg <= mem_rdata;
+            mem_raddr <= mem_raddr+1;
+        end
+        
+        case (sd_datOutState)
+        0: begin
+            if (sd_datOutTrigger[1]) begin
+                sd_datOutActive <= 1;
+                sd_datOutState <= 1;
+            end
+        end
+        
+        1: begin
+            sd_datOut <= sd_memReg[3:0];
+        end
+        endcase
+        
+        
+        
+        
         
         case (sd_respState)
         0: begin
@@ -307,6 +350,8 @@ module Top(
             end
         end
         endcase
+        
+        
         
         
         
@@ -365,6 +410,7 @@ module Top(
     localparam MsgCmd_SDSetClkSrc       = 8'h01;
     localparam MsgCmd_SDSendCmd         = 8'h02;
     localparam MsgCmd_SDGetStatus       = 8'h03;
+    localparam MsgCmd_SDDatOut          = 8'h04;
     
     reg[1:0] ctrl_state = 0;
     always @(posedge ctrl_clk) begin
@@ -417,6 +463,10 @@ module Top(
                 // Ie, sd_respCRCOK and sd_resp should be ignored unless ctrl_sdRespReady=1.
                 // TODO: add a synchronizer for `sd_datIn`
                 ctrl_doutReg <= {Msg_StartBit, 9'b0, sd_datIn, ctrl_sdCmdOutDone, ctrl_sdRespReady, sd_respCRCOK, sd_resp, Msg_EndBit};
+            end
+            
+            MsgCmd_SDDatOut: begin
+                ctrl_sdDatOutTrigger <= 1;
             end
             endcase
             
@@ -597,6 +647,25 @@ module Testbench();
 
             $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg_payload[50], ctrl_doReg_payload[49], ctrl_doReg_payload[48], ctrl_doReg_payload[47:0]);
             sdDone = ctrl_doReg_payload[49];
+        end
+        
+        
+        
+        
+        
+        
+        
+        
+        // Start clocking out data on DAT lines
+        ctrl_diReg = {START_BIT, 8'd4, 56'b0, END_BIT};
+        for (i=0; i<66; i++) begin
+            wait(ctrl_clk);
+            wait(!ctrl_clk);
+        end
+
+        for (i=0; i<128; i++) begin
+            wait(ctrl_clk);
+            wait(!ctrl_clk);
         end
     end
 endmodule
