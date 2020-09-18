@@ -6,6 +6,33 @@
 #include <sstream>
 #include <iomanip>
 
+uint64_t getBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
+    assert(start < len*8);
+    assert(start >= end);
+    const uint8_t leftByteIdx = len-(start/8)-1;
+    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
+    const uint8_t rightByteIdx = len-(end/8)-1;
+    const uint8_t rightByteMask = ~((1<<(end%8))-1);
+    uint64_t r = 0;
+    for (uint8_t i=leftByteIdx; i<=rightByteIdx; i++) {
+        uint8_t tmp = bytes[i];
+        // Mask-out bits we don't want
+        if (i == leftByteIdx)   tmp &= leftByteMask;
+        if (i == rightByteIdx)  tmp &= rightByteMask;
+        // Make space for the incoming bits
+        if (i == rightByteIdx) {
+            tmp >>= end%8; // Shift right the number of unused bits
+            r <<= 8-(end%8); // Shift left the number of used bits
+        } else {
+            r <<= 8;
+        }
+        // Or the bits into place
+        r |= tmp;
+    }
+    return r;
+}
+
+
 // Left shift array of bytes by `n` bits
 static void lshift(uint8_t* bytes, size_t len, uint8_t n) {
     assert(n <= 8);
@@ -76,7 +103,17 @@ public:
     struct Msg {
         MsgType type = 0;
         uint8_t payload[7];
-    };
+    } __attribute__((packed));
+    
+//    struct EchoMsg {
+//        Msg msg{.type=0x00};
+//        uint8_t(& text)[7] = msg.payload;
+//    } __attribute__((packed));
+//    
+//    struct SetSDClockSourceMsg {
+//        Msg msg{.type=0x01};
+//        uint8_t(& text)[7] = msg.payload;
+//    } __attribute__((packed));
     
     struct Resp {
         uint8_t payload[8];
@@ -203,6 +240,14 @@ public:
         // End bit (clock out a single 1)
         {
             uint8_t b[] = {0x13, 0x00, 0xFF};
+            _ftdiWrite(_ftdi, b, sizeof(b));
+        }
+        
+        // Two more cycles:
+        //   +1 for the ice40 to finish clocking-in the command (the ice40's DI pin is registered),
+        //   +1 for the ice40 to execute the message
+        {
+            uint8_t b[] = {0x8E, 0x01};
             _ftdiWrite(_ftdi, b, sizeof(b));
         }
     }

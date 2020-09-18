@@ -493,19 +493,19 @@ module Testbench();
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
-        
+
         // Send SD CMD0
         ctrl_diReg = {START, 8'd2, 8'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}, END};
         for (i=0; i<66; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
-        
+
         for (i=0; i<128; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
-        
+
         // Wait for SD command to be sent
         sdDone = 0;
         while (!sdDone) begin
@@ -520,7 +520,7 @@ module Testbench();
                 wait(ctrl_clk);
                 wait(!ctrl_clk);
             end
-            
+
             // Load the full response
             for (i=0; i<65; i++) begin
                 wait(ctrl_clk);
