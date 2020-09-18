@@ -106,9 +106,11 @@ int main(int argc, const char* argv[]) {
     auto devicePtr = std::make_unique<MDCDevice>();
     MDCDevice& device = *devicePtr;
     
-    // SD clock source = 400 kHz
+    // Enable SD slow clock
     {
+        printf("Enabling SD slow clock\n");
         device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
+        printf("-> Done\n\n");
     }
     
     // Issue SD CMD0
@@ -178,7 +180,7 @@ int main(int argc, const char* argv[]) {
     
     // Re-enable the SD clock
     {
-        printf("Enabling SD clock\n");
+        printf("Enabling SD slow clock\n");
         device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
         printf("-> Done\n\n");
     }
@@ -199,11 +201,11 @@ int main(int argc, const char* argv[]) {
         printf("Sending SD CMD2\n");
         sendSDCmd(device, 2, 0x00000000);
         auto resp = getSDResp(device);
-        // Wait 1ms extra to allow the SD card to finish responding.
+        // Wait 1000us extra to allow the SD card to finish responding.
         // The SD card response to CMD2 is 136 bits (instead of the typical 48 bits),
         // so the SD card will still be responding at the time that the ice40 thinks
         // that the response is complete.
-        usleep(1);
+        usleep(1000);
         printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
     }
     
@@ -246,6 +248,34 @@ int main(int argc, const char* argv[]) {
             assert(resp.sdRespCRCOK());
             printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
         }
+    }
+    
+    // Issue SD CMD6
+    {
+        // TODO: we need to check that the 'Access Mode' was successfully changed
+        //       by looking at the function group 1 of the DAT response
+        printf("Sending SD CMD6\n");
+        sendSDCmd(device, 6, 0x80FFFFF3);
+        auto resp = getSDResp(device);
+        assert(resp.sdRespCRCOK());
+        // Wait 1000us to allow the SD card to finish writing the 512-bit status on the DAT lines
+        // 512 bits / 4 DAT lines = 128 bits per DAT line -> 128 bits * (1/350kHz) = 366us.
+        usleep(1000);
+        printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+    }
+    
+    // Disable SD clock
+    {
+        printf("Disabling SD clock\n");
+        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+        printf("-> Done\n\n");
+    }
+    
+    // Enable SD fast clock
+    {
+        printf("Enabling SD fast clock\n");
+        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
+        printf("-> Done\n\n");
     }
     
     return 0;

@@ -268,14 +268,14 @@ public:
             ready = true;
             for (uint8_t b : buf) {
                 if (b != 0xFF) {
-                    printf("MDC not ready...\n");
+                    printf("Waiting for MDC...\n");
                     ready = false;
                     break;
                 }
             }
         } while (!ready);
         
-        printf("MDC ready!\n");
+        printf("MDC ready!\n\n");
     }
     
     ~MDCDevice() {
