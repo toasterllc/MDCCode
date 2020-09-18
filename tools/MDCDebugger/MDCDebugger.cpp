@@ -278,6 +278,31 @@ int main(int argc, const char* argv[]) {
         printf("-> Done\n\n");
     }
     
+    
+    
+    
+    // Issue SD ACMD23
+    for (int i=0; i<100; i++) {
+        {
+            printf("Sending SD ACMD23\n");
+            
+            // CMD55
+            {
+                sendSDCmd(device, 55, ((uint32_t)rca)<<16);
+                auto resp = getSDResp(device);
+                assert(resp.sdRespCRCOK());
+            }
+            
+            // CMD23
+            {
+                sendSDCmd(device, 23, 0x00000001);
+                auto resp = getSDResp(device);
+                assert(resp.sdRespCRCOK());
+                printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+            }
+        }
+    }
+    
     return 0;
     
 //    Args args;

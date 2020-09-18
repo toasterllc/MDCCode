@@ -106,16 +106,40 @@ module Top(
     reg ctrl_sdCmdOutTrigger = 0;
     
     
+    // // ====================
+    // // Fast Clock (204 MHz)
+    // // ====================
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(204000000),
+    //     .DIVR(0),
+    //     .DIVF(67),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    
+    
+    // // ====================
+    // // Fast Clock (180 MHz)
+    // // ====================
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(180000000),
+    //     .DIVR(0),
+    //     .DIVF(59),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
     
     // ====================
-    // Fast Clock (180 MHz)
+    // Fast Clock (120 MHz)
     // ====================
     wire fastClk;
     ClockGen #(
-        .FREQ(180000000),
+        .FREQ(120000000),
         .DIVR(0),
-        .DIVF(59),
-        .DIVQ(2),
+        .DIVF(79),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
     
