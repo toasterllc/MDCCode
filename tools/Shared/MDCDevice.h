@@ -99,9 +99,15 @@ public:
         }
     };
     
-    using MsgType = uint8_t;
     struct Msg {
-        MsgType type = 0;
+        enum class Cmd : uint8_t {
+            Echo              = 0,
+            SDSetClockSource  = 1,
+            SDSendCmd         = 2,
+            SDGetStatus       = 3,
+        };
+        
+        Cmd cmd = Cmd::Echo;
         uint8_t payload[7];
     } __attribute__((packed));
     
