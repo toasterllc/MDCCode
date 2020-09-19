@@ -27,7 +27,7 @@ module Mem(
     output reg[15:0] rdata = 0
 );
     reg[15:0] mem[0:255];
-    initial $readmemh("../mem.txt", mem);
+    // initial $readmemh("../mem.txt", mem);
     
     always @(posedge wclk)
         if (wen) mem[waddr] <= wdata;
@@ -243,38 +243,104 @@ module Top(
         .dout(sd_respCRC)
     );
     
-    // reg mem_ren = 0;
-    reg[7:0] mem_raddr = 0;
-    wire[15:0] mem_rdata;
-    Mem Mem(
-        .wclk(clk12mhz),
-        .wen(),
-        .waddr(),
-        .wdata(),
-        
-        .rclk(sd_clk),
-        .ren(1'b1), // mem_ren
-        .raddr(mem_raddr),
-        .rdata(mem_rdata)
-    );
     
-    // ====================
-    // SD State Machine
-    // ====================
+    
+    
+    
     
     reg[2:0] sd_cmdOutTriggerTmp = 0;
     wire sd_cmdOutTrigger = sd_cmdOutTriggerTmp[2]!==sd_cmdOutTriggerTmp[1];
     always @(posedge sd_clk)
         sd_cmdOutTriggerTmp <= (sd_cmdOutTriggerTmp<<1)|ctrl_sdCmdOutTrigger;
     
-    reg[2:0] sd_datOutTriggerTmp = 0;
-    wire sd_datOutTrigger = sd_datOutTriggerTmp[2]!==sd_datOutTriggerTmp[1];
+    reg writer_datOutTrigger = 0;
+    reg[1:0] sd_datOutTriggerTmp = 0;
+    reg sd_datOutTriggerAck = 0;
+    wire sd_datOutTrigger = sd_datOutTriggerAck!==sd_datOutTriggerTmp[1];
     always @(posedge sd_clk)
-        sd_datOutTriggerTmp <= (sd_datOutTriggerTmp<<1)|ctrl_sdDatOutTrigger;
+        sd_datOutTriggerTmp <= sd_datOutTriggerTmp<<1|writer_datOutTrigger;
+    
+    reg[1:0] writer_datOutStartedTmp = 0;
+    reg writer_datOutStartedAck = 0;
+    wire writer_datOutStarted = writer_datOutStartedAck!==writer_datOutStartedTmp[1];
+    always @(posedge clk12mhz)
+        writer_datOutStartedTmp <= writer_datOutStartedTmp<<1|sd_datOutTriggerAck;
+    
+    reg[7:0] mem_waddr;
+    reg[15:0] mem_wdata;
+    reg[7:0] mem_raddr;
+    
+    reg mem0_wen;
+    wire[15:0] mem0_rdata;
+    Mem Mem0(
+        .wclk(clk12mhz),
+        .wen(mem0_wen),
+        .waddr(mem_waddr),
+        .wdata(mem_wdata),
+        
+        .rclk(sd_clk),
+        .ren(1'b1),
+        .raddr(mem_raddr),
+        .rdata(mem0_rdata)
+    );
+    
+    reg mem1_wen;
+    wire[15:0] mem1_rdata;
+    Mem Mem1(
+        .wclk(clk12mhz),
+        .wen(mem1_wen),
+        .waddr(mem_waddr),
+        .wdata(mem_wdata),
+        
+        .rclk(sd_clk),
+        .ren(1'b1),
+        .raddr(mem_raddr),
+        .rdata(mem1_rdata)
+    );
+    
+    reg writer_wbank = 0;
+    reg[1:0] writer_state = 0;
+    always @(posedge clk12mhz) begin
+        mem_waddr <= mem_waddr+1;
+        mem_wdata <= mem_wdata+1;
+        
+        case (writer_state)
+        0: begin
+            mem_waddr <= 0;
+            mem0_wen <= !writer_wbank;
+            mem1_wen <= writer_wbank;
+            writer_state <= 1;
+        end
+        
+        // When we're finished writing this bank, signal the reader
+        1: begin
+            if (&mem_waddr) begin
+                mem0_wen <= 0;
+                mem1_wen <= 0;
+                writer_datOutTrigger <= !writer_datOutTrigger;
+                writer_state <= 2;
+            end
+        end
+        
+        // Wait for reader to signal that it started
+        2: begin
+            if (writer_datOutStarted) begin
+                writer_datOutStartedAck <= !writer_datOutStartedAck;
+                writer_wbank <= !writer_wbank;
+                writer_state <= 0;
+            end
+        end
+        endcase
+    end
+    
+    // ====================
+    // SD State Machine
+    // ====================
     
     reg[15:0] sd_memReg = 0;
+    reg sd_memBank = 0;
     
-    // reg[1:0] sd_datOutState = 0;
+    reg[1:0] sd_datOutState = 0;
     reg[1:0] sd_respState = 0;
     reg[1:0] sd_cmdOutState = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
@@ -286,38 +352,43 @@ module Top(
         sd_respExpectedCRC <= sd_respExpectedCRC<<1;
         sd_memReg <= sd_memReg>>4;
         sd_datOut <= sd_memReg[3:0];
-        // mem_ren <= 0; // Pulse
         
         if (!sd_datOutCounter) begin
-            sd_memReg <= mem_rdata;
+            sd_memReg <= (!sd_memBank ? mem0_rdata : mem1_rdata);
             mem_raddr <= mem_raddr+1;
-            // mem_ren <= 1;
         end
-        
-        if (sd_datOutTrigger) begin
-            sd_datOutActive <= 1;
-            // sd_datOutState <= 1;
-            mem_raddr <= 0;
-            sd_datOutCounter <= 2;
-        end
-        
-        if (&mem_raddr) begin
-            sd_datOutActive <= 0;
-        end
-        
-        // case (sd_datOutState)
-        // 0: begin
-        //     if (sd_datOutTrigger) begin
-        //         sd_datOutActive <= 1;
-        //         sd_datOutState <= 1;
-        //     end
+        //
+        // if (sd_datOutTrigger) begin
+        //     sd_datOutActive <= 1;
+        //     // sd_datOutState <= 1;
+        //     mem_raddr <= 0;
+        //     sd_datOutCounter <= 2;
         // end
         //
-        // 1: begin
-        //     if (&mem_raddr) begin
-        //     end
+        // if (&mem_raddr) begin
+        //     sd_datOutActive <= 0;
         // end
-        // endcase
+        
+        case (sd_datOutState)
+        0: begin
+            mem_raddr <= 0;
+            sd_datOutCounter <= 0;
+            sd_datOutActive <= 0;
+            if (sd_datOutTrigger) begin
+                $display("Write another block");
+                sd_datOutTriggerAck <= !sd_datOutTriggerAck;
+                sd_datOutState <= 1;
+            end
+        end
+        
+        1: begin
+            sd_datOutActive <= 1;
+            if (!mem_raddr && sd_datOutCounter===1) begin
+                sd_memBank <= !sd_memBank;
+                sd_datOutState <= 0;
+            end
+        end
+        endcase
         
         
         
