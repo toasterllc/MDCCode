@@ -241,38 +241,29 @@ module Top(
         .dout(sd_respCRC)
     );
     
+    reg mem_wen;
+    reg[7:0] mem_waddr;
+    reg[15:0] mem_wdata;
     
-    
-    
-    
-    
-    
-    
-    reg rtrigger = 0;
-    wire[15:0] rdata;
-    wire rok;
-    reg[15:0] wdata = 0;
-    wire wok;
-    AFIFO #(
-        .Width(16),
-        .Size(256)
-    ) AFIFO(
-        .rclk(sd_clk),
-        .rtrigger(rtrigger),
-        .rdata(rdata),
-        .rok(rok),
-        
+    reg[7:0] mem_raddr;
+    wire[15:0] mem_rdata;
+    Mem Mem(
         .wclk(clk12mhz),
-        .wtrigger(1'b1),
-        .wdata(wdata),
-        .wok(wok)
+        .wen(mem_wen),
+        .waddr(mem_waddr),
+        .wdata(mem_wdata),
+        
+        .rclk(sd_clk),
+        .ren(1'b1),
+        .raddr(mem_raddr),
+        .rdata(mem_rdata)
     );
     
     always @(posedge clk12mhz) begin
-        if (wok) wdata <= wdata+1;
+        mem_wen <= 1;
+        mem_waddr <= mem_waddr+1;
+        mem_wdata <= mem_waddr;
     end
-    
-    
     
     // ====================
     // SD State Machine
@@ -300,11 +291,10 @@ module Top(
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
         sd_respExpectedCRC <= sd_respExpectedCRC<<1;
         sd_memReg <= sd_memReg>>4;
-        rtrigger <= 0; // Enforce pulse
         
         if (!sd_datOutCounter) begin
-            sd_memReg <= rdata;
-            rtrigger <= 1;
+            sd_memReg <= mem_rdata;
+            mem_raddr <= mem_raddr+1;
         end
         
         case (sd_datOutState)
