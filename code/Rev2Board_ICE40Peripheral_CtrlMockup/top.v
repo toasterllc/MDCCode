@@ -26,7 +26,9 @@ module Mem(
     input wire[7:0] raddr,
     output reg[15:0] rdata = 0
 );
-    reg[15:0] mem[255:0];
+    reg[15:0] mem[0:255];
+    initial $readmemh("../mem.txt", mem);
+    
     always @(posedge wclk)
         if (wen) mem[waddr] <= wdata;
     
@@ -241,29 +243,20 @@ module Top(
         .dout(sd_respCRC)
     );
     
-    reg mem_wen;
-    reg[7:0] mem_waddr;
-    reg[15:0] mem_wdata;
-    
-    reg[7:0] mem_raddr;
+    // reg mem_ren = 0;
+    reg[7:0] mem_raddr = 0;
     wire[15:0] mem_rdata;
     Mem Mem(
         .wclk(clk12mhz),
-        .wen(mem_wen),
-        .waddr(mem_waddr),
-        .wdata(mem_wdata),
+        .wen(),
+        .waddr(),
+        .wdata(),
         
         .rclk(sd_clk),
-        .ren(1'b1),
+        .ren(1'b1), // mem_ren
         .raddr(mem_raddr),
         .rdata(mem_rdata)
     );
-    
-    always @(posedge clk12mhz) begin
-        mem_wen <= 1;
-        mem_waddr <= mem_waddr+1;
-        mem_wdata <= mem_waddr;
-    end
     
     // ====================
     // SD State Machine
@@ -274,13 +267,14 @@ module Top(
     always @(posedge sd_clk)
         sd_cmdOutTriggerTmp <= (sd_cmdOutTriggerTmp<<1)|ctrl_sdCmdOutTrigger;
     
-    reg[1:0] sd_datOutTrigger = 0;
+    reg[2:0] sd_datOutTriggerTmp = 0;
+    wire sd_datOutTrigger = sd_datOutTriggerTmp[2]!==sd_datOutTriggerTmp[1];
     always @(posedge sd_clk)
-        sd_datOutTrigger <= (sd_datOutTrigger<<1)|ctrl_sdDatOutTrigger;
+        sd_datOutTriggerTmp <= (sd_datOutTriggerTmp<<1)|ctrl_sdDatOutTrigger;
     
     reg[15:0] sd_memReg = 0;
     
-    reg[1:0] sd_datOutState = 0;
+    // reg[1:0] sd_datOutState = 0;
     reg[1:0] sd_respState = 0;
     reg[1:0] sd_cmdOutState = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
@@ -291,24 +285,39 @@ module Top(
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
         sd_respExpectedCRC <= sd_respExpectedCRC<<1;
         sd_memReg <= sd_memReg>>4;
+        sd_datOut <= sd_memReg[3:0];
+        // mem_ren <= 0; // Pulse
         
         if (!sd_datOutCounter) begin
             sd_memReg <= mem_rdata;
             mem_raddr <= mem_raddr+1;
+            // mem_ren <= 1;
         end
         
-        case (sd_datOutState)
-        0: begin
-            if (sd_datOutTrigger[1]) begin
-                sd_datOutActive <= 1;
-                sd_datOutState <= 1;
-            end
+        if (sd_datOutTrigger) begin
+            sd_datOutActive <= 1;
+            // sd_datOutState <= 1;
+            mem_raddr <= 0;
+            sd_datOutCounter <= 2;
         end
         
-        1: begin
-            sd_datOut <= sd_memReg[3:0];
+        if (&mem_raddr) begin
+            sd_datOutActive <= 0;
         end
-        endcase
+        
+        // case (sd_datOutState)
+        // 0: begin
+        //     if (sd_datOutTrigger) begin
+        //         sd_datOutActive <= 1;
+        //         sd_datOutState <= 1;
+        //     end
+        // end
+        //
+        // 1: begin
+        //     if (&mem_raddr) begin
+        //     end
+        // end
+        // endcase
         
         
         
