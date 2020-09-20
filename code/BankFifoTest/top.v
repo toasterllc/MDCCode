@@ -20,15 +20,27 @@ module Top(
         .FILTER_RANGE(1)
     ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
 
+    // // ====================
+    // // r_clk
+    // // ====================
+    // wire r_clk;
+    // ClockGen #(
+    //     .FREQ(48000000),
+    //     .DIVR(0),
+    //     .DIVF(63),
+    //     .DIVQ(4),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
+    
     // ====================
     // r_clk
     // ====================
     wire r_clk;
     ClockGen #(
-        .FREQ(48000000),
+        .FREQ(96000000),
         .DIVR(0),
         .DIVF(63),
-        .DIVQ(4),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
 
