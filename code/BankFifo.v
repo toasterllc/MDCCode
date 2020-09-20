@@ -45,7 +45,7 @@ module BankFifo(
     // ====================
     reg[7:0] r_addr = 0;
     wire r_bank = r_addr[7];
-    reg r_lastBank = 0;
+    reg r_lastBank_ = 0;
     
     reg r_wbank=0, r_wbankTmp=0;
     always @(posedge r_clk)
@@ -53,11 +53,11 @@ module BankFifo(
     
     always @(posedge r_clk) begin
         r_done <= 0; // Pulse
-        if (r_trigger && (r_bank===r_lastBank || r_bank!==r_wbank)) begin
+        if (r_trigger && (r_bank===!r_lastBank_ || r_bank!==r_wbank)) begin
             r_data <= mem[r_addr];
             r_done <= 1;
             r_addr <= r_addr+1;
-            r_lastBank <= r_bank;
+            r_lastBank_ <= !r_bank;
         end
     end
 

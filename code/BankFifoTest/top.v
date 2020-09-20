@@ -1,9 +1,12 @@
 `include "../Util.v"
+`include "../ClockGen.v"
 `include "../BankFifo.v"
 `timescale 1ns/1ps
 
 
-module Top();
+module Top(
+    input wire clk12mhz
+);
     reg w_clk;
     reg r_clk;
     
@@ -48,22 +51,23 @@ module Top();
             end
         end
     end
-    
+
+`ifdef SIM
     initial begin
         forever begin
             r_clk = 0;
-            #21;
+            #42;
             r_clk = 1;
-            #21;
+            #42;
         end
     end
     
     initial begin
         forever begin
             w_clk = 0;
-            #42;
+            #21;
             w_clk = 1;
-            #42;
+            #21;
         end
     end
     
@@ -72,6 +76,48 @@ module Top();
         $dumpvars(0, Top);
     end
     
-    
-    
+    // initial begin
+    //     reg[15:0] i;
+    //     reg[15:0] count;
+    //
+    //     count = $urandom()%50;
+    //     for (i=0; i<count; i=i+1) begin
+    //         wait(w_clk);
+    //         wait(!w_clk);
+    //     end
+    //
+    //
+    //
+    //
+    //     $display("[WRITER] Writing 128 words");
+    //     w_trigger = 1;
+    //     w_data = 0;
+    //     for (i=0; i<128; i=i+1) begin
+    //         wait(w_clk);
+    //         wait(!w_clk);
+    //         w_data = w_data+1;
+    //     end
+    //     w_trigger = 0;
+    //     $display("[WRITER] Done writing");
+    //
+    //
+    //     $display("[WRITER] Writing 128 words");
+    //     w_trigger = 1;
+    //     for (i=0; i<128; i=i+1) begin
+    //         wait(w_clk);
+    //         wait(!w_clk);
+    //         w_data = w_data+1;
+    //     end
+    //     w_trigger = 0;
+    //     $display("[WRITER] Done writing");
+    //
+    //
+    //
+    //     count = $urandom()%50;
+    //     for (i=0; i<count; i=i+1) begin
+    //         wait(w_clk);
+    //         wait(!w_clk);
+    //     end
+    // end
+`endif
 endmodule
