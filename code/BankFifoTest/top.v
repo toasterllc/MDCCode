@@ -53,11 +53,11 @@ module Top(
     
     reg w_trigger = 0;
     reg[15:0] w_data = 0;
-    wire w_done;
+    wire w_ok;
     always @(posedge w_clk) begin
         if (w_go[1]) begin
             w_trigger <= 1;
-            if (w_done) begin
+            if (w_trigger && w_ok) begin
                 w_data <= w_data+1;
             end
         end
@@ -76,13 +76,13 @@ module Top(
     reg r_lastDataInit = 0;
     reg r_lastDataInit2 = 0;
     wire[15:0] r_data;
-    wire r_done;
+    wire r_ok;
     always @(posedge r_clk) begin
         if (r_go[1]) begin
             r_trigger <= 1;
         end
         
-        if (r_done) begin
+        if (r_trigger && r_ok) begin
             {r_lastData2, r_lastData} <= {r_lastData, r_data};
             {r_lastDataInit2, r_lastDataInit} <= {r_lastDataInit, 1'b1};
         end
@@ -106,12 +106,12 @@ module Top(
         .w_clk(w_clk),
         .w_trigger(w_trigger),
         .w_data(w_data),
-        .w_done(w_done),
+        .w_ok(w_ok),
         
         .r_clk(r_clk),
         .r_trigger(r_trigger),
         .r_data(r_data),
-        .r_done(r_done)
+        .r_ok(r_ok)
     );
 endmodule
 

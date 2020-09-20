@@ -4,6 +4,7 @@
 `include "../CRC7.v"
 `include "../CRC16.v"
 `include "../AFIFO.v"
+`include "../BankFifo.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -247,87 +248,63 @@ module Top(
     
     
     
+    // ====================
+    // FIFO
+    // ====================
+    reg w_sdDatOutFifo_wtrigger = 0;
+    reg[15:0] w_sdDatOutFifo_wdata = 0;
+    wire w_sdDatOutFifo_wok;
+    
+    reg sd_sdDatOutFifo_rtrigger = 0;
+    wire[15:0] sd_sdDatOutFifo_rdata;
+    wire sd_sdDatOutFifo_rok;
+    BankFifo #(
+        .W(16),
+        .N(8)
+    ) BankFifo_sdDatOut(
+        .w_clk(clk12mhz),
+        .w_trigger(w_sdDatOutFifo_wtrigger),
+        .w_data(w_sdDatOutFifo_wdata),
+        .w_ok(w_sdDatOutFifo_wok),
+        
+        .r_clk(sd_clk),
+        .r_trigger(sd_sdDatOutFifo_rtrigger),
+        .r_data(sd_sdDatOutFifo_rdata),
+        .r_ok(sd_sdDatOutFifo_rok)
+    );
+    
+    
+    
     
     reg[2:0] sd_cmdOutTriggerTmp = 0;
     wire sd_cmdOutTrigger = sd_cmdOutTriggerTmp[2]!==sd_cmdOutTriggerTmp[1];
     always @(posedge sd_clk)
         sd_cmdOutTriggerTmp <= (sd_cmdOutTriggerTmp<<1)|ctrl_sdCmdOutTrigger;
     
-    reg writer_datOutTrigger = 0;
-    reg[1:0] sd_datOutTriggerTmp = 0;
-    reg sd_datOutTriggerAck = 0;
-    wire sd_datOutTrigger = sd_datOutTriggerAck!==sd_datOutTriggerTmp[1];
-    always @(posedge sd_clk)
-        sd_datOutTriggerTmp <= sd_datOutTriggerTmp<<1|writer_datOutTrigger;
-    
-    reg[1:0] writer_datOutStartedTmp = 0;
-    reg writer_datOutStartedAck = 0;
-    wire writer_datOutStarted = writer_datOutStartedAck!==writer_datOutStartedTmp[1];
+    reg[2:0] w_sdDatOutTriggerTmp = 0;
+    wire w_sdDatOutTrigger = w_sdDatOutTriggerTmp[2]!==w_sdDatOutTriggerTmp[1];
     always @(posedge clk12mhz)
-        writer_datOutStartedTmp <= writer_datOutStartedTmp<<1|sd_datOutTriggerAck;
+        w_sdDatOutTriggerTmp <= (w_sdDatOutTriggerTmp<<1)|ctrl_sdDatOutTrigger;
     
-    reg[7:0] mem_waddr;
-    reg[15:0] mem_wdata;
-    reg[7:0] mem_raddr;
-    
-    reg mem0_wen;
-    wire[15:0] mem0_rdata;
-    Mem Mem0(
-        .wclk(clk12mhz),
-        .wen(mem0_wen),
-        .waddr(mem_waddr),
-        .wdata(mem_wdata),
-        
-        .rclk(sd_clk),
-        .ren(1'b1),
-        .raddr(mem_raddr),
-        .rdata(mem0_rdata)
-    );
-    
-    reg mem1_wen;
-    wire[15:0] mem1_rdata;
-    Mem Mem1(
-        .wclk(clk12mhz),
-        .wen(mem1_wen),
-        .waddr(mem_waddr),
-        .wdata(mem_wdata),
-        
-        .rclk(sd_clk),
-        .ren(1'b1),
-        .raddr(mem_raddr),
-        .rdata(mem1_rdata)
-    );
-    
-    reg writer_wbank = 0;
-    reg[1:0] writer_state = 0;
+    reg[1:0] w_state = 0;
     always @(posedge clk12mhz) begin
-        mem_waddr <= mem_waddr+1;
-        mem_wdata <= mem_wdata+1;
-        
-        case (writer_state)
+        case (w_state)
         0: begin
-            mem_waddr <= 0;
-            mem0_wen <= !writer_wbank;
-            mem1_wen <= writer_wbank;
-            writer_state <= 1;
-        end
-        
-        // When we're finished writing this bank, signal the reader
-        1: begin
-            if (&mem_waddr) begin
-                mem0_wen <= 0;
-                mem1_wen <= 0;
-                writer_datOutTrigger <= !writer_datOutTrigger;
-                writer_state <= 2;
+            w_sdDatOutFifo_wdata <= 0;
+            if (w_sdDatOutTrigger) begin
+                w_sdDatOutFifo_wtrigger <= 1;
+                w_state <= 1;
             end
         end
         
-        // Wait for reader to signal that it started
-        2: begin
-            if (writer_datOutStarted) begin
-                writer_datOutStartedAck <= !writer_datOutStartedAck;
-                writer_wbank <= !writer_wbank;
-                writer_state <= 0;
+        1: begin
+            // TODO: do we need to check for `wok` here? should we be able to write 512 bytes uninterrupted?
+            if (w_sdDatOutFifo_wok) begin
+                w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
+                if (w_sdDatOutFifo_wdata === 16'h00FF) begin
+                    w_sdDatOutFifo_wtrigger <= 0;
+                    w_state <= 0;
+                end
             end
         end
         endcase
@@ -338,12 +315,16 @@ module Top(
     // ====================
     
     reg[15:0] sd_memReg = 0;
-    reg sd_memBank = 0;
-    
     reg[1:0] sd_datOutState = 0;
     reg[1:0] sd_respState = 0;
     reg[1:0] sd_cmdOutState = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
+    
+    reg[2:0] sd_datOutTriggerTmp = 0;
+    wire sd_datOutTrigger = sd_datOutTriggerTmp[2]!==sd_datOutTriggerTmp[1];
+    always @(posedge sd_clk)
+        sd_datOutTriggerTmp <= (sd_datOutTriggerTmp<<1)|ctrl_sdDatOutTrigger;
+    
     always @(posedge sd_clk) begin
         sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
         sd_counter <= sd_counter-1;
@@ -352,40 +333,30 @@ module Top(
         sd_respExpectedCRC <= sd_respExpectedCRC<<1;
         sd_memReg <= sd_memReg>>4;
         sd_datOut <= sd_memReg[3:0];
-        
-        if (!sd_datOutCounter) begin
-            sd_memReg <= (!sd_memBank ? mem0_rdata : mem1_rdata);
-            mem_raddr <= mem_raddr+1;
-        end
-        //
-        // if (sd_datOutTrigger) begin
-        //     sd_datOutActive <= 1;
-        //     // sd_datOutState <= 1;
-        //     mem_raddr <= 0;
-        //     sd_datOutCounter <= 2;
-        // end
-        //
-        // if (&mem_raddr) begin
-        //     sd_datOutActive <= 0;
-        // end
+        sd_sdDatOutFifo_rtrigger <= 0; // Pulse
         
         case (sd_datOutState)
         0: begin
-            mem_raddr <= 0;
             sd_datOutCounter <= 0;
             sd_datOutActive <= 0;
-            if (sd_datOutTrigger) begin
-                $display("Write another block");
-                sd_datOutTriggerAck <= !sd_datOutTriggerAck;
+            if (sd_sdDatOutFifo_rok) begin
+                $display("Write another block to SD card");
                 sd_datOutState <= 1;
             end
         end
         
         1: begin
             sd_datOutActive <= 1;
-            if (!mem_raddr && sd_datOutCounter===1) begin
-                sd_memBank <= !sd_memBank;
-                sd_datOutState <= 0;
+            
+            if (!sd_datOutCounter) begin
+                if (sd_sdDatOutFifo_rok) begin
+                    $display("  Write another word");
+                    sd_memReg <= sd_sdDatOutFifo_rdata;
+                    // sd_sdDatOutFifo_rtrigger <= 1;
+                
+                end else begin
+                    sd_datOutState <= 0;
+                end
             end
         end
         endcase
@@ -546,7 +517,7 @@ module Top(
             end
             
             MsgCmd_SDDatOut: begin
-                ctrl_sdDatOutTrigger <= 1;
+                ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
             end
             endcase
             
