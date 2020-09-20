@@ -13,10 +13,10 @@ module Top(
     // ====================
     wire w_clk;
     ClockGen #(
-        .FREQ(72000000),
+        .FREQ(18000000),
         .DIVR(0),
         .DIVF(47),
-        .DIVQ(3),
+        .DIVQ(5),
         .FILTER_RANGE(1)
     ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
 
@@ -32,15 +32,27 @@ module Top(
     //     .FILTER_RANGE(1)
     // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
     
+    // // ====================
+    // // r_clk
+    // // ====================
+    // wire r_clk;
+    // ClockGen #(
+    //     .FREQ(96000000),
+    //     .DIVR(0),
+    //     .DIVF(63),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
+    
     // ====================
     // r_clk
     // ====================
     wire r_clk;
     ClockGen #(
-        .FREQ(96000000),
+        .FREQ(180000000),
         .DIVR(0),
-        .DIVF(63),
-        .DIVQ(3),
+        .DIVF(59),
+        .DIVQ(2),
         .FILTER_RANGE(1)
     ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
 
@@ -58,6 +70,7 @@ module Top(
         if (w_go[1]) begin
             w_trigger <= 1;
             if (w_trigger && w_ok) begin
+                $display("Wrote %x", w_data);
                 w_data <= w_data+1;
             end
         end

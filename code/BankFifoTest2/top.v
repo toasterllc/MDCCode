@@ -78,6 +78,9 @@ module Top();
 
         
         
+        
+        
+        
         // Wait random number of r_clk cycles
         count = $urandom()%50;
         for (i=0; i<count; i=i+1) begin
