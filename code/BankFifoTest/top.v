@@ -1,3 +1,4 @@
+`include "../Util.v"
 `include "../BankFifo.v"
 `timescale 1ns/1ps
 
@@ -32,28 +33,37 @@ module Top();
         end
     end
     
+    reg[15:0] r_lastData = 0;
+    reg r_lastDataInit = 0;
     always @(posedge r_clk) begin
         r_trigger <= 1;
         if (r_done) begin
             $display("Got data: 0x%x", r_data);
+            r_lastDataInit <= 1;
+            r_lastData <= r_data;
+            
+            if (r_lastDataInit && (r_data!==(r_lastData+1'b1))) begin
+                $display("Bad data (wanted: %x, got: %x)", r_lastData+1'b1, r_data);
+                `finish;
+            end
         end
     end
     
     initial begin
         forever begin
             r_clk = 0;
-            #42;
+            #21;
             r_clk = 1;
-            #42;
+            #21;
         end
     end
     
     initial begin
         forever begin
             w_clk = 0;
-            #21;
+            #42;
             w_clk = 1;
-            #21;
+            #42;
         end
     end
     
