@@ -27,8 +27,11 @@ module BankFifo #(
     always @(posedge w_clk)
         {w_rbank, w_rbankTmp} <= {w_rbankTmp, r_bank};
     
-    reg w_empty = 0;
-    assign w_ok = (w_bank!==w_rbank || w_empty);
+    reg w_rok=0, w_rokTmp=0;
+    always @(posedge w_clk)
+        {w_rok, w_rokTmp} <= {w_rokTmp, r_ok};
+    
+    assign w_ok = (w_bank!==w_rbank || !w_rok);
     always @(posedge w_clk) begin
         if (w_trigger && w_ok) begin
             mem[w_addr] <= w_data;
@@ -53,8 +56,11 @@ module BankFifo #(
     always @(posedge r_clk)
         {r_wbank, r_wbankTmp} <= {r_wbankTmp, w_bank};
     
-    reg r_full = 0;
-    assign r_ok = (r_bank!==r_wbank || r_full);
+    reg r_wok=0, r_wokTmp=0;
+    always @(posedge r_clk)
+        {r_wok, r_wokTmp} <= {r_wokTmp, w_ok};
+    
+    assign r_ok = (r_bank!==r_wbank || !r_wok);
     assign r_data = mem[r_addr];
     always @(posedge r_clk) begin
         if (r_trigger && r_ok) begin

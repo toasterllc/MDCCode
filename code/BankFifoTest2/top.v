@@ -64,18 +64,18 @@ module Top();
             wait(w_clk);
             wait(!w_clk);
         end
-        
+
         $display("[WRITER] Writing until wok=0");
         w_trigger = 1;
         for (i=0; w_ok; i=i+1) begin
             wait(w_clk);
             wait(!w_clk);
             w_data = w_data+1;
-            $display("[WRITER]  Wrote %0d", i);
+            $display("[WRITER]  Wrote %x", i);
         end
         w_trigger = 0;
         $display("[WRITER] Done writing");
-        
+
         
         
         // Wait random number of r_clk cycles
