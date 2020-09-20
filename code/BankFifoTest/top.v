@@ -104,7 +104,7 @@ module Top(
             if (r_lastData !== r_lastData2+2'b01) begin
                 $display("Got bad data: %x, %x", r_lastData2, r_lastData);
                 led <= 4'b1111;
-                `finish;
+                // `finish;
             
             end else begin
                 $display("Got good data: %x", r_lastData2);
