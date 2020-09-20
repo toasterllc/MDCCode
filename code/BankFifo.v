@@ -19,10 +19,8 @@ module BankFifo(
     // ====================
     // Write domain
     // ====================
-    reg[7:0] w_addr;
-    initial w_addr = 0;
-    
-    wire w_bank = w_addr[7];
+    reg[7:0] w_addr = 0;
+    wire w_bank = w_addr[$size(w_addr)-1];
     reg w_lastBank = 0;
     
     reg w_rbank=0, w_rbankTmp=0;
@@ -46,22 +44,27 @@ module BankFifo(
     // Read domain
     // ====================
     reg[7:0] r_addr;
-    initial r_addr = 0;
-    
-    wire r_bank = r_addr[7];
+    wire r_bank = r_addr[$size(r_addr)-1];
     reg r_lastBank_ = 0;
     
     reg r_wbank=0, r_wbankTmp=0;
     always @(posedge r_clk)
         {r_wbank, r_wbankTmp} <= {r_wbankTmp, w_bank};
     
+    reg r_init = 0;
     always @(posedge r_clk) begin
-        r_done <= 0; // Pulse
-        if (r_trigger && (r_bank===!r_lastBank_ || r_bank!==r_wbank)) begin
-            r_data <= mem[r_addr];
-            r_done <= 1;
-            r_addr <= r_addr+1;
-            r_lastBank_ <= !r_bank;
+        if (!r_init) begin
+            r_init <= 1;
+            r_addr <= 0;
+        
+        end else begin
+            r_done <= 0; // Pulse
+            if (r_trigger && (r_bank===!r_lastBank_ || r_bank!==r_wbank)) begin
+                r_data <= mem[r_addr];
+                r_done <= 1;
+                r_addr <= r_addr+1;
+                r_lastBank_ <= !r_bank;
+            end
         end
     end
 

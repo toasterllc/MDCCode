@@ -5,67 +5,84 @@
 
 module Top(
     input wire clk12mhz,
-    // output wire[3:0] led,
-    output reg err = 0
+    input wire go,
+    output reg[3:0] led = 0
 );
     // ====================
     // w_clk
     // ====================
     wire w_clk;
     ClockGen #(
-        .FREQ(120000000),
+        .FREQ(72000000),
         .DIVR(0),
-        .DIVF(79),
+        .DIVF(47),
         .DIVQ(3),
         .FILTER_RANGE(1)
     ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
-    
+
     // ====================
     // r_clk
     // ====================
     wire r_clk;
     ClockGen #(
-        .FREQ(120000000),
+        .FREQ(48000000),
         .DIVR(0),
-        .DIVF(79),
-        .DIVQ(3),
+        .DIVF(63),
+        .DIVQ(4),
         .FILTER_RANGE(1)
     ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
-    
+
     // ====================
     // Writer
     // ====================
+    reg[1:0] w_go = 0;
+    always @(posedge w_clk)
+        w_go <= w_go<<1|go;
+    
     reg w_trigger = 0;
     reg[15:0] w_data = 0;
     wire w_done;
-    
     always @(posedge w_clk) begin
-        w_trigger <= 1;
-        if (w_done) begin
-            w_data <= w_data+1;
+        if (w_go[1]) begin
+            w_trigger <= 1;
+            if (w_done) begin
+                w_data <= w_data+1;
+            end
         end
     end
-    
+
     // ====================
     // Reader
     // ====================
-    
-    // reg[9:0] ledReg = 0;
-    // always @(posedge clk12mhz) begin
-    //     ledReg <= ledReg<<1|err;
-    // end
-    // assign led[3:0] = {4{err}};
+    reg[1:0] r_go = 0;
+    always @(posedge r_clk)
+        r_go <= r_go<<1|go;
     
     reg r_trigger = 0;
+    reg[15:0] r_lastData = 0;
+    reg[15:0] r_lastData2 = 0;
+    reg r_lastDataInit = 0;
+    reg r_lastDataInit2 = 0;
     wire[15:0] r_data;
     wire r_done;
     always @(posedge r_clk) begin
-        r_trigger <= 1;
+        if (r_go[1]) begin
+            r_trigger <= 1;
+        end
+        
         if (r_done) begin
-            if (r_data !== 16'hABCD) begin
-                $display("Got bad data: %x", r_data);
-                err <= 1;
+            {r_lastData2, r_lastData} <= {r_lastData, r_data};
+            {r_lastDataInit2, r_lastDataInit} <= {r_lastDataInit, 1'b1};
+        end
+        
+        if (r_lastDataInit && r_lastDataInit2) begin
+            if (r_lastData !== r_lastData2+2'b01) begin
+                $display("Got bad data: %x, %x", r_lastData2, r_lastData);
+                led <= 4'b1111;
                 `finish;
+            
+            end else begin
+                $display("Got good data: %x", r_lastData2);
             end
         end
     end
@@ -76,7 +93,7 @@ module Top(
     BankFifo BankFifo(
         .w_clk(w_clk),
         .w_trigger(w_trigger),
-        .w_data(16'hABCD),
+        .w_data(w_data),
         .w_done(w_done),
         
         .r_clk(r_clk),
@@ -84,12 +101,37 @@ module Top(
         .r_data(r_data),
         .r_done(r_done)
     );
+endmodule
+
+
+
+
+
+
+
 
 `ifdef SIM
+module Testbench();
+    reg clk12mhz = 0;
+    reg go = 0;
+    wire[3:0] led;
+    Top Top(
+        .clk12mhz(clk12mhz),
+        .go(go),
+        .led(led)
+    );
+    
     initial begin
         $dumpfile("top.vcd");
-        $dumpvars(0, Top);
+        $dumpvars(0, Testbench);
     end
+    
+    initial begin
+        go = 0;
+        #1000;
+        go = 1;
+    end
+    
     
     // initial begin
     //     reg[15:0] i;
@@ -134,5 +176,7 @@ module Top(
     //         wait(!w_clk);
     //     end
     // end
-`endif
 endmodule
+`endif
+
+
