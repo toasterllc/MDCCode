@@ -19,7 +19,9 @@ module BankFifo(
     // ====================
     // Write domain
     // ====================
-    reg[7:0] w_addr = 0;
+    reg[7:0] w_addr;
+    initial w_addr = 0;
+    
     wire w_bank = w_addr[7];
     reg w_lastBank = 0;
     
@@ -43,7 +45,9 @@ module BankFifo(
     // ====================
     // Read domain
     // ====================
-    reg[7:0] r_addr = 0;
+    reg[7:0] r_addr;
+    initial r_addr = 0;
+    
     wire r_bank = r_addr[7];
     reg r_lastBank_ = 0;
     

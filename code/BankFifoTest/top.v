@@ -3,31 +3,41 @@
 `include "../BankFifo.v"
 `timescale 1ns/1ps
 
-
 module Top(
-    input wire clk12mhz
+    input wire clk12mhz,
+    // output wire[3:0] led,
+    output reg err = 0
 );
-    reg w_clk;
-    reg r_clk;
+    // ====================
+    // w_clk
+    // ====================
+    wire w_clk;
+    ClockGen #(
+        .FREQ(120000000),
+        .DIVR(0),
+        .DIVF(79),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
     
+    // ====================
+    // r_clk
+    // ====================
+    wire r_clk;
+    ClockGen #(
+        .FREQ(120000000),
+        .DIVR(0),
+        .DIVF(79),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
+    
+    // ====================
+    // Writer
+    // ====================
     reg w_trigger = 0;
     reg[15:0] w_data = 0;
     wire w_done;
-    
-    reg r_trigger = 0;
-    wire[15:0] r_data;
-    wire r_done;
-    BankFifo BankFifo(
-        .w_clk(w_clk),
-        .w_trigger(w_trigger),
-        .w_data(w_data),
-        .w_done(w_done),
-        
-        .r_clk(r_clk),
-        .r_trigger(r_trigger),
-        .r_data(r_data),
-        .r_done(r_done)
-    );
     
     always @(posedge w_clk) begin
         w_trigger <= 1;
@@ -36,41 +46,46 @@ module Top(
         end
     end
     
-    reg[15:0] r_lastData = 0;
-    reg r_lastDataInit = 0;
+    // ====================
+    // Reader
+    // ====================
+    
+    // reg[9:0] ledReg = 0;
+    // always @(posedge clk12mhz) begin
+    //     ledReg <= ledReg<<1|err;
+    // end
+    // assign led[3:0] = {4{err}};
+    
+    reg r_trigger = 0;
+    wire[15:0] r_data;
+    wire r_done;
     always @(posedge r_clk) begin
         r_trigger <= 1;
         if (r_done) begin
-            $display("Got data: 0x%x", r_data);
-            r_lastDataInit <= 1;
-            r_lastData <= r_data;
-            
-            if (r_lastDataInit && (r_data!==(r_lastData+1'b1))) begin
-                $display("Bad data (wanted: %x, got: %x)", r_lastData+1'b1, r_data);
+            if (r_data !== 16'hABCD) begin
+                $display("Got bad data: %x", r_data);
+                err <= 1;
                 `finish;
             end
         end
     end
+    
+    // ====================
+    // FIFO
+    // ====================
+    BankFifo BankFifo(
+        .w_clk(w_clk),
+        .w_trigger(w_trigger),
+        .w_data(16'hABCD),
+        .w_done(w_done),
+        
+        .r_clk(r_clk),
+        .r_trigger(r_trigger),
+        .r_data(r_data),
+        .r_done(r_done)
+    );
 
 `ifdef SIM
-    initial begin
-        forever begin
-            r_clk = 0;
-            #42;
-            r_clk = 1;
-            #42;
-        end
-    end
-    
-    initial begin
-        forever begin
-            w_clk = 0;
-            #21;
-            w_clk = 1;
-            #21;
-        end
-    end
-    
     initial begin
         $dumpfile("top.vcd");
         $dumpvars(0, Top);
