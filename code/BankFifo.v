@@ -37,7 +37,10 @@ module BankFifo #(
     // ====================
     // Read domain
     // ====================
-    reg[N-1:0] r_addr = 0;
+    reg[N-1:0] r_addr;
+`ifdef SIM
+    initial r_addr = 0;
+`endif
     wire[N-1:0] r_addrNext = r_addr+1;
     wire r_bank = r_addr[N-1];
     wire r_bankNext = r_addrNext[N-1];
