@@ -13,54 +13,36 @@ module BankFifo #(
     output wire r_ok
 );
     reg[W-1:0] mem[0:(1<<N)-1];
-    reg[1:0] bits = 0;
-    wire full = &bits;
-    wire empty = !bits;
     
     // ====================
     // Write domain
     // ====================
     reg[N-1:0] w_addr = 0;
-    wire[N-1:0] w_addrNext = w_addr+1;
-    assign w_ok = !full;
+    reg[1:0] w_bits = 0;
+    reg[1:0] w_rbits = 0;
+    assign w_ok = |(~w_bits);
     always @(posedge w_clk) begin
         if (w_trigger && w_ok) begin
             mem[w_addr] <= w_data;
-            w_addr <= w_addrNext;
+            w_addr <= w_addr+1;
+            if (w_addr===8'h7F) w_bits[0] <= 1;
+            if (w_addr===8'hFF) w_bits[1] <= 1;
         end
     end
     
-    
-    
-    
+    always @(posedge w_clk) begin
+        
+    end
     
     // ====================
     // Read domain
     // ====================
-    reg[N-1:0] r_addr; // Don't initialize, otherwise yosys doesn't infer a BRAM
-    wire[N-1:0] r_addrNext = r_addr+1;
-`ifdef SIM
-    initial r_addr = 8'h00;
-`endif
+    reg[N-1:0] r_addr = 0;
     assign r_data = mem[r_addr];
-    assign r_ok = !empty;
+    assign r_ok = 
     always @(posedge r_clk) begin
         if (r_trigger && r_ok) begin
-            r_addr <= r_addrNext;
+            r_addr <= r_addr+1;
         end
     end
-    
-    
-    wire w_bank = w_addr[N-1];
-    wire r_bank = r_addr[N-1];
-    always @(posedge w_bank, posedge r_bank) begin
-        if (w_bank) bits[0] <= 1;
-        else bits[0] <= 0;
-    end
-    
-    always @(negedge w_bank, negedge r_bank) begin
-        if (!w_bank) bits[1] <= 1;
-        else bits[1] <= 0;
-    end
-    
 endmodule
