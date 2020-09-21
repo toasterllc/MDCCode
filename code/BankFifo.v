@@ -13,31 +13,20 @@ module BankFifo #(
     output wire r_ok
 );
     reg[W-1:0] mem[0:(1<<N)-1];
+    reg[1:0] bits = 0;
+    wire full = &bits;
+    wire empty = !bits;
     
     // ====================
     // Write domain
     // ====================
     reg[N-1:0] w_addr = 0;
-    wire w_bank = w_addr[N-1];
-    reg w_lastBank = 0;
-    
-    reg[1:0] w_rswapTmp = 0;
-    reg w_rswapAck = 1;
-    wire w_rswap = w_rswapTmp[1]!==w_rswapAck;
-    always @(posedge w_clk)
-        w_rswapTmp <= w_rswapTmp<<1|r_bank;
-    
-    wire w_swap = (w_bank!==w_lastBank);
-    assign w_ok = !w_swap || w_rswap;
+    wire[N-1:0] w_addrNext = w_addr+1;
+    assign w_ok = !full;
     always @(posedge w_clk) begin
-        if (w_swap && w_rswap) begin
-            w_lastBank <= !w_lastBank;
-            w_rswapAck <= !w_rswapAck;
-        end
-        
         if (w_trigger && w_ok) begin
             mem[w_addr] <= w_data;
-            w_addr <= w_addr+1;
+            w_addr <= w_addrNext;
         end
     end
     
@@ -49,29 +38,29 @@ module BankFifo #(
     // Read domain
     // ====================
     reg[N-1:0] r_addr; // Don't initialize, otherwise yosys doesn't infer a BRAM
+    wire[N-1:0] r_addrNext = r_addr+1;
 `ifdef SIM
     initial r_addr = 8'h00;
 `endif
-    wire r_bank = r_addr[N-1];
-    reg r_lastBank = 0;
-    
-    reg[1:0] r_wswapTmp = 0;
-    reg r_wswapAck = 0;
-    wire r_wswap = r_wswapTmp[1]!==r_wswapAck;
-    always @(posedge r_clk)
-        r_wswapTmp <= r_wswapTmp<<1|w_bank;
-    
-    wire r_swap = (r_bank!==r_lastBank);
     assign r_data = mem[r_addr];
-    assign r_ok = !r_swap || r_wswap;
+    assign r_ok = !empty;
     always @(posedge r_clk) begin
-        if (r_swap && r_wswap) begin
-            r_lastBank <= !r_lastBank;
-            r_wswapAck <= !r_wswapAck;
+        if (r_trigger && r_ok) begin
+            r_addr <= r_addrNext;
         end
-        
-        if (r_trigger && r_ok)
-            r_addr <= r_addr+1;
     end
-
+    
+    
+    wire w_bank = w_addr[N-1];
+    wire r_bank = r_addr[N-1];
+    always @(posedge w_bank, posedge r_bank) begin
+        if (w_bank) bits[0] <= 1;
+        else bits[0] <= 0;
+    end
+    
+    always @(negedge w_bank, negedge r_bank) begin
+        if (!w_bank) bits[1] <= 1;
+        else bits[1] <= 0;
+    end
+    
 endmodule
