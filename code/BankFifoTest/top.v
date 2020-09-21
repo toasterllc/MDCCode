@@ -44,15 +44,28 @@ module Top(
     //     .FILTER_RANGE(1)
     // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
     
+    // // ====================
+    // // r_clk
+    // // ====================
+    // wire r_clk;
+    // ClockGen #(
+    //     .FREQ(180000000),
+    //     .DIVR(0),
+    //     .DIVF(59),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
+    
     // ====================
     // r_clk
     // ====================
+    // TODO: the simulation frequency doesn't match the synthesis frequency
     wire r_clk;
     ClockGen #(
-        .FREQ(180000000),
+        .FREQ(10000),
         .DIVR(0),
-        .DIVF(59),
-        .DIVQ(2),
+        .DIVF(63),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
 

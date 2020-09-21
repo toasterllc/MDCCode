@@ -14,9 +14,6 @@ module BankFifo #(
 );
     reg[W-1:0] mem[0:(1<<N)-1];
     
-    
-    
-    
     // ====================
     // Write domain
     // ====================
@@ -24,20 +21,19 @@ module BankFifo #(
     wire w_bank = w_addr[N-1];
     reg w_lastBank = 0;
     
-    reg[1:0] w_rbank = 0;
-    reg w_rswapAck = 0;
-    wire w_rswap = w_rbank[1]!==w_rswapAck;
+    reg w_rswap=0, w_rswapTmp=0;
     always @(posedge w_clk)
-        w_rbank <= w_rbank<<1|r_bank;
+        {w_rswap, w_rswapTmp} <= {w_rswapTmp, r_swap};
     
-    wire w_swap = w_bank!==w_lastBank;
-    assign w_ok = !w_swap || (w_swap && w_rswap);
+    wire w_swap = (w_bank!==w_lastBank);
+    assign w_ok = !w_swap || w_rswap;
     always @(posedge w_clk) begin
+        if (w_swap && w_rswap)
+            w_lastBank <= !w_lastBank;
+        
         if (w_trigger && w_ok) begin
             mem[w_addr] <= w_data;
             w_addr <= w_addr+1;
-            w_lastBank <= w_bank;
-            if (w_swap && w_rswap) w_rswapAck <= !w_rswapAck;
         end
     end
     
@@ -50,26 +46,24 @@ module BankFifo #(
     // ====================
     reg[N-1:0] r_addr; // Don't initialize, otherwise yosys doesn't infer a BRAM
 `ifdef SIM
-    initial r_addr = 8'h80;
+    initial r_addr = 8'h00;
 `endif
     wire r_bank = r_addr[N-1];
-    reg r_lastBank = 1;
+    reg r_lastBank_ = 0;
     
-    reg[1:0] r_wbank = 0;
-    reg r_wswapAck = 0;
-    wire r_wswap = r_wbank[1]!==r_wswapAck;
+    reg r_wswap=0, r_wswapTmp=0;
     always @(posedge r_clk)
-        r_wbank <= r_wbank<<1|w_bank;
+        {r_wswap, r_wswapTmp} <= {r_wswapTmp, w_swap};
     
-    wire r_swap = r_bank!==r_lastBank;
-    assign r_ok = !r_swap || (r_swap && r_wswap);
+    wire r_swap = (r_bank!==!r_lastBank_);
     assign r_data = mem[r_addr];
+    assign r_ok = !r_swap || r_wswap;
     always @(posedge r_clk) begin
-        if (r_trigger && r_ok) begin
+        if (r_swap && r_wswap)
+            r_lastBank_ <= !r_lastBank_;
+        
+        if (r_trigger && r_ok)
             r_addr <= r_addr+1;
-            r_lastBank <= r_bank;
-            if (r_swap && r_wswap) r_wswapAck <= !r_wswapAck;
-        end
     end
 
 endmodule
