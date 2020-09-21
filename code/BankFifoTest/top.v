@@ -120,7 +120,7 @@ module Top(
                 // `finish;
             
             end else begin
-                $display("Got good data: %x", r_lastData2);
+                $display("Read data: %x", r_lastData2);
             end
         end
     end

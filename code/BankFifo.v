@@ -21,15 +21,19 @@ module BankFifo #(
     wire w_bank = w_addr[N-1];
     reg w_lastBank = 0;
     
-    reg w_rswap=0, w_rswapTmp=0;
+    reg[1:0] w_rswapTmp = 0;
+    reg w_rswapAck = 1;
+    wire w_rswap = w_rswapTmp[1]!==w_rswapAck;
     always @(posedge w_clk)
-        {w_rswap, w_rswapTmp} <= {w_rswapTmp, r_swap};
+        w_rswapTmp <= w_rswapTmp<<1|r_bank;
     
     wire w_swap = (w_bank!==w_lastBank);
     assign w_ok = !w_swap || w_rswap;
     always @(posedge w_clk) begin
-        if (w_swap && w_rswap)
+        if (w_swap && w_rswap) begin
             w_lastBank <= !w_lastBank;
+            w_rswapAck <= !w_rswapAck;
+        end
         
         if (w_trigger && w_ok) begin
             mem[w_addr] <= w_data;
@@ -49,18 +53,22 @@ module BankFifo #(
     initial r_addr = 8'h00;
 `endif
     wire r_bank = r_addr[N-1];
-    reg r_lastBank_ = 0;
+    reg r_lastBank = 0;
     
-    reg r_wswap=0, r_wswapTmp=0;
+    reg[1:0] r_wswapTmp = 0;
+    reg r_wswapAck = 0;
+    wire r_wswap = r_wswapTmp[1]!==r_wswapAck;
     always @(posedge r_clk)
-        {r_wswap, r_wswapTmp} <= {r_wswapTmp, w_swap};
+        r_wswapTmp <= r_wswapTmp<<1|w_bank;
     
-    wire r_swap = (r_bank!==!r_lastBank_);
+    wire r_swap = (r_bank!==r_lastBank);
     assign r_data = mem[r_addr];
     assign r_ok = !r_swap || r_wswap;
     always @(posedge r_clk) begin
-        if (r_swap && r_wswap)
-            r_lastBank_ <= !r_lastBank_;
+        if (r_swap && r_wswap) begin
+            r_lastBank <= !r_lastBank;
+            r_wswapAck <= !r_wswapAck;
+        end
         
         if (r_trigger && r_ok)
             r_addr <= r_addr+1;

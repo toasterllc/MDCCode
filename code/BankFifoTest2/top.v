@@ -65,7 +65,7 @@ module Top();
             wait(r_clk);
             wait(!r_clk);
         end
-        
+
         $display("[READER] Reading until rok=0");
         r_trigger = 1;
         for (i=0; r_ok; i=i+1) begin
@@ -135,7 +135,7 @@ module Top();
             wait(w_clk);
             wait(!w_clk);
         end
-        
+
         $display("[WRITER] Writing until wok=0");
         w_trigger = 1;
         for (i=0; i<128; i=i+1) begin
@@ -146,19 +146,19 @@ module Top();
         end
         w_trigger = 0;
         $display("[WRITER] Done writing");
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
         // Wait random number of r_clk cycles
         count = $urandom()%50;
         for (i=0; i<count; i=i+1) begin
             wait(r_clk);
             wait(!r_clk);
         end
-        
+
         $display("[READER] Reading until rok=0");
         r_trigger = 1;
         for (i=0; r_ok; i=i+1) begin
