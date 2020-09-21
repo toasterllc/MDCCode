@@ -4,12 +4,12 @@ module BankFifo #(
 )(
     input wire w_clk,
     input wire w_trigger,
-    input wire[15:0] w_data,
+    input wire[W-1:0] w_data,
     output wire w_ok,
     
     input wire r_clk,
     input wire r_trigger,
-    output wire[15:0] r_data,
+    output wire[W-1:0] r_data,
     output wire r_ok
 );
     reg[W-1:0] mem[0:(1<<N)-1];
