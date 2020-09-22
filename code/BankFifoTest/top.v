@@ -1,5 +1,6 @@
 `include "../Util.v"
 `include "../ClockGen.v"
+`include "../AFIFO.v"
 `include "../BankFifo.v"
 `timescale 1ns/1ps
 
@@ -62,7 +63,7 @@ module Top(
     // TODO: the simulation frequency doesn't match the synthesis frequency
     wire r_clk;
     ClockGen #(
-        .FREQ(10000),
+        .FREQ(1900000),
         .DIVR(0),
         .DIVF(63),
         .DIVQ(3),
@@ -117,7 +118,7 @@ module Top(
             if (r_lastData !== r_lastData2+2'b01) begin
                 $display("Got bad data: %x, %x", r_lastData2, r_lastData);
                 led <= 4'b1111;
-                // `finish;
+                `finish;
             
             end else begin
                 $display("Read data: %x", r_lastData2);
@@ -128,6 +129,22 @@ module Top(
     // ====================
     // FIFO
     // ====================
+    // AFIFO #(
+    //     .Width(16),
+    //     .Size(256)
+    // ) AFIFO(
+    //     .wclk(w_clk),
+    //     .wtrigger(w_trigger),
+    //     .wdata(w_data),
+    //     .wok(w_ok),
+    //
+    //     .rclk(r_clk),
+    //     .rtrigger(r_trigger),
+    //     .rdata(r_data),
+    //     .rok(r_ok)
+    // );
+    
+    
     BankFifo BankFifo(
         .w_clk(w_clk),
         .w_trigger(w_trigger),
