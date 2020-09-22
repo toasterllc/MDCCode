@@ -10,66 +10,77 @@ module Top(
     output reg[3:0] led = 0
 );
     // ====================
-    // w_clk
+    // w_clk (18 MHz)
     // ====================
     wire w_clk;
     ClockGen #(
-        .FREQ(18000000),
+        .FREQ(18_000_000),
         .DIVR(0),
         .DIVF(47),
         .DIVQ(5),
         .FILTER_RANGE(1)
     ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
-
+    
     // // ====================
-    // // r_clk
+    // // w_clk (24 MHz)
+    // // ====================
+    // wire w_clk;
+    // ClockGen #(
+    //     .FREQ(24_000_000),
+    //     .DIVR(0),
+    //     .DIVF(63),
+    //     .DIVQ(5),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
+    
+    // // ====================
+    // // w_clk (228 MHz)
+    // // ====================
+    // wire w_clk;
+    // ClockGen #(
+    //     .FREQ(228_000_000),
+    //     .DIVR(0),
+    //     .DIVF(75),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
+    
+    // // ====================
+    // // r_clk (18 MHz)
     // // ====================
     // wire r_clk;
     // ClockGen #(
-    //     .FREQ(48000000),
+    //     .FREQ(18_000_000),
     //     .DIVR(0),
-    //     .DIVF(63),
-    //     .DIVQ(4),
+    //     .DIVF(47),
+    //     .DIVQ(5),
     //     .FILTER_RANGE(1)
     // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
     
     // // ====================
-    // // r_clk
+    // // r_clk (96 MHz)
     // // ====================
     // wire r_clk;
     // ClockGen #(
-    //     .FREQ(96000000),
+    //     .FREQ(96_000_000),
     //     .DIVR(0),
     //     .DIVF(63),
     //     .DIVQ(3),
     //     .FILTER_RANGE(1)
     // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
     
-    // // ====================
-    // // r_clk
-    // // ====================
-    // wire r_clk;
-    // ClockGen #(
-    //     .FREQ(180000000),
-    //     .DIVR(0),
-    //     .DIVF(59),
-    //     .DIVQ(2),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
-    
     // ====================
-    // r_clk
+    // r_clk (108 MHz)
     // ====================
-    // TODO: the simulation frequency doesn't match the synthesis frequency
     wire r_clk;
     ClockGen #(
-        .FREQ(1900000),
+        .FREQ(108_000_000),
         .DIVR(0),
-        .DIVF(63),
+        .DIVF(71),
         .DIVQ(3),
         .FILTER_RANGE(1)
     ) ClockGen_r_clk(.clk12mhz(clk12mhz), .clk(r_clk));
-
+    
     // ====================
     // Writer
     // ====================

@@ -6,11 +6,13 @@ module BankFifo #(
     input wire w_trigger,
     input wire[W-1:0] w_data,
     output wire w_ok,
+    output wire w_bank,
     
     input wire r_clk,
     input wire r_trigger,
     output wire[W-1:0] r_data,
-    output wire r_ok
+    output wire r_ok,
+    output wire r_bank
 );
     reg[W-1:0] mem[0:(1<<N)-1];
     reg dir = 0;
@@ -19,8 +21,8 @@ module BankFifo #(
     // Write domain
     // ====================
     reg[N-1:0] w_addr = 0;
-    wire w_bank = w_addr[N-1];
     reg w_rbank=0, w_rbankTmp=0;
+    assign w_bank = w_addr[N-1];
     assign w_ok = w_bank!==w_rbank || !dir;
     always @(posedge w_clk) begin
         if (w_trigger && w_ok) begin
@@ -38,8 +40,8 @@ module BankFifo #(
 `ifdef SIM
     initial r_addr = 0;
 `endif
-    wire r_bank = r_addr[N-1];
     reg r_wbank=0, r_wbankTmp=0;
+    assign r_bank = r_addr[N-1];
     assign r_data = mem[r_addr];
     assign r_ok = r_bank!==r_wbank || dir;
     always @(posedge r_clk) begin

@@ -16,27 +16,6 @@
 
 `timescale 1ns/1ps
 
-module Mem(
-    input wire wclk,
-    input wire wen,
-    input wire[7:0] waddr,
-    input wire[15:0] wdata,
-    
-    input wire rclk,
-    input wire ren,
-    input wire[7:0] raddr,
-    output reg[15:0] rdata = 0
-);
-    reg[15:0] mem[0:255];
-    // initial $readmemh("../mem.txt", mem);
-    
-    always @(posedge wclk)
-        if (wen) mem[waddr] <= wdata;
-    
-    always @(posedge rclk)
-        if (ren) rdata <= mem[raddr];
-endmodule
-
 module Top(
     input wire          clk12mhz,
     
@@ -81,6 +60,8 @@ module Top(
     
     reg[5:0] sd_counter = 0;
     reg[1:0] sd_datOutCounter = 0;
+    reg sd_datOutLastBank = 0;
+    reg sd_datOutEnding = 0;
     
     reg ctrl_dinActive = 0;
     reg[65:0] ctrl_dinReg = 0;
@@ -244,6 +225,19 @@ module Top(
         .dout(sd_respCRC)
     );
     
+    wire[15:0] datCRC[3:0];
+    reg datCRCRst_ = 0;
+    // genvar i;
+    for (i=0; i<4; i=i+1) begin
+        CRC16 CRC16_dat(
+            .clk(clk),
+            .rst_(datCRCRst_),
+            .din(sd_memReg[0+i]),
+            .dout(),
+            .doutNext(datCRC[i])
+        );
+    end
+    
     
     
     
@@ -252,7 +246,7 @@ module Top(
     // FIFO
     // ====================
     reg w_sdDatOutFifo_wtrigger = 0;
-    reg[15:0] w_sdDatOutFifo_wdata = 0;
+    reg[7:0] w_sdDatOutFifo_wdata = 0;
     wire w_sdDatOutFifo_wok;
     
     reg sd_sdDatOutFifo_rtrigger = 0;
@@ -264,13 +258,14 @@ module Top(
     ) BankFifo_sdDatOut(
         .w_clk(clk12mhz),
         .w_trigger(w_sdDatOutFifo_wtrigger),
-        .w_data(w_sdDatOutFifo_wdata),
+        .w_data({w_sdDatOutFifo_wdata, w_sdDatOutFifo_wdata}),
         .w_ok(w_sdDatOutFifo_wok),
         
         .r_clk(sd_clk),
         .r_trigger(sd_sdDatOutFifo_rtrigger),
         .r_data(sd_sdDatOutFifo_rdata),
-        .r_ok(sd_sdDatOutFifo_rok)
+        .r_ok(sd_sdDatOutFifo_rok),
+        .r_bank(sd_sdDatOutFifo_rbank)
     );
     
     
@@ -290,22 +285,20 @@ module Top(
     always @(posedge clk12mhz) begin
         case (w_state)
         0: begin
-            w_sdDatOutFifo_wdata <= 0;
+            w_sdDatOutFifo_wtrigger <= 0;
+            // w_sdDatOutFifo_wdata <= 0;
             if (w_sdDatOutTrigger) begin
-                w_sdDatOutFifo_wtrigger <= 1;
                 w_state <= 1;
             end
         end
         
         1: begin
-            // TODO: do we need to check for `wok` here? should we be able to write 512 bytes uninterrupted?
-            if (w_sdDatOutFifo_wok) begin
-                w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
-                if (w_sdDatOutFifo_wdata === 16'h00FF) begin
-                    w_sdDatOutFifo_wtrigger <= 0;
-                    w_state <= 0;
-                end
-            end
+            w_sdDatOutFifo_wtrigger <= 1;
+            w_sdDatOutFifo_wdata <= 8'hFF;
+            // w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
+            // if (w_sdDatOutFifo_wdata === 8'hFF) begin
+            //     w_state <= 0;
+            // end
         end
         endcase
     end
@@ -334,13 +327,22 @@ module Top(
         sd_memReg <= sd_memReg>>4;
         sd_datOut <= sd_memReg[3:0];
         sd_sdDatOutFifo_rtrigger <= 0; // Pulse
+        sd_datOutLastBank <= sd_sdDatOutFifo_rbank;
+        sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_sdDatOutFifo_rbank);
+        
+        if (!sd_datOutCounter) begin
+            sd_memReg <= sd_sdDatOutFifo_rdata;
+        end
         
         case (sd_datOutState)
         0: begin
             sd_datOutCounter <= 0;
             sd_datOutActive <= 0;
+            sd_datOutEnding <= 0;
+            datCRCRst_ <= 0;
             if (sd_sdDatOutFifo_rok) begin
-                $display("Write another block to SD card");
+                $display("[SD DATOUT] Write another block to SD card");
+                datCRCRst_ <= 1;
                 sd_datOutState <= 1;
             end
         end
@@ -349,15 +351,19 @@ module Top(
             sd_datOutActive <= 1;
             
             if (!sd_datOutCounter) begin
-                if (sd_sdDatOutFifo_rok) begin
-                    $display("  Write another word");
-                    sd_memReg <= sd_sdDatOutFifo_rdata;
-                    // sd_sdDatOutFifo_rtrigger <= 1;
+                if (!sd_datOutEnding) begin
+                    $display("[SD DATOUT]   Write another word: %x", sd_sdDatOutFifo_rdata);
+                    sd_sdDatOutFifo_rtrigger <= 1;
                 
                 end else begin
-                    sd_datOutState <= 0;
+                    $display("[SD DATOUT] Done writing (sd_datOutCounter: %x)", sd_datOutCounter);
+                    sd_datOutState <= 2;
                 end
             end
+        end
+        
+        2: begin
+            
         end
         endcase
         

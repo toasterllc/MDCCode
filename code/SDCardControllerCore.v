@@ -156,7 +156,7 @@ module SDCardControllerCore(
             .dout(),
             .doutNext(datCRC[i])
         );
-     end
+    end
     
     reg[15:0] datOut3CRCReg = 0;
     reg[15:0] datOut2CRCReg = 0;
