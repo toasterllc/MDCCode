@@ -1,6 +1,21 @@
-`include "../CRC16.v"
-
 `timescale 1ns/1ps
+
+module CRC16(
+    input wire clk,
+    input wire rst_,
+    input din,
+    output wire[15:0] dout,
+    output wire[15:0] doutNext
+);
+    reg[15:0] d = 0;
+    wire dx = din^d[15];
+    wire[15:0] dnext = { d[14], d[13], d[12], d[11]^dx, d[10], d[9], d[8], d[7], d[6], d[5], d[4]^dx, d[3], d[2], d[1], d[0], dx };
+    always @(posedge clk)
+        if (!rst_) d <= 0;
+        else d <= dnext;
+    assign dout = d;
+    assign doutNext = dnext;
+endmodule
 
 module Top();
     reg clk = 0;
@@ -20,7 +35,7 @@ module Top();
     end
     
     reg crc_rst_ = 0;
-    reg[511:0] crc_din = 512'hFF0FFF00_FFCCC3CC_C33CCCFF_FEFFFEEF_FFDFFFDD_FFFBFFFB_BFFF7FFF_77F7BDEF_FFF0FFF0_0FFCCC3C_CC33CCCF_FFEFFFEE_FFFDFFFD_DFFFBFFF_BBFFF7FF_F77F7BDE;
+    reg[4095:0] crc_din = ~0;
     wire[15:0] crc_dout;
     CRC16 crc(
         .clk(clk),
@@ -38,7 +53,7 @@ module Top();
         wait(!clk);
         crc_rst_ = 1;
         
-        repeat (128) begin
+        repeat (1024) begin
             wait(clk);
             wait(!clk);
             crc_din = crc_din<<4;

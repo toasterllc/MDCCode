@@ -1,3 +1,43 @@
+module Sim_CRC7(
+    input wire clk,
+    input wire rst_,
+    input din,
+    output wire[6:0] dout,
+    output wire[6:0] doutNext
+);
+    reg[6:0] d = 0;
+    wire dx = din ^ d[6];
+    wire[6:0] dnext = { d[5], d[4], d[3], d[2]^dx, d[1], d[0], dx };
+    always @(posedge clk)
+        if (!rst_) d <= 0;
+        else d <= dnext;
+    assign dout = d;
+    assign doutNext = dnext;
+endmodule
+
+
+module Sim_CRC16(
+    input wire clk,
+    input wire rst_,
+    input din,
+    output wire[15:0] dout,
+    output wire[15:0] doutNext
+);
+    reg[15:0] d = 0;
+    wire dx = din^d[15];
+    wire[15:0] dnext = { d[14], d[13], d[12], d[11]^dx, d[10], d[9], d[8], d[7], d[6], d[5], d[4]^dx, d[3], d[2], d[1], d[0], dx };
+    always @(posedge clk)
+        if (!rst_) d <= 0;
+        else d <= dnext;
+    assign dout = d;
+    assign doutNext = dnext;
+endmodule
+
+
+
+
+
+
 module SDCardSim(
     input wire      sd_clk,
     inout wire      sd_cmd,
@@ -67,7 +107,7 @@ module SDCardSim(
     reg cmdIn_ourCRC_rst_ = 0;
     wire[6:0] cmdIn_ourCRC;
     reg[6:0] cmdIn_ourCRCReg = 0;
-    CRC7 CRC7_cmdIn(
+    Sim_CRC7 Sim_CRC7(
         .clk(sd_clk),
         .rst_(cmdIn_ourCRC_rst_),
         .din(cmdIn[0]),
@@ -88,7 +128,7 @@ module SDCardSim(
     reg[15:0] dat_theirCRCReg[3:0];
     genvar geni;
     for (geni=0; geni<4; geni=geni+1) begin
-        CRC16 crc16(
+        Sim_CRC16 Sim_CRC16(
             .clk(sd_clk),
             .rst_(dat_crcRst_),
             .din(sd_dat[geni]),

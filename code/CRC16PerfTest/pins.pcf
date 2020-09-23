@@ -1,0 +1,5 @@
+# Rev2 board / ICE40HX4K-BG121
+set_io clk      C11     -pullup no
+set_io en       K10     -pullup no
+set_io din      J9      -pullup no
+set_io dout     K9      -pullup no
