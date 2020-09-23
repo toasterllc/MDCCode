@@ -189,19 +189,19 @@ module SDCardSim(
                 
                 if (cmdIn_preamble !== 2'b01) begin
                     $display("[SD CARD] Bad preamble: %b ❌", cmdIn_preamble);
-                    `finish;
+                    `Finish;
                 end
                 
                 if (cmdIn_theirCRC === cmdIn_ourCRCReg) begin
                     $display("[SD CARD] ^^^ CRC Valid ✅");
                 end else begin
                     $display("[SD CARD] ^^^ Bad CRC: ours=%b, theirs=%b ❌", cmdIn_ourCRCReg, cmdIn[7:1]);
-                    `finish;
+                    `Finish;
                 end
                 
                 if (cmdIn_endBit !== 1'b1) begin
                     $display("[SD CARD] Bad end bit: %b ❌", cmdIn_endBit);
-                    // `finish;
+                    // `Finish;
                 end
                 
                 // Issue response if needed
@@ -227,7 +227,7 @@ module SDCardSim(
                     CMD7: begin
                         if (cmdIn_rca !== rca) begin
                             $display("[SD CARD] CMD7: Bad RCA received: %h ❌", cmdIn_rca);
-                            `finish;
+                            `Finish;
                         end
                         respOut=136'h070000070075ffffffffffffffffffffff;
                         respLen=48;
@@ -265,7 +265,7 @@ module SDCardSim(
                         // TODO: uncomment -- we need this check, but disabled it for the case where we don't do the initialization sequence (because we assume the SD card was already initialized)
                         // if (cmdIn_rca !== rca) begin
                         //     $display("[SD CARD] CMD55: Bad RCA received: %h ❌", cmdIn_rca);
-                        //     `finish;
+                        //     `Finish;
                         // end
                         respOut=136'h370000012083ffffffffffffffffffffff;
                         respLen=48;
@@ -279,7 +279,7 @@ module SDCardSim(
                     ACMD23: begin
                         if (!cmdIn_arg[22:0]) begin
                             $display("[SD CARD] ACMD23: Zero block count received ❌");
-                            `finish;
+                            `Finish;
                         end
                         // TODO: make this a real ACMD23 response. right now it's a CMD3 response.
                         respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
@@ -300,7 +300,7 @@ module SDCardSim(
                     
                     default: begin
                         $display("[SD CARD] BAD COMMAND: CMD%0d (%b)", cmdIn_cmdIndex, cmd);
-                        `finish;
+                        `Finish;
                     end
                     endcase
                     
@@ -410,7 +410,7 @@ module SDCardSim(
                 
                 CMD18: begin
                     // sendReadData=1 should have occurred above
-                    `assert(sendReadData);
+                    `Assert(sendReadData);
                 end
                 
                 CMD25: begin

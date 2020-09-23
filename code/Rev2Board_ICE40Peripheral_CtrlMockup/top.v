@@ -1,4 +1,6 @@
 `include "../Util.v"
+`include "../Sync.v"
+`include "../TogglePulse.v"
 `include "../ClockGen.v"
 `include "../MsgChannel.v"
 `include "../CRC7.v"
@@ -65,7 +67,7 @@ module Top(
     reg sd_crcErr = 0;
     
     reg[5:0] sd_counter = 0;
-    reg[3:0] sd_datOutCounter = 0;
+    reg[4:0] sd_datOutCounter = 0;
     reg sd_datOutLastBank = 0;
     reg sd_datOutEnding = 0;
     
@@ -168,14 +170,8 @@ module Top(
     // ====================
     // Pin: sd_clk
     // ====================
-    reg sdClkSlow=0, sdClkSlowTmp=0;
-    always @(negedge slowClk)
-        {sdClkSlow, sdClkSlowTmp} <= {sdClkSlowTmp, ctrl_sdClkSlow};
-    
-    reg sdClkFast=0, sdClkFastTmp=0;
-    always @(negedge fastClk)
-        {sdClkFast, sdClkFastTmp} <= {sdClkFastTmp, ctrl_sdClkFast};
-    
+    `Sync(sdClkSlow, ctrl_sdClkSlow, negedge, slowClk);
+    `Sync(sdClkFast, ctrl_sdClkFast, negedge, fastClk);
     assign sd_clk = (sdClkSlow ? slowClk : (sdClkFast ? fastClk : 0));
     
     
@@ -260,6 +256,7 @@ module Top(
     reg sd_sdDatOutFifo_rtrigger = 0;
     wire[15:0] sd_sdDatOutFifo_rdata;
     wire sd_sdDatOutFifo_rok;
+    wire sd_sdDatOutFifo_rbank;
     BankFifo #(
         .W(16),
         .N(8)
@@ -279,15 +276,9 @@ module Top(
     
     
     
-    reg[2:0] sd_cmdOutTriggerTmp = 0;
-    wire sd_cmdOutTrigger = sd_cmdOutTriggerTmp[2]!==sd_cmdOutTriggerTmp[1];
-    always @(posedge sd_clk)
-        sd_cmdOutTriggerTmp <= (sd_cmdOutTriggerTmp<<1)|ctrl_sdCmdOutTrigger;
     
-    reg[2:0] w_sdDatOutTriggerTmp = 0;
-    wire w_sdDatOutTrigger = w_sdDatOutTriggerTmp[2]!==w_sdDatOutTriggerTmp[1];
-    always @(posedge clk12mhz)
-        w_sdDatOutTriggerTmp <= (w_sdDatOutTriggerTmp<<1)|ctrl_sdDatOutTrigger;
+    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk);
+    `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, clk12mhz);
     
     reg[7:0] w_counter = 0;
     reg[1:0] w_state = 0;
@@ -328,10 +319,7 @@ module Top(
     reg[1:0] sd_cmdOutState = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
     
-    reg[2:0] sd_datOutTriggerTmp = 0;
-    wire sd_datOutTrigger = sd_datOutTriggerTmp[2]!==sd_datOutTriggerTmp[1];
-    always @(posedge sd_clk)
-        sd_datOutTriggerTmp <= (sd_datOutTriggerTmp<<1)|ctrl_sdDatOutTrigger;
+    `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk);
     
     always @(posedge sd_clk) begin
         sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
@@ -346,6 +334,7 @@ module Top(
         
         if (sd_cmdOutCRCOutEn) sd_shiftReg[47] <= sd_cmdOutCRC;
         if (sd_datOutCRCOutEn) sd_datOutReg[23:20] <= sd_datOutCRC;
+        // if (sd_datOutCRCOutEn) sd_datOutReg[23:20] <= 4'bxxxx;
         
         case (sd_datOutState)
         0: begin
@@ -356,6 +345,7 @@ module Top(
             sd_datOutCRCOutEn <= 0;
             if (sd_sdDatOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
+                sd_datOutReg <= 24'hFF0000; // Start bit
                 sd_datOutState <= 1;
             end
         end
@@ -373,7 +363,7 @@ module Top(
                     sd_sdDatOutFifo_rtrigger <= 1;
                 
                 end else begin
-                    $display("[SD-CTRL:DATOUT] Done writing (sd_datOutCounter: %x)", sd_datOutCounter);
+                    $display("[SD-CTRL:DATOUT] Done writing");
                     sd_datOutState <= 2;
                 end
             end
@@ -384,21 +374,22 @@ module Top(
             $display("[SD-CTRL:DATOUT] Sending CRCs");
             sd_datOutCRCEn <= 0;
             sd_datOutCRCOutEn <= 1;
-            sd_datOutCounter <= 14;
+            sd_datOutCounter <= 16;
             sd_datOutState <= 3;
         end
         
         // TODO: verify that we're writing a single end bit (1'b1), and not relying on pull up
         3: begin
             if (!sd_datOutCounter) begin
-                sd_datOutActive <= 0;
-                sd_datOutCounter <= 9;
+                sd_datOutReg <= 24'hFFFFFF; // End bit
+                sd_datOutCounter <= 10;
                 sd_datOutState <= 4;
             end
         end
         
         // Check CRC status token
         4: begin
+            sd_datOutActive <= 0;
             if (!sd_datOutCounter) begin
                 // 5 bits: start bit, CRC status, end bit
                 if (sd_datInCRCStatus !== 5'b0_010_1) begin
@@ -509,14 +500,8 @@ module Top(
     // ====================
     // Control State Machine
     // ====================
-    
-    reg ctrl_sdCmdOutDone=0, ctrl_sdCmdOutDoneTmp=0;
-    always @(posedge ctrl_clk)
-        {ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneTmp} <= {ctrl_sdCmdOutDoneTmp, sd_cmdOutDone};
-    
-    reg ctrl_sdRespReady=0, ctrl_sdRespReadyTmp=0;
-    always @(posedge ctrl_clk)
-        {ctrl_sdRespReady, ctrl_sdRespReadyTmp} <= {ctrl_sdRespReadyTmp, sd_respReady};
+    `Sync(ctrl_sdCmdOutDone, sd_cmdOutDone, posedge, ctrl_clk);
+    `Sync(ctrl_sdRespReady, sd_respReady, posedge, ctrl_clk);
     
     localparam Msg_StartBit = 1'b0;
     localparam Msg_EndBit   = 1'b1;
@@ -550,7 +535,7 @@ module Top(
         end
         
         2: begin
-            $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgCmd, ctrl_msgArg);
+            // $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgCmd, ctrl_msgArg);
             case (ctrl_msgCmd)
             // Echo
             MsgCmd_Echo: begin
@@ -572,12 +557,12 @@ module Top(
             
             // Get SD status / response
             MsgCmd_SDGetStatus: begin
-                // $display("[CTRL] Clock out SD response to master: %0d", ctrl_dinReg);
+                // $display("[CTRL] Got MsgCmd_SDGetStatus");
                 // We don't need synchronizers for sd_respCRCOK / sd_resp, because
                 // they're guarded by `ctrl_sdRespReady`, which is synchronized.
                 // Ie, sd_respCRCOK and sd_resp should be ignored unless ctrl_sdRespReady=1.
                 // TODO: add a synchronizer for `sd_datIn`
-                ctrl_doutReg <= {Msg_StartBit, sd_datIn, ctrl_sdCmdOutDone, ctrl_sdRespReady, sd_crcErr, 8'b0, sd_resp, Msg_EndBit};
+                ctrl_doutReg <= {1'b0, sd_datIn, ctrl_sdCmdOutDone, ctrl_sdRespReady, sd_crcErr, 9'b0, sd_resp, Msg_EndBit};
             end
             
             MsgCmd_SDDatOut: begin
@@ -740,11 +725,11 @@ module Testbench();
         SendSDCmd(CMD55, 32'b0);
         SendSDCmd(ACMD23, 32'b1);
         
-        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmd(CMD25, 32'b0);
-        //
-        // // Start clocking out data on DAT lines
-        // SendMsg({8'd4, 56'b0});
+        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        SendSDCmd(CMD25, 32'b0);
+
+        // Start clocking out data on DAT lines
+        SendMsg({8'd4, 56'b0});
     end
 endmodule
 `endif
