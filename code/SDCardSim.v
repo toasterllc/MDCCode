@@ -299,7 +299,7 @@ module SDCardSim(
                     end
                     
                     default: begin
-                        $display("[SD CARD] BAD COMMAND: CMD%0d", cmdIn_cmdIndex);
+                        $display("[SD CARD] BAD COMMAND: CMD%0d (%b)", cmdIn_cmdIndex, cmd);
                         `finish;
                     end
                     endcase

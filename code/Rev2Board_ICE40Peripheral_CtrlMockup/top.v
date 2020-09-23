@@ -56,13 +56,13 @@ module Top(
     wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
     reg sd_datOutActive = 0;
     reg sd_datOutCRCOutEn = 0;
-    reg sd_datCRCErr = 0;
     
     wire sd_cmdIn;
     reg[47:0] sd_resp = 0;
     reg sd_cmdOutDone = 0;
     reg sd_respReady = 0;
-    reg sd_respCRCOK = 0;
+    
+    reg sd_crcErr = 0;
     
     reg[5:0] sd_counter = 0;
     reg[3:0] sd_datOutCounter = 0;
@@ -403,7 +403,7 @@ module Top(
                 // 5 bits: start bit, CRC status, end bit
                 if (sd_datInCRCStatus !== 5'b0_010_1) begin
                     $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatus);
-                    sd_datCRCErr <= sd_datCRCErr|1;
+                    sd_crcErr <= sd_crcErr|1;
                 end else begin
                     $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
                 end
@@ -432,7 +432,6 @@ module Top(
         
         1: begin
             sd_respCRCEn <= 0;
-            sd_respCRCOK <= 1;
             if (!sd_cmdInStaged) begin
                 sd_respCRCEn <= 1;
                 sd_respState <= 2;
@@ -450,7 +449,7 @@ module Top(
             if (sd_respCRC === sd_shiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
             end else begin
-                sd_respCRCOK <= 0;
+                sd_crcErr <= sd_crcErr|1;
                 $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
                 // `finish;
             end
@@ -551,7 +550,7 @@ module Top(
         end
         
         2: begin
-            // $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgCmd, ctrl_msgArg);
+            $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgCmd, ctrl_msgArg);
             case (ctrl_msgCmd)
             // Echo
             MsgCmd_Echo: begin
@@ -578,7 +577,7 @@ module Top(
                 // they're guarded by `ctrl_sdRespReady`, which is synchronized.
                 // Ie, sd_respCRCOK and sd_resp should be ignored unless ctrl_sdRespReady=1.
                 // TODO: add a synchronizer for `sd_datIn`
-                ctrl_doutReg <= {Msg_StartBit, 9'b0, sd_datIn, ctrl_sdCmdOutDone, ctrl_sdRespReady, sd_respCRCOK, sd_resp, Msg_EndBit};
+                ctrl_doutReg <= {Msg_StartBit, sd_datIn, ctrl_sdCmdOutDone, ctrl_sdRespReady, sd_crcErr, 8'b0, sd_resp, Msg_EndBit};
             end
             
             MsgCmd_SDDatOut: begin
@@ -657,12 +656,16 @@ module Testbench();
     localparam CMD7     = 6'd7;     // SELECT_CARD/DESELECT_CARD
     localparam CMD8     = 6'd8;     // SEND_BIT_IF_COND
     localparam CMD11    = 6'd11;    // VOLTAGE_SWITCH
+    localparam CMD25    = 6'd25;    // WRITE_MULTIPLE_BLOCK
     localparam CMD41    = 6'd41;    // SD_SEND_BIT_OP_COND
     localparam CMD55    = 6'd55;    // APP_CMD
+    
+    localparam ACMD23    = 6'd23;   // SET_WR_BLK_ERASE_COUNT
     
     reg[65:0] ctrl_diReg;
     reg[65:0] ctrl_doReg;
     wire[63:0] ctrl_doReg_payload = ctrl_doReg[64:1];
+    reg[63:0] resp;
     
     always @(posedge ctrl_clk) begin
         ctrl_diReg <= ctrl_diReg<<1|1'b1;
@@ -670,6 +673,57 @@ module Testbench();
     end
     
     assign ctrl_di = ctrl_diReg[65];
+    
+    task _SendMsg(input[63:0] msg); begin
+        reg[15:0] i;
+        
+        ctrl_diReg = {START_BIT, msg, END_BIT};
+        for (i=0; i<66; i++) begin
+            wait(ctrl_clk);
+            wait(!ctrl_clk);
+        end
+    end endtask
+    
+    task SendMsg(input[63:0] msg); begin
+        reg[15:0] i;
+        
+        _SendMsg(msg);
+        
+        // Wait for msg to be consumed before sending another, otherwise we can overwrite
+        // the shift register while it's still being used
+        #100000;
+        wait(!ctrl_clk);
+    end endtask
+    
+    task SendMsgRecvResp(input[63:0] msg); begin
+        reg[15:0] i;
+        
+        _SendMsg(msg);
+        
+        // Wait for response to start
+        while (ctrl_doReg[0]) begin
+            wait(ctrl_clk);
+            wait(!ctrl_clk);
+        end
+        
+        // Load the full response
+        for (i=0; i<65; i++) begin
+            wait(ctrl_clk);
+            wait(!ctrl_clk);
+        end
+        
+        resp = ctrl_doReg_payload;
+    end endtask
+    
+    task SendSDCmd(input[5:0] sdCmd, input[31:0] sdArg); begin
+        SendMsg({8'd2, 8'b0, {2'b01, sdCmd, sdArg, 7'b0, 1'b1}});
+        
+        // Wait for SD card to respond
+        do begin
+            // Request SD status
+            SendMsgRecvResp({8'd3, 56'b0});
+        end while(!resp[58]);
+    end endtask
     
     initial begin
         reg[15:0] i, ii;
@@ -680,109 +734,17 @@ module Testbench();
         wait(!ctrl_clk);
         
         // Set SD clock source = 400 kHz
-        ctrl_diReg = {START_BIT, 8'd1, 56'b01, END_BIT};
-        for (i=0; i<66; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
+        SendMsg({8'd1, 56'b01});
         
-        for (i=0; i<128; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
-
-        // Send SD CMD0
-        ctrl_diReg = {START_BIT, 8'd2, 8'b0, {2'b01, CMD0, 32'h00000000, 7'b0, 1'b1}, END_BIT};
-        for (i=0; i<66; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
-
-        for (i=0; i<128; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
-
-        // Wait for SD command to be sent
-        sdDone = 0;
-        while (!sdDone) begin
-            ctrl_diReg = {START_BIT, 8'd3, 56'b0, END_BIT};
-            for (i=0; i<66; i++) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // Wait for response to start
-            while (ctrl_doReg[0]) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // Load the full response
-            for (i=0; i<65; i++) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg_payload[50], ctrl_doReg_payload[49], ctrl_doReg_payload[48], ctrl_doReg_payload[47:0]);
-            sdDone = ctrl_doReg_payload[50];
-        end
-
-        // Send SD CMD8
-        ctrl_diReg = {START_BIT, 8'd2, 8'b0, {2'b01, CMD8, 32'h000001AA, 7'b0, 1'b1}, END_BIT};
-        for (i=0; i<66; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
-
-        for (i=0; i<128; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
-
-        // Get SD card response
-        sdDone = 0;
-        while (!sdDone) begin
-            ctrl_diReg = {START_BIT, 8'd3, 56'b0, END_BIT};
-            for (i=0; i<66; i++) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // Wait for response to start
-            while (ctrl_doReg[0]) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // Load the full response
-            for (i=0; i<65; i++) begin
-                wait(ctrl_clk);
-                wait(!ctrl_clk);
-            end
-
-            // $display("Got respone: %b (SD command sent: %b, SD did resp: %b, CRC OK: %b, SD resp: %b)", ctrl_doReg, ctrl_doReg_payload[50], ctrl_doReg_payload[49], ctrl_doReg_payload[48], ctrl_doReg_payload[47:0]);
-            sdDone = ctrl_doReg_payload[49];
-        end
+        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        SendSDCmd(CMD55, 32'b0);
+        SendSDCmd(ACMD23, 32'b1);
         
-        
-        
-        
-        
-        
-        
-        
-        // Start clocking out data on DAT lines
-        ctrl_diReg = {START_BIT, 8'd4, 56'b0, END_BIT};
-        for (i=0; i<66; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
-
-        for (i=0; i<128; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
+        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        // SendSDCmd(CMD25, 32'b0);
+        //
+        // // Start clocking out data on DAT lines
+        // SendMsg({8'd4, 56'b0});
     end
 endmodule
 `endif
