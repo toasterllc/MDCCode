@@ -180,11 +180,13 @@ public:
     };
     
     struct SDGetStatusResp : Resp {
-        uint8_t sdDat() const { return getBits(54, 51); }
-        bool sdCommandSent() const { return getBits(50, 50); }
-        bool sdRespReady() const { return getBits(49, 49); }
-        bool sdRespCRCOK() const { return getBits(48, 48); }
-        uint64_t sdResp() const { return getBits(47, 0); }
+        uint8_t sdDat() const       { return getBits(63, 60); }
+        bool sdCommandSent() const  { return getBits(59, 59); }
+        bool sdRespRecv() const     { return getBits(58, 58); }
+        bool sdDatOutIdle() const   { return getBits(57, 57); }
+        bool sdRespCRCErr() const   { return getBits(56, 56); }
+        bool sdDatOutCRCErr() const { return getBits(55, 55); }
+        uint64_t sdResp() const     { return getBits(47, 0); }
     };
     
     using MsgPtr = std::unique_ptr<Msg>;

@@ -67,9 +67,10 @@ module Top(
     wire sd_cmdIn;
     reg[47:0] sd_resp = 0;
     reg sd_cmdOutDone = 0;
-    reg sd_respReady = 0;
+    reg sd_respRecv = 0;
     
-    reg sd_crcErr = 0;
+    reg sd_respCRCErr = 0;
+    reg sd_datOutCRCErr = 0;
     
     reg[5:0] sd_counter = 0;
     reg[1:0] sd_datOutCounter = 0;
@@ -95,9 +96,10 @@ module Top(
     // // ====================
     // // Fast Clock (204 MHz)
     // // ====================
+    // localparam FastClkFreq = 204_000_000;
     // wire fastClk;
     // ClockGen #(
-    //     .FREQ(204000000),
+    //     .FREQ(FastClkFreq),
     //     .DIVR(0),
     //     .DIVF(67),
     //     .DIVQ(2),
@@ -108,33 +110,54 @@ module Top(
     // // ====================
     // // Fast Clock (180 MHz)
     // // ====================
+    // localparam FastClkFreq = 180_000_000;
     // wire fastClk;
     // ClockGen #(
-    //     .FREQ(180000000),
+    //     .FREQ(FastClkFreq),
     //     .DIVR(0),
     //     .DIVF(59),
     //     .DIVQ(2),
     //     .FILTER_RANGE(1)
     // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
     
+    // // ====================
+    // // Fast Clock (120 MHz)
+    // // ====================
+    // localparam FastClkFreq = 120_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(79),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    
+    // // ====================
+    // // Fast Clock (18 MHz)
+    // // ====================
+    // localparam FastClkFreq = 18_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(47),
+    //     .DIVQ(5),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    
     // ====================
-    // Fast Clock (120 MHz)
+    // Fast Clock (12 MHz)
     // ====================
-    wire fastClk;
-    ClockGen #(
-        .FREQ(120000000),
-        .DIVR(0),
-        .DIVF(79),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
-    ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    localparam FastClkFreq = 12_000_000;
+    wire fastClk = clk12mhz;
     
     
     // ====================
     // Slow Clock (400 kHz)
     // ====================
     localparam SlowClkFreq = 400000;
-    localparam SlowClkDividerWidth = $clog2(DivCeil(180000000, SlowClkFreq));
+    localparam SlowClkDividerWidth = $clog2(DivCeil(FastClkFreq, SlowClkFreq));
     reg[SlowClkDividerWidth-1:0] slowClkDivider = 0;
     wire slowClk = slowClkDivider[SlowClkDividerWidth-1];
     always @(posedge fastClk) begin
@@ -408,7 +431,7 @@ module Top(
                     $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
                 end else begin
                     $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatus);
-                    sd_crcErr <= sd_crcErr|1;
+                    sd_datOutCRCErr <= sd_datOutCRCErr|1;
                 end
                 sd_datOutState <= 5;
             end
@@ -435,6 +458,7 @@ module Top(
         
         1: begin
             sd_respCRCEn <= 0;
+            sd_respCRCErr <= 0;
             if (!sd_cmdInStaged) begin
                 sd_respCRCEn <= 1;
                 sd_respState <= 2;
@@ -452,14 +476,14 @@ module Top(
             if (sd_respCRC === sd_shiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
             end else begin
-                sd_crcErr <= sd_crcErr|1;
+                sd_respCRCErr <= sd_respCRCErr|1;
                 $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
                 // `Finish;
             end
             
             if (!sd_shiftReg[47]) begin
                 sd_resp <= sd_shiftReg;
-                sd_respReady <= !sd_respReady;
+                sd_respRecv <= !sd_respRecv;
                 sd_respState <= 0;
             end
         end
@@ -512,9 +536,10 @@ module Top(
     // ====================
     wire sd_datOutIdle = &sd_datOutIdleReg;
     `ToggleAck(ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneAck, sd_cmdOutDone, posedge, ctrl_clk);
-    `ToggleAck(ctrl_sdRespReady, ctrl_sdRespReadyAck, sd_respReady, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdRespRecv, ctrl_sdRespRecvAck, sd_respRecv, posedge, ctrl_clk);
     `Sync(ctrl_sdDatOutIdle, sd_datOutIdle, posedge, ctrl_clk);
-    `Sync(ctrl_sdCRCErr, sd_crcErr, posedge, ctrl_clk);
+    `Sync(ctrl_sdRespCRCErr, sd_respCRCErr, posedge, ctrl_clk);
+    `Sync(ctrl_sdDatOutCRCErr, sd_datOutCRCErr, posedge, ctrl_clk);
     
     localparam Msg_StartBit = 1'b0;
     localparam Msg_EndBit   = 1'b1;
@@ -567,7 +592,7 @@ module Top(
                 $display("[CTRL] Got SDSendCmd");
                 // Clear our signals so they can be reliably observed via SDGetStatus
                 if (ctrl_sdCmdOutDone) ctrl_sdCmdOutDoneAck <= !ctrl_sdCmdOutDoneAck;
-                if (ctrl_sdRespReady) ctrl_sdRespReadyAck <= !ctrl_sdRespReadyAck;
+                if (ctrl_sdRespRecv) ctrl_sdRespRecvAck <= !ctrl_sdRespRecvAck;
                 ctrl_sdCmdOutTrigger <= !ctrl_sdCmdOutTrigger;
             end
             
@@ -575,18 +600,21 @@ module Top(
             MsgCmd_SDGetStatus: begin
                 // $display("[CTRL] Got MsgCmd_SDGetStatus");
                 // We don't need a synchronizer for sd_resp because
-                // it's guarded by `ctrl_sdRespReady`, which is synchronized.
-                // Ie, sd_resp should be ignored unless ctrl_sdRespReady=1.
+                // it's guarded by `ctrl_sdRespRecv`, which is synchronized.
+                // Ie, sd_resp should be ignored unless ctrl_sdRespRecv=1.
                 // TODO: add a synchronizer for `sd_datIn`
                 ctrl_doutReg <=
                     {Msg_StartBit,
-                        sd_datIn,                           // 63:60
-                        ctrl_sdCmdOutDone,                  // 59
-                        ctrl_sdRespReady,                   // 58
-                        ctrl_sdDatOutIdle,                  // 57
-                        ctrl_sdCRCErr,                      // 56
-                        8'b0,                               // 55:48
-                        sd_resp,                            // 47:0
+                        sd_datIn,               // 63:60
+                        ctrl_sdCmdOutDone,      // 59
+                        ctrl_sdRespRecv,        // 58
+                        ctrl_sdDatOutIdle,      // 57
+                        
+                        ctrl_sdRespCRCErr,      // 56       Reset every SD response (since some responses have incorrect CRCs, like ACMD41)
+                        ctrl_sdDatOutCRCErr,    // 55       Accumulates, never reset
+                        
+                        7'b0,                   // 55:48
+                        sd_resp,                // 47:0
                     Msg_EndBit};
             end
             
@@ -743,8 +771,11 @@ module Testbench();
         wait(ctrl_clk);
         wait(!ctrl_clk);
         
-        // Set SD clock source = 400 kHz
-        SendMsg({8'd1, 56'b01});
+        // Disable SD clock
+        SendMsg({8'd1, 56'b00});
+        
+        // Set SD clock source = fast clock
+        SendMsg({8'd1, 56'b10});
         
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         SendSDCmd(CMD55, 32'b0);
