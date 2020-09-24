@@ -55,7 +55,6 @@ module Top(
     wire[3:0] sd_datIn;
     reg[19:0] sd_datOutReg = 0;
     reg[19:0] sd_datInReg = 0;
-    reg sd_datInCRCStatusChecked = 0;
     wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
     wire[3:0] sd_datOutCRC;
     reg sd_datOutCRCEn = 0;
@@ -350,7 +349,6 @@ module Top(
         if (sd_datOutCRCOutEn) sd_datOutReg[19:16] <= sd_datOutCRC;
         if (sd_datOutStartBit) sd_datOutReg[19:16] <= 4'b0000;
         if (sd_datOutEndBit)   sd_datOutReg[19:16] <= 4'b1111;
-        // if (sd_datOutCRCOutEn) sd_datOutReg[23:20] <= 4'bxxxx;
         
         case (sd_datOutState)
         0: begin
@@ -359,7 +357,6 @@ module Top(
             sd_datOutActive <= 0;
             sd_datOutEnding <= 0;
             sd_datOutCRCEn <= 0;
-            sd_datInCRCStatusChecked <= 0;
             sd_datOutStartBit <= 1;
             if (sd_sdDatOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
@@ -402,10 +399,6 @@ module Top(
         4: begin
             sd_datOutActive[0] <= 0;
             sd_datOutCRCOutEn <= 0;
-            
-            // $display("[SD-CTRL:DATOUT] DatOut: %0d  %b", sd_datOutCRCCounter, sd_datInCRCStatus);
-            // if (!sd_datInCRCStatusChecked && !sd_datOutCRCCounter===4) begin
-            //     sd_datInCRCStatusChecked <= 1;
             if (sd_datOutCRCCounter === 4) begin
                 // 5 bits: start bit, CRC status, end bit
                 if (sd_datInCRCStatus === 5'b0_010_1) begin

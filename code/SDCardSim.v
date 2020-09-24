@@ -452,10 +452,19 @@ module SDCardSim(
                 reg[7:0] count;
                 
                 // Wait for start bit
-                while (sd_dat[0] && recvWriteData) begin
+                while (sd_dat[0]===1'b1 && recvWriteData) begin
                     wait(!sd_clk);
                     wait(sd_clk);
                 end
+                
+                if (recvWriteData) begin
+                    if (sd_dat[0] === 1'b0) begin
+                        $display("[SD CARD] Good start bit ✅");
+                    end else begin
+                        $display("[SD CARD] Bad start bit ❌: %b", sd_dat[0]);
+                    end
+                end
+                
                 wait(!sd_clk);
                 
                 dat_crcRst_ = 1;
