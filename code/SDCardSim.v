@@ -563,7 +563,7 @@ module SDCardSim(
                 end
                 
                 // Send CRC status token
-                if (recvWriteData && crcOK) begin
+                if (recvWriteData) begin
                     // Wait 2 cycles before sending CRC status
                     wait(sd_clk);
                     wait(!sd_clk);
@@ -571,25 +571,50 @@ module SDCardSim(
                     wait(sd_clk);
                     wait(!sd_clk);
                     
-                    datOut = 4'b0000;
-                    wait(sd_clk);
-                    wait(!sd_clk);
+                    if (crcOK) begin
+                        // Positive CRC status
+                        datOut = 4'b0000;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0000;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0001;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0000;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0001;
+                        wait(sd_clk);
+                        wait(!sd_clk);
                     
-                    datOut = 4'b0000;
-                    wait(sd_clk);
-                    wait(!sd_clk);
-                    
-                    datOut = 4'b0001;
-                    wait(sd_clk);
-                    wait(!sd_clk);
-                    
-                    datOut = 4'b0000;
-                    wait(sd_clk);
-                    wait(!sd_clk);
-                    
-                    datOut = 4'b0001;
-                    wait(sd_clk);
-                    wait(!sd_clk);
+                    end else begin
+                        // Negative CRC status
+                        datOut = 4'b0000;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0001;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0000;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0001;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                        
+                        datOut = 4'b0001;
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                    end
                     
                     // Send busy signal for a random number of cycles
                     count = $urandom%10;
