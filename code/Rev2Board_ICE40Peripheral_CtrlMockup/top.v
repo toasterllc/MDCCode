@@ -318,7 +318,7 @@ module Top(
     // SD State Machine
     // ====================
     
-    reg[2:0] sd_datOutState = 0;
+    reg[1:0] sd_datOutState = 0;
     reg[1:0] sd_respState = 0;
     reg[1:0] sd_cmdOutState = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
@@ -390,9 +390,7 @@ module Top(
             // $display("[SD-CTRL:DATOUT] DatOut: %0d  %b", sd_datOutCRCCounter, sd_datInCRCStatus);
             sd_datOutActive <= 0;
             
-            // if (!sd_datInCRCStatusChecked && !sd_datOutCRCCounter===4) begin
-            //     sd_datInCRCStatusChecked <= 1;
-            if (sd_datOutCRCCounter === 4) begin
+            if (sd_datOutCRCCounter===4) begin
                 // 5 bits: start bit, CRC status, end bit
                 if (sd_datInCRCStatus === 5'b0_010_1) begin
                     $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
@@ -400,17 +398,18 @@ module Top(
                     $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatus);
                     sd_crcErr <= sd_crcErr|1;
                 end
-                sd_datOutState <= 4;
+                sd_datInCRCStatusChecked <= 1;
             end
-        end
-        
-        // Wait until the card stops being busy (busy == DAT0 low)
-        4: begin
-            if (sd_datInReg[0]) begin
-                $display("[SD-CTRL:DATOUT] Card ready");
-                sd_datOutState <= 0;
-            end else begin
-                $display("[SD-CTRL:DATOUT] Card busy");
+            
+            // After checking the CRC status, wait until the card
+            // stops being busy (busy == DAT0 low)
+            if (sd_datInCRCStatusChecked) begin
+                if (sd_datInReg[0]) begin
+                    $display("[SD-CTRL:DATOUT] Card ready");
+                    sd_datOutState <= 0;
+                end else begin
+                    $display("[SD-CTRL:DATOUT] Card busy");
+                end
             end
         end
         endcase
