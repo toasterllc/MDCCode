@@ -450,6 +450,7 @@ module SDCardSim(
             if (recvWriteData) begin
                 reg[15:0] i;
                 reg[7:0] count;
+                reg crcOK;
                 
                 // Wait for start bit
                 while (sd_dat[0]===1'b1 && recvWriteData) begin
@@ -497,30 +498,34 @@ module SDCardSim(
                 end
                 
                 // Check CRCs
+                crcOK = 1;
                 if (recvWriteData) begin
                     if (dat_ourCRCReg[3] === dat_theirCRCReg[3]) begin
                         $display("[SD CARD] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                     end else begin
                         $display("[SD CARD] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
-                        `Finish;
+                        crcOK = 0;
                     end
                     
                     if (dat_ourCRCReg[2] === dat_theirCRCReg[2]) begin
                         $display("[SD CARD] DAT2: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                     end else begin
                         $display("[SD CARD] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[2], dat_theirCRCReg[2]);
+                        crcOK = 0;
                     end
                     
                     if (dat_ourCRCReg[1] === dat_theirCRCReg[1]) begin
                         $display("[SD CARD] DAT1: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                     end else begin
                         $display("[SD CARD] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[1], dat_theirCRCReg[1]);
+                        crcOK = 0;
                     end
                     
                     if (dat_ourCRCReg[0] === dat_theirCRCReg[0]) begin
                         $display("[SD CARD] DAT0: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[0], dat_theirCRCReg[0]);
                     end else begin
                         $display("[SD CARD] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[0], dat_theirCRCReg[0]);
+                        crcOK = 0;
                     end
                 end
                 
@@ -531,30 +536,34 @@ module SDCardSim(
                         $display("[SD CARD] DAT3: End bit OK ✅");
                     end else begin
                         $display("[SD CARD] DAT3: Bad end bit: %b ❌", sd_dat[3]);
+                        crcOK = 0;
                     end
                     
                     if (sd_dat[2] === 1'b1) begin
                         $display("[SD CARD] DAT2: End bit OK ✅");
                     end else begin
                         $display("[SD CARD] DAT2: Bad end bit: %b ❌", sd_dat[2]);
+                        crcOK = 0;
                     end
                     
                     if (sd_dat[1] === 1'b1) begin
                         $display("[SD CARD] DAT1: End bit OK ✅");
                     end else begin
                         $display("[SD CARD] DAT1: Bad end bit: %b ❌", sd_dat[1]);
+                        crcOK = 0;
                     end
                     
                     if (sd_dat[0] === 1'b1) begin
                         $display("[SD CARD] DAT0: End bit OK ✅");
                     end else begin
                         $display("[SD CARD] DAT0: Bad end bit: %b ❌", sd_dat[0]);
+                        crcOK = 0;
                     end
                     wait(!sd_clk);
                 end
                 
                 // Send CRC status token
-                if (recvWriteData) begin
+                if (recvWriteData && crcOK) begin
                     // Wait 2 cycles before sending CRC status
                     wait(sd_clk);
                     wait(!sd_clk);
