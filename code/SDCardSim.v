@@ -493,6 +493,7 @@ module SDCardSim(
                         $display("[SD CARD] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                     end else begin
                         $display("[SD CARD] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
+                        `Finish;
                     end
                     
                     if (dat_ourCRCReg[2] === dat_theirCRCReg[2]) begin
