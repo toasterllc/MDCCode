@@ -306,9 +306,9 @@ module Top(
             if (w_sdDatOutFifo_wok) begin
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
-            // if (w_counter === 8'hFF) begin
-            //     w_state <= 0;
-            // end
+            if (w_counter === 8'hFF) begin
+                w_state <= 0;
+            end
             // w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             // if (w_sdDatOutFifo_wdata === 8'hFF) begin
             //     w_state <= 0;
@@ -345,7 +345,6 @@ module Top(
         
         if (!sd_datOutCounter) sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
         if (sd_cmdOutCRCOutEn) sd_shiftReg[47] <= sd_cmdOutCRC;
-        // TODO: bits sd_datOutReg[15:12] depend on both sd_datOutCounter and sd_datOutEnding[1]. can we make them depend on only one? add 4 more bits to sd_datOutReg?
         if (sd_datOutCRCOutEn) sd_datOutReg[19:16] <= sd_datOutCRC;
         if (sd_datOutStartBit) sd_datOutReg[19:16] <= 4'b0000;
         if (sd_datOutEndBit)   sd_datOutReg[19:16] <= 4'b1111;
@@ -736,7 +735,7 @@ module Testbench();
         
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, 32'b0);
-
+        
         // Start clocking out data on DAT lines
         SendMsg({8'd4, 56'b0});
     end
