@@ -22,11 +22,12 @@ proj="$3"
 cd "$proj/tmp"
 
 # Place and route the design ({top.json, pins.pcf} -> .asc)
-trialCount=20
+trialCount=50
 freqTotal=0
 freqMin=99999999
 freqMax=0
 for (( i=0; i<$trialCount; i++)); do
+    echo "Trial $i"
     freq=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained 2>&1 | grep 'Info: Max frequency for clock.*sd_clk$SB_IO_OUT_$glb_clk' | tail -1 | cut -d " " -f 8 )
     freqTotal=$( echo "scale=4; $freqTotal+$freq" | bc )
     

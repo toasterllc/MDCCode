@@ -53,11 +53,14 @@ module Top(
     wire sd_respCRC;
     
     wire[3:0] sd_datIn;
-    reg[23:0] sd_datOutReg = 0;
+    reg[15:0] sd_datOutReg = 0;
     reg[19:0] sd_datInReg = 0;
+    reg sd_datInCRCStatusChecked = 0;
     wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
-    reg sd_datOutActive = 0;
+    wire[3:0] sd_datOutCRC;
+    reg sd_datOutCRCEn = 0;
     reg sd_datOutCRCOutEn = 0;
+    reg sd_datOutActive = 0;
     
     wire sd_cmdIn;
     reg[47:0] sd_resp = 0;
@@ -67,7 +70,8 @@ module Top(
     reg sd_crcErr = 0;
     
     reg[5:0] sd_counter = 0;
-    reg[4:0] sd_datOutCounter = 0;
+    reg[1:0] sd_datOutCounter = 0;
+    reg[3:0] sd_datOutCRCCounter = 0;
     reg sd_datOutLastBank = 0;
     reg sd_datOutEnding = 0;
     
@@ -202,7 +206,7 @@ module Top(
             .OUTPUT_CLK(sd_clk),
             .PACKAGE_PIN(sd_dat[i]),
             .OUTPUT_ENABLE(sd_datOutActive),
-            .D_OUT_0(sd_datOutReg[20+i]),
+            .D_OUT_0(sd_datOutReg[12+i]),
             .D_IN_0(sd_datIn[i])
         );
     end
@@ -231,13 +235,13 @@ module Top(
         .dout(sd_respCRC) // TODO: search and replace
     );
     
-    wire[3:0] sd_datOutCRC;
-    reg sd_datOutCRCEn = 0;
     for (i=0; i<4; i=i+1) begin
-        CRC16 CRC16_dat(
+        CRC16 #(
+            .Delay(-1)
+        ) CRC16_dat(
             .clk(sd_clk),
             .en(sd_datOutCRCEn),
-            .din(sd_datOutReg[16+i]),
+            .din(sd_datOutReg[12+i]),
             .dout(sd_datOutCRC[i])
         );
     end
@@ -325,27 +329,30 @@ module Top(
         sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
         sd_counter <= sd_counter-1;
         sd_datOutCounter <= sd_datOutCounter-1;
+        sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
-        sd_datOutReg <= sd_datOutReg<<4|4'b1111;
+        sd_datOutReg <= sd_datOutReg<<4;
         sd_datInReg <= (sd_datInReg<<4)|{sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
         sd_sdDatOutFifo_rtrigger <= 0; // Pulse
         sd_datOutLastBank <= sd_sdDatOutFifo_rbank;
         sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_sdDatOutFifo_rbank);
         
+        if (!sd_datOutCounter) sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
         if (sd_cmdOutCRCOutEn) sd_shiftReg[47] <= sd_cmdOutCRC;
-        if (sd_datOutCRCOutEn) sd_datOutReg[23:20] <= sd_datOutCRC;
+        // TODO: bits sd_datOutReg[15:12] depend on both sd_datOutCounter and sd_datOutEnding[1]. can we make them depend on only one? add 4 more bits to sd_datOutReg?
+        if (sd_datOutCRCOutEn) sd_datOutReg[15:12] <= sd_datOutCRC;
         // if (sd_datOutCRCOutEn) sd_datOutReg[23:20] <= 4'bxxxx;
         
         case (sd_datOutState)
         0: begin
-            sd_datOutCounter <= 0;
+            sd_datOutCounter <= 1;
+            sd_datOutCRCCounter <= 0;
             sd_datOutActive <= 0;
             sd_datOutEnding <= 0;
             sd_datOutCRCEn <= 0;
-            sd_datOutCRCOutEn <= 0;
+            sd_datInCRCStatusChecked <= 0;
             if (sd_sdDatOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
-                sd_datOutReg <= 24'hFF0000; // Start bit
                 sd_datOutState <= 1;
             end
         end
@@ -355,55 +362,50 @@ module Top(
             sd_datOutCRCEn <= 1;
             
             if (!sd_datOutCounter) begin
-                sd_datOutCounter <= 3;
-                sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
-                
-                if (!sd_datOutEnding) begin
-                    $display("[SD-CTRL:DATOUT]   Write another word: %x", sd_sdDatOutFifo_rdata);
-                    sd_sdDatOutFifo_rtrigger <= 1;
-                
-                end else begin
-                    $display("[SD-CTRL:DATOUT] Done writing");
-                    sd_datOutState <= 2;
-                end
+                $display("[SD-CTRL:DATOUT]   Write another word: %x", sd_sdDatOutFifo_rdata);
+                sd_sdDatOutFifo_rtrigger <= 1;
+            end
+            
+            if (sd_datOutEnding) begin
+                $display("[SD-CTRL:DATOUT] Done writing");
+                sd_datOutCRCOutEn <= 1;
+                sd_datOutState <= 2;
             end
         end
         
-        // TODO: for perf, try removing this state by moving it into the previous one
+        // Wait for CRC to be clocked out and supply end bit
         2: begin
-            $display("[SD-CTRL:DATOUT] Sending CRCs");
+            // $display("sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
+            // `Finish;
             sd_datOutCRCEn <= 0;
-            sd_datOutCRCOutEn <= 1;
-            sd_datOutCounter <= 16;
-            sd_datOutState <= 3;
-        end
-        
-        // TODO: verify that we're writing a single end bit (1'b1), and not relying on pull up
-        3: begin
-            if (!sd_datOutCounter) begin
-                sd_datOutReg <= 24'hFFFFFF; // End bit
-                sd_datOutCounter <= 10;
-                sd_datOutState <= 4;
+            if (!sd_datOutCRCEn && sd_datOutCRCCounter===15) begin
+                sd_datOutReg[15:12] <= 4'b1111;
+                sd_datOutCRCOutEn <= 0;
+                sd_datOutState <= 3;
             end
         end
         
         // Check CRC status token
-        4: begin
+        3: begin
+            // $display("[SD-CTRL:DATOUT] DatOut: %0d  %b", sd_datOutCRCCounter, sd_datInCRCStatus);
             sd_datOutActive <= 0;
-            if (!sd_datOutCounter) begin
+            
+            // if (!sd_datInCRCStatusChecked && !sd_datOutCRCCounter===4) begin
+            //     sd_datInCRCStatusChecked <= 1;
+            if (sd_datOutCRCCounter === 4) begin
                 // 5 bits: start bit, CRC status, end bit
-                if (sd_datInCRCStatus !== 5'b0_010_1) begin
+                if (sd_datInCRCStatus === 5'b0_010_1) begin
+                    $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
+                end else begin
                     $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatus);
                     sd_crcErr <= sd_crcErr|1;
-                end else begin
-                    $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
                 end
-                sd_datOutState <= 5;
+                sd_datOutState <= 4;
             end
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        5: begin
+        4: begin
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 sd_datOutState <= 0;
@@ -442,7 +444,7 @@ module Top(
             end else begin
                 sd_crcErr <= sd_crcErr|1;
                 $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
-                // `finish;
+                // `Finish;
             end
             
             if (!sd_shiftReg[47]) begin
@@ -610,7 +612,7 @@ module Testbench();
     
     initial begin
         #100000000;
-        `finish;
+        `Finish;
     end
     
     initial begin

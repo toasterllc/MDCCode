@@ -489,56 +489,56 @@ module SDCardSim(
                 
                 // Check CRCs
                 if (recvWriteData) begin
-                    if (dat_ourCRCReg[3] !== dat_theirCRCReg[3]) begin
-                        $display("[SD CARD] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
-                    end else begin
+                    if (dat_ourCRCReg[3] === dat_theirCRCReg[3]) begin
                         $display("[SD CARD] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[3], dat_theirCRCReg[3]);
+                    end else begin
+                        $display("[SD CARD] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                     end
                     
-                    if (dat_ourCRCReg[2] !== dat_theirCRCReg[2]) begin
-                        $display("[SD CARD] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[2], dat_theirCRCReg[2]);
-                    end else begin
+                    if (dat_ourCRCReg[2] === dat_theirCRCReg[2]) begin
                         $display("[SD CARD] DAT2: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[2], dat_theirCRCReg[2]);
+                    end else begin
+                        $display("[SD CARD] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                     end
                     
-                    if (dat_ourCRCReg[1] !== dat_theirCRCReg[1]) begin
-                        $display("[SD CARD] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[1], dat_theirCRCReg[1]);
-                    end else begin
+                    if (dat_ourCRCReg[1] === dat_theirCRCReg[1]) begin
                         $display("[SD CARD] DAT1: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[1], dat_theirCRCReg[1]);
+                    end else begin
+                        $display("[SD CARD] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                     end
                     
-                    if (dat_ourCRCReg[0] !== dat_theirCRCReg[0]) begin
-                        $display("[SD CARD] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[0], dat_theirCRCReg[0]);
-                    end else begin
+                    if (dat_ourCRCReg[0] === dat_theirCRCReg[0]) begin
                         $display("[SD CARD] DAT0: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[0], dat_theirCRCReg[0]);
+                    end else begin
+                        $display("[SD CARD] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[0], dat_theirCRCReg[0]);
                     end
                 end
                 
                 // Check end bits
                 if (recvWriteData) begin
                     wait(sd_clk);
-                    if (!sd_dat[3]) begin
-                        $display("[SD CARD] DAT3: Bad end bit: %b ❌", sd_dat[3]);
-                    end else begin
+                    if (sd_dat[3] === 1'b1) begin
                         $display("[SD CARD] DAT3: End bit OK ✅");
+                    end else begin
+                        $display("[SD CARD] DAT3: Bad end bit: %b ❌", sd_dat[3]);
                     end
                     
-                    if (!sd_dat[2]) begin
-                        $display("[SD CARD] DAT2: Bad end bit: %b ❌", sd_dat[2]);
-                    end else begin
+                    if (sd_dat[2] === 1'b1) begin
                         $display("[SD CARD] DAT2: End bit OK ✅");
+                    end else begin
+                        $display("[SD CARD] DAT2: Bad end bit: %b ❌", sd_dat[2]);
                     end
                     
-                    if (!sd_dat[1]) begin
-                        $display("[SD CARD] DAT1: Bad end bit: %b ❌", sd_dat[1]);
-                    end else begin
+                    if (sd_dat[1] === 1'b1) begin
                         $display("[SD CARD] DAT1: End bit OK ✅");
+                    end else begin
+                        $display("[SD CARD] DAT1: Bad end bit: %b ❌", sd_dat[1]);
                     end
                     
-                    if (!sd_dat[0]) begin
-                        $display("[SD CARD] DAT0: Bad end bit: %b ❌", sd_dat[0]);
-                    end else begin
+                    if (sd_dat[0] === 1'b1) begin
                         $display("[SD CARD] DAT0: End bit OK ✅");
+                    end else begin
+                        $display("[SD CARD] DAT0: Bad end bit: %b ❌", sd_dat[0]);
                     end
                     wait(!sd_clk);
                 end
