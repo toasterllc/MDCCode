@@ -7,12 +7,40 @@
 
 `timescale 1ns/1ps
 
-module Inv(
-    input wire in,
-    output wire out
-);
-    assign out = !in;
-endmodule
+// module Buf(
+//     input wire in,
+//     output wire out
+// );
+//     SB_LUT4 #(
+//         .LUT_INIT(16'bxxxx_xxxx_xxxx_xx10)
+//     ) SB_LUT4(
+//         .I3(1'b0),
+//         .I2(1'b0),
+//         .I1(1'b0),
+//         .I0(in),
+//         .O(out)
+//     );
+// endmodule
+//
+// module Delay #(
+//     parameter Count = 1
+// )(
+//     input wire in,
+//     output wire out
+// );
+//     wire[Count:0] bits;
+//     assign bits[0] = in;
+//     assign out = bits[Count];
+//
+//     genvar i;
+//     for (i=0; i<Count; i=i+1) begin
+//         Buf Buf(.in(bits[i]), .out(bits[i+1]));
+//     end
+// endmodule
+
+
+
+
 
 module Delay #(
     parameter Count = 1
@@ -23,12 +51,20 @@ module Delay #(
     wire[Count:0] bits;
     assign bits[0] = in;
     assign out = bits[Count];
-    
     genvar i;
     for (i=0; i<Count; i=i+1) begin
-        (* keep *) (* syn_keep *) (* blackbox *) Inv Inv(.in(bits[i]), .out(bits[i+1]));
+        SB_LUT4 #(
+            .LUT_INIT(16'bxxxx_xxxx_xxxx_xx10)
+        ) SB_LUT4(
+            .I3(1'b0),
+            .I2(1'b0),
+            .I1(1'b0),
+            .I0(bits[i]),
+            .O(bits[i+1])
+        );
     end
 endmodule
+
 
 module Top(
     input wire          clk12mhz,
