@@ -61,7 +61,7 @@ module Top(
     wire[3:0] sd_datOutCRC;
     reg sd_datOutCRCEn = 0;
     reg sd_datOutCRCOutEn = 0;
-    reg[1:0] sd_datOutActive = 0;
+    reg sd_datOutActive = 0;
     reg sd_datOutStartBit = 0;
     reg sd_datOutEndBit = 0;
     
@@ -75,7 +75,7 @@ module Top(
     
     reg[5:0] sd_counter = 0;
     reg[1:0] sd_datOutCounter = 0;
-    reg[3:0] sd_datOutCRCCounter = 0;
+    reg[4:0] sd_datOutCRCCounter = 0;
     reg sd_datOutLastBank = 0;
     reg sd_datOutEnding = 0;
     
@@ -237,7 +237,7 @@ module Top(
             .INPUT_CLK(sd_clk_int),
             .OUTPUT_CLK(sd_clk_int),
             .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_ENABLE(sd_datOutActive[1]),
+            .OUTPUT_ENABLE(sd_datOutActive),
             .D_OUT_0(sd_datOutReg[16+i]),
             .D_IN_0(sd_datIn[i])
         );
@@ -374,7 +374,6 @@ module Top(
         sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_sdDatOutFifo_rbank);
         sd_datOutStartBit <= 0; // Pulse
         sd_datOutEndBit <= 0; // Pulse
-        sd_datOutActive <= sd_datOutActive<<1|sd_datOutActive[0];
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
         sd_datInCRCStatusReg <= sd_datInCRCStatusReg<<1|sd_datInCRCStatusOK;
         
@@ -403,7 +402,7 @@ module Top(
         end
         
         1: begin
-            sd_datOutActive <= ~0;
+            sd_datOutActive <= 1;
             sd_datOutCRCEn <= 1;
             
             if (!sd_datOutCounter) begin
@@ -419,31 +418,31 @@ module Top(
         
         // Wait for CRC to be clocked out and supply end bit
         2: begin
-            // $display("sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
+            $display("sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
             // `Finish;
             sd_datOutCRCOutEn <= 1;
-            if (sd_datOutCRCCounter === 1) begin
+            if (sd_datOutCRCCounter === 16) begin
+                sd_datOutCRCEn <= 0;
+                sd_datOutEndBit <= 1;
                 sd_datOutState <= 3;
             end
         end
         
-        3: begin
-            sd_datOutCRCEn <= 0;
-            sd_datOutEndBit <= 1;
-            sd_datOutState <= 4;
-        end
-        
         // Check CRC status token
-        4: begin
-            sd_datOutActive[0] <= 0;
+        3: begin
+            // $display("meowmix sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
             sd_datOutCRCOutEn <= 0;
+            if (sd_datOutCRCCounter === 14) begin
+                sd_datOutActive <= 0;
+            end
+            
             if (sd_datOutCRCCounter === 4) begin
-                sd_datOutState <= 5;
+                sd_datOutState <= 4;
             end
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        5: begin
+        4: begin
             $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusReg: %b", sd_datInCRCStatusReg);
             // 5 bits: start bit, CRC status, end bit
             if (sd_datInCRCStatusReg) begin
@@ -452,10 +451,10 @@ module Top(
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusReg);
                 sd_datOutCRCErr <= 1;
             end
-            sd_datOutState <= 6;
+            sd_datOutState <= 5;
         end
         
-        6: begin
+        5: begin
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 sd_datOutState <= 0;
@@ -478,13 +477,13 @@ module Top(
                 sd_respState <= 1;
             end
         end
-        
+
         1: begin
             sd_respGo <= 0;
             if (!sd_shiftReg[40]) begin
                 sd_respCRCEn <= 0;
             end
-            
+
             if (!sd_respCRCEn) begin
                 if (sd_respCRC === sd_shiftReg[1]) begin
                     $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
@@ -494,7 +493,7 @@ module Top(
                     // `Finish;
                 end
             end
-            
+
             if (!sd_shiftReg[47]) begin
                 sd_resp <= sd_shiftReg;
                 sd_respRecv <= !sd_respRecv;
@@ -517,23 +516,23 @@ module Top(
                 sd_cmdOutState <= 1;
             end
         end
-        
+
         1: begin
             if (sd_counter === 9) begin
                 sd_cmdOutCRCOutEn <= 1;
                 // sd_cmdOutCRCEn <= 0;
             end
-            
+
             // TODO: improve perf by making sd_cmdOutCRCEn a shift reg?
             if (sd_counter === 8) begin
                 sd_cmdOutCRCEn <= 0;
             end
-            
+
             if (sd_counter === 3) begin
                 sd_cmdOutState <= 2;
             end
         end
-        
+
         2: begin
             sd_cmdOutCRCOutEn <= 0;
             sd_cmdOutDone <= !sd_cmdOutDone;
