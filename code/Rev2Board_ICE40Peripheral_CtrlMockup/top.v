@@ -43,7 +43,7 @@ module Top(
     // ====================
     // Registers
     // ====================
-    reg[47:0] sd_shiftReg = 0;
+    reg[48:0] sd_shiftReg = 0;
     reg[2:0] sd_cmdOutActive = 0;
     
     reg sd_cmdOutStartBit = 0;
@@ -223,7 +223,7 @@ module Top(
         .OUTPUT_CLK(sd_clk_int),
         .PACKAGE_PIN(sd_cmd),
         .OUTPUT_ENABLE(sd_cmdOutActive[0]),
-        .D_OUT_0(sd_shiftReg[47]),
+        .D_OUT_0(sd_shiftReg[48]),
         .D_IN_0(sd_cmdIn)
     );
     
@@ -255,7 +255,7 @@ module Top(
     ) CRC7_sd_cmdOut(
         .clk(sd_clk_int),
         .en(sd_cmdOutCRCEn),
-        .din(sd_shiftReg[47]),
+        .din(sd_shiftReg[48]),
         .dout(sd_cmdOutCRC)
     );
     
@@ -355,9 +355,10 @@ module Top(
     
     reg[2:0] sd_datOutState = 0;
     reg[1:0] sd_respState = 0;
-    reg[2:0] sd_cmdOutState = 0;
+    reg[1:0] sd_cmdOutState = 0;
     reg[1:0] sd_datOutIdleReg = 0;
-    wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
+    reg sd_respInStaged = 0;
+    reg sd_respGo = 0;
     
     `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk_int);
     
@@ -378,10 +379,11 @@ module Top(
         sd_datOutActive <= sd_datOutActive<<1|sd_datOutActive[0];
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
         
-        sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
-        if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
-        if (sd_cmdOutStartBit)  sd_shiftReg[47] <= 1'b0;
-        if (sd_cmdOutEndBit)    sd_shiftReg[47] <= 1'b1;
+        sd_shiftReg <= sd_shiftReg<<1|sd_respInStaged;
+        sd_respInStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
+        if (sd_cmdOutCRCOutEn)  sd_shiftReg[48] <= sd_cmdOutCRC;
+        if (sd_cmdOutStartBit)  sd_shiftReg[48] <= 1'b0;
+        if (sd_cmdOutEndBit)    sd_shiftReg[48] <= 1'b1;
         
         if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
         if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
@@ -467,31 +469,28 @@ module Top(
         
         case (sd_respState)
         0: begin
+            sd_respCRCEn <= 0;
+            sd_respCRCErr <= 0;
+            if (sd_respGo && !sd_respInStaged) begin
+                sd_respCRCEn <= 1;
+                sd_respState <= 1;
+            end
         end
         
         1: begin
-            sd_respCRCEn <= 0;
-            sd_respCRCErr <= 0;
-            if (!sd_cmdInStaged) begin
-                sd_respCRCEn <= 1;
-                sd_respState <= 2;
-            end
-        end
-        
-        2: begin
+            sd_respGo <= 0;
             if (!sd_shiftReg[40]) begin
                 sd_respCRCEn <= 0;
-                sd_respState <= 3;
             end
-        end
-        
-        3: begin
-            if (sd_respCRC === sd_shiftReg[1]) begin
-                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
-            end else begin
-                sd_respCRCErr <= sd_respCRCErr|1;
-                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
-                // `Finish;
+            
+            if (!sd_respCRCEn) begin
+                if (sd_respCRC === sd_shiftReg[1]) begin
+                    $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
+                end else begin
+                    sd_respCRCErr <= sd_respCRCErr|1;
+                    $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
+                    // `Finish;
+                end
             end
             
             if (!sd_shiftReg[47]) begin
@@ -504,9 +503,6 @@ module Top(
         
         
         
-        
-        
-        
         case (sd_cmdOutState)
         0: begin
             sd_counter <= 48;
@@ -514,48 +510,33 @@ module Top(
             sd_cmdOutActive[0] <= 0;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
+                sd_shiftReg <= ctrl_msgArg;
                 sd_cmdOutState <= 1;
             end
         end
         
         1: begin
             sd_cmdOutActive[0] <= 1;
-            sd_shiftReg <= ctrl_msgArg;
             sd_cmdOutCRCEn <= 1;
-            sd_respState <= 0;
-            sd_cmdOutState <= 2;
+            
+            if (sd_counter === 9) begin
+                sd_cmdOutCRCOutEn <= 1;
+                sd_cmdOutCRCEn <= 0;
+            end
+            
+            if (sd_counter === 3) begin
+                sd_cmdOutState <= 2;
+            end
         end
         
         2: begin
-            // $display("sd_counter: %0d", sd_counter);
-            if (sd_counter === 10) begin
-                sd_cmdOutState <= 3;
-            end
-        end
-        
-        3: begin
-            sd_cmdOutCRCOutEn <= 1;
-            sd_cmdOutCRCEn <= 0;
-            if (sd_counter === 3) begin
-                sd_cmdOutState <= 4;
-            end
-        end
-        
-        4: begin
             sd_cmdOutCRCOutEn <= 0;
             sd_cmdOutEndBit <= 1;
-            sd_cmdOutState <= 5;
-        end
-        
-        5: begin
-            sd_cmdOutState <= 6;
-        end
-        
-        6: begin
-            sd_cmdOutActive[0] <= 0;
             sd_cmdOutDone <= !sd_cmdOutDone;
-            sd_respState <= 1;
-            sd_cmdOutState <= 0;
+            sd_respGo <= 1;
+            if (sd_counter === 0) begin
+                sd_cmdOutState <= 0;
+            end
         end
         endcase
     end
@@ -645,7 +626,7 @@ module Top(
                         ctrl_sdDatOutIdle,      // 57
                         
                         ctrl_sdRespCRCErr,      // 56       Reset every SD response (since some responses have incorrect CRCs, like ACMD41)
-                        ctrl_sdDatOutCRCErr,    // 55       Accumulates, never reset
+                        1'b0,// ctrl_sdDatOutCRCErr,    // 55       Accumulates, never reset
                         
                         7'b0,                   // 54:48
                         sd_resp,                // 47:0
@@ -811,7 +792,9 @@ module Testbench();
         // Set SD clock source = fast clock
         SendMsg({8'd1, 56'b10});
         
-        SendSDCmd(ACMD23, 32'b1);
+        SendSDCmd(CMD55, 32'b0);
+        
+        // SendSDCmd(ACMD23, 32'b1);
         
         
         
