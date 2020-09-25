@@ -46,6 +46,8 @@ module Top(
     reg[47:0] sd_shiftReg = 0;
     reg[2:0] sd_cmdOutActive = 0;
     
+    reg sd_cmdOutStartBit = 0;
+    reg sd_cmdOutEndBit = 0;
     reg sd_cmdOutCRCEn = 0;
     wire sd_cmdOutCRC;
     reg sd_cmdOutCRCOutEn = 0;
@@ -205,7 +207,7 @@ module Top(
     
     // Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
     Delay #(
-        .Count(6)
+        .Count(1)
     ) Delay_sd_clk_int(
         .in(sd_clk_int),
         .out(sd_clk)
@@ -249,11 +251,11 @@ module Top(
     // CRC
     // ====================
     CRC7 #(
-        .Delay(0)
+        .Delay(-1)
     ) CRC7_sd_cmdOut(
         .clk(sd_clk_int),
         .en(sd_cmdOutCRCEn),
-        .din(sd_shiftReg[46]),
+        .din(sd_shiftReg[47]),
         .dout(sd_cmdOutCRC)
     );
     
@@ -353,14 +355,13 @@ module Top(
     
     reg[2:0] sd_datOutState = 0;
     reg[1:0] sd_respState = 0;
-    reg[1:0] sd_cmdOutState = 0;
+    reg[2:0] sd_cmdOutState = 0;
     reg[1:0] sd_datOutIdleReg = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
     
     `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk_int);
     
     always @(posedge sd_clk_int) begin
-        sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
         sd_counter <= sd_counter-1;
         sd_datOutCounter <= sd_datOutCounter-1;
         sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
@@ -370,16 +371,22 @@ module Top(
         sd_sdDatOutFifo_rtrigger <= 0; // Pulse
         sd_datOutLastBank <= sd_sdDatOutFifo_rbank;
         sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_sdDatOutFifo_rbank);
+        sd_cmdOutStartBit <= 0; // Pulse
+        sd_cmdOutEndBit <= 0; // Pulse
         sd_datOutStartBit <= 0; // Pulse
         sd_datOutEndBit <= 0; // Pulse
         sd_datOutActive <= sd_datOutActive<<1|sd_datOutActive[0];
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
         
-        if (!sd_datOutCounter) sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
-        if (sd_cmdOutCRCOutEn) sd_shiftReg[47] <= sd_cmdOutCRC;
-        if (sd_datOutCRCOutEn) sd_datOutReg[19:16] <= sd_datOutCRC;
-        if (sd_datOutStartBit) sd_datOutReg[19:16] <= 4'b0000;
-        if (sd_datOutEndBit)   sd_datOutReg[19:16] <= 4'b1111;
+        sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
+        if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
+        if (sd_cmdOutStartBit)  sd_shiftReg[47] <= 1'b0;
+        if (sd_cmdOutEndBit)    sd_shiftReg[47] <= 1'b1;
+        
+        if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
+        if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
+        if (sd_datOutStartBit)  sd_datOutReg[19:16] <= 4'b0000;
+        if (sd_datOutEndBit)    sd_datOutReg[19:16] <= 4'b1111;
         
         case (sd_datOutState)
         0: begin
@@ -502,32 +509,53 @@ module Top(
         
         case (sd_cmdOutState)
         0: begin
+            sd_counter <= 48;
+            sd_cmdOutStartBit <= 1;
+            sd_cmdOutActive[0] <= 0;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
-                
-                sd_cmdOutActive[0] <= 1;
-                sd_shiftReg <= ctrl_msgArg;
-                sd_counter <= 46;
-                sd_cmdOutCRCEn <= 1;
-                sd_respState <= 0;
                 sd_cmdOutState <= 1;
             end
         end
         
         1: begin
-            if (sd_counter === 8) begin
-            // TODO: experiment with adding another state that performs `sd_shiftReg[47] <= sd_cmdOutCRC;`, instead of using a separate register `sd_cmdOutCRCOutEn`
-                sd_cmdOutCRCOutEn <= 1;
-                sd_cmdOutCRCEn <= 0;
+            sd_cmdOutActive[0] <= 1;
+            sd_shiftReg <= ctrl_msgArg;
+            sd_cmdOutCRCEn <= 1;
+            sd_respState <= 0;
+            sd_cmdOutState <= 2;
+        end
+        
+        2: begin
+            // $display("sd_counter: %0d", sd_counter);
+            if (sd_counter === 10) begin
+                sd_cmdOutState <= 3;
             end
-            
-            if (!sd_counter) begin
-                sd_cmdOutActive[0] <= 0;
-                sd_cmdOutCRCOutEn <= 0;
-                sd_cmdOutDone <= !sd_cmdOutDone;
-                sd_respState <= 1;
-                sd_cmdOutState <= 0;
+        end
+        
+        3: begin
+            sd_cmdOutCRCOutEn <= 1;
+            sd_cmdOutCRCEn <= 0;
+            if (sd_counter === 3) begin
+                sd_cmdOutState <= 4;
             end
+        end
+        
+        4: begin
+            sd_cmdOutCRCOutEn <= 0;
+            sd_cmdOutEndBit <= 1;
+            sd_cmdOutState <= 5;
+        end
+        
+        5: begin
+            sd_cmdOutState <= 6;
+        end
+        
+        6: begin
+            sd_cmdOutActive[0] <= 0;
+            sd_cmdOutDone <= !sd_cmdOutDone;
+            sd_respState <= 1;
+            sd_cmdOutState <= 0;
         end
         endcase
     end
@@ -650,14 +678,14 @@ module Testbench();
     tri1        ctrl_di;
     tri1        ctrl_do;
     
-    wire        sd_clk_int;
+    wire        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
     
     Top Top(.*);
     
     SDCardSim SDCardSim(
-        .sd_clk_int(sd_clk_int),
+        .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat)
     );
@@ -783,37 +811,47 @@ module Testbench();
         // Set SD clock source = fast clock
         SendMsg({8'd1, 56'b10});
         
-        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        SendSDCmd(CMD55, 32'b0);
         SendSDCmd(ACMD23, 32'b1);
         
-        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        SendSDCmd(CMD25, 32'b0);
         
-        // Clock out data on DAT lines
-        SendMsg({8'd4, 56'b0});
         
-        // Wait some pre-determined amount of time that guarantees
-        // that we've started writing to the SD card.
-        for (i=0; i<64; i++) begin
-            wait(ctrl_clk);
-            wait(!ctrl_clk);
-        end
-        
-        // Wait until we're done clocking out data on DAT lines
-        $display("[EXT] Waiting while data is written...");
-        do begin
-            // Request SD status
-            SendMsgRecvResp({8'd3, 56'b0});
-        end while(!resp[57]);
-        $display("[EXT] Done writing");
-        
-        // Check CRC status
-        if (resp[56] === 1'b0) begin
-            $display("[EXT] CRC OK ✅");
-        end else begin
-            $display("[EXT] CRC bad ❌");
-        end
+        // // Disable SD clock
+        // SendMsg({8'd1, 56'b00});
+        //
+        // // Set SD clock source = fast clock
+        // SendMsg({8'd1, 56'b10});
+        //
+        // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        // SendSDCmd(CMD55, 32'b0);
+        // SendSDCmd(ACMD23, 32'b1);
+        //
+        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        // SendSDCmd(CMD25, 32'b0);
+        //
+        // // Clock out data on DAT lines
+        // SendMsg({8'd4, 56'b0});
+        //
+        // // Wait some pre-determined amount of time that guarantees
+        // // that we've started writing to the SD card.
+        // for (i=0; i<64; i++) begin
+        //     wait(ctrl_clk);
+        //     wait(!ctrl_clk);
+        // end
+        //
+        // // Wait until we're done clocking out data on DAT lines
+        // $display("[EXT] Waiting while data is written...");
+        // do begin
+        //     // Request SD status
+        //     SendMsgRecvResp({8'd3, 56'b0});
+        // end while(!resp[57]);
+        // $display("[EXT] Done writing");
+        //
+        // // Check CRC status
+        // if (resp[56] === 1'b0) begin
+        //     $display("[EXT] CRC OK ✅");
+        // end else begin
+        //     $display("[EXT] CRC bad ❌");
+        // end
     end
 endmodule
 `endif
