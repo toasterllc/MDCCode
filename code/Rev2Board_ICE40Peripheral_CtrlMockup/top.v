@@ -545,20 +545,19 @@ module Top(
         1: begin
             if (sd_counter === 9) begin
                 sd_cmdOutCRCOutEn <= 1;
-                // sd_cmdOutCRCEn <= 0;
-            end
-            
-            // TODO: improve perf by making sd_cmdOutCRCEn a shift reg?
-            if (sd_counter === 8) begin
-                sd_cmdOutCRCEn <= 0;
-            end
-            
-            if (sd_counter === 3) begin
                 sd_cmdOutState <= 2;
+                // sd_cmdOutCRCEn <= 0;
             end
         end
         
         2: begin
+            sd_cmdOutCRCEn <= 0;
+            if (sd_counter === 3) begin
+                sd_cmdOutState <= 3;
+            end
+        end
+        
+        3: begin
             sd_cmdOutCRCOutEn <= 0;
             sd_cmdOutDone <= !sd_cmdOutDone;
             sd_respGo <= 1;
