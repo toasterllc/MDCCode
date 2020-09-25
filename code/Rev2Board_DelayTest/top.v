@@ -68,8 +68,8 @@ endmodule
 
 module Top(
     input wire          clk12mhz,
-    output wire         sd_clk,
-    output wire         sd_clk_delayed
+    output wire         clkout,
+    output wire         clkout_delayed
 );
     ClockGen #(
         .FREQ(96_000_000),
@@ -77,13 +77,13 @@ module Top(
         .DIVF(63),
         .DIVQ(3),
         .FILTER_RANGE(1)
-    ) ClockGen(.clk12mhz(clk12mhz), .clk(sd_clk));
+    ) ClockGen(.clk12mhz(clk12mhz), .clk(clkout));
     
     Delay #(
-        .Count(100)
+        .Count(2)
     ) Delay (
-        .in(sd_clk),
-        .out(sd_clk_delayed)
+        .in(clkout),
+        .out(clkout_delayed)
     );
     
 endmodule
@@ -91,8 +91,8 @@ endmodule
 `ifdef SIM
 module Testbench();
     reg         clk12mhz;
-    wire        sd_clk;
-    wire        sd_clk_delayed;
+    wire        clkout;
+    wire        clkout_delayed;
     
     Top Top(.*);
     
