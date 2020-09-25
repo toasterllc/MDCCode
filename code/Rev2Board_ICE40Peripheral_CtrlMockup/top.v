@@ -438,15 +438,19 @@ module Top(
             $display("sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
             // `Finish;
             sd_datOutCRCOutEn <= 1;
-            if (sd_datOutCRCOutEn && !sd_datOutCRCCounter) begin
+            sd_datOutState <= 3;
+        end
+        
+        3: begin
+            if (!sd_datOutCRCCounter) begin
                 sd_datOutCRCEn <= 0;
                 sd_datOutEndBit <= 1;
-                sd_datOutState <= 3;
+                sd_datOutState <= 4;
             end
         end
         
         // Check CRC status token
-        3: begin
+        4: begin
             // $display("meowmix sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
             sd_datOutCRCOutEn <= 0;
             if (sd_datOutCRCCounter === 14) begin
@@ -454,12 +458,12 @@ module Top(
             end
             
             if (sd_datOutCRCCounter === 4) begin
-                sd_datOutState <= 4;
+                sd_datOutState <= 5;
             end
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        4: begin
+        5: begin
             $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusReg: %b", sd_datInCRCStatusReg);
             // 5 bits: start bit, CRC status, end bit
             if (sd_datInCRCStatusReg) begin
@@ -468,10 +472,10 @@ module Top(
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusReg);
                 sd_datOutCRCErr <= 1;
             end
-            sd_datOutState <= 5;
+            sd_datOutState <= 6;
         end
         
-        5: begin
+        6: begin
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 sd_datOutState <= 0;
@@ -826,10 +830,10 @@ module Testbench();
 
         // Set SD clock source = fast clock
         SendMsg({8'd1, 56'b10});
-        //
-        // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        // SendSDCmd(CMD55, 32'b0);
-        // SendSDCmd(ACMD23, 32'b1);
+
+        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        SendSDCmd(CMD55, 32'b0);
+        SendSDCmd(ACMD23, 32'b1);
 
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, 32'b0);
