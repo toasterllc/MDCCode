@@ -94,18 +94,18 @@ module Top(
     reg ctrl_sdDatOutTrigger = 0;
     
     
-    // // ====================
-    // // Fast Clock (204 MHz)
-    // // ====================
-    // localparam FastClkFreq = 204_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(67),
-    //     .DIVQ(2),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    // ====================
+    // Fast Clock (204 MHz)
+    // ====================
+    localparam FastClkFreq = 204_000_000;
+    wire fastClk;
+    ClockGen #(
+        .FREQ(FastClkFreq),
+        .DIVR(0),
+        .DIVF(67),
+        .DIVQ(2),
+        .FILTER_RANGE(1)
+    ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
     
     
     // // ====================
@@ -134,18 +134,18 @@ module Top(
     //     .FILTER_RANGE(1)
     // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
     
-    // ====================
-    // Fast Clock (18 MHz)
-    // ====================
-    localparam FastClkFreq = 18_000_000;
-    wire fastClk;
-    ClockGen #(
-        .FREQ(FastClkFreq),
-        .DIVR(0),
-        .DIVF(47),
-        .DIVQ(5),
-        .FILTER_RANGE(1)
-    ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    // // ====================
+    // // Fast Clock (18 MHz)
+    // // ====================
+    // localparam FastClkFreq = 18_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(47),
+    //     .DIVQ(5),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
     
     // // ====================
     // // Fast Clock (12 MHz)
@@ -206,7 +206,7 @@ module Top(
     
     // Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
     Delay #(
-        .Count(1)
+        .Count(0)
     ) Delay_sd_clk_int(
         .in(sd_clk_int),
         .out(sd_clk)
