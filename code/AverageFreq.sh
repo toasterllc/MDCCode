@@ -28,7 +28,7 @@ freqMin=99999999
 freqMax=0
 for (( i=0; i<$trialCount; i++)); do
     echo "Trial $i"
-    freq=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained 2>&1 | grep 'Info: Max frequency for clock.*sd_clk$SB_IO_OUT_$glb_clk' | tail -1 | cut -d " " -f 8 )
+    freq=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained 2>&1 | grep 'Info: Max frequency for clock.*sd_clk_int_$glb_clk' | tail -1 | awk -F' ' '{print $(NF-5)}' )
     freqTotal=$( echo "scale=4; $freqTotal+$freq" | bc )
     
     if (($(echo "$freq < $freqMin" | bc))); then

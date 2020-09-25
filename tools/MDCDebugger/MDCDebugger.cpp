@@ -268,6 +268,23 @@ int main(int argc, const char* argv[]) {
         printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
     }
     
+    
+    
+    // Disable SD clock
+    {
+        printf("Disabling SD clock\n");
+        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+        printf("-> Done\n\n");
+    }
+    
+    // Enable SD slow clock
+    {
+        printf("Enabling SD slow clock\n");
+        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
+        printf("-> Done\n\n");
+    }
+    
+    
     // Disable SD clock
     {
         printf("Disabling SD clock\n");
@@ -292,13 +309,20 @@ int main(int argc, const char* argv[]) {
         {
             sendSDCmd(device, 55, ((uint32_t)rca)<<16);
             auto resp = getSDResp(device);
+            printf("-> CMD55 response: 0x%012jx\n\n", (uintmax_t)resp.sdResp());
             assert(!resp.sdRespCRCErr());
+        }
+        
+        for (int i=10; i>=0; i--) {
+            printf("Sending ACMD23 in %d...\n", i);
+            sleep(1);
         }
         
         // CMD23
         {
             sendSDCmd(device, 23, 0x00000001);
             auto resp = getSDResp(device);
+            printf("-> ACMD23 response: 0x%012jx\n\n", (uintmax_t)resp.sdResp());
             assert(!resp.sdRespCRCErr());
         }
     }

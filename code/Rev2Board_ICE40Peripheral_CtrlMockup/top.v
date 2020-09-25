@@ -6,8 +6,8 @@
 `include "../MsgChannel.v"
 `include "../CRC7.v"
 `include "../CRC16.v"
-`include "../AFIFO.v"
 `include "../BankFifo.v"
+`include "../Delay.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -197,13 +197,19 @@ module Top(
     
     
     // ====================
-    // Pin: sd_clk
+    // Pin: sd_clk / sd_clk_int
     // ====================
     `Sync(sdClkSlow, ctrl_sdClkSlow, negedge, slowClk);
     `Sync(sdClkFast, ctrl_sdClkFast, negedge, fastClk);
-    assign sd_clk = (sdClkSlow ? slowClk : (sdClkFast ? fastClk : 0));
+    assign sd_clk_int = (sdClkSlow ? slowClk : (sdClkFast ? fastClk : 0));
     
-    
+    // Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
+    Delay #(
+        .Count(6)
+    ) Delay_sd_clk_int(
+        .in(sd_clk_int),
+        .out(sd_clk)
+    );
     
     // ====================
     // Pin: sd_cmd
@@ -211,8 +217,8 @@ module Top(
     SB_IO #(
         .PIN_TYPE(6'b1101_00)
     ) SB_IO_sd_cmd (
-        .INPUT_CLK(sd_clk),
-        .OUTPUT_CLK(sd_clk),
+        .INPUT_CLK(sd_clk_int),
+        .OUTPUT_CLK(sd_clk_int),
         .PACKAGE_PIN(sd_cmd),
         .OUTPUT_ENABLE(sd_cmdOutActive[0]),
         .D_OUT_0(sd_shiftReg[47]),
@@ -227,8 +233,8 @@ module Top(
         SB_IO #(
             .PIN_TYPE(6'b1101_00)
         ) SB_IO (
-            .INPUT_CLK(sd_clk),
-            .OUTPUT_CLK(sd_clk),
+            .INPUT_CLK(sd_clk_int),
+            .OUTPUT_CLK(sd_clk_int),
             .PACKAGE_PIN(sd_dat[i]),
             .OUTPUT_ENABLE(sd_datOutActive[1]),
             .D_OUT_0(sd_datOutReg[16+i]),
@@ -245,7 +251,7 @@ module Top(
     CRC7 #(
         .Delay(0)
     ) CRC7_sd_cmdOut(
-        .clk(sd_clk),
+        .clk(sd_clk_int),
         .en(sd_cmdOutCRCEn),
         .din(sd_shiftReg[46]),
         .dout(sd_cmdOutCRC)
@@ -254,7 +260,7 @@ module Top(
     CRC7 #(
         .Delay(1)
     ) CRC7_sd_resp(
-        .clk(sd_clk),
+        .clk(sd_clk_int),
         .en(sd_respCRCEn),
         .din(sd_shiftReg[0]),
         .dout(sd_respCRC) // TODO: search and replace
@@ -264,7 +270,7 @@ module Top(
         CRC16 #(
             .Delay(-1)
         ) CRC16_dat(
-            .clk(sd_clk),
+            .clk(sd_clk_int),
             .en(sd_datOutCRCEn),
             .din(sd_datOutReg[16+i]),
             .dout(sd_datOutCRC[i])
@@ -295,7 +301,7 @@ module Top(
         .w_data(w_sdDatOutFifo_wdata),
         .w_ok(w_sdDatOutFifo_wok),
         
-        .r_clk(sd_clk),
+        .r_clk(sd_clk_int),
         .r_trigger(sd_sdDatOutFifo_rtrigger),
         .r_data(sd_sdDatOutFifo_rdata),
         .r_ok(sd_sdDatOutFifo_rok),
@@ -306,7 +312,7 @@ module Top(
     
     
     
-    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk);
+    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, clk12mhz);
     
     reg[7:0] w_counter = 0;
@@ -351,9 +357,9 @@ module Top(
     reg[1:0] sd_datOutIdleReg = 0;
     wire sd_cmdInStaged = (sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn);
     
-    `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk);
+    `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk_int);
     
-    always @(posedge sd_clk) begin
+    always @(posedge sd_clk_int) begin
         sd_shiftReg <= (sd_shiftReg<<1)|sd_cmdInStaged;
         sd_counter <= sd_counter-1;
         sd_datOutCounter <= sd_datOutCounter-1;
@@ -613,7 +619,7 @@ module Top(
                         ctrl_sdRespCRCErr,      // 56       Reset every SD response (since some responses have incorrect CRCs, like ACMD41)
                         ctrl_sdDatOutCRCErr,    // 55       Accumulates, never reset
                         
-                        7'b0,                   // 55:48
+                        7'b0,                   // 54:48
                         sd_resp,                // 47:0
                     Msg_EndBit};
             end
@@ -644,14 +650,14 @@ module Testbench();
     tri1        ctrl_di;
     tri1        ctrl_do;
     
-    wire        sd_clk;
+    wire        sd_clk_int;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
     
     Top Top(.*);
     
     SDCardSim SDCardSim(
-        .sd_clk(sd_clk),
+        .sd_clk_int(sd_clk_int),
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat)
     );
