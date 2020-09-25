@@ -210,7 +210,7 @@ module Top(
     // ====================
     SB_IO #(
         .PIN_TYPE(6'b1101_00)
-    ) SB_IO_sd_clk (
+    ) SB_IO_sd_cmd (
         .INPUT_CLK(sd_clk),
         .OUTPUT_CLK(sd_clk),
         .PACKAGE_PIN(sd_cmd),
