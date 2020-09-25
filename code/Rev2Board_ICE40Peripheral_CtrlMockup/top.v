@@ -75,7 +75,7 @@ module Top(
     
     reg[5:0] sd_counter = 0;
     reg[1:0] sd_datOutCounter = 0;
-    reg[4:0] sd_datOutCRCCounter = 0;
+    reg[3:0] sd_datOutCRCCounter = 0;
     reg sd_datOutLastBank = 0;
     reg sd_datOutEnding = 0;
     
@@ -105,7 +105,7 @@ module Top(
         .DIVF(67),
         .DIVQ(2),
         .FILTER_RANGE(1)
-    ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
     
     
     // // ====================
@@ -119,7 +119,7 @@ module Top(
     //     .DIVF(59),
     //     .DIVQ(2),
     //     .FILTER_RANGE(1)
-    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
     
     // // ====================
     // // Fast Clock (120 MHz)
@@ -132,7 +132,7 @@ module Top(
     //     .DIVF(79),
     //     .DIVQ(3),
     //     .FILTER_RANGE(1)
-    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
     
     // // ====================
     // // Fast Clock (18 MHz)
@@ -145,7 +145,7 @@ module Top(
     //     .DIVF(47),
     //     .DIVQ(5),
     //     .FILTER_RANGE(1)
-    // ) ClockGen(.clk12mhz(clk12mhz), .clk(fastClk));
+    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
     
     // // ====================
     // // Fast Clock (12 MHz)
@@ -282,6 +282,21 @@ module Top(
     
     
     
+    
+    // ====================
+    // W Clock (60 MHz)
+    // ====================
+    localparam WClkFreq = 60_000_000;
+    wire w_clk;
+    ClockGen #(
+        .FREQ(WClkFreq),
+        .DIVR(0),
+        .DIVF(79),
+        .DIVQ(4),
+        .FILTER_RANGE(1)
+    ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
+    
+    
     // ====================
     // FIFO
     // ====================
@@ -297,7 +312,7 @@ module Top(
         .W(16),
         .N(8)
     ) BankFifo_sdDatOut(
-        .w_clk(clk12mhz),
+        .w_clk(w_clk),
         .w_trigger(w_sdDatOutFifo_wtrigger),
         .w_data(w_sdDatOutFifo_wdata),
         .w_ok(w_sdDatOutFifo_wok),
@@ -312,13 +327,15 @@ module Top(
     
     
     
+
+    
     
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
-    `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, clk12mhz);
+    `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, w_clk);
     
     reg[7:0] w_counter = 0;
     reg[1:0] w_state = 0;
-    always @(posedge clk12mhz) begin
+    always @(posedge w_clk) begin
         w_counter <= w_counter+1;
         
         case (w_state)
@@ -421,7 +438,7 @@ module Top(
             $display("sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
             // `Finish;
             sd_datOutCRCOutEn <= 1;
-            if (sd_datOutCRCCounter === 16) begin
+            if (sd_datOutCRCOutEn && !sd_datOutCRCCounter) begin
                 sd_datOutCRCEn <= 0;
                 sd_datOutEndBit <= 1;
                 sd_datOutState <= 3;
@@ -806,14 +823,14 @@ module Testbench();
         
         // Disable SD clock
         SendMsg({8'd1, 56'b00});
-        
+
         // Set SD clock source = fast clock
         SendMsg({8'd1, 56'b10});
-        
-        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        SendSDCmd(CMD55, 32'b0);
-        SendSDCmd(ACMD23, 32'b1);
-        
+        //
+        // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        // SendSDCmd(CMD55, 32'b0);
+        // SendSDCmd(ACMD23, 32'b1);
+
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, 32'b0);
         
