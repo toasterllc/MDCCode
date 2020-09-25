@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 5 ]; then
 	echo "Usage:"
-    echo "  AverageFreq.sh <DeviceType> <DevicePackage> <ProjName>"
+    echo "  AverageFreq.sh <DeviceType> <DevicePackage> <ProjName> <ClkName> <NumTrials>"
 	echo "    DeviceType: 1k (iCEstick) or 8k (iCE40HX board)"
 	echo "    DevicePackage: tq144 (iCEstick) or ct256 (iCE40HX board)"
 	
@@ -18,17 +18,24 @@ dir=$(cd $(dirname "$0"); pwd)
 dev="$1"
 pkg="$2"
 proj="$3"
+clk="$4"
+ntrials="$5"
 
 cd "$proj/tmp"
 
 # Place and route the design ({top.json, pins.pcf} -> .asc)
-trialCount=50
 freqTotal=0
 freqMin=99999999
 freqMax=0
-for (( i=0; i<$trialCount; i++)); do
+for (( i=0; i<$ntrials; i++)); do
     echo "Trial $i"
-    freq=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained 2>&1 | grep 'Info: Max frequency for clock.*sd_clk_int_$glb_clk' | tail -1 | awk -F' ' '{print $(NF-5)}' )
+    output=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained 2>&1 | grep "Info: Max frequency for clock.*$clk" || true )
+    if [ -z "$output" ]; then
+        echo "No clock named $clk"
+        exit 1
+    fi
+    
+    freq=$( echo "$output" | tail -1 | awk -F' ' '{print $(NF-5)}' )
     freqTotal=$( echo "scale=4; $freqTotal+$freq" | bc )
     
     if (($(echo "$freq < $freqMin" | bc))); then
@@ -39,7 +46,7 @@ for (( i=0; i<$trialCount; i++)); do
         freqMax="$freq"
     fi
 done
-freqAverage=$( echo "scale=2; $freqTotal/$trialCount" | bc )
+freqAverage=$( echo "scale=2; $freqTotal/$ntrials" | bc )
 echo "    Min frequency: $freqMin"
 echo "    Max frequency: $freqMax"
 echo "Average frequency: $freqAverage"
