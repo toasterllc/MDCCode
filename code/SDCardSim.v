@@ -142,14 +142,15 @@ module SDCardSim(
     
     
     initial begin
-        reg halla;
-        halla = 0;
+        // Let inputs settle first
+        wait(sd_clk);
+        wait(!sd_clk);
         
         forever begin
             cmdIn_ourCRC_rst_ = 0;
             
             wait(sd_clk);
-            if (!sd_cmd) begin
+            if (sd_cmd !== 1'b1) begin
                 // Receive command
                 reg[10:0] i;
                 reg[10:0] count;

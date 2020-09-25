@@ -477,13 +477,13 @@ module Top(
                 sd_respState <= 1;
             end
         end
-
+        
         1: begin
             sd_respGo <= 0;
             if (!sd_shiftReg[40]) begin
                 sd_respCRCEn <= 0;
             end
-
+            
             if (!sd_respCRCEn) begin
                 if (sd_respCRC === sd_shiftReg[1]) begin
                     $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
@@ -493,7 +493,7 @@ module Top(
                     // `Finish;
                 end
             end
-
+            
             if (!sd_shiftReg[47]) begin
                 sd_resp <= sd_shiftReg;
                 sd_respRecv <= !sd_respRecv;
@@ -516,23 +516,23 @@ module Top(
                 sd_cmdOutState <= 1;
             end
         end
-
+        
         1: begin
             if (sd_counter === 9) begin
                 sd_cmdOutCRCOutEn <= 1;
                 // sd_cmdOutCRCEn <= 0;
             end
-
+            
             // TODO: improve perf by making sd_cmdOutCRCEn a shift reg?
             if (sd_counter === 8) begin
                 sd_cmdOutCRCEn <= 0;
             end
-
+            
             if (sd_counter === 3) begin
                 sd_cmdOutState <= 2;
             end
         end
-
+        
         2: begin
             sd_cmdOutCRCOutEn <= 0;
             sd_cmdOutDone <= !sd_cmdOutDone;
@@ -651,7 +651,6 @@ module Top(
         end
         endcase
     end
-    
 endmodule
 
 
@@ -807,27 +806,27 @@ module Testbench();
         
         // Disable SD clock
         SendMsg({8'd1, 56'b00});
-
+        
         // Set SD clock source = fast clock
         SendMsg({8'd1, 56'b10});
-
+        
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        // SendSDCmd(CMD55, 32'b0);
-        // SendSDCmd(ACMD23, 32'b1);
-
+        SendSDCmd(CMD55, 32'b0);
+        SendSDCmd(ACMD23, 32'b1);
+        
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, 32'b0);
-
+        
         // Clock out data on DAT lines
         SendMsg({8'd4, 56'b0});
-
+        
         // Wait some pre-determined amount of time that guarantees
         // that we've started writing to the SD card.
         for (i=0; i<64; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
-
+        
         // Wait until we're done clocking out data on DAT lines
         $display("[EXT] Waiting while data is written...");
         do begin
@@ -835,7 +834,7 @@ module Testbench();
             SendMsgRecvResp({8'd3, 56'b0});
         end while(!resp[57]);
         $display("[EXT] Done writing");
-
+        
         // Check CRC status
         if (resp[55] === 1'b0) begin
             $display("[EXT] CRC OK ✅");
