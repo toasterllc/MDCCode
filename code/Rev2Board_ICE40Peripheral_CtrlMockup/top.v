@@ -442,15 +442,19 @@ module Top(
         end
         
         3: begin
-            if (!sd_datOutCRCCounter) begin
-                sd_datOutCRCEn <= 0;
-                sd_datOutEndBit <= 1;
+            if (sd_datOutCRCCounter === 1) begin
                 sd_datOutState <= 4;
             end
         end
         
-        // Check CRC status token
         4: begin
+            sd_datOutCRCEn <= 0;
+            sd_datOutEndBit <= 1;
+            sd_datOutState <= 5;
+        end
+        
+        // Check CRC status token
+        5: begin
             // $display("meowmix sd_datOutCRCCounter: %0d", sd_datOutCRCCounter);
             sd_datOutCRCOutEn <= 0;
             if (sd_datOutCRCCounter === 14) begin
@@ -458,12 +462,12 @@ module Top(
             end
             
             if (sd_datOutCRCCounter === 4) begin
-                sd_datOutState <= 5;
+                sd_datOutState <= 6;
             end
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        5: begin
+        6: begin
             $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusReg: %b", sd_datInCRCStatusReg);
             // 5 bits: start bit, CRC status, end bit
             if (sd_datInCRCStatusReg) begin
@@ -472,10 +476,10 @@ module Top(
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusReg);
                 sd_datOutCRCErr <= 1;
             end
-            sd_datOutState <= 6;
+            sd_datOutState <= 7;
         end
         
-        6: begin
+        7: begin
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 sd_datOutState <= 0;
