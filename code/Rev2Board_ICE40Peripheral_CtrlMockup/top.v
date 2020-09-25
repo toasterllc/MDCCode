@@ -43,11 +43,9 @@ module Top(
     // ====================
     // Registers
     // ====================
-    reg[48:0] sd_shiftReg = 0;
+    reg[47:0] sd_shiftReg = 0;
     reg[2:0] sd_cmdOutActive = 0;
     
-    reg sd_cmdOutStartBit = 0;
-    reg sd_cmdOutEndBit = 0;
     reg sd_cmdOutCRCEn = 0;
     wire sd_cmdOutCRC;
     reg sd_cmdOutCRCOutEn = 0;
@@ -224,7 +222,7 @@ module Top(
         .OUTPUT_CLK(sd_clk_int),
         .PACKAGE_PIN(sd_cmd),
         .OUTPUT_ENABLE(sd_cmdOutActive[0]),
-        .D_OUT_0(sd_shiftReg[48]),
+        .D_OUT_0(sd_shiftReg[47]),
         .D_IN_0(sd_cmdIn)
     );
     
@@ -256,7 +254,7 @@ module Top(
     ) CRC7_sd_cmdOut(
         .clk(sd_clk_int),
         .en(sd_cmdOutCRCEn),
-        .din(sd_shiftReg[48]),
+        .din(sd_shiftReg[47]),
         .dout(sd_cmdOutCRC)
     );
     
@@ -374,8 +372,6 @@ module Top(
         sd_sdDatOutFifo_rtrigger <= 0; // Pulse
         sd_datOutLastBank <= sd_sdDatOutFifo_rbank;
         sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_sdDatOutFifo_rbank);
-        sd_cmdOutStartBit <= 0; // Pulse
-        sd_cmdOutEndBit <= 0; // Pulse
         sd_datOutStartBit <= 0; // Pulse
         sd_datOutEndBit <= 0; // Pulse
         sd_datOutActive <= sd_datOutActive<<1|sd_datOutActive[0];
@@ -384,9 +380,7 @@ module Top(
         
         sd_shiftReg <= sd_shiftReg<<1|sd_respInStaged;
         sd_respInStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
-        if (sd_cmdOutCRCOutEn)  sd_shiftReg[48] <= sd_cmdOutCRC;
-        if (sd_cmdOutStartBit)  sd_shiftReg[48] <= 1'b0;
-        if (sd_cmdOutEndBit)    sd_shiftReg[48] <= 1'b1;
+        if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
         
         if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
         if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
@@ -444,19 +438,24 @@ module Top(
             sd_datOutActive[0] <= 0;
             sd_datOutCRCOutEn <= 0;
             if (sd_datOutCRCCounter === 4) begin
-                // 5 bits: start bit, CRC status, end bit
-                if (sd_datInCRCStatusReg) begin
-                    $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
-                end else begin
-                    $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusReg);
-                    sd_datOutCRCErr <= sd_datOutCRCErr|1;
-                end
                 sd_datOutState <= 5;
             end
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
         5: begin
+            $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusReg: %b", sd_datInCRCStatusReg);
+            // 5 bits: start bit, CRC status, end bit
+            if (sd_datInCRCStatusReg) begin
+                $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
+            end else begin
+                $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusReg);
+                sd_datOutCRCErr <= 1;
+            end
+            sd_datOutState <= 6;
+        end
+        
+        6: begin
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 sd_datOutState <= 0;
@@ -508,22 +507,25 @@ module Top(
         
         case (sd_cmdOutState)
         0: begin
-            sd_counter <= 48;
-            sd_cmdOutStartBit <= 1;
             sd_cmdOutActive[0] <= 0;
+            sd_counter <= 47;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
+                sd_cmdOutActive[0] <= 1;
                 sd_shiftReg <= ctrl_msgArg;
+                sd_cmdOutCRCEn <= 1;
                 sd_cmdOutState <= 1;
             end
         end
         
         1: begin
-            sd_cmdOutActive[0] <= 1;
-            sd_cmdOutCRCEn <= 1;
-            
             if (sd_counter === 9) begin
                 sd_cmdOutCRCOutEn <= 1;
+                // sd_cmdOutCRCEn <= 0;
+            end
+            
+            // TODO: improve perf by making sd_cmdOutCRCEn a shift reg?
+            if (sd_counter === 8) begin
                 sd_cmdOutCRCEn <= 0;
             end
             
@@ -534,7 +536,6 @@ module Top(
         
         2: begin
             sd_cmdOutCRCOutEn <= 0;
-            sd_cmdOutEndBit <= 1;
             sd_cmdOutDone <= !sd_cmdOutDone;
             sd_respGo <= 1;
             if (sd_counter === 0) begin
@@ -795,55 +796,53 @@ module Testbench();
         wait(ctrl_clk);
         wait(!ctrl_clk);
         
-        // Disable SD clock
-        SendMsg({8'd1, 56'b00});
-        
-        // Set SD clock source = fast clock
-        SendMsg({8'd1, 56'b10});
-        
-        SendSDCmd(CMD55, 32'b0);
-        
-        // SendSDCmd(ACMD23, 32'b1);
-        
-        
-        
         // // Disable SD clock
         // SendMsg({8'd1, 56'b00});
         //
         // // Set SD clock source = fast clock
         // SendMsg({8'd1, 56'b10});
         //
-        // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        // SendSDCmd(CMD55, 32'b0);
+        
+        
+        
+        // Disable SD clock
+        SendMsg({8'd1, 56'b00});
+
+        // Set SD clock source = fast clock
+        SendMsg({8'd1, 56'b10});
+
+        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         // SendSDCmd(CMD55, 32'b0);
         // SendSDCmd(ACMD23, 32'b1);
-        //
-        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmd(CMD25, 32'b0);
-        //
-        // // Clock out data on DAT lines
-        // SendMsg({8'd4, 56'b0});
-        //
-        // // Wait some pre-determined amount of time that guarantees
-        // // that we've started writing to the SD card.
-        // for (i=0; i<64; i++) begin
-        //     wait(ctrl_clk);
-        //     wait(!ctrl_clk);
-        // end
-        //
-        // // Wait until we're done clocking out data on DAT lines
-        // $display("[EXT] Waiting while data is written...");
-        // do begin
-        //     // Request SD status
-        //     SendMsgRecvResp({8'd3, 56'b0});
-        // end while(!resp[57]);
-        // $display("[EXT] Done writing");
-        //
-        // // Check CRC status
-        // if (resp[56] === 1'b0) begin
-        //     $display("[EXT] CRC OK ✅");
-        // end else begin
-        //     $display("[EXT] CRC bad ❌");
-        // end
+
+        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        SendSDCmd(CMD25, 32'b0);
+
+        // Clock out data on DAT lines
+        SendMsg({8'd4, 56'b0});
+
+        // Wait some pre-determined amount of time that guarantees
+        // that we've started writing to the SD card.
+        for (i=0; i<64; i++) begin
+            wait(ctrl_clk);
+            wait(!ctrl_clk);
+        end
+
+        // Wait until we're done clocking out data on DAT lines
+        $display("[EXT] Waiting while data is written...");
+        do begin
+            // Request SD status
+            SendMsgRecvResp({8'd3, 56'b0});
+        end while(!resp[57]);
+        $display("[EXT] Done writing");
+
+        // Check CRC status
+        if (resp[55] === 1'b0) begin
+            $display("[EXT] CRC OK ✅");
+        end else begin
+            $display("[EXT] CRC bad ❌");
+        end
     end
 endmodule
 `endif
