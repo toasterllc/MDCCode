@@ -73,7 +73,7 @@ module Top(
     reg sd_respCRCErr = 0;
     reg sd_datOutCRCErr = 0;
     
-    reg[48:0] sd_cmdOutState = 0;
+    reg[49:0] sd_cmdOutState = 0;
     reg sd_cmdOutStateInit = 0;
     reg[1:0] sd_datOutCounter = 0;
     reg[3:0] sd_datOutCounter2 = 0;
@@ -372,7 +372,7 @@ module Top(
     
     reg[19:0] sd_datOutState = 0;
     reg sd_datOutStateInit = 0;
-    reg[9:0] sd_respState = 0;
+    reg[10:0] sd_respState = 0;
     reg sd_respStateInit = 0;
     reg[1:0] sd_datOutIdleReg = 0;
     reg sd_respInStaged = 0;
@@ -384,9 +384,11 @@ module Top(
     // TODO: try to improve the "Stay in state" strategy. we don't need to assign the whole state shift register -- we can just assign 2 bits
     always @(posedge sd_clk_int) begin
         sd_cmdOutState <= sd_cmdOutState>>1;
+        sd_cmdOutState[49] <= (!sd_cmdOutStateInit)|sd_cmdOutState[0];
         sd_cmdOutStateInit <= 1;
         
         sd_respState <= sd_respState>>1;
+        sd_respState[10] <= (!sd_respStateInit)|sd_respState[0];
         sd_respStateInit <= 1;
         
         sd_datOutState <= sd_datOutState>>1;
@@ -497,14 +499,14 @@ module Top(
         
         
         
-        if (!sd_respStateInit || sd_respState[0]) begin
+        if (sd_respState[10]) begin
             sd_respCRCEn <= 0;
             sd_respCRCErr <= 0;
             if (sd_respGo && !sd_respInStaged) begin
                 sd_respCRCEn <= 1;
-                sd_respState[9] <= 1;
             end else begin
-                sd_respState[0] <= 1; // Stay in this state
+                // Stay in this state
+                sd_respState[10:9] <= sd_respState[10:9];
             end
         end
         
@@ -533,49 +535,14 @@ module Top(
         end
         
         
-        // case (sd_respState)
-        // // 0: begin
-        // //     sd_respCRCEn <= 0;
-        // //     sd_respCRCErr <= 0;
-        // //     if (sd_respGo && !sd_respInStaged) begin
-        // //         sd_respCRCEn <= 1;
-        // //         sd_respState <= 1;
-        // //     end
-        // // end
-        //
-        // 1: begin
-        //     sd_respGo <= 0;
-        //     if (!sd_shiftReg[40]) begin
-        //         sd_respCRCEn <= 0;
-        //     end
-        //
-        //     if (!sd_respCRCEn) begin
-        //         if (sd_respCRC === sd_shiftReg[1]) begin
-        //             $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
-        //         end else begin
-        //             sd_respCRCErr <= sd_respCRCErr|1;
-        //             $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
-        //             // `Finish;
-        //         end
-        //     end
-        //
-        //     if (!sd_shiftReg[47]) begin
-        //         sd_resp <= sd_shiftReg;
-        //         sd_respRecv <= !sd_respRecv;
-        //         sd_respState <= 0;
-        //     end
-        // end
-        // endcase
         
-        
-        
-        if (!sd_cmdOutStateInit || sd_cmdOutState[0]) begin
+        if (sd_cmdOutState[49]) begin
             sd_cmdOutActive[0] <= 0;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
-                sd_cmdOutState[48] <= 1;
             end else begin
-                sd_cmdOutState[0] <= 1; // Stay in this state
+                // Stay in this state
+                sd_cmdOutState[49:48] <= sd_cmdOutState[49:48];
             end
         end
         
