@@ -416,6 +416,7 @@ module Top(
         if (sd_datOutStartBit)  sd_datOutReg[19:16] <= 4'b0000;
         if (sd_datOutEndBit)    sd_datOutReg[19:16] <= 4'b1111;
         
+        // TODO: try turning this into the one-hot state machine style
         case (sd_datOutState)
         0: begin
             sd_datOutCounter <= 0;
@@ -532,13 +533,17 @@ module Top(
             end
         end
         
+        if (sd_respState[2]) begin
+            sd_respGo <= 0;
+        end
+        
         if (sd_respState[0]) begin
             sd_respGo <= 0;
             sd_respRecv <= !sd_respRecv;
         end
         
         
-        
+        // TODO: try using a counter to reduce the number of bits
         if (sd_cmdOutState[48]) begin
             sd_cmdOutActive[0] <= 0;
             if (sd_cmdOutTrigger) begin
