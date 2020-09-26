@@ -526,8 +526,11 @@ module Top(
             end
         end
         
-        if (sd_respState[0]) begin
+        if (sd_respState[1]) begin
             sd_resp <= sd_shiftReg;
+        end
+        
+        if (sd_respState[0]) begin
             sd_respRecv <= !sd_respRecv;
         end
         
