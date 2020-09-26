@@ -549,15 +549,12 @@ module Top(
                 sd_cmdOutCRCEn <= 0;
             end
             
-            if (sd_counter === 3) begin
-                sd_cmdOutState <= 2;
+            if (sd_counter === 2) begin
+                sd_cmdOutCRCOutEn <= 0;
+                sd_cmdOutDone <= !sd_cmdOutDone;
+                sd_respGo <= 1;
             end
-        end
-        
-        2: begin
-            sd_cmdOutCRCOutEn <= 0;
-            sd_cmdOutDone <= !sd_cmdOutDone;
-            sd_respGo <= 1;
+            
             if (sd_counter === 0) begin
                 sd_cmdOutState <= 0;
             end
