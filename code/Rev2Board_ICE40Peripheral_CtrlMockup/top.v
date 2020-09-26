@@ -73,7 +73,8 @@ module Top(
     reg sd_respCRCErr = 0;
     reg sd_datOutCRCErr = 0;
     
-    reg[48:0] sd_counter = 0;
+    reg[48:0] sd_cmdOutState = 0;
+    reg sd_cmdOutStateInit = 0;
     reg[1:0] sd_datOutCounter = 0;
     reg[3:0] sd_datOutCRCCounter = 0;
     reg sd_datOutLastBank = 0;
@@ -379,8 +380,8 @@ module Top(
     `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk_int);
     
     always @(posedge sd_clk_int) begin
-        sd_counter <= sd_counter>>1;
-        sd_counterInit <= 1;
+        sd_cmdOutState <= sd_cmdOutState>>1;
+        sd_cmdOutStateInit <= 1;
         sd_datOutCounter <= sd_datOutCounter-1;
         sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
@@ -525,31 +526,31 @@ module Top(
         
         
         
-        if (!sd_counterInit || sd_counter[0]) begin
-            sd_counter[0] <= 1; // Stay in this state until we're triggered
+        if (!sd_cmdOutStateInit || sd_cmdOutState[0]) begin
+            sd_cmdOutState[0] <= 1; // Stay in this state until we're triggered
             sd_cmdOutActive[0] <= 0;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
-                sd_counter[48] <= 1;
-                sd_counter[0] <= 0;
+                sd_cmdOutState[48] <= 1;
+                sd_cmdOutState[0] <= 0;
             end
         end
         
-        if (sd_counter[48]) begin
+        if (sd_cmdOutState[48]) begin
             sd_cmdOutActive[0] <= 1;
             sd_shiftReg <= ctrl_msgArg;
             sd_cmdOutCRCEn <= 1;
         end
         
-        if (sd_counter[9]) begin
+        if (sd_cmdOutState[9]) begin
             sd_cmdOutCRCOutEn <= 1;
         end
         
-        if (sd_counter[8]) begin
+        if (sd_cmdOutState[8]) begin
             sd_cmdOutCRCEn <= 0;
         end
         
-        if (sd_counter[2]) begin
+        if (sd_cmdOutState[2]) begin
             sd_cmdOutCRCOutEn <= 0;
             sd_cmdOutDone <= !sd_cmdOutDone;
             sd_respGo <= 1;
@@ -818,14 +819,14 @@ module Testbench();
         
         // Disable SD clock
         SendMsg({8'd1, 56'b00});
-
+        
         // Set SD clock source = fast clock
         SendMsg({8'd1, 56'b10});
-
+        
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         SendSDCmd(CMD55, 32'b0);
         SendSDCmd(ACMD23, 32'b1);
-
+        
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, 32'b0);
         
