@@ -189,6 +189,12 @@ public:
         uint64_t sdResp() const     { return getBits(47, 0); }
     };
     
+    struct SDDatOutMsg : Msg {
+        SDDatOutMsg() {
+            cmd = 0x04;
+        }
+    };
+    
     using MsgPtr = std::unique_ptr<Msg>;
     using RespPtr = std::unique_ptr<Resp>;
     

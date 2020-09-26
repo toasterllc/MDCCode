@@ -102,6 +102,7 @@ int main(int argc, const char* argv[]) {
     using SDSendCmdMsg = MDC::SDSendCmdMsg;
     using SDGetStatusMsg = MDC::SDGetStatusMsg;
     using SDGetStatusResp = MDC::SDGetStatusResp;
+    using SDDatOutMsg = MDC::SDDatOutMsg;
     using Resp = MDC::Resp;
     auto devicePtr = std::make_unique<MDCDevice>();
     MDCDevice& device = *devicePtr;
@@ -191,7 +192,7 @@ int main(int argc, const char* argv[]) {
         for (;;) {
             auto status = getSDStatus(device);
             if (status.sdDat() & 0x1) break;
-            printf("-> Busy...\n\n");
+            printf("-> Busy\n");
         }
         printf("-> Ready\n\n");
     }
@@ -302,7 +303,6 @@ int main(int argc, const char* argv[]) {
     
     
     // Issue SD ACMD23
-//    for (int i=0; i<100; i++)
     {
         printf("Sending SD ACMD23\n");
         
@@ -320,6 +320,44 @@ int main(int argc, const char* argv[]) {
             assert(!resp.sdRespCRCErr());
             printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
         }
+    }
+    
+    
+    // Issue SD CMD25
+    {
+        printf("Sending SD CMD25\n");
+        sendSDCmd(device, 25, 0);
+        auto resp = getSDResp(device);
+        assert(!resp.sdRespCRCErr());
+        printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
+    }
+    
+    // Clock out data on DAT lines
+    {
+        printf("Clocking out data on DAT lines\n");
+        device.write(SDDatOutMsg());
+        printf("-> Done\n\n");
+    }
+    
+    // Wait some pre-determined amount of time that guarantees that the
+    // datOut state machine has started.
+    // This is necessary so that when we observe sdDatOutIdle=1, it
+    // means we're done writing, rather than that we haven't started yet.
+    // TODO: determine the upper bound here using the write module's frequency and the number of cycles required for BankFifo to trigger its `rok` wire
+    usleep(1000);
+    
+    // Wait until we're done clocking out data on DAT lines
+    {
+        printf("Waiting for writing to finish\n");
+        for (;;) {
+            auto status = getSDStatus(device);
+            if (status.sdDatOutIdle()) {
+                assert(!status.sdDatOutCRCErr());
+                break;
+            }
+            printf("-> Busy\n");
+        }
+        printf("-> Done\n\n");
     }
     
     return 0;

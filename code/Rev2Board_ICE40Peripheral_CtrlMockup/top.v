@@ -220,7 +220,7 @@ module Top(
     
     // Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
     Delay #(
-        .Count(0)
+        .Count(3)
     ) Delay_sd_clk_int(
         .in(sd_clk_int),
         .out(sd_clk)
@@ -298,15 +298,15 @@ module Top(
     
     
     // ====================
-    // W Clock (60 MHz)
+    // W Clock
     // ====================
-    localparam WClkFreq = 60_000_000;
+    localparam WClkFreq = 96_000_000;
     wire w_clk;
     ClockGen #(
         .FREQ(WClkFreq),
         .DIVR(0),
-        .DIVF(79),
-        .DIVQ(4),
+        .DIVF(63),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
     
@@ -347,10 +347,10 @@ module Top(
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, w_clk);
     
-    reg[7:0] w_counter = 0;
+    reg[22:0] w_counter = 0;
     reg[1:0] w_state = 0;
     always @(posedge w_clk) begin
-        w_counter <= w_counter+1;
+        
         
         case (w_state)
         0: begin
@@ -366,9 +366,11 @@ module Top(
         
         1: begin
             if (w_sdDatOutFifo_wok) begin
+                w_counter <= w_counter+1;
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
-            if (w_counter === 8'hFF) begin
+            if (w_counter === 'h7FFFFF) begin
+                w_sdDatOutFifo_wtrigger <= 0;
                 w_state <= 0;
             end
             // w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
@@ -439,6 +441,9 @@ module Top(
             sd_datOutEnding <= 0;
             sd_datOutCRCEn <= 0;
             sd_datOutStartBit <= 1;
+            // Use 2 bits for sd_datOutIdleReg, so that if they're both 1,
+            // we know that we're actually idle, since being in this state
+            // more than one cycle implies that the FIFO's rok=0
             sd_datOutIdleReg[0] <= 1;
             if (sd_sdDatOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
@@ -451,7 +456,7 @@ module Top(
             sd_datOutCRCEn <= 1;
             
             if (!sd_datOutCounter) begin
-                $display("[SD-CTRL:DATOUT]   Write another word: %x", sd_sdDatOutFifo_rdata);
+                // $display("[SD-CTRL:DATOUT]   Write another word: %x", sd_sdDatOutFifo_rdata);
                 sd_sdDatOutFifo_rtrigger <= 1;
             end
             
