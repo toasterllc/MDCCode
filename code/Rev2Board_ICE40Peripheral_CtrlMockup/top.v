@@ -96,17 +96,30 @@ module Top(
     
     
     // ====================
-    // Fast Clock (204 MHz)
+    // Fast Clock (207 MHz)
     // ====================
-    localparam FastClkFreq = 204_000_000;
+    localparam FastClkFreq = 207_000_000;
     wire fastClk;
     ClockGen #(
         .FREQ(FastClkFreq),
         .DIVR(0),
-        .DIVF(67),
+        .DIVF(68),
         .DIVQ(2),
         .FILTER_RANGE(1)
     ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
+    
+    // // ====================
+    // // Fast Clock (204 MHz)
+    // // ====================
+    // localparam FastClkFreq = 204_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(67),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
     
     
     // // ====================
