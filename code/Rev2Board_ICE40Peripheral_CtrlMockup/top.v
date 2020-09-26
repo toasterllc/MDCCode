@@ -76,6 +76,7 @@ module Top(
     reg[48:0] sd_cmdOutState = 0;
     reg sd_cmdOutStateInit = 0;
     reg[1:0] sd_datOutCounter = 0;
+    reg[3:0] sd_datOutCounter2 = 0;
     reg sd_datOutLastBank = 0;
     reg sd_datOutEnding = 0;
     
@@ -369,7 +370,7 @@ module Top(
     // SD State Machine
     // ====================
     
-    reg[32:0] sd_datOutState = 0;
+    reg[19:0] sd_datOutState = 0;
     reg sd_datOutStateInit = 0;
     reg[9:0] sd_respState = 0;
     reg sd_respStateInit = 0;
@@ -389,9 +390,11 @@ module Top(
         sd_respStateInit <= 1;
         
         sd_datOutState <= sd_datOutState>>1;
+        sd_datOutState[19] <= (!sd_datOutStateInit)|sd_datOutState[0];
         sd_datOutStateInit <= 1;
         
         sd_datOutCounter <= sd_datOutCounter-1;
+        sd_datOutCounter2 <= sd_datOutCounter2-1;
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
         sd_datOutReg <= sd_datOutReg<<4;
         sd_datInReg <= (sd_datInReg<<4)|{sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
@@ -412,8 +415,9 @@ module Top(
         if (sd_datOutStartBit)  sd_datOutReg[19:16] <= 4'b0000;
         if (sd_datOutEndBit)    sd_datOutReg[19:16] <= 4'b1111;
         
-        if (!sd_datOutStateInit || sd_datOutState[0]) begin
+        if (sd_datOutState[19]) begin
             sd_datOutCounter <= 0;
+            sd_datOutCounter2 <= 0;
             sd_datOutActive <= 0;
             sd_datOutEnding <= 0;
             sd_datOutCRCEn <= 0;
@@ -421,13 +425,14 @@ module Top(
             sd_datOutIdleReg[0] <= 1;
             if (sd_sdDatOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
-                sd_datOutState[32] <= 1;
             end else begin
-                sd_datOutState[0] <= 1; // Stay in this state
+                // Stay in this state
+                sd_datOutState[19] <= 1;
+                sd_datOutState[18] <= 0;
             end
         end
         
-        if (sd_datOutState[32]) begin
+        if (sd_datOutState[18]) begin
             sd_datOutActive <= 1;
             sd_datOutCRCEn <= 1;
             
@@ -440,16 +445,26 @@ module Top(
                 $display("[SD-CTRL:DATOUT] Done writing");
             end else begin
                 // Stay in this state
-                sd_datOutState[32] <= 1;
-                sd_datOutState[31] <= 0;
+                sd_datOutState[18] <= 1;
+                sd_datOutState[17] <= 0;
             end
         end
         
-        if (sd_datOutState[31]) begin
+        if (sd_datOutState[17]) begin
+            $display("[SD-CTRL:DATOUT] AAA sd_datOutCounter2: %0d", sd_datOutCounter2);
             sd_datOutCRCOutEn <= 1;
         end
         
+        if (sd_datOutState[16]) begin
+            $display("[SD-CTRL:DATOUT] BBB sd_datOutCounter2: %0d", sd_datOutCounter2);
+            if (sd_datOutCounter2!==1) begin
+                sd_datOutState[16] <= 1;
+                sd_datOutState[15] <= 0;
+            end
+        end
+        
         if (sd_datOutState[15]) begin
+            $display("[SD-CTRL:DATOUT] CCC sd_datOutCounter2: %0d", sd_datOutCounter2);
             sd_datOutCRCEn <= 0;
             sd_datOutCRCOutEn <= 0;
             sd_datOutEndBit <= 1;
