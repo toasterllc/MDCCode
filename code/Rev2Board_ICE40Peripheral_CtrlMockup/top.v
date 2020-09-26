@@ -371,7 +371,8 @@ module Top(
     // ====================
     
     reg[2:0] sd_datOutState = 0;
-    reg[1:0] sd_respState = 0;
+    reg[9:0] sd_respState = 0;
+    reg sd_respStateInit = 0;
     reg[1:0] sd_datOutIdleReg = 0;
     reg sd_respInStaged = 0;
     reg sd_respGo = 0;
@@ -382,6 +383,8 @@ module Top(
     always @(posedge sd_clk_int) begin
         sd_cmdOutState <= sd_cmdOutState>>1;
         sd_cmdOutStateInit <= 1;
+        sd_respState <= sd_respState>>1;
+        sd_respStateInit <= 1;
         sd_datOutCounter <= sd_datOutCounter-1;
         sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
@@ -489,40 +492,75 @@ module Top(
         
         
         
-        
-        case (sd_respState)
-        0: begin
+        if (!sd_respStateInit || sd_respState[0]) begin
             sd_respCRCEn <= 0;
             sd_respCRCErr <= 0;
             if (sd_respGo && !sd_respInStaged) begin
                 sd_respCRCEn <= 1;
-                sd_respState <= 1;
+                sd_respState[9] <= 1;
+            end else begin
+                sd_respState[0] <= 1; // Stay in this state
             end
         end
         
-        1: begin
+        if (sd_respState[9]) begin
             sd_respGo <= 0;
             if (!sd_shiftReg[40]) begin
                 sd_respCRCEn <= 0;
-            end
-            
-            if (!sd_respCRCEn) begin
-                if (sd_respCRC === sd_shiftReg[1]) begin
-                    $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
-                end else begin
-                    sd_respCRCErr <= sd_respCRCErr|1;
-                    $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
-                    // `Finish;
-                end
-            end
-            
-            if (!sd_shiftReg[47]) begin
-                sd_resp <= sd_shiftReg;
-                sd_respRecv <= !sd_respRecv;
-                sd_respState <= 0;
+            end else begin
+                sd_respState <= sd_respState; // Stay in this state
             end
         end
-        endcase
+        
+        if (sd_respState[8:2]) begin
+            if (sd_respCRC === sd_shiftReg[1]) begin
+                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
+            end else begin
+                sd_respCRCErr <= sd_respCRCErr|1;
+                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
+                // `Finish;
+            end
+        end
+        
+        if (sd_respState[1]) begin
+            sd_resp <= sd_shiftReg;
+            sd_respRecv <= !sd_respRecv;
+        end
+        
+        
+        // case (sd_respState)
+        // // 0: begin
+        // //     sd_respCRCEn <= 0;
+        // //     sd_respCRCErr <= 0;
+        // //     if (sd_respGo && !sd_respInStaged) begin
+        // //         sd_respCRCEn <= 1;
+        // //         sd_respState <= 1;
+        // //     end
+        // // end
+        //
+        // 1: begin
+        //     sd_respGo <= 0;
+        //     if (!sd_shiftReg[40]) begin
+        //         sd_respCRCEn <= 0;
+        //     end
+        //
+        //     if (!sd_respCRCEn) begin
+        //         if (sd_respCRC === sd_shiftReg[1]) begin
+        //             $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
+        //         end else begin
+        //             sd_respCRCErr <= sd_respCRCErr|1;
+        //             $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
+        //             // `Finish;
+        //         end
+        //     end
+        //
+        //     if (!sd_shiftReg[47]) begin
+        //         sd_resp <= sd_shiftReg;
+        //         sd_respRecv <= !sd_respRecv;
+        //         sd_respState <= 0;
+        //     end
+        // end
+        // endcase
         
         
         
