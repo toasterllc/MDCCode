@@ -20,6 +20,20 @@
 using Cmd = std::string;
 const Cmd EchoCmd = "echo";
 
+using TimeInstant = std::chrono::steady_clock::time_point;
+
+static TimeInstant CurrentTime() {
+    return std::chrono::steady_clock::now();
+}
+
+static uint64_t TimeDurationNs(TimeInstant t1, TimeInstant t2) {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(t2-t1).count();
+}
+
+static uint64_t TimeDurationMs(TimeInstant t1, TimeInstant t2) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+}
+
 void printUsage() {
     using namespace std;
     cout << "MDCDebugger commands:\n";
@@ -349,15 +363,18 @@ int main(int argc, const char* argv[]) {
     // Wait until we're done clocking out data on DAT lines
     {
         printf("Waiting for writing to finish\n");
+        auto start = CurrentTime();
+        TimeInstant end;
         for (;;) {
             auto status = getSDStatus(device);
             if (status.sdDatOutIdle()) {
                 assert(!status.sdDatOutCRCErr());
+                end = CurrentTime();
                 break;
             }
             printf("-> Busy\n");
         }
-        printf("-> Done\n\n");
+        printf("-> Done, took %ju ns\n\n", (uintmax_t)TimeDurationNs(start, end));
     }
     
     return 0;
