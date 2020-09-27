@@ -73,7 +73,7 @@ module Top(
     reg sd_respCRCErr = 0;
     reg sd_datOutCRCErr = 0;
     
-    reg[48:0] sd_cmdOutState = 0;
+    reg[11:0] sd_cmdOutState = 0;
     reg sd_cmdOutStateInit = 0;
     reg[1:0] sd_datOutCounter = 0;
     reg[3:0] sd_datOutCRCCounter = 0;
@@ -96,63 +96,17 @@ module Top(
     
     
     // ====================
-    // Fast Clock (204 MHz)
+    // Fast Clock (207 MHz)
     // ====================
-    localparam FastClkFreq = 204_000_000;
+    localparam FastClkFreq = 207_000_000;
     wire fastClk;
     ClockGen #(
         .FREQ(FastClkFreq),
         .DIVR(0),
-        .DIVF(67),
+        .DIVF(68),
         .DIVQ(2),
         .FILTER_RANGE(1)
     ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    
-    // // ====================
-    // // Fast Clock (180 MHz)
-    // // ====================
-    // localparam FastClkFreq = 180_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(59),
-    //     .DIVQ(2),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    // // ====================
-    // // Fast Clock (120 MHz)
-    // // ====================
-    // localparam FastClkFreq = 120_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(79),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    // // ====================
-    // // Fast Clock (18 MHz)
-    // // ====================
-    // localparam FastClkFreq = 18_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(47),
-    //     .DIVQ(5),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    // // ====================
-    // // Fast Clock (12 MHz)
-    // // ====================
-    // localparam FastClkFreq = 12_000_000;
-    // wire fastClk = clk12mhz;
     
     
     // ====================
@@ -207,7 +161,7 @@ module Top(
     
     // Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
     Delay #(
-        .Count(0)
+        .Count(3)
     ) Delay_sd_clk_int(
         .in(sd_clk_int),
         .out(sd_clk)
@@ -354,7 +308,7 @@ module Top(
                 w_counter <= w_counter+1;
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
-            if (w_counter === 'h7FFFFF) begin
+            if (w_counter === 'h7FFFFE) begin
                 w_state <= 0;
             end
             
@@ -380,19 +334,21 @@ module Top(
     reg sd_respInStaged = 0;
     reg sd_respGo = 0;
     reg sd_datInCRCStatusReg = 0;
+    reg[5:0] sd_cmdOutCounter = 0;
     
     `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk_int);
     
     // TODO: try to improve the "Stay in state" strategy. we don't need to assign the whole state shift register -- we can just assign 2 bits
     always @(posedge sd_clk_int) begin
         sd_cmdOutState <= sd_cmdOutState>>1;
-        sd_cmdOutState[48] <= (!sd_cmdOutStateInit)|sd_cmdOutState[0];
+        sd_cmdOutState[11] <= (!sd_cmdOutStateInit)|sd_cmdOutState[0];
         sd_cmdOutStateInit <= 1;
         
         sd_respState <= sd_respState>>1;
         sd_respState[9] <= (!sd_respStateInit)|sd_respState[0];
         sd_respStateInit <= 1;
         
+        sd_cmdOutCounter <= sd_cmdOutCounter-1;
         sd_datOutCounter <= sd_datOutCounter-1;
         sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
         
@@ -536,20 +492,28 @@ module Top(
         
         
         
-        if (sd_cmdOutState[48]) begin
+        if (sd_cmdOutState[11]) begin
             sd_cmdOutActive[0] <= 0;
+            sd_cmdOutCounter <= 38;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
             end else begin
                 // Stay in this state
-                sd_cmdOutState[48:47] <= sd_cmdOutState[48:47];
+                sd_cmdOutState[11:10] <= sd_cmdOutState[11:10];
             end
         end
         
-        if (sd_cmdOutState[47]) begin
+        if (sd_cmdOutState[10]) begin
             sd_cmdOutActive[0] <= 1;
             sd_shiftReg <= ctrl_msgArg;
             sd_cmdOutCRCEn <= 1;
+        end
+        
+        if (sd_cmdOutState[9]) begin
+            if (sd_cmdOutCounter) begin
+                // Stay in this state
+                sd_cmdOutState[9:8] <= sd_cmdOutState[9:8];
+            end
         end
         
         if (sd_cmdOutState[8]) begin
