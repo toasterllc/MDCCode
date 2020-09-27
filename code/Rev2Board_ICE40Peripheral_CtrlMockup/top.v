@@ -334,11 +334,9 @@ module Top(
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, w_clk);
     
-    reg[7:0] w_counter = 0;
+    reg[22:0] w_counter = 0;
     reg[1:0] w_state = 0;
     always @(posedge w_clk) begin
-        w_counter <= w_counter+1;
-        
         case (w_state)
         0: begin
             w_sdDatOutFifo_wdata <= 0;
@@ -353,8 +351,13 @@ module Top(
         
         1: begin
             if (w_sdDatOutFifo_wok) begin
+                w_counter <= w_counter+1;
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
+            if (w_counter === 'h7FFFFF) begin
+                w_state <= 0;
+            end
+            
             // if (w_counter === 8'hFF) begin
             //     w_state <= 0;
             // end
