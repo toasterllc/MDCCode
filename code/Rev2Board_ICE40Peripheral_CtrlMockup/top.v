@@ -33,47 +33,6 @@ module Top(
     // ====================
     // Registers
     // ====================
-    reg[47:0] sd_shiftReg = 0;
-    
-    // `sd_cmdOutActive` is 3 bits to track whether `sd_cmdIn` is
-    // valid or not, since it takes several cycles to transition
-    // between output and input.
-    reg sd_cmdOutCRCEn = 0;
-    reg sd_cmdOutCRCOutEn = 0;
-    reg sd_cmdOutDone = 0;
-    reg[2:0] sd_cmdOutActive = 0;
-    reg[5:0] sd_cmdOutCounter = 0;
-    wire sd_cmdIn;
-    wire sd_cmdOutCRC;
-    
-    reg sd_respCRCEn = 0;
-    reg sd_respCRCErr = 0;
-    reg sd_respGo = 0;
-    reg sd_respRecv = 0;
-    reg sd_respStaged = 0;
-    reg[47:0] sd_resp = 0;
-    wire sd_respCRC;
-    
-    reg sd_datOutActive = 0;
-    reg sd_datOutCRCEn = 0;
-    reg sd_datOutCRCErr = 0;
-    reg sd_datOutCRCOutEn = 0;
-    reg sd_datOutEndBit = 0;
-    reg sd_datOutEnding = 0;
-    reg sd_datOutLastBank = 0;
-    reg sd_datOutStartBit = 0;
-    reg[19:0] sd_datInReg = 0;
-    reg[19:0] sd_datOutReg = 0;
-    reg[1:0] sd_datOutCounter = 0;
-    reg[3:0] sd_datOutCRCCounter = 0;
-    wire sd_datInCRCStatusOK = sd_datInCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
-    wire[3:0] sd_datIn;
-    wire[3:0] sd_datOutCRC;
-    wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
-    
-    reg sd_datInCRCStatusReg = 0;
-    reg[1:0] sd_datOutIdleReg = 0;
-    
     reg ctrl_dinActive = 0;
     reg ctrl_sdClkFast = 0;
     reg ctrl_sdClkSlow = 0;
@@ -131,109 +90,6 @@ module Top(
     
     
     
-    
-    
-    // ====================
-    // Pin: ctrl_di
-    // ====================
-    wire ctrlDI;
-    SB_IO #(
-        .PIN_TYPE(6'b0000_00),
-        .PULLUP(1'b1)
-    ) SB_IO_ctrl_clk (
-        .INPUT_CLK(ctrl_clk),
-        .PACKAGE_PIN(ctrl_di),
-        .D_IN_0(ctrlDI)
-    );
-    
-    // ====================
-    // Pin: ctrl_do
-    // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b1101_01),
-        .PULLUP(1'b1)
-    ) SB_IO_ctrl_do (
-        .OUTPUT_CLK(ctrl_clk),
-        .PACKAGE_PIN(ctrl_do),
-        .OUTPUT_ENABLE(1'b1),
-        .D_OUT_0(ctrl_doutReg[65])
-    );
-    
-    // ====================
-    // Pin: sd_cmd
-    // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b1101_00)
-    ) SB_IO_sd_cmd (
-        .INPUT_CLK(sd_clk_int),
-        .OUTPUT_CLK(sd_clk_int),
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_ENABLE(sd_cmdOutActive[0]),
-        .D_OUT_0(sd_shiftReg[47]),
-        .D_IN_0(sd_cmdIn)
-    );
-    
-    // ====================
-    // Pin: sd_dat[3:0]
-    // ====================
-    genvar i;
-    for (i=0; i<4; i=i+1) begin
-        SB_IO #(
-            .PIN_TYPE(6'b1101_00)
-        ) SB_IO (
-            .INPUT_CLK(sd_clk_int),
-            .OUTPUT_CLK(sd_clk_int),
-            .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_ENABLE(sd_datOutActive),
-            .D_OUT_0(sd_datOutReg[16+i]),
-            .D_IN_0(sd_datIn[i])
-        );
-    end
-    
-    
-    
-    
-    // ====================
-    // CRC: sd_cmdOutCRC
-    // ====================
-    CRC7 #(
-        .Delay(-1)
-    ) CRC7_sd_cmdOut(
-        .clk(sd_clk_int),
-        .en(sd_cmdOutCRCEn),
-        .din(sd_shiftReg[47]),
-        .dout(sd_cmdOutCRC)
-    );
-    
-    // ====================
-    // CRC: sd_cmdOutCRC
-    // ====================
-    CRC7 #(
-        .Delay(1)
-    ) CRC7_sd_resp(
-        .clk(sd_clk_int),
-        .en(sd_respCRCEn),
-        .din(sd_shiftReg[0]),
-        .dout(sd_respCRC) // TODO: search and replace
-    );
-    
-    // ====================
-    // CRC: sd_datOutCRC
-    // ====================
-    for (i=0; i<4; i=i+1) begin
-        CRC16 #(
-            .Delay(-1)
-        ) CRC16_dat(
-            .clk(sd_clk_int),
-            .en(sd_datOutCRCEn),
-            .din(sd_datOutReg[16+i]),
-            .dout(sd_datOutCRC[i])
-        );
-    end
-    
-    
-    
-    
     // ====================
     // w_clk
     // ====================
@@ -253,7 +109,6 @@ module Top(
     reg w_sdDatOutFifo_wtrigger = 0;
     reg[15:0] w_sdDatOutFifo_wdata = 0;
     wire w_sdDatOutFifo_wok;
-    
     reg sd_sdDatOutFifo_rtrigger = 0;
     wire[15:0] sd_sdDatOutFifo_rdata;
     wire sd_sdDatOutFifo_rok;
@@ -315,13 +170,51 @@ module Top(
     // ====================
     // SD State Machine
     // ====================
-    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
-    
     reg[11:0] sd_cmdOutState = 0;
     reg sd_cmdOutStateInit = 0;
     reg[9:0] sd_respState = 0;
     reg sd_respStateInit = 0;
     reg[2:0] sd_datOutState = 0;
+    
+    reg[47:0] sd_shiftReg = 0;
+    
+    reg sd_cmdOutCRCEn = 0;
+    reg sd_cmdOutCRCOutEn = 0;
+    reg sd_cmdOutDone = 0;
+    reg[2:0] sd_cmdOutActive = 0; // 3 bits -- see explanation where assigned
+    reg[5:0] sd_cmdOutCounter = 0;
+    wire sd_cmdIn;
+    wire sd_cmdOutCRC;
+    
+    reg sd_respCRCEn = 0;
+    reg sd_respCRCErr = 0;
+    reg sd_respGo = 0;
+    reg sd_respRecv = 0;
+    reg sd_respStaged = 0;
+    reg[47:0] sd_resp = 0;
+    wire sd_respCRC;
+    
+    reg sd_datOutActive = 0;
+    reg sd_datOutCRCEn = 0;
+    reg sd_datOutCRCErr = 0;
+    reg sd_datOutCRCOutEn = 0;
+    reg sd_datOutEndBit = 0;
+    reg sd_datOutEnding = 0;
+    reg sd_datOutLastBank = 0;
+    reg sd_datOutStartBit = 0;
+    reg[19:0] sd_datInReg = 0;
+    reg[19:0] sd_datOutReg = 0;
+    reg[1:0] sd_datOutCounter = 0;
+    reg[3:0] sd_datOutCRCCounter = 0;
+    wire[3:0] sd_datIn;
+    wire[3:0] sd_datOutCRC;
+    wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
+    wire sd_datInCRCStatusOK = sd_datInCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
+    reg sd_datInCRCStatusReg = 0;
+    reg[1:0] sd_datOutIdleReg = 0; // 2 bits -- see explanation where it's assigned
+    
+    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
+    
     always @(posedge sd_clk_int) begin
         sd_cmdOutState <= sd_cmdOutState>>1;
         sd_cmdOutState[11] <= (!sd_cmdOutStateInit)|sd_cmdOutState[0];
@@ -335,6 +228,9 @@ module Top(
         sd_datOutCounter <= sd_datOutCounter-1;
         sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
         
+        // `sd_cmdOutActive` is 3 bits to track whether `sd_cmdIn` is
+        // valid or not, since it takes several cycles to transition
+        // between output and input.
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
         sd_datOutReg <= sd_datOutReg<<4;
         sd_datInReg <= (sd_datInReg<<4)|{sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
@@ -530,7 +426,6 @@ module Top(
     // ====================
     // Control State Machine
     // ====================
-    
     localparam Msg_StartBit = 1'b0;
     localparam Msg_EndBit   = 1'b1;
     
@@ -623,6 +518,105 @@ module Top(
             ctrl_state <= 0;
         end
         endcase
+    end
+    
+    
+    
+    
+    
+    // ====================
+    // Pin: ctrl_di
+    // ====================
+    wire ctrlDI;
+    SB_IO #(
+        .PIN_TYPE(6'b0000_00),
+        .PULLUP(1'b1)
+    ) SB_IO_ctrl_clk (
+        .INPUT_CLK(ctrl_clk),
+        .PACKAGE_PIN(ctrl_di),
+        .D_IN_0(ctrlDI)
+    );
+    
+    // ====================
+    // Pin: ctrl_do
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b1101_01),
+        .PULLUP(1'b1)
+    ) SB_IO_ctrl_do (
+        .OUTPUT_CLK(ctrl_clk),
+        .PACKAGE_PIN(ctrl_do),
+        .OUTPUT_ENABLE(1'b1),
+        .D_OUT_0(ctrl_doutReg[65])
+    );
+    
+    // ====================
+    // Pin: sd_cmd
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b1101_00)
+    ) SB_IO_sd_cmd (
+        .INPUT_CLK(sd_clk_int),
+        .OUTPUT_CLK(sd_clk_int),
+        .PACKAGE_PIN(sd_cmd),
+        .OUTPUT_ENABLE(sd_cmdOutActive[0]),
+        .D_OUT_0(sd_shiftReg[47]),
+        .D_IN_0(sd_cmdIn)
+    );
+    
+    // ====================
+    // Pin: sd_dat[3:0]
+    // ====================
+    genvar i;
+    for (i=0; i<4; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_00)
+        ) SB_IO (
+            .INPUT_CLK(sd_clk_int),
+            .OUTPUT_CLK(sd_clk_int),
+            .PACKAGE_PIN(sd_dat[i]),
+            .OUTPUT_ENABLE(sd_datOutActive),
+            .D_OUT_0(sd_datOutReg[16+i]),
+            .D_IN_0(sd_datIn[i])
+        );
+    end
+    
+    // ====================
+    // CRC: sd_cmdOutCRC
+    // ====================
+    CRC7 #(
+        .Delay(-1)
+    ) CRC7_sd_cmdOut(
+        .clk(sd_clk_int),
+        .en(sd_cmdOutCRCEn),
+        .din(sd_shiftReg[47]),
+        .dout(sd_cmdOutCRC)
+    );
+    
+    // ====================
+    // CRC: sd_cmdOutCRC
+    // ====================
+    CRC7 #(
+        .Delay(1)
+    ) CRC7_sd_resp(
+        .clk(sd_clk_int),
+        .en(sd_respCRCEn),
+        .din(sd_shiftReg[0]),
+        .dout(sd_respCRC)
+    );
+    
+    // ====================
+    // CRC: sd_datOutCRC
+    // ====================
+    for (i=0; i<4; i=i+1) begin
+        CRC16 #(
+            .Delay(-1)
+        ) CRC16_dat(
+            .clk(sd_clk_int),
+            .en(sd_datOutCRCEn),
+            .din(sd_datOutReg[16+i]),
+            .dout(sd_datOutCRC[i])
+        );
     end
 endmodule
 
