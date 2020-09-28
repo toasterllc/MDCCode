@@ -24,9 +24,7 @@ ntrials="$5"
 cd "$proj/tmp"
 
 # Place and route the design ({top.json, pins.pcf} -> .asc)
-freqTotal=0
-freqMin=99999999
-freqMax=0
+freqs=()
 for (( i=0; i<$ntrials; i++)); do
     echo "Trial $i"
     output=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained 2>&1 | grep "Info: Max frequency for clock.*$clk" || true )
@@ -36,17 +34,20 @@ for (( i=0; i<$ntrials; i++)); do
     fi
     
     freq=$( echo "$output" | tail -1 | awk -F' ' '{print $(NF-5)}' )
-    freqTotal=$( echo "scale=4; $freqTotal+$freq" | bc )
-    
-    if (($(echo "$freq < $freqMin" | bc))); then
-        freqMin="$freq"
-    fi
-    
-    if (($(echo "$freq > $freqMax" | bc))); then
-        freqMax="$freq"
-    fi
+    freqs+=($freq)
 done
-freqAverage=$( echo "scale=2; $freqTotal/$ntrials" | bc )
+
+# Sort the frequencies
+freqs=($(IFS=$'\n' ; sort -g <<<"${freqs[*]}"))
+# echo "Sorted Freqs: " ${freqs[*]}
+
+freqMin=${freqs[0]}
+freqMax=${freqs[ntrials-1]}
+freqTotal=$(IFS='+'; bc <<< "${freqs[*]}")
+freqAverage=$(bc <<< "scale=2; $freqTotal/$ntrials")
+freqMedian=${freqs[(ntrials-1)/2]}
+
 echo "    Min frequency: $freqMin"
 echo "    Max frequency: $freqMax"
 echo "Average frequency: $freqAverage"
+echo " Median frequency: $freqMedian"
