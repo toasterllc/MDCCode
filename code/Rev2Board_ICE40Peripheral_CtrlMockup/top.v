@@ -77,7 +77,7 @@ module Top(
     //   Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
     // ====================
     Delay #(
-        .Count(3)
+        .Count(4)
     ) Delay_sd_clk_int(
         .in(sd_clk_int),
         .out(sd_clk)

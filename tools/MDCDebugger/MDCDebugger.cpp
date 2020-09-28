@@ -92,6 +92,7 @@ static void sendSDCmd(MDCDevice& d, uint8_t sdCmd, uint32_t sdArg) {
         d.write(SDGetStatusMsg());
         auto resp = d.read<SDGetStatusResp>();
         if (resp.sdCommandSent()) break;
+        else printf("  Waiting for SD command to be sent...\n");
     }
 }
 
@@ -107,6 +108,7 @@ static MDCDevice::SDGetStatusResp getSDResp(MDCDevice& d) {
     for (;;) {
         auto status = getSDStatus(d);
         if (status.sdRespRecv()) return status;
+        else printf("  Waiting for response from SD card...\n");
     }
 }
 
@@ -281,22 +283,6 @@ int main(int argc, const char* argv[]) {
         // 512 bits / 4 DAT lines = 128 bits per DAT line -> 128 bits * (1/350kHz) = 366us.
         usleep(1000);
         printf("-> Done (response: 0x%012jx)\n\n", (uintmax_t)resp.sdResp());
-    }
-    
-    
-    
-    // Disable SD clock
-    {
-        printf("Disabling SD clock\n");
-        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
-        printf("-> Done\n\n");
-    }
-    
-    // Enable SD slow clock
-    {
-        printf("Enabling SD slow clock\n");
-        device.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
-        printf("-> Done\n\n");
     }
     
     
