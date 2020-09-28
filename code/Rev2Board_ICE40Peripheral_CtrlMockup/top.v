@@ -303,6 +303,10 @@ module Top(
         end
         
         if (sd_respState[0]) begin
+            // Ideally we'd assign `sd_resp` on the previous clock cycle
+            // so that we didn't need this right-shift, but that hurts
+            // our perf quite a bit. So since the high bit of SD card
+            // commands/responses is always zero, assign it here.
             sd_resp <= sd_shiftReg>>1;
             sd_respRecv <= !sd_respRecv;
         end
