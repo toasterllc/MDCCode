@@ -30,69 +30,61 @@ module Top(
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat
 );
-    function [63:0] DivCeil;
-        input [63:0] n;
-        input [63:0] d;
-        begin
-            DivCeil = (n+d-1)/d;
-        end
-    endfunction
-    
-    
-    
     // ====================
     // Registers
     // ====================
     reg[47:0] sd_shiftReg = 0;
-    reg[2:0] sd_cmdOutActive = 0;
     
+    // `sd_cmdOutActive` is 3 bits to track whether `sd_cmdIn` is
+    // valid or not, since it takes several cycles to transition
+    // between output and input.
     reg sd_cmdOutCRCEn = 0;
-    wire sd_cmdOutCRC;
     reg sd_cmdOutCRCOutEn = 0;
+    reg sd_cmdOutDone = 0;
+    reg[2:0] sd_cmdOutActive = 0;
+    reg[5:0] sd_cmdOutCounter = 0;
+    wire sd_cmdIn;
+    wire sd_cmdOutCRC;
     
     reg sd_respCRCEn = 0;
+    reg sd_respCRCErr = 0;
+    reg sd_respGo = 0;
+    reg sd_respRecv = 0;
+    reg sd_respStaged = 0;
+    reg[47:0] sd_resp = 0;
     wire sd_respCRC;
     
-    wire[3:0] sd_datIn;
-    reg[19:0] sd_datOutReg = 0;
-    reg[19:0] sd_datInReg = 0;
-    wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
-    wire sd_datInCRCStatusOK = sd_datInCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
-    wire[3:0] sd_datOutCRC;
-    reg sd_datOutCRCEn = 0;
-    reg sd_datOutCRCOutEn = 0;
     reg sd_datOutActive = 0;
-    reg sd_datOutStartBit = 0;
-    reg sd_datOutEndBit = 0;
-    
-    wire sd_cmdIn;
-    reg[47:0] sd_resp = 0;
-    reg sd_cmdOutDone = 0;
-    reg sd_respRecv = 0;
-    
-    reg sd_respCRCErr = 0;
+    reg sd_datOutCRCEn = 0;
     reg sd_datOutCRCErr = 0;
-    
-    reg[11:0] sd_cmdOutState = 0;
-    reg sd_cmdOutStateInit = 0;
+    reg sd_datOutCRCOutEn = 0;
+    reg sd_datOutEndBit = 0;
+    reg sd_datOutEnding = 0;
+    reg sd_datOutLastBank = 0;
+    reg sd_datOutStartBit = 0;
+    reg[19:0] sd_datInReg = 0;
+    reg[19:0] sd_datOutReg = 0;
     reg[1:0] sd_datOutCounter = 0;
     reg[3:0] sd_datOutCRCCounter = 0;
-    reg sd_datOutLastBank = 0;
-    reg sd_datOutEnding = 0;
+    wire sd_datInCRCStatusOK = sd_datInCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
+    wire[3:0] sd_datIn;
+    wire[3:0] sd_datOutCRC;
+    wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
+    
+    reg sd_datInCRCStatusReg = 0;
+    reg[1:0] sd_datOutIdleReg = 0;
     
     reg ctrl_dinActive = 0;
-    reg[65:0] ctrl_dinReg = 0;
-    wire[7:0] ctrl_msgCmd = ctrl_dinReg[64:57];
-    wire[55:0] ctrl_msgArg = ctrl_dinReg[56:1];
-    
-    reg[65:0] ctrl_doutReg = 0;
-    
-    reg[6:0] ctrl_counter = 0;
-    reg ctrl_sdClkSlow = 0;
     reg ctrl_sdClkFast = 0;
-    
+    reg ctrl_sdClkSlow = 0;
     reg ctrl_sdCmdOutTrigger = 0;
     reg ctrl_sdDatOutTrigger = 0;
+    reg[65:0] ctrl_dinReg = 0;
+    reg[65:0] ctrl_doutReg = 0;
+    reg[6:0] ctrl_counter = 0;
+    wire[55:0] ctrl_msgArg = ctrl_dinReg[56:1];
+    wire[7:0] ctrl_msgCmd = ctrl_dinReg[64:57];
+    
     
     
     // ====================
@@ -108,66 +100,6 @@ module Top(
         .FILTER_RANGE(1)
     ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
     
-    // // ====================
-    // // Fast Clock (204 MHz)
-    // // ====================
-    // localparam FastClkFreq = 204_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(67),
-    //     .DIVQ(2),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    
-    // // ====================
-    // // Fast Clock (180 MHz)
-    // // ====================
-    // localparam FastClkFreq = 180_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(59),
-    //     .DIVQ(2),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    // // ====================
-    // // Fast Clock (120 MHz)
-    // // ====================
-    // localparam FastClkFreq = 120_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(79),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    // // ====================
-    // // Fast Clock (18 MHz)
-    // // ====================
-    // localparam FastClkFreq = 18_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(47),
-    //     .DIVQ(5),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clk12mhz(clk12mhz), .clk(fastClk));
-    
-    // // ====================
-    // // Fast Clock (12 MHz)
-    // // ====================
-    // localparam FastClkFreq = 12_000_000;
-    // wire fastClk = clk12mhz;
-    
-    
     // ====================
     // Slow Clock (400 kHz)
     // ====================
@@ -178,6 +110,26 @@ module Top(
     always @(posedge fastClk) begin
         slowClkDivider <= slowClkDivider+1;
     end
+    
+    // ====================
+    // sd_clk_int
+    // ====================
+    `Sync(sdClkSlow, ctrl_sdClkSlow, negedge, slowClk);
+    `Sync(sdClkFast, ctrl_sdClkFast, negedge, fastClk);
+    wire sd_clk_int = (sdClkSlow ? slowClk : (sdClkFast ? fastClk : 0));
+    
+    // ====================
+    // sd_clk
+    //   Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
+    // ====================
+    Delay #(
+        .Count(3)
+    ) Delay_sd_clk_int(
+        .in(sd_clk_int),
+        .out(sd_clk)
+    );
+    
+    
     
     
     
@@ -194,8 +146,6 @@ module Top(
         .D_IN_0(ctrlDI)
     );
     
-    
-    
     // ====================
     // Pin: ctrl_do
     // ====================
@@ -207,23 +157,6 @@ module Top(
         .PACKAGE_PIN(ctrl_do),
         .OUTPUT_ENABLE(1'b1),
         .D_OUT_0(ctrl_doutReg[65])
-    );
-    
-    
-    
-    // ====================
-    // Pin: sd_clk / sd_clk_int
-    // ====================
-    `Sync(sdClkSlow, ctrl_sdClkSlow, negedge, slowClk);
-    `Sync(sdClkFast, ctrl_sdClkFast, negedge, fastClk);
-    assign sd_clk_int = (sdClkSlow ? slowClk : (sdClkFast ? fastClk : 0));
-    
-    // Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
-    Delay #(
-        .Count(3)
-    ) Delay_sd_clk_int(
-        .in(sd_clk_int),
-        .out(sd_clk)
     );
     
     // ====================
@@ -261,7 +194,7 @@ module Top(
     
     
     // ====================
-    // CRC
+    // CRC: sd_cmdOutCRC
     // ====================
     CRC7 #(
         .Delay(-1)
@@ -272,6 +205,9 @@ module Top(
         .dout(sd_cmdOutCRC)
     );
     
+    // ====================
+    // CRC: sd_cmdOutCRC
+    // ====================
     CRC7 #(
         .Delay(1)
     ) CRC7_sd_resp(
@@ -281,6 +217,9 @@ module Top(
         .dout(sd_respCRC) // TODO: search and replace
     );
     
+    // ====================
+    // CRC: sd_datOutCRC
+    // ====================
     for (i=0; i<4; i=i+1) begin
         CRC16 #(
             .Delay(-1)
@@ -295,10 +234,8 @@ module Top(
     
     
     
-    
-    
     // ====================
-    // W Clock
+    // w_clk
     // ====================
     localparam WClkFreq = 96_000_000;
     wire w_clk;
@@ -310,9 +247,8 @@ module Top(
         .FILTER_RANGE(1)
     ) ClockGen_w_clk(.clk12mhz(clk12mhz), .clk(w_clk));
     
-    
     // ====================
-    // FIFO
+    // SD Dat Out FIFO
     // ====================
     reg w_sdDatOutFifo_wtrigger = 0;
     reg[15:0] w_sdDatOutFifo_wdata = 0;
@@ -340,18 +276,14 @@ module Top(
     
     
     
-    
-
-    
-    
-    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
+    // ====================
+    // Writer State Machine
+    // ====================
     `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, w_clk);
     
-    reg[22:0] w_counter = 0;
     reg[1:0] w_state = 0;
+    reg[22:0] w_counter = 0;
     always @(posedge w_clk) begin
-        
-        
         case (w_state)
         0: begin
             w_sdDatOutFifo_wdata <= 0;
@@ -376,22 +308,20 @@ module Top(
         endcase
     end
     
+    
+    
+    
+    
     // ====================
     // SD State Machine
     // ====================
+    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     
-    reg[2:0] sd_datOutState = 0;
+    reg[11:0] sd_cmdOutState = 0;
+    reg sd_cmdOutStateInit = 0;
     reg[9:0] sd_respState = 0;
     reg sd_respStateInit = 0;
-    reg[1:0] sd_datOutIdleReg = 0;
-    reg sd_respInStaged = 0;
-    reg sd_respGo = 0;
-    reg sd_datInCRCStatusReg = 0;
-    reg[5:0] sd_cmdOutCounter = 0;
-    
-    `TogglePulse(sd_datOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_clk_int);
-    
-    // TODO: try to improve the "Stay in state" strategy. we don't need to assign the whole state shift register -- we can just assign 2 bits
+    reg[2:0] sd_datOutState = 0;
     always @(posedge sd_clk_int) begin
         sd_cmdOutState <= sd_cmdOutState>>1;
         sd_cmdOutState[11] <= (!sd_cmdOutStateInit)|sd_cmdOutState[0];
@@ -416,8 +346,8 @@ module Top(
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
         sd_datInCRCStatusReg <= sd_datInCRCStatusReg<<1|sd_datInCRCStatusOK;
         
-        sd_shiftReg <= sd_shiftReg<<1|sd_respInStaged;
-        sd_respInStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
+        sd_shiftReg <= sd_shiftReg<<1|sd_respStaged;
+        sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
         if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
         
         if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
@@ -514,7 +444,7 @@ module Top(
         if (sd_respState[9]) begin
             sd_respCRCEn <= 0;
             sd_respCRCErr <= 0;
-            if (sd_respGo && !sd_respInStaged) begin
+            if (sd_respGo && !sd_respStaged) begin
                 sd_respCRCEn <= 1;
             end else begin
                 // Stay in this state
@@ -600,18 +530,6 @@ module Top(
     // ====================
     // Control State Machine
     // ====================
-    wire sd_datOutIdle = &sd_datOutIdleReg;
-    `ToggleAck(ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneAck, sd_cmdOutDone, posedge, ctrl_clk);
-    `ToggleAck(ctrl_sdRespRecv, ctrl_sdRespRecvAck, sd_respRecv, posedge, ctrl_clk);
-    `Sync(ctrl_sdDatOutIdle, sd_datOutIdle, posedge, ctrl_clk);
-    `Sync(ctrl_sdRespCRCErr, sd_respCRCErr, posedge, ctrl_clk);
-    `Sync(ctrl_sdDatOutCRCErr, sd_datOutCRCErr, posedge, ctrl_clk);
-    
-    // reg[9:0] ctrl_sdDatOutCRCErr = 0;
-    // always @(posedge ctrl_clk)
-    //     ctrl_sdDatOutCRCErr <= ctrl_sdDatOutCRCErr<<1|sd_datOutCRCErr;
-
-    
     
     localparam Msg_StartBit = 1'b0;
     localparam Msg_EndBit   = 1'b1;
@@ -621,6 +539,13 @@ module Top(
     localparam MsgCmd_SDSendCmd         = 8'h02;
     localparam MsgCmd_SDGetStatus       = 8'h03;
     localparam MsgCmd_SDDatOut          = 8'h04;
+    
+    wire sd_datOutIdle = &sd_datOutIdleReg;
+    `ToggleAck(ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneAck, sd_cmdOutDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdRespRecv, ctrl_sdRespRecvAck, sd_respRecv, posedge, ctrl_clk);
+    `Sync(ctrl_sdDatOutIdle, sd_datOutIdle, posedge, ctrl_clk);
+    `Sync(ctrl_sdRespCRCErr, sd_respCRCErr, posedge, ctrl_clk);
+    `Sync(ctrl_sdDatOutCRCErr, sd_datOutCRCErr, posedge, ctrl_clk);
     
     reg[1:0] ctrl_state = 0;
     always @(posedge ctrl_clk) begin

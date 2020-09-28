@@ -18,3 +18,11 @@
 `else
     `define Finish
 `endif
+
+function [63:0] DivCeil;
+    input [63:0] n;
+    input [63:0] d;
+    begin
+        DivCeil = (n+d-1)/d;
+    end
+endfunction
