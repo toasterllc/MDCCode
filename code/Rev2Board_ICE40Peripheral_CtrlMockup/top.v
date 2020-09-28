@@ -31,20 +31,15 @@ module Top(
     inout wire[3:0]     sd_dat
 );
     // ====================
-    // Registers
+    // Shared Nets/Registers
     // ====================
-    reg ctrl_dinActive = 0;
     reg ctrl_sdClkFast = 0;
     reg ctrl_sdClkSlow = 0;
     reg ctrl_sdCmdOutTrigger = 0;
     reg ctrl_sdDatOutTrigger = 0;
     reg[65:0] ctrl_dinReg = 0;
-    reg[65:0] ctrl_doutReg = 0;
-    reg[6:0] ctrl_counter = 0;
     wire[55:0] ctrl_msgArg = ctrl_dinReg[56:1];
     wire[7:0] ctrl_msgCmd = ctrl_dinReg[64:57];
-    
-    
     
     // ====================
     // Fast Clock (207 MHz)
@@ -88,8 +83,6 @@ module Top(
         .out(sd_clk)
     );
     
-    
-    
     // ====================
     // w_clk
     // ====================
@@ -129,15 +122,12 @@ module Top(
         .r_bank(sd_sdDatOutFifo_rbank)
     );
     
-    
-    
     // ====================
     // Writer State Machine
     // ====================
-    `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, w_clk);
-    
     reg[1:0] w_state = 0;
     reg[22:0] w_counter = 0;
+    `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, w_clk);
     always @(posedge w_clk) begin
         case (w_state)
         0: begin
@@ -156,16 +146,13 @@ module Top(
                 w_counter <= w_counter+1;
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
-            if (w_counter === 'h7FFFFE) begin
+            if (w_counter === 'h7FE) begin
+            // if (w_counter === 'h7FFFFE) begin
                 w_state <= 0;
             end
         end
         endcase
     end
-    
-    
-    
-    
     
     // ====================
     // SD State Machine
@@ -435,6 +422,11 @@ module Top(
     localparam MsgCmd_SDGetStatus       = 8'h03;
     localparam MsgCmd_SDDatOut          = 8'h04;
     
+    reg[1:0] ctrl_state = 0;
+    reg[6:0] ctrl_counter = 0;
+    reg ctrl_dinActive = 0;
+    reg[65:0] ctrl_doutReg = 0;
+    
     wire sd_datOutIdle = &sd_datOutIdleReg;
     `ToggleAck(ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneAck, sd_cmdOutDone, posedge, ctrl_clk);
     `ToggleAck(ctrl_sdRespRecv, ctrl_sdRespRecvAck, sd_respRecv, posedge, ctrl_clk);
@@ -442,7 +434,6 @@ module Top(
     `Sync(ctrl_sdRespCRCErr, sd_respCRCErr, posedge, ctrl_clk);
     `Sync(ctrl_sdDatOutCRCErr, sd_datOutCRCErr, posedge, ctrl_clk);
     
-    reg[1:0] ctrl_state = 0;
     always @(posedge ctrl_clk) begin
         if (ctrl_dinActive) ctrl_dinReg <= ctrl_dinReg<<1|ctrlDI;
         ctrl_counter <= ctrl_counter-1;
@@ -519,10 +510,6 @@ module Top(
         end
         endcase
     end
-    
-    
-    
-    
     
     // ====================
     // Pin: ctrl_di
