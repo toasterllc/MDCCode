@@ -102,10 +102,10 @@ module Top(
     reg w_sdDatOutFifo_wtrigger = 0;
     reg[15:0] w_sdDatOutFifo_wdata = 0;
     wire w_sdDatOutFifo_wok;
-    reg sd_sdDatOutFifo_rtrigger = 0;
-    wire[15:0] sd_sdDatOutFifo_rdata;
-    wire sd_sdDatOutFifo_rok;
-    wire sd_sdDatOutFifo_rbank;
+    reg sd_datOutFifo_rtrigger = 0;
+    wire[15:0] sd_datOutFifo_rdata;
+    wire sd_datOutFifo_rok;
+    wire sd_datOutFifo_rbank;
     BankFifo #(
         .W(16),
         .N(8)
@@ -116,10 +116,10 @@ module Top(
         .w_ok(w_sdDatOutFifo_wok),
         
         .r_clk(sd_clk_int),
-        .r_trigger(sd_sdDatOutFifo_rtrigger),
-        .r_data(sd_sdDatOutFifo_rdata),
-        .r_ok(sd_sdDatOutFifo_rok),
-        .r_bank(sd_sdDatOutFifo_rbank)
+        .r_trigger(sd_datOutFifo_rtrigger),
+        .r_data(sd_datOutFifo_rdata),
+        .r_ok(sd_datOutFifo_rok),
+        .r_bank(sd_datOutFifo_rbank)
     );
     
     // ====================
@@ -206,37 +206,125 @@ module Top(
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     
     always @(posedge sd_clk_int) begin
+        // ====================
+        // CmdOut State Machine
+        // ====================
         sd_cmdOutState <= sd_cmdOutState>>1;
         sd_cmdOutState[11] <= (!sd_cmdOutStateInit)|sd_cmdOutState[0];
         sd_cmdOutStateInit <= 1;
-        
-        sd_respState <= sd_respState>>1;
-        sd_respState[9] <= (!sd_respStateInit)|sd_respState[0];
-        sd_respStateInit <= 1;
-        
         sd_cmdOutCounter <= sd_cmdOutCounter-1;
-        sd_datOutCounter <= sd_datOutCounter-1;
-        sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
-        
         // `sd_cmdOutActive` is 3 bits to track whether `sd_cmdIn` is
         // valid or not, since it takes several cycles to transition
         // between output and input.
         sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
-        sd_datOutReg <= sd_datOutReg<<4;
-        sd_datInReg <= (sd_datInReg<<4)|{sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
-        sd_sdDatOutFifo_rtrigger <= 0; // Pulse
-        sd_datOutLastBank <= sd_sdDatOutFifo_rbank;
-        sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_sdDatOutFifo_rbank);
+        
+        sd_shiftReg <= sd_shiftReg<<1|sd_respStaged;
+        if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
+        
+        if (sd_cmdOutState[11]) begin
+            sd_cmdOutActive[0] <= 0;
+            sd_cmdOutCounter <= 38;
+            if (sd_cmdOutTrigger) begin
+                $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
+            end else begin
+                // Stay in this state
+                sd_cmdOutState[11:10] <= sd_cmdOutState[11:10];
+            end
+        end
+        
+        if (sd_cmdOutState[10]) begin
+            sd_cmdOutActive[0] <= 1;
+            sd_shiftReg <= ctrl_msgArg;
+            sd_cmdOutCRCEn <= 1;
+        end
+        
+        if (sd_cmdOutState[9]) begin
+            if (sd_cmdOutCounter) begin
+                // Stay in this state
+                sd_cmdOutState[9:8] <= sd_cmdOutState[9:8];
+            end
+        end
+        
+        if (sd_cmdOutState[8]) begin
+            sd_cmdOutCRCOutEn <= 1;
+        end
+        
+        if (sd_cmdOutState[7]) begin
+            sd_cmdOutCRCEn <= 0;
+        end
+        
+        if (sd_cmdOutState[1]) begin
+            sd_cmdOutCRCOutEn <= 0;
+            sd_cmdOutDone <= !sd_cmdOutDone;
+            sd_respGo <= 1;
+        end
+        
+        
+        
+        // ====================
+        // Resp State Machine
+        // ====================
+        sd_respState <= sd_respState>>1;
+        sd_respState[9] <= (!sd_respStateInit)|sd_respState[0];
+        sd_respStateInit <= 1;
+        sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
+        
+        if (sd_respState[9]) begin
+            sd_respCRCEn <= 0;
+            sd_respCRCErr <= 0;
+            if (sd_respGo && !sd_respStaged) begin
+                sd_respCRCEn <= 1;
+            end else begin
+                // Stay in this state
+                sd_respState[9:8] <= sd_respState[9:8];
+            end
+        end
+        
+        if (sd_respState[8]) begin
+            if (!sd_shiftReg[40]) begin
+                sd_respCRCEn <= 0;
+            end else begin
+                sd_respState[8:7] <= sd_respState[8:7];
+            end
+        end
+        
+        if (sd_respState[7:1]) begin
+            if (sd_respCRC === sd_shiftReg[1]) begin
+                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
+            end else begin
+                sd_respCRCErr <= sd_respCRCErr|1;
+                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
+                // `Finish;
+            end
+        end
+        
+        if (sd_respState[1]) begin
+            sd_respGo <= 0;
+        end
+        
+        if (sd_respState[0]) begin
+            sd_resp <= sd_shiftReg>>1;
+            sd_respRecv <= !sd_respRecv;
+        end
+        
+        
+        
+        
+        // ====================
+        // DatOut State Machine
+        // ====================
+        sd_datOutCounter <= sd_datOutCounter-1;
+        sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
+        sd_datOutFifo_rtrigger <= 0; // Pulse
+        sd_datOutLastBank <= sd_datOutFifo_rbank;
+        sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_datOutFifo_rbank);
         sd_datOutStartBit <= 0; // Pulse
         sd_datOutEndBit <= 0; // Pulse
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
+        sd_datInReg <= (sd_datInReg<<4)|{sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
         sd_datInCRCStatusReg <= sd_datInCRCStatusReg<<1|sd_datInCRCStatusOK;
-        
-        sd_shiftReg <= sd_shiftReg<<1|sd_respStaged;
-        sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
-        if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
-        
-        if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_sdDatOutFifo_rdata;
+        sd_datOutReg <= sd_datOutReg<<4;
+        if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_datOutFifo_rdata;
         if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
         if (sd_datOutStartBit)  sd_datOutReg[19:16] <= 4'b0000;
         if (sd_datOutEndBit)    sd_datOutReg[19:16] <= 4'b1111;
@@ -253,7 +341,7 @@ module Top(
             // we know that we're actually idle, since being in this state
             // more than one cycle implies that the FIFO's rok=0
             sd_datOutIdleReg[0] <= 1;
-            if (sd_sdDatOutFifo_rok) begin
+            if (sd_datOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
                 sd_datOutState <= 1;
             end
@@ -264,8 +352,8 @@ module Top(
             sd_datOutCRCEn <= 1;
             
             if (!sd_datOutCounter) begin
-                // $display("[SD-CTRL:DATOUT]   Write another word: %x", sd_sdDatOutFifo_rdata);
-                sd_sdDatOutFifo_rtrigger <= 1;
+                // $display("[SD-CTRL:DATOUT]   Write another word: %x", sd_datOutFifo_rdata);
+                sd_datOutFifo_rtrigger <= 1;
             end
             
             if (sd_datOutEnding) begin
@@ -323,89 +411,6 @@ module Top(
             end
         end
         endcase
-        
-        
-        
-        
-        if (sd_respState[9]) begin
-            sd_respCRCEn <= 0;
-            sd_respCRCErr <= 0;
-            if (sd_respGo && !sd_respStaged) begin
-                sd_respCRCEn <= 1;
-            end else begin
-                // Stay in this state
-                sd_respState[9:8] <= sd_respState[9:8];
-            end
-        end
-        
-        if (sd_respState[8]) begin
-            if (!sd_shiftReg[40]) begin
-                sd_respCRCEn <= 0;
-            end else begin
-                sd_respState[8:7] <= sd_respState[8:7];
-            end
-        end
-        
-        if (sd_respState[7:1]) begin
-            if (sd_respCRC === sd_shiftReg[1]) begin
-                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
-            end else begin
-                sd_respCRCErr <= sd_respCRCErr|1;
-                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
-                // `Finish;
-            end
-        end
-        
-        if (sd_respState[1]) begin
-            sd_respGo <= 0;
-        end
-        
-        if (sd_respState[0]) begin
-            sd_resp <= sd_shiftReg>>1;
-            sd_respRecv <= !sd_respRecv;
-        end
-        
-        
-        
-        
-        
-        if (sd_cmdOutState[11]) begin
-            sd_cmdOutActive[0] <= 0;
-            sd_cmdOutCounter <= 38;
-            if (sd_cmdOutTrigger) begin
-                $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
-            end else begin
-                // Stay in this state
-                sd_cmdOutState[11:10] <= sd_cmdOutState[11:10];
-            end
-        end
-        
-        if (sd_cmdOutState[10]) begin
-            sd_cmdOutActive[0] <= 1;
-            sd_shiftReg <= ctrl_msgArg;
-            sd_cmdOutCRCEn <= 1;
-        end
-        
-        if (sd_cmdOutState[9]) begin
-            if (sd_cmdOutCounter) begin
-                // Stay in this state
-                sd_cmdOutState[9:8] <= sd_cmdOutState[9:8];
-            end
-        end
-        
-        if (sd_cmdOutState[8]) begin
-            sd_cmdOutCRCOutEn <= 1;
-        end
-        
-        if (sd_cmdOutState[7]) begin
-            sd_cmdOutCRCEn <= 0;
-        end
-        
-        if (sd_cmdOutState[1]) begin
-            sd_cmdOutCRCOutEn <= 0;
-            sd_cmdOutDone <= !sd_cmdOutDone;
-            sd_respGo <= 1;
-        end
     end
     
     
