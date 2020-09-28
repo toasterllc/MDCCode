@@ -209,8 +209,7 @@ module Top(
         // ====================
         // CmdOut State Machine
         // ====================
-        sd_cmdOutState <= sd_cmdOutState>>1;
-        sd_cmdOutState[11] <= (!sd_cmdOutStateInit)|sd_cmdOutState[0];
+        sd_cmdOutState <= sd_cmdOutState<<1|!sd_cmdOutStateInit|sd_cmdOutState[$size(sd_cmdOutState)-1];
         sd_cmdOutStateInit <= 1;
         sd_cmdOutCounter <= sd_cmdOutCounter-1;
         // `sd_cmdOutActive` is 3 bits to track whether `sd_cmdIn` is
@@ -221,39 +220,39 @@ module Top(
         sd_shiftReg <= sd_shiftReg<<1|sd_respStaged;
         if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
         
-        if (sd_cmdOutState[11]) begin
+        if (sd_cmdOutState[0]) begin
             sd_cmdOutActive[0] <= 0;
             sd_cmdOutCounter <= 38;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
             end else begin
                 // Stay in this state
-                sd_cmdOutState[11:10] <= sd_cmdOutState[11:10];
+                sd_cmdOutState[1:0] <= sd_cmdOutState[1:0];
             end
         end
         
-        if (sd_cmdOutState[10]) begin
+        if (sd_cmdOutState[1]) begin
             sd_cmdOutActive[0] <= 1;
             sd_shiftReg <= ctrl_msgArg;
             sd_cmdOutCRCEn <= 1;
         end
         
-        if (sd_cmdOutState[9]) begin
+        if (sd_cmdOutState[2]) begin
             if (sd_cmdOutCounter) begin
                 // Stay in this state
-                sd_cmdOutState[9:8] <= sd_cmdOutState[9:8];
+                sd_cmdOutState[3:2] <= sd_cmdOutState[3:2];
             end
         end
         
-        if (sd_cmdOutState[8]) begin
+        if (sd_cmdOutState[3]) begin
             sd_cmdOutCRCOutEn <= 1;
         end
         
-        if (sd_cmdOutState[7]) begin
+        if (sd_cmdOutState[4]) begin
             sd_cmdOutCRCEn <= 0;
         end
         
-        if (sd_cmdOutState[1]) begin
+        if (sd_cmdOutState[10]) begin
             sd_cmdOutCRCOutEn <= 0;
             sd_cmdOutDone <= !sd_cmdOutDone;
             sd_respGo <= 1;
@@ -264,31 +263,30 @@ module Top(
         // ====================
         // Resp State Machine
         // ====================
-        sd_respState <= sd_respState>>1;
-        sd_respState[9] <= (!sd_respStateInit)|sd_respState[0];
+        sd_respState <= sd_respState<<1|!sd_respStateInit|sd_respState[$size(sd_respState)-1];
         sd_respStateInit <= 1;
         sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
         
-        if (sd_respState[9]) begin
+        if (sd_respState[0]) begin
             sd_respCRCEn <= 0;
             sd_respCRCErr <= 0;
             if (sd_respGo && !sd_respStaged) begin
                 sd_respCRCEn <= 1;
             end else begin
                 // Stay in this state
-                sd_respState[9:8] <= sd_respState[9:8];
+                sd_respState[1:0] <= sd_respState[1:0];
             end
         end
         
-        if (sd_respState[8]) begin
+        if (sd_respState[1]) begin
             if (!sd_shiftReg[40]) begin
                 sd_respCRCEn <= 0;
             end else begin
-                sd_respState[8:7] <= sd_respState[8:7];
+                sd_respState[2:1] <= sd_respState[2:1];
             end
         end
         
-        if (sd_respState[7:1]) begin
+        if (sd_respState[8:2]) begin
             if (sd_respCRC === sd_shiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
             end else begin
@@ -298,11 +296,11 @@ module Top(
             end
         end
         
-        if (sd_respState[1]) begin
+        if (sd_respState[8]) begin
             sd_respGo <= 0;
         end
         
-        if (sd_respState[0]) begin
+        if (sd_respState[9]) begin
             // Ideally we'd assign `sd_resp` on the previous clock cycle
             // so that we didn't need this right-shift, but that hurts
             // our perf quite a bit. So since the high bit of SD card
