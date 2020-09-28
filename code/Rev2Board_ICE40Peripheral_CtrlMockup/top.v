@@ -277,7 +277,7 @@ module Top(
     ) CRC7_sd_resp(
         .clk(sd_clk_int),
         .en(sd_respCRCEn),
-        .din(sd_resp[0]),
+        .din(sd_shiftReg[0]),
         .dout(sd_respCRC) // TODO: search and replace
     );
     
@@ -369,7 +369,7 @@ module Top(
                 w_counter <= w_counter+1;
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
-            if (w_counter === 'h7FFFFF) begin
+            if (w_counter === 'h7FFFFE) begin
                 w_sdDatOutFifo_wtrigger <= 0;
                 w_state <= 0;
             end
@@ -386,8 +386,7 @@ module Top(
     // ====================
     
     reg[2:0] sd_datOutState = 0;
-    reg[10:0] sd_respState = 0;
-    reg[5:0] sd_respCounter = 0;
+    reg[9:0] sd_respState = 0;
     reg sd_respStateInit = 0;
     reg[1:0] sd_datOutIdleReg = 0;
     reg sd_respInStaged = 0;
@@ -404,7 +403,7 @@ module Top(
         sd_cmdOutStateInit <= 1;
         
         sd_respState <= sd_respState>>1;
-        sd_respState[10] <= (!sd_respStateInit)|sd_respState[0];
+        sd_respState[9] <= (!sd_respStateInit)|sd_respState[0];
         sd_respStateInit <= 1;
         
         sd_cmdOutCounter <= sd_cmdOutCounter-1;
@@ -423,8 +422,7 @@ module Top(
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
         sd_datInCRCStatusReg <= sd_datInCRCStatusReg<<1|sd_datInCRCStatusOK;
         
-        sd_shiftReg <= sd_shiftReg<<1;
-        if (sd_respGo) sd_resp <= sd_resp<<1|sd_respInStaged;
+        sd_shiftReg <= sd_shiftReg<<1|sd_respInStaged;
         sd_respInStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
         if (sd_cmdOutCRCOutEn)  sd_shiftReg[47] <= sd_cmdOutCRC;
         
@@ -519,35 +517,32 @@ module Top(
         
         
         
-        if (sd_respState[10]) begin
+        if (sd_respState[9]) begin
             sd_respCRCEn <= 0;
             sd_respCRCErr <= 0;
-            sd_respCounter <= 39;
             if (sd_respGo && !sd_respInStaged) begin
                 sd_respCRCEn <= 1;
             end else begin
-                // Stay in this state
-                sd_respState[10:9] <= sd_respState[10:9];
-            end
-        end
-        
-        if (sd_respState[9]) begin
-            if (sd_respCounter) begin
                 // Stay in this state
                 sd_respState[9:8] <= sd_respState[9:8];
             end
         end
         
         if (sd_respState[8]) begin
-            sd_respCRCEn <= 0;
+            sd_respGo <= 0;
+            if (!sd_shiftReg[40]) begin
+                sd_respCRCEn <= 0;
+            end else begin
+                sd_respState[8:7] <= sd_respState[8:7];
+            end
         end
         
         if (sd_respState[7:1]) begin
-            if (sd_respCRC === sd_resp[1]) begin
-                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_resp[1]);
+            if (sd_respCRC === sd_shiftReg[1]) begin
+                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_shiftReg[1]);
             end else begin
                 sd_respCRCErr <= sd_respCRCErr|1;
-                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_resp[1]);
+                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_shiftReg[1]);
                 // `Finish;
             end
         end
@@ -557,7 +552,7 @@ module Top(
         end
         
         if (sd_respState[0]) begin
-            sd_respGo <= 0;
+            sd_resp <= sd_shiftReg>>1;
             sd_respRecv <= !sd_respRecv;
         end
         
