@@ -146,8 +146,11 @@ module Top(
                 w_counter <= w_counter+1;
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
+`ifdef SIM
             if (w_counter === 'h7FE) begin
-            // if (w_counter === 'h7FFFFE) begin
+`else
+            if (w_counter === 'h7FFFFE) begin
+`endif
                 w_state <= 0;
             end
         end
