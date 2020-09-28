@@ -370,13 +370,8 @@ module Top(
                 w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
             if (w_counter === 'h7FFFFE) begin
-                w_sdDatOutFifo_wtrigger <= 0;
                 w_state <= 0;
             end
-            // w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
-            // if (w_sdDatOutFifo_wdata === 8'hFF) begin
-            //     w_state <= 0;
-            // end
         end
         endcase
     end
@@ -407,7 +402,6 @@ module Top(
         sd_respStateInit <= 1;
         
         sd_cmdOutCounter <= sd_cmdOutCounter-1;
-        sd_respCounter <= sd_respCounter-1;
         sd_datOutCounter <= sd_datOutCounter-1;
         sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
         
@@ -529,7 +523,6 @@ module Top(
         end
         
         if (sd_respState[8]) begin
-            sd_respGo <= 0;
             if (!sd_shiftReg[40]) begin
                 sd_respCRCEn <= 0;
             end else begin
@@ -547,7 +540,7 @@ module Top(
             end
         end
         
-        if (sd_respState[2]) begin
+        if (sd_respState[1]) begin
             sd_respGo <= 0;
         end
         
@@ -560,10 +553,9 @@ module Top(
         
         
         
-        // TODO: try using a counter to reduce the number of bits
         if (sd_cmdOutState[11]) begin
-            sd_cmdOutCounter <= 38;
             sd_cmdOutActive[0] <= 0;
+            sd_cmdOutCounter <= 38;
             if (sd_cmdOutTrigger) begin
                 $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_msgArg[47:0]);
             end else begin
