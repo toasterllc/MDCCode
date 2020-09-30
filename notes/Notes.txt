@@ -34,6 +34,18 @@
 
 
 
+- Rev3 todo
+
+    - Program ice40 over USB
+    
+    - STM32: MSP430 puppetmaster emulation to:
+         - Configure image sensor (over i2c) through ice40
+         - Configure SD card through ice40
+         - Capture image to RAM through ice40
+         - Write image to SD card at a particular address through ice40
+    
+    - STM32: readout images over USB at 480 Mbps
+
 
 
 - Verilog
