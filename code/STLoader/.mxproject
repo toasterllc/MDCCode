@@ -9,17 +9,17 @@ CDefines=USE_HAL_DRIVER;STM32F730xx;USE_HAL_DRIVER;USE_HAL_DRIVER;
 [PreviousGenFiles]
 AdvancedFolderStructure=true
 HeaderFileListSize=3
-HeaderFiles#0=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Inc/stm32f7xx_it.h
-HeaderFiles#1=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Inc/stm32f7xx_hal_conf.h
-HeaderFiles#2=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Inc/main.h
+HeaderFiles#0=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Inc/stm32f7xx_it.h
+HeaderFiles#1=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Inc/stm32f7xx_hal_conf.h
+HeaderFiles#2=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Inc/main.h
 HeaderFolderListSize=1
-HeaderPath#0=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Inc
+HeaderPath#0=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Inc
 HeaderFiles=;
 SourceFileListSize=3
-SourceFiles#0=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Src/stm32f7xx_it.c
-SourceFiles#1=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Src/stm32f7xx_hal_msp.c
-SourceFiles#2=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Src/main.c
+SourceFiles#0=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Src/stm32f7xx_it.c
+SourceFiles#1=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Src/stm32f7xx_hal_msp.c
+SourceFiles#2=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Src/main.c
 SourceFolderListSize=1
-SourcePath#0=/home/dave/STM32CubeIDE/workspace_1.4.0/MDCRev3/Core/Src
+SourcePath#0=/home/dave/repos/MotionDetectorCamera/code/STLoader/Core/Src
 SourceFiles=;
 
