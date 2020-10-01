@@ -20,6 +20,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -42,10 +43,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-QSPI_HandleTypeDef hqspi;
-
-PCD_HandleTypeDef hpcd_USB_OTG_HS;
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -53,14 +50,18 @@ PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_QUADSPI_Init(void);
-static void MX_USB_OTG_HS_PCD_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void setLeds(int on) {
+    HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin|STM_LED1_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+    HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin|STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
 
 /* USER CODE END 0 */
 
@@ -92,24 +93,22 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_QUADSPI_Init();
-  MX_USB_OTG_HS_PCD_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  bool ledOn = true;
+  // bool ledOn = true;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin|STM_LED1_Pin, (ledOn ? GPIO_PIN_SET : GPIO_PIN_RESET));
-	  HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin|STM_LED3_Pin, (ledOn ? GPIO_PIN_SET : GPIO_PIN_RESET));
-	  ledOn = !ledOn;
-	  HAL_Delay(1000);
+      //       setLeds(ledOn);
+      // ledOn = !ledOn;
+      // HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -169,75 +168,6 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief QUADSPI Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_QUADSPI_Init(void)
-{
-
-  /* USER CODE BEGIN QUADSPI_Init 0 */
-
-  /* USER CODE END QUADSPI_Init 0 */
-
-  /* USER CODE BEGIN QUADSPI_Init 1 */
-
-  /* USER CODE END QUADSPI_Init 1 */
-  /* QUADSPI parameter configuration*/
-  hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 255;
-  hqspi.Init.FifoThreshold = 1;
-  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  hqspi.Init.FlashSize = 1;
-  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-  hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
-  hqspi.Init.DualFlash = QSPI_DUALFLASH_ENABLE;
-  if (HAL_QSPI_Init(&hqspi) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN QUADSPI_Init 2 */
-
-  /* USER CODE END QUADSPI_Init 2 */
-
-}
-
-/**
-  * @brief USB_OTG_HS Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USB_OTG_HS_PCD_Init(void)
-{
-
-  /* USER CODE BEGIN USB_OTG_HS_Init 0 */
-
-  /* USER CODE END USB_OTG_HS_Init 0 */
-
-  /* USER CODE BEGIN USB_OTG_HS_Init 1 */
-
-  /* USER CODE END USB_OTG_HS_Init 1 */
-  hpcd_USB_OTG_HS.Instance = USB_OTG_HS;
-  hpcd_USB_OTG_HS.Init.dev_endpoints = 9;
-  hpcd_USB_OTG_HS.Init.dma_enable = DISABLE;
-  hpcd_USB_OTG_HS.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
-  hpcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
-  hpcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
-  hpcd_USB_OTG_HS.Init.lpm_enable = DISABLE;
-  hpcd_USB_OTG_HS.Init.vbus_sensing_enable = DISABLE;
-  hpcd_USB_OTG_HS.Init.use_dedicated_ep1 = DISABLE;
-  hpcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
-  if (HAL_PCD_Init(&hpcd_USB_OTG_HS) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USB_OTG_HS_Init 2 */
-
-  /* USER CODE END USB_OTG_HS_Init 2 */
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -247,12 +177,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin|STM_LED1_Pin, GPIO_PIN_RESET);
@@ -288,7 +215,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
+    // setLeds(1);
   /* USER CODE END Error_Handler_Debug */
 }
 

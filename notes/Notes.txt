@@ -36,6 +36,7 @@
 
 - Rev3 todo
 
+    - Program stm32 over USB
     - Program ice40 over USB
     
     - STM32: MSP430 puppetmaster emulation to:
