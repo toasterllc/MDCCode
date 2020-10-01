@@ -57,9 +57,20 @@ static void MX_GPIO_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void setLeds(int on) {
-    HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin|STM_LED1_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-    HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin|STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+void setLed0(int on) {
+    HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void setLed1(int on) {
+    HAL_GPIO_WritePin(GPIOE, STM_LED1_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void setLed2(int on) {
+    HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void setLed3(int on) {
+    HAL_GPIO_WritePin(GPIOB, STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
 }
 
 /* USER CODE END 0 */
@@ -92,12 +103,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  
+  setLed0(1);
+  HAL_Delay(1000);
+  
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
+  
   /* USER CODE BEGIN WHILE */
   // bool ledOn = true;
   while (1)
@@ -213,7 +229,7 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-    setLeds(1);
+  setLed3(1);
   /* User can add his own implementation to report the HAL error return state */
   /* USER CODE END Error_Handler_Debug */
 }
