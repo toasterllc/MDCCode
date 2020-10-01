@@ -71,11 +71,9 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
   if(pcdHandle->Instance==USB_OTG_HS)
   {
   /* USER CODE BEGIN USB_OTG_HS_MspInit 0 */
-    __HAL_RCC_OTGPHYC_CLK_ENABLE(); // meowmix new
-    // while (__HAL_RCC_OTGPHYC_IS_CLK_ENABLED()) {
-    // }
-    // while (!__HAL_RCC_OTGPHYC_IS_CLK_ENABLED()) {
-    // }
+    // Required to enable USB PHY clock. Otherwise USB_HS_PHYCInit() will fail with HAL_TIMEOUT.
+    // It appears to be a bug that the STM tools doesn't generate this for us.
+    __HAL_RCC_OTGPHYC_CLK_ENABLE();
   /* USER CODE END USB_OTG_HS_MspInit 0 */
 
     __HAL_RCC_GPIOB_CLK_ENABLE();

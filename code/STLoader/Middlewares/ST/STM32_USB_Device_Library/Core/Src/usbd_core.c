@@ -629,8 +629,7 @@ USBD_StatusTypeDef USBD_LL_DevConnected(USBD_HandleTypeDef *pdev)
 {
   /* Prevent unused argument compilation warning */
   UNUSED(pdev);
-  extern void setLeds(int on);
-  setLeds(1);
+
   return USBD_OK;
 }
 

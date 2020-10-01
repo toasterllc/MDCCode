@@ -1384,10 +1384,10 @@ static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx)
   /* wait for LDO Ready */
   while ((USB_HS_PHYC->USB_HS_PHYC_LDO & USB_HS_PHYC_LDO_STATUS) == 0U)
   {
-    //if (++count > 200000U)
-    //{
-    //  return HAL_TIMEOUT;
-    //}
+    if (++count > 200000U)
+    {
+      return HAL_TIMEOUT;
+    }
   }
 
   /* Controls PHY frequency operation selection */

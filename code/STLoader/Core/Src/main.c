@@ -50,7 +50,6 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -106,9 +105,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      //       setLeds(ledOn);
-      // ledOn = !ledOn;
-      // HAL_Delay(1000);
+    // setLeds(ledOn);
+    // ledOn = !ledOn;
+    // HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
@@ -214,8 +213,8 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+    setLeds(1);
   /* User can add his own implementation to report the HAL error return state */
-    // setLeds(1);
   /* USER CODE END Error_Handler_Debug */
 }
 
