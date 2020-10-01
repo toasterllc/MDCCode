@@ -379,8 +379,7 @@ USBD_StatusTypeDef USBD_StdEPReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 */
 static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
-    extern void setLed1(int on);
-    setLed1(1);
+  extern void setLed1(int on);
   uint16_t len = 0U;
   uint8_t *pbuf = NULL;
   uint8_t err = 0U;
@@ -391,6 +390,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
   case USB_DESC_TYPE_BOS:
     if (pdev->pDesc->GetBOSDescriptor != NULL)
     {
+      setLed1(1);
       pbuf = pdev->pDesc->GetBOSDescriptor(pdev->dev_speed, &len);
     }
     else

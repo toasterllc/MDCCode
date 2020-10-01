@@ -69,13 +69,19 @@
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
 /*---------- -----------*/
+#define USBD_SUPPORT_USER_STRING_DESC     1U
+/*---------- -----------*/
 #define USBD_DEBUG_LEVEL     0U
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     1U
 /*---------- -----------*/
 #define USBD_SELF_POWERED     0U
 /*---------- -----------*/
-#define HID_HS_BINTERVAL     0x7U
+#define USBD_DFU_MAX_ITF_NUM     1U
+/*---------- -----------*/
+#define USBD_DFU_XFER_SIZE     1024U
+/*---------- -----------*/
+#define USBD_DFU_APP_DEFAULT_ADD     0x08000000U
 
 /****************************************/
 /* #define for FS and HS identification */
