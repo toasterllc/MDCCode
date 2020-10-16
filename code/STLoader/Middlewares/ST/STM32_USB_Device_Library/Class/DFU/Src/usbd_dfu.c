@@ -151,71 +151,72 @@ USBD_ClassTypeDef USBD_DFU =
 };
 
 /* USB DFU device Configuration Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USB_DFU_CONFIG_DESC_SIZ] __ALIGN_END =
+__ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
 {
-  0x09,                                                /* bLength: Configuation Descriptor size */
-  USB_DESC_TYPE_CONFIGURATION,                         /* bDescriptorType: Configuration */
-  USB_DFU_CONFIG_DESC_SIZ,
-                                                       /* wTotalLength: Bytes returned */
-  0x00,
-  0x01,                                                /* bNumInterfaces: 1 interface */
-  0x01,                                                /* bConfigurationValue: Configuration value */
-  0x02,                                                /* iConfiguration: Index of string descriptor describing the configuration */
-  0xC0,                                                /* bmAttributes: bus powered and Supprts Remote Wakeup */
-  0x32,                                                /* MaxPower 100 mA: this current is used for detecting Vbus */
-  /* 09 */
+    // Configuration descriptor
+    0x09,                                       // bLength: configuration descriptor length
+    USB_DESC_TYPE_CONFIGURATION,                // bDescriptorType: configuration descriptor
+    LOBYTE(sizeof(USBD_DFU_CfgDesc)),           // wTotalLength: total descriptor length
+    HIBYTE(sizeof(USBD_DFU_CfgDesc)),
+    0x02,                                       // bNumInterfaces: 2 interfaces
+    0x01,                                       // bConfigurationValue: config 1
+    0x00,                                       // iConfiguration: string descriptor index
+    0x80,                                       // bmAttributes: bus powered
+    0xFA,                                       // bMaxPower: 500 mA (2 mA units)
+    
+        // Interface descriptor: STM32 bootloader
+        0x09,                                       // bLength: interface descriptor length
+        USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
+        0x00,                                       // bInterfaceNumber: Number of Interface
+        0x00,                                       // bAlternateSetting: Alternate setting
+        0x02,                                       // bNumEndpoints
+        0xFF,                                       // bInterfaceClass: vendor specific
+        0x00,                                       // bInterfaceSubClass
+        0x00,                                       // nInterfaceProtocol
+        0x00,                                       // iInterface: string descriptor index
+    
+            // Endpoint OUT Descriptor
+            0x07,                                       // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
+            CDC_OUT_EP,                                 // bEndpointAddress
+            0x02,                                       // bmAttributes: Bulk
+            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
+            0x00,                                       // bInterval: ignore for Bulk transfer
+    
+            // Endpoint IN Descriptor
+            0x07,                                       // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
+            CDC_IN_EP,                                  // bEndpointAddress
+            0x02,                                       // bmAttributes: Bulk
+            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
+            0x00,                                       // bInterval: ignore for Bulk transfer
+        
+        // Interface descriptor: ICE40 bootloader
+        0x09,                                       // bLength: interface descriptor length
+        USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
+        0x01,                                       // bInterfaceNumber: Number of Interface
+        0x00,                                       // bAlternateSetting: Alternate setting
+        0x02,                                       // bNumEndpoints
+        0xFF,                                       // bInterfaceClass: vendor specific
+        0x00,                                       // bInterfaceSubClass
+        0x00,                                       // nInterfaceProtocol
+        0x00,                                       // iInterface: string descriptor index
+        
+            // Endpoint OUT Descriptor
+            0x07,                                       // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
+            CDC_OUT_EP,                                 // bEndpointAddress
+            0x02,                                       // bmAttributes: Bulk
+            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
+            0x00,                                       // bInterval: ignore for Bulk transfer
 
-  /**********  Descriptor of DFU interface 0 Alternate setting 0 **************/
-  USBD_DFU_IF_DESC(0U),                                /* This interface is mandatory for all devices */
-
-#if (USBD_DFU_MAX_ITF_NUM > 1U)
-  /**********  Descriptor of DFU interface 0 Alternate setting 1 **************/
-  USBD_DFU_IF_DESC(1),
-#endif /* (USBD_DFU_MAX_ITF_NUM > 1) */
-
-#if (USBD_DFU_MAX_ITF_NUM > 2U)
-  /**********  Descriptor of DFU interface 0 Alternate setting 2 **************/
-  USBD_DFU_IF_DESC(2),
-#endif /* (USBD_DFU_MAX_ITF_NUM > 2) */
-
-#if (USBD_DFU_MAX_ITF_NUM > 3U)
-  /**********  Descriptor of DFU interface 0 Alternate setting 3 **************/
-  USBD_DFU_IF_DESC(3),
-#endif /* (USBD_DFU_MAX_ITF_NUM > 3) */
-
-#if (USBD_DFU_MAX_ITF_NUM > 4U)
-  /**********  Descriptor of DFU interface 0 Alternate setting 4 **************/
-  USBD_DFU_IF_DESC(4),
-#endif /* (USBD_DFU_MAX_ITF_NUM > 4) */
-
-#if (USBD_DFU_MAX_ITF_NUM > 5U)
-  /**********  Descriptor of DFU interface 0 Alternate setting 5 **************/
-  USBD_DFU_IF_DESC(5),
-#endif /* (USBD_DFU_MAX_ITF_NUM > 5) */
-
-#if (USBD_DFU_MAX_ITF_NUM > 6U)
-#error "ERROR: usbd_dfu_core.c: Modify the file to support more descriptors!"
-#endif /* (USBD_DFU_MAX_ITF_NUM > 6) */
-
-  /******************** DFU Functional Descriptor********************/
-  0x09,                                                /* blength = 9 Bytes */
-  DFU_DESCRIPTOR_TYPE,                                 /* DFU Functional Descriptor */
-  0x0B,                                                /* bmAttribute:
-                                                          bitCanDnload             = 1      (bit 0)
-                                                          bitCanUpload             = 1      (bit 1)
-                                                          bitManifestationTolerant = 0      (bit 2)
-                                                          bitWillDetach            = 1      (bit 3)
-                                                          Reserved                          (bit4-6)
-                                                          bitAcceleratedST         = 0      (bit 7) */
-  0xFF,                                                /* DetachTimeOut= 255 ms*/
-  0x00,
-  /* WARNING: In DMA mode the multiple MPS packets feature is still not supported
-   ==> In this case, when using DMA USBD_DFU_XFER_SIZE should be set to 64 in usbd_conf.h */
-  TRANSFER_SIZE_BYTES(USBD_DFU_XFER_SIZE),       /* TransferSize = 1024 Byte */
-  0x1A,                                /* bcdDFUVersion */
-  0x01
-  /***********************************************************/
-  /* 9*/
+            // Endpoint IN Descriptor
+            0x07,                                       // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
+            CDC_IN_EP,                                  // bEndpointAddress
+            0x02,                                       // bmAttributes: Bulk
+            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
+            0x00,                                       // bInterval: ignore for Bulk transfer
 };
 
 /* USB Standard Device Descriptor */

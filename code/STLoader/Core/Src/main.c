@@ -103,10 +103,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  
-  setLed0(1);
-  HAL_Delay(3000);
-  
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 

@@ -198,7 +198,7 @@ __ALIGN_BEGIN uint8_t USBD_HS_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
         /* device capability */
   0x7,
   USB_DEVICE_CAPABITY_TYPE,
-  0x2, // USB 2.0 Extension Descriptor
+  0x2,
   0x2,  /*LPM capability bit set */
   0x0,
   0x0,
