@@ -150,6 +150,14 @@ USBD_ClassTypeDef USBD_DFU =
 #endif
 };
 
+#define BL_PACKET_SIZE      512
+
+#define BL_EP_OUT_STM32     0x01
+#define BL_EP_IN_STM32      0x81
+
+#define BL_EP_OUT_ICE40     0x02
+#define BL_EP_IN_ICE40      0x82
+
 /* USB DFU device Configuration Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
 {
@@ -174,22 +182,22 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
         0x00,                                       // bInterfaceSubClass
         0x00,                                       // nInterfaceProtocol
         0x00,                                       // iInterface: string descriptor index
-    
+        
             // Endpoint OUT Descriptor
-            0x07,                                       // bLength: Endpoint Descriptor size
-            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
-            CDC_OUT_EP,                                 // bEndpointAddress
-            0x02,                                       // bmAttributes: Bulk
-            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
-            0x00,                                       // bInterval: ignore for Bulk transfer
-    
+            0x07,                                               // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
+            BL_EP_OUT_STM32,                                    // bEndpointAddress
+            0x02,                                               // bmAttributes: Bulk
+            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            0x00,                                               // bInterval: ignore for Bulk transfer
+            
             // Endpoint IN Descriptor
-            0x07,                                       // bLength: Endpoint Descriptor size
-            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
-            CDC_IN_EP,                                  // bEndpointAddress
-            0x02,                                       // bmAttributes: Bulk
-            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
-            0x00,                                       // bInterval: ignore for Bulk transfer
+            0x07,                                               // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
+            BL_EP_IN_STM32,                                     // bEndpointAddress
+            0x02,                                               // bmAttributes: Bulk
+            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            0x00,                                               // bInterval: ignore for Bulk transfer
         
         // Interface descriptor: ICE40 bootloader
         0x09,                                       // bLength: interface descriptor length
@@ -203,35 +211,34 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
         0x00,                                       // iInterface: string descriptor index
         
             // Endpoint OUT Descriptor
-            0x07,                                       // bLength: Endpoint Descriptor size
-            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
-            CDC_OUT_EP,                                 // bEndpointAddress
-            0x02,                                       // bmAttributes: Bulk
-            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
-            0x00,                                       // bInterval: ignore for Bulk transfer
-
+            0x07,                                               // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
+            BL_EP_OUT_ICE40,                                    // bEndpointAddress
+            0x02,                                               // bmAttributes: Bulk
+            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            0x00,                                               // bInterval: ignore for Bulk transfer
+            
             // Endpoint IN Descriptor
-            0x07,                                       // bLength: Endpoint Descriptor size
-            USB_DESC_TYPE_ENDPOINT,                     // bDescriptorType: Endpoint
-            CDC_IN_EP,                                  // bEndpointAddress
-            0x02,                                       // bmAttributes: Bulk
-            LOBYTE(512), HIBYTE(512),                   // wMaxPacketSize
-            0x00,                                       // bInterval: ignore for Bulk transfer
+            0x07,                                               // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
+            BL_EP_IN_ICE40,                                     // bEndpointAddress
+            0x02,                                               // bmAttributes: Bulk
+            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            0x00,                                               // bInterval: ignore for Bulk transfer
 };
 
 /* USB Standard Device Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_DFU_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
 {
-  USB_LEN_DEV_QUALIFIER_DESC,
-  USB_DESC_TYPE_DEVICE_QUALIFIER,
-  0x00,
-  0x02,
-  0x00,
-  0x00,
-  0x00,
-  0x40,
-  0x01,
-  0x00,
+  USB_LEN_DEV_QUALIFIER_DESC,               // bLength
+  USB_DESC_TYPE_DEVICE_QUALIFIER,           // bDescriptorType
+  0x00, 0x02,                               // bcdUSB
+  0x00,                                     // bDeviceClass
+  0x00,                                     // bDeviceSubClass
+  0x00,                                     // bDeviceProtocol
+  0x40,                                     // bMaxPacketSize0
+  0x01,                                     // bNumConfigurations
+  0x00,                                     // bReserved
 };
 
 /**
@@ -289,6 +296,64 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
   return (uint8_t)USBD_OK;
 }
+
+
+
+
+//#define BL_EP_OUT_STM32    0x01
+//#define BL_EP_IN_STM32     0x81
+//
+//#define BL_EP_OUT_ICE40    0x02
+//#define BL_EP_IN_ICE40     0x82
+
+static uint8_t USBD_CDC_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx) {
+    USBD_CDC_HandleTypeDef *hcdc;
+    
+    hcdc = USBD_malloc(sizeof(USBD_CDC_HandleTypeDef));
+    
+    if (!hcdc) {
+        pdev->pClassData = NULL;
+        return (uint8_t)USBD_EMEM;
+    }
+    
+    pdev->pClassData = (void *)hcdc;
+    
+    // Open endpoints for STM32 interface
+    {
+        // OUT endpoint
+        USBD_LL_OpenEP(pdev, BL_EP_OUT_STM32, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        pdev->ep_out[BL_EP_OUT_STM32 & 0xFU].is_used = 1U;
+        
+        // IN endpoint
+        USBD_LL_OpenEP(pdev, BL_EP_IN_STM32, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        pdev->ep_in[BL_EP_IN_STM32 & 0xFU].is_used = 1U;
+    }
+    
+    // Open endpoints for ICE40 interface
+    {
+        // OUT endpoint
+        USBD_LL_OpenEP(pdev, BL_EP_OUT_ICE40, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        pdev->ep_out[BL_EP_OUT_ICE40 & 0xFU].is_used = 1U;
+        
+        // IN endpoint
+        USBD_LL_OpenEP(pdev, BL_EP_IN_ICE40, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        pdev->ep_in[BL_EP_IN_ICE40 & 0xFU].is_used = 1U;
+    }
+    
+    // Init physical Interface components
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Init();
+    
+    // Prepare OUT endpoints endpoint to receive next packet
+    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, hcdc->RxBuffer, BL_PACKET_SIZE);
+    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_ICE40, hcdc->RxBuffer, BL_PACKET_SIZE);
+    
+    return (uint8_t)USBD_OK;
+}
+
+
+
+
+
 
 /**
   * @brief  USBD_DFU_Init
