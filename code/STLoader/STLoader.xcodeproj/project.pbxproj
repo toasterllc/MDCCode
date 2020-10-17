@@ -1,0 +1,824 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5563E1AB253A8B8500BCC0F7 /* startup_stm32f730i8kx.s in Sources */ = {isa = PBXBuildFile; fileRef = 5563E190253A8B6400BCC0F7 /* startup_stm32f730i8kx.s */; };
+		5563E1AC253A8B8500BCC0F7 /* stm32f7xx_it.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E191253A8B6400BCC0F7 /* stm32f7xx_it.c */; };
+		5563E1AD253A8B8500BCC0F7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E192253A8B6400BCC0F7 /* main.c */; };
+		5563E1AE253A8B8500BCC0F7 /* system_stm32f7xx.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E193253A8B6400BCC0F7 /* system_stm32f7xx.c */; };
+		5563E1AF253A8B8500BCC0F7 /* stm32f7xx_hal_msp.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.c */; };
+		5563E1C6253A8B8500BCC0F7 /* stm32f7xx_hal_rcc.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.c */; };
+		5563E1C7253A8B8500BCC0F7 /* stm32f7xx_hal_flash.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.c */; };
+		5563E1C8253A8B8500BCC0F7 /* stm32f7xx_hal_gpio.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.c */; };
+		5563E1C9253A8B8500BCC0F7 /* stm32f7xx_hal_i2c.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.c */; };
+		5563E1CA253A8B8500BCC0F7 /* stm32f7xx_hal_pcd.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.c */; };
+		5563E1CB253A8B8500BCC0F7 /* stm32f7xx_hal_tim.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.c */; };
+		5563E1CC253A8B8500BCC0F7 /* stm32f7xx_hal_exti.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.c */; };
+		5563E1CD253A8B8500BCC0F7 /* stm32f7xx_hal_i2c_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.c */; };
+		5563E1CE253A8B8500BCC0F7 /* stm32f7xx_hal_pcd_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.c */; };
+		5563E1CF253A8B8500BCC0F7 /* stm32f7xx_hal_tim_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.c */; };
+		5563E1D0253A8B8500BCC0F7 /* stm32f7xx_hal_flash_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.c */; };
+		5563E1D1253A8B8500BCC0F7 /* stm32f7xx_hal.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.c */; };
+		5563E1D2253A8B8500BCC0F7 /* stm32f7xx_ll_usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.c */; };
+		5563E1D3253A8B8500BCC0F7 /* stm32f7xx_hal_rcc_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.c */; };
+		5563E1D4253A8B8500BCC0F7 /* stm32f7xx_hal_dma.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.c */; };
+		5563E1D5253A8B8500BCC0F7 /* stm32f7xx_hal_cortex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.c */; };
+		5563E1D6253A8B8500BCC0F7 /* stm32f7xx_hal_dma_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.c */; };
+		5563E1D7253A8B8500BCC0F7 /* stm32f7xx_hal_pwr_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.c */; };
+		5563E1D8253A8B8500BCC0F7 /* stm32f7xx_hal_pwr.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.c */; };
+		5563E1F7253A8B8500BCC0F7 /* usbd_ctlreq.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.c */; };
+		5563E1F8253A8B8500BCC0F7 /* usbd_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17C253A8B6400BCC0F7 /* usbd_core.c */; };
+		5563E1F9253A8B8500BCC0F7 /* usbd_ioreq.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17D253A8B6400BCC0F7 /* usbd_ioreq.c */; };
+		5563E1FB253A8B8500BCC0F7 /* usbd_dfu.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E186253A8B6400BCC0F7 /* usbd_dfu.c */; };
+		5563E1FF253A8B8500BCC0F7 /* usbd_dfu_if.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.c */; };
+		5563E201253A8B8500BCC0F7 /* usb_device.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A0253A8B6500BCC0F7 /* usb_device.c */; };
+		5563E203253A8B8500BCC0F7 /* usbd_desc.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A2253A8B6500BCC0F7 /* usbd_desc.c */; };
+		5563E206253A8B8500BCC0F7 /* usbd_conf.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A6253A8B6500BCC0F7 /* usbd_conf.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5563E117253A8B3D00BCC0F7 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5563E119253A8B3D00BCC0F7 /* STLoader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoader; sourceTree = BUILT_PRODUCTS_DIR; };
+		5563E126253A8B6400BCC0F7 /* stm32f7xx_hal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal.h; sourceTree = "<group>"; };
+		5563E127253A8B6400BCC0F7 /* stm32f7xx_ll_usb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_ll_usb.h; sourceTree = "<group>"; };
+		5563E128253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_pcd_ex.h; sourceTree = "<group>"; };
+		5563E129253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_flash_ex.h; sourceTree = "<group>"; };
+		5563E12A253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_tim_ex.h; sourceTree = "<group>"; };
+		5563E12B253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_i2c_ex.h; sourceTree = "<group>"; };
+		5563E12C253A8B6400BCC0F7 /* stm32f7xx_hal_exti.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_exti.h; sourceTree = "<group>"; };
+		5563E12D253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_pwr_ex.h; sourceTree = "<group>"; };
+		5563E12E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_dma_ex.h; sourceTree = "<group>"; };
+		5563E12F253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_cortex.h; sourceTree = "<group>"; };
+		5563E130253A8B6400BCC0F7 /* stm32f7xx_hal_dma.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_dma.h; sourceTree = "<group>"; };
+		5563E131253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_rcc_ex.h; sourceTree = "<group>"; };
+		5563E133253A8B6400BCC0F7 /* stm32_hal_legacy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32_hal_legacy.h; sourceTree = "<group>"; };
+		5563E134253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_pwr.h; sourceTree = "<group>"; };
+		5563E135253A8B6400BCC0F7 /* stm32f7xx_hal_def.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_def.h; sourceTree = "<group>"; };
+		5563E136253A8B6400BCC0F7 /* stm32f7xx_hal_flash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_flash.h; sourceTree = "<group>"; };
+		5563E137253A8B6400BCC0F7 /* stm32f7xx_hal_gpio_ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_gpio_ex.h; sourceTree = "<group>"; };
+		5563E138253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_rcc.h; sourceTree = "<group>"; };
+		5563E139253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_i2c.h; sourceTree = "<group>"; };
+		5563E13A253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_gpio.h; sourceTree = "<group>"; };
+		5563E13B253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_pcd.h; sourceTree = "<group>"; };
+		5563E13C253A8B6400BCC0F7 /* stm32f7xx_hal_tim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_tim.h; sourceTree = "<group>"; };
+		5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_rcc.c; sourceTree = "<group>"; };
+		5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_flash.c; sourceTree = "<group>"; };
+		5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_gpio.c; sourceTree = "<group>"; };
+		5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_i2c.c; sourceTree = "<group>"; };
+		5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pcd.c; sourceTree = "<group>"; };
+		5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_tim.c; sourceTree = "<group>"; };
+		5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_exti.c; sourceTree = "<group>"; };
+		5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_i2c_ex.c; sourceTree = "<group>"; };
+		5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pcd_ex.c; sourceTree = "<group>"; };
+		5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_tim_ex.c; sourceTree = "<group>"; };
+		5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_flash_ex.c; sourceTree = "<group>"; };
+		5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal.c; sourceTree = "<group>"; };
+		5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_ll_usb.c; sourceTree = "<group>"; };
+		5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_rcc_ex.c; sourceTree = "<group>"; };
+		5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_dma.c; sourceTree = "<group>"; };
+		5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_cortex.c; sourceTree = "<group>"; };
+		5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_dma_ex.c; sourceTree = "<group>"; };
+		5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pwr_ex.c; sourceTree = "<group>"; };
+		5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pwr.c; sourceTree = "<group>"; };
+		5563E153253A8B6400BCC0F7 /* core_cm7.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm7.h; sourceTree = "<group>"; };
+		5563E154253A8B6400BCC0F7 /* tz_context.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_context.h; sourceTree = "<group>"; };
+		5563E155253A8B6400BCC0F7 /* core_cm3.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm3.h; sourceTree = "<group>"; };
+		5563E156253A8B6400BCC0F7 /* cmsis_compiler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmsis_compiler.h; sourceTree = "<group>"; };
+		5563E157253A8B6400BCC0F7 /* cmsis_armclang.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmsis_armclang.h; sourceTree = "<group>"; };
+		5563E158253A8B6400BCC0F7 /* mpu_armv7.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mpu_armv7.h; sourceTree = "<group>"; };
+		5563E159253A8B6400BCC0F7 /* cmsis_armcc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmsis_armcc.h; sourceTree = "<group>"; };
+		5563E15A253A8B6400BCC0F7 /* core_cm4.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm4.h; sourceTree = "<group>"; };
+		5563E15B253A8B6400BCC0F7 /* core_cm0.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm0.h; sourceTree = "<group>"; };
+		5563E15C253A8B6400BCC0F7 /* cmsis_iccarm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmsis_iccarm.h; sourceTree = "<group>"; };
+		5563E15D253A8B6400BCC0F7 /* core_armv8mml.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_armv8mml.h; sourceTree = "<group>"; };
+		5563E15E253A8B6400BCC0F7 /* core_sc000.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_sc000.h; sourceTree = "<group>"; };
+		5563E15F253A8B6400BCC0F7 /* core_cm1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm1.h; sourceTree = "<group>"; };
+		5563E160253A8B6400BCC0F7 /* mpu_armv8.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mpu_armv8.h; sourceTree = "<group>"; };
+		5563E161253A8B6400BCC0F7 /* core_sc300.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_sc300.h; sourceTree = "<group>"; };
+		5563E162253A8B6400BCC0F7 /* cmsis_gcc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmsis_gcc.h; sourceTree = "<group>"; };
+		5563E163253A8B6400BCC0F7 /* cmsis_version.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmsis_version.h; sourceTree = "<group>"; };
+		5563E164253A8B6400BCC0F7 /* core_cm23.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm23.h; sourceTree = "<group>"; };
+		5563E165253A8B6400BCC0F7 /* core_cm33.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm33.h; sourceTree = "<group>"; };
+		5563E166253A8B6400BCC0F7 /* core_cm0plus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm0plus.h; sourceTree = "<group>"; };
+		5563E167253A8B6400BCC0F7 /* core_armv8mbl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_armv8mbl.h; sourceTree = "<group>"; };
+		5563E16C253A8B6400BCC0F7 /* system_stm32f7xx.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = system_stm32f7xx.h; sourceTree = "<group>"; };
+		5563E16D253A8B6400BCC0F7 /* stm32f7xx.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx.h; sourceTree = "<group>"; };
+		5563E16E253A8B6400BCC0F7 /* stm32f730xx.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f730xx.h; sourceTree = "<group>"; };
+		5563E176253A8B6400BCC0F7 /* usbd_ctlreq.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_ctlreq.h; sourceTree = "<group>"; };
+		5563E177253A8B6400BCC0F7 /* usbd_ioreq.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_ioreq.h; sourceTree = "<group>"; };
+		5563E178253A8B6400BCC0F7 /* usbd_core.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_core.h; sourceTree = "<group>"; };
+		5563E179253A8B6400BCC0F7 /* usbd_def.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_def.h; sourceTree = "<group>"; };
+		5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_ctlreq.c; sourceTree = "<group>"; };
+		5563E17C253A8B6400BCC0F7 /* usbd_core.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_core.c; sourceTree = "<group>"; };
+		5563E17D253A8B6400BCC0F7 /* usbd_ioreq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_ioreq.c; sourceTree = "<group>"; };
+		5563E184253A8B6400BCC0F7 /* usbd_dfu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_dfu.h; sourceTree = "<group>"; };
+		5563E186253A8B6400BCC0F7 /* usbd_dfu.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_dfu.c; sourceTree = "<group>"; };
+		5563E18C253A8B6400BCC0F7 /* main.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
+		5563E18D253A8B6400BCC0F7 /* stm32f7xx_hal_conf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_conf.h; sourceTree = "<group>"; };
+		5563E18E253A8B6400BCC0F7 /* stm32f7xx_it.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_it.h; sourceTree = "<group>"; };
+		5563E190253A8B6400BCC0F7 /* startup_stm32f730i8kx.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = startup_stm32f730i8kx.s; sourceTree = "<group>"; };
+		5563E191253A8B6400BCC0F7 /* stm32f7xx_it.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_it.c; sourceTree = "<group>"; };
+		5563E192253A8B6400BCC0F7 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		5563E193253A8B6400BCC0F7 /* system_stm32f7xx.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = system_stm32f7xx.c; sourceTree = "<group>"; };
+		5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_msp.c; sourceTree = "<group>"; };
+		5563E195253A8B6400BCC0F7 /* STM32F730I8KX_FLASH.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_FLASH.ld; sourceTree = "<group>"; };
+		5563E197253A8B6400BCC0F7 /* STM32F730I8KX_RAM.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_RAM.ld; sourceTree = "<group>"; };
+		5563E19A253A8B6400BCC0F7 /* .project */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = .project; sourceTree = "<group>"; };
+		5563E19B253A8B6400BCC0F7 /* MDCRev3.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = MDCRev3.ioc; sourceTree = "<group>"; };
+		5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_dfu_if.c; sourceTree = "<group>"; };
+		5563E19F253A8B6500BCC0F7 /* usbd_desc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_desc.h; sourceTree = "<group>"; };
+		5563E1A0253A8B6500BCC0F7 /* usb_device.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usb_device.c; sourceTree = "<group>"; };
+		5563E1A1253A8B6500BCC0F7 /* usbd_dfu_if.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_dfu_if.h; sourceTree = "<group>"; };
+		5563E1A2253A8B6500BCC0F7 /* usbd_desc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_desc.c; sourceTree = "<group>"; };
+		5563E1A3253A8B6500BCC0F7 /* usb_device.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usb_device.h; sourceTree = "<group>"; };
+		5563E1A5253A8B6500BCC0F7 /* usbd_conf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_conf.h; sourceTree = "<group>"; };
+		5563E1A6253A8B6500BCC0F7 /* usbd_conf.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_conf.c; sourceTree = "<group>"; };
+		5563E1A7253A8B6500BCC0F7 /* MDCRev3 Debug.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "MDCRev3 Debug.launch"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5563E116253A8B3D00BCC0F7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5563E110253A8B3D00BCC0F7 = {
+			isa = PBXGroup;
+			children = (
+				5563E18A253A8B6400BCC0F7 /* Core */,
+				5563E196253A8B6400BCC0F7 /* Debug */,
+				5563E123253A8B6400BCC0F7 /* Drivers */,
+				5563E1A7253A8B6500BCC0F7 /* MDCRev3 Debug.launch */,
+				5563E19B253A8B6400BCC0F7 /* MDCRev3.ioc */,
+				5563E171253A8B6400BCC0F7 /* Middlewares */,
+				5563E198253A8B6400BCC0F7 /* Release */,
+				5563E199253A8B6400BCC0F7 /* RemoteSystemsTempFiles */,
+				5563E195253A8B6400BCC0F7 /* STM32F730I8KX_FLASH.ld */,
+				5563E197253A8B6400BCC0F7 /* STM32F730I8KX_RAM.ld */,
+				5563E19C253A8B6500BCC0F7 /* USB_DEVICE */,
+				5563E11A253A8B3D00BCC0F7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5563E11A253A8B3D00BCC0F7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5563E119253A8B3D00BCC0F7 /* STLoader */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5563E123253A8B6400BCC0F7 /* Drivers */ = {
+			isa = PBXGroup;
+			children = (
+				5563E124253A8B6400BCC0F7 /* STM32F7xx_HAL_Driver */,
+				5563E151253A8B6400BCC0F7 /* CMSIS */,
+			);
+			path = Drivers;
+			sourceTree = "<group>";
+		};
+		5563E124253A8B6400BCC0F7 /* STM32F7xx_HAL_Driver */ = {
+			isa = PBXGroup;
+			children = (
+				5563E125253A8B6400BCC0F7 /* Inc */,
+				5563E13D253A8B6400BCC0F7 /* Src */,
+			);
+			path = STM32F7xx_HAL_Driver;
+			sourceTree = "<group>";
+		};
+		5563E125253A8B6400BCC0F7 /* Inc */ = {
+			isa = PBXGroup;
+			children = (
+				5563E126253A8B6400BCC0F7 /* stm32f7xx_hal.h */,
+				5563E127253A8B6400BCC0F7 /* stm32f7xx_ll_usb.h */,
+				5563E128253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.h */,
+				5563E129253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.h */,
+				5563E12A253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.h */,
+				5563E12B253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.h */,
+				5563E12C253A8B6400BCC0F7 /* stm32f7xx_hal_exti.h */,
+				5563E12D253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.h */,
+				5563E12E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.h */,
+				5563E12F253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.h */,
+				5563E130253A8B6400BCC0F7 /* stm32f7xx_hal_dma.h */,
+				5563E131253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.h */,
+				5563E132253A8B6400BCC0F7 /* Legacy */,
+				5563E134253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.h */,
+				5563E135253A8B6400BCC0F7 /* stm32f7xx_hal_def.h */,
+				5563E136253A8B6400BCC0F7 /* stm32f7xx_hal_flash.h */,
+				5563E137253A8B6400BCC0F7 /* stm32f7xx_hal_gpio_ex.h */,
+				5563E138253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.h */,
+				5563E139253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.h */,
+				5563E13A253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.h */,
+				5563E13B253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.h */,
+				5563E13C253A8B6400BCC0F7 /* stm32f7xx_hal_tim.h */,
+			);
+			path = Inc;
+			sourceTree = "<group>";
+		};
+		5563E132253A8B6400BCC0F7 /* Legacy */ = {
+			isa = PBXGroup;
+			children = (
+				5563E133253A8B6400BCC0F7 /* stm32_hal_legacy.h */,
+			);
+			path = Legacy;
+			sourceTree = "<group>";
+		};
+		5563E13D253A8B6400BCC0F7 /* Src */ = {
+			isa = PBXGroup;
+			children = (
+				5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.c */,
+				5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.c */,
+				5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.c */,
+				5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.c */,
+				5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.c */,
+				5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.c */,
+				5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.c */,
+				5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.c */,
+				5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.c */,
+				5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.c */,
+				5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.c */,
+				5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.c */,
+				5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.c */,
+				5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.c */,
+				5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.c */,
+				5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.c */,
+				5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.c */,
+				5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.c */,
+				5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.c */,
+			);
+			path = Src;
+			sourceTree = "<group>";
+		};
+		5563E151253A8B6400BCC0F7 /* CMSIS */ = {
+			isa = PBXGroup;
+			children = (
+				5563E152253A8B6400BCC0F7 /* Include */,
+				5563E168253A8B6400BCC0F7 /* Device */,
+			);
+			path = CMSIS;
+			sourceTree = "<group>";
+		};
+		5563E152253A8B6400BCC0F7 /* Include */ = {
+			isa = PBXGroup;
+			children = (
+				5563E153253A8B6400BCC0F7 /* core_cm7.h */,
+				5563E154253A8B6400BCC0F7 /* tz_context.h */,
+				5563E155253A8B6400BCC0F7 /* core_cm3.h */,
+				5563E156253A8B6400BCC0F7 /* cmsis_compiler.h */,
+				5563E157253A8B6400BCC0F7 /* cmsis_armclang.h */,
+				5563E158253A8B6400BCC0F7 /* mpu_armv7.h */,
+				5563E159253A8B6400BCC0F7 /* cmsis_armcc.h */,
+				5563E15A253A8B6400BCC0F7 /* core_cm4.h */,
+				5563E15B253A8B6400BCC0F7 /* core_cm0.h */,
+				5563E15C253A8B6400BCC0F7 /* cmsis_iccarm.h */,
+				5563E15D253A8B6400BCC0F7 /* core_armv8mml.h */,
+				5563E15E253A8B6400BCC0F7 /* core_sc000.h */,
+				5563E15F253A8B6400BCC0F7 /* core_cm1.h */,
+				5563E160253A8B6400BCC0F7 /* mpu_armv8.h */,
+				5563E161253A8B6400BCC0F7 /* core_sc300.h */,
+				5563E162253A8B6400BCC0F7 /* cmsis_gcc.h */,
+				5563E163253A8B6400BCC0F7 /* cmsis_version.h */,
+				5563E164253A8B6400BCC0F7 /* core_cm23.h */,
+				5563E165253A8B6400BCC0F7 /* core_cm33.h */,
+				5563E166253A8B6400BCC0F7 /* core_cm0plus.h */,
+				5563E167253A8B6400BCC0F7 /* core_armv8mbl.h */,
+			);
+			path = Include;
+			sourceTree = "<group>";
+		};
+		5563E168253A8B6400BCC0F7 /* Device */ = {
+			isa = PBXGroup;
+			children = (
+				5563E169253A8B6400BCC0F7 /* ST */,
+			);
+			path = Device;
+			sourceTree = "<group>";
+		};
+		5563E169253A8B6400BCC0F7 /* ST */ = {
+			isa = PBXGroup;
+			children = (
+				5563E16A253A8B6400BCC0F7 /* STM32F7xx */,
+			);
+			path = ST;
+			sourceTree = "<group>";
+		};
+		5563E16A253A8B6400BCC0F7 /* STM32F7xx */ = {
+			isa = PBXGroup;
+			children = (
+				5563E16B253A8B6400BCC0F7 /* Include */,
+				5563E16F253A8B6400BCC0F7 /* Source */,
+			);
+			path = STM32F7xx;
+			sourceTree = "<group>";
+		};
+		5563E16B253A8B6400BCC0F7 /* Include */ = {
+			isa = PBXGroup;
+			children = (
+				5563E16C253A8B6400BCC0F7 /* system_stm32f7xx.h */,
+				5563E16D253A8B6400BCC0F7 /* stm32f7xx.h */,
+				5563E16E253A8B6400BCC0F7 /* stm32f730xx.h */,
+			);
+			path = Include;
+			sourceTree = "<group>";
+		};
+		5563E16F253A8B6400BCC0F7 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				5563E170253A8B6400BCC0F7 /* Templates */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+		5563E170253A8B6400BCC0F7 /* Templates */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Templates;
+			sourceTree = "<group>";
+		};
+		5563E171253A8B6400BCC0F7 /* Middlewares */ = {
+			isa = PBXGroup;
+			children = (
+				5563E172253A8B6400BCC0F7 /* ST */,
+			);
+			path = Middlewares;
+			sourceTree = "<group>";
+		};
+		5563E172253A8B6400BCC0F7 /* ST */ = {
+			isa = PBXGroup;
+			children = (
+				5563E173253A8B6400BCC0F7 /* STM32_USB_Device_Library */,
+			);
+			path = ST;
+			sourceTree = "<group>";
+		};
+		5563E173253A8B6400BCC0F7 /* STM32_USB_Device_Library */ = {
+			isa = PBXGroup;
+			children = (
+				5563E174253A8B6400BCC0F7 /* Core */,
+				5563E17E253A8B6400BCC0F7 /* Class */,
+			);
+			path = STM32_USB_Device_Library;
+			sourceTree = "<group>";
+		};
+		5563E174253A8B6400BCC0F7 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				5563E175253A8B6400BCC0F7 /* Inc */,
+				5563E17A253A8B6400BCC0F7 /* Src */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		5563E175253A8B6400BCC0F7 /* Inc */ = {
+			isa = PBXGroup;
+			children = (
+				5563E176253A8B6400BCC0F7 /* usbd_ctlreq.h */,
+				5563E177253A8B6400BCC0F7 /* usbd_ioreq.h */,
+				5563E178253A8B6400BCC0F7 /* usbd_core.h */,
+				5563E179253A8B6400BCC0F7 /* usbd_def.h */,
+			);
+			path = Inc;
+			sourceTree = "<group>";
+		};
+		5563E17A253A8B6400BCC0F7 /* Src */ = {
+			isa = PBXGroup;
+			children = (
+				5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.c */,
+				5563E17C253A8B6400BCC0F7 /* usbd_core.c */,
+				5563E17D253A8B6400BCC0F7 /* usbd_ioreq.c */,
+			);
+			path = Src;
+			sourceTree = "<group>";
+		};
+		5563E17E253A8B6400BCC0F7 /* Class */ = {
+			isa = PBXGroup;
+			children = (
+				5563E17F253A8B6400BCC0F7 /* CDC */,
+				5563E182253A8B6400BCC0F7 /* DFU */,
+				5563E187253A8B6400BCC0F7 /* AUDIO */,
+			);
+			path = Class;
+			sourceTree = "<group>";
+		};
+		5563E17F253A8B6400BCC0F7 /* CDC */ = {
+			isa = PBXGroup;
+			children = (
+				5563E180253A8B6400BCC0F7 /* Inc */,
+				5563E181253A8B6400BCC0F7 /* Src */,
+			);
+			path = CDC;
+			sourceTree = "<group>";
+		};
+		5563E180253A8B6400BCC0F7 /* Inc */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Inc;
+			sourceTree = "<group>";
+		};
+		5563E181253A8B6400BCC0F7 /* Src */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Src;
+			sourceTree = "<group>";
+		};
+		5563E182253A8B6400BCC0F7 /* DFU */ = {
+			isa = PBXGroup;
+			children = (
+				5563E183253A8B6400BCC0F7 /* Inc */,
+				5563E185253A8B6400BCC0F7 /* Src */,
+			);
+			path = DFU;
+			sourceTree = "<group>";
+		};
+		5563E183253A8B6400BCC0F7 /* Inc */ = {
+			isa = PBXGroup;
+			children = (
+				5563E184253A8B6400BCC0F7 /* usbd_dfu.h */,
+			);
+			path = Inc;
+			sourceTree = "<group>";
+		};
+		5563E185253A8B6400BCC0F7 /* Src */ = {
+			isa = PBXGroup;
+			children = (
+				5563E186253A8B6400BCC0F7 /* usbd_dfu.c */,
+			);
+			path = Src;
+			sourceTree = "<group>";
+		};
+		5563E187253A8B6400BCC0F7 /* AUDIO */ = {
+			isa = PBXGroup;
+			children = (
+				5563E188253A8B6400BCC0F7 /* Inc */,
+				5563E189253A8B6400BCC0F7 /* Src */,
+			);
+			path = AUDIO;
+			sourceTree = "<group>";
+		};
+		5563E188253A8B6400BCC0F7 /* Inc */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Inc;
+			sourceTree = "<group>";
+		};
+		5563E189253A8B6400BCC0F7 /* Src */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Src;
+			sourceTree = "<group>";
+		};
+		5563E18A253A8B6400BCC0F7 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				5563E18B253A8B6400BCC0F7 /* Inc */,
+				5563E18F253A8B6400BCC0F7 /* Src */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		5563E18B253A8B6400BCC0F7 /* Inc */ = {
+			isa = PBXGroup;
+			children = (
+				5563E18C253A8B6400BCC0F7 /* main.h */,
+				5563E18D253A8B6400BCC0F7 /* stm32f7xx_hal_conf.h */,
+				5563E18E253A8B6400BCC0F7 /* stm32f7xx_it.h */,
+			);
+			path = Inc;
+			sourceTree = "<group>";
+		};
+		5563E18F253A8B6400BCC0F7 /* Src */ = {
+			isa = PBXGroup;
+			children = (
+				5563E190253A8B6400BCC0F7 /* startup_stm32f730i8kx.s */,
+				5563E191253A8B6400BCC0F7 /* stm32f7xx_it.c */,
+				5563E192253A8B6400BCC0F7 /* main.c */,
+				5563E193253A8B6400BCC0F7 /* system_stm32f7xx.c */,
+				5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.c */,
+			);
+			path = Src;
+			sourceTree = "<group>";
+		};
+		5563E196253A8B6400BCC0F7 /* Debug */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Debug;
+			sourceTree = "<group>";
+		};
+		5563E198253A8B6400BCC0F7 /* Release */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Release;
+			sourceTree = "<group>";
+		};
+		5563E199253A8B6400BCC0F7 /* RemoteSystemsTempFiles */ = {
+			isa = PBXGroup;
+			children = (
+				5563E19A253A8B6400BCC0F7 /* .project */,
+			);
+			path = RemoteSystemsTempFiles;
+			sourceTree = "<group>";
+		};
+		5563E19C253A8B6500BCC0F7 /* USB_DEVICE */ = {
+			isa = PBXGroup;
+			children = (
+				5563E19D253A8B6500BCC0F7 /* App */,
+				5563E1A4253A8B6500BCC0F7 /* Target */,
+			);
+			path = USB_DEVICE;
+			sourceTree = "<group>";
+		};
+		5563E19D253A8B6500BCC0F7 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.c */,
+				5563E19F253A8B6500BCC0F7 /* usbd_desc.h */,
+				5563E1A0253A8B6500BCC0F7 /* usb_device.c */,
+				5563E1A1253A8B6500BCC0F7 /* usbd_dfu_if.h */,
+				5563E1A2253A8B6500BCC0F7 /* usbd_desc.c */,
+				5563E1A3253A8B6500BCC0F7 /* usb_device.h */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		5563E1A4253A8B6500BCC0F7 /* Target */ = {
+			isa = PBXGroup;
+			children = (
+				5563E1A5253A8B6500BCC0F7 /* usbd_conf.h */,
+				5563E1A6253A8B6500BCC0F7 /* usbd_conf.c */,
+			);
+			path = Target;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5563E118253A8B3D00BCC0F7 /* STLoader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STLoader" */;
+			buildPhases = (
+				5563E115253A8B3D00BCC0F7 /* Sources */,
+				5563E116253A8B3D00BCC0F7 /* Frameworks */,
+				5563E117253A8B3D00BCC0F7 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = STLoader;
+			productName = STLoader;
+			productReference = 5563E119253A8B3D00BCC0F7 /* STLoader */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5563E111253A8B3D00BCC0F7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1140;
+				ORGANIZATIONNAME = dave;
+				TargetAttributes = {
+					5563E118253A8B3D00BCC0F7 = {
+						CreatedOnToolsVersion = 11.4;
+					};
+				};
+			};
+			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STLoader" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5563E110253A8B3D00BCC0F7;
+			productRefGroup = 5563E11A253A8B3D00BCC0F7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5563E118253A8B3D00BCC0F7 /* STLoader */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5563E115253A8B3D00BCC0F7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5563E1AB253A8B8500BCC0F7 /* startup_stm32f730i8kx.s in Sources */,
+				5563E1AC253A8B8500BCC0F7 /* stm32f7xx_it.c in Sources */,
+				5563E1AD253A8B8500BCC0F7 /* main.c in Sources */,
+				5563E1AE253A8B8500BCC0F7 /* system_stm32f7xx.c in Sources */,
+				5563E1AF253A8B8500BCC0F7 /* stm32f7xx_hal_msp.c in Sources */,
+				5563E1C6253A8B8500BCC0F7 /* stm32f7xx_hal_rcc.c in Sources */,
+				5563E1C7253A8B8500BCC0F7 /* stm32f7xx_hal_flash.c in Sources */,
+				5563E1C8253A8B8500BCC0F7 /* stm32f7xx_hal_gpio.c in Sources */,
+				5563E1C9253A8B8500BCC0F7 /* stm32f7xx_hal_i2c.c in Sources */,
+				5563E1CA253A8B8500BCC0F7 /* stm32f7xx_hal_pcd.c in Sources */,
+				5563E1CB253A8B8500BCC0F7 /* stm32f7xx_hal_tim.c in Sources */,
+				5563E1CC253A8B8500BCC0F7 /* stm32f7xx_hal_exti.c in Sources */,
+				5563E1CD253A8B8500BCC0F7 /* stm32f7xx_hal_i2c_ex.c in Sources */,
+				5563E1CE253A8B8500BCC0F7 /* stm32f7xx_hal_pcd_ex.c in Sources */,
+				5563E1CF253A8B8500BCC0F7 /* stm32f7xx_hal_tim_ex.c in Sources */,
+				5563E1D0253A8B8500BCC0F7 /* stm32f7xx_hal_flash_ex.c in Sources */,
+				5563E1D1253A8B8500BCC0F7 /* stm32f7xx_hal.c in Sources */,
+				5563E1D2253A8B8500BCC0F7 /* stm32f7xx_ll_usb.c in Sources */,
+				5563E1D3253A8B8500BCC0F7 /* stm32f7xx_hal_rcc_ex.c in Sources */,
+				5563E1D4253A8B8500BCC0F7 /* stm32f7xx_hal_dma.c in Sources */,
+				5563E1D5253A8B8500BCC0F7 /* stm32f7xx_hal_cortex.c in Sources */,
+				5563E1D6253A8B8500BCC0F7 /* stm32f7xx_hal_dma_ex.c in Sources */,
+				5563E1D7253A8B8500BCC0F7 /* stm32f7xx_hal_pwr_ex.c in Sources */,
+				5563E1D8253A8B8500BCC0F7 /* stm32f7xx_hal_pwr.c in Sources */,
+				5563E1F7253A8B8500BCC0F7 /* usbd_ctlreq.c in Sources */,
+				5563E1F8253A8B8500BCC0F7 /* usbd_core.c in Sources */,
+				5563E1F9253A8B8500BCC0F7 /* usbd_ioreq.c in Sources */,
+				5563E1FB253A8B8500BCC0F7 /* usbd_dfu.c in Sources */,
+				5563E1FF253A8B8500BCC0F7 /* usbd_dfu_if.c in Sources */,
+				5563E201253A8B8500BCC0F7 /* usb_device.c in Sources */,
+				5563E203253A8B8500BCC0F7 /* usbd_desc.c in Sources */,
+				5563E206253A8B8500BCC0F7 /* usbd_conf.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5563E11E253A8B3D00BCC0F7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		5563E11F253A8B3D00BCC0F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		5563E121253A8B3D00BCC0F7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		5563E122253A8B3D00BCC0F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STLoader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5563E11E253A8B3D00BCC0F7 /* Debug */,
+				5563E11F253A8B3D00BCC0F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STLoader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5563E121253A8B3D00BCC0F7 /* Debug */,
+				5563E122253A8B3D00BCC0F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5563E111253A8B3D00BCC0F7 /* Project object */;
+}
