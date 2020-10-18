@@ -136,8 +136,8 @@ USBD_ClassTypeDef USBD_DFU =
   USBD_DFU_Setup,
   USBD_DFU_EP0_TxReady,
   USBD_DFU_EP0_RxReady,
-  NULL,
-  NULL,
+  USBD_DFU_DataIn,
+  USBD_DFU_DataOut,
   USBD_DFU_SOF,
   NULL,
   NULL,
@@ -150,7 +150,7 @@ USBD_ClassTypeDef USBD_DFU =
 #endif
 };
 
-#define BL_PACKET_SIZE      512
+#define BL_MAX_PACKET_SIZE      512
 
 #define BL_EP_OUT_STM32     0x01
 #define BL_EP_IN_STM32      0x81
@@ -188,7 +188,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
             USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
             BL_EP_OUT_STM32,                                    // bEndpointAddress
             0x02,                                               // bmAttributes: Bulk
-            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
             0x00,                                               // bInterval: ignore for Bulk transfer
             
             // Endpoint IN Descriptor
@@ -196,7 +196,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
             USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
             BL_EP_IN_STM32,                                     // bEndpointAddress
             0x02,                                               // bmAttributes: Bulk
-            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
             0x00,                                               // bInterval: ignore for Bulk transfer
         
         // Interface descriptor: ICE40 bootloader
@@ -215,7 +215,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
             USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
             BL_EP_OUT_ICE40,                                    // bEndpointAddress
             0x02,                                               // bmAttributes: Bulk
-            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
             0x00,                                               // bInterval: ignore for Bulk transfer
             
             // Endpoint IN Descriptor
@@ -223,7 +223,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[] __ALIGN_END =
             USB_DESC_TYPE_ENDPOINT,                             // bDescriptorType: Endpoint
             BL_EP_IN_ICE40,                                     // bEndpointAddress
             0x02,                                               // bmAttributes: Bulk
-            LOBYTE(BL_PACKET_SIZE), HIBYTE(BL_PACKET_SIZE),     // wMaxPacketSize
+            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
             0x00,                                               // bInterval: ignore for Bulk transfer
 };
 
@@ -258,94 +258,69 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
   */
 static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
-  UNUSED(cfgidx);
-
-  USBD_DFU_HandleTypeDef *hdfu;
-
-  /* Allocate Audio structure */
-  hdfu = USBD_malloc(sizeof(USBD_DFU_HandleTypeDef));
-
-  if (hdfu == NULL)
-  {
-    pdev->pClassData = NULL;
-    return (uint8_t)USBD_EMEM;
-  }
-
-  pdev->pClassData = (void *)hdfu;
-
-  hdfu->alt_setting = 0U;
-  hdfu->data_ptr = USBD_DFU_APP_DEFAULT_ADD;
-  hdfu->wblock_num = 0U;
-  hdfu->wlength = 0U;
-
-  hdfu->manif_state = DFU_MANIFEST_COMPLETE;
-  hdfu->dev_state = DFU_STATE_IDLE;
-
-  hdfu->dev_status[0] = DFU_ERROR_NONE;
-  hdfu->dev_status[1] = 0U;
-  hdfu->dev_status[2] = 0U;
-  hdfu->dev_status[3] = 0U;
-  hdfu->dev_status[4] = DFU_STATE_IDLE;
-  hdfu->dev_status[5] = 0U;
-
-  /* Initialize Hardware layer */
-  if (((USBD_DFU_MediaTypeDef *)pdev->pUserData)->Init() != USBD_OK)
-  {
-    return (uint8_t)USBD_FAIL;
-  }
-
-  return (uint8_t)USBD_OK;
-}
-
-
-
-
-//#define BL_EP_OUT_STM32    0x01
-//#define BL_EP_IN_STM32     0x81
-//
-//#define BL_EP_OUT_ICE40    0x02
-//#define BL_EP_IN_ICE40     0x82
-
-static uint8_t USBD_CDC_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx) {
-    USBD_CDC_HandleTypeDef *hcdc;
+    UNUSED(cfgidx);
     
-    hcdc = USBD_malloc(sizeof(USBD_CDC_HandleTypeDef));
+    USBD_DFU_HandleTypeDef *hdfu;
     
-    if (!hcdc) {
+    /* Allocate Audio structure */
+    hdfu = USBD_malloc(sizeof(USBD_DFU_HandleTypeDef));
+    
+    if (hdfu == NULL)
+    {
         pdev->pClassData = NULL;
         return (uint8_t)USBD_EMEM;
     }
     
-    pdev->pClassData = (void *)hcdc;
+    pdev->pClassData = (void *)hdfu;
+    
+    hdfu->alt_setting = 0U;
+    hdfu->data_ptr = USBD_DFU_APP_DEFAULT_ADD;
+    hdfu->wblock_num = 0U;
+    hdfu->wlength = 0U;
+    
+    hdfu->manif_state = DFU_MANIFEST_COMPLETE;
+    hdfu->dev_state = DFU_STATE_IDLE;
+    
+    hdfu->dev_status[0] = DFU_ERROR_NONE;
+    hdfu->dev_status[1] = 0U;
+    hdfu->dev_status[2] = 0U;
+    hdfu->dev_status[3] = 0U;
+    hdfu->dev_status[4] = DFU_STATE_IDLE;
+    hdfu->dev_status[5] = 0U;
     
     // Open endpoints for STM32 interface
     {
         // OUT endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_OUT_STM32, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        USBD_LL_OpenEP(pdev, BL_EP_OUT_STM32, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
         pdev->ep_out[BL_EP_OUT_STM32 & 0xFU].is_used = 1U;
         
         // IN endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_IN_STM32, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        USBD_LL_OpenEP(pdev, BL_EP_IN_STM32, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
         pdev->ep_in[BL_EP_IN_STM32 & 0xFU].is_used = 1U;
     }
     
     // Open endpoints for ICE40 interface
     {
         // OUT endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_OUT_ICE40, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        USBD_LL_OpenEP(pdev, BL_EP_OUT_ICE40, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
         pdev->ep_out[BL_EP_OUT_ICE40 & 0xFU].is_used = 1U;
         
         // IN endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_IN_ICE40, USBD_EP_TYPE_BULK, BL_PACKET_SIZE);
+        USBD_LL_OpenEP(pdev, BL_EP_IN_ICE40, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
         pdev->ep_in[BL_EP_IN_ICE40 & 0xFU].is_used = 1U;
     }
     
-    // Init physical Interface components
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Init();
+    /* Initialize Hardware layer */
+    if (((USBD_DFU_MediaTypeDef *)pdev->pUserData)->Init() != USBD_OK)
+    {
+        return (uint8_t)USBD_FAIL;
+    }
     
+    hdfu->STM32Bootloader.state = STM32BootloaderState_GetAddress;
     // Prepare OUT endpoints endpoint to receive next packet
-    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, hcdc->RxBuffer, BL_PACKET_SIZE);
-    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_ICE40, hcdc->RxBuffer, BL_PACKET_SIZE);
+    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, &hdfu->STM32Bootloader.address, sizeof(hdfu->STM32Bootloader.address));
+    // TODO: implement ice40 bootloader. we'll need a temporary buffer to store stuff while
+//    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_ICE40, hcdc->RxBuffer, BL_MAX_PACKET_SIZE);
     
     return (uint8_t)USBD_OK;
 }
@@ -554,7 +529,7 @@ static uint8_t USBD_DFU_EP0_RxReady(USBD_HandleTypeDef *pdev)
   * @param  pdev: device instance
   * @retval status
   */
-static uint8_t  USBD_DFU_EP0_TxReady(USBD_HandleTypeDef *pdev)
+static uint8_t USBD_DFU_EP0_TxReady(USBD_HandleTypeDef *pdev)
 {
   USBD_SetupReqTypedef req;
   uint32_t addr;
@@ -662,6 +637,54 @@ static uint8_t USBD_DFU_SOF(USBD_HandleTypeDef *pdev)
 
   return (uint8_t)USBD_OK;
 }
+
+
+
+static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
+{
+  UNUSED(pdev);
+  UNUSED(epnum);
+
+  /* Only OUT data are processed */
+  return (uint8_t)USBD_OK;
+}
+
+static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
+{
+    USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
+    if (epnum == BL_EP_OUT_STM32) {
+        const uint16_t packetLen = (uint16_t)USBD_LL_GetRxDataSize(pdev, epnum);
+        switch (hdfu->STM32Bootloader.state) {
+        case STM32BootloaderState_GetAddress: {
+            // Verify that we got exactly the number of bytes needed for an address
+            if (packetLen != sizeof(hdfu->STM32Bootloader.address)) {
+                return USBD_FAIL;
+            }
+            
+            hdfu->STM32Bootloader.state = STM32BootloaderState_WriteData;
+            USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)hdfu->STM32Bootloader.address, BL_MAX_PACKET_SIZE);
+            break;
+        }
+        
+        case STM32BootloaderState_WriteData: {
+            if (packetLen == BL_MAX_PACKET_SIZE) {
+                // Wrote more data
+                hdfu->STM32Bootloader.address += packetLen;
+                USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)hdfu->STM32Bootloader.address, BL_MAX_PACKET_SIZE);
+                
+            } else {
+                // End of transfer
+                hdfu->STM32Bootloader.state = STM32BootloaderState_GetAddress;
+                USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, &hdfu->STM32Bootloader.address, sizeof(hdfu->STM32Bootloader.address));
+            }
+            break;
+        }}
+    }
+
+    return (uint8_t)USBD_OK;
+}
+
+
 
 
 /**

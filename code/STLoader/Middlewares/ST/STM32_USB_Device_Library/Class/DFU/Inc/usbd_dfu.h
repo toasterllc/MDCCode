@@ -157,6 +157,12 @@ typedef  void (*pFunction)(void);
   * @{
   */
 
+typedef enum
+{
+  STM32BootloaderState_GetAddress,
+  STM32BootloaderState_WriteData,
+} STM32BootloaderState;
+
 typedef struct
 {
   union
@@ -171,9 +177,13 @@ typedef struct
   uint32_t alt_setting;
 
   uint8_t dev_status[DFU_STATUS_DEPTH];
-  uint8_t ReservedForAlign[2];
   uint8_t dev_state;
   uint8_t manif_state;
+  
+  struct {
+      STM32BootloaderState state;
+      uint32_t address __attribute__((aligned(4)));
+  } STM32Bootloader;
 } USBD_DFU_HandleTypeDef;
 
 typedef struct
