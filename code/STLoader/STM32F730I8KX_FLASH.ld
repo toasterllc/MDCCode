@@ -36,7 +36,7 @@ _Min_Stack_Size = 0x400 ;	/* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 256K
+  RAM    (xrw)    : ORIGIN = 0x2003E000,   LENGTH = 8K     /* Confine bootloader to last 8K of RAM */
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
 }
 
