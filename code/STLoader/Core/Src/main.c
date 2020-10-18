@@ -79,6 +79,7 @@ void setLed3(int on) {
   * @brief  The application entry point.
   * @retval int
   */
+int ledState = 0;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -116,9 +117,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    // setLeds(ledOn);
-    // ledOn = !ledOn;
-    // HAL_Delay(100);
+    setLed0(ledState);
+    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
