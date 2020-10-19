@@ -162,7 +162,16 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
-
+  
+  /* Region for variables that should persist across resets */
+  .noinit :
+  {
+    . = ALIGN(4);
+    *(.noinit)
+    *(.noinit*)
+    . = ALIGN(4);
+  } >RAM
+  
   /* Remove information from the compiler libraries */
   /DISCARD/ :
   {

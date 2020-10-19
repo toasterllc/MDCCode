@@ -157,33 +157,51 @@ typedef  void (*pFunction)(void);
   * @{
   */
 
-typedef enum
+enum
 {
-  STM32BootloaderState_GetAddress,
-  STM32BootloaderState_WriteData,
-} STM32BootloaderState;
+  STM32LoaderCmd_None,
+  STM32LoaderCmd_WriteData,
+  STM32LoaderCmd_Reset,
+}; typedef uint8_t STM32LoaderCmd;
 
 typedef struct
 {
-  union
-  {
-    uint32_t d32[USBD_DFU_XFER_SIZE / 4U];
-    uint8_t d8[USBD_DFU_XFER_SIZE];
-  } buffer;
-
-  uint32_t wblock_num;
-  uint32_t wlength;
-  uint32_t data_ptr;
-  uint32_t alt_setting;
-
-  uint8_t dev_status[DFU_STATUS_DEPTH];
-  uint8_t dev_state;
-  uint8_t manif_state;
-  
-  struct {
-      STM32BootloaderState state;
-      uint32_t address __attribute__((aligned(4)));
-  } STM32Bootloader;
+    union
+    {
+        uint32_t d32[USBD_DFU_XFER_SIZE / 4U];
+        uint8_t d8[USBD_DFU_XFER_SIZE];
+    } buffer;
+    
+    uint32_t wblock_num;
+    uint32_t wlength;
+    uint32_t data_ptr;
+    uint32_t alt_setting;
+    
+    uint8_t dev_status[DFU_STATUS_DEPTH];
+    uint8_t dev_state;
+    uint8_t manif_state;
+    
+    struct {
+        STM32LoaderCmd cmd;
+        uint8_t state;
+        uint32_t addr;
+    } STM32Loader;
+    
+    
+    
+//    struct {
+//        STM32LoaderCmd cmd;
+//        
+//        union {
+//            struct {
+//                uint32_t addr;
+//            } writeData;
+//            
+//            struct {
+//                uint32_t vectorTableAddr;
+//            } reset;
+//        } arg;
+//    } STM32LoaderCmdArg;
 } USBD_DFU_HandleTypeDef;
 
 typedef struct
