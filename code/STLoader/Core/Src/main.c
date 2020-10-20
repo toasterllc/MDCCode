@@ -95,7 +95,7 @@ int main(void)
 
   /* Infinite loop */
   for (;;) {
-    __WFI();
+    HAL_Delay(100);
   }
 }
 
