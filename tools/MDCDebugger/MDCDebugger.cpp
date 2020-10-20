@@ -45,14 +45,14 @@ const Cmd PixCaptureCmd = "pixcapture";
 void printUsage() {
     using namespace std;
     cout << "MDCDebugger commands:\n";
-    cout << " " << LEDSetCmd        << " <0/1>\n";
-    cout << " " << MemReadCmd       << " <file>\n";
-    cout << " " << MemVerifyCmd     << "\n";
-    cout << " " << PixReg8Cmd       << " <addr>\n";
-    cout << " " << PixReg8Cmd       << " <addr>=<val8>\n";
-    cout << " " << PixReg16Cmd      << " <addr>\n";
-    cout << " " << PixReg16Cmd      << " <addr>=<val16>\n";
-    cout << " " << PixCaptureCmd    << " <file>\n";
+    cout << "  " << LEDSetCmd        << " <0/1>\n";
+    cout << "  " << MemReadCmd       << " <file>\n";
+    cout << "  " << MemVerifyCmd     << "\n";
+    cout << "  " << PixReg8Cmd       << " <addr>\n";
+    cout << "  " << PixReg8Cmd       << " <addr>=<val8>\n";
+    cout << "  " << PixReg16Cmd      << " <addr>\n";
+    cout << "  " << PixReg16Cmd      << " <addr>=<val16>\n";
+    cout << "  " << PixCaptureCmd    << " <file>\n";
     cout << "\n";
 }
 

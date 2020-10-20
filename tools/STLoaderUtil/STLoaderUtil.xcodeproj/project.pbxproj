@@ -29,6 +29,10 @@
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55E1D8ED253E892B00628EF6 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		55E1D8F0253EB2F100628EF6 /* ELFBinary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELFBinary.h; sourceTree = "<group>"; };
+		55E1D8F5253F758A00628EF6 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
+		55E1D8F6253F75A300628EF6 /* USBInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
+		55E1D8F7253F9E0E00628EF6 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +51,10 @@
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
+				55E1D8F7253F9E0E00628EF6 /* Enum.h */,
+				55E1D8F6253F75A300628EF6 /* USBInterface.h */,
+				55E1D8F5253F758A00628EF6 /* SendRight.h */,
+				55E1D8F0253EB2F100628EF6 /* ELFBinary.h */,
 				55E1D8ED253E892B00628EF6 /* main.mm */,
 				55E1D8DF253E864F00628EF6 /* Products */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
