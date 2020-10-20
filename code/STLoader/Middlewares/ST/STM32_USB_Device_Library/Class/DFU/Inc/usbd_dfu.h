@@ -158,19 +158,19 @@ typedef  void (*pFunction)(void);
   */
 
 enum {
-    STM32LoaderCmdOp_None,
-    STM32LoaderCmdOp_SetLED,
-    STM32LoaderCmdOp_WriteData,
-    STM32LoaderCmdOp_Reset,
-}; typedef uint8_t STM32LoaderCmdOp;
+    STLoaderCmdOp_None,
+    STLoaderCmdOp_SetLED,
+    STLoaderCmdOp_WriteData,
+    STLoaderCmdOp_Reset,
+}; typedef uint8_t STLoaderCmdOp;
 
 typedef struct __attribute__((packed)) {
-    STM32LoaderCmdOp op;
+    STLoaderCmdOp op;
     union {
         struct {
             uint8_t idx;
             uint8_t on;
-        } setLED;
+        } ledSet;
         
         struct {
             uint32_t addr;
@@ -180,9 +180,9 @@ typedef struct __attribute__((packed)) {
             uint32_t vectorTableAddr;
         } reset;
     } arg;
-} STM32LoaderCmd;
+} STLoaderCmd;
 
-_Static_assert(sizeof(STM32LoaderCmd)==5, "STM32LoaderCmd: invalid size");
+_Static_assert(sizeof(STLoaderCmd)==5, "STLoaderCmd: invalid size");
 
 typedef struct
 {
@@ -201,7 +201,7 @@ typedef struct
     uint8_t dev_state;
     uint8_t manif_state;
     
-    STM32LoaderCmd stm32Cmd;
+    STLoaderCmd stm32Cmd;
     uint32_t stm32DataAddr;
 } USBD_DFU_HandleTypeDef;
 

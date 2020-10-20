@@ -6,7 +6,7 @@
 //extern void setLed1(int on);
 //extern void setLed2(int on);
 //extern void setLed3(int on);
-//static void resetLEDs() {
+//static void reledSets() {
 //    setLed0(0);
 //    setLed1(0);
 //    setLed2(0);
@@ -61,9 +61,9 @@ USBD_ClassTypeDef USBD_DFU =
 
 #define MAX_PACKET_SIZE             512
 
-#define STM32_EPADDR_CMD_OUT        0x01    // OUT endpoint
-#define STM32_EPADDR_CMD_IN         0x81    // IN endpoint
-#define STM32_EPADDR_DATA_OUT       0x02    // OUT endpoint
+#define ST_EPADDR_CMD_OUT        0x01    // OUT endpoint
+#define ST_EPADDR_CMD_IN         0x81    // IN endpoint
+#define ST_EPADDR_DATA_OUT       0x02    // OUT endpoint
 
 #define EPNUM(addr)                 (addr & 0xF)
 
@@ -82,7 +82,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
     0x80,                                       // bmAttributes: bus powered
     0xFA,                                       // bMaxPower: 500 mA (2 mA units)
     
-        // Interface descriptor: STM32 bootloader
+        // Interface descriptor: ST bootloader
         0x09,                                       // bLength: interface descriptor length
         USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
         0x00,                                       // bInterfaceNumber: Number of Interface
@@ -96,7 +96,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // CMD_OUT endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            STM32_EPADDR_CMD_OUT,                                       // bEndpointAddress
+            ST_EPADDR_CMD_OUT,                                       // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
@@ -104,7 +104,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // CMD_IN endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            STM32_EPADDR_CMD_IN,                                        // bEndpointAddress
+            ST_EPADDR_CMD_IN,                                        // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
@@ -112,7 +112,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // DATA_OUT endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            STM32_EPADDR_DATA_OUT,                                      // bEndpointAddress
+            ST_EPADDR_DATA_OUT,                                      // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
@@ -175,19 +175,19 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
     hdfu->dev_status[4] = DFU_STATE_IDLE;
     hdfu->dev_status[5] = 0U;
     
-    // Open endpoints for STM32 interface
+    // Open endpoints for ST bootloader interface
     {
         // CMD_OUT endpoint
-        USBD_LL_OpenEP(pdev, STM32_EPADDR_CMD_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
-        pdev->ep_out[EPNUM(STM32_EPADDR_CMD_OUT)].is_used = 1U;
+        USBD_LL_OpenEP(pdev, ST_EPADDR_CMD_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_out[EPNUM(ST_EPADDR_CMD_OUT)].is_used = 1U;
         
         // CMD_IN endpoint
-        USBD_LL_OpenEP(pdev, STM32_EPADDR_CMD_IN, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
-        pdev->ep_in[EPNUM(STM32_EPADDR_CMD_IN)].is_used = 1U;
+        USBD_LL_OpenEP(pdev, ST_EPADDR_CMD_IN, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_in[EPNUM(ST_EPADDR_CMD_IN)].is_used = 1U;
         
         // DATA_OUT endpoint
-        USBD_LL_OpenEP(pdev, STM32_EPADDR_DATA_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
-        pdev->ep_out[EPNUM(STM32_EPADDR_DATA_OUT)].is_used = 1U;
+        USBD_LL_OpenEP(pdev, ST_EPADDR_DATA_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_out[EPNUM(ST_EPADDR_DATA_OUT)].is_used = 1U;
     }
     
     /* Initialize Hardware layer */
@@ -196,7 +196,7 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
         return (uint8_t)USBD_FAIL;
     }
     
-    USBD_LL_PrepareReceive(pdev, STM32_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
+    USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
     return (uint8_t)USBD_OK;
 }
 
@@ -324,29 +324,29 @@ void setLed3(bool on) {
 static uint32_t vectorTableAddr __attribute__((section(".noinit")));
 static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
-    STM32LoaderCmd* cmd = &hdfu->stm32Cmd;
+    STLoaderCmd* cmd = &hdfu->stm32Cmd;
     const size_t packetLen = USBD_LL_GetRxDataSize(pdev, epnum);
     
     switch (epnum) {
     
     // CMD_OUT endpoint:
     //   Handle the supplied command
-    case EPNUM(STM32_EPADDR_CMD_OUT): {
+    case EPNUM(ST_EPADDR_CMD_OUT): {
         // Verify that we received at least the command op
         if (packetLen < sizeof(cmd->op)) return USBD_FAIL;
         
         const size_t argLen = packetLen-sizeof(cmd->op);
         switch (cmd->op) {
         // Set LED command:
-        case STM32LoaderCmdOp_SetLED: {
+        case STLoaderCmdOp_SetLED: {
             // Verify that we got the right argument size
-            if (argLen < sizeof(cmd->arg.setLED)) return USBD_FAIL;
+            if (argLen < sizeof(cmd->arg.ledSet)) return USBD_FAIL;
             
-            switch (cmd->arg.setLED.idx) {
-            case 0: setLed0(cmd->arg.setLED.on); break;
-            case 1: setLed1(cmd->arg.setLED.on); break;
-            case 2: setLed2(cmd->arg.setLED.on); break;
-            case 3: setLed3(cmd->arg.setLED.on); break;
+            switch (cmd->arg.ledSet.idx) {
+            case 0: setLed0(cmd->arg.ledSet.on); break;
+            case 1: setLed1(cmd->arg.ledSet.on); break;
+            case 2: setLed2(cmd->arg.ledSet.on); break;
+            case 3: setLed3(cmd->arg.ledSet.on); break;
             }
             
             break;
@@ -355,18 +355,18 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         // Write data command:
         //   Stash the address we're writing to in `stm32DataAddr`,
         //   Prepare the DATA_OUT endpoint for writing at that address
-        case STM32LoaderCmdOp_WriteData: {
+        case STLoaderCmdOp_WriteData: {
             // Verify that we got the right argument size
             if (argLen < sizeof(cmd->arg.writeData)) return USBD_FAIL;
             hdfu->stm32DataAddr = cmd->arg.writeData.addr;
-            USBD_LL_PrepareReceive(pdev, STM32_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
             break;
         }
         
         // Reset command:
         //   Stash the vector table address for access after we reset,
         //   Perform a software reset
-        case STM32LoaderCmdOp_Reset: {
+        case STLoaderCmdOp_Reset: {
             // Verify we got the right argument size
             if (argLen < sizeof(cmd->arg.reset)) return USBD_FAIL;
             vectorTableAddr = cmd->arg.reset.vectorTableAddr;
@@ -376,14 +376,14 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         }}
         
         // Prepare to receive another command
-        USBD_LL_PrepareReceive(pdev, STM32_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
+        USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
         break;
     }
     
     // DATA_OUT endpoint:
     //   Update the address that we're writing to,
     //   Prepare ourself to receive more data
-    case EPNUM(STM32_EPADDR_DATA_OUT): {
+    case EPNUM(ST_EPADDR_DATA_OUT): {
         hdfu->stm32DataAddr += packetLen;
         // Only prepare for more data if this packet was the maximum size.
         // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
@@ -391,7 +391,7 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         //   packet with a payload size less than wMaxPacketSize or
         //   transfers a zero-length packet".)
         if (packetLen == MAX_PACKET_SIZE) {
-            USBD_LL_PrepareReceive(pdev, STM32_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
         }
         break;
     }}
