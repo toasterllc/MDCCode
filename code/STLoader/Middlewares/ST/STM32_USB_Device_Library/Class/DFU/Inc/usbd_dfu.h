@@ -169,7 +169,7 @@ typedef struct __attribute__((packed)) {
     union {
         struct {
             uint8_t idx;
-            uint8_t state;
+            uint8_t on;
         } setLED;
         
         struct {

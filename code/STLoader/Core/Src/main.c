@@ -57,22 +57,6 @@ static void MX_GPIO_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void setLed0(int on) {
-    HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
-void setLed1(int on) {
-    HAL_GPIO_WritePin(GPIOE, STM_LED1_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
-void setLed2(int on) {
-    HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
-void setLed3(int on) {
-    HAL_GPIO_WritePin(GPIOB, STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -110,16 +94,9 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  // bool ledOn = true;
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-    HAL_Delay(100);
+  for (;;) {
+    __WFI();
   }
-  /* USER CODE END 3 */
 }
 
 /**

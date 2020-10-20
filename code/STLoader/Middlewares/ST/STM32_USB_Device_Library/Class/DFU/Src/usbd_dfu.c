@@ -61,12 +61,14 @@ USBD_ClassTypeDef USBD_DFU =
 
 #define MAX_PACKET_SIZE             512
 
-#define STM32_ENDPOINT_CMD_OUT      0x01    // OUT endpoint
-#define STM32_ENDPOINT_CMD_IN       0x81    // IN endpoint
-//#define STM32_ENDPOINT_DATA_OUT     0x02    // OUT endpoint
+#define STM32_EPADDR_CMD_OUT        0x01    // OUT endpoint
+#define STM32_EPADDR_CMD_IN         0x81    // IN endpoint
+#define STM32_EPADDR_DATA_OUT       0x02    // OUT endpoint
+
+#define EPNUM(addr)                 (addr & 0xF)
 
 /* USB DFU device Configuration Descriptor */
-#define USBD_DFU_CfgDescLen 32
+#define USBD_DFU_CfgDescLen 39
 __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
 {
     // Configuration descriptor
@@ -85,7 +87,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
         USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
         0x00,                                       // bInterfaceNumber: Number of Interface
         0x00,                                       // bAlternateSetting: Alternate setting
-        0x02,                                       // bNumEndpoints
+        0x03,                                       // bNumEndpoints
         0xFF,                                       // bInterfaceClass: vendor specific
         0x00,                                       // bInterfaceSubClass
         0x00,                                       // nInterfaceProtocol
@@ -94,7 +96,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // CMD_OUT endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            STM32_ENDPOINT_CMD_OUT,                                     // bEndpointAddress
+            STM32_EPADDR_CMD_OUT,                                       // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
@@ -102,18 +104,18 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // CMD_IN endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            STM32_ENDPOINT_CMD_IN,                                      // bEndpointAddress
+            STM32_EPADDR_CMD_IN,                                        // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
             
-//            // DATA_OUT endpoint
-//            0x07,                                                       // bLength: Endpoint Descriptor size
-//            USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-//            STM32_ENDPOINT_DATA_OUT,                                    // bEndpointAddress
-//            0x02,                                                       // bmAttributes: Bulk
-//            LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
-//            0x00,                                                       // bInterval: ignore for Bulk transfer
+            // DATA_OUT endpoint
+            0x07,                                                       // bLength: Endpoint Descriptor size
+            USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
+            STM32_EPADDR_DATA_OUT,                                      // bEndpointAddress
+            0x02,                                                       // bmAttributes: Bulk
+            LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
+            0x00,                                                       // bInterval: ignore for Bulk transfer
 };
 
 /* USB Standard Device Descriptor */
@@ -129,8 +131,6 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
   0x01,                                     // bNumConfigurations
   0x00,                                     // bReserved
 };
-
-static uint8_t randomDataBuf[] = "But the other reason why the Flex buds are an important product is, well, Android. Instead of using Apple's proprietary Lightning connector for charging, as many Beats headphones have since the acquisition, the Flex have a USB-C port. Beats' Android app has already been updated to support them. These moves show that as Apple continues putting a greater emphasis on audio products - with the new HomePod mini and long-rumored premium headphones expected to launch soon - Beats is realizing it needs to stand independently from Apple's ecosystem if the brand wants to continue its enormous success. $50 for decent-sounding wireless earbuds with W1 chips for Apple device integration, and USB-C charging and a nice-looking Android app for better outside-the-Apple-universe appeal. A product like this is exactly why Apple is keeping the Beats brand around.";
 
 /** @defgroup USBD_DFU_Private_Functions
   * @{
@@ -178,16 +178,16 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
     // Open endpoints for STM32 interface
     {
         // CMD_OUT endpoint
-        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_CMD_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
-        pdev->ep_out[STM32_ENDPOINT_CMD_OUT & 0xFU].is_used = 1U;
+        USBD_LL_OpenEP(pdev, STM32_EPADDR_CMD_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_out[EPNUM(STM32_EPADDR_CMD_OUT)].is_used = 1U;
         
         // CMD_IN endpoint
-        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_CMD_IN, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
-        pdev->ep_in[STM32_ENDPOINT_CMD_IN & 0xFU].is_used = 1U;
+        USBD_LL_OpenEP(pdev, STM32_EPADDR_CMD_IN, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_in[EPNUM(STM32_EPADDR_CMD_IN)].is_used = 1U;
         
-//        // DATA_OUT endpoint
-//        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_DATA_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
-//        pdev->ep_out[STM32_ENDPOINT_DATA_OUT & 0xFU].is_used = 1U;
+        // DATA_OUT endpoint
+        USBD_LL_OpenEP(pdev, STM32_EPADDR_DATA_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_out[EPNUM(STM32_EPADDR_DATA_OUT)].is_used = 1U;
     }
     
     /* Initialize Hardware layer */
@@ -196,8 +196,7 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
         return (uint8_t)USBD_FAIL;
     }
     
-    USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
-    USBD_LL_Transmit(pdev, STM32_ENDPOINT_CMD_IN, randomDataBuf, sizeof(randomDataBuf));
+    USBD_LL_PrepareReceive(pdev, STM32_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
     return (uint8_t)USBD_OK;
 }
 
@@ -302,17 +301,24 @@ static uint8_t USBD_DFU_SOF(USBD_HandleTypeDef *pdev)
   return (uint8_t)USBD_OK;
 }
 
-
-
-static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
-{
-    switch (epnum) {
-    case (STM32_ENDPOINT_CMD_IN&0x7F): {
-        USBD_LL_Transmit(pdev, STM32_ENDPOINT_CMD_IN, randomDataBuf, sizeof(randomDataBuf));
-        break;
-    }}
-    
+static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     return (uint8_t)USBD_OK;
+}
+
+void setLed0(bool on) {
+    HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void setLed1(bool on) {
+    HAL_GPIO_WritePin(GPIOE, STM_LED1_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void setLed2(bool on) {
+    HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void setLed3(bool on) {
+    HAL_GPIO_WritePin(GPIOB, STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
 }
 
 static uint32_t vectorTableAddr __attribute__((section(".noinit")));
@@ -325,7 +331,7 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     
     // CMD_OUT endpoint:
     //   Handle the supplied command
-    case STM32_ENDPOINT_CMD_OUT: {
+    case EPNUM(STM32_EPADDR_CMD_OUT): {
         // Verify that we received at least the command op
         if (packetLen < sizeof(cmd->op)) return USBD_FAIL;
         
@@ -336,15 +342,11 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
             // Verify that we got the right argument size
             if (argLen < sizeof(cmd->arg.setLED)) return USBD_FAIL;
             
-            extern void setLed0(int on);
-            extern void setLed1(int on);
-            extern void setLed2(int on);
-            extern void setLed3(int on);
             switch (cmd->arg.setLED.idx) {
-            case 0: setLed0(cmd->arg.setLED.state); break;
-            case 1: setLed1(cmd->arg.setLED.state); break;
-            case 2: setLed2(cmd->arg.setLED.state); break;
-            case 3: setLed3(cmd->arg.setLED.state); break;
+            case 0: setLed0(cmd->arg.setLED.on); break;
+            case 1: setLed1(cmd->arg.setLED.on); break;
+            case 2: setLed2(cmd->arg.setLED.on); break;
+            case 3: setLed3(cmd->arg.setLED.on); break;
             }
             
             break;
@@ -357,7 +359,7 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
             // Verify that we got the right argument size
             if (argLen < sizeof(cmd->arg.writeData)) return USBD_FAIL;
             hdfu->stm32DataAddr = cmd->arg.writeData.addr;
-//            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+            USBD_LL_PrepareReceive(pdev, STM32_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
             break;
         }
         
@@ -374,27 +376,25 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         }}
         
         // Prepare to receive another command
-        USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
+        USBD_LL_PrepareReceive(pdev, STM32_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
         break;
     }
     
-//    // DATA_OUT endpoint:
-//    //   Update the address that we're writing to,
-//    //   Prepare ourself to receive more data
-//    case STM32_ENDPOINT_DATA_OUT: {
-//        hdfu->stm32DataAddr += packetLen;
-//        // Only prepare for more data if this packet was the maximum size.
-//        // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
-//        //   "A bulk transfer is complete when the endpoint ... Transfers a
-//        //   packet with a payload size less than wMaxPacketSize or
-//        //   transfers a zero-length packet".)
-//        if (packetLen == MAX_PACKET_SIZE) {
-//            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
-//        }
-//        break;
-//    }
-    
-    }
+    // DATA_OUT endpoint:
+    //   Update the address that we're writing to,
+    //   Prepare ourself to receive more data
+    case EPNUM(STM32_EPADDR_DATA_OUT): {
+        hdfu->stm32DataAddr += packetLen;
+        // Only prepare for more data if this packet was the maximum size.
+        // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
+        //   "A bulk transfer is complete when the endpoint ... Transfers a
+        //   packet with a payload size less than wMaxPacketSize or
+        //   transfers a zero-length packet".)
+        if (packetLen == MAX_PACKET_SIZE) {
+            USBD_LL_PrepareReceive(pdev, STM32_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+        }
+        break;
+    }}
     
     return (uint8_t)USBD_OK;
 }
