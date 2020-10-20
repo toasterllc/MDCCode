@@ -62,7 +62,8 @@ USBD_ClassTypeDef USBD_DFU =
 #define MAX_PACKET_SIZE             512
 
 #define STM32_ENDPOINT_CMD_OUT      0x01    // OUT endpoint
-#define STM32_ENDPOINT_DATA_OUT     0x02    // OUT endpoint
+#define STM32_ENDPOINT_CMD_IN       0x81    // IN endpoint
+//#define STM32_ENDPOINT_DATA_OUT     0x02    // OUT endpoint
 
 /* USB DFU device Configuration Descriptor */
 #define USBD_DFU_CfgDescLen 32
@@ -98,13 +99,21 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
             
-            // DATA_OUT endpoint
+            // CMD_IN endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            STM32_ENDPOINT_DATA_OUT,                                    // bEndpointAddress
+            STM32_ENDPOINT_CMD_IN,                                      // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
+            
+//            // DATA_OUT endpoint
+//            0x07,                                                       // bLength: Endpoint Descriptor size
+//            USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
+//            STM32_ENDPOINT_DATA_OUT,                                    // bEndpointAddress
+//            0x02,                                                       // bmAttributes: Bulk
+//            LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
+//            0x00,                                                       // bInterval: ignore for Bulk transfer
 };
 
 /* USB Standard Device Descriptor */
@@ -121,9 +130,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
   0x00,                                     // bReserved
 };
 
-/**
-  * @}
-  */
+static uint8_t randomDataBuf[] = "But the other reason why the Flex buds are an important product is, well, Android. Instead of using Apple's proprietary Lightning connector for charging, as many Beats headphones have since the acquisition, the Flex have a USB-C port. Beats' Android app has already been updated to support them. These moves show that as Apple continues putting a greater emphasis on audio products - with the new HomePod mini and long-rumored premium headphones expected to launch soon - Beats is realizing it needs to stand independently from Apple's ecosystem if the brand wants to continue its enormous success. $50 for decent-sounding wireless earbuds with W1 chips for Apple device integration, and USB-C charging and a nice-looking Android app for better outside-the-Apple-universe appeal. A product like this is exactly why Apple is keeping the Beats brand around.";
 
 /** @defgroup USBD_DFU_Private_Functions
   * @{
@@ -174,9 +181,13 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
         USBD_LL_OpenEP(pdev, STM32_ENDPOINT_CMD_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
         pdev->ep_out[STM32_ENDPOINT_CMD_OUT & 0xFU].is_used = 1U;
         
-        // DATA_OUT endpoint
-        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_DATA_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
-        pdev->ep_out[STM32_ENDPOINT_DATA_OUT & 0xFU].is_used = 1U;
+        // CMD_IN endpoint
+        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_CMD_IN, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_in[STM32_ENDPOINT_CMD_IN & 0xFU].is_used = 1U;
+        
+//        // DATA_OUT endpoint
+//        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_DATA_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+//        pdev->ep_out[STM32_ENDPOINT_DATA_OUT & 0xFU].is_used = 1U;
     }
     
     /* Initialize Hardware layer */
@@ -186,6 +197,7 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
     }
     
     USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
+    USBD_LL_Transmit(pdev, STM32_ENDPOINT_CMD_IN, randomDataBuf, sizeof(randomDataBuf));
     return (uint8_t)USBD_OK;
 }
 
@@ -294,11 +306,13 @@ static uint8_t USBD_DFU_SOF(USBD_HandleTypeDef *pdev)
 
 static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
-  UNUSED(pdev);
-  UNUSED(epnum);
-
-  /* Only OUT data are processed */
-  return (uint8_t)USBD_OK;
+    switch (epnum) {
+    case (STM32_ENDPOINT_CMD_IN&0x7F): {
+        USBD_LL_Transmit(pdev, STM32_ENDPOINT_CMD_IN, randomDataBuf, sizeof(randomDataBuf));
+        break;
+    }}
+    
+    return (uint8_t)USBD_OK;
 }
 
 static uint32_t vectorTableAddr __attribute__((section(".noinit")));
@@ -343,7 +357,7 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
             // Verify that we got the right argument size
             if (argLen < sizeof(cmd->arg.writeData)) return USBD_FAIL;
             hdfu->stm32DataAddr = cmd->arg.writeData.addr;
-            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+//            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
             break;
         }
         
@@ -364,21 +378,23 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         break;
     }
     
-    // DATA_OUT endpoint:
-    //   Update the address that we're writing to,
-    //   Prepare ourself to receive more data
-    case STM32_ENDPOINT_DATA_OUT: {
-        hdfu->stm32DataAddr += packetLen;
-        // Only prepare for more data if this packet was the maximum size.
-        // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
-        //   "A bulk transfer is complete when the endpoint ... Transfers a
-        //   packet with a payload size less than wMaxPacketSize or
-        //   transfers a zero-length packet".)
-        if (packetLen == MAX_PACKET_SIZE) {
-            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
-        }
-        break;
-    }}
+//    // DATA_OUT endpoint:
+//    //   Update the address that we're writing to,
+//    //   Prepare ourself to receive more data
+//    case STM32_ENDPOINT_DATA_OUT: {
+//        hdfu->stm32DataAddr += packetLen;
+//        // Only prepare for more data if this packet was the maximum size.
+//        // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
+//        //   "A bulk transfer is complete when the endpoint ... Transfers a
+//        //   packet with a payload size less than wMaxPacketSize or
+//        //   transfers a zero-length packet".)
+//        if (packetLen == MAX_PACKET_SIZE) {
+//            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+//        }
+//        break;
+//    }
+    
+    }
     
     return (uint8_t)USBD_OK;
 }
