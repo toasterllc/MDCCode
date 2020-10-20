@@ -157,12 +157,32 @@ typedef  void (*pFunction)(void);
   * @{
   */
 
-enum
-{
-  STM32LoaderCmd_None,
-  STM32LoaderCmd_WriteData,
-  STM32LoaderCmd_Reset,
-}; typedef uint8_t STM32LoaderCmd;
+enum {
+    STM32LoaderCmdOp_None,
+    STM32LoaderCmdOp_SetLED,
+    STM32LoaderCmdOp_WriteData,
+    STM32LoaderCmdOp_Reset,
+}; typedef uint8_t STM32LoaderCmdOp;
+
+typedef struct __attribute__((packed)) {
+    STM32LoaderCmdOp op;
+    union {
+        struct {
+            uint8_t idx;
+            uint8_t state;
+        } setLED;
+        
+        struct {
+            uint32_t addr;
+        } writeData;
+        
+        struct {
+            uint32_t vectorTableAddr;
+        } reset;
+    } arg;
+} STM32LoaderCmd;
+
+_Static_assert(sizeof(STM32LoaderCmd)==5, "STM32LoaderCmd: invalid size");
 
 typedef struct
 {
@@ -181,27 +201,8 @@ typedef struct
     uint8_t dev_state;
     uint8_t manif_state;
     
-    struct {
-        STM32LoaderCmd cmd;
-        uint8_t state;
-        uint32_t addr;
-    } STM32Loader;
-    
-    
-    
-//    struct {
-//        STM32LoaderCmd cmd;
-//        
-//        union {
-//            struct {
-//                uint32_t addr;
-//            } writeData;
-//            
-//            struct {
-//                uint32_t vectorTableAddr;
-//            } reset;
-//        } arg;
-//    } STM32LoaderCmdArg;
+    STM32LoaderCmd stm32Cmd;
+    uint32_t stm32DataAddr;
 } USBD_DFU_HandleTypeDef;
 
 typedef struct

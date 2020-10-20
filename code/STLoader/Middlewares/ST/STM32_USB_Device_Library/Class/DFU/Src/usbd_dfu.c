@@ -1,102 +1,17 @@
-/**
-  ******************************************************************************
-  * @file    usbd_dfu.c
-  * @author  MCD Application Team
-  * @brief   This file provides the DFU core functions.
-  *
-  * @verbatim
-  *
-  *          ===================================================================
-  *                                DFU Class Driver Description
-  *          ===================================================================
-  *           This driver manages the DFU class V1.1 following the "Device Class Specification for
-  *           Device Firmware Upgrade Version 1.1 Aug 5, 2004".
-  *           This driver implements the following aspects of the specification:
-  *             - Device descriptor management
-  *             - Configuration descriptor management
-  *             - Enumeration as DFU device (in DFU mode only)
-  *             - Requests management (supporting ST DFU sub-protocol)
-  *             - Memory operations management (Download/Upload/Erase/Detach/GetState/GetStatus)
-  *             - DFU state machine implementation.
-  *
-  *           @note
-  *            ST DFU sub-protocol is compliant with DFU protocol and use sub-requests to manage
-  *            memory addressing, commands processing, specific memories operations (ie. Erase) ...
-  *            As required by the DFU specification, only endpoint 0 is used in this application.
-  *            Other endpoints and functions may be added to the application (ie. DFU ...)
-  *
-  *           These aspects may be enriched or modified for a specific user application.
-  *
-  *           This driver doesn't implement the following aspects of the specification
-  *           (but it is possible to manage these features with some modifications on this driver):
-  *             - Manifestation Tolerant mode
-  *
-  *  @endverbatim
-  *
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                      www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
-
-/* BSPDependencies
-- "stm32xxxxx_{eval}{discovery}{nucleo_144}.c"
-- "stm32xxxxx_{eval}{discovery}_io.c"
-EndBSPDependencies */
-
-/* Includes ------------------------------------------------------------------*/
 #include "usbd_dfu.h"
 #include "usbd_ctlreq.h"
 #include <stdbool.h>
 
-
-/** @addtogroup STM32_USB_DEVICE_LIBRARY
-  * @{
-  */
-
-
-/** @defgroup USBD_DFU
-  * @brief usbd core module
-  * @{
-  */
-
-/** @defgroup USBD_DFU_Private_TypesDefinitions
-  * @{
-  */
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_DFU_Private_Defines
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_DFU_Private_Macros
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_DFU_Private_FunctionPrototypes
-  * @{
-  */
+//extern void setLed0(int on);
+//extern void setLed1(int on);
+//extern void setLed2(int on);
+//extern void setLed3(int on);
+//static void resetLEDs() {
+//    setLed0(0);
+//    setLed1(0);
+//    setLed2(0);
+//    setLed3(0);
+//}
 
 static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_DFU_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
@@ -144,22 +59,19 @@ USBD_ClassTypeDef USBD_DFU =
 #endif
 };
 
-#define BL_MAX_PACKET_SIZE      512
+#define MAX_PACKET_SIZE             512
 
-#define BL_EP_OUT_STM32     0x01
-#define BL_EP_IN_STM32      0x81
-
-#define BL_EP_OUT_ICE40     0x02
-#define BL_EP_IN_ICE40      0x82
+#define STM32_ENDPOINT_CMD_OUT      0x01    // OUT endpoint
+#define STM32_ENDPOINT_DATA_OUT     0x02    // OUT endpoint
 
 /* USB DFU device Configuration Descriptor */
-#define USBD_DFU_CfgDescLen 55
+#define USBD_DFU_CfgDescLen 32
 __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
 {
     // Configuration descriptor
     0x09,                                       // bLength: configuration descriptor length
     USB_DESC_TYPE_CONFIGURATION,                // bDescriptorType: configuration descriptor
-    LOBYTE(USBD_DFU_CfgDescLen),           // wTotalLength: total descriptor length
+    LOBYTE(USBD_DFU_CfgDescLen),                // wTotalLength: total descriptor length
     HIBYTE(USBD_DFU_CfgDescLen),
     0x02,                                       // bNumInterfaces: 2 interfaces
     0x01,                                       // bConfigurationValue: config 1
@@ -178,47 +90,20 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
         0x00,                                       // nInterfaceProtocol
         0x00,                                       // iInterface: string descriptor index
         
-            // Endpoint OUT Descriptor
+            // CMD_OUT endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            BL_EP_OUT_STM32,                                            // bEndpointAddress
+            STM32_ENDPOINT_CMD_OUT,                                     // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
-            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
+            LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
             
-            // Endpoint IN Descriptor
+            // DATA_OUT endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            BL_EP_IN_STM32,                                             // bEndpointAddress
+            STM32_ENDPOINT_DATA_OUT,                                    // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
-            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
-            0x00,                                                       // bInterval: ignore for Bulk transfer
-        
-        // Interface descriptor: ICE40 bootloader
-        0x09,                                       // bLength: interface descriptor length
-        USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
-        0x01,                                       // bInterfaceNumber: Number of Interface
-        0x00,                                       // bAlternateSetting: Alternate setting
-        0x02,                                       // bNumEndpoints
-        0xFF,                                       // bInterfaceClass: vendor specific
-        0x00,                                       // bInterfaceSubClass
-        0x00,                                       // nInterfaceProtocol
-        0x00,                                       // iInterface: string descriptor index
-        
-            // Endpoint OUT Descriptor
-            0x07,                                                       // bLength: Endpoint Descriptor size
-            USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            BL_EP_OUT_ICE40,                                            // bEndpointAddress
-            0x02,                                                       // bmAttributes: Bulk
-            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
-            0x00,                                                       // bInterval: ignore for Bulk transfer
-            
-            // Endpoint IN Descriptor
-            0x07,                                                       // bLength: Endpoint Descriptor size
-            USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            BL_EP_IN_ICE40,                                             // bEndpointAddress
-            0x02,                                                       // bmAttributes: Bulk
-            LOBYTE(BL_MAX_PACKET_SIZE), HIBYTE(BL_MAX_PACKET_SIZE),     // wMaxPacketSize
+            LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
 };
 
@@ -285,24 +170,13 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
     
     // Open endpoints for STM32 interface
     {
-        // OUT endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_OUT_STM32, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
-        pdev->ep_out[BL_EP_OUT_STM32 & 0xFU].is_used = 1U;
+        // CMD_OUT endpoint
+        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_CMD_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_out[STM32_ENDPOINT_CMD_OUT & 0xFU].is_used = 1U;
         
-        // IN endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_IN_STM32, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
-        pdev->ep_in[BL_EP_IN_STM32 & 0xFU].is_used = 1U;
-    }
-    
-    // Open endpoints for ICE40 interface
-    {
-        // OUT endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_OUT_ICE40, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
-        pdev->ep_out[BL_EP_OUT_ICE40 & 0xFU].is_used = 1U;
-        
-        // IN endpoint
-        USBD_LL_OpenEP(pdev, BL_EP_IN_ICE40, USBD_EP_TYPE_BULK, BL_MAX_PACKET_SIZE);
-        pdev->ep_in[BL_EP_IN_ICE40 & 0xFU].is_used = 1U;
+        // DATA_OUT endpoint
+        USBD_LL_OpenEP(pdev, STM32_ENDPOINT_DATA_OUT, USBD_EP_TYPE_BULK, MAX_PACKET_SIZE);
+        pdev->ep_out[STM32_ENDPOINT_DATA_OUT & 0xFU].is_used = 1U;
     }
     
     /* Initialize Hardware layer */
@@ -311,17 +185,7 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
         return (uint8_t)USBD_FAIL;
     }
     
-    hdfu->STM32Loader.cmd = STM32LoaderCmd_None;
-    hdfu->STM32Loader.state = 0;
-    
-    // FIXME: debug
-    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Loader.addr, sizeof(hdfu->STM32Loader.addr));
-    
-    // Prepare OUT endpoints to receive next packet
-//    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Loader.cmd, sizeof(hdfu->STM32Loader.cmd));
-    // TODO: implement ice40 bootloader. we'll need a temporary buffer to store stuff while
-//    USBD_LL_PrepareReceive(pdev, BL_EP_OUT_ICE40, hcdc->RxBuffer, BL_MAX_PACKET_SIZE);
-    
+    USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
     return (uint8_t)USBD_OK;
 }
 
@@ -363,17 +227,6 @@ static uint8_t USBD_DFU_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   return (uint8_t)USBD_OK;
 }
 
-extern void setLed0(int on);
-extern void setLed1(int on);
-extern void setLed2(int on);
-extern void setLed3(int on);
-static void resetLEDs() {
-    setLed0(0);
-    setLed1(0);
-    setLed2(0);
-    setLed3(0);
-}
-
 /**
   * @brief  USBD_DFU_Setup
   *         Handle the DFU specific requests
@@ -381,118 +234,9 @@ static void resetLEDs() {
   * @param  req: usb requests
   * @retval status
   */
-static uint8_t USBD_DFU_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-  USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
-  USBD_StatusTypeDef ret = USBD_OK;
-  uint8_t *pbuf = NULL;
-  uint16_t len = 0U;
-  uint16_t status_info = 0U;
-  uint8_t ep_addr = LOBYTE(req->wIndex);
-
-  switch (req->bmRequest & USB_REQ_TYPE_MASK)
-  {
-  case USB_REQ_TYPE_CLASS:
-    switch (req->bRequest)
-    {
-    default:
-      USBD_CtlError(pdev, req);
-      ret = USBD_FAIL;
-      break;
-    }
-    break;
-
-  case USB_REQ_TYPE_STANDARD:
-    switch (req->bRequest)
-    {
-    case USB_REQ_GET_STATUS:
-      if (pdev->dev_state == USBD_STATE_CONFIGURED)
-      {
-        (void)USBD_CtlSendData(pdev, (uint8_t *)&status_info, 2U);
-      }
-      else
-      {
-        USBD_CtlError(pdev, req);
-        ret = USBD_FAIL;
-      }
-      break;
-
-    case USB_REQ_GET_DESCRIPTOR:
-      if ((req->wValue >> 8) == DFU_DESCRIPTOR_TYPE)
-      {
-        pbuf = USBD_DFU_CfgDesc + (9U * (USBD_DFU_MAX_ITF_NUM + 1U));
-        len = MIN(USB_DFU_DESC_SIZ, req->wLength);
-      }
-
-      (void)USBD_CtlSendData(pdev, pbuf, len);
-      break;
-
-    case USB_REQ_GET_INTERFACE:
-      if (pdev->dev_state == USBD_STATE_CONFIGURED)
-      {
-        (void)USBD_CtlSendData(pdev, (uint8_t *)hdfu->alt_setting, 1U);
-      }
-      else
-      {
-        USBD_CtlError(pdev, req);
-        ret = USBD_FAIL;
-      }
-      break;
-
-    case USB_REQ_SET_INTERFACE:
-      if ((uint8_t)(req->wValue) < USBD_DFU_MAX_ITF_NUM)
-      {
-        if (pdev->dev_state == USBD_STATE_CONFIGURED)
-        {
-          hdfu->alt_setting = (uint8_t)(req->wValue);
-        }
-        else
-        {
-          USBD_CtlError(pdev, req);
-          ret = USBD_FAIL;
-        }
-      }
-      else
-      {
-        /* Call the error management function (command will be nacked */
-        USBD_CtlError(pdev, req);
-        ret = USBD_FAIL;
-      }
-      break;
-
-    case USB_REQ_CLEAR_FEATURE:
-      if (pdev->dev_state == USBD_STATE_CONFIGURED)
-      {
-        if (req->wValue == USB_FEATURE_EP_HALT)
-        {
-          if (ep_addr == BL_EP_OUT_STM32)
-          {
-            resetLEDs();
-            USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Loader.addr, sizeof(hdfu->STM32Loader.addr));
-          }
-        }
-      }
-      else
-      {
-        USBD_CtlError(pdev, req);
-        ret = USBD_FAIL;
-      }
-      break;
-
-    default:
-      USBD_CtlError(pdev, req);
-      ret = USBD_FAIL;
-      break;
-    }
-    break;
-
-  default:
+static uint8_t USBD_DFU_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {
     USBD_CtlError(pdev, req);
-    ret = USBD_FAIL;
-    break;
-  }
-
-  return (uint8_t)ret;
+    return USBD_FAIL;
 }
 
 
@@ -558,74 +302,83 @@ static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 }
 
 static uint32_t vectorTableAddr __attribute__((section(".noinit")));
-static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
-{
+static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
-    if (epnum == BL_EP_OUT_STM32) {
-//        ledState = (hdfu->STM32Bootloader.address != 0);
-//        USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Bootloader.address, sizeof(hdfu->STM32Bootloader.address));
+    STM32LoaderCmd* cmd = &hdfu->stm32Cmd;
+    const size_t packetLen = USBD_LL_GetRxDataSize(pdev, epnum);
+    
+    switch (epnum) {
+    
+    // CMD_OUT endpoint:
+    //   Handle the supplied command
+    case STM32_ENDPOINT_CMD_OUT: {
+        // Verify that we received at least the command op
+        if (packetLen < sizeof(cmd->op)) return USBD_FAIL;
         
-        const uint16_t packetLen = (uint16_t)USBD_LL_GetRxDataSize(pdev, epnum);
-        
-        resetLEDs();
-        switch (packetLen) {
-        case 1: setLed0(1); break;
-        case 2: setLed1(1); break;
-        case 3: setLed2(1); break;
-        case 4: setLed3(1); break;
+        const size_t argLen = packetLen-sizeof(cmd->op);
+        switch (cmd->op) {
+        // Set LED command:
+        case STM32LoaderCmdOp_SetLED: {
+            // Verify that we got the right argument size
+            if (argLen < sizeof(cmd->arg.setLED)) return USBD_FAIL;
+            
+            extern void setLed0(int on);
+            extern void setLed1(int on);
+            extern void setLed2(int on);
+            extern void setLed3(int on);
+            switch (cmd->arg.setLED.idx) {
+            case 0: setLed0(cmd->arg.setLED.state); break;
+            case 1: setLed1(cmd->arg.setLED.state); break;
+            case 2: setLed2(cmd->arg.setLED.state); break;
+            case 3: setLed3(cmd->arg.setLED.state); break;
+            }
+            
+            break;
         }
         
-        if (packetLen != 4) {
-            USBD_LL_StallEP(pdev, epnum);
-//            USBD_CtlError(pdev, NULL);
-            return USBD_FAIL;
+        // Write data command:
+        //   Stash the address we're writing to in `stm32DataAddr`,
+        //   Prepare the DATA_OUT endpoint for writing at that address
+        case STM32LoaderCmdOp_WriteData: {
+            // Verify that we got the right argument size
+            if (argLen < sizeof(cmd->arg.writeData)) return USBD_FAIL;
+            hdfu->stm32DataAddr = cmd->arg.writeData.addr;
+            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+            break;
         }
         
-        USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Loader.addr, sizeof(hdfu->STM32Loader.addr));
+        // Reset command:
+        //   Stash the vector table address for access after we reset,
+        //   Perform a software reset
+        case STM32LoaderCmdOp_Reset: {
+            // Verify we got the right argument size
+            if (argLen < sizeof(cmd->arg.reset)) return USBD_FAIL;
+            vectorTableAddr = cmd->arg.reset.vectorTableAddr;
+            // Perform software reset
+            NVIC_SystemReset();
+            break;
+        }}
         
-        vectorTableAddr = hdfu->STM32Loader.addr;
-        
-//        // TODO: what happens if we get less bytes than we specified to USBD_LL_PrepareReceive?
-//        const uint16_t packetLen = (uint16_t)USBD_LL_GetRxDataSize(pdev, epnum);
-//        bool cmdDone = false;
-//        switch (hdfu->STM32Loader.cmd) {
-//        case STM32LoaderCmd_WriteData: {
-//            switch (hdfu->STM32Loader.state) {
-//            case 0:
-//                USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Loader.addr, sizeof(hdfu->STM32Loader.addr));
-//                break;
-//            case 1:
-//                USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)hdfu->STM32Loader.addr, BL_MAX_PACKET_SIZE);
-//                break;
-//            case 2:
-//                cmdDone = true;
-//                break;
-//            }
-//            break;
-//        }
-//        
-//        case STM32LoaderCmd_Reset: {
-//            switch (hdfu->STM32Loader.state) {
-//            case 0:
-//                USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Loader.addr, sizeof(hdfu->STM32Loader.addr));
-//                break;
-//            case 1:
-//                // Stash the vector table address in a place that is accessible across resets
-//                vectorTableAddr = hdfu->STM32Loader.addr;
-//                // Perform software reset
-//                NVIC_SystemReset();
-//                break;
-//            }
-//            break;
-//        }}
-//        
-//        hdfu->STM32Loader.state++;
-//        
-//        if (cmdDone) {
-//            USBD_LL_PrepareReceive(pdev, BL_EP_OUT_STM32, (uint8_t*)&hdfu->STM32Loader.cmd, sizeof(hdfu->STM32Loader.cmd));
-//            hdfu->STM32Loader.state = 0;
-//        }
+        // Prepare to receive another command
+        USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
+        break;
     }
+    
+    // DATA_OUT endpoint:
+    //   Update the address that we're writing to,
+    //   Prepare ourself to receive more data
+    case STM32_ENDPOINT_DATA_OUT: {
+        hdfu->stm32DataAddr += packetLen;
+        // Only prepare for more data if this packet was the maximum size.
+        // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
+        //   "A bulk transfer is complete when the endpoint ... Transfers a
+        //   packet with a payload size less than wMaxPacketSize or
+        //   transfers a zero-length packet".)
+        if (packetLen == MAX_PACKET_SIZE) {
+            USBD_LL_PrepareReceive(pdev, STM32_ENDPOINT_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+        }
+        break;
+    }}
     
     return (uint8_t)USBD_OK;
 }
