@@ -19,15 +19,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		5563E119253A8B3D00BCC0F7 /* STApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STApp; sourceTree = BUILT_PRODUCTS_DIR; };
-		55E1D9692540E3DB00628EF6 /* STM32F730I8KX_FLASH.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_FLASH.ld; sourceTree = "<group>"; };
-		55E1D96A2540E3DC00628EF6 /* Release */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Release; sourceTree = "<group>"; };
-		55E1D96B2540E3DC00628EF6 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Core; sourceTree = "<group>"; };
-		55E1D96C2540E3DC00628EF6 /* STApp.cfg */ = {isa = PBXFileReference; lastKnownFileType = text; path = STApp.cfg; sourceTree = "<group>"; };
-		55E1D96D2540E3DC00628EF6 /* STM32F730I8KX_RAM.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_RAM.ld; sourceTree = "<group>"; };
-		55E1D96E2540E3DC00628EF6 /* Drivers */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Drivers; sourceTree = "<group>"; };
-		55E1D96F2540E3DC00628EF6 /* STApp.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = STApp.ioc; sourceTree = "<group>"; };
-		55E1D9702540E3DC00628EF6 /* STApp.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = STApp.launch; sourceTree = "<group>"; };
+		5563E119253A8B3D00BCC0F7 /* STScratch */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STScratch; sourceTree = BUILT_PRODUCTS_DIR; };
+		55E1D9642540E3C700628EF6 /* Drivers */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Drivers; sourceTree = "<group>"; };
+		55E1D9652540E3C700628EF6 /* STScratch.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = STScratch.ioc; sourceTree = "<group>"; };
+		55E1D9662540E3C700628EF6 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Core; sourceTree = "<group>"; };
+		55E1D9672540E3C700628EF6 /* STM32F730I8KX_FLASH.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_FLASH.ld; sourceTree = "<group>"; };
+		55E1D9682540E3C700628EF6 /* STM32F730I8KX_RAM.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_RAM.ld; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,14 +41,11 @@
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
-				55E1D96B2540E3DC00628EF6 /* Core */,
-				55E1D96E2540E3DC00628EF6 /* Drivers */,
-				55E1D96A2540E3DC00628EF6 /* Release */,
-				55E1D96C2540E3DC00628EF6 /* STApp.cfg */,
-				55E1D96F2540E3DC00628EF6 /* STApp.ioc */,
-				55E1D9702540E3DC00628EF6 /* STApp.launch */,
-				55E1D9692540E3DB00628EF6 /* STM32F730I8KX_FLASH.ld */,
-				55E1D96D2540E3DC00628EF6 /* STM32F730I8KX_RAM.ld */,
+				55E1D9662540E3C700628EF6 /* Core */,
+				55E1D9642540E3C700628EF6 /* Drivers */,
+				55E1D9672540E3C700628EF6 /* STM32F730I8KX_FLASH.ld */,
+				55E1D9682540E3C700628EF6 /* STM32F730I8KX_RAM.ld */,
+				55E1D9652540E3C700628EF6 /* STScratch.ioc */,
 				5563E11A253A8B3D00BCC0F7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -59,7 +53,7 @@
 		5563E11A253A8B3D00BCC0F7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5563E119253A8B3D00BCC0F7 /* STApp */,
+				5563E119253A8B3D00BCC0F7 /* STScratch */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -67,9 +61,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5563E118253A8B3D00BCC0F7 /* STApp */ = {
+		5563E118253A8B3D00BCC0F7 /* STScratch */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STApp" */;
+			buildConfigurationList = 5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STScratch" */;
 			buildPhases = (
 				5563E115253A8B3D00BCC0F7 /* Sources */,
 				5563E116253A8B3D00BCC0F7 /* Frameworks */,
@@ -79,9 +73,9 @@
 			);
 			dependencies = (
 			);
-			name = STApp;
+			name = STScratch;
 			productName = STLoader;
-			productReference = 5563E119253A8B3D00BCC0F7 /* STApp */;
+			productReference = 5563E119253A8B3D00BCC0F7 /* STScratch */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -98,7 +92,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STApp" */;
+			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STScratch" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -111,7 +105,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5563E118253A8B3D00BCC0F7 /* STApp */,
+				5563E118253A8B3D00BCC0F7 /* STScratch */,
 			);
 		};
 /* End PBXProject section */
@@ -255,7 +249,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STApp" */ = {
+		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STScratch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5563E11E253A8B3D00BCC0F7 /* Debug */,
@@ -264,7 +258,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STApp" */ = {
+		5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STScratch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5563E121253A8B3D00BCC0F7 /* Debug */,
