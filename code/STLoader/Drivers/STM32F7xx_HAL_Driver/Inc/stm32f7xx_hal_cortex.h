@@ -284,7 +284,7 @@ void HAL_NVIC_SetPendingIRQ(IRQn_Type IRQn);
 void HAL_NVIC_ClearPendingIRQ(IRQn_Type IRQn);
 uint32_t HAL_NVIC_GetActive(IRQn_Type IRQn);
 void HAL_SYSTICK_CLKSourceConfig(uint32_t CLKSource);
-void HAL_SYSTICK_IRQHandler(void);
+void ISR_HAL_SYSTICK(void);
 void HAL_SYSTICK_Callback(void);
 /**
   * @}

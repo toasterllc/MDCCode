@@ -61,102 +61,100 @@ VectorTable:
   .word SysTick_Handler
   
   /* External Interrupts */
-  .word    WWDG_IRQHandler                   /* Window WatchDog              */                                        
-  .word    PVD_IRQHandler                    /* PVD through EXTI Line detection */                        
-  .word    TAMP_STAMP_IRQHandler             /* Tamper and TimeStamps through the EXTI line */            
-  .word    RTC_WKUP_IRQHandler               /* RTC Wakeup through the EXTI line */                      
-  .word    FLASH_IRQHandler                  /* FLASH                        */                                          
-  .word    RCC_IRQHandler                    /* RCC                          */                                            
-  .word    EXTI0_IRQHandler                  /* EXTI Line0                   */                        
-  .word    EXTI1_IRQHandler                  /* EXTI Line1                   */                          
-  .word    EXTI2_IRQHandler                  /* EXTI Line2                   */                          
-  .word    EXTI3_IRQHandler                  /* EXTI Line3                   */                          
-  .word    EXTI4_IRQHandler                  /* EXTI Line4                   */                          
-  .word    DMA1_Stream0_IRQHandler           /* DMA1 Stream 0                */                  
-  .word    DMA1_Stream1_IRQHandler           /* DMA1 Stream 1                */                   
-  .word    DMA1_Stream2_IRQHandler           /* DMA1 Stream 2                */                   
-  .word    DMA1_Stream3_IRQHandler           /* DMA1 Stream 3                */                   
-  .word    DMA1_Stream4_IRQHandler           /* DMA1 Stream 4                */                   
-  .word    DMA1_Stream5_IRQHandler           /* DMA1 Stream 5                */                   
-  .word    DMA1_Stream6_IRQHandler           /* DMA1 Stream 6                */                   
-  .word    ADC_IRQHandler                    /* ADC1, ADC2 and ADC3s         */                   
-  .word    CAN1_TX_IRQHandler                /* CAN1 TX                      */                         
-  .word    CAN1_RX0_IRQHandler               /* CAN1 RX0                     */                          
-  .word    CAN1_RX1_IRQHandler               /* CAN1 RX1                     */                          
-  .word    CAN1_SCE_IRQHandler               /* CAN1 SCE                     */                          
-  .word    EXTI9_5_IRQHandler                /* External Line[9:5]s          */                          
-  .word    TIM1_BRK_TIM9_IRQHandler          /* TIM1 Break and TIM9          */         
-  .word    TIM1_UP_TIM10_IRQHandler          /* TIM1 Update and TIM10        */         
-  .word    TIM1_TRG_COM_TIM11_IRQHandler     /* TIM1 Trigger and Commutation and TIM11 */
-  .word    TIM1_CC_IRQHandler                /* TIM1 Capture Compare         */                          
-  .word    TIM2_IRQHandler                   /* TIM2                         */                   
-  .word    TIM3_IRQHandler                   /* TIM3                         */                   
-  .word    TIM4_IRQHandler                   /* TIM4                         */                   
-  .word    I2C1_EV_IRQHandler                /* I2C1 Event                   */                          
-  .word    I2C1_ER_IRQHandler                /* I2C1 Error                   */                          
-  .word    I2C2_EV_IRQHandler                /* I2C2 Event                   */                          
-  .word    I2C2_ER_IRQHandler                /* I2C2 Error                   */                            
-  .word    SPI1_IRQHandler                   /* SPI1                         */                   
-  .word    SPI2_IRQHandler                   /* SPI2                         */                   
-  .word    USART1_IRQHandler                 /* USART1                       */                   
-  .word    USART2_IRQHandler                 /* USART2                       */                   
-  .word    USART3_IRQHandler                 /* USART3                       */                   
-  .word    EXTI15_10_IRQHandler              /* External Line[15:10]s        */                          
-  .word    RTC_Alarm_IRQHandler              /* RTC Alarm (A and B) through EXTI Line */                 
-  .word    OTG_FS_WKUP_IRQHandler            /* USB OTG FS Wakeup through EXTI line */                       
-  .word    TIM8_BRK_TIM12_IRQHandler         /* TIM8 Break and TIM12         */         
-  .word    TIM8_UP_TIM13_IRQHandler          /* TIM8 Update and TIM13        */         
-  .word    TIM8_TRG_COM_TIM14_IRQHandler     /* TIM8 Trigger and Commutation and TIM14 */
-  .word    TIM8_CC_IRQHandler                /* TIM8 Capture Compare         */                          
-  .word    DMA1_Stream7_IRQHandler           /* DMA1 Stream7                 */                          
-  .word    FMC_IRQHandler                    /* FMC                          */                   
-  .word    SDMMC1_IRQHandler                 /* SDMMC1                       */                   
-  .word    TIM5_IRQHandler                   /* TIM5                         */                   
-  .word    SPI3_IRQHandler                   /* SPI3                         */                   
-  .word    UART4_IRQHandler                  /* UART4                        */                   
-  .word    UART5_IRQHandler                  /* UART5                        */                   
-  .word    TIM6_DAC_IRQHandler               /* TIM6 and DAC1&2 underrun errors */                   
-  .word    TIM7_IRQHandler                   /* TIM7                         */
-  .word    DMA2_Stream0_IRQHandler           /* DMA2 Stream 0                */                   
-  .word    DMA2_Stream1_IRQHandler           /* DMA2 Stream 1                */                   
-  .word    DMA2_Stream2_IRQHandler           /* DMA2 Stream 2                */                   
-  .word    DMA2_Stream3_IRQHandler           /* DMA2 Stream 3                */                   
-  .word    DMA2_Stream4_IRQHandler           /* DMA2 Stream 4                */                   
+  .word    ISR_WWDG                   /* Window WatchDog              */                                        
+  .word    ISR_PVD                    /* PVD through EXTI Line detection */                        
+  .word    ISR_TAMP_STAMP             /* Tamper and TimeStamps through the EXTI line */            
+  .word    ISR_RTC_WKUP               /* RTC Wakeup through the EXTI line */                      
+  .word    ISR_FLASH                  /* FLASH                        */                                          
+  .word    ISR_RCC                    /* RCC                          */                                            
+  .word    ISR_EXTI0                  /* EXTI Line0                   */                        
+  .word    ISR_EXTI1                  /* EXTI Line1                   */                          
+  .word    ISR_EXTI2                  /* EXTI Line2                   */                          
+  .word    ISR_EXTI3                  /* EXTI Line3                   */                          
+  .word    ISR_EXTI4                  /* EXTI Line4                   */                          
+  .word    ISR_DMA1_Stream0           /* DMA1 Stream 0                */                  
+  .word    ISR_DMA1_Stream1           /* DMA1 Stream 1                */                   
+  .word    ISR_DMA1_Stream2           /* DMA1 Stream 2                */                   
+  .word    ISR_DMA1_Stream3           /* DMA1 Stream 3                */                   
+  .word    ISR_DMA1_Stream4           /* DMA1 Stream 4                */                   
+  .word    ISR_DMA1_Stream5           /* DMA1 Stream 5                */                   
+  .word    ISR_DMA1_Stream6           /* DMA1 Stream 6                */                   
+  .word    ISR_ADC                    /* ADC1, ADC2 and ADC3s         */                   
+  .word    ISR_CAN1_TX                /* CAN1 TX                      */                         
+  .word    ISR_CAN1_RX0               /* CAN1 RX0                     */                          
+  .word    ISR_CAN1_RX1               /* CAN1 RX1                     */                          
+  .word    ISR_CAN1_SCE               /* CAN1 SCE                     */                          
+  .word    ISR_EXTI9_5                /* External Line[9:5]s          */                          
+  .word    ISR_TIM1_BRK_TIM9          /* TIM1 Break and TIM9          */         
+  .word    ISR_TIM1_UP_TIM10          /* TIM1 Update and TIM10        */         
+  .word    ISR_TIM1_TRG_COM_TIM11     /* TIM1 Trigger and Commutation and TIM11 */
+  .word    ISR_TIM1_CC                /* TIM1 Capture Compare         */                          
+  .word    ISR_TIM2                   /* TIM2                         */                   
+  .word    ISR_TIM3                   /* TIM3                         */                   
+  .word    ISR_TIM4                   /* TIM4                         */                   
+  .word    ISR_I2C1_EV                /* I2C1 Event                   */                          
+  .word    ISR_I2C1_ER                /* I2C1 Error                   */                          
+  .word    ISR_I2C2_EV                /* I2C2 Event                   */                          
+  .word    ISR_I2C2_ER                /* I2C2 Error                   */                            
+  .word    ISR_SPI1                   /* SPI1                         */                   
+  .word    ISR_SPI2                   /* SPI2                         */                   
+  .word    ISR_USART1                 /* USART1                       */                   
+  .word    ISR_USART2                 /* USART2                       */                   
+  .word    ISR_USART3                 /* USART3                       */                   
+  .word    ISR_EXTI15_10              /* External Line[15:10]s        */                          
+  .word    ISR_RTC_Alarm              /* RTC Alarm (A and B) through EXTI Line */                 
+  .word    ISR_OTG_FS_WKUP            /* USB OTG FS Wakeup through EXTI line */                       
+  .word    ISR_TIM8_BRK_TIM12         /* TIM8 Break and TIM12         */         
+  .word    ISR_TIM8_UP_TIM13          /* TIM8 Update and TIM13        */         
+  .word    ISR_TIM8_TRG_COM_TIM14     /* TIM8 Trigger and Commutation and TIM14 */
+  .word    ISR_TIM8_CC                /* TIM8 Capture Compare         */                          
+  .word    ISR_DMA1_Stream7           /* DMA1 Stream7                 */                          
+  .word    ISR_FMC                    /* FMC                          */                   
+  .word    ISR_SDMMC1                 /* SDMMC1                       */                   
+  .word    ISR_TIM5                   /* TIM5                         */                   
+  .word    ISR_SPI3                   /* SPI3                         */                   
+  .word    ISR_UART4                  /* UART4                        */                   
+  .word    ISR_UART5                  /* UART5                        */                   
+  .word    ISR_TIM6_DAC               /* TIM6 and DAC1&2 underrun errors */                   
+  .word    ISR_TIM7                   /* TIM7                         */
+  .word    ISR_DMA2_Stream0           /* DMA2 Stream 0                */                   
+  .word    ISR_DMA2_Stream1           /* DMA2 Stream 1                */                   
+  .word    ISR_DMA2_Stream2           /* DMA2 Stream 2                */                   
+  .word    ISR_DMA2_Stream3           /* DMA2 Stream 3                */                   
+  .word    ISR_DMA2_Stream4           /* DMA2 Stream 4                */                   
   .word    0                                 /* Reserved                     */                   
   .word    0                                 /* Reserved                     */                    
   .word    0                                 /* Reserved                     */                          
   .word    0                                 /* Reserved                     */                          
   .word    0                                 /* Reserved                     */                          
   .word    0                                 /* Reserved                     */                          
-  .word    OTG_FS_IRQHandler                 /* USB OTG FS                   */                   
-  .word    DMA2_Stream5_IRQHandler           /* DMA2 Stream 5                */                   
-  .word    DMA2_Stream6_IRQHandler           /* DMA2 Stream 6                */                   
-  .word    DMA2_Stream7_IRQHandler           /* DMA2 Stream 7                */                   
-  .word    USART6_IRQHandler                 /* USART6                       */                    
-  .word    I2C3_EV_IRQHandler                /* I2C3 event                   */                          
-  .word    I2C3_ER_IRQHandler                /* I2C3 error                   */                          
-  .word    OTG_HS_EP1_OUT_IRQHandler         /* USB OTG HS End Point 1 Out   */                   
-  .word    OTG_HS_EP1_IN_IRQHandler          /* USB OTG HS End Point 1 In    */                   
-  .word    OTG_HS_WKUP_IRQHandler            /* USB OTG HS Wakeup through EXTI */                         
-  .word    OTG_HS_IRQHandler                 /* USB OTG HS                   */                   
+  .word    ISR_OTG_FS                 /* USB OTG FS                   */                   
+  .word    ISR_DMA2_Stream5           /* DMA2 Stream 5                */                   
+  .word    ISR_DMA2_Stream6           /* DMA2 Stream 6                */                   
+  .word    ISR_DMA2_Stream7           /* DMA2 Stream 7                */                   
+  .word    ISR_USART6                 /* USART6                       */                    
+  .word    ISR_I2C3_EV                /* I2C3 event                   */                          
+  .word    ISR_I2C3_ER                /* I2C3 error                   */                          
+  .word    ISR_OTG_HS_EP1_OUT         /* USB OTG HS End Point 1 Out   */                   
+  .word    ISR_OTG_HS_EP1_IN          /* USB OTG HS End Point 1 In    */                   
+  .word    ISR_OTG_HS_WKUP            /* USB OTG HS Wakeup through EXTI */                         
+  .word    ISR_OTG_HS                 /* USB OTG HS                   */                   
   .word    0                                 /* Reserved                     */                   
-  .word    AES_IRQHandler                    /* AES                          */                   
-  .word    RNG_IRQHandler                    /* RNG                          */
-  .word    FPU_IRQHandler                    /* FPU                          */
-  .word    UART7_IRQHandler                  /* UART7                        */      
-  .word    UART8_IRQHandler                  /* UART8                        */
-  .word    SPI4_IRQHandler                   /* SPI4                         */
-  .word    SPI5_IRQHandler                   /* SPI5                         */
+  .word    ISR_AES                    /* AES                          */                   
+  .word    ISR_RNG                    /* RNG                          */
+  .word    ISR_FPU                    /* FPU                          */
+  .word    ISR_UART7                  /* UART7                        */      
+  .word    ISR_UART8                  /* UART8                        */
+  .word    ISR_SPI4                   /* SPI4                         */
+  .word    ISR_SPI5                   /* SPI5                         */
   .word    0                                 /* Reserved                     */
-  .word    SAI1_IRQHandler                   /* SAI1                         */
-  .word    0                                 /* Reserved                     */
-  .word    0                                 /* Reserved                     */
-  .word    0                                 /* Reserved                     */
-  .word    SAI2_IRQHandler                   /* SAI2                         */
-  .word    QUADSPI_IRQHandler                /* QUADSPI                      */
-  .word    LPTIM1_IRQHandler                 /* LPTIM1                       */
+  .word    ISR_SAI1                   /* SAI1                         */
   .word    0                                 /* Reserved                     */
   .word    0                                 /* Reserved                     */
+  .word    0                                 /* Reserved                     */
+  .word    ISR_SAI2                   /* SAI2                         */
+  .word    ISR_QUADSPI                /* QUADSPI                      */
+  .word    ISR_LPTIM1                 /* LPTIM1                       */
   .word    0                                 /* Reserved                     */
   .word    0                                 /* Reserved                     */
   .word    0                                 /* Reserved                     */
@@ -164,7 +162,9 @@ VectorTable:
   .word    0                                 /* Reserved                     */
   .word    0                                 /* Reserved                     */
   .word    0                                 /* Reserved                     */
-  .word    SDMMC2_IRQHandler                 /* SDMMC2                       */ 
+  .word    0                                 /* Reserved                     */
+  .word    0                                 /* Reserved                     */
+  .word    ISR_SDMMC2                 /* SDMMC2                       */ 
   
 /*******************************************************************************
 *
@@ -200,257 +200,257 @@ VectorTable:
    .weak      SysTick_Handler
    .thumb_set SysTick_Handler,DefaultHandler              
   
-   .weak      WWDG_IRQHandler                   
-   .thumb_set WWDG_IRQHandler,DefaultHandler      
+   .weak      ISR_WWDG                   
+   .thumb_set ISR_WWDG,DefaultHandler      
                   
-   .weak      PVD_IRQHandler      
-   .thumb_set PVD_IRQHandler,DefaultHandler
+   .weak      ISR_PVD      
+   .thumb_set ISR_PVD,DefaultHandler
                
-   .weak      TAMP_STAMP_IRQHandler            
-   .thumb_set TAMP_STAMP_IRQHandler,DefaultHandler
+   .weak      ISR_TAMP_STAMP            
+   .thumb_set ISR_TAMP_STAMP,DefaultHandler
             
-   .weak      RTC_WKUP_IRQHandler                  
-   .thumb_set RTC_WKUP_IRQHandler,DefaultHandler
+   .weak      ISR_RTC_WKUP                  
+   .thumb_set ISR_RTC_WKUP,DefaultHandler
             
-   .weak      FLASH_IRQHandler         
-   .thumb_set FLASH_IRQHandler,DefaultHandler
+   .weak      ISR_FLASH         
+   .thumb_set ISR_FLASH,DefaultHandler
                   
-   .weak      RCC_IRQHandler      
-   .thumb_set RCC_IRQHandler,DefaultHandler
+   .weak      ISR_RCC      
+   .thumb_set ISR_RCC,DefaultHandler
                   
-   .weak      EXTI0_IRQHandler         
-   .thumb_set EXTI0_IRQHandler,DefaultHandler
+   .weak      ISR_EXTI0         
+   .thumb_set ISR_EXTI0,DefaultHandler
                   
-   .weak      EXTI1_IRQHandler         
-   .thumb_set EXTI1_IRQHandler,DefaultHandler
+   .weak      ISR_EXTI1         
+   .thumb_set ISR_EXTI1,DefaultHandler
                      
-   .weak      EXTI2_IRQHandler         
-   .thumb_set EXTI2_IRQHandler,DefaultHandler 
+   .weak      ISR_EXTI2         
+   .thumb_set ISR_EXTI2,DefaultHandler 
                  
-   .weak      EXTI3_IRQHandler         
-   .thumb_set EXTI3_IRQHandler,DefaultHandler
+   .weak      ISR_EXTI3         
+   .thumb_set ISR_EXTI3,DefaultHandler
                         
-   .weak      EXTI4_IRQHandler         
-   .thumb_set EXTI4_IRQHandler,DefaultHandler
+   .weak      ISR_EXTI4         
+   .thumb_set ISR_EXTI4,DefaultHandler
                   
-   .weak      DMA1_Stream0_IRQHandler               
-   .thumb_set DMA1_Stream0_IRQHandler,DefaultHandler
+   .weak      ISR_DMA1_Stream0               
+   .thumb_set ISR_DMA1_Stream0,DefaultHandler
          
-   .weak      DMA1_Stream1_IRQHandler               
-   .thumb_set DMA1_Stream1_IRQHandler,DefaultHandler
+   .weak      ISR_DMA1_Stream1               
+   .thumb_set ISR_DMA1_Stream1,DefaultHandler
                   
-   .weak      DMA1_Stream2_IRQHandler               
-   .thumb_set DMA1_Stream2_IRQHandler,DefaultHandler
+   .weak      ISR_DMA1_Stream2               
+   .thumb_set ISR_DMA1_Stream2,DefaultHandler
                   
-   .weak      DMA1_Stream3_IRQHandler               
-   .thumb_set DMA1_Stream3_IRQHandler,DefaultHandler 
+   .weak      ISR_DMA1_Stream3               
+   .thumb_set ISR_DMA1_Stream3,DefaultHandler 
                  
-   .weak      DMA1_Stream4_IRQHandler              
-   .thumb_set DMA1_Stream4_IRQHandler,DefaultHandler
+   .weak      ISR_DMA1_Stream4              
+   .thumb_set ISR_DMA1_Stream4,DefaultHandler
                   
-   .weak      DMA1_Stream5_IRQHandler               
-   .thumb_set DMA1_Stream5_IRQHandler,DefaultHandler
+   .weak      ISR_DMA1_Stream5               
+   .thumb_set ISR_DMA1_Stream5,DefaultHandler
                   
-   .weak      DMA1_Stream6_IRQHandler               
-   .thumb_set DMA1_Stream6_IRQHandler,DefaultHandler
+   .weak      ISR_DMA1_Stream6               
+   .thumb_set ISR_DMA1_Stream6,DefaultHandler
                   
-   .weak      ADC_IRQHandler      
-   .thumb_set ADC_IRQHandler,DefaultHandler
+   .weak      ISR_ADC      
+   .thumb_set ISR_ADC,DefaultHandler
                
-   .weak      CAN1_TX_IRQHandler   
-   .thumb_set CAN1_TX_IRQHandler,DefaultHandler
+   .weak      ISR_CAN1_TX   
+   .thumb_set ISR_CAN1_TX,DefaultHandler
             
-   .weak      CAN1_RX0_IRQHandler                  
-   .thumb_set CAN1_RX0_IRQHandler,DefaultHandler
+   .weak      ISR_CAN1_RX0                  
+   .thumb_set ISR_CAN1_RX0,DefaultHandler
                            
-   .weak      CAN1_RX1_IRQHandler                  
-   .thumb_set CAN1_RX1_IRQHandler,DefaultHandler
+   .weak      ISR_CAN1_RX1                  
+   .thumb_set ISR_CAN1_RX1,DefaultHandler
             
-   .weak      CAN1_SCE_IRQHandler                  
-   .thumb_set CAN1_SCE_IRQHandler,DefaultHandler
+   .weak      ISR_CAN1_SCE                  
+   .thumb_set ISR_CAN1_SCE,DefaultHandler
             
-   .weak      EXTI9_5_IRQHandler   
-   .thumb_set EXTI9_5_IRQHandler,DefaultHandler
+   .weak      ISR_EXTI9_5   
+   .thumb_set ISR_EXTI9_5,DefaultHandler
             
-   .weak      TIM1_BRK_TIM9_IRQHandler            
-   .thumb_set TIM1_BRK_TIM9_IRQHandler,DefaultHandler
+   .weak      ISR_TIM1_BRK_TIM9            
+   .thumb_set ISR_TIM1_BRK_TIM9,DefaultHandler
             
-   .weak      TIM1_UP_TIM10_IRQHandler            
-   .thumb_set TIM1_UP_TIM10_IRQHandler,DefaultHandler
+   .weak      ISR_TIM1_UP_TIM10            
+   .thumb_set ISR_TIM1_UP_TIM10,DefaultHandler
 
-   .weak      TIM1_TRG_COM_TIM11_IRQHandler      
-   .thumb_set TIM1_TRG_COM_TIM11_IRQHandler,DefaultHandler
+   .weak      ISR_TIM1_TRG_COM_TIM11      
+   .thumb_set ISR_TIM1_TRG_COM_TIM11,DefaultHandler
       
-   .weak      TIM1_CC_IRQHandler   
-   .thumb_set TIM1_CC_IRQHandler,DefaultHandler
+   .weak      ISR_TIM1_CC   
+   .thumb_set ISR_TIM1_CC,DefaultHandler
                   
-   .weak      TIM2_IRQHandler            
-   .thumb_set TIM2_IRQHandler,DefaultHandler
+   .weak      ISR_TIM2            
+   .thumb_set ISR_TIM2,DefaultHandler
                   
-   .weak      TIM3_IRQHandler            
-   .thumb_set TIM3_IRQHandler,DefaultHandler
+   .weak      ISR_TIM3            
+   .thumb_set ISR_TIM3,DefaultHandler
                   
-   .weak      TIM4_IRQHandler            
-   .thumb_set TIM4_IRQHandler,DefaultHandler
+   .weak      ISR_TIM4            
+   .thumb_set ISR_TIM4,DefaultHandler
                   
-   .weak      I2C1_EV_IRQHandler   
-   .thumb_set I2C1_EV_IRQHandler,DefaultHandler
+   .weak      ISR_I2C1_EV   
+   .thumb_set ISR_I2C1_EV,DefaultHandler
                      
-   .weak      I2C1_ER_IRQHandler   
-   .thumb_set I2C1_ER_IRQHandler,DefaultHandler
+   .weak      ISR_I2C1_ER   
+   .thumb_set ISR_I2C1_ER,DefaultHandler
                      
-   .weak      I2C2_EV_IRQHandler   
-   .thumb_set I2C2_EV_IRQHandler,DefaultHandler
+   .weak      ISR_I2C2_EV   
+   .thumb_set ISR_I2C2_EV,DefaultHandler
                   
-   .weak      I2C2_ER_IRQHandler   
-   .thumb_set I2C2_ER_IRQHandler,DefaultHandler
+   .weak      ISR_I2C2_ER   
+   .thumb_set ISR_I2C2_ER,DefaultHandler
                            
-   .weak      SPI1_IRQHandler            
-   .thumb_set SPI1_IRQHandler,DefaultHandler
+   .weak      ISR_SPI1            
+   .thumb_set ISR_SPI1,DefaultHandler
                         
-   .weak      SPI2_IRQHandler            
-   .thumb_set SPI2_IRQHandler,DefaultHandler
+   .weak      ISR_SPI2            
+   .thumb_set ISR_SPI2,DefaultHandler
                   
-   .weak      USART1_IRQHandler      
-   .thumb_set USART1_IRQHandler,DefaultHandler
+   .weak      ISR_USART1      
+   .thumb_set ISR_USART1,DefaultHandler
                      
-   .weak      USART2_IRQHandler      
-   .thumb_set USART2_IRQHandler,DefaultHandler
+   .weak      ISR_USART2      
+   .thumb_set ISR_USART2,DefaultHandler
                      
-   .weak      USART3_IRQHandler      
-   .thumb_set USART3_IRQHandler,DefaultHandler
+   .weak      ISR_USART3      
+   .thumb_set ISR_USART3,DefaultHandler
                   
-   .weak      EXTI15_10_IRQHandler               
-   .thumb_set EXTI15_10_IRQHandler,DefaultHandler
+   .weak      ISR_EXTI15_10               
+   .thumb_set ISR_EXTI15_10,DefaultHandler
                
-   .weak      RTC_Alarm_IRQHandler               
-   .thumb_set RTC_Alarm_IRQHandler,DefaultHandler
+   .weak      ISR_RTC_Alarm               
+   .thumb_set ISR_RTC_Alarm,DefaultHandler
             
-   .weak      OTG_FS_WKUP_IRQHandler         
-   .thumb_set OTG_FS_WKUP_IRQHandler,DefaultHandler
+   .weak      ISR_OTG_FS_WKUP         
+   .thumb_set ISR_OTG_FS_WKUP,DefaultHandler
             
-   .weak      TIM8_BRK_TIM12_IRQHandler         
-   .thumb_set TIM8_BRK_TIM12_IRQHandler,DefaultHandler
+   .weak      ISR_TIM8_BRK_TIM12         
+   .thumb_set ISR_TIM8_BRK_TIM12,DefaultHandler
          
-   .weak      TIM8_UP_TIM13_IRQHandler            
-   .thumb_set TIM8_UP_TIM13_IRQHandler,DefaultHandler
+   .weak      ISR_TIM8_UP_TIM13            
+   .thumb_set ISR_TIM8_UP_TIM13,DefaultHandler
          
-   .weak      TIM8_TRG_COM_TIM14_IRQHandler      
-   .thumb_set TIM8_TRG_COM_TIM14_IRQHandler,DefaultHandler
+   .weak      ISR_TIM8_TRG_COM_TIM14      
+   .thumb_set ISR_TIM8_TRG_COM_TIM14,DefaultHandler
       
-   .weak      TIM8_CC_IRQHandler   
-   .thumb_set TIM8_CC_IRQHandler,DefaultHandler
+   .weak      ISR_TIM8_CC   
+   .thumb_set ISR_TIM8_CC,DefaultHandler
                   
-   .weak      DMA1_Stream7_IRQHandler               
-   .thumb_set DMA1_Stream7_IRQHandler,DefaultHandler
+   .weak      ISR_DMA1_Stream7               
+   .thumb_set ISR_DMA1_Stream7,DefaultHandler
                      
-   .weak      FMC_IRQHandler            
-   .thumb_set FMC_IRQHandler,DefaultHandler
+   .weak      ISR_FMC            
+   .thumb_set ISR_FMC,DefaultHandler
                      
-   .weak      SDMMC1_IRQHandler            
-   .thumb_set SDMMC1_IRQHandler,DefaultHandler
+   .weak      ISR_SDMMC1            
+   .thumb_set ISR_SDMMC1,DefaultHandler
                      
-   .weak      TIM5_IRQHandler            
-   .thumb_set TIM5_IRQHandler,DefaultHandler
+   .weak      ISR_TIM5            
+   .thumb_set ISR_TIM5,DefaultHandler
                      
-   .weak      SPI3_IRQHandler            
-   .thumb_set SPI3_IRQHandler,DefaultHandler
+   .weak      ISR_SPI3            
+   .thumb_set ISR_SPI3,DefaultHandler
                      
-   .weak      UART4_IRQHandler         
-   .thumb_set UART4_IRQHandler,DefaultHandler
+   .weak      ISR_UART4         
+   .thumb_set ISR_UART4,DefaultHandler
                   
-   .weak      UART5_IRQHandler         
-   .thumb_set UART5_IRQHandler,DefaultHandler
+   .weak      ISR_UART5         
+   .thumb_set ISR_UART5,DefaultHandler
                   
-   .weak      TIM6_DAC_IRQHandler                  
-   .thumb_set TIM6_DAC_IRQHandler,DefaultHandler
+   .weak      ISR_TIM6_DAC                  
+   .thumb_set ISR_TIM6_DAC,DefaultHandler
                
-   .weak      TIM7_IRQHandler            
-   .thumb_set TIM7_IRQHandler,DefaultHandler
+   .weak      ISR_TIM7            
+   .thumb_set ISR_TIM7,DefaultHandler
          
-   .weak      DMA2_Stream0_IRQHandler               
-   .thumb_set DMA2_Stream0_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream0               
+   .thumb_set ISR_DMA2_Stream0,DefaultHandler
                
-   .weak      DMA2_Stream1_IRQHandler               
-   .thumb_set DMA2_Stream1_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream1               
+   .thumb_set ISR_DMA2_Stream1,DefaultHandler
                   
-   .weak      DMA2_Stream2_IRQHandler               
-   .thumb_set DMA2_Stream2_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream2               
+   .thumb_set ISR_DMA2_Stream2,DefaultHandler
             
-   .weak      DMA2_Stream3_IRQHandler               
-   .thumb_set DMA2_Stream3_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream3               
+   .thumb_set ISR_DMA2_Stream3,DefaultHandler
             
-   .weak      DMA2_Stream4_IRQHandler               
-   .thumb_set DMA2_Stream4_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream4               
+   .thumb_set ISR_DMA2_Stream4,DefaultHandler
    
-   .weak      DMA2_Stream4_IRQHandler               
-   .thumb_set DMA2_Stream4_IRQHandler,DefaultHandler   
+   .weak      ISR_DMA2_Stream4               
+   .thumb_set ISR_DMA2_Stream4,DefaultHandler   
                            
-   .weak      OTG_FS_IRQHandler      
-   .thumb_set OTG_FS_IRQHandler,DefaultHandler
+   .weak      ISR_OTG_FS      
+   .thumb_set ISR_OTG_FS,DefaultHandler
                      
-   .weak      DMA2_Stream5_IRQHandler               
-   .thumb_set DMA2_Stream5_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream5               
+   .thumb_set ISR_DMA2_Stream5,DefaultHandler
                   
-   .weak      DMA2_Stream6_IRQHandler               
-   .thumb_set DMA2_Stream6_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream6               
+   .thumb_set ISR_DMA2_Stream6,DefaultHandler
                   
-   .weak      DMA2_Stream7_IRQHandler               
-   .thumb_set DMA2_Stream7_IRQHandler,DefaultHandler
+   .weak      ISR_DMA2_Stream7               
+   .thumb_set ISR_DMA2_Stream7,DefaultHandler
                   
-   .weak      USART6_IRQHandler      
-   .thumb_set USART6_IRQHandler,DefaultHandler
+   .weak      ISR_USART6      
+   .thumb_set ISR_USART6,DefaultHandler
                         
-   .weak      I2C3_EV_IRQHandler   
-   .thumb_set I2C3_EV_IRQHandler,DefaultHandler
+   .weak      ISR_I2C3_EV   
+   .thumb_set ISR_I2C3_EV,DefaultHandler
                         
-   .weak      I2C3_ER_IRQHandler   
-   .thumb_set I2C3_ER_IRQHandler,DefaultHandler
+   .weak      ISR_I2C3_ER   
+   .thumb_set ISR_I2C3_ER,DefaultHandler
                         
-   .weak      OTG_HS_EP1_OUT_IRQHandler         
-   .thumb_set OTG_HS_EP1_OUT_IRQHandler,DefaultHandler
+   .weak      ISR_OTG_HS_EP1_OUT         
+   .thumb_set ISR_OTG_HS_EP1_OUT,DefaultHandler
                
-   .weak      OTG_HS_EP1_IN_IRQHandler            
-   .thumb_set OTG_HS_EP1_IN_IRQHandler,DefaultHandler
+   .weak      ISR_OTG_HS_EP1_IN            
+   .thumb_set ISR_OTG_HS_EP1_IN,DefaultHandler
                
-   .weak      OTG_HS_WKUP_IRQHandler         
-   .thumb_set OTG_HS_WKUP_IRQHandler,DefaultHandler
+   .weak      ISR_OTG_HS_WKUP         
+   .thumb_set ISR_OTG_HS_WKUP,DefaultHandler
             
-   .weak      OTG_HS_IRQHandler      
-   .thumb_set OTG_HS_IRQHandler,DefaultHandler
+   .weak      ISR_OTG_HS      
+   .thumb_set ISR_OTG_HS,DefaultHandler
 
-   .weak      AES_IRQHandler            
-   .thumb_set AES_IRQHandler,DefaultHandler
+   .weak      ISR_AES            
+   .thumb_set ISR_AES,DefaultHandler
 
-   .weak      RNG_IRQHandler            
-   .thumb_set RNG_IRQHandler,DefaultHandler   
+   .weak      ISR_RNG            
+   .thumb_set ISR_RNG,DefaultHandler   
 
-   .weak      FPU_IRQHandler                  
-   .thumb_set FPU_IRQHandler,DefaultHandler
+   .weak      ISR_FPU                  
+   .thumb_set ISR_FPU,DefaultHandler
 
-   .weak      UART7_IRQHandler                  
-   .thumb_set UART7_IRQHandler,DefaultHandler
+   .weak      ISR_UART7                  
+   .thumb_set ISR_UART7,DefaultHandler
 
-   .weak      UART8_IRQHandler                  
-   .thumb_set UART8_IRQHandler,DefaultHandler   
+   .weak      ISR_UART8                  
+   .thumb_set ISR_UART8,DefaultHandler   
 
-   .weak      SPI4_IRQHandler            
-   .thumb_set SPI4_IRQHandler,DefaultHandler
+   .weak      ISR_SPI4            
+   .thumb_set ISR_SPI4,DefaultHandler
    
-   .weak      SPI5_IRQHandler            
-   .thumb_set SPI5_IRQHandler,DefaultHandler  
+   .weak      ISR_SPI5            
+   .thumb_set ISR_SPI5,DefaultHandler  
 
-   .weak      SAI1_IRQHandler            
-   .thumb_set SAI1_IRQHandler,DefaultHandler
+   .weak      ISR_SAI1            
+   .thumb_set ISR_SAI1,DefaultHandler
 
-   .weak      SAI2_IRQHandler            
-   .thumb_set SAI2_IRQHandler,DefaultHandler
+   .weak      ISR_SAI2            
+   .thumb_set ISR_SAI2,DefaultHandler
    
-   .weak      QUADSPI_IRQHandler            
-   .thumb_set QUADSPI_IRQHandler,DefaultHandler
+   .weak      ISR_QUADSPI            
+   .thumb_set ISR_QUADSPI,DefaultHandler
  
-   .weak      LPTIM1_IRQHandler            
-   .thumb_set LPTIM1_IRQHandler,DefaultHandler
+   .weak      ISR_LPTIM1            
+   .thumb_set ISR_LPTIM1,DefaultHandler
 
-   .weak      SDMMC2_IRQHandler            
-   .thumb_set SDMMC2_IRQHandler,DefaultHandler  
+   .weak      ISR_SDMMC2            
+   .thumb_set ISR_SDMMC2,DefaultHandler  

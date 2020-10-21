@@ -469,7 +469,7 @@ void HAL_SYSTICK_CLKSourceConfig(uint32_t CLKSource)
   * @brief  This function handles SYSTICK interrupt request.
   * @retval None
   */
-void HAL_SYSTICK_IRQHandler(void)
+void ISR_HAL_SYSTICK(void)
 {
   HAL_SYSTICK_Callback();
 }

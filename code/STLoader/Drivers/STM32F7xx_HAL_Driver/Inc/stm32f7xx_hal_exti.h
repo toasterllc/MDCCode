@@ -289,7 +289,7 @@ HAL_StatusTypeDef HAL_EXTI_GetHandle(EXTI_HandleTypeDef *hexti, uint32_t ExtiLin
   * @{
   */
 /* IO operation functions *****************************************************/
-void HAL_EXTI_IRQHandler(EXTI_HandleTypeDef *hexti);
+void ISR_HAL_EXTI(EXTI_HandleTypeDef *hexti);
 uint32_t HAL_EXTI_GetPending(EXTI_HandleTypeDef *hexti, uint32_t Edge);
 void HAL_EXTI_ClearPending(EXTI_HandleTypeDef *hexti, uint32_t Edge);
 void HAL_EXTI_GenerateSWI(EXTI_HandleTypeDef *hexti);

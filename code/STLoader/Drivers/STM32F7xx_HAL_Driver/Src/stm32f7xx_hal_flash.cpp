@@ -44,7 +44,7 @@
             (+++) Interrupt mode using HAL_FLASH_Program_IT() function
     
       (#) Interrupts and flags management functions : 
-           (++) Handle FLASH interrupts by calling HAL_FLASH_IRQHandler()
+           (++) Handle FLASH interrupts by calling ISR_HAL_FLASH()
            (++) Wait for last FLASH operation according to its status
            (++) Get error flag status by calling HAL_SetErrorCode()          
     [..] 
@@ -292,7 +292,7 @@ HAL_StatusTypeDef HAL_FLASH_Program_IT(uint32_t TypeProgram, uint32_t Address, u
   * @brief This function handles FLASH interrupt request.
   * @retval None
   */
-void HAL_FLASH_IRQHandler(void)
+void ISR_HAL_FLASH(void)
 {
   uint32_t temp = 0;
   

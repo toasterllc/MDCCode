@@ -46,8 +46,8 @@
           (+) Use HAL_DMA_Start_IT() to start DMA transfer after the configuration of  
               Source address and destination address and the Length of data to be transferred. In this 
               case the DMA interrupt is configured 
-          (+) Use HAL_DMA_IRQHandler() called under DMA_IRQHandler() Interrupt subroutine
-          (+) At the end of data transfer HAL_DMA_IRQHandler() function is executed and user can 
+          (+) Use ISR_HAL_DMA() called under ISR_DMA() Interrupt subroutine
+          (+) At the end of data transfer ISR_HAL_DMA() function is executed and user can 
               add his own function by customization of function pointer XferCpltCallback and 
               XferErrorCallback (i.e a member of DMA handle structure).
     [..]
@@ -287,7 +287,7 @@ HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
   hdma->Instance->FCR = tmp;
 
   /* Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate
-     DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer() */
+     DMA steam Base Address needed by ISR_HAL_DMA() and HAL_DMA_PollForTransfer() */
   regs = (DMA_Base_Registers *)DMA_CalcBaseAndBitshift(hdma);
   
   /* Clear all interrupt flags */
@@ -746,7 +746,7 @@ HAL_StatusTypeDef HAL_DMA_PollForTransfer(DMA_HandleTypeDef *hdma, HAL_DMA_Level
   *               the configuration information for the specified DMA Stream.  
   * @retval None
   */
-void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
+void ISR_HAL_DMA(DMA_HandleTypeDef *hdma)
 {
   uint32_t tmpisr;
   __IO uint32_t count = 0;

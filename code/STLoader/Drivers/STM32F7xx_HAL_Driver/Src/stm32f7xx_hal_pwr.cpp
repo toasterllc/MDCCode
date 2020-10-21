@@ -502,10 +502,10 @@ void HAL_PWR_EnterSTANDBYMode(void)
 
 /**
   * @brief This function handles the PWR PVD interrupt request.
-  * @note This API should be called under the PVD_IRQHandler().
+  * @note This API should be called under the ISR_PVD().
   * @retval None
   */
-void HAL_PWR_PVD_IRQHandler(void)
+void ISR_HAL_PWR_PVD(void)
 {
   /* Check PWR Exti flag */
   if(__HAL_PWR_PVD_EXTI_GET_FLAG() != RESET)
