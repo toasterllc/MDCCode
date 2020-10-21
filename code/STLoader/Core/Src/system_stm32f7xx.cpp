@@ -46,6 +46,7 @@
   */
 
 #include "stm32f7xx.h"
+#include <string.h>
 
 #if !defined  (HSE_VALUE) 
   #define HSE_VALUE    ((uint32_t)25000000) /*!< Default value of the External oscillator in Hz */
@@ -131,19 +132,36 @@
   * @param  None
   * @retval None
   */
-void SystemInit(void)
-{
-  /* FPU settings ------------------------------------------------------------*/
-#if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
-#endif
-
-  /* Configure the Vector Table location add offset address ------------------*/
-#ifdef VECT_TAB_SRAM
-  SCB->VTOR = RAMDTCM_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
-#else
-  SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
-#endif
+extern uintptr_t _sidata;
+extern uintptr_t _sdata;
+extern uintptr_t _edata;
+extern uintptr_t _sbss;
+extern uintptr_t _ebss;
+extern uintptr_t _sisr_vector;
+extern "C" void __libc_init_array();
+extern int main();
+void SystemInit(void) {
+    // Copy .data section from flash to RAM
+    memcpy((void*)_sdata, (void*)_sidata, _edata-_sdata);
+    // Zero .bss section
+    memset((void*)_sbss, 0, _ebss-_sbss);
+    
+    // FPU settings
+    if (__FPU_PRESENT && __FPU_USED) {
+        SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // Set CP10 and CP11 Full Access
+    }
+    
+    // Set vector table address
+    SCB->VTOR = _sisr_vector;
+    
+    // Call static constructors
+    __libc_init_array();
+    
+    // Call main function
+    main();
+    
+    // Loop forever if main returns
+    for (;;);
 }
 
 /**

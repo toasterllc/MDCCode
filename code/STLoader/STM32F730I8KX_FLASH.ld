@@ -25,7 +25,7 @@
  */
 
 /* Entry Point */
-ENTRY(Reset_Handler)
+ENTRY(ResetHandler)
 
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);	/* end of "RAM" Ram type memory */
@@ -47,6 +47,7 @@ SECTIONS
   .isr_vector :
   {
     . = ALIGN(4);
+    _sisr_vector = .;        /* create a global symbol at ISR vector start */
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH

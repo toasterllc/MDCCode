@@ -519,9 +519,9 @@
 			children = (
 				5563E190253A8B6400BCC0F7 /* startup_stm32f730i8kx.s */,
 				5563E191253A8B6400BCC0F7 /* stm32f7xx_it.cpp */,
-				5563E192253A8B6400BCC0F7 /* main.cpp */,
 				5563E193253A8B6400BCC0F7 /* system_stm32f7xx.cpp */,
 				5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.cpp */,
+				5563E192253A8B6400BCC0F7 /* main.cpp */,
 			);
 			path = Src;
 			sourceTree = "<group>";
