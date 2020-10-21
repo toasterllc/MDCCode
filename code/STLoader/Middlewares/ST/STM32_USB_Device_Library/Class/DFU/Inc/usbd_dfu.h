@@ -27,6 +27,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include  "usbd_ioreq.h"
+#include "STLoaderTypes.h"
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -157,33 +158,6 @@ typedef  void (*pFunction)(void);
   * @{
   */
 
-enum {
-    STLoaderCmdOp_None,
-    STLoaderCmdOp_SetLED,
-    STLoaderCmdOp_WriteData,
-    STLoaderCmdOp_Reset,
-}; typedef uint8_t STLoaderCmdOp;
-
-typedef struct __attribute__((packed)) {
-    STLoaderCmdOp op;
-    union {
-        struct {
-            uint8_t idx;
-            uint8_t on;
-        } ledSet;
-        
-        struct {
-            uint32_t addr;
-        } writeData;
-        
-        struct {
-            uint32_t vectorTableAddr;
-        } reset;
-    } arg;
-} STLoaderCmd;
-
-_Static_assert(sizeof(STLoaderCmd)==5, "STLoaderCmd: invalid size");
-
 typedef struct
 {
     union
@@ -201,8 +175,10 @@ typedef struct
     uint8_t dev_state;
     uint8_t manif_state;
     
-    STLoaderCmd stm32Cmd;
-    uint32_t stm32DataAddr;
+    struct {
+        STLoaderCmd cmd;
+        uint32_t dataAddr;
+    } st;
 } USBD_DFU_HandleTypeDef;
 
 typedef struct

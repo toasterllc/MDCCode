@@ -2,17 +2,6 @@
 #include "usbd_ctlreq.h"
 #include <stdbool.h>
 
-//extern void setLed0(int on);
-//extern void setLed1(int on);
-//extern void setLed2(int on);
-//extern void setLed3(int on);
-//static void reledSets() {
-//    setLed0(0);
-//    setLed1(0);
-//    setLed2(0);
-//    setLed3(0);
-//}
-
 static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_DFU_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_DFU_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
@@ -196,7 +185,7 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
         return (uint8_t)USBD_FAIL;
     }
     
-    USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
+    USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->st.cmd, sizeof(hdfu->st.cmd));
     return (uint8_t)USBD_OK;
 }
 
@@ -324,7 +313,7 @@ void setLed3(bool on) {
 static uint32_t vectorTableAddr __attribute__((section(".noinit")));
 static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
-    STLoaderCmd* cmd = &hdfu->stm32Cmd;
+    STLoaderCmd* cmd = &hdfu->st.cmd;
     const size_t packetLen = USBD_LL_GetRxDataSize(pdev, epnum);
     
     switch (epnum) {
@@ -338,7 +327,7 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         const size_t argLen = packetLen-sizeof(cmd->op);
         switch (cmd->op) {
         // Set LED command:
-        case STLoaderCmdOp_SetLED: {
+        case STLoaderCmd::Op::LEDSet: {
             // Verify that we got the right argument size
             if (argLen < sizeof(cmd->arg.ledSet)) return USBD_FAIL;
             
@@ -353,30 +342,35 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         }
         
         // Write data command:
-        //   Stash the address we're writing to in `stm32DataAddr`,
+        //   Stash the address we're writing to in `st.dataAddr`,
         //   Prepare the DATA_OUT endpoint for writing at that address
-        case STLoaderCmdOp_WriteData: {
+        case STLoaderCmd::Op::WriteData: {
             // Verify that we got the right argument size
             if (argLen < sizeof(cmd->arg.writeData)) return USBD_FAIL;
-            hdfu->stm32DataAddr = cmd->arg.writeData.addr;
-            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+            hdfu->st.dataAddr = cmd->arg.writeData.addr;
+            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->st.dataAddr, MAX_PACKET_SIZE);
             break;
         }
         
         // Reset command:
         //   Stash the vector table address for access after we reset,
         //   Perform a software reset
-        case STLoaderCmdOp_Reset: {
+        case STLoaderCmd::Op::Reset: {
             // Verify we got the right argument size
             if (argLen < sizeof(cmd->arg.reset)) return USBD_FAIL;
             vectorTableAddr = cmd->arg.reset.vectorTableAddr;
             // Perform software reset
             NVIC_SystemReset();
             break;
+        }
+        
+        // Bad command
+        default: {
+            break;
         }}
         
         // Prepare to receive another command
-        USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stm32Cmd, sizeof(hdfu->stm32Cmd));
+        USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->st.cmd, sizeof(hdfu->st.cmd));
         break;
     }
     
@@ -384,14 +378,14 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     //   Update the address that we're writing to,
     //   Prepare ourself to receive more data
     case EPNUM(ST_EPADDR_DATA_OUT): {
-        hdfu->stm32DataAddr += packetLen;
+        hdfu->st.dataAddr += packetLen;
         // Only prepare for more data if this packet was the maximum size.
         // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
         //   "A bulk transfer is complete when the endpoint ... Transfers a
         //   packet with a payload size less than wMaxPacketSize or
         //   transfers a zero-length packet".)
         if (packetLen == MAX_PACKET_SIZE) {
-            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->stm32DataAddr, MAX_PACKET_SIZE);
+            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->st.dataAddr, MAX_PACKET_SIZE);
         }
         break;
     }}

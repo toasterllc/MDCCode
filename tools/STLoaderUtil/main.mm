@@ -8,33 +8,7 @@
 #import "ELFBinary.h"
 #import "SendRight.h"
 #import "USBInterface.h"
-
-struct STLoaderCmd {
-    enum class Op : uint8_t {
-        None,
-        LEDSet,
-        WriteData,
-        Reset,
-    };
-    
-    Op op;
-    union {
-        struct {
-            uint8_t idx;
-            uint8_t on;
-        } ledSet;
-        
-        struct {
-            uint32_t addr;
-        } writeData;
-        
-        struct {
-            uint32_t vectorTableAddr;
-        } reset;
-    } arg;
-} __attribute__((packed));
-
-_Static_assert(sizeof(STLoaderCmd)==5, "STLoaderCmd: invalid size");
+#import "STLoaderTypes.h"
 
 static USBInterface findUSBInterface(uint8_t interfaceNum) {
     NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBInterfaceClassName));
@@ -205,12 +179,12 @@ int main(int argc, const char* argv[]) {
     
     USBInterface stInterface;
     USBInterface iceInterface;
-//    try {
-//        stInterface = findUSBInterface(0);
-//    } catch (const std::exception& e) {
-//        fprintf(stderr, "Failed to get STM32 interface: %s\n", e.what());
-//        return 1;
-//    }
+    try {
+        stInterface = findUSBInterface(0);
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Failed to get STM32 interface: %s\n", e.what());
+        return 1;
+    }
     
 //    try {
 //        iceInterface = findUSBInterface(1);

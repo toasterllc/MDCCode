@@ -150,6 +150,7 @@
 		5563E1A6253A8B6500BCC0F7 /* usbd_conf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_conf.cpp; sourceTree = "<group>"; };
 		5563E1A7253A8B6500BCC0F7 /* MDCRev3 Debug.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "MDCRev3 Debug.launch"; sourceTree = "<group>"; };
 		55E1D8F8253FA29C00628EF6 /* usbd_dfu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_dfu.cpp; sourceTree = "<group>"; };
+		55E1D8FC253FBD9400628EF6 /* STLoaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STLoaderTypes.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,6 +167,7 @@
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
+				55E1D8FB253FBD9400628EF6 /* Shared */,
 				5563E18A253A8B6400BCC0F7 /* Core */,
 				5563E196253A8B6400BCC0F7 /* Debug */,
 				5563E123253A8B6400BCC0F7 /* Drivers */,
@@ -575,6 +577,14 @@
 				5563E1A6253A8B6500BCC0F7 /* usbd_conf.cpp */,
 			);
 			path = Target;
+			sourceTree = "<group>";
+		};
+		55E1D8FB253FBD9400628EF6 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				55E1D8FC253FBD9400628EF6 /* STLoaderTypes.h */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
