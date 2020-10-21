@@ -1,50 +1,3 @@
-/**
-  ******************************************************************************
-  * @file    system_stm32f7xx.c
-  * @author  MCD Application Team
-  * @brief   CMSIS Cortex-M7 Device Peripheral Access Layer System Source File.
-  *
-  *   This file provides two functions and one global variable to be called from 
-  *   user application:
-  *      - SystemInit(): This function is called at startup just after reset and 
-  *                      before branch to main program. This call is made inside
-  *                      the "startup_stm32f7xx.s" file.
-  *
-  *      - SystemCoreClock variable: Contains the core clock (HCLK), it can be used
-  *                                  by the user application to setup the SysTick 
-  *                                  timer or configure other parameters.
-  *                                     
-  *      - SystemCoreClockUpdate(): Updates the variable SystemCoreClock and must
-  *                                 be called whenever the core clock is changed
-  *                                 during program execution.
-  *
-  *
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2016 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
-
-/** @addtogroup CMSIS
-  * @{
-  */
-
-/** @addtogroup stm32f7xx_system
-  * @{
-  */  
-  
-/** @addtogroup STM32F7xx_System_Private_Includes
-  * @{
-  */
-
 #include "stm32f7xx.h"
 #include <string.h>
 
@@ -56,91 +9,28 @@
   #define HSI_VALUE    ((uint32_t)16000000) /*!< Value of the Internal oscillator in Hz*/
 #endif /* HSI_VALUE */
 
-/**
-  * @}
-  */
+/* This variable is updated in three ways:
+  1) by calling CMSIS function SystemCoreClockUpdate()
+  2) by calling HAL API function HAL_RCC_GetHCLKFreq()
+  3) each time HAL_RCC_ClockConfig() is called to configure the system clock frequency 
+     Note: If you use this function to configure the system clock; then there
+           is no need to call the 2 first functions listed above, since SystemCoreClock
+           variable is updated automatically.
+*/
+uint32_t SystemCoreClock = 16000000;
+const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
 
-/** @addtogroup STM32F7xx_System_Private_TypesDefinitions
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F7xx_System_Private_Defines
-  * @{
-  */
-
-/************************* Miscellaneous Configuration ************************/
-
-/*!< Uncomment the following line if you need to relocate your vector Table in
-     Internal SRAM. */
-/* #define VECT_TAB_SRAM */
-#define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
-                                   This value must be a multiple of 0x200. */
-/******************************************************************************/
-
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F7xx_System_Private_Macros
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F7xx_System_Private_Variables
-  * @{
-  */
-
-  /* This variable is updated in three ways:
-      1) by calling CMSIS function SystemCoreClockUpdate()
-      2) by calling HAL API function HAL_RCC_GetHCLKFreq()
-      3) each time HAL_RCC_ClockConfig() is called to configure the system clock frequency 
-         Note: If you use this function to configure the system clock; then there
-               is no need to call the 2 first functions listed above, since SystemCoreClock
-               variable is updated automatically.
-  */
-  uint32_t SystemCoreClock = 16000000;
-  const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
-  const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
-
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F7xx_System_Private_FunctionPrototypes
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F7xx_System_Private_Functions
-  * @{
-  */
-
-/**
-  * @brief  Setup the microcontroller system
-  *         Initialize the Embedded Flash Interface, the PLL and update the 
-  *         SystemFrequency variable.
-  * @param  None
-  * @retval None
-  */
-extern uint8_t _sidata;
-extern uint8_t _sdata;
-extern uint8_t _edata;
-extern uint8_t _sbss;
-extern uint8_t _ebss;
-extern uint8_t _sisr_vector;
 extern "C" void __libc_init_array();
-extern int main();
 void SystemInit(void) {
+    extern uint8_t _sidata;
+    extern uint8_t _sdata;
+    extern uint8_t _edata;
+    extern uint8_t _sbss;
+    extern uint8_t _ebss;
+    extern uint8_t _sisr_vector;
+    extern int main();
+    
     // Copy .data section from flash to RAM
     memcpy(&_sdata, &_sidata, &_edata-&_sdata);
     // Zero .bss section
@@ -247,16 +137,3 @@ void SystemCoreClockUpdate(void)
   /* HCLK frequency */
   SystemCoreClock >>= tmp;
 }
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-  
-/**
-  * @}
-  */    
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
