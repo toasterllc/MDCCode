@@ -348,7 +348,7 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
             extern uintptr_t AppEntryPointAddr;
             AppEntryPointAddr = cmd->arg.reset.entryPointAddr;
             // Perform software reset
-            NVIC_SystemReset();
+            HAL_NVIC_SystemReset();
             break;
         }
         
