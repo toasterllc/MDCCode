@@ -47,16 +47,16 @@
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-void ISR_NMI(void);
-void ISR_HardFault(void);
-void ISR_MemManage(void);
-void ISR_BusFault(void);
-void ISR_UsageFault(void);
-void ISR_SVC(void);
-void ISR_DebugMon(void);
-void ISR_PendSV(void);
-void ISR_SysTick(void);
-void ISR_OTG_HS(void);
+void ISR_NMI();
+void ISR_HardFault();
+void ISR_MemManage();
+void ISR_BusFault();
+void ISR_UsageFault();
+void ISR_SVC();
+void ISR_DebugMon();
+void ISR_PendSV();
+void ISR_SysTick();
+void ISR_OTG_HS();
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

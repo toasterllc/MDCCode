@@ -6,20 +6,23 @@
 .global VectorTable
 .global ISR_Default
 
+
+// Reset ISR
 .section .text.ISR_Reset
 .weak ISR_Reset
 .type ISR_Reset, %function
 ISR_Reset:
-    ldr sp, =_estack // set stack pointer
+    // Set stack pointer
+    ldr sp, =_estack
+    // Jump to init routine
     bl SystemInit
-    bx lr
 .size ISR_Reset, .-ISR_Reset
 
 
+// Default ISR handler
 .section .text.ISR_Default,"ax",%progbits
 ISR_Default:
-Infinite_Loop:
-    b  Infinite_Loop
+    b  ISR_Default
 .size ISR_Default, .-ISR_Default
 
 
