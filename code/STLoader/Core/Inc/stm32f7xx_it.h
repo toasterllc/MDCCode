@@ -47,15 +47,15 @@
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-void NMI_Handler(void);
-void HardFault_Handler(void);
-void MemManage_Handler(void);
-void BusFault_Handler(void);
-void UsageFault_Handler(void);
-void SVC_Handler(void);
-void DebugMon_Handler(void);
-void PendSV_Handler(void);
-void SysTick_Handler(void);
+void ISR_NMI(void);
+void ISR_HardFault(void);
+void ISR_MemManage(void);
+void ISR_BusFault(void);
+void ISR_UsageFault(void);
+void ISR_SVC(void);
+void ISR_DebugMon(void);
+void ISR_PendSV(void);
+void ISR_SysTick(void);
 void ISR_OTG_HS(void);
 /* USER CODE BEGIN EFP */
 

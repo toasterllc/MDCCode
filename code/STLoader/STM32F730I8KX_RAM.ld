@@ -25,7 +25,7 @@
  */
 
 /* Entry Point */
-ENTRY(ResetHandler)
+ENTRY(ISR_Reset)
 
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);	/* end of "RAM" Ram type memory */
