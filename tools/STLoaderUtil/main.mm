@@ -176,14 +176,14 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
                 },
             };
             
-//            IOReturn ior = stInterface.write(Endpoint::STCmdOut, &cmd, sizeof(cmd));
-//            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+            IOReturn ior = stInterface.write(Endpoint::STCmdOut, &cmd, sizeof(cmd));
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
         }
         
         // Send actual data
         {
-//            IOReturn ior = stInterface.write(Endpoint::STDataOut, data, dataLen);
-//            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STDataOut");
+            IOReturn ior = stInterface.write(Endpoint::STDataOut, data, dataLen);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STDataOut");
         }
     }
     printf("\n");

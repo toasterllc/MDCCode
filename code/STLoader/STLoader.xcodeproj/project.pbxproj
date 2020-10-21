@@ -8,37 +8,37 @@
 
 /* Begin PBXBuildFile section */
 		5563E1AB253A8B8500BCC0F7 /* startup_stm32f730i8kx.s in Sources */ = {isa = PBXBuildFile; fileRef = 5563E190253A8B6400BCC0F7 /* startup_stm32f730i8kx.s */; };
-		5563E1AC253A8B8500BCC0F7 /* stm32f7xx_it.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E191253A8B6400BCC0F7 /* stm32f7xx_it.c */; };
-		5563E1AD253A8B8500BCC0F7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E192253A8B6400BCC0F7 /* main.c */; };
-		5563E1AE253A8B8500BCC0F7 /* system_stm32f7xx.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E193253A8B6400BCC0F7 /* system_stm32f7xx.c */; };
-		5563E1AF253A8B8500BCC0F7 /* stm32f7xx_hal_msp.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.c */; };
-		5563E1C6253A8B8500BCC0F7 /* stm32f7xx_hal_rcc.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.c */; };
-		5563E1C7253A8B8500BCC0F7 /* stm32f7xx_hal_flash.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.c */; };
-		5563E1C8253A8B8500BCC0F7 /* stm32f7xx_hal_gpio.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.c */; };
-		5563E1C9253A8B8500BCC0F7 /* stm32f7xx_hal_i2c.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.c */; };
-		5563E1CA253A8B8500BCC0F7 /* stm32f7xx_hal_pcd.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.c */; };
-		5563E1CB253A8B8500BCC0F7 /* stm32f7xx_hal_tim.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.c */; };
-		5563E1CC253A8B8500BCC0F7 /* stm32f7xx_hal_exti.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.c */; };
-		5563E1CD253A8B8500BCC0F7 /* stm32f7xx_hal_i2c_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.c */; };
-		5563E1CE253A8B8500BCC0F7 /* stm32f7xx_hal_pcd_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.c */; };
-		5563E1CF253A8B8500BCC0F7 /* stm32f7xx_hal_tim_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.c */; };
-		5563E1D0253A8B8500BCC0F7 /* stm32f7xx_hal_flash_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.c */; };
-		5563E1D1253A8B8500BCC0F7 /* stm32f7xx_hal.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.c */; };
-		5563E1D2253A8B8500BCC0F7 /* stm32f7xx_ll_usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.c */; };
-		5563E1D3253A8B8500BCC0F7 /* stm32f7xx_hal_rcc_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.c */; };
-		5563E1D4253A8B8500BCC0F7 /* stm32f7xx_hal_dma.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.c */; };
-		5563E1D5253A8B8500BCC0F7 /* stm32f7xx_hal_cortex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.c */; };
-		5563E1D6253A8B8500BCC0F7 /* stm32f7xx_hal_dma_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.c */; };
-		5563E1D7253A8B8500BCC0F7 /* stm32f7xx_hal_pwr_ex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.c */; };
-		5563E1D8253A8B8500BCC0F7 /* stm32f7xx_hal_pwr.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.c */; };
-		5563E1F7253A8B8500BCC0F7 /* usbd_ctlreq.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.c */; };
-		5563E1F8253A8B8500BCC0F7 /* usbd_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17C253A8B6400BCC0F7 /* usbd_core.c */; };
-		5563E1F9253A8B8500BCC0F7 /* usbd_ioreq.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17D253A8B6400BCC0F7 /* usbd_ioreq.c */; };
-		5563E1FB253A8B8500BCC0F7 /* usbd_dfu.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E186253A8B6400BCC0F7 /* usbd_dfu.c */; };
-		5563E1FF253A8B8500BCC0F7 /* usbd_dfu_if.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.c */; };
-		5563E201253A8B8500BCC0F7 /* usb_device.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A0253A8B6500BCC0F7 /* usb_device.c */; };
-		5563E203253A8B8500BCC0F7 /* usbd_desc.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A2253A8B6500BCC0F7 /* usbd_desc.c */; };
-		5563E206253A8B8500BCC0F7 /* usbd_conf.c in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A6253A8B6500BCC0F7 /* usbd_conf.c */; };
+		5563E1AC253A8B8500BCC0F7 /* stm32f7xx_it.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E191253A8B6400BCC0F7 /* stm32f7xx_it.cpp */; };
+		5563E1AD253A8B8500BCC0F7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E192253A8B6400BCC0F7 /* main.cpp */; };
+		5563E1AE253A8B8500BCC0F7 /* system_stm32f7xx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E193253A8B6400BCC0F7 /* system_stm32f7xx.cpp */; };
+		5563E1AF253A8B8500BCC0F7 /* stm32f7xx_hal_msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.cpp */; };
+		5563E1C6253A8B8500BCC0F7 /* stm32f7xx_hal_rcc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.cpp */; };
+		5563E1C7253A8B8500BCC0F7 /* stm32f7xx_hal_flash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.cpp */; };
+		5563E1C8253A8B8500BCC0F7 /* stm32f7xx_hal_gpio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.cpp */; };
+		5563E1C9253A8B8500BCC0F7 /* stm32f7xx_hal_i2c.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.cpp */; };
+		5563E1CA253A8B8500BCC0F7 /* stm32f7xx_hal_pcd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.cpp */; };
+		5563E1CB253A8B8500BCC0F7 /* stm32f7xx_hal_tim.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.cpp */; };
+		5563E1CC253A8B8500BCC0F7 /* stm32f7xx_hal_exti.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.cpp */; };
+		5563E1CD253A8B8500BCC0F7 /* stm32f7xx_hal_i2c_ex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.cpp */; };
+		5563E1CE253A8B8500BCC0F7 /* stm32f7xx_hal_pcd_ex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.cpp */; };
+		5563E1CF253A8B8500BCC0F7 /* stm32f7xx_hal_tim_ex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.cpp */; };
+		5563E1D0253A8B8500BCC0F7 /* stm32f7xx_hal_flash_ex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.cpp */; };
+		5563E1D1253A8B8500BCC0F7 /* stm32f7xx_hal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.cpp */; };
+		5563E1D2253A8B8500BCC0F7 /* stm32f7xx_ll_usb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.cpp */; };
+		5563E1D3253A8B8500BCC0F7 /* stm32f7xx_hal_rcc_ex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.cpp */; };
+		5563E1D4253A8B8500BCC0F7 /* stm32f7xx_hal_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.cpp */; };
+		5563E1D5253A8B8500BCC0F7 /* stm32f7xx_hal_cortex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.cpp */; };
+		5563E1D6253A8B8500BCC0F7 /* stm32f7xx_hal_dma_ex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.cpp */; };
+		5563E1D7253A8B8500BCC0F7 /* stm32f7xx_hal_pwr_ex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.cpp */; };
+		5563E1D8253A8B8500BCC0F7 /* stm32f7xx_hal_pwr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.cpp */; };
+		5563E1F7253A8B8500BCC0F7 /* usbd_ctlreq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.cpp */; };
+		5563E1F8253A8B8500BCC0F7 /* usbd_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17C253A8B6400BCC0F7 /* usbd_core.cpp */; };
+		5563E1F9253A8B8500BCC0F7 /* usbd_ioreq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E17D253A8B6400BCC0F7 /* usbd_ioreq.cpp */; };
+		5563E1FF253A8B8500BCC0F7 /* usbd_dfu_if.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.cpp */; };
+		5563E201253A8B8500BCC0F7 /* usb_device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A0253A8B6500BCC0F7 /* usb_device.cpp */; };
+		5563E203253A8B8500BCC0F7 /* usbd_desc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A2253A8B6500BCC0F7 /* usbd_desc.cpp */; };
+		5563E206253A8B8500BCC0F7 /* usbd_conf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5563E1A6253A8B6500BCC0F7 /* usbd_conf.cpp */; };
+		55E1D8F9253FA29C00628EF6 /* usbd_dfu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55E1D8F8253FA29C00628EF6 /* usbd_dfu.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -77,25 +77,25 @@
 		5563E13A253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_gpio.h; sourceTree = "<group>"; };
 		5563E13B253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_pcd.h; sourceTree = "<group>"; };
 		5563E13C253A8B6400BCC0F7 /* stm32f7xx_hal_tim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_tim.h; sourceTree = "<group>"; };
-		5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_rcc.c; sourceTree = "<group>"; };
-		5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_flash.c; sourceTree = "<group>"; };
-		5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_gpio.c; sourceTree = "<group>"; };
-		5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_i2c.c; sourceTree = "<group>"; };
-		5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pcd.c; sourceTree = "<group>"; };
-		5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_tim.c; sourceTree = "<group>"; };
-		5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_exti.c; sourceTree = "<group>"; };
-		5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_i2c_ex.c; sourceTree = "<group>"; };
-		5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pcd_ex.c; sourceTree = "<group>"; };
-		5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_tim_ex.c; sourceTree = "<group>"; };
-		5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_flash_ex.c; sourceTree = "<group>"; };
-		5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal.c; sourceTree = "<group>"; };
-		5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_ll_usb.c; sourceTree = "<group>"; };
-		5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_rcc_ex.c; sourceTree = "<group>"; };
-		5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_dma.c; sourceTree = "<group>"; };
-		5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_cortex.c; sourceTree = "<group>"; };
-		5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_dma_ex.c; sourceTree = "<group>"; };
-		5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pwr_ex.c; sourceTree = "<group>"; };
-		5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_pwr.c; sourceTree = "<group>"; };
+		5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_rcc.cpp; sourceTree = "<group>"; };
+		5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_flash.cpp; sourceTree = "<group>"; };
+		5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_gpio.cpp; sourceTree = "<group>"; };
+		5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_i2c.cpp; sourceTree = "<group>"; };
+		5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_pcd.cpp; sourceTree = "<group>"; };
+		5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_tim.cpp; sourceTree = "<group>"; };
+		5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_exti.cpp; sourceTree = "<group>"; };
+		5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_i2c_ex.cpp; sourceTree = "<group>"; };
+		5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_pcd_ex.cpp; sourceTree = "<group>"; };
+		5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_tim_ex.cpp; sourceTree = "<group>"; };
+		5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_flash_ex.cpp; sourceTree = "<group>"; };
+		5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal.cpp; sourceTree = "<group>"; };
+		5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_ll_usb.cpp; sourceTree = "<group>"; };
+		5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_rcc_ex.cpp; sourceTree = "<group>"; };
+		5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_dma.cpp; sourceTree = "<group>"; };
+		5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_cortex.cpp; sourceTree = "<group>"; };
+		5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_dma_ex.cpp; sourceTree = "<group>"; };
+		5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_pwr_ex.cpp; sourceTree = "<group>"; };
+		5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_pwr.cpp; sourceTree = "<group>"; };
 		5563E153253A8B6400BCC0F7 /* core_cm7.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm7.h; sourceTree = "<group>"; };
 		5563E154253A8B6400BCC0F7 /* tz_context.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_context.h; sourceTree = "<group>"; };
 		5563E155253A8B6400BCC0F7 /* core_cm3.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm3.h; sourceTree = "<group>"; };
@@ -124,32 +124,32 @@
 		5563E177253A8B6400BCC0F7 /* usbd_ioreq.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_ioreq.h; sourceTree = "<group>"; };
 		5563E178253A8B6400BCC0F7 /* usbd_core.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_core.h; sourceTree = "<group>"; };
 		5563E179253A8B6400BCC0F7 /* usbd_def.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_def.h; sourceTree = "<group>"; };
-		5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_ctlreq.c; sourceTree = "<group>"; };
-		5563E17C253A8B6400BCC0F7 /* usbd_core.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_core.c; sourceTree = "<group>"; };
-		5563E17D253A8B6400BCC0F7 /* usbd_ioreq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_ioreq.c; sourceTree = "<group>"; };
+		5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_ctlreq.cpp; sourceTree = "<group>"; };
+		5563E17C253A8B6400BCC0F7 /* usbd_core.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_core.cpp; sourceTree = "<group>"; };
+		5563E17D253A8B6400BCC0F7 /* usbd_ioreq.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_ioreq.cpp; sourceTree = "<group>"; };
 		5563E184253A8B6400BCC0F7 /* usbd_dfu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_dfu.h; sourceTree = "<group>"; };
-		5563E186253A8B6400BCC0F7 /* usbd_dfu.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_dfu.c; sourceTree = "<group>"; };
 		5563E18C253A8B6400BCC0F7 /* main.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
 		5563E18D253A8B6400BCC0F7 /* stm32f7xx_hal_conf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_hal_conf.h; sourceTree = "<group>"; };
 		5563E18E253A8B6400BCC0F7 /* stm32f7xx_it.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stm32f7xx_it.h; sourceTree = "<group>"; };
 		5563E190253A8B6400BCC0F7 /* startup_stm32f730i8kx.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = startup_stm32f730i8kx.s; sourceTree = "<group>"; };
-		5563E191253A8B6400BCC0F7 /* stm32f7xx_it.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_it.c; sourceTree = "<group>"; };
-		5563E192253A8B6400BCC0F7 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
-		5563E193253A8B6400BCC0F7 /* system_stm32f7xx.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = system_stm32f7xx.c; sourceTree = "<group>"; };
-		5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = stm32f7xx_hal_msp.c; sourceTree = "<group>"; };
+		5563E191253A8B6400BCC0F7 /* stm32f7xx_it.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_it.cpp; sourceTree = "<group>"; };
+		5563E192253A8B6400BCC0F7 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		5563E193253A8B6400BCC0F7 /* system_stm32f7xx.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = system_stm32f7xx.cpp; sourceTree = "<group>"; };
+		5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = stm32f7xx_hal_msp.cpp; sourceTree = "<group>"; };
 		5563E195253A8B6400BCC0F7 /* STM32F730I8KX_FLASH.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_FLASH.ld; sourceTree = "<group>"; };
 		5563E197253A8B6400BCC0F7 /* STM32F730I8KX_RAM.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_RAM.ld; sourceTree = "<group>"; };
 		5563E19A253A8B6400BCC0F7 /* .project */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = .project; sourceTree = "<group>"; };
 		5563E19B253A8B6400BCC0F7 /* MDCRev3.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = MDCRev3.ioc; sourceTree = "<group>"; };
-		5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_dfu_if.c; sourceTree = "<group>"; };
+		5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_dfu_if.cpp; sourceTree = "<group>"; };
 		5563E19F253A8B6500BCC0F7 /* usbd_desc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_desc.h; sourceTree = "<group>"; };
-		5563E1A0253A8B6500BCC0F7 /* usb_device.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usb_device.c; sourceTree = "<group>"; };
+		5563E1A0253A8B6500BCC0F7 /* usb_device.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usb_device.cpp; sourceTree = "<group>"; };
 		5563E1A1253A8B6500BCC0F7 /* usbd_dfu_if.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_dfu_if.h; sourceTree = "<group>"; };
-		5563E1A2253A8B6500BCC0F7 /* usbd_desc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_desc.c; sourceTree = "<group>"; };
+		5563E1A2253A8B6500BCC0F7 /* usbd_desc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_desc.cpp; sourceTree = "<group>"; };
 		5563E1A3253A8B6500BCC0F7 /* usb_device.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usb_device.h; sourceTree = "<group>"; };
 		5563E1A5253A8B6500BCC0F7 /* usbd_conf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usbd_conf.h; sourceTree = "<group>"; };
-		5563E1A6253A8B6500BCC0F7 /* usbd_conf.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = usbd_conf.c; sourceTree = "<group>"; };
+		5563E1A6253A8B6500BCC0F7 /* usbd_conf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_conf.cpp; sourceTree = "<group>"; };
 		5563E1A7253A8B6500BCC0F7 /* MDCRev3 Debug.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "MDCRev3 Debug.launch"; sourceTree = "<group>"; };
+		55E1D8F8253FA29C00628EF6 /* usbd_dfu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbd_dfu.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -247,25 +247,25 @@
 		5563E13D253A8B6400BCC0F7 /* Src */ = {
 			isa = PBXGroup;
 			children = (
-				5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.c */,
-				5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.c */,
-				5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.c */,
-				5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.c */,
-				5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.c */,
-				5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.c */,
-				5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.c */,
-				5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.c */,
-				5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.c */,
-				5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.c */,
-				5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.c */,
-				5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.c */,
-				5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.c */,
-				5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.c */,
-				5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.c */,
-				5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.c */,
-				5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.c */,
-				5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.c */,
-				5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.c */,
+				5563E13E253A8B6400BCC0F7 /* stm32f7xx_hal_rcc.cpp */,
+				5563E13F253A8B6400BCC0F7 /* stm32f7xx_hal_flash.cpp */,
+				5563E140253A8B6400BCC0F7 /* stm32f7xx_hal_gpio.cpp */,
+				5563E141253A8B6400BCC0F7 /* stm32f7xx_hal_i2c.cpp */,
+				5563E142253A8B6400BCC0F7 /* stm32f7xx_hal_pcd.cpp */,
+				5563E143253A8B6400BCC0F7 /* stm32f7xx_hal_tim.cpp */,
+				5563E144253A8B6400BCC0F7 /* stm32f7xx_hal_exti.cpp */,
+				5563E145253A8B6400BCC0F7 /* stm32f7xx_hal_i2c_ex.cpp */,
+				5563E146253A8B6400BCC0F7 /* stm32f7xx_hal_pcd_ex.cpp */,
+				5563E147253A8B6400BCC0F7 /* stm32f7xx_hal_tim_ex.cpp */,
+				5563E148253A8B6400BCC0F7 /* stm32f7xx_hal_flash_ex.cpp */,
+				5563E149253A8B6400BCC0F7 /* stm32f7xx_hal.cpp */,
+				5563E14A253A8B6400BCC0F7 /* stm32f7xx_ll_usb.cpp */,
+				5563E14B253A8B6400BCC0F7 /* stm32f7xx_hal_rcc_ex.cpp */,
+				5563E14C253A8B6400BCC0F7 /* stm32f7xx_hal_dma.cpp */,
+				5563E14D253A8B6400BCC0F7 /* stm32f7xx_hal_cortex.cpp */,
+				5563E14E253A8B6400BCC0F7 /* stm32f7xx_hal_dma_ex.cpp */,
+				5563E14F253A8B6400BCC0F7 /* stm32f7xx_hal_pwr_ex.cpp */,
+				5563E150253A8B6400BCC0F7 /* stm32f7xx_hal_pwr.cpp */,
 			);
 			path = Src;
 			sourceTree = "<group>";
@@ -405,9 +405,9 @@
 		5563E17A253A8B6400BCC0F7 /* Src */ = {
 			isa = PBXGroup;
 			children = (
-				5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.c */,
-				5563E17C253A8B6400BCC0F7 /* usbd_core.c */,
-				5563E17D253A8B6400BCC0F7 /* usbd_ioreq.c */,
+				5563E17B253A8B6400BCC0F7 /* usbd_ctlreq.cpp */,
+				5563E17C253A8B6400BCC0F7 /* usbd_core.cpp */,
+				5563E17D253A8B6400BCC0F7 /* usbd_ioreq.cpp */,
 			);
 			path = Src;
 			sourceTree = "<group>";
@@ -465,7 +465,7 @@
 		5563E185253A8B6400BCC0F7 /* Src */ = {
 			isa = PBXGroup;
 			children = (
-				5563E186253A8B6400BCC0F7 /* usbd_dfu.c */,
+				55E1D8F8253FA29C00628EF6 /* usbd_dfu.cpp */,
 			);
 			path = Src;
 			sourceTree = "<group>";
@@ -516,10 +516,10 @@
 			isa = PBXGroup;
 			children = (
 				5563E190253A8B6400BCC0F7 /* startup_stm32f730i8kx.s */,
-				5563E191253A8B6400BCC0F7 /* stm32f7xx_it.c */,
-				5563E192253A8B6400BCC0F7 /* main.c */,
-				5563E193253A8B6400BCC0F7 /* system_stm32f7xx.c */,
-				5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.c */,
+				5563E191253A8B6400BCC0F7 /* stm32f7xx_it.cpp */,
+				5563E192253A8B6400BCC0F7 /* main.cpp */,
+				5563E193253A8B6400BCC0F7 /* system_stm32f7xx.cpp */,
+				5563E194253A8B6400BCC0F7 /* stm32f7xx_hal_msp.cpp */,
 			);
 			path = Src;
 			sourceTree = "<group>";
@@ -558,11 +558,11 @@
 		5563E19D253A8B6500BCC0F7 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.c */,
+				5563E19E253A8B6500BCC0F7 /* usbd_dfu_if.cpp */,
 				5563E19F253A8B6500BCC0F7 /* usbd_desc.h */,
-				5563E1A0253A8B6500BCC0F7 /* usb_device.c */,
+				5563E1A0253A8B6500BCC0F7 /* usb_device.cpp */,
 				5563E1A1253A8B6500BCC0F7 /* usbd_dfu_if.h */,
-				5563E1A2253A8B6500BCC0F7 /* usbd_desc.c */,
+				5563E1A2253A8B6500BCC0F7 /* usbd_desc.cpp */,
 				5563E1A3253A8B6500BCC0F7 /* usb_device.h */,
 			);
 			path = App;
@@ -572,7 +572,7 @@
 			isa = PBXGroup;
 			children = (
 				5563E1A5253A8B6500BCC0F7 /* usbd_conf.h */,
-				5563E1A6253A8B6500BCC0F7 /* usbd_conf.c */,
+				5563E1A6253A8B6500BCC0F7 /* usbd_conf.cpp */,
 			);
 			path = Target;
 			sourceTree = "<group>";
@@ -635,37 +635,37 @@
 			buildActionMask = 2147483647;
 			files = (
 				5563E1AB253A8B8500BCC0F7 /* startup_stm32f730i8kx.s in Sources */,
-				5563E1AC253A8B8500BCC0F7 /* stm32f7xx_it.c in Sources */,
-				5563E1AD253A8B8500BCC0F7 /* main.c in Sources */,
-				5563E1AE253A8B8500BCC0F7 /* system_stm32f7xx.c in Sources */,
-				5563E1AF253A8B8500BCC0F7 /* stm32f7xx_hal_msp.c in Sources */,
-				5563E1C6253A8B8500BCC0F7 /* stm32f7xx_hal_rcc.c in Sources */,
-				5563E1C7253A8B8500BCC0F7 /* stm32f7xx_hal_flash.c in Sources */,
-				5563E1C8253A8B8500BCC0F7 /* stm32f7xx_hal_gpio.c in Sources */,
-				5563E1C9253A8B8500BCC0F7 /* stm32f7xx_hal_i2c.c in Sources */,
-				5563E1CA253A8B8500BCC0F7 /* stm32f7xx_hal_pcd.c in Sources */,
-				5563E1CB253A8B8500BCC0F7 /* stm32f7xx_hal_tim.c in Sources */,
-				5563E1CC253A8B8500BCC0F7 /* stm32f7xx_hal_exti.c in Sources */,
-				5563E1CD253A8B8500BCC0F7 /* stm32f7xx_hal_i2c_ex.c in Sources */,
-				5563E1CE253A8B8500BCC0F7 /* stm32f7xx_hal_pcd_ex.c in Sources */,
-				5563E1CF253A8B8500BCC0F7 /* stm32f7xx_hal_tim_ex.c in Sources */,
-				5563E1D0253A8B8500BCC0F7 /* stm32f7xx_hal_flash_ex.c in Sources */,
-				5563E1D1253A8B8500BCC0F7 /* stm32f7xx_hal.c in Sources */,
-				5563E1D2253A8B8500BCC0F7 /* stm32f7xx_ll_usb.c in Sources */,
-				5563E1D3253A8B8500BCC0F7 /* stm32f7xx_hal_rcc_ex.c in Sources */,
-				5563E1D4253A8B8500BCC0F7 /* stm32f7xx_hal_dma.c in Sources */,
-				5563E1D5253A8B8500BCC0F7 /* stm32f7xx_hal_cortex.c in Sources */,
-				5563E1D6253A8B8500BCC0F7 /* stm32f7xx_hal_dma_ex.c in Sources */,
-				5563E1D7253A8B8500BCC0F7 /* stm32f7xx_hal_pwr_ex.c in Sources */,
-				5563E1D8253A8B8500BCC0F7 /* stm32f7xx_hal_pwr.c in Sources */,
-				5563E1F7253A8B8500BCC0F7 /* usbd_ctlreq.c in Sources */,
-				5563E1F8253A8B8500BCC0F7 /* usbd_core.c in Sources */,
-				5563E1F9253A8B8500BCC0F7 /* usbd_ioreq.c in Sources */,
-				5563E1FB253A8B8500BCC0F7 /* usbd_dfu.c in Sources */,
-				5563E1FF253A8B8500BCC0F7 /* usbd_dfu_if.c in Sources */,
-				5563E201253A8B8500BCC0F7 /* usb_device.c in Sources */,
-				5563E203253A8B8500BCC0F7 /* usbd_desc.c in Sources */,
-				5563E206253A8B8500BCC0F7 /* usbd_conf.c in Sources */,
+				5563E1AC253A8B8500BCC0F7 /* stm32f7xx_it.cpp in Sources */,
+				5563E1AD253A8B8500BCC0F7 /* main.cpp in Sources */,
+				5563E1AE253A8B8500BCC0F7 /* system_stm32f7xx.cpp in Sources */,
+				5563E1AF253A8B8500BCC0F7 /* stm32f7xx_hal_msp.cpp in Sources */,
+				5563E1C6253A8B8500BCC0F7 /* stm32f7xx_hal_rcc.cpp in Sources */,
+				5563E1C7253A8B8500BCC0F7 /* stm32f7xx_hal_flash.cpp in Sources */,
+				5563E1C8253A8B8500BCC0F7 /* stm32f7xx_hal_gpio.cpp in Sources */,
+				5563E1C9253A8B8500BCC0F7 /* stm32f7xx_hal_i2c.cpp in Sources */,
+				55E1D8F9253FA29C00628EF6 /* usbd_dfu.cpp in Sources */,
+				5563E1CA253A8B8500BCC0F7 /* stm32f7xx_hal_pcd.cpp in Sources */,
+				5563E1CB253A8B8500BCC0F7 /* stm32f7xx_hal_tim.cpp in Sources */,
+				5563E1CC253A8B8500BCC0F7 /* stm32f7xx_hal_exti.cpp in Sources */,
+				5563E1CD253A8B8500BCC0F7 /* stm32f7xx_hal_i2c_ex.cpp in Sources */,
+				5563E1CE253A8B8500BCC0F7 /* stm32f7xx_hal_pcd_ex.cpp in Sources */,
+				5563E1CF253A8B8500BCC0F7 /* stm32f7xx_hal_tim_ex.cpp in Sources */,
+				5563E1D0253A8B8500BCC0F7 /* stm32f7xx_hal_flash_ex.cpp in Sources */,
+				5563E1D1253A8B8500BCC0F7 /* stm32f7xx_hal.cpp in Sources */,
+				5563E1D2253A8B8500BCC0F7 /* stm32f7xx_ll_usb.cpp in Sources */,
+				5563E1D3253A8B8500BCC0F7 /* stm32f7xx_hal_rcc_ex.cpp in Sources */,
+				5563E1D4253A8B8500BCC0F7 /* stm32f7xx_hal_dma.cpp in Sources */,
+				5563E1D5253A8B8500BCC0F7 /* stm32f7xx_hal_cortex.cpp in Sources */,
+				5563E1D6253A8B8500BCC0F7 /* stm32f7xx_hal_dma_ex.cpp in Sources */,
+				5563E1D7253A8B8500BCC0F7 /* stm32f7xx_hal_pwr_ex.cpp in Sources */,
+				5563E1D8253A8B8500BCC0F7 /* stm32f7xx_hal_pwr.cpp in Sources */,
+				5563E1F7253A8B8500BCC0F7 /* usbd_ctlreq.cpp in Sources */,
+				5563E1F8253A8B8500BCC0F7 /* usbd_core.cpp in Sources */,
+				5563E1F9253A8B8500BCC0F7 /* usbd_ioreq.cpp in Sources */,
+				5563E1FF253A8B8500BCC0F7 /* usbd_dfu_if.cpp in Sources */,
+				5563E201253A8B8500BCC0F7 /* usb_device.cpp in Sources */,
+				5563E203253A8B8500BCC0F7 /* usbd_desc.cpp in Sources */,
+				5563E206253A8B8500BCC0F7 /* usbd_conf.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

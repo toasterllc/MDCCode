@@ -64,6 +64,7 @@ static void MX_GPIO_Init(void);
   * @retval int
   */
   
+// __attribute__((visibility ("default")))
 int main(void)
 {
   /* USER CODE BEGIN 1 */

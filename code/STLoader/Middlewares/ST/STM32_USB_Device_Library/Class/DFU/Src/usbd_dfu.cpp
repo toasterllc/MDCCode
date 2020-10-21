@@ -96,7 +96,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // CMD_OUT endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            ST_EPADDR_CMD_OUT,                                       // bEndpointAddress
+            ST_EPADDR_CMD_OUT,                                          // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
@@ -104,7 +104,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // CMD_IN endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            ST_EPADDR_CMD_IN,                                        // bEndpointAddress
+            ST_EPADDR_CMD_IN,                                           // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
@@ -112,7 +112,7 @@ __ALIGN_BEGIN static uint8_t USBD_DFU_CfgDesc[USBD_DFU_CfgDescLen] __ALIGN_END =
             // DATA_OUT endpoint
             0x07,                                                       // bLength: Endpoint Descriptor size
             USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-            ST_EPADDR_DATA_OUT,                                      // bEndpointAddress
+            ST_EPADDR_DATA_OUT,                                         // bEndpointAddress
             0x02,                                                       // bmAttributes: Bulk
             LOBYTE(MAX_PACKET_SIZE), HIBYTE(MAX_PACKET_SIZE),           // wMaxPacketSize
             0x00,                                                       // bInterval: ignore for Bulk transfer
@@ -150,7 +150,7 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
     USBD_DFU_HandleTypeDef *hdfu;
     
     /* Allocate Audio structure */
-    hdfu = USBD_malloc(sizeof(USBD_DFU_HandleTypeDef));
+    hdfu = (USBD_DFU_HandleTypeDef*)USBD_malloc(sizeof(USBD_DFU_HandleTypeDef));
     
     if (hdfu == NULL)
     {
