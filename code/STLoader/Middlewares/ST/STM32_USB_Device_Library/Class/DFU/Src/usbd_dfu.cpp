@@ -294,7 +294,6 @@ static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     return (uint8_t)USBD_OK;
 }
 
-static uint32_t vectorTableAddr __attribute__((section(".noinit")));
 static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
     STLoaderCmd* cmd = &hdfu->st.cmd;
@@ -346,7 +345,8 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         case STLoaderCmd::Op::Reset: {
             // Verify we got the right argument size
             if (argLen < sizeof(cmd->arg.reset)) return USBD_FAIL;
-            vectorTableAddr = cmd->arg.reset.vectorTableAddr;
+            extern uintptr_t AppVectorTableAddr;
+            AppVectorTableAddr = cmd->arg.reset.vectorTableAddr;
             // Perform software reset
             NVIC_SystemReset();
             break;
