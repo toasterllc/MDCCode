@@ -132,19 +132,19 @@
   * @param  None
   * @retval None
   */
-extern uintptr_t _sidata;
-extern uintptr_t _sdata;
-extern uintptr_t _edata;
-extern uintptr_t _sbss;
-extern uintptr_t _ebss;
-extern uintptr_t _sisr_vector;
+extern uint8_t _sidata;
+extern uint8_t _sdata;
+extern uint8_t _edata;
+extern uint8_t _sbss;
+extern uint8_t _ebss;
+extern uint8_t _sisr_vector;
 extern "C" void __libc_init_array();
 extern int main();
 void SystemInit(void) {
     // Copy .data section from flash to RAM
-    memcpy((void*)_sdata, (void*)_sidata, _edata-_sdata);
+    memcpy(&_sdata, &_sidata, &_edata-&_sdata);
     // Zero .bss section
-    memset((void*)_sbss, 0, _ebss-_sbss);
+    memset(&_sbss, 0, &_ebss-&_sbss);
     
     // FPU settings
     if (__FPU_PRESENT && __FPU_USED) {
@@ -152,7 +152,7 @@ void SystemInit(void) {
     }
     
     // Set vector table address
-    SCB->VTOR = _sisr_vector;
+    SCB->VTOR = (uint32_t)&_sisr_vector;
     
     // Call static constructors
     __libc_init_array();
