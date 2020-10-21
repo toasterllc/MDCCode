@@ -1156,7 +1156,7 @@ void     HAL_RCC_GetOscConfig(RCC_OscInitTypeDef *RCC_OscInitStruct);
 void     HAL_RCC_GetClockConfig(RCC_ClkInitTypeDef *RCC_ClkInitStruct, uint32_t *pFLatency);
 
 /* CSS NMI IRQ handler */
-void HAL_RCC_NMI_IRQHandler(void);
+void ISR_HAL_RCC_NMI(void);
 
 /* User Callbacks in non blocking mode (IT mode) */ 
 void HAL_RCC_CSSCallback(void);

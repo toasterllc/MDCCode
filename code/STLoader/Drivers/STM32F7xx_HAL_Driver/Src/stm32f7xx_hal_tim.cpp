@@ -3175,7 +3175,7 @@ HAL_StatusTypeDef HAL_TIM_Encoder_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Cha
   * @param  htim TIM  handle
   * @retval None
   */
-void HAL_TIM_IRQHandler(TIM_HandleTypeDef *htim)
+void ISR_HAL_TIM(TIM_HandleTypeDef *htim)
 {
   /* Capture compare 1 event */
   if (__HAL_TIM_GET_FLAG(htim, TIM_FLAG_CC1) != RESET)

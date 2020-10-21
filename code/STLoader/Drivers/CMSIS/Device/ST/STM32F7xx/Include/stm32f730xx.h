@@ -15756,8 +15756,8 @@ typedef struct
 /* Aliases for __IRQn */
 #define HASH_RNG_IRQn              RNG_IRQn
 
-/* Aliases for __IRQHandler */
-#define HASH_RNG_IRQHandler        RNG_IRQHandler
+/* Aliases for ISR__ */
+#define ISR_HASH_RNG        ISR_RNG
 
 /**
   * @}

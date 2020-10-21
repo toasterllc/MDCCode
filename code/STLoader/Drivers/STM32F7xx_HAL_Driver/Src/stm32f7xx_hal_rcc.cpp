@@ -1195,10 +1195,10 @@ void HAL_RCC_GetClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, uint32_t *pF
 
 /**
   * @brief This function handles the RCC CSS interrupt request.
-  * @note This API should be called under the NMI_Handler().
+  * @note This API should be called under the ISR_NMI().
   * @retval None
   */
-void HAL_RCC_NMI_IRQHandler(void)
+void ISR_HAL_RCC_NMI(void)
 {
   /* Check RCC CSSF flag  */
   if (__HAL_RCC_GET_IT(RCC_IT_CSS))

@@ -1566,7 +1566,7 @@
 #define HAL_PWR_ConfigPVD															HAL_PWREx_ConfigPVD
 #define HAL_PWR_EnablePVD															HAL_PWREx_EnablePVD
 #define HAL_PWR_DisablePVD													  HAL_PWREx_DisablePVD
-#define HAL_PWR_PVD_IRQHandler											  HAL_PWREx_PVD_IRQHandler
+#define ISR_HAL_PWR_PVD											  ISR_HAL_PWREx_PVD
 #endif
 #define HAL_PWR_PVDConfig                             HAL_PWR_ConfigPVD
 #define HAL_PWR_DisableBkUpReg                        HAL_PWREx_DisableBkUpReg
@@ -1575,9 +1575,9 @@
 #define HAL_PWR_EnableBkUpReg                         HAL_PWREx_EnableBkUpReg
 #define HAL_PWR_EnableFlashPowerDown                  HAL_PWREx_EnableFlashPowerDown
 #define HAL_PWR_EnableVddio2Monitor                   HAL_PWREx_EnableVddio2Monitor
-#define HAL_PWR_PVD_PVM_IRQHandler                    HAL_PWREx_PVD_PVM_IRQHandler
+#define ISR_HAL_PWR_PVD_PVM                    ISR_HAL_PWREx_PVD_PVM
 #define HAL_PWR_PVDLevelConfig                        HAL_PWR_ConfigPVD
-#define HAL_PWR_Vddio2Monitor_IRQHandler              HAL_PWREx_Vddio2Monitor_IRQHandler
+#define ISR_HAL_PWR_Vddio2Monitor              ISR_HAL_PWREx_Vddio2Monitor
 #define HAL_PWR_Vddio2MonitorCallback                 HAL_PWREx_Vddio2MonitorCallback
 #define HAL_PWREx_ActivateOverDrive                   HAL_PWREx_EnableOverDrive
 #define HAL_PWREx_DeactivateOverDrive                 HAL_PWREx_DisableOverDrive
@@ -2547,7 +2547,7 @@
 #define __HAL_RCC_QSPI_IS_CLK_DISABLED        __HAL_RCC_QUADSPI_IS_CLK_DISABLED
 #define __HAL_RCC_QSPI_IS_CLK_SLEEP_ENABLED   __HAL_RCC_QUADSPI_IS_CLK_SLEEP_ENABLED
 #define __HAL_RCC_QSPI_IS_CLK_SLEEP_DISABLED  __HAL_RCC_QUADSPI_IS_CLK_SLEEP_DISABLED
-#define QSPI_IRQHandler QUADSPI_IRQHandler
+#define ISR_QSPI ISR_QUADSPI
 #endif /* __HAL_RCC_QUADSPI_CLK_ENABLE */
 
 #define __RNG_CLK_DISABLE __HAL_RCC_RNG_CLK_DISABLE
@@ -3460,7 +3460,7 @@
 #define  SD_SDMMC_SEND_IF_COND      SD_SDIO_SEND_IF_COND
 /* alias CMSIS */
 #define  SDMMC1_IRQn                SDIO_IRQn
-#define  SDMMC1_IRQHandler          SDIO_IRQHandler
+#define  ISR_SDMMC1          ISR_SDIO
 #endif
 
 #if defined(STM32F7) || defined(STM32L4)
@@ -3486,7 +3486,7 @@
 #define  SD_SDIO_SEND_IF_COND	      SD_SDMMC_SEND_IF_COND
 /* alias CMSIS for compatibilities */
 #define  SDIO_IRQn                  SDMMC1_IRQn
-#define  SDIO_IRQHandler            SDMMC1_IRQHandler
+#define  ISR_SDIO            ISR_SDMMC1
 #endif
 
 #if defined(STM32F7) || defined(STM32F4) || defined(STM32F2) || defined(STM32L4) || defined(STM32H7)

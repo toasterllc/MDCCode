@@ -442,7 +442,7 @@ HAL_StatusTypeDef HAL_EXTI_GetHandle(EXTI_HandleTypeDef *hexti, uint32_t ExtiLin
   * @param  hexti Exti handle.
   * @retval none.
   */
-void HAL_EXTI_IRQHandler(EXTI_HandleTypeDef *hexti)
+void ISR_HAL_EXTI(EXTI_HandleTypeDef *hexti)
 {
   uint32_t regval;
   uint32_t maskline;

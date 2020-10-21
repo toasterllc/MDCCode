@@ -4294,7 +4294,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Abort_IT(I2C_HandleTypeDef *hi2c, uint16_t DevA
   *                the configuration information for the specified I2C.
   * @retval None
   */
-void HAL_I2C_EV_IRQHandler(I2C_HandleTypeDef *hi2c)
+void ISR_HAL_I2C_EV(I2C_HandleTypeDef *hi2c)
 {
   /* Get current IT Flags and IT sources value */
   uint32_t itflags   = READ_REG(hi2c->Instance->ISR);
@@ -4313,7 +4313,7 @@ void HAL_I2C_EV_IRQHandler(I2C_HandleTypeDef *hi2c)
   *                the configuration information for the specified I2C.
   * @retval None
   */
-void HAL_I2C_ER_IRQHandler(I2C_HandleTypeDef *hi2c)
+void ISR_HAL_I2C_ER(I2C_HandleTypeDef *hi2c)
 {
   uint32_t itflags   = READ_REG(hi2c->Instance->ISR);
   uint32_t itsources = READ_REG(hi2c->Instance->CR1);
