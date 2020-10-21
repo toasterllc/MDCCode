@@ -294,22 +294,6 @@ static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     return (uint8_t)USBD_OK;
 }
 
-void setLed0(bool on) {
-    HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
-void setLed1(bool on) {
-    HAL_GPIO_WritePin(GPIOE, STM_LED1_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
-void setLed2(bool on) {
-    HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
-void setLed3(bool on) {
-    HAL_GPIO_WritePin(GPIOB, STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
-}
-
 static uint32_t vectorTableAddr __attribute__((section(".noinit")));
 static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
@@ -330,12 +314,16 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         case STLoaderCmd::Op::LEDSet: {
             // Verify that we got the right argument size
             if (argLen < sizeof(cmd->arg.ledSet)) return USBD_FAIL;
+            extern void led0Set(bool on);
+            extern void led1Set(bool on);
+            extern void led2Set(bool on);
+            extern void led3Set(bool on);
             
             switch (cmd->arg.ledSet.idx) {
-            case 0: setLed0(cmd->arg.ledSet.on); break;
-            case 1: setLed1(cmd->arg.ledSet.on); break;
-            case 2: setLed2(cmd->arg.ledSet.on); break;
-            case 3: setLed3(cmd->arg.ledSet.on); break;
+            case 0: led0Set(cmd->arg.ledSet.on); break;
+            case 1: led1Set(cmd->arg.ledSet.on); break;
+            case 2: led2Set(cmd->arg.ledSet.on); break;
+            case 3: led3Set(cmd->arg.ledSet.on); break;
             }
             
             break;

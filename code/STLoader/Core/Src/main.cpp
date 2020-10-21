@@ -19,7 +19,6 @@
 #include <stdbool.h>
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 #include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -106,6 +105,7 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
+  extern void Error_Handler();
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
@@ -154,6 +154,31 @@ void SystemClock_Config(void)
   }
 }
 
+#define STM_LED0_Pin            GPIO_PIN_12
+#define STM_LED0_GPIO_Port      GPIOE
+#define STM_LED1_Pin            GPIO_PIN_15
+#define STM_LED1_GPIO_Port      GPIOE
+#define STM_LED2_Pin            GPIO_PIN_10
+#define STM_LED2_GPIO_Port      GPIOB
+#define STM_LED3_Pin            GPIO_PIN_11
+#define STM_LED3_GPIO_Port      GPIOB
+
+void led0Set(bool on) {
+    HAL_GPIO_WritePin(GPIOE, STM_LED0_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void led1Set(bool on) {
+    HAL_GPIO_WritePin(GPIOE, STM_LED1_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void led2Set(bool on) {
+    HAL_GPIO_WritePin(GPIOB, STM_LED2_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
+void led3Set(bool on) {
+    HAL_GPIO_WritePin(GPIOB, STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
+}
+
 /**
   * @brief GPIO Initialization Function
   * @param None
@@ -198,7 +223,7 @@ static void MX_GPIO_Init(void)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
+void Error_Handler()
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */

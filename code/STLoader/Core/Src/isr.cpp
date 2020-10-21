@@ -1,5 +1,4 @@
-#include "main.h"
-#include "stm32f7xx_it.h"
+#include "stm32f7xx_hal.h"
 
 void ISR_NMI() {}
 void ISR_HardFault() { for (;;); }
