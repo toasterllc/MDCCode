@@ -5,7 +5,7 @@
 
 .global VectorTable
 .global ISR_Default
-.global StartApp
+
 
 // Reset ISR
 .section .text.ISR_Reset
@@ -17,17 +17,6 @@ ISR_Reset:
     // Jump to init routine
     b SystemInit
 .size ISR_Reset, .-ISR_Reset
-
-// Start application function
-.section .text
-.type StartApp, %function
-StartApp:
-    // Load stack pointer from the app's vector table
-    ldr sp, [r0, #0]
-    // Jump to reset vector in app's vector table
-    ldr r0, [r0, #4]
-    bx r0
-.size StartApp, .-StartApp
 
 
 // Default ISR handler

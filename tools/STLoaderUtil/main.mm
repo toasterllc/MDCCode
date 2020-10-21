@@ -5,6 +5,7 @@
 #import <vector>
 #import <string>
 #import <iostream>
+#import <optional>
 #import "ELFBinary.h"
 #import "SendRight.h"
 #import "USBInterface.h"
@@ -128,6 +129,7 @@ static void ledSet(const Args& args, USBInterface& stInterface) {
 static void stLoad(const Args& args, USBInterface& stInterface) {
     ELFBinary bin(args.filePath.c_str());
     auto sections = bin.sections();
+    std::optional<uint32_t> vectorTableAddr;
     for (const auto& s : sections) {
         // Ignore sections that don't have the ALLOC flag ("The section occupies
         // memory during process execution.")
@@ -159,8 +161,35 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             IOReturn ior = stInterface.write(Endpoint::STDataOut, data, dataLen);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STDataOut");
         }
+        
+        // Remember the vector table address when we find it
+        if (s.name == ".isr_vector") {
+            if (vectorTableAddr) throw std::runtime_error("more than one vector table");
+            vectorTableAddr = dataAddr;
+        }
     }
     printf("\n");
+    
+    
+    // Verify that we had a vector table
+    if (!vectorTableAddr) throw std::runtime_error("no vector table");
+    
+    // Reset the device, triggering it to load the program we just wrote
+    {
+        printf("Resetting device...\n");
+        const STLoaderCmd cmd = {
+            .op = STLoaderCmd::Op::Reset,
+            .arg = {
+                .reset = {
+                    .vectorTableAddr = *vectorTableAddr,
+                },
+            },
+        };
+        
+        IOReturn ior = stInterface.write(Endpoint::STCmdOut, &cmd, sizeof(cmd));
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+    }
+    printf("Done\n");
 }
 
 static void iceLoad(const Args& args, USBInterface& stInterface) {

@@ -21,8 +21,6 @@ uint32_t SystemCoreClock = 16000000;
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
 
-uintptr_t AppVectorTableAddr __attribute__((section(".noinit")));
-extern "C" void StartApp(uintptr_t vectorTableAddr);
 extern "C" void __libc_init_array();
 void SystemInit(void) {
     extern uint8_t _sidata;
@@ -32,23 +30,6 @@ void SystemInit(void) {
     extern uint8_t _ebss;
     extern uint8_t _sisr_vector;
     extern int main();
-    
-    // Stash and reset `AppVectorTableAddr` so that we only attempt to start the app once
-    // after each software reset.
-    const uintptr_t appVectorTableAddr = AppVectorTableAddr;
-    AppVectorTableAddr = 0;
-    
-    // Cache RCC_CSR since we're about to clear it
-    auto csr = READ_REG(RCC->CSR);
-    // Clear RCC_CSR by setting the RMVF bit
-    SET_BIT(RCC->CSR, RCC_CSR_RMVF);
-    // Check if we reset due to a software reset (SFTRSTF), and
-    // we have the app's vector table.
-    if (READ_BIT(csr, RCC_CSR_SFTRSTF) && appVectorTableAddr) {
-        // Start the application
-        StartApp(appVectorTableAddr);
-        return;
-    }
     
     // Copy .data section from flash to RAM
     memcpy(&_sdata, &_sidata, &_edata-&_sdata);
