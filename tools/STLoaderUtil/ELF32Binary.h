@@ -4,7 +4,7 @@
 #include <vector>
 #include "Enum.h"
 
-class ELFBinary {
+class ELF32Binary {
 public:
     Enum(uint32_t, SectionType, SectionTypes,
         NUL         = 0x00000000,
@@ -44,7 +44,7 @@ public:
     };
     
     // Throws on error
-    ELFBinary(const char* path) {
+    ELF32Binary(const char* path) {
         try {
             _fd = open(path, O_RDONLY);
             if (_fd < 0) throw std::runtime_error(std::string("open failed: ") + strerror(errno));
@@ -66,9 +66,11 @@ public:
                 throw std::runtime_error("bad magic number");
             
             // Verify that we have an ELF32 binary
-            ELFHeader header = _read<ELFHeader>(0);
+            ELF32Header header = _read<ELF32Header>(0);
             if (header.e_ident[ELFIdentIdxs::CLASS] != ELFClasses::CLASS32)
                 throw std::runtime_error("not an ELF32 binary");
+            
+            _entryPointAddr = header.e_entry;
         
         } catch (const std::exception& e) {
             _reset();
@@ -76,18 +78,22 @@ public:
         }
     }
     
-    ~ELFBinary() {
+    ~ELF32Binary() {
         _reset();
+    }
+    
+    uint32_t entryPointAddr() {
+        return _entryPointAddr;
     }
     
     // Throws on error
     std::vector<Section> sections() {
-        const ELFHeader ehdr = _read<ELFHeader>(0);
-        const ELFSectionHeader strhdr = _read<ELFSectionHeader>(ehdr.e_shoff + ehdr.e_shstrndx*sizeof(ELFSectionHeader));
+        const ELF32Header ehdr = _read<ELF32Header>(0);
+        const ELF32SectionHeader strhdr = _read<ELF32SectionHeader>(ehdr.e_shoff + ehdr.e_shstrndx*sizeof(ELF32SectionHeader));
         const size_t sectionCount = ehdr.e_shnum;
         std::vector<Section> sections;
         for (size_t i=0; i<sectionCount; i++) {
-            const ELFSectionHeader shdr = _read<ELFSectionHeader>(ehdr.e_shoff + i*sizeof(ELFSectionHeader));
+            const ELF32SectionHeader shdr = _read<ELF32SectionHeader>(ehdr.e_shoff + i*sizeof(ELF32SectionHeader));
             Section s;
             s.idx = i;
             s.name = _readString(strhdr.sh_offset + shdr.sh_name);
@@ -108,7 +114,7 @@ public:
     }
     
 private:
-    struct ELFHeader {
+    struct ELF32Header {
         unsigned char e_ident[16];
         uint16_t e_type;
         uint16_t e_machine;
@@ -125,7 +131,7 @@ private:
         uint16_t e_shstrndx;
     };
     
-    struct ELFSectionHeader {
+    struct ELF32SectionHeader {
         uint32_t sh_name;
         uint32_t sh_type;
         uint32_t sh_flags;
@@ -196,4 +202,5 @@ private:
     int _fd = -1;
     void* _data = nullptr;
     size_t _dataLen = 0;
+    uint32_t _entryPointAddr = 0;
 };

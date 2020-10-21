@@ -6,7 +6,7 @@
 #import <string>
 #import <iostream>
 #import <optional>
-#import "ELFBinary.h"
+#import "ELF32Binary.h"
 #import "SendRight.h"
 #import "USBInterface.h"
 #import "STLoaderTypes.h"
@@ -127,13 +127,16 @@ static void ledSet(const Args& args, USBInterface& stInterface) {
 }
 
 static void stLoad(const Args& args, USBInterface& stInterface) {
-    ELFBinary bin(args.filePath.c_str());
+    ELF32Binary bin(args.filePath.c_str());
     auto sections = bin.sections();
-    std::optional<uint32_t> vectorTableAddr;
+    
+    uint32_t entryPointAddr = bin.entryPointAddr();
+    if (!entryPointAddr) throw std::runtime_error("no entry point");
+    
     for (const auto& s : sections) {
         // Ignore sections that don't have the ALLOC flag ("The section occupies
         // memory during process execution.")
-        if (!(s.flags & ELFBinary::SectionFlags::ALLOC)) continue;
+        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
         const void*const data = bin.sectionData(s);
         const size_t dataLen = s.size;
         const uint32_t dataAddr = s.addr;
@@ -161,18 +164,7 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             IOReturn ior = stInterface.write(Endpoint::STDataOut, data, dataLen);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STDataOut");
         }
-        
-        // Remember the vector table address when we find it
-        if (s.name == ".isr_vector") {
-            if (vectorTableAddr) throw std::runtime_error("more than one vector table");
-            vectorTableAddr = dataAddr;
-        }
     }
-    printf("\n");
-    
-    
-    // Verify that we had a vector table
-    if (!vectorTableAddr) throw std::runtime_error("no vector table");
     
     // Reset the device, triggering it to load the program we just wrote
     {
@@ -181,7 +173,7 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             .op = STLoaderCmd::Op::Reset,
             .arg = {
                 .reset = {
-                    .vectorTableAddr = *vectorTableAddr,
+                    .entryPointAddr = entryPointAddr,
                 },
             },
         };

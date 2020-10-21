@@ -345,8 +345,8 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
         case STLoaderCmd::Op::Reset: {
             // Verify we got the right argument size
             if (argLen < sizeof(cmd->arg.reset)) return USBD_FAIL;
-            extern uintptr_t AppVectorTableAddr;
-            AppVectorTableAddr = cmd->arg.reset.vectorTableAddr;
+            extern uintptr_t AppEntryPointAddr;
+            AppEntryPointAddr = cmd->arg.reset.entryPointAddr;
             // Perform software reset
             NVIC_SystemReset();
             break;

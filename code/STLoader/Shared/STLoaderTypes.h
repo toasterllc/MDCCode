@@ -18,7 +18,7 @@ struct STLoaderCmd {
         } writeData;
         
         struct {
-            uint32_t vectorTableAddr;
+            uint32_t entryPointAddr;
         } reset;
     } arg;
 } __attribute__((packed));
