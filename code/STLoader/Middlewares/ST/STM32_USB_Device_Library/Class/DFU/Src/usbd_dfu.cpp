@@ -15,6 +15,7 @@ static uint8_t USBD_DFU_SOF(USBD_HandleTypeDef *pdev);
 static uint8_t *USBD_DFU_GetCfgDesc(uint16_t *length);
 static uint8_t *USBD_DFU_GetDeviceQualifierDesc(uint16_t *length);
 
+Channel<USBCmdOutEvent, 3> USBCmdOutChannel;
 Channel<USBDataOutEvent, 3> USBDataOutChannel;
 
 #if (USBD_SUPPORT_USER_STRING_DESC == 1U)
@@ -301,11 +302,24 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     USBD_DFU_HandleTypeDef* hdfu = (USBD_DFU_HandleTypeDef*)pdev->pClassData;
     const size_t dataLen = USBD_LL_GetRxDataSize(pdev, epnum);
     
-    USBDataOutChannel.writeTry(USBDataOutEvent{
-        .endpoint = epnum,
-        .data = hdfu->stDataOutBuf,
-        .dataLen = dataLen,
-    });
+    switch (epnum) {
+    
+    // CMD_OUT endpoint
+    case EPNUM(ST_EPADDR_CMD_OUT): {
+        USBCmdOutChannel.writeTry(USBCmdOutEvent{
+            .data = hdfu->stDataOutBuf,
+            .dataLen = dataLen,
+        });
+        break;
+    }
+    
+    // DATA_OUT endpoint
+    case EPNUM(ST_EPADDR_DATA_OUT): {
+        USBDataOutChannel.writeTry(USBDataOutEvent{
+            .dataLen = dataLen,
+        });
+        break;
+    }}
     
     return (uint8_t)USBD_OK;
 }

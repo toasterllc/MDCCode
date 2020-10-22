@@ -18,7 +18,6 @@ QSPI_HandleTypeDef hqspi;
 #define ST_EPADDR_CMD_OUT           0x01    // OUT endpoint
 #define ST_EPADDR_CMD_IN            0x81    // IN endpoint (high bit 1 = IN)
 #define ST_EPADDR_DATA_OUT          0x02    // OUT endpoint
-#define EPNUM(addr)                 (addr & 0xF)
 
 
 
@@ -48,76 +47,66 @@ void led3Set(bool on) {
 }
 
 static uintptr_t dataAddr = 0; // TODO: figure out where to put this
-static void handleEvent_USBDataOut(const USBDataOutEvent& ev) {
+static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
     extern USBD_HandleTypeDef hUsbDeviceHS; // TODO: find where to put this
     
-    switch (ev.endpoint) {
-    
-    // CMD_OUT endpoint:
-    //   Handle the supplied command
-    case EPNUM(ST_EPADDR_CMD_OUT): {
-        Assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
-        
-        STLoaderCmd cmd;
-        memcpy(&cmd, ev.data, ev.dataLen);
-        switch (cmd.op) {
-        // Set LED command:
-        case STLoaderCmd::Op::LEDSet: {
-            switch (cmd.arg.ledSet.idx) {
-            case 0: led0Set(cmd.arg.ledSet.on); break;
-            case 1: led1Set(cmd.arg.ledSet.on); break;
-            case 2: led2Set(cmd.arg.ledSet.on); break;
-            case 3: led3Set(cmd.arg.ledSet.on); break;
-            }
-            
-            break;
+    STLoaderCmd cmd;
+    Assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
+    memcpy(&cmd, ev.data, ev.dataLen);
+    switch (cmd.op) {
+    // Set LED command:
+    case STLoaderCmd::Op::LEDSet: {
+        switch (cmd.arg.ledSet.idx) {
+        case 0: led0Set(cmd.arg.ledSet.on); break;
+        case 1: led1Set(cmd.arg.ledSet.on); break;
+        case 2: led2Set(cmd.arg.ledSet.on); break;
+        case 3: led3Set(cmd.arg.ledSet.on); break;
         }
         
-        // Write data command:
-        //   Stash the address we're writing to in `dataAddr`,
-        //   Prepare the DATA_OUT endpoint for writing at that address
-        case STLoaderCmd::Op::WriteData: {
-            dataAddr = cmd.arg.writeData.addr;
-            USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
-            break;
-        }
-        
-        // Reset command:
-        //   Stash the vector table address for access after we reset,
-        //   Perform a software reset
-        case STLoaderCmd::Op::Reset: {
-            extern uintptr_t AppEntryPointAddr;
-            AppEntryPointAddr = cmd.arg.reset.entryPointAddr;
-            // Perform software reset
-            HAL_NVIC_SystemReset();
-            break;
-        }
-        
-        // Bad command
-        default: {
-            break;
-        }}
-        // Prepare to receive another command
-        USBD_DFU_HandleTypeDef* hdfu = (USBD_DFU_HandleTypeDef*)hUsbDeviceHS.pClassData; // TODO: cleanup
-        USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stDataOutBuf, sizeof(hdfu->stDataOutBuf));
         break;
     }
     
-    // DATA_OUT endpoint:
-    //   Update the address that we're writing to,
-    //   Prepare ourself to receive more data
-    case EPNUM(ST_EPADDR_DATA_OUT): {
-        dataAddr += ev.dataLen;
-        // Only prepare for more data if this packet was the maximum size.
-        // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
-        //   "A bulk transfer is complete when the endpoint ... Transfers a
-        //   packet with a payload size less than wMaxPacketSize or
-        //   transfers a zero-length packet".)
-        if (ev.dataLen == MAX_PACKET_SIZE) {
-            USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
-        }
+    // Write data command:
+    //   Stash the address we're writing to in `dataAddr`,
+    //   Prepare the DATA_OUT endpoint for writing at that address
+    case STLoaderCmd::Op::WriteData: {
+        dataAddr = cmd.arg.writeData.addr;
+        USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
+        break;
+    }
+    
+    // Reset command:
+    //   Stash the vector table address for access after we reset,
+    //   Perform a software reset
+    case STLoaderCmd::Op::Reset: {
+        extern uintptr_t AppEntryPointAddr;
+        AppEntryPointAddr = cmd.arg.reset.entryPointAddr;
+        // Perform software reset
+        HAL_NVIC_SystemReset();
+        break;
+    }
+    
+    // Bad command
+    default: {
         break;
     }}
+    
+    // Prepare to receive another command
+    USBD_DFU_HandleTypeDef* hdfu = (USBD_DFU_HandleTypeDef*)hUsbDeviceHS.pClassData; // TODO: cleanup
+    USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stDataOutBuf, sizeof(hdfu->stDataOutBuf));
+}
+
+static void handleEvent_USBDataOut(const USBDataOutEvent& ev) {
+    extern USBD_HandleTypeDef hUsbDeviceHS; // TODO: find where to put this
+    dataAddr += ev.dataLen;
+    // Only prepare for more data if this packet was the maximum size.
+    // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
+    //   "A bulk transfer is complete when the endpoint ... Transfers a
+    //   packet with a payload size less than wMaxPacketSize or
+    //   transfers a zero-length packet".)
+    if (ev.dataLen == MAX_PACKET_SIZE) {
+        USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
+    }
 }
 
 int main() {
@@ -136,7 +125,10 @@ int main() {
     for (;;) {
         // Dequeue outstanding events
         ChannelSelect::Start();
-        if (auto x = USBDataOutChannel.readSelect()) {
+        if (auto x = USBCmdOutChannel.readSelect()) {
+            handleEvent_USBCmdOut(*x);
+        
+        } else if (auto x = USBDataOutChannel.readSelect()) {
             handleEvent_USBDataOut(*x);
         
         } else {

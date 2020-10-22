@@ -104,10 +104,13 @@ extern USBD_ClassTypeDef USBD_DFU;
 
 uint8_t USBD_DFU_RegisterMedia(USBD_HandleTypeDef *pdev, USBD_DFU_MediaTypeDef *fops);
 
-struct USBDataOutEvent {
-    uint8_t endpoint;
+struct USBCmdOutEvent {
     uint8_t* data;
     size_t dataLen;
 };
+extern Channel<USBCmdOutEvent, 3> USBCmdOutChannel;
 
+struct USBDataOutEvent {
+    size_t dataLen;
+};
 extern Channel<USBDataOutEvent, 3> USBDataOutChannel;
