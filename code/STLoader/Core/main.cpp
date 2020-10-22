@@ -56,23 +56,13 @@ static void handleEvent_USBDataOut(const USBDataOutEvent& ev) {
     // CMD_OUT endpoint:
     //   Handle the supplied command
     case EPNUM(ST_EPADDR_CMD_OUT): {
-        STLoaderCmd cmd;
-        // Verify that we received at least the command op
-        Assert(ev.dataLen >= sizeof(cmd.op)); // TODO: handle errors
-        Assert(ev.dataLen < sizeof(cmd)); // TODO: handle errors
-        memcpy(&cmd, ev.data, std::min(sizeof(cmd), ev.dataLen));
+        Assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
         
-        const size_t argLen = ev.dataLen-sizeof(cmd.op);
+        STLoaderCmd cmd;
+        memcpy(&cmd, ev.data, ev.dataLen);
         switch (cmd.op) {
         // Set LED command:
         case STLoaderCmd::Op::LEDSet: {
-            // Verify that we got the right argument size
-            Assert(argLen == sizeof(cmd.arg.ledSet)); // TODO: handle errors
-            extern void led0Set(bool on);
-            extern void led1Set(bool on);
-            extern void led2Set(bool on);
-            extern void led3Set(bool on);
-            
             switch (cmd.arg.ledSet.idx) {
             case 0: led0Set(cmd.arg.ledSet.on); break;
             case 1: led1Set(cmd.arg.ledSet.on); break;
@@ -87,8 +77,6 @@ static void handleEvent_USBDataOut(const USBDataOutEvent& ev) {
         //   Stash the address we're writing to in `dataAddr`,
         //   Prepare the DATA_OUT endpoint for writing at that address
         case STLoaderCmd::Op::WriteData: {
-            // Verify that we got the right argument size
-            Assert(argLen == sizeof(cmd.arg.writeData)); // TODO: handle errors
             dataAddr = cmd.arg.writeData.addr;
             USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
             break;
@@ -98,8 +86,6 @@ static void handleEvent_USBDataOut(const USBDataOutEvent& ev) {
         //   Stash the vector table address for access after we reset,
         //   Perform a software reset
         case STLoaderCmd::Op::Reset: {
-            // Verify we got the right argument size
-            Assert(argLen == sizeof(cmd.arg.reset)); // TODO: handle errors
             extern uintptr_t AppEntryPointAddr;
             AppEntryPointAddr = cmd.arg.reset.entryPointAddr;
             // Perform software reset
@@ -149,13 +135,13 @@ int main() {
     // Event loop
     for (;;) {
         // Dequeue outstanding events
-        Channels::SelectStart();
-        if (auto x = USBDataOutChannel.read(Channels::Select)) {
+        ChannelSelect::Start();
+        if (auto x = USBDataOutChannel.readSelect()) {
             handleEvent_USBDataOut(*x);
         
         } else {
             // No events, go to sleep
-            Channels::SelectWait();
+            ChannelSelect::Wait();
         }
     }
 }

@@ -301,17 +301,11 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
     USBD_DFU_HandleTypeDef* hdfu = (USBD_DFU_HandleTypeDef*)pdev->pClassData;
     const size_t dataLen = USBD_LL_GetRxDataSize(pdev, epnum);
     
-    extern void led1Set(bool);
-    led1Set(1);
-    
-    USBDataOutChannel.write(Channels::Poll, USBDataOutEvent{
+    USBDataOutChannel.writeTry(USBDataOutEvent{
         .endpoint = epnum,
         .data = hdfu->stDataOutBuf,
         .dataLen = dataLen,
     });
-    
-    extern void led2Set(bool);
-    led2Set(1);
     
     return (uint8_t)USBD_OK;
 }

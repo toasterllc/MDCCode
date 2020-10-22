@@ -1,28 +1,23 @@
 #pragma once
 #include "IRQState.h"
 
-class Channels {
-public:
-    static void SelectStart() {
+namespace ChannelSelect {
+    inline void Start() {
         IRQState::Disable();
     }
     
-    static void SelectCancel() {
+    inline void Cancel() {
         IRQState::Enable();
     }
     
-    static void SelectWait() {
+    inline void Wait() {
         __WFI();
         IRQState::Enable();
     }
-    
-    struct BlockType {}; static constexpr auto Block = BlockType();
-    struct PollType {}; static constexpr auto Poll = PollType();
-    struct SelectType {}; static constexpr auto Select = SelectType();
 };
 
 template <typename T, size_t N>
-class Channel : public Channels {
+class Channel {
 public:
     class ReadResult {
     public:
@@ -36,7 +31,7 @@ public:
         bool _e = false;
     };
     
-    T read(BlockType) {
+    T read() {
         for (;;) {
             IRQState irq;
             irq.disable();
@@ -45,20 +40,20 @@ public:
         }
     }
     
-    ReadResult read(PollType) {
+    ReadResult readTry() {
         IRQState irq;
         irq.disable();
         if (_canRead()) return _read();
     }
     
-    ReadResult read(SelectType) {
+    ReadResult readSelect() {
         if (!_canRead()) return ReadResult();
         auto r = _read();
-        SelectCancel();
+        IRQState::Enable();
         return r;
     }
     
-    void write(BlockType, const T& x) {
+    void write(const T& x) {
         for (;;) {
             IRQState irq;
             irq.disable();
@@ -70,7 +65,7 @@ public:
         }
     }
     
-    bool write(PollType, const T& x) {
+    bool writeTry(const T& x) {
         IRQState irq;
         irq.disable();
         if (!_canWrite()) return false;
@@ -78,10 +73,10 @@ public:
         return true;
     }
     
-    bool write(SelectType, const T& x) {
+    bool writeSelect(const T& x) {
         if (!_canWrite()) return false;
         _write(x);
-        SelectCancel();
+        IRQState::Enable();
         return true;
     }
     
