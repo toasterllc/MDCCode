@@ -1,3 +1,5 @@
+#pragma once
+
 struct STLoaderCmd {
     enum class Op : uint8_t {
         None,
@@ -22,5 +24,26 @@ struct STLoaderCmd {
         } reset;
     } arg;
 } __attribute__((packed));
-
 static_assert(sizeof(STLoaderCmd)==5, "STLoaderCmd: invalid size");
+
+struct ICELoaderCmd {
+    enum class Op : uint8_t {
+        None,
+        Start,
+        Stop,
+        WriteData,
+    };
+    
+    Op op;
+//    union {
+//        struct {
+//        } start;
+//        
+//        struct {
+//        } stop;
+//        
+//        struct {
+//        } writeData;
+//    } arg;
+} __attribute__((packed));
+static_assert(sizeof(ICELoaderCmd)==1, "ICELoaderCmd: invalid size");

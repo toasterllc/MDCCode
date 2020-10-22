@@ -31,6 +31,7 @@
 		55E1D9612540E3B900628EF6 /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Shared; sourceTree = "<group>"; };
 		55E1D9622540E3B900628EF6 /* STLoader.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = STLoader.launch; sourceTree = "<group>"; };
 		55E1D9632540E3B900628EF6 /* STM32F730I8KX_FLASH.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_FLASH.ld; sourceTree = "<group>"; };
+		55E1D97125411D3A00628EF6 /* Util */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Util; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +48,7 @@
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
+				55E1D97125411D3A00628EF6 /* Util */,
 				55E1D95F2540E3B900628EF6 /* Core */,
 				55E1D9602540E3B900628EF6 /* Drivers */,
 				55E1D95E2540E3B900628EF6 /* Middlewares */,

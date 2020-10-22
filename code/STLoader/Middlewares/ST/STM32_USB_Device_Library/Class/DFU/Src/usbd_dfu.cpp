@@ -1,6 +1,7 @@
 #include "usbd_dfu.h"
-#include "usbd_ctlreq.h"
 #include <stdbool.h>
+#include "usbd_ctlreq.h"
+#include "Event.h"
 
 static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_DFU_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
@@ -13,6 +14,8 @@ static uint8_t USBD_DFU_SOF(USBD_HandleTypeDef *pdev);
 
 static uint8_t *USBD_DFU_GetCfgDesc(uint16_t *length);
 static uint8_t *USBD_DFU_GetDeviceQualifierDesc(uint16_t *length);
+
+Channel<USBDataOutEvent, 3> USBDataOutChannel;
 
 #if (USBD_SUPPORT_USER_STRING_DESC == 1U)
 static uint8_t *USBD_DFU_GetUsrStringDesc(USBD_HandleTypeDef *pdev,
@@ -50,9 +53,9 @@ USBD_ClassTypeDef USBD_DFU =
 
 #define MAX_PACKET_SIZE             512
 
-#define ST_EPADDR_CMD_OUT        0x01    // OUT endpoint
-#define ST_EPADDR_CMD_IN         0x81    // IN endpoint
-#define ST_EPADDR_DATA_OUT       0x02    // OUT endpoint
+#define ST_EPADDR_CMD_OUT           0x01    // OUT endpoint
+#define ST_EPADDR_CMD_IN            0x81    // IN endpoint (high bit 1 = IN)
+#define ST_EPADDR_DATA_OUT          0x02    // OUT endpoint
 
 #define EPNUM(addr)                 (addr & 0xF)
 
@@ -185,7 +188,7 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
         return (uint8_t)USBD_FAIL;
     }
     
-    USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->st.cmd, sizeof(hdfu->st.cmd));
+    USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stDataOutBuf, sizeof(hdfu->stDataOutBuf));
     return (uint8_t)USBD_OK;
 }
 
@@ -295,88 +298,20 @@ static uint8_t USBD_DFU_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum) {
 }
 
 static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
-    USBD_DFU_HandleTypeDef *hdfu = (USBD_DFU_HandleTypeDef *)pdev->pClassData;
-    STLoaderCmd* cmd = &hdfu->st.cmd;
-    const size_t packetLen = USBD_LL_GetRxDataSize(pdev, epnum);
+    USBD_DFU_HandleTypeDef* hdfu = (USBD_DFU_HandleTypeDef*)pdev->pClassData;
+    const size_t dataLen = USBD_LL_GetRxDataSize(pdev, epnum);
     
-    switch (epnum) {
+    extern void led1Set(bool);
+    led1Set(1);
     
-    // CMD_OUT endpoint:
-    //   Handle the supplied command
-    case EPNUM(ST_EPADDR_CMD_OUT): {
-        // Verify that we received at least the command op
-        if (packetLen < sizeof(cmd->op)) return USBD_FAIL;
-        
-        const size_t argLen = packetLen-sizeof(cmd->op);
-        switch (cmd->op) {
-        // Set LED command:
-        case STLoaderCmd::Op::LEDSet: {
-            // Verify that we got the right argument size
-            if (argLen < sizeof(cmd->arg.ledSet)) return USBD_FAIL;
-            extern void led0Set(bool on);
-            extern void led1Set(bool on);
-            extern void led2Set(bool on);
-            extern void led3Set(bool on);
-            
-            switch (cmd->arg.ledSet.idx) {
-            case 0: led0Set(cmd->arg.ledSet.on); break;
-            case 1: led1Set(cmd->arg.ledSet.on); break;
-            case 2: led2Set(cmd->arg.ledSet.on); break;
-            case 3: led3Set(cmd->arg.ledSet.on); break;
-            }
-            
-            break;
-        }
-        
-        // Write data command:
-        //   Stash the address we're writing to in `st.dataAddr`,
-        //   Prepare the DATA_OUT endpoint for writing at that address
-        case STLoaderCmd::Op::WriteData: {
-            // Verify that we got the right argument size
-            if (argLen < sizeof(cmd->arg.writeData)) return USBD_FAIL;
-            hdfu->st.dataAddr = cmd->arg.writeData.addr;
-            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->st.dataAddr, MAX_PACKET_SIZE);
-            break;
-        }
-        
-        // Reset command:
-        //   Stash the vector table address for access after we reset,
-        //   Perform a software reset
-        case STLoaderCmd::Op::Reset: {
-            // Verify we got the right argument size
-            if (argLen < sizeof(cmd->arg.reset)) return USBD_FAIL;
-            extern uintptr_t AppEntryPointAddr;
-            AppEntryPointAddr = cmd->arg.reset.entryPointAddr;
-            // Perform software reset
-            HAL_NVIC_SystemReset();
-            break;
-        }
-        
-        // Bad command
-        default: {
-            break;
-        }}
-        
-        // Prepare to receive another command
-        USBD_LL_PrepareReceive(pdev, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->st.cmd, sizeof(hdfu->st.cmd));
-        break;
-    }
+    USBDataOutChannel.write(Channels::Poll, USBDataOutEvent{
+        .endpoint = epnum,
+        .data = hdfu->stDataOutBuf,
+        .dataLen = dataLen,
+    });
     
-    // DATA_OUT endpoint:
-    //   Update the address that we're writing to,
-    //   Prepare ourself to receive more data
-    case EPNUM(ST_EPADDR_DATA_OUT): {
-        hdfu->st.dataAddr += packetLen;
-        // Only prepare for more data if this packet was the maximum size.
-        // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
-        //   "A bulk transfer is complete when the endpoint ... Transfers a
-        //   packet with a payload size less than wMaxPacketSize or
-        //   transfers a zero-length packet".)
-        if (packetLen == MAX_PACKET_SIZE) {
-            USBD_LL_PrepareReceive(pdev, ST_EPADDR_DATA_OUT, (uint8_t*)hdfu->st.dataAddr, MAX_PACKET_SIZE);
-        }
-        break;
-    }}
+    extern void led2Set(bool);
+    led2Set(1);
     
     return (uint8_t)USBD_OK;
 }
