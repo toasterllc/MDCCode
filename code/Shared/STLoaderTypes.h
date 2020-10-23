@@ -18,7 +18,6 @@ struct STLoaderCmd {
         
         struct {
             uint32_t addr;
-            uint32_t len;
         } writeData;
         
         struct {
@@ -26,7 +25,7 @@ struct STLoaderCmd {
         } reset;
     } arg;
 } __attribute__((packed));
-static_assert(sizeof(STLoaderCmd)==9, "STLoaderCmd: invalid size");
+static_assert(sizeof(STLoaderCmd)==5, "STLoaderCmd: invalid size");
 
 enum class STLoaderStatus : uint8_t {
     Idle,

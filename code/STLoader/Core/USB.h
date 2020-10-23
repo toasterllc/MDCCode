@@ -38,5 +38,5 @@ private:
     uint8_t* _usbd_GetConfigDescriptor(uint16_t *length);
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t *length);
     
-    uint8_t _cmdOutBuf[16];
+    uint8_t _cmdOutBuf[8];
 };

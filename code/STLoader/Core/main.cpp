@@ -54,7 +54,14 @@ static void handleEvent_USBCmdOut(const USB::CmdOutEvent& ev) {
     //   Prepare the DATA_OUT endpoint for writing at the given address+length
     case STLoaderCmd::Op::WriteData: {
         status = STLoaderStatus::Writing;
-        usb.recvDataOut((void*)0x20000000, cmd.arg.writeData.len);
+        void*const addr = (void*)cmd.arg.writeData.addr;
+        // Verify that `addr` is in the allowed RAM range
+        extern uint8_t _sram_app[];
+        extern uint8_t _eram_app[];
+        assert(addr >= _sram_app); // TODO: error handling
+        assert(addr < _eram_app); // TODO: error handling
+        const size_t len = (uintptr_t)_eram_app-(uintptr_t)addr;
+        usb.recvDataOut((void*)cmd.arg.writeData.addr, len);
         break;
     }
     
@@ -91,12 +98,8 @@ static void handleEvent_USBCmdOut(const USB::CmdOutEvent& ev) {
 }
 
 static void handleEvent_USBDataOut(const USB::DataOutEvent& ev) {
-    if (ev.end) {
-        // We're done writing
-        status = STLoaderStatus::Idle;
-    } else {
-        usb.recvDataOut((void*)0x20000000, 0);
-    }
+    // We're done writing
+    status = STLoaderStatus::Idle;
 }
 
 int main() {
