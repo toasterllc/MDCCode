@@ -31,8 +31,8 @@ ENTRY(ISR_Reset)
 _estack = ORIGIN(RAM) + LENGTH(RAM);	/* end of "RAM" Ram type memory */
 
 /* RAM reserved for application */
-_sram_app = ORIGIN(RAM);
-_eram_app = ORIGIN(RAM) + LENGTH(RAM);
+_sram_app = ORIGIN(RAM_APP);
+_eram_app = ORIGIN(RAM_APP) + LENGTH(RAM_APP);
 
 _Min_Heap_Size = 0x200 ;	/* required amount of heap  */
 _Min_Stack_Size = 0x400 ;	/* required amount of stack */

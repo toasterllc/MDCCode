@@ -39,7 +39,6 @@ void led3Set(bool on) {
 }
 
 static STLoaderStatus status = STLoaderStatus::Idle;
-static uintptr_t dataAddr = 0; // TODO: figure out where to put this
 static void handleEvent_USBCmdOut(const USB::CmdOutEvent& ev) {
     STLoaderCmd cmd;
     assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
@@ -52,12 +51,10 @@ static void handleEvent_USBCmdOut(const USB::CmdOutEvent& ev) {
     }
     
     // Write data
-    //   Stash the address we're writing to in `dataAddr`,
-    //   Prepare the DATA_OUT endpoint for writing at that address
+    //   Prepare the DATA_OUT endpoint for writing at the given address+length
     case STLoaderCmd::Op::WriteData: {
         status = STLoaderStatus::Writing;
-        dataAddr = cmd.arg.writeData.addr;
-        usb.recvDataOut((void*)dataAddr);
+        usb.recvDataOut((void*)0x20000000, cmd.arg.writeData.len);
         break;
     }
     
@@ -94,12 +91,11 @@ static void handleEvent_USBCmdOut(const USB::CmdOutEvent& ev) {
 }
 
 static void handleEvent_USBDataOut(const USB::DataOutEvent& ev) {
-    dataAddr += ev.dataLen;
-    if (!ev.end) {
-        usb.recvDataOut((void*)dataAddr); // TODO: handle errors
-    } else {
+    if (ev.end) {
         // We're done writing
         status = STLoaderStatus::Idle;
+    } else {
+        usb.recvDataOut((void*)0x20000000, 0);
     }
 }
 
@@ -114,9 +110,6 @@ int main() {
     MX_GPIO_Init();
     MX_QUADSPI_Init();
     usb.init();
-    
-    // Prepare to receive commands
-    usb.recvCmdOut(); // TODO: handle errors
     
     // Event loop
     for (;;) {

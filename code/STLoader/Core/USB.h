@@ -7,7 +7,7 @@ public:
     void init();
     
     USBD_StatusTypeDef recvCmdOut();
-    USBD_StatusTypeDef recvDataOut(void* addr);
+    USBD_StatusTypeDef recvDataOut(void* addr, size_t len);
     USBD_StatusTypeDef sendCmdIn(void* data, size_t len);
     
     // Channels
@@ -38,5 +38,5 @@ private:
     uint8_t* _usbd_GetConfigDescriptor(uint16_t *length);
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t *length);
     
-    uint8_t _cmdOutBuf[8];
+    uint8_t _cmdOutBuf[16];
 };

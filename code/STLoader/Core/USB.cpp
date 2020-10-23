@@ -63,13 +63,15 @@ USBD_StatusTypeDef USB::recvCmdOut() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdOutBuf, sizeof(_cmdOutBuf));
 }
 
-USBD_StatusTypeDef USB::recvDataOut(void* addr) {
+USBD_StatusTypeDef USB::recvDataOut(void* addr, size_t len) {
     // Restrict writing to the allowed range in RAM
     extern uint8_t _sram_app[];
     extern uint8_t _eram_app[];
+    // Verify that `addr` is in range
     if (addr<_sram_app || addr>=_eram_app) return USBD_FAIL;
-    const size_t len = (uintptr_t)_eram_app-(uintptr_t)addr;
-    return USBD_LL_PrepareReceive(&_device, Endpoints::DataOut, (uint8_t*)addr, len);
+    // Verify that `len` is in range
+    if (len > (uintptr_t)_eram_app-(uintptr_t)addr) return USBD_FAIL;
+    return USBD_LL_PrepareReceive(&_device, Endpoints::DataOut, (uint8_t*)addr, MaxPacketSize);
 }
 
 USBD_StatusTypeDef USB::sendCmdIn(void* data, size_t len) {
@@ -89,6 +91,9 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     // DATA_OUT endpoint
     USBD_LL_OpenEP(&_device, Endpoints::DataOut, USBD_EP_TYPE_BULK, MaxPacketSize);
     _device.ep_out[EndpointNum(Endpoints::DataOut)].is_used = 1U;
+    
+    // Prepare to receive commands
+    recvCmdOut();
     return (uint8_t)USBD_OK;
 }
 
