@@ -60,7 +60,7 @@ USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef* pdev)
 }
 
 // Link class driver to Device Core.
-USBD_StatusTypeDef USBD_RegisterClass(USBD_HandleTypeDef* pdev, USBD_ClassTypeDef* pclass)
+USBD_StatusTypeDef USBD_RegisterClass(USBD_HandleTypeDef* pdev, const USBD_ClassTypeDef* pclass)
 {
   uint16_t len = 0U;
 

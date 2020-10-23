@@ -1,7 +1,13 @@
 #include "stm32f7xx_hal.h"
 
 extern "C" void ISR_NMI() {}
-extern "C" void ISR_HardFault() { for (;;); }
+
+extern void led0Set(bool on);
+extern "C" void ISR_HardFault() {
+    led0Set(true);
+    for (;;);
+}
+
 extern "C" void ISR_MemManage() { for (;;); }
 extern "C" void ISR_BusFault() { for (;;); }
 extern "C" void ISR_UsageFault() { for (;;); }

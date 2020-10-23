@@ -25,12 +25,12 @@ static constexpr uint8_t EndpointNum(Endpoint ep) {
 void USB::init() {
     USBD_StatusTypeDef ur = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
     assert(ur == USBD_OK);
-
+    
 #define Fwd0(name) [](void* ctx) { return ((USB*)ctx)->_usbd_##name(); }
 #define Fwd1(name, T0) [](void* ctx, T0 t0) { return ((USB*)ctx)->_usbd_##name(t0); }
 #define Fwd2(name, T0, T1) [](void* ctx, T0 t0, T1 t1) { return ((USB*)ctx)->_usbd_##name(t0, t1); }
     
-    USBD_ClassTypeDef usbClass = {
+    static const USBD_ClassTypeDef usbClass = {
         .Init                           = Fwd1(Init, uint8_t),
         .DeInit                         = Fwd1(DeInit, uint8_t),
         .Setup                          = Fwd1(Setup, USBD_SetupReqTypedef*),
@@ -57,19 +57,6 @@ void USB::init() {
     
     ur = USBD_Start(&_device);
     assert(ur == USBD_OK);
-    
-    // Open endpoints
-    // CMD_OUT endpoint
-    USBD_LL_OpenEP(&_device, Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize);
-    _device.ep_out[EndpointNum(Endpoints::CmdOut)].is_used = 1U;
-    
-    // CMD_IN endpoint
-    USBD_LL_OpenEP(&_device, Endpoints::CmdIn, USBD_EP_TYPE_BULK, MaxPacketSize);
-    _device.ep_in[EndpointNum(Endpoints::CmdIn)].is_used = 1U;
-    
-    // DATA_OUT endpoint
-    USBD_LL_OpenEP(&_device, Endpoints::DataOut, USBD_EP_TYPE_BULK, MaxPacketSize);
-    _device.ep_out[EndpointNum(Endpoints::DataOut)].is_used = 1U;
 }
 
 USBD_StatusTypeDef USB::recvCmdOut() {
@@ -90,6 +77,18 @@ USBD_StatusTypeDef USB::sendCmdIn(void* data, size_t len) {
 }
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
+    // Open endpoints
+    // CMD_OUT endpoint
+    USBD_LL_OpenEP(&_device, Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize);
+    _device.ep_out[EndpointNum(Endpoints::CmdOut)].is_used = 1U;
+    
+    // CMD_IN endpoint
+    USBD_LL_OpenEP(&_device, Endpoints::CmdIn, USBD_EP_TYPE_BULK, MaxPacketSize);
+    _device.ep_in[EndpointNum(Endpoints::CmdIn)].is_used = 1U;
+    
+    // DATA_OUT endpoint
+    USBD_LL_OpenEP(&_device, Endpoints::DataOut, USBD_EP_TYPE_BULK, MaxPacketSize);
+    _device.ep_out[EndpointNum(Endpoints::DataOut)].is_used = 1U;
     return (uint8_t)USBD_OK;
 }
 
