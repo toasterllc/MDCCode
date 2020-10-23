@@ -16,10 +16,7 @@ public:
         size_t dataLen;
     };
     
-    struct DataOutEvent {
-        size_t dataLen;
-        bool end;
-    };
+    struct DataOutEvent {};
     
     Channel<CmdOutEvent, 3> cmdOutChannel;
     Channel<DataOutEvent, 3> dataOutChannel;

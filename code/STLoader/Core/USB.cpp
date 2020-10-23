@@ -127,10 +127,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // DATA_OUT endpoint
     case EndpointNum(Endpoints::DataOut): {
-        dataOutChannel.writeTry(DataOutEvent{
-            .dataLen = dataLen,
-            .end = (dataLen != MaxPacketSize),
-        });
+        dataOutChannel.writeTry(DataOutEvent{});
         break;
     }}
     
