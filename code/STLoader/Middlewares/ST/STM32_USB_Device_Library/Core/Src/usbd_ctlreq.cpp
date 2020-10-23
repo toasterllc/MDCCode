@@ -491,7 +491,6 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
       break;
 
     default:
-#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
       if (pdev->pClass->GetUsrStrDescriptor != NULL)
       {
         pbuf = pdev->pClass->GetUsrStrDescriptor(pdev, (req->wValue), &len);
@@ -501,45 +500,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
         USBD_CtlError(pdev, req);
         err++;
       }
-#elif (USBD_CLASS_USER_STRING_DESC == 1U)
-      if (pdev->pDesc->GetUserStrDescriptor != NULL)
-      {
-        pbuf = pdev->pDesc->GetUserStrDescriptor(pdev->dev_speed, (req->wValue), &len);
-      }
-      else
-      {
-        USBD_CtlError(pdev, req);
-        err++;
-      }
-#else
-      USBD_CtlError(pdev, req);
-      err++;
-#endif
       break;
-    }
-    break;
-
-  case USB_DESC_TYPE_DEVICE_QUALIFIER:
-//    if (pdev->dev_speed == USBD_SPEED_HIGH)
-//    {
-//      pbuf = pdev->pClass->GetDeviceQualifierDescriptor(&len);
-//    }
-//    else
-    {
-      USBD_CtlError(pdev, req);
-      err++;
-    }
-    break;
-
-  case USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION:
-//    if (pdev->dev_speed == USBD_SPEED_HIGH)
-//    {
-//      pbuf = pdev->pClass->GetOtherSpeedConfigDescriptor(&len);
-//    }
-//    else
-    {
-      USBD_CtlError(pdev, req);
-      err++;
     }
     break;
 

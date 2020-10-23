@@ -75,12 +75,6 @@
 #define USBD_LPM_ENABLED     1U
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
-/*---------- -----------*/
-#define USBD_DFU_MAX_ITF_NUM     1U
-/*---------- -----------*/
-#define USBD_DFU_XFER_SIZE     1024U
-/*---------- -----------*/
-#define USBD_DFU_APP_DEFAULT_ADD     0x08000000U
 
 /****************************************/
 /* #define for FS and HS identification */

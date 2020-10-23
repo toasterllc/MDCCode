@@ -4,7 +4,7 @@
 #include "Assert.h"
 #include "usb_device.h"
 #include "usbd_core.h"
-#include "usbd_dfu.h"
+#include "USB.h"
 
 extern void Error_Handler();
 void SystemClock_Config(void);
