@@ -6,4 +6,4 @@
         enum : name {                   \
             __VA_ARGS__                 \
         };                              \
-    };                                  \
+    };

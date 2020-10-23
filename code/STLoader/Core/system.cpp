@@ -23,13 +23,13 @@ const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
 
 volatile uintptr_t AppEntryPointAddr __attribute__((section(".noinit")));
 extern "C" void __libc_init_array();
-void SystemInit(void) {
-    extern uint8_t _sidata;
-    extern uint8_t _sdata;
-    extern uint8_t _edata;
-    extern uint8_t _sbss;
-    extern uint8_t _ebss;
-    extern uint8_t _sisr_vector;
+void SystemInit() {
+    extern uint8_t _sidata[];
+    extern uint8_t _sdata[];
+    extern uint8_t _edata[];
+    extern uint8_t _sbss[];
+    extern uint8_t _ebss[];
+    extern uint8_t _sisr_vector[];
     extern int main();
     
     // Stash and reset `AppEntryPointAddr` so that we only attempt to start the app once
@@ -51,9 +51,9 @@ void SystemInit(void) {
     }
     
     // Copy .data section from flash to RAM
-    memcpy(&_sdata, &_sidata, &_edata-&_sdata);
+    memcpy(_sdata, _sidata, _edata-_sdata);
     // Zero .bss section
-    memset(&_sbss, 0, &_ebss-&_sbss);
+    memset(_sbss, 0, _ebss-_sbss);
     
     // FPU settings
     if (__FPU_PRESENT && __FPU_USED) {
@@ -61,7 +61,7 @@ void SystemInit(void) {
     }
     
     // Set the vector table address
-    SCB->VTOR = (uint32_t)&_sisr_vector;
+    SCB->VTOR = (uint32_t)_sisr_vector;
     
     // Call static constructors
     __libc_init_array();

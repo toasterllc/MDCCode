@@ -1,5 +1,5 @@
 #pragma once
 
-static void Assert(bool x) {
+static void assert(bool x) {
     while (!x);
 }

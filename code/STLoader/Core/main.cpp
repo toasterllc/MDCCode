@@ -1,25 +1,17 @@
 #include <stdbool.h>
 #include <algorithm>
-#include "Event.h"
-#include "Assert.h"
-#include "usb_device.h"
+#include "assert.h"
 #include "usbd_core.h"
 #include "USB.h"
+#include "STLoaderTypes.h"
 
 extern void Error_Handler();
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_QUADSPI_Init(void);
 
+USB usb;
 QSPI_HandleTypeDef hqspi;
-
-// TODO: these is declared in 2 places. cleanup!
-#define MAX_PACKET_SIZE             512
-#define ST_EPADDR_CMD_OUT           0x01    // OUT endpoint
-#define ST_EPADDR_CMD_IN            0x81    // IN endpoint (high bit 1 = IN)
-#define ST_EPADDR_DATA_OUT          0x02    // OUT endpoint
-
-
 
 #define STM_LED0_Pin            GPIO_PIN_12
 #define STM_LED0_GPIO_Port      GPIOE
@@ -48,16 +40,14 @@ void led3Set(bool on) {
 
 static STLoaderStatus status = STLoaderStatus::Idle;
 static uintptr_t dataAddr = 0; // TODO: figure out where to put this
-static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
-    extern USBD_HandleTypeDef hUsbDeviceHS; // TODO: find where to put this
-    
+static void handleEvent_USBCmdOut(const USB::CmdOutEvent& ev) {
     STLoaderCmd cmd;
-    Assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
+    assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
     memcpy(&cmd, ev.data, ev.dataLen);
     switch (cmd.op) {
     // Get status
     case STLoaderCmd::Op::GetStatus: {
-        USBD_LL_Transmit(&hUsbDeviceHS, ST_EPADDR_CMD_IN, (uint8_t*)&status, sizeof(status));
+        usb.sendCmdIn(&status, sizeof(status));
         break;
     }
     
@@ -67,7 +57,7 @@ static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
     case STLoaderCmd::Op::WriteData: {
         status = STLoaderStatus::Writing;
         dataAddr = cmd.arg.writeData.addr;
-        USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
+        usb.recvDataOut((void*)dataAddr);
         break;
     }
     
@@ -100,20 +90,13 @@ static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
     }}
     
     // Prepare to receive another command
-    USBD_DFU_HandleTypeDef* hdfu = (USBD_DFU_HandleTypeDef*)hUsbDeviceHS.pClassData; // TODO: cleanup
-    USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_CMD_OUT, (uint8_t*)&hdfu->stDataOutBuf, sizeof(hdfu->stDataOutBuf));
+    usb.recvCmdOut(); // TODO: handle errors
 }
 
-static void handleEvent_USBDataOut(const USBDataOutEvent& ev) {
-    extern USBD_HandleTypeDef hUsbDeviceHS; // TODO: find where to put this
+static void handleEvent_USBDataOut(const USB::DataOutEvent& ev) {
     dataAddr += ev.dataLen;
-    // Prepare for more data if this packet was the maximum size.
-    // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
-    //   "A bulk transfer is complete when the endpoint ... Transfers a
-    //   packet with a payload size less than wMaxPacketSize or
-    //   transfers a zero-length packet".)
-    if (ev.dataLen == MAX_PACKET_SIZE) {
-        USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
+    if (!ev.end) {
+        usb.recvDataOut((void*)dataAddr); // TODO: handle errors
     } else {
         // We're done writing
         status = STLoaderStatus::Idle;
@@ -130,16 +113,19 @@ int main() {
     // Initialize all configured peripherals
     MX_GPIO_Init();
     MX_QUADSPI_Init();
-    MX_USB_DEVICE_Init();
+    usb.init();
+    
+    // Prepare to receive commands
+    usb.recvCmdOut(); // TODO: handle errors
     
     // Event loop
     for (;;) {
         // Dequeue outstanding events
         ChannelSelect::Start();
-        if (auto x = USBCmdOutChannel.readSelect()) {
+        if (auto x = usb.cmdOutChannel.readSelect()) {
             handleEvent_USBCmdOut(*x);
         
-        } else if (auto x = USBDataOutChannel.readSelect()) {
+        } else if (auto x = usb.dataOutChannel.readSelect()) {
             handleEvent_USBDataOut(*x);
         
         } else {

@@ -1,5 +1,5 @@
 #pragma once
-#include "Assert.h"
+#include "assert.h"
 #include "stm32f7xx.h"
 
 class IRQState {
@@ -17,13 +17,13 @@ public:
     }
     
     void enable() {
-        Assert(!_enabled);
+        assert(!_enabled);
         Enable();
         _enabled = true;
     }
     
     void disable() {
-        Assert(_enabled);
+        assert(_enabled);
         Disable();
         _enabled = false;
     }
