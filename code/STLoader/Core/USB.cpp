@@ -101,8 +101,8 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef* pdev, uint8_t cfgidx) {
     // Allocate Audio structure
     hdfu = (USBD_DFU_HandleTypeDef*)USBD_malloc(sizeof(USBD_DFU_HandleTypeDef));
     
-    if (hdfu == NULL) {
-        pdev->pClassData = NULL;
+    if (!hdfu) {
+        pdev->pClassData = nullptr;
         return (uint8_t)USBD_EMEM;
     }
     
@@ -128,14 +128,10 @@ static uint8_t USBD_DFU_Init(USBD_HandleTypeDef* pdev, uint8_t cfgidx) {
 }
 
 static uint8_t USBD_DFU_DeInit(USBD_HandleTypeDef* pdev, uint8_t cfgidx) {
-    if (pdev->pClassData == NULL)
-    {
-        return (uint8_t)USBD_EMEM;
+    if (pdev->pClassData) {
+        USBD_free(pdev->pClassData);
+        pdev->pClassData = nullptr;
     }
-    
-    USBD_free(pdev->pClassData);
-    pdev->pClassData = NULL;
-    
     return (uint8_t)USBD_OK;
 }
 
@@ -192,5 +188,5 @@ static uint8_t USBD_DFU_DataOut(USBD_HandleTypeDef* pdev, uint8_t epnum) {
 }
 
 static uint8_t* USBD_DFU_GetUsrStringDesc(USBD_HandleTypeDef* pdev, uint8_t index, uint16_t* length) {
-    return NULL;
+    return nullptr;
 }

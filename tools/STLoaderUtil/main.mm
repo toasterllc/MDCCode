@@ -134,8 +134,9 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
     if (!entryPointAddr) throw std::runtime_error("no entry point");
     
     for (const auto& s : sections) {
-        // Ignore sections that don't have the ALLOC flag ("The section occupies
-        // memory during process execution.")
+        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
+        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
         if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
         const void*const data = bin.sectionData(s);
         const size_t dataLen = s.size;

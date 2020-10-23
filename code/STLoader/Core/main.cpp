@@ -76,7 +76,7 @@ static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
     }
     
     // Reset command:
-    //   Stash the vector table address for access after we reset,
+    //   Stash the entry point address for access after we reset,
     //   Perform a software reset
     case STLoaderCmd::Op::Reset: {
         extern uintptr_t AppEntryPointAddr;

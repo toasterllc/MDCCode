@@ -21,7 +21,7 @@ uint32_t SystemCoreClock = 16000000;
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
 
-uintptr_t AppEntryPointAddr __attribute__((section(".noinit")));
+volatile uintptr_t AppEntryPointAddr __attribute__((section(".noinit")));
 extern "C" void __libc_init_array();
 void SystemInit(void) {
     extern uint8_t _sidata;
