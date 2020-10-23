@@ -24,6 +24,7 @@
 #include "stm32f7xx_hal.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
+#include "SystemClock.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -41,7 +42,6 @@
 PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
 /* External functions --------------------------------------------------------*/
-void SystemClock_Config(void);
 
 /* USER CODE BEGIN 0 */
 
@@ -659,7 +659,7 @@ void USBD_LL_Delay(uint32_t Delay)
   */
 static void SystemClockConfig_Resume(void)
 {
-  SystemClock_Config();
+  SystemClock::Init();
 }
 /* USER CODE END 5 */
 /**

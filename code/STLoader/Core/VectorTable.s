@@ -5,7 +5,6 @@
 
 .global VectorTable
 .global ISR_Default
-.global StartApp
 
 
 // Reset ISR
@@ -16,7 +15,7 @@ ISR_Reset:
     // Set stack pointer
     ldr sp, =_estack
     // Jump to init routine
-    b SystemInit
+    b Startup
 .size ISR_Reset, .-ISR_Reset
 
 
