@@ -122,7 +122,7 @@ static void ledSet(const Args& args, USBInterface& stInterface) {
         },
     };
     
-    IOReturn ior = stInterface.write(Endpoint::STCmdOut, &cmd, sizeof(cmd));
+    IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
     if (ior != kIOReturnSuccess) throw std::runtime_error("pipe write failed");
 }
 
@@ -156,14 +156,36 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
                 },
             };
             
-            IOReturn ior = stInterface.write(Endpoint::STCmdOut, &cmd, sizeof(cmd));
+            IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
         }
         
         // Send actual data
         {
-            IOReturn ior = stInterface.write(Endpoint::STDataOut, data, dataLen);
+            IOReturn ior = stInterface.writeData(Endpoint::STDataOut, data, dataLen);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STDataOut");
+        }
+        
+        // Wait for write to complete
+        // Without this, it's possible for the next `WriteData` command to update the write
+        // address while we're still sending data from this iteration.
+        for (;;) {
+            // Request status
+            {
+                const STLoaderCmd cmd = {
+                    .op = STLoaderCmd::Op::GetStatus,
+                };
+                
+                IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
+                if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+            }
+            
+            // Read status
+            {
+                auto [status, ior] = stInterface.read<STLoaderStatus>(Endpoint::STCmdIn);
+                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STCmdIn");
+                if (status == STLoaderStatus::Idle) break;
+            }
         }
     }
     
@@ -179,7 +201,7 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             },
         };
         
-        IOReturn ior = stInterface.write(Endpoint::STCmdOut, &cmd, sizeof(cmd));
+        IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
     }
     printf("Done\n");

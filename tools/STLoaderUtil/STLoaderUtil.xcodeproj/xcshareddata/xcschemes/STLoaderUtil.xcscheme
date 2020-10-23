@@ -56,7 +56,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/dave/repos/MotionDetectorCamera/code/STLoader/Debug/MDCRev3.elf"
+            argument = "/Users/dave/repos/MotionDetectorCamera/code/STApp/Release/STApp.elf"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

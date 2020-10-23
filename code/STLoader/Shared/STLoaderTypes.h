@@ -3,9 +3,10 @@
 struct STLoaderCmd {
     enum class Op : uint8_t {
         None,
-        LEDSet,
+        GetStatus,
         WriteData,
         Reset,
+        LEDSet,
     };
     
     Op op;
@@ -25,6 +26,11 @@ struct STLoaderCmd {
     } arg;
 } __attribute__((packed));
 static_assert(sizeof(STLoaderCmd)==5, "STLoaderCmd: invalid size");
+
+enum class STLoaderStatus : uint8_t {
+    Idle,
+    Writing,
+};
 
 struct ICELoaderCmd {
     enum class Op : uint8_t {

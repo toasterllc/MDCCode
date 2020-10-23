@@ -37,13 +37,32 @@ public:
     
     operator bool() const { return _interface; }
     
-    IOReturn write(uint8_t pipe, const void* buf, size_t len) {
+    template <typename T>
+    IOReturn write(uint8_t pipe, T& x) {
+        assert(_interface);
+        _openIfNeeded();
+        return (*_interface)->WritePipe(_interface, pipe, (void*)&x, sizeof(x));
+    }
+    
+    IOReturn writeData(uint8_t pipe, const void* buf, size_t len) {
         assert(_interface);
         _openIfNeeded();
         return (*_interface)->WritePipe(_interface, pipe, (void*)buf, (uint32_t)len);
     }
     
-    std::tuple<size_t, IOReturn> read(uint8_t pipe, void* buf, size_t len) {
+    template <typename T>
+    std::tuple<T, IOReturn> read(uint8_t pipe) {
+        assert(_interface);
+        _openIfNeeded();
+        T t;
+        uint32_t len32 = (uint32_t)sizeof(t);
+        IOReturn ior = (*_interface)->ReadPipe(_interface, pipe, &t, &len32);
+        if (ior != kIOReturnSuccess) return std::make_tuple(t, ior);
+        if (len32 < sizeof(t)) return std::make_tuple(t, kIOReturnUnderrun);
+        return std::make_tuple(t, ior);
+    }
+    
+    std::tuple<size_t, IOReturn> readData(uint8_t pipe, void* buf, size_t len) {
         assert(_interface);
         _openIfNeeded();
         uint32_t len32 = (uint32_t)len;

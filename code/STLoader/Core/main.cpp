@@ -46,6 +46,7 @@ void led3Set(bool on) {
     HAL_GPIO_WritePin(GPIOB, STM_LED3_Pin, (on ? GPIO_PIN_SET : GPIO_PIN_RESET));
 }
 
+static STLoaderStatus status = STLoaderStatus::Idle;
 static uintptr_t dataAddr = 0; // TODO: figure out where to put this
 static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
     extern USBD_HandleTypeDef hUsbDeviceHS; // TODO: find where to put this
@@ -54,7 +55,34 @@ static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
     Assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
     memcpy(&cmd, ev.data, ev.dataLen);
     switch (cmd.op) {
-    // Set LED command:
+    // Get status
+    case STLoaderCmd::Op::GetStatus: {
+        USBD_LL_Transmit(&hUsbDeviceHS, ST_EPADDR_CMD_IN, (uint8_t*)&status, sizeof(status));
+        break;
+    }
+    
+    // Write data
+    //   Stash the address we're writing to in `dataAddr`,
+    //   Prepare the DATA_OUT endpoint for writing at that address
+    case STLoaderCmd::Op::WriteData: {
+        status = STLoaderStatus::Writing;
+        dataAddr = cmd.arg.writeData.addr;
+        USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
+        break;
+    }
+    
+    // Reset
+    //   Stash the entry point address for access after we reset,
+    //   Perform a software reset
+    case STLoaderCmd::Op::Reset: {
+        extern uintptr_t AppEntryPointAddr;
+        AppEntryPointAddr = cmd.arg.reset.entryPointAddr;
+        // Perform software reset
+        HAL_NVIC_SystemReset();
+        break;
+    }
+    
+    // Set LED
     case STLoaderCmd::Op::LEDSet: {
         switch (cmd.arg.ledSet.idx) {
         case 0: led0Set(cmd.arg.ledSet.on); break;
@@ -63,26 +91,6 @@ static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
         case 3: led3Set(cmd.arg.ledSet.on); break;
         }
         
-        break;
-    }
-    
-    // Write data command:
-    //   Stash the address we're writing to in `dataAddr`,
-    //   Prepare the DATA_OUT endpoint for writing at that address
-    case STLoaderCmd::Op::WriteData: {
-        dataAddr = cmd.arg.writeData.addr;
-        USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
-        break;
-    }
-    
-    // Reset command:
-    //   Stash the entry point address for access after we reset,
-    //   Perform a software reset
-    case STLoaderCmd::Op::Reset: {
-        extern uintptr_t AppEntryPointAddr;
-        AppEntryPointAddr = cmd.arg.reset.entryPointAddr;
-        // Perform software reset
-        HAL_NVIC_SystemReset();
         break;
     }
     
@@ -99,13 +107,16 @@ static void handleEvent_USBCmdOut(const USBCmdOutEvent& ev) {
 static void handleEvent_USBDataOut(const USBDataOutEvent& ev) {
     extern USBD_HandleTypeDef hUsbDeviceHS; // TODO: find where to put this
     dataAddr += ev.dataLen;
-    // Only prepare for more data if this packet was the maximum size.
+    // Prepare for more data if this packet was the maximum size.
     // Otherwise, this packet is the last packet (USB 2 spec 5.8.3:
     //   "A bulk transfer is complete when the endpoint ... Transfers a
     //   packet with a payload size less than wMaxPacketSize or
     //   transfers a zero-length packet".)
     if (ev.dataLen == MAX_PACKET_SIZE) {
         USBD_LL_PrepareReceive(&hUsbDeviceHS, ST_EPADDR_DATA_OUT, (uint8_t*)dataAddr, MAX_PACKET_SIZE);
+    } else {
+        // We're done writing
+        status = STLoaderStatus::Idle;
     }
 }
 
