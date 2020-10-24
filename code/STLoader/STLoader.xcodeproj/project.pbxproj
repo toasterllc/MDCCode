@@ -19,12 +19,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		554F17802543900400F67066 /* USB_DEVICE */ = {isa = PBXFileReference; lastKnownFileType = folder; path = USB_DEVICE; sourceTree = "<group>"; };
-		554F17812543900400F67066 /* Util */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Util; sourceTree = "<group>"; };
-		554F17822543900400F67066 /* Drivers */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Drivers; sourceTree = "<group>"; };
 		554F17832543900400F67066 /* Release */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Release; sourceTree = "<group>"; };
-		554F17842543900400F67066 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Core; sourceTree = "<group>"; };
-		554F17852543900400F67066 /* Middlewares */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Middlewares; sourceTree = "<group>"; };
+		554F17882543ED5400F67066 /* ST */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ST; sourceTree = "<group>"; };
+		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
 		5563E119253A8B3D00BCC0F7 /* STLoader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoader; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D95A2540E3B900628EF6 /* STLoader.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = STLoader.ioc; sourceTree = "<group>"; };
 		55E1D95D2540E3B900628EF6 /* STM32F730I8KX_RAM.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_RAM.ld; sourceTree = "<group>"; };
@@ -46,12 +43,9 @@
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
-				554F17842543900400F67066 /* Core */,
-				554F17822543900400F67066 /* Drivers */,
-				554F17852543900400F67066 /* Middlewares */,
+				554F17892543ED5400F67066 /* Source */,
+				554F17882543ED5400F67066 /* ST */,
 				554F17832543900400F67066 /* Release */,
-				554F17802543900400F67066 /* USB_DEVICE */,
-				554F17812543900400F67066 /* Util */,
 				55E1D95A2540E3B900628EF6 /* STLoader.ioc */,
 				55E1D9622540E3B900628EF6 /* STLoader.launch */,
 				55E1D9632540E3B900628EF6 /* STM32F730I8KX_FLASH.ld */,
