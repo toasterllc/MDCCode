@@ -7,7 +7,6 @@ public:
     QSPI();
     void init();
     void config();
-//    void configForBitbang();
     
 private:
     QSPI_HandleTypeDef _qspi;

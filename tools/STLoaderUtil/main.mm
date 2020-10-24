@@ -11,6 +11,8 @@
 #import "USBInterface.h"
 #import "STLoaderTypes.h"
 
+using namespace STLoader;
+
 static USBInterface findUSBInterface(uint8_t interfaceNum) {
     NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBInterfaceClassName));
     match[@kIOPropertyMatchKey] = @{
@@ -118,8 +120,8 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void ledSet(const Args& args, USBInterface& stInterface) {
-    STLoader::STCmd cmd = {
-        .op = STLoader::STCmd::Op::LEDSet,
+    STCmd cmd = {
+        .op = STCmd::Op::LEDSet,
         .arg = {
             .ledSet = {
                 .idx = args.ledSet.idx,
@@ -153,8 +155,8 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
         
         // Send WriteData command
         {
-            const STLoader::STCmd cmd = {
-                .op = STLoader::STCmd::Op::WriteData,
+            const STCmd cmd = {
+                .op = STCmd::Op::WriteData,
                 .arg = {
                     .writeData = {
                         .addr = dataAddr,
@@ -178,8 +180,8 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
         for (;;) {
             // Request status
             {
-                const STLoader::STCmd cmd = {
-                    .op = STLoader::STCmd::Op::GetStatus,
+                const STCmd cmd = {
+                    .op = STCmd::Op::GetStatus,
                 };
                 
                 IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
@@ -188,9 +190,9 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             
             // Read status
             {
-                auto [status, ior] = stInterface.read<STLoader::STStatus>(Endpoint::STStatusIn);
+                auto [status, ior] = stInterface.read<STStatus>(Endpoint::STStatusIn);
                 if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
-                if (status == STLoader::STStatus::Idle) break;
+                if (status == STStatus::Idle) break;
             }
         }
     }
@@ -198,8 +200,8 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
     // Reset the device, triggering it to load the program we just wrote
     {
         printf("Resetting device...\n");
-        const STLoader::STCmd cmd = {
-            .op = STLoader::STCmd::Op::Reset,
+        const STCmd cmd = {
+            .op = STCmd::Op::Reset,
             .arg = {
                 .reset = {
                     .entryPointAddr = entryPointAddr,

@@ -9,6 +9,8 @@
 #include "SystemClock.h"
 #include "Startup.h"
 
+using namespace STLoader;
+
 class System {
 public:
     System() :
@@ -74,20 +76,20 @@ public:
     
 private:
     void _handleSTCmd(const USB::CmdEvent& ev) {
-        STLoader::STCmd cmd;
+        STCmd cmd;
         assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
         memcpy(&cmd, ev.data, ev.dataLen);
         switch (cmd.op) {
         // Get status
-        case STLoader::STCmd::Op::GetStatus: {
+        case STCmd::Op::GetStatus: {
             _usb.stSendStatus(&_stStatus, sizeof(_stStatus));
             break;
         }
         
         // Write data
         //   Prepare the DATA_OUT endpoint for writing at the given address+length
-        case STLoader::STCmd::Op::WriteData: {
-            _stStatus = STLoader::STStatus::Writing;
+        case STCmd::Op::WriteData: {
+            _stStatus = STStatus::Writing;
             void*const addr = (void*)cmd.arg.writeData.addr;
             // Verify that `addr` is in the allowed RAM range
             extern uint8_t _sram_app[];
@@ -102,7 +104,7 @@ private:
         // Reset
         //   Stash the entry point address for access after we reset,
         //   Perform a software reset
-        case STLoader::STCmd::Op::Reset: {
+        case STCmd::Op::Reset: {
             Startup::SetAppEntryPointAddr(cmd.arg.reset.entryPointAddr);
             // Perform software reset
             HAL_NVIC_SystemReset();
@@ -110,7 +112,7 @@ private:
         }
         
         // Set LED
-        case STLoader::STCmd::Op::LEDSet: {
+        case STCmd::Op::LEDSet: {
             switch (cmd.arg.ledSet.idx) {
             case 0: _led0.write(cmd.arg.ledSet.on); break;
             case 1: _led1.write(cmd.arg.ledSet.on); break;
@@ -132,7 +134,7 @@ private:
     
     void _handleSTData(const USB::DataEvent& ev) {
         // We're done writing
-        _stStatus = STLoader::STStatus::Idle;
+        _stStatus = STStatus::Idle;
     }
     
     void _handleICECmd(const USB::CmdEvent& ev) {
@@ -143,8 +145,8 @@ private:
     
     QSPI _qspi;
     USB _usb;
-    STLoader::STStatus _stStatus = STLoader::STStatus::Idle;
-    STLoader::ICEStatus _iceStatus = STLoader::ICEStatus::Idle;
+    STStatus _stStatus = STStatus::Idle;
+    ICEStatus _iceStatus = ICEStatus::Idle;
     
     GPIO _iceCRST_;
     GPIO _iceCDONE;
