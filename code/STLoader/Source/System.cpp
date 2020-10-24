@@ -14,6 +14,9 @@ public:
     System() :
     _iceCRST_(GPIOC, GPIO_PIN_3),
     _iceCDONE(GPIOC, GPIO_PIN_2),
+    _iceSPIClk(GPIOB, GPIO_PIN_2),
+    _iceSPICS_(GPIOB, GPIO_PIN_6),
+    
     _led0(GPIOE, GPIO_PIN_12),
     _led1(GPIOE, GPIO_PIN_15),
     _led2(GPIOB, GPIO_PIN_10),
@@ -145,6 +148,8 @@ private:
     
     GPIO _iceCRST_;
     GPIO _iceCDONE;
+    GPIO _iceSPIClk;
+    GPIO _iceSPICS_;
     
     GPIO _led0;
     GPIO _led1;
