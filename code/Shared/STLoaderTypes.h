@@ -1,55 +1,62 @@
 #pragma once
 
-struct STLoaderCmd {
-    enum class Op : uint8_t {
-        None,
-        GetStatus,
-        WriteData,
-        Reset,
-        LEDSet,
+namespace STLoader {
+    struct STCmd {
+        enum class Op : uint8_t {
+            None,
+            GetStatus,
+            WriteData,
+            Reset,
+            LEDSet,
+        };
+        
+        Op op;
+        union {
+            struct {
+                uint8_t idx;
+                uint8_t on;
+            } ledSet;
+            
+            struct {
+                uint32_t addr;
+            } writeData;
+            
+            struct {
+                uint32_t entryPointAddr;
+            } reset;
+        } arg;
+    } __attribute__((packed));
+    static_assert(sizeof(STCmd)==5, "STCmd: invalid size");
+    
+    enum class STStatus : uint8_t {
+        Idle,
+        Writing,
     };
     
-    Op op;
-    union {
-        struct {
-            uint8_t idx;
-            uint8_t on;
-        } ledSet;
+    struct ICECmd {
+        enum class Op : uint8_t {
+            None,
+            Start,
+            Stop,
+            WriteData,
+        };
         
-        struct {
-            uint32_t addr;
-        } writeData;
-        
-        struct {
-            uint32_t entryPointAddr;
-        } reset;
-    } arg;
-} __attribute__((packed));
-static_assert(sizeof(STLoaderCmd)==5, "STLoaderCmd: invalid size");
-
-enum class STLoaderStatus : uint8_t {
-    Idle,
-    Writing,
-};
-
-struct ICELoaderCmd {
-    enum class Op : uint8_t {
-        None,
-        Start,
-        Stop,
-        WriteData,
-    };
+        Op op;
+        union {
+            struct {
+            } start;
+            
+            struct {
+            } stop;
+            
+            struct {
+            } writeData;
+        } arg;
+    } __attribute__((packed));
+    static_assert(sizeof(ICECmd)==2, "ICECmd: invalid size");
     
-    Op op;
-//    union {
-//        struct {
-//        } start;
-//        
-//        struct {
-//        } stop;
-//        
-//        struct {
-//        } writeData;
-//    } arg;
-} __attribute__((packed));
-static_assert(sizeof(ICELoaderCmd)==1, "ICELoaderCmd: invalid size");
+    enum class ICEStatus : uint8_t {
+        Idle,
+        Writing,
+    };
+}

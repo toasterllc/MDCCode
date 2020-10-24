@@ -52,12 +52,18 @@ static USBInterface findUSBInterface(uint8_t interfaceNum) {
 }
 
 namespace Endpoint {
-    // These values aren't the same as the endpoint addresses in firmware!
-    // These values are the determined by the order that the endpoints are
-    // listed in the interface descriptor.
-    const uint8_t STCmdOut = 1;
-    const uint8_t STCmdIn = 2;
-    const uint8_t STDataOut = 3;
+    enum : uint8_t {
+        // These values aren't the same as the endpoint addresses in firmware!
+        // These values are the determined by the order that the endpoints are
+        // listed in the interface descriptor.
+        STCmdOut = 1,
+        STDataOut,
+        STStatusIn,
+        
+        ICECmdOut,
+        ICEDataOut,
+        ICEStatusIn,
+    };
 }
 
 using Cmd = std::string;
@@ -112,8 +118,8 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void ledSet(const Args& args, USBInterface& stInterface) {
-    STLoaderCmd cmd = {
-        .op = STLoaderCmd::Op::LEDSet,
+    STLoader::STCmd cmd = {
+        .op = STLoader::STCmd::Op::LEDSet,
         .arg = {
             .ledSet = {
                 .idx = args.ledSet.idx,
@@ -147,8 +153,8 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
         
         // Send WriteData command
         {
-            const STLoaderCmd cmd = {
-                .op = STLoaderCmd::Op::WriteData,
+            const STLoader::STCmd cmd = {
+                .op = STLoader::STCmd::Op::WriteData,
                 .arg = {
                     .writeData = {
                         .addr = dataAddr,
@@ -172,8 +178,8 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
         for (;;) {
             // Request status
             {
-                const STLoaderCmd cmd = {
-                    .op = STLoaderCmd::Op::GetStatus,
+                const STLoader::STCmd cmd = {
+                    .op = STLoader::STCmd::Op::GetStatus,
                 };
                 
                 IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
@@ -182,9 +188,9 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             
             // Read status
             {
-                auto [status, ior] = stInterface.read<STLoaderStatus>(Endpoint::STCmdIn);
-                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STCmdIn");
-                if (status == STLoaderStatus::Idle) break;
+                auto [status, ior] = stInterface.read<STLoader::STStatus>(Endpoint::STStatusIn);
+                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
+                if (status == STLoader::STStatus::Idle) break;
             }
         }
     }
@@ -192,8 +198,8 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
     // Reset the device, triggering it to load the program we just wrote
     {
         printf("Resetting device...\n");
-        const STLoaderCmd cmd = {
-            .op = STLoaderCmd::Op::Reset,
+        const STLoader::STCmd cmd = {
+            .op = STLoader::STCmd::Op::Reset,
             .arg = {
                 .reset = {
                     .entryPointAddr = entryPointAddr,

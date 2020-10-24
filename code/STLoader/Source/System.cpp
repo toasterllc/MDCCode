@@ -51,11 +51,17 @@ public:
     void handleEvent() {
         // Wait for an event to occur on one of our channels
         ChannelSelect::Start();
-        if (auto x = _usb.cmdOutChannel.readSelect()) {
-            _handleUSBCmd(*x);
+        if (auto x = _usb.stCmdChannel.readSelect()) {
+            _handleSTCmd(*x);
         
-        } else if (auto x = _usb.dataOutChannel.readSelect()) {
-            _handleUSBData(*x);
+        } else if (auto x = _usb.stDataChannel.readSelect()) {
+            _handleSTData(*x);
+        
+        } else if (auto x = _usb.iceCmdChannel.readSelect()) {
+            _handleICECmd(*x);
+        
+        } else if (auto x = _usb.iceDataChannel.readSelect()) {
+            _handleICEData(*x);
         
         } else {
             // No events, go to sleep
@@ -64,21 +70,21 @@ public:
     }
     
 private:
-    void _handleUSBCmd(const USB::CmdOutEvent& ev) {
-        STLoaderCmd cmd;
+    void _handleSTCmd(const USB::CmdEvent& ev) {
+        STLoader::STCmd cmd;
         assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
         memcpy(&cmd, ev.data, ev.dataLen);
         switch (cmd.op) {
         // Get status
-        case STLoaderCmd::Op::GetStatus: {
-            _usb.sendCmdIn(&_status, sizeof(_status));
+        case STLoader::STCmd::Op::GetStatus: {
+            _usb.stSendStatus(&_stStatus, sizeof(_stStatus));
             break;
         }
         
         // Write data
         //   Prepare the DATA_OUT endpoint for writing at the given address+length
-        case STLoaderCmd::Op::WriteData: {
-            _status = STLoaderStatus::Writing;
+        case STLoader::STCmd::Op::WriteData: {
+            _stStatus = STLoader::STStatus::Writing;
             void*const addr = (void*)cmd.arg.writeData.addr;
             // Verify that `addr` is in the allowed RAM range
             extern uint8_t _sram_app[];
@@ -86,14 +92,14 @@ private:
             assert(addr >= _sram_app); // TODO: error handling
             assert(addr < _eram_app); // TODO: error handling
             const size_t len = (uintptr_t)_eram_app-(uintptr_t)addr;
-            _usb.recvDataOut((void*)cmd.arg.writeData.addr, len);
+            _usb.stRecvData((void*)cmd.arg.writeData.addr, len);
             break;
         }
         
         // Reset
         //   Stash the entry point address for access after we reset,
         //   Perform a software reset
-        case STLoaderCmd::Op::Reset: {
+        case STLoader::STCmd::Op::Reset: {
             Startup::SetAppEntryPointAddr(cmd.arg.reset.entryPointAddr);
             // Perform software reset
             HAL_NVIC_SystemReset();
@@ -101,7 +107,7 @@ private:
         }
         
         // Set LED
-        case STLoaderCmd::Op::LEDSet: {
+        case STLoader::STCmd::Op::LEDSet: {
             switch (cmd.arg.ledSet.idx) {
             case 0: _led0.write(cmd.arg.ledSet.on); break;
             case 1: _led1.write(cmd.arg.ledSet.on); break;
@@ -118,17 +124,24 @@ private:
         }}
         
         // Prepare to receive another command
-        _usb.recvCmdOut(); // TODO: handle errors
+        _usb.stRecvCmd(); // TODO: handle errors
     }
     
-    void _handleUSBData(const USB::DataOutEvent& ev) {
+    void _handleSTData(const USB::DataEvent& ev) {
         // We're done writing
-        _status = STLoaderStatus::Idle;
+        _stStatus = STLoader::STStatus::Idle;
+    }
+    
+    void _handleICECmd(const USB::CmdEvent& ev) {
+    }
+    
+    void _handleICEData(const USB::DataEvent& ev) {
     }
     
     QSPI _qspi;
     USB _usb;
-    STLoaderStatus _status = STLoaderStatus::Idle;
+    STLoader::STStatus _stStatus = STLoader::STStatus::Idle;
+    STLoader::ICEStatus _iceStatus = STLoader::ICEStatus::Idle;
     
     GPIO _iceCRST_;
     GPIO _iceCDONE;

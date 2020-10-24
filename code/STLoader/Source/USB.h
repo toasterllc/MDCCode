@@ -6,20 +6,27 @@ class USB {
 public:
     void init();
     
-    USBD_StatusTypeDef recvCmdOut();
-    USBD_StatusTypeDef recvDataOut(void* addr, size_t len);
-    USBD_StatusTypeDef sendCmdIn(void* data, size_t len);
-    
     // Channels
-    struct CmdOutEvent {
-        uint8_t* data;
+    struct CmdEvent {
+        const uint8_t* data;
         size_t dataLen;
     };
     
-    struct DataOutEvent {};
+    struct DataEvent {
+        size_t dataLen;
+    };
     
-    Channel<CmdOutEvent, 3> cmdOutChannel;
-    Channel<DataOutEvent, 3> dataOutChannel;
+    USBD_StatusTypeDef stRecvCmd();
+    USBD_StatusTypeDef stRecvData(void* addr, size_t len);
+    USBD_StatusTypeDef stSendStatus(void* data, size_t len);
+    Channel<CmdEvent, 3> stCmdChannel;
+    Channel<DataEvent, 3> stDataChannel;
+    
+    USBD_StatusTypeDef iceRecvCmd();
+    USBD_StatusTypeDef iceRecvData(void* addr, size_t len);
+    USBD_StatusTypeDef iceSendStatus(void* data, size_t len);
+    Channel<CmdEvent, 3> iceCmdChannel;
+    Channel<DataEvent, 3> iceDataChannel;
     
 private:
     USBD_HandleTypeDef _device;
@@ -35,5 +42,6 @@ private:
     uint8_t* _usbd_GetConfigDescriptor(uint16_t *length);
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t *length);
     
-    uint8_t _cmdOutBuf[8];
+    uint8_t _stCmdBuf[8];
+    uint8_t _iceCmdBuf[8];
 };
