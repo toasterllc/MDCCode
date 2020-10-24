@@ -21,6 +21,7 @@
 /* Begin PBXFileReference section */
 		554F17882543ED5400F67066 /* ST */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ST; sourceTree = "<group>"; };
 		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
+		554F178A2544105F00F67066 /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
 		5563E119253A8B3D00BCC0F7 /* STLoader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoader; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D95A2540E3B900628EF6 /* STLoader.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = STLoader.ioc; sourceTree = "<group>"; };
 		55E1D95D2540E3B900628EF6 /* STM32F730I8KX_RAM.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_RAM.ld; sourceTree = "<group>"; };
@@ -42,6 +43,7 @@
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
+				554F178A2544105F00F67066 /* Shared */,
 				554F17892543ED5400F67066 /* Source */,
 				554F17882543ED5400F67066 /* ST */,
 				55E1D95A2540E3B900628EF6 /* STLoader.ioc */,
