@@ -1,7 +1,6 @@
 #include "USB.h"
 #include <stdbool.h>
 #include "stm32f7xx.h"
-#include "stm32f7xx_hal.h"
 #include "usbd_core.h"
 #include "usbd_ctlreq.h"
 #include "usbd_def.h"

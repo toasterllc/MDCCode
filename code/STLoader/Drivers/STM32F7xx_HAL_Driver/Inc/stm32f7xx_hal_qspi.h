@@ -563,8 +563,6 @@ typedef void (*pQSPI_CallbackTypeDef)(QSPI_HandleTypeDef *hqspi);
 /* Initialization/de-initialization functions  ********************************/
 HAL_StatusTypeDef     HAL_QSPI_Init     (QSPI_HandleTypeDef *hqspi);
 HAL_StatusTypeDef     HAL_QSPI_DeInit   (QSPI_HandleTypeDef *hqspi);
-void                  HAL_QSPI_MspInit  (QSPI_HandleTypeDef *hqspi);
-void                  HAL_QSPI_MspDeInit(QSPI_HandleTypeDef *hqspi);
 /**
   * @}
   */

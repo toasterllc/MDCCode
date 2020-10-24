@@ -1,7 +1,6 @@
-#include "stm32f7xx_hal.h"
+#include "stm32f7xx.h"
 
 extern "C" void ISR_NMI() {}
-
 extern "C" void ISR_HardFault() { for (;;); }
 extern "C" void ISR_MemManage() { for (;;); }
 extern "C" void ISR_BusFault() { for (;;); }

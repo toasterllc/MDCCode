@@ -1,6 +1,6 @@
 #pragma once
 #include "assert.h"
-#include "stm32f7xx_hal.h"
+#include "stm32f7xx.h"
 
 class SystemClock {
 public:

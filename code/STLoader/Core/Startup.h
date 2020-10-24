@@ -1,5 +1,4 @@
-#include "stm32f7xx.h"
-#include <string.h>
+#include <stdint.h>
 
 class Startup {
 public:

@@ -118,6 +118,9 @@ HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT;  /* 1KHz */
   * @{
   */
 
+static void HAL_MspInit();
+static void HAL_MspDeInit();
+
 /**
   * @brief  This function is used to initialize the HAL Library; it must be the first 
   *         instruction to be executed in the main program (before to call any other
@@ -194,22 +197,16 @@ HAL_StatusTypeDef HAL_DeInit(void)
   * @brief  Initialize the MSP.
   * @retval None
   */
-__weak void HAL_MspInit(void)
-{
-  /* NOTE : This function should not be modified, when the callback is needed,
-            the HAL_MspInit could be implemented in the user file
-   */
+static void HAL_MspInit() {
+    __HAL_RCC_PWR_CLK_ENABLE();
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
 }
 
 /**
   * @brief  DeInitializes the MSP.
   * @retval None
   */
-__weak void HAL_MspDeInit(void)
-{
-  /* NOTE : This function should not be modified, when the callback is needed,
-            the HAL_MspDeInit could be implemented in the user file
-   */ 
+static void HAL_MspDeInit() {
 }
 
 /**

@@ -1,6 +1,6 @@
 #include "Startup.h"
-#include "stm32f7xx.h"
 #include <string.h>
+#include "stm32f7xx.h"
 
 static volatile uintptr_t AppEntryPointAddr __attribute__((section(".noinit")));
 
