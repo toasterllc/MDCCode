@@ -8,7 +8,7 @@ public:
         _pin = pin;
     }
     
-    void init(uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alt) {
+    void config(uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alt) {
         GPIO_InitTypeDef cfg = {
             .Pin = _pin,
             .Mode = mode,

@@ -69,7 +69,7 @@ typedef struct
                                   This parameter can be a value of @ref QSPI_Flash_Select */
   uint32_t DualFlash;          /* Specifies the Dual Flash Mode State
                                   This parameter can be a value of @ref QSPI_DualFlash_Mode */
-}QSPI_InitTypeDef;
+} QSPI_InitTypeDef;
 
 /**
   * @brief HAL QSPI State structures definition
@@ -85,7 +85,7 @@ typedef enum
   HAL_QSPI_STATE_BUSY_MEM_MAPPED   = 0x82U,    /*!< Peripheral in memory mapped mode ongoing              */
   HAL_QSPI_STATE_ABORT             = 0x08U,    /*!< Peripheral with abort request ongoing                 */
   HAL_QSPI_STATE_ERROR             = 0x04U     /*!< Peripheral in error                                   */
-}HAL_QSPI_StateTypeDef;
+} HAL_QSPI_StateTypeDef;
 
 /**
   * @brief  QSPI Handle Structure definition
@@ -109,6 +109,7 @@ typedef struct
   __IO HAL_QSPI_StateTypeDef State;            /* QSPI communication state           */
   __IO uint32_t              ErrorCode;        /* QSPI Error code                    */
   uint32_t                   Timeout;          /* Timeout for the QSPI memory access */
+  void*                      Ctx;
 #if (USE_HAL_QSPI_REGISTER_CALLBACKS == 1)
   void (* ErrorCallback)        (struct __QSPI_HandleTypeDef *hqspi);
   void (* AbortCpltCallback)    (struct __QSPI_HandleTypeDef *hqspi);
@@ -124,7 +125,7 @@ typedef struct
   void (* MspInitCallback)      (struct __QSPI_HandleTypeDef *hqspi);
   void (* MspDeInitCallback)    (struct __QSPI_HandleTypeDef *hqspi);
 #endif
-}QSPI_HandleTypeDef;
+} QSPI_HandleTypeDef;
 
 /**
   * @brief  QSPI Command structure definition
@@ -161,7 +162,7 @@ typedef struct
                                   This parameter can be a value of @ref QSPI_DdrHoldHalfCycle */
   uint32_t SIOOMode;           /* Specifies the send instruction only once mode
                                   This parameter can be a value of @ref QSPI_SIOOMode */
-}QSPI_CommandTypeDef;
+} QSPI_CommandTypeDef;
 
 /**
   * @brief  QSPI Auto Polling mode configuration structure definition
@@ -180,7 +181,7 @@ typedef struct
                                   This parameter can be a value of @ref QSPI_MatchMode */
   uint32_t AutomaticStop;      /* Specifies if automatic polling is stopped after a match.
                                   This parameter can be a value of @ref QSPI_AutomaticStop */
-}QSPI_AutoPollingTypeDef;
+} QSPI_AutoPollingTypeDef;
 
 /**
   * @brief  QSPI Memory Mapped mode configuration structure definition
@@ -191,7 +192,7 @@ typedef struct
                                   This parameter can be any value between 0 and 0xFFFF */
   uint32_t TimeOutActivation;  /* Specifies if the timeout counter is enabled to release the chip select.
                                   This parameter can be a value of @ref QSPI_TimeOutActivation */
-}QSPI_MemoryMappedTypeDef;
+} QSPI_MemoryMappedTypeDef;
 
 #if (USE_HAL_QSPI_REGISTER_CALLBACKS == 1)
 /**
@@ -212,7 +213,7 @@ typedef enum
 
   HAL_QSPI_MSP_INIT_CB_ID       = 0x0AU,  /*!< QSPI MspInit Callback ID          */
   HAL_QSPI_MSP_DEINIT_CB_ID     = 0x0B0   /*!< QSPI MspDeInit Callback ID        */
-}HAL_QSPI_CallbackIDTypeDef;
+} HAL_QSPI_CallbackIDTypeDef;
 
 /**
   * @brief  HAL QSPI Callback pointer definition

@@ -36,6 +36,7 @@ namespace STLoader {
     struct ICECmd {
         enum class Op : uint8_t {
             None,
+            GetStatus,
             Start,
             Stop,
             WriteData,

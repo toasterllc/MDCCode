@@ -39,14 +39,14 @@ public:
         __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
         
         // Configure ice40 control GPIOs
-        _iceCRST_.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _iceCDONE.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _iceCRST_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _iceCDONE.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         
         // Configure our LEDs
-        _led0.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _led1.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _led2.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _led3.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _led0.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _led1.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         
         // Initialize peripherals
         _qspi.init();
@@ -138,21 +138,78 @@ private:
     }
     
     void _handleICECmd(const USB::CmdEvent& ev) {
+        ICECmd cmd;
+        assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
+        memcpy(&cmd, ev.data, ev.dataLen);
+        switch (cmd.op) {
+        // Get status
+        case ICECmd::Op::GetStatus: {
+            break;
+        }
+        
+        // Start configuring
+        case ICECmd::Op::Start: {
+            _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _iceSPICS_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            
+            // Put ICE40 into configuration mode
+            _iceSPIClk.write(1);
+            
+            _iceSPICS_.write(0);
+            _iceCRST_.write(0);
+            HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
+            
+            _iceCRST_.write(1);
+            HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+            
+            // Release chip select before we give control of _iceSPIClk/_iceSPICS_ to QSPI
+            _iceSPICS_.write(1);
+            
+            // Have QSPI take over _iceSPIClk/_iceSPICS_
+            _qspi.config();
+            
+            break;
+        }
+        
+        // Stop configuring
+        case ICECmd::Op::Stop: {
+            break;
+        }
+        
+        // Write data
+        case ICECmd::Op::WriteData: {
+            break;
+        }
+        
+        // Bad command
+        default: {
+            break;
+        }}
+        
+        // Prepare to receive another command
+        _usb.iceRecvCmd(); // TODO: handle errors
     }
     
     void _handleICEData(const USB::DataEvent& ev) {
     }
     
+    // Peripherals
     QSPI _qspi;
     USB _usb;
-    STStatus _stStatus = STStatus::Idle;
-    ICEStatus _iceStatus = ICEStatus::Idle;
     
+    // STM32 bootloader
+    STStatus _stStatus = STStatus::Idle;
+    
+    // ICE40 bootloader
     GPIO _iceCRST_;
     GPIO _iceCDONE;
     GPIO _iceSPIClk;
     GPIO _iceSPICS_;
+    ICEStatus _iceStatus = ICEStatus::Idle;
+    uint8_t _iceBuf0[1024];
+    uint8_t _iceBuf1[1024];
     
+    // LEDs
     GPIO _led0;
     GPIO _led1;
     GPIO _led2;

@@ -21,14 +21,27 @@ void QSPI::init() {
     _qspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
     _qspi.Init.FlashID = QSPI_FLASH_ID_1;
     _qspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+    _qspi.Ctx = this;
     
     HAL_StatusTypeDef sr = HAL_QSPI_Init(&_qspi);
     assert(sr == HAL_OK);
 }
 
 void QSPI::config() {
-    _clk.init(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    _cs.init(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-    _do.init(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    _di.init(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _clk.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _cs.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+    _do.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _di.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+}
+
+void QSPI::write(void* data, size_t len) {
+    
+}
+
+void QSPI::_handleWriteComplete() {
+    
+}
+
+void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi) {
+    ((QSPI*)qspi->Ctx)->_handleWriteComplete();
 }
