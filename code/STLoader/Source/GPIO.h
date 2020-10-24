@@ -8,13 +8,13 @@ public:
         _pin = pin;
     }
     
-    void init(uint32_t mode, uint32_t pull, uint32_t speed) {
+    void init(uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alt) {
         GPIO_InitTypeDef cfg = {
             .Pin = _pin,
             .Mode = mode,
             .Pull = pull,
             .Speed = speed,
-            .Alternate = 0,
+            .Alternate = alt,
         };
         
         HAL_GPIO_Init(_port, &cfg);

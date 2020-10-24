@@ -6,8 +6,10 @@ class SystemClock {
 public:
     static void Init() {
         // Configure the main internal regulator output voltage
-        __HAL_RCC_PWR_CLK_ENABLE();
-        __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+        {
+            __HAL_RCC_PWR_CLK_ENABLE();
+            __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+        }
         
         // Initialize RCC oscillators
         {

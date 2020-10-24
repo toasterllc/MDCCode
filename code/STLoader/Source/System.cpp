@@ -12,6 +12,8 @@
 class System {
 public:
     System() :
+    _iceCRST_(GPIOC, GPIO_PIN_3),
+    _iceCDONE(GPIOC, GPIO_PIN_2),
     _led0(GPIOE, GPIO_PIN_12),
     _led1(GPIOE, GPIO_PIN_15),
     _led2(GPIOB, GPIO_PIN_10),
@@ -31,11 +33,15 @@ public:
         __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
         __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
         
+        // Configure ice40 control GPIOs
+        _iceCRST_.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _iceCDONE.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        
         // Configure our LEDs
-        _led0.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW);
-        _led1.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW);
-        _led2.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW);
-        _led3.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW);
+        _led0.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _led1.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _led2.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _led3.init(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         
         // Initialize peripherals
         _qspi.init();
@@ -123,6 +129,9 @@ private:
     QSPI _qspi;
     USB _usb;
     STLoaderStatus _status = STLoaderStatus::Idle;
+    
+    GPIO _iceCRST_;
+    GPIO _iceCDONE;
     
     GPIO _led0;
     GPIO _led1;

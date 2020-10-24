@@ -260,9 +260,6 @@ static void QSPI_DMAAbortCplt(DMA_HandleTypeDef *hdma);
 static HAL_StatusTypeDef QSPI_WaitFlagStateUntilTimeout(QSPI_HandleTypeDef *hqspi, uint32_t Flag, FlagStatus State, uint32_t Tickstart, uint32_t Timeout);
 static void QSPI_Config(QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode);
 
-static void HAL_QSPI_MspInit  (QSPI_HandleTypeDef *hqspi);
-static void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef *hqspi);
-
 /* Exported functions --------------------------------------------------------*/
 
 /** @defgroup QSPI_Exported_Functions QSPI Exported Functions
@@ -433,39 +430,14 @@ HAL_StatusTypeDef HAL_QSPI_DeInit(QSPI_HandleTypeDef *hqspi)
   * @param hqspi : QSPI handle
   * @retval None
   */
-static void HAL_QSPI_MspInit(QSPI_HandleTypeDef *hqspi)
+__weak void HAL_QSPI_MspInit(QSPI_HandleTypeDef *hqspi)
 {
-    __HAL_RCC_QSPI_CLK_ENABLE();
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(hqspi);
 
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    /**QUADSPI GPIO Configuration
-    PB6     ------> QUADSPI_BK1_NCS
-    PC10     ------> QUADSPI_BK1_IO1
-    PC9     ------> QUADSPI_BK1_IO0
-    PB2     ------> QUADSPI_CLK
-    */
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_2;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the HAL_QSPI_MspInit can be implemented in the user file
+   */
 }
 
 /**
@@ -473,20 +445,14 @@ static void HAL_QSPI_MspInit(QSPI_HandleTypeDef *hqspi)
   * @param hqspi : QSPI handle
   * @retval None
   */
-static void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef *hqspi)
+__weak void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef *hqspi)
 {
-    /* Peripheral clock disable */
-    __HAL_RCC_QSPI_CLK_DISABLE();
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(hqspi);
 
-    /**QUADSPI GPIO Configuration
-    PB6     ------> QUADSPI_BK1_NCS
-    PC10     ------> QUADSPI_BK1_IO1
-    PC9     ------> QUADSPI_BK1_IO0
-    PB2     ------> QUADSPI_CLK
-    */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6|GPIO_PIN_2);
-
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_10|GPIO_PIN_9);
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the HAL_QSPI_MspDeInit can be implemented in the user file
+   */
 }
 
 /**
