@@ -1,8 +1,12 @@
+#include "Startup.h"
 #include "stm32f7xx.h"
+#include <string.h>
 
-volatile uintptr_t AppEntryPointAddr __attribute__((section(".noinit")));
+static volatile uintptr_t AppEntryPointAddr __attribute__((section(".noinit")));
+
 extern "C" void __libc_init_array();
-void Startup() {
+
+void Startup::Run() {
     extern uint8_t _sidata[];
     extern uint8_t _sdata[];
     extern uint8_t _edata[];
@@ -13,8 +17,8 @@ void Startup() {
     
     // Stash and reset `AppEntryPointAddr` so that we only attempt to start the app once
     // after each software reset.
-    const uintptr_t appEntryPointAddr = AppEntryPointAddr;
-    AppEntryPointAddr = 0;
+    void (*const appEntryPoint)() = (void (*)())AppEntryPointAddr;
+    Startup::SetAppEntryPointAddr(0);
     
     // Cache RCC_CSR since we're about to clear it
     auto csr = READ_REG(RCC->CSR);
@@ -22,9 +26,8 @@ void Startup() {
     SET_BIT(RCC->CSR, RCC_CSR_RMVF);
     // Check if we reset due to a software reset (SFTRSTF), and
     // we have the app's vector table.
-    if (READ_BIT(csr, RCC_CSR_SFTRSTF) && appEntryPointAddr) {
+    if (READ_BIT(csr, RCC_CSR_SFTRSTF) && appEntryPoint) {
         // Start the application
-        void (*const appEntryPoint)() = (void (*)())appEntryPointAddr;
         appEntryPoint();
         for (;;); // Loop forever if the app returns
     }
@@ -50,4 +53,12 @@ void Startup() {
     
     // Loop forever if main returns
     for (;;);
+}
+
+void Startup::SetAppEntryPointAddr(uintptr_t addr) {
+    AppEntryPointAddr = addr;
+}
+
+extern "C" void Startup() {
+    Startup::Run();
 }

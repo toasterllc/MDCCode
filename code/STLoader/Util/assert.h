@@ -1,5 +1,6 @@
 #pragma once
+#include "abort.h"
 
-static void assert(bool x) {
-    while (!x);
+inline void assert(bool x) {
+    if (!x) abort();
 }

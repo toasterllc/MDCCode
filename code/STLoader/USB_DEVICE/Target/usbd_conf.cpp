@@ -25,6 +25,7 @@
 #include "usbd_def.h"
 #include "usbd_core.h"
 #include "SystemClock.h"
+#include "abort.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -207,8 +208,7 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
   }
   else
   {
-    extern void Error_Handler();
-    Error_Handler();
+    abort();
   }
     /* Set Speed. */
   USBD_LL_SetSpeed((USBD_HandleTypeDef*)hpcd->pData, speed);
@@ -347,8 +347,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   hpcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
   if (HAL_PCD_Init(&hpcd_USB_OTG_HS) != HAL_OK)
   {
-    extern void Error_Handler();
-    Error_Handler( );
+    abort();
   }
 
 #if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)

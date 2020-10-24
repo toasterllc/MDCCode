@@ -9,7 +9,7 @@ public:
         __HAL_RCC_PWR_CLK_ENABLE();
         __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
         
-        // Initialize the RCC Oscillators
+        // Initialize RCC oscillators
         {
             RCC_OscInitTypeDef cfg = {};
             cfg.OscillatorType = RCC_OSCILLATORTYPE_HSE;
@@ -25,10 +25,10 @@ public:
             assert(hr == HAL_OK);
         }
         
-        // Initialize the CPU, AHB and APB buses clocks
+        // Initialize bus clocks for CPU, AHB, APB
         {
             RCC_ClkInitTypeDef cfg = {};
-            cfg.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+            cfg.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
             cfg.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
             cfg.AHBCLKDivider = RCC_SYSCLK_DIV1;
             cfg.APB1CLKDivider = RCC_HCLK_DIV4;

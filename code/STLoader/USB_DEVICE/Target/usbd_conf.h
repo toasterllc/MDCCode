@@ -29,7 +29,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "stm32f7xx.h"
 #include "stm32f7xx_hal.h"

@@ -454,6 +454,9 @@
  #include "stm32f7xx_hal_smbus.h"
 #endif /* HAL_SMBUS_MODULE_ENABLED */
 
+/* Exported macro ------------------------------------------------------------*/
+#define assert_param(expr) ((void)0U)
+
 #ifdef __cplusplus
 }
 #endif
