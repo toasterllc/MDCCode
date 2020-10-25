@@ -4,6 +4,7 @@
 #include "usbd_core.h"
 #include "SystemClock.h"
 #include "Startup.h"
+#include <string.h>
 
 using namespace STLoader;
 

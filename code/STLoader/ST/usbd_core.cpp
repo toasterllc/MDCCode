@@ -1,4 +1,6 @@
 #include "usbd_core.h"
+#include "stm32f7xx.h"
+#include "stm32f7xx_hal.h"
 
 // Initializes the device stack and load the class driver
 USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef* pdev, USBD_DescriptorsTypeDef* pdesc, uint8_t id, void* ctx)
