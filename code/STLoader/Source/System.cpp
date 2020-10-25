@@ -175,6 +175,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Start configuring
     case ICECmd::Op::Start: {
+        assert(_iceStatus == ICEStatus::Idle);
         assert(cmd.arg.start.len);
         
         _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -208,12 +209,15 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         _iceStatus = ICEStatus::Configuring;
         
         // Prepare to receive ICE40 bootloader data
-        usb.iceRecvData(_iceBuf, sizeof(_iceBuf)); // TODO: handle errors
+        _iceInBufs = std::queue<ICEBuf*>({&_iceBuf[0], &_iceBuf[1]});
+        _iceOutBufs = std::queue<ICEBuf*>();
+        _iceRecvData();
         break;
     }
     
     // Finish configuring
     case ICECmd::Op::Finish: {
+        assert(_iceStatus == ICEStatus::Idle);
         // Send >100 clocks (13*8 = 104 clocks)
         qspi.write(_iceBuf, 13);
         // Wait for write to complete
@@ -240,26 +244,74 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
 }
 
 void System::_iceHandleData(const USB::Data& ev) {
+    assert(!_iceInBufs.empty());
     assert(_iceStatus == ICEStatus::Configuring);
     assert(ev.len <= _iceRemLen);
-    qspi.write(_iceBuf, ev.len);
-    _iceRemLen -= ev.len;
+    
+    // Move the completed in-buffer to the out queue
+    {
+        ICEBuf* buf = _iceInBufs.front();
+        buf->len = ev.len;
+        _iceInBufs.pop();
+        _iceOutBufs.push(buf);
+        
+        // Update the number of remaining bytes to receive from the host
+        _iceRemLen -= ev.len;
+    }
+    
+    // Start a SPI transaction when _iceOutBufs goes from 0->1 elements
+    if (_iceOutBufs.size() == 1) {
+        _qspiWriteData();
+    }
+    
+    // Prepare to receive more data if we're expecting more,
+    // and we have a buffer to store the data in
+    if (_iceRemLen && !_iceInBufs.empty()) {
+        _iceRecvData();
+    }
 }
 
 void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
+    assert(!_iceOutBufs.empty());
     switch (ev.type) {
     // Write done
     case QSPI::Event::Type::WriteDone: {
+        // Move the completed out-buffer to the in queue
+        {
+            ICEBuf* buf = _iceOutBufs.front();
+            _iceOutBufs.pop();
+            _iceInBufs.push(buf);
+        }
+        
+        // Start another SPI transaction if there's more data to write
+        if (!_iceOutBufs.empty()) {
+            _qspiWriteData();
+        }
+        
         if (_iceRemLen) {
-            // We expect more data, so prepare to receive it
-            usb.iceRecvData(_iceBuf, sizeof(_iceBuf)); // TODO: handle errors
+            // Prepare to receive more data if we're expecting more,
+            // and _iceInBufs went from 0->1 elements
+            if (_iceInBufs.size() == 1) {
+                _iceRecvData();
+            }
         } else {
-            // Otherwise, we're done
-            // Update our status
+            // We're done
             _iceStatus = ICEStatus::Idle;
         }
         break;
     }}
+}
+
+void System::_iceRecvData() {
+    assert(!_iceInBufs.empty());
+    ICEBuf*const buf = _iceInBufs.front();
+    usb.iceRecvData(buf->data, sizeof(buf->data)); // TODO: handle errors
+}
+
+void System::_qspiWriteData() {
+    assert(!_iceOutBufs.empty());
+    ICEBuf*const buf = _iceOutBufs.front();
+    qspi.write(buf->data, buf->len);
 }
 
 int main() {
