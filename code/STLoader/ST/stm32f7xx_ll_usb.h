@@ -89,7 +89,7 @@ typedef struct
                                          This parameter depends on the used USB core.
                                          This parameter must be a number between Min_Data = 1 and Max_Data = 15 */
 
-  uint32_t Host_channels;           /*!< Host Channels number.
+  uint32_t host_channels;           /*!< Host Channels number.
                                          This parameter Depends on the used USB core.
                                          This parameter must be a number between Min_Data = 1 and Max_Data = 15 */
 
@@ -103,7 +103,7 @@ typedef struct
   uint32_t phy_itface;              /*!< Select the used PHY interface.
                                          This parameter can be any value of @ref USB_Core_PHY_                  */
 
-  uint32_t Sof_enable;              /*!< Enable or disable the output of the SOF signal.                        */
+  uint32_t sof_enable;              /*!< Enable or disable the output of the SOF signal.                        */
 
   uint32_t low_power_enable;        /*!< Enable or disable the low power mode.                                  */
 

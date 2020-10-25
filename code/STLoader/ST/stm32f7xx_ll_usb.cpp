@@ -452,7 +452,7 @@ HAL_StatusTypeDef USB_DevInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef cf
                    USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_IISOIXFRM |
                    USB_OTG_GINTMSK_PXFRM_IISOOXFRM | USB_OTG_GINTMSK_WUIM;
 
-  if (cfg.Sof_enable != 0U)
+  if (cfg.sof_enable != 0U)
   {
     USBx->GINTMSK |= USB_OTG_GINTMSK_SOFM;
   }
@@ -1476,7 +1476,7 @@ HAL_StatusTypeDef USB_HostInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
   (void)USB_FlushRxFifo(USBx);
 
   /* Clear all pending HC Interrupts */
-  for (i = 0U; i < cfg.Host_channels; i++)
+  for (i = 0U; i < cfg.host_channels; i++)
   {
     USBx_HC(i)->HCINT = 0xFFFFFFFFU;
     USBx_HC(i)->HCINTMSK = 0U;
