@@ -9,11 +9,11 @@ public:
     // Types
     struct Cmd {
         const uint8_t* data;
-        size_t dataLen;
+        size_t len;
     };
     
     struct Data {
-        size_t dataLen;
+        size_t len;
     };
     
     struct Event {

@@ -43,13 +43,11 @@ namespace STLoader {
         Op op;
         union {
             struct {
+                uint32_t len;
             } start;
-            
-            struct {
-            } finish;
         } arg;
     } __attribute__((packed));
-    static_assert(sizeof(ICECmd)==2, "ICECmd: invalid size");
+    static_assert(sizeof(ICECmd)==5, "ICECmd: invalid size");
     
     enum class ICEStatus : uint8_t {
         Idle,

@@ -36,7 +36,7 @@ private:
     GPIO _iceSPICS_;
     
     uint8_t _iceBuf[512];
-    size_t _iceBufLen = 0;
+    size_t _iceRemLen = 0;
     ICEStatus _iceStatus = ICEStatus::Idle;
     
     // LEDs

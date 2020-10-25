@@ -215,7 +215,7 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
     
     // Reset the device, triggering it to load the program we just wrote
     {
-        printf("Resetting device...\n");
+        printf("Resetting device\n");
         const STCmd cmd = {
             .op = STCmd::Op::Reset,
             .arg = {
@@ -236,9 +236,14 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
     
     // Start ICE40 configuration
     {
-        printf("Starting configuration...\n");
+        printf("Starting configuration\n");
         const ICECmd cmd = {
             .op = ICECmd::Op::Start,
+            .arg = {
+                .start = {
+                    .len = (uint32_t)mmap.len(),
+                }
+            }
         };
         
         IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
@@ -252,9 +257,30 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEDataOut");
     }
     
+    // Wait for interface to be idle
+    // Without this, the next 'Finish' command would interupt the SPI configuration process
+    for (;;) {
+        // Request status
+        {
+            const ICECmd cmd = {
+                .op = ICECmd::Op::GetStatus,
+            };
+            
+            IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+        }
+        
+        // Read status
+        {
+            auto [status, ior] = iceInterface.read<ICEStatus>(ICEEndpoint::StatusIn);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
+            if (status == ICEStatus::Idle) break;
+        }
+    }
+    
     // Finish ICE40 configuration
     {
-        printf("Finishing configuration...\n");
+        printf("Finishing configuration\n");
         const ICECmd cmd = {
             .op = ICECmd::Op::Finish,
         };
@@ -265,7 +291,6 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
     
     // Request CDONE
     {
-        printf("Reading CDONE...\n");
         const ICECmd cmd = {
             .op = ICECmd::Op::ReadCDONE,
         };
@@ -278,7 +303,7 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
     {
         auto [cdone, ior] = iceInterface.read<ICECDONE>(ICEEndpoint::StatusIn);
         if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEStatusIn");
-        printf("%s (CDONE = %ju)", (cdone==ICECDONE::OK ? "Success" : "Failed"), (uintmax_t)cdone);
+        printf("%s (CDONE = %ju)\n", (cdone==ICECDONE::OK ? "Success" : "Failed"), (uintmax_t)cdone);
     }
 }
 

@@ -89,8 +89,6 @@ void System::_usbHandleEvent(const USB::Event& ev) {
             usb.stRecvCmd();
             // Prepare to receive ICE40 bootloader commands
             usb.iceRecvCmd();
-            // Prepare to receive ICE40 bootloader data
-            usb.iceRecvData(_iceBuf, sizeof(_iceBuf)); // TODO: handle errors
         }
         break;
     }
@@ -103,8 +101,8 @@ void System::_usbHandleEvent(const USB::Event& ev) {
 
 void System::_stHandleCmd(const USB::Cmd& ev) {
     STCmd cmd;
-    assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
-    memcpy(&cmd, ev.data, ev.dataLen);
+    assert(ev.len == sizeof(cmd)); // TODO: handle errors
+    memcpy(&cmd, ev.data, ev.len);
     switch (cmd.op) {
     // Get status
     case STCmd::Op::GetStatus: {
@@ -165,8 +163,8 @@ void System::_stHandleData(const USB::Data& ev) {
 
 void System::_iceHandleCmd(const USB::Cmd& ev) {
     ICECmd cmd;
-    assert(ev.dataLen == sizeof(cmd)); // TODO: handle errors
-    memcpy(&cmd, ev.data, ev.dataLen);
+    assert(ev.len == sizeof(cmd)); // TODO: handle errors
+    memcpy(&cmd, ev.data, ev.len);
     switch (cmd.op) {
     // Get status
     case ICECmd::Op::GetStatus: {
@@ -176,6 +174,8 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Start configuring
     case ICECmd::Op::Start: {
+        assert(cmd.arg.start.len);
+        
         _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _iceSPICS_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         
@@ -202,7 +202,12 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         QSPI::Event qev = qspi.eventChannel.read();
         assert(qev.type == QSPI::Event::Type::WriteDone);
         
+        // Update our state
+        _iceRemLen = cmd.arg.start.len;
         _iceStatus = ICEStatus::Configuring;
+        
+        // Prepare to receive ICE40 bootloader data
+        usb.iceRecvData(_iceBuf, sizeof(_iceBuf)); // TODO: handle errors
         break;
     }
     
@@ -213,8 +218,6 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         // Wait for write to complete
         QSPI::Event qev = qspi.eventChannel.read();
         assert(qev.type == QSPI::Event::Type::WriteDone);
-        
-        _iceStatus = ICEStatus::Idle;
         break;
     }
     
@@ -237,15 +240,23 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
 
 void System::_iceHandleData(const USB::Data& ev) {
     assert(_iceStatus == ICEStatus::Configuring);
-    qspi.write(_iceBuf, ev.dataLen);
+    assert(ev.len <= _iceRemLen);
+    qspi.write(_iceBuf, ev.len);
+    _iceRemLen -= ev.len;
 }
 
 void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
     switch (ev.type) {
     // Write done
     case QSPI::Event::Type::WriteDone: {
-        // Prepare to receive more data
-        usb.iceRecvData(_iceBuf, sizeof(_iceBuf)); // TODO: handle errors
+        if (_iceRemLen) {
+            // We expect more data, so prepare to receive it
+            usb.iceRecvData(_iceBuf, sizeof(_iceBuf)); // TODO: handle errors
+        } else {
+            // Otherwise, we're done
+            // Update our status
+            _iceStatus = ICEStatus::Idle;
+        }
         break;
     }}
 }

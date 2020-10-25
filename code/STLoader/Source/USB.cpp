@@ -198,7 +198,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     case EndpointNum(Endpoints::STCmdOut): {
         stCmdChannel.writeTry(Cmd{
             .data = _stCmdBuf,
-            .dataLen = dataLen,
+            .len = dataLen,
         });
         break;
     }
@@ -206,7 +206,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     // STDataOut endpoint
     case EndpointNum(Endpoints::STDataOut): {
         stDataChannel.writeTry(Data{
-            .dataLen = dataLen,
+            .len = dataLen,
         });
         break;
     }
@@ -215,7 +215,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     case EndpointNum(Endpoints::ICECmdOut): {
         iceCmdChannel.writeTry(Cmd{
             .data = _iceCmdBuf,
-            .dataLen = dataLen,
+            .len = dataLen,
         });
         break;
     }
@@ -223,7 +223,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     // ICEDataOut endpoint
     case EndpointNum(Endpoints::ICEDataOut): {
         iceDataChannel.writeTry(Data{
-            .dataLen = dataLen,
+            .len = dataLen,
         });
         break;
     }}
