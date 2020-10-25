@@ -3,7 +3,6 @@
 namespace STLoader {
     struct STCmd {
         enum class Op : uint8_t {
-            None,
             GetStatus,
             WriteData,
             Reset,
@@ -35,7 +34,6 @@ namespace STLoader {
     
     struct ICECmd {
         enum class Op : uint8_t {
-            None,
             GetStatus,
             Start,
             Stop,

@@ -38,10 +38,11 @@ void QSPI::write(void* data, size_t len) {
     
 }
 
-void QSPI::_handleWriteComplete() {
+void QSPI::_handleWriteDone() {
     
 }
 
+// TODO: make sure this is being used by commenting out, and making sure we get a linker error
 void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi) {
-    ((QSPI*)qspi->Ctx)->_handleWriteComplete();
+    ((QSPI*)qspi->Ctx)->_handleWriteDone();
 }

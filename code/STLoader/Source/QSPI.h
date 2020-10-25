@@ -2,8 +2,6 @@
 #include "stm32f7xx.h"
 #include "GPIO.h"
 
-void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi);
-
 class QSPI {
 public:
     QSPI();
@@ -11,8 +9,16 @@ public:
     void config();
     void write(void* data, size_t len);
     
+    struct Event {
+        enum class Type : uint8_t {
+            WriteDone,
+        };
+        
+        Type type;
+    };
+    
 private:
-    void _handleWriteComplete();
+    void _handleWriteDone();
     
     QSPI_HandleTypeDef _qspi;
     GPIO _clk;
@@ -20,5 +26,6 @@ private:
     GPIO _do;
     GPIO _di;
     
+    void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi);
     friend void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi);
 };

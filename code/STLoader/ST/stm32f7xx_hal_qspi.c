@@ -484,7 +484,7 @@ __weak void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef *hqspi)
   * @param hqspi : QSPI handle
   * @retval None
   */
-void HAL_QSPI_IRQHandler(QSPI_HandleTypeDef *hqspi)
+void ISR_HAL_QSPI(QSPI_HandleTypeDef *hqspi)
 {
   __IO uint32_t *data_reg;
   uint32_t flag = READ_REG(hqspi->Instance->SR);

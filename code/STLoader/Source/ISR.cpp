@@ -17,3 +17,7 @@ extern "C" void ISR_OTG_HS() {
     extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
     ISR_HAL_PCD(&hpcd_USB_OTG_HS);
 }
+
+//extern "C" void ISR_QUADSPI() {
+//    ISR_HAL_QSPI(&hqspi);
+//}
