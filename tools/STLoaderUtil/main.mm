@@ -234,34 +234,34 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
 static void iceLoad(const Args& args, USBInterface& iceInterface) {
     Mmap mmap(args.filePath.c_str());
     
-    // Start ICE40 configuration
-    {
-        printf("Starting configuration...\n");
-        const ICECmd cmd = {
-            .op = ICECmd::Op::Start,
-        };
-        
-        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
-    }
-    
-    // Send ICE40 binary
-    {
-        printf("Writing 0x%jx bytes\n", (uintmax_t)mmap.len());
-        IOReturn ior = iceInterface.write(ICEEndpoint::DataOut, mmap.data(), mmap.len());
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEDataOut");
-    }
-    
-    // Finish ICE40 configuration
-    {
-        printf("Finishing configuration...\n");
-        const ICECmd cmd = {
-            .op = ICECmd::Op::Finish,
-        };
-        
-        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
-    }
+//    // Start ICE40 configuration
+//    {
+//        printf("Starting configuration...\n");
+//        const ICECmd cmd = {
+//            .op = ICECmd::Op::Start,
+//        };
+//        
+//        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+//        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+//    }
+//    
+//    // Send ICE40 binary
+//    {
+//        printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
+//        IOReturn ior = iceInterface.write(ICEEndpoint::DataOut, mmap.data(), mmap.len());
+//        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEDataOut");
+//    }
+//    
+//    // Finish ICE40 configuration
+//    {
+//        printf("Finishing configuration...\n");
+//        const ICECmd cmd = {
+//            .op = ICECmd::Op::Finish,
+//        };
+//        
+//        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+//        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+//    }
     
     // Request CDONE
     {

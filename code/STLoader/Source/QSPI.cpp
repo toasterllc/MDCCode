@@ -1,4 +1,5 @@
 #include "QSPI.h"
+#include "abort.h"
 #include "assert.h"
 
 QSPI::QSPI() :
@@ -21,9 +22,9 @@ void QSPI::init() {
     _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1) = 128/(7+1) = 21.3 MHz
     _device.Init.FifoThreshold = 1;
     _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-    _device.Init.FlashSize = 1;
+    _device.Init.FlashSize = 31; // Flash size is 31+1 address bits => 2^(31+1) bytes
     _device.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-    _device.Init.ClockMode = QSPI_CLOCK_MODE_0;
+    _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock is high while chip-select is released
     _device.Init.FlashID = QSPI_FLASH_ID_1;
     _device.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
     _device.Ctx = this;
@@ -44,7 +45,7 @@ void QSPI::write(void* data, size_t len) {
         .Instruction = 0,
         .Address = 0,
         .AlternateBytes = 0,
-        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressSize = QSPI_ADDRESS_32_BITS,
         .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
         .DummyCycles = 0,
         .InstructionMode = QSPI_INSTRUCTION_NONE,
@@ -73,7 +74,10 @@ void QSPI::_handleWriteDone() {
     });
 }
 
-// TODO: make sure this is being used by commenting out, and making sure we get a linker error
 void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device) {
     ((QSPI*)device->Ctx)->_handleWriteDone();
+}
+
+void HAL_QSPI_ErrorCallback(QSPI_HandleTypeDef* device) {
+    abort();
 }

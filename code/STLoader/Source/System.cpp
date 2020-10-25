@@ -175,21 +175,21 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Start configuring
     case ICECmd::Op::Start: {
-//        _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        _iceSPICS_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        
-//        // Put ICE40 into configuration mode
-//        _iceSPIClk.write(1);
-//        
-//        _iceSPICS_.write(0);
-//        _iceCRST_.write(0);
-//        HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
-//        
-//        _iceCRST_.write(1);
-//        HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
-//        
-//        // Release chip-select before we give control of _iceSPIClk/_iceSPICS_ to QSPI
-//        _iceSPICS_.write(1);
+        _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _iceSPICS_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        
+        // Put ICE40 into configuration mode
+        _iceSPIClk.write(1);
+        
+        _iceSPICS_.write(0);
+        _iceCRST_.write(0);
+        HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
+        
+        _iceCRST_.write(1);
+        HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+        
+        // Release chip-select before we give control of _iceSPIClk/_iceSPICS_ to QSPI
+        _iceSPICS_.write(1);
         
         // Have QSPI take over _iceSPIClk/_iceSPICS_
         qspi.config();
@@ -220,6 +220,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     // Read CDONE pin
     case ICECmd::Op::ReadCDONE: {
         ICECDONE cdone = (_iceCDONE.read() ? ICECDONE::OK : ICECDONE::Error);
+//        usb.stSendStatus(&_stStatus, sizeof(_stStatus));
         usb.iceSendStatus(&cdone, sizeof(cdone));
         break;
     }

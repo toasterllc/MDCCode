@@ -70,12 +70,6 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(pcdHandle->Instance==USB_OTG_HS)
   {
-  /* USER CODE BEGIN USB_OTG_HS_MspInit 0 */
-    // Required to enable USB PHY clock. Otherwise USB_HS_PHYCInit() will fail with HAL_TIMEOUT.
-    // It appears to be a bug that the STM tools doesn't generate this for us.
-    __HAL_RCC_OTGPHYC_CLK_ENABLE();
-  /* USER CODE END USB_OTG_HS_MspInit 0 */
-
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**USB_OTG_HS GPIO Configuration
     PB14     ------> USB_OTG_HS_DM
@@ -91,6 +85,9 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
     /* Peripheral clock enable */
     __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
     __HAL_RCC_USB_OTG_HS_ULPI_CLK_ENABLE();
+    // Required to enable USB PHY clock. Otherwise USB_HS_PHYCInit() will fail with HAL_TIMEOUT.
+    // It appears to be a bug that the STM tools doesn't generate this for us.
+    __HAL_RCC_OTGPHYC_CLK_ENABLE();
 
     /* Peripheral interrupt init */
     HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
