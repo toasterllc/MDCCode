@@ -11,8 +11,8 @@ using namespace STLoader;
 System Sys;
 
 System::System() :
-_iceCRST_(GPIOC, GPIO_PIN_3),
-_iceCDONE(GPIOC, GPIO_PIN_2),
+_iceCRST_(GPIOI, GPIO_PIN_6),
+_iceCDONE(GPIOI, GPIO_PIN_7),
 _iceSPIClk(GPIOB, GPIO_PIN_2),
 _iceSPICS_(GPIOB, GPIO_PIN_6),
 
@@ -30,14 +30,15 @@ void System::init() {
     // Configure the system clock
     SystemClock::Init();
     
-    __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE
     __HAL_RCC_GPIOB_CLK_ENABLE(); // QSPI, LEDs
     __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
     __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
+    __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
+    __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
     // Configure ice40 control GPIOs
     _iceCRST_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _iceCDONE.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _iceCDONE.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Configure our LEDs
     _led0.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
