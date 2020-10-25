@@ -1763,9 +1763,9 @@ typedef struct
 #define ADC_CSR_OVR3              ADC_CSR_OVR3_Msk                             /*!<ADC3 Overrun flag                       */
 
 /* Legacy defines */
-#define  ADC_CSR_DOVR1                       ADC_CSR_OVR1
-#define  ADC_CSR_DOVR2                       ADC_CSR_OVR2
-#define  ADC_CSR_DOVR3                       ADC_CSR_OVR3
+#define ADC_CSR_DOVR1                       ADC_CSR_OVR1
+#define ADC_CSR_DOVR2                       ADC_CSR_OVR2
+#define ADC_CSR_DOVR3                       ADC_CSR_OVR3
 
 
 /*******************  Bit definition for ADC_CCR register  ********************/
@@ -6143,30 +6143,30 @@ typedef struct
 #define EXTI_IMR_MR23             EXTI_IMR_MR23_Msk                            /*!< Interrupt Mask on line 23 */
 
 /* Reference Defines */
-#define  EXTI_IMR_IM0                        EXTI_IMR_MR0
-#define  EXTI_IMR_IM1                        EXTI_IMR_MR1
-#define  EXTI_IMR_IM2                        EXTI_IMR_MR2
-#define  EXTI_IMR_IM3                        EXTI_IMR_MR3
-#define  EXTI_IMR_IM4                        EXTI_IMR_MR4
-#define  EXTI_IMR_IM5                        EXTI_IMR_MR5
-#define  EXTI_IMR_IM6                        EXTI_IMR_MR6
-#define  EXTI_IMR_IM7                        EXTI_IMR_MR7
-#define  EXTI_IMR_IM8                        EXTI_IMR_MR8
-#define  EXTI_IMR_IM9                        EXTI_IMR_MR9
-#define  EXTI_IMR_IM10                       EXTI_IMR_MR10
-#define  EXTI_IMR_IM11                       EXTI_IMR_MR11
-#define  EXTI_IMR_IM12                       EXTI_IMR_MR12
-#define  EXTI_IMR_IM13                       EXTI_IMR_MR13
-#define  EXTI_IMR_IM14                       EXTI_IMR_MR14
-#define  EXTI_IMR_IM15                       EXTI_IMR_MR15
-#define  EXTI_IMR_IM16                       EXTI_IMR_MR16
-#define  EXTI_IMR_IM17                       EXTI_IMR_MR17
-#define  EXTI_IMR_IM18                       EXTI_IMR_MR18
-#define  EXTI_IMR_IM19                       EXTI_IMR_MR19
-#define  EXTI_IMR_IM20                       EXTI_IMR_MR20
-#define  EXTI_IMR_IM21                       EXTI_IMR_MR21
-#define  EXTI_IMR_IM22                       EXTI_IMR_MR22
-#define  EXTI_IMR_IM23                       EXTI_IMR_MR23
+#define EXTI_IMR_IM0                        EXTI_IMR_MR0
+#define EXTI_IMR_IM1                        EXTI_IMR_MR1
+#define EXTI_IMR_IM2                        EXTI_IMR_MR2
+#define EXTI_IMR_IM3                        EXTI_IMR_MR3
+#define EXTI_IMR_IM4                        EXTI_IMR_MR4
+#define EXTI_IMR_IM5                        EXTI_IMR_MR5
+#define EXTI_IMR_IM6                        EXTI_IMR_MR6
+#define EXTI_IMR_IM7                        EXTI_IMR_MR7
+#define EXTI_IMR_IM8                        EXTI_IMR_MR8
+#define EXTI_IMR_IM9                        EXTI_IMR_MR9
+#define EXTI_IMR_IM10                       EXTI_IMR_MR10
+#define EXTI_IMR_IM11                       EXTI_IMR_MR11
+#define EXTI_IMR_IM12                       EXTI_IMR_MR12
+#define EXTI_IMR_IM13                       EXTI_IMR_MR13
+#define EXTI_IMR_IM14                       EXTI_IMR_MR14
+#define EXTI_IMR_IM15                       EXTI_IMR_MR15
+#define EXTI_IMR_IM16                       EXTI_IMR_MR16
+#define EXTI_IMR_IM17                       EXTI_IMR_MR17
+#define EXTI_IMR_IM18                       EXTI_IMR_MR18
+#define EXTI_IMR_IM19                       EXTI_IMR_MR19
+#define EXTI_IMR_IM20                       EXTI_IMR_MR20
+#define EXTI_IMR_IM21                       EXTI_IMR_MR21
+#define EXTI_IMR_IM22                       EXTI_IMR_MR22
+#define EXTI_IMR_IM23                       EXTI_IMR_MR23
 
 #define EXTI_IMR_IM_Pos           (0U)
 #define EXTI_IMR_IM_Msk           (0xFFFFFFUL << EXTI_IMR_IM_Pos)               /*!< 0x00FFFFFF */
@@ -6247,30 +6247,30 @@ typedef struct
 #define EXTI_EMR_MR23             EXTI_EMR_MR23_Msk                            /*!< Event Mask on line 23 */
 
 /* Reference Defines */
-#define  EXTI_EMR_EM0                        EXTI_EMR_MR0
-#define  EXTI_EMR_EM1                        EXTI_EMR_MR1
-#define  EXTI_EMR_EM2                        EXTI_EMR_MR2
-#define  EXTI_EMR_EM3                        EXTI_EMR_MR3
-#define  EXTI_EMR_EM4                        EXTI_EMR_MR4
-#define  EXTI_EMR_EM5                        EXTI_EMR_MR5
-#define  EXTI_EMR_EM6                        EXTI_EMR_MR6
-#define  EXTI_EMR_EM7                        EXTI_EMR_MR7
-#define  EXTI_EMR_EM8                        EXTI_EMR_MR8
-#define  EXTI_EMR_EM9                        EXTI_EMR_MR9
-#define  EXTI_EMR_EM10                       EXTI_EMR_MR10
-#define  EXTI_EMR_EM11                       EXTI_EMR_MR11
-#define  EXTI_EMR_EM12                       EXTI_EMR_MR12
-#define  EXTI_EMR_EM13                       EXTI_EMR_MR13
-#define  EXTI_EMR_EM14                       EXTI_EMR_MR14
-#define  EXTI_EMR_EM15                       EXTI_EMR_MR15
-#define  EXTI_EMR_EM16                       EXTI_EMR_MR16
-#define  EXTI_EMR_EM17                       EXTI_EMR_MR17
-#define  EXTI_EMR_EM18                       EXTI_EMR_MR18
-#define  EXTI_EMR_EM19                       EXTI_EMR_MR19
-#define  EXTI_EMR_EM20                       EXTI_EMR_MR20
-#define  EXTI_EMR_EM21                       EXTI_EMR_MR21
-#define  EXTI_EMR_EM22                       EXTI_EMR_MR22
-#define  EXTI_EMR_EM23                       EXTI_EMR_MR23
+#define EXTI_EMR_EM0                        EXTI_EMR_MR0
+#define EXTI_EMR_EM1                        EXTI_EMR_MR1
+#define EXTI_EMR_EM2                        EXTI_EMR_MR2
+#define EXTI_EMR_EM3                        EXTI_EMR_MR3
+#define EXTI_EMR_EM4                        EXTI_EMR_MR4
+#define EXTI_EMR_EM5                        EXTI_EMR_MR5
+#define EXTI_EMR_EM6                        EXTI_EMR_MR6
+#define EXTI_EMR_EM7                        EXTI_EMR_MR7
+#define EXTI_EMR_EM8                        EXTI_EMR_MR8
+#define EXTI_EMR_EM9                        EXTI_EMR_MR9
+#define EXTI_EMR_EM10                       EXTI_EMR_MR10
+#define EXTI_EMR_EM11                       EXTI_EMR_MR11
+#define EXTI_EMR_EM12                       EXTI_EMR_MR12
+#define EXTI_EMR_EM13                       EXTI_EMR_MR13
+#define EXTI_EMR_EM14                       EXTI_EMR_MR14
+#define EXTI_EMR_EM15                       EXTI_EMR_MR15
+#define EXTI_EMR_EM16                       EXTI_EMR_MR16
+#define EXTI_EMR_EM17                       EXTI_EMR_MR17
+#define EXTI_EMR_EM18                       EXTI_EMR_MR18
+#define EXTI_EMR_EM19                       EXTI_EMR_MR19
+#define EXTI_EMR_EM20                       EXTI_EMR_MR20
+#define EXTI_EMR_EM21                       EXTI_EMR_MR21
+#define EXTI_EMR_EM22                       EXTI_EMR_MR22
+#define EXTI_EMR_EM23                       EXTI_EMR_MR23
 
 
 /******************  Bit definition for EXTI_RTSR register  *******************/
@@ -11390,7 +11390,7 @@ typedef struct
 #define SAI_xFRCR_FSOFF            SAI_xFRCR_FSOFF_Msk                         /*!<Frame Synchronization OFFset      */
 
 /* Legacy define */
-#define  SAI_xFRCR_FSPO                      SAI_xFRCR_FSPOL
+#define SAI_xFRCR_FSPO                      SAI_xFRCR_FSPOL
 
 /******************  Bit definition for SAI_xSLOTR register  *******************/
 #define SAI_xSLOTR_FBOFF_Pos       (0U)
@@ -13074,7 +13074,7 @@ typedef struct
 #define TIM_CCR5_GC5C3            TIM_CCR5_GC5C3_Msk                           /*!<Group Channel 5 and Channel 3 */
 
 /*******************  Bit definition for TIM_CCR6 register  *******************/
-#define  TIM_CCR6_CCR6           ((uint16_t)0xFFFFU)                           /*!<Capture/Compare 6 Value */
+#define TIM_CCR6_CCR6           ((uint16_t)0xFFFFU)                           /*!<Capture/Compare 6 Value */
 
 
 /******************************************************************************/
@@ -13320,8 +13320,8 @@ typedef struct
 #define USART_CR1_M1                  0x10000000U                              /*!< Word length - Bit 1               */
 
 /* Legacy defines */
-#define  USART_CR1_M_0                       USART_CR1_M0          /*!< Word length - Bit 0               */
-#define  USART_CR1_M_1                       USART_CR1_M1          /*!< Word length - Bit 1               */
+#define USART_CR1_M_0                       USART_CR1_M0          /*!< Word length - Bit 0               */
+#define USART_CR1_M_1                       USART_CR1_M1          /*!< Word length - Bit 1               */
 
 /******************  Bit definition for USART_CR2 register  *******************/
 #define USART_CR2_ADDM7_Pos           (4U)

@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_ctlreq.h"
+#include "usbd_core.h"
 #include "usbd_ioreq.h"
 
 

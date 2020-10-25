@@ -170,7 +170,7 @@ typedef struct
   * @{
   */
 #if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
-#define  HAL_PCD_ERROR_INVALID_CALLBACK                        (0x00000010U)    /*!< Invalid Callback error  */
+#define HAL_PCD_ERROR_INVALID_CALLBACK                        (0x00000010U)    /*!< Invalid Callback error  */
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 
 /**

@@ -56,7 +56,7 @@
 /** @defgroup PWR_ENABLE_WUP_Mask PWR Enable WUP Mask
   * @{
   */  
-#define  PWR_EWUP_MASK                          ((uint32_t)0x00003F00)
+#define PWR_EWUP_MASK                          ((uint32_t)0x00003F00)
 /**
   * @}
   */

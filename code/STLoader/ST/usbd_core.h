@@ -1,87 +1,8 @@
-/**
-  ******************************************************************************
-  * @file    usbd_core.h
-  * @author  MCD Application Team
-  * @brief   Header file for usbd_core.c file
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                      www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USBD_CORE_H
-#define __USBD_CORE_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Includes ------------------------------------------------------------------*/
-#include "usbd_conf.h"
+#pragma once
 #include "usbd_def.h"
 #include "usbd_ioreq.h"
 #include "usbd_ctlreq.h"
 
-/** @addtogroup STM32_USB_DEVICE_LIBRARY
-  * @{
-  */
-
-/** @defgroup USBD_CORE
-  * @brief This file is the Header file for usbd_core.c file
-  * @{
-  */
-
-
-/** @defgroup USBD_CORE_Exported_Defines
-  * @{
-  */
-#ifndef USBD_DEBUG_LEVEL
-#define USBD_DEBUG_LEVEL           0U
-#endif /* USBD_DEBUG_LEVEL */
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_CORE_Exported_TypesDefinitions
-  * @{
-  */
-
-
-/**
-  * @}
-  */
-
-
-
-/** @defgroup USBD_CORE_Exported_Macros
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CORE_Exported_Variables
-  * @{
-  */
-#define USBD_SOF          USBD_LL_SOF
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CORE_Exported_FunctionsPrototype
-  * @{
-  */
 USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev, USBD_DescriptorsTypeDef *pdesc, uint8_t id, void* ctx);
 USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef *pdev);
 USBD_StatusTypeDef USBD_Start(USBD_HandleTypeDef *pdev);
@@ -108,7 +29,6 @@ USBD_StatusTypeDef USBD_LL_IsoOUTIncomplete(USBD_HandleTypeDef *pdev, uint8_t ep
 USBD_StatusTypeDef USBD_LL_DevConnected(USBD_HandleTypeDef *pdev);
 USBD_StatusTypeDef USBD_LL_DevDisconnected(USBD_HandleTypeDef *pdev);
 
-/* USBD Low Level Driver */
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev);
 USBD_StatusTypeDef USBD_LL_DeInit(USBD_HandleTypeDef *pdev);
 USBD_StatusTypeDef USBD_LL_Start(USBD_HandleTypeDef *pdev);
@@ -131,26 +51,3 @@ USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, uint8_t ep_a
 
 uint8_t USBD_LL_IsStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr);
 uint32_t USBD_LL_GetRxDataSize(USBD_HandleTypeDef *pdev, uint8_t  ep_addr);
-
-/**
-  * @}
-  */
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __USBD_CORE_H */
-
-/**
-  * @}
-  */
-
-/**
-* @}
-*/
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
-
-

@@ -289,8 +289,8 @@ typedef  void (*pI2C_AddrCallbackTypeDef)(I2C_HandleTypeDef *hi2c, uint8_t Trans
 /* List of XferOptions in usage of :
  * 1- Restart condition in all use cases (direction change or not)
  */
-#define  I2C_OTHER_FRAME                (0x000000AAU)
-#define  I2C_OTHER_AND_LAST_FRAME       (0x0000AA00U)
+#define I2C_OTHER_FRAME                (0x000000AAU)
+#define I2C_OTHER_AND_LAST_FRAME       (0x0000AA00U)
 /**
   * @}
   */
@@ -367,9 +367,9 @@ typedef  void (*pI2C_AddrCallbackTypeDef)(I2C_HandleTypeDef *hi2c, uint8_t Trans
 /** @defgroup I2C_RELOAD_END_MODE I2C Reload End Mode
   * @{
   */
-#define  I2C_RELOAD_MODE                I2C_CR2_RELOAD
-#define  I2C_AUTOEND_MODE               I2C_CR2_AUTOEND
-#define  I2C_SOFTEND_MODE               (0x00000000U)
+#define I2C_RELOAD_MODE                I2C_CR2_RELOAD
+#define I2C_AUTOEND_MODE               I2C_CR2_AUTOEND
+#define I2C_SOFTEND_MODE               (0x00000000U)
 /**
   * @}
   */
@@ -377,10 +377,10 @@ typedef  void (*pI2C_AddrCallbackTypeDef)(I2C_HandleTypeDef *hi2c, uint8_t Trans
 /** @defgroup I2C_START_STOP_MODE I2C Start or Stop Mode
   * @{
   */
-#define  I2C_NO_STARTSTOP               (0x00000000U)
-#define  I2C_GENERATE_STOP              (uint32_t)(0x80000000U | I2C_CR2_STOP)
-#define  I2C_GENERATE_START_READ        (uint32_t)(0x80000000U | I2C_CR2_START | I2C_CR2_RD_WRN)
-#define  I2C_GENERATE_START_WRITE       (uint32_t)(0x80000000U | I2C_CR2_START)
+#define I2C_NO_STARTSTOP               (0x00000000U)
+#define I2C_GENERATE_STOP              (uint32_t)(0x80000000U | I2C_CR2_STOP)
+#define I2C_GENERATE_START_READ        (uint32_t)(0x80000000U | I2C_CR2_START | I2C_CR2_RD_WRN)
+#define I2C_GENERATE_START_WRITE       (uint32_t)(0x80000000U | I2C_CR2_START)
 /**
   * @}
   */

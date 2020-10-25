@@ -1254,7 +1254,7 @@ __STATIC_FORCEINLINE void __STL(uint32_t value, volatile uint32_t *ptr)
   \param [in]    ptr  Pointer to data
   \return             value of type uint8_t at (*ptr)
  */
-#define     __LDAEXB                 (uint8_t)__builtin_arm_ldaex
+#define __LDAEXB                 (uint8_t)__builtin_arm_ldaex
 
 
 /**
@@ -1263,7 +1263,7 @@ __STATIC_FORCEINLINE void __STL(uint32_t value, volatile uint32_t *ptr)
   \param [in]    ptr  Pointer to data
   \return        value of type uint16_t at (*ptr)
  */
-#define     __LDAEXH                 (uint16_t)__builtin_arm_ldaex
+#define __LDAEXH                 (uint16_t)__builtin_arm_ldaex
 
 
 /**
@@ -1272,7 +1272,7 @@ __STATIC_FORCEINLINE void __STL(uint32_t value, volatile uint32_t *ptr)
   \param [in]    ptr  Pointer to data
   \return        value of type uint32_t at (*ptr)
  */
-#define     __LDAEX                  (uint32_t)__builtin_arm_ldaex
+#define __LDAEX                  (uint32_t)__builtin_arm_ldaex
 
 
 /**
@@ -1283,7 +1283,7 @@ __STATIC_FORCEINLINE void __STL(uint32_t value, volatile uint32_t *ptr)
   \return          0  Function succeeded
   \return          1  Function failed
  */
-#define     __STLEXB                 (uint32_t)__builtin_arm_stlex
+#define __STLEXB                 (uint32_t)__builtin_arm_stlex
 
 
 /**
@@ -1294,7 +1294,7 @@ __STATIC_FORCEINLINE void __STL(uint32_t value, volatile uint32_t *ptr)
   \return          0  Function succeeded
   \return          1  Function failed
  */
-#define     __STLEXH                 (uint32_t)__builtin_arm_stlex
+#define __STLEXH                 (uint32_t)__builtin_arm_stlex
 
 
 /**
@@ -1305,7 +1305,7 @@ __STATIC_FORCEINLINE void __STL(uint32_t value, volatile uint32_t *ptr)
   \return          0  Function succeeded
   \return          1  Function failed
  */
-#define     __STLEX                  (uint32_t)__builtin_arm_stlex
+#define __STLEX                  (uint32_t)__builtin_arm_stlex
 
 #endif /* ((defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
            (defined (__ARM_ARCH_8M_BASE__ ) && (__ARM_ARCH_8M_BASE__ == 1))    ) */
