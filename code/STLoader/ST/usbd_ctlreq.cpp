@@ -105,7 +105,7 @@ USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
   {
   case USB_REQ_TYPE_CLASS:
   case USB_REQ_TYPE_VENDOR:
-    ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev->pCtx, req);
+    ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
     break;
 
   case USB_REQ_TYPE_STANDARD:
@@ -177,7 +177,7 @@ USBD_StatusTypeDef USBD_StdItfReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
 
       if (LOBYTE(req->wIndex) <= USBD_MAX_NUM_INTERFACES)
       {
-        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev->pCtx, req);
+        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
 
         if ((req->wLength == 0U) && (ret == USBD_OK))
         {
@@ -222,7 +222,7 @@ USBD_StatusTypeDef USBD_StdEPReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
   {
   case USB_REQ_TYPE_CLASS:
   case USB_REQ_TYPE_VENDOR:
-    ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev->pCtx, req);
+    ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
     break;
 
   case USB_REQ_TYPE_STANDARD:
@@ -285,7 +285,7 @@ USBD_StatusTypeDef USBD_StdEPReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
             (void)USBD_LL_ClearStallEP(pdev, ep_addr);
           }
           (void)USBD_CtlSendStatus(pdev);
-          (USBD_StatusTypeDef)pdev->pClass->Setup(pdev->pCtx, req);
+          (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
         }
         break;
 
@@ -405,12 +405,12 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
   case USB_DESC_TYPE_CONFIGURATION:
     if (pdev->dev_speed == USBD_SPEED_HIGH)
     {
-      pbuf = pdev->pClass->GetHSConfigDescriptor(pdev->pCtx, &len);
+      pbuf = pdev->pClass->GetHSConfigDescriptor(pdev, &len);
       pbuf[1] = USB_DESC_TYPE_CONFIGURATION;
     }
     else
     {
-      pbuf = pdev->pClass->GetFSConfigDescriptor(pdev->pCtx, &len);
+      pbuf = pdev->pClass->GetFSConfigDescriptor(pdev, &len);
       pbuf[1] = USB_DESC_TYPE_CONFIGURATION;
     }
     break;
@@ -493,7 +493,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
     default:
       if (pdev->pClass->GetUsrStrDescriptor != NULL)
       {
-        pbuf = pdev->pClass->GetUsrStrDescriptor(pdev->pCtx, (req->wValue), &len);
+        pbuf = pdev->pClass->GetUsrStrDescriptor(pdev, (req->wValue), &len);
       }
       else
       {

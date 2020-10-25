@@ -31,9 +31,9 @@ void USB::init() {
     USBD_StatusTypeDef ur = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
     assert(ur == USBD_OK);
     
-#define Fwd0(name) [](void* ctx) { return ((USB*)ctx)->_usbd_##name(); }
-#define Fwd1(name, T0) [](void* ctx, T0 t0) { return ((USB*)ctx)->_usbd_##name(t0); }
-#define Fwd2(name, T0, T1) [](void* ctx, T0 t0, T1 t1) { return ((USB*)ctx)->_usbd_##name(t0, t1); }
+#define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((USB*)pdev->pCtx)->_usbd_##name(); }
+#define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((USB*)pdev->pCtx)->_usbd_##name(t0); }
+#define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((USB*)pdev->pCtx)->_usbd_##name(t0, t1); }
     
     static const USBD_ClassTypeDef usbClass = {
         .Init                           = Fwd1(Init, uint8_t),

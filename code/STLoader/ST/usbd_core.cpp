@@ -39,7 +39,7 @@ USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef* pdev)
   // Free Class Resources
   if (pdev->pClass != NULL)
   {
-    pdev->pClass->DeInit(pdev->pCtx, (uint8_t)pdev->dev_config);
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
   }
 
   pdev->pConfDesc = NULL;
@@ -73,9 +73,9 @@ USBD_StatusTypeDef USBD_RegisterClass(USBD_HandleTypeDef* pdev, const USBD_Class
 
   // Get Device Configuration Descriptor
 #ifdef USE_USB_FS
-  pdev->pConfDesc = (void* )pdev->pClass->GetFSConfigDescriptor(pdev->pCtx, &len);
+  pdev->pConfDesc = (void* )pdev->pClass->GetFSConfigDescriptor(pdev, &len);
 #else // USE_USB_HS
-  pdev->pConfDesc = (void* )pdev->pClass->GetHSConfigDescriptor(pdev->pCtx, &len);
+  pdev->pConfDesc = (void* )pdev->pClass->GetHSConfigDescriptor(pdev, &len);
 #endif // USE_USB_FS
 
 
@@ -97,7 +97,7 @@ USBD_StatusTypeDef USBD_Stop(USBD_HandleTypeDef* pdev)
   // Free Class Resources
   if (pdev->pClass != NULL)
   {
-    pdev->pClass->DeInit(pdev->pCtx, (uint8_t)pdev->dev_config);
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
   }
 
   if (pdev->pConfDesc != NULL)
@@ -125,7 +125,7 @@ USBD_StatusTypeDef USBD_SetClassConfig(USBD_HandleTypeDef* pdev, uint8_t cfgidx)
   if (pdev->pClass != NULL)
   {
     // Set configuration and Start the Class
-    ret = (USBD_StatusTypeDef)pdev->pClass->Init(pdev->pCtx, cfgidx);
+    ret = (USBD_StatusTypeDef)pdev->pClass->Init(pdev, cfgidx);
   }
 
   return ret;
@@ -137,7 +137,7 @@ USBD_StatusTypeDef USBD_ClrClassConfig(USBD_HandleTypeDef* pdev, uint8_t cfgidx)
   // Clear configuration and De-initialize the Class process
   if (pdev->pClass != NULL)
   {
-    pdev->pClass->DeInit(pdev->pCtx, cfgidx);
+    pdev->pClass->DeInit(pdev, cfgidx);
   }
 
   return USBD_OK;
@@ -200,7 +200,7 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef* pdev,
       {
         if ((pdev->pClass->EP0_RxReady != NULL) && (pdev->dev_state == USBD_STATE_CONFIGURED))
         {
-          pdev->pClass->EP0_RxReady(pdev->pCtx);
+          pdev->pClass->EP0_RxReady(pdev);
         }
         (void)USBD_CtlSendStatus(pdev);
       }
@@ -220,7 +220,7 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef* pdev,
   else if ((pdev->pClass->DataOut != NULL) &&
            (pdev->dev_state == USBD_STATE_CONFIGURED))
   {
-    ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev->pCtx, epnum);
+    ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
 
     if (ret != USBD_OK)
     {
@@ -276,7 +276,7 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef* pdev,
           if ((pdev->pClass->EP0_TxSent != NULL) &&
               (pdev->dev_state == USBD_STATE_CONFIGURED))
           {
-            pdev->pClass->EP0_TxSent(pdev->pCtx);
+            pdev->pClass->EP0_TxSent(pdev);
           }
           (void)USBD_LL_StallEP(pdev, 0x80U);
           (void)USBD_CtlReceiveStatus(pdev);
@@ -303,7 +303,7 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef* pdev,
   else if ((pdev->pClass->DataIn != NULL) &&
            (pdev->dev_state == USBD_STATE_CONFIGURED))
   {
-    ret = (USBD_StatusTypeDef)pdev->pClass->DataIn(pdev->pCtx, epnum);
+    ret = (USBD_StatusTypeDef)pdev->pClass->DataIn(pdev, epnum);
 
     if (ret != USBD_OK)
     {
@@ -330,7 +330,7 @@ USBD_StatusTypeDef USBD_LL_Reset(USBD_HandleTypeDef* pdev)
 
   if (pdev->pClass != NULL)
   {
-    pdev->pClass->DeInit(pdev->pCtx, (uint8_t)pdev->dev_config);
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
   }
 
     // Open EP0 OUT
@@ -383,7 +383,7 @@ USBD_StatusTypeDef USBD_LL_SOF(USBD_HandleTypeDef* pdev)
   {
     if (pdev->pClass->SOF != NULL)
     {
-      pdev->pClass->SOF(pdev->pCtx);
+      pdev->pClass->SOF(pdev);
     }
   }
 
@@ -416,7 +416,7 @@ USBD_StatusTypeDef USBD_LL_DevDisconnected(USBD_HandleTypeDef* pdev)
 
   if (pdev->pClass != NULL)
   {
-    pdev->pClass->DeInit(pdev->pCtx, (uint8_t)pdev->dev_config);
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
   }
 
   return USBD_OK;
