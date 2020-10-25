@@ -2,6 +2,8 @@
 #include "stm32f7xx.h"
 #include "GPIO.h"
 
+extern "C" void ISR_QUADSPI();
+
 class QSPI {
 public:
     QSPI();
@@ -18,6 +20,7 @@ public:
     };
     
 private:
+    void _isr();
     void _handleWriteDone();
     
     QSPI_HandleTypeDef _qspi;
@@ -28,4 +31,6 @@ private:
     
     void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi);
     friend void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi);
+    
+    friend void ISR_QUADSPI();
 };

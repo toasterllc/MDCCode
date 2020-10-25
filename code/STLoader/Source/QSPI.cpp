@@ -38,6 +38,10 @@ void QSPI::write(void* data, size_t len) {
     
 }
 
+void QSPI::_isr() {
+    ISR_HAL_QSPI(&_qspi);
+}
+
 void QSPI::_handleWriteDone() {
     
 }

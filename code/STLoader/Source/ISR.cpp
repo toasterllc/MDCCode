@@ -1,4 +1,5 @@
 #include "stm32f7xx.h"
+#include "System.h"
 
 extern "C" void ISR_NMI() {}
 extern "C" void ISR_HardFault() { for (;;); }
@@ -18,6 +19,6 @@ extern "C" void ISR_OTG_HS() {
     ISR_HAL_PCD(&hpcd_USB_OTG_HS);
 }
 
-//extern "C" void ISR_QUADSPI() {
-//    ISR_HAL_QSPI(&hqspi);
-//}
+extern "C" void ISR_QUADSPI() {
+    Sys.qspi._isr();
+}
