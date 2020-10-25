@@ -31,8 +31,15 @@ private:
     GPIO _iceSPIClk;
     GPIO _iceSPICS_;
     ICEStatus _iceStatus = ICEStatus::Idle;
-    uint8_t _iceBuf0[1024];
-    uint8_t _iceBuf1[1024];
+    
+    struct ICEBuf {
+        uint8_t buf[512];
+        size_t len;
+    };
+    
+    ICEBuf _iceBuf[2];
+    ICEBuf* _iceBufIn = nullptr;
+    ICEBuf* _iceBufOut = nullptr;
     
     // LEDs
     GPIO _led0;

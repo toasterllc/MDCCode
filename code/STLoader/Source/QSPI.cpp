@@ -35,7 +35,23 @@ void QSPI::config() {
 }
 
 void QSPI::write(void* data, size_t len) {
-    
+    QSPI_CommandTypeDef cmd = {
+        .Instruction = 0,
+        .Address = 0,
+        .AlternateBytes = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .DummyCycles = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        .DataMode = QSPI_DATA_1_LINE,
+        .NbData = (uint32_t)len,
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    HAL_QSPI_Command_IT(&_qspi, &cmd);
 }
 
 void QSPI::_isr() {
@@ -43,7 +59,9 @@ void QSPI::_isr() {
 }
 
 void QSPI::_handleWriteDone() {
-    
+    eventChannel.writeTry(Event{
+        .type = Event::Type::WriteDone,
+    });
 }
 
 // TODO: make sure this is being used by commenting out, and making sure we get a linker error

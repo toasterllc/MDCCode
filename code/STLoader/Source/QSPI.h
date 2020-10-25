@@ -1,6 +1,7 @@
 #pragma once
 #include "stm32f7xx.h"
 #include "GPIO.h"
+#include "Channel.h"
 
 extern "C" void ISR_QUADSPI();
 
@@ -19,6 +20,8 @@ public:
         Type type;
     };
     
+    Channel<Event, 3> eventChannel;
+    
 private:
     void _isr();
     void _handleWriteDone();
@@ -31,6 +34,5 @@ private:
     
     void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi);
     friend void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* qspi);
-    
     friend void ISR_QUADSPI();
 };

@@ -162,6 +162,17 @@ void System::_handleICECmd(const USB::CmdEvent& ev) {
         // Have QSPI take over _iceSPIClk/_iceSPICS_
         qspi.config();
         
+        // Send 8 clocks
+        qspi.write(_iceBuf0, 1);
+        
+        // Wait for write to complete
+        QSPI::Event qev = qspi.eventChannel.read();
+        assert(qev.type == QSPI::Event::Type::WriteDone);
+        
+        // Prepare to receive data
+        _iceBufIn = &_iceBuf[0];
+        usb.iceRecvData(_iceBuf[0].buf, sizeof(_iceBuf[0].buf)); // TODO: handle errors
+        
         break;
     }
     
@@ -172,6 +183,13 @@ void System::_handleICECmd(const USB::CmdEvent& ev) {
     
     // Write data
     case ICECmd::Op::WriteData: {
+        assert(_iceBufIn);
+        _iceBufIn->len = cmd.arg.writeData.len;
+        
+        // If a QSPI operation isn't in progress, prepare to receive more data into the other buffer
+        _iceBufIn = (_iceBufIn==&_iceBuf[0] ? &_iceBuf[1] : &_iceBuf[0]);
+        usb.iceRecvData(_iceBuf[0].buf, sizeof(_iceBuf[0].buf)); // TODO: handle errors
+        
         break;
     }
     
@@ -185,6 +203,7 @@ void System::_handleICECmd(const USB::CmdEvent& ev) {
 }
 
 void System::_handleICEData(const USB::DataEvent& ev) {
+    
 }
 
 int main() {
