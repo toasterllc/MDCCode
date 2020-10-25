@@ -26,6 +26,7 @@
 
 /* Begin PBXFileReference section */
 		554F165D2542AC5100F67066 /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../code/Shared; sourceTree = "<group>"; };
+		554F178B254536A700F67066 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* STLoaderUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoaderUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -53,6 +54,7 @@
 			children = (
 				554F165D2542AC5100F67066 /* Shared */,
 				55E1D8F6253F75A300628EF6 /* USBInterface.h */,
+				554F178B254536A700F67066 /* Mmap.h */,
 				55E1D8F5253F758A00628EF6 /* SendRight.h */,
 				55E1D8F0253EB2F100628EF6 /* ELF32Binary.h */,
 				55E1D8ED253E892B00628EF6 /* main.mm */,

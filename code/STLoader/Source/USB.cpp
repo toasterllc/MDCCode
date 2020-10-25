@@ -64,6 +64,10 @@ void USB::init() {
     assert(ur == USBD_OK);
 }
 
+USB::State USB::state() const {
+    return _state;
+}
+
 USBD_StatusTypeDef USB::stRecvCmd() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::STCmdOut, _stCmdBuf, sizeof(_stCmdBuf));
 }
@@ -125,13 +129,19 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
         _device.ep_in[EndpointNum(Endpoints::ICEStatusIn)].is_used = 1U;
     }
     
-    // Prepare to receive commands
-    stRecvCmd();
-    iceRecvCmd();
+    _state = State::Connected;
+    eventChannel.writeTry(Event{
+        .type = Event::Type::StateChanged,
+    });
+    
     return (uint8_t)USBD_OK;
 }
 
 uint8_t USB::_usbd_DeInit(uint8_t cfgidx) {
+    _state = State::Disconnected;
+    eventChannel.writeTry(Event{
+        .type = Event::Type::StateChanged,
+    });
     return (uint8_t)USBD_OK;
 }
 
@@ -159,7 +169,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // STCmdOut endpoint
     case EndpointNum(Endpoints::STCmdOut): {
-        stCmdChannel.writeTry(CmdEvent{
+        stCmdChannel.writeTry(Cmd{
             .data = _stCmdBuf,
             .dataLen = dataLen,
         });
@@ -168,7 +178,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // STDataOut endpoint
     case EndpointNum(Endpoints::STDataOut): {
-        stDataChannel.writeTry(DataEvent{
+        stDataChannel.writeTry(Data{
             .dataLen = dataLen,
         });
         break;
@@ -176,7 +186,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // ICECmdOut endpoint
     case EndpointNum(Endpoints::ICECmdOut): {
-        iceCmdChannel.writeTry(CmdEvent{
+        iceCmdChannel.writeTry(Cmd{
             .data = _iceCmdBuf,
             .dataLen = dataLen,
         });
@@ -185,7 +195,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // ICEDataOut endpoint
     case EndpointNum(Endpoints::ICEDataOut): {
-        iceDataChannel.writeTry(DataEvent{
+        iceDataChannel.writeTry(Data{
             .dataLen = dataLen,
         });
         break;

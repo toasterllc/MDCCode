@@ -53,18 +53,32 @@ static USBInterface findUSBInterface(uint8_t interfaceNum) {
     return USBInterface(usbInterface);
 }
 
-namespace Endpoint {
+namespace Interface {
+    enum : uint8_t {
+        STM32 = 0,
+        ICE40 = 1,
+    };
+}
+
+namespace STEndpoint {
     enum : uint8_t {
         // These values aren't the same as the endpoint addresses in firmware!
         // These values are the determined by the order that the endpoints are
         // listed in the interface descriptor.
-        STCmdOut = 1,
-        STDataOut,
-        STStatusIn,
-        
-        ICECmdOut,
-        ICEDataOut,
-        ICEStatusIn,
+        CmdOut = 1,
+        DataOut,
+        StatusIn,
+    };
+}
+
+namespace ICEEndpoint {
+    enum : uint8_t {
+        // These values aren't the same as the endpoint addresses in firmware!
+        // These values are the determined by the order that the endpoints are
+        // listed in the interface descriptor.
+        CmdOut = 1,
+        DataOut,
+        StatusIn,
     };
 }
 
@@ -130,7 +144,7 @@ static void ledSet(const Args& args, USBInterface& stInterface) {
         },
     };
     
-    IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
+    IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
     if (ior != kIOReturnSuccess) throw std::runtime_error("pipe write failed");
 }
 
@@ -153,6 +167,30 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
         
         printf("Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
         
+        kIOUSBUnknownPipeErr;
+        
+        // Wait for interface to be idle
+        // Without this, it's possible for the next `WriteData` command to update the write
+        // address while we're still sending data from this iteration.
+        for (;;) {
+            // Request status
+            {
+                const STCmd cmd = {
+                    .op = STCmd::Op::GetStatus,
+                };
+                
+                IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
+                if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+            }
+            
+            // Read status
+            {
+                auto [status, ior] = stInterface.read<STStatus>(STEndpoint::StatusIn);
+                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
+                if (status == STStatus::Idle) break;
+            }
+        }
+        
         // Send WriteData command
         {
             const STCmd cmd = {
@@ -164,36 +202,14 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
                 },
             };
             
-            IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
+            IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
         }
         
         // Send actual data
         {
-            IOReturn ior = stInterface.writeData(Endpoint::STDataOut, data, dataLen);
+            IOReturn ior = stInterface.write(STEndpoint::DataOut, data, dataLen);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STDataOut");
-        }
-        
-        // Wait for write to complete
-        // Without this, it's possible for the next `WriteData` command to update the write
-        // address while we're still sending data from this iteration.
-        for (;;) {
-            // Request status
-            {
-                const STCmd cmd = {
-                    .op = STCmd::Op::GetStatus,
-                };
-                
-                IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
-                if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
-            }
-            
-            // Read status
-            {
-                auto [status, ior] = stInterface.read<STStatus>(Endpoint::STStatusIn);
-                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
-                if (status == STStatus::Idle) break;
-            }
         }
     }
     
@@ -209,13 +225,61 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             },
         };
         
-        IOReturn ior = stInterface.write(Endpoint::STCmdOut, cmd);
+        IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
     }
     printf("Done\n");
 }
 
-static void iceLoad(const Args& args, USBInterface& stInterface) {
+static void iceLoad(const Args& args, USBInterface& iceInterface) {
+    Mmap mmap(args.filePath.c_str());
+    
+    // Start ICE40 configuration
+    {
+        printf("Starting configuration...\n");
+        const ICECmd cmd = {
+            .op = ICECmd::Op::Start,
+        };
+        
+        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+    }
+    
+    // Send ICE40 binary
+    {
+        printf("Writing 0x%jx bytes\n", (uintmax_t)mmap.len());
+        IOReturn ior = iceInterface.write(ICEEndpoint::DataOut, mmap.data(), mmap.len());
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEDataOut");
+    }
+    
+    // Finish ICE40 configuration
+    {
+        printf("Finishing configuration...\n");
+        const ICECmd cmd = {
+            .op = ICECmd::Op::Finish,
+        };
+        
+        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+    }
+    
+    // Request CDONE
+    {
+        printf("Reading CDONE...\n");
+        const ICECmd cmd = {
+            .op = ICECmd::Op::ReadCDONE,
+        };
+        
+        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+    }
+    
+    // Read CDONE
+    {
+        auto [cdone, ior] = iceInterface.read<ICECDONE>(ICEEndpoint::StatusIn);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEStatusIn");
+        printf("%s (CDONE = %ju)", (cdone==ICECDONE::OK ? "Success" : "Failed"), (uintmax_t)cdone);
+    }
 }
 
 int main(int argc, const char* argv[]) {
@@ -232,18 +296,18 @@ int main(int argc, const char* argv[]) {
     USBInterface stInterface;
     USBInterface iceInterface;
     try {
-        stInterface = findUSBInterface(0);
+        stInterface = findUSBInterface(Interface::STM32);
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed to get STM32 interface: %s\n", e.what());
         return 1;
     }
     
-//    try {
-//        iceInterface = findUSBInterface(1);
-//    } catch (const std::exception& e) {
-//        fprintf(stderr, "Failed to get ICE40 interface: %s\n", e.what());
-//        return 1;
-//    }
+    try {
+        iceInterface = findUSBInterface(Interface::ICE40);
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Failed to get ICE40 interface: %s\n", e.what());
+        return 1;
+    }
     
     try {
         if (args.cmd == LEDSetCmd)          ledSet(args, stInterface);

@@ -44,7 +44,7 @@ public:
         return (*_interface)->WritePipe(_interface, pipe, (void*)&x, sizeof(x));
     }
     
-    IOReturn writeData(uint8_t pipe, const void* buf, size_t len) {
+    IOReturn write(uint8_t pipe, const void* buf, size_t len) {
         assert(_interface);
         _openIfNeeded();
         return (*_interface)->WritePipe(_interface, pipe, (void*)buf, (uint32_t)len);
@@ -62,7 +62,7 @@ public:
         return std::make_tuple(t, ior);
     }
     
-    std::tuple<size_t, IOReturn> readData(uint8_t pipe, void* buf, size_t len) {
+    std::tuple<size_t, IOReturn> read(uint8_t pipe, void* buf, size_t len) {
         assert(_interface);
         _openIfNeeded();
         uint32_t len32 = (uint32_t)len;

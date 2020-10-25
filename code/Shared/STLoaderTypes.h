@@ -36,8 +36,8 @@ namespace STLoader {
         enum class Op : uint8_t {
             GetStatus,
             Start,
-            Stop,
-            WriteData,
+            Finish,
+            ReadCDONE,
         };
         
         Op op;
@@ -46,16 +46,18 @@ namespace STLoader {
             } start;
             
             struct {
-            } stop;
-            
-            struct {
-            } writeData;
+            } finish;
         } arg;
     } __attribute__((packed));
     static_assert(sizeof(ICECmd)==2, "ICECmd: invalid size");
     
     enum class ICEStatus : uint8_t {
         Idle,
-        Writing,
+        Configuring,
+    };
+    
+    enum class ICECDONE : uint8_t {
+        Error,
+        OK,
     };
 }

@@ -53,10 +53,18 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "stload"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/dave/repos/MotionDetectorCamera/code/STApp/Release/STApp.elf"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "iceload"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/dave/repos/MotionDetectorCamera/code/Rev3Board_Blinky/tmp/top.bin"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

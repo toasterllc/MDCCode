@@ -16,30 +16,28 @@ public:
     USB usb;
     
 private:
-    void _handleSTCmd(const USB::CmdEvent& ev);
-    void _handleSTData(const USB::DataEvent& ev);
-    
-    void _handleICECmd(const USB::CmdEvent& ev);
-    void _handleICEData(const USB::DataEvent& ev);
+    // USB
+    void _usbHandleEvent(const USB::Event& ev);
     
     // STM32 bootloader
+    void _stHandleCmd(const USB::Cmd& ev);
+    void _stHandleData(const USB::Data& ev);
+    
     STStatus _stStatus = STStatus::Idle;
     
     // ICE40 bootloader
+    void _iceHandleCmd(const USB::Cmd& ev);
+    void _iceHandleData(const USB::Data& ev);
+    void _iceHandleQSPIEvent(const QSPI::Event& ev);
+    
     GPIO _iceCRST_;
     GPIO _iceCDONE;
     GPIO _iceSPIClk;
     GPIO _iceSPICS_;
+    
+    uint8_t _iceBuf[512];
+    size_t _iceBufLen = 0;
     ICEStatus _iceStatus = ICEStatus::Idle;
-    
-    struct ICEBuf {
-        uint8_t buf[512];
-        size_t len;
-    };
-    
-    ICEBuf _iceBuf[2];
-    ICEBuf* _iceBufIn = nullptr;
-    ICEBuf* _iceBufOut = nullptr;
     
     // LEDs
     GPIO _led0;

@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 #include <vector>
 #include "Enum.h"
+#include "Mmap.h"
 
 class ELF32Binary {
 public:
@@ -44,42 +45,21 @@ public:
     };
     
     // Throws on error
-    ELF32Binary(const char* path) {
-        try {
-            _fd = open(path, O_RDONLY);
-            if (_fd < 0) throw std::runtime_error(std::string("open failed: ") + strerror(errno));
-            
-            struct stat st;
-            int ir = fstat(_fd, &st);
-            if (ir) throw std::runtime_error(std::string("fstat failed: ") + strerror(errno));
-            _dataLen = st.st_size;
-            
-            void* data = mmap(nullptr, _dataLen, PROT_READ, MAP_PRIVATE, _fd, 0);
-            if (data == MAP_FAILED) throw std::runtime_error(std::string("mmap failed: ") + strerror(errno));
-            _data = data;
-            
-            // Validate the magic number
-            struct MagicNum { uint8_t b[4]; };
-            const MagicNum expected = {0x7F, 'E', 'L', 'F'};
-            MagicNum mn = _read<MagicNum>(0);
-            if (memcmp(expected.b, mn.b, sizeof(expected.b)))
-                throw std::runtime_error("bad magic number");
-            
-            // Verify that we have an ELF32 binary
-            ELF32Header header = _read<ELF32Header>(0);
-            if (header.e_ident[ELFIdentIdxs::CLASS] != ELFClasses::CLASS32)
-                throw std::runtime_error("not an ELF32 binary");
-            
-            _entryPointAddr = header.e_entry;
+    ELF32Binary(const char* path) :
+    _mmap(path) {
+        // Validate the magic number
+        struct MagicNum { uint8_t b[4]; };
+        const MagicNum expected = {0x7F, 'E', 'L', 'F'};
+        MagicNum mn = _read<MagicNum>(0);
+        if (memcmp(expected.b, mn.b, sizeof(expected.b)))
+            throw std::runtime_error("bad magic number");
         
-        } catch (const std::exception& e) {
-            _reset();
-            throw;
-        }
-    }
-    
-    ~ELF32Binary() {
-        _reset();
+        // Verify that we have an ELF32 binary
+        ELF32Header header = _read<ELF32Header>(0);
+        if (header.e_ident[ELFIdentIdxs::CLASS] != ELFClasses::CLASS32)
+            throw std::runtime_error("not an ELF32 binary");
+        
+        _entryPointAddr = header.e_entry;
     }
     
     uint32_t entryPointAddr() {
@@ -110,7 +90,7 @@ public:
     
     void* sectionData(const Section& s) {
         _assertCanRead(s.off, s.size);
-        return (uint8_t*)_data+s.off;
+        return (uint8_t*)_mmap.data()+s.off;
     }
     
 private:
@@ -161,21 +141,9 @@ private:
         CLASS64     = 2,
     );
     
-    void _reset() {
-        if (_data) {
-            munmap(_data, _dataLen);
-            _data = nullptr;
-        }
-        
-        if (_fd >= 0) {
-            close(_fd);
-            _fd = -1;
-        }
-    }
-    
     void _assertCanRead(size_t off, size_t len) {
-        if (off > _dataLen) throw std::runtime_error("attempt to read past data");
-        if (_dataLen-off < len) throw std::runtime_error("attempt to read past data");
+        if (off > _mmap.len()) throw std::runtime_error("attempt to read past data");
+        if (_mmap.len()-off < len) throw std::runtime_error("attempt to read past data");
     }
     
     // _read: Verify that we have enough bytes to return a `T` from offset `off`
@@ -185,7 +153,7 @@ private:
     T _read(size_t off) {
         _assertCanRead(off, sizeof(T));
         T r;
-        memcpy(&r, (uint8_t*)_data+off, sizeof(T));
+        memcpy(&r, (uint8_t*)_mmap.data()+off, sizeof(T));
         return r;
     }
     
@@ -199,8 +167,6 @@ private:
         return str;
     }
     
-    int _fd = -1;
-    void* _data = nullptr;
-    size_t _dataLen = 0;
+    Mmap _mmap;
     uint32_t _entryPointAddr = 0;
 };

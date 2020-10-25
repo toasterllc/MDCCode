@@ -4,32 +4,53 @@
 
 class USB {
 public:
-    void init();
-    
-    // Channels
-    struct CmdEvent {
+    // Types
+    struct Cmd {
         const uint8_t* data;
         size_t dataLen;
     };
     
-    struct DataEvent {
+    struct Data {
         size_t dataLen;
     };
     
+    struct Event {
+        enum class Type : uint8_t {
+            StateChanged,
+        };
+        Type type;
+    };
+    
+    enum class State : uint8_t {
+        Disconnected,
+        Connected,
+    };
+    
+    // Initialization
+    void init();
+    
+    // Accessors
+    State state() const;
+    
+    // Methods
     USBD_StatusTypeDef stRecvCmd();
     USBD_StatusTypeDef stRecvData(void* addr, size_t len);
     USBD_StatusTypeDef stSendStatus(void* data, size_t len);
-    Channel<CmdEvent, 3> stCmdChannel;
-    Channel<DataEvent, 3> stDataChannel;
     
     USBD_StatusTypeDef iceRecvCmd();
     USBD_StatusTypeDef iceRecvData(void* addr, size_t len);
     USBD_StatusTypeDef iceSendStatus(void* data, size_t len);
-    Channel<CmdEvent, 3> iceCmdChannel;
-    Channel<DataEvent, 3> iceDataChannel;
+    
+    // Channels
+    Channel<Event, 1> eventChannel;
+    Channel<Cmd, 1> stCmdChannel;
+    Channel<Data, 1> stDataChannel;
+    Channel<Cmd, 1> iceCmdChannel;
+    Channel<Data, 1> iceDataChannel;
     
 private:
     USBD_HandleTypeDef _device;
+    State _state = State::Disconnected;
     
     uint8_t _usbd_Init(uint8_t cfgidx);
     uint8_t _usbd_DeInit(uint8_t cfgidx);
