@@ -28,8 +28,31 @@ static constexpr uint8_t EndpointNum(Endpoint ep) {
 }
 
 void USB::init() {
-    USBD_StatusTypeDef ur = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
-    assert(ur == USBD_OK);
+    USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
+    assert(us == USBD_OK);
+    
+    _pcd.pData = &_device;
+    _device.pData = &_pcd;
+    
+    _pcd.Instance = USB_OTG_HS;
+    _pcd.Init.dev_endpoints = 9;
+    _pcd.Init.dma_enable = DISABLE;
+    _pcd.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
+    _pcd.Init.sof_enable = DISABLE;
+    _pcd.Init.low_power_enable = DISABLE;
+    _pcd.Init.lpm_enable = DISABLE;
+    _pcd.Init.vbus_sensing_enable = DISABLE;
+    _pcd.Init.use_dedicated_ep1 = DISABLE;
+    _pcd.Init.use_external_vbus = DISABLE;
+    HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
+    assert(hs == HAL_OK);
+    
+    // Set Rx FIFO sizes (OUT endpoints)
+    HAL_PCDEx_SetRxFiFo(&_pcd, 512);
+    // Set Tx FIFO sizes (IN endpoints)
+    HAL_PCDEx_SetTxFiFo(&_pcd, 0, 128); // Control endpoint
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::STStatusIn), 64);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::ICEStatusIn), 64);
     
 #define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((USB*)pdev->pCtx)->_usbd_##name(); }
 #define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((USB*)pdev->pCtx)->_usbd_##name(t0); }
@@ -57,11 +80,11 @@ void USB::init() {
 #undef Fwd1
 #undef Fwd2
     
-    ur = USBD_RegisterClass(&_device, &usbClass);
-    assert(ur == USBD_OK);
+    us = USBD_RegisterClass(&_device, &usbClass);
+    assert(us == USBD_OK);
     
-    ur = USBD_Start(&_device);
-    assert(ur == USBD_OK);
+    us = USBD_Start(&_device);
+    assert(us == USBD_OK);
 }
 
 USB::State USB::state() const {
@@ -94,6 +117,10 @@ USBD_StatusTypeDef USB::iceSendStatus(void* data, size_t len) {
     // TODO: if this function is called twice, the second call will clobber the first.
     //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
     return USBD_LL_Transmit(&_device, Endpoints::ICEStatusIn, (uint8_t*)data, len);
+}
+
+void USB::_isr() {
+    ISR_HAL_PCD(&_pcd);
 }
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {

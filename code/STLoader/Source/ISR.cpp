@@ -15,8 +15,7 @@ extern "C" void ISR_SysTick() {
 }
 
 extern "C" void ISR_OTG_HS() {
-    extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
-    ISR_HAL_PCD(&hpcd_USB_OTG_HS);
+    Sys.usb._isr();
 }
 
 extern "C" void ISR_QUADSPI() {

@@ -2,6 +2,8 @@
 #include "Channel.h"
 #include "usbd_def.h"
 
+extern "C" void ISR_OTG_HS();
+
 class USB {
 public:
     // Types
@@ -49,7 +51,10 @@ public:
     Channel<Data, 1> iceDataChannel;
     
 private:
+    void _isr();
+    
     USBD_HandleTypeDef _device;
+    PCD_HandleTypeDef _pcd;
     State _state = State::Disconnected;
     
     uint8_t _usbd_Init(uint8_t cfgidx);
@@ -65,4 +70,6 @@ private:
     
     uint8_t _stCmdBuf[8];
     uint8_t _iceCmdBuf[8];
+    
+    friend void ISR_OTG_HS();
 };

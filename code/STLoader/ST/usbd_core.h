@@ -29,8 +29,6 @@ USBD_StatusTypeDef USBD_LL_IsoOUTIncomplete(USBD_HandleTypeDef *pdev, uint8_t ep
 USBD_StatusTypeDef USBD_LL_DevConnected(USBD_HandleTypeDef *pdev);
 USBD_StatusTypeDef USBD_LL_DevDisconnected(USBD_HandleTypeDef *pdev);
 
-USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev);
-USBD_StatusTypeDef USBD_LL_DeInit(USBD_HandleTypeDef *pdev);
 USBD_StatusTypeDef USBD_LL_Start(USBD_HandleTypeDef *pdev);
 USBD_StatusTypeDef USBD_LL_Stop(USBD_HandleTypeDef *pdev);
 

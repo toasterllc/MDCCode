@@ -4,8 +4,6 @@
 #include "abort.h"
 #include "SystemClock.h"
 
-PCD_HandleTypeDef hpcd_USB_OTG_HS;
-
 USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status);
 
 static void SystemClockConfig_Resume();
@@ -136,50 +134,6 @@ void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
 void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 {
   USBD_LL_DevDisconnected((USBD_HandleTypeDef*)hpcd->pData);
-}
-
-// Initializes the low level portion of the device driver.
-USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
-{
-  // Init USB Ip
-  if (pdev->id == DEVICE_HS) {
-      // Link the driver to the stack
-      hpcd_USB_OTG_HS.pData = pdev;
-      pdev->pData = &hpcd_USB_OTG_HS;
-
-      hpcd_USB_OTG_HS.Instance = USB_OTG_HS;
-      hpcd_USB_OTG_HS.Init.dev_endpoints = 9;
-      hpcd_USB_OTG_HS.Init.dma_enable = DISABLE;
-      hpcd_USB_OTG_HS.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
-      hpcd_USB_OTG_HS.Init.sof_enable = DISABLE;
-      hpcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
-      hpcd_USB_OTG_HS.Init.lpm_enable = DISABLE;
-      hpcd_USB_OTG_HS.Init.vbus_sensing_enable = DISABLE;
-      hpcd_USB_OTG_HS.Init.use_dedicated_ep1 = DISABLE;
-      hpcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
-      if (HAL_PCD_Init(&hpcd_USB_OTG_HS) != HAL_OK)
-      {
-        abort();
-      }
-
-      HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 0x200);
-      HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);
-      HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x174);
-  }
-  return USBD_OK;
-}
-
-// De-Initializes the low level portion of the device driver.
-USBD_StatusTypeDef USBD_LL_DeInit(USBD_HandleTypeDef *pdev)
-{
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_DeInit((PCD_HandleTypeDef*)pdev->pData);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
 }
 
 // Starts the low level portion of the device driver.
@@ -383,8 +337,6 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status) {
 // Initializes the device stack and load the class driver
 USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef* pdev, USBD_DescriptorsTypeDef* pdesc, uint8_t id, void* ctx)
 {
-  USBD_StatusTypeDef ret;
-
   // Check whether the USB Host handle is valid
   if (pdev == NULL) {
     return USBD_FAIL;
@@ -402,10 +354,7 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef* pdev, USBD_DescriptorsTypeDef* 
   pdev->id = id;
   pdev->pCtx = ctx;
 
-  // Initialize low level driver
-  ret = USBD_LL_Init(pdev);
-
-  return ret;
+  return USBD_OK;
 }
 
 // Re-Initialize th device library
@@ -432,9 +381,6 @@ USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef* pdev)
   {
     return ret;
   }
-
-  // Initialize low level driver
-  ret = USBD_LL_DeInit(pdev);
 
   return ret;
 }
