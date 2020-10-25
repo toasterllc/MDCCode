@@ -228,9 +228,8 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Read CDONE pin
     case ICECmd::Op::ReadCDONE: {
-        ICECDONE cdone = (_iceCDONE.read() ? ICECDONE::OK : ICECDONE::Error);
-//        usb.stSendStatus(&_stStatus, sizeof(_stStatus));
-        usb.iceSendStatus(&cdone, sizeof(cdone));
+        _iceCDONEState = (_iceCDONE.read() ? ICECDONE::OK : ICECDONE::Error);
+        usb.iceSendStatus(&_iceCDONEState, sizeof(_iceCDONEState));
         break;
     }
     

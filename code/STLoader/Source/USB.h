@@ -68,8 +68,8 @@ private:
     uint8_t* _usbd_GetConfigDescriptor(uint16_t *length);
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t *length);
     
-    uint8_t _stCmdBuf[8];
-    uint8_t _iceCmdBuf[8];
+    uint8_t _stCmdBuf[8] __attribute__((aligned(4)));
+    uint8_t _iceCmdBuf[8] __attribute__((aligned(4)));;
     
     friend void ISR_OTG_HS();
 };

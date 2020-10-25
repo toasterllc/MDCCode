@@ -24,7 +24,7 @@ private:
     void _stHandleCmd(const USB::Cmd& ev);
     void _stHandleData(const USB::Data& ev);
     
-    STStatus _stStatus = STStatus::Idle;
+    STStatus _stStatus __attribute__((aligned(4))) = STStatus::Idle;
     
     // ICE40 bootloader
     void _iceHandleCmd(const USB::Cmd& ev);
@@ -47,7 +47,8 @@ private:
     std::queue<ICEBuf*> _iceInBufs;
     std::queue<ICEBuf*> _iceOutBufs;
     size_t _iceRemLen = 0;
-    ICEStatus _iceStatus = ICEStatus::Idle;
+    ICEStatus _iceStatus __attribute__((aligned(4))) = ICEStatus::Idle;
+    ICECDONE _iceCDONEState __attribute__((aligned(4))) = ICECDONE::Error;
     
     // LEDs
     GPIO _led0;

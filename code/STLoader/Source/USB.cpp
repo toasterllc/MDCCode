@@ -36,14 +36,14 @@ void USB::init() {
     
     _pcd.Instance = USB_OTG_HS;
     _pcd.Init.dev_endpoints = 9;
-    _pcd.Init.dma_enable = DISABLE;
+    _pcd.Init.dma_enable = true;
     _pcd.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
-    _pcd.Init.sof_enable = DISABLE;
-    _pcd.Init.low_power_enable = DISABLE;
-    _pcd.Init.lpm_enable = DISABLE;
-    _pcd.Init.vbus_sensing_enable = DISABLE;
-    _pcd.Init.use_dedicated_ep1 = DISABLE;
-    _pcd.Init.use_external_vbus = DISABLE;
+    _pcd.Init.sof_enable = false;
+    _pcd.Init.low_power_enable = false;
+    _pcd.Init.lpm_enable = false;
+    _pcd.Init.vbus_sensing_enable = false;
+    _pcd.Init.use_dedicated_ep1 = false;
+    _pcd.Init.use_external_vbus = false;
     HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
     assert(hs == HAL_OK);
     
