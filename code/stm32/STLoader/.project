@@ -33,9 +33,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>Shared</name>
+			<name>Util</name>
 			<type>2</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Shared</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/Util</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
