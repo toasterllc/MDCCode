@@ -56,6 +56,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "assert.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -1645,10 +1646,13 @@ HAL_StatusTypeDef HAL_PCD_EP_Close(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   */
 HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
 {
-  PCD_EPTypeDef *ep;
-
-  ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
-
+  PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
+  
+  // Verify that `len` is a multiple of the max packet size.
+  // (The hardware doesn't restrict itself to non-packet boundaries,
+  // so `len` can only be used to control the packet count.)
+  AssertParam(!(len % ep->maxpacket));
+  
   /*setup and start the Xfer */
   ep->xfer_buff = pBuf;
   ep->xfer_len = len;
@@ -1982,13 +1986,16 @@ static HAL_StatusTypeDef PCD_EP_OutXfrComplete_int(PCD_HandleTypeDef *hpcd, uint
       }
       else
       {
-        /* out data packet received over EP0 */
-        hpcd->OUT_ep[epnum].xfer_count =
-          hpcd->OUT_ep[epnum].maxpacket -
-          (USBx_OUTEP(epnum)->DOEPTSIZ & USB_OTG_DOEPTSIZ_XFRSIZ);
-
-        hpcd->OUT_ep[epnum].xfer_buff += hpcd->OUT_ep[epnum].maxpacket;
-
+        const uint32_t xfer_len = hpcd->OUT_ep[epnum].xfer_len;
+        const uint32_t xfrsiz = (USBx_OUTEP(epnum)->DOEPTSIZ & USB_OTG_DOEPTSIZ_XFRSIZ);
+        if (xfer_len) {
+            const uint32_t xfer_count = xfer_len - xfrsiz;
+            hpcd->OUT_ep[epnum].xfer_count = xfer_count;
+            hpcd->OUT_ep[epnum].xfer_buff += xfer_count;
+        } else {
+            hpcd->OUT_ep[epnum].xfer_count = 0;
+        }
+        
         if ((epnum == 0U) && (hpcd->OUT_ep[epnum].xfer_len == 0U))
         {
           /* this is ZLP, so prepare EP0 for next setup */

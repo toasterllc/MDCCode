@@ -9,12 +9,6 @@
 #include "STLoaderTypes.h"
 #include "usbd_ioreq.h"
 
-namespace MaxPacketSize {
-    constexpr size_t Cmd        = 8;
-    constexpr size_t Status     = 8;
-    constexpr size_t Data       = 512;
-}
-
 Enum(uint8_t, Endpoint, Endpoints,
     // OUT endpoints (high bit 0)
     STCmdOut        = 0x01,

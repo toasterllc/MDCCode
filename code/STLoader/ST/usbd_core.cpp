@@ -259,7 +259,7 @@ USBD_StatusTypeDef USBD_LL_SetUSBAddress(USBD_HandleTypeDef *pdev, uint8_t dev_a
 // Transmits data over an endpoint.
 USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
-  // Ensure address is 4-byte aligned (required for DMA)
+  // Ensure `pbuf` is 4-byte aligned (required for DMA)
   assert(!((uintptr_t)pbuf & (4-1)));
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
@@ -274,7 +274,7 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, u
 // Prepares an endpoint for reception.
 USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
-  // Ensure address is 4-byte aligned (required for DMA)
+  // Ensure `pbuf` is 4-byte aligned (required for DMA)
   assert(!((uintptr_t)pbuf & (4-1)));
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;

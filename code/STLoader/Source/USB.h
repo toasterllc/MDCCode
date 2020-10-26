@@ -28,6 +28,12 @@ public:
         Connected,
     };
     
+    struct MaxPacketSize {
+        static constexpr size_t Cmd        = 8;
+        static constexpr size_t Status     = 8;
+        static constexpr size_t Data       = 512;
+    };
+    
     // Initialization
     void init();
     
@@ -68,8 +74,8 @@ private:
     uint8_t* _usbd_GetConfigDescriptor(uint16_t *length);
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t *length);
     
-    uint8_t _stCmdBuf[8] __attribute__((aligned(4)));
-    uint8_t _iceCmdBuf[8] __attribute__((aligned(4)));;
+    uint8_t _stCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    uint8_t _iceCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
     
     friend void ISR_OTG_HS();
 };

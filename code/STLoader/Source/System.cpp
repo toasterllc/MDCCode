@@ -313,11 +313,6 @@ void System::_iceRecvData() {
     assert(!_iceBufFull);
     ICEBuf& buf = _iceBuf[_iceBufWPtr];
     usb.iceRecvData(buf.data, sizeof(buf.data)); // TODO: handle errors
-    
-    if (_iceRemLen == 67584) {
-        volatile bool x = false;
-        while (x);
-    }
 }
 
 void System::_qspiWriteData() {
