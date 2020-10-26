@@ -1,8 +1,8 @@
 #include "usbd_core.h"
 #include "stm32f7xx.h"
 #include "stm32f7xx_hal.h"
-#include "abort.h"
-#include "assert.h"
+#include "Abort.h"
+#include "Assert.h"
 #include "SystemClock.h"
 
 USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status);
@@ -90,7 +90,7 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
   }
   else
   {
-    abort();
+    Abort();
   }
     // Set Speed
   USBD_LL_SetSpeed((USBD_HandleTypeDef*)hpcd->pData, speed);
@@ -260,7 +260,7 @@ USBD_StatusTypeDef USBD_LL_SetUSBAddress(USBD_HandleTypeDef *pdev, uint8_t dev_a
 USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
   // Ensure `pbuf` is 4-byte aligned (required for DMA)
-  assert(!((uintptr_t)pbuf & (4-1)));
+  Assert(!((uintptr_t)pbuf & (4-1)));
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
 
@@ -275,7 +275,7 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, u
 USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
   // Ensure `pbuf` is 4-byte aligned (required for DMA)
-  assert(!((uintptr_t)pbuf & (4-1)));
+  Assert(!((uintptr_t)pbuf & (4-1)));
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
 

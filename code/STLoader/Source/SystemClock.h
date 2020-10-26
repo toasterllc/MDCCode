@@ -1,5 +1,5 @@
 #pragma once
-#include "assert.h"
+#include "Assert.h"
 #include "stm32f7xx.h"
 
 class SystemClock {
@@ -24,7 +24,7 @@ public:
             cfg.PLL.PLLQ = 2;
             
             HAL_StatusTypeDef hr = HAL_RCC_OscConfig(&cfg);
-            assert(hr == HAL_OK);
+            Assert(hr == HAL_OK);
         }
         
         // Initialize bus clocks for CPU, AHB, APB
@@ -37,7 +37,7 @@ public:
             cfg.APB2CLKDivider = RCC_HCLK_DIV2;
             
             HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
-            assert(hr == HAL_OK);
+            Assert(hr == HAL_OK);
         }
         
         {
@@ -50,7 +50,7 @@ public:
             cfg.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
             
             HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
-            assert(hr == HAL_OK);
+            Assert(hr == HAL_OK);
         }
     }
 };

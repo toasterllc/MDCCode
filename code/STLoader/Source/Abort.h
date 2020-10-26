@@ -1,5 +1,5 @@
 #pragma once
 
-inline void abort() {
+inline void Abort() {
     for (;;);
 }

@@ -27,7 +27,7 @@ static constexpr uint8_t EndpointNum(Endpoint ep) {
 
 void USB::init() {
     USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
-    assert(us == USBD_OK);
+    Assert(us == USBD_OK);
     
     _pcd.pData = &_device;
     _device.pData = &_pcd;
@@ -43,7 +43,7 @@ void USB::init() {
     _pcd.Init.use_dedicated_ep1 = false;
     _pcd.Init.use_external_vbus = false;
     HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
-    assert(hs == HAL_OK);
+    Assert(hs == HAL_OK);
     
     // Set Rx FIFO sizes (OUT endpoints)
     HAL_PCDEx_SetRxFiFo(&_pcd, 512);
@@ -79,10 +79,10 @@ void USB::init() {
 #undef Fwd2
     
     us = USBD_RegisterClass(&_device, &usbClass);
-    assert(us == USBD_OK);
+    Assert(us == USBD_OK);
     
     us = USBD_Start(&_device);
-    assert(us == USBD_OK);
+    Assert(us == USBD_OK);
 }
 
 USB::State USB::state() const {

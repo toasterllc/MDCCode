@@ -1,6 +1,6 @@
 #include "QSPI.h"
-#include "abort.h"
-#include "assert.h"
+#include "Abort.h"
+#include "Assert.h"
 
 QSPI::QSPI() :
 _clk(GPIOB, GPIO_PIN_2),
@@ -36,7 +36,7 @@ void QSPI::init() {
     _device.Ctx = this;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
-    assert(hs == HAL_OK);
+    Assert(hs == HAL_OK);
     
     // Init DMA
     _dma.Instance = DMA2_Stream7;
@@ -51,7 +51,7 @@ void QSPI::init() {
     _dma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     
     hs = HAL_DMA_Init(&_dma);
-    assert(hs == HAL_OK);
+    Assert(hs == HAL_OK);
     
     __HAL_LINKDMA(&_device, hdma, _dma);
 }
@@ -64,8 +64,8 @@ void QSPI::config() {
 }
 
 void QSPI::write(const void* data, size_t len) {
-    assert(data);
-    assert(len);
+    Assert(data);
+    Assert(len);
     
     QSPI_CommandTypeDef cmd = {
         .Instruction = 0,
@@ -84,10 +84,10 @@ void QSPI::write(const void* data, size_t len) {
         .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
     };
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
-    assert(hs == HAL_OK);
+    Assert(hs == HAL_OK);
     
     hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)data);
-    assert(hs == HAL_OK);
+    Assert(hs == HAL_OK);
 }
 
 void QSPI::_isrQSPI() {
@@ -109,5 +109,5 @@ void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device) {
 }
 
 void HAL_QSPI_ErrorCallback(QSPI_HandleTypeDef* device) {
-    abort();
+    Abort();
 }

@@ -56,7 +56,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-#include "assert.h"
+#include "Assert.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -1651,7 +1651,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
   // Verify that `len` is a multiple of the max packet size.
   // (The hardware doesn't restrict itself to non-packet boundaries,
   // so `len` can only be used to control the packet count.)
-  AssertParam(!(len % ep->maxpacket));
+  AssertArg(!(len % ep->maxpacket));
   
   /*setup and start the Xfer */
   ep->xfer_buff = pBuf;

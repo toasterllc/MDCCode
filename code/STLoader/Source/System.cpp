@@ -1,6 +1,6 @@
 #include "System.h"
-#include "assert.h"
-#include "abort.h"
+#include "Assert.h"
+#include "Abort.h"
 #include "usbd_core.h"
 #include "SystemClock.h"
 #include "Startup.h"
@@ -96,13 +96,13 @@ void System::_usbHandleEvent(const USB::Event& ev) {
     
     default: {
         // Invalid event tpye
-        abort();
+        Abort();
     }}
 }
 
 void System::_stHandleCmd(const USB::Cmd& ev) {
     STCmd cmd;
-    assert(ev.len == sizeof(cmd)); // TODO: handle errors
+    Assert(ev.len == sizeof(cmd)); // TODO: handle errors
     memcpy(&cmd, ev.data, ev.len);
     switch (cmd.op) {
     // Get status
@@ -119,8 +119,8 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         // Verify that `addr` is in the allowed RAM range
         extern uint8_t _sram_app[];
         extern uint8_t _eram_app[];
-        assert(addr >= _sram_app); // TODO: error handling
-        assert(addr < _eram_app); // TODO: error handling
+        Assert(addr >= _sram_app); // TODO: error handling
+        Assert(addr < _eram_app); // TODO: error handling
         const size_t len = (uintptr_t)_eram_app-(uintptr_t)addr;
         usb.stRecvData((void*)cmd.arg.writeData.addr, len);
         break;
@@ -164,7 +164,7 @@ void System::_stHandleData(const USB::Data& ev) {
 
 void System::_iceHandleCmd(const USB::Cmd& ev) {
     ICECmd cmd;
-    assert(ev.len == sizeof(cmd)); // TODO: handle errors
+    Assert(ev.len == sizeof(cmd)); // TODO: handle errors
     memcpy(&cmd, ev.data, ev.len);
     switch (cmd.op) {
     // Get status
@@ -175,8 +175,8 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Start configuring
     case ICECmd::Op::Start: {
-        assert(_iceStatus == ICEStatus::Idle);
-        assert(cmd.arg.start.len);
+        Assert(_iceStatus == ICEStatus::Idle);
+        Assert(cmd.arg.start.len);
         
         _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _iceSPICS_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -202,7 +202,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         
         // Wait for write to complete
         QSPI::Event qev = qspi.eventChannel.read();
-        assert(qev.type == QSPI::Event::Type::WriteDone);
+        Assert(qev.type == QSPI::Event::Type::WriteDone);
         
         // Update our state
         _iceRemLen = cmd.arg.start.len;
@@ -215,12 +215,12 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Finish configuring
     case ICECmd::Op::Finish: {
-        assert(_iceStatus == ICEStatus::Idle);
+        Assert(_iceStatus == ICEStatus::Idle);
         // Send >100 clocks (13*8 = 104 clocks)
         qspi.write(_iceBuf, 13);
         // Wait for write to complete
         QSPI::Event qev = qspi.eventChannel.read();
-        assert(qev.type == QSPI::Event::Type::WriteDone);
+        Assert(qev.type == QSPI::Event::Type::WriteDone);
         break;
     }
     
@@ -241,9 +241,9 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
 }
 
 void System::_iceHandleData(const USB::Data& ev) {
-    assert(!_iceBufFull);
-    assert(_iceStatus == ICEStatus::Configuring);
-    assert(ev.len <= _iceRemLen);
+    Assert(!_iceBufFull);
+    Assert(_iceStatus == ICEStatus::Configuring);
+    Assert(ev.len <= _iceRemLen);
     
     const bool wasEmpty = _iceBufEmpty();
     
@@ -273,7 +273,7 @@ void System::_iceHandleData(const USB::Data& ev) {
 }
 
 void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
-    assert(!_iceBufEmpty());
+    Assert(!_iceBufEmpty());
     switch (ev.type) {
     // Write done
     case QSPI::Event::Type::WriteDone: {
@@ -310,13 +310,13 @@ bool System::_iceBufEmpty() {
 }
 
 void System::_iceRecvData() {
-    assert(!_iceBufFull);
+    Assert(!_iceBufFull);
     ICEBuf& buf = _iceBuf[_iceBufWPtr];
     usb.iceRecvData(buf.data, sizeof(buf.data)); // TODO: handle errors
 }
 
 void System::_qspiWriteData() {
-    assert(!_iceBufEmpty());
+    Assert(!_iceBufEmpty());
     const ICEBuf& buf = _iceBuf[_iceBufRPtr];
     qspi.write(buf.data, buf.len);
 }
