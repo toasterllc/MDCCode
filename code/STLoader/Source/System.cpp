@@ -297,7 +297,7 @@ void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
             if (wasFull) {
                 _iceRecvData();
             }
-        } else {
+        } else if (_iceBufEmpty()) {
             // We're done
             _iceStatus = ICEStatus::Idle;
         }
