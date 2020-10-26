@@ -105,7 +105,7 @@ HAL_StatusTypeDef HAL_DMAEx_MultiBufferStart(DMA_HandleTypeDef *hdma, uint32_t S
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_DMA_BUFFER_SIZE(DataLength));
+  AssertArg(IS_DMA_BUFFER_SIZE(DataLength));
   
   /* Memory-to-memory transfer not supported in double buffering mode */
   if (hdma->Init.Direction == DMA_MEMORY_TO_MEMORY)
@@ -159,7 +159,7 @@ HAL_StatusTypeDef HAL_DMAEx_MultiBufferStart_IT(DMA_HandleTypeDef *hdma, uint32_
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_DMA_BUFFER_SIZE(DataLength));
+  AssertArg(IS_DMA_BUFFER_SIZE(DataLength));
   
   /* Memory-to-memory transfer not supported in double buffering mode */
   if (hdma->Init.Direction == DMA_MEMORY_TO_MEMORY)

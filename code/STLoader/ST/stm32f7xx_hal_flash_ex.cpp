@@ -164,7 +164,7 @@ HAL_StatusTypeDef HAL_FLASHEx_Erase(FLASH_EraseInitTypeDef *pEraseInit, uint32_t
   __HAL_LOCK(&pFlash);
 
   /* Check the parameters */
-  assert_param(IS_FLASH_TYPEERASE(pEraseInit->TypeErase));
+  AssertArg(IS_FLASH_TYPEERASE(pEraseInit->TypeErase));
 
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -192,7 +192,7 @@ HAL_StatusTypeDef HAL_FLASHEx_Erase(FLASH_EraseInitTypeDef *pEraseInit, uint32_t
     else
     {
       /* Check the parameters */
-      assert_param(IS_FLASH_NBSECTORS(pEraseInit->NbSectors + pEraseInit->Sector));
+      AssertArg(IS_FLASH_NBSECTORS(pEraseInit->NbSectors + pEraseInit->Sector));
 
       /* Erase by sector by sector to be done*/
       for(index = pEraseInit->Sector; index < (pEraseInit->NbSectors + pEraseInit->Sector); index++)
@@ -236,7 +236,7 @@ HAL_StatusTypeDef HAL_FLASHEx_Erase_IT(FLASH_EraseInitTypeDef *pEraseInit)
   __HAL_LOCK(&pFlash);
 
   /* Check the parameters */
-  assert_param(IS_FLASH_TYPEERASE(pEraseInit->TypeErase));
+  AssertArg(IS_FLASH_TYPEERASE(pEraseInit->TypeErase));
 
   /* Enable End of FLASH Operation interrupt */
   __HAL_FLASH_ENABLE_IT(FLASH_IT_EOP);
@@ -263,7 +263,7 @@ HAL_StatusTypeDef HAL_FLASHEx_Erase_IT(FLASH_EraseInitTypeDef *pEraseInit)
     /* Erase by sector to be done*/
 
     /* Check the parameters */
-    assert_param(IS_FLASH_NBSECTORS(pEraseInit->NbSectors + pEraseInit->Sector));
+    AssertArg(IS_FLASH_NBSECTORS(pEraseInit->NbSectors + pEraseInit->Sector));
 
     pFlash.ProcedureOnGoing = FLASH_PROC_SECTERASE;
     pFlash.NbSectorsToErase = pEraseInit->NbSectors;
@@ -292,12 +292,12 @@ HAL_StatusTypeDef HAL_FLASHEx_OBProgram(FLASH_OBProgramInitTypeDef *pOBInit)
   __HAL_LOCK(&pFlash);
 
   /* Check the parameters */
-  assert_param(IS_OPTIONBYTE(pOBInit->OptionType));
+  AssertArg(IS_OPTIONBYTE(pOBInit->OptionType));
 
   /* Write protection configuration */
   if((pOBInit->OptionType & OPTIONBYTE_WRP) == OPTIONBYTE_WRP)
   {
-    assert_param(IS_WRPSTATE(pOBInit->WRPState));
+    AssertArg(IS_WRPSTATE(pOBInit->WRPState));
     if(pOBInit->WRPState == OB_WRPSTATE_ENABLE)
     {
       /*Enable of Write protection on the selected Sector*/
@@ -442,8 +442,8 @@ void HAL_FLASHEx_OBGetConfig(FLASH_OBProgramInitTypeDef *pOBInit)
 static void FLASH_MassErase(uint8_t VoltageRange, uint32_t Banks)
 {
   /* Check the parameters */
-  assert_param(IS_VOLTAGERANGE(VoltageRange));
-  assert_param(IS_FLASH_BANK(Banks));
+  AssertArg(IS_VOLTAGERANGE(VoltageRange));
+  AssertArg(IS_FLASH_BANK(Banks));
 
   /* if the previous operation is completed, proceed to erase all sectors */
   FLASH->CR &= CR_PSIZE_MASK;
@@ -490,8 +490,8 @@ void FLASH_Erase_Sector(uint32_t Sector, uint8_t VoltageRange)
   uint32_t tmp_psize = 0;
 
   /* Check the parameters */
-  assert_param(IS_FLASH_SECTOR(Sector));
-  assert_param(IS_VOLTAGERANGE(VoltageRange));
+  AssertArg(IS_FLASH_SECTOR(Sector));
+  AssertArg(IS_VOLTAGERANGE(VoltageRange));
   
   if(VoltageRange == FLASH_VOLTAGE_RANGE_1)
   {
@@ -584,14 +584,14 @@ static HAL_StatusTypeDef FLASH_OB_UserConfig(uint32_t Wwdg, uint32_t Iwdg, uint3
   HAL_StatusTypeDef status = HAL_OK;
 
   /* Check the parameters */
-  assert_param(IS_OB_WWDG_SOURCE(Wwdg));
-  assert_param(IS_OB_IWDG_SOURCE(Iwdg));
-  assert_param(IS_OB_STOP_SOURCE(Stop));
-  assert_param(IS_OB_STDBY_SOURCE(Stdby));
-  assert_param(IS_OB_IWDG_STOP_FREEZE(Iwdgstop));
-  assert_param(IS_OB_IWDG_STDBY_FREEZE(Iwdgstdby));
-  assert_param(IS_OB_NDBANK(NDBank));
-  assert_param(IS_OB_NDBOOT(NDBoot));
+  AssertArg(IS_OB_WWDG_SOURCE(Wwdg));
+  AssertArg(IS_OB_IWDG_SOURCE(Iwdg));
+  AssertArg(IS_OB_STOP_SOURCE(Stop));
+  AssertArg(IS_OB_STDBY_SOURCE(Stdby));
+  AssertArg(IS_OB_IWDG_STOP_FREEZE(Iwdgstop));
+  AssertArg(IS_OB_IWDG_STDBY_FREEZE(Iwdgstdby));
+  AssertArg(IS_OB_NDBANK(NDBank));
+  AssertArg(IS_OB_NDBOOT(NDBoot));
   
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -641,7 +641,7 @@ static uint32_t FLASH_OB_GetUser(void)
 static void FLASH_MassErase(uint8_t VoltageRange)
 {
   /* Check the parameters */
-  assert_param(IS_VOLTAGERANGE(VoltageRange));
+  AssertArg(IS_VOLTAGERANGE(VoltageRange));
 
   /* if the previous operation is completed, proceed to erase all sectors */
   FLASH->CR &= CR_PSIZE_MASK;
@@ -674,8 +674,8 @@ void FLASH_Erase_Sector(uint32_t Sector, uint8_t VoltageRange)
   uint32_t tmp_psize = 0;
 
   /* Check the parameters */
-  assert_param(IS_FLASH_SECTOR(Sector));
-  assert_param(IS_VOLTAGERANGE(VoltageRange));
+  AssertArg(IS_FLASH_SECTOR(Sector));
+  AssertArg(IS_VOLTAGERANGE(VoltageRange));
   
   if(VoltageRange == FLASH_VOLTAGE_RANGE_1)
   {
@@ -752,12 +752,12 @@ static HAL_StatusTypeDef FLASH_OB_UserConfig(uint32_t Wwdg, uint32_t Iwdg, uint3
   HAL_StatusTypeDef status = HAL_OK;
 
   /* Check the parameters */
-  assert_param(IS_OB_WWDG_SOURCE(Wwdg));
-  assert_param(IS_OB_IWDG_SOURCE(Iwdg));
-  assert_param(IS_OB_STOP_SOURCE(Stop));
-  assert_param(IS_OB_STDBY_SOURCE(Stdby));
-  assert_param(IS_OB_IWDG_STOP_FREEZE(Iwdgstop));
-  assert_param(IS_OB_IWDG_STDBY_FREEZE(Iwdgstdby));
+  AssertArg(IS_OB_WWDG_SOURCE(Wwdg));
+  AssertArg(IS_OB_IWDG_SOURCE(Iwdg));
+  AssertArg(IS_OB_STOP_SOURCE(Stop));
+  AssertArg(IS_OB_STDBY_SOURCE(Stdby));
+  AssertArg(IS_OB_IWDG_STOP_FREEZE(Iwdgstop));
+  AssertArg(IS_OB_IWDG_STDBY_FREEZE(Iwdgstdby));
 
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -810,7 +810,7 @@ static HAL_StatusTypeDef FLASH_OB_EnableWRP(uint32_t WRPSector)
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_OB_WRP_SECTOR(WRPSector));
+  AssertArg(IS_OB_WRP_SECTOR(WRPSector));
     
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -846,7 +846,7 @@ static HAL_StatusTypeDef FLASH_OB_DisableWRP(uint32_t WRPSector)
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_OB_WRP_SECTOR(WRPSector));
+  AssertArg(IS_OB_WRP_SECTOR(WRPSector));
     
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -877,7 +877,7 @@ static HAL_StatusTypeDef FLASH_OB_RDP_LevelConfig(uint8_t Level)
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_OB_RDP_LEVEL(Level));
+  AssertArg(IS_OB_RDP_LEVEL(Level));
     
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -903,7 +903,7 @@ static HAL_StatusTypeDef FLASH_OB_RDP_LevelConfig(uint8_t Level)
 static HAL_StatusTypeDef FLASH_OB_BOR_LevelConfig(uint8_t Level)
 {
   /* Check the parameters */
-  assert_param(IS_OB_BOR_LEVEL(Level));
+  AssertArg(IS_OB_BOR_LEVEL(Level));
 
   /* Set the BOR Level */
   MODIFY_REG(FLASH->OPTCR, FLASH_OPTCR_BOR_LEV, Level);
@@ -936,7 +936,7 @@ static HAL_StatusTypeDef FLASH_OB_BootAddressConfig(uint32_t BootOption, uint32_
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_OB_BOOT_ADDRESS(Address));
+  AssertArg(IS_OB_BOOT_ADDRESS(Address));
     
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -1047,7 +1047,7 @@ static HAL_StatusTypeDef FLASH_OB_PCROP_Config(uint32_t PCROPSector)
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_OB_PCROP_SECTOR(PCROPSector));
+  AssertArg(IS_OB_PCROP_SECTOR(PCROPSector));
     
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -1071,7 +1071,7 @@ static HAL_StatusTypeDef FLASH_OB_PCROP_RDP_Config(uint32_t Pcrop_Rdp)
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  assert_param(IS_OB_PCROP_RDP_VALUE(Pcrop_Rdp));
+  AssertArg(IS_OB_PCROP_RDP_VALUE(Pcrop_Rdp));
     
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);

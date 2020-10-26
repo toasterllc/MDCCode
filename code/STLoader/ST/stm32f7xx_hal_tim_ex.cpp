@@ -139,13 +139,13 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Init(TIM_HandleTypeDef *htim, TIM_HallSen
   }
 
   /* Check the parameters */
-  assert_param(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_COUNTER_MODE(htim->Init.CounterMode));
-  assert_param(IS_TIM_CLOCKDIVISION_DIV(htim->Init.ClockDivision));
-  assert_param(IS_TIM_AUTORELOAD_PRELOAD(htim->Init.AutoReloadPreload));
-  assert_param(IS_TIM_IC_POLARITY(sConfig->IC1Polarity));
-  assert_param(IS_TIM_IC_PRESCALER(sConfig->IC1Prescaler));
-  assert_param(IS_TIM_IC_FILTER(sConfig->IC1Filter));
+  AssertArg(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_COUNTER_MODE(htim->Init.CounterMode));
+  AssertArg(IS_TIM_CLOCKDIVISION_DIV(htim->Init.ClockDivision));
+  AssertArg(IS_TIM_AUTORELOAD_PRELOAD(htim->Init.AutoReloadPreload));
+  AssertArg(IS_TIM_IC_POLARITY(sConfig->IC1Polarity));
+  AssertArg(IS_TIM_IC_PRESCALER(sConfig->IC1Prescaler));
+  AssertArg(IS_TIM_IC_FILTER(sConfig->IC1Filter));
 
   if (htim->State == HAL_TIM_STATE_RESET)
   {
@@ -223,7 +223,7 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Init(TIM_HandleTypeDef *htim, TIM_HallSen
 HAL_StatusTypeDef HAL_TIMEx_HallSensor_DeInit(TIM_HandleTypeDef *htim)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_INSTANCE(htim->Instance));
 
   htim->State = HAL_TIM_STATE_BUSY;
 
@@ -291,7 +291,7 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start(TIM_HandleTypeDef *htim)
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
 
   /* Enable the Input Capture channel 1
     (in the Hall Sensor Interface the three possible channels that can be used are TIM_CHANNEL_1, TIM_CHANNEL_2 and TIM_CHANNEL_3) */
@@ -316,7 +316,7 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start(TIM_HandleTypeDef *htim)
 HAL_StatusTypeDef HAL_TIMEx_HallSensor_Stop(TIM_HandleTypeDef *htim)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
 
   /* Disable the Input Capture channels 1, 2 and 3
     (in the Hall Sensor Interface the three possible channels that can be used are TIM_CHANNEL_1, TIM_CHANNEL_2 and TIM_CHANNEL_3) */
@@ -339,7 +339,7 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start_IT(TIM_HandleTypeDef *htim)
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
 
   /* Enable the capture compare Interrupts 1 event */
   __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
@@ -367,7 +367,7 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start_IT(TIM_HandleTypeDef *htim)
 HAL_StatusTypeDef HAL_TIMEx_HallSensor_Stop_IT(TIM_HandleTypeDef *htim)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
 
   /* Disable the Input Capture channel 1
     (in the Hall Sensor Interface the three possible channels that can be used are TIM_CHANNEL_1, TIM_CHANNEL_2 and TIM_CHANNEL_3) */
@@ -395,7 +395,7 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start_DMA(TIM_HandleTypeDef *htim, uint32
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
 
   if (htim->State == HAL_TIM_STATE_BUSY)
   {
@@ -453,7 +453,7 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start_DMA(TIM_HandleTypeDef *htim, uint32
 HAL_StatusTypeDef HAL_TIMEx_HallSensor_Stop_DMA(TIM_HandleTypeDef *htim)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_HALL_SENSOR_INTERFACE_INSTANCE(htim->Instance));
 
   /* Disable the Input Capture channel 1
     (in the Hall Sensor Interface the three possible channels that can be used are TIM_CHANNEL_1, TIM_CHANNEL_2 and TIM_CHANNEL_3) */
@@ -511,7 +511,7 @@ HAL_StatusTypeDef HAL_TIMEx_OCN_Start(TIM_HandleTypeDef *htim, uint32_t Channel)
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   /* Enable the Capture compare channel N */
   TIM_CCxNChannelCmd(htim->Instance, Channel, TIM_CCxN_ENABLE);
@@ -544,7 +544,7 @@ HAL_StatusTypeDef HAL_TIMEx_OCN_Start(TIM_HandleTypeDef *htim, uint32_t Channel)
 HAL_StatusTypeDef HAL_TIMEx_OCN_Stop(TIM_HandleTypeDef *htim, uint32_t Channel)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   /* Disable the Capture compare channel N */
   TIM_CCxNChannelCmd(htim->Instance, Channel, TIM_CCxN_DISABLE);
@@ -575,7 +575,7 @@ HAL_StatusTypeDef HAL_TIMEx_OCN_Start_IT(TIM_HandleTypeDef *htim, uint32_t Chann
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   switch (Channel)
   {
@@ -640,7 +640,7 @@ HAL_StatusTypeDef HAL_TIMEx_OCN_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channe
 {
   uint32_t tmpccer;
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   switch (Channel)
   {
@@ -707,7 +707,7 @@ HAL_StatusTypeDef HAL_TIMEx_OCN_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Chan
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   if (htim->State == HAL_TIM_STATE_BUSY)
   {
@@ -823,7 +823,7 @@ HAL_StatusTypeDef HAL_TIMEx_OCN_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Chan
 HAL_StatusTypeDef HAL_TIMEx_OCN_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   switch (Channel)
   {
@@ -920,7 +920,7 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Start(TIM_HandleTypeDef *htim, uint32_t Channel
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   /* Enable the complementary PWM output  */
   TIM_CCxNChannelCmd(htim->Instance, Channel, TIM_CCxN_ENABLE);
@@ -952,7 +952,7 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Start(TIM_HandleTypeDef *htim, uint32_t Channel
 HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop(TIM_HandleTypeDef *htim, uint32_t Channel)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   /* Disable the complementary PWM output  */
   TIM_CCxNChannelCmd(htim->Instance, Channel, TIM_CCxN_DISABLE);
@@ -983,7 +983,7 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Start_IT(TIM_HandleTypeDef *htim, uint32_t Chan
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   switch (Channel)
   {
@@ -1048,7 +1048,7 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Chann
   uint32_t tmpccer;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   switch (Channel)
   {
@@ -1115,7 +1115,7 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Cha
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   if (htim->State == HAL_TIM_STATE_BUSY)
   {
@@ -1230,7 +1230,7 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Cha
 HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, Channel));
 
   switch (Channel)
   {
@@ -1313,7 +1313,7 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Chan
 HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Start(TIM_HandleTypeDef *htim, uint32_t OutputChannel)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
 
   /* Enable the complementary One Pulse output */
   TIM_CCxNChannelCmd(htim->Instance, OutputChannel, TIM_CCxN_ENABLE);
@@ -1339,7 +1339,7 @@ HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Stop(TIM_HandleTypeDef *htim, uint32_t Out
 {
 
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
 
   /* Disable the complementary One Pulse output */
   TIM_CCxNChannelCmd(htim->Instance, OutputChannel, TIM_CCxN_DISABLE);
@@ -1367,7 +1367,7 @@ HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Stop(TIM_HandleTypeDef *htim, uint32_t Out
 HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Start_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
 
   /* Enable the TIM Capture/Compare 1 interrupt */
   __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
@@ -1398,7 +1398,7 @@ HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Start_IT(TIM_HandleTypeDef *htim, uint32_t
 HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Stop_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
+  AssertArg(IS_TIM_CCXN_INSTANCE(htim->Instance, OutputChannel));
 
   /* Disable the TIM Capture/Compare 1 interrupt */
   __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC1);
@@ -1470,8 +1470,8 @@ HAL_StatusTypeDef HAL_TIMEx_ConfigCommutEvent(TIM_HandleTypeDef *htim, uint32_t 
                                               uint32_t  CommutationSource)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_COMMUTATION_EVENT_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_INTERNAL_TRIGGEREVENT_SELECTION(InputTrigger));
+  AssertArg(IS_TIM_COMMUTATION_EVENT_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_INTERNAL_TRIGGEREVENT_SELECTION(InputTrigger));
 
   __HAL_LOCK(htim);
 
@@ -1526,8 +1526,8 @@ HAL_StatusTypeDef HAL_TIMEx_ConfigCommutEvent_IT(TIM_HandleTypeDef *htim, uint32
                                                  uint32_t  CommutationSource)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_COMMUTATION_EVENT_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_INTERNAL_TRIGGEREVENT_SELECTION(InputTrigger));
+  AssertArg(IS_TIM_COMMUTATION_EVENT_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_INTERNAL_TRIGGEREVENT_SELECTION(InputTrigger));
 
   __HAL_LOCK(htim);
 
@@ -1583,8 +1583,8 @@ HAL_StatusTypeDef HAL_TIMEx_ConfigCommutEvent_DMA(TIM_HandleTypeDef *htim, uint3
                                                   uint32_t  CommutationSource)
 {
   /* Check the parameters */
-  assert_param(IS_TIM_COMMUTATION_EVENT_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_INTERNAL_TRIGGEREVENT_SELECTION(InputTrigger));
+  AssertArg(IS_TIM_COMMUTATION_EVENT_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_INTERNAL_TRIGGEREVENT_SELECTION(InputTrigger));
 
   __HAL_LOCK(htim);
 
@@ -1635,9 +1635,9 @@ HAL_StatusTypeDef HAL_TIMEx_MasterConfigSynchronization(TIM_HandleTypeDef *htim,
   uint32_t tmpsmcr;
 
   /* Check the parameters */
-  assert_param(IS_TIM_MASTER_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_TRGO_SOURCE(sMasterConfig->MasterOutputTrigger));
-  assert_param(IS_TIM_MSM_STATE(sMasterConfig->MasterSlaveMode));
+  AssertArg(IS_TIM_MASTER_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_TRGO_SOURCE(sMasterConfig->MasterOutputTrigger));
+  AssertArg(IS_TIM_MSM_STATE(sMasterConfig->MasterSlaveMode));
 
   /* Check input state */
   __HAL_LOCK(htim);
@@ -1655,7 +1655,7 @@ HAL_StatusTypeDef HAL_TIMEx_MasterConfigSynchronization(TIM_HandleTypeDef *htim,
   if (IS_TIM_TRGO2_INSTANCE(htim->Instance))
   {
     /* Check the parameters */
-    assert_param(IS_TIM_TRGO2_SOURCE(sMasterConfig->MasterOutputTrigger2));
+    AssertArg(IS_TIM_TRGO2_SOURCE(sMasterConfig->MasterOutputTrigger2));
 
     /* Clear the MMS2 bits */
     tmpcr2 &= ~TIM_CR2_MMS2;
@@ -1708,15 +1708,15 @@ HAL_StatusTypeDef HAL_TIMEx_ConfigBreakDeadTime(TIM_HandleTypeDef *htim,
   uint32_t tmpbdtr = 0U;
 
   /* Check the parameters */
-  assert_param(IS_TIM_BREAK_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_OSSR_STATE(sBreakDeadTimeConfig->OffStateRunMode));
-  assert_param(IS_TIM_OSSI_STATE(sBreakDeadTimeConfig->OffStateIDLEMode));
-  assert_param(IS_TIM_LOCK_LEVEL(sBreakDeadTimeConfig->LockLevel));
-  assert_param(IS_TIM_DEADTIME(sBreakDeadTimeConfig->DeadTime));
-  assert_param(IS_TIM_BREAK_STATE(sBreakDeadTimeConfig->BreakState));
-  assert_param(IS_TIM_BREAK_POLARITY(sBreakDeadTimeConfig->BreakPolarity));
-  assert_param(IS_TIM_BREAK_FILTER(sBreakDeadTimeConfig->BreakFilter));
-  assert_param(IS_TIM_AUTOMATIC_OUTPUT_STATE(sBreakDeadTimeConfig->AutomaticOutput));
+  AssertArg(IS_TIM_BREAK_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_OSSR_STATE(sBreakDeadTimeConfig->OffStateRunMode));
+  AssertArg(IS_TIM_OSSI_STATE(sBreakDeadTimeConfig->OffStateIDLEMode));
+  AssertArg(IS_TIM_LOCK_LEVEL(sBreakDeadTimeConfig->LockLevel));
+  AssertArg(IS_TIM_DEADTIME(sBreakDeadTimeConfig->DeadTime));
+  AssertArg(IS_TIM_BREAK_STATE(sBreakDeadTimeConfig->BreakState));
+  AssertArg(IS_TIM_BREAK_POLARITY(sBreakDeadTimeConfig->BreakPolarity));
+  AssertArg(IS_TIM_BREAK_FILTER(sBreakDeadTimeConfig->BreakFilter));
+  AssertArg(IS_TIM_AUTOMATIC_OUTPUT_STATE(sBreakDeadTimeConfig->AutomaticOutput));
 
   /* Check input state */
   __HAL_LOCK(htim);
@@ -1737,9 +1737,9 @@ HAL_StatusTypeDef HAL_TIMEx_ConfigBreakDeadTime(TIM_HandleTypeDef *htim,
   if (IS_TIM_BKIN2_INSTANCE(htim->Instance))
   {
     /* Check the parameters */
-    assert_param(IS_TIM_BREAK2_STATE(sBreakDeadTimeConfig->Break2State));
-    assert_param(IS_TIM_BREAK2_POLARITY(sBreakDeadTimeConfig->Break2Polarity));
-    assert_param(IS_TIM_BREAK_FILTER(sBreakDeadTimeConfig->Break2Filter));
+    AssertArg(IS_TIM_BREAK2_STATE(sBreakDeadTimeConfig->Break2State));
+    AssertArg(IS_TIM_BREAK2_POLARITY(sBreakDeadTimeConfig->Break2Polarity));
+    AssertArg(IS_TIM_BREAK_FILTER(sBreakDeadTimeConfig->Break2Filter));
 
     /* Set the BREAK2 input related BDTR bits */
     MODIFY_REG(tmpbdtr, TIM_BDTR_BK2F, (sBreakDeadTimeConfig->Break2Filter << TIM_BDTR_BK2F_Pos));
@@ -1778,17 +1778,17 @@ HAL_StatusTypeDef HAL_TIMEx_ConfigBreakInput(TIM_HandleTypeDef *htim,
   uint32_t bkin_polarity_bitpos;
 
   /* Check the parameters */
-  assert_param(IS_TIM_BREAK_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_BREAKINPUT(BreakInput));
-  assert_param(IS_TIM_BREAKINPUTSOURCE(sBreakInputConfig->Source));
-  assert_param(IS_TIM_BREAKINPUTSOURCE_STATE(sBreakInputConfig->Enable));
+  AssertArg(IS_TIM_BREAK_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_BREAKINPUT(BreakInput));
+  AssertArg(IS_TIM_BREAKINPUTSOURCE(sBreakInputConfig->Source));
+  AssertArg(IS_TIM_BREAKINPUTSOURCE_STATE(sBreakInputConfig->Enable));
 #if defined(DFSDM1_Channel0)
   if (sBreakInputConfig->Source != TIM_BREAKINPUTSOURCE_DFSDM1)
   {
-    assert_param(IS_TIM_BREAKINPUTSOURCE_POLARITY(sBreakInputConfig->Polarity));
+    AssertArg(IS_TIM_BREAKINPUTSOURCE_POLARITY(sBreakInputConfig->Polarity));
   }
 #else
-  assert_param(IS_TIM_BREAKINPUTSOURCE_POLARITY(sBreakInputConfig->Polarity));
+  AssertArg(IS_TIM_BREAKINPUTSOURCE_POLARITY(sBreakInputConfig->Polarity));
 #endif /* DFSDM1_Channel0 */
 
   /* Check input state */
@@ -1906,8 +1906,8 @@ HAL_StatusTypeDef HAL_TIMEx_RemapConfig(TIM_HandleTypeDef *htim, uint32_t Remap)
   __HAL_LOCK(htim);
 
   /* Check parameters */
-  assert_param(IS_TIM_REMAP_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_REMAP(Remap));
+  AssertArg(IS_TIM_REMAP_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_REMAP(Remap));
 
   /* Set the Timer remapping configuration */
   htim->Instance->OR = Remap;
@@ -1933,8 +1933,8 @@ HAL_StatusTypeDef HAL_TIMEx_RemapConfig(TIM_HandleTypeDef *htim, uint32_t Remap)
 HAL_StatusTypeDef HAL_TIMEx_GroupChannel5(TIM_HandleTypeDef *htim, uint32_t Channels)
 {
   /* Check parameters */
-  assert_param(IS_TIM_COMBINED3PHASEPWM_INSTANCE(htim->Instance));
-  assert_param(IS_TIM_GROUPCH5(Channels));
+  AssertArg(IS_TIM_COMBINED3PHASEPWM_INSTANCE(htim->Instance));
+  AssertArg(IS_TIM_GROUPCH5(Channels));
 
   /* Process Locked */
   __HAL_LOCK(htim);

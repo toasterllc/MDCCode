@@ -174,10 +174,10 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
   uint32_t temp = 0x00;
 
   /* Check the parameters */
-  assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
-  assert_param(IS_GPIO_PIN(GPIO_Init->Pin));
-  assert_param(IS_GPIO_MODE(GPIO_Init->Mode));
-  assert_param(IS_GPIO_PULL(GPIO_Init->Pull));
+  AssertArg(IS_GPIO_ALL_INSTANCE(GPIOx));
+  AssertArg(IS_GPIO_PIN(GPIO_Init->Pin));
+  AssertArg(IS_GPIO_MODE(GPIO_Init->Mode));
+  AssertArg(IS_GPIO_PULL(GPIO_Init->Pull));
 
   /* Configure the port pins */
   for(position = 0; position < GPIO_NUMBER; position++)
@@ -195,7 +195,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
          (GPIO_Init->Mode == GPIO_MODE_OUTPUT_OD) || (GPIO_Init->Mode == GPIO_MODE_AF_OD))
       {
         /* Check the Speed parameter */
-        assert_param(IS_GPIO_SPEED(GPIO_Init->Speed));
+        AssertArg(IS_GPIO_SPEED(GPIO_Init->Speed));
         /* Configure the IO Speed */
         temp = GPIOx->OSPEEDR; 
         temp &= ~(GPIO_OSPEEDER_OSPEEDR0 << (position * 2));
@@ -219,7 +219,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
       if((GPIO_Init->Mode == GPIO_MODE_AF_PP) || (GPIO_Init->Mode == GPIO_MODE_AF_OD))
       {
         /* Check the Alternate function parameter */
-        assert_param(IS_GPIO_AF(GPIO_Init->Alternate));
+        AssertArg(IS_GPIO_AF(GPIO_Init->Alternate));
 
         /* Configure Alternate function mapped with the current IO */
         temp = GPIOx->AFR[position >> 3];
@@ -299,7 +299,7 @@ void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
   uint32_t tmp = 0x00;
 
   /* Check the parameters */
-  assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
+  AssertArg(IS_GPIO_ALL_INSTANCE(GPIOx));
 
   /* Configure the port pins */
   for(position = 0; position < GPIO_NUMBER; position++)
@@ -375,7 +375,7 @@ GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
   GPIO_PinState bitstatus;
 
   /* Check the parameters */
-  assert_param(IS_GPIO_PIN(GPIO_Pin));
+  AssertArg(IS_GPIO_PIN(GPIO_Pin));
 
   if((GPIOx->IDR & GPIO_Pin) != (uint32_t)GPIO_PIN_RESET)
   {
@@ -407,8 +407,8 @@ GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 void HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
 {
   /* Check the parameters */
-  assert_param(IS_GPIO_PIN(GPIO_Pin));
-  assert_param(IS_GPIO_PIN_ACTION(PinState));
+  AssertArg(IS_GPIO_PIN(GPIO_Pin));
+  AssertArg(IS_GPIO_PIN_ACTION(PinState));
 
   if(PinState != GPIO_PIN_RESET)
   {
@@ -429,7 +429,7 @@ void HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState Pin
 void HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 {
   /* Check the parameters */
-  assert_param(IS_GPIO_PIN(GPIO_Pin));
+  AssertArg(IS_GPIO_PIN(GPIO_Pin));
 
   if ((GPIOx->ODR & GPIO_Pin) != 0X00u)
   {
@@ -457,7 +457,7 @@ HAL_StatusTypeDef HAL_GPIO_LockPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
   __IO uint32_t tmp = GPIO_LCKR_LCKK;
 
   /* Check the parameters */
-  assert_param(IS_GPIO_PIN(GPIO_Pin));
+  AssertArg(IS_GPIO_PIN(GPIO_Pin));
 
   /* Apply lock key write sequence */
   tmp |= GPIO_Pin;

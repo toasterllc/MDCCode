@@ -189,13 +189,6 @@
 #define USE_HAL_USART_REGISTER_CALLBACKS       0U /* USART register callback disabled     */
 #define USE_HAL_WWDG_REGISTER_CALLBACKS        0U /* WWDG register callback disabled      */
 
-/* ########################## Assert Selection ############################## */
-/**
-  * @brief Uncomment the line below to expanse the "assert_param" macro in the
-  *        HAL drivers code
-  */
-/* #define USE_FULL_ASSERT    1U */
-
 /* ################## Ethernet peripheral configuration ##################### */
 
 /* Section 1 : Ethernet peripheral configuration */
@@ -453,9 +446,6 @@
 #ifdef HAL_SMBUS_MODULE_ENABLED
  #include "stm32f7xx_hal_smbus.h"
 #endif /* HAL_SMBUS_MODULE_ENABLED */
-
-/* Exported macro ------------------------------------------------------------*/
-#define assert_param(expr) ((void)0U)
 
 #ifdef __cplusplus
 }

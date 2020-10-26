@@ -382,8 +382,8 @@ HAL_StatusTypeDef HAL_PWREx_EnterUnderDriveSTOPMode(uint32_t Regulator, uint8_t 
   uint32_t tickstart = 0;
   
   /* Check the parameters */
-  assert_param(IS_PWR_REGULATOR_UNDERDRIVE(Regulator));
-  assert_param(IS_PWR_STOP_ENTRY(STOPEntry));
+  AssertArg(IS_PWR_REGULATOR_UNDERDRIVE(Regulator));
+  AssertArg(IS_PWR_STOP_ENTRY(STOPEntry));
   
   /* Enable Power ctrl clock */
   __HAL_RCC_PWR_CLK_ENABLE();
@@ -478,7 +478,7 @@ HAL_StatusTypeDef HAL_PWREx_ControlVoltageScaling(uint32_t VoltageScaling)
 {
   uint32_t tickstart = 0;
 
-  assert_param(IS_PWR_REGULATOR_VOLTAGE(VoltageScaling));
+  AssertArg(IS_PWR_REGULATOR_VOLTAGE(VoltageScaling));
 
   /* Enable Power ctrl clock */
   __HAL_RCC_PWR_CLK_ENABLE();

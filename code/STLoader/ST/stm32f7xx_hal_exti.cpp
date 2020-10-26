@@ -153,8 +153,8 @@ HAL_StatusTypeDef HAL_EXTI_SetConfigLine(EXTI_HandleTypeDef *hexti, EXTI_ConfigT
   }
 
   /* Check parameters */
-  assert_param(IS_EXTI_LINE(pExtiConfig->Line));
-  assert_param(IS_EXTI_MODE(pExtiConfig->Mode));
+  AssertArg(IS_EXTI_LINE(pExtiConfig->Line));
+  AssertArg(IS_EXTI_MODE(pExtiConfig->Mode));
 
   /* Assign line number to handle */
   hexti->Line = pExtiConfig->Line;
@@ -166,7 +166,7 @@ HAL_StatusTypeDef HAL_EXTI_SetConfigLine(EXTI_HandleTypeDef *hexti, EXTI_ConfigT
   /* Configure triggers for configurable lines */
   if ((pExtiConfig->Line & EXTI_CONFIG) != 0x00u)
   {
-    assert_param(IS_EXTI_TRIGGER(pExtiConfig->Trigger));
+    AssertArg(IS_EXTI_TRIGGER(pExtiConfig->Trigger));
 
     /* Configure rising trigger */
     /* Mask or set line */
@@ -194,8 +194,8 @@ HAL_StatusTypeDef HAL_EXTI_SetConfigLine(EXTI_HandleTypeDef *hexti, EXTI_ConfigT
     /* Configure gpio port selection in case of gpio exti line */
     if ((pExtiConfig->Line & EXTI_GPIO) == EXTI_GPIO)
     {
-      assert_param(IS_EXTI_GPIO_PORT(pExtiConfig->GPIOSel));
-      assert_param(IS_EXTI_GPIO_PIN(linepos));
+      AssertArg(IS_EXTI_GPIO_PORT(pExtiConfig->GPIOSel));
+      AssertArg(IS_EXTI_GPIO_PIN(linepos));
 
       regval = SYSCFG->EXTICR[linepos >> 2u];
       regval &= ~(SYSCFG_EXTICR1_EXTI0 << (SYSCFG_EXTICR1_EXTI1_Pos * (linepos & 0x03u)));
@@ -248,7 +248,7 @@ HAL_StatusTypeDef HAL_EXTI_GetConfigLine(EXTI_HandleTypeDef *hexti, EXTI_ConfigT
   }
 
   /* Check the parameter */
-  assert_param(IS_EXTI_LINE(hexti->Line));
+  AssertArg(IS_EXTI_LINE(hexti->Line));
 
   /* Store handle line number to configuration structure */
   pExtiConfig->Line = hexti->Line;
@@ -299,7 +299,7 @@ HAL_StatusTypeDef HAL_EXTI_GetConfigLine(EXTI_HandleTypeDef *hexti, EXTI_ConfigT
     /* Get Gpio port selection for gpio lines */
     if ((pExtiConfig->Line & EXTI_GPIO) == EXTI_GPIO)
     {
-      assert_param(IS_EXTI_GPIO_PIN(linepos));
+      AssertArg(IS_EXTI_GPIO_PIN(linepos));
 
       regval = SYSCFG->EXTICR[linepos >> 2u];
       pExtiConfig->GPIOSel = ((regval << (SYSCFG_EXTICR1_EXTI1_Pos * (3uL - (linepos & 0x03u)))) >> 24);
@@ -337,7 +337,7 @@ HAL_StatusTypeDef HAL_EXTI_ClearConfigLine(EXTI_HandleTypeDef *hexti)
   }
 
   /* Check the parameter */
-  assert_param(IS_EXTI_LINE(hexti->Line));
+  AssertArg(IS_EXTI_LINE(hexti->Line));
 
   /* compute line mask */
   linepos = (hexti->Line & EXTI_PIN_MASK);
@@ -358,7 +358,7 @@ HAL_StatusTypeDef HAL_EXTI_ClearConfigLine(EXTI_HandleTypeDef *hexti)
     /* Get Gpio port selection for gpio lines */
     if ((hexti->Line & EXTI_GPIO) == EXTI_GPIO)
     {
-      assert_param(IS_EXTI_GPIO_PIN(linepos));
+      AssertArg(IS_EXTI_GPIO_PIN(linepos));
 
       regval = SYSCFG->EXTICR[linepos >> 2u];
       regval &= ~(SYSCFG_EXTICR1_EXTI0 << (SYSCFG_EXTICR1_EXTI1_Pos * (linepos & 0x03u)));
@@ -405,7 +405,7 @@ HAL_StatusTypeDef HAL_EXTI_RegisterCallback(EXTI_HandleTypeDef *hexti, EXTI_Call
 HAL_StatusTypeDef HAL_EXTI_GetHandle(EXTI_HandleTypeDef *hexti, uint32_t ExtiLine)
 {
   /* Check the parameters */
-  assert_param(IS_EXTI_LINE(ExtiLine));
+  AssertArg(IS_EXTI_LINE(ExtiLine));
 
   /* Check null pointer */
   if (hexti == NULL)
@@ -481,9 +481,9 @@ uint32_t HAL_EXTI_GetPending(EXTI_HandleTypeDef *hexti, uint32_t Edge)
   uint32_t maskline;
 
   /* Check parameters */
-  assert_param(IS_EXTI_LINE(hexti->Line));
-  assert_param(IS_EXTI_CONFIG_LINE(hexti->Line));
-  assert_param(IS_EXTI_PENDING_EDGE(Edge));
+  AssertArg(IS_EXTI_LINE(hexti->Line));
+  AssertArg(IS_EXTI_CONFIG_LINE(hexti->Line));
+  AssertArg(IS_EXTI_PENDING_EDGE(Edge));
 
   /* Compute line mask */
   linepos = (hexti->Line & EXTI_PIN_MASK);
@@ -508,9 +508,9 @@ void HAL_EXTI_ClearPending(EXTI_HandleTypeDef *hexti, uint32_t Edge)
   uint32_t maskline;
 
   /* Check parameters */
-  assert_param(IS_EXTI_LINE(hexti->Line));
-  assert_param(IS_EXTI_CONFIG_LINE(hexti->Line));
-  assert_param(IS_EXTI_PENDING_EDGE(Edge));
+  AssertArg(IS_EXTI_LINE(hexti->Line));
+  AssertArg(IS_EXTI_CONFIG_LINE(hexti->Line));
+  AssertArg(IS_EXTI_PENDING_EDGE(Edge));
 
   /* Compute line mask */
   maskline = (1uL << (hexti->Line & EXTI_PIN_MASK));
@@ -529,8 +529,8 @@ void HAL_EXTI_GenerateSWI(EXTI_HandleTypeDef *hexti)
   uint32_t maskline;
 
   /* Check parameters */
-  assert_param(IS_EXTI_LINE(hexti->Line));
-  assert_param(IS_EXTI_CONFIG_LINE(hexti->Line));
+  AssertArg(IS_EXTI_LINE(hexti->Line));
+  AssertArg(IS_EXTI_CONFIG_LINE(hexti->Line));
 
   /* Compute line mask */
   maskline = (1uL << (hexti->Line & EXTI_PIN_MASK));

@@ -475,14 +475,14 @@ HAL_StatusTypeDef HAL_I2C_Init(I2C_HandleTypeDef *hi2c)
   }
 
   /* Check the parameters */
-  assert_param(IS_I2C_ALL_INSTANCE(hi2c->Instance));
-  assert_param(IS_I2C_OWN_ADDRESS1(hi2c->Init.OwnAddress1));
-  assert_param(IS_I2C_ADDRESSING_MODE(hi2c->Init.AddressingMode));
-  assert_param(IS_I2C_DUAL_ADDRESS(hi2c->Init.DualAddressMode));
-  assert_param(IS_I2C_OWN_ADDRESS2(hi2c->Init.OwnAddress2));
-  assert_param(IS_I2C_OWN_ADDRESS2_MASK(hi2c->Init.OwnAddress2Masks));
-  assert_param(IS_I2C_GENERAL_CALL(hi2c->Init.GeneralCallMode));
-  assert_param(IS_I2C_NO_STRETCH(hi2c->Init.NoStretchMode));
+  AssertArg(IS_I2C_ALL_INSTANCE(hi2c->Instance));
+  AssertArg(IS_I2C_OWN_ADDRESS1(hi2c->Init.OwnAddress1));
+  AssertArg(IS_I2C_ADDRESSING_MODE(hi2c->Init.AddressingMode));
+  AssertArg(IS_I2C_DUAL_ADDRESS(hi2c->Init.DualAddressMode));
+  AssertArg(IS_I2C_OWN_ADDRESS2(hi2c->Init.OwnAddress2));
+  AssertArg(IS_I2C_OWN_ADDRESS2_MASK(hi2c->Init.OwnAddress2Masks));
+  AssertArg(IS_I2C_GENERAL_CALL(hi2c->Init.GeneralCallMode));
+  AssertArg(IS_I2C_NO_STRETCH(hi2c->Init.NoStretchMode));
 
   if (hi2c->State == HAL_I2C_STATE_RESET)
   {
@@ -584,7 +584,7 @@ HAL_StatusTypeDef HAL_I2C_DeInit(I2C_HandleTypeDef *hi2c)
   }
 
   /* Check the parameters */
-  assert_param(IS_I2C_ALL_INSTANCE(hi2c->Instance));
+  AssertArg(IS_I2C_ALL_INSTANCE(hi2c->Instance));
 
   hi2c->State = HAL_I2C_STATE_BUSY;
 
@@ -2282,7 +2282,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Write(I2C_HandleTypeDef *hi2c, uint16_t DevAddress
   uint32_t tickstart;
 
   /* Check the parameters */
-  assert_param(IS_I2C_MEMADD_SIZE(MemAddSize));
+  AssertArg(IS_I2C_MEMADD_SIZE(MemAddSize));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -2417,7 +2417,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Read(I2C_HandleTypeDef *hi2c, uint16_t DevAddress,
   uint32_t tickstart;
 
   /* Check the parameters */
-  assert_param(IS_I2C_MEMADD_SIZE(MemAddSize));
+  AssertArg(IS_I2C_MEMADD_SIZE(MemAddSize));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -2551,7 +2551,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Write_IT(I2C_HandleTypeDef *hi2c, uint16_t DevAddr
   uint32_t xfermode;
 
   /* Check the parameters */
-  assert_param(IS_I2C_MEMADD_SIZE(MemAddSize));
+  AssertArg(IS_I2C_MEMADD_SIZE(MemAddSize));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -2642,7 +2642,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Read_IT(I2C_HandleTypeDef *hi2c, uint16_t DevAddre
   uint32_t xfermode;
 
   /* Check the parameters */
-  assert_param(IS_I2C_MEMADD_SIZE(MemAddSize));
+  AssertArg(IS_I2C_MEMADD_SIZE(MemAddSize));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -2733,7 +2733,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Write_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAdd
   HAL_StatusTypeDef dmaxferstatus;
 
   /* Check the parameters */
-  assert_param(IS_I2C_MEMADD_SIZE(MemAddSize));
+  AssertArg(IS_I2C_MEMADD_SIZE(MemAddSize));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -2877,7 +2877,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Read_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAddr
   HAL_StatusTypeDef dmaxferstatus;
 
   /* Check the parameters */
-  assert_param(IS_I2C_MEMADD_SIZE(MemAddSize));
+  AssertArg(IS_I2C_MEMADD_SIZE(MemAddSize));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -3159,7 +3159,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Seq_Transmit_IT(I2C_HandleTypeDef *hi2c, uint16
   uint32_t xferrequest = I2C_GENERATE_START_WRITE;
 
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -3244,7 +3244,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Seq_Transmit_DMA(I2C_HandleTypeDef *hi2c, uint1
   HAL_StatusTypeDef dmaxferstatus;
 
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -3405,7 +3405,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Seq_Receive_IT(I2C_HandleTypeDef *hi2c, uint16_
   uint32_t xferrequest = I2C_GENERATE_START_READ;
 
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -3490,7 +3490,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Seq_Receive_DMA(I2C_HandleTypeDef *hi2c, uint16
   HAL_StatusTypeDef dmaxferstatus;
 
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -3646,7 +3646,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Seq_Receive_DMA(I2C_HandleTypeDef *hi2c, uint16
 HAL_StatusTypeDef HAL_I2C_Slave_Seq_Transmit_IT(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint16_t Size, uint32_t XferOptions)
 {
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (((uint32_t)hi2c->State & (uint32_t)HAL_I2C_STATE_LISTEN) == (uint32_t)HAL_I2C_STATE_LISTEN)
   {
@@ -3743,7 +3743,7 @@ HAL_StatusTypeDef HAL_I2C_Slave_Seq_Transmit_DMA(I2C_HandleTypeDef *hi2c, uint8_
   HAL_StatusTypeDef dmaxferstatus;
 
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (((uint32_t)hi2c->State & (uint32_t)HAL_I2C_STATE_LISTEN) == (uint32_t)HAL_I2C_STATE_LISTEN)
   {
@@ -3920,7 +3920,7 @@ HAL_StatusTypeDef HAL_I2C_Slave_Seq_Transmit_DMA(I2C_HandleTypeDef *hi2c, uint8_
 HAL_StatusTypeDef HAL_I2C_Slave_Seq_Receive_IT(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint16_t Size, uint32_t XferOptions)
 {
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (((uint32_t)hi2c->State & (uint32_t)HAL_I2C_STATE_LISTEN) == (uint32_t)HAL_I2C_STATE_LISTEN)
   {
@@ -4017,7 +4017,7 @@ HAL_StatusTypeDef HAL_I2C_Slave_Seq_Receive_DMA(I2C_HandleTypeDef *hi2c, uint8_t
   HAL_StatusTypeDef dmaxferstatus;
 
   /* Check the parameters */
-  assert_param(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
+  AssertArg(IS_I2C_TRANSFER_OPTIONS_REQUEST(XferOptions));
 
   if (((uint32_t)hi2c->State & (uint32_t)HAL_I2C_STATE_LISTEN) == (uint32_t)HAL_I2C_STATE_LISTEN)
   {
@@ -6333,9 +6333,9 @@ static HAL_StatusTypeDef I2C_IsAcknowledgeFailed(I2C_HandleTypeDef *hi2c, uint32
 static void I2C_TransferConfig(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t Size, uint32_t Mode, uint32_t Request)
 {
   /* Check the parameters */
-  assert_param(IS_I2C_ALL_INSTANCE(hi2c->Instance));
-  assert_param(IS_TRANSFER_MODE(Mode));
-  assert_param(IS_TRANSFER_REQUEST(Request));
+  AssertArg(IS_I2C_ALL_INSTANCE(hi2c->Instance));
+  AssertArg(IS_TRANSFER_MODE(Mode));
+  AssertArg(IS_TRANSFER_REQUEST(Request));
 
   /* update CR2 register */
   MODIFY_REG(hi2c->Instance->CR2, ((I2C_CR2_SADD | I2C_CR2_NBYTES | I2C_CR2_RELOAD | I2C_CR2_AUTOEND | (I2C_CR2_RD_WRN & (uint32_t)(Request >> (31U - I2C_CR2_RD_WRN_Pos))) | I2C_CR2_START | I2C_CR2_STOP)), \

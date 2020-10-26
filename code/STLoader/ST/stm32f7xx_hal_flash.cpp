@@ -169,7 +169,7 @@ HAL_StatusTypeDef HAL_FLASH_Program(uint32_t TypeProgram, uint32_t Address, uint
   __HAL_LOCK(&pFlash);
 
   /* Check the parameters */
-  assert_param(IS_FLASH_TYPEPROGRAM(TypeProgram));
+  AssertArg(IS_FLASH_TYPEPROGRAM(TypeProgram));
 
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
@@ -238,7 +238,7 @@ HAL_StatusTypeDef HAL_FLASH_Program_IT(uint32_t TypeProgram, uint32_t Address, u
   __HAL_LOCK(&pFlash);
 
   /* Check the parameters */
-  assert_param(IS_FLASH_TYPEPROGRAM(TypeProgram));
+  AssertArg(IS_FLASH_TYPEPROGRAM(TypeProgram));
 
   /* Enable End of FLASH Operation interrupt */
   __HAL_FLASH_ENABLE_IT(FLASH_IT_EOP);
@@ -653,7 +653,7 @@ HAL_StatusTypeDef FLASH_WaitForLastOperation(uint32_t Timeout)
 static void FLASH_Program_DoubleWord(uint32_t Address, uint64_t Data)
 {
   /* Check the parameters */
-  assert_param(IS_FLASH_ADDRESS(Address));
+  AssertArg(IS_FLASH_ADDRESS(Address));
   
   /* If the previous operation is completed, proceed to program the new data */
   FLASH->CR &= CR_PSIZE_MASK;
@@ -685,7 +685,7 @@ static void FLASH_Program_DoubleWord(uint32_t Address, uint64_t Data)
 static void FLASH_Program_Word(uint32_t Address, uint32_t Data)
 {
   /* Check the parameters */
-  assert_param(IS_FLASH_ADDRESS(Address));
+  AssertArg(IS_FLASH_ADDRESS(Address));
   
   /* If the previous operation is completed, proceed to program the new data */
   FLASH->CR &= CR_PSIZE_MASK;
@@ -714,7 +714,7 @@ static void FLASH_Program_Word(uint32_t Address, uint32_t Data)
 static void FLASH_Program_HalfWord(uint32_t Address, uint16_t Data)
 {
   /* Check the parameters */
-  assert_param(IS_FLASH_ADDRESS(Address));
+  AssertArg(IS_FLASH_ADDRESS(Address));
   
   /* If the previous operation is completed, proceed to program the new data */
   FLASH->CR &= CR_PSIZE_MASK;
@@ -744,7 +744,7 @@ static void FLASH_Program_HalfWord(uint32_t Address, uint16_t Data)
 static void FLASH_Program_Byte(uint32_t Address, uint8_t Data)
 {
   /* Check the parameters */
-  assert_param(IS_FLASH_ADDRESS(Address));
+  AssertArg(IS_FLASH_ADDRESS(Address));
   
   /* If the previous operation is completed, proceed to program the new data */
   FLASH->CR &= CR_PSIZE_MASK;

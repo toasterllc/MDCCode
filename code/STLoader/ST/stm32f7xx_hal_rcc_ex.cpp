@@ -113,13 +113,13 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   uint32_t pllsaiused = 0;
 
   /* Check the parameters */
-  assert_param(IS_RCC_PERIPHCLOCK(PeriphClkInit->PeriphClockSelection));
+  AssertArg(IS_RCC_PERIPHCLOCK(PeriphClkInit->PeriphClockSelection));
 
   /*----------------------------------- I2S configuration ----------------------------------*/
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2S) == (RCC_PERIPHCLK_I2S))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2SCLKSOURCE(PeriphClkInit->I2sClockSelection));
+    AssertArg(IS_RCC_I2SCLKSOURCE(PeriphClkInit->I2sClockSelection));
 
     /* Configure I2S Clock source */
     __HAL_RCC_I2S_CONFIG(PeriphClkInit->I2sClockSelection);
@@ -135,7 +135,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI1) == (RCC_PERIPHCLK_SAI1))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SAI1CLKSOURCE(PeriphClkInit->Sai1ClockSelection));
+    AssertArg(IS_RCC_SAI1CLKSOURCE(PeriphClkInit->Sai1ClockSelection));
 
     /* Configure SAI1 Clock source */
     __HAL_RCC_SAI1_CONFIG(PeriphClkInit->Sai1ClockSelection);
@@ -155,7 +155,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI2) == (RCC_PERIPHCLK_SAI2))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SAI2CLKSOURCE(PeriphClkInit->Sai2ClockSelection));
+    AssertArg(IS_RCC_SAI2CLKSOURCE(PeriphClkInit->Sai2ClockSelection));
 
     /* Configure SAI2 Clock source */
     __HAL_RCC_SAI2_CONFIG(PeriphClkInit->Sai2ClockSelection);
@@ -182,7 +182,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_RTC) == (RCC_PERIPHCLK_RTC))
   {
     /* Check for RTC Parameters used to output RTCCLK */
-    assert_param(IS_RCC_RTCCLKSOURCE(PeriphClkInit->RTCClockSelection));
+    AssertArg(IS_RCC_RTCCLKSOURCE(PeriphClkInit->RTCClockSelection));
 
     /* Enable Power Clock*/
     __HAL_RCC_PWR_CLK_ENABLE();
@@ -240,7 +240,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_TIM) == (RCC_PERIPHCLK_TIM))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_TIMPRES(PeriphClkInit->TIMPresSelection));
+    AssertArg(IS_RCC_TIMPRES(PeriphClkInit->TIMPresSelection));
 
     /* Configure Timer Prescaler */
     __HAL_RCC_TIMCLKPRESCALER(PeriphClkInit->TIMPresSelection);
@@ -250,7 +250,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2C1) == RCC_PERIPHCLK_I2C1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2C1CLKSOURCE(PeriphClkInit->I2c1ClockSelection));
+    AssertArg(IS_RCC_I2C1CLKSOURCE(PeriphClkInit->I2c1ClockSelection));
 
     /* Configure the I2C1 clock source */
     __HAL_RCC_I2C1_CONFIG(PeriphClkInit->I2c1ClockSelection);
@@ -260,7 +260,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2C2) == RCC_PERIPHCLK_I2C2)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2C2CLKSOURCE(PeriphClkInit->I2c2ClockSelection));
+    AssertArg(IS_RCC_I2C2CLKSOURCE(PeriphClkInit->I2c2ClockSelection));
 
     /* Configure the I2C2 clock source */
     __HAL_RCC_I2C2_CONFIG(PeriphClkInit->I2c2ClockSelection);
@@ -270,7 +270,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2C3) == RCC_PERIPHCLK_I2C3)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2C3CLKSOURCE(PeriphClkInit->I2c3ClockSelection));
+    AssertArg(IS_RCC_I2C3CLKSOURCE(PeriphClkInit->I2c3ClockSelection));
 
     /* Configure the I2C3 clock source */
     __HAL_RCC_I2C3_CONFIG(PeriphClkInit->I2c3ClockSelection);
@@ -280,7 +280,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2C4) == RCC_PERIPHCLK_I2C4)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2C4CLKSOURCE(PeriphClkInit->I2c4ClockSelection));
+    AssertArg(IS_RCC_I2C4CLKSOURCE(PeriphClkInit->I2c4ClockSelection));
 
     /* Configure the I2C4 clock source */
     __HAL_RCC_I2C4_CONFIG(PeriphClkInit->I2c4ClockSelection);
@@ -290,7 +290,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART1) == RCC_PERIPHCLK_USART1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART1CLKSOURCE(PeriphClkInit->Usart1ClockSelection));
+    AssertArg(IS_RCC_USART1CLKSOURCE(PeriphClkInit->Usart1ClockSelection));
 
     /* Configure the USART1 clock source */
     __HAL_RCC_USART1_CONFIG(PeriphClkInit->Usart1ClockSelection);
@@ -300,7 +300,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART2) == RCC_PERIPHCLK_USART2)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART2CLKSOURCE(PeriphClkInit->Usart2ClockSelection));
+    AssertArg(IS_RCC_USART2CLKSOURCE(PeriphClkInit->Usart2ClockSelection));
 
     /* Configure the USART2 clock source */
     __HAL_RCC_USART2_CONFIG(PeriphClkInit->Usart2ClockSelection);
@@ -310,7 +310,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART3) == RCC_PERIPHCLK_USART3)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART3CLKSOURCE(PeriphClkInit->Usart3ClockSelection));
+    AssertArg(IS_RCC_USART3CLKSOURCE(PeriphClkInit->Usart3ClockSelection));
 
     /* Configure the USART3 clock source */
     __HAL_RCC_USART3_CONFIG(PeriphClkInit->Usart3ClockSelection);
@@ -320,7 +320,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART4) == RCC_PERIPHCLK_UART4)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART4CLKSOURCE(PeriphClkInit->Uart4ClockSelection));
+    AssertArg(IS_RCC_UART4CLKSOURCE(PeriphClkInit->Uart4ClockSelection));
 
     /* Configure the UART4 clock source */
     __HAL_RCC_UART4_CONFIG(PeriphClkInit->Uart4ClockSelection);
@@ -330,7 +330,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART5) == RCC_PERIPHCLK_UART5)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART5CLKSOURCE(PeriphClkInit->Uart5ClockSelection));
+    AssertArg(IS_RCC_UART5CLKSOURCE(PeriphClkInit->Uart5ClockSelection));
 
     /* Configure the UART5 clock source */
     __HAL_RCC_UART5_CONFIG(PeriphClkInit->Uart5ClockSelection);
@@ -340,7 +340,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART6) == RCC_PERIPHCLK_USART6)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART6CLKSOURCE(PeriphClkInit->Usart6ClockSelection));
+    AssertArg(IS_RCC_USART6CLKSOURCE(PeriphClkInit->Usart6ClockSelection));
 
     /* Configure the USART6 clock source */
     __HAL_RCC_USART6_CONFIG(PeriphClkInit->Usart6ClockSelection);
@@ -350,7 +350,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART7) == RCC_PERIPHCLK_UART7)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART7CLKSOURCE(PeriphClkInit->Uart7ClockSelection));
+    AssertArg(IS_RCC_UART7CLKSOURCE(PeriphClkInit->Uart7ClockSelection));
 
     /* Configure the UART7 clock source */
     __HAL_RCC_UART7_CONFIG(PeriphClkInit->Uart7ClockSelection);
@@ -360,7 +360,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART8) == RCC_PERIPHCLK_UART8)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART8CLKSOURCE(PeriphClkInit->Uart8ClockSelection));
+    AssertArg(IS_RCC_UART8CLKSOURCE(PeriphClkInit->Uart8ClockSelection));
 
     /* Configure the UART8 clock source */
     __HAL_RCC_UART8_CONFIG(PeriphClkInit->Uart8ClockSelection);
@@ -370,7 +370,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_CEC) == RCC_PERIPHCLK_CEC)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_CECCLKSOURCE(PeriphClkInit->CecClockSelection));
+    AssertArg(IS_RCC_CECCLKSOURCE(PeriphClkInit->CecClockSelection));
 
     /* Configure the CEC clock source */
     __HAL_RCC_CEC_CONFIG(PeriphClkInit->CecClockSelection);
@@ -380,7 +380,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_CLK48) == RCC_PERIPHCLK_CLK48)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_CLK48SOURCE(PeriphClkInit->Clk48ClockSelection));
+    AssertArg(IS_RCC_CLK48SOURCE(PeriphClkInit->Clk48ClockSelection));
 
     /* Configure the CLK48 source */
     __HAL_RCC_CLK48_CONFIG(PeriphClkInit->Clk48ClockSelection);
@@ -404,7 +404,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_LPTIM1) == RCC_PERIPHCLK_LPTIM1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_LPTIM1CLK(PeriphClkInit->Lptim1ClockSelection));
+    AssertArg(IS_RCC_LPTIM1CLK(PeriphClkInit->Lptim1ClockSelection));
 
     /* Configure the LTPIM1 clock source */
     __HAL_RCC_LPTIM1_CONFIG(PeriphClkInit->Lptim1ClockSelection);
@@ -414,7 +414,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SDMMC1) == RCC_PERIPHCLK_SDMMC1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SDMMC1CLKSOURCE(PeriphClkInit->Sdmmc1ClockSelection));
+    AssertArg(IS_RCC_SDMMC1CLKSOURCE(PeriphClkInit->Sdmmc1ClockSelection));
 
     /* Configure the SDMMC1 clock source */
     __HAL_RCC_SDMMC1_CONFIG(PeriphClkInit->Sdmmc1ClockSelection);
@@ -425,7 +425,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SDMMC2) == RCC_PERIPHCLK_SDMMC2)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SDMMC2CLKSOURCE(PeriphClkInit->Sdmmc2ClockSelection));
+    AssertArg(IS_RCC_SDMMC2CLKSOURCE(PeriphClkInit->Sdmmc2ClockSelection));
 
     /* Configure the SDMMC2 clock source */
     __HAL_RCC_SDMMC2_CONFIG(PeriphClkInit->Sdmmc2ClockSelection);
@@ -435,7 +435,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_DFSDM1) == RCC_PERIPHCLK_DFSDM1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_DFSDM1CLKSOURCE(PeriphClkInit->Dfsdm1ClockSelection));
+    AssertArg(IS_RCC_DFSDM1CLKSOURCE(PeriphClkInit->Dfsdm1ClockSelection));
 
     /* Configure the DFSDM1 interface clock source */
     __HAL_RCC_DFSDM1_CONFIG(PeriphClkInit->Dfsdm1ClockSelection);
@@ -445,7 +445,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_DFSDM1_AUDIO) == RCC_PERIPHCLK_DFSDM1_AUDIO)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_DFSDM1AUDIOCLKSOURCE(PeriphClkInit->Dfsdm1AudioClockSelection));
+    AssertArg(IS_RCC_DFSDM1AUDIOCLKSOURCE(PeriphClkInit->Dfsdm1AudioClockSelection));
 
     /* Configure the DFSDM interface clock source */
     __HAL_RCC_DFSDM1AUDIO_CONFIG(PeriphClkInit->Dfsdm1AudioClockSelection);
@@ -473,13 +473,13 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     }
 
     /* check for common PLLI2S Parameters */
-    assert_param(IS_RCC_PLLI2SN_VALUE(PeriphClkInit->PLLI2S.PLLI2SN));
+    AssertArg(IS_RCC_PLLI2SN_VALUE(PeriphClkInit->PLLI2S.PLLI2SN));
 
     /*----------------- In Case of PLLI2S is selected as source clock for I2S -------------------*/
     if(((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2S) == RCC_PERIPHCLK_I2S) && (PeriphClkInit->I2sClockSelection == RCC_I2SCLKSOURCE_PLLI2S)))
     {
       /* check for Parameters */
-      assert_param(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
+      AssertArg(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
 
       /* Read PLLI2SP and PLLI2SQ value from PLLI2SCFGR register (this value is not needed for I2S configuration) */
       tmpreg0 = ((RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SP) >> RCC_PLLI2SCFGR_PLLI2SP_Pos);
@@ -495,9 +495,9 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
        ((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI2) == RCC_PERIPHCLK_SAI2) && (PeriphClkInit->Sai2ClockSelection == RCC_SAI2CLKSOURCE_PLLI2S)))
     {
       /* Check for PLLI2S Parameters */
-      assert_param(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
+      AssertArg(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
       /* Check for PLLI2S/DIVQ parameters */
-      assert_param(IS_RCC_PLLI2S_DIVQ_VALUE(PeriphClkInit->PLLI2SDivQ));
+      AssertArg(IS_RCC_PLLI2S_DIVQ_VALUE(PeriphClkInit->PLLI2SDivQ));
 
       /* Read PLLI2SP and PLLI2SR values from PLLI2SCFGR register (this value is not needed for SAI configuration) */
       tmpreg0 = ((RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SP) >> RCC_PLLI2SCFGR_PLLI2SP_Pos);
@@ -516,7 +516,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SPDIFRX) == RCC_PERIPHCLK_SPDIFRX)
     {
       /* check for Parameters */
-      assert_param(IS_RCC_PLLI2SP_VALUE(PeriphClkInit->PLLI2S.PLLI2SP));
+      AssertArg(IS_RCC_PLLI2SP_VALUE(PeriphClkInit->PLLI2S.PLLI2SP));
 
      /* Read PLLI2SR value from PLLI2SCFGR register (this value is not needed for SPDIF-RX configuration) */
       tmpreg0 = ((RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SQ) >> RCC_PLLI2SCFGR_PLLI2SQ_Pos);
@@ -531,9 +531,9 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     if((PeriphClkInit->PeriphClockSelection & RCC_PERIPHCLK_PLLI2S) == RCC_PERIPHCLK_PLLI2S)
     {
       /* Check for Parameters */
-      assert_param(IS_RCC_PLLI2SP_VALUE(PeriphClkInit->PLLI2S.PLLI2SP));
-      assert_param(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
-      assert_param(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
+      AssertArg(IS_RCC_PLLI2SP_VALUE(PeriphClkInit->PLLI2S.PLLI2SP));
+      AssertArg(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
+      AssertArg(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
 
       /* Configure the PLLI2S division factors */
       /* PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) x (PLLI2SN/PLLI2SM) */
@@ -579,16 +579,16 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     }
 
     /* Check the PLLSAI division factors */
-    assert_param(IS_RCC_PLLSAIN_VALUE(PeriphClkInit->PLLSAI.PLLSAIN));
+    AssertArg(IS_RCC_PLLSAIN_VALUE(PeriphClkInit->PLLSAI.PLLSAIN));
 
     /*----------------- In Case of PLLSAI is selected as source clock for SAI -------------------*/
     if(((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI1) == RCC_PERIPHCLK_SAI1) && (PeriphClkInit->Sai1ClockSelection == RCC_SAI1CLKSOURCE_PLLSAI)) ||\
        ((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI2) == RCC_PERIPHCLK_SAI2) && (PeriphClkInit->Sai2ClockSelection == RCC_SAI2CLKSOURCE_PLLSAI)))
     {
       /* check for PLLSAIQ Parameter */
-      assert_param(IS_RCC_PLLSAIQ_VALUE(PeriphClkInit->PLLSAI.PLLSAIQ));
+      AssertArg(IS_RCC_PLLSAIQ_VALUE(PeriphClkInit->PLLSAI.PLLSAIQ));
       /* check for PLLSAI/DIVQ Parameter */
-      assert_param(IS_RCC_PLLSAI_DIVQ_VALUE(PeriphClkInit->PLLSAIDivQ));
+      AssertArg(IS_RCC_PLLSAI_DIVQ_VALUE(PeriphClkInit->PLLSAIDivQ));
 
       /* Read PLLSAIP value from PLLSAICFGR register (this value is not needed for SAI configuration) */
       tmpreg0 = ((RCC->PLLSAICFGR & RCC_PLLSAICFGR_PLLSAIP) >> RCC_PLLSAICFGR_PLLSAIP_Pos);
@@ -607,7 +607,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     if((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_CLK48) == RCC_PERIPHCLK_CLK48) && (PeriphClkInit->Clk48ClockSelection == RCC_CLK48SOURCE_PLLSAIP))
     {
       /* check for Parameters */
-      assert_param(IS_RCC_PLLSAIP_VALUE(PeriphClkInit->PLLSAI.PLLSAIP));
+      AssertArg(IS_RCC_PLLSAIP_VALUE(PeriphClkInit->PLLSAI.PLLSAIP));
       /* Read PLLSAIQ and PLLSAIR value from PLLSAICFGR register (this value is not needed for CK48 configuration) */
       tmpreg0 = ((RCC->PLLSAICFGR & RCC_PLLSAICFGR_PLLSAIQ) >> RCC_PLLSAICFGR_PLLSAIQ_Pos);
       tmpreg1 = ((RCC->PLLSAICFGR & RCC_PLLSAICFGR_PLLSAIR) >> RCC_PLLSAICFGR_PLLSAIR_Pos);
@@ -622,8 +622,8 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     /*---------------------------- LTDC configuration -------------------------------*/
     if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_LTDC) == (RCC_PERIPHCLK_LTDC))
     {
-      assert_param(IS_RCC_PLLSAIR_VALUE(PeriphClkInit->PLLSAI.PLLSAIR));
-      assert_param(IS_RCC_PLLSAI_DIVR_VALUE(PeriphClkInit->PLLSAIDivR));
+      AssertArg(IS_RCC_PLLSAIR_VALUE(PeriphClkInit->PLLSAI.PLLSAIR));
+      AssertArg(IS_RCC_PLLSAI_DIVR_VALUE(PeriphClkInit->PLLSAIDivR));
 
       /* Read PLLSAIP and PLLSAIQ value from PLLSAICFGR register (these value are not needed for LTDC configuration) */
       tmpreg0 = ((RCC->PLLSAICFGR & RCC_PLLSAICFGR_PLLSAIQ) >> RCC_PLLSAICFGR_PLLSAIQ_Pos);
@@ -820,13 +820,13 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   uint32_t pllsaiused = 0;
 
   /* Check the parameters */
-  assert_param(IS_RCC_PERIPHCLOCK(PeriphClkInit->PeriphClockSelection));
+  AssertArg(IS_RCC_PERIPHCLOCK(PeriphClkInit->PeriphClockSelection));
 
   /*----------------------------------- I2S configuration ----------------------------------*/
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2S) == (RCC_PERIPHCLK_I2S))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2SCLKSOURCE(PeriphClkInit->I2sClockSelection));
+    AssertArg(IS_RCC_I2SCLKSOURCE(PeriphClkInit->I2sClockSelection));
 
     /* Configure I2S Clock source */
     __HAL_RCC_I2S_CONFIG(PeriphClkInit->I2sClockSelection);
@@ -842,7 +842,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI1) == (RCC_PERIPHCLK_SAI1))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SAI1CLKSOURCE(PeriphClkInit->Sai1ClockSelection));
+    AssertArg(IS_RCC_SAI1CLKSOURCE(PeriphClkInit->Sai1ClockSelection));
 
     /* Configure SAI1 Clock source */
     __HAL_RCC_SAI1_CONFIG(PeriphClkInit->Sai1ClockSelection);
@@ -862,7 +862,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI2) == (RCC_PERIPHCLK_SAI2))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SAI2CLKSOURCE(PeriphClkInit->Sai2ClockSelection));
+    AssertArg(IS_RCC_SAI2CLKSOURCE(PeriphClkInit->Sai2ClockSelection));
 
     /* Configure SAI2 Clock source */
     __HAL_RCC_SAI2_CONFIG(PeriphClkInit->Sai2ClockSelection);
@@ -883,7 +883,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_RTC) == (RCC_PERIPHCLK_RTC))
   {
     /* Check for RTC Parameters used to output RTCCLK */
-    assert_param(IS_RCC_RTCCLKSOURCE(PeriphClkInit->RTCClockSelection));
+    AssertArg(IS_RCC_RTCCLKSOURCE(PeriphClkInit->RTCClockSelection));
 
     /* Enable Power Clock*/
     __HAL_RCC_PWR_CLK_ENABLE();
@@ -941,7 +941,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_TIM) == (RCC_PERIPHCLK_TIM))
   {
     /* Check the parameters */
-    assert_param(IS_RCC_TIMPRES(PeriphClkInit->TIMPresSelection));
+    AssertArg(IS_RCC_TIMPRES(PeriphClkInit->TIMPresSelection));
 
     /* Configure Timer Prescaler */
     __HAL_RCC_TIMCLKPRESCALER(PeriphClkInit->TIMPresSelection);
@@ -951,7 +951,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2C1) == RCC_PERIPHCLK_I2C1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2C1CLKSOURCE(PeriphClkInit->I2c1ClockSelection));
+    AssertArg(IS_RCC_I2C1CLKSOURCE(PeriphClkInit->I2c1ClockSelection));
 
     /* Configure the I2C1 clock source */
     __HAL_RCC_I2C1_CONFIG(PeriphClkInit->I2c1ClockSelection);
@@ -961,7 +961,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2C2) == RCC_PERIPHCLK_I2C2)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2C2CLKSOURCE(PeriphClkInit->I2c2ClockSelection));
+    AssertArg(IS_RCC_I2C2CLKSOURCE(PeriphClkInit->I2c2ClockSelection));
 
     /* Configure the I2C2 clock source */
     __HAL_RCC_I2C2_CONFIG(PeriphClkInit->I2c2ClockSelection);
@@ -971,7 +971,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2C3) == RCC_PERIPHCLK_I2C3)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_I2C3CLKSOURCE(PeriphClkInit->I2c3ClockSelection));
+    AssertArg(IS_RCC_I2C3CLKSOURCE(PeriphClkInit->I2c3ClockSelection));
 
     /* Configure the I2C3 clock source */
     __HAL_RCC_I2C3_CONFIG(PeriphClkInit->I2c3ClockSelection);
@@ -981,7 +981,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART1) == RCC_PERIPHCLK_USART1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART1CLKSOURCE(PeriphClkInit->Usart1ClockSelection));
+    AssertArg(IS_RCC_USART1CLKSOURCE(PeriphClkInit->Usart1ClockSelection));
 
     /* Configure the USART1 clock source */
     __HAL_RCC_USART1_CONFIG(PeriphClkInit->Usart1ClockSelection);
@@ -991,7 +991,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART2) == RCC_PERIPHCLK_USART2)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART2CLKSOURCE(PeriphClkInit->Usart2ClockSelection));
+    AssertArg(IS_RCC_USART2CLKSOURCE(PeriphClkInit->Usart2ClockSelection));
 
     /* Configure the USART2 clock source */
     __HAL_RCC_USART2_CONFIG(PeriphClkInit->Usart2ClockSelection);
@@ -1001,7 +1001,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART3) == RCC_PERIPHCLK_USART3)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART3CLKSOURCE(PeriphClkInit->Usart3ClockSelection));
+    AssertArg(IS_RCC_USART3CLKSOURCE(PeriphClkInit->Usart3ClockSelection));
 
     /* Configure the USART3 clock source */
     __HAL_RCC_USART3_CONFIG(PeriphClkInit->Usart3ClockSelection);
@@ -1011,7 +1011,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART4) == RCC_PERIPHCLK_UART4)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART4CLKSOURCE(PeriphClkInit->Uart4ClockSelection));
+    AssertArg(IS_RCC_UART4CLKSOURCE(PeriphClkInit->Uart4ClockSelection));
 
     /* Configure the UART4 clock source */
     __HAL_RCC_UART4_CONFIG(PeriphClkInit->Uart4ClockSelection);
@@ -1021,7 +1021,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART5) == RCC_PERIPHCLK_UART5)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART5CLKSOURCE(PeriphClkInit->Uart5ClockSelection));
+    AssertArg(IS_RCC_UART5CLKSOURCE(PeriphClkInit->Uart5ClockSelection));
 
     /* Configure the UART5 clock source */
     __HAL_RCC_UART5_CONFIG(PeriphClkInit->Uart5ClockSelection);
@@ -1031,7 +1031,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_USART6) == RCC_PERIPHCLK_USART6)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_USART6CLKSOURCE(PeriphClkInit->Usart6ClockSelection));
+    AssertArg(IS_RCC_USART6CLKSOURCE(PeriphClkInit->Usart6ClockSelection));
 
     /* Configure the USART6 clock source */
     __HAL_RCC_USART6_CONFIG(PeriphClkInit->Usart6ClockSelection);
@@ -1041,7 +1041,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART7) == RCC_PERIPHCLK_UART7)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART7CLKSOURCE(PeriphClkInit->Uart7ClockSelection));
+    AssertArg(IS_RCC_UART7CLKSOURCE(PeriphClkInit->Uart7ClockSelection));
 
     /* Configure the UART7 clock source */
     __HAL_RCC_UART7_CONFIG(PeriphClkInit->Uart7ClockSelection);
@@ -1051,7 +1051,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_UART8) == RCC_PERIPHCLK_UART8)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_UART8CLKSOURCE(PeriphClkInit->Uart8ClockSelection));
+    AssertArg(IS_RCC_UART8CLKSOURCE(PeriphClkInit->Uart8ClockSelection));
 
     /* Configure the UART8 clock source */
     __HAL_RCC_UART8_CONFIG(PeriphClkInit->Uart8ClockSelection);
@@ -1061,7 +1061,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_CLK48) == RCC_PERIPHCLK_CLK48)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_CLK48SOURCE(PeriphClkInit->Clk48ClockSelection));
+    AssertArg(IS_RCC_CLK48SOURCE(PeriphClkInit->Clk48ClockSelection));
 
     /* Configure the CLK48 source */
     __HAL_RCC_CLK48_CONFIG(PeriphClkInit->Clk48ClockSelection);
@@ -1077,7 +1077,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_LPTIM1) == RCC_PERIPHCLK_LPTIM1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_LPTIM1CLK(PeriphClkInit->Lptim1ClockSelection));
+    AssertArg(IS_RCC_LPTIM1CLK(PeriphClkInit->Lptim1ClockSelection));
 
     /* Configure the LTPIM1 clock source */
     __HAL_RCC_LPTIM1_CONFIG(PeriphClkInit->Lptim1ClockSelection);
@@ -1087,7 +1087,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SDMMC1) == RCC_PERIPHCLK_SDMMC1)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SDMMC1CLKSOURCE(PeriphClkInit->Sdmmc1ClockSelection));
+    AssertArg(IS_RCC_SDMMC1CLKSOURCE(PeriphClkInit->Sdmmc1ClockSelection));
 
     /* Configure the SDMMC1 clock source */
     __HAL_RCC_SDMMC1_CONFIG(PeriphClkInit->Sdmmc1ClockSelection);
@@ -1097,7 +1097,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
   if(((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SDMMC2) == RCC_PERIPHCLK_SDMMC2)
   {
     /* Check the parameters */
-    assert_param(IS_RCC_SDMMC2CLKSOURCE(PeriphClkInit->Sdmmc2ClockSelection));
+    AssertArg(IS_RCC_SDMMC2CLKSOURCE(PeriphClkInit->Sdmmc2ClockSelection));
 
     /* Configure the SDMMC2 clock source */
     __HAL_RCC_SDMMC2_CONFIG(PeriphClkInit->Sdmmc2ClockSelection);
@@ -1124,13 +1124,13 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     }
 
     /* check for common PLLI2S Parameters */
-    assert_param(IS_RCC_PLLI2SN_VALUE(PeriphClkInit->PLLI2S.PLLI2SN));
+    AssertArg(IS_RCC_PLLI2SN_VALUE(PeriphClkInit->PLLI2S.PLLI2SN));
 
     /*----------------- In Case of PLLI2S is selected as source clock for I2S -------------------*/
     if(((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_I2S) == RCC_PERIPHCLK_I2S) && (PeriphClkInit->I2sClockSelection == RCC_I2SCLKSOURCE_PLLI2S)))
     {
       /* check for Parameters */
-      assert_param(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
+      AssertArg(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
 
       /* Read PLLI2SQ value from PLLI2SCFGR register (this value is not needed for I2S configuration) */
       tmpreg0 = ((RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SQ) >> RCC_PLLI2SCFGR_PLLI2SQ_Pos);
@@ -1145,9 +1145,9 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
        ((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI2) == RCC_PERIPHCLK_SAI2) && (PeriphClkInit->Sai2ClockSelection == RCC_SAI2CLKSOURCE_PLLI2S)))
     {
       /* Check for PLLI2S Parameters */
-      assert_param(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
+      AssertArg(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
       /* Check for PLLI2S/DIVQ parameters */
-      assert_param(IS_RCC_PLLI2S_DIVQ_VALUE(PeriphClkInit->PLLI2SDivQ));
+      AssertArg(IS_RCC_PLLI2S_DIVQ_VALUE(PeriphClkInit->PLLI2SDivQ));
 
       /* Read PLLI2SP and PLLI2SR values from PLLI2SCFGR register (this value is not needed for SAI configuration) */
       tmpreg0 = ((RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SR) >> RCC_PLLI2SCFGR_PLLI2SR_Pos);
@@ -1165,8 +1165,8 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     if((PeriphClkInit->PeriphClockSelection & RCC_PERIPHCLK_PLLI2S) == RCC_PERIPHCLK_PLLI2S)
     {
       /* Check for Parameters */
-      assert_param(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
-      assert_param(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
+      AssertArg(IS_RCC_PLLI2SR_VALUE(PeriphClkInit->PLLI2S.PLLI2SR));
+      AssertArg(IS_RCC_PLLI2SQ_VALUE(PeriphClkInit->PLLI2S.PLLI2SQ));
 
       /* Configure the PLLI2S division factors */
       /* PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) x (PLLI2SN/PLLI2SM) */
@@ -1211,16 +1211,16 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     }
 
     /* Check the PLLSAI division factors */
-    assert_param(IS_RCC_PLLSAIN_VALUE(PeriphClkInit->PLLSAI.PLLSAIN));
+    AssertArg(IS_RCC_PLLSAIN_VALUE(PeriphClkInit->PLLSAI.PLLSAIN));
 
     /*----------------- In Case of PLLSAI is selected as source clock for SAI -------------------*/
     if(((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI1) == RCC_PERIPHCLK_SAI1) && (PeriphClkInit->Sai1ClockSelection == RCC_SAI1CLKSOURCE_PLLSAI)) ||\
        ((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_SAI2) == RCC_PERIPHCLK_SAI2) && (PeriphClkInit->Sai2ClockSelection == RCC_SAI2CLKSOURCE_PLLSAI)))
     {
       /* check for PLLSAIQ Parameter */
-      assert_param(IS_RCC_PLLSAIQ_VALUE(PeriphClkInit->PLLSAI.PLLSAIQ));
+      AssertArg(IS_RCC_PLLSAIQ_VALUE(PeriphClkInit->PLLSAI.PLLSAIQ));
       /* check for PLLSAI/DIVQ Parameter */
-      assert_param(IS_RCC_PLLSAI_DIVQ_VALUE(PeriphClkInit->PLLSAIDivQ));
+      AssertArg(IS_RCC_PLLSAI_DIVQ_VALUE(PeriphClkInit->PLLSAIDivQ));
 
       /* Read PLLSAIP value from PLLSAICFGR register (this value is not needed for SAI configuration) */
       tmpreg0 = ((RCC->PLLSAICFGR & RCC_PLLSAICFGR_PLLSAIP) >> RCC_PLLSAICFGR_PLLSAIP_Pos);
@@ -1238,7 +1238,7 @@ HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClk
     if((((PeriphClkInit->PeriphClockSelection) & RCC_PERIPHCLK_CLK48) == RCC_PERIPHCLK_CLK48) && (PeriphClkInit->Clk48ClockSelection == RCC_CLK48SOURCE_PLLSAIP))
     {
       /* check for Parameters */
-      assert_param(IS_RCC_PLLSAIP_VALUE(PeriphClkInit->PLLSAI.PLLSAIP));
+      AssertArg(IS_RCC_PLLSAIP_VALUE(PeriphClkInit->PLLSAI.PLLSAIP));
       /* Read PLLSAIQ and PLLSAIR value from PLLSAICFGR register (this value is not needed for CK48 configuration) */
       tmpreg0 = ((RCC->PLLSAICFGR & RCC_PLLSAICFGR_PLLSAIQ) >> RCC_PLLSAICFGR_PLLSAIQ_Pos);
 
@@ -1590,11 +1590,11 @@ HAL_StatusTypeDef HAL_RCCEx_EnablePLLI2S(RCC_PLLI2SInitTypeDef  *PLLI2SInit)
   uint32_t tickstart;
 
   /* Check for parameters */
-  assert_param(IS_RCC_PLLI2SN_VALUE(PLLI2SInit->PLLI2SN));
-  assert_param(IS_RCC_PLLI2SR_VALUE(PLLI2SInit->PLLI2SR));
-  assert_param(IS_RCC_PLLI2SQ_VALUE(PLLI2SInit->PLLI2SQ));
+  AssertArg(IS_RCC_PLLI2SN_VALUE(PLLI2SInit->PLLI2SN));
+  AssertArg(IS_RCC_PLLI2SR_VALUE(PLLI2SInit->PLLI2SR));
+  AssertArg(IS_RCC_PLLI2SQ_VALUE(PLLI2SInit->PLLI2SQ));
 #if defined(RCC_PLLI2SCFGR_PLLI2SP)
-  assert_param(IS_RCC_PLLI2SP_VALUE(PLLI2SInit->PLLI2SP));
+  AssertArg(IS_RCC_PLLI2SP_VALUE(PLLI2SInit->PLLI2SP));
 #endif /* RCC_PLLI2SCFGR_PLLI2SP */
 
   /* Disable the PLLI2S */
@@ -1678,11 +1678,11 @@ HAL_StatusTypeDef HAL_RCCEx_EnablePLLSAI(RCC_PLLSAIInitTypeDef  *PLLSAIInit)
   uint32_t tickstart;
 
   /* Check for parameters */
-  assert_param(IS_RCC_PLLSAIN_VALUE(PLLSAIInit->PLLSAIN));
-  assert_param(IS_RCC_PLLSAIQ_VALUE(PLLSAIInit->PLLSAIQ));
-  assert_param(IS_RCC_PLLSAIP_VALUE(PLLSAIInit->PLLSAIP));
+  AssertArg(IS_RCC_PLLSAIN_VALUE(PLLSAIInit->PLLSAIN));
+  AssertArg(IS_RCC_PLLSAIQ_VALUE(PLLSAIInit->PLLSAIQ));
+  AssertArg(IS_RCC_PLLSAIP_VALUE(PLLSAIInit->PLLSAIP));
 #if defined(RCC_PLLSAICFGR_PLLSAIR)
-  assert_param(IS_RCC_PLLSAIR_VALUE(PLLSAIInit->PLLSAIR));
+  AssertArg(IS_RCC_PLLSAIR_VALUE(PLLSAIInit->PLLSAIR));
 #endif /* RCC_PLLSAICFGR_PLLSAIR */
 
   /* Disable the PLLSAI */

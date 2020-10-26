@@ -260,8 +260,8 @@ void HAL_PWR_DisableBkUpAccess(void)
 void HAL_PWR_ConfigPVD(PWR_PVDTypeDef *sConfigPVD)
 {
   /* Check the parameters */
-  assert_param(IS_PWR_PVD_LEVEL(sConfigPVD->PVDLevel));
-  assert_param(IS_PWR_PVD_MODE(sConfigPVD->Mode));
+  AssertArg(IS_PWR_PVD_LEVEL(sConfigPVD->PVDLevel));
+  AssertArg(IS_PWR_PVD_MODE(sConfigPVD->Mode));
   
   /* Set PLS[7:5] bits according to PVDLevel value */
   MODIFY_REG(PWR->CR1, PWR_CR1_PLS, sConfigPVD->PVDLevel);
@@ -335,7 +335,7 @@ void HAL_PWR_DisablePVD(void)
   */
 void HAL_PWR_EnableWakeUpPin(uint32_t WakeUpPinPolarity)
 {
-  assert_param(IS_PWR_WAKEUP_PIN(WakeUpPinPolarity));
+  AssertArg(IS_PWR_WAKEUP_PIN(WakeUpPinPolarity));
   
   /* Enable wake-up pin */
   SET_BIT(PWR->CSR2, (PWR_EWUP_MASK & WakeUpPinPolarity));
@@ -359,7 +359,7 @@ void HAL_PWR_EnableWakeUpPin(uint32_t WakeUpPinPolarity)
   */
 void HAL_PWR_DisableWakeUpPin(uint32_t WakeUpPinx)
 {
-  assert_param(IS_PWR_WAKEUP_PIN(WakeUpPinx));
+  AssertArg(IS_PWR_WAKEUP_PIN(WakeUpPinx));
 
   CLEAR_BIT(PWR->CSR2, WakeUpPinx);
 }
@@ -387,8 +387,8 @@ void HAL_PWR_DisableWakeUpPin(uint32_t WakeUpPinx)
 void HAL_PWR_EnterSLEEPMode(uint32_t Regulator, uint8_t SLEEPEntry)
 {
   /* Check the parameters */
-  assert_param(IS_PWR_REGULATOR(Regulator));
-  assert_param(IS_PWR_SLEEP_ENTRY(SLEEPEntry));
+  AssertArg(IS_PWR_REGULATOR(Regulator));
+  AssertArg(IS_PWR_SLEEP_ENTRY(SLEEPEntry));
 
   /* Clear SLEEPDEEP bit of Cortex System Control Register */
   CLEAR_BIT(SCB->SCR, ((uint32_t)SCB_SCR_SLEEPDEEP_Msk));
@@ -436,8 +436,8 @@ void HAL_PWR_EnterSTOPMode(uint32_t Regulator, uint8_t STOPEntry)
   uint32_t tmpreg = 0;
 
   /* Check the parameters */
-  assert_param(IS_PWR_REGULATOR(Regulator));
-  assert_param(IS_PWR_STOP_ENTRY(STOPEntry));
+  AssertArg(IS_PWR_REGULATOR(Regulator));
+  AssertArg(IS_PWR_STOP_ENTRY(STOPEntry));
 
   /* Select the regulator state in Stop mode ---------------------------------*/
   tmpreg = PWR->CR1;
