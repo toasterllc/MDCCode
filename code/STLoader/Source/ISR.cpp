@@ -19,5 +19,9 @@ extern "C" void ISR_OTG_HS() {
 }
 
 extern "C" void ISR_QUADSPI() {
-    Sys.qspi._isr();
+    Sys.qspi._isrQSPI();
+}
+
+extern "C" void ISR_DMA2_Stream7() {
+    Sys.qspi._isrDMA();
 }

@@ -11,13 +11,19 @@ _di(GPIOC, GPIO_PIN_10) {
 }
 
 void QSPI::init() {
+    // DMA clock/IRQ
+    __HAL_RCC_DMA2_CLK_ENABLE();
+    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+    
+    // QSPI clock/IRQ
     __HAL_RCC_QSPI_CLK_ENABLE();
     __HAL_RCC_QSPI_FORCE_RESET();
     __HAL_RCC_QSPI_RELEASE_RESET();
-    
     HAL_NVIC_SetPriority(QUADSPI_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
     
+    // Init QUADSPI
     _device.Instance = QUADSPI;
     _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1) = 128/(7+1) = 21.3 MHz
     _device.Init.FifoThreshold = 1;
@@ -29,8 +35,25 @@ void QSPI::init() {
     _device.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
     _device.Ctx = this;
     
-    HAL_StatusTypeDef sr = HAL_QSPI_Init(&_device);
-    assert(sr == HAL_OK);
+    HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
+    assert(hs == HAL_OK);
+    
+    // Init DMA
+    _dma.Instance = DMA2_Stream7;
+    _dma.Init.Channel = DMA_CHANNEL_3;
+    _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    _dma.Init.PeriphInc = DMA_PINC_DISABLE;
+    _dma.Init.MemInc = DMA_MINC_ENABLE;
+    _dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    _dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    _dma.Init.Mode = DMA_NORMAL;
+    _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    _dma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    
+    hs = HAL_DMA_Init(&_dma);
+    assert(hs == HAL_OK);
+    
+    __HAL_LINKDMA(&_device, hdma, _dma);
 }
 
 void QSPI::config() {
@@ -41,6 +64,9 @@ void QSPI::config() {
 }
 
 void QSPI::write(void* data, size_t len) {
+    assert(data);
+    assert(len);
+    
     QSPI_CommandTypeDef cmd = {
         .Instruction = 0,
         .Address = 0,
@@ -60,12 +86,16 @@ void QSPI::write(void* data, size_t len) {
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     assert(hs == HAL_OK);
     
-    hs = HAL_QSPI_Transmit_IT(&_device, (uint8_t*)data);
+    hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)data);
     assert(hs == HAL_OK);
 }
 
-void QSPI::_isr() {
+void QSPI::_isrQSPI() {
     ISR_HAL_QSPI(&_device);
+}
+
+void QSPI::_isrDMA() {
+    ISR_HAL_DMA(&_dma);
 }
 
 void QSPI::_handleWriteDone() {
