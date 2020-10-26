@@ -1,5 +1,5 @@
 [submodule "pcb/EagleLibrary"]
-	path = pcb/EagleLibrary
+	path = EagleLibrary
 	url = git@github.com:davekeck/EagleLibrary.git
 [submodule "tools/icestorm"]
 	path = tools/icestorm
