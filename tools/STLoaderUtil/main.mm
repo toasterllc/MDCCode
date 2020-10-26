@@ -260,6 +260,7 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
     // Wait for interface to be idle
     // Without this, the next 'Finish' command would interupt the SPI configuration process
     for (;;) {
+//        usleep(10000);
         // Request status
         {
             const ICECmd cmd = {

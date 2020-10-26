@@ -209,8 +209,6 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         _iceStatus = ICEStatus::Configuring;
         
         // Prepare to receive ICE40 bootloader data
-        _iceInBufs = std::queue<ICEBuf*>({&_iceBuf[0], &_iceBuf[1]});
-        _iceOutBufs = std::queue<ICEBuf*>();
         _iceRecvData();
         break;
     }
@@ -243,54 +241,60 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
 }
 
 void System::_iceHandleData(const USB::Data& ev) {
-    assert(!_iceInBufs.empty());
+    assert(!_iceBufFull);
     assert(_iceStatus == ICEStatus::Configuring);
     assert(ev.len <= _iceRemLen);
     
-    // Move the completed in-buffer to the out queue
+    const bool wasEmpty = _iceBufEmpty();
+    
+    // Enqueue the buffer
     {
-        ICEBuf* buf = _iceInBufs.front();
-        buf->len = ev.len;
-        _iceInBufs.pop();
-        _iceOutBufs.push(buf);
+        ICEBuf& buf = _iceBuf[_iceBufWPtr];
+        _iceBufWPtr++;
+        if (_iceBufWPtr == _ICEBufCount) _iceBufWPtr = 0;
+        if (_iceBufWPtr == _iceBufRPtr) _iceBufFull = true;
+        
+        buf.len = ev.len;
         
         // Update the number of remaining bytes to receive from the host
         _iceRemLen -= ev.len;
     }
     
-    // Start a SPI transaction when _iceOutBufs goes from 0->1 elements
-    if (_iceOutBufs.size() == 1) {
+    // Start a SPI transaction when we go from 0->1
+    if (wasEmpty) {
         _qspiWriteData();
     }
     
     // Prepare to receive more data if we're expecting more,
     // and we have a buffer to store the data in
-    if (_iceRemLen && !_iceInBufs.empty()) {
+    if (_iceRemLen && !_iceBufFull) {
         _iceRecvData();
     }
 }
 
 void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
-    assert(!_iceOutBufs.empty());
+    assert(!_iceBufEmpty());
     switch (ev.type) {
     // Write done
     case QSPI::Event::Type::WriteDone: {
-        // Move the completed out-buffer to the in queue
+        const bool wasFull = _iceBufFull;
+        
+        // Dequeue the buffer
         {
-            ICEBuf* buf = _iceOutBufs.front();
-            _iceOutBufs.pop();
-            _iceInBufs.push(buf);
+            _iceBufRPtr++;
+            if (_iceBufRPtr == _ICEBufCount) _iceBufRPtr = 0;
+            _iceBufFull = false;
         }
         
         // Start another SPI transaction if there's more data to write
-        if (!_iceOutBufs.empty()) {
+        if (!_iceBufEmpty()) {
             _qspiWriteData();
         }
         
         if (_iceRemLen) {
             // Prepare to receive more data if we're expecting more,
-            // and _iceInBufs went from 0->1 elements
-            if (_iceInBufs.size() == 1) {
+            // and we were previously full
+            if (wasFull) {
                 _iceRecvData();
             }
         } else {
@@ -301,16 +305,25 @@ void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
     }}
 }
 
+bool System::_iceBufEmpty() {
+    return _iceBufWPtr==_iceBufRPtr && !_iceBufFull;
+}
+
 void System::_iceRecvData() {
-    assert(!_iceInBufs.empty());
-    ICEBuf*const buf = _iceInBufs.front();
-    usb.iceRecvData(buf->data, sizeof(buf->data)); // TODO: handle errors
+    assert(!_iceBufFull);
+    ICEBuf& buf = _iceBuf[_iceBufWPtr];
+    usb.iceRecvData(buf.data, sizeof(buf.data)); // TODO: handle errors
+    
+    if (_iceRemLen == 67584) {
+        volatile bool x = false;
+        while (x);
+    }
 }
 
 void System::_qspiWriteData() {
-    assert(!_iceOutBufs.empty());
-    ICEBuf*const buf = _iceOutBufs.front();
-    qspi.write(buf->data, buf->len);
+    assert(!_iceBufEmpty());
+    const ICEBuf& buf = _iceBuf[_iceBufRPtr];
+    qspi.write(buf.data, buf.len);
 }
 
 int main() {

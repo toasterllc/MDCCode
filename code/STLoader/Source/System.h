@@ -2,7 +2,6 @@
 #include "USB.h"
 #include "QSPI.h"
 #include "STLoaderTypes.h"
-#include <queue>
 
 using namespace STLoader;
 
@@ -30,6 +29,7 @@ private:
     void _iceHandleCmd(const USB::Cmd& ev);
     void _iceHandleData(const USB::Data& ev);
     void _iceHandleQSPIEvent(const QSPI::Event& ev);
+    bool _iceBufEmpty();
     void _iceRecvData();
     void _qspiWriteData();
     
@@ -39,13 +39,15 @@ private:
     GPIO _iceSPICS_;
     
     struct ICEBuf {
-        uint8_t data[512];
+        uint8_t data[1024] __attribute__((aligned(4)));
         size_t len = 0;
     };
     
-    ICEBuf _iceBuf[2];
-    std::queue<ICEBuf*> _iceInBufs;
-    std::queue<ICEBuf*> _iceOutBufs;
+    static constexpr size_t _ICEBufCount = 2;
+    ICEBuf _iceBuf[_ICEBufCount];
+    size_t _iceBufWPtr = 0;
+    size_t _iceBufRPtr = 0;
+    bool _iceBufFull = false;
     size_t _iceRemLen = 0;
     ICEStatus _iceStatus __attribute__((aligned(4))) = ICEStatus::Idle;
     ICECDONE _iceCDONEState __attribute__((aligned(4))) = ICECDONE::Error;

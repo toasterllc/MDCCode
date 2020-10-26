@@ -11,7 +11,7 @@ public:
     QSPI();
     void init();
     void config();
-    void write(void* data, size_t len);
+    void write(const void* data, size_t len);
     
     struct Event {
         enum class Type : uint8_t {

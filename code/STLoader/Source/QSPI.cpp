@@ -63,7 +63,7 @@ void QSPI::config() {
     _di.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
 }
 
-void QSPI::write(void* data, size_t len) {
+void QSPI::write(const void* data, size_t len) {
     assert(data);
     assert(len);
     
