@@ -10,7 +10,7 @@ USBD_StatusTypeDef USBD_CtlSendData(USBD_HandleTypeDef *pdev,
   pdev->ep_in[0].rem_length = len;
 
   // Start the transfer
-  (void)USBD_LL_Transmit(pdev, 0x00U, pbuf, len);
+  (void)USBD_LL_Transmit(pdev, 0U, pbuf, len);
 
   return USBD_OK;
 }
@@ -19,7 +19,7 @@ USBD_StatusTypeDef USBD_CtlSendData(USBD_HandleTypeDef *pdev,
 USBD_StatusTypeDef USBD_CtlContinueSendData(USBD_HandleTypeDef *pdev, uint8_t *pbuf, uint32_t len)
 {
   // Start the next transfer
-  (void)USBD_LL_Transmit(pdev, 0x00U, pbuf, len);
+  (void)USBD_LL_Transmit(pdev, 0U, pbuf, len);
 
   return USBD_OK;
 }
@@ -53,7 +53,7 @@ USBD_StatusTypeDef USBD_CtlSendStatus(USBD_HandleTypeDef *pdev)
   pdev->ep0_state = USBD_EP0_STATUS_IN;
 
   // Start the transfer
-  (void)USBD_LL_Transmit(pdev, 0x00U, NULL, 0U);
+  (void)USBD_LL_TransmitZeroLen(pdev, 0U);
 
   return USBD_OK;
 }
@@ -65,7 +65,7 @@ USBD_StatusTypeDef USBD_CtlReceiveStatus(USBD_HandleTypeDef *pdev)
   pdev->ep0_state = USBD_EP0_STATUS_OUT;
 
   // Start the transfer
-  (void)USBD_LL_PrepareReceive(pdev, 0U, NULL, 0U);
+  (void)USBD_LL_PrepareReceiveZeroLen(pdev, 0U);
 
   return USBD_OK;
 }

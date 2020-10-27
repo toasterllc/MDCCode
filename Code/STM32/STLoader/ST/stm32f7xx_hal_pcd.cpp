@@ -1646,10 +1646,11 @@ HAL_StatusTypeDef HAL_PCD_EP_Close(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   */
 HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
 {
+  AssertArg(pBuf);
+  AssertArg(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
+  AssertArg(len); // We don't support zero-length packets
   PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
   
-//  // We don't allow zero-length data
-//  AssertArg(len);
   // Verify that `len` is a multiple of the max packet size.
   // (The hardware doesn't restrict itself to non-packet boundaries,
   // so `len` can only be used to control the packet count.)
@@ -1679,6 +1680,34 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
   return HAL_OK;
 }
 
+HAL_StatusTypeDef HAL_PCD_EP_ReceiveZeroLen(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
+{
+  PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
+  
+  /*setup and start the Xfer */
+  ep->xfer_buff = NULL;
+  ep->xfer_len = 0;
+  ep->xfer_count = 0U;
+  ep->is_in = 0U;
+  ep->num = ep_addr & EP_ADDR_MSK;
+
+  if (hpcd->Init.dma_enable == 1U)
+  {
+    ep->dma_addr = (uint32_t)NULL;
+  }
+
+  if ((ep_addr & EP_ADDR_MSK) == 0U)
+  {
+    (void)USB_EP0StartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
+  }
+  else
+  {
+    (void)USB_EPStartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
+  }
+
+  return HAL_OK;
+}
+
 /**
   * @brief  Get Received Data Size
   * @param  hpcd PCD handle
@@ -1689,6 +1718,7 @@ uint32_t HAL_PCD_EP_GetRxCount(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
 {
   return hpcd->OUT_ep[ep_addr & EP_ADDR_MSK].xfer_count;
 }
+
 /**
   * @brief  Send an amount of data
   * @param  hpcd PCD handle
@@ -1699,9 +1729,10 @@ uint32_t HAL_PCD_EP_GetRxCount(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   */
 HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
 {
-  PCD_EPTypeDef *ep;
-
-  ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
+  AssertArg(pBuf);
+  AssertArg(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
+  AssertArg(len); // We don't support zero-length packets
+  PCD_EPTypeDef *ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
 
   /*setup and start the Xfer */
   ep->xfer_buff = pBuf;
@@ -1713,6 +1744,36 @@ HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, 
   if (hpcd->Init.dma_enable == 1U)
   {
     ep->dma_addr = (uint32_t)pBuf;
+  }
+
+  if ((ep_addr & EP_ADDR_MSK) == 0U)
+  {
+    (void)USB_EP0StartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
+  }
+  else
+  {
+    (void)USB_EPStartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
+  }
+
+  return HAL_OK;
+}
+
+HAL_StatusTypeDef HAL_PCD_EP_TransmitZeroLen(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
+{
+  PCD_EPTypeDef *ep;
+
+  ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
+
+  /*setup and start the Xfer */
+  ep->xfer_buff = NULL;
+  ep->xfer_len = 0;
+  ep->xfer_count = 0U;
+  ep->is_in = 1U;
+  ep->num = ep_addr & EP_ADDR_MSK;
+
+  if (hpcd->Init.dma_enable == 1U)
+  {
+    ep->dma_addr = (uint32_t)NULL;
   }
 
   if ((ep_addr & EP_ADDR_MSK) == 0U)
@@ -1998,7 +2059,7 @@ static HAL_StatusTypeDef PCD_EP_OutXfrComplete_int(PCD_HandleTypeDef *hpcd, uint
         } else {
             hpcd->OUT_ep[epnum].xfer_count = 0;
         }
-
+        
         if ((epnum == 0U) && (hpcd->OUT_ep[epnum].xfer_len == 0U))
         {
           /* this is ZLP, so prepare EP0 for next setup */

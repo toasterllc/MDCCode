@@ -259,31 +259,24 @@ USBD_StatusTypeDef USBD_LL_SetUSBAddress(USBD_HandleTypeDef *pdev, uint8_t dev_a
 // Transmits data over an endpoint.
 USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
-  // Ensure `pbuf` is 4-byte aligned (required for DMA)
-  Assert(!((uintptr_t)pbuf & (4-1)));
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
+  return USBD_Get_USB_Status(HAL_PCD_EP_Transmit((PCD_HandleTypeDef*)pdev->pData, ep_addr, pbuf, size));
+}
 
-  hal_status = HAL_PCD_EP_Transmit((PCD_HandleTypeDef*)pdev->pData, ep_addr, pbuf, size);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+USBD_StatusTypeDef USBD_LL_TransmitZeroLen(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
+{
+  return USBD_Get_USB_Status(HAL_PCD_EP_TransmitZeroLen((PCD_HandleTypeDef*)pdev->pData, ep_addr));
 }
 
 // Prepares an endpoint for reception.
 USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
-  // Ensure `pbuf` is 4-byte aligned (required for DMA)
-  Assert(!((uintptr_t)pbuf & (4-1)));
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
+  return USBD_Get_USB_Status(HAL_PCD_EP_Receive((PCD_HandleTypeDef*)pdev->pData, ep_addr, pbuf, size));
+}
 
-  hal_status = HAL_PCD_EP_Receive((PCD_HandleTypeDef*)pdev->pData, ep_addr, pbuf, size);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+// Prepares an endpoint for reception.
+USBD_StatusTypeDef USBD_LL_PrepareReceiveZeroLen(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
+{
+  return USBD_Get_USB_Status(HAL_PCD_EP_ReceiveZeroLen((PCD_HandleTypeDef*)pdev->pData, ep_addr));
 }
 
 // Returns the last transfered packet size.
@@ -576,7 +569,7 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef* pdev,
         (void)USBD_CtlContinueSendData(pdev, pdata, pep->rem_length);
 
         // Prepare endpoint for premature end of transfer
-       (void)USBD_LL_PrepareReceive(pdev, 0U, NULL, 0U);
+       (void)USBD_LL_PrepareReceiveZeroLen(pdev, 0U);
       }
       else
       {
@@ -589,7 +582,7 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef* pdev,
           pdev->ep0_data_len = 0U;
 
           // Prepare endpoint for premature end of transfer
-          (void)USBD_LL_PrepareReceive(pdev, 0U, NULL, 0U);
+          (void)USBD_LL_PrepareReceiveZeroLen(pdev, 0U);
         }
         else
         {
