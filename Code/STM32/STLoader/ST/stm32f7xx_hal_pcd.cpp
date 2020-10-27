@@ -1986,6 +1986,7 @@ static HAL_StatusTypeDef PCD_EP_OutXfrComplete_int(PCD_HandleTypeDef *hpcd, uint
       }
       else
       {
+        // STBUG
         const uint32_t xfer_len = hpcd->OUT_ep[epnum].xfer_len;
         const uint32_t xfrsiz = (USBx_OUTEP(epnum)->DOEPTSIZ & USB_OTG_DOEPTSIZ_XFRSIZ);
         if (xfer_len) {
