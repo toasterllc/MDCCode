@@ -126,6 +126,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         // (We can only restrict the receipt of USB data
         // at multiples of the max packet size.)
         len -= len%USB::MaxPacketSize::Data;
+        Assert(len); // TODO: error handling
         usb.stRecvData(addr, len);
         break;
     }
