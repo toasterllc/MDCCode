@@ -832,7 +832,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
 
     if (ep->xfer_len == 0U)
     {
-      USBx_OUTEP(epnum)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_XFRSIZ & ep->maxpacket);
+//      USBx_OUTEP(epnum)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_XFRSIZ & ep->maxpacket);
       USBx_OUTEP(epnum)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_PKTCNT & (1U << USB_OTG_DOEPTSIZ_PKTCNT_Pos));
     }
     else
@@ -844,7 +844,15 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
 
     if (dma == 1U)
     {
-      USBx_OUTEP(epnum)->DOEPDMA = (uint32_t)(ep->xfer_buff);
+      if ((uint32_t)ep->xfer_buff != 0U)
+      {
+        USBx_OUTEP(epnum)->DOEPDMA = (uint32_t)(ep->xfer_buff);
+      }
+      else
+      {
+        volatile void* DOEPDMA = (void*)USBx_OUTEP(epnum)->DOEPDMA;
+        while (!DOEPDMA);
+      }
     }
 
     if (ep->type == EP_TYPE_ISOC)
@@ -945,11 +953,19 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
     }
 
     USBx_OUTEP(epnum)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_PKTCNT & (1U << 19));
-    USBx_OUTEP(epnum)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_XFRSIZ & (ep->maxpacket));
+    USBx_OUTEP(epnum)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_XFRSIZ & ep->xfer_len); // MEOWMIX
 
     if (dma == 1U)
     {
-      USBx_OUTEP(epnum)->DOEPDMA = (uint32_t)(ep->xfer_buff);
+      if ((uint32_t)ep->xfer_buff != 0U)
+      {
+        USBx_OUTEP(epnum)->DOEPDMA = (uint32_t)(ep->xfer_buff);
+      }
+      else
+      {
+        volatile void* DOEPDMA = (void*)USBx_OUTEP(epnum)->DOEPDMA;
+        while (!DOEPDMA);
+      }
     }
 
     /* EP enable */
@@ -1000,13 +1016,13 @@ HAL_StatusTypeDef USB_WritePacket(USB_OTG_GlobalTypeDef *USBx, uint8_t *src, uin
   */
 void *USB_ReadPacket(USB_OTG_GlobalTypeDef *USBx, uint8_t *dest, uint16_t len)
 {
-  // STBUG
-  // Throw the packet away if a destination wasn't provided.
-  // This is necessary to match the behavior of the DMA mode, in which
-  // case we can receive data but give a NULL destination to throw away
-  // the response.
-  // TODO: verify the above claim that a NULL address in DMA mode doesn't actually write to address 0x0!
-  if (!dest) return;
+//  // STBUG
+//  // Throw the packet away if a destination wasn't provided.
+//  // This is necessary to match the behavior of the DMA mode, in which
+//  // case we can receive data but give a NULL destination to throw away
+//  // the response.
+//  // TODO: verify the above claim that a NULL address in DMA mode doesn't actually write to address 0x0!
+//  if (!dest) return;
   AssertArg(!len || dest);
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t *pDest = (uint32_t *)dest;

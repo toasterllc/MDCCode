@@ -1648,6 +1648,8 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
 {
   PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
   
+//  // We don't allow zero-length data
+//  AssertArg(len);
   // Verify that `len` is a multiple of the max packet size.
   // (The hardware doesn't restrict itself to non-packet boundaries,
   // so `len` can only be used to control the packet count.)
@@ -1996,7 +1998,7 @@ static HAL_StatusTypeDef PCD_EP_OutXfrComplete_int(PCD_HandleTypeDef *hpcd, uint
         } else {
             hpcd->OUT_ep[epnum].xfer_count = 0;
         }
-        
+
         if ((epnum == 0U) && (hpcd->OUT_ep[epnum].xfer_len == 0U))
         {
           /* this is ZLP, so prepare EP0 for next setup */

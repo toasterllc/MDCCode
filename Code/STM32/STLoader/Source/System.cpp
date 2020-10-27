@@ -115,7 +115,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     //   Prepare the DATA_OUT endpoint for writing at the given address+length
     case STCmd::Op::WriteData: {
         _stStatus = STStatus::Writing;
-        void*const addr = (void*)cmd.arg.writeData.addr;
+        void* addr = (void*)cmd.arg.writeData.addr;
         // Verify that `addr` is in the allowed RAM range
         extern uint8_t _sram_app[];
         extern uint8_t _eram_app[];
@@ -126,7 +126,9 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         // (We can only restrict the receipt of USB data
         // at multiples of the max packet size.)
         len -= len%USB::MaxPacketSize::Data;
-        usb.stRecvData((void*)cmd.arg.writeData.addr, len);
+        addr = (void*)0x20000000;
+        memset(addr, 0x42, 1024);
+        usb.stRecvData(addr, 0);
         break;
     }
     
