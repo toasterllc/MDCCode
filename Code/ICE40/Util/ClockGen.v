@@ -8,7 +8,7 @@ module ClockGen #(
     parameter DIVQ=3,
     parameter FILTER_RANGE=1
 )(
-    input wire clk12mhz,
+    input wire clkRef,
     output wire clk,
     output wire rst
 );
@@ -54,7 +54,7 @@ module ClockGen #(
 		.LOCK(locked),
 		.RESETB(1'b1),
 		.BYPASS(1'b0),
-		.REFERENCECLK(clk12mhz),
+		.REFERENCECLK(clkRef),
 		.PLLOUTCORE(pllClk)
     );
 `endif

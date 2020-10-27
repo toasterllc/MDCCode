@@ -1,3 +1,5 @@
+`include "../Util/ClockGen.v"
+
 `timescale 1ns/1ps
 
 module Top(
@@ -8,15 +10,36 @@ module Top(
     output wire sd_cmd,
     output wire[3:0] sd_dat,
 );
+    // ====================
+    // Fast Clock (207 MHz)
+    // ====================
+    localparam FastClkFreq = 207_000_000;
+    wire fastClk;
+    ClockGen #(
+        .FREQ(FastClkFreq),
+        .DIVR(1),
+        .DIVF(68),
+        .DIVQ(2),
+        .FILTER_RANGE(1)
+    ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    
+    // ====================
+    // Slow Clock (375 kHz)
+    // ====================
     reg[5:0] counter = 0;
     always @(posedge clk24mhz) begin
         counter <= counter+1;
     end
-    assign led[3:0] = {4{counter[$size(counter)-1]}};
-    assign sd_clk = counter[$size(counter)-1];
-    assign sd_cmd = counter[$size(counter)-1];
-    assign sd_dat[3:0] = {4{counter[$size(counter)-1]}};
-    assign sd_init = 1'b1;
+    wire slowClk = counter[$size(counter)-1];
+    
+    // ====================
+    // Nets
+    // ====================
+    assign led[3:0] = {4{fastClk}};
+    assign sd_clk = fastClk;
+    assign sd_cmd = fastClk;
+    assign sd_dat[3:0] = {4{fastClk}};
+    assign sd_init = 1'b0;
 endmodule
 
 // Test states
