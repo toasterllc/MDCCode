@@ -1,6 +1,6 @@
 [submodule "pcb/EagleLibrary"]
 	path = PCB/EagleLibrary
 	url = git@github.com:davekeck/EagleLibrary.git
-[submodule "tools/icestorm"]
-	path = tools/icestorm
+[submodule "Tools/icestorm"]
+	path = Tools/icestorm
 	url = git@github.com:davekeck/icestorm-MDC.git
