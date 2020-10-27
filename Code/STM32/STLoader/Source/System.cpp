@@ -121,7 +121,11 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         extern uint8_t _eram_app[];
         Assert(addr >= _sram_app); // TODO: error handling
         Assert(addr < _eram_app); // TODO: error handling
-        const size_t len = (uintptr_t)_eram_app-(uintptr_t)addr;
+        size_t len = (uintptr_t)_eram_app-(uintptr_t)addr;
+        // Round `len` down to the nearest max packet size.
+        // (We can only restrict the receipt of USB data
+        // at multiples of the max packet size.)
+        len -= len%USB::MaxPacketSize::Data;
         usb.stRecvData((void*)cmd.arg.writeData.addr, len);
         break;
     }

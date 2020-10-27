@@ -339,7 +339,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == STLoadCmd)     stLoad(args, stInterface);
         else if (args.cmd == ICELoadCmd)    iceLoad(args, iceInterface);
     } catch (const std::exception& e) {
-        fprintf(stderr, "Failed: %s\n", e.what());
+        fprintf(stderr, "Error: %s\n", e.what());
         return 1;
     }
     
