@@ -12,8 +12,8 @@ public:
     void handleEvent();
     
     // Peripherals
-    QSPI qspi;
     USB usb;
+    QSPI qspi;
     
 private:
     // USB

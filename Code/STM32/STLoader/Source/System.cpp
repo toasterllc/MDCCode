@@ -1,14 +1,11 @@
 #include "System.h"
 #include "Assert.h"
 #include "Abort.h"
-#include "usbd_core.h"
 #include "SystemClock.h"
 #include "Startup.h"
 #include <string.h>
 
 using namespace STLoader;
-
-System Sys;
 
 System::System() :
 _iceCRST_(GPIOI, GPIO_PIN_6),
@@ -95,7 +92,7 @@ void System::_usbHandleEvent(const USB::Event& ev) {
     }
     
     default: {
-        // Invalid event tpye
+        // Invalid event type
         Abort();
     }}
 }
@@ -325,6 +322,8 @@ void System::_qspiWriteData() {
     const ICEBuf& buf = _iceBuf[_iceBufRPtr];
     qspi.write(buf.data, buf.len);
 }
+
+System Sys;
 
 int main() {
     Sys.init();

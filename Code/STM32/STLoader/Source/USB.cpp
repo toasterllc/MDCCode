@@ -179,8 +179,8 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             // Interface descriptor: STM32 bootloader
             0x09,                                       // bLength: interface descriptor length
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
-            0x00,                                       // bInterfaceNumber: Number of Interface
-            0x00,                                       // bAlternateSetting: Alternate setting
+            0x00,                                       // bInterfaceNumber: interface index
+            0x00,                                       // bAlternateSetting: alternate setting
             0x03,                                       // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific
             0x00,                                       // bInterfaceSubClass
