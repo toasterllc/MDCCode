@@ -4,18 +4,9 @@
 
 extern "C" void ISR_OTG_HS();
 
-class USB : USBBase {
+class USBBase {
 public:
     // Types
-    struct Cmd {
-        const uint8_t* data;
-        size_t len;
-    };
-    
-    struct Data {
-        size_t len;
-    };
-    
     struct Event {
         enum class Type : uint8_t {
             StateChanged,
@@ -28,35 +19,16 @@ public:
         Connected,
     };
     
-    struct MaxPacketSize {
-        static constexpr size_t Cmd        = 8;
-        static constexpr size_t Status     = 8;
-        static constexpr size_t Data       = 512;
-    };
-    
     // Initialization
     void init();
     
     // Accessors
     State state() const;
     
-    // Methods
-    USBD_StatusTypeDef stRecvCmd();
-    USBD_StatusTypeDef stRecvData(void* addr, size_t len);
-    USBD_StatusTypeDef stSendStatus(void* data, size_t len);
-    
-    USBD_StatusTypeDef iceRecvCmd();
-    USBD_StatusTypeDef iceRecvData(void* addr, size_t len);
-    USBD_StatusTypeDef iceSendStatus(void* data, size_t len);
-    
     // Channels
     Channel<Event, 1> eventChannel;
-    Channel<Cmd, 1> stCmdChannel;
-    Channel<Data, 1> stDataChannel;
-    Channel<Cmd, 1> iceCmdChannel;
-    Channel<Data, 1> iceDataChannel;
     
-private:
+protected:
     void _isr();
     
     USBD_HandleTypeDef _device;
@@ -71,7 +43,12 @@ private:
     uint8_t _usbd_DataIn(uint8_t epnum);
     uint8_t _usbd_DataOut(uint8_t epnum);
     uint8_t _usbd_SOF();
-    uint8_t* _usbd_GetConfigDescriptor(uint16_t *length);
+    uint8_t _usbd_IsoINIncomplete(uint8_t epnum);
+    uint8_t _usbd_IsoOUTIncomplete(uint8_t epnum);
+    uint8_t* _usbd_GetHSConfigDescriptor(uint16_t *length);
+    uint8_t* _usbd_GetFSConfigDescriptor(uint16_t *length);
+    uint8_t* _usbd_GetOtherSpeedConfigDescriptor(uint16_t *length);
+    uint8_t* _usbd_GetDeviceQualifierDescriptor(uint16_t *length);
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t *length);
     
     uint8_t _stCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));

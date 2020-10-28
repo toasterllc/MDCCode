@@ -1,7 +1,15 @@
 #include <stdint.h>
+#include "StartupBase.h"
 
-class Startup {
+class Startup : StartupBase {
 public:
-    static void Run();
-    static void SetAppEntryPointAddr(uintptr_t addr);
+    void setAppEntryPointAddr(uintptr_t addr);
+    
+protected:
+    void runInit() override;
+    
+private:
+    volatile uintptr_t _appEntryPointAddr;
 };
+
+extern Startup Start;

@@ -21,12 +21,11 @@
 /* Begin PBXFileReference section */
 		554F17882543ED5400F67066 /* ST */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ST; sourceTree = "<group>"; };
 		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
-		554F178A2544105F00F67066 /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
 		5563E119253A8B3D00BCC0F7 /* STLoader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoader; sourceTree = BUILT_PRODUCTS_DIR; };
+		556875D4254A163B00B774CE /* Util */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Util; path = ../Util; sourceTree = "<group>"; };
+		556875D5254A165200B774CE /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 		55E1D95A2540E3B900628EF6 /* STLoader.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = STLoader.ioc; sourceTree = "<group>"; };
-		55E1D95D2540E3B900628EF6 /* STM32F730I8KX_RAM.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_RAM.ld; sourceTree = "<group>"; };
 		55E1D9622540E3B900628EF6 /* STLoader.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = STLoader.launch; sourceTree = "<group>"; };
-		55E1D9632540E3B900628EF6 /* STM32F730I8KX_FLASH.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = STM32F730I8KX_FLASH.ld; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,13 +42,12 @@
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
-				554F178A2544105F00F67066 /* Shared */,
 				554F17892543ED5400F67066 /* Source */,
 				554F17882543ED5400F67066 /* ST */,
+				556875D4254A163B00B774CE /* Util */,
 				55E1D95A2540E3B900628EF6 /* STLoader.ioc */,
 				55E1D9622540E3B900628EF6 /* STLoader.launch */,
-				55E1D9632540E3B900628EF6 /* STM32F730I8KX_FLASH.ld */,
-				55E1D95D2540E3B900628EF6 /* STM32F730I8KX_RAM.ld */,
+				556875D5254A165200B774CE /* Linker.ld */,
 				5563E11A253A8B3D00BCC0F7 /* Products */,
 			);
 			sourceTree = "<group>";

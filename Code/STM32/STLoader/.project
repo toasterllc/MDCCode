@@ -31,11 +31,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>Util</name>
-			<type>2</type>
-			<locationURI>PARENT-3-PROJECT_LOC/Code/Util</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>

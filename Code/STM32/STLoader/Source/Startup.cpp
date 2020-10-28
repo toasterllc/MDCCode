@@ -2,23 +2,15 @@
 #include <string.h>
 #include "stm32f7xx.h"
 
-static volatile uintptr_t AppEntryPointAddr __attribute__((section(".noinit")));
+void Startup::setAppEntryPointAddr(uintptr_t addr) {
+    _appEntryPointAddr = addr;
+}
 
-extern "C" void __libc_init_array();
-
-void Startup::Run() {
-    extern uint8_t _sidata[];
-    extern uint8_t _sdata[];
-    extern uint8_t _edata[];
-    extern uint8_t _sbss[];
-    extern uint8_t _ebss[];
-    extern uint8_t _sisr_vector[];
-    extern int main();
-    
+void Startup::runInit() {
     // Stash and reset `AppEntryPointAddr` so that we only attempt to start the app once
     // after each software reset.
-    void (*const appEntryPoint)() = (void (*)())AppEntryPointAddr;
-    Startup::SetAppEntryPointAddr(0);
+    void (*const appEntryPoint)() = (void (*)())_appEntryPointAddr;
+    setAppEntryPointAddr(0);
     
     // Cache RCC_CSR since we're about to clear it
     auto csr = READ_REG(RCC->CSR);
@@ -31,34 +23,13 @@ void Startup::Run() {
         appEntryPoint();
         for (;;); // Loop forever if the app returns
     }
-    
-    // Copy .data section from flash to RAM
-    memcpy(_sdata, _sidata, _edata-_sdata);
-    // Zero .bss section
-    memset(_sbss, 0, _ebss-_sbss);
-    
-    // FPU settings
-    if (__FPU_PRESENT && __FPU_USED) {
-        SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // Set CP10 and CP11 Full Access
-    }
-    
-    // Set the vector table address
-    SCB->VTOR = (uint32_t)_sisr_vector;
-    
-    // Call static constructors
-    __libc_init_array();
-    
-    // Call main function
-    main();
-    
-    // Loop forever if main returns
-    for (;;);
 }
 
-void Startup::SetAppEntryPointAddr(uintptr_t addr) {
-    AppEntryPointAddr = addr;
-}
+// The Startup class needs to exist in the `noinit` section,
+// so that its _appEntryPointAddr member doesn't get clobbered
+// on startup.
+Startup Start __attribute__((section(".noinit")));
 
 extern "C" void Startup() {
-    Startup::Run();
+    Start.run();
 }

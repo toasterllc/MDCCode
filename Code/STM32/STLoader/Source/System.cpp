@@ -326,7 +326,7 @@ void System::_qspiWriteData() {
     qspi.write(buf.data, buf.len);
 }
 
-int main() {
+int main() __attribute__((noreturn)) {
     Sys.init();
     // Event loop
     for (;;) {
