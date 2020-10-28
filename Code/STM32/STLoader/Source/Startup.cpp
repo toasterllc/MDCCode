@@ -6,7 +6,7 @@ void Startup::setAppEntryPointAddr(uintptr_t addr) {
     _appEntryPointAddr = addr;
 }
 
-void Startup::runInit() {
+void Startup::run() {
     // Stash and reset `AppEntryPointAddr` so that we only attempt to start the app once
     // after each software reset.
     void (*const appEntryPoint)() = (void (*)())_appEntryPointAddr;
@@ -23,6 +23,8 @@ void Startup::runInit() {
         appEntryPoint();
         for (;;); // Loop forever if the app returns
     }
+    
+    _super::run();
 }
 
 // The Startup class needs to exist in the `noinit` section,
@@ -30,6 +32,6 @@ void Startup::runInit() {
 // on startup.
 Startup Start __attribute__((section(".noinit")));
 
-extern "C" void Startup() {
+extern "C" void StartupRun() {
     Start.run();
 }

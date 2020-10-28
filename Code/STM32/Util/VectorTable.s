@@ -15,7 +15,7 @@ ISR_Reset:
     // Set stack pointer
     ldr sp, =_estack
     // Jump to init routine
-    b Startup
+    b StartupRun
 .size ISR_Reset, .-ISR_Reset
 
 

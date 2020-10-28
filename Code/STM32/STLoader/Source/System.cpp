@@ -135,7 +135,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     //   Stash the entry point address for access after we reset,
     //   Perform a software reset
     case STCmd::Op::Reset: {
-        Startup::SetAppEntryPointAddr(cmd.arg.reset.entryPointAddr);
+        Start.setAppEntryPointAddr(cmd.arg.reset.entryPointAddr);
         // Perform software reset
         HAL_NVIC_SystemReset();
         break;
@@ -326,7 +326,7 @@ void System::_qspiWriteData() {
     qspi.write(buf.data, buf.len);
 }
 
-int main() __attribute__((noreturn)) {
+int main() {
     Sys.init();
     // Event loop
     for (;;) {
