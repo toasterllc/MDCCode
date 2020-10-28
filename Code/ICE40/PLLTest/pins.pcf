@@ -1,0 +1,5 @@
+# Rev3 board / ICE40HX4K-BG121
+
+set_io clk  C11     -pullup no
+set_io B6   B6      -pullup no
+set_io L5   L5      -pullup no
