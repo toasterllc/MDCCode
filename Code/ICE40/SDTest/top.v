@@ -86,15 +86,7 @@ module Top(
     // ====================
     // w_clk
     // ====================
-    localparam WClkFreq = 96_000_000;
-    wire w_clk;
-    ClockGen #(
-        .FREQ(WClkFreq),
-        .DIVR(0),
-        .DIVF(63),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
-    ) ClockGen_w_clk(.clkRef(clk24mhz), .clk(w_clk));
+    wire w_clk = slowClkDivider[0];
     
     // ====================
     // SD Dat Out FIFO
