@@ -34,6 +34,18 @@
 
 
 
+- Rev4 todo
+
+    - STM32: Fix USB power supply.
+        - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
+    
+    - Fix ice40 pin layout so that both PLLs can be used.
+        - When a PLL is used, the tile that it's on can only be used as an output pin (not an input pin)
+        - "PLL input path is shared with the IO input path of the IO tile it's in":
+            https://freenode.irclog.whitequark.org/yosys/2019-03-13
+            https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
+
+
 - Rev3 todo
 
     - Program stm32 over USB
