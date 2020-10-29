@@ -44,7 +44,7 @@
 `define Resp_Range_EndByte          `Msg_Range_EndSentinel
 
 `define Resp_Range_SDDat            62:59
-`define Resp_Range_SDCmdOutDone     58:58
+`define Resp_Range_SDCmdSent        58:58
 `define Resp_Range_SDRespRecv       57:57
 `define Resp_Range_SDDatOutIdle     56:56
 `define Resp_Range_SDRespCRCErr     55:55
@@ -198,7 +198,7 @@ module Top(
     
     reg sd_cmdOutCRCEn = 0;
     reg sd_cmdOutCRCOutEn = 0;
-    reg sd_cmdOutDone = 0;
+    reg sd_cmdSent = 0;
     reg[2:0] sd_cmdOutActive = 0; // 3 bits -- see explanation where assigned
     reg[5:0] sd_cmdOutCounter = 0;
     wire sd_cmdIn;
@@ -282,7 +282,7 @@ module Top(
         
         if (sd_cmdOutState[10]) begin
             sd_cmdOutCRCOutEn <= 0;
-            sd_cmdOutDone <= !sd_cmdOutDone;
+            sd_cmdSent <= !sd_cmdSent;
             sd_respGo <= 1;
         end
         
@@ -457,7 +457,7 @@ module Top(
     reg[`Resp_Len-1:0] ctrl_doutReg = 0;
     
     wire sd_datOutIdle = &sd_datOutIdleReg;
-    `ToggleAck(ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneAck, sd_cmdOutDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdCmdSent, ctrl_sdCmdSentAck, sd_cmdSent, posedge, ctrl_clk);
     `ToggleAck(ctrl_sdRespRecv, ctrl_sdRespRecvAck, sd_respRecv, posedge, ctrl_clk);
     `Sync(ctrl_sdDatOutIdle, sd_datOutIdle, posedge, ctrl_clk);
     `Sync(ctrl_sdRespCRCErr, sd_respCRCErr, posedge, ctrl_clk);
@@ -505,7 +505,7 @@ module Top(
             `Msg_Cmd_SDSendCmd: begin
                 $display("[CTRL] Got SDSendCmd");
                 // Clear our signals so they can be reliably observed via SDGetStatus
-                if (ctrl_sdCmdOutDone) ctrl_sdCmdOutDoneAck <= !ctrl_sdCmdOutDoneAck;
+                if (ctrl_sdCmdSent) ctrl_sdCmdSentAck <= !ctrl_sdCmdSentAck;
                 if (ctrl_sdRespRecv) ctrl_sdRespRecvAck <= !ctrl_sdRespRecvAck;
                 ctrl_sdCmdOutTrigger <= !ctrl_sdCmdOutTrigger;
             end
@@ -519,7 +519,7 @@ module Top(
                 // TODO: add a synchronizer for `sd_datIn`
                 ctrl_doutReg[`Resp_Range_StartByte]             <= `Resp_StartSentinel;
                     ctrl_doutReg[`Resp_Range_SDDat]             <= sd_datIn;
-                    ctrl_doutReg[`Resp_Range_SDCmdOutDone]      <= ctrl_sdCmdOutDone;
+                    ctrl_doutReg[`Resp_Range_SDCmdSent]         <= ctrl_sdCmdSent;
                     ctrl_doutReg[`Resp_Range_SDRespRecv]        <= ctrl_sdRespRecv;
                     ctrl_doutReg[`Resp_Range_SDDatOutIdle]      <= ctrl_sdDatOutIdle;
                     ctrl_doutReg[`Resp_Range_SDRespCRCErr]      <= ctrl_sdRespCRCErr;
