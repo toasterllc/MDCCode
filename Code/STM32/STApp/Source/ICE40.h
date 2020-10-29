@@ -102,12 +102,12 @@ public:
             AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
             cmd = 0x02;
             payload[0] = 0x00;
-            payload[1] = 0x40|sdCmd; // Start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
+            payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
             payload[2] = (sdArg&0xFF000000)>>24;
             payload[3] = (sdArg&0x00FF0000)>>16;
             payload[4] = (sdArg&0x0000FF00)>> 8;
             payload[5] = (sdArg&0x000000FF)>> 0;
-            payload[6] = 0x01; // End bit (1'b1)
+            payload[6] = 0x01; // SD command end bit (1'b1)
         }
     };
     
@@ -118,13 +118,13 @@ public:
     };
     
     struct SDGetStatusResp : Resp {
-        uint8_t sdDat() const       { return getBits(61, 58); }
-        bool sdCommandSent() const  { return getBits(57, 57); }
-        bool sdRespRecv() const     { return getBits(56, 56); }
-        bool sdDatOutIdle() const   { return getBits(55, 55); }
-        bool sdRespCRCErr() const   { return getBits(54, 54); }
-        bool sdDatOutCRCErr() const { return getBits(53, 53); }
-        uint64_t sdResp() const     { return getBits(47, 0); }
+        uint8_t sdDat() const       { return getBits(62, 59); }
+        bool sdCmdSent() const      { return getBits(58, 58); }
+        bool sdRespRecv() const     { return getBits(57, 57); }
+        bool sdDatOutIdle() const   { return getBits(56, 56); }
+        bool sdRespCRCErr() const   { return getBits(55, 55); }
+        bool sdDatOutCRCErr() const { return getBits(54, 54); }
+        uint64_t sdResp() const     { return getBits(48, 1); }
     };
     
     struct SDDatOutMsg : Msg {
@@ -139,8 +139,8 @@ public:
         uint8_t b[sizeof(msg)];
         memcpy(b, msg, sizeof(b));
         _lshift(b, sizeof(b), 1);
-        b[sizeof(msg)-1] &= 0x7F // Set start bit (0)
-        b[0] |= 0x01; // Set end bit (1)
+        b[sizeof(msg)-1] &= 0x7F // Clear the start bit
+        b[0] |= 0x01; // Set the end bit (1)
         _write(b, sizeof(b));
     }
     
@@ -188,10 +188,12 @@ public:
         // Find the index of start bit in `respBuf`
         const int8_t mszIdx = _msz(respBuf[0]);
         Assert(mszIdx >= 0); // Our logic guarantees a zero
-        // Calculate the number of bits we need to shift left
-        const uint8_t shiftn = 8-mszIdx;
-        // Left-shift the buffer to remove the start bit
-        _lshift(respBuf, sizeof(respBuf), shiftn);
+        // Shift the buffer to remove the end bit
+        switch (mszIdx) {
+        case 7: _rshift(respBuf, sizeof(respBuf), 1); break;
+        case 6: break; // Already positioned correctly
+        default: _lshift(respBuf, sizeof(respBuf), 6-mszIdx); break;
+        }
         // Copy the shifted bits into `resp`
         memcpy(&resp, respBuf, sizeof(resp));
         return resp;
@@ -251,6 +253,22 @@ private:
             b <<= n;
             b |= l;
             l = h>>(8-n);
+        }
+    }
+    
+    // Right shift array of bytes by `n` bits
+    static void _rshift(uint8_t* bytes, size_t len, uint8_t n) {
+        AssertArg(n <= 8);
+        const uint8_t mask = (1<<n)-1;
+        uint8_t h = 0;
+        for (size_t i=0; i<len; i++) {
+            uint8_t& b = bytes[i-1];
+            // Remember the low bits that we're losing by right-shifting,
+            // which will become the next byte's high bits.
+            const uint8_t l = b&mask;
+            b >>= n;
+            b |= h;
+            h = l<<(8-n);
         }
     }
     
