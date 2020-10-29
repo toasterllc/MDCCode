@@ -19,6 +19,42 @@
 
 `timescale 1ns/1ps
 
+`define Msg_Len                     80
+`define Msg_Len_Cmd                 8
+`define Msg_Len_Arg                 56
+
+`define Msg_Range_StartByte         79:72
+`define Msg_Range_Cmd               71:64
+`define Msg_Range_Arg               63:8
+`define Msg_Range_EndByte           7:0
+
+`define Msg_StartByte               8'h00
+`define Msg_EndByte                 8'hFF
+
+`define Msg_Cmd_Echo                8'h00
+`define Msg_Cmd_SDSetClkSrc         8'h01
+`define Msg_Cmd_SDSendCmd           8'h02
+`define Msg_Cmd_SDGetStatus         8'h03
+`define Msg_Cmd_SDDatOut            8'h04
+
+`define Resp_Len                    `Msg_Len
+
+`define Resp_Range_StartByte        `Msg_Range_StartByte
+`define Resp_Range_Arg              71:8
+`define Resp_Range_EndByte          `Msg_Range_EndByte
+
+`define Resp_Range_SDDat            71:68
+`define Resp_Range_SDCmdOutDone     67:67
+`define Resp_Range_SDRespRecv       66:66
+`define Resp_Range_SDDatOutIdle     65:65
+`define Resp_Range_SDRespCRCErr     64:64
+`define Resp_Range_SDDatOutCRCErr   63:63
+`define Resp_Range_SDFiller         62:56
+`define Resp_Range_SDResp           55:8
+
+`define Resp_StartByte              `Msg_StartByte
+`define Resp_EndByte                `Msg_EndByte
+
 module Top(
     input wire          clk24mhz,
     
@@ -37,9 +73,9 @@ module Top(
     reg ctrl_sdClkSlow = 0;
     reg ctrl_sdCmdOutTrigger = 0;
     reg ctrl_sdDatOutTrigger = 0;
-    reg[63:0] ctrl_dinReg = 0;
-    wire[55:0] ctrl_msgArg = ctrl_dinReg[56:1];
-    wire[5:0] ctrl_msgCmd = ctrl_dinReg[62:57];
+    reg[`Msg_Len-1:0] ctrl_dinReg = 0;
+    wire[`Msg_Len_Cmd-1:0] ctrl_msgCmd = ctrl_dinReg[`Msg_Range_Cmd];
+    wire[`Msg_Len_Arg-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Range_Arg];
     
     // ====================
     // Fast Clock (207 MHz)
@@ -415,19 +451,10 @@ module Top(
     // ====================
     // Control State Machine
     // ====================
-    localparam Msg_StartBit = 1'b0;
-    localparam Msg_EndBit   = 1'b1;
-    
-    localparam MsgCmd_Echo              = 6'h00;
-    localparam MsgCmd_SDSetClkSrc       = 6'h01;
-    localparam MsgCmd_SDSendCmd         = 6'h02;
-    localparam MsgCmd_SDGetStatus       = 6'h03;
-    localparam MsgCmd_SDDatOut          = 6'h04;
-    
     reg[1:0] ctrl_state = 0;
     reg[6:0] ctrl_counter = 0;
     reg ctrl_dinActive = 0;
-    reg[63:0] ctrl_doutReg = 0;
+    reg[`Resp_Len-1:0] ctrl_doutReg = 0;
     
     wire sd_datOutIdle = &sd_datOutIdleReg;
     `ToggleAck(ctrl_sdCmdOutDone, ctrl_sdCmdOutDoneAck, sd_cmdOutDone, posedge, ctrl_clk);
@@ -443,7 +470,7 @@ module Top(
         
         case (ctrl_state)
         0: begin
-            ctrl_counter <= 62;
+            ctrl_counter <= `Msg_Len-2;
             if (!ctrlDI) begin
                 ctrl_dinActive <= 1;
                 ctrl_state <= 1;
@@ -461,19 +488,21 @@ module Top(
             // $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgCmd, ctrl_msgArg);
             case (ctrl_msgCmd)
             // Echo
-            MsgCmd_Echo: begin
-                ctrl_doutReg <= {Msg_StartBit, 6'b0, ctrl_msgArg, Msg_EndBit};
+            `Msg_Cmd_Echo: begin
+                ctrl_doutReg[`Resp_Range_StartByte] <= `Resp_StartByte;
+                ctrl_doutReg[`Resp_Range_Arg] <= ctrl_msgArg;
+                ctrl_doutReg[`Resp_Range_EndByte] <= `Resp_EndByte;
             end
             
             // Set SD clock source
-            MsgCmd_SDSetClkSrc: begin
+            `Msg_Cmd_SDSetClkSrc: begin
                 $display("[CTRL] Got SDSetClkSrc: %0d", ctrl_msgArg[1:0]);
                 ctrl_sdClkSlow <= ctrl_msgArg[0];
                 ctrl_sdClkFast <= ctrl_msgArg[1];
             end
             
             // Clock out SD command
-            MsgCmd_SDSendCmd: begin
+            `Msg_Cmd_SDSendCmd: begin
                 $display("[CTRL] Got SDSendCmd");
                 // Clear our signals so they can be reliably observed via SDGetStatus
                 if (ctrl_sdCmdOutDone) ctrl_sdCmdOutDoneAck <= !ctrl_sdCmdOutDoneAck;
@@ -482,28 +511,23 @@ module Top(
             end
             
             // Get SD status / response
-            MsgCmd_SDGetStatus: begin
+            `Msg_Cmd_SDGetStatus: begin
                 // $display("[CTRL] Got MsgCmd_SDGetStatus");
                 // We don't need a synchronizer for sd_resp because
                 // it's guarded by `ctrl_sdRespRecv`, which is synchronized.
                 // Ie, sd_resp should be ignored unless ctrl_sdRespRecv=1.
                 // TODO: add a synchronizer for `sd_datIn`
-                ctrl_doutReg <=
-                    {Msg_StartBit,
-                        sd_datIn,               // 61:58
-                        ctrl_sdCmdOutDone,      // 57
-                        ctrl_sdRespRecv,        // 56
-                        ctrl_sdDatOutIdle,      // 55
-                        
-                        ctrl_sdRespCRCErr,      // 54       Reset every SD response (since some responses have incorrect CRCs, like ACMD41)
-                        ctrl_sdDatOutCRCErr,    // 53       Accumulates, never reset
-                        
-                        5'b0,                   // 52:48
-                        sd_resp,                // 47:0
-                    Msg_EndBit};
+                ctrl_doutReg[`Resp_Range_StartByte]             <= `Resp_StartByte;
+                    ctrl_doutReg[`Resp_Range_SDDat]             <= sd_datIn;
+                    ctrl_doutReg[`Resp_Range_SDCmdOutDone]      <= ctrl_sdCmdOutDone;
+                    ctrl_doutReg[`Resp_Range_SDRespRecv]        <= ctrl_sdRespRecv;
+                    ctrl_doutReg[`Resp_Range_SDDatOutIdle]      <= ctrl_sdDatOutIdle;
+                    ctrl_doutReg[`Resp_Range_SDRespCRCErr]      <= ctrl_sdRespCRCErr;
+                    ctrl_doutReg[`Resp_Range_SDDatOutCRCErr]    <= ctrl_sdDatOutCRCErr;
+                ctrl_doutReg[`Resp_Range_EndByte]               <= `Resp_EndByte;
             end
             
-            MsgCmd_SDDatOut: begin
+            `Msg_Cmd_SDDatOut: begin
                 ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
             end
             endcase
@@ -536,7 +560,7 @@ module Top(
         .OUTPUT_CLK(ctrl_clk),
         .PACKAGE_PIN(ctrl_do),
         .OUTPUT_ENABLE(1'b1),
-        .D_OUT_0(ctrl_doutReg[63])
+        .D_OUT_0(ctrl_doutReg[`Msg_Len-1])
     );
     
     // ====================
@@ -663,9 +687,6 @@ module Testbench();
         end
     end
     
-    localparam START_BIT    = 1'b0;
-    localparam END_BIT      = 1'b1;
-    
     localparam CMD0     = 6'd0;     // GO_IDLE_STATE
     localparam CMD2     = 6'd2;     // ALL_SEND_BIT_CID
     localparam CMD3     = 6'd3;     // SEND_BIT_RELATIVE_ADDR
@@ -679,32 +700,31 @@ module Testbench();
     
     localparam ACMD23    = 6'd23;   // SET_WR_BLK_ERASE_COUNT
     
-    reg[63:0] ctrl_diReg;
-    reg[63:0] ctrl_doReg;
-    wire[61:0] ctrl_doReg_payload = ctrl_doReg[62:1];
-    reg[61:0] resp;
+    reg[`Msg_Len-1:0] ctrl_diReg;
+    reg[`Resp_Len-1:0] ctrl_doReg;
+    reg[`Resp_Len-1:0] resp;
     
     always @(posedge ctrl_clk) begin
         ctrl_diReg <= ctrl_diReg<<1|1'b1;
         ctrl_doReg <= ctrl_doReg<<1|ctrl_do;
     end
     
-    assign ctrl_di = ctrl_diReg[63];
+    assign ctrl_di = ctrl_diReg[`Msg_Len-1];
     
-    task _SendMsg(input[61:0] msg); begin
+    task _SendMsg(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
         reg[15:0] i;
         
-        ctrl_diReg = {START_BIT, msg, END_BIT};
-        for (i=0; i<66; i++) begin
+        ctrl_diReg = {`Msg_StartByte, cmd, arg, `Msg_EndByte};
+        for (i=0; i<`Msg_Len; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
     end endtask
     
-    task SendMsg(input[61:0] msg); begin
+    task SendMsg(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
         reg[15:0] i;
         
-        _SendMsg(msg);
+        _SendMsg(cmd, arg);
         
         // Wait for msg to be consumed before sending another, otherwise we can overwrite
         // the shift register while it's still being used
@@ -712,10 +732,10 @@ module Testbench();
         wait(!ctrl_clk);
     end endtask
     
-    task SendMsgRecvResp(input[61:0] msg); begin
+    task SendMsgRecvResp(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
         reg[15:0] i;
         
-        _SendMsg(msg);
+        _SendMsg(cmd, arg);
         
         // Wait for response to start
         while (ctrl_doReg[0]) begin
@@ -724,22 +744,22 @@ module Testbench();
         end
         
         // Load the full response
-        for (i=0; i<63; i++) begin
+        for (i=0; i<`Msg_Len-1; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
         
-        resp = ctrl_doReg_payload;
+        resp = ctrl_doReg;
     end endtask
     
     task SendSDCmd(input[5:0] sdCmd, input[31:0] sdArg); begin
-        SendMsg({6'd2, 8'b0, {2'b01, sdCmd, sdArg, 7'b0, 1'b1}});
+        SendMsg(`Msg_Cmd_SDSendCmd, {8'b0, {2'b01, sdCmd, sdArg, 7'b0, 1'b1}});
         
         // Wait for SD card to respond
         do begin
             // Request SD status
-            SendMsgRecvResp({6'd3, 56'b0});
-        end while(!resp[56]);
+            SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
+        end while(!resp[`Resp_Range_SDRespRecv]);
     end endtask
     
     initial begin
@@ -750,21 +770,11 @@ module Testbench();
         wait(ctrl_clk);
         wait(!ctrl_clk);
         
-        // // Disable SD clock
-        // SendMsg({6'd1, 56'b00});
-        //
-        // // Set SD clock source = fast clock
-        // SendMsg({6'd1, 56'b10});
-        //
-        // SendSDCmd(CMD55, 32'b0);
-        
-        
-        
         // Disable SD clock
-        SendMsg({6'd1, 56'b00});
+        SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
         
         // Set SD clock source = fast clock
-        SendMsg({6'd1, 56'b10});
+        SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
         
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         SendSDCmd(CMD55, 32'b0);
@@ -774,11 +784,11 @@ module Testbench();
         SendSDCmd(CMD25, 32'b0);
         
         // Clock out data on DAT lines
-        SendMsg({6'd4, 56'b0});
+        SendMsg(`Msg_Cmd_SDDatOut, 0);
         
         // Wait some pre-determined amount of time that guarantees
         // that we've started writing to the SD card.
-        for (i=0; i<64; i++) begin
+        for (i=0; i<`Msg_Len; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
         end
@@ -787,12 +797,12 @@ module Testbench();
         $display("[EXT] Waiting while data is written...");
         do begin
             // Request SD status
-            SendMsgRecvResp({6'd3, 56'b0});
-        end while(!resp[55]);
+            SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
+        end while(!resp[`Resp_Range_SDDatOutIdle]);
         $display("[EXT] Done writing");
         
         // Check CRC status
-        if (resp[53] === 1'b0) begin
+        if (resp[`Resp_Range_SDDatOutCRCErr] === 1'b0) begin
             $display("[EXT] CRC OK ✅");
         end else begin
             $display("[EXT] CRC bad ❌");

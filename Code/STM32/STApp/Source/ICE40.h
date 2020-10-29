@@ -118,12 +118,12 @@ public:
     };
     
     struct SDGetStatusResp : Resp {
-        uint8_t sdDat() const       { return getBits(63, 60); }
-        bool sdCommandSent() const  { return getBits(59, 59); }
-        bool sdRespRecv() const     { return getBits(58, 58); }
-        bool sdDatOutIdle() const   { return getBits(57, 57); }
-        bool sdRespCRCErr() const   { return getBits(56, 56); }
-        bool sdDatOutCRCErr() const { return getBits(55, 55); }
+        uint8_t sdDat() const       { return getBits(61, 58); }
+        bool sdCommandSent() const  { return getBits(57, 57); }
+        bool sdRespRecv() const     { return getBits(56, 56); }
+        bool sdDatOutIdle() const   { return getBits(55, 55); }
+        bool sdRespCRCErr() const   { return getBits(54, 54); }
+        bool sdDatOutCRCErr() const { return getBits(53, 53); }
         uint64_t sdResp() const     { return getBits(47, 0); }
     };
     
@@ -136,18 +136,12 @@ public:
     ICE40(QSPI& qspi) : _qspi(qspi) {}
     
     void write(const Msg& msg) {
-        struct FullMsg {
-            uint8_t start; // For start bit
-            Msg msg;
-            uint8_t end; // For end bit
-        } __attribute__((packed));
-        
-        const FullMsg fm = {
-            .start = 0xFE,
-            .msg = msg,
-            .end = 0xFF,
-        };
-        _write((void*)&fm, sizeof(fm));
+        uint8_t b[sizeof(msg)];
+        memcpy(b, msg, sizeof(b));
+        _lshift(b, sizeof(b), 1);
+        b[sizeof(msg)-1] &= 0x7F // Set start bit (0)
+        b[0] |= 0x01; // Set end bit (1)
+        _write(b, sizeof(b));
     }
     
     template <typename T>
