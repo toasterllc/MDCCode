@@ -44,6 +44,8 @@
         - "PLL input path is shared with the IO input path of the IO tile it's in":
             https://freenode.irclog.whitequark.org/yosys/2019-03-13
             https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
+    
+    - Add a pullup to STM32<->ICE40 SPI interface?
 
 
 - Rev3 todo

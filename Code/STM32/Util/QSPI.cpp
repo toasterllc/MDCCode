@@ -63,6 +63,33 @@ void QSPI::config() {
     _di.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
 }
 
+void QSPI::read(void* data, size_t len) {
+    Assert(data);
+    Assert(len);
+    
+    QSPI_CommandTypeDef cmd = {
+        .Instruction = 0,
+        .Address = 0,
+        .AlternateBytes = 0,
+        .AddressSize = QSPI_ADDRESS_32_BITS,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .DummyCycles = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        .DataMode = QSPI_DATA_1_LINE,
+        .NbData = (uint32_t)len,
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
+    Assert(hs == HAL_OK);
+    
+    hs = HAL_QSPI_Receive_DMA(&_device, (uint8_t*)data);
+    Assert(hs == HAL_OK);
+}
+
 void QSPI::write(const void* data, size_t len) {
     Assert(data);
     Assert(len);
@@ -98,10 +125,20 @@ void QSPI::_isrDMA() {
     ISR_HAL_DMA(&_dma);
 }
 
+void QSPI::_handleReadDone() {
+    eventChannel.writeTry(Event{
+        .type = Event::Type::ReadDone,
+    });
+}
+
 void QSPI::_handleWriteDone() {
     eventChannel.writeTry(Event{
         .type = Event::Type::WriteDone,
     });
+}
+
+void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef* device) {
+    ((QSPI*)device->Ctx)->_handleReadDone();
 }
 
 void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device) {

@@ -3,19 +3,20 @@
 #include "QSPI.h"
 #include "STLoaderTypes.h"
 
-using namespace STLoader;
+extern "C" int main();
 
 class System {
 public:
     System();
     void init();
-    void handleEvent();
     
     // Peripherals
     USB usb;
     QSPI qspi;
     
 private:
+    void _handleEvent();
+    
     // USB
     void _usbHandleEvent(const USB::Event& ev);
     
@@ -57,6 +58,8 @@ private:
     GPIO _led1;
     GPIO _led2;
     GPIO _led3;
+    
+    friend int main();
 };
 
 extern System Sys;

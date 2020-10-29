@@ -50,7 +50,7 @@ void System::init() {
     usb.init();
 }
 
-void System::handleEvent() {
+void System::_handleEvent() {
     // Wait for an event to occur on one of our channels
     ChannelSelect::Start();
     if (auto x = usb.eventChannel.readSelect()) {
@@ -329,6 +329,6 @@ int main() {
     Sys.init();
     // Event loop
     for (;;) {
-        Sys.handleEvent();
+        Sys._handleEvent();
     }
 }

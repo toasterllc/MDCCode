@@ -87,5 +87,5 @@ set_io spi_d[6]            H7       -pullup no
 set_io spi_d[7]            L8       -pullup no
 
 set_io ctrl_clk            L10      -pullup no
-set_io ctrl_di             J9       -pullup no
-set_io ctrl_do             K9       -pullup no
+set_io ctrl_di             J9
+set_io ctrl_do             K9
