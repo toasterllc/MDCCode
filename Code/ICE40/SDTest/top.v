@@ -19,41 +19,41 @@
 
 `timescale 1ns/1ps
 
-`define Msg_Len                     80
-`define Msg_Len_Cmd                 8
+`define Msg_Len                     64
+`define Msg_Len_Cmd                 6
 `define Msg_Len_Arg                 56
 
-`define Msg_Range_StartByte         79:72
-`define Msg_Range_Cmd               71:64
-`define Msg_Range_Arg               63:8
-`define Msg_Range_EndByte           7:0
+`define Msg_Range_StartSentinel     63:63
+`define Msg_Range_Cmd               62:57
+`define Msg_Range_Arg               56:1
+`define Msg_Range_EndSentinel       0:0
 
-`define Msg_StartByte               8'h00
-`define Msg_EndByte                 8'hFF
+`define Msg_StartSentinel           1'b0
+`define Msg_EndSentinel             1'b1
 
-`define Msg_Cmd_Echo                8'h00
-`define Msg_Cmd_SDSetClkSrc         8'h01
-`define Msg_Cmd_SDSendCmd           8'h02
-`define Msg_Cmd_SDGetStatus         8'h03
-`define Msg_Cmd_SDDatOut            8'h04
+`define Msg_Cmd_Echo                `Msg_Len_Cmd'h00
+`define Msg_Cmd_SDSetClkSrc         `Msg_Len_Cmd'h01
+`define Msg_Cmd_SDSendCmd           `Msg_Len_Cmd'h02
+`define Msg_Cmd_SDGetStatus         `Msg_Len_Cmd'h03
+`define Msg_Cmd_SDDatOut            `Msg_Len_Cmd'h04
 
 `define Resp_Len                    `Msg_Len
 
-`define Resp_Range_StartByte        `Msg_Range_StartByte
-`define Resp_Range_Arg              71:8
-`define Resp_Range_EndByte          `Msg_Range_EndByte
+`define Resp_Range_StartByte        `Msg_Range_StartSentinel
+`define Resp_Range_Arg              62:1
+`define Resp_Range_EndByte          `Msg_Range_EndSentinel
 
-`define Resp_Range_SDDat            71:68
-`define Resp_Range_SDCmdOutDone     67:67
-`define Resp_Range_SDRespRecv       66:66
-`define Resp_Range_SDDatOutIdle     65:65
-`define Resp_Range_SDRespCRCErr     64:64
-`define Resp_Range_SDDatOutCRCErr   63:63
-`define Resp_Range_SDFiller         62:56
-`define Resp_Range_SDResp           55:8
+`define Resp_Range_SDDat            62:59
+`define Resp_Range_SDCmdOutDone     58:58
+`define Resp_Range_SDRespRecv       57:57
+`define Resp_Range_SDDatOutIdle     56:56
+`define Resp_Range_SDRespCRCErr     55:55
+`define Resp_Range_SDDatOutCRCErr   54:54
+`define Resp_Range_SDFiller         53:49
+`define Resp_Range_SDResp           48:1
 
-`define Resp_StartByte              `Msg_StartByte
-`define Resp_EndByte                `Msg_EndByte
+`define Resp_StartSentinel          `Msg_StartSentinel
+`define Resp_EndSentinel            `Msg_EndSentinel
 
 module Top(
     input wire          clk24mhz,
@@ -489,9 +489,9 @@ module Top(
             case (ctrl_msgCmd)
             // Echo
             `Msg_Cmd_Echo: begin
-                ctrl_doutReg[`Resp_Range_StartByte] <= `Resp_StartByte;
+                ctrl_doutReg[`Resp_Range_StartByte] <= `Resp_StartSentinel;
                 ctrl_doutReg[`Resp_Range_Arg] <= ctrl_msgArg;
-                ctrl_doutReg[`Resp_Range_EndByte] <= `Resp_EndByte;
+                ctrl_doutReg[`Resp_Range_EndByte] <= `Resp_EndSentinel;
             end
             
             // Set SD clock source
@@ -517,14 +517,14 @@ module Top(
                 // it's guarded by `ctrl_sdRespRecv`, which is synchronized.
                 // Ie, sd_resp should be ignored unless ctrl_sdRespRecv=1.
                 // TODO: add a synchronizer for `sd_datIn`
-                ctrl_doutReg[`Resp_Range_StartByte]             <= `Resp_StartByte;
+                ctrl_doutReg[`Resp_Range_StartByte]             <= `Resp_StartSentinel;
                     ctrl_doutReg[`Resp_Range_SDDat]             <= sd_datIn;
                     ctrl_doutReg[`Resp_Range_SDCmdOutDone]      <= ctrl_sdCmdOutDone;
                     ctrl_doutReg[`Resp_Range_SDRespRecv]        <= ctrl_sdRespRecv;
                     ctrl_doutReg[`Resp_Range_SDDatOutIdle]      <= ctrl_sdDatOutIdle;
                     ctrl_doutReg[`Resp_Range_SDRespCRCErr]      <= ctrl_sdRespCRCErr;
                     ctrl_doutReg[`Resp_Range_SDDatOutCRCErr]    <= ctrl_sdDatOutCRCErr;
-                ctrl_doutReg[`Resp_Range_EndByte]               <= `Resp_EndByte;
+                ctrl_doutReg[`Resp_Range_EndByte]               <= `Resp_EndSentinel;
             end
             
             `Msg_Cmd_SDDatOut: begin
@@ -714,7 +714,7 @@ module Testbench();
     task _SendMsg(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
         reg[15:0] i;
         
-        ctrl_diReg = {`Msg_StartByte, cmd, arg, `Msg_EndByte};
+        ctrl_diReg = {`Msg_StartSentinel, cmd, arg, `Msg_EndSentinel};
         for (i=0; i<`Msg_Len; i++) begin
             wait(ctrl_clk);
             wait(!ctrl_clk);
