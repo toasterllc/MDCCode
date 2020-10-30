@@ -118,13 +118,13 @@ public:
     };
     
     struct SDGetStatusResp : Resp {
-        uint8_t sdDat() const       { return getBits(62, 59); }
-        bool sdCmdSent() const      { return getBits(58, 58); }
-        bool sdRespRecv() const     { return getBits(57, 57); }
-        bool sdDatOutIdle() const   { return getBits(56, 56); }
-        bool sdRespCRCErr() const   { return getBits(55, 55); }
-        bool sdDatOutCRCErr() const { return getBits(54, 54); }
-        uint64_t sdResp() const     { return getBits(48, 1); }
+        uint8_t sdDat() const       { return getBits(63, 60); }
+        bool sdCmdSent() const      { return getBits(59, 59); }
+        bool sdRespRecv() const     { return getBits(58, 58); }
+        bool sdDatOutIdle() const   { return getBits(57, 57); }
+        bool sdRespCRCErr() const   { return getBits(56, 56); }
+        bool sdDatOutCRCErr() const { return getBits(55, 55); }
+        uint64_t sdResp() const     { return getBits(47, 0); }
     };
     
     struct SDDatOutMsg : Msg {
@@ -136,81 +136,24 @@ public:
     ICE40(QSPI& qspi) : _qspi(qspi) {}
     
     void write(const Msg& msg) {
-        uint8_t b[sizeof(msg)];
-        memcpy(b, msg, sizeof(b));
-        _lshift(b, sizeof(b), 1);
-        b[sizeof(msg)-1] &= 0x7F // Clear the start bit
-        b[0] |= 0x01; // Set the end bit (1)
-        _write(b, sizeof(b));
-    }
-    
-    template <typename T>
-    T read() {
-        T resp;
-        uint8_t respBuf[sizeof(resp)+1]; // +1 since the response can start at any bit within
-                                         // a byte, so we need an extra byte to make sure we
-                                         // can fit the full response.
-        size_t respBufLen = 0;
-        
-        // Read until we get the start bit, and fill up `respBuf`
-        while (respBufLen < sizeof(respBuf)) {
-            uint8_t buf[8];
-            _read(buf, sizeof(buf));
-            
-            size_t bufOff = 0;
-            bool bufOffValid = false;
-            if (!respBufLen) {
-                // Response hasn't started yet
-                // Find the byte in `buf` containing the start bit
-                for (size_t i=0; i<sizeof(buf); i++) {
-                    if (buf[i] != 0xFF) {
-                        bufOff = i;
-                        bufOffValid = true;
-                        break;
-                    }
-                }
-            
-            } else {
-                // Response already started
-                // The continuation of the data is at the beginning of `buf`
-                bufOff = 0;
-                bufOffValid = true;
-            }
-            
-            // If the response started, copy new bytes into `respBuf`
-            if (bufOffValid) {
-                const size_t copyLen = std::min(sizeof(respBuf)-respBufLen, sizeof(buf)-bufOff);
-                memcpy(respBuf+respBufLen, buf+bufOff, copyLen);
-                respBufLen += copyLen;
-            }
-        }
-        
-        // Find the index of start bit in `respBuf`
-        const int8_t mszIdx = _msz(respBuf[0]);
-        Assert(mszIdx >= 0); // Our logic guarantees a zero
-        // Shift the buffer to remove the end bit
-        switch (mszIdx) {
-        case 7: _rshift(respBuf, sizeof(respBuf), 1); break;
-        case 6: break; // Already positioned correctly
-        default: _lshift(respBuf, sizeof(respBuf), 6-mszIdx); break;
-        }
-        // Copy the shifted bits into `resp`
-        memcpy(&resp, respBuf, sizeof(resp));
-        return resp;
-    }
-    
-    void _read(void* d, size_t len) {
-        _qspi.read(d, len);
-        // Wait for read to complete
-        QSPI::Event ev = _qspi.eventChannel.read();
-        Assert(ev.type == QSPI::Event::Type::ReadDone);
-    }
-    
-    void _write(const void* d, const size_t len) {
-        _qspi.write(d, len);
+        static_assert(sizeof(msg) == 8);
+        // Copy the message into `b`, and populate the trailing dummy byte
+        uint8_t b[sizeof(msg)+1];
+        memcpy(b, msg, sizeof(msg));
+        b[sizeof(msg)] = 0xFF;
+        _qspi.write(b, sizeof(b));
         // Wait for write to complete
         QSPI::Event ev = _qspi.eventChannel.read();
         Assert(ev.type == QSPI::Event::Type::WriteDone);
+    }
+    
+    template <typename T>
+    void read(T& resp) {
+        static_assert(sizeof(resp) == 8);
+        _qspi.read(&resp, sizeof(resp));
+        // Wait for read to complete
+        QSPI::Event ev = _qspi.eventChannel.read();
+        Assert(ev.type == QSPI::Event::Type::ReadDone);
     }
     
 private:
