@@ -28,9 +28,10 @@
 
 `define Msg_Cmd_Echo                `Msg_Len_Cmd'h00
 `define Msg_Cmd_SDSetClkSrc         `Msg_Len_Cmd'h01
-`define Msg_Cmd_SDSendCmd           `Msg_Len_Cmd'h02
-`define Msg_Cmd_SDGetStatus         `Msg_Len_Cmd'h03
-`define Msg_Cmd_SDDatOut            `Msg_Len_Cmd'h04
+`define Msg_Cmd_SDSetInit           `Msg_Len_Cmd'h02
+`define Msg_Cmd_SDSendCmd           `Msg_Len_Cmd'h03
+`define Msg_Cmd_SDGetStatus         `Msg_Len_Cmd'h04
+`define Msg_Cmd_SDDatOut            `Msg_Len_Cmd'h05
 
 `define Resp_Len                    `Msg_Len
 `define Resp_Range_Arg              63:0
@@ -495,6 +496,12 @@ module Top(
                     ctrl_sdClkFast <= ctrl_msgArg[1];
                 end
                 
+                // Set sd_init
+                `Msg_Cmd_SDSetInit: begin
+                    $display("[CTRL] Got Msg_Cmd_SDSetInit: %0d", ctrl_msgArg[0]);
+                    sd_init_ <= !ctrl_msgArg[0];
+                end
+                
                 // Clock out SD command
                 `Msg_Cmd_SDSendCmd: begin
                     $display("[CTRL] Got Msg_Cmd_SDSendCmd");
@@ -830,71 +837,71 @@ module Testbench();
         
         
         
-        // Set SD clock source = slow clock
-        SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b01);
-        
-        // Send SD CMD0
-        SendSDCmd(CMD0, 0);
-       
-        // Send SD CMD8
-        SendSDCmdRecvSDResp(CMD8, 32'h000001AA);
-        if (resp[`Resp_Range_SDRespCRCErr] !== 1'b0) begin
-            $display("[EXT] CRC error ❌");
-            $finish;
-        end
-        
-        if (resp[15:8] !== 8'hAA) begin
-            $display("[EXT] Bad response: %h ❌", resp);
-            $finish;
-        end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        // // Disable SD clock
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
+        // // Set SD clock source = slow clock
+        // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b01);
         //
-        // // Set SD clock source = fast clock
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
+        // // Send SD CMD0
+        // SendSDCmd(CMD0, 0);
         //
-        // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        // SendSDCmdRecvSDResp(CMD55, 32'b0);
-        // SendSDCmdRecvSDResp(ACMD23, 32'b1);
-        //
-        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmdRecvSDResp(CMD25, 32'b0);
-        //
-        // // Clock out data on DAT lines
-        // SendMsg(`Msg_Cmd_SDDatOut, 0);
-        //
-        // // Wait some pre-determined amount of time that guarantees
-        // // that we've started writing to the SD card.
-        // for (i=0; i<`Msg_Len; i++) begin
-        //     wait(ctrl_clk);
-        //     wait(!ctrl_clk);
+        // // Send SD CMD8
+        // SendSDCmdRecvSDResp(CMD8, 32'h000001AA);
+        // if (resp[`Resp_Range_SDRespCRCErr] !== 1'b0) begin
+        //     $display("[EXT] CRC error ❌");
+        //     $finish;
         // end
         //
-        // // Wait until we're done clocking out data on DAT lines
-        // $display("[EXT] Waiting while data is written...");
-        // do begin
-        //     // Request SD status
-        //     SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
-        // end while(!resp[`Resp_Range_SDDatOutIdle]);
-        // $display("[EXT] Done writing");
-        //
-        // // Check CRC status
-        // if (resp[`Resp_Range_SDDatOutCRCErr] === 1'b0) begin
-        //     $display("[EXT] CRC OK ✅");
-        // end else begin
-        //     $display("[EXT] CRC bad ❌");
+        // if (resp[15:8] !== 8'hAA) begin
+        //     $display("[EXT] Bad response: %h ❌", resp);
+        //     $finish;
         // end
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        // Disable SD clock
+        SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
+
+        // Set SD clock source = fast clock
+        SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
+
+        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        SendSDCmdRecvSDResp(CMD55, 32'b0);
+        SendSDCmdRecvSDResp(ACMD23, 32'b1);
+
+        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        SendSDCmdRecvSDResp(CMD25, 32'b0);
+
+        // Clock out data on DAT lines
+        SendMsg(`Msg_Cmd_SDDatOut, 0);
+
+        // Wait some pre-determined amount of time that guarantees
+        // that we've started writing to the SD card.
+        for (i=0; i<`Msg_Len; i++) begin
+            wait(ctrl_clk);
+            wait(!ctrl_clk);
+        end
+
+        // Wait until we're done clocking out data on DAT lines
+        $display("[EXT] Waiting while data is written...");
+        do begin
+            // Request SD status
+            SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
+        end while(!resp[`Resp_Range_SDDatOutIdle]);
+        $display("[EXT] Done writing");
+
+        // Check CRC status
+        if (resp[`Resp_Range_SDDatOutCRCErr] === 1'b0) begin
+            $display("[EXT] CRC OK ✅");
+        end else begin
+            $display("[EXT] CRC bad ❌");
+        end
     end
 endmodule
 `endif

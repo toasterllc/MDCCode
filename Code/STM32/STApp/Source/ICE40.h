@@ -98,10 +98,23 @@ public:
         }
     };
     
+    struct SDSetInitMsg : Msg {
+        SDSetInitMsg(bool init) {
+            cmd = 0x02;
+            payload[0] = 0x00;
+            payload[1] = 0x00;
+            payload[2] = 0x00;
+            payload[3] = 0x00;
+            payload[4] = 0x00;
+            payload[5] = 0x00;
+            payload[6] = (uint8_t)init;
+        }
+    };
+    
     struct SDSendCmdMsg : Msg {
         SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg) {
             AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
-            cmd = 0x02;
+            cmd = 0x03;
             payload[0] = 0x00;
             payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
             payload[2] = (sdArg&0xFF000000)>>24;
@@ -114,7 +127,7 @@ public:
     
     struct SDGetStatusMsg : Msg {
         SDGetStatusMsg() {
-            cmd = 0x03;
+            cmd = 0x04;
         }
     };
     
@@ -130,7 +143,7 @@ public:
     
     struct SDDatOutMsg : Msg {
         SDDatOutMsg() {
-            cmd = 0x04;
+            cmd = 0x05;
         }
     };
     

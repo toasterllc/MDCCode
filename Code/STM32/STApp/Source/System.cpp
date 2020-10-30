@@ -81,6 +81,7 @@ void System::_handleEvent() {
 //    return;
     
     using SDSetClkSrcMsg = ICE40::SDSetClkSrcMsg;
+    using SDSetInitMsg = ICE40::SDSetInitMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;
     
     // Enable SD slow clock
@@ -88,12 +89,20 @@ void System::_handleEvent() {
         ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
     }
     
-    // Issue SD CMD0
+    // ====================
+    // CMD0 | GO_IDLE_STATE
+    //   State: X -> Idle
+    //   Go to idle state
+    // ====================
     {
         _sendSDCmd(0, 0);
     }
     
-    // Issue SD CMD8
+    // ====================
+    // CMD8 | SEND_IF_COND
+    //   State: Idle -> Idle
+    //   Send interface condition
+    // ====================
     {
         _sendSDCmd(8, 0x000001AA);
         auto resp = _getSDResp();
@@ -101,7 +110,11 @@ void System::_handleEvent() {
         Assert(resp.getBits(15,8) == 0xAA); // Verify the response pattern is what we sent
     }
     
-    // Issue SD ACMD41
+    // ====================
+    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
+    //   State: Idle -> Ready
+    //   Initialize
+    // ====================
     {
         for (;;) {
             // CMD55
@@ -130,7 +143,11 @@ void System::_handleEvent() {
         }
     }
     
-    // Issue SD CMD11
+    // ====================
+    // CMD11 | VOLTAGE_SWITCH
+    //   State: Ready -> Ready
+    //   Switch to 1.8V signaling voltage
+    // ====================
     {
         _sendSDCmd(11, 0x00000000);
         auto resp = _getSDResp();
@@ -141,6 +158,11 @@ void System::_handleEvent() {
     {
         ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
         HAL_Delay(5);
+    }
+    
+    // Switch to 1.8V with SDInit=false
+    {
+        ice40.write(SDSetInitMsg(false));
     }
     
     // Re-enable the SD clock
@@ -159,7 +181,11 @@ void System::_handleEvent() {
         // Ready
     }
     
-    // Issue SD CMD2
+    // ====================
+    // CMD2 | ALL_SEND_CID
+    //   State: Ready -> Identification
+    //   Get card identification number (CID)
+    // ====================
     {
         _sendSDCmd(2, 0x00000000);
         _getSDResp();
@@ -170,7 +196,11 @@ void System::_handleEvent() {
         HAL_Delay(1);
     }
     
-    // Issue SD CMD3
+    // ====================
+    // CMD3 | SEND_RELATIVE_ADDR
+    //   State: Identification -> Standby
+    //   Publish a new relative address (RCA)
+    // ====================
     uint16_t rca = 0;
     {
         _sendSDCmd(3, 0x00000000);
@@ -180,14 +210,22 @@ void System::_handleEvent() {
         rca = resp.getBits(39, 24);
     }
     
-    // Issue SD CMD7
+    // ====================
+    // CMD7 | SELECT_CARD/DESELECT_CARD
+    //   State: Standby -> Transfer
+    //   Select card
+    // ====================
     {
         _sendSDCmd(7, ((uint32_t)rca)<<16);
         auto resp = _getSDResp();
         Assert(!resp.sdRespCRCErr());
     }
     
-    // Issue SD ACMD6
+    // ====================
+    // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
+    //   State: Transfer -> Transfer
+    //   Set bus width to 4 bits
+    // ====================
     {
         // CMD55
         {
@@ -208,11 +246,21 @@ void System::_handleEvent() {
     
     
     
-    // Issue SD CMD6
+    // ====================
+    // CMD6 | SWITCH_FUNC
+    //   State: Transfer -> Data
+    //   Switch to SDR104
+    // ====================
     {
         // TODO: we need to check that the 'Access Mode' was successfully changed
         //       by looking at the function group 1 of the DAT response
-        // Sending SD CMD6
+        // Mode = 1 (switch function)  = 0x80
+        // Group 6 (Reserved)          = 0xF (no change)
+        // Group 5 (Reserved)          = 0xF (no change)
+        // Group 4 (Current Limit)     = 0xF (no change)
+        // Group 3 (Driver Strength)   = 0xF (no change)
+        // Group 2 (Command System)    = 0xF (no change)
+        // Group 1 (Access Mode)       = 0x3 (SDR104)
         _sendSDCmd(6, 0x80FFFFF3);
         auto resp = _getSDResp();
         Assert(!resp.sdRespCRCErr());
@@ -234,7 +282,12 @@ void System::_handleEvent() {
     
     
     
-    // Issue SD ACMD23
+    // ====================
+    // ACMD23 | SET_WR_BLK_ERASE_COUNT
+    //   State: Transfer -> Transfer
+    //   Set the number of blocks to be
+    //   pre-erased before writing
+    // ====================
     {
         // CMD55
         {
@@ -252,7 +305,11 @@ void System::_handleEvent() {
     }
     
     
-    // Issue SD CMD25
+    // ====================
+    // CMD25 | WRITE_MULTIPLE_BLOCK
+    //   State: Transfer -> Receive Data
+    //   Write blocks of data
+    // ====================
     {
         _sendSDCmd(25, 0);
         auto resp = _getSDResp();
