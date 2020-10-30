@@ -470,7 +470,6 @@ module Top(
                 ctrl_state <= 1;
             end
             
-            // TODO: try assigning ctrl_counter during reset so we can merge state 0 and state 1
             1: begin
                 if (!ctrl_counter) begin
                     ctrl_state <= 2;
@@ -485,14 +484,14 @@ module Top(
                     $display("[CTRL] Got Msg_Cmd_Echo: %0h", ctrl_msgArg);
                     ctrl_doutReg[`Resp_Range_Arg] <= ctrl_msgArg;
                 end
-            
+                
                 // Set SD clock source
                 `Msg_Cmd_SDSetClkSrc: begin
                     $display("[CTRL] Got Msg_Cmd_SDSetClkSrc: %0d", ctrl_msgArg[1:0]);
                     ctrl_sdClkSlow <= ctrl_msgArg[0];
                     ctrl_sdClkFast <= ctrl_msgArg[1];
                 end
-            
+                
                 // Clock out SD command
                 `Msg_Cmd_SDSendCmd: begin
                     $display("[CTRL] Got Msg_Cmd_SDSendCmd");
@@ -501,7 +500,7 @@ module Top(
                     if (ctrl_sdRespRecv) ctrl_sdRespRecvAck <= !ctrl_sdRespRecvAck;
                     ctrl_sdCmdOutTrigger <= !ctrl_sdCmdOutTrigger;
                 end
-            
+                
                 // Get SD status / response
                 `Msg_Cmd_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Cmd_SDGetStatus");
@@ -516,13 +515,13 @@ module Top(
                     ctrl_doutReg[`Resp_Range_SDRespCRCErr]      <= ctrl_sdRespCRCErr;
                     ctrl_doutReg[`Resp_Range_SDDatOutCRCErr]    <= ctrl_sdDatOutCRCErr;
                 end
-            
+                
                 `Msg_Cmd_SDDatOut: begin
                     $display("[CTRL] Got Msg_Cmd_SDDatOut");
                     ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
                 end
                 endcase
-            
+                
                 ctrl_state <= 0;
             end
             endcase
