@@ -304,6 +304,10 @@ void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
             _iceStatus = ICEStatus::Idle;
         }
         break;
+    }
+    
+    default: {
+        Abort();
     }}
 }
 
