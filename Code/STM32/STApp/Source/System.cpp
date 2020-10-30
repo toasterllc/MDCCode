@@ -71,14 +71,14 @@ ICE40::SDGetStatusResp System::_getSDResp() {
 }
 
 void System::_handleEvent() {
-    char str[] = "abcdefg";
-    ICE40::EchoMsg msg(str);
-    ice40.write(msg);
-    ICE40::EchoResp resp = ice40.read<ICE40::EchoResp>();
-    if (memcmp(resp.payload, str, sizeof(str))) {
-        for (;;);
-    }
-    return;
+//    char str[] = "abcdefg";
+//    ICE40::EchoMsg msg(str);
+//    ice40.write(msg);
+//    ICE40::EchoResp resp = ice40.read<ICE40::EchoResp>();
+//    if (memcmp(resp.payload, str, sizeof(str))) {
+//        for (;;);
+//    }
+//    return;
     
     using SDSetClkSrcMsg = ICE40::SDSetClkSrcMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;

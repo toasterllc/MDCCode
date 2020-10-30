@@ -54,7 +54,8 @@ module Top(
     
     output wire         sd_clk,
     inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat
+    inout wire[3:0]     sd_dat,
+    output wire         sd_init
 );
     // ====================
     // Shared Nets/Registers
@@ -68,6 +69,8 @@ module Top(
     reg[`Msg_Len-1:0] ctrl_dinReg = 0;
     wire[`Msg_Len_Cmd-1:0] ctrl_msgCmd = ctrl_dinReg[`Msg_Range_Cmd];
     wire[`Msg_Len_Arg-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Range_Arg];
+    reg[47:0] ctrl_sdCmd = 0;
+    reg sd_init_ = 0;
     
     // ====================
     // Fast Clock (207 MHz)
@@ -253,7 +256,7 @@ module Top(
         
         if (sd_cmdOutState[1]) begin
             sd_cmdOutActive[0] <= 1;
-            sd_shiftReg <= ctrl_msgArg;
+            sd_shiftReg <= ctrl_sdCmd;
             sd_cmdOutCRCEn <= 1;
         end
         
@@ -498,6 +501,7 @@ module Top(
                     // Clear our signals so they can be reliably observed via SDGetStatus
                     if (ctrl_sdCmdSent) ctrl_sdCmdSentAck <= !ctrl_sdCmdSentAck;
                     if (ctrl_sdRespRecv) ctrl_sdRespRecvAck <= !ctrl_sdRespRecvAck;
+                    ctrl_sdCmd <= ctrl_msgArg;
                     ctrl_sdCmdOutTrigger <= !ctrl_sdCmdOutTrigger;
                 end
                 
@@ -598,6 +602,17 @@ module Top(
     end
     
     // ====================
+    // Pin: sd_init
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b0110_01),
+        .PULLUP(1'b1)
+    ) SB_IO_sd_init (
+        .PACKAGE_PIN(sd_init),
+        .D_OUT_0(!sd_init_)
+    );
+    
+    // ====================
     // CRC: sd_cmdOutCRC
     // ====================
     CRC7 #(
@@ -654,6 +669,7 @@ module Testbench();
     wire        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
+    wire        sd_init;
     
     Top Top(.*);
     
@@ -733,15 +749,18 @@ module Testbench();
         ctrl_rst = 1;
     end endtask
     
-    task SendMsg(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
-        reg[15:0] i;
-        
-        _SendMsg(cmd, arg);
-        
+    task _Wait; begin
         // Wait for msg to be consumed before sending another, otherwise we can overwrite
         // the shift register while it's still being used
         #100000;
         wait(!ctrl_clk);
+    end endtask
+    
+    task SendMsg(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
+        reg[15:0] i;
+        
+        _SendMsg(cmd, arg);
+        _Wait();
     end endtask
     
     task SendMsgRecvResp(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
@@ -758,6 +777,8 @@ module Testbench();
         ctrl_rst = 1;
         
         resp = ctrl_doReg;
+        
+        _Wait();
     end endtask
     
     task SendSDCmd(input[5:0] sdCmd, input[31:0] sdArg); begin
@@ -783,9 +804,9 @@ module Testbench();
         // $display("Got response: %h", resp);
         // $finish;
         
-        SendMsgRecvResp(`Msg_Cmd_Echo, 56'h66554433221100);
-        $display("Got response: %h", resp);
-        $finish;
+        // SendMsgRecvResp(`Msg_Cmd_Echo, 56'h66554433221100);
+        // $display("Got response: %h", resp);
+        // $finish;
         
         // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
         // SendSDCmd(CMD55, 32'b0);
