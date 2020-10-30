@@ -49,7 +49,8 @@ void System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg) {
     ice40.write(SDSendCmdMsg(sdCmd, sdArg));
     
     // Wait for command to be sent
-    for (;;) {
+    for (uint8_t i=0;; i++) { // TODO: remove
+        Assert(i < 100); // TODO: remove
         ice40.write(SDGetStatusMsg());
         auto resp = ice40.read<SDGetStatusResp>();
         if (resp.sdCmdSent()) break;
@@ -83,6 +84,62 @@ void System::_handleEvent() {
     using SDSetClkSrcMsg = ICE40::SDSetClkSrcMsg;
     using SDSetInitMsg = ICE40::SDSetInitMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;
+    
+    
+    // Disable SD clock
+    {
+        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+    }
+    
+    // Switch to 1.8V with SDInit=false
+    {
+        ice40.write(SDSetInitMsg(false));
+    }
+    
+    // Enable SD fast clock
+    {
+        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
+    }
+    
+    for (;;);
+    
+    
+    
+//    // Disable SD clock
+//    {
+//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+//    }
+//    
+//    // Enable SD fast clock
+//    {
+//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
+//    }
+//    
+//    
+//    {
+//        for (;;) {
+//            _sendSDCmd(0, 0);
+//        }
+//    }
+    
+    
+    
+    
+//    ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+//    HAL_Delay(100);
+//    ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
+//    _sendSDCmd(0, 0);
+//    
+//    
+//    for (;;);
+    
+    
+    
+    // Disable SD clock
+    {
+        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+    }
+    
     
     // Enable SD slow clock
     {

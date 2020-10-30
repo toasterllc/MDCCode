@@ -57,6 +57,8 @@ module Top(
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
     output wire         sd_init
+    
+    // output wire[3:0]    led
 );
     // ====================
     // Shared Nets/Registers
@@ -73,17 +75,48 @@ module Top(
     reg[47:0] ctrl_sdCmd = 0;
     reg sd_init_ = 0;
     
+    // assign led[0] = ctrl_sdClkSlow;
+    // assign led[1] = ctrl_sdClkFast;
+    
+    
+    
+    // // ====================
+    // // Fast Clock (207 MHz)
+    // // ====================
+    // localparam FastClkFreq = 207_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(1),
+    //     .DIVF(68),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    
+    // // ====================
+    // // Fast Clock (120 MHz)
+    // // ====================
+    // localparam FastClkFreq = 120_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(39),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    
     // ====================
-    // Fast Clock (207 MHz)
+    // Fast Clock (60 MHz)
     // ====================
-    localparam FastClkFreq = 207_000_000;
+    localparam FastClkFreq = 60_000_000;
     wire fastClk;
     ClockGen #(
         .FREQ(FastClkFreq),
         .DIVR(0),
-        .DIVF(68),
-        .DIVQ(2),
-        .FILTER_RANGE(1)
+        .DIVF(39),
+        .DIVQ(4),
+        .FILTER_RANGE(2)
     ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
     
     // ====================
@@ -103,6 +136,7 @@ module Top(
     `Sync(sdClkSlow, ctrl_sdClkSlow, negedge, slowClk);
     `Sync(sdClkFast, ctrl_sdClkFast, negedge, fastClk);
     wire sd_clk_int = (sdClkSlow ? slowClk : (sdClkFast ? fastClk : 0));
+    // wire sd_clk_int = fastClk;
     
     // ====================
     // sd_clk
