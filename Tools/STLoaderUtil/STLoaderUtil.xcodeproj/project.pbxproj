@@ -27,7 +27,7 @@
 /* Begin PBXFileReference section */
 		554F178B254536A700F67066 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		556875CC254785C400B774CE /* STLoaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STLoaderTypes.h; path = ../../code/stm32/STLoader/Source/STLoaderTypes.h; sourceTree = "<group>"; };
-		556875D3254786FE00B774CE /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
+		556875ED254BE63800B774CE /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Enum.h; path = ../../Code/STM32/Util/Enum.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* STLoaderUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoaderUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -50,19 +50,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		556875D2254786FE00B774CE /* Util */ = {
-			isa = PBXGroup;
-			children = (
-				556875D3254786FE00B774CE /* Enum.h */,
-			);
-			name = Util;
-			path = ../../Code/Util;
-			sourceTree = "<group>";
-		};
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
-				556875D2254786FE00B774CE /* Util */,
+				556875ED254BE63800B774CE /* Enum.h */,
 				556875CC254785C400B774CE /* STLoaderTypes.h */,
 				55E1D8F6253F75A300628EF6 /* USBInterface.h */,
 				554F178B254536A700F67066 /* Mmap.h */,

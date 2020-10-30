@@ -482,7 +482,7 @@ module Top(
                 // Echo
                 `Msg_Cmd_Echo: begin
                     $display("[CTRL] Got Msg_Cmd_Echo: %0h", ctrl_msgArg);
-                    ctrl_doutReg[`Resp_Range_Arg] <= ctrl_msgArg;
+                    ctrl_doutReg[`Resp_Range_Arg] <= {ctrl_msgArg, 8'h00};
                 end
                 
                 // Set SD clock source

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <algorithm>
 #include "Assert.h"
+#include "QSPI.h"
 
 class ICE40 {
 public:
@@ -139,7 +140,7 @@ public:
         static_assert(sizeof(msg) == 8);
         // Copy the message into `b`, and populate the trailing dummy byte
         uint8_t b[sizeof(msg)+1];
-        memcpy(b, msg, sizeof(msg));
+        memcpy(b, &msg, sizeof(msg));
         b[sizeof(msg)] = 0xFF;
         _qspi.write(b, sizeof(b));
         // Wait for write to complete
@@ -148,12 +149,14 @@ public:
     }
     
     template <typename T>
-    void read(T& resp) {
+    T read() {
+        T resp;
         static_assert(sizeof(resp) == 8);
-        _qspi.read(&resp, sizeof(resp));
+        _qspi.read((void*)&resp, sizeof(resp));
         // Wait for read to complete
         QSPI::Event ev = _qspi.eventChannel.read();
         Assert(ev.type == QSPI::Event::Type::ReadDone);
+        return resp;
     }
     
 private:
@@ -181,48 +184,6 @@ private:
             r |= tmp;
         }
         return r;
-    }
-    
-    // Left shift array of bytes by `n` bits
-    static void _lshift(uint8_t* bytes, size_t len, uint8_t n) {
-        AssertArg(n <= 8);
-        const uint8_t mask = ~((1<<(8-n))-1);
-        uint8_t l = 0;
-        for (size_t i=len; i; i--) {
-            uint8_t& b = bytes[i-1];
-            // Remember the high bits that we're losing by left-shifting,
-            // which will become the next byte's low bits.
-            const uint8_t h = b&mask;
-            b <<= n;
-            b |= l;
-            l = h>>(8-n);
-        }
-    }
-    
-    // Right shift array of bytes by `n` bits
-    static void _rshift(uint8_t* bytes, size_t len, uint8_t n) {
-        AssertArg(n <= 8);
-        const uint8_t mask = (1<<n)-1;
-        uint8_t h = 0;
-        for (size_t i=0; i<len; i++) {
-            uint8_t& b = bytes[i-1];
-            // Remember the low bits that we're losing by right-shifting,
-            // which will become the next byte's high bits.
-            const uint8_t l = b&mask;
-            b >>= n;
-            b |= h;
-            h = l<<(8-n);
-        }
-    }
-    
-    // Returns of the index (0-7) of the most significant zero,
-    // or -1 if there are no zeroes.
-    static int8_t _msz(uint8_t x) {
-        for (uint8_t i=0; i<8; i++) {
-            const int8_t pos = 7-i;
-            if (!(x & (1<<pos))) return pos;
-        }
-        return -1;
     }
     
     QSPI& _qspi;

@@ -13,7 +13,6 @@ _led0(GPIOE, GPIO_PIN_12),
 _led1(GPIOE, GPIO_PIN_15),
 _led2(GPIOB, GPIO_PIN_10),
 _led3(GPIOB, GPIO_PIN_11) {
-    
 }
 
 void System::init() {
@@ -35,11 +34,12 @@ void System::init() {
     _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
-    // Initialize QSPI
-    qspi.init();
-    
     // Initialize USB
     usb.init();
+    
+    // Initialize QSPI
+    qspi.init();
+    qspi.config();
 }
 
 void System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg) {
@@ -52,7 +52,7 @@ void System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg) {
     for (;;) {
         ice40.write(SDGetStatusMsg());
         auto resp = ice40.read<SDGetStatusResp>();
-        if (resp.sdCommandSent()) break;
+        if (resp.sdCmdSent()) break;
     }
 }
 
@@ -71,7 +71,14 @@ ICE40::SDGetStatusResp System::_getSDResp() {
 }
 
 void System::_handleEvent() {
-    qspi.config();
+    char str[] = "abcdefg";
+    ICE40::EchoMsg msg(str);
+    ice40.write(msg);
+    ICE40::EchoResp resp = ice40.read<ICE40::EchoResp>();
+    if (memcmp(resp.payload, str, sizeof(str))) {
+        for (;;);
+    }
+    return;
     
     using SDSetClkSrcMsg = ICE40::SDSetClkSrcMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;
@@ -293,9 +300,6 @@ void System::_usbHandleEvent(const USB::Event& ev) {
         // Invalid event type
         Abort();
     }}
-}
-
-void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
 }
 
 System Sys;

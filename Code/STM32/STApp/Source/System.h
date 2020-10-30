@@ -19,7 +19,6 @@ public:
 private:
     void _handleEvent();
     void _usbHandleEvent(const USB::Event& ev);
-    void _iceHandleQSPIEvent(const QSPI::Event& ev);
     void _sendSDCmd(uint8_t sdCmd, uint32_t sdArg);
     ICE40::SDGetStatusResp _getSDStatus();
     ICE40::SDGetStatusResp _getSDResp();
