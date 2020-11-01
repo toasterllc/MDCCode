@@ -261,13 +261,13 @@ module Top(
     reg sd_datOutEnding = 0;
     reg sd_datOutLastBank = 0;
     reg sd_datOutStartBit = 0;
-    reg[19:0] sd_datInReg = 0;
+    reg[4:0] sd_dat0InReg = 0;
     reg[19:0] sd_datOutReg = 0;
     reg[1:0] sd_datOutCounter = 0;
     reg[3:0] sd_datOutCRCCounter = 0;
     wire[3:0] sd_datIn;
     wire[3:0] sd_datOutCRC;
-    wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
+    wire[4:0] sd_datInCRCStatus = {sd_dat0InReg[4], sd_dat0InReg[3], sd_dat0InReg[2], sd_dat0InReg[1], sd_dat0InReg[0]};
     wire sd_datInCRCStatusOK = sd_datInCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
     reg sd_datInCRCStatusOKReg = 0;
     reg[1:0] sd_datOutIdleReg = 0; // 2 bits -- see explanation where it's assigned
@@ -392,7 +392,7 @@ module Top(
         sd_datOutStartBit <= 0; // Pulse
         sd_datOutEndBit <= 0; // Pulse
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
-        sd_datInReg <= (sd_datInReg<<4)|{sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
+        sd_dat0InReg <= (sd_dat0InReg<<1)|sd_datIn[0];
         sd_datInCRCStatusOKReg <= sd_datInCRCStatusOK;
         sd_datOutReg <= sd_datOutReg<<4;
         if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_datOutFifo_rdata;
@@ -474,7 +474,7 @@ module Top(
         end
         
         6: begin
-            if (sd_datInReg[0]) begin
+            if (sd_dat0InReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 sd_datOutState <= 0;
             end else begin
