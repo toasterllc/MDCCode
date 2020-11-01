@@ -52,6 +52,9 @@ public:
     
     struct Resp {
         uint8_t payload[8];
+        bool getBool(uint8_t bit) const {
+            return _getBool(payload, sizeof(payload), bit);
+        }
         uint64_t getBits(uint8_t start, uint8_t end) const {
             return _getBits(payload, sizeof(payload), start, end);
         }
@@ -98,23 +101,10 @@ public:
         }
     };
     
-    struct SDSetInitMsg : Msg {
-        SDSetInitMsg(bool init) {
-            cmd = 0x02;
-            payload[0] = 0x00;
-            payload[1] = 0x00;
-            payload[2] = 0x00;
-            payload[3] = 0x00;
-            payload[4] = 0x00;
-            payload[5] = 0x00;
-            payload[6] = (uint8_t)init;
-        }
-    };
-    
     struct SDSendCmdMsg : Msg {
         SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg) {
             AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
-            cmd = 0x03;
+            cmd = 0x02;
             payload[0] = 0x00;
             payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
             payload[2] = (sdArg&0xFF000000)>>24;
@@ -127,23 +117,23 @@ public:
     
     struct SDGetStatusMsg : Msg {
         SDGetStatusMsg() {
-            cmd = 0x04;
+            cmd = 0x03;
         }
     };
     
     struct SDGetStatusResp : Resp {
         uint8_t sdDat() const       { return getBits(63, 60); }
-        bool sdCmdSent() const      { return getBits(59, 59); }
-        bool sdRespRecv() const     { return getBits(58, 58); }
-        bool sdDatOutIdle() const   { return getBits(57, 57); }
-        bool sdRespCRCErr() const   { return getBits(56, 56); }
-        bool sdDatOutCRCErr() const { return getBits(55, 55); }
+        bool sdCmdSent() const      { return getBool(59); }
+        bool sdRespRecv() const     { return getBool(58); }
+        bool sdDatOutIdle() const   { return getBool(57); }
+        bool sdRespCRCErr() const   { return getBool(56); }
+        bool sdDatOutCRCErr() const { return getBool(55); }
         uint64_t sdResp() const     { return getBits(47, 0); }
     };
     
     struct SDDatOutMsg : Msg {
         SDDatOutMsg() {
-            cmd = 0x05;
+            cmd = 0x04;
         }
     };
     
@@ -173,6 +163,14 @@ public:
     }
     
 private:
+    static bool _getBool(const uint8_t* bytes, size_t len, uint8_t bit) {
+        AssertArg(bit < len*8);
+        const uint8_t byteIdx = len-(bit/8)-1;
+        const uint8_t bitIdx = bit%8;
+        const uint8_t bitMask = 1<<bitIdx;
+        return bytes[byteIdx] & bitMask;
+    }
+    
     static uint64_t _getBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
         AssertArg(start < len*8);
         AssertArg(start >= end);
