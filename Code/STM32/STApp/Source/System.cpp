@@ -72,6 +72,14 @@ ICE40::SDGetStatusResp System::_getSDResp() {
 }
 
 void System::_handleEvent() {
+
+//    bool on = false;
+//    for (;;) {
+//        HAL_Delay(1);
+//        _led0.write(on);
+//        on = !on;
+//    }
+    
 //    char str[] = "abcdefg";
 //    ICE40::EchoMsg msg(str);
 //    ice40.write(msg);
@@ -85,23 +93,28 @@ void System::_handleEvent() {
     using SDSetInitMsg = ICE40::SDSetInitMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;
     
+    for (int i=0; i<10; i++) HAL_Delay(1000);
     
-    // Disable SD clock
-    {
-        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
-    }
+    _led0.write(1);
     
-    // Switch to 1.8V with SDInit=false
-    {
-        ice40.write(SDSetInitMsg(false));
-    }
+//    volatile uint32_t tickstart = HAL_GetTick();
     
-    // Enable SD fast clock
-    {
-        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
-    }
-    
-    for (;;);
+//    // Disable SD clock
+//    {
+//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
+//    }
+//    
+//    // Switch to 1.8V with SDInit=false
+//    {
+//        ice40.write(SDSetInitMsg(false));
+//    }
+//    
+//    // Enable SD fast clock
+//    {
+//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
+//    }
+//    
+//    for (;;);
     
     
     
@@ -319,11 +332,24 @@ void System::_handleEvent() {
         // Group 2 (Command System)    = 0xF (no change)
         // Group 1 (Access Mode)       = 0x3 (SDR104)
         _sendSDCmd(6, 0x80FFFFF3);
-        auto resp = _getSDResp();
-        Assert(!resp.sdRespCRCErr());
-        // Wait 1000us to allow the SD card to finish writing the 512-bit status on the DAT lines
-        // 512 bits / 4 DAT lines = 128 bits per DAT line -> 128 bits * (1/350kHz) = 366us.
-        HAL_Delay(1);
+        
+        // Wait for DAT response to start
+        for (;;) {
+            auto status = _getSDStatus();
+            bool started = (status.getBits(63,60) != 0xF);
+            if (started) break;
+        }
+        
+        for (uint8_t i=0; i<10;) {
+            auto status = _getSDStatus();
+            bool stopped = (status.getBits(63,60) == 0xF);
+            if (stopped) i++;
+            else i = 0;
+        }
+        
+//        // Wait 1000us to allow the SD card to finish writing the 512-bit status on the DAT lines
+//        // 512 bits / 4 DAT lines = 128 bits per DAT line -> 128 bits * (1/200kHz) = 640us.
+//        HAL_Delay(1);
     }
     
     
@@ -352,7 +378,7 @@ void System::_handleEvent() {
             auto resp = _getSDResp();
             Assert(!resp.sdRespCRCErr());
         }
-        
+
         // CMD23
         {
             _sendSDCmd(23, 0x00000001);
@@ -360,7 +386,6 @@ void System::_handleEvent() {
             Assert(!resp.sdRespCRCErr());
         }
     }
-    
     
     // ====================
     // CMD25 | WRITE_MULTIPLE_BLOCK
@@ -397,6 +422,10 @@ void System::_handleEvent() {
             // Busy
         }
     }
+    
+    _led0.write(0);
+//    volatile uint32_t duration = HAL_GetTick()-tickstart;
+    for (;;);
 }
 
 void System::_usbHandleEvent(const USB::Event& ev) {

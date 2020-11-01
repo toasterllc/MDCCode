@@ -36,30 +36,34 @@
 
 - Rev4 todo
 
-    - STM32: Fix USB power supply.
+    - STM32: Fix USB power supply
         - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
     
-    - Fix ice40 pin layout so that both PLLs can be used.
+    - ICE40: Fix pin layout so that both PLLs can be used
         - When a PLL is used, the tile that it's on can only be used as an output pin (not an input pin). So make PLL IO tiles either outputs, or unused
         - "PLL input path is shared with the IO input path of the IO tile it's in":
             https://freenode.irclog.whitequark.org/yosys/2019-03-13
             https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
     
-    - Add a pullup to STM32<->ICE40 SPI interface?
+    - Consider lowering 2V8 rail to 2V7-ish, so that it's easier to meet the SD card Vih in 3.3V mode
+        - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => only 50mV away from 1.8V rail
+        - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
+    
+    - U11 pins SD_DATx pins are out of order on Rev3
 
 
 - Rev3 todo
-
-    - Program stm32 over USB
-    - Program ice40 over USB
     
     - STM32: MSP430 puppetmaster emulation to:
-         - Configure image sensor (over i2c) through ice40
-         - Configure SD card through ice40
-         - Capture image to RAM through ice40
-         - Write image to SD card at a particular address through ice40
+        - Configure SD card through ice40
+        - Configure image sensor (over i2c) through ice40
+        - Capture image to RAM through ice40
+        - Write image to SD card at a particular address through ice40
     
     - STM32: readout images over USB at 480 Mbps
+    
+    √ Program stm32 over USB
+    √ Program ice40 over USB
 
 
 
@@ -70,7 +74,7 @@
     - Rev3: Re-export pins from Eagle to create pins.pcf, since nets moved around
     
     - Consider registering SB_IO inputs -- might speed up design? (via SB_IO.PIN_TYPE)
-      
+    
     - ADD attribute to AFIFO to prevent overhead:
        /* synthesis syn_ramstyle="no_rw_check" */
     
