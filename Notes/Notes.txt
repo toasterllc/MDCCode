@@ -50,9 +50,27 @@
         - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
     
     - U11 pins SD_DATx pins are out of order on Rev3
+        - Probably doesn't matter because we're likely getting rid of these ICs anyway
+    
+    - STM32 QSPI: make frequency a parameter
+        - For STLoader, it needs to be <24MHz for configuring ICE40
+        - For STApp, it can be as high as ctrl_clk can go depending on the Verilog
+    
+    
 
 
 - Rev3 todo
+    
+    - SDTest:
+        - Add a DatIn state machine (needed for CMD6)
+            - Similar to Resp state machine: specify whether DatIn is expected as the result of a command
+            - Add DatIn CRC checking
+                - Reuse DatOut CRC16 or add separate instances?
+        
+        - Add ability to specify whether a response is expected as the result of a command
+            - If so, start the Resp state machine
+            - If not, don't start the Resp state machine
+            
     
     - STM32: MSP430 puppetmaster emulation to:
         - Configure SD card through ice40
