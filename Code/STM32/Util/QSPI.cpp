@@ -25,6 +25,7 @@ void QSPI::init() {
     
     // Init QUADSPI
     _device.Instance = QUADSPI;
+    // TODO: make ClockPrescaler configurable -- STLoader needs it to be <=25MHz, but STApp wants it to be as fast as ctrl_clk can go
     _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1) = 128/(7+1) = 21.3 MHz
     _device.Init.FifoThreshold = 1;
     _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
