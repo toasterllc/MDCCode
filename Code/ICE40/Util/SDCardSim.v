@@ -140,7 +140,9 @@ module SDCardSim(
     
     
     
-    
+    // ====================
+    // Handle commands from the host
+    // ====================
     initial begin
         // Let inputs settle first
         wait(sd_clk);
