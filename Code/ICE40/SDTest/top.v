@@ -55,8 +55,7 @@ module Top(
     
     output wire         sd_clk,
     inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat,
-    output wire         sd_init
+    inout wire[3:0]     sd_dat
     
     // output wire[3:0]    led
 );
@@ -73,7 +72,6 @@ module Top(
     wire[`Msg_Len_Cmd-1:0] ctrl_msgCmd = ctrl_dinReg[`Msg_Range_Cmd];
     wire[`Msg_Len_Arg-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Range_Arg];
     reg[47:0] ctrl_sdCmd = 0;
-    reg sd_init_ = 0;
     
     // assign led[0] = ctrl_sdClkSlow;
     // assign led[1] = ctrl_sdClkFast;
@@ -93,29 +91,16 @@ module Top(
     //     .FILTER_RANGE(1)
     // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
     
-    // // ====================
-    // // Fast Clock (120 MHz)
-    // // ====================
-    // localparam FastClkFreq = 120_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(39),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(2)
-    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
-    
     // ====================
-    // Fast Clock (60 MHz)
+    // Fast Clock (120 MHz)
     // ====================
-    localparam FastClkFreq = 60_000_000;
+    localparam FastClkFreq = 120_000_000;
     wire fastClk;
     ClockGen #(
         .FREQ(FastClkFreq),
         .DIVR(0),
         .DIVF(39),
-        .DIVQ(4),
+        .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
     
@@ -530,12 +515,6 @@ module Top(
                     ctrl_sdClkFast <= ctrl_msgArg[1];
                 end
                 
-                // Set sd_init
-                `Msg_Cmd_SDSetInit: begin
-                    $display("[CTRL] Got Msg_Cmd_SDSetInit: %0d", ctrl_msgArg[0]);
-                    sd_init_ <= !ctrl_msgArg[0];
-                end
-                
                 // Clock out SD command
                 `Msg_Cmd_SDSendCmd: begin
                     $display("[CTRL] Got Msg_Cmd_SDSendCmd");
@@ -644,17 +623,6 @@ module Top(
     end
     
     // ====================
-    // Pin: sd_init
-    // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b0110_01),
-        .PULLUP(1'b1)
-    ) SB_IO_sd_init (
-        .PACKAGE_PIN(sd_init),
-        .D_OUT_0(!sd_init_)
-    );
-    
-    // ====================
     // CRC: sd_cmdOutCRC
     // ====================
     CRC7 #(
@@ -711,7 +679,6 @@ module Testbench();
     wire        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
-    wire        sd_init;
     
     Top Top(.*);
     
