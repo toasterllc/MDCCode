@@ -91,6 +91,32 @@ module Top(
     //     .FILTER_RANGE(1)
     // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
     
+    // // ====================
+    // // Fast Clock (144 MHz)
+    // // ====================
+    // localparam FastClkFreq = 144_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(23),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    
+    // // ====================
+    // // Fast Clock (162 MHz)
+    // // ====================
+    // localparam FastClkFreq = 162_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(26),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    
     // ====================
     // Fast Clock (120 MHz)
     // ====================
@@ -243,7 +269,7 @@ module Top(
     wire[3:0] sd_datOutCRC;
     wire[4:0] sd_datInCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
     wire sd_datInCRCStatusOK = sd_datInCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
-    reg sd_datInCRCStatusReg = 0;
+    reg sd_datInCRCStatusOKReg = 0;
     reg[1:0] sd_datOutIdleReg = 0; // 2 bits -- see explanation where it's assigned
     
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
@@ -367,7 +393,7 @@ module Top(
         sd_datOutEndBit <= 0; // Pulse
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
         sd_datInReg <= (sd_datInReg<<4)|{sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]};
-        sd_datInCRCStatusReg <= sd_datInCRCStatusReg<<1|sd_datInCRCStatusOK;
+        sd_datInCRCStatusOKReg <= sd_datInCRCStatusOK;
         sd_datOutReg <= sd_datOutReg<<4;
         if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_datOutFifo_rdata;
         if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
@@ -436,12 +462,12 @@ module Top(
         
         // Wait until the card stops being busy (busy == DAT0 low)
         5: begin
-            $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusReg: %b", sd_datInCRCStatusReg);
+            $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusOKReg: %b", sd_datInCRCStatusOKReg);
             // 5 bits: start bit, CRC status, end bit
-            if (sd_datInCRCStatusReg) begin
+            if (sd_datInCRCStatusOKReg) begin
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
             end else begin
-                $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusReg);
+                $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusOKReg);
                 sd_datOutCRCErr <= 1;
             end
             sd_datOutState <= 6;
