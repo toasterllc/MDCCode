@@ -61,16 +61,19 @@
 
 - Rev3 todo
     
-    √ Add ability to specify whether a response is expected as the result of a command
-        - If so, start the Resp state machine
-        - If not, don't start the Resp state machine
-    
     - SDTest:
+        - Resp state machine: add ability to specify response length (since the CMD2 response is 136 bits)
+        - Add ability to capture part of the DatIn stream (so we can verify that the CMD6 'Access Mode' was successfully changed)
+        
         √ Add a DatIn state machine (needed for CMD6)
-            - Similar to Resp state machine: specify whether DatIn is expected as the result of a command
-            - Add DatIn CRC checking
-                - Reuse DatOut CRC16 or add separate instances?
-            
+            √ Similar to Resp state machine: specify whether DatIn is expected as the result of a command
+            √ Add DatIn CRC checking
+                X Reuse DatOut CRC16?
+        
+        √ Add ability to specify whether a response is expected as the result of a command
+            √ If so, start the Resp state machine
+            √ If not, don't start the Resp state machine
+    
     
     - STM32: MSP430 puppetmaster emulation to:
         - Configure SD card through ice40
