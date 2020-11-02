@@ -286,7 +286,7 @@ module Top(
     wire[3:0] sd_datIn;
     reg[19:0] sd_datInReg = 0;
     reg sd_datInCRCEn = 0;
-    wire[3:0] sd_datInCRC;
+    wire[3:0] sd_datInCRC = sd_datOutCRC;
     reg sd_datInRecv = 0;
     reg sd_datInCRCErr = 0;
     reg[6:0] sd_datInCounter = 0;
@@ -806,26 +806,12 @@ module Top(
     // ====================
     for (i=0; i<4; i=i+1) begin
         CRC16 #(
-            .Delay(-1)
+            .Delay(1)
         ) CRC16_sd_datOutCRC(
             .clk(sd_clk_int),
-            .en(sd_datOutCRCEn),
-            .din(sd_datOutReg[16+i]),
+            .en(sd_datOutActive[0] ? sd_datOutCRCEn : sd_datInCRCEn),
+            .din(sd_datOutActive[0] ? sd_datOutReg[16+i] : sd_datInReg[i]),
             .dout(sd_datOutCRC[i])
-        );
-    end
-    
-    // ====================
-    // CRC: sd_datInCRC
-    // ====================
-    for (i=0; i<4; i=i+1) begin
-        CRC16 #(
-            .Delay(1)
-        ) CRC16_dat(
-            .clk(sd_clk_int),
-            .en(sd_datInCRCEn),
-            .din(sd_datInReg[i]),
-            .dout(sd_datInCRC[i])
         );
     end
 endmodule
@@ -1089,10 +1075,10 @@ module Testbench();
         
         // Disable SD clock
         SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
-        
+
         // Set SD clock source = fast clock
         SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
-        
+
         // Send SD command CMD6 (SWITCH_FUNC)
         SendSDCmd(CMD6, SD_RESP_TRUE, SD_DAT_IN_TRUE, 32'h80FFFFF3);
         $display("[EXT] Waiting for DatIn to complete...");
@@ -1101,7 +1087,7 @@ module Testbench();
             SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
         end while(!resp[`Resp_Range_SDDatInRecv]);
         $display("[EXT] DatIn completed");
-        
+
         // Check DatIn CRC status
         if (resp[`Resp_Range_SDDatInCRCErr] === 1'b0) begin
             $display("[EXT] DatIn CRC OK ✅");
