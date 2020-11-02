@@ -33,8 +33,8 @@
 `define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h04
 `define Msg_Cmd_None                    `Msg_Len_Cmd'hFF
 
-`define MsgArg_Range_SDRespExpected     49:49
-`define MsgArg_Range_SDDatInExpected    48:48
+`define MsgArg_Range_SDDatInExpected    49:49
+`define MsgArg_Range_SDRespExpected     48:48
 `define MsgArg_Range_SDCmd              47:0
 
 `define Resp_Len                        `Msg_Len

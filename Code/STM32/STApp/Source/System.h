@@ -19,9 +19,8 @@ public:
 private:
     void _handleEvent();
     void _usbHandleEvent(const USB::Event& ev);
-    void _sendSDCmd(uint8_t sdCmd, uint32_t sdArg);
     ICE40::SDGetStatusResp _getSDStatus();
-    ICE40::SDGetStatusResp _getSDResp();
+    ICE40::SDGetStatusResp _sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::SDSendCmdMsg::Option options);
     
     // LEDs
     GPIO _led0;

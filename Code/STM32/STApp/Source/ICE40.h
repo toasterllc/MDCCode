@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "Assert.h"
 #include "QSPI.h"
+#include "Enum.h"
 
 class ICE40 {
 public:
@@ -102,10 +103,16 @@ public:
     };
     
     struct SDSendCmdMsg : Msg {
-        SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg) {
+        Enum(uint8_t, Option, Options,
+            None            = 0,
+            RespExpected    = 1<<0,
+            DatInExpected   = 1<<1,
+        );
+        
+        SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, Option options) {
             AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
             cmd = 0x02;
-            payload[0] = 0x00;
+            payload[0] = options;
             payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
             payload[2] = (sdArg&0xFF000000)>>24;
             payload[3] = (sdArg&0x00FF0000)>>16;
@@ -126,8 +133,10 @@ public:
         bool sdCmdSent() const      { return getBool(59); }
         bool sdRespRecv() const     { return getBool(58); }
         bool sdDatOutIdle() const   { return getBool(57); }
-        bool sdRespCRCErr() const   { return getBool(56); }
-        bool sdDatOutCRCErr() const { return getBool(55); }
+        bool sdDatInRecv() const    { return getBool(56); }
+        bool sdRespCRCErr() const   { return getBool(55); }
+        bool sdDatOutCRCErr() const { return getBool(54); }
+        bool sdDatInCRCErr() const  { return getBool(53); }
         uint64_t sdResp() const     { return getBits(47, 0); }
     };
     
