@@ -22,18 +22,14 @@ module CRC16 #(
     // Negative delays are possible because the high 4 bits of the CRC
     // are a simple shift register, so we can peek ahead.
     // See CRC section of SD spec.
-    parameter DelayA = 0,
-    parameter DelayB = 0
+    parameter Delay = 0
 )(
     input wire clk,
     input wire en,
     input din,
-    output wire doutA,
-    output wire doutB
+    output wire dout
 );
-    localparam PosDelayA = (DelayA > 0 ? DelayA : 0);
-    localparam PosDelayB = (DelayB > 0 ? DelayB : 0);
-    localparam PosDelay = (PosDelayA > PosDelayB ? PosDelayA : PosDelayB);
+    localparam PosDelay = (Delay > 0 ? Delay : 0);
     reg[15+PosDelay:0] d = 0;
     wire dx = (en ? din^d[15] : 0);
     always @(posedge clk) begin
@@ -42,6 +38,5 @@ module CRC16 #(
         d[5] <= dx^d[4];
         d[12] <= dx^d[11];
     end
-    assign doutA = d[15+DelayA];
-    assign doutB = d[15+DelayB];
+    assign dout = d[15+Delay];
 endmodule
