@@ -75,16 +75,16 @@ set_io sd_dat[2]            L5      -pullup no
 set_io sd_dat[3]            L4      -pullup no
 set_io sd_init              L1      -pullup no
 
-set_io spi_clk              L10     -pullup no
-set_io spi_cs_              K10     -pullup no
-set_io spi_d[0]             J9      -pullup no
-set_io spi_d[1]             K9      -pullup no
-set_io spi_d[2]             L7      -pullup no
-set_io spi_d[3]             K6      -pullup no
-set_io spi_d[4]             J7      -pullup no
-set_io spi_d[5]             K7      -pullup no
-set_io spi_d[6]             H7      -pullup no
-set_io spi_d[7]             L8      -pullup no
+set_io spi_clk              L10
+set_io spi_cs_              K10
+set_io spi_d[0]             J9
+set_io spi_d[1]             K9
+set_io spi_d[2]             L7
+set_io spi_d[3]             K6
+set_io spi_d[4]             J7
+set_io spi_d[5]             K7
+set_io spi_d[6]             H7
+set_io spi_d[7]             L8
 
 set_io ctrl_clk             L10
 set_io ctrl_rst             K10

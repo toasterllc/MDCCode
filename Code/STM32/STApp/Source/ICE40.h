@@ -153,6 +153,11 @@ public:
     
     template <typename T>
     T read() {
+        // TODO: We need to ensure that IO0 outputs 1 while reading, otherwise the ICE40 will
+        //       interpret the data as an actual command.
+        //       Our 0xFF dummy byte at the end of each command, combined with a pullup resistor,
+        //       should protect us here, unless the SPI peripheral explicitly outputs a 0
+        //       (or random data) on IO0 during reading for some reason.
         T resp;
         static_assert(sizeof(resp) == 8);
         _qspi.read((void*)&resp, sizeof(resp));

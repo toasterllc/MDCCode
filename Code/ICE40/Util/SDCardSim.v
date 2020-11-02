@@ -75,7 +75,7 @@ module SDCardSim(
     
     reg recvWriteData = 0;
     reg sendReadData = 0;
-    
+    reg sendCMD6Data = 0;
     
     localparam CMD0     = {1'b0, 6'd0};     // GO_IDLE_STATE
     localparam CMD2     = {1'b0, 6'd2};     // ALL_SEND_CID
@@ -208,118 +208,121 @@ module SDCardSim(
                 end
                 
                 // Issue response if needed
-                if (cmdIn_cmdIndex) begin
-                    case (cmd)
-                    
-                    CMD2: begin
-                        respOut=136'h3f0353445352313238808bb79d66014677;
-                        respLen=136;
-                    end
-                    
-                    CMD3: begin
-                        rca = 16'hAAAA;
-                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD6: begin
-                        respOut=136'h0600000900ddffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD7: begin
-                        if (cmdIn_rca !== rca) begin
-                            $display("[SD CARD] CMD7: Bad RCA received: %h ❌", cmdIn_rca);
-                            `Finish;
-                        end
-                        respOut=136'h070000070075ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD8: begin
-                        respOut=136'h08000001aa13ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD11: begin
-                        respOut=136'h0B0000070081ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD12: begin
-                        // TODO: make this a real CMD12 response. right now it's a CMD3 response.
-                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD18: begin
-                        // TODO: make this a real CMD18 response. right now it's a CMD3 response.
-                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD25: begin
-                        // TODO: make this a real CMD18 response. right now it's a CMD3 response.
-                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    CMD55: begin
-                        // TODO: uncomment -- we need this check, but disabled it for the case where we don't do the initialization sequence (because we assume the SD card was already initialized)
-                        // if (cmdIn_rca !== rca) begin
-                        //     $display("[SD CARD] CMD55: Bad RCA received: %h ❌", cmdIn_rca);
-                        //     `Finish;
-                        // end
-                        respOut=136'h370000012083ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    ACMD6: begin
-                        respOut=136'h0600000920b9ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    ACMD23: begin
-                        if (!cmdIn_arg[22:0]) begin
-                            $display("[SD CARD] ACMD23: Zero block count received ❌");
-                            `Finish;
-                        end
-                        // TODO: make this a real ACMD23 response. right now it's a CMD3 response.
-                        respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
-                        respLen=48;
-                    end
-                    
-                    ACMD41: begin
-                        if ($urandom % 2) begin
-                            $display("[SD CARD] ACMD41: card busy");
-                            respOut=136'h3f00ff8080ffffffffffffffffffffffff;
-                        end
-                        else begin
-                            $display("[SD CARD] ACMD41: card ready");
-                            respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
-                        end
-                        respLen=48;
-                    end
-                    
-                    default: begin
-                        $display("[SD CARD] BAD COMMAND: CMD%0d (%b)", cmdIn_cmdIndex, cmd);
+                case (cmd)
+                CMD0: begin
+                    respLen=0;
+                end
+                
+                CMD2: begin
+                    respOut=136'h3f0353445352313238808bb79d66014677;
+                    respLen=136;
+                end
+                
+                CMD3: begin
+                    rca = 16'hAAAA;
+                    respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD6: begin
+                    respOut=136'h0600000900ddffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD7: begin
+                    if (cmdIn_rca !== rca) begin
+                        $display("[SD CARD] CMD7: Bad RCA received: %h ❌", cmdIn_rca);
                         `Finish;
                     end
-                    endcase
-                    
-                    // Signal busy (DAT=0) if we were previously writing,
-                    // and we received the stop command
-                    signalBusy = (cmd===CMD12 && recvWriteData);
-                    if (signalBusy) begin
-                        wait(sd_clk);
-                        wait(!sd_clk);
-                        
-                        wait(sd_clk);
-                        wait(!sd_clk);
-                        
-                        datOut[0] = 0;
+                    respOut=136'h070000070075ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD8: begin
+                    respOut=136'h08000001aa13ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD11: begin
+                    respOut=136'h0B0000070081ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD12: begin
+                    // TODO: make this a real CMD12 response. right now it's a CMD3 response.
+                    respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD18: begin
+                    // TODO: make this a real CMD18 response. right now it's a CMD3 response.
+                    respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD25: begin
+                    // TODO: make this a real CMD18 response. right now it's a CMD3 response.
+                    respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                CMD55: begin
+                    // TODO: uncomment -- we need this check, but disabled it for the case where we don't do the initialization sequence (because we assume the SD card was already initialized)
+                    // if (cmdIn_rca !== rca) begin
+                    //     $display("[SD CARD] CMD55: Bad RCA received: %h ❌", cmdIn_rca);
+                    //     `Finish;
+                    // end
+                    respOut=136'h370000012083ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                ACMD6: begin
+                    respOut=136'h0600000920b9ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                ACMD23: begin
+                    if (!cmdIn_arg[22:0]) begin
+                        $display("[SD CARD] ACMD23: Zero block count received ❌");
+                        `Finish;
                     end
+                    // TODO: make this a real ACMD23 response. right now it's a CMD3 response.
+                    respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
+                    respLen=48;
+                end
+                
+                ACMD41: begin
+                    if ($urandom % 2) begin
+                        $display("[SD CARD] ACMD41: card busy");
+                        respOut=136'h3f00ff8080ffffffffffffffffffffffff;
+                    end
+                    else begin
+                        $display("[SD CARD] ACMD41: card ready");
+                        respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
+                    end
+                    respLen=48;
+                end
+                
+                default: begin
+                    $display("[SD CARD] BAD COMMAND: CMD%0d (%b)", cmdIn_cmdIndex, cmd);
+                    `Finish;
+                end
+                endcase
+                
+                // Signal busy (DAT=0) if we were previously writing,
+                // and we received the stop command
+                signalBusy = (cmd===CMD12 && recvWriteData);
+                if (signalBusy) begin
+                    wait(sd_clk);
+                    wait(!sd_clk);
                     
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    datOut[0] = 0;
+                end
+                
+                if (respLen) begin
                     // Wait a random number of clocks before providing response
                     count = ($urandom%10)+1;
                     $display("[SD CARD] Response: delaying %0d clocks", count);
@@ -344,54 +347,29 @@ module SDCardSim(
                         cmdOut = respOut[135];
                         respOut = respOut<<1;
                         
-                        // Start sending the data on the DAT lines after a random number of cycles
-                        if (cmd===CMD18 && i===count) begin
-                            sendReadData = 1;
+                        // Start sending data on the DAT lines after a random number of cycles
+                        if (i === count) begin
+                            case (cmd)
+                            CMD6:   sendCMD6Data = 1;
+                            CMD18:  sendReadData = 1;
+                            endcase
                         end
                         
                         wait(sd_clk);
                     end
                 end
+                
+                
+                
+                
+                
+                
+                
+                
                 wait(!sd_clk);
                 cmdOut = 1'bz;
                 
                 case (cmd)
-                CMD6: begin
-                    reg[511:0] datOutReg;
-                    
-                    datOutReg = 512'h00000000_00000000_00000000_00000000_03000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
-                    
-                    // Start bit
-                    datOut = 4'b0000;
-                    wait(sd_clk);
-                    wait(!sd_clk);
-                    
-                    // Payload
-                    for (i=0; i<128; i++) begin
-                        datOut = datOutReg[511:508];
-                        wait(sd_clk);
-                        wait(!sd_clk);
-                        datOutReg = datOutReg<<4;
-                    end
-                    
-                    // CRC
-                    for (i=0; i<16; i++) begin
-                        datOut = 4'b0000;
-                        wait(sd_clk);
-                        wait(!sd_clk);
-                    end
-                    
-                    // End bit
-                    datOut = 4'b1111;
-                    wait(sd_clk);
-                    wait(!sd_clk);
-                    
-                    // Let go of DAT lines
-                    datOut = 4'bzzzz;
-                    wait(sd_clk);
-                    wait(!sd_clk);
-                end
-                
                 CMD11: begin
                     // Drive CMD/DAT lines low
                     cmdOut = 0;
@@ -439,9 +417,6 @@ module SDCardSim(
             wait(!sd_clk);
         end
     end
-    
-    
-    
     
     
     // ====================
@@ -685,7 +660,7 @@ module SDCardSim(
                 // Shift out data
                 $display("[SD CARD] Sending read data");
                 
-                for (i=0; i<128 && sendReadData; i++) begin
+                for (i=0; i<1024 && sendReadData; i++) begin
                     datOutReg = i;
                     for (ii=0; ii<8 && sendReadData; ii++) begin
                         // $display("[SD CARD] Sending bit: %b", datOut);
@@ -745,6 +720,89 @@ module SDCardSim(
                 wait(sd_clk);
             end
             
+            wait(!sd_clk);
+        end
+    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // ====================
+    // Handle CMD6 DAT output
+    // ====================
+    initial begin
+        forever begin
+            wait(sd_clk);
+            if (sendCMD6Data) begin
+                reg[511:0] datOutReg;
+                reg[10:0] i;
+                
+                $display("[SD CARD] Sending CMD6 response");
+                wait(!sd_clk);
+                dat_crcRst_ = 1;
+                
+                // datOutReg = 512'h00000000_00000000_00000000_00000000_03000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
+                
+                // datOutReg = {512{1'bx}};
+                datOutReg = ~0;
+                
+                // Start bit
+                datOut = 4'b0000;
+                wait(sd_clk);
+                wait(!sd_clk);
+                
+                // Payload
+                for (i=0; i<128; i++) begin
+                    datOut = datOutReg[511:508];
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    datOutReg = datOutReg<<4;
+                end
+                
+                // CRC
+                dat_ourCRCReg[3] = dat_crc[3];
+                dat_ourCRCReg[2] = dat_crc[2];
+                dat_ourCRCReg[1] = dat_crc[1];
+                dat_ourCRCReg[0] = dat_crc[0];
+                
+                $display("[SD CARD] CMD6 DatOut CRC3: %h", dat_ourCRCReg[3]);
+                $display("[SD CARD] CMD6 DatOut CRC2: %h", dat_ourCRCReg[2]);
+                $display("[SD CARD] CMD6 DatOut CRC1: %h", dat_ourCRCReg[1]);
+                $display("[SD CARD] CMD6 DatOut CRC0: %h", dat_ourCRCReg[0]);
+                
+                // Shift out CRC
+                for (i=0; i<16; i++) begin
+                    datOut = {dat_ourCRCReg[3][15], dat_ourCRCReg[2][15], dat_ourCRCReg[1][15], dat_ourCRCReg[0][15]};
+                    // datOut = 4'bxxxx;
+                    
+                    dat_ourCRCReg[3] = dat_ourCRCReg[3]<<1;
+                    dat_ourCRCReg[2] = dat_ourCRCReg[2]<<1;
+                    dat_ourCRCReg[1] = dat_ourCRCReg[1]<<1;
+                    dat_ourCRCReg[0] = dat_ourCRCReg[0]<<1;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                end
+                
+                // End bit
+                datOut = 4'b1111;
+                wait(sd_clk);
+                wait(!sd_clk);
+                
+                // Let go of DAT lines
+                datOut = 4'bzzzz;
+                wait(sd_clk);
+                wait(!sd_clk);
+                
+                sendCMD6Data = 0;
+                
+                dat_crcRst_ = 0;
+            end
             wait(!sd_clk);
         end
     end
