@@ -279,7 +279,7 @@ module Top(
     reg sd_datInCRCStatusOKReg = 0;
     reg[1:0] sd_datOutIdleReg = 0; // 2 bits -- see explanation where it's assigned
     
-    reg[1:0] sd_datInState = 0;
+    reg[4:0] sd_datInState = 0;
     reg sd_datInStateInit = 0;
     reg sd_datInGo = 0;
     wire[3:0] sd_datIn;
@@ -288,6 +288,8 @@ module Top(
     wire[3:0] sd_datInCRC;
     reg sd_datInRecv = 0;
     reg sd_datInCRCErr = 0;
+    reg[6:0] sd_datInCounter = 0;
+    reg[3:0] sd_datInCRCCounter = 0;
     
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     
@@ -510,15 +512,19 @@ module Top(
         
         
         
-        
+        // TODO: test traditional state machine style (like the DatOut state machine) vs this one-hot style, and use the faster one
         // ====================
         // DatIn State Machine
         // ====================
         sd_datInState <= sd_datInState<<1|!sd_datInStateInit|sd_datInState[$size(sd_datInState)-1];
         sd_datInStateInit <= 1;
         sd_datInReg <= (sd_datInReg<<4)|(sd_datOutActive[2] ? 4'b1111 : {sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]});
+        sd_datInCounter <= sd_datInCounter-1;
+        sd_datInCRCCounter <= sd_datInCRCCounter-1;
         case (sd_datInState)
         0: begin
+            sd_datInCounter <= 0;
+            sd_datInCRCEn <= 0;
             if (sd_datInGo && !sd_datInReg[0]) begin
                 
             
@@ -529,7 +535,36 @@ module Top(
         end
         
         1: begin
+            sd_datInCRCEn <= 1;
+            if (sd_datInCounter) begin
+                // Stay in this state
+                sd_datInState[2:1] <= sd_datInState[2:1];
+            end
+        end
+        
+        2: begin
+            sd_datInCRCEn <= 0;
+            sd_datInCRCCounter <= 15;
+        end
+        
+        3: begin
+            if (sd_datInCRC !== sd_datInReg[3:0]) begin
+                $display("[SD-CTRL:DATIN] Bad CRC ❌");
+                sd_datInCRCErr <= 1;
+            end
             
+            if (sd_datInCRCCounter) begin
+                // Stay in this state
+                sd_datInState[4:3] <= sd_datInState[4:3];
+            end
+        end
+        
+        4: begin
+            if (sd_datInReg[3:0] === 4'b1111) begin
+                $display("[SD-CTRL:DATIN] Good end bit ✅");
+            end else begin
+                $display("[SD-CTRL:DATIN] Bad end bit ❌");
+            end
         end
         endcase
     end
