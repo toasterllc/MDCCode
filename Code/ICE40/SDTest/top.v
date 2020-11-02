@@ -286,7 +286,7 @@ module Top(
     wire[3:0] sd_datIn;
     reg[19:0] sd_datInReg = 0;
     reg sd_datInCRCEn = 0;
-    wire[3:0] sd_datInCRC = sd_datOutCRC;
+    wire[3:0] sd_datInCRC;
     reg sd_datInRecv = 0;
     reg sd_datInCRCErr = 0;
     reg[6:0] sd_datInCounter = 0;
@@ -781,24 +781,24 @@ module Top(
     // CRC: sd_cmdOutCRC
     // ====================
     CRC7 #(
-        .Delay(-1)
+        .DelayA(-1)
     ) CRC7_sd_cmdOutCRC(
         .clk(sd_clk_int),
         .en(sd_cmdOutCRCEn),
         .din(sd_cmdRespShiftReg[47]),
-        .dout(sd_cmdOutCRC)
+        .doutA(sd_cmdOutCRC)
     );
     
     // ====================
     // CRC: sd_respCRC
     // ====================
     CRC7 #(
-        .Delay(1)
+        .DelayA(1)
     ) CRC7_sd_respCRC(
         .clk(sd_clk_int),
         .en(sd_respCRCEn),
         .din(sd_cmdRespShiftReg[0]),
-        .dout(sd_respCRC)
+        .doutA(sd_respCRC)
     );
     
     // ====================
@@ -806,12 +806,14 @@ module Top(
     // ====================
     for (i=0; i<4; i=i+1) begin
         CRC16 #(
-            .Delay(1)
+            .DelayA(-1),    // DatOut
+            .DelayB(1)      // DatIn
         ) CRC16_sd_datOutCRC(
             .clk(sd_clk_int),
             .en(sd_datOutActive[0] ? sd_datOutCRCEn : sd_datInCRCEn),
             .din(sd_datOutActive[0] ? sd_datOutReg[16+i] : sd_datInReg[i]),
-            .dout(sd_datOutCRC[i])
+            .doutA(sd_datOutCRC[i]),
+            .doutB(sd_datInCRC[i])
         );
     end
 endmodule
@@ -1028,72 +1030,72 @@ module Testbench();
         
         
         
-        // // Disable SD clock
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
-        //
-        // // Set SD clock source = fast clock
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
-        //
-        // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        // SendSDCmd(CMD55, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
-        // SendSDCmd(ACMD23, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b1);
-        //
-        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmd(CMD25, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
-        //
-        // // Clock out data on DAT lines
-        // SendMsg(`Msg_Cmd_SDDatOut, 0);
-        //
-        // // Wait some pre-determined amount of time that guarantees
-        // // that we've started writing to the SD card.
-        // #1000;
-        //
-        // // Wait until we're done clocking out data on DAT lines
-        // $display("[EXT] Waiting while data is written...");
-        // do begin
-        //     // Request SD status
-        //     SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
-        // end while(!resp[`Resp_Range_SDDatOutIdle]);
-        // $display("[EXT] Done writing");
-        //
-        // // Check CRC status
-        // if (resp[`Resp_Range_SDDatOutCRCErr] === 1'b0) begin
-        //     $display("[EXT] DatOut CRC OK ✅");
-        // end else begin
-        //     $display("[EXT] DatOut CRC bad ❌");
-        // end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         // Disable SD clock
         SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
 
         // Set SD clock source = fast clock
         SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
 
-        // Send SD command CMD6 (SWITCH_FUNC)
-        SendSDCmd(CMD6, SD_RESP_TRUE, SD_DAT_IN_TRUE, 32'h80FFFFF3);
-        $display("[EXT] Waiting for DatIn to complete...");
+        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        SendSDCmd(CMD55, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
+        SendSDCmd(ACMD23, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b1);
+
+        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        SendSDCmd(CMD25, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
+
+        // Clock out data on DAT lines
+        SendMsg(`Msg_Cmd_SDDatOut, 0);
+
+        // Wait some pre-determined amount of time that guarantees
+        // that we've started writing to the SD card.
+        #1000;
+
+        // Wait until we're done clocking out data on DAT lines
+        $display("[EXT] Waiting while data is written...");
         do begin
             // Request SD status
             SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
-        end while(!resp[`Resp_Range_SDDatInRecv]);
-        $display("[EXT] DatIn completed");
+        end while(!resp[`Resp_Range_SDDatOutIdle]);
+        $display("[EXT] Done writing");
 
-        // Check DatIn CRC status
-        if (resp[`Resp_Range_SDDatInCRCErr] === 1'b0) begin
-            $display("[EXT] DatIn CRC OK ✅");
+        // Check CRC status
+        if (resp[`Resp_Range_SDDatOutCRCErr] === 1'b0) begin
+            $display("[EXT] DatOut CRC OK ✅");
         end else begin
-            $display("[EXT] DatIn CRC bad ❌");
+            $display("[EXT] DatOut CRC bad ❌");
         end
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        // // Disable SD clock
+        // SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
+        //
+        // // Set SD clock source = fast clock
+        // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
+        //
+        // // Send SD command CMD6 (SWITCH_FUNC)
+        // SendSDCmd(CMD6, SD_RESP_TRUE, SD_DAT_IN_TRUE, 32'h80FFFFF3);
+        // $display("[EXT] Waiting for DatIn to complete...");
+        // do begin
+        //     // Request SD status
+        //     SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
+        // end while(!resp[`Resp_Range_SDDatInRecv]);
+        // $display("[EXT] DatIn completed");
+        //
+        // // Check DatIn CRC status
+        // if (resp[`Resp_Range_SDDatInCRCErr] === 1'b0) begin
+        //     $display("[EXT] DatIn CRC OK ✅");
+        // end else begin
+        //     $display("[EXT] DatIn CRC bad ❌");
+        // end
         
         
         
