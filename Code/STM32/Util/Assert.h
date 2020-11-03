@@ -6,7 +6,7 @@ inline void Assert(bool x) {
     if (!x) Abort();
 }
 
-//#define AssertArg(x)
-inline void AssertArg(bool x) {
-    if (!x) Abort();
-}
+#define AssertArg(x)
+//inline void AssertArg(bool x) {
+//    if (!x) Abort();
+//}

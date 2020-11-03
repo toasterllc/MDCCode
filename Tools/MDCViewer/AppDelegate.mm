@@ -27,7 +27,7 @@ using namespace MDCImageLayerTypes;
     const size_t imageLen = width*height*sizeof(ImagePixel);
 //    NSString* fileName = @"TestPattern.bin";
 //    NSString* fileName = @"Photo1.bin";
-    NSString* fileName = @"Photo2.bin";
+    NSString* fileName = @"Photo6.bin";
     NSData* imageData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:fileName ofType:nil]];
     assert([imageData length] >= imageLen);
     auto pixels = std::make_unique<ImagePixel[]>(width*height);
