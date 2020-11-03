@@ -542,7 +542,9 @@ module SDCardSim(
                 
                 // Send CRC status token
                 if (recvWriteData) begin
+                    
                     // Wait 2 cycles before sending CRC status
+                    // SD spec: "Note that the CRC response output is always two clocks after the end of data"
                     wait(sd_clk);
                     wait(!sd_clk);
                     
@@ -595,7 +597,7 @@ module SDCardSim(
                     end
                     
                     // Send busy signal for a random number of cycles
-                    count = $urandom%10;
+                    count = $urandom%16;
                     if (count) begin
                         // Start bit
                         datOut = 4'b0000;

@@ -53,7 +53,7 @@ module Top();
         wait(!clk);
         crc_rst_ = 1;
         
-        repeat (128) begin
+        repeat (1024) begin
             wait(clk);
             wait(!clk);
             crc_din = crc_din<<1;

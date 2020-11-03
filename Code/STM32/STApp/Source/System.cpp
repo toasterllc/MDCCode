@@ -92,7 +92,7 @@ void System::_handleEvent() {
     
     uint16_t rca = 0;
     
-    for (int i=0; i<10; i++) HAL_Delay(1000);
+//    for (int i=0; i<10; i++) HAL_Delay(1000);
     
     _led0.write(1);
     
@@ -174,6 +174,7 @@ void System::_handleEvent() {
         //   Send interface condition
         // ====================
         {
+            // TODO: this failed at one point. Try different binaries generated with BuildAndFlash and see if we can get it to fail again...
             auto status = _sendSDCmd(8, 0x000001AA, SDOptions::RespExpected);
             Assert(!status.sdRespCRCErr());
             Assert(status.getBits(15,8) == 0xAA); // Verify the response pattern is what we sent
@@ -345,7 +346,9 @@ void System::_handleEvent() {
             // Group 3 (Driver Strength)   = 0xF (no change)
             // Group 2 (Command System)    = 0xF (no change)
             // Group 1 (Access Mode)       = 0x3 (SDR104)
-            _sendSDCmd(6, 0x80FFFFF3, SDOptions::RespExpected|SDOptions::DatInExpected);
+            auto status = _sendSDCmd(6, 0x80FFFFF3, SDOptions::RespExpected|SDOptions::DatInExpected);
+            Assert(!status.sdRespCRCErr());
+            Assert(!status.sdDatInCRCErr());
         }
         
         // Disable SD clock
@@ -355,7 +358,9 @@ void System::_handleEvent() {
         
         // Enable SD fast clock
         {
-            ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
+            // TODO: switch back to fast clock again
+//            ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));            
+            ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
         }
     }
     volatile uint32_t Phase6Duration = HAL_GetTick()-start;
