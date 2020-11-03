@@ -55,8 +55,10 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::
     ice40.write(SDSendCmdMsg(sdCmd, sdArg, options));
     
     // Wait for command to be sent
-    for (uint8_t i=0;; i++) { // TODO: remove
-        Assert(i < 100); // TODO: remove
+    const uint32_t MaxAttempts = 200;
+    for (uint32_t i=0;; i++) {
+        Assert(i < MaxAttempts); // TODO: improve error handling
+        if (i >= 10) HAL_Delay(1);
         auto status = _getSDStatus();
         // Continue if the command hasn't been sent yet
         if (!status.sdCmdSent()) continue;
@@ -70,81 +72,17 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::
 
 void System::_handleEvent() {
 
-//    bool on = false;
-//    for (;;) {
-//        HAL_Delay(1);
-//        _led0.write(on);
-//        on = !on;
-//    }
-    
-//    char str[] = "abcdefg";
-//    ICE40::EchoMsg msg(str);
-//    ice40.write(msg);
-//    ICE40::EchoResp resp = ice40.read<ICE40::EchoResp>();
-//    if (memcmp(status.payload, str, sizeof(str))) {
-//        for (;;);
-//    }
-//    return;
-    
+    using EchoMsg = ICE40::EchoMsg;
     using SDOptions = ICE40::SDSendCmdMsg::Options;
     using SDSetClkSrcMsg = ICE40::SDSetClkSrcMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;
     
     uint16_t rca = 0;
     
-//    for (int i=0; i<10; i++) HAL_Delay(1000);
-    
-    _led0.write(1);
-    
-//    volatile uint32_t tickstart = HAL_GetTick();
-    
-//    // Disable SD clock
-//    {
-//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
-//    }
-//    
-//    // Switch to 1.8V with SDInit=false
-//    {
-//        ice40.write(SDSetInitMsg(false));
-//    }
-//    
-//    // Enable SD fast clock
-//    {
-//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
-//    }
-//    
-//    for (;;);
-    
-    
-    
-//    // Disable SD clock
-//    {
-//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
-//    }
-//    
-//    // Enable SD fast clock
-//    {
-//        ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
-//    }
-//    
-//    
-//    {
-//        for (;;) {
-//            _sendSDCmd(0, 0);
-//        }
-//    }
-    
-    
-    
-    
-//    ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::None));
-//    HAL_Delay(100);
-//    ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
-//    _sendSDCmd(0, 0);
-//    
-//    
-//    for (;;);
-    
+    char str[] = "halla";
+    ice40.write(EchoMsg(str));
+    auto status = ice40.read<ICE40::EchoResp>();
+    Assert(!strcmp((char*)status.payload, str));
     
     volatile uint32_t start = HAL_GetTick();
     {
@@ -359,8 +297,8 @@ void System::_handleEvent() {
         // Enable SD fast clock
         {
             // TODO: switch back to fast clock again
-//            ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));            
-            ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
+            ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Fast));
+//            ice40.write(SDSetClkSrcMsg(SDSetClkSrcMsg::ClkSrc::Slow));
         }
     }
     volatile uint32_t Phase6Duration = HAL_GetTick()-start;
@@ -380,7 +318,7 @@ void System::_handleEvent() {
                 auto status = _sendSDCmd(55, ((uint32_t)rca)<<16, SDOptions::RespExpected);
                 Assert(!status.sdRespCRCErr());
             }
-
+            
             // CMD23
             {
                 auto status = _sendSDCmd(23, 0x00000001, SDOptions::RespExpected);
@@ -425,7 +363,7 @@ void System::_handleEvent() {
     }
     volatile uint32_t Phase7Duration = HAL_GetTick()-start;
     
-    _led0.write(0);
+    _led0.write(1);
 //    volatile uint32_t duration = HAL_GetTick()-tickstart;
     for (;;);
 }
