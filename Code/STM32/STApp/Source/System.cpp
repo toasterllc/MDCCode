@@ -55,7 +55,7 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::
     ice40.write(SDSendCmdMsg(sdCmd, sdArg, options));
     
     // Wait for command to be sent
-    const uint32_t MaxAttempts = 200;
+    const uint32_t MaxAttempts = 1000;
     for (uint32_t i=0;; i++) {
         Assert(i < MaxAttempts); // TODO: improve error handling
         if (i >= 10) HAL_Delay(1);
@@ -303,9 +303,7 @@ void System::_handleEvent() {
     }
     volatile uint32_t Phase6Duration = HAL_GetTick()-start;
     
-    
-    start = HAL_GetTick();
-    {
+    for (bool on=true;; on=!on) {
         // ====================
         // ACMD23 | SET_WR_BLK_ERASE_COUNT
         //   State: Transfer -> Transfer
@@ -360,10 +358,26 @@ void System::_handleEvent() {
                 // Busy
             }
         }
+        
+        // ====================
+        // CMD12 | STOP_TRANSMISSION
+        //   State: Receive Data -> Programming
+        //   Finish writing
+        // ====================
+        {
+            auto status = _sendSDCmd(12, 0, SDOptions::RespExpected);
+            Assert(!status.sdRespCRCErr());
+            // Wait until the SD card stops being busy
+            for (;;) {
+                if (status.sdDat() & 0x01) break; // Break if the SD card isn't busy (busy == DAT0=0)
+                status = _getSDStatus();
+            }
+        }
+        
+        _led0.write(on);
+        HAL_Delay(100);
     }
-    volatile uint32_t Phase7Duration = HAL_GetTick()-start;
     
-    _led0.write(1);
 //    volatile uint32_t duration = HAL_GetTick()-tickstart;
     for (;;);
 }

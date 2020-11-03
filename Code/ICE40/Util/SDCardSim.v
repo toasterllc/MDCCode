@@ -402,7 +402,7 @@ module SDCardSim(
                 // Stop signaling busy, if we were signaling busy
                 if (signalBusy) begin
                     // Wait a random number of clocks before de-asserting busy
-                    count = $urandom%10;
+                    count = $urandom%16;
                     for (i=0; i<count; i++) begin
                         wait(sd_clk);
                         wait(!sd_clk);
