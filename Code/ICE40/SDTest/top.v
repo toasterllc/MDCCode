@@ -127,31 +127,31 @@ module Top(
     //     .FILTER_RANGE(2)
     // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
     
-    // // ====================
-    // // Fast Clock (120 MHz)
-    // // ====================
-    // localparam FastClkFreq = 120_000_000;
-    // wire fastClk;
-    // ClockGen #(
-    //     .FREQ(FastClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(39),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(2)
-    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
-    
     // ====================
-    // Fast Clock (48 MHz)
+    // Fast Clock (120 MHz)
     // ====================
-    localparam FastClkFreq = 48_000_000;
+    localparam FastClkFreq = 120_000_000;
     wire fastClk;
     ClockGen #(
         .FREQ(FastClkFreq),
         .DIVR(0),
-        .DIVF(31),
-        .DIVQ(4),
+        .DIVF(39),
+        .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    
+    // // ====================
+    // // Fast Clock (48 MHz)
+    // // ====================
+    // localparam FastClkFreq = 48_000_000;
+    // wire fastClk;
+    // ClockGen #(
+    //     .FREQ(FastClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(31),
+    //     .DIVQ(4),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
     
     // ====================
     // Slow Clock (400 kHz)
@@ -177,7 +177,7 @@ module Top(
     //   Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
     // ====================
     Delay #(
-        .Count(4)
+        .Count(0)
     ) Delay_sd_clk_int(
         .in(sd_clk_int),
         .out(sd_clk)
@@ -223,7 +223,7 @@ module Top(
     always @(posedge w_clk) begin
         case (w_state)
         0: begin
-            w_sdDatOutFifo_wdata <= 16'hFFFF;
+            w_sdDatOutFifo_wdata <= 0;
             // w_sdDatOutFifo_wdata <= 8'hFF;
             w_sdDatOutFifo_wtrigger <= 0;
             w_counter <= 0;
@@ -236,15 +236,14 @@ module Top(
         1: begin
             if (w_sdDatOutFifo_wok) begin
                 w_counter <= w_counter+1;
-                w_sdDatOutFifo_wdata <= 16'hFFFF;
-                // w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
+                w_sdDatOutFifo_wdata <= w_sdDatOutFifo_wdata+1;
             end
 `ifdef SIM
-            if (w_counter === 'hFE) begin
+            if (w_counter === 'h800-2) begin
 `else
-            // if (w_counter === 'h7FFFFE) begin
-            if (w_counter === 'hFE) begin
+            if (w_counter === (2304*1296)-2) begin
 `endif
+            // if (w_counter === 'hFE) begin
                 w_state <= 0;
             end
         end
