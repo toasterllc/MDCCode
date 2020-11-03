@@ -28,17 +28,14 @@
 `define Msg_Range_Arg                   55:0
 
 `define Msg_Cmd_Echo                    `Msg_Len_Cmd'h00
-`define Msg_Cmd_SDSetClkDelay           `Msg_Len_Cmd'h01
-`define Msg_Cmd_SDSetClkSrc             `Msg_Len_Cmd'h02
-`define Msg_Cmd_SDSendCmd               `Msg_Len_Cmd'h03
-`define Msg_Cmd_SDGetStatus             `Msg_Len_Cmd'h04
-`define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h05
+`define Msg_Cmd_SDClkSet                `Msg_Len_Cmd'h01
+`define Msg_Cmd_SDSendCmd               `Msg_Len_Cmd'h02
+`define Msg_Cmd_SDGetStatus             `Msg_Len_Cmd'h03
+`define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h04
 `define Msg_Cmd_None                    `Msg_Len_Cmd'hFF
 
-// Msg_Cmd_SDSetClkDelay arguments
-`define MsgArg_Range_SDClkDelay         3:0
-
-// Msg_Cmd_SDSetClkSrc arguments
+// Msg_Cmd_SDClkSet arguments
+`define MsgArg_Range_SDClkDelay         5:2
 `define MsgArg_Range_SDClkFast          1:1
 `define MsgArg_Range_SDClkSlow          0:0
 
@@ -101,86 +98,86 @@ module Top(
     // // ====================
     // // Fast Clock (207 MHz)
     // // ====================
-    // localparam FastClkFreq = 207_000_000;
-    // wire fastClk;
+    // localparam ClkFastFreq = 207_000_000;
+    // wire clkFast;
     // ClockGen #(
-    //     .FREQ(FastClkFreq),
+    //     .FREQ(ClkFastFreq),
     //     .DIVR(1),
     //     .DIVF(68),
     //     .DIVQ(2),
     //     .FILTER_RANGE(1)
-    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    // ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clkFast));
     
     // // ====================
     // // Fast Clock (144 MHz)
     // // ====================
-    // localparam FastClkFreq = 144_000_000;
-    // wire fastClk;
+    // localparam ClkFastFreq = 144_000_000;
+    // wire clkFast;
     // ClockGen #(
-    //     .FREQ(FastClkFreq),
+    //     .FREQ(ClkFastFreq),
     //     .DIVR(0),
     //     .DIVF(23),
     //     .DIVQ(2),
     //     .FILTER_RANGE(2)
-    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    // ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clkFast));
     
     // // ====================
     // // Fast Clock (162 MHz)
     // // ====================
-    // localparam FastClkFreq = 162_000_000;
-    // wire fastClk;
+    // localparam ClkFastFreq = 162_000_000;
+    // wire clkFast;
     // ClockGen #(
-    //     .FREQ(FastClkFreq),
+    //     .FREQ(ClkFastFreq),
     //     .DIVR(0),
     //     .DIVF(26),
     //     .DIVQ(2),
     //     .FILTER_RANGE(2)
-    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    // ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clkFast));
     
     // ====================
     // Fast Clock (120 MHz)
     // ====================
-    localparam FastClkFreq = 120_000_000;
-    wire fastClk;
+    localparam ClkFastFreq = 120_000_000;
+    wire clkFast;
     ClockGen #(
-        .FREQ(FastClkFreq),
+        .FREQ(ClkFastFreq),
         .DIVR(0),
         .DIVF(39),
         .DIVQ(3),
         .FILTER_RANGE(2)
-    ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clkFast));
     
     // // ====================
     // // Fast Clock (48 MHz)
     // // ====================
-    // localparam FastClkFreq = 48_000_000;
-    // wire fastClk;
+    // localparam ClkFastFreq = 48_000_000;
+    // wire clkFast;
     // ClockGen #(
-    //     .FREQ(FastClkFreq),
+    //     .FREQ(ClkFastFreq),
     //     .DIVR(0),
     //     .DIVF(31),
     //     .DIVQ(4),
     //     .FILTER_RANGE(2)
-    // ) ClockGen_fastClk(.clkRef(clk24mhz), .clk(fastClk));
+    // ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clkFast));
     
     // ====================
     // Slow Clock (400 kHz)
     // ====================
-    localparam SlowClkFreq = 400000;
-    localparam SlowClkDividerWidth = $clog2(DivCeil(FastClkFreq, SlowClkFreq));
-    reg[SlowClkDividerWidth-1:0] slowClkDivider = 0;
-    wire slowClk = slowClkDivider[SlowClkDividerWidth-1];
-    always @(posedge fastClk) begin
-        slowClkDivider <= slowClkDivider+1;
+    localparam ClkSlowFreq = 400000;
+    localparam ClkSlowDividerWidth = $clog2(DivCeil(ClkFastFreq, ClkSlowFreq));
+    reg[ClkSlowDividerWidth-1:0] clkSlowDivider = 0;
+    wire clkSlow = clkSlowDivider[ClkSlowDividerWidth-1];
+    always @(posedge clkFast) begin
+        clkSlowDivider <= clkSlowDivider+1;
     end
     
     // ====================
     // sd_clk_int
     // ====================
-    `Sync(sd_clkSlow, ctrl_sdClkSlow, negedge, slowClk);
-    `Sync(sd_clkFast, ctrl_sdClkFast, negedge, fastClk);
-    wire sd_clk_int = (sd_clkSlow ? slowClk : (sd_clkFast ? fastClk : 0));
-    // wire sd_clk_int = fastClk;
+    `Sync(sd_clkSlow, ctrl_sdClkSlow, negedge, clkSlow);
+    `Sync(sd_clkFast, ctrl_sdClkFast, negedge, clkFast);
+    wire sd_clk_int = (sd_clkSlow ? clkSlow : (sd_clkFast ? clkFast : 0));
+    // wire sd_clk_int = clkFast;
     
     // ====================
     // sd_clk / sd_clkDelay
@@ -201,7 +198,7 @@ module Top(
     // ====================
     // w_clk
     // ====================
-    wire w_clk = slowClkDivider[0];
+    wire w_clk = clkSlowDivider[0];
     
     // ====================
     // SD Dat Out FIFO
@@ -679,15 +676,15 @@ module Top(
                 end
                 
                 // Set SD clock source
-                `Msg_Cmd_SDSetClkDelay: begin
-                    $display("[CTRL] Got Msg_Cmd_SDSetClkDelay: %0d", ctrl_msgArg[`MsgArg_Range_SDClkDelay]);
-                    ctrl_sdClkSlow <= ctrl_msgArg[0];
-                    ctrl_sdClkFast <= ctrl_msgArg[1];
-                end
-                
-                // Set SD clock source
-                `Msg_Cmd_SDSetClkSrc: begin
-                    $display("[CTRL] Got Msg_Cmd_SDSetClkSrc: fast=%b slow=%b", ctrl_msgArg[`MsgArg_Range_SDClkFast], ctrl_msgArg[`MsgArg_Range_SDClkSlow]);
+                `Msg_Cmd_SDClkSet: begin
+                    $display("[CTRL] Got Msg_Cmd_SDClkSet: delay=%0d fast=%b slow=%b",
+                        ctrl_msgArg[`MsgArg_Range_SDClkDelay],
+                        ctrl_msgArg[`MsgArg_Range_SDClkFast],
+                        ctrl_msgArg[`MsgArg_Range_SDClkSlow]);
+                    
+                    // We don't need to synchronize `sd_clkDelay` into the sd_ domain,
+                    // because it should only be set while the sd_ clock is disabled.
+                    sd_clkDelay <= ctrl_msgArg[`MsgArg_Range_SDClkDelay];
                     ctrl_sdClkFast <= ctrl_msgArg[`MsgArg_Range_SDClkFast];
                     ctrl_sdClkSlow <= ctrl_msgArg[`MsgArg_Range_SDClkSlow];
                 end
@@ -1039,7 +1036,7 @@ module Testbench();
         // $display("Got response: %h", resp);
         // $finish;
         
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
+        // SendMsg(`Msg_Cmd_SDClkSet, 2'b10);
         // SendSDCmd(CMD55, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
         // $finish;
         
@@ -1051,7 +1048,7 @@ module Testbench();
         
         
         // // Set SD clock source = slow clock
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b01);
+        // SendMsg(`Msg_Cmd_SDClkSet, 2'b01);
         //
         // // Send SD CMD0
         // SendSDCmd(CMD0, SD_RESP_FALSE, SD_DAT_IN_FALSE, 0);
@@ -1074,10 +1071,10 @@ module Testbench();
         
         
         // Disable SD clock
-        SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
+        SendMsg(`Msg_Cmd_SDClkSet, 0);
 
         // Set SD clock source = fast clock
-        SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
+        SendMsg(`Msg_Cmd_SDClkSet, 2'b10);
 
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         SendSDCmd(CMD55, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
@@ -1119,10 +1116,10 @@ module Testbench();
         
         
         // // Disable SD clock
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 0);
+        // SendMsg(`Msg_Cmd_SDClkSet, 0);
         //
         // // Set SD clock source = fast clock
-        // SendMsg(`Msg_Cmd_SDSetClkSrc, 2'b10);
+        // SendMsg(`Msg_Cmd_SDClkSet, 2'b10);
         //
         // // Send SD command CMD6 (SWITCH_FUNC)
         // SendSDCmd(CMD6, SD_RESP_TRUE, SD_DAT_IN_TRUE, 32'h80FFFFF3);
