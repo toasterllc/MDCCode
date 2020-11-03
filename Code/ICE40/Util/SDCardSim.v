@@ -152,7 +152,7 @@ module SDCardSim(
             cmdIn_ourCRC_rst_ = 0;
             
             wait(sd_clk);
-            if (sd_cmd !== 1'b1) begin
+            if (sd_cmd === 1'b0) begin
                 // Receive command
                 reg[10:0] i;
                 reg[10:0] count;
@@ -431,7 +431,7 @@ module SDCardSim(
                 reg crcOK;
                 
                 // Wait for start bit
-                while (sd_dat[0]===1'b1 && recvWriteData) begin
+                while (sd_dat[0]!==1'b0 && recvWriteData) begin
                     wait(!sd_clk);
                     wait(sd_clk);
                 end

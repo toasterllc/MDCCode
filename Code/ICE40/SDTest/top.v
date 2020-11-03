@@ -861,8 +861,8 @@ module Testbench();
     tri1        ctrl_do;
     
     wire        sd_clk;
-    tri1        sd_cmd;
-    tri1[3:0]   sd_dat;
+    wire        sd_cmd;
+    wire[3:0]   sd_dat;
     
     Top Top(.*);
     
@@ -1061,10 +1061,10 @@ module Testbench();
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         SendSDCmd(CMD55, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
         SendSDCmd(ACMD23, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b1);
-
+        
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
-
+        
         // Clock out data on DAT lines
         SendMsg(`Msg_Cmd_SDDatOut, 0);
 
