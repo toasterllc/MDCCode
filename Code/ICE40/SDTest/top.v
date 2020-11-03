@@ -8,6 +8,7 @@
 `include "../Util/CRC16.v"
 `include "../Util/BankFifo.v"
 `include "../Util/Delay.v"
+`include "../Util/VariableDelay.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
@@ -27,12 +28,21 @@
 `define Msg_Range_Arg                   55:0
 
 `define Msg_Cmd_Echo                    `Msg_Len_Cmd'h00
-`define Msg_Cmd_SDSetClkSrc             `Msg_Len_Cmd'h01
-`define Msg_Cmd_SDSendCmd               `Msg_Len_Cmd'h02
-`define Msg_Cmd_SDGetStatus             `Msg_Len_Cmd'h03
-`define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h04
+`define Msg_Cmd_SDSetClkDelay           `Msg_Len_Cmd'h01
+`define Msg_Cmd_SDSetClkSrc             `Msg_Len_Cmd'h02
+`define Msg_Cmd_SDSendCmd               `Msg_Len_Cmd'h03
+`define Msg_Cmd_SDGetStatus             `Msg_Len_Cmd'h04
+`define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h05
 `define Msg_Cmd_None                    `Msg_Len_Cmd'hFF
 
+// Msg_Cmd_SDSetClkDelay arguments
+`define MsgArg_Range_SDClkDelay         3:0
+
+// Msg_Cmd_SDSetClkSrc arguments
+`define MsgArg_Range_SDClkFast          1:1
+`define MsgArg_Range_SDClkSlow          0:0
+
+// Msg_Cmd_SDSendCmd arguments
 `define MsgArg_Range_SDDatInExpected    49:49
 `define MsgArg_Range_SDRespExpected     48:48
 `define MsgArg_Range_SDCmd              47:0
@@ -167,20 +177,24 @@ module Top(
     // ====================
     // sd_clk_int
     // ====================
-    `Sync(sdClkSlow, ctrl_sdClkSlow, negedge, slowClk);
-    `Sync(sdClkFast, ctrl_sdClkFast, negedge, fastClk);
-    wire sd_clk_int = (sdClkSlow ? slowClk : (sdClkFast ? fastClk : 0));
+    `Sync(sd_clkSlow, ctrl_sdClkSlow, negedge, slowClk);
+    `Sync(sd_clkFast, ctrl_sdClkFast, negedge, fastClk);
+    wire sd_clk_int = (sd_clkSlow ? slowClk : (sd_clkFast ? fastClk : 0));
     // wire sd_clk_int = fastClk;
     
     // ====================
-    // sd_clk
+    // sd_clk / sd_clkDelay
     //   Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
+    //   `sd_clkDelay` should only be set while `sd_clk_int` is stopped
     // ====================
-    Delay #(
-        // .Count(0)
-        .Count(11)
-    ) Delay_sd_clk_int(
+    localparam SDClkDelayCount = 16;
+    reg[$clog2(SDClkDelayCount)-1:0] sd_clkDelay = 0;
+    
+    VariableDelay #(
+        .Count(SDClkDelayCount)
+    ) VariableDelay_sd_clk_int(
         .in(sd_clk_int),
+        .sel(sd_clkDelay),
         .out(sd_clk)
     );
     
@@ -665,10 +679,17 @@ module Top(
                 end
                 
                 // Set SD clock source
-                `Msg_Cmd_SDSetClkSrc: begin
-                    $display("[CTRL] Got Msg_Cmd_SDSetClkSrc: %0d", ctrl_msgArg[1:0]);
+                `Msg_Cmd_SDSetClkDelay: begin
+                    $display("[CTRL] Got Msg_Cmd_SDSetClkDelay: %0d", ctrl_msgArg[`MsgArg_Range_SDClkDelay]);
                     ctrl_sdClkSlow <= ctrl_msgArg[0];
                     ctrl_sdClkFast <= ctrl_msgArg[1];
+                end
+                
+                // Set SD clock source
+                `Msg_Cmd_SDSetClkSrc: begin
+                    $display("[CTRL] Got Msg_Cmd_SDSetClkSrc: fast=%b slow=%b", ctrl_msgArg[`MsgArg_Range_SDClkFast], ctrl_msgArg[`MsgArg_Range_SDClkSlow]);
+                    ctrl_sdClkFast <= ctrl_msgArg[`MsgArg_Range_SDClkFast];
+                    ctrl_sdClkSlow <= ctrl_msgArg[`MsgArg_Range_SDClkSlow];
                 end
                 
                 // Clock out SD command
