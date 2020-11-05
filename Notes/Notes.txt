@@ -79,7 +79,7 @@
         √ Add a DatIn state machine (needed for CMD6)
             √ Similar to Resp state machine: specify whether DatIn is expected as the result of a command
             √ Add DatIn CRC checking
-                - Use separate CRC16 than DatOut because it's faster
+                √ Use separate CRC16 instance than DatOut because it's faster
         
         √ Add ability to specify whether a response is expected as the result of a command
             √ If so, start the Resp state machine
