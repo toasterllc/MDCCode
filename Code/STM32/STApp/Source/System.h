@@ -20,7 +20,9 @@ private:
     void _handleEvent();
     void _usbHandleEvent(const USB::Event& ev);
     ICE40::SDGetStatusResp _getSDStatus();
-    ICE40::SDGetStatusResp _sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::SDSendCmdMsg::Option options);
+    ICE40::SDGetStatusResp _sendSDCmd(uint8_t sdCmd, uint32_t sdArg,
+        ICE40::SDSendCmdMsg::RespType respType = ICE40::SDSendCmdMsg::RespTypes::Normal48,
+        ICE40::SDSendCmdMsg::DatInType datInType = ICE40::SDSendCmdMsg::DatInTypes::None);
     
     // LEDs
     GPIO _led0;

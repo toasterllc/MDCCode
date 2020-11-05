@@ -49,10 +49,13 @@ ICE40::SDGetStatusResp System::_getSDStatus() {
     return ice40.read<SDGetStatusResp>();
 }
 
-ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::SDSendCmdMsg::Option options) {
-    using SDOptions = ICE40::SDSendCmdMsg::Options;
+ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg,
+    ICE40::SDSendCmdMsg::RespType respType, ICE40::SDSendCmdMsg::DatInType datInType) {
+
+    using SDRespType = ICE40::SDSendCmdMsg::RespTypes;
+    using SDDatInType = ICE40::SDSendCmdMsg::DatInTypes;
     using SDSendCmdMsg = ICE40::SDSendCmdMsg;
-    ice40.write(SDSendCmdMsg(sdCmd, sdArg, options));
+    ice40.write(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
     // Wait for command to be sent
     const uint32_t MaxAttempts = 1000;
@@ -63,9 +66,9 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::
         // Continue if the command hasn't been sent yet
         if (!status.sdCmdSent()) continue;
         // Continue if we expect a response but it hasn't been received yet
-        if (options&SDOptions::RespExpected && !status.sdRespRecv()) continue;
+        if (respType!=SDRespType::None && !status.sdRespRecv()) continue;
         // Continue if we expect DatIn but it hasn't been received yet
-        if (options&SDOptions::DatInExpected && !status.sdDatInRecv()) continue;
+        if (datInType!=SDDatInType::None && !status.sdDatInRecv()) continue;
         return status;
     }
 }
@@ -73,7 +76,8 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg, ICE40::
 void System::_handleEvent() {
 
     using EchoMsg = ICE40::EchoMsg;
-    using SDOptions = ICE40::SDSendCmdMsg::Options;
+    using SDRespType = ICE40::SDSendCmdMsg::RespTypes;
+    using SDDatInType = ICE40::SDSendCmdMsg::DatInTypes;
     using SDSetClkMsg = ICE40::SDSetClkMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;
     
@@ -107,7 +111,8 @@ void System::_handleEvent() {
         //   Go to idle state
         // ====================
         {
-            _sendSDCmd(0, 0, SDOptions::None);
+            _sendSDCmd(0, 0, SDRespType::None);
+            // There's no response to CMD0
         }
         
         // ====================
@@ -116,8 +121,7 @@ void System::_handleEvent() {
         //   Send interface condition
         // ====================
         {
-            // TODO: this failed at one point. Try different binaries generated with BuildAndFlash and see if we can get it to fail again...
-            auto status = _sendSDCmd(8, 0x000001AA, SDOptions::RespExpected);
+            auto status = _sendSDCmd(8, 0x000001AA);
             Assert(!status.sdRespCRCErr());
             Assert(status.getBits(15,8) == 0xAA); // Verify the response pattern is what we sent
         }
@@ -138,14 +142,15 @@ void System::_handleEvent() {
             for (;;) {
                 // CMD55
                 {
-                    auto status = _sendSDCmd(55, 0, SDOptions::RespExpected);
+                    auto status = _sendSDCmd(55, 0);
                     Assert(!status.sdRespCRCErr());
                 }
                 
                 // CMD41
                 {
-                    auto status = _sendSDCmd(41, 0x51008000, SDOptions::RespExpected);
+                    auto status = _sendSDCmd(41, 0x51008000);
                     // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
+                    // TODO: should we be checking these reserved fields in the response? what if a future spec version changes the response values?
                     Assert(status.getBits(45,40) == 0x3F); // Command should be 6'b111111
                     Assert(status.getBits(7,1) == 0x7F); // CRC should be 7'b1111111
                     // Check if card is ready. If it's not, retry ACMD41.
@@ -172,7 +177,7 @@ void System::_handleEvent() {
         //   Switch to 1.8V signaling voltage
         // ====================
         {
-            auto status = _sendSDCmd(11, 0, SDOptions::RespExpected);
+            auto status = _sendSDCmd(11, 0);
             Assert(!status.sdRespCRCErr());
         }
         
@@ -211,13 +216,10 @@ void System::_handleEvent() {
         //   Get card identification number (CID)
         // ====================
         {
-            // TODO: we should specify that the response is 136 bits so we don't need the arbitrary delay, and we can check the CRC
-            _sendSDCmd(2, 0, SDOptions::RespExpected);
-            // Wait 1000us extra to allow the SD card to finish responding.
-            // The SD card response to CMD2 is 136 bits (instead of the typical 48 bits),
-            // so the SD card will still be responding at the time that the ice40 thinks
-            // that the response is complete.
-            HAL_Delay(1);
+            // The response to CMD2 is 136 bits, instead of the usual 48 bits
+            _sendSDCmd(2, 0, SDRespType::Long136);
+            // Don't check the CRC because the CRC isn't calculated in the typical manner,
+            // so it'll be flagged as incorrect
         }
         
         // ====================
@@ -226,7 +228,7 @@ void System::_handleEvent() {
         //   Publish a new relative address (RCA)
         // ====================
         {
-            auto status = _sendSDCmd(3, 0, SDOptions::RespExpected);
+            auto status = _sendSDCmd(3, 0);
             Assert(!status.sdRespCRCErr());
             // Get the card's RCA from the response
             rca = status.getBits(39, 24);
@@ -244,7 +246,7 @@ void System::_handleEvent() {
         //   Select card
         // ====================
         {
-            auto status = _sendSDCmd(7, ((uint32_t)rca)<<16, SDOptions::RespExpected);
+            auto status = _sendSDCmd(7, ((uint32_t)rca)<<16);
             Assert(!status.sdRespCRCErr());
         }
         
@@ -256,13 +258,13 @@ void System::_handleEvent() {
         {
             // CMD55
             {
-                auto status = _sendSDCmd(55, ((uint32_t)rca)<<16, SDOptions::RespExpected);
+                auto status = _sendSDCmd(55, ((uint32_t)rca)<<16);
                 Assert(!status.sdRespCRCErr());
             }
             
             // CMD6
             {
-                auto status = _sendSDCmd(6, 0x00000002, SDOptions::RespExpected);
+                auto status = _sendSDCmd(6, 0x00000002);
                 Assert(!status.sdRespCRCErr());
             }
         }
@@ -288,7 +290,7 @@ void System::_handleEvent() {
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
             // Group 1 (Access Mode)       = 0x3 (SDR104)
-            auto status = _sendSDCmd(6, 0x80FFFFF3, SDOptions::RespExpected|SDOptions::DatInExpected);
+            auto status = _sendSDCmd(6, 0x80FFFFF3, SDRespType::Normal48, SDDatInType::Block512);
             Assert(!status.sdRespCRCErr());
             Assert(!status.sdDatInCRCErr());
         }
@@ -321,13 +323,13 @@ void System::_handleEvent() {
         {
             // CMD55
             {
-                auto status = _sendSDCmd(55, ((uint32_t)rca)<<16, SDOptions::RespExpected);
+                auto status = _sendSDCmd(55, ((uint32_t)rca)<<16);
                 Assert(!status.sdRespCRCErr());
             }
             
             // CMD23
             {
-                auto status = _sendSDCmd(23, 0x00000001, SDOptions::RespExpected);
+                auto status = _sendSDCmd(23, 0x00000001);
                 Assert(!status.sdRespCRCErr());
             }
         }
@@ -338,7 +340,7 @@ void System::_handleEvent() {
         //   Write blocks of data
         // ====================
         {
-            auto status = _sendSDCmd(25, 0, SDOptions::RespExpected);
+            auto status = _sendSDCmd(25, 0);
             Assert(!status.sdRespCRCErr());
         }
         
@@ -376,7 +378,7 @@ void System::_handleEvent() {
         //   Finish writing
         // ====================
         {
-            auto status = _sendSDCmd(12, 0, SDOptions::RespExpected);
+            auto status = _sendSDCmd(12, 0);
             Assert(!status.sdRespCRCErr());
             // Wait until the SD card stops being busy
             for (;;) {

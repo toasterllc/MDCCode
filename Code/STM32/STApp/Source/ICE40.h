@@ -103,16 +103,21 @@ public:
     };
     
     struct SDSendCmdMsg : Msg {
-        Enum(uint8_t, Option, Options,
-            None            = 0,
-            RespExpected    = 1<<0,
-            DatInExpected   = 1<<1,
+        Enum(uint8_t, RespType, RespTypes,
+            None        = 0,
+            Normal48    = 1<<0,
+            Long136     = 1<<1,
         );
         
-        SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, Option options) {
+        Enum(uint8_t, DatInType, DatInTypes,
+            None        = 0,
+            Block512    = 1<<2,
+        );
+        
+        SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
             AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
             cmd = 0x02;
-            payload[0] = options;
+            payload[0] = respType|datInType;
             payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
             payload[2] = (sdArg&0xFF000000)>>24;
             payload[3] = (sdArg&0x00FF0000)>>16;

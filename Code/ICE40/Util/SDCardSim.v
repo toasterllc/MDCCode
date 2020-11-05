@@ -332,14 +332,25 @@ module SDCardSim(
                     end
                     
                     // respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
-                    $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
-                        respOut,
-                        respOut[135 : 134], // preamble
-                        respOut[133 : 128], // cmd
-                        respOut[127 :  96], // arg
-                        respOut[95  :  89], // crc
-                        respOut[88],        // end bit
-                    );
+                    if (respLen === 48) begin
+                        $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
+                            respOut,
+                            respOut[135 : 134], // preamble
+                            respOut[133 : 128], // cmd
+                            respOut[127 :  96], // arg
+                            respOut[95  :  89], // crc
+                            respOut[88],        // end bit
+                        );
+                    
+                    end else if (respLen === 136) begin
+                        $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, crc: %b, end: %b ]",
+                            respOut,
+                            respOut[135 : 134], // preamble
+                            respOut[133 : 128], // cmd
+                            respOut[7   :  1],  // crc
+                            respOut[0],         // end bit
+                        );
+                    end
                     
                     count = ($urandom%respLen);
                     for (i=0; i<respLen; i++) begin
