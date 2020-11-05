@@ -43,18 +43,12 @@ void System::init() {
 }
 
 ICE40::SDGetStatusResp System::_getSDStatus() {
-    using SDGetStatusMsg = ICE40::SDGetStatusMsg;
-    using SDGetStatusResp = ICE40::SDGetStatusResp;
     ice40.write(SDGetStatusMsg());
     return ice40.read<SDGetStatusResp>();
 }
 
 ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg,
-    ICE40::SDSendCmdMsg::RespType respType, ICE40::SDSendCmdMsg::DatInType datInType) {
-
-    using SDRespType = ICE40::SDSendCmdMsg::RespTypes;
-    using SDDatInType = ICE40::SDSendCmdMsg::DatInTypes;
-    using SDSendCmdMsg = ICE40::SDSendCmdMsg;
+    SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
     ice40.write(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
     // Wait for command to be sent
@@ -74,13 +68,6 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg,
 }
 
 void System::_handleEvent() {
-
-    using EchoMsg = ICE40::EchoMsg;
-    using SDRespType = ICE40::SDSendCmdMsg::RespTypes;
-    using SDDatInType = ICE40::SDSendCmdMsg::DatInTypes;
-    using SDSetClkMsg = ICE40::SDSetClkMsg;
-    using SDDatOutMsg = ICE40::SDDatOutMsg;
-    
     uint16_t rca = 0;
     
     char str[] = "halla";
