@@ -32,6 +32,7 @@
 `define Msg_Cmd_SDSendCmd               `Msg_Len_Cmd'h02
 `define Msg_Cmd_SDGetStatus             `Msg_Len_Cmd'h03
 `define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h04
+`define Msg_Cmd_SDGetDebugInfo          `Msg_Len_Cmd'h05
 `define Msg_Cmd_None                    `Msg_Len_Cmd'hFF
 
 // Msg_Cmd_SDClkSet arguments
@@ -47,6 +48,7 @@
 `define Resp_Len                        `Msg_Len
 `define Resp_Range_Arg                  63:0
 
+// Msg_Cmd_SDGetStatus response arguments
 `define Resp_Range_SDDat                63:60
 `define Resp_Range_SDCmdSent            59:59
 `define Resp_Range_SDRespRecv           58:58
@@ -60,6 +62,10 @@
 `define Resp_Range_SDFiller             52:48
 `define Resp_Range_SDResp               47:0
 
+// Msg_Cmd_SDGetDebugInfo response arguments
+`define Resp_Range_SDDebugDatInCRCStatusOK  5:5
+`define Resp_Range_SDDebugDatInCRCStatus    4:0
+
 module Top(
     input wire          clk24mhz,
     
@@ -70,9 +76,9 @@ module Top(
     
     output wire         sd_clk,
     inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat
+    inout wire[3:0]     sd_dat,
     
-    // output wire[3:0]    led
+    output reg[3:0]    led = 0
 );
     // ====================
     // Shared Nets/Registers
@@ -134,6 +140,20 @@ module Top(
     //     .FILTER_RANGE(2)
     // ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clkFast));
     
+    // // ====================
+    // // Fast Clock (192 MHz)
+    // // ====================
+    // localparam ClkFastFreq = 192_000_000;
+    // wire clkFast;
+    // ClockGen #(
+    //     .FREQ(ClkFastFreq),
+    //     .DIVR(0),
+    //     .DIVF(63),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clkFast));
+    
+    
     // ====================
     // Fast Clock (120 MHz)
     // ====================
@@ -187,6 +207,13 @@ module Top(
     localparam SDClkDelayCount = 16;
     reg[$clog2(SDClkDelayCount)-1:0] sd_clkDelay = 0;
     
+    // Delay #(
+    //     .Count(0)
+    // ) Delay_sd_clk_int(
+    //     .in(sd_clk_int),
+    //     .out(sd_clk)
+    // );
+    
     VariableDelay #(
         .Count(SDClkDelayCount)
     ) VariableDelay_sd_clk_int(
@@ -236,7 +263,7 @@ module Top(
         case (w_state)
         0: begin
             w_sdDatOutFifo_wdata <= 0;
-            // w_sdDatOutFifo_wdata <= 8'hFF;
+            // w_sdDatOutFifo_wdata <= 16'hFFFF;
             w_sdDatOutFifo_wtrigger <= 0;
             w_counter <= 0;
             if (w_sdDatOutTrigger) begin
@@ -307,6 +334,9 @@ module Top(
     wire sd_datInCRCStatusOK = sd_datInCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
     reg sd_datInCRCStatusOKReg = 0;
     reg[1:0] sd_datOutIdleReg = 0; // 2 bits -- see explanation where it's assigned
+    reg sd_datOutIdle = 0;
+    reg sd_debugDatInCRCStatusOK = 0;
+    reg[4:0] sd_debugDatInCRCStatus = 0;
     
     reg[4:0] sd_datInState = 0;
     reg sd_datInStateInit = 0;
@@ -440,6 +470,7 @@ module Top(
         sd_datOutStartBit <= 0; // Pulse
         sd_datOutEndBit <= 0; // Pulse
         sd_datOutIdleReg <= sd_datOutIdleReg<<1;
+        sd_datOutIdle <= &sd_datOutIdleReg;
         sd_datInCRCStatusOKReg <= sd_datInCRCStatusOK;
         sd_datOutReg <= sd_datOutReg<<4;
         if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_datOutFifo_rdata;
@@ -464,7 +495,7 @@ module Top(
             // we know that we're actually idle, since being in this state
             // more than one cycle implies that the FIFO's rok=0
             sd_datOutIdleReg[0] <= 1;
-            if (sd_datOutFifo_rok) begin
+            if (sd_datOutFifo_rok && !sd_datOutCRCErr) begin // TODO: remove sd_datOutCRCErr check after debugging
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
                 sd_datOutState <= 1;
             end
@@ -499,31 +530,36 @@ module Top(
             end
         end
         
-        // Check CRC status token
+        // Disable DatOut after we finish outputting the CRC,
+        // and wait for the CRC status from the card.
         4: begin
             sd_datOutCRCOutEn <= 0;
             if (sd_datOutCRCCounter === 14) begin
                 sd_datOutActive[0] <= 0;
             end
             
-            if (sd_datOutCRCCounter === 4) begin
+            if (!sd_datInReg[16]) begin
+                sd_debugDatInCRCStatusOK <= sd_datInCRCStatusOK;
+                sd_debugDatInCRCStatus <= sd_datInCRCStatus;
                 sd_datOutState <= 5;
             end
         end
         
-        // Wait until the card stops being busy (busy == DAT0 low)
+        // Check CRC status token
         5: begin
-            $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusOKReg: %b", sd_datInCRCStatusOKReg);
+            $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusOKReg: %b (sd_debugDatInCRCStatusOK: %b, sd_debugDatInCRCStatus: %b)", sd_datInCRCStatusOKReg, sd_debugDatInCRCStatusOK, sd_debugDatInCRCStatus);
             // 5 bits: start bit, CRC status, end bit
             if (sd_datInCRCStatusOKReg) begin
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
             end else begin
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusOKReg);
                 sd_datOutCRCErr <= 1;
+                led[3:0] <= 4'b1111;
             end
             sd_datOutState <= 6;
         end
         
+        // Wait until the card stops being busy (busy == DAT0 low)
         6: begin
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
@@ -636,7 +672,6 @@ module Top(
     // +5 for delay states, so that clients send an extra byte before receiving the response
     reg[`Resp_Len+5-1:0] ctrl_doutReg = 0;
     
-    wire sd_datOutIdle = &sd_datOutIdleReg;
     `ToggleAck(ctrl_sdCmdSent, ctrl_sdCmdSentAck, sd_cmdSent, posedge, ctrl_clk);
     `ToggleAck(ctrl_sdRespRecv, ctrl_sdRespRecvAck, sd_respRecv, posedge, ctrl_clk);
     `ToggleAck(ctrl_sdDatInRecv, ctrl_sdDatInRecvAck, sd_datInRecv, posedge, ctrl_clk);
@@ -723,6 +758,12 @@ module Top(
                 `Msg_Cmd_SDDatOut: begin
                     $display("[CTRL] Got Msg_Cmd_SDDatOut");
                     ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
+                end
+                
+                `Msg_Cmd_SDGetDebugInfo: begin
+                    $display("[CTRL] Got Msg_Cmd_SDGetDebugInfo");
+                    ctrl_doutReg[`Resp_Range_SDDebugDatInCRCStatusOK]   <= sd_debugDatInCRCStatusOK;
+                    ctrl_doutReg[`Resp_Range_SDDebugDatInCRCStatus]     <= sd_debugDatInCRCStatus;
                 end
                 
                 `Msg_Cmd_None: begin
@@ -881,6 +922,7 @@ module Testbench();
     wire        sd_clk;
     wire        sd_cmd;
     wire[3:0]   sd_dat;
+    wire[3:0]   led;
     
     Top Top(.*);
     
@@ -1064,6 +1106,8 @@ module Testbench();
         //     $display("[EXT] Bad response: %h ❌", resp);
         //     $finish;
         // end
+        //
+        // $finish;
         
         
         
@@ -1079,10 +1123,10 @@ module Testbench();
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         SendSDCmd(CMD55, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
         SendSDCmd(ACMD23, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b1);
-        
+
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
-        
+
         // Clock out data on DAT lines
         SendMsg(`Msg_Cmd_SDDatOut, 0);
 
@@ -1104,6 +1148,10 @@ module Testbench();
         end else begin
             $display("[EXT] DatOut CRC bad ❌");
         end
+        
+        // Get SD debug info
+        SendMsgRecvResp(`Msg_Cmd_SDGetDebugInfo, 0);
+        $display("[EXT] SDDatInCRCStatus: %b", resp[`Resp_Range_SDDebugDatInCRCStatus]);
 
         
         

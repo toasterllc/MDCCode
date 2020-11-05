@@ -83,14 +83,14 @@ public:
         }
     };
     
-    struct SDSetClkSrcMsg : Msg {
+    struct SDSetClkMsg : Msg {
         enum class ClkSrc : uint8_t {
             None    = 0,
             Slow    = 1<<0,
             Fast    = 1<<1,
         };
         
-        SDSetClkSrcMsg(ClkSrc src) {
+        SDSetClkMsg(ClkSrc src, uint8_t delay) {
             cmd = 0x01;
             payload[0] = 0x00;
             payload[1] = 0x00;
@@ -98,7 +98,7 @@ public:
             payload[3] = 0x00;
             payload[4] = 0x00;
             payload[5] = 0x00;
-            payload[6] = (uint8_t)src;
+            payload[6] = (delay<<2) | (uint8_t)src;
         }
     };
     
@@ -144,6 +144,17 @@ public:
         SDDatOutMsg() {
             cmd = 0x04;
         }
+    };
+    
+    struct SDGetDebugInfoMsg : Msg {
+        SDGetDebugInfoMsg() {
+            cmd = 0x05;
+        }
+    };
+    
+    struct SDGetDebugInfoResp : Resp {
+        bool sdDatInCRCStatusOK() const { return getBool(5); }
+        uint8_t sdDatInCRCStatus() const { return getBits(4, 0); }
     };
     
     ICE40(QSPI& qspi) : _qspi(qspi) {}
