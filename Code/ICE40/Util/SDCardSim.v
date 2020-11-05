@@ -543,13 +543,17 @@ module SDCardSim(
                 // Send CRC status token
                 if (recvWriteData) begin
                     
-                    // Wait 2 cycles before sending CRC status
-                    // SD spec: "Note that the CRC response output is always two clocks after the end of data"
-                    wait(sd_clk);
-                    wait(!sd_clk);
+                    // Wait 2-8 cycles before sending CRC status
+                    // SD spec:
+                    //   NCRC:
+                    //     2-8 cycles
+                    //     Period between an end bit of write data and a start bit of CRC status."
                     
-                    wait(sd_clk);
-                    wait(!sd_clk);
+                    count = 2+($urandom%7);
+                    for (i=0; i<count; i++) begin
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                    end
                     
                     if (crcOK) begin
                         // Positive CRC status
