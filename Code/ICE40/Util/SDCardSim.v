@@ -753,21 +753,58 @@ module SDCardSim(
     // ====================
     // Handle CMD6 DAT output
     // ====================
+    reg[3:0] accessMode = 0;
     initial begin
         forever begin
             wait(sd_clk);
             if (sendCMD6Data) begin
                 reg[511:0] datOutReg;
                 reg[10:0] i;
+                reg changeAccessMode;
+                reg[3:0] newAccessMode;
+                reg[3:0] respAccessMode;
                 
+                // Handle new access mode
+                changeAccessMode = cmdIn_arg[31];
+                if (changeAccessMode) begin
+                    $display("[SD CARD] Change access mode = 1 ✅");
+                end else begin
+                    $display("[SD CARD] Change access mode = 0 ❌");
+                    `Finish;
+                end
+                
+                newAccessMode = cmdIn_arg[3:0];
+                case (newAccessMode)
+                // SDR12
+                4'h0: begin
+                    accessMode = 4'h0;
+                    respAccessMode = 4'h0;
+                end
+                
+                // SDR104
+                4'h3: begin
+                    accessMode = 4'h3;
+                    respAccessMode = 4'h3;
+                end
+                
+                // No change
+                4'hF: begin
+                    respAccessMode = accessMode;
+                end
+                
+                // Error
+                default: begin
+                    respAccessMode = 4'hF;
+                end
+                endcase
+                
+                datOutReg = 0;
+                datOutReg[379:376] = respAccessMode;
+                
+                // Send response
                 $display("[SD CARD] Sending CMD6 response");
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
-                
-                // datOutReg = 512'h00000000_00000000_00000000_00000000_03000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
-                
-                // datOutReg = {512{1'bx}};
-                datOutReg = ~0;
                 
                 // Start bit
                 datOut = 4'b0000;

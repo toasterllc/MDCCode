@@ -602,6 +602,7 @@ module Top(
                 $display("[SD-CTRL:DATIN] Triggered");
                 sd_datInGo <= 0;
                 sd_datInCRCEn <= 1;
+                sd_datInCRCErr <= 0;
             
             end else begin
                 // Stay in this state
