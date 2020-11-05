@@ -45,6 +45,7 @@ module VariableDelay #(
     genvar i;
     for (i=0; i<Count-1; i=i+1) begin
         wire #(1) dbits = bits[i];
+        // Buffers
         SB_LUT4 #(
             .LUT_INIT(16'bxxxx_xxxx_xxxx_xx10)
         ) SB_LUT4(
@@ -54,9 +55,18 @@ module VariableDelay #(
             .I0(dbits),
             .O(bits[i+1])
         );
+        
+        // // Inverters
+        // SB_LUT4 #(
+        //     .LUT_INIT(16'bxxxx_xxxx_xxxx_xx01)
+        // ) SB_LUT4(
+        //     .I3(1'b0),
+        //     .I2(1'b0),
+        //     .I1(1'b0),
+        //     .I0(dbits),
+        //     .O(bits[i+1])
+        // );
     end
-
-    for (i=0; i<Count; i=i+1) begin
-        assign out = (sel===i ? bits[i] : 1'bz);
-    end
+    
+    assign out = bits[sel];
 endmodule
