@@ -56,7 +56,15 @@
         - For STLoader, it needs to be <24MHz for configuring ICE40
         - For STApp, it can be as high as ctrl_clk can go depending on the Verilog
     
+    - Add motion detector
     
+    - Add MSP430
+        - Needs FRAM to store the bitmap of the SD card usage
+        - Needs connection to STM32, so the STM32 can request bitmap of SD card usage
+    
+    - Add power domain control
+        - Controlled by MSP430
+
 
 
 - Rev3 todo
@@ -64,11 +72,14 @@
     - SDTest:
         - Resp state machine: add ability to specify response length (since the CMD2 response is 136 bits)
         - Add ability to capture part of the DatIn stream (so we can verify that the CMD6 'Access Mode' was successfully changed)
+        - Implement a recovery mechanism when a failure occurs
+            - CRC errors
+            - Timeouts (such as waiting for a CRC response from the card, but more than 8 cycles pass)
         
         √ Add a DatIn state machine (needed for CMD6)
             √ Similar to Resp state machine: specify whether DatIn is expected as the result of a command
             √ Add DatIn CRC checking
-                X Reuse DatOut CRC16?
+                - Use separate CRC16 than DatOut because it's faster
         
         √ Add ability to specify whether a response is expected as the result of a command
             √ If so, start the Resp state machine

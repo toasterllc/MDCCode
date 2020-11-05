@@ -21,45 +21,51 @@
 `timescale 1ns/1ps
 
 `define Msg_Len                         64
-`define Msg_Len_Cmd                     8
-`define Msg_Len_Arg                     56
 
-`define Msg_Range_Cmd                   63:56
-`define Msg_Range_Arg                   55:0
+`define Msg_Cmd_Len                     8
+`define Msg_Cmd_Range                   63:56
+`define Msg_Cmd_Echo                    `Msg_Cmd_Len'h00
+`define Msg_Cmd_SDClkSet                `Msg_Cmd_Len'h01
+`define Msg_Cmd_SDSendCmd               `Msg_Cmd_Len'h02
+`define Msg_Cmd_SDGetStatus             `Msg_Cmd_Len'h03
+`define Msg_Cmd_SDDatOut                `Msg_Cmd_Len'h04
+`define Msg_Cmd_None                    `Msg_Cmd_Len'hFF
 
-`define Msg_Cmd_Echo                    `Msg_Len_Cmd'h00
-`define Msg_Cmd_SDClkSet                `Msg_Len_Cmd'h01
-`define Msg_Cmd_SDSendCmd               `Msg_Len_Cmd'h02
-`define Msg_Cmd_SDGetStatus             `Msg_Len_Cmd'h03
-`define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h04
-`define Msg_Cmd_None                    `Msg_Len_Cmd'hFF
+`define Msg_Arg_Len                     56
+`define Msg_Arg_Range                   55:0
 
 // Msg_Cmd_SDClkSet arguments
-`define MsgArg_Range_SDClkDelay         5:2
-`define MsgArg_Range_SDClkFast          1:1
-`define MsgArg_Range_SDClkSlow          0:0
+`define MsgArg_SDClkDelay_Range         5:2
+`define MsgArg_SDClkFast_Range          1:1
+`define MsgArg_SDClkSlow_Range          0:0
 
 // Msg_Cmd_SDSendCmd arguments
-`define MsgArg_Range_SDDatInExpected    49:49
-`define MsgArg_Range_SDRespExpected     48:48
-`define MsgArg_Range_SDCmd              47:0
+`define MsgArg_SDDatInExpected_Range    50:50
+
+`define MsgArg_SDRespType_Len           2
+`define MsgArg_SDRespType_Range         49:48
+`define MsgArg_SDRespType_None          2'b00
+`define MsgArg_SDRespType_48            2'b01
+`define MsgArg_SDRespType_136           2'b02
+
+`define MsgArg_SDCmd_Range              47:0
 
 `define Resp_Len                        `Msg_Len
-`define Resp_Range_Arg                  63:0
+`define Resp_Arg_Range                  63:0
 
 // Msg_Cmd_SDGetStatus response arguments
-`define Resp_Range_SDDat                63:60
-`define Resp_Range_SDCmdSent            59:59
-`define Resp_Range_SDRespRecv           58:58
-`define Resp_Range_SDDatOutIdle         57:57
-`define Resp_Range_SDDatInRecv          56:56
+`define Resp_SDDat_Range                63:60
+`define Resp_SDCmdSent_Range            59:59
+`define Resp_SDRespRecv_Range           58:58
+`define Resp_SDDatOutIdle_Range         57:57
+`define Resp_SDDatInRecv_Range          56:56
 
-`define Resp_Range_SDRespCRCErr         55:55
-`define Resp_Range_SDDatOutCRCErr       54:54
-`define Resp_Range_SDDatInCRCErr        53:53
+`define Resp_SDRespCRCErr_Range         55:55
+`define Resp_SDDatOutCRCErr_Range       54:54
+`define Resp_SDDatInCRCErr_Range        53:53
 
-`define Resp_Range_SDFiller             52:48
-`define Resp_Range_SDResp               47:0
+`define Resp_SDFiller_Range             52:48
+`define Resp_SDResp_Range               47:0
 
 module Top(
     input wire          clk24mhz,
@@ -85,8 +91,8 @@ module Top(
     reg ctrl_sdCmdOutTrigger = 0;
     reg ctrl_sdDatOutTrigger = 0;
     reg[`Msg_Len-1:0] ctrl_dinReg = 0;
-    wire[`Msg_Len_Cmd-1:0] ctrl_msgCmd = ctrl_dinReg[`Msg_Range_Cmd];
-    wire[`Msg_Len_Arg-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Range_Arg];
+    wire[`Msg_Cmd_Len-1:0] ctrl_msgCmd = ctrl_dinReg[`Msg_Cmd_Range];
+    wire[`Msg_Arg_Len-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Arg_Range];
     reg ctrl_sdRespExpected = 0;
     reg ctrl_sdDatInExpected = 0;
     reg[47:0] ctrl_sdCmd = 0;
@@ -303,6 +309,7 @@ module Top(
     wire sd_cmdIn;
     wire sd_cmdOutCRC;
     
+    reg[6:0] sd_respCounter = 0;
     reg sd_respCRCEn = 0;
     reg sd_respCRCErr = 0;
     reg sd_respGo = 0;
@@ -408,10 +415,12 @@ module Top(
         sd_respState <= sd_respState<<1|!sd_respStateInit|sd_respState[$size(sd_respState)-1];
         sd_respStateInit <= 1;
         sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
+        sd_respCounter <= sd_respCounter-1;
         
         if (sd_respState[0]) begin
             sd_respCRCEn <= 0;
             sd_respCRCErr <= 0;
+            sd_respCounter <= 40;
             if (sd_respGo && !sd_respStaged) begin
                 sd_respGo <= 0;
                 sd_respCRCEn <= 1;
@@ -422,7 +431,7 @@ module Top(
         end
         
         if (sd_respState[1]) begin
-            if (!sd_cmdRespShiftReg[40]) begin
+            if (!sd_respCounter) begin
                 sd_respCRCEn <= 0;
             end else begin
                 sd_respState[2:1] <= sd_respState[2:1];
@@ -433,7 +442,7 @@ module Top(
             if (sd_respCRC === sd_cmdRespShiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_cmdRespShiftReg[1]);
             end else begin
-                sd_respCRCErr <= sd_respCRCErr|1;
+                sd_respCRCErr <= 1;
                 $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_cmdRespShiftReg[1]);
                 // `Finish;
             end
@@ -697,21 +706,21 @@ module Top(
                 // Echo
                 `Msg_Cmd_Echo: begin
                     $display("[CTRL] Got Msg_Cmd_Echo: %0h", ctrl_msgArg);
-                    ctrl_doutReg[`Resp_Range_Arg] <= {ctrl_msgArg, 8'h00};
+                    ctrl_doutReg[`Resp_Arg_Range] <= {ctrl_msgArg, 8'h00};
                 end
                 
                 // Set SD clock source
                 `Msg_Cmd_SDClkSet: begin
                     $display("[CTRL] Got Msg_Cmd_SDClkSet: delay=%0d fast=%b slow=%b",
-                        ctrl_msgArg[`MsgArg_Range_SDClkDelay],
-                        ctrl_msgArg[`MsgArg_Range_SDClkFast],
-                        ctrl_msgArg[`MsgArg_Range_SDClkSlow]);
+                        ctrl_msgArg[`MsgArg_SDClkDelay_Range],
+                        ctrl_msgArg[`MsgArg_SDClkFast_Range],
+                        ctrl_msgArg[`MsgArg_SDClkSlow_Range]);
                     
                     // We don't need to synchronize `sd_clkDelay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
-                    sd_clkDelay <= ctrl_msgArg[`MsgArg_Range_SDClkDelay];
-                    ctrl_sdClkFast <= ctrl_msgArg[`MsgArg_Range_SDClkFast];
-                    ctrl_sdClkSlow <= ctrl_msgArg[`MsgArg_Range_SDClkSlow];
+                    sd_clkDelay <= ctrl_msgArg[`MsgArg_SDClkDelay_Range];
+                    ctrl_sdClkFast <= ctrl_msgArg[`MsgArg_SDClkFast_Range];
+                    ctrl_sdClkSlow <= ctrl_msgArg[`MsgArg_SDClkSlow_Range];
                 end
                 
                 // Clock out SD command
@@ -722,8 +731,8 @@ module Top(
                     if (ctrl_sdRespRecv) ctrl_sdRespRecvAck <= !ctrl_sdRespRecvAck;
                     if (ctrl_sdDatInRecv) ctrl_sdDatInRecvAck <= !ctrl_sdDatInRecvAck;
                     ctrl_sdRespExpected <= ctrl_msgArg[`MsgArg_Range_SDRespExpected];
-                    ctrl_sdDatInExpected <= ctrl_msgArg[`MsgArg_Range_SDDatInExpected];
-                    ctrl_sdCmd <= ctrl_msgArg[`MsgArg_Range_SDCmd];
+                    ctrl_sdDatInExpected <= ctrl_msgArg[`MsgArg_SDDatInExpected_Range];
+                    ctrl_sdCmd <= ctrl_msgArg[`MsgArg_SDCmd_Range];
                     ctrl_sdCmdOutTrigger <= !ctrl_sdCmdOutTrigger;
                 end
                 
@@ -734,15 +743,15 @@ module Top(
                     // it's guarded by `ctrl_sdRespRecv`, which is synchronized.
                     // Ie, sd_resp should be ignored unless ctrl_sdRespRecv=1.
                     // TODO: add a synchronizer for `sd_datIn`
-                    ctrl_doutReg[`Resp_Range_SDDat]             <= sd_datIn;
-                    ctrl_doutReg[`Resp_Range_SDCmdSent]         <= ctrl_sdCmdSent;
-                    ctrl_doutReg[`Resp_Range_SDRespRecv]        <= ctrl_sdRespRecv;
-                    ctrl_doutReg[`Resp_Range_SDDatOutIdle]      <= ctrl_sdDatOutIdle;
-                    ctrl_doutReg[`Resp_Range_SDDatInRecv]       <= ctrl_sdDatInRecv;
-                    ctrl_doutReg[`Resp_Range_SDRespCRCErr]      <= ctrl_sdRespCRCErr;
-                    ctrl_doutReg[`Resp_Range_SDDatOutCRCErr]    <= ctrl_sdDatOutCRCErr;
-                    ctrl_doutReg[`Resp_Range_SDDatInCRCErr]     <= ctrl_sdDatInCRCErr;
-                    ctrl_doutReg[`Resp_Range_SDResp]            <= sd_resp;
+                    ctrl_doutReg[`Resp_SDDat_Range]             <= sd_datIn;
+                    ctrl_doutReg[`Resp_SDCmdSent_Range]         <= ctrl_sdCmdSent;
+                    ctrl_doutReg[`Resp_SDRespRecv_Range]        <= ctrl_sdRespRecv;
+                    ctrl_doutReg[`Resp_SDDatOutIdle_Range]      <= ctrl_sdDatOutIdle;
+                    ctrl_doutReg[`Resp_SDDatInRecv_Range]       <= ctrl_sdDatInRecv;
+                    ctrl_doutReg[`Resp_SDRespCRCErr_Range]      <= ctrl_sdRespCRCErr;
+                    ctrl_doutReg[`Resp_SDDatOutCRCErr_Range]    <= ctrl_sdDatOutCRCErr;
+                    ctrl_doutReg[`Resp_SDDatInCRCErr_Range]     <= ctrl_sdDatInCRCErr;
+                    ctrl_doutReg[`Resp_SDResp_Range]            <= sd_resp;
                 end
                 
                 `Msg_Cmd_SDDatOut: begin
@@ -967,7 +976,7 @@ module Testbench();
     
     assign ctrl_di = ctrl_diReg[`Msg_Len-1];
     
-    task _SendMsg(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
+    task _SendMsg(input[`Msg_Cmd_Len-1:0] cmd, input[`Msg_Arg_Len-1:0] arg); begin
         reg[15:0] i;
         
         ctrl_rst = 0;
@@ -998,14 +1007,14 @@ module Testbench();
         // wait(!ctrl_clk);
     end endtask
     
-    task SendMsg(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
+    task SendMsg(input[`Msg_Cmd_Len-1:0] cmd, input[`Msg_Arg_Len-1:0] arg); begin
         reg[15:0] i;
         
         _SendMsg(cmd, arg);
         _Wait();
     end endtask
     
-    task SendMsgRecvResp(input[`Msg_Len_Cmd-1:0] cmd, input[`Msg_Len_Arg-1:0] arg); begin
+    task SendMsgRecvResp(input[`Msg_Cmd_Len-1:0] cmd, input[`Msg_Arg_Len-1:0] arg); begin
         reg[15:0] i;
         
         _SendMsg(cmd, arg);
@@ -1028,12 +1037,12 @@ module Testbench();
     end endtask
     
     task SendSDCmd(input[5:0] sdCmd, input respExpected, input datInExpected, input[31:0] sdArg); begin
-        reg[`Msg_Len_Arg-1] arg;
+        reg[`Msg_Arg_Len-1] arg;
         reg done;
         arg = 0;
         arg[`MsgArg_Range_SDRespExpected] = respExpected;
-        arg[`MsgArg_Range_SDDatInExpected] = datInExpected;
-        arg[`MsgArg_Range_SDCmd] = {2'b01, sdCmd, sdArg, 7'b0, 1'b1};
+        arg[`MsgArg_SDDatInExpected_Range] = datInExpected;
+        arg[`MsgArg_SDCmd_Range] = {2'b01, sdCmd, sdArg, 7'b0, 1'b1};
         
         SendMsg(`Msg_Cmd_SDSendCmd, arg);
         
@@ -1043,9 +1052,9 @@ module Testbench();
             SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
             
             // If a response is expected, we're done when the response is received
-            if (respExpected) done = resp[`Resp_Range_SDRespRecv];
+            if (respExpected) done = resp[`Resp_SDRespRecv_Range];
             // If a response isn't expected, we're done when the command is sent
-            else done = resp[`Resp_Range_SDCmdSent];
+            else done = resp[`Resp_SDCmdSent_Range];
         end while(!done);
     end endtask
     
@@ -1054,7 +1063,7 @@ module Testbench();
         reg sdDone;
         ctrl_diReg = ~0;
         
-        // SendMsgRecvResp(`Msg_Len_Cmd'hFF, 56'h66554433221100);
+        // SendMsgRecvResp(`Msg_Cmd_Len'hFF, 56'h66554433221100);
         // $display("Got response: %h", resp);
         // $finish;
         
@@ -1081,7 +1090,7 @@ module Testbench();
         //
         // // Send SD CMD8
         // SendSDCmd(CMD8, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'h000001AA);
-        // if (resp[`Resp_Range_SDRespCRCErr] !== 1'b0) begin
+        // if (resp[`Resp_SDRespCRCErr_Range] !== 1'b0) begin
         //     $display("[EXT] CRC error ❌");
         //     $finish;
         // end
@@ -1111,27 +1120,28 @@ module Testbench();
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmd(CMD25, SD_RESP_TRUE, SD_DAT_IN_FALSE, 32'b0);
 
-        // Clock out data on DAT lines
-        SendMsg(`Msg_Cmd_SDDatOut, 0);
-
-        // Wait some pre-determined amount of time that guarantees
-        // that we've started writing to the SD card.
-        #10000;
-
-        // Wait until we're done clocking out data on DAT lines
-        $display("[EXT] Waiting while data is written...");
-        do begin
-            // Request SD status
-            SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
-        end while(!resp[`Resp_Range_SDDatOutIdle]);
-        $display("[EXT] Done writing");
-
-        // Check CRC status
-        if (resp[`Resp_Range_SDDatOutCRCErr] === 1'b0) begin
-            $display("[EXT] DatOut CRC OK ✅");
-        end else begin
-            $display("[EXT] DatOut CRC bad ❌");
-        end
+        // // Clock out data on DAT lines
+        // SendMsg(`Msg_Cmd_SDDatOut, 0);
+        //
+        // // Wait some pre-determined amount of time that guarantees
+        // // that we've started writing to the SD card.
+        // #10000;
+        //
+        // // Wait until we're done clocking out data on DAT lines
+        // $display("[EXT] Waiting while data is written...");
+        // do begin
+        //     // Request SD status
+        //     SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
+        // end while(!resp[`Resp_SDDatOutIdle_Range]);
+        // $display("[EXT] Done writing");
+        //
+        // // Check CRC status
+        // if (resp[`Resp_SDDatOutCRCErr_Range] === 1'b0) begin
+        //     $display("[EXT] DatOut CRC OK ✅");
+        // end else begin
+        //     $display("[EXT] DatOut CRC bad ❌");
+        // end
+        $finish;
 
         
         
@@ -1155,11 +1165,11 @@ module Testbench();
         // do begin
         //     // Request SD status
         //     SendMsgRecvResp(`Msg_Cmd_SDGetStatus, 0);
-        // end while(!resp[`Resp_Range_SDDatInRecv]);
+        // end while(!resp[`Resp_SDDatInRecv_Range]);
         // $display("[EXT] DatIn completed");
         //
         // // Check DatIn CRC status
-        // if (resp[`Resp_Range_SDDatInCRCErr] === 1'b0) begin
+        // if (resp[`Resp_SDDatInCRCErr_Range] === 1'b0) begin
         //     $display("[EXT] DatIn CRC OK ✅");
         // end else begin
         //     $display("[EXT] DatIn CRC bad ❌");
