@@ -146,17 +146,6 @@ public:
         }
     };
     
-    struct SDGetDebugInfoMsg : Msg {
-        SDGetDebugInfoMsg() {
-            cmd = 0x05;
-        }
-    };
-    
-    struct SDGetDebugInfoResp : Resp {
-        bool sdDatInCRCStatusOK() const { return getBool(5); }
-        uint8_t sdDatInCRCStatus() const { return getBits(4, 0); }
-    };
-    
     ICE40(QSPI& qspi) : _qspi(qspi) {}
     
     void write(const Msg& msg) {

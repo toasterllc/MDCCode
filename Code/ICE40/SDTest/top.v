@@ -32,7 +32,6 @@
 `define Msg_Cmd_SDSendCmd               `Msg_Len_Cmd'h02
 `define Msg_Cmd_SDGetStatus             `Msg_Len_Cmd'h03
 `define Msg_Cmd_SDDatOut                `Msg_Len_Cmd'h04
-`define Msg_Cmd_SDGetDebugInfo          `Msg_Len_Cmd'h05
 `define Msg_Cmd_None                    `Msg_Len_Cmd'hFF
 
 // Msg_Cmd_SDClkSet arguments
@@ -62,10 +61,6 @@
 `define Resp_Range_SDFiller             52:48
 `define Resp_Range_SDResp               47:0
 
-// Msg_Cmd_SDGetDebugInfo response arguments
-`define Resp_Range_SDDebugDatInCRCStatusOK  5:5
-`define Resp_Range_SDDebugDatInCRCStatus    4:0
-
 module Top(
     input wire          clk24mhz,
     
@@ -76,9 +71,9 @@ module Top(
     
     output wire         sd_clk,
     inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat,
+    inout wire[3:0]     sd_dat
     
-    output reg[3:0]    led = 0
+    // output reg[3:0]    led = 0
 );
     // ====================
     // Shared Nets/Registers
@@ -335,8 +330,6 @@ module Top(
     reg sd_datInCRCStatusOKReg = 0;
     reg[1:0] sd_datOutIdleReg = 0; // 2 bits -- see explanation where it's assigned
     reg sd_datOutIdle = 0;
-    reg sd_debugDatInCRCStatusOK = 0;
-    reg[4:0] sd_debugDatInCRCStatus = 0;
     
     reg[4:0] sd_datInState = 0;
     reg sd_datInStateInit = 0;
@@ -495,7 +488,7 @@ module Top(
             // we know that we're actually idle, since being in this state
             // more than one cycle implies that the FIFO's rok=0
             sd_datOutIdleReg[0] <= 1;
-            if (sd_datOutFifo_rok && !sd_datOutCRCErr) begin // TODO: remove sd_datOutCRCErr check after debugging
+            if (sd_datOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
                 sd_datOutState <= 1;
             end
@@ -530,7 +523,7 @@ module Top(
             end
         end
         
-        // Disable DatOut after we finish outputting the CRC,
+        // Disable DatOut when we finish outputting the CRC,
         // and wait for the CRC status from the card.
         4: begin
             sd_datOutCRCOutEn <= 0;
@@ -539,22 +532,19 @@ module Top(
             end
             
             if (!sd_datInReg[16]) begin
-                sd_debugDatInCRCStatusOK <= sd_datInCRCStatusOK;
-                sd_debugDatInCRCStatus <= sd_datInCRCStatus;
                 sd_datOutState <= 5;
             end
         end
         
         // Check CRC status token
         5: begin
-            $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusOKReg: %b (sd_debugDatInCRCStatusOK: %b, sd_debugDatInCRCStatus: %b)", sd_datInCRCStatusOKReg, sd_debugDatInCRCStatusOK, sd_debugDatInCRCStatus);
+            $display("[SD-CTRL:DATOUT] DatOut: sd_datInCRCStatusOKReg: %b", sd_datInCRCStatusOKReg);
             // 5 bits: start bit, CRC status, end bit
             if (sd_datInCRCStatusOKReg) begin
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
             end else begin
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datInCRCStatusOKReg);
                 sd_datOutCRCErr <= 1;
-                led[3:0] <= 4'b1111;
             end
             sd_datOutState <= 6;
         end
@@ -758,12 +748,6 @@ module Top(
                 `Msg_Cmd_SDDatOut: begin
                     $display("[CTRL] Got Msg_Cmd_SDDatOut");
                     ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
-                end
-                
-                `Msg_Cmd_SDGetDebugInfo: begin
-                    $display("[CTRL] Got Msg_Cmd_SDGetDebugInfo");
-                    ctrl_doutReg[`Resp_Range_SDDebugDatInCRCStatusOK]   <= sd_debugDatInCRCStatusOK;
-                    ctrl_doutReg[`Resp_Range_SDDebugDatInCRCStatus]     <= sd_debugDatInCRCStatus;
                 end
                 
                 `Msg_Cmd_None: begin
@@ -1148,10 +1132,6 @@ module Testbench();
         end else begin
             $display("[EXT] DatOut CRC bad ❌");
         end
-        
-        // Get SD debug info
-        SendMsgRecvResp(`Msg_Cmd_SDGetDebugInfo, 0);
-        $display("[EXT] SDDatInCRCStatus: %b", resp[`Resp_Range_SDDebugDatInCRCStatus]);
 
         
         

@@ -76,8 +76,6 @@ void System::_handleEvent() {
     using SDOptions = ICE40::SDSendCmdMsg::Options;
     using SDSetClkMsg = ICE40::SDSetClkMsg;
     using SDDatOutMsg = ICE40::SDDatOutMsg;
-    using SDGetDebugInfoMsg = ICE40::SDGetDebugInfoMsg;
-    using SDGetDebugInfoResp = ICE40::SDGetDebugInfoResp;
     
     uint16_t rca = 0;
     
@@ -86,103 +84,7 @@ void System::_handleEvent() {
     auto status = ice40.read<ICE40::EchoResp>();
     Assert(!strcmp((char*)status.payload, str));
     
-    // Init delays (tested only for CMD8)
-//    const uint8_t SDClkDelay = 0;         // X
-//    const uint8_t SDClkDelay = 1;         // √
-//    const uint8_t SDClkDelay = 2;         // √
-//    const uint8_t SDClkDelay = 3;         // √
-//    const uint8_t SDClkDelay = 4;         // √
-//    const uint8_t SDClkDelay = 5;         // √
-//    const uint8_t SDClkDelay = 6;         // √
-//    const uint8_t SDClkDelay = 7;         // √
-//    const uint8_t SDClkDelay = 8;         // √
-//    const uint8_t SDClkDelay = 9;         // √
-//    const uint8_t SDClkDelay = 10;        // √
-//    const uint8_t SDClkDelay = 11;        // √
-//    const uint8_t SDClkDelay = 12;        // √
-//    const uint8_t SDClkDelay = 13;        // √
-//    const uint8_t SDClkDelay = 14;        // √
-//    const uint8_t SDClkDelay = 15;        // √
-
-    // Write data delays
-//    const uint8_t SDClkDelay = 0;         // X (assumed bad since it doesn't work for initializing)
-//    const uint8_t SDClkDelay = 1;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 2;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 3;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 4;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 5;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 6;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 7;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 8;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 9;         // X DatOut CRC error
-//    const uint8_t SDClkDelay = 10;        // X No response to ACMD23
-//    const uint8_t SDClkDelay = 11;        // X DatOut CRC error
-//    const uint8_t SDClkDelay = 12;        // X DatOut CRC error
-//    const uint8_t SDClkDelay = 13;        // X DatOut CRC error
-//    const uint8_t SDClkDelay = 14;        // X DatOut CRC error
-//    const uint8_t SDClkDelay = 15;        // X DatOut CRC error
-    
-    
-    const uint8_t SDClkSlowDelay = 15; // see scope_10.png
-    
-    // Inverters
-//    const uint8_t SDClkFastDelay = 0;       // X
-//    const uint8_t SDClkFastDelay = 1;       // X/√
-//    const uint8_t SDClkFastDelay = 2;       // X
-//    const uint8_t SDClkFastDelay = 3;       // X/√
-//    const uint8_t SDClkFastDelay = 4;       // X
-//    const uint8_t SDClkFastDelay = 5;       // X
-//    const uint8_t SDClkFastDelay = 6;       // X/√
-//    const uint8_t SDClkFastDelay = 7;       // X
-//    const uint8_t SDClkFastDelay = 8;       // X
-//    const uint8_t SDClkFastDelay = 9;       // X
-//    const uint8_t SDClkFastDelay = 10;      // X
-//    const uint8_t SDClkFastDelay = 11;      // X
-//    const uint8_t SDClkFastDelay = 12;      // X
-//    const uint8_t SDClkFastDelay = 13;      // X
-//    const uint8_t SDClkFastDelay = 14;      // X
-//    const uint8_t SDClkFastDelay = 15;      // X
-    
-    
-    // Buffers
-//    const uint8_t SDClkFastDelay = 0;       // X
-//    const uint8_t SDClkFastDelay = 1;       // X
-//    const uint8_t SDClkFastDelay = 2;       // X
-//    const uint8_t SDClkFastDelay = 3;       // X/√
-//    const uint8_t SDClkFastDelay = 4;       // X
-//    const uint8_t SDClkFastDelay = 5;       // X/√
-//    const uint8_t SDClkFastDelay = 6;       // X/√
-//    const uint8_t SDClkFastDelay = 7;       // X
-//    const uint8_t SDClkFastDelay = 8;       // X
-//    const uint8_t SDClkFastDelay = 9;       // X
-//    const uint8_t SDClkFastDelay = 10;      // X
-//    const uint8_t SDClkFastDelay = 11;      // X
-//    const uint8_t SDClkFastDelay = 12;      // X
-//    const uint8_t SDClkFastDelay = 13;      // X/√
-//    const uint8_t SDClkFastDelay = 14;      // X
-//    const uint8_t SDClkFastDelay = 15;      // X/√
-
-
-    // Buffers
-//    const uint8_t SDClkFastDelay = 0;       // X
-//    const uint8_t SDClkFastDelay = 1;       // X/√
-//    const uint8_t SDClkFastDelay = 2;       // X/√
-//    const uint8_t SDClkFastDelay = 3;       // X/√
-//    const uint8_t SDClkFastDelay = 4;       // X/√
-//    const uint8_t SDClkFastDelay = 5;       // X/√
-//    const uint8_t SDClkFastDelay = 6;       // X/√
-//    const uint8_t SDClkFastDelay = 7;       // X/√
-//    const uint8_t SDClkFastDelay = 8;       // X/√
-//    const uint8_t SDClkFastDelay = 9;       // X/√
-//    const uint8_t SDClkFastDelay = 10;      // X
-//    const uint8_t SDClkFastDelay = 11;      // X/√
-//    const uint8_t SDClkFastDelay = 12;      // X/√
-//    const uint8_t SDClkFastDelay = 13;      // X/√
-//    const uint8_t SDClkFastDelay = 14;      // X
-//    const uint8_t SDClkFastDelay = 15;      // X/√
-    
-    
-    
+    const uint8_t SDClkSlowDelay = 15;
     const uint8_t SDClkFastDelay = 2;
     
     
@@ -403,9 +305,7 @@ void System::_handleEvent() {
         
         // Enable SD fast clock
         {
-            // TODO: switch back to fast clock again
             ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::Fast, SDClkFastDelay));
-//            ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::Slow, SDClkSlowDelay));
         }
     }
     volatile uint32_t Phase6Duration = HAL_GetTick()-start;
@@ -462,17 +362,8 @@ void System::_handleEvent() {
                 if (status.sdDatOutIdle()) {
                     if (status.sdDatOutCRCErr()) {
                         _led3.write(true);
-                        
-                        for (volatile int i=0; i<10; i++) {
-                            ice40.write(SDGetDebugInfoMsg());
-                            auto debugInfo = ice40.read<SDGetDebugInfoResp>();
-                            volatile uint8_t sdDatInCRCStatusOK = debugInfo.sdDatInCRCStatusOK();
-                            volatile uint8_t sdDatInCRCStatus = debugInfo.sdDatInCRCStatus();
-                            for (int ii=0; ii<10; ii++);
-                        }
+                        for (;;);
                     }
-//                    break;
-//                    Assert(!status.sdDatOutCRCErr());
                     break;
                 }
                 // Busy
