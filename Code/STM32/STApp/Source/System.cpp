@@ -179,12 +179,11 @@ void System::_handleEvent() {
             ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::Slow, SDClkSlowDelay));
         }
         
-        // Wait for SD card to release DAT[0] line to indicate it's ready
+        // Wait for SD card to indicate that it's ready (DAT0=1)
         {
-            // Waiting for SD card to be ready...
             for (;;) {
                 auto status = _getSDStatus();
-                if (status.sdDat() & 0x01) break;
+                if (status.sdDat0Idle()) break;
                 // Busy
             }
             // Ready
@@ -367,10 +366,10 @@ void System::_handleEvent() {
         {
             auto status = _sendSDCmd(12, 0);
             Assert(!status.sdRespCRCErr());
-            // TODO: can we find a better solution to this? have the ice40 tell us when it's done being busy, instead of polling the lines directly?
-            // Wait until the SD card stops being busy
+            
+            // Wait for SD card to indicate that it's ready (DAT0=1)
             for (;;) {
-                if (status.sdDat() & 0x01) break; // Break if the SD card isn't busy (busy == DAT0=0)
+                if (status.sdDat0Idle()) break;
                 status = _getSDStatus();
             }
         }

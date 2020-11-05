@@ -134,14 +134,14 @@ public:
     };
     
     struct SDGetStatusResp : Resp {
-        uint8_t sdDat() const       { return getBits(63, 60); }
-        bool sdCmdSent() const      { return getBool(59); }
-        bool sdRespRecv() const     { return getBool(58); }
-        bool sdDatOutIdle() const   { return getBool(57); }
-        bool sdDatInRecv() const    { return getBool(56); }
-        bool sdRespCRCErr() const   { return getBool(55); }
-        bool sdDatOutCRCErr() const { return getBool(54); }
-        bool sdDatInCRCErr() const  { return getBool(53); }
+        bool sdDat0Idle() const     { return getBool(63); }
+        bool sdCmdSent() const      { return getBool(62); }
+        bool sdRespRecv() const     { return getBool(61); }
+        bool sdDatOutIdle() const   { return getBool(60); }
+        bool sdDatInRecv() const    { return getBool(59); }
+        bool sdRespCRCErr() const   { return getBool(58); }
+        bool sdDatOutCRCErr() const { return getBool(57); }
+        bool sdDatInCRCErr() const  { return getBool(56); }
         uint64_t sdResp() const     { return getBits(47, 0); }
     };
     
