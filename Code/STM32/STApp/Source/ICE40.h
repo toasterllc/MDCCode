@@ -47,7 +47,7 @@ public:
     };
     
     struct Msg {
-        uint8_t cmd = 0;
+        uint8_t type = 0;
         uint8_t payload[7] = {};
     } __attribute__((packed));
     
@@ -63,7 +63,7 @@ public:
     
     struct EchoMsg : Msg {
         EchoMsg(const char* msg) {
-            cmd = 0x00;
+            type = 0x00;
             memcpy(payload, msg, std::min(sizeof(payload), strlen(msg)));
         }
     };
@@ -91,7 +91,7 @@ public:
         };
         
         SDSetClkMsg(ClkSrc src, uint8_t delay) {
-            cmd = 0x01;
+            type = 0x01;
             payload[0] = 0x00;
             payload[1] = 0x00;
             payload[2] = 0x00;
@@ -116,7 +116,7 @@ public:
         
         SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
             AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
-            cmd = 0x02;
+            type = 0x02;
             payload[0] = respType|datInType;
             payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
             payload[2] = (sdArg&0xFF000000)>>24;
@@ -129,7 +129,7 @@ public:
     
     struct SDGetStatusMsg : Msg {
         SDGetStatusMsg() {
-            cmd = 0x03;
+            type = 0x03;
         }
     };
     
@@ -147,7 +147,7 @@ public:
     
     struct SDDatOutMsg : Msg {
         SDDatOutMsg() {
-            cmd = 0x04;
+            type = 0x04;
         }
     };
     
