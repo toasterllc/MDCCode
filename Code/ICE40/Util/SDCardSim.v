@@ -323,8 +323,9 @@ module SDCardSim(
                 end
                 
                 if (respLen) begin
-                    // Wait a random number of clocks before providing response
-                    count = ($urandom%10)+1;
+                    // Wait a 0-64 clocks before providing response
+                    // (See the NCR timing parameter in the SD spec)
+                    count = ($urandom%65);
                     $display("[SD CARD] Response: delaying %0d clocks", count);
                     for (i=0; i<count; i++) begin
                         wait(sd_clk);

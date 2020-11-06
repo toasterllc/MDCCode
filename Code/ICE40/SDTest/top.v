@@ -324,7 +324,7 @@ module Top(
     reg sd_respTrigger = 0;
     reg sd_respCRCErr = 0;
     reg sd_respTimeout = 0;
-    reg[5:0] sd_respTimeoutCounter = 0;
+    reg[6:0] sd_respTimeoutCounter = 0;
     reg sd_respDone = 0;
     reg sd_respStaged = 0;
     reg[47:0] sd_resp = 0;
@@ -333,7 +333,7 @@ module Top(
     reg[2:0] sd_datOutState = 0;
     reg[2:0] sd_datOutActive = 0; // 3 bits -- see explanation where assigned
     reg sd_datOutCRCEn = 0;
-    reg sd_datOutCRCErr = 0; // TODO: we need to fix resetting this when starting a write session
+    reg sd_datOutCRCErr = 0;
     reg sd_datOutCRCOutEn = 0;
     reg sd_datOutEndBit = 0;
     reg sd_datOutEnding = 0;
@@ -449,7 +449,10 @@ module Top(
             sd_cmdDone <= !sd_cmdDone;
             
             sd_respTrigger <= (ctrl_sdRespType !== `Msg_Arg_SDRespType_0);
-            sd_respTimeoutCounter <= 63;
+            // The NCR parameter from the SD spec requires a response within 64 cycles.
+            // From this point, it takes a few cycles to finish transmitting
+            // and transition sd_cmd from output to input, so just add some slop cycles.
+            sd_respTimeoutCounter <= 80;
             sd_datInTrigger <= (ctrl_sdDatInType !== `Msg_Arg_SDDatInType_0);
         end
         
@@ -1133,30 +1136,30 @@ module Testbench();
         
         
         
-        // // ====================
-        // // Test SD CMD8 (SEND_IF_COND)
-        // // ====================
-        //
-        // // Set SD clock source = slow clock
-        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
-        //
-        // // Send SD CMD0
-        // SendSDCmd(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
-        //
-        // // Send SD CMD8
-        // SendSDCmd(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
-        // if (resp[`Resp_Arg_SDRespCRCErr_Range] !== 1'b0) begin
-        //     $display("[EXT] CRC error ❌");
-        //     `Finish;
-        // end
-        //
-        // sdResp = resp[`Resp_Arg_SDResp_Range];
-        // if (sdResp[15:8] !== 8'hAA) begin
-        //     $display("[EXT] Bad response: %h ❌", resp);
-        //     `Finish;
-        // end
-        //
-        // `Finish;
+        // ====================
+        // Test SD CMD8 (SEND_IF_COND)
+        // ====================
+
+        // Set SD clock source = slow clock
+        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
+
+        // Send SD CMD0
+        SendSDCmd(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
+
+        // Send SD CMD8
+        SendSDCmd(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
+        if (resp[`Resp_Arg_SDRespCRCErr_Range] !== 1'b0) begin
+            $display("[EXT] CRC error ❌");
+            `Finish;
+        end
+
+        sdResp = resp[`Resp_Arg_SDResp_Range];
+        if (sdResp[15:8] !== 8'hAA) begin
+            $display("[EXT] Bad response: %h ❌", resp);
+            `Finish;
+        end
+
+        `Finish;
         
         
         
