@@ -134,16 +134,26 @@ public:
     };
     
     struct SDGetStatusResp : Resp {
-        bool sdDat0Idle() const                 { return getBool(63); }
-        bool sdCmdSent() const                  { return getBool(62); }
-        bool sdRespRecv() const                 { return getBool(61); }
-        bool sdDatOutIdle() const               { return getBool(60); }
-        bool sdDatInRecv() const                { return getBool(59); }
-        bool sdRespCRCErr() const               { return getBool(58); }
-        bool sdDatOutCRCErr() const             { return getBool(57); }
-        bool sdDatInCRCErr() const              { return getBool(56); }
-        uint8_t sdDatInCMD6AccessMode() const   { return getBits(55, 52); }
-        uint64_t sdResp() const                 { return getBits(47, 0); }
+        // Command
+        bool sdCmdDone() const                  { return getBool(63);       }
+        
+        // Response
+        bool sdRespDone() const                 { return getBool(62);       }
+        bool sdRespCRCErr() const               { return getBool(61);       }
+        bool sdRespTimeout() const              { return getBool(60);       }
+        uint64_t sdResp() const                 { return getBits(59,12);    }
+        
+        // DatOut
+        bool sdDatOutDone() const               { return getBool(11);       }
+        bool sdDatOutCRCErr() const             { return getBool(10);       }
+        
+        // DatIn
+        bool sdDatInDone() const                { return getBool(9);        }
+        bool sdDatInCRCErr() const              { return getBool(8);        }
+        uint8_t sdDatInCMD6AccessMode() const   { return getBits(7,4);      }
+        
+        // Other
+        bool sdDat0Idle() const                 { return getBool(3);        }
     };
     
     struct SDDatOutMsg : Msg {

@@ -58,11 +58,11 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg,
         if (i >= 10) HAL_Delay(1);
         auto status = _getSDStatus();
         // Continue if the command hasn't been sent yet
-        if (!status.sdCmdSent()) continue;
+        if (!status.sdCmdDone()) continue;
         // Continue if we expect a response but it hasn't been received yet
-        if (respType!=SDRespType::None && !status.sdRespRecv()) continue;
+        if (respType!=SDRespType::None && !status.sdRespDone()) continue;
         // Continue if we expect DatIn but it hasn't been received yet
-        if (datInType!=SDDatInType::None && !status.sdDatInRecv()) continue;
+        if (datInType!=SDDatInType::None && !status.sdDatInDone()) continue;
         return status;
     }
 }
@@ -134,10 +134,7 @@ void System::_handleEvent() {
             Assert(status.getBits(45,40) == 0x3F); // Command should be 6'b111111
             Assert(status.getBits(7,1) == 0x7F); // CRC should be 7'b1111111
             // Check if card is ready. If it's not, retry ACMD41.
-            if (!status.getBool(39)) {
-                // -> Card busy (response: 0x%012jx)\n\n", (uintmax_t)status.sdResp());
-                continue;
-            }
+            if (!status.getBool(39)) continue;
             // Check if we can switch to 1.8V
             // If not, we'll assume we're already in 1.8V mode
             switchTo1V8 = status.getBool(32);
@@ -308,19 +305,12 @@ void System::_handleEvent() {
             ice40.write(SDDatOutMsg());
         }
         
-        // Wait some pre-determined amount of time that guarantees that the
-        // datOut state machine has started.
-        // This is necessary so that when we observe sdDatOutIdle=1, it
-        // means we're done writing, rather than that we haven't started yet.
-        // TODO: determine the upper bound here using the write module's frequency and the number of cycles required for BankFifo to trigger its `rok` wire
-        HAL_Delay(1);
-        
         // Wait until we're done clocking out data on DAT lines
         {
             // Waiting for writing to finish
             for (;;) {
                 auto status = _getSDStatus();
-                if (status.sdDatOutIdle()) {
+                if (status.sdDatOutDone()) {
                     if (status.sdDatOutCRCErr()) {
                         _led3.write(true);
                         for (;;);
