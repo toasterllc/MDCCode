@@ -68,95 +68,84 @@ ICE40::SDGetStatusResp System::_sendSDCmd(uint8_t sdCmd, uint32_t sdArg,
 }
 
 void System::_handleEvent() {
-    uint16_t rca = 0;
-    
-    char str[] = "halla";
-    ice40.write(EchoMsg(str));
-    auto status = ice40.read<ICE40::EchoResp>();
-    Assert(!strcmp((char*)status.payload, str));
-    
     const uint8_t SDClkSlowDelay = 15;
-    const uint8_t SDClkFastDelay = 0;
+    const uint8_t SDClkFastDelay = 2;
     
-    
-    
-    volatile uint32_t start = HAL_GetTick();
+    // Confirm that we can communicate with the ICE40
     {
-        // Disable SD clock
+        char str[] = "halla";
+        ice40.write(EchoMsg(str));
+        auto status = ice40.read<ICE40::EchoResp>();
+        Assert(!strcmp((char*)status.payload, str));
+    }
+    
+    
+    // Disable SD clock
+    {
+        ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::None, SDClkSlowDelay));
+    }
+    
+    // Enable SD slow clock
+    {
+        ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::Slow, SDClkSlowDelay));
+    }
+    
+    // ====================
+    // CMD0 | GO_IDLE_STATE
+    //   State: X -> Idle
+    //   Go to idle state
+    // ====================
+    {
+        _sendSDCmd(0, 0, SDRespType::None);
+        // There's no response to CMD0
+    }
+    
+    // ====================
+    // CMD8 | SEND_IF_COND
+    //   State: Idle -> Idle
+    //   Send interface condition
+    // ====================
+    {
+        auto status = _sendSDCmd(8, 0x000001AA);
+        Assert(!status.sdRespCRCErr());
+        Assert(status.getBits(15,8) == 0xAA); // Verify the response pattern is what we sent
+    }
+    
+    
+    
+    
+    // ====================
+    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
+    //   State: Idle -> Ready
+    //   Initialize
+    // ====================
+    bool switchTo1V8 = false;
+    for (;;) {
+        // CMD55
         {
-            ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::None, SDClkSlowDelay));
-        }
-        
-        // Enable SD slow clock
-        {
-            ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::Slow, SDClkSlowDelay));
-        }
-        
-        // ====================
-        // CMD0 | GO_IDLE_STATE
-        //   State: X -> Idle
-        //   Go to idle state
-        // ====================
-        {
-            _sendSDCmd(0, 0, SDRespType::None);
-            // There's no response to CMD0
-        }
-        
-        // ====================
-        // CMD8 | SEND_IF_COND
-        //   State: Idle -> Idle
-        //   Send interface condition
-        // ====================
-        {
-            auto status = _sendSDCmd(8, 0x000001AA);
+            auto status = _sendSDCmd(55, 0);
             Assert(!status.sdRespCRCErr());
-            Assert(status.getBits(15,8) == 0xAA); // Verify the response pattern is what we sent
         }
-    }
-    volatile uint32_t Phase1Duration = HAL_GetTick()-start;
-    
-    
-    
-    
-    start = HAL_GetTick();
-    {
-        // ====================
-        // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
-        //   State: Idle -> Ready
-        //   Initialize
-        // ====================
+        
+        // CMD41
         {
-            for (;;) {
-                // CMD55
-                {
-                    auto status = _sendSDCmd(55, 0);
-                    Assert(!status.sdRespCRCErr());
-                }
-                
-                // CMD41
-                {
-                    auto status = _sendSDCmd(41, 0x51008000);
-                    // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
-                    Assert(status.getBits(45,40) == 0x3F); // Command should be 6'b111111
-                    Assert(status.getBits(7,1) == 0x7F); // CRC should be 7'b1111111
-                    // Check if card is ready. If it's not, retry ACMD41.
-                    if (!status.getBits(39, 39)) {
-                        // -> Card busy (response: 0x%012jx)\n\n", (uintmax_t)status.sdResp());
-                        continue;
-                    }
-                    Assert(status.getBits(32, 32)); // Verify that card can switch to 1.8V
-                    
-                    break;
-                }
+            auto status = _sendSDCmd(41, 0x51008000);
+            // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
+            Assert(status.getBits(45,40) == 0x3F); // Command should be 6'b111111
+            Assert(status.getBits(7,1) == 0x7F); // CRC should be 7'b1111111
+            // Check if card is ready. If it's not, retry ACMD41.
+            if (!status.getBool(39)) {
+                // -> Card busy (response: 0x%012jx)\n\n", (uintmax_t)status.sdResp());
+                continue;
             }
+            // Check if we can switch to 1.8V
+            // If not, we'll assume we're already in 1.8V mode
+            switchTo1V8 = status.getBool(32);
+            break;
         }
     }
-    volatile uint32_t Phase2Duration = HAL_GetTick()-start;
     
-    
-    
-    start = HAL_GetTick();
-    {
+    if (switchTo1V8) {
         // ====================
         // CMD11 | VOLTAGE_SWITCH
         //   State: Ready -> Ready
@@ -188,115 +177,99 @@ void System::_handleEvent() {
             // Ready
         }
     }
-    volatile uint32_t Phase3Duration = HAL_GetTick()-start;
     
     
     
     
-    start = HAL_GetTick();
+    // ====================
+    // CMD2 | ALL_SEND_CID
+    //   State: Ready -> Identification
+    //   Get card identification number (CID)
+    // ====================
     {
-        // ====================
-        // CMD2 | ALL_SEND_CID
-        //   State: Ready -> Identification
-        //   Get card identification number (CID)
-        // ====================
+        // The response to CMD2 is 136 bits, instead of the usual 48 bits
+        _sendSDCmd(2, 0, SDRespType::Long136);
+        // Don't check the CRC because the CRC isn't calculated in the typical manner,
+        // so it'll be flagged as incorrect
+    }
+    
+    // ====================
+    // CMD3 | SEND_RELATIVE_ADDR
+    //   State: Identification -> Standby
+    //   Publish a new relative address (RCA)
+    // ====================
+    uint16_t rca = 0;
+    {
+        auto status = _sendSDCmd(3, 0);
+        Assert(!status.sdRespCRCErr());
+        // Get the card's RCA from the response
+        rca = status.getBits(39,24);
+    }
+    
+    // ====================
+    // CMD7 | SELECT_CARD/DESELECT_CARD
+    //   State: Standby -> Transfer
+    //   Select card
+    // ====================
+    {
+        auto status = _sendSDCmd(7, ((uint32_t)rca)<<16);
+        Assert(!status.sdRespCRCErr());
+    }
+    
+    // ====================
+    // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
+    //   State: Transfer -> Transfer
+    //   Set bus width to 4 bits
+    // ====================
+    {
+        // CMD55
         {
-            // The response to CMD2 is 136 bits, instead of the usual 48 bits
-            _sendSDCmd(2, 0, SDRespType::Long136);
-            // Don't check the CRC because the CRC isn't calculated in the typical manner,
-            // so it'll be flagged as incorrect
+            auto status = _sendSDCmd(55, ((uint32_t)rca)<<16);
+            Assert(!status.sdRespCRCErr());
         }
         
-        // ====================
-        // CMD3 | SEND_RELATIVE_ADDR
-        //   State: Identification -> Standby
-        //   Publish a new relative address (RCA)
-        // ====================
+        // CMD6
         {
-            auto status = _sendSDCmd(3, 0);
+            auto status = _sendSDCmd(6, 0x00000002);
             Assert(!status.sdRespCRCErr());
-            // Get the card's RCA from the response
-            rca = status.getBits(39, 24);
         }
     }
-    volatile uint32_t Phase4Duration = HAL_GetTick()-start;
     
-    
-    
-    start = HAL_GetTick();
+    // ====================
+    // CMD6 | SWITCH_FUNC
+    //   State: Transfer -> Data
+    //   Switch to SDR104
+    // ====================
     {
-        // ====================
-        // CMD7 | SELECT_CARD/DESELECT_CARD
-        //   State: Standby -> Transfer
-        //   Select card
-        // ====================
-        {
-            auto status = _sendSDCmd(7, ((uint32_t)rca)<<16);
-            Assert(!status.sdRespCRCErr());
-        }
-        
-        // ====================
-        // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
-        //   State: Transfer -> Transfer
-        //   Set bus width to 4 bits
-        // ====================
-        {
-            // CMD55
-            {
-                auto status = _sendSDCmd(55, ((uint32_t)rca)<<16);
-                Assert(!status.sdRespCRCErr());
-            }
-            
-            // CMD6
-            {
-                auto status = _sendSDCmd(6, 0x00000002);
-                Assert(!status.sdRespCRCErr());
-            }
-        }
+        // Mode = 1 (switch function)  = 0x80
+        // Group 6 (Reserved)          = 0xF (no change)
+        // Group 5 (Reserved)          = 0xF (no change)
+        // Group 4 (Current Limit)     = 0xF (no change)
+        // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
+        // Group 2 (Command System)    = 0xF (no change)
+        // Group 1 (Access Mode)       = 0x3 (SDR104)
+        auto status = _sendSDCmd(6, 0x80FFFFF3, SDRespType::Normal48, SDDatInType::Block512);
+        Assert(!status.sdRespCRCErr());
+        Assert(!status.sdDatInCRCErr());
+        // Verify that the access mode was successfully changed
+        // TODO: properly handle this failing, see CMD6 docs
+        Assert(status.sdDatInCMD6AccessMode() == 0x03);
     }
-    volatile uint32_t Phase5Duration = HAL_GetTick()-start;
     
-    
-    
-    start = HAL_GetTick();
+    // Disable SD clock
     {
-        // ====================
-        // CMD6 | SWITCH_FUNC
-        //   State: Transfer -> Data
-        //   Switch to SDR104
-        // ====================
-        {
-            // Mode = 1 (switch function)  = 0x80
-            // Group 6 (Reserved)          = 0xF (no change)
-            // Group 5 (Reserved)          = 0xF (no change)
-            // Group 4 (Current Limit)     = 0xF (no change)
-            // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
-            // Group 2 (Command System)    = 0xF (no change)
-            // Group 1 (Access Mode)       = 0x3 (SDR104)
-            auto status = _sendSDCmd(6, 0x80FFFFF3, SDRespType::Normal48, SDDatInType::Block512);
-            Assert(!status.sdRespCRCErr());
-            Assert(!status.sdDatInCRCErr());
-            // Verify that the access mode was successfully changed
-            // TODO: properly handle this failing, see CMD6 docs
-            Assert(status.sdDatInCMD6AccessMode() == 0x03);
-        }
-        
-        // Disable SD clock
-        {
-            ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::None, SDClkSlowDelay));
-        }
-        
-        // Switch to the fast delay
-        {
-            ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::None, SDClkFastDelay));
-        }
-        
-        // Enable SD fast clock
-        {
-            ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::Fast, SDClkFastDelay));
-        }
+        ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::None, SDClkSlowDelay));
     }
-    volatile uint32_t Phase6Duration = HAL_GetTick()-start;
+    
+    // Switch to the fast delay
+    {
+        ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::None, SDClkFastDelay));
+    }
+    
+    // Enable SD fast clock
+    {
+        ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::Fast, SDClkFastDelay));
+    }
     
     bool on = true;
     for (volatile uint32_t iter=0;; iter++) {
@@ -378,7 +351,6 @@ void System::_handleEvent() {
         on = !on;
     }
     
-//    volatile uint32_t duration = HAL_GetTick()-tickstart;
     for (;;);
 }
 

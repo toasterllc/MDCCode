@@ -23,57 +23,59 @@
 // ====================
 // Control Messages/Responses
 // ====================
-`define Msg_Len                                     64
+`define Msg_Len                                         64
 
-`define Msg_Type_Len                                8
-`define Msg_Type_Range                              63:56
+`define Msg_Type_Len                                    8
+`define Msg_Type_Range                                  63:56
 
-`define Msg_Arg_Len                                 56
-`define Msg_Arg_Range                               55:0
+`define Msg_Arg_Len                                     56
+`define Msg_Arg_Range                                   55:0
 
-`define Resp_Len                                    `Msg_Len
-`define Resp_Arg_Range                              63:0
+`define Resp_Len                                        `Msg_Len
+`define Resp_Arg_Range                                  63:0
 
-`define Msg_Type_Echo                               `Msg_Type_Len'h00
-`define Msg_Type_SDClkSet                           `Msg_Type_Len'h01
-    `define Msg_Arg_SDClkDelay_Range                5:2
-    `define Msg_Arg_SDClkSrc_Len                    2
-    `define Msg_Arg_SDClkSrc_Range                  1:0
-    `define Msg_Arg_SDClkSrc_None                   `Msg_Arg_SDClkSrc_Len'b00
-    `define Msg_Arg_SDClkSrc_Slow                   `Msg_Arg_SDClkSrc_Len'b01
-    `define Msg_Arg_SDClkSrc_Slow_Range             0:0
-    `define Msg_Arg_SDClkSrc_Fast                   `Msg_Arg_SDClkSrc_Len'b10
-    `define Msg_Arg_SDClkSrc_Fast_Range             1:1
+`define Msg_Type_Echo                                   `Msg_Type_Len'h00
+`define Msg_Type_SDClkSet                               `Msg_Type_Len'h01
+`define     Msg_Arg_SDClkDelay_Range                    5:2
+`define     Msg_Arg_SDClkSrc_Len                        2
+`define     Msg_Arg_SDClkSrc_Range                      1:0
+`define     Msg_Arg_SDClkSrc_None                       `Msg_Arg_SDClkSrc_Len'b00
+`define     Msg_Arg_SDClkSrc_Slow                       `Msg_Arg_SDClkSrc_Len'b01
+`define     Msg_Arg_SDClkSrc_Slow_Range                 0:0
+`define     Msg_Arg_SDClkSrc_Fast                       `Msg_Arg_SDClkSrc_Len'b10
+`define     Msg_Arg_SDClkSrc_Fast_Range                 1:1
 
-`define Msg_Type_SDSendCmd                          `Msg_Type_Len'h02
-    `define Msg_Arg_SDRespType_Len                  2
-    `define Msg_Arg_SDRespType_Range                49:48
-    `define Msg_Arg_SDRespType_0                    `Msg_Arg_SDRespType_Len'b00
-    `define Msg_Arg_SDRespType_48                   `Msg_Arg_SDRespType_Len'b01
-    `define Msg_Arg_SDRespType_48_Range             0:0
-    `define Msg_Arg_SDRespType_136                  `Msg_Arg_SDRespType_Len'b10
-    `define Msg_Arg_SDRespType_136_Range            1:1
-    `define Msg_Arg_SDDatInType_Len                 1
-    `define Msg_Arg_SDDatInType_Range               50:50
-    `define Msg_Arg_SDDatInType_0                   `Msg_Arg_SDDatInType_Len'b0
-    `define Msg_Arg_SDDatInType_512                 `Msg_Arg_SDDatInType_Len'b1
-    `define Msg_Arg_SDCmd_Range                     47:0
+`define Msg_Type_SDSendCmd                              `Msg_Type_Len'h02
+`define     Msg_Arg_SDRespType_Len                      2
+`define     Msg_Arg_SDRespType_Range                    49:48
+`define     Msg_Arg_SDRespType_0                        `Msg_Arg_SDRespType_Len'b00
+`define     Msg_Arg_SDRespType_48                       `Msg_Arg_SDRespType_Len'b01
+`define     Msg_Arg_SDRespType_48_Range                 0:0
+`define     Msg_Arg_SDRespType_136                      `Msg_Arg_SDRespType_Len'b10
+`define     Msg_Arg_SDRespType_136_Range                1:1
+`define     Msg_Arg_SDDatInType_Len                     1
+`define     Msg_Arg_SDDatInType_Range                   50:50
+`define     Msg_Arg_SDDatInType_0                       `Msg_Arg_SDDatInType_Len'b0
+`define     Msg_Arg_SDDatInType_512                     `Msg_Arg_SDDatInType_Len'b1
+`define     Msg_Arg_SDCmd_Range                         47:0
 
-`define Msg_Type_SDGetStatus                        `Msg_Type_Len'h03
-    `define Resp_Arg_SDDat0Idle_Range               63:63
-    `define Resp_Arg_SDCmdSent_Range                62:62
-    `define Resp_Arg_SDRespRecv_Range               61:61
-    `define Resp_Arg_SDDatOutIdle_Range             60:60
-    `define Resp_Arg_SDDatInRecv_Range              59:59
-    `define Resp_Arg_SDRespCRCErr_Range             58:58
-    `define Resp_Arg_SDDatOutCRCErr_Range           57:57
-    `define Resp_Arg_SDDatInCRCErr_Range            56:56
-    `define Resp_Arg_SDDatInCMD6AccessMode_Range    55:52
-    `define Resp_Arg_SDFiller_Range                 51:48
-    `define Resp_Arg_SDResp_Range                   47:0
+`define Msg_Type_SDGetStatus                            `Msg_Type_Len'h03
+`define     Resp_Arg_SDCmdDone_Range                    63:63
+`define     Resp_Arg_SDRespDone_Range                   62:62
+`define         Resp_Arg_SDRespCRCErr_Range             61:61
+`define         Resp_Arg_SDRespTimeout_Range            60:60
+`define         Resp_Arg_SDResp_Range                   59:12
+`define         Resp_Arg_SDResp_Len                     48
+`define     Resp_Arg_SDDatOutDone_Range                 11:11
+`define         Resp_Arg_SDDatOutCRCErr_Range           10:10
+`define     Resp_Arg_SDDatInDone_Range                  9:9
+`define         Resp_Arg_SDDatInCRCErr_Range            8:8
+`define         Resp_Arg_SDDatInCMD6AccessMode_Range    7:4
+`define     Resp_Arg_SDDat0Idle_Range                   3:3
+`define     Resp_Arg_SDFiller_Range                     2:0
 
-`define Msg_Type_SDDatOut                           `Msg_Type_Len'h04
-`define Msg_Type_NoOp                               `Msg_Type_Len'hFF
+`define Msg_Type_SDDatOut                               `Msg_Type_Len'h04
+`define Msg_Type_NoOp                                   `Msg_Type_Len'hFF
 
 module Top(
     input wire          clk24mhz,
@@ -245,6 +247,7 @@ module Top(
     reg sd_datOutFifo_rtrigger = 0;
     wire[15:0] sd_datOutFifo_rdata;
     wire sd_datOutFifo_rok;
+    wire sd_datOutFifo_rok;
     wire sd_datOutFifo_rbank;
     BankFifo #(
         .W(16),
@@ -311,7 +314,7 @@ module Top(
     
     reg sd_cmdOutCRCEn = 0;
     reg sd_cmdOutCRCOutEn = 0;
-    reg sd_cmdSent = 0;
+    reg sd_cmdDone = 0;
     reg[2:0] sd_cmdOutActive = 0; // 3 bits -- see explanation where assigned
     reg[5:0] sd_cmdOutCounter = 0;
     wire sd_cmdIn;
@@ -319,9 +322,11 @@ module Top(
     
     reg[7:0] sd_respCounter = 0;
     reg sd_respCRCEn = 0;
+    reg sd_respTrigger = 0;
     reg sd_respCRCErr = 0;
-    reg sd_respGo = 0;
-    reg sd_respRecv = 0;
+    reg sd_respTimeout = 0;
+    reg[5:0] sd_respTimeoutCounter = 0;
+    reg sd_respDone = 0;
     reg sd_respStaged = 0;
     reg[47:0] sd_resp = 0;
     wire sd_respCRC;
@@ -329,11 +334,11 @@ module Top(
     reg[2:0] sd_datOutState = 0;
     reg[2:0] sd_datOutActive = 0; // 3 bits -- see explanation where assigned
     reg sd_datOutCRCEn = 0;
-    reg sd_datOutCRCErr = 0;
+    reg sd_datOutCRCErr = 0; // TODO: we need to fix resetting this when starting a write session
     reg sd_datOutCRCOutEn = 0;
     reg sd_datOutEndBit = 0;
     reg sd_datOutEnding = 0;
-    reg sd_datOutLastBank = 0;
+    reg sd_datOutPrevBank = 0;
     reg sd_datOutStartBit = 0;
     reg[19:0] sd_datOutReg = 0;
     reg[1:0] sd_datOutCounter = 0;
@@ -342,17 +347,16 @@ module Top(
     wire[4:0] sd_datOutCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
     wire sd_datOutCRCStatusOK = sd_datOutCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
     reg sd_datOutCRCStatusOKReg = 0;
-    reg[1:0] sd_datOutIdleReg = 0; // 2 bits -- see explanation where it's assigned
-    reg sd_datOutIdle = 0;
+    reg sd_datOutDone = 0;
     
     reg[4:0] sd_datInState = 0;
     reg sd_datInStateInit = 0;
-    reg sd_datInGo = 0;
+    reg sd_datInTrigger = 0;
     wire[3:0] sd_datIn;
     reg[19:0] sd_datInReg = 0;
     reg sd_datInCRCEn = 0;
     wire[3:0] sd_datInCRC;
-    reg sd_datInRecv = 0;
+    reg sd_datInDone = 0;
     reg sd_datInCRCErr = 0;
     reg[6:0] sd_datInCounter = 0;
     reg[3:0] sd_datInCRCCounter = 0;
@@ -363,9 +367,6 @@ module Top(
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     
     always @(posedge sd_clk_int) begin
-        // ====================
-        // CmdOut State Machine
-        // ====================
         sd_cmdOutState <= sd_cmdOutState<<1|!sd_cmdOutStateInit|sd_cmdOutState[$size(sd_cmdOutState)-1];
         sd_cmdOutStateInit <= 1;
         sd_cmdOutCounter <= sd_cmdOutCounter-1;
@@ -377,6 +378,41 @@ module Top(
         sd_cmdRespShiftReg <= sd_cmdRespShiftReg<<1|sd_respStaged;
         if (sd_cmdOutCRCOutEn)  sd_cmdRespShiftReg[47] <= sd_cmdOutCRC;
         
+        sd_respState <= sd_respState<<1|!sd_respStateInit|sd_respState[$size(sd_respState)-1];
+        sd_respStateInit <= 1;
+        sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
+        sd_respCounter <= sd_respCounter-1;
+        sd_respTimeoutCounter <= sd_respTimeoutCounter-1;
+        
+        sd_datOutCounter <= sd_datOutCounter-1;
+        sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
+        sd_datOutFifo_rtrigger <= 0; // Pulse
+        sd_datOutPrevBank <= sd_datOutFifo_rbank;
+        sd_datOutEnding <= sd_datOutEnding|(sd_datOutPrevBank && !sd_datOutFifo_rbank);
+        sd_datOutStartBit <= 0; // Pulse
+        sd_datOutEndBit <= 0; // Pulse
+        sd_datOutCRCStatusOKReg <= sd_datOutCRCStatusOK;
+        sd_datOutReg <= sd_datOutReg<<4;
+        if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_datOutFifo_rdata;
+        if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
+        if (sd_datOutStartBit)  sd_datOutReg[19:16] <= 4'b0000;
+        if (sd_datOutEndBit)    sd_datOutReg[19:16] <= 4'b1111;
+        
+        // `sd_datOutActive` is 3 bits to track whether `sd_datIn` is
+        // valid or not, since it takes several cycles to transition
+        // between output and input.
+        sd_datOutActive <= (sd_datOutActive<<1)|sd_datOutActive[0];
+        
+        sd_datInState <= sd_datInState<<1|!sd_datInStateInit|sd_datInState[$size(sd_datInState)-1];
+        sd_datInStateInit <= 1;
+        sd_datInReg <= (sd_datInReg<<4)|(sd_datOutActive[2] ? 4'b1111 : {sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]});
+        sd_datInCounter <= sd_datInCounter-1;
+        sd_datInCRCCounter <= sd_datInCRCCounter-1;
+        sd_dat0Idle <= sd_datInReg[0];
+        
+        // ====================
+        // CmdOut State Machine
+        // ====================
         if (sd_cmdOutState[0]) begin
             sd_cmdOutActive[0] <= 0;
             sd_cmdOutCounter <= 38;
@@ -411,9 +447,11 @@ module Top(
         
         if (sd_cmdOutState[10]) begin
             sd_cmdOutCRCOutEn <= 0;
-            sd_cmdSent <= !sd_cmdSent;
-            sd_respGo <= (ctrl_sdRespType !== `Msg_Arg_SDRespType_0);
-            sd_datInGo <= (ctrl_sdDatInType !== `Msg_Arg_SDDatInType_0);
+            sd_cmdDone <= !sd_cmdDone;
+            
+            sd_respTrigger <= (ctrl_sdRespType !== `Msg_Arg_SDRespType_0);
+            sd_respTimeoutCounter <= 63;
+            sd_datInTrigger <= (ctrl_sdDatInType !== `Msg_Arg_SDDatInType_0);
         end
         
         
@@ -422,22 +460,33 @@ module Top(
         // ====================
         // Resp State Machine
         // ====================
-        sd_respState <= sd_respState<<1|!sd_respStateInit|sd_respState[$size(sd_respState)-1];
-        sd_respStateInit <= 1;
-        sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
-        sd_respCounter <= sd_respCounter-1;
-        
         if (sd_respState[0]) begin
             sd_respCRCEn <= 0;
             // We're accessing `ctrl_sdRespType` without synchronization, but that's
             // safe because the ctrl_ domain isn't allowed to modify it until we
-            // signal `sd_respRecv`
+            // signal `sd_respDone`
             sd_respCounter <= (ctrl_sdRespType[`Msg_Arg_SDRespType_48_Range] ? 48 : 136) - 8;
-            if (sd_respGo && !sd_respStaged) begin
-                sd_respGo <= 0;
-                sd_respCRCEn <= 1;
+            
+            if (sd_respTrigger) begin
+                // Reset our various flags
                 sd_respCRCErr <= 0;
-            end else begin
+                sd_respTimeout <= 0;
+                
+                if (!sd_respStaged) begin
+                    $display("[SD-CTRL:RESP] Triggered");
+                    sd_respTrigger <= 0;
+                    sd_respCRCEn <= 1;
+                
+                end else if (!sd_respTimeoutCounter) begin
+                    $display("[SD-CTRL:RESP] Resp timeout ❌");
+                    sd_respTrigger <= 0;
+                    sd_respTimeout <= 1;
+                    sd_respDone <= !sd_respDone;
+                    `Finish;
+                end
+            end
+            
+            if (!sd_respTrigger || sd_respStaged) begin
                 // Stay in this state
                 sd_respState[1:0] <= sd_respState[1:0];
             end
@@ -474,7 +523,7 @@ module Top(
             // commands/responses is always zero, assign it here.
             sd_resp <= sd_cmdRespShiftReg>>1;
             // Signal that the response was received
-            sd_respRecv <= !sd_respRecv;
+            sd_respDone <= !sd_respDone;
         end
         
         
@@ -483,27 +532,6 @@ module Top(
         // ====================
         // DatOut State Machine
         // ====================
-        sd_datOutCounter <= sd_datOutCounter-1;
-        sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
-        sd_datOutFifo_rtrigger <= 0; // Pulse
-        sd_datOutLastBank <= sd_datOutFifo_rbank;
-        sd_datOutEnding <= sd_datOutEnding|(sd_datOutLastBank && !sd_datOutFifo_rbank);
-        sd_datOutStartBit <= 0; // Pulse
-        sd_datOutEndBit <= 0; // Pulse
-        sd_datOutIdleReg <= sd_datOutIdleReg<<1;
-        sd_datOutIdle <= &sd_datOutIdleReg;
-        sd_datOutCRCStatusOKReg <= sd_datOutCRCStatusOK;
-        sd_datOutReg <= sd_datOutReg<<4;
-        if (!sd_datOutCounter)  sd_datOutReg[15:0] <= sd_datOutFifo_rdata;
-        if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
-        if (sd_datOutStartBit)  sd_datOutReg[19:16] <= 4'b0000;
-        if (sd_datOutEndBit)    sd_datOutReg[19:16] <= 4'b1111;
-        
-        // `sd_datOutActive` is 3 bits to track whether `sd_datIn` is
-        // valid or not, since it takes several cycles to transition
-        // between output and input.
-        sd_datOutActive <= (sd_datOutActive<<1)|sd_datOutActive[0];
-        
         case (sd_datOutState)
         0: begin
             sd_datOutCounter <= 0;
@@ -512,16 +540,8 @@ module Top(
             sd_datOutEnding <= 0;
             sd_datOutCRCEn <= 0;
             sd_datOutStartBit <= 1;
-            // Use 2 bits for sd_datOutIdleReg, so that if they're both 1,
-            // we know that we're actually idle, since being in this state
-            // more than one cycle implies that the FIFO's rok=0
-            sd_datOutIdleReg[0] <= 1;
             if (sd_datOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
-                
-                // Reset `sd_datOutCRCErr` when we start writing from the idle state.
-                // In other words, reset `sd_datOutCRCErr` when a new writing session begins.
-                if (sd_datOutIdle) sd_datOutCRCErr <= 0;
                 sd_datOutState <= 1;
             end
         end
@@ -587,6 +607,10 @@ module Top(
             // TODO: handle timeout, in case card never stops being busy. we'd need to cut off power...
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
+                
+                // Signal that DatOut is done, if there's no more data
+                if (!sd_datOutFifo_rok) sd_datOutDone <= !sd_datOutDone;
+                
                 sd_datOutState <= 0;
             end else begin
                 $display("[SD-CTRL:DATOUT] Card busy");
@@ -601,22 +625,21 @@ module Top(
         // ====================
         // DatIn State Machine
         // ====================
-        sd_datInState <= sd_datInState<<1|!sd_datInStateInit|sd_datInState[$size(sd_datInState)-1];
-        sd_datInStateInit <= 1;
-        sd_datInReg <= (sd_datInReg<<4)|(sd_datOutActive[2] ? 4'b1111 : {sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]});
-        sd_datInCounter <= sd_datInCounter-1;
-        sd_datInCRCCounter <= sd_datInCRCCounter-1;
-        sd_dat0Idle <= sd_datInReg[0];
         if (sd_datInState[0]) begin
             sd_datInCounter <= 127;
             sd_datInCRCEn <= 0;
-            if (sd_datInGo && !sd_datInReg[0]) begin
-                $display("[SD-CTRL:DATIN] Triggered");
-                sd_datInGo <= 0;
-                sd_datInCRCEn <= 1;
+            if (sd_datInTrigger) begin
+                // Reset our various flags
                 sd_datInCRCErr <= 0;
+                
+                if (!sd_datInReg[0]) begin
+                    $display("[SD-CTRL:DATIN] Triggered");
+                    sd_datInCRCEn <= 1;
+                    sd_datInTrigger <= 0;
+                end
+            end
             
-            end else begin
+            if (!sd_datInTrigger || sd_datInReg[0]) begin
                 // Stay in this state
                 sd_datInState[1:0] <= sd_datInState[1:0];
             end
@@ -686,7 +709,7 @@ module Top(
                 sd_datInCRCErr <= 1;
             end
             // Signal that the DatIn is complete
-            sd_datInRecv <= !sd_datInRecv;
+            sd_datInDone <= !sd_datInDone;
         end
     end
     
@@ -703,14 +726,11 @@ module Top(
     // +5 for delay states, so that clients send an extra byte before receiving the response
     reg[`Resp_Len+5-1:0] ctrl_doutReg = 0;
     
-    `ToggleAck(ctrl_sdCmdSent, ctrl_sdCmdSentAck, sd_cmdSent, posedge, ctrl_clk);
-    `ToggleAck(ctrl_sdRespRecv, ctrl_sdRespRecvAck, sd_respRecv, posedge, ctrl_clk);
-    `ToggleAck(ctrl_sdDatInRecv, ctrl_sdDatInRecvAck, sd_datInRecv, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdCmdDone, ctrl_sdCmdDoneAck, sd_cmdDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdRespDone, ctrl_sdRespDoneAck, sd_respDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdDatOutDone, ctrl_sdDatOutDoneAck, sd_datOutDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdDatInDone, ctrl_sdDatInDoneAck, sd_datInDone, posedge, ctrl_clk);
     `Sync(ctrl_sdDat0Idle, sd_dat0Idle, posedge, ctrl_clk);
-    `Sync(ctrl_sdDatOutIdle, sd_datOutIdle, posedge, ctrl_clk);
-    `Sync(ctrl_sdRespCRCErr, sd_respCRCErr, posedge, ctrl_clk);
-    `Sync(ctrl_sdDatOutCRCErr, sd_datOutCRCErr, posedge, ctrl_clk);
-    `Sync(ctrl_sdDatInCRCErr, sd_datInCRCErr, posedge, ctrl_clk);
     
     always @(posedge ctrl_clk, negedge ctrl_rst_) begin
         if (!ctrl_rst_) begin
@@ -761,9 +781,9 @@ module Top(
                 `Msg_Type_SDSendCmd: begin
                     $display("[CTRL] Got Msg_Type_SDSendCmd");
                     // Clear our signals so they can be reliably observed via SDGetStatus
-                    if (ctrl_sdCmdSent) ctrl_sdCmdSentAck <= !ctrl_sdCmdSentAck;
-                    if (ctrl_sdRespRecv) ctrl_sdRespRecvAck <= !ctrl_sdRespRecvAck;
-                    if (ctrl_sdDatInRecv) ctrl_sdDatInRecvAck <= !ctrl_sdDatInRecvAck;
+                    if (ctrl_sdCmdDone) ctrl_sdCmdDoneAck <= !ctrl_sdCmdDoneAck;
+                    if (ctrl_sdRespDone) ctrl_sdRespDoneAck <= !ctrl_sdRespDoneAck;
+                    if (ctrl_sdDatInDone) ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
                     ctrl_sdRespType <= ctrl_msgArg[`Msg_Arg_SDRespType_Range];
                     ctrl_sdDatInType <= ctrl_msgArg[`Msg_Arg_SDDatInType_Range];
                     ctrl_sdCmd <= ctrl_msgArg[`Msg_Arg_SDCmd_Range];
@@ -773,26 +793,23 @@ module Top(
                 // Get SD status / response
                 `Msg_Type_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Type_SDGetStatus");
-                    ctrl_doutReg[`Resp_Arg_SDDat0Idle_Range]        <= ctrl_sdDat0Idle;
-                    ctrl_doutReg[`Resp_Arg_SDCmdSent_Range]         <= ctrl_sdCmdSent;
-                    ctrl_doutReg[`Resp_Arg_SDRespRecv_Range]        <= ctrl_sdRespRecv;
-                    ctrl_doutReg[`Resp_Arg_SDDatOutIdle_Range]      <= ctrl_sdDatOutIdle;
-                    ctrl_doutReg[`Resp_Arg_SDDatInRecv_Range]       <= ctrl_sdDatInRecv;
-                    ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range]      <= ctrl_sdRespCRCErr;
-                    ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range]    <= ctrl_sdDatOutCRCErr;
-                    ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Range]     <= ctrl_sdDatInCRCErr;
-                    // We don't need a synchronizer for `sd_datInCMD6AccessMode` because
-                    // it's guarded by `ctrl_sdDatInRecv`, which is synchronized.
-                    // Ie, `sd_datInCMD6AccessMode` should be ignored unless `ctrl_sdDatInRecv`==1.
-                    ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Range] <= sd_datInCMD6AccessMode;
-                    // We don't need a synchronizer for `sd_resp` because
-                    // it's guarded by `ctrl_sdRespRecv`, which is synchronized.
-                    // Ie, `sd_resp` should be ignored unless `ctrl_sdRespRecv`==1.
-                    ctrl_doutReg[`Resp_Arg_SDResp_Range]            <= sd_resp;
+                    
+                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Range]                 <= ctrl_sdCmdDone;
+                    ctrl_doutReg[`Resp_Arg_SDRespDone_Range]                <= ctrl_sdRespDone;
+                        ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range]              <= sd_respCRCErr;
+                        ctrl_doutReg[`Resp_Arg_SDRespTimeout_Range]             <= sd_respTimeout;
+                    ctrl_doutReg[`Resp_Arg_SDDatOutDone_Range]              <= ctrl_sdDatOutDone;
+                        ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range]            <= sd_datOutCRCErr;
+                    ctrl_doutReg[`Resp_Arg_SDDatInDone_Range]               <= ctrl_sdDatInDone;
+                        ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Range]             <= sd_datInCRCErr;
+                        ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Range]     <= sd_datInCMD6AccessMode;
+                    ctrl_doutReg[`Resp_Arg_SDDat0Idle_Range]                <= ctrl_sdDat0Idle;
+                    ctrl_doutReg[`Resp_Arg_SDResp_Range]                    <= sd_resp;
                 end
                 
                 `Msg_Type_SDDatOut: begin
                     $display("[CTRL] Got Msg_Type_SDDatOut");
+                    if (ctrl_sdDatOutDone) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
                     ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
                 end
                 
@@ -950,8 +967,8 @@ module Testbench();
     tri1        ctrl_do;
     
     wire        sd_clk;
-    wire        sd_cmd;
-    wire[3:0]   sd_dat;
+    tri1        sd_cmd;
+    tri1[3:0]   sd_dat;
     wire[3:0]   led;
     
     Top Top(.*);
@@ -1067,15 +1084,16 @@ module Testbench();
             SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
             
             // If a response is expected, we're done when the response is received
-            if (respType !== `Msg_Arg_SDRespType_0) done = resp[`Resp_Arg_SDRespRecv_Range];
+            if (respType !== `Msg_Arg_SDRespType_0) done = resp[`Resp_Arg_SDRespDone_Range];
             // If a response isn't expected, we're done when the command is sent
-            else done = resp[`Resp_Arg_SDCmdSent_Range];
+            else done = resp[`Resp_Arg_SDCmdDone_Range];
         end while(!done);
     end endtask
     
     initial begin
         reg[15:0] i, ii;
         reg sdDone;
+        reg[`Resp_Arg_SDResp_Len-1:0] sdResp;
         
         // Set our initial state
         ctrl_clk = 0;
@@ -1124,7 +1142,8 @@ module Testbench();
         //     `Finish;
         // end
         //
-        // if (resp[15:8] !== 8'hAA) begin
+        // sdResp = resp[`Resp_Arg_SDResp_Range];
+        // if (sdResp[15:8] !== 8'hAA) begin
         //     $display("[EXT] Bad response: %h ❌", resp);
         //     `Finish;
         // end
@@ -1164,7 +1183,7 @@ module Testbench();
         // do begin
         //     // Request SD status
         //     SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
-        // end while(!resp[`Resp_Arg_SDDatOutIdle_Range]);
+        // end while(!resp[`Resp_Arg_SDDatOutDone_Range]);
         // $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDResp_Range]);
         //
         // // Check CRC status
@@ -1184,39 +1203,39 @@ module Testbench();
         
         
         
-        // ====================
-        // Test CMD6 (SWITCH_FUNC) + DatIn
-        // ====================
-
-        // Disable SD clock
-        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
-
-        // Set SD clock source = fast clock
-        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
-
-        // Send SD command CMD6 (SWITCH_FUNC)
-        SendSDCmd(CMD6, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 32'h80FFFFF3);
-        $display("[EXT] Waiting for DatIn to complete...");
-        do begin
-            // Request SD status
-            SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
-        end while(!resp[`Resp_Arg_SDDatInRecv_Range]);
-        $display("[EXT] DatIn completed");
-
-        // Check DatIn CRC status
-        if (resp[`Resp_Arg_SDDatInCRCErr_Range] === 1'b0) begin
-            $display("[EXT] DatIn CRC OK ✅");
-        end else begin
-            $display("[EXT] DatIn CRC bad ❌");
-        end
-        
-        // Check the access mode from the CMD6 response
-        if (resp[`Resp_Arg_SDDatInCMD6AccessMode_Range] === 4'h3) begin
-            $display("[EXT] CMD6 access mode == 0x3 ✅");
-        end else begin
-            $display("[EXT] CMD6 access mode == 0x%h ❌", resp[`Resp_Arg_SDDatInCMD6AccessMode_Range]);
-        end
-        `Finish;
+        // // ====================
+        // // Test CMD6 (SWITCH_FUNC) + DatIn
+        // // ====================
+        //
+        // // Disable SD clock
+        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
+        //
+        // // Set SD clock source = fast clock
+        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
+        //
+        // // Send SD command CMD6 (SWITCH_FUNC)
+        // SendSDCmd(CMD6, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 32'h80FFFFF3);
+        // $display("[EXT] Waiting for DatIn to complete...");
+        // do begin
+        //     // Request SD status
+        //     SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
+        // end while(!resp[`Resp_Arg_SDDatInDone_Range]);
+        // $display("[EXT] DatIn completed");
+        //
+        // // Check DatIn CRC status
+        // if (resp[`Resp_Arg_SDDatInCRCErr_Range] === 1'b0) begin
+        //     $display("[EXT] DatIn CRC OK ✅");
+        // end else begin
+        //     $display("[EXT] DatIn CRC bad ❌");
+        // end
+        //
+        // // Check the access mode from the CMD6 response
+        // if (resp[`Resp_Arg_SDDatInCMD6AccessMode_Range] === 4'h3) begin
+        //     $display("[EXT] CMD6 access mode == 0x3 ✅");
+        // end else begin
+        //     $display("[EXT] CMD6 access mode == 0x%h ❌", resp[`Resp_Arg_SDDatInCMD6AccessMode_Range]);
+        // end
+        // `Finish;
         
         
         
