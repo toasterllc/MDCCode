@@ -53,8 +53,8 @@ public:
     
     struct Resp {
         uint8_t payload[8];
-        bool getBool(uint8_t bit) const {
-            return _getBool(payload, sizeof(payload), bit);
+        bool getBool(uint8_t idx) const {
+            return _getBool(payload, sizeof(payload), idx);
         }
         uint64_t getBits(uint8_t start, uint8_t end) const {
             return _getBits(payload, sizeof(payload), start, end);
@@ -142,6 +142,13 @@ public:
         bool sdRespCRCErr() const               { return getBool(61);       }
         bool sdRespTimeout() const              { return getBool(60);       }
         uint64_t sdResp() const                 { return getBits(59,12);    }
+        uint64_t sdRespGetBool(uint8_t idx) const {
+            return getBool(idx+12);
+        }
+        
+        uint64_t sdRespGetBits(uint8_t start, uint8_t end) const {
+            return getBits(start+12, end+12);
+        }
         
         // DatOut
         bool sdDatOutDone() const               { return getBool(11);       }
@@ -193,10 +200,10 @@ public:
     }
     
 private:
-    static bool _getBool(const uint8_t* bytes, size_t len, uint8_t bit) {
-        AssertArg(bit < len*8);
-        const uint8_t byteIdx = len-(bit/8)-1;
-        const uint8_t bitIdx = bit%8;
+    static bool _getBool(const uint8_t* bytes, size_t len, uint8_t idx) {
+        AssertArg(idx < len*8);
+        const uint8_t byteIdx = len-(idx/8)-1;
+        const uint8_t bitIdx = idx%8;
         const uint8_t bitMask = 1<<bitIdx;
         return bytes[byteIdx] & bitMask;
     }

@@ -108,11 +108,8 @@ void System::_handleEvent() {
     {
         auto status = _sendSDCmd(8, 0x000001AA);
         Assert(!status.sdRespCRCErr());
-        Assert(status.getBits(15,8) == 0xAA); // Verify the response pattern is what we sent
+        Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
     }
-    
-    
-    
     
     // ====================
     // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
@@ -131,13 +128,13 @@ void System::_handleEvent() {
         {
             auto status = _sendSDCmd(41, 0x51008000);
             // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
-            Assert(status.getBits(45,40) == 0x3F); // Command should be 6'b111111
-            Assert(status.getBits(7,1) == 0x7F); // CRC should be 7'b1111111
+            Assert(status.sdRespGetBits(45,40) == 0x3F); // Command should be 6'b111111
+            Assert(status.sdRespGetBits(7,1) == 0x7F); // CRC should be 7'b1111111
             // Check if card is ready. If it's not, retry ACMD41.
-            if (!status.getBool(39)) continue;
+            if (!status.sdRespGetBool(39)) continue;
             // Check if we can switch to 1.8V
             // If not, we'll assume we're already in 1.8V mode
-            switchTo1V8 = status.getBool(32);
+            switchTo1V8 = status.sdRespGetBool(32);
             break;
         }
     }
@@ -200,7 +197,7 @@ void System::_handleEvent() {
         auto status = _sendSDCmd(3, 0);
         Assert(!status.sdRespCRCErr());
         // Get the card's RCA from the response
-        rca = status.getBits(39,24);
+        rca = status.sdRespGetBits(39,24);
     }
     
     // ====================
