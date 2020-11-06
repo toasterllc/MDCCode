@@ -71,8 +71,16 @@
     
     - SDTest:
         - Implement recovery mechanisms:
-            - For CRC errors
-            - For timeouts (such as waiting for a CRC response from the card, but more than 8 cycles pass)
+            - CRC errors
+            - Respone timeout (response from card never starts)
+            - DatOut CRC status timeout (CRC status from card never starts)
+            - DatOut card-busy timeout (if card never de-asserts DAT0 to signal idle)
+            - DatIn timeout (if DatIn data from card never starts)
+            - Remove sd_respTimeout/sd_respTimeoutCounter mechanism since
+              we have to implement some kind of reset/abort mechanism anyway?
+              (For example, in the DatIn timeout case, we'll need to tell the
+              ICE40 to abort after 100ms. So we might as well use the same
+              mechanism for respone timeouts too?)
         
         √ Add a DatIn state machine (needed for CMD6)
             √ Similar to Resp state machine: specify whether DatIn is expected as the result of a command

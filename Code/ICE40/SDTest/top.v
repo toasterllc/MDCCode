@@ -480,10 +480,11 @@ module Top(
                     sd_respCRCEn <= 1;
                 
                 end else if (!sd_respTimeoutCounter) begin
-                    $display("[SD-CTRL:RESP] Resp timeout ❌");
                     sd_respTrigger <= 0;
                     sd_respTimeout <= 1;
                     sd_respDone <= !sd_respDone;
+                    
+                    $display("[SD-CTRL:RESP] Resp timeout ❌");
                     `Finish;
                 end
             end
@@ -643,6 +644,7 @@ module Top(
                 // Reset our various flags
                 sd_datInCRCErr <= 0;
                 
+                // TODO: handle timeout if DatIn never starts
                 if (!sd_datInReg[0]) begin
                     $display("[SD-CTRL:DATIN] Triggered");
                     sd_datInCRCEn <= 1;
@@ -805,17 +807,17 @@ module Top(
                 `Msg_Type_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Type_SDGetStatus");
                     
-                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Range]                 <= ctrl_sdCmdDone;
-                    ctrl_doutReg[`Resp_Arg_SDRespDone_Range]                <= ctrl_sdRespDone;
-                        ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range]              <= sd_respCRCErr;
-                        ctrl_doutReg[`Resp_Arg_SDRespTimeout_Range]             <= sd_respTimeout;
-                    ctrl_doutReg[`Resp_Arg_SDDatOutDone_Range]              <= ctrl_sdDatOutDone;
-                        ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range]            <= sd_datOutCRCErr;
-                    ctrl_doutReg[`Resp_Arg_SDDatInDone_Range]               <= ctrl_sdDatInDone;
-                        ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Range]             <= sd_datInCRCErr;
-                        ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Range]     <= sd_datInCMD6AccessMode;
-                    ctrl_doutReg[`Resp_Arg_SDDat0Idle_Range]                <= ctrl_sdDat0Idle;
-                    ctrl_doutReg[`Resp_Arg_SDResp_Range]                    <= sd_resp;
+                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Range] <= ctrl_sdCmdDone;
+                    ctrl_doutReg[`Resp_Arg_SDRespDone_Range] <= ctrl_sdRespDone;
+                        ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range] <= sd_respCRCErr;
+                        ctrl_doutReg[`Resp_Arg_SDRespTimeout_Range] <= sd_respTimeout;
+                    ctrl_doutReg[`Resp_Arg_SDDatOutDone_Range] <= ctrl_sdDatOutDone;
+                        ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range] <= sd_datOutCRCErr;
+                    ctrl_doutReg[`Resp_Arg_SDDatInDone_Range] <= ctrl_sdDatInDone;
+                        ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Range] <= sd_datInCRCErr;
+                        ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Range] <= sd_datInCMD6AccessMode;
+                    ctrl_doutReg[`Resp_Arg_SDDat0Idle_Range] <= ctrl_sdDat0Idle;
+                    ctrl_doutReg[`Resp_Arg_SDResp_Range] <= sd_resp;
                 end
                 
                 `Msg_Type_SDDatOut: begin
@@ -1136,74 +1138,74 @@ module Testbench();
         
         
         
-        // ====================
-        // Test SD CMD8 (SEND_IF_COND)
-        // ====================
-
-        // Set SD clock source = slow clock
-        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
-
-        // Send SD CMD0
-        SendSDCmd(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
-
-        // Send SD CMD8
-        SendSDCmd(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
-        if (resp[`Resp_Arg_SDRespCRCErr_Range] !== 1'b0) begin
-            $display("[EXT] CRC error ❌");
-            `Finish;
-        end
-
-        sdResp = resp[`Resp_Arg_SDResp_Range];
-        if (sdResp[15:8] !== 8'hAA) begin
-            $display("[EXT] Bad response: %h ❌", resp);
-            `Finish;
-        end
-
-        `Finish;
-        
-        
-        
-        
-        
         // // ====================
-        // // Test writing data to SD card / DatOut
+        // // Test SD CMD8 (SEND_IF_COND)
         // // ====================
         //
-        // // Disable SD clock
-        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
+        // // Set SD clock source = slow clock
+        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
         //
-        // // Set SD clock source = fast clock
-        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
+        // // Send SD CMD0
+        // SendSDCmd(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
         //
-        // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        // SendSDCmd(CMD55, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
-        // SendSDCmd(ACMD23, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b1);
-        //
-        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmd(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
-        //
-        // // Clock out data on DAT lines
-        // SendMsg(`Msg_Type_SDDatOut, 0);
-        //
-        // // Wait some pre-determined amount of time that guarantees
-        // // that we've started writing to the SD card.
-        // #10000;
-        //
-        // // Wait until we're done clocking out data on DAT lines
-        // $display("[EXT] Waiting while data is written...");
-        // do begin
-        //     // Request SD status
-        //     SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
-        // end while(!resp[`Resp_Arg_SDDatOutDone_Range]);
-        // $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDResp_Range]);
-        //
-        // // Check CRC status
-        // if (resp[`Resp_Arg_SDDatOutCRCErr_Range] === 1'b0) begin
-        //     $display("[EXT] DatOut CRC OK ✅");
-        // end else begin
-        //     $display("[EXT] DatOut CRC bad ❌");
+        // // Send SD CMD8
+        // SendSDCmd(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
+        // if (resp[`Resp_Arg_SDRespCRCErr_Range] !== 1'b0) begin
+        //     $display("[EXT] CRC error ❌");
+        //     `Finish;
         // end
+        //
+        // sdResp = resp[`Resp_Arg_SDResp_Range];
+        // if (sdResp[15:8] !== 8'hAA) begin
+        //     $display("[EXT] Bad response: %h ❌", resp);
+        //     `Finish;
+        // end
+        //
         // `Finish;
+        
+        
+        
+        
+        
+        // ====================
+        // Test writing data to SD card / DatOut
+        // ====================
+
+        // Disable SD clock
+        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
+
+        // Set SD clock source = fast clock
+        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
+
+        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        SendSDCmd(CMD55, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+        SendSDCmd(ACMD23, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b1);
+
+        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        SendSDCmd(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+
+        // Clock out data on DAT lines
+        SendMsg(`Msg_Type_SDDatOut, 0);
+
+        // Wait some pre-determined amount of time that guarantees
+        // that we've started writing to the SD card.
+        #10000;
+
+        // Wait until we're done clocking out data on DAT lines
+        $display("[EXT] Waiting while data is written...");
+        do begin
+            // Request SD status
+            SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
+        end while(!resp[`Resp_Arg_SDDatOutDone_Range]);
+        $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDResp_Range]);
+
+        // Check CRC status
+        if (resp[`Resp_Arg_SDDatOutCRCErr_Range] === 1'b0) begin
+            $display("[EXT] DatOut CRC OK ✅");
+        end else begin
+            $display("[EXT] DatOut CRC bad ❌");
+        end
+        `Finish;
 
         
         
