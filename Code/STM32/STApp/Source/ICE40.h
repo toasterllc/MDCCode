@@ -165,7 +165,7 @@ public:
         }
     
     private:
-        const size_t _RespIdx = 13;
+        static constexpr size_t _RespIdx = 13;
     };
     
     struct SDDatOutMsg : Msg {
