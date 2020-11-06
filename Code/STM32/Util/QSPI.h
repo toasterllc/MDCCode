@@ -10,7 +10,7 @@ class QSPI {
 public:
     QSPI();
     void init();
-    void config();
+    void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     void read(void* data, size_t len);
     void write(const void* data, size_t len);
     

@@ -8,38 +8,17 @@
 using namespace STLoader;
 
 System::System() :
-ice40(qspi),
-_led0(GPIOE, GPIO_PIN_12),
-_led1(GPIOE, GPIO_PIN_15),
-_led2(GPIOB, GPIO_PIN_10),
-_led3(GPIOB, GPIO_PIN_11) {
+ice40(qspi) {
 }
 
 void System::init() {
-    // Reset peripherals, initialize flash interface, initialize Systick
-    HAL_Init();
-    
-    // Configure the system clock
-    SystemClock::Init();
-    
-    __HAL_RCC_GPIOB_CLK_ENABLE(); // QSPI, LEDs
-    __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
-    __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
-    __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
-    
-    // Configure our LEDs
-    _led0.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _led1.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Initialize USB
     usb.init();
     
     // Initialize QSPI
     qspi.init();
-    qspi.config();
 }
 
 ICE40::SDGetStatusResp System::_getSDStatus() {
@@ -309,7 +288,7 @@ void System::_handleEvent() {
                 auto status = _getSDStatus();
                 if (status.sdDatOutDone()) {
                     if (status.sdDatOutCRCErr()) {
-                        _led3.write(true);
+                        led3.write(true);
                         for (;;);
                     }
                     break;
@@ -334,7 +313,7 @@ void System::_handleEvent() {
             }
         }
         
-        _led0.write(on);
+        led0.write(on);
         on = !on;
     }
     
@@ -366,4 +345,5 @@ int main() {
     for (;;) {
         Sys._handleEvent();
     }
+    return 0;
 }

@@ -55,6 +55,8 @@ void QSPI::init() {
     Assert(hs == HAL_OK);
     
     __HAL_LINKDMA(&_device, hdma, _dma);
+    
+    config();
 }
 
 void QSPI::config() {
