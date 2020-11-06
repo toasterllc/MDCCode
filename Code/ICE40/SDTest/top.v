@@ -518,6 +518,10 @@ module Top(
             sd_datOutIdleReg[0] <= 1;
             if (sd_datOutFifo_rok) begin
                 $display("[SD-CTRL:DATOUT] Write another block to SD card");
+                
+                // Reset `sd_datOutCRCErr` when we start writing from the idle state.
+                // In other words, reset `sd_datOutCRCErr` when a new writing session begins.
+                if (sd_datOutIdle) sd_datOutCRCErr <= 0;
                 sd_datOutState <= 1;
             end
         end
