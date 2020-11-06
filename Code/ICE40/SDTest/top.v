@@ -429,7 +429,6 @@ module Top(
         
         if (sd_respState[0]) begin
             sd_respCRCEn <= 0;
-            sd_respCRCErr <= 0;
             // We're accessing `ctrl_sdRespType` without synchronization, but that's
             // safe because the ctrl_ domain isn't allowed to modify it until we
             // signal `sd_respRecv`
@@ -437,6 +436,7 @@ module Top(
             if (sd_respGo && !sd_respStaged) begin
                 sd_respGo <= 0;
                 sd_respCRCEn <= 1;
+                sd_respCRCErr <= 0;
             end else begin
                 // Stay in this state
                 sd_respState[1:0] <= sd_respState[1:0];
@@ -619,8 +619,8 @@ module Top(
         end
         
         if (sd_datInState[1]) begin
-            // Stash the access mode from the DatIn response
-            // (We're assuming this was a CMD6 response.)
+            // Stash the access mode from the DatIn response.
+            // (This assumes we're receiving a CMD6 response.)
             if (sd_datInCounter === 7'd94) begin
                 sd_datInCMD6AccessMode <= sd_datInReg[3:0];
             end
