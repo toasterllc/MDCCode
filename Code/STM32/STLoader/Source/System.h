@@ -1,11 +1,9 @@
-#include "GPIO.h"
-#include "USB.h"
-#include "QSPI.h"
+#include "SystemBase.h"
 #include "STLoaderTypes.h"
 
 extern "C" int main();
 
-class System {
+class System : public SystemBase<System> {
 public:
     System();
     void init();
@@ -53,12 +51,8 @@ private:
     STLoader::ICEStatus _iceStatus __attribute__((aligned(4))) = STLoader::ICEStatus::Idle;
     STLoader::ICECDONE _iceCDONEState __attribute__((aligned(4))) = STLoader::ICECDONE::Error;
     
-    // LEDs
-    GPIO _led0;
-    GPIO _led1;
-    GPIO _led2;
-    GPIO _led3;
-    
+    using _super = SystemBase<System>;
+    friend class SystemBase<System>;
     friend int main();
 };
 

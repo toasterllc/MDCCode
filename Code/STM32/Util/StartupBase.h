@@ -8,16 +8,16 @@ template <typename T>
 class StartupBase {
 public:
     void run() {
-        extern uint8_t _sidata[];
-        extern uint8_t _sdata[];
-        extern uint8_t _edata[];
+        extern uint8_t _sdata_flash[];
+        extern uint8_t _sdata_ram[];
+        extern uint8_t _edata_ram[];
         extern uint8_t _sbss[];
         extern uint8_t _ebss[];
         extern uint8_t _sisr_vector[];
         extern int main() __attribute__((noreturn));
         
         // Copy .data section from flash to RAM
-        memcpy(_sdata, _sidata, _edata-_sdata);
+        memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
         // Zero .bss section
         memset(_sbss, 0, _ebss-_sbss);
         

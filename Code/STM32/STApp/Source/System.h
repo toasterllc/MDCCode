@@ -1,6 +1,5 @@
 #include "SystemBase.h"
 #include "ICE40.h"
-#include "STLoaderTypes.h"
 
 extern "C" int main();
 

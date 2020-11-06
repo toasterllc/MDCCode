@@ -11,43 +11,17 @@ System::System() :
 _iceCRST_(GPIOI, GPIO_PIN_6),
 _iceCDONE(GPIOI, GPIO_PIN_7),
 _iceSPIClk(GPIOB, GPIO_PIN_2),
-_iceSPICS_(GPIOB, GPIO_PIN_6),
-
-_led0(GPIOE, GPIO_PIN_12),
-_led1(GPIOE, GPIO_PIN_15),
-_led2(GPIOB, GPIO_PIN_10),
-_led3(GPIOB, GPIO_PIN_11) {
-    
+_iceSPICS_(GPIOB, GPIO_PIN_6) {
 }
 
 void System::init() {
-    // Reset peripherals, initialize flash interface, initialize Systick
-    HAL_Init();
+    _super::init();
     
-    // Configure the system clock
-    SystemClock::Init();
-    
-    __HAL_RCC_GPIOB_CLK_ENABLE(); // QSPI, LEDs
-    __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
-    __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
-    __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
     // Configure ice40 control GPIOs
     _iceCRST_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _iceCDONE.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    
-    // Configure our LEDs
-    _led0.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _led1.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    
-    // Initialize QSPI
-    qspi.init();
-    
-    // Initialize USB
-    usb.init();
 }
 
 void System::_handleEvent() {
@@ -114,11 +88,11 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         _stStatus = STStatus::Writing;
         void*const addr = (void*)cmd.arg.writeData.addr;
         // Verify that `addr` is in the allowed RAM range
-        extern uint8_t _sram_app[];
-        extern uint8_t _eram_app[];
-        Assert(addr >= _sram_app); // TODO: error handling
-        Assert(addr < _eram_app); // TODO: error handling
-        size_t len = (uintptr_t)_eram_app-(uintptr_t)addr;
+        extern uint8_t _sapp_ram[];
+        extern uint8_t _eapp_ram[];
+        Assert(addr >= _sapp_ram); // TODO: error handling
+        Assert(addr < _eapp_ram); // TODO: error handling
+        size_t len = (uintptr_t)_eapp_ram-(uintptr_t)addr;
         // Round `len` down to the nearest max packet size.
         // (We can only restrict the receipt of USB data
         // at multiples of the max packet size.)
@@ -141,10 +115,10 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     // Set LED
     case STCmd::Op::LEDSet: {
         switch (cmd.arg.ledSet.idx) {
-        case 0: _led0.write(cmd.arg.ledSet.on); break;
-        case 1: _led1.write(cmd.arg.ledSet.on); break;
-        case 2: _led2.write(cmd.arg.ledSet.on); break;
-        case 3: _led3.write(cmd.arg.ledSet.on); break;
+        case 0: led0.write(cmd.arg.ledSet.on); break;
+        case 1: led1.write(cmd.arg.ledSet.on); break;
+        case 2: led2.write(cmd.arg.ledSet.on); break;
+        case 3: led3.write(cmd.arg.ledSet.on); break;
         }
         
         break;

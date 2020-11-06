@@ -63,18 +63,18 @@
 `define     Resp_Arg_SDCmdDone_Range                    63:63
 `define     Resp_Arg_SDRespDone_Range                   62:62
 `define         Resp_Arg_SDRespCRCErr_Range             61:61
-`define         Resp_Arg_SDRespTimeout_Range            60:60
-`define         Resp_Arg_SDResp_Range                   59:12
+`define         Resp_Arg_SDResp_Range                   60:13
 `define         Resp_Arg_SDResp_Len                     48
-`define     Resp_Arg_SDDatOutDone_Range                 11:11
-`define         Resp_Arg_SDDatOutCRCErr_Range           10:10
-`define     Resp_Arg_SDDatInDone_Range                  9:9
-`define         Resp_Arg_SDDatInCRCErr_Range            8:8
-`define         Resp_Arg_SDDatInCMD6AccessMode_Range    7:4
-`define     Resp_Arg_SDDat0Idle_Range                   3:3
-`define     Resp_Arg_SDFiller_Range                     2:0
+`define     Resp_Arg_SDDatOutDone_Range                 12:12
+`define         Resp_Arg_SDDatOutCRCErr_Range           11:11
+`define     Resp_Arg_SDDatInDone_Range                  10:10
+`define         Resp_Arg_SDDatInCRCErr_Range            9:9
+`define         Resp_Arg_SDDatInCMD6AccessMode_Range    8:5
+`define     Resp_Arg_SDDat0Idle_Range                   4:4
+`define     Resp_Arg_SDFiller_Range                     3:0
 
 `define Msg_Type_SDDatOut                               `Msg_Type_Len'h04
+`define Msg_Type_SDAbort                                `Msg_Type_Len'h05
 `define Msg_Type_NoOp                                   `Msg_Type_Len'hFF
 
 module Top(
@@ -323,8 +323,6 @@ module Top(
     reg sd_respCRCEn = 0;
     reg sd_respTrigger = 0;
     reg sd_respCRCErr = 0;
-    reg sd_respTimeout = 0;
-    reg[6:0] sd_respTimeoutCounter = 0;
     reg sd_respDone = 0;
     reg sd_respStaged = 0;
     reg[47:0] sd_resp = 0;
@@ -381,7 +379,6 @@ module Top(
         sd_respStateInit <= 1;
         sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
         sd_respCounter <= sd_respCounter-1;
-        sd_respTimeoutCounter <= sd_respTimeoutCounter-1;
         
         sd_datOutCounter <= sd_datOutCounter-1;
         sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
@@ -447,12 +444,7 @@ module Top(
         if (sd_cmdOutState[10]) begin
             sd_cmdOutCRCOutEn <= 0;
             sd_cmdDone <= !sd_cmdDone;
-            
             sd_respTrigger <= (ctrl_sdRespType !== `Msg_Arg_SDRespType_0);
-            // The NCR parameter from the SD spec requires a response within 64 cycles.
-            // From this point, it takes a few cycles to finish transmitting
-            // and transition sd_cmd from output to input, so just add some slop cycles.
-            sd_respTimeoutCounter <= 80;
             sd_datInTrigger <= (ctrl_sdDatInType !== `Msg_Arg_SDDatInType_0);
         end
         
@@ -472,20 +464,11 @@ module Top(
             if (sd_respTrigger) begin
                 // Reset our various flags
                 sd_respCRCErr <= 0;
-                sd_respTimeout <= 0;
                 
                 if (!sd_respStaged) begin
                     $display("[SD-CTRL:RESP] Triggered");
                     sd_respTrigger <= 0;
                     sd_respCRCEn <= 1;
-                
-                end else if (!sd_respTimeoutCounter) begin
-                    sd_respTrigger <= 0;
-                    sd_respTimeout <= 1;
-                    sd_respDone <= !sd_respDone;
-                    
-                    $display("[SD-CTRL:RESP] Resp timeout ❌");
-                    `Finish;
                 end
             end
             
@@ -647,8 +630,8 @@ module Top(
                 // TODO: handle timeout if DatIn never starts
                 if (!sd_datInReg[0]) begin
                     $display("[SD-CTRL:DATIN] Triggered");
-                    sd_datInCRCEn <= 1;
                     sd_datInTrigger <= 0;
+                    sd_datInCRCEn <= 1;
                 end
             end
             
@@ -810,7 +793,6 @@ module Top(
                     ctrl_doutReg[`Resp_Arg_SDCmdDone_Range] <= ctrl_sdCmdDone;
                     ctrl_doutReg[`Resp_Arg_SDRespDone_Range] <= ctrl_sdRespDone;
                         ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range] <= sd_respCRCErr;
-                        ctrl_doutReg[`Resp_Arg_SDRespTimeout_Range] <= sd_respTimeout;
                     ctrl_doutReg[`Resp_Arg_SDDatOutDone_Range] <= ctrl_sdDatOutDone;
                         ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range] <= sd_datOutCRCErr;
                     ctrl_doutReg[`Resp_Arg_SDDatInDone_Range] <= ctrl_sdDatInDone;
@@ -824,6 +806,11 @@ module Top(
                     $display("[CTRL] Got Msg_Type_SDDatOut");
                     if (ctrl_sdDatOutDone) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
                     ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
+                end
+                
+                `Msg_Type_SDAbort: begin
+                    $display("[CTRL] Got Msg_Type_SDAbort");
+                    
                 end
                 
                 `Msg_Type_NoOp: begin

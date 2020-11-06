@@ -5,20 +5,12 @@
 #include "Startup.h"
 #include <string.h>
 
-using namespace STLoader;
-
 System::System() :
 ice40(qspi) {
 }
 
 void System::init() {
-    __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
-    
-    // Initialize USB
-    usb.init();
-    
-    // Initialize QSPI
-    qspi.init();
+    _super::init();
 }
 
 ICE40::SDGetStatusResp System::_getSDStatus() {
