@@ -76,7 +76,7 @@ void System::_handleEvent() {
     Assert(!strcmp((char*)status.payload, str));
     
     const uint8_t SDClkSlowDelay = 15;
-    const uint8_t SDClkFastDelay = 2;
+    const uint8_t SDClkFastDelay = 0;
     
     
     
@@ -137,7 +137,6 @@ void System::_handleEvent() {
                 {
                     auto status = _sendSDCmd(41, 0x51008000);
                     // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
-                    // TODO: should we be checking these reserved fields in the response? what if a future spec version changes the response values?
                     Assert(status.getBits(45,40) == 0x3F); // Command should be 6'b111111
                     Assert(status.getBits(7,1) == 0x7F); // CRC should be 7'b1111111
                     // Check if card is ready. If it's not, retry ACMD41.
@@ -267,8 +266,6 @@ void System::_handleEvent() {
         //   Switch to SDR104
         // ====================
         {
-            // TODO: we need to check that the 'Access Mode' was successfully changed
-            //       by looking at the function group 1 of the DAT response
             // Mode = 1 (switch function)  = 0x80
             // Group 6 (Reserved)          = 0xF (no change)
             // Group 5 (Reserved)          = 0xF (no change)
@@ -279,6 +276,9 @@ void System::_handleEvent() {
             auto status = _sendSDCmd(6, 0x80FFFFF3, SDRespType::Normal48, SDDatInType::Block512);
             Assert(!status.sdRespCRCErr());
             Assert(!status.sdDatInCRCErr());
+            // Verify that the access mode was successfully changed
+            // TODO: properly handle this failing, see CMD6 docs
+            Assert(status.sdDatInCMD6AccessMode() == 0x03);
         }
         
         // Disable SD clock

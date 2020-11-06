@@ -23,56 +23,57 @@
 // ====================
 // Control Messages/Responses
 // ====================
-`define Msg_Len                                 64
+`define Msg_Len                                     64
 
-`define Msg_Type_Len                            8
-`define Msg_Type_Range                          63:56
+`define Msg_Type_Len                                8
+`define Msg_Type_Range                              63:56
 
-`define Msg_Arg_Len                             56
-`define Msg_Arg_Range                           55:0
+`define Msg_Arg_Len                                 56
+`define Msg_Arg_Range                               55:0
 
-`define Resp_Len                                `Msg_Len
-`define Resp_Arg_Range                          63:0
+`define Resp_Len                                    `Msg_Len
+`define Resp_Arg_Range                              63:0
 
-`define Msg_Type_Echo                           `Msg_Type_Len'h00
-`define Msg_Type_SDClkSet                       `Msg_Type_Len'h01
-    `define Msg_Arg_SDClkDelay_Range            5:2
-    `define Msg_Arg_SDClkSrc_Len                2
-    `define Msg_Arg_SDClkSrc_Range              1:0
-    `define Msg_Arg_SDClkSrc_None               `Msg_Arg_SDClkSrc_Len'b00
-    `define Msg_Arg_SDClkSrc_Slow               `Msg_Arg_SDClkSrc_Len'b01
-    `define Msg_Arg_SDClkSrc_Slow_Range         0:0
-    `define Msg_Arg_SDClkSrc_Fast               `Msg_Arg_SDClkSrc_Len'b10
-    `define Msg_Arg_SDClkSrc_Fast_Range         1:1
+`define Msg_Type_Echo                               `Msg_Type_Len'h00
+`define Msg_Type_SDClkSet                           `Msg_Type_Len'h01
+    `define Msg_Arg_SDClkDelay_Range                5:2
+    `define Msg_Arg_SDClkSrc_Len                    2
+    `define Msg_Arg_SDClkSrc_Range                  1:0
+    `define Msg_Arg_SDClkSrc_None                   `Msg_Arg_SDClkSrc_Len'b00
+    `define Msg_Arg_SDClkSrc_Slow                   `Msg_Arg_SDClkSrc_Len'b01
+    `define Msg_Arg_SDClkSrc_Slow_Range             0:0
+    `define Msg_Arg_SDClkSrc_Fast                   `Msg_Arg_SDClkSrc_Len'b10
+    `define Msg_Arg_SDClkSrc_Fast_Range             1:1
 
-`define Msg_Type_SDSendCmd                      `Msg_Type_Len'h02
-    `define Msg_Arg_SDRespType_Len              2
-    `define Msg_Arg_SDRespType_Range            49:48
-    `define Msg_Arg_SDRespType_0                `Msg_Arg_SDRespType_Len'b00
-    `define Msg_Arg_SDRespType_48               `Msg_Arg_SDRespType_Len'b01
-    `define Msg_Arg_SDRespType_48_Range         0:0
-    `define Msg_Arg_SDRespType_136              `Msg_Arg_SDRespType_Len'b10
-    `define Msg_Arg_SDRespType_136_Range        1:1
-    `define Msg_Arg_SDDatInType_Len             1
-    `define Msg_Arg_SDDatInType_Range           50:50
-    `define Msg_Arg_SDDatInType_0               `Msg_Arg_SDDatInType_Len'b0
-    `define Msg_Arg_SDDatInType_512             `Msg_Arg_SDDatInType_Len'b1
-    `define Msg_Arg_SDCmd_Range                 47:0
+`define Msg_Type_SDSendCmd                          `Msg_Type_Len'h02
+    `define Msg_Arg_SDRespType_Len                  2
+    `define Msg_Arg_SDRespType_Range                49:48
+    `define Msg_Arg_SDRespType_0                    `Msg_Arg_SDRespType_Len'b00
+    `define Msg_Arg_SDRespType_48                   `Msg_Arg_SDRespType_Len'b01
+    `define Msg_Arg_SDRespType_48_Range             0:0
+    `define Msg_Arg_SDRespType_136                  `Msg_Arg_SDRespType_Len'b10
+    `define Msg_Arg_SDRespType_136_Range            1:1
+    `define Msg_Arg_SDDatInType_Len                 1
+    `define Msg_Arg_SDDatInType_Range               50:50
+    `define Msg_Arg_SDDatInType_0                   `Msg_Arg_SDDatInType_Len'b0
+    `define Msg_Arg_SDDatInType_512                 `Msg_Arg_SDDatInType_Len'b1
+    `define Msg_Arg_SDCmd_Range                     47:0
 
-`define Msg_Type_SDGetStatus                    `Msg_Type_Len'h03
-    `define Resp_Arg_SDDat0Idle_Range           63:63
-    `define Resp_Arg_SDCmdSent_Range            62:62
-    `define Resp_Arg_SDRespRecv_Range           61:61
-    `define Resp_Arg_SDDatOutIdle_Range         60:60
-    `define Resp_Arg_SDDatInRecv_Range          59:59
-    `define Resp_Arg_SDRespCRCErr_Range         58:58
-    `define Resp_Arg_SDDatOutCRCErr_Range       57:57
-    `define Resp_Arg_SDDatInCRCErr_Range        56:56
-    `define Resp_Arg_SDFiller_Range             55:48
-    `define Resp_Arg_SDResp_Range               47:0
+`define Msg_Type_SDGetStatus                        `Msg_Type_Len'h03
+    `define Resp_Arg_SDDat0Idle_Range               63:63
+    `define Resp_Arg_SDCmdSent_Range                62:62
+    `define Resp_Arg_SDRespRecv_Range               61:61
+    `define Resp_Arg_SDDatOutIdle_Range             60:60
+    `define Resp_Arg_SDDatInRecv_Range              59:59
+    `define Resp_Arg_SDRespCRCErr_Range             58:58
+    `define Resp_Arg_SDDatOutCRCErr_Range           57:57
+    `define Resp_Arg_SDDatInCRCErr_Range            56:56
+    `define Resp_Arg_SDDatInCMD6AccessMode_Range    55:52
+    `define Resp_Arg_SDFiller_Range                 51:48
+    `define Resp_Arg_SDResp_Range                   47:0
 
-`define Msg_Type_SDDatOut                       `Msg_Type_Len'h04
-`define Msg_Type_NoOp                           `Msg_Type_Len'hFF
+`define Msg_Type_SDDatOut                           `Msg_Type_Len'h04
+`define Msg_Type_NoOp                               `Msg_Type_Len'hFF
 
 module Top(
     input wire          clk24mhz,
@@ -357,6 +358,7 @@ module Top(
     reg[3:0] sd_datInCRCCounter = 0;
     
     reg sd_dat0Idle = 0;
+    reg[3:0] sd_datInCMD6AccessMode = 0;
     
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     
@@ -428,6 +430,9 @@ module Top(
         if (sd_respState[0]) begin
             sd_respCRCEn <= 0;
             sd_respCRCErr <= 0;
+            // We're accessing `ctrl_sdRespType` without synchronization, but that's
+            // safe because the ctrl_ domain isn't allowed to modify it until we
+            // signal `sd_respRecv`
             sd_respCounter <= (ctrl_sdRespType[`Msg_Arg_SDRespType_48_Range] ? 48 : 136) - 8;
             if (sd_respGo && !sd_respStaged) begin
                 sd_respGo <= 0;
@@ -554,6 +559,7 @@ module Top(
                 sd_datOutActive[0] <= 0;
             end
             
+            // TODO: handle timeout, in case card never replies
             if (!sd_datInReg[16]) begin
                 sd_datOutState <= 5;
             end
@@ -574,6 +580,7 @@ module Top(
         
         // Wait until the card stops being busy (busy == DAT0 low)
         6: begin
+            // TODO: handle timeout, in case card never stops being busy. we'd need to cut off power...
             if (sd_datInReg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 sd_datOutState <= 0;
@@ -587,7 +594,6 @@ module Top(
         
         
         
-        // TODO: test traditional state machine style (like the DatOut state machine) vs this one-hot style, and use the faster one
         // ====================
         // DatIn State Machine
         // ====================
@@ -613,11 +619,18 @@ module Top(
         end
         
         if (sd_datInState[1]) begin
+            // Stash the access mode from the DatIn response
+            // (We're assuming this was a CMD6 response.)
+            if (sd_datInCounter === 7'd94) begin
+                sd_datInCMD6AccessMode <= sd_datInReg[3:0];
+            end
+            
             if (!sd_datInCounter) begin
                 sd_datInCRCEn <= 0;
+            end
             
-            end else begin
-                // Stay in this state
+            // Stay in this state until sd_datInCounter==0
+            if (sd_datInCounter) begin
                 sd_datInState[2:1] <= sd_datInState[2:1];
             end
         end
@@ -756,9 +769,6 @@ module Top(
                 // Get SD status / response
                 `Msg_Type_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Type_SDGetStatus");
-                    // We don't need a synchronizer for sd_resp because
-                    // it's guarded by `ctrl_sdRespRecv`, which is synchronized.
-                    // Ie, sd_resp should be ignored unless ctrl_sdRespRecv=1.
                     ctrl_doutReg[`Resp_Arg_SDDat0Idle_Range]        <= ctrl_sdDat0Idle;
                     ctrl_doutReg[`Resp_Arg_SDCmdSent_Range]         <= ctrl_sdCmdSent;
                     ctrl_doutReg[`Resp_Arg_SDRespRecv_Range]        <= ctrl_sdRespRecv;
@@ -767,6 +777,13 @@ module Top(
                     ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range]      <= ctrl_sdRespCRCErr;
                     ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range]    <= ctrl_sdDatOutCRCErr;
                     ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Range]     <= ctrl_sdDatInCRCErr;
+                    // We don't need a synchronizer for `sd_datInCMD6AccessMode` because
+                    // it's guarded by `ctrl_sdDatInRecv`, which is synchronized.
+                    // Ie, `sd_datInCMD6AccessMode` should be ignored unless `ctrl_sdDatInRecv`==1.
+                    ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Range] <= sd_datInCMD6AccessMode;
+                    // We don't need a synchronizer for `sd_resp` because
+                    // it's guarded by `ctrl_sdRespRecv`, which is synchronized.
+                    // Ie, `sd_resp` should be ignored unless `ctrl_sdRespRecv`==1.
                     ctrl_doutReg[`Resp_Arg_SDResp_Range]            <= sd_resp;
                 end
                 
@@ -1163,32 +1180,39 @@ module Testbench();
         
         
         
-        // // ====================
-        // // Test CMD6 (SWITCH_FUNC) + DatIn
-        // // ====================
-        //
-        // // Disable SD clock
-        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
-        //
-        // // Set SD clock source = fast clock
-        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
-        //
-        // // Send SD command CMD6 (SWITCH_FUNC)
-        // SendSDCmd(CMD6, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 32'h80FFFFF3);
-        // $display("[EXT] Waiting for DatIn to complete...");
-        // do begin
-        //     // Request SD status
-        //     SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
-        // end while(!resp[`Resp_Arg_SDDatInRecv_Range]);
-        // $display("[EXT] DatIn completed");
-        //
-        // // Check DatIn CRC status
-        // if (resp[`Resp_Arg_SDDatInCRCErr_Range] === 1'b0) begin
-        //     $display("[EXT] DatIn CRC OK ✅");
-        // end else begin
-        //     $display("[EXT] DatIn CRC bad ❌");
-        // end
-        // `Finish;
+        // ====================
+        // Test CMD6 (SWITCH_FUNC) + DatIn
+        // ====================
+
+        // Disable SD clock
+        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
+
+        // Set SD clock source = fast clock
+        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
+
+        // Send SD command CMD6 (SWITCH_FUNC)
+        SendSDCmd(CMD6, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 32'h80FFFFF3);
+        $display("[EXT] Waiting for DatIn to complete...");
+        do begin
+            // Request SD status
+            SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
+        end while(!resp[`Resp_Arg_SDDatInRecv_Range]);
+        $display("[EXT] DatIn completed");
+
+        // Check DatIn CRC status
+        if (resp[`Resp_Arg_SDDatInCRCErr_Range] === 1'b0) begin
+            $display("[EXT] DatIn CRC OK ✅");
+        end else begin
+            $display("[EXT] DatIn CRC bad ❌");
+        end
+        
+        // Check the access mode from the CMD6 response
+        if (resp[`Resp_Arg_SDDatInCMD6AccessMode_Range] === 4'h3) begin
+            $display("[EXT] CMD6 access mode == 0x3 ✅");
+        end else begin
+            $display("[EXT] CMD6 access mode == 0x%h ❌", resp[`Resp_Arg_SDDatInCMD6AccessMode_Range]);
+        end
+        `Finish;
         
         
         
