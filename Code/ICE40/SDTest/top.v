@@ -330,7 +330,7 @@ module Top(
     reg[47:0] sd_resp = 0;
     wire sd_respCRC;
     
-    reg[2:0] sd_datOutState = 0;
+    reg[3:0] sd_datOutState = 0;
     reg[2:0] sd_datOutActive = 0; // 3 bits -- see explanation where assigned
     reg sd_datOutCRCEn = 0;
     reg sd_datOutCRCErr = 0;
@@ -544,8 +544,7 @@ module Top(
         end
         
         2: begin
-            // Only output on the DAT lines if we're not being aborted
-            if (!sd_abort) sd_datOutActive[0] <= 1;
+            sd_datOutActive[0] <= 1;
             sd_datOutCRCEn <= 1;
             
             if (!sd_datOutCounter) begin
@@ -581,9 +580,12 @@ module Top(
                 sd_datOutActive[0] <= 0;
             end
             
-            // Wait for CRC status
-            // Allow sd_abort to short-circuit the need for a response from the card
-            if (!sd_datInReg[16] || sd_abort) begin
+            // SD response timeout point:
+            //   check if we've been aborted before checking SD response
+            if (sd_abort) begin
+                sd_datOutState <= 8;
+            
+            end else if (!sd_datInReg[16]) begin
                 sd_datOutState <= 6;
             end
         end
@@ -603,9 +605,13 @@ module Top(
         
         // Wait until the card stops being busy (busy == DAT0 low)
         7: begin
-            if (sd_datInReg[0] || sd_abort) begin
-                if (sd_datInReg[0]) $display("[SD-CTRL:DATOUT] Card ready");
-                else $display("[SD-CTRL:DATOUT] Aborting");
+            // SD response timeout point:
+            //   check if we've been aborted before checking SD response
+            if (sd_abort) begin
+                sd_datOutState <= 8;
+            
+            end else if (sd_datInReg[0]) begin
+                $display("[SD-CTRL:DATOUT] Card ready");
                 
                 if (sd_datOutFifo_rok) begin
                     sd_datOutState <= 1;
@@ -618,6 +624,28 @@ module Top(
             
             end else begin
                 $display("[SD-CTRL:DATOUT] Card busy");
+            end
+        end
+        
+        // Abort state:
+        //   Drain the fifo, and once it's empty, signal that
+        //   we're done and go back to state 0.
+        8: begin
+            // Disable DatOut while we're aborting
+            sd_datOutActive[0] <= 0;
+            
+            // Drain only on !sd_datOutCounter (the same as DatOut does normally)
+            // so that we don't read too fast. If we read faster than we write,
+            // then `!sd_datOutFifo_rok`=1, and we'll signal that we're done and
+            // transition to state 0 before we're actually done.
+            if (!sd_datOutCounter) begin
+                sd_datOutFifo_rtrigger <= 1;
+            end
+            
+            if (!sd_datOutFifo_rok) begin
+                // Signal that DatOut is done
+                sd_datOutDone <= !sd_datOutDone;
+                sd_datOutState <= 0;
             end
         end
         endcase
