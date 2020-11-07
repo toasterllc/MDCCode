@@ -21,9 +21,9 @@ public:
         SystemClock::Init();
         
         // Allow debugging while we're asleep
-        HAL_EnableDBGSleepMode();
-        HAL_EnableDBGStopMode();
-        HAL_EnableDBGStandbyMode();
+        HAL_DBGMCU_EnableDBGSleepMode();
+        HAL_DBGMCU_EnableDBGStopMode();
+        HAL_DBGMCU_EnableDBGStandbyMode();
         
         __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
         __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI

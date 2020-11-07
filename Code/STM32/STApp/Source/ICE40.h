@@ -127,9 +127,15 @@ public:
         }
     };
     
+    struct SDDatOutMsg : Msg {
+        SDDatOutMsg() {
+            type = 0x03;
+        }
+    };
+    
     struct SDGetStatusMsg : Msg {
         SDGetStatusMsg() {
-            type = 0x03;
+            type = 0x04;
         }
     };
     
@@ -168,9 +174,9 @@ public:
         static constexpr size_t _RespIdx = 13;
     };
     
-    struct SDDatOutMsg : Msg {
-        SDDatOutMsg() {
-            type = 0x04;
+    struct SDAbortMsg : Msg {
+        SDAbortMsg() {
+            type = 0x05;
         }
     };
     

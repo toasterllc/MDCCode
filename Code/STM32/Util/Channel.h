@@ -11,7 +11,7 @@ namespace ChannelSelect {
     }
     
     inline void Wait() {
-        __WFI();
+        IRQState::Sleep();
         IRQState::Enable();
     }
 };
@@ -36,7 +36,7 @@ public:
             IRQState irq;
             irq.disable();
             if (_canRead()) return _read();
-            __WFI();
+            IRQState::Sleep();
         }
     }
     
@@ -61,7 +61,7 @@ public:
                 _write(x);
                 return;
             }
-            __WFI();
+            IRQState::Sleep();
         }
     }
     

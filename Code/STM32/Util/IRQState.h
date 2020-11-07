@@ -12,6 +12,12 @@ public:
         __disable_irq();
     }
     
+    static void Sleep() {
+        HAL_SuspendTick();
+        __WFI();
+        HAL_ResumeTick();
+    }
+    
     ~IRQState() {
         if (!_enabled) enable();
     }
