@@ -153,8 +153,8 @@ void System::_handleEvent() {
     {
         // The response to CMD2 is 136 bits, instead of the usual 48 bits
         _sendSDCmd(2, 0, SDRespType::Long136);
-        // Don't check the CRC because the CRC isn't calculated in the typical manner,
-        // so it'll be flagged as incorrect
+        // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
+        // so it'll be flagged as incorrect.
     }
     
     // ====================
