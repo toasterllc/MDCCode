@@ -233,10 +233,6 @@ module Top(
             end
         end
     end
-    
-`ifdef SIM
-
-`endif
 endmodule
 
 
@@ -291,5 +287,3 @@ module Testbench();
     end
 endmodule
 `endif
-
-
