@@ -807,52 +807,52 @@ module SDCardSim(
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
                 
-                // // Start bit
-                // datOut = 4'b0000;
-                // wait(sd_clk);
-                // wait(!sd_clk);
-                //
-                // // Payload
-                // for (i=0; i<128; i++) begin
-                //     datOut = datOutReg[511:508];
-                //     wait(sd_clk);
-                //     wait(!sd_clk);
-                //     datOutReg = datOutReg<<4;
-                // end
-                //
-                // // CRC
-                // dat_ourCRCReg[3] = dat_crc[3];
-                // dat_ourCRCReg[2] = dat_crc[2];
-                // dat_ourCRCReg[1] = dat_crc[1];
-                // dat_ourCRCReg[0] = dat_crc[0];
-                //
-                // $display("[SD CARD] CMD6 DatOut CRC3: %h", dat_ourCRCReg[3]);
-                // $display("[SD CARD] CMD6 DatOut CRC2: %h", dat_ourCRCReg[2]);
-                // $display("[SD CARD] CMD6 DatOut CRC1: %h", dat_ourCRCReg[1]);
-                // $display("[SD CARD] CMD6 DatOut CRC0: %h", dat_ourCRCReg[0]);
-                //
-                // // Shift out CRC
-                // for (i=0; i<16; i++) begin
-                //     datOut = {dat_ourCRCReg[3][15], dat_ourCRCReg[2][15], dat_ourCRCReg[1][15], dat_ourCRCReg[0][15]};
-                //     // datOut = 4'bxxxx;
-                //
-                //     dat_ourCRCReg[3] = dat_ourCRCReg[3]<<1;
-                //     dat_ourCRCReg[2] = dat_ourCRCReg[2]<<1;
-                //     dat_ourCRCReg[1] = dat_ourCRCReg[1]<<1;
-                //     dat_ourCRCReg[0] = dat_ourCRCReg[0]<<1;
-                //     wait(sd_clk);
-                //     wait(!sd_clk);
-                // end
-                //
-                // // End bit
-                // datOut = 4'b1111;
-                // wait(sd_clk);
-                // wait(!sd_clk);
-                //
-                // // Let go of DAT lines
-                // datOut = 4'bzzzz;
-                // wait(sd_clk);
-                // wait(!sd_clk);
+                // Start bit
+                datOut = 4'b0000;
+                wait(sd_clk);
+                wait(!sd_clk);
+                
+                // Payload
+                for (i=0; i<128; i++) begin
+                    datOut = datOutReg[511:508];
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    datOutReg = datOutReg<<4;
+                end
+                
+                // CRC
+                dat_ourCRCReg[3] = dat_crc[3];
+                dat_ourCRCReg[2] = dat_crc[2];
+                dat_ourCRCReg[1] = dat_crc[1];
+                dat_ourCRCReg[0] = dat_crc[0];
+                
+                $display("[SD CARD] CMD6 DatOut CRC3: %h", dat_ourCRCReg[3]);
+                $display("[SD CARD] CMD6 DatOut CRC2: %h", dat_ourCRCReg[2]);
+                $display("[SD CARD] CMD6 DatOut CRC1: %h", dat_ourCRCReg[1]);
+                $display("[SD CARD] CMD6 DatOut CRC0: %h", dat_ourCRCReg[0]);
+                
+                // Shift out CRC
+                for (i=0; i<16; i++) begin
+                    datOut = {dat_ourCRCReg[3][15], dat_ourCRCReg[2][15], dat_ourCRCReg[1][15], dat_ourCRCReg[0][15]};
+                    // datOut = 4'bxxxx;
+                    
+                    dat_ourCRCReg[3] = dat_ourCRCReg[3]<<1;
+                    dat_ourCRCReg[2] = dat_ourCRCReg[2]<<1;
+                    dat_ourCRCReg[1] = dat_ourCRCReg[1]<<1;
+                    dat_ourCRCReg[0] = dat_ourCRCReg[0]<<1;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                end
+                
+                // End bit
+                datOut = 4'b1111;
+                wait(sd_clk);
+                wait(!sd_clk);
+                
+                // Let go of DAT lines
+                datOut = 4'bzzzz;
+                wait(sd_clk);
+                wait(!sd_clk);
                 
                 sendCMD6Data = 0;
                 

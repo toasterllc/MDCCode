@@ -108,10 +108,10 @@ module Top(
     `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
     `TogglePulse(sd_abortTrigger, ctrl_sdAbortTrigger, posedge, sd_clk_int);
     
-    `ToggleAck(ctrl_sdCmdDone, ctrl_sdCmdDoneAck, sd_cmdDone, posedge, ctrl_clk);
-    `ToggleAck(ctrl_sdRespDone, ctrl_sdRespDoneAck, sd_respDone, posedge, ctrl_clk);
-    `ToggleAck(ctrl_sdDatOutDone, ctrl_sdDatOutDoneAck, sd_datOutDone, posedge, ctrl_clk);
-    `ToggleAck(ctrl_sdDatInDone, ctrl_sdDatInDoneAck, sd_datInDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdCmdDone_, ctrl_sdCmdDoneAck, sd_cmdDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdRespDone_, ctrl_sdRespDoneAck, sd_respDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdDatOutDone_, ctrl_sdDatOutDoneAck, sd_datOutDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdDatInDone_, ctrl_sdDatInDoneAck, sd_datInDone, posedge, ctrl_clk);
     
     `Sync(ctrl_sdDat0Idle, sd_dat0Idle, posedge, ctrl_clk);
     
@@ -626,6 +626,7 @@ module Top(
         //   Drain the fifo, and once it's empty, signal that
         //   we're done and go back to state 0.
         8: begin
+            $display("[SD-CTRL:DATOUT] Aborting");
             sd_datOutActive[0] <= 0;
             sd_datOutFifo_rtrigger <= 1;
             if (!sd_datOutFifo_rok) begin
@@ -800,9 +801,18 @@ module Top(
                 `Msg_Type_SDSendCmd: begin
                     $display("[CTRL] Got Msg_Type_SDSendCmd");
                     // Clear our signals so they can be reliably observed via SDGetStatus
-                    if (ctrl_sdCmdDone) ctrl_sdCmdDoneAck <= !ctrl_sdCmdDoneAck;
-                    if (ctrl_sdRespDone) ctrl_sdRespDoneAck <= !ctrl_sdRespDoneAck;
-                    if (ctrl_sdDatInDone) ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
+                    if (!ctrl_sdCmdDone_) ctrl_sdCmdDoneAck <= !ctrl_sdCmdDoneAck;
+                    
+                    // Reset `ctrl_sdRespDone_` if the Resp state machine will run
+                    if (ctrl_msgArg[`Msg_Arg_SDRespType_Range] !== `Msg_Arg_SDRespType_0) begin
+                        if (!ctrl_sdRespDone_) ctrl_sdRespDoneAck <= !ctrl_sdRespDoneAck;
+                    end
+                    
+                    // Reset `ctrl_sdDatInDone_` if the DatIn state machine will run
+                    if (ctrl_msgArg[`Msg_Arg_SDDatInType_Range] !== `Msg_Arg_SDDatInType_0) begin
+                        if (!ctrl_sdDatInDone_) ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
+                    end
+                    
                     ctrl_sdRespType <= ctrl_msgArg[`Msg_Arg_SDRespType_Range];
                     ctrl_sdDatInType <= ctrl_msgArg[`Msg_Arg_SDDatInType_Range];
                     ctrl_sdCmd <= ctrl_msgArg[`Msg_Arg_SDCmd_Range];
@@ -811,7 +821,7 @@ module Top(
                 
                 `Msg_Type_SDDatOut: begin
                     $display("[CTRL] Got Msg_Type_SDDatOut");
-                    if (ctrl_sdDatOutDone) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
+                    if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
                     ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
                 end
                 
@@ -819,12 +829,12 @@ module Top(
                 `Msg_Type_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Type_SDGetStatus");
                     
-                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Range] <= ctrl_sdCmdDone;
-                    ctrl_doutReg[`Resp_Arg_SDRespDone_Range] <= ctrl_sdRespDone;
+                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Range] <= !ctrl_sdCmdDone_;
+                    ctrl_doutReg[`Resp_Arg_SDRespDone_Range] <= !ctrl_sdRespDone_;
                         ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range] <= sd_respCRCErr;
-                    ctrl_doutReg[`Resp_Arg_SDDatOutDone_Range] <= ctrl_sdDatOutDone;
+                    ctrl_doutReg[`Resp_Arg_SDDatOutDone_Range] <= !ctrl_sdDatOutDone_;
                         ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range] <= sd_datOutCRCErr;
-                    ctrl_doutReg[`Resp_Arg_SDDatInDone_Range] <= ctrl_sdDatInDone;
+                    ctrl_doutReg[`Resp_Arg_SDDatInDone_Range] <= !ctrl_sdDatInDone_;
                         ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Range] <= sd_datInCRCErr;
                         ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Range] <= sd_datInCMD6AccessMode;
                     ctrl_doutReg[`Resp_Arg_SDDat0Idle_Range] <= ctrl_sdDat0Idle;
@@ -1071,7 +1081,7 @@ module Testbench();
         #1; // Let `ctrl_rst` change take effect
     end endtask
     
-    task SendMsgRecvResp(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
+    task SendMsgResp(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
         reg[15:0] i;
         
         SendMsg(typ, arg);
@@ -1093,18 +1103,22 @@ module Testbench();
     
     task SendSDCmd(input[5:0] sdCmd, input[`Msg_Arg_SDRespType_Len-1:0] respType, input[`Msg_Arg_SDDatInType_Len-1:0] datInType, input[31:0] sdArg); begin
         reg[`Msg_Arg_Len-1] arg;
-        reg done;
         arg = 0;
         arg[`Msg_Arg_SDRespType_Range] = respType;
         arg[`Msg_Arg_SDDatInType_Range] = datInType;
         arg[`Msg_Arg_SDCmd_Range] = {2'b01, sdCmd, sdArg, 7'b0, 1'b1};
         
         SendMsg(`Msg_Type_SDSendCmd, arg);
+    end endtask
+    
+    task SendSDCmdResp(input[5:0] sdCmd, input[`Msg_Arg_SDRespType_Len-1:0] respType, input[`Msg_Arg_SDDatInType_Len-1:0] datInType, input[31:0] sdArg); begin
+        reg done;
+        SendSDCmd(sdCmd, respType, datInType, sdArg);
         
         // Wait for SD command to be sent
         do begin
             // Request SD status
-            SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
+            SendMsgResp(`Msg_Type_SDGetStatus, 0);
             
             // If a response is expected, we're done when the response is received
             if (respType !== `Msg_Arg_SDRespType_0) done = resp[`Resp_Arg_SDRespDone_Range];
@@ -1128,7 +1142,7 @@ module Testbench();
         // // Test NoOp command
         // // ====================
         //
-        // SendMsgRecvResp(`Msg_Type_NoOp, 56'h66554433221100);
+        // SendMsgResp(`Msg_Type_NoOp, 56'h66554433221100);
         // $display("Got response: %h", resp);
         // `Finish;
         
@@ -1140,7 +1154,7 @@ module Testbench();
         // // Test Echo command
         // // ====================
         //
-        // SendMsgRecvResp(`Msg_Type_Echo, `Msg_Arg_Len'h66554433221100);
+        // SendMsgResp(`Msg_Type_Echo, `Msg_Arg_Len'h66554433221100);
         // $display("Got response: %h", resp);
         // `Finish;
         
@@ -1156,10 +1170,10 @@ module Testbench();
         // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
         //
         // // Send SD CMD0
-        // SendSDCmd(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
+        // SendSDCmdResp(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
         //
         // // Send SD CMD8
-        // SendSDCmd(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
+        // SendSDCmdResp(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
         // if (resp[`Resp_Arg_SDRespCRCErr_Range] !== 1'b0) begin
         //     $display("[EXT] CRC error ❌");
         //     `Finish;
@@ -1188,24 +1202,20 @@ module Testbench();
         // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
         //
         // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        // SendSDCmd(CMD55, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
-        // SendSDCmd(ACMD23, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b1);
+        // SendSDCmdResp(CMD55, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+        // SendSDCmdResp(ACMD23, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b1);
         //
         // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmd(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+        // SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
         //
         // // Clock out data on DAT lines
         // SendMsg(`Msg_Type_SDDatOut, 0);
-        //
-        // // Wait some pre-determined amount of time that guarantees
-        // // that we've started writing to the SD card.
-        // #10000;
         //
         // // Wait until we're done clocking out data on DAT lines
         // $display("[EXT] Waiting while data is written...");
         // do begin
         //     // Request SD status
-        //     SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
+        //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
         // end while(!resp[`Resp_Arg_SDDatOutDone_Range]);
         // $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDResp_Range]);
         //
@@ -1237,11 +1247,11 @@ module Testbench();
         // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
         //
         // // Send SD command CMD6 (SWITCH_FUNC)
-        // SendSDCmd(CMD6, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 32'h80FFFFF3);
+        // SendSDCmdResp(CMD6, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 32'h80FFFFF3);
         // $display("[EXT] Waiting for DatIn to complete...");
         // do begin
         //     // Request SD status
-        //     SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
+        //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
         // end while(!resp[`Resp_Arg_SDDatInDone_Range]);
         // $display("[EXT] DatIn completed");
         //
@@ -1279,7 +1289,75 @@ module Testbench();
         // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
         //
         // // Send SD command CMD2 (ALL_SEND_CID)
-        // SendSDCmd(CMD2, `Msg_Arg_SDRespType_136, `Msg_Arg_SDDatInType_0, 0);
+        // SendSDCmdResp(CMD2, `Msg_Arg_SDRespType_136, `Msg_Arg_SDDatInType_0, 0);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        // // ====================
+        // // Test Resp abort
+        // // ====================
+        //
+        // // Disable SD clock
+        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
+        //
+        // // Set SD clock source = fast clock
+        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
+        //
+        // // Send an SD command that doesn't provide a response
+        // SendSDCmd(CMD0, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 0);
+        // $display("[EXT] Verifying that Resp times out...");
+        // done = 0;
+        // for (i=0; i<10 && !done; i++) begin
+        //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
+        //     done = resp[`Resp_Arg_SDRespDone_Range];
+        // end
+        //
+        // if (!done) begin
+        //     $display("[EXT] Resp timeout ✅");
+        //
+        //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
+        //     $display("[EXT] Pre-abort status: sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+        //         resp[`Resp_Arg_SDCmdDone_Range],
+        //         resp[`Resp_Arg_SDRespDone_Range],
+        //         resp[`Resp_Arg_SDDatOutDone_Range],
+        //         resp[`Resp_Arg_SDDatInDone_Range]);
+        //
+        //     $display("[EXT] Aborting...");
+        //     SendMsg(`Msg_Type_SDAbort, 0);
+        //
+        //     $display("[EXT] Checking abort status...");
+        //     done = 0;
+        //     for (i=0; i<10 && !done; i++) begin
+        //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
+        //         $display("[EXT] Post-abort status: sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+        //             resp[`Resp_Arg_SDCmdDone_Range],
+        //             resp[`Resp_Arg_SDRespDone_Range],
+        //             resp[`Resp_Arg_SDDatOutDone_Range],
+        //             resp[`Resp_Arg_SDDatInDone_Range]);
+        //
+        //         done =  resp[`Resp_Arg_SDCmdDone_Range]     &&
+        //                 resp[`Resp_Arg_SDRespDone_Range]    &&
+        //                 resp[`Resp_Arg_SDDatOutDone_Range]  &&
+        //                 resp[`Resp_Arg_SDDatInDone_Range]   ;
+        //     end
+        //
+        //     if (done) begin
+        //         $display("[EXT] Abort OK ✅");
+        //     end else begin
+        //         $display("[EXT] Abort failed ❌");
+        //     end
+        //
+        // end else begin
+        //     $display("[EXT] DatIn didn't timeout? ❌");
+        // end
+        // `Finish;
         
         
         
@@ -1289,56 +1367,58 @@ module Testbench();
         
         
         // ====================
-        // Test DatIn abort
+        // Test DatOut abort
         // ====================
-        
+
         // Disable SD clock
         SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
-        
+
         // Set SD clock source = fast clock
         SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
+
+        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        // SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+
+        // Clock out data on DAT lines
+        SendMsg(`Msg_Type_SDDatOut, 0);
         
-        
-        SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
-        $display("[EXT] sdCmdDone: %b", resp[`Resp_Arg_SDCmdDone_Range]);
-        $display("[EXT] sdRespDone: %b", resp[`Resp_Arg_SDRespDone_Range]);
-        $display("[EXT] sdDatOutDone: %b", resp[`Resp_Arg_SDDatOutDone_Range]);
-        $display("[EXT] sdDatInDone: %b", resp[`Resp_Arg_SDDatInDone_Range]);
-        `Finish;
-        
-        // Send SD command CMD6 (SWITCH_FUNC)
-        SendSDCmd(CMD6, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 32'h80FFFFF3);
-        $display("[EXT] Waiting for DatIn to complete...");
+        // Verify that we timeout
+        $display("[EXT] Verifying that DatOut times out...");
         done = 0;
-        for (i=0; i<10 && !done; i++) begin
-            SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
-            done = resp[`Resp_Arg_SDDatInDone_Range];
+        // TODO: fix iteration count
+        for (i=0; i<1 && !done; i++) begin
+            SendMsgResp(`Msg_Type_SDGetStatus, 0);
+            done = resp[`Resp_Arg_SDDatOutDone_Range];
+            $display("[EXT] Checking if done: %b", done);
         end
         
         if (!done) begin
-            $display("[EXT] DatIn timeout, aborting...");
-            // Set SD clock source = fast clock
+            $display("[EXT] DatOut timeout ✅");
+            
+            SendMsgResp(`Msg_Type_SDGetStatus, 0);
+            $display("[EXT] Pre-abort status: sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+                resp[`Resp_Arg_SDCmdDone_Range],
+                resp[`Resp_Arg_SDRespDone_Range],
+                resp[`Resp_Arg_SDDatOutDone_Range],
+                resp[`Resp_Arg_SDDatInDone_Range]);
+            
+            $display("[EXT] Aborting...");
             SendMsg(`Msg_Type_SDAbort, 0);
             
-            $display("[EXT] Checking for abort success...");
-            
+            $display("[EXT] Checking abort status...");
             done = 0;
             for (i=0; i<10 && !done; i++) begin
-                reg sdCmdDone = 0;
-                reg sdRespDone = 0;
-                reg sdDatOutDone = 0;
-                reg sdDatInDone = 0;
+                SendMsgResp(`Msg_Type_SDGetStatus, 0);
+                $display("[EXT] Post-abort status: sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+                    resp[`Resp_Arg_SDCmdDone_Range],
+                    resp[`Resp_Arg_SDRespDone_Range],
+                    resp[`Resp_Arg_SDDatOutDone_Range],
+                    resp[`Resp_Arg_SDDatInDone_Range]);
                 
-                SendMsgRecvResp(`Msg_Type_SDGetStatus, 0);
-                
-                sdCmdDone = resp[`Resp_Arg_SDCmdDone_Range];
-                sdRespDone = resp[`Resp_Arg_SDRespDone_Range];
-                sdDatOutDone = resp[`Resp_Arg_SDDatOutDone_Range];
-                sdDatInDone = resp[`Resp_Arg_SDDatInDone_Range];
-                $display("[EXT] Status: sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-                    sdCmdDone, sdRespDone, sdDatOutDone, sdDatInDone);
-                
-                done = sdCmdDone && sdRespDone && sdDatOutDone && sdDatInDone;
+                done =  resp[`Resp_Arg_SDCmdDone_Range]     &&
+                        resp[`Resp_Arg_SDRespDone_Range]    &&
+                        resp[`Resp_Arg_SDDatOutDone_Range]  &&
+                        resp[`Resp_Arg_SDDatInDone_Range]   ;
             end
             
             if (done) begin
@@ -1346,8 +1426,78 @@ module Testbench();
             end else begin
                 $display("[EXT] Abort failed ❌");
             end
+        
+        end else begin
+            $display("[EXT] DatOut didn't timeout? ❌");
         end
         `Finish;
+        
+        
+        
+        
+        
+        
+        
+        
+        // // ====================
+        // // Test DatIn abort
+        // // ====================
+        //
+        // // Disable SD clock
+        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
+        //
+        // // Set SD clock source = fast clock
+        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
+        //
+        // // Send SD command that doesn't respond on the DAT lines,
+        // // but specify that we expect DAT data
+        // SendSDCmdResp(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_512, 0);
+        // $display("[EXT] Verifying that DatIn times out...");
+        // done = 0;
+        // for (i=0; i<10 && !done; i++) begin
+        //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
+        //     done = resp[`Resp_Arg_SDDatInDone_Range];
+        // end
+        //
+        // if (!done) begin
+        //     $display("[EXT] DatIn timeout ✅");
+        //
+        //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
+        //     $display("[EXT] Pre-abort status: sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+        //         resp[`Resp_Arg_SDCmdDone_Range],
+        //         resp[`Resp_Arg_SDRespDone_Range],
+        //         resp[`Resp_Arg_SDDatOutDone_Range],
+        //         resp[`Resp_Arg_SDDatInDone_Range]);
+        //
+        //     $display("[EXT] Aborting...");
+        //     SendMsg(`Msg_Type_SDAbort, 0);
+        //
+        //     $display("[EXT] Checking abort status...");
+        //     done = 0;
+        //     for (i=0; i<10 && !done; i++) begin
+        //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
+        //         $display("[EXT] Post-abort status: sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+        //             resp[`Resp_Arg_SDCmdDone_Range],
+        //             resp[`Resp_Arg_SDRespDone_Range],
+        //             resp[`Resp_Arg_SDDatOutDone_Range],
+        //             resp[`Resp_Arg_SDDatInDone_Range]);
+        //
+        //         done =  resp[`Resp_Arg_SDCmdDone_Range]     &&
+        //                 resp[`Resp_Arg_SDRespDone_Range]    &&
+        //                 resp[`Resp_Arg_SDDatOutDone_Range]  &&
+        //                 resp[`Resp_Arg_SDDatInDone_Range]   ;
+        //     end
+        //
+        //     if (done) begin
+        //         $display("[EXT] Abort OK ✅");
+        //     end else begin
+        //         $display("[EXT] Abort failed ❌");
+        //     end
+        //
+        // end else begin
+        //     $display("[EXT] DatIn didn't timeout? ❌");
+        // end
+        // `Finish;
     end
 endmodule
 `endif
