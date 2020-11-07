@@ -157,11 +157,11 @@ public:
         
         // Helper methods
         uint64_t sdRespGetBool(uint8_t idx) const {
-            return getBool(idx+12);
+            return getBool(idx+_RespIdx);
         }
         
         uint64_t sdRespGetBits(uint8_t start, uint8_t end) const {
-            return getBits(start+12, end+12);
+            return getBits(start+_RespIdx, end+_RespIdx);
         }
     
     private:

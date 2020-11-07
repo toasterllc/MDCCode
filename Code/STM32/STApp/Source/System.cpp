@@ -50,7 +50,6 @@ void System::_handleEvent() {
         Assert(!strcmp((char*)status.payload, str));
     }
     
-    
     // Disable SD clock
     {
         ice40.write(SDSetClkMsg(SDSetClkMsg::ClkSrc::None, SDClkSlowDelay));
