@@ -457,18 +457,21 @@ module Top(
             // signal `sd_respDone`
             sd_respCounter <= (ctrl_sdRespType[`Msg_Arg_SDRespType_48_Range] ? 48 : 136) - 8;
             
-            // Handle being aborted
-            if (sd_abortTrigger) begin
-                sd_respTrigger <= 0;
-                // Signal that we're done
-                sd_respDone <= !sd_respDone;
-            end
-            
-            if (sd_respTrigger && !sd_respStaged) begin
-                $display("[SD-CTRL:RESP] Triggered");
-                sd_respTrigger <= 0;
-                sd_respCRCErr <= 0;
-                sd_respCRCEn <= 1;
+            if (sd_respTrigger) begin
+                // Handle being aborted
+                // Only do this if `sd_respTrigger`=1 though, otherwise toggling `sd_respDone`
+                // will toggle us from Done->!Done, instead of remaining Done.
+                if (sd_abortTrigger) begin
+                    sd_respTrigger <= 0;
+                    // Signal that we're done
+                    sd_respDone <= !sd_respDone;
+                
+                end else if (!sd_respStaged) begin
+                    $display("[SD-CTRL:RESP] Triggered");
+                    sd_respTrigger <= 0;
+                    sd_respCRCErr <= 0;
+                    sd_respCRCEn <= 1;
+                end
             end
             
             if (!sd_respTrigger || sd_respStaged || sd_abortTrigger) begin
@@ -643,18 +646,21 @@ module Top(
             sd_datInCounter <= 127;
             sd_datInCRCEn <= 0;
             
-            // Handle being aborted
-            if (sd_abortTrigger) begin
-                sd_datInTrigger <= 0;
-                // Signal that we're done
-                sd_datInDone <= !sd_datInDone;
-            end
-            
-            if (sd_datInTrigger && !sd_datInReg[0]) begin
-                $display("[SD-CTRL:DATIN] Triggered");
-                sd_datInTrigger <= 0;
-                sd_datInCRCErr <= 0;
-                sd_datInCRCEn <= 1;
+            if (sd_datInTrigger) begin
+                // Handle being aborted
+                // Only do this if `sd_datInTrigger`=1 though, otherwise toggling `sd_datInDone`
+                // will toggle us from Done->!Done, instead of remaining Done.
+                if (sd_abortTrigger) begin
+                    sd_datInTrigger <= 0;
+                    // Signal that we're done
+                    sd_datInDone <= !sd_datInDone;
+                
+                end else if (!sd_datInReg[0]) begin
+                    $display("[SD-CTRL:DATIN] Triggered");
+                    sd_datInTrigger <= 0;
+                    sd_datInCRCErr <= 0;
+                    sd_datInCRCEn <= 1;
+                end
             end
             
             if (!sd_datInTrigger || sd_datInReg[0] || sd_abortTrigger) begin
