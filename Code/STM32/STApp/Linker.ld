@@ -26,14 +26,14 @@ SECTIONS {
         KEEP(*(.fini))
         . = ALIGN(4);
     } >RAM
-
+    
     .rodata : {
         . = ALIGN(4);
         *(.rodata)
         *(.rodata*)
         . = ALIGN(4);
     } >RAM
-
+    
     .ARM.extab : {
         . = ALIGN(4);
         *(.ARM.extab*)
