@@ -8,10 +8,6 @@ public:
     System();
     void init();
     
-    // Peripherals
-    USB usb;
-    QSPI qspi;
-    
 private:
     void _handleEvent();
     
