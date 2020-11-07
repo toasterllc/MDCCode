@@ -3,7 +3,7 @@ ENTRY(ISR_Reset)
 
 MEMORY {
     FLASH     (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
-    RAM_APP   (r)     : ORIGIN = 0x20000000,  LENGTH = 248K   /* RAM reserved for application */
+    APP_RAM   (r)     : ORIGIN = 0x20000000,  LENGTH = 248K   /* RAM reserved for application */
     RAM       (rwx)   : ORIGIN = 0x2003E000,  LENGTH = 8K     /* RAM reserved for bootloader */
 }
 
@@ -108,9 +108,9 @@ SECTIONS {
     
     .app_ram : {
         _sapp_ram = .;
-        . = . + LENGTH(RAM_APP);
+        . = . + LENGTH(APP_RAM);
         _eapp_ram = .;
-    } >RAM_APP
+    } >APP_RAM
     
     /* Remove information from the compiler libraries */
     /DISCARD/ : {
