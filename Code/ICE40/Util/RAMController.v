@@ -3,22 +3,25 @@
 `endif
 
 module RAMController #(
-    parameter ClkFreq       = 12000000,
-    parameter BlockSize     = 2304*1296,
+    parameter ClkFreq               = 24000000,
+    parameter BlockSize             = 2304*1296,
     
-    localparam WordWidth    = 16,
-    localparam BankWidth    = 2,
-    localparam RowWidth     = 13,
-    localparam ColWidth     = 10,
-    localparam DQMWidth     = 2,
+    localparam WordWidth            = 16,
+    localparam BankWidth            = 2,
+    localparam RowWidth             = 13,
+    localparam ColWidth             = 10,
+    localparam DQMWidth             = 2,
     
-    localparam AddrWidth    = BankWidth+RowWidth+ColWidth,
-    `define BankBits        AddrWidth-1                     -: BankWidth
-    `define RowBits         AddrWidth-BankWidth-1           -: RowWidth
-    `define ColBits         AddrWidth-BankWidth-RowWidth-1  -: ColWidth
+    localparam AddrWidth            = BankWidth+RowWidth+ColWidth,
+    localparam WordCount            = 64'b1<<AddrWidth,
+    `define BankBits                AddrWidth-1                     -: BankWidth
+    `define RowBits                 AddrWidth-BankWidth-1           -: RowWidth
+    `define ColBits                 AddrWidth-BankWidth-RowWidth-1  -: ColWidth
     
-    localparam BlockCount   = (64'b1<<AddrWidth)/BlockSize,
-    localparam BlockWidth   = $clog2(BlockCount+1)
+    localparam BlockSizeCeilLog2    = $clog2(BlockSize),
+    localparam BlockSizeCeilPow2    = 1<<BlockSizeCeilLog2,
+    localparam BlockCount           = WordCount/BlockSizeCeilPow2,
+    localparam BlockWidth           = $clog2(BlockCount)
 )(
     input wire                  clk,            // Clock
     
@@ -46,6 +49,14 @@ module RAMController #(
     output wire[DQMWidth-1:0]   ram_dqm,        // Data mask
     inout wire[WordWidth-1:0]   ram_dq          // Data input/output
 );
+    // initial begin
+    //     $display("BlockSizeCeilLog2    = %0d", BlockSizeCeilLog2);
+    //     $display("BlockSizeCeilPow2    = %0d", BlockSizeCeilPow2);
+    //     $display("BlockCount           = %0d", BlockCount);
+    //     $display("BlockWidth           = %0d", BlockWidth);
+    //     $finish;
+    // end
+    
     // Winbond W989D6DB Timing parameters (nanoseconds)
     localparam T_INIT               = 200000;   // Power up initialization time
     localparam T_REFI               = 7812;     // Time between refreshes
@@ -110,20 +121,7 @@ module RAMController #(
     
     function[AddrWidth-1:0] AddrFromBlock;
         input[BlockWidth-1:0] block;
-        case (block)
-        0:  AddrFromBlock = BlockSize * 0;
-        1:  AddrFromBlock = BlockSize * 1;
-        2:  AddrFromBlock = BlockSize * 2;
-        3:  AddrFromBlock = BlockSize * 3;
-        4:  AddrFromBlock = BlockSize * 4;
-        5:  AddrFromBlock = BlockSize * 5;
-        6:  AddrFromBlock = BlockSize * 6;
-        7:  AddrFromBlock = BlockSize * 7;
-        8:  AddrFromBlock = BlockSize * 8;
-        9:  AddrFromBlock = BlockSize * 9;
-        10: AddrFromBlock = BlockSize * 10;
-        11: AddrFromBlock = BlockSize * 11;
-        endcase
+        AddrFromBlock = block << BlockSizeCeilPow2;
     endfunction
     
     // ====================
@@ -558,7 +556,7 @@ module RAMController #(
                     
                     // Handle reaching the end of the block
                     end else if (!data_blockCounter) begin
-                        $display("Reached end of block");
+                        $display("End of block");
                         // Override `data_ready=1` above since we're done with the block
                         data_ready <= 0;
                         

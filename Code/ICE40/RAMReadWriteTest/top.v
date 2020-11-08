@@ -27,7 +27,7 @@ module Top(
     wire clk = clk24mhz;
     wire cmd_ready;
     reg cmd_trigger = 0;
-    reg[3:0] cmd_block = 0;
+    reg[2:0] cmd_block = 0;
     reg cmd_write = 0;
     wire data_ready;
     reg data_trigger = 0;
@@ -37,6 +37,7 @@ module Top(
     RAMController #(
         .ClkFreq(24000000),
         .BlockSize(16)
+        // .BlockSize(2304*1296)
     ) RAMController(
         .clk(clk),
         
