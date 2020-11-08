@@ -36,7 +36,7 @@ module Top(
     
     RAMController #(
         .ClkFreq(24000000),
-        .BlockSize(2304*1296)
+        .BlockSize(16)
     ) RAMController(
         .clk(clk),
         

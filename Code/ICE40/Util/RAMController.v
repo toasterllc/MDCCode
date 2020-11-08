@@ -108,6 +108,24 @@ module RAMController #(
         Max = (a > b ? a : b);
     endfunction
     
+    function[AddrWidth-1:0] AddrFromBlock;
+        input[BlockWidth-1:0] block;
+        case (block)
+        0:  AddrFromBlock = BlockSize * 0;
+        1:  AddrFromBlock = BlockSize * 1;
+        2:  AddrFromBlock = BlockSize * 2;
+        3:  AddrFromBlock = BlockSize * 3;
+        4:  AddrFromBlock = BlockSize * 4;
+        5:  AddrFromBlock = BlockSize * 5;
+        6:  AddrFromBlock = BlockSize * 6;
+        7:  AddrFromBlock = BlockSize * 7;
+        8:  AddrFromBlock = BlockSize * 8;
+        9:  AddrFromBlock = BlockSize * 9;
+        10: AddrFromBlock = BlockSize * 10;
+        11: AddrFromBlock = BlockSize * 11;
+        endcase
+    endfunction
+    
     // ====================
     // ram_clk
     // ====================
@@ -225,22 +243,19 @@ module RAMController #(
         );
     end
     
-    reg cmd_saved_trigger = 0;
-    reg[BlockWidth-1:0] cmd_saved_block = 0;
-    reg cmd_saved_write = 0;
+    localparam Init_State_Init              = 0; // +7
+    localparam Init_State_Delay             = 8; // +0
     
-    localparam Init_State_Init          = 0; // +7
-    localparam Init_State_Delay         = 8; // +0
+    localparam Refresh_State_Idle           = 0; // +0
+    localparam Refresh_State_Go             = 1; // +2
+    localparam Refresh_State_Delay          = 4; // +0
     
-    localparam Refresh_State_Idle       = 0; // +0
-    localparam Refresh_State_Go         = 1; // +2
-    localparam Refresh_State_Delay      = 4; // +0
-    
-    localparam Data_State_Idle          = 0; // +0
-    localparam Data_State_Write         = 1; // +2
-    localparam Data_State_WriteAbort    = 4; // +0
-    localparam Data_State_Read          = 5; // +0
-    localparam Data_State_Delay         = 6; // +0
+    localparam Data_State_Idle              = 0; // +0
+    localparam Data_State_Write             = 1; // +2
+    localparam Data_State_WriteNextRow      = 4; // +0
+    localparam Data_State_WriteAbort        = 5; // +0
+    localparam Data_State_Read              = 6; // +0
+    localparam Data_State_Delay             = 7; // +0
     
     reg init_done = 0;
     reg[3:0] init_state = 0;
@@ -289,6 +304,8 @@ module RAMController #(
     reg[3:0] data_state = 0;
     reg[3:0] data_nextState = 0;
     reg[3:0] data_restartState = 0;
+    reg[AddrWidth-1:0] data_blockAddr = 0;
+    reg[$clog2(BlockSize)-1:0] data_blockCounter = 0;
     // TODO: verify that this is the correct math, since data_delayCounter is only used in the init states
     // At high clock speeds, Clocks(T_RFC,1) is the largest delay stored in delayCounter.
     // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
@@ -474,6 +491,8 @@ module RAMController #(
             case (data_state)
             Data_State_Idle: begin
                 if (cmd_ready && cmd_trigger) begin
+                    data_blockAddr <= AddrFromBlock(cmd_block);
+                    data_blockCounter <= BlockSize-1;
                     data_state <= (cmd_write ? Data_State_Write : Data_State_Read);
                     data_restartState <= (cmd_write ? Data_State_Write : Data_State_Read);
                 end else begin
@@ -484,43 +503,62 @@ module RAMController #(
             Data_State_Write: begin
                 // Activate the bank+row
                 ramCmd <= RAM_Cmd_BankActivate;
-                // TODO: fix with actual bank/row from the supplied block
-                // TODO: we may be returning from a refresh, in which case we need to pick up where we left off
-                ramBA <= 0;
-                ramA <= 0;
+                ramBA <= data_blockAddr[`BankBits];
+                ramA <= data_blockAddr[`RowBits];
                 
                 data_delayCounter <= Data_BankActivateDelay;
                 data_state <= Data_State_Delay;
                 data_nextState <= Data_State_Write+1;
             end
             
+            // TODO: we should merge Data_State_Write+1 and Data_State_Write+2. we need to because if a refresh interrupts the last write (data_blockCounter=0), we'll restart at Data_State_Write, which will run both Data_State_Write+1 and Data_State_Write+2, which will underflow data_blockCounter
             Data_State_Write+1: begin
                 data_ready <= 1; // Accept more data
                 if (data_ready && data_trigger) begin
-                    // TODO: fix with actual column address
-                    ramA <= 0; // Supply the column address
+                    $display("Wrote mem[%h] = %h", data_blockAddr, data_write);
+                    ramA <= data_blockAddr[`ColBits]; // Supply the column address
                     ramDQOut <= data_write; // Supply data to be written
                     ramDQOutEn <= 1;
                     ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                     ramCmd <= RAM_Cmd_Write; // Give write command
+                    data_blockAddr <= data_blockAddr+1;
+                    data_blockCounter <= data_blockCounter-1;
                     data_state <= Data_State_Write+2;
                 end
             end
             
             Data_State_Write+2: begin
-                // TODO: handle crossing a bank/row boundary
                 data_ready <= 1; // Accept more data
                 if (data_ready && data_trigger) begin
                     // Continue the write burst
-                    ramA <= ramA+1; // Supply the column address
+                    $display("Wrote mem[%h] = %h", data_blockAddr, data_write);
+                    ramA <= data_blockAddr[`ColBits]; // Supply the column address
                     ramDQOut <= data_write; // Supply data to be written
                     ramDQOutEn <= 1;
                     ramDQM <= RAM_DQM_Unmasked; // Unmask the data
+                    data_blockAddr <= data_blockAddr+1;
+                    data_blockCounter <= data_blockCounter-1;
                     // Don't set `ramCmd` -- the burst continues with the NoOp command
                     
+                    // Handle reaching the end of a row
+                    if (&data_blockAddr[`RowBits]) begin
+                        $display("Crossed row boundary");
+                        // Override `data_ready=1` above since we can't handle new data in the next state
+                        data_ready <= 0;
+                        
+                        // Abort writing
+                        // Wait the 'write recover' time before doing so.
+                        // Datasheet (paraphrased):
+                        //   "The PrechargeAll command that interrupts a write burst should be
+                        //   issued ceil(tWR/tCK) cycles after the clock edge in which the
+                        //   last data-in element is registered."
+                        data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to the next state
+                        data_state <= Data_State_Delay;
+                        data_nextState <= Data_State_WriteNextRow;
+                    
                     // Handle reaching the end of the block
-                    // TODO: implement real end-of-block handling
-                    if (ramA === 15) begin
+                    end else if (!data_blockCounter) begin
+                        $display("Reached end of block");
                         // Override `data_ready=1` above since we're done with the block
                         data_ready <= 0;
                         
@@ -542,6 +580,17 @@ module RAMController #(
                     // write command when the flow starts again.
                     data_state <= Data_State_Write+1;
                 end
+            end
+            
+            // TODO: try merging Data_State_WriteNextRow + Data_State_WriteAbort
+            Data_State_WriteNextRow: begin
+                ramCmd <= RAM_Cmd_PrechargeAll;
+                ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
+                
+                // After precharge completes, continue writing
+                data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+                data_state <= Data_State_Delay;
+                data_nextState <= Data_State_Write;
             end
             
             Data_State_WriteAbort: begin
