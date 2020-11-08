@@ -2,17 +2,17 @@ module BankFifo #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
 )(
-    input wire w_clk,
-    input wire w_trigger,
-    input wire[W-1:0] w_data,
-    output wire w_ok,
-    output wire w_bank,
+    input wire          w_clk,
+    input wire          w_trigger,
+    input wire[W-1:0]   w_data,
+    output wire         w_ok,
+    output wire         w_bank,
     
-    input wire r_clk,
-    input wire r_trigger,
-    output wire[W-1:0] r_data,
-    output wire r_ok,
-    output wire r_bank
+    input wire          r_clk,
+    input wire          r_trigger,
+    output wire[W-1:0]  r_data,
+    output wire         r_ok,
+    output wire         r_bank
 );
     reg[W-1:0] mem[0:(1<<N)-1];
     reg dir = 0;
