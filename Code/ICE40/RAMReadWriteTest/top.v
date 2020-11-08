@@ -80,7 +80,7 @@ module Top(
         1: begin
             data_trigger <= 1;
             if (data_ready && data_trigger) begin
-                $display("Wrote word: %h", data_write);
+                // $display("Wrote word: %h", data_write);
                 data_write <= data_write+1;
             end
             
