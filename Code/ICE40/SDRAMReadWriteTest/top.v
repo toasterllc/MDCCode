@@ -62,6 +62,35 @@ module Top(
         .ram_dq(ram_dq)
     );
     
+    reg[1:0] state = 0;
+    always @(posedge clk24mhz) begin
+        case (state)
+        0: begin
+            cmd_trigger <= 1;
+            cmd_block <= 0;
+            cmd_write <= 1;
+            if (cmd_ready && cmd_trigger) begin
+                $display("Write started");
+                cmd_trigger <= 0;
+                state <= 1;
+            end
+        end
+        
+        1: begin
+            data_trigger <= 1;
+            if (data_ready && data_trigger) begin
+                $display("Wrote word: %h", data_write);
+                data_write <= data_write+1;
+            end
+            
+            if (cmd_ready) begin
+                data_trigger <= 0;
+                state <= 0;
+            end
+        end
+        endcase
+    end
+    
 endmodule
 
 
