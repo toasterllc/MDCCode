@@ -83,11 +83,11 @@ module Top(
     endfunction
     
     wire clk = clk24mhz;
-    wire cmd_ready;
+    wire cmd_ready_raw;
     reg cmd_trigger = 0;
     reg[BlockWidth-1:0] cmd_block = 0;
     reg cmd_write = 0;
-    wire data_ready;
+    wire data_ready_raw;
     reg data_trigger = 0;
     wire[15:0] data_write;
     wire[15:0] data_read;
@@ -99,12 +99,12 @@ module Top(
     ) RAMCtrl(
         .clk(clk),
         
-        .cmd_ready(cmd_ready),
+        .cmd_ready(cmd_ready_raw),
         .cmd_trigger(cmd_trigger),
         .cmd_block(cmd_block),
         .cmd_write(cmd_write),
         
-        .data_ready(data_ready),
+        .data_ready(data_ready_raw),
         .data_trigger(data_trigger),
         .data_write(data_write),
         .data_read(data_read),
@@ -121,29 +121,31 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    
-    
-    
     // TODO: add pauses when reading/writing
-    // TODO: add a WriteAll mode?
     
     wire wrapped;
     assign led[3] = wrapped;
     
     wire[15:0] random16;
     reg random16Next = 0;
-    Random16 random16Gen(.clk(clk), .next(random16Next), .q(random16));
+    Random16 Random16(.clk(clk), .next(random16Next), .q(random16));
     
     wire[24:0] random25;
     reg random25Next = 0;
-    Random25 random25Gen(.clk(clk), .next(random25Next), .q(random25), .wrapped(wrapped));
+    Random25 Random25(.clk(clk), .next(random25Next), .q(random25), .wrapped(wrapped));
     wire[BlockWidth-1:0] random25_block = random25&(BlockLimit-1);
     
     wire[5:0] random6;
     reg random6Next = 0;
-    Random6 random6Gen(.clk(clk), .next(random6Next), .q(random6));
+    Random6 Random6(.clk(clk), .next(random6Next), .q(random6));
     wire[5:0] random6_blockCount = Min(BlockLimit-random25_block, random6);
     
+    wire[5:0] random6Pause;
+    Random6 Random6_random6Pause(.clk(clk), .next(1'b1), .q(random6Pause));
+    // wire pause = random6Pause>60;
+    wire pause = 0;
+    wire cmd_ready = cmd_ready_raw && !pause;
+    wire data_ready = data_ready_raw && !pause;
     
     reg[4:0] state = 0;
     reg[WordIdxWidth-1:0] wordIdx = 0;
@@ -343,14 +345,14 @@ module Top(
                 state <= State_WriteAll+2;
             
             end else begin
-                // $display("Mode: WriteAll done");
+                $display("Mode: WriteAll done");
                 state <= State_Idle;
             end
         end
         
         State_WriteAll+2: begin
             if (cmd_ready) begin
-                // $display("Mode: WriteAll start/continue");
+                $display("Mode: WriteAll start/continue");
                 cmd_trigger <= 0;
                 state <= State_WriteAll+3;
             end
@@ -359,7 +361,7 @@ module Top(
         State_WriteAll+3: begin
             data_trigger <= 1;
             if (data_ready && data_trigger) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             
