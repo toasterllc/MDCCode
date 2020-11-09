@@ -123,8 +123,9 @@ module Top(
         .ram_dq(ram_dq)
     );
     
+    reg[2:0] status = 0;
     wire wrapped;
-    assign led[3] = wrapped;
+    assign led = {wrapped, status};
     
     wire[15:0] random16;
     reg random16Next = 0;
@@ -160,6 +161,7 @@ module Top(
     localparam State_WriteAll       = 13; // +3
     localparam State_WriteSeq       = 17; // +3
     localparam State_Write          = 21; // +2
+    localparam State_Error          = 24; // +0
     
     always @(posedge clk) begin
         case (state)
@@ -167,6 +169,7 @@ module Top(
         // Initialize Memory
         // ====================
         State_Init: begin
+            status <= 0;
             state <= State_WriteAll;
         end
         
@@ -219,7 +222,7 @@ module Top(
                     // $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
                 end else begin
                     $display("Read word %h[%h]: %h (expected: %h) ❌", cmd_block, wordIdx, data_read, data_read_expected);
-                    `Finish;
+                    state <= State_Error;
                 end
                 wordIdx <= wordIdx+1;
             end
@@ -269,7 +272,7 @@ module Top(
                     // $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
                 end else begin
                     $display("Read word %h[%h]: %h (expected: %h) ❌", cmd_block, wordIdx, data_read, data_read_expected);
-                    `Finish;
+                    state <= State_Error;
                 end
                 wordIdx <= wordIdx+1;
             end
@@ -313,7 +316,7 @@ module Top(
                     // $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
                 end else begin
                     $display("Read word %h[%h]: %h (expected: %h) ❌", cmd_block, wordIdx, data_read, data_read_expected);
-                    `Finish;
+                    state <= State_Error;
                 end
                 wordIdx <= wordIdx+1;
             end
@@ -444,6 +447,14 @@ module Top(
                 data_trigger <= 0;
                 state <= State_Idle;
             end
+        end
+        
+        // ====================
+        // Write
+        // ====================
+        State_Error: begin
+            status <= 3'b111;
+            `Finish;
         end
         endcase
     end
