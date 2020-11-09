@@ -164,6 +164,10 @@ module Top(
     localparam State_Error          = 24; // +0
     
     always @(posedge clk) begin
+        random6Next <= 0;
+        random16Next <= 0;
+        random25Next <= 0;
+        
         case (state)
         // ====================
         // Initialize Memory
