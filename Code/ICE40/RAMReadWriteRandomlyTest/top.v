@@ -76,6 +76,12 @@ module Top(
         DataFromBlockAndWordIdx = {7'h55, wordIdx, block[20:16]} ^ ~(block[15:0]);
     endfunction
     
+    function[63:0] Min;
+        input[63:0] a;
+        input[63:0] b;
+        Min = (a < b ? a : b);
+    endfunction
+    
     wire clk = clk24mhz;
     wire cmd_ready;
     reg cmd_trigger = 0;
@@ -124,10 +130,6 @@ module Top(
     wire wrapped;
     assign led[3] = wrapped;
     
-    wire[5:0] random6;
-    reg random6Next = 0;
-    Random6 random6Gen(.clk(clk), .next(random6Next), .q(random6));
-    
     wire[15:0] random16;
     reg random16Next = 0;
     Random16 random16Gen(.clk(clk), .next(random16Next), .q(random16));
@@ -136,6 +138,11 @@ module Top(
     reg random25Next = 0;
     Random25 random25Gen(.clk(clk), .next(random25Next), .q(random25), .wrapped(wrapped));
     wire[BlockWidth-1:0] random25_block = random25&(BlockLimit-1);
+    
+    wire[5:0] random6;
+    reg random6Next = 0;
+    Random6 random6Gen(.clk(clk), .next(random6Next), .q(random6));
+    wire[5:0] random6_blockCount = Min(BlockLimit-random25_block, random6);
     
     
     reg[4:0] state = 0;
@@ -236,10 +243,10 @@ module Top(
         // ReadSeq
         // ====================
         6: begin
-            $display("Mode: ReadSeq: %h-%h", random25_block, random25_block+random6-1'b1);
+            $display("Mode: ReadSeq: %h-%h", random25_block, random25_block+random6_blockCount-1'b1);
             cmd_write <= 0;
             cmd_block <= random25_block;
-            blockCount <= random6;
+            blockCount <= random6_blockCount;
             random6Next <= 1;
             random25Next <= 1;
             state <= 7;
@@ -369,10 +376,10 @@ module Top(
         // WriteSeq
         // ====================
         17: begin
-            $display("Mode: WriteSeq: %h-%h", random25_block, random25_block+random6-1'b1);
+            $display("Mode: WriteSeq: %h-%h", random25_block, random25_block+random6_blockCount-1'b1);
             cmd_write <= 1;
             cmd_block <= random25_block;
-            blockCount <= random6;
+            blockCount <= random6_blockCount;
             random6Next <= 1;
             random25Next <= 1;
             state <= 18;
