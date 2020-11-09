@@ -122,7 +122,7 @@ module RAMController #(
     
     function[AddrWidth-1:0] AddrFromBlock;
         input[BlockWidth-1:0] block;
-        AddrFromBlock = block << BlockSizeCeilPow2;
+        AddrFromBlock = block << BlockSizeCeilLog2;
     endfunction
     
     // ====================
@@ -346,6 +346,7 @@ module RAMController #(
         refresh_delayCounter <= refresh_delayCounter-1;
         // TODO: make sure `Clocks(T_REFI,2)` is right
         refresh_counter <= (refresh_counter ? refresh_counter-1 : Clocks(T_REFI,2));
+        // refresh_counter <= 2;
         refresh_pretrigger <= !refresh_counter;
         if (refresh_pretrigger) refresh_trigger <= 1;
         
@@ -448,7 +449,7 @@ module RAMController #(
         end else if (refresh_trigger) begin
             case (refresh_state)
             Refresh_State_Idle: begin
-                $display("[RAMController] Refresh triggered");
+                $display("[RAMController] Refresh start");
                 // We don't know what state we came from, so wait the most conservative amount of time.
                 refresh_delayCounter <= Refresh_StartDelay;
                 refresh_state <= Refresh_State_Delay;
@@ -484,10 +485,11 @@ module RAMController #(
                 refresh_state <= Refresh_State_Idle;
                 
                 case (data_mode)
-                Data_Mode_Idle:     data_state <= Data_Mode_Idle;
-                Data_Mode_Write:    data_state <= Data_Mode_Write;
-                Data_Mode_Read:     data_state <= Data_Mode_Read;
+                Data_Mode_Idle: data_state <= Data_State_Idle;
+                default:        data_state <= Data_State_Start;
                 endcase
+                
+                $display("[RAMController] Refresh done");
             end
             
             Refresh_State_Delay: begin
@@ -513,6 +515,7 @@ module RAMController #(
             end
             
             Data_State_Start: begin
+                $display("Data_State_Start");
                 // Activate the bank+row
                 ramCmd <= RAM_Cmd_BankActivate;
                 ramBA <= data_blockAddr[`BankBits];
@@ -525,6 +528,7 @@ module RAMController #(
             end
             
             Data_State_Write: begin
+                $display("Data_State_Write");
                 data_ready <= 1; // Accept more data
                 if (data_ready && data_trigger) begin
                     $display("Wrote mem[%h] = %h", data_blockAddr, data_write);
@@ -570,6 +574,7 @@ module RAMController #(
             end
             
             Data_State_Read: begin
+                $display("Data_State_Read");
                 // $display("Read mem[%h] = %h", data_blockAddr, data_write);
                 ramA <= data_blockAddr[`ColBits]; // Supply the column address
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
@@ -579,6 +584,7 @@ module RAMController #(
             end
             
             Data_State_Read+1: begin
+                $display("Data_State_Read+1");
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                 if (!data_delayCounter) begin
                     data_ready <= 1; // Notify that data is available
@@ -587,6 +593,7 @@ module RAMController #(
             end
             
             Data_State_Read+2: begin
+                $display("Data_State_Read+2");
                 // if (data_ready) $display("Read mem[%h] = %h", data_blockAddr, data_read);
                 if (data_trigger) begin
                     $display("Read mem[%h] = %h", data_blockAddr, data_read);
@@ -622,6 +629,7 @@ module RAMController #(
             // TODO: perf: experiment with separating this into 2 separate states: Data_State_WriteFinish/Data_State_ReadFinish
             // TODO: perf: after separating into separate states, try using !data_blockCounter instead of data_mode
             Data_State_Finish: begin
+                $display("Data_State_Finish");
                 ramCmd <= RAM_Cmd_PrechargeAll;
                 ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
                 

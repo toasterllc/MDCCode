@@ -31,12 +31,14 @@ module Top(
     reg cmd_write = 0;
     wire data_ready;
     reg data_trigger = 0;
-    reg[15:0] data_write = 0;
+    wire[15:0] data_write;
     wire[15:0] data_read;
+    
+    localparam BlockSize = 16;
     
     RAMController #(
         .ClkFreq(24000000),
-        .BlockSize(16)
+        .BlockSize(BlockSize)
         // .BlockSize(2304*1296)
     ) RAMController(
         .clk(clk),
@@ -64,14 +66,20 @@ module Top(
     );
     
     reg[3:0] state = 0;
+    reg[$clog2(BlockSize)-1:0] word_idx = 0;
+    assign data_write = cmd_block^word_idx;
+    // assign data_write = word_idx;
+    wire[15:0] data_read_expected = cmd_block^word_idx;
+    // wire[15:0] data_read_expected = word_idx;
+    
     always @(posedge clk24mhz) begin
         case (state)
         0: begin
             cmd_trigger <= 1;
-            cmd_block <= 0;
             cmd_write <= 1;
+            word_idx <= 0;
             if (cmd_ready && cmd_trigger) begin
-                $display("Write started");
+                $display("Write started @ block %h", cmd_block);
                 cmd_trigger <= 0;
                 state <= 1;
             end
@@ -81,7 +89,7 @@ module Top(
             data_trigger <= 1;
             if (data_ready && data_trigger) begin
                 // $display("Wrote word: %h", data_write);
-                data_write <= data_write+1;
+                word_idx <= word_idx+1;
             end
             
             if (cmd_ready) begin
@@ -92,8 +100,8 @@ module Top(
         
         2: begin
             cmd_trigger <= 1;
-            cmd_block <= 0;
             cmd_write <= 0;
+            word_idx <= 0;
             if (cmd_ready && cmd_trigger) begin
                 $display("Read started");
                 cmd_trigger <= 0;
@@ -104,11 +112,18 @@ module Top(
         3: begin
             data_trigger <= 1;
             if (data_ready && data_trigger) begin
-                $display("Read word: %h", data_read);
+                if (data_read === data_read_expected) begin
+                    $display("Read word: %h (expected: %h) ✅", data_read, data_read_expected);
+                end else begin
+                    $display("Read word: %h (expected: %h) ❌", data_read, data_read_expected);
+                    `Finish;
+                end
+                word_idx <= word_idx+1;
             end
             
             if (cmd_ready) begin
                 data_trigger <= 0;
+                cmd_block <= cmd_block+1;
                 state <= 0;
             end
         end
@@ -154,10 +169,10 @@ module Testbench();
         $dumpvars(0, Testbench);
     end
     
-    initial begin
-        #10000;
-        `Finish;
-    end
+    // initial begin
+    //     #10000000;
+    //     `Finish;
+    // end
     
     initial begin
         forever begin
