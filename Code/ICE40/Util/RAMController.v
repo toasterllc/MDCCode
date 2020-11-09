@@ -567,6 +567,7 @@ module RAMController #(
                     end
                 
                 end else begin
+                    // $display("[RAM-CTRL] Restart write");
                     // The data flow was interrupted, so we need to re-issue the
                     // write command when the flow starts again.
                     data_issueCmd <= 1;
@@ -649,7 +650,6 @@ module RAMController #(
             endcase
             
             // Override our `_ready` flags if we're refreshing on the next cycle
-            // TODO: update this to handle the multiple-bit data_ready register
             if (refresh_pretrigger) begin
                 cmd_ready <= 0;
                 data_ready <= 0;
