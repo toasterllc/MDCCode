@@ -27,7 +27,7 @@ module Top(
     wire clk = clk24mhz;
     wire cmd_ready;
     reg cmd_trigger = 0;
-    reg[2:0] cmd_block = 0;
+    reg[20:0] cmd_block = 0;
     reg cmd_write = 0;
     wire data_ready;
     reg data_trigger = 0;
@@ -63,7 +63,7 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    reg[1:0] state = 0;
+    reg[3:0] state = 0;
     always @(posedge clk24mhz) begin
         case (state)
         0: begin
@@ -82,6 +82,29 @@ module Top(
             if (data_ready && data_trigger) begin
                 // $display("Wrote word: %h", data_write);
                 data_write <= data_write+1;
+            end
+            
+            if (cmd_ready) begin
+                data_trigger <= 0;
+                state <= 2;
+            end
+        end
+        
+        2: begin
+            cmd_trigger <= 1;
+            cmd_block <= 0;
+            cmd_write <= 0;
+            if (cmd_ready && cmd_trigger) begin
+                $display("Read started");
+                cmd_trigger <= 0;
+                state <= 3;
+            end
+        end
+        
+        3: begin
+            data_trigger <= 1;
+            if (data_ready && data_trigger) begin
+                $display("Read word: %h", data_read);
             end
             
             if (cmd_ready) begin
@@ -132,7 +155,7 @@ module Testbench();
     end
     
     initial begin
-        #100000000;
+        #10000;
         `Finish;
     end
     
