@@ -65,7 +65,7 @@ module Top(
     localparam BlockSize = 16;
     localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
-    localparam BlockLimit = 'h10;
+    localparam BlockLimit = 'h100;
 `else
     localparam BlockLimit = {BlockWidth{1'b1}};
 `endif
@@ -149,7 +149,7 @@ module Top(
     reg[4:0] state = 0;
     reg[WordIdxWidth-1:0] wordIdx = 0;
     wire[15:0] data_read_expected = DataFromBlockAndWordIdx(cmd_block, wordIdx);
-    reg[5:0] blockCount = 0;
+    reg[BlockWidth-1:0] blockCount = 0;
     assign data_write = DataFromBlockAndWordIdx(cmd_block, wordIdx);
     
     localparam State_Init           = 0; // +0
@@ -351,7 +351,7 @@ module Top(
         
         State_WriteAll+2: begin
             if (cmd_ready && cmd_triggerActual) begin
-                // $display("Mode: WriteAll start/continue");
+                $display("Mode: WriteAll start/continue");
                 cmd_trigger <= 0;
                 state <= State_WriteAll+3;
             end
@@ -360,7 +360,7 @@ module Top(
         State_WriteAll+3: begin
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             
