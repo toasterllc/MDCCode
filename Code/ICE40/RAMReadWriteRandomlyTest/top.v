@@ -1,6 +1,7 @@
 `include "../Util/Util.v"
 `include "../Util/RAMController.v"
 `include "../Util/Delay.v"
+`include "../Util/ClockGen.v"
 
 `ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"
@@ -66,7 +67,7 @@ module Top(
     localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
     // localparam BlockLimit = {BlockWidth{1'b1}};
-    localparam BlockLimit = 'h10;
+    localparam BlockLimit = 'h100;
 `else
     localparam BlockLimit = {BlockWidth{1'b1}};
 `endif
@@ -90,7 +91,19 @@ module Top(
         Min = (a < b ? a : b);
     endfunction
     
-    wire clk = clk24mhz;
+    // ====================
+    // Clock (81 MHz)
+    // ====================
+    localparam ClkFreq = 81_000_000;
+    wire clk;
+    ClockGen #(
+        .FREQ(ClkFreq),
+        .DIVR(0),
+        .DIVF(26),
+        .DIVQ(3),
+        .FILTER_RANGE(2)
+    ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clk));
+    
     wire cmd_ready;
     reg cmd_trigger = 0;
     wire cmd_triggerActual;
@@ -103,7 +116,8 @@ module Top(
     wire[15:0] data_read;
     
     RAMController #(
-        .ClkFreq(24000000),
+        .ClkFreq(ClkFreq),
+        .RAMClkDelay(0),
         .BlockSize(BlockSize)
         // .BlockSize(2304*1296)
     ) RAMController(
@@ -131,9 +145,6 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    reg[3:0] status = 0;
-    assign led = status;
-    
     wire[15:0] random16;
     Random16 Random16(.clk(clk), .next(1'b1), .q(random16));
     
@@ -158,6 +169,10 @@ module Top(
     reg[BlockWidth-1:0] blockCount = 0;
     assign data_write = DataFromBlockAndWordIdx(cmd_block, wordIdx);
     
+    reg error = 0;
+    reg[24:0] statusCounter = 0;
+    assign led = {error, statusCounter[2-:3]};
+    
     localparam State_Init           = 0; // +0
     localparam State_Idle           = 1; // +0
     localparam State_ReadAll        = 2; // +3
@@ -174,14 +189,10 @@ module Top(
         // Initialize Memory
         // ====================
         State_Init: begin
-            status <= 0;
             state <= State_WriteAll;
         end
         
         State_Idle: begin
-            status[0] <= !status[0];
-            
-            // Nop
             if (random16 < 1*'h3333) $display("Mode: Nop");
             else if (random16 < 1*'h3333+'h1)   state <= State_ReadAll; // Rare
             else if (random16 < 2*'h3333)       state <= State_ReadSeq;
@@ -189,6 +200,7 @@ module Top(
             else if (random16 < 3*'h3333+'h1)   state <= State_WriteAll; // Rare
             else if (random16 < 4*'h3333)       state <= State_WriteSeq;
             else                                state <= State_Write;
+            statusCounter <= statusCounter+1;
         end
         
         // ====================
@@ -447,7 +459,7 @@ module Top(
         // Write
         // ====================
         State_Error: begin
-            status[3] <= 1;
+            error <= 1;
             `Finish;
         end
         endcase

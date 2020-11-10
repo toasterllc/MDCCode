@@ -4,6 +4,7 @@
 
 module RAMController #(
     parameter ClkFreq               = 24000000,
+    parameter RAMClkDelay           = 0,
     parameter BlockSize             = 2304*1296,
     
     localparam WordWidth            = 16,
@@ -125,16 +126,15 @@ module RAMController #(
         AddrFromBlock = block << BlockSizeCeilLog2;
     endfunction
     
-    // // ====================
-    // // ram_clk
-    // // ====================
-    // Delay #(
-    //     .Count(0)
-    // ) Delay(
-    //     .in(clk),
-    //     .out(ram_clk)
-    // );
-    assign ram_clk = ~clk;
+    // ====================
+    // ram_clk
+    // ====================
+    Delay #(
+        .Count(RAMClkDelay)
+    ) Delay(
+        .in(clk),
+        .out(ram_clk)
+    );
     
     // ====================
     // ram_cke
@@ -589,7 +589,7 @@ module RAMController #(
                 ramA <= data_blockAddr[`ColBits]; // Supply the column address
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                 ramCmd <= RAM_Cmd_Read; // Give read command
-                data_delayCounter <= 2;
+                data_delayCounter <= 3;
                 data_state <= Data_State_Read+1;
             end
             
