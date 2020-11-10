@@ -1,7 +1,6 @@
 `include "../Util/Util.v"
 `include "../Util/RAMController.v"
 `include "../Util/Delay.v"
-`include "../Util/VariableDelay.v"
 
 `ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"
@@ -64,15 +63,11 @@ module Top(
 );
     localparam BlockWidth = 21;
     localparam BlockSize = 16;
-    // localparam BlockWidth = 2;
-    // localparam BlockSize = 'h800000;
     localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
     localparam BlockLimit = 'h100;
 `else
-    // localparam BlockLimit = 'h10;
     localparam BlockLimit = {BlockWidth{1'b1}};
-    // localparam BlockLimit = 'h100000;
 `endif
     
     function[15:0] DataFromBlockAndWordIdx;
@@ -161,8 +156,8 @@ module Top(
     
     wire[5:0] random6Pause;
     Random6 Random6_random6Pause(.clk(clk), .next(1'b1), .q(random6Pause));
-    // wire pause = random6Pause>60;
-    wire pause = 0;
+    wire pause = random6Pause>60;
+    // wire pause = 0;
     assign cmd_triggerActual = cmd_trigger && !pause;
     assign data_triggerActual = data_trigger && !pause;
     
