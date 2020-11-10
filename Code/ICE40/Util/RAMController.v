@@ -109,8 +109,8 @@ module RAMController #(
         input[63:0] sub;
         begin
             Clocks = DivCeil(t*ClkFreq, 1000000000);
-            if (Clocks >= sub) Clocks = Clocks-sub;
-            else Clocks = 0;
+            // if (Clocks >= sub) Clocks = Clocks-sub;
+            // else Clocks = 0;
         end
     endfunction
     
@@ -128,12 +128,20 @@ module RAMController #(
     // ====================
     // ram_clk
     // ====================
-    Delay #(
-        .Count(0)
-    ) Delay(
-        .in(clk),
-        .out(ram_clk)
-    );
+    // Delay #(
+    //     .Count(40)
+    // ) Delay(
+    //     .in(clk),
+    //     .out(ram_clk)
+    // );
+    
+    // VariableDelay #(
+    //     .Count(20),
+    // ) VariableDelay(
+    //     .in(clk),
+    //     .sel(15),
+    //     .out(ram_clk)
+    // );
     
     // ====================
     // ram_cke
@@ -263,14 +271,18 @@ module RAMController #(
     // TODO: verify that this is the correct math, since init_delayCounter is only used in the init states
     // At high clock speeds, Clocks(T_RFC,1) is the largest delay stored in delayCounter.
     // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
-    localparam Init_DelayCounterWidth = Max($clog2(Clocks(T_RFC,1)+1), $clog2(C_DQZ+1+1));
+    localparam Init_DelayCounterWidth = $clog2(Clocks(T_INIT,2)+1);
+    initial $display("Init_DelayCounterWidth: %d", Init_DelayCounterWidth);
+    // localparam Init_DelayCounterWidth = Max($clog2(Clocks(T_RFC,1)+1), $clog2(C_DQZ+1+1));
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     
     reg[3:0] refresh_state = 0;
     reg[3:0] refresh_nextState = 0;
     localparam Refresh_CounterWidth = $clog2(Clocks(T_REFI,1)+1);
+    initial $display("Refresh_CounterWidth: %d", Refresh_CounterWidth);
     reg[Refresh_CounterWidth-1:0] refresh_counter = 0;
     localparam Refresh_DelayCounterWidth = Max($clog2(Clocks(T_RFC,1)+1), $clog2(C_DQZ+1+1));
+    initial $display("Refresh_DelayCounterWidth: %d", Refresh_DelayCounterWidth);
     reg[Refresh_DelayCounterWidth-1:0] refresh_delayCounter = 0;
     reg refresh_pretrigger = 0;
     reg refresh_trigger = 0;
@@ -300,6 +312,7 @@ module RAMController #(
         // until precharging is complete.
         // -2 cycles getting to the next state
         Clocks(T_WR, 2));
+    initial $display("Refresh_StartDelay: %d", Refresh_StartDelay);
     
     reg[3:0] data_state = 0;
     reg[3:0] data_nextState = 0;
@@ -308,8 +321,9 @@ module RAMController #(
     // TODO: verify that this is the correct math, since data_delayCounter is only used in the init states
     // At high clock speeds, Clocks(T_RFC,1) is the largest delay stored in delayCounter.
     // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
-    localparam Data_DelayCounterWidth = Max($clog2(Clocks(T_RFC,1)+1), $clog2(C_DQZ+1+1));
+    localparam Data_DelayCounterWidth = 4;//Max($clog2(Clocks(T_RFC,1)+1), $clog2(C_DQZ+1+1));
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
+    initial $display("Data_DelayCounterWidth: %d", Data_DelayCounterWidth);
     
     localparam Data_Mode_Idle               = 2'b00;
     localparam Data_Mode_Write              = 2'b01;
@@ -345,8 +359,8 @@ module RAMController #(
         data_delayCounter <= data_delayCounter-1;
         refresh_delayCounter <= refresh_delayCounter-1;
         // TODO: make sure `Clocks(T_REFI,2)` is right
-        refresh_counter <= (refresh_counter ? refresh_counter-1 : Clocks(T_REFI,2));
-        // refresh_counter <= 2;
+        // refresh_counter <= (refresh_counter ? refresh_counter-1 : Clocks(T_REFI,2));
+        refresh_counter <= 2;
         refresh_pretrigger <= !refresh_counter;
         if (refresh_pretrigger) refresh_trigger <= 1;
         
@@ -550,7 +564,7 @@ module RAMController #(
                     end
                     
                     // Handle reaching the end of a row or the end of block
-                    if (&data_blockAddr[`RowBits] || !data_blockCounter) begin
+                    if (!data_blockCounter) begin
                         // $display("[RAM-CTRL] End of row / end of block");
                         // Override `data_ready=1` above since we can't handle new data in the next state
                         data_ready <= 0;
@@ -561,7 +575,7 @@ module RAMController #(
                         //   "The PrechargeAll command that interrupts a write burst should be
                         //   issued ceil(tWR/tCK) cycles after the clock edge in which the
                         //   last data-in element is registered."
-                        data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to the next state
+                        data_delayCounter <= Clocks(T_WR,2)+10; // -2 cycles getting to the next state
                         data_state <= Data_State_Delay;
                         data_nextState <= Data_State_Finish;
                     end
@@ -580,7 +594,7 @@ module RAMController #(
                 ramA <= data_blockAddr[`ColBits]; // Supply the column address
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                 ramCmd <= RAM_Cmd_Read; // Give read command
-                data_delayCounter <= 3;
+                data_delayCounter <= 2;
                 data_state <= Data_State_Read+1;
             end
             
@@ -611,7 +625,7 @@ module RAMController #(
                     end
                     
                     // Handle reaching the end of a row or the end of block
-                    if (&data_blockAddr[`RowBits] || !data_blockCounter) begin
+                    if (!data_blockCounter) begin
                         // $display("[RAM-CTRL] End of row / end of block");
                         // Abort reading
                         data_state <= Data_State_Finish;
@@ -635,7 +649,7 @@ module RAMController #(
                 ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
                 
                 // After precharge completes, continue writing/reading
-                data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+                data_delayCounter <= Clocks(T_RP,2)+10; // -2 cycles getting to the next state
                 data_state <= Data_State_Delay;
                 case (data_mode)
                 Data_Mode_Idle:     data_nextState <= Data_State_Idle;

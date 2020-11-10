@@ -1,6 +1,7 @@
 `include "../Util/Util.v"
 `include "../Util/RAMController.v"
 `include "../Util/Delay.v"
+`include "../Util/VariableDelay.v"
 
 `ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"
@@ -63,17 +64,28 @@ module Top(
 );
     localparam BlockWidth = 21;
     localparam BlockSize = 16;
+    // localparam BlockWidth = 2;
+    // localparam BlockSize = 'h800000;
     localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
-    localparam BlockLimit = 'h10;
+    localparam BlockLimit = 'h100;
 `else
+    // localparam BlockLimit = 'h10;
     localparam BlockLimit = {BlockWidth{1'b1}};
+    // localparam BlockLimit = 'h100000;
 `endif
     
     function[15:0] DataFromBlockAndWordIdx;
         input[BlockWidth-1:0] block;
         input[WordIdxWidth-1:0] wordIdx;
+        
+        // DataFromBlockAndWordIdx = block;
+        // DataFromBlockAndWordIdx = wordIdx;
         DataFromBlockAndWordIdx = {7'h55, wordIdx, block[20:16]} ^ ~(block[15:0]);
+        // DataFromBlockAndWordIdx = 0;
+        // DataFromBlockAndWordIdx = ~0;
+        // DataFromBlockAndWordIdx = 16'hABCD;
+        // DataFromBlockAndWordIdx = 16'hCAFE;
     endfunction
     
     function[63:0] Min;
@@ -82,7 +94,17 @@ module Top(
         Min = (a < b ? a : b);
     endfunction
     
-    wire clk = clk24mhz;
+    wire clk = ~clk24mhz;
+    // Delay #(
+    //     .Count(0)
+    // ) Delay(
+    //     .in(~clk24mhz),
+    //     .out(clk)
+    // );
+    
+    assign ram_clk = clk24mhz;
+    
+    // wire clk = clk24mhz;
     wire cmd_ready;
     reg cmd_trigger = 0;
     wire cmd_triggerActual;
@@ -111,7 +133,7 @@ module Top(
         .data_write(data_write),
         .data_read(data_read),
         
-        .ram_clk(ram_clk),
+        .ram_clk(),
         .ram_cke(ram_cke),
         .ram_ba(ram_ba),
         .ram_a(ram_a),
@@ -123,15 +145,14 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    reg[2:0] status = 0;
-    wire wrapped;
-    assign led = {wrapped, status};
+    reg[3:0] status = 0;
+    assign led = status;
     
     wire[15:0] random16;
     Random16 Random16(.clk(clk), .next(1'b1), .q(random16));
     
     wire[24:0] random25;
-    Random25 Random25(.clk(clk), .next(1'b1), .q(random25), .wrapped(wrapped));
+    Random25 Random25(.clk(clk), .next(1'b1), .q(random25), .wrapped());
     wire[BlockWidth-1:0] random25_block = random25&(BlockLimit-1);
     
     wire[5:0] random6;
@@ -140,7 +161,8 @@ module Top(
     
     wire[5:0] random6Pause;
     Random6 Random6_random6Pause(.clk(clk), .next(1'b1), .q(random6Pause));
-    wire pause = random6Pause>60;
+    // wire pause = random6Pause>60;
+    wire pause = 0;
     assign cmd_triggerActual = cmd_trigger && !pause;
     assign data_triggerActual = data_trigger && !pause;
     
@@ -171,6 +193,8 @@ module Top(
         end
         
         State_Idle: begin
+            status[0] <= !status[0];
+            
             // Nop
             if (random16 < 1*'h3333) $display("Mode: Nop");
             // ReadAll (we want this to be rare so only check for 1 value)
@@ -180,11 +204,11 @@ module Top(
             // Read
             else if (random16 < 3*'h3333)       state <= State_Read;
             // WriteAll
-            else if (random16 < 3*'h3333+'h1)   state <= State_WriteAll;
+            else if (random16 < 3*'h3333+'h1)   state <= State_ReadAll;
             // WriteSeq
-            else if (random16 < 4*'h3333)       state <= State_WriteSeq;
+            else if (random16 < 4*'h3333)       state <= State_ReadSeq;
             // Write
-            else                                state <= State_Write;
+            else                                state <= State_Read;
         end
         
         // ====================
@@ -443,7 +467,7 @@ module Top(
         // Write
         // ====================
         State_Error: begin
-            status <= 3'b111;
+            status[3] <= 1;
             `Finish;
         end
         endcase
