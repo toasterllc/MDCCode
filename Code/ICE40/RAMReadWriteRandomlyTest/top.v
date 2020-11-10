@@ -134,16 +134,13 @@ module Top(
     reg[3:0] status = 0;
     assign led = status;
     
-    reg random16Next = 0;
     wire[15:0] random16;
     Random16 Random16(.clk(clk), .next(1'b1), .q(random16));
     
-    reg random25Next = 0;
     wire[24:0] random25;
     Random25 Random25(.clk(clk), .next(1'b1), .q(random25), .wrapped());
     wire[BlockWidth-1:0] random25_block = random25&(BlockLimit-1);
     
-    reg random6Next = 0;
     wire[5:0] random6;
     Random6 Random6(.clk(clk), .next(1'b1), .q(random6));
     wire[5:0] random6_blockCount = Min(BlockLimit-random25_block-1, random6);
@@ -172,10 +169,6 @@ module Top(
     localparam State_Error          = 24; // +0
     
     always @(posedge clk) begin
-        random6Next <= 0;
-        random16Next <= 0;
-        random25Next <= 0;
-        
         case (state)
         // ====================
         // Initialize Memory
@@ -196,7 +189,6 @@ module Top(
             else if (random16 < 3*'h3333+'h1)   state <= State_WriteAll; // Rare
             else if (random16 < 4*'h3333)       state <= State_WriteSeq;
             else                                state <= State_Write;
-            random16Next <= 1;
         end
         
         // ====================
@@ -255,8 +247,6 @@ module Top(
             cmd_write <= 0;
             cmd_block <= random25_block;
             blockCount <= random6_blockCount;
-            random6Next <= 1;
-            random25Next <= 1;
             state <= State_ReadSeq+1;
         end
         
@@ -306,7 +296,6 @@ module Top(
             cmd_write <= 0;
             cmd_block <= random25_block;
             wordIdx <= 0;
-            random25Next <= 1;
             state <= State_Read+1;
         end
         
@@ -387,10 +376,6 @@ module Top(
             cmd_write <= 1;
             cmd_block <= random25_block;
             blockCount <= random6_blockCount;
-            
-            random6Next <= 1;
-            random25Next <= 1;
-            
             state <= State_WriteSeq+1;
         end
         
@@ -435,7 +420,6 @@ module Top(
             cmd_write <= 1;
             cmd_block <= random25_block;
             wordIdx <= 0;
-            random25Next <= 1;
             state <= State_Write+1;
         end
         
