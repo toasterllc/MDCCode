@@ -66,7 +66,7 @@ module Top(
     localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
     // localparam BlockLimit = {BlockWidth{1'b1}};
-    localparam BlockLimit = 'h100;
+    localparam BlockLimit = 'h10;
 `else
     localparam BlockLimit = {BlockWidth{1'b1}};
 `endif
@@ -90,17 +90,7 @@ module Top(
         Min = (a < b ? a : b);
     endfunction
     
-    wire clk = ~clk24mhz;
-    // Delay #(
-    //     .Count(0)
-    // ) Delay(
-    //     .in(~clk24mhz),
-    //     .out(clk)
-    // );
-    
-    assign ram_clk = clk24mhz;
-    
-    // wire clk = clk24mhz;
+    wire clk = clk24mhz;
     wire cmd_ready;
     reg cmd_trigger = 0;
     wire cmd_triggerActual;
@@ -129,7 +119,7 @@ module Top(
         .data_write(data_write),
         .data_read(data_read),
         
-        .ram_clk(),
+        .ram_clk(ram_clk),
         .ram_cke(ram_cke),
         .ram_ba(ram_ba),
         .ram_a(ram_a),

@@ -125,23 +125,16 @@ module RAMController #(
         AddrFromBlock = block << BlockSizeCeilLog2;
     endfunction
     
-    // ====================
-    // ram_clk
-    // ====================
+    // // ====================
+    // // ram_clk
+    // // ====================
     // Delay #(
-    //     .Count(40)
+    //     .Count(0)
     // ) Delay(
     //     .in(clk),
     //     .out(ram_clk)
     // );
-    
-    // VariableDelay #(
-    //     .Count(20),
-    // ) VariableDelay(
-    //     .in(clk),
-    //     .sel(15),
-    //     .out(ram_clk)
-    // );
+    assign ram_clk = ~clk;
     
     // ====================
     // ram_cke
