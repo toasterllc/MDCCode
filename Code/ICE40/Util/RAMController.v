@@ -109,8 +109,8 @@ module RAMController #(
         input[63:0] sub;
         begin
             Clocks = DivCeil(t*ClkFreq, 1000000000);
-            // if (Clocks >= sub) Clocks = Clocks-sub;
-            // else Clocks = 0;
+            if (Clocks >= sub) Clocks = Clocks-sub;
+            else Clocks = 0;
         end
     endfunction
     
@@ -321,7 +321,7 @@ module RAMController #(
     // TODO: verify that this is the correct math, since data_delayCounter is only used in the init states
     // At high clock speeds, Clocks(T_RFC,1) is the largest delay stored in delayCounter.
     // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
-    localparam Data_DelayCounterWidth = 4;//Max($clog2(Clocks(T_RFC,1)+1), $clog2(C_DQZ+1+1));
+    localparam Data_DelayCounterWidth = Max($clog2(Clocks(T_RFC,1)+1), $clog2(C_DQZ+1+1));
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
     initial $display("Data_DelayCounterWidth: %d", Data_DelayCounterWidth);
     
@@ -575,7 +575,7 @@ module RAMController #(
                         //   "The PrechargeAll command that interrupts a write burst should be
                         //   issued ceil(tWR/tCK) cycles after the clock edge in which the
                         //   last data-in element is registered."
-                        data_delayCounter <= Clocks(T_WR,2)+10; // -2 cycles getting to the next state
+                        data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to the next state
                         data_state <= Data_State_Delay;
                         data_nextState <= Data_State_Finish;
                     end
@@ -649,7 +649,7 @@ module RAMController #(
                 ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
                 
                 // After precharge completes, continue writing/reading
-                data_delayCounter <= Clocks(T_RP,2)+10; // -2 cycles getting to the next state
+                data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
                 data_state <= Data_State_Delay;
                 case (data_mode)
                 Data_Mode_Idle:     data_nextState <= Data_State_Idle;
