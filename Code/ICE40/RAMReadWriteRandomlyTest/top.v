@@ -197,18 +197,12 @@ module Top(
             
             // Nop
             if (random16 < 1*'h3333) $display("Mode: Nop");
-            // ReadAll (we want this to be rare so only check for 1 value)
-            else if (random16 < 1*'h3333+'h1)   state <= State_ReadAll;
-            // ReadSeq
+            else if (random16 < 1*'h3333+'h1)   state <= State_ReadAll; // Rare
             else if (random16 < 2*'h3333)       state <= State_ReadSeq;
-            // Read
             else if (random16 < 3*'h3333)       state <= State_Read;
-            // WriteAll
-            else if (random16 < 3*'h3333+'h1)   state <= State_ReadAll;
-            // WriteSeq
-            else if (random16 < 4*'h3333)       state <= State_ReadSeq;
-            // Write
-            else                                state <= State_Read;
+            else if (random16 < 3*'h3333+'h1)   state <= State_WriteAll; // Rare
+            else if (random16 < 4*'h3333)       state <= State_WriteSeq;
+            else                                state <= State_Write;
         end
         
         // ====================

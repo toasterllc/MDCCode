@@ -359,8 +359,8 @@ module RAMController #(
         data_delayCounter <= data_delayCounter-1;
         refresh_delayCounter <= refresh_delayCounter-1;
         // TODO: make sure `Clocks(T_REFI,2)` is right
-        // refresh_counter <= (refresh_counter ? refresh_counter-1 : Clocks(T_REFI,2));
-        refresh_counter <= 2;
+        refresh_counter <= (refresh_counter ? refresh_counter-1 : Clocks(T_REFI,2));
+        // refresh_counter <= 2;
         refresh_pretrigger <= !refresh_counter;
         if (refresh_pretrigger) refresh_trigger <= 1;
         
