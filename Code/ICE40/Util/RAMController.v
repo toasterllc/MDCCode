@@ -563,8 +563,10 @@ module RAMController #(
                         data_mode <= Data_Mode_Idle;
                     end
                     
+                    // TODO: perf: try setting `data_nextState` directly here, instead of `Data_State_Finish` looking at `data_mode`. we'll need a new Write state to delay T_WR though
+                    
                     // Handle reaching the end of a row or the end of block
-                    if (!data_blockCounter) begin
+                    if (&data_blockAddr[`ColBits] || !data_blockCounter) begin
                         // $display("[RAM-CTRL] End of row / end of block");
                         // Override `data_ready=1` above since we can't handle new data in the next state
                         data_ready <= 0;
@@ -624,8 +626,10 @@ module RAMController #(
                         data_mode <= Data_Mode_Idle;
                     end
                     
+                    // TODO: perf: try setting `data_nextState` directly here, instead of `Data_State_Finish` looking at `data_mode`
+                    
                     // Handle reaching the end of a row or the end of block
-                    if (!data_blockCounter) begin
+                    if (&data_blockAddr[`ColBits] || !data_blockCounter) begin
                         // $display("[RAM-CTRL] End of row / end of block");
                         // Abort reading
                         data_state <= Data_State_Finish;
