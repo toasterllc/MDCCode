@@ -76,7 +76,7 @@ module Top(
         
         // DataFromBlockAndWordIdx = block;
         // DataFromBlockAndWordIdx = wordIdx;
-        DataFromBlockAndWordIdx = {7'h55, wordIdx, block[20:16]} ^ ~(block[15:0]);
+        DataFromBlockAndWordIdx = {~block[20:18], ~wordIdx, wordIdx, block[20:16]} ^ ~(block[15:0]);
         // DataFromBlockAndWordIdx = 0;
         // DataFromBlockAndWordIdx = ~0;
         // DataFromBlockAndWordIdx = 16'hABCD;
@@ -228,7 +228,7 @@ module Top(
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
                 if (data_read === data_read_expected) begin
-                    // $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
+                    $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
                 end else begin
                     $display("Read word %h[%h]: %h (expected: %h) ❌", cmd_block, wordIdx, data_read, data_read_expected);
                     state <= State_Error;
@@ -276,7 +276,7 @@ module Top(
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
                 if (data_read === data_read_expected) begin
-                    // $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
+                    $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
                 end else begin
                     $display("Read word %h[%h]: %h (expected: %h) ❌", cmd_block, wordIdx, data_read, data_read_expected);
                     state <= State_Error;
@@ -319,7 +319,7 @@ module Top(
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
                 if (data_read === data_read_expected) begin
-                    // $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
+                    $display("Read word %h[%h]: %h (expected: %h) ✅", cmd_block, wordIdx, data_read, data_read_expected);
                 end else begin
                     $display("Read word %h[%h]: %h (expected: %h) ❌", cmd_block, wordIdx, data_read, data_read_expected);
                     state <= State_Error;
@@ -361,7 +361,7 @@ module Top(
         State_WriteAll+3: begin
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             
@@ -404,7 +404,7 @@ module Top(
         State_WriteSeq+3: begin
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             
@@ -442,7 +442,7 @@ module Top(
         State_Write+2: begin
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             
