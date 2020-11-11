@@ -250,12 +250,12 @@ module RAMController #(
     localparam Data_State_Nop               = 0;    // +0
     localparam Data_State_Idle              = 1;    // +0
     localparam Data_State_Start             = 2;    // +0
-    localparam Data_State_Write             = 3;    // +0
-    localparam Data_State_Read              = 4;    // +2
-    localparam Data_State_Finish            = 7;    // +0
-    localparam Data_State_Refresh           = 8;    // +2
-    localparam Data_State_Delay             = 11;   // +0
-    localparam Data_State_Count             = 12;
+    localparam Data_State_Write             = 3;    // +1
+    localparam Data_State_Read              = 5;    // +2
+    localparam Data_State_Finish            = 8;    // +0
+    localparam Data_State_Refresh           = 9;    // +2
+    localparam Data_State_Delay             = 12;   // +0
+    localparam Data_State_Count             = 13;
     localparam Data_State_Width             = `RegWidth(Data_State_Count);
     
     reg[Data_State_Width-1:0] data_state = 0;
@@ -480,9 +480,14 @@ module RAMController #(
         end
         
         Data_State_Write: begin
+            data_ready <= 1;
+            data_state <= Data_State_Write+1;
+        end
+        
+        Data_State_Write+1: begin
             // $display("[RAM-CTRL] Data_State_Write");
             data_ready <= 1; // Accept more data
-            if (data_ready && data_trigger) begin
+            if (data_trigger) begin
                 // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, data_write);
                 if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
                 ramDQOut <= data_write; // Supply data to be written
@@ -515,7 +520,7 @@ module RAMController #(
                     data_nextState <= Data_State_Finish;
                 end
             
-            end else if (data_ready && !data_trigger) begin
+            end else begin
                 // $display("[RAM-CTRL] Restart write");
                 // The data flow was interrupted, so we need to re-issue the
                 // write command when the flow starts again.
