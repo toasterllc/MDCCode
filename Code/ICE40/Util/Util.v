@@ -19,6 +19,9 @@
 `define RegWidth5(a,b,c,d,y)    (`RegWidth4(a,b,c,d)   > (y) ? `RegWidth4(a,b,c,d)     : (y))
 `define RegWidth6(a,b,c,d,e,y)  (`RegWidth5(a,b,c,d,e) > (y) ? `RegWidth5(a,b,c,d,e)   : (y))
 
+// Sub: a-b, clipping to 0
+`define Sub(a,b)                ((a) > (b) ? ((a)-(b)) : 0)
+
 `define Stringify(x) `"x```"
 
 `define Fits(container, value) ($size(container) >= $clog2(value+64'b1))

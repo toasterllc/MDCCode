@@ -102,7 +102,7 @@ module Top(
         .DIVF(62),
         .DIVQ(3),
         .FILTER_RANGE(1)
-    ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clk));
+    ) ClockGen(.clkRef(clk24mhz), .clk(clk));
     
     wire cmd_ready;
     reg cmd_trigger = 0;

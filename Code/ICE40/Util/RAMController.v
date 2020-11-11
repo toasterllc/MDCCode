@@ -83,14 +83,6 @@ module RAMController #(
         DivCeil = (n+d-1)/d;
     endfunction
     
-    // Sub() performs Max(0, a-b)
-    function[63:0] Sub;
-        input[63:0] a;
-        input[63:0] b;
-        if (a > b)  Sub = a-b;
-        else        Sub = 0;
-    endfunction
-    
     // Clocks() returns the minimum number of `ClkFreq` clock cycles
     // for >= `t` nanoseconds to elapse. For example, if t=5ns, and
     // the clock period is 3ns, Clocks(t=5,sub=0) will return 2.
@@ -251,7 +243,7 @@ module RAMController #(
         10,
         Clocks(T_RFC,2),
         Clocks(T_RP,2),
-        Sub(C_MRD,2)
+        `Sub(C_MRD,2)
     );
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     
@@ -417,7 +409,7 @@ module RAMController #(
                 // ram_a:    write burst length,     test mode,  CAS latency,    burst type,     burst length
                 ramA <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
                 
-                init_delayCounter <= Sub(C_MRD,2); // Delay C_MRD; -2 cycles getting to the next state
+                init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
                 init_state <= Init_State_Delay;
                 init_nextState <= Init_State_Init+6;
             end
@@ -430,8 +422,7 @@ module RAMController #(
                 // ram_a:    output drive strength,      reserved,       self refresh banks
                 ramA <= {    2'b0,                       2'b0,           3'b000};
                 
-                // TODO: make sure Sub(C_MRD,2) is the right number of cycles
-                init_delayCounter <= Sub(C_MRD,2); // Delay C_MRD; -2 cycles getting to the next state
+                init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
                 init_state <= Init_State_Delay;
                 init_nextState <= Init_State_Init+7;
             end
