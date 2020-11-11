@@ -246,7 +246,13 @@ module RAMController #(
     reg[3:0] init_state = 0;
     reg[3:0] init_nextState = 0;
     localparam Init_Delay = Clocks(T_INIT,2); // -2 cycles getting to the next state
-    localparam Init_DelayCounterWidth = `RegWidth(Init_Delay);
+    localparam Init_DelayCounterWidth = `RegWidth5(
+        Init_Delay,
+        10,
+        Clocks(T_RFC,2),
+        Clocks(T_RP,2),
+        Sub(C_MRD,2)
+    );
     initial $display("Init_DelayCounterWidth: %d", Init_DelayCounterWidth);
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     
