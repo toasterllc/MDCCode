@@ -249,19 +249,22 @@ module RAMController #(
     // ====================
     localparam Data_State_Nop               = 0;    // +0
     localparam Data_State_Idle              = 1;    // +0
-    localparam Data_State_WriteStart        = 2;    // +0
+    localparam Data_State_Start             = 2;    // +0
     localparam Data_State_Write             = 3;    // +0
-    localparam Data_State_ReadStart         = 4;    // +0
-    localparam Data_State_Read              = 5;    // +2
-    localparam Data_State_Finish            = 8;    // +0
-    localparam Data_State_Refresh           = 9;    // +3
-    localparam Data_State_Delay             = 13;   // +0
-    localparam Data_State_Count             = 14;
+    localparam Data_State_Read              = 4;    // +2
+    localparam Data_State_Finish            = 7;    // +0
+    localparam Data_State_Refresh           = 8;    // +2
+    localparam Data_State_Delay             = 11;   // +0
+    localparam Data_State_Count             = 12;
     localparam Data_State_Width             = `RegWidth(Data_State_Count);
     
     reg[Data_State_Width-1:0] data_state = 0;
-    reg[Data_State_Width-1:0] data_modeState = 0;
     reg[Data_State_Width-1:0] data_nextState = 0;
+    
+    localparam Data_Mode_Idle       = 0;
+    localparam Data_Mode_Write      = 1;
+    localparam Data_Mode_Read       = 2;
+    reg[1:0] data_mode = 0;
     
     localparam Data_RefreshDelay = Clocks(T_REFI,2);    // -2 cycles:
                                                         //   -1: Because waiting N cycles requires loading a counter with N-1.
@@ -455,15 +458,15 @@ module RAMController #(
             if (cmd_ready && cmd_trigger) begin
                 data_addr <= AddrFromBlock(cmd_block);
                 data_counter <= BlockSize-1;
-                data_modeState <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
-                data_state <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
+                data_mode <= (cmd_write ? Data_Mode_Write : Data_Mode_Read);
+                data_state <= Data_State_Start;
             end else begin
                 // $display("[RAM-CTRL] IDLE");
                 cmd_ready <= 1;
             end
         end
         
-        Data_State_WriteStart: begin
+        Data_State_Start: begin
             // $display("[RAM-CTRL] Data_State_Start");
             // Activate the bank+row
             ramCmd <= RAM_Cmd_BankActivate;
@@ -473,7 +476,7 @@ module RAMController #(
             data_write_issueCmd <= 1; // The first write needs to issue the write command
             data_delayCounter <= Data_BankActivateDelay;
             data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Write;
+            data_nextState <= (data_mode===Data_Mode_Write ? Data_State_Write : Data_State_Read);
         end
         
         Data_State_Write: begin
@@ -491,8 +494,8 @@ module RAMController #(
                 data_write_issueCmd <= 0; // Reset after we issue the write command
                 
                 if (!data_counter) begin
-                    // Clear data_modeState because we're done
-                    data_modeState <= Data_State_Idle;
+                    // Clear data_mode because we're done
+                    data_mode <= Data_Mode_Idle;
                 end
                 
                 // Handle reaching the end of a row or the end of block
@@ -518,18 +521,6 @@ module RAMController #(
                 // write command when the flow starts again.
                 data_write_issueCmd <= 1;
             end
-        end
-        
-        Data_State_ReadStart: begin
-            // $display("[RAM-CTRL] Data_State_Start");
-            // Activate the bank+row
-            ramCmd <= RAM_Cmd_BankActivate;
-            ramBA <= data_addr[`BankBits];
-            ramA <= data_addr[`RowBits];
-            
-            data_delayCounter <= Data_BankActivateDelay;
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Read;
         end
         
         Data_State_Read: begin
@@ -561,8 +552,8 @@ module RAMController #(
                 data_counter <= data_counter-1;
                 
                 if (!data_counter) begin
-                    // Clear data_modeState because we're done
-                    data_modeState <= Data_State_Idle;
+                    // Clear data_mode because we're done
+                    data_mode <= Data_Mode_Idle;
                 end
                 
                 // Handle reaching the end of a row or the end of block
@@ -590,7 +581,10 @@ module RAMController #(
             // After precharge completes, continue writing if there's more data
             data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
             data_state <= Data_State_Delay;
-            data_nextState <= data_modeState;
+            case (data_mode)
+            Data_Mode_Idle:     data_nextState <= Data_State_Idle;
+            default:            data_nextState <= Data_State_Start;
+            endcase
         end
         
         Data_State_Refresh: begin
@@ -618,16 +612,12 @@ module RAMController #(
             ramCmd <= RAM_Cmd_AutoRefresh;
             // Wait T_RFC (auto refresh time) to guarantee that the next command can
             // activate the same bank immediately
-            //   -3 cycles:
-            //     -2: to get to the next refresh state,
-            //     -1: to get to the next normal state after exiting refresh mode
-            data_delayCounter <= Clocks(T_RFC,3);
+            data_delayCounter <= Clocks(T_RFC,2); // -2 cycles getting to the next state
             data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Refresh+3;
-        end
-        
-        Data_State_Refresh+3: begin
-            data_state <= data_modeState;
+            case (data_mode)
+            Data_Mode_Idle:     data_nextState <= Data_State_Idle;
+            default:            data_nextState <= Data_State_Start;
+            endcase
         end
         
         Data_State_Delay: begin
