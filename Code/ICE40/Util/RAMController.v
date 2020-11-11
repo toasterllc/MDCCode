@@ -220,36 +220,19 @@ module RAMController #(
     end
     assign data_read = ramDQIn;
     
-    localparam Init_State_Init              = 0; // +7
-    localparam Init_State_Delay             = 8; // +0
-    
-    localparam Refresh_State_Idle           = 0; // +0
-    localparam Refresh_State_Go             = 1; // +2
-    localparam Refresh_State_Delay          = 4; // +0
-    
-    localparam Data_State_Idle              = 0; // +0
-    localparam Data_State_WriteStart        = 1; // +0
-    localparam Data_State_Write             = 2; // +0
-    localparam Data_State_ReadStart         = 3; // +0
-    localparam Data_State_Read              = 4; // +2
-    localparam Data_State_Finish            = 7; // +0
-    localparam Data_State_Delay             = 8; // +0
+    localparam Data_State_Init              = 0;    // +6
+    localparam Data_State_Idle              = 7;    // +0
+    localparam Data_State_WriteStart        = 8;    // +0
+    localparam Data_State_Write             = 9;    // +0
+    localparam Data_State_ReadStart         = 10;   // +0
+    localparam Data_State_Read              = 11;   // +2
+    localparam Data_State_Finish            = 14;   // +0
+    localparam Data_State_Refresh           = 15;   // +3
+    localparam Data_State_Delay             = 19;   // +0
     
     reg init_done = 0;
-    reg[3:0] init_state = 0;
-    reg[3:0] init_nextState = 0;
     localparam Init_Delay = Clocks(T_INIT,2); // -2 cycles getting to the next state
-    localparam Init_DelayCounterWidth = `RegWidth5(
-        Init_Delay,
-        10,
-        Clocks(T_RFC,2),
-        Clocks(T_RP,2),
-        `Sub(C_MRD,2)
-    );
-    reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     
-    reg[3:0] refresh_state = 0;
-    reg[3:0] refresh_nextState = 0;
     localparam Refresh_Delay = Clocks(T_REFI,2); // -2 cycles:
                                                  //   -1: Because waiting N cycles requires loading a counter with N-1.
                                                  //   -1: Because Clocks() ceils the result, so if we need to
@@ -286,18 +269,10 @@ module RAMController #(
         // -2 cycles getting to the next state
         Clocks(T_WR,2)
     );
-    localparam Refresh_DelayCounterWidth = `RegWidth3(
-        Refresh_StartDelay,
-        Clocks(T_RP,2),
-        Clocks(T_RFC,3)
-    );
-    reg[Refresh_DelayCounterWidth-1:0] refresh_delayCounter = 0;
-    reg refresh_pretrigger = 0;
-    reg refresh_trigger = 0;
     
-    reg[3:0] data_state = 0;
-    reg[3:0] data_modeState = 0;
-    reg[3:0] data_nextState = 0;
+    reg[4:0] data_state = 0;
+    reg[4:0] data_modeState = 0;
+    reg[4:0] data_nextState = 0;
     reg[AddrWidth-1:0] data_addr = 0;
     reg[BlockSizeCeilLog2-1:0] data_counter = 0;
     
@@ -318,25 +293,32 @@ module RAMController #(
         // -2 cycles getting to the next state
         Clocks(T_RRD,2)
     );
-    localparam Data_DelayCounterWidth = `RegWidth4(
+    localparam Data_DelayCounterWidth = `RegWidth12(
+        // Init states
+        Init_Delay,
+        10,
+        Clocks(T_RP,2),
+        Clocks(T_RFC,2),
+        `Sub(C_MRD,2),
+        
         Data_BankActivateDelay,
         Clocks(T_WR,2),
         C_CAS+1,
-        Clocks(T_RP,2)
+        Clocks(T_RP,2),
+        
+        // Refresh states
+        Refresh_StartDelay,
+        Clocks(T_RP,2),
+        Clocks(T_RFC,3)
     );
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
     
     reg data_write_issueCmd = 0;
     
 	always @(posedge clk) begin
-        init_delayCounter <= init_delayCounter-1;
         data_delayCounter <= data_delayCounter-1;
-        refresh_delayCounter <= refresh_delayCounter-1;
-        // -2 cycles: -1 , -1
         refresh_counter <= (refresh_counter ? refresh_counter-1 : Refresh_Delay);
         // refresh_counter <= 2;
-        refresh_pretrigger <= !refresh_counter;
-        if (refresh_pretrigger) refresh_trigger <= 1;
         
         cmd_ready <= 0; // Reset by default
         data_ready <= 0; // Reset by default
@@ -346,297 +328,278 @@ module RAMController #(
         ramDQM <= RAM_DQM_Masked;
         ramDQOutEn <= 0;
         
-        if (!init_done) begin
-            case (init_state)
-            Init_State_Init: begin
-                // Initialize registers
-                ramCKE <= 0;
-                init_delayCounter <= Init_Delay;
-                init_state <= Init_State_Delay;
-                init_nextState <= Init_State_Init+1;
-            end
-            
-            Init_State_Init+1: begin
-                // Bring ram_cke high for a bit before issuing commands
-                ramCKE <= 1;
-                init_delayCounter <= 10; // Delay 10 cycles
-                init_state <= Init_State_Delay;
-                init_nextState <= Init_State_Init+2;
-            end
-            
-            Init_State_Init+2: begin
-                // Precharge all banks
-                ramCmd <= RAM_Cmd_PrechargeAll;
-                ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-                
-                init_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-                init_state <= Init_State_Delay;
-                init_nextState <= Init_State_Init+3;
-            end
-            
-            Init_State_Init+3: begin
-                // Autorefresh 1/2
-                ramCmd <= RAM_Cmd_AutoRefresh;
-                // Wait T_RFC for autorefresh to complete
-                // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
-                // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
-                // we just have to wait T_RFC.
-                init_delayCounter <= Clocks(T_RFC,2); // -2 cycles getting to the next state
-                init_state <= Init_State_Delay;
-                init_nextState <= Init_State_Init+4;
-            end
-            
-            Init_State_Init+4: begin
-                // Autorefresh 2/2
-                ramCmd <= RAM_Cmd_AutoRefresh;
-                // Wait T_RFC for autorefresh to complete
-                // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
-                // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
-                // we just have to wait T_RFC.
-                init_delayCounter <= Clocks(T_RFC,2); // Delay T_RFC; -2 cycles getting to the next state
-                init_state <= Init_State_Delay;
-                init_nextState <= Init_State_Init+5;
-            end
-            
-            Init_State_Init+5: begin
-                // Set the operating mode of the SDRAM
-                ramCmd <= RAM_Cmd_SetMode;
-                // ram_ba: reserved
-                ramBA <= 0;
-                // ram_a:    write burst length,     test mode,  CAS latency,    burst type,     burst length
-                ramA <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
-                
-                init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
-                init_state <= Init_State_Delay;
-                init_nextState <= Init_State_Init+6;
-            end
-            
-            Init_State_Init+6: begin
-                // Set the extended operating mode of the SDRAM (applies only to Winbond RAMs)
-                ramCmd <= RAM_Cmd_SetMode;
-                // ram_ba: reserved
-                ramBA <= 'b10;
-                // ram_a:    output drive strength,      reserved,       self refresh banks
-                ramA <= {    2'b0,                       2'b0,           3'b000};
-                
-                init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
-                init_state <= Init_State_Delay;
-                init_nextState <= Init_State_Init+7;
-            end
-            
-            Init_State_Init+7: begin
-                init_done <= 1;
-            end
-            
-            Init_State_Delay: begin
-                if (!init_delayCounter) init_state <= init_nextState;
-            end
-            endcase
+        // ====================
+        // Data State Machine
+        // ====================
+        case (data_state)
+        Data_State_Init: begin
+            // Initialize registers
+            ramCKE <= 0;
+            data_delayCounter <= Init_Delay;
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Init+1;
+        end
         
-        end else if (refresh_trigger) begin
-            case (refresh_state)
-            Refresh_State_Idle: begin
-                // $display("[RAM-CTRL] Refresh start");
-                // We don't know what state we came from, so wait the most conservative amount of time.
-                refresh_delayCounter <= Refresh_StartDelay;
-                refresh_state <= Refresh_State_Delay;
-                refresh_nextState <= Refresh_State_Go;
-            end
-            
-            Refresh_State_Go: begin
-                // Precharge all banks
-                ramCmd <= RAM_Cmd_PrechargeAll;
-                ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-                
-                // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
-                refresh_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-                refresh_state <= Refresh_State_Delay;
-                refresh_nextState <= Refresh_State_Go+1;
-            end
-            
-            Refresh_State_Go+1: begin
-                $display("Refresh time: %0d", $time);
-                // Issue auto-refresh command
-                ramCmd <= RAM_Cmd_AutoRefresh;
-                // Wait T_RFC (auto refresh time) to guarantee that the next command can
-                // activate the same bank immediately
-                //   -3 cycles:
-                //     -2: to get to the next refresh state,
-                //     -1: to get to the next normal state after exiting refresh mode
-                refresh_delayCounter <= Clocks(T_RFC,3);
-                refresh_state <= Refresh_State_Delay;
-                refresh_nextState <= Refresh_State_Go+2;
-            end
-            
-            Refresh_State_Go+2: begin
-                refresh_trigger <= 0;
-                refresh_state <= Refresh_State_Idle;
-                data_state <= data_modeState;
-                // $display("[RAM-CTRL] Refresh done");
-            end
-            
-            Refresh_State_Delay: begin
-                if (!refresh_delayCounter) refresh_state <= refresh_nextState;
-            end
-            endcase
+        Data_State_Init+1: begin
+            // Bring ram_cke high for a bit before issuing commands
+            ramCKE <= 1;
+            data_delayCounter <= 10; // Delay 10 cycles
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Init+2;
+        end
         
-        end else begin
-            // ====================
-            // Data State Machine
-            // ====================
-            case (data_state)
-            Data_State_Idle: begin
-                if (cmd_ready && cmd_trigger) begin
-                    data_addr <= AddrFromBlock(cmd_block);
-                    data_counter <= BlockSize-1;
-                    data_modeState <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
-                    data_state <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
-                end else begin
-                    // $display("[RAM-CTRL] IDLE");
-                    cmd_ready <= 1;
-                end
-            end
+        Data_State_Init+2: begin
+            // Precharge all banks
+            ramCmd <= RAM_Cmd_PrechargeAll;
+            ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
             
-            Data_State_WriteStart: begin
-                // $display("[RAM-CTRL] Data_State_Start");
-                // Activate the bank+row
-                ramCmd <= RAM_Cmd_BankActivate;
-                ramBA <= data_addr[`BankBits];
-                ramA <= data_addr[`RowBits];
-                
-                data_write_issueCmd <= 1; // The first write needs to issue the write command
-                data_delayCounter <= Data_BankActivateDelay;
-                data_state <= Data_State_Delay;
-                data_nextState <= Data_State_Write;
-            end
+            data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Init+3;
+        end
+        
+        Data_State_Init+3: begin
+            // Autorefresh 1/2
+            ramCmd <= RAM_Cmd_AutoRefresh;
+            // Wait T_RFC for autorefresh to complete
+            // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
+            // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
+            // we just have to wait T_RFC.
+            data_delayCounter <= Clocks(T_RFC,2); // -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Init+4;
+        end
+        
+        Data_State_Init+4: begin
+            // Autorefresh 2/2
+            ramCmd <= RAM_Cmd_AutoRefresh;
+            // Wait T_RFC for autorefresh to complete
+            // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
+            // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
+            // we just have to wait T_RFC.
+            data_delayCounter <= Clocks(T_RFC,2); // Delay T_RFC; -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Init+5;
+        end
+        
+        Data_State_Init+5: begin
+            // Set the operating mode of the SDRAM
+            ramCmd <= RAM_Cmd_SetMode;
+            // ram_ba: reserved
+            ramBA <= 0;
+            // ram_a:    write burst length,     test mode,  CAS latency,    burst type,     burst length
+            ramA <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
             
-            Data_State_Write: begin
-                // $display("[RAM-CTRL] Data_State_Write");
-                data_ready <= 1; // Accept more data
-                if (data_ready && data_trigger) begin
-                    // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, data_write);
-                    if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
-                    ramDQOut <= data_write; // Supply data to be written
-                    ramDQOutEn <= 1;
-                    ramDQM <= RAM_DQM_Unmasked; // Unmask the data
-                    if (data_write_issueCmd) ramCmd <= RAM_Cmd_Write; // Give write command
-                    data_addr <= data_addr+1;
-                    data_counter <= data_counter-1;
-                    data_write_issueCmd <= 0; // Reset after we issue the write command
-                    
-                    if (!data_counter) begin
-                        // Clear data_modeState because we're done
-                        data_modeState <= Data_State_Idle;
-                    end
-                    
-                    // Handle reaching the end of a row or the end of block
-                    if (&data_addr[`ColBits] || !data_counter) begin
-                        // $display("[RAM-CTRL] End of row / end of block");
-                        // Override `data_ready=1` above since we can't handle new data in the next state
-                        data_ready <= 0;
-                        
-                        // Abort writing
-                        // Wait the 'write recover' time before doing so.
-                        // Datasheet (paraphrased):
-                        //   "The PrechargeAll command that interrupts a write burst should be
-                        //   issued ceil(tWR/tCK) cycles after the clock edge in which the
-                        //   last data-in element is registered."
-                        data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to Data_State_Finish
-                        data_state <= Data_State_Delay;
-                        data_nextState <= Data_State_Finish;
-                    end
-                
-                end else begin
-                    // $display("[RAM-CTRL] Restart write");
-                    // The data flow was interrupted, so we need to re-issue the
-                    // write command when the flow starts again.
-                    data_write_issueCmd <= 1;
-                end
-            end
+            data_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Init+6;
+        end
+        
+        Data_State_Init+6: begin
+            // Set the extended operating mode of the SDRAM (applies only to Winbond RAMs)
+            ramCmd <= RAM_Cmd_SetMode;
+            // ram_ba: reserved
+            ramBA <= 'b10;
+            // ram_a:    output drive strength,      reserved,       self refresh banks
+            ramA <= {    2'b0,                       2'b0,           3'b000};
             
-            Data_State_ReadStart: begin
-                // $display("[RAM-CTRL] Data_State_Start");
-                // Activate the bank+row
-                ramCmd <= RAM_Cmd_BankActivate;
-                ramBA <= data_addr[`BankBits];
-                ramA <= data_addr[`RowBits];
-                
-                data_delayCounter <= Data_BankActivateDelay;
-                data_state <= Data_State_Delay;
-                data_nextState <= Data_State_Read;
-            end
+            init_done <= 1;
             
-            Data_State_Read: begin
-                // $display("[RAM-CTRL] Data_State_Read");
-                // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_write);
-                ramA <= data_addr[`ColBits]; // Supply the column address
+            data_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Idle;
+        end
+        
+        Data_State_Idle: begin
+            if (cmd_ready && cmd_trigger) begin
+                data_addr <= AddrFromBlock(cmd_block);
+                data_counter <= BlockSize-1;
+                data_modeState <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
+                data_state <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
+            end else begin
+                // $display("[RAM-CTRL] IDLE");
+                cmd_ready <= 1;
+            end
+        end
+        
+        Data_State_WriteStart: begin
+            // $display("[RAM-CTRL] Data_State_Start");
+            // Activate the bank+row
+            ramCmd <= RAM_Cmd_BankActivate;
+            ramBA <= data_addr[`BankBits];
+            ramA <= data_addr[`RowBits];
+            
+            data_write_issueCmd <= 1; // The first write needs to issue the write command
+            data_delayCounter <= Data_BankActivateDelay;
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Write;
+        end
+        
+        Data_State_Write: begin
+            // $display("[RAM-CTRL] Data_State_Write");
+            data_ready <= 1; // Accept more data
+            if (data_ready && data_trigger) begin
+                // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, data_write);
+                if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
+                ramDQOut <= data_write; // Supply data to be written
+                ramDQOutEn <= 1;
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
-                ramCmd <= RAM_Cmd_Read; // Give read command
-                data_delayCounter <= C_CAS+1; // +1 cycle due to input register
-                data_state <= Data_State_Read+1;
-            end
+                if (data_write_issueCmd) ramCmd <= RAM_Cmd_Write; // Give write command
+                data_addr <= data_addr+1;
+                data_counter <= data_counter-1;
+                data_write_issueCmd <= 0; // Reset after we issue the write command
+                
+                if (!data_counter) begin
+                    // Clear data_modeState because we're done
+                    data_modeState <= Data_State_Idle;
+                end
+                
+                // Handle reaching the end of a row or the end of block
+                if (&data_addr[`ColBits] || !data_counter) begin
+                    // $display("[RAM-CTRL] End of row / end of block");
+                    // Override `data_ready=1` above since we can't handle new data in the next state
+                    data_ready <= 0;
+                    
+                    // Abort writing
+                    // Wait the 'write recover' time before doing so.
+                    // Datasheet (paraphrased):
+                    //   "The PrechargeAll command that interrupts a write burst should be
+                    //   issued ceil(tWR/tCK) cycles after the clock edge in which the
+                    //   last data-in element is registered."
+                    data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to Data_State_Finish
+                    data_state <= Data_State_Delay;
+                    data_nextState <= Data_State_Finish;
+                end
             
-            Data_State_Read+1: begin
-                // $display("[RAM-CTRL] Data_State_Read+1");
+            end else begin
+                // $display("[RAM-CTRL] Restart write");
+                // The data flow was interrupted, so we need to re-issue the
+                // write command when the flow starts again.
+                data_write_issueCmd <= 1;
+            end
+        end
+        
+        Data_State_ReadStart: begin
+            // $display("[RAM-CTRL] Data_State_Start");
+            // Activate the bank+row
+            ramCmd <= RAM_Cmd_BankActivate;
+            ramBA <= data_addr[`BankBits];
+            ramA <= data_addr[`RowBits];
+            
+            data_delayCounter <= Data_BankActivateDelay;
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Read;
+        end
+        
+        Data_State_Read: begin
+            // $display("[RAM-CTRL] Data_State_Read");
+            // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_write);
+            ramA <= data_addr[`ColBits]; // Supply the column address
+            ramDQM <= RAM_DQM_Unmasked; // Unmask the data
+            ramCmd <= RAM_Cmd_Read; // Give read command
+            data_delayCounter <= C_CAS+1; // +1 cycle due to input register
+            data_state <= Data_State_Read+1;
+        end
+        
+        Data_State_Read+1: begin
+            // $display("[RAM-CTRL] Data_State_Read+1");
+            ramDQM <= RAM_DQM_Unmasked; // Unmask the data
+            if (!data_delayCounter) begin
+                data_ready <= 1; // Notify that data is available
+                data_state <= Data_State_Read+2;
+            end
+        end
+        
+        Data_State_Read+2: begin
+            // $display("[RAM-CTRL] Data_State_Read+2");
+            // if (data_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_read);
+            if (data_trigger) begin
+                // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_read);
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
-                if (!data_delayCounter) begin
-                    data_ready <= 1; // Notify that data is available
-                    data_state <= Data_State_Read+2;
-                end
-            end
-            
-            Data_State_Read+2: begin
-                // $display("[RAM-CTRL] Data_State_Read+2");
-                // if (data_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_read);
-                if (data_trigger) begin
-                    // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_read);
-                    ramDQM <= RAM_DQM_Unmasked; // Unmask the data
-                    data_addr <= data_addr+1;
-                    data_counter <= data_counter-1;
-                    
-                    if (!data_counter) begin
-                        // Clear data_modeState because we're done
-                        data_modeState <= Data_State_Idle;
-                    end
-                    
-                    // Handle reaching the end of a row or the end of block
-                    if (&data_addr[`ColBits] || !data_counter) begin
-                        // $display("[RAM-CTRL] End of row / end of block");
-                        // Abort reading
-                        data_state <= Data_State_Finish;
-                    end else begin
-                        // Notify that more data is available
-                        data_ready <= 1;
-                    end
+                data_addr <= data_addr+1;
+                data_counter <= data_counter-1;
                 
+                if (!data_counter) begin
+                    // Clear data_modeState because we're done
+                    data_modeState <= Data_State_Idle;
+                end
+                
+                // Handle reaching the end of a row or the end of block
+                if (&data_addr[`ColBits] || !data_counter) begin
+                    // $display("[RAM-CTRL] End of row / end of block");
+                    // Abort reading
+                    data_state <= Data_State_Finish;
                 end else begin
-                    // $display("[RAM-CTRL] Restart read");
-                    // If the current data wasn't accepted, we need restart reading
-                    data_state <= Data_State_Read;
+                    // Notify that more data is available
+                    data_ready <= 1;
                 end
-            end
             
-            Data_State_Finish: begin
-                // $display("[RAM-CTRL] Data_State_Finish");
-                ramCmd <= RAM_Cmd_PrechargeAll;
-                ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-                
-                // After precharge completes, continue writing if there's more data
-                data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-                data_state <= Data_State_Delay;
-                data_nextState <= data_modeState;
+            end else begin
+                // $display("[RAM-CTRL] Restart read");
+                // If the current data wasn't accepted, we need restart reading
+                data_state <= Data_State_Read;
             end
+        end
+        
+        Data_State_Finish: begin
+            // $display("[RAM-CTRL] Data_State_Finish");
+            ramCmd <= RAM_Cmd_PrechargeAll;
+            ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
             
-            Data_State_Delay: begin
-                if (!data_delayCounter) data_state <= data_nextState;
-            end
-            endcase
-            
+            // After precharge completes, continue writing if there's more data
+            data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= data_modeState;
+        end
+        
+        Data_State_Refresh: begin
+            // $display("[RAM-CTRL] Refresh start");
+            // We don't know what state we came from, so wait the most conservative amount of time.
+            data_delayCounter <= Refresh_StartDelay;
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Refresh+1;
+        end
+
+        Data_State_Refresh+1: begin
+            // Precharge all banks
+            ramCmd <= RAM_Cmd_PrechargeAll;
+            ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
+
+            // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
+            data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Refresh+2;
+        end
+
+        Data_State_Refresh+2: begin
+            $display("Refresh time: %0d", $time);
+            // Issue auto-refresh command
+            ramCmd <= RAM_Cmd_AutoRefresh;
+            // Wait T_RFC (auto refresh time) to guarantee that the next command can
+            // activate the same bank immediately
+            //   -3 cycles:
+            //     -2: to get to the next refresh state,
+            //     -1: to get to the next normal state after exiting refresh mode
+            data_delayCounter <= Clocks(T_RFC,3);
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Refresh+3;
+        end
+
+        Data_State_Refresh+3: begin
+            data_state <= data_modeState;
+            $display("[RAM-CTRL] Refresh done");
+        end
+        
+        Data_State_Delay: begin
+            if (!data_delayCounter) data_state <= data_nextState;
+        end
+        endcase
+        
+        if (init_done && !refresh_counter) begin
             // Override our `_ready` flags if we're refreshing on the next cycle
-            if (refresh_pretrigger) begin
-                cmd_ready <= 0;
-                data_ready <= 0;
-            end
+            cmd_ready <= 0;
+            data_ready <= 0;
+            data_state <= Data_State_Refresh;
         end
     end
 endmodule
