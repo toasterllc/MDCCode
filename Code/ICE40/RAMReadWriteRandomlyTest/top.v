@@ -92,16 +92,16 @@ module Top(
     endfunction
     
     // ====================
-    // Clock (81 MHz)
+    // Clock (94.5 MHz)
     // ====================
-    localparam ClkFreq = 81_000_000;
+    localparam ClkFreq = 94_500_000;
     wire clk;
     ClockGen #(
         .FREQ(ClkFreq),
-        .DIVR(0),
-        .DIVF(26),
+        .DIVR(1),
+        .DIVF(62),
         .DIVQ(3),
-        .FILTER_RANGE(2)
+        .FILTER_RANGE(1)
     ) ClockGen_clkFast(.clkRef(clk24mhz), .clk(clk));
     
     wire cmd_ready;
