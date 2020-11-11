@@ -220,18 +220,19 @@ module RAMController #(
     end
     assign data_read = ramDQIn;
     
-    
-    
-    
-    
+    // ====================
+    // Init State Machine Registers
+    // ====================
     localparam Init_State_Init              = 0;    // +7
     localparam Init_State_Nop               = 8;    // +0
     localparam Init_State_Delay             = 9;    // +0
-    reg[4:0] init_state = 0;
-    reg[4:0] init_nextState = 0;
+    localparam Init_State_Count             = 10;
+    localparam Init_State_Width             = `RegWidth(Init_State_Count);
+    
+    reg[Init_State_Width-1:0] init_state = 0;
+    reg[Init_State_Width-1:0] init_nextState = 0;
     
     localparam Init_Delay = Clocks(T_INIT,2); // -2 cycles getting to the next state
-    
     localparam Init_DelayCounterWidth = `RegWidth5(
         // Init states
         Init_Delay,
@@ -243,11 +244,9 @@ module RAMController #(
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     reg init_done = 0;
     
-    
-    
-    
-    
-    
+    // ====================
+    // Data State Machine Registers
+    // ====================
     localparam Data_State_Nop               = 0;    // +0
     localparam Data_State_Idle              = 1;    // +0
     localparam Data_State_WriteStart        = 2;    // +0
@@ -257,22 +256,24 @@ module RAMController #(
     localparam Data_State_Finish            = 8;    // +0
     localparam Data_State_Refresh           = 9;    // +3
     localparam Data_State_Delay             = 13;   // +0
+    localparam Data_State_Count             = 14;
+    localparam Data_State_Width             = `RegWidth(Data_State_Count);
     
-    reg[4:0] data_state = 0;
-    reg[4:0] data_modeState = 0;
-    reg[4:0] data_nextState = 0;
+    reg[Data_State_Width-1:0] data_state = 0;
+    reg[Data_State_Width-1:0] data_modeState = 0;
+    reg[Data_State_Width-1:0] data_nextState = 0;
     
-    localparam Refresh_Delay = Clocks(T_REFI,2); // -2 cycles:
-                                                 //   -1: Because waiting N cycles requires loading a counter with N-1.
-                                                 //   -1: Because Clocks() ceils the result, so if we need to
-                                                 //       wait 10.5 cycles, Clocks() will return 11, when we
-                                                 //       actually want 10. This can cause us to be more
-                                                 //       conservative than necessary in the case where refresh period
-                                                 //       is an exact multiple of the clock period, but refreshing
-                                                 //       one cycle earlier is fine.
-    localparam Refresh_CounterWidth = `RegWidth(Refresh_Delay);
-    reg[Refresh_CounterWidth-1:0] refresh_counter = 0;
-    localparam Refresh_StartDelay = `Max6(
+    localparam Data_RefreshDelay = Clocks(T_REFI,2);    // -2 cycles:
+                                                        //   -1: Because waiting N cycles requires loading a counter with N-1.
+                                                        //   -1: Because Clocks() ceils the result, so if we need to
+                                                        //       wait 10.5 cycles, Clocks() will return 11, when we
+                                                        //       actually want 10. This can cause us to be more
+                                                        //       conservative than necessary in the case where refresh period
+                                                        //       is an exact multiple of the clock period, but refreshing
+                                                        //       one cycle earlier is fine.
+    localparam Data_RefreshCounterWidth = `RegWidth(Data_RefreshDelay);
+    reg[Data_RefreshCounterWidth-1:0] data_refreshCounter = 0;
+    localparam Data_RefreshStartDelay = `Max6(
         // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
         // when we return to that command via StateHandleSaved after refreshing is complete.
         // -2 cycles getting to the next state
@@ -326,7 +327,7 @@ module RAMController #(
         Clocks(T_RP,2),
         
         // Refresh states
-        Refresh_StartDelay,
+        Data_RefreshStartDelay,
         Clocks(T_RP,2),
         Clocks(T_RFC,3)
     );
@@ -337,8 +338,8 @@ module RAMController #(
 	always @(posedge clk) begin
         init_delayCounter <= init_delayCounter-1;
         data_delayCounter <= data_delayCounter-1;
-        refresh_counter <= (refresh_counter ? refresh_counter-1 : Refresh_Delay);
-        // refresh_counter <= 2;
+        data_refreshCounter <= (data_refreshCounter ? data_refreshCounter-1 : Data_RefreshDelay);
+        // data_refreshCounter <= 2;
         
         cmd_ready <= 0; // Reset by default
         data_ready <= 0; // Reset by default
@@ -511,7 +512,7 @@ module RAMController #(
                     data_nextState <= Data_State_Finish;
                 end
             
-            end else begin
+            end else if (data_ready && !data_trigger) begin
                 // $display("[RAM-CTRL] Restart write");
                 // The data flow was interrupted, so we need to re-issue the
                 // write command when the flow starts again.
@@ -595,7 +596,7 @@ module RAMController #(
         Data_State_Refresh: begin
             // $display("[RAM-CTRL] Refresh start");
             // We don't know what state we came from, so wait the most conservative amount of time.
-            data_delayCounter <= Refresh_StartDelay;
+            data_delayCounter <= Data_RefreshStartDelay;
             data_state <= Data_State_Delay;
             data_nextState <= Data_State_Refresh+1;
         end
@@ -634,7 +635,7 @@ module RAMController #(
         end
         endcase
         
-        if (init_done && !refresh_counter) begin
+        if (init_done && !data_refreshCounter) begin
             // Override our `_ready` flags if we're refreshing on the next cycle
             cmd_ready <= 0;
             data_ready <= 0;
