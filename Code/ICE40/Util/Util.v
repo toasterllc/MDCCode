@@ -12,12 +12,18 @@
 `define Max(a,y)            `Max2(a,y)
 
 // RegWidth: returns the width of a register to store the given values
-`define RegWidth(y)             $clog2((y)+1'b1)
-`define RegWidth2(a,y)          (`RegWidth(a) > `RegWidth(y) ? `RegWidth(a) : `RegWidth(y))
-`define RegWidth3(a,b,y)        (`RegWidth2(a,b)       > (y) ? `RegWidth2(a,b)         : (y))
-`define RegWidth4(a,b,c,y)      (`RegWidth3(a,b,c)     > (y) ? `RegWidth3(a,b,c)       : (y))
-`define RegWidth5(a,b,c,d,y)    (`RegWidth4(a,b,c,d)   > (y) ? `RegWidth4(a,b,c,d)     : (y))
-`define RegWidth6(a,b,c,d,e,y)  (`RegWidth5(a,b,c,d,e) > (y) ? `RegWidth5(a,b,c,d,e)   : (y))
+`define RegWidth(y)                 $clog2((y)+1'b1)
+`define RegWidth2(a,y)                          (`RegWidth(a) > `RegWidth(y) ? `RegWidth(a) : `RegWidth(y))
+`define RegWidth3(a,b,y)                        (`RegWidth2(a,b)                    > (y) ? `RegWidth2(a,b)                     : (y))
+`define RegWidth4(a,b,c,y)                      (`RegWidth3(a,b,c)                  > (y) ? `RegWidth3(a,b,c)                   : (y))
+`define RegWidth5(a,b,c,d,y)                    (`RegWidth4(a,b,c,d)                > (y) ? `RegWidth4(a,b,c,d)                 : (y))
+`define RegWidth6(a,b,c,d,e,y)                  (`RegWidth5(a,b,c,d,e)              > (y) ? `RegWidth5(a,b,c,d,e)               : (y))
+`define RegWidth7(a,b,c,d,e,f,y)                (`RegWidth6(a,b,c,d,e,f)            > (y) ? `RegWidth6(a,b,c,d,e,f)             : (y))
+`define RegWidth8(a,b,c,d,e,f,g,y)              (`RegWidth7(a,b,c,d,e,f,g)          > (y) ? `RegWidth7(a,b,c,d,e,f,g)           : (y))
+`define RegWidth9(a,b,c,d,e,f,g,h,y)            (`RegWidth8(a,b,c,d,e,f,g,h)        > (y) ? `RegWidth8(a,b,c,d,e,f,g,h)         : (y))
+`define RegWidth10(a,b,c,d,e,f,g,h,i,y)         (`RegWidth9(a,b,c,d,e,f,g,h,i)      > (y) ? `RegWidth9(a,b,c,d,e,f,g,h,i)       : (y))
+`define RegWidth11(a,b,c,d,e,f,g,h,i,j,y)       (`RegWidth10(a,b,c,d,e,f,g,h,i,j)   > (y) ? `RegWidth10(a,b,c,d,e,f,g,h,i,j)    : (y))
+`define RegWidth12(a,b,c,d,e,f,g,h,i,j,k,y)     (`RegWidth11(a,b,c,d,e,f,g,h,i,j,k) > (y) ? `RegWidth11(a,b,c,d,e,f,g,h,i,j,k)  : (y))
 
 // Sub: a-b, clipping to 0
 `define Sub(a,b)                ((a) > (b) ? ((a)-(b)) : 0)
