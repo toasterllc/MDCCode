@@ -1,4 +1,4 @@
-module BankFifo #(
+module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
 )(
