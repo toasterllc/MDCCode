@@ -62,12 +62,12 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    localparam BlockWidth = 21;
-    localparam BlockSize = 16;
+    localparam BlockWidth = 3;
+    localparam BlockSize = 2304*1296;
     localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
-    // localparam BlockLimit = {BlockWidth{1'b1}};
-    localparam BlockLimit = 'h10;
+    localparam BlockLimit = {BlockWidth{1'b1}};
+    // localparam BlockLimit = 'h10;
 `else
     localparam BlockLimit = {BlockWidth{1'b1}};
 `endif
@@ -78,7 +78,10 @@ module Top(
         
         // DataFromBlockAndWordIdx = block;
         // DataFromBlockAndWordIdx = wordIdx;
-        DataFromBlockAndWordIdx = {~block[20:18], ~wordIdx, wordIdx, block[20:16]} ^ ~(block[15:0]);
+        // DataFromBlockAndWordIdx = {~block[20:18], ~wordIdx, wordIdx, block[20:16]} ^ ~(block[15:0]);
+        
+        DataFromBlockAndWordIdx = {1'b1, ~wordIdx[21:18], ~block, block, wordIdx[20:16]} ^ ~(wordIdx[15:0]);
+        
         // DataFromBlockAndWordIdx = 0;
         // DataFromBlockAndWordIdx = ~0;
         // DataFromBlockAndWordIdx = 16'hABCD;
@@ -118,8 +121,8 @@ module Top(
     RAMController #(
         .ClkFreq(ClkFreq),
         .RAMClkDelay(0),
-        .BlockSize(BlockSize)
-        // .BlockSize(2304*1296)
+        // .BlockSize(BlockSize)
+        .BlockSize(2304*1296)
     ) RAMController(
         .clk(clk),
         
@@ -364,7 +367,7 @@ module Top(
         State_WriteAll+3: begin
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             
@@ -407,7 +410,7 @@ module Top(
         State_WriteSeq+3: begin
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             
@@ -445,7 +448,7 @@ module Top(
         State_Write+2: begin
             data_trigger <= 1;
             if (data_ready && data_triggerActual) begin
-                // $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
+                $display("Write word: %h[%h] = %h", cmd_block, wordIdx, data_write);
                 wordIdx <= wordIdx+1;
             end
             

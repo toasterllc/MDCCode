@@ -433,7 +433,6 @@ module RAMController #(
         end
         
         Init_State_Init+7: begin
-            $display("Init_State_Init+7");
             init_done <= 1;
             data_state <= Data_State_Idle;
             init_state <= Init_State_Nop;
