@@ -220,18 +220,47 @@ module RAMController #(
     end
     assign data_read = ramDQIn;
     
-    localparam Data_State_Init              = 0;    // +6
-    localparam Data_State_Idle              = 7;    // +0
-    localparam Data_State_WriteStart        = 8;    // +0
-    localparam Data_State_Write             = 9;    // +0
-    localparam Data_State_ReadStart         = 10;   // +0
-    localparam Data_State_Read              = 11;   // +2
-    localparam Data_State_Finish            = 14;   // +0
-    localparam Data_State_Refresh           = 15;   // +3
-    localparam Data_State_Delay             = 19;   // +0
     
-    reg init_done = 0;
+    
+    
+    
+    localparam Init_State_Init              = 0;    // +7
+    localparam Init_State_Nop               = 8;    // +0
+    localparam Init_State_Delay             = 9;    // +0
+    reg[4:0] init_state = 0;
+    reg[4:0] init_nextState = 0;
+    
     localparam Init_Delay = Clocks(T_INIT,2); // -2 cycles getting to the next state
+    
+    localparam Init_DelayCounterWidth = `RegWidth5(
+        // Init states
+        Init_Delay,
+        10,
+        Clocks(T_RP,2),
+        Clocks(T_RFC,2),
+        `Sub(C_MRD,2)
+    );
+    reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
+    reg init_done = 0;
+    
+    
+    
+    
+    
+    
+    localparam Data_State_Nop               = 0;    // +0
+    localparam Data_State_Idle              = 1;    // +0
+    localparam Data_State_WriteStart        = 2;    // +0
+    localparam Data_State_Write             = 3;    // +0
+    localparam Data_State_ReadStart         = 4;    // +0
+    localparam Data_State_Read              = 5;    // +2
+    localparam Data_State_Finish            = 8;    // +0
+    localparam Data_State_Refresh           = 9;    // +3
+    localparam Data_State_Delay             = 13;   // +0
+    
+    reg[4:0] data_state = 0;
+    reg[4:0] data_modeState = 0;
+    reg[4:0] data_nextState = 0;
     
     localparam Refresh_Delay = Clocks(T_REFI,2); // -2 cycles:
                                                  //   -1: Because waiting N cycles requires loading a counter with N-1.
@@ -270,9 +299,6 @@ module RAMController #(
         Clocks(T_WR,2)
     );
     
-    reg[4:0] data_state = 0;
-    reg[4:0] data_modeState = 0;
-    reg[4:0] data_nextState = 0;
     reg[AddrWidth-1:0] data_addr = 0;
     reg[BlockSizeCeilLog2-1:0] data_counter = 0;
     
@@ -293,14 +319,7 @@ module RAMController #(
         // -2 cycles getting to the next state
         Clocks(T_RRD,2)
     );
-    localparam Data_DelayCounterWidth = `RegWidth12(
-        // Init states
-        Init_Delay,
-        10,
-        Clocks(T_RP,2),
-        Clocks(T_RFC,2),
-        `Sub(C_MRD,2),
-        
+    localparam Data_DelayCounterWidth = `RegWidth7(
         Data_BankActivateDelay,
         Clocks(T_WR,2),
         C_CAS+1,
@@ -316,6 +335,7 @@ module RAMController #(
     reg data_write_issueCmd = 0;
     
 	always @(posedge clk) begin
+        init_delayCounter <= init_delayCounter-1;
         data_delayCounter <= data_delayCounter-1;
         refresh_counter <= (refresh_counter ? refresh_counter-1 : Refresh_Delay);
         // refresh_counter <= 2;
@@ -329,60 +349,60 @@ module RAMController #(
         ramDQOutEn <= 0;
         
         // ====================
-        // Data State Machine
+        // Init State Machine
         // ====================
-        case (data_state)
-        Data_State_Init: begin
+        case (init_state)
+        Init_State_Init: begin
             // Initialize registers
             ramCKE <= 0;
-            data_delayCounter <= Init_Delay;
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Init+1;
+            init_delayCounter <= Init_Delay;
+            init_state <= Init_State_Delay;
+            init_nextState <= Init_State_Init+1;
         end
         
-        Data_State_Init+1: begin
+        Init_State_Init+1: begin
             // Bring ram_cke high for a bit before issuing commands
             ramCKE <= 1;
-            data_delayCounter <= 10; // Delay 10 cycles
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Init+2;
+            init_delayCounter <= 10; // Delay 10 cycles
+            init_state <= Init_State_Delay;
+            init_nextState <= Init_State_Init+2;
         end
         
-        Data_State_Init+2: begin
+        Init_State_Init+2: begin
             // Precharge all banks
             ramCmd <= RAM_Cmd_PrechargeAll;
             ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
             
-            data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Init+3;
+            init_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+            init_state <= Init_State_Delay;
+            init_nextState <= Init_State_Init+3;
         end
         
-        Data_State_Init+3: begin
+        Init_State_Init+3: begin
             // Autorefresh 1/2
             ramCmd <= RAM_Cmd_AutoRefresh;
             // Wait T_RFC for autorefresh to complete
             // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
             // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
             // we just have to wait T_RFC.
-            data_delayCounter <= Clocks(T_RFC,2); // -2 cycles getting to the next state
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Init+4;
+            init_delayCounter <= Clocks(T_RFC,2); // -2 cycles getting to the next state
+            init_state <= Init_State_Delay;
+            init_nextState <= Init_State_Init+4;
         end
         
-        Data_State_Init+4: begin
+        Init_State_Init+4: begin
             // Autorefresh 2/2
             ramCmd <= RAM_Cmd_AutoRefresh;
             // Wait T_RFC for autorefresh to complete
             // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
             // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
             // we just have to wait T_RFC.
-            data_delayCounter <= Clocks(T_RFC,2); // Delay T_RFC; -2 cycles getting to the next state
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Init+5;
+            init_delayCounter <= Clocks(T_RFC,2); // Delay T_RFC; -2 cycles getting to the next state
+            init_state <= Init_State_Delay;
+            init_nextState <= Init_State_Init+5;
         end
         
-        Data_State_Init+5: begin
+        Init_State_Init+5: begin
             // Set the operating mode of the SDRAM
             ramCmd <= RAM_Cmd_SetMode;
             // ram_ba: reserved
@@ -390,12 +410,12 @@ module RAMController #(
             // ram_a:    write burst length,     test mode,  CAS latency,    burst type,     burst length
             ramA <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
             
-            data_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Init+6;
+            init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
+            init_state <= Init_State_Delay;
+            init_nextState <= Init_State_Init+6;
         end
         
-        Data_State_Init+6: begin
+        Init_State_Init+6: begin
             // Set the extended operating mode of the SDRAM (applies only to Winbond RAMs)
             ramCmd <= RAM_Cmd_SetMode;
             // ram_ba: reserved
@@ -403,11 +423,31 @@ module RAMController #(
             // ram_a:    output drive strength,      reserved,       self refresh banks
             ramA <= {    2'b0,                       2'b0,           3'b000};
             
+            init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
+            init_state <= Init_State_Delay;
+            init_nextState <= Init_State_Init+7;
+        end
+        
+        Init_State_Init+7: begin
+            $display("Init_State_Init+7");
             init_done <= 1;
-            
-            data_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
-            data_state <= Data_State_Delay;
-            data_nextState <= Data_State_Idle;
+            data_state <= Data_State_Idle;
+            init_state <= Init_State_Nop;
+        end
+        
+        Init_State_Nop: begin
+        end
+        
+        Init_State_Delay: begin
+            if (!init_delayCounter) init_state <= init_nextState;
+        end
+        endcase
+        
+        // ====================
+        // Data State Machine
+        // ====================
+        case (data_state)
+        Data_State_Nop: begin
         end
         
         Data_State_Idle: begin
@@ -559,7 +599,7 @@ module RAMController #(
             data_state <= Data_State_Delay;
             data_nextState <= Data_State_Refresh+1;
         end
-
+        
         Data_State_Refresh+1: begin
             // Precharge all banks
             ramCmd <= RAM_Cmd_PrechargeAll;
@@ -570,9 +610,9 @@ module RAMController #(
             data_state <= Data_State_Delay;
             data_nextState <= Data_State_Refresh+2;
         end
-
+        
         Data_State_Refresh+2: begin
-            $display("Refresh time: %0d", $time);
+            $display("[RAM-CTRL] Refresh (time: %0d)", $time);
             // Issue auto-refresh command
             ramCmd <= RAM_Cmd_AutoRefresh;
             // Wait T_RFC (auto refresh time) to guarantee that the next command can
@@ -584,10 +624,9 @@ module RAMController #(
             data_state <= Data_State_Delay;
             data_nextState <= Data_State_Refresh+3;
         end
-
+        
         Data_State_Refresh+3: begin
             data_state <= data_modeState;
-            $display("[RAM-CTRL] Refresh done");
         end
         
         Data_State_Delay: begin
