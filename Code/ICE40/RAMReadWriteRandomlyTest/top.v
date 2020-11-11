@@ -67,7 +67,7 @@ module Top(
     localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
     // localparam BlockLimit = {BlockWidth{1'b1}};
-    localparam BlockLimit = 'h100;
+    localparam BlockLimit = 'h10;
 `else
     localparam BlockLimit = {BlockWidth{1'b1}};
 `endif
