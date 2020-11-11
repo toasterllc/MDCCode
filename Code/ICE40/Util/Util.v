@@ -3,6 +3,7 @@
 `define Var3(a,b,c)     var_``a``_``b``_``c``
 `define Var4(a,b,c,d)   var_``a``_``b``_``c``_``d``
 
+// Max: returns the larger of N values
 `define Max2(a,y)           ((a) > (y) ? (a) : (y))
 `define Max3(a,b,y)         (`Max2(a,b)         > (y) ? `Max2(a,b)          : (y))
 `define Max4(a,b,c,y)       (`Max3(a,b,c)       > (y) ? `Max3(a,b,c)        : (y))

@@ -51,19 +51,19 @@ module RAMController #(
     inout wire[WordWidth-1:0]   ram_dq          // Data input/output
 );
     // Winbond W989D6DB Timing parameters (nanoseconds)
-    localparam T_INIT               = 200000;   // Power up initialization time
-    localparam T_REFI               = 7812;     // Time between refreshes
-    localparam T_RC                 = 68;       // Bank activate to bank activate time (same bank)
-    localparam T_RFC                = 72;       // Refresh time
-    localparam T_RRD                = 15;       // Row activate to row activate time (different banks)
-    localparam T_RAS                = 45;       // Row activate to precharge time (same bank)
-    localparam T_RCD                = 18;       // Bank activate to read/write time (same bank)
-    localparam T_RP                 = 18;       // Precharge to refresh/row activate (same bank)
-    localparam T_WR                 = 15;       // Write recover time
+    localparam T_INIT                   = 200000;   // Power up initialization time
+    localparam T_REFI                   = 7812;     // Time between refreshes
+    localparam T_RC                     = 68;       // Bank activate to bank activate time (same bank)
+    localparam T_RFC                    = 72;       // Refresh time
+    localparam T_RRD                    = 15;       // Row activate to row activate time (different banks)
+    localparam T_RAS                    = 45;       // Row activate to precharge time (same bank)
+    localparam T_RCD                    = 18;       // Bank activate to read/write time (same bank)
+    localparam T_RP                     = 18;       // Precharge to refresh/row activate (same bank)
+    localparam T_WR                     = 15;       // Write recover time
     
     // Timing parameters (clock cycles)
-    localparam C_CAS                = 2;        // Column address strobe (CAS) delay
-    localparam C_MRD                = 2;        // (T_MRD) set mode command to bank activate/refresh command delay
+    localparam C_CAS                    = 2;        // Column address strobe (CAS) delay
+    localparam C_MRD                    = 2;        // (T_MRD) set mode command to bank activate/refresh command delay
     
     // ras_, cas_, we_
     localparam RAM_Cmd_SetMode          = 3'b000;
@@ -253,52 +253,51 @@ module RAMController #(
         Clocks(T_RP,2),
         Sub(C_MRD,2)
     );
-    initial $display("Init_DelayCounterWidth: %d", Init_DelayCounterWidth);
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     
     reg[3:0] refresh_state = 0;
     reg[3:0] refresh_nextState = 0;
     localparam Refresh_Delay = Clocks(T_REFI,2); // -2 cycles:
-                                                 //   -1: waiting N cycles requires loading a counter with N-1;
-                                                 //   -1: because Clocks() ceils the result, so if we need to
+                                                 //   -1: Because waiting N cycles requires loading a counter with N-1.
+                                                 //   -1: Because Clocks() ceils the result, so if we need to
                                                  //       wait 10.5 cycles, Clocks() will return 11, when we
-                                                 //       actually want 10.
+                                                 //       actually want 10. This can cause us to be more
+                                                 //       conservative than necessary in the case where refresh period
+                                                 //       is an exact multiple of the clock period, but refreshing
+                                                 //       one cycle earlier is fine.
     localparam Refresh_CounterWidth = `RegWidth(Refresh_Delay);
-    initial $display("Refresh_CounterWidth: %d", Refresh_CounterWidth);
     reg[Refresh_CounterWidth-1:0] refresh_counter = 0;
     localparam Refresh_StartDelay = `Max6(
         // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
         // when we return to that command via StateHandleSaved after refreshing is complete.
         // -2 cycles getting to the next state
-        Clocks(T_RC, 2),
+        Clocks(T_RC,2),
         // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
         // when we return to that command via StateHandleSaved after refreshing is complete.
         // -2 cycles getting to the next state
-        Clocks(T_RRD, 2),
+        Clocks(T_RRD,2),
         // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
         // since we're about to issue CmdPrechargeAll.
         // -2 cycles getting to the next state
-        Clocks(T_RAS, 2),
+        Clocks(T_RAS,2),
         // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
         // when we return to that command via StateHandleSaved after refreshing is complete.
         // -2 cycles getting to the next state
-        Clocks(T_RCD, 2),
+        Clocks(T_RCD,2),
         // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
         // until precharging is complete.
         // -2 cycles getting to the next state
-        Clocks(T_RP, 2),
+        Clocks(T_RP,2),
         // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
         // until precharging is complete.
         // -2 cycles getting to the next state
-        Clocks(T_WR, 2)
+        Clocks(T_WR,2)
     );
-    initial $display("Refresh_StartDelay: %d", Refresh_StartDelay);
     localparam Refresh_DelayCounterWidth = `RegWidth3(
         Refresh_StartDelay,
         Clocks(T_RP,2),
         Clocks(T_RFC,3)
     );
-    initial $display("Refresh_DelayCounterWidth: %d", Refresh_DelayCounterWidth);
     reg[Refresh_DelayCounterWidth-1:0] refresh_delayCounter = 0;
     reg refresh_pretrigger = 0;
     reg refresh_trigger = 0;
@@ -308,33 +307,23 @@ module RAMController #(
     reg[AddrWidth-1:0] data_blockAddr = 0;
     reg[BlockSizeCeilLog2-1:0] data_blockCounter = 0;
     
-    // TODO: update these comments and verify they're correct
     localparam Data_BankActivateDelay = `Max4(
         // T_RCD: ensure "bank activate to read/write time".
-        // -1 cycle getting to the next state
-        Clocks(T_RCD, 1),
+        // -2 cycles getting to the next state
+        Clocks(T_RCD,2),
         // T_RAS: ensure "row activate to precharge time", ie that we don't
         // CmdPrechargeAll too soon after we activate the bank.
-        // -2 cycles since we know that it takes >=2 state transitions from this state
-        // to issue CmdPrechargeAll (StateIdle/StateHandleSaved -> StateRead/StateWrite ->
-        // StateReadAbort/StateWriteAbort)
-        Clocks(T_RAS, 2),
+        // -2 cycles getting to the next state
+        Clocks(T_RAS,2),
         // T_RC: ensure "activate bank A to activate bank A time", to ensure that the next
         // bank can't be activated too soon after this bank activation.
-        // -3 cycles since we know that it takes >=3 state transitions from this state to
-        // reach this state again and issue another CmdBankActivate (StateIdle/StateHandleSaved ->
-        // StateRead/StateWrite -> StateReadAbort/StateWriteAbort -> StateIdle/StateHandleSaved)
-        Clocks(T_RC, 3),
+        // -2 cycles getting to the next state
+        Clocks(T_RC,2),
         // T_RRD: ensure "activate bank A to activate bank B time", to ensure that the next
         // bank can't be activated too soon after this bank activation.
-        // -3 cycles since we know that it takes >=3 state transitions from this state to
-        // reach this state again and issue another CmdBankActivate (see explanation for T_RC, above.)
-        Clocks(T_RRD, 3)
+        // -2 cycles getting to the next state
+        Clocks(T_RRD,2)
     );
-    
-    // TODO: verify that this is the correct math, since data_delayCounter is only used in the init states
-    // At high clock speeds, Clocks(T_RFC,1) is the largest delay stored in delayCounter.
-    // At low clock speeds, C_DQZ+1 is the largest delay stored in delayCounter.
     localparam Data_DelayCounterWidth = `RegWidth4(
         Data_BankActivateDelay,
         Clocks(T_WR,2),
@@ -342,7 +331,6 @@ module RAMController #(
         Clocks(T_RP,2)
     );
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
-    initial $display("Data_DelayCounterWidth: %d", Data_DelayCounterWidth);
     
     localparam Data_Mode_Idle               = 2'b00;
     localparam Data_Mode_Write              = 2'b01;
