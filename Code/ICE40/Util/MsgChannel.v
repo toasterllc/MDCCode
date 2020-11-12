@@ -1,3 +1,6 @@
+`ifndef MsgChannel_v
+`define MsgChannel_v
+
 // // MsgChannel
 // //   Transmits a single-clock pulse across clock domains.
 // //   Pulses can be dropped if they occur more rapidly than they can be acknowledged.
@@ -78,3 +81,5 @@ module MsgChannel #(
 
     assign out_trigger = !out_req2 & out_req; // Trigger pulse occurs upon the positive edge of `out_req`.
 endmodule
+
+`endif

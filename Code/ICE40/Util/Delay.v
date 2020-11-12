@@ -1,3 +1,6 @@
+`ifndef Delay_v
+`define Delay_v
+
 module Delay #(
     parameter Count = 1
 )(
@@ -20,3 +23,5 @@ module Delay #(
         );
     end
 endmodule
+
+`endif

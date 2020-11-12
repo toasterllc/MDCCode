@@ -1,3 +1,6 @@
+`ifndef CRC7_v
+`define CRC7_v
+
 // module CRC7(
 //     input wire clk,
 //     input wire rst_,
@@ -41,3 +44,5 @@ module CRC7 #(
     end
     assign dout = d[6+Delay];
 endmodule
+
+`endif

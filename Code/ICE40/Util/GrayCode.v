@@ -1,3 +1,6 @@
+`ifndef GrayCode_v
+`define GrayCode_v
+
 module Bin2Gray(
     input logic[Width-1:0] d,
     output logic[Width-1:0] q
@@ -26,3 +29,5 @@ module Gray2Bin(
     end
 
 endmodule
+
+`endif

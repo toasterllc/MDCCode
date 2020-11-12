@@ -1,3 +1,6 @@
+`ifndef SDCardSim_v
+`define SDCardSim_v
+
 module Sim_CRC7(
     input wire clk,
     input wire rst_,
@@ -862,3 +865,5 @@ module SDCardSim(
         end
     end
 endmodule
+
+`endif

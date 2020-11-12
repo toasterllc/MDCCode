@@ -1,3 +1,6 @@
+`ifndef RAMController_v
+`define RAMController_v
+
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
 `endif
@@ -637,3 +640,5 @@ module RAMController #(
         end
     end
 endmodule
+
+`endif

@@ -1,3 +1,6 @@
+`ifndef Util_v
+`define Util_v
+
 `define Var1(a)         var_``a``
 `define Var2(a,b)       var_``a``_``b``
 `define Var3(a,b,c)     var_``a``_``b``_``c``
@@ -51,3 +54,5 @@ function [63:0] DivCeil;
         DivCeil = (n+d-1)/d;
     end
 endfunction
+
+`endif

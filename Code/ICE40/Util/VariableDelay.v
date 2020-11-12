@@ -1,3 +1,6 @@
+`ifndef VariableDelay_v
+`define VariableDelay_v
+
 `timescale 1ns/1ps
 
 // // One-hot `sel`
@@ -70,3 +73,5 @@ module VariableDelay #(
     
     assign out = bits[sel];
 endmodule
+
+`endif

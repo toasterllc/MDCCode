@@ -1,3 +1,6 @@
+`ifndef CRC16_v
+`define CRC16_v
+
 // module CRC16(
 //     input wire clk,
 //     input wire rst_,
@@ -40,3 +43,5 @@ module CRC16 #(
     end
     assign dout = d[15+Delay];
 endmodule
+
+`endif

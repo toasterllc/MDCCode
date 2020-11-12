@@ -1,3 +1,6 @@
+`ifndef uart_v
+`define uart_v
+
 `timescale 1ns / 1ps
 // Documented Verilog UART
 // Copyright (C) 2010 Timothy Goddard (tim@goddard.net.nz)
@@ -311,3 +314,5 @@
     end
 
 endmodule
+
+`endif

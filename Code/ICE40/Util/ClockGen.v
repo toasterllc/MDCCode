@@ -1,3 +1,6 @@
+`ifndef ClockGen_v
+`define ClockGen_v
+
 `timescale 1ps/1ps
 
 module ClockGen #(
@@ -80,3 +83,5 @@ module ClockGen #(
     //     else if (rst) rstCounter <= rstCounter+1;
     // assign rst = !(&rstCounter);
 endmodule
+
+`endif

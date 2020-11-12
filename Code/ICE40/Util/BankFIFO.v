@@ -1,3 +1,6 @@
+`ifndef BankFIFO_v
+`define BankFIFO_v
+
 module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
@@ -65,3 +68,5 @@ module BankFIFO #(
         else dir <= 1;
     
 endmodule
+
+`endif

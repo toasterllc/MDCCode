@@ -1,3 +1,6 @@
+`ifndef ShiftAdder_v
+`define ShiftAdder_v
+
 module Adder #(
     parameter N = 4
 )(
@@ -43,3 +46,5 @@ module ShiftAdder #(
         sum <= sumParts;
     end
 endmodule
+
+`endif

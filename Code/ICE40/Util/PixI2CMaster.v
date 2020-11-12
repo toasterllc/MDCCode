@@ -1,3 +1,6 @@
+`ifndef PixI2CMaster_v
+`define PixI2CMaster_v
+
 module PixI2CMaster #(
     parameter ClkFreq       = 24_000_000,   // `clk` frequency
     parameter I2CClkFreq    = 400_000       // `i2c_clk` frequency
@@ -489,3 +492,5 @@ module PixI2CMaster #(
         end
     end
 endmodule
+
+`endif

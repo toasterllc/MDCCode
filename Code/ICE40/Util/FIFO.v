@@ -1,3 +1,6 @@
+`ifndef FIFO_v
+`define FIFO_v
+
 module FIFO(
     input logic clk,
     
@@ -53,3 +56,5 @@ module FIFO(
     
     assign qValid = !empty;
 endmodule
+
+`endif

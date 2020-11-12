@@ -1,3 +1,6 @@
+`ifndef AFIFO_v
+`define AFIFO_v
+
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
 module AFIFO #(
@@ -104,3 +107,5 @@ module AFIFO #(
     //     else dir <= 1;
     // end
 endmodule
+
+`endif

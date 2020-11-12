@@ -1,3 +1,6 @@
+`ifndef FastCounter256_v
+`define FastCounter256_v
+
 module FastCounter256(
     input wire clk,
     output reg out = 0
@@ -36,3 +39,5 @@ module FastCounter256(
     //     end
     // end
 endmodule
+
+`endif

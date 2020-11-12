@@ -1,3 +1,12 @@
+`ifndef SDController_v
+`define SDController_v
+
+`include "../Util/Util.v"
+`include "../Util/VariableDelay.v"
+`include "../Util/BankFIFO.v"
+`include "../Util/CRC7.v"
+`include "../Util/CRC16.v"
+
 module SDController #(
     parameter ClkFreq           = 120_000_000,
     localparam ClkDelayWidth    = 4
@@ -636,3 +645,5 @@ module SDController #(
         );
     end
 endmodule
+
+`endif
