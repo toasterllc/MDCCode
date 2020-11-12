@@ -1,7 +1,14 @@
+`include "Util.v"
 `include "Sync.v"
 `include "TogglePulse.v"
 `include "ToggleAck.v"
 `include "ClockGen.v"
+`include "MsgChannel.v"
+`include "CRC7.v"
+`include "CRC16.v"
+`include "BankFifo.v"
+`include "Delay.v"
+`include "VariableDelay.v"
 `include "SDController.v"
 
 `ifdef SIM
