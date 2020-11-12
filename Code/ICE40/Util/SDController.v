@@ -86,10 +86,10 @@ module SDController #(
     // ====================
     // Dat Out FIFO
     // ====================
-    reg datOut_read_trigger = 0;
-    wire[15:0] datOut_read_data;
-    wire datOut_read_ok;
-    wire datOut_read_bank;
+    reg datOut_readTrigger = 0;
+    wire[15:0] datOut_readData;
+    wire datOut_readOK;
+    wire datOut_readBank;
     BankFIFO #(
         .W(16),
         .N(8)
@@ -100,10 +100,10 @@ module SDController #(
         .w_ok(datOut_writeOK),
         
         .r_clk(clk_int),
-        .r_trigger(datOut_read_trigger),
-        .r_data(datOut_read_data),
-        .r_ok(datOut_read_ok),
-        .r_bank(datOut_read_bank)
+        .r_trigger(datOut_readTrigger),
+        .r_data(datOut_readData),
+        .r_ok(datOut_readOK),
+        .r_bank(datOut_readBank)
     );
     
     
@@ -180,14 +180,14 @@ module SDController #(
         
         datOut_counter <= datOut_counter-1;
         datOut_crcCounter <= datOut_crcCounter-1;
-        datOut_read_trigger <= 0; // Pulse
-        datOut_prevBank <= datOut_read_bank;
-        datOut_ending <= datOut_ending|(datOut_prevBank && !datOut_read_bank);
+        datOut_readTrigger <= 0; // Pulse
+        datOut_prevBank <= datOut_readBank;
+        datOut_ending <= datOut_ending|(datOut_prevBank && !datOut_readBank);
         datOut_startBit <= 0; // Pulse
         datOut_endBit <= 0; // Pulse
         datOut_crcStatusOKReg <= datOut_crcStatusOK;
         datOut_reg <= datOut_reg<<4;
-        if (!datOut_counter)  datOut_reg[15:0] <= datOut_read_data;
+        if (!datOut_counter)  datOut_reg[15:0] <= datOut_readData;
         if (datOut_crcOutEn)  datOut_reg[19:16] <= datOut_crc;
         if (datOut_startBit)  datOut_reg[19:16] <= 4'b0000;
         if (datOut_endBit)    datOut_reg[19:16] <= 4'b1111;
@@ -326,7 +326,7 @@ module SDController #(
         // ====================
         case (datOut_state)
         0: begin
-            if (datOut_read_ok) begin
+            if (datOut_readOK) begin
                 $display("[SD-CTRL:DATOUT] Write session starting");
                 status_datOutCRCErr <= 0;
                 datOut_state <= 1;
@@ -349,8 +349,8 @@ module SDController #(
             datOut_crcEn <= 1;
             
             if (!datOut_counter) begin
-                // $display("[SD-CTRL:DATOUT]   Write another word: %x", datOut_read_data);
-                datOut_read_trigger <= 1;
+                // $display("[SD-CTRL:DATOUT]   Write another word: %x", datOut_readData);
+                datOut_readTrigger <= 1;
             end
             
             if (datOut_ending) begin
@@ -414,7 +414,7 @@ module SDController #(
             end else if (datIn_reg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 
-                if (datOut_read_ok) begin
+                if (datOut_readOK) begin
                     datOut_state <= 1;
                 
                 end else begin
@@ -437,13 +437,13 @@ module SDController #(
             
             // Drain only on !datOut_counter (the same as DatOut does normally)
             // so that we don't read too fast. If we read faster than we write,
-            // then `!datOut_read_ok`=1, and we'll signal that we're done and
+            // then `!datOut_readOK`=1, and we'll signal that we're done and
             // transition to state 0 before we're actually done.
             if (!datOut_counter) begin
-                datOut_read_trigger <= 1;
+                datOut_readTrigger <= 1;
             end
             
-            if (!datOut_read_ok) begin
+            if (!datOut_readOK) begin
                 // Signal that DatOut is done
                 status_datOutDone <= !status_datOutDone;
                 datOut_state <= 0;
@@ -574,7 +574,7 @@ module SDController #(
     for (i=0; i<4; i=i+1) begin
         SB_IO #(
             .PIN_TYPE(6'b1101_00)
-        ) SB_IO (
+        ) SB_IO_sdcard_dat (
             .INPUT_CLK(clk_int),
             .OUTPUT_CLK(clk_int),
             .PACKAGE_PIN(sdcard_dat[i]),
