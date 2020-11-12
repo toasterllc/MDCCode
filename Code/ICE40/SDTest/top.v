@@ -1,21 +1,11 @@
-`include "../Util/Util.v"
 `include "../Util/Sync.v"
 `include "../Util/TogglePulse.v"
 `include "../Util/ToggleAck.v"
 `include "../Util/ClockGen.v"
-`include "../Util/MsgChannel.v"
-`include "../Util/CRC7.v"
-`include "../Util/CRC16.v"
-`include "../Util/BankFifo.v"
-`include "../Util/Delay.v"
-`include "../Util/VariableDelay.v"
 `include "../Util/SDController.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
-`endif
-
-`ifdef SIM
 `include "../Util/SDCardSim.v"
 `endif
 
@@ -257,10 +247,8 @@ module Top(
     reg[`Msg_Len-1:0] ctrl_dinReg = 0;
     wire[`Msg_Type_Len-1:0] ctrl_msgType = ctrl_dinReg[`Msg_Type_Bits];
     wire[`Msg_Arg_Len-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Arg_Bits];
-    reg[`Msg_Arg_SDRespType_Len-1:0] ctrl_sdRespType = 0;
-    reg[`Msg_Arg_SDDatInType_Len-1:0] ctrl_sdDatInType = 0;
     
-    `ToggleAck(sd_ctrl_cmdDone_, sd_ctrl_cmdDoneAck, sd_status_cmdDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_sdCmdDone_, ctrl_sdCmdDoneAck, sd_status_cmdDone, posedge, ctrl_clk);
     `ToggleAck(ctrl_sdRespDone_, ctrl_sdRespDoneAck, sd_status_respDone, posedge, ctrl_clk);
     `ToggleAck(ctrl_sdDatOutDone_, ctrl_sdDatOutDoneAck, sd_status_datOutDone, posedge, ctrl_clk);
     `ToggleAck(ctrl_sdDatInDone_, ctrl_sdDatInDoneAck, sd_status_datInDone, posedge, ctrl_clk);
@@ -316,7 +304,7 @@ module Top(
                 `Msg_Type_SDSendCmd: begin
                     $display("[CTRL] Got Msg_Type_SDSendCmd");
                     // Clear our signals so they can be reliably observed via SDGetStatus
-                    if (!sd_ctrl_cmdDone_) sd_ctrl_cmdDoneAck <= !sd_ctrl_cmdDoneAck;
+                    if (!ctrl_sdCmdDone_) ctrl_sdCmdDoneAck <= !ctrl_sdCmdDoneAck;
                     
                     // Reset `ctrl_sdRespDone_` if the Resp state machine will run
                     if (ctrl_msgArg[`Msg_Arg_SDRespType_Bits] !== `Msg_Arg_SDRespType_0) begin
@@ -346,7 +334,7 @@ module Top(
                 `Msg_Type_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Type_SDGetStatus");
                     
-                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Bits] <= !sd_ctrl_cmdDone_;
+                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Bits] <= !ctrl_sdCmdDone_;
                     ctrl_doutReg[`Resp_Arg_SDRespDone_Bits] <= !ctrl_sdRespDone_;
                         ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Bits] <= sd_status_respCRCErr;
                     ctrl_doutReg[`Resp_Arg_SDDatOutDone_Bits] <= !ctrl_sdDatOutDone_;
