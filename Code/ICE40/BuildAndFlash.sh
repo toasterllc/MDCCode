@@ -21,16 +21,16 @@ proj="$3"
 
 rm -Rf "$proj/tmp"
 mkdir -p "$proj/tmp"
+cp -R "$dir/Util/." "$proj/tmp"
+cp "$proj/Top.v" "$proj/tmp"
+cp "$proj/Pins.pcf" "$proj/tmp"
 cd "$proj/tmp"
 
 # Synthesize the design from Verilog (.v -> .json)
-yosys -p "synth_ice40 -top Top -json top.json" ../top.v
+yosys -p "synth_ice40 -top Top -json Top.json" Top.v
 
-# Place and route the design ({top.json, pins.pcf} -> .asc)
-nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained
+# Place and route the design ({Top.json, Pins.pcf} -> .asc)
+nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json Top.json --pcf ../Pins.pcf --asc Top.asc --pcf-allow-unconstrained --top Top
 
 # Generate the bitstream file (.asc -> .bin)
-icepack top.asc top.bin
-
-# Flash the bitstream (.bin)
-# sudo "$dir/../tools/icestorm/iceprog/iceprog_linux" -S top.bin
+icepack Top.asc Top.bin

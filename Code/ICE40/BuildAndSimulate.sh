@@ -11,12 +11,12 @@ proj="$1"
 
 rm -Rf "$proj/tmp"
 mkdir -p "$proj/tmp"
+cp -R "$dir/Util/." "$proj/tmp"
+cp "$proj/Top.v" "$proj/tmp"
+cp "$proj/Pins.pcf" "$proj/tmp"
 cd "$proj/tmp"
 
-# iverilog only allows .v files, so copy top.sv to tmp/top.v and use that
-cp ../top.v top.v
-
 # Simulate!
-rm -f top.vvp
-iverilog "-I./.." -DSIM -o top.vvp -g2012 top.v
-./top.vvp
+rm -f Top.vvp
+iverilog -DSIM -o Top.vvp -g2012 Top.v
+./Top.vvp

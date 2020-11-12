@@ -1,12 +1,12 @@
-`include "../Util/Sync.v"
-`include "../Util/TogglePulse.v"
-`include "../Util/ToggleAck.v"
-`include "../Util/ClockGen.v"
-`include "../Util/SDController.v"
+`include "Sync.v"
+`include "TogglePulse.v"
+`include "ToggleAck.v"
+`include "ClockGen.v"
+`include "SDController.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
-`include "../Util/SDCardSim.v"
+`include "SDCardSim.v"
 `endif
 
 `timescale 1ns/1ps
