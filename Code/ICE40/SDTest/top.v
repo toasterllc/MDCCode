@@ -21,8 +21,7 @@
 
 `timescale 1ns/1ps
 
-// TODO: rename the _Range constants to _Bits
-// TODO: cmdOut -> cmd
+// TODO: rename the _Bits constants to _Bits
 
 // ====================
 // Control Messages/Responses
@@ -30,55 +29,55 @@
 `define Msg_Len                                         64
 
 `define Msg_Type_Len                                    8
-`define Msg_Type_Range                                  63:56
+`define Msg_Type_Bits                                   63:56
 
 `define Msg_Arg_Len                                     56
-`define Msg_Arg_Range                                   55:0
+`define Msg_Arg_Bits                                    55:0
 
 `define Resp_Len                                        `Msg_Len
-`define Resp_Arg_Range                                  63:0
+`define Resp_Arg_Bits                                   63:0
 
 `define Msg_Type_Echo                                   `Msg_Type_Len'h00
 `define Msg_Type_SDClkSet                               `Msg_Type_Len'h01
-`define     Msg_Arg_SDClkDelay_Range                    5:2
+`define     Msg_Arg_SDClkDelay_Bits                     5:2
 `define     Msg_Arg_SDClkSrc_Len                        2
-`define     Msg_Arg_SDClkSrc_Range                      1:0
+`define     Msg_Arg_SDClkSrc_Bits                       1:0
 `define     Msg_Arg_SDClkSrc_None                       `Msg_Arg_SDClkSrc_Len'b00
 `define     Msg_Arg_SDClkSrc_Slow                       `Msg_Arg_SDClkSrc_Len'b01
-`define     Msg_Arg_SDClkSrc_Slow_Range                 0:0
+`define     Msg_Arg_SDClkSrc_Slow_Bits                  0:0
 `define     Msg_Arg_SDClkSrc_Fast                       `Msg_Arg_SDClkSrc_Len'b10
-`define     Msg_Arg_SDClkSrc_Fast_Range                 1:1
+`define     Msg_Arg_SDClkSrc_Fast_Bits                  1:1
 
 `define Msg_Type_SDSendCmd                              `Msg_Type_Len'h02
 `define     Msg_Arg_SDRespType_Len                      2
-`define     Msg_Arg_SDRespType_Range                    49:48
+`define     Msg_Arg_SDRespType_Bits                     49:48
 `define     Msg_Arg_SDRespType_0                        `Msg_Arg_SDRespType_Len'b00
 `define     Msg_Arg_SDRespType_48                       `Msg_Arg_SDRespType_Len'b01
-`define     Msg_Arg_SDRespType_48_Range                 0:0
+`define     Msg_Arg_SDRespType_48_Bits                  0:0
 `define     Msg_Arg_SDRespType_136                      `Msg_Arg_SDRespType_Len'b10
-`define     Msg_Arg_SDRespType_136_Range                1:1
+`define     Msg_Arg_SDRespType_136_Bits                 1:1
 `define     Msg_Arg_SDDatInType_Len                     1
-`define     Msg_Arg_SDDatInType_Range                   50:50
+`define     Msg_Arg_SDDatInType_Bits                    50:50
 `define     Msg_Arg_SDDatInType_0                       `Msg_Arg_SDDatInType_Len'b0
 `define     Msg_Arg_SDDatInType_512                     `Msg_Arg_SDDatInType_Len'b1
-`define     Msg_Arg_SDDatInType_512_Range               50:50
-`define     Msg_Arg_SDCmd_Range                         47:0
+`define     Msg_Arg_SDDatInType_512_Bits                50:50
+`define     Msg_Arg_SDCmd_Bits                          47:0
 
 `define Msg_Type_SDDatOut                               `Msg_Type_Len'h03
 
 `define Msg_Type_SDGetStatus                            `Msg_Type_Len'h04
-`define     Resp_Arg_SDCmdDone_Range                    63:63
-`define     Resp_Arg_SDRespDone_Range                   62:62
-`define         Resp_Arg_SDRespCRCErr_Range             61:61
-`define         Resp_Arg_SDResp_Range                   60:13
+`define     Resp_Arg_SDCmdDone_Bits                     63:63
+`define     Resp_Arg_SDRespDone_Bits                    62:62
+`define         Resp_Arg_SDRespCRCErr_Bits              61:61
+`define         Resp_Arg_SDResp_Bits                    60:13
 `define         Resp_Arg_SDResp_Len                     48
-`define     Resp_Arg_SDDatOutDone_Range                 12:12
-`define         Resp_Arg_SDDatOutCRCErr_Range           11:11
-`define     Resp_Arg_SDDatInDone_Range                  10:10
-`define         Resp_Arg_SDDatInCRCErr_Range            9:9
-`define         Resp_Arg_SDDatInCMD6AccessMode_Range    8:5
-`define     Resp_Arg_SDDat0Idle_Range                   4:4
-`define     Resp_Arg_SDFiller_Range                     3:0
+`define     Resp_Arg_SDDatOutDone_Bits                  12:12
+`define         Resp_Arg_SDDatOutCRCErr_Bits            11:11
+`define     Resp_Arg_SDDatInDone_Bits                   10:10
+`define         Resp_Arg_SDDatInCRCErr_Bits             9:9
+`define         Resp_Arg_SDDatInCMD6AccessMode_Bits     8:5
+`define     Resp_Arg_SDDat0Idle_Bits                    4:4
+`define     Resp_Arg_SDFiller_Bits                      3:0
 
 `define Msg_Type_SDAbort                                `Msg_Type_Len'h05
 `define Msg_Type_NoOp                                   `Msg_Type_Len'hFF
@@ -258,8 +257,8 @@ module Top(
     wire ctrl_rst_;
     wire ctrl_din;
     reg[`Msg_Len-1:0] ctrl_dinReg = 0;
-    wire[`Msg_Type_Len-1:0] ctrl_msgType = ctrl_dinReg[`Msg_Type_Range];
-    wire[`Msg_Arg_Len-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Arg_Range];
+    wire[`Msg_Type_Len-1:0] ctrl_msgType = ctrl_dinReg[`Msg_Type_Bits];
+    wire[`Msg_Arg_Len-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Arg_Bits];
     reg[`Msg_Arg_SDRespType_Len-1:0] ctrl_sdRespType = 0;
     reg[`Msg_Arg_SDDatInType_Len-1:0] ctrl_sdDatInType = 0;
     
@@ -297,22 +296,22 @@ module Top(
                 // Echo
                 `Msg_Type_Echo: begin
                     $display("[CTRL] Got Msg_Type_Echo: %0h", ctrl_msgArg);
-                    ctrl_doutReg[`Resp_Arg_Range] <= {ctrl_msgArg, 8'h00};
-                    // ctrl_doutReg[`Resp_Arg_Range] <= 'b10000;
+                    ctrl_doutReg[`Resp_Arg_Bits] <= {ctrl_msgArg, 8'h00};
+                    // ctrl_doutReg[`Resp_Arg_Bits] <= 'b10000;
                 end
                 
                 // Set SD clock source
                 `Msg_Type_SDClkSet: begin
                     $display("[CTRL] Got Msg_Type_SDClkSet: delay=%0d fast=%b slow=%b",
-                        ctrl_msgArg[`Msg_Arg_SDClkDelay_Range],
-                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Range],
-                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Range]);
+                        ctrl_msgArg[`Msg_Arg_SDClkDelay_Bits],
+                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Bits],
+                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Bits]);
                     
                     // We don't need to synchronize `sd_ctrl_clkDelay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
-                    sd_ctrl_clkDelay <= ctrl_msgArg[`Msg_Arg_SDClkDelay_Range];
-                    sd_ctrl_clkFastEn <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Range];
-                    sd_ctrl_clkSlowEn <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Range];
+                    sd_ctrl_clkDelay <= ctrl_msgArg[`Msg_Arg_SDClkDelay_Bits];
+                    sd_ctrl_clkFastEn <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Bits];
+                    sd_ctrl_clkSlowEn <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Bits];
                 end
                 
                 // Clock out SD command
@@ -322,20 +321,20 @@ module Top(
                     if (!sd_ctrl_cmdDone_) sd_ctrl_cmdDoneAck <= !sd_ctrl_cmdDoneAck;
                     
                     // Reset `ctrl_sdRespDone_` if the Resp state machine will run
-                    if (ctrl_msgArg[`Msg_Arg_SDRespType_Range] !== `Msg_Arg_SDRespType_0) begin
+                    if (ctrl_msgArg[`Msg_Arg_SDRespType_Bits] !== `Msg_Arg_SDRespType_0) begin
                         if (!ctrl_sdRespDone_) ctrl_sdRespDoneAck <= !ctrl_sdRespDoneAck;
                     end
                     
                     // Reset `ctrl_sdDatInDone_` if the DatIn state machine will run
-                    if (ctrl_msgArg[`Msg_Arg_SDDatInType_Range] !== `Msg_Arg_SDDatInType_0) begin
+                    if (ctrl_msgArg[`Msg_Arg_SDDatInType_Bits] !== `Msg_Arg_SDDatInType_0) begin
                         if (!ctrl_sdDatInDone_) ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
                     end
                     
-                    sd_ctrl_cmdRespType_48 <= ctrl_msgArg[`Msg_Arg_SDRespType_48_Range];
-                    sd_ctrl_cmdRespType_136 <= ctrl_msgArg[`Msg_Arg_SDRespType_136_Range];
-                    sd_ctrl_cmdDatInType_512 <= ctrl_msgArg[`Msg_Arg_SDDatInType_512_Range];
+                    sd_ctrl_cmdRespType_48 <= ctrl_msgArg[`Msg_Arg_SDRespType_48_Bits];
+                    sd_ctrl_cmdRespType_136 <= ctrl_msgArg[`Msg_Arg_SDRespType_136_Bits];
+                    sd_ctrl_cmdDatInType_512 <= ctrl_msgArg[`Msg_Arg_SDDatInType_512_Bits];
                     
-                    sd_ctrl_cmd <= ctrl_msgArg[`Msg_Arg_SDCmd_Range];
+                    sd_ctrl_cmd <= ctrl_msgArg[`Msg_Arg_SDCmd_Bits];
                     sd_ctrl_cmdTrigger <= !sd_ctrl_cmdTrigger;
                 end
                 
@@ -349,16 +348,16 @@ module Top(
                 `Msg_Type_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Type_SDGetStatus");
                     
-                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Range] <= !sd_ctrl_cmdDone_;
-                    ctrl_doutReg[`Resp_Arg_SDRespDone_Range] <= !ctrl_sdRespDone_;
-                        ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Range] <= sd_status_respCRCErr;
-                    ctrl_doutReg[`Resp_Arg_SDDatOutDone_Range] <= !ctrl_sdDatOutDone_;
-                        ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Range] <= sd_status_datOutCRCErr;
-                    ctrl_doutReg[`Resp_Arg_SDDatInDone_Range] <= !ctrl_sdDatInDone_;
-                        ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Range] <= sd_status_datInCRCErr;
-                        ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Range] <= sd_status_datInCMD6AccessMode;
-                    ctrl_doutReg[`Resp_Arg_SDDat0Idle_Range] <= ctrl_sdDat0Idle;
-                    ctrl_doutReg[`Resp_Arg_SDResp_Range] <= sd_status_resp;
+                    ctrl_doutReg[`Resp_Arg_SDCmdDone_Bits] <= !sd_ctrl_cmdDone_;
+                    ctrl_doutReg[`Resp_Arg_SDRespDone_Bits] <= !ctrl_sdRespDone_;
+                        ctrl_doutReg[`Resp_Arg_SDRespCRCErr_Bits] <= sd_status_respCRCErr;
+                    ctrl_doutReg[`Resp_Arg_SDDatOutDone_Bits] <= !ctrl_sdDatOutDone_;
+                        ctrl_doutReg[`Resp_Arg_SDDatOutCRCErr_Bits] <= sd_status_datOutCRCErr;
+                    ctrl_doutReg[`Resp_Arg_SDDatInDone_Bits] <= !ctrl_sdDatInDone_;
+                        ctrl_doutReg[`Resp_Arg_SDDatInCRCErr_Bits] <= sd_status_datInCRCErr;
+                        ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Bits] <= sd_status_datInCMD6AccessMode;
+                    ctrl_doutReg[`Resp_Arg_SDDat0Idle_Bits] <= ctrl_sdDat0Idle;
+                    ctrl_doutReg[`Resp_Arg_SDResp_Bits] <= sd_status_resp;
                 end
                 
                 `Msg_Type_SDAbort: begin
@@ -541,9 +540,9 @@ module Testbench();
     task SendSDCmd(input[5:0] sdCmd, input[`Msg_Arg_SDRespType_Len-1:0] respType, input[`Msg_Arg_SDDatInType_Len-1:0] datInType, input[31:0] sdArg); begin
         reg[`Msg_Arg_Len-1] arg;
         arg = 0;
-        arg[`Msg_Arg_SDRespType_Range] = respType;
-        arg[`Msg_Arg_SDDatInType_Range] = datInType;
-        arg[`Msg_Arg_SDCmd_Range] = {2'b01, sdCmd, sdArg, 7'b0, 1'b1};
+        arg[`Msg_Arg_SDRespType_Bits] = respType;
+        arg[`Msg_Arg_SDDatInType_Bits] = datInType;
+        arg[`Msg_Arg_SDCmd_Bits] = {2'b01, sdCmd, sdArg, 7'b0, 1'b1};
         
         SendMsg(`Msg_Type_SDSendCmd, arg);
     end endtask
@@ -558,9 +557,9 @@ module Testbench();
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
             
             // If a response is expected, we're done when the response is received
-            if (respType !== `Msg_Arg_SDRespType_0) done = resp[`Resp_Arg_SDRespDone_Range];
+            if (respType !== `Msg_Arg_SDRespType_0) done = resp[`Resp_Arg_SDRespDone_Bits];
             // If a response isn't expected, we're done when the command is sent
-            else done = resp[`Resp_Arg_SDCmdDone_Range];
+            else done = resp[`Resp_Arg_SDCmdDone_Bits];
         end while(!done);
     end endtask
     
@@ -611,12 +610,12 @@ module Testbench();
         //
         // // Send SD CMD8
         // SendSDCmdResp(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
-        // if (resp[`Resp_Arg_SDRespCRCErr_Range] !== 1'b0) begin
+        // if (resp[`Resp_Arg_SDRespCRCErr_Bits] !== 1'b0) begin
         //     $display("[EXT] CRC error ❌");
         //     `Finish;
         // end
         //
-        // sdResp = resp[`Resp_Arg_SDResp_Range];
+        // sdResp = resp[`Resp_Arg_SDResp_Bits];
         // if (sdResp[15:8] !== 8'hAA) begin
         //     $display("[EXT] Bad response: %h ❌", resp);
         //     `Finish;
@@ -653,11 +652,11 @@ module Testbench();
         // do begin
         //     // Request SD status
         //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
-        // end while(!resp[`Resp_Arg_SDDatOutDone_Range]);
-        // $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDResp_Range]);
+        // end while(!resp[`Resp_Arg_SDDatOutDone_Bits]);
+        // $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDResp_Bits]);
         //
         // // Check CRC status
-        // if (resp[`Resp_Arg_SDDatOutCRCErr_Range] === 1'b0) begin
+        // if (resp[`Resp_Arg_SDDatOutCRCErr_Bits] === 1'b0) begin
         //     $display("[EXT] DatOut CRC OK ✅");
         // end else begin
         //     $display("[EXT] DatOut CRC bad ❌");
@@ -689,21 +688,21 @@ module Testbench();
         // do begin
         //     // Request SD status
         //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
-        // end while(!resp[`Resp_Arg_SDDatInDone_Range]);
+        // end while(!resp[`Resp_Arg_SDDatInDone_Bits]);
         // $display("[EXT] DatIn completed");
         //
         // // Check DatIn CRC status
-        // if (resp[`Resp_Arg_SDDatInCRCErr_Range] === 1'b0) begin
+        // if (resp[`Resp_Arg_SDDatInCRCErr_Bits] === 1'b0) begin
         //     $display("[EXT] DatIn CRC OK ✅");
         // end else begin
         //     $display("[EXT] DatIn CRC bad ❌");
         // end
         //
         // // Check the access mode from the CMD6 response
-        // if (resp[`Resp_Arg_SDDatInCMD6AccessMode_Range] === 4'h3) begin
+        // if (resp[`Resp_Arg_SDDatInCMD6AccessMode_Bits] === 4'h3) begin
         //     $display("[EXT] CMD6 access mode == 0x3 ✅");
         // end else begin
-        //     $display("[EXT] CMD6 access mode == 0x%h ❌", resp[`Resp_Arg_SDDatInCMD6AccessMode_Range]);
+        //     $display("[EXT] CMD6 access mode == 0x%h ❌", resp[`Resp_Arg_SDDatInCMD6AccessMode_Bits]);
         // end
         // `Finish;
         
@@ -758,12 +757,12 @@ module Testbench();
         //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
         //     $display("[EXT] Pre-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
         //         i+1,
-        //         resp[`Resp_Arg_SDCmdDone_Range],
-        //         resp[`Resp_Arg_SDRespDone_Range],
-        //         resp[`Resp_Arg_SDDatOutDone_Range],
-        //         resp[`Resp_Arg_SDDatInDone_Range]);
+        //         resp[`Resp_Arg_SDCmdDone_Bits],
+        //         resp[`Resp_Arg_SDRespDone_Bits],
+        //         resp[`Resp_Arg_SDDatOutDone_Bits],
+        //         resp[`Resp_Arg_SDDatInDone_Bits]);
         //
-        //     done = resp[`Resp_Arg_SDRespDone_Range];
+        //     done = resp[`Resp_Arg_SDRespDone_Bits];
         // end
         //
         // if (!done) begin
@@ -777,15 +776,15 @@ module Testbench();
         //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
         //         $display("[EXT] Post-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
         //             i+1,
-        //             resp[`Resp_Arg_SDCmdDone_Range],
-        //             resp[`Resp_Arg_SDRespDone_Range],
-        //             resp[`Resp_Arg_SDDatOutDone_Range],
-        //             resp[`Resp_Arg_SDDatInDone_Range]);
+        //             resp[`Resp_Arg_SDCmdDone_Bits],
+        //             resp[`Resp_Arg_SDRespDone_Bits],
+        //             resp[`Resp_Arg_SDDatOutDone_Bits],
+        //             resp[`Resp_Arg_SDDatInDone_Bits]);
         //
-        //         done =  resp[`Resp_Arg_SDCmdDone_Range]     &&
-        //                 resp[`Resp_Arg_SDRespDone_Range]    &&
-        //                 resp[`Resp_Arg_SDDatOutDone_Range]  &&
-        //                 resp[`Resp_Arg_SDDatInDone_Range]   ;
+        //         done =  resp[`Resp_Arg_SDCmdDone_Bits]     &&
+        //                 resp[`Resp_Arg_SDRespDone_Bits]    &&
+        //                 resp[`Resp_Arg_SDDatOutDone_Bits]  &&
+        //                 resp[`Resp_Arg_SDDatInDone_Bits]   ;
         //     end
         //
         //     if (done) begin
@@ -829,12 +828,12 @@ module Testbench();
         //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
         //     $display("[EXT] Pre-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
         //         i+1,
-        //         resp[`Resp_Arg_SDCmdDone_Range],
-        //         resp[`Resp_Arg_SDRespDone_Range],
-        //         resp[`Resp_Arg_SDDatOutDone_Range],
-        //         resp[`Resp_Arg_SDDatInDone_Range]);
+        //         resp[`Resp_Arg_SDCmdDone_Bits],
+        //         resp[`Resp_Arg_SDRespDone_Bits],
+        //         resp[`Resp_Arg_SDDatOutDone_Bits],
+        //         resp[`Resp_Arg_SDDatInDone_Bits]);
         //
-        //     done = resp[`Resp_Arg_SDDatOutDone_Range];
+        //     done = resp[`Resp_Arg_SDDatOutDone_Bits];
         // end
         //
         // if (!done) begin
@@ -848,15 +847,15 @@ module Testbench();
         //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
         //         $display("[EXT] Post-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
         //             i+1,
-        //             resp[`Resp_Arg_SDCmdDone_Range],
-        //             resp[`Resp_Arg_SDRespDone_Range],
-        //             resp[`Resp_Arg_SDDatOutDone_Range],
-        //             resp[`Resp_Arg_SDDatInDone_Range]);
+        //             resp[`Resp_Arg_SDCmdDone_Bits],
+        //             resp[`Resp_Arg_SDRespDone_Bits],
+        //             resp[`Resp_Arg_SDDatOutDone_Bits],
+        //             resp[`Resp_Arg_SDDatInDone_Bits]);
         //
-        //         done =  resp[`Resp_Arg_SDCmdDone_Range]     &&
-        //                 resp[`Resp_Arg_SDRespDone_Range]    &&
-        //                 resp[`Resp_Arg_SDDatOutDone_Range]  &&
-        //                 resp[`Resp_Arg_SDDatInDone_Range]   ;
+        //         done =  resp[`Resp_Arg_SDCmdDone_Bits]     &&
+        //                 resp[`Resp_Arg_SDRespDone_Bits]    &&
+        //                 resp[`Resp_Arg_SDDatOutDone_Bits]  &&
+        //                 resp[`Resp_Arg_SDDatInDone_Bits]   ;
         //     end
         //
         //     if (done) begin
@@ -896,11 +895,11 @@ module Testbench();
         //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
         //     $display("[EXT] Pre-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
         //         i+1,
-        //         resp[`Resp_Arg_SDCmdDone_Range],
-        //         resp[`Resp_Arg_SDRespDone_Range],
-        //         resp[`Resp_Arg_SDDatOutDone_Range],
-        //         resp[`Resp_Arg_SDDatInDone_Range]);
-        //     done = resp[`Resp_Arg_SDDatInDone_Range];
+        //         resp[`Resp_Arg_SDCmdDone_Bits],
+        //         resp[`Resp_Arg_SDRespDone_Bits],
+        //         resp[`Resp_Arg_SDDatOutDone_Bits],
+        //         resp[`Resp_Arg_SDDatInDone_Bits]);
+        //     done = resp[`Resp_Arg_SDDatInDone_Bits];
         // end
         //
         // if (!done) begin
@@ -914,15 +913,15 @@ module Testbench();
         //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
         //         $display("[EXT] Post-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
         //             i+1,
-        //             resp[`Resp_Arg_SDCmdDone_Range],
-        //             resp[`Resp_Arg_SDRespDone_Range],
-        //             resp[`Resp_Arg_SDDatOutDone_Range],
-        //             resp[`Resp_Arg_SDDatInDone_Range]);
+        //             resp[`Resp_Arg_SDCmdDone_Bits],
+        //             resp[`Resp_Arg_SDRespDone_Bits],
+        //             resp[`Resp_Arg_SDDatOutDone_Bits],
+        //             resp[`Resp_Arg_SDDatInDone_Bits]);
         //
-        //         done =  resp[`Resp_Arg_SDCmdDone_Range]     &&
-        //                 resp[`Resp_Arg_SDRespDone_Range]    &&
-        //                 resp[`Resp_Arg_SDDatOutDone_Range]  &&
-        //                 resp[`Resp_Arg_SDDatInDone_Range]   ;
+        //         done =  resp[`Resp_Arg_SDCmdDone_Bits]     &&
+        //                 resp[`Resp_Arg_SDRespDone_Bits]    &&
+        //                 resp[`Resp_Arg_SDDatOutDone_Bits]  &&
+        //                 resp[`Resp_Arg_SDDatInDone_Bits]   ;
         //     end
         //
         //     if (done) begin
