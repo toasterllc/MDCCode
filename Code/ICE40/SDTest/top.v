@@ -1,14 +1,7 @@
-`include "Util.v"
 `include "Sync.v"
 `include "TogglePulse.v"
 `include "ToggleAck.v"
 `include "ClockGen.v"
-`include "MsgChannel.v"
-`include "CRC7.v"
-`include "CRC16.v"
-`include "BankFifo.v"
-`include "Delay.v"
-`include "VariableDelay.v"
 `include "SDController.v"
 
 `ifdef SIM
@@ -17,6 +10,34 @@
 `endif
 
 `timescale 1ns/1ps
+
+// TODO: Adding the unused `UnknownSpeedup` module speeds up the design:
+// * Without:
+// 
+//      Info: Device utilisation:
+//      Info:              ICESTORM_LC:  988/ 7680    12%
+// 
+//          Min frequency: 153.35
+//          Max frequency: 188.32
+//      Average frequency: 168.91
+//       Median frequency: 166.78
+// 
+// * With:
+// 
+//      Info: Device utilisation:
+//      Info:              ICESTORM_LC:  1041/ 7680    13%
+// 
+//          Min frequency: 158.20
+//          Max frequency: 197.98
+//      Average frequency: 178.81
+//       Median frequency: 182.55
+// 
+// module UnknownSpeedup(
+//     input wire a,
+//     output reg b
+// );
+//     always @(posedge a) b <= !b;
+// endmodule
 
 // ====================
 // Control Messages/Responses
