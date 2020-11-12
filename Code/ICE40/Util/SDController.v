@@ -1,110 +1,115 @@
-// TODO: cmdOut -> cmd
-
 module SDController #(
-    parameter ClkFreq               = 120_000_000,
-    parameter SDClkDelayWidth       = 4
+    parameter ClkFreq           = 120_000_000,
+    localparam ClkDelayWidth    = 4
 )(
+    // Main clock
     input wire clk,
     
-    output wire     sd_clk,
-    inout wire      sd_cmd,
-    inout wire[3:0] sd_dat,
+    // SD card
+    output wire     sdcard_clk,
+    inout wire      sdcard_cmd,
+    inout wire[3:0] sdcard_dat,
     
-    input wire          ctrl_sdClkSlow,
-    input wire          ctrl_sdClkFast,
-    input wire[47:0]    ctrl_sdCmd,
-    input wire          ctrl_sdCmdOutTrigger,   // toggle
-    input wire          ctrl_sdAbort,           // toggle
+    // Control: clock
+    input wire                      ctrl_clkSlowEn,
+    input wire                      ctrl_clkFastEn,
+    input wire[ClkDelayWidth-1:0]   ctrl_clkDelay,
+    // Control: command
+    input wire[47:0]                ctrl_cmd,
+    input wire                      ctrl_cmdRespType_48,
+    input wire                      ctrl_cmdRespType_136,
+    input wire                      ctrl_cmdDatInType_512,
+    input wire                      ctrl_cmdTrigger, // toggle
+    // Control: abort
+    input wire                      ctrl_abort, // toggle
     
-    input wire ctrl_sdRespType_48,
-    input wire ctrl_sdRespType_136,
-    input wire ctrl_sdDatInType_512,
+    // DatOut
+    input wire          datOut_writeClk,
+    input wire          datOut_writeTrigger,
+    input wire[15:0]    datOut_writeData,
+    output wire         datOut_writeOK,
     
-    input wire[SDClkDelayWidth-1:0] sd_clkDelay,
-    
-    input wire datOutFIFO_writeClk,
-    input wire datOutFIFO_writeTrigger,
-    input wire[15:0] datOutFIFO_writeData,
-    output wire datOutFIFO_writeOK,
-    
-    output reg sd_cmdDone = 0,          // toggle
-    output reg sd_respDone = 0,         // toggle
-    output reg sd_datOutDone = 0,       // toggle
-    output reg sd_datInDone = 0,        // toggle
-    output reg sd_dat0Idle = 0,         // level
-    
-    output reg[47:0]    sd_resp = 0,
-    output reg          sd_respCRCErr = 0,
-    output reg          sd_datOutCRCErr = 0,
-    output reg          sd_datInCRCErr = 0,
-    output reg[3:0]     sd_datInCMD6AccessMode = 0
+    // Status: command
+    output reg          status_cmdDone = 0, // toggle
+    // Status: response
+    output reg          status_respDone = 0, // toggle
+    output reg[47:0]    status_resp = 0,
+    output reg          status_respCRCErr = 0,
+    // Status: datOut
+    output reg          status_datOutDone = 0, // toggle
+    output reg          status_datOutCRCErr = 0,
+    // Status: datIn
+    output reg          status_datInDone = 0, // toggle
+    output reg          status_datInCRCErr = 0,
+    output reg[3:0]     status_datInCMD6AccessMode = 0,
+    // Status: other
+    output reg          status_dat0Idle = 0
 );
     // ====================
-    // Fast Clock (ClkFreq)
+    // clk_fast (ClkFreq)
     // ====================
-    localparam ClkFastFreq = ClkFreq;
-    wire clkFast = clk;
+    localparam Clk_Fast_Freq = ClkFreq;
+    wire clk_fast = clk;
     
     // ====================
-    // Slow Clock (400 kHz)
+    // clk_slow (400 kHz)
     // ====================
-    localparam ClkSlowFreq = 400000;
-    localparam ClkSlowDividerWidth = $clog2(DivCeil(ClkFastFreq, ClkSlowFreq));
-    reg[ClkSlowDividerWidth-1:0] clkSlowDivider = 0;
-    wire clkSlow = clkSlowDivider[ClkSlowDividerWidth-1];
-    always @(posedge clkFast) begin
-        clkSlowDivider <= clkSlowDivider+1;
+    localparam Clk_Slow_Freq = 400000;
+    localparam Clk_Slow_DividerWidth = $clog2(DivCeil(Clk_Fast_Freq, Clk_Slow_Freq));
+    reg[Clk_Slow_DividerWidth-1:0] clk_slow_divider = 0;
+    wire clk_slow = clk_slow_divider[Clk_Slow_DividerWidth-1];
+    always @(posedge clk_fast) begin
+        clk_slow_divider <= clk_slow_divider+1;
     end
     
     // ====================
-    // sd_clk_int
+    // clk_int
     // ====================
-    `Sync(sd_clkSlow, ctrl_sdClkSlow, negedge, clkSlow);
-    `Sync(sd_clkFast, ctrl_sdClkFast, negedge, clkFast);
-    wire sd_clk_int = (sd_clkSlow ? clkSlow : (sd_clkFast ? clkFast : 0));
-    // wire sd_clk_int = clkFast;
+    `Sync(clk_slow_en, ctrl_clkSlowEn, negedge, clk_slow);
+    `Sync(clk_fast_en, ctrl_clkFastEn, negedge, clk_fast);
+    wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
     
     // ====================
-    // sd_clk / sd_clkDelay
-    //   Delay `sd_clk` relative to `sd_clk_int` to correct the phase from the SD card's perspective
-    //   `sd_clkDelay` should only be set while `sd_clk_int` is stopped
+    // sdcard_clk / ctrl_clkDelay
+    //   Delay `sdcard_clk` relative to `clk_int` to correct the phase from the SD card's perspective
+    //   `ctrl_clkDelay` should only be set while `clk_int` is stopped
     // ====================
     VariableDelay #(
-        .Count(1<<SDClkDelayWidth)
-    ) VariableDelay_sd_clk_int(
-        .in(sd_clk_int),
-        .sel(sd_clkDelay),
-        .out(sd_clk)
+        .Count(1<<ClkDelayWidth)
+    ) VariableDelay (
+        .in(clk_int),
+        .sel(ctrl_clkDelay),
+        .out(sdcard_clk)
     );
     
-    `TogglePulse(sd_cmdOutTrigger, ctrl_sdCmdOutTrigger, posedge, sd_clk_int);
-    `ToggleAck(sd_abort, sd_abortAck, ctrl_sdAbort, posedge, sd_clk_int);
+    `TogglePulse(cmd_trigger, ctrl_cmdTrigger, posedge, clk_int);
+    `ToggleAck(abort, abort_ack, ctrl_abort, posedge, clk_int);
     
     
     
     
     
     // ====================
-    // SD Dat Out FIFO
+    // Dat Out FIFO
     // ====================
-    reg datOutFIFO_readTrigger = 0;
-    wire[15:0] datOutFIFO_readData;
-    wire datOutFIFO_readOK;
-    wire datOutFIFO_readBank;
+    reg datOut_read_trigger = 0;
+    wire[15:0] datOut_read_data;
+    wire datOut_read_ok;
+    wire datOut_read_bank;
     BankFIFO #(
         .W(16),
         .N(8)
     ) BankFIFO(
-        .w_clk(datOutFIFO_writeClk),
-        .w_trigger(datOutFIFO_writeTrigger),
-        .w_data(datOutFIFO_writeData),
-        .w_ok(datOutFIFO_writeOK),
+        .w_clk(datOut_writeClk),
+        .w_trigger(datOut_writeTrigger),
+        .w_data(datOut_writeData),
+        .w_ok(datOut_writeOK),
         
-        .r_clk(sd_clk_int),
-        .r_trigger(datOutFIFO_readTrigger),
-        .r_data(datOutFIFO_readData),
-        .r_ok(datOutFIFO_readOK),
-        .r_bank(datOutFIFO_readBank)
+        .r_clk(clk_int),
+        .r_trigger(datOut_read_trigger),
+        .r_data(datOut_read_data),
+        .r_ok(datOut_read_ok),
+        .r_bank(datOut_read_bank)
     );
     
     
@@ -115,140 +120,138 @@ module SDController #(
     
     
     // ====================
-    // SD State Machine
+    // State Machine
     // ====================
-    reg[11:0] sd_cmdOutState = 0;
-    reg sd_cmdOutStateInit = 0;
+    reg[11:0] cmd_state = 0;
+    reg cmd_stateInit = 0;
+    reg cmd_crcEn = 0;
+    reg cmd_crcOutEn = 0;
+    reg[2:0] cmd_active = 0; // 3 bits -- see explanation where assigned
+    reg[5:0] cmd_counter = 0;
+    wire cmd_in;
+    wire cmd_crc;
     
-    reg[9:0] sd_respState = 0;
-    reg sd_respStateInit = 0;
+    reg[9:0] resp_state = 0;
+    reg resp_stateInit = 0;
+    reg[7:0] resp_counter = 0;
+    reg resp_crcEn = 0;
+    reg resp_trigger = 0;
+    reg resp_staged = 0;
+    wire resp_crc;
     
-    reg[47:0] sd_cmdRespShiftReg = 0;
+    reg[47:0] cmdresp_shiftReg = 0;
     
-    reg sd_cmdOutCRCEn = 0;
-    reg sd_cmdOutCRCOutEn = 0;
-    reg[2:0] sd_cmdOutActive = 0; // 3 bits -- see explanation where assigned
-    reg[5:0] sd_cmdOutCounter = 0;
-    wire sd_cmdIn;
-    wire sd_cmdOutCRC;
+    reg[3:0] datOut_state = 0;
+    reg[2:0] datOut_active = 0; // 3 bits -- see explanation where assigned
+    reg datOut_crcEn = 0;
+    reg datOut_crcOutEn = 0;
+    reg datOut_endBit = 0;
+    reg datOut_ending = 0;
+    reg datOut_prevBank = 0;
+    reg datOut_startBit = 0;
+    reg[19:0] datOut_reg = 0;
+    reg[1:0] datOut_counter = 0;
+    reg[3:0] datOut_crcCounter = 0;
+    wire[3:0] datOut_crc;
+    wire[4:0] datOut_crcStatus = {datIn_reg[16], datIn_reg[12], datIn_reg[8], datIn_reg[4], datIn_reg[0]};
+    wire datOut_crcStatusOK = datOut_crcStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
+    reg datOut_crcStatusOKReg = 0;
     
-    reg[7:0] sd_respCounter = 0;
-    reg sd_respCRCEn = 0;
-    reg sd_respTrigger = 0;
-    reg sd_respStaged = 0;
-    wire sd_respCRC;
+    reg[4:0] datIn_state = 0;
+    reg datIn_stateInit = 0;
+    reg datIn_trigger = 0;
+    wire[3:0] datIn;
+    reg[19:0] datIn_reg = 0;
+    reg datIn_crcEn = 0;
+    wire[3:0] datIn_crc;
+    reg[6:0] datIn_counter = 0;
+    reg[3:0] datIn_crcCounter = 0;
     
-    reg[3:0] sd_datOutState = 0;
-    reg[2:0] sd_datOutActive = 0; // 3 bits -- see explanation where assigned
-    reg sd_datOutCRCEn = 0;
-    reg sd_datOutCRCOutEn = 0;
-    reg sd_datOutEndBit = 0;
-    reg sd_datOutEnding = 0;
-    reg sd_datOutPrevBank = 0;
-    reg sd_datOutStartBit = 0;
-    reg[19:0] sd_datOutReg = 0;
-    reg[1:0] sd_datOutCounter = 0;
-    reg[3:0] sd_datOutCRCCounter = 0;
-    wire[3:0] sd_datOutCRC;
-    wire[4:0] sd_datOutCRCStatus = {sd_datInReg[16], sd_datInReg[12], sd_datInReg[8], sd_datInReg[4], sd_datInReg[0]};
-    wire sd_datOutCRCStatusOK = sd_datOutCRCStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
-    reg sd_datOutCRCStatusOKReg = 0;
-    
-    reg[4:0] sd_datInState = 0;
-    reg sd_datInStateInit = 0;
-    reg sd_datInTrigger = 0;
-    wire[3:0] sd_datIn;
-    reg[19:0] sd_datInReg = 0;
-    reg sd_datInCRCEn = 0;
-    wire[3:0] sd_datInCRC;
-    reg[6:0] sd_datInCounter = 0;
-    reg[3:0] sd_datInCRCCounter = 0;
-    
-    always @(posedge sd_clk_int) begin
-        sd_cmdOutState <= sd_cmdOutState<<1|!sd_cmdOutStateInit|sd_cmdOutState[$size(sd_cmdOutState)-1];
-        sd_cmdOutStateInit <= 1;
-        sd_cmdOutCounter <= sd_cmdOutCounter-1;
-        // `sd_cmdOutActive` is 3 bits to track whether `sd_cmdIn` is
+    always @(posedge clk_int) begin
+        cmd_state <= cmd_state<<1|!cmd_stateInit|cmd_state[$size(cmd_state)-1];
+        cmd_stateInit <= 1;
+        cmd_counter <= cmd_counter-1;
+        // `cmd_active` is 3 bits to track whether `cmd_in` is
         // valid or not, since it takes several cycles to transition
         // between output and input.
-        sd_cmdOutActive <= (sd_cmdOutActive<<1)|sd_cmdOutActive[0];
+        cmd_active <= (cmd_active<<1)|cmd_active[0];
         
-        sd_cmdRespShiftReg <= sd_cmdRespShiftReg<<1|sd_respStaged;
-        if (sd_cmdOutCRCOutEn)  sd_cmdRespShiftReg[47] <= sd_cmdOutCRC;
+        cmdresp_shiftReg <= cmdresp_shiftReg<<1|resp_staged;
+        if (cmd_crcOutEn)  cmdresp_shiftReg[47] <= cmd_crc;
         
-        sd_respState <= sd_respState<<1|!sd_respStateInit|sd_respState[$size(sd_respState)-1];
-        sd_respStateInit <= 1;
-        sd_respStaged <= sd_cmdOutActive[2] ? 1'b1 : sd_cmdIn;
-        sd_respCounter <= sd_respCounter-1;
+        resp_state <= resp_state<<1|!resp_stateInit|resp_state[$size(resp_state)-1];
+        resp_stateInit <= 1;
+        resp_staged <= cmd_active[2] ? 1'b1 : cmd_in;
+        resp_counter <= resp_counter-1;
         
-        sd_datOutCounter <= sd_datOutCounter-1;
-        sd_datOutCRCCounter <= sd_datOutCRCCounter-1;
-        datOutFIFO_readTrigger <= 0; // Pulse
-        sd_datOutPrevBank <= datOutFIFO_readBank;
-        sd_datOutEnding <= sd_datOutEnding|(sd_datOutPrevBank && !datOutFIFO_readBank);
-        sd_datOutStartBit <= 0; // Pulse
-        sd_datOutEndBit <= 0; // Pulse
-        sd_datOutCRCStatusOKReg <= sd_datOutCRCStatusOK;
-        sd_datOutReg <= sd_datOutReg<<4;
-        if (!sd_datOutCounter)  sd_datOutReg[15:0] <= datOutFIFO_readData;
-        if (sd_datOutCRCOutEn)  sd_datOutReg[19:16] <= sd_datOutCRC;
-        if (sd_datOutStartBit)  sd_datOutReg[19:16] <= 4'b0000;
-        if (sd_datOutEndBit)    sd_datOutReg[19:16] <= 4'b1111;
+        datOut_counter <= datOut_counter-1;
+        datOut_crcCounter <= datOut_crcCounter-1;
+        datOut_read_trigger <= 0; // Pulse
+        datOut_prevBank <= datOut_read_bank;
+        datOut_ending <= datOut_ending|(datOut_prevBank && !datOut_read_bank);
+        datOut_startBit <= 0; // Pulse
+        datOut_endBit <= 0; // Pulse
+        datOut_crcStatusOKReg <= datOut_crcStatusOK;
+        datOut_reg <= datOut_reg<<4;
+        if (!datOut_counter)  datOut_reg[15:0] <= datOut_read_data;
+        if (datOut_crcOutEn)  datOut_reg[19:16] <= datOut_crc;
+        if (datOut_startBit)  datOut_reg[19:16] <= 4'b0000;
+        if (datOut_endBit)    datOut_reg[19:16] <= 4'b1111;
         
-        // `sd_datOutActive` is 3 bits to track whether `sd_datIn` is
+        // `datOut_active` is 3 bits to track whether `datIn` is
         // valid or not, since it takes several cycles to transition
         // between output and input.
-        sd_datOutActive <= (sd_datOutActive<<1)|sd_datOutActive[0];
+        datOut_active <= (datOut_active<<1)|datOut_active[0];
         
-        sd_datInState <= sd_datInState<<1|!sd_datInStateInit|sd_datInState[$size(sd_datInState)-1];
-        sd_datInStateInit <= 1;
-        sd_datInReg <= (sd_datInReg<<4)|(sd_datOutActive[2] ? 4'b1111 : {sd_datIn[3], sd_datIn[2], sd_datIn[1], sd_datIn[0]});
-        sd_datInCounter <= sd_datInCounter-1;
-        sd_datInCRCCounter <= sd_datInCRCCounter-1;
-        sd_dat0Idle <= sd_datInReg[0];
+        datIn_state <= datIn_state<<1|!datIn_stateInit|datIn_state[$size(datIn_state)-1];
+        datIn_stateInit <= 1;
+        datIn_reg <= (datIn_reg<<4)|(datOut_active[2] ? 4'b1111 : {datIn[3], datIn[2], datIn[1], datIn[0]});
+        datIn_counter <= datIn_counter-1;
+        datIn_crcCounter <= datIn_crcCounter-1;
+        status_dat0Idle <= datIn_reg[0];
         
         // ====================
         // CmdOut State Machine
         // ====================
-        if (sd_cmdOutState[0]) begin
-            sd_cmdOutActive[0] <= 0;
-            sd_cmdOutCounter <= 38;
-            if (sd_cmdOutTrigger) begin
-                $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_sdCmd);
+        if (cmd_state[0]) begin
+            cmd_active[0] <= 0;
+            cmd_counter <= 38;
+            if (cmd_trigger) begin
+                $display("[SD-CTRL:CMDOUT] Command to be clocked out: %b", ctrl_cmd);
                 // Clear outstanding abort when starting a new command
-                if (sd_abort) sd_abortAck <= !sd_abortAck;
+                if (abort) abort_ack <= !abort_ack;
             end else begin
                 // Stay in this state
-                sd_cmdOutState[1:0] <= sd_cmdOutState[1:0];
+                cmd_state[1:0] <= cmd_state[1:0];
             end
         end
         
-        if (sd_cmdOutState[1]) begin
-            sd_cmdOutActive[0] <= 1;
-            sd_cmdRespShiftReg <= ctrl_sdCmd;
-            sd_cmdOutCRCEn <= 1;
+        if (cmd_state[1]) begin
+            cmd_active[0] <= 1;
+            cmdresp_shiftReg <= ctrl_cmd;
+            cmd_crcEn <= 1;
         end
         
-        if (sd_cmdOutState[2]) begin
-            if (sd_cmdOutCounter) begin
+        if (cmd_state[2]) begin
+            if (cmd_counter) begin
                 // Stay in this state
-                sd_cmdOutState[3:2] <= sd_cmdOutState[3:2];
+                cmd_state[3:2] <= cmd_state[3:2];
             end
         end
         
-        if (sd_cmdOutState[3]) begin
-            sd_cmdOutCRCOutEn <= 1;
+        if (cmd_state[3]) begin
+            cmd_crcOutEn <= 1;
         end
         
-        if (sd_cmdOutState[4]) begin
-            sd_cmdOutCRCEn <= 0;
+        if (cmd_state[4]) begin
+            cmd_crcEn <= 0;
         end
         
-        if (sd_cmdOutState[10]) begin
-            sd_cmdOutCRCOutEn <= 0;
-            sd_cmdDone <= !sd_cmdDone;
-            sd_respTrigger <= (ctrl_sdRespType_48 || ctrl_sdRespType_136);
-            sd_datInTrigger <= ctrl_sdDatInType_512;
+        if (cmd_state[10]) begin
+            cmd_crcOutEn <= 0;
+            status_cmdDone <= !status_cmdDone;
+            resp_trigger <= (ctrl_cmdRespType_48 || ctrl_cmdRespType_136);
+            datIn_trigger <= ctrl_cmdDatInType_512;
         end
         
         
@@ -257,68 +260,68 @@ module SDController #(
         // ====================
         // Resp State Machine
         // ====================
-        if (sd_respState[0]) begin
-            sd_respCRCEn <= 0;
+        if (resp_state[0]) begin
+            resp_crcEn <= 0;
             // We're accessing `ctrl_sdRespType` without synchronization, but that's
             // safe because the ctrl_ domain isn't allowed to modify it until we
-            // signal `sd_respDone`
-            sd_respCounter <= (ctrl_sdRespType_48 ? 48 : 136) - 8;
+            // signal `status_respDone`
+            resp_counter <= (ctrl_cmdRespType_48 ? 48 : 136) - 8;
             
             // Handle being aborted
-            if (sd_abort) begin
-                sd_respTrigger <= 0;
+            if (abort) begin
+                resp_trigger <= 0;
                 // Signal that we're done
-                // Only do this if `sd_respTrigger`=1 though, otherwise toggling `sd_respDone`
+                // Only do this if `resp_trigger`=1 though, otherwise toggling `status_respDone`
                 // will toggle us from Done->!Done, instead of remaining Done.
-                if (sd_respTrigger) sd_respDone <= !sd_respDone;
+                if (resp_trigger) status_respDone <= !status_respDone;
                 
                 // Stay in this state
-                sd_respState[1:0] <= sd_respState[1:0];
+                resp_state[1:0] <= resp_state[1:0];
             
-            end else if (sd_respTrigger && !sd_respStaged) begin
+            end else if (resp_trigger && !resp_staged) begin
                 $display("[SD-CTRL:RESP] Triggered");
-                sd_respTrigger <= 0;
-                sd_respCRCErr <= 0;
-                sd_respCRCEn <= 1;
+                resp_trigger <= 0;
+                status_respCRCErr <= 0;
+                resp_crcEn <= 1;
             
             end else begin
                 // Stay in this state
-                sd_respState[1:0] <= sd_respState[1:0];
+                resp_state[1:0] <= resp_state[1:0];
             end
         end
         
-        if (sd_respState[1]) begin
-            if (!sd_respCounter) begin
-                sd_respCRCEn <= 0;
+        if (resp_state[1]) begin
+            if (!resp_counter) begin
+                resp_crcEn <= 0;
             end else begin
-                sd_respState[2:1] <= sd_respState[2:1];
+                resp_state[2:1] <= resp_state[2:1];
             end
         end
         
-        if (sd_respState[8:2]) begin
-            if (sd_respCRC === sd_cmdRespShiftReg[1]) begin
-                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", sd_respCRC, sd_cmdRespShiftReg[1]);
+        if (resp_state[8:2]) begin
+            if (resp_crc === cmdresp_shiftReg[1]) begin
+                $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", resp_crc, cmdresp_shiftReg[1]);
             end else begin
-                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", sd_respCRC, sd_cmdRespShiftReg[1]);
-                sd_respCRCErr <= 1;
+                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", resp_crc, cmdresp_shiftReg[1]);
+                status_respCRCErr <= 1;
             end
         end
         
-        if (sd_respState[9]) begin
-            if (sd_cmdRespShiftReg[1]) begin
+        if (resp_state[9]) begin
+            if (cmdresp_shiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good end bit ✅");
             end else begin
                 $display("[SD-CTRL:RESP] Response: Bad end bit ❌");
-                sd_respCRCErr <= 1;
+                status_respCRCErr <= 1;
             end
             
-            // Ideally we'd assign `sd_resp` on the previous clock cycle
+            // Ideally we'd assign `status_resp` on the previous clock cycle
             // so that we didn't need this right-shift, but that hurts
             // our perf quite a bit. So since the high bit of SD card
             // commands/responses is always zero, assign it here.
-            sd_resp <= sd_cmdRespShiftReg>>1;
+            status_resp <= cmdresp_shiftReg>>1;
             // Signal that the response was received
-            sd_respDone <= !sd_respDone;
+            status_respDone <= !status_respDone;
         end
         
         
@@ -327,103 +330,103 @@ module SDController #(
         // ====================
         // DatOut State Machine
         // ====================
-        case (sd_datOutState)
+        case (datOut_state)
         0: begin
-            if (datOutFIFO_readOK) begin
+            if (datOut_read_ok) begin
                 $display("[SD-CTRL:DATOUT] Write session starting");
-                sd_datOutCRCErr <= 0;
-                sd_datOutState <= 1;
+                status_datOutCRCErr <= 0;
+                datOut_state <= 1;
             end
         end
         
         1: begin
             $display("[SD-CTRL:DATOUT] Write another block");
-            sd_datOutCounter <= 0;
-            sd_datOutCRCCounter <= 0;
-            sd_datOutActive[0] <= 0;
-            sd_datOutEnding <= 0;
-            sd_datOutCRCEn <= 0;
-            sd_datOutStartBit <= 1;
-            sd_datOutState <= 2;
+            datOut_counter <= 0;
+            datOut_crcCounter <= 0;
+            datOut_active[0] <= 0;
+            datOut_ending <= 0;
+            datOut_crcEn <= 0;
+            datOut_startBit <= 1;
+            datOut_state <= 2;
         end
         
         2: begin
-            sd_datOutActive[0] <= 1;
-            sd_datOutCRCEn <= 1;
+            datOut_active[0] <= 1;
+            datOut_crcEn <= 1;
             
-            if (!sd_datOutCounter) begin
-                // $display("[SD-CTRL:DATOUT]   Write another word: %x", datOutFIFO_readData);
-                datOutFIFO_readTrigger <= 1;
+            if (!datOut_counter) begin
+                // $display("[SD-CTRL:DATOUT]   Write another word: %x", datOut_read_data);
+                datOut_read_trigger <= 1;
             end
             
-            if (sd_datOutEnding) begin
+            if (datOut_ending) begin
                 $display("[SD-CTRL:DATOUT] Done writing");
-                sd_datOutState <= 3;
+                datOut_state <= 3;
             end
         end
         
         // Wait for CRC to be clocked out and supply end bit
         3: begin
-            sd_datOutCRCOutEn <= 1;
-            sd_datOutState <= 4;
+            datOut_crcOutEn <= 1;
+            datOut_state <= 4;
         end
         
         4: begin
-            if (!sd_datOutCRCCounter) begin
-                sd_datOutCRCEn <= 0;
-                sd_datOutEndBit <= 1;
-                sd_datOutState <= 5;
+            if (!datOut_crcCounter) begin
+                datOut_crcEn <= 0;
+                datOut_endBit <= 1;
+                datOut_state <= 5;
             end
         end
         
         // Disable DatOut when we finish outputting the CRC,
         // and wait for the CRC status from the card.
         5: begin
-            sd_datOutCRCOutEn <= 0;
-            if (sd_datOutCRCCounter === 14) begin
-                sd_datOutActive[0] <= 0;
+            datOut_crcOutEn <= 0;
+            if (datOut_crcCounter === 14) begin
+                datOut_active[0] <= 0;
             end
             
             // SD response timeout point:
             //   check if we've been aborted before checking SD response
-            if (sd_abort) begin
-                sd_datOutState <= 8;
+            if (abort) begin
+                datOut_state <= 8;
             
-            end else if (!sd_datInReg[16]) begin
-                sd_datOutState <= 6;
+            end else if (!datIn_reg[16]) begin
+                datOut_state <= 6;
             end
         end
         
         // Check CRC status token
         6: begin
-            $display("[SD-CTRL:DATOUT] DatOut: sd_datOutCRCStatusOKReg: %b", sd_datOutCRCStatusOKReg);
+            $display("[SD-CTRL:DATOUT] DatOut: datOut_crcStatusOKReg: %b", datOut_crcStatusOKReg);
             // 5 bits: start bit, CRC status, end bit
-            if (sd_datOutCRCStatusOKReg) begin
+            if (datOut_crcStatusOKReg) begin
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
             end else begin
-                $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", sd_datOutCRCStatusOKReg);
-                sd_datOutCRCErr <= 1;
+                $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", datOut_crcStatusOKReg);
+                status_datOutCRCErr <= 1;
             end
-            sd_datOutState <= 7;
+            datOut_state <= 7;
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
         7: begin
             // SD response timeout point:
             //   check if we've been aborted before checking SD response
-            if (sd_abort) begin
-                sd_datOutState <= 8;
+            if (abort) begin
+                datOut_state <= 8;
             
-            end else if (sd_datInReg[0]) begin
+            end else if (datIn_reg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 
-                if (datOutFIFO_readOK) begin
-                    sd_datOutState <= 1;
+                if (datOut_read_ok) begin
+                    datOut_state <= 1;
                 
                 end else begin
                     // Signal that DatOut is done
-                    sd_datOutDone <= !sd_datOutDone;
-                    sd_datOutState <= 0;
+                    status_datOutDone <= !status_datOutDone;
+                    datOut_state <= 0;
                 end
             
             end else begin
@@ -436,20 +439,20 @@ module SDController #(
         //   we're done and go back to state 0.
         8: begin
             // Disable DatOut while we're aborting
-            sd_datOutActive[0] <= 0;
+            datOut_active[0] <= 0;
             
-            // Drain only on !sd_datOutCounter (the same as DatOut does normally)
+            // Drain only on !datOut_counter (the same as DatOut does normally)
             // so that we don't read too fast. If we read faster than we write,
-            // then `!datOutFIFO_readOK`=1, and we'll signal that we're done and
+            // then `!datOut_read_ok`=1, and we'll signal that we're done and
             // transition to state 0 before we're actually done.
-            if (!sd_datOutCounter) begin
-                datOutFIFO_readTrigger <= 1;
+            if (!datOut_counter) begin
+                datOut_read_trigger <= 1;
             end
             
-            if (!datOutFIFO_readOK) begin
+            if (!datOut_read_ok) begin
                 // Signal that DatOut is done
-                sd_datOutDone <= !sd_datOutDone;
-                sd_datOutState <= 0;
+                status_datOutDone <= !status_datOutDone;
+                datOut_state <= 0;
             end
         end
         endcase
@@ -461,181 +464,181 @@ module SDController #(
         // ====================
         // DatIn State Machine
         // ====================
-        if (sd_datInState[0]) begin
-            sd_datInCounter <= 127;
-            sd_datInCRCEn <= 0;
+        if (datIn_state[0]) begin
+            datIn_counter <= 127;
+            datIn_crcEn <= 0;
             
-            if (sd_abort) begin
-                sd_datInTrigger <= 0;
+            if (abort) begin
+                datIn_trigger <= 0;
                 
                 // Signal that we're done
-                // Only do this if `sd_datInTrigger`=1 though, otherwise toggling `sd_datInDone`
+                // Only do this if `datIn_trigger`=1 though, otherwise toggling `status_datInDone`
                 // will toggle us from Done->!Done, instead of remaining Done.
-                if (sd_datInTrigger) sd_datInDone <= !sd_datInDone;
+                if (datIn_trigger) status_datInDone <= !status_datInDone;
                 
                 // Stay in this state
-                sd_datInState[1:0] <= sd_datInState[1:0];
+                datIn_state[1:0] <= datIn_state[1:0];
             
-            end else if (sd_datInTrigger && !sd_datInReg[0]) begin
+            end else if (datIn_trigger && !datIn_reg[0]) begin
                 $display("[SD-CTRL:DATIN] Triggered");
-                sd_datInTrigger <= 0;
-                sd_datInCRCErr <= 0;
-                sd_datInCRCEn <= 1;
+                datIn_trigger <= 0;
+                status_datInCRCErr <= 0;
+                datIn_crcEn <= 1;
             
             end else begin
                 // Stay in this state
-                sd_datInState[1:0] <= sd_datInState[1:0];
+                datIn_state[1:0] <= datIn_state[1:0];
             end
         end
         
-        if (sd_datInState[1]) begin
+        if (datIn_state[1]) begin
             // Stash the access mode from the DatIn response.
             // (This assumes we're receiving a CMD6 response.)
-            if (sd_datInCounter === 7'd94) begin
-                sd_datInCMD6AccessMode <= sd_datInReg[3:0];
+            if (datIn_counter === 7'd94) begin
+                status_datInCMD6AccessMode <= datIn_reg[3:0];
             end
             
-            if (!sd_datInCounter) begin
-                sd_datInCRCEn <= 0;
+            if (!datIn_counter) begin
+                datIn_crcEn <= 0;
             end
             
-            // Stay in this state until sd_datInCounter==0
-            if (sd_datInCounter) begin
-                sd_datInState[2:1] <= sd_datInState[2:1];
+            // Stay in this state until datIn_counter==0
+            if (datIn_counter) begin
+                datIn_state[2:1] <= datIn_state[2:1];
             end
         end
         
-        if (sd_datInState[2]) begin
-            sd_datInCRCCounter <= 15;
+        if (datIn_state[2]) begin
+            datIn_crcCounter <= 15;
         end
         
-        if (sd_datInState[3]) begin
-            if (sd_datInCRC[3] === sd_datInReg[7]) begin
+        if (datIn_state[3]) begin
+            if (datIn_crc[3] === datIn_reg[7]) begin
                 $display("[SD-CTRL:DATIN] DAT3 CRC valid ✅");
             end else begin
-                $display("[SD-CTRL:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", sd_datInCRC[3], sd_datInReg[7]);
-                sd_datInCRCErr <= 1;
+                $display("[SD-CTRL:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
+                status_datInCRCErr <= 1;
             end
             
-            if (sd_datInCRC[2] === sd_datInReg[6]) begin
+            if (datIn_crc[2] === datIn_reg[6]) begin
                 $display("[SD-CTRL:DATIN] DAT2 CRC valid ✅");
             end else begin
-                $display("[SD-CTRL:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", sd_datInCRC[2], sd_datInReg[6]);
-                sd_datInCRCErr <= 1;
+                $display("[SD-CTRL:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
+                status_datInCRCErr <= 1;
             end
             
-            if (sd_datInCRC[1] === sd_datInReg[5]) begin
+            if (datIn_crc[1] === datIn_reg[5]) begin
                 $display("[SD-CTRL:DATIN] DAT1 CRC valid ✅");
             end else begin
-                $display("[SD-CTRL:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", sd_datInCRC[1], sd_datInReg[5]);
-                sd_datInCRCErr <= 1;
+                $display("[SD-CTRL:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
+                status_datInCRCErr <= 1;
             end
             
-            if (sd_datInCRC[0] === sd_datInReg[4]) begin
+            if (datIn_crc[0] === datIn_reg[4]) begin
                 $display("[SD-CTRL:DATIN] DAT0 CRC valid ✅");
             end else begin
-                $display("[SD-CTRL:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", sd_datInCRC[0], sd_datInReg[4]);
-                sd_datInCRCErr <= 1;
+                $display("[SD-CTRL:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
+                status_datInCRCErr <= 1;
             end
             
-            if (sd_datInCRCCounter) begin
+            if (datIn_crcCounter) begin
                 // Stay in this state
-                sd_datInState[4:3] <= sd_datInState[4:3];
+                datIn_state[4:3] <= datIn_state[4:3];
             end
         end
         
-        if (sd_datInState[4]) begin
-            if (sd_datInReg[7:4] === 4'b1111) begin
+        if (datIn_state[4]) begin
+            if (datIn_reg[7:4] === 4'b1111) begin
                 $display("[SD-CTRL:DATIN] Good end bit ✅");
             end else begin
                 $display("[SD-CTRL:DATIN] Bad end bit ❌");
-                sd_datInCRCErr <= 1;
+                status_datInCRCErr <= 1;
             end
             // Signal that the DatIn is complete
-            sd_datInDone <= !sd_datInDone;
+            status_datInDone <= !status_datInDone;
         end
     end
     
     // ====================
-    // Pin: sd_cmd
+    // Pin: sdcard_cmd
     // ====================
     SB_IO #(
         .PIN_TYPE(6'b1101_00)
-    ) SB_IO_sd_cmd (
-        .INPUT_CLK(sd_clk_int),
-        .OUTPUT_CLK(sd_clk_int),
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_ENABLE(sd_cmdOutActive[0]),
-        .D_OUT_0(sd_cmdRespShiftReg[47]),
-        .D_IN_0(sd_cmdIn)
+    ) SB_IO_sdcard_cmd (
+        .INPUT_CLK(clk_int),
+        .OUTPUT_CLK(clk_int),
+        .PACKAGE_PIN(sdcard_cmd),
+        .OUTPUT_ENABLE(cmd_active[0]),
+        .D_OUT_0(cmdresp_shiftReg[47]),
+        .D_IN_0(cmd_in)
     );
     
     // ====================
-    // Pin: sd_dat[3:0]
+    // Pin: sdcard_dat[3:0]
     // ====================
     genvar i;
     for (i=0; i<4; i=i+1) begin
         SB_IO #(
             .PIN_TYPE(6'b1101_00)
         ) SB_IO (
-            .INPUT_CLK(sd_clk_int),
-            .OUTPUT_CLK(sd_clk_int),
-            .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_ENABLE(sd_datOutActive[0]),
-            .D_OUT_0(sd_datOutReg[16+i]),
-            .D_IN_0(sd_datIn[i])
+            .INPUT_CLK(clk_int),
+            .OUTPUT_CLK(clk_int),
+            .PACKAGE_PIN(sdcard_dat[i]),
+            .OUTPUT_ENABLE(datOut_active[0]),
+            .D_OUT_0(datOut_reg[16+i]),
+            .D_IN_0(datIn[i])
         );
     end
     
     // ====================
-    // CRC: sd_cmdOutCRC
+    // CRC: cmd_crc
     // ====================
     CRC7 #(
         .Delay(-1)
-    ) CRC7_sd_cmdOutCRC(
-        .clk(sd_clk_int),
-        .en(sd_cmdOutCRCEn),
-        .din(sd_cmdRespShiftReg[47]),
-        .dout(sd_cmdOutCRC)
+    ) CRC7_cmd_crc(
+        .clk(clk_int),
+        .en(cmd_crcEn),
+        .din(cmdresp_shiftReg[47]),
+        .dout(cmd_crc)
     );
     
     // ====================
-    // CRC: sd_respCRC
+    // CRC: resp_crc
     // ====================
     CRC7 #(
         .Delay(1)
-    ) CRC7_sd_respCRC(
-        .clk(sd_clk_int),
-        .en(sd_respCRCEn),
-        .din(sd_cmdRespShiftReg[0]),
-        .dout(sd_respCRC)
+    ) CRC7_resp_crc(
+        .clk(clk_int),
+        .en(resp_crcEn),
+        .din(cmdresp_shiftReg[0]),
+        .dout(resp_crc)
     );
     
     // ====================
-    // CRC: sd_datOutCRC
+    // CRC: datOut_crc
     // ====================
     for (i=0; i<4; i=i+1) begin
         CRC16 #(
             .Delay(-1)
-        ) CRC16_sd_datOutCRC(
-            .clk(sd_clk_int),
-            .en(sd_datOutCRCEn),
-            .din(sd_datOutReg[16+i]),
-            .dout(sd_datOutCRC[i])
+        ) CRC16_datOut_crc(
+            .clk(clk_int),
+            .en(datOut_crcEn),
+            .din(datOut_reg[16+i]),
+            .dout(datOut_crc[i])
         );
     end
     
     // ====================
-    // CRC: sd_datInCRC
+    // CRC: datIn_crc
     // ====================
     for (i=0; i<4; i=i+1) begin
         CRC16 #(
             .Delay(1)
         ) CRC16_dat(
-            .clk(sd_clk_int),
-            .en(sd_datInCRCEn),
-            .din(sd_datInReg[i]),
-            .dout(sd_datInCRC[i])
+            .clk(clk_int),
+            .en(datIn_crcEn),
+            .din(datIn_reg[i]),
+            .dout(datIn_crc[i])
         );
     end
 endmodule
