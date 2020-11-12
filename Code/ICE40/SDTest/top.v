@@ -21,8 +21,6 @@
 
 `timescale 1ns/1ps
 
-// TODO: rename the _Bits constants to _Bits
-
 // ====================
 // Control Messages/Responses
 // ====================

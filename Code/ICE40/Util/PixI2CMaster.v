@@ -1,6 +1,6 @@
 module PixI2CMaster #(
-    parameter ClkFreq = 12000000,   // `clk` frequency
-    parameter I2CClkFreq = 400000   // `i2c_clk` frequency
+    parameter ClkFreq       = 24_000_000,   // `clk` frequency
+    parameter I2CClkFreq    = 400_000       // `i2c_clk` frequency
 )(
     input wire          clk,
     
@@ -15,7 +15,7 @@ module PixI2CMaster #(
     output reg          cmd_ok = 0,
     
     // i2c port
-    output reg          i2c_clk = 0,
+    output wire         i2c_clk,
     inout wire          i2c_data
 );
     function [63:0] DivCeil;
@@ -35,10 +35,6 @@ module PixI2CMaster #(
     // Width of `delay`
     localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);
     
-    
-    
-    
-    
     reg[5:0] state = 0;
     reg[5:0] nextState = 0;
     reg ack = 0;
@@ -48,21 +44,32 @@ module PixI2CMaster #(
     assign cmd_readData = dataInShiftReg[15:0];
     wire dataIn;
     reg[DelayWidth-1:0] delay = 0;
+    reg clkOut = 0;
     
-    `ifdef SIM
-        assign i2c_data = (!dataOut ? 0 : 1'bz);
-        assign dataIn = i2c_data;
-    `else
-        SB_IO #(
-            .PIN_TYPE(6'b1010_01)
-        ) sdaTri (
-            .PACKAGE_PIN(i2c_data),
-            .OUTPUT_ENABLE(dataOut==0),
-            .D_OUT_0(dataOut),
-            .D_IN_0(dataIn)
-        );
-    `endif
+    // ====================
+    // i2c_clk
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b0101_01)
+    ) SB_IO_i2c_clk (
+        .OUTPUT_CLK(clk),
+        .PACKAGE_PIN(i2c_clk),
+        .D_OUT_0(clkOut)
+    );
     
+    // ====================
+    // i2c_data
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b1101_00)
+    ) SB_IO_i2c_data (
+        .INPUT_CLK(clk),
+        .OUTPUT_CLK(clk),
+        .PACKAGE_PIN(i2c_data),
+        .OUTPUT_ENABLE(!dataOut),
+        .D_OUT_0(dataOut),
+        .D_IN_0(dataIn)
+    );
     
     localparam StateIdle = 0;
     localparam StateStart = 1;
@@ -83,7 +90,7 @@ module PixI2CMaster #(
             
             // Idle (SDA=1, SCL=1)
             StateIdle: begin
-                i2c_clk <= 1;
+                clkOut <= 1;
                 dataOutShiftReg <= ~0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStart;
@@ -111,7 +118,7 @@ module PixI2CMaster #(
             // SCL=0,
             // Delay 1/4 cycle
             StateStart+1: begin
-                i2c_clk <= 0;
+                clkOut <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStart+2;
             end
@@ -148,7 +155,7 @@ module PixI2CMaster #(
             // SCL=1,
             // Delay 1/4 cycle
             StateShiftOut: begin
-                i2c_clk <= 1;
+                clkOut <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut+1;
             end
@@ -163,7 +170,7 @@ module PixI2CMaster #(
             // SCL=0,
             // Delay 1/4 cycle
             StateShiftOut+2: begin
-                i2c_clk <= 0;
+                clkOut <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut+3;
             end
@@ -189,7 +196,7 @@ module PixI2CMaster #(
             // SCL=1,
             // Delay 1/4 cycle
             StateShiftOut+4: begin
-                i2c_clk <= 1;
+                clkOut <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateShiftOut+5;
             end
@@ -206,7 +213,7 @@ module PixI2CMaster #(
             // Delay 1/4 cycle,
             // Go to `nextState`
             StateShiftOut+6: begin
-                i2c_clk <= 0;
+                clkOut <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= nextState;
             end
@@ -216,7 +223,7 @@ module PixI2CMaster #(
             // Delay 1/4 cycle,
             // Go to StateStop
             StateShiftOut+7: begin
-                i2c_clk <= 0;
+                clkOut <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStopFail;
             end
@@ -292,7 +299,7 @@ module PixI2CMaster #(
             // SCL=1,
             // Delay 1/4 cycle
             StateReadData+1: begin
-                i2c_clk <= 1;
+                clkOut <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateReadData+2;
             end
@@ -308,7 +315,7 @@ module PixI2CMaster #(
             // SCL=0,
             // Delay 1/4 cycle
             StateReadData+3: begin
-                i2c_clk <= 0;
+                clkOut <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateReadData+4;
             end
@@ -337,7 +344,7 @@ module PixI2CMaster #(
             // SCL=1,
             // Delay 1/4 cycle
             StateReadData+6: begin
-                i2c_clk <= 1;
+                clkOut <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateReadData+7;
             end
@@ -353,7 +360,7 @@ module PixI2CMaster #(
             // SCL=0,
             // Check if we need to ACK or if we're done
             StateReadData+8: begin
-                i2c_clk <= 0;
+                clkOut <= 0;
                 
                 // Check if we need to ACK a byte
                 if (dataInShiftReg[16:8] == 9'b0_00000001) begin
@@ -402,7 +409,7 @@ module PixI2CMaster #(
             // SCL=1,
             // Delay 1/4 cycle,
             StateACK+1: begin
-                i2c_clk <= 1;
+                clkOut <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateACK+2;
             end
@@ -416,7 +423,7 @@ module PixI2CMaster #(
             // SCL=0,
             // Delay 1/4 cycle
             StateACK+3: begin
-                i2c_clk <= 0;
+                clkOut <= 0;
                 delay <= I2CQuarterCycleDelay;
                 state <= nextState;
             end
@@ -453,7 +460,7 @@ module PixI2CMaster #(
             // SCL=1,
             // Delay 1/4 cycle
             StateStop: begin
-                i2c_clk <= 1;
+                clkOut <= 1;
                 delay <= I2CQuarterCycleDelay;
                 state <= StateStop+1;
             end

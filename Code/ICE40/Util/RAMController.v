@@ -3,7 +3,7 @@
 `endif
 
 module RAMController #(
-    parameter ClkFreq               = 24000000,
+    parameter ClkFreq               = 24_000_000,
     parameter RAMClkDelay           = 0,
     parameter BlockSize             = 2304*1296,
     
