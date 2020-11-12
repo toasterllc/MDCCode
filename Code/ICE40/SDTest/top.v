@@ -125,34 +125,33 @@ module Top(
     // ====================
     // SDController
     // ====================
-    reg sd_ctrl_clkSlowEn = 0;
-    reg sd_ctrl_clkFastEn = 0;
-    reg[47:0] sd_ctrl_cmd = 0;
-    reg sd_ctrl_cmdTrigger = 0;
-    reg sd_ctrl_abort = 0;
+    reg         sd_ctrl_clkSlowEn = 0;
+    reg         sd_ctrl_clkFastEn = 0;
+    reg[3:0]    sd_ctrl_clkDelay = 0;
     
-    reg sd_ctrl_cmdRespType_48 = 0;
-    reg sd_ctrl_cmdRespType_136 = 0;
-    reg sd_ctrl_cmdDatInType_512 = 0;
+    reg[47:0]   sd_ctrl_cmd = 0;
+    reg         sd_ctrl_cmdRespType_48 = 0;
+    reg         sd_ctrl_cmdRespType_136 = 0;
+    reg         sd_ctrl_cmdDatInType_512 = 0;
+    reg         sd_ctrl_cmdTrigger = 0;
     
-    reg[3:0] sd_ctrl_clkDelay = 0;
+    reg         sd_ctrl_abort = 0;
     
     wire        sd_datOut_writeClk;
     reg         sd_datOut_writeTrigger = 0;
     reg[15:0]   sd_datOut_writeData = 0;
     wire        sd_datOut_writeOK;
     
-    wire sd_status_cmdDone;
-    wire sd_status_respDone;
-    wire sd_status_datOutDone;
-    wire sd_status_datInDone;
-    wire sd_status_dat0Idle;
-    
-    wire[47:0]  sd_status_resp;
+    wire        sd_status_cmdDone;
+    wire        sd_status_respDone;
     wire        sd_status_respCRCErr;
+    wire[47:0]  sd_status_resp;
+    wire        sd_status_datOutDone;
     wire        sd_status_datOutCRCErr;
+    wire        sd_status_datInDone;
     wire        sd_status_datInCRCErr;
     wire[3:0]   sd_status_datInCMD6AccessMode;
+    wire        sd_status_dat0Idle;
     
     SDController #(
         .ClkFreq(ClkFreq)
@@ -182,8 +181,8 @@ module Top(
         
         .status_cmdDone(sd_status_cmdDone),
         .status_respDone(sd_status_respDone),
-        .status_resp(sd_status_resp),
         .status_respCRCErr(sd_status_respCRCErr),
+        .status_resp(sd_status_resp),
         .status_datOutDone(sd_status_datOutDone),
         .status_datOutCRCErr(sd_status_datOutCRCErr),
         .status_datInDone(sd_status_datInDone),

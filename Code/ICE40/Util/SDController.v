@@ -2,7 +2,7 @@ module SDController #(
     parameter ClkFreq           = 120_000_000,
     localparam ClkDelayWidth    = 4
 )(
-    // Main clock
+    // Clock
     input wire clk,
     
     // SD card
@@ -10,17 +10,15 @@ module SDController #(
     inout wire      sdcard_cmd,
     inout wire[3:0] sdcard_dat,
     
-    // Control: clock
+    // Control
     input wire                      ctrl_clkSlowEn,
     input wire                      ctrl_clkFastEn,
     input wire[ClkDelayWidth-1:0]   ctrl_clkDelay,
-    // Control: command
     input wire[47:0]                ctrl_cmd,
     input wire                      ctrl_cmdRespType_48,
     input wire                      ctrl_cmdRespType_136,
     input wire                      ctrl_cmdDatInType_512,
     input wire                      ctrl_cmdTrigger, // toggle
-    // Control: abort
     input wire                      ctrl_abort, // toggle
     
     // DatOut
@@ -29,20 +27,16 @@ module SDController #(
     input wire[15:0]    datOut_writeData,
     output wire         datOut_writeOK,
     
-    // Status: command
+    // Status
     output reg          status_cmdDone = 0, // toggle
-    // Status: response
     output reg          status_respDone = 0, // toggle
-    output reg[47:0]    status_resp = 0,
     output reg          status_respCRCErr = 0,
-    // Status: datOut
+    output reg[47:0]    status_resp = 0,
     output reg          status_datOutDone = 0, // toggle
     output reg          status_datOutCRCErr = 0,
-    // Status: datIn
     output reg          status_datInDone = 0, // toggle
     output reg          status_datInCRCErr = 0,
     output reg[3:0]     status_datInCMD6AccessMode = 0,
-    // Status: other
     output reg          status_dat0Idle = 0
 );
     // ====================
