@@ -1,14 +1,12 @@
 `ifndef RAMController_v
 `define RAMController_v
 
-`ifdef SIM
-`include "/usr/local/share/yosys/ice40/cells_sim.v"
-`endif
+`include "Delay.v"
 
 module RAMController #(
     parameter ClkFreq               = 24_000_000,
     parameter RAMClkDelay           = 0,
-    parameter BlockSize             = 2304*1296,
+    parameter BlockSize             = 16,
     
     localparam WordWidth            = 16,
     localparam BankWidth            = 2,

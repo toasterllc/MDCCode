@@ -12,9 +12,9 @@
 `include "ClockGen.v"
 `include "SDController.v"
 `include "PixI2CMaster.v"
+`include "RAMController.v"
 
 `ifdef SIM
-`include "/usr/local/share/yosys/ice40/cells_sim.v"
 `include "SDCardSim.v"
 `include "PixI2CSlaveSim.v"
 `endif
@@ -123,7 +123,19 @@ module Top(
     input wire          pix_lv,
     output reg          pix_rst_ = 0,
     output wire         pix_sclk,
-    inout wire          pix_sdata
+    inout wire          pix_sdata,
+    
+    // RAM port
+    output wire         ram_clk,
+    output wire         ram_cke,
+    output wire[1:0]    ram_ba,
+    output wire[12:0]   ram_a,
+    output wire         ram_cs_,
+    output wire         ram_ras_,
+    output wire         ram_cas_,
+    output wire         ram_we_,
+    output wire[1:0]    ram_dqm,
+    inout wire[15:0]    ram_dq
     
     // output reg[3:0]    led = 0
 );
@@ -139,6 +151,57 @@ module Top(
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
+    
+    
+    
+    
+    
+    
+    
+    
+    // ====================
+    // RAMController
+    // ====================
+    parameter ImageSize = 2304*1296;
+    
+    wire        ramctrl_cmd_ready;
+    reg         ramctrl_cmd_trigger = 0;
+    reg[2:0]    ramctrl_cmd_block = 0;
+    reg         ramctrl_cmd_write = 0;
+    wire        ramctrl_data_ready;
+    reg         ramctrl_data_trigger = 0;
+    reg[15:0]   ramctrl_data_write = 0;
+    wire[15:0]  ramctrl_data_read;
+    
+    RAMController #(
+        .ClkFreq(ClkFreq),
+        .BlockSize(ImageSize)
+    ) RAMController (
+        .clk(clk),
+        
+        .cmd_ready(ramctrl_cmd_ready),
+        .cmd_trigger(ramctrl_cmd_trigger),
+        .cmd_block(ramctrl_cmd_block),
+        .cmd_write(ramctrl_cmd_write),
+        
+        .data_ready(ramctrl_data_ready),
+        .data_trigger(ramctrl_data_trigger),
+        .data_write(ramctrl_data_write),
+        .data_read(ramctrl_data_read),
+        
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
+    );
+    
+    
     
     
     
@@ -483,6 +546,17 @@ module Testbench();
     wire        pix_rst_;
     wire        pix_sclk;
     tri1        pix_sdata;
+    
+    wire        ram_clk;
+    wire        ram_cke;
+    wire[1:0]   ram_ba;
+    wire[12:0]  ram_a;
+    wire        ram_cs_;
+    wire        ram_ras_;
+    wire        ram_cas_;
+    wire        ram_we_;
+    wire[1:0]   ram_dqm;
+    wire[15:0]  ram_dq;
     
     wire[3:0]   led;
     

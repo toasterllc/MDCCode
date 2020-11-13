@@ -2,10 +2,6 @@
 `include "Util.v"
 `include "VariableDelay.v"
 
-`ifdef SIM
-`include "/usr/local/share/yosys/ice40/cells_sim.v"
-`endif
-
 `timescale 1ns/1ps
 
 module Top(

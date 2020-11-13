@@ -1,7 +1,6 @@
 `include "ClockGen.v"
 `include "PixI2CMaster.v"
 `include "TogglePulse.v"
-`include "/usr/local/share/yosys/ice40/cells_sim.v"
 `include "PixI2CSlaveSim.v"
 
 `timescale 1ns/1ps

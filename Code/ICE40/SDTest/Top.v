@@ -5,7 +5,6 @@
 `include "SDController.v"
 
 `ifdef SIM
-`include "/usr/local/share/yosys/ice40/cells_sim.v"
 `include "SDCardSim.v"
 `endif
 
