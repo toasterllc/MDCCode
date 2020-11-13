@@ -27,8 +27,8 @@ module SDController #(
     input wire                      ctrl_cmdRespType_48,
     input wire                      ctrl_cmdRespType_136,
     input wire                      ctrl_cmdDatInType_512,
-    input wire                      ctrl_cmdTrigger, // toggle
-    input wire                      ctrl_abort, // toggle
+    input wire                      ctrl_cmdTrigger, // Toggle
+    input wire                      ctrl_abort, // Toggle
     
     // DatOut
     input wire          datOut_writeClk,
@@ -37,13 +37,13 @@ module SDController #(
     output wire         datOut_writeOK,
     
     // Status
-    output reg          status_cmdDone = 0, // toggle
-    output reg          status_respDone = 0, // toggle
+    output reg          status_cmdDone = 0, // Toggle
+    output reg          status_respDone = 0, // Toggle
     output reg          status_respCRCErr = 0,
     output reg[47:0]    status_resp = 0,
-    output reg          status_datOutDone = 0, // toggle
+    output reg          status_datOutDone = 0, // Toggle
     output reg          status_datOutCRCErr = 0,
-    output reg          status_datInDone = 0, // toggle
+    output reg          status_datInDone = 0, // Toggle
     output reg          status_datInCRCErr = 0,
     output reg[3:0]     status_datInCMD6AccessMode = 0,
     output reg          status_dat0Idle = 0

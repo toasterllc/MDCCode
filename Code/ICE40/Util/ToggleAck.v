@@ -1,6 +1,8 @@
 `ifndef ToggleAck_v
 `define ToggleAck_v
 
+`include "Util.v"
+
 // `out` is set (in the clock domain `clk`) when the async signal `in` toggles.
 // `out` is cleared when `ack` is toggled.
 `define ToggleAck(out, ack, in, edge, clk)                      \
