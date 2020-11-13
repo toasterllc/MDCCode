@@ -15,10 +15,10 @@ module PixI2CSlaveSim(
     reg dir = 0;
     
     reg[15:0] regAddr = 0;
-    reg[15:0] writeData = 0;
+    reg[7:0] writeData[0:1];
     reg[1:0] writeLen = 0;
     
-    reg[15:0] mem[0:'hffff];
+    reg[7:0] mem[0:'hffff];
     
     reg ack = 1;
     
@@ -34,12 +34,10 @@ module PixI2CSlaveSim(
         dataIn = 0;
         i2cCondition = I2CConditionNone;
         
-        wait(!i2c_clk);
         for (i=0; i<8 && i2cOK; i++) begin
             reg sdataBefore;
             
-            $display("[PixI2CSlaveSim@0x%x] ReadByte %0d", slaveAddr, i);
-            
+            wait(!i2c_clk);
             wait(i2c_clk);
             
             dataIn = (dataIn<<1)|i2c_data;
@@ -48,9 +46,7 @@ module PixI2CSlaveSim(
             sdataBefore = i2c_data;
             
             // Wait for SCL 1->0, or for SDA to change while SCL=1
-            wait(!i2c_clk || i2c_data!=sdataBefore);
-            
-            $display("[PixI2CSlaveSim@0x%x] ReadByte %0d BBB", slaveAddr, i);
+            wait(!i2c_clk || i2c_data!==sdataBefore);
             
             if (i2c_clk) begin
                 if (i2c_data) begin
@@ -61,10 +57,6 @@ module PixI2CSlaveSim(
                     i2cCondition = I2CConditionRestart;
                 end
             end
-            
-            wait(!i2c_clk);
-            
-            $display("[PixI2CSlaveSim@0x%x] ReadByte %0d CCC", slaveAddr, i);
         end
         
         if (i2cOK) begin
@@ -111,21 +103,23 @@ module PixI2CSlaveSim(
                 if (i2cOK) begin
                     slaveAddr = dataIn[7:1];
                     dir = dataIn[0];
-                    $display("[PixI2CSlaveSim@0x%x] dir:%d", slaveAddr, dir);
+                    // $display("[PixI2CSlaveSim@0x%x] dir:%d", slaveAddr, dir);
                 end
                 
                 if (i2cOK) begin
                     // Read
                     if (dir) begin
-                        dataOut = mem[regAddr][15:8];
+                        dataOut = mem[regAddr];
                         WriteByte();
                         
                         if (i2cOK) begin
-                            dataOut = mem[regAddr][7:0];
+                            dataOut = mem[regAddr+1];
                             WriteByte();
-                            $display("[PixI2CSlaveSim@0x%x] READ (len=2): mem[0x%x] = 0x%x", slaveAddr, regAddr, mem[regAddr][15:0]);
+                            $display("[PixI2CSlaveSim@0x%x] READ (len=2): mem[0x%x] = 0x%02x%02x",
+                                slaveAddr, regAddr, mem[regAddr], mem[regAddr+1]);
                         end else begin
-                            $display("[PixI2CSlaveSim@0x%x] READ (len=1): mem[0x%x] = 0x%x", slaveAddr, regAddr, mem[regAddr][15:8]);
+                            $display("[PixI2CSlaveSim@0x%x] READ (len=1): mem[0x%x] = 0x%x",
+                                slaveAddr, regAddr, mem[regAddr]);
                         end
                     
                     // Write
@@ -140,7 +134,6 @@ module PixI2CSlaveSim(
                             end
                         end
                         
-                        $display("[PixI2CSlaveSim@0x%x] AAA %b", slaveAddr, i2cOK);
                         if (i2cOK) begin
                             ReadByte();
                             if (i2cOK) begin
@@ -148,34 +141,35 @@ module PixI2CSlaveSim(
                             end
                         end
                         
-                        $display("[PixI2CSlaveSim@0x%x] BBB %b", slaveAddr, i2cOK);
                         if (i2cOK) begin
                             ReadByte();
                             if (i2cOK) begin
-                                writeData[7:0] = dataIn;
+                                writeData[0] = dataIn;
                                 writeLen = 1;
                             end
                         end
                         
-                        $display("[PixI2CSlaveSim@0x%x] CCC %b", slaveAddr, i2cOK);
                         if (i2cOK) begin
                             ReadByte();
                             if (i2cOK) begin
-                                writeData = (writeData<<8)|dataIn;
+                                writeData[1] = dataIn;
                                 writeLen = 2;
                             end
                         end
                         
-                        $display("[PixI2CSlaveSim@0x%x] DDD %b", slaveAddr, i2cOK);
                         case (writeLen)
                         2: begin
-                            $display("[PixI2CSlaveSim@0x%x] WRITE (len=2): mem[0x%x] = 0x%x", slaveAddr, regAddr, writeData[15:0]);
-                            mem[regAddr] = writeData[15:0];
+                            $display("[PixI2CSlaveSim@0x%x] WRITE (len=2): mem[0x%x] = 0x%02x%02x",
+                                slaveAddr, regAddr, writeData[0], writeData[1]);
+                            
+                            mem[regAddr] = writeData[0];
+                            mem[regAddr+1] = writeData[1];
                         end
                         
                         1: begin
-                            $display("[PixI2CSlaveSim@0x%x] WRITE (len=1): mem[0x%x] = 0x%x", slaveAddr, regAddr, writeData[7:0]);
-                            mem[regAddr] = {mem[regAddr][15:8], writeData[7:0]};
+                            $display("[PixI2CSlaveSim@0x%x] WRITE (len=1): mem[0x%x] = 0x%x",
+                                slaveAddr, regAddr, writeData[0]);
+                            mem[regAddr] = writeData[0];
                         end
                         
                         default: begin
