@@ -140,7 +140,7 @@ module PixI2CMaster #(
             // SDA=first bit,
             // Delay 1/4 cycle
             // After ACK, state=State_RegAddr
-            // *** Note that dir=1 (write) on the initial transmission, even when reading.
+            // *** Note that dir=0 (write) on the initial transmission, even when reading.
             // *** If we intend to read, we perform a second START condition after
             // *** providing the slave address, and then provide the slave address/direction
             // *** again. This second time is when provide dir=1 (read).
@@ -261,8 +261,10 @@ module PixI2CMaster #(
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 if (cmd_write) begin
+                    $display("[PixI2CMaster] WRITE");
                     nextState <= (cmd_dataLen ? State_WriteData : State_WriteData+1);
                 end else begin
+                    $display("[PixI2CMaster] READ");
                     nextState <= (cmd_dataLen ? State_ReadData : State_ReadData+1);
                 end
             end
@@ -488,6 +490,7 @@ module PixI2CMaster #(
             
             // Tell client we're done
             State_Stop+2: begin
+                // `Finish;
                 status_done <= !status_done;
                 state <= State_Idle;
             end
