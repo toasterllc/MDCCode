@@ -377,6 +377,8 @@ void System::_handleEvent() {
     // Sanity-check pix comms by reading a known register
     {
         const uint16_t chipVersion = _pixRead(0x3000);
+        // TODO: we probably don't want to check the version number in production, in case the version number changes?
+        // also the 0x3000 isn't read-only, so in theory it could change
         Assert(chipVersion == 0x2604);
     }
     
