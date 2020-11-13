@@ -235,7 +235,7 @@ module Top(
     
     PixI2CMaster #(
         .ClkFreq(24_000_000),
-        .I2CClkFreq(100_000) // TODO: we may need to slow this down depending on the strength of the pullup resistor
+        .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
     ) PixI2CMaster (
         .clk(clk24mhz),
         
