@@ -69,7 +69,9 @@
 `define     Resp_Arg_SDGetStatus_Dat0Idle_Bits                  4:4
 `define     Resp_Arg_SDGetStatus_Filler_Bits                    3:0
 
-`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h05
+`define Msg_Type_SDAbort                                        `Msg_Type_Len'h05
+
+`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h06
 `define     Msg_Arg_PixI2CTransaction_Write_Bits                63:63
 `define     Msg_Arg_PixI2CTransaction_DataLen_Bits              62:62
 `define         Msg_Arg_PixI2CTransaction_DataLen_1             1'b0
@@ -77,12 +79,11 @@
 `define     Msg_Arg_PixI2CTransaction_RegAddr_Bits              31:16
 `define     Msg_Arg_PixI2CTransaction_WriteData_Bits            15:0
 
-`define Msg_Type_PixI2CGetStatus                                `Msg_Type_Len'h06
-`define     Msg_Arg_PixI2CGetStatus_Done_Bits                   63:63
-`define     Msg_Arg_PixI2CGetStatus_Err_Bits                    62:62
-`define     Msg_Arg_PixI2CGetStatus_ReadData_Bits               15:0
+`define Msg_Type_PixI2CGetStatus                                `Msg_Type_Len'h07
+`define     Resp_Arg_PixI2CGetStatus_Done_Bits                  63:63
+`define     Resp_Arg_PixI2CGetStatus_Err_Bits                   62:62
+`define     Resp_Arg_PixI2CGetStatus_ReadData_Bits              15:0
 
-`define Msg_Type_SDAbort                                        `Msg_Type_Len'h07
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
 
@@ -212,12 +213,13 @@ module Top(
     localparam PixI2CSlaveAddr = 7'h10;
     reg pixi2c_cmd_write = 0;
     reg[15:0] pixi2c_cmd_regAddr = 0;
-    reg[15:0] pixi2c_cmd_writeData = 0;
     reg pixi2c_cmd_dataLen = 0;
+    reg[15:0] pixi2c_cmd_writeData = 0;
     reg pixi2c_cmd_trigger = 0;
     wire pixi2c_status_done;
     wire pixi2c_status_err;
     wire[15:0] pixi2c_status_readData;
+    `ToggleAck(ctrl_pixi2c_done_, ctrl_pixi2c_doneAck, pixi2c_status_done, posedge, ctrl_clk);
     
     PixI2CMaster #(
         .ClkFreq(24_000_000),
@@ -228,8 +230,8 @@ module Top(
         .cmd_slaveAddr(PixI2CSlaveAddr),
         .cmd_write(pixi2c_cmd_write),
         .cmd_regAddr(pixi2c_cmd_regAddr),
-        .cmd_writeData(pixi2c_cmd_writeData),
         .cmd_dataLen(pixi2c_cmd_dataLen),
+        .cmd_writeData(pixi2c_cmd_writeData),
         .cmd_trigger(pixi2c_cmd_trigger), // Toggle
         
         .status_done(pixi2c_status_done), // Toggle
@@ -361,6 +363,26 @@ module Top(
                 `Msg_Type_SDAbort: begin
                     $display("[CTRL] Got Msg_Type_SDAbort");
                     sd_ctrl_abort <= !sd_ctrl_abort;
+                end
+                
+                `Msg_Type_PixI2CTransaction: begin
+                    $display("[CTRL] Got Msg_Type_PixI2CTransaction");
+                    
+                    // Clear our done signal so it can be reliably observed via PixI2CGetStatus
+                    if (!ctrl_pixi2c_done_) ctrl_pixi2c_doneAck <= !ctrl_pixi2c_doneAck;
+                    
+                    pixi2c_cmd_write <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_Write_Bits];
+                    pixi2c_cmd_regAddr <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits];
+                    pixi2c_cmd_writeData <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_WriteData_Bits];
+                    pixi2c_cmd_dataLen <= (ctrl_msgArg[`Msg_Arg_PixI2CTransaction_DataLen_Bits]===`Msg_Arg_PixI2CTransaction_DataLen_2);
+                    pixi2c_cmd_trigger <= !pixi2c_cmd_trigger;
+                end
+                
+                `Msg_Type_PixI2CGetStatus: begin
+                    $display("[CTRL] Got Msg_Type_PixI2CGetStatus");
+                    ctrl_doutReg[`Resp_Arg_PixI2CGetStatus_Done_Bits] <= !ctrl_pixi2c_done_;
+                    ctrl_doutReg[`Resp_Arg_PixI2CGetStatus_Err_Bits] <= pixi2c_status_err;
+                    ctrl_doutReg[`Resp_Arg_PixI2CGetStatus_ReadData_Bits] <= pixi2c_status_readData;
                 end
                 
                 `Msg_Type_NoOp: begin

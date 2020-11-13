@@ -13,8 +13,8 @@ module PixI2CMaster #(
     input wire[6:0]     cmd_slaveAddr,
     input wire          cmd_write,
     input wire[15:0]    cmd_regAddr,
-    input wire[15:0]    cmd_writeData,
     input wire          cmd_dataLen, // 0: 1 byte, 1: 2 bytes
+    input wire[15:0]    cmd_writeData,
     input wire          cmd_trigger, // Toggle
     
     // Status port
