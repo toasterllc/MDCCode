@@ -27,6 +27,7 @@
 `define Resp_Arg_Bits                                   63:0
 
 `define Msg_Type_Echo                                   `Msg_Type_Len'h00
+
 `define Msg_Type_SDClkSet                               `Msg_Type_Len'h01
 `define     Msg_Arg_SDClkDelay_Bits                     5:2
 `define     Msg_Arg_SDClkSrc_Len                        2
@@ -68,7 +69,20 @@
 `define     Resp_Arg_SDDat0Idle_Bits                    4:4
 `define     Resp_Arg_SDFiller_Bits                      3:0
 
-`define Msg_Type_SDAbort                                `Msg_Type_Len'h05
+`define Msg_Type_PixI2CTransaction                      `Msg_Type_Len'h05
+`define     Msg_Arg_PixI2CTransaction_Write_Bits        63:63
+`define     Msg_Arg_PixI2CTransaction_DataLen_Bits      62:62
+`define         Msg_Arg_PixI2CTransaction_DataLen_1     1'b0
+`define         Msg_Arg_PixI2CTransaction_DataLen_2     1'b1
+`define     Msg_Arg_PixI2CTransaction_RegAddr_Bits      31:16
+`define     Msg_Arg_PixI2CTransaction_WriteData_Bits    15:0
+
+`define Msg_Type_PixI2CGetStatus                        `Msg_Type_Len'h06
+`define     Msg_Arg_PixI2CGetStatus_Done_Bits           63:63
+`define     Msg_Arg_PixI2CGetStatus_Err_Bits            62:62
+`define     Msg_Arg_PixI2CGetStatus_ReadData_Bits       15:0
+
+`define Msg_Type_SDAbort                                `Msg_Type_Len'h07
 `define Msg_Type_NoOp                                   `Msg_Type_Len'hFF
 
 
@@ -199,32 +213,32 @@ module Top(
     reg pixi2c_cmd_write = 0;
     reg[15:0] pixi2c_cmd_regAddr = 0;
     reg[15:0] pixi2c_cmd_writeData = 0;
-    wire[15:0] pixi2c_cmd_readData;
-    reg[1:0] pixi2c_cmd_dataLen;
-    wire pixi2c_cmd_done;
-    wire pixi2c_cmd_ok;
+    reg pixi2c_cmd_dataLen = 0;
+    reg pixi2c_cmd_trigger = 0;
+    wire pixi2c_status_done;
+    wire pixi2c_status_err;
+    wire[15:0] pixi2c_status_readData;
     
     PixI2CMaster #(
         .ClkFreq(24_000_000),
         .I2CClkFreq(400_000) // TODO: we may need to slow this down depending on the strength of the pullup resistor
     ) PixI2CMaster (
-        .clk(clk24mhz),
+        .clk(clk),
         
-        // Command port
         .cmd_slaveAddr(PixI2CSlaveAddr),
         .cmd_write(pixi2c_cmd_write),
         .cmd_regAddr(pixi2c_cmd_regAddr),
         .cmd_writeData(pixi2c_cmd_writeData),
-        .cmd_readData(pixi2c_cmd_readData),
         .cmd_dataLen(pixi2c_cmd_dataLen),
-        .cmd_done(pixi2c_cmd_done),
-        .cmd_ok(pixi2c_cmd_ok),
+        .cmd_trigger(pixi2c_cmd_trigger), // Toggle
         
-        // i2c port
+        .status_done(pixi2c_status_done), // Toggle
+        .status_err(pixi2c_status_err),
+        .status_readData(pixi2c_status_readData),
+        
         .i2c_clk(pix_sclk),
         .i2c_data(pix_sdata)
     );
-    
     
     
     
@@ -325,7 +339,7 @@ module Top(
                 `Msg_Type_SDDatOut: begin
                     $display("[CTRL] Got Msg_Type_SDDatOut");
                     if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
-                    ctrl_sdDatOutTrigger <= !ctrl_sdDatOutTrigger;
+                    // TODO: trigger dat out
                 end
                 
                 // Get SD status / response
@@ -422,6 +436,15 @@ module Testbench();
     wire        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
+    
+    reg         pix_dclk;
+    reg[11:0]   pix_d;
+    reg         pix_fv;
+    reg         pix_lv;
+    wire        pix_rst_;
+    wire        pix_sclk;
+    wire        pix_sdata;
+    
     wire[3:0]   led;
     
     Top Top(.*);
