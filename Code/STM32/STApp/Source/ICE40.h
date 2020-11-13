@@ -92,12 +92,12 @@ public:
         
         SDSetClkMsg(ClkSrc src, uint8_t delay) {
             type = 0x01;
-            payload[0] = 0x00;
-            payload[1] = 0x00;
-            payload[2] = 0x00;
-            payload[3] = 0x00;
-            payload[4] = 0x00;
-            payload[5] = 0x00;
+            payload[0] = 0;
+            payload[1] = 0;
+            payload[2] = 0;
+            payload[3] = 0;
+            payload[4] = 0;
+            payload[5] = 0;
             payload[6] = (delay<<2) | (uint8_t)src;
         }
     };
@@ -178,6 +178,45 @@ public:
         SDAbortMsg() {
             type = 0x05;
         }
+    };
+    
+    struct PixResetMsg : Msg {
+        PixResetMsg(bool val) {
+            type = 0x06;
+            payload[0] = 0;
+            payload[1] = 0;
+            payload[2] = 0;
+            payload[3] = 0;
+            payload[4] = 0;
+            payload[5] = 0;
+            payload[6] = val;
+        }
+    };
+    
+    struct PixI2CTransactionMsg : Msg {
+        PixI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t data) {
+            Assert(len==1 || len==2);
+            type = 0x07;
+            payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
+            payload[1] = 0;
+            payload[2] = 0;
+            payload[3] = (addr&0xFF00)>>8;
+            payload[4] = addr&0x00FF;
+            payload[5] = (data&0xFF00)>>8;
+            payload[6] = data&0x00FF;
+        }
+    };
+    
+    struct PixI2CGetStatusMsg : Msg {
+        PixI2CGetStatusMsg() {
+            type = 0x08;
+        }
+    };
+    
+    struct PixI2CGetStatusResp : Resp {
+        bool done() const           { return getBool(63);   }
+        bool err() const            { return getBool(62);   }
+        uint16_t readData() const   { return getBits(15,0); }
     };
     
     ICE40(QSPI& qspi) : _qspi(qspi) {}

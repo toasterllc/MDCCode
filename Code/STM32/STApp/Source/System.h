@@ -23,11 +23,19 @@ private:
     using SDRespType = ICE40::SDSendCmdMsg::RespTypes;
     using SDSendCmdMsg = ICE40::SDSendCmdMsg;
     using SDSetClkMsg = ICE40::SDSetClkMsg;
+    using PixResetMsg = ICE40::PixResetMsg;
+    using PixI2CTransactionMsg = ICE40::PixI2CTransactionMsg;
+    using PixI2CGetStatusMsg = ICE40::PixI2CGetStatusMsg;
+    using PixI2CGetStatusResp = ICE40::PixI2CGetStatusResp;
     
-    SDGetStatusResp _getSDStatus();
-    SDGetStatusResp _sendSDCmd(uint8_t sdCmd, uint32_t sdArg,
+    SDGetStatusResp _sdGetStatus();
+    SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
         ICE40::SDSendCmdMsg::RespType respType = ICE40::SDSendCmdMsg::RespTypes::Normal48,
         ICE40::SDSendCmdMsg::DatInType datInType = ICE40::SDSendCmdMsg::DatInTypes::None);
+    
+    PixI2CGetStatusResp _pixGetStatus();
+    uint16_t _pixRead(uint16_t addr);
+    void _pixWrite(uint16_t addr, uint16_t val);
     
     using _super = SystemBase<System>;
     friend class SystemBase<System>;
