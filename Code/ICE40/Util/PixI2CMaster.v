@@ -58,9 +58,11 @@ module PixI2CMaster #(
     reg[$clog2(State_Count)-1:0] state = 0;
     reg[$clog2(State_Count)-1:0] nextState = 0;
     reg ack = 0;
-    reg[8:0] dataOutShiftReg = 0; // Low bit is sentinel
-    wire dataOut = dataOutShiftReg[8];
-    reg[16:0] dataInShiftReg = 0; // Low bit is sentinel
+    reg[7:0] dataOutShiftReg = 0;
+    wire dataOut = dataOutShiftReg[7];
+    reg[2:0] dataOutCounter = 0;
+    reg[15:0] dataInShiftReg = 0;
+    reg[3:0] dataInCounter = 0;
     assign status_readData = dataInShiftReg[15:0];
     wire dataIn;
     reg[DelayWidth-1:0] delay = 0;
@@ -146,7 +148,8 @@ module PixI2CMaster #(
             // *** again. This second time is when provide dir=1 (read).
             // *** See i2c docs for more information on how reads are performed.
             State_Start+2: begin
-                dataOutShiftReg <= {cmd_slaveAddr, 1'b0 /* dir=0 (write, see comment above) */, 1'b1 /* sentinel */};
+                dataOutShiftReg <= {cmd_slaveAddr, 1'b0 /* dir=0 (write, see comment above) */};
+                dataOutCounter <= 7;
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 nextState <= State_RegAddr;
@@ -191,8 +194,9 @@ module PixI2CMaster #(
             // SDA=next bit,
             // Delay 1/4 cycle
             State_ShiftOut+3: begin
+                dataOutCounter <= dataOutCounter-1;
                 // Continue shift loop if there's more data
-                if (dataOutShiftReg[7:0] != 8'b10000000) begin
+                if (dataOutCounter) begin
                     dataOutShiftReg <= dataOutShiftReg<<1;
                     delay <= I2CQuarterCycleDelay;
                     state <= State_ShiftOut;
@@ -249,7 +253,8 @@ module PixI2CMaster #(
             
             // Shift out high 8 bits of address
             State_RegAddr: begin
-                dataOutShiftReg <= {cmd_regAddr[15:8], 1'b1};
+                dataOutShiftReg <= cmd_regAddr[15:8];
+                dataOutCounter <= 7;
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 nextState <= State_RegAddr+1;
@@ -257,7 +262,8 @@ module PixI2CMaster #(
             
             // Shift out low 8 bits of address
             State_RegAddr+1: begin
-                dataOutShiftReg <= {cmd_regAddr[7:0], 1'b1};
+                dataOutShiftReg <= cmd_regAddr[7:0];
+                dataOutCounter <= 7;
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 if (cmd_write) begin
@@ -279,7 +285,8 @@ module PixI2CMaster #(
             
             // Shift out high 8 bits of data
             State_WriteData: begin
-                dataOutShiftReg <= {cmd_writeData[15:8], 1'b1};
+                dataOutShiftReg <= cmd_writeData[15:8];
+                dataOutCounter <= 7;
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 nextState <= State_WriteData+1;
@@ -287,7 +294,8 @@ module PixI2CMaster #(
             
             // Shift out low 8 bits of data
             State_WriteData+1: begin
-                dataOutShiftReg <= {cmd_writeData[7:0], 1'b1};
+                dataOutShiftReg <= cmd_writeData[7:0];
+                dataOutCounter <= 7;
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 nextState <= State_StopOK;
@@ -340,8 +348,9 @@ module PixI2CMaster #(
             // whereas the first time we always specify the write direction. See comment
             // in the State_Start state for more info.
             State_ReadData+4: begin
-                dataOutShiftReg <= {cmd_slaveAddr, 1'b1 /* dir=1 (read) */, 1'b1  /* sentinel */};
-                dataInShiftReg <= (cmd_dataLen ? 1 : 1<<8); // Prepare dataInShiftReg with the sentinel
+                dataOutShiftReg <= {cmd_slaveAddr, 1'b1 /* dir=1 (read) */};
+                dataOutCounter <= 7;
+                dataInCounter <= (cmd_dataLen ? 15 : 7);
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 nextState <= State_ReadData+5;
@@ -376,16 +385,17 @@ module PixI2CMaster #(
             // Check if we need to ACK or if we're done
             State_ReadData+8: begin
                 clkOut <= 0;
+                dataInCounter <= dataInCounter-1;
                 
                 // Check if we need to ACK a byte
-                if (dataInShiftReg[16:8] === 9'b0_00000001) begin
+                if (dataInCounter === 8) begin
                     delay <= I2CQuarterCycleDelay;
                     state <= State_ACK;
                     ack <= 1; // Tell State_ACK to issue an ACK
                     nextState <= State_ReadData+5; // Tell State_ACK to go to State_ReadData+5 after the ACK
                 
                 // Check if we're done shifting
-                end else if (dataInShiftReg[16]) begin
+                end else if (!dataInCounter) begin
                     delay <= I2CQuarterCycleDelay;
                     state <= State_ACK;
                     ack <= 0; // Tell State_ACK to issue a NACK

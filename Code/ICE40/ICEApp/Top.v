@@ -988,8 +988,9 @@ module Testbench();
         
         
         // // ====================
-        // // Test PixI2C Write / Read (len=2)
+        // // Test PixI2C Write / Read (len=2, len=1)
         // // ====================
+        // // *** Length=2 ***
         // arg = 0;
         // arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
         // arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
@@ -1044,13 +1045,8 @@ module Testbench();
         // end else begin
         //     $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixI2CGetStatus_ReadData_Bits]);
         // end
-        // `Finish;
-
-
-
-        // // ====================
-        // // Test PixI2C Write / Read (len=1)
-        // // ====================
+        //
+        // // *** Length=1 ***
         // arg = 0;
         // arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
         // arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
@@ -1101,11 +1097,10 @@ module Testbench();
         // end
         //
         // if ((resp[`Resp_Arg_PixI2CGetStatus_ReadData_Bits]&16'h00FF) === 16'h0037) begin
-        //     $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixI2CGetStatus_ReadData_Bits]);
+        //     $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixI2CGetStatus_ReadData_Bits]&16'h00FF);
         // end else begin
-        //     $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixI2CGetStatus_ReadData_Bits]);
+        //     $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixI2CGetStatus_ReadData_Bits]&16'h00FF);
         // end
-        //
         // `Finish;
     end
 endmodule
