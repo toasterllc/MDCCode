@@ -23,11 +23,11 @@ ntrials="$5"
 
 cd "$proj/tmp"
 
-# Place and route the design ({top.json, pins.pcf} -> .asc)
+# Place and route the design ({Top.json, Pins.pcf} -> .asc)
 freqs=()
 for (( i=0; i<$ntrials; i++)); do
     echo "Trial $i"
-    output=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json top.json --pcf ../pins.pcf --asc top.asc --pcf-allow-unconstrained 2>&1 | grep "Info: Max frequency for clock.*$clk" || true )
+    output=$( nextpnr-ice40 -r "--hx$dev" --package "$pkg" --json Top.json --pcf ../Pins.pcf --asc Top.asc --pcf-allow-unconstrained 2>&1 | grep "Info: Max frequency for clock.*$clk" || true )
     if [ -z "$output" ]; then
         echo "No clock named $clk"
         exit 1
