@@ -1,13 +1,13 @@
-`include "../Util/Sync.v"
-`include "../Util/TogglePulse.v"
-`include "../Util/ToggleAck.v"
-`include "../Util/ClockGen.v"
-`include "../Util/SDController.v"
-`include "../Util/PixI2CMaster.v"
+`include "Sync.v"
+`include "TogglePulse.v"
+`include "ToggleAck.v"
+`include "ClockGen.v"
+`include "SDController.v"
+`include "PixI2CMaster.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"
-`include "../Util/SDCardSim.v"
+`include "SDCardSim.v"
 `endif
 
 `timescale 1ns/1ps
@@ -433,7 +433,7 @@ module Testbench();
     );
     
     initial begin
-        $dumpfile("top.vcd");
+        $dumpfile("Top.vcd");
         $dumpvars(0, Testbench);
     end
     
