@@ -21,7 +21,7 @@ module Top();
     reg clk = 0;
     
     initial begin
-        $dumpfile("top.vcd");
+        $dumpfile("Top.vcd");
         $dumpvars(0, Top);
     end
     

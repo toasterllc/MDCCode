@@ -435,7 +435,7 @@ module Testbench();
     );
     
     initial begin
-        $dumpfile("top.vcd");
+        $dumpfile("Top.vcd");
         $dumpvars(0, Testbench);
     end
     
