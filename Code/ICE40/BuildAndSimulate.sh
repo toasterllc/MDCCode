@@ -7,6 +7,7 @@ if [ "$#" -ne 1 ]; then
 	exit 1
 fi
 
+dir=$(cd $(dirname "$0"); pwd)
 proj="$1"
 
 rm -Rf "$proj/tmp"
