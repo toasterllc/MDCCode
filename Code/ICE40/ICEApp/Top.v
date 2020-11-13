@@ -80,7 +80,10 @@
 
 `define Msg_Type_SDAbort                                        `Msg_Type_Len'h05
 
-`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h06
+`define Msg_Type_PixReset                                       `Msg_Type_Len'h06
+`define     Msg_Arg_PixReset_Val_Bits                           0:0
+
+`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h07
 `define     Msg_Arg_PixI2CTransaction_Write_Bits                55:55
 `define     Msg_Arg_PixI2CTransaction_DataLen_Bits              54:54
 `define         Msg_Arg_PixI2CTransaction_DataLen_1             1'b0
@@ -88,7 +91,7 @@
 `define     Msg_Arg_PixI2CTransaction_RegAddr_Bits              31:16
 `define     Msg_Arg_PixI2CTransaction_WriteData_Bits            15:0
 
-`define Msg_Type_PixI2CGetStatus                                `Msg_Type_Len'h07
+`define Msg_Type_PixI2CGetStatus                                `Msg_Type_Len'h08
 `define     Resp_Arg_PixI2CGetStatus_Done_Bits                  63:63
 `define     Resp_Arg_PixI2CGetStatus_Err_Bits                   62:62
 `define     Resp_Arg_PixI2CGetStatus_ReadData_Bits              15:0
@@ -118,7 +121,7 @@ module Top(
     input wire[11:0]    pix_d,
     input wire          pix_fv,
     input wire          pix_lv,
-    output wire         pix_rst_,
+    output reg          pix_rst_ = 0,
     output wire         pix_sclk,
     inout wire          pix_sdata
     
@@ -372,6 +375,11 @@ module Top(
                 `Msg_Type_SDAbort: begin
                     $display("[CTRL] Got Msg_Type_SDAbort");
                     sd_ctrl_abort <= !sd_ctrl_abort;
+                end
+                
+                `Msg_Type_PixReset: begin
+                    $display("[CTRL] Got Msg_Type_PixReset (rst=%b)", ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits]);
+                    pix_rst_ <= ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits];
                 end
                 
                 `Msg_Type_PixI2CTransaction: begin
@@ -982,6 +990,27 @@ module Testbench();
         
         
         
+        
+        // ====================
+        // Test PixI2C reset
+        // ====================
+        arg = 0;
+        arg[`Msg_Arg_PixReset_Val_Bits] = 0;
+        SendMsg(`Msg_Type_PixReset, arg);
+        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+            $display("[EXT] Reset=0 success ✅");
+        end else begin
+            $display("[EXT] Reset=0 failed ❌");
+        end
+        
+        arg = 0;
+        arg[`Msg_Arg_PixReset_Val_Bits] = 1;
+        SendMsg(`Msg_Type_PixReset, arg);
+        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+            $display("[EXT] Reset=1 success ✅");
+        end else begin
+            $display("[EXT] Reset=1 failed ❌");
+        end
         
         
         
