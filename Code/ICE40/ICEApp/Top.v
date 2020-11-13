@@ -157,7 +157,7 @@ module Top(
     
     reg         sd_ctrl_abort = 0;
     
-    wire        sd_datOut_writeClk;
+    wire        sd_datOut_writeClk = 0;
     reg         sd_datOut_writeTrigger = 0;
     reg[15:0]   sd_datOut_writeData = 0;
     wire        sd_datOut_writeOK;
@@ -232,9 +232,9 @@ module Top(
     
     PixI2CMaster #(
         .ClkFreq(24_000_000),
-        .I2CClkFreq(400_000) // TODO: we may need to slow this down depending on the strength of the pullup resistor
+        .I2CClkFreq(100_000) // TODO: we may need to slow this down depending on the strength of the pullup resistor
     ) PixI2CMaster (
-        .clk(clk),
+        .clk(clk24mhz),
         
         .cmd_slaveAddr(PixI2CSlaveAddr),
         .cmd_write(pixi2c_cmd_write),
