@@ -3,7 +3,7 @@
 `include "Delay.v"
 
 `ifdef SIM
-`include "../mt48h32m16lf/mobile_sdr.v"
+`include "../../mt48h32m16lf/mobile_sdr.v"
 `endif
 
 `timescale 1ns/1ps
