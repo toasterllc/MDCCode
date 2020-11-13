@@ -1,6 +1,6 @@
-`include "../Util/Util.v"
-`include "../Util/RAMController.v"
-`include "../Util/Delay.v"
+`include "Util.v"
+`include "RAMController.v"
+`include "Delay.v"
 
 `ifdef SIM
 `include "../mt48h32m16lf/mobile_sdr.v"

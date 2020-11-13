@@ -1,6 +1,6 @@
-`include "../Util/ClockGen.v"
-`include "../Util/Util.v"
-`include "../Util/VariableDelay.v"
+`include "ClockGen.v"
+`include "Util.v"
+`include "VariableDelay.v"
 
 `ifdef SIM
 `include "/usr/local/share/yosys/ice40/cells_sim.v"

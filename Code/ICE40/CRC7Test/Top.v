@@ -1,4 +1,4 @@
-`include "../Util/CRC7.v"
+`include "CRC7.v"
 
 `timescale 1ns/1ps
 

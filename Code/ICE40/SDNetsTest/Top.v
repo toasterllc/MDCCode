@@ -1,4 +1,4 @@
-`include "../Util/ClockGen.v"
+`include "ClockGen.v"
 
 `timescale 1ns/1ps
 
