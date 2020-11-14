@@ -103,6 +103,120 @@
 
 
 
+module PixStream(
+    // Control port
+    output wire         ctrl_trigger, // Toggle
+    
+    // Read port
+    input wire          read_clk,
+    input wire          read_trigger,
+    output wire[15:0]   read_data,
+    output wire         read_ok,
+    
+    // Pix port
+    input wire          pix_dclk,
+    input wire[11:0]    pix_d,
+    input wire          pix_fv,
+    input wire          pix_lv
+);
+    // ====================
+    // Shared Nets/Registers
+    // ====================
+    reg pix_writeEn = 0;
+    
+    // ====================
+    // pix_d
+    // ====================
+    genvar i;
+    wire[11:0] pix_d_reg;
+    for (i=0; i<12; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b0000_00)
+        ) SB_IO_pix_d (
+            .INPUT_CLK(pix_dclk),
+            .PACKAGE_PIN(pix_d[i]),
+            .D_IN_0(pix_d_reg[i])
+        );
+    end
+    
+    // ====================
+    // pix_fv
+    // ====================
+    wire pix_fv_reg;
+    SB_IO #(
+        .PIN_TYPE(6'b0000_00)
+    ) SB_IO_pix_fv (
+        .INPUT_CLK(pix_dclk),
+        .PACKAGE_PIN(pix_fv),
+        .D_IN_0(pix_fv_reg)
+    );
+    
+    // ====================
+    // pix_lv
+    // ====================
+    wire pix_lv_reg;
+    SB_IO #(
+        .PIN_TYPE(6'b0000_00)
+    ) SB_IO_pix_lv (
+        .INPUT_CLK(pix_dclk),
+        .PACKAGE_PIN(pix_lv),
+        .D_IN_0(pix_lv_reg)
+    );
+    
+    // ====================
+    // Pix->RAM FIFO
+    // ====================
+    BankFIFO #(
+        .W(16),
+        .N(8)
+    ) BankFIFO (
+        .w_clk(pix_dclk),
+        .w_trigger(pix_writeEn && pix_lv_reg),
+        .w_data({4'b0, pix_d_reg}),
+        .w_ok(), // TODO: handle not being able to write by signalling an error somehow?
+        
+        .r_clk(read_clk),
+        .r_trigger(read_trigger),
+        .r_data(read_data),
+        .r_ok(read_ok),
+        .r_bank()
+    );
+    
+    // ====================
+    // State Machine
+    // ====================
+    `ToggleAck(pix_trigger, pix_triggerAck, ctrl_trigger, posedge, pix_dclk);
+    
+    reg[1:0] pix_state = 0;
+    always @(posedge pix_dclk) begin
+        case (pix_state)
+        // Wait to be triggered
+        0: begin
+            pix_writeEn <= 0; // TODO: perf: try moving this to previous state
+            if (pix_trigger) begin
+                pix_triggerAck <= !pix_triggerAck;
+                pix_state <= 1;
+            end
+        end
+        
+        // Wait for the frame to be invalid
+        1: begin
+            if (!pix_fv_reg) begin
+                pix_state <= 2;
+            end
+        end
+        
+        // Capture pixels until the end of frame
+        2: begin
+            pix_writeEn <= 1; // TODO: perf: try moving this to previous state
+            if (!pix_fv_reg) begin
+                pix_state <= 0;
+            end
+        end
+        endcase
+    end
+endmodule
+
 
 
 module Top(
@@ -200,6 +314,10 @@ module Top(
         .ram_dqm(ram_dqm),
         .ram_dq(ram_dq)
     );
+    
+    
+    
+    
     
     
     
