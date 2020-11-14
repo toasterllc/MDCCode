@@ -1,6 +1,8 @@
 `ifndef BankFIFO_v
 `define BankFIFO_v
 
+// TODO: rename `ok` nets to `ready` to match SDController/RAMController?
+
 module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
