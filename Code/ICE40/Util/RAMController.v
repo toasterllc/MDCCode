@@ -33,11 +33,15 @@ module RAMController #(
     input wire[BlockWidth-1:0]  cmd_block,      // Block index
     input wire                  cmd_write,      // Read (0) or write (1)
     
-    // Data port
-    output reg                  data_ready = 0, // Reading: `data_read` is valid; writing: `data_write` accepted
-    input wire                  data_trigger,   // Only effective if `data_ready`=1
-    input wire[WordWidth-1:0]   data_write,     // Data to write to RAM
-    output wire[WordWidth-1:0]  data_read,      // Data read from RAM
+    // Write port
+    output reg                  write_ready = 0,    // `write_data` accepted
+    input wire                  write_trigger,      // Only effective if `write_ready`=1
+    input wire[WordWidth-1:0]   write_data,         // Data to write to RAM
+    
+    // Read port
+    output reg                  read_ready = 0,     // `read_data` valid
+    input wire                  read_trigger,       // Only effective if `read_ready`=1
+    output wire[WordWidth-1:0]  read_data,          // Data read from RAM
     
     // RAM port
     output wire                 ram_clk,        // Clock
@@ -219,7 +223,7 @@ module RAMController #(
             .D_IN_0(ramDQIn[i])
         );
     end
-    assign data_read = ramDQIn;
+    assign read_data = ramDQIn;
     
     // ====================
     // Init State Machine Registers
@@ -346,7 +350,8 @@ module RAMController #(
         // data_refreshCounter <= 2;
         
         cmd_ready <= 0; // Reset by default
-        data_ready <= 0; // Reset by default
+        write_ready <= 0; // Reset by default
+        read_ready <= 0; // Reset by default
         
         // Reset RAM cmd state
         ramCmd <= RAM_Cmd_Nop;
@@ -480,17 +485,17 @@ module RAMController #(
         end
         
         Data_State_Write: begin
-            data_ready <= 1;
+            write_ready <= 1;
             data_state <= Data_State_Write+1;
         end
         
         Data_State_Write+1: begin
             // $display("[RAM-CTRL] Data_State_Write");
-            data_ready <= 1; // Accept more data
-            if (data_trigger) begin
-                // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, data_write);
+            write_ready <= 1; // Accept more data
+            if (write_trigger) begin
+                // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, write_data);
                 if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
-                ramDQOut <= data_write; // Supply data to be written
+                ramDQOut <= write_data; // Supply data to be written
                 ramDQOutEn <= 1;
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                 if (data_write_issueCmd) ramCmd <= RAM_Cmd_Write; // Give write command
@@ -506,8 +511,8 @@ module RAMController #(
                 // Handle reaching the end of a row or the end of block
                 if (&data_addr[`ColBits] || !data_counter) begin
                     // $display("[RAM-CTRL] End of row / end of block");
-                    // Override `data_ready=1` above since we can't handle new data in the next state
-                    data_ready <= 0;
+                    // Override `write_ready=1` above since we can't handle new data in the next state
+                    write_ready <= 0;
                     
                     // Abort writing
                     // Wait the 'write recover' time before doing so.
@@ -530,7 +535,7 @@ module RAMController #(
         
         Data_State_Read: begin
             // $display("[RAM-CTRL] Data_State_Read");
-            // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_write);
+            // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, write_data);
             ramA <= data_addr[`ColBits]; // Supply the column address
             ramDQM <= RAM_DQM_Unmasked; // Unmask the data
             ramCmd <= RAM_Cmd_Read; // Give read command
@@ -542,16 +547,16 @@ module RAMController #(
             // $display("[RAM-CTRL] Data_State_Read+1");
             ramDQM <= RAM_DQM_Unmasked; // Unmask the data
             if (!data_delayCounter) begin
-                data_ready <= 1; // Notify that data is available
+                read_ready <= 1; // Notify that data is available
                 data_state <= Data_State_Read+2;
             end
         end
         
         Data_State_Read+2: begin
             // $display("[RAM-CTRL] Data_State_Read+2");
-            // if (data_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_read);
-            if (data_trigger) begin
-                // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, data_read);
+            // if (read_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
+            if (read_trigger) begin
+                // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
                 ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                 data_addr <= data_addr+1;
                 data_counter <= data_counter-1;
@@ -568,7 +573,7 @@ module RAMController #(
                     data_state <= Data_State_Finish;
                 end else begin
                     // Notify that more data is available
-                    data_ready <= 1;
+                    read_ready <= 1;
                 end
             
             end else begin
@@ -633,7 +638,8 @@ module RAMController #(
         if (init_done && !data_refreshCounter) begin
             // Override our `_ready` flags if we're refreshing on the next cycle
             cmd_ready <= 0;
-            data_ready <= 0;
+            write_ready <= 0;
+            read_ready <= 0;
             data_state <= Data_State_Refresh;
         end
     end

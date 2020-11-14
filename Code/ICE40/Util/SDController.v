@@ -102,7 +102,7 @@ module SDController #(
     BankFIFO #(
         .W(16),
         .N(8)
-    ) BankFIFO(
+    ) BankFIFO (
         .w_clk(datOut_writeClk),
         .w_ready(datOut_writeReady),
         .w_trigger(datOut_writeTrigger),
