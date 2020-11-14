@@ -1,22 +1,20 @@
 `ifndef BankFIFO_v
 `define BankFIFO_v
 
-// TODO: rename `ok` nets to `ready` to match SDController/RAMController?
-
 module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
 )(
     input wire          w_clk,
+    output wire         w_ready,
     input wire          w_trigger,
     input wire[W-1:0]   w_data,
-    output wire         w_ok,
     output wire         w_bank,
     
     input wire          r_clk,
+    output wire         r_ready,
     input wire          r_trigger,
     output wire[W-1:0]  r_data,
-    output wire         r_ok,
     output wire         r_bank
 );
     reg[W-1:0] mem[0:(1<<N)-1];
@@ -28,9 +26,9 @@ module BankFIFO #(
     reg[N-1:0] w_addr = 0;
     reg w_rbank=0, w_rbankTmp=0;
     assign w_bank = w_addr[N-1];
-    assign w_ok = w_bank!==w_rbank || !dir;
+    assign w_ready = w_bank!==w_rbank || !dir;
     always @(posedge w_clk) begin
-        if (w_trigger && w_ok) begin
+        if (w_trigger && w_ready) begin
             mem[w_addr] <= w_data;
             w_addr <= w_addr+1;
         end
@@ -48,9 +46,9 @@ module BankFIFO #(
     reg r_wbank=0, r_wbankTmp=0;
     assign r_bank = r_addr[N-1];
     assign r_data = mem[r_addr];
-    assign r_ok = r_bank!==r_wbank || dir;
+    assign r_ready = r_bank!==r_wbank || dir;
     always @(posedge r_clk) begin
-        if (r_trigger && r_ok)
+        if (r_trigger && r_ready)
             r_addr <= r_addr+1;
         
         {r_wbank, r_wbankTmp} <= {r_wbankTmp, w_bank};

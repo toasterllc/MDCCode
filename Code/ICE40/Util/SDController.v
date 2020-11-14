@@ -32,9 +32,9 @@ module SDController #(
     
     // DatOut
     input wire          datOut_writeClk,
+    output wire         datOut_writeReady,
     input wire          datOut_writeTrigger,
     input wire[15:0]    datOut_writeData,
-    output wire         datOut_writeOK,
     
     // Status
     output reg          status_cmdDone = 0, // Toggle
@@ -97,21 +97,21 @@ module SDController #(
     // ====================
     reg datOut_readTrigger = 0;
     wire[15:0] datOut_readData;
-    wire datOut_readOK;
+    wire datOut_readReady;
     wire datOut_readBank;
     BankFIFO #(
         .W(16),
         .N(8)
     ) BankFIFO(
         .w_clk(datOut_writeClk),
+        .w_ready(datOut_writeReady),
         .w_trigger(datOut_writeTrigger),
         .w_data(datOut_writeData),
-        .w_ok(datOut_writeOK),
         
         .r_clk(clk_int),
+        .r_ready(datOut_readReady),
         .r_trigger(datOut_readTrigger),
         .r_data(datOut_readData),
-        .r_ok(datOut_readOK),
         .r_bank(datOut_readBank)
     );
     
@@ -335,7 +335,7 @@ module SDController #(
         // ====================
         case (datOut_state)
         0: begin
-            if (datOut_readOK) begin
+            if (datOut_readReady) begin
                 $display("[SD-CTRL:DATOUT] Write session starting");
                 status_datOutCRCErr <= 0;
                 datOut_state <= 1;
@@ -423,7 +423,7 @@ module SDController #(
             end else if (datIn_reg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 
-                if (datOut_readOK) begin
+                if (datOut_readReady) begin
                     datOut_state <= 1;
                 
                 end else begin
@@ -446,13 +446,13 @@ module SDController #(
             
             // Drain only on !datOut_counter (the same as DatOut does normally)
             // so that we don't read too fast. If we read faster than we write,
-            // then `!datOut_readOK`=1, and we'll signal that we're done and
+            // then `!datOut_readReady`=1, and we'll signal that we're done and
             // transition to state 0 before we're actually done.
             if (!datOut_counter) begin
                 datOut_readTrigger <= 1;
             end
             
-            if (!datOut_readOK) begin
+            if (!datOut_readReady) begin
                 // Signal that DatOut is done
                 status_datOutDone <= !status_datOutDone;
                 datOut_state <= 0;

@@ -126,20 +126,20 @@ module PixController #(
     reg fifo_writeEn = 0;
     wire fifo_readTrigger;
     wire[15:0] fifo_readData;
-    wire fifo_readOK;
+    wire fifo_readReady;
     BankFIFO #(
         .W(16),
         .N(8)
     ) BankFIFO (
         .w_clk(pix_dclk),
+        .w_ready(), // TODO: handle not being able to write by signalling an error somehow?
         .w_trigger(fifo_writeEn && pix_lv_reg),
         .w_data({4'b0, pix_d_reg}),
-        .w_ok(), // TODO: handle not being able to write by signalling an error somehow?
         
         .r_clk(clk),
+        .r_ready(fifo_readReady),
         .r_trigger(fifo_readTrigger),
         .r_data(fifo_readData),
-        .r_ok(fifo_readOK),
         .r_bank()
     );
     
@@ -219,7 +219,7 @@ module PixController #(
             end
             
             // TODO: handle FIFO data being available when we don't expect it
-            if (fifo_readOK) begin
+            if (fifo_readReady) begin
             end
         end
         
@@ -256,7 +256,7 @@ module PixController #(
             end
             
             // Copy word from FIFO->RAM
-            if (fifo_readOK && fifo_readTrigger) begin
+            if (fifo_readReady && fifo_readTrigger) begin
                 ramctrl_data_write <= fifo_readData;
                 ctrl_ramReadTrigger <= 1;
             end
