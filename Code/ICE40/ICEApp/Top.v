@@ -165,9 +165,9 @@ module Top(
     reg         sd_ctrl_abort = 0;
     
     wire        sd_datOut_writeClk = 0;
+    wire        sd_datOut_writeReady;
     reg         sd_datOut_writeTrigger = 0;
     reg[15:0]   sd_datOut_writeData = 0;
-    wire        sd_datOut_writeOK;
     
     wire        sd_status_cmdDone;
     wire        sd_status_respDone;
@@ -202,9 +202,9 @@ module Top(
         .ctrl_abort(sd_ctrl_abort),
         
         .datOut_writeClk(sd_datOut_writeClk),
+        .datOut_writeReady(sd_datOut_writeReady),
         .datOut_writeTrigger(sd_datOut_writeTrigger),
         .datOut_writeData(sd_datOut_writeData),
-        .datOut_writeOK(sd_datOut_writeOK),
         
         .status_cmdDone(sd_status_cmdDone),
         .status_respDone(sd_status_respDone),

@@ -44,14 +44,16 @@ module PixController #(
     // ====================
     parameter ImageSize = 2304*1296;
     
-    wire        ramctrl_cmd_ready;
-    reg         ramctrl_cmd_trigger = 0;
-    reg[2:0]    ramctrl_cmd_block = 0;
-    reg         ramctrl_cmd_write = 0;
-    wire        ramctrl_data_ready;
-    wire        ramctrl_data_trigger;
-    reg[15:0]   ramctrl_data_write = 0;
-    wire[15:0]  ramctrl_data_read;
+    wire                ramctrl_cmd_ready;
+    reg                 ramctrl_cmd_trigger = 0;
+    reg[2:0]            ramctrl_cmd_block = 0;
+    reg                 ramctrl_cmd_write = 0;
+    wire                ramctrl_write_ready;
+    reg                 ramctrl_write_trigger = 0;
+    reg[WordWidth-1:0]  ramctrl_write_data = 0;
+    wire                ramctrl_read_ready;
+    wire                ramctrl_read_trigger;
+    wire[WordWidth-1:0] ramctrl_read_data;
     
     RAMController #(
         .ClkFreq(ClkFreq),
@@ -64,10 +66,13 @@ module PixController #(
         .cmd_block(ramctrl_cmd_block),
         .cmd_write(ramctrl_cmd_write),
         
-        .data_ready(ramctrl_data_ready),
-        .data_trigger(ramctrl_data_trigger),
-        .data_write(ramctrl_data_write),
-        .data_read(ramctrl_data_read),
+        .write_ready(ramctrl_write_ready),
+        .write_trigger(ramctrl_write_trigger),
+        .write_data(ramctrl_write_data),
+        
+        .read_ready(ramctrl_read_ready),
+        .read_trigger(ramctrl_read_trigger),
+        .read_data(ramctrl_read_data),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -140,7 +145,6 @@ module PixController #(
         .r_ready(fifo_readReady),
         .r_trigger(fifo_readTrigger),
         .r_data(fifo_readData),
-        .r_bank()
     );
     
     reg ctrl_fifoCaptureTrigger = 0;
@@ -189,16 +193,10 @@ module PixController #(
     // ====================
     `ToggleAck(ctrl_cmdTrigger, ctrl_cmdTriggerAck, cmd_trigger, posedge, clk);
     
-    // TODO: maybe we should separate read/write ports of RAMController to simplify our logic?
-    
-    reg ctrl_captureEn = 0;
-    reg ctrl_readoutEn = 0;
-    reg ctrl_ramReadTrigger = 0;
-    assign ramctrl_data_trigger = (ctrl_readoutEn ? readout_trigger : ctrl_ramReadTrigger);
-    assign fifo_readTrigger = (ctrl_captureEn && (!ctrl_ramReadTrigger || ramctrl_data_ready));
-    
-    assign readout_ready = (ctrl_readoutEn ? ramctrl_data_ready : 0);
-    assign readout_data = ramctrl_data_read;
+    assign fifo_readTrigger = (!ramctrl_write_trigger || ramctrl_write_ready);
+    assign readout_ready = ramctrl_read_ready;
+    assign ramctrl_read_trigger = readout_trigger;
+    assign readout_data = ramctrl_read_data;
     
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +2
@@ -206,10 +204,8 @@ module PixController #(
     localparam Ctrl_State_Count     = 3; // +0
     reg[$clog2(Ctrl_State_Count)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
-        ctrl_captureEn <= 0;
-        ctrl_readoutEn <= 0;
         ramctrl_cmd_trigger <= 0;
-        ctrl_ramReadTrigger <= 0;
+        ramctrl_write_trigger <= 0;
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
@@ -226,9 +222,6 @@ module PixController #(
         Ctrl_State_Capture: begin
             // Start the FIFO data flow
             ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
-            // Configure RAM command
-            ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd_write <= 1;
             // Next state
             ctrl_state <= Ctrl_State_Capture+1;
         end
@@ -238,27 +231,27 @@ module PixController #(
             if (ramctrl_cmd_ready && ramctrl_cmd_trigger) begin
                 ctrl_state <= Ctrl_State_Capture+2;
             end else begin
+                // Configure RAM command
+                ramctrl_cmd_block <= cmd_ramBlock;
+                ramctrl_cmd_write <= 1;
                 ramctrl_cmd_trigger <= 1; // Assert until the command is accepted
             end
         end
         
         // Copy data from FIFO->RAM
         Ctrl_State_Capture+2: begin
-            // Enable reading from FIFO
-            ctrl_captureEn <= 1;
+            // By default, prevent `ramctrl_write_trigger` from being reset
+            ramctrl_write_trigger <= ramctrl_write_trigger;
             
-            // By default, prevent `ctrl_ramReadTrigger` from being reset
-            ctrl_ramReadTrigger <= ctrl_ramReadTrigger;
-            
-            // Reset `ctrl_ramReadTrigger` if the data was consumed
-            if (ramctrl_data_ready && ctrl_ramReadTrigger) begin
-                ctrl_ramReadTrigger <= 0;
+            // Reset `ramctrl_write_trigger` if RAMController accepted the data
+            if (ramctrl_write_ready && ramctrl_write_trigger) begin
+                ramctrl_write_trigger <= 0;
             end
             
             // Copy word from FIFO->RAM
             if (fifo_readReady && fifo_readTrigger) begin
-                ramctrl_data_write <= fifo_readData;
-                ctrl_ramReadTrigger <= 1;
+                ramctrl_write_data <= fifo_readData;
+                ramctrl_write_trigger <= 1;
             end
             
             // We're finished when RAMController says we've received all the pixels.
@@ -272,24 +265,17 @@ module PixController #(
         end
         
         Ctrl_State_Readout: begin
-            // Configure RAM command
-            ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd_write <= 0;
-            // Next state
-            ctrl_state <= Ctrl_State_Readout+1;
-        end
-        
-        Ctrl_State_Readout+1: begin
             if (ramctrl_cmd_ready && ramctrl_cmd_trigger) begin
-                ctrl_state <= Ctrl_State_Readout+2;
+                ctrl_state <= Ctrl_State_Readout+1;
             end else begin
+                // Configure RAM command
+                ramctrl_cmd_block <= cmd_ramBlock;
+                ramctrl_cmd_write <= 0;
                 ramctrl_cmd_trigger <= 1; // Assert until the command is accepted
             end
         end
         
-        Ctrl_State_Readout+2: begin
-            ctrl_readoutEn <= 1;
-            
+        Ctrl_State_Readout+1: begin
             // We're finished when RAMController says we've read all the pixels.
             // (RAMController knows when it's read the entire block, and we
             // define RAMController's block size as the image size.)
