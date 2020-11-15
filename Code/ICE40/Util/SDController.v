@@ -19,6 +19,7 @@ module SDController #(
     inout wire      sdcard_cmd,
     inout wire[3:0] sdcard_dat,
     
+    // TODO: cleanup by combining ctrl_clkSlow/ctrl_clkFastEn, ctrl_cmdRespType_*
     // Control
     input wire                      ctrl_clkSlowEn,
     input wire                      ctrl_clkFastEn,
@@ -30,6 +31,7 @@ module SDController #(
     input wire                      ctrl_cmdTrigger, // Toggle
     input wire                      ctrl_abort, // Toggle
     
+    // TODO: consider re-ordering: datOut_writeClk, datOut_writeData, datOut_writeTrigger, datOut_writeReady
     // DatOut
     input wire          datOut_writeClk,
     output wire         datOut_writeReady,

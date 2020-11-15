@@ -11,11 +11,12 @@ module PixController #(
     input wire          clk,
     
     // Command port
-    input wire          cmd_trigger, // Toggle
-    input wire[2:0]     cmd_ramBlock,
     input wire          cmd,
+    input wire[2:0]     cmd_ramBlock,
+    input wire          cmd_trigger, // Toggle
     output reg          cmd_done = 0, // Toggle
     
+    // TODO: consider re-ordering: readout_data, readout_trigger, readout_ready
     // Readout port
     output wire         readout_ready,
     input wire          readout_trigger,
@@ -44,16 +45,16 @@ module PixController #(
     // ====================
     parameter ImageSize = 2304*1296;
     
-    wire                ramctrl_cmd_ready;
-    reg                 ramctrl_cmd_trigger = 0;
-    reg[2:0]            ramctrl_cmd_block = 0;
-    reg                 ramctrl_cmd_write = 0;
-    wire                ramctrl_write_ready;
-    reg                 ramctrl_write_trigger = 0;
-    reg[WordWidth-1:0]  ramctrl_write_data = 0;
-    wire                ramctrl_read_ready;
-    wire                ramctrl_read_trigger;
-    wire[WordWidth-1:0] ramctrl_read_data;
+    wire        ramctrl_cmd_ready;
+    reg         ramctrl_cmd_trigger = 0;
+    reg[2:0]    ramctrl_cmd_block = 0;
+    reg         ramctrl_cmd_write = 0;
+    wire        ramctrl_write_ready;
+    reg         ramctrl_write_trigger = 0;
+    reg[15:0]   ramctrl_write_data = 0;
+    wire        ramctrl_read_ready;
+    wire        ramctrl_read_trigger;
+    wire[15:0]  ramctrl_read_data;
     
     RAMController #(
         .ClkFreq(ClkFreq),
@@ -144,7 +145,7 @@ module PixController #(
         .r_clk(clk),
         .r_ready(fifo_readReady),
         .r_trigger(fifo_readTrigger),
-        .r_data(fifo_readData),
+        .r_data(fifo_readData)
     );
     
     reg ctrl_fifoCaptureTrigger = 0;
@@ -260,7 +261,7 @@ module PixController #(
             if (ramctrl_cmd_ready) begin
                 // Signal that we're done
                 cmd_done <= !cmd_done;
-                state <= Ctrl_State_Idle;
+                ctrl_state <= Ctrl_State_Idle;
             end
         end
         
@@ -282,7 +283,7 @@ module PixController #(
             if (ramctrl_cmd_ready) begin
                 // Signal that we're done
                 cmd_done <= !cmd_done;
-                state <= Ctrl_State_Idle;
+                ctrl_state <= Ctrl_State_Idle;
             end
         end
         endcase

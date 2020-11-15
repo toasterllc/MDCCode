@@ -27,17 +27,20 @@ module RAMController #(
 )(
     input wire                  clk,            // Clock
     
+    // TODO: consider re-ordering: cmd_block, cmd_write, cmd_trigger, cmd_ready
     // Command port
     output reg                  cmd_ready = 0,  // Ready for new command
     input wire                  cmd_trigger,    // Start the command
     input wire[BlockWidth-1:0]  cmd_block,      // Block index
     input wire                  cmd_write,      // Read (0) or write (1)
     
+    // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port
     output reg                  write_ready = 0,    // `write_data` accepted
     input wire                  write_trigger,      // Only effective if `write_ready`=1
     input wire[WordWidth-1:0]   write_data,         // Data to write to RAM
     
+    // TODO: consider re-ordering: read_data, read_trigger, read_ready
     // Read port
     output reg                  read_ready = 0,     // `read_data` valid
     input wire                  read_trigger,       // Only effective if `read_ready`=1

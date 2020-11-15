@@ -5,12 +5,14 @@ module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
 )(
+    // TODO: consider re-ordering: w_clk, w_data, w_trigger, w_ready, w_bank
     input wire          w_clk,
     output wire         w_ready,
     input wire          w_trigger,
     input wire[W-1:0]   w_data,
     output wire         w_bank,
     
+    // TODO: consider re-ordering: r_clk, r_data, r_trigger, r_ready, r_bank
     input wire          r_clk,
     output wire         r_ready,
     input wire          r_trigger,

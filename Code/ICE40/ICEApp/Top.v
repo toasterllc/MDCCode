@@ -11,6 +11,7 @@
 `include "ToggleAck.v"
 `include "ClockGen.v"
 `include "SDController.v"
+`include "PixController.v"
 `include "PixI2CMaster.v"
 `include "RAMController.v"
 
@@ -86,13 +87,16 @@
 `define Msg_Type_PixCapture                                     `Msg_Type_Len'h07
 `define     Msg_Arg_PixCapture_Block_Bits                       2:0
 
-`define Msg_Type_PixGetStatus                                   `Msg_Type_Len'h08
+`define Msg_Type_PixReadout                                     `Msg_Type_Len'h08
+`define     Msg_Arg_PixReadout_Block_Bits                       2:0
+
+`define Msg_Type_PixGetStatus                                   `Msg_Type_Len'h09
 `define     Resp_Arg_PixGetStatus_I2CDone_Bits                  63:63
 `define     Resp_Arg_PixGetStatus_I2CErr_Bits                   62:62
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
 
-`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h09
+`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h0A
 `define     Msg_Arg_PixI2CTransaction_Write_Bits                55:55
 `define     Msg_Arg_PixI2CTransaction_DataLen_Bits              54:54
 `define         Msg_Arg_PixI2CTransaction_DataLen_1             1'b0
@@ -164,10 +168,10 @@ module Top(
     
     reg         sd_ctrl_abort = 0;
     
-    wire        sd_datOut_writeClk = 0;
+    wire        sd_datOut_writeClk;
     wire        sd_datOut_writeReady;
-    reg         sd_datOut_writeTrigger = 0;
-    reg[15:0]   sd_datOut_writeData = 0;
+    wire        sd_datOut_writeTrigger;
+    wire[15:0]  sd_datOut_writeData;
     
     wire        sd_status_cmdDone;
     wire        sd_status_respDone;
@@ -261,6 +265,67 @@ module Top(
     
     
     
+    
+    
+    
+    reg         pixctrl_cmd = 0;
+    reg[2:0]    pixctrl_cmd_ramBlock = 0;
+    reg         pixctrl_cmd_trigger = 0;
+    wire        pixctrl_cmd_done;
+    wire        pixctrl_readout_ready;
+    wire        pixctrl_readout_trigger;
+    wire[15:0]  pixctrl_readout_data;
+    PixController #(
+        .ClkFreq(ClkFreq)
+    ) PixController (
+        .clk(clk),
+        
+        // Command port
+        .cmd(pixctrl_cmd),
+        .cmd_ramBlock(pixctrl_cmd_ramBlock),
+        .cmd_trigger(pixctrl_cmd_trigger),
+        .cmd_done(pixctrl_cmd_done),
+        
+        // Readout port
+        .readout_ready(pixctrl_readout_ready),
+        .readout_trigger(pixctrl_readout_trigger),
+        .readout_data(pixctrl_readout_data),
+        
+        // Pix port
+        .pix_dclk(pix_dclk),
+        .pix_d(pix_d),
+        .pix_fv(pix_fv),
+        .pix_lv(pix_lv),
+        
+        // RAM port
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
+    );
+    
+    // Connect PixController's readout port to SDController's datOut port
+    assign sd_datOut_writeClk = clk;
+    assign sd_datOut_writeTrigger = pixctrl_readout_ready;
+    assign pixctrl_readout_trigger = sd_datOut_writeReady;
+    assign sd_datOut_writeData = pixctrl_readout_data;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ====================
     // Control State Machine
     // ====================
@@ -281,7 +346,7 @@ module Top(
     `ToggleAck(ctrl_sdDatInDone_, ctrl_sdDatInDoneAck, sd_status_datInDone, posedge, ctrl_clk);
     `Sync(ctrl_sdDat0Idle, sd_status_dat0Idle, posedge, ctrl_clk);
     
-    `ToggleAck(ctrl_pixctrlCaptureDone_, ctrl_pixctrlCaptureDoneAck, pixctrl_captureDone, posedge, ctrl_clk);
+    `ToggleAck(ctrl_pixctrlCmdDone_, ctrl_pixctrlCmdDoneAck, pixctrl_cmd_done, posedge, ctrl_clk);
     
     always @(posedge ctrl_clk, negedge ctrl_rst_) begin
         if (!ctrl_rst_) begin
@@ -387,17 +452,26 @@ module Top(
                 `Msg_Type_PixCapture: begin
                     $display("[CTRL] Got Msg_Type_PixCapture (block=%b)", ctrl_msgArg[`Msg_Arg_PixCapture_Block_Bits]);
                     
-                    // Reset `ctrl_pixctrlCaptureDone_` if it's asserted
-                    if (!ctrl_pixctrlCaptureDone_) ctrl_pixctrlCaptureDoneAck <= !ctrl_pixctrlCaptureDoneAck;
+                    // Reset `ctrl_pixctrlCmdDone_` if it's asserted
+                    if (!ctrl_pixctrlCmdDone_) ctrl_pixctrlCmdDoneAck <= !ctrl_pixctrlCmdDoneAck;
                     
-                    pixctrl_block <= ctrl_msgArg[`Msg_Arg_PixCapture_Block_Bits];
-                    ctrl_pixCapture <= !ctrl_pixCapture;
+                    pixctrl_cmd <= PixController.CmdCapture;
+                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixCapture_Block_Bits];
+                    pixctrl_cmd_trigger <= !pixctrl_cmd_trigger;
+                end
+                
+                `Msg_Type_PixReadout: begin
+                    $display("[CTRL] Got Msg_Type_PixReadout (block=%b)", ctrl_msgArg[`Msg_Arg_PixReadout_Block_Bits]);
+                    
+                    pixctrl_cmd <= PixController.CmdReadout;
+                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixReadout_Block_Bits];
+                    pixctrl_cmd_trigger <= !pixctrl_cmd_trigger;
                 end
                 
                 `Msg_Type_PixI2CTransaction: begin
                     $display("[CTRL] Got Msg_Type_PixI2CTransaction");
                     
-                    // Clear our done signal so it can be reliably observed via PixI2CGetStatus
+                    // Reset `ctrl_pixi2c_done_` if it's asserted
                     if (!ctrl_pixi2c_done_) ctrl_pixi2c_doneAck <= !ctrl_pixi2c_doneAck;
                     
                     pixi2c_cmd_write <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_Write_Bits];
@@ -412,6 +486,7 @@ module Top(
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !ctrl_pixi2c_done_;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
+                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlCmdDone_;
                 end
                 
                 `Msg_Type_NoOp: begin
