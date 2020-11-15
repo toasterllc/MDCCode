@@ -5,6 +5,7 @@
 
 module PixController #(
     parameter ClkFreq = 24_000_000,
+    parameter ImageSize = 256*256,
     localparam CmdCapture = 1'b0,
     localparam CmdReadout = 1'b1
 )(
@@ -43,7 +44,6 @@ module PixController #(
     // ====================
     // RAMController
     // ====================
-    parameter ImageSize = 2304*1296;
     
     wire        ramctrl_cmd_ready;
     reg         ramctrl_cmd_trigger = 0;
@@ -166,6 +166,7 @@ module PixController #(
         // Wait for the frame to be invalid
         1: begin
             if (!pix_fv_reg) begin
+                $display("[PIXCTRL:FIFO] Waiting for frame invalid...");
                 fifo_state <= 2;
             end
         end
@@ -173,6 +174,7 @@ module PixController #(
         // Wait for the frame to start
         2: begin
             if (pix_fv_reg) begin
+                $display("[PIXCTRL:FIFO] Frame start");
                 fifo_writeEn <= 1;
                 fifo_state <= 3;
             end
@@ -181,6 +183,7 @@ module PixController #(
         // Wait until the end of the frame
         3: begin
             if (!pix_fv_reg) begin
+                $display("[PIXCTRL:FIFO] Frame end");
                 fifo_state <= 0;
             end
         end
@@ -230,6 +233,7 @@ module PixController #(
         // Wait for RAM to accept write command
         Ctrl_State_Capture+1: begin
             if (ramctrl_cmd_ready && ramctrl_cmd_trigger) begin
+                $display("[PIXCTRL:Capture] Start");
                 ctrl_state <= Ctrl_State_Capture+2;
             end else begin
                 // Configure RAM command
@@ -251,6 +255,7 @@ module PixController #(
             
             // Copy word from FIFO->RAM
             if (fifo_readReady && fifo_readTrigger) begin
+                $display("[PIXCTRL:Capture] Got pixel");
                 ramctrl_write_data <= fifo_readData;
                 ramctrl_write_trigger <= 1;
             end
@@ -259,6 +264,7 @@ module PixController #(
             // (RAMController knows when it's written the entire block, and we
             // define RAMController's block size as the image size.)
             if (ramctrl_cmd_ready) begin
+                $display("[PIXCTRL:Capture] Finished");
                 // Signal that we're done
                 cmd_done <= !cmd_done;
                 ctrl_state <= Ctrl_State_Idle;
@@ -267,6 +273,7 @@ module PixController #(
         
         Ctrl_State_Readout: begin
             if (ramctrl_cmd_ready && ramctrl_cmd_trigger) begin
+                $display("[PIXCTRL:Readout] Start");
                 ctrl_state <= Ctrl_State_Readout+1;
             end else begin
                 // Configure RAM command
@@ -281,6 +288,7 @@ module PixController #(
             // (RAMController knows when it's read the entire block, and we
             // define RAMController's block size as the image size.)
             if (ramctrl_cmd_ready) begin
+                $display("[PIXCTRL:Readout] Finished");
                 // Signal that we're done
                 cmd_done <= !cmd_done;
                 ctrl_state <= Ctrl_State_Idle;

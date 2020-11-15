@@ -23,6 +23,14 @@
 
 `timescale 1ns/1ps
 
+`ifdef SIM
+localparam ImageWidth = 256;
+localparam ImageHeight = 256;
+`else
+localparam ImageWidth = 2304;
+localparam ImageHeight = 1296;
+`endif
+
 // ====================
 // Control Messages/Responses
 // ====================
@@ -277,7 +285,8 @@ module Top(
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;
     PixController #(
-        .ClkFreq(ClkFreq)
+        .ClkFreq(ClkFreq),
+        .ImageSize(ImageWidth*ImageHeight)
     ) PixController (
         .clk(clk),
         
@@ -593,7 +602,10 @@ module Testbench();
         .sd_dat(sd_dat)
     );
     
-    PixSim PixSim(
+    PixSim #(
+        .ImageWidth(ImageWidth),
+        .ImageHeight(ImageHeight)
+    ) PixSim (
         .pix_dclk(pix_dclk),
         .pix_d(pix_d),
         .pix_fv(pix_fv),
@@ -1098,26 +1110,49 @@ module Testbench();
         
         
         
+        // // ====================
+        // // Test Pix reset
+        // // ====================
+        // arg = 0;
+        // arg[`Msg_Arg_PixReset_Val_Bits] = 0;
+        // SendMsg(`Msg_Type_PixReset, arg);
+        // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+        //     $display("[EXT] Reset=0 success ✅");
+        // end else begin
+        //     $display("[EXT] Reset=0 failed ❌");
+        // end
+        //
+        // arg = 0;
+        // arg[`Msg_Arg_PixReset_Val_Bits] = 1;
+        // SendMsg(`Msg_Type_PixReset, arg);
+        // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+        //     $display("[EXT] Reset=1 success ✅");
+        // end else begin
+        //     $display("[EXT] Reset=1 failed ❌");
+        // end
+        
+        
+        
+        
+        
         // ====================
-        // Test Pix reset
+        // Test PixCapture
         // ====================
-        arg = 0;
-        arg[`Msg_Arg_PixReset_Val_Bits] = 0;
-        SendMsg(`Msg_Type_PixReset, arg);
-        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=0 success ✅");
-        end else begin
-            $display("[EXT] Reset=0 failed ❌");
-        end
-
         arg = 0;
         arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-        SendMsg(`Msg_Type_PixReset, arg);
-        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=1 success ✅");
-        end else begin
-            $display("[EXT] Reset=1 failed ❌");
-        end
+        SendMsg(`Msg_Type_PixReset, arg); // Deassert Pix reset
+        
+        arg = 0;
+        arg[`Msg_Arg_PixCapture_Block_Bits] = 0;
+        SendMsg(`Msg_Type_PixCapture, arg);
+        
+        // Wait until the capture is done
+        $display("[EXT] Waiting for capture to complete...");
+        do begin
+            // Request Pix status
+            SendMsgResp(`Msg_Type_PixGetStatus, 0);
+        end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
+        $display("[EXT] Capture done ✅");
         
         
         

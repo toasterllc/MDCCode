@@ -3,16 +3,16 @@
 
 `timescale 1ns/1ps
 
-module PixSim(
+module PixSim #(
+    parameter ImageWidth = 256,
+    parameter ImageHeight = 256
+)(
     output wire         pix_dclk,
     output reg[11:0]    pix_d = 0,
     output reg          pix_fv = 0,
     output reg          pix_lv = 0,
     input wire          pix_rst_
 );
-    localparam ImageWidth = 2304;
-    localparam ImageHeight = 1296;
-    
     reg clk = 0;
     initial forever begin
         #5;
@@ -42,6 +42,7 @@ module PixSim(
         end
         
         for (row=0; row<ImageHeight; row=row+1) begin
+            $display("[PixSim] Row %0d", row);
             // pix_lv=1 (line start)
             // Output a row
             pix_lv = 1;
