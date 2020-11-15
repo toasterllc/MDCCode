@@ -73,7 +73,7 @@ module Top(
             w_counter <= w_counter+1;
             if (w_counter === 255) begin
                 w_trigger <= 0;
-                w_delay <= 16;
+                w_delay <= 2;
             end
         end
         
@@ -101,11 +101,15 @@ module Top(
         if (r_ready && r_trigger) begin
             $display("Read data (0x%x): %x", BankFIFO.r_addr, r_data);
             r_lastData <= r_data;
+            if (r_data < r_lastData) begin
+                $display("BAD DATA (r_lastData:%x, r_data:%x)", r_lastData, r_data);
+                `Finish;
+            end
         end
         
-        if (r_lastData===1 && BankFIFO.r_addr===8'hBD) begin
+        if (BankFIFO.r_addr===8'hBD) begin
             r_trigger <= 0;
-            r_counter <= 32;
+            r_counter <= 18;
         end
         
         if (r_counter) begin
@@ -137,51 +141,6 @@ module Testbench();
         $dumpfile("top.vcd");
         $dumpvars(0, Testbench);
     end
-    
-    
-    // initial begin
-    //     reg[15:0] i;
-    //     reg[15:0] count;
-    //
-    //     count = $urandom()%50;
-    //     for (i=0; i<count; i=i+1) begin
-    //         wait(w_clk);
-    //         wait(!w_clk);
-    //     end
-    //
-    //
-    //
-    //
-    //     $display("[WRITER] Writing 128 words");
-    //     w_trigger = 1;
-    //     w_data = 0;
-    //     for (i=0; i<128; i=i+1) begin
-    //         wait(w_clk);
-    //         wait(!w_clk);
-    //         w_data = w_data+1;
-    //     end
-    //     w_trigger = 0;
-    //     $display("[WRITER] Done writing");
-    //
-    //
-    //     $display("[WRITER] Writing 128 words");
-    //     w_trigger = 1;
-    //     for (i=0; i<128; i=i+1) begin
-    //         wait(w_clk);
-    //         wait(!w_clk);
-    //         w_data = w_data+1;
-    //     end
-    //     w_trigger = 0;
-    //     $display("[WRITER] Done writing");
-    //
-    //
-    //
-    //     count = $urandom()%50;
-    //     for (i=0; i<count; i=i+1) begin
-    //         wait(w_clk);
-    //         wait(!w_clk);
-    //     end
-    // end
 endmodule
 `endif
 
