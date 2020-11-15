@@ -62,8 +62,15 @@ module BankFIFO #(
     // ====================
     wire[1:0] r = r_addr[N-1:N-2];
     wire[1:0] w = w_addr[N-1:N-2];
-    wire emptyish = (r===2'b01 && w===2'b10) || (r===2'b11 && w===2'b00);
-    wire fullish = (w===2'b01 && r===2'b10) || (w===2'b11 && r===2'b00);
+    wire emptyish = (r===2'b00 && w===2'b01) ||
+                    (r===2'b01 && w===2'b10) ||
+                    (r===2'b10 && w===2'b11) ||
+                    (r===2'b11 && w===2'b00);
+    
+    wire fullish =  (w===2'b00 && r===2'b01) ||
+                    (w===2'b01 && r===2'b10) ||
+                    (w===2'b10 && r===2'b11) ||
+                    (w===2'b11 && r===2'b00);
     
     always @(posedge emptyish, posedge fullish)
         if (emptyish) dir <= 0;
