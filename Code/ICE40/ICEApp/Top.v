@@ -17,6 +17,7 @@
 
 `ifdef SIM
 `include "SDCardSim.v"
+`include "PixSim.v"
 `include "PixI2CSlaveSim.v"
 `endif
 
@@ -563,10 +564,10 @@ module Testbench();
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
     
-    reg         pix_dclk;
-    reg[11:0]   pix_d;
-    reg         pix_fv;
-    reg         pix_lv;
+    wire        pix_dclk;
+    wire[11:0]  pix_d;
+    wire        pix_fv;
+    wire        pix_lv;
     wire        pix_rst_;
     wire        pix_sclk;
     tri1        pix_sdata;
@@ -590,6 +591,14 @@ module Testbench();
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat)
+    );
+    
+    PixSim PixSim(
+        .pix_dclk(pix_dclk),
+        .pix_d(pix_d),
+        .pix_fv(pix_fv),
+        .pix_lv(pix_lv),
+        .pix_rst_(pix_rst_)
     );
     
     PixI2CSlaveSim PixI2CSlaveSim(
@@ -1089,26 +1098,26 @@ module Testbench();
         
         
         
-        // // ====================
-        // // Test Pix reset
-        // // ====================
-        // arg = 0;
-        // arg[`Msg_Arg_PixReset_Val_Bits] = 0;
-        // SendMsg(`Msg_Type_PixReset, arg);
-        // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-        //     $display("[EXT] Reset=0 success ✅");
-        // end else begin
-        //     $display("[EXT] Reset=0 failed ❌");
-        // end
-        //
-        // arg = 0;
-        // arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-        // SendMsg(`Msg_Type_PixReset, arg);
-        // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-        //     $display("[EXT] Reset=1 success ✅");
-        // end else begin
-        //     $display("[EXT] Reset=1 failed ❌");
-        // end
+        // ====================
+        // Test Pix reset
+        // ====================
+        arg = 0;
+        arg[`Msg_Arg_PixReset_Val_Bits] = 0;
+        SendMsg(`Msg_Type_PixReset, arg);
+        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+            $display("[EXT] Reset=0 success ✅");
+        end else begin
+            $display("[EXT] Reset=0 failed ❌");
+        end
+
+        arg = 0;
+        arg[`Msg_Arg_PixReset_Val_Bits] = 1;
+        SendMsg(`Msg_Type_PixReset, arg);
+        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+            $display("[EXT] Reset=1 success ✅");
+        end else begin
+            $display("[EXT] Reset=1 failed ❌");
+        end
         
         
         
