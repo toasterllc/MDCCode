@@ -1089,26 +1089,26 @@ module Testbench();
         
         
         
-        // ====================
-        // Test PixI2C reset
-        // ====================
-        arg = 0;
-        arg[`Msg_Arg_PixReset_Val_Bits] = 0;
-        SendMsg(`Msg_Type_PixReset, arg);
-        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=0 success ✅");
-        end else begin
-            $display("[EXT] Reset=0 failed ❌");
-        end
-        
-        arg = 0;
-        arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-        SendMsg(`Msg_Type_PixReset, arg);
-        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=1 success ✅");
-        end else begin
-            $display("[EXT] Reset=1 failed ❌");
-        end
+        // // ====================
+        // // Test Pix reset
+        // // ====================
+        // arg = 0;
+        // arg[`Msg_Arg_PixReset_Val_Bits] = 0;
+        // SendMsg(`Msg_Type_PixReset, arg);
+        // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+        //     $display("[EXT] Reset=0 success ✅");
+        // end else begin
+        //     $display("[EXT] Reset=0 failed ❌");
+        // end
+        //
+        // arg = 0;
+        // arg[`Msg_Arg_PixReset_Val_Bits] = 1;
+        // SendMsg(`Msg_Type_PixReset, arg);
+        // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+        //     $display("[EXT] Reset=1 success ✅");
+        // end else begin
+        //     $display("[EXT] Reset=1 failed ❌");
+        // end
         
         
         

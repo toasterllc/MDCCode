@@ -201,8 +201,8 @@ module PixController #(
     
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +2
-    localparam Ctrl_State_Readout   = 2; // +0
-    localparam Ctrl_State_Count     = 3; // +0
+    localparam Ctrl_State_Readout   = 4; // +1
+    localparam Ctrl_State_Count     = 6;
     reg[$clog2(Ctrl_State_Count)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd_trigger <= 0;
