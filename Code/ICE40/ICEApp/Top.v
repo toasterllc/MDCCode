@@ -25,7 +25,7 @@
 
 `ifdef SIM
 localparam ImageWidth = 256;
-localparam ImageHeight = 256;
+localparam ImageHeight = 16;
 `else
 localparam ImageWidth = 2304;
 localparam ImageHeight = 1296;
@@ -72,9 +72,7 @@ localparam ImageHeight = 1296;
 `define     Msg_Arg_SDSendCmd_DatInType_512_Bits                50:50
 `define     Msg_Arg_SDSendCmd_Cmd_Bits                          47:0
 
-`define Msg_Type_SDDatOut                                       `Msg_Type_Len'h03
-
-`define Msg_Type_SDGetStatus                                    `Msg_Type_Len'h04
+`define Msg_Type_SDGetStatus                                    `Msg_Type_Len'h03
 `define     Resp_Arg_SDGetStatus_CmdDone_Bits                   63:63
 `define     Resp_Arg_SDGetStatus_RespDone_Bits                  62:62
 `define         Resp_Arg_SDGetStatus_RespCRCErr_Bits            61:61
@@ -88,24 +86,24 @@ localparam ImageHeight = 1296;
 `define     Resp_Arg_SDGetStatus_Dat0Idle_Bits                  4:4
 `define     Resp_Arg_SDGetStatus_Filler_Bits                    3:0
 
-`define Msg_Type_SDAbort                                        `Msg_Type_Len'h05
+`define Msg_Type_SDAbort                                        `Msg_Type_Len'h04
 
-`define Msg_Type_PixReset                                       `Msg_Type_Len'h06
+`define Msg_Type_PixReset                                       `Msg_Type_Len'h05
 `define     Msg_Arg_PixReset_Val_Bits                           0:0
 
-`define Msg_Type_PixCapture                                     `Msg_Type_Len'h07
+`define Msg_Type_PixCapture                                     `Msg_Type_Len'h06
 `define     Msg_Arg_PixCapture_Block_Bits                       2:0
 
-`define Msg_Type_PixReadout                                     `Msg_Type_Len'h08
-`define     Msg_Arg_PixReadout_Block_Bits                       2:0
+`define Msg_Type_PixReadout                                     `Msg_Type_Len'h07
+`define     Msg_Arg_PixReadout_RAMBlock_Bits                    2:0
 
-`define Msg_Type_PixGetStatus                                   `Msg_Type_Len'h09
+`define Msg_Type_PixGetStatus                                   `Msg_Type_Len'h08
 `define     Resp_Arg_PixGetStatus_I2CDone_Bits                  63:63
 `define     Resp_Arg_PixGetStatus_I2CErr_Bits                   62:62
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
 
-`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h0A
+`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h09
 `define     Msg_Arg_PixI2CTransaction_Write_Bits                55:55
 `define     Msg_Arg_PixI2CTransaction_DataLen_Bits              54:54
 `define         Msg_Arg_PixI2CTransaction_DataLen_1             1'b0
@@ -427,12 +425,6 @@ module Top(
                     sd_ctrl_cmdTrigger <= !sd_ctrl_cmdTrigger;
                 end
                 
-                `Msg_Type_SDDatOut: begin
-                    $display("[CTRL] Got Msg_Type_SDDatOut");
-                    if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
-                    // TODO: trigger dat out
-                end
-                
                 // Get SD status / response
                 `Msg_Type_SDGetStatus: begin
                     $display("[CTRL] Got Msg_Type_SDGetStatus");
@@ -471,10 +463,13 @@ module Top(
                 end
                 
                 `Msg_Type_PixReadout: begin
-                    $display("[CTRL] Got Msg_Type_PixReadout (block=%b)", ctrl_msgArg[`Msg_Arg_PixReadout_Block_Bits]);
+                    $display("[CTRL] Got Msg_Type_PixReadout (block=%b)", ctrl_msgArg[`Msg_Arg_PixReadout_RAMBlock_Bits]);
+                    
+                    // Reset `ctrl_sdDatOutDone_` if it's asserted
+                    if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
                     
                     pixctrl_cmd <= PixController.CmdReadout;
-                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixReadout_Block_Bits];
+                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixReadout_RAMBlock_Bits];
                     pixctrl_cmd_trigger <= !pixctrl_cmd_trigger;
                 end
                 
@@ -816,7 +811,9 @@ module Testbench();
         // SendSDCmdResp(CMD25, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_0, 32'b0);
         //
         // // Clock out data on DAT lines
-        // SendMsg(`Msg_Type_SDDatOut, 0);
+        // arg = 0;
+        // arg[`Msg_Arg_PixReadout_RAMBlock_Bits] = 0;
+        // SendMsg(`Msg_Type_PixReadout, arg);
         //
         // // Wait until we're done clocking out data on DAT lines
         // $display("[EXT] Waiting while data is written...");
@@ -1141,11 +1138,11 @@ module Testbench();
         arg = 0;
         arg[`Msg_Arg_PixReset_Val_Bits] = 1;
         SendMsg(`Msg_Type_PixReset, arg); // Deassert Pix reset
-        
+
         arg = 0;
         arg[`Msg_Arg_PixCapture_Block_Bits] = 0;
         SendMsg(`Msg_Type_PixCapture, arg);
-        
+
         // Wait until the capture is done
         $display("[EXT] Waiting for capture to complete...");
         do begin

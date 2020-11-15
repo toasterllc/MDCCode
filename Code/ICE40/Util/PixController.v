@@ -203,9 +203,9 @@ module PixController #(
     assign readout_data = ramctrl_read_data;
     
     localparam Ctrl_State_Idle      = 0; // +0
-    localparam Ctrl_State_Capture   = 1; // +2
-    localparam Ctrl_State_Readout   = 4; // +1
-    localparam Ctrl_State_Count     = 6;
+    localparam Ctrl_State_Capture   = 1; // +1
+    localparam Ctrl_State_Readout   = 3; // +1
+    localparam Ctrl_State_Count     = 5;
     reg[$clog2(Ctrl_State_Count)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd_trigger <= 0;
@@ -223,18 +223,13 @@ module PixController #(
             end
         end
         
-        Ctrl_State_Capture: begin
-            // Start the FIFO data flow
-            ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
-            // Next state
-            ctrl_state <= Ctrl_State_Capture+1;
-        end
-        
         // Wait for RAM to accept write command
-        Ctrl_State_Capture+1: begin
+        Ctrl_State_Capture: begin
             if (ramctrl_cmd_ready && ramctrl_cmd_trigger) begin
                 $display("[PIXCTRL:Capture] Start");
-                ctrl_state <= Ctrl_State_Capture+2;
+                // Start the FIFO data flow
+                ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
+                ctrl_state <= Ctrl_State_Capture+1;
             end else begin
                 // Configure RAM command
                 ramctrl_cmd_block <= cmd_ramBlock;
@@ -244,7 +239,7 @@ module PixController #(
         end
         
         // Copy data from FIFO->RAM
-        Ctrl_State_Capture+2: begin
+        Ctrl_State_Capture+1: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             

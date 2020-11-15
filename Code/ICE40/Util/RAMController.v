@@ -228,6 +228,11 @@ module RAMController #(
     end
     assign read_data = ramDQIn;
     
+    // TODO: we need to remove this when testing the RAM with the SDRAM chip sim (mt48h32m16lf)
+`ifdef SIM
+    assign ramDQIn = 0;
+`endif
+    
     // ====================
     // Init State Machine Registers
     // ====================
