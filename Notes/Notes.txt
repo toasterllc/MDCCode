@@ -69,6 +69,16 @@
 
 - Rev3 todo
     
+    - Get ram_clk running comfortably at 120MHz (so we can use the SD clk)
+        - Data arrives from the image sensor at ~100 MHz, so we need to be able to store it into RAM at a faster rate
+    
+    - Fix toggling strategy, so that every toggle signal is delayed by 1 cycle in the source clock domain
+    
+    - Implement recovery strategy if the image sensor sends more/less data than we expect
+        - If the image sensor sends too much data, BankFIFO will be partially filled, and there's no way to recover. The next image will fill up the bank, allowing partially-bad/partially-good data in the next capture.
+    
+    
+    
     - SDTest:
         - Implement recovery mechanisms:
             - CRC errors
