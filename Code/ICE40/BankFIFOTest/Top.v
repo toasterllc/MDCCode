@@ -155,8 +155,11 @@ module Top(
     //     .rok(r_ready)
     // );
     
+    wire rst_ = 1;
     
     BankFIFO BankFIFO(
+        .rst_(rst_),
+        
         .w_clk(w_clk),
         .w_trigger(w_trigger),
         .w_data(w_data),

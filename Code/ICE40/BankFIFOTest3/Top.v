@@ -33,6 +33,14 @@ module Top(
     ) ClockGen_r_clk(.clkRef(clk24mhz), .clk(r_clk));
     
     // ====================
+    // rstClk (50 MHz)
+    // ====================
+    wire rstClk;
+    ClockGen #(
+        .FREQ(50_000_000)
+    ) ClockGen_rstClk(.clkRef(clk24mhz), .clk(rstClk));
+    
+    // ====================
     // BankFIFO
     // ====================
     reg w_trigger = 0;
@@ -43,10 +51,14 @@ module Top(
     wire[15:0] r_data;
     wire r_ready;
     
+    reg rst_ = 0;
+    
     BankFIFO #(
         .W(16),
         .N(8)
     ) BankFIFO (
+        .rst_(rst_),
+        
         .w_clk(w_clk),
         .w_trigger(w_trigger),
         .w_data(w_data),
@@ -118,6 +130,13 @@ module Top(
                 r_trigger <= 1;
             end
         end
+    end
+    
+    
+    reg[7:0] rstCounter = 0;
+    always @(posedge rstClk) begin
+        rstCounter <= rstCounter+1;
+        rst_ <= !(&rstCounter);
     end
 endmodule
 

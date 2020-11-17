@@ -137,6 +137,8 @@ module PixController #(
         .W(16),
         .N(8)
     ) BankFIFO (
+        .rst_(1'b1),
+        
         .w_clk(pix_dclk),
         .w_ready(), // TODO: handle not being able to write by signalling an error somehow?
         .w_trigger(fifo_writeEn && pix_lv_reg),
