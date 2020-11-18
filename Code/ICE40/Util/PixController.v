@@ -1,6 +1,7 @@
 `ifndef PixController_v
 `define PixController_v
 
+`include "TogglePulse.v"
 `include "ToggleAck.v"
 
 module PixController #(
@@ -197,7 +198,7 @@ module PixController #(
     // ====================
     // State Machine
     // ====================
-    `ToggleAck(ctrl_cmdTrigger, ctrl_cmdTriggerAck, cmd_trigger, posedge, clk);
+    `TogglePulse(ctrl_cmdTrigger, cmd_trigger, posedge, clk);
     
     assign fifo_readTrigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     assign readout_ready = ramctrl_read_ready;
@@ -216,7 +217,6 @@ module PixController #(
         case (ctrl_state)
         Ctrl_State_Idle: begin
             if (ctrl_cmdTrigger) begin
-                ctrl_cmdTriggerAck <= !ctrl_cmdTriggerAck; // Ack command
                 ctrl_state <= (cmd===CmdCapture ? Ctrl_State_Capture : Ctrl_State_Readout);
             end
             
