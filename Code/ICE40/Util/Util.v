@@ -12,6 +12,7 @@
 `define Max4(a,b,c,y)       (`Max3(a,b,c)       > (y) ? `Max3(a,b,c)        : (y))
 `define Max5(a,b,c,d,y)     (`Max4(a,b,c,d)     > (y) ? `Max4(a,b,c,d)      : (y))
 `define Max6(a,b,c,d,e,y)   (`Max5(a,b,c,d,e)   > (y) ? `Max5(a,b,c,d,e)    : (y))
+`define Max7(a,b,c,d,e,f,y) (`Max6(a,b,c,d,e,f) > (y) ? `Max6(a,b,c,d,e,f)  : (y))
 `define Max(a,y)            `Max2(a,y)
 
 // RegWidth: returns the width of a register to store the given values

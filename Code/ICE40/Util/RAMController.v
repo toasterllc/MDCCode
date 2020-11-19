@@ -33,7 +33,7 @@ module RAMController #(
     input wire                  cmd_trigger,    // Start the command
     input wire[BlockWidth-1:0]  cmd_block,      // Block index
     input wire                  cmd_write,      // Read (0) or write (1)
-    input wire                  cmd_abort,
+    input wire                  cmd_abort,      // Pulse
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port
@@ -268,9 +268,9 @@ module RAMController #(
     localparam Data_State_Read              = 5;    // +2
     localparam Data_State_Finish            = 8;    // +0
     localparam Data_State_Abort             = 9;    // +1
-    localparam Data_State_Refresh           = 11;   // +2
-    localparam Data_State_Delay             = 14;   // +0
-    localparam Data_State_Count             = 15;
+    localparam Data_State_Refresh           = 11;   // +3
+    localparam Data_State_Delay             = 15;   // +0
+    localparam Data_State_Count             = 16;
     localparam Data_State_Width             = `RegWidth(Data_State_Count);
     
     reg[Data_State_Width-1:0] data_state = 0;
@@ -291,28 +291,34 @@ module RAMController #(
                                                         //       one cycle earlier is fine.
     localparam Data_RefreshCounterWidth = `RegWidth(Data_RefreshDelay);
     reg[Data_RefreshCounterWidth-1:0] data_refreshCounter = 0;
-    localparam Data_InterruptDelay = `Max6(
-        // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
+    localparam Data_InterruptDelay = `Max7(
+        // T_RC: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RC
         // when we finish refreshing.
         // -2 cycles getting to the next state
         Clocks(T_RC,2),
-        // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
+        // T_RFC: the previous cycle may have issued RAM_Cmd_AutoRefresh, so prevent violating T_RFC
+        // when we finish refreshing.
+        // This is necessary because an abort can interrupt the refresh state while it was waiting
+        // for the refresh to complete.
+        // -2 cycles getting to the next state
+        Clocks(T_RFC,2),
+        // T_RRD: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RRD
         // when we finish refreshing.
         // -2 cycles getting to the next state
         Clocks(T_RRD,2),
-        // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
+        // T_RAS: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RAS
         // since we're about to issue CmdPrechargeAll.
         // -2 cycles getting to the next state
         Clocks(T_RAS,2),
-        // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
+        // T_RCD: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RCD
         // when we finish refreshing.
         // -2 cycles getting to the next state
         Clocks(T_RCD,2),
-        // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
+        // T_RP: the previous cycle may have issued RAM_Cmd_PrechargeAll, so delay other commands
         // until precharging is complete.
         // -2 cycles getting to the next state
         Clocks(T_RP,2),
-        // T_WR: the previous cycle may have issued CmdWrite, so delay other commands
+        // T_WR: the previous cycle may have issued RAM_Cmd_Write, so delay other commands
         // until precharging is complete.
         // -2 cycles getting to the next state
         Clocks(T_WR,2)
@@ -352,6 +358,7 @@ module RAMController #(
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
     
     reg data_write_issueCmd = 0;
+    reg data_refresh = 0;
     
 	always @(posedge clk) begin
         init_delayCounter <= init_delayCounter-1;
@@ -648,13 +655,26 @@ module RAMController #(
             $display("[RAM-CTRL] Refresh (time: %0d)", $time);
             // Issue auto-refresh command
             ramCmd <= RAM_Cmd_AutoRefresh;
+            // Allow aborts to interrupt us after this point, since the refresh
+            // command has been issued.
+            data_refresh <= 0;
             // Wait T_RFC (auto refresh time) to guarantee that the next command can
             // activate the same bank immediately
-            data_delayCounter <= Clocks(T_RFC,2); // -2 cycles getting to the next state
+            data_delayCounter <= Clocks(T_RFC,3); // -3 cycles getting to the next state
             data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Refresh+3;
+        end
+        
+        Data_State_Refresh+3: begin
+            // This state is necessary because we need at least 1 state between resetting
+            // `data_refresh` and reading `data_mode`, to allow an abort to either observe
+            // `data_refresh`=1, so that it resets `data_mode` (successfully triggering an
+            // abort at the end of refresh), or observe that `data_refresh`=0, so that it
+            // sets `data_state`, overriding our assignment (successfully triggering an
+            // abort).
             case (data_mode)
-            Data_Mode_Idle:     data_nextState <= Data_State_Idle;
-            default:            data_nextState <= Data_State_Start;
+            Data_Mode_Idle:     data_state <= Data_State_Idle;
+            default:            data_state <= Data_State_Start;
             endcase
         end
         
@@ -663,19 +683,29 @@ module RAMController #(
         end
         endcase
         
-        // Handle abort/refresh
-        if (init_done && (cmd_abort || !data_refreshCounter)) begin
-            // Override our `_ready` flags if we're aborting/refreshing on the next cycle
+        // Handle refresh/abort
+        if (init_done && (!data_refreshCounter || cmd_abort)) begin
+            // Override our `_ready` flags if we're refreshing/aborting on the next cycle
             cmd_ready <= 0;
             write_ready <= 0;
             read_ready <= 0;
             
-            if (cmd_abort) data_mode <= Data_Mode_Idle;
+            // Handle abort
+            if (cmd_abort) begin
+                data_mode <= Data_Mode_Idle;
+                // Don't interrupt a refresh.
+                // If a refresh is underway, resetting `data_mode` (above) will abort
+                // whatever was underway.
+                if (!data_refresh) data_state <= Data_State_Abort;
+            end
             
-            // Refresh takes precedence -- otherwise, a badly-timed
-            // abort could prevent a refresh
-            if (!data_refreshCounter) data_state <= Data_State_Refresh;
-            else if (cmd_abort) data_state <= Data_State_Abort;
+            // Handle refresh
+            // Refresh takes precedence over abort, so this needs to come after handling
+            // abort (above), so that `data_state <= Data_State_Refresh` takes precedence.
+            if (!data_refreshCounter) begin
+                data_refresh <= 1;
+                data_state <= Data_State_Refresh;
+            end
         end
     end
 endmodule
