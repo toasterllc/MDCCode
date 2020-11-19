@@ -29,10 +29,14 @@ module Top(
     reg cmd_trigger = 0;
     reg[20:0] cmd_block = 0;
     reg cmd_write = 0;
-    wire data_ready;
-    reg data_trigger = 0;
-    wire[15:0] data_write;
-    wire[15:0] data_read;
+    reg cmd_abort = 0;
+    
+    wire write_ready;
+    reg write_trigger = 0;
+    wire[15:0] write_data;
+    wire read_ready;
+    reg read_trigger = 0;
+    wire[15:0] read_data;
     
     localparam BlockSize = 16;
     
@@ -47,11 +51,15 @@ module Top(
         .cmd_trigger(cmd_trigger),
         .cmd_block(cmd_block),
         .cmd_write(cmd_write),
+        .cmd_abort(cmd_abort),
         
-        .data_ready(data_ready),
-        .data_trigger(data_trigger),
-        .data_write(data_write),
-        .data_read(data_read),
+        .write_ready(write_ready),
+        .write_trigger(write_trigger),
+        .write_data(write_data),
+        
+        .read_ready(read_ready),
+        .read_trigger(read_trigger),
+        .read_data(read_data),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -67,12 +75,13 @@ module Top(
     
     reg[3:0] state = 0;
     reg[$clog2(BlockSize)-1:0] word_idx = 0;
-    assign data_write = cmd_block^word_idx;
-    // assign data_write = word_idx;
-    wire[15:0] data_read_expected = cmd_block^word_idx;
-    // wire[15:0] data_read_expected = word_idx;
+    assign write_data = cmd_block^word_idx;
+    wire[15:0] read_data_expected = cmd_block^word_idx;
+    reg[7:0] abortCounter = 0;
     
     always @(posedge clk24mhz) begin
+        cmd_abort <= 0; // Reset by default
+        
         case (state)
         0: begin
             cmd_trigger <= 1;
@@ -84,20 +93,20 @@ module Top(
                 state <= 1;
             end
         end
-        
+    
         1: begin
-            data_trigger <= 1;
-            if (data_ready && data_trigger) begin
-                // $display("Wrote word: %h", data_write);
+            write_trigger <= 1;
+            if (write_ready && write_trigger) begin
+                $display("Wrote word: %h", write_data);
                 word_idx <= word_idx+1;
             end
-            
+        
             if (cmd_ready) begin
-                data_trigger <= 0;
+                write_trigger <= 0;
                 state <= 2;
             end
         end
-        
+    
         2: begin
             cmd_trigger <= 1;
             cmd_write <= 0;
@@ -108,26 +117,37 @@ module Top(
                 state <= 3;
             end
         end
-        
+    
         3: begin
-            data_trigger <= 1;
-            if (data_ready && data_trigger) begin
-                if (data_read === data_read_expected) begin
-                    $display("Read word: %h (expected: %h) ✅", data_read, data_read_expected);
+            read_trigger <= 1;
+            if (read_ready && read_trigger) begin
+                if (read_data === read_data_expected) begin
+                    $display("Read word: %h (expected: %h) ✅", read_data, read_data_expected);
                 end else begin
-                    $display("Read word: %h (expected: %h) ❌", data_read, data_read_expected);
-                    `Finish;
+                    $display("Read word: %h (expected: %h) ❌", read_data, read_data_expected);
+                    // `Finish;
                 end
                 word_idx <= word_idx+1;
             end
-            
+        
             if (cmd_ready) begin
-                data_trigger <= 0;
+                read_trigger <= 0;
                 cmd_block <= cmd_block+1;
                 state <= 0;
             end
         end
+        
+        4: begin
+            $display("ABORTING");
+            cmd_abort <= 1;
+            state <= 0;
+        end
         endcase
+        
+        abortCounter <= abortCounter+1;
+        if (&abortCounter) begin
+            state <= 4;
+        end
     end
     
 endmodule
