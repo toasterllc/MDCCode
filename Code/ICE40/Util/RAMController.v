@@ -28,7 +28,7 @@ module RAMController #(
     input wire                  clk,            // Clock
     
     // TODO: consider re-ordering: cmd_block, cmd_write, cmd_trigger, cmd_ready
-    // Command port
+    // Command port (clock domain: `clk`)
     output reg                  cmd_ready = 0,  // Ready for new command
     input wire                  cmd_trigger,    // Start the command
     input wire[BlockWidth-1:0]  cmd_block,      // Block index
@@ -36,18 +36,18 @@ module RAMController #(
     input wire                  cmd_abort,      // Pulse
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
-    // Write port
+    // Write port (clock domain: `clk`)
     output reg                  write_ready = 0,    // `write_data` accepted
     input wire                  write_trigger,      // Only effective if `write_ready`=1
     input wire[WordWidth-1:0]   write_data,         // Data to write to RAM
     
     // TODO: consider re-ordering: read_data, read_trigger, read_ready
-    // Read port
+    // Read port (clock domain: `clk`)
     output reg                  read_ready = 0,     // `read_data` valid
     input wire                  read_trigger,       // Only effective if `read_ready`=1
     output wire[WordWidth-1:0]  read_data,          // Data read from RAM
     
-    // RAM port
+    // RAM port (clock domain: `ram_clk`)
     output wire                 ram_clk,        // Clock
     output wire                 ram_cke,        // Clock enable
     output wire[BankWidth-1:0]  ram_ba,         // Bank address

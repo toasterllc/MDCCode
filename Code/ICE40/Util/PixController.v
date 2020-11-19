@@ -11,7 +11,7 @@ module PixController #(
 )(
     input wire          clk,
     
-    // Command port
+    // Command port (clock domain: `clk`)
     output reg          cmd_ready = 0,  // Ready for new command
     input wire          cmd_trigger,
     input wire          cmd,
@@ -19,18 +19,18 @@ module PixController #(
     input wire          cmd_abort,
     
     // TODO: consider re-ordering: readout_data, readout_trigger, readout_ready
-    // Readout port
+    // Readout port (clock domain: `clk`)
     output wire         readout_ready,
     input wire          readout_trigger,
     output wire[15:0]   readout_data,
     
-    // Pix port
+    // Pix port (clock domain: `pix_dclk`)
     input wire          pix_dclk,
     input wire[11:0]    pix_d,
     input wire          pix_fv,
     input wire          pix_lv,
     
-    // RAM port
+    // RAM port (clock domain: `ram_clk`)
     output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,

@@ -5,7 +5,7 @@ module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
 )(
-    input wire          rst_,           // Clock domain: any (async)
+    input wire          rst_,           // Clock domain: async
     output reg          rst_done = 0,   // Clock domain: w_clk
     
     // TODO: consider re-ordering: w_clk, w_data, w_trigger, w_ready, w_bank
