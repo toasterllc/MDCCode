@@ -51,13 +51,13 @@ module Top(
     wire[15:0] r_data;
     wire r_ready;
     
-    reg rst_ = 0;
+    reg rst = 0;
     
     BankFIFO #(
         .W(16),
         .N(8)
     ) BankFIFO (
-        .rst_(rst_),
+        .rst(rst),
         
         .w_clk(w_clk),
         .w_trigger(w_trigger),
@@ -81,7 +81,7 @@ module Top(
         end
         
         if (w_ready && w_trigger) begin
-            $display("Wrote %x", w_data);
+            $display("Write %x @ 0x%x", w_data, BankFIFO.w_addr);
             w_counter <= w_counter+1;
             if (w_counter === 255) begin
                 w_trigger <= 0;
@@ -111,7 +111,7 @@ module Top(
         end
         
         if (r_ready && r_trigger) begin
-            $display("Read data (0x%x): %x", BankFIFO.r_addr, r_data);
+            $display("Read %x @ 0x%x", r_data, BankFIFO.r_addr);
             r_lastData <= r_data;
             if (r_data < r_lastData) begin
                 $display("BAD DATA (r_lastData:%x, r_data:%x)", r_lastData, r_data);
@@ -136,7 +136,7 @@ module Top(
     reg[7:0] rstCounter = 0;
     always @(posedge rstClk) begin
         rstCounter <= rstCounter+1;
-        rst_ <= !(&rstCounter);
+        if (&rstCounter) rst <= !rst;
     end
 endmodule
 

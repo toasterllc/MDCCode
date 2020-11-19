@@ -1,13 +1,17 @@
 `ifndef BankFIFO_v
 `define BankFIFO_v
 
+`include "TogglePulse.v"
+
 module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
 )(
-    input wire          rst_,           // Clock domain: async
-    output reg          rst_done = 0,   // Clock domain: w_clk
+    // Reset port (clock domain: async)
+    input wire          rst,
+    output reg          rst_done = 0,
     
+    // Write port (clock domain: `w_clk`)
     // TODO: consider re-ordering: w_clk, w_data, w_trigger, w_ready, w_bank
     input wire          w_clk,
     output wire         w_ready,
@@ -15,6 +19,7 @@ module BankFIFO #(
     input wire[W-1:0]   w_data,
     output wire         w_bank,
     
+    // Read port (clock domain: `r_clk`)
     // TODO: consider re-ordering: r_clk, r_data, r_trigger, r_ready, r_bank
     input wire          r_clk,
     output wire         r_ready,
@@ -30,20 +35,20 @@ module BankFIFO #(
     // ====================
     // Reset Handling
     // ====================
-    reg w_rstReq = 0;
-    reg w_rst=0, w_rstTmp=0;
-    reg w_rstAck=0, w_rstAckTmp=0;
+    reg w_rst = 0;
+    reg w_rstAck=0, w_rstAckTmp=0, w_rstAckPrev=0;
     reg r_rst=0, r_rstTmp=0;
-    always @(posedge w_clk, negedge rst_) begin
-        if (!rst_) begin
-            w_rstReq <= 1;
-            rst_done <= 0;
-        end else begin
-            {w_rst, w_rstTmp} <= {w_rstTmp, w_rstReq};
-            {w_rstAck, w_rstAckTmp} <= {w_rstAckTmp, r_rst};
-            if (w_rstAck) w_rstReq <= 0;
-            rst_done <= !w_rstReq && !w_rstAck;
-        end
+    `TogglePulse(w_rstTrigger, rst, posedge, w_clk);
+    always @(posedge w_clk) begin
+        if (w_rstTrigger) w_rst <= 1;
+        // Synchronize `r_rst` into `w_rstAck`, representing the
+        // acknowledgement of the reset from the read domain.
+        {w_rstAck, w_rstAckTmp} <= {w_rstAckTmp, r_rst};
+        // Clear `w_rstReq` upon the ack from the read domain
+        if (w_rstAck) w_rst <= 0;
+        // We're done resetting when the ack goes 1->0
+        w_rstAckPrev <= w_rstAck;
+        if (w_rstAckPrev && !w_rstAck) rst_done <= !rst_done;
     end
     
     always @(posedge r_clk) begin
