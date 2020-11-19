@@ -144,7 +144,7 @@ module PixController #(
         .W(16),
         .N(8)
     ) BankFIFO (
-        .rst_(!fifo_rst),
+        .rst(fifo_rst),
         .rst_done(fifo_rst_done),
         
         .w_clk(pix_dclk),
@@ -160,11 +160,10 @@ module PixController #(
     
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
     `TogglePulse(fifo_abortTrigger, ctrl_fifoAbortTrigger, posedge, pix_dclk);
+    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
     
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
-        fifo_rst <= 0;
-        
         case (fifo_state)
         // Wait to be triggered
         0: begin
@@ -201,18 +200,13 @@ module PixController #(
         
         // Reset the FIFO
         4: begin
-            fifo_rst <= 1;
+            fifo_rst <= !fifo_rst;
             fifo_state <= 5;
-        end
-        
-        // Wait state (let the FIFO accept the reset)
-        5: begin
-            fifo_state <= 6;
         end
         
         // Wait for the FIFO to finish resetting
         6: begin
-            if (fifo_rst_done) begin
+            if (fifo_rstDone) begin
                 // Announce that we're done aborting
                 fifo_abortDone <= !fifo_abortDone;
                 fifo_state <= 0;
