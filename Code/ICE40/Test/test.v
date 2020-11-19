@@ -1,19 +1,44 @@
 // iverilog -o test.vvp -g2012 test.v ; ./test.vvp
 
-`define FieldLen(domain, subdomain)         FieldLen_``domain``_``subdomain``
-`define FieldLen(A, B)                 8
-`define FieldLen(C, D)                 9
-
-module MyModule #(
-    parameter ClkFreq = 24_000_000,
-    localparam CmdCapture = 1'b0,
-    localparam CmdReadout = 1'b1
-)();
-endmodule
-
 module main();
-    initial begin
-        $display("Hello ABC %0d", MyModule.ClkFreq);
-        $finish;
+    reg clk = 0;
+    reg rst = 0;
+    wire rst_ = !rst;
+    
+    initial forever begin
+        clk = !clk;
+        #21;
+    end
+    
+    reg rstReg=0, rstRegTmp=0;
+    always @(posedge clk, negedge rst_) begin
+        if (!rst_) rstReg <= 1;
+        else begin
+            {rstReg, rstRegTmp} <= {rstRegTmp, 1'b0};
+        end
+    end
+    
+    reg[1:0] state = 0;
+    always @(posedge clk, negedge rst_) begin
+        case (state)
+        0: begin
+            state <= 1;
+        end
+        
+        1: begin
+            rst <= 1;
+            state <= 2;
+        end
+        
+        2: begin
+            $display("rstReg A: %b", rstReg);
+            state <= 3;
+        end
+        
+        3: begin
+            $display("rstReg B: %b", rstReg);
+            $finish;
+        end
+        endcase
     end
 endmodule
