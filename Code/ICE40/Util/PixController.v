@@ -139,7 +139,6 @@ module PixController #(
     wire fifo_readTrigger;
     wire[15:0] fifo_readData;
     wire fifo_readReady;
-    reg fifo_abortDone = 0;
     BankFIFO #(
         .W(16),
         .N(8)
@@ -159,64 +158,58 @@ module PixController #(
     );
     
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
-    `TogglePulse(fifo_abortTrigger, ctrl_fifoAbortTrigger, posedge, pix_dclk);
     `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
     
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
+        fifo_writeEn <= 0; // Reset by default
+        
         case (fifo_state)
-        // Wait to be triggered
+        // Idle: wait to be triggered
         0: begin
-            fifo_writeEn <= 0;
-            if (fifo_captureTrigger) begin
-                fifo_state <= 1;
-            end
         end
         
-        // Wait for the frame to be invalid
+        // Reset FIFO
         1: begin
-            if (!pix_fv_reg) begin
-                $display("[PIXCTRL:FIFO] Waiting for frame invalid...");
-                fifo_state <= 2;
-            end
+            fifo_rst <= !fifo_rst;
+            fifo_state <= 2;
         end
         
-        // Wait for the frame to start
+        // Wait for FIFO to be done resetting
         2: begin
-            if (pix_fv_reg) begin
-                $display("[PIXCTRL:FIFO] Frame start");
-                fifo_writeEn <= 1;
+            if (fifo_rstDone) begin
                 fifo_state <= 3;
             end
         end
         
-        // Wait until the end of the frame
+        // Wait for the frame to be invalid
         3: begin
+            if (!pix_fv_reg) begin
+                $display("[PIXCTRL:FIFO] Waiting for frame invalid...");
+                fifo_state <= 4;
+            end
+        end
+        
+        // Wait for the frame to start
+        4: begin
+            if (pix_fv_reg) begin
+                $display("[PIXCTRL:FIFO] Frame start");
+                fifo_state <= 5;
+            end
+        end
+        
+        // Wait until the end of the frame
+        5: begin
+            fifo_writeEn <= 1;
             if (!pix_fv_reg) begin
                 $display("[PIXCTRL:FIFO] Frame end");
                 fifo_state <= 0;
             end
         end
-        
-        // Reset the FIFO
-        4: begin
-            fifo_rst <= !fifo_rst;
-            fifo_state <= 5;
-        end
-        
-        // Wait for the FIFO to finish resetting
-        6: begin
-            if (fifo_rstDone) begin
-                // Announce that we're done aborting
-                fifo_abortDone <= !fifo_abortDone;
-                fifo_state <= 0;
-            end
-        end
         endcase
         
-        // Handle being aborted
-        if (fifo_abortTrigger) begin
-            fifo_state <= 4;
+        if (fifo_captureTrigger) begin
+            fifo_state <= 1;
         end
     end
     
@@ -247,7 +240,7 @@ module PixController #(
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
-            if (cmd_trigger) begin
+            if (cmd_ready && cmd_trigger) begin
                 ctrl_state <= (cmd===CmdCapture ? Ctrl_State_Capture : Ctrl_State_Readout);
             end else begin
                 cmd_ready <= 1;
