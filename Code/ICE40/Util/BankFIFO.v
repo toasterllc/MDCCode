@@ -5,7 +5,8 @@ module BankFIFO #(
     parameter W=16, // Word size
     parameter N=8   // Word count (2^N)
 )(
-    input wire          rst_, // Async
+    input wire          rst_,           // Clock domain: any (async)
+    output reg          rst_done = 0,   // Clock domain: w_clk
     
     // TODO: consider re-ordering: w_clk, w_data, w_trigger, w_ready, w_bank
     input wire          w_clk,
@@ -34,11 +35,14 @@ module BankFIFO #(
     reg w_rstAck=0, w_rstAckTmp=0;
     reg r_rst=0, r_rstTmp=0;
     always @(posedge w_clk, negedge rst_) begin
-        if (!rst_) w_rstReq <= 1;
-        else begin
+        if (!rst_) begin
+            w_rstReq <= 1;
+            rst_done <= 0;
+        end else begin
             {w_rst, w_rstTmp} <= {w_rstTmp, w_rstReq};
             {w_rstAck, w_rstAckTmp} <= {w_rstAckTmp, r_rst};
             if (w_rstAck) w_rstReq <= 0;
+            rst_done <= !w_rstReq && !w_rstAck;
         end
     end
     

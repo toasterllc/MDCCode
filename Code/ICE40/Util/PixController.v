@@ -2,7 +2,6 @@
 `define PixController_v
 
 `include "TogglePulse.v"
-`include "ToggleAck.v"
 
 module PixController #(
     parameter ClkFreq = 24_000_000,
@@ -13,10 +12,11 @@ module PixController #(
     input wire          clk,
     
     // Command port
+    output reg          cmd_ready = 0,  // Ready for new command
+    input wire          cmd_trigger,
     input wire          cmd,
     input wire[2:0]     cmd_ramBlock,
-    input wire          cmd_trigger, // Toggle
-    output reg          cmd_done = 0, // Toggle
+    input wire          cmd_abort,
     
     // TODO: consider re-ordering: readout_data, readout_trigger, readout_ready
     // Readout port
@@ -50,6 +50,7 @@ module PixController #(
     reg         ramctrl_cmd_trigger = 0;
     reg[2:0]    ramctrl_cmd_block = 0;
     reg         ramctrl_cmd_write = 0;
+    reg         ramctrl_cmd_abort = 0;
     wire        ramctrl_write_ready;
     reg         ramctrl_write_trigger = 0;
     reg[15:0]   ramctrl_write_data = 0;
@@ -67,6 +68,7 @@ module PixController #(
         .cmd_trigger(ramctrl_cmd_trigger),
         .cmd_block(ramctrl_cmd_block),
         .cmd_write(ramctrl_cmd_write),
+        .cmd_abort(ramctrl_cmd_abort),
         
         .write_ready(ramctrl_write_ready),
         .write_trigger(ramctrl_write_trigger),
@@ -130,18 +132,23 @@ module PixController #(
     // ====================
     // FIFO
     // ====================
+    reg fifo_rst = 0;
+    reg fifo_rst_done = 0;
     reg fifo_writeEn = 0;
+    wire fifo_writeReady;
     wire fifo_readTrigger;
     wire[15:0] fifo_readData;
     wire fifo_readReady;
+    reg fifo_abortDone = 0;
     BankFIFO #(
         .W(16),
         .N(8)
     ) BankFIFO (
-        .rst_(1'b1),
+        .rst_(!fifo_rst),
+        .rst_done(fifo_rst_done),
         
         .w_clk(pix_dclk),
-        .w_ready(), // TODO: handle not being able to write by signalling an error somehow?
+        .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
         .w_trigger(fifo_writeEn && pix_lv_reg),
         .w_data({4'b0, pix_d_reg}),
         
@@ -151,17 +158,18 @@ module PixController #(
         .r_data(fifo_readData)
     );
     
-    reg ctrl_fifoCaptureTrigger = 0;
-    `ToggleAck(fifo_captureTrigger, fifo_captureTriggerAck, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
+    `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
+    `TogglePulse(fifo_abortTrigger, ctrl_fifoAbortTrigger, posedge, pix_dclk);
     
-    reg[1:0] fifo_state = 0;
+    reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
+        fifo_rst <= 0;
+        
         case (fifo_state)
         // Wait to be triggered
         0: begin
             fifo_writeEn <= 0;
             if (fifo_captureTrigger) begin
-                fifo_captureTriggerAck <= !fifo_captureTriggerAck;
                 fifo_state <= 1;
             end
         end
@@ -190,7 +198,32 @@ module PixController #(
                 fifo_state <= 0;
             end
         end
+        
+        // Reset the FIFO
+        4: begin
+            fifo_rst <= 1;
+            fifo_state <= 5;
+        end
+        
+        // Wait state (let the FIFO accept the reset)
+        5: begin
+            fifo_state <= 6;
+        end
+        
+        // Wait for the FIFO to finish resetting
+        6: begin
+            if (fifo_rst_done) begin
+                // Announce that we're done aborting
+                fifo_abortDone <= !fifo_abortDone;
+                fifo_state <= 0;
+            end
+        end
         endcase
+        
+        // Handle being aborted
+        if (fifo_abortTrigger) begin
+            fifo_state <= 4;
+        end
     end
     
     
@@ -198,26 +231,32 @@ module PixController #(
     // ====================
     // State Machine
     // ====================
-    `TogglePulse(ctrl_cmdTrigger, cmd_trigger, posedge, clk);
-    
     assign fifo_readTrigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     assign readout_ready = ramctrl_read_ready;
     assign ramctrl_read_trigger = readout_trigger;
     assign readout_data = ramctrl_read_data;
     
+    `ToggleAck(ctrl_fifoAbortDone, ctrl_fifoAbortDoneAck, fifo_abortDone, posedge, clk);
+    
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +1
     localparam Ctrl_State_Readout   = 3; // +1
-    localparam Ctrl_State_Count     = 5;
+    localparam Ctrl_State_Abort     = 5; // +2
+    localparam Ctrl_State_Count     = 8;
     reg[$clog2(Ctrl_State_Count)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
+        cmd_ready <= 0;
+        
         ramctrl_cmd_trigger <= 0;
         ramctrl_write_trigger <= 0;
+        ramctrl_cmd_abort <= 0;
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
-            if (ctrl_cmdTrigger) begin
+            if (cmd_trigger) begin
                 ctrl_state <= (cmd===CmdCapture ? Ctrl_State_Capture : Ctrl_State_Readout);
+            end else begin
+                cmd_ready <= 1;
             end
             
             // TODO: handle FIFO data being available when we don't expect it
@@ -262,8 +301,6 @@ module PixController #(
             // define RAMController's block size as the image size.)
             if (ramctrl_cmd_ready) begin
                 $display("[PIXCTRL:Capture] Finished");
-                // Signal that we're done
-                cmd_done <= !cmd_done;
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
@@ -286,12 +323,36 @@ module PixController #(
             // define RAMController's block size as the image size.)
             if (ramctrl_cmd_ready) begin
                 $display("[PIXCTRL:Readout] Finished");
-                // Signal that we're done
-                cmd_done <= !cmd_done;
+                ctrl_state <= Ctrl_State_Idle;
+            end
+        end
+        
+        Ctrl_State_Abort: begin
+            // Abort RAMController
+            ramctrl_cmd_abort <= 1;
+            // Abort FIFO state machine
+            ctrl_fifoAbortTrigger <= !ctrl_fifoAbortTrigger;
+            ctrl_state <= Ctrl_State_Abort+1;
+        end
+        
+        // Wait state: wait for RAMController to accept abort command
+        Ctrl_State_Abort+1: begin
+            ctrl_state <= Ctrl_State_Abort+2;
+        end
+        
+        // Wait for RAMController and FIFO state machine to finish aborting
+        Ctrl_State_Abort+2: begin
+            if (ramctrl_cmd_ready && ctrl_fifoAbortDone) begin
+                ctrl_fifoAbortDoneAck <= !ctrl_fifoAbortDoneAck;
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
         endcase
+        
+        // Handle aborting whatever is in progress
+        if (cmd_abort) begin
+            ctrl_state <= Ctrl_State_Abort;
+        end
     end
     
 endmodule
