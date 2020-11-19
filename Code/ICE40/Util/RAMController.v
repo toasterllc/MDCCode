@@ -33,6 +33,7 @@ module RAMController #(
     input wire                  cmd_trigger,    // Start the command
     input wire[BlockWidth-1:0]  cmd_block,      // Block index
     input wire                  cmd_write,      // Read (0) or write (1)
+    input wire                  cmd_abort,
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port
@@ -228,10 +229,10 @@ module RAMController #(
     end
     assign read_data = ramDQIn;
     
-    // TODO: we need to remove this when testing the RAM with the SDRAM chip sim (mt48h32m16lf)
-`ifdef SIM
-    assign ramDQIn = 0;
-`endif
+//     // TODO: we need to remove this when testing the RAM with the SDRAM chip sim (mt48h32m16lf)
+// `ifdef SIM
+//     assign ramDQIn = 0;
+// `endif
     
     // ====================
     // Init State Machine Registers
@@ -266,9 +267,10 @@ module RAMController #(
     localparam Data_State_Write             = 3;    // +1
     localparam Data_State_Read              = 5;    // +2
     localparam Data_State_Finish            = 8;    // +0
-    localparam Data_State_Refresh           = 9;    // +2
-    localparam Data_State_Delay             = 12;   // +0
-    localparam Data_State_Count             = 13;
+    localparam Data_State_Abort             = 9;    // +1
+    localparam Data_State_Refresh           = 11;   // +2
+    localparam Data_State_Delay             = 14;   // +0
+    localparam Data_State_Count             = 15;
     localparam Data_State_Width             = `RegWidth(Data_State_Count);
     
     reg[Data_State_Width-1:0] data_state = 0;
@@ -289,13 +291,13 @@ module RAMController #(
                                                         //       one cycle earlier is fine.
     localparam Data_RefreshCounterWidth = `RegWidth(Data_RefreshDelay);
     reg[Data_RefreshCounterWidth-1:0] data_refreshCounter = 0;
-    localparam Data_RefreshStartDelay = `Max6(
+    localparam Data_InterruptDelay = `Max6(
         // T_RC: the previous cycle may have issued CmdBankActivate, so prevent violating T_RC
-        // when we return to that command via StateHandleSaved after refreshing is complete.
+        // when we finish refreshing.
         // -2 cycles getting to the next state
         Clocks(T_RC,2),
         // T_RRD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RRD
-        // when we return to that command via StateHandleSaved after refreshing is complete.
+        // when we finish refreshing.
         // -2 cycles getting to the next state
         Clocks(T_RRD,2),
         // T_RAS: the previous cycle may have issued CmdBankActivate, so prevent violating T_RAS
@@ -303,7 +305,7 @@ module RAMController #(
         // -2 cycles getting to the next state
         Clocks(T_RAS,2),
         // T_RCD: the previous cycle may have issued CmdBankActivate, so prevent violating T_RCD
-        // when we return to that command via StateHandleSaved after refreshing is complete.
+        // when we finish refreshing.
         // -2 cycles getting to the next state
         Clocks(T_RCD,2),
         // T_RP: the previous cycle may have issued CmdPrechargeAll, so delay other commands
@@ -343,7 +345,7 @@ module RAMController #(
         Clocks(T_RP,2),
         
         // Refresh states
-        Data_RefreshStartDelay,
+        Data_InterruptDelay,
         Clocks(T_RP,2),
         Clocks(T_RFC,3)
     );
@@ -605,10 +607,28 @@ module RAMController #(
             endcase
         end
         
+        Data_State_Abort: begin
+            // $display("[RAM-CTRL] Abort start");
+            // We don't know what state we came from, so wait the most conservative amount of time.
+            data_delayCounter <= Data_InterruptDelay;
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Abort+1;
+        end
+        
+        Data_State_Abort+1: begin
+            // Precharge all banks
+            ramCmd <= RAM_Cmd_PrechargeAll;
+            ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
+            
+            data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+            data_state <= Data_State_Delay;
+            data_nextState <= Data_State_Idle;
+        end
+        
         Data_State_Refresh: begin
             // $display("[RAM-CTRL] Refresh start");
             // We don't know what state we came from, so wait the most conservative amount of time.
-            data_delayCounter <= Data_RefreshStartDelay;
+            data_delayCounter <= Data_InterruptDelay;
             data_state <= Data_State_Delay;
             data_nextState <= Data_State_Refresh+1;
         end
@@ -617,7 +637,7 @@ module RAMController #(
             // Precharge all banks
             ramCmd <= RAM_Cmd_PrechargeAll;
             ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-
+            
             // Wait T_RP (precharge to refresh/row activate) until we can issue CmdAutoRefresh
             data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
             data_state <= Data_State_Delay;
@@ -643,12 +663,19 @@ module RAMController #(
         end
         endcase
         
-        if (init_done && !data_refreshCounter) begin
-            // Override our `_ready` flags if we're refreshing on the next cycle
+        // Handle abort/refresh
+        if (init_done && (cmd_abort || !data_refreshCounter)) begin
+            // Override our `_ready` flags if we're aborting/refreshing on the next cycle
             cmd_ready <= 0;
             write_ready <= 0;
             read_ready <= 0;
-            data_state <= Data_State_Refresh;
+            
+            if (cmd_abort) data_mode <= Data_Mode_Idle;
+            
+            // Refresh takes precedence -- otherwise, a badly-timed
+            // abort could prevent a refresh
+            if (!data_refreshCounter) data_state <= Data_State_Refresh;
+            else if (cmd_abort) data_state <= Data_State_Abort;
         end
     end
 endmodule
