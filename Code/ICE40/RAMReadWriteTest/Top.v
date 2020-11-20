@@ -25,11 +25,10 @@ module Top(
     inout wire[15:0]    ram_dq
 );
     wire clk = clk24mhz;
-    wire cmd_ready;
     reg cmd_trigger = 0;
     reg[20:0] cmd_block = 0;
     reg cmd_write = 0;
-    reg cmd_abort = 0;
+    wire cmd_done;
     
     wire write_ready;
     reg write_trigger = 0;
@@ -47,11 +46,10 @@ module Top(
     ) RAMController(
         .clk(clk),
         
-        .cmd_ready(cmd_ready),
         .cmd_trigger(cmd_trigger),
         .cmd_block(cmd_block),
         .cmd_write(cmd_write),
-        .cmd_abort(cmd_abort),
+        .cmd_done(cmd_done),
         
         .write_ready(write_ready),
         .write_trigger(write_trigger),
@@ -80,44 +78,39 @@ module Top(
     reg[7:0] abortCounter = 0;
     
     always @(posedge clk24mhz) begin
-        cmd_abort <= 0; // Reset by default
-        
+        cmd_trigger <= 0;
+        write_trigger <= 0;
+        read_trigger <= 0;
         case (state)
         0: begin
+            $display("Write started @ block %x", cmd_block);
             cmd_trigger <= 1;
             cmd_write <= 1;
             word_idx <= 0;
-            if (cmd_ready && cmd_trigger) begin
-                $display("Write started @ block %h", cmd_block);
-                cmd_trigger <= 0;
-                state <= 1;
-            end
+            state <= 1;
         end
-    
+        
         1: begin
             write_trigger <= 1;
             if (write_ready && write_trigger) begin
                 $display("Wrote word: %h", write_data);
                 word_idx <= word_idx+1;
             end
-        
-            if (cmd_ready) begin
-                write_trigger <= 0;
+            
+            if (cmd_done) begin
+                $display("Write done @ block %x", cmd_block);
                 state <= 2;
             end
         end
-    
+        
         2: begin
+            $display("Read started @ block %x", cmd_block);
             cmd_trigger <= 1;
             cmd_write <= 0;
             word_idx <= 0;
-            if (cmd_ready && cmd_trigger) begin
-                $display("Read started");
-                cmd_trigger <= 0;
-                state <= 3;
-            end
+            state <= 3;
         end
-    
+        
         3: begin
             read_trigger <= 1;
             if (read_ready && read_trigger) begin
@@ -129,17 +122,17 @@ module Top(
                 end
                 word_idx <= word_idx+1;
             end
-        
-            if (cmd_ready) begin
-                read_trigger <= 0;
+            
+            if (cmd_done) begin
+                $display("Read done @ block %x", cmd_block);
                 cmd_block <= cmd_block+1;
                 state <= 0;
             end
         end
         
         4: begin
+            // TODO: randomly switch between aborting to reading and aborting to writing?
             $display("ABORTING");
-            cmd_abort <= 1;
             state <= 0;
         end
         endcase
