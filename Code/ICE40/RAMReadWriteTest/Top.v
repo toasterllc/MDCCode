@@ -93,7 +93,12 @@ module Top(
             state <= 1;
         end
         
+        // Wait state for cmd_trigger to be accepted
         1: begin
+            state <= 2;
+        end
+        
+        2: begin
             write_trigger <= 1;
             if (write_ready && write_trigger) begin
                 $display("Wrote word: %h", write_data);
@@ -102,19 +107,24 @@ module Top(
             
             if (write_done) begin
                 $display("Write done @ block %x", cmd_block);
-                state <= 2;
+                state <= 3;
             end
         end
         
-        2: begin
+        3: begin
             $display("Read started @ block %x", cmd_block);
             cmd_trigger <= 1;
             cmd_write <= 0;
             word_idx <= 0;
-            state <= 3;
+            state <= 4;
         end
         
-        3: begin
+        // Wait state for cmd_trigger to be accepted
+        4: begin
+            state <= 5;
+        end
+        
+        5: begin
             read_trigger <= 1;
             if (read_ready && read_trigger) begin
                 if (read_data === read_data_expected) begin
