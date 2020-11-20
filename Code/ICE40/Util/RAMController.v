@@ -32,19 +32,20 @@ module RAMController #(
     input wire                  cmd_trigger,    // Start the command
     input wire[BlockWidth-1:0]  cmd_block,      // Block index
     input wire                  cmd_write,      // Read (0) or write (1)
-    output reg                  cmd_done = 0,
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port (clock domain: `clk`)
     output reg                  write_ready = 0,    // `write_data` accepted
     input wire                  write_trigger,      // Only effective if `write_ready`=1
     input wire[WordWidth-1:0]   write_data,         // Data to write to RAM
+    output reg                  write_done,         // Writing to the block is complete
     
     // TODO: consider re-ordering: read_data, read_trigger, read_ready
     // Read port (clock domain: `clk`)
     output reg                  read_ready = 0,     // `read_data` valid
     input wire                  read_trigger,       // Only effective if `read_ready`=1
     output wire[WordWidth-1:0]  read_data,          // Data read from RAM
+    output reg                  read_done,          // Reading from the block is complete
     
     // RAM port (clock domain: `ram_clk`)
     output wire                 ram_clk,        // Clock
@@ -266,9 +267,9 @@ module RAMController #(
     // ====================
     // Refresh State Machine Registers
     // ====================
-    localparam Refresh_State_Go     = 0;    // +2
-    localparam Refresh_State_Delay  = 3;    // +1
-    localparam Refresh_State_Count  = 16;
+    localparam Refresh_State_Go     = 0;    // +3
+    localparam Refresh_State_Delay  = 4;    // +1
+    localparam Refresh_State_Count  = 5;
     localparam Refresh_State_Width  = `RegWidth(Refresh_State_Count);
     localparam Refresh_Delay = Clocks(T_REFI,2);    // -2 cycles:
                                                     //   -1: Because waiting N cycles requires loading a counter with N-1.
@@ -324,13 +325,13 @@ module RAMController #(
     // Data State Machine Registers
     // ====================
     localparam Data_State_Idle              = 0;    // +0
-    localparam Data_State_StartInterrupt    = 1;    // +1
+    localparam Data_State_StartInterrupt    = 1;    // +0
+    localparam Data_State_StartPrecharge    = 2;    // +0
     localparam Data_State_Start             = 3;    // +0
     localparam Data_State_Write             = 4;    // +1
     localparam Data_State_Read              = 6;    // +2
-    localparam Data_State_Finish            = 9;    // +0
-    localparam Data_State_Delay             = 10;   // +0
-    localparam Data_State_Count             = 11;
+    localparam Data_State_Delay             = 9;    // +0
+    localparam Data_State_Count             = 10;
     localparam Data_State_Width             = `RegWidth(Data_State_Count);
     
     reg[Data_State_Width-1:0] data_state = 0;
@@ -379,9 +380,10 @@ module RAMController #(
         // data_refreshCounter <= 2;
         
         // Reset by default
-        cmd_done <= 0;
         write_ready <= 0;
+        write_done <= 0;
         read_ready <= 0;
+        read_done <= 0;
         
         
         // Reset RAM cmd state
@@ -489,7 +491,7 @@ module RAMController #(
                 // ====================
                 case (refresh_state)
                 Refresh_State_Go: begin
-                    // $display("[RAM-CTRL] Refresh start");
+                    $display("[RAM-CTRL] Refresh start");
                     // We don't know what state we came from, so wait the most conservative amount of time.
                     refresh_delayCounter <= Refresh_StartDelay;
                     refresh_state <= Refresh_State_Delay;
@@ -519,6 +521,7 @@ module RAMController #(
                 end
                 
                 Refresh_State_Go+3: begin
+                    refresh_state <= Refresh_State_Go;
                     refresh_trigger <= 0;
                     // Restart the current command, if there was one in progress
                     case (data_mode)
@@ -544,18 +547,18 @@ module RAMController #(
                     // TODO: figure out a better name for `Refresh_StartDelay` since we're using it here
                     data_delayCounter <= Refresh_StartDelay;
                     data_state <= Data_State_Delay;
-                    data_nextState <= Data_State_StartInterrupt+1;
+                    data_nextState <= Data_State_StartPrecharge;
                 end
                 
-                Data_State_StartInterrupt+1: begin
-                    // $display("[RAM-CTRL] Data_State_Finish");
+                Data_State_StartPrecharge: begin
+                    // $display("[RAM-CTRL] Data_State_StartPrecharge");
                     ramCmd <= RAM_Cmd_PrechargeAll;
                     ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
                     
                     // After precharge completes, continue writing if there's more data
                     data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
                     data_state <= Data_State_Delay;
-                    data_nextState <= Data_State_Start;
+                    data_nextState <= (data_mode===Data_Mode_None ? Data_State_Idle : Data_State_Start);
                 end
                 
                 Data_State_Start: begin
@@ -591,6 +594,8 @@ module RAMController #(
                         data_write_issueCmd <= 0; // Reset after we issue the write command
                         
                         if (!data_counter) begin
+                            // Signal that we're done
+                            write_done <= 1;
                             // Clear data_mode because we're done
                             data_mode <= Data_Mode_None;
                         end
@@ -607,9 +612,9 @@ module RAMController #(
                             //   "The PrechargeAll command that interrupts a write burst should be
                             //   issued ceil(tWR/tCK) cycles after the clock edge in which the
                             //   last data-in element is registered."
-                            data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to Data_State_Finish
+                            data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to Data_State_StartPrecharge
                             data_state <= Data_State_Delay;
-                            data_nextState <= Data_State_Finish;
+                            data_nextState <= Data_State_StartPrecharge;
                         end
                         
                     end else begin
@@ -649,6 +654,8 @@ module RAMController #(
                         data_counter <= data_counter-1;
                         
                         if (!data_counter) begin
+                            // Signal that we're done
+                            read_done <= 1;
                             // Clear data_mode because we're done
                             data_mode <= Data_Mode_None;
                         end
@@ -657,7 +664,7 @@ module RAMController #(
                         if (&data_addr[`ColBits] || !data_counter) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
-                            data_state <= Data_State_Finish;
+                            data_state <= Data_State_StartPrecharge;
                         end else begin
                             // Notify that more data is available
                             read_ready <= 1;
@@ -668,26 +675,6 @@ module RAMController #(
                         // If the current data wasn't accepted, we need restart reading
                         data_state <= Data_State_Read;
                     end
-                end
-                
-                Data_State_Finish: begin
-                    // $display("[RAM-CTRL] Data_State_Finish");
-                    ramCmd <= RAM_Cmd_PrechargeAll;
-                    ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-                    
-                    // After precharge completes, continue writing if there's more data
-                    data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-                    data_state <= Data_State_Delay;
-                    case (data_mode)
-                    Data_Mode_None: begin
-                        data_nextState <= Data_State_Idle;
-                        cmd_done <= 1;
-                    end
-                    
-                    default: begin
-                        data_nextState <= Data_State_Start;
-                    end
-                    endcase
                 end
                 
                 Data_State_Delay: begin

@@ -28,14 +28,16 @@ module Top(
     reg cmd_trigger = 0;
     reg[20:0] cmd_block = 0;
     reg cmd_write = 0;
-    wire cmd_done;
     
     wire write_ready;
     reg write_trigger = 0;
     wire[15:0] write_data;
+    wire write_done;
+    
     wire read_ready;
     reg read_trigger = 0;
     wire[15:0] read_data;
+    wire read_done;
     
     localparam BlockSize = 16;
     
@@ -49,15 +51,16 @@ module Top(
         .cmd_trigger(cmd_trigger),
         .cmd_block(cmd_block),
         .cmd_write(cmd_write),
-        .cmd_done(cmd_done),
         
         .write_ready(write_ready),
         .write_trigger(write_trigger),
         .write_data(write_data),
+        .write_done(write_done),
         
         .read_ready(read_ready),
         .read_trigger(read_trigger),
         .read_data(read_data),
+        .read_done(read_done),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -97,7 +100,7 @@ module Top(
                 word_idx <= word_idx+1;
             end
             
-            if (cmd_done) begin
+            if (write_done) begin
                 $display("Write done @ block %x", cmd_block);
                 state <= 2;
             end
@@ -118,28 +121,27 @@ module Top(
                     $display("Read word: %h (expected: %h) ✅", read_data, read_data_expected);
                 end else begin
                     $display("Read word: %h (expected: %h) ❌", read_data, read_data_expected);
-                    // `Finish;
+                    `Finish;
                 end
                 word_idx <= word_idx+1;
             end
             
-            if (cmd_done) begin
+            if (read_done) begin
                 $display("Read done @ block %x", cmd_block);
                 cmd_block <= cmd_block+1;
                 state <= 0;
             end
         end
-        
-        4: begin
-            // TODO: randomly switch between aborting to reading and aborting to writing?
-            $display("ABORTING");
-            state <= 0;
-        end
         endcase
         
         abortCounter <= abortCounter+1;
         if (&abortCounter) begin
-            state <= 4;
+            $display("ABORTING");
+            cmd_trigger <= 0;
+            write_trigger <= 0;
+            read_trigger <= 0;
+            cmd_block <= cmd_block+7;
+            state <= 0;
         end
     end
     
