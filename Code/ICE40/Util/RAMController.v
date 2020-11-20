@@ -534,7 +534,7 @@ module RAMController #(
                     if (!refresh_delayCounter) refresh_state <= refresh_nextState;
                 end
                 endcase
-        
+            
             end else begin
                 // ====================
                 // Data State Machine
@@ -692,9 +692,6 @@ module RAMController #(
             end
         end
         
-        // TODO: upon exiting refresh, we need to return to _Start
-        // TODO: when starting a new command, if a command is already in progress, we need to way a conservative a mount of time.
-        
         // Handle new commands
         if (cmd_trigger) begin
             // Override our `_ready` flags if we're starting a new command on the next cycle
@@ -708,6 +705,7 @@ module RAMController #(
             // Otherwise, we need to delay going to _Start, since we don't
             // know what state we came from.
             // TODO: if this executes on the cycle before the refresh is finished, the Data_State_StartInterrupt will get overridden by the refresh with Data_State_Start, which is kinda gross.
+            // TODO: if a command is triggered after write_done is signalled, we'll likely be delaying T_WR, which will cause us to wait a long time in Data_State_StartInterrupt, when we only needed to wait T_WR.
             data_state <= (data_state===Data_State_Idle ? Data_State_Start : Data_State_StartInterrupt);
         end
     end
