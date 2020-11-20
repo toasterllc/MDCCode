@@ -325,8 +325,6 @@ module RAMController #(
     // Data State Machine Registers
     // ====================
     localparam Data_State_Idle              = 0;    // +0
-    localparam Data_State_StartInterrupt    = 1;    // +0
-    localparam Data_State_StartPrecharge    = 2;    // +0
     localparam Data_State_Start             = 3;    // +0
     localparam Data_State_Write             = 4;    // +1
     localparam Data_State_Read              = 6;    // +2
@@ -336,14 +334,10 @@ module RAMController #(
     
     reg[Data_State_Width-1:0] data_state = 0;
     reg[Data_State_Width-1:0] data_nextState = 0;
-    
-    localparam Data_Mode_None       = 0;
-    localparam Data_Mode_Write      = 1;
-    localparam Data_Mode_Read       = 2;
-    reg[1:0] data_mode = 0;
+    reg[Data_State_Width-1:0] data_restartState = 0;
     
     reg[AddrWidth-1:0] data_addr = 0;
-    reg[BlockSizeCeilLog2-1:0] data_counter = 0;
+    reg[`RegWidth(BlockSize)-1:0] data_counter = 0;
     
     localparam Data_BankActivateDelay = `Max4(
         // T_RCD: ensure "bank activate to read/write time".
@@ -524,10 +518,7 @@ module RAMController #(
                     refresh_state <= Refresh_State_Go;
                     refresh_trigger <= 0;
                     // Restart the current command, if there was one in progress
-                    case (data_mode)
-                    Data_Mode_None: data_state <= Data_State_Idle;
-                    default:        data_state <= Data_State_Start;
-                    endcase
+                    data_state <= data_restartState;
                 end
                 
                 Refresh_State_Delay: begin
@@ -543,25 +534,7 @@ module RAMController #(
                 Data_State_Idle: begin
                 end
                 
-                Data_State_StartInterrupt: begin
-                    // TODO: figure out a better name for `Refresh_StartDelay` since we're using it here
-                    data_delayCounter <= Refresh_StartDelay;
-                    data_state <= Data_State_Delay;
-                    data_nextState <= Data_State_StartPrecharge;
-                end
-                
-                Data_State_StartPrecharge: begin
-                    // $display("[RAM-CTRL] Data_State_StartPrecharge");
-                    ramCmd <= RAM_Cmd_PrechargeAll;
-                    ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-                    
-                    // After precharge completes, continue writing if there's more data
-                    data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-                    data_state <= Data_State_Delay;
-                    data_nextState <= (data_mode===Data_Mode_None ? Data_State_Idle : Data_State_Start);
-                end
-                
-                Data_State_Start: begin
+                Data_State_WriteStart: begin
                     // $display("[RAM-CTRL] Data_State_Start");
                     // Activate the bank+row
                     ramCmd <= RAM_Cmd_BankActivate;
@@ -571,58 +544,88 @@ module RAMController #(
                     data_write_issueCmd <= 1; // The first write needs to issue the write command
                     data_delayCounter <= Data_BankActivateDelay;
                     data_state <= Data_State_Delay;
-                    data_nextState <= (data_mode===Data_Mode_Write ? Data_State_Write : Data_State_Read);
+                    data_nextState <= Data_Mode_Write;
                 end
                 
                 Data_State_Write: begin
-                    write_ready <= 1;
-                    data_state <= Data_State_Write+1;
+                    if (data_counter) begin
+                        // $display("[RAM-CTRL] Data_State_Write");
+                        write_ready <= 1; // Accept more data
+                        if (write_trigger) begin
+                            // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, write_data);
+                            if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
+                            ramDQOut <= write_data; // Supply data to be written
+                            ramDQOutEn <= 1;
+                            ramDQM <= RAM_DQM_Unmasked; // Unmask the data
+                            if (data_write_issueCmd) ramCmd <= RAM_Cmd_Write; // Give write command
+                            data_addr <= data_addr+1;
+                            data_counter <= data_counter-1;
+                            data_write_issueCmd <= 0; // Reset after we issue the write command
+                            
+                            // Handle reaching the end of a row or the end of block
+                            if (&data_addr[`ColBits]) begin
+                                // $display("[RAM-CTRL] End of row / end of block");
+                                // Override `write_ready=1` above since we can't handle new data in the next state
+                                write_ready <= 0;
+                                
+                                // Abort writing
+                                // Wait the 'write recover' time before doing so.
+                                // Datasheet (paraphrased):
+                                //   "The PrechargeAll command that interrupts a write burst should be
+                                //   issued ceil(tWR/tCK) cycles after the clock edge in which the
+                                //   last data-in element is registered."
+                                data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to the next state
+                                data_state <= Data_State_Delay;
+                                data_nextState <= Data_State_WriteFinish;
+                            end
+                        
+                        end else begin
+                            // $display("[RAM-CTRL] Restart write");
+                            // The data flow was interrupted, so we need to re-issue the
+                            // write command when the flow starts again.
+                            data_write_issueCmd <= 1;
+                        end
+                    
+                    end else begin
+                        // Abort writing
+                        // Wait the 'write recover' time before doing so.
+                        // Datasheet (paraphrased):
+                        //   "The PrechargeAll command that interrupts a write burst should be
+                        //   issued ceil(tWR/tCK) cycles after the clock edge in which the
+                        //   last data-in element is registered."
+                        data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to the next state
+                        data_state <= Data_State_Delay;
+                        data_nextState <= Data_State_WriteFinish;
+                    end
                 end
                 
-                Data_State_Write+1: begin
-                    // $display("[RAM-CTRL] Data_State_Write");
-                    write_ready <= 1; // Accept more data
-                    if (write_trigger) begin
-                        // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, write_data);
-                        if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
-                        ramDQOut <= write_data; // Supply data to be written
-                        ramDQOutEn <= 1;
-                        ramDQM <= RAM_DQM_Unmasked; // Unmask the data
-                        if (data_write_issueCmd) ramCmd <= RAM_Cmd_Write; // Give write command
-                        data_addr <= data_addr+1;
-                        data_counter <= data_counter-1;
-                        data_write_issueCmd <= 0; // Reset after we issue the write command
-                        
-                        if (!data_counter) begin
-                            // Signal that we're done
-                            write_done <= 1;
-                            // Clear data_mode because we're done
-                            data_mode <= Data_Mode_None;
-                        end
-                        
-                        // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || !data_counter) begin
-                            // $display("[RAM-CTRL] End of row / end of block");
-                            // Override `write_ready=1` above since we can't handle new data in the next state
-                            write_ready <= 0;
-                            
-                            // Abort writing
-                            // Wait the 'write recover' time before doing so.
-                            // Datasheet (paraphrased):
-                            //   "The PrechargeAll command that interrupts a write burst should be
-                            //   issued ceil(tWR/tCK) cycles after the clock edge in which the
-                            //   last data-in element is registered."
-                            data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to Data_State_StartPrecharge
-                            data_state <= Data_State_Delay;
-                            data_nextState <= Data_State_StartPrecharge;
-                        end
-                        
+                Data_State_WriteFinish: begin
+                    // $display("[RAM-CTRL] Data_State_WriteFinish");
+                    ramCmd <= RAM_Cmd_PrechargeAll;
+                    ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
+                    
+                    if (data_counter) begin
+                        // Continue writing if there's more data
+                        data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+                        data_state <= Data_State_Delay;
+                        data_nextState <= Data_State_WriteStart;
+                    
                     end else begin
-                        // $display("[RAM-CTRL] Restart write");
-                        // The data flow was interrupted, so we need to re-issue the
-                        // write command when the flow starts again.
-                        data_write_issueCmd <= 1;
+                        write_done <= 1;
+                        data_state <= Data_State_Idle;
                     end
+                end
+                
+                Data_State_ReadStart: begin
+                    // $display("[RAM-CTRL] Data_State_ReadStart");
+                    // Activate the bank+row
+                    ramCmd <= RAM_Cmd_BankActivate;
+                    ramBA <= data_addr[`BankBits];
+                    ramA <= data_addr[`RowBits];
+                    
+                    data_delayCounter <= Data_BankActivateDelay;
+                    data_state <= Data_State_Delay;
+                    data_nextState <= Data_Mode_Read;
                 end
                 
                 Data_State_Read: begin
@@ -645,35 +648,50 @@ module RAMController #(
                 end
                 
                 Data_State_Read+2: begin
-                    // $display("[RAM-CTRL] Data_State_Read+2");
-                    // if (read_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
-                    if (read_trigger) begin
-                        // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
-                        ramDQM <= RAM_DQM_Unmasked; // Unmask the data
-                        data_addr <= data_addr+1;
-                        data_counter <= data_counter-1;
+                    if (data_counter) begin
+                        // $display("[RAM-CTRL] Data_State_Read+2");
+                        // if (read_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
+                        if (read_trigger) begin
+                            // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
+                            ramDQM <= RAM_DQM_Unmasked; // Unmask the data
+                            data_addr <= data_addr+1;
+                            data_counter <= data_counter-1;
+                            
+                            // Handle reaching the end of a row or the end of block
+                            if (&data_addr[`ColBits]) begin
+                                // $display("[RAM-CTRL] End of row / end of block");
+                                // Abort reading
+                                data_state <= Data_State_ReadFinish;
+                            end else begin
+                                // Notify that more data is available
+                                read_ready <= 1;
+                            end
                         
-                        if (!data_counter) begin
-                            // Signal that we're done
-                            read_done <= 1;
-                            // Clear data_mode because we're done
-                            data_mode <= Data_Mode_None;
-                        end
-                        
-                        // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || !data_counter) begin
-                            // $display("[RAM-CTRL] End of row / end of block");
-                            // Abort reading
-                            data_state <= Data_State_StartPrecharge;
                         end else begin
-                            // Notify that more data is available
-                            read_ready <= 1;
+                            // $display("[RAM-CTRL] Restart read");
+                            // If the current data wasn't accepted, we need restart reading
+                            data_state <= Data_State_Read;
                         end
-                        
+                    
                     end else begin
-                        // $display("[RAM-CTRL] Restart read");
-                        // If the current data wasn't accepted, we need restart reading
-                        data_state <= Data_State_Read;
+                        data_state <= Data_State_ReadFinish;
+                    end
+                end
+                
+                Data_State_ReadFinish: begin
+                    // $display("[RAM-CTRL] Data_State_ReadFinish");
+                    ramCmd <= RAM_Cmd_PrechargeAll;
+                    ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
+                    
+                    if (data_counter) begin
+                        // Continue writing if there's more data
+                        data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+                        data_state <= Data_State_Delay;
+                        data_nextState <= Data_State_ReadStart;
+                    
+                    end else begin
+                        read_done <= 1;
+                        data_state <= Data_State_Idle;
                     end
                 end
                 
@@ -699,14 +717,14 @@ module RAMController #(
             read_ready <= 0;
             
             data_addr <= AddrFromBlock(cmd_block);
-            data_counter <= BlockSize-1;
-            data_mode <= (cmd_write ? Data_Mode_Write : Data_Mode_Read);
+            data_counter <= BlockSize;
+            data_restartState <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
             // If `data_state` is _Idle, then we can jump right to _Start.
             // Otherwise, we need to delay going to _Start, since we don't
             // know what state we came from.
             // TODO: if this executes on the cycle before the refresh is finished, the Data_State_StartInterrupt will get overridden by the refresh with Data_State_Start, which is kinda gross.
             // TODO: if a command is triggered after write_done is signalled, we'll likely be delaying T_WR, which will cause us to wait a long time in Data_State_StartInterrupt, when we only needed to wait T_WR.
-            data_state <= (data_state===Data_State_Idle ? Data_State_Start : Data_State_StartInterrupt);
+            data_state <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
         end
     end
 endmodule
