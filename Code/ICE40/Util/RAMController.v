@@ -326,14 +326,14 @@ module RAMController #(
     // ====================
     localparam Data_State_Idle              = 0;    // +0
     localparam Data_State_WriteStart        = 1;    // +0
-    localparam Data_State_Write             = 2;    // +0
-    localparam Data_State_WriteFinish       = 3;    // +1
-    localparam Data_State_ReadStart         = 5;    // +0
-    localparam Data_State_Read              = 6;    // +2
-    localparam Data_State_ReadFinish        = 9;    // +1
-    localparam Data_State_InterruptStart    = 11;   // +0
-    localparam Data_State_Delay             = 12;   // +0
-    localparam Data_State_Count             = 13;
+    localparam Data_State_Write             = 2;    // +1
+    localparam Data_State_WriteFinish       = 4;    // +1
+    localparam Data_State_ReadStart         = 6;    // +0
+    localparam Data_State_Read              = 7;    // +2
+    localparam Data_State_ReadFinish        = 10;   // +1
+    localparam Data_State_InterruptStart    = 12;   // +0
+    localparam Data_State_Delay             = 13;   // +0
+    localparam Data_State_Count             = 14;
     localparam Data_State_Width             = `RegWidth(Data_State_Count-1);
     
     reg[Data_State_Width-1:0] data_state = 0;
@@ -552,9 +552,14 @@ module RAMController #(
                 end
                 
                 Data_State_Write: begin
+                    write_ready <= 1;
+                    data_state <= Data_State_Write+1;
+                end
+                
+                Data_State_Write+1: begin
                     // $display("[RAM-CTRL] Data_State_Write");
                     write_ready <= 1; // Accept more data
-                    if (write_ready && write_trigger) begin
+                    if (write_trigger) begin
                         // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, write_data);
                         if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
                         ramDQOut <= write_data; // Supply data to be written
@@ -651,7 +656,7 @@ module RAMController #(
                 Data_State_Read+2: begin
                     // $display("[RAM-CTRL] Data_State_Read+2");
                     // if (read_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
-                    if (read_ready && read_trigger) begin
+                    if (read_trigger) begin
                         // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
                         ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                         data_addr <= data_addr+1;
@@ -737,12 +742,8 @@ module RAMController #(
             data_addr <= AddrFromBlock(cmd_block);
             data_counter <= BlockSize;
             data_restartState <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
-            // If `data_state` is _Idle, then we can jump right to _Start.
-            // Otherwise, we need to delay going to _Start, since we don't
-            // know what state we came from.
-            // TODO: if this executes on the cycle before the refresh is finished, the Data_State_StartInterrupt will get overridden by the refresh with Data_State_Start, which is kinda gross.
-            // TODO: if a command is triggered after write_done is signalled, we'll likely be delaying T_WR, which will cause us to wait a long time in Data_State_StartInterrupt, when we only needed to wait T_WR.
-            
+            // If `data_state` is _Idle, then we can jump right to _WriteStart/_ReadStart.
+            // Otherwise, we need to delay since we don't know what state we came from.
             if (data_state === Data_State_Idle) begin
                 data_state <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
             
