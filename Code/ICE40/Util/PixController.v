@@ -1,6 +1,7 @@
 `ifndef PixController_v
 `define PixController_v
 
+`include "RAMController.v"
 `include "TogglePulse.v"
 
 module PixController #(
@@ -12,17 +13,16 @@ module PixController #(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    output reg          cmd_ready = 0,  // Ready for new command
     input wire          cmd_trigger,
     input wire          cmd,
     input wire[2:0]     cmd_ramBlock,
-    input wire          cmd_abort,
     
     // TODO: consider re-ordering: readout_data, readout_trigger, readout_ready
     // Readout port (clock domain: `clk`)
     output wire         readout_ready,
     input wire          readout_trigger,
     output wire[15:0]   readout_data,
+    output wire         readout_done,
     
     // Pix port (clock domain: `pix_dclk`)
     input wire          pix_dclk,
@@ -46,17 +46,17 @@ module PixController #(
     // RAMController
     // ====================
     
-    wire        ramctrl_cmd_ready;
     reg         ramctrl_cmd_trigger = 0;
     reg[2:0]    ramctrl_cmd_block = 0;
     reg         ramctrl_cmd_write = 0;
-    reg         ramctrl_cmd_abort = 0;
     wire        ramctrl_write_ready;
     reg         ramctrl_write_trigger = 0;
     reg[15:0]   ramctrl_write_data = 0;
+    wire        ramctrl_write_done;
     wire        ramctrl_read_ready;
     wire        ramctrl_read_trigger;
     wire[15:0]  ramctrl_read_data;
+    wire        ramctrl_read_done;
     
     RAMController #(
         .ClkFreq(ClkFreq),
@@ -64,19 +64,19 @@ module PixController #(
     ) RAMController (
         .clk(clk),
         
-        .cmd_ready(ramctrl_cmd_ready),
         .cmd_trigger(ramctrl_cmd_trigger),
         .cmd_block(ramctrl_cmd_block),
         .cmd_write(ramctrl_cmd_write),
-        .cmd_abort(ramctrl_cmd_abort),
         
         .write_ready(ramctrl_write_ready),
         .write_trigger(ramctrl_write_trigger),
         .write_data(ramctrl_write_data),
+        .write_done(ramctrl_write_done),
         
         .read_ready(ramctrl_read_ready),
         .read_trigger(ramctrl_read_trigger),
         .read_data(ramctrl_read_data),
+        .read_done(ramctrl_read_done),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -159,6 +159,7 @@ module PixController #(
     
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
     `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
+    `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
     
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
@@ -222,52 +223,43 @@ module PixController #(
     assign readout_ready = ramctrl_read_ready;
     assign ramctrl_read_trigger = readout_trigger;
     assign readout_data = ramctrl_read_data;
-    
-    `ToggleAck(ctrl_fifoAbortDone, ctrl_fifoAbortDoneAck, fifo_abortDone, posedge, clk);
+    assign readout_done = ramctrl_read_done;
     
     localparam Ctrl_State_Idle      = 0; // +0
-    localparam Ctrl_State_Capture   = 1; // +1
-    localparam Ctrl_State_Readout   = 3; // +1
-    localparam Ctrl_State_Abort     = 5; // +2
-    localparam Ctrl_State_Count     = 8;
-    reg[$clog2(Ctrl_State_Count)-1:0] ctrl_state = 0;
+    localparam Ctrl_State_Capture   = 1; // +2
+    localparam Ctrl_State_Readout   = 4; // +0
+    localparam Ctrl_State_Count     = 5;
+    reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
-        cmd_ready <= 0;
-        
         ramctrl_cmd_trigger <= 0;
         ramctrl_write_trigger <= 0;
-        ramctrl_cmd_abort <= 0;
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
-            if (cmd_ready && cmd_trigger) begin
-                ctrl_state <= (cmd===CmdCapture ? Ctrl_State_Capture : Ctrl_State_Readout);
-            end else begin
-                cmd_ready <= 1;
-            end
-            
-            // TODO: handle FIFO data being available when we don't expect it
-            if (fifo_readReady) begin
-            end
         end
         
-        // Wait for RAM to accept write command
         Ctrl_State_Capture: begin
-            if (ramctrl_cmd_ready && ramctrl_cmd_trigger) begin
-                $display("[PIXCTRL:Capture] Start");
-                // Start the FIFO data flow
-                ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
-                ctrl_state <= Ctrl_State_Capture+1;
-            end else begin
-                // Configure RAM command
-                ramctrl_cmd_block <= cmd_ramBlock;
-                ramctrl_cmd_write <= 1;
-                ramctrl_cmd_trigger <= 1; // Assert until the command is accepted
+            $display("[PIXCTRL:Capture] Start");
+            // Supply RAM command
+            ramctrl_cmd_block <= cmd_ramBlock;
+            ramctrl_cmd_write <= 1;
+            ramctrl_cmd_trigger <= 1;
+            // Start the FIFO data flow
+            ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
+            ctrl_state <= Ctrl_State_Capture+1;
+        end
+        
+        Ctrl_State_Capture+1: begin
+            // Wait until the FIFO is reset
+            // This is necessary so that when we observe `fifo_readReady`,
+            // we know it's from the start of this session, not from a previous one.
+            if (ctrl_fifoRstDone) begin
+                ctrl_state <= Ctrl_State_Capture+2;
             end
         end
         
         // Copy data from FIFO->RAM
-        Ctrl_State_Capture+1: begin
+        Ctrl_State_Capture+2: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             
@@ -286,59 +278,24 @@ module PixController #(
             // We're finished when RAMController says we've received all the pixels.
             // (RAMController knows when it's written the entire block, and we
             // define RAMController's block size as the image size.)
-            if (ramctrl_cmd_ready) begin
+            if (ramctrl_write_done) begin
                 $display("[PIXCTRL:Capture] Finished");
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
         
         Ctrl_State_Readout: begin
-            if (ramctrl_cmd_ready && ramctrl_cmd_trigger) begin
-                $display("[PIXCTRL:Readout] Start");
-                ctrl_state <= Ctrl_State_Readout+1;
-            end else begin
-                // Configure RAM command
-                ramctrl_cmd_block <= cmd_ramBlock;
-                ramctrl_cmd_write <= 0;
-                ramctrl_cmd_trigger <= 1; // Assert until the command is accepted
-            end
-        end
-        
-        Ctrl_State_Readout+1: begin
-            // We're finished when RAMController says we've read all the pixels.
-            // (RAMController knows when it's read the entire block, and we
-            // define RAMController's block size as the image size.)
-            if (ramctrl_cmd_ready) begin
-                $display("[PIXCTRL:Readout] Finished");
-                ctrl_state <= Ctrl_State_Idle;
-            end
-        end
-        
-        Ctrl_State_Abort: begin
-            // Abort RAMController
-            ramctrl_cmd_abort <= 1;
-            // Abort FIFO state machine
-            ctrl_fifoAbortTrigger <= !ctrl_fifoAbortTrigger;
-            ctrl_state <= Ctrl_State_Abort+1;
-        end
-        
-        // Wait state: wait for RAMController to accept abort command
-        Ctrl_State_Abort+1: begin
-            ctrl_state <= Ctrl_State_Abort+2;
-        end
-        
-        // Wait for RAMController and FIFO state machine to finish aborting
-        Ctrl_State_Abort+2: begin
-            if (ramctrl_cmd_ready && ctrl_fifoAbortDone) begin
-                ctrl_fifoAbortDoneAck <= !ctrl_fifoAbortDoneAck;
-                ctrl_state <= Ctrl_State_Idle;
-            end
+            $display("[PIXCTRL:Readout] Start");
+            // Supply RAM command
+            ramctrl_cmd_block <= cmd_ramBlock;
+            ramctrl_cmd_write <= 0;
+            ramctrl_cmd_trigger <= 1;
+            ctrl_state <= Ctrl_State_Idle;
         end
         endcase
         
-        // Handle aborting whatever is in progress
-        if (cmd_abort) begin
-            ctrl_state <= Ctrl_State_Abort;
+        if (cmd_trigger) begin
+            ctrl_state <= (cmd===CmdCapture ? Ctrl_State_Capture : Ctrl_State_Readout);
         end
     end
     
