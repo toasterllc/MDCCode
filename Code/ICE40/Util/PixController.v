@@ -17,6 +17,9 @@ module PixController #(
     input wire          cmd,
     input wire[2:0]     cmd_ramBlock,
     
+    // Capture port
+    output reg          capture_done = 0,
+    
     // TODO: consider re-ordering: readout_data, readout_trigger, readout_ready
     // Readout port (clock domain: `clk`)
     output wire         readout_ready,
@@ -233,6 +236,7 @@ module PixController #(
     always @(posedge clk) begin
         ramctrl_cmd_trigger <= 0;
         ramctrl_write_trigger <= 0;
+        capture_done <= 0;
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
@@ -280,6 +284,7 @@ module PixController #(
             // define RAMController's block size as the image size.)
             if (ramctrl_write_done) begin
                 $display("[PIXCTRL:Capture] Finished");
+                capture_done <= 1;
                 ctrl_state <= Ctrl_State_Idle;
             end
         end

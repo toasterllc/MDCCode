@@ -275,13 +275,14 @@ module Top(
     
     
     
+    reg         pixctrl_cmd_trigger = 0;
     reg         pixctrl_cmd = 0;
     reg[2:0]    pixctrl_cmd_ramBlock = 0;
-    reg         pixctrl_cmd_trigger = 0;
-    wire        pixctrl_cmd_done;
+    wire        pixctrl_capture_done;
     wire        pixctrl_readout_ready;
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;
+    wire        pixctrl_readout_done;
     PixController #(
         .ClkFreq(ClkFreq),
         .ImageSize(ImageWidth*ImageHeight)
@@ -289,15 +290,18 @@ module Top(
         .clk(clk),
         
         // Command port
+        .cmd_trigger(pixctrl_cmd_trigger),
         .cmd(pixctrl_cmd),
         .cmd_ramBlock(pixctrl_cmd_ramBlock),
-        .cmd_trigger(pixctrl_cmd_trigger),
-        .cmd_done(pixctrl_cmd_done),
+        
+        // Capture port
+        .capture_done(pixctrl_capture_done),
         
         // Readout port
         .readout_ready(pixctrl_readout_ready),
         .readout_trigger(pixctrl_readout_trigger),
         .readout_data(pixctrl_readout_data),
+        .readout_done(pixctrl_readout_done),
         
         // Pix port
         .pix_dclk(pix_dclk),
