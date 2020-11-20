@@ -16,7 +16,7 @@
 `define Max(a,y)            `Max2(a,y)
 
 // RegWidth: returns the width of a register to store the given values
-`define RegWidth(y)                 $clog2((y)+1'b1)
+`define RegWidth(y)                             `Max(1, $clog2((y)+1'b1))   // Enforce a minimum register width of 1
 `define RegWidth2(a,y)                          (`RegWidth(a) > `RegWidth(y) ? `RegWidth(a) : `RegWidth(y))
 `define RegWidth3(a,b,y)                        (`RegWidth2(a,b)                    > (y) ? `RegWidth2(a,b)                     : (y))
 `define RegWidth4(a,b,c,y)                      (`RegWidth3(a,b,c)                  > (y) ? `RegWidth3(a,b,c)                   : (y))
