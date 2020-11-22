@@ -8,8 +8,8 @@ module BankFIFO #(
     parameter N=8   // Word count (2^N)
 )(
     // Reset port (clock domain: async)
-    input wire          rst,
-    output reg          rst_done = 0,
+    input wire          rst, // Toggle
+    output reg          rst_done = 0, // Toggle
     
     // Write port (clock domain: `w_clk`)
     // TODO: consider re-ordering: w_clk, w_data, w_trigger, w_ready, w_bank
