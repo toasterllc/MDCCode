@@ -169,10 +169,9 @@ module SDController #(
         // valid or not, since it takes several cycles to transition
         // between output and input.
         cmd_active <= (cmd_active<<1)|1'b0;
-        
         cmdresp_shiftReg <= cmdresp_shiftReg<<1|resp_staged;
-        if (cmd_crcOutEn)  cmdresp_shiftReg[47] <= cmd_crc;
-        // if (cmd_crcOutEn)  cmdresp_shiftReg[47] <= 1'bx;
+        if (cmd_crcOutEn) cmdresp_shiftReg[47] <= cmd_crc;
+        cmd_crcOutEn <= 0;
         
         resp_staged <= cmd_active[2] ? 1'b1 : cmd_in;
         resp_counter <= resp_counter-1;
@@ -190,6 +189,7 @@ module SDController #(
         if (datOut_crcOutEn)  datOut_reg[19:16] <= datOut_crc;
         if (datOut_startBit)  datOut_reg[19:16] <= 4'b0000;
         if (datOut_endBit)    datOut_reg[19:16] <= 4'b1111;
+        datOut_crcOutEn <= 0;
         
         // `datOut_active` is 3 bits to track whether `datIn` is
         // valid or not, since it takes several cycles to transition
@@ -214,7 +214,6 @@ module SDController #(
             resp_state <= 0;
             datIn_state <= 0;
             cmd_crcRst <= 1;
-            cmd_crcOutEn <= 0;
             cmd_state <= 2;
         end
         
@@ -237,6 +236,7 @@ module SDController #(
         
         4: begin
             cmd_active[0] <= 1;
+            cmd_crcOutEn <= 1;
             cmd_crcEn <= 0;
             cmd_counter <= 5;
             cmd_state <= 5;
@@ -244,10 +244,8 @@ module SDController #(
         
         5: begin
             cmd_active[0] <= 1;
-            if (!cmd_counter) begin
-                cmd_crcOutEn <= 0;
-                cmd_state <= 6;
-            end
+            if (cmd_counter) cmd_crcOutEn <= 1;
+            else cmd_state <= 6;
         end
         
         6: begin
@@ -341,7 +339,6 @@ module SDController #(
             // Reset the FIFO
             datOutFIFO_rst <= !datOutFIFO_rst;
             datOut_crcErr <= 0;
-            datOut_crcOutEn <= 0;
             datOut_state <= 2;
         end
         
@@ -398,8 +395,9 @@ module SDController #(
         7: begin
             datOut_active[0] <= 1;
             datOut_crcEn <= 0;
-            if (!datOut_crcCounter) begin
-                datOut_crcOutEn <= 0;
+            if (datOut_crcCounter) begin
+                datOut_crcOutEn <= 1;
+            end else begin
                 datOut_endBit <= 1;
                 datOut_state <= 8;
             end
