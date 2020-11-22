@@ -812,11 +812,29 @@ module SDCardSim(
                 end
                 endcase
                 
+                // Fill datOutReg with random data so we can stress test CRC calculation
                 datOutReg = 0;
+                datOutReg[((32*((15)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*((14)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*((13)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*((12)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*((11)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*((10)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 9)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 8)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 7)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 6)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 5)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 4)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 3)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 2)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 1)+1))-1) -: 32] = $urandom;
+                datOutReg[((32*(( 0)+1))-1) -: 32] = $urandom;
+                
                 datOutReg[379:376] = respAccessMode;
                 
                 // Send response
-                $display("[SD CARD] Sending CMD6 response");
+                $display("[SD CARD] Sending CMD6 response: %0h", datOutReg);
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
                 

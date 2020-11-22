@@ -205,6 +205,9 @@ module SDController #(
         datIn_reg <= (datIn_reg<<4)|(datOut_active[2] ? 4'b1111 : {datIn[3], datIn[2], datIn[1], datIn[0]});
         datIn_counter <= datIn_counter-1;
         datIn_crcCounter <= datIn_crcCounter-1;
+        datIn_crcRst <= 0;
+        datIn_crcEn <= 0;
+        
         status_dat0Idle <= datIn_reg[0];
         
         // ====================
@@ -469,7 +472,6 @@ module SDController #(
         1: begin
             datIn_counter <= 127;
             datIn_crcRst <= 1;
-            datIn_crcEn <= 0;
             datIn_crcErr <= 0;
             
             if (!datIn_reg[0]) begin
@@ -479,8 +481,9 @@ module SDController #(
                 datIn_state <= 2;
             end
         end
-
+        
         2: begin
+            datIn_crcEn <= 1;
             // Stash the access mode from the DatIn response.
             // (This assumes we're receiving a CMD6 response.)
             if (datIn_counter === 7'd94) begin
