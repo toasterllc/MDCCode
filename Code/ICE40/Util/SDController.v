@@ -470,19 +470,20 @@ module SDController #(
         end
         
         1: begin
-            datIn_counter <= 127;
             datIn_crcRst <= 1;
             datIn_crcErr <= 0;
-            
-            if (!datIn_reg[0]) begin
-                $display("[SD-CTRL:DATIN] Triggered");
-                datIn_crcRst <= 0;
-                datIn_crcEn <= 1;
-                datIn_state <= 2;
-            end
+            datIn_state <= 2;
         end
         
         2: begin
+            datIn_counter <= 127;
+            if (!datIn_reg[0]) begin
+                $display("[SD-CTRL:DATIN] Triggered");
+                datIn_state <= 3;
+            end
+        end
+        
+        3: begin
             datIn_crcEn <= 1;
             // Stash the access mode from the DatIn response.
             // (This assumes we're receiving a CMD6 response.)
@@ -492,17 +493,16 @@ module SDController #(
             
             // Stay in this state until datIn_counter==0
             if (!datIn_counter) begin
-                datIn_crcEn <= 0;
-                datIn_state <= 3;
+                datIn_state <= 4;
             end
         end
         
-        3: begin
+        4: begin
             datIn_crcCounter <= 15;
-            datIn_state <= 4;
+            datIn_state <= 5;
         end
         
-        4: begin
+        5: begin
             if (datIn_crc[3] === datIn_reg[7]) begin
                 $display("[SD-CTRL:DATIN] DAT3 CRC valid ✅");
             end else begin
@@ -532,11 +532,11 @@ module SDController #(
             end
             
             if (!datIn_crcCounter) begin
-                datIn_state <= 5;
+                datIn_state <= 6;
             end
         end
         
-        5: begin
+        6: begin
             if (datIn_reg[7:4] === 4'b1111) begin
                 $display("[SD-CTRL:DATIN] Good end bit ✅");
             end else begin
@@ -649,12 +649,12 @@ module SDController #(
     // ====================
     for (i=0; i<4; i=i+1) begin
         CRC16 #(
-            .Delay(1)
+            .Delay(0)
         ) CRC16_dat(
             .clk(clk_int),
             .rst(datIn_crcRst),
             .en(datIn_crcEn),
-            .din(datIn_reg[i]),
+            .din(datIn_reg[4+i]),
             .dout(datIn_crc[i])
         );
     end
