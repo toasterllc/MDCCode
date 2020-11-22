@@ -19,11 +19,13 @@ module Top();
         end
     end
     
+    reg crc_rst = 0;
     reg crc_en = 0;
-    reg[127:0] crc_din = 136'b00111111000000110101001101000100010100110101001000110001001100100011100010000000100010111011011110011101011001100000000101000110;
+    reg[127:0] crc_din = 128'b00111111000000110101001101000100010100110101001000110001001100100011100010000000100010111011011110011101011001100000000101000110;
     wire[15:0] crc_dout;
     CRC7 crc(
         .clk(clk),
+        .rst(crc_rst),
         .en(crc_en),
         .din(crc_din[$size(crc_din)-1])
     );
@@ -34,6 +36,16 @@ module Top();
         
         #1000;
         wait(!clk);
+        
+        crc_en = 0;
+        
+        crc_rst = 1;
+        wait(clk);
+        wait(!clk);
+        crc_rst = 0;
+        wait(clk);
+        wait(!clk);
+        
         crc_en = 1;
         
         repeat (128) begin
