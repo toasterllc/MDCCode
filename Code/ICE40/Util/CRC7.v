@@ -22,6 +22,45 @@
 
 
 
+// module CRC7 #(
+//     // Delay can be between [-3, infinity]
+//     // Negative delays are possible because the high 4 bits of the CRC
+//     // are a simple shift register, so we can peek ahead.
+//     // See CRC section of SD spec.
+//     parameter Delay = 0
+// )(
+//     input wire clk,
+//     input wire en,
+//     input din,
+//     output wire dout
+// );
+//     localparam PosDelay = (Delay > 0 ? Delay : 0);
+//     reg[6+PosDelay:0] d = 0;
+//     wire dx = (en ? din^d[6] : 0);
+//     reg enPrev = 0;
+//     wire rst_ = !(!enPrev && en);
+//     always @(posedge clk) enPrev <= en;
+//     always @(posedge clk, negedge rst_) begin
+//         if (!rst_) d <= 0;
+//         else begin
+//             d <= d<<1;
+//             d[0] <= dx;
+//             d[3] <= dx^d[2];
+//         end
+//     end
+//     assign dout = d[6+Delay];
+// endmodule
+
+
+
+
+
+
+
+
+
+
+
 module CRC7 #(
     // Delay can be between [-3, infinity]
     // Negative delays are possible because the high 4 bits of the CRC
@@ -30,6 +69,7 @@ module CRC7 #(
     parameter Delay = 0
 )(
     input wire clk,
+    input wire rst,
     input wire en,
     input din,
     output wire dout
@@ -38,11 +78,19 @@ module CRC7 #(
     reg[6+PosDelay:0] d = 0;
     wire dx = (en ? din^d[6] : 0);
     always @(posedge clk) begin
-        d <= d<<1;
-        d[0] <= dx;
-        d[3] <= dx^d[2];
+        if (rst) begin
+            d <= 0;
+        
+        end else begin
+            d <= d<<1;
+            d[0] <= dx;
+            d[3] <= dx^d[2];
+        end
     end
     assign dout = d[6+Delay];
 endmodule
+
+
+
 
 `endif

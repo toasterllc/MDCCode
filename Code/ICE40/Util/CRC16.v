@@ -28,6 +28,7 @@ module CRC16 #(
     parameter Delay = 0
 )(
     input wire clk,
+    input wire rst,
     input wire en,
     input din,
     output wire dout
@@ -36,10 +37,15 @@ module CRC16 #(
     reg[15+PosDelay:0] d = 0;
     wire dx = (en ? din^d[15] : 0);
     always @(posedge clk) begin
-        d <= d<<1;
-        d[0] <= dx;
-        d[5] <= dx^d[4];
-        d[12] <= dx^d[11];
+        if (rst) begin
+            d <= 0;
+        
+        end else begin
+            d <= d<<1;
+            d[0] <= dx;
+            d[5] <= dx^d[4];
+            d[12] <= dx^d[11];
+        end
     end
     assign dout = d[15+Delay];
 endmodule
