@@ -171,10 +171,14 @@ module SDController #(
         cmd_active <= (cmd_active<<1)|1'b0;
         cmdresp_shiftReg <= cmdresp_shiftReg<<1|resp_staged;
         if (cmd_crcOutEn) cmdresp_shiftReg[47] <= cmd_crc;
+        cmd_crcRst <= 0;
+        cmd_crcEn <= 0;
         cmd_crcOutEn <= 0;
         
         resp_staged <= cmd_active[2] ? 1'b1 : cmd_in;
         resp_counter <= resp_counter-1;
+        resp_crcRst <= 0;
+        resp_crcEn <= 0;
         
         datOut_counter <= datOut_counter-1;
         datOut_crcCounter <= datOut_crcCounter-1;
@@ -189,6 +193,8 @@ module SDController #(
         if (datOut_crcOutEn)  datOut_reg[19:16] <= datOut_crc;
         if (datOut_startBit)  datOut_reg[19:16] <= 4'b0000;
         if (datOut_endBit)    datOut_reg[19:16] <= 4'b1111;
+        datOut_crcRst <= 0;
+        datOut_crcEn <= 0;
         datOut_crcOutEn <= 0;
         
         // `datOut_active` is 3 bits to track whether `datIn` is
@@ -220,7 +226,6 @@ module SDController #(
         2: begin
             cmd_counter <= 37;
             cmd_active[0] <= 1;
-            cmd_crcRst <= 0;
             cmd_crcEn <= 1;
             cmdresp_shiftReg <= cmd_sdCmd;
             cmd_state <= 3;
@@ -228,12 +233,14 @@ module SDController #(
         
         3: begin
             cmd_active[0] <= 1;
+            cmd_crcEn <= 1;
             if (!cmd_counter) cmd_state <= 4;
         end
         
         // Start CRC output
         4: begin
             cmd_active[0] <= 1;
+            cmd_crcEn <= 1;
             cmd_crcOutEn <= 1;
             cmd_counter <= 6;
             cmd_state <= 5;
@@ -242,7 +249,6 @@ module SDController #(
         // Wait until CRC output is finished
         5: begin
             cmd_active[0] <= 1;
-            cmd_crcEn <= 0;
             if (cmd_counter) cmd_crcOutEn <= 1;
             else cmd_state <= 6;
         end
@@ -270,31 +276,34 @@ module SDController #(
         0: begin
         end
         
+        // Wait for response to start
         1: begin
             resp_crcRst <= 1;
             resp_crcErr <= 0;
+            // We're accessing `cmd_respType_48` without synchronization, but that's
+            // safe because the cmd_ domain isn't allowed to modify it until we
+            // signal `resp_done`
+            resp_counter <= (cmd_respType_48 ? 48-8-1 : 136-8-1);
             // Wait for response to start
             if (!resp_staged) begin
                 $display("[SD-CTRL:RESP] Triggered");
-                // We're accessing `cmd_respType_48` without synchronization, but that's
-                // safe because the cmd_ domain isn't allowed to modify it until we
-                // signal `resp_done`
-                resp_counter <= (cmd_respType_48 ? 48-8 : 136-8);
-                resp_crcRst <= 0;
-                resp_crcEn <= 1;
                 resp_state <= 2;
             end
         end
         
         2: begin
+            resp_crcEn <= 1;
             if (!resp_counter) begin
-                resp_counter <= 6;
-                resp_crcEn <= 0;
                 resp_state <= 3;
             end
         end
         
         3: begin
+            resp_counter <= 6;
+            resp_state <= 4;
+        end
+        
+        4: begin
             if (resp_crc === cmdresp_shiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", resp_crc, cmdresp_shiftReg[1]);
             end else begin
@@ -304,11 +313,11 @@ module SDController #(
             
             if (!resp_counter) begin
                 resp_data <= cmdresp_shiftReg;
-                resp_state <= 4;
+                resp_state <= 5;
             end
         end
         
-        4: begin
+        5: begin
             if (cmdresp_shiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good end bit ✅");
             end else begin
@@ -365,7 +374,6 @@ module SDController #(
         
         5: begin
             datOut_active[0] <= 1;
-            datOut_crcRst <= 0;
             datOut_crcEn <= 1;
             
             if (!datOut_counter) begin
@@ -382,6 +390,7 @@ module SDController #(
         // Output the CRC
         6: begin
             datOut_active[0] <= 1;
+            datOut_crcEn <= 1;
             datOut_crcOutEn <= 1;
             datOut_crcCounter <= 15;
             datOut_state <= 7;
@@ -390,7 +399,6 @@ module SDController #(
         // Wait for CRC output to finish
         7: begin
             datOut_active[0] <= 1;
-            datOut_crcEn <= 0;
             if (datOut_crcCounter) begin
                 datOut_crcOutEn <= 1;
             end else begin
@@ -448,9 +456,6 @@ module SDController #(
         if (datOut_startPulse) begin
             datOut_state <= 1;
         end
-        
-        
-        // TODO: fix which cycle we disable `XXX_crcEn <= 0` -- follow what we used to do before all our recent changes
         
         
         // TODO: move this above Cmd state machine, so that the Cmd assignments (such as setting resp_state) take precedence
