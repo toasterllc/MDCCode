@@ -633,12 +633,16 @@ module SDCardSim(
                     end
                     
                     datOut = 4'b0001;
-                    wait(sd_clk);
-                    wait(!sd_clk);
-                    
-                    datOut = 4'b0001;
-                    wait(sd_clk);
-                    wait(!sd_clk);
+                    // Output several cycles of a strong 'DAT0=1' before we switch to 'DAT[3:0]=ZZZZ'.
+                    // This is so that our simulation still works even if the sd_cmd/sd_dat lines are
+                    // defined as 'wire' instead of 'tri1'. By outputting several cycles, we give
+                    // SDController a chance to observe our strong 1. (At the time of writing,
+                    // SDController takes a few cycles before checking the DAT0 state for busy, so if
+                    // we only output one cycle of a strong 1, it'll get missed.)
+                    for (i=0; i<4; i++) begin
+                        wait(sd_clk);
+                        wait(!sd_clk);
+                    end
                     
                     datOut = 4'bzzzz;
                 end

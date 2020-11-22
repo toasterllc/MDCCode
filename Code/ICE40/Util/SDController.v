@@ -365,7 +365,6 @@ module SDController #(
         4: begin
             $display("[SD-CTRL:DATOUT] Write another block");
             datOut_counter <= 0;
-            datOut_crcCounter <= 0;
             datOut_ending <= 0;
             datOut_crcRst <= 1;
             datOut_crcEn <= 0;
@@ -393,13 +392,16 @@ module SDController #(
         6: begin
             datOut_active[0] <= 1;
             datOut_crcOutEn <= 1;
+            datOut_crcCounter <= 15;
             datOut_state <= 7;
         end
         
+        // Wait for CRC output to finish
         7: begin
             datOut_active[0] <= 1;
             if (!datOut_crcCounter) begin
                 datOut_crcEn <= 0;
+                datOut_crcOutEn <= 0;
                 datOut_endBit <= 1;
                 datOut_state <= 8;
             end
@@ -408,12 +410,10 @@ module SDController #(
         // Output the end bit
         8: begin
             datOut_active[0] <= 1;
-            datOut_crcOutEn <= 0;
             datOut_state <= 9;
         end
         
-        // Disable DatOut when we finish outputting the CRC,
-        // and wait for the CRC status from the card.
+        // Wait for the CRC status from the card
         9: begin
             if (!datIn_reg[16]) begin
                 datOut_state <= 10;
@@ -435,7 +435,7 @@ module SDController #(
         
         // Wait until the card stops being busy (busy == DAT0 low)
         11: begin
-            if (datIn_reg[4]) begin
+            if (datIn_reg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 // `Finish;
                 
