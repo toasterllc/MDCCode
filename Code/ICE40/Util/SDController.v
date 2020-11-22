@@ -19,7 +19,7 @@ module SDController #(
     inout wire      sdcard_cmd,
     inout wire[3:0] sdcard_dat,
     
-    // TODO: cleanup by combining ctrl_clkSlow/ctrl_clkFastEn, cmd_respType_*
+    // TODO: rename ctrl_ -> clk_
     // Control port (clock domain: async)
     input wire                      ctrl_clkSlowEn,
     input wire                      ctrl_clkFastEn,
@@ -231,6 +231,7 @@ module SDController #(
             if (!cmd_counter) cmd_state <= 4;
         end
         
+        // Start CRC output
         4: begin
             cmd_active[0] <= 1;
             cmd_crcOutEn <= 1;
@@ -238,6 +239,7 @@ module SDController #(
             cmd_state <= 5;
         end
         
+        // Wait until CRC output is finished
         5: begin
             cmd_active[0] <= 1;
             cmd_crcEn <= 0;
@@ -277,7 +279,7 @@ module SDController #(
                 // We're accessing `cmd_respType_48` without synchronization, but that's
                 // safe because the cmd_ domain isn't allowed to modify it until we
                 // signal `resp_done`
-                resp_counter <= (cmd_respType_48 ? 48 : 136) - 8;
+                resp_counter <= (cmd_respType_48 ? 48-8 : 136-8);
                 resp_crcRst <= 0;
                 resp_crcEn <= 1;
                 resp_state <= 2;
@@ -319,9 +321,6 @@ module SDController #(
             resp_state <= 0;
         end
         endcase
-        
-        
-        // TODO: make all XXX_crcOutEn reset by default
         
         
         // ====================
@@ -483,12 +482,9 @@ module SDController #(
                 datIn_cmd6AccessMode <= datIn_reg[3:0];
             end
             
-            // if (!datIn_counter) begin
-            //     datIn_crcEn <= 0;
-            // end
-            
             // Stay in this state until datIn_counter==0
             if (!datIn_counter) begin
+                datIn_crcEn <= 0;
                 datIn_state <= 3;
             end
         end
