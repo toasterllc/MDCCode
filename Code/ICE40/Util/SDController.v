@@ -162,7 +162,6 @@ module SDController #(
     reg[6:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
     
-    // TODO: clean up CRC rst/en logic for the 4 state machines
     always @(posedge clk_int) begin
         cmd_counter <= cmd_counter-1;
         // `cmd_active` is 3 bits to track whether `cmd_in` is
