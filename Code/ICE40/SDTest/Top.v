@@ -861,6 +861,7 @@ module Testbench();
         // TestEcho();
         // TestSDCMD8();
         TestSDDatOut();
+        TestSDDatOut();
         // TestSDDatIn();
         // TestSDCMD2();
         // TestSDRespReset();

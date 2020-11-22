@@ -389,7 +389,7 @@ module SDController #(
             end
         end
         
-        // Start clocking out CRC
+        // Output the CRC
         6: begin
             datOut_active[0] <= 1;
             datOut_crcOutEn <= 1;
@@ -405,21 +405,23 @@ module SDController #(
             end
         end
         
+        // Output the end bit
+        8: begin
+            datOut_active[0] <= 1;
+            datOut_crcOutEn <= 0;
+            datOut_state <= 9;
+        end
+        
         // Disable DatOut when we finish outputting the CRC,
         // and wait for the CRC status from the card.
-        8: begin
-            datOut_crcOutEn <= 0;
-            if (datOut_crcCounter === 14) begin
-                $display("[SD-CTRL:DATOUT] Waiting for SD card CRC status...");
-            end
-            
+        9: begin
             if (!datIn_reg[16]) begin
-                datOut_state <= 9;
+                datOut_state <= 10;
             end
         end
         
         // Check CRC status token
-        9: begin
+        10: begin
             $display("[SD-CTRL:DATOUT] DatOut: datOut_crcStatusOKReg: %b", datOut_crcStatusOKReg);
             // 5 bits: start bit, CRC status, end bit
             if (datOut_crcStatusOKReg) begin
@@ -428,13 +430,14 @@ module SDController #(
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", datOut_crcStatusOKReg);
                 datOut_crcErr <= 1;
             end
-            datOut_state <= 10;
+            datOut_state <= 11;
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        10: begin
-            if (datIn_reg[0]) begin
+        11: begin
+            if (datIn_reg[4]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
+                // `Finish;
                 
                 if (datOutFIFO_readReady) begin
                     datOut_state <= 4;
@@ -456,7 +459,7 @@ module SDController #(
         
         
         
-        
+        // TODO: move this above Cmd state machine, so that the Cmd assignments (such as setting resp_state) take precedence
         // // ====================
         // // DatIn State Machine
         // // ====================

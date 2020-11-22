@@ -422,7 +422,14 @@ module SDCardSim(
                         wait(sd_clk);
                         wait(!sd_clk);
                     end
-                    
+
+                    // Drive 1
+                    datOut[0] = 1'b1;
+
+                    wait(sd_clk);
+                    wait(!sd_clk);
+
+                    // Let go
                     datOut[0] = 1'bz;
                 end
                 
@@ -618,21 +625,20 @@ module SDCardSim(
                     // Send busy signal for a random number of cycles
                     count = $urandom%16;
                     if (count) begin
-                        // Start bit
                         datOut = 4'b0000;
-                        wait(sd_clk);
-                        wait(!sd_clk);
-                        
                         for (i=0; i<count; i++) begin
                             wait(sd_clk);
                             wait(!sd_clk);
                         end
-                        
-                        // End bit
-                        datOut = 4'b0001;
-                        wait(sd_clk);
-                        wait(!sd_clk);
                     end
+                    
+                    datOut = 4'b0001;
+                    wait(sd_clk);
+                    wait(!sd_clk);
+                    
+                    datOut = 4'b0001;
+                    wait(sd_clk);
+                    wait(!sd_clk);
                     
                     datOut = 4'bzzzz;
                 end
