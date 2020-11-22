@@ -123,6 +123,8 @@ module Top(
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
+    reg         sd_datOut_start = 0;
+    wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
     wire        sd_datOutWrite_clk;
@@ -158,6 +160,8 @@ module Top(
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
         
+        .datOut_start(sd_datOut_start),
+        .datOut_ready(sd_datOut_ready),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
         
@@ -189,26 +193,63 @@ module Top(
     // ====================
     // DatOut Writer State Machine
     // ====================
+    // reg sdDatOut_writeTrigger = 0;
+    // `TogglePulse(sdDatOut_ready, sd_datOut_ready, posedge, clk);
+    // reg[1:0] sdDatOut_state = 0;
+    // always @(posedge clk) begin
+    //     case (sdDatOut_state)
+    //     0: begin
+    //         if (sdDatOut_trigger) begin
+    //             // Start SDController DatOut
+    //             sd_datOut_start <= !sd_datOut_start;
+    //             sdDatOut_state <= 1;
+    //         end
+    //     end
+    //
+    //     1: begin
+    //         // Wait for SDController DatOut to be ready
+    //         if (sdDatOut_ready) begin
+    //             sdDatOut_writeTrigger <= !sdDatOut_writeTrigger;
+    //             sdDatOut_state <= 0;
+    //         end
+    //     end
+    //     endcase
+    // end
+    
     reg ctrl_sdDatOutTrigger = 0;
     `TogglePulse(w_sdDatOutTrigger, ctrl_sdDatOutTrigger, posedge, sd_datOutWrite_clk);
-    
+    `TogglePulse(w_sdDatOutReady, sd_datOut_ready, posedge, sd_datOutWrite_clk);
     reg[1:0] w_state = 0;
     reg[22:0] w_counter = 0;
     always @(posedge sd_datOutWrite_clk) begin
+        sd_datOutWrite_trigger <= 0;
+        
         case (w_state)
         0: begin
-            sd_datOutWrite_data <= 0;
-            // sd_datOutWrite_data <= 16'hFFFF;
-            sd_datOutWrite_trigger <= 0;
-            w_counter <= 0;
             if (w_sdDatOutTrigger) begin
-                sd_datOutWrite_trigger <= 1;
+                $display("w_state 0: triggered");
+                // Start SDController DatOut
+                sd_datOut_start <= !sd_datOut_start;
                 w_state <= 1;
             end
         end
         
         1: begin
-            if (sd_datOutWrite_ready) begin
+            $display("w_state 1 (sd_datOut_ready: %b)", sd_datOut_ready);
+            sd_datOutWrite_data <= 0;
+            // sd_datOutWrite_data <= 16'hFFFF;
+            w_counter <= 0;
+            
+            // Wait for SDController DatOut to be ready
+            if (w_sdDatOutReady) begin
+                $display("w_state 1: triggered");
+                w_state <= 2;
+            end
+        end
+        
+        2: begin
+            sd_datOutWrite_trigger <= 1;
+            if (sd_datOutWrite_ready && sd_datOutWrite_trigger) begin
                 w_counter <= w_counter+1;
                 sd_datOutWrite_data <= sd_datOutWrite_data+1;
             end
@@ -223,6 +264,8 @@ module Top(
         end
         endcase
     end
+    
+    
     
     
     
@@ -408,8 +451,8 @@ module Testbench();
     tri1        ctrl_do;
     
     wire        sd_clk;
-    tri1        sd_cmd;
-    tri1[3:0]   sd_dat;
+    wire        sd_cmd;
+    wire[3:0]   sd_dat;
     wire[3:0]   led;
     
     Top Top(.*);
@@ -817,7 +860,7 @@ module Testbench();
         // TestNoOp();
         // TestEcho();
         // TestSDCMD8();
-        // TestSDDatOut();
+        TestSDDatOut();
         // TestSDDatIn();
         // TestSDCMD2();
         // TestSDRespReset();
