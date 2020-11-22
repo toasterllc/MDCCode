@@ -862,15 +862,25 @@ module Testbench();
         SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
         // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
         
-        // TestNoOp();
-        // TestEcho();
-        // TestSDCMD0();
-        // TestSDCMD8();
-        // TestSDDatOut();
-        // TestSDDatOut();
-        // TestSDCMD2();
-        TestSDCMD2();
-        TestSDDatIn();
+        TestNoOp();
+        TestEcho();
+        
+        forever begin
+            i = $urandom%7;
+            case (i)
+            0: TestSDCMD0();
+            1: TestSDCMD8();
+            2: TestSDDatOut();
+            3: TestSDDatOut();
+            4: TestSDCMD2();
+            5: TestSDCMD2();
+            6: TestSDDatIn();
+            endcase
+        end
+        
+        
+        
+        
         // TestSDRespReset();
         // TestSDDatOutReset();
         // TestSDDatInReset();

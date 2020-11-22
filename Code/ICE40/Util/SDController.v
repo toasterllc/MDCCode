@@ -310,7 +310,14 @@ module SDController #(
             if (resp_crc === cmdresp_shiftReg[1]) begin
                 $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", resp_crc, cmdresp_shiftReg[1]);
             end else begin
-                $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", resp_crc, cmdresp_shiftReg[1]);
+`ifdef SIM
+                if (cmd_sdCmd[45:40] !== 6'd2) begin
+                    $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", resp_crc, cmdresp_shiftReg[1]);
+                end else begin
+                    $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b); ignoring because it's a CMD2 response",
+                        resp_crc, cmdresp_shiftReg[1]);
+                end
+`endif
                 resp_crcErr <= 1;
             end
             
