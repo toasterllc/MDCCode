@@ -153,8 +153,7 @@ module SDController #(
     `TogglePulse(datOut_startPulse, datOut_start, posedge, clk_int);
     `TogglePulse(datOut_fifoRstDone, datOutFIFO_rstDone, posedge, clk_int);
     
-    reg[4:0] datIn_state = 0;
-    reg datIn_trigger = 0;
+    reg[2:0] datIn_state = 0;
     wire[3:0] datIn;
     reg[19:0] datIn_reg = 0;
     reg datIn_crcRst = 0;
@@ -163,6 +162,7 @@ module SDController #(
     reg[6:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
     
+    // TODO: clean up CRC rst/en logic for the 4 state machines
     always @(posedge clk_int) begin
         cmd_counter <= cmd_counter-1;
         // `cmd_active` is 3 bits to track whether `cmd_in` is
@@ -196,7 +196,6 @@ module SDController #(
         // between output and input.
         datOut_active <= (datOut_active<<1)|1'b0;
         
-        datIn_state <= datIn_state<<1|datIn_state[$size(datIn_state)-1];
         datIn_reg <= (datIn_reg<<4)|(datOut_active[2] ? 4'b1111 : {datIn[3], datIn[2], datIn[1], datIn[0]});
         datIn_counter <= datIn_counter-1;
         datIn_crcCounter <= datIn_crcCounter-1;
@@ -460,91 +459,95 @@ module SDController #(
         
         
         // TODO: move this above Cmd state machine, so that the Cmd assignments (such as setting resp_state) take precedence
-        // // ====================
-        // // DatIn State Machine
-        // // ====================
-        // if (datIn_state[0]) begin
-        //     datIn_counter <= 127;
-        //     datIn_crcEn <= 0;
-        //
-        //     if (datIn_trigger && !datIn_reg[0]) begin
-        //         $display("[SD-CTRL:DATIN] Triggered");
-        //         datIn_trigger <= 0;
-        //         status_datInCRCErr <= 0;
-        //         datIn_crcEn <= 1;
-        //
-        //     end else begin
-        //         // Stay in this state
-        //         datIn_state[1:0] <= datIn_state[1:0];
-        //     end
-        // end
-        //
-        // if (datIn_state[1]) begin
-        //     // Stash the access mode from the DatIn response.
-        //     // (This assumes we're receiving a CMD6 response.)
-        //     if (datIn_counter === 7'd94) begin
-        //         status_datInCMD6AccessMode <= datIn_reg[3:0];
-        //     end
-        //
-        //     if (!datIn_counter) begin
-        //         datIn_crcEn <= 0;
-        //     end
-        //
-        //     // Stay in this state until datIn_counter==0
-        //     if (datIn_counter) begin
-        //         datIn_state[2:1] <= datIn_state[2:1];
-        //     end
-        // end
-        //
-        // if (datIn_state[2]) begin
-        //     datIn_crcCounter <= 15;
-        // end
-        //
-        // if (datIn_state[3]) begin
-        //     if (datIn_crc[3] === datIn_reg[7]) begin
-        //         $display("[SD-CTRL:DATIN] DAT3 CRC valid ✅");
-        //     end else begin
-        //         $display("[SD-CTRL:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
-        //         status_datInCRCErr <= 1;
-        //     end
-        //
-        //     if (datIn_crc[2] === datIn_reg[6]) begin
-        //         $display("[SD-CTRL:DATIN] DAT2 CRC valid ✅");
-        //     end else begin
-        //         $display("[SD-CTRL:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
-        //         status_datInCRCErr <= 1;
-        //     end
-        //
-        //     if (datIn_crc[1] === datIn_reg[5]) begin
-        //         $display("[SD-CTRL:DATIN] DAT1 CRC valid ✅");
-        //     end else begin
-        //         $display("[SD-CTRL:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
-        //         status_datInCRCErr <= 1;
-        //     end
-        //
-        //     if (datIn_crc[0] === datIn_reg[4]) begin
-        //         $display("[SD-CTRL:DATIN] DAT0 CRC valid ✅");
-        //     end else begin
-        //         $display("[SD-CTRL:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
-        //         status_datInCRCErr <= 1;
-        //     end
-        //
-        //     if (datIn_crcCounter) begin
-        //         // Stay in this state
-        //         datIn_state[4:3] <= datIn_state[4:3];
-        //     end
-        // end
-        //
-        // if (datIn_state[4]) begin
-        //     if (datIn_reg[7:4] === 4'b1111) begin
-        //         $display("[SD-CTRL:DATIN] Good end bit ✅");
-        //     end else begin
-        //         $display("[SD-CTRL:DATIN] Bad end bit ❌");
-        //         status_datInCRCErr <= 1;
-        //     end
-        //     // Signal that the DatIn is complete
-        //     status_datInDone <= !status_datInDone;
-        // end
+        // ====================
+        // DatIn State Machine
+        // ====================
+        case (datIn_state)
+        0: begin
+        end
+        
+        1: begin
+            datIn_counter <= 127;
+            datIn_crcRst <= 1;
+            datIn_crcEn <= 0;
+            datIn_crcErr <= 0;
+            
+            if (!datIn_reg[0]) begin
+                $display("[SD-CTRL:DATIN] Triggered");
+                datIn_crcRst <= 0;
+                datIn_crcEn <= 1;
+                datIn_state <= 2;
+            end
+        end
+
+        2: begin
+            // Stash the access mode from the DatIn response.
+            // (This assumes we're receiving a CMD6 response.)
+            if (datIn_counter === 7'd94) begin
+                datIn_cmd6AccessMode <= datIn_reg[3:0];
+            end
+            
+            // if (!datIn_counter) begin
+            //     datIn_crcEn <= 0;
+            // end
+            
+            // Stay in this state until datIn_counter==0
+            if (!datIn_counter) begin
+                datIn_state <= 3;
+            end
+        end
+        
+        3: begin
+            datIn_crcCounter <= 15;
+            datIn_state <= 4;
+        end
+        
+        4: begin
+            if (datIn_crc[3] === datIn_reg[7]) begin
+                $display("[SD-CTRL:DATIN] DAT3 CRC valid ✅");
+            end else begin
+                $display("[SD-CTRL:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
+                datIn_crcErr <= 1;
+            end
+            
+            if (datIn_crc[2] === datIn_reg[6]) begin
+                $display("[SD-CTRL:DATIN] DAT2 CRC valid ✅");
+            end else begin
+                $display("[SD-CTRL:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
+                datIn_crcErr <= 1;
+            end
+            
+            if (datIn_crc[1] === datIn_reg[5]) begin
+                $display("[SD-CTRL:DATIN] DAT1 CRC valid ✅");
+            end else begin
+                $display("[SD-CTRL:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
+                datIn_crcErr <= 1;
+            end
+            
+            if (datIn_crc[0] === datIn_reg[4]) begin
+                $display("[SD-CTRL:DATIN] DAT0 CRC valid ✅");
+            end else begin
+                $display("[SD-CTRL:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
+                datIn_crcErr <= 1;
+            end
+            
+            if (!datIn_crcCounter) begin
+                datIn_state <= 5;
+            end
+        end
+        
+        5: begin
+            if (datIn_reg[7:4] === 4'b1111) begin
+                $display("[SD-CTRL:DATIN] Good end bit ✅");
+            end else begin
+                $display("[SD-CTRL:DATIN] Bad end bit ❌");
+                datIn_crcErr <= 1;
+            end
+            // Signal that the DatIn is complete
+            datIn_done <= !datIn_done;
+            datIn_state <= 0;
+        end
+        endcase
     end
     
     // ====================

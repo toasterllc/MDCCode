@@ -489,6 +489,7 @@ module Testbench();
     localparam CMD7     = 6'd7;     // SELECT_CARD/DESELECT_CARD
     localparam CMD8     = 6'd8;     // SEND_BIT_IF_COND
     localparam CMD11    = 6'd11;    // VOLTAGE_SWITCH
+    localparam CMD12    = 6'd12;    // STOP_TRANSMISSION
     localparam CMD25    = 6'd25;    // WRITE_MULTIPLE_BLOCK
     localparam CMD41    = 6'd41;    // SD_SEND_BIT_OP_COND
     localparam CMD55    = 6'd55;    // APP_CMD
@@ -635,13 +636,13 @@ module Testbench();
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
         SendSDCmdResp(CMD55, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
         SendSDCmdResp(ACMD23, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b1);
-
+        
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
-
+        
         // Clock out data on DAT lines
         SendMsg(`Msg_Type_SDDatOut, 0);
-
+        
         // Wait until we're done clocking out data on DAT lines
         $display("[EXT] Waiting while data is written...");
         do begin
@@ -649,7 +650,7 @@ module Testbench();
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
         end while(!resp[`Resp_Arg_SDDatOutDone_Bits]);
         $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDResp_Bits]);
-
+        
         // Check CRC status
         if (resp[`Resp_Arg_SDDatOutCRCErr_Bits] === 1'b0) begin
             $display("[EXT] DatOut CRC OK ✅");
@@ -657,6 +658,9 @@ module Testbench();
             $display("[EXT] DatOut CRC bad ❌");
             `Finish;
         end
+        
+        // Stop transmission
+        SendSDCmdResp(CMD12, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
     end endtask
     
     task TestSDDatIn; begin
@@ -857,13 +861,14 @@ module Testbench();
         SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
         // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
         
-        // TestNoOp();
-        // TestEcho();
-        // TestSDCMD8();
+        TestNoOp();
+        TestEcho();
+        TestSDCMD8();
         TestSDDatOut();
         TestSDDatOut();
-        // TestSDDatIn();
-        // TestSDCMD2();
+        TestSDCMD2();
+        TestSDCMD2();
+        TestSDDatIn();
         // TestSDRespReset();
         // TestSDDatOutReset();
         // TestSDDatInReset();
