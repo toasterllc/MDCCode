@@ -214,7 +214,6 @@ module SDController #(
             resp_state <= 0;
             datIn_state <= 0;
             cmd_crcRst <= 1;
-            cmd_crcEn <= 0;
             cmd_crcOutEn <= 0;
             cmd_state <= 2;
         end
@@ -238,6 +237,7 @@ module SDController #(
         
         4: begin
             cmd_active[0] <= 1;
+            cmd_crcEn <= 0;
             cmd_counter <= 5;
             cmd_state <= 5;
         end
@@ -275,7 +275,6 @@ module SDController #(
         
         1: begin
             resp_crcRst <= 1;
-            resp_crcEn <= 0;
             resp_crcErr <= 0;
             // Wait for response to start
             if (!resp_staged) begin
@@ -327,6 +326,7 @@ module SDController #(
         endcase
         
         
+        // TODO: make all XXX_crcOutEn reset by default
         
         
         // ====================
@@ -340,8 +340,8 @@ module SDController #(
             $display("[SD-CTRL:DATOUT] Write session starting");
             // Reset the FIFO
             datOutFIFO_rst <= !datOutFIFO_rst;
-            // Reset CRC error state
             datOut_crcErr <= 0;
+            datOut_crcOutEn <= 0;
             datOut_state <= 2;
         end
         
@@ -366,7 +366,6 @@ module SDController #(
             datOut_counter <= 0;
             datOut_ending <= 0;
             datOut_crcRst <= 1;
-            datOut_crcEn <= 0;
             datOut_startBit <= 1;
             datOut_state <= 5;
         end
@@ -398,8 +397,8 @@ module SDController #(
         // Wait for CRC output to finish
         7: begin
             datOut_active[0] <= 1;
+            datOut_crcEn <= 0;
             if (!datOut_crcCounter) begin
-                datOut_crcEn <= 0;
                 datOut_crcOutEn <= 0;
                 datOut_endBit <= 1;
                 datOut_state <= 8;
@@ -456,6 +455,8 @@ module SDController #(
             datOut_state <= 1;
         end
         
+        
+        // TODO: fix which cycle we disable `XXX_crcEn <= 0` -- follow what we used to do before all our recent changes
         
         
         // TODO: move this above Cmd state machine, so that the Cmd assignments (such as setting resp_state) take precedence

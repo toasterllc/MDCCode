@@ -605,15 +605,16 @@ module Testbench();
         $display("Got response: %h", resp);
     end endtask
     
+    task TestSDCMD0; begin
+        SendSDCmdResp(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
+    end endtask
+    
     task TestSDCMD8; begin
         // ====================
         // Test SD CMD8 (SEND_IF_COND)
         // ====================
         reg[`Resp_Arg_SDResp_Len-1:0] sdResp;
         
-        // Send SD CMD0
-        SendSDCmdResp(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
-
         // Send SD CMD8
         SendSDCmdResp(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
         if (resp[`Resp_Arg_SDRespCRCErr_Bits] !== 1'b0) begin
@@ -863,6 +864,7 @@ module Testbench();
         
         TestNoOp();
         TestEcho();
+        TestSDCMD0();
         TestSDCMD8();
         TestSDDatOut();
         TestSDDatOut();
