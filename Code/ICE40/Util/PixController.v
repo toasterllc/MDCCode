@@ -7,14 +7,15 @@
 module PixController #(
     parameter ClkFreq = 24_000_000,
     parameter ImageSize = 256*256,
-    localparam CmdCapture = 1'b0,
-    localparam CmdReadout = 1'b1
+    localparam CmdNone      = 2'b00,
+    localparam CmdCapture   = 2'b01,
+    localparam CmdReadout   = 2'b10,
+    localparam CmdStop      = 2'b11
 )(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire          cmd_trigger,
-    input wire          cmd,
+    input wire[1:0]     cmd,
     input wire[2:0]     cmd_ramBlock,
     
     // Capture port
@@ -49,9 +50,9 @@ module PixController #(
     // RAMController
     // ====================
     
-    reg         ramctrl_cmd_trigger = 0;
+    // reg         ramctrl_cmd_trigger = 0;
     reg[2:0]    ramctrl_cmd_block = 0;
-    reg         ramctrl_cmd_write = 0;
+    reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
     reg         ramctrl_write_trigger = 0;
     reg[15:0]   ramctrl_write_data = 0;
@@ -67,9 +68,9 @@ module PixController #(
     ) RAMController (
         .clk(clk),
         
-        .cmd_trigger(ramctrl_cmd_trigger),
+        // .cmd_trigger(ramctrl_cmd_trigger),
         .cmd_block(ramctrl_cmd_block),
-        .cmd_write(ramctrl_cmd_write),
+        .cmd(ramctrl_cmd),
         
         .write_ready(ramctrl_write_ready),
         .write_trigger(ramctrl_write_trigger),
@@ -234,7 +235,7 @@ module PixController #(
     localparam Ctrl_State_Count     = 5;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
-        ramctrl_cmd_trigger <= 0;
+        ramctrl_cmd <= RAMController.CmdNone;
         ramctrl_write_trigger <= 0;
         capture_done <= 0;
         
@@ -243,11 +244,11 @@ module PixController #(
         end
         
         Ctrl_State_Capture: begin
-            $display("[PIXCTRL:Capture] Start");
-            // Supply RAM command
+            $display("[PIXCTRL:Capture] Triggered");
+            // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd_write <= 1;
-            ramctrl_cmd_trigger <= 1;
+            ramctrl_cmd <= RAMController.CmdWrite;
+            // ramctrl_cmd_trigger <= 1;
             // Start the FIFO data flow
             ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
             ctrl_state <= Ctrl_State_Capture+1;
@@ -290,17 +291,30 @@ module PixController #(
         end
         
         Ctrl_State_Readout: begin
-            $display("[PIXCTRL:Readout] Start");
-            // Supply RAM command
+            $display("[PIXCTRL:Readout] Triggered");
+            // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd_write <= 0;
-            ramctrl_cmd_trigger <= 1;
+            ramctrl_cmd <= RAMController.CmdRead;
+            // ramctrl_cmd_trigger <= 1;
+            ctrl_state <= Ctrl_State_Idle;
+        end
+        
+        Ctrl_State_Stop: begin
+            $display("[PIXCTRL:Stop] Triggered");
+            // Supply 'Stop' RAM command
+            ramctrl_cmd_block <= cmd_ramBlock;
+            ramctrl_cmd <= RAMController.CmdStop;
+            // ramctrl_cmd_trigger <= 1;
             ctrl_state <= Ctrl_State_Idle;
         end
         endcase
         
-        if (cmd_trigger) begin
-            ctrl_state <= (cmd===CmdCapture ? Ctrl_State_Capture : Ctrl_State_Readout);
+        if (cmd !== CmdNone) begin
+            case (cmd)
+            CmdCapture:     ctrl_state <= Ctrl_State_Capture;
+            CmdReadout:     ctrl_state <= Ctrl_State_Readout;
+            CmdStop:        ctrl_state <= Ctrl_State_Stop;
+            endcase
         end
     end
     

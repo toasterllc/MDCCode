@@ -8,6 +8,11 @@ module RAMController #(
     parameter RAMClkDelay           = 0,
     parameter BlockSize             = 16,
     
+    localparam CmdNone              = 2'b00,
+    localparam CmdWrite             = 2'b01,
+    localparam CmdRead              = 2'b10,
+    localparam CmdStop              = 2'b11,
+    
     localparam WordWidth            = 16,
     localparam BankWidth            = 2,
     localparam RowWidth             = 13,
@@ -29,9 +34,9 @@ module RAMController #(
     
     // TODO: consider re-ordering: cmd_block, cmd_write, cmd_trigger
     // Command port (clock domain: `clk`)
-    input wire                  cmd_trigger,    // Start the command
+    input wire[1:0]             cmd,            // CmdWrite/CmdRead/CmdStop
+    // input wire                  cmd_trigger,    // Start the command
     input wire[BlockWidth-1:0]  cmd_block,      // Block index
-    input wire                  cmd_write,      // Read (0) or write (1)
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port (clock domain: `clk`)
@@ -732,7 +737,7 @@ module RAMController #(
         end
         
         // Handle new commands
-        if (cmd_trigger) begin
+        if (cmd !== CmdNone) begin
             // Override our _ready/_done flags if we're starting a new command on the next cycle
             write_ready <= 0;
             write_done <= 0;
@@ -741,11 +746,21 @@ module RAMController #(
             
             data_addr <= AddrFromBlock(cmd_block);
             data_counter <= BlockSize;
-            data_restartState <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
-            // If `data_state` is _Idle, then we can jump right to _WriteStart/_ReadStart.
+            
+            case (cmd)
+            CmdWrite:   data_restartState <= Data_State_WriteStart;
+            CmdRead:    data_restartState <= Data_State_ReadStart;
+            CmdStop:    data_restartState <= Data_State_Idle;
+            endcase
+            
+            // If `data_state` is _Idle, then we can jump right to _WriteStart/_ReadStart/_Idle.
             // Otherwise, we need to delay since we don't know what state we came from.
             if (data_state === Data_State_Idle) begin
-                data_state <= (cmd_write ? Data_State_WriteStart : Data_State_ReadStart);
+                case (cmd)
+                CmdWrite:   data_state <= Data_State_WriteStart;
+                CmdRead:    data_state <= Data_State_ReadStart;
+                CmdStop:    data_state <= Data_State_Idle;
+                endcase
             
             end else begin
                 data_delayCounter <= Refresh_StartDelay;
