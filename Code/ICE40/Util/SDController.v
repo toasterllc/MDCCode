@@ -218,7 +218,7 @@ module SDController #(
         end
         
         2: begin
-            cmd_counter <= 38;
+            cmd_counter <= 37;
             cmd_active[0] <= 1;
             cmd_crcRst <= 0;
             cmd_crcEn <= 1;
@@ -228,22 +228,19 @@ module SDController #(
         
         3: begin
             cmd_active[0] <= 1;
-            if (!cmd_counter) begin
-                cmd_crcOutEn <= 1;
-                cmd_state <= 4;
-            end
+            if (!cmd_counter) cmd_state <= 4;
         end
         
         4: begin
             cmd_active[0] <= 1;
             cmd_crcOutEn <= 1;
-            cmd_crcEn <= 0;
-            cmd_counter <= 5;
+            cmd_counter <= 6;
             cmd_state <= 5;
         end
         
         5: begin
             cmd_active[0] <= 1;
+            cmd_crcEn <= 0;
             if (cmd_counter) cmd_crcOutEn <= 1;
             else cmd_state <= 6;
         end
