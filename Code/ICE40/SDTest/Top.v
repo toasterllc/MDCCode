@@ -111,9 +111,9 @@ module Top(
     // ====================
     // SDController
     // ====================
-    reg         sd_clk_slowEn = 0;
-    reg         sd_clk_fastEn = 0;
-    reg[3:0]    sd_clk_delay = 0;
+    reg         sd_clksrc_slow = 0;
+    reg         sd_clksrc_fast = 0;
+    reg[3:0]    sd_clksrc_delay = 0;
     reg         sd_cmd_trigger = 0;
     reg[47:0]   sd_cmd_sdCmd = 0;
     reg         sd_cmd_respType_48 = 0;
@@ -145,9 +145,9 @@ module Top(
         .sdcard_cmd(sd_cmd),
         .sdcard_dat(sd_dat),
         
-        .clk_slowEn(sd_clk_slowEn),
-        .clk_fastEn(sd_clk_fastEn),
-        .clk_delay(sd_clk_delay),
+        .clksrc_slow(sd_clksrc_slow),
+        .clksrc_fast(sd_clksrc_fast),
+        .clksrc_delay(sd_clksrc_delay),
         
         .cmd_trigger(sd_cmd_trigger),
         .cmd_sdCmd(sd_cmd_sdCmd),
@@ -333,9 +333,9 @@ module Top(
                     
                     // We don't need to synchronize `sd_ctrl_clkDelay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
-                    sd_clk_delay <= ctrl_msgArg[`Msg_Arg_SDClkDelay_Bits];
-                    sd_clk_fastEn <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Bits];
-                    sd_clk_slowEn <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Bits];
+                    sd_clksrc_delay <= ctrl_msgArg[`Msg_Arg_SDClkDelay_Bits];
+                    sd_clksrc_fast <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Bits];
+                    sd_clksrc_slow <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Bits];
                 end
                 
                 // Clock out SD command

@@ -19,10 +19,10 @@ module SDController #(
     inout wire      sdcard_cmd,
     inout wire[3:0] sdcard_dat,
     
-    // Control port (clock domain: async)
-    input wire                      clk_slowEn,
-    input wire                      clk_fastEn,
-    input wire[ClkDelayWidth-1:0]   clk_delay,
+    // Clock source port (clock domain: async)
+    input wire                      clksrc_slow,
+    input wire                      clksrc_fast,
+    input wire[ClkDelayWidth-1:0]   clksrc_delay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger, // Toggle
@@ -77,20 +77,20 @@ module SDController #(
     // ====================
     // clk_int
     // ====================
-    `Sync(clk_slowEnSync, clk_slowEn, negedge, clk_slow);
-    `Sync(clk_fastEnSync, clk_fastEn, negedge, clk_fast);
-    wire clk_int = (clk_slowEnSync ? clk_slow : (clk_fastEnSync ? clk_fast : 0));
+    `Sync(clk_slow_en, clksrc_slow, negedge, clk_slow);
+    `Sync(clk_fast_en, clksrc_fast, negedge, clk_fast);
+    wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
     
     // ====================
-    // sdcard_clk / clk_delay
+    // sdcard_clk / clksrc_delay
     //   Delay `sdcard_clk` relative to `clk_int` to correct the phase from the SD card's perspective
-    //   `clk_delay` should only be set while `clk_int` is stopped
+    //   `clksrc_delay` should only be set while `clk_int` is stopped
     // ====================
     VariableDelay #(
         .Count(1<<ClkDelayWidth)
     ) VariableDelay (
         .in(clk_int),
-        .sel(clk_delay),
+        .sel(clksrc_delay),
         .out(sdcard_clk)
     );
     
@@ -248,6 +248,7 @@ module SDController #(
 `ifdef SIM
                 if (cmd_sdCmd[45:40] !== 6'd2) begin
                     $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", resp_crc, cmdresp_shiftReg[1]);
+                    `Finish;
                 end else begin
                     $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b); ignoring because it's a CMD2 response",
                         resp_crc, cmdresp_shiftReg[1]);
@@ -267,6 +268,7 @@ module SDController #(
                 $display("[SD-CTRL:RESP] Response: Good end bit ✅");
             end else begin
                 $display("[SD-CTRL:RESP] Response: Bad end bit ❌");
+                `Finish;
                 resp_crcErr <= 1;
             end
             
@@ -372,6 +374,7 @@ module SDController #(
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status valid ✅");
             end else begin
                 $display("[SD-CTRL:DATOUT] DatOut: CRC status invalid: %b ❌", datOut_crcStatusOKReg);
+                `Finish;
                 datOut_crcErr <= 1;
             end
             datOut_state <= 11;
@@ -446,6 +449,7 @@ module SDController #(
                 $display("[SD-CTRL:DATIN] DAT3 CRC valid ✅");
             end else begin
                 $display("[SD-CTRL:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
+                `Finish;
                 datIn_crcErr <= 1;
             end
             
@@ -453,6 +457,7 @@ module SDController #(
                 $display("[SD-CTRL:DATIN] DAT2 CRC valid ✅");
             end else begin
                 $display("[SD-CTRL:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
+                `Finish;
                 datIn_crcErr <= 1;
             end
             
@@ -460,6 +465,7 @@ module SDController #(
                 $display("[SD-CTRL:DATIN] DAT1 CRC valid ✅");
             end else begin
                 $display("[SD-CTRL:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
+                `Finish;
                 datIn_crcErr <= 1;
             end
             
@@ -467,6 +473,7 @@ module SDController #(
                 $display("[SD-CTRL:DATIN] DAT0 CRC valid ✅");
             end else begin
                 $display("[SD-CTRL:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
+                `Finish;
                 datIn_crcErr <= 1;
             end
             
@@ -480,6 +487,7 @@ module SDController #(
                 $display("[SD-CTRL:DATIN] Good end bit ✅");
             end else begin
                 $display("[SD-CTRL:DATIN] Bad end bit ❌");
+                `Finish;
                 datIn_crcErr <= 1;
             end
             // Signal that the DatIn is complete
