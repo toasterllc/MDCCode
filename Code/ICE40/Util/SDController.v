@@ -43,7 +43,6 @@ module SDController #(
     output reg datOut_done = 0,     // Toggle
     output reg datOut_crcErr = 0,
     
-    // TODO: consider re-ordering: datOut_writeClk, datOut_writeData, datOut_writeTrigger, datOut_writeReady
     // DatOutWrite port (clock domain: `datOutWrite_clk`)
     input wire          datOutWrite_clk,
     output wire         datOutWrite_ready,
@@ -209,68 +208,6 @@ module SDController #(
         status_dat0Idle <= datIn_reg[0];
         
         // ====================
-        // CmdOut State Machine
-        // ====================
-        case (cmd_state)
-        0: begin
-        end
-        
-        1: begin
-            $display("[SD-CTRL:CMD] Triggered");
-            // Reset Resp/DatIn state machines
-            resp_state <= 0;
-            datIn_state <= 0;
-            cmd_crcRst <= 1;
-            cmd_state <= 2;
-        end
-        
-        2: begin
-            cmd_counter <= 37;
-            cmd_active[0] <= 1;
-            cmd_crcEn <= 1;
-            cmdresp_shiftReg <= cmd_sdCmd;
-            cmd_state <= 3;
-        end
-        
-        3: begin
-            cmd_active[0] <= 1;
-            cmd_crcEn <= 1;
-            if (!cmd_counter) cmd_state <= 4;
-        end
-        
-        // Start CRC output
-        4: begin
-            cmd_active[0] <= 1;
-            cmd_crcEn <= 1;
-            cmd_crcOutEn <= 1;
-            cmd_counter <= 6;
-            cmd_state <= 5;
-        end
-        
-        // Wait until CRC output is finished
-        5: begin
-            cmd_active[0] <= 1;
-            if (cmd_counter) cmd_crcOutEn <= 1;
-            else cmd_state <= 6;
-        end
-        
-        6: begin
-            cmd_active[0] <= 1;
-            $display("[SD-CTRL:CMD] Done");
-            cmd_done <= !cmd_done;
-            if (cmd_respType_48 || cmd_respType_136) resp_state <= 1;
-            if (cmd_datInType_512) datIn_state <= 1;
-            cmd_state <= 0;
-        end
-        endcase
-        
-        if (cmd_triggerPulse) begin
-            cmd_state <= 1;
-        end
-        
-        
-        // TODO: move this above Cmd state machine, so that the Cmd assignments (such as setting resp_state) take precedence
-        // ====================
         // Resp State Machine
         // ====================
         case (resp_state)
@@ -338,7 +275,6 @@ module SDController #(
             resp_state <= 0;
         end
         endcase
-        
         
         // ====================
         // DatOut State Machine
@@ -465,8 +401,6 @@ module SDController #(
             datOut_state <= 1;
         end
         
-        
-        // TODO: move this above Cmd state machine, so that the Cmd assignments (such as setting resp_state) take precedence
         // ====================
         // DatIn State Machine
         // ====================
@@ -553,6 +487,68 @@ module SDController #(
             datIn_state <= 0;
         end
         endcase
+        
+        // ====================
+        // CmdOut State Machine
+        //   This needs to be below the Resp/DatOut/DatIn state machines, so that the Cmd
+        //   assignments take precedence (such as when assigning resp_state/datIn_state.)
+        // ====================
+        case (cmd_state)
+        0: begin
+        end
+        
+        1: begin
+            $display("[SD-CTRL:CMD] Triggered");
+            // Reset Resp/DatIn state machines
+            resp_state <= 0;
+            datIn_state <= 0;
+            cmd_crcRst <= 1;
+            cmd_state <= 2;
+        end
+        
+        2: begin
+            cmd_counter <= 37;
+            cmd_active[0] <= 1;
+            cmd_crcEn <= 1;
+            cmdresp_shiftReg <= cmd_sdCmd;
+            cmd_state <= 3;
+        end
+        
+        3: begin
+            cmd_active[0] <= 1;
+            cmd_crcEn <= 1;
+            if (!cmd_counter) cmd_state <= 4;
+        end
+        
+        // Start CRC output
+        4: begin
+            cmd_active[0] <= 1;
+            cmd_crcEn <= 1;
+            cmd_crcOutEn <= 1;
+            cmd_counter <= 6;
+            cmd_state <= 5;
+        end
+        
+        // Wait until CRC output is finished
+        5: begin
+            cmd_active[0] <= 1;
+            if (cmd_counter) cmd_crcOutEn <= 1;
+            else cmd_state <= 6;
+        end
+        
+        6: begin
+            cmd_active[0] <= 1;
+            $display("[SD-CTRL:CMD] Done");
+            cmd_done <= !cmd_done;
+            if (cmd_respType_48 || cmd_respType_136) resp_state <= 1;
+            if (cmd_datInType_512) datIn_state <= 1;
+            cmd_state <= 0;
+        end
+        endcase
+        
+        if (cmd_triggerPulse) begin
+            cmd_state <= 1;
+        end
     end
     
     // ====================

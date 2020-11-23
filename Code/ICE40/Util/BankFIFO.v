@@ -12,7 +12,6 @@ module BankFIFO #(
     output reg          rst_done = 0, // Toggle
     
     // Write port (clock domain: `w_clk`)
-    // TODO: consider re-ordering: w_clk, w_data, w_trigger, w_ready, w_bank
     input wire          w_clk,
     output wire         w_ready,
     input wire          w_trigger,
@@ -20,7 +19,6 @@ module BankFIFO #(
     output wire         w_bank,
     
     // Read port (clock domain: `r_clk`)
-    // TODO: consider re-ordering: r_clk, r_data, r_trigger, r_ready, r_bank
     input wire          r_clk,
     output wire         r_ready,
     input wire          r_trigger,

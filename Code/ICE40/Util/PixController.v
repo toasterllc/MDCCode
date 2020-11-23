@@ -21,7 +21,6 @@ module PixController #(
     // Capture port
     output reg          capture_done = 0,
     
-    // TODO: consider re-ordering: readout_data, readout_trigger, readout_ready
     // Readout port (clock domain: `clk`)
     output wire         readout_ready,
     input wire          readout_trigger,
