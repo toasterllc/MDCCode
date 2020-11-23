@@ -70,7 +70,6 @@
 `define     Resp_Arg_SDDat0Idle_Bits                    4:4
 `define     Resp_Arg_SDFiller_Bits                      3:0
 
-`define Msg_Type_SDReset                                `Msg_Type_Len'h05
 `define Msg_Type_NoOp                                   `Msg_Type_Len'hFF
 
 
@@ -226,28 +225,26 @@ module Top(
         
         case (w_state)
         0: begin
-            if (w_sdDatOutTrigger) begin
-                $display("w_state 0: triggered");
-                // Start SDController DatOut
-                sd_datOut_start <= !sd_datOut_start;
-                w_state <= 1;
-            end
         end
         
         1: begin
-            $display("w_state 1 (sd_datOut_ready: %b)", sd_datOut_ready);
+            // Start SDController DatOut
+            sd_datOut_start <= !sd_datOut_start;
+            w_state <= 2;
+        end
+        
+        2: begin
             sd_datOutWrite_data <= 0;
             // sd_datOutWrite_data <= 16'hFFFF;
             w_counter <= 0;
             
             // Wait for SDController DatOut to be ready
             if (w_sdDatOutReady) begin
-                $display("w_state 1: triggered");
-                w_state <= 2;
+                w_state <= 3;
             end
         end
         
-        2: begin
+        3: begin
             sd_datOutWrite_trigger <= 1;
             if (sd_datOutWrite_ready && sd_datOutWrite_trigger) begin
                 w_counter <= w_counter+1;
@@ -259,10 +256,15 @@ module Top(
             if (w_counter === (2304*1296)-2) begin
 `endif
             // if (w_counter === 'hFE) begin
+                $display("[CTRL] Finished writing into FIFO");
                 w_state <= 0;
             end
         end
         endcase
+        
+        if (w_sdDatOutTrigger) begin
+            w_state <= 1;
+        end
     end
     
     
@@ -346,8 +348,12 @@ module Top(
                     $display("[CTRL] Got Msg_Type_SDSendCmd [respType:%0b]", ctrl_msgArg[`Msg_Arg_SDRespType_Bits]);
                     // Reset ctrl_sdCmdDone_ / ctrl_sdRespDone_ / ctrl_sdDatInDone_
                     if (!ctrl_sdCmdDone_) ctrl_sdCmdDoneAck <= !ctrl_sdCmdDoneAck;
-                    if (!ctrl_sdRespDone_) ctrl_sdRespDoneAck <= !ctrl_sdRespDoneAck;
-                    if (!ctrl_sdDatInDone_) ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
+                    
+                    if (!ctrl_sdRespDone_ && ctrl_msgArg[`Msg_Arg_SDRespType_Bits]!==`Msg_Arg_SDRespType_None)
+                        ctrl_sdRespDoneAck <= !ctrl_sdRespDoneAck;
+                    
+                    if (!ctrl_sdDatInDone_ && ctrl_msgArg[`Msg_Arg_SDDatInType_Bits]!==`Msg_Arg_SDDatInType_None)
+                        ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
                     
                     case (ctrl_msgArg[`Msg_Arg_SDRespType_Bits])
                     `Msg_Arg_SDRespType_None:   sd_cmd_respType <= SDController.RespType_None;
@@ -384,10 +390,6 @@ module Top(
                         ctrl_doutReg[`Resp_Arg_SDDatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
                     ctrl_doutReg[`Resp_Arg_SDDat0Idle_Bits] <= ctrl_sdDat0Idle;
                     ctrl_doutReg[`Resp_Arg_SDResp_Bits] <= sd_resp_data;
-                end
-                
-                `Msg_Type_SDReset: begin
-                    $display("[CTRL] Got Msg_Type_SDReset");
                 end
                 
                 `Msg_Type_NoOp: begin
@@ -732,10 +734,7 @@ module Testbench();
         $display("====================================================");
     end endtask
     
-    task TestSDRespReset; begin
-        // ====================
-        // Test Resp reset
-        // ====================
+    task TestSDRespRecovery; begin
         reg done;
         reg[15:0] i;
         
@@ -745,7 +744,7 @@ module Testbench();
         done = 0;
         for (i=0; i<10 && !done; i++) begin
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
-            $display("[EXT] Pre-reset status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+            $display("[EXT] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
                 i+1,
                 resp[`Resp_Arg_SDCmdDone_Bits],
                 resp[`Resp_Arg_SDRespDone_Bits],
@@ -754,15 +753,12 @@ module Testbench();
 
             done = resp[`Resp_Arg_SDRespDone_Bits];
         end
-
+        
         if (!done) begin
             $display("[EXT] Resp timeout ✅");
-            $display("[EXT] Resetting...");
-            SendMsg(`Msg_Type_SDReset, 0);
-            
-            $display("[EXT] Testing Resp after reset...");
+            $display("[EXT] Testing Resp after timeout...");
             TestSDCMD8();
-            $display("[EXT] Reset OK ✅");
+            $display("[EXT] Resp Recovered ✅");
         
         end else begin
             $display("[EXT] DatIn didn't timeout? ❌");
@@ -776,30 +772,27 @@ module Testbench();
         
         
         
-    task TestSDDatOutReset; begin
-        // ====================
-        // Test DatOut reset
-        // ====================
+    task TestSDDatOutRecovery; begin
         reg done;
         reg[15:0] i;
         
         // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         // SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 32'b0);
         
-        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        SendSDCmd(CMD0, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 0);
+        // Send command SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        // SendSDCmd(CMD0, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 0);
         
         // Clock out data on DAT lines
         SendMsg(`Msg_Type_SDDatOut, 0);
         
-        #100000;
+        #50000;
         
         // Verify that we timeout
         $display("[EXT] Verifying that DatOut times out...");
         done = 0;
         for (i=0; i<10 && !done; i++) begin
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
-            $display("[EXT] Pre-reset status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+            $display("[EXT] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
                 i+1,
                 resp[`Resp_Arg_SDCmdDone_Bits],
                 resp[`Resp_Arg_SDRespDone_Bits],
@@ -811,15 +804,9 @@ module Testbench();
 
         if (!done) begin
             $display("[EXT] DatOut timeout ✅");
-            $display("[EXT] Resetting...");
-            SendMsg(`Msg_Type_SDReset, 0);
-            
-            #1000;
-            `Finish;
-
-            // $display("[EXT] Testing DatOut after reset...");
-            // TestSDDatOut();
-            // $display("[EXT] Reset OK ✅");
+            $display("[EXT] Testing DatOut after timeout...");
+            TestSDDatOut();
+            $display("[EXT] DatOut Recovered ✅");
 
         end else begin
             $display("[EXT] DatOut didn't timeout? ❌");
@@ -827,10 +814,8 @@ module Testbench();
         end
     end endtask
     
-    task TestSDDatInReset; begin
-        // ====================
-        // Test DatIn reset
-        // ====================
+    task TestSDDatInRecovery; begin
+
         reg done;
         reg[15:0] i;
         
@@ -841,23 +826,21 @@ module Testbench();
         done = 0;
         for (i=0; i<10 && !done; i++) begin
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
-            $display("[EXT] Pre-reset status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+            $display("[EXT] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
                 i+1,
                 resp[`Resp_Arg_SDCmdDone_Bits],
                 resp[`Resp_Arg_SDRespDone_Bits],
                 resp[`Resp_Arg_SDDatOutDone_Bits],
                 resp[`Resp_Arg_SDDatInDone_Bits]);
+            
             done = resp[`Resp_Arg_SDDatInDone_Bits];
         end
 
         if (!done) begin
             $display("[EXT] DatIn timeout ✅");
-            $display("[EXT] Resetting...");
-            SendMsg(`Msg_Type_SDReset, 0);
-            
-            $display("[EXT] Testing DatIn after reset...");
+            $display("[EXT] Testing DatIn after timeout...");
             TestSDDatIn();
-            $display("[EXT] Reset OK ✅");
+            $display("[EXT] DatIn Recovered ✅");
         
         end else begin
             $display("[EXT] DatIn didn't timeout? ❌");
@@ -888,7 +871,7 @@ module Testbench();
         TestEcho();
         
         forever begin
-            i = $urandom%7;
+            i = $urandom%10;
             case (i)
             0: TestSDCMD0();
             1: TestSDCMD8();
@@ -897,15 +880,11 @@ module Testbench();
             4: TestSDCMD2();
             5: TestSDCMD2();
             6: TestSDDatIn();
+            7: TestSDRespRecovery();
+            8: TestSDDatOutRecovery();
+            9: TestSDDatInRecovery();
             endcase
         end
-        
-        
-        
-        
-        // TestSDRespReset();
-        // TestSDDatOutReset();
-        // TestSDDatInReset();
         
         `Finish;
         
