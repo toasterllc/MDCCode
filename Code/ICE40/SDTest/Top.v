@@ -25,15 +25,19 @@
 `define Resp_Arg_Bits                                   63:0
 
 `define Msg_Type_Echo                                   `Msg_Type_Len'h00
-`define Msg_Type_SDClkSet                               `Msg_Type_Len'h01
-`define     Msg_Arg_SDClkDelay_Bits                     5:2
-`define     Msg_Arg_SDClkSrc_Len                        2
-`define     Msg_Arg_SDClkSrc_Bits                       1:0
-`define     Msg_Arg_SDClkSrc_None                       `Msg_Arg_SDClkSrc_Len'b00
-`define     Msg_Arg_SDClkSrc_Slow                       `Msg_Arg_SDClkSrc_Len'b01
-`define     Msg_Arg_SDClkSrc_Slow_Bits                  0:0
-`define     Msg_Arg_SDClkSrc_Fast                       `Msg_Arg_SDClkSrc_Len'b10
-`define     Msg_Arg_SDClkSrc_Fast_Bits                  1:1
+`define     Msg_Arg_Echo_Msg_Len                        56
+`define     Msg_Arg_Echo_Msg_Bits                       55:0
+`define     Resp_Arg_Echo_Msg_Bits                      63:8
+
+`define Msg_Type_SDClkSrc                               `Msg_Type_Len'h01
+`define     Msg_Arg_SDClkSrc_Delay_Bits                 5:2
+`define     Msg_Arg_SDClkSrc_Speed_Len                  2
+`define     Msg_Arg_SDClkSrc_Speed_Bits                 1:0
+`define     Msg_Arg_SDClkSrc_Speed_Off                  `Msg_Arg_SDClkSrc_Speed_Len'b00
+`define     Msg_Arg_SDClkSrc_Speed_Slow                 `Msg_Arg_SDClkSrc_Speed_Len'b01
+`define     Msg_Arg_SDClkSrc_Speed_Slow_Bits            0:0
+`define     Msg_Arg_SDClkSrc_Speed_Fast                 `Msg_Arg_SDClkSrc_Speed_Len'b10
+`define     Msg_Arg_SDClkSrc_Speed_Fast_Bits            1:1
 
 `define Msg_Type_SDSendCmd                              `Msg_Type_Len'h02
 `define     Msg_Arg_SDRespType_Len                      2
@@ -111,8 +115,7 @@ module Top(
     // ====================
     // SDController
     // ====================
-    reg         sd_clksrc_slow = 0;
-    reg         sd_clksrc_fast = 0;
+    reg[1:0]    sd_clksrc_speed = 0;
     reg[3:0]    sd_clksrc_delay = 0;
     reg         sd_cmd_trigger = 0;
     reg[47:0]   sd_cmd_sdCmd = 0;
@@ -145,8 +148,7 @@ module Top(
         .sdcard_cmd(sd_cmd),
         .sdcard_dat(sd_dat),
         
-        .clksrc_slow(sd_clksrc_slow),
-        .clksrc_fast(sd_clksrc_fast),
+        .clksrc_speed(sd_clksrc_speed),
         .clksrc_delay(sd_clksrc_delay),
         
         .cmd_trigger(sd_cmd_trigger),
@@ -319,23 +321,26 @@ module Top(
                 case (ctrl_msgType)
                 // Echo
                 `Msg_Type_Echo: begin
-                    $display("[CTRL] Got Msg_Type_Echo: %0h", ctrl_msgArg);
-                    ctrl_doutReg[`Resp_Arg_Bits] <= {ctrl_msgArg, 8'h00};
-                    // ctrl_doutReg[`Resp_Arg_Bits] <= 'b10000;
+                    $display("[CTRL] Got Msg_Type_Echo: %0h", ctrl_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                    ctrl_doutReg[`Resp_Arg_Echo_Msg_Bits] <= ctrl_msgArg[`Msg_Arg_Echo_Msg_Bits];
                 end
                 
                 // Set SD clock source
-                `Msg_Type_SDClkSet: begin
-                    $display("[CTRL] Got Msg_Type_SDClkSet: delay=%0d fast=%b slow=%b",
-                        ctrl_msgArg[`Msg_Arg_SDClkDelay_Bits],
-                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Bits],
-                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Bits]);
+                `Msg_Type_SDClkSrc: begin
+                    $display("[CTRL] Got Msg_Type_SDClkSrc: delay=%0d fast=%b slow=%b",
+                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Delay_Bits],
+                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Speed_Fast_Bits],
+                        ctrl_msgArg[`Msg_Arg_SDClkSrc_Speed_Slow_Bits]);
                     
                     // We don't need to synchronize `sd_ctrl_clkDelay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
-                    sd_clksrc_delay <= ctrl_msgArg[`Msg_Arg_SDClkDelay_Bits];
-                    sd_clksrc_fast <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Fast_Bits];
-                    sd_clksrc_slow <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Slow_Bits];
+                    sd_clksrc_delay <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Delay_Bits];
+                    
+                    case (ctrl_msgArg[`Msg_Arg_SDClkSrc_Speed_Bits])
+                    `Msg_Arg_SDClkSrc_Speed_Off:    sd_clksrc_speed <= SDController.ClkSrc_Speed_Off;
+                    `Msg_Arg_SDClkSrc_Speed_Slow:   sd_clksrc_speed <= SDController.ClkSrc_Speed_Slow;
+                    `Msg_Arg_SDClkSrc_Speed_Fast:   sd_clksrc_speed <= SDController.ClkSrc_Speed_Fast;
+                    endcase
                 end
                 
                 // Clock out SD command
@@ -570,7 +575,7 @@ module Testbench();
         
         // Wait for SD command to be sent
         done = 0;
-        for (i=0; i<100 && !done; i++) begin
+        for (i=0; i<1000 && !done; i++) begin
             // Request SD status
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
             
@@ -593,16 +598,28 @@ module Testbench();
         // ====================
 
         SendMsgResp(`Msg_Type_NoOp, 56'h66554433221100);
-        $display("Got response: %h", resp);
+        if (resp === 64'hFFFFFFFFFFFFFFFF) begin
+            $display("Response OK ✅: %h", resp);
+        end else begin
+            $display("Bad response ❌: %h", resp);
+            `Finish;
+        end
     end endtask
     
     task TestEcho; begin
         // ====================
         // Test Echo command
         // ====================
-
-        SendMsgResp(`Msg_Type_Echo, `Msg_Arg_Len'h66554433221100);
-        $display("Got response: %h", resp);
+        reg[`Msg_Arg_Echo_Msg_Len-1:0] arg;
+        arg = `Msg_Arg_Echo_Msg_Len'h66554433221100;
+        
+        SendMsgResp(`Msg_Type_Echo, arg);
+        if (resp[`Resp_Arg_Echo_Msg_Bits] === arg) begin
+            $display("Response OK ✅: %h", resp);
+        end else begin
+            $display("Bad response ❌: %h", resp);
+            `Finish;
+        end
     end endtask
     
     task TestSDCMD0; begin
@@ -856,11 +873,11 @@ module Testbench();
         
         
         // Disable SD clock
-        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_None);
+        SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Off);
 
         // Set SD clock source
-        SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Fast);
-        // SendMsg(`Msg_Type_SDClkSet, `Msg_Arg_SDClkSrc_Slow);
+        SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
+        // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Slow);
         
         TestNoOp();
         TestEcho();

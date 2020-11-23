@@ -8,8 +8,11 @@
 `include "CRC16.v"
 
 module SDController #(
-    parameter ClkFreq           = 120_000_000,
-    localparam ClkDelayWidth    = 4
+    parameter ClkFreq               = 120_000_000,
+    localparam ClkSrc_Speed_Off     = 2'b00,
+    localparam ClkSrc_Speed_Slow    = 2'b01,
+    localparam ClkSrc_Speed_Fast    = 2'b10,
+    localparam ClkSrc_Delay_Width   = 4
 )(
     // Clock
     input wire clk,
@@ -20,9 +23,8 @@ module SDController #(
     inout wire[3:0] sdcard_dat,
     
     // Clock source port (clock domain: async)
-    input wire                      clksrc_slow,
-    input wire                      clksrc_fast,
-    input wire[ClkDelayWidth-1:0]   clksrc_delay,
+    input wire[1:0]                     clksrc_speed,
+    input wire[ClkSrc_Delay_Width-1:0]  clksrc_delay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger, // Toggle
@@ -77,6 +79,8 @@ module SDController #(
     // ====================
     // clk_int
     // ====================
+    wire clksrc_slow = clksrc_speed[0];
+    wire clksrc_fast = clksrc_speed[1];
     `Sync(clk_slow_en, clksrc_slow, negedge, clk_slow);
     `Sync(clk_fast_en, clksrc_fast, negedge, clk_fast);
     wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
@@ -87,7 +91,7 @@ module SDController #(
     //   `clksrc_delay` should only be set while `clk_int` is stopped
     // ====================
     VariableDelay #(
-        .Count(1<<ClkDelayWidth)
+        .Count(1<<ClkSrc_Delay_Width)
     ) VariableDelay (
         .in(clk_int),
         .sel(clksrc_delay),
