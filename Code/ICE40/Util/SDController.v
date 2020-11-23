@@ -19,11 +19,10 @@ module SDController #(
     inout wire      sdcard_cmd,
     inout wire[3:0] sdcard_dat,
     
-    // TODO: rename ctrl_ -> clk_
     // Control port (clock domain: async)
-    input wire                      ctrl_clkSlowEn,
-    input wire                      ctrl_clkFastEn,
-    input wire[ClkDelayWidth-1:0]   ctrl_clkDelay,
+    input wire                      clk_slowEn,
+    input wire                      clk_fastEn,
+    input wire[ClkDelayWidth-1:0]   clk_delay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger, // Toggle
@@ -79,20 +78,20 @@ module SDController #(
     // ====================
     // clk_int
     // ====================
-    `Sync(clk_slow_en, ctrl_clkSlowEn, negedge, clk_slow);
-    `Sync(clk_fast_en, ctrl_clkFastEn, negedge, clk_fast);
-    wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
+    `Sync(clk_slowEnSync, clk_slowEn, negedge, clk_slow);
+    `Sync(clk_fastEnSync, clk_fastEn, negedge, clk_fast);
+    wire clk_int = (clk_slowEnSync ? clk_slow : (clk_fastEnSync ? clk_fast : 0));
     
     // ====================
-    // sdcard_clk / ctrl_clkDelay
+    // sdcard_clk / clk_delay
     //   Delay `sdcard_clk` relative to `clk_int` to correct the phase from the SD card's perspective
-    //   `ctrl_clkDelay` should only be set while `clk_int` is stopped
+    //   `clk_delay` should only be set while `clk_int` is stopped
     // ====================
     VariableDelay #(
         .Count(1<<ClkDelayWidth)
     ) VariableDelay (
         .in(clk_int),
-        .sel(ctrl_clkDelay),
+        .sel(clk_delay),
         .out(sdcard_clk)
     );
     
