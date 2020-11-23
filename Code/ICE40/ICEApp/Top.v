@@ -394,6 +394,7 @@ module Top(
             pixctrl_state <= PixCtrl_State_Readout;
         end
         
+        // TODO: create a primitive to convert a pulse in a source clock domain to a ToggleAck in a destination clock domain
         if (pixctrl_capture_done) pixctrl_captureDoneToggle <= !pixctrl_captureDoneToggle;
     end
     
@@ -689,7 +690,7 @@ module Testbench();
         .i2c_data(pix_sdata)
     );
     
-    mobile_sdr sdram(
+    mobile_sdr mobile_sdr(
         .clk(ram_clk),
         .cke(ram_cke),
         .addr(ram_a),
@@ -705,11 +706,6 @@ module Testbench();
     initial begin
         $dumpfile("Top.vcd");
         $dumpvars(0, Testbench);
-    end
-    
-    initial begin
-        #100000000;
-        `Finish;
     end
     
     initial begin
@@ -1266,20 +1262,20 @@ module Testbench();
         
         TestPixCapture();
         
-        // TestNoOp();
-        // TestEcho();
-        // TestSDCMD0();
-        // TestSDCMD8();
-        // TestSDDatOut();
-        // TestSDCMD2();
-        // TestSDDatIn();
-        // TestSDRespRecovery();
-        // TestSDDatOutRecovery();
-        // TestSDDatInRecovery();
-        // TestPixReset();
-        // TestPixCapture();
-        // TestPixI2CWriteRead();
-        // `Finish;
+        TestNoOp();
+        TestEcho();
+        TestSDCMD0();
+        TestSDCMD8();
+        TestSDDatOut();
+        TestSDCMD2();
+        TestSDDatIn();
+        TestSDRespRecovery();
+        TestSDDatOutRecovery();
+        TestSDDatInRecovery();
+        TestPixReset();
+        TestPixCapture();
+        TestPixI2CWriteRead();
+        `Finish;
         
         // forever begin
         //     i = $urandom%8;
