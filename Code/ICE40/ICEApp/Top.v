@@ -19,6 +19,7 @@
 `include "SDCardSim.v"
 `include "PixSim.v"
 `include "PixI2CSlaveSim.v"
+`include "../../mt48h32m16lf/mobile_sdr.v"
 `endif
 
 `timescale 1ns/1ps
@@ -257,7 +258,7 @@ module Top(
     PixI2CMaster #(
         .ClkFreq(24_000_000),
 `ifdef SIM
-        .I2CClkFreq(12_000_000)
+        .I2CClkFreq(4_000_000)
 `else
         .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
 `endif
@@ -686,6 +687,19 @@ module Testbench();
     PixI2CSlaveSim PixI2CSlaveSim(
         .i2c_clk(pix_sclk),
         .i2c_data(pix_sdata)
+    );
+    
+    mobile_sdr sdram(
+        .clk(ram_clk),
+        .cke(ram_cke),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dq(ram_dq),
+        .dqm(ram_dqm)
     );
     
     initial begin
@@ -1167,6 +1181,7 @@ module Testbench();
             $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
         end else begin
             $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
+            `Finish;
         end
 
         // ====================
@@ -1249,20 +1264,22 @@ module Testbench();
         SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
         // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Slow);
         
-        TestNoOp();
-        TestEcho();
-        TestSDCMD0();
-        TestSDCMD8();
-        TestSDDatOut();
-        TestSDCMD2();
-        TestSDDatIn();
-        TestSDRespRecovery();
-        TestSDDatOutRecovery();
-        TestSDDatInRecovery();
-        TestPixReset();
         TestPixCapture();
-        TestPixI2CWriteRead();
-        `Finish;
+        
+        // TestNoOp();
+        // TestEcho();
+        // TestSDCMD0();
+        // TestSDCMD8();
+        // TestSDDatOut();
+        // TestSDCMD2();
+        // TestSDDatIn();
+        // TestSDRespRecovery();
+        // TestSDDatOutRecovery();
+        // TestSDDatInRecovery();
+        // TestPixReset();
+        // TestPixCapture();
+        // TestPixI2CWriteRead();
+        // `Finish;
         
         // forever begin
         //     i = $urandom%8;
@@ -1279,551 +1296,5 @@ module Testbench();
         // end
         
     end
-    
-    
-    
-    // initial begin
-    //     reg[15:0] i, ii;
-    //     reg done;
-    //     reg[`Msg_Arg_Len-1:0] arg;
-    //     reg[`Resp_Arg_SDGetStatus_Resp_Len-1:0] sdResp;
-    //
-    //     // Set our initial state
-    //     ctrl_clk = 0;
-    //     ctrl_rst = 1;
-    //     ctrl_diReg = ~0;
-    //     #1;
-    //
-    //     // // ====================
-    //     // // Test NoOp command
-    //     // // ====================
-    //     //
-    //     // SendMsgResp(`Msg_Type_NoOp, 56'h66554433221100);
-    //     // $display("Got response: %x", resp);
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test Echo command
-    //     // // ====================
-    //     //
-    //     // SendMsgResp(`Msg_Type_Echo, `Msg_Arg_Len'h66554433221100);
-    //     // $display("Got response: %x", resp);
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test SD CMD8 (SEND_IF_COND)
-    //     // // ====================
-    //     //
-    //     // // Set SD clock source = slow clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Slow);
-    //     //
-    //     // // Send SD CMD0
-    //     // SendSDCmdResp(CMD0, `Msg_Arg_SDSendCmd_RespType_None, `Msg_Arg_SDSendCmd_DatInType_None, 0);
-    //     //
-    //     // // Send SD CMD8
-    //     // SendSDCmdResp(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'h000001AA);
-    //     // if (resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] !== 1'b0) begin
-    //     //     $display("[EXT] CRC error ❌");
-    //     //     `Finish;
-    //     // end
-    //     //
-    //     // sdResp = resp[`Resp_Arg_SDGetStatus_Resp_Bits];
-    //     // if (sdResp[15:8] !== 8'hAA) begin
-    //     //     $display("[EXT] Bad response: %x ❌", resp);
-    //     //     `Finish;
-    //     // end
-    //     //
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test writing data to SD card / DatOut
-    //     // // ====================
-    //     //
-    //     // // Disable SD clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_None);
-    //     //
-    //     // // Set SD clock source = fast clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
-    //     //
-    //     // // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-    //     // SendSDCmdResp(CMD55, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
-    //     // SendSDCmdResp(ACMD23, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b1);
-    //     //
-    //     // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-    //     // SendSDCmdResp(CMD25, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
-    //     //
-    //     // // Clock out data on DAT lines
-    //     // arg = 0;
-    //     // arg[`Msg_Arg_PixReadout_RAMBlock_Bits] = 0;
-    //     // SendMsg(`Msg_Type_PixReadout, arg);
-    //     //
-    //     // // Wait until we're done clocking out data on DAT lines
-    //     // $display("[EXT] Waiting while data is written...");
-    //     // do begin
-    //     //     // Request SD status
-    //     //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     // end while(!resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]);
-    //     // $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDGetStatus_Resp_Bits]);
-    //     //
-    //     // // Check CRC status
-    //     // if (resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] === 1'b0) begin
-    //     //     $display("[EXT] DatOut CRC OK ✅");
-    //     // end else begin
-    //     //     $display("[EXT] DatOut CRC bad ❌");
-    //     // end
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test CMD6 (SWITCH_FUNC) + DatIn
-    //     // // ====================
-    //     //
-    //     // // Disable SD clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_None);
-    //     //
-    //     // // Set SD clock source = fast clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
-    //     //
-    //     // // Send SD command CMD6 (SWITCH_FUNC)
-    //     // SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 32'h80FFFFF3);
-    //     // $display("[EXT] Waiting for DatIn to complete...");
-    //     // do begin
-    //     //     // Request SD status
-    //     //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     // end while(!resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     // $display("[EXT] DatIn completed");
-    //     //
-    //     // // Check DatIn CRC status
-    //     // if (resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] === 1'b0) begin
-    //     //     $display("[EXT] DatIn CRC OK ✅");
-    //     // end else begin
-    //     //     $display("[EXT] DatIn CRC bad ❌");
-    //     // end
-    //     //
-    //     // // Check the access mode from the CMD6 response
-    //     // if (resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
-    //     //     $display("[EXT] CMD6 access mode == 0x3 ✅");
-    //     // end else begin
-    //     //     $display("[EXT] CMD6 access mode == 0x%x ❌", resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits]);
-    //     // end
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test CMD2 (ALL_SEND_CID) + long SD card response (136 bits)
-    //     // //   Note: we expect CRC errors in the response because the R2
-    //     // //   response CRC doesn't follow the semantics of other responses
-    //     // // ====================
-    //     //
-    //     // // Disable SD clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_None);
-    //     //
-    //     // // Set SD clock source = slow clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Slow);
-    //     //
-    //     // // Send SD command CMD2 (ALL_SEND_CID)
-    //     // SendSDCmdResp(CMD2, `Msg_Arg_SDSendCmd_RespType_136, `Msg_Arg_SDSendCmd_DatInType_None, 0);
-    //     // $display("====================================================");
-    //     // $display("^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
-    //     // $display("====================================================");
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test Resp abort
-    //     // // ====================
-    //     //
-    //     // // Disable SD clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_None);
-    //     //
-    //     // // Set SD clock source = fast clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
-    //     //
-    //     // // Send an SD command that doesn't provide a response
-    //     // SendSDCmd(CMD0, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 0);
-    //     // $display("[EXT] Verifying that Resp times out...");
-    //     // done = 0;
-    //     // for (i=0; i<10 && !done; i++) begin
-    //     //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     //     $display("[EXT] Pre-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //     //         i+1,
-    //     //         resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     //
-    //     //     done = resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
-    //     // end
-    //     //
-    //     // if (!done) begin
-    //     //     $display("[EXT] Resp timeout ✅");
-    //     //     $display("[EXT] Aborting...");
-    //     //     SendMsg(`Msg_Type_SDAbort, 0);
-    //     //
-    //     //     $display("[EXT] Checking abort status...");
-    //     //     done = 0;
-    //     //     for (i=0; i<10 && !done; i++) begin
-    //     //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     //         $display("[EXT] Post-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //     //             i+1,
-    //     //             resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     //
-    //     //         done =  resp[`Resp_Arg_SDGetStatus_CmdDone_Bits]     &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_RespDone_Bits]    &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]  &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]   ;
-    //     //     end
-    //     //
-    //     //     if (done) begin
-    //     //         $display("[EXT] Abort OK ✅");
-    //     //     end else begin
-    //     //         $display("[EXT] Abort failed ❌");
-    //     //     end
-    //     //
-    //     // end else begin
-    //     //     $display("[EXT] DatIn didn't timeout? ❌");
-    //     // end
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test DatOut abort
-    //     // // ====================
-    //     //
-    //     // // Disable SD clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_None);
-    //     //
-    //     // // Set SD clock source = fast clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
-    //     //
-    //     // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-    //     // SendSDCmdResp(CMD25, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
-    //     //
-    //     // // Clock out data on DAT lines
-    //     // SendMsg(`Msg_Type_PixReadout, 0);
-    //     //
-    //     // // Verify that we timeout
-    //     // $display("[EXT] Verifying that DatOut times out...");
-    //     // done = 0;
-    //     // for (i=0; i<10 && !done; i++) begin
-    //     //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     //     $display("[EXT] Pre-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //     //         i+1,
-    //     //         resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     //
-    //     //     done = resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits];
-    //     // end
-    //     //
-    //     // if (!done) begin
-    //     //     $display("[EXT] DatOut timeout ✅");
-    //     //     $display("[EXT] Aborting...");
-    //     //     SendMsg(`Msg_Type_SDAbort, 0);
-    //     //
-    //     //     $display("[EXT] Checking abort status...");
-    //     //     done = 0;
-    //     //     for (i=0; i<10 && !done; i++) begin
-    //     //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     //         $display("[EXT] Post-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //     //             i+1,
-    //     //             resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     //
-    //     //         done =  resp[`Resp_Arg_SDGetStatus_CmdDone_Bits]     &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_RespDone_Bits]    &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]  &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]   ;
-    //     //     end
-    //     //
-    //     //     if (done) begin
-    //     //         $display("[EXT] Abort OK ✅");
-    //     //     end else begin
-    //     //         $display("[EXT] Abort failed ❌");
-    //     //     end
-    //     //
-    //     // end else begin
-    //     //     $display("[EXT] DatOut didn't timeout? ❌");
-    //     // end
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test DatIn abort
-    //     // // ====================
-    //     //
-    //     // // Disable SD clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_None);
-    //     //
-    //     // // Set SD clock source = fast clock
-    //     // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
-    //     //
-    //     // // Send SD command that doesn't respond on the DAT lines,
-    //     // // but specify that we expect DAT data
-    //     // SendSDCmdResp(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 0);
-    //     // $display("[EXT] Verifying that DatIn times out...");
-    //     // done = 0;
-    //     // for (i=0; i<10 && !done; i++) begin
-    //     //     SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     //     $display("[EXT] Pre-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //     //         i+1,
-    //     //         resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //     //         resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     //     done = resp[`Resp_Arg_SDGetStatus_DatInDone_Bits];
-    //     // end
-    //     //
-    //     // if (!done) begin
-    //     //     $display("[EXT] DatIn timeout ✅");
-    //     //     $display("[EXT] Aborting...");
-    //     //     SendMsg(`Msg_Type_SDAbort, 0);
-    //     //
-    //     //     $display("[EXT] Checking abort status...");
-    //     //     done = 0;
-    //     //     for (i=0; i<10 && !done; i++) begin
-    //     //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     //         $display("[EXT] Post-abort status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //     //             i+1,
-    //     //             resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //     //             resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     //
-    //     //         done =  resp[`Resp_Arg_SDGetStatus_CmdDone_Bits]     &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_RespDone_Bits]    &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]  &&
-    //     //                 resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]   ;
-    //     //     end
-    //     //
-    //     //     if (done) begin
-    //     //         $display("[EXT] Abort OK ✅");
-    //     //     end else begin
-    //     //         $display("[EXT] Abort failed ❌");
-    //     //     end
-    //     //
-    //     // end else begin
-    //     //     $display("[EXT] DatIn didn't timeout? ❌");
-    //     // end
-    //     // `Finish;
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test Pix reset
-    //     // // ====================
-    //     // arg = 0;
-    //     // arg[`Msg_Arg_PixReset_Val_Bits] = 0;
-    //     // SendMsg(`Msg_Type_PixReset, arg);
-    //     // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-    //     //     $display("[EXT] Reset=0 success ✅");
-    //     // end else begin
-    //     //     $display("[EXT] Reset=0 failed ❌");
-    //     // end
-    //     //
-    //     // arg = 0;
-    //     // arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-    //     // SendMsg(`Msg_Type_PixReset, arg);
-    //     // if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-    //     //     $display("[EXT] Reset=1 success ✅");
-    //     // end else begin
-    //     //     $display("[EXT] Reset=1 failed ❌");
-    //     // end
-    //
-    //
-    //
-    //
-    //
-    //     // ====================
-    //     // Test PixCapture
-    //     // ====================
-    //     arg = 0;
-    //     arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-    //     SendMsg(`Msg_Type_PixReset, arg); // Deassert Pix reset
-    //
-    //     arg = 0;
-    //     arg[`Msg_Arg_PixCapture_DstBlock_Bits] = 0;
-    //     SendMsg(`Msg_Type_PixCapture, arg);
-    //
-    //     // Wait until the capture is done
-    //     $display("[EXT] Waiting for capture to complete...");
-    //     do begin
-    //         // Request Pix status
-    //         SendMsgResp(`Msg_Type_PixGetStatus, 0);
-    //     end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
-    //     $display("[EXT] Capture done ✅");
-    //
-    //
-    //
-    //
-    //
-    //     // // ====================
-    //     // // Test PixI2C Write / Read (len=2, len=1)
-    //     // // ====================
-    //     // // *** Length=2 ***
-    //     // arg = 0;
-    //     // arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
-    //     // arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
-    //     // arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
-    //     // arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'hCAFE;
-    //     // SendMsg(`Msg_Type_PixI2CTransaction, arg);
-    //     //
-    //     // done = 0;
-    //     // while (!done) begin
-    //     //     SendMsgResp(`Msg_Type_PixGetStatus, 0);
-    //     //     $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-    //     //     );
-    //     //
-    //     //     done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-    //     // end
-    //     //
-    //     // if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-    //     //     $display("[EXT] Write success ✅");
-    //     // end else begin
-    //     //     $display("[EXT] Write failed ❌");
-    //     // end
-    //     //
-    //     // arg = 0;
-    //     // arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
-    //     // arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
-    //     // arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
-    //     // SendMsg(`Msg_Type_PixI2CTransaction, arg);
-    //     //
-    //     // done = 0;
-    //     // while (!done) begin
-    //     //     SendMsgResp(`Msg_Type_PixGetStatus, 0);
-    //     //     $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-    //     //     );
-    //     //
-    //     //     done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-    //     // end
-    //     //
-    //     // if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-    //     //     $display("[EXT] Read success ✅");
-    //     // end else begin
-    //     //     $display("[EXT] Read failed ❌");
-    //     // end
-    //     //
-    //     // if (resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] === 16'hCAFE) begin
-    //     //     $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
-    //     // end else begin
-    //     //     $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
-    //     // end
-    //     //
-    //     // // *** Length=1 ***
-    //     // arg = 0;
-    //     // arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
-    //     // arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
-    //     // arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
-    //     // arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'h0037;
-    //     // SendMsg(`Msg_Type_PixI2CTransaction, arg);
-    //     //
-    //     // done = 0;
-    //     // while (!done) begin
-    //     //     SendMsgResp(`Msg_Type_PixGetStatus, 0);
-    //     //     $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-    //     //     );
-    //     //
-    //     //     done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-    //     // end
-    //     //
-    //     // if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-    //     //     $display("[EXT] Write success ✅");
-    //     // end else begin
-    //     //     $display("[EXT] Write failed ❌");
-    //     // end
-    //     //
-    //     // arg = 0;
-    //     // arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
-    //     // arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
-    //     // arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
-    //     // SendMsg(`Msg_Type_PixI2CTransaction, arg);
-    //     //
-    //     // done = 0;
-    //     // while (!done) begin
-    //     //     SendMsgResp(`Msg_Type_PixGetStatus, 0);
-    //     //     $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-    //     //         resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-    //     //     );
-    //     //
-    //     //     done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-    //     // end
-    //     //
-    //     // if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-    //     //     $display("[EXT] Read success ✅");
-    //     // end else begin
-    //     //     $display("[EXT] Read failed ❌");
-    //     // end
-    //     //
-    //     // if ((resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF) === 16'h0037) begin
-    //     //     $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
-    //     // end else begin
-    //     //     $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
-    //     // end
-    //     // `Finish;
-    // end
 endmodule
 `endif
