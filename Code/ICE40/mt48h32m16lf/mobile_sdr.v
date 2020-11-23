@@ -165,7 +165,7 @@ module mobile_sdr (
     parameter LOAD_MODE        = 6'b100000 ;    // 32
     parameter CKE_DISABLE      = 6'b011111 ;    // 
 
-    parameter DEBUG = 0;
+    parameter DEBUG = 1;
 
 //----------------------------------------
 // Error codes and reporting

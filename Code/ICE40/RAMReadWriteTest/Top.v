@@ -42,7 +42,7 @@ module Top(
     localparam BlockSize = 16;
     
     RAMController #(
-        .ClkFreq(24000000),
+        .ClkFreq(125_000_000),
         .BlockSize(BlockSize)
         // .BlockSize(2304*1296)
     ) RAMController(
@@ -198,10 +198,8 @@ module Testbench();
     
     initial begin
         forever begin
-            clk24mhz = 0;
-            #21;
-            clk24mhz = 1;
-            #21;
+            #4;
+            clk24mhz = !clk24mhz;
         end
     end
 endmodule

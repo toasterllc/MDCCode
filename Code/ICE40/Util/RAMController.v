@@ -76,8 +76,12 @@ module RAMController #(
     localparam T_WR                     = 15;       // Write recover time
     
     // Timing parameters (clock cycles)
-    localparam C_CAS                    = 2;        // Column address strobe (CAS) delay
-    localparam C_MRD                    = 2;        // (T_MRD) set mode command to bank activate/refresh command delay
+    // C_CAS: Column address strobe (CAS) delay cycles
+    //   CAS=2 => Fmax=104 MHz
+    //   CAS=3 => Fmax=166 MHz
+    localparam C_CAS                    = 3;
+    // C_MRD (T_MRD): Set mode -> bank activate/refresh delay cycles
+    localparam C_MRD                    = 2;
     
     // ras_, cas_, we_
     localparam RAM_Cmd_SetMode          = 3'b000;
@@ -455,7 +459,7 @@ module RAMController #(
             // ram_ba: reserved
             ramBA <= 0;
             // ram_a:    write burst length,     test mode,  CAS latency,    burst type,     burst length
-            ramA <= {    1'b0,                   2'b0,       3'b010,         1'b0,           3'b111};
+            ramA <= {    1'b0,                   2'b0,       C_CAS[2:0],     1'b0,           3'b111};
             
             init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
             init_state <= Init_State_Delay;
