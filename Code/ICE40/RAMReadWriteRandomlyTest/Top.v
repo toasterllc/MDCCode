@@ -110,10 +110,9 @@ module Top(
         .FILTER_RANGE(2)
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
     
-    reg cmd_trigger = 0;
-    wire cmd_triggerActual;
+    wire[1:0] cmd_actual;
     reg[BlockWidth-1:0] cmd_block = 0;
-    reg cmd_write = 0;
+    reg[1:0] cmd = 0;
     wire write_ready;
     wire write_done;
     wire read_ready;
@@ -133,9 +132,8 @@ module Top(
     ) RAMController(
         .clk(clk),
         
-        .cmd_trigger(cmd_triggerActual),
+        .cmd(cmd_actual),
         .cmd_block(cmd_block),
-        .cmd_write(cmd_write),
         
         .write_ready(write_ready),
         .write_trigger(write_triggerActual),
@@ -174,7 +172,7 @@ module Top(
     Random6 Random6_random6Pause(.clk(clk), .next(1'b1), .q(random6Pause));
     wire pause = random6Pause>60;
     // wire pause = 0;
-    assign cmd_triggerActual = cmd_trigger && !pause;
+    assign cmd_actual = (pause ? RAMController.CmdNone : cmd);
     assign write_triggerActual = write_trigger && !pause;
     assign read_triggerActual = read_trigger && !pause;
     
@@ -223,21 +221,20 @@ module Top(
         // ====================
         State_ReadAll: begin
             $display("Mode: ReadAll");
-            cmd_write <= 0;
             cmd_block <= 0;
             blockCount <= BlockLimit;
             state <= State_ReadAll+1;
         end
         
         State_ReadAll+1: begin
-            cmd_trigger <= 1;
+            cmd <= RAMController.CmdRead;
             wordIdx <= 0;
             state <= State_ReadAll+2;
         end
         
         State_ReadAll+2: begin
-            if (cmd_triggerActual) begin
-                cmd_trigger <= 0;
+            if (cmd_actual !== RAMController.CmdNone) begin
+                cmd <= RAMController.CmdNone;
                 state <= State_ReadAll+3;
             end
         end
@@ -271,21 +268,20 @@ module Top(
         // ====================
         State_ReadSeq: begin
             $display("Mode: ReadSeq: %0h-%0h", random25_block, random25_block+random6_blockCount);
-            cmd_write <= 0;
             cmd_block <= random25_block;
             blockCount <= random6_blockCount;
             state <= State_ReadSeq+1;
         end
         
         State_ReadSeq+1: begin
-            cmd_trigger <= 1;
+            cmd <= RAMController.CmdRead;
             wordIdx <= 0;
             state <= State_ReadSeq+2;
         end
         
         State_ReadSeq+2: begin
-            if (cmd_triggerActual) begin
-                cmd_trigger <= 0;
+            if (cmd_actual !== RAMController.CmdNone) begin
+                cmd <= RAMController.CmdNone;
                 state <= State_ReadSeq+3;
             end
         end
@@ -319,16 +315,15 @@ module Top(
         // ====================
         State_Read: begin
             $display("Mode: Read: %0h", random25_block);
-            cmd_trigger <= 1;
-            cmd_write <= 0;
+            cmd <= RAMController.CmdRead;
             cmd_block <= random25_block;
             wordIdx <= 0;
             state <= State_Read+1;
         end
         
         State_Read+1: begin
-            if (cmd_triggerActual) begin
-                cmd_trigger <= 0;
+            if (cmd_actual !== RAMController.CmdNone) begin
+                cmd <= RAMController.CmdNone;
                 state <= State_Read+2;
             end
         end
@@ -356,22 +351,21 @@ module Top(
         // ====================
         State_WriteAll: begin
             $display("Mode: WriteAll");
-            cmd_write <= 1;
             cmd_block <= 0;
             blockCount <= BlockLimit;
             state <= State_WriteAll+1;
         end
         
         State_WriteAll+1: begin
-            cmd_trigger <= 1;
+            cmd <= RAMController.CmdWrite;
             wordIdx <= 0;
             state <= State_WriteAll+2;
         end
         
         State_WriteAll+2: begin
-            if (cmd_triggerActual) begin
+            if (cmd_actual !== RAMController.CmdNone) begin
                 $display("Mode: WriteAll start/continue");
-                cmd_trigger <= 0;
+                cmd <= RAMController.CmdNone;
                 state <= State_WriteAll+3;
             end
         end
@@ -400,21 +394,20 @@ module Top(
         // ====================
         State_WriteSeq: begin
             $display("Mode: WriteSeq: %0h-%0h", random25_block, random25_block+random6_blockCount);
-            cmd_write <= 1;
             cmd_block <= random25_block;
             blockCount <= random6_blockCount;
             state <= State_WriteSeq+1;
         end
         
         State_WriteSeq+1: begin
-            cmd_trigger <= 1;
+            cmd <= RAMController.CmdWrite;
             wordIdx <= 0;
             state <= State_WriteSeq+2;
         end
         
         State_WriteSeq+2: begin
-            if (cmd_triggerActual) begin
-                cmd_trigger <= 0;
+            if (cmd_actual !== RAMController.CmdNone) begin
+                cmd <= RAMController.CmdNone;
                 state <= State_WriteSeq+3;
             end
         end
@@ -443,16 +436,15 @@ module Top(
         // ====================
         State_Write: begin
             $display("Mode: Write: %0h", random25_block);
-            cmd_trigger <= 1;
-            cmd_write <= 1;
+            cmd <= RAMController.CmdWrite;
             cmd_block <= random25_block;
             wordIdx <= 0;
             state <= State_Write+1;
         end
         
         State_Write+1: begin
-            if (cmd_triggerActual) begin
-                cmd_trigger <= 0;
+            if (cmd_actual !== RAMController.CmdNone) begin
+                cmd <= RAMController.CmdNone;
                 state <= State_Write+2;
             end
         end
