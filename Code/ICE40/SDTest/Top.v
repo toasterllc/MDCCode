@@ -815,7 +815,6 @@ module Testbench();
     end endtask
     
     task TestSDDatInRecovery; begin
-
         reg done;
         reg[15:0] i;
         

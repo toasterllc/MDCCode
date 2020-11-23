@@ -236,7 +236,7 @@ module RAMController #(
     
 //     // TODO: we need to remove this when testing the RAM with the SDRAM chip sim (mt48h32m16lf)
 // `ifdef SIM
-//     assign ramDQIn = 0;
+//     assign ramDQIn = 16'hABCD;
 // `endif
     
     // ====================
@@ -495,7 +495,7 @@ module RAMController #(
                 // ====================
                 case (refresh_state)
                 Refresh_State_Go: begin
-                    $display("[RAM-CTRL] Refresh start");
+                    // $display("[RAM-CTRL] Refresh start");
                     // We don't know what state we came from, so wait the most conservative amount of time.
                     refresh_delayCounter <= Refresh_StartDelay;
                     refresh_state <= Refresh_State_Delay;
@@ -513,7 +513,7 @@ module RAMController #(
                 end
                 
                 Refresh_State_Go+2: begin
-                    $display("[RAM-CTRL] Refresh (time: %0d)", $time);
+                    // $display("[RAM-CTRL] Refresh (time: %0d)", $time);
                     // Issue auto-refresh command
                     ramCmd <= RAM_Cmd_AutoRefresh;
                     // Wait T_RFC (auto refresh time) to guarantee that the next command can
