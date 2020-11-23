@@ -42,14 +42,14 @@
 `define Msg_Type_SDSendCmd                              `Msg_Type_Len'h02
 `define     Msg_Arg_SDRespType_Len                      2
 `define     Msg_Arg_SDRespType_Bits                     49:48
-`define     Msg_Arg_SDRespType_0                        `Msg_Arg_SDRespType_Len'b00
+`define     Msg_Arg_SDRespType_None                     `Msg_Arg_SDRespType_Len'b00
 `define     Msg_Arg_SDRespType_48                       `Msg_Arg_SDRespType_Len'b01
 `define     Msg_Arg_SDRespType_48_Bits                  48:48
 `define     Msg_Arg_SDRespType_136                      `Msg_Arg_SDRespType_Len'b10
 `define     Msg_Arg_SDRespType_136_Bits                 49:49
 `define     Msg_Arg_SDDatInType_Len                     1
 `define     Msg_Arg_SDDatInType_Bits                    50:50
-`define     Msg_Arg_SDDatInType_0                       `Msg_Arg_SDDatInType_Len'b0
+`define     Msg_Arg_SDDatInType_None                    `Msg_Arg_SDDatInType_Len'b0
 `define     Msg_Arg_SDDatInType_512                     `Msg_Arg_SDDatInType_Len'b1
 `define     Msg_Arg_SDDatInType_512_Bits                50:50
 `define     Msg_Arg_SDCmd_Bits                          47:0
@@ -118,10 +118,9 @@ module Top(
     reg[1:0]    sd_clksrc_speed = 0;
     reg[3:0]    sd_clksrc_delay = 0;
     reg         sd_cmd_trigger = 0;
-    reg[47:0]   sd_cmd_sdCmd = 0;
-    reg         sd_cmd_respType_48 = 0;
-    reg         sd_cmd_respType_136 = 0;
-    reg         sd_cmd_datInType_512 = 0;
+    reg[47:0]   sd_cmd_data = 0;
+    reg[1:0]    sd_cmd_respType = 0;
+    reg         sd_cmd_datInType = 0;
     wire        sd_cmd_done;
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
@@ -152,10 +151,9 @@ module Top(
         .clksrc_delay(sd_clksrc_delay),
         
         .cmd_trigger(sd_cmd_trigger),
-        .cmd_sdCmd(sd_cmd_sdCmd),
-        .cmd_respType_48(sd_cmd_respType_48),
-        .cmd_respType_136(sd_cmd_respType_136),
-        .cmd_datInType_512(sd_cmd_datInType_512),
+        .cmd_data(sd_cmd_data),
+        .cmd_respType(sd_cmd_respType),
+        .cmd_datInType(sd_cmd_datInType),
         .cmd_done(sd_cmd_done),
         
         .resp_done(sd_resp_done),
@@ -351,11 +349,18 @@ module Top(
                     if (!ctrl_sdRespDone_) ctrl_sdRespDoneAck <= !ctrl_sdRespDoneAck;
                     if (!ctrl_sdDatInDone_) ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
                     
-                    sd_cmd_respType_48 <= ctrl_msgArg[`Msg_Arg_SDRespType_48_Bits];
-                    sd_cmd_respType_136 <= ctrl_msgArg[`Msg_Arg_SDRespType_136_Bits];
-                    sd_cmd_datInType_512 <= ctrl_msgArg[`Msg_Arg_SDDatInType_512_Bits];
+                    case (ctrl_msgArg[`Msg_Arg_SDRespType_Bits])
+                    `Msg_Arg_SDRespType_None:   sd_cmd_respType <= SDController.RespType_None;
+                    `Msg_Arg_SDRespType_48:     sd_cmd_respType <= SDController.RespType_48;
+                    `Msg_Arg_SDRespType_136:    sd_cmd_respType <= SDController.RespType_136;
+                    endcase
                     
-                    sd_cmd_sdCmd <= ctrl_msgArg[`Msg_Arg_SDCmd_Bits];
+                    case (ctrl_msgArg[`Msg_Arg_SDDatInType_Bits])
+                    `Msg_Arg_SDDatInType_None:  sd_cmd_datInType <= SDController.DatInType_None;
+                    `Msg_Arg_SDDatInType_512:   sd_cmd_datInType <= SDController.DatInType_512;
+                    endcase
+                    
+                    sd_cmd_data <= ctrl_msgArg[`Msg_Arg_SDCmd_Bits];
                     sd_cmd_trigger <= !sd_cmd_trigger;
                 end
                 
@@ -580,7 +585,7 @@ module Testbench();
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
             
             // If a response is expected, we're done when the response is received
-            if (respType !== `Msg_Arg_SDRespType_0) done = resp[`Resp_Arg_SDRespDone_Bits];
+            if (respType !== `Msg_Arg_SDRespType_None) done = resp[`Resp_Arg_SDRespDone_Bits];
             // If a response isn't expected, we're done when the command is sent
             else done = resp[`Resp_Arg_SDCmdDone_Bits];
         end
@@ -623,7 +628,7 @@ module Testbench();
     end endtask
     
     task TestSDCMD0; begin
-        SendSDCmdResp(CMD0, `Msg_Arg_SDRespType_0, `Msg_Arg_SDDatInType_0, 0);
+        SendSDCmdResp(CMD0, `Msg_Arg_SDRespType_None, `Msg_Arg_SDDatInType_None, 0);
     end endtask
     
     task TestSDCMD8; begin
@@ -633,7 +638,7 @@ module Testbench();
         reg[`Resp_Arg_SDResp_Len-1:0] sdResp;
         
         // Send SD CMD8
-        SendSDCmdResp(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'h000001AA);
+        SendSDCmdResp(CMD8, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 32'h000001AA);
         if (resp[`Resp_Arg_SDRespCRCErr_Bits] !== 1'b0) begin
             $display("[EXT] CRC error ❌");
             `Finish;
@@ -652,11 +657,11 @@ module Testbench();
         // ====================
         
         // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-        SendSDCmdResp(CMD55, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
-        SendSDCmdResp(ACMD23, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b1);
+        SendSDCmdResp(CMD55, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 32'b0);
+        SendSDCmdResp(ACMD23, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 32'b1);
         
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+        SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 32'b0);
         
         // Clock out data on DAT lines
         SendMsg(`Msg_Type_SDDatOut, 0);
@@ -678,7 +683,7 @@ module Testbench();
         end
         
         // Stop transmission
-        SendSDCmdResp(CMD12, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+        SendSDCmdResp(CMD12, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 32'b0);
     end endtask
     
     task TestSDDatIn; begin
@@ -721,7 +726,7 @@ module Testbench();
         // ====================
         
         // Send SD command CMD2 (ALL_SEND_CID)
-        SendSDCmdResp(CMD2, `Msg_Arg_SDRespType_136, `Msg_Arg_SDDatInType_0, 0);
+        SendSDCmdResp(CMD2, `Msg_Arg_SDRespType_136, `Msg_Arg_SDDatInType_None, 0);
         $display("====================================================");
         $display("^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
         $display("====================================================");
@@ -735,7 +740,7 @@ module Testbench();
         reg[15:0] i;
         
         // Send an SD command that doesn't provide a response
-        SendSDCmd(CMD0, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 0);
+        SendSDCmd(CMD0, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 0);
         $display("[EXT] Verifying that Resp times out...");
         done = 0;
         for (i=0; i<10 && !done; i++) begin
@@ -779,10 +784,10 @@ module Testbench();
         reg[15:0] i;
         
         // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 32'b0);
+        // SendSDCmdResp(CMD25, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 32'b0);
         
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        SendSDCmd(CMD0, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_0, 0);
+        SendSDCmd(CMD0, `Msg_Arg_SDRespType_48, `Msg_Arg_SDDatInType_None, 0);
         
         // Clock out data on DAT lines
         SendMsg(`Msg_Type_SDDatOut, 0);

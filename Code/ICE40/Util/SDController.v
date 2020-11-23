@@ -9,10 +9,18 @@
 
 module SDController #(
     parameter ClkFreq               = 120_000_000,
+    
     localparam ClkSrc_Speed_Off     = 2'b00,
     localparam ClkSrc_Speed_Slow    = 2'b01,
     localparam ClkSrc_Speed_Fast    = 2'b10,
-    localparam ClkSrc_Delay_Width   = 4
+    localparam ClkSrc_Delay_Width   = 4,
+    
+    localparam RespType_None        = 2'b00,
+    localparam RespType_48          = 2'b01,
+    localparam RespType_136         = 2'b10,
+    
+    localparam DatInType_None       = 1'b0,
+    localparam DatInType_512        = 1'b1
 )(
     // Clock
     input wire clk,
@@ -28,10 +36,9 @@ module SDController #(
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger, // Toggle
-    input wire[47:0]    cmd_sdCmd,
-    input wire          cmd_respType_48,
-    input wire          cmd_respType_136,
-    input wire          cmd_datInType_512,
+    input wire[47:0]    cmd_data,
+    input wire[1:0]     cmd_respType,
+    input wire          cmd_datInType,
     output reg          cmd_done = 0, // Toggle
     
     // Response port (clock domain: `clk`)
@@ -222,10 +229,10 @@ module SDController #(
         1: begin
             resp_crcRst <= 1;
             resp_crcErr <= 0;
-            // We're accessing `cmd_respType_48` without synchronization, but that's
+            // We're accessing `cmd_respType` without synchronization, but that's
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `resp_done`
-            resp_counter <= (cmd_respType_48 ? 48-8-1 : 136-8-1);
+            resp_counter <= (cmd_respType===RespType_48 ? 48-8-1 : 136-8-1);
             // Wait for response to start
             if (!resp_staged) begin
                 $display("[SD-CTRL:RESP] Triggered");
@@ -250,7 +257,7 @@ module SDController #(
                 $display("[SD-CTRL:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", resp_crc, cmdresp_shiftReg[1]);
             end else begin
 `ifdef SIM
-                if (cmd_sdCmd[45:40] !== 6'd2) begin
+                if (cmd_data[45:40] !== 6'd2) begin
                     $display("[SD-CTRL:RESP] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", resp_crc, cmdresp_shiftReg[1]);
                     `Finish;
                 end else begin
@@ -522,7 +529,7 @@ module SDController #(
             cmd_counter <= 37;
             cmd_active[0] <= 1;
             cmd_crcEn <= 1;
-            cmdresp_shiftReg <= cmd_sdCmd;
+            cmdresp_shiftReg <= cmd_data;
             cmd_state <= 3;
         end
         
@@ -552,8 +559,8 @@ module SDController #(
             cmd_active[0] <= 1;
             $display("[SD-CTRL:CMD] Done");
             cmd_done <= !cmd_done;
-            if (cmd_respType_48 || cmd_respType_136) resp_state <= 1;
-            if (cmd_datInType_512) datIn_state <= 1;
+            if (cmd_respType!==RespType_None) resp_state <= 1;
+            if (cmd_datInType!==DatInType_None) datIn_state <= 1;
             cmd_state <= 0;
         end
         endcase
