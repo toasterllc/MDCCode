@@ -49,7 +49,6 @@ module PixController #(
     // RAMController
     // ====================
     
-    // reg         ramctrl_cmd_trigger = 0;
     reg[2:0]    ramctrl_cmd_block = 0;
     reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
@@ -67,7 +66,6 @@ module PixController #(
     ) RAMController (
         .clk(clk),
         
-        // .cmd_trigger(ramctrl_cmd_trigger),
         .cmd_block(ramctrl_cmd_block),
         .cmd(ramctrl_cmd),
         
@@ -206,6 +204,14 @@ module PixController #(
         // Wait until the end of the frame
         5: begin
             fifo_writeEn <= 1;
+            
+`ifdef SIM
+            if (fifo_writeEn && pix_fv_reg && pix_lv_reg && !fifo_writeReady) begin
+                $display("[PIXCTRL:FIFO] Dropped pixel ❌");
+                `Finish;
+            end
+`endif
+            
             if (!pix_fv_reg) begin
                 $display("[PIXCTRL:FIFO] Frame end");
                 fifo_state <= 0;
@@ -230,10 +236,10 @@ module PixController #(
     assign readout_done = ramctrl_read_done;
     
     localparam Ctrl_State_Idle      = 0; // +0
-    localparam Ctrl_State_Capture   = 1; // +2
-    localparam Ctrl_State_Readout   = 4; // +0
-    localparam Ctrl_State_Stop      = 5; // +0
-    localparam Ctrl_State_Count     = 6;
+    localparam Ctrl_State_Capture   = 1; // +3
+    localparam Ctrl_State_Readout   = 5; // +0
+    localparam Ctrl_State_Stop      = 6; // +0
+    localparam Ctrl_State_Count     = 7;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= RAMController.CmdNone;
@@ -249,23 +255,34 @@ module PixController #(
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= RAMController.CmdWrite;
-            // ramctrl_cmd_trigger <= 1;
-            // Start the FIFO data flow
-            ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
+            $display("[PIXCTRL:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
         Ctrl_State_Capture+1: begin
-            // Wait until the FIFO is reset
-            // This is necessary so that when we observe `fifo_readReady`,
-            // we know it's from the start of this session, not from a previous one.
-            if (ctrl_fifoRstDone) begin
+            // Wait for RAMController to be ready to write.
+            // This is necessary because the RAMController/SDRAM takes some time to
+            // initialize upon power on. If we attempted a capture during this time,
+            // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
+            // be ready to write yet.
+            if (ramctrl_write_ready) begin
+                // Start the FIFO data flow now that RAMController is ready to write
+                ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
                 ctrl_state <= Ctrl_State_Capture+2;
             end
         end
         
-        // Copy data from FIFO->RAM
         Ctrl_State_Capture+2: begin
+            // Wait until the FIFO is reset
+            // This is necessary so that when we observe `fifo_readReady`,
+            // we know it's from the start of this session, not from a previous one.
+            if (ctrl_fifoRstDone) begin
+                ctrl_state <= Ctrl_State_Capture+3;
+            end
+        end
+        
+        // Copy data from FIFO->RAM
+        Ctrl_State_Capture+3: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             
@@ -296,7 +313,6 @@ module PixController #(
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= RAMController.CmdRead;
-            // ramctrl_cmd_trigger <= 1;
             ctrl_state <= Ctrl_State_Idle;
         end
         
@@ -305,7 +321,6 @@ module PixController #(
             // Supply 'Stop' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= RAMController.CmdStop;
-            // ramctrl_cmd_trigger <= 1;
             ctrl_state <= Ctrl_State_Idle;
         end
         endcase
