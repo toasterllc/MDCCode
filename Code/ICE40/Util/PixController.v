@@ -136,7 +136,7 @@ module PixController #(
     // FIFO
     // ====================
     reg fifo_rst = 0;
-    reg fifo_rst_done = 0;
+    wire fifo_rst_done;
     reg fifo_writeEn = 0;
     wire fifo_writeReady;
     wire fifo_readTrigger;
@@ -160,6 +160,7 @@ module PixController #(
         .r_data(fifo_readData)
     );
     
+    reg ctrl_fifoCaptureTrigger = 0;
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
     `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
     `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
@@ -231,7 +232,8 @@ module PixController #(
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +2
     localparam Ctrl_State_Readout   = 4; // +0
-    localparam Ctrl_State_Count     = 5;
+    localparam Ctrl_State_Stop      = 5; // +0
+    localparam Ctrl_State_Count     = 6;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= RAMController.CmdNone;
