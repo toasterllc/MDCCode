@@ -120,9 +120,9 @@ module Top(
     input wire          ctrl_di,
     output wire         ctrl_do,
     
-    output wire         sd_clk,
-    inout wire          sd_cmd,
-    inout wire[3:0]     sd_dat,
+    output wire         sdcard_clk,
+    inout wire          sdcard_cmd,
+    inout wire[3:0]     sdcard_dat,
     
     input wire          pix_dclk,
     input wire[11:0]    pix_d,
@@ -147,17 +147,17 @@ module Top(
     // output reg[3:0]     led = 0
 );
     // ====================
-    // Clock (120 MHz)
+    // SD Clock (120 MHz)
     // ====================
-    localparam ClkFreq = 120_000_000;
-    wire clk;
+    localparam SD_Clk_Freq = 120_000_000;
+    wire sd_clk;
     ClockGen #(
-        .FREQ(ClkFreq),
+        .FREQ(SD_Clk_Freq),
         .DIVR(0),
         .DIVF(39),
         .DIVQ(3),
         .FILTER_RANGE(2)
-    ) ClockGen(.clkRef(clk24mhz), .clk(clk));
+    ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(sd_clk));
     
     // ====================
     // SDController
@@ -186,13 +186,13 @@ module Top(
     wire        sd_status_dat0Idle;
     
     SDController #(
-        .ClkFreq(ClkFreq)
+        .ClkFreq(SD_Clk_Freq)
     ) SDController (
-        .clk(clk),
+        .clk(sd_clk),
         
-        .sdcard_clk(sd_clk),
-        .sdcard_cmd(sd_cmd),
-        .sdcard_dat(sd_dat),
+        .sdcard_clk(sdcard_clk),
+        .sdcard_cmd(sdcard_cmd),
+        .sdcard_dat(sdcard_dat),
         
         .clksrc_speed(sd_clksrc_speed),
         .clksrc_delay(sd_clksrc_delay),
@@ -282,6 +282,46 @@ module Top(
     
     
     
+    
+    // // ====================
+    // // Pix Clock (141 MHz)
+    // // ====================
+    // localparam Pix_Clk_Freq = 141_000_000;
+    // wire pix_clk;
+    // ClockGen #(
+    //     .FREQ(Pix_Clk_Freq),
+    //     .DIVR(1),
+    //     .DIVF(46),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
+    
+    // // ====================
+    // // Pix Clock (108 MHz)
+    // // ====================
+    // localparam Pix_Clk_Freq = 108_000_000;
+    // wire pix_clk;
+    // ClockGen #(
+    //     .FREQ(Pix_Clk_Freq),
+    //     .DIVR(0),
+    //     .DIVF(35),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
+    
+    // ====================
+    // Pix Clock (102 MHz)
+    // ====================
+    localparam Pix_Clk_Freq = 102_000_000;
+    wire pix_clk;
+    ClockGen #(
+        .FREQ(Pix_Clk_Freq),
+        .DIVR(0),
+        .DIVF(33),
+        .DIVQ(3),
+        .FILTER_RANGE(2)
+    ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
+    
     // ====================
     // PixController
     // ====================
@@ -293,10 +333,10 @@ module Top(
     wire[15:0]  pixctrl_readout_data;
     wire        pixctrl_readout_done;
     PixController #(
-        .ClkFreq(ClkFreq),
+        .ClkFreq(Pix_Clk_Freq),
         .ImageSize(ImageWidth*ImageHeight)
     ) PixController (
-        .clk(clk),
+        .clk(pix_clk),
         
         .cmd(pixctrl_cmd),
         .cmd_ramBlock(pixctrl_cmd_ramBlock),
@@ -326,16 +366,16 @@ module Top(
     );
     
     // Connect PixController's readout port to SDController's datOut port
-    assign sd_datOutWrite_clk = clk;
+    assign sd_datOutWrite_clk = pix_clk;
     assign sd_datOutWrite_trigger = pixctrl_readout_ready;
     assign pixctrl_readout_trigger = sd_datOutWrite_ready;
     assign sd_datOutWrite_data = pixctrl_readout_data;
     
     reg ctrl_pixCaptureTrigger = 0;
-    `TogglePulse(pixctrl_captureTrigger, ctrl_pixCaptureTrigger, posedge, clk);
+    `TogglePulse(pixctrl_captureTrigger, ctrl_pixCaptureTrigger, posedge, pix_clk);
     reg ctrl_pixReadoutTrigger = 0;
-    `TogglePulse(pixctrl_readoutTrigger, ctrl_pixReadoutTrigger, posedge, clk);
-    `TogglePulse(pixctrl_sdDatOutReady, sd_datOut_ready, posedge, clk);
+    `TogglePulse(pixctrl_readoutTrigger, ctrl_pixReadoutTrigger, posedge, pix_clk);
+    `TogglePulse(pixctrl_sdDatOutReady, sd_datOut_ready, posedge, pix_clk);
     reg pixctrl_captureDoneToggle = 0;
     
     localparam PixCtrl_State_Idle           = 0;    // +0
@@ -343,7 +383,7 @@ module Top(
     localparam PixCtrl_State_Readout        = 2;    // +3
     localparam Data_State_Count             = 6;
     reg[`RegWidth(Data_State_Count-1)-1:0] pixctrl_state = 0;
-    always @(posedge clk) begin
+    always @(posedge pix_clk) begin
         pixctrl_cmd <= `PixController_Cmd_None;
         
         case (pixctrl_state)
@@ -635,11 +675,11 @@ module Testbench();
     tri1        ctrl_di;
     tri1        ctrl_do;
     
-    wire        sd_clk;
+    wire        sdcard_clk;
     // tri1        sd_cmd;
     // tri1[3:0]   sd_dat;
-    wire        sd_cmd;
-    wire[3:0]   sd_dat;
+    wire        sdcard_cmd;
+    wire[3:0]   sdcard_dat;
     
     wire        pix_dclk;
     wire[11:0]  pix_d;
@@ -665,9 +705,9 @@ module Testbench();
     Top Top(.*);
     
     SDCardSim SDCardSim(
-        .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
+        .sd_clk(sdcard_clk),
+        .sd_cmd(sdcard_cmd),
+        .sd_dat(sdcard_dat)
     );
     
     PixSim #(

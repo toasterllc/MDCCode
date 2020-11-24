@@ -67,13 +67,13 @@ set_io ram_dq[15]           K2      -pullup no
 set_io ram_ras_             A5      -pullup no
 set_io ram_we_              B4      -pullup no
 
-set_io sd_clk               K4      -pullup no
-set_io sd_cmd               L3      -pullup no
-set_io sd_dat[0]            L2      -pullup no
-set_io sd_dat[1]            K3      -pullup no
-set_io sd_dat[2]            L5      -pullup no    # Comment out to allow PLL to be used
-set_io sd_dat[3]            L4      -pullup no
-set_io sd_init              L1      -pullup no
+set_io sdcard_clk           K4      -pullup no
+set_io sdcard_cmd           L3      -pullup no
+set_io sdcard_dat[0]        L2      -pullup no
+set_io sdcard_dat[1]        K3      -pullup no
+# set_io sdcard_dat[2]        L5      -pullup no    # Comment out to allow PLL to be used
+set_io sdcard_dat[3]        L4      -pullup no
+set_io sdcard_init          L1      -pullup no
 
 set_io spi_clk              L10
 set_io spi_cs_              K10
