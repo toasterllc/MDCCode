@@ -349,8 +349,7 @@ module RAMController #(
     reg[Data_State_Width-1:0] data_nextState = 0;
     reg[Data_State_Width-1:0] data_restartState = 0;
     
-    reg[AddrWidth-1:0] write_addr = 0;
-    reg[AddrWidth-1:0] read_addr = 0;
+    reg[AddrWidth-1:0] data_addr = 0;
     reg[`RegWidth(BlockSize)-1:0] write_counter = 0;
     reg[`RegWidth(BlockSize)-1:0] read_counter = 0;
     
@@ -553,8 +552,8 @@ module RAMController #(
                     // $display("[RAM-CTRL] Data_State_Start");
                     // Activate the bank+row
                     ramCmd <= RAM_Cmd_BankActivate;
-                    ramBA <= write_addr[`BankBits];
-                    ramA <= write_addr[`RowBits];
+                    ramBA <= data_addr[`BankBits];
+                    ramA <= data_addr[`RowBits];
                     
                     data_write_issueCmd <= 1; // The first write needs to issue the write command
                     data_delayCounter <= Data_BankActivateDelay;
@@ -571,13 +570,13 @@ module RAMController #(
                     // $display("[RAM-CTRL] Data_State_Write");
                     write_ready <= 1; // Accept more data
                     if (write_trigger) begin
-                        // $display("[RAM-CTRL] Wrote mem[%h] = %h", write_addr, write_data);
-                        if (data_write_issueCmd) ramA <= write_addr[`ColBits]; // Supply the column address
+                        // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, write_data);
+                        if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
                         ramDQOut <= write_data; // Supply data to be written
                         ramDQOutEn <= 1;
                         ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                         if (data_write_issueCmd) ramCmd <= RAM_Cmd_Write; // Give write command
-                        write_addr <= write_addr+1;
+                        data_addr <= data_addr+1;
                         write_counter <= write_counter-1;
                         data_write_issueCmd <= 0; // Reset after we issue the write command
                         
@@ -587,7 +586,7 @@ module RAMController #(
                         end
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&write_addr[`ColBits] || write_counter===1) begin
+                        if (&data_addr[`ColBits] || write_counter===1) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Override `write_ready=1` above since we can't handle new data in the next state
                             write_ready <= 0;
@@ -637,8 +636,8 @@ module RAMController #(
                     // $display("[RAM-CTRL] Data_State_ReadStart");
                     // Activate the bank+row
                     ramCmd <= RAM_Cmd_BankActivate;
-                    ramBA <= read_addr[`BankBits];
-                    ramA <= read_addr[`RowBits];
+                    ramBA <= data_addr[`BankBits];
+                    ramA <= data_addr[`RowBits];
                     
                     data_delayCounter <= Data_BankActivateDelay;
                     data_state <= Data_State_Delay;
@@ -647,8 +646,8 @@ module RAMController #(
                 
                 Data_State_Read: begin
                     // $display("[RAM-CTRL] Data_State_Read");
-                    // $display("[RAM-CTRL] Read mem[%h] = %h", read_addr, write_data);
-                    ramA <= read_addr[`ColBits]; // Supply the column address
+                    // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, write_data);
+                    ramA <= data_addr[`ColBits]; // Supply the column address
                     ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                     ramCmd <= RAM_Cmd_Read; // Give read command
                     data_delayCounter <= C_CAS+1; // +1 cycle due to input register
@@ -666,11 +665,11 @@ module RAMController #(
                 
                 Data_State_Read+2: begin
                     // $display("[RAM-CTRL] Data_State_Read+2");
-                    // if (read_ready) $display("[RAM-CTRL] Read mem[%h] = %h", read_addr, read_data);
+                    // if (read_ready) $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
                     if (read_trigger) begin
-                        // $display("[RAM-CTRL] Read mem[%h] = %h", read_addr, read_data);
+                        // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
                         ramDQM <= RAM_DQM_Unmasked; // Unmask the data
-                        read_addr <= read_addr+1;
+                        data_addr <= data_addr+1;
                         read_counter <= read_counter-1;
                         
                         if (read_counter === 1) begin
@@ -679,7 +678,7 @@ module RAMController #(
                         end
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&read_addr[`ColBits] || read_counter===1) begin
+                        if (&data_addr[`ColBits] || read_counter===1) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
                             data_state <= Data_State_ReadFinish;
@@ -750,8 +749,7 @@ module RAMController #(
             read_ready <= 0;
             read_done <= 0;
             
-            write_addr <= AddrFromBlock(cmd_block);
-            read_addr <= AddrFromBlock(cmd_block);
+            data_addr <= AddrFromBlock(cmd_block);
             write_counter <= BlockSize;
             read_counter <= BlockSize;
             
