@@ -592,7 +592,7 @@ module RAMController #(
                         data_write_issueCmd <= 0; // Reset after we issue the write command
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || data_counter===1) begin
+                        if (&data_addr[`ColBits]) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Override `write_ready=1` above since we can't handle new data in the next state
                             write_ready <= 0;
@@ -679,7 +679,7 @@ module RAMController #(
                         data_counter <= data_counter-1;
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || data_counter===1) begin
+                        if (&data_addr[`ColBits]) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
                             data_state <= Data_State_ReadFinish;

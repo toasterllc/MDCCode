@@ -26,7 +26,7 @@ module Top(
 );
     wire clk = clk24mhz;
     reg cmd_trigger = 0;
-    reg[20:0] cmd_block = 0;
+    reg[14:0] cmd_block = 0;
     reg[1:0] cmd = 0;
     
     wire write_ready;
@@ -39,7 +39,7 @@ module Top(
     wire[15:0] read_data;
     wire read_done;
     
-    localparam BlockSize = 16;
+    localparam BlockSize = 1024;
     
     RAMController #(
         .ClkFreq(125_000_000),
@@ -77,7 +77,7 @@ module Top(
     reg[$clog2(BlockSize)-1:0] word_idx = 0;
     assign write_data = cmd_block^word_idx;
     wire[15:0] read_data_expected = cmd_block^word_idx;
-    reg[7:0] abortCounter = 0;
+    reg[11:0] abortCounter = 0;
     
     always @(posedge clk24mhz) begin
         cmd <= `RAMController_Cmd_None;
