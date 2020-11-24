@@ -395,6 +395,12 @@ module RAMController #(
         read_ready <= 0;
         read_done <= 0;
         
+        if (write_ready && write_trigger)
+            write_ending <= (data_addr[`ColBits]==={{(ColWidth-1){1'b1}}, 1'b0} || data_counter===2);
+        
+        if (read_ready && read_trigger)
+            read_ending <= (data_addr[`ColBits]==={{(ColWidth-1){1'b1}}, 1'b0} || data_counter===2);
+        
         // Reset RAM cmd state
         ramCmd <= RAM_Cmd_Nop;
         ramDQM <= RAM_DQM_Masked;
@@ -591,7 +597,6 @@ module RAMController #(
                         data_addr <= data_addr+1;
                         data_counter <= data_counter-1;
                         data_write_issueCmd <= 0; // Reset after we issue the write command
-                        write_ending <= data_counter===2;
                         
                         // Handle reaching the end of a row or the end of block
                         if (write_ending) begin
@@ -679,7 +684,6 @@ module RAMController #(
                         ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                         data_addr <= data_addr+1;
                         data_counter <= data_counter-1;
-                        read_ending <= data_counter===2;
                         
                         // Handle reaching the end of a row or the end of block
                         if (read_ending) begin
