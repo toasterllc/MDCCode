@@ -80,13 +80,13 @@ module Top(
     reg[7:0] abortCounter = 0;
     
     always @(posedge clk24mhz) begin
-        cmd <= RAMController.CmdNone;
+        cmd <= `RAMController_Cmd_None;
         write_trigger <= 0;
         read_trigger <= 0;
         case (state)
         0: begin
             $display("Write started @ block %x", cmd_block);
-            cmd <= RAMController.CmdWrite;
+            cmd <= `RAMController_Cmd_Write;
             word_idx <= 0;
             state <= 1;
         end
@@ -111,7 +111,7 @@ module Top(
         
         3: begin
             $display("Read started @ block %x", cmd_block);
-            cmd <= RAMController.CmdRead;
+            cmd <= `RAMController_Cmd_Read;
             word_idx <= 0;
             state <= 4;
         end
@@ -144,7 +144,7 @@ module Top(
         abortCounter <= abortCounter+1;
         if (&abortCounter) begin
             $display("ABORTING");
-            cmd <= RAMController.CmdNone;
+            cmd <= `RAMController_Cmd_None;
             write_trigger <= 0;
             read_trigger <= 0;
             cmd_block <= cmd_block+7;
