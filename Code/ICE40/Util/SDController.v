@@ -7,20 +7,20 @@
 `include "CRC7.v"
 `include "CRC16.v"
 
+`define SDController_ClkSrc_Speed_Off       2'b00
+`define SDController_ClkSrc_Speed_Slow      2'b01
+`define SDController_ClkSrc_Speed_Fast      2'b10
+`define SDController_ClkSrc_Delay_Width     4
+
+`define SDController_RespType_None          2'b00
+`define SDController_RespType_48            2'b01
+`define SDController_RespType_136           2'b10
+
+`define SDController_DatInType_None         1'b0
+`define SDController_DatInType_512          1'b1
+
 module SDController #(
-    parameter ClkFreq               = 120_000_000,
-    
-    localparam ClkSrc_Speed_Off     = 2'b00,
-    localparam ClkSrc_Speed_Slow    = 2'b01,
-    localparam ClkSrc_Speed_Fast    = 2'b10,
-    localparam ClkSrc_Delay_Width   = 4,
-    
-    localparam RespType_None        = 2'b00,
-    localparam RespType_48          = 2'b01,
-    localparam RespType_136         = 2'b10,
-    
-    localparam DatInType_None       = 1'b0,
-    localparam DatInType_512        = 1'b1
+    parameter ClkFreq = 120_000_000
 )(
     // Clock
     input wire clk,
@@ -31,8 +31,8 @@ module SDController #(
     inout wire[3:0] sdcard_dat,
     
     // Clock source port (clock domain: async)
-    input wire[1:0]                     clksrc_speed,
-    input wire[ClkSrc_Delay_Width-1:0]  clksrc_delay,
+    input wire[1:0]                                     clksrc_speed,
+    input wire[`SDController_ClkSrc_Delay_Width-1:0]    clksrc_delay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger, // Toggle
@@ -98,7 +98,7 @@ module SDController #(
     //   `clksrc_delay` should only be set while `clk_int` is stopped
     // ====================
     VariableDelay #(
-        .Count(1<<ClkSrc_Delay_Width)
+        .Count(1<<`SDController_ClkSrc_Delay_Width)
     ) VariableDelay (
         .in(clk_int),
         .sel(clksrc_delay),
@@ -232,7 +232,7 @@ module SDController #(
             // We're accessing `cmd_respType` without synchronization, but that's
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `resp_done`
-            resp_counter <= (cmd_respType===RespType_48 ? 48-8-1 : 136-8-1);
+            resp_counter <= (cmd_respType===`SDController_RespType_48 ? 48-8-1 : 136-8-1);
             // Wait for response to start
             if (!resp_staged) begin
                 $display("[SD-CTRL:RESP] Triggered");
@@ -559,8 +559,8 @@ module SDController #(
             cmd_active[0] <= 1;
             $display("[SD-CTRL:CMD] Done");
             cmd_done <= !cmd_done;
-            if (cmd_respType!==RespType_None) resp_state <= 1;
-            if (cmd_datInType!==DatInType_None) datIn_state <= 1;
+            if (cmd_respType!==`SDController_RespType_None) resp_state <= 1;
+            if (cmd_datInType!==`SDController_DatInType_None) datIn_state <= 1;
             cmd_state <= 0;
         end
         endcase

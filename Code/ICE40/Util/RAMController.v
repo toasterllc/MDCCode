@@ -3,15 +3,15 @@
 
 `include "Delay.v"
 
+`define RAMController_Cmd_None      2'b00
+`define RAMController_Cmd_Write     2'b01
+`define RAMController_Cmd_Read      2'b10
+`define RAMController_Cmd_Stop      2'b11
+
 module RAMController #(
     parameter ClkFreq               = 24_000_000,
     parameter RAMClkDelay           = 0,
     parameter BlockSize             = 16,
-    
-    localparam CmdNone              = 2'b00,
-    localparam CmdWrite             = 2'b01,
-    localparam CmdRead              = 2'b10,
-    localparam CmdStop              = 2'b11,
     
     localparam WordWidth            = 16,
     localparam BankWidth            = 2,
@@ -741,7 +741,7 @@ module RAMController #(
         end
         
         // Handle new commands
-        if (cmd !== CmdNone) begin
+        if (cmd !== `RAMController_Cmd_None) begin
             // Override our _ready/_done flags if we're starting a new command on the next cycle
             write_ready <= 0;
             write_done <= 0;
@@ -752,18 +752,18 @@ module RAMController #(
             data_counter <= BlockSize;
             
             case (cmd)
-            CmdWrite:   data_restartState <= Data_State_WriteStart;
-            CmdRead:    data_restartState <= Data_State_ReadStart;
-            CmdStop:    data_restartState <= Data_State_Idle;
+            `RAMController_Cmd_Write:   data_restartState <= Data_State_WriteStart;
+            `RAMController_Cmd_Read:    data_restartState <= Data_State_ReadStart;
+            `RAMController_Cmd_Stop:    data_restartState <= Data_State_Idle;
             endcase
             
             // If `data_state` is _Idle, then we can jump right to _WriteStart/_ReadStart/_Idle.
             // Otherwise, we need to delay since we don't know what state we came from.
             if (data_state === Data_State_Idle) begin
                 case (cmd)
-                CmdWrite:   data_state <= Data_State_WriteStart;
-                CmdRead:    data_state <= Data_State_ReadStart;
-                CmdStop:    data_state <= Data_State_Idle;
+                `RAMController_Cmd_Write:   data_state <= Data_State_WriteStart;
+                `RAMController_Cmd_Read:    data_state <= Data_State_ReadStart;
+                `RAMController_Cmd_Stop:    data_state <= Data_State_Idle;
                 endcase
             
             end else begin

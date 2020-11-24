@@ -344,14 +344,14 @@ module Top(
     localparam Data_State_Count             = 6;
     reg[`RegWidth(Data_State_Count-1)-1:0] pixctrl_state = 0;
     always @(posedge clk) begin
-        pixctrl_cmd <= PixController.CmdNone;
+        pixctrl_cmd <= `PixController_Cmd_None;
         
         case (pixctrl_state)
         PixCtrl_State_Idle: begin
         end
         
         PixCtrl_State_Capture: begin
-            pixctrl_cmd <= PixController.CmdCapture;
+            pixctrl_cmd <= `PixController_Cmd_Capture;
             pixctrl_state <= PixCtrl_State_Idle;
         end
         
@@ -359,7 +359,7 @@ module Top(
             $display("[PixCtrl] Readout triggered");
             // Tell PixController to stop so that data is guaranteed to not
             // be flowing into SDController
-            pixctrl_cmd <= PixController.CmdStop;
+            pixctrl_cmd <= `PixController_Cmd_Stop;
             pixctrl_state <= PixCtrl_State_Readout+1;
         end
         
@@ -378,7 +378,7 @@ module Top(
         
         PixCtrl_State_Readout+3: begin
             // Tell PixController to start readout
-            pixctrl_cmd <= PixController.CmdReadout;
+            pixctrl_cmd <= `PixController_Cmd_Readout;
             pixctrl_state <= PixCtrl_State_Idle;
         end
         endcase
@@ -465,9 +465,9 @@ module Top(
                     sd_clksrc_delay <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Delay_Bits];
                     
                     case (ctrl_msgArg[`Msg_Arg_SDClkSrc_Speed_Bits])
-                    `Msg_Arg_SDClkSrc_Speed_Off:    sd_clksrc_speed <= SDController.ClkSrc_Speed_Off;
-                    `Msg_Arg_SDClkSrc_Speed_Slow:   sd_clksrc_speed <= SDController.ClkSrc_Speed_Slow;
-                    `Msg_Arg_SDClkSrc_Speed_Fast:   sd_clksrc_speed <= SDController.ClkSrc_Speed_Fast;
+                    `Msg_Arg_SDClkSrc_Speed_Off:    sd_clksrc_speed <= `SDController_ClkSrc_Speed_Off;
+                    `Msg_Arg_SDClkSrc_Speed_Slow:   sd_clksrc_speed <= `SDController_ClkSrc_Speed_Slow;
+                    `Msg_Arg_SDClkSrc_Speed_Fast:   sd_clksrc_speed <= `SDController_ClkSrc_Speed_Fast;
                     endcase
                 end
                 
@@ -484,14 +484,14 @@ module Top(
                         ctrl_sdDatInDoneAck <= !ctrl_sdDatInDoneAck;
                     
                     case (ctrl_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
-                    `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= SDController.RespType_None;
-                    `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= SDController.RespType_48;
-                    `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= SDController.RespType_136;
+                    `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= `SDController_RespType_None;
+                    `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= `SDController_RespType_48;
+                    `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= `SDController_RespType_136;
                     endcase
                     
                     case (ctrl_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
-                    `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= SDController.DatInType_None;
-                    `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= SDController.DatInType_512;
+                    `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= `SDController_DatInType_None;
+                    `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= `SDController_DatInType_512;
                     endcase
                     
                     sd_cmd_data <= ctrl_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];

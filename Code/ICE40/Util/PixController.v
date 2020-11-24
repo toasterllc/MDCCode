@@ -4,13 +4,14 @@
 `include "RAMController.v"
 `include "TogglePulse.v"
 
+`define PixController_Cmd_None      2'b00
+`define PixController_Cmd_Capture   2'b01
+`define PixController_Cmd_Readout   2'b10
+`define PixController_Cmd_Stop      2'b11
+
 module PixController #(
     parameter ClkFreq = 24_000_000,
-    parameter ImageSize = 256*256,
-    localparam CmdNone      = 2'b00,
-    localparam CmdCapture   = 2'b01,
-    localparam CmdReadout   = 2'b10,
-    localparam CmdStop      = 2'b11
+    parameter ImageSize = 256*256
 )(
     input wire          clk,
     
@@ -242,7 +243,7 @@ module PixController #(
     localparam Ctrl_State_Count     = 7;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
-        ramctrl_cmd <= RAMController.CmdNone;
+        ramctrl_cmd <= `RAMController_Cmd_None;
         ramctrl_write_trigger <= 0;
         capture_done <= 0;
         
@@ -254,7 +255,7 @@ module PixController #(
             $display("[PIXCTRL:Capture] Triggered");
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd <= RAMController.CmdWrite;
+            ramctrl_cmd <= `RAMController_Cmd_Write;
             $display("[PIXCTRL:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
@@ -312,7 +313,7 @@ module PixController #(
             $display("[PIXCTRL:Readout] Triggered");
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd <= RAMController.CmdRead;
+            ramctrl_cmd <= `RAMController_Cmd_Read;
             ctrl_state <= Ctrl_State_Idle;
         end
         
@@ -320,16 +321,16 @@ module PixController #(
             $display("[PIXCTRL:Stop] Triggered");
             // Supply 'Stop' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd <= RAMController.CmdStop;
+            ramctrl_cmd <= `RAMController_Cmd_Stop;
             ctrl_state <= Ctrl_State_Idle;
         end
         endcase
         
-        if (cmd !== CmdNone) begin
+        if (cmd !== `PixController_Cmd_None) begin
             case (cmd)
-            CmdCapture:     ctrl_state <= Ctrl_State_Capture;
-            CmdReadout:     ctrl_state <= Ctrl_State_Readout;
-            CmdStop:        ctrl_state <= Ctrl_State_Stop;
+            `PixController_Cmd_Capture:     ctrl_state <= Ctrl_State_Capture;
+            `PixController_Cmd_Readout:     ctrl_state <= Ctrl_State_Readout;
+            `PixController_Cmd_Stop:        ctrl_state <= Ctrl_State_Stop;
             endcase
         end
     end
