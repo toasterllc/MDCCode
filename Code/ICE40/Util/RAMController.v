@@ -379,7 +379,8 @@ module RAMController #(
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
     
     reg data_write_issueCmd = 0;
-    reg data_ending = 0;
+    reg write_ending = 0;
+    reg read_ending = 0;
     
 	always @(posedge clk) begin
         init_delayCounter <= init_delayCounter-1;
@@ -393,8 +394,6 @@ module RAMController #(
         write_done <= 0;
         read_ready <= 0;
         read_done <= 0;
-        
-        data_ending <= (data_addr[`ColBits]==={{(ColWidth-1){1'b1}}, 1'b0} || data_counter===2);
         
         // Reset RAM cmd state
         ramCmd <= RAM_Cmd_Nop;
@@ -501,7 +500,7 @@ module RAMController #(
                 // ====================
                 case (refresh_state)
                 Refresh_State_Go: begin
-                    // $display("[RAM-CTRL] Refresh start");
+                    $display("[RAM-CTRL] Refresh start");
                     // We don't know what state we came from, so wait the most conservative amount of time.
                     refresh_delayCounter <= Refresh_StartDelay;
                     refresh_state <= Refresh_State_Delay;
@@ -519,7 +518,7 @@ module RAMController #(
                 end
                 
                 Refresh_State_Go+2: begin
-                    // $display("[RAM-CTRL] Refresh (time: %0d)", $time);
+                    $display("[RAM-CTRL] Refresh (time: %0d)", $time);
                     // Issue auto-refresh command
                     ramCmd <= RAM_Cmd_AutoRefresh;
                     // Wait T_RFC (auto refresh time) to guarantee that the next command can
@@ -592,9 +591,10 @@ module RAMController #(
                         data_addr <= data_addr+1;
                         data_counter <= data_counter-1;
                         data_write_issueCmd <= 0; // Reset after we issue the write command
+                        write_ending <= data_counter===2;
                         
                         // Handle reaching the end of a row or the end of block
-                        if (data_ending) begin
+                        if (write_ending) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Override `write_ready=1` above since we can't handle new data in the next state
                             write_ready <= 0;
@@ -679,9 +679,10 @@ module RAMController #(
                         ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                         data_addr <= data_addr+1;
                         data_counter <= data_counter-1;
+                        read_ending <= data_counter===2;
                         
                         // Handle reaching the end of a row or the end of block
-                        if (data_ending) begin
+                        if (read_ending) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
                             data_state <= Data_State_ReadFinish;
