@@ -3,6 +3,8 @@
 
 `include "RAMController.v"
 `include "TogglePulse.v"
+`include "AFIFO.v"
+// `include "BankFIFO.v"
 
 `define PixController_Cmd_None      2'b00
 `define PixController_Cmd_Capture   2'b01
@@ -141,12 +143,12 @@ module PixController #(
     wire fifo_readTrigger;
     wire[15:0] fifo_readData;
     wire fifo_readReady;
-    BankFIFO #(
+    AFIFO #(
         .W(16),
         .N(8)
-    ) BankFIFO (
-        .rst(fifo_rst),
-        .rst_done(fifo_rst_done),
+    ) AFIFO (
+        // .rst(fifo_rst),
+        // .rst_done(fifo_rst_done),
         
         .w_clk(pix_dclk),
         .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?

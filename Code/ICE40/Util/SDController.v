@@ -1,9 +1,10 @@
 `ifndef SDController_v
 `define SDController_v
 
+`include "AFIFO.v"
 `include "Util.v"
 `include "VariableDelay.v"
-`include "BankFIFO.v"
+// `include "BankFIFO.v"
 `include "CRC7.v"
 `include "CRC16.v"
 
@@ -141,8 +142,8 @@ module SDController #(
     reg datOut_crcEn = 0;
     reg datOut_crcOutEn = 0;
     reg datOut_endBit = 0;
-    reg datOut_ending = 0;
-    reg datOut_prevBank = 0;
+    // reg datOut_ending = 0;
+    // reg datOut_prevBank = 0;
     reg datOut_startBit = 0;
     reg[19:0] datOut_reg = 0;
     reg[1:0] datOut_counter = 0;
@@ -158,7 +159,7 @@ module SDController #(
     reg datOutFIFO_readTrigger = 0;
     wire[15:0] datOutFIFO_readData;
     wire datOutFIFO_readReady;
-    wire datOutFIFO_readBank;
+    // wire datOutFIFO_readBank;
     `TogglePulse(datOut_startPulse, datOut_start, posedge, clk_int);
     `TogglePulse(datOut_fifoRstDone, datOutFIFO_rstDone, posedge, clk_int);
     
@@ -191,8 +192,8 @@ module SDController #(
         datOut_counter <= datOut_counter-1;
         datOut_crcCounter <= datOut_crcCounter-1;
         datOutFIFO_readTrigger <= 0; // Pulse
-        datOut_prevBank <= datOutFIFO_readBank;
-        datOut_ending <= datOut_ending|(datOut_prevBank && !datOutFIFO_readBank);
+        // datOut_prevBank <= datOutFIFO_readBank;
+        // datOut_ending <= datOut_ending|(datOut_prevBank && !datOutFIFO_readBank);
         datOut_startBit <= 0; // Pulse
         datOut_endBit <= 0; // Pulse
         datOut_crcStatusOKReg <= datOut_crcStatusOK;
@@ -323,7 +324,7 @@ module SDController #(
         4: begin
             $display("[SD-CTRL:DATOUT] Write another block");
             datOut_counter <= 0;
-            datOut_ending <= 0;
+            // datOut_ending <= 0;
             datOut_crcRst <= 1;
             datOut_startBit <= 1;
             datOut_state <= 5;
@@ -338,7 +339,7 @@ module SDController #(
                 datOutFIFO_readTrigger <= 1;
             end
             
-            if (datOut_ending) begin
+            if (!datOutFIFO_readReady) begin
                 $display("[SD-CTRL:DATOUT] Done writing");
                 datOut_state <= 6;
             end
@@ -573,12 +574,12 @@ module SDController #(
     // ====================
     // Dat Out FIFO
     // ====================
-    BankFIFO #(
+    AFIFO #(
         .W(16),
         .N(8)
-    ) BankFIFO (
-        .rst(datOutFIFO_rst),
-        .rst_done(datOutFIFO_rstDone),
+    ) AFIFO (
+        // .rst(datOutFIFO_rst),
+        // .rst_done(datOutFIFO_rstDone),
         
         .w_clk(datOutWrite_clk),
         .w_ready(datOutWrite_ready),
@@ -588,8 +589,8 @@ module SDController #(
         .r_clk(clk_int),
         .r_ready(datOutFIFO_readReady),
         .r_trigger(datOutFIFO_readTrigger),
-        .r_data(datOutFIFO_readData),
-        .r_bank(datOutFIFO_readBank)
+        .r_data(datOutFIFO_readData)
+        // .r_bank(datOutFIFO_readBank)
     );
     
     // ====================
