@@ -16,24 +16,27 @@ private:
     void _usbHandleEvent(const USB::Event& ev);
     
     using EchoMsg = ICE40::EchoMsg;
-    using SDDatInType = ICE40::SDSendCmdMsg::DatInTypes;
-    using SDDatOutMsg = ICE40::SDDatOutMsg;
+    using EchoResp = ICE40::EchoResp;
+    using SDClkSrcMsg = ICE40::SDClkSrcMsg;
+    using SDSendCmdMsg = ICE40::SDSendCmdMsg;
     using SDGetStatusMsg = ICE40::SDGetStatusMsg;
     using SDGetStatusResp = ICE40::SDGetStatusResp;
-    using SDRespType = ICE40::SDSendCmdMsg::RespTypes;
-    using SDSendCmdMsg = ICE40::SDSendCmdMsg;
-    using SDSetClkMsg = ICE40::SDSetClkMsg;
     using PixResetMsg = ICE40::PixResetMsg;
+    using PixCaptureMsg = ICE40::PixCaptureMsg;
+    using PixReadoutMsg = ICE40::PixReadoutMsg;
     using PixI2CTransactionMsg = ICE40::PixI2CTransactionMsg;
-    using PixI2CGetStatusMsg = ICE40::PixI2CGetStatusMsg;
-    using PixI2CGetStatusResp = ICE40::PixI2CGetStatusResp;
+    using PixGetStatusMsg = ICE40::PixGetStatusMsg;
+    using PixGetStatusResp = ICE40::PixGetStatusResp;
+    
+    using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
+    using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
     
     SDGetStatusResp _sdGetStatus();
     SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
-        ICE40::SDSendCmdMsg::RespType respType = ICE40::SDSendCmdMsg::RespTypes::Normal48,
+        ICE40::SDSendCmdMsg::RespType respType = ICE40::SDSendCmdMsg::RespTypes::Len48,
         ICE40::SDSendCmdMsg::DatInType datInType = ICE40::SDSendCmdMsg::DatInTypes::None);
     
-    PixI2CGetStatusResp _pixGetStatus();
+    PixGetStatusResp _pixGetStatus();
     uint16_t _pixRead(uint16_t addr);
     void _pixWrite(uint16_t addr, uint16_t val);
     

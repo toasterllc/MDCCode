@@ -31,9 +31,9 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
         // Continue if the command hasn't been sent yet
         if (!status.sdCmdDone()) continue;
         // Continue if we expect a response but it hasn't been received yet
-        if (respType!=SDRespType::None && !status.sdRespDone()) continue;
+        if (respType!=SDRespTypes::None && !status.sdRespDone()) continue;
         // Continue if we expect DatIn but it hasn't been received yet
-        if (datInType!=SDDatInType::None && !status.sdDatInDone()) continue;
+        if (datInType!=SDDatInTypes::None && !status.sdDatInDone()) continue;
         return status;
     }
 }
@@ -213,7 +213,7 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 //        // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
 //        // Group 2 (Command System)    = 0xF (no change)
 //        // Group 1 (Access Mode)       = 0x3 (SDR104)
-//        auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespType::Normal48, SDDatInType::Block512);
+//        auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespType::Len48, SDDatInType::Block512);
 //        Assert(!status.sdRespCRCErr());
 //        Assert(!status.sdDatInCRCErr());
 //        // Verify that the access mode was successfully changed
@@ -315,9 +315,9 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 
 
 
-ICE40::PixI2CGetStatusResp System::_pixGetStatus() {
-    ice40.write(PixI2CGetStatusMsg());
-    return ice40.read<PixI2CGetStatusResp>();
+ICE40::PixGetStatusResp System::_pixGetStatus() {
+    ice40.write(PixGetStatusMsg());
+    return ice40.read<PixGetStatusResp>();
 }
 
 uint16_t System::_pixRead(uint16_t addr) {

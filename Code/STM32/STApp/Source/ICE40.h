@@ -53,8 +53,8 @@ public:
     
     struct Resp {
         uint8_t payload[8];
-        bool getBool(uint8_t idx) const {
-            return _getBool(payload, sizeof(payload), idx);
+        bool getBit(uint8_t idx) const {
+            return _getBit(payload, sizeof(payload), idx);
         }
         uint64_t getBits(uint8_t start, uint8_t end) const {
             return _getBits(payload, sizeof(payload), start, end);
@@ -83,14 +83,14 @@ public:
         }
     };
     
-    struct SDSetClkMsg : Msg {
-        enum class ClkSrc : uint8_t {
-            None    = 0,
-            Slow    = 1<<0,
-            Fast    = 1<<1,
+    struct SDClkSrcMsg : Msg {
+        enum class ClkSpeed : uint8_t {
+            Off     = 0,
+            Slow    = 1,
+            Fast    = 2,
         };
         
-        SDSetClkMsg(ClkSrc src, uint8_t delay) {
+        SDClkSrcMsg(ClkSpeed speed, uint8_t delay) {
             type = 0x01;
             payload[0] = 0;
             payload[1] = 0;
@@ -98,26 +98,26 @@ public:
             payload[3] = 0;
             payload[4] = 0;
             payload[5] = 0;
-            payload[6] = (delay<<2) | (uint8_t)src;
+            payload[6] = (delay<<2) | (uint8_t)speed;
         }
     };
     
     struct SDSendCmdMsg : Msg {
         Enum(uint8_t, RespType, RespTypes,
             None        = 0,
-            Normal48    = 1<<0,
-            Long136     = 1<<1,
+            Len48       = 1,
+            Len136      = 2,
         );
         
         Enum(uint8_t, DatInType, DatInTypes,
             None        = 0,
-            Block512    = 1<<2,
+            Len512      = 1,
         );
         
         SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
             AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
             type = 0x02;
-            payload[0] = respType|datInType;
+            payload[0] = (respType<<1)|datInType;
             payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
             payload[2] = (sdArg&0xFF000000)>>24;
             payload[3] = (sdArg&0x00FF0000)>>16;
@@ -127,43 +127,36 @@ public:
         }
     };
     
-    struct SDDatOutMsg : Msg {
-        SDDatOutMsg() {
-            type = 0x03;
-        }
-    };
-    
     struct SDGetStatusMsg : Msg {
         SDGetStatusMsg() {
-            type = 0x04;
+            type = 0x03;
         }
     };
     
     struct SDGetStatusResp : Resp {
         // Command
-        bool sdCmdDone() const                  { return getBool(63);                           }
+        bool sdCmdDone() const                  { return getBit(63);                            }
         
         // Response
-        bool sdRespDone() const                 { return getBool(62);                           }
-        bool sdRespCRCErr() const               { return getBool(61);                           }
-        bool sdRespTimeout() const              { return getBool(60);                           }
+        bool sdRespDone() const                 { return getBit(62);                            }
+        bool sdRespCRCErr() const               { return getBit(61);                            }
         uint64_t sdResp() const                 { return getBits(_RespIdx+48-1, _RespIdx);      }
         
         // DatOut
-        bool sdDatOutDone() const               { return getBool(12);                           }
-        bool sdDatOutCRCErr() const             { return getBool(11);                           }
+        bool sdDatOutDone() const               { return getBit(12);                            }
+        bool sdDatOutCRCErr() const             { return getBit(11);                            }
         
         // DatIn
-        bool sdDatInDone() const                { return getBool(10);                           }
-        bool sdDatInCRCErr() const              { return getBool(9);                            }
+        bool sdDatInDone() const                { return getBit(10);                            }
+        bool sdDatInCRCErr() const              { return getBit(9);                             }
         uint8_t sdDatInCMD6AccessMode() const   { return getBits(8,5);                          }
         
         // Other
-        bool sdDat0Idle() const                 { return getBool(4);                            }
+        bool sdDat0Idle() const                 { return getBit(4);                             }
         
         // Helper methods
-        uint64_t sdRespGetBool(uint8_t idx) const {
-            return getBool(idx+_RespIdx);
+        uint64_t sdRespGetBit(uint8_t idx) const {
+            return getBit(idx+_RespIdx);
         }
         
         uint64_t sdRespGetBits(uint8_t start, uint8_t end) const {
@@ -174,15 +167,9 @@ public:
         static constexpr size_t _RespIdx = 13;
     };
     
-    struct SDAbortMsg : Msg {
-        SDAbortMsg() {
-            type = 0x05;
-        }
-    };
-    
     struct PixResetMsg : Msg {
         PixResetMsg(bool val) {
-            type = 0x06;
+            type = 0x04;
             payload[0] = 0;
             payload[1] = 0;
             payload[2] = 0;
@@ -190,6 +177,32 @@ public:
             payload[4] = 0;
             payload[5] = 0;
             payload[6] = val;
+        }
+    };
+    
+    struct PixCaptureMsg : Msg {
+        PixCaptureMsg(uint8_t dstBlock) {
+            type = 0x05;
+            payload[0] = 0;
+            payload[1] = 0;
+            payload[2] = 0;
+            payload[3] = 0;
+            payload[4] = 0;
+            payload[5] = 0;
+            payload[6] = dstBlock&0x7;
+        }
+    };
+    
+    struct PixReadoutMsg : Msg {
+        PixReadoutMsg(uint8_t srcBlock) {
+            type = 0x06;
+            payload[0] = 0;
+            payload[1] = 0;
+            payload[2] = 0;
+            payload[3] = 0;
+            payload[4] = 0;
+            payload[5] = 0;
+            payload[6] = srcBlock&0x7;
         }
     };
     
@@ -207,16 +220,17 @@ public:
         }
     };
     
-    struct PixI2CGetStatusMsg : Msg {
-        PixI2CGetStatusMsg() {
+    struct PixGetStatusMsg : Msg {
+        PixGetStatusMsg() {
             type = 0x08;
         }
     };
     
-    struct PixI2CGetStatusResp : Resp {
-        bool done() const           { return getBool(63);   }
-        bool err() const            { return getBool(62);   }
-        uint16_t readData() const   { return getBits(15,0); }
+    struct PixGetStatusResp : Resp {
+        bool done() const           { return getBit(63);        }
+        bool err() const            { return getBit(62);        }
+        uint16_t readData() const   { return getBits(61,46);    }
+        bool captureDone() const    { return getBit(45);        }
     };
     
     ICE40(QSPI& qspi) : _qspi(qspi) {}
@@ -250,7 +264,7 @@ public:
     }
     
 private:
-    static bool _getBool(const uint8_t* bytes, size_t len, uint8_t idx) {
+    static bool _getBit(const uint8_t* bytes, size_t len, uint8_t idx) {
         AssertArg(idx < len*8);
         const uint8_t byteIdx = len-(idx/8)-1;
         const uint8_t bitIdx = idx%8;
