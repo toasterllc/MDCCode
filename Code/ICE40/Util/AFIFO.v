@@ -1,12 +1,18 @@
 `ifndef AFIFO_v
 `define AFIFO_v
 
+`include "TogglePulse.v"
+
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
 module AFIFO #(
     parameter W=16, // Word width
     parameter N=8   // Word count (2^N)
 )(
+    // Reset port (clock domain: async)
+    input wire rst, // Toggle
+    output reg rst_done = 0, // Toggle
+    
     input wire w_clk,           // Write clock
     input wire w_trigger,       // Write trigger
     input wire[W-1:0] w_data,   // Write data
@@ -18,6 +24,32 @@ module AFIFO #(
     output wire r_ready         // Read OK (data available -- not empty)
 );
     reg[W-1:0] mem[0:(1<<N)-1];
+    
+    
+    // ====================
+    // Reset Handling
+    // ====================
+    reg w_rst = 0;
+    reg w_rstAck=0, w_rstAckTmp=0, w_rstAckPrev=0;
+    reg r_rst=0, r_rstTmp=0;
+    `TogglePulse(w_rstTrigger, rst, posedge, w_clk);
+    always @(posedge w_clk) begin
+        if (w_rstTrigger) w_rst <= 1;
+        // Synchronize `r_rst` into `w_rstAck`, representing the
+        // acknowledgement of the reset from the read domain.
+        {w_rstAck, w_rstAckTmp} <= {w_rstAckTmp, r_rst};
+        // Clear `w_rstReq` upon the ack from the read domain
+        if (w_rstAck) w_rst <= 0;
+        // We're done resetting when the ack goes 1->0
+        w_rstAckPrev <= w_rstAck;
+        if (w_rstAckPrev && !w_rstAck) rst_done <= !rst_done;
+    end
+    
+    always @(posedge r_clk) begin
+        {r_rst, r_rstTmp} <= {r_rstTmp, w_rst};
+    end
+    
+    
     
     // ====================
     // Read handling
@@ -32,10 +64,15 @@ module AFIFO #(
     
     wire[N:0] r_baddrNext = r_baddr+1'b1;
     always @(posedge r_clk) begin
-        r_gaddrDelayed <= r_gaddr;
-        if (r_trigger & r_ready) begin
-            r_baddr <= r_baddrNext;
-            r_gaddr <= (r_baddrNext>>1)^r_baddrNext;
+        if (!r_rst) begin
+            
+        
+        end else begin
+            r_gaddrDelayed <= r_gaddr;
+            if (r_trigger & r_ready) begin
+                r_baddr <= r_baddrNext;
+                r_gaddr <= (r_baddrNext>>1)^r_baddrNext;
+            end
         end
     end
     
