@@ -334,12 +334,12 @@ module RAMController #(
     // Data State Machine Registers
     // ====================
     localparam Data_State_Idle              = 0;    // +0
-    localparam Data_State_WriteStart        = 1;    // +0
-    localparam Data_State_Write             = 2;    // +1
-    localparam Data_State_WriteFinish       = 4;    // +1
-    localparam Data_State_ReadStart         = 6;    // +0
-    localparam Data_State_Read              = 7;    // +2
-    localparam Data_State_ReadFinish        = 10;   // +1
+    localparam Data_State_WriteStart        = 1;    // +1
+    localparam Data_State_Write             = 3;    // +1
+    localparam Data_State_WriteFinish       = 5;    // +0
+    localparam Data_State_ReadStart         = 6;    // +1
+    localparam Data_State_Read              = 8;    // +2
+    localparam Data_State_ReadFinish        = 11;   // +0
     localparam Data_State_InterruptStart    = 12;   // +0
     localparam Data_State_Delay             = 13;   // +0
     localparam Data_State_Count             = 14;
@@ -548,6 +548,18 @@ module RAMController #(
                 end
                 
                 Data_State_WriteStart: begin
+                    if (data_counter) begin
+                        data_state <= Data_State_WriteStart+1;
+                    
+                    end else begin
+                        // We're done writing
+                        write_done <= 1;
+                        data_state <= Data_State_Idle;
+                        data_restartState <= Data_State_Idle;
+                    end
+                end
+                
+                Data_State_WriteStart+1: begin
                     // $display("[RAM-CTRL] Data_State_Start");
                     // Activate the bank+row
                     ramCmd <= RAM_Cmd_BankActivate;
@@ -579,13 +591,8 @@ module RAMController #(
                         data_counter <= data_counter-1;
                         data_write_issueCmd <= 0; // Reset after we issue the write command
                         
-                        if (data_counter === 1) begin
-                            // If we're interrupted after this point, continue in WriteFinish
-                            data_restartState <= Data_State_WriteFinish;
-                        end
-                        
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || data_counter===1) begin
+                        if (&data_addr[`ColBits]) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Override `write_ready=1` above since we can't handle new data in the next state
                             write_ready <= 0;
@@ -619,19 +626,19 @@ module RAMController #(
                     data_nextState <= Data_State_WriteFinish+1;
                 end
                 
-                Data_State_WriteFinish+1: begin
+                Data_State_ReadStart: begin
                     if (data_counter) begin
-                        data_state <= Data_State_WriteStart;
+                        data_state <= Data_State_ReadStart+1;
                     
                     end else begin
-                        // We're done writing
-                        write_done <= 1;
+                        // We're done reading
+                        read_done <= 1;
                         data_state <= Data_State_Idle;
                         data_restartState <= Data_State_Idle;
                     end
                 end
                 
-                Data_State_ReadStart: begin
+                Data_State_ReadStart+1: begin
                     // $display("[RAM-CTRL] Data_State_ReadStart");
                     // Activate the bank+row
                     ramCmd <= RAM_Cmd_BankActivate;
@@ -671,13 +678,8 @@ module RAMController #(
                         data_addr <= data_addr+1;
                         data_counter <= data_counter-1;
                         
-                        if (data_counter === 1) begin
-                            // If we're interrupted after this point, continue in ReadFinish
-                            data_restartState <= Data_State_ReadFinish;
-                        end
-                        
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || data_counter===1) begin
+                        if (&data_addr[`ColBits]) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
                             data_state <= Data_State_ReadFinish;
@@ -700,19 +702,7 @@ module RAMController #(
                     
                     data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
                     data_state <= Data_State_Delay;
-                    data_nextState <= Data_State_ReadFinish+1;
-                end
-                
-                Data_State_ReadFinish+1: begin
-                    if (data_counter) begin
-                        data_state <= Data_State_ReadStart;
-                    
-                    end else begin
-                        // We're done reading
-                        read_done <= 1;
-                        data_state <= Data_State_Idle;
-                        data_restartState <= Data_State_Idle;
-                    end
+                    data_nextState <= Data_State_ReadStart;
                 end
                 
                 Data_State_InterruptStart: begin
