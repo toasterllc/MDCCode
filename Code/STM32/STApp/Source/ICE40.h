@@ -91,6 +91,7 @@ public:
         };
         
         SDClkSrcMsg(ClkSpeed speed, uint8_t delay) {
+            AssertArg((delay&0xF) == delay); // Ensure delay fits in 4 bits
             type = 0x01;
             payload[0] = 0;
             payload[1] = 0;
@@ -98,7 +99,7 @@ public:
             payload[3] = 0;
             payload[4] = 0;
             payload[5] = 0;
-            payload[6] = (delay<<2) | (uint8_t)speed;
+            payload[6] = ((delay&0xF)<<2) | (uint8_t)speed;
         }
     };
     

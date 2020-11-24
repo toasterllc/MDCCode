@@ -55,11 +55,9 @@ localparam ImageHeight = 1296;
 `define     Msg_Arg_SDClkSrc_Delay_Bits                         5:2
 `define     Msg_Arg_SDClkSrc_Speed_Len                          2
 `define     Msg_Arg_SDClkSrc_Speed_Bits                         1:0
-`define     Msg_Arg_SDClkSrc_Speed_Fast                         `Msg_Arg_SDClkSrc_Speed_Len'b10
-`define     Msg_Arg_SDClkSrc_Speed_Fast_Bits                    1:1
-`define     Msg_Arg_SDClkSrc_Speed_Slow                         `Msg_Arg_SDClkSrc_Speed_Len'b01
-`define     Msg_Arg_SDClkSrc_Speed_Slow_Bits                    0:0
 `define     Msg_Arg_SDClkSrc_Speed_Off                          `Msg_Arg_SDClkSrc_Speed_Len'b00
+`define     Msg_Arg_SDClkSrc_Speed_Slow                         `Msg_Arg_SDClkSrc_Speed_Len'b01
+`define     Msg_Arg_SDClkSrc_Speed_Fast                         `Msg_Arg_SDClkSrc_Speed_Len'b10
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_Len'h02
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
@@ -146,7 +144,7 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
     
-    // output reg[3:0]    led = 0
+    // output reg[3:0]     led = 0
 );
     // ====================
     // Clock (120 MHz)
@@ -462,7 +460,7 @@ module Top(
                         ctrl_msgArg[`Msg_Arg_SDClkSrc_Delay_Bits],
                         ctrl_msgArg[`Msg_Arg_SDClkSrc_Speed_Bits]);
                     
-                    // We don't need to synchronize `sd_ctrl_clkDelay` into the sd_ domain,
+                    // We don't need to synchronize `sd_clksrc_delay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
                     sd_clksrc_delay <= ctrl_msgArg[`Msg_Arg_SDClkSrc_Delay_Bits];
                     
