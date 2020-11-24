@@ -379,6 +379,7 @@ module RAMController #(
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
     
     reg data_write_issueCmd = 0;
+    reg data_ending = 0;
     
 	always @(posedge clk) begin
         init_delayCounter <= init_delayCounter-1;
@@ -393,6 +394,7 @@ module RAMController #(
         read_ready <= 0;
         read_done <= 0;
         
+        data_ending <= (data_addr[`ColBits] === {{(ColWidth-1){1'b1}}, 1'b0});
         
         // Reset RAM cmd state
         ramCmd <= RAM_Cmd_Nop;
@@ -592,7 +594,7 @@ module RAMController #(
                         data_write_issueCmd <= 0; // Reset after we issue the write command
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits]) begin
+                        if (data_ending) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Override `write_ready=1` above since we can't handle new data in the next state
                             write_ready <= 0;
@@ -679,7 +681,7 @@ module RAMController #(
                         data_counter <= data_counter-1;
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits]) begin
+                        if (data_ending) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
                             data_state <= Data_State_ReadFinish;
