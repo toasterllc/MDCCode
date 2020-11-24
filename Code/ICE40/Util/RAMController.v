@@ -289,7 +289,19 @@ module RAMController #(
                                                     //       is an exact multiple of the clock period, but refreshing
                                                     //       one cycle earlier is fine.
     reg[`RegWidth(Refresh_Delay)-1:0] refresh_counter = 0;
-    localparam Refresh_StartDelay = `Max6(
+    localparam Refresh_DelayCounterWidth = `RegWidth3(
+        InterruptDelay,
+        Clocks(T_RP,2),
+        Clocks(T_RFC,2)
+    );
+    reg[Refresh_DelayCounterWidth-1:0] refresh_delayCounter = 0;
+    reg[Refresh_State_Width-1:0] refresh_state = 0;
+    reg[Refresh_State_Width-1:0] refresh_nextState = 0;
+    reg refresh_trigger = 0;
+    
+    
+    
+    localparam InterruptDelay = `Max6(
         // T_RC: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RC
         // when we finish refreshing.
         // -2 cycles getting to the next state
@@ -315,18 +327,6 @@ module RAMController #(
         // -2 cycles getting to the next state
         Clocks(T_WR,2)
     );
-    localparam Refresh_DelayCounterWidth = `RegWidth3(
-        Refresh_StartDelay,
-        Clocks(T_RP,2),
-        Clocks(T_RFC,2)
-    );
-    reg[Refresh_DelayCounterWidth-1:0] refresh_delayCounter = 0;
-    reg[Refresh_State_Width-1:0] refresh_state = 0;
-    reg[Refresh_State_Width-1:0] refresh_nextState = 0;
-    reg refresh_trigger = 0;
-    
-    
-    
     
     
     
@@ -336,13 +336,11 @@ module RAMController #(
     localparam Data_State_Idle              = 0;    // +0
     localparam Data_State_WriteStart        = 1;    // +1
     localparam Data_State_Write             = 3;    // +1
-    localparam Data_State_WriteFinish       = 5;    // +0
-    localparam Data_State_ReadStart         = 6;    // +1
-    localparam Data_State_Read              = 8;    // +2
-    localparam Data_State_ReadFinish        = 11;   // +0
-    localparam Data_State_InterruptStart    = 12;   // +0
-    localparam Data_State_Delay             = 13;   // +0
-    localparam Data_State_Count             = 14;
+    localparam Data_State_ReadStart         = 5;    // +1
+    localparam Data_State_Read              = 7;    // +2
+    localparam Data_State_Finish            = 10;   // +0
+    localparam Data_State_Delay             = 11;   // +0
+    localparam Data_State_Count             = 12;
     localparam Data_State_Width             = `RegWidth(Data_State_Count-1);
     
     reg[Data_State_Width-1:0] data_state = 0;
@@ -352,10 +350,20 @@ module RAMController #(
     reg[AddrWidth-1:0] data_addr = 0;
     reg[`RegWidth(BlockSize)-1:0] data_counter = 0;
     
-    localparam Data_BankActivateDelay = `Max4(
+    localparam Data_BankActivateDelay = (
         // T_RCD: ensure "bank activate to read/write time".
         // -2 cycles getting to the next state
-        Clocks(T_RCD,2),
+        Clocks(T_RCD,2)
+    );
+    
+    localparam Data_FinishDelay = `Max4(
+        // T_WR: ensure "write recover" time before precharging after a write
+        // Datasheet (paraphrased):
+        //   "The PrechargeAll command that interrupts a write burst should be
+        //   issued ceil(tWR/tCK) cycles after the clock edge in which the
+        //   last data-in element is registered."
+        // -2 cycles getting to the next state
+        Clocks(T_WR,2),
         // T_RAS: ensure "row activate to precharge time", ie that we don't
         // CmdPrechargeAll too soon after we activate the bank.
         // -2 cycles getting to the next state
@@ -369,12 +377,14 @@ module RAMController #(
         // -2 cycles getting to the next state
         Clocks(T_RRD,2)
     );
-    localparam Data_DelayCounterWidth = `RegWidth5(
+    
+    localparam Data_DelayCounterWidth = `RegWidth6(
         Data_BankActivateDelay,
+        Data_FinishDelay,
         Clocks(T_WR,2),
         C_CAS+1,
         Clocks(T_RP,2),
-        Refresh_StartDelay
+        InterruptDelay
     );
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
     
@@ -501,7 +511,7 @@ module RAMController #(
                 Refresh_State_Go: begin
                     // $display("[RAM-CTRL] Refresh start");
                     // We don't know what state we came from, so wait the most conservative amount of time.
-                    refresh_delayCounter <= Refresh_StartDelay;
+                    refresh_delayCounter <= InterruptDelay;
                     refresh_state <= Refresh_State_Delay;
                     refresh_nextState <= Refresh_State_Go+1;
                 end
@@ -598,14 +608,9 @@ module RAMController #(
                             write_ready <= 0;
                             
                             // Abort writing
-                            // Wait the 'write recover' time before doing so.
-                            // Datasheet (paraphrased):
-                            //   "The PrechargeAll command that interrupts a write burst should be
-                            //   issued ceil(tWR/tCK) cycles after the clock edge in which the
-                            //   last data-in element is registered."
-                            data_delayCounter <= Clocks(T_WR,2); // -2 cycles getting to Data_State_StartPrecharge
+                            data_delayCounter <= Data_FinishDelay;
                             data_state <= Data_State_Delay;
-                            data_nextState <= Data_State_WriteFinish;
+                            data_nextState <= Data_State_Finish;
                         end
                         
                     end else begin
@@ -614,16 +619,6 @@ module RAMController #(
                         // write command when the flow starts again.
                         data_write_issueCmd <= 1;
                     end
-                end
-                
-                Data_State_WriteFinish: begin
-                    // $display("[RAM-CTRL] Data_State_WriteFinish");
-                    ramCmd <= RAM_Cmd_PrechargeAll;
-                    ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-                    
-                    data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-                    data_state <= Data_State_Delay;
-                    data_nextState <= Data_State_WriteStart;
                 end
                 
                 Data_State_ReadStart: begin
@@ -682,7 +677,9 @@ module RAMController #(
                         if (&data_addr[`ColBits] || data_counter===1) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
-                            data_state <= Data_State_ReadFinish;
+                            data_delayCounter <= Data_FinishDelay;
+                            data_state <= Data_State_Delay;
+                            data_nextState <= Data_State_Finish;
                         end else begin
                             // Notify that more data is available
                             read_ready <= 1;
@@ -695,18 +692,8 @@ module RAMController #(
                     end
                 end
                 
-                Data_State_ReadFinish: begin
-                    // $display("[RAM-CTRL] Data_State_ReadFinish");
-                    ramCmd <= RAM_Cmd_PrechargeAll;
-                    ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
-                    
-                    data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
-                    data_state <= Data_State_Delay;
-                    data_nextState <= Data_State_ReadStart;
-                end
-                
-                Data_State_InterruptStart: begin
-                    // Precharge all banks
+                Data_State_Finish: begin
+                    // $display("[RAM-CTRL] Data_State_Finish");
                     ramCmd <= RAM_Cmd_PrechargeAll;
                     ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
                     
@@ -757,9 +744,9 @@ module RAMController #(
                 endcase
             
             end else begin
-                data_delayCounter <= Refresh_StartDelay;
+                data_delayCounter <= InterruptDelay;
                 data_state <= Data_State_Delay;
-                data_nextState <= Data_State_InterruptStart;
+                data_nextState <= Data_State_Finish;
             end
         end
     end
