@@ -394,7 +394,7 @@ module RAMController #(
         read_ready <= 0;
         read_done <= 0;
         
-        data_ending <= (data_addr[`ColBits] === {{(ColWidth-1){1'b1}}, 1'b0});
+        data_ending <= (data_addr[`ColBits]==={{(ColWidth-1){1'b1}}, 1'b0} || data_counter===2);
         
         // Reset RAM cmd state
         ramCmd <= RAM_Cmd_Nop;
