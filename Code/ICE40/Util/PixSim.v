@@ -1,7 +1,7 @@
 `ifndef PixSim_v
 `define PixSim_v
 
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module PixSim #(
     parameter ImageWidth = 256,
@@ -15,7 +15,7 @@ module PixSim #(
 );
     reg clk = 0;
     initial forever begin
-        #5;
+        #5102; // 98 MHz
         clk = !clk;
     end
     

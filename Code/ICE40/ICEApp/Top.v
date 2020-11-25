@@ -146,6 +146,20 @@ module Top(
     
     // output reg[3:0]     led = 0
 );
+    // // ====================
+    // // SD Clock (102 MHz)
+    // // ====================
+    // localparam SD_Clk_Freq = 102_000_000;
+    // wire sd_clk;
+    // ClockGen #(
+    //     .FREQ(SD_Clk_Freq),
+    //     .DIVR(0),
+    //     .DIVF(33),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(sd_clk));
+    
+    
     // ====================
     // SD Clock (108 MHz)
     // ====================
@@ -401,6 +415,7 @@ module Top(
         endcase
         
         if (pixctrl_captureTrigger) begin
+            // led <= 4'b1111;
             pixctrl_state <= PixCtrl_State_Capture;
         end
         
@@ -1275,20 +1290,20 @@ module Testbench();
         
         TestPixCapture();
         
-        TestNoOp();
-        TestEcho();
-        TestSDCMD0();
-        TestSDCMD8();
-        TestSDDatOut();
-        TestSDCMD2();
-        TestSDDatIn();
-        TestSDRespRecovery();
-        TestSDDatOutRecovery();
-        TestSDDatInRecovery();
-        TestPixReset();
-        TestPixCapture();
-        TestPixI2CWriteRead();
-        `Finish;
+        // TestNoOp();
+        // TestEcho();
+        // TestSDCMD0();
+        // TestSDCMD8();
+        // TestSDDatOut();
+        // TestSDCMD2();
+        // TestSDDatIn();
+        // TestSDRespRecovery();
+        // TestSDDatOutRecovery();
+        // TestSDDatInRecovery();
+        // TestPixReset();
+        // TestPixCapture();
+        // TestPixI2CWriteRead();
+        // `Finish;
         
         // forever begin
         //     i = $urandom%8;
