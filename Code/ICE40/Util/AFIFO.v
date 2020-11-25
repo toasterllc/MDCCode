@@ -1,8 +1,6 @@
 `ifndef AFIFO_v
 `define AFIFO_v
 
-`include "TogglePulse.v"
-
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
 module AFIFO #(
@@ -10,8 +8,7 @@ module AFIFO #(
     parameter N=8   // Word count (2^N)
 )(
     // Reset port (clock domain: async)
-    input wire rst, // Toggle
-    output reg rst_done = 0, // Toggle
+    input wire rst_,
     
     input wire w_clk,           // Write clock
     input wire w_trigger,       // Write trigger
@@ -25,31 +22,33 @@ module AFIFO #(
 );
     reg[W-1:0] mem[0:(1<<N)-1];
     
-    
     // ====================
-    // Reset Handling
+    // Write handling
     // ====================
-    reg w_rst = 0;
-    reg w_rstAck=0, w_rstAckTmp=0, w_rstAckPrev=0;
-    reg r_rst=0, r_rstTmp=0;
-    `TogglePulse(w_rstTrigger, rst, posedge, w_clk);
-    always @(posedge w_clk) begin
-        if (w_rstTrigger) w_rst <= 1;
-        // Synchronize `r_rst` into `w_rstAck`, representing the
-        // acknowledgement of the reset from the read domain.
-        {w_rstAck, w_rstAckTmp} <= {w_rstAckTmp, r_rst};
-        // Clear `w_rstReq` upon the ack from the read domain
-        if (w_rstAck) w_rst <= 0;
-        // We're done resetting when the ack goes 1->0
-        w_rstAckPrev <= w_rstAck;
-        if (w_rstAckPrev && !w_rstAck) rst_done <= !rst_done;
+    reg[N:0] w_baddr=0, w_gaddr=0, w_gaddrDelayed=0; // Write address (binary, gray, gray delayed)
+    wire[N:0] w_baddrNext = w_baddr+1'b1;
+    always @(posedge w_clk, negedge rst_) begin
+        if (!rst_) begin
+            w_baddr <= 0;
+            w_gaddr <= 0;
+            w_gaddrDelayed <= 0;
+        
+        end else begin
+            w_gaddrDelayed <= w_gaddr;
+            if (w_trigger & w_ready) begin
+                mem[w_baddr[N-1:0]] <= w_data;
+                w_baddr <= w_baddrNext;
+                w_gaddr <= (w_baddrNext>>1)^w_baddrNext;
+            end
+        end
     end
     
-    always @(posedge r_clk) begin
-        {r_rst, r_rstTmp} <= {r_rstTmp, w_rst};
-    end
+    reg[1:0] w_readyReg_ = 0; // Inverted logic so we come out of reset with w_ready==true
+    always @(posedge w_clk, negedge w_readyAsync)
+        if (!w_readyAsync) w_readyReg_ <= 2'b11;
+        else w_readyReg_ <= (w_readyReg_<<1)|1'b0;
     
-    
+    assign w_ready = !w_readyReg_[1];
     
     // ====================
     // Read handling
@@ -63,9 +62,11 @@ module AFIFO #(
 `endif
     
     wire[N:0] r_baddrNext = r_baddr+1'b1;
-    always @(posedge r_clk) begin
-        if (!r_rst) begin
-            
+    always @(posedge r_clk, negedge rst_) begin
+        if (!rst_) begin
+            r_baddr <= 0;
+            r_gaddr <= 0;
+            r_gaddrDelayed <= 0;
         
         end else begin
             r_gaddrDelayed <= r_gaddr;
@@ -85,34 +86,13 @@ module AFIFO #(
     assign r_ready = r_readyReg[1];
     
     // ====================
-    // Write handling
-    // ====================
-    reg[N:0] w_baddr=0, w_gaddr=0, w_gaddrDelayed=0; // Write address (binary, gray, gray delayed)
-    wire[N:0] w_baddrNext = w_baddr+1'b1;
-    always @(posedge w_clk) begin
-        w_gaddrDelayed <= w_gaddr;
-        if (w_trigger & w_ready) begin
-            mem[w_baddr[N-1:0]] <= w_data;
-            w_baddr <= w_baddrNext;
-            w_gaddr <= (w_baddrNext>>1)^w_baddrNext;
-        end
-    end
-    
-    reg[1:0] w_readyReg_ = 0; // Inverted logic so we come out of reset with w_ready==true
-    always @(posedge w_clk, negedge w_readyAsync)
-        if (!w_readyAsync) w_readyReg_ <= 2'b11;
-        else w_readyReg_ <= (w_readyReg_<<1)|1'b0;
-    
-    assign w_ready = !w_readyReg_[1];
-    
-    // ====================
     // Async signal generation
     // ====================
     wire r_empty = (r_gaddr == w_gaddrDelayed);
     wire w_full = (w_gaddr == {~r_gaddrDelayed[N:N-1], r_gaddrDelayed[N-2:0]});
     
     wire r_readyAsync = !r_empty; // Read OK == !empty
-    wire w_readyAsync = !w_full; // Write OK == !full
+    wire w_readyAsync = !w_full || !rst_; // Write OK == !full
     
     // reg dir = 0;
     // wire arok = (r_gaddr!=w_gaddrDelayed) || dir; // Read OK == not empty
