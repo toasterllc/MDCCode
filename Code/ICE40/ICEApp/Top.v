@@ -1298,20 +1298,20 @@ module Testbench();
         
         TestPixCapture();
         
-        TestNoOp();
-        TestEcho();
-        TestSDCMD0();
-        TestSDCMD8();
+        // TestNoOp();
+        // TestEcho();
+        // TestSDCMD0();
+        // TestSDCMD8();
         TestSDDatOut();
-        TestSDCMD2();
-        TestSDDatIn();
-        TestSDRespRecovery();
-        TestSDDatOutRecovery();
-        TestSDDatInRecovery();
-        TestPixReset();
-        TestPixCapture();
-        TestPixI2CWriteRead();
-        `Finish;
+        // TestSDCMD2();
+        // TestSDDatIn();
+        // TestSDRespRecovery();
+        // TestSDDatOutRecovery();
+        // TestSDDatInRecovery();
+        // TestPixReset();
+        // TestPixCapture();
+        // TestPixI2CWriteRead();
+        // `Finish;
         
         // forever begin
         //     i = $urandom%8;

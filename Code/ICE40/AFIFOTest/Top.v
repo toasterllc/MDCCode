@@ -33,17 +33,9 @@ module Top(
         .FILTER_RANGE(2)
     ) ClockGen_r_clk(.clkRef(clk24mhz), .clk(r_clk));
     
-    // ====================
-    // rstClk (50 MHz)
-    // ====================
-    wire rstClk;
-    ClockGen #(
-        .FREQ(50_000_000)
-    ) ClockGen_rstClk(.clkRef(clk24mhz), .clk(rstClk));
-    
-    reg[7:0] rst_counter = 0;
     reg rst_req = 0;
-    always @(posedge rstClk) begin
+    reg[7:0] rst_counter = 0;
+    always @(posedge w_clk) begin
         rst_counter <= rst_counter+1;
         if (&rst_counter) begin
             $display("RESET");
@@ -156,6 +148,7 @@ module Top(
                 r_lastData <= r_data;
                 if (r_lastDataInit && r_data!==(r_lastData+1'b1)) begin
                     $display("BAD DATA (r_lastData:%x, r_data:%x)", r_lastData, r_data);
+                    led <= 4'b1111;
                     `Finish;
                 end
                 r_lastDataInit <= 1;
