@@ -4,7 +4,6 @@
 `include "RAMController.v"
 `include "TogglePulse.v"
 `include "AFIFO.v"
-// `include "BankFIFO.v"
 
 `define PixController_Cmd_None      2'b00
 `define PixController_Cmd_Capture   2'b01

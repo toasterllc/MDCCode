@@ -4,7 +4,6 @@
 `include "AFIFO.v"
 `include "Util.v"
 `include "VariableDelay.v"
-// `include "BankFIFO.v"
 `include "CRC7.v"
 `include "CRC16.v"
 
