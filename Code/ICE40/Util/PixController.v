@@ -137,7 +137,7 @@ module PixController #(
     // FIFO
     // ====================
     reg fifo_rst = 0;
-    reg fifo_rstDone = 0;
+    wire fifo_rst_done;
     reg fifo_writeEn = 0;
     wire fifo_writeReady;
     wire fifo_readTrigger;
@@ -147,7 +147,8 @@ module PixController #(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst_(!fifo_rst),
+        .rst(fifo_rst),
+        .rst_done(fifo_rst_done),
         
         .w_clk(pix_dclk),
         .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
@@ -162,11 +163,11 @@ module PixController #(
     
     reg ctrl_fifoCaptureTrigger = 0;
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
-    `TogglePulse(ctrl_fifoRstDone, fifo_rstDone, posedge, clk);
+    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
+    `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
     
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
-        fifo_rst <= 0; // Pulse
         fifo_writeEn <= 0; // Reset by default
         
         case (fifo_state)
@@ -176,14 +177,13 @@ module PixController #(
         
         // Reset FIFO
         1: begin
-            fifo_rst <= 1;
+            fifo_rst <= !fifo_rst;
             fifo_state <= 2;
         end
         
-        // Wait state for FIFO reset pulse to complete
+        // Wait for FIFO to be done resetting
         2: begin
-            if (!fifo_rst) begin
-                fifo_rstDone <= !fifo_rstDone;
+            if (fifo_rstDone) begin
                 fifo_state <= 3;
             end
         end

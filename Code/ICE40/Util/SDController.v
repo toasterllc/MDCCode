@@ -155,11 +155,13 @@ module SDController #(
     reg datOut_crcStatusOKReg = 0;
     
     reg datOutFIFO_rst = 0;
+    wire datOutFIFO_rstDone;
     wire datOutFIFO_writeReady;
     reg datOutFIFO_readTrigger = 0;
     wire[15:0] datOutFIFO_readData;
     wire datOutFIFO_readReady;
     `TogglePulse(datOut_startPulse, datOut_start, posedge, clk_int);
+    `TogglePulse(datOut_fifoRstDone, datOutFIFO_rstDone, posedge, clk_int);
     
     reg[2:0] datIn_state = 0;
     wire[3:0] datIn;
@@ -202,7 +204,6 @@ module SDController #(
         datOut_crcRst <= 0;
         datOut_crcEn <= 0;
         datOut_crcOutEn <= 0;
-        datOutFIFO_rst <= 0;
         
         // `datOut_active` is 3 bits to track whether `datIn` is
         // valid or not, since it takes several cycles to transition
@@ -298,14 +299,14 @@ module SDController #(
         1: begin
             $display("[SD-CTRL:DATOUT] Write session starting");
             // Reset the FIFO
-            datOutFIFO_rst <= 1;
+            datOutFIFO_rst <= !datOutFIFO_rst;
             datOut_crcErr <= 0;
             datOut_state <= 2;
         end
         
         2: begin
-            // Wait for the FIFO reset pulse to finish
-            if (!datOutFIFO_rst) begin
+            // Wait for the FIFO to finish resetting
+            if (datOut_fifoRstDone) begin
                 $display("[SD-CTRL:DATOUT] Signalling ready");
                 datOut_ready <= !datOut_ready;
                 datOut_state <= 3;
@@ -577,7 +578,8 @@ module SDController #(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst_(!datOutFIFO_rst),
+        .rst(datOutFIFO_rst),
+        .rst_done(datOutFIFO_rstDone),
         
         .w_clk(datOutWrite_clk),
         .w_ready(datOutWrite_ready),
