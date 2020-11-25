@@ -142,8 +142,6 @@ module SDController #(
     reg datOut_crcEn = 0;
     reg datOut_crcOutEn = 0;
     reg datOut_endBit = 0;
-    // reg datOut_ending = 0;
-    // reg datOut_prevBank = 0;
     reg datOut_startBit = 0;
     reg[19:0] datOut_reg = 0;
     reg[9:0] datOut_counter = 0;
@@ -324,7 +322,6 @@ module SDController #(
             $display("[SD-CTRL:DATOUT] Write another block");
             datOut_counter <= 1023;
             datOut_triggerCounter <= 0;
-            // datOut_ending <= 0;
             datOut_crcRst <= 1;
             datOut_startBit <= 1;
             datOut_state <= 5;
