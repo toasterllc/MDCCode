@@ -228,10 +228,11 @@ public:
     };
     
     struct PixGetStatusResp : Resp {
-        bool i2cDone() const            { return getBit(63);        }
-        bool i2cErr() const             { return getBit(62);        }
-        uint16_t i2cReadData() const    { return getBits(61,46);    }
-        bool captureDone() const        { return getBit(45);        }
+        bool i2cDone() const                { return getBit(63);        }
+        bool i2cErr() const                 { return getBit(62);        }
+        uint16_t i2cReadData() const        { return getBits(61,46);    }
+        bool captureDone() const            { return getBit(45);        }
+        bool capturePixelDropped() const    { return getBit(44);        }
     };
     
     ICE40(QSPI& qspi) : _qspi(qspi) {}

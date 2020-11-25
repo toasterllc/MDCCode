@@ -432,7 +432,7 @@ void System::_handleEvent() {
     {
 //        _pixWrite(0x306E, 0x0010);  // Slow
 //        _pixWrite(0x306E, 0x9010);  // Medium (default)
-//        _pixWrite(0x306E, 0xFC10);  // Fast
+        _pixWrite(0x306E, 0xFC10);  // Fast
     }
     
     // Set data_pedestal
@@ -531,10 +531,9 @@ void System::_handleEvent() {
     
     // Disable embedded_data (first 2 rows of statistic info)
     // See AR0134_RR_D.pdf for info on statistics format
-    // Stats enabled (default)   = 0x1902
-    // Stats disabled            = 0x1802
     {
-        _pixWrite(0x3064, 0x1802);
+//        _pixWrite(0x3064, 0x1902);  // Stats enabled (default)
+        _pixWrite(0x3064, 0x1802);  // Stats disabled
     }
     
     // Start streaming
@@ -544,13 +543,13 @@ void System::_handleEvent() {
     }
     
     // Capture a frame
-    {
-        auto status = _pixGetStatus();
-        volatile bool captureDone = status.captureDone();
+    for (;;) {
         ice40.write(PixCaptureMsg(0));
-        for (;;) {
+        for (int i=0; i<10; i++) {
             auto status = _pixGetStatus();
-            captureDone = status.captureDone();
+//            Assert(!status.capturePixelDropped());
+            volatile bool captureDone = status.captureDone();
+            volatile bool pixelDropped = status.capturePixelDropped();
             if (status.captureDone()) break;
         }
     }

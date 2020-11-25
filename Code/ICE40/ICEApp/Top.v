@@ -29,6 +29,7 @@ localparam ImageWidth = 256;
 localparam ImageHeight = 16;
 `else
 localparam ImageWidth = 2304;
+// localparam ImageHeight = 1296;
 localparam ImageHeight = 1296;
 `endif
 
@@ -109,6 +110,8 @@ localparam ImageHeight = 1296;
 `define     Resp_Arg_PixGetStatus_I2CErr_Bits                   62:62
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
+`define     Resp_Arg_PixGetStatus_CapturePixelDropped_Bits      44:44
+`define     Resp_Arg_PixGetStatus_CaptureStatus_Bits            31:0 // TODO: remove
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
@@ -160,15 +163,28 @@ module Top(
     // ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(sd_clk));
     
     
+    // // ====================
+    // // SD Clock (108 MHz)
+    // // ====================
+    // localparam SD_Clk_Freq = 108_000_000;
+    // wire sd_clk;
+    // ClockGen #(
+    //     .FREQ(SD_Clk_Freq),
+    //     .DIVR(0),
+    //     .DIVF(35),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(sd_clk));
+    
     // ====================
-    // SD Clock (108 MHz)
+    // SD Clock (102 MHz)
     // ====================
-    localparam SD_Clk_Freq = 108_000_000;
+    localparam SD_Clk_Freq = 102_000_000;
     wire sd_clk;
     ClockGen #(
         .FREQ(SD_Clk_Freq),
         .DIVR(0),
-        .DIVF(35),
+        .DIVF(33),
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(sd_clk));
@@ -203,38 +219,38 @@ module Top(
         .ClkFreq(SD_Clk_Freq)
     ) SDController (
         .clk(sd_clk),
-        
+
         .sdcard_clk(sdcard_clk),
         .sdcard_cmd(sdcard_cmd),
         .sdcard_dat(sdcard_dat),
-        
+
         .clksrc_speed(sd_clksrc_speed),
         .clksrc_delay(sd_clksrc_delay),
-        
+
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
         .cmd_respType(sd_cmd_respType),
         .cmd_datInType(sd_cmd_datInType),
         .cmd_done(sd_cmd_done),
-        
+
         .resp_done(sd_resp_done),
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
-        
+
         .datOut_start(sd_datOut_start),
         .datOut_ready(sd_datOut_ready),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
-        
+
         .datOutWrite_clk(sd_datOutWrite_clk),
         .datOutWrite_ready(sd_datOutWrite_ready),
         .datOutWrite_trigger(sd_datOutWrite_trigger),
         .datOutWrite_data(sd_datOutWrite_data),
-        
+
         .datIn_done(sd_datIn_done),
         .datIn_crcErr(sd_datIn_crcErr),
         .datIn_cmd6AccessMode(sd_datIn_cmd6AccessMode),
-        
+
         .status_dat0Idle(sd_status_dat0Idle)
     );
     
@@ -311,7 +327,7 @@ module Top(
     // ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
     
     localparam Pix_Clk_Freq = SD_Clk_Freq;
-    assign pix_clk = sd_clk;
+    wire pix_clk = sd_clk;
     
     // ====================
     // PixController
@@ -319,6 +335,8 @@ module Top(
     reg[1:0]    pixctrl_cmd = 0;
     reg[2:0]    pixctrl_cmd_ramBlock = 0;
     wire        pixctrl_capture_done;
+    wire        pixctrl_capture_pixelDropped;
+    wire[31:0]  pixctrl_capture_status; // TODO: remove
     wire        pixctrl_readout_ready;
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;
@@ -333,6 +351,8 @@ module Top(
         .cmd_ramBlock(pixctrl_cmd_ramBlock),
         
         .capture_done(pixctrl_capture_done),
+        .capture_pixelDropped(pixctrl_capture_pixelDropped),
+        .capture_status(pixctrl_capture_status), // TODO: remove
         
         .readout_ready(pixctrl_readout_ready),
         .readout_trigger(pixctrl_readout_trigger),
@@ -455,6 +475,7 @@ module Top(
     `Sync(ctrl_sdDat0Idle, sd_status_dat0Idle, posedge, ctrl_clk);
     
     `ToggleAck(ctrl_pixctrlCaptureDone_, ctrl_pixctrlCaptureDoneAck, pixctrl_captureDoneToggle, posedge, ctrl_clk);
+    `Sync(ctrl_pixctrlCapturePixelDropped, pixctrl_capture_pixelDropped, posedge, ctrl_clk);
     
     always @(posedge ctrl_clk, negedge ctrl_rst_) begin
         if (!ctrl_rst_) begin
@@ -595,6 +616,8 @@ module Top(
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlCaptureDone_;
+                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= ctrl_pixctrlCapturePixelDropped;
+                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureStatus_Bits] <= pixctrl_capture_status;
                 end
                 
                 `Msg_Type_NoOp: begin
@@ -1139,7 +1162,9 @@ module Testbench();
             // Request Pix status
             SendMsgResp(`Msg_Type_PixGetStatus, 0);
         end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
+        
         $display("[EXT] Capture done ✅");
+        $display("[EXT] Capture status: %0d", resp[`Resp_Arg_PixGetStatus_CaptureStatus_Bits]);
     end endtask
     
     task TestPixI2CWriteRead; begin
@@ -1288,7 +1313,9 @@ module Testbench();
         SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
         // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Slow);
         
-        TestPixCapture();
+        forever begin
+            TestPixCapture();
+        end
         
         // TestNoOp();
         // TestEcho();

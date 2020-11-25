@@ -4,6 +4,7 @@
 `include "RAMController.v"
 `include "TogglePulse.v"
 `include "AFIFO.v"
+`include "Delay.v"
 
 `define PixController_Cmd_None      2'b00
 `define PixController_Cmd_Capture   2'b01
@@ -22,6 +23,8 @@ module PixController #(
     
     // Capture port
     output reg          capture_done = 0,
+    output wire         capture_pixelDropped,
+    output reg[31:0]    capture_status = 0, // TODO: remove
     
     // Readout port (clock domain: `clk`)
     output wire         readout_ready,
@@ -93,6 +96,14 @@ module PixController #(
         .ram_dq(ram_dq)
     );
     
+    wire pix_dclk_int;
+    Delay #(
+        .Count(1)
+    ) Delay (
+        .in(pix_dclk),
+        .out(pix_dclk_int)
+    );
+    
     // ====================
     // Pin: pix_d
     // ====================
@@ -102,7 +113,7 @@ module PixController #(
         SB_IO #(
             .PIN_TYPE(6'b0000_00)
         ) SB_IO_pix_d (
-            .INPUT_CLK(pix_dclk),
+            .INPUT_CLK(pix_dclk_int),
             .PACKAGE_PIN(pix_d[i]),
             .D_IN_0(pix_d_reg[i])
         );
@@ -115,7 +126,7 @@ module PixController #(
     SB_IO #(
         .PIN_TYPE(6'b0000_00)
     ) SB_IO_pix_fv (
-        .INPUT_CLK(pix_dclk),
+        .INPUT_CLK(pix_dclk_int),
         .PACKAGE_PIN(pix_fv),
         .D_IN_0(pix_fv_reg)
     );
@@ -127,7 +138,7 @@ module PixController #(
     SB_IO #(
         .PIN_TYPE(6'b0000_00)
     ) SB_IO_pix_lv (
-        .INPUT_CLK(pix_dclk),
+        .INPUT_CLK(pix_dclk_int),
         .PACKAGE_PIN(pix_lv),
         .D_IN_0(pix_lv_reg)
     );
@@ -149,7 +160,7 @@ module PixController #(
         .rst(fifo_rst),
         .rst_done(fifo_rst_done),
         
-        .w_clk(pix_dclk),
+        .w_clk(pix_dclk_int),
         .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
         .w_trigger(fifo_writeEn && pix_lv_reg),
         .w_data({4'b0, pix_d_reg}),
@@ -161,12 +172,13 @@ module PixController #(
     );
     
     reg ctrl_fifoCaptureTrigger = 0;
-    `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
-    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
+    `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk_int);
+    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk_int);
     `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
     
+    reg fifo_pixelDropped = 0;
     reg[2:0] fifo_state = 0;
-    always @(posedge pix_dclk) begin
+    always @(posedge pix_dclk_int) begin
         fifo_writeEn <= 0; // Reset by default
         
         case (fifo_state)
@@ -174,9 +186,11 @@ module PixController #(
         0: begin
         end
         
-        // Reset FIFO
+        // Reset FIFO / ourself
         1: begin
             fifo_rst <= !fifo_rst;
+            fifo_pixelDropped <= 0;
+            capture_status <= 0;
             fifo_state <= 2;
         end
         
@@ -207,13 +221,6 @@ module PixController #(
         5: begin
             fifo_writeEn <= 1;
             
-`ifdef SIM
-            if (fifo_writeEn && pix_fv_reg && pix_lv_reg && !fifo_writeReady) begin
-                $display("[PIXCTRL:FIFO] Dropped pixel ❌");
-                `Finish;
-            end
-`endif
-            
             if (!pix_fv_reg) begin
                 $display("[PIXCTRL:FIFO] Frame end");
                 fifo_state <= 0;
@@ -224,6 +231,26 @@ module PixController #(
         if (fifo_captureTrigger) begin
             fifo_state <= 1;
         end
+        
+        // Watch for dropped pixels
+        if (fifo_writeEn && pix_lv_reg && !fifo_writeReady) begin
+            fifo_pixelDropped <= 1;
+            capture_status <= capture_status+1;
+            $display("[PIXCTRL:FIFO] Pixel dropped ❌");
+            `Finish;
+        end
+        
+        // if (fifo_writeEn && pix_lv_reg && fifo_writeReady) begin
+        //     capture_status <= capture_status+1;
+        // end
+        
+        // if (fifo_writeEn && pix_lv_reg) begin
+        //     capture_status <= capture_status+1;
+        // end
+        
+        // if (!pix_fv_reg && pix_lv_reg) begin
+        //     capture_status <= 32'hAABBCCDD;
+        // end
     end
     
     
@@ -236,6 +263,9 @@ module PixController #(
     assign ramctrl_read_trigger = readout_trigger;
     assign readout_data = ramctrl_read_data;
     assign readout_done = ramctrl_read_done;
+    
+    `Sync(capture_pixelDroppedSync, fifo_pixelDropped, posedge, clk);
+    assign capture_pixelDropped = capture_pixelDroppedSync;
     
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +3
@@ -257,7 +287,6 @@ module PixController #(
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Write;
-            $display("[PIXCTRL:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
@@ -267,6 +296,7 @@ module PixController #(
             // initialize upon power on. If we attempted a capture during this time,
             // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
             // be ready to write yet.
+            $display("[PIXCTRL:Capture] Waiting for RAMController to be ready to write...");
             if (ramctrl_write_ready) begin
                 // Start the FIFO data flow now that RAMController is ready to write
                 ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
