@@ -9,29 +9,63 @@ module Top(
     input wire clk24mhz,
     output reg[3:0] led = 0
 );
+    // // ====================
+    // // w_clk (156 MHz)
+    // // ====================
+    // wire w_clk;
+    // ClockGen #(
+    //     .FREQ(156_000_000),
+    //     .DIVR(0),
+    //     .DIVF(25),
+    //     .DIVQ(2),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_w_clk(.clkRef(clk24mhz), .clk(w_clk));
+    //
+    // // ====================
+    // // r_clk (96 MHz)
+    // // ====================
+    // wire r_clk;
+    // ClockGen #(
+    //     .FREQ(96_000_000),
+    //     .DIVR(0),
+    //     .DIVF(31),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_r_clk(.clkRef(clk24mhz), .clk(r_clk));
+    
+    
+    
+    
+    
+    
     // ====================
-    // w_clk (100.5 MHz)
+    // w_clk (48 MHz)
     // ====================
     wire w_clk;
     ClockGen #(
-        .FREQ(100_000_000),
-        .DIVR(1),
-        .DIVF(66),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
+        .FREQ(48_000_000),
+        .DIVR(0),
+        .DIVF(31),
+        .DIVQ(4),
+        .FILTER_RANGE(2)
     ) ClockGen_w_clk(.clkRef(clk24mhz), .clk(w_clk));
     
     // ====================
-    // r_clk (120 MHz)
+    // r_clk (96 MHz)
     // ====================
     wire r_clk;
     ClockGen #(
-        .FREQ(120_000_000),
+        .FREQ(96_000_000),
         .DIVR(0),
-        .DIVF(39),
+        .DIVF(31),
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen_r_clk(.clkRef(clk24mhz), .clk(r_clk));
+    
+    
+    
+    
+    
     
     reg rst_req = 0;
     reg[7:0] rst_counter = 0;
