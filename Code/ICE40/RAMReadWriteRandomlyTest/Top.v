@@ -184,7 +184,7 @@ module Top(
     
     reg error = 0;
     reg[24:0] statusCounter = 0;
-    assign led = {error, statusCounter[2-:3]};
+    assign led = {error, statusCounter[18-:3]};
     
     localparam State_Init           = 0; // +0
     localparam State_Idle           = 1; // +0

@@ -1,6 +1,7 @@
 `include "Util.v"
 `include "RAMController.v"
 `include "Delay.v"
+`include "ClockGen.v"
 
 `ifdef SIM
 `include "../../mt48h32m16lf/mobile_sdr.v"
@@ -24,7 +25,20 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    wire clk = clk24mhz;
+    // ====================
+    // Clock (108 MHz)
+    // ====================
+    localparam Clk_Freq = 108_000_000;
+    wire sd_clk;
+    ClockGen #(
+        .FREQ(Clk_Freq),
+        .DIVR(0),
+        .DIVF(35),
+        .DIVQ(3),
+        .FILTER_RANGE(2)
+    ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(clk));
+    
+    
     reg cmd_trigger = 0;
     reg[20:0] cmd_block = 0;
     reg[1:0] cmd = 0;
@@ -43,6 +57,7 @@ module Top(
     
     RAMController #(
         .ClkFreq(125_000_000),
+        .RAMClkDelay(0),
         .BlockSize(BlockSize)
         // .BlockSize(2304*1296)
     ) RAMController(
@@ -127,6 +142,7 @@ module Top(
                 if (read_data === read_data_expected) begin
                     $display("Read word: %h (expected: %h) ✅", read_data, read_data_expected);
                 end else begin
+                    led <= 4'b1111;
                     $display("Read word: %h (expected: %h) ❌", read_data, read_data_expected);
                     `Finish;
                 end
