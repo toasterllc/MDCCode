@@ -147,14 +147,14 @@ module Top(
     // output reg[3:0]     led = 0
 );
     // ====================
-    // SD Clock (120 MHz)
+    // SD Clock (108 MHz)
     // ====================
-    localparam SD_Clk_Freq = 120_000_000;
+    localparam SD_Clk_Freq = 108_000_000;
     wire sd_clk;
     ClockGen #(
         .FREQ(SD_Clk_Freq),
         .DIVR(0),
-        .DIVF(39),
+        .DIVF(35),
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(sd_clk));
@@ -283,18 +283,21 @@ module Top(
     
     
     
-    // ====================
-    // Pix Clock (108 MHz)
-    // ====================
-    localparam Pix_Clk_Freq = 108_000_000;
-    wire pix_clk;
-    ClockGen #(
-        .FREQ(Pix_Clk_Freq),
-        .DIVR(0),
-        .DIVF(35),
-        .DIVQ(3),
-        .FILTER_RANGE(2)
-    ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
+    // // ====================
+    // // Pix Clock (108 MHz)
+    // // ====================
+    // localparam Pix_Clk_Freq = 108_000_000;
+    // wire pix_clk;
+    // ClockGen #(
+    //     .FREQ(Pix_Clk_Freq),
+    //     .DIVR(0),
+    //     .DIVF(35),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
+    
+    localparam Pix_Clk_Freq = SD_Clk_Freq;
+    assign pix_clk = sd_clk;
     
     // ====================
     // PixController

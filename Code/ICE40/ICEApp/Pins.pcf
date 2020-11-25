@@ -53,7 +53,7 @@ set_io ram_dq[1]            B8      -pullup no
 set_io ram_dq[2]            A9      -pullup no
 set_io ram_dq[3]            B7      -pullup no
 set_io ram_dq[4]            A8      -pullup no
-# set_io ram_dq[5]            B6      -pullup no    # Comment out to allow PLL to be used
+set_io ram_dq[5]            B6      -pullup no    # Comment out to allow PLL to be used
 set_io ram_dq[6]            A7      -pullup no
 set_io ram_dq[7]            B5      -pullup no
 set_io ram_dq[8]            F1      -pullup no
