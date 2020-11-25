@@ -63,15 +63,14 @@ module Top(
     inout wire[15:0]    ram_dq
 );
     localparam BlockWidth = 3;
-    // localparam BlockSize = 2304*1296;
-    localparam BlockSize = 128;
-    localparam WordIdxWidth = $clog2(BlockSize);
 `ifdef SIM
-    localparam BlockLimit = {BlockWidth{1'b1}};
-    // localparam BlockLimit = 'h10;
+    localparam BlockSize = 128;
 `else
-    localparam BlockLimit = {BlockWidth{1'b1}};
+    localparam BlockSize = 2304*1296;
 `endif
+    
+    localparam WordIdxWidth = $clog2(BlockSize);
+    localparam BlockLimit = {BlockWidth{1'b1}};
     
     function[15:0] DataFromBlockAndWordIdx;
         input[BlockWidth-1:0] block;
@@ -81,9 +80,9 @@ module Top(
         // DataFromBlockAndWordIdx = wordIdx;
         // DataFromBlockAndWordIdx = {~block[20:18], ~wordIdx, wordIdx, block[20:16]} ^ ~(block[15:0]);
 
-        // DataFromBlockAndWordIdx = {1'b1, ~wordIdx[21:18], ~block, block, wordIdx[20:16]} ^ ~(wordIdx[15:0]);
+        DataFromBlockAndWordIdx = {1'b1, ~wordIdx[21:18], ~block, block, wordIdx[20:16]} ^ ~(wordIdx[15:0]);
         
-        DataFromBlockAndWordIdx = wordIdx^block;
+        // DataFromBlockAndWordIdx = wordIdx^block;
 
         // DataFromBlockAndWordIdx = 0;
         // DataFromBlockAndWordIdx = ~0;
@@ -184,7 +183,7 @@ module Top(
     
     reg error = 0;
     reg[24:0] statusCounter = 0;
-    assign led = {error, statusCounter[18-:3]};
+    assign led = {error, statusCounter[4-:3]};
     
     localparam State_Init           = 0; // +0
     localparam State_Idle           = 1; // +0
