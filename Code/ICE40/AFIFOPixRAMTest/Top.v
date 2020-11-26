@@ -8,9 +8,8 @@
 
 `ifdef SIM
 localparam ImageWidth = 2304;
-localparam ImageHeight = 2;
-// localparam ImageWidth = 16;
-// localparam ImageHeight = 16;
+// localparam ImageHeight = 1296;
+localparam ImageHeight = 16;
 `else
 localparam ImageWidth = 2304;
 localparam ImageHeight = 1296;
@@ -96,10 +95,17 @@ module Top(
         2: begin
             fifo_writeEn <= 1;
             if (fifo_writeEn) begin
-                fifo_counter <= fifo_counter-1;
-                if (!fifo_counter) begin
-                    $display("[FIFO] Frame end");
-                    fifo_state <= 0;
+                if (fifo_writeReady) begin
+                    fifo_counter <= fifo_counter-1;
+                    if (!fifo_counter) begin
+                        $display("[FIFO] Frame end");
+                        fifo_state <= 0;
+                    end
+                
+                end else begin
+                    $display("[FIFO] Pixel dropped ❌");
+                    led[2] <= 1;
+                    `Finish;
                 end
             end
         end
@@ -108,59 +114,39 @@ module Top(
         if (fifo_captureTrigger) begin
             fifo_state <= 1;
         end
-        
-        // Watch for dropped pixels
-        if (fifo_writeEn && !fifo_writeReady) begin
-            $display("[FIFO] Pixel dropped ❌");
-            led[2] <= 1;
-            `Finish;
-        end
     end
     
     
     
-    // ====================
-    // State Machine
-    // ====================
-    reg ctrl_captureTrigger = 0;
-    reg[9:0] ctrl_captureTriggerCounter = 0;    
-    always @(posedge clk) begin
-        ctrl_captureTrigger <= 0;
-        ctrl_captureTriggerCounter <= ctrl_captureTriggerCounter+1;
-        if (&ctrl_captureTriggerCounter) begin
-            ctrl_captureTrigger <= 1;
-        end
-    end
-    
-    localparam Ctrl_State_Idle      = 0; // +0
-    localparam Ctrl_State_Capture   = 1; // +4
-    localparam Ctrl_State_Count     = 6;
-    reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
+    reg[2:0] ctrl_state = 0;
     reg[`RegWidth(ImageSize-1)-1:0] ctrl_pixelCounter = 0;
-    reg[3:0] ctrl_counter = 0;
+    reg[9:0] ctrl_counter = 0;
     always @(posedge clk) begin
         ctrl_counter <= ctrl_counter+1;
         fifo_readTrigger <= 0;
         
         case (ctrl_state)
-        Ctrl_State_Idle: begin
+        0: begin
+            if (&ctrl_counter) begin
+                ctrl_state <= 1;
+            end
         end
         
-        Ctrl_State_Capture: begin
+        1: begin
             $display("[CTRL] Triggered");
             led[0] <= !led[0];
-            ctrl_state <= Ctrl_State_Capture+1;
+            ctrl_state <= 2;
         end
         
-        Ctrl_State_Capture+1: begin
+        2: begin
             // Start the FIFO data flow
             ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
             ctrl_pixelCounter <= ImageSize-1;
-            ctrl_state <= Ctrl_State_Capture+2;
+            ctrl_state <= 3;
         end
         
         // Receive data out of FIFO
-        Ctrl_State_Capture+2: begin
+        3: begin
             fifo_readTrigger <= 1;
             
             if (fifo_readTrigger && fifo_readReady) begin
@@ -168,14 +154,15 @@ module Top(
                 ctrl_pixelCounter <= ctrl_pixelCounter-1;
                 if (!ctrl_pixelCounter) begin
                     $display("[CTRL] Received full image");
-                    ctrl_state <= Ctrl_State_Capture+3;
+                    ctrl_counter <= 0;
+                    ctrl_state <= 4;
                 end
             end
         end
         
         // Wait for extra pixels that we don't expect
-        Ctrl_State_Capture+3: begin
-            if (&ctrl_counter) begin
+        4: begin
+            if (ctrl_counter === 16) begin
                 if (fifo_readReady) begin
                     // We got a pixel we didn't expect
                     $display("[CTRL] Got extra pixel ❌");
@@ -185,10 +172,6 @@ module Top(
             end
         end
         endcase
-        
-        if (ctrl_state===Ctrl_State_Idle && ctrl_captureTrigger) begin
-            ctrl_state <= Ctrl_State_Capture;
-        end
     end
 endmodule
 
