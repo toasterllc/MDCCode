@@ -20,9 +20,21 @@ localparam ImageSize = ImageWidth*ImageHeight;
 
 module Top(
     input wire          clk24mhz,
-    input wire          pix_dclk,
     output reg[3:0]     led = 0
 );
+    // ====================
+    // Clock (97.5 MHz)
+    // ====================
+    localparam PixDClkFreq = 97_500_000;
+    wire pix_dclk;
+    ClockGen #(
+        .FREQ(PixDClkFreq),
+        .DIVR(1),
+        .DIVF(64),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_pix_dclk(.clkRef(clk24mhz), .clk(pix_dclk));
+    
     // ====================
     // Clock (120 MHz)
     // ====================
@@ -34,7 +46,7 @@ module Top(
         .DIVF(39),
         .DIVQ(3),
         .FILTER_RANGE(2)
-    ) ClockGen(.clkRef(clk24mhz), .clk(clk));
+    ) ClockGen_clk(.clkRef(clk24mhz), .clk(clk));
     
     // ====================
     // FIFO
@@ -192,14 +204,7 @@ module Testbench();
     reg clk24mhz = 0;
     wire[3:0] led;
     
-    reg pix_dclk = 0;
-    
     Top Top(.*);
-    
-    initial forever begin
-        #5102; // 98 MHz
-        pix_dclk = !pix_dclk;
-    end
     
     // initial begin
     //     $dumpfile("Top.vcd");
