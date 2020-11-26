@@ -65,15 +65,25 @@ module Top(
     
     
     
-    
-    
-    reg rst_req = 0;
-    reg[7:0] rst_counter = 0;
+    reg w_rst_ = 0;
+    reg[9:0] w_rstCounter = 0;
     always @(posedge w_clk) begin
-        rst_counter <= rst_counter+1;
-        if (&rst_counter) begin
-            $display("RESET");
-            rst_req <= !rst_req;
+        w_rstCounter <= w_rstCounter+1;
+        if (&w_rstCounter) begin
+            w_rst_ <= 1;
+        end
+    end
+    
+    
+    
+    
+    reg rstFIFO_req = 0;
+    reg[7:0] rstFIFO_counter = 0;
+    always @(posedge w_clk) begin
+        rstFIFO_counter <= rstFIFO_counter+1;
+        if (&rstFIFO_counter) begin
+            $display("[Async] Reset FIFO");
+            rstFIFO_req <= !rstFIFO_req;
         end
     end
     
@@ -110,49 +120,55 @@ module Top(
     );
     
     reg r_rstReady = 0;
-    `ToggleAck(w_rrstReady, w_rrstReadyAck, r_rstReady, posedge, r_clk);
+    `ToggleAck(w_rrstReady, w_rrstReadyAck, r_rstReady, posedge, w_clk);
     
-    `TogglePulse(w_rstReq, rst_req, posedge, w_clk);
+    `TogglePulse(w_rstFIFOReq, rstFIFO_req, posedge, w_clk);
     `TogglePulse(w_fifoRstDone, fifo_rst_done, posedge, w_clk);
     
     reg[1:0] w_state = 0;
     always @(posedge w_clk) begin
-        w_trigger <= 0;
+        if (!w_rst_) begin
+            $display("Reset...");
         
-        case (w_state)
-        0: begin
-            w_trigger <= 1;
-            if (w_ready && w_trigger) begin
-                $display("Write %x @ 0x%x", w_data, AFIFO.w_baddr);
-                w_data <= w_data+1;
-            end
-        end
-        
-        1: begin
-            // Wait for read domain to signal that they're ready for the reset
-            if (w_rrstReady) begin
-                w_rrstReadyAck <= !w_rrstReadyAck;
-                w_state <= 2;
-            end
-        end
-        
-        2: begin
-            // Reset FIFO
-            fifo_rst <= !fifo_rst;
-            w_state <= 3;
-        end
-        
-        3: begin
-            // Wait for reset to complete
-            if (w_fifoRstDone) begin
-                w_state <= 0;
-            end
-        end
-        endcase
-        
-        if (w_rstReq) begin
+        end else begin
             w_trigger <= 0;
-            w_state <= 1;
+        
+            case (w_state)
+            0: begin
+                w_trigger <= 1;
+                if (w_ready && w_trigger) begin
+                    $display("[Write] %x @ 0x%x", w_data, AFIFO.w_baddr);
+                    w_data <= w_data+1;
+                end
+            end
+            
+            1: begin
+                // Wait for read domain to signal that they're ready for the reset
+                if (w_rrstReady) begin
+                    w_rrstReadyAck <= !w_rrstReadyAck;
+                    w_state <= 2;
+                end
+            end
+            
+            2: begin
+                $display("[Write] Reset FIFO");
+                // Reset FIFO
+                fifo_rst <= !fifo_rst;
+                w_state <= 3;
+            end
+            
+            3: begin
+                // Wait for reset to complete
+                if (w_fifoRstDone) begin
+                    w_state <= 0;
+                end
+            end
+            endcase
+            
+            if (w_rstFIFOReq) begin
+                w_trigger <= 0;
+                w_state <= 1;
+            end
         end
     end
     
@@ -164,7 +180,7 @@ module Top(
     reg r_init = 0;
     reg[7:0] r_counter = 0;
     
-    `TogglePulse(r_rstReq, rst_req, posedge, r_clk);
+    `TogglePulse(r_rstFIFOReq, rstFIFO_req, posedge, r_clk);
     `TogglePulse(r_fifoRstDone, fifo_rst_done, posedge, r_clk);
     
     reg[1:0] r_state = 0;
@@ -175,18 +191,21 @@ module Top(
         0: begin
             r_trigger <= 1;
             if (r_ready && r_trigger) begin
-                $display("Read %x @ 0x%x", r_data, AFIFO.r_baddr);
+                $display("[Read] %x @ 0x%x", r_data, AFIFO.r_baddr);
                 r_lastData <= r_data;
                 if (r_lastDataInit && r_data!==(r_lastData+1'b1)) begin
-                    $display("BAD DATA (r_lastData:%x, r_data:%x)", r_lastData, r_data);
                     led <= 4'b1111;
+                    $display("BAD DATA (r_lastData:%x, r_data:%x)", r_lastData, r_data);
                     `Finish;
+                end else begin
+                    // led <= ~led;
                 end
                 r_lastDataInit <= 1;
             end
         end
         
         1: begin
+            $display("[Read] Reset FIFO");
             // Signal that we're ready for the reset
             r_rstReady <= !r_rstReady;
             r_state <= 2;
@@ -201,7 +220,7 @@ module Top(
         end
         endcase
         
-        if (r_rstReq) begin
+        if (r_rstFIFOReq) begin
             r_trigger <= 0;
             r_state <= 1;
         end
