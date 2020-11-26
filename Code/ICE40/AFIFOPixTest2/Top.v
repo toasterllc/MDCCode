@@ -3,7 +3,11 @@
 `include "AFIFO.v"
 `include "ToggleAck.v"
 `include "TogglePulse.v"
+
+`ifdef SIM
 `include "PixSim.v"
+`endif
+
 `timescale 1ns/1ps
 
 localparam ImageWidth = 2304;
@@ -24,13 +28,13 @@ module Top(
     localparam PixelCount = ImageWidth*ImageHeight;
     
     // ====================
-    // Clock (99 MHz)
+    // Clock (102 MHz)
     // ====================
     wire clk;
     ClockGen #(
-        .FREQ(99_000_000),
+        .FREQ(102_000_000),
         .DIVR(0),
-        .DIVF(32),
+        .DIVF(33),
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
