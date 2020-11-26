@@ -1,16 +1,10 @@
 `include "Util.v"
 `include "ClockGen.v"
 `include "AFIFO.v"
-// `include "BankFIFO.v"
 `include "ToggleAck.v"
 `include "TogglePulse.v"
 
-`ifdef SIM
-`include "PixSim.v"
-`include "../../mt48h32m16lf/mobile_sdr.v"
-`endif
-
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 `ifdef SIM
 localparam ImageWidth = 2304;
@@ -24,48 +18,11 @@ localparam ImageHeight = 1296;
 
 localparam ImageSize = ImageWidth*ImageHeight;
 
-
-
-
-
 module Top(
-    input wire clk24mhz,
-    
+    input wire          clk24mhz,
     input wire          pix_dclk,
-    input wire[11:0]    pix_d,
-    
     output reg[3:0]     led = 0
 );
-    // localparam ImageWidth = 16;
-    // localparam ImageHeight = 16;
-    localparam PixelCount = ImageWidth*ImageHeight;
-    
-    // // ====================
-    // // Clock (102 MHz)
-    // // ====================
-    // localparam ClkFreq = 102_000_000;
-    // wire clk;
-    // ClockGen #(
-    //     .FREQ(ClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(33),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(2)
-    // ) ClockGen(.clkRef(clk24mhz), .clk(clk));
-    
-    // // ====================
-    // // Clock (114 MHz)
-    // // ====================
-    // localparam ClkFreq = 114_000_000;
-    // wire clk;
-    // ClockGen #(
-    //     .FREQ(ClkFreq),
-    //     .DIVR(0),
-    //     .DIVF(37),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(2)
-    // ) ClockGen(.clkRef(clk24mhz), .clk(clk));
-    
     // ====================
     // Clock (120 MHz)
     // ====================
@@ -78,21 +35,6 @@ module Top(
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
-    
-    // ====================
-    // Pin: pix_d
-    // ====================
-    genvar i;
-    wire[11:0] pix_d_reg;
-    for (i=0; i<12; i=i+1) begin
-        SB_IO #(
-            .PIN_TYPE(6'b0000_00)
-        ) SB_IO_pix_d (
-            .INPUT_CLK(pix_dclk),
-            .PACKAGE_PIN(pix_d[i]),
-            .D_IN_0(pix_d_reg[i])
-        );
-    end
     
     reg[`RegWidth(ImageWidth-1)-1:0] ix = 0;
     reg[`RegWidth(ImageHeight-1)-1:0] iy = 0;
@@ -176,7 +118,7 @@ module Top(
         .w_clk(pix_dclk),
         .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
         .w_trigger(fifo_writeEn && pix_lv_reg),
-        .w_data({4'b0, pix_d_reg}),
+        .w_data({4'b0, ix}),
         
         .r_clk(clk),
         .r_ready(fifo_readReady),
@@ -348,26 +290,14 @@ module Testbench();
     reg clk24mhz = 0;
     wire[3:0] led;
     
-    wire        pix_dclk;
-    wire[11:0]  pix_d;
-    wire        pix_fv;
-    wire        pix_lv;
-    wire        pix_rst_;
-    wire        pix_sclk;
-    tri1        pix_sdata;
+    reg pix_dclk = 0;
     
     Top Top(.*);
     
-    PixSim #(
-        .ImageWidth(ImageWidth),
-        .ImageHeight(ImageHeight)
-    ) PixSim (
-        .pix_dclk(pix_dclk),
-        .pix_d(pix_d),
-        .pix_fv(pix_fv),
-        .pix_lv(pix_lv),
-        .pix_rst_(pix_rst_)
-    );
+    initial forever begin
+        #5102; // 98 MHz
+        pix_dclk = !pix_dclk;
+    end
     
     // initial begin
     //     $dumpfile("Top.vcd");
