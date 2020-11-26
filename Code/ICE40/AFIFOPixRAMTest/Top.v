@@ -266,8 +266,6 @@ module Top(
                     led[3] <= !led[3];
                     `Finish;
                 end
-                
-                ctrl_state <= Ctrl_State_Idle;
             end
         end
         endcase
