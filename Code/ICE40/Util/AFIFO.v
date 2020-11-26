@@ -9,6 +9,9 @@ module AFIFO #(
     parameter W=16, // Word width
     parameter N=8   // Word count (2^N)
 )(
+    // Reset port (clock domain: async)
+    input wire rst_, // Toggle
+    
     input wire w_clk,               // Write clock
     input wire w_trigger,           // Write trigger
     input wire[W-1:0] w_data,       // Write data
@@ -23,11 +26,18 @@ module AFIFO #(
     // Write handling
     // ====================
     reg[N-1:0] w_baddr=0, w_gaddr=0, w_gaddrDelayed=0; // Write address (binary, gray)
-    wire[N-1:0] w_baddrNext = (w_trigger && w_ready ? w_baddr+1'b1 : w_baddr);
-    always @(posedge w_clk) begin
-        w_gaddrDelayed <= w_gaddr;
-        w_baddr <= w_baddrNext;
-        w_gaddr <= (w_baddrNext>>1)^w_baddrNext;
+    wire[N-1:0] w_baddrNext = (w_trigger&&w_ready ? w_baddr+1'b1 : w_baddr);
+    always @(posedge w_clk, negedge rst_) begin
+        if (!rst_) begin
+            w_gaddrDelayed <= 0;
+            w_baddr <= 0;
+            w_gaddr <= 0;
+        
+        end else begin
+            w_gaddrDelayed <= w_gaddr;
+            w_baddr <= w_baddrNext;
+            w_gaddr <= (w_baddrNext>>1)^w_baddrNext;
+        end
     end
     
     reg[1:0] w_readyReg_ = 0; // Inverted logic so we come out of reset with w_ready==true
@@ -48,11 +58,18 @@ module AFIFO #(
     initial r_baddr = 0; // For simulation (see r_baddr comment above)
 `endif
     
-    wire[N-1:0] r_baddrNext = (r_trigger && r_ready ? r_baddr+1'b1 : r_baddr);
+    wire[N-1:0] r_baddrNext = (r_trigger&&r_ready ? r_baddr+1'b1 : r_baddr);
     always @(posedge r_clk) begin
-        r_gaddrDelayed <= r_gaddr;
-        r_baddr <= r_baddrNext;
-        r_gaddr <= (r_baddrNext>>1)^r_baddrNext;
+        if (!rst_) begin
+            r_gaddrDelayed <= 0;
+            r_baddr <= 0;
+            r_gaddr <= 0;
+        
+        end else begin
+            r_gaddrDelayed <= r_gaddr;
+            r_baddr <= r_baddrNext;
+            r_gaddr <= (r_baddrNext>>1)^r_baddrNext;
+        end
     end
     
     reg[2:0] r_readyReg = 0;
@@ -67,7 +84,7 @@ module AFIFO #(
     // ====================
     reg a_dir = 0;
     wire a_dirSet = (w_gaddr[N-1]^r_gaddrDelayed[N-2]) && ~(w_gaddr[N-2]^r_gaddrDelayed[N-1]);
-    wire a_dirClr = (~(w_gaddrDelayed[N-1]^r_gaddr[N-2]) && (w_gaddrDelayed[N-2]^r_gaddr[N-1]));
+    wire a_dirClr = (~(w_gaddrDelayed[N-1]^r_gaddr[N-2]) && (w_gaddrDelayed[N-2]^r_gaddr[N-1])) || !rst_;
     
     always @(posedge a_dirSet, posedge a_dirClr)
         if (a_dirClr) a_dir <= 0;

@@ -52,7 +52,6 @@ module Top(
     // FIFO
     // ====================
     reg fifo_rst = 0;
-    wire fifo_rst_done;
     reg fifo_writeEn = 0;
     wire fifo_writeReady;
     reg fifo_readTrigger = 0;
@@ -64,8 +63,8 @@ module Top(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst(fifo_rst),
-        .rst_done(fifo_rst_done),
+        .rst_(!fifo_rst),
+        // .rst_done(fifo_rst_done),
         
         .w_clk(pix_dclk),
         .w_ready(fifo_writeReady),
@@ -80,11 +79,12 @@ module Top(
     
     reg ctrl_fifoCaptureTrigger = 0;
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
-    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
-    `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
+    `TogglePulse(ctrl_fifoRstDone, fifo_rstDone, posedge, clk);
     
+    reg fifo_rstDone = 0;
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
+        fifo_rst <= 0;
         fifo_writeEn <= 0; // Reset by default
         
         case (fifo_state)
@@ -94,14 +94,15 @@ module Top(
         
         // Reset FIFO / ourself
         1: begin
-            fifo_rst <= !fifo_rst;
+            fifo_rst <= 1;
             fifo_state <= 2;
         end
         
-        // Wait for FIFO to be done resetting
+        // Wait for FIFO reset to complete
         2: begin
-            if (fifo_rstDone) begin
+            if (!fifo_rst) begin
                 $display("[FIFO] Frame start");
+                fifo_rstDone <= !fifo_rstDone;
                 fifo_counter <= ImageSize-1;
                 fifo_state <= 3;
             end
