@@ -20,9 +20,21 @@ localparam ImageSize = ImageWidth*ImageHeight;
 
 module Top(
     input wire          clk24mhz,
-    input wire          pix_dclk,
     output reg[3:0]     led = 0
 );
+    // ====================
+    // Clock (97.5 MHz)
+    // ====================
+    localparam PixDClkFreq = 97_500_000;
+    wire pix_dclk;
+    ClockGen #(
+        .FREQ(PixDClkFreq),
+        .DIVR(1),
+        .DIVF(64),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_pix_dclk(.clkRef(clk24mhz), .clk(pix_dclk));
+    
     // ====================
     // Clock (120 MHz)
     // ====================
@@ -101,6 +113,7 @@ module Top(
             if (fifo_writeEn) begin
                 fifo_counter <= fifo_counter-1;
                 if (!fifo_counter) begin
+                    fifo_writeEn <= 0;
                     $display("[FIFO] Frame end");
                     fifo_state <= 0;
                 end
@@ -181,6 +194,7 @@ module Top(
                 ctrl_pixelCounter <= ctrl_pixelCounter-1;
                 if (!ctrl_pixelCounter) begin
                     $display("[CTRL] Received full image");
+                    fifo_readTrigger <= 0;
                     ctrl_state <= Ctrl_State_Capture+4;
                 end
             end
@@ -188,13 +202,11 @@ module Top(
         
         // Wait for extra pixels that we don't expect
         Ctrl_State_Capture+4: begin
-            if (&ctrl_counter) begin
-                if (fifo_readReady) begin
-                    // We got a pixel we didn't expect
-                    $display("[CTRL] Got extra pixel ❌");
-                    led[3] <= !led[3];
-                    `Finish;
-                end
+            if (fifo_readReady) begin
+                // We got a pixel we didn't expect
+                $display("[CTRL] Got extra pixel ❌");
+                led[3] <= !led[3];
+                `Finish;
             end
         end
         endcase
@@ -217,14 +229,7 @@ module Testbench();
     reg clk24mhz = 0;
     wire[3:0] led;
     
-    reg pix_dclk = 0;
-    
     Top Top(.*);
-    
-    initial forever begin
-        #5102; // 98 MHz
-        pix_dclk = !pix_dclk;
-    end
     
     // initial begin
     //     $dumpfile("Top.vcd");
