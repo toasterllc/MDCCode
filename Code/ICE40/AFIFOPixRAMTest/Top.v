@@ -1,10 +1,9 @@
 `include "Util.v"
 `include "ClockGen.v"
-// `include "AFIFO.v"
-`include "BankFIFO.v"
+`include "AFIFO.v"
+// `include "BankFIFO.v"
 `include "ToggleAck.v"
 `include "TogglePulse.v"
-`include "RAMController.v"
 
 `ifdef SIM
 `include "PixSim.v"
@@ -32,18 +31,6 @@ module Top(
     input wire[11:0]    pix_d,
     input wire          pix_fv,
     input wire          pix_lv,
-    
-    // RAM port (clock domain: `ram_clk`)
-    output wire         ram_clk,
-    output wire         ram_cke,
-    output wire[1:0]    ram_ba,
-    output wire[12:0]   ram_a,
-    output wire         ram_cs_,
-    output wire         ram_ras_,
-    output wire         ram_cas_,
-    output wire         ram_we_,
-    output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq,
     
     output reg[3:0]     led = 0
 );
@@ -91,48 +78,6 @@ module Top(
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
     
     // ====================
-    // RAMController
-    // ====================
-    
-    reg[2:0]    ramctrl_cmd_block = 0;
-    reg[1:0]    ramctrl_cmd = 0;
-    wire        ramctrl_write_ready;
-    reg         ramctrl_write_trigger = 0;
-    reg[15:0]   ramctrl_write_data = 0;
-    wire        ramctrl_write_done;
-    
-    RAMController #(
-        .ClkFreq(ClkFreq),
-        .BlockSize(ImageSize)
-    ) RAMController (
-        .clk(clk),
-        
-        .cmd_block(ramctrl_cmd_block),
-        .cmd(ramctrl_cmd),
-        
-        .write_ready(ramctrl_write_ready),
-        .write_trigger(ramctrl_write_trigger),
-        .write_data(ramctrl_write_data),
-        .write_done(ramctrl_write_done),
-        
-        .read_ready(),
-        .read_trigger(1'b0),
-        .read_data(),
-        .read_done(),
-        
-        .ram_clk(ram_clk),
-        .ram_cke(ram_cke),
-        .ram_ba(ram_ba),
-        .ram_a(ram_a),
-        .ram_cs_(ram_cs_),
-        .ram_ras_(ram_ras_),
-        .ram_cas_(ram_cas_),
-        .ram_we_(ram_we_),
-        .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq)
-    );
-    
-    // ====================
     // Pin: pix_d
     // ====================
     genvar i;
@@ -178,13 +123,13 @@ module Top(
     wire fifo_rst_done;
     reg fifo_writeEn = 0;
     wire fifo_writeReady;
-    wire fifo_readTrigger;
+    reg fifo_readTrigger = 0;
     wire[15:0] fifo_readData;
     wire fifo_readReady;
-    BankFIFO #(
+    AFIFO #(
         .W(16),
         .N(8)
-    ) BankFIFO (
+    ) AFIFO (
         .rst(fifo_rst),
         .rst_done(fifo_rst_done),
         
@@ -280,17 +225,15 @@ module Top(
         end
     end
     
-    assign fifo_readTrigger = (!ramctrl_write_trigger || ramctrl_write_ready);
-    
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +4
     localparam Ctrl_State_Count     = 6;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
+    reg[`RegWidth(ImageSize-1)-1:0] ctrl_pixelCounter = 0;
     reg[3:0] ctrl_counter = 0;
     always @(posedge clk) begin
-        ramctrl_cmd <= `RAMController_Cmd_None;
-        ramctrl_write_trigger <= 0;
         ctrl_counter <= ctrl_counter+1;
+        fifo_readTrigger <= 0;
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
@@ -299,25 +242,13 @@ module Top(
         Ctrl_State_Capture: begin
             $display("[CTRL] Triggered");
             led[0] <= !led[0];
-            // Supply 'Write' RAM command
-            ramctrl_cmd_block <= 0;
-            ramctrl_cmd <= `RAMController_Cmd_Write;
-            $display("[CTRL] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
         Ctrl_State_Capture+1: begin
-            // Wait for RAMController to be ready to write.
-            // This is necessary because the RAMController/SDRAM takes some time to
-            // initialize upon power on. If we attempted a capture during this time,
-            // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
-            // be ready to write yet.
-            if (ramctrl_write_ready) begin
-                $display("[CTRL] Waiting for FIFO to reset...");
-                // Start the FIFO data flow now that RAMController is ready to write
-                ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
-                ctrl_state <= Ctrl_State_Capture+2;
-            end
+            // Start the FIFO data flow
+            ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
+            ctrl_state <= Ctrl_State_Capture+2;
         end
         
         Ctrl_State_Capture+2: begin
@@ -326,34 +257,21 @@ module Top(
             // we know it's from the start of this session, not from a previous one.
             if (ctrl_fifoRstDone) begin
                 $display("[CTRL] Receiving data from FIFO...");
+                ctrl_pixelCounter <= ImageSize-1;
                 ctrl_state <= Ctrl_State_Capture+3;
             end
         end
         
-        // Copy data from FIFO->RAM
+        // Receive data out of FIFO
         Ctrl_State_Capture+3: begin
-            // By default, prevent `ramctrl_write_trigger` from being reset
-            ramctrl_write_trigger <= ramctrl_write_trigger;
+            fifo_readTrigger <= 1;
             
-            // Reset `ramctrl_write_trigger` if RAMController accepted the data
-            if (ramctrl_write_ready && ramctrl_write_trigger) begin
-                ramctrl_write_trigger <= 0;
-            end
-            
-            // Copy word from FIFO->RAM
-            if (fifo_readReady && fifo_readTrigger) begin
-                $display("[CTRL] Got pixel: %0d", fifo_readData);
-                ramctrl_write_data <= fifo_readData;
-                ramctrl_write_trigger <= 1;
-            end
-            
-            // We're finished when RAMController says we've received all the pixels.
-            // (RAMController knows when it's written the entire block, and we
-            // define RAMController's block size as the image size.)
-            if (ramctrl_write_done) begin
-                $display("[CTRL] Finished");
-                ctrl_counter <= 0;
-                ctrl_state <= Ctrl_State_Capture+4;
+            if (fifo_readTrigger && fifo_readReady) begin
+                $display("[CTRL] Got pixel: %0d (%0d)", fifo_readData, ctrl_pixelCounter);
+                ctrl_pixelCounter <= ctrl_pixelCounter-1;
+                if (!ctrl_pixelCounter) begin
+                    ctrl_state <= Ctrl_State_Capture+4;
+                end
             end
         end
         
@@ -398,31 +316,7 @@ module Testbench();
     wire        pix_sclk;
     tri1        pix_sdata;
     
-    wire        ram_clk;
-    wire        ram_cke;
-    wire[1:0]   ram_ba;
-    wire[12:0]  ram_a;
-    wire        ram_cs_;
-    wire        ram_ras_;
-    wire        ram_cas_;
-    wire        ram_we_;
-    wire[1:0]   ram_dqm;
-    wire[15:0]  ram_dq;
-    
     Top Top(.*);
-    
-    mobile_sdr mobile_sdr(
-        .clk(ram_clk),
-        .cke(ram_cke),
-        .addr(ram_a),
-        .ba(ram_ba),
-        .cs_n(ram_cs_),
-        .ras_n(ram_ras_),
-        .cas_n(ram_cas_),
-        .we_n(ram_we_),
-        .dq(ram_dq),
-        .dqm(ram_dqm)
-    );
     
     PixSim #(
         .ImageWidth(ImageWidth),
