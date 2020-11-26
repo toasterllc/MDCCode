@@ -11,8 +11,8 @@ localparam ImageWidth = 2304;
 // localparam ImageHeight = 1296;
 localparam ImageHeight = 16;
 `else
-localparam ImageWidth = 2304;
-localparam ImageHeight = 1296;
+localparam ImageWidth = 6000;
+localparam ImageHeight = 6000;
 `endif
 
 localparam ImageSize = ImageWidth*ImageHeight;
@@ -99,6 +99,7 @@ module Top(
                     fifo_counter <= fifo_counter-1;
                     if (!fifo_counter) begin
                         $display("[FIFO] Frame end");
+                        fifo_writeEn <= 0;
                         fifo_state <= 0;
                     end
                 
@@ -154,7 +155,7 @@ module Top(
                 ctrl_pixelCounter <= ctrl_pixelCounter-1;
                 if (!ctrl_pixelCounter) begin
                     $display("[CTRL] Received full image");
-                    ctrl_counter <= 0;
+                    fifo_readTrigger <= 0;
                     ctrl_state <= 4;
                 end
             end
@@ -162,13 +163,11 @@ module Top(
         
         // Wait for extra pixels that we don't expect
         4: begin
-            if (ctrl_counter === 16) begin
-                if (fifo_readReady) begin
-                    // We got a pixel we didn't expect
-                    $display("[CTRL] Got extra pixel ❌");
-                    led[3] <= !led[3];
-                    `Finish;
-                end
+            if (fifo_readReady) begin
+                // We got a pixel we didn't expect
+                $display("[CTRL] Got extra pixel ❌");
+                led[3] <= !led[3];
+                `Finish;
             end
         end
         endcase
