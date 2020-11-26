@@ -270,8 +270,7 @@ module Top(
     
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +4
-    localparam Ctrl_State_Error     = 6; // +0
-    localparam Ctrl_State_Count     = 7;
+    localparam Ctrl_State_Count     = 6;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     reg[3:0] ctrl_counter = 0;
     always @(posedge clk) begin
@@ -353,14 +352,8 @@ module Top(
             if (fifo_readReady) begin
                 // We got a pixel we didn't expect
                 $display("[CTRL] Got extra pixel ❌");
-                ctrl_state <= Ctrl_State_Error;
+                led[3] <= 1;
             end
-        end
-        
-        Ctrl_State_Error: begin
-            $display("[CTRL] Error");
-            led[3] <= 1;
-            `Finish;
         end
         endcase
         
