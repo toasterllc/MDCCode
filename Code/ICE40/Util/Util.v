@@ -16,7 +16,7 @@
 `define Max(a,y)            `Max2(a,y)
 
 // RegWidth: returns the width of a register to store the given values
-`define RegWidth(y)                             `Max(1, $clog2((y)+1'b1))   // Enforce a minimum register width of 1
+`define RegWidth(y)                             `Max(64'b1, $clog2((y)+64'b1)) // Enforce min width of 1
 `define RegWidth2(a,y)                          (`RegWidth(a) > `RegWidth(y) ? `RegWidth(a) : `RegWidth(y))
 `define RegWidth3(a,b,y)                        (`RegWidth2(a,b)                    > (y) ? `RegWidth2(a,b)                     : (y))
 `define RegWidth4(a,b,c,y)                      (`RegWidth3(a,b,c)                  > (y) ? `RegWidth3(a,b,c)                   : (y))
@@ -34,7 +34,9 @@
 
 `define Stringify(x) `"x```"
 
-`define Fits(container, value) ($size(container) >= $clog2(value+64'b1))
+`define Fits(container, value) ($size(container) >= `RegWidth(value))
+
+`define LeftBit(r, n) r[$size(r)-n-1]
 
 `ifdef SIM
     `define Assert(cond) do if (!(cond)) begin $error("Assertion failed: %s (%s:%0d)", `Stringify(cond), `__FILE__, `__LINE__); $finish; end while (0)
