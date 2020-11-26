@@ -195,6 +195,7 @@ module Top(
                 if (!ctrl_pixelCounter) begin
                     $display("[CTRL] Received full image");
                     fifo_readTrigger <= 0;
+                    ctrl_counter <= 0;
                     ctrl_state <= Ctrl_State_Capture+4;
                 end
             end
@@ -202,10 +203,14 @@ module Top(
         
         // Wait for extra pixels that we don't expect
         Ctrl_State_Capture+4: begin
+            if (&ctrl_counter) begin
+                ctrl_state <= Ctrl_State_Idle;
+            end
+            
             if (fifo_readReady) begin
                 // We got a pixel we didn't expect
                 $display("[CTRL] Got extra pixel ❌");
-                led[3] <= !led[3];
+                led[3] <= 1;
                 `Finish;
             end
         end
