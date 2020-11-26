@@ -36,68 +36,6 @@ module Top(
         .FILTER_RANGE(2)
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
     
-    reg[`RegWidth(ImageWidth-1)-1:0] ix = 0;
-    reg[`RegWidth(ImageHeight-1)-1:0] iy = 0;
-    reg[2:0] state = 0;
-    reg[3:0] counter = 0;
-    reg pix_fv_reg = 0;
-    reg pix_lv_reg = 0;
-    always @(posedge pix_dclk) begin
-        pix_fv_reg <= 0;
-        pix_lv_reg <= 0;
-        counter <= counter+1;
-        
-        case (state)
-        0: begin
-            ix <= 0;
-            iy <= 0;
-            if (&counter) begin
-                counter <= 0;
-                state <= 1;
-            end
-        end
-        
-        1: begin
-            pix_fv_reg <= 1;
-            if (&counter) begin
-                state <= 2;
-            end
-        end
-        
-        2: begin
-            pix_fv_reg <= 1;
-            
-            if (ix !== ImageWidth-1) begin
-                pix_lv_reg <= 1;
-            
-            end else begin
-                counter <= 0;
-                state <= 3;
-            end
-            
-            if (pix_lv_reg) begin
-                ix <= ix+1;
-            end
-        end
-        
-        3: begin
-            pix_fv_reg <= 1;
-            if (&counter) begin
-                if (iy !== ImageHeight-1) begin
-                    ix <= 0;
-                    iy <= iy+1;
-                    state <= 2;
-                
-                end else begin
-                    counter <= 0;
-                    state <= 0;
-                end
-            end
-        end
-        endcase
-    end
-    
-    
     // ====================
     // FIFO
     // ====================
@@ -108,6 +46,8 @@ module Top(
     reg fifo_readTrigger = 0;
     wire[15:0] fifo_readData;
     wire fifo_readReady;
+    reg[`RegWidth(ImageSize-1)-1:0] fifo_counter = 0;
+    
     AFIFO #(
         .W(16),
         .N(8)
@@ -116,9 +56,9 @@ module Top(
         .rst_done(fifo_rst_done),
         
         .w_clk(pix_dclk),
-        .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
-        .w_trigger(fifo_writeEn && pix_lv_reg),
-        .w_data({4'b0, ix}),
+        .w_ready(fifo_writeReady),
+        .w_trigger(fifo_writeEn),
+        .w_data({3'b0, fifo_counter}),
         
         .r_clk(clk),
         .r_ready(fifo_readReady),
@@ -149,33 +89,21 @@ module Top(
         // Wait for FIFO to be done resetting
         2: begin
             if (fifo_rstDone) begin
-                $display("[FIFO] Waiting for frame invalid...");
+                $display("[FIFO] Frame start");
+                fifo_counter <= ImageSize-1;
                 fifo_state <= 3;
             end
         end
         
-        // Wait for the frame to be invalid
-        3: begin
-            if (!pix_fv_reg) begin
-                fifo_state <= 4;
-            end
-        end
-        
-        // Wait for the frame to start
-        4: begin
-            if (pix_fv_reg) begin
-                $display("[FIFO] Frame start");
-                fifo_state <= 5;
-            end
-        end
-        
         // Wait until the end of the frame
-        5: begin
+        3: begin
             fifo_writeEn <= 1;
-            
-            if (!pix_fv_reg) begin
-                $display("[FIFO] Frame end");
-                fifo_state <= 0;
+            if (fifo_writeEn) begin
+                fifo_counter <= fifo_counter-1;
+                if (!fifo_counter) begin
+                    $display("[FIFO] Frame end");
+                    fifo_state <= 0;
+                end
             end
         end
         endcase
@@ -185,7 +113,7 @@ module Top(
         end
         
         // Watch for dropped pixels
-        if (fifo_writeEn && pix_lv_reg && !fifo_writeReady) begin
+        if (fifo_writeEn && !fifo_writeReady) begin
             $display("[FIFO] Pixel dropped ❌");
             led[2] <= 1;
             `Finish;
@@ -252,6 +180,7 @@ module Top(
                 $display("[CTRL] Got pixel: %0d (%0d)", fifo_readData, ctrl_pixelCounter);
                 ctrl_pixelCounter <= ctrl_pixelCounter-1;
                 if (!ctrl_pixelCounter) begin
+                    $display("[CTRL] Received full image");
                     ctrl_state <= Ctrl_State_Capture+4;
                 end
             end
