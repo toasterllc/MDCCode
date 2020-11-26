@@ -24,13 +24,15 @@ localparam ImageHeight = 1296;
 
 localparam ImageSize = ImageWidth*ImageHeight;
 
+
+
+
+
 module Top(
     input wire clk24mhz,
     
     input wire          pix_dclk,
     input wire[11:0]    pix_d,
-    input wire          pix_fv,
-    input wire          pix_lv,
     
     output reg[3:0]     led = 0
 );
@@ -92,29 +94,67 @@ module Top(
         );
     end
     
-    // ====================
-    // Pin: pix_fv
-    // ====================
-    wire pix_fv_reg;
-    SB_IO #(
-        .PIN_TYPE(6'b0000_00)
-    ) SB_IO_pix_fv (
-        .INPUT_CLK(pix_dclk),
-        .PACKAGE_PIN(pix_fv),
-        .D_IN_0(pix_fv_reg)
-    );
+    reg[`RegWidth(ImageWidth-1)-1:0] ix = 0;
+    reg[`RegWidth(ImageHeight-1)-1:0] iy = 0;
+    reg[2:0] state = 0;
+    reg[3:0] counter = 0;
+    reg pix_fv_reg = 0;
+    reg pix_lv_reg = 0;
+    always @(posedge pix_dclk) begin
+        pix_fv_reg <= 0;
+        pix_lv_reg <= 0;
+        counter <= counter+1;
+        
+        case (state)
+        0: begin
+            ix <= 0;
+            iy <= 0;
+            if (&counter) begin
+                counter <= 0;
+                state <= 1;
+            end
+        end
+        
+        1: begin
+            pix_fv_reg <= 1;
+            if (&counter) begin
+                state <= 2;
+            end
+        end
+        
+        2: begin
+            pix_fv_reg <= 1;
+            
+            if (ix !== ImageWidth-1) begin
+                pix_lv_reg <= 1;
+            
+            end else begin
+                counter <= 0;
+                state <= 3;
+            end
+            
+            if (pix_lv_reg) begin
+                ix <= ix+1;
+            end
+        end
+        
+        3: begin
+            pix_fv_reg <= 1;
+            if (&counter) begin
+                if (iy !== ImageHeight-1) begin
+                    ix <= 0;
+                    iy <= iy+1;
+                    state <= 2;
+                
+                end else begin
+                    counter <= 0;
+                    state <= 0;
+                end
+            end
+        end
+        endcase
+    end
     
-    // ====================
-    // Pin: pix_lv
-    // ====================
-    wire pix_lv_reg;
-    SB_IO #(
-        .PIN_TYPE(6'b0000_00)
-    ) SB_IO_pix_lv (
-        .INPUT_CLK(pix_dclk),
-        .PACKAGE_PIN(pix_lv),
-        .D_IN_0(pix_lv_reg)
-    );
     
     // ====================
     // FIFO
