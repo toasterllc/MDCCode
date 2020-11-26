@@ -550,6 +550,7 @@ void System::_handleEvent() {
 //            Assert(!status.capturePixelDropped());
             volatile bool captureDone = status.captureDone();
             volatile bool pixelDropped = status.capturePixelDropped();
+            volatile uint8_t fifoState = status.payload[3];
             volatile uint8_t droppedPixelCount = status.payload[7];
             if (status.captureDone()) break;
         }

@@ -111,7 +111,7 @@ localparam ImageHeight = 1296;
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
 `define     Resp_Arg_PixGetStatus_CapturePixelDropped_Bits      44:44
-`define     Resp_Arg_PixGetStatus_CaptureStatus_Bits            31:0 // TODO: remove
+`define     Resp_Arg_PixGetStatus_CaptureStatus_Bits            39:0 // TODO: remove
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
@@ -336,7 +336,7 @@ module Top(
     reg[2:0]    pixctrl_cmd_ramBlock = 0;
     wire        pixctrl_capture_done;
     wire        pixctrl_capture_pixelDropped;
-    wire[31:0]  pixctrl_capture_status; // TODO: remove
+    wire[39:0]  pixctrl_capture_status; // TODO: remove
     wire        pixctrl_readout_ready;
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;

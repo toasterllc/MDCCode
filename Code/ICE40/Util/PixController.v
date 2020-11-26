@@ -24,7 +24,7 @@ module PixController #(
     // Capture port
     output reg          capture_done = 0,
     output wire         capture_pixelDropped,
-    output reg[31:0]    capture_status = 0, // TODO: remove
+    output reg[39:0]    capture_status = 0, // TODO: remove
     
     // Readout port (clock domain: `clk`)
     output wire         readout_ready,
@@ -190,7 +190,7 @@ module PixController #(
         1: begin
             fifo_rst <= !fifo_rst;
             fifo_pixelDropped <= 0;
-            capture_status <= 0;
+            capture_status[31:0] <= 0;
             fifo_state <= 2;
         end
         
@@ -235,10 +235,12 @@ module PixController #(
         // Watch for dropped pixels
         if (fifo_writeEn && pix_lv_reg && !fifo_writeReady) begin
             fifo_pixelDropped <= 1;
-            capture_status <= capture_status+1;
+            capture_status[31:0] <= capture_status+1;
             $display("[PIXCTRL:FIFO] Pixel dropped ❌");
             `Finish;
         end
+        
+        capture_status[39:32] <= fifo_state;
         
         // if (fifo_writeEn && pix_lv_reg && fifo_writeReady) begin
         //     capture_status <= capture_status+1;
