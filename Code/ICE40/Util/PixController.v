@@ -287,6 +287,7 @@ module PixController #(
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Write;
+            $display("[PIXCTRL:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
@@ -296,7 +297,6 @@ module PixController #(
             // initialize upon power on. If we attempted a capture during this time,
             // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
             // be ready to write yet.
-            $display("[PIXCTRL:Capture] Waiting for RAMController to be ready to write...");
             if (ramctrl_write_ready) begin
                 // Start the FIFO data flow now that RAMController is ready to write
                 ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
