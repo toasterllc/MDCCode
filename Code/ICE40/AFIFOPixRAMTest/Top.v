@@ -1,6 +1,7 @@
 `include "Util.v"
 `include "ClockGen.v"
-`include "AFIFO.v"
+// `include "AFIFO.v"
+`include "BankFIFO.v"
 `include "ToggleAck.v"
 `include "TogglePulse.v"
 `include "RAMController.v"
@@ -13,10 +14,10 @@
 `timescale 1ns/1ps
 
 `ifdef SIM
-// localparam ImageWidth = 2304;
-// localparam ImageHeight = 1296;
-localparam ImageWidth = 16;
-localparam ImageHeight = 16;
+localparam ImageWidth = 2304;
+localparam ImageHeight = 2;
+// localparam ImageWidth = 16;
+// localparam ImageHeight = 16;
 `else
 localparam ImageWidth = 2304;
 localparam ImageHeight = 1296;
@@ -63,15 +64,28 @@ module Top(
     //     .FILTER_RANGE(2)
     // ) ClockGen(.clkRef(clk24mhz), .clk(clk));
     
+    // // ====================
+    // // Clock (114 MHz)
+    // // ====================
+    // localparam ClkFreq = 114_000_000;
+    // wire clk;
+    // ClockGen #(
+    //     .FREQ(ClkFreq),
+    //     .DIVR(0),
+    //     .DIVF(37),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(2)
+    // ) ClockGen(.clkRef(clk24mhz), .clk(clk));
+    
     // ====================
-    // Clock (114 MHz)
+    // Clock (120 MHz)
     // ====================
-    localparam ClkFreq = 114_000_000;
+    localparam ClkFreq = 120_000_000;
     wire clk;
     ClockGen #(
         .FREQ(ClkFreq),
         .DIVR(0),
-        .DIVF(37),
+        .DIVF(39),
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
@@ -167,10 +181,10 @@ module Top(
     wire fifo_readTrigger;
     wire[15:0] fifo_readData;
     wire fifo_readReady;
-    AFIFO #(
+    BankFIFO #(
         .W(16),
         .N(8)
-    ) AFIFO (
+    ) BankFIFO (
         .rst(fifo_rst),
         .rst_done(fifo_rst_done),
         
@@ -346,13 +360,14 @@ module Top(
         // Wait for extra pixels that we don't expect
         Ctrl_State_Capture+4: begin
             if (&ctrl_counter) begin
+                if (fifo_readReady) begin
+                    // We got a pixel we didn't expect
+                    $display("[CTRL] Got extra pixel ❌");
+                    led[3] <= !led[3];
+                    `Finish;
+                end
+                
                 ctrl_state <= Ctrl_State_Idle;
-            end
-            
-            if (fifo_readReady) begin
-                // We got a pixel we didn't expect
-                $display("[CTRL] Got extra pixel ❌");
-                led[3] <= 1;
             end
         end
         endcase

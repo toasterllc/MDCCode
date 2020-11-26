@@ -42,7 +42,7 @@ module PixSim #(
         end
         
         for (row=0; row<ImageHeight; row=row+1) begin
-            // $display("[PixSim] Row %0d", row);
+            $display("[PixSim] Row %0d", row);
             // pix_lv=1 (line start)
             // Output a row
             pix_lv = 1;

@@ -714,7 +714,7 @@ module RAMController #(
                 read_ready <= 0;
                 // Trigger refresh
                 // TODO: uncomment
-                refresh_trigger <= 1;
+                // refresh_trigger <= 1;
             end
         end
         
