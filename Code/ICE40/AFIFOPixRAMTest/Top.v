@@ -168,21 +168,21 @@ module Top(
     wire[15:0] fifo_readData;
     wire fifo_readReady;
     AFIFO #(
-        .Width(16),
-        .Size(256)
+        .W(16),
+        .N(8)
     ) AFIFO (
-        // .rst(fifo_rst),
-        // .rst_done(fifo_rst_done),
+        .rst(fifo_rst),
+        .rst_done(fifo_rst_done),
         
-        .wclk(pix_dclk),
-        .wok(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
-        .wtrigger(fifo_writeEn && pix_lv_reg),
-        .wdata({4'b0, pix_d_reg}),
+        .w_clk(pix_dclk),
+        .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
+        .w_trigger(fifo_writeEn && pix_lv_reg),
+        .w_data({4'b0, pix_d_reg}),
         
-        .rclk(clk),
-        .rok(fifo_readReady),
-        .rtrigger(fifo_readTrigger),
-        .rdata(fifo_readData)
+        .r_clk(clk),
+        .r_ready(fifo_readReady),
+        .r_trigger(fifo_readTrigger),
+        .r_data(fifo_readData)
     );
     
     reg ctrl_fifoCaptureTrigger = 0;
@@ -201,13 +201,13 @@ module Top(
         
         // Reset FIFO / ourself
         1: begin
-            // fifo_rst <= !fifo_rst;
+            fifo_rst <= !fifo_rst;
             fifo_state <= 2;
         end
         
         // Wait for FIFO to be done resetting
         2: begin
-            if (1'b1) begin
+            if (fifo_rstDone) begin
                 $display("[FIFO] Waiting for frame invalid...");
                 fifo_state <= 3;
             end
@@ -310,7 +310,7 @@ module Top(
             // Wait until the FIFO is reset
             // This is necessary so that when we observe `fifo_readReady`,
             // we know it's from the start of this session, not from a previous one.
-            if (1'b1) begin
+            if (ctrl_fifoRstDone) begin
                 $display("[CTRL] Receiving data from FIFO...");
                 ctrl_state <= Ctrl_State_Capture+3;
             end
