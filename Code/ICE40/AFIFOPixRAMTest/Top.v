@@ -52,6 +52,7 @@ module Top(
     // FIFO
     // ====================
     reg fifo_rst = 0;
+    wire fifo_rst_done;
     reg fifo_writeEn = 0;
     wire fifo_writeReady;
     reg fifo_readTrigger = 0;
@@ -63,8 +64,8 @@ module Top(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst_(!fifo_rst),
-        // .rst_done(fifo_rst_done),
+        .rst(fifo_rst),
+        .rst_done(fifo_rst_done),
         
         .w_clk(pix_dclk),
         .w_ready(fifo_writeReady),
@@ -79,12 +80,11 @@ module Top(
     
     reg ctrl_fifoCaptureTrigger = 0;
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
-    `TogglePulse(ctrl_fifoRstDone, fifo_rstDone, posedge, clk);
+    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
+    `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
     
-    reg fifo_rstDone = 0;
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
-        fifo_rst <= 0;
         fifo_writeEn <= 0; // Reset by default
         
         case (fifo_state)
@@ -94,15 +94,14 @@ module Top(
         
         // Reset FIFO / ourself
         1: begin
-            fifo_rst <= 1;
+            fifo_rst <= !fifo_rst;
             fifo_state <= 2;
         end
         
-        // Wait for FIFO reset to complete
+        // Wait for FIFO to be done resetting
         2: begin
-            if (!fifo_rst) begin
+            if (fifo_rstDone) begin
                 $display("[FIFO] Frame start");
-                fifo_rstDone <= !fifo_rstDone;
                 fifo_counter <= ImageSize-1;
                 fifo_state <= 3;
             end
@@ -149,45 +148,53 @@ module Top(
         end
     end
     
-    localparam Ctrl_State_Idle      = 0; // +0
-    localparam Ctrl_State_Capture   = 1; // +4
-    localparam Ctrl_State_Count     = 6;
-    reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
+    reg[2:0] ctrl_state = 0;
     reg[`RegWidth(ImageSize-1)-1:0] ctrl_pixelCounter = 0;
     reg[3:0] ctrl_counter = 0;
+    reg[7:0] ctrl_stuckCounter = 0;
+    wire ctrl_stuck = &ctrl_stuckCounter;
     always @(posedge clk) begin
         ctrl_counter <= ctrl_counter+1;
+        if (!ctrl_stuck) ctrl_stuckCounter <= ctrl_stuckCounter+1;
         fifo_readTrigger <= 0;
         
         case (ctrl_state)
-        Ctrl_State_Idle: begin
+        0: begin
         end
         
-        Ctrl_State_Capture: begin
+        1: begin
             $display("[CTRL] Triggered");
             led[0] <= !led[0];
-            ctrl_state <= Ctrl_State_Capture+1;
+            ctrl_state <= 2;
         end
         
-        Ctrl_State_Capture+1: begin
+        2: begin
             // Start the FIFO data flow
             ctrl_fifoCaptureTrigger <= !ctrl_fifoCaptureTrigger;
-            ctrl_state <= Ctrl_State_Capture+2;
+            ctrl_stuckCounter <= 0;
+            ctrl_state <= 3;
         end
         
-        Ctrl_State_Capture+2: begin
+        3: begin
             // Wait until the FIFO is reset
             // This is necessary so that when we observe `fifo_readReady`,
             // we know it's from the start of this session, not from a previous one.
             if (ctrl_fifoRstDone) begin
                 $display("[CTRL] Receiving data from FIFO...");
                 ctrl_pixelCounter <= ImageSize-1;
-                ctrl_state <= Ctrl_State_Capture+3;
+                ctrl_stuckCounter <= 0;
+                ctrl_state <= 4;
+            end
+            
+            if (ctrl_stuck) begin
+                led[1] <= 1;
+                $display("STUCK");
+                `Finish;
             end
         end
         
         // Receive data out of FIFO
-        Ctrl_State_Capture+3: begin
+        4: begin
             fifo_readTrigger <= 1;
             
             if (fifo_readTrigger && fifo_readReady) begin
@@ -197,15 +204,23 @@ module Top(
                     $display("[CTRL] Received full image");
                     fifo_readTrigger <= 0;
                     ctrl_counter <= 0;
-                    ctrl_state <= Ctrl_State_Capture+4;
+                    ctrl_state <= 5;
                 end
+            end
+            
+            if (fifo_readReady) ctrl_stuckCounter <= 0;
+            
+            if (ctrl_stuck) begin
+                led[1] <= 1;
+                $display("STUCK");
+                `Finish;
             end
         end
         
         // Wait for extra pixels that we don't expect
-        Ctrl_State_Capture+4: begin
+        5: begin
             if (&ctrl_counter) begin
-                ctrl_state <= Ctrl_State_Idle;
+                ctrl_state <= 0;
             end
             
             if (fifo_readReady) begin
@@ -217,9 +232,11 @@ module Top(
         end
         endcase
         
-        if (ctrl_state===Ctrl_State_Idle && ctrl_captureTrigger) begin
-            ctrl_state <= Ctrl_State_Capture;
+        if (ctrl_state===0 && ctrl_captureTrigger) begin
+            ctrl_state <= 1;
         end
+        
+        // led[1] <= ctrl_stuck;
     end
 endmodule
 

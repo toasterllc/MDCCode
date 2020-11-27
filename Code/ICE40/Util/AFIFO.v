@@ -10,7 +10,8 @@ module AFIFO #(
     parameter N=8   // Word count (2^N)
 )(
     // Reset port (clock domain: async)
-    input wire rst_, // Toggle
+    input wire rst, // Toggle
+    output reg rst_done = 0, // Toggle
     
     input wire w_clk,               // Write clock
     input wire w_trigger,           // Write trigger
@@ -23,12 +24,39 @@ module AFIFO #(
     output wire r_ready             // Read OK (data available -- not empty)
 );
     // ====================
+    // Reset Handling
+    // ====================
+    reg w_rst = 0;
+    reg w_rstAck=0, w_rstAckTmp=0, w_rstAckPrev=0;
+    reg r_rst=0, r_rstTmp=0;
+    `TogglePulse(w_rstTrigger, rst, posedge, w_clk);
+    always @(posedge w_clk) begin
+        if (w_rstTrigger) w_rst <= 1;
+        // Synchronize `r_rst` into `w_rstAck`, representing the
+        // acknowledgement of the reset from the read domain.
+        {w_rstAck, w_rstAckTmp} <= {w_rstAckTmp, r_rst};
+        // Clear `w_rstReq` upon the ack from the read domain
+        if (w_rstAck) w_rst <= 0;
+        // We're done resetting when the ack goes 1->0
+        w_rstAckPrev <= w_rstAck;
+        if (w_rstAckPrev && !w_rstAck) rst_done <= !rst_done;
+    end
+    
+    always @(posedge r_clk) begin
+        {r_rst, r_rstTmp} <= {r_rstTmp, w_rst};
+    end
+    
+    
+    
+    
+    
+    // ====================
     // Write handling
     // ====================
     reg[N-1:0] w_baddr=0, w_gaddr=0, w_gaddrDelayed=0; // Write address (binary, gray)
     wire[N-1:0] w_baddrNext = (w_trigger&&w_ready ? w_baddr+1'b1 : w_baddr);
-    always @(posedge w_clk, negedge rst_) begin
-        if (!rst_) begin
+    always @(posedge w_clk) begin
+        if (w_rst) begin
             w_gaddrDelayed <= 0;
             w_baddr <= 0;
             w_gaddr <= 0;
@@ -43,24 +71,19 @@ module AFIFO #(
     reg[1:0] w_readyReg_ = 0; // Inverted logic so we come out of reset with w_ready==true
     always @(posedge w_clk, negedge a_full_)
         if (!a_full_) w_readyReg_ <= ~0;
-        else w_readyReg_ <= (w_readyReg_<<1)|(!a_full_);
+        else w_readyReg_ <= (w_readyReg_<<1)|1'b0;
     
-    assign w_ready = !w_readyReg_[$size(w_readyReg_)-1];
+    assign w_ready = !`LeftBit(w_readyReg_, 0);
     
     // ====================
     // Read handling
     // ====================
     // Don't init r_baddr=0, since that breaks RAM inference with Icestorm,
     // since it thinks r_baddr is async instead of being clocked by r_clk
-    reg[N-1:0] r_baddr, r_gaddr=0, r_gaddrDelayed=0; // Read addresses (binary, gray)
-    
-`ifdef SIM
-    initial r_baddr = 0; // For simulation (see r_baddr comment above)
-`endif
-    
+    reg[N-1:0] r_baddr=0, r_gaddr=0, r_gaddrDelayed=0; // Read addresses (binary, gray)
     wire[N-1:0] r_baddrNext = (r_trigger&&r_ready ? r_baddr+1'b1 : r_baddr);
     always @(posedge r_clk) begin
-        if (!rst_) begin
+        if (r_rst) begin
             r_gaddrDelayed <= 0;
             r_baddr <= 0;
             r_gaddr <= 0;
@@ -72,10 +95,10 @@ module AFIFO #(
         end
     end
     
-    reg[2:0] r_readyReg = 0;
+    reg[1:0] r_readyReg = 0;
     always @(posedge r_clk, negedge a_empty_)
         if (!a_empty_) r_readyReg <= 0;
-        else r_readyReg <= (r_readyReg<<1)|a_empty_;
+        else r_readyReg <= (r_readyReg<<1)|1'b1;
     
     assign r_ready = `LeftBit(r_readyReg, 0);
     
@@ -84,7 +107,7 @@ module AFIFO #(
     // ====================
     reg a_dir = 0;
     wire a_dirSet = (w_gaddr[N-1]^r_gaddrDelayed[N-2]) && ~(w_gaddr[N-2]^r_gaddrDelayed[N-1]);
-    wire a_dirClr = (~(w_gaddrDelayed[N-1]^r_gaddr[N-2]) && (w_gaddrDelayed[N-2]^r_gaddr[N-1])) || !rst_;
+    wire a_dirClr = (~(w_gaddrDelayed[N-1]^r_gaddr[N-2]) && (w_gaddrDelayed[N-2]^r_gaddr[N-1]));
     
     always @(posedge a_dirSet, posedge a_dirClr)
         if (a_dirClr) a_dir <= 0;
