@@ -4,7 +4,6 @@
 `include "RAMController.v"
 `include "TogglePulse.v"
 `include "AFIFO.v"
-`include "Delay.v"
 
 `define PixController_Cmd_None      2'b00
 `define PixController_Cmd_Capture   2'b01
@@ -95,14 +94,6 @@ module PixController #(
         .ram_dq(ram_dq)
     );
     
-    wire pix_dclk_int;
-    Delay #(
-        .Count(1)
-    ) Delay (
-        .in(pix_dclk),
-        .out(pix_dclk_int)
-    );
-    
     // ====================
     // Pin: pix_d
     // ====================
@@ -112,7 +103,7 @@ module PixController #(
         SB_IO #(
             .PIN_TYPE(6'b0000_00)
         ) SB_IO_pix_d (
-            .INPUT_CLK(pix_dclk_int),
+            .INPUT_CLK(pix_dclk),
             .PACKAGE_PIN(pix_d[i]),
             .D_IN_0(pix_d_reg[i])
         );
@@ -125,7 +116,7 @@ module PixController #(
     SB_IO #(
         .PIN_TYPE(6'b0000_00)
     ) SB_IO_pix_fv (
-        .INPUT_CLK(pix_dclk_int),
+        .INPUT_CLK(pix_dclk),
         .PACKAGE_PIN(pix_fv),
         .D_IN_0(pix_fv_reg)
     );
@@ -137,7 +128,7 @@ module PixController #(
     SB_IO #(
         .PIN_TYPE(6'b0000_00)
     ) SB_IO_pix_lv (
-        .INPUT_CLK(pix_dclk_int),
+        .INPUT_CLK(pix_dclk),
         .PACKAGE_PIN(pix_lv),
         .D_IN_0(pix_lv_reg)
     );
@@ -158,7 +149,7 @@ module PixController #(
     ) AFIFO (
         .rst_(!fifo_rst),
         
-        .w_clk(pix_dclk_int),
+        .w_clk(pix_dclk),
         .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
         .w_trigger(fifo_writeEn && pix_lv_reg),
         .w_data({4'b0, pix_d_reg}),
@@ -170,14 +161,14 @@ module PixController #(
     );
     
     reg ctrl_fifoCaptureTrigger = 0;
-    `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk_int);
+    `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
     
     reg fifo_rstDone = 0;
     `TogglePulse(ctrl_fifoRstDone, fifo_rstDone, posedge, clk);
     
     reg fifo_pixelDropped = 0;
     reg[2:0] fifo_state = 0;
-    always @(posedge pix_dclk_int) begin
+    always @(posedge pix_dclk) begin
         fifo_rst <= 0; // Pulse
         fifo_writeEn <= 0; // Reset by default
         
