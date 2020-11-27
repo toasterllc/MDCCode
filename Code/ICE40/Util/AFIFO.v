@@ -52,20 +52,19 @@ module AFIFO #(
     reg[N:0] w_baddr=0, w_gaddr=0; // Write address (binary, gray)
     wire[N:0] w_baddrNext = (w_trigger&&w_ready ? w_baddr+1'b1 : w_baddr);
     wire[N:0] w_gaddrNext = (w_baddrNext>>1)^w_baddrNext;
-    always @(posedge w_clk) begin
-        if (w_rst)  {w_baddr, w_gaddr} <= 0;
-        else        {w_baddr, w_gaddr} <= {w_baddrNext, w_gaddrNext};
-    end
-    
     reg[N:0] w_rgaddr=0, w_rgaddrTmp=0;
-    always @(posedge w_clk)
-        if (w_rst)  {w_rgaddr, w_rgaddrTmp} <= 0;
-        else        {w_rgaddr, w_rgaddrTmp} <= {w_rgaddrTmp, r_gaddr};
-    
     reg w_full = 0;
-    always @(posedge w_clk)
-        if (w_rst)  w_full <= 0;
-        else        w_full <= (w_gaddrNext === {~w_rgaddr[N:N-1], w_rgaddr[N-2:0]});
+    always @(posedge w_clk) begin
+        if (w_rst) begin
+            {w_baddr, w_gaddr} <= 0;
+            {w_rgaddr, w_rgaddrTmp} <= 0;
+            w_full <= 0;
+        end else begin
+            {w_baddr, w_gaddr} <= {w_baddrNext, w_gaddrNext};
+            {w_rgaddr, w_rgaddrTmp} <= {w_rgaddrTmp, r_gaddr};
+            w_full <= (w_gaddrNext === {~w_rgaddr[N:N-1], w_rgaddr[N-2:0]});
+        end
+    end
     
     assign w_ready = !w_full;
     
@@ -77,20 +76,19 @@ module AFIFO #(
     reg[N:0] r_baddr=0, r_gaddr=0; // Read addresses (binary, gray)
     wire[N:0] r_baddrNext = (r_trigger&&r_ready ? r_baddr+1'b1 : r_baddr);
     wire[N:0] r_gaddrNext = (r_baddrNext>>1)^r_baddrNext;
-    always @(posedge r_clk) begin
-        if (r_rst)  {r_baddr, r_gaddr} <= 0;
-        else        {r_baddr, r_gaddr} <= {r_baddrNext, r_gaddrNext};
-    end
-    
     reg[N:0] r_wgaddr=0, r_wgaddrTmp=0;
-    always @(posedge r_clk)
-        if (r_rst)  {r_wgaddr, r_wgaddrTmp} <= 0;
-        else        {r_wgaddr, r_wgaddrTmp} <= {r_wgaddrTmp, w_gaddr};
-    
     reg r_empty_ = 0;
-    always @(posedge r_clk)
-        if (r_rst)  r_empty_ <= 1'b0;
-        else        r_empty_ <= !(r_gaddrNext == r_wgaddr);
+    always @(posedge r_clk) begin
+        if (r_rst) begin
+            {r_baddr, r_gaddr} <= 0;
+            {r_wgaddr, r_wgaddrTmp} <= 0;
+            r_empty_ <= 0;
+        end else begin
+            {r_baddr, r_gaddr} <= {r_baddrNext, r_gaddrNext};
+            {r_wgaddr, r_wgaddrTmp} <= {r_wgaddrTmp, w_gaddr};
+            r_empty_ <= !(r_gaddrNext == r_wgaddr);
+        end
+    end
     
     assign r_ready = r_empty_;
     
