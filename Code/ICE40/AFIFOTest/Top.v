@@ -99,14 +99,12 @@ module Top(
     wire r_ready;
     
     reg fifo_rst = 0;
-    wire fifo_rst_done;
     
     AFIFO #(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst(fifo_rst),
-        .rst_done(fifo_rst_done),
+        .rst_(!fifo_rst),
         
         .w_clk(w_clk),
         .w_trigger(w_trigger),
@@ -119,12 +117,11 @@ module Top(
         .r_ready(r_ready)
     );
     
+    reg fifo_rstDone = 0;
     reg r_rstReady = 0;
     `ToggleAck(w_rrstReady, w_rrstReadyAck, r_rstReady, posedge, w_clk);
     
     `TogglePulse(w_rstFIFOReq, rstFIFO_req, posedge, w_clk);
-    `TogglePulse(w_fifoRstDone, fifo_rst_done, posedge, w_clk);
-    
     reg[1:0] w_state = 0;
     always @(posedge w_clk) begin
         if (!w_rst_) begin
@@ -132,7 +129,8 @@ module Top(
         
         end else begin
             w_trigger <= 0;
-        
+            fifo_rst <= 0; // Pulse
+            
             case (w_state)
             0: begin
                 w_trigger <= 1;
@@ -153,13 +151,14 @@ module Top(
             2: begin
                 $display("[Write] Reset FIFO");
                 // Reset FIFO
-                fifo_rst <= !fifo_rst;
+                fifo_rst <= 1;
                 w_state <= 3;
             end
             
             3: begin
                 // Wait for reset to complete
-                if (w_fifoRstDone) begin
+                if (!fifo_rst) begin
+                    fifo_rstDone <= !fifo_rstDone;
                     w_state <= 0;
                 end
             end
@@ -181,7 +180,7 @@ module Top(
     reg[7:0] r_counter = 0;
     
     `TogglePulse(r_rstFIFOReq, rstFIFO_req, posedge, r_clk);
-    `TogglePulse(r_fifoRstDone, fifo_rst_done, posedge, r_clk);
+    `TogglePulse(r_fifoRstDone, fifo_rstDone, posedge, r_clk);
     
     reg[1:0] r_state = 0;
     always @(posedge r_clk) begin

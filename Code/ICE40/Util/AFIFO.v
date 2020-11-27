@@ -10,8 +10,7 @@ module AFIFO #(
     parameter N=8   // Word count (2^N)
 )(
     // Reset port (clock domain: async)
-    input wire rst, // Toggle
-    output reg rst_done = 0, // Toggle
+    input wire rst_,
     
     input wire w_clk,               // Write clock
     input wire w_trigger,           // Write trigger
@@ -24,29 +23,6 @@ module AFIFO #(
     output wire r_ready             // Read OK (data available -- not empty)
 );
     // ====================
-    // Reset Handling
-    // ====================
-    reg w_rst = 0;
-    reg w_rstAck=0, w_rstAckTmp=0, w_rstAckPrev=0;
-    reg r_rst=0, r_rstTmp=0;
-    `TogglePulse(w_rstTrigger, rst, posedge, w_clk);
-    always @(posedge w_clk) begin
-        if (w_rstTrigger) w_rst <= 1;
-        // Synchronize `r_rst` into `w_rstAck`, representing the
-        // acknowledgement of the reset from the read domain.
-        {w_rstAck, w_rstAckTmp} <= {w_rstAckTmp, r_rst};
-        // Clear `w_rstReq` upon the ack from the read domain
-        if (w_rstAck) w_rst <= 0;
-        // We're done resetting when the ack goes 1->0
-        w_rstAckPrev <= w_rstAck;
-        if (w_rstAckPrev && !w_rstAck) rst_done <= !rst_done;
-    end
-    
-    always @(posedge r_clk) begin
-        {r_rst, r_rstTmp} <= {r_rstTmp, w_rst};
-    end
-    
-    // ====================
     // Write handling
     // ====================
     reg[N:0] w_baddr=0, w_gaddr=0; // Write address (binary, gray)
@@ -54,8 +30,8 @@ module AFIFO #(
     wire[N:0] w_gaddrNext = (w_baddrNext>>1)^w_baddrNext;
     reg[N:0] w_rgaddr=0, w_rgaddrTmp=0;
     reg w_full = 0;
-    always @(posedge w_clk) begin
-        if (w_rst) begin
+    always @(posedge w_clk, negedge rst_) begin
+        if (!rst_) begin
             {w_baddr, w_gaddr} <= 0;
             {w_rgaddr, w_rgaddrTmp} <= 0;
             w_full <= 0;
@@ -78,8 +54,8 @@ module AFIFO #(
     wire[N:0] r_gaddrNext = (r_baddrNext>>1)^r_baddrNext;
     reg[N:0] r_wgaddr=0, r_wgaddrTmp=0;
     reg r_empty_ = 0;
-    always @(posedge r_clk) begin
-        if (r_rst) begin
+    always @(posedge r_clk, negedge rst_) begin
+        if (!rst_) begin
             {r_baddr, r_gaddr} <= 0;
             {r_wgaddr, r_wgaddrTmp} <= 0;
             r_empty_ <= 0;
