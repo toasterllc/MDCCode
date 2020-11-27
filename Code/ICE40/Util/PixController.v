@@ -24,7 +24,6 @@ module PixController #(
     // Capture port
     output reg          capture_done = 0,
     output wire         capture_pixelDropped,
-    output reg[39:0]    capture_status = 0, // TODO: remove
     
     // Readout port (clock domain: `clk`)
     output wire         readout_ready,
@@ -147,7 +146,7 @@ module PixController #(
     // FIFO
     // ====================
     reg fifo_rst = 0;
-    wire fifo_rst_done;
+    // wire fifo_rst_done;
     reg fifo_writeEn = 0;
     wire fifo_writeReady;
     wire fifo_readTrigger;
@@ -157,8 +156,7 @@ module PixController #(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst(fifo_rst),
-        .rst_done(fifo_rst_done),
+        .rst_(!fifo_rst),
         
         .w_clk(pix_dclk_int),
         .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
@@ -173,12 +171,14 @@ module PixController #(
     
     reg ctrl_fifoCaptureTrigger = 0;
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk_int);
-    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk_int);
-    `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
+    
+    reg fifo_rstDone = 0;
+    `TogglePulse(ctrl_fifoRstDone, fifo_rstDone, posedge, clk);
     
     reg fifo_pixelDropped = 0;
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk_int) begin
+        fifo_rst <= 0; // Pulse
         fifo_writeEn <= 0; // Reset by default
         
         case (fifo_state)
@@ -188,15 +188,15 @@ module PixController #(
         
         // Reset FIFO / ourself
         1: begin
-            fifo_rst <= !fifo_rst;
+            fifo_rst <= 1;
             fifo_pixelDropped <= 0;
-            capture_status[31:0] <= 0;
             fifo_state <= 2;
         end
         
         // Wait for FIFO to be done resetting
         2: begin
-            if (fifo_rstDone) begin
+            if (!fifo_rst) begin
+                fifo_rstDone <= !fifo_rstDone;
                 fifo_state <= 3;
             end
         end
@@ -235,24 +235,9 @@ module PixController #(
         // Watch for dropped pixels
         if (fifo_writeEn && pix_lv_reg && !fifo_writeReady) begin
             fifo_pixelDropped <= 1;
-            capture_status[31:0] <= capture_status+1;
             $display("[PIXCTRL:FIFO] Pixel dropped ❌");
             `Finish;
         end
-        
-        capture_status[39:32] <= fifo_state;
-        
-        // if (fifo_writeEn && pix_lv_reg && fifo_writeReady) begin
-        //     capture_status <= capture_status+1;
-        // end
-        
-        // if (fifo_writeEn && pix_lv_reg) begin
-        //     capture_status <= capture_status+1;
-        // end
-        
-        // if (!pix_fv_reg && pix_lv_reg) begin
-        //     capture_status <= 32'hAABBCCDD;
-        // end
     end
     
     
@@ -327,7 +312,7 @@ module PixController #(
             
             // Copy word from FIFO->RAM
             if (fifo_readReady && fifo_readTrigger) begin
-                $display("[PIXCTRL:Capture] Got pixel");
+                $display("[PIXCTRL:Capture] Got pixel: %0d", fifo_readData);
                 ramctrl_write_data <= fifo_readData;
                 ramctrl_write_trigger <= 1;
             end

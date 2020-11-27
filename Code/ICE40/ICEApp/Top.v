@@ -111,7 +111,6 @@ localparam ImageHeight = 1296;
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
 `define     Resp_Arg_PixGetStatus_CapturePixelDropped_Bits      44:44
-`define     Resp_Arg_PixGetStatus_CaptureStatus_Bits            39:0 // TODO: remove
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
@@ -336,7 +335,6 @@ module Top(
     reg[2:0]    pixctrl_cmd_ramBlock = 0;
     wire        pixctrl_capture_done;
     wire        pixctrl_capture_pixelDropped;
-    wire[39:0]  pixctrl_capture_status; // TODO: remove
     wire        pixctrl_readout_ready;
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;
@@ -352,7 +350,6 @@ module Top(
         
         .capture_done(pixctrl_capture_done),
         .capture_pixelDropped(pixctrl_capture_pixelDropped),
-        .capture_status(pixctrl_capture_status), // TODO: remove
         
         .readout_ready(pixctrl_readout_ready),
         .readout_trigger(pixctrl_readout_trigger),
@@ -617,7 +614,6 @@ module Top(
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlCaptureDone_;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= ctrl_pixctrlCapturePixelDropped;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureStatus_Bits] <= pixctrl_capture_status;
                 end
                 
                 `Msg_Type_NoOp: begin
@@ -1164,7 +1160,12 @@ module Testbench();
         end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
         
         $display("[EXT] Capture done ✅");
-        $display("[EXT] Capture status: %0d", resp[`Resp_Arg_PixGetStatus_CaptureStatus_Bits]);
+        
+        if (!resp[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits]) begin
+            $display("[EXT] No dropped pixels ✅");
+        end else begin
+            $display("[EXT] Dropped pixels ❌");
+        end
     end endtask
     
     task TestPixI2CWriteRead; begin

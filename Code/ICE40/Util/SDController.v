@@ -152,13 +152,11 @@ module SDController #(
     reg datOut_crcStatusOKReg = 0;
     
     reg datOutFIFO_rst = 0;
-    wire datOutFIFO_rstDone;
     wire datOutFIFO_writeReady;
     reg datOutFIFO_readTrigger = 0;
     wire[15:0] datOutFIFO_readData;
     wire datOutFIFO_readReady;
     `TogglePulse(datOut_startPulse, datOut_start, posedge, clk_int);
-    `TogglePulse(datOut_fifoRstDone, datOutFIFO_rstDone, posedge, clk_int);
     
     reg[2:0] datIn_state = 0;
     wire[3:0] datIn;
@@ -189,7 +187,6 @@ module SDController #(
         datOut_counter <= datOut_counter-1;
         datOut_triggerCounter <= datOut_triggerCounter-1;
         datOut_crcCounter <= datOut_crcCounter-1;
-        datOutFIFO_readTrigger <= 0; // Pulse
         datOut_startBit <= 0; // Pulse
         datOut_endBit <= 0; // Pulse
         datOut_crcStatusOKReg <= datOut_crcStatusOK;
@@ -201,6 +198,8 @@ module SDController #(
         datOut_crcRst <= 0;
         datOut_crcEn <= 0;
         datOut_crcOutEn <= 0;
+        datOutFIFO_rst <= 0; // Pulse
+        datOutFIFO_readTrigger <= 0; // Pulse
         
         // `datOut_active` is 3 bits to track whether `datIn` is
         // valid or not, since it takes several cycles to transition
@@ -296,14 +295,14 @@ module SDController #(
         1: begin
             $display("[SD-CTRL:DATOUT] Write session starting");
             // Reset the FIFO
-            datOutFIFO_rst <= !datOutFIFO_rst;
+            datOutFIFO_rst <= 1;
             datOut_crcErr <= 0;
             datOut_state <= 2;
         end
         
         2: begin
             // Wait for the FIFO to finish resetting
-            if (datOut_fifoRstDone) begin
+            if (!datOutFIFO_rst) begin
                 $display("[SD-CTRL:DATOUT] Signalling ready");
                 datOut_ready <= !datOut_ready;
                 datOut_state <= 3;
@@ -574,8 +573,7 @@ module SDController #(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst(datOutFIFO_rst),
-        .rst_done(datOutFIFO_rstDone),
+        .rst_(!datOutFIFO_rst),
         
         .w_clk(datOutWrite_clk),
         .w_ready(datOutWrite_ready),
