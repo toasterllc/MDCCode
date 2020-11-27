@@ -60,7 +60,7 @@ module AFIFO #(
         end else begin
             {r_baddr, r_gaddr} <= {r_baddrNext, r_gaddrNext};
             {r_wgaddr, r_wgaddrTmp} <= {r_wgaddrTmp, w_gaddr};
-            r_empty_ <= !(r_gaddrNext == r_wgaddr);
+            r_empty_ <= !(r_gaddrNext === r_wgaddr);
         end
     end
     
