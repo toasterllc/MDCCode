@@ -543,17 +543,16 @@ void System::_handleEvent() {
     }
     
     // Capture a frame
-    for (;;) {
+    for (bool ledOn=true;; ledOn=!ledOn) {
+        led0.write(ledOn);
         ice40.write(PixCaptureMsg(0));
         for (int i=0; i<10; i++) {
             auto status = _pixGetStatus();
-//            Assert(!status.capturePixelDropped());
-            volatile bool captureDone = status.captureDone();
-            volatile bool pixelDropped = status.capturePixelDropped();
-            volatile uint8_t fifoState = status.payload[3];
-            volatile uint8_t droppedPixelCount = status.payload[7];
+            Assert(!status.capturePixelDropped());
             if (status.captureDone()) break;
+            Assert(i < 10);
         }
+        HAL_Delay(33);
     }
     
     for (;;);
