@@ -857,9 +857,10 @@ module Testbench();
             SendMsgResp(`Msg_Type_SDGetStatus, 0);
             
             // If a response is expected, we're done when the response is received
-            if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done = resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
-            // If a response isn't expected, we're done when the command is sent
-            else done = resp[`Resp_Arg_SDGetStatus_CmdDone_Bits];
+            done = 1;
+            done = done && resp[`Resp_Arg_SDGetStatus_CmdDone_Bits];
+            if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done = done && resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
+            if (datInType !== `Msg_Arg_SDSendCmd_DatInType_None) done = done && resp[`Resp_Arg_SDGetStatus_DatInDone_Bits];
         end
         
         if (!done) begin
@@ -1045,13 +1046,8 @@ module Testbench();
         reg done;
         reg[15:0] i;
         
-        // // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmdResp(CMD25, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
-        
-        // Send command SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-        // SendSDCmd(CMD0, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 0);
-        
-        // Clock out data on DAT lines
+        // Clock out data on DAT lines, but without the SD card
+        // expecting data so that we don't get a response
         SendMsg(`Msg_Type_PixReadout, 0);
         
         #50000;
@@ -1089,7 +1085,7 @@ module Testbench();
         
         // Send SD command that doesn't respond on the DAT lines,
         // but specify that we expect DAT data
-        SendSDCmdResp(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 0);
+        SendSDCmd(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 0);
         $display("[EXT] Verifying that DatIn times out...");
         done = 0;
         for (i=0; i<10 && !done; i++) begin
@@ -1314,24 +1310,28 @@ module Testbench();
         SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
         // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Slow);
         
-        forever begin
-            TestPixCapture();
-        end
+        // forever begin
+        //     TestPixCapture();
+        // end
         
-        // TestNoOp();
-        // TestEcho();
-        // TestSDCMD0();
-        // TestSDCMD8();
-        // TestSDDatOut();
-        // TestSDCMD2();
-        // TestSDDatIn();
-        // TestSDRespRecovery();
-        // TestSDDatOutRecovery();
-        // TestSDDatInRecovery();
-        // TestPixReset();
-        // TestPixCapture();
-        // TestPixI2CWriteRead();
-        // `Finish;
+        TestNoOp();
+        TestEcho();
+        
+        // Do Pix stuff before SD stuff, so that the RAM is populated with an image, so that
+        // the RAM has valid content for when we do the readout to write to the SD card.
+        TestPixReset();
+        TestPixCapture();
+        TestPixI2CWriteRead();
+        
+        TestSDCMD0();
+        TestSDCMD8();
+        TestSDDatOut();
+        TestSDCMD2();
+        TestSDDatIn();
+        TestSDRespRecovery();
+        TestSDDatOutRecovery();
+        TestSDDatInRecovery();
+        `Finish;
         
         // forever begin
         //     i = $urandom%8;
