@@ -13,10 +13,9 @@
 `timescale 1ns/1ps
 
 `ifdef SIM
-// localparam ImageWidth = 2304;
+localparam ImageWidth = 2304;
 // localparam ImageHeight = 1296;
-localparam ImageWidth = 16;
-localparam ImageHeight = 16;
+localparam ImageHeight = 2;
 `else
 localparam ImageWidth = 2304;
 localparam ImageHeight = 1296;
@@ -161,7 +160,6 @@ module Top(
     // FIFO
     // ====================
     reg fifo_rst = 0;
-    wire fifo_rst_done;
     reg fifo_writeEn = 0;
     wire fifo_writeReady;
     wire fifo_readTrigger;
@@ -171,8 +169,7 @@ module Top(
         .W(16),
         .N(8)
     ) AFIFO (
-        .rst(fifo_rst),
-        .rst_done(fifo_rst_done),
+        .rst_(!fifo_rst),
         
         .w_clk(pix_dclk),
         .w_ready(fifo_writeReady), // TODO: handle not being able to write by signalling an error somehow?
@@ -185,13 +182,14 @@ module Top(
         .r_data(fifo_readData)
     );
     
+    reg fifo_rstDone = 0;
     reg ctrl_fifoCaptureTrigger = 0;
     `TogglePulse(fifo_captureTrigger, ctrl_fifoCaptureTrigger, posedge, pix_dclk);
-    `TogglePulse(fifo_rstDone, fifo_rst_done, posedge, pix_dclk);
-    `TogglePulse(ctrl_fifoRstDone, fifo_rst_done, posedge, clk);
+    `TogglePulse(ctrl_fifoRstDone, fifo_rstDone, posedge, clk);
     
     reg[2:0] fifo_state = 0;
     always @(posedge pix_dclk) begin
+        fifo_rst <= 0; // Pulse
         fifo_writeEn <= 0; // Reset by default
         
         case (fifo_state)
@@ -207,8 +205,9 @@ module Top(
         
         // Wait for FIFO to be done resetting
         2: begin
-            if (fifo_rstDone) begin
+            if (!fifo_rst) begin
                 $display("[FIFO] Waiting for frame invalid...");
+                fifo_rstDone <= !fifo_rstDone;
                 fifo_state <= 3;
             end
         end

@@ -47,7 +47,7 @@ module PixSim #(
             // Output a row
             pix_lv = 1;
             for (col=0; col<ImageWidth; col=col+1) begin
-                pix_d = row;
+                pix_d = col;
                 wait(clk);
                 wait(!clk);
             end
