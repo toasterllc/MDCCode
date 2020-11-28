@@ -1041,13 +1041,7 @@ module Testbench();
             `Finish;
         end
     end endtask
-        
-        
-        
-        
-        
-        
-        
+    
     task TestSDDatOutRecovery; begin
         reg done;
         reg[15:0] i;
