@@ -45,8 +45,6 @@ module AFIFO #(
     // ====================
     // Read handling
     // ====================
-    // Don't init r_baddr=0, since that breaks RAM inference with Icestorm,
-    // since it thinks r_baddr is async instead of being clocked by r_clk
     reg[N:0] r_baddr=0, r_gaddr=0; // Read addresses (binary, gray)
     wire[N:0] r_baddrNext = (r_trigger&&r_ready ? r_baddr+1'b1 : r_baddr);
     wire[N:0] r_gaddrNext = (r_baddrNext>>1)^r_baddrNext;
