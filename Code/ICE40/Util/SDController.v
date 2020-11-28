@@ -47,16 +47,17 @@ module SDController #(
     output reg          resp_crcErr = 0,
     
     // DatOut port (clock domain: `clk`)
+    input wire datOut_stop,         // Toggle
+    output reg datOut_stopped = 0,  // Toggle
     input wire datOut_start,        // Toggle
-    output reg datOut_ready = 0,    // Toggle
     output reg datOut_done = 0,     // Toggle
     output reg datOut_crcErr = 0,
     
-    // DatOutWrite port (clock domain: `datOutWrite_clk`)
-    input wire          datOutWrite_clk,
-    output wire         datOutWrite_ready,
-    input wire          datOutWrite_trigger,
-    input wire[15:0]    datOutWrite_data,
+    // DatOutRead port (clock domain: `datOutRead_clk`)
+    output wire         datOutRead_clk,
+    input wire          datOutRead_ready,
+    output reg          datOutRead_trigger = 0,
+    input wire[15:0]    datOutRead_data,
     
     // DatIn port (clock domain: `clk`)
     output reg      datIn_done = 0, // Toggle
@@ -91,6 +92,7 @@ module SDController #(
     `Sync(clk_slow_en, clksrc_slow, negedge, clk_slow);
     `Sync(clk_fast_en, clksrc_fast, negedge, clk_fast);
     wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
+    assign datOutRead_clk = clk_int;
     
     // ====================
     // sdcard_clk / clksrc_delay
@@ -144,19 +146,14 @@ module SDController #(
     reg datOut_startBit = 0;
     reg[19:0] datOut_reg = 0;
     reg[9:0] datOut_counter = 0;
-    reg[1:0] datOut_triggerCounter = 0;
+    reg[1:0] datOut_readCounter = 0;
     reg[3:0] datOut_crcCounter = 0;
     wire[3:0] datOut_crc;
     wire[4:0] datOut_crcStatus = {datIn_reg[16], datIn_reg[12], datIn_reg[8], datIn_reg[4], datIn_reg[0]};
     wire datOut_crcStatusOK = datOut_crcStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
     reg datOut_crcStatusOKReg = 0;
-    
-    reg datOutFIFO_rst = 0;
-    wire datOutFIFO_writeReady;
-    reg datOutFIFO_readTrigger = 0;
-    wire[15:0] datOutFIFO_readData;
-    wire datOutFIFO_readReady;
     `TogglePulse(datOut_startPulse, datOut_start, posedge, clk_int);
+    `TogglePulse(datOut_stopPulse, datOut_stop, posedge, clk_int);
     
     reg[2:0] datIn_state = 0;
     wire[3:0] datIn;
@@ -185,21 +182,20 @@ module SDController #(
         resp_crcEn <= 0;
         
         datOut_counter <= datOut_counter-1;
-        datOut_triggerCounter <= datOut_triggerCounter-1;
+        datOut_readCounter <= datOut_readCounter-1;
         datOut_crcCounter <= datOut_crcCounter-1;
         datOut_startBit <= 0; // Pulse
         datOut_endBit <= 0; // Pulse
         datOut_crcStatusOKReg <= datOut_crcStatusOK;
         datOut_reg <= datOut_reg<<4;
-        if (!datOut_triggerCounter) datOut_reg[15:0] <= datOutFIFO_readData;
+        if (!datOut_readCounter)    datOut_reg[15:0] <= datOutRead_data;
         if (datOut_crcOutEn)        datOut_reg[19:16] <= datOut_crc;
         if (datOut_startBit)        datOut_reg[19:16] <= 4'b0000;
         if (datOut_endBit)          datOut_reg[19:16] <= 4'b1111;
         datOut_crcRst <= 0;
         datOut_crcEn <= 0;
         datOut_crcOutEn <= 0;
-        datOutFIFO_rst <= 0; // Pulse
-        datOutFIFO_readTrigger <= 0; // Pulse
+        datOutRead_trigger <= 0; // Pulse
         
         // `datOut_active` is 3 bits to track whether `datIn` is
         // valid or not, since it takes several cycles to transition
@@ -294,87 +290,72 @@ module SDController #(
         
         1: begin
             $display("[SD-CTRL:DATOUT] Write session starting");
-            // Reset the FIFO
-            datOutFIFO_rst <= 1;
             datOut_crcErr <= 0;
-            datOut_state <= 2;
+            // Wait for data to start
+            if (datOutRead_ready) begin
+                datOut_state <= 2;
+            end
         end
         
         2: begin
-            // Wait for the FIFO to finish resetting
-            if (!datOutFIFO_rst) begin
-                $display("[SD-CTRL:DATOUT] Signalling ready");
-                datOut_ready <= !datOut_ready;
-                datOut_state <= 3;
-            end
+            $display("[SD-CTRL:DATOUT] Write another block");
+            datOut_counter <= 1023;
+            datOut_readCounter <= 0;
+            datOut_crcRst <= 1;
+            datOut_startBit <= 1;
+            datOut_state <= 3;
         end
         
         3: begin
-            // Wait for data to start
-            if (datOutFIFO_readReady) begin
-                datOut_state <= 4;
-            end
-        end
-        
-        4: begin
-            $display("[SD-CTRL:DATOUT] Write another block");
-            datOut_counter <= 1023;
-            datOut_triggerCounter <= 0;
-            datOut_crcRst <= 1;
-            datOut_startBit <= 1;
-            datOut_state <= 5;
-        end
-        
-        5: begin
             datOut_active[0] <= 1;
             datOut_crcEn <= 1;
             
-            if (!datOut_triggerCounter) begin
-                // $display("[SD-CTRL:DATOUT]   Write another word: %x", datOutFIFO_readData);
-                datOutFIFO_readTrigger <= 1;
+            if (!datOut_readCounter) begin
+                // $display("[SD-CTRL:DATOUT]   Write another word: %x", datOutRead_data);
+                datOutRead_trigger <= 1;
             end
             
             if (!datOut_counter) begin
                 $display("[SD-CTRL:DATOUT] Done writing");
-                datOut_state <= 6;
+                datOut_state <= 4;
             end
         end
         
         // Output the CRC
-        6: begin
+        4: begin
             datOut_active[0] <= 1;
             datOut_crcEn <= 1;
             datOut_crcOutEn <= 1;
             datOut_crcCounter <= 15;
-            datOut_state <= 7;
+            datOut_state <= 5;
         end
         
         // Wait for CRC output to finish
-        7: begin
+        5: begin
             datOut_active[0] <= 1;
             if (datOut_crcCounter) begin
                 datOut_crcOutEn <= 1;
             end else begin
                 datOut_endBit <= 1;
-                datOut_state <= 8;
+                datOut_state <= 6;
             end
         end
         
         // Output the end bit
-        8: begin
+        6: begin
             datOut_active[0] <= 1;
-            datOut_state <= 9;
+            datOut_state <= 7;
         end
         
         // Wait for the CRC status from the card
-        9: begin
+        7: begin
             if (!datIn_reg[16]) begin
-                datOut_state <= 10;
+                datOut_state <= 8;
             end
         end
         
         // Check CRC status token
-        10: begin
+        8: begin
             $display("[SD-CTRL:DATOUT] DatOut: datOut_crcStatusOKReg: %b", datOut_crcStatusOKReg);
             // 5 bits: start bit, CRC status, end bit
             if (datOut_crcStatusOKReg) begin
@@ -384,17 +365,17 @@ module SDController #(
                 `Finish;
                 datOut_crcErr <= 1;
             end
-            datOut_state <= 11;
+            datOut_state <= 9;
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        11: begin
+        9: begin
             if (datIn_reg[0]) begin
                 $display("[SD-CTRL:DATOUT] Card ready");
                 // `Finish;
                 
-                if (datOutFIFO_readReady) begin
-                    datOut_state <= 4;
+                if (datOutRead_ready) begin
+                    datOut_state <= 2;
                 
                 end else begin
                     datOut_done <= !datOut_done;
@@ -407,7 +388,14 @@ module SDController #(
         end
         endcase
         
+        if (datOut_stopPulse) begin
+            $display("[SD-CTRL:DATOUT] Stop");
+            datOut_stopped <= !datOut_stopped;
+            datOut_state <= 0;
+        end
+        
         if (datOut_startPulse) begin
+            $display("[SD-CTRL:DATOUT] Start");
             datOut_state <= 1;
         end
         
@@ -566,25 +554,6 @@ module SDController #(
         end
     end
     
-    // ====================
-    // Dat Out FIFO
-    // ====================
-    AFIFO #(
-        .W(16),
-        .N(8)
-    ) AFIFO (
-        .rst_(!datOutFIFO_rst),
-        
-        .w_clk(datOutWrite_clk),
-        .w_ready(datOutWrite_ready),
-        .w_trigger(datOutWrite_trigger),
-        .w_data(datOutWrite_data),
-        
-        .r_clk(clk_int),
-        .r_ready(datOutFIFO_readReady),
-        .r_trigger(datOutFIFO_readTrigger),
-        .r_data(datOutFIFO_readData)
-    );
     
     // ====================
     // Pin: sdcard_cmd

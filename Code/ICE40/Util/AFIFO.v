@@ -4,8 +4,8 @@
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
 module AFIFO #(
-    parameter W=16, // Word width
-    parameter N=8   // Word count (2^N)
+    localparam W = 16, // Word width
+    localparam N = 8   // Word count (2^N)
 )(
     // Reset port (clock domain: async)
     input wire rst_,

@@ -201,14 +201,16 @@ module Top(
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
+    reg         sd_datOut_stop = 0;
+    wire        sd_datOut_stopped;
     reg         sd_datOut_start = 0;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
-    wire        sd_datOutWrite_clk;
-    wire        sd_datOutWrite_ready;
-    wire        sd_datOutWrite_trigger;
-    wire[15:0]  sd_datOutWrite_data;
+    wire        sd_datOutRead_clk;
+    wire        sd_datOutRead_ready;
+    wire        sd_datOutRead_trigger;
+    wire[15:0]  sd_datOutRead_data;
     wire        sd_datIn_done;
     wire        sd_datIn_crcErr;
     wire[3:0]   sd_datIn_cmd6AccessMode;
@@ -218,38 +220,39 @@ module Top(
         .ClkFreq(SD_Clk_Freq)
     ) SDController (
         .clk(sd_clk),
-
+        
         .sdcard_clk(sdcard_clk),
         .sdcard_cmd(sdcard_cmd),
         .sdcard_dat(sdcard_dat),
-
+        
         .clksrc_speed(sd_clksrc_speed),
         .clksrc_delay(sd_clksrc_delay),
-
+        
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
         .cmd_respType(sd_cmd_respType),
         .cmd_datInType(sd_cmd_datInType),
         .cmd_done(sd_cmd_done),
-
+        
         .resp_done(sd_resp_done),
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
-
+        
+        .datOut_stop(sd_datOut_stop),
+        .datOut_stopped(sd_datOut_stopped),
         .datOut_start(sd_datOut_start),
-        .datOut_ready(sd_datOut_ready),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
-
-        .datOutWrite_clk(sd_datOutWrite_clk),
-        .datOutWrite_ready(sd_datOutWrite_ready),
-        .datOutWrite_trigger(sd_datOutWrite_trigger),
-        .datOutWrite_data(sd_datOutWrite_data),
-
+        
+        .datOutRead_clk(sd_datOutRead_clk),
+        .datOutRead_ready(sd_datOutRead_ready),
+        .datOutRead_trigger(sd_datOutRead_trigger),
+        .datOutRead_data(sd_datOutRead_data),
+        
         .datIn_done(sd_datIn_done),
         .datIn_crcErr(sd_datIn_crcErr),
         .datIn_cmd6AccessMode(sd_datIn_cmd6AccessMode),
-
+        
         .status_dat0Idle(sd_status_dat0Idle)
     );
     
@@ -333,12 +336,14 @@ module Top(
     // ====================
     reg[1:0]    pixctrl_cmd = 0;
     reg[2:0]    pixctrl_cmd_ramBlock = 0;
-    wire        pixctrl_capture_done;
-    wire        pixctrl_capture_pixelDropped;
+    wire        pixctrl_readout_clk;
     wire        pixctrl_readout_ready;
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;
     wire        pixctrl_readout_done;
+    wire        pixctrl_status_captureDone;
+    wire        pixctrl_status_capturePixelDropped;
+    wire        pixctrl_status_readoutStarted;
     PixController #(
         .ClkFreq(Pix_Clk_Freq),
         .ImageSize(ImageWidth*ImageHeight)
@@ -348,13 +353,15 @@ module Top(
         .cmd(pixctrl_cmd),
         .cmd_ramBlock(pixctrl_cmd_ramBlock),
         
-        .capture_done(pixctrl_capture_done),
-        .capture_pixelDropped(pixctrl_capture_pixelDropped),
-        
+        .readout_clk(pixctrl_readout_clk),
         .readout_ready(pixctrl_readout_ready),
         .readout_trigger(pixctrl_readout_trigger),
         .readout_data(pixctrl_readout_data),
         .readout_done(pixctrl_readout_done),
+        
+        .status_captureDone(pixctrl_status_captureDone),
+        .status_capturePixelDropped(pixctrl_status_capturePixelDropped),
+        .status_readoutStarted(pixctrl_status_readoutStarted),
         
         .pix_dclk(pix_dclk),
         .pix_d(pix_d),
@@ -373,23 +380,23 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    // Connect PixController's readout port to SDController's datOut port
-    assign sd_datOutWrite_clk = pix_clk;
-    assign sd_datOutWrite_trigger = pixctrl_readout_ready;
-    assign pixctrl_readout_trigger = sd_datOutWrite_ready;
-    assign sd_datOutWrite_data = pixctrl_readout_data;
+    // Connect PixController.readout to SDController.datOutRead
+    assign pixctrl_readout_clk = sd_datOutRead_clk;
+    assign sd_datOutRead_ready = pixctrl_readout_ready;
+    assign pixctrl_readout_trigger = sd_datOutRead_trigger;
+    assign sd_datOutRead_data = pixctrl_readout_data;
     
     reg ctrl_pixCaptureTrigger = 0;
     `TogglePulse(pixctrl_captureTrigger, ctrl_pixCaptureTrigger, posedge, pix_clk);
     reg ctrl_pixReadoutTrigger = 0;
     `TogglePulse(pixctrl_readoutTrigger, ctrl_pixReadoutTrigger, posedge, pix_clk);
-    `TogglePulse(pixctrl_sdDatOutReady, sd_datOut_ready, posedge, pix_clk);
-    reg pixctrl_captureDoneToggle = 0;
+    `TogglePulse(pixctrl_sdDatOutStopped, sd_datOut_stopped, posedge, pix_clk);
+    reg pixctrl_statusCaptureDoneToggle = 0;
     
     localparam PixCtrl_State_Idle           = 0;    // +0
     localparam PixCtrl_State_Capture        = 1;    // +0
-    localparam PixCtrl_State_Readout        = 2;    // +3
-    localparam Data_State_Count             = 6;
+    localparam PixCtrl_State_Readout        = 2;    // +2
+    localparam Data_State_Count             = 5;
     reg[`RegWidth(Data_State_Count-1)-1:0] pixctrl_state = 0;
     always @(posedge pix_clk) begin
         pixctrl_cmd <= `PixController_Cmd_None;
@@ -405,29 +412,28 @@ module Top(
         
         PixCtrl_State_Readout: begin
             $display("[PixCtrl] Readout triggered");
-            // Tell PixController to stop so that data is guaranteed to not
-            // be flowing into SDController
-            pixctrl_cmd <= `PixController_Cmd_Stop;
+            // Tell SDController DatOut to stop so that the FIFO isn't accessed until
+            // the FIFO is reset and new data is available.
+            sd_datOut_stop <= !sd_datOut_stop;
             pixctrl_state <= PixCtrl_State_Readout+1;
         end
         
         PixCtrl_State_Readout+1: begin
-            // Tell SDController to start DatOut
-            sd_datOut_start <= !sd_datOut_start;
-            pixctrl_state <= PixCtrl_State_Readout+2;
-        end
-        
-        PixCtrl_State_Readout+2: begin
-            // Wait for SDController DatOut to be ready
-            if (pixctrl_sdDatOutReady) begin
-                pixctrl_state <= PixCtrl_State_Readout+3;
+            // Wait until SDController DatOut is stopped
+            if (pixctrl_sdDatOutStopped) begin
+                // Tell PixController to start readout
+                pixctrl_cmd <= `PixController_Cmd_Readout;
+                pixctrl_state <= PixCtrl_State_Readout+2;
             end
         end
         
-        PixCtrl_State_Readout+3: begin
-            // Tell PixController to start readout
-            pixctrl_cmd <= `PixController_Cmd_Readout;
-            pixctrl_state <= PixCtrl_State_Idle;
+        PixCtrl_State_Readout+2: begin
+            // Wait until PixController readout starts
+            if (pixctrl_status_readoutStarted) begin
+                // Start SD DatOut now that readout has started (and therefore
+                // the FIFO has been reset)
+                sd_datOut_start <= !sd_datOut_start;
+            end
         end
         endcase
         
@@ -441,7 +447,7 @@ module Top(
         end
         
         // TODO: create a primitive to convert a pulse in a source clock domain to a ToggleAck in a destination clock domain
-        if (pixctrl_capture_done) pixctrl_captureDoneToggle <= !pixctrl_captureDoneToggle;
+        if (pixctrl_status_captureDone) pixctrl_statusCaptureDoneToggle <= !pixctrl_statusCaptureDoneToggle;
     end
     
     
@@ -471,8 +477,8 @@ module Top(
     `ToggleAck(ctrl_sdDatInDone_, ctrl_sdDatInDoneAck, sd_datIn_done, posedge, ctrl_clk);
     `Sync(ctrl_sdDat0Idle, sd_status_dat0Idle, posedge, ctrl_clk);
     
-    `ToggleAck(ctrl_pixctrlCaptureDone_, ctrl_pixctrlCaptureDoneAck, pixctrl_captureDoneToggle, posedge, ctrl_clk);
-    `Sync(ctrl_pixctrlCapturePixelDropped, pixctrl_capture_pixelDropped, posedge, ctrl_clk);
+    `ToggleAck(ctrl_pixctrlStatusCaptureDone_, ctrl_pixctrlStatusCaptureDoneAck, pixctrl_statusCaptureDoneToggle, posedge, ctrl_clk);
+    `Sync(ctrl_pixctrlStatusCapturePixelDropped, pixctrl_status_capturePixelDropped, posedge, ctrl_clk);
     
     always @(posedge ctrl_clk, negedge ctrl_rst_) begin
         if (!ctrl_rst_) begin
@@ -572,8 +578,8 @@ module Top(
                 `Msg_Type_PixCapture: begin
                     $display("[CTRL] Got Msg_Type_PixCapture (block=%b)", ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits]);
                     
-                    // Reset `ctrl_pixctrlCaptureDone_` if it's asserted
-                    if (!ctrl_pixctrlCaptureDone_) ctrl_pixctrlCaptureDoneAck <= !ctrl_pixctrlCaptureDoneAck;
+                    // Reset `ctrl_pixctrlStatusCaptureDone_` if it's asserted
+                    if (!ctrl_pixctrlStatusCaptureDone_) ctrl_pixctrlStatusCaptureDoneAck <= !ctrl_pixctrlStatusCaptureDoneAck;
                     
                     pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits];
                     ctrl_pixCaptureTrigger <= !ctrl_pixCaptureTrigger;
@@ -607,13 +613,13 @@ module Top(
                     //     !ctrl_pixi2c_done_,
                     //     pixi2c_status_err,
                     //     pixi2c_status_readData,
-                    //     !ctrl_pixctrlCaptureDone_
+                    //     !ctrl_pixctrlStatusCaptureDone_
                     // );
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !ctrl_pixi2c_done_;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
                     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlCaptureDone_;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= ctrl_pixctrlCapturePixelDropped;
+                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlStatusCaptureDone_;
+                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= ctrl_pixctrlStatusCapturePixelDropped;
                 end
                 
                 `Msg_Type_NoOp: begin
@@ -1308,11 +1314,6 @@ module Testbench();
 
         // Set SD clock source
         SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
-        // SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Slow);
-        
-        // forever begin
-        //     TestPixCapture();
-        // end
         
         TestNoOp();
         TestEcho();
