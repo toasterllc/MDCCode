@@ -27,7 +27,7 @@ module PixController #(
     output wire         readout_done,
     
     // Status port (clock domain: `clk`)
-    output wire         status_captureDone,
+    output reg          status_captureDone = 0,
     output wire         status_capturePixelDropped,
     output reg          status_readoutStarted = 0,
     
@@ -55,8 +55,8 @@ module PixController #(
     reg[2:0]    ramctrl_cmd_block = 0;
     reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
-    wire        ramctrl_write_trigger;
-    wire[15:0]  ramctrl_write_data;
+    reg         ramctrl_write_trigger = 0;
+    reg[15:0]   ramctrl_write_data = 0;
     wire        ramctrl_write_done;
     wire        ramctrl_read_ready;
     wire        ramctrl_read_trigger;
@@ -99,10 +99,10 @@ module PixController #(
     // ====================
     reg fifoIn_rst = 0;
     wire fifoIn_write_ready;
-    wire fifoIn_write_trigger; // fifoIn_writeEn && pix_lv_reg
-    wire[15:0] fifoIn_write_data; // {4'b0, pix_d_reg}
-    wire fifoIn_read_ready; // ramctrl_write_trigger
-    wire fifoIn_read_trigger; // fifoIn_readEn && ramctrl_write_ready
+    wire fifoIn_write_trigger;
+    wire[15:0] fifoIn_write_data;
+    wire fifoIn_read_ready;
+    wire fifoIn_read_trigger;
     wire[15:0] fifoIn_read_data;
     
     AFIFO AFIFO_fifoIn(
@@ -262,21 +262,20 @@ module PixController #(
     // ====================
     // Control State Machine
     // ====================
-    reg ctrl_captureEn_ = 0;
-    
     `Sync(status_capturePixelDroppedSync, fifoIn_pixelDropped, posedge, clk);
     assign status_capturePixelDropped = status_capturePixelDroppedSync;
     
     localparam Ctrl_State_Idle      = 0; // +0
-    localparam Ctrl_State_Capture   = 1; // +2
+    localparam Ctrl_State_Capture   = 1; // +3
     localparam Ctrl_State_Readout   = 5; // +1
     localparam Ctrl_State_Count     = 7;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
-        ctrl_captureEn_ <= 0;
         fifoOut_rst <= 0;
+        status_captureDone <= 0;
         status_readoutStarted <= 0;
+        ramctrl_write_trigger <= 0;
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
@@ -284,7 +283,6 @@ module PixController #(
         
         Ctrl_State_Capture: begin
             $display("[PIXCTRL:Capture] Triggered");
-            ctrl_captureEn_ <= 1; // Disable until we start
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Write;
@@ -293,7 +291,6 @@ module PixController #(
         end
         
         Ctrl_State_Capture+1: begin
-            ctrl_captureEn_ <= 1; // Disable until we start
             // Wait for the write command to be consumed, and for the RAMController
             // to be ready to write.
             // This is necessary because the RAMController/SDRAM takes some time to
@@ -309,8 +306,33 @@ module PixController #(
         end
         
         Ctrl_State_Capture+2: begin
-            ctrl_captureEn_ <= 1; // Disable until we start
             if (ctrl_fifoInStarted) begin
+                ctrl_state <= Ctrl_State_Capture+3;
+            end
+        end
+        
+        Ctrl_State_Capture+3: begin
+            // By default, prevent `ramctrl_write_trigger` from being reset
+            ramctrl_write_trigger <= ramctrl_write_trigger;
+            
+            // Reset `ramctrl_write_trigger` if RAMController accepted the data
+            if (ramctrl_write_ready && ramctrl_write_trigger) begin
+                ramctrl_write_trigger <= 0;
+            end
+            
+            // Copy word from FIFO->RAM
+            if (fifoIn_read_ready && fifoIn_read_trigger) begin
+                $display("[PIXCTRL:Capture] Got pixel: %0d", fifoIn_read_data);
+                ramctrl_write_data <= fifoIn_read_data;
+                ramctrl_write_trigger <= 1;
+            end
+            
+            // We're finished when RAMController says we've received all the pixels.
+            // (RAMController knows when it's written the entire block, and we
+            // define RAMController's block size as the image size.)
+            if (ramctrl_write_done) begin
+                $display("[PIXCTRL:Capture] Finished");
+                status_captureDone <= 1;
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
@@ -350,9 +372,7 @@ module PixController #(
     assign fifoIn_write_data = {4'b0, pix_d_reg};
     
     // Connect input FIFO read -> RAM write
-    assign fifoIn_read_trigger = !ctrl_captureEn_ && ramctrl_write_ready;
-    assign ramctrl_write_trigger = !ctrl_captureEn_ && fifoIn_read_ready;
-    assign ramctrl_write_data = fifoIn_read_data;
+    assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     
     // Connect RAM read -> output FIFO write
     assign fifoOut_write_trigger = ramctrl_read_ready;
@@ -363,8 +383,6 @@ module PixController #(
     assign readout_ready = fifoOut_read_ready;
     assign fifoOut_read_trigger = readout_trigger;
     assign readout_data = fifoOut_read_data;
-    
-    assign status_captureDone = ramctrl_write_done;
     
 endmodule
 
