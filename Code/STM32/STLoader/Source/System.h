@@ -1,7 +1,6 @@
 #include "SystemBase.h"
 #include "STLoaderTypes.h"
-
-extern "C" int main();
+#include "QSPI.h"
 
 class System : public SystemBase<System> {
 public:
@@ -29,6 +28,7 @@ private:
     void _qspiWriteBuf();
     void _qspiWrite(const void* data, size_t len);
     
+    QSPI _qspi;
     GPIO _iceCRST_;
     GPIO _iceCDONE;
     GPIO _iceSPIClk;
@@ -48,9 +48,13 @@ private:
     STLoader::ICEStatus _iceStatus __attribute__((aligned(4))) = STLoader::ICEStatus::Idle;
     STLoader::ICECDONE _iceCDONEState __attribute__((aligned(4))) = STLoader::ICECDONE::Error;
     
+    friend int main();
+    friend void ISR_OTG_HS();
+    friend void ISR_QUADSPI();
+    friend void ISR_DMA2_Stream7();
+    
     using _super = SystemBase<System>;
     friend class SystemBase<System>;
-    friend int main();
 };
 
 extern System Sys;

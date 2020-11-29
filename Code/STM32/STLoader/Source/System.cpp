@@ -8,6 +8,7 @@
 using namespace STLoader;
 
 System::System() :
+_qspi(QSPI::Mode::Single),
 _iceCRST_(GPIOI, GPIO_PIN_6),
 _iceCDONE(GPIOI, GPIO_PIN_7),
 _iceSPIClk(GPIOB, GPIO_PIN_2),
@@ -19,6 +20,8 @@ void System::init() {
     
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
+    _qspi.init();
+    
     // Configure ice40 control GPIOs
     _iceCRST_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _iceCDONE.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -27,22 +30,22 @@ void System::init() {
 void System::_handleEvent() {
     // Wait for an event to occur on one of our channels
     ChannelSelect::Start();
-    if (auto x = usb.eventChannel.readSelect()) {
+    if (auto x = _usb.eventChannel.readSelect()) {
         _usbHandleEvent(*x);
     
-    } else if (auto x = usb.stCmdChannel.readSelect()) {
+    } else if (auto x = _usb.stCmdChannel.readSelect()) {
         _stHandleCmd(*x);
     
-    } else if (auto x = usb.stDataChannel.readSelect()) {
+    } else if (auto x = _usb.stDataChannel.readSelect()) {
         _stHandleData(*x);
     
-    } else if (auto x = usb.iceCmdChannel.readSelect()) {
+    } else if (auto x = _usb.iceCmdChannel.readSelect()) {
         _iceHandleCmd(*x);
     
-    } else if (auto x = usb.iceDataChannel.readSelect()) {
+    } else if (auto x = _usb.iceDataChannel.readSelect()) {
         _iceHandleData(*x);
     
-    } else if (auto x = qspi.eventChannel.readSelect()) {
+    } else if (auto x = _qspi.eventChannel.readSelect()) {
         _iceHandleQSPIEvent(*x);
     
     } else {
@@ -56,11 +59,11 @@ void System::_usbHandleEvent(const USB::Event& ev) {
     switch (ev.type) {
     case Type::StateChanged: {
         // Handle USB connection
-        if (usb.state() == USB::State::Connected) {
+        if (_usb.state() == USB::State::Connected) {
             // Prepare to receive STM32 bootloader commands
-            usb.stRecvCmd();
+            _usb.stRecvCmd();
             // Prepare to receive ICE40 bootloader commands
-            usb.iceRecvCmd();
+            _usb.iceRecvCmd();
         }
         break;
     }
@@ -78,7 +81,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     switch (cmd.op) {
     // Get status
     case STCmd::Op::GetStatus: {
-        usb.stSendStatus(&_stStatus, sizeof(_stStatus));
+        _usb.stSendStatus(&_stStatus, sizeof(_stStatus));
         break;
     }
     
@@ -98,7 +101,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         // at multiples of the max packet size.)
         len -= len%USB::MaxPacketSize::Data;
         Assert(len); // TODO: error handling
-        usb.stRecvData(addr, len);
+        _usb.stRecvData(addr, len);
         break;
     }
     
@@ -115,10 +118,10 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     // Set LED
     case STCmd::Op::LEDSet: {
         switch (cmd.arg.ledSet.idx) {
-        case 0: led0.write(cmd.arg.ledSet.on); break;
-        case 1: led1.write(cmd.arg.ledSet.on); break;
-        case 2: led2.write(cmd.arg.ledSet.on); break;
-        case 3: led3.write(cmd.arg.ledSet.on); break;
+        case 0: _led0.write(cmd.arg.ledSet.on); break;
+        case 1: _led1.write(cmd.arg.ledSet.on); break;
+        case 2: _led2.write(cmd.arg.ledSet.on); break;
+        case 3: _led3.write(cmd.arg.ledSet.on); break;
         }
         
         break;
@@ -130,7 +133,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     }}
     
     // Prepare to receive another command
-    usb.stRecvCmd(); // TODO: handle errors
+    _usb.stRecvCmd(); // TODO: handle errors
 }
 
 void System::_stHandleData(const USB::Data& ev) {
@@ -145,7 +148,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     switch (cmd.op) {
     // Get status
     case ICECmd::Op::GetStatus: {
-        usb.iceSendStatus(&_iceStatus, sizeof(_iceStatus));
+        _usb.iceSendStatus(&_iceStatus, sizeof(_iceStatus));
         break;
     }
     
@@ -171,13 +174,13 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         _iceSPICS_.write(1);
         
         // Have QSPI take over _iceSPIClk/_iceSPICS_
-        qspi.config();
+        _qspi.config();
         
         // Send 8 clocks
         _qspiWrite(_iceBuf, 1);
         
         // Wait for write to complete
-        QSPI::Event qev = qspi.eventChannel.read();
+        QSPI::Event qev = _qspi.eventChannel.read();
         Assert(qev.type == QSPI::Event::Type::WriteDone);
         
         // Update our state
@@ -195,7 +198,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         // Send >100 clocks (13*8 = 104 clocks)
         _qspiWrite(_iceBuf, 13);
         // Wait for write to complete
-        QSPI::Event qev = qspi.eventChannel.read();
+        QSPI::Event qev = _qspi.eventChannel.read();
         Assert(qev.type == QSPI::Event::Type::WriteDone);
         break;
     }
@@ -203,7 +206,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     // Read CDONE pin
     case ICECmd::Op::ReadCDONE: {
         _iceCDONEState = (_iceCDONE.read() ? ICECDONE::OK : ICECDONE::Error);
-        usb.iceSendStatus(&_iceCDONEState, sizeof(_iceCDONEState));
+        _usb.iceSendStatus(&_iceCDONEState, sizeof(_iceCDONEState));
         break;
     }
     
@@ -213,7 +216,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     }}
     
     // Prepare to receive another command
-    usb.iceRecvCmd(); // TODO: handle errors
+    _usb.iceRecvCmd(); // TODO: handle errors
 }
 
 void System::_iceHandleData(const USB::Data& ev) {
@@ -292,7 +295,7 @@ bool System::_iceBufEmpty() {
 void System::_iceRecvData() {
     Assert(!_iceBufFull);
     ICEBuf& buf = _iceBuf[_iceBufWPtr];
-    usb.iceRecvData(buf.data, sizeof(buf.data)); // TODO: handle errors
+    _usb.iceRecvData(buf.data, sizeof(buf.data)); // TODO: handle errors
 }
 
 void System::_qspiWriteBuf() {
@@ -307,7 +310,7 @@ void System::_qspiWrite(const void* data, size_t len) {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         
         .Address = 0,
-        .AddressSize = QSPI_ADDRESS_32_BITS,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
         .AddressMode = QSPI_ADDRESS_NONE,
         
         .AlternateBytes = 0,
@@ -324,7 +327,7 @@ void System::_qspiWrite(const void* data, size_t len) {
         .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
     };
     
-    qspi.write(cmd, data, len);
+    _qspi.write(cmd, data, len);
 }
 
 System Sys;

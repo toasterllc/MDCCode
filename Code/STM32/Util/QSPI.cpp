@@ -2,7 +2,8 @@
 #include "Abort.h"
 #include "Assert.h"
 
-QSPI::QSPI() :
+QSPI::QSPI(Mode mode) :
+_mode(mode),
 _clk(GPIOB, GPIO_PIN_2),
 _cs(GPIOB, GPIO_PIN_6),
 _d{
@@ -32,14 +33,14 @@ void QSPI::init() {
     // Init QUADSPI
     _device.Instance = QUADSPI;
     // TODO: make ClockPrescaler configurable -- STLoader needs it to be <=25MHz, but STApp wants it to be as fast as ctrl_clk can go
-    _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1) = 128/(7+1) = 21.3 MHz
+    _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1) = 128/(5+1) = 21.3 MHz
     _device.Init.FifoThreshold = 1;
     _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
     _device.Init.FlashSize = 31; // Flash size is 31+1 address bits => 2^(31+1) bytes
     _device.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
     _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
     _device.Init.FlashID = QSPI_FLASH_ID_1;
-    _device.Init.DualFlash = QSPI_DUALFLASH_ENABLE; // Use 8 data lines
+    _device.Init.DualFlash = (_mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
     _device.Ctx = this;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);

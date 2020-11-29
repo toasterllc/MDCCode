@@ -8,7 +8,12 @@ extern "C" void ISR_DMA2_Stream7();
 
 class QSPI {
 public:
-    QSPI();
+    enum class Mode {
+        Single,
+        Dual
+    };
+    
+    QSPI(Mode mode);
     void init();
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     void command(const QSPI_CommandTypeDef& cmd);
@@ -35,6 +40,7 @@ private:
     void _handleReadDone();
     void _handleWriteDone();
     
+    Mode _mode;
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
     GPIO _clk;

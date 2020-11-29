@@ -6,21 +6,23 @@
 #include <string.h>
 
 System::System() :
-ice40(qspi) {
+_qspi(QSPI::Mode::Dual),
+_ice40(_qspi) {
 }
 
 void System::init() {
     _super::init();
+    _qspi.init();
 }
 
 ICE40::SDGetStatusResp System::_sdGetStatus() {
-    return ice40.sendMsgWithResp<SDGetStatusResp>(SDGetStatusMsg());
+    return _ice40.sendMsgWithResp<SDGetStatusResp>(SDGetStatusMsg());
 }
 
 ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
     SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
     
-    ice40.sendMsg(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+    _ice40.sendMsg(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
     // Wait for command to be sent
     const uint32_t MaxAttempts = 1000;
@@ -46,18 +48,18 @@ void System::_handleEvent() {
     // Confirm that we can communicate with the ICE40
     {
         char str[] = "halla";
-        auto status = ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
         Assert(!strcmp((char*)status.payload, str));
     }
     
     // Disable SD clock
     {
-        ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
     }
     
     // Enable SD slow clock
     {
-        ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
     }
     
     // ====================
@@ -122,13 +124,13 @@ void System::_handleEvent() {
         
         // Disable SD clock for 5ms (SD clock source = none)
         {
-            ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
             HAL_Delay(5);
         }
         
         // Re-enable the SD clock
         {
-            ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
         }
         
         // Wait for SD card to indicate that it's ready (DAT0=1)
@@ -222,17 +224,17 @@ void System::_handleEvent() {
     
     // Disable SD clock
     {
-        ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
     }
     
     // Switch to the fast delay
     {
-        ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkFastDelay));
+        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkFastDelay));
     }
     
     // Enable SD fast clock
     {
-        ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Fast, SDClkFastDelay));
+        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Fast, SDClkFastDelay));
     }
     
     bool on = true;
@@ -269,7 +271,7 @@ void System::_handleEvent() {
         
         // Clock out data on DAT lines
         {
-            ice40.sendMsg(PixReadoutMsg(0));
+            _ice40.sendMsg(PixReadoutMsg(0));
         }
         
         // Wait until we're done clocking out data on DAT lines
@@ -279,7 +281,7 @@ void System::_handleEvent() {
                 auto status = _sdGetStatus();
                 if (status.sdDatOutDone()) {
                     if (status.sdDatOutCRCErr()) {
-                        led3.write(true);
+                        _led3.write(true);
                         for (;;);
                     }
                     break;
@@ -304,7 +306,7 @@ void System::_handleEvent() {
             }
         }
         
-        led0.write(on);
+        _led0.write(on);
         on = !on;
     }
     
@@ -315,11 +317,11 @@ void System::_handleEvent() {
 
 
 ICE40::PixGetStatusResp System::_pixGetStatus() {
-    return ice40.sendMsgWithResp<PixGetStatusResp>(PixGetStatusMsg());
+    return _ice40.sendMsgWithResp<PixGetStatusResp>(PixGetStatusMsg());
 }
 
 uint16_t System::_pixRead(uint16_t addr) {
-    ice40.sendMsg(PixI2CTransactionMsg(false, 2, addr, 0));
+    _ice40.sendMsg(PixI2CTransactionMsg(false, 2, addr, 0));
     
     // Wait for the I2C transaction to complete
     const uint32_t MaxAttempts = 1000;
@@ -335,7 +337,7 @@ uint16_t System::_pixRead(uint16_t addr) {
 }
 
 void System::_pixWrite(uint16_t addr, uint16_t val) {
-    ice40.sendMsg(PixI2CTransactionMsg(true, 2, addr, val));
+    _ice40.sendMsg(PixI2CTransactionMsg(true, 2, addr, val));
     
     // Wait for the I2C transaction to complete
     const uint32_t MaxAttempts = 1000;
@@ -357,15 +359,15 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    // Confirm that we can communicate with the ICE40
 //    {
 //        char str[] = "halla";
-//        auto status = ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+//        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
 //        Assert(!strcmp((char*)status.payload, str));
 //    }
 //    
 //    // Assert/deassert pix reset
 //    {
-//        ice40.sendMsg(PixResetMsg(false));
+//        _ice40.sendMsg(PixResetMsg(false));
 //        HAL_Delay(1);
-//        ice40.sendMsg(PixResetMsg(true));
+//        _ice40.sendMsg(PixResetMsg(true));
 //        // Wait 150k EXTCLK (24MHz) periods
 //        // (150e3*(1/24e6)) == 6.25ms
 //        HAL_Delay(7);
@@ -541,8 +543,8 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    
 //    // Capture a frame
 //    for (bool ledOn=true;; ledOn=!ledOn) {
-//        led0.write(ledOn);
-//        ice40.sendMsg(PixCaptureMsg(0));
+//        _led0.write(ledOn);
+//        _ice40.sendMsg(PixCaptureMsg(0));
 //        for (int i=0; i<10; i++) {
 //            auto status = _pixGetStatus();
 //            Assert(!status.capturePixelDropped());

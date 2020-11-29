@@ -15,13 +15,13 @@ extern "C" void ISR_SysTick() {
 }
 
 extern "C" void ISR_OTG_HS() {
-    Sys.usb._isr();
+    Sys._usb._isr();
 }
 
 extern "C" void ISR_QUADSPI() {
-    Sys.qspi._isrQSPI();
+    Sys._qspi._isrQSPI();
 }
 
 extern "C" void ISR_DMA2_Stream7() {
-    Sys.qspi._isrDMA();
+    Sys._qspi._isrDMA();
 }
