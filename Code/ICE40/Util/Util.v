@@ -17,26 +17,27 @@
 
 // RegWidth: returns the width of a register to store the given values
 `define RegWidth(y)                             `Max(64'b1, $clog2((y)+64'b1)) // Enforce min width of 1
-`define RegWidth2(a,y)                          (`RegWidth(a) > `RegWidth(y) ? `RegWidth(a) : `RegWidth(y))
-`define RegWidth3(a,b,y)                        (`RegWidth2(a,b)                    > (y) ? `RegWidth2(a,b)                     : (y))
-`define RegWidth4(a,b,c,y)                      (`RegWidth3(a,b,c)                  > (y) ? `RegWidth3(a,b,c)                   : (y))
-`define RegWidth5(a,b,c,d,y)                    (`RegWidth4(a,b,c,d)                > (y) ? `RegWidth4(a,b,c,d)                 : (y))
-`define RegWidth6(a,b,c,d,e,y)                  (`RegWidth5(a,b,c,d,e)              > (y) ? `RegWidth5(a,b,c,d,e)               : (y))
-`define RegWidth7(a,b,c,d,e,f,y)                (`RegWidth6(a,b,c,d,e,f)            > (y) ? `RegWidth6(a,b,c,d,e,f)             : (y))
-`define RegWidth8(a,b,c,d,e,f,g,y)              (`RegWidth7(a,b,c,d,e,f,g)          > (y) ? `RegWidth7(a,b,c,d,e,f,g)           : (y))
-`define RegWidth9(a,b,c,d,e,f,g,h,y)            (`RegWidth8(a,b,c,d,e,f,g,h)        > (y) ? `RegWidth8(a,b,c,d,e,f,g,h)         : (y))
-`define RegWidth10(a,b,c,d,e,f,g,h,i,y)         (`RegWidth9(a,b,c,d,e,f,g,h,i)      > (y) ? `RegWidth9(a,b,c,d,e,f,g,h,i)       : (y))
-`define RegWidth11(a,b,c,d,e,f,g,h,i,j,y)       (`RegWidth10(a,b,c,d,e,f,g,h,i,j)   > (y) ? `RegWidth10(a,b,c,d,e,f,g,h,i,j)    : (y))
-`define RegWidth12(a,b,c,d,e,f,g,h,i,j,k,y)     (`RegWidth11(a,b,c,d,e,f,g,h,i,j,k) > (y) ? `RegWidth11(a,b,c,d,e,f,g,h,i,j,k)  : (y))
+`define RegWidth2(a,y)                          (`RegWidth(a)                       > `RegWidth(y) ? `RegWidth(a)                       : `RegWidth(y))
+`define RegWidth3(a,b,y)                        (`RegWidth2(a,b)                    > `RegWidth(y) ? `RegWidth2(a,b)                    : `RegWidth(y))
+`define RegWidth4(a,b,c,y)                      (`RegWidth3(a,b,c)                  > `RegWidth(y) ? `RegWidth3(a,b,c)                  : `RegWidth(y))
+`define RegWidth5(a,b,c,d,y)                    (`RegWidth4(a,b,c,d)                > `RegWidth(y) ? `RegWidth4(a,b,c,d)                : `RegWidth(y))
+`define RegWidth6(a,b,c,d,e,y)                  (`RegWidth5(a,b,c,d,e)              > `RegWidth(y) ? `RegWidth5(a,b,c,d,e)              : `RegWidth(y))
+`define RegWidth7(a,b,c,d,e,f,y)                (`RegWidth6(a,b,c,d,e,f)            > `RegWidth(y) ? `RegWidth6(a,b,c,d,e,f)            : `RegWidth(y))
+`define RegWidth8(a,b,c,d,e,f,g,y)              (`RegWidth7(a,b,c,d,e,f,g)          > `RegWidth(y) ? `RegWidth7(a,b,c,d,e,f,g)          : `RegWidth(y))
+`define RegWidth9(a,b,c,d,e,f,g,h,y)            (`RegWidth8(a,b,c,d,e,f,g,h)        > `RegWidth(y) ? `RegWidth8(a,b,c,d,e,f,g,h)        : `RegWidth(y))
+`define RegWidth10(a,b,c,d,e,f,g,h,i,y)         (`RegWidth9(a,b,c,d,e,f,g,h,i)      > `RegWidth(y) ? `RegWidth9(a,b,c,d,e,f,g,h,i)      : `RegWidth(y))
+`define RegWidth11(a,b,c,d,e,f,g,h,i,j,y)       (`RegWidth10(a,b,c,d,e,f,g,h,i,j)   > `RegWidth(y) ? `RegWidth10(a,b,c,d,e,f,g,h,i,j)   : `RegWidth(y))
+`define RegWidth12(a,b,c,d,e,f,g,h,i,j,k,y)     (`RegWidth11(a,b,c,d,e,f,g,h,i,j,k) > `RegWidth(y) ? `RegWidth11(a,b,c,d,e,f,g,h,i,j,k) : `RegWidth(y))
 
 // Sub: a-b, clipping to 0
-`define Sub(a,b)                ((a) > (b) ? ((a)-(b)) : 0)
+`define Sub(a,b) ((a) > (b) ? ((a)-(b)) : 0)
 
 `define Stringify(x) `"x```"
 
 `define Fits(container, value) ($size(container) >= `RegWidth(value))
 
-`define LeftBit(r, n) r[$size(r)-n-1]
+`define LeftBit(r, idx)         r[$size(r)-(idx)-1]
+`define LeftBits(r, idx, len)   r[($size(r)-(idx)-1) -: (len)]
 
 `ifdef SIM
     `define Assert(cond) do if (!(cond)) begin $error("Assertion failed: %s (%s:%0d)", `Stringify(cond), `__FILE__, `__LINE__); $finish; end while (0)
@@ -50,12 +51,6 @@
     `define Finish
 `endif
 
-function [63:0] DivCeil;
-    input [63:0] n;
-    input [63:0] d;
-    begin
-        DivCeil = (n+d-1)/d;
-    end
-endfunction
+`define DivCeil(n, d) (((n)+(d)-1)/(d))
 
 `endif
