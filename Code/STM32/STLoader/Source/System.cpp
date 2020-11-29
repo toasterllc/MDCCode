@@ -238,7 +238,7 @@ void System::_iceHandleData(const USB::Data& ev) {
     
     // Start a SPI transaction when we go from 0->1
     if (wasEmpty) {
-        _qspiWriteData();
+        _qspiWriteBuf();
     }
     
     // Prepare to receive more data if we're expecting more,
@@ -264,7 +264,7 @@ void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
         
         // Start another SPI transaction if there's more data to write
         if (!_iceBufEmpty()) {
-            _qspiWriteData();
+            _qspiWriteBuf();
         }
         
         if (_iceRemLen) {
@@ -295,10 +295,36 @@ void System::_iceRecvData() {
     usb.iceRecvData(buf.data, sizeof(buf.data)); // TODO: handle errors
 }
 
-void System::_qspiWriteData() {
+void System::_qspiWriteBuf() {
     Assert(!_iceBufEmpty());
     const ICEBuf& buf = _iceBuf[_iceBufRPtr];
-    qspi.write(buf.data, buf.len);
+    _qspiWrite(buf.data, buf.len);
+}
+
+void System::_qspiWrite(void* data, size_t len) {
+    static const QSPI_CommandTypeDef QSPICmd = {
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_32_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    
+    qspi.write(QSPICmd, data, len);
 }
 
 System Sys;

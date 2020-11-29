@@ -300,5 +300,33 @@ private:
         return r;
     }
     
+    static QSPI_CommandTypeDef _qspiCmd(const Msg& msg, size_t respLen) {
+        uint64_t b[8];
+        static_assert(sizeof(msg) == sizeof(b));
+        memcpy(b, &msg, sizeof(b));
+        
+        return QSPI_CommandTypeDef{
+            .Instruction = 0,
+            .InstructionMode = QSPI_INSTRUCTION_NONE,
+            
+            .Address = b[0]<<24 | b[1]<<16 | b[2]<<8 | b[3]<<0,
+            .AddressSize = QSPI_ADDRESS_32_BITS,
+            .AddressMode = QSPI_ADDRESS_4_LINES,
+            
+            .AlternateBytes = b[4]<<24 | b[5]<<16 | b[6]<<8 | b[7]<<0,
+            .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
+            .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
+            
+            .DummyCycles = 3,
+            
+            .NbData = (uint32_t)respLen,
+            .DataMode = QSPI_DATA_4_LINES,
+            
+            .DdrMode = QSPI_DDR_MODE_DISABLE,
+            .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+            .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+        };
+    }
+    
     QSPI& _qspi;
 };
