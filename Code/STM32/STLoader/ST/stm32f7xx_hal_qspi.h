@@ -134,27 +134,32 @@ typedef struct
 {
   uint32_t Instruction;        /* Specifies the Instruction to be sent
                                   This parameter can be a value (8-bit) between 0x00 and 0xFF */
+  uint32_t InstructionMode;    /* Specifies the Instruction Mode
+                                  This parameter can be a value of @ref QSPI_InstructionMode */
+
   uint32_t Address;            /* Specifies the Address to be sent (Size from 1 to 4 bytes according AddressSize)
-                                  This parameter can be a value (32-bits) between 0x0 and 0xFFFFFFFF */
-  uint32_t AlternateBytes;     /* Specifies the Alternate Bytes to be sent (Size from 1 to 4 bytes according AlternateBytesSize)
                                   This parameter can be a value (32-bits) between 0x0 and 0xFFFFFFFF */
   uint32_t AddressSize;        /* Specifies the Address Size
                                   This parameter can be a value of @ref QSPI_AddressSize */
-  uint32_t AlternateBytesSize; /* Specifies the Alternate Bytes Size
-                                  This parameter can be a value of @ref QSPI_AlternateBytesSize */
-  uint32_t DummyCycles;        /* Specifies the Number of Dummy Cycles.
-                                  This parameter can be a number between 0 and 31 */
-  uint32_t InstructionMode;    /* Specifies the Instruction Mode
-                                  This parameter can be a value of @ref QSPI_InstructionMode */
   uint32_t AddressMode;        /* Specifies the Address Mode
                                   This parameter can be a value of @ref QSPI_AddressMode */
+
+  uint32_t AlternateBytes;     /* Specifies the Alternate Bytes to be sent (Size from 1 to 4 bytes according AlternateBytesSize)
+                                  This parameter can be a value (32-bits) between 0x0 and 0xFFFFFFFF */
+  uint32_t AlternateBytesSize; /* Specifies the Alternate Bytes Size
+                                  This parameter can be a value of @ref QSPI_AlternateBytesSize */
   uint32_t AlternateByteMode;  /* Specifies the Alternate Bytes Mode
                                   This parameter can be a value of @ref QSPI_AlternateBytesMode */
-  uint32_t DataMode;           /* Specifies the Data Mode (used for dummy cycles and data phases)
-                                  This parameter can be a value of @ref QSPI_DataMode */
+
+  uint32_t DummyCycles;        /* Specifies the Number of Dummy Cycles.
+                                  This parameter can be a number between 0 and 31 */
+
   uint32_t NbData;             /* Specifies the number of data to transfer. (This is the number of bytes)
                                   This parameter can be any value between 0 and 0xFFFFFFFF (0 means undefined length
                                   until end of memory)*/
+  uint32_t DataMode;           /* Specifies the Data Mode (used for dummy cycles and data phases)
+                                  This parameter can be a value of @ref QSPI_DataMode */
+
   uint32_t DdrMode;            /* Specifies the double data rate mode for address, alternate byte and data phase
                                   This parameter can be a value of @ref QSPI_DdrMode */
   uint32_t DdrHoldHalfCycle;   /* Specifies if the DDR hold is enabled. When enabled it delays the data
@@ -578,10 +583,10 @@ void                  HAL_QSPI_MspDeInit(QSPI_HandleTypeDef *hqspi);
 void                  ISR_HAL_QSPI(QSPI_HandleTypeDef *hqspi);
 
 /* QSPI indirect mode */
-HAL_StatusTypeDef     HAL_QSPI_Command      (QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDef *cmd, uint32_t Timeout);
+HAL_StatusTypeDef     HAL_QSPI_Command      (QSPI_HandleTypeDef *hqspi, const QSPI_CommandTypeDef *cmd, uint32_t Timeout);
 HAL_StatusTypeDef     HAL_QSPI_Transmit     (QSPI_HandleTypeDef *hqspi, uint8_t *pData, uint32_t Timeout);
 HAL_StatusTypeDef     HAL_QSPI_Receive      (QSPI_HandleTypeDef *hqspi, uint8_t *pData, uint32_t Timeout);
-HAL_StatusTypeDef     HAL_QSPI_Command_IT   (QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDef *cmd);
+HAL_StatusTypeDef     HAL_QSPI_Command_IT   (QSPI_HandleTypeDef *hqspi, const QSPI_CommandTypeDef *cmd);
 HAL_StatusTypeDef     HAL_QSPI_Transmit_IT  (QSPI_HandleTypeDef *hqspi, uint8_t *pData);
 HAL_StatusTypeDef     HAL_QSPI_Receive_IT   (QSPI_HandleTypeDef *hqspi, uint8_t *pData);
 HAL_StatusTypeDef     HAL_QSPI_Transmit_DMA (QSPI_HandleTypeDef *hqspi, uint8_t *pData);

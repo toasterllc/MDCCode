@@ -258,7 +258,7 @@ static void QSPI_DMATxHalfCplt(DMA_HandleTypeDef *hdma);
 static void QSPI_DMAError(DMA_HandleTypeDef *hdma);
 static void QSPI_DMAAbortCplt(DMA_HandleTypeDef *hdma);
 static HAL_StatusTypeDef QSPI_WaitFlagStateUntilTimeout(QSPI_HandleTypeDef *hqspi, uint32_t Flag, FlagStatus State, uint32_t Tickstart, uint32_t Timeout);
-static void QSPI_Config(QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode);
+static void QSPI_Config(QSPI_HandleTypeDef *hqspi, const QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -781,7 +781,7 @@ void ISR_HAL_QSPI(QSPI_HandleTypeDef *hqspi)
   * @note   This function is used only in Indirect Read or Write Modes
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_QSPI_Command(QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDef *cmd, uint32_t Timeout)
+HAL_StatusTypeDef HAL_QSPI_Command(QSPI_HandleTypeDef *hqspi, const QSPI_CommandTypeDef *cmd, uint32_t Timeout)
 {
   HAL_StatusTypeDef status;
   uint32_t tickstart = HAL_GetTick();
@@ -870,7 +870,7 @@ HAL_StatusTypeDef HAL_QSPI_Command(QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDe
   * @note   This function is used only in Indirect Read or Write Modes
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_QSPI_Command_IT(QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDef *cmd)
+HAL_StatusTypeDef HAL_QSPI_Command_IT(QSPI_HandleTypeDef *hqspi, const QSPI_CommandTypeDef *cmd)
 {
   HAL_StatusTypeDef status;
   uint32_t tickstart = HAL_GetTick();
@@ -2642,7 +2642,7 @@ static HAL_StatusTypeDef QSPI_WaitFlagStateUntilTimeout(QSPI_HandleTypeDef *hqsp
   *            @arg QSPI_FUNCTIONAL_MODE_MEMORY_MAPPED: Memory-mapped mode
   * @retval None
   */
-static void QSPI_Config(QSPI_HandleTypeDef *hqspi, QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode)
+static void QSPI_Config(QSPI_HandleTypeDef *hqspi, const QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode)
 {
   AssertArg(IS_QSPI_FUNCTIONAL_MODE(FunctionalMode));
 

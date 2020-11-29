@@ -68,19 +68,29 @@ void QSPI::init() {
 void QSPI::config() {
     _clk.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
     _cs.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-    d[0].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    d[1].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    d[2].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    d[3].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    d[4].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    d[5].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    d[6].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    d[7].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[0].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[1].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[2].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[3].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[4].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[5].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[6].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+    _d[7].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+}
+
+void QSPI::command(const QSPI_CommandTypeDef& cmd) {
+    AssertArg(cmd.DataMode == QSPI_DATA_NONE);
+    AssertArg(!cmd.NbData);
+    
+    HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
+    Assert(hs == HAL_OK);
 }
 
 void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
-    Assert(data);
-    Assert(len);
+    AssertArg(cmd.DataMode != QSPI_DATA_NONE);
+    AssertArg(cmd.NbData == len);
+    AssertArg(data);
+    AssertArg(len);
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
@@ -90,8 +100,10 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
 }
 
 void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
-    Assert(data);
-    Assert(len);
+    AssertArg(cmd.DataMode != QSPI_DATA_NONE);
+    AssertArg(cmd.NbData == len);
+    AssertArg(data);
+    AssertArg(len);
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
@@ -108,6 +120,12 @@ void QSPI::_isrDMA() {
     ISR_HAL_DMA(&_dma);
 }
 
+void QSPI::_handleCommandDone() {
+    eventChannel.writeTry(Event{
+        .type = Event::Type::CommandDone,
+    });
+}
+
 void QSPI::_handleReadDone() {
     eventChannel.writeTry(Event{
         .type = Event::Type::ReadDone,
@@ -118,6 +136,10 @@ void QSPI::_handleWriteDone() {
     eventChannel.writeTry(Event{
         .type = Event::Type::WriteDone,
     });
+}
+
+void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device) {
+    ((QSPI*)device->Ctx)->_handleCommandDone();
 }
 
 void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef* device) {

@@ -237,29 +237,20 @@ public:
     
     ICE40(QSPI& qspi) : _qspi(qspi) {}
     
-    void write(const Msg& msg) {
-        static_assert(sizeof(msg) == 8);
-        // Copy the message into `b`, and populate the trailing dummy byte
-        uint8_t b[sizeof(msg)+1];
-        memcpy(b, &msg, sizeof(msg));
-        b[sizeof(msg)] = 0xFF;
-        _qspi.write(b, sizeof(b));
-        // Wait for write to complete
+    void sendMsg(const Msg& msg) {
+        const QSPI_CommandTypeDef cmd = _qspiCmd(msg, 0);
+        _qspi.command(cmd);
+        // Wait for the transfer to complete
         QSPI::Event ev = _qspi.eventChannel.read();
-        Assert(ev.type == QSPI::Event::Type::WriteDone);
+        Assert(ev.type == QSPI::Event::Type::CommandDone);
     }
     
     template <typename T>
-    T read() {
-        // TODO: We need to ensure that IO0 outputs 1 while reading, otherwise the ICE40 will
-        //       interpret the data as an actual command.
-        //       Our 0xFF dummy byte at the end of each command, combined with a pullup resistor,
-        //       should protect us here, unless the SPI peripheral explicitly outputs a 0
-        //       (or random data) on IO0 during reading for some reason.
+    T sendMsgWithResp(const Msg& msg) {
         T resp;
-        static_assert(sizeof(resp) == 8);
-        _qspi.read((void*)&resp, sizeof(resp));
-        // Wait for read to complete
+        const QSPI_CommandTypeDef cmd = _qspiCmd(msg, sizeof(resp));
+        _qspi.read(cmd, &resp, sizeof(resp));
+        // Wait for transfer to complete
         QSPI::Event ev = _qspi.eventChannel.read();
         Assert(ev.type == QSPI::Event::Type::ReadDone);
         return resp;
@@ -301,7 +292,7 @@ private:
     }
     
     static QSPI_CommandTypeDef _qspiCmd(const Msg& msg, size_t respLen) {
-        uint64_t b[8];
+        uint8_t b[8];
         static_assert(sizeof(msg) == sizeof(b));
         memcpy(b, &msg, sizeof(b));
         
@@ -309,18 +300,18 @@ private:
             .Instruction = 0,
             .InstructionMode = QSPI_INSTRUCTION_NONE,
             
-            .Address = b[0]<<24 | b[1]<<16 | b[2]<<8 | b[3]<<0,
+            .Address = (uint32_t)b[0]<<24 | (uint32_t)b[1]<<16 | (uint32_t)b[2]<<8 | (uint32_t)b[3]<<0,
             .AddressSize = QSPI_ADDRESS_32_BITS,
             .AddressMode = QSPI_ADDRESS_4_LINES,
             
-            .AlternateBytes = b[4]<<24 | b[5]<<16 | b[6]<<8 | b[7]<<0,
+            .AlternateBytes = (uint32_t)b[4]<<24 | (uint32_t)b[5]<<16 | (uint32_t)b[6]<<8 | (uint32_t)b[7]<<0,
             .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
             .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
             
             .DummyCycles = 3,
             
             .NbData = (uint32_t)respLen,
-            .DataMode = QSPI_DATA_4_LINES,
+            .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
             
             .DdrMode = QSPI_DDR_MODE_DISABLE,
             .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
