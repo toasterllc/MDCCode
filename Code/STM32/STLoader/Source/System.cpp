@@ -174,7 +174,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         qspi.config();
         
         // Send 8 clocks
-        qspi.write(_iceBuf, 1);
+        _qspiWrite(_iceBuf, 1);
         
         // Wait for write to complete
         QSPI::Event qev = qspi.eventChannel.read();
@@ -193,7 +193,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     case ICECmd::Op::Finish: {
         Assert(_iceStatus == ICEStatus::Idle);
         // Send >100 clocks (13*8 = 104 clocks)
-        qspi.write(_iceBuf, 13);
+        _qspiWrite(_iceBuf, 13);
         // Wait for write to complete
         QSPI::Event qev = qspi.eventChannel.read();
         Assert(qev.type == QSPI::Event::Type::WriteDone);
@@ -301,8 +301,8 @@ void System::_qspiWriteBuf() {
     _qspiWrite(buf.data, buf.len);
 }
 
-void System::_qspiWrite(void* data, size_t len) {
-    static const QSPI_CommandTypeDef QSPICmd = {
+void System::_qspiWrite(const void* data, size_t len) {
+    QSPI_CommandTypeDef cmd = {
         .Instruction = 0,
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         
@@ -324,7 +324,7 @@ void System::_qspiWrite(void* data, size_t len) {
         .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
     };
     
-    qspi.write(QSPICmd, data, len);
+    qspi.write(cmd, data, len);
 }
 
 System Sys;

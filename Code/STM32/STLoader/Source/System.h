@@ -27,7 +27,7 @@ private:
     bool _iceBufEmpty();
     void _iceRecvData();
     void _qspiWriteBuf();
-    void _qspiWrite(void* data, size_t len);
+    void _qspiWrite(const void* data, size_t len);
     
     GPIO _iceCRST_;
     GPIO _iceCDONE;
