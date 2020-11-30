@@ -68,6 +68,16 @@ void QSPI::init() {
     config();
 }
 
+//void QSPI::meowmix() {
+//    // QSPI clock/IRQ
+//    __HAL_RCC_QSPI_FORCE_RESET();
+//    __HAL_RCC_QSPI_RELEASE_RESET();
+//    
+//    HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
+//    Assert(hs == HAL_OK);
+//}
+
+
 void QSPI::config() {
     _clk.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
     _cs.config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
@@ -94,6 +104,8 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     AssertArg(cmd.NbData == len);
     AssertArg(data);
     AssertArg(len);
+    
+//    meowmix();
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);

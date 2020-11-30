@@ -15,6 +15,7 @@ public:
     
     QSPI(Mode mode, uint8_t clkDivider);
     void init();
+//    void meowmix();
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     void command(const QSPI_CommandTypeDef& cmd);
     void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len);

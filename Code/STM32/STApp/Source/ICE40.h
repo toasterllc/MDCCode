@@ -239,6 +239,7 @@ public:
     
     void sendMsg(const Msg& msg) {
         const QSPI_CommandTypeDef cmd = _qspiCmd(msg, 0);
+//        _qspi.init();
         _qspi.command(cmd);
         // Wait for the transfer to complete
         QSPI::Event ev = _qspi.eventChannel.read();
@@ -249,6 +250,7 @@ public:
     T sendMsgWithResp(const Msg& msg) {
         T resp;
         const QSPI_CommandTypeDef cmd = _qspiCmd(msg, sizeof(resp));
+//        _qspi.init();
         _qspi.read(cmd, &resp, sizeof(resp));
         // Wait for transfer to complete
         QSPI::Event ev = _qspi.eventChannel.read();
@@ -258,6 +260,7 @@ public:
     
     void sendMsgWithResp(const Msg& msg, void* data, size_t len) {
         const QSPI_CommandTypeDef cmd = _qspiCmd(msg, len);
+//        _qspi.init();
         _qspi.read(cmd, data, len);
         // Wait for transfer to complete
         QSPI::Event ev = _qspi.eventChannel.read();
@@ -318,21 +321,23 @@ private:
             
             // When dual-flash quadspi is enabled, the supplied address is
             // divided by 2, so we left-shift `addr` in anticipation of that.
-            .Address = (
-                (uint32_t)b[0]<<24  |
-                (uint32_t)b[1]<<16  |
-                (uint32_t)b[2]<<8   |
-                (uint32_t)b[3]<<0
-            ) << 1,
+//            .Address = (
+//                (uint32_t)b[0]<<24  |
+//                (uint32_t)b[1]<<16  |
+//                (uint32_t)b[2]<<8   |
+//                (uint32_t)b[3]<<0
+//            ) << 1,
+            .Address = 0,
             .AddressSize = QSPI_ADDRESS_32_BITS,
             .AddressMode = QSPI_ADDRESS_4_LINES,
             
-            .AlternateBytes = (
-                (uint32_t)b[4]<<24  |
-                (uint32_t)b[5]<<16  |
-                (uint32_t)b[6]<<8   |
-                (uint32_t)b[7]<<0
-            ),
+//            .AlternateBytes = (
+//                (uint32_t)b[4]<<24  |
+//                (uint32_t)b[5]<<16  |
+//                (uint32_t)b[6]<<8   |
+//                (uint32_t)b[7]<<0
+//            ),
+            .AlternateBytes = 0,
             .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
             .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
             

@@ -123,6 +123,7 @@ module Top(
             end
             
             2: begin
+                // spi_resp <= 64'h123456789ABCDEF0;
                 spi_resp <= spi_dinReg;
                 spi_doutCounter <= 0;
                 spi_state <= 3;
