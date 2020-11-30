@@ -154,7 +154,9 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Start configuring
     case ICECmd::Op::Start: {
-        Assert(_iceStatus == ICEStatus::Idle);
+        Assert( _iceStatus==ICEStatus::Idle ||
+                _iceStatus==ICEStatus::Done ||
+                _iceStatus==ICEStatus::Error);
         Assert(cmd.arg.start.len);
         
         _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -194,19 +196,26 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     
     // Finish configuring
     case ICECmd::Op::Finish: {
-        Assert(_iceStatus == ICEStatus::Idle);
-        // Send >100 clocks (13*8 = 104 clocks)
-        _qspiWrite(_iceBuf, 13);
-        // Wait for write to complete
-        QSPI::Event qev = _qspi.eventChannel.read();
-        Assert(qev.type == QSPI::Event::Type::WriteDone);
-        break;
-    }
-    
-    // Read CDONE pin
-    case ICECmd::Op::ReadCDONE: {
-        _iceCDONEState = (_iceCDONE.read() ? ICECDONE::OK : ICECDONE::Error);
-        _usb.iceSendStatus(&_iceCDONEState, sizeof(_iceCDONEState));
+        bool done = false;
+        for (int i=0; i<10; i++) {
+            done = _iceCDONE.read();
+            if (done) break;
+            HAL_Delay(1); // Sleep 1 ms
+        }
+        
+        if (done) {
+            _iceStatus = ICEStatus::Done;
+            // Supply >=49 additional clocks (8*7=56 clocks)
+            _qspiWrite(_iceBuf, 7);
+            // Wait for write to complete
+            QSPI::Event qev = _qspi.eventChannel.read();
+            Assert(qev.type == QSPI::Event::Type::WriteDone);
+        
+        } else {
+            // If CDONE isn't high after 10ms, consider it a failure
+            _iceStatus = ICEStatus::Error;
+        }
+        
         break;
     }
     

@@ -46,7 +46,6 @@ private:
     bool _iceBufFull = false;
     size_t _iceRemLen = 0;
     STLoader::ICEStatus _iceStatus __attribute__((aligned(4))) = STLoader::ICEStatus::Idle;
-    STLoader::ICECDONE _iceCDONEState __attribute__((aligned(4))) = STLoader::ICECDONE::Error;
     
     friend int main();
     friend void ISR_OTG_HS();

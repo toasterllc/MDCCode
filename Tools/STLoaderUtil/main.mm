@@ -289,21 +289,21 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
     }
     
-    // Request CDONE
+    // Request status
     {
         const ICECmd cmd = {
-            .op = ICECmd::Op::ReadCDONE,
+            .op = ICECmd::Op::GetStatus,
         };
         
         IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
     }
     
-    // Read CDONE
+    // Read status
     {
-        auto [cdone, ior] = iceInterface.read<ICECDONE>(ICEEndpoint::StatusIn);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEStatusIn");
-        printf("%s (CDONE = %ju)\n", (cdone==ICECDONE::OK ? "Success" : "Failed"), (uintmax_t)cdone);
+        auto [status, ior] = iceInterface.read<ICEStatus>(ICEEndpoint::StatusIn);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
+        printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
     }
 }
 

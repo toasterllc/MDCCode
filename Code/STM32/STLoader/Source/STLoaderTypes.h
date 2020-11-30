@@ -36,8 +36,7 @@ namespace STLoader {
         enum class Op : uint8_t {
             GetStatus,
             Start,
-            Finish,
-            ReadCDONE,
+            Finish
         };
         
         Op op;
@@ -52,10 +51,7 @@ namespace STLoader {
     enum class ICEStatus : uint8_t {
         Idle,
         Configuring,
-    };
-    
-    enum class ICECDONE : uint8_t {
-        Error,
-        OK,
+        Done,
+        Error
     };
 }
