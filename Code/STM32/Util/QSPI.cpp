@@ -39,8 +39,8 @@ void QSPI::init() {
 //    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
     _device.Init.FlashSize = 31; // Flash size is 31+1 address bits => 2^(31+1) bytes
     _device.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-//    _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
-    _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
+    _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
+//    _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
     _device.Init.FlashID = QSPI_FLASH_ID_1;
     _device.Init.DualFlash = (_mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
     _device.Ctx = this;

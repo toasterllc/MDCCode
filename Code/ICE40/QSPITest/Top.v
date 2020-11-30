@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 
 `include "Util.v"
+`include "Delay.v"
 
 // ====================
 // SPI Messages/Responses
@@ -21,6 +22,8 @@
 `define     Msg_Arg_Echo_Msg_Bits                               55:0
 `define     Resp_Arg_Echo_Msg_Bits                              63:8
 
+`define Msg_Type_ReadData                                       `Msg_Type_Len'h01
+
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
 module Top(
@@ -31,6 +34,14 @@ module Top(
     
     output reg[3:0] led = 0
 );
+    wire spi_clk_int;
+    Delay #(
+        .Count(0)
+    ) Delay (
+        .in(spi_clk),
+        .out(spi_clk_int)
+    );
+    
     // ====================
     // Pin: spi_cs_
     // ====================
@@ -56,8 +67,8 @@ module Top(
             .PIN_TYPE(6'b1101_00),
             .PULLUP(1'b1)
         ) SB_IO_sd_cmd (
-            .INPUT_CLK(spi_clk),
-            .OUTPUT_CLK(spi_clk),
+            .INPUT_CLK(spi_clk_int),
+            .OUTPUT_CLK(spi_clk_int),
             .PACKAGE_PIN(spi_d[i]),
             .OUTPUT_ENABLE(spi_d_outEn),
             .D_OUT_0(spi_d_out[i]),
@@ -70,7 +81,7 @@ module Top(
     // SPI State Machine
     // ====================
     localparam MsgCycleCount = (`Msg_Len/4)-1; // Commands only use 4 lines -- spi_d[3:0]
-    reg[1:0] spi_state = 0;
+    reg[2:0] spi_state = 0;
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
     reg[0:0] spi_doutCounter = 0;
     reg[`Msg_Len-1:0] spi_dinReg = 0;
@@ -84,7 +95,7 @@ module Top(
         `LeftBits(spi_doutReg, 0, 4)    // Low 4 bits:  4 bits of byte 0
     };
     
-    always @(posedge spi_clk, negedge spi_cs) begin
+    always @(posedge spi_clk_int, negedge spi_cs) begin
         // Reset ourself when we're de-selected
         if (!spi_cs) begin
             spi_state <= 0;
@@ -112,32 +123,50 @@ module Top(
             end
             
             2: begin
-                case (spi_msgType)
-                // Echo
-                `Msg_Type_Echo: begin
-                    $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                    spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
-                end
-                
-                // NoOp
-                `Msg_Type_NoOp: begin
-                    $display("[SPI] Got Msg_Type_None");
-                end
-                
-                default: begin
-                    $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
-                    `Finish;
-                end
-                endcase
-                
+                spi_resp <= spi_dinReg;
                 spi_doutCounter <= 0;
                 spi_state <= 3;
+                
+                // // By default, return to state 0
+                // spi_state <= 0;
+                // spi_doutCounter <= 0;
+                //
+                // case (spi_msgType)
+                // // Echo
+                // `Msg_Type_Echo: begin
+                //     $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                //     spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                //     spi_state <= 3;
+                // end
+                //
+                // // ReadData
+                // `Msg_Type_ReadData: begin
+                //     spi_state <= 4;
+                // end
+                //
+                // // NoOp
+                // `Msg_Type_NoOp: begin
+                //     $display("[SPI] Got Msg_Type_None");
+                // end
+                //
+                // default: begin
+                //     $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
+                //     `Finish;
+                // end
+                // endcase
             end
 
             3: begin
                 spi_d_outEn <= 1;
                 if (!spi_doutCounter) begin
                     spi_doutReg <= `LeftBits(spi_resp, 0, 16);
+                end
+            end
+            
+            4: begin
+                spi_d_outEn <= 1;
+                if (!spi_doutCounter) begin
+                    spi_doutReg <= 16'h3742;
                 end
             end
             endcase
@@ -192,6 +221,11 @@ module Testbench();
     task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg, input[31:0] respLen); begin
         reg[15:0] i;
         
+        #(SPI_CLK_HALF_PERIOD);
+        spi_clk = 1;
+        #(SPI_CLK_HALF_PERIOD);
+        spi_clk = 0;
+        
         spi_cs_ = 0;
         spi_doutReg = {typ, arg};
         spi_d_outEn = 1;
@@ -234,9 +268,6 @@ module Testbench();
     end endtask
     
     task TestNoOp; begin
-        // ====================
-        // Test NoOp command
-        // ====================
         SendMsg(`Msg_Type_NoOp, 56'h123456789ABCDE, 8);
         if (resp === 64'hFFFFFFFFFFFFFFFF) begin
             $display("Response OK: %h ✅", resp);
@@ -247,9 +278,6 @@ module Testbench();
     end endtask
     
     task TestEcho; begin
-        // ====================
-        // Test Echo command
-        // ====================
         reg[`Msg_Arg_Echo_Msg_Len-1:0] arg;
         arg = `Msg_Arg_Echo_Msg_Len'h123456789ABCDE;
         
@@ -260,6 +288,11 @@ module Testbench();
             $display("Bad response: %h ❌", resp[`Resp_Arg_Echo_Msg_Bits]);
             `Finish;
         end
+    end endtask
+
+    task TestReadData; begin
+        SendMsg(`Msg_Type_ReadData, 0, 8);
+        $display("Response: %h", resp);
     end endtask
     
     initial begin
@@ -278,7 +311,7 @@ module Testbench();
         
         TestNoOp();
         // TestEcho();
-        // TestEcho();
+        // TestReadData();
         
         `Finish;
     end
