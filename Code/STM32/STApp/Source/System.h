@@ -8,6 +8,7 @@ public:
     void init();
     
 private:
+    using Msg = ICE40::Msg;
     using EchoMsg = ICE40::EchoMsg;
     using EchoResp = ICE40::EchoResp;
     using SDClkSrcMsg = ICE40::SDClkSrcMsg;

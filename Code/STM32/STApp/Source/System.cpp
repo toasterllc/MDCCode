@@ -6,7 +6,7 @@
 #include <string.h>
 
 System::System() :
-_qspi(QSPI::Mode::Dual, 255), // clock divider=1 => run QSPI clock at 64 MHz
+_qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
 _ice40(_qspi) {
 }
 
@@ -21,33 +21,13 @@ void System::_handleEvent() {
     {
         char str[] = "halla";
         volatile auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
-        for (volatile int i=0; i<10; i++);
-//        Assert(!strcmp((char*)status.payload, str));
+        Assert(!strcmp((char*)status.payload, str));
     }
-    
-    {
-        char str[] = "halla";
-        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
-        for (volatile int i=0; i<10; i++);
-//        Assert(!strcmp((char*)status.payload, str));
-    }
-    
-    
-    {
-        char str[] = "halla";
-        auto msg = EchoMsg(str);
-        msg.type = 0x01;
-        auto status = _ice40.sendMsgWithResp<EchoResp>(msg);
-        for (volatile int i=0; i<10; i++);
-//        Assert(!strcmp((char*)status.payload, str));
-    }
-    
     
     // Test reading a chunk of data
-    {
-        static uint8_t respDataChunk[16] __attribute__((aligned(4)));
-//        static uint8_t respDataChunk[198*1024];
-        auto msg = EchoMsg("");
+    for (;;) {
+        static uint8_t respDataChunk[65532];
+        Msg msg;
         msg.type = 0x01;
         _ice40.sendMsgWithResp(msg, (void*)respDataChunk, sizeof(respDataChunk));
         // Confirm the data is what we expect

@@ -80,7 +80,18 @@ module Top(
     // ====================
     // SPI State Machine
     // ====================
-    localparam MsgCycleCount = (`Msg_Len/4)-1; // Commands only use 4 lines -- spi_d[3:0]
+    
+    // MsgCycleCount notes:
+    //
+    //   - We include a dummy byte at the beginning of each command, to workaround an
+    //     apparent STM32 bug that always sends the first nibble as 0xF. As such, we
+    //     need to add 2 cycles to `MsgCycleCount`. Without this dummy byte,
+    //     MsgCycleCount=(`Msg_Len/4)-1, so with this dummy byte,
+    //     MsgCycleCount=(`Msg_Len/4)+1.
+    //
+    //   - Commands use 4 lines (spi_d[3:0]), so we divide `Msg_Len by 4.
+    //
+    localparam MsgCycleCount = (`Msg_Len/4)+1;
     reg[2:0] spi_state = 0;
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
     reg[0:0] spi_doutCounter = 0;
@@ -123,38 +134,38 @@ module Top(
             end
             
             2: begin
-                // spi_resp <= 64'h123456789ABCDEF0;
-                spi_resp <= spi_dinReg;
-                spi_doutCounter <= 0;
-                spi_state <= 3;
-                
-                // // By default, return to state 0
-                // spi_state <= 0;
+                // // spi_resp <= 64'h123456789ABCDEF0;
+                // spi_resp <= spi_dinReg;
                 // spi_doutCounter <= 0;
-                //
-                // case (spi_msgType)
-                // // Echo
-                // `Msg_Type_Echo: begin
-                //     $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                //     spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
-                //     spi_state <= 3;
-                // end
-                //
-                // // ReadData
-                // `Msg_Type_ReadData: begin
-                //     spi_state <= 4;
-                // end
-                //
-                // // NoOp
-                // `Msg_Type_NoOp: begin
-                //     $display("[SPI] Got Msg_Type_None");
-                // end
-                //
-                // default: begin
-                //     $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
-                //     `Finish;
-                // end
-                // endcase
+                // spi_state <= 3;
+                
+                // By default, return to state 0
+                spi_state <= 0;
+                spi_doutCounter <= 0;
+
+                case (spi_msgType)
+                // Echo
+                `Msg_Type_Echo: begin
+                    $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                    spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                    spi_state <= 3;
+                end
+
+                // ReadData
+                `Msg_Type_ReadData: begin
+                    spi_state <= 4;
+                end
+
+                // NoOp
+                `Msg_Type_NoOp: begin
+                    $display("[SPI] Got Msg_Type_None");
+                end
+
+                default: begin
+                    $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
+                    `Finish;
+                end
+                endcase
             end
 
             3: begin
@@ -222,14 +233,17 @@ module Testbench();
     task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg, input[31:0] respLen); begin
         reg[15:0] i;
         
-        #(SPI_CLK_HALF_PERIOD);
-        spi_clk = 1;
-        #(SPI_CLK_HALF_PERIOD);
-        spi_clk = 0;
-        
         spi_cs_ = 0;
         spi_doutReg = {typ, arg};
         spi_d_outEn = 1;
+            
+            // 2 initial dummy cycles
+            for (i=0; i<2; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 1;
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 0;
+            end
             
             for (i=0; i<`Msg_Len/4; i++) begin
                 #(SPI_CLK_HALF_PERIOD);
@@ -257,7 +271,7 @@ module Testbench();
                 
                     if (!i[0]) spi_dinReg = 0;
                     spi_dinReg = spi_dinReg<<4|{4'b0000, spi_d_in[3:0], 4'b0000, spi_d_in[7:4]};
-                
+                    
                     resp = resp<<8;
                     if (i[0]) resp = resp|spi_dinReg;
                 
@@ -266,9 +280,11 @@ module Testbench();
             end
         
         spi_cs_ = 1;
+        #1; // Allow spi_cs_ to take effect
     end endtask
     
     task TestNoOp; begin
+        $display("\n========== TestNoOp ==========");
         SendMsg(`Msg_Type_NoOp, 56'h123456789ABCDE, 8);
         if (resp === 64'hFFFFFFFFFFFFFFFF) begin
             $display("Response OK: %h ✅", resp);
@@ -280,6 +296,7 @@ module Testbench();
     
     task TestEcho; begin
         reg[`Msg_Arg_Echo_Msg_Len-1:0] arg;
+        $display("\n========== TestEcho ==========");
         arg = `Msg_Arg_Echo_Msg_Len'h123456789ABCDE;
         
         SendMsg(`Msg_Type_Echo, arg, 8);
@@ -292,6 +309,7 @@ module Testbench();
     end endtask
 
     task TestReadData; begin
+        $display("\n========== TestReadData ==========");
         SendMsg(`Msg_Type_ReadData, 0, 8);
         $display("Response: %h", resp);
     end endtask
@@ -310,9 +328,10 @@ module Testbench();
         #1;
         spi_clk = 0;
         
-        TestNoOp();
-        // TestEcho();
-        // TestReadData();
+        // TestNoOp();
+        TestEcho();
+        TestReadData();
+        TestReadData();
         
         `Finish;
     end

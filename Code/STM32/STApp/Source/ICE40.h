@@ -314,30 +314,28 @@ private:
         AssertArg(!(b[0] & 0x80));
         
         return QSPI_CommandTypeDef{
-            .Instruction = 0,
-            .InstructionMode = QSPI_INSTRUCTION_NONE,
-//            .Instruction = 0x37,
-//            .InstructionMode = QSPI_INSTRUCTION_4_LINES,
+            .Instruction = 0xFF,
+            .InstructionMode = QSPI_INSTRUCTION_4_LINES,
             
             // When dual-flash quadspi is enabled, the supplied address is
             // divided by 2, so we left-shift `addr` in anticipation of that.
-//            .Address = (
-//                (uint32_t)b[0]<<24  |
-//                (uint32_t)b[1]<<16  |
-//                (uint32_t)b[2]<<8   |
-//                (uint32_t)b[3]<<0
-//            ) << 1,
-            .Address = 0,
+            .Address = (
+                (uint32_t)b[0]<<24  |
+                (uint32_t)b[1]<<16  |
+                (uint32_t)b[2]<<8   |
+                (uint32_t)b[3]<<0
+            ) << 1,
+//            .Address = 0,
             .AddressSize = QSPI_ADDRESS_32_BITS,
             .AddressMode = QSPI_ADDRESS_4_LINES,
             
-//            .AlternateBytes = (
-//                (uint32_t)b[4]<<24  |
-//                (uint32_t)b[5]<<16  |
-//                (uint32_t)b[6]<<8   |
-//                (uint32_t)b[7]<<0
-//            ),
-            .AlternateBytes = 0,
+            .AlternateBytes = (
+                (uint32_t)b[4]<<24  |
+                (uint32_t)b[5]<<16  |
+                (uint32_t)b[6]<<8   |
+                (uint32_t)b[7]<<0
+            ),
+//            .AlternateBytes = 0,
             .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
             .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
             
