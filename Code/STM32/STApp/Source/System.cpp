@@ -15,6 +15,21 @@ void System::init() {
     _qspi.init();
 }
 
+// Test QSPI
+void System::_handleEvent() {
+    const uint8_t SDClkSlowDelay = 15;
+    const uint8_t SDClkFastDelay = 2;
+    
+    // Confirm that we can communicate with the ICE40
+    {
+        char str[] = "halla";
+        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+        Assert(!strcmp((char*)status.payload, str));
+    }
+    
+    for (;;);
+}
+
 ICE40::SDGetStatusResp System::_sdGetStatus() {
     return _ice40.sendMsgWithResp<SDGetStatusResp>(SDGetStatusMsg());
 }
@@ -40,283 +55,278 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
     }
 }
 
-// Test SD card bulk DatOut writing
-void System::_handleEvent() {
-    const uint8_t SDClkSlowDelay = 15;
-    const uint8_t SDClkFastDelay = 2;
-    
-    // Confirm that we can communicate with the ICE40
-    {
-        EchoMsg msg("halla");
-        volatile auto status = _ice40.sendMsgWithResp<EchoResp>(msg);
-        for (;;);
-        
+//// Test SD card bulk DatOut writing
+//void System::_handleEvent() {
+//    const uint8_t SDClkSlowDelay = 15;
+//    const uint8_t SDClkFastDelay = 2;
+//    
+//    // Confirm that we can communicate with the ICE40
+//    {
 //        char str[] = "halla";
 //        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
 //        Assert(!strcmp((char*)status.payload, str));
-        for (;;);
-    }
-    
-    // Disable SD clock
-    {
-        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
-    }
-    
-    // Enable SD slow clock
-    {
-        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
-    }
-    
-    // ====================
-    // CMD0 | GO_IDLE_STATE
-    //   State: X -> Idle
-    //   Go to idle state
-    // ====================
-    {
-        _sdSendCmd(0, 0, SDRespTypes::None);
-        // There's no response to CMD0
-    }
-    
-    // ====================
-    // CMD8 | SEND_IF_COND
-    //   State: Idle -> Idle
-    //   Send interface condition
-    // ====================
-    {
-        auto status = _sdSendCmd(8, 0x000001AA);
-        Assert(!status.sdRespCRCErr());
-        Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
-    }
-    
-    // ====================
-    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
-    //   State: Idle -> Ready
-    //   Initialize
-    // ====================
-    bool switchTo1V8 = false;
-    for (;;) {
-        // CMD55
-        {
-            auto status = _sdSendCmd(55, 0);
-            Assert(!status.sdRespCRCErr());
-        }
-        
-        // CMD41
-        {
-            auto status = _sdSendCmd(41, 0x51008000);
-            // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
-            Assert(status.sdRespGetBits(45,40) == 0x3F); // Command should be 6'b111111
-            Assert(status.sdRespGetBits(7,1) == 0x7F); // CRC should be 7'b1111111
-            // Check if card is ready. If it's not, retry ACMD41.
-            if (!status.sdRespGetBit(39)) continue;
-            // Check if we can switch to 1.8V
-            // If not, we'll assume we're already in 1.8V mode
-            switchTo1V8 = status.sdRespGetBit(32);
-            break;
-        }
-    }
-    
-    if (switchTo1V8) {
-        // ====================
-        // CMD11 | VOLTAGE_SWITCH
-        //   State: Ready -> Ready
-        //   Switch to 1.8V signaling voltage
-        // ====================
-        {
-            auto status = _sdSendCmd(11, 0);
-            Assert(!status.sdRespCRCErr());
-        }
-        
-        // Disable SD clock for 5ms (SD clock source = none)
-        {
-            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
-            HAL_Delay(5);
-        }
-        
-        // Re-enable the SD clock
-        {
-            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
-        }
-        
-        // Wait for SD card to indicate that it's ready (DAT0=1)
-        {
-            for (;;) {
-                auto status = _sdGetStatus();
-                if (status.sdDat0Idle()) break;
-                // Busy
-            }
-            // Ready
-        }
-    }
-    
-    
-    
-    
-    // ====================
-    // CMD2 | ALL_SEND_CID
-    //   State: Ready -> Identification
-    //   Get card identification number (CID)
-    // ====================
-    {
-        // The response to CMD2 is 136 bits, instead of the usual 48 bits
-        _sdSendCmd(2, 0, SDRespTypes::Len136);
-        // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
-        // so it'll be flagged as incorrect.
-    }
-    
-    // ====================
-    // CMD3 | SEND_RELATIVE_ADDR
-    //   State: Identification -> Standby
-    //   Publish a new relative address (RCA)
-    // ====================
-    uint16_t rca = 0;
-    {
-        auto status = _sdSendCmd(3, 0);
-        Assert(!status.sdRespCRCErr());
-        // Get the card's RCA from the response
-        rca = status.sdRespGetBits(39,24);
-    }
-    
-    // ====================
-    // CMD7 | SELECT_CARD/DESELECT_CARD
-    //   State: Standby -> Transfer
-    //   Select card
-    // ====================
-    {
-        auto status = _sdSendCmd(7, ((uint32_t)rca)<<16);
-        Assert(!status.sdRespCRCErr());
-    }
-    
-    // ====================
-    // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
-    //   State: Transfer -> Transfer
-    //   Set bus width to 4 bits
-    // ====================
-    {
-        // CMD55
-        {
-            auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
-            Assert(!status.sdRespCRCErr());
-        }
-        
-        // CMD6
-        {
-            auto status = _sdSendCmd(6, 0x00000002);
-            Assert(!status.sdRespCRCErr());
-        }
-    }
-    
-    // ====================
-    // CMD6 | SWITCH_FUNC
-    //   State: Transfer -> Data
-    //   Switch to SDR104
-    // ====================
-    {
-        // Mode = 1 (switch function)  = 0x80
-        // Group 6 (Reserved)          = 0xF (no change)
-        // Group 5 (Reserved)          = 0xF (no change)
-        // Group 4 (Current Limit)     = 0xF (no change)
-        // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
-        // Group 2 (Command System)    = 0xF (no change)
-        // Group 1 (Access Mode)       = 0x3 (SDR104)
-        auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512);
-        Assert(!status.sdRespCRCErr());
-        Assert(!status.sdDatInCRCErr());
-        // Verify that the access mode was successfully changed
-        // TODO: properly handle this failing, see CMD6 docs
-        Assert(status.sdDatInCMD6AccessMode() == 0x03);
-    }
-    
-    // Disable SD clock
-    {
-        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
-    }
-    
-    // Switch to the fast delay
-    {
-        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkFastDelay));
-    }
-    
-    // Enable SD fast clock
-    {
-        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Fast, SDClkFastDelay));
-    }
-    
-    bool on = true;
-    for (volatile uint32_t iter=0;; iter++) {
-        // ====================
-        // ACMD23 | SET_WR_BLK_ERASE_COUNT
-        //   State: Transfer -> Transfer
-        //   Set the number of blocks to be
-        //   pre-erased before writing
-        // ====================
-        {
-            // CMD55
-            {
-                auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
-                Assert(!status.sdRespCRCErr());
-            }
-            
-            // CMD23
-            {
-                auto status = _sdSendCmd(23, 0x00000001);
-                Assert(!status.sdRespCRCErr());
-            }
-        }
-        
-        // ====================
-        // CMD25 | WRITE_MULTIPLE_BLOCK
-        //   State: Transfer -> Receive Data
-        //   Write blocks of data
-        // ====================
-        {
-            auto status = _sdSendCmd(25, 0);
-            Assert(!status.sdRespCRCErr());
-        }
-        
-        // Clock out data on DAT lines
-        {
-            _ice40.sendMsg(PixReadoutMsg(0));
-        }
-        
-        // Wait until we're done clocking out data on DAT lines
-        {
-            // Waiting for writing to finish
-            for (;;) {
-                auto status = _sdGetStatus();
-                if (status.sdDatOutDone()) {
-                    if (status.sdDatOutCRCErr()) {
-                        _led3.write(true);
-                        for (;;);
-                    }
-                    break;
-                }
-                // Busy
-            }
-        }
-        
-        // ====================
-        // CMD12 | STOP_TRANSMISSION
-        //   State: Receive Data -> Programming
-        //   Finish writing
-        // ====================
-        {
-            auto status = _sdSendCmd(12, 0);
-            Assert(!status.sdRespCRCErr());
-            
-            // Wait for SD card to indicate that it's ready (DAT0=1)
-            for (;;) {
-                if (status.sdDat0Idle()) break;
-                status = _sdGetStatus();
-            }
-        }
-        
-        _led0.write(on);
-        on = !on;
-    }
-    
-    for (;;);
-}
+//    }
+//    
+//    // Disable SD clock
+//    {
+//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//    }
+//    
+//    // Enable SD slow clock
+//    {
+//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+//    }
+//    
+//    // ====================
+//    // CMD0 | GO_IDLE_STATE
+//    //   State: X -> Idle
+//    //   Go to idle state
+//    // ====================
+//    {
+//        _sdSendCmd(0, 0, SDRespTypes::None);
+//        // There's no response to CMD0
+//    }
+//    
+//    // ====================
+//    // CMD8 | SEND_IF_COND
+//    //   State: Idle -> Idle
+//    //   Send interface condition
+//    // ====================
+//    {
+//        auto status = _sdSendCmd(8, 0x000001AA);
+//        Assert(!status.sdRespCRCErr());
+//        Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
+//    }
+//    
+//    // ====================
+//    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
+//    //   State: Idle -> Ready
+//    //   Initialize
+//    // ====================
+//    bool switchTo1V8 = false;
+//    for (;;) {
+//        // CMD55
+//        {
+//            auto status = _sdSendCmd(55, 0);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // CMD41
+//        {
+//            auto status = _sdSendCmd(41, 0x51008000);
+//            // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
+//            Assert(status.sdRespGetBits(45,40) == 0x3F); // Command should be 6'b111111
+//            Assert(status.sdRespGetBits(7,1) == 0x7F); // CRC should be 7'b1111111
+//            // Check if card is ready. If it's not, retry ACMD41.
+//            if (!status.sdRespGetBit(39)) continue;
+//            // Check if we can switch to 1.8V
+//            // If not, we'll assume we're already in 1.8V mode
+//            switchTo1V8 = status.sdRespGetBit(32);
+//            break;
+//        }
+//    }
+//    
+//    if (switchTo1V8) {
+//        // ====================
+//        // CMD11 | VOLTAGE_SWITCH
+//        //   State: Ready -> Ready
+//        //   Switch to 1.8V signaling voltage
+//        // ====================
+//        {
+//            auto status = _sdSendCmd(11, 0);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // Disable SD clock for 5ms (SD clock source = none)
+//        {
+//            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//            HAL_Delay(5);
+//        }
+//        
+//        // Re-enable the SD clock
+//        {
+//            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+//        }
+//        
+//        // Wait for SD card to indicate that it's ready (DAT0=1)
+//        {
+//            for (;;) {
+//                auto status = _sdGetStatus();
+//                if (status.sdDat0Idle()) break;
+//                // Busy
+//            }
+//            // Ready
+//        }
+//    }
+//    
+//    
+//    
+//    
+//    // ====================
+//    // CMD2 | ALL_SEND_CID
+//    //   State: Ready -> Identification
+//    //   Get card identification number (CID)
+//    // ====================
+//    {
+//        // The response to CMD2 is 136 bits, instead of the usual 48 bits
+//        _sdSendCmd(2, 0, SDRespTypes::Len136);
+//        // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
+//        // so it'll be flagged as incorrect.
+//    }
+//    
+//    // ====================
+//    // CMD3 | SEND_RELATIVE_ADDR
+//    //   State: Identification -> Standby
+//    //   Publish a new relative address (RCA)
+//    // ====================
+//    uint16_t rca = 0;
+//    {
+//        auto status = _sdSendCmd(3, 0);
+//        Assert(!status.sdRespCRCErr());
+//        // Get the card's RCA from the response
+//        rca = status.sdRespGetBits(39,24);
+//    }
+//    
+//    // ====================
+//    // CMD7 | SELECT_CARD/DESELECT_CARD
+//    //   State: Standby -> Transfer
+//    //   Select card
+//    // ====================
+//    {
+//        auto status = _sdSendCmd(7, ((uint32_t)rca)<<16);
+//        Assert(!status.sdRespCRCErr());
+//    }
+//    
+//    // ====================
+//    // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
+//    //   State: Transfer -> Transfer
+//    //   Set bus width to 4 bits
+//    // ====================
+//    {
+//        // CMD55
+//        {
+//            auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // CMD6
+//        {
+//            auto status = _sdSendCmd(6, 0x00000002);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//    }
+//    
+//    // ====================
+//    // CMD6 | SWITCH_FUNC
+//    //   State: Transfer -> Data
+//    //   Switch to SDR104
+//    // ====================
+//    {
+//        // Mode = 1 (switch function)  = 0x80
+//        // Group 6 (Reserved)          = 0xF (no change)
+//        // Group 5 (Reserved)          = 0xF (no change)
+//        // Group 4 (Current Limit)     = 0xF (no change)
+//        // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
+//        // Group 2 (Command System)    = 0xF (no change)
+//        // Group 1 (Access Mode)       = 0x3 (SDR104)
+//        auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512);
+//        Assert(!status.sdRespCRCErr());
+//        Assert(!status.sdDatInCRCErr());
+//        // Verify that the access mode was successfully changed
+//        // TODO: properly handle this failing, see CMD6 docs
+//        Assert(status.sdDatInCMD6AccessMode() == 0x03);
+//    }
+//    
+//    // Disable SD clock
+//    {
+//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//    }
+//    
+//    // Switch to the fast delay
+//    {
+//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkFastDelay));
+//    }
+//    
+//    // Enable SD fast clock
+//    {
+//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Fast, SDClkFastDelay));
+//    }
+//    
+//    bool on = true;
+//    for (volatile uint32_t iter=0;; iter++) {
+//        // ====================
+//        // ACMD23 | SET_WR_BLK_ERASE_COUNT
+//        //   State: Transfer -> Transfer
+//        //   Set the number of blocks to be
+//        //   pre-erased before writing
+//        // ====================
+//        {
+//            // CMD55
+//            {
+//                auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
+//                Assert(!status.sdRespCRCErr());
+//            }
+//            
+//            // CMD23
+//            {
+//                auto status = _sdSendCmd(23, 0x00000001);
+//                Assert(!status.sdRespCRCErr());
+//            }
+//        }
+//        
+//        // ====================
+//        // CMD25 | WRITE_MULTIPLE_BLOCK
+//        //   State: Transfer -> Receive Data
+//        //   Write blocks of data
+//        // ====================
+//        {
+//            auto status = _sdSendCmd(25, 0);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // Clock out data on DAT lines
+//        {
+//            _ice40.sendMsg(PixReadoutMsg(0));
+//        }
+//        
+//        // Wait until we're done clocking out data on DAT lines
+//        {
+//            // Waiting for writing to finish
+//            for (;;) {
+//                auto status = _sdGetStatus();
+//                if (status.sdDatOutDone()) {
+//                    if (status.sdDatOutCRCErr()) {
+//                        _led3.write(true);
+//                        for (;;);
+//                    }
+//                    break;
+//                }
+//                // Busy
+//            }
+//        }
+//        
+//        // ====================
+//        // CMD12 | STOP_TRANSMISSION
+//        //   State: Receive Data -> Programming
+//        //   Finish writing
+//        // ====================
+//        {
+//            auto status = _sdSendCmd(12, 0);
+//            Assert(!status.sdRespCRCErr());
+//            
+//            // Wait for SD card to indicate that it's ready (DAT0=1)
+//            for (;;) {
+//                if (status.sdDat0Idle()) break;
+//                status = _sdGetStatus();
+//            }
+//        }
+//        
+//        _led0.write(on);
+//        on = !on;
+//    }
+//    
+//    for (;;);
+//}
 
 
 

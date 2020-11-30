@@ -112,75 +112,23 @@ module Top(
             end
             
             2: begin
-                // if (spi_dinReg[(1*8)-1 -: 8] === 8'hAA) begin
-                //     led <= 4'b1111;
-                // end
+                case (spi_msgType)
+                // Echo
+                `Msg_Type_Echo: begin
+                    $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                    spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                end
                 
-                // if (spi_dinReg[(5*8)-1 -: 8] === 8'h5A) begin
-                //     led <= 4'b1111;
-                // end
+                // NoOp
+                `Msg_Type_NoOp: begin
+                    $display("[SPI] Got Msg_Type_None");
+                end
                 
-                // if (spi_dinReg[(4*8)-1 -: 32] === 32'hAA_AA_AA_AA) begin
-                //     led <= 4'b1111;
-                // end
-                
-                // 55_55_55_55_AA_AA_AA_AA
-                
-                // if (spi_dinReg[(8*8)-1 -: 32] === 32'hAA_AA_AA_AA) begin
-                //     led <= 4'b1111;
-                // end
-                
-                // if (spi_dinReg[(8*8)-1 -: 32] === 32'h55_55_55_55) begin
-                //     led <= 4'b1111;
-                // end
-                
-                // if (spi_dinReg[(8*8)-1 -: 32] === 32'h55_55_55_55) begin
-                //     led <= 4'b1111;
-                // end
-                
-                // 55_55_55_5A_AA_AA_AA_AA
-                
-                // led <= spi_dinReg[39 -: 4];
-                // led <= spi_dinReg[35 -: 4];
-                
-                // if (spi_dinReg === 64'hAA_AA_AA_AA_AA_AA_AA_AA) begin
-                //     led <= 4'b1111;
-                // end
-                
-                // if (spi_dinReg === 64'h55_55_55_55_AA_AA_AA_AA) begin
-                //     led <= 4'b1111;
-                // end
-
-                $display("[SPI] spi_dinReg: %h", spi_dinReg);
-                spi_resp <= spi_dinReg;
-                
-                // $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                // spi_resp <= 64'h1122334455667788;
-                
-                // $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                // spi_resp <= 64'h3737373737373737;
-                
-                // $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                // spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
-                
-                
-                // case (spi_msgType)
-                // // Echo
-                // `Msg_Type_Echo: begin
-                //     $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                //     spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
-                // end
-                //
-                // // NoOp
-                // `Msg_Type_NoOp: begin
-                //     $display("[SPI] Got Msg_Type_None");
-                // end
-                //
-                // default: begin
-                //     $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
-                //     `Finish;
-                // end
-                // endcase
+                default: begin
+                    $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
+                    `Finish;
+                end
+                endcase
                 
                 spi_doutCounter <= 0;
                 spi_state <= 3;
