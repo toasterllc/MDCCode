@@ -179,7 +179,8 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         _qspi.config();
         
         // Send 8 clocks
-        _qspiWrite(_iceBuf, 1);
+        static const uint8_t ff = 0xff;
+        _qspiWrite(&ff, 1);
         
         // Wait for write to complete
         QSPI::Event qev = _qspi.eventChannel.read();
@@ -205,11 +206,23 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         
         if (done) {
             _iceStatus = ICEStatus::Done;
-            // Supply >=49 additional clocks (8*7=56 clocks)
-            _qspiWrite(_iceBuf, 7);
-            // Wait for write to complete
-            QSPI::Event qev = _qspi.eventChannel.read();
-            Assert(qev.type == QSPI::Event::Type::WriteDone);
+            // Supply >=49 additional clocks (8*7=56 clocks), per the
+            // "iCE40 Programming and Configuration" guide.
+            // These clocks apparently reach the user application. Since this
+            // appears unavoidable, prevent the clocks from affecting the user
+            // application in two ways:
+            //   1. write 0xFF, which the user application must consider as a NOP;
+            //   2. write a byte at a time, causing chip-select to be de-asserted
+            //      between bytes, which must cause the user application to reset
+            //      itself.
+            const uint8_t clockCount = 7;
+            for (int i=0; i<clockCount; i++) {
+                static const uint8_t ff = 0xff;
+                _qspiWrite(&ff, 1);
+                // Wait for write to complete
+                QSPI::Event qev = _qspi.eventChannel.read();
+                Assert(qev.type == QSPI::Event::Type::WriteDone);
+            }
         
         } else {
             // If CDONE isn't high after 10ms, consider it a failure
