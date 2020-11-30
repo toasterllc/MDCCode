@@ -75,7 +75,7 @@ module Top(
     reg[0:0] spi_doutCounter = 0;
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
-    reg[16+`Resp_Len-1:0] spi_resp = 0;
+    reg[`Resp_Len-1:0] spi_resp = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
@@ -260,7 +260,7 @@ module Testbench();
             spi_d_outEn = 0;
             
             // Dummy cycles
-            for (i=0; i<6; i++) begin
+            for (i=0; i<4; i++) begin
                 #(SPI_CLK_HALF_PERIOD);
                 spi_clk = 1;
                 #(SPI_CLK_HALF_PERIOD);

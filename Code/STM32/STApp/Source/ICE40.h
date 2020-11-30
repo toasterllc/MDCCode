@@ -327,7 +327,7 @@ private:
             .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
             .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
             
-            .DummyCycles = 6,
+            .DummyCycles = 4,
             
             .NbData = (uint32_t)respLen,
             .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
