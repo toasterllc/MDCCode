@@ -47,9 +47,14 @@ void System::_handleEvent() {
     
     // Confirm that we can communicate with the ICE40
     {
-        char str[] = "halla";
-        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
-        Assert(!strcmp((char*)status.payload, str));
+        EchoMsg msg("halla");
+        volatile auto status = _ice40.sendMsgWithResp<EchoResp>(msg);
+        for (;;);
+        
+//        char str[] = "halla";
+//        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+//        Assert(!strcmp((char*)status.payload, str));
+        for (;;);
     }
     
     // Disable SD clock

@@ -27,7 +27,9 @@ module Top(
     input wire      clk24mhz,
     input wire      spi_clk,
     input wire      spi_cs_,
-    inout wire[7:0] spi_d
+    inout wire[7:0] spi_d,
+    
+    output reg[3:0] led = 0
 );
     // ====================
     // Pin: spi_cs_
@@ -37,7 +39,7 @@ module Top(
     SB_IO #(
         .PIN_TYPE(6'b0000_01),
         .PULLUP(1'b1)
-    ) SB_IO_spi_rst (
+    ) SB_IO_spi_cs (
         .PACKAGE_PIN(spi_cs_),
         .D_IN_0(spi_cs_tmp_)
     );
@@ -67,16 +69,20 @@ module Top(
     // ====================
     // SPI State Machine
     // ====================
-    localparam MsgCycleCount = (`Msg_Len/4); // Commands only use 4 lines -- spi_d[3:0]
+    localparam MsgCycleCount = (`Msg_Len/4)-1; // Commands only use 4 lines -- spi_d[3:0]
     reg[1:0] spi_state = 0;
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
     reg[0:0] spi_doutCounter = 0;
     reg[`Msg_Len-1:0] spi_dinReg = 0;
-    reg[`Resp_Len-1:0] spi_doutReg = 0;
+    reg[15:0] spi_doutReg = 0;
+    reg[16+`Resp_Len-1:0] spi_resp = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
-    assign spi_d_out = `LeftBits(spi_doutReg, 0, 8);
+    assign spi_d_out = {
+        `LeftBits(spi_doutReg, 8, 4),   // High 4 bits: 4 bits of byte 1
+        `LeftBits(spi_doutReg, 0, 4)    // Low 4 bits:  4 bits of byte 0
+    };
     
     always @(posedge spi_clk, negedge spi_cs) begin
         // Reset ourself when we're de-selected
@@ -85,11 +91,13 @@ module Top(
             spi_d_outEn <= 0;
         
         end else begin
-            spi_dinReg <= (spi_dinReg<<4)|spi_d_in[3:0]; // Commands only use 4 lines -- spi_d[3:0]
+            // Commands only use 4 lines (spi_d[3:0]) because it's quadspi.
+            spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
             spi_dinCounter <= spi_dinCounter-1;
-            spi_doutReg <= (spi_doutReg<<8)|8'hFF; // Responses use all 8 lines -- spi_d[7:0]
+            spi_doutReg <= spi_doutReg<<4|4'hF;
             spi_doutCounter <= spi_doutCounter-1;
             spi_d_outEn <= 0;
+            spi_resp <= spi_resp<<8|8'hFF;
             
             case (spi_state)
             0: begin
@@ -104,30 +112,85 @@ module Top(
             end
             
             2: begin
-                case (spi_msgType)
-                // Echo
-                `Msg_Type_Echo: begin
-                    $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                    spi_doutReg[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
-                end
+                // if (spi_dinReg[(1*8)-1 -: 8] === 8'hAA) begin
+                //     led <= 4'b1111;
+                // end
                 
-                // NoOp
-                `Msg_Type_NoOp: begin
-                    $display("[SPI] Got Msg_Type_None");
-                end
+                // if (spi_dinReg[(5*8)-1 -: 8] === 8'h5A) begin
+                //     led <= 4'b1111;
+                // end
                 
-                default: begin
-                    $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
-                    `Finish;
-                end
-                endcase
+                // if (spi_dinReg[(4*8)-1 -: 32] === 32'hAA_AA_AA_AA) begin
+                //     led <= 4'b1111;
+                // end
                 
-                spi_d_outEn <= 1;
+                // 55_55_55_55_AA_AA_AA_AA
+                
+                // if (spi_dinReg[(8*8)-1 -: 32] === 32'hAA_AA_AA_AA) begin
+                //     led <= 4'b1111;
+                // end
+                
+                // if (spi_dinReg[(8*8)-1 -: 32] === 32'h55_55_55_55) begin
+                //     led <= 4'b1111;
+                // end
+                
+                // if (spi_dinReg[(8*8)-1 -: 32] === 32'h55_55_55_55) begin
+                //     led <= 4'b1111;
+                // end
+                
+                // 55_55_55_5A_AA_AA_AA_AA
+                
+                // led <= spi_dinReg[39 -: 4];
+                // led <= spi_dinReg[35 -: 4];
+                
+                // if (spi_dinReg === 64'hAA_AA_AA_AA_AA_AA_AA_AA) begin
+                //     led <= 4'b1111;
+                // end
+                
+                // if (spi_dinReg === 64'h55_55_55_55_AA_AA_AA_AA) begin
+                //     led <= 4'b1111;
+                // end
+
+                $display("[SPI] spi_dinReg: %h", spi_dinReg);
+                spi_resp <= spi_dinReg;
+                
+                // $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                // spi_resp <= 64'h1122334455667788;
+                
+                // $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                // spi_resp <= 64'h3737373737373737;
+                
+                // $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                // spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                
+                
+                // case (spi_msgType)
+                // // Echo
+                // `Msg_Type_Echo: begin
+                //     $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                //     spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                // end
+                //
+                // // NoOp
+                // `Msg_Type_NoOp: begin
+                //     $display("[SPI] Got Msg_Type_None");
+                // end
+                //
+                // default: begin
+                //     $display("[SPI] BAD COMMAND: %0h ❌", spi_msgType);
+                //     `Finish;
+                // end
+                // endcase
+                
+                spi_doutCounter <= 0;
                 spi_state <= 3;
             end
-            
+
             3: begin
                 spi_d_outEn <= 1;
+                if (!spi_doutCounter) begin
+                    spi_doutReg <= `LeftBits(spi_resp, 0, 16);
+                end
             end
             endcase
         end
@@ -143,6 +206,7 @@ endmodule
 `ifdef SIM
 module Testbench();
     reg clk24mhz = 0;
+    wire[3:0] led;
     
     reg         spi_clk = 0;
     reg         spi_cs_ = 0;
@@ -154,7 +218,7 @@ module Testbench();
     assign spi_d_in = spi_d;
     
     reg[`Msg_Len-1:0] spi_doutReg = 0;
-    reg[`Resp_Len-1:0] spi_dinReg = 0;
+    reg[15:0] spi_dinReg = 0;
     reg[`Resp_Len-1:0] resp = 0;
     assign spi_d_out[7:4] = `LeftBits(spi_doutReg,0,4);
     assign spi_d_out[3:0] = `LeftBits(spi_doutReg,0,4);
@@ -183,38 +247,42 @@ module Testbench();
         spi_cs_ = 0;
         spi_doutReg = {typ, arg};
         spi_d_outEn = 1;
-        #1; // Let register changes take effect
             
             for (i=0; i<`Msg_Len/4; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
                 spi_clk = 1;
                 #(SPI_CLK_HALF_PERIOD);
                 spi_clk = 0;
-                #(SPI_CLK_HALF_PERIOD);
+                
                 spi_doutReg = spi_doutReg<<4|{4{1'b1}};
             end
             
             spi_d_outEn = 0;
             
-            // Clock out dummy byte
-            for (i=0; i<3; i++) begin
+            // Dummy cycles
+            for (i=0; i<6; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
                 spi_clk = 1;
                 #(SPI_CLK_HALF_PERIOD);
                 spi_clk = 0;
-                #(SPI_CLK_HALF_PERIOD);
             end
             
             // Clock in response
             for (i=0; i<respLen; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
                 spi_clk = 1;
+                
+                    if (!i[0]) spi_dinReg = 0;
+                    spi_dinReg = spi_dinReg<<4|{4'b0000, spi_d_in[3:0], 4'b0000, spi_d_in[7:4]};
+                
+                    resp = resp<<8;
+                    if (i[0]) resp = resp|spi_dinReg;
+                
                 #(SPI_CLK_HALF_PERIOD);
                 spi_clk = 0;
-                #(SPI_CLK_HALF_PERIOD);
-                spi_dinReg = (spi_dinReg<<8)|spi_d_in;
             end
-        spi_cs_ = 1;
-        #1; // Let `spi_cs_` change take effect
         
-        resp = spi_dinReg;
+        spi_cs_ = 1;
     end endtask
     
     task TestNoOp; begin
@@ -251,15 +319,18 @@ module Testbench();
         reg done;
         
         // Set our initial state
-        spi_clk = 0;
         spi_cs_ = 1;
         spi_doutReg = ~0;
         spi_d_outEn = 0;
+        
+        // Pulse the clock to get SB_IO initialized
+        spi_clk = 1;
         #1;
+        spi_clk = 0;
         
         TestNoOp();
-        TestEcho();
-        TestEcho();
+        // TestEcho();
+        // TestEcho();
         
         `Finish;
     end

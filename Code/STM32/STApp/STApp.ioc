@@ -200,4 +200,4 @@ VP_SYS_VS_Systick.Signal=SYS_VS_Systick
 VP_USB_DEVICE_VS_USB_DEVICE_DFU_HS.Mode=DFU_HS
 VP_USB_DEVICE_VS_USB_DEVICE_DFU_HS.Signal=USB_DEVICE_VS_USB_DEVICE_DFU_HS
 board=custom
-isbadioc=true
+isbadioc=false

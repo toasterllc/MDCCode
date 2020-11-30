@@ -296,19 +296,38 @@ private:
         static_assert(sizeof(msg) == sizeof(b));
         memcpy(b, &msg, sizeof(b));
         
+        // When dual-flash quadspi is enabled, the supplied address is
+        // divided by 2, so we left-shift `addr` in anticipation of that.
+        // But by doing so, we throw out the high bit of `msg`, so we
+        // require it to be 0.
+        AssertArg(!(b[0] & 0x80));
+        const uint32_t addr = (
+            (uint32_t)b[0]<<24  |
+            (uint32_t)b[1]<<16  |
+            (uint32_t)b[2]<<8   |
+            (uint32_t)b[3]<<0
+        ) << 1;
+        
+        const uint32_t altBytes = (
+            (uint32_t)b[4]<<24  |
+            (uint32_t)b[5]<<16  |
+            (uint32_t)b[6]<<8   |
+            (uint32_t)b[7]<<0
+        );
+        
         return QSPI_CommandTypeDef{
             .Instruction = 0,
             .InstructionMode = QSPI_INSTRUCTION_NONE,
             
-            .Address = (uint32_t)b[0]<<24 | (uint32_t)b[1]<<16 | (uint32_t)b[2]<<8 | (uint32_t)b[3]<<0,
+            .Address = addr,
             .AddressSize = QSPI_ADDRESS_32_BITS,
             .AddressMode = QSPI_ADDRESS_4_LINES,
             
-            .AlternateBytes = (uint32_t)b[4]<<24 | (uint32_t)b[5]<<16 | (uint32_t)b[6]<<8 | (uint32_t)b[7]<<0,
+            .AlternateBytes = altBytes,
             .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
             .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
             
-            .DummyCycles = 3,
+            .DummyCycles = 6,
             
             .NbData = (uint32_t)respLen,
             .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
