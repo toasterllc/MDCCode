@@ -8,7 +8,7 @@
 using namespace STLoader;
 
 System::System() :
-_qspi(QSPI::Mode::Single),
+_qspi(QSPI::Mode::Single, 5), // clock divider=5 => run QSPI clock at 21.3 MHz
 _iceCRST_(GPIOI, GPIO_PIN_6),
 _iceCDONE(GPIOI, GPIO_PIN_7),
 _iceSPIClk(GPIOB, GPIO_PIN_2),

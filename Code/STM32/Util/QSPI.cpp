@@ -2,8 +2,9 @@
 #include "Abort.h"
 #include "Assert.h"
 
-QSPI::QSPI(Mode mode) :
+QSPI::QSPI(Mode mode, uint8_t clkDivider) :
 _mode(mode),
+_clkDivider(clkDivider),
 _clk(GPIOB, GPIO_PIN_2),
 _cs(GPIOB, GPIO_PIN_6),
 _d{
@@ -32,8 +33,7 @@ void QSPI::init() {
     
     // Init QUADSPI
     _device.Instance = QUADSPI;
-    // TODO: make ClockPrescaler configurable -- STLoader needs it to be <=25MHz, but STApp wants it to be as fast as ctrl_clk can go
-    _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1) = 128/(5+1) = 21.3 MHz
+    _device.Init.ClockPrescaler = _clkDivider; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
     _device.Init.FifoThreshold = 1;
     _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
 //    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;

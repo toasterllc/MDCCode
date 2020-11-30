@@ -13,7 +13,7 @@ public:
         Dual
     };
     
-    QSPI(Mode mode);
+    QSPI(Mode mode, uint8_t clkDivider);
     void init();
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     void command(const QSPI_CommandTypeDef& cmd);
@@ -40,7 +40,8 @@ private:
     void _handleReadDone();
     void _handleWriteDone();
     
-    Mode _mode;
+    Mode _mode = Mode::Single;
+    uint8_t _clkDivider = 0;
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
     GPIO _clk;

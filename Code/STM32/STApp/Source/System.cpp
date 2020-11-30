@@ -6,7 +6,7 @@
 #include <string.h>
 
 System::System() :
-_qspi(QSPI::Mode::Dual),
+_qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
 _ice40(_qspi) {
 }
 
@@ -17,15 +17,14 @@ void System::init() {
 
 // Test QSPI
 void System::_handleEvent() {
-    const uint8_t SDClkSlowDelay = 15;
-    const uint8_t SDClkFastDelay = 2;
-    
     // Confirm that we can communicate with the ICE40
     {
         char str[] = "halla";
         auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
         Assert(!strcmp((char*)status.payload, str));
     }
+    
+    
     
     for (;;);
 }
