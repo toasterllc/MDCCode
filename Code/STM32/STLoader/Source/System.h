@@ -1,6 +1,7 @@
 #include "SystemBase.h"
 #include "STLoaderTypes.h"
 #include "QSPI.h"
+#include "BufQueue.h"
 
 class System : public SystemBase<System> {
 public:
@@ -34,16 +35,7 @@ private:
     GPIO _iceSPIClk;
     GPIO _iceSPICS_;
     
-    struct ICEBuf {
-        uint8_t data[1024] __attribute__((aligned(4)));
-        size_t len = 0;
-    };
-    
-    static constexpr size_t _ICEBufCount = 2;
-    ICEBuf _iceBuf[_ICEBufCount];
-    size_t _iceBufWPtr = 0;
-    size_t _iceBufRPtr = 0;
-    bool _iceBufFull = false;
+    BufQueue<1024, 2> _iceBufs;
     size_t _iceRemLen = 0;
     STLoader::ICEStatus _iceStatus __attribute__((aligned(4))) = STLoader::ICEStatus::Idle;
     
