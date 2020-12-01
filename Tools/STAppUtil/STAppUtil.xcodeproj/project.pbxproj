@@ -6,8 +6,14 @@
 	objectVersion = 50;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		55E1D8EA253E868000628EF6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8E9253E868000628EF6 /* Foundation.framework */; };
+		55E1D8EC253E868400628EF6 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8EB253E868400628EF6 /* IOKit.framework */; };
+		55E1D8EE253E892B00628EF6 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E1D8ED253E892B00628EF6 /* main.mm */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXCopyFilesBuildPhase section */
-		5563E117253A8B3D00BCC0F7 /* CopyFiles */ = {
+		55E1D8DC253E864F00628EF6 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -19,84 +25,92 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		554F17882543ED5400F67066 /* ST */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ST; sourceTree = "<group>"; };
-		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
-		5563E119253A8B3D00BCC0F7 /* STApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STApp; sourceTree = BUILT_PRODUCTS_DIR; };
-		556875D4254A163B00B774CE /* Util */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Util; path = ../Util; sourceTree = "<group>"; };
-		556875D5254A165200B774CE /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
-		55844C1A2575D51A008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
-		55E1D95A2540E3B900628EF6 /* STLoader.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = STLoader.ioc; sourceTree = "<group>"; };
-		55E1D9622540E3B900628EF6 /* STLoader.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = STLoader.launch; sourceTree = "<group>"; };
+		55844C172575CF34008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
+		55844C182575D204008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Code/Shared; sourceTree = "<group>"; };
+		55844C1B2575D5C7008737ED /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/STApp/Source/STAppTypes.h; sourceTree = "<group>"; };
+		55E1D8DE253E864F00628EF6 /* STAppUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STAppUtil; sourceTree = BUILT_PRODUCTS_DIR; };
+		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		55E1D8ED253E892B00628EF6 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		5563E116253A8B3D00BCC0F7 /* Frameworks */ = {
+		55E1D8DB253E864F00628EF6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55E1D8EA253E868000628EF6 /* Foundation.framework in Frameworks */,
+				55E1D8EC253E868400628EF6 /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5563E110253A8B3D00BCC0F7 = {
+		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
-				55844C1A2575D51A008737ED /* Shared */,
-				554F17892543ED5400F67066 /* Source */,
-				554F17882543ED5400F67066 /* ST */,
-				556875D4254A163B00B774CE /* Util */,
-				55E1D95A2540E3B900628EF6 /* STLoader.ioc */,
-				55E1D9622540E3B900628EF6 /* STLoader.launch */,
-				556875D5254A165200B774CE /* Linker.ld */,
-				5563E11A253A8B3D00BCC0F7 /* Products */,
+				55844C172575CF34008737ED /* Shared */,
+				55844C182575D204008737ED /* Shared */,
+				55844C1B2575D5C7008737ED /* STAppTypes.h */,
+				55E1D8ED253E892B00628EF6 /* main.mm */,
+				55E1D8E8253E868000628EF6 /* Frameworks */,
+				55E1D8DF253E864F00628EF6 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		5563E11A253A8B3D00BCC0F7 /* Products */ = {
+		55E1D8DF253E864F00628EF6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5563E119253A8B3D00BCC0F7 /* STApp */,
+				55E1D8DE253E864F00628EF6 /* STAppUtil */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		55E1D8E8253E868000628EF6 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				55E1D8EB253E868400628EF6 /* IOKit.framework */,
+				55E1D8E9253E868000628EF6 /* Foundation.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5563E118253A8B3D00BCC0F7 /* STApp */ = {
+		55E1D8DD253E864F00628EF6 /* STAppUtil */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STApp" */;
+			buildConfigurationList = 55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "STAppUtil" */;
 			buildPhases = (
-				5563E115253A8B3D00BCC0F7 /* Sources */,
-				5563E116253A8B3D00BCC0F7 /* Frameworks */,
-				5563E117253A8B3D00BCC0F7 /* CopyFiles */,
+				55E1D8DA253E864F00628EF6 /* Sources */,
+				55E1D8DB253E864F00628EF6 /* Frameworks */,
+				55E1D8DC253E864F00628EF6 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = STApp;
-			productName = STLoader;
-			productReference = 5563E119253A8B3D00BCC0F7 /* STApp */;
+			name = STAppUtil;
+			productName = STLoaderUtil;
+			productReference = 55E1D8DE253E864F00628EF6 /* STAppUtil */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		5563E111253A8B3D00BCC0F7 /* Project object */ = {
+		55E1D8D6253E864F00628EF6 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 1140;
 				ORGANIZATIONNAME = dave;
 				TargetAttributes = {
-					5563E118253A8B3D00BCC0F7 = {
+					55E1D8DD253E864F00628EF6 = {
 						CreatedOnToolsVersion = 11.4;
 					};
 				};
 			};
-			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STApp" */;
+			buildConfigurationList = 55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "STAppUtil" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -104,36 +118,36 @@
 				en,
 				Base,
 			);
-			mainGroup = 5563E110253A8B3D00BCC0F7;
-			productRefGroup = 5563E11A253A8B3D00BCC0F7 /* Products */;
+			mainGroup = 55E1D8D5253E864F00628EF6;
+			productRefGroup = 55E1D8DF253E864F00628EF6 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5563E118253A8B3D00BCC0F7 /* STApp */,
+				55E1D8DD253E864F00628EF6 /* STAppUtil */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		5563E115253A8B3D00BCC0F7 /* Sources */ = {
+		55E1D8DA253E864F00628EF6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55E1D8EE253E892B00628EF6 /* main.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		5563E11E253A8B3D00BCC0F7 /* Debug */ = {
+		55E1D8E3253E864F00628EF6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -161,7 +175,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -175,6 +189,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../Shared,
+					../../Code/Shared,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -183,15 +201,14 @@
 			};
 			name = Debug;
 		};
-		5563E11F253A8B3D00BCC0F7 /* Release */ = {
+		55E1D8E4253E864F00628EF6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -219,7 +236,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -227,6 +244,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../Shared,
+					../../Code/Shared,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -234,7 +255,7 @@
 			};
 			name = Release;
 		};
-		5563E121253A8B3D00BCC0F7 /* Debug */ = {
+		55E1D8E6253E864F00628EF6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -242,7 +263,7 @@
 			};
 			name = Debug;
 		};
-		5563E122253A8B3D00BCC0F7 /* Release */ = {
+		55E1D8E7253E864F00628EF6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -253,25 +274,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STApp" */ = {
+		55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "STAppUtil" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5563E11E253A8B3D00BCC0F7 /* Debug */,
-				5563E11F253A8B3D00BCC0F7 /* Release */,
+				55E1D8E3253E864F00628EF6 /* Debug */,
+				55E1D8E4253E864F00628EF6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STApp" */ = {
+		55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "STAppUtil" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5563E121253A8B3D00BCC0F7 /* Debug */,
-				5563E122253A8B3D00BCC0F7 /* Release */,
+				55E1D8E6253E864F00628EF6 /* Debug */,
+				55E1D8E7253E864F00628EF6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 5563E111253A8B3D00BCC0F7 /* Project object */;
+	rootObject = 55E1D8D6253E864F00628EF6 /* Project object */;
 }
