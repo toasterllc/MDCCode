@@ -26,11 +26,11 @@ public:
     
     USBD_StatusTypeDef stCmdRecv();
     USBD_StatusTypeDef stDataRecv(void* addr, size_t len);
-    USBD_StatusTypeDef stStatusSend(void* data, size_t len);
+    USBD_StatusTypeDef stStatusSend(const void* data, size_t len);
     
     USBD_StatusTypeDef iceCmdRecv();
     USBD_StatusTypeDef iceDataRecv(void* addr, size_t len);
-    USBD_StatusTypeDef iceStatusSend(void* data, size_t len);
+    USBD_StatusTypeDef iceStatusSend(const void* data, size_t len);
     
     // Channels
     Channel<Cmd, 1> stCmdChannel;

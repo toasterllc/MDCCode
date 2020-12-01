@@ -1,4 +1,3 @@
-#include "USB.h"
 #include "GPIO.h"
 #include "SystemClock.h"
 
@@ -38,13 +37,7 @@ protected:
         _led1.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        
-        // Initialize USB
-        _usb.init();
     }
-    
-    // Peripherals
-    USB _usb;
     
     // LEDs
     GPIO _led0;

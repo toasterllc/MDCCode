@@ -4,26 +4,112 @@
 #include "SystemClock.h"
 #include "Startup.h"
 #include "STAppTypes.h"
-#include <string.h>
 
 using namespace STApp;
 
+using SDClkSrcMsg = ICE40::SDClkSrcMsg;
+using SDSendCmdMsg = ICE40::SDSendCmdMsg;
+using SDGetStatusMsg = ICE40::SDGetStatusMsg;
+using SDGetStatusResp = ICE40::SDGetStatusResp;
+using PixResetMsg = ICE40::PixResetMsg;
+using PixCaptureMsg = ICE40::PixCaptureMsg;
+using PixReadoutMsg = ICE40::PixReadoutMsg;
+using PixI2CTransactionMsg = ICE40::PixI2CTransactionMsg;
+using PixGetStatusMsg = ICE40::PixGetStatusMsg;
+using PixGetStatusResp = ICE40::PixGetStatusResp;
+
+using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
+using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
+
 System::System() :
-_qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
-_ice40(_qspi) {
+_qspi(QSPI::Mode::Dual, 1) { // clock divider=1 => run QSPI clock at 64 MHz
 }
 
 void System::init() {
     _super::init();
+    _usb.init();
     _qspi.init();
 }
+
+static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) {
+    uint8_t b[8];
+    static_assert(sizeof(msg) == sizeof(b));
+    memcpy(b, &msg, sizeof(b));
+    
+    // When dual-flash quadspi is enabled, the supplied address is
+    // divided by 2, so we left-shift `addr` in anticipation of that.
+    // But by doing so, we throw out the high bit of `msg`, so we
+    // require it to be 0.
+    AssertArg(!(b[0] & 0x80));
+    
+    return QSPI_CommandTypeDef{
+        .Instruction = 0xFF,
+        .InstructionMode = QSPI_INSTRUCTION_4_LINES,
+        
+        // When dual-flash quadspi is enabled, the supplied address is
+        // divided by 2, so we left-shift `addr` in anticipation of that.
+        .Address = (
+            (uint32_t)b[0]<<24  |
+            (uint32_t)b[1]<<16  |
+            (uint32_t)b[2]<<8   |
+            (uint32_t)b[3]<<0
+        ) << 1,
+//            .Address = 0,
+        .AddressSize = QSPI_ADDRESS_32_BITS,
+        .AddressMode = QSPI_ADDRESS_4_LINES,
+        
+        .AlternateBytes = (
+            (uint32_t)b[4]<<24  |
+            (uint32_t)b[5]<<16  |
+            (uint32_t)b[6]<<8   |
+            (uint32_t)b[7]<<0
+        ),
+//            .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
+        
+        .DummyCycles = 4,
+        
+        .NbData = (uint32_t)respLen,
+        .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+}
+
+static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
+    qspi.command(_ice40QSPICmd(msg, 0));
+    qspi.eventChannel.read(); // Wait for the transfer to complete
+}
+
+template <typename T>
+static T _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
+    T resp;
+    qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
+    qspi.eventChannel.read(); // Wait for the transfer to complete
+    return resp;
+}
+
+static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg, void* resp, size_t respLen) {
+    qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
+    qspi.eventChannel.read(); // Wait for the transfer to complete
+}
+
+static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, size_t respLen) {
+    qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
+}
+
+
+
 
 //// Test QSPI
 //void System::_handleEvent() {
 //    // Confirm that we can communicate with the ICE40
 //    {
 //        char str[] = "halla";
-//        volatile auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+//        volatile auto status = _ice40Transfer<EchoResp>(_qspi, EchoMsg(str));
 //        Assert(!strcmp((char*)status.payload, str));
 //    }
 //    
@@ -32,7 +118,7 @@ void System::init() {
 //        static uint8_t respDataChunk[65532];
 //        Msg msg;
 //        msg.type = 0x01;
-//        _ice40.sendMsgWithResp(msg, (void*)respDataChunk, sizeof(respDataChunk));
+//        _ice40Transfer(_qspi, msg, (void*)respDataChunk, sizeof(respDataChunk));
 //        // Confirm the data is what we expect
 //        for (size_t i=0; i<sizeof(respDataChunk); i++) {
 //            if (!(i % 2))   Assert(respDataChunk[i] == 0x37);
@@ -43,14 +129,14 @@ void System::init() {
 //    for (;;);
 //}
 
-ICE40::SDGetStatusResp System::_sdGetStatus() {
-    return _ice40.sendMsgWithResp<SDGetStatusResp>(SDGetStatusMsg());
+SDGetStatusResp System::_sdGetStatus() {
+    return _ice40Transfer<SDGetStatusResp>(_qspi, SDGetStatusMsg());
 }
 
-ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
+SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
     SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
     
-    _ice40.sendMsg(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+    _ice40Transfer(_qspi, SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
     // Wait for command to be sent
     const uint32_t MaxAttempts = 1000;
@@ -76,18 +162,18 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 //    // Confirm that we can communicate with the ICE40
 //    {
 //        char str[] = "halla";
-//        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+//        auto status = _ice40Transfer<EchoResp>(_qspi, EchoMsg(str));
 //        Assert(!strcmp((char*)status.payload, str));
 //    }
 //    
 //    // Disable SD clock
 //    {
-//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//        _ice40Transfer(_qspi, SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
 //    }
 //    
 //    // Enable SD slow clock
 //    {
-//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+//        _ice40Transfer(_qspi, SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
 //    }
 //    
 //    // ====================
@@ -152,13 +238,13 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 //        
 //        // Disable SD clock for 5ms (SD clock source = none)
 //        {
-//            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//            _ice40Transfer(_qspi, SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
 //            HAL_Delay(5);
 //        }
 //        
 //        // Re-enable the SD clock
 //        {
-//            _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+//            _ice40Transfer(_qspi, SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
 //        }
 //        
 //        // Wait for SD card to indicate that it's ready (DAT0=1)
@@ -252,17 +338,17 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 //    
 //    // Disable SD clock
 //    {
-//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//        _ice40Transfer(_qspi, SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
 //    }
 //    
 //    // Switch to the fast delay
 //    {
-//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkFastDelay));
+//        _ice40Transfer(_qspi, SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkFastDelay));
 //    }
 //    
 //    // Enable SD fast clock
 //    {
-//        _ice40.sendMsg(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Fast, SDClkFastDelay));
+//        _ice40Transfer(_qspi, SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Fast, SDClkFastDelay));
 //    }
 //    
 //    bool on = true;
@@ -299,7 +385,7 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 //        
 //        // Clock out data on DAT lines
 //        {
-//            _ice40.sendMsg(PixReadoutMsg(0));
+//            _ice40Transfer(_qspi, PixReadoutMsg(0));
 //        }
 //        
 //        // Wait until we're done clocking out data on DAT lines
@@ -345,11 +431,11 @@ ICE40::SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 
 
 ICE40::PixGetStatusResp System::_pixGetStatus() {
-    return _ice40.sendMsgWithResp<PixGetStatusResp>(PixGetStatusMsg());
+    return _ice40Transfer<PixGetStatusResp>(_qspi, PixGetStatusMsg());
 }
 
 uint16_t System::_pixRead(uint16_t addr) {
-    _ice40.sendMsg(PixI2CTransactionMsg(false, 2, addr, 0));
+    _ice40Transfer(_qspi, PixI2CTransactionMsg(false, 2, addr, 0));
     
     // Wait for the I2C transaction to complete
     const uint32_t MaxAttempts = 1000;
@@ -365,7 +451,7 @@ uint16_t System::_pixRead(uint16_t addr) {
 }
 
 void System::_pixWrite(uint16_t addr, uint16_t val) {
-    _ice40.sendMsg(PixI2CTransactionMsg(true, 2, addr, val));
+    _ice40Transfer(_qspi, PixI2CTransactionMsg(true, 2, addr, val));
     
     // Wait for the I2C transaction to complete
     const uint32_t MaxAttempts = 1000;
@@ -387,15 +473,15 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    // Confirm that we can communicate with the ICE40
 //    {
 //        char str[] = "halla";
-//        auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+//        auto status = _ice40Transfer<EchoResp>(_qspi, EchoMsg(str));
 //        Assert(!strcmp((char*)status.payload, str));
 //    }
 //    
 //    // Assert/deassert pix reset
 //    {
-//        _ice40.sendMsg(PixResetMsg(false));
+//        _ice40Transfer(_qspi, PixResetMsg(false));
 //        HAL_Delay(1);
-//        _ice40.sendMsg(PixResetMsg(true));
+//        _ice40Transfer(_qspi, PixResetMsg(true));
 //        // Wait 150k EXTCLK (24MHz) periods
 //        // (150e3*(1/24e6)) == 6.25ms
 //        HAL_Delay(7);
@@ -572,7 +658,7 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    // Capture a frame
 //    for (bool ledOn=true;; ledOn=!ledOn) {
 //        _led0.write(ledOn);
-//        _ice40.sendMsg(PixCaptureMsg(0));
+//        _ice40Transfer(_qspi, PixCaptureMsg(0));
 //        for (int i=0; i<10; i++) {
 //            auto status = _pixGetStatus();
 //            Assert(!status.capturePixelDropped());
@@ -590,10 +676,16 @@ void System::_handleEvent() {
     // Wait for an event to occur on one of our channels
     ChannelSelect::Start();
     if (auto x = _usb.eventChannel.readSelect()) {
-        _usbHandleEvent(*x);
+        _handleUSBEvent(*x);
     
     } else if (auto x = _usb.cmdChannel.readSelect()) {
         _handleCmd(*x);
+    
+    } else if (auto x = _qspi.eventChannel.readSelect()) {
+        _handleQSPIEvent(*x);
+    
+    } else if (auto x = _usb.pixChannel.readSelect()) {
+        _handlePixUSBEvent(*x);
     
     } else {
         // No events, go to sleep
@@ -601,7 +693,7 @@ void System::_handleEvent() {
     }
 }
 
-void System::_usbHandleEvent(const USB::Event& ev) {
+void System::_handleUSBEvent(const USB::Event& ev) {
     using Type = USB::Event::Type;
     switch (ev.type) {
     case Type::StateChanged: {
@@ -623,10 +715,19 @@ void System::_handleCmd(const USB::Cmd& ev) {
     Cmd cmd;
     Assert(ev.len == sizeof(cmd)); // TODO: handle errors
     memcpy(&cmd, ev.data, ev.len);
+    
     switch (cmd.op) {
     // PixStream
     case Cmd::Op::PixStream: {
-        _usb.pixSend();
+        if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
+            _pixStreamEnabled = true;
+            _pixRemLen = 2304*1296*2;
+            _recvPixDataViaICE40();
+        
+        } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
+            // TODO: how do we disable streaming?
+            _pixStreamEnabled = false;
+        }
         break;
     }
     
@@ -649,6 +750,72 @@ void System::_handleCmd(const USB::Cmd& ev) {
     
     // Prepare to receive another command
     _usb.cmdRecv(); // TODO: handle errors
+}
+
+void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
+    Assert(_pixStreamEnabled);
+    Assert(_pixBufs.writable());
+    
+    const bool wasReadable = _pixBufs.readable();
+    
+    // Enqueue the buffer
+    {
+        // Update the number of remaining bytes to receive from the host
+        _pixRemLen -= _pixBufs.writeBuf().len;
+        _pixBufs.writeEnqueue();
+    }
+    
+    // Start a USB transaction when we go from 0->1 buffers
+    if (!wasReadable) {
+        _sendPixDataViaUSB();
+    }
+    
+    // Prepare to receive more data if we're expecting more,
+    // and we have a buffer to store the data in
+    if (_pixRemLen && _pixBufs.writable()) {
+        _recvPixDataViaICE40();
+    }
+}
+
+void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
+    Assert(_pixStreamEnabled);
+    Assert(_pixBufs.readable());
+    const bool wasWritable = _pixBufs.writable();
+    
+    // Dequeue the buffer
+    _pixBufs.readDequeue();
+    
+    // Start another USB transaction if there's more data to write
+    if (_pixBufs.readable()) {
+        _sendPixDataViaUSB();
+    }
+    
+    if (_pixRemLen) {
+        // Prepare to receive more data if we're expecting more,
+        // and we were previously un-writable
+        if (!wasWritable) {
+            _recvPixDataViaICE40();
+        }
+    } else if (!_pixBufs.readable()) {
+        // We're done32,768
+        // TODO: what do after we sent all the data?
+    }
+}
+
+// Arrange for pix data to be received from ICE40
+void System::_recvPixDataViaICE40() {
+    Assert(_pixBufs.writable());
+    ICE40::Msg msg;
+    msg.type = 0x01;
+    _pixBufs.writeBuf().len = sizeof(_pixBufs.writeBuf().data);
+    _ice40TransferAsync(_qspi, msg, (void*)_pixBufs.writeBuf().data, sizeof(_pixBufs.writeBuf().data));
+}
+
+// Arrange for pix data to be sent over USB
+void System::_sendPixDataViaUSB() {
+    Assert(_pixBufs.readable());
+    const auto& buf = _pixBufs.readBuf();
+    _usb.pixSend(buf.data, buf.len);
 }
 
 System Sys;

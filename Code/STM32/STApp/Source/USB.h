@@ -16,17 +16,17 @@ public:
         size_t len;
     };
     
-    struct PixSentEvent {};
+    struct DoneEvent {};
     
     // Methods
     void init();
     
     USBD_StatusTypeDef cmdRecv();
-    USBD_StatusTypeDef pixSend(void* data, size_t len);
+    USBD_StatusTypeDef pixSend(const void* data, size_t len);
     
     // Channels
     Channel<Cmd, 1> cmdChannel;
-    Channel<PixSentEvent, 1> pixChannel;
+    Channel<DoneEvent, 1> pixChannel;
     
 protected:
     // Callbacks

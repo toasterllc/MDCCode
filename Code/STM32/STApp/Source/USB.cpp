@@ -19,7 +19,7 @@ USBD_StatusTypeDef USB::cmdRecv() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
 }
 
-USBD_StatusTypeDef USB::pixSend(void* data, size_t len) {
+USBD_StatusTypeDef USB::pixSend(const void* data, size_t len) {
     // TODO: if this function is called twice, the second call will clobber the first.
     //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
     return USBD_LL_Transmit(&_device, Endpoints::PixIn, (uint8_t*)data, len);
@@ -66,7 +66,7 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
     switch (epnum) {
     // PixIn endpoint
     case EndpointNum(Endpoints::PixIn): {
-        pixChannel.writeTry(PixSentEvent{});
+        pixChannel.writeTry(DoneEvent{});
         break;
     }}
     

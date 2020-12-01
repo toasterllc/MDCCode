@@ -8,44 +8,6 @@
 
 class ICE40 {
 public:
-    struct Pin {
-        uint8_t bit = 0;
-        uint8_t dir = 0;
-        uint8_t val = 0;
-        
-        uint8_t dirBit() const { return (dir ? bit : 0); }
-        uint8_t valBit() const { return (val ? bit : 0); }
-    };
-    
-    struct Pins {
-        Pin CLK     {.bit=1<<0, .dir=1, .val=0};
-        Pin DO      {.bit=1<<1, .dir=1, .val=1};
-        Pin DI      {.bit=1<<2, .dir=0, .val=0};
-        // Unused
-        Pin CS      {.bit=1<<4, .dir=1, .val=0};
-        // Unused
-        Pin CDONE   {.bit=1<<6, .dir=0, .val=0};
-        Pin CRST_   {.bit=1<<7, .dir=1, .val=1};
-        
-        uint8_t dirBits() const {
-            return  CLK.dirBit()    |
-                    DO.dirBit()     |
-                    DI.dirBit()     |
-                    CS.dirBit()     |
-                    CDONE.dirBit()  |
-                    CRST_.dirBit()  ;
-        }
-        
-        uint8_t valBits() const {
-            return  CLK.valBit()    |
-                    DO.valBit()     |
-                    DI.valBit()     |
-                    CS.valBit()     |
-                    CDONE.valBit()  |
-                    CRST_.valBit()  ;
-        }
-    };
-    
     struct Msg {
         uint8_t type = 0;
         uint8_t payload[7] = {};
@@ -54,10 +16,10 @@ public:
     struct Resp {
         uint8_t payload[8];
         bool getBit(uint8_t idx) const {
-            return _getBit(payload, sizeof(payload), idx);
+            return _GetBit(payload, sizeof(payload), idx);
         }
         uint64_t getBits(uint8_t start, uint8_t end) const {
-            return _getBits(payload, sizeof(payload), start, end);
+            return _GetBits(payload, sizeof(payload), start, end);
         }
     };
     
@@ -235,40 +197,8 @@ public:
         bool capturePixelDropped() const    { return getBit(44);        }
     };
     
-    ICE40(QSPI& qspi) : _qspi(qspi) {}
-    
-    void sendMsg(const Msg& msg) {
-        const QSPI_CommandTypeDef cmd = _qspiCmd(msg, 0);
-//        _qspi.init();
-        _qspi.command(cmd);
-        // Wait for the transfer to complete
-        QSPI::Event ev = _qspi.eventChannel.read();
-        Assert(ev.type == QSPI::Event::Type::CommandDone);
-    }
-    
-    template <typename T>
-    T sendMsgWithResp(const Msg& msg) {
-        T resp;
-        const QSPI_CommandTypeDef cmd = _qspiCmd(msg, sizeof(resp));
-//        _qspi.init();
-        _qspi.read(cmd, &resp, sizeof(resp));
-        // Wait for transfer to complete
-        QSPI::Event ev = _qspi.eventChannel.read();
-        Assert(ev.type == QSPI::Event::Type::ReadDone);
-        return resp;
-    }
-    
-    void sendMsgWithResp(const Msg& msg, void* data, size_t len) {
-        const QSPI_CommandTypeDef cmd = _qspiCmd(msg, len);
-//        _qspi.init();
-        _qspi.read(cmd, data, len);
-        // Wait for transfer to complete
-        QSPI::Event ev = _qspi.eventChannel.read();
-        Assert(ev.type == QSPI::Event::Type::ReadDone);
-    }
-    
 private:
-    static bool _getBit(const uint8_t* bytes, size_t len, uint8_t idx) {
+    static bool _GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
         AssertArg(idx < len*8);
         const uint8_t byteIdx = len-(idx/8)-1;
         const uint8_t bitIdx = idx%8;
@@ -276,7 +206,7 @@ private:
         return bytes[byteIdx] & bitMask;
     }
     
-    static uint64_t _getBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
+    static uint64_t _GetBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
         AssertArg(start < len*8);
         AssertArg(start >= end);
         const uint8_t leftByteIdx = len-(start/8)-1;
@@ -301,54 +231,4 @@ private:
         }
         return r;
     }
-    
-    static QSPI_CommandTypeDef _qspiCmd(const Msg& msg, size_t respLen) {
-        uint8_t b[8];
-        static_assert(sizeof(msg) == sizeof(b));
-        memcpy(b, &msg, sizeof(b));
-        
-        // When dual-flash quadspi is enabled, the supplied address is
-        // divided by 2, so we left-shift `addr` in anticipation of that.
-        // But by doing so, we throw out the high bit of `msg`, so we
-        // require it to be 0.
-        AssertArg(!(b[0] & 0x80));
-        
-        return QSPI_CommandTypeDef{
-            .Instruction = 0xFF,
-            .InstructionMode = QSPI_INSTRUCTION_4_LINES,
-            
-            // When dual-flash quadspi is enabled, the supplied address is
-            // divided by 2, so we left-shift `addr` in anticipation of that.
-            .Address = (
-                (uint32_t)b[0]<<24  |
-                (uint32_t)b[1]<<16  |
-                (uint32_t)b[2]<<8   |
-                (uint32_t)b[3]<<0
-            ) << 1,
-//            .Address = 0,
-            .AddressSize = QSPI_ADDRESS_32_BITS,
-            .AddressMode = QSPI_ADDRESS_4_LINES,
-            
-            .AlternateBytes = (
-                (uint32_t)b[4]<<24  |
-                (uint32_t)b[5]<<16  |
-                (uint32_t)b[6]<<8   |
-                (uint32_t)b[7]<<0
-            ),
-//            .AlternateBytes = 0,
-            .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
-            .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
-            
-            .DummyCycles = 4,
-            
-            .NbData = (uint32_t)respLen,
-            .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
-            
-            .DdrMode = QSPI_DDR_MODE_DISABLE,
-            .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-            .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-        };
-    }
-    
-    QSPI& _qspi;
 };

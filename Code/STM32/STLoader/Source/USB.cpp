@@ -27,7 +27,7 @@ USBD_StatusTypeDef USB::stDataRecv(void* addr, size_t len) {
     return USBD_LL_PrepareReceive(&_device, Endpoints::STDataOut, (uint8_t*)addr, len);
 }
 
-USBD_StatusTypeDef USB::stStatusSend(void* data, size_t len) {
+USBD_StatusTypeDef USB::stStatusSend(const void* data, size_t len) {
     // TODO: if this function is called twice, the second call will clobber the first.
     //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
     return USBD_LL_Transmit(&_device, Endpoints::STStatusIn, (uint8_t*)data, len);
@@ -41,7 +41,7 @@ USBD_StatusTypeDef USB::iceDataRecv(void* addr, size_t len) {
     return USBD_LL_PrepareReceive(&_device, Endpoints::ICEDataOut, (uint8_t*)addr, len);
 }
 
-USBD_StatusTypeDef USB::iceStatusSend(void* data, size_t len) {
+USBD_StatusTypeDef USB::iceStatusSend(const void* data, size_t len) {
     // TODO: if this function is called twice, the second call will clobber the first.
     //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
     return USBD_LL_Transmit(&_device, Endpoints::ICEStatusIn, (uint8_t*)data, len);

@@ -167,8 +167,6 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
         
         printf("Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
         
-        kIOUSBUnknownPipeErr;
-        
         // Wait for interface to be idle
         // Without this, it's possible for the next `WriteData` command to update the write
         // address while we're still sending data from this iteration.
@@ -180,13 +178,13 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
                 };
                 
                 IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
-                if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+                if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
             }
             
             // Read status
             {
                 auto [status, ior] = stInterface.read<STStatus>(STEndpoint::StatusIn);
-                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
+                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STEndpoint::StatusIn");
                 if (status == STStatus::Idle) break;
             }
         }
@@ -203,13 +201,13 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             };
             
             IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
         }
         
         // Send actual data
         {
             IOReturn ior = stInterface.write(STEndpoint::DataOut, data, dataLen);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STDataOut");
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::DataOut");
         }
     }
     
@@ -226,7 +224,7 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
         };
         
         IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
     }
     printf("Done\n");
 }
@@ -247,14 +245,14 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
         };
         
         IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
     }
     
     // Send ICE40 binary
     {
         printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
         IOReturn ior = iceInterface.write(ICEEndpoint::DataOut, mmap.data(), mmap.len());
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEDataOut");
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::DataOut");
     }
     
     // Wait for interface to be idle
@@ -267,13 +265,13 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
             };
             
             IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STCmdOut");
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
         }
         
         // Read status
         {
             auto [status, ior] = iceInterface.read<ICEStatus>(ICEEndpoint::StatusIn);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
+            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEEndpoint::StatusIn");
             if (status == ICEStatus::Idle) break;
         }
     }
@@ -286,7 +284,7 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
         };
         
         IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
     }
     
     // Request status
@@ -296,13 +294,13 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
         };
         
         IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICECmdOut");
+        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
     }
     
     // Read status
     {
         auto [status, ior] = iceInterface.read<ICEStatus>(ICEEndpoint::StatusIn);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STStatusIn");
+        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEEndpoint::StatusIn");
         printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
     }
 }

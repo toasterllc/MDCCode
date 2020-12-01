@@ -1,6 +1,8 @@
 #include "SystemBase.h"
-#include "ICE40.h"
 #include "QSPI.h"
+#include "ICE40.h"
+#include "BufQueue.h"
+#include "USB.h"
 
 class System : public SystemBase<System> {
 public:
@@ -8,39 +10,30 @@ public:
     void init();
     
 private:
-    using Msg = ICE40::Msg;
-    using EchoMsg = ICE40::EchoMsg;
-    using EchoResp = ICE40::EchoResp;
-    using SDClkSrcMsg = ICE40::SDClkSrcMsg;
-    using SDSendCmdMsg = ICE40::SDSendCmdMsg;
-    using SDGetStatusMsg = ICE40::SDGetStatusMsg;
-    using SDGetStatusResp = ICE40::SDGetStatusResp;
-    using PixResetMsg = ICE40::PixResetMsg;
-    using PixCaptureMsg = ICE40::PixCaptureMsg;
-    using PixReadoutMsg = ICE40::PixReadoutMsg;
-    using PixI2CTransactionMsg = ICE40::PixI2CTransactionMsg;
-    using PixGetStatusMsg = ICE40::PixGetStatusMsg;
-    using PixGetStatusResp = ICE40::PixGetStatusResp;
-    
-    using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
-    using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
-    
     void _handleEvent();
-    void _usbHandleEvent(const USB::Event& ev);
+    void _handleUSBEvent(const USB::Event& ev);
     void _handleCmd(const USB::Cmd& ev);
+    void _handleQSPIEvent(const QSPI::DoneEvent& ev);
+    void _handlePixUSBEvent(const USB::DoneEvent& ev);
+    void _recvPixDataViaICE40();
+    void _sendPixDataViaUSB();
     
-    SDGetStatusResp _sdGetStatus();
-    SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
+    ICE40::SDGetStatusResp _sdGetStatus();
+    ICE40::SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
         ICE40::SDSendCmdMsg::RespType respType = ICE40::SDSendCmdMsg::RespTypes::Len48,
         ICE40::SDSendCmdMsg::DatInType datInType = ICE40::SDSendCmdMsg::DatInTypes::None);
     
-    PixGetStatusResp _pixGetStatus();
+    ICE40::PixGetStatusResp _pixGetStatus();
     uint16_t _pixRead(uint16_t addr);
     void _pixWrite(uint16_t addr, uint16_t val);
     
     // Peripherals
+    USB _usb;
     QSPI _qspi;
-    ICE40 _ice40;
+    
+    bool _pixStreamEnabled = 0;
+    BufQueue<1024, 2> _pixBufs;
+    size_t _pixRemLen = 0;
     
     friend int main();
     friend void ISR_OTG_HS();

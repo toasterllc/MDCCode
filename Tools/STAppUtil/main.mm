@@ -51,25 +51,13 @@ static USBInterface findUSBInterface(uint8_t interfaceNum) {
     return USBInterface(usbInterface);
 }
 
-namespace STEndpoint {
+namespace Endpoint {
     enum : uint8_t {
         // These values aren't the same as the endpoint addresses in firmware!
         // These values are the determined by the order that the endpoints are
         // listed in the interface descriptor.
         CmdOut = 1,
-        DataOut,
-        StatusIn,
-    };
-}
-
-namespace ICEEndpoint {
-    enum : uint8_t {
-        // These values aren't the same as the endpoint addresses in firmware!
-        // These values are the determined by the order that the endpoints are
-        // listed in the interface descriptor.
-        CmdOut = 1,
-        DataOut,
-        StatusIn,
+        PixIn,
     };
 }
 
@@ -117,6 +105,36 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void pixStream(const Args& args, USBInterface& interface) {
+    STApp::Cmd cmd = {
+        .op = STApp::Cmd::Op::PixStream,
+        .arg = {
+            .pixStream = {
+                .enable = true,
+            },
+        },
+    };
+    
+    IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+    if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
+    
+    for (;;) {
+        const size_t imageSize = 1024;
+//        const size_t imageSize = 2304*1296*2;
+        auto buf = std::make_unique<uint8_t[]>(imageSize);
+        // Read status
+        {
+            auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), imageSize);
+            printf("USB read result: len=0x%jx ior=0x%x\n", (uintmax_t)len, ior);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
+            const size_t printWidth = 16;
+            for (size_t i=0; i<len; i+=printWidth) {
+                for (size_t ii=i; ii<std::min(i+printWidth,len); ii++) {
+                    printf("%02x ", buf[ii]);
+                }
+                printf("\n");
+            }
+        }
+    }
 }
 
 static void ledSet(const Args& args, USBInterface& interface) {
@@ -130,7 +148,7 @@ static void ledSet(const Args& args, USBInterface& interface) {
         },
     };
     
-    IOReturn ior = interface.write(STEndpoint::CmdOut, cmd);
+    IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
     if (ior != kIOReturnSuccess) throw std::runtime_error("pipe write failed");
 }
 

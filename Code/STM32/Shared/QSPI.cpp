@@ -136,21 +136,15 @@ void QSPI::_isrDMA() {
 }
 
 void QSPI::_handleCommandDone() {
-    eventChannel.writeTry(Event{
-        .type = Event::Type::CommandDone,
-    });
+    eventChannel.writeTry(DoneEvent{});
 }
 
 void QSPI::_handleReadDone() {
-    eventChannel.writeTry(Event{
-        .type = Event::Type::ReadDone,
-    });
+    eventChannel.writeTry(DoneEvent{});
 }
 
 void QSPI::_handleWriteDone() {
-    eventChannel.writeTry(Event{
-        .type = Event::Type::WriteDone,
-    });
+    eventChannel.writeTry(DoneEvent{});
 }
 
 void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device) {

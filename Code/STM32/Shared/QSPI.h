@@ -21,18 +21,8 @@ public:
     void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len);
     void write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len);
     
-    struct Event {
-        enum class Type : uint8_t {
-            CommandDone,
-            ReadDone,
-            WriteDone,
-        };
-        
-        Type type;
-    };
-    
-    // TODO: if both _handleCommandDone and _handleReadDone/_handleWriteDone are called per transaction, this channel needs to have 2 slots to avoid dropping events
-    Channel<Event, 1> eventChannel;
+    struct DoneEvent {};
+    Channel<DoneEvent, 1> eventChannel;
     
 private:
     void _isrQSPI();

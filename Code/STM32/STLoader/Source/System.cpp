@@ -20,6 +20,7 @@ void System::init() {
     
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
+    _usb.init();
     _qspi.init();
     
     // Configure ice40 control GPIOs
@@ -183,8 +184,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         _qspiWrite(&ff, 1);
         
         // Wait for write to complete
-        QSPI::Event qev = _qspi.eventChannel.read();
-        Assert(qev.type == QSPI::Event::Type::WriteDone);
+        _qspi.eventChannel.read();
         
         // Update our state
         _iceRemLen = cmd.arg.start.len;
@@ -220,8 +220,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
                 static const uint8_t ff = 0xff;
                 _qspiWrite(&ff, 1);
                 // Wait for write to complete
-                QSPI::Event qev = _qspi.eventChannel.read();
-                Assert(qev.type == QSPI::Event::Type::WriteDone);
+                _qspi.eventChannel.read();
             }
         
         } else {
@@ -269,37 +268,29 @@ void System::_iceHandleData(const USB::Data& ev) {
     }
 }
 
-void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
+void System::_iceHandleQSPIEvent(const QSPI::DoneEvent& ev) {
     Assert(_iceBufs.readable());
-    switch (ev.type) {
-    // Write done
-    case QSPI::Event::Type::WriteDone: {
-        const bool wasWritable = _iceBufs.writable();
-        
-        // Dequeue the buffer
-        _iceBufs.readDequeue();
-        
-        // Start another SPI transaction if there's more data to write
-        if (_iceBufs.readable()) {
-            _qspiWriteBuf();
-        }
-        
-        if (_iceRemLen) {
-            // Prepare to receive more data if we're expecting more,
-            // and we were previously un-writable
-            if (!wasWritable) {
-                _iceDataRecv();
-            }
-        } else if (!_iceBufs.readable()) {
-            // We're done
-            _iceStatus = ICEStatus::Idle;
-        }
-        break;
+    const bool wasWritable = _iceBufs.writable();
+    
+    // Dequeue the buffer
+    _iceBufs.readDequeue();
+    
+    // Start another SPI transaction if there's more data to write
+    if (_iceBufs.readable()) {
+        _qspiWriteBuf();
     }
     
-    default: {
-        Abort();
-    }}
+    if (_iceRemLen) {
+        // Prepare to receive more data if we're expecting more,
+        // and we were previously un-writable
+        if (!wasWritable) {
+            _iceDataRecv();
+        }
+    } else if (!_iceBufs.readable()) {
+        // We're done
+        _iceStatus = ICEStatus::Idle;
+    }
+
 }
 
 void System::_iceDataRecv() {
