@@ -24,7 +24,7 @@ private:
     void _iceHandleData(const USB::Data& ev);
     void _iceHandleQSPIEvent(const QSPI::Event& ev);
     bool _iceBufEmpty();
-    void _iceRecvData();
+    void _iceDataRecv();
     void _qspiWriteBuf();
     void _qspiWrite(const void* data, size_t len);
     

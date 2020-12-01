@@ -61,9 +61,9 @@ void System::_usbHandleEvent(const USB::Event& ev) {
         // Handle USB connection
         if (_usb.state() == USB::State::Connected) {
             // Prepare to receive STM32 bootloader commands
-            _usb.stRecvCmd();
+            _usb.stCmdRecv();
             // Prepare to receive ICE40 bootloader commands
-            _usb.iceRecvCmd();
+            _usb.iceCmdRecv();
         }
         break;
     }
@@ -81,7 +81,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     switch (cmd.op) {
     // Get status
     case STCmd::Op::GetStatus: {
-        _usb.stSendStatus(&_stStatus, sizeof(_stStatus));
+        _usb.stStatusSend(&_stStatus, sizeof(_stStatus));
         break;
     }
     
@@ -101,7 +101,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         // at multiples of the max packet size.)
         len -= len%USB::MaxPacketSize::Data;
         Assert(len); // TODO: error handling
-        _usb.stRecvData(addr, len);
+        _usb.stDataRecv(addr, len);
         break;
     }
     
@@ -133,7 +133,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     }}
     
     // Prepare to receive another command
-    _usb.stRecvCmd(); // TODO: handle errors
+    _usb.stCmdRecv(); // TODO: handle errors
 }
 
 void System::_stHandleData(const USB::Data& ev) {
@@ -148,7 +148,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     switch (cmd.op) {
     // Get status
     case ICECmd::Op::GetStatus: {
-        _usb.iceSendStatus(&_iceStatus, sizeof(_iceStatus));
+        _usb.iceStatusSend(&_iceStatus, sizeof(_iceStatus));
         break;
     }
     
@@ -191,7 +191,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
         _iceStatus = ICEStatus::Configuring;
         
         // Prepare to receive ICE40 bootloader data
-        _iceRecvData();
+        _iceDataRecv();
         break;
     }
     
@@ -238,7 +238,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     }}
     
     // Prepare to receive another command
-    _usb.iceRecvCmd(); // TODO: handle errors
+    _usb.iceCmdRecv(); // TODO: handle errors
 }
 
 void System::_iceHandleData(const USB::Data& ev) {
@@ -269,7 +269,7 @@ void System::_iceHandleData(const USB::Data& ev) {
     // Prepare to receive more data if we're expecting more,
     // and we have a buffer to store the data in
     if (_iceRemLen && !_iceBufFull) {
-        _iceRecvData();
+        _iceDataRecv();
     }
 }
 
@@ -296,7 +296,7 @@ void System::_iceHandleQSPIEvent(const QSPI::Event& ev) {
             // Prepare to receive more data if we're expecting more,
             // and we were previously full
             if (wasFull) {
-                _iceRecvData();
+                _iceDataRecv();
             }
         } else if (_iceBufEmpty()) {
             // We're done
@@ -314,10 +314,10 @@ bool System::_iceBufEmpty() {
     return _iceBufWPtr==_iceBufRPtr && !_iceBufFull;
 }
 
-void System::_iceRecvData() {
+void System::_iceDataRecv() {
     Assert(!_iceBufFull);
     ICEBuf& buf = _iceBuf[_iceBufWPtr];
-    _usb.iceRecvData(buf.data, sizeof(buf.data)); // TODO: handle errors
+    _usb.iceDataRecv(buf.data, sizeof(buf.data)); // TODO: handle errors
 }
 
 void System::_qspiWriteBuf() {

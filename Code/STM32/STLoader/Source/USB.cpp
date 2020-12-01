@@ -19,29 +19,29 @@ void USB::init() {
     HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::ICEStatusIn), 64);
 }
 
-USBD_StatusTypeDef USB::stRecvCmd() {
+USBD_StatusTypeDef USB::stCmdRecv() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::STCmdOut, _stCmdBuf, sizeof(_stCmdBuf));
 }
 
-USBD_StatusTypeDef USB::stRecvData(void* addr, size_t len) {
+USBD_StatusTypeDef USB::stDataRecv(void* addr, size_t len) {
     return USBD_LL_PrepareReceive(&_device, Endpoints::STDataOut, (uint8_t*)addr, len);
 }
 
-USBD_StatusTypeDef USB::stSendStatus(void* data, size_t len) {
+USBD_StatusTypeDef USB::stStatusSend(void* data, size_t len) {
     // TODO: if this function is called twice, the second call will clobber the first.
     //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
     return USBD_LL_Transmit(&_device, Endpoints::STStatusIn, (uint8_t*)data, len);
 }
 
-USBD_StatusTypeDef USB::iceRecvCmd() {
+USBD_StatusTypeDef USB::iceCmdRecv() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::ICECmdOut, _iceCmdBuf, sizeof(_iceCmdBuf));
 }
 
-USBD_StatusTypeDef USB::iceRecvData(void* addr, size_t len) {
+USBD_StatusTypeDef USB::iceDataRecv(void* addr, size_t len) {
     return USBD_LL_PrepareReceive(&_device, Endpoints::ICEDataOut, (uint8_t*)addr, len);
 }
 
-USBD_StatusTypeDef USB::iceSendStatus(void* data, size_t len) {
+USBD_StatusTypeDef USB::iceStatusSend(void* data, size_t len) {
     // TODO: if this function is called twice, the second call will clobber the first.
     //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
     return USBD_LL_Transmit(&_device, Endpoints::ICEStatusIn, (uint8_t*)data, len);
