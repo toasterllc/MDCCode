@@ -1,6 +1,8 @@
 `ifndef ClockGen_v
 `define ClockGen_v
 
+`include "Util.v"
+
 `timescale 1ps/1ps
 
 module ClockGen #(
@@ -19,14 +21,6 @@ module ClockGen #(
     wire pllClk;
     assign clk = pllClk&locked;
     
-    function [63:0] DivCeil;
-        input [63:0] n;
-        input [63:0] d;
-        begin
-            DivCeil = (n+d-1)/d;
-        end
-    endfunction
-    
 `ifdef SIM
     reg simClk;
     reg[3:0] simLockedCounter;
@@ -37,7 +31,7 @@ module ClockGen #(
         simClk = 0;
         simLockedCounter = 0;
         forever begin
-            #(DivCeil(1000000000000, 2*FREQ));
+            #(`DivCeil(1000000000000, 2*FREQ));
             simClk = !simClk;
             
             if (!simClk & !locked) begin

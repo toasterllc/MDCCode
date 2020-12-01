@@ -3,14 +3,14 @@ set -e
 
 if [ "$#" -ne 3 ]; then
 	echo "Usage:"
-    echo "  BuildAndFlash.sh <DeviceType> <DevicePackage> <ProjName>"
+    echo "  Synth.sh <DeviceType> <DevicePackage> <ProjName>"
 	echo "    DeviceType: 1k (iCEstick) or 8k (iCE40HX board)"
 	echo "    DevicePackage: tq144 (iCEstick) or ct256 (iCE40HX board)"
 	
 	echo
 	echo "Examples:"
-	echo "  BuildAndFlash.sh 1k tq144 Icestick_SDRAMReadWriteRandomly"
-	echo "  BuildAndFlash.sh 8k ct256 Iceboard_Blinky"
+	echo "  Synth.sh 1k tq144 Icestick_SDRAMReadWriteRandomly"
+	echo "  Synth.sh 8k ct256 Iceboard_Blinky"
 	exit 1
 fi
 
@@ -22,7 +22,7 @@ proj="$3"
 rm -Rf "$proj/tmp"
 mkdir -p "$proj/tmp"
 cp "$dir/Synth.ys" "$proj/tmp"
-cp -R "$dir/Util/." "$proj/tmp"
+cp -R "$dir/Shared/." "$proj/tmp"
 cp "$proj/Top.v" "$proj/tmp"
 cp "$proj/Pins.pcf" "$proj/tmp"
 cd "$proj/tmp"

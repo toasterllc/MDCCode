@@ -27,6 +27,7 @@ private:
     
     void _handleEvent();
     void _usbHandleEvent(const USB::Event& ev);
+    void _handleCmd(const USB::Cmd& ev);
     
     SDGetStatusResp _sdGetStatus();
     SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,

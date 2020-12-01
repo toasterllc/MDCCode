@@ -25,16 +25,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		554F178B254536A700F67066 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		556875CC254785C400B774CE /* STLoaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STLoaderTypes.h; path = ../../code/stm32/STLoader/Source/STLoaderTypes.h; sourceTree = "<group>"; };
-		556875ED254BE63800B774CE /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Enum.h; path = ../../Code/STM32/Util/Enum.h; sourceTree = "<group>"; };
+		55844C172575CF34008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
+		55844C182575D204008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Code/Shared; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* STLoaderUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoaderUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55E1D8ED253E892B00628EF6 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
-		55E1D8F0253EB2F100628EF6 /* ELF32Binary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
-		55E1D8F5253F758A00628EF6 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		55E1D8F6253F75A300628EF6 /* USBInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,12 +50,9 @@
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
-				556875ED254BE63800B774CE /* Enum.h */,
+				55844C172575CF34008737ED /* Shared */,
+				55844C182575D204008737ED /* Shared */,
 				556875CC254785C400B774CE /* STLoaderTypes.h */,
-				55E1D8F6253F75A300628EF6 /* USBInterface.h */,
-				554F178B254536A700F67066 /* Mmap.h */,
-				55E1D8F5253F758A00628EF6 /* SendRight.h */,
-				55E1D8F0253EB2F100628EF6 /* ELF32Binary.h */,
 				55E1D8ED253E892B00628EF6 /* main.mm */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
 				55E1D8DF253E864F00628EF6 /* Products */,
@@ -195,6 +189,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../Shared,
+					../../Code/Shared,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -246,6 +244,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../Shared,
+					../../Code/Shared,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -257,7 +259,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				HEADER_SEARCH_PATHS = ../../code/Shared;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -266,7 +267,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				HEADER_SEARCH_PATHS = ../../code/Shared;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

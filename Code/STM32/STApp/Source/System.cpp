@@ -3,7 +3,10 @@
 #include "Abort.h"
 #include "SystemClock.h"
 #include "Startup.h"
+#include "STAppTypes.h"
 #include <string.h>
+
+using namespace STApp;
 
 System::System() :
 _qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
@@ -15,30 +18,30 @@ void System::init() {
     _qspi.init();
 }
 
-// Test QSPI
-void System::_handleEvent() {
-    // Confirm that we can communicate with the ICE40
-    {
-        char str[] = "halla";
-        volatile auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
-        Assert(!strcmp((char*)status.payload, str));
-    }
-    
-    // Test reading a chunk of data
-    for (;;) {
-        static uint8_t respDataChunk[65532];
-        Msg msg;
-        msg.type = 0x01;
-        _ice40.sendMsgWithResp(msg, (void*)respDataChunk, sizeof(respDataChunk));
-        // Confirm the data is what we expect
-        for (size_t i=0; i<sizeof(respDataChunk); i++) {
-            if (!(i % 2))   Assert(respDataChunk[i] == 0x37);
-            else            Assert(respDataChunk[i] == 0x42);
-        }
-    }
-    
-    for (;;);
-}
+//// Test QSPI
+//void System::_handleEvent() {
+//    // Confirm that we can communicate with the ICE40
+//    {
+//        char str[] = "halla";
+//        volatile auto status = _ice40.sendMsgWithResp<EchoResp>(EchoMsg(str));
+//        Assert(!strcmp((char*)status.payload, str));
+//    }
+//    
+//    // Test reading a chunk of data
+//    for (;;) {
+//        static uint8_t respDataChunk[65532];
+//        Msg msg;
+//        msg.type = 0x01;
+//        _ice40.sendMsgWithResp(msg, (void*)respDataChunk, sizeof(respDataChunk));
+//        // Confirm the data is what we expect
+//        for (size_t i=0; i<sizeof(respDataChunk); i++) {
+//            if (!(i % 2))   Assert(respDataChunk[i] == 0x37);
+//            else            Assert(respDataChunk[i] == 0x42);
+//        }
+//    }
+//    
+//    for (;;);
+//}
 
 ICE40::SDGetStatusResp System::_sdGetStatus() {
     return _ice40.sendMsgWithResp<SDGetStatusResp>(SDGetStatusMsg());
@@ -581,23 +584,71 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    
 //    for (;;);
 //}
-//
-//void System::_usbHandleEvent(const USB::Event& ev) {
-//    using Type = USB::Event::Type;
-//    switch (ev.type) {
-//    case Type::StateChanged: {
-//        // Handle USB connection
-//        if (usb.state() == USB::State::Connected) {
-//            // Handle USB connected
-//        }
-//        break;
-//    }
-//    
-//    default: {
-//        // Invalid event type
-//        Abort();
-//    }}
-//}
+
+
+void System::_handleEvent() {
+    // Wait for an event to occur on one of our channels
+    ChannelSelect::Start();
+    if (auto x = _usb.eventChannel.readSelect()) {
+        _usbHandleEvent(*x);
+    
+    } else if (auto x = _usb.cmdChannel.readSelect()) {
+        _handleCmd(*x);
+    
+    } else {
+        // No events, go to sleep
+        ChannelSelect::Wait();
+    }
+}
+
+void System::_usbHandleEvent(const USB::Event& ev) {
+    using Type = USB::Event::Type;
+    switch (ev.type) {
+    case Type::StateChanged: {
+        // Handle USB connection
+        if (_usb.state() == USB::State::Connected) {
+            // Prepare to receive commands
+            _usb.cmdRecv();
+        }
+        break;
+    }
+    
+    default: {
+        // Invalid event type
+        Abort();
+    }}
+}
+
+void System::_handleCmd(const USB::Cmd& ev) {
+    Cmd cmd;
+    Assert(ev.len == sizeof(cmd)); // TODO: handle errors
+    memcpy(&cmd, ev.data, ev.len);
+    switch (cmd.op) {
+    // PixStream
+    case Cmd::Op::PixStream: {
+        break;
+    }
+    
+    // LEDSet
+    case Cmd::Op::LEDSet: {
+        switch (cmd.arg.ledSet.idx) {
+        case 0: _led0.write(cmd.arg.ledSet.on); break;
+        case 1: _led1.write(cmd.arg.ledSet.on); break;
+        case 2: _led2.write(cmd.arg.ledSet.on); break;
+        case 3: _led3.write(cmd.arg.ledSet.on); break;
+        }
+        
+        break;
+    }
+    
+    // Bad command
+    default: {
+        break;
+    }}
+    
+    // Prepare to receive another command
+    _usb.cmdRecv(); // TODO: handle errors
+}
 
 System Sys;
 

@@ -21,6 +21,8 @@
 // TODO: handle never receiving a response from the card
 //   according to 4.12.4 , the max number of cycles for a response to start is 64
 
+`include "Util.v"
+
 module SDCardInitializer(
     input wire          clk12mhz,
     output reg[15:0]    rca = 0,
@@ -37,16 +39,8 @@ module SDCardInitializer(
     // ====================
     // Internal clock (400 kHz)
     // ====================
-    function [63:0] DivCeil;
-        input [63:0] n;
-        input [63:0] d;
-        begin
-            DivCeil = (n+d-1)/d;
-        end
-    endfunction
-    
     localparam ClkFreq = 400000;
-    localparam ClkDividerWidth = $clog2(DivCeil(12000000, ClkFreq));
+    localparam ClkDividerWidth = $clog2(`DivCeil(12000000, ClkFreq));
     reg[ClkDividerWidth-1:0] clkDivider = 0;
     wire clk = clkDivider[ClkDividerWidth-1];
     

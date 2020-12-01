@@ -1,5 +1,7 @@
 // TODO: we may want to add support for partial reads, so we don't have to read a full block if the client only wants a few bytes
 
+`include "Util.v"
+
 module SDCardController(
     input wire          clk12mhz,
     output wire         clk,    // FIXME: remove once we've set up our glue across our internal vs external clock domains
@@ -45,16 +47,8 @@ module SDCardController(
     // // ====================
     // // Internal clock (400 kHz)
     // // ====================
-    // function [63:0] DivCeil;
-    //     input [63:0] n;
-    //     input [63:0] d;
-    //     begin
-    //         DivCeil = (n+d-1)/d;
-    //     end
-    // endfunction
-    //
     // localparam ClkFreq = 100000;
-    // localparam ClkDividerWidth = $clog2(DivCeil(12000000, ClkFreq));
+    // localparam ClkDividerWidth = $clog2(`DivCeil(12000000, ClkFreq));
     // reg[ClkDividerWidth-1:0] clkDivider = 0;
     // assign clk = clkDivider[ClkDividerWidth-1];
     // always @(posedge clk12mhz)

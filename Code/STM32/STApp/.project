@@ -33,9 +33,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>Util</name>
+			<name>Shared</name>
 			<type>2</type>
-			<locationURI>PARENT-3-PROJECT_LOC/Code/STM32/Util</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/Code/STM32/Shared</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

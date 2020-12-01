@@ -42,7 +42,7 @@ module Top(
 `else
     localparam SlowClkFreq = 1;
 `endif
-    localparam SlowClkDividerWidth = $clog2(DivCeil(32'd24_000_000, SlowClkFreq));
+    localparam SlowClkDividerWidth = $clog2(`DivCeil(32'd24_000_000, SlowClkFreq));
     reg[SlowClkDividerWidth-1:0] slowClkDivider = 0;
     wire slowClk = slowClkDivider[SlowClkDividerWidth-1];
     always @(posedge clk24mhz) begin

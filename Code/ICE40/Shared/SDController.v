@@ -77,7 +77,7 @@ module SDController #(
     // clk_slow (400 kHz)
     // ====================
     localparam Clk_Slow_Freq = 400000;
-    localparam Clk_Slow_DividerWidth = $clog2(DivCeil(Clk_Fast_Freq, Clk_Slow_Freq));
+    localparam Clk_Slow_DividerWidth = $clog2(`DivCeil(Clk_Fast_Freq, Clk_Slow_Freq));
     reg[Clk_Slow_DividerWidth-1:0] clk_slow_divider = 0;
     wire clk_slow = clk_slow_divider[Clk_Slow_DividerWidth-1];
     always @(posedge clk_fast) begin

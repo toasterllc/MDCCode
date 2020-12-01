@@ -1,6 +1,7 @@
 `ifndef RAMController_v
 `define RAMController_v
 
+`include "Util.v"
 `include "Delay.v"
 
 `define RAMController_Cmd_None      2'b00
@@ -95,12 +96,6 @@ module RAMController #(
     localparam RAM_DQM_Unmasked         = 0;
     localparam RAM_DQM_Masked           = 1;
     
-    function[63:0] DivCeil;
-        input[63:0] n;
-        input[63:0] d;
-        DivCeil = (n+d-1)/d;
-    endfunction
-    
     // Clocks() returns the minimum number of `ClkFreq` clock cycles
     // for >= `t` nanoseconds to elapse. For example, if t=5ns, and
     // the clock period is 3ns, Clocks(t=5,sub=0) will return 2.
@@ -109,7 +104,7 @@ module RAMController #(
         input[63:0] t;
         input[63:0] sub;
         begin
-            Clocks = DivCeil(t*ClkFreq, 1000000000);
+            Clocks = `DivCeil(t*ClkFreq, 1000000000);
             if (Clocks >= sub) Clocks = Clocks-sub;
             else Clocks = 0;
         end

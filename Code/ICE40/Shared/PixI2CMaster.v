@@ -1,6 +1,7 @@
 `ifndef PixI2CMaster_v
 `define PixI2CMaster_v
 
+`include "Util.v"
 `include "ToggleAck.v"
 
 module PixI2CMaster #(
@@ -26,19 +27,11 @@ module PixI2CMaster #(
     output wire         i2c_clk,
     inout wire          i2c_data
 );
-    function [63:0] DivCeil;
-        input [63:0] n;
-        input [63:0] d;
-        begin
-            DivCeil = (n+d-1)/d;
-        end
-    endfunction
-    
     // I2CQuarterCycleDelay: number of `clk` cycles for a quarter of the `i2c_clk` cycle to elapse.
     // DivCeil() is necessary to perform the quarter-cycle calculation, so that the
     // division is ceiled to the nearest clock cycle. (Ie -- slower than I2CClkFreq is OK, faster is not.)
     // -1 for the value that should be stored in a counter.
-    localparam I2CQuarterCycleDelay = DivCeil(ClkFreq, 4*I2CClkFreq)-1;
+    localparam I2CQuarterCycleDelay = `DivCeil(ClkFreq, 4*I2CClkFreq)-1;
     
     // Width of `delay`
     localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);

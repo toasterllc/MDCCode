@@ -1,12 +1,44 @@
 #include "USB.h"
 #include "Enum.h"
 
+Enum(uint8_t, Endpoint, Endpoints,
+    // OUT endpoints (high bit 0)
+    CmdOut  = 0x01,
+    
+    // IN endpoints (high bit 1)
+    PixIn  = 0x81,
+);
+
 void USB::init() {
     _super::init();
+    // TODO: revisit to determine proper FIFO size
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 512);
+}
+
+USBD_StatusTypeDef USB::cmdRecv() {
+    return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
+}
+
+USBD_StatusTypeDef USB::pixSend(void* data, size_t len) {
+    // TODO: if this function is called twice, the second call will clobber the first.
+    //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
+    return USBD_LL_Transmit(&_device, Endpoints::PixIn, (uint8_t*)data, len);
 }
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     _super::_usbd_Init(cfgidx);
+    
+    // Open endpoints
+    {
+        // CmdOut endpoint
+        USBD_LL_OpenEP(&_device, Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
+        _device.ep_out[EndpointNum(Endpoints::CmdOut)].is_used = 1U;
+        
+        // PixIn endpoint
+        USBD_LL_OpenEP(&_device, Endpoints::PixIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        _device.ep_in[EndpointNum(Endpoints::PixIn)].is_used = 1U;
+    }
+    
     return (uint8_t)USBD_OK;
 }
 
@@ -33,7 +65,20 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
 }
 
 uint8_t USB::_usbd_DataOut(uint8_t epnum) {
-    return _super::_usbd_DataOut(epnum);
+    _super::_usbd_DataOut(epnum);
+    
+    const size_t dataLen = USBD_LL_GetRxDataSize(&_device, epnum);
+    switch (epnum) {
+    // CmdOut endpoint
+    case EndpointNum(Endpoints::CmdOut): {
+        cmdChannel.writeTry(Cmd{
+            .data = _cmdBuf,
+            .len = dataLen,
+        });
+        break;
+    }}
+    
+    return (uint8_t)USBD_OK;
 }
 
 uint8_t USB::_usbd_SOF() {
@@ -52,28 +97,44 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
     _super::_usbd_GetHSConfigDescriptor(len);
     
     // USB DFU device Configuration Descriptor
-    constexpr size_t descLen = 18;
+    constexpr size_t descLen = 32;
     static uint8_t desc[] = {
         // Configuration descriptor
         0x09,                                       // bLength: configuration descriptor length
         USB_DESC_TYPE_CONFIGURATION,                // bDescriptorType: configuration descriptor
         LOBYTE(descLen), HIBYTE(descLen),           // wTotalLength: total descriptor length
-        0x01,                                       // bNumInterfaces: 1 interfaces
+        0x01,                                       // bNumInterfaces: 1 interface
         0x01,                                       // bConfigurationValue: config 1
         0x00,                                       // iConfiguration: string descriptor index
         0x80,                                       // bmAttributes: bus powered
         0xFA,                                       // bMaxPower: 500 mA (2 mA units)
         
-            // Interface descriptor: STM32 bootloader
+            // Interface descriptor
             0x09,                                       // bLength: interface descriptor length
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
             0x00,                                       // bInterfaceNumber: interface index
             0x00,                                       // bAlternateSetting: alternate setting
-            0x00,                                       // bNumEndpoints
+            0x02,                                       // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific
             0x00,                                       // bInterfaceSubClass
             0x00,                                       // nInterfaceProtocol
             0x00,                                       // iInterface: string descriptor index
+            
+                // CmdOut endpoint
+                0x07,                                                       // bLength: Endpoint Descriptor size
+                USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
+                Endpoints::CmdOut,                                          // bEndpointAddress
+                0x02,                                                       // bmAttributes: Bulk
+                LOBYTE(MaxPacketSize::Cmd), HIBYTE(MaxPacketSize::Cmd),     // wMaxPacketSize
+                0x00,                                                       // bInterval: ignore for Bulk transfer
+                
+                // PixIn endpoint
+                0x07,                                                       // bLength: Endpoint Descriptor size
+                USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
+                Endpoints::PixIn,                                           // bEndpointAddress
+                0x02,                                                       // bmAttributes: Bulk
+                LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),   // wMaxPacketSize
+                0x00,                                                       // bInterval: ignore for Bulk transfer
     };
     static_assert(sizeof(desc)==descLen, "descLen invalid");
     

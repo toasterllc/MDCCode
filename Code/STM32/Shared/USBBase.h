@@ -51,6 +51,7 @@ public:
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
         Assert(hs == HAL_OK);
         
+        // TODO: revisit to determine proper FIFO sizes
         // Set Rx FIFO sizes (OUT endpoints)
         HAL_PCDEx_SetRxFiFo(&_pcd, 512);
         // Set Tx FIFO sizes (IN endpoints)
