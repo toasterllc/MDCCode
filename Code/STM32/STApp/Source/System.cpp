@@ -721,8 +721,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
             _pixStreamEnabled = true;
-            _pixRemLen = 2304*1296*2;
-            _recvPixDataViaICE40();
+            _sendPixDataViaUSB();
         
         } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
             // TODO: how do we disable streaming?
@@ -761,7 +760,7 @@ void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
     // Enqueue the buffer
     {
         // Update the number of remaining bytes to receive from the host
-        _pixRemLen -= _pixBufs.writeBuf().len;
+//        _pixRemLen -= _pixBufs.writeBuf().len;
         _pixBufs.writeEnqueue();
     }
     
@@ -779,27 +778,7 @@ void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
 
 void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
     Assert(_pixStreamEnabled);
-    Assert(_pixBufs.readable());
-    const bool wasWritable = _pixBufs.writable();
-    
-    // Dequeue the buffer
-    _pixBufs.readDequeue();
-    
-    // Start another USB transaction if there's more data to write
-    if (_pixBufs.readable()) {
-        _sendPixDataViaUSB();
-    }
-    
-    if (_pixRemLen) {
-        // Prepare to receive more data if we're expecting more,
-        // and we were previously un-writable
-        if (!wasWritable) {
-            _recvPixDataViaICE40();
-        }
-    } else if (!_pixBufs.readable()) {
-        // We're done32,768
-        // TODO: what do after we sent all the data?
-    }
+    _sendPixDataViaUSB();
 }
 
 // Arrange for pix data to be received from ICE40
@@ -813,9 +792,9 @@ void System::_recvPixDataViaICE40() {
 
 // Arrange for pix data to be sent over USB
 void System::_sendPixDataViaUSB() {
-    Assert(_pixBufs.readable());
-    const auto& buf = _pixBufs.readBuf();
-    _usb.pixSend(buf.data, buf.len);
+//    Assert(_pixBufs.readable());
+    const auto& buf = _pixBufs.writeBuf();
+    _usb.pixSend(buf.data, sizeof(buf.data));
 }
 
 System Sys;
