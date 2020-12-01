@@ -626,6 +626,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     switch (cmd.op) {
     // PixStream
     case Cmd::Op::PixStream: {
+        _usb.pixSend();
         break;
     }
     

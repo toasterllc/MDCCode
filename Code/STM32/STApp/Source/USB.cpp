@@ -61,7 +61,16 @@ uint8_t USB::_usbd_EP0_RxReady() {
 }
 
 uint8_t USB::_usbd_DataIn(uint8_t epnum) {
-    return _super::_usbd_DataIn(epnum);
+    _super::_usbd_DataIn(epnum);
+    
+    switch (epnum) {
+    // PixIn endpoint
+    case EndpointNum(Endpoints::PixIn): {
+        pixChannel.writeTry(PixSentEvent{});
+        break;
+    }}
+    
+    return (uint8_t)USBD_OK;
 }
 
 uint8_t USB::_usbd_DataOut(uint8_t epnum) {

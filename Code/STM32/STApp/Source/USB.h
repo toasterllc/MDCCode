@@ -16,6 +16,8 @@ public:
         size_t len;
     };
     
+    struct PixSentEvent {};
+    
     // Methods
     void init();
     
@@ -24,6 +26,7 @@ public:
     
     // Channels
     Channel<Cmd, 1> cmdChannel;
+    Channel<PixSentEvent, 1> pixChannel;
     
 protected:
     // Callbacks
