@@ -32,7 +32,7 @@ private:
     QSPI _qspi;
     
     bool _pixStreamEnabled = 0;
-    BufQueue<1024, 2> _pixBufs;
+    BufQueue<32*1024, 2> _pixBufs;
     size_t _pixRemLen = 0;
     
     friend int main();

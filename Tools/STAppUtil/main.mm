@@ -10,6 +10,7 @@
 #import "SendRight.h"
 #import "USBInterface.h"
 #import "STAppTypes.h"
+#import "MyTime.h"
 
 static USBInterface findUSBInterface(uint8_t interfaceNum) {
     NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBInterfaceClassName));
@@ -118,22 +119,37 @@ static void pixStream(const Args& args, USBInterface& interface) {
     if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
     
     for (;;) {
-        const size_t imageSize = 1024;
-//        const size_t imageSize = 2304*1296*2;
+        const size_t imageSize = 128*1024*1024;
         auto buf = std::make_unique<uint8_t[]>(imageSize);
-        // Read status
-        {
-            auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), imageSize);
-            printf("USB read result: len=0x%jx ior=0x%x\n", (uintmax_t)len, ior);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
-            const size_t printWidth = 16;
-            for (size_t i=0; i<len; i+=printWidth) {
-                for (size_t ii=i; ii<std::min(i+printWidth,len); ii++) {
-                    printf("%02x ", buf[ii]);
-                }
-                printf("\n");
-            }
-        }
+        
+        auto startTime = MyTime::Now();
+        auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), imageSize);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
+        auto durationNs = MyTime::DurationNs(startTime);
+        double bitsPerSecond = ((double)imageSize*8) / ((double)durationNs/UINT64_C(1000000000));
+        double megabytesPerSecond = bitsPerSecond/(8*1024*1024);
+        printf("%ju bytes took %ju ns == %.0f bits/sec == %.1f MB/sec\n",
+            (uintmax_t)imageSize, (uintmax_t)durationNs, bitsPerSecond, megabytesPerSecond);
+        
+        
+        
+//        const size_t imageSize = 1024;
+//        const size_t imageSize = 2304*1296*2;
+//        auto buf = std::make_unique<uint8_t[]>(imageSize);
+//        // Read status
+//        {
+//            double start = CFAbsoluteTimeGetCurrent()
+//            auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), imageSize);
+////            printf("USB read result: len=0x%jx ior=0x%x\n", (uintmax_t)len, ior);
+//            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
+//            const size_t printWidth = 16;
+//            for (size_t i=0; i<len; i+=printWidth) {
+//                for (size_t ii=i; ii<std::min(i+printWidth,len); ii++) {
+//                    printf("%02x ", buf[ii]);
+//                }
+//                printf("\n");
+//            }
+//        }
     }
 }
 

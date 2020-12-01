@@ -51,12 +51,6 @@ public:
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
         Assert(hs == HAL_OK);
         
-        // TODO: revisit to determine proper FIFO sizes
-        // Set Rx FIFO sizes (OUT endpoints)
-        HAL_PCDEx_SetRxFiFo(&_pcd, 512);
-        // Set Tx FIFO sizes (IN endpoints)
-        HAL_PCDEx_SetTxFiFo(&_pcd, 0, 128); // Control endpoint
-        
     #define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((T*)pdev->pCtx)->_usbd_##name(); }
     #define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((T*)pdev->pCtx)->_usbd_##name(t0); }
     #define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((T*)pdev->pCtx)->_usbd_##name(t0, t1); }

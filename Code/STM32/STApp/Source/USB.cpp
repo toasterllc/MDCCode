@@ -2,17 +2,30 @@
 #include "Enum.h"
 
 Enum(uint8_t, Endpoint, Endpoints,
+    Control = 0x00,
+    
     // OUT endpoints (high bit 0)
     CmdOut  = 0x01,
     
     // IN endpoints (high bit 1)
-    PixIn  = 0x81,
+    PixIn   = 0x81,
 );
 
 void USB::init() {
     _super::init();
-    // TODO: revisit to determine proper FIFO size
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 512);
+    
+    // ## Set Rx/Tx FIFO sizes. Notes:
+    //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst the all endpoints.
+    //   - FIFO sizes (supplied as arguments below) have units of 4-byte words.
+    
+    // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
+    //   "The OTG peripheral uses a single receive FIFO that receives
+    //   the data directed to all OUT endpoints."
+    HAL_PCDEx_SetRxFiFo(&_pcd, 64);
+    
+    // # Set Tx FIFO sizes (IN endpoints; DIEPTXF0 register)
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Control), 16);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 768);
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
