@@ -15,8 +15,8 @@ private:
     void _handleCmd(const USB::Cmd& ev);
     void _handleQSPIEvent(const QSPI::DoneEvent& ev);
     void _handlePixUSBEvent(const USB::DoneEvent& ev);
-    void _recvPixDataViaICE40();
-    void _sendPixDataViaUSB();
+    void _recvPixDataFromICE40();
+    void _sendPixDataOverUSB();
     
     ICE40::SDGetStatusResp _sdGetStatus();
     ICE40::SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
@@ -32,7 +32,7 @@ private:
     QSPI _qspi;
     
     bool _pixStreamEnabled = 0;
-//    BufQueue<32*1024, 2> _pixBufs;
+    BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
     
     friend int main();

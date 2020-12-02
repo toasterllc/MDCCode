@@ -37,7 +37,9 @@ private:
     GPIO _iceSPIClk;
     GPIO _iceSPICS_;
     
-    BufQueue<1024, 2> _iceBufs;
+    uint8_t _iceBuf0[1024];
+    uint8_t _iceBuf1[1024];
+    BufQueue<2> _iceBufs;
     size_t _iceRemLen = 0;
     STLoader::ICEStatus _iceStatus __attribute__((aligned(4))) = STLoader::ICEStatus::Idle;
     

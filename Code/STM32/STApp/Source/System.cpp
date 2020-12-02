@@ -5,8 +5,11 @@
 #include "Startup.h"
 #include "STAppTypes.h"
 
-static uint8_t _buf0[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
-static uint8_t _buf1[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram2")));
+// Put our Pix buffers in two different SRAM regions, so the DMA
+// controllers can access them simultaneously. (SRAM1 and SRAM2
+// are on separate DMA slave buses.) Unfortunately SRAM2 is only 16KB.
+static uint8_t _pixBuf0[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
+static uint8_t _pixBuf1[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram2")));
 
 using namespace STApp;
 
@@ -25,7 +28,8 @@ using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
 using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
 System::System() :
-_qspi(QSPI::Mode::Dual, 1) { // clock divider=1 => run QSPI clock at 64 MHz
+_qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
+_pixBufs(_pixBuf0, _pixBuf1) {
 }
 
 void System::init() {
@@ -723,8 +727,9 @@ void System::_handleCmd(const USB::Cmd& ev) {
     // PixStream
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
-            _sendPixDataViaUSB();
-//            _recvPixDataViaICE40();
+            _pixStreamEnabled = true;
+//            _pixRemLen = 128*1024*1024;
+            _recvPixDataFromICE40();
         
         } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
             // TODO: how do we disable streaming?
@@ -755,23 +760,69 @@ void System::_handleCmd(const USB::Cmd& ev) {
 }
 
 void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
-    _recvPixDataViaICE40();
+    Assert(_pixStreamEnabled);
+    Assert(_pixBufs.writable());
+    
+    const bool wasReadable = _pixBufs.readable();
+    
+    // Enqueue the buffer
+    {
+        // Update the number of remaining bytes to receive from the host
+        _pixRemLen -= _pixBufs.writeBuf().len;
+        _pixBufs.writeEnqueue();
+    }
+    
+    // Start a USB transaction when we go from 0->1 buffers
+    if (!wasReadable) {
+        _sendPixDataOverUSB();
+    }
+    
+    // Prepare to receive more data if we're expecting more,
+    // and we have a buffer to store the data in
+    if (_pixRemLen && _pixBufs.writable()) {
+        _recvPixDataFromICE40();
+    }
 }
 
 void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
-    _sendPixDataViaUSB();
+    Assert(_pixStreamEnabled);
+    Assert(_pixBufs.readable());
+    const bool wasWritable = _pixBufs.writable();
+    
+    // Dequeue the buffer
+    _pixBufs.readDequeue();
+    
+    // Start another USB transaction if there's more data to write
+    if (_pixBufs.readable()) {
+        _sendPixDataOverUSB();
+    }
+    
+    if (_pixRemLen) {
+        // Prepare to receive more data if we're expecting more,
+        // and we were previously un-writable
+        if (!wasWritable) {
+            _recvPixDataFromICE40();
+        }
+    } else if (!_pixBufs.readable()) {
+        // We're done32,768
+        // TODO: what do after we sent all the data?
+    }
 }
 
 // Arrange for pix data to be received from ICE40
-void System::_recvPixDataViaICE40() {
+void System::_recvPixDataFromICE40() {
+    Assert(_pixBufs.writable());
     ICE40::Msg msg;
     msg.type = 0x01;
-    _ice40TransferAsync(_qspi, msg, (void*)_buf1, sizeof(_buf1));
+    _pixBufs.writeBuf().len = _pixBufs.writeBuf().cap;
+    _ice40TransferAsync(_qspi, msg, (void*)_pixBufs.writeBuf().data, _pixBufs.writeBuf().len);
 }
 
 // Arrange for pix data to be sent over USB
-void System::_sendPixDataViaUSB() {
-    _usb.pixSend(_buf0, sizeof(_buf0));
+void System::_sendPixDataOverUSB() {
+    Assert(_pixBufs.readable());
+    const auto& buf = _pixBufs.readBuf();
+    _usb.pixSend(buf.data, buf.len);
 }
 
 System Sys;

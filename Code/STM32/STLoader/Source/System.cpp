@@ -12,7 +12,8 @@ _qspi(QSPI::Mode::Single, 5), // clock divider=5 => run QSPI clock at 21.3 MHz
 _iceCRST_(GPIOI, GPIO_PIN_6),
 _iceCDONE(GPIOI, GPIO_PIN_7),
 _iceSPIClk(GPIOB, GPIO_PIN_2),
-_iceSPICS_(GPIOB, GPIO_PIN_6) {
+_iceSPICS_(GPIOB, GPIO_PIN_6),
+_iceBufs(_iceBuf0, _iceBuf1) {
 }
 
 void System::init() {
