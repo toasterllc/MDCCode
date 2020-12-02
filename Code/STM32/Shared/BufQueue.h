@@ -14,16 +14,17 @@ template <size_t Count>
 class BufQueue {
 private:
     struct Buf {
-        uint8_t* data = nullptr;
-        size_t cap = 0;
+        template <typename T>
+        Buf(T& buf) : data(buf), cap(sizeof(buf)) {}
+        uint8_t*const data = nullptr;
+        const size_t cap = 0;
         size_t len = 0;
     };
     
 public:
     template <typename... Ts>
-    BufQueue(Ts&... bufs) {
-        static_assert(sizeof...(bufs) == Count, "invalid number of buffers");
-        _init(bufs...);
+    BufQueue(Ts&... bufs) : _bufs{bufs...} {
+        static_assert(Count && sizeof...(bufs)==Count, "invalid number of buffers");
     }
     
     // Reading
@@ -61,19 +62,4 @@ private:
     size_t _w = 0;
     size_t _r = 0;
     bool _full = false;
-    
-    template <typename T>
-    void _init(T& buf) {
-        constexpr size_t idx = Count-1;
-        _bufs[idx].data = buf;
-        _bufs[idx].cap = sizeof(buf);
-    }
-    
-    template <typename T, typename... Ts>
-    void _init(T& buf, Ts&... bufs) {
-        constexpr size_t idx = Count-sizeof...(bufs)-1;
-        _bufs[idx].data = buf;
-        _bufs[idx].cap = sizeof(buf);
-        _init(bufs...);
-    }
 };

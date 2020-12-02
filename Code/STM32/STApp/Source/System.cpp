@@ -10,7 +10,6 @@
 // are on separate DMA slave buses.) Unfortunately SRAM2 is only 16KB.
 static uint8_t _pixBuf0[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
 static uint8_t _pixBuf1[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
-//static uint8_t _pixBuf1[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram2")));
 
 using namespace STApp;
 
@@ -29,7 +28,7 @@ using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
 using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
 System::System() :
-_qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
+_qspi(QSPI::Mode::Dual, 0), // clock divider=0 => run QSPI clock at 100 MHz
 _pixBufs(_pixBuf0, _pixBuf1) {
 }
 
@@ -751,7 +750,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
             _pixStreamEnabled = true;
-//            _pixRemLen = 128*1024*1024;
+            _pixRemLen = 128*1024*1024;
             _recvPixDataFromICE40();
         
         } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
@@ -791,7 +790,7 @@ void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
     // Enqueue the buffer
     {
         // Update the number of remaining bytes to receive from the host
-        _pixRemLen -= _pixBufs.writeBuf().len;
+//        _pixRemLen -= _pixBufs.writeBuf().len;
         _pixBufs.writeEnqueue();
     }
     
@@ -827,7 +826,7 @@ void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
             _recvPixDataFromICE40();
         }
     } else if (!_pixBufs.readable()) {
-        // We're done32,768
+        // We're done
         // TODO: what do after we sent all the data?
     }
 }
@@ -838,7 +837,7 @@ void System::_recvPixDataFromICE40() {
     ICE40::Msg msg;
     msg.type = 0x01;
     _pixBufs.writeBuf().len = _pixBufs.writeBuf().cap;
-    _ice40TransferAsync(_qspi, msg, (void*)_pixBufs.writeBuf().data, _pixBufs.writeBuf().len);
+    _ice40TransferAsync(_qspi, msg, _pixBufs.writeBuf().data, _pixBufs.writeBuf().len);
 }
 
 // Arrange for pix data to be sent over USB

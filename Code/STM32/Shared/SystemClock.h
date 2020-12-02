@@ -19,7 +19,7 @@ public:
             cfg.PLL.PLLState = RCC_PLL_ON;
             cfg.PLL.PLLSource = RCC_PLLSOURCE_HSE;
             cfg.PLL.PLLM = 12;
-            cfg.PLL.PLLN = 128;
+            cfg.PLL.PLLN = 100;
             cfg.PLL.PLLP = RCC_PLLP_DIV2;
             cfg.PLL.PLLQ = 2;
             
@@ -36,7 +36,7 @@ public:
             cfg.APB1CLKDivider = RCC_HCLK_DIV4;
             cfg.APB2CLKDivider = RCC_HCLK_DIV2;
             
-            HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
+            HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_4);
             Assert(hr == HAL_OK);
         }
         
