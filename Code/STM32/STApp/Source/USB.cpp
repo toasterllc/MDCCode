@@ -15,7 +15,7 @@ void USB::init() {
     _super::init(true);
     
     // ## Set Rx/Tx FIFO sizes. Notes:
-    //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst the all endpoints.
+    //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
     //   - FIFO sizes (supplied as arguments below) have units of 4-byte words.
     
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
@@ -25,7 +25,7 @@ void USB::init() {
     
     // # Set Tx FIFO sizes (IN endpoints; DIEPTXF0 register)
     HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Control), 16);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 768);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 768);     // TODO: perf: try making larger for
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {

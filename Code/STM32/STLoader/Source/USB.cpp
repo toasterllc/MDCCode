@@ -23,7 +23,7 @@ void USB::init() {
     _super::init(false);
     
     // ## Set Rx/Tx FIFO sizes. Notes:
-    //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst the all endpoints.
+    //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
     //   - FIFO sizes (supplied as arguments below) have units of 4-byte words.
     
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
