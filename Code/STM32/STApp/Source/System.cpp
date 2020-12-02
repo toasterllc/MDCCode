@@ -8,7 +8,7 @@
 // Put our Pix buffers in two different SRAM regions, so the DMA
 // controllers can access them simultaneously. (SRAM1 and SRAM2
 // are on separate DMA slave buses.) Unfortunately SRAM2 is only 16KB.
-static uint8_t _pixBuf0[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
+static uint8_t _pixBuf0[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
 static uint8_t _pixBuf1[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram2")));
 
 using namespace STApp;
@@ -680,25 +680,43 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 
 
 void System::_handleEvent() {
-    // Wait for an event to occur on one of our channels
-    ChannelSelect::Start();
-    if (auto x = _usb.eventChannel.readSelect()) {
-        _handleUSBEvent(*x);
+    const uint32_t iterCount = 2048;
+    ICE40::Msg msg;
+    msg.type = 0x01;
     
-    } else if (auto x = _usb.cmdChannel.readSelect()) {
-        _handleCmd(*x);
+    uint32_t startTime = HAL_GetTick();
+        for (uint32_t i=0; i<iterCount; i++) {
+            _ice40Transfer(_qspi, msg, (void*)_pixBuf0, sizeof(_pixBuf0));
+        }
+    uint32_t endTime = HAL_GetTick();
     
-    } else if (auto x = _qspi.eventChannel.readSelect()) {
-        _handleQSPIEvent(*x);
-    
-    } else if (auto x = _usb.pixChannel.readSelect()) {
-        _handlePixUSBEvent(*x);
-    
-    } else {
-        // No events, go to sleep
-        ChannelSelect::Wait();
-    }
+    uint64_t bytes = sizeof(_pixBuf0)*iterCount;
+    uint64_t durationMs = endTime-startTime;
+    volatile uint64_t bytesPerSecond = ((bytes*UINT64_C(1000))/durationMs);
+    for (;;);
 }
+
+
+//void System::_handleEvent() {
+//    // Wait for an event to occur on one of our channels
+//    ChannelSelect::Start();
+//    if (auto x = _usb.eventChannel.readSelect()) {
+//        _handleUSBEvent(*x);
+//    
+//    } else if (auto x = _usb.cmdChannel.readSelect()) {
+//        _handleCmd(*x);
+//    
+//    } else if (auto x = _qspi.eventChannel.readSelect()) {
+//        _handleQSPIEvent(*x);
+//    
+//    } else if (auto x = _usb.pixChannel.readSelect()) {
+//        _handlePixUSBEvent(*x);
+//    
+//    } else {
+//        // No events, go to sleep
+//        ChannelSelect::Wait();
+//    }
+//}
 
 void System::_handleUSBEvent(const USB::Event& ev) {
     using Type = USB::Event::Type;

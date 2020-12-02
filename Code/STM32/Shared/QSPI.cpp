@@ -34,7 +34,7 @@ void QSPI::init() {
     // Init QUADSPI
     _device.Instance = QUADSPI;
     _device.Init.ClockPrescaler = _clkDivider; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
-    _device.Init.FifoThreshold = 1;
+    _device.Init.FifoThreshold = 4;
     _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
 //    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
     _device.Init.FlashSize = 31; // Flash size is 31+1 address bits => 2^(31+1) bytes
@@ -54,11 +54,14 @@ void QSPI::init() {
     _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
     _dma.Init.PeriphInc = DMA_PINC_DISABLE;
     _dma.Init.MemInc = DMA_MINC_ENABLE;
-    _dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    _dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    _dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    _dma.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     _dma.Init.Mode = DMA_NORMAL;
     _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
-    _dma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    _dma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    _dma.Init.MemBurst = DMA_MBURST_SINGLE;
+    _dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
     
     hs = HAL_DMA_Init(&_dma);
     Assert(hs == HAL_OK);
