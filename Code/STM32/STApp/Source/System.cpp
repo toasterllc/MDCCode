@@ -5,6 +5,9 @@
 #include "Startup.h"
 #include "STAppTypes.h"
 
+static uint8_t _buf0[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
+static uint8_t _buf1[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram2")));
+
 using namespace STApp;
 
 using SDClkSrcMsg = ICE40::SDClkSrcMsg;
@@ -721,7 +724,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
             _sendPixDataViaUSB();
-            _recvPixDataViaICE40();
+//            _recvPixDataViaICE40();
         
         } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
             // TODO: how do we disable streaming?

@@ -119,17 +119,18 @@ static void pixStream(const Args& args, USBInterface& interface) {
     if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
     
     for (;;) {
-        const size_t imageSize = 128*1024*1024;
-        auto buf = std::make_unique<uint8_t[]>(imageSize);
+        const size_t bufSize = 128*1024*1024;
+        auto buf = std::make_unique<uint8_t[]>(bufSize);
         
         auto startTime = MyTime::Now();
-        auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), imageSize);
+        auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufSize);
         if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
+        
         auto durationNs = MyTime::DurationNs(startTime);
-        double bitsPerSecond = ((double)imageSize*8) / ((double)durationNs/UINT64_C(1000000000));
+        double bitsPerSecond = ((double)len*8) / ((double)durationNs/UINT64_C(1000000000));
         double megabytesPerSecond = bitsPerSecond/(8*1024*1024);
         printf("%ju bytes took %ju ns == %.0f bits/sec == %.1f MB/sec\n",
-            (uintmax_t)imageSize, (uintmax_t)durationNs, bitsPerSecond, megabytesPerSecond);
+            (uintmax_t)len, (uintmax_t)durationNs, bitsPerSecond, megabytesPerSecond);
         
         
         

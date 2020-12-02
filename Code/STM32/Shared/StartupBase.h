@@ -13,7 +13,7 @@ public:
         extern uint8_t _edata_ram[];
         extern uint8_t _sbss[];
         extern uint8_t _ebss[];
-        extern uint8_t _sisr_vector[];
+        extern uint8_t VectorTable[];
         extern int main() __attribute__((noreturn));
         
         // Copy .data section from flash to RAM
@@ -27,7 +27,7 @@ public:
         }
         
         // Set the vector table address
-        SCB->VTOR = (uint32_t)_sisr_vector;
+        SCB->VTOR = (uint32_t)VectorTable;
         
         // Call static constructors
         __libc_init_array();

@@ -12,7 +12,7 @@ Enum(uint8_t, Endpoint, Endpoints,
 );
 
 void USB::init() {
-    _super::init();
+    _super::init(true);
     
     // ## Set Rx/Tx FIFO sizes. Notes:
     //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst the all endpoints.

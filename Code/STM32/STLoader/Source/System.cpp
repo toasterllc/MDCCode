@@ -91,12 +91,22 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     case STCmd::Op::WriteData: {
         _stStatus = STStatus::Writing;
         void*const addr = (void*)cmd.arg.writeData.addr;
-        // Verify that `addr` is in the allowed RAM range
-        extern uint8_t _sapp_ram[];
-        extern uint8_t _eapp_ram[];
-        Assert(addr >= _sapp_ram); // TODO: error handling
-        Assert(addr < _eapp_ram); // TODO: error handling
-        size_t len = (uintptr_t)_eapp_ram-(uintptr_t)addr;
+        // Verify that `addr` is in one of the allowed RAM regions
+        extern uint8_t _sitcm_ram[], _eitcm_ram[];
+        extern uint8_t _sdtcm[], _edtcm[];
+        extern uint8_t _ssram1[], _esram1[];
+        size_t len = 0;
+        if (addr>=_sitcm_ram && addr<_eitcm_ram) {
+            len = (uintptr_t)_eitcm_ram-(uintptr_t)addr;
+        } else if (addr>=_sdtcm && addr<_edtcm) {
+            len = (uintptr_t)_edtcm-(uintptr_t)addr;
+        } else if (addr>=_ssram1 && addr<_esram1) {
+            len = (uintptr_t)_esram1-(uintptr_t)addr;
+        } else {
+            // TODO: implement proper error handling on writing out of the allowed regions
+            Abort();
+        }
+        
         // Round `len` down to the nearest max packet size.
         // (We can only restrict the receipt of USB data
         // at multiples of the max packet size.)

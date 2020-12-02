@@ -1646,7 +1646,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Close(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   */
 HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
 {
-  AssertArg(pBuf);
+  // pBuf==0x0 is allowed, since that's where ITCM RAM is!
   AssertArg(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
   AssertArg(len); // We don't support zero-length packets
   PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];

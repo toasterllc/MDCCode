@@ -1,19 +1,13 @@
-StackSize = 0x400;
-ENTRY(ISR_Reset)
-
-MEMORY {
-    /* Stay out of the last 8K, which is reserved for the bootloader. */
-    RAM(rwx): ORIGIN = 0x20000000, LENGTH = 248K
-}
+INCLUDE LinkerBase.ld
 
 SECTIONS {
 
-    .isr_vector : {
+    .isr : {
         . = ALIGN(4);
-        _sisr_vector = .;
-        KEEP(*(.isr_vector))
+        _sisr = .;
+        KEEP(*(.isr))
         . = ALIGN(4);
-    } >RAM
+    } >ITCM_RAM
     
     .text : {
         . = ALIGN(4);
@@ -25,34 +19,34 @@ SECTIONS {
         KEEP(*(.init))
         KEEP(*(.fini))
         . = ALIGN(4);
-    } >RAM
+    } >DTCM
     
     .rodata : {
         . = ALIGN(4);
         *(.rodata)
         *(.rodata*)
         . = ALIGN(4);
-    } >RAM
+    } >DTCM
     
     .ARM.extab : {
         . = ALIGN(4);
         *(.ARM.extab*)
         *(.gnu.linkonce.armextab.*)
         . = ALIGN(4);
-    } >RAM
+    } >DTCM
     
     .ARM : {
         . = ALIGN(4);
         *(.ARM.exidx*)
         . = ALIGN(4);
-    } >RAM
+    } >DTCM
     
     .preinit_array : {
         . = ALIGN(4);
         PROVIDE_HIDDEN(__preinit_array_start = .);
         KEEP(*(.preinit_array*))
         PROVIDE_HIDDEN(__preinit_array_end = .);
-    } >RAM
+    } >DTCM
     
     .init_array : {
         . = ALIGN(4);
@@ -60,7 +54,7 @@ SECTIONS {
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array*))
         PROVIDE_HIDDEN(__init_array_end = .);
-    } >RAM
+    } >DTCM
     
     .fini_array : {
         . = ALIGN(4);
@@ -68,7 +62,7 @@ SECTIONS {
         KEEP(*(SORT(.fini_array.*)))
         KEEP(*(.fini_array*))
         PROVIDE_HIDDEN(__fini_array_end = .);
-    } >RAM
+    } >DTCM
     
     .data : {
         . = ALIGN(4);
@@ -78,7 +72,7 @@ SECTIONS {
         *(.data*)
         . = ALIGN(4);
         _edata_ram = .;
-    } >RAM
+    } >DTCM
     
     .bss : {
         . = ALIGN(4);
@@ -88,14 +82,14 @@ SECTIONS {
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
-    } >RAM
+    } >DTCM
     
-    .noinit : {
+    .uninit (NOLOAD) : {
         . = ALIGN(4);
-        *(.noinit)
-        *(.noinit*)
+        *(.uninit)
+        *(.uninit*)
         . = ALIGN(4);
-    } >RAM
+    } >DTCM
     
     .stack : {
         . = ALIGN(4);
@@ -103,7 +97,24 @@ SECTIONS {
         . = . + StackSize;
         . = ALIGN(4);
         _estack = .;
-    } >RAM
+    } >DTCM
+    
+    .sram1 : {
+        . = ALIGN(4);
+        *(.sram1)
+        *(.sram1*)
+        . = ALIGN(4);
+    } >SRAM1
+    
+    /* SRAM2 is marked NOLOAD to prevent it from being initialized,
+       because it's used by the bootloader. See details under the
+       MEMORY portion of this file. */
+    .sram2 (NOLOAD) : {
+        . = ALIGN(4);
+        *(.sram2)
+        *(.sram2*)
+        . = ALIGN(4);
+    } >SRAM2
     
     /* Remove information from the compiler libraries */
     /DISCARD/ : {

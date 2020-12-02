@@ -27,11 +27,13 @@ void Startup::run() {
     _super::run();
 }
 
-// The Startup class needs to exist in the `noinit` section,
+// The Startup class needs to exist in the `uninit` section,
 // so that its _appEntryPointAddr member doesn't get clobbered
 // on startup.
-Startup Start __attribute__((section(".noinit")));
+Startup Start __attribute__((section(".uninit")));
 
-extern "C" void StartupRun() {
+// StartupRun needs to be in the .isr section so that it's near ISR_Reset,
+// otherwise we can get a linker error.
+extern "C" __attribute__((section(".isr"))) void StartupRun() {
     Start.run();
 }

@@ -17,7 +17,10 @@ Enum(uint8_t, Endpoint, Endpoints,
 );
 
 void USB::init() {
-    _super::init();
+    // Disable USB DMA because we want USB to be able to write to
+    // ITCM RAM (because we write to that region as a part of
+    // bootloading), but DMA masters can't access it.
+    _super::init(false);
     
     // ## Set Rx/Tx FIFO sizes. Notes:
     //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst the all endpoints.

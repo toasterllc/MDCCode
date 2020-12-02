@@ -1,20 +1,13 @@
-StackSize = 0x400;
-ENTRY(ISR_Reset)
-
-MEMORY {
-    FLASH     (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
-    APP_RAM   (r)     : ORIGIN = 0x20000000,  LENGTH = 248K   /* RAM reserved for application */
-    RAM       (rwx)   : ORIGIN = 0x2003E000,  LENGTH = 8K     /* RAM reserved for bootloader */
-}
+INCLUDE LinkerBase.ld
 
 SECTIONS {
 
-    .isr_vector : {
+    .isr : {
         . = ALIGN(4);
-        _sisr_vector = .;
-        KEEP(*(.isr_vector))
+        _sisr = .;
+        KEEP(*(.isr))
         . = ALIGN(4);
-    } >FLASH
+    } >ITCM_FLASH
     
     .text : {
         . = ALIGN(4);
@@ -26,34 +19,34 @@ SECTIONS {
         KEEP(*(.init))
         KEEP(*(.fini))
         . = ALIGN(4);
-    } >FLASH
+    } >ITCM_FLASH
     
     .rodata : {
         . = ALIGN(4);
         *(.rodata)
         *(.rodata*)
         . = ALIGN(4);
-    } >FLASH
+    } >ITCM_FLASH
     
     .ARM.extab : {
         . = ALIGN(4);
         *(.ARM.extab*)
         *(.gnu.linkonce.armextab.*)
         . = ALIGN(4);
-    } >FLASH
+    } >ITCM_FLASH
     
     .ARM : {
         . = ALIGN(4);
         *(.ARM.exidx*)
         . = ALIGN(4);
-    } >FLASH
+    } >ITCM_FLASH
     
     .preinit_array : {
         . = ALIGN(4);
         PROVIDE_HIDDEN(__preinit_array_start = .);
         KEEP(*(.preinit_array*))
         PROVIDE_HIDDEN(__preinit_array_end = .);
-    } >FLASH
+    } >ITCM_FLASH
     
     .init_array : {
         . = ALIGN(4);
@@ -61,7 +54,7 @@ SECTIONS {
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array*))
         PROVIDE_HIDDEN(__init_array_end = .);
-    } >FLASH
+    } >ITCM_FLASH
     
     .fini_array : {
         . = ALIGN(4);
@@ -69,7 +62,7 @@ SECTIONS {
         KEEP(*(SORT(.fini_array.*)))
         KEEP(*(.fini_array*))
         PROVIDE_HIDDEN(__fini_array_end = .);
-    } >FLASH
+    } >ITCM_FLASH
     
     .data : {
         . = ALIGN(4);
@@ -79,7 +72,7 @@ SECTIONS {
         *(.data*)
         . = ALIGN(4);
         _edata_ram = .;
-    } >RAM AT> FLASH
+    } >SRAM2 AT> ITCM_FLASH
     
     .bss : {
         . = ALIGN(4);
@@ -89,14 +82,14 @@ SECTIONS {
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
-    } >RAM
+    } >SRAM2
     
-    .noinit : {
+    .uninit (NOLOAD) : {
         . = ALIGN(4);
-        *(.noinit)
-        *(.noinit*)
+        *(.uninit)
+        *(.uninit*)
         . = ALIGN(4);
-    } >RAM
+    } >SRAM2
     
     .stack : {
         . = ALIGN(4);
@@ -104,13 +97,7 @@ SECTIONS {
         . = . + StackSize;
         . = ALIGN(4);
         _estack = .;
-    } >RAM
-    
-    .app_ram : {
-        _sapp_ram = .;
-        . = . + LENGTH(APP_RAM);
-        _eapp_ram = .;
-    } >APP_RAM
+    } >SRAM2
     
     /* Remove information from the compiler libraries */
     /DISCARD/ : {

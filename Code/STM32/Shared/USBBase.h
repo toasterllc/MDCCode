@@ -31,7 +31,7 @@ public:
     };
     
     // Initialization
-    void init() {
+    void init(bool dmaEnable) {
         USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
         Assert(us == USBD_OK);
         
@@ -40,7 +40,7 @@ public:
         
         _pcd.Instance = USB_OTG_HS;
         _pcd.Init.dev_endpoints = 9;
-        _pcd.Init.dma_enable = true;
+        _pcd.Init.dma_enable = dmaEnable;
         _pcd.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
         _pcd.Init.sof_enable = false;
         _pcd.Init.low_power_enable = false;

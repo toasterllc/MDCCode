@@ -6,33 +6,12 @@
 
 .global VectorTable
 .global ISR_Default
-
-
-// Reset ISR
-.section .text.ISR_Reset
-.weak ISR_Reset
-.type ISR_Reset, %function
-ISR_Reset:
-    // Set stack pointer
-    ldr sp, =_estack
-    // Jump to init routine
-    b StartupRun
-.size ISR_Reset, .-ISR_Reset
-
-
-// Default ISR handler
-.section .text.ISR_Default,"ax",%progbits
-ISR_Default:
-    b  ISR_Default
-.size ISR_Default, .-ISR_Default
+.global ISR_Reset
 
 
 // Vector table
-.section .isr_vector,"a",%progbits
+.section .isr
 .type VectorTable, %object
-.size VectorTable, .-VectorTable
-
-
 VectorTable:
     .word _estack
     .word ISR_Reset
@@ -444,3 +423,20 @@ VectorTable:
 
     .weak      ISR_SDMMC2
     .thumb_set ISR_SDMMC2,ISR_Default
+
+
+// Reset ISR handler
+.section .isr
+.type ISR_Reset, %function
+ISR_Reset:
+    // Set stack pointer
+    ldr sp, =_estack
+    // Jump to init routine
+    b StartupRun
+
+
+// Default ISR handler
+.section .isr
+.type ISR_Default, %function
+ISR_Default:
+    b  ISR_Default
