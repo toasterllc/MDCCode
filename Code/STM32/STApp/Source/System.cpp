@@ -720,8 +720,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     // PixStream
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
-            _pixStreamEnabled = true;
-            _pixRemLen = 2304*1296*2;
+            _sendPixDataViaUSB();
             _recvPixDataViaICE40();
         
         } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
@@ -753,69 +752,23 @@ void System::_handleCmd(const USB::Cmd& ev) {
 }
 
 void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
-    Assert(_pixStreamEnabled);
-    Assert(_pixBufs.writable());
-    
-    const bool wasReadable = _pixBufs.readable();
-    
-    // Enqueue the buffer
-    {
-        // Update the number of remaining bytes to receive from the host
-        _pixRemLen -= _pixBufs.writeBuf().len;
-        _pixBufs.writeEnqueue();
-    }
-    
-    // Start a USB transaction when we go from 0->1 buffers
-    if (!wasReadable) {
-        _sendPixDataViaUSB();
-    }
-    
-    // Prepare to receive more data if we're expecting more,
-    // and we have a buffer to store the data in
-    if (_pixRemLen && _pixBufs.writable()) {
-        _recvPixDataViaICE40();
-    }
+    _recvPixDataViaICE40();
 }
 
 void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
-    Assert(_pixStreamEnabled);
-    Assert(_pixBufs.readable());
-    const bool wasWritable = _pixBufs.writable();
-    
-    // Dequeue the buffer
-    _pixBufs.readDequeue();
-    
-    // Start another USB transaction if there's more data to write
-    if (_pixBufs.readable()) {
-        _sendPixDataViaUSB();
-    }
-    
-    if (_pixRemLen) {
-        // Prepare to receive more data if we're expecting more,
-        // and we were previously un-writable
-        if (!wasWritable) {
-            _recvPixDataViaICE40();
-        }
-    } else if (!_pixBufs.readable()) {
-        // We're done32,768
-        // TODO: what do after we sent all the data?
-    }
+    _sendPixDataViaUSB();
 }
 
 // Arrange for pix data to be received from ICE40
 void System::_recvPixDataViaICE40() {
-    Assert(_pixBufs.writable());
     ICE40::Msg msg;
     msg.type = 0x01;
-    _pixBufs.writeBuf().len = sizeof(_pixBufs.writeBuf().data);
-    _ice40TransferAsync(_qspi, msg, (void*)_pixBufs.writeBuf().data, sizeof(_pixBufs.writeBuf().data));
+    _ice40TransferAsync(_qspi, msg, (void*)_buf1, sizeof(_buf1));
 }
 
 // Arrange for pix data to be sent over USB
 void System::_sendPixDataViaUSB() {
-    Assert(_pixBufs.readable());
-    const auto& buf = _pixBufs.readBuf();
-    _usb.pixSend(buf.data, buf.len);
+    _usb.pixSend(_buf0, sizeof(_buf0));
 }
 
 System Sys;
