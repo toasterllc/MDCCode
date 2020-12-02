@@ -13,10 +13,9 @@ public:
     }
     
     static void Sleep() {
-        // TODO: uncomment
-//        HAL_SuspendTick();
+        HAL_SuspendTick();
         __WFI();
-//        HAL_ResumeTick();
+        HAL_ResumeTick();
     }
     
     ~IRQState() {

@@ -9,7 +9,8 @@
 // controllers can access them simultaneously. (SRAM1 and SRAM2
 // are on separate DMA slave buses.) Unfortunately SRAM2 is only 16KB.
 static uint8_t _pixBuf0[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
-static uint8_t _pixBuf1[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram2")));
+static uint8_t _pixBuf1[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
+//static uint8_t _pixBuf1[16*1024] __attribute__((aligned(4))) __attribute__((section(".sram2")));
 
 using namespace STApp;
 
@@ -133,6 +134,28 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
 //        }
 //    }
 //    
+//    for (;;);
+//}
+
+// Test QSPI perf
+//
+// *** NOTE ***
+//   HAL_SuspendTick/HAL_ResumeTick must be commented-out
+//   in IRQState.h to accurately track time!
+//void System::_handleEvent() {
+//    const uint32_t iterCount = 2048;
+//    ICE40::Msg msg;
+//    msg.type = 0x01;
+//    
+//    uint32_t startTime = HAL_GetTick();
+//        for (uint32_t i=0; i<iterCount; i++) {
+//            _ice40Transfer(_qspi, msg, (void*)_pixBuf0, sizeof(_pixBuf0));
+//        }
+//    uint32_t endTime = HAL_GetTick();
+//    
+//    uint64_t bytes = sizeof(_pixBuf0)*iterCount;
+//    uint64_t durationMs = endTime-startTime;
+//    volatile uint64_t bytesPerSecond = ((bytes*UINT64_C(1000))/durationMs);
 //    for (;;);
 //}
 
@@ -680,43 +703,25 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 
 
 void System::_handleEvent() {
-    const uint32_t iterCount = 2048;
-    ICE40::Msg msg;
-    msg.type = 0x01;
+    // Wait for an event to occur on one of our channels
+    ChannelSelect::Start();
+    if (auto x = _usb.eventChannel.readSelect()) {
+        _handleUSBEvent(*x);
     
-    uint32_t startTime = HAL_GetTick();
-        for (uint32_t i=0; i<iterCount; i++) {
-            _ice40Transfer(_qspi, msg, (void*)_pixBuf0, sizeof(_pixBuf0));
-        }
-    uint32_t endTime = HAL_GetTick();
+    } else if (auto x = _usb.cmdChannel.readSelect()) {
+        _handleCmd(*x);
     
-    uint64_t bytes = sizeof(_pixBuf0)*iterCount;
-    uint64_t durationMs = endTime-startTime;
-    volatile uint64_t bytesPerSecond = ((bytes*UINT64_C(1000))/durationMs);
-    for (;;);
+    } else if (auto x = _qspi.eventChannel.readSelect()) {
+        _handleQSPIEvent(*x);
+    
+    } else if (auto x = _usb.pixChannel.readSelect()) {
+        _handlePixUSBEvent(*x);
+    
+    } else {
+        // No events, go to sleep
+        ChannelSelect::Wait();
+    }
 }
-
-
-//void System::_handleEvent() {
-//    // Wait for an event to occur on one of our channels
-//    ChannelSelect::Start();
-//    if (auto x = _usb.eventChannel.readSelect()) {
-//        _handleUSBEvent(*x);
-//    
-//    } else if (auto x = _usb.cmdChannel.readSelect()) {
-//        _handleCmd(*x);
-//    
-//    } else if (auto x = _qspi.eventChannel.readSelect()) {
-//        _handleQSPIEvent(*x);
-//    
-//    } else if (auto x = _usb.pixChannel.readSelect()) {
-//        _handlePixUSBEvent(*x);
-//    
-//    } else {
-//        // No events, go to sleep
-//        ChannelSelect::Wait();
-//    }
-//}
 
 void System::_handleUSBEvent(const USB::Event& ev) {
     using Type = USB::Event::Type;
