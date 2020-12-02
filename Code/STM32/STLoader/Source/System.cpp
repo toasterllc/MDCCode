@@ -8,7 +8,6 @@
 using namespace STLoader;
 
 System::System() :
-_qspi(QSPI::Mode::Single, 5), // clock divider=5 => run QSPI clock at 21.3 MHz
 _iceCRST_(GPIOI, GPIO_PIN_6),
 _iceCDONE(GPIOI, GPIO_PIN_7),
 _iceSPIClk(GPIOB, GPIO_PIN_2),
@@ -22,7 +21,10 @@ void System::init() {
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
     _usb.init();
-    _qspi.init();
+    
+    // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
+    // QSPI alignment=byte, so we can transfer single bytes at a time
+    _qspi.init(QSPI::Mode::Single, 5, QSPI::Align::Byte);
     
     // Configure ice40 control GPIOs
     _iceCRST_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -307,7 +309,7 @@ void System::_iceHandleQSPIEvent(const QSPI::DoneEvent& ev) {
 void System::_iceDataRecv() {
     Assert(_iceBufs.writable());
     auto& buf = _iceBufs.writeBuf();
-    _usb.iceDataRecv(buf.data, sizeof(buf.data)); // TODO: handle errors
+    _usb.iceDataRecv(buf.data, buf.cap); // TODO: handle errors
 }
 
 void System::_qspiWriteBuf() {

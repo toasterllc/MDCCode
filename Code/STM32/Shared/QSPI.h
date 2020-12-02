@@ -13,9 +13,13 @@ public:
         Dual
     };
     
-    QSPI(Mode mode, uint8_t clkDivider);
-    void init();
-//    void meowmix();
+    enum class Align {
+        Byte,
+        Word // Best performance for large transfers
+    };
+    
+    QSPI();
+    void init(Mode mode, uint8_t clkDivider, Align align);
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     void command(const QSPI_CommandTypeDef& cmd);
     void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len);
@@ -31,8 +35,6 @@ private:
     void _handleReadDone();
     void _handleWriteDone();
     
-    Mode _mode = Mode::Single;
-    uint8_t _clkDivider = 0;
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
     GPIO _clk;

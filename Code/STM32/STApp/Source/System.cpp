@@ -5,9 +5,8 @@
 #include "Startup.h"
 #include "STAppTypes.h"
 
-// Put our Pix buffers in two different SRAM regions, so the DMA
-// controllers can access them simultaneously. (SRAM1 and SRAM2
-// are on separate DMA slave buses.) Unfortunately SRAM2 is only 16KB.
+// We're using 63K buffers instead of 64K, because the
+// max DMA transfer is 65535 bytes, not 65536.
 static uint8_t _pixBuf0[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
 static uint8_t _pixBuf1[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
 
@@ -28,14 +27,17 @@ using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
 using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
 System::System() :
-_qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
 _pixBufs(_pixBuf0, _pixBuf1) {
 }
 
 void System::init() {
     _super::init();
+    
     _usb.init();
-    _qspi.init();
+    
+    // QSPI clock divider=1 => run QSPI clock at 64 MHz
+    // QSPI alignment=word for high performance transfers
+    _qspi.init(QSPI::Mode::Dual, 1, QSPI::Align::Word);
 }
 
 static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) {
@@ -750,7 +752,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
             _pixStreamEnabled = true;
-//            _pixRemLen = 128*1024*1024;
+            _pixRemLen = 128*1024*1024;
             _recvPixDataFromICE40();
         
         } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
