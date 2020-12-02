@@ -28,7 +28,7 @@ using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
 using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
 System::System() :
-_qspi(QSPI::Mode::Dual, 0), // clock divider=0 => run QSPI clock at 100 MHz
+_qspi(QSPI::Mode::Dual, 1), // clock divider=1 => run QSPI clock at 64 MHz
 _pixBufs(_pixBuf0, _pixBuf1) {
 }
 
@@ -750,7 +750,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
             _pixStreamEnabled = true;
-            _pixRemLen = 128*1024*1024;
+//            _pixRemLen = 128*1024*1024;
             _recvPixDataFromICE40();
         
         } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {

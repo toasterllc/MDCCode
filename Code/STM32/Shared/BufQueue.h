@@ -4,11 +4,13 @@
 //   BufQueue manages `Count` static buffers (supplied to the
 //   constructor) to facilitate producer-consumer schemes.
 //
-//   The writer writes into the buffer returned by writeBuf(),
-//   and when writing is complete, calls writeEnqueue().
+//   If the BufQueue is writable(), the writer writes into
+//   the buffer returned by writeBuf(), and when writing is
+//   complete, calls writeEnqueue().
 //
-//   The reader reads from the buffer returned by readBuf(),
-//   and when reading is complete, calls readDequeue().
+//   If the BufQueue is readable(), the reader reads from the
+//   buffer returned by readBuf(), and when reading is
+//   complete, calls readDequeue().
 
 template <size_t Count>
 class BufQueue {
