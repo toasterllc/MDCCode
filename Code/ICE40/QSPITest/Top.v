@@ -23,6 +23,8 @@
 `define     Resp_Arg_Echo_Msg_Bits                              63:8
 
 `define Msg_Type_ReadData                                       `Msg_Type_Len'h01
+`define     Msg_Arg_ReadData_Counter_Len                        16
+`define     Msg_Arg_ReadData_Counter_Bits                       15:0
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
@@ -97,10 +99,10 @@ module Top(
     reg[0:0] spi_doutCounter = 0;
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
-    reg[15:0] spi_doutRegPrev = 0;
-    reg spi_doutRegPrevValid = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     reg[15:0] spi_doutDataCounter = 0;
+    reg[`Msg_Arg_ReadData_Counter_Len-1:0] spi_readDataCounter = 0;
+    reg spi_readDataDone = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
@@ -123,6 +125,9 @@ module Top(
             spi_doutCounter <= spi_doutCounter-1;
             spi_d_outEn <= 0;
             spi_resp <= spi_resp<<8|8'hFF;
+            
+            spi_readDataCounter <= spi_readDataCounter-1;
+            if (!spi_readDataCounter) spi_readDataDone <= 1;
             
             case (spi_state)
             0: begin
@@ -156,7 +161,9 @@ module Top(
 
                 // ReadData
                 `Msg_Type_ReadData: begin
-                    spi_state <= (spi_doutRegPrevValid ? 4 : 5);
+                    spi_readDataCounter <= spi_msgArg[`Msg_Arg_ReadData_Counter_Bits];
+                    spi_readDataDone <= 0;
+                    spi_state <= 4;
                 end
 
                 // NoOp
@@ -180,19 +187,13 @@ module Top(
             
             4: begin
                 spi_d_outEn <= 1;
-                spi_doutReg <= spi_doutRegPrev;
-                spi_doutRegPrevValid <= 0;
-                spi_state <= 5;
-            end
-            
-            5: begin
-                spi_d_outEn <= 1;
                 if (!spi_doutCounter) begin
                     spi_doutReg <= spi_doutDataCounter;
                     spi_doutDataCounter <= spi_doutDataCounter+1;
-                    
-                    spi_doutRegPrev <= spi_doutDataCounter;
-                    spi_doutRegPrevValid <= 1;
+                end
+                
+                if (spi_readDataDone) begin
+                    spi_state <= 0;
                 end
             end
             endcase
@@ -309,9 +310,10 @@ module Testbench();
     end endtask
     
     task TestEcho; begin
-        reg[`Msg_Arg_Echo_Msg_Len-1:0] arg;
+        reg[`Msg_Arg_Len-1:0] arg;
+        
         $display("\n========== TestEcho ==========");
-        arg = `Msg_Arg_Echo_Msg_Len'h123456789ABCDE;
+        arg[`Msg_Arg_Echo_Msg_Bits] = `Msg_Arg_Echo_Msg_Len'h123456789ABCDE;
         
         SendMsg(`Msg_Type_Echo, arg, 8);
         if (resp[`Resp_Arg_Echo_Msg_Bits] === arg) begin
@@ -324,18 +326,17 @@ module Testbench();
     
     task TestReadData; begin
         reg[31:0] i;
+        reg[`Msg_Arg_Len-1:0] arg;
         $display("\n========== TestReadData ==========");
         
-        // SendMsg(`Msg_Type_ReadData, 0, 8);
-        // $display("Response: %h %h %h %h",
-        //     resp[(16*4)-1 -: 16],
-        //     resp[(16*3)-1 -: 16],
-        //     resp[(16*2)-1 -: 16],
-        //     resp[(16*1)-1 -: 16]
-        // );
-        // #10000;
+        // 1 word       counter=0
+        // 2 words      counter=2
+        // 3 words      counter=4
+        // 4 words      counter=6
+        arg[`Msg_Arg_ReadData_Counter_Bits] = `Msg_Arg_Echo_Msg_Len'h6;
+        
         for (i=0; i<8; i++) begin
-            SendMsg(`Msg_Type_ReadData, 0, 8);
+            SendMsg(`Msg_Type_ReadData, arg, 8);
             $display("Response: %h %h %h %h",
                 resp[(16*4)-1 -: 16],
                 resp[(16*3)-1 -: 16],

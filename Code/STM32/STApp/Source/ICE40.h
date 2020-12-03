@@ -45,6 +45,28 @@ public:
         }
     };
     
+    struct DebugReadDataMsg : Msg {
+        // The word count needs to be supplied to the ICE40 to prevent
+        // over-reading, otherwise the end of the QSPI transaction
+        // causes one more word to be read than wanted, and we'd drop
+        // that word if not for this counter.
+        DebugReadDataMsg(size_t wordCount) {
+            AssertArg(wordCount);
+            // Supply the value to load into the ICE40 counter.
+            // Put the burden of this calculation on the STM32,
+            // to improve the performance of the ICE40 Verilog.
+            const uint16_t count = (wordCount-1)*2;
+            type = 0x01;
+            payload[0] = 0;
+            payload[1] = 0;
+            payload[2] = 0;
+            payload[3] = 0;
+            payload[4] = 0;
+            payload[5] = (count&0xFF00)>>8;
+            payload[6] = (count&0x00FF)>>0;
+        }
+    };
+    
     struct SDClkSrcMsg : Msg {
         enum class ClkSpeed : uint8_t {
             Off     = 0,

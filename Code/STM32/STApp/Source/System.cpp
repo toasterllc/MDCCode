@@ -12,6 +12,9 @@ static uint8_t _pixBuf1[63*1024] __attribute__((aligned(4))) __attribute__((sect
 
 using namespace STApp;
 
+using EchoMsg = ICE40::EchoMsg;
+using EchoResp = ICE40::EchoResp;
+using DebugReadDataMsg = ICE40::DebugReadDataMsg;
 using SDClkSrcMsg = ICE40::SDClkSrcMsg;
 using SDSendCmdMsg = ICE40::SDSendCmdMsg;
 using SDGetStatusMsg = ICE40::SDGetStatusMsg;
@@ -836,17 +839,17 @@ void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
 // Arrange for pix data to be received from ICE40
 void System::_recvPixDataFromICE40() {
     Assert(_pixBufs.writable());
-    ICE40::Msg msg;
-    msg.type = 0x01;
-    _pixBufs.writeBuf().len = _pixBufs.writeBuf().cap;
-    _ice40TransferAsync(_qspi, msg, _pixBufs.writeBuf().data, _pixBufs.writeBuf().len);
+    
+    const size_t wordCount = _pixBufs.writeBuf().cap/2;
+    _pixBufs.writeBuf().len = wordCount; // The `.len` field to indicate the number of words (not byte length)
+    _ice40TransferAsync(_qspi, DebugReadDataMsg(wordCount), _pixBufs.writeBuf().data, _pixBufs.writeBuf().len*2);
 }
 
 // Arrange for pix data to be sent over USB
 void System::_sendPixDataOverUSB() {
     Assert(_pixBufs.readable());
     const auto& buf = _pixBufs.readBuf();
-    _usb.pixSend(buf.data, buf.len);
+    _usb.pixSend(buf.data, buf.len*2); // The `.len` field to indicate the number of words (not byte length)
 }
 
 System Sys;

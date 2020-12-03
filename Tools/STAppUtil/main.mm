@@ -120,12 +120,11 @@ static void pixStream(const Args& args, USBInterface& interface) {
     
     std::optional<uint16_t> lastNum;
     for (;;) {
-        const size_t bufSize = 128*1024;
-//        const size_t bufSize = 128*1024*1024;
-        auto buf = std::make_unique<uint8_t[]>(bufSize);
+        const size_t bufCap = 128*1024*1024;
+        auto buf = std::make_unique<uint8_t[]>(bufCap);
         
         auto startTime = MyTime::Now();
-        auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufSize);
+        auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufCap);
         if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
         assert(!(len % 2));
         
@@ -139,7 +138,7 @@ static void pixStream(const Args& args, USBInterface& interface) {
         bool good = true;
         for (size_t i=0; i<len; i+=2) {
             uint16_t num = nums[i]<<8|nums[i+1];
-            printf("%04x\n", num);
+//            printf("%04x\n", num);
             if (lastNum) {
 //                uint16_t expected = 0x3742;
                 uint16_t expected = (uint16_t)(*lastNum+1);
