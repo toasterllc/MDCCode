@@ -98,6 +98,7 @@ module Top(
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
+    reg[15:0] spi_doutDataCounter = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
@@ -178,7 +179,9 @@ module Top(
             4: begin
                 spi_d_outEn <= 1;
                 if (!spi_doutCounter) begin
-                    spi_doutReg <= 16'h3742;
+                    // spi_doutReg <= 16'h3742;
+                    spi_doutReg <= spi_doutDataCounter;
+                    spi_doutDataCounter <= spi_doutDataCounter+1;
                 end
             end
             endcase

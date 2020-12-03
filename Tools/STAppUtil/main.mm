@@ -118,13 +118,16 @@ static void pixStream(const Args& args, USBInterface& interface) {
     IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
     if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
     
+    std::optional<uint16_t> lastNum;
     for (;;) {
-        const size_t bufSize = 128*1024*1024;
+        const size_t bufSize = 128*1024;
+//        const size_t bufSize = 128*1024*1024;
         auto buf = std::make_unique<uint8_t[]>(bufSize);
         
         auto startTime = MyTime::Now();
         auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufSize);
         if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
+        assert(!(len % 2));
         
         auto durationNs = MyTime::DurationNs(startTime);
         double bitsPerSecond = ((double)len*8) / ((double)durationNs/UINT64_C(1000000000));
@@ -132,6 +135,22 @@ static void pixStream(const Args& args, USBInterface& interface) {
         printf("%ju bytes took %ju ns == %.0f bits/sec == %.1f MB/sec\n",
             (uintmax_t)len, (uintmax_t)durationNs, bitsPerSecond, megabytesPerSecond);
         
+        uint8_t* nums = (uint8_t*)buf.get();
+        bool good = true;
+        for (size_t i=0; i<len; i+=2) {
+            uint16_t num = nums[i]<<8|nums[i+1];
+            printf("%04x\n", num);
+            if (lastNum) {
+//                uint16_t expected = 0x3742;
+                uint16_t expected = (uint16_t)(*lastNum+1);
+                if (num != expected) {
+                    printf("Bad number; expected: %04x, got %04x ❌\n", expected, num);
+                    good = false;
+                }
+            }
+            lastNum = num;
+        }
+        if (good) printf("Numbers valid ✅\n");
         
         
 //        const size_t imageSize = 1024;
