@@ -97,6 +97,8 @@ module Top(
     reg[0:0] spi_doutCounter = 0;
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
+    reg[15:0] spi_doutRegPrev = 0;
+    reg spi_doutRegPrevValid = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     reg[15:0] spi_doutDataCounter = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
@@ -154,7 +156,7 @@ module Top(
 
                 // ReadData
                 `Msg_Type_ReadData: begin
-                    spi_state <= 4;
+                    spi_state <= (spi_doutRegPrevValid ? 4 : 5);
                 end
 
                 // NoOp
@@ -168,7 +170,7 @@ module Top(
                 end
                 endcase
             end
-
+            
             3: begin
                 spi_d_outEn <= 1;
                 if (!spi_doutCounter) begin
@@ -178,10 +180,19 @@ module Top(
             
             4: begin
                 spi_d_outEn <= 1;
+                spi_doutReg <= spi_doutRegPrev;
+                spi_doutRegPrevValid <= 0;
+                spi_state <= 5;
+            end
+            
+            5: begin
+                spi_d_outEn <= 1;
                 if (!spi_doutCounter) begin
-                    // spi_doutReg <= 16'h3742;
                     spi_doutReg <= spi_doutDataCounter;
                     spi_doutDataCounter <= spi_doutDataCounter+1;
+                    
+                    spi_doutRegPrev <= spi_doutDataCounter;
+                    spi_doutRegPrevValid <= 1;
                 end
             end
             endcase
@@ -310,11 +321,28 @@ module Testbench();
             `Finish;
         end
     end endtask
-
+    
     task TestReadData; begin
+        reg[31:0] i;
         $display("\n========== TestReadData ==========");
-        SendMsg(`Msg_Type_ReadData, 0, 8);
-        $display("Response: %h", resp);
+        
+        // SendMsg(`Msg_Type_ReadData, 0, 8);
+        // $display("Response: %h %h %h %h",
+        //     resp[(16*4)-1 -: 16],
+        //     resp[(16*3)-1 -: 16],
+        //     resp[(16*2)-1 -: 16],
+        //     resp[(16*1)-1 -: 16]
+        // );
+        // #10000;
+        for (i=0; i<8; i++) begin
+            SendMsg(`Msg_Type_ReadData, 0, 8);
+            $display("Response: %h %h %h %h",
+                resp[(16*4)-1 -: 16],
+                resp[(16*3)-1 -: 16],
+                resp[(16*2)-1 -: 16],
+                resp[(16*1)-1 -: 16]
+            );
+        end
     end endtask
     
     initial begin
@@ -332,8 +360,7 @@ module Testbench();
         spi_clk = 0;
         
         // TestNoOp();
-        TestEcho();
-        TestReadData();
+        // TestEcho();
         TestReadData();
         
         `Finish;
