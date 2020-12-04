@@ -3,6 +3,7 @@
 #include "ICE40.h"
 #include "BufQueue.h"
 #include "USB.h"
+#include "STAppTypes.h"
 
 class System : public SystemBase<System> {
 public:
@@ -31,7 +32,16 @@ private:
     USB _usb;
     QSPI _qspi;
     
-    bool _pixStreamEnabled = 0;
+    const STApp::PixInfo _pixInfo = {
+        .width = 2304,
+        .height = 1296,
+    };
+    
+    enum class PixStreamState {
+        Idle,
+        Underway,
+    };
+    PixStreamState _pixStreamState = PixStreamState::Idle;
     BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
     

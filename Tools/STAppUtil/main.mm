@@ -52,16 +52,6 @@ static USBInterface findUSBInterface(uint8_t interfaceNum) {
     return USBInterface(usbInterface);
 }
 
-namespace Endpoint {
-    enum : uint8_t {
-        // These values aren't the same as the endpoint addresses in firmware!
-        // These values are the determined by the order that the endpoints are
-        // listed in the interface descriptor.
-        CmdOut = 1,
-        PixIn,
-    };
-}
-
 using Cmd = std::string;
 const Cmd PixStreamCmd = "pixstream";
 const Cmd LEDSetCmd = "ledset";
@@ -106,6 +96,26 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void pixStream(const Args& args, USBInterface& interface) {
+    using namespace STApp;
+    // Get PixInfo
+    PixInfo pixInfo;
+    {
+        STApp::Cmd cmd = {
+            .op = STApp::Cmd::Op::GetPixInfo,
+        };
+        
+        {
+            IOReturn ior = interface.write(EndpointIdxs::CmdOut, cmd);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on CmdOut endpoint");
+        }
+        
+        {
+            auto [pi, ior] = interface.read<PixInfo>(EndpointIdxs::CmdIn);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on CmdIn endpoint");
+            pixInfo = pi;
+        }
+    }
+    
     STApp::Cmd cmd = {
         .op = STApp::Cmd::Op::PixStream,
         .arg = {
@@ -115,18 +125,16 @@ static void pixStream(const Args& args, USBInterface& interface) {
         },
     };
     
-    IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
-    if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
+    IOReturn ior = interface.write(EndpointIdxs::CmdOut, cmd);
+    if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on CmdOut endpoint");
     
-    std::optional<uint16_t> lastNum;
+    const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
+    auto buf = std::make_unique<uint8_t[]>(imageLen);
     for (;;) {
-        const size_t bufCap = 128*1024*1024;
-        auto buf = std::make_unique<uint8_t[]>(bufCap);
-        
         auto startTime = MyTime::Now();
-        auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufCap);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
-        assert(!(len % 2));
+        auto [len, ior] = interface.read(EndpointIdxs::PixIn, buf.get(), imageLen);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on PixIn endpoint");
+        if (len != imageLen) throw std::runtime_error("read returned invalid length");
         
         auto durationNs = MyTime::DurationNs(startTime);
         double bitsPerSecond = ((double)len*8) / ((double)durationNs/UINT64_C(1000000000));
@@ -134,22 +142,19 @@ static void pixStream(const Args& args, USBInterface& interface) {
         printf("%ju bytes took %ju ns == %.0f bits/sec == %.1f MB/sec\n",
             (uintmax_t)len, (uintmax_t)durationNs, bitsPerSecond, megabytesPerSecond);
         
-        uint8_t* nums = (uint8_t*)buf.get();
+        std::optional<Pixel> lastPixel;
         bool good = true;
         for (size_t i=0; i<len; i+=2) {
-            uint16_t num = nums[i]<<8|nums[i+1];
-//            printf("%04x\n", num);
-            if (lastNum) {
-//                uint16_t expected = 0x3742;
-                uint16_t expected = (uint16_t)(*lastNum+1);
-                if (num != expected) {
-                    printf("Bad number; expected: %04x, got %04x ❌\n", expected, num);
-                    good = false;
-                }
+            const uint16_t pixel = buf[i]<<8|buf[i+1];
+            // First pixel is expected to be 0x00
+            const uint16_t expected = (lastPixel ? (uint16_t)(*lastPixel+1) : 0);
+            if (pixel != expected) {
+                printf("Bad pixel; expected: %04x, got %04x ❌\n", expected, pixel);
+                good = false;
             }
-            lastNum = num;
+            lastPixel = pixel;
         }
-        if (good) printf("Numbers valid ✅\n");
+        if (good) printf("Pixels valid ✅\n");
         
         
 //        const size_t imageSize = 1024;
@@ -158,9 +163,9 @@ static void pixStream(const Args& args, USBInterface& interface) {
 //        // Read status
 //        {
 //            double start = CFAbsoluteTimeGetCurrent()
-//            auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), imageSize);
+//            auto [len, ior] = interface.read(EndpointIdxs::PixIn, buf.get(), imageSize);
 ////            printf("USB read result: len=0x%jx ior=0x%x\n", (uintmax_t)len, ior);
-//            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
+//            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on PixIn endpoint");
 //            const size_t printWidth = 16;
 //            for (size_t i=0; i<len; i+=printWidth) {
 //                for (size_t ii=i; ii<std::min(i+printWidth,len); ii++) {
@@ -173,6 +178,8 @@ static void pixStream(const Args& args, USBInterface& interface) {
 }
 
 static void ledSet(const Args& args, USBInterface& interface) {
+    using namespace STApp;
+    
     STApp::Cmd cmd = {
         .op = STApp::Cmd::Op::LEDSet,
         .arg = {
@@ -183,7 +190,7 @@ static void ledSet(const Args& args, USBInterface& interface) {
         },
     };
     
-    IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+    IOReturn ior = interface.write(EndpointIdxs::CmdOut, cmd);
     if (ior != kIOReturnSuccess) throw std::runtime_error("pipe write failed");
 }
 
