@@ -81,7 +81,6 @@ public:
         _open = false;
     }
     
-private:
     void _openIfNeeded() {
         if (!_open) {
             (*_interface)->USBInterfaceOpen(_interface);

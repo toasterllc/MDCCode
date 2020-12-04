@@ -120,7 +120,35 @@ static void pixStream(const Args& args, USBInterface& interface) {
     
     std::optional<uint16_t> lastNum;
     for (;;) {
-        const size_t bufCap = 128*1024*1024;
+        {
+            interface._openIfNeeded();
+            IOReturn ior = (*interface.interface())->AbortPipe(interface.interface(), Endpoint::PixIn);
+            printf("AbortPipe returned: 0x%x\n", ior);
+        }
+        
+        {
+            interface._openIfNeeded();
+            IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
+            printf("ResetPipe returned: 0x%x\n", ior);
+        }
+        
+        {
+            interface._openIfNeeded();
+            IOReturn ior = (*interface.interface())->ClearPipeStall(interface.interface(), Endpoint::PixIn);
+            printf("ClearPipeStall returned: 0x%x\n", ior);
+        }
+        
+        {
+            interface._openIfNeeded();
+            IOReturn ior = (*interface.interface())->ClearPipeStallBothEnds(interface.interface(), Endpoint::PixIn);
+            printf("ClearPipeStallBothEnds returned: 0x%x\n", ior);
+        }
+        
+        
+        
+        const size_t bufCap = (63*1024);
+//        const size_t bufCap = (63*1024) + (63*1024)/2;
+//        const size_t bufCap = 128*1024*1024;
         auto buf = std::make_unique<uint8_t[]>(bufCap);
         
         auto startTime = MyTime::Now();
@@ -128,28 +156,45 @@ static void pixStream(const Args& args, USBInterface& interface) {
         if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on Endpoint::PixIn");
         assert(!(len % 2));
         
-        auto durationNs = MyTime::DurationNs(startTime);
-        double bitsPerSecond = ((double)len*8) / ((double)durationNs/UINT64_C(1000000000));
-        double megabytesPerSecond = bitsPerSecond/(8*1024*1024);
-        printf("%ju bytes took %ju ns == %.0f bits/sec == %.1f MB/sec\n",
-            (uintmax_t)len, (uintmax_t)durationNs, bitsPerSecond, megabytesPerSecond);
-        
         uint8_t* nums = (uint8_t*)buf.get();
-        bool good = true;
-        for (size_t i=0; i<len; i+=2) {
-            uint16_t num = nums[i]<<8|nums[i+1];
-//            printf("%04x\n", num);
-            if (lastNum) {
-//                uint16_t expected = 0x3742;
-                uint16_t expected = (uint16_t)(*lastNum+1);
-                if (num != expected) {
-                    printf("Bad number; expected: %04x, got %04x ❌\n", expected, num);
-                    good = false;
-                }
-            }
-            lastNum = num;
+        {
+            const size_t idx = 0;
+            uint16_t num = nums[idx]<<8|nums[idx+1];
+            printf("%d (%04x)\n", num, num);
         }
-        if (good) printf("Numbers valid ✅\n");
+        
+        printf("...\n");
+        
+        {
+            const size_t idx = len-2;
+            uint16_t num = nums[idx]<<8|nums[idx+1];
+            printf("%d (%04x)\n", num, num);
+        }
+        
+        printf("Got %ju (0x%jx) bytes\n", (uintmax_t)len, (uintmax_t)len);
+        exit(0);
+        
+//        auto durationNs = MyTime::DurationNs(startTime);
+//        double bitsPerSecond = ((double)len*8) / ((double)durationNs/UINT64_C(1000000000));
+//        double megabytesPerSecond = bitsPerSecond/(8*1024*1024);
+//        printf("%ju bytes took %ju ns == %.0f bits/sec == %.1f MB/sec\n",
+//            (uintmax_t)len, (uintmax_t)durationNs, bitsPerSecond, megabytesPerSecond);
+//        
+//        bool good = true;
+//        for (size_t i=0; i<len; i+=2) {
+//            uint16_t num = nums[i]<<8|nums[i+1];
+////            printf("%04x\n", num);
+//            if (lastNum) {
+////                uint16_t expected = 0x3742;
+//                uint16_t expected = (uint16_t)(*lastNum+1);
+//                if (num != expected) {
+//                    printf("Bad number; expected: %04x, got %04x ❌\n", expected, num);
+//                    good = false;
+//                }
+//            }
+//            lastNum = num;
+//        }
+//        if (good) printf("Numbers valid ✅\n");
         
         
 //        const size_t imageSize = 1024;

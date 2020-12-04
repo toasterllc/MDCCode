@@ -755,12 +755,10 @@ void System::_handleCmd(const USB::Cmd& ev) {
     case Cmd::Op::PixStream: {
         if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
             _pixStreamEnabled = true;
-            _pixRemLen = 128*1024*1024;
-            _recvPixDataFromICE40();
-        
-        } else if (!cmd.arg.pixStream.enable && _pixStreamEnabled) {
-            // TODO: how do we disable streaming?
-            _pixStreamEnabled = false;
+            
+            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
+            _pixBuf0[0] = 0x37;
+            _sendPixDataOverUSB();
         }
         break;
     }
@@ -812,28 +810,7 @@ void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
 }
 
 void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
-    Assert(_pixStreamEnabled);
-    Assert(_pixBufs.readable());
-    const bool wasWritable = _pixBufs.writable();
-    
-    // Dequeue the buffer
-    _pixBufs.readDequeue();
-    
-    // Start another USB transaction if there's more data to write
-    if (_pixBufs.readable()) {
-        _sendPixDataOverUSB();
-    }
-    
-    if (_pixRemLen) {
-        // Prepare to receive more data if we're expecting more,
-        // and we were previously un-writable
-        if (!wasWritable) {
-            _recvPixDataFromICE40();
-        }
-    } else if (!_pixBufs.readable()) {
-        // We're done
-        // TODO: what do after we sent all the data?
-    }
+    _sendPixDataOverUSB();
 }
 
 // Arrange for pix data to be received from ICE40
@@ -847,9 +824,11 @@ void System::_recvPixDataFromICE40() {
 
 // Arrange for pix data to be sent over USB
 void System::_sendPixDataOverUSB() {
-    Assert(_pixBufs.readable());
-    const auto& buf = _pixBufs.readBuf();
-    _usb.pixSend(buf.data, buf.len*2); // The `.len` field to indicate the number of words (not byte length)
+    _usb.pixSend(_pixBuf0, sizeof(_pixBuf0));
+    
+//    Assert(_pixBufs.readable());
+//    const auto& buf = _pixBufs.readBuf();
+//    _usb.pixSend(buf.data, buf.len*2); // The `.len` field to indicate the number of words (not byte length)
 }
 
 System Sys;
