@@ -1,19 +1,18 @@
 #pragma once
 #include <chrono>
 
-// TODO: choose a name for this
 namespace MyTime {
     using Instant = std::chrono::steady_clock::time_point;
     
-    inline Instant Now() {
+    static Instant Now() {
         return std::chrono::steady_clock::now();
     }
     
-    inline uint64_t DurationNs(Instant start, Instant end=Now()) {
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();
+    static uint64_t DurationNs(Instant t1, Instant t2=Now()) {
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(t2-t1).count();
     }
     
-    inline uint64_t DurationMs(Instant start, Instant end=Now()) {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    static uint64_t DurationMs(Instant t1, Instant t2=Now()) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
     }
 }
