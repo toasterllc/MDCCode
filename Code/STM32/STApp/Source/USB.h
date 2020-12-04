@@ -22,6 +22,8 @@ public:
     void init();
     
     USBD_StatusTypeDef cmdRecv();
+    USBD_StatusTypeDef pixDisable();
+    USBD_StatusTypeDef pixEnable();
     USBD_StatusTypeDef pixSend(const void* data, size_t len);
     
     // Channels

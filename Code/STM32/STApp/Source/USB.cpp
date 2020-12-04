@@ -25,11 +25,32 @@ void USB::init() {
     
     // # Set Tx FIFO sizes (IN endpoints; DIEPTXF0 register)
     HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Control), 16);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 768);     // TODO: perf: try making larger for
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 768);
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
+}
+
+USBD_StatusTypeDef USB::pixDisable() {
+//    USBD_StatusTypeDef ur = USBD_LL_CloseEP(&_device, Endpoints::PixIn);
+//    Assert(ur == USBD_OK); // TOOD: error handling
+    
+    USBD_StatusTypeDef ur = USBD_LL_StallEP(&_device, Endpoints::PixIn);
+    Assert(ur == USBD_OK); // TOOD: error handling
+    
+    return USBD_OK;
+}
+
+USBD_StatusTypeDef USB::pixEnable() {
+//    USBD_StatusTypeDef ur = USBD_LL_OpenEP(&_device, Endpoints::PixIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+//    Assert(ur == USBD_OK); // TOOD: error handling
+    
+//    // TODO: why cant this go before OpenEP? when we put it there, our writes on PixIn don't reach the host
+    USBD_StatusTypeDef ur = USBD_LL_ClearStallEP(&_device, Endpoints::PixIn);
+    Assert(ur == USBD_OK); // TOOD: error handling
+    
+    return USBD_OK;
 }
 
 USBD_StatusTypeDef USB::pixSend(const void* data, size_t len) {
@@ -47,8 +68,10 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
         USBD_LL_OpenEP(&_device, Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
         _device.ep_out[EndpointNum(Endpoints::CmdOut)].is_used = 1U;
         
-        // PixIn endpoint
+//        pixEnable();
+        // PixIn endpoint is disabled by default
         USBD_LL_OpenEP(&_device, Endpoints::PixIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        pixDisable();
         _device.ep_in[EndpointNum(Endpoints::PixIn)].is_used = 1U;
     }
     

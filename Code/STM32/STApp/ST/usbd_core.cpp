@@ -140,92 +140,43 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 // Starts the low level portion of the device driver.
 USBD_StatusTypeDef USBD_LL_Start(USBD_HandleTypeDef *pdev)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_Start((PCD_HandleTypeDef*)pdev->pData);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_Start((PCD_HandleTypeDef*)pdev->pData));
 }
 
 // Stops the low level portion of the device driver.
 USBD_StatusTypeDef USBD_LL_Stop(USBD_HandleTypeDef *pdev)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_Stop((PCD_HandleTypeDef*)pdev->pData);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_Stop((PCD_HandleTypeDef*)pdev->pData));
 }
 
 // Opens an endpoint of the low level driver.
 USBD_StatusTypeDef USBD_LL_OpenEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t ep_type, uint16_t ep_mps)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_EP_Open((PCD_HandleTypeDef*)pdev->pData, ep_addr, ep_mps, ep_type);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_EP_Open((PCD_HandleTypeDef*)pdev->pData, ep_addr, ep_mps, ep_type));
 }
 
 // Closes an endpoint of the low level driver.
 USBD_StatusTypeDef USBD_LL_CloseEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_EP_Close((PCD_HandleTypeDef*)pdev->pData, ep_addr);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_EP_Close((PCD_HandleTypeDef*)pdev->pData, ep_addr));
 }
 
 // Flushes an endpoint of the Low Level Driver.
 USBD_StatusTypeDef USBD_LL_FlushEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_EP_Flush((PCD_HandleTypeDef*)pdev->pData, ep_addr);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_EP_Flush((PCD_HandleTypeDef*)pdev->pData, ep_addr));
 }
 
 // Sets a Stall condition on an endpoint of the Low Level Driver.
 USBD_StatusTypeDef USBD_LL_StallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_EP_SetStall((PCD_HandleTypeDef*)pdev->pData, ep_addr);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_EP_SetStall((PCD_HandleTypeDef*)pdev->pData, ep_addr));
 }
 
 // Clears a Stall condition on an endpoint of the Low Level Driver.
 USBD_StatusTypeDef USBD_LL_ClearStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_EP_ClrStall((PCD_HandleTypeDef*)pdev->pData, ep_addr);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_EP_ClrStall((PCD_HandleTypeDef*)pdev->pData, ep_addr));
 }
 
 // Returns Stall condition.
@@ -246,14 +197,7 @@ uint8_t USBD_LL_IsStallEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 // Assigns a USB address to the device.
 USBD_StatusTypeDef USBD_LL_SetUSBAddress(USBD_HandleTypeDef *pdev, uint8_t dev_addr)
 {
-  HAL_StatusTypeDef hal_status = HAL_OK;
-  USBD_StatusTypeDef usb_status = USBD_OK;
-
-  hal_status = HAL_PCD_SetAddress((PCD_HandleTypeDef*)pdev->pData, dev_addr);
-
-  usb_status =  USBD_Get_USB_Status(hal_status);
-
-  return usb_status;
+  return USBD_Get_USB_Status(HAL_PCD_SetAddress((PCD_HandleTypeDef*)pdev->pData, dev_addr));
 }
 
 // Transmits data over an endpoint.

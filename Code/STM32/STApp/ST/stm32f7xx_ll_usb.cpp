@@ -469,8 +469,7 @@ HAL_StatusTypeDef USB_DevInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef cf
   * @brief  USB_OTG_FlushTxFifo : Flush a Tx FIFO
   * @param  USBx  Selected device
   * @param  num  FIFO number
-  *         This parameter can be a value from 1 to 15
-            15 means Flush all Tx FIFOs
+  *         This parameter can be a value from 0-15, or 16 to flush all FIFOs
   * @retval HAL status
   */
 HAL_StatusTypeDef USB_FlushTxFifo(USB_OTG_GlobalTypeDef *USBx, uint32_t num)
@@ -651,39 +650,76 @@ HAL_StatusTypeDef USB_DeactivateEndpoint(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EP
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t epnum = (uint32_t)ep->num;
-
-  /* Read DEPCTLn register */
-  if (ep->is_in == 1U)
+  
+  // Disable interrupts
+  bool enirq = !__get_PRIMASK();
+  __disable_irq();
   {
-    if ((USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_EPENA) == USB_OTG_DIEPCTL_EPENA)
-    {
-      USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
-      USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_EPDIS;
+    if (ep->is_in == 1U) {
+      auto epin = USBx_INEP(epnum);
+      
+      if (epin->DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
+          // Put endpoint into NAK mode
+          epin->DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
+          // Wait for INEPNE to be set
+          while (!(epin->DIEPINT & USB_OTG_DIEPINT_INEPNE));
+          // Set EPDIS/SNAK
+          epin->DIEPCTL |= USB_OTG_DIEPCTL_EPDIS|USB_OTG_DIEPCTL_SNAK;
+          // Wait for EPDISD to be set, indicating that the USB core has disabled the endpoint
+          while (!(epin->DIEPINT & USB_OTG_DIEPINT_EPDISD));
+      }
+      
+      // Before flushing the FIFO: "The application must [check] that the core
+      // is neither writing to the Tx FIFO nor reading from the Tx FIFO."
+      // Write: "AHBIDL bit in OTG_GRSTCTL ensures the core is not writing
+      //         anything to the FIFO"
+      // Read: "NAK Effective [INEPNE] interrupt ensures the core is not
+      //        reading from the FIFO" (checked above)
+      while (!(USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL));
+      
+      // Flush Tx FIFO
+      USBx->GRSTCTL |= (USB_OTG_GRSTCTL_TXFFLSH | (epnum << 6));
+      // Wait for the FIFO to be flushed
+      while (USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH);
+    
+    } else {
+      
     }
-
-    USBx_DEVICE->DEACHMSK &= ~(USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK)));
-    USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK)));
-    USBx_INEP(epnum)->DIEPCTL &= ~(USB_OTG_DIEPCTL_USBAEP |
-                                   USB_OTG_DIEPCTL_MPSIZ |
-                                   USB_OTG_DIEPCTL_TXFNUM |
-                                   USB_OTG_DIEPCTL_SD0PID_SEVNFRM |
-                                   USB_OTG_DIEPCTL_EPTYP);
   }
-  else
-  {
-    if ((USBx_OUTEP(epnum)->DOEPCTL & USB_OTG_DOEPCTL_EPENA) == USB_OTG_DOEPCTL_EPENA)
-    {
-      USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
-      USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_EPDIS;
-    }
+  if (enirq) __enable_irq();
 
-    USBx_DEVICE->DEACHMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((uint32_t)(1UL << (ep->num & EP_ADDR_MSK)) << 16));
-    USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((uint32_t)(1UL << (ep->num & EP_ADDR_MSK)) << 16));
-    USBx_OUTEP(epnum)->DOEPCTL &= ~(USB_OTG_DOEPCTL_USBAEP |
-                                    USB_OTG_DOEPCTL_MPSIZ |
-                                    USB_OTG_DOEPCTL_SD0PID_SEVNFRM |
-                                    USB_OTG_DOEPCTL_EPTYP);
-  }
+//  /* Read DEPCTLn register */
+//  if (ep->is_in == 1U)
+//  {
+//    if ((USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_EPENA) == USB_OTG_DIEPCTL_EPENA)
+//    {
+//      USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
+//      USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_EPDIS;
+//    }
+//
+//    USBx_DEVICE->DEACHMSK &= ~(USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK)));
+//    USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK)));
+//    USBx_INEP(epnum)->DIEPCTL &= ~(USB_OTG_DIEPCTL_USBAEP |
+//                                   USB_OTG_DIEPCTL_MPSIZ |
+//                                   USB_OTG_DIEPCTL_TXFNUM |
+//                                   USB_OTG_DIEPCTL_SD0PID_SEVNFRM |
+//                                   USB_OTG_DIEPCTL_EPTYP);
+//  }
+//  else
+//  {
+//    if ((USBx_OUTEP(epnum)->DOEPCTL & USB_OTG_DOEPCTL_EPENA) == USB_OTG_DOEPCTL_EPENA)
+//    {
+//      USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
+//      USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_EPDIS;
+//    }
+//
+//    USBx_DEVICE->DEACHMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((uint32_t)(1UL << (ep->num & EP_ADDR_MSK)) << 16));
+//    USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((uint32_t)(1UL << (ep->num & EP_ADDR_MSK)) << 16));
+//    USBx_OUTEP(epnum)->DOEPCTL &= ~(USB_OTG_DOEPCTL_USBAEP |
+//                                    USB_OTG_DOEPCTL_MPSIZ |
+//                                    USB_OTG_DOEPCTL_SD0PID_SEVNFRM |
+//                                    USB_OTG_DOEPCTL_EPTYP);
+//  }
 
   return HAL_OK;
 }

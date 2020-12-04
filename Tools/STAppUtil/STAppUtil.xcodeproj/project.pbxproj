@@ -92,7 +92,7 @@
 			dependencies = (
 			);
 			name = STAppUtil;
-			productName = STLoaderUtil;
+			productName = STAppUtil;
 			productReference = 55E1D8DE253E864F00628EF6 /* STAppUtil */;
 			productType = "com.apple.product-type.tool";
 		};

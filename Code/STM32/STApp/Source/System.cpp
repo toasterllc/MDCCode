@@ -751,15 +751,34 @@ void System::_handleCmd(const USB::Cmd& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    // PixStream
-    case Cmd::Op::PixStream: {
-        if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
-            _pixStreamEnabled = true;
-            
-            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
-            _pixBuf0[0] = 0x37;
-            _sendPixDataOverUSB();
-        }
+    // PixStreamReset
+    case Cmd::Op::PixStreamReset: {
+        _pixStreamEnabled = false;
+        _usb.pixDisable();
+        
+//        if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
+//            _pixStreamEnabled = true;
+//            
+//            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
+//            _pixBuf0[0] = 0x37;
+//            _sendPixDataOverUSB();
+//        }
+        break;
+    }
+    
+    // PixStreamStart
+    case Cmd::Op::PixStreamStart: {
+        _pixStreamEnabled = true;
+        _usb.pixEnable();
+        _sendPixDataOverUSB();
+        
+//        if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
+//            _pixStreamEnabled = true;
+//            
+//            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
+//            _pixBuf0[0] = 0x37;
+//            _sendPixDataOverUSB();
+//        }
         break;
     }
     

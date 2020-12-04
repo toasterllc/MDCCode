@@ -3,15 +3,18 @@
 namespace STApp {
     struct Cmd {
         enum class Op : uint8_t {
-            PixStream,
+            PixStreamReset,
+            PixStreamStart,
             LEDSet,
         };
         
         Op op;
         union {
             struct {
-                uint8_t enable;
-            } pixStream;
+            } pixStreamReset;
+            
+            struct {
+            } pixStreamStart;
             
             struct {
                 uint8_t idx;

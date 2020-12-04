@@ -3,7 +3,9 @@
 
 namespace ChannelSelect {
     inline void Start() {
-        IRQState::Disable();
+        // To avoid returning the interrupt state for the caller to keep track of,
+        // we require that we're called with interrupts enabled, hence the Assert.
+        Assert(IRQState::Disable());
     }
     
     inline void Cancel() {

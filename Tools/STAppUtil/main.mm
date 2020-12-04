@@ -106,36 +106,26 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void pixStream(const Args& args, USBInterface& interface) {
-    STApp::Cmd cmd = {
-        .op = STApp::Cmd::Op::PixStream,
-        .arg = {
-            .pixStream = {
-                .enable = true,
-            },
-        },
-    };
-    
-    IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
-    if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
-    
-    std::optional<uint16_t> lastNum;
     for (;;) {
-        {
-            interface._openIfNeeded();
-            IOReturn ior = (*interface.interface())->AbortPipe(interface.interface(), Endpoint::PixIn);
-            printf("AbortPipe returned: 0x%x\n", ior);
+        for (int i=0; i<3; i++) {
+            uint8_t buf[512];
+            auto [len, ior] = interface.read(Endpoint::PixIn, buf, sizeof(buf));
+            printf("[BEFORE RESET] PixIn read returned: 0x%x\n", ior);
+            usleep(500000);
         }
         
+        // Reset PixStream
         {
-            interface._openIfNeeded();
-            IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
-            printf("ResetPipe returned: 0x%x\n", ior);
+            STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStreamReset };
+            IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
         }
         
-        {
-            interface._openIfNeeded();
-            IOReturn ior = (*interface.interface())->ClearPipeStall(interface.interface(), Endpoint::PixIn);
-            printf("ClearPipeStall returned: 0x%x\n", ior);
+        for (int i=0; i<3; i++) {
+            uint8_t buf[512];
+            auto [len, ior] = interface.read(Endpoint::PixIn, buf, sizeof(buf));
+            printf("[AFTER RESET] PixIn read returned: 0x%x\n", ior);
+            usleep(500000);
         }
         
         {
@@ -143,6 +133,54 @@ static void pixStream(const Args& args, USBInterface& interface) {
             IOReturn ior = (*interface.interface())->ClearPipeStallBothEnds(interface.interface(), Endpoint::PixIn);
             printf("ClearPipeStallBothEnds returned: 0x%x\n", ior);
         }
+        
+        // Start PixStream
+        {
+            STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStreamStart };
+            IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
+        }
+        
+        for (int i=0; i<3; i++) {
+            uint8_t buf[512];
+            auto [len, ior] = interface.read(Endpoint::PixIn, buf, sizeof(buf));
+            printf("[AFTER START] PixIn read returned: 0x%x (got %ju bytes)\n", ior, (uintmax_t)len);
+            if (ior == kIOUSBPipeStalled) {
+                interface._openIfNeeded();
+                IOReturn ior = (*interface.interface())->AbortPipe(interface.interface(), Endpoint::PixIn);
+                printf("AbortPipe returned: 0x%x\n", ior);
+            }
+            usleep(500000);
+        }
+        
+        printf("\n\n\n\n\n");
+    }
+    
+    std::optional<uint16_t> lastNum;
+    for (;;) {
+//        {
+//            interface._openIfNeeded();
+//            IOReturn ior = (*interface.interface())->AbortPipe(interface.interface(), Endpoint::PixIn);
+//            printf("AbortPipe returned: 0x%x\n", ior);
+//        }
+//        
+//        {
+//            interface._openIfNeeded();
+//            IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
+//            printf("ResetPipe returned: 0x%x\n", ior);
+//        }
+//        
+//        {
+//            interface._openIfNeeded();
+//            IOReturn ior = (*interface.interface())->ClearPipeStall(interface.interface(), Endpoint::PixIn);
+//            printf("ClearPipeStall returned: 0x%x\n", ior);
+//        }
+//        
+//        {
+//            interface._openIfNeeded();
+//            IOReturn ior = (*interface.interface())->ClearPipeStallBothEnds(interface.interface(), Endpoint::PixIn);
+//            printf("ClearPipeStallBothEnds returned: 0x%x\n", ior);
+//        }
         
         
         
