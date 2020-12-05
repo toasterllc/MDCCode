@@ -756,6 +756,13 @@ void System::_handleCmd(const USB::Cmd& ev) {
         _pixStreamEnabled = false;
         _usb.pixDisable();
         
+        static bool init = false;
+        if (!init) {
+            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
+            _pixBuf0[0] = 0x37;
+            init = true;
+        }
+        
 //        if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
 //            _pixStreamEnabled = true;
 //            

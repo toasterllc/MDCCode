@@ -32,7 +32,107 @@ USBD_StatusTypeDef USB::cmdRecv() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
 }
 
+static HAL_StatusTypeDef abortEndpoint(USBD_HandleTypeDef* pdev, uint8_t ep_addr) {
+  PCD_HandleTypeDef *hpcd = (PCD_HandleTypeDef*)pdev->pData;
+  PCD_EPTypeDef* ep = (ep_addr&0x80 ? &hpcd->IN_ep[ep_addr&EP_ADDR_MSK] : &hpcd->OUT_ep[ep_addr&EP_ADDR_MSK]);
+  ep->is_in = (ep_addr&0x80 ? 1 : 0);
+  ep->num = ep_addr & EP_ADDR_MSK;
+  
+  USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
+  uint32_t USBx_BASE = (uint32_t)USBx;
+  uint32_t epnum = (uint32_t)ep->num;
+  
+  // Disable interrupts
+  bool enirq = !__get_PRIMASK();
+  __disable_irq();
+  {
+    if (ep->is_in == 1U) {
+      auto epin = USBx_INEP(epnum);
+      auto& DIEPCTL = epin->DIEPCTL;
+      auto& DIEPINT = epin->DIEPINT;
+      if (DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
+          // Enable NAK-mode (set SNAK)
+          DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
+          // Wait for the USB core to acknowledge NAK-mode=enabled via the
+          // "NAK effective" interrupt bit (INEPNE)
+          while (!(DIEPINT & USB_OTG_DIEPINT_INEPNE));
+          
+          // Disable the endpoint (set EPDIS and SNAK)
+          // TODO: revisit the clearing of USB_OTG_DIEPCTL_EPENA here,
+          // to ensure we're not writing a 1 to it... is that necessary?
+          DIEPCTL |= (DIEPCTL&~USB_OTG_DIEPCTL_EPENA) | USB_OTG_DIEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK;
+          // Wait for the USB core to acknowledge that the endpoint is disabled
+          // via the "endpoint disabled" interrupt bit (EPDISD)
+          while (!(DIEPINT & USB_OTG_DIEPINT_EPDISD));
+          // Verify that EPDIS is cleared: "The core clears [EPDIS] before
+          // setting the endpoint disabled interrupt."
+          Assert(!(DIEPCTL & USB_OTG_DIEPCTL_EPDIS));
+          
+          // Prepare to flush the FIFO
+          // Before flushing the FIFO: "The application must [check] that the core
+          // is neither writing to the Tx FIFO nor reading from the Tx FIFO."
+          // Write: "AHBIDL bit in OTG_GRSTCTL ensures the core is not writing
+          //         anything to the FIFO"
+          // Read: "NAK Effective [INEPNE] interrupt ensures the core is not
+          //        reading from the FIFO" (checked above)
+          while (!(USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL));
+          
+          // Flush Tx FIFO
+          USBx->GRSTCTL = (USB_OTG_GRSTCTL_TXFFLSH | (epnum << 6));
+          // Wait for the FIFO to be flushed
+          while (USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH);
+          
+          // Disable NAK-mode (set SNAK)
+          DIEPCTL |= USB_OTG_DIEPCTL_CNAK;
+          // Wait for the USB core to acknowledge NAK-mode=disabled via the
+          // "NAK effective" interrupt bit (INEPNE)
+          while (DIEPINT & USB_OTG_DIEPINT_INEPNE);
+      }
+    
+    } else {
+      
+    }
+  }
+  if (enirq) __enable_irq();
+
+//  /* Read DEPCTLn register */
+//  if (ep->is_in == 1U)
+//  {
+//    if ((USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_EPENA) == USB_OTG_DIEPCTL_EPENA)
+//    {
+//      USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
+//      USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_EPDIS;
+//    }
+//
+//    USBx_DEVICE->DEACHMSK &= ~(USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK)));
+//    USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (ep->num & EP_ADDR_MSK)));
+//    USBx_INEP(epnum)->DIEPCTL &= ~(USB_OTG_DIEPCTL_USBAEP |
+//                                   USB_OTG_DIEPCTL_MPSIZ |
+//                                   USB_OTG_DIEPCTL_TXFNUM |
+//                                   USB_OTG_DIEPCTL_SD0PID_SEVNFRM |
+//                                   USB_OTG_DIEPCTL_EPTYP);
+//  }
+//  else
+//  {
+//    if ((USBx_OUTEP(epnum)->DOEPCTL & USB_OTG_DOEPCTL_EPENA) == USB_OTG_DOEPCTL_EPENA)
+//    {
+//      USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
+//      USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_EPDIS;
+//    }
+//
+//    USBx_DEVICE->DEACHMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((uint32_t)(1UL << (ep->num & EP_ADDR_MSK)) << 16));
+//    USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((uint32_t)(1UL << (ep->num & EP_ADDR_MSK)) << 16));
+//    USBx_OUTEP(epnum)->DOEPCTL &= ~(USB_OTG_DOEPCTL_USBAEP |
+//                                    USB_OTG_DOEPCTL_MPSIZ |
+//                                    USB_OTG_DOEPCTL_SD0PID_SEVNFRM |
+//                                    USB_OTG_DOEPCTL_EPTYP);
+//  }
+
+  return HAL_OK;
+}
+
 USBD_StatusTypeDef USB::pixDisable() {
+    abortEndpoint(&_device, Endpoints::PixIn);
 //    USBD_StatusTypeDef ur = USBD_LL_CloseEP(&_device, Endpoints::PixIn);
 //    Assert(ur == USBD_OK); // TOOD: error handling
     
@@ -71,8 +171,8 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
 //        pixEnable();
         // PixIn endpoint is disabled by default
         USBD_LL_OpenEP(&_device, Endpoints::PixIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
-        pixDisable();
         _device.ep_in[EndpointNum(Endpoints::PixIn)].is_used = 1U;
+        pixDisable();
     }
     
     return (uint8_t)USBD_OK;
