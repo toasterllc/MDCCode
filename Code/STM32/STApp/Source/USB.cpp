@@ -106,7 +106,9 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
     IRQState irq;
     irq.disable();
     
-    // NAK all transactions while we reset our endpoints
+    // NAK all transactions while we reset our endpoints.
+    // This is necessary to prevent writing into the FIFOs,
+    // which we'll flush at the end.
     bool oldIgnoreINTransactions = setIgnoreINTransactions(pdev, true);
     bool oldIgnoreOUTTransactions = setIgnoreOUTTransactions(pdev, true);
     
@@ -120,13 +122,17 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
             auto& DIEPINT = epin->DIEPINT;
             
             if (DIEPCTL & USB_OTG_DIEPCTL_USBAEP) {
+                // Enable endpoint NAK mode
+                DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
+                
                 // Check if transfer in progress
                 if (DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
-                    // Set endpoint SNAK if it was disabled, and wait for completion
-                    if (!(DIEPINT & USB_OTG_DIEPINT_INEPNE)) {
-                        DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
-                        while (!(DIEPINT & USB_OTG_DIEPINT_INEPNE));
-                    }
+                    // Wait for NAK mode to be enabled (per "IN endpoint disable"
+                    // from the Reference Manual)
+                    // We only wait for INEPNE completion when EPENA=1, because
+                    // INEPNE doesn't get asserted as a result of SNAK=1, when
+                    // EPENA=0.
+                    while (!(DIEPINT & USB_OTG_DIEPINT_INEPNE));
                     
                     // Disable the endpoint (set EPDIS) and wait for completion
                     // Clear USB_OTG_DIEPCTL_EPENA here, since setting it to 1 enables the endpoint.
@@ -137,11 +143,6 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
                     Assert(!(DIEPCTL & USB_OTG_DIEPCTL_EPDIS));
                     // Clear EPDISD
                     DIEPINT = USB_OTG_DIEPINT_EPDISD;
-                
-                } else {
-                    // Don't wait for completion via INEPNE, because that interrupt bit
-                    // is only set when a transfer is underway (DIEPCTL.EPENA=1)
-                    DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
                 }
                 
                 // Clear STALL
@@ -158,6 +159,12 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
             auto& DOEPINT = epout->DOEPINT;
             
             if (DOEPCTL & USB_OTG_DOEPCTL_USBAEP) {
+                // Set endpoint SNAK
+                // For some reason, for OUT endpoints, there's no mechanism to poll for
+                // SNAK being enabled (eg OUTEPNE / "OUT endpoint NAK effective"),
+                // like there is for IN endpoints (INEPNE / "IN endpoint NAK effective").
+                DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
+                
                 // Check if transfer in progress
                 if (DOEPCTL & USB_OTG_DOEPCTL_EPENA) {
                     // Skip endpoint 0, since it can't be disabled
@@ -173,12 +180,6 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
                         DOEPINT = USB_OTG_DOEPINT_EPDISD;
                     }
                 }
-                
-                // Set endpoint SNAK
-                // For some reason, for OUT endpoints, there's no mechanism to poll for
-                // SNAK being enabled (eg OUTEPNE / "OUT endpoint NAK effective"),
-                // like there is for IN endpoints (INEPNE / "IN endpoint NAK effective").
-                DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
                 
                 // Clear STALL (endpoint 0 doesn't support resetting STALL)
                 if (i) DOEPCTL &= ~USB_OTG_DOEPCTL_STALL;
