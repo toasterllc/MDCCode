@@ -1889,6 +1889,117 @@ HAL_StatusTypeDef HAL_PCD_EP_Flush(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   return HAL_OK;
 }
 
+HAL_StatusTypeDef HAL_PCD_EP_ResetAll(PCD_HandleTypeDef* hpcd) {
+    USB_OTG_GlobalTypeDef* USBx = hpcd->Instance;
+    uint32_t USBx_BASE = (uint32_t)USBx;
+    
+    // NAK all transactions while we reset our endpoints.
+    // This is necessary to prevent writing into the FIFOs,
+    // which we'll flush at the end.
+    bool oldIgnoreINTransactions = setIgnoreINTransactions(pdev, true);
+    bool oldIgnoreOUTTransactions = setIgnoreOUTTransactions(pdev, true);
+    
+    // Abort all underway transfers on all endpoints,
+    // and reset their PIDs to DATA0
+    for (uint8_t i=0; i<hpcd->Init.dev_endpoints; i++) {
+        // IN endpoint handling
+        {
+            auto epin = USBx_INEP(i);
+            auto& DIEPCTL = epin->DIEPCTL;
+            auto& DIEPINT = epin->DIEPINT;
+            
+            if (DIEPCTL & USB_OTG_DIEPCTL_USBAEP) {
+                // Enable endpoint NAK mode
+                DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
+                
+                // Check if transfer in progress
+                if (DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
+                    // Wait for NAK mode to be enabled (per "IN endpoint disable"
+                    // from the Reference Manual)
+                    // We only wait for INEPNE completion when EPENA=1, because
+                    // INEPNE doesn't get asserted as a result of SNAK=1, when
+                    // EPENA=0.
+                    while (!(DIEPINT & USB_OTG_DIEPINT_INEPNE));
+                    
+                    // Disable the endpoint (set EPDIS) and wait for completion
+                    // Clear USB_OTG_DIEPCTL_EPENA here, since setting it to 1 enables the endpoint.
+                    DIEPCTL |= USB_OTG_DIEPCTL_EPDIS;
+                    while (!(DIEPINT & USB_OTG_DIEPINT_EPDISD));
+                    // Verify that EPDIS is cleared: "The core clears [EPDIS] before
+                    // setting the endpoint disabled interrupt."
+                    Assert(!(DIEPCTL & USB_OTG_DIEPCTL_EPDIS));
+                    // Clear EPDISD
+                    DIEPINT = USB_OTG_DIEPINT_EPDISD;
+                }
+                
+                // Clear STALL
+                DIEPCTL &= ~USB_OTG_DIEPCTL_STALL;
+                // Reset PID to DATA0
+                DIEPCTL |= USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
+            }
+        }
+        
+        // OUT endpoint handling
+        {
+            auto epout = USBx_OUTEP(i);
+            auto& DOEPCTL = epout->DOEPCTL;
+            auto& DOEPINT = epout->DOEPINT;
+            
+            if (DOEPCTL & USB_OTG_DOEPCTL_USBAEP) {
+                // Set endpoint SNAK
+                // For some reason, for OUT endpoints, there's no mechanism to poll for
+                // SNAK being enabled (eg OUTEPNE / "OUT endpoint NAK effective"),
+                // like there is for IN endpoints (INEPNE / "IN endpoint NAK effective").
+                DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
+                
+                // Check if transfer in progress
+                if (DOEPCTL & USB_OTG_DOEPCTL_EPENA) {
+                    // Skip endpoint 0, since it can't be disabled
+                    if (i) {
+                        // Disable the endpoint (set EPDIS) and wait for completion
+                        // Clear USB_OTG_DOEPCTL_EPENA here, since setting it to 1 enables the endpoint.
+                        DOEPCTL |= USB_OTG_DOEPCTL_EPDIS;
+                        while (!(DOEPINT & USB_OTG_DOEPINT_EPDISD));
+                        // Verify that EPDIS is cleared: "The core clears [EPDIS] before
+                        // setting the endpoint disabled interrupt."
+                        Assert(!(DOEPCTL & USB_OTG_DOEPCTL_EPDIS));
+                        // Clear EPDISD
+                        DOEPINT = USB_OTG_DOEPINT_EPDISD;
+                    }
+                }
+                
+                // Clear STALL (endpoint 0 doesn't support resetting STALL)
+                if (i) DOEPCTL &= ~USB_OTG_DOEPCTL_STALL;
+                
+                // Reset PID to DATA0 (endpoint 0 doesn't support resetting PID to 0)
+                if (i) DOEPCTL |= USB_OTG_DOEPCTL_SD0PID_SEVNFRM;
+            }
+        }
+    }
+    
+    // Prepare to flush the FIFO
+    // Before flushing the FIFO: "The application must [check] that the core
+    // is neither writing to the Tx FIFO nor reading from the Tx FIFO."
+    // Write: "AHBIDL bit in OTG_GRSTCTL ensures the core is not writing
+    //         anything to the FIFO"
+    // Read: "NAK Effective [INEPNE] interrupt ensures the core is not
+    //        reading from the FIFO" (checked above)
+    while (!(USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL));
+    
+    // Flush Rx FIFO
+    USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
+    while (USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH);
+    
+    // Flush all Tx FIFOs
+    USBx->GRSTCTL = (USB_OTG_GRSTCTL_TXFFLSH | (0x10 << 6));
+    while (USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH);
+    
+    // Restore old NAK state
+    setIgnoreOUTTransactions(pdev, oldIgnoreOUTTransactions);
+    setIgnoreINTransactions(pdev, oldIgnoreINTransactions);
+    return HAL_OK;
+}
+
 /**
   * @brief  Activate remote wakeup signalling
   * @param  hpcd PCD handle
