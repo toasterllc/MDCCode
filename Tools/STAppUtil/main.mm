@@ -90,18 +90,17 @@ static std::vector<USBDevice> findUSBDevices() {
 
 static void resetDevice(USBDevice& device) {
     using namespace STApp;
-    
-    // Reset the device
-    IOReturn ior = device.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
-    if (ior != kIOReturnSuccess) throw std::runtime_error("device.vendorRequestOut() failed");
-    
     std::vector<USBInterface> interfaces = device.usbInterfaces();
     if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
     USBInterface& interface = interfaces[0];
     USBPipe cmdOutPipe(interface, Endpoint::CmdOut);
     USBPipe pixInPipe(interface, Endpoint::PixIn);
     
-    // Reset our pipes
+    // Send the reset vendor-defined control request
+    IOReturn ior = device.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
+    if (ior != kIOReturnSuccess) throw std::runtime_error("device.vendorRequestOut() failed");
+    
+    // Reset our pipes now that the device is reset
     for (const USBPipe& pipe : {cmdOutPipe, pixInPipe}) {
         ior = pipe.reset();
         if (ior != kIOReturnSuccess) throw std::runtime_error("pipe.reset() failed");
@@ -231,6 +230,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
+    // Reset the device to put it back in a pre-defined state
     USBDevice& device = devices[0];
     try {
         resetDevice(device);
