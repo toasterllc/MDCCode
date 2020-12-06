@@ -705,6 +705,13 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    for (;;);
 //}
 
+void System::_reset() {
+    // Reset our state
+    // TODO: reset QSPI
+    _pixStreamEnabled = false;
+    // Prepare to receive commands
+    _usb.cmdRecv();
+}
 
 void System::_handleEvent() {
     // Wait for an event to occur on one of our channels
@@ -736,8 +743,7 @@ void System::_handleUSBEvent(const USB::Event& ev) {
     case Type::StateChanged: {
         // Handle USB connection
         if (_usb.state() == USB::State::Connected) {
-            // Prepare to receive commands
-            _usb.cmdRecv();
+            _reset();
         }
         break;
     }
@@ -749,13 +755,10 @@ void System::_handleUSBEvent(const USB::Event& ev) {
 }
 
 void System::_handleReset() {
-    // TODO: reset QSPI
-    // Reset our state
-    _pixStreamEnabled = false;
-    // Complete reset by notifying USB
+    // Complete USB reset
     _usb.resetFinish();
-    // Prepare to receive commands again
-    _usb.cmdRecv();
+    // Reset ourself
+    _reset();
 }
 
 void System::_handleCmd(const USB::Cmd& ev) {

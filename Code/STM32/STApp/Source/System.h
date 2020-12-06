@@ -10,6 +10,7 @@ public:
     void init();
     
 private:
+    void _reset();
     void _handleEvent();
     void _handleUSBEvent(const USB::Event& ev);
     void _handleReset();
