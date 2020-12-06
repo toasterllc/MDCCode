@@ -10,6 +10,7 @@
 #import "SendRight.h"
 #import "USBDevice.h"
 #import "USBInterface.h"
+#import "USBPipe.h"
 #import "STAppTypes.h"
 #import "MyTime.h"
 
@@ -93,7 +94,8 @@ static void pixStream(const Args& args, USBDevice& device) {
     std::vector<USBInterface> interfaces = device.usbInterfaces();
     if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
     USBInterface& interface = interfaces[0];
-    
+    USBPipe cmdOutPipe(interface, Endpoint::CmdOut);
+    USBPipe pixInPipe(interface, Endpoint::PixIn);
     
     
     
@@ -114,7 +116,7 @@ static void pixStream(const Args& args, USBDevice& device) {
         {
             printf("Enabling PixStream...\n");
             STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStream };
-            IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+            IOReturn ior = cmdOutPipe.write(cmd);
             if (ior != kIOReturnSuccess) {
                 printf("-> write failed on Endpoint::CmdOut: 0x%x ❌\n", ior);
                 return;
@@ -130,7 +132,7 @@ static void pixStream(const Args& args, USBDevice& device) {
             for (int i=0; i<3; i++) {
                 printf("Reading from PixIn...\n");
                 memset(buf.get(), 0x42, bufCap);
-                auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufCap);
+                auto [len, ior] = pixInPipe.read(buf.get(), bufCap);
                 if (ior != kIOReturnSuccess) {
                     printf("-> PixIn read failed: 0x%x ❌\n", ior);
                     return;
@@ -159,7 +161,7 @@ static void pixStream(const Args& args, USBDevice& device) {
             printf("Corrupting PixIn endpoint...\n");
             for (int i=0; i<3; i++) {
                 uint8_t buf[512];
-                auto [len, ior] = interface.read(Endpoint::PixIn, buf, sizeof(buf));
+                auto [len, ior] = pixInPipe.read(buf, sizeof(buf));
                 if (ior != kIOReturnSuccess) {
                     printf("-> PixIn read returned: 0x%x ❌\n", ior);
                     return;
@@ -182,14 +184,13 @@ static void pixStream(const Args& args, USBDevice& device) {
         // Reset our pipes
         {
             printf("Resetting pipes...\n");
-            IOReturn ior = interface.resetPipe(Endpoint::CmdOut);
+            IOReturn ior = cmdOutPipe.reset();;
             if (ior != kIOReturnSuccess) {
                 printf("-> ResetPipe failed: 0x%x ❌\n", ior);
                 return;
             }
             
-            interface.resetPipe(Endpoint::PixIn);
-            ior = interface.resetPipe(Endpoint::PixIn);
+            ior = pixInPipe.reset();
             if (ior != kIOReturnSuccess) {
                 printf("-> ResetPipe failed: 0x%x ❌\n", ior);
                 return;
@@ -612,6 +613,7 @@ static void ledSet(const Args& args, USBDevice& device) {
     std::vector<USBInterface> interfaces = device.usbInterfaces();
     if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
     USBInterface& interface = interfaces[0];
+    USBPipe cmdOutPipe(interface, Endpoint::CmdOut);
     
     STApp::Cmd cmd = {
         .op = STApp::Cmd::Op::LEDSet,
@@ -623,7 +625,7 @@ static void ledSet(const Args& args, USBDevice& device) {
         },
     };
     
-    IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+    IOReturn ior = cmdOutPipe.write(cmd);
     if (ior != kIOReturnSuccess) throw std::runtime_error("pipe write failed");
 }
 

@@ -10,29 +10,34 @@ public:
     
     // Constructor: accept a SendRight
     USBDevice(SendRight&& service) {
-        assert(service);
+        try {
+            assert(service);
+            
+            IOCFPlugInInterface** plugin = nullptr;
+            SInt32 score = 0;
+            IOReturn kr = IOCreatePlugInInterfaceForService(service.port(), kIOUSBDeviceUserClientTypeID,
+                kIOCFPlugInInterfaceID, &plugin, &score);
+            if (kr != KERN_SUCCESS) throw std::runtime_error("IOCreatePlugInInterfaceForService failed");
+            if (!plugin) throw std::runtime_error("IOCreatePlugInInterfaceForService returned NULL plugin");
+            
+            IOUSBDeviceInterface** interface = nullptr;
+            HRESULT hr = (*plugin)->QueryInterface(plugin, CFUUIDGetUUIDBytes(kIOUSBDeviceInterfaceID),
+                (LPVOID*)&interface);
+            // Release `plugin` before checking for error, so we don't
+            // leak it if QueryInterface fails
+            (*plugin)->Release(plugin);
+            if (hr) throw std::runtime_error("QueryInterface failed");
+            
+            _setInterface(interface);
         
-        IOCFPlugInInterface** plugin = nullptr;
-        SInt32 score = 0;
-        IOReturn kr = IOCreatePlugInInterfaceForService(service.port(), kIOUSBDeviceUserClientTypeID,
-            kIOCFPlugInInterfaceID, &plugin, &score);
-        if (kr != KERN_SUCCESS) throw std::runtime_error("IOCreatePlugInInterfaceForService failed");
-        if (!plugin) throw std::runtime_error("IOCreatePlugInInterfaceForService returned NULL plugin");
-        
-        IOUSBDeviceInterface** interface = nullptr;
-        HRESULT hr = (*plugin)->QueryInterface(plugin, CFUUIDGetUUIDBytes(kIOUSBDeviceInterfaceID),
-            (LPVOID*)&interface);
-        // Release `plugin` before checking for error, so we don't
-        // leak it if QueryInterface fails
-        (*plugin)->Release(plugin);
-        if (hr) throw std::runtime_error("QueryInterface failed");
-        
-        setInterface(interface);
+        } catch (...) {
+            _reset();
+        }
     }
     
     // Constructor: take ownership of a IOUSBDeviceInterface
     USBDevice(IOUSBDeviceInterface** interface) {
-        setInterface(interface);
+        _setInterface(interface);
     }
     
     // Copy constructor: illegal
@@ -41,33 +46,18 @@ public:
     USBDevice(USBDevice&& x) { *this = std::move(x); }
     // Move assignment operator
     USBDevice& operator=(USBDevice&& x) {
-        // Retain the interface on behalf of `set`
-        auto interface = x._interface;
-        if (interface) (*interface)->AddRef(interface);
-        
-        x.setInterface(nullptr); // Reset x's interface first, so that it calls USBDeviceClose before we call USBDeviceOpen
-        setInterface(interface);
+        _interface = x._interface;
+        x._interface = nullptr;
         return *this;
     }
     
     ~USBDevice() {
-        setInterface(nullptr);
+        _reset();
     }
     
     IOUSBDeviceInterface** interface() {
         assert(_interface);
         return _interface;
-    }
-    
-    // Take ownership of a IOUSBDeviceInterface
-    void setInterface(IOUSBDeviceInterface** interface) {
-        if (_interface) {
-            if (_open) (*_interface)->USBDeviceClose(_interface);
-            (*_interface)->Release(_interface);
-        }
-        
-        _interface = interface;
-        _open = false;
     }
     
     operator bool() const { return _interface; }
@@ -94,7 +84,6 @@ public:
     }
     
     IOReturn vendorRequestOut(uint8_t req, void* data, size_t len) {
-        _openIfNeeded();
         IOUSBDevRequest usbReq = {
             .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
             .bRequest       = req,
@@ -105,10 +94,20 @@ public:
     }
     
 private:
-    void _openIfNeeded() {
-        if (!_open) {
-            (*_interface)->USBDeviceOpen(_interface);
-            _open = true;
+    // Take ownership of a IOUSBDeviceInterface
+    void _setInterface(IOUSBDeviceInterface** interface) {
+        assert(!_interface);
+        _interface = interface;
+        // Open the interface
+        IOReturn ior = (*_interface)->USBDeviceOpen(_interface);
+        if (ior != kIOReturnSuccess) throw std::runtime_error("USBDeviceOpen failed");
+    }
+    
+    void _reset() {
+        if (_interface) {
+            (*_interface)->USBDeviceClose(_interface);
+            (*_interface)->Release(_interface);
+            _interface = nullptr;
         }
     }
     

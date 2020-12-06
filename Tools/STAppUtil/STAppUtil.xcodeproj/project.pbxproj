@@ -33,6 +33,7 @@
 		55671A11257CEC4A00C1CDA4 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
 		55671A12257CEC4A00C1CDA4 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		55671A14257CEC7400C1CDA4 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
+		55671A15257CEDF400C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55844C1B2575D5C7008737ED /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/STApp/Source/STAppTypes.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* STAppUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STAppUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -63,6 +64,7 @@
 				55671A12257CEC4A00C1CDA4 /* SendRight.h */,
 				55671A11257CEC4A00C1CDA4 /* USBDevice.h */,
 				55671A0E257CEC4A00C1CDA4 /* USBInterface.h */,
+				55671A15257CEDF400C1CDA4 /* USBPipe.h */,
 			);
 			name = Shared;
 			path = ../Shared;

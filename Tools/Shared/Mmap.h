@@ -19,7 +19,7 @@ public:
             if (data == MAP_FAILED) throw std::runtime_error(std::string("mmap failed: ") + strerror(errno));
             _data = data;
         
-        } catch (const std::exception& e) {
+        } catch (...) {
             _reset();
             throw;
         }
