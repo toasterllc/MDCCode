@@ -1,10 +1,33 @@
 #pragma once
 #include <IOKit/IOKitLib.h>
+#include "SendRight.h"
 
 class USBInterface {
 public:
     // Default constructor: empty
     USBInterface() {}
+    
+    // Constructor: accept a SendRight
+    USBInterface(SendRight&& service) {
+        assert(service);
+        
+        IOCFPlugInInterface** plugin = nullptr;
+        SInt32 score = 0;
+        IOReturn kr = IOCreatePlugInInterfaceForService(service.port(), kIOUSBInterfaceUserClientTypeID,
+            kIOCFPlugInInterfaceID, &plugin, &score);
+        if (kr != KERN_SUCCESS) throw std::runtime_error("IOCreatePlugInInterfaceForService failed");
+        if (!plugin) throw std::runtime_error("IOCreatePlugInInterfaceForService returned NULL plugin");
+        
+        IOUSBInterfaceInterface** interface = nullptr;
+        HRESULT hr = (*plugin)->QueryInterface(plugin, CFUUIDGetUUIDBytes(kIOUSBInterfaceInterfaceID),
+            (LPVOID*)&interface);
+        // Release `plugin` before checking for error, so we don't
+        // leak it if QueryInterface fails
+        (*plugin)->Release(plugin);
+        if (hr) throw std::runtime_error("QueryInterface failed");
+        
+        set(interface);
+    }
     
     // Constructor: take ownership of a IOUSBInterfaceInterface
     USBInterface(IOUSBInterfaceInterface** interface) {

@@ -12,9 +12,10 @@ public:
 private:
     void _handleEvent();
     void _handleUSBEvent(const USB::Event& ev);
+    void _handleReset();
     void _handleCmd(const USB::Cmd& ev);
-    void _handleQSPIEvent(const QSPI::DoneEvent& ev);
-    void _handlePixUSBEvent(const USB::DoneEvent& ev);
+    void _handleQSPIEvent(const QSPI::Signal& ev);
+    void _handlePixUSBEvent(const USB::Signal& ev);
     void _recvPixDataFromICE40();
     void _sendPixDataOverUSB();
     

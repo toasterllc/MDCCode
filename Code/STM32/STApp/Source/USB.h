@@ -2,6 +2,7 @@
 #include "USBBase.h"
 #include "Channel.h"
 #include "usbd_def.h"
+#include <atomic>
 
 class USB : public USBBase<USB> {
 public:
@@ -16,19 +17,24 @@ public:
         size_t len;
     };
     
-    struct DoneEvent {};
+    struct Signal {};
     
     // Methods
     void init();
     
-    USBD_StatusTypeDef cmdRecv();
-    USBD_StatusTypeDef pixDisable();
-    USBD_StatusTypeDef pixEnable();
-    USBD_StatusTypeDef pixSend(const void* data, size_t len);
+    // Reset
+    Channel<Signal, 1> resetChannel; // Signals that a reset was requested
+    void resetFinish(); // Call to complete resetting
     
-    // Channels
+    void debugFlushRxFIFO();
+    
+    // Command input
     Channel<Cmd, 1> cmdChannel;
-    Channel<DoneEvent, 1> pixChannel;
+    USBD_StatusTypeDef cmdRecv(); // Arranges for another command to be received
+    
+    // Pixel data output
+    Channel<Signal, 1> pixChannel; // Signals that the previous pixSend() is complete
+    USBD_StatusTypeDef pixSend(const void* data, size_t len);
     
 protected:
     // Callbacks
@@ -50,6 +56,7 @@ protected:
     
 private:
     uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    bool _resetDone = false;
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;

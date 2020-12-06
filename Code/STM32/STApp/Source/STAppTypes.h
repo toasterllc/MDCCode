@@ -1,20 +1,21 @@
 #pragma once
 
 namespace STApp {
+    // Vendor-defined Control Requests
+    Enum(uint8_t, CtrlReq, CtrlReqs,
+        Reset,
+    );
+    
     struct Cmd {
         enum class Op : uint8_t {
-            PixStreamReset,
-            PixStreamStart,
+            PixStream,
             LEDSet,
         };
         
         Op op;
         union {
             struct {
-            } pixStreamReset;
-            
-            struct {
-            } pixStreamStart;
+            } pixStream;
             
             struct {
                 uint8_t idx;

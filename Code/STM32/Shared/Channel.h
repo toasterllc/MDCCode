@@ -1,21 +1,23 @@
 #pragma once
 #include "IRQState.h"
 
-namespace ChannelSelect {
-    inline void Start() {
-        // To avoid returning the interrupt state for the caller to keep track of,
-        // we require that we're called with interrupts enabled, hence the Assert.
-        Assert(IRQState::Disable());
+class ChannelSelect {
+public:
+    static void Start() {
+        _irqState.disable();
     }
     
-    inline void Cancel() {
-        IRQState::Enable();
+    static void End() {
+        _irqState.restore();
     }
     
-    inline void Wait() {
+    static void Wait() {
         IRQState::Sleep();
-        IRQState::Enable();
+        End();
     }
+    
+private:
+    static inline IRQState _irqState;
 };
 
 template <typename T, size_t N>
@@ -51,7 +53,7 @@ public:
     ReadResult readSelect() {
         if (!_canRead()) return ReadResult();
         auto r = _read();
-        IRQState::Enable();
+        ChannelSelect::End();
         return r;
     }
     
@@ -78,7 +80,7 @@ public:
     bool writeSelect(const T& x) {
         if (!_canWrite()) return false;
         _write(x);
-        IRQState::Enable();
+        ChannelSelect::End();
         return true;
     }
     

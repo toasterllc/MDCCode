@@ -712,6 +712,9 @@ void System::_handleEvent() {
     if (auto x = _usb.eventChannel.readSelect()) {
         _handleUSBEvent(*x);
     
+    } else if (auto x = _usb.resetChannel.readSelect()) {
+        _handleReset();
+    
     } else if (auto x = _usb.cmdChannel.readSelect()) {
         _handleCmd(*x);
     
@@ -745,17 +748,27 @@ void System::_handleUSBEvent(const USB::Event& ev) {
     }}
 }
 
+void System::_handleReset() {
+//    for (;;) {
+//        _usb.debugFlushRxFIFO();
+////        for (volatile int i=0; i<10; i++) {}
+//    }
+    
+    // TODO: reset QSPI
+    // Reset our state
+    _pixStreamEnabled = false;
+    // Complete reset by notifying USB
+    _usb.resetFinish();
+}
+
 void System::_handleCmd(const USB::Cmd& ev) {
     Cmd cmd;
     Assert(ev.len == sizeof(cmd)); // TODO: handle errors
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    // PixStreamReset
-    case Cmd::Op::PixStreamReset: {
-        _pixStreamEnabled = false;
-        _usb.pixDisable();
-        
+    // PixStream
+    case Cmd::Op::PixStream: {
         static bool init = false;
         if (!init) {
             memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
@@ -763,29 +776,10 @@ void System::_handleCmd(const USB::Cmd& ev) {
             init = true;
         }
         
-//        if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
-//            _pixStreamEnabled = true;
-//            
-//            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
-//            _pixBuf0[0] = 0x37;
-//            _sendPixDataOverUSB();
-//        }
-        break;
-    }
-    
-    // PixStreamStart
-    case Cmd::Op::PixStreamStart: {
-        _pixStreamEnabled = true;
-        _usb.pixEnable();
-        _sendPixDataOverUSB();
-        
-//        if (cmd.arg.pixStream.enable && !_pixStreamEnabled) {
-//            _pixStreamEnabled = true;
-//            
-//            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
-//            _pixBuf0[0] = 0x37;
-//            _sendPixDataOverUSB();
-//        }
+        if (!_pixStreamEnabled) {
+            _pixStreamEnabled = true;
+            _sendPixDataOverUSB();
+        }
         break;
     }
     
@@ -810,7 +804,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     _usb.cmdRecv(); // TODO: handle errors
 }
 
-void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
+void System::_handleQSPIEvent(const QSPI::Signal& ev) {
     Assert(_pixStreamEnabled);
     Assert(_pixBufs.writable());
     
@@ -835,7 +829,9 @@ void System::_handleQSPIEvent(const QSPI::DoneEvent& ev) {
     }
 }
 
-void System::_handlePixUSBEvent(const USB::DoneEvent& ev) {
+void System::_handlePixUSBEvent(const USB::Signal& ev) {
+    // Short-circuit if streaming is disabled
+    if (!_pixStreamEnabled) return;
     _sendPixDataOverUSB();
 }
 

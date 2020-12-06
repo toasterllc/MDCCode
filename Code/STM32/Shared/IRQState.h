@@ -13,30 +13,12 @@ public:
         return en;
     }
     
-    static void Enable() {
-        __enable_irq();
-    }
-    
     static void Restore(bool en) {
-        if (en) Enable();
+        if (en) __enable_irq();
     }
     
-    
-//    static bool Set(bool en) {
-//        
-//        __disable_irq();
-//        return
-//    }
-    
-    
-////    static bool Disable() {
-////        
-////        __disable_irq();
-////        return
-////    }
-//    
-//    static void Restore(bool en) {
-//        if (en) __enable_irq();
+//    static void Enable() {
+//        __enable_irq();
 //    }
     
     static void Sleep() {
@@ -46,21 +28,18 @@ public:
     }
     
     ~IRQState() {
-        if (!_enabled) enable();
-    }
-    
-    void enable() {
-        Assert(!_enabled);
-        Enable();
-        _enabled = true;
+        restore();
     }
     
     void disable() {
-        Assert(_enabled);
-        Disable();
-        _enabled = false;
+        _oldEnabled = Disable();
     }
-
+    
+    void restore() {
+        Restore(_oldEnabled);
+        _oldEnabled = false;
+    }
+    
 private:
-    bool _enabled = true;
+    bool _oldEnabled = false;
 };
