@@ -830,8 +830,6 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count)
     // requires that the caller of this function guarantees that
     // SETUP packets won't be received while during this function's
     // execution.
-    
-    USB_OTG_GlobalTypeDef* USBx = hpcd->Instance;
     uint32_t USBx_BASE = (uint32_t)USBx;
     
     // NAK all transactions while we reset our endpoints.

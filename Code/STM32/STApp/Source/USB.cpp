@@ -52,7 +52,7 @@ void USB::resetFinish() {
     // since control requests are typically synchronous.) This contact
     // guarantees that SETUP packets aren't delivered while
     // USB_ResetEndpoints() is executing.
-    USB_ResetEndpoints(&_device, _pcd.Init.dev_endpoints);
+    USB_ResetEndpoints(_pcd.Instance, _pcd.Init.dev_endpoints);
     // Reply to the reset control request
     USBD_CtlSendStatus(&_device);
 }
