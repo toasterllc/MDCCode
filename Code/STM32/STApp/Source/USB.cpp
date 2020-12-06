@@ -34,139 +34,25 @@ void USB::init() {
     HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 768);
 }
 
-static void resetEndpoints(USBD_HandleTypeDef* pdev) {
-    PCD_HandleTypeDef* hpcd = (PCD_HandleTypeDef*)pdev->pData;
-    USB_OTG_GlobalTypeDef* USBx = hpcd->Instance;
-    uint32_t USBx_BASE = (uint32_t)USBx;
-    
+void USB::resetFinish() {
+    // Disable interrupts while we reset our endpoints, to prevent
+    // USB interrupts from corrupting the reset process.
     IRQState irq;
     irq.disable();
     
-    // NAK all transactions while we reset our endpoints.
-    // This is necessary to prevent writing into the FIFOs,
-    // which we'll flush at the end.
-    bool oldIgnoreINTransactions = setIgnoreINTransactions(pdev, true);
-    bool oldIgnoreOUTTransactions = setIgnoreOUTTransactions(pdev, true);
-    
-    // Abort all underway transfers on all endpoints,
-    // and reset their PIDs to DATA0
-    for (uint8_t i=0; i<hpcd->Init.dev_endpoints; i++) {
-        // IN endpoint handling
-        {
-            auto epin = USBx_INEP(i);
-            auto& DIEPCTL = epin->DIEPCTL;
-            auto& DIEPINT = epin->DIEPINT;
-            
-            if (DIEPCTL & USB_OTG_DIEPCTL_USBAEP) {
-                // Enable endpoint NAK mode
-                DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
-                
-                // Check if transfer in progress
-                if (DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
-                    // Wait for NAK mode to be enabled (per "IN endpoint disable"
-                    // from the Reference Manual)
-                    // We only wait for INEPNE completion when EPENA=1, because
-                    // INEPNE doesn't get asserted as a result of SNAK=1, when
-                    // EPENA=0.
-                    while (!(DIEPINT & USB_OTG_DIEPINT_INEPNE));
-                    
-                    // Disable the endpoint (set EPDIS) and wait for completion
-                    // Clear USB_OTG_DIEPCTL_EPENA here, since setting it to 1 enables the endpoint.
-                    DIEPCTL |= USB_OTG_DIEPCTL_EPDIS;
-                    while (!(DIEPINT & USB_OTG_DIEPINT_EPDISD));
-                    // Verify that EPDIS is cleared: "The core clears [EPDIS] before
-                    // setting the endpoint disabled interrupt."
-                    Assert(!(DIEPCTL & USB_OTG_DIEPCTL_EPDIS));
-                    // Clear EPDISD
-                    DIEPINT = USB_OTG_DIEPINT_EPDISD;
-                }
-                
-                // Clear STALL
-                DIEPCTL &= ~USB_OTG_DIEPCTL_STALL;
-                // Reset PID to DATA0
-                DIEPCTL |= USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
-            }
-        }
-        
-        // OUT endpoint handling
-        {
-            auto epout = USBx_OUTEP(i);
-            auto& DOEPCTL = epout->DOEPCTL;
-            auto& DOEPINT = epout->DOEPINT;
-            
-            if (DOEPCTL & USB_OTG_DOEPCTL_USBAEP) {
-                // Set endpoint SNAK
-                // For some reason, for OUT endpoints, there's no mechanism to poll for
-                // SNAK being enabled (eg OUTEPNE / "OUT endpoint NAK effective"),
-                // like there is for IN endpoints (INEPNE / "IN endpoint NAK effective").
-                DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
-                
-                // Check if transfer in progress
-                if (DOEPCTL & USB_OTG_DOEPCTL_EPENA) {
-                    // Skip endpoint 0, since it can't be disabled
-                    if (i) {
-                        // Disable the endpoint (set EPDIS) and wait for completion
-                        // Clear USB_OTG_DOEPCTL_EPENA here, since setting it to 1 enables the endpoint.
-                        DOEPCTL |= USB_OTG_DOEPCTL_EPDIS;
-                        while (!(DOEPINT & USB_OTG_DOEPINT_EPDISD));
-                        // Verify that EPDIS is cleared: "The core clears [EPDIS] before
-                        // setting the endpoint disabled interrupt."
-                        Assert(!(DOEPCTL & USB_OTG_DOEPCTL_EPDIS));
-                        // Clear EPDISD
-                        DOEPINT = USB_OTG_DOEPINT_EPDISD;
-                    }
-                }
-                
-                // Clear STALL (endpoint 0 doesn't support resetting STALL)
-                if (i) DOEPCTL &= ~USB_OTG_DOEPCTL_STALL;
-                
-                // Reset PID to DATA0 (endpoint 0 doesn't support resetting PID to 0)
-                if (i) DOEPCTL |= USB_OTG_DOEPCTL_SD0PID_SEVNFRM;
-            }
-        }
-    }
-    
-    // Prepare to flush the FIFO
-    // Before flushing the FIFO: "The application must [check] that the core
-    // is neither writing to the Tx FIFO nor reading from the Tx FIFO."
-    // Write: "AHBIDL bit in OTG_GRSTCTL ensures the core is not writing
-    //         anything to the FIFO"
-    // Read: "NAK Effective [INEPNE] interrupt ensures the core is not
-    //        reading from the FIFO" (checked above)
-    while (!(USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL));
-    
-    // Flush Rx FIFO
-    USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
-    while (USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH);
-    
-    // Flush all Tx FIFOs
-    USBx->GRSTCTL = (USB_OTG_GRSTCTL_TXFFLSH | (0x10 << 6));
-    while (USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH);
-    
-    // Restore old NAK state
-    setIgnoreOUTTransactions(pdev, oldIgnoreOUTTransactions);
-    setIgnoreINTransactions(pdev, oldIgnoreINTransactions);
-}
-
-void USB::resetFinish() {
     // Reset all endpoints to return them to the default state.
-    // resetEndpoints() requires that the Rx/Tx FIFOs are idle (not
-    // being read/written to) since it flushes them.
-    // 
-    // The only way we can guarantee that the FIFOs are idle is by
-    // enabling the global NAK modes (using setIgnoreOUTTransactions/
-    // setIgnoreINTransactions), but even with that, it appears to
-    // be impossible to prevent the USB core from writing SETUP
-    // packets into the Rx FIFO, since the USB core always ACKs SETUP
-    // packets. Therefore successfully resetting the endpoints
-    // requires a contract between ourself and the USB host.
-    // 
-    // This contract is simply: during the time between the host sending
+    // USB_ResetEndpoints() requires that SETUP packets aren't
+    // received while it's executing. (See comment within
+    // USB_ResetEndpoints().)
+    //
+    // This requirement necessitates a contract between the device
+    // and the USB host: during the time between the host sending
     // the reset control request and receiving our response, the host
     // must not send any control requests. (This should be easily met
     // since control requests are typically synchronous.) This contact
-    // guarantees that the Rx FIFO will be idle while we flush it.
-    resetEndpoints(&_device);
+    // guarantees that SETUP packets aren't delivered while
+    // USB_ResetEndpoints() is executing.
+    USB_ResetEndpoints(&_device, _pcd.Init.dev_endpoints);
     // Reply to the reset control request
     USBD_CtlSendStatus(&_device);
 }

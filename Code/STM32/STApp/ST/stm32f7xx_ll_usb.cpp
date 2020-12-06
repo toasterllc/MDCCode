@@ -816,7 +816,21 @@ static bool setIgnoreINTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     return state;
 }
 
-HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx) {
+HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count) {
+    // Reset all endpoints to return them to the default state.
+    // We require that the Rx/Tx FIFOs are idle (not being
+    // read from/written to) since we're about to flush them.
+    // 
+    // The only way we can guarantee that the FIFOs are idle is by
+    // enabling the global NAK modes (using setIgnoreOUTTransactions/
+    // setIgnoreINTransactions), but even with that, it appears to
+    // be impossible to prevent the USB core from writing SETUP
+    // packets into the Rx FIFO, since the USB core always ACKs SETUP
+    // packets. Therefore successfully resetting the endpoints
+    // requires that the caller of this function guarantees that
+    // SETUP packets won't be received while during this function's
+    // execution.
+    
     USB_OTG_GlobalTypeDef* USBx = hpcd->Instance;
     uint32_t USBx_BASE = (uint32_t)USBx;
     
@@ -828,7 +842,7 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx) {
     
     // Abort all underway transfers on all endpoints,
     // and reset their PIDs to DATA0
-    for (uint8_t i=0; i<hpcd->Init.dev_endpoints; i++) {
+    for (uint8_t i=0; i<count; i++) {
         // IN endpoint handling
         {
             auto epin = USBx_INEP(i);
