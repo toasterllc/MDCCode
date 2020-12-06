@@ -754,6 +754,8 @@ void System::_handleReset() {
     _pixStreamEnabled = false;
     // Complete reset by notifying USB
     _usb.resetFinish();
+    // Prepare to receive commands again
+    _usb.cmdRecv();
 }
 
 void System::_handleCmd(const USB::Cmd& ev) {

@@ -110,23 +110,62 @@ static void pixStream(const Args& args, USBDevice& device) {
 //            printf("DeviceRequest returned: 0x%x\n", ior);
 //        }
         
-                    // Reset our pipes
-                    {
-                        printf("Resetting pipes...\n");
-                        interface._openIfNeeded();
-                        IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::CmdOut);
-                        printf("-> ResetPipe returned: 0x%x\n", ior);
-                        
-                        interface._openIfNeeded();
-                        ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
-                        printf("-> ResetPipe returned: 0x%x\n", ior);
-                    }
-        
         // Start PixStream
         {
+            printf("Enabling PixStream...\n");
             STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStream };
             IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
+            if (ior != kIOReturnSuccess) {
+                printf("-> write failed on Endpoint::CmdOut: 0x%x ❌\n", ior);
+                return;
+            }
+            printf("-> Done\n\n");
+        }
+        
+        // Read data and make sure it's synchronized (by making
+        // sure it starts with the byte we expect)
+        {
+            const size_t bufCap = (63*1024);
+            auto buf = std::make_unique<uint8_t[]>(bufCap);
+            for (int i=0; i<3; i++) {
+                printf("Reading from PixIn...\n");
+                memset(buf.get(), 0x42, bufCap);
+                auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufCap);
+                if (ior != kIOReturnSuccess) {
+                    printf("-> PixIn read failed: 0x%x ❌\n", ior);
+                    return;
+                }
+                
+                if (ior == kIOReturnSuccess) {
+                    bool good = true;
+                    uint8_t expected = 0x37;
+                    for (size_t ii=0; ii<len; ii++) {
+                        if (buf[ii] != expected) {
+                            printf("-> Bad byte @ %zu; expected: %02x, got %02x ❌\n", ii, expected, buf[ii]);
+                            good = false;
+                        }
+                        expected = 0xFF;
+                    }
+                    if (good) {
+                        printf("-> Bytes valid ✅\n");
+                    }
+                }
+            }
+            printf("-> Done\n\n");
+        }
+        
+        // Trigger the data to be de-synchronized, by performing a truncated read
+        {
+            printf("Corrupting PixIn endpoint...\n");
+            for (int i=0; i<3; i++) {
+                uint8_t buf[512];
+                auto [len, ior] = interface.read(Endpoint::PixIn, buf, sizeof(buf));
+                if (ior != kIOReturnSuccess) {
+                    printf("-> PixIn read returned: 0x%x ❌\n", ior);
+                    return;
+                }
+            }
+            printf("-> Done\n\n");
         }
         
         // Tell the device to reset
@@ -138,60 +177,30 @@ static void pixStream(const Args& args, USBDevice& device) {
                 .bRequest       = CtrlReqs::Reset,
             };
             IOReturn ior = (*device.interface())->DeviceRequest(device.interface(), &req);
-            printf("DeviceRequest returned: 0x%x\n", ior);
-        }
-        
-//                    // Reset our pipes
-//                    {
-//                        printf("Resetting pipes...\n");
-//                        interface._openIfNeeded();
-//                        IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::CmdOut);
-//                        printf("-> ResetPipe returned: 0x%x\n", ior);
-//                        
-//                        interface._openIfNeeded();
-//                        ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
-//                        printf("-> ResetPipe returned: 0x%x\n", ior);
-//                    }
-        
-        // Start PixStream
-        {
-            STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStream };
-            IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
-        }
-        
-        // Read data and make sure it's synchronized (by making
-        // sure it starts with the byte we expect)
-        const size_t bufCap = (63*1024);
-        auto buf = std::make_unique<uint8_t[]>(bufCap);
-        for (int i=0; i<3; i++) {
-            printf("Reading from PixIn...\n");
-            memset(buf.get(), 0x42, bufCap);
-            auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufCap);
-            printf("-> PixIn read returned: 0x%x (got %ju bytes)\n", ior, (uintmax_t)len);
-            
-            if (ior == kIOReturnSuccess) {
-                bool good = true;
-                uint8_t expected = 0x37;
-                for (size_t ii=0; ii<len; ii++) {
-                    if (buf[ii] != expected) {
-                        printf("-> Bad byte @ %zu; expected: %02x, got %02x ❌\n", ii, expected, buf[ii]);
-                        good = false;
-                    }
-                    expected = 0xFF;
-                }
-                if (good) {
-                    printf("-> Bytes valid ✅\n");
-                }
+            if (ior != kIOReturnSuccess) {
+                printf("-> DeviceRequest failed: 0x%x ❌\n", ior);
+                return;
             }
+            printf("-> Done\n\n");
         }
         
-        // Trigger the data to be de-synchronized, by performing a truncated read
-        printf("Corrupting PixIn endpoint...\n");
-        for (int i=0; i<3; i++) {
-            uint8_t buf[512];
-            auto [len, ior] = interface.read(Endpoint::PixIn, buf, sizeof(buf));
-            printf("-> PixIn read returned: 0x%x\n", ior);
+        // Reset our pipes
+        {
+            printf("Resetting pipes...\n");
+            interface._openIfNeeded();
+            IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::CmdOut);
+            if (ior != kIOReturnSuccess) {
+                printf("-> ResetPipe failed: 0x%x ❌\n", ior);
+                return;
+            }
+            
+            interface._openIfNeeded();
+            ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
+            if (ior != kIOReturnSuccess) {
+                printf("-> ResetPipe failed: 0x%x ❌\n", ior);
+                return;
+            }
+            printf("-> Done\n\n");
         }
     }
 

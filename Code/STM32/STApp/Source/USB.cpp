@@ -122,7 +122,6 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
             if (DIEPCTL & USB_OTG_DIEPCTL_USBAEP) {
                 // Check if transfer in progress
                 if (DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
-                    
                     // Set endpoint SNAK if it was disabled, and wait for completion
                     if (!(DIEPINT & USB_OTG_DIEPINT_INEPNE)) {
                         DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
@@ -140,6 +139,8 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
                     DIEPINT = USB_OTG_DIEPINT_EPDISD;
                 
                 } else {
+                    // Don't wait for completion via INEPNE, because that interrupt bit
+                    // is only set when a transfer is underway (DIEPCTL.EPENA=1)
                     DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
                 }
                 
