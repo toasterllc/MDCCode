@@ -26,8 +26,6 @@ public:
     Channel<Signal, 1> resetChannel; // Signals that a reset was requested
     void resetFinish(); // Call to complete resetting
     
-    void debugFlushRxFIFO();
-    
     // Command input
     Channel<Cmd, 1> cmdChannel;
     USBD_StatusTypeDef cmdRecv(); // Arranges for another command to be received

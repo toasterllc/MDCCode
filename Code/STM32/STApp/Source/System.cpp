@@ -749,11 +749,6 @@ void System::_handleUSBEvent(const USB::Event& ev) {
 }
 
 void System::_handleReset() {
-//    for (;;) {
-//        _usb.debugFlushRxFIFO();
-////        for (volatile int i=0; i<10; i++) {}
-//    }
-    
     // TODO: reset QSPI
     // Reset our state
     _pixStreamEnabled = false;

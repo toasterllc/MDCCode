@@ -97,43 +97,150 @@ static void pixStream(const Args& args, USBDevice& device) {
     
     
     
-    // 
-    // Test if flushing the Rx FIFO flushes the region of the FIFO dedicated to SETUP packets
-    //
-    {
-        printf("Sending Reset control request...\n");
-        device._openIfNeeded();
-        IOUSBDevRequest req = {
-            .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
-            .bRequest       = CtrlReqs::Reset,
-        };
-        IOReturn ior = (*device.interface())->DeviceRequest(device.interface(), &req);
-        printf("DeviceRequest returned: 0x%x\n", ior);
-    }
-    
-    sleep(1);
-    
     for (;;) {
-        printf("Sending vendor requests...\n");
-        device._openIfNeeded();
-        uint32_t counter = 0;
-        IOUSBDevRequestTO req = {
-            .bmRequestType      = USBmakebmRequestType(kUSBIn, kUSBVendor, kUSBDevice),
-            .bRequest           = 0,
-            .wLength            = sizeof(counter),
-            .pData              = &counter,
-            .noDataTimeout      = 10,
-            .completionTimeout  = 10,
-        };
-        IOReturn ior = (*device.interface())->DeviceRequestTO(device.interface(), &req);
-        printf("DeviceRequest returned: 0x%x\n", ior);
-        if (ior == kIOReturnSuccess) {
-            printf("Counter: %jx\n", (uintmax_t)counter);
+//        // Tell the device to reset
+//        {
+//            printf("Sending Reset control request...\n");
+//            device._openIfNeeded();
+//            IOUSBDevRequest req = {
+//                .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
+//                .bRequest       = CtrlReqs::Reset,
+//            };
+//            IOReturn ior = (*device.interface())->DeviceRequest(device.interface(), &req);
+//            printf("DeviceRequest returned: 0x%x\n", ior);
+//        }
+        
+                    // Reset our pipes
+                    {
+                        printf("Resetting pipes...\n");
+                        interface._openIfNeeded();
+                        IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::CmdOut);
+                        printf("-> ResetPipe returned: 0x%x\n", ior);
+                        
+                        interface._openIfNeeded();
+                        ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
+                        printf("-> ResetPipe returned: 0x%x\n", ior);
+                    }
+        
+        // Start PixStream
+        {
+            STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStream };
+            IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
         }
-//        sleep(1);
+        
+        // Tell the device to reset
+        {
+            printf("Sending Reset control request...\n");
+            device._openIfNeeded();
+            IOUSBDevRequest req = {
+                .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
+                .bRequest       = CtrlReqs::Reset,
+            };
+            IOReturn ior = (*device.interface())->DeviceRequest(device.interface(), &req);
+            printf("DeviceRequest returned: 0x%x\n", ior);
+        }
+        
+//                    // Reset our pipes
+//                    {
+//                        printf("Resetting pipes...\n");
+//                        interface._openIfNeeded();
+//                        IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::CmdOut);
+//                        printf("-> ResetPipe returned: 0x%x\n", ior);
+//                        
+//                        interface._openIfNeeded();
+//                        ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
+//                        printf("-> ResetPipe returned: 0x%x\n", ior);
+//                    }
+        
+        // Start PixStream
+        {
+            STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStream };
+            IOReturn ior = interface.write(Endpoint::CmdOut, cmd);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on Endpoint::CmdOut");
+        }
+        
+        // Read data and make sure it's synchronized (by making
+        // sure it starts with the byte we expect)
+        const size_t bufCap = (63*1024);
+        auto buf = std::make_unique<uint8_t[]>(bufCap);
+        for (int i=0; i<3; i++) {
+            printf("Reading from PixIn...\n");
+            memset(buf.get(), 0x42, bufCap);
+            auto [len, ior] = interface.read(Endpoint::PixIn, buf.get(), bufCap);
+            printf("-> PixIn read returned: 0x%x (got %ju bytes)\n", ior, (uintmax_t)len);
+            
+            if (ior == kIOReturnSuccess) {
+                bool good = true;
+                uint8_t expected = 0x37;
+                for (size_t ii=0; ii<len; ii++) {
+                    if (buf[ii] != expected) {
+                        printf("-> Bad byte @ %zu; expected: %02x, got %02x ❌\n", ii, expected, buf[ii]);
+                        good = false;
+                    }
+                    expected = 0xFF;
+                }
+                if (good) {
+                    printf("-> Bytes valid ✅\n");
+                }
+            }
+        }
+        
+        // Trigger the data to be de-synchronized, by performing a truncated read
+        printf("Corrupting PixIn endpoint...\n");
+        for (int i=0; i<3; i++) {
+            uint8_t buf[512];
+            auto [len, ior] = interface.read(Endpoint::PixIn, buf, sizeof(buf));
+            printf("-> PixIn read returned: 0x%x\n", ior);
+        }
     }
+
     
-    exit(0);
+    
+    
+    
+    
+    
+    
+    
+    
+//    // 
+//    // Test if flushing the Rx FIFO flushes the region of the FIFO dedicated to SETUP packets
+//    //
+//    {
+//        printf("Sending Reset control request...\n");
+//        device._openIfNeeded();
+//        IOUSBDevRequest req = {
+//            .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
+//            .bRequest       = CtrlReqs::Reset,
+//        };
+//        IOReturn ior = (*device.interface())->DeviceRequest(device.interface(), &req);
+//        printf("DeviceRequest returned: 0x%x\n", ior);
+//    }
+//    
+//    sleep(1);
+//    
+//    for (;;) {
+//        printf("Sending vendor requests...\n");
+//        device._openIfNeeded();
+//        uint32_t counter = 0;
+//        IOUSBDevRequestTO req = {
+//            .bmRequestType      = USBmakebmRequestType(kUSBIn, kUSBVendor, kUSBDevice),
+//            .bRequest           = 0,
+//            .wLength            = sizeof(counter),
+//            .pData              = &counter,
+//            .noDataTimeout      = 10,
+//            .completionTimeout  = 10,
+//        };
+//        IOReturn ior = (*device.interface())->DeviceRequestTO(device.interface(), &req);
+//        printf("DeviceRequest returned: 0x%x\n", ior);
+//        if (ior == kIOReturnSuccess) {
+//            printf("Counter: %jx\n", (uintmax_t)counter);
+//        }
+////        sleep(1);
+//    }
+//    
+//    exit(0);
     
     
     
