@@ -171,12 +171,7 @@ static void pixStream(const Args& args, USBDevice& device) {
         // Tell the device to reset
         {
             printf("Sending Reset control request...\n");
-            device._openIfNeeded();
-            IOUSBDevRequest req = {
-                .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
-                .bRequest       = CtrlReqs::Reset,
-            };
-            IOReturn ior = (*device.interface())->DeviceRequest(device.interface(), &req);
+            IOReturn ior = device.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
             if (ior != kIOReturnSuccess) {
                 printf("-> DeviceRequest failed: 0x%x ❌\n", ior);
                 return;
@@ -187,15 +182,14 @@ static void pixStream(const Args& args, USBDevice& device) {
         // Reset our pipes
         {
             printf("Resetting pipes...\n");
-            interface._openIfNeeded();
-            IOReturn ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::CmdOut);
+            IOReturn ior = interface.resetPipe(Endpoint::CmdOut);
             if (ior != kIOReturnSuccess) {
                 printf("-> ResetPipe failed: 0x%x ❌\n", ior);
                 return;
             }
             
-            interface._openIfNeeded();
-            ior = (*interface.interface())->ResetPipe(interface.interface(), Endpoint::PixIn);
+            interface.resetPipe(Endpoint::PixIn);
+            ior = interface.resetPipe(Endpoint::PixIn);
             if (ior != kIOReturnSuccess) {
                 printf("-> ResetPipe failed: 0x%x ❌\n", ior);
                 return;

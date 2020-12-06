@@ -27,12 +27,12 @@ public:
         (*plugin)->Release(plugin);
         if (hr) throw std::runtime_error("QueryInterface failed");
         
-        set(interface);
+        setInterface(interface);
     }
     
     // Constructor: take ownership of a IOUSBDeviceInterface
     USBDevice(IOUSBDeviceInterface** interface) {
-        set(interface);
+        setInterface(interface);
     }
     
     // Copy constructor: illegal
@@ -45,19 +45,32 @@ public:
         auto interface = x._interface;
         if (interface) (*interface)->AddRef(interface);
         
-        x.set(nullptr); // Reset x's interface first, so that it calls USBDeviceClose before we call USBDeviceOpen
-        set(interface);
+        x.setInterface(nullptr); // Reset x's interface first, so that it calls USBDeviceClose before we call USBDeviceOpen
+        setInterface(interface);
         return *this;
     }
     
     ~USBDevice() {
-        set(nullptr);
+        setInterface(nullptr);
     }
     
     IOUSBDeviceInterface** interface() {
         assert(_interface);
         return _interface;
     }
+    
+    // Take ownership of a IOUSBDeviceInterface
+    void setInterface(IOUSBDeviceInterface** interface) {
+        if (_interface) {
+            if (_open) (*_interface)->USBDeviceClose(_interface);
+            (*_interface)->Release(_interface);
+        }
+        
+        _interface = interface;
+        _open = false;
+    }
+    
+    operator bool() const { return _interface; }
     
     std::vector<USBInterface> usbInterfaces() {
         std::vector<USBInterface> interfaces;
@@ -80,19 +93,18 @@ public:
         return interfaces;
     }
     
-    operator bool() const { return _interface; }
-    
-    // Take ownership of a IOUSBDeviceInterface
-    void set(IOUSBDeviceInterface** interface) {
-        if (_interface) {
-            if (_open) (*_interface)->USBDeviceClose(_interface);
-            (*_interface)->Release(_interface);
-        }
-        
-        _interface = interface;
-        _open = false;
+    IOReturn vendorRequestOut(uint8_t req, void* data, size_t len) {
+        _openIfNeeded();
+        IOUSBDevRequest usbReq = {
+            .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
+            .bRequest       = req,
+            .pData          = data,
+            .wLength        = (uint16_t)len
+        };
+        return (*_interface)->DeviceRequest(_interface, &usbReq);
     }
     
+private:
     void _openIfNeeded() {
         if (!_open) {
             (*_interface)->USBDeviceOpen(_interface);

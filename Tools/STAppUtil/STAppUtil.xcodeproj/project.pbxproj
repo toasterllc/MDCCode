@@ -25,8 +25,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		55844C172575CF34008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
-		55844C182575D204008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Code/Shared; sourceTree = "<group>"; };
+		55671A0C257CEC4A00C1CDA4 /* MyTime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MyTime.h; sourceTree = "<group>"; };
+		55671A0D257CEC4A00C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
+		55671A0E257CEC4A00C1CDA4 /* USBInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
+		55671A0F257CEC4A00C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
+		55671A10257CEC4A00C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
+		55671A11257CEC4A00C1CDA4 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
+		55671A12257CEC4A00C1CDA4 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
+		55671A14257CEC7400C1CDA4 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55844C1B2575D5C7008737ED /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/STApp/Source/STAppTypes.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* STAppUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STAppUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -47,11 +53,35 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		55671A0B257CEC4A00C1CDA4 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				55671A0F257CEC4A00C1CDA4 /* ELF32Binary.h */,
+				55671A0D257CEC4A00C1CDA4 /* MDCDevice.h */,
+				55671A10257CEC4A00C1CDA4 /* Mmap.h */,
+				55671A0C257CEC4A00C1CDA4 /* MyTime.h */,
+				55671A12257CEC4A00C1CDA4 /* SendRight.h */,
+				55671A11257CEC4A00C1CDA4 /* USBDevice.h */,
+				55671A0E257CEC4A00C1CDA4 /* USBInterface.h */,
+			);
+			name = Shared;
+			path = ../Shared;
+			sourceTree = "<group>";
+		};
+		55671A13257CEC7400C1CDA4 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				55671A14257CEC7400C1CDA4 /* Enum.h */,
+			);
+			name = Shared;
+			path = ../../Code/Shared;
+			sourceTree = "<group>";
+		};
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
-				55844C172575CF34008737ED /* Shared */,
-				55844C182575D204008737ED /* Shared */,
+				55671A0B257CEC4A00C1CDA4 /* Shared */,
+				55671A13257CEC7400C1CDA4 /* Shared */,
 				55844C1B2575D5C7008737ED /* STAppTypes.h */,
 				55E1D8ED253E892B00628EF6 /* main.mm */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
@@ -189,10 +219,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					../Shared,
-					../../Code/Shared,
-				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -244,10 +270,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					../Shared,
-					../../Code/Shared,
-				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;

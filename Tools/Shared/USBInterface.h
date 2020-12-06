@@ -26,12 +26,12 @@ public:
         (*plugin)->Release(plugin);
         if (hr) throw std::runtime_error("QueryInterface failed");
         
-        set(interface);
+        setInterface(interface);
     }
     
     // Constructor: take ownership of a IOUSBInterfaceInterface
     USBInterface(IOUSBInterfaceInterface** interface) {
-        set(interface);
+        setInterface(interface);
     }
     
     // Copy constructor: illegal
@@ -44,18 +44,29 @@ public:
         auto interface = x._interface;
         if (interface) (*interface)->AddRef(interface);
         
-        x.set(nullptr); // Reset x's interface first, so that it calls USBInterfaceClose before we call USBInterfaceOpen
-        set(interface);
+        x.setInterface(nullptr); // Reset x's interface first, so that it calls USBInterfaceClose before we call USBInterfaceOpen
+        setInterface(interface);
         return *this;
     }
     
     ~USBInterface() {
-        set(nullptr);
+        setInterface(nullptr);
     }
     
     IOUSBInterfaceInterface** interface() {
         assert(_interface);
         return _interface;
+    }
+    
+    // Take ownership of a IOUSBInterfaceInterface
+    void setInterface(IOUSBInterfaceInterface** interface) {
+        if (_interface) {
+            if (_open) (*_interface)->USBInterfaceClose(_interface);
+            (*_interface)->Release(_interface);
+        }
+        
+        _interface = interface;
+        _open = false;
     }
     
     operator bool() const { return _interface; }
@@ -93,17 +104,12 @@ public:
         return std::make_tuple(len32, ior);
     }
     
-    // Take ownership of a IOUSBInterfaceInterface
-    void set(IOUSBInterfaceInterface** interface) {
-        if (_interface) {
-            if (_open) (*_interface)->USBInterfaceClose(_interface);
-            (*_interface)->Release(_interface);
-        }
-        
-        _interface = interface;
-        _open = false;
+    IOReturn resetPipe(uint8_t pipe) {
+        _openIfNeeded();
+        return (*_interface)->ResetPipe(_interface, pipe);
     }
     
+private:
     void _openIfNeeded() {
         if (!_open) {
             (*_interface)->USBInterfaceOpen(_interface);
