@@ -213,9 +213,25 @@ static void resetEndpoints(USBD_HandleTypeDef* pdev) {
 }
 
 void USB::resetFinish() {
-    // Reset all endpoints to return them to the default state
+    // Reset all endpoints to return them to the default state.
+    // resetEndpoints() requires that the Rx/Tx FIFOs are idle (not
+    // being read/written to) since it flushes them.
+    // 
+    // The only way we can guarantee that the FIFOs are idle is by
+    // enabling the global NAK modes (using setIgnoreOUTTransactions/
+    // setIgnoreINTransactions), but even with that, it appears to
+    // be impossible to prevent the USB core from writing SETUP
+    // packets into the Rx FIFO, since the USB core always ACKs SETUP
+    // packets. Therefore successfully resetting the endpoints
+    // requires a contract between ourself and the USB host.
+    // 
+    // This contract is simply: during the time between the host sending
+    // the reset control request and receiving our response, the host
+    // must not send any control requests. (This should be easily met
+    // since control requests are typically synchronous.) This contact
+    // guarantees that the Rx FIFO will be idle while we flush it.
     resetEndpoints(&_device);
-    // Reply to the reset control report
+    // Reply to the reset control request
     USBD_CtlSendStatus(&_device);
 }
 
