@@ -27,20 +27,27 @@ public:
             (*plugin)->Release(plugin);
             if (hr) throw std::runtime_error("QueryInterface failed");
             
-            _setInterface(interface);
+            _interface = interface;
+            // Open the interface
+            IOReturn ior = (*_interface)->USBInterfaceOpen(_interface);
+            if (ior != kIOReturnSuccess) {
+                throw std::runtime_error("USBInterfaceOpen failed");
+            }
         
         } catch (...) {
             _reset();
+            throw;
         }
     }
     
-    // Constructor: take ownership of a IOUSBInterfaceInterface
-    USBInterface(IOUSBInterfaceInterface** interface) {
-        _setInterface(interface);
+    // Copy constructor: use copy assignment operator
+    USBInterface(const USBInterface& x) { *this = x; }
+    // Copy assignment operator
+    USBInterface& operator=(const USBInterface& x) {
+        _interface = x._interface;
+        if (_interface) (*_interface)->AddRef(_interface);
+        return *this;
     }
-    
-    // Copy constructor: illegal
-    USBInterface(const USBInterface&) = delete;
     // Move constructor: use move assignment operator
     USBInterface(USBInterface&& x) { *this = std::move(x); }
     // Move assignment operator
@@ -54,7 +61,7 @@ public:
         _reset();
     }
     
-    IOUSBInterfaceInterface** interface() {
+    IOUSBInterfaceInterface** interface() const {
         assert(_interface);
         return _interface;
     }
@@ -62,18 +69,12 @@ public:
     operator bool() const { return _interface; }
     
 private:
-    // Take ownership of a IOUSBInterfaceInterface
-    void _setInterface(IOUSBInterfaceInterface** interface) {
-        assert(!_interface);
-        _interface = interface;
-        // Open the interface
-        IOReturn ior = (*_interface)->USBInterfaceOpen(_interface);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("USBInterfaceOpen failed");
-    }
-    
     void _reset() {
         if (_interface) {
-            (*_interface)->USBInterfaceClose(_interface);
+            // We don't call USBInterfaceClose here!
+            // We allow USBInterface to be copied, and the copies assume
+            // the interface is open.
+            // It'll be closed when the object is deallocated.
             (*_interface)->Release(_interface);
             _interface = nullptr;
         }

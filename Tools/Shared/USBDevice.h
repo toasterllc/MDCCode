@@ -28,20 +28,25 @@ public:
             (*plugin)->Release(plugin);
             if (hr) throw std::runtime_error("QueryInterface failed");
             
-            _setInterface(interface);
+            _interface = interface;
+            // Open the device
+            IOReturn ior = (*_interface)->USBDeviceOpen(_interface);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("USBDeviceOpen failed");
         
         } catch (...) {
             _reset();
+            throw;
         }
     }
     
-    // Constructor: take ownership of a IOUSBDeviceInterface
-    USBDevice(IOUSBDeviceInterface** interface) {
-        _setInterface(interface);
+    // Copy constructor: use copy assignment operator
+    USBDevice(const USBDevice& x) { *this = x; }
+    // Copy assignment operator
+    USBDevice& operator=(const USBDevice& x) {
+        _interface = x._interface;
+        if (_interface) (*_interface)->AddRef(_interface);
+        return *this;
     }
-    
-    // Copy constructor: illegal
-    USBDevice(const USBDevice&) = delete;
     // Move constructor: use move assignment operator
     USBDevice(USBDevice&& x) { *this = std::move(x); }
     // Move assignment operator
@@ -55,7 +60,7 @@ public:
         _reset();
     }
     
-    IOUSBDeviceInterface** interface() {
+    IOUSBDeviceInterface** interface() const {
         assert(_interface);
         return _interface;
     }
@@ -63,27 +68,29 @@ public:
     operator bool() const { return _interface; }
     
     std::vector<USBInterface> usbInterfaces() {
-        std::vector<USBInterface> interfaces;
-        io_iterator_t ioServicesIter = MACH_PORT_NULL;
-        IOUSBFindInterfaceRequest req = {
-            .bInterfaceClass = kIOUSBFindInterfaceDontCare,
-            .bInterfaceSubClass = kIOUSBFindInterfaceDontCare,
-            .bInterfaceProtocol = kIOUSBFindInterfaceDontCare,
-            .bAlternateSetting = kIOUSBFindInterfaceDontCare,
-        };
-        IOReturn ior = (*_interface)->CreateInterfaceIterator(_interface, &req, &ioServicesIter);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("CreateInterfaceIterator failed");
-        
-        SendRight servicesIter(ioServicesIter);
-        while (servicesIter) {
-            SendRight service(IOIteratorNext(servicesIter.port()));
-            if (!service) break;
-            interfaces.emplace_back(std::move(service));
+        if (!_usbInterfacesInit) {
+            io_iterator_t ioServicesIter = MACH_PORT_NULL;
+            IOUSBFindInterfaceRequest req = {
+                .bInterfaceClass = kIOUSBFindInterfaceDontCare,
+                .bInterfaceSubClass = kIOUSBFindInterfaceDontCare,
+                .bInterfaceProtocol = kIOUSBFindInterfaceDontCare,
+                .bAlternateSetting = kIOUSBFindInterfaceDontCare,
+            };
+            IOReturn ior = (*_interface)->CreateInterfaceIterator(_interface, &req, &ioServicesIter);
+            if (ior != kIOReturnSuccess) throw std::runtime_error("CreateInterfaceIterator failed");
+            
+            SendRight servicesIter(ioServicesIter);
+            while (servicesIter) {
+                SendRight service(IOIteratorNext(servicesIter.port()));
+                if (!service) break;
+                _usbInterfaces.emplace_back(std::move(service));
+            }
+            _usbInterfacesInit = true;
         }
-        return interfaces;
+        return _usbInterfaces;
     }
     
-    IOReturn vendorRequestOut(uint8_t req, void* data, size_t len) {
+    IOReturn vendorRequestOut(uint8_t req, void* data, size_t len) const {
         IOUSBDevRequest usbReq = {
             .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
             .bRequest       = req,
@@ -94,23 +101,19 @@ public:
     }
     
 private:
-    // Take ownership of a IOUSBDeviceInterface
-    void _setInterface(IOUSBDeviceInterface** interface) {
-        assert(!_interface);
-        _interface = interface;
-        // Open the interface
-        IOReturn ior = (*_interface)->USBDeviceOpen(_interface);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("USBDeviceOpen failed");
-    }
     
     void _reset() {
         if (_interface) {
-            (*_interface)->USBDeviceClose(_interface);
+            // We don't call USBDeviceClose here!
+            // We allow USBDevice to be copied, and the copies assume
+            // the device is open.
+            // It'll be closed when the object is deallocated.
             (*_interface)->Release(_interface);
             _interface = nullptr;
         }
     }
     
     IOUSBDeviceInterface** _interface = nullptr;
-    bool _open = false;
+    std::vector<USBInterface> _usbInterfaces;
+    bool _usbInterfacesInit = false;
 };

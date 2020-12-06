@@ -14,27 +14,6 @@
 #import "STAppTypes.h"
 #import "MyTime.h"
 
-static std::vector<USBDevice> findUSBDevices() {
-    std::vector<USBDevice> devices;
-    NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
-    match[@kIOPropertyMatchKey] = @{
-        @"idVendor": @1155,
-        @"idProduct": @57105,
-    };
-    
-    io_iterator_t ioServicesIter = MACH_PORT_NULL;
-    kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (CFDictionaryRef)CFBridgingRetain(match), &ioServicesIter);
-    if (kr != KERN_SUCCESS) throw std::runtime_error("IOServiceGetMatchingServices failed");
-    
-    SendRight servicesIter(ioServicesIter);
-    while (servicesIter) {
-        SendRight service(IOIteratorNext(servicesIter.port()));
-        if (!service) break;
-        devices.emplace_back(std::move(service));
-    }
-    return devices;
-}
-
 namespace Endpoint {
     enum : uint8_t {
         // These values aren't the same as the endpoint addresses in firmware!
@@ -49,14 +28,6 @@ using Cmd = std::string;
 const Cmd PixStreamCmd = "pixstream";
 const Cmd LEDSetCmd = "ledset";
 
-void printUsage() {
-    using namespace std;
-    cout << "STAppUtil commands:\n";
-    cout << "  " << PixStreamCmd << "\n";
-    cout << "  " << LEDSetCmd    << " <idx> <0/1>\n";
-    cout << "\n";
-}
-
 struct Args {
     Cmd cmd;
     struct {
@@ -65,6 +36,14 @@ struct Args {
     } ledSet;
     std::string filePath;
 };
+
+void printUsage() {
+    using namespace std;
+    cout << "STAppUtil commands:\n";
+    cout << "  " << PixStreamCmd << "\n";
+    cout << "  " << LEDSetCmd    << " <idx> <0/1>\n";
+    cout << "\n";
+}
 
 static Args parseArgs(int argc, const char* argv[]) {
     std::vector<std::string> strs;
@@ -88,6 +67,47 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
+static std::vector<USBDevice> findUSBDevices() {
+    std::vector<USBDevice> devices;
+    NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
+    match[@kIOPropertyMatchKey] = @{
+        @"idVendor": @1155,
+        @"idProduct": @57105,
+    };
+    
+    io_iterator_t ioServicesIter = MACH_PORT_NULL;
+    kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (CFDictionaryRef)CFBridgingRetain(match), &ioServicesIter);
+    if (kr != KERN_SUCCESS) throw std::runtime_error("IOServiceGetMatchingServices failed");
+    
+    SendRight servicesIter(ioServicesIter);
+    while (servicesIter) {
+        SendRight service(IOIteratorNext(servicesIter.port()));
+        if (!service) break;
+        devices.emplace_back(std::move(service));
+    }
+    return devices;
+}
+
+static void resetDevice(USBDevice& device) {
+    using namespace STApp;
+    
+    // Reset the device
+    IOReturn ior = device.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
+    if (ior != kIOReturnSuccess) throw std::runtime_error("device.vendorRequestOut() failed");
+    
+    std::vector<USBInterface> interfaces = device.usbInterfaces();
+    if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
+    USBInterface& interface = interfaces[0];
+    USBPipe cmdOutPipe(interface, Endpoint::CmdOut);
+    USBPipe pixInPipe(interface, Endpoint::PixIn);
+    
+    // Reset our pipes
+    for (const USBPipe& pipe : {cmdOutPipe, pixInPipe}) {
+        ior = pipe.reset();
+        if (ior != kIOReturnSuccess) throw std::runtime_error("pipe.reset() failed");
+    }
+}
+
 static void pixStream(const Args& args, USBDevice& device) {
     using namespace STApp;
     
@@ -100,18 +120,6 @@ static void pixStream(const Args& args, USBDevice& device) {
     
     
     for (;;) {
-//        // Tell the device to reset
-//        {
-//            printf("Sending Reset control request...\n");
-//            device._openIfNeeded();
-//            IOUSBDevRequest req = {
-//                .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
-//                .bRequest       = CtrlReqs::Reset,
-//            };
-//            IOReturn ior = (*device.interface())->DeviceRequest(device.interface(), &req);
-//            printf("DeviceRequest returned: 0x%x\n", ior);
-//        }
-        
         // Start PixStream
         {
             printf("Enabling PixStream...\n");
@@ -170,33 +178,7 @@ static void pixStream(const Args& args, USBDevice& device) {
             printf("-> Done\n\n");
         }
         
-        // Tell the device to reset
-        {
-            printf("Sending Reset control request...\n");
-            IOReturn ior = device.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
-            if (ior != kIOReturnSuccess) {
-                printf("-> DeviceRequest failed: 0x%x ❌\n", ior);
-                return;
-            }
-            printf("-> Done\n\n");
-        }
-        
-        // Reset our pipes
-        {
-            printf("Resetting pipes...\n");
-            IOReturn ior = cmdOutPipe.reset();;
-            if (ior != kIOReturnSuccess) {
-                printf("-> ResetPipe failed: 0x%x ❌\n", ior);
-                return;
-            }
-            
-            ior = pixInPipe.reset();
-            if (ior != kIOReturnSuccess) {
-                printf("-> ResetPipe failed: 0x%x ❌\n", ior);
-                return;
-            }
-            printf("-> Done\n\n");
-        }
+        resetDevice(device);
     }
 
     
@@ -656,9 +638,18 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
+    USBDevice& device = devices[0];
     try {
-        if (args.cmd == PixStreamCmd)   pixStream(args, devices[0]);
-        else if (args.cmd == LEDSetCmd) ledSet(args, devices[0]);
+        resetDevice(device);
+    
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Reset device failed: %s\n\n", e.what());
+        return 1;
+    }
+    
+    try {
+        if (args.cmd == PixStreamCmd)   pixStream(args, device);
+        else if (args.cmd == LEDSetCmd) ledSet(args, device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
