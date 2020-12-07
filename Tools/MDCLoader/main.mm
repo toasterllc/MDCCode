@@ -21,7 +21,7 @@ const Cmd ICELoadCmd = "iceload";
 
 void printUsage() {
     using namespace std;
-    cout << "STLoaderUtil commands:\n";
+    cout << "MDCLoader commands:\n";
     cout << "  " << LEDSetCmd    << " <idx> <0/1>\n";
     cout << "  " << STLoadCmd    << " <file>\n";
     cout << "  " << ICELoadCmd   << " <file>\n";

@@ -37,7 +37,7 @@
 		55671A18257E850700C1CDA4 /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/Shared/STAppTypes.h; sourceTree = "<group>"; };
 		55671A27257E865F00C1CDA4 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
 		55671A28257E870E00C1CDA4 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
-		55E1D8DE253E864F00628EF6 /* STAppUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STAppUtil; sourceTree = BUILT_PRODUCTS_DIR; };
+		55E1D8DE253E864F00628EF6 /* MDCUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55E1D8ED253E892B00628EF6 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
@@ -86,9 +86,9 @@
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
-				55671A18257E850700C1CDA4 /* STAppTypes.h */,
 				55671A0B257CEC4A00C1CDA4 /* Shared */,
 				55671A13257CEC7400C1CDA4 /* Shared */,
+				55671A18257E850700C1CDA4 /* STAppTypes.h */,
 				55E1D8ED253E892B00628EF6 /* main.mm */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
 				55E1D8DF253E864F00628EF6 /* Products */,
@@ -98,7 +98,7 @@
 		55E1D8DF253E864F00628EF6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				55E1D8DE253E864F00628EF6 /* STAppUtil */,
+				55E1D8DE253E864F00628EF6 /* MDCUtil */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,9 +115,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		55E1D8DD253E864F00628EF6 /* STAppUtil */ = {
+		55E1D8DD253E864F00628EF6 /* MDCUtil */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "STAppUtil" */;
+			buildConfigurationList = 55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "MDCUtil" */;
 			buildPhases = (
 				55E1D8DA253E864F00628EF6 /* Sources */,
 				55E1D8DB253E864F00628EF6 /* Frameworks */,
@@ -127,9 +127,9 @@
 			);
 			dependencies = (
 			);
-			name = STAppUtil;
-			productName = STAppUtil;
-			productReference = 55E1D8DE253E864F00628EF6 /* STAppUtil */;
+			name = MDCUtil;
+			productName = MDCUtil;
+			productReference = 55E1D8DE253E864F00628EF6 /* MDCUtil */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -146,7 +146,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "STAppUtil" */;
+			buildConfigurationList = 55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "MDCUtil" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -159,7 +159,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				55E1D8DD253E864F00628EF6 /* STAppUtil */,
+				55E1D8DD253E864F00628EF6 /* MDCUtil */,
 			);
 		};
 /* End PBXProject section */
@@ -302,7 +302,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "STAppUtil" */ = {
+		55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "MDCUtil" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				55E1D8E3253E864F00628EF6 /* Debug */,
@@ -311,7 +311,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "STAppUtil" */ = {
+		55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "MDCUtil" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				55E1D8E6253E864F00628EF6 /* Debug */,

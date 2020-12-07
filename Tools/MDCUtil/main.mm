@@ -33,7 +33,7 @@ struct Args {
 
 void printUsage() {
     using namespace std;
-    cout << "STAppUtil commands:\n";
+    cout << "MDCUtil commands:\n";
     cout << "  " << PixStreamCmd        << "\n";
     cout << "  " << LEDSetCmd           << " <idx> <0/1>\n";
     cout << "  " << TestResetStream     << "\n";

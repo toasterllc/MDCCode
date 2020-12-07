@@ -37,7 +37,7 @@
 		55671A24257E853100C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		55671A25257E853100C1CDA4 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
 		55671A26257E853100C1CDA4 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		55E1D8DE253E864F00628EF6 /* STLoaderUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoaderUtil; sourceTree = BUILT_PRODUCTS_DIR; };
+		55E1D8DE253E864F00628EF6 /* MDCLoader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCLoader; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55E1D8ED253E892B00628EF6 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
@@ -86,9 +86,9 @@
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
-				55671A19257E851B00C1CDA4 /* STLoaderTypes.h */,
 				55671A1A257E852900C1CDA4 /* Shared */,
 				55671A1C257E853100C1CDA4 /* Shared */,
+				55671A19257E851B00C1CDA4 /* STLoaderTypes.h */,
 				55E1D8ED253E892B00628EF6 /* main.mm */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
 				55E1D8DF253E864F00628EF6 /* Products */,
@@ -98,7 +98,7 @@
 		55E1D8DF253E864F00628EF6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				55E1D8DE253E864F00628EF6 /* STLoaderUtil */,
+				55E1D8DE253E864F00628EF6 /* MDCLoader */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,9 +115,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		55E1D8DD253E864F00628EF6 /* STLoaderUtil */ = {
+		55E1D8DD253E864F00628EF6 /* MDCLoader */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "STLoaderUtil" */;
+			buildConfigurationList = 55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "MDCLoader" */;
 			buildPhases = (
 				55E1D8DA253E864F00628EF6 /* Sources */,
 				55E1D8DB253E864F00628EF6 /* Frameworks */,
@@ -127,9 +127,9 @@
 			);
 			dependencies = (
 			);
-			name = STLoaderUtil;
-			productName = STLoaderUtil;
-			productReference = 55E1D8DE253E864F00628EF6 /* STLoaderUtil */;
+			name = MDCLoader;
+			productName = MDCLoader;
+			productReference = 55E1D8DE253E864F00628EF6 /* MDCLoader */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -146,7 +146,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "STLoaderUtil" */;
+			buildConfigurationList = 55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "MDCLoader" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -159,7 +159,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				55E1D8DD253E864F00628EF6 /* STLoaderUtil */,
+				55E1D8DD253E864F00628EF6 /* MDCLoader */,
 			);
 		};
 /* End PBXProject section */
@@ -310,7 +310,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "STLoaderUtil" */ = {
+		55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "MDCLoader" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				55E1D8E3253E864F00628EF6 /* Debug */,
@@ -319,7 +319,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "STLoaderUtil" */ = {
+		55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "MDCLoader" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				55E1D8E6253E864F00628EF6 /* Debug */,

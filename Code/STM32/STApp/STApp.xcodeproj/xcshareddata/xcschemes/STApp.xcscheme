@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "55E1D8DD253E864F00628EF6"
-               BuildableName = "STLoaderUtil"
-               BlueprintName = "STLoaderUtil"
-               ReferencedContainer = "container:STLoaderUtil.xcodeproj">
+               BlueprintIdentifier = "5563E118253A8B3D00BCC0F7"
+               BuildableName = "STApp"
+               BlueprintName = "STApp"
+               ReferencedContainer = "container:STApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,30 +44,12 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "55E1D8DD253E864F00628EF6"
-            BuildableName = "STLoaderUtil"
-            BlueprintName = "STLoaderUtil"
-            ReferencedContainer = "container:STLoaderUtil.xcodeproj">
+            BlueprintIdentifier = "5563E118253A8B3D00BCC0F7"
+            BuildableName = "STApp"
+            BlueprintName = "STApp"
+            ReferencedContainer = "container:STApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-         <CommandLineArgument
-            argument = "stload"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "/Users/dave/repos/MotionDetectorCamera/code/STApp/Release/STApp.elf"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "iceload"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "/Users/dave/repos/MotionDetectorCamera/code/Rev3Board_Blinky/tmp/top.bin"
-            isEnabled = "YES">
-         </CommandLineArgument>
-      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -79,10 +61,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "55E1D8DD253E864F00628EF6"
-            BuildableName = "STLoaderUtil"
-            BlueprintName = "STLoaderUtil"
-            ReferencedContainer = "container:STLoaderUtil.xcodeproj">
+            BlueprintIdentifier = "5563E118253A8B3D00BCC0F7"
+            BuildableName = "STApp"
+            BlueprintName = "STApp"
+            ReferencedContainer = "container:STApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
