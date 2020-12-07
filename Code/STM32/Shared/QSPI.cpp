@@ -2,7 +2,10 @@
 #include "Abort.h"
 #include "Assert.h"
 
-QSPI::QSPI() :
+QSPI::QSPI(Mode mode, uint8_t clkDivider, Align align) :
+_mode(mode),
+_clkDivider(clkDivider),
+_align(align),
 _clk(GPIOB, GPIO_PIN_2),
 _cs(GPIOB, GPIO_PIN_6),
 _d{
@@ -16,7 +19,7 @@ _d{
     GPIO(GPIOG, GPIO_PIN_14)    // SPI D7
 } {}
 
-void QSPI::init(Mode mode, uint8_t clkDivider, Align align) {
+void QSPI::init() {
     // DMA clock/IRQ
     __HAL_RCC_DMA2_CLK_ENABLE();
     HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
@@ -31,7 +34,7 @@ void QSPI::init(Mode mode, uint8_t clkDivider, Align align) {
     
     // Init QUADSPI
     _device.Instance = QUADSPI;
-    _device.Init.ClockPrescaler = clkDivider; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
+    _device.Init.ClockPrescaler = _clkDivider; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
     _device.Init.FifoThreshold = 4;
     _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
 //    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
@@ -40,7 +43,7 @@ void QSPI::init(Mode mode, uint8_t clkDivider, Align align) {
     _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
 //    _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
     _device.Init.FlashID = QSPI_FLASH_ID_1;
-    _device.Init.DualFlash = (mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
+    _device.Init.DualFlash = (_mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
     _device.Ctx = this;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
@@ -52,11 +55,11 @@ void QSPI::init(Mode mode, uint8_t clkDivider, Align align) {
     _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
     _dma.Init.PeriphInc = DMA_PINC_DISABLE;
     _dma.Init.MemInc = DMA_MINC_ENABLE;
-    _dma.Init.PeriphDataAlignment = (align==Align::Byte ? DMA_PDATAALIGN_BYTE : DMA_PDATAALIGN_WORD);
-    _dma.Init.MemDataAlignment = (align==Align::Byte ? DMA_MDATAALIGN_BYTE : DMA_MDATAALIGN_WORD);
+    _dma.Init.PeriphDataAlignment = (_align==Align::Byte ? DMA_PDATAALIGN_BYTE : DMA_PDATAALIGN_WORD);
+    _dma.Init.MemDataAlignment = (_align==Align::Byte ? DMA_MDATAALIGN_BYTE : DMA_MDATAALIGN_WORD);
     _dma.Init.Mode = DMA_NORMAL;
     _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
-    _dma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
     _dma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
     _dma.Init.MemBurst = DMA_MBURST_SINGLE;
     _dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
@@ -97,6 +100,27 @@ void QSPI::reset() {
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     AssertArg(cmd.DataMode == QSPI_DATA_NONE);
     AssertArg(!cmd.NbData);
+    
+    // Dummy cycles don't appear to work correctly when no data is transferred.
+    // (For some reason, only DummyCycles=0 and DummyCycles=2 work correctly,
+    // while other values never trigger the "Transfer complete" (TCF) flag,
+    // so we hang forever.)
+    //
+    // To work around this, if dummy cycles are used, perform a minimum-length
+    // read instead. This will cause more cycles than the caller may expect,
+    // so this strategy will only work if these extra cycles have no adverse
+    // effect.
+    
+    if (cmd.DummyCycles) {
+        const size_t readLen = (_align==Align::Byte ? 1 : 4);
+        QSPI_CommandTypeDef readCmd = cmd;
+        readCmd.NbData = readLen;
+        readCmd.DataMode = QSPI_DATA_4_LINES;
+        
+        static uint32_t buf = 0;
+        read(readCmd, &buf, readLen);
+        return;
+    }
     
     // Use HAL_QSPI_Command_IT() in this case, instead of HAL_QSPI_Command(),
     // because we're not transferring any data, so the HAL_QSPI_Command()

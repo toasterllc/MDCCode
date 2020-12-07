@@ -28,6 +28,9 @@ using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
 using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
 System::System() :
+// QSPI clock divider=1 => run QSPI clock at 64 MHz
+// QSPI alignment=word for high performance transfers
+_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word),
 _pixBufs(_pixBuf0, _pixBuf1) {
 }
 
@@ -68,7 +71,7 @@ static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) 
         .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
         .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
         
-        .DummyCycles = 0,
+        .DummyCycles = 4,
         
         .NbData = (uint32_t)respLen,
         .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
@@ -105,10 +108,7 @@ void System::init() {
     _super::init();
     
     _usb.init();
-    
-    // QSPI clock divider=1 => run QSPI clock at 64 MHz
-    // QSPI alignment=word for high performance transfers
-    _qspi.init(QSPI::Mode::Single, 1, QSPI::Align::Byte);
+    _qspi.init();
     
     // Assert/deassert pix reset
     {

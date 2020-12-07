@@ -24,7 +24,7 @@ private:
     // ICE40 bootloader
     void _iceHandleCmd(const USB::Cmd& ev);
     void _iceHandleData(const USB::Data& ev);
-    void _iceHandleQSPIEvent(const QSPI::DoneEvent& ev);
+    void _iceHandleQSPIEvent(const QSPI::Signal& ev);
     bool _iceBufEmpty();
     void _iceDataRecv();
     void _qspiWriteBuf();

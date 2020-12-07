@@ -18,8 +18,8 @@ public:
         Word // Best performance for large transfers
     };
     
-    QSPI();
-    void init(Mode mode, uint8_t clkDivider, Align align);
+    QSPI(Mode mode, uint8_t clkDivider, Align align);
+    void init();
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     
     void reset(); // Aborts whatever is in progress, and resets all channels
@@ -36,6 +36,10 @@ private:
     void _handleCommandDone();
     void _handleReadDone();
     void _handleWriteDone();
+    
+    Mode _mode = Mode::Single;
+    uint8_t _clkDivider = 0;
+    Align _align = Align::Byte;
     
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
