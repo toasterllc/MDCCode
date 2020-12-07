@@ -24,7 +24,6 @@ module PixController #(
     output wire         readout_ready,
     input wire          readout_trigger,
     output wire[15:0]   readout_data,
-    output wire         readout_done,
     
     // Status port (clock domain: `clk`)
     output reg          status_captureDone = 0,
@@ -322,7 +321,7 @@ module PixController #(
             
             // Copy word from FIFO->RAM
             if (fifoIn_read_ready && fifoIn_read_trigger) begin
-                $display("[PIXCTRL:Capture] Got pixel: %0d", fifoIn_read_data);
+                // $display("[PIXCTRL:Capture] Got pixel: %0d", fifoIn_read_data);
                 ramctrl_write_data <= fifoIn_read_data;
                 ramctrl_write_trigger <= 1;
             end
@@ -348,7 +347,7 @@ module PixController #(
         end
         
         Ctrl_State_Readout+1: begin
-            // Wait for the read command to be consumed
+            // Wait for the read command and FIFO reset to be consumed
             if (ramctrl_cmd===`RAMController_Cmd_None && !fifoOut_rst) begin
                 status_readoutStarted <= 1;
                 ctrl_state <= Ctrl_State_Idle;

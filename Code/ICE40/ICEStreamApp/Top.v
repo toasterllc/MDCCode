@@ -26,10 +26,9 @@
 module Top(
     input wire          clk24mhz,
     
-    input wire          ctrl_clk,
-    input wire          ctrl_rst,
-    input wire          ctrl_di,
-    output wire         ctrl_do,
+    input wire          spi_clk,
+    input wire          spi_cs_,
+    inout wire[7:0]     spi_d,
     
     input wire          pix_dclk,
     input wire[11:0]    pix_d,
@@ -65,7 +64,7 @@ module Top(
     wire pixi2c_status_done;
     wire pixi2c_status_err;
     wire[15:0] pixi2c_status_readData;
-    `ToggleAck(ctrl_pixi2c_done_, ctrl_pixi2c_doneAck, pixi2c_status_done, posedge, ctrl_clk);
+    `ToggleAck(spi_pixi2c_done_, spi_pixi2c_doneAck, pixi2c_status_done, posedge, spi_clk);
     
     PixI2CMaster #(
         .ClkFreq(24_000_000),
@@ -120,7 +119,6 @@ module Top(
     wire        pixctrl_readout_ready;
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;
-    wire        pixctrl_readout_done;
     wire        pixctrl_status_captureDone;
     wire        pixctrl_status_capturePixelDropped;
     wire        pixctrl_status_readoutStarted;
@@ -137,7 +135,6 @@ module Top(
         .readout_ready(pixctrl_readout_ready),
         .readout_trigger(pixctrl_readout_trigger),
         .readout_data(pixctrl_readout_data),
-        .readout_done(pixctrl_readout_done),
         
         .status_captureDone(pixctrl_status_captureDone),
         .status_capturePixelDropped(pixctrl_status_capturePixelDropped),
@@ -160,67 +157,59 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    reg ctrl_pixCaptureTrigger = 0;
-    `TogglePulse(pixctrl_captureTrigger, ctrl_pixCaptureTrigger, posedge, pix_clk);
-    reg ctrl_pixReadoutTrigger = 0;
-    `TogglePulse(pixctrl_readoutTrigger, ctrl_pixReadoutTrigger, posedge, pix_clk);
-    reg pixctrl_statusCaptureDoneToggle = 0;
+    reg spi_pixCaptureTrigger = 0;
+    `TogglePulse(pix_captureTrigger, spi_pixCaptureTrigger, posedge, pix_clk);
+    reg pix_pixctrlReadoutReadyPrev = 0;
+    `Sync(pix_pixctrlReadoutReady, pixctrl_readout_ready, posedge, pix_clk);
+    reg pix_readoutStarted = 0;
     
-    localparam PixCtrl_State_Idle           = 0;    // +0
-    localparam PixCtrl_State_Capture        = 1;    // +0
-    localparam PixCtrl_State_Readout        = 2;    // +2
-    localparam Data_State_Count             = 5;
-    reg[`RegWidth(Data_State_Count-1)-1:0] pixctrl_state = 0;
+    localparam Pix_State_Idle       = 0;    // +0
+    localparam Pix_State_Capture    = 1;    // +1
+    localparam Pix_State_Readout    = 3;    // +1
+    localparam Pix_State_Count      = 5;
+    reg[`RegWidth(Pix_State_Count-1)-1:0] pix_state = 0;
     always @(posedge pix_clk) begin
         pixctrl_cmd <= `PixController_Cmd_None;
+        pix_pixctrlReadoutReadyPrev <= pix_pixctrlReadoutReady;
         
-        case (pixctrl_state)
-        PixCtrl_State_Idle: begin
+        case (pix_state)
+        Pix_State_Idle: begin
         end
         
-        PixCtrl_State_Capture: begin
+        Pix_State_Capture: begin
+            // Start a capture
             pixctrl_cmd <= `PixController_Cmd_Capture;
-            pixctrl_state <= PixCtrl_State_Idle;
+            pix_state <= Pix_State_Capture+1;
         end
         
-        PixCtrl_State_Readout: begin
-            $display("[PixCtrl] Readout triggered");
-            // Tell SDController DatOut to stop so that the FIFO isn't accessed until
-            // the FIFO is reset and new data is available.
-            sd_datOut_stop <= !sd_datOut_stop;
-            pixctrl_state <= PixCtrl_State_Readout+1;
-        end
-        
-        PixCtrl_State_Readout+1: begin
-            // Wait until SDController DatOut is stopped
-            if (pixctrl_sdDatOutStopped) begin
-                // Tell PixController to start readout
+        Pix_State_Capture+1: begin
+            // Wait for the capture to complete, and then start readout
+            if (pixctrl_status_captureDone) begin
                 pixctrl_cmd <= `PixController_Cmd_Readout;
-                pixctrl_state <= PixCtrl_State_Readout+2;
+                pix_state <= Pix_State_Readout;
             end
         end
         
-        PixCtrl_State_Readout+2: begin
-            // Wait until PixController readout starts
+        Pix_State_Readout: begin
+            // Wait for readout to start, and then signal so via pix_readoutStarted
             if (pixctrl_status_readoutStarted) begin
-                // Start SD DatOut now that readout has started (and therefore
-                // the FIFO has been reset)
-                sd_datOut_start <= !sd_datOut_start;
+                pix_readoutStarted <= !pix_readoutStarted;
+                pix_state <= Pix_State_Readout+1;
+            end
+        end
+        
+        Pix_State_Readout+1: begin
+            // Wait for readout to complete, and then start a new capture
+            if (pix_pixctrlReadoutReadyPrev && !pix_pixctrlReadoutReady) begin
+                pix_state <= Pix_State_Capture;
             end
         end
         endcase
         
-        if (pixctrl_captureTrigger) begin
+        if (pix_captureTrigger) begin
             // led <= 4'b1111;
-            pixctrl_state <= PixCtrl_State_Capture;
+            pix_state <= Pix_State_Capture;
         end
-        
-        if (pixctrl_readoutTrigger) begin
-            pixctrl_state <= PixCtrl_State_Readout;
-        end
-        
-        // TODO: create a primitive to convert a pulse in a source clock domain to a ToggleAck in a destination clock domain
-        if (pixctrl_status_captureDone) pixctrl_statusCaptureDoneToggle <= !pixctrl_statusCaptureDoneToggle;
     end
     
     
@@ -230,158 +219,220 @@ module Top(
     
     
     
+    
     // ====================
-    // Control State Machine
+    // SPI State Machine
     // ====================
-    reg[1:0] ctrl_state = 0;
-    reg[6:0] ctrl_counter = 0;
-    // +5 for delay states, so that clients send an extra byte before receiving the response
-    reg[`Resp_Len+5-1:0] ctrl_doutReg = 0;
     
-    wire ctrl_rst_;
-    wire ctrl_din;
-    reg[`Msg_Len-1:0] ctrl_dinReg = 0;
-    wire[`Msg_Type_Len-1:0] ctrl_msgType = ctrl_dinReg[`Msg_Type_Bits];
-    wire[`Msg_Arg_Len-1:0] ctrl_msgArg = ctrl_dinReg[`Msg_Arg_Bits];
+    // MsgCycleCount notes:
+    //
+    //   - We include a dummy byte at the beginning of each command, to workaround an
+    //     apparent STM32 bug that always sends the first nibble as 0xF. As such, we
+    //     need to add 2 cycles to `MsgCycleCount`. Without this dummy byte,
+    //     MsgCycleCount=(`Msg_Len/4)-1, so with this dummy byte,
+    //     MsgCycleCount=(`Msg_Len/4)+1.
+    //
+    //   - Commands use 4 lines (spi_d[3:0]), so we divide `Msg_Len by 4.
+    //
+    localparam MsgCycleCount = (`Msg_Len/4)+1;
+    reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
+    reg[0:0] spi_doutCounter = 0;
+    reg[`Msg_Len-1:0] spi_dinReg = 0;
+    reg[15:0] spi_doutReg = 0;
+    reg[`Resp_Len-1:0] spi_resp = 0;
+    wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
+    wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
+    reg[`Msg_Arg_PixReadout_Counter_Len-1:0] spi_pixReadoutCounter = 0;
+    reg spi_pixReadoutDone = 0;
     
-    `ToggleAck(ctrl_pixctrlStatusCaptureDone_, ctrl_pixctrlStatusCaptureDoneAck, pixctrl_statusCaptureDoneToggle, posedge, ctrl_clk);
-    `Sync(ctrl_pixctrlStatusCapturePixelDropped, pixctrl_status_capturePixelDropped, posedge, ctrl_clk);
+    wire spi_cs;
+    reg spi_d_outEn = 0;
+    wire[7:0] spi_d_out;
+    wire[7:0] spi_d_in;
     
-    always @(posedge ctrl_clk, negedge ctrl_rst_) begin
-        if (!ctrl_rst_) begin
-            ctrl_state <= 0;
+    assign spi_d_out = {
+        `LeftBits(spi_doutReg, 8, 4),   // High 4 bits: 4 bits of byte 1
+        `LeftBits(spi_doutReg, 0, 4)    // Low 4 bits:  4 bits of byte 0
+    };
+    
+    `Sync(spi_pixctrlStatusCapturePixelDropped, pixctrl_status_capturePixelDropped, posedge, spi_clk);
+    `ToggleAck(spi_pixReadoutStarted, spi_pixReadoutStartedAck, pix_readoutStarted, posedge, spi_clk);
+    
+    assign pixctrl_readout_clk = spi_clk;
+    wire spi_pixctrlReadoutReady = pixctrl_readout_ready;
+    reg spi_pixctrlReadoutTrigger = 0;
+    assign pixctrl_readout_trigger = spi_pixctrlReadoutTrigger;
+    wire[15:0] spi_pixctrlReadoutData = pixctrl_readout_data;
+    // `spi_pixReadoutReady` combines the state of (1) readout having started, and (2) data being available in the FIFO.
+    // This is so that a new PixCapture message that interrupts a readout will force `spi_pixReadoutReady`=0,
+    // because `spi_pixReadoutStarted`=0 until the new capture is complete and readout starts.
+    wire spi_pixReadoutReady = spi_pixReadoutStarted && spi_pixctrlReadoutReady;
+    
+    localparam SPI_State_MsgIn      = 0;    // +2
+    localparam SPI_State_RespOut    = 3;    // +0
+    localparam SPI_State_PixOut     = 4;    // +0
+    localparam SPI_State_Nop        = 5;    // +0
+    localparam SPI_State_Count      = 6;
+    reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
+    
+    always @(posedge spi_clk, negedge spi_cs) begin
+        // Reset ourself when we're de-selected
+        if (!spi_cs) begin
+            spi_state <= 0;
+            spi_d_outEn <= 0;
         
         end else begin
-            ctrl_dinReg <= ctrl_dinReg<<1|ctrl_din;
-            ctrl_doutReg <= ctrl_doutReg<<1|1'b1;
-            ctrl_counter <= ctrl_counter-1;
+            // Commands only use 4 lines (spi_d[3:0]) because it's quadspi.
+            spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
+            spi_dinCounter <= spi_dinCounter-1;
+            spi_doutReg <= spi_doutReg<<4|4'hF;
+            spi_doutCounter <= spi_doutCounter-1;
+            spi_d_outEn <= 0;
+            spi_resp <= spi_resp<<8|8'hFF;
             
-            case (ctrl_state)
-            0: begin
-                ctrl_counter <= `Msg_Len-1;
-                ctrl_state <= 1;
+            spi_pixReadoutCounter <= spi_pixReadoutCounter-1;
+            if (!spi_pixReadoutCounter) spi_pixReadoutDone <= 1;
+            spi_pixctrlReadoutTrigger <= 0;
+            
+            case (spi_state)
+            SPI_State_MsgIn: begin
+                spi_dinCounter <= MsgCycleCount;
+                spi_state <= 1;
             end
             
-            1: begin
-                if (!ctrl_counter) begin
-                    ctrl_state <= 2;
+            SPI_State_MsgIn+1: begin
+                if (!spi_dinCounter) begin
+                    spi_state <= 2;
                 end
             end
             
-            2: begin
-                // $display("[CTRL] Got command: %b [cmd: %0d, arg: %0d]", ctrl_dinReg, ctrl_msgType, ctrl_msgArg);
-                case (ctrl_msgType)
+            SPI_State_MsgIn+2: begin
+                // By default, go to SPI_State_Nop
+                spi_state <= SPI_State_Nop;
+                spi_doutCounter <= 0;
+                
+                case (spi_msgType)
                 // Echo
                 `Msg_Type_Echo: begin
-                    $display("[CTRL] Got Msg_Type_Echo: %0h", ctrl_msgArg[`Msg_Arg_Echo_Msg_Bits]);
-                    ctrl_doutReg[`Resp_Arg_Echo_Msg_Bits] <= ctrl_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                    $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                    spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                    spi_state <= SPI_State_RespOut;
                 end
                 
                 `Msg_Type_PixReset: begin
-                    $display("[CTRL] Got Msg_Type_PixReset (rst=%b)", ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits]);
-                    pix_rst_ <= ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits];
+                    $display("[SPI] Got Msg_Type_PixReset (rst=%b)", spi_msgArg[`Msg_Arg_PixReset_Val_Bits]);
+                    pix_rst_ <= spi_msgArg[`Msg_Arg_PixReset_Val_Bits];
                 end
                 
                 `Msg_Type_PixCapture: begin
-                    $display("[CTRL] Got Msg_Type_PixCapture (block=%b)", ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits]);
-                    
-                    // Reset `ctrl_pixctrlStatusCaptureDone_` if it's asserted
-                    if (!ctrl_pixctrlStatusCaptureDone_) ctrl_pixctrlStatusCaptureDoneAck <= !ctrl_pixctrlStatusCaptureDoneAck;
-                    
-                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits];
-                    ctrl_pixCaptureTrigger <= !ctrl_pixCaptureTrigger;
+                    $display("[SPI] Got Msg_Type_PixCapture (block=%b)", spi_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits]);
+                    pixctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits];
+                    spi_pixCaptureTrigger <= !spi_pixCaptureTrigger;
                 end
                 
                 `Msg_Type_PixReadout: begin
-                    $display("[CTRL] Got Msg_Type_PixReadout (block=%b)", ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits]);
+                    $display("[SPI] Got Msg_Type_PixReadout");
+                    // Reset `spi_pixReadoutStarted` if it's asserted
+                    if (spi_pixReadoutStarted) spi_pixReadoutStartedAck <= !spi_pixReadoutStartedAck;
                     
-                    // Reset `ctrl_sdDatOutDone_` if it's asserted
-                    if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
-                    
-                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits];
-                    ctrl_pixReadoutTrigger <= !ctrl_pixReadoutTrigger;
+                    spi_pixReadoutCounter <= spi_msgArg[`Msg_Arg_PixReadout_Counter_Bits];
+                    spi_pixReadoutDone <= 0;
+                    spi_state <= SPI_State_PixOut;
                 end
                 
                 `Msg_Type_PixI2CTransaction: begin
-                    $display("[CTRL] Got Msg_Type_PixI2CTransaction");
+                    $display("[SPI] Got Msg_Type_PixI2CTransaction");
                     
-                    // Reset `ctrl_pixi2c_done_` if it's asserted
-                    if (!ctrl_pixi2c_done_) ctrl_pixi2c_doneAck <= !ctrl_pixi2c_doneAck;
+                    // Reset `spi_pixi2c_done_` if it's asserted
+                    if (!spi_pixi2c_done_) spi_pixi2c_doneAck <= !spi_pixi2c_doneAck;
                     
-                    pixi2c_cmd_write <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_Write_Bits];
-                    pixi2c_cmd_regAddr <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits];
-                    pixi2c_cmd_dataLen <= (ctrl_msgArg[`Msg_Arg_PixI2CTransaction_DataLen_Bits]===`Msg_Arg_PixI2CTransaction_DataLen_2);
-                    pixi2c_cmd_writeData <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_WriteData_Bits];
+                    pixi2c_cmd_write <= spi_msgArg[`Msg_Arg_PixI2CTransaction_Write_Bits];
+                    pixi2c_cmd_regAddr <= spi_msgArg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits];
+                    pixi2c_cmd_dataLen <= (spi_msgArg[`Msg_Arg_PixI2CTransaction_DataLen_Bits]===`Msg_Arg_PixI2CTransaction_DataLen_2);
+                    pixi2c_cmd_writeData <= spi_msgArg[`Msg_Arg_PixI2CTransaction_WriteData_Bits];
                     pixi2c_cmd_trigger <= !pixi2c_cmd_trigger;
                 end
                 
                 `Msg_Type_PixGetStatus: begin
-                    // $display("[CTRL] Got Msg_Type_PixGetStatus [I2CDone:%b, I2CErr:%b, I2CReadData:%b, CaptureDone:%b]",
-                    //     !ctrl_pixi2c_done_,
+                    // $display("[SPI] Got Msg_Type_PixGetStatus [I2CDone:%b, I2CErr:%b, I2CReadData:%b ReadoutReady:%b]",
+                    //     !spi_pixi2c_done_,
                     //     pixi2c_status_err,
                     //     pixi2c_status_readData,
-                    //     !ctrl_pixctrlStatusCaptureDone_
+                    //     spi_pixReadoutReady
                     // );
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !ctrl_pixi2c_done_;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlStatusCaptureDone_;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= ctrl_pixctrlStatusCapturePixelDropped;
+                    spi_resp[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !spi_pixi2c_done_;
+                    spi_resp[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
+                    spi_resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
+                    spi_resp[`Resp_Arg_PixGetStatus_ReadoutReady_Bits] <= spi_pixReadoutReady;
+                    spi_state <= SPI_State_RespOut;
                 end
                 
                 `Msg_Type_NoOp: begin
-                    $display("[CTRL] Got Msg_Type_None");
+                    $display("[SPI] Got Msg_Type_None");
                 end
                 
                 default: begin
-                    $display("[CTRL] BAD COMMAND: %0d ❌", ctrl_msgType);
+                    $display("[SPI] BAD COMMAND: %0d ❌", spi_msgType);
                     `Finish;
                 end
                 endcase
+            end
+            
+            SPI_State_RespOut: begin
+                spi_d_outEn <= 1;
+                if (!spi_doutCounter) begin
+                    spi_doutReg <= `LeftBits(spi_resp, 0, 16);
+                end
+            end
+            
+            SPI_State_PixOut: begin
+                spi_d_outEn <= 1;
+                if (!spi_doutCounter) begin
+                    spi_doutReg <= spi_pixctrlReadoutData;
+                    spi_pixctrlReadoutTrigger <= 1;
+                end
                 
-                ctrl_state <= 0;
+                if (spi_pixReadoutDone) begin
+                    spi_state <= SPI_State_Nop;
+                end
+            end
+            
+            SPI_State_Nop: begin
             end
             endcase
         end
     end
     
     // ====================
-    // Pin: ctrl_rst
+    // Pin: spi_cs_
     // ====================
-    wire ctrl_rst_tmp;
-    assign ctrl_rst_ = !ctrl_rst_tmp;
+    wire spi_cs_tmp_;
     SB_IO #(
         .PIN_TYPE(6'b0000_01),
         .PULLUP(1'b1)
-    ) SB_IO_ctrl_rst (
-        .PACKAGE_PIN(ctrl_rst),
-        .D_IN_0(ctrl_rst_tmp)
+    ) SB_IO_spi_cs (
+        .PACKAGE_PIN(spi_cs_),
+        .D_IN_0(spi_cs_tmp_)
     );
+    assign spi_cs = !spi_cs_tmp_;
     
     // ====================
-    // Pin: ctrl_di
+    // Pin: spi_d
     // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b0000_00),
-        .PULLUP(1'b1)
-    ) SB_IO_ctrl_clk (
-        .INPUT_CLK(ctrl_clk),
-        .PACKAGE_PIN(ctrl_di),
-        .D_IN_0(ctrl_din)
-    );
-    
-    // ====================
-    // Pin: ctrl_do
-    // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b1101_01),
-        .PULLUP(1'b1)
-    ) SB_IO_ctrl_do (
-        .OUTPUT_CLK(ctrl_clk),
-        .PACKAGE_PIN(ctrl_do),
-        .OUTPUT_ENABLE(1'b1),
-        .D_OUT_0(ctrl_doutReg[$size(ctrl_doutReg)-1])
-    );
+    genvar i;
+    for (i=0; i<8; i++) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_00),
+            .PULLUP(1'b1)
+        ) SB_IO_sd_cmd (
+            .INPUT_CLK(spi_clk),
+            .OUTPUT_CLK(spi_clk),
+            .PACKAGE_PIN(spi_d[i]),
+            .OUTPUT_ENABLE(spi_d_outEn),
+            .D_OUT_0(spi_d_out[i]),
+            .D_IN_0(spi_d_in[i])
+        );
+    end
 endmodule
 
 
@@ -392,12 +443,11 @@ endmodule
 
 `ifdef SIM
 module Testbench();
-    reg         clk24mhz;
+    reg         clk24mhz = 0;
     
-    reg         ctrl_clk;
-    reg         ctrl_rst;
-    tri1        ctrl_di;
-    tri1        ctrl_do;
+    reg         spi_clk = 0;
+    reg         spi_cs_ = 0;
+    wire[7:0]   spi_d;
     
     wire        pix_dclk;
     wire[11:0]  pix_d;
@@ -465,69 +515,77 @@ module Testbench();
         end
     end
     
-    localparam CTRL_CLK_DELAY = 21;
+    wire[7:0]   spi_d_out;
+    reg         spi_d_outEn = 0;    
+    wire[7:0]   spi_d_in;
+    assign spi_d = (spi_d_outEn ? spi_d_out : {8{1'bz}});
+    assign spi_d_in = spi_d;
     
-    reg[`Msg_Len-1:0] ctrl_diReg;
-    reg[`Resp_Len-1:0] ctrl_doReg;
-    reg[`Resp_Len-1:0] resp;
+    reg[`Msg_Len-1:0] spi_doutReg = 0;
+    reg[15:0] spi_dinReg = 0;
+    reg[`Resp_Len-1:0] resp = 0;
+    reg[((ImageWidth*2)*8)-1:0] pixRow = 0;
+    assign spi_d_out[7:4] = `LeftBits(spi_doutReg,0,4);
+    assign spi_d_out[3:0] = `LeftBits(spi_doutReg,0,4);
     
-    always @(posedge ctrl_clk) begin
-        ctrl_diReg <= ctrl_diReg<<1|1'b1;
-        ctrl_doReg <= ctrl_doReg<<1|ctrl_do;
-    end
+    localparam SPI_CLK_HALF_PERIOD = 21;
     
-    assign ctrl_di = ctrl_diReg[`Msg_Len-1];
-    
-    task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
+    task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg, input[31:0] respLen); begin
         reg[15:0] i;
         
-        ctrl_rst = 0;
-        #1; // Let `ctrl_rst` change take effect
-            ctrl_diReg = {typ, arg};
-            for (i=0; i<`Msg_Len; i++) begin
-                ctrl_clk = 1;
-                #(CTRL_CLK_DELAY);
-                ctrl_clk = 0;
-                #(CTRL_CLK_DELAY);
+        spi_cs_ = 0;
+        spi_doutReg = {typ, arg};
+        spi_d_outEn = 1;
+            
+            // 2 initial dummy cycles
+            for (i=0; i<2; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 1;
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 0;
             end
             
-            // Clock out dummy byte
-            for (i=0; i<8; i++) begin
-                ctrl_clk = 1;
-                #(CTRL_CLK_DELAY);
-                ctrl_clk = 0;
-                #(CTRL_CLK_DELAY);
+            for (i=0; i<`Msg_Len/4; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 1;
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 0;
+                
+                spi_doutReg = spi_doutReg<<4|{4{1'b1}};
             end
-        ctrl_rst = 1;
-        #1; // Let `ctrl_rst` change take effect
-    end endtask
-    
-    task SendMsgResp(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
-        reg[15:0] i;
-        
-        SendMsg(typ, arg);
-        
-        // Load the response
-        ctrl_rst = 0;
-        #1; // Let `ctrl_rst` change take effect
-            for (i=0; i<`Msg_Len; i++) begin
-                ctrl_clk = 1;
-                #(CTRL_CLK_DELAY);
-                ctrl_clk = 0;
-                #(CTRL_CLK_DELAY);
+            
+            spi_d_outEn = 0;
+            
+            // Dummy cycles
+            for (i=0; i<4; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 1;
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 0;
             end
-        ctrl_rst = 1;
-        #1; // Let `ctrl_rst` change take effect
+            
+            // Clock in response
+            for (i=0; i<respLen; i++) begin
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 1;
+                
+                    if (!i[0]) spi_dinReg = 0;
+                    spi_dinReg = spi_dinReg<<4|{4'b0000, spi_d_in[3:0], 4'b0000, spi_d_in[7:4]};
+                    
+                    resp = resp<<8;
+                    if (i[0]) resp = resp|spi_dinReg;
+                
+                #(SPI_CLK_HALF_PERIOD);
+                spi_clk = 0;
+            end
         
-        resp = ctrl_doReg;
+        spi_cs_ = 1;
+        #1; // Allow spi_cs_ to take effect
     end endtask
     
     task TestNoOp; begin
-        // ====================
-        // Test NoOp command
-        // ====================
-
-        SendMsgResp(`Msg_Type_NoOp, 56'h66554433221100);
+        $display("\n========== TestNoOp ==========");
+        SendMsg(`Msg_Type_NoOp, 56'h123456789ABCDE, 8);
         if (resp === 64'hFFFFFFFFFFFFFFFF) begin
             $display("Response OK: %h ✅", resp);
         end else begin
@@ -537,77 +595,94 @@ module Testbench();
     end endtask
     
     task TestEcho; begin
-        // ====================
-        // Test Echo command
-        // ====================
-        reg[`Msg_Arg_Echo_Msg_Len-1:0] arg;
-        arg = `Msg_Arg_Echo_Msg_Len'h66554433221100;
+        reg[`Msg_Arg_Len-1:0] arg;
         
-        SendMsgResp(`Msg_Type_Echo, arg);
+        $display("\n========== TestEcho ==========");
+        arg[`Msg_Arg_Echo_Msg_Bits] = `Msg_Arg_Echo_Msg_Len'h123456789ABCDE;
+        
+        SendMsg(`Msg_Type_Echo, arg, 8);
         if (resp[`Resp_Arg_Echo_Msg_Bits] === arg) begin
-            $display("Response OK: %h ✅", resp);
+            $display("Response OK: %h ✅", resp[`Resp_Arg_Echo_Msg_Bits]);
         end else begin
-            $display("Bad response: %h ❌", resp);
+            $display("Bad response: %h ❌", resp[`Resp_Arg_Echo_Msg_Bits]);
             `Finish;
         end
     end endtask
     
     task TestPixReset; begin
         reg[`Msg_Arg_Len-1:0] arg;
+        $display("\n========== TestPixReset ==========");
         
         // ====================
         // Test Pix reset
         // ====================
         arg = 0;
         arg[`Msg_Arg_PixReset_Val_Bits] = 0;
-        SendMsg(`Msg_Type_PixReset, arg);
+        SendMsg(`Msg_Type_PixReset, arg, 0);
         if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=0 success ✅");
+            $display("[STM32] Reset=0 success ✅");
         end else begin
-            $display("[EXT] Reset=0 failed ❌");
+            $display("[STM32] Reset=0 failed ❌");
         end
-
-        arg = 0;
-        arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-        SendMsg(`Msg_Type_PixReset, arg);
-        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=1 success ✅");
-        end else begin
-            $display("[EXT] Reset=1 failed ❌");
-        end
-    end endtask
-
-    task TestPixCapture; begin
-        reg[`Msg_Arg_Len-1:0] arg;
         
         arg = 0;
         arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-        SendMsg(`Msg_Type_PixReset, arg); // Deassert Pix reset
+        SendMsg(`Msg_Type_PixReset, arg, 0);
+        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+            $display("[STM32] Reset=1 success ✅");
+        end else begin
+            $display("[STM32] Reset=1 failed ❌");
+        end
+    end endtask
 
+    task TestPixStream; begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        reg[31:0] row;
+        reg[31:0] col;
+        reg[31:0] i;
+        reg[31:0] transferPixelCount;
+        $display("\n========== TestPixStream ==========");
+        
+        arg = 0;
+        arg[`Msg_Arg_PixReset_Val_Bits] = 1;
+        SendMsg(`Msg_Type_PixReset, arg, 0); // Deassert Pix reset
+        
         arg = 0;
         arg[`Msg_Arg_PixCapture_DstBlock_Bits] = 0;
-        SendMsg(`Msg_Type_PixCapture, arg);
-
-        // Wait until the capture is done
-        $display("[EXT] Waiting for capture to complete...");
-        do begin
-            // Request Pix status
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-        end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
+        SendMsg(`Msg_Type_PixCapture, arg, 0);
         
-        $display("[EXT] Capture done ✅");
+        forever begin
+            // Wait until readout is ready
+            $display("[STM32] Waiting until readout is ready...");
+            do begin
+                // Request Pix status
+                SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            end while(!resp[`Resp_Arg_PixGetStatus_ReadoutReady_Bits]);
+            $display("[STM32] Readout ready ✅");
         
-        if (!resp[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits]) begin
-            $display("[EXT] No dropped pixels ✅");
-        end else begin
-            $display("[EXT] Dropped pixels ❌");
+            // 1 pixels     counter=0
+            // 2 pixels     counter=2
+            // 3 pixels     counter=4
+            // 4 pixels     counter=6
+            transferPixelCount = 4; // 4 pixels at a time (since `resp` is only 8 bytes=4 pixels wide)
+            for (row=0; row<ImageHeight; row++) begin
+                for (i=0; i<ImageWidth/transferPixelCount; i++) begin
+                    arg[`Msg_Arg_PixReadout_Counter_Bits] = (transferPixelCount-1)*2;
+                    arg[`Msg_Arg_PixReadout_SrcBlock_Bits] = 0;
+                
+                    SendMsg(`Msg_Type_PixReadout, arg, transferPixelCount*2);
+                    pixRow = (pixRow<<(transferPixelCount*2*8))|resp;
+                end
+            
+                $display("Row %04d: %h", row, pixRow);
+            end
         end
     end endtask
-    
+
     task TestPixI2CWriteRead; begin
         reg[`Msg_Arg_Len-1:0] arg;
         reg done;
-        
+
         // ====================
         // Test PixI2C Write (len=2)
         // ====================
@@ -616,12 +691,12 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
         arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'hCAFE;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
-        
+        SendMsg(`Msg_Type_PixI2CTransaction, arg, 0);
+
         done = 0;
         while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
                 resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
@@ -629,13 +704,13 @@ module Testbench();
 
             done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
         end
-        
+
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Write success ✅");
+            $display("[STM32] Write success ✅");
         end else begin
-            $display("[EXT] Write failed ❌");
+            $display("[STM32] Write failed ❌");
         end
-        
+
         // ====================
         // Test PixI2C Read (len=2)
         // ====================
@@ -643,12 +718,12 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
         arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
-        
+        SendMsg(`Msg_Type_PixI2CTransaction, arg, 0);
+
         done = 0;
         while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
                 resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
@@ -658,15 +733,15 @@ module Testbench();
         end
 
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Read success ✅");
+            $display("[STM32] Read success ✅");
         end else begin
-            $display("[EXT] Read failed ❌");
+            $display("[STM32] Read failed ❌");
         end
 
         if (resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] === 16'hCAFE) begin
-            $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
+            $display("[STM32] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
         end else begin
-            $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
+            $display("[STM32] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
             `Finish;
         end
 
@@ -678,12 +753,12 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
         arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'h0037;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
+        SendMsg(`Msg_Type_PixI2CTransaction, arg, 0);
 
         done = 0;
         while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
                 resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
@@ -693,9 +768,9 @@ module Testbench();
         end
 
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Write success ✅");
+            $display("[STM32] Write success ✅");
         end else begin
-            $display("[EXT] Write failed ❌");
+            $display("[STM32] Write failed ❌");
         end
 
         // ====================
@@ -705,12 +780,12 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
         arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
+        SendMsg(`Msg_Type_PixI2CTransaction, arg, 0);
 
         done = 0;
         while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
                 resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
@@ -720,15 +795,15 @@ module Testbench();
         end
 
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Read success ✅");
+            $display("[STM32] Read success ✅");
         end else begin
-            $display("[EXT] Read failed ❌");
+            $display("[STM32] Read failed ❌");
         end
 
         if ((resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF) === 16'h0037) begin
-            $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
+            $display("[STM32] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
         end else begin
-            $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
+            $display("[STM32] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
         end
     end endtask
     
@@ -738,19 +813,23 @@ module Testbench();
         reg done;
         
         // Set our initial state
-        ctrl_clk = 0;
-        ctrl_rst = 1;
-        ctrl_diReg = ~0;
-        #1;
+        spi_cs_ = 1;
+        spi_doutReg = ~0;
+        spi_d_outEn = 0;
         
-        TestNoOp();
-        TestEcho();
+        // Pulse the clock to get SB_IO initialized
+        spi_clk = 1;
+        #1;
+        spi_clk = 0;
+        
+        // TestNoOp();
+        // TestEcho();
         
         TestPixReset();
-        TestPixCapture();
-        TestPixI2CWriteRead();
-        `Finish;
+        TestPixStream();
+        // TestPixI2CWriteRead();
         
+        `Finish;
     end
 endmodule
 `endif
