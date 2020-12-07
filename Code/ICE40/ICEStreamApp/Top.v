@@ -662,7 +662,7 @@ module Testbench();
                 SendMsg(`Msg_Type_PixGetStatus, 0, 8);
             end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
             $display("[STM32] Readout ready ✅");
-        
+            
             // 1 pixels     counter=0
             // 2 pixels     counter=2
             // 3 pixels     counter=4

@@ -56,7 +56,7 @@ void QSPI::init(Mode mode, uint8_t clkDivider, Align align) {
     _dma.Init.MemDataAlignment = (align==Align::Byte ? DMA_MDATAALIGN_BYTE : DMA_MDATAALIGN_WORD);
     _dma.Init.Mode = DMA_NORMAL;
     _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
-    _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    _dma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     _dma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
     _dma.Init.MemBurst = DMA_MBURST_SINGLE;
     _dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
@@ -98,7 +98,11 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     AssertArg(cmd.DataMode == QSPI_DATA_NONE);
     AssertArg(!cmd.NbData);
     
-    HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
+    // Use HAL_QSPI_Command_IT() in this case, instead of HAL_QSPI_Command(),
+    // because we're not transferring any data, so the HAL_QSPI_Command()
+    // synchronously performs the SPI transaction, instead asynchronously
+    // like we want.
+    HAL_StatusTypeDef hs = HAL_QSPI_Command_IT(&_device, &cmd);
     Assert(hs == HAL_OK);
 }
 
