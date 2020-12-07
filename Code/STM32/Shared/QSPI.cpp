@@ -82,6 +82,18 @@ void QSPI::config() {
     _d[7].config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
 }
 
+void QSPI::reset() {
+    // Disable interrupts so that resetting is atomic
+    IRQState irq;
+    irq.disable();
+    
+    // Aborting whatever is underway (if anything)
+    HAL_QSPI_Abort(&_device);
+    
+    // Reset channels to clear pending events
+    eventChannel.reset();
+}
+
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     AssertArg(cmd.DataMode == QSPI_DATA_NONE);
     AssertArg(!cmd.NbData);

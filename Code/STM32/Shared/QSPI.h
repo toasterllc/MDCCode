@@ -21,6 +21,8 @@ public:
     QSPI();
     void init(Mode mode, uint8_t clkDivider, Align align);
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
+    
+    void reset(); // Aborts whatever is in progress, and resets all channels
     void command(const QSPI_CommandTypeDef& cmd);
     void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len);
     void write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len);

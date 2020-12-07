@@ -704,11 +704,19 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    for (;;);
 //}
 
-void System::_reset() {
+void System::_reset(bool usbResetFinish) {
+    // Disable interrupts so that resetting is atomic
+    IRQState irq;
+    irq.disable();
+    
+    // Complete USB reset, if the source of the reset was _usb.resetChannel
+    if (usbResetFinish) _usb.resetFinish();
+    
     // Reset our state
-    // TODO: reset QSPI
+    _qspi.reset();
     _pixStream = false;
     _pixBufs.reset();
+    
     // Prepare to receive commands
     _usb.cmdRecv();
 }
@@ -720,7 +728,7 @@ void System::_handleEvent() {
         _handleUSBEvent(*x);
     
     } else if (auto x = _usb.resetChannel.readSelect()) {
-        _handleReset();
+        _reset(true);
     
     } else if (auto x = _usb.cmdChannel.readSelect()) {
         _handleCmd(*x);
@@ -743,7 +751,7 @@ void System::_handleUSBEvent(const USB::Event& ev) {
     case Type::StateChanged: {
         // Handle USB connection
         if (_usb.state() == USB::State::Connected) {
-            _reset();
+            _reset(false);
         }
         break;
     }
@@ -752,13 +760,6 @@ void System::_handleUSBEvent(const USB::Event& ev) {
         // Invalid event type
         Abort();
     }}
-}
-
-void System::_handleReset() {
-    // Complete USB reset
-    _usb.resetFinish();
-    // Reset ourself
-    _reset();
 }
 
 void System::_handleCmd(const USB::Cmd& ev) {
@@ -778,7 +779,6 @@ void System::_handleCmd(const USB::Cmd& ev) {
         if (!_pixStream) {
             _pixStream = true;
             _pixTest = cmd.arg.pixStream.test;
-            _pixRemLen = _pixInfo.width*_pixInfo.height;
             _pixStartImage();
         }
         break;
@@ -806,7 +806,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
 }
 
 void System::_handleQSPIEvent(const QSPI::Signal& ev) {
-    if (!_pixStream) return; // Short-circuit if streaming is disabled
+    Assert(_pixStream);
     Assert(_pixBufs.writable());
     
     const bool wasReadable = _pixBufs.readable();
@@ -831,7 +831,7 @@ void System::_handleQSPIEvent(const QSPI::Signal& ev) {
 }
 
 void System::_handlePixUSBEvent(const USB::Signal& ev) {
-    if (!_pixStream) return; // Short-circuit if streaming is disabled
+    Assert(_pixStream);
     Assert(_pixBufs.readable());
     const bool wasWritable = _pixBufs.writable();
     
@@ -850,8 +850,8 @@ void System::_handlePixUSBEvent(const USB::Signal& ev) {
             _recvPixDataFromICE40();
         }
     } else if (!_pixBufs.readable()) {
-        // We're done sending this image
-        _pixFinishImage();
+        // We're done sending this image, start the next one
+        _pixStartImage();
     }
 }
 
@@ -878,7 +878,8 @@ void System::_sendPixDataOverUSB() {
     // being sent to the host, overwrite the beginning of the
     // transfer with the image's number.
     if (_pixTest && _pixTestFirstTransfer) {
-        memcpy(buf.data, &_pixTestImageCount, sizeof(_pixTestImageCount));
+        const uint32_t magicNum = STApp::PixTestMagicNumber;
+        memcpy(buf.data, &magicNum, sizeof(magicNum));
         _pixTestFirstTransfer = false;
     }
     
@@ -889,16 +890,9 @@ void System::_pixStartImage() {
     Assert(_pixStream); // Should only be called while streaming
     // Start the next transfer
     // TODO: poll ICE40 until it says it's ready for us to readout the next image
+    _pixRemLen = _pixInfo.width*_pixInfo.height;
     _pixTestFirstTransfer = true;
     _recvPixDataFromICE40();
-}
-
-void System::_pixFinishImage() {
-    Assert(_pixStream); // Should only be called while streaming
-    // Finish the image
-    _pixTestImageCount++;
-    // Start the next transfer
-    _pixStartImage();
 }
 
 System Sys;

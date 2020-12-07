@@ -53,5 +53,7 @@ namespace STApp {
     
     using Pixel = uint16_t;
     
+    const uint32_t PixTestMagicNumber = 0xCAFEBABE;
+    
     static_assert(sizeof(Cmd)==3, "Cmd: invalid size");
 }

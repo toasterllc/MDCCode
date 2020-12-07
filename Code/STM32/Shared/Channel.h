@@ -84,6 +84,12 @@ public:
         return true;
     }
     
+    void reset() {
+        _rptr = 0;
+        _wptr = 0;
+        _full = 0;
+    }
+    
 private:
     bool _canRead() {
         return (_rptr!=_wptr || _full);

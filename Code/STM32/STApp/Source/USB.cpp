@@ -46,6 +46,11 @@ void USB::resetFinish() {
     IRQState irq;
     irq.disable();
     
+    // Reset our channels so there are no pending events
+    resetChannel.reset();
+    cmdChannel.reset();
+    pixChannel.reset();
+    
     // Reset all endpoints to return them to the default state.
     // USB_ResetEndpoints() requires that SETUP packets aren't
     // received while it's executing. (See comment within

@@ -20,7 +20,7 @@ private:
     uint16_t _pixRead(uint16_t addr);
     void _pixWrite(uint16_t addr, uint16_t val);
     
-    void _reset();
+    void _reset(bool usbResetFinish);
     void _handleEvent();
     void _handleUSBEvent(const USB::Event& ev);
     void _handleReset();
@@ -30,7 +30,6 @@ private:
     void _recvPixDataFromICE40();
     void _sendPixDataOverUSB();
     void _pixStartImage();
-    void _pixFinishImage();
     
     // Peripherals
     USB _usb;
@@ -43,7 +42,6 @@ private:
     bool _pixStream = false;
     bool _pixTest = false;
     bool _pixTestFirstTransfer = false;
-    uint32_t _pixTestImageCount = 0;
     BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
     
