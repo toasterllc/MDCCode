@@ -126,7 +126,10 @@ static void pixStream(const Args& args, USBDevice& device) {
     if (ior != kIOReturnSuccess) throw RuntimeError("cmdInPipe.read() failed: %x", ior);
     
     // Start PixStream
-    cmd = { .op = STApp::Cmd::Op::PixStream };
+    cmd = {
+        .op = STApp::Cmd::Op::PixStream,
+        .arg = { .pixStream = { .test = false, } }
+    };
     ior = cmdOutPipe.write(cmd);
     if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
     

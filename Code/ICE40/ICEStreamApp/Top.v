@@ -363,7 +363,10 @@ module Top(
                     spi_resp[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !spi_pixi2c_done_;
                     spi_resp[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
                     spi_resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
-                    spi_resp[`Resp_Arg_PixGetStatus_ReadoutReady_Bits] <= spi_pixReadoutReady;
+                    // Use `CaptureDone` bit to signal whether we can readout,
+                    // not whether the capture has merely been written to RAM
+                    spi_resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= spi_pixReadoutReady;
+                    spi_resp[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= spi_pixctrlStatusCapturePixelDropped;
                     spi_state <= SPI_State_RespOut;
                 end
                 
@@ -657,7 +660,7 @@ module Testbench();
             do begin
                 // Request Pix status
                 SendMsg(`Msg_Type_PixGetStatus, 0, 8);
-            end while(!resp[`Resp_Arg_PixGetStatus_ReadoutReady_Bits]);
+            end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
             $display("[STM32] Readout ready ✅");
         
             // 1 pixels     counter=0

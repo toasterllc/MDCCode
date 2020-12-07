@@ -61,7 +61,7 @@
 
 `define Msg_Type_PixReadout                                     `Msg_Type_Len'h06
 `define     Msg_Arg_PixReadout_Counter_Len                      16
-`define     Msg_Arg_PixReadout_Counter_Bits                     18:3
+`define     Msg_Arg_PixReadout_Counter_Bits                     31:16
 `define     Msg_Arg_PixReadout_SrcBlock_Bits                    2:0
 
 `define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h07
@@ -78,7 +78,6 @@
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
 `define     Resp_Arg_PixGetStatus_CapturePixelDropped_Bits      44:44
-`define     Resp_Arg_PixGetStatus_ReadoutReady_Bits             43:43
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 

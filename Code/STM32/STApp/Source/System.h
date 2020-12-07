@@ -29,6 +29,7 @@ private:
     void _handlePixUSBEvent(const USB::Signal& ev);
     void _recvPixDataFromICE40();
     void _sendPixDataOverUSB();
+    void _pixConfig();
     void _pixStartImage();
     
     // Peripherals
