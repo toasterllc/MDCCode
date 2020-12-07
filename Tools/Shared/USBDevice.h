@@ -2,9 +2,35 @@
 #include <IOKit/IOKitLib.h>
 #include "SendRight.h"
 #include "USBInterface.h"
+#include "RuntimeError.h"
 
 class USBDevice {
 public:
+    template <typename T>
+    static std::vector<T> FindDevices(uint16_t vid, uint16_t pid) {
+        std::vector<T> devices;
+        NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
+        match[@kIOPropertyMatchKey] = @{
+            @"idVendor": @(vid),
+            @"idProduct": @(pid),
+        };
+        
+        io_iterator_t ioServicesIter = MACH_PORT_NULL;
+        kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (CFDictionaryRef)CFBridgingRetain(match), &ioServicesIter);
+        if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceGetMatchingServices failed: %x", kr);
+        
+        SendRight servicesIter(ioServicesIter);
+        while (servicesIter) {
+            SendRight service(IOIteratorNext(servicesIter.port()));
+            if (!service) break;
+            try {
+                T device(std::move(service));
+                devices.push_back(device);
+            } catch (...) {}
+        }
+        return devices;
+    }
+    
     // Default constructor: empty
     USBDevice() {}
     

@@ -14,16 +14,16 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "55746C6723FB58BD00DA8CD8"
-               BuildableName = "MDCDebugger"
-               BlueprintName = "MDCDebugger"
-               ReferencedContainer = "container:MDCDebugger.xcodeproj">
+               BlueprintIdentifier = "55E1D8DD253E864F00628EF6"
+               BuildableName = "STAppUtil"
+               BlueprintName = "STAppUtil"
+               ReferencedContainer = "container:STAppUtil.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
@@ -31,7 +31,7 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
@@ -44,12 +44,18 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "55746C6723FB58BD00DA8CD8"
-            BuildableName = "MDCDebugger"
-            BlueprintName = "MDCDebugger"
-            ReferencedContainer = "container:MDCDebugger.xcodeproj">
+            BlueprintIdentifier = "55E1D8DD253E864F00628EF6"
+            BuildableName = "STAppUtil"
+            BlueprintName = "STAppUtil"
+            ReferencedContainer = "container:STAppUtil.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "PixStream"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -61,15 +67,15 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "55746C6723FB58BD00DA8CD8"
-            BuildableName = "MDCDebugger"
-            BlueprintName = "MDCDebugger"
-            ReferencedContainer = "container:MDCDebugger.xcodeproj">
+            BlueprintIdentifier = "55E1D8DD253E864F00628EF6"
+            BuildableName = "STAppUtil"
+            BlueprintName = "STAppUtil"
+            ReferencedContainer = "container:STAppUtil.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
-      buildConfiguration = "Release">
+      buildConfiguration = "Debug">
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"

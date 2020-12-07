@@ -10,77 +10,9 @@
 #import "SendRight.h"
 #import "USBInterface.h"
 #import "STLoaderTypes.h"
+#import "MDCLoaderDevice.h"
 
 using namespace STLoader;
-
-static USBInterface findUSBInterface(uint8_t interfaceNum) {
-    NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBInterfaceClassName));
-    match[@kIOPropertyMatchKey] = @{
-        @"bInterfaceNumber": @(interfaceNum),
-        @"idVendor": @1155,
-        @"idProduct": @57105,
-    };
-    
-    io_iterator_t ioServicesIter = MACH_PORT_NULL;
-    kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (CFDictionaryRef)CFBridgingRetain(match), &ioServicesIter);
-    if (kr != KERN_SUCCESS) throw std::runtime_error("IOServiceGetMatchingServices failed");
-    
-    SendRight servicesIter(ioServicesIter);
-    std::vector<SendRight> services;
-    while (servicesIter) {
-        SendRight service(IOIteratorNext(servicesIter.port()));
-        if (!service) break;
-        services.push_back(std::move(service));
-    }
-    
-    // Confirm that we have exactly one matching service
-    if (services.empty()) throw std::runtime_error("no matching services");
-    if (services.size() != 1) throw std::runtime_error("more than 1 matching service");
-    
-    SendRight& service = services[0];
-    
-    IOCFPlugInInterface** plugin = nullptr;
-    SInt32 score = 0;
-    kr = IOCreatePlugInInterfaceForService(service.port(), kIOUSBInterfaceUserClientTypeID, kIOCFPlugInInterfaceID, &plugin, &score);
-    if (kr != KERN_SUCCESS) throw std::runtime_error("IOCreatePlugInInterfaceForService failed");
-    if (!plugin) throw std::runtime_error("IOCreatePlugInInterfaceForService returned NULL plugin");
-    
-    IOUSBInterfaceInterface** usbInterface = nullptr;
-    HRESULT hr = (*plugin)->QueryInterface(plugin, CFUUIDGetUUIDBytes(kIOUSBInterfaceInterfaceID), (LPVOID*)&usbInterface);
-    if (hr) throw std::runtime_error("QueryInterface failed");
-    (*plugin)->Release(plugin);
-    
-    return USBInterface(usbInterface);
-}
-
-namespace Interface {
-    enum : uint8_t {
-        STM32 = 0,
-        ICE40 = 1,
-    };
-}
-
-namespace STEndpoint {
-    enum : uint8_t {
-        // These values aren't the same as the endpoint addresses in firmware!
-        // These values are the determined by the order that the endpoints are
-        // listed in the interface descriptor.
-        CmdOut = 1,
-        DataOut,
-        StatusIn,
-    };
-}
-
-namespace ICEEndpoint {
-    enum : uint8_t {
-        // These values aren't the same as the endpoint addresses in firmware!
-        // These values are the determined by the order that the endpoints are
-        // listed in the interface descriptor.
-        CmdOut = 1,
-        DataOut,
-        StatusIn,
-    };
-}
 
 using Cmd = std::string;
 const Cmd LEDSetCmd = "ledset";
@@ -133,7 +65,7 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
-static void ledSet(const Args& args, USBInterface& stInterface) {
+static void ledSet(const Args& args, MDCLoaderDevice& device) {
     STCmd cmd = {
         .op = STCmd::Op::LEDSet,
         .arg = {
@@ -144,11 +76,11 @@ static void ledSet(const Args& args, USBInterface& stInterface) {
         },
     };
     
-    IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
+    IOReturn ior = device.stCmdOutPipe.write(cmd);
     if (ior != kIOReturnSuccess) throw std::runtime_error("pipe write failed");
 }
 
-static void stLoad(const Args& args, USBInterface& stInterface) {
+static void stLoad(const Args& args, MDCLoaderDevice& device) {
     ELF32Binary bin(args.filePath.c_str());
     auto sections = bin.sections();
     
@@ -177,13 +109,14 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
                     .op = STCmd::Op::GetStatus,
                 };
                 
-                IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
+                IOReturn ior = device.stCmdOutPipe.write(cmd);
                 if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
             }
             
             // Read status
             {
-                auto [status, ior] = stInterface.read<STStatus>(STEndpoint::StatusIn);
+                STStatus status;
+                IOReturn ior = device.stStatusInPipe.read(status);
                 if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STEndpoint::StatusIn");
                 if (status == STStatus::Idle) break;
             }
@@ -200,13 +133,13 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
                 },
             };
             
-            IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
+            IOReturn ior = device.stCmdOutPipe.write(cmd);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
         }
         
         // Send actual data
         {
-            IOReturn ior = stInterface.write(STEndpoint::DataOut, data, dataLen);
+            IOReturn ior = device.stDataOutPipe.write(data, dataLen);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::DataOut");
         }
     }
@@ -223,13 +156,13 @@ static void stLoad(const Args& args, USBInterface& stInterface) {
             },
         };
         
-        IOReturn ior = stInterface.write(STEndpoint::CmdOut, cmd);
+        IOReturn ior = device.stCmdOutPipe.write(cmd);
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
     }
     printf("Done\n");
 }
 
-static void iceLoad(const Args& args, USBInterface& iceInterface) {
+static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     Mmap mmap(args.filePath.c_str());
     
     // Start ICE40 configuration
@@ -244,14 +177,14 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
             }
         };
         
-        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+        IOReturn ior = device.iceCmdOutPipe.write(cmd);
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
     }
     
     // Send ICE40 binary
     {
         printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
-        IOReturn ior = iceInterface.write(ICEEndpoint::DataOut, mmap.data(), mmap.len());
+        IOReturn ior = device.iceDataOutPipe.write(mmap.data(), mmap.len());
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::DataOut");
     }
     
@@ -264,13 +197,14 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
                 .op = ICECmd::Op::GetStatus,
             };
             
-            IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+            IOReturn ior = device.iceCmdOutPipe.write(cmd);
             if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
         }
         
         // Read status
         {
-            auto [status, ior] = iceInterface.read<ICEStatus>(ICEEndpoint::StatusIn);
+            ICEStatus status;
+            IOReturn ior = device.iceStatusInPipe.read(status);
             if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEEndpoint::StatusIn");
             if (status == ICEStatus::Idle) break;
         }
@@ -283,7 +217,7 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
             .op = ICECmd::Op::Finish,
         };
         
-        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+        IOReturn ior = device.iceCmdOutPipe.write(cmd);
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
     }
     
@@ -293,13 +227,14 @@ static void iceLoad(const Args& args, USBInterface& iceInterface) {
             .op = ICECmd::Op::GetStatus,
         };
         
-        IOReturn ior = iceInterface.write(ICEEndpoint::CmdOut, cmd);
+        IOReturn ior = device.iceCmdOutPipe.write(cmd);
         if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
     }
     
     // Read status
     {
-        auto [status, ior] = iceInterface.read<ICEStatus>(ICEEndpoint::StatusIn);
+        ICEStatus status;
+        IOReturn ior = device.iceStatusInPipe.read(status);
         if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEEndpoint::StatusIn");
         printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
     }
@@ -316,26 +251,27 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    USBInterface stInterface;
-    USBInterface iceInterface;
+    std::vector<MDCLoaderDevice> devices;
     try {
-        stInterface = findUSBInterface(Interface::STM32);
+        devices = MDCLoaderDevice::FindDevices();
     } catch (const std::exception& e) {
-        fprintf(stderr, "Failed to get STM32 interface: %s\n", e.what());
+        fprintf(stderr, "Failed to find MDC loader devices: %s\n\n", e.what());
         return 1;
     }
     
-    try {
-        iceInterface = findUSBInterface(Interface::ICE40);
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Failed to get ICE40 interface: %s\n", e.what());
+    if (devices.empty()) {
+        fprintf(stderr, "No matching MDC loader devices\n\n");
+        return 1;
+    } else if (devices.size() > 1) {
+        fprintf(stderr, "Too many matching MDC loader devices\n\n");
         return 1;
     }
     
+    MDCLoaderDevice& device = devices[0];
     try {
-        if (args.cmd == LEDSetCmd)          ledSet(args, stInterface);
-        else if (args.cmd == STLoadCmd)     stLoad(args, stInterface);
-        else if (args.cmd == ICELoadCmd)    iceLoad(args, iceInterface);
+        if (args.cmd == LEDSetCmd)          ledSet(args, device);
+        else if (args.cmd == STLoadCmd)     stLoad(args, device);
+        else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;

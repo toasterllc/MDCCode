@@ -13,7 +13,7 @@
 #import "USBPipe.h"
 #import "STAppTypes.h"
 #import "MyTime.h"
-#import "SystemError.h"
+#import "RuntimeError.h"
 #import "MDCDevice.h"
 
 using Cmd = std::string;

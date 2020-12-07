@@ -1,20 +1,7 @@
 #include "USB.h"
 #include "Enum.h"
-
-Enum(uint8_t, Endpoint, Endpoints,
-    // OUT endpoints (high bit 0)
-    Control         = 0x00,
-    
-    // OUT endpoints (high bit 0)
-    STCmdOut        = 0x01,
-    STDataOut       = 0x02,
-    ICECmdOut       = 0x03,
-    ICEDataOut      = 0x04,
-    
-    // IN endpoints (high bit 1)
-    STStatusIn      = 0x81,
-    ICEStatusIn     = 0x82,
-);
+#include "STLoaderTypes.h"
+using namespace STLoader;
 
 void USB::init() {
     // Disable USB DMA because we want USB to be able to write to
@@ -197,7 +184,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             // Interface descriptor: STM32 bootloader
             0x09,                                       // bLength: interface descriptor length
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
-            0x00,                                       // bInterfaceNumber: interface index
+            InterfaceIdxs::STM32,                       // bInterfaceNumber: interface index
             0x00,                                       // bAlternateSetting: alternate setting
             0x03,                                       // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific
@@ -232,7 +219,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             // Interface descriptor: ICE40 bootloader
             0x09,                                       // bLength: interface descriptor length
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
-            0x01,                                       // bInterfaceNumber: Number of Interface
+            InterfaceIdxs::ICE40,                       // bInterfaceNumber: Number of Interface
             0x00,                                       // bAlternateSetting: Alternate setting
             0x03,                                       // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific

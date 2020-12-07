@@ -1,4 +1,5 @@
 #pragma once
+#include "Enum.h"
 
 namespace STApp {
     Enum(uint8_t, Endpoint, Endpoints,
