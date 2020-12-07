@@ -391,7 +391,7 @@ module Top(
             SPI_State_PixOut: begin
                 spi_d_outEn <= 1;
                 if (!spi_doutCounter) begin
-                    spi_doutReg <= spi_pixctrlReadoutData;
+                    spi_doutReg <= {spi_pixctrlReadoutData[7:0], spi_pixctrlReadoutData[15:8]}; // Output pixels in little endian
                     spi_pixctrlReadoutTrigger <= 1;
                 end
                 

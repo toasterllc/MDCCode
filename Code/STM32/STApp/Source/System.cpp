@@ -106,17 +106,8 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
 
 void System::init() {
     _super::init();
-    
     _usb.init();
     _qspi.init();
-    
-    // Assert/deassert pix reset
-    {
-        char str[] = "halla";
-        _ice40Transfer(_qspi, EchoMsg(str));
-    }
-    
-    for (;;);
 }
 
 

@@ -139,6 +139,9 @@ static void pixStream(const Args& args, USBDevice& device) {
         ior = pixInPipe.read(buf.get(), imageLen);
         if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
         printf("Got %ju bytes\n", imageLen);
+        
+        [[NSData dataWithBytes:buf.get() length:imageLen] writeToFile:@"/Users/dave/Desktop/img.bin" atomically:true];
+        exit(0);
     }
 }
 
@@ -271,9 +274,7 @@ static void testResetStreamInc(const Args& args, USBDevice& device) {
             std::optional<uint16_t> lastNum;
             // Start off past the magic number
             for (size_t i=4; i<imageLen; i+=2) {
-                uint16_t num = 0;
-                memcpy(&num, &buf[i], sizeof(num));
-                num = ((num&0xFF00)>>8) | ((num&0x00FF)<<8);
+                const uint16_t num = (buf[i]<<8)|buf[i+1];
                 if (lastNum) {
                     uint16_t expected = *lastNum+1;
                     if (num != expected) {

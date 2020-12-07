@@ -188,7 +188,7 @@ module Top(
             4: begin
                 spi_d_outEn <= 1;
                 if (!spi_doutCounter) begin
-                    spi_doutReg <= spi_doutDataCounter;
+                    spi_doutReg <= {spi_doutDataCounter[7:0], spi_doutDataCounter[15:8]}; // Output in little endian
                     spi_doutDataCounter <= spi_doutDataCounter+1;
                 end
                 
@@ -335,7 +335,7 @@ module Testbench();
         // 4 words      counter=6
         arg[`Msg_Arg_ReadData_Counter_Bits] = `Msg_Arg_Echo_Msg_Len'h6;
         
-        for (i=0; i<8; i++) begin
+        for (i=0; i<128; i++) begin
             SendMsg(`Msg_Type_ReadData, arg, 8);
             $display("Response: %h %h %h %h",
                 resp[(16*4)-1 -: 16],
