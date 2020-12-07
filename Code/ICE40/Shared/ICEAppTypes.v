@@ -79,4 +79,13 @@
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
+`ifdef SIM
+localparam ImageWidth = 256;
+localparam ImageHeight = 16;
+`else
+localparam ImageWidth = 2304;
+// localparam ImageHeight = 1296;
+localparam ImageHeight = 1296;
+`endif
+
 `endif

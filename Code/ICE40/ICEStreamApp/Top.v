@@ -13,6 +13,7 @@
 `include "PixController.v"
 `include "PixI2CMaster.v"
 `include "RAMController.v"
+`include "ICEAppTypes.v"
 
 `ifdef SIM
 `include "PixSim.v"
@@ -21,60 +22,6 @@
 `endif
 
 `timescale 1ns/1ps
-
-`ifdef SIM
-localparam ImageWidth = 256;
-localparam ImageHeight = 16;
-`else
-localparam ImageWidth = 2304;
-// localparam ImageHeight = 1296;
-localparam ImageHeight = 1296;
-`endif
-
-// ====================
-// Control Messages/Responses
-// ====================
-`define Msg_Len                                                 64
-
-`define Msg_Type_Len                                            8
-`define Msg_Type_Bits                                           63:56
-
-`define Msg_Arg_Len                                             56
-`define Msg_Arg_Bits                                            55:0
-
-`define Resp_Len                                                `Msg_Len
-`define Resp_Arg_Bits                                           63:0
-
-`define Msg_Type_Echo                                           `Msg_Type_Len'h00
-`define     Msg_Arg_Echo_Msg_Len                                56
-`define     Msg_Arg_Echo_Msg_Bits                               55:0
-`define     Resp_Arg_Echo_Msg_Bits                              63:8
-
-`define Msg_Type_PixReset                                       `Msg_Type_Len'h04
-`define     Msg_Arg_PixReset_Val_Bits                           0:0
-
-`define Msg_Type_PixCapture                                     `Msg_Type_Len'h05
-`define     Msg_Arg_PixCapture_DstBlock_Bits                    2:0
-
-`define Msg_Type_PixReadout                                     `Msg_Type_Len'h06
-`define     Msg_Arg_PixReadout_SrcBlock_Bits                    2:0
-
-`define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h07
-`define     Msg_Arg_PixI2CTransaction_Write_Bits                55:55
-`define     Msg_Arg_PixI2CTransaction_DataLen_Bits              54:54
-`define         Msg_Arg_PixI2CTransaction_DataLen_1             1'b0
-`define         Msg_Arg_PixI2CTransaction_DataLen_2             1'b1
-`define     Msg_Arg_PixI2CTransaction_RegAddr_Bits              31:16
-`define     Msg_Arg_PixI2CTransaction_WriteData_Bits            15:0
-
-`define Msg_Type_PixGetStatus                                   `Msg_Type_Len'h08
-`define     Resp_Arg_PixGetStatus_I2CDone_Bits                  63:63
-`define     Resp_Arg_PixGetStatus_I2CErr_Bits                   62:62
-`define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
-`define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
-`define     Resp_Arg_PixGetStatus_CapturePixelDropped_Bits      44:44
-
-`define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
 module Top(
     input wire          clk24mhz,
@@ -238,31 +185,28 @@ module Top(
         
         PixCtrl_State_Readout: begin
             $display("[PixCtrl] Readout triggered");
-            // TODO: ???
             // Tell SDController DatOut to stop so that the FIFO isn't accessed until
             // the FIFO is reset and new data is available.
-            // sd_datOut_stop <= !sd_datOut_stop;
+            sd_datOut_stop <= !sd_datOut_stop;
             pixctrl_state <= PixCtrl_State_Readout+1;
         end
         
         PixCtrl_State_Readout+1: begin
-            // TODO: ???
-            // // Wait until SDController DatOut is stopped
-            // if (pixctrl_sdDatOutStopped) begin
-            //     // Tell PixController to start readout
-            //     pixctrl_cmd <= `PixController_Cmd_Readout;
-            //     pixctrl_state <= PixCtrl_State_Readout+2;
-            // end
+            // Wait until SDController DatOut is stopped
+            if (pixctrl_sdDatOutStopped) begin
+                // Tell PixController to start readout
+                pixctrl_cmd <= `PixController_Cmd_Readout;
+                pixctrl_state <= PixCtrl_State_Readout+2;
+            end
         end
         
         PixCtrl_State_Readout+2: begin
-            // TODO: ???
-            // // Wait until PixController readout starts
-            // if (pixctrl_status_readoutStarted) begin
-            //     // Start SD DatOut now that readout has started (and therefore
-            //     // the FIFO has been reset)
-            //     sd_datOut_start <= !sd_datOut_start;
-            // end
+            // Wait until PixController readout starts
+            if (pixctrl_status_readoutStarted) begin
+                // Start SD DatOut now that readout has started (and therefore
+                // the FIFO has been reset)
+                sd_datOut_start <= !sd_datOut_start;
+            end
         end
         endcase
         
@@ -350,6 +294,9 @@ module Top(
                 
                 `Msg_Type_PixReadout: begin
                     $display("[CTRL] Got Msg_Type_PixReadout (block=%b)", ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits]);
+                    
+                    // Reset `ctrl_sdDatOutDone_` if it's asserted
+                    if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
                     
                     pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits];
                     ctrl_pixReadoutTrigger <= !ctrl_pixReadoutTrigger;
@@ -619,7 +566,7 @@ module Testbench();
         end else begin
             $display("[EXT] Reset=0 failed ❌");
         end
-        
+
         arg = 0;
         arg[`Msg_Arg_PixReset_Val_Bits] = 1;
         SendMsg(`Msg_Type_PixReset, arg);
@@ -636,11 +583,11 @@ module Testbench();
         arg = 0;
         arg[`Msg_Arg_PixReset_Val_Bits] = 1;
         SendMsg(`Msg_Type_PixReset, arg); // Deassert Pix reset
-        
+
         arg = 0;
         arg[`Msg_Arg_PixCapture_DstBlock_Bits] = 0;
         SendMsg(`Msg_Type_PixCapture, arg);
-        
+
         // Wait until the capture is done
         $display("[EXT] Waiting for capture to complete...");
         do begin
@@ -679,7 +626,7 @@ module Testbench();
                 resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
             );
-            
+
             done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
         end
         
@@ -709,20 +656,20 @@ module Testbench();
 
             done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
         end
-        
+
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
             $display("[EXT] Read success ✅");
         end else begin
             $display("[EXT] Read failed ❌");
         end
-        
+
         if (resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] === 16'hCAFE) begin
             $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
         end else begin
             $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
             `Finish;
         end
-        
+
         // ====================
         // Test PixI2C Write (len=1)
         // ====================
@@ -732,7 +679,7 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
         arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'h0037;
         SendMsg(`Msg_Type_PixI2CTransaction, arg);
-        
+
         done = 0;
         while (!done) begin
             SendMsgResp(`Msg_Type_PixGetStatus, 0);
@@ -741,16 +688,16 @@ module Testbench();
                 resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
             );
-            
+
             done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
         end
-        
+
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
             $display("[EXT] Write success ✅");
         end else begin
             $display("[EXT] Write failed ❌");
         end
-        
+
         // ====================
         // Test PixI2C Read (len=1)
         // ====================
@@ -759,7 +706,7 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
         SendMsg(`Msg_Type_PixI2CTransaction, arg);
-        
+
         done = 0;
         while (!done) begin
             SendMsgResp(`Msg_Type_PixGetStatus, 0);
@@ -768,16 +715,16 @@ module Testbench();
                 resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
                 resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
             );
-            
+
             done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
         end
-        
+
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
             $display("[EXT] Read success ✅");
         end else begin
             $display("[EXT] Read failed ❌");
         end
-        
+
         if ((resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF) === 16'h0037) begin
             $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
         end else begin
@@ -799,13 +746,11 @@ module Testbench();
         TestNoOp();
         TestEcho();
         
-        // Do Pix stuff before SD stuff, so that the RAM is populated with an image, so that
-        // the RAM has valid content for when we do the readout to write to the SD card.
         TestPixReset();
         TestPixCapture();
         TestPixI2CWriteRead();
-        
         `Finish;
+        
     end
 endmodule
 `endif
