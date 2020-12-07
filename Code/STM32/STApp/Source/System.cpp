@@ -974,19 +974,19 @@ void System::_pixConfig() {
     {
 //        // Set test_data_red
 //        _pixWrite(0x3072, 0x0B2A);  // AAA
-//        _pixWrite(0x3072, 0x0FFF);  // FFF
+        _pixWrite(0x3072, 0x0FFF);  // FFF
 //
 //        // Set test_data_greenr
 //        _pixWrite(0x3074, 0x0C3B);  // BBB
-//        _pixWrite(0x3074, 0x0FFF);  // FFF
+        _pixWrite(0x3074, 0x0FFF);  // FFF
 //
 //        // Set test_data_blue
 //        _pixWrite(0x3076, 0x0D4C);  // CCC
-//        _pixWrite(0x3076, 0x0FFF);  // FFF
+        _pixWrite(0x3076, 0x0FFF);  // FFF
 //
 //        // Set test_data_greenb
 //        _pixWrite(0x3078, 0x0C3B);  // BBB
-//        _pixWrite(0x3078, 0x0FFF);  // FFF
+        _pixWrite(0x3078, 0x0FFF);  // FFF
     }
     
     // Set test_pattern_mode
@@ -997,7 +997,7 @@ void System::_pixConfig() {
         // 3: Fade-to-gray color bar test pattern
         // 256: Walking 1s test pattern (12 bit)
 //        _pixWrite(0x3070, 0x0000);  // Normal operation
-//        _pixWrite(0x3070, 0x0001);  // Solid color
+        _pixWrite(0x3070, 0x0001);  // Solid color
 //        _pixWrite(0x3070, 0x0002);  // Color bars
 //        _pixWrite(0x3070, 0x0003);  // Fade-to-gray
 //        _pixWrite(0x3070, 0x0100);  // Walking 1s
