@@ -11,16 +11,6 @@ public:
     void init();
     
 private:
-    void _reset();
-    void _handleEvent();
-    void _handleUSBEvent(const USB::Event& ev);
-    void _handleReset();
-    void _handleCmd(const USB::Cmd& ev);
-    void _handleQSPIEvent(const QSPI::Signal& ev);
-    void _handlePixUSBEvent(const USB::Signal& ev);
-    void _recvPixDataFromICE40();
-    void _sendPixDataOverUSB();
-    
     ICE40::SDGetStatusResp _sdGetStatus();
     ICE40::SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
         ICE40::SDSendCmdMsg::RespType respType = ICE40::SDSendCmdMsg::RespTypes::Len48,
@@ -30,6 +20,18 @@ private:
     uint16_t _pixRead(uint16_t addr);
     void _pixWrite(uint16_t addr, uint16_t val);
     
+    void _reset();
+    void _handleEvent();
+    void _handleUSBEvent(const USB::Event& ev);
+    void _handleReset();
+    void _handleCmd(const USB::Cmd& ev);
+    void _handleQSPIEvent(const QSPI::Signal& ev);
+    void _handlePixUSBEvent(const USB::Signal& ev);
+    void _recvPixDataFromICE40();
+    void _sendPixDataOverUSB();
+    void _pixStartImage();
+    void _pixFinishImage();
+    
     // Peripherals
     USB _usb;
     QSPI _qspi;
@@ -38,8 +40,10 @@ private:
         .width = 2304,
         .height = 1296,
     };
-    bool _pixStreamEnabled = false;
-    bool _pixStreamTestMode = false;
+    bool _pixStream = false;
+    bool _pixTest = false;
+    bool _pixTestFirstTransfer = false;
+    uint32_t _pixTestImageCount = 0;
     BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
     

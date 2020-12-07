@@ -707,7 +707,7 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 void System::_reset() {
     // Reset our state
     // TODO: reset QSPI
-    _pixStreamEnabled = false;
+    _pixStream = false;
     _pixBufs.reset();
     // Prepare to receive commands
     _usb.cmdRecv();
@@ -775,11 +775,11 @@ void System::_handleCmd(const USB::Cmd& ev) {
     
     // PixStream
     case Cmd::Op::PixStream: {
-        if (!_pixStreamEnabled) {
-            _pixStreamEnabled = true;
-            _pixStreamTestMode = cmd.arg.pixStream.testMode;
+        if (!_pixStream) {
+            _pixStream = true;
+            _pixTest = cmd.arg.pixStream.test;
             _pixRemLen = _pixInfo.width*_pixInfo.height;
-            _recvPixDataFromICE40();
+            _pixStartImage();
         }
         break;
     }
@@ -806,7 +806,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
 }
 
 void System::_handleQSPIEvent(const QSPI::Signal& ev) {
-    if (!_pixStreamEnabled) return; // Short-circuit if streaming is disabled
+    if (!_pixStream) return; // Short-circuit if streaming is disabled
     Assert(_pixBufs.writable());
     
     const bool wasReadable = _pixBufs.readable();
@@ -831,7 +831,7 @@ void System::_handleQSPIEvent(const QSPI::Signal& ev) {
 }
 
 void System::_handlePixUSBEvent(const USB::Signal& ev) {
-    if (!_pixStreamEnabled) return; // Short-circuit if streaming is disabled
+    if (!_pixStream) return; // Short-circuit if streaming is disabled
     Assert(_pixBufs.readable());
     const bool wasWritable = _pixBufs.writable();
     
@@ -851,7 +851,7 @@ void System::_handlePixUSBEvent(const USB::Signal& ev) {
         }
     } else if (!_pixBufs.readable()) {
         // We're done sending this image
-        // TODO: what do we do now?
+        _pixFinishImage();
     }
 }
 
@@ -873,7 +873,32 @@ void System::_recvPixDataFromICE40() {
 void System::_sendPixDataOverUSB() {
     Assert(_pixBufs.readable());
     const auto& buf = _pixBufs.readBuf();
+    
+    // In test mode, if this is the initial transfer for an image
+    // being sent to the host, overwrite the beginning of the
+    // transfer with the image's number.
+    if (_pixTest && _pixTestFirstTransfer) {
+        memcpy(buf.data, &_pixTestImageCount, sizeof(_pixTestImageCount));
+        _pixTestFirstTransfer = false;
+    }
+    
     _usb.pixSend(buf.data, buf.len*sizeof(Pixel)); // The `.len` field to indicate the number of pixels (not byte length)
+}
+
+void System::_pixStartImage() {
+    Assert(_pixStream); // Should only be called while streaming
+    // Start the next transfer
+    // TODO: poll ICE40 until it says it's ready for us to readout the next image
+    _pixTestFirstTransfer = true;
+    _recvPixDataFromICE40();
+}
+
+void System::_pixFinishImage() {
+    Assert(_pixStream); // Should only be called while streaming
+    // Finish the image
+    _pixTestImageCount++;
+    // Start the next transfer
+    _pixStartImage();
 }
 
 System Sys;
