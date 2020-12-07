@@ -2,18 +2,23 @@
 #include "Enum.h"
 #include "STAppTypes.h"
 
-Enum(uint8_t, Endpoint, Endpoints,
-    Control = 0x00,
-    
-    // OUT endpoints (high bit 0)
-    CmdOut  = 0x01,
-    
-    // IN endpoints (high bit 1)
-    PixIn   = 0x81,
-);
-
 void USB::init() {
     _super::init(true);
+    
+    // TODO: revisit FIFO sizes and max packet sizes:
+    //   Rx/Tx FIFO size
+    //   Max packet size in USB descriptor
+    //   MPSIZ (max packet size) in OTG_DIEPCTLx/OTG_DOEPCTLx
+    //   PKTCNT (packet count) in OTG_DIEPTSIZx/OTG_DOEPTSIZx
+    //   XFRSIZ (transfer size) in OTG_DIEPTSIZx/OTG_DOEPTSIZx
+    //   
+    //   The max packet size in the descriptor is defined by the USB spec,
+    //   and is often larger than what we want, especially for BULK endpoints
+    //   used for commands. In such cases, we should try making MPSIZ the actual
+    //   max packet size that we want (which would be smaller than the
+    //   max packet size in the descriptor) and make sure that when the host 
+    //   sends us a larger packet than this amount, MPSIZ causes the excess data
+    //   to be rejected.
     
     // ## Set Rx/Tx FIFO sizes. Notes:
     // - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
@@ -30,8 +35,9 @@ void USB::init() {
     //   is the maximum packet size for that particular IN endpoint."
     // - "More space allocated in the transmit IN endpoint FIFO results in
     //   better performance on the USB."
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Control), 16);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::PixIn), 768);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::Control), 16);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::CmdOut), 4);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::PixIn), 768);
 }
 
 void USB::resetFinish() {
@@ -58,13 +64,19 @@ void USB::resetFinish() {
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
-    return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
+    return USBD_LL_PrepareReceive(&_device, STApp::Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
+}
+
+USBD_StatusTypeDef USB::cmdSend(const void* data, size_t len) {
+    // TODO: if this function is called twice, the second call will clobber the first.
+    //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
+    return USBD_LL_Transmit(&_device, STApp::Endpoints::CmdIn, (uint8_t*)data, len);
 }
 
 USBD_StatusTypeDef USB::pixSend(const void* data, size_t len) {
     // TODO: if this function is called twice, the second call will clobber the first.
     //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
-    return USBD_LL_Transmit(&_device, Endpoints::PixIn, (uint8_t*)data, len);
+    return USBD_LL_Transmit(&_device, STApp::Endpoints::PixIn, (uint8_t*)data, len);
 }
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
@@ -73,12 +85,16 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     // Open endpoints
     {
         // CmdOut endpoint
-        USBD_LL_OpenEP(&_device, Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
-        _device.ep_out[EndpointNum(Endpoints::CmdOut)].is_used = 1U;
+        USBD_LL_OpenEP(&_device, STApp::Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
+        _device.ep_out[EndpointNum(STApp::Endpoints::CmdOut)].is_used = 1U;
         
-        // PixIn endpoint is disabled by default
-        USBD_LL_OpenEP(&_device, Endpoints::PixIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
-        _device.ep_in[EndpointNum(Endpoints::PixIn)].is_used = 1U;
+        // CmdIn endpoint
+        USBD_LL_OpenEP(&_device, STApp::Endpoints::CmdIn, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
+        _device.ep_out[EndpointNum(STApp::Endpoints::CmdIn)].is_used = 1U;
+        
+        // PixIn endpoint
+        USBD_LL_OpenEP(&_device, STApp::Endpoints::PixIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        _device.ep_in[EndpointNum(STApp::Endpoints::PixIn)].is_used = 1U;
     }
     
     return (uint8_t)USBD_OK;
@@ -125,7 +141,7 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
     
     switch (epnum) {
     // PixIn endpoint
-    case EndpointNum(Endpoints::PixIn): {
+    case EndpointNum(STApp::Endpoints::PixIn): {
         pixChannel.writeTry(Signal{});
         break;
     }}
@@ -139,7 +155,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     const size_t dataLen = USBD_LL_GetRxDataSize(&_device, epnum);
     switch (epnum) {
     // CmdOut endpoint
-    case EndpointNum(Endpoints::CmdOut): {
+    case EndpointNum(STApp::Endpoints::CmdOut): {
         cmdChannel.writeTry(Cmd{
             .data = _cmdBuf,
             .len = dataLen,
@@ -166,7 +182,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
     _super::_usbd_GetHSConfigDescriptor(len);
     
     // USB DFU device Configuration Descriptor
-    constexpr size_t descLen = 32;
+    constexpr size_t descLen = 39;
     static uint8_t desc[] = {
         // Configuration descriptor
         0x09,                                       // bLength: configuration descriptor length
@@ -183,7 +199,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
             0x00,                                       // bInterfaceNumber: interface index
             0x00,                                       // bAlternateSetting: alternate setting
-            0x02,                                       // bNumEndpoints
+            0x03,                                       // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific
             0x00,                                       // bInterfaceSubClass
             0x00,                                       // nInterfaceProtocol
@@ -192,15 +208,23 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 // CmdOut endpoint
                 0x07,                                                       // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-                Endpoints::CmdOut,                                          // bEndpointAddress
+                STApp::Endpoints::CmdOut,                                   // bEndpointAddress
                 0x02,                                                       // bmAttributes: Bulk
                 LOBYTE(MaxPacketSize::Cmd), HIBYTE(MaxPacketSize::Cmd),     // wMaxPacketSize
+                0x00,                                                       // bInterval: ignore for Bulk transfer
+                
+                // CmdIn endpoint
+                0x07,                                                       // bLength: Endpoint Descriptor size
+                USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
+                STApp::Endpoints::CmdIn,                                    // bEndpointAddress
+                0x02,                                                       // bmAttributes: Bulk
+                LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),   // wMaxPacketSize
                 0x00,                                                       // bInterval: ignore for Bulk transfer
                 
                 // PixIn endpoint
                 0x07,                                                       // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-                Endpoints::PixIn,                                           // bEndpointAddress
+                STApp::Endpoints::PixIn,                                    // bEndpointAddress
                 0x02,                                                       // bmAttributes: Bulk
                 LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),   // wMaxPacketSize
                 0x00,                                                       // bInterval: ignore for Bulk transfer

@@ -3,7 +3,6 @@
 #include "Abort.h"
 #include "SystemClock.h"
 #include "Startup.h"
-#include "STAppTypes.h"
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -20,7 +19,7 @@ using SDSendCmdMsg = ICE40::SDSendCmdMsg;
 using SDGetStatusMsg = ICE40::SDGetStatusMsg;
 using SDGetStatusResp = ICE40::SDGetStatusResp;
 using PixResetMsg = ICE40::PixResetMsg;
-using PixCaptureMsg = ICE40::PixCaptureMsg;
+using PixStreamMsg = ICE40::PixStreamMsg;
 using PixReadoutMsg = ICE40::PixReadoutMsg;
 using PixI2CTransactionMsg = ICE40::PixI2CTransactionMsg;
 using PixGetStatusMsg = ICE40::PixGetStatusMsg;
@@ -709,6 +708,7 @@ void System::_reset() {
     // Reset our state
     // TODO: reset QSPI
     _pixStreamEnabled = false;
+    _pixBufs.reset();
     // Prepare to receive commands
     _usb.cmdRecv();
 }
@@ -767,18 +767,18 @@ void System::_handleCmd(const USB::Cmd& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
+    // GetPixInfo
+    case Cmd::Op::GetPixInfo: {
+        _usb.cmdSend(&_pixInfo, sizeof(_pixInfo));
+        break;
+    }
+    
     // PixStream
     case Cmd::Op::PixStream: {
-        static bool init = false;
-        if (!init) {
-            memset(_pixBuf0, 0xFF, sizeof(_pixBuf0));
-            _pixBuf0[0] = 0x37;
-            init = true;
-        }
-        
         if (!_pixStreamEnabled) {
             _pixStreamEnabled = true;
-            _sendPixDataOverUSB();
+            _pixRemLen = _pixInfo.width*_pixInfo.height;
+            _recvPixDataFromICE40();
         }
         break;
     }
@@ -805,15 +805,15 @@ void System::_handleCmd(const USB::Cmd& ev) {
 }
 
 void System::_handleQSPIEvent(const QSPI::Signal& ev) {
-    Assert(_pixStreamEnabled);
+    if (!_pixStreamEnabled) return; // Short-circuit if streaming is disabled
     Assert(_pixBufs.writable());
     
     const bool wasReadable = _pixBufs.readable();
     
     // Enqueue the buffer
     {
-        // Update the number of remaining bytes to receive from the host
-//        _pixRemLen -= _pixBufs.writeBuf().len;
+        // Update the number of remaining bytes to receive from the image sensor
+        _pixRemLen -= _pixBufs.writeBuf().len;
         _pixBufs.writeEnqueue();
     }
     
@@ -830,27 +830,49 @@ void System::_handleQSPIEvent(const QSPI::Signal& ev) {
 }
 
 void System::_handlePixUSBEvent(const USB::Signal& ev) {
-    // Short-circuit if streaming is disabled
-    if (!_pixStreamEnabled) return;
-    _sendPixDataOverUSB();
+    if (!_pixStreamEnabled) return; // Short-circuit if streaming is disabled
+    Assert(_pixBufs.readable());
+    const bool wasWritable = _pixBufs.writable();
+    
+    // Dequeue the buffer
+    _pixBufs.readDequeue();
+    
+    // Start another USB transaction if there's more data to write
+    if (_pixBufs.readable()) {
+        _sendPixDataOverUSB();
+    }
+    
+    if (_pixRemLen) {
+        // Prepare to receive more data if we're expecting more,
+        // and we were previously un-writable
+        if (!wasWritable) {
+            _recvPixDataFromICE40();
+        }
+    } else if (!_pixBufs.readable()) {
+        // We're done sending this image
+        // TODO: what do we do now?
+    }
 }
+
 
 // Arrange for pix data to be received from ICE40
 void System::_recvPixDataFromICE40() {
     Assert(_pixBufs.writable());
     
-    const size_t wordCount = _pixBufs.writeBuf().cap/2;
-    _pixBufs.writeBuf().len = wordCount; // The `.len` field to indicate the number of words (not byte length)
-    _ice40TransferAsync(_qspi, DebugReadDataMsg(wordCount), _pixBufs.writeBuf().data, _pixBufs.writeBuf().len*2);
+    // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
+    const size_t pixCount = std::min(_pixRemLen, _pixBufs.writeBuf().cap/sizeof(Pixel));
+    _pixBufs.writeBuf().len = pixCount; // The `.len` field to indicate the number of pixels (not byte length)
+    
+    _ice40TransferAsync(_qspi, DebugReadDataMsg(pixCount),
+        _pixBufs.writeBuf().data,
+        _pixBufs.writeBuf().len*sizeof(Pixel));
 }
 
 // Arrange for pix data to be sent over USB
 void System::_sendPixDataOverUSB() {
-    _usb.pixSend(_pixBuf0, sizeof(_pixBuf0));
-    
-//    Assert(_pixBufs.readable());
-//    const auto& buf = _pixBufs.readBuf();
-//    _usb.pixSend(buf.data, buf.len*2); // The `.len` field to indicate the number of words (not byte length)
+    Assert(_pixBufs.readable());
+    const auto& buf = _pixBufs.readBuf();
+    _usb.pixSend(buf.data, buf.len*sizeof(Pixel)); // The `.len` field to indicate the number of pixels (not byte length)
 }
 
 System Sys;

@@ -165,8 +165,8 @@ public:
         }
     };
     
-    struct PixCaptureMsg : Msg {
-        PixCaptureMsg(uint8_t dstBlock) {
+    struct PixStreamMsg : Msg {
+        PixStreamMsg(uint8_t dstBlock) {
             type = 0x05;
             payload[0] = 0;
             payload[1] = 0;

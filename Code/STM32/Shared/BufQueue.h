@@ -29,7 +29,7 @@ public:
         static_assert(Count && sizeof...(bufs)==Count, "invalid number of buffers");
     }
     
-    // Reading
+    // Read
     bool readable() const { return _w!=_r || _full; }
     
     const Buf& readBuf() const {
@@ -44,7 +44,7 @@ public:
         _full = false;
     }
     
-    // Writing
+    // Write
     bool writable() const { return !_full; }
     
     Buf& writeBuf() {
@@ -57,6 +57,13 @@ public:
         _w++;
         if (_w == Count) _w = 0;
         if (_w == _r) _full = true;
+    }
+    
+    // Reset
+    void reset() {
+        _w = 0;
+        _r = 0;
+        _full = false;
     }
     
 private:

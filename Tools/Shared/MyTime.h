@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 
+// TODO: choose a name for this
 namespace MyTime {
     using Instant = std::chrono::steady_clock::time_point;
     

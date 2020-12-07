@@ -29,6 +29,7 @@ public:
     // Command input
     Channel<Cmd, 1> cmdChannel;
     USBD_StatusTypeDef cmdRecv(); // Arranges for another command to be received
+    USBD_StatusTypeDef cmdSend(const void* data, size_t len);
     
     // Pixel data output
     Channel<Signal, 1> pixChannel; // Signals that the previous pixSend() is complete
