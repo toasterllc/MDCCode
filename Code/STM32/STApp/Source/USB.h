@@ -55,7 +55,6 @@ protected:
     
 private:
     uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
-    bool _resetDone = false;
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;
