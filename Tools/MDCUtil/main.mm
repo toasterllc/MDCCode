@@ -74,11 +74,12 @@ static void pixStream(const Args& args, MDCDevice& device) {
     // Start Pix stream
     device.pixStartStream();
     
-    const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
-    auto buf = std::make_unique<uint8_t[]>(imageLen);
+    const size_t pixelCount = pixInfo.width*pixInfo.height;
+    auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (;;) {
-        device.pixReadImage(buf.get(), imageLen);
-        printf("Got %ju bytes\n", imageLen);
+        device.pixReadImage(pixels.get(), pixelCount);
+        printf("Got %ju pixels (%ju x %ju)\n",
+            (uintmax_t)pixelCount, (uintmax_t)pixInfo.width, (uintmax_t)pixInfo.height);
 //        [[NSData dataWithBytes:buf.get() length:imageLen] writeToFile:@"/Users/dave/Desktop/img.bin" atomically:true];
 //        exit(0);
     }
@@ -106,10 +107,8 @@ static void testResetStream(const Args& args, MDCDevice& device) {
     
     // Get Pix info
     PixInfo pixInfo = device.pixInfo();
-    
-    const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
-    auto buf = std::make_unique<uint8_t[]>(imageLen);
-    
+    const size_t pixelCount = pixInfo.width*pixInfo.height;
+    auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (;;) {
         // Start Pix stream
         device.pixStartStream();
@@ -118,9 +117,9 @@ static void testResetStream(const Args& args, MDCDevice& device) {
         // sure it starts with the magic number)
         printf("Reading from PixIn...\n");
         for (int i=0; i<3; i++) {
-            device.pixReadImage(buf.get(), imageLen);
+            device.pixReadImage(pixels.get(), pixelCount);
             uint32_t magicNum = 0;
-            memcpy(&magicNum, buf.get(), sizeof(magicNum));
+            memcpy(&magicNum, pixels.get(), sizeof(magicNum));
             if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
         }
         printf("-> Done\n\n");
@@ -146,10 +145,8 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
     
     // Get Pix info
     PixInfo pixInfo = device.pixInfo();
-    
-    const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
-    auto buf = std::make_unique<uint8_t[]>(imageLen);
-    
+    const size_t pixelCount = pixInfo.width*pixInfo.height;
+    auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (;;) {
         // Start Pix stream
         device.pixStartStream();
@@ -158,16 +155,16 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
         // sure it starts with the magic number)
         printf("Reading from PixIn...\n");
         for (int i=0; i<3; i++) {
-            device.pixReadImage(buf.get(), imageLen);
+            device.pixReadImage(pixels.get(), pixelCount);
             uint32_t magicNum = 0;
-            memcpy(&magicNum, buf.get(), sizeof(magicNum));
+            memcpy(&magicNum, pixels.get(), sizeof(magicNum));
             if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
             
             // Verify that the values are incrementing numbers
             std::optional<uint16_t> lastNum;
             // Start off past the magic number
-            for (size_t i=4; i<imageLen; i+=2) {
-                const uint16_t num = (buf[i]<<8)|buf[i+1];
+            for (size_t i=2; i<pixelCount; i++) {
+                const uint16_t num = pixels[i];
                 if (lastNum) {
                     uint16_t expected = *lastNum+1;
                     if (num != expected) {

@@ -52,8 +52,8 @@ public:
         cmdOutPipe.write(cmd);
     }
     
-    void pixReadImage(void* buf, size_t len) {
-        pixInPipe.read(buf, len);
+    void pixReadImage(STApp::Pixel* pixels, size_t count) {
+        pixInPipe.read(pixels, count*sizeof(STApp::Pixel));
     }
     
     USBPipe cmdOutPipe;

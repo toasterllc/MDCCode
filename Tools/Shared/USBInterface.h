@@ -1,5 +1,7 @@
 #pragma once
 #include <IOKit/IOKitLib.h>
+#include <IOKit/usb/IOUSBLib.h>
+#include <IOKit/IOCFPlugIn.h>
 #include "SendRight.h"
 
 class USBInterface {

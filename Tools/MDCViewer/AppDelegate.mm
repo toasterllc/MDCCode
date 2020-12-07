@@ -1,6 +1,8 @@
 #import "MDCMainView.h"
-#import "MDCImageLayer.h"
 #import <memory>
+#import "MDCImageLayer.h"
+#import "STAppTypes.h"
+#import "MDCDevice.h"
 using namespace MDCImageLayerTypes;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
@@ -9,6 +11,7 @@ using namespace MDCImageLayerTypes;
 
 @implementation AppDelegate {
     IBOutlet MDCMainView* _mainView;
+    MDCDevice _device;
 }
 
 //static bool checkPixel(uint32_t x, uint32_t y, ImagePixel expected, ImagePixel got) {
@@ -21,71 +24,43 @@ using namespace MDCImageLayerTypes;
 //}
 
 - (void)applicationDidFinishLaunching:(NSNotification*)note {
+    std::vector<MDCDevice> devices = MDCDevice::FindDevices();
+    if (devices.empty()) throw std::runtime_error("no matching MDC devices");
+    if (devices.size() > 1) throw std::runtime_error("too many matching MDC devices");
+    _device = devices[0];
     
-    const uint32_t width = 2304;
-    const uint32_t height = 1296;
-    const size_t imageLen = width*height*sizeof(ImagePixel);
-//    NSString* fileName = @"TestPattern.bin";
-//    NSString* fileName = @"Photo1.bin";
-    NSString* fileName = @"Photo6.bin";
-    NSData* imageData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:fileName ofType:nil]];
-    assert([imageData length] >= imageLen);
-    auto pixels = std::make_unique<ImagePixel[]>(width*height);
-    memcpy(pixels.get(), [imageData bytes], imageLen);
-//    uint32_t errorCount = 0;
-//    for (uint32_t y=0; y<height; y++) {
-//        for (uint32_t x=0; x<width; x++) {
-//            ImagePixel px = pixels[(width*y)+x];
-//            if (px!=0x0000 && px!=0x0FFF) {
-//                printf("Got weird pixel: %jx\n", (uintmax_t)px);
-//            }
-//            if (!(y % 2)) {
-//                // Row: G R G R ...
-//                if (!(x % 2))   errorCount += (uint32_t)!checkPixel(x, y, 0xBBB, px);
-//                else            errorCount += (uint32_t)!checkPixel(x, y, 0xAAA, px);
-//            } else {
-//                // Row: B G B G ...
-//                if (!(x % 2))   errorCount += (uint32_t)!checkPixel(x, y, 0xCCC, px);
-//                else            errorCount += (uint32_t)!checkPixel(x, y, 0xDDD, px);
-//            }
-//            
-//            if (!(y % 2)) {
-//                // Row: G R G R ...
-//                if (!(x % 2))   errorCount += (uint32_t)!checkPixel(x, y, 0xFFF, px);
-//                else            errorCount += (uint32_t)!checkPixel(x, y, 0xFFF, px);
-//            } else {
-//                // Row: B G B G ...
-//                if (!(x % 2))   errorCount += (uint32_t)!checkPixel(x, y, 0xFFF, px);
-//                else            errorCount += (uint32_t)!checkPixel(x, y, 0xFFF, px);
-//            }
-//        }
-//    }
-//    printf("Error count: %ju\n", (uintmax_t)errorCount);
+    [NSThread detachNewThreadWithBlock:^{
+        [self _threadStreamImages];
+    }];
+}
+
+- (void)_threadStreamImages {
+    using namespace STApp;
     
-    Image image = {
-        .width = width,
-        .height = height,
-        .pixels = pixels.get(),
-    };
-    [[_mainView layer] updateImage:image];
+    MDCImageLayer* layer = [_mainView layer];
     
-//    [NSThread detachNewThreadWithBlock:^{
-//        for (int iter=0; iter<100; iter++) {
-//            uint32_t width = 100;
-//            uint32_t height = 200;
-//            auto pixels = std::make_unique<ImagePixel[]>(width*height);
-//            for (size_t i=0; i<width*height; i++) {
-//                pixels[i] = iter*40;
-//            }
-//            Image image = {
-//                .width = width,
-//                .height = height,
-//                .pixels = pixels.get(),
-//            };
-//            [[_mainView layer] updateImage:image];
-//            usleep(100000);
-//        }
-//    }];
+    // Reset the device to put it back in a pre-defined state
+    _device.reset();
+    
+    // Get Pix info
+    PixInfo pixInfo = _device.pixInfo();
+    // Start Pix stream
+    _device.pixStartStream();
+    
+    const size_t pixelCount = pixInfo.width*pixInfo.height;
+    auto pixels = std::make_unique<Pixel[]>(pixelCount);
+    for (;;) {
+        _device.pixReadImage(pixels.get(), pixelCount);
+        printf("Got %ju pixels (%ju x %ju)\n",
+            (uintmax_t)pixelCount, (uintmax_t)pixInfo.width, (uintmax_t)pixInfo.height);
+        
+        Image image = {
+            .width = pixInfo.width,
+            .height = pixInfo.height,
+            .pixels = pixels.get(),
+        };
+        [layer updateImage:image];
+    }
 }
 
 @end
