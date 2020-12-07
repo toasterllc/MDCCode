@@ -1,6 +1,7 @@
 #pragma once
 #include <IOKit/IOKitLib.h>
 #include "USBInterface.h"
+#include "RuntimeError.h"
 
 class USBPipe {
 public:
@@ -12,12 +13,14 @@ public:
     operator bool() const { return _interface; }
     
     template <typename T>
-    IOReturn write(T& x) const {
-        return (*_interface.interface())->WritePipe(_interface.interface(), _idx, (void*)&x, sizeof(x));
+    void write(T& x) const {
+        IOReturn ior = (*_interface.interface())->WritePipe(_interface.interface(), _idx, (void*)&x, sizeof(x));
+        if (ior != kIOReturnSuccess) throw RuntimeError("WritePipe() failed: %x", ior);
     }
     
-    IOReturn write(const void* buf, size_t len) const {
-        return (*_interface.interface())->WritePipe(_interface.interface(), _idx, (void*)buf, (uint32_t)len);
+    void write(const void* buf, size_t len) const {
+        IOReturn ior = (*_interface.interface())->WritePipe(_interface.interface(), _idx, (void*)buf, (uint32_t)len);
+        if (ior != kIOReturnSuccess) throw RuntimeError("WritePipe() failed: %x", ior);
     }
     
 //    template <typename T>
@@ -31,24 +34,25 @@ public:
 //    }
     
     template <typename T>
-    IOReturn read(T& t) const {
+    void read(T& t) const {
         uint32_t len32 = (uint32_t)sizeof(t);
         IOReturn ior = (*_interface.interface())->ReadPipe(_interface.interface(), _idx, &t, &len32);
-        if (ior != kIOReturnSuccess) return ior;
-        if (len32 < sizeof(t)) return kIOReturnUnderrun;
-        return kIOReturnSuccess;
+        if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: %x", ior);
+        if (len32 != sizeof(t)) throw RuntimeError("ReadPipe() returned bad length; expected %ju bytes, got %ju bytes",
+            (uintmax_t)sizeof(t), (uintmax_t)len32);
     }
     
-    IOReturn read(void* buf, size_t len) const {
+    void read(void* buf, size_t len) const {
         uint32_t len32 = (uint32_t)len;
         IOReturn ior = (*_interface.interface())->ReadPipe(_interface.interface(), _idx, buf, &len32);
-        if (ior != kIOReturnSuccess) return ior;
-        if (len32 < len) return kIOReturnUnderrun;
-        return kIOReturnSuccess;
+        if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: %x", ior);
+        if (len32 != len) throw RuntimeError("ReadPipe() returned bad length; expected %ju bytes, got %ju bytes",
+            (uintmax_t)len, (uintmax_t)len32);
     }
     
-    IOReturn reset() const {
-        return (*_interface.interface())->ResetPipe(_interface.interface(), _idx);
+    void reset() const {
+        IOReturn ior = (*_interface.interface())->ResetPipe(_interface.interface(), _idx);
+        if (ior != kIOReturnSuccess) throw RuntimeError("ResetPipe() failed: %x", ior);
     }
     
 private:

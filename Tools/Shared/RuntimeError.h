@@ -1,5 +1,6 @@
-#import <sstream>
-#import <IOKit/IOKitLib.h>
+#pragma once
+#include <sstream>
+#include <IOKit/IOKitLib.h>
 
 class RuntimeError : public std::runtime_error {
 public:

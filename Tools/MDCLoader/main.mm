@@ -76,8 +76,7 @@ static void ledSet(const Args& args, MDCLoaderDevice& device) {
         },
     };
     
-    IOReturn ior = device.stCmdOutPipe.write(cmd);
-    if (ior != kIOReturnSuccess) throw std::runtime_error("pipe write failed");
+    device.stCmdOutPipe.write(cmd);
 }
 
 static void stLoad(const Args& args, MDCLoaderDevice& device) {
@@ -109,15 +108,13 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
                     .op = STCmd::Op::GetStatus,
                 };
                 
-                IOReturn ior = device.stCmdOutPipe.write(cmd);
-                if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
+                device.stCmdOutPipe.write(cmd);
             }
             
             // Read status
             {
                 STStatus status;
-                IOReturn ior = device.stStatusInPipe.read(status);
-                if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on STEndpoint::StatusIn");
+                device.stStatusInPipe.read(status);
                 if (status == STStatus::Idle) break;
             }
         }
@@ -133,14 +130,12 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
                 },
             };
             
-            IOReturn ior = device.stCmdOutPipe.write(cmd);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
+            device.stCmdOutPipe.write(cmd);
         }
         
         // Send actual data
         {
-            IOReturn ior = device.stDataOutPipe.write(data, dataLen);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::DataOut");
+            device.stDataOutPipe.write(data, dataLen);
         }
     }
     
@@ -156,8 +151,7 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
             },
         };
         
-        IOReturn ior = device.stCmdOutPipe.write(cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on STEndpoint::CmdOut");
+        device.stCmdOutPipe.write(cmd);
     }
     printf("Done\n");
 }
@@ -177,15 +171,13 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
             }
         };
         
-        IOReturn ior = device.iceCmdOutPipe.write(cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
+        device.iceCmdOutPipe.write(cmd);
     }
     
     // Send ICE40 binary
     {
         printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
-        IOReturn ior = device.iceDataOutPipe.write(mmap.data(), mmap.len());
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::DataOut");
+        device.iceDataOutPipe.write(mmap.data(), mmap.len());
     }
     
     // Wait for interface to be idle
@@ -197,15 +189,13 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
                 .op = ICECmd::Op::GetStatus,
             };
             
-            IOReturn ior = device.iceCmdOutPipe.write(cmd);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
+            device.iceCmdOutPipe.write(cmd);
         }
         
         // Read status
         {
             ICEStatus status;
-            IOReturn ior = device.iceStatusInPipe.read(status);
-            if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEEndpoint::StatusIn");
+            device.iceStatusInPipe.read(status);
             if (status == ICEStatus::Idle) break;
         }
     }
@@ -217,8 +207,7 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
             .op = ICECmd::Op::Finish,
         };
         
-        IOReturn ior = device.iceCmdOutPipe.write(cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
+        device.iceCmdOutPipe.write(cmd);
     }
     
     // Request status
@@ -227,15 +216,13 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
             .op = ICECmd::Op::GetStatus,
         };
         
-        IOReturn ior = device.iceCmdOutPipe.write(cmd);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("write failed on ICEEndpoint::CmdOut");
+        device.iceCmdOutPipe.write(cmd);
     }
     
     // Read status
     {
         ICEStatus status;
-        IOReturn ior = device.iceStatusInPipe.read(status);
-        if (ior != kIOReturnSuccess) throw std::runtime_error("read failed on ICEEndpoint::StatusIn");
+        device.iceStatusInPipe.read(status);
         printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
     }
 }

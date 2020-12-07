@@ -116,14 +116,15 @@ public:
         return _state.usbInterfaces;
     }
     
-    IOReturn vendorRequestOut(uint8_t req, void* data, size_t len) const {
+    void vendorRequestOut(uint8_t req, void* data, size_t len) const {
         IOUSBDevRequest usbReq = {
             .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
             .bRequest       = req,
             .pData          = data,
             .wLength        = (uint16_t)len
         };
-        return (*_state.interface)->DeviceRequest(_state.interface, &usbReq);
+        IOReturn ior = (*_state.interface)->DeviceRequest(_state.interface, &usbReq);
+        if (ior != kIOReturnSuccess) throw RuntimeError("DeviceRequest() failed: %x", ior);
     }
     
 private:

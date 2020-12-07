@@ -97,8 +97,7 @@ static void ledSet(const Args& args, MDCDevice& device) {
         },
     };
     
-    IOReturn ior = device.cmdOutPipe.write(cmd);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
+    device.cmdOutPipe.write(cmd);
 }
 
 static void testResetStream(const Args& args, MDCDevice& device) {
@@ -130,8 +129,7 @@ static void testResetStream(const Args& args, MDCDevice& device) {
         printf("Corrupting PixIn endpoint...\n");
         for (int i=0; i<3; i++) {
             uint8_t buf[512];
-            IOReturn ior = device.pixInPipe.read(buf, sizeof(buf));
-            if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
+            device.pixInPipe.read(buf, sizeof(buf));
         }
         printf("-> Done\n\n");
         
@@ -147,12 +145,7 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
     using namespace STApp;
     
     // Get Pix info
-    PixInfo pixInfo;
-    STApp::Cmd cmd = { .op = STApp::Cmd::Op::GetPixInfo };
-    IOReturn ior = device.cmdOutPipe.write(cmd);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
-    ior = device.cmdInPipe.read(pixInfo);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdInPipe.read() failed: %x", ior);
+    PixInfo pixInfo = device.pixInfo();
     
     const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
     auto buf = std::make_unique<uint8_t[]>(imageLen);
@@ -190,8 +183,7 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
         printf("Corrupting PixIn endpoint...\n");
         for (int i=0; i<3; i++) {
             uint8_t buf[512];
-            ior = device.pixInPipe.read(buf, sizeof(buf));
-            if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
+            device.pixInPipe.read(buf, sizeof(buf));
         }
         printf("-> Done\n\n");
         
