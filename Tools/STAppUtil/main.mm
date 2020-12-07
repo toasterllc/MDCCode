@@ -69,37 +69,16 @@ static Args parseArgs(int argc, const char* argv[]) {
 
 static void pixStream(const Args& args, MDCDevice& device) {
     using namespace STApp;
-    
-    std::vector<USBInterface> interfaces = device.usbInterfaces();
-    if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
-    USBInterface& interface = interfaces[0];
-    USBPipe cmdOutPipe(interface, EndpointIdxs::CmdOut);
-    USBPipe cmdInPipe(interface, EndpointIdxs::CmdIn);
-    USBPipe pixInPipe(interface, EndpointIdxs::PixIn);
-    
     // Get Pix info
-    PixInfo pixInfo;
-    STApp::Cmd cmd = { .op = STApp::Cmd::Op::GetPixInfo };
-    IOReturn ior = cmdOutPipe.write(cmd);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
-    ior = cmdInPipe.read(pixInfo);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdInPipe.read() failed: %x", ior);
-    
-    // Start PixStream
-    cmd = {
-        .op = STApp::Cmd::Op::PixStream,
-        .arg = { .pixStream = { .test = false, } }
-    };
-    ior = cmdOutPipe.write(cmd);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
+    PixInfo pixInfo = device.pixInfo();
+    // Start Pix stream
+    device.pixStartStream();
     
     const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
     auto buf = std::make_unique<uint8_t[]>(imageLen);
     for (;;) {
-        ior = pixInPipe.read(buf.get(), imageLen);
-        if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
+        device.pixReadImage(buf.get(), imageLen);
         printf("Got %ju bytes\n", imageLen);
-        
 //        [[NSData dataWithBytes:buf.get() length:imageLen] writeToFile:@"/Users/dave/Desktop/img.bin" atomically:true];
 //        exit(0);
     }
@@ -107,10 +86,6 @@ static void pixStream(const Args& args, MDCDevice& device) {
 
 static void ledSet(const Args& args, MDCDevice& device) {
     using namespace STApp;
-    std::vector<USBInterface> interfaces = device.usbInterfaces();
-    if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
-    USBInterface& interface = interfaces[0];
-    USBPipe cmdOutPipe(interface, EndpointIdxs::CmdOut);
     
     STApp::Cmd cmd = {
         .op = STApp::Cmd::Op::LEDSet,
@@ -122,7 +97,7 @@ static void ledSet(const Args& args, MDCDevice& device) {
         },
     };
     
-    IOReturn ior = cmdOutPipe.write(cmd);
+    IOReturn ior = device.cmdOutPipe.write(cmd);
     if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
 }
 
@@ -130,41 +105,21 @@ static void testResetStream(const Args& args, MDCDevice& device) {
     // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
     using namespace STApp;
     
-    std::vector<USBInterface> interfaces = device.usbInterfaces();
-    if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
-    USBInterface& interface = interfaces[0];
-    USBPipe cmdOutPipe(interface, EndpointIdxs::CmdOut);
-    USBPipe cmdInPipe(interface, EndpointIdxs::CmdIn);
-    USBPipe pixInPipe(interface, EndpointIdxs::PixIn);
-    
     // Get Pix info
-    PixInfo pixInfo;
-    STApp::Cmd cmd = { .op = STApp::Cmd::Op::GetPixInfo };
-    IOReturn ior = cmdOutPipe.write(cmd);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
-    ior = cmdInPipe.read(pixInfo);
-    if (ior != kIOReturnSuccess) throw RuntimeError("cmdInPipe.read() failed: %x", ior);
+    PixInfo pixInfo = device.pixInfo();
     
     const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
     auto buf = std::make_unique<uint8_t[]>(imageLen);
     
     for (;;) {
-        // Start PixStream
-        printf("Enabling PixStream...\n");
-        STApp::Cmd cmd = {
-            .op = STApp::Cmd::Op::PixStream,
-            .arg = { .pixStream = { .test = true, } }
-        };
-        ior = cmdOutPipe.write(cmd);
-        if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
-        printf("-> Done\n\n");
+        // Start Pix stream
+        device.pixStartStream();
         
         // Read data and make sure it's synchronized (by making
         // sure it starts with the magic number)
         printf("Reading from PixIn...\n");
         for (int i=0; i<3; i++) {
-            ior = pixInPipe.read(buf.get(), imageLen);
-            if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
+            device.pixReadImage(buf.get(), imageLen);
             uint32_t magicNum = 0;
             memcpy(&magicNum, buf.get(), sizeof(magicNum));
             if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
@@ -175,15 +130,14 @@ static void testResetStream(const Args& args, MDCDevice& device) {
         printf("Corrupting PixIn endpoint...\n");
         for (int i=0; i<3; i++) {
             uint8_t buf[512];
-            ior = pixInPipe.read(buf, sizeof(buf));
+            IOReturn ior = device.pixInPipe.read(buf, sizeof(buf));
             if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
         }
         printf("-> Done\n\n");
         
         // Recover device
         printf("Recovering device...\n");
-        ior = device.reset();
-        if (ior != kIOReturnSuccess) throw RuntimeError("device.reset() failed: %x", ior);
+        device.reset();
         printf("-> Done\n\n");
     }
 }
@@ -192,41 +146,26 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
     // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
     using namespace STApp;
     
-    std::vector<USBInterface> interfaces = device.usbInterfaces();
-    if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
-    USBInterface& interface = interfaces[0];
-    USBPipe cmdOutPipe(interface, EndpointIdxs::CmdOut);
-    USBPipe cmdInPipe(interface, EndpointIdxs::CmdIn);
-    USBPipe pixInPipe(interface, EndpointIdxs::PixIn);
-    
     // Get Pix info
     PixInfo pixInfo;
     STApp::Cmd cmd = { .op = STApp::Cmd::Op::GetPixInfo };
-    IOReturn ior = cmdOutPipe.write(cmd);
+    IOReturn ior = device.cmdOutPipe.write(cmd);
     if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
-    ior = cmdInPipe.read(pixInfo);
+    ior = device.cmdInPipe.read(pixInfo);
     if (ior != kIOReturnSuccess) throw RuntimeError("cmdInPipe.read() failed: %x", ior);
     
     const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
     auto buf = std::make_unique<uint8_t[]>(imageLen);
     
     for (;;) {
-        // Start PixStream
-        printf("Enabling PixStream...\n");
-        STApp::Cmd cmd = {
-            .op = STApp::Cmd::Op::PixStream,
-            .arg = { .pixStream = { .test = true, } }
-        };
-        ior = cmdOutPipe.write(cmd);
-        if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
-        printf("-> Done\n\n");
+        // Start Pix stream
+        device.pixStartStream();
         
         // Read data and make sure it's synchronized (by making
         // sure it starts with the magic number)
         printf("Reading from PixIn...\n");
         for (int i=0; i<3; i++) {
-            ior = pixInPipe.read(buf.get(), imageLen);
-            if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
+            device.pixReadImage(buf.get(), imageLen);
             uint32_t magicNum = 0;
             memcpy(&magicNum, buf.get(), sizeof(magicNum));
             if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
@@ -251,15 +190,14 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
         printf("Corrupting PixIn endpoint...\n");
         for (int i=0; i<3; i++) {
             uint8_t buf[512];
-            ior = pixInPipe.read(buf, sizeof(buf));
+            ior = device.pixInPipe.read(buf, sizeof(buf));
             if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
         }
         printf("-> Done\n\n");
         
         // Recover device
         printf("Recovering device...\n");
-        ior = device.reset();
-        if (ior != kIOReturnSuccess) throw RuntimeError("device.reset() failed: %x", ior);
+        device.reset();
         printf("-> Done\n\n");
     }
 }
@@ -293,9 +231,10 @@ int main(int argc, const char* argv[]) {
     
     // Reset the device to put it back in a pre-defined state
     MDCDevice& device = devices[0];
-    IOReturn ior = device.reset();
-    if (ior != kIOReturnSuccess) {
-        fprintf(stderr, "Reset device failed: %x\n\n", ior);
+    try {
+        device.reset();
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Reset device failed: %s\n\n", e.what());
         return 1;
     }
     

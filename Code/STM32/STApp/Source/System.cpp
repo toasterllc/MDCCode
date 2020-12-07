@@ -773,7 +773,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     }
     
     // PixStream
-    case Cmd::Op::PixStream: {
+    case Cmd::Op::PixStartStream: {
         if (!_pixStream) {
             _pixStream = true;
             _pixTest = cmd.arg.pixStream.test;

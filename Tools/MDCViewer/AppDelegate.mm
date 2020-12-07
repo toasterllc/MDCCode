@@ -1,10 +1,9 @@
-#import "AppDelegate.h"
 #import "MDCMainView.h"
 #import "MDCImageLayer.h"
 #import <memory>
 using namespace MDCImageLayerTypes;
 
-@interface AppDelegate ()
+@interface AppDelegate : NSObject <NSApplicationDelegate>
 @property(weak) IBOutlet NSWindow* window;
 @end
 
@@ -22,6 +21,7 @@ using namespace MDCImageLayerTypes;
 //}
 
 - (void)applicationDidFinishLaunching:(NSNotification*)note {
+    
     const uint32_t width = 2304;
     const uint32_t height = 1296;
     const size_t imageLen = width*height*sizeof(ImagePixel);

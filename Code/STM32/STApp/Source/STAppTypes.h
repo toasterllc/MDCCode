@@ -25,7 +25,7 @@ namespace STApp {
     struct Cmd {
         enum class Op : uint8_t {
             GetPixInfo,
-            PixStream,
+            PixStartStream,
             LEDSet,
         };
         
