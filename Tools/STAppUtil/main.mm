@@ -18,6 +18,7 @@
 using Cmd = std::string;
 const Cmd PixStreamCmd = "pixstream";
 const Cmd LEDSetCmd = "ledset";
+const Cmd TestResetStream = "testresetstream";
 
 struct Args {
     Cmd cmd;
@@ -31,8 +32,9 @@ struct Args {
 void printUsage() {
     using namespace std;
     cout << "STAppUtil commands:\n";
-    cout << "  " << PixStreamCmd << "\n";
-    cout << "  " << LEDSetCmd    << " <idx> <0/1>\n";
+    cout << "  " << PixStreamCmd    << "\n";
+    cout << "  " << LEDSetCmd       << " <idx> <0/1>\n";
+    cout << "  " << TestResetStream << "\n";
     cout << "\n";
 }
 
@@ -50,6 +52,8 @@ static Args parseArgs(int argc, const char* argv[]) {
         if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
         args.ledSet.idx = std::stoi(strs[1]);
         args.ledSet.on = std::stoi(strs[2]);
+    
+    } else if (args.cmd == TestResetStream) {
     
     } else {
         throw std::runtime_error("invalid command");
@@ -151,6 +155,77 @@ static void ledSet(const Args& args, USBDevice& device) {
     if (ior != kIOReturnSuccess) throw SystemError(ior, "cmdOutPipe.write() failed");
 }
 
+static void testResetStream(const Args& args, USBDevice& device) {
+    // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
+    using namespace STApp;
+    
+    std::vector<USBInterface> interfaces = device.usbInterfaces();
+    if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
+    USBInterface& interface = interfaces[0];
+    USBPipe cmdOutPipe(interface, EndpointIdxs::CmdOut);
+    USBPipe cmdInPipe(interface, EndpointIdxs::CmdIn);
+    USBPipe pixInPipe(interface, EndpointIdxs::PixIn);
+    
+    // Get Pix info
+    PixInfo pixInfo;
+    STApp::Cmd cmd = { .op = STApp::Cmd::Op::GetPixInfo };
+    IOReturn ior = cmdOutPipe.write(cmd);
+    if (ior != kIOReturnSuccess) throw SystemError(ior, "cmdOutPipe.write() failed");
+    ior = cmdInPipe.read(pixInfo);
+    if (ior != kIOReturnSuccess) throw SystemError(ior, "cmdInPipe.read() failed");
+    
+    const size_t imageLen = pixInfo.width*pixInfo.height*sizeof(Pixel);
+    auto buf = std::make_unique<uint8_t[]>(imageLen);
+    
+    for (;;) {
+        // Start PixStream
+        printf("Enabling PixStream...\n");
+        STApp::Cmd cmd = { .op = STApp::Cmd::Op::PixStream };
+        ior = cmdOutPipe.write(cmd);
+        if (ior != kIOReturnSuccess) throw SystemError(ior, "cmdOutPipe.write() failed");
+        printf("-> Done\n\n");
+        
+        // Read data and make sure it's synchronized (by making
+        // sure it starts with the byte we expect)
+        for (int i=0; i<3; i++) {
+            printf("Reading from PixIn...\n");
+            memset(buf.get(), 0x42, imageLen);
+            ior = pixInPipe.read(buf.get(), imageLen);
+            if (ior != kIOReturnSuccess) throw SystemError(ior, "pixInPipe.read() failed");
+            
+            if (ior == kIOReturnSuccess) {
+                bool good = true;
+                uint8_t expected = 0x37;
+                for (size_t ii=0; ii<imageLen; ii++) {
+                    if (buf[ii] != expected) {
+                        printf("-> Bad byte @ %zu; expected: %02x, got %02x ❌\n", ii, expected, buf[ii]);
+                        good = false;
+                    }
+                    expected = 0xFF;
+                }
+                if (good) {
+                    printf("-> Bytes valid ✅\n");
+                }
+            }
+        }
+        printf("-> Done\n\n");
+        
+        // Trigger the data to be de-synchronized, by performing a truncated read
+        printf("Corrupting PixIn endpoint...\n");
+        for (int i=0; i<3; i++) {
+            uint8_t buf[512];
+            ior = pixInPipe.read(buf, sizeof(buf));
+            if (ior != kIOReturnSuccess) throw SystemError(ior, "pixInPipe.read() failed");
+        }
+        printf("-> Done\n\n");
+        
+        // Recover device
+        printf("Recovering device...\n");
+        resetDevice(device);
+        printf("-> Done\n\n");
+    }
+}
+
 int main(int argc, const char* argv[]) {
     Args args;
     try {
@@ -188,8 +263,9 @@ int main(int argc, const char* argv[]) {
     }
     
     try {
-        if (args.cmd == PixStreamCmd)   pixStream(args, device);
-        else if (args.cmd == LEDSetCmd) ledSet(args, device);
+        if (args.cmd == PixStreamCmd)           pixStream(args, device);
+        else if (args.cmd == LEDSetCmd)         ledSet(args, device);
+        else if (args.cmd == TestResetStream)   testResetStream(args, device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
