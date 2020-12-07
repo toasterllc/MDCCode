@@ -777,6 +777,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
     case Cmd::Op::PixStream: {
         if (!_pixStreamEnabled) {
             _pixStreamEnabled = true;
+            _pixStreamTestMode = cmd.arg.pixStream.testMode;
             _pixRemLen = _pixInfo.width*_pixInfo.height;
             _recvPixDataFromICE40();
         }

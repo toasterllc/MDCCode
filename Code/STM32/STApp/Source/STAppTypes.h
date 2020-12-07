@@ -35,6 +35,7 @@ namespace STApp {
             } getPixInfo;
             
             struct {
+                bool testMode;
             } pixStream;
             
             struct {

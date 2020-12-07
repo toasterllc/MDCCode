@@ -38,7 +38,8 @@ private:
         .width = 2304,
         .height = 1296,
     };
-    bool _pixStreamEnabled = 0;
+    bool _pixStreamEnabled = false;
+    bool _pixStreamTestMode = false;
     BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
     
