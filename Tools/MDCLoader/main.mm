@@ -66,17 +66,7 @@ static Args parseArgs(int argc, const char* argv[]) {
 }
 
 static void ledSet(const Args& args, MDCLoaderDevice& device) {
-    STCmd cmd = {
-        .op = STCmd::Op::LEDSet,
-        .arg = {
-            .ledSet = {
-                .idx = args.ledSet.idx,
-                .on = args.ledSet.on,
-            },
-        },
-    };
-    
-    device.stCmdOutPipe.write(cmd);
+    device.ledSet(args.ledSet.idx, args.ledSet.on);
 }
 
 static void stLoad(const Args& args, MDCLoaderDevice& device) {
@@ -102,57 +92,16 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
         // Without this, it's possible for the next `WriteData` command to update the write
         // address while we're still sending data from this iteration.
         for (;;) {
-            // Request status
-            {
-                const STCmd cmd = {
-                    .op = STCmd::Op::GetStatus,
-                };
-                
-                device.stCmdOutPipe.write(cmd);
-            }
-            
-            // Read status
-            {
-                STStatus status;
-                device.stStatusInPipe.read(status);
-                if (status == STStatus::Idle) break;
-            }
+            STStatus status = device.stGetStatus();
+            if (status == STStatus::Idle) break;
         }
         
-        // Send WriteData command
-        {
-            const STCmd cmd = {
-                .op = STCmd::Op::WriteData,
-                .arg = {
-                    .writeData = {
-                        .addr = dataAddr,
-                    },
-                },
-            };
-            
-            device.stCmdOutPipe.write(cmd);
-        }
-        
-        // Send actual data
-        {
-            device.stDataOutPipe.write(data, dataLen);
-        }
+        device.stWriteData(dataAddr, data, dataLen);
     }
     
     // Reset the device, triggering it to load the program we just wrote
-    {
-        printf("Resetting device\n");
-        const STCmd cmd = {
-            .op = STCmd::Op::Reset,
-            .arg = {
-                .reset = {
-                    .entryPointAddr = entryPointAddr,
-                },
-            },
-        };
-        
-        device.stCmdOutPipe.write(cmd);
-    }
+    printf("Resetting device\n");
+    device.stReset(entryPointAddr);
     printf("Done\n");
 }
 
@@ -160,71 +109,27 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     Mmap mmap(args.filePath.c_str());
     
     // Start ICE40 configuration
-    {
-        printf("Starting configuration\n");
-        const ICECmd cmd = {
-            .op = ICECmd::Op::Start,
-            .arg = {
-                .start = {
-                    .len = (uint32_t)mmap.len(),
-                }
-            }
-        };
-        
-        device.iceCmdOutPipe.write(cmd);
-    }
+    printf("Starting configuration\n");
+    device.iceStart(mmap.len());
     
     // Send ICE40 binary
-    {
-        printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
-        device.iceDataOutPipe.write(mmap.data(), mmap.len());
-    }
+    printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
+    device.iceDataOutPipe.write(mmap.data(), mmap.len());
     
     // Wait for interface to be idle
     // Without this, the next 'Finish' command would interupt the SPI configuration process
     for (;;) {
-        // Request status
-        {
-            const ICECmd cmd = {
-                .op = ICECmd::Op::GetStatus,
-            };
-            
-            device.iceCmdOutPipe.write(cmd);
-        }
-        
-        // Read status
-        {
-            ICEStatus status;
-            device.iceStatusInPipe.read(status);
-            if (status == ICEStatus::Idle) break;
-        }
+        ICEStatus status = device.iceGetStatus();
+        if (status == ICEStatus::Idle) break;
     }
     
     // Finish ICE40 configuration
-    {
-        printf("Finishing configuration\n");
-        const ICECmd cmd = {
-            .op = ICECmd::Op::Finish,
-        };
-        
-        device.iceCmdOutPipe.write(cmd);
-    }
+    printf("Finishing configuration\n");
+    device.iceFinish();
     
     // Request status
-    {
-        const ICECmd cmd = {
-            .op = ICECmd::Op::GetStatus,
-        };
-        
-        device.iceCmdOutPipe.write(cmd);
-    }
-    
-    // Read status
-    {
-        ICEStatus status;
-        device.iceStatusInPipe.read(status);
-        printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
-    }
+    ICEStatus status = device.iceGetStatus();
+    printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
 }
 
 int main(int argc, const char* argv[]) {

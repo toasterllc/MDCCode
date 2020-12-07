@@ -29,6 +29,93 @@ public:
         iceStatusInPipe = USBPipe(_iceInterface, STLoader::EndpointIdxs::ICEStatusIn);
     }
     
+    void ledSet(uint8_t idx, bool on) {
+        using namespace STLoader;
+        STCmd cmd = {
+            .op = STCmd::Op::LEDSet,
+            .arg = {
+                .ledSet = {
+                    .idx = idx,
+                    .on = on,
+                },
+            },
+        };
+        stCmdOutPipe.write(cmd);
+    }
+    
+    STLoader::STStatus stGetStatus() {
+        using namespace STLoader;
+        // Request status
+        const STCmd cmd = { .op = STCmd::Op::GetStatus };
+        stCmdOutPipe.write(cmd);
+        // Read status
+        STStatus status;
+        stStatusInPipe.read(status);
+        return status;
+    }
+    
+    void stWriteData(uint32_t addr, const void* data, size_t len) {
+        using namespace STLoader;
+        
+        // Send WriteData command
+        const STCmd cmd = {
+            .op = STCmd::Op::WriteData,
+            .arg = {
+                .writeData = {
+                    .addr = addr,
+                },
+            },
+        };
+        stCmdOutPipe.write(cmd);
+        // Send actual data
+        stDataOutPipe.write(data, len);
+    }
+    
+    void stReset(uint32_t entryPointAddr) {
+        using namespace STLoader;
+        const STCmd cmd = {
+            .op = STCmd::Op::Reset,
+            .arg = {
+                .reset = {
+                    .entryPointAddr = entryPointAddr,
+                },
+            },
+        };
+        
+        stCmdOutPipe.write(cmd);
+    }
+    
+    void iceStart(size_t len) {
+        using namespace STLoader;
+        const ICECmd cmd = {
+            .op = ICECmd::Op::Start,
+            .arg = {
+                .start = {
+                    .len = (uint32_t)len,
+                }
+            }
+        };
+        iceCmdOutPipe.write(cmd);
+    }
+    
+    STLoader::ICEStatus iceGetStatus() {
+        using namespace STLoader;
+        // Request status
+        const ICECmd cmd = { .op = ICECmd::Op::GetStatus, };
+        iceCmdOutPipe.write(cmd);
+        
+        // Read status
+        ICEStatus status;
+        iceStatusInPipe.read(status);
+        return status;
+    }
+    
+    void iceFinish() {
+        using namespace STLoader;
+        const ICECmd cmd = { .op = ICECmd::Op::Finish };
+        iceCmdOutPipe.write(cmd);
+    }
+    
     USBPipe stCmdOutPipe;
     USBPipe stDataOutPipe;
     USBPipe stStatusInPipe;
