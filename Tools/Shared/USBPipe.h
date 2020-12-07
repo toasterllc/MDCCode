@@ -4,7 +4,12 @@
 
 class USBPipe {
 public:
+    // Default constructor: empty
+    USBPipe() {}
+    
     USBPipe(USBInterface& interface, uint8_t idx) : _interface(interface), _idx(idx) {}
+    
+    operator bool() const { return _interface; }
     
     template <typename T>
     IOReturn write(T& x) const {
@@ -47,6 +52,6 @@ public:
     }
     
 private:
-    USBInterface& _interface;
+    USBInterface _interface;
     uint8_t _idx = 0;
 };

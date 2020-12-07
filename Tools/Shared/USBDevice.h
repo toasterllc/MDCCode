@@ -28,9 +28,9 @@ public:
             (*plugin)->Release(plugin);
             if (hr) throw std::runtime_error("QueryInterface failed");
             
-            _interface = interface;
+            _state.interface = interface;
             // Open the device
-            IOReturn ior = (*_interface)->USBDeviceOpen(_interface);
+            IOReturn ior = (*_state.interface)->USBDeviceOpen(_state.interface);
             if (ior != kIOReturnSuccess) throw std::runtime_error("USBDeviceOpen failed");
         
         } catch (...) {
@@ -43,16 +43,16 @@ public:
     USBDevice(const USBDevice& x) { *this = x; }
     // Copy assignment operator
     USBDevice& operator=(const USBDevice& x) {
-        _interface = x._interface;
-        if (_interface) (*_interface)->AddRef(_interface);
+        _state = x._state;
+        if (_state.interface) (*_state.interface)->AddRef(_state.interface);
         return *this;
     }
     // Move constructor: use move assignment operator
     USBDevice(USBDevice&& x) { *this = std::move(x); }
     // Move assignment operator
     USBDevice& operator=(USBDevice&& x) {
-        _interface = x._interface;
-        x._interface = nullptr;
+        _state = x._state;
+        x._state = {};
         return *this;
     }
     
@@ -61,14 +61,14 @@ public:
     }
     
     IOUSBDeviceInterface** interface() const {
-        assert(_interface);
-        return _interface;
+        assert(_state.interface);
+        return _state.interface;
     }
     
-    operator bool() const { return _interface; }
+    operator bool() const { return _state.interface; }
     
     std::vector<USBInterface> usbInterfaces() {
-        if (!_usbInterfacesInit) {
+        if (!_state.usbInterfacesInit) {
             io_iterator_t ioServicesIter = MACH_PORT_NULL;
             IOUSBFindInterfaceRequest req = {
                 .bInterfaceClass = kIOUSBFindInterfaceDontCare,
@@ -76,18 +76,18 @@ public:
                 .bInterfaceProtocol = kIOUSBFindInterfaceDontCare,
                 .bAlternateSetting = kIOUSBFindInterfaceDontCare,
             };
-            IOReturn ior = (*_interface)->CreateInterfaceIterator(_interface, &req, &ioServicesIter);
+            IOReturn ior = (*_state.interface)->CreateInterfaceIterator(_state.interface, &req, &ioServicesIter);
             if (ior != kIOReturnSuccess) throw std::runtime_error("CreateInterfaceIterator failed");
             
             SendRight servicesIter(ioServicesIter);
             while (servicesIter) {
                 SendRight service(IOIteratorNext(servicesIter.port()));
                 if (!service) break;
-                _usbInterfaces.emplace_back(std::move(service));
+                _state.usbInterfaces.emplace_back(std::move(service));
             }
-            _usbInterfacesInit = true;
+            _state.usbInterfacesInit = true;
         }
-        return _usbInterfaces;
+        return _state.usbInterfaces;
     }
     
     IOReturn vendorRequestOut(uint8_t req, void* data, size_t len) const {
@@ -97,23 +97,25 @@ public:
             .pData          = data,
             .wLength        = (uint16_t)len
         };
-        return (*_interface)->DeviceRequest(_interface, &usbReq);
+        return (*_state.interface)->DeviceRequest(_state.interface, &usbReq);
     }
     
 private:
     
     void _reset() {
-        if (_interface) {
+        if (_state.interface) {
             // We don't call USBDeviceClose here!
             // We allow USBDevice to be copied, and the copies assume
             // the device is open.
             // It'll be closed when the object is deallocated.
-            (*_interface)->Release(_interface);
-            _interface = nullptr;
+            (*_state.interface)->Release(_state.interface);
+            _state.interface = nullptr;
         }
     }
     
-    IOUSBDeviceInterface** _interface = nullptr;
-    std::vector<USBInterface> _usbInterfaces;
-    bool _usbInterfacesInit = false;
+    struct {
+        IOUSBDeviceInterface** interface = nullptr;
+        std::vector<USBInterface> usbInterfaces;
+        bool usbInterfacesInit = false;
+    } _state;
 };

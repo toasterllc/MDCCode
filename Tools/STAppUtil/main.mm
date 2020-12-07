@@ -14,6 +14,7 @@
 #import "STAppTypes.h"
 #import "MyTime.h"
 #import "SystemError.h"
+#import "MDCDevice.h"
 
 using Cmd = std::string;
 const Cmd PixStreamCmd = "PixStream";
@@ -66,48 +67,7 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
-static std::vector<USBDevice> findUSBDevices() {
-    std::vector<USBDevice> devices;
-    NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
-    match[@kIOPropertyMatchKey] = @{
-        @"idVendor": @1155,
-        @"idProduct": @57105,
-    };
-    
-    io_iterator_t ioServicesIter = MACH_PORT_NULL;
-    kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (CFDictionaryRef)CFBridgingRetain(match), &ioServicesIter);
-    if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceGetMatchingServices failed: %x", kr);
-    
-    SendRight servicesIter(ioServicesIter);
-    while (servicesIter) {
-        SendRight service(IOIteratorNext(servicesIter.port()));
-        if (!service) break;
-        devices.emplace_back(std::move(service));
-    }
-    return devices;
-}
-
-static void resetDevice(USBDevice& device) {
-    using namespace STApp;
-    std::vector<USBInterface> interfaces = device.usbInterfaces();
-    if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
-    USBInterface& interface = interfaces[0];
-    USBPipe cmdOutPipe(interface, EndpointIdxs::CmdOut);
-    USBPipe cmdInPipe(interface, EndpointIdxs::CmdIn);
-    USBPipe pixInPipe(interface, EndpointIdxs::PixIn);
-    
-    // Send the reset vendor-defined control request
-    IOReturn ior = device.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
-    if (ior != kIOReturnSuccess) throw RuntimeError("device.vendorRequestOut() failed: %x", ior);
-    
-    // Reset our pipes now that the device is reset
-    for (const USBPipe& pipe : {cmdOutPipe, cmdInPipe, pixInPipe}) {
-        ior = pipe.reset();
-        if (ior != kIOReturnSuccess) throw RuntimeError("pipe.reset() failed: %x", ior);
-    }
-}
-
-static void pixStream(const Args& args, USBDevice& device) {
+static void pixStream(const Args& args, MDCDevice& device) {
     using namespace STApp;
     
     std::vector<USBInterface> interfaces = device.usbInterfaces();
@@ -140,12 +100,12 @@ static void pixStream(const Args& args, USBDevice& device) {
         if (ior != kIOReturnSuccess) throw RuntimeError("pixInPipe.read() failed: %x", ior);
         printf("Got %ju bytes\n", imageLen);
         
-        [[NSData dataWithBytes:buf.get() length:imageLen] writeToFile:@"/Users/dave/Desktop/img.bin" atomically:true];
-        exit(0);
+//        [[NSData dataWithBytes:buf.get() length:imageLen] writeToFile:@"/Users/dave/Desktop/img.bin" atomically:true];
+//        exit(0);
     }
 }
 
-static void ledSet(const Args& args, USBDevice& device) {
+static void ledSet(const Args& args, MDCDevice& device) {
     using namespace STApp;
     std::vector<USBInterface> interfaces = device.usbInterfaces();
     if (interfaces.size() != 1) throw std::runtime_error("unexpected number of USB interfaces");
@@ -166,7 +126,7 @@ static void ledSet(const Args& args, USBDevice& device) {
     if (ior != kIOReturnSuccess) throw RuntimeError("cmdOutPipe.write() failed: %x", ior);
 }
 
-static void testResetStream(const Args& args, USBDevice& device) {
+static void testResetStream(const Args& args, MDCDevice& device) {
     // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
     using namespace STApp;
     
@@ -222,12 +182,13 @@ static void testResetStream(const Args& args, USBDevice& device) {
         
         // Recover device
         printf("Recovering device...\n");
-        resetDevice(device);
+        ior = device.reset();
+        if (ior != kIOReturnSuccess) throw RuntimeError("device.reset() failed: %x", ior);
         printf("-> Done\n\n");
     }
 }
 
-static void testResetStreamInc(const Args& args, USBDevice& device) {
+static void testResetStreamInc(const Args& args, MDCDevice& device) {
     // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
     using namespace STApp;
     
@@ -297,7 +258,8 @@ static void testResetStreamInc(const Args& args, USBDevice& device) {
         
         // Recover device
         printf("Recovering device...\n");
-        resetDevice(device);
+        ior = device.reset();
+        if (ior != kIOReturnSuccess) throw RuntimeError("device.reset() failed: %x", ior);
         printf("-> Done\n\n");
     }
 }
@@ -313,28 +275,27 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    std::vector<USBDevice> devices;
+    std::vector<MDCDevice> devices;
     try {
-        devices = findUSBDevices();
+        devices = MDCDevice::FindDevices();
     } catch (const std::exception& e) {
-        fprintf(stderr, "Failed to find USB device: %s\n", e.what());
+        fprintf(stderr, "Failed to find MDC devices: %s\n\n", e.what());
         return 1;
     }
     
     if (devices.empty()) {
-        fprintf(stderr, "No matching USB devices\n");
+        fprintf(stderr, "No matching MDC devices\n\n");
         return 1;
     } else if (devices.size() > 1) {
-        fprintf(stderr, "Too many matching USB devices\n");
+        fprintf(stderr, "Too many matching MDC devices\n\n");
         return 1;
     }
     
     // Reset the device to put it back in a pre-defined state
-    USBDevice& device = devices[0];
-    try {
-        resetDevice(device);
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Reset device failed: %s\n\n", e.what());
+    MDCDevice& device = devices[0];
+    IOReturn ior = device.reset();
+    if (ior != kIOReturnSuccess) {
+        fprintf(stderr, "Reset device failed: %x\n\n", ior);
         return 1;
     }
     
@@ -344,7 +305,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == TestResetStream)       testResetStream(args, device);
         else if (args.cmd == TestResetStreamInc)    testResetStreamInc(args, device);
     } catch (const std::exception& e) {
-        fprintf(stderr, "Error: %s\n", e.what());
+        fprintf(stderr, "Error: %s\n\n", e.what());
         return 1;
     }
     

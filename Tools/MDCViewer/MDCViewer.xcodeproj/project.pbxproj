@@ -7,14 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		552E7D5224C9315700438AAF /* Photo6.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D4A24C9315700438AAF /* Photo6.bin */; };
-		552E7D5324C9315700438AAF /* Photo4.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D4B24C9315700438AAF /* Photo4.bin */; };
-		552E7D5424C9315700438AAF /* Photo1.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D4C24C9315700438AAF /* Photo1.bin */; };
-		552E7D5524C9315700438AAF /* Photo7.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D4D24C9315700438AAF /* Photo7.bin */; };
-		552E7D5624C9315700438AAF /* Photo3.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D4E24C9315700438AAF /* Photo3.bin */; };
-		552E7D5724C9315700438AAF /* Photo5.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D4F24C9315700438AAF /* Photo5.bin */; };
-		552E7D5824C9315700438AAF /* TestPattern.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D5024C9315700438AAF /* TestPattern.bin */; };
-		552E7D5924C9315700438AAF /* Photo2.bin in Resources */ = {isa = PBXBuildFile; fileRef = 552E7D5124C9315700438AAF /* Photo2.bin */; };
 		55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55B9745D24C504E2000B2633 /* AppDelegate.mm */; };
 		55B9746024C504E2000B2633 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55B9745F24C504E2000B2633 /* Assets.xcassets */; };
 		55B9746324C504E2000B2633 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55B9746124C504E2000B2633 /* MainMenu.xib */; };
@@ -29,14 +21,6 @@
 
 /* Begin PBXFileReference section */
 		552E7D4924C92FDE00438AAF /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
-		552E7D4A24C9315700438AAF /* Photo6.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Photo6.bin; sourceTree = "<group>"; };
-		552E7D4B24C9315700438AAF /* Photo4.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Photo4.bin; sourceTree = "<group>"; };
-		552E7D4C24C9315700438AAF /* Photo1.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Photo1.bin; sourceTree = "<group>"; };
-		552E7D4D24C9315700438AAF /* Photo7.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Photo7.bin; sourceTree = "<group>"; };
-		552E7D4E24C9315700438AAF /* Photo3.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Photo3.bin; sourceTree = "<group>"; };
-		552E7D4F24C9315700438AAF /* Photo5.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Photo5.bin; sourceTree = "<group>"; };
-		552E7D5024C9315700438AAF /* TestPattern.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = TestPattern.bin; sourceTree = "<group>"; };
-		552E7D5124C9315700438AAF /* Photo2.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Photo2.bin; sourceTree = "<group>"; };
 		552E7D5A24C9316900438AAF /* MDCViewer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MDCViewer.entitlements; sourceTree = "<group>"; };
 		55B9745924C504E2000B2633 /* MDCViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55B9745C24C504E2000B2633 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -87,14 +71,6 @@
 				55B9746424C504E2000B2633 /* Info.plist */,
 				55B9746524C504E2000B2633 /* main.m */,
 				552E7D5A24C9316900438AAF /* MDCViewer.entitlements */,
-				552E7D4C24C9315700438AAF /* Photo1.bin */,
-				552E7D5124C9315700438AAF /* Photo2.bin */,
-				552E7D4E24C9315700438AAF /* Photo3.bin */,
-				552E7D4B24C9315700438AAF /* Photo4.bin */,
-				552E7D4F24C9315700438AAF /* Photo5.bin */,
-				552E7D4A24C9315700438AAF /* Photo6.bin */,
-				552E7D4D24C9315700438AAF /* Photo7.bin */,
-				552E7D5024C9315700438AAF /* TestPattern.bin */,
 				55B9745A24C504E2000B2633 /* Products */,
 				55B9747624C50A81000B2633 /* Frameworks */,
 			);
@@ -175,16 +151,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				552E7D5724C9315700438AAF /* Photo5.bin in Resources */,
-				552E7D5624C9315700438AAF /* Photo3.bin in Resources */,
-				552E7D5524C9315700438AAF /* Photo7.bin in Resources */,
 				55B9746024C504E2000B2633 /* Assets.xcassets in Resources */,
-				552E7D5824C9315700438AAF /* TestPattern.bin in Resources */,
-				552E7D5224C9315700438AAF /* Photo6.bin in Resources */,
 				55B9746324C504E2000B2633 /* MainMenu.xib in Resources */,
-				552E7D5324C9315700438AAF /* Photo4.bin in Resources */,
-				552E7D5424C9315700438AAF /* Photo1.bin in Resources */,
-				552E7D5924C9315700438AAF /* Photo2.bin in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
