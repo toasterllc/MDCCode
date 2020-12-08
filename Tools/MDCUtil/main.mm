@@ -6,6 +6,7 @@
 #import <string>
 #import <iostream>
 #import <optional>
+#import <inttypes.h>
 #import "ELF32Binary.h"
 #import "SendRight.h"
 #import "USBDevice.h"
@@ -17,23 +18,37 @@
 #import "MDCDevice.h"
 
 using Cmd = std::string;
+const Cmd PixI2CCmd = "PixI2C";
 const Cmd PixStreamCmd = "PixStream";
 const Cmd LEDSetCmd = "LEDSet";
 const Cmd TestResetStream = "TestResetStream";
 const Cmd TestResetStreamInc = "TestResetStreamInc";
 
+struct RegOp {
+    bool write = false;
+    uint16_t addr = 0;
+    uint16_t val = 0;
+};
+
 struct Args {
     Cmd cmd;
+    
+    struct {
+        bool write;
+        uint16_t addr;
+        uint16_t val;
+    } pixI2C;
+    
     struct {
         uint8_t idx;
         uint8_t on;
     } ledSet;
-    std::string filePath;
 };
 
 void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
+    cout << "  " << PixI2CCmd           << "\n";
     cout << "  " << PixStreamCmd        << "\n";
     cout << "  " << LEDSetCmd           << " <idx> <0/1>\n";
     cout << "  " << TestResetStream     << "\n";
@@ -49,7 +64,25 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = strs[0];
     
-    if (args.cmd == PixStreamCmd) {
+    if (args.cmd == PixI2CCmd) {
+        if (strs.size() < 2) throw std::runtime_error("no register specified");
+        std::stringstream ss(strs[1]);
+        std::string part;
+        std::vector<std::string> parts;
+        while (std::getline(ss, part, '=')) parts.push_back(part);
+        
+        uintmax_t addr = strtoumax(parts[0].c_str(), nullptr, 0);
+        if (addr > UINT16_MAX) throw std::runtime_error("invalid register address");
+        args.pixI2C.addr = addr;
+        
+        if (parts.size() > 1) {
+            uintmax_t val = strtoumax(parts[1].c_str(), nullptr, 0);
+            if (val > UINT16_MAX) throw std::runtime_error("invalid register value");
+            args.pixI2C.write = true;
+            args.pixI2C.val = val;
+        }
+    
+    } else if (args.cmd == PixStreamCmd) {
     
     } else if (args.cmd == LEDSetCmd) {
         if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
@@ -67,6 +100,18 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
+static void pixI2C(const Args& args, MDCDevice& device) {
+    using namespace STApp;
+    
+    if (args.pixI2C.write) {
+        device.pixI2CWrite(args.pixI2C.addr, args.pixI2C.val);
+    
+    } else {
+        const uint16_t val = device.pixI2CRead(args.pixI2C.addr);
+        printf("0x%04x = 0x%04x\n", args.pixI2C.addr, val);
+    }
+}
+
 static void pixStream(const Args& args, MDCDevice& device) {
     using namespace STApp;
     // Get Pix info
@@ -80,8 +125,6 @@ static void pixStream(const Args& args, MDCDevice& device) {
         device.pixReadImage(pixels.get(), pixelCount);
         printf("Got %ju pixels (%ju x %ju)\n",
             (uintmax_t)pixelCount, (uintmax_t)pixInfo.width, (uintmax_t)pixInfo.height);
-//        [[NSData dataWithBytes:buf.get() length:imageLen] writeToFile:@"/Users/dave/Desktop/img.bin" atomically:true];
-//        exit(0);
     }
 }
 
@@ -228,7 +271,8 @@ int main(int argc, const char* argv[]) {
     }
     
     try {
-        if (args.cmd == PixStreamCmd)               pixStream(args, device);
+        if (args.cmd == PixI2CCmd)                  pixI2C(args, device);
+        else if (args.cmd == PixStreamCmd)          pixStream(args, device);
         else if (args.cmd == LEDSetCmd)             ledSet(args, device);
         else if (args.cmd == TestResetStream)       testResetStream(args, device);
         else if (args.cmd == TestResetStreamInc)    testResetStreamInc(args, device);

@@ -766,9 +766,22 @@ void System::_handleCmd(const USB::Cmd& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    // GetPixInfo
-    case Cmd::Op::GetPixInfo: {
+    // PixGetInfo
+    case Cmd::Op::PixGetInfo: {
         _usb.cmdSend(&_pixInfo, sizeof(_pixInfo));
+        break;
+    }
+    
+    // PixI2CTransaction
+    case Cmd::Op::PixI2CTransaction: {
+        auto& arg = cmd.arg.pixI2CTransaction;
+        _pixI2CTransaction(arg.write, arg.addr, arg.val);
+        break;
+    }
+    
+    // PixI2CGetStatus
+    case Cmd::Op::PixI2CGetStatus: {
+        _usb.cmdSend(&_pixI2CStatus, sizeof(_pixI2CStatus));
         break;
     }
     
@@ -1092,6 +1105,14 @@ void System::_pixStartImage() {
     Assert(readoutReady);
     
     _recvPixDataFromICE40();
+}
+
+void System::_pixI2CTransaction(bool write, uint16_t addr, uint16_t val) {
+    if (write) {
+        _pixWrite(addr, val);
+    } else {
+        _pixI2CStatus.readVal = _pixRead(addr);
+    }
 }
 
 System Sys;

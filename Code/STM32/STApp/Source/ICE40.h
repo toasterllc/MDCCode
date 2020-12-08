@@ -179,7 +179,7 @@ public:
     };
     
     struct PixI2CTransactionMsg : Msg {
-        PixI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t data) {
+        PixI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
             Assert(len==1 || len==2);
             type = 0x07;
             payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
@@ -187,8 +187,8 @@ public:
             payload[2] = 0;
             payload[3] = (addr&0xFF00)>>8;
             payload[4] = addr&0x00FF;
-            payload[5] = (data&0xFF00)>>8;
-            payload[6] = data&0x00FF;
+            payload[5] = (val&0xFF00)>>8;
+            payload[6] = val&0x00FF;
         }
     };
     

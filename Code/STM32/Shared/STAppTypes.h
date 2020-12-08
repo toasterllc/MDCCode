@@ -25,21 +25,32 @@ namespace STApp {
     
     struct Cmd {
         enum class Op : uint8_t {
-            GetPixInfo,
+            PixGetInfo,
+            PixI2CTransaction,
+            PixI2CGetStatus,
             PixStartStream,
             LEDSet,
         };
         
         Op op;
         union {
-            struct {
-            } getPixInfo;
+            struct __attribute__((packed)) {
+            } pixGetInfo;
             
-            struct {
+            struct __attribute__((packed)) {
+                bool write;
+                uint16_t addr;
+                uint16_t val;
+            } pixI2CTransaction;
+            
+            struct __attribute__((packed)) {
+            } pixI2CGetStatus;
+            
+            struct __attribute__((packed)) {
                 bool test;
             } pixStream;
             
-            struct {
+            struct __attribute__((packed)) {
                 uint8_t idx;
                 uint8_t on;
             } ledSet;
@@ -52,9 +63,13 @@ namespace STApp {
         uint16_t height;
     } __attribute__((packed));
     
+    struct PixI2CStatus {
+        uint16_t readVal;
+    } __attribute__((packed));
+    
     using Pixel = uint16_t;
     
     const uint32_t PixTestMagicNumber = 0xCAFEBABE;
     
-    static_assert(sizeof(Cmd)==3, "Cmd: invalid size");
+    static_assert(sizeof(Cmd)==6, "Cmd: invalid size");
 }

@@ -31,6 +31,7 @@ private:
     void _sendPixDataOverUSB();
     void _pixConfig();
     void _pixStartImage();
+    void _pixI2CTransaction(bool write, uint16_t addr, uint16_t value);
     
     // Peripherals
     USB _usb;
@@ -45,6 +46,7 @@ private:
     bool _pixTestFirstTransfer = false;
     BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
+    STApp::PixI2CStatus _pixI2CStatus;
     
     friend int main();
     friend void ISR_OTG_HS();
