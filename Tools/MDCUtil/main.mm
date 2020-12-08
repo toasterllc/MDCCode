@@ -58,10 +58,7 @@ void printUsage() {
     cout << "\n";
 }
 
-static Args parseArgs(int argc, const char* argv[]) {
-    std::vector<std::string> strs;
-    for (int i=0; i<argc; i++) strs.push_back(argv[i]);
-    
+static Args parseArgs(const std::vector<std::string>& strs) {
     Args args;
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = strs[0];
@@ -243,41 +240,16 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
     }
 }
 
-int main(int argc, const char* argv[]) {
+void run(MDCDevice& device, const std::vector<std::string>& argStrs) {
     Args args;
     try {
-        args = parseArgs(argc-1, argv+1);
-    
+        args = parseArgs(argStrs);
     } catch (const std::exception& e) {
-        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
-        printUsage();
-        return 1;
-    }
-    
-    std::vector<MDCDevice> devices;
-    try {
-        devices = MDCDevice::FindDevices();
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Failed to find MDC devices: %s\n\n", e.what());
-        return 1;
-    }
-    
-    if (devices.empty()) {
-        fprintf(stderr, "No matching MDC devices\n\n");
-        return 1;
-    } else if (devices.size() > 1) {
-        fprintf(stderr, "Too many matching MDC devices\n\n");
-        return 1;
+        throw RuntimeError("bad arguments: %s", e.what());
     }
     
     // Reset the device to put it back in a pre-defined state
-    MDCDevice& device = devices[0];
-    try {
-        device.reset();
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Reset device failed: %s\n\n", e.what());
-        return 1;
-    }
+    device.reset();
     
     try {
         if (args.cmd == PixResetCmd)                pixReset(args, device);
@@ -286,6 +258,23 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == LEDSetCmd)             ledSet(args, device);
         else if (args.cmd == TestResetStream)       testResetStream(args, device);
         else if (args.cmd == TestResetStreamInc)    testResetStreamInc(args, device);
+    
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Error: %s\n\n", e.what());
+        return;
+    }
+}
+
+int main(int argc, const char* argv[]) {
+    try {
+        std::vector<std::string> argStrs;
+        for (int i=1; i<argc-1; i++) argStrs.push_back(argv[i]);
+        
+        std::vector<MDCDevice> devices = MDCDevice::FindDevices();
+        if (devices.empty()) throw RuntimeError("no matching MDC devices");
+        if (devices.size() > 1) throw RuntimeError("Too many matching MDC devices");
+        run(devices[0], argStrs);
+    
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n\n", e.what());
         return 1;

@@ -3,6 +3,7 @@
 #import "MDCImageLayer.h"
 #import "STAppTypes.h"
 #import "MDCDevice.h"
+#import <iostream>
 using namespace MDCImageLayerTypes;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
@@ -244,7 +245,11 @@ static void _pixConfig(MDCDevice& device) {
 }
 
 - (void)_threadControl {
-    
+    for (;;) {
+        std::string line;
+        std::getline(std::cin, line);
+        printf("Got command: %s\n", line.c_str());
+    }
 }
 
 - (void)_threadStreamImages {
@@ -279,11 +284,11 @@ static void _pixConfig(MDCDevice& device) {
             _threadState.lock.unlock();
             if (cancel) break;
             
-            // Read an image, timing-out after 500ms so we can check the device status,
+            // Read an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
             _device.pixReadImage(pixels.get(), pixelCount, 1000);
-            printf("Got %ju pixels (%ju x %ju)\n",
-                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
+//            printf("Got %ju pixels (%ju x %ju)\n",
+//                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
             
             Image image = {
                 .width = pixStatus.width,
@@ -294,7 +299,7 @@ static void _pixConfig(MDCDevice& device) {
         
         } catch (...) {
             if (_device.pixStatus().state != PixState::Streaming) {
-                printf("pixStatus.state != PixState::Streaming\n");
+//                printf("pixStatus.state != PixState::Streaming\n");
                 break;
             }
         }
