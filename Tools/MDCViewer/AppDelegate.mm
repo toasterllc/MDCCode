@@ -12,6 +12,12 @@ using namespace MDCImageLayerTypes;
 @implementation AppDelegate {
     IBOutlet MDCMainView* _mainView;
     MDCDevice _device;
+    struct {
+        std::mutex lock; // Protects this struct
+        std::condition_variable signal;
+        bool running = false;
+        bool cancel = false;
+    } _threadState;
 }
 
 //static bool checkPixel(uint32_t x, uint32_t y, ImagePixel expected, ImagePixel got) {
@@ -28,6 +34,10 @@ using namespace MDCImageLayerTypes;
     if (devices.empty()) throw std::runtime_error("no matching MDC devices");
     if (devices.size() > 1) throw std::runtime_error("too many matching MDC devices");
     _device = devices[0];
+    
+    [NSThread detachNewThreadWithBlock:^{
+        [self _threadControl];
+    }];
     
     [NSThread detachNewThreadWithBlock:^{
         [self _threadStreamImages];
@@ -220,10 +230,11 @@ static void _pixConfig(MDCDevice& device) {
         device.pixI2CWrite(0x3012, 0x1000);
     }
     
-//    // Set line_length_pck
-//    {
+    // Set line_length_pck
+    {
 //        device.pixI2CWrite(0x300C, 0x04E0);
-//    }
+        device.pixI2CWrite(0x300C, 0x04E0);
+    }
     
     // Start streaming
     // (Previous value of 0x301A is 0x10D8, as set above)
@@ -232,10 +243,20 @@ static void _pixConfig(MDCDevice& device) {
     }
 }
 
+- (void)_threadControl {
+    
+}
+
 - (void)_threadStreamImages {
     using namespace STApp;
     
     MDCImageLayer* layer = [_mainView layer];
+    
+    // Notify that our thread has started
+    _threadState.lock.lock();
+        _threadState.running = true;
+        _threadState.signal.notify_all();
+    _threadState.lock.unlock();
     
     // Reset the device to put it back in a pre-defined state
     _device.reset();
@@ -243,7 +264,6 @@ static void _pixConfig(MDCDevice& device) {
     // Configure the image sensor
     _pixConfig(_device);
     
-    // Get Pix info
     const PixStatus pixStatus = _device.pixStatus();
     // Start Pix stream
     _device.pixStartStream();
@@ -251,17 +271,40 @@ static void _pixConfig(MDCDevice& device) {
     const size_t pixelCount = pixStatus.width*pixStatus.height;
     auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (;;) {
-        _device.pixReadImage(pixels.get(), pixelCount);
-        printf("Got %ju pixels (%ju x %ju)\n",
-            (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
+        try {
+            // Check if we've been cancelled
+            bool cancel = false;
+            _threadState.lock.lock();
+                cancel = _threadState.cancel;
+            _threadState.lock.unlock();
+            if (cancel) break;
+            
+            // Read an image, timing-out after 500ms so we can check the device status,
+            // in case it reports a streaming error
+            _device.pixReadImage(pixels.get(), pixelCount, 1000);
+            printf("Got %ju pixels (%ju x %ju)\n",
+                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
+            
+            Image image = {
+                .width = pixStatus.width,
+                .height = pixStatus.height,
+                .pixels = pixels.get(),
+            };
+            [layer updateImage:image];
         
-        Image image = {
-            .width = pixStatus.width,
-            .height = pixStatus.height,
-            .pixels = pixels.get(),
-        };
-        [layer updateImage:image];
+        } catch (...) {
+            if (_device.pixStatus().state != PixState::Streaming) {
+                printf("pixStatus.state != PixState::Streaming\n");
+                break;
+            }
+        }
     }
+    
+    // Notify that our thread has exited
+    _threadState.lock.lock();
+        _threadState.running = false;
+        _threadState.signal.notify_all();
+    _threadState.lock.unlock();
 }
 
 @end

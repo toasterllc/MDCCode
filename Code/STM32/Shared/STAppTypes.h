@@ -41,13 +41,13 @@ namespace STApp {
             } pixReset;
             
             struct __attribute__((packed)) {
-                bool write;
+                uint8_t write;
                 uint16_t addr;
                 uint16_t val;
             } pixI2CTransaction;
             
             struct __attribute__((packed)) {
-                bool test;
+                uint8_t test;
             } pixStream;
             
             struct __attribute__((packed)) {
@@ -58,9 +58,17 @@ namespace STApp {
         
     } __attribute__((packed));
     
+    enum class PixState : uint8_t {
+        Idle,
+        Streaming,
+        Error,
+    };
+    
     struct PixStatus {
         uint16_t width;
         uint16_t height;
+        PixState state;
+        uint8_t i2cErr;
         uint16_t i2cReadVal;
     } __attribute__((packed));
     

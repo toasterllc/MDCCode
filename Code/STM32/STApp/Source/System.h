@@ -17,7 +17,7 @@ private:
         ICE40::SDSendCmdMsg::DatInType datInType = ICE40::SDSendCmdMsg::DatInTypes::None);
     
     ICE40::PixGetStatusResp _pixGetStatus();
-    uint16_t _pixRead(uint16_t addr);
+    void _pixRead(uint16_t addr);
     void _pixWrite(uint16_t addr, uint16_t val);
     
     void _reset(bool usbResetFinish);
@@ -32,7 +32,6 @@ private:
     void _pixReset();
 //    void _pixConfig();
     void _pixStartImage();
-    void _pixI2CTransaction(bool write, uint16_t addr, uint16_t value);
     
     // Peripherals
     USB _usb;
@@ -41,9 +40,10 @@ private:
     STApp::PixStatus _pixStatus = {
         .width = 2304,
         .height = 1296,
+        .state = STApp::PixState::Idle,
+        .i2cErr = false,
         .i2cReadVal = 0,
     };
-    bool _pixStream = false;
     bool _pixTest = false;
     bool _pixTestFirstTransfer = false;
     BufQueue<2> _pixBufs;

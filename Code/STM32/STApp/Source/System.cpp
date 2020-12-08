@@ -465,20 +465,24 @@ ICE40::PixGetStatusResp System::_pixGetStatus() {
     return _ice40Transfer<PixGetStatusResp>(_qspi, PixGetStatusMsg());
 }
 
-uint16_t System::_pixRead(uint16_t addr) {
+void System::_pixRead(uint16_t addr) {
     _ice40Transfer(_qspi, PixI2CTransactionMsg(false, 2, addr, 0));
     
     // Wait for the I2C transaction to complete
     const uint32_t MaxAttempts = 1000;
-    for (uint32_t i=0;; i++) {
-        Assert(i < MaxAttempts); // TODO: improve error handling
+    for (uint32_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) HAL_Delay(1);
         auto status = _pixGetStatus();
-        // Continue if the I2C transaction isn't complete yet
-        if (!status.i2cDone()) continue;
-        Assert(!status.i2cErr()); // TODO: improve error handling
-        return status.i2cReadData();
+        _pixStatus.i2cErr = status.i2cErr();
+        if (_pixStatus.i2cErr) return;
+        if (status.i2cDone()) {
+            _pixStatus.i2cReadVal = status.i2cReadData();
+            return;
+        }
     }
+    // Timeout getting response from ICE40
+    // This should never happen, since it indicates a Verilog error or a hardware failure.
+    Abort();
 }
 
 void System::_pixWrite(uint16_t addr, uint16_t val) {
@@ -486,15 +490,16 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
     
     // Wait for the I2C transaction to complete
     const uint32_t MaxAttempts = 1000;
-    for (uint32_t i=0;; i++) {
-        Assert(i < MaxAttempts); // TODO: improve error handling
+    for (uint32_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) HAL_Delay(1);
         auto status = _pixGetStatus();
-        // Continue if the I2C transaction isn't complete yet
-        if (!status.i2cDone()) continue;
-        Assert(!status.i2cErr()); // TODO: improve error handling
-        return;
+        _pixStatus.i2cErr = status.i2cErr();
+        if (_pixStatus.i2cErr) return;
+        if (status.i2cDone()) return;
     }
+    // Timeout getting response from ICE40
+    // This should never happen, since it indicates a Verilog error or a hardware failure.
+    Abort();
 }
 
 
@@ -711,7 +716,7 @@ void System::_reset(bool usbResetFinish) {
         
         // Reset our state
         _qspi.reset();
-        _pixStream = false;
+        _pixStatus.state = PixState::Idle;
         _pixBufs.reset();
         
         // Prepare to receive commands
@@ -788,14 +793,15 @@ void System::_handleCmd(const USB::Cmd& ev) {
     // PixI2CTransaction
     case Cmd::Op::PixI2CTransaction: {
         auto& arg = cmd.arg.pixI2CTransaction;
-        _pixI2CTransaction(arg.write, arg.addr, arg.val);
+        if (arg.write)  _pixWrite(arg.addr, arg.val);
+        else            _pixRead(arg.addr);
         break;
     }
     
     // PixStream
     case Cmd::Op::PixStartStream: {
-        if (!_pixStream) {
-            _pixStream = true;
+        if (_pixStatus.state == PixState::Idle) {
+            _pixStatus.state = PixState::Streaming;
             _pixTest = cmd.arg.pixStream.test;
             _ice40Transfer(_qspi, PixCaptureMsg(0));
             _pixStartImage();
@@ -825,7 +831,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
 }
 
 void System::_handleQSPIEvent(const QSPI::Signal& ev) {
-    Assert(_pixStream); // We should only be called while streaming
+    Assert(_pixStatus.state == PixState::Streaming); // We should only be called while streaming
     Assert(_pixBufs.writable());
     
     const bool wasReadable = _pixBufs.readable();
@@ -850,7 +856,7 @@ void System::_handleQSPIEvent(const QSPI::Signal& ev) {
 }
 
 void System::_handlePixUSBEvent(const USB::Signal& ev) {
-    Assert(_pixStream); // We should only be called while streaming
+    Assert(_pixStatus.state == PixState::Streaming); // We should only be called while streaming
     Assert(_pixBufs.readable());
     const bool wasWritable = _pixBufs.writable();
     
@@ -1107,27 +1113,27 @@ void System::_pixReset() {
 //}
 
 void System::_pixStartImage() {
-    Assert(_pixStream); // We should only be called while streaming
+    Assert(_pixStatus.state == PixState::Streaming); // We should only be called while streaming
     // Start the next transfer
     _pixRemLen = _pixStatus.width*_pixStatus.height;
     _pixTestFirstTransfer = true;
     
-    // Wait for the the capture to ready for readout
+    // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
+    const uint32_t MaxDelayMs = 500;
     bool readoutReady = false;
-    for (volatile uint32_t i=0; !readoutReady; i++) {
-        ICE40::PixGetStatusResp pixStatus = _pixGetStatus();
-        readoutReady = pixStatus.captureDone();
+    uint32_t startTime = HAL_GetTick();
+    while (!readoutReady && (HAL_GetTick()-startTime)<MaxDelayMs) {
+        readoutReady = _pixGetStatus().captureDone();
     }
-    Assert(readoutReady);
     
-    _recvPixDataFromICE40();
-}
-
-void System::_pixI2CTransaction(bool write, uint16_t addr, uint16_t val) {
-    if (write) {
-        _pixWrite(addr, val);
+    
+    // Start readout if it's ready
+    if (readoutReady) {
+        _recvPixDataFromICE40();
+    
+    // Otherwise set our error state for the host to observe
     } else {
-        _pixStatus.i2cReadVal = _pixRead(addr);
+        _pixStatus.state = PixState::Error;
     }
 }
 

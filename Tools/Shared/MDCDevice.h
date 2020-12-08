@@ -39,7 +39,7 @@ public:
         cmdOutPipe.write(cmd);
         
         PixStatus pixStatus;
-        cmdInPipe.read(pixStatus);
+        cmdInPipe.read(pixStatus, 0);
         return pixStatus;
     }
     
@@ -63,7 +63,9 @@ public:
             }
         };
         cmdOutPipe.write(cmd);
-        return pixStatus().i2cReadVal;
+        PixStatus status = pixStatus();
+        if (status.i2cErr) throw std::runtime_error("device reported i2c error");
+        return status.i2cReadVal;
     }
     
     void pixI2CWrite(uint16_t addr, uint16_t val) {
@@ -80,8 +82,8 @@ public:
         };
         cmdOutPipe.write(cmd);
         
-        // Wait for completion by getting status
-        pixStatus();
+        PixStatus status = pixStatus();
+        if (status.i2cErr) throw std::runtime_error("device reported i2c error");
     }
     
     void pixStartStream() {
@@ -93,8 +95,8 @@ public:
         cmdOutPipe.write(cmd);
     }
     
-    void pixReadImage(STApp::Pixel* pixels, size_t count) {
-        pixInPipe.read(pixels, count*sizeof(STApp::Pixel));
+    void pixReadImage(STApp::Pixel* pixels, size_t count, USBPipe::Milliseconds timeout=0) {
+        pixInPipe.readBuf(pixels, count*sizeof(STApp::Pixel), timeout);
     }
     
     USBPipe cmdOutPipe;
