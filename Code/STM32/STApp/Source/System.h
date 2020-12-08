@@ -29,7 +29,8 @@ private:
     void _handlePixUSBEvent(const USB::Signal& ev);
     void _recvPixDataFromICE40();
     void _sendPixDataOverUSB();
-    void _pixConfig();
+    void _pixReset();
+//    void _pixConfig();
     void _pixStartImage();
     void _pixI2CTransaction(bool write, uint16_t addr, uint16_t value);
     
@@ -37,16 +38,16 @@ private:
     USB _usb;
     QSPI _qspi;
     
-    const STApp::PixInfo _pixInfo = {
+    STApp::PixStatus _pixStatus = {
         .width = 2304,
         .height = 1296,
+        .i2cReadVal = 0,
     };
     bool _pixStream = false;
     bool _pixTest = false;
     bool _pixTestFirstTransfer = false;
     BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
-    STApp::PixI2CStatus _pixI2CStatus;
     
     friend int main();
     friend void ISR_OTG_HS();

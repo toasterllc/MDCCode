@@ -18,7 +18,7 @@ public:
         
         io_iterator_t ioServicesIter = MACH_PORT_NULL;
         kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (CFDictionaryRef)CFBridgingRetain(match), &ioServicesIter);
-        if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceGetMatchingServices failed: %x", kr);
+        if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceGetMatchingServices failed: 0x%x", kr);
         
         SendRight servicesIter(ioServicesIter);
         while (servicesIter) {
@@ -125,7 +125,7 @@ public:
             .wLength        = (uint16_t)len
         };
         IOReturn ior = (*_state.interface)->DeviceRequest(_state.interface, &usbReq);
-        if (ior != kIOReturnSuccess) throw RuntimeError("DeviceRequest() failed: %x", ior);
+        if (ior != kIOReturnSuccess) throw RuntimeError("DeviceRequest() failed: 0x0x%x", ior);
     }
     
 private:

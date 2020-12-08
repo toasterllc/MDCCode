@@ -15,12 +15,12 @@ public:
     template <typename T>
     void write(T& x) const {
         IOReturn ior = (*_interface.interface())->WritePipe(_interface.interface(), _idx, (void*)&x, sizeof(x));
-        if (ior != kIOReturnSuccess) throw RuntimeError("WritePipe() failed: %x", ior);
+        if (ior != kIOReturnSuccess) throw RuntimeError("WritePipe() failed: 0x%x", ior);
     }
     
     void write(const void* buf, size_t len) const {
         IOReturn ior = (*_interface.interface())->WritePipe(_interface.interface(), _idx, (void*)buf, (uint32_t)len);
-        if (ior != kIOReturnSuccess) throw RuntimeError("WritePipe() failed: %x", ior);
+        if (ior != kIOReturnSuccess) throw RuntimeError("WritePipe() failed: 0x%x", ior);
     }
     
 //    template <typename T>
@@ -37,7 +37,7 @@ public:
     void read(T& t) const {
         uint32_t len32 = (uint32_t)sizeof(t);
         IOReturn ior = (*_interface.interface())->ReadPipe(_interface.interface(), _idx, &t, &len32);
-        if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: %x", ior);
+        if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: 0x%x", ior);
         if (len32 != sizeof(t)) throw RuntimeError("ReadPipe() returned bad length; expected %ju bytes, got %ju bytes",
             (uintmax_t)sizeof(t), (uintmax_t)len32);
     }
@@ -45,14 +45,14 @@ public:
     void read(void* buf, size_t len) const {
         uint32_t len32 = (uint32_t)len;
         IOReturn ior = (*_interface.interface())->ReadPipe(_interface.interface(), _idx, buf, &len32);
-        if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: %x", ior);
+        if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: 0x%x", ior);
         if (len32 != len) throw RuntimeError("ReadPipe() returned bad length; expected %ju bytes, got %ju bytes",
             (uintmax_t)len, (uintmax_t)len32);
     }
     
     void reset() const {
         IOReturn ior = (*_interface.interface())->ResetPipe(_interface.interface(), _idx);
-        if (ior != kIOReturnSuccess) throw RuntimeError("ResetPipe() failed: %x", ior);
+        if (ior != kIOReturnSuccess) throw RuntimeError("ResetPipe() failed: 0x%x", ior);
     }
     
 private:

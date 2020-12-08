@@ -33,14 +33,22 @@ public:
         }
     }
     
-    STApp::PixInfo pixInfo() {
+    STApp::PixStatus pixStatus() {
         using namespace STApp;
-        Cmd cmd = { .op = Cmd::Op::PixGetInfo };
+        Cmd cmd = { .op = Cmd::Op::PixGetStatus };
         cmdOutPipe.write(cmd);
         
-        PixInfo pixInfo;
-        cmdInPipe.read(pixInfo);
-        return pixInfo;
+        PixStatus pixStatus;
+        cmdInPipe.read(pixStatus);
+        return pixStatus;
+    }
+    
+    void pixReset() {
+        using namespace STApp;
+        Cmd cmd = { .op = Cmd::Op::PixReset };
+        cmdOutPipe.write(cmd);
+        // Wait for completion by getting status
+        pixStatus();
     }
     
     uint16_t pixI2CRead(uint16_t addr) {
@@ -55,10 +63,7 @@ public:
             }
         };
         cmdOutPipe.write(cmd);
-        
-        PixI2CStatus i2cStatus;
-        cmdInPipe.read(i2cStatus);
-        return i2cStatus.readVal;
+        return pixStatus().i2cReadVal;
     }
     
     void pixI2CWrite(uint16_t addr, uint16_t val) {
@@ -75,9 +80,8 @@ public:
         };
         cmdOutPipe.write(cmd);
         
-        // Wait for the I2C transaction to complete by getting the status
-        PixI2CStatus i2cStatus;
-        cmdInPipe.read(i2cStatus);
+        // Wait for completion by getting status
+        pixStatus();
     }
     
     void pixStartStream() {

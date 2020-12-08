@@ -18,6 +18,7 @@
 #import "MDCDevice.h"
 
 using Cmd = std::string;
+const Cmd PixResetCmd = "PixReset";
 const Cmd PixI2CCmd = "PixI2C";
 const Cmd PixStreamCmd = "PixStream";
 const Cmd LEDSetCmd = "LEDSet";
@@ -48,6 +49,7 @@ struct Args {
 void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
+    cout << "  " << PixResetCmd         << "\n";
     cout << "  " << PixI2CCmd           << "\n";
     cout << "  " << PixStreamCmd        << "\n";
     cout << "  " << LEDSetCmd           << " <idx> <0/1>\n";
@@ -64,7 +66,9 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = strs[0];
     
-    if (args.cmd == PixI2CCmd) {
+    if (args.cmd == PixResetCmd) {
+        
+    } else if (args.cmd == PixI2CCmd) {
         if (strs.size() < 2) throw std::runtime_error("no register specified");
         std::stringstream ss(strs[1]);
         std::string part;
@@ -100,6 +104,11 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
+static void pixReset(const Args& args, MDCDevice& device) {
+    using namespace STApp;
+    device.pixReset();
+}
+
 static void pixI2C(const Args& args, MDCDevice& device) {
     using namespace STApp;
     
@@ -114,17 +123,17 @@ static void pixI2C(const Args& args, MDCDevice& device) {
 
 static void pixStream(const Args& args, MDCDevice& device) {
     using namespace STApp;
-    // Get Pix info
-    PixInfo pixInfo = device.pixInfo();
+    const PixStatus pixStatus = device.pixStatus();
+    const size_t pixelCount = pixStatus.width*pixStatus.height;
+    
     // Start Pix stream
     device.pixStartStream();
     
-    const size_t pixelCount = pixInfo.width*pixInfo.height;
     auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (;;) {
         device.pixReadImage(pixels.get(), pixelCount);
         printf("Got %ju pixels (%ju x %ju)\n",
-            (uintmax_t)pixelCount, (uintmax_t)pixInfo.width, (uintmax_t)pixInfo.height);
+            (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
     }
 }
 
@@ -149,8 +158,8 @@ static void testResetStream(const Args& args, MDCDevice& device) {
     using namespace STApp;
     
     // Get Pix info
-    PixInfo pixInfo = device.pixInfo();
-    const size_t pixelCount = pixInfo.width*pixInfo.height;
+    const PixStatus pixStatus = device.pixStatus();
+    const size_t pixelCount = pixStatus.width*pixStatus.height;
     auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (;;) {
         // Start Pix stream
@@ -187,8 +196,8 @@ static void testResetStreamInc(const Args& args, MDCDevice& device) {
     using namespace STApp;
     
     // Get Pix info
-    PixInfo pixInfo = device.pixInfo();
-    const size_t pixelCount = pixInfo.width*pixInfo.height;
+    const PixStatus pixStatus = device.pixStatus();
+    const size_t pixelCount = pixStatus.width*pixStatus.height;
     auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (;;) {
         // Start Pix stream
@@ -271,7 +280,8 @@ int main(int argc, const char* argv[]) {
     }
     
     try {
-        if (args.cmd == PixI2CCmd)                  pixI2C(args, device);
+        if (args.cmd == PixResetCmd)                pixReset(args, device);
+        else if (args.cmd == PixI2CCmd)             pixI2C(args, device);
         else if (args.cmd == PixStreamCmd)          pixStream(args, device);
         else if (args.cmd == LEDSetCmd)             ledSet(args, device);
         else if (args.cmd == TestResetStream)       testResetStream(args, device);
