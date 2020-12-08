@@ -36,6 +36,7 @@
 		55671A35257E94C000C1CDA4 /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55671A36257E961000C1CDA4 /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/Shared/STAppTypes.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		55671A3A2580178100C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		55B9745924C504E2000B2633 /* MDCViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55B9745D24C504E2000B2633 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55B9745F24C504E2000B2633 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -71,16 +72,17 @@
 		55671A29257E94BD00C1CDA4 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				55671A2A257E94BD00C1CDA4 /* USBPipe.h */,
-				55671A2B257E94BD00C1CDA4 /* MyTime.h */,
-				55671A2C257E94BD00C1CDA4 /* MDCDevice.h */,
-				55671A2D257E94BD00C1CDA4 /* RuntimeError.h */,
-				55671A2E257E94BD00C1CDA4 /* USBInterface.h */,
-				55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */,
 				55671A30257E94BD00C1CDA4 /* ELF32Binary.h */,
+				55671A2C257E94BD00C1CDA4 /* MDCDevice.h */,
+				55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */,
+				55671A3A2580178100C1CDA4 /* MDCUtil.h */,
 				55671A31257E94BD00C1CDA4 /* Mmap.h */,
-				55671A32257E94BD00C1CDA4 /* USBDevice.h */,
+				55671A2B257E94BD00C1CDA4 /* MyTime.h */,
+				55671A2D257E94BD00C1CDA4 /* RuntimeError.h */,
 				55671A33257E94BD00C1CDA4 /* SendRight.h */,
+				55671A32257E94BD00C1CDA4 /* USBDevice.h */,
+				55671A2E257E94BD00C1CDA4 /* USBInterface.h */,
+				55671A2A257E94BD00C1CDA4 /* USBPipe.h */,
 			);
 			name = Shared;
 			path = ../Shared;

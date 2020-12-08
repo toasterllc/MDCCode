@@ -37,6 +37,7 @@
 		55671A18257E850700C1CDA4 /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/Shared/STAppTypes.h; sourceTree = "<group>"; };
 		55671A27257E865F00C1CDA4 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
 		55671A28257E870E00C1CDA4 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
+		55671A392580123C00C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* MDCUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -62,10 +63,11 @@
 				55671A0F257CEC4A00C1CDA4 /* ELF32Binary.h */,
 				55671A0D257CEC4A00C1CDA4 /* MDCDevice.h */,
 				55671A28257E870E00C1CDA4 /* MDCLoaderDevice.h */,
+				55671A392580123C00C1CDA4 /* MDCUtil.h */,
 				55671A10257CEC4A00C1CDA4 /* Mmap.h */,
 				55671A0C257CEC4A00C1CDA4 /* MyTime.h */,
-				55671A12257CEC4A00C1CDA4 /* SendRight.h */,
 				55671A27257E865F00C1CDA4 /* RuntimeError.h */,
+				55671A12257CEC4A00C1CDA4 /* SendRight.h */,
 				55671A11257CEC4A00C1CDA4 /* USBDevice.h */,
 				55671A0E257CEC4A00C1CDA4 /* USBInterface.h */,
 				55671A15257CEDF400C1CDA4 /* USBPipe.h */,

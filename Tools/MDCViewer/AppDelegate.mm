@@ -4,11 +4,18 @@
 #import "STAppTypes.h"
 #import "MDCDevice.h"
 #import <iostream>
+#import "MDCUtil.h"
 using namespace MDCImageLayerTypes;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @property(weak) IBOutlet NSWindow* window;
 @end
+
+enum class StreamState {
+    Idle,
+    Streaming,
+    Stopped,
+};
 
 @implementation AppDelegate {
     IBOutlet MDCMainView* _mainView;
@@ -16,9 +23,9 @@ using namespace MDCImageLayerTypes;
     struct {
         std::mutex lock; // Protects this struct
         std::condition_variable signal;
-        bool running = false;
-        bool cancel = false;
-    } _threadState;
+        StreamState streamState = StreamState::Idle;
+        bool streamCancel = false;
+    } _state;
 }
 
 //static bool checkPixel(uint32_t x, uint32_t y, ImagePixel expected, ImagePixel got) {
@@ -38,10 +45,6 @@ using namespace MDCImageLayerTypes;
     
     [NSThread detachNewThreadWithBlock:^{
         [self _threadControl];
-    }];
-    
-    [NSThread detachNewThreadWithBlock:^{
-        [self _threadStreamImages];
     }];
 }
 
@@ -246,9 +249,61 @@ static void _pixConfig(MDCDevice& device) {
 
 - (void)_threadControl {
     for (;;) {
+        // Kick off a new streaming thread
+        _state.lock.lock();
+            _state.streamState = StreamState::Streaming;
+            _state.streamCancel = false;
+            _state.signal.notify_all();
+        _state.lock.unlock();
+        
+        [NSThread detachNewThreadWithBlock:^{
+            [self _threadStreamImages];
+        }];
+        
+        // Read arguments from stdin
         std::string line;
         std::getline(std::cin, line);
-        printf("Got command: %s\n", line.c_str());
+        
+        std::vector<std::string> argStrs;
+        std::stringstream argStream(line);
+        std::string argStr;
+        while (std::getline(argStream, argStr, ' ')) {
+            if (!argStr.empty()) argStrs.push_back(argStr);
+        }
+        
+        // Parse arguments
+        MDCUtil::Args args;
+        try {
+            args = MDCUtil::ParseArgs(argStrs);
+        
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Bad arguments: %s\n\n", e.what());
+            MDCUtil::PrintUsage();
+            continue;
+        }
+        
+        // Cancel streaming and wait for it to stop
+        for (;;) {
+            auto lock = std::unique_lock(_state.lock);
+            if (_state.streamState == StreamState::Streaming) {
+                _state.streamCancel = true;
+            }
+            if (_state.streamState==StreamState::Idle ||
+                _state.streamState==StreamState::Stopped) break;
+            _state.signal.wait(lock);
+        }
+        
+        try {
+            std::vector<MDCDevice> devices = MDCDevice::FindDevices();
+            if (devices.empty()) throw RuntimeError("no matching MDC devices");
+            if (devices.size() > 1) throw RuntimeError("Too many matching MDC devices");
+            
+            MDCUtil::Run(devices[0], args);
+        
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n\n", e.what());
+            continue;
+        }
     }
 }
 
@@ -256,12 +311,6 @@ static void _pixConfig(MDCDevice& device) {
     using namespace STApp;
     
     MDCImageLayer* layer = [_mainView layer];
-    
-    // Notify that our thread has started
-    _threadState.lock.lock();
-        _threadState.running = true;
-        _threadState.signal.notify_all();
-    _threadState.lock.unlock();
     
     // Reset the device to put it back in a pre-defined state
     _device.reset();
@@ -279,9 +328,9 @@ static void _pixConfig(MDCDevice& device) {
         try {
             // Check if we've been cancelled
             bool cancel = false;
-            _threadState.lock.lock();
-                cancel = _threadState.cancel;
-            _threadState.lock.unlock();
+            _state.lock.lock();
+                cancel = _state.streamCancel;
+            _state.lock.unlock();
             if (cancel) break;
             
             // Read an image, timing-out after 1s so we can check the device status,
@@ -306,10 +355,10 @@ static void _pixConfig(MDCDevice& device) {
     }
     
     // Notify that our thread has exited
-    _threadState.lock.lock();
-        _threadState.running = false;
-        _threadState.signal.notify_all();
-    _threadState.lock.unlock();
+    _state.lock.lock();
+        _state.streamState = StreamState::Stopped;
+        _state.signal.notify_all();
+    _state.lock.unlock();
 }
 
 @end
