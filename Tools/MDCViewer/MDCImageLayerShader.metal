@@ -46,6 +46,8 @@ float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, ui
 }
 
 float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+//    return px(ctx, pxs, pos.x, 0, pos.y, 0);
+    
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -78,6 +80,8 @@ float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uin
 }
 
 float g(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+//    return px(ctx, pxs, pos.x, 0, pos.y, 0);
+    
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -113,6 +117,8 @@ float g(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uin
 }
 
 float b(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+//    return px(ctx, pxs, pos.x, 0, pos.y, 0);
+    
     if (pos.y % 2) {
         // ROW = B G B G ...
         
