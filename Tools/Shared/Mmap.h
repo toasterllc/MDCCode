@@ -1,6 +1,8 @@
 #pragma once
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <stdexcept>
+#include <string>
 
 class Mmap {
 public:
