@@ -23,7 +23,7 @@ vertex VertexOutput MDCImageLayer_VertexShader(
 ) {
     const float4x4 scaleTransform = scale(
         (float)ctx.imageWidth/ctx.viewWidth,
-        (float)ctx.imageHeight/ctx.viewHeight,
+        -(float)ctx.imageHeight/ctx.viewHeight,
         1
     );
     const float4 unitPosition = ctx.v[ctx.vi[vidx]];
