@@ -138,17 +138,17 @@ using namespace MDCImageLayerTypes;
 //            printf("Got %ju pixels (%ju x %ju)\n",
 //                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
             
-            {
-                Pixel min = std::numeric_limits<Pixel>::max();
-                Pixel max = std::numeric_limits<Pixel>::min();
-                for (size_t i=0; i<pixelCount; i++) {
-                    min = std::min(min, pixels[i]);
-                    max = std::max(max, pixels[i]);
-                }
-                
-                printf("Min pixel: %ju\n", (uintmax_t)min);
-                printf("Max pixel: %ju\n", (uintmax_t)max);
-            }
+//            {
+//                Pixel min = std::numeric_limits<Pixel>::max();
+//                Pixel max = std::numeric_limits<Pixel>::min();
+//                for (size_t i=0; i<pixelCount; i++) {
+//                    min = std::min(min, pixels[i]);
+//                    max = std::max(max, pixels[i]);
+//                }
+//                
+//                printf("Min pixel: %ju\n", (uintmax_t)min);
+//                printf("Max pixel: %ju\n", (uintmax_t)max);
+//            }
             
             static bool wrote = false;
             if (!wrote) {
