@@ -114,7 +114,7 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     
     // Send ICE40 binary
     printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
-    device.iceDataOutPipe.write(mmap.data(), mmap.len());
+    device.iceDataOutPipe.writeBuf(mmap.data(), mmap.len());
     
     // Wait for interface to be idle
     // Without this, the next 'Finish' command would interupt the SPI configuration process

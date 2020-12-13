@@ -68,7 +68,7 @@ public:
         };
         stCmdOutPipe.write(cmd);
         // Send actual data
-        stDataOutPipe.write(data, len);
+        stDataOutPipe.writeBuf(data, len);
     }
     
     void stReset(uint32_t entryPointAddr) {
