@@ -33,25 +33,27 @@ using namespace MDCImageLayerTypes;
 
 - (void)applicationDidFinishLaunching:(NSNotification*)note {
 //    Mmap imageData("/Users/dave/repos/MotionDetectorCamera/Tools/cfa2dng/me.cfa");
-////    Mmap imageData("/Users/dave/repos/MotionDetectorCamera/Tools/cfa2dng/colorbars.cfa");
-////    Mmap imageData("/Users/dave/Desktop/colorbars.cfa");
-//    constexpr size_t ImageWidth = 2304;
-//    constexpr size_t ImageHeight = 1296;
-//    Image image = {
-//        .width = ImageWidth,
-//        .height = ImageHeight,
-//        .pixels = (ImagePixel*)imageData.data(),
-//    };
-//    [[_mainView layer] updateImage:image];
+//    Mmap imageData("/Users/dave/repos/MotionDetectorCamera/Tools/cfa2dng/colorbars.cfa");
+//    Mmap imageData("/Users/dave/Desktop/colorbars.cfa");
+//    Mmap imageData("/Users/dave/Desktop/colorchecker.cfa");
+    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
+    constexpr size_t ImageWidth = 2304;
+    constexpr size_t ImageHeight = 1296;
+    Image image = {
+        .width = ImageWidth,
+        .height = ImageHeight,
+        .pixels = (ImagePixel*)imageData.data(),
+    };
+    [[_mainView layer] updateImage:image];
     
-    std::vector<MDCDevice> devices = MDCDevice::FindDevices();
-    if (devices.empty()) throw std::runtime_error("no matching MDC devices");
-    if (devices.size() > 1) throw std::runtime_error("too many matching MDC devices");
-    _device = devices[0];
-    
-    [NSThread detachNewThreadWithBlock:^{
-        [self _threadControl];
-    }];
+//    std::vector<MDCDevice> devices = MDCDevice::FindDevices();
+//    if (devices.empty()) throw std::runtime_error("no matching MDC devices");
+//    if (devices.size() > 1) throw std::runtime_error("too many matching MDC devices");
+//    _device = devices[0];
+//    
+//    [NSThread detachNewThreadWithBlock:^{
+//        [self _threadControl];
+//    }];
 }
 
 - (void)_threadControl {
