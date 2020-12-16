@@ -131,31 +131,6 @@ static NSDictionary* layerNullActions() {
     return _state.depthAttachment;
 }
 
-//// Calculate the maximum value for each group of `binsPerPixel` bins
-//template <size_t N>
-//static uint32_t findMaxVal(const uint32_t(& vals)[N]) {
-//    uint32_t maxVal = 0;
-//    for (uint32_t val : vals) {
-//        maxVal = std::max(maxVal, val);
-//    }
-//    return maxVal;
-//}
-
-//// Calculate the maximum value for each group of `binsPerPixel` bins
-//template <size_t N>
-//static uint32_t calcMaxVal(uint32_t groupSize, const uint32_t(& bins)[N]) {
-//    uint32_t val = 0;
-//    uint32_t maxVal = 0;
-//    for (size_t i=0; i<N; i++) {
-//        if (!(i % groupSize)) {
-//            maxVal = std::max(maxVal, val);
-//            val = 0;
-//        }
-//        val += bins[i];
-//    }
-//    return maxVal;
-//}
-
 template <size_t N>
 float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N]) {
     unitRange0 = std::max(0.f, unitRange0);
@@ -197,6 +172,8 @@ float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N])
     ctx.viewHeight = (uint32_t)lround(viewSizePx.height);
     
     // Update _state.histogramFloat
+    // We do this in CPU-land so that we can determine the max Y values,
+    // to scale the histogram appropriately.
     ctx.maxVals = {};
     for (uint32_t i=0; i<ctx.viewWidth; i++) {
 
@@ -218,21 +195,6 @@ float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N])
             std::max(ctx.maxVals[2], b)
         };
     }
-    
-//    float binsPerPixel = (float)Histogram::Count/ctx.viewWidth;
-//    ctx.binsPerPixel = (float)Histogram::Count/ctx.viewWidth;
-//    
-//    const vector_uint3 maxVals = {
-//        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.r),
-//        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.g),
-//        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.b)
-//    };
-//    ctx.maxVals = {
-//        100000,
-////        binsPerPixel*findMaxVal(_state.histogram.r),
-//        binsPerPixel*findMaxVal(_state.histogram.g),
-//        binsPerPixel*findMaxVal(_state.histogram.b),
-//    };
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);

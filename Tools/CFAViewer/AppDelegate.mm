@@ -88,13 +88,13 @@ using namespace ImageLayerTypes;
     [[_inputHistogramView histogramLayer] updateHistogram:[[_mainView imageLayer] inputHistogram]];
     [[_outputHistogramView histogramLayer] updateHistogram:[[_mainView imageLayer] outputHistogram]];
     
-    auto hist = [[_mainView imageLayer] outputHistogram];
-    size_t i = 0;
-    for (uint32_t& val : hist.r) {
-        if (!val) continue;
-        printf("[%ju]: %ju\n", (uintmax_t)i, (uintmax_t)val);
-        i++;
-    }
+//    auto hist = [[_mainView imageLayer] outputHistogram];
+//    size_t i = 0;
+//    for (uint32_t& val : hist.r) {
+//        if (!val) continue;
+//        printf("[%ju]: %ju\n", (uintmax_t)i, (uintmax_t)val);
+//        i++;
+//    }
 }
 
 @end
