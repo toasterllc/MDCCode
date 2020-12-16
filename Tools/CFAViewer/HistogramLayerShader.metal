@@ -31,8 +31,12 @@ fragment float4 HistogramLayer_FragmentShader(
     VertexOutput interpolated [[stage_in]]
 ) {
     uint x = interpolated.pixelPosition.x;
-    float height = histogram.r[x];
-    height /= ctx.maxVals[0];
+    float3 height = {
+        histogram.r[x],
+        histogram.g[x],
+        histogram.b[x],
+    };
+    height /= ctx.maxVal;
     height *= ctx.viewHeight;
-    return float4(max(0., height-interpolated.pixelPosition.y), 0, 0, 1);
+    return float4(max(0., height-interpolated.pixelPosition.y), 1);
 }

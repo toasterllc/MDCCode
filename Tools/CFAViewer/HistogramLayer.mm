@@ -174,7 +174,7 @@ float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N])
     // Update _state.histogramFloat
     // We do this in CPU-land so that we can determine the max Y values,
     // to scale the histogram appropriately.
-    ctx.maxVals = {};
+    ctx.maxVal = 0;
     for (uint32_t i=0; i<ctx.viewWidth; i++) {
 
         assert(i < Histogram::Count);   // TODO: Our float histogram is capped at Histogram::Count points,
@@ -189,11 +189,9 @@ float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N])
         _state.histogramFloat.r[i] = r;
         _state.histogramFloat.g[i] = g;
         _state.histogramFloat.b[i] = b;
-        ctx.maxVals = {
-            std::max(ctx.maxVals[0], r),
-            std::max(ctx.maxVals[1], g),
-            std::max(ctx.maxVals[2], b)
-        };
+        ctx.maxVal = std::max(ctx.maxVal, r);
+        ctx.maxVal = std::max(ctx.maxVal, g);
+        ctx.maxVal = std::max(ctx.maxVal, b);
     }
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
