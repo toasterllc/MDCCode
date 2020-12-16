@@ -20,9 +20,10 @@ using namespace HistogramLayerTypes;
         
         id<MTLTexture> depthTexture;
         MTLRenderPassDepthAttachmentDescriptor* depthAttachment;
-        
+         
         RenderContext ctx;
         Histogram histogram __attribute__((aligned(4096)));
+        HistogramFloat histogramFloat __attribute__((aligned(4096)));
         id<MTLBuffer> histogramBuf;
     } _state;
 }
@@ -88,59 +89,12 @@ static NSDictionary* layerNullActions() {
         [_state.depthAttachment setStoreAction:MTLStoreActionDontCare];
         [_state.depthAttachment setClearDepth:1];
         
-        _state.histogramBuf = [_device newBufferWithBytesNoCopy:&_state.histogram
-            length:sizeof(_state.histogram) options:MTLResourceStorageModeShared deallocator:nil];
+        _state.histogramBuf = [_device newBufferWithBytesNoCopy:&_state.histogramFloat
+            length:sizeof(_state.histogramFloat) options:MTLResourceStorageModeShared
+            deallocator:nil];
     
     return self;
 }
-
-
-template <size_t N>
-float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N]) {
-    unitRange0 = std::max(0.f, unitRange0);
-    unitRange1 = std::min(1.f, unitRange1);
-    
-    const float range0 = unitRange0*N;
-    const float range1 = unitRange1*N;
-    const uint rangeIdx0 = (uint)range0;
-    const uint rangeIdx1 = (uint)range1;
-    const float leftAmount = 1-(range0-floor(range0));
-    const float rightAmount = range1-floor(range1);
-    
-    float sample = 0;
-    // Limit `i` to N-1 here to prevent reading beyond `bins`.
-    // We don't limit `i` via `rangeIdx`, because our alg works with
-    // closed-open intervals, where the open interval has rightAmount==0.
-    // If we limited our iteration with `rangeIdx`, we'd need a special
-    // case to set rightAmount=1, otherwise the last bin would get dropped.
-    for (uint i=rangeIdx0; i<=std::min((uint32_t)N-1, rangeIdx1); i++) {
-        if (i == rangeIdx0)         sample += leftAmount*bins[i];
-        else if (i == rangeIdx1)    sample += rightAmount*bins[i];
-        else                        sample += bins[i];
-    }
-    return sample;
-}
-
-//template <size_t N>
-//float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N]) {
-//    unitRange0 = std::max(0.f, unitRange0);
-//    unitRange1 = std::min(1.f, unitRange1);
-//    
-//    const float range0 = unitRange0*N;
-//    const float range1 = unitRange1*N;
-//    const uint32_t rangeIdx0 = range0;
-//    const uint32_t rangeIdx1 = (uint32_t)range1;
-//    const float leftAmount = 1-(range0-floor(range0));
-//    const float rightAmount = range1-floor(range1);
-//    
-//    float sample = 0;
-//    for (uint i=rangeIdx0; i<=std::min((uint32_t)N-1, rangeIdx1); i++) {
-//        if (i == rangeIdx0)         sample += leftAmount*bins[i];
-//        else if (i == rangeIdx1)    sample += rightAmount*bins[i];
-//        else                        sample += bins[i];
-//    }
-//    return sample;
-//}
 
 - (void)updateHistogram:(const MetalTypes::Histogram&)histogram {
     auto lock = std::unique_lock(_state.lock);
@@ -177,15 +131,15 @@ float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N])
     return _state.depthAttachment;
 }
 
-// Calculate the maximum value for each group of `binsPerPixel` bins
-template <size_t N>
-static uint32_t findMaxVal(const uint32_t(& vals)[N]) {
-    uint32_t maxVal = 0;
-    for (uint32_t val : vals) {
-        maxVal = std::max(maxVal, val);
-    }
-    return maxVal;
-}
+//// Calculate the maximum value for each group of `binsPerPixel` bins
+//template <size_t N>
+//static uint32_t findMaxVal(const uint32_t(& vals)[N]) {
+//    uint32_t maxVal = 0;
+//    for (uint32_t val : vals) {
+//        maxVal = std::max(maxVal, val);
+//    }
+//    return maxVal;
+//}
 
 //// Calculate the maximum value for each group of `binsPerPixel` bins
 //template <size_t N>
@@ -202,6 +156,32 @@ static uint32_t findMaxVal(const uint32_t(& vals)[N]) {
 //    return maxVal;
 //}
 
+template <size_t N>
+float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N]) {
+    unitRange0 = std::max(0.f, unitRange0);
+    unitRange1 = std::min(1.f, unitRange1);
+    
+    const float range0 = unitRange0*N;
+    const float range1 = unitRange1*N;
+    const uint32_t rangeIdx0 = range0;
+    const uint32_t rangeIdx1 = range1;
+    const float leftAmount = 1-(range0-floor(range0));
+    const float rightAmount = range1-floor(range1);
+    
+    float sample = 0;
+    // Limit `i` to N-1 here to prevent reading beyond `bins`.
+    // We don't limit `i` via `rangeIdx`, because our alg works with
+    // closed-open intervals, where the open interval has rightAmount==0.
+    // If we limited our iteration with `rangeIdx`, we'd need a special
+    // case to set rightAmount=1, otherwise the last bin would get dropped.
+    for (uint i=rangeIdx0; i<=std::min((uint32_t)N-1, rangeIdx1); i++) {
+        if (i == rangeIdx0)         sample += leftAmount*bins[i];
+        else if (i == rangeIdx1)    sample += rightAmount*bins[i];
+        else                        sample += bins[i];
+    }
+    return sample;
+}
+
 - (void)display {
     auto lock = std::unique_lock(_state.lock);
     auto& ctx = _state.ctx;
@@ -215,7 +195,31 @@ static uint32_t findMaxVal(const uint32_t(& vals)[N]) {
     
     ctx.viewWidth = (uint32_t)lround(viewSizePx.width);
     ctx.viewHeight = (uint32_t)lround(viewSizePx.height);
-    float binsPerPixel = (float)Histogram::Count/ctx.viewWidth;
+    
+    // Update _state.histogramFloat
+    ctx.maxVals = {};
+    for (uint32_t i=0; i<ctx.viewWidth; i++) {
+
+        assert(i < Histogram::Count);   // TODO: Our float histogram is capped at Histogram::Count points,
+                                        // so if our view is wider than that, then we need to implement a
+                                        // way for multiple pixels to refer to the same bin in
+                                        // _state.histogramFloat.r/g/b
+        const float start = (float)i/ctx.viewWidth;
+        const float end = ((float)i+1)/ctx.viewWidth;
+        const float r = sampleRange(start, end, _state.histogram.r);
+        const float g = sampleRange(start, end, _state.histogram.g);
+        const float b = sampleRange(start, end, _state.histogram.b);        
+        _state.histogramFloat.r[i] = r;
+        _state.histogramFloat.g[i] = g;
+        _state.histogramFloat.b[i] = b;
+        ctx.maxVals = {
+            std::max(ctx.maxVals[0], r),
+            std::max(ctx.maxVals[1], g),
+            std::max(ctx.maxVals[2], b)
+        };
+    }
+    
+//    float binsPerPixel = (float)Histogram::Count/ctx.viewWidth;
 //    ctx.binsPerPixel = (float)Histogram::Count/ctx.viewWidth;
 //    
 //    const vector_uint3 maxVals = {
@@ -223,11 +227,12 @@ static uint32_t findMaxVal(const uint32_t(& vals)[N]) {
 //        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.g),
 //        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.b)
 //    };
-    ctx.maxVals = {
-        1.1f*(float)findMaxVal(_state.histogram.r),
-        1.1f*(float)findMaxVal(_state.histogram.g),
-        1.1f*(float)findMaxVal(_state.histogram.b),
-    };
+//    ctx.maxVals = {
+//        100000,
+////        binsPerPixel*findMaxVal(_state.histogram.r),
+//        binsPerPixel*findMaxVal(_state.histogram.g),
+//        binsPerPixel*findMaxVal(_state.histogram.b),
+//    };
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);

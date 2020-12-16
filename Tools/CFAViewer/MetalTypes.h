@@ -28,6 +28,14 @@ namespace MetalTypes {
         Histogram() : r{}, g{}, b{} {}
     };
     
+    struct HistogramFloat {
+        float r[Histogram::Count];
+        float g[Histogram::Count];
+        float b[Histogram::Count];
+        
+        HistogramFloat() : r{}, g{}, b{} {}
+    };
+    
     // Unique vertexes (defines a unit square)
     MetalConst vector_float4 SquareVert[4] = {
         { 1,  1, 0, 1},

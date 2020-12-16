@@ -74,20 +74,26 @@ float sampleRange(float2 unitRange, device const uint32_t(& bins)[N]) {
 
 fragment float4 HistogramLayer_FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
-    device Histogram& histogram [[buffer(1)]],
+    device HistogramFloat& histogram [[buffer(1)]],
     VertexOutput interpolated [[stage_in]]
 ) {
-    float2 unitRange = float2{
-        floor(interpolated.pixelPosition.x),
-        floor(interpolated.pixelPosition.x)+1
-    }/ctx.viewWidth;
+//    float2 unitRange = float2{
+//        floor(interpolated.pixelPosition.x),
+//        floor(interpolated.pixelPosition.x)+1
+//    }/ctx.viewWidth;
+    
+    uint x = interpolated.pixelPosition.x;
     
 //    float2 unitRange = float2{
 //        interpolated.pixelPosition.x-.5,
 //        interpolated.pixelPosition.x+.5,
 //    }/ctx.viewWidth;
     
-    float height = sampleRange(unitRange, histogram.r);
+//    float height = sampleRange(unitRange, histogram.r);
+//    height /= ctx.maxVals[0];
+//    height *= ctx.viewHeight;
+    
+    float height = histogram.r[x];
     height /= ctx.maxVals[0];
     height *= ctx.viewHeight;
     
