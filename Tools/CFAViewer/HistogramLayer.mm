@@ -176,7 +176,6 @@ float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N])
     // to scale the histogram appropriately.
     ctx.maxVal = 0;
     for (uint32_t i=0; i<ctx.viewWidth; i++) {
-
         assert(i < Histogram::Count);   // TODO: Our float histogram is capped at Histogram::Count points,
                                         // so if our view is wider than that, then we need to implement a
                                         // way for multiple pixels to refer to the same bin in

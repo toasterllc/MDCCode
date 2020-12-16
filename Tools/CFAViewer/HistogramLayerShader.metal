@@ -36,7 +36,8 @@ fragment float4 HistogramLayer_FragmentShader(
         histogram.g[x],
         histogram.b[x],
     };
-    height /= ctx.maxVal;
+    height = log(height);
+    height /= log(ctx.maxVal);
     height *= ctx.viewHeight;
     return float4(max(0., height-interpolated.pixelPosition.y), 1);
 }
