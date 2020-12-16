@@ -2,19 +2,17 @@
 #import <Metal/Metal.h>
 #import <mutex>
 #import <os/log.h>
-#import "ImageLayer.h"
-#import "ImageLayerTypes.h"
+#import "HistogramLayer.h"
+#import "HistogramLayerTypes.h"
 #import "Assert.h"
-#import "MyTime.h"
 using namespace MetalTypes;
-using namespace ImageLayerTypes;
+using namespace HistogramLayerTypes;
 
-@implementation ImageLayer {
+@implementation HistogramLayer {
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
     id<MTLRenderPipelineState> _pipelineState;
     id<MTLDepthStencilState> _depthStencilState;
-    ImageLayerHistogramChangedHandler _histogramChangedHandler;
     
     struct {
         // Protects this struct
@@ -24,12 +22,8 @@ using namespace ImageLayerTypes;
         MTLRenderPassDepthAttachmentDescriptor* depthAttachment;
         
         RenderContext ctx;
-        id<MTLBuffer> pixelData;
-        
-        Histogram inputHistogram __attribute__((aligned(4096)));
-        id<MTLBuffer> inputHistogramBuf;
-        Histogram outputHistogram __attribute__((aligned(4096)));
-        id<MTLBuffer> outputHistogramBuf;
+        Histogram histogram __attribute__((aligned(4096)));
+        id<MTLBuffer> histogramBuf;
     } _state;
 }
 
@@ -68,10 +62,10 @@ static NSDictionary* layerNullActions() {
         [NSBundle bundleForClass:[self class]] error:nil];
     Assert(library, return nil);
     
-    id<MTLFunction> vertexShader = [library newFunctionWithName:@"ImageLayer_VertexShader"];
+    id<MTLFunction> vertexShader = [library newFunctionWithName:@"HistogramLayer_VertexShader"];
     Assert(vertexShader, return nil);
     
-    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"ImageLayer_FragmentShader"];
+    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"HistogramLayer_FragmentShader"];
     Assert(fragmentShader, return nil);
     
     MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
@@ -94,67 +88,70 @@ static NSDictionary* layerNullActions() {
         [_state.depthAttachment setStoreAction:MTLStoreActionDontCare];
         [_state.depthAttachment setClearDepth:1];
         
-        _state.inputHistogramBuf = [_device newBufferWithBytesNoCopy:&_state.inputHistogram
-            length:sizeof(_state.inputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
-        
-        _state.outputHistogramBuf = [_device newBufferWithBytesNoCopy:&_state.outputHistogram
-            length:sizeof(_state.outputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
+        _state.histogramBuf = [_device newBufferWithBytesNoCopy:&_state.histogram
+            length:sizeof(_state.histogram) options:MTLResourceStorageModeShared deallocator:nil];
     
     return self;
 }
 
-- (void)updateImage:(const Image&)image {
-    // If we don't have pixel data, ensure that our image has 0 pixels
-    NSParameterAssert(image.pixels || (image.width*image.height)==0);
-    const size_t pixelCount = image.width*image.height;
+
+template <size_t N>
+float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N]) {
+    unitRange0 = std::max(0.f, unitRange0);
+    unitRange1 = std::min(1.f, unitRange1);
     
+    const float range0 = unitRange0*N;
+    const float range1 = unitRange1*N;
+    const uint rangeIdx0 = (uint)range0;
+    const uint rangeIdx1 = (uint)range1;
+    const float leftAmount = 1-(range0-floor(range0));
+    const float rightAmount = range1-floor(range1);
+    
+    float sample = 0;
+    // Limit `i` to N-1 here to prevent reading beyond `bins`.
+    // We don't limit `i` via `rangeIdx`, because our alg works with
+    // closed-open intervals, where the open interval has rightAmount==0.
+    // If we limited our iteration with `rangeIdx`, we'd need a special
+    // case to set rightAmount=1, otherwise the last bin would get dropped.
+    for (uint i=rangeIdx0; i<=std::min((uint32_t)N-1, rangeIdx1); i++) {
+        if (i == rangeIdx0)         sample += leftAmount*bins[i];
+        else if (i == rangeIdx1)    sample += rightAmount*bins[i];
+        else                        sample += bins[i];
+    }
+    return sample;
+}
+
+//template <size_t N>
+//float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N]) {
+//    unitRange0 = std::max(0.f, unitRange0);
+//    unitRange1 = std::min(1.f, unitRange1);
+//    
+//    const float range0 = unitRange0*N;
+//    const float range1 = unitRange1*N;
+//    const uint32_t rangeIdx0 = range0;
+//    const uint32_t rangeIdx1 = (uint32_t)range1;
+//    const float leftAmount = 1-(range0-floor(range0));
+//    const float rightAmount = range1-floor(range1);
+//    
+//    float sample = 0;
+//    for (uint i=rangeIdx0; i<=std::min((uint32_t)N-1, rangeIdx1); i++) {
+//        if (i == rangeIdx0)         sample += leftAmount*bins[i];
+//        else if (i == rangeIdx1)    sample += rightAmount*bins[i];
+//        else                        sample += bins[i];
+//    }
+//    return sample;
+//}
+
+- (void)updateHistogram:(const MetalTypes::Histogram&)histogram {
     auto lock = std::unique_lock(_state.lock);
-        // Reset image size in case something fails
-        _state.ctx.imageWidth = 0;
-        _state.ctx.imageHeight = 0;
-        
-        const size_t len = pixelCount*sizeof(ImagePixel);
-        if (len) {
-            if (!_state.pixelData || [_state.pixelData length]<len) {
-                _state.pixelData = [_device newBufferWithLength:len
-                    options:MTLResourceCPUCacheModeDefaultCache];
-                Assert(_state.pixelData, return);
-            }
-            
-            // Copy the pixel data into the Metal buffer
-            memcpy([_state.pixelData contents], image.pixels, len);
-            
-            // Set the image size now that we have image data
-            _state.ctx.imageWidth = image.width;
-            _state.ctx.imageHeight = image.height;
-        
-        } else {
-            _state.pixelData = nil;
-        }
+    _state.histogram = histogram;
+//    _state.histogram.r[0] = 5000000;
+//    float val = sampleRange(0, 1./400, _state.histogram.r);
+//    _state.histogram.r[4095] = 5000000;
+//    float val = sampleRange(1-1./400, 1, _state.histogram.r);
     lock.unlock();
     
     [self setNeedsDisplay];
-}
-
-- (void)updateColorMatrix:(const ColorMatrix&)colorMatrix {
-    auto lock = std::unique_lock(_state.lock);
-        _state.ctx.colorMatrix = colorMatrix;
-    lock.unlock();
-    [self setNeedsDisplay];
-}
-
-- (void)setHistogramChangedHandler:(ImageLayerHistogramChangedHandler)histogramChangedHandler {
-    _histogramChangedHandler = histogramChangedHandler;
-}
-
-- (MetalTypes::Histogram)inputHistogram {
-    auto lock = std::unique_lock(_state.lock);
-    return _state.inputHistogram;
-}
-
-- (MetalTypes::Histogram)outputHistogram {
-    auto lock = std::unique_lock(_state.lock);
-    return _state.outputHistogram;
 }
 
 // _state.lock lock must be held
@@ -180,12 +177,34 @@ static NSDictionary* layerNullActions() {
     return _state.depthAttachment;
 }
 
+// Calculate the maximum value for each group of `binsPerPixel` bins
+template <size_t N>
+static uint32_t findMaxVal(const uint32_t(& vals)[N]) {
+    uint32_t maxVal = 0;
+    for (uint32_t val : vals) {
+        maxVal = std::max(maxVal, val);
+    }
+    return maxVal;
+}
+
+//// Calculate the maximum value for each group of `binsPerPixel` bins
+//template <size_t N>
+//static uint32_t calcMaxVal(uint32_t groupSize, const uint32_t(& bins)[N]) {
+//    uint32_t val = 0;
+//    uint32_t maxVal = 0;
+//    for (size_t i=0; i<N; i++) {
+//        if (!(i % groupSize)) {
+//            maxVal = std::max(maxVal, val);
+//            val = 0;
+//        }
+//        val += bins[i];
+//    }
+//    return maxVal;
+//}
+
 - (void)display {
     auto lock = std::unique_lock(_state.lock);
     auto& ctx = _state.ctx;
-    
-    _state.inputHistogram = Histogram();
-    _state.outputHistogram = Histogram();
     
     // Update our drawable size using our view size (in pixels)
     const CGFloat scale = [self contentsScale];
@@ -196,6 +215,19 @@ static NSDictionary* layerNullActions() {
     
     ctx.viewWidth = (uint32_t)lround(viewSizePx.width);
     ctx.viewHeight = (uint32_t)lround(viewSizePx.height);
+    float binsPerPixel = (float)Histogram::Count/ctx.viewWidth;
+//    ctx.binsPerPixel = (float)Histogram::Count/ctx.viewWidth;
+//    
+//    const vector_uint3 maxVals = {
+//        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.r),
+//        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.g),
+//        calcMaxVal(ceilf(ctx.binsPerPixel), _state.histogram.b)
+//    };
+    ctx.maxVals = {
+        1.1f*(float)findMaxVal(_state.histogram.r),
+        1.1f*(float)findMaxVal(_state.histogram.g),
+        1.1f*(float)findMaxVal(_state.histogram.b),
+    };
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
@@ -221,41 +253,21 @@ static NSDictionary* layerNullActions() {
     [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
     [renderEncoder setCullMode:MTLCullModeNone];
     
-    // Only try to render if we have a _state.pixelData
-    if (_state.pixelData) {
-        [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
-        
-        [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentBuffer:_state.pixelData offset:0 atIndex:1];
-        [renderEncoder setFragmentBuffer:_state.inputHistogramBuf offset:0 atIndex:2];
-        [renderEncoder setFragmentBuffer:_state.outputHistogramBuf offset:0 atIndex:3];
-        
-        [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-            vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
-    }
+    [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
+    [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
+    [renderEncoder setFragmentBuffer:_state.histogramBuf offset:0 atIndex:1];
+    
+    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0
+        vertexCount:MetalTypes::SquareVertIdxCount];
     
     [renderEncoder endEncoding];
     [commandBuffer presentDrawable:drawable];
     [commandBuffer commit];
-//    auto startTime = MyTime::Now();
     // Wait for the render to complete, since the lock needs to be
     // held because the shader accesses _state
     [commandBuffer waitUntilCompleted];
     
     lock.unlock();
-    
-    // Notify that our histogram changed
-    if (_histogramChangedHandler) _histogramChangedHandler(self);
-    
-//    size_t i = 0;
-//    for (const auto& count : _state.inputHistogram.r) {
-//        printf("[%ju] %ju\n", (uintmax_t)i, (uintmax_t)count);
-//        i++;
-//    }
-    
-//    printf("Duration: %ju\n", (uintmax_t)MyTime::DurationNs(startTime));
-//    printf("%ju\n", (uintmax_t)_state.histogram.counts[0].load());
-    
 }
 
 - (void)layoutSublayers {

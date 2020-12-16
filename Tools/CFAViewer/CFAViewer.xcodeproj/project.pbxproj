@@ -15,9 +15,11 @@
 		55B9747824C50A81000B2633 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747724C50A81000B2633 /* Cocoa.framework */; };
 		55B9747A24C50A86000B2633 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747924C50A86000B2633 /* Metal.framework */; };
 		55B9747C24C50A8A000B2633 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747B24C50A8A000B2633 /* QuartzCore.framework */; };
-		55EBCC8C258966FE0089A441 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC87258966FE0089A441 /* MainView.mm */; };
+		55EBCC8C258966FE0089A441 /* MetalView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC87258966FE0089A441 /* MetalView.mm */; };
 		55EBCC8D258966FE0089A441 /* ImageLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC88258966FE0089A441 /* ImageLayer.mm */; };
 		55EBCC8E258966FE0089A441 /* ImageLayerShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC89258966FE0089A441 /* ImageLayerShader.metal */; };
+		55EBCC922589C3570089A441 /* HistogramLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC902589C3570089A441 /* HistogramLayer.mm */; };
+		55EBCC942589C3960089A441 /* HistogramLayerShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC932589C3960089A441 /* HistogramLayerShader.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,12 +47,17 @@
 		55B9747924C50A86000B2633 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		55B9747B24C50A8A000B2633 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		55EBCC86258966FE0089A441 /* ImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayer.h; sourceTree = "<group>"; };
-		55EBCC87258966FE0089A441 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
+		55EBCC87258966FE0089A441 /* MetalView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MetalView.mm; sourceTree = "<group>"; };
 		55EBCC88258966FE0089A441 /* ImageLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageLayer.mm; sourceTree = "<group>"; };
 		55EBCC89258966FE0089A441 /* ImageLayerShader.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageLayerShader.metal; sourceTree = "<group>"; };
 		55EBCC8A258966FE0089A441 /* ImageLayerTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayerTypes.h; sourceTree = "<group>"; };
-		55EBCC8B258966FE0089A441 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
+		55EBCC8B258966FE0089A441 /* MetalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetalView.h; sourceTree = "<group>"; };
 		55EBCC8F25896F160089A441 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
+		55EBCC902589C3570089A441 /* HistogramLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HistogramLayer.mm; sourceTree = "<group>"; };
+		55EBCC912589C3570089A441 /* HistogramLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HistogramLayer.h; sourceTree = "<group>"; };
+		55EBCC932589C3960089A441 /* HistogramLayerShader.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = HistogramLayerShader.metal; sourceTree = "<group>"; };
+		55EBCC9B2589E5A00089A441 /* MetalTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalTypes.h; sourceTree = "<group>"; };
+		55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistogramLayerTypes.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,12 +111,17 @@
 				55671A34257E94C000C1CDA4 /* Shared */,
 				552E7D5A24C9316900438AAF /* CFAViewer.entitlements */,
 				55B9745D24C504E2000B2633 /* AppDelegate.mm */,
-				55EBCC86258966FE0089A441 /* ImageLayer.h */,
-				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
+				55EBCC9B2589E5A00089A441 /* MetalTypes.h */,
 				55EBCC8A258966FE0089A441 /* ImageLayerTypes.h */,
 				55EBCC89258966FE0089A441 /* ImageLayerShader.metal */,
-				55EBCC8B258966FE0089A441 /* MainView.h */,
-				55EBCC87258966FE0089A441 /* MainView.mm */,
+				55EBCC86258966FE0089A441 /* ImageLayer.h */,
+				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
+				55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */,
+				55EBCC912589C3570089A441 /* HistogramLayer.h */,
+				55EBCC902589C3570089A441 /* HistogramLayer.mm */,
+				55EBCC932589C3960089A441 /* HistogramLayerShader.metal */,
+				55EBCC8B258966FE0089A441 /* MetalView.h */,
+				55EBCC87258966FE0089A441 /* MetalView.mm */,
 				55B9746424C504E2000B2633 /* Info.plist */,
 				55B9746524C504E2000B2633 /* main.m */,
 				55B9745F24C504E2000B2633 /* Assets.xcassets */,
@@ -207,9 +219,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55EBCC922589C3570089A441 /* HistogramLayer.mm in Sources */,
 				55B9746624C504E2000B2633 /* main.m in Sources */,
+				55EBCC942589C3960089A441 /* HistogramLayerShader.metal in Sources */,
 				55EBCC8D258966FE0089A441 /* ImageLayer.mm in Sources */,
-				55EBCC8C258966FE0089A441 /* MainView.mm in Sources */,
+				55EBCC8C258966FE0089A441 /* MetalView.mm in Sources */,
 				55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */,
 				55EBCC8E258966FE0089A441 /* ImageLayerShader.metal in Sources */,
 			);

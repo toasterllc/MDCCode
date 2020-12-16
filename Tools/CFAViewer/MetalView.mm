@@ -1,10 +1,13 @@
-#import "MainView.h"
-#import "ImageLayer.h"
+#import "MetalView.h"
 #import <memory>
-using namespace ImageLayerTypes;
 
-@implementation MainView {
-    ImageLayer* _layer;
+@implementation MetalView {
+    CALayer* _layer;
+}
+
++ (Class)layerClass {
+    // Subclass must override
+    abort();
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -20,12 +23,10 @@ using namespace ImageLayerTypes;
 }
 
 - (void)commonInit {
-    _layer = [ImageLayer new];
+    _layer = [[[self class] layerClass] new];
     [self setLayer:_layer];
     [self setWantsLayer:true];
 }
-
-#pragma mark - Contents Scale
 
 static void setContentsScaleForSublayers(CALayer* layer, CGFloat contentsScale) {
     [layer setContentsScale:contentsScale];
@@ -38,10 +39,6 @@ static void setContentsScaleForSublayers(CALayer* layer, CGFloat contentsScale) 
     [super viewDidChangeBackingProperties];
     const CGFloat contentsScale = [[self window] backingScaleFactor];
     setContentsScaleForSublayers(_layer, contentsScale);
-}
-
-- (ImageLayer*)layer {
-    return _layer;
 }
 
 @end

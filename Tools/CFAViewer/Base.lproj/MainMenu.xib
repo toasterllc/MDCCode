@@ -15,7 +15,9 @@
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
             <connections>
                 <outlet property="_colorMatrixTextField" destination="rvZ-kB-DXu" id="p8n-9z-W1i"/>
+                <outlet property="_inputHistogramView" destination="osY-3C-qNQ" id="Ou4-HW-UsG"/>
                 <outlet property="_mainView" destination="EiT-Mj-1SZ" id="Jdu-Qd-kK8"/>
+                <outlet property="_outputHistogramView" destination="4k6-Ff-4m2" id="Hxv-tX-8oC"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -694,7 +696,7 @@
             </view>
             <point key="canvasLocation" x="139" y="-120"/>
         </window>
-        <window title="Utility" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="" animationBehavior="default" titleVisibility="hidden" id="MxN-x5-RZK">
+        <window title="Inspector" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="" animationBehavior="default" titleVisibility="hidden" id="MxN-x5-RZK">
             <windowStyleMask key="styleMask" titled="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="179" y="218" width="400" height="800"/>
@@ -712,9 +714,9 @@
                         </textFieldCell>
                     </textField>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="rvZ-kB-DXu">
-                        <rect key="frame" x="20" y="692" width="360" height="64"/>
+                        <rect key="frame" x="20" y="684" width="360" height="72"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="64" id="HKO-Hh-H0W"/>
+                            <constraint firstAttribute="height" constant="72" id="jiO-w4-Cpg"/>
                         </constraints>
                         <textFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="hwj-1l-ozR">
                             <font key="font" size="13" name="Monaco"/>
@@ -722,17 +724,58 @@
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <action selector="updateColorMatrix:" target="Voe-Tx-rLC" id="es2-0t-bxM"/>
+                            <outlet property="delegate" destination="Voe-Tx-rLC" id="5aG-CX-4br"/>
                         </connections>
                     </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qwO-Ta-OP0">
+                        <rect key="frame" x="18" y="648" width="364" height="16"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" title="Input Histogram" id="KR3-Kh-ubW">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="osY-3C-qNQ" customClass="HistogramView">
+                        <rect key="frame" x="20" y="440" width="360" height="200"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="200" id="2Ct-2Q-3g4"/>
+                        </constraints>
+                    </customView>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y6t-iF-1mR">
+                        <rect key="frame" x="18" y="404" width="364" height="16"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" title="Output Histogram" id="VXq-x7-ZQi">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="4k6-Ff-4m2" customClass="HistogramView">
+                        <rect key="frame" x="20" y="196" width="360" height="200"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="200" id="QVo-OR-p9F"/>
+                        </constraints>
+                    </customView>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="kbI-BK-MGm" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="D5M-qn-egm"/>
-                    <constraint firstItem="rvZ-kB-DXu" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="Qm7-df-neL"/>
-                    <constraint firstItem="kbI-BK-MGm" firstAttribute="top" secondItem="SDP-Rt-KYP" secondAttribute="top" constant="20" id="Wud-Jw-pEh"/>
-                    <constraint firstAttribute="trailing" secondItem="rvZ-kB-DXu" secondAttribute="trailing" constant="20" id="nkl-m9-jVF"/>
-                    <constraint firstAttribute="trailing" secondItem="kbI-BK-MGm" secondAttribute="trailing" constant="20" id="pvH-ml-9FS"/>
-                    <constraint firstItem="rvZ-kB-DXu" firstAttribute="top" secondItem="kbI-BK-MGm" secondAttribute="bottom" constant="8" id="yzg-g7-wb8"/>
+                    <constraint firstItem="4k6-Ff-4m2" firstAttribute="top" secondItem="Y6t-iF-1mR" secondAttribute="bottom" constant="8" id="5As-Bp-AKv"/>
+                    <constraint firstItem="4k6-Ff-4m2" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="5aM-Ts-fsg"/>
+                    <constraint firstItem="kbI-BK-MGm" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="5g6-Sl-y34"/>
+                    <constraint firstAttribute="trailing" secondItem="4k6-Ff-4m2" secondAttribute="trailing" constant="20" id="5lb-zS-4nt"/>
+                    <constraint firstItem="qwO-Ta-OP0" firstAttribute="top" secondItem="rvZ-kB-DXu" secondAttribute="bottom" constant="20" id="9l5-U3-MZx"/>
+                    <constraint firstAttribute="trailing" secondItem="kbI-BK-MGm" secondAttribute="trailing" constant="20" id="Fhx-xQ-6n3"/>
+                    <constraint firstItem="Y6t-iF-1mR" firstAttribute="top" secondItem="osY-3C-qNQ" secondAttribute="bottom" constant="20" id="LYP-NB-qba"/>
+                    <constraint firstItem="osY-3C-qNQ" firstAttribute="top" secondItem="qwO-Ta-OP0" secondAttribute="bottom" constant="8" id="Q3U-wg-TcY"/>
+                    <constraint firstItem="rvZ-kB-DXu" firstAttribute="top" secondItem="kbI-BK-MGm" secondAttribute="bottom" constant="8" id="SuM-Sy-Hjw"/>
+                    <constraint firstAttribute="trailing" secondItem="osY-3C-qNQ" secondAttribute="trailing" constant="20" id="XYU-0a-P5s"/>
+                    <constraint firstItem="rvZ-kB-DXu" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="ZAA-Ya-TuX"/>
+                    <constraint firstAttribute="trailing" secondItem="Y6t-iF-1mR" secondAttribute="trailing" constant="20" id="g6q-9S-DpH"/>
+                    <constraint firstItem="4k6-Ff-4m2" firstAttribute="top" secondItem="Y6t-iF-1mR" secondAttribute="bottom" constant="8" id="gCf-UO-fVX"/>
+                    <constraint firstItem="qwO-Ta-OP0" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="k8w-wv-JQf"/>
+                    <constraint firstAttribute="trailing" secondItem="rvZ-kB-DXu" secondAttribute="trailing" constant="20" id="m0C-EW-JI4"/>
+                    <constraint firstAttribute="trailing" secondItem="qwO-Ta-OP0" secondAttribute="trailing" constant="20" id="pwQ-gh-B8N"/>
+                    <constraint firstItem="Y6t-iF-1mR" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="tKi-Wv-WGE"/>
+                    <constraint firstItem="kbI-BK-MGm" firstAttribute="top" secondItem="SDP-Rt-KYP" secondAttribute="top" constant="20" id="vQX-bM-Lih"/>
+                    <constraint firstItem="osY-3C-qNQ" firstAttribute="leading" secondItem="SDP-Rt-KYP" secondAttribute="leading" constant="20" id="yzR-cR-gWw"/>
                 </constraints>
             </view>
             <point key="canvasLocation" x="-164" y="-1303"/>

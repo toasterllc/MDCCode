@@ -1,6 +1,7 @@
 #import <metal_stdlib>
 #import "ImageLayerTypes.h"
 using namespace metal;
+using namespace MetalTypes;
 using namespace ImageLayerTypes;
 
 static float4x4 scale(float x, float y, float z) {
@@ -26,7 +27,8 @@ vertex VertexOutput ImageLayer_VertexShader(
         -(float)ctx.imageHeight/ctx.viewHeight,
         1
     );
-    const float4 unitPosition = ctx.v[ctx.vi[vidx]];
+    
+    const float4 unitPosition = SquareVert[SquareVertIdx[vidx]];
     const float4 position = scaleTransform * unitPosition;
     const float2 pixelPosition = {
         ((unitPosition.x+1)/2)*(ctx.imageWidth),
@@ -150,9 +152,20 @@ float b(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uin
     }
 }
 
+uint3 binFromColor(float3 color) {
+    const uint32_t maxBin = (uint32_t)(sizeof(Histogram::r)/sizeof(*Histogram::r))-1;
+    return {
+        clamp((uint32_t)round(color.r*maxBin), (uint32_t)0, maxBin),
+        clamp((uint32_t)round(color.g*maxBin), (uint32_t)0, maxBin),
+        clamp((uint32_t)round(color.b*maxBin), (uint32_t)0, maxBin),
+    };
+}
+
 fragment float4 ImageLayer_FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
+    device Histogram& inputHistogram [[buffer(2)]],
+    device Histogram& outputHistogram [[buffer(3)]],
     VertexOutput interpolated [[stage_in]]
 ) {
     // Bayer pattern:
@@ -161,16 +174,19 @@ fragment float4 ImageLayer_FragmentShader(
     //  Row2    G R G R
     //  Row3    B G B G
     uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
+    float3 inputColor(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+    float3x3 colorMatrix(ctx.colorMatrix.c0, ctx.colorMatrix.c1, ctx.colorMatrix.c2);
+    float3 outputColor = colorMatrix*inputColor;
     
-    float3x3 colorMatrix(
-        ctx.colorMatrix.c0,
-        ctx.colorMatrix.c1,
-        ctx.colorMatrix.c2
-    );
+    uint3 inputColorBin = binFromColor(inputColor);
+    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.r[inputColorBin.r], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.g[inputColorBin.g], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.b[inputColorBin.b], 1, memory_order_relaxed);
     
-    float3 color(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-    return float4(colorMatrix * color, 1);
+    uint3 outputColorBin = binFromColor(outputColor);
+    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.r[outputColorBin.r], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.g[outputColorBin.g], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.b[outputColorBin.b], 1, memory_order_relaxed);
+    
+    return float4(outputColor, 1);
 }
-
-// unitToViewTransform -- transforms unit square coordinates -> view coordinates
-// viewToImageTransform -- transforms view coordinates -> image coordinates
