@@ -1,5 +1,10 @@
 #import <Cocoa/Cocoa.h>
 
 @interface MetalView : NSView
-+ (Class)layerClass; // Subclass must override
+// Subclass must override
++ (Class)layerClass;
+
+// Subclass can override, and must call super
+- (void)commonInit;
+
 @end

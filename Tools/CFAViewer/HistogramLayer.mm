@@ -25,6 +25,7 @@ using namespace HistogramLayerTypes;
         Histogram histogram __attribute__((aligned(4096)));
         HistogramFloat histogramFloat __attribute__((aligned(4096)));
         id<MTLBuffer> histogramBuf;
+        float maxVal;
     } _state;
 }
 
@@ -108,7 +109,17 @@ static NSDictionary* layerNullActions() {
     [self setNeedsDisplay];
 }
 
-// _state.lock lock must be held
+- (CGPoint)valueFromPoint:(CGPoint)p {
+    auto lock = std::unique_lock(_state.lock);
+    auto& ctx = _state.ctx;
+    CGSize size = [self bounds].size;
+    CGPoint r = {p.x/size.width, p.y/size.height};
+    r.x *= Histogram::Count;
+    r.y = powf(ctx.maxVal, r.y);
+    return r;
+}
+
+// _state.lock must be held
 - (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
     NSParameterAssert(drawableTexture);
     
