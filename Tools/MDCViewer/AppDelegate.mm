@@ -36,24 +36,24 @@ using namespace MDCImageLayerTypes;
 //    Mmap imageData("/Users/dave/repos/MotionDetectorCamera/Tools/cfa2dng/colorbars.cfa");
 //    Mmap imageData("/Users/dave/Desktop/colorbars.cfa");
 //    Mmap imageData("/Users/dave/Desktop/colorchecker.cfa");
-    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
-    constexpr size_t ImageWidth = 2304;
-    constexpr size_t ImageHeight = 1296;
-    Image image = {
-        .width = ImageWidth,
-        .height = ImageHeight,
-        .pixels = (ImagePixel*)imageData.data(),
-    };
-    [[_mainView layer] updateImage:image];
+//    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
+//    constexpr size_t ImageWidth = 2304;
+//    constexpr size_t ImageHeight = 1296;
+//    Image image = {
+//        .width = ImageWidth,
+//        .height = ImageHeight,
+//        .pixels = (ImagePixel*)imageData.data(),
+//    };
+//    [[_mainView layer] updateImage:image];
     
-//    std::vector<MDCDevice> devices = MDCDevice::FindDevices();
-//    if (devices.empty()) throw std::runtime_error("no matching MDC devices");
-//    if (devices.size() > 1) throw std::runtime_error("too many matching MDC devices");
-//    _device = devices[0];
-//    
-//    [NSThread detachNewThreadWithBlock:^{
-//        [self _threadControl];
-//    }];
+    std::vector<MDCDevice> devices = MDCDevice::FindDevices();
+    if (devices.empty()) throw std::runtime_error("no matching MDC devices");
+    if (devices.size() > 1) throw std::runtime_error("too many matching MDC devices");
+    _device = devices[0];
+    
+    [NSThread detachNewThreadWithBlock:^{
+        [self _threadControl];
+    }];
 }
 
 - (void)_threadControl {
@@ -125,7 +125,7 @@ using namespace MDCImageLayerTypes;
     
     const size_t pixelCount = pixStatus.width*pixStatus.height;
     auto pixels = std::make_unique<Pixel[]>(pixelCount);
-    for (;;) {
+    for (int count=0;; count++) {
         try {
             // Check if we've been cancelled
             bool cancel = false;
@@ -140,17 +140,16 @@ using namespace MDCImageLayerTypes;
 //            printf("Got %ju pixels (%ju x %ju)\n",
 //                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
             
-//            {
-//                Pixel min = std::numeric_limits<Pixel>::max();
-//                Pixel max = std::numeric_limits<Pixel>::min();
-//                for (size_t i=0; i<pixelCount; i++) {
-//                    min = std::min(min, pixels[i]);
-//                    max = std::max(max, pixels[i]);
-//                }
-//                
-//                printf("Min pixel: %ju\n", (uintmax_t)min);
-//                printf("Max pixel: %ju\n", (uintmax_t)max);
-//            }
+            if (!(count % 16)) {
+                Pixel min = std::numeric_limits<Pixel>::max();
+                Pixel max = std::numeric_limits<Pixel>::min();
+                for (size_t i=0; i<pixelCount; i++) {
+                    min = std::min(min, pixels[i]);
+                    max = std::max(max, pixels[i]);
+                }
+                
+                printf("Pixel range: [ %ju, %ju ]\n", (uintmax_t)min, (uintmax_t)max);
+            }
             
             static bool wrote = false;
             if (!wrote) {

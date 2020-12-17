@@ -116,8 +116,8 @@
 				55B9746424C504E2000B2633 /* Info.plist */,
 				55B9746524C504E2000B2633 /* main.m */,
 				552E7D5A24C9316900438AAF /* MDCViewer.entitlements */,
-				55B9745A24C504E2000B2633 /* Products */,
 				55B9747624C50A81000B2633 /* Frameworks */,
+				55B9745A24C504E2000B2633 /* Products */,
 			);
 			sourceTree = "<group>";
 		};

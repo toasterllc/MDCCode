@@ -200,11 +200,11 @@ fragment float4 MDCImageLayer_FragmentShader(
 //        31.76553751, 29.68887885, 109.69564914  // Column 2
 //    );
 
-//    float3x3 colorMatrix(
-//        1,  0,  0,
-//        0,  1,  0,
-//        0,  0,  1
-//    );
+    float3x3 colorMatrix(
+        1,  0,  0,
+        0,  1,  0,
+        0,  0,  1
+    );
 
 //    float3x3 colorMatrix(
 //        26.14248486,    -20.00693736,   31.76553751,
@@ -212,11 +212,11 @@ fragment float4 MDCImageLayer_FragmentShader(
 //        5.0718457,      -31.09156744,   109.69564914
 //    );
     
-    float3x3 colorMatrix(
-        95.496633,-8.895581,12.708955,
-        -40.551059,44.143511,-53.883598,
-        33.547201,24.089959,149.957579
-    );
+//    float3x3 colorMatrix(
+//        95.496633,-8.895581,12.708955,
+//        -40.551059,44.143511,-53.883598,
+//        33.547201,24.089959,149.957579
+//    );
     
     float3 color(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
 //    float3 color(1,0,0);
