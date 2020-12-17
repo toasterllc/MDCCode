@@ -108,8 +108,6 @@ public:
         }
     }
     
-private:
-    
     static const inline Cmd _PixResetCmd            = "PixReset";
     static const inline Cmd _PixConfigCmd           = "PixConfig";
     static const inline Cmd _PixI2CCmd              = "PixI2C";

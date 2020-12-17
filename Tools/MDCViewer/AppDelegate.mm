@@ -1,9 +1,10 @@
 #import "MDCMainView.h"
 #import <memory>
+#import <vector>
+#import <iostream>
 #import "MDCImageLayer.h"
 #import "STAppTypes.h"
 #import "MDCDevice.h"
-#import <iostream>
 #import "MDCUtil.h"
 using namespace MDCImageLayerTypes;
 
@@ -14,12 +15,6 @@ using namespace MDCImageLayerTypes;
 @implementation AppDelegate {
     IBOutlet MDCMainView* _mainView;
     MDCDevice _device;
-    struct {
-        std::mutex lock; // Protects this struct
-        std::condition_variable signal;
-        bool streamRunning = false;
-        bool streamCancel = false;
-    } _state;
 }
 
 //static bool checkPixel(uint32_t x, uint32_t y, ImagePixel expected, ImagePixel got) {
@@ -52,64 +47,34 @@ using namespace MDCImageLayerTypes;
     _device = devices[0];
     
     [NSThread detachNewThreadWithBlock:^{
-        [self _threadControl];
+        [self _threadStreamImages];
     }];
 }
 
-- (void)_threadControl {
-    for (;;) {
-        // Kick off a new streaming thread
-        _state.lock.lock();
-            _state.streamRunning = true;
-            _state.streamCancel = false;
-            _state.signal.notify_all();
-        _state.lock.unlock();
-        
-        [NSThread detachNewThreadWithBlock:^{
-            [self _threadStreamImages];
-        }];
-        
-        // Read arguments from stdin, repeating until they're valid
-        MDCUtil::Args args;
-        for (;;) {
-            std::string line;
-            std::getline(std::cin, line);
-            
-            std::vector<std::string> argStrs;
-            std::stringstream argStream(line);
-            std::string argStr;
-            while (std::getline(argStream, argStr, ' ')) {
-                if (!argStr.empty()) argStrs.push_back(argStr);
-            }
-            
-            // Parse arguments
-            try {
-                args = MDCUtil::ParseArgs(argStrs);
-                break;
-            
-            } catch (const std::exception& e) {
-                fprintf(stderr, "Bad arguments: %s\n\n", e.what());
-                MDCUtil::PrintUsage();
-            }
-        }
-        
-        // Cancel streaming and wait for it to stop
-        for (;;) {
-            auto lock = std::unique_lock(_state.lock);
-            _state.streamCancel = true;
-            if (!_state.streamRunning) break;
-            _state.signal.wait(lock);
-        }
-        
-        try {
-            MDCUtil::Run(_device, args);
-        
-        } catch (const std::exception& e) {
-            fprintf(stderr, "Error: %s\n\n", e.what());
-            continue;
+//  Row0    G1  R  G1  R
+//  Row1    B   G2 B   G2
+//  Row2    G1  R  G1  R
+//  Row3    B   G2 B   G2
+
+constexpr size_t ImageWidth = 2304;
+constexpr size_t ImageHeight = 1296;
+
+static double avgChannel(const STApp::Pixel* pixels, uint8_t phaseX, uint8_t phaseY) {
+    uint64_t total = 0;
+    uint64_t count = 0;
+    for (size_t y=phaseY; y<ImageHeight; y+=2) {
+        for (size_t x=phaseX; x<ImageWidth; x+=2) {
+            total += pixels[(y*ImageWidth)+x];
+            count++;
         }
     }
+    return (double)total/count;
 }
+
+static double avgG1(const STApp::Pixel* pixels) { return avgChannel(pixels, 0, 0); }
+static double avgB(const STApp::Pixel* pixels)  { return avgChannel(pixels, 0, 1); }
+static double avgR(const STApp::Pixel* pixels)  { return avgChannel(pixels, 1, 0); }
+static double avgG2(const STApp::Pixel* pixels) { return avgChannel(pixels, 1, 1); }
 
 - (void)_threadStreamImages {
     using namespace STApp;
@@ -119,43 +84,47 @@ using namespace MDCImageLayerTypes;
     // Reset the device to put it back in a pre-defined state
     _device.reset();
     
-    const PixStatus pixStatus = _device.pixStatus();
-    // Start Pix stream
-    _device.pixStartStream();
+    // Configure image sensor
+    MDCUtil::_PixReset(MDCUtil::Args(), _device);
+    MDCUtil::_PixConfig(MDCUtil::Args(), _device);
+    _device.pixI2CWrite(0x301E, 0); // data pedestal=0
     
+    const PixStatus pixStatus = _device.pixStatus();
     const size_t pixelCount = pixStatus.width*pixStatus.height;
     auto pixels = std::make_unique<Pixel[]>(pixelCount);
-    for (int count=0;; count++) {
+    
+//    uint8_t phaseX = 0;
+//    uint8_t phaseY = 0;
+//    assert(pixelCount == ImageWidth*ImageHeight);
+//    memset(pixels.get(), 0, pixelCount);
+//    for (size_t y=phaseY; y<ImageHeight; y+=2) {
+//        for (size_t x=phaseX; x<ImageWidth; x+=2) {
+//            pixels[(y*ImageWidth)+x] = 12;
+//        }
+//    }
+//    printf("r:%f g1:%f g2:%f b:%f\n", avgR(pixels.get()), avgG1(pixels.get()), avgG2(pixels.get()), avgB(pixels.get()));
+//    exit(0);
+    
+    for (uint16_t coarseIntTime=0; coarseIntTime<130; coarseIntTime+=1) {
         try {
-            // Check if we've been cancelled
-            bool cancel = false;
-            _state.lock.lock();
-                cancel = _state.streamCancel;
-            _state.lock.unlock();
-            if (cancel) break;
+            // Stop streaming (by resetting the STM32) so that we can set the pix integration time
+            _device.reset();
+            
+            // Set integration time
+            _device.pixI2CWrite(0x3012, coarseIntTime);
+            _device.pixStartStream();
+            
+            // Throw away some images after changing the integration time
+            for (int i=0; i<8; i++) {
+                _device.pixReadImage(pixels.get(), pixelCount, 1000);
+            }
             
             // Read an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
             _device.pixReadImage(pixels.get(), pixelCount, 1000);
-//            printf("Got %ju pixels (%ju x %ju)\n",
-//                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
             
-            if (!(count % 16)) {
-                Pixel min = std::numeric_limits<Pixel>::max();
-                Pixel max = std::numeric_limits<Pixel>::min();
-                for (size_t i=0; i<pixelCount; i++) {
-                    min = std::min(min, pixels[i]);
-                    max = std::max(max, pixels[i]);
-                }
-                
-                printf("Pixel range: [ %ju, %ju ]\n", (uintmax_t)min, (uintmax_t)max);
-            }
-            
-            static bool wrote = false;
-            if (!wrote) {
-                wrote = true;
-                [[NSData dataWithBytes:pixels.get() length:pixelCount*sizeof(Pixel)] writeToFile:@"/Users/dave/Desktop/img.bin" atomically:true];
-            }
+            printf("%ju\t%f\t%f\t%f\t%f\n",
+                (uintmax_t)coarseIntTime, avgR(pixels.get()), avgG1(pixels.get()), avgG2(pixels.get()), avgB(pixels.get()));
             
             Image image = {
                 .width = pixStatus.width,
@@ -166,17 +135,11 @@ using namespace MDCImageLayerTypes;
         
         } catch (...) {
             if (_device.pixStatus().state != PixState::Streaming) {
-//                printf("pixStatus.state != PixState::Streaming\n");
+                printf("pixStatus.state != PixState::Streaming\n");
                 break;
             }
         }
     }
-    
-    // Notify that our thread has exited
-    _state.lock.lock();
-        _state.streamRunning = false;
-        _state.signal.notify_all();
-    _state.lock.unlock();
 }
 
 @end
