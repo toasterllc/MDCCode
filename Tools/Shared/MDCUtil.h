@@ -190,7 +190,7 @@ private:
         // Set data_pedestal
         {
 //            device.pixI2CWrite(0x301E, 0x00A8);  // Default
-//            device.pixI2CWrite(0x301E, 0x0000);
+            device.pixI2CWrite(0x301E, 0x0000);
         }
         
         // Set test data colors

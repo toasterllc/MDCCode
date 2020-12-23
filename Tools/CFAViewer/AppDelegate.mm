@@ -91,7 +91,8 @@ using namespace ImageLayerTypes;
 }
 
 - (void)awakeFromNib {
-    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
+    Mmap imageData("/Users/dave/Desktop/img.cfa");
+//    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
     constexpr size_t ImageWidth = 2304;
     constexpr size_t ImageHeight = 1296;
     Image image = {
