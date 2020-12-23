@@ -6,8 +6,10 @@
 #import "ImageLayerTypes.h"
 #import "Assert.h"
 #import "MyTime.h"
-using namespace MetalTypes;
-using namespace ImageLayerTypes;
+#import "Util.h"
+using namespace CFAViewer;
+using namespace CFAViewer::MetalTypes;
+using namespace CFAViewer::ImageLayerTypes;
 
 @implementation ImageLayer {
     id<MTLDevice> _device;
@@ -16,46 +18,22 @@ using namespace ImageLayerTypes;
     id<MTLDepthStencilState> _depthStencilState;
     ImageLayerHistogramChangedHandler _histogramChangedHandler;
     
-    struct {
-        // Protects this struct
-        std::mutex lock;
-        
-        id<MTLTexture> depthTexture;
-        MTLRenderPassDepthAttachmentDescriptor* depthAttachment;
-        
-        RenderContext ctx;
-        id<MTLBuffer> pixelData;
-        
-        Histogram inputHistogram __attribute__((aligned(4096)));
-        id<MTLBuffer> inputHistogramBuf;
-        Histogram outputHistogram __attribute__((aligned(4096)));
-        id<MTLBuffer> outputHistogramBuf;
-    } _state;
-}
-
-static NSDictionary* layerNullActions() {
-    static NSDictionary* r = @{
-        kCAOnOrderIn: [NSNull null],
-        kCAOnOrderOut: [NSNull null],
-        @"bounds": [NSNull null],
-        @"frame": [NSNull null],
-        @"position": [NSNull null],
-        @"sublayers": [NSNull null],
-        @"transform": [NSNull null],
-        @"contents": [NSNull null],
-        @"contentsScale": [NSNull null],
-        @"hidden": [NSNull null],
-        @"fillColor": [NSNull null],
-        @"fontSize": [NSNull null],
-    };
-    return r;
+    id<MTLTexture> _depthTexture;
+    MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
+    
+    RenderContext _ctx;
+    id<MTLBuffer> _pixelData;
+    
+    Histogram _inputHistogram __attribute__((aligned(4096)));
+    id<MTLBuffer> _inputHistogramBuf;
+    Histogram _outputHistogram __attribute__((aligned(4096)));
+    id<MTLBuffer> _outputHistogramBuf;
 }
 
 - (instancetype)init {
     if (!(self = [super init])) return nil;
     
-    [self setActions:layerNullActions()];
-    [self setNeedsDisplayOnBoundsChange:true];
+    [self setActions:LayerNullActions()];
     
     _device = MTLCreateSystemDefaultDevice();
     Assert(_device, return nil);
@@ -88,17 +66,16 @@ static NSDictionary* layerNullActions() {
     depthStencilDescriptor.depthWriteEnabled = true;
     _depthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
     
-    auto lock = std::lock_guard(_state.lock);
-        _state.depthAttachment = [MTLRenderPassDepthAttachmentDescriptor new];
-        [_state.depthAttachment setLoadAction:MTLLoadActionClear];
-        [_state.depthAttachment setStoreAction:MTLStoreActionDontCare];
-        [_state.depthAttachment setClearDepth:1];
-        
-        _state.inputHistogramBuf = [_device newBufferWithBytesNoCopy:&_state.inputHistogram
-            length:sizeof(_state.inputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
-        
-        _state.outputHistogramBuf = [_device newBufferWithBytesNoCopy:&_state.outputHistogram
-            length:sizeof(_state.outputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
+    _depthAttachment = [MTLRenderPassDepthAttachmentDescriptor new];
+    [_depthAttachment setLoadAction:MTLLoadActionClear];
+    [_depthAttachment setStoreAction:MTLStoreActionDontCare];
+    [_depthAttachment setClearDepth:1];
+    
+    _inputHistogramBuf = [_device newBufferWithBytesNoCopy:&_inputHistogram
+        length:sizeof(_inputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
+    
+    _outputHistogramBuf = [_device newBufferWithBytesNoCopy:&_outputHistogram
+        length:sizeof(_outputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
     
     return self;
 }
@@ -108,38 +85,37 @@ static NSDictionary* layerNullActions() {
     NSParameterAssert(image.pixels || (image.width*image.height)==0);
     const size_t pixelCount = image.width*image.height;
     
-    auto lock = std::unique_lock(_state.lock);
-        // Reset image size in case something fails
-        _state.ctx.imageWidth = 0;
-        _state.ctx.imageHeight = 0;
-        
-        const size_t len = pixelCount*sizeof(ImagePixel);
-        if (len) {
-            if (!_state.pixelData || [_state.pixelData length]<len) {
-                _state.pixelData = [_device newBufferWithLength:len
-                    options:MTLResourceCPUCacheModeDefaultCache];
-                Assert(_state.pixelData, return);
-            }
-            
-            // Copy the pixel data into the Metal buffer
-            memcpy([_state.pixelData contents], image.pixels, len);
-            
-            // Set the image size now that we have image data
-            _state.ctx.imageWidth = image.width;
-            _state.ctx.imageHeight = image.height;
-        
-        } else {
-            _state.pixelData = nil;
+    // Reset image size in case something fails
+    _ctx.imageWidth = 0;
+    _ctx.imageHeight = 0;
+    
+    const size_t len = pixelCount*sizeof(ImagePixel);
+    if (len) {
+        if (!_pixelData || [_pixelData length]<len) {
+            _pixelData = [_device newBufferWithLength:len
+                options:MTLResourceCPUCacheModeDefaultCache];
+            Assert(_pixelData, return);
         }
-    lock.unlock();
+        
+        // Copy the pixel data into the Metal buffer
+        memcpy([_pixelData contents], image.pixels, len);
+        
+        // Set the image size now that we have image data
+        _ctx.imageWidth = image.width;
+        _ctx.imageHeight = image.height;
+    
+    } else {
+        _pixelData = nil;
+    }
+    
+    const CGFloat scale = [self contentsScale];
+    [self setBounds:{0, 0, _ctx.imageWidth/scale, _ctx.imageHeight/scale}];
     
     [self setNeedsDisplay];
 }
 
 - (void)updateColorMatrix:(const ColorMatrix&)colorMatrix {
-    auto lock = std::unique_lock(_state.lock);
-        _state.ctx.colorMatrix = colorMatrix;
-    lock.unlock();
+    _ctx.colorMatrix = colorMatrix;
     [self setNeedsDisplay];
 }
 
@@ -148,22 +124,19 @@ static NSDictionary* layerNullActions() {
 }
 
 - (MetalTypes::Histogram)inputHistogram {
-    auto lock = std::unique_lock(_state.lock);
-    return _state.inputHistogram;
+    return _inputHistogram;
 }
 
 - (MetalTypes::Histogram)outputHistogram {
-    auto lock = std::unique_lock(_state.lock);
-    return _state.outputHistogram;
+    return _outputHistogram;
 }
 
-// _state.lock lock must be held
 - (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
     NSParameterAssert(drawableTexture);
     
     const NSUInteger width = [drawableTexture width];
     const NSUInteger height = [drawableTexture height];
-    if (!_state.depthTexture || width!=[_state.depthTexture width] || height!=[_state.depthTexture height]) {
+    if (!_depthTexture || width!=[_depthTexture width] || height!=[_depthTexture height]) {
         // The _depthTexture doesn't exist or our size changed, so re-create the depth texture
         MTLTextureDescriptor* desc =
             [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
@@ -173,19 +146,20 @@ static NSDictionary* layerNullActions() {
         [desc setUsage:MTLTextureUsageUnknown];
         [desc setStorageMode:MTLStorageModePrivate];
         
-        _state.depthTexture = [_device newTextureWithDescriptor:desc];
-        [_state.depthAttachment setTexture:_state.depthTexture];
+        _depthTexture = [_device newTextureWithDescriptor:desc];
+        [_depthAttachment setTexture:_depthTexture];
     }
     
-    return _state.depthAttachment;
+    return _depthAttachment;
 }
 
 - (void)display {
-    auto lock = std::unique_lock(_state.lock);
-    auto& ctx = _state.ctx;
     
-    _state.inputHistogram = Histogram();
-    _state.outputHistogram = Histogram();
+    // Short-circuit if we don't have any image data
+    if (!_pixelData) return;
+    
+    _inputHistogram = Histogram();
+    _outputHistogram = Histogram();
     
     // Update our drawable size using our view size (in pixels)
     const CGFloat scale = [self contentsScale];
@@ -194,8 +168,8 @@ static NSDictionary* layerNullActions() {
     viewSizePx.height *= scale;
     [self setDrawableSize:viewSizePx];
     
-    ctx.viewWidth = (uint32_t)lround(viewSizePx.width);
-    ctx.viewHeight = (uint32_t)lround(viewSizePx.height);
+    _ctx.viewWidth = (uint32_t)lround(viewSizePx.width);
+    _ctx.viewHeight = (uint32_t)lround(viewSizePx.height);
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
@@ -221,18 +195,16 @@ static NSDictionary* layerNullActions() {
     [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
     [renderEncoder setCullMode:MTLCullModeNone];
     
-    // Only try to render if we have a _state.pixelData
-    if (_state.pixelData) {
-        [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
-        
-        [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentBuffer:_state.pixelData offset:0 atIndex:1];
-        [renderEncoder setFragmentBuffer:_state.inputHistogramBuf offset:0 atIndex:2];
-        [renderEncoder setFragmentBuffer:_state.outputHistogramBuf offset:0 atIndex:3];
-        
-        [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-            vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
-    }
+    // Only try to render if we have a _pixelData
+    [renderEncoder setVertexBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    
+    [renderEncoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [renderEncoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
+    [renderEncoder setFragmentBuffer:_inputHistogramBuf offset:0 atIndex:2];
+    [renderEncoder setFragmentBuffer:_outputHistogramBuf offset:0 atIndex:3];
+    
+    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+        vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
     
     [renderEncoder endEncoding];
     [commandBuffer presentDrawable:drawable];
@@ -242,24 +214,18 @@ static NSDictionary* layerNullActions() {
     // held because the shader accesses _state
     [commandBuffer waitUntilCompleted];
     
-    lock.unlock();
-    
     // Notify that our histogram changed
     if (_histogramChangedHandler) _histogramChangedHandler(self);
     
 //    size_t i = 0;
-//    for (const auto& count : _state.inputHistogram.r) {
+//    for (const auto& count : _inputHistogram.r) {
 //        printf("[%ju] %ju\n", (uintmax_t)i, (uintmax_t)count);
 //        i++;
 //    }
     
 //    printf("Duration: %ju\n", (uintmax_t)MyTime::DurationNs(startTime));
-//    printf("%ju\n", (uintmax_t)_state.histogram.counts[0].load());
+//    printf("%ju\n", (uintmax_t)_histogram.counts[0].load());
     
-}
-
-- (void)layoutSublayers {
-    [super layoutSublayers];
 }
 
 - (void)setContentsScale:(CGFloat)scale {

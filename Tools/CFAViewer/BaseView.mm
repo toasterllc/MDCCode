@@ -1,13 +1,12 @@
-#import "MetalView.h"
+#import "BaseView.h"
 #import <memory>
 
-@implementation MetalView {
+@implementation BaseView {
     CALayer* _layer;
 }
 
 + (Class)layerClass {
-    // Subclass must override
-    abort();
+    return [CALayer class];
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {

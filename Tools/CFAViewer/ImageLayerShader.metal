@@ -1,8 +1,8 @@
 #import <metal_stdlib>
 #import "ImageLayerTypes.h"
 using namespace metal;
-using namespace MetalTypes;
-using namespace ImageLayerTypes;
+using namespace CFAViewer::MetalTypes;
+using namespace CFAViewer::ImageLayerTypes;
 
 static float4x4 scale(float x, float y, float z) {
     return {
@@ -23,8 +23,8 @@ vertex VertexOutput ImageLayer_VertexShader(
     uint vidx [[vertex_id]]
 ) {
     const float4x4 scaleTransform = scale(
-        (float)ctx.imageWidth/ctx.viewWidth,
-        -(float)ctx.imageHeight/ctx.viewHeight,
+        1,
+        -1,
         1
     );
     

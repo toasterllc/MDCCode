@@ -1,7 +1,8 @@
 #import <Cocoa/Cocoa.h>
 
-@interface MetalView : NSView
-// Subclass must override
+@interface BaseView : NSView
+
+// Subclass can override if it wants a custom layer class
 + (Class)layerClass;
 
 // Subclass can override, and must call super

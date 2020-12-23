@@ -5,6 +5,8 @@
 #import "HistogramLayer.h"
 #import "HistogramLayerTypes.h"
 #import "Assert.h"
+#import "Util.h"
+using namespace CFAViewer;
 using namespace MetalTypes;
 using namespace HistogramLayerTypes;
 
@@ -29,28 +31,10 @@ using namespace HistogramLayerTypes;
     } _state;
 }
 
-static NSDictionary* layerNullActions() {
-    static NSDictionary* r = @{
-        kCAOnOrderIn: [NSNull null],
-        kCAOnOrderOut: [NSNull null],
-        @"bounds": [NSNull null],
-        @"frame": [NSNull null],
-        @"position": [NSNull null],
-        @"sublayers": [NSNull null],
-        @"transform": [NSNull null],
-        @"contents": [NSNull null],
-        @"contentsScale": [NSNull null],
-        @"hidden": [NSNull null],
-        @"fillColor": [NSNull null],
-        @"fontSize": [NSNull null],
-    };
-    return r;
-}
-
 - (instancetype)init {
     if (!(self = [super init])) return nil;
     
-    [self setActions:layerNullActions()];
+    [self setActions:LayerNullActions()];
     [self setNeedsDisplayOnBoundsChange:true];
     
     _device = MTLCreateSystemDefaultDevice();

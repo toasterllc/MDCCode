@@ -1,8 +1,8 @@
 #import <metal_stdlib>
 #import "HistogramLayerTypes.h"
 using namespace metal;
-using namespace MetalTypes;
-using namespace HistogramLayerTypes;
+using namespace CFAViewer::MetalTypes;
+using namespace CFAViewer::HistogramLayerTypes;
 
 struct VertexOutput {
     float4 viewPosition [[position]];

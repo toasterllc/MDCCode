@@ -1,4 +1,4 @@
-#import "MetalView.h"
+#import "BaseView.h"
 #import <memory>
 #import <iostream>
 #import <regex>
@@ -6,18 +6,124 @@
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Mmap.h"
+#import "Util.h"
+using namespace CFAViewer;
 using namespace MetalTypes;
 using namespace ImageLayerTypes;
 
-@interface MainView : MetalView
+@interface MainView : BaseView <CALayoutManager>
 @end
 
-@implementation MainView
-+ (Class)layerClass         { return [ImageLayer class];    }
-- (ImageLayer*)imageLayer   { return (id)[self layer];      }
+@implementation MainView {
+    CALayer* _layer;
+    ImageLayer* _imageLayer;
+    float _circleRadius;
+    std::vector<CAShapeLayer*> _circles;
+}
+
+- (void)commonInit {
+    [super commonInit];
+    _layer = [self layer];
+    _circleRadius = 10;
+    _imageLayer = [ImageLayer new];
+    [_layer addSublayer:_imageLayer];
+    [_layer setLayoutManager:self];
+}
+
+- (ImageLayer*)imageLayer {
+    return _imageLayer;
+}
+
+// `p` is in coordinates of _layer
+- (CAShapeLayer*)_findCircle:(CGPoint)p {
+    for (CAShapeLayer* c : _circles) {
+        const CGPoint cp = [c position];
+        if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _circleRadius) {
+            return c;
+        }
+    }
+    return nil;
+}
+
+struct RGB {
+    float r;
+    float g;
+    float b;    
+};
+
+const RGB ColorCheckerColors[] {
+    // Row 0
+    {   0x73/255.   ,   0x52/255.   ,   0x44/255.   },
+    {   0xc2/255.   ,   0x96/255.   ,   0x82/255.   },
+    {   0x62/255.   ,   0x7a/255.   ,   0x9d/255.   },
+    {   0x57/255.   ,   0x6c/255.   ,   0x43/255.   },
+    {   0x85/255.   ,   0x80/255.   ,   0xb1/255.   },
+    {   0x67/255.   ,   0xbd/255.   ,   0xaa/255.   },
+    
+    // Row 1
+    {   0xd6/255.   ,   0x7e/255.   ,   0x2c/255.   },
+    {   0x50/255.   ,   0x5b/255.   ,   0xa6/255.   },
+    {   0xc1/255.   ,   0x5a/255.   ,   0x63/255.   },
+    {   0x5e/255.   ,   0x3c/255.   ,   0x6c/255.   },
+    {   0x9d/255.   ,   0xbc/255.   ,   0x40/255.   },
+    {   0xe0/255.   ,   0xa3/255.   ,   0x2e/255.   },
+    
+    // Row 2
+    {   0x38/255.   ,   0x3d/255.   ,   0x96/255.   },
+    {   0x46/255.   ,   0x94/255.   ,   0x49/255.   },
+    {   0xaf/255.   ,   0x36/255.   ,   0x3c/255.   },
+    {   0xe7/255.   ,   0xc7/255.   ,   0x1f/255.   },
+    {   0xbb/255.   ,   0x56/255.   ,   0x95/255.   },
+    {   0x08/255.   ,   0x85/255.   ,   0xa1/255.   },
+    
+    // Row 3
+    {   0xf3/255.   ,   0xf3/255.   ,   0xf2/255.   },
+    {   0xc8/255.   ,   0xc8/255.   ,   0xc8/255.   },
+    {   0xa0/255.   ,   0xa0/255.   ,   0xa0/255.   },
+    {   0x7a/255.   ,   0x7a/255.   ,   0x79/255.   },
+    {   0x55/255.   ,   0x55/255.   ,   0x55/255.   },
+    {   0x34/255.   ,   0x34/255.   ,   0x34/255.   },
+};
+
+- (void)mouseDown:(NSEvent*)ev {
+    NSWindow* win = [self window];
+    const CGPoint p = [_imageLayer convertPoint:[ev locationInWindow]
+        fromLayer:[[win contentView] layer]];
+    const size_t MaxCircleCount = std::size(ColorCheckerColors);
+    
+    CAShapeLayer* circle = [self _findCircle:p];
+    if (!circle && _circles.size()<MaxCircleCount) {
+        circle = [CAShapeLayer new];
+        [circle setPath:
+            (CGPathRef)CFBridgingRelease(CGPathCreateWithEllipseInRect({0,0,_circleRadius*2,_circleRadius*2}, nil))];
+        [circle setBounds:{0,0,_circleRadius*2,_circleRadius*2}];
+        
+        auto rgb = ColorCheckerColors[_circles.size()];
+        [circle setFillColor:(CGColorRef)SRGBColor(rgb.r, rgb.g, rgb.b, 1)];
+        [circle setActions:LayerNullActions()];
+        
+        [circle setPosition:p];
+        [_imageLayer addSublayer:circle];
+        _circles.push_back(circle);
+    }
+    
+    TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
+        const CGPoint p = [_imageLayer convertPoint:[ev locationInWindow]
+            fromLayer:[[win contentView] layer]];
+        [circle setPosition:p];
+    });
+}
+
+- (void)layoutSublayersOfLayer:(CALayer*)layer {
+    if (layer == _layer) {
+        CGSize layerSize = [_layer bounds].size;
+        [_imageLayer setPosition:{layerSize.width/2, layerSize.height/2}];
+    }
+}
+
 @end
 
-@interface HistogramView : MetalView
+@interface HistogramView : BaseView
 @end
 
 @implementation HistogramView {
@@ -71,9 +177,6 @@ using namespace ImageLayerTypes;
 - (void)_updateLabel:(CGPoint)p {
     CGPoint val = [[self histogramLayer] valueFromPoint:p];
     [_label setStringValue:[NSString stringWithFormat:@"%.1f %.1f", val.x, val.y]];
-    
-    NSLog(@"%f", val.y);
-//    p = [self convertPoint:[event locationInWindow] fromView:nil];
 }
 
 @end
