@@ -111,6 +111,31 @@ using namespace MDCImageLayerTypes;
     }
 }
 
+//  Row0    G1  R  G1  R
+//  Row1    B   G2 B   G2
+//  Row2    G1  R  G1  R
+//  Row3    B   G2 B   G2
+
+constexpr size_t ImageWidth = 2304;
+constexpr size_t ImageHeight = 1296;
+
+static double avgChannel(const STApp::Pixel* pixels, uint8_t phaseX, uint8_t phaseY) {
+    uint64_t total = 0;
+    uint64_t count = 0;
+    for (size_t y=phaseY; y<ImageHeight; y+=2) {
+        for (size_t x=phaseX; x<ImageWidth; x+=2) {
+            total += pixels[(y*ImageWidth)+x];
+            count++;
+        }
+    }
+    return (double)total/count;
+}
+
+static double avgG1(const STApp::Pixel* pixels) { return avgChannel(pixels, 0, 0); }
+static double avgB(const STApp::Pixel* pixels)  { return avgChannel(pixels, 0, 1); }
+static double avgR(const STApp::Pixel* pixels)  { return avgChannel(pixels, 1, 0); }
+static double avgG2(const STApp::Pixel* pixels) { return avgChannel(pixels, 1, 1); }
+
 - (void)_threadStreamImages {
     using namespace STApp;
     
@@ -140,16 +165,34 @@ using namespace MDCImageLayerTypes;
 //            printf("Got %ju pixels (%ju x %ju)\n",
 //                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
             
-            if (!(count % 16)) {
-                Pixel min = std::numeric_limits<Pixel>::max();
-                Pixel max = std::numeric_limits<Pixel>::min();
-                for (size_t i=0; i<pixelCount; i++) {
-                    min = std::min(min, pixels[i]);
-                    max = std::max(max, pixels[i]);
-                }
-                
-                printf("Pixel range: [ %ju, %ju ]\n", (uintmax_t)min, (uintmax_t)max);
-            }
+//            if (!(count % 16))
+//            {
+////                Pixel min = std::numeric_limits<Pixel>::max();
+////                Pixel max = std::numeric_limits<Pixel>::min();
+////                for (size_t i=0; i<pixelCount; i++) {
+////                    min = std::min(min, pixels[i]);
+////                    max = std::max(max, pixels[i]);
+////                }
+////                
+////                printf("Pixel range: [ %ju, %ju ]\n", (uintmax_t)min, (uintmax_t)max);
+//                
+//                const double r = avgR(pixels.get());
+//                const double g1 = avgG1(pixels.get());
+//                const double g2 = avgG2(pixels.get());
+//                const double b = avgB(pixels.get());
+//                double max = std::max(r, g1);
+//                max = std::max(max, g2);
+//                max = std::max(max, b);
+//                
+////                printf("%ju\t%f\t%f\t%f\t%f (%f %f %f %f)\n", (uintmax_t)count,
+////                    r, g1, g2, b,
+////                    r/max, g1/max, g2/max, b/max);
+//                
+////                printf("%f\n", r);
+////                printf("%f\n", g1);
+////                printf("%f\n", g2);
+////                printf("%f\n", b);
+//            }
             
             static bool wrote = false;
             if (!wrote) {
