@@ -11,47 +11,17 @@ using namespace CFAViewer;
 using namespace MetalTypes;
 using namespace ImageLayerTypes;
 
-@interface MainView : BaseView <CALayoutManager>
+@interface NSObject ()
+- (void)colorCheckerPointsChanged;
 @end
 
-@implementation MainView {
-    CALayer* _layer;
-    ImageLayer* _imageLayer;
-    float _circleRadius;
-    std::vector<CAShapeLayer*> _circles;
-}
-
-- (void)commonInit {
-    [super commonInit];
-    _layer = [self layer];
-    _circleRadius = 10;
-    _imageLayer = [ImageLayer new];
-    [_layer addSublayer:_imageLayer];
-    [_layer setLayoutManager:self];
-}
-
-- (ImageLayer*)imageLayer {
-    return _imageLayer;
-}
-
-// `p` is in coordinates of _layer
-- (CAShapeLayer*)_findCircle:(CGPoint)p {
-    for (CAShapeLayer* c : _circles) {
-        const CGPoint cp = [c position];
-        if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _circleRadius) {
-            return c;
-        }
-    }
-    return nil;
-}
-
-struct RGB {
-    float r;
-    float g;
-    float b;    
+struct Color3 {
+    float r = 0;
+    float g = 0;
+    float b = 0;
 };
 
-const RGB ColorCheckerColors[] {
+const Color3 ColorCheckerColors[] {
     // Row 0
     {   0x73/255.   ,   0x52/255.   ,   0x44/255.   },
     {   0xc2/255.   ,   0x96/255.   ,   0x82/255.   },
@@ -85,26 +55,62 @@ const RGB ColorCheckerColors[] {
     {   0x34/255.   ,   0x34/255.   ,   0x34/255.   },
 };
 
+const size_t ColorCheckerCount = std::size(ColorCheckerColors);
+
+@interface MainView : BaseView <CALayoutManager>
+@end
+
+@implementation MainView {
+    CALayer* _layer;
+    ImageLayer* _imageLayer;
+    float _circleRadius;
+    std::vector<CAShapeLayer*> _colorCheckerCircles;
+    IBOutlet id _delegate;
+}
+
+- (void)commonInit {
+    [super commonInit];
+    _layer = [self layer];
+    _circleRadius = 10;
+    _imageLayer = [ImageLayer new];
+    [_layer addSublayer:_imageLayer];
+    [_layer setLayoutManager:self];
+}
+
+- (ImageLayer*)imageLayer {
+    return _imageLayer;
+}
+
+// `p` is in coordinates of _layer
+- (CAShapeLayer*)_findCircle:(CGPoint)p {
+    for (CAShapeLayer* c : _colorCheckerCircles) {
+        const CGPoint cp = [c position];
+        if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _circleRadius) {
+            return c;
+        }
+    }
+    return nil;
+}
+
 - (void)mouseDown:(NSEvent*)ev {
     NSWindow* win = [self window];
     const CGPoint p = [_imageLayer convertPoint:[ev locationInWindow]
         fromLayer:[[win contentView] layer]];
-    const size_t MaxCircleCount = std::size(ColorCheckerColors);
     
     CAShapeLayer* circle = [self _findCircle:p];
-    if (!circle && _circles.size()<MaxCircleCount) {
+    if (!circle && _colorCheckerCircles.size()<ColorCheckerCount) {
         circle = [CAShapeLayer new];
         [circle setPath:
             (CGPathRef)CFBridgingRelease(CGPathCreateWithEllipseInRect({0,0,_circleRadius*2,_circleRadius*2}, nil))];
         [circle setBounds:{0,0,_circleRadius*2,_circleRadius*2}];
         
-        auto rgb = ColorCheckerColors[_circles.size()];
+        auto rgb = ColorCheckerColors[_colorCheckerCircles.size()];
         [circle setFillColor:(CGColorRef)SRGBColor(rgb.r, rgb.g, rgb.b, 1)];
         [circle setActions:LayerNullActions()];
         
         [circle setPosition:p];
         [_imageLayer addSublayer:circle];
-        _circles.push_back(circle);
+        _colorCheckerCircles.push_back(circle);
     }
     
     TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
@@ -112,6 +118,8 @@ const RGB ColorCheckerColors[] {
             fromLayer:[[win contentView] layer]];
         [circle setPosition:p];
     });
+    
+    [_delegate colorCheckerPointsChanged];
 }
 
 - (void)layoutSublayersOfLayer:(CALayer*)layer {
@@ -119,6 +127,18 @@ const RGB ColorCheckerColors[] {
         CGSize layerSize = [_layer bounds].size;
         [_imageLayer setPosition:{layerSize.width/2, layerSize.height/2}];
     }
+}
+
+- (std::vector<CGPoint>)colorCheckerPoints {
+    std::vector<CGPoint> r;
+    CGSize layerSize = [_layer bounds].size;
+    for (CALayer* c : _colorCheckerCircles) {
+        CGPoint p = [c position];
+        p.x /= layerSize.width;
+        p.y /= layerSize.height;
+        r.push_back(p);
+    }
+    return r;
 }
 
 @end
@@ -189,21 +209,24 @@ const RGB ColorCheckerColors[] {
     IBOutlet MainView* _mainView;
     IBOutlet HistogramView* _inputHistogramView;
     IBOutlet HistogramView* _outputHistogramView;
-    
     IBOutlet NSTextField* _colorMatrixTextField;
+    
+    Mmap _imageData;
+    Image _image;
 }
 
 - (void)awakeFromNib {
-    Mmap imageData("/Users/dave/Desktop/img.cfa");
+    _imageData = Mmap("/Users/dave/Desktop/img.cfa");
+    
 //    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
     constexpr size_t ImageWidth = 2304;
     constexpr size_t ImageHeight = 1296;
-    Image image = {
+    _image = {
         .width = ImageWidth,
         .height = ImageHeight,
-        .pixels = (MetalTypes::ImagePixel*)imageData.data(),
+        .pixels = (MetalTypes::ImagePixel*)_imageData.data(),
     };
-    [[_mainView imageLayer] updateImage:image];
+    [[_mainView imageLayer] updateImage:_image];
     
     __weak auto weakSelf = self;
     [[_mainView imageLayer] setHistogramChangedHandler:^(ImageLayer*) {
@@ -252,6 +275,157 @@ const RGB ColorCheckerColors[] {
 //        printf("[%ju]: %ju\n", (uintmax_t)i, (uintmax_t)val);
 //        i++;
 //    }
+}
+
+//  Row0    G1  R  G1  R
+//  Row1    B   G2 B   G2
+//  Row2    G1  R  G1  R
+//  Row3    B   G2 B   G2
+
+static float px(Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
+    int32_t xc = (int32_t)x + dx;
+    int32_t yc = (int32_t)y + dy;
+    xc = std::clamp(xc, (int32_t)0, (int32_t)img.width-1);
+    yc = std::clamp(yc, (int32_t)0, (int32_t)img.height-1);
+    return (float)img.pixels[(yc*img.width)+xc] / ImagePixelMax;
+}
+
+static float sampleR(Image& img, uint32_t x, uint32_t y) {
+    if (y % 2) {
+        // ROW = B G B G ...
+        
+        // Have G
+        // Want R
+        // Sample @ y-1, y+1
+        if (x % 2) return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
+        
+        // Have B
+        // Want R
+        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+        else return .25*px(img, x, -1, y, -1) +
+                    .25*px(img, x, -1, y, +1) +
+                    .25*px(img, x, +1, y, -1) +
+                    .25*px(img, x, +1, y, +1) ;
+    
+    } else {
+        // ROW = G R G R ...
+        
+        // Have R
+        // Want R
+        // Sample @ this pixel
+        if (x % 2) return px(img, x, 0, y, 0);
+        
+        // Have G
+        // Want R
+        // Sample @ x-1 and x+1
+        else return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
+    }
+}
+
+static float sampleG(Image& img, uint32_t x, uint32_t y) {
+//    return px(img, x, 0, y, 0);
+    
+    if (y % 2) {
+        // ROW = B G B G ...
+        
+        // Have G
+        // Want G
+        // Sample @ this pixel
+        if (x % 2) return px(img, x, 0, y, 0);
+        
+        // Have B
+        // Want G
+        // Sample @ x-1, x+1, y-1, y+1
+        else return .25*px(img, x, -1, y, 0) +
+                    .25*px(img, x, +1, y, 0) +
+                    .25*px(img, x, 0, y, -1) +
+                    .25*px(img, x, 0, y, +1) ;
+    
+    } else {
+        // ROW = G R G R ...
+        
+        // Have R
+        // Want G
+        // Sample @ x-1, x+1, y-1, y+1
+        if (x % 2) return   .25*px(img, x, -1, y, 0) +
+                                .25*px(img, x, +1, y, 0) +
+                                .25*px(img, x, 0, y, -1) +
+                                .25*px(img, x, 0, y, +1) ;
+        
+        // Have G
+        // Want G
+        // Sample @ this pixel
+        else return px(img, x, 0, y, 0);
+    }
+}
+
+static float sampleB(Image& img, uint32_t x, uint32_t y) {
+//    return px(img, x, 0, y, 0);
+    
+    if (y % 2) {
+        // ROW = B G B G ...
+        
+        // Have G
+        // Want B
+        // Sample @ x-1, x+1
+        if (x % 2) return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
+        
+        // Have B
+        // Want B
+        // Sample @ this pixel
+        else return px(img, x, 0, y, 0);
+    
+    } else {
+        // ROW = G R G R ...
+        
+        // Have R
+        // Want B
+        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+        if (x % 2) return   .25*px(img, x, -1, y, -1) +
+                                .25*px(img, x, -1, y, +1) +
+                                .25*px(img, x, +1, y, -1) +
+                                .25*px(img, x, +1, y, +1) ;
+        
+        // Have G
+        // Want B
+        // Sample @ y-1, y+1
+        else return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
+    }
+}
+
+static Color3 sampleImage(Image& img, uint32_t x, uint32_t y, uint32_t win) {
+    uint32_t left = std::clamp((int32_t)x-(int32_t)win, (int32_t)0, (int32_t)img.width-1);
+    uint32_t right = std::clamp((int32_t)x+(int32_t)win, (int32_t)0, (int32_t)img.width-1)+1;
+    uint32_t top = std::clamp((int32_t)y-(int32_t)win, (int32_t)0, (int32_t)img.height-1);
+    uint32_t bottom = std::clamp((int32_t)y+(int32_t)win, (int32_t)0, (int32_t)img.height-1)+1;
+    
+    Color3 c;
+    uint32_t i = 0;
+    for (uint32_t y=top; y<bottom; y++) {
+        for (uint32_t x=left; x<right; x++) {
+            c.r += sampleR(img, x, y);
+            c.g += sampleG(img, x, y);
+            c.b += sampleB(img, x, y);
+            i++;
+        }
+    }
+    
+    c.r /= i;
+    c.g /= i;
+    c.b /= i;
+    return c;
+}
+
+//static Color3 sampleImage(uint32_t x, uint32_t y, uint32_t win) {
+//    
+//    return {};
+//}
+
+- (void)colorCheckerPointsChanged {
+    auto points = [_mainView colorCheckerPoints];
+    // Short-circuit until we have all the color-checker points
+    if (points.size() != ColorCheckerCount) return;
+    
 }
 
 @end
