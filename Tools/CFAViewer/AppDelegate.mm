@@ -1,4 +1,5 @@
 #import "BaseView.h"
+#import <Accelerate/Accelerate.h>
 #import <memory>
 #import <iostream>
 #import <regex>
@@ -21,7 +22,8 @@ struct Color3 {
     float b = 0;
 };
 
-const Color3 ColorCheckerColors[] {
+constexpr size_t ColorCheckerCount = 24;
+const Color3 ColorCheckerColors[ColorCheckerCount] {
     // Row 0
     {   0x73/255.   ,   0x52/255.   ,   0x44/255.   },
     {   0xc2/255.   ,   0x96/255.   ,   0x82/255.   },
@@ -55,15 +57,13 @@ const Color3 ColorCheckerColors[] {
     {   0x34/255.   ,   0x34/255.   ,   0x34/255.   },
 };
 
-const size_t ColorCheckerCount = std::size(ColorCheckerColors);
-
 @interface MainView : BaseView <CALayoutManager>
 @end
 
 @implementation MainView {
     CALayer* _layer;
     ImageLayer* _imageLayer;
-    float _circleRadius;
+    CGFloat _colorCheckerCircleRadius;
     std::vector<CAShapeLayer*> _colorCheckerCircles;
     IBOutlet id _delegate;
 }
@@ -71,10 +71,11 @@ const size_t ColorCheckerCount = std::size(ColorCheckerColors);
 - (void)commonInit {
     [super commonInit];
     _layer = [self layer];
-    _circleRadius = 10;
+    _colorCheckerCircleRadius = 1;
     _imageLayer = [ImageLayer new];
     [_layer addSublayer:_imageLayer];
     [_layer setLayoutManager:self];
+    [_imageLayer setAffineTransform:CGAffineTransformMakeScale(1, -1)];
 }
 
 - (ImageLayer*)imageLayer {
@@ -85,11 +86,16 @@ const size_t ColorCheckerCount = std::size(ColorCheckerColors);
 - (CAShapeLayer*)_findCircle:(CGPoint)p {
     for (CAShapeLayer* c : _colorCheckerCircles) {
         const CGPoint cp = [c position];
-        if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _circleRadius) {
+        if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _colorCheckerCircleRadius) {
             return c;
         }
     }
     return nil;
+}
+
+static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
+    [c setPath:(CGPathRef)CFBridgingRelease(CGPathCreateWithEllipseInRect({0,0,r*2,r*2}, nil))];
+    [c setBounds:{0,0,r*2,r*2}];
 }
 
 - (void)mouseDown:(NSEvent*)ev {
@@ -100,9 +106,7 @@ const size_t ColorCheckerCount = std::size(ColorCheckerColors);
     CAShapeLayer* circle = [self _findCircle:p];
     if (!circle && _colorCheckerCircles.size()<ColorCheckerCount) {
         circle = [CAShapeLayer new];
-        [circle setPath:
-            (CGPathRef)CFBridgingRelease(CGPathCreateWithEllipseInRect({0,0,_circleRadius*2,_circleRadius*2}, nil))];
-        [circle setBounds:{0,0,_circleRadius*2,_circleRadius*2}];
+        setCircleRadius(circle, _colorCheckerCircleRadius);
         
         auto rgb = ColorCheckerColors[_colorCheckerCircles.size()];
         [circle setFillColor:(CGColorRef)SRGBColor(rgb.r, rgb.g, rgb.b, 1)];
@@ -131,7 +135,7 @@ const size_t ColorCheckerCount = std::size(ColorCheckerColors);
 
 - (std::vector<CGPoint>)colorCheckerPoints {
     std::vector<CGPoint> r;
-    CGSize layerSize = [_layer bounds].size;
+    CGSize layerSize = [_imageLayer bounds].size;
     for (CALayer* c : _colorCheckerCircles) {
         CGPoint p = [c position];
         p.x /= layerSize.width;
@@ -139,6 +143,13 @@ const size_t ColorCheckerCount = std::size(ColorCheckerColors);
         r.push_back(p);
     }
     return r;
+}
+
+- (void)setColorCheckerCircleRadius:(CGFloat)r {
+    _colorCheckerCircleRadius = r;
+    for (CAShapeLayer* c : _colorCheckerCircles) {
+        setCircleRadius(c, _colorCheckerCircleRadius);
+    }
 }
 
 @end
@@ -201,6 +212,89 @@ const size_t ColorCheckerCount = std::size(ColorCheckerColors);
 
 @end
 
+template <typename T, size_t M, size_t N>
+class Mat {
+public:
+    Mat() {}
+    
+    // Copy constructor: use copy assignment operator
+    Mat(const Mat& x) { *this = x; }
+    // Copy assignment operator
+    Mat& operator=(const Mat& x) {
+        memcpy(vals, x.vals, sizeof(vals));
+        return *this;
+    }
+    
+    template <typename... Ts>
+    Mat(Ts... vals) : vals{vals...} {
+        static_assert(sizeof...(vals)==M*N, "invalid number of values");
+    }
+    
+    Mat<T,N,M> trans() {
+        Mat<T,N,M> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_mtrans(vals, 1, r.vals, 1, N, M);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_mtransD(vals, 1, r.vals, 1, N, M);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    Mat<T,M,N> inv() {
+        static_assert(M==N, "not a square matrix");
+        
+        Mat<T,M,M> r;
+        memcpy(r.vals, vals, sizeof(vals));
+        
+        __CLPK_integer m = M;
+        __CLPK_integer err = 0;
+        __CLPK_integer pivot[m];
+        T tmp[m];
+        if constexpr(std::is_same_v<T, float>) {
+            sgetrf_(&m, &m, r.vals, &m, pivot, &err);
+            if (err) throw std::runtime_error("dgetrf_ failed");
+            
+            sgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
+            if (err) throw std::runtime_error("dgetri_ failed");
+        
+        } else if constexpr(std::is_same_v<T, double>) {
+            dgetrf_(&m, &m, r.vals, &m, pivot, &err);
+            if (err) throw std::runtime_error("dgetrf_ failed");
+            
+            dgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
+            if (err) throw std::runtime_error("dgetri_ failed");
+        
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
+        return r;
+    }
+    
+    // Moore-Penrose inverse
+    Mat<T,N,M> pinv() {
+        return (trans()*(*this)).inv()*trans();
+    }
+    
+    template <size_t P>
+    Mat<T,M,P> operator*(const Mat<T,N,P>& x) {
+        Mat<T,M,P> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_mmul(vals, 1, x.vals, 1, r.vals, 1, M, P, N);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_mmulD(vals, 1, x.vals, 1, r.vals, 1, M, P, N);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    T vals[M*N] = {};
+
+private:
+    template <class...> static constexpr std::false_type _AlwaysFalse;
+};
+
+
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @property(weak) IBOutlet NSWindow* window;
 @end
@@ -211,11 +305,76 @@ const size_t ColorCheckerCount = std::size(ColorCheckerColors);
     IBOutlet HistogramView* _outputHistogramView;
     IBOutlet NSTextField* _colorMatrixTextField;
     
+    float _colorCheckerCircleRadius;
     Mmap _imageData;
     Image _image;
 }
 
 - (void)awakeFromNib {
+    Mat<double,3,2> A(
+        2., -1.,
+        1.,  2.,
+        1.,  1.
+    );
+    
+    Mat<double,3,1> b(
+        2.,
+        1.,
+        4.
+    );
+    
+    auto x = A.pinv() * b;
+    printf("AAA\n");
+    
+//    Mat<float,2,2> A(5.f, 6.f, 7.f, 8.f);
+//    auto B = A.inverse();
+//    printf("AAA\n");
+//    Mat<float,2,2> A(1.f,2.f,2.f,2.f);
+//    Mat<float,2,2> B(1.f,2.f,2.f,2.f);
+//    A*B;
+//    Mat<int,2,2> A(1.f,2.f,2.f,2.f);
+//    A.transpose();
+    
+//    const size_t Ah = 3;
+//    const size_t Aw = 2;
+//    float A[Ah*Aw] = {
+//        2, -1,
+//        1,  2,
+//        1,  1,
+//    };
+//    
+//    float b[] = {
+//        2,
+//        1,
+//        4,
+//    };
+//    
+//    // Calculate A transpose
+//    float At[Aw*Ah] = {};
+//    vDSP_mtrans(A, 1, At, 1, Aw, Ah);
+//    
+//    // Calculate At*A
+//    float AtA[Aw*Aw] = {};
+//    vDSP_mmul(At, 1, A, 1, AtA, 1, Aw, Aw, Ah);
+//    
+//    // Calculate (At*A)^-1
+//    float AtA[Aw*Aw] = {};
+    
+//    float min[] = {
+//        1,0,0,  // Column 1
+//        1,0,0,  // Column 2
+//        1,0,0,  // Column 3
+//    };
+//    
+//    float mout[std::size(min)] = {};
+//    
+//    vDSP_mtrans(min, 1, mout, 1, 3, 3);
+    printf("AAA\n");
+    return;
+    
+    _colorCheckerCircleRadius = 10;
+    [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
+    
     _imageData = Mmap("/Users/dave/Desktop/img.cfa");
     
 //    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
@@ -348,9 +507,9 @@ static float sampleG(Image& img, uint32_t x, uint32_t y) {
         // Want G
         // Sample @ x-1, x+1, y-1, y+1
         if (x % 2) return   .25*px(img, x, -1, y, 0) +
-                                .25*px(img, x, +1, y, 0) +
-                                .25*px(img, x, 0, y, -1) +
-                                .25*px(img, x, 0, y, +1) ;
+                            .25*px(img, x, +1, y, 0) +
+                            .25*px(img, x, 0, y, -1) +
+                            .25*px(img, x, 0, y, +1) ;
         
         // Have G
         // Want G
@@ -382,9 +541,9 @@ static float sampleB(Image& img, uint32_t x, uint32_t y) {
         // Want B
         // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
         if (x % 2) return   .25*px(img, x, -1, y, -1) +
-                                .25*px(img, x, -1, y, +1) +
-                                .25*px(img, x, +1, y, -1) +
-                                .25*px(img, x, +1, y, +1) ;
+                            .25*px(img, x, -1, y, +1) +
+                            .25*px(img, x, +1, y, -1) +
+                            .25*px(img, x, +1, y, +1) ;
         
         // Have G
         // Want B
@@ -393,20 +552,24 @@ static float sampleB(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static Color3 sampleImage(Image& img, uint32_t x, uint32_t y, uint32_t win) {
-    uint32_t left = std::clamp((int32_t)x-(int32_t)win, (int32_t)0, (int32_t)img.width-1);
-    uint32_t right = std::clamp((int32_t)x+(int32_t)win, (int32_t)0, (int32_t)img.width-1)+1;
-    uint32_t top = std::clamp((int32_t)y-(int32_t)win, (int32_t)0, (int32_t)img.height-1);
-    uint32_t bottom = std::clamp((int32_t)y+(int32_t)win, (int32_t)0, (int32_t)img.height-1)+1;
+static Color3 sampleImage(Image& img, uint32_t x, uint32_t y, uint32_t radius) {
+    uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
+    uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
+    uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
+    uint32_t top = std::clamp((int32_t)y+(int32_t)radius, (int32_t)0, (int32_t)img.height-1)+1;
+    
+    printf("%ju %ju\n", (uintmax_t)x, (uintmax_t)y);
     
     Color3 c;
     uint32_t i = 0;
-    for (uint32_t y=top; y<bottom; y++) {
-        for (uint32_t x=left; x<right; x++) {
-            c.r += sampleR(img, x, y);
-            c.g += sampleG(img, x, y);
-            c.b += sampleB(img, x, y);
-            i++;
+    for (uint32_t iy=bottom; iy<top; iy++) {
+        for (uint32_t ix=left; ix<right; ix++) {
+            if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
+                c.r += sampleR(img, ix, iy);
+                c.g += sampleG(img, ix, iy);
+                c.b += sampleB(img, ix, iy);
+                i++;
+            }
         }
     }
     
@@ -426,6 +589,17 @@ static Color3 sampleImage(Image& img, uint32_t x, uint32_t y, uint32_t win) {
     // Short-circuit until we have all the color-checker points
     if (points.size() != ColorCheckerCount) return;
     
+    Color3 colorCheckerColors[ColorCheckerCount];
+    for (size_t i=0; i<ColorCheckerCount; i++) {
+        CGPoint p = points[i];
+        colorCheckerColors[i] = sampleImage(_image,
+            round(p.x*_image.width),
+            round(p.y*_image.height),
+            _colorCheckerCircleRadius);
+    }
+    
+    const auto& A = colorCheckerColors; // have
+    const auto& b = ColorCheckerColors; // want
 }
 
 @end

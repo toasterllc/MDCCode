@@ -4,15 +4,6 @@ using namespace metal;
 using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
 
-static float4x4 scale(float x, float y, float z) {
-    return {
-        {x, 0, 0, 0}, // Column 0
-        {0, y, 0, 0}, // Column 1
-        {0, 0, z, 0}, // Column 2
-        {0, 0, 0, 1}, // Column 3
-    };
-}
-
 struct VertexOutput {
     float4 viewPosition [[position]];
     float2 pixelPosition;
@@ -22,21 +13,14 @@ vertex VertexOutput ImageLayer_VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
-    const float4x4 scaleTransform = scale(
-        1,
-        -1,
-        1
-    );
-    
     const float4 unitPosition = SquareVert[SquareVertIdx[vidx]];
-    const float4 position = scaleTransform * unitPosition;
     const float2 pixelPosition = {
         ((unitPosition.x+1)/2)*(ctx.imageWidth),
         ((unitPosition.y+1)/2)*(ctx.imageHeight),
     };
     
     return VertexOutput{
-        position,
+        unitPosition,
         pixelPosition
     };
 }
