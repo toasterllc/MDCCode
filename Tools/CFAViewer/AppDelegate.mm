@@ -8,6 +8,7 @@
 #import "HistogramLayer.h"
 #import "Mmap.h"
 #import "Util.h"
+#import "Mat.h"
 using namespace CFAViewer;
 using namespace MetalTypes;
 using namespace ImageLayerTypes;
@@ -16,11 +17,7 @@ using namespace ImageLayerTypes;
 - (void)colorCheckerPointsChanged;
 @end
 
-struct Color3 {
-    float r = 0;
-    float g = 0;
-    float b = 0;
-};
+using Color3 = Mat<double,3,1>;
 
 constexpr size_t ColorCheckerCount = 24;
 const Color3 ColorCheckerColors[ColorCheckerCount] {
@@ -109,7 +106,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         setCircleRadius(circle, _colorCheckerCircleRadius);
         
         auto rgb = ColorCheckerColors[_colorCheckerCircles.size()];
-        [circle setFillColor:(CGColorRef)SRGBColor(rgb.r, rgb.g, rgb.b, 1)];
+        [circle setFillColor:(CGColorRef)SRGBColor(rgb[0], rgb[1], rgb[2], 1)];
         [circle setActions:LayerNullActions()];
         
         [circle setPosition:p];
@@ -212,88 +209,6 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 
 @end
 
-template <typename T, size_t M, size_t N>
-class Mat {
-public:
-    Mat() {}
-    
-    // Copy constructor: use copy assignment operator
-    Mat(const Mat& x) { *this = x; }
-    // Copy assignment operator
-    Mat& operator=(const Mat& x) {
-        memcpy(vals, x.vals, sizeof(vals));
-        return *this;
-    }
-    
-    template <typename... Ts>
-    Mat(Ts... vals) : vals{vals...} {
-        static_assert(sizeof...(vals)==M*N, "invalid number of values");
-    }
-    
-    Mat<T,N,M> trans() {
-        Mat<T,N,M> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_mtrans(vals, 1, r.vals, 1, N, M);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_mtransD(vals, 1, r.vals, 1, N, M);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    Mat<T,M,N> inv() {
-        static_assert(M==N, "not a square matrix");
-        
-        Mat<T,M,M> r;
-        memcpy(r.vals, vals, sizeof(vals));
-        
-        __CLPK_integer m = M;
-        __CLPK_integer err = 0;
-        __CLPK_integer pivot[m];
-        T tmp[m];
-        if constexpr(std::is_same_v<T, float>) {
-            sgetrf_(&m, &m, r.vals, &m, pivot, &err);
-            if (err) throw std::runtime_error("dgetrf_ failed");
-            
-            sgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
-            if (err) throw std::runtime_error("dgetri_ failed");
-        
-        } else if constexpr(std::is_same_v<T, double>) {
-            dgetrf_(&m, &m, r.vals, &m, pivot, &err);
-            if (err) throw std::runtime_error("dgetrf_ failed");
-            
-            dgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
-            if (err) throw std::runtime_error("dgetri_ failed");
-        
-        } else {
-            static_assert(_AlwaysFalse<T>);
-        }
-        return r;
-    }
-    
-    // Moore-Penrose inverse
-    Mat<T,N,M> pinv() {
-        return (trans()*(*this)).inv()*trans();
-    }
-    
-    template <size_t P>
-    Mat<T,M,P> operator*(const Mat<T,N,P>& x) {
-        Mat<T,M,P> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_mmul(vals, 1, x.vals, 1, r.vals, 1, M, P, N);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_mmulD(vals, 1, x.vals, 1, r.vals, 1, M, P, N);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    T vals[M*N] = {};
-
-private:
-    template <class...> static constexpr std::false_type _AlwaysFalse;
-};
-
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @property(weak) IBOutlet NSWindow* window;
@@ -311,67 +226,6 @@ private:
 }
 
 - (void)awakeFromNib {
-    Mat<double,3,2> A(
-        2., -1.,
-        1.,  2.,
-        1.,  1.
-    );
-    
-    Mat<double,3,1> b(
-        2.,
-        1.,
-        4.
-    );
-    
-    auto x = A.pinv() * b;
-    printf("AAA\n");
-    
-//    Mat<float,2,2> A(5.f, 6.f, 7.f, 8.f);
-//    auto B = A.inverse();
-//    printf("AAA\n");
-//    Mat<float,2,2> A(1.f,2.f,2.f,2.f);
-//    Mat<float,2,2> B(1.f,2.f,2.f,2.f);
-//    A*B;
-//    Mat<int,2,2> A(1.f,2.f,2.f,2.f);
-//    A.transpose();
-    
-//    const size_t Ah = 3;
-//    const size_t Aw = 2;
-//    float A[Ah*Aw] = {
-//        2, -1,
-//        1,  2,
-//        1,  1,
-//    };
-//    
-//    float b[] = {
-//        2,
-//        1,
-//        4,
-//    };
-//    
-//    // Calculate A transpose
-//    float At[Aw*Ah] = {};
-//    vDSP_mtrans(A, 1, At, 1, Aw, Ah);
-//    
-//    // Calculate At*A
-//    float AtA[Aw*Aw] = {};
-//    vDSP_mmul(At, 1, A, 1, AtA, 1, Aw, Aw, Ah);
-//    
-//    // Calculate (At*A)^-1
-//    float AtA[Aw*Aw] = {};
-    
-//    float min[] = {
-//        1,0,0,  // Column 1
-//        1,0,0,  // Column 2
-//        1,0,0,  // Column 3
-//    };
-//    
-//    float mout[std::size(min)] = {};
-//    
-//    vDSP_mtrans(min, 1, mout, 1, 3, 3);
-    printf("AAA\n");
-    return;
-    
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
@@ -404,21 +258,25 @@ private:
     const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
     auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
     auto end = std::sregex_iterator();
-    std::vector<float> floats;
+    std::vector<double> vals;
     
     for (std::sregex_iterator i=begin; i!=end; i++) {
-        floats.push_back(std::stod(i->str()));
+        vals.push_back(std::stod(i->str()));
     }
     
-    if (floats.size() != 9) {
+    if (vals.size() != 9) {
         NSLog(@"Failed to parse color matrix");
         return;
     }
     
+    [self _updateColorMatrix:vals.data()];
+}
+
+- (void)_updateColorMatrix:(double[])vals {
     const ColorMatrix cm{
-        {floats[0], floats[3], floats[6]},  // Column 0
-        {floats[1], floats[4], floats[7]},  // Column 1
-        {floats[2], floats[5], floats[8]}   // Column 2
+        {(float)vals[0], (float)vals[3], (float)vals[6]},   // Column 0
+        {(float)vals[1], (float)vals[4], (float)vals[7]},   // Column 1
+        {(float)vals[2], (float)vals[5], (float)vals[8]}    // Column 2
     };
     [[_mainView imageLayer] updateColorMatrix:cm];
 }
@@ -441,15 +299,15 @@ private:
 //  Row2    G1  R  G1  R
 //  Row3    B   G2 B   G2
 
-static float px(Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
+static double px(Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
     int32_t xc = (int32_t)x + dx;
     int32_t yc = (int32_t)y + dy;
     xc = std::clamp(xc, (int32_t)0, (int32_t)img.width-1);
     yc = std::clamp(yc, (int32_t)0, (int32_t)img.height-1);
-    return (float)img.pixels[(yc*img.width)+xc] / ImagePixelMax;
+    return (double)img.pixels[(yc*img.width)+xc] / ImagePixelMax;
 }
 
-static float sampleR(Image& img, uint32_t x, uint32_t y) {
+static double sampleR(Image& img, uint32_t x, uint32_t y) {
     if (y % 2) {
         // ROW = B G B G ...
         
@@ -481,7 +339,7 @@ static float sampleR(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static float sampleG(Image& img, uint32_t x, uint32_t y) {
+static double sampleG(Image& img, uint32_t x, uint32_t y) {
 //    return px(img, x, 0, y, 0);
     
     if (y % 2) {
@@ -518,7 +376,7 @@ static float sampleG(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static float sampleB(Image& img, uint32_t x, uint32_t y) {
+static double sampleB(Image& img, uint32_t x, uint32_t y) {
 //    return px(img, x, 0, y, 0);
     
     if (y % 2) {
@@ -558,24 +416,22 @@ static Color3 sampleImage(Image& img, uint32_t x, uint32_t y, uint32_t radius) {
     uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
     uint32_t top = std::clamp((int32_t)y+(int32_t)radius, (int32_t)0, (int32_t)img.height-1)+1;
     
-    printf("%ju %ju\n", (uintmax_t)x, (uintmax_t)y);
-    
     Color3 c;
     uint32_t i = 0;
     for (uint32_t iy=bottom; iy<top; iy++) {
         for (uint32_t ix=left; ix<right; ix++) {
             if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
-                c.r += sampleR(img, ix, iy);
-                c.g += sampleG(img, ix, iy);
-                c.b += sampleB(img, ix, iy);
+                c[0] += sampleR(img, ix, iy);
+                c[1] += sampleG(img, ix, iy);
+                c[2] += sampleB(img, ix, iy);
                 i++;
             }
         }
     }
     
-    c.r /= i;
-    c.g /= i;
-    c.b /= i;
+    c[0] /= i;
+    c[1] /= i;
+    c[2] /= i;
     return c;
 }
 
@@ -584,22 +440,79 @@ static Color3 sampleImage(Image& img, uint32_t x, uint32_t y, uint32_t radius) {
 //    return {};
 //}
 
+static double linearSRGBFromSRGB(double x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    if (x <= 0.04045) return x/12.92;
+    return pow((x+.055)/1.055, 2.4);
+}
+
+static Color3 xyzFromSRGB(const Color3 c) {
+    // Calculate the linear SRGB value from the gamma-ified SRGB value
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const Color3 linearSRGB(
+        linearSRGBFromSRGB(c[0]),
+        linearSRGBFromSRGB(c[1]),
+        linearSRGBFromSRGB(c[2])
+    );
+    // Calculate the XYZ values from the linear SRGB values
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const Mat<double,3,3> xyzFromLinearSRGB(
+        0.4124564, 0.3575761, 0.1804375,
+        0.2126729, 0.7151522, 0.0721750,
+        0.0193339, 0.1191920, 0.9503041
+    );
+    return xyzFromLinearSRGB*linearSRGB;
+}
+
 - (void)colorCheckerPointsChanged {
     auto points = [_mainView colorCheckerPoints];
     // Short-circuit until we have all the color-checker points
     if (points.size() != ColorCheckerCount) return;
     
-    Color3 colorCheckerColors[ColorCheckerCount];
-    for (size_t i=0; i<ColorCheckerCount; i++) {
-        CGPoint p = points[i];
-        colorCheckerColors[i] = sampleImage(_image,
+    Mat<double,ColorCheckerCount,3> A; // Colors that we have
+    size_t i = 0;
+    for (const CGPoint& p : points) {
+        Color3 c = sampleImage(_image,
             round(p.x*_image.width),
             round(p.y*_image.height),
             _colorCheckerCircleRadius);
+        A[i+0] = c[0];
+        A[i+1] = c[1];
+        A[i+2] = c[2];
+        i += 3;
     }
     
-    const auto& A = colorCheckerColors; // have
-    const auto& b = ColorCheckerColors; // want
+    Mat<double,ColorCheckerCount,3> b; // Colors that we want
+    i = 0;
+    for (Color3 c : ColorCheckerColors) {
+        // Convert the color from SRGB -> XYZ
+        c = xyzFromSRGB(c);
+        b[i+0] = c[0];
+        b[i+1] = c[1];
+        b[i+2] = c[2];
+        i += 3;
+    }
+    
+    // Calculate the color matrix (x = (At*A)^-1 * At * b)
+    auto x = (A.pinv() * b).trans();
+    [self _updateColorMatrix:x.vals];
+    printf("Color matrix:\n%s\n", x.str().c_str());
+    printf("Color matrix inverted:\n%s\n", x.inv().str().c_str());
+    
+    [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
+        @"%f %f %f\n"
+        @"%f %f %f\n"
+        @"%f %f %f\n",
+        x[0], x[1], x[2],
+        x[3], x[4], x[5],
+        x[6], x[7], x[8]
+    ]];
+    
+//    printf("%.3f\t%.3f\t%.3f \n%.3f\t%.3f\t%.3f \n%.3f\t%.3f\t%.3f \n",
+//        x[0], x[1], x[2],
+//        x[3], x[4], x[5],
+//        x[6], x[7], x[8]
+//    );
 }
 
 @end

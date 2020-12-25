@@ -145,6 +145,12 @@ uint3 binFromColor(float3 color) {
     };
 }
 
+static float srgbFromLinearSRGB(float x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    if (x <= 0.0031308) return 12.92*x;
+    return 1.055*pow(x, 1/2.4) - .055;
+}
+
 fragment float4 ImageLayer_FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
@@ -160,17 +166,29 @@ fragment float4 ImageLayer_FragmentShader(
     uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
     float3 inputColor(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
     float3x3 colorMatrix(ctx.colorMatrix.c0, ctx.colorMatrix.c1, ctx.colorMatrix.c2);
-    float3 outputColor = colorMatrix*inputColor;
+    float3 outputColor_xyz = colorMatrix*inputColor;
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const float3x3 LinearSRGBD65_From_XYZD65(
+        3.2404542, -0.9692660, 0.0556434,
+        -1.5371385, 1.8760108, -0.2040259,
+        -0.4985314, 0.0415560, 1.0572252
+    );
+    float3 outputColor_linearSRGB = LinearSRGBD65_From_XYZD65*outputColor_xyz;
+    float3 outputColor_srgb = float3{
+        srgbFromLinearSRGB(outputColor_linearSRGB[0]),
+        srgbFromLinearSRGB(outputColor_linearSRGB[1]),
+        srgbFromLinearSRGB(outputColor_linearSRGB[2])
+    };
     
     uint3 inputColorBin = binFromColor(inputColor);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.r[inputColorBin.r], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.g[inputColorBin.g], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.b[inputColorBin.b], 1, memory_order_relaxed);
     
-    uint3 outputColorBin = binFromColor(outputColor);
+    uint3 outputColorBin = binFromColor(outputColor_srgb);
     atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.r[outputColorBin.r], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.g[outputColorBin.g], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.b[outputColorBin.b], 1, memory_order_relaxed);
     
-    return float4(outputColor, 1);
+    return float4(outputColor_srgb, 1);
 }

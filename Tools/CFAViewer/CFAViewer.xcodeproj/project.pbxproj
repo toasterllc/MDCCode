@@ -40,6 +40,7 @@
 		55671A3A2580178100C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		559D8E0E2593EAB200836B47 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		559D8E1125954F7E00836B47 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		55B9745924C504E2000B2633 /* CFAViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CFAViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55B9745D24C504E2000B2633 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55B9745F24C504E2000B2633 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -82,6 +83,7 @@
 		55671A29257E94BD00C1CDA4 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				559D8E1125954F7E00836B47 /* Mat.h */,
 				55EBCC8F25896F160089A441 /* Assert.h */,
 				55671A30257E94BD00C1CDA4 /* ELF32Binary.h */,
 				55671A2C257E94BD00C1CDA4 /* MDCDevice.h */,
