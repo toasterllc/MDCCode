@@ -237,7 +237,7 @@ static double srgbFromLinearSRGB(double x) {
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
 //    _imageData = Mmap("/Users/dave/Desktop/img.cfa");
-    _imageData = Mmap("/Users/dave/Desktop/gray-16bit.cfa");
+    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/gray-16bit.cfa");
 //    _imageData = Mmap("/Users/dave/Desktop/gray-dark-16bit.cfa");
     
     constexpr size_t ImageWidth = 256;
