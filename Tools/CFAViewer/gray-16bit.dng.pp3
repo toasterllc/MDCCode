@@ -3,7 +3,7 @@ AppVersion=5.8
 Version=346
 
 [General]
-Rank=-1
+Rank=0
 ColorLabel=0
 InTrash=false
 
@@ -18,16 +18,16 @@ Black=0
 HighlightCompr=0
 HighlightComprThreshold=0
 ShadowCompr=50
-HistogramMatching=true
+HistogramMatching=false
 CurveFromHistogramMatching=false
-ClampOOG=true
-CurveMode=Standard
+ClampOOG=false
+CurveMode=FilmLike
 CurveMode2=Standard
 Curve=0;
 Curve2=0;
 
 [HLRecovery]
-Enabled=true
+Enabled=false
 Method=Blend
 
 [Retinex]
@@ -161,10 +161,10 @@ Contrast=20
 Uniformity=5
 
 [White Balance]
-Enabled=true
+Enabled=false
 Setting=Camera
-Temperature=6504
-Green=1
+Temperature=6490
+Green=1.002
 Equal=1
 TemperatureBias=0
 
@@ -179,7 +179,7 @@ Surrsrc=Average
 AdaptLum=16
 Badpixsl=0
 Model=RawT
-Algorithm=No
+Algorithm=JC
 J-Light=0
 Q-Bright=0
 C-Chroma=0
@@ -240,7 +240,7 @@ C2Method=AUTO
 SMethod=shal
 MedMethod=soft
 RGBMethod=soft
-MethodMed=none
+MethodMed=Lonly
 Redchro=0
 Bluechro=0
 Gamma=1.7
@@ -273,10 +273,10 @@ Lab=false
 
 [Crop]
 Enabled=false
-X=-1
-Y=-1
-W=15000
-H=15000
+X=0
+Y=0
+W=248
+H=248
 FixedRatio=true
 Ratio=As Image
 Orientation=As Image
@@ -338,7 +338,7 @@ CenterY=0
 
 [Resize]
 Enabled=false
-Scale=1
+Scale=3.6299999999999999
 AppliesTo=Cropped area
 Method=Lanczos
 DataSpecified=3
@@ -347,7 +347,7 @@ Height=900
 AllowUpscaling=false
 
 [PostDemosaicSharpening]
-Enabled=true
+Enabled=false
 Contrast=10
 AutoContrast=true
 AutoRadius=true
@@ -374,7 +374,7 @@ DeconvDamping=0
 DeconvIterations=100
 
 [Color Management]
-InputProfile=(cameraICC)
+InputProfile=file:/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/ICCProfile copy.icc
 ToneCurve=false
 ApplyLookTable=true
 ApplyBaselineExposureOffset=true
@@ -383,7 +383,7 @@ DCPIlluminant=0
 WorkingProfile=ProPhoto
 WorkingTRC=none
 WorkingTRCGamma=2.3999999999999999
-WorkingTRCSlope=12.9231
+WorkingTRCSlope=12.92
 OutputProfile=RTv4_sRGB
 OutputProfileIntent=Relative
 OutputBPC=true
@@ -570,9 +570,9 @@ LabRegionChannel_1=-1
 LabRegionsShowMask=-1
 
 [RAW]
-DarkFrame=
+DarkFrame=/szeva
 DarkFrameAuto=false
-FlatFieldFile=
+FlatFieldFile=/szeva
 FlatFieldAutoSelect=false
 FlatFieldBlurRadius=32
 FlatFieldBlurType=Area Flatfield
@@ -589,7 +589,7 @@ HotDeadPixelThresh=100
 PreExposure=1
 
 [RAW Bayer]
-Method=amaze
+Method=fast
 Border=4
 ImageNum=1
 CcSteps=0
@@ -597,7 +597,7 @@ PreBlack0=0
 PreBlack1=0
 PreBlack2=0
 PreBlack3=0
-PreTwoGreen=true
+PreTwoGreen=false
 LineDenoise=0
 LineDenoiseDirection=3
 GreenEqThreshold=0

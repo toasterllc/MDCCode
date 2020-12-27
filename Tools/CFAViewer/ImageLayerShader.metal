@@ -28,7 +28,7 @@ vertex VertexOutput ImageLayer_VertexShader(
 float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint x, int dx, uint y, int dy) {
     x += clamp(dx, -((int)x), (int)(ctx.imageWidth-1-x));
     y += clamp(dy, -((int)y), (int)(ctx.imageHeight-1-y));
-    return (float)pxs[(y*ctx.imageWidth)+x] / 0xFFFF;
+    return (float)pxs[(y*ctx.imageWidth)+x] / ImagePixelMax;
 }
 
 float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {

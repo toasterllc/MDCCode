@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <IccProfile>
     <Header>
+        <PreferredCMMType></PreferredCMMType>
         <CreationDateTime>2020-02-09T11:44:00</CreationDateTime>
         <ProfileVersion>4.3.0.0</ProfileVersion>
         <ProfileDeviceClass>scnr</ProfileDeviceClass>
@@ -23,9 +24,9 @@
         
         <mediaWhitePointTag> <XYZArrayType> <XYZNumber X="1" Y="1" Z="1"/> </XYZArrayType> </mediaWhitePointTag>
         
-        <redColorantTag> <XYZArrayType> <XYZNumber      X="1"           Y="0"       Z="0"/> </XYZArrayType> </redColorantTag>
-        <greenColorantTag> <XYZArrayType> <XYZNumber    X="0"           Y="1"       Z="0"/> </XYZArrayType> </greenColorantTag>
-        <blueColorantTag> <XYZArrayType> <XYZNumber     X="0"           Y="0"       Z="1"/> </XYZArrayType> </blueColorantTag>
+        <redColorantTag> <XYZArrayType> <XYZNumber      X="2.942464"    Y="-0.310210"   Z="-0.675905"/> </XYZArrayType> </redColorantTag>
+        <greenColorantTag> <XYZArrayType> <XYZNumber    X="1.051732"    Y="4.638322"    Z="-2.114415"/> </XYZArrayType> </greenColorantTag>
+        <blueColorantTag> <XYZArrayType> <XYZNumber     X="1.339899"    Y="-0.501141"   Z="11.476543"/> </XYZArrayType> </blueColorantTag>
         
         <redTRCTag> <curveType> <Curve> </Curve> </curveType> </redTRCTag>
         <greenTRCTag> <curveType> <Curve> </Curve> </curveType> </greenTRCTag>

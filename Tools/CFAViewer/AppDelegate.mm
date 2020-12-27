@@ -235,17 +235,12 @@ static double srgbFromLinearSRGB(double x) {
 - (void)awakeFromNib {
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
+  
+    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
     
-//    _imageData = Mmap("/Users/dave/Desktop/img.cfa");
-    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/gray-16bit.cfa");
-//    _imageData = Mmap("/Users/dave/Desktop/gray-dark-16bit.cfa");
+    constexpr size_t ImageWidth = 2304;
+    constexpr size_t ImageHeight = 1296;
     
-    constexpr size_t ImageWidth = 256;
-    constexpr size_t ImageHeight = 256;
-    
-//    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
-//    constexpr size_t ImageWidth = 256;
-//    constexpr size_t ImageHeight = 256;
     _image = {
         .width = ImageWidth,
         .height = ImageHeight,
@@ -318,7 +313,7 @@ static double srgbFromLinearSRGB(double x) {
         );
         
         Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
-        color = color/0xFFFF;
+        color = color/ImagePixelMax;
         Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Bradford*color;
         Color3 color_srgb = Color3(
             srgbFromLinearSRGB(color_linearSRGB[0]),

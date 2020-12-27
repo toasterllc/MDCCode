@@ -10,17 +10,16 @@ fi
 cfa=$1
 dng=$2
 
-./cfa2dng "$cfa" "$dng"
+./cfa2tiff "$cfa" "$dng"
 
+# Strip all metadata
 ./exiftool -overwrite_original -all= $dng
 
 ./exiftool                                              \
     -DNGVersion="1.4.0.0"                               \
     -DNGBackwardVersion="1.4.0.0"                       \
-    -ColorMatrix1="1 0 0 0 1 0 0 0 1"                   \
-    -CalibrationIlluminant1=D65                         \
     -IFD0:BlackLevel=0                                  \
-    -IFD0:WhiteLevel=65535                              \
+    -IFD0:WhiteLevel=4095                               \
     -PhotometricInterpretation="Color Filter Array"     \
     -SamplesPerPixel=1                                  \
     -IFD0:CFARepeatPatternDim="2 2"                     \
