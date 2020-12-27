@@ -9,7 +9,7 @@ InTrash=false
 
 [Exposure]
 Auto=false
-Clip=0.02
+Clip=0
 Compensation=0
 Brightness=0
 Contrast=0
@@ -347,11 +347,11 @@ Height=900
 AllowUpscaling=false
 
 [PostDemosaicSharpening]
-Enabled=false
-Contrast=7
+Enabled=true
+Contrast=19
 AutoContrast=true
 AutoRadius=true
-DeconvRadius=0.66000000000000003
+DeconvRadius=0.77000000000000002
 DeconvRadiusOffset=0
 DeconvIterCheck=true
 DeconvIterations=20
@@ -374,7 +374,7 @@ DeconvDamping=0
 DeconvIterations=100
 
 [Color Management]
-InputProfile=
+InputProfile=file:/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/ICCProfile.icc
 ToneCurve=false
 ApplyLookTable=true
 ApplyBaselineExposureOffset=true
@@ -605,7 +605,7 @@ DCBIterations=2
 DCBEnhance=true
 LMMSEIterations=2
 DualDemosaicAutoContrast=true
-DualDemosaicContrast=9
+DualDemosaicContrast=20
 PixelShiftMotionCorrectionMethod=1
 PixelShiftEperIso=0
 PixelShiftSigma=1

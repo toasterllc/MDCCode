@@ -1,16 +1,20 @@
 #!/bin/bash
 set -e
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 6 ]; then
 	echo "Usage:"
-    echo "  cfa2dng.sh <InputName.cfa> <OutputName.dng>"
+    echo "  cfa2dng.sh <InputName.cfa> <ImageWidth> <ImageHeight> <BlackLevel> <WhiteLevel> <OutputName.dng>"
 	exit 1
 fi
 
 cfa=$1
-dng=$2
+width=$2
+height=$3
+black=$4
+white=$5
+dng=$6
 
-./cfa2tiff "$cfa" "$dng"
+./cfa2tiff "$cfa" "$width" "$height" "$dng"
 
 # Strip all metadata
 ./exiftool -overwrite_original -all= $dng
@@ -18,8 +22,8 @@ dng=$2
 ./exiftool                                              \
     -DNGVersion="1.4.0.0"                               \
     -DNGBackwardVersion="1.4.0.0"                       \
-    -IFD0:BlackLevel=0                                  \
-    -IFD0:WhiteLevel=4095                               \
+    -IFD0:BlackLevel=$black                             \
+    -IFD0:WhiteLevel=$white                             \
     -PhotometricInterpretation="Color Filter Array"     \
     -SamplesPerPixel=1                                  \
     -IFD0:CFARepeatPatternDim="2 2"                     \

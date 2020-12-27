@@ -306,14 +306,17 @@ static double srgbFromLinearSRGB(double x) {
     
     
     {
+        Mmap grayData("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/gray-16bit.cfa");
+        ImagePixel* grayPixels = (ImagePixel*)grayData.data();
+        
         printf(
             "Assuming raw values are XYZ.D50\n"
             "Chromatic adaptation: Bradford\n"
             "SRGB Gamma: complex\n"
         );
         
-        Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
-        color = color/ImagePixelMax;
+        Color3 color((double)grayPixels[0], (double)grayPixels[0], (double)grayPixels[0]);
+        color = color/0xFFFF;
         Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Bradford*color;
         Color3 color_srgb = Color3(
             srgbFromLinearSRGB(color_linearSRGB[0]),

@@ -5,28 +5,34 @@
 
 static void printUsage() {
     printf("Usage:\n");
-    printf("  cfa2dng <InputFile.cfa> <OutputFile.tiff>\n\n");
+    printf("  cfa2dng <InputFile.cfa> <ImageWidth> <ImageHeight> <OutputFile.tiff>\n\n");
 }
-
-constexpr size_t ImageWidth = 2304;
-constexpr size_t ImageHeight = 1296;
 
 int main(int argc, const char* argv[]) {
     using Pixel = STApp::Pixel;
-    if (argc != 3) {
+    if (argc != 5) {
         printUsage();
         return 1;
     }
     
     try {
         const char* inputFilePath = argv[1];
-        const char* outputFilePath = argv[2];
+        size_t imageWidth = std::strtoull(argv[2], nullptr, 0);
+        size_t imageHeight = std::strtoull(argv[3], nullptr, 0);
+        const char* outputFilePath = argv[4];
         Mmap mmap(inputFilePath);
+        
+        const size_t expectedFileSize = imageWidth*imageHeight*2;
+        if (mmap.len() != expectedFileSize) {
+            fprintf(stderr, "Invalid file size; expected %ju bytes, got %ju bytes\n\n",
+            (uintmax_t)expectedFileSize, (uintmax_t)mmap.len());
+            return 1;
+        }
         
         constexpr size_t bitsPerComponent = 16;
         CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray(); // TODO: needs to be released
-        CGContextRef context = CGBitmapContextCreate((void*)mmap.data(), ImageWidth, ImageHeight, bitsPerComponent,
-            ImageWidth*sizeof(Pixel), colorSpace, kCGBitmapByteOrder16Little);
+        CGContextRef context = CGBitmapContextCreate((void*)mmap.data(), imageWidth, imageHeight, bitsPerComponent,
+            imageWidth*sizeof(Pixel), colorSpace, kCGBitmapByteOrder16Little);
         
         CGImageRef image = CGBitmapContextCreateImage(context);
         NSURL* outputURL = [NSURL fileURLWithPath:@(outputFilePath)];
