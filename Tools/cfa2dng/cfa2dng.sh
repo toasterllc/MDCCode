@@ -12,23 +12,93 @@ dng=$2
 
 ./cfa2dng "$cfa" "$dng"
 
-# BlackLevel=0
-./exiftool                                                                                                              \
-    -DNGVersion="1.4.0.0"                                                                                               \
-    -DNGBackwardVersion="1.4.0.0"                                                                                       \
-    -IFD0:BlackLevel=0                                                                                                  \
-    -IFD0:WhiteLevel=4095                                                                                               \
-    -PhotometricInterpretation="Color Filter Array"                                                                     \
-    -SamplesPerPixel=1                                                                                                  \
-    -IFD0:CFARepeatPatternDim="2 2"                                                                                     \
-    -IFD0:CFAPattern2="1 0 2 1"                                                                                         \
-    -overwrite_original                                                                                                 \
-    "$dng"                                                                                                              \
+./exiftool -overwrite_original -all= $dng
+
+./exiftool                                              \
+    -DNGVersion="1.4.0.0"                               \
+    -DNGBackwardVersion="1.4.0.0"                       \
+    -ColorMatrix1="1 0 0 0 1 0 0 0 1"                   \
+    -CalibrationIlluminant1=D65                         \
+    -IFD0:BlackLevel=0                                  \
+    -IFD0:WhiteLevel=65535                              \
+    -PhotometricInterpretation="Color Filter Array"     \
+    -SamplesPerPixel=1                                  \
+    -IFD0:CFARepeatPatternDim="2 2"                     \
+    -IFD0:CFAPattern2="1 0 2 1"                         \
+    -overwrite_original                                 \
+    "$dng"
+
+
+# ./exiftool                                              \
+#     -DNGVersion="1.1.0.0"                               \
+#     -DNGBackwardVersion="1.1.0.0"                       \
+#     -ColorMatrix1="1 0 0 0 1 0 0 0 1"                   \
+#     -ColorMatrix2="1 0 0 0 1 0 0 0 1"                   \
+#     -CameraCalibration1="1 0 0 0 1 0 0 0 1"             \
+#     -CameraCalibration2="1 0 0 0 1 0 0 0 1"             \
+#     -CalibrationIlluminant1=D65                         \
+#     -CalibrationIlluminant2=D65                         \
+#     -AnalogBalance="1 1 1"                              \
+#     -AsShotWhiteXY="0.31271 0.32902"                    \
+#     -IFD0:BlackLevel=0                                  \
+#     -IFD0:WhiteLevel=65535                              \
+#     -PhotometricInterpretation="Color Filter Array"     \
+#     -SamplesPerPixel=1                                  \
+#     -IFD0:CFARepeatPatternDim="2 2"                     \
+#     -IFD0:CFAPattern2="1 0 2 1"                         \
+#     -overwrite_original                                 \
+#     "$dng"                                              \
+
+
+    # -AsShotNeutral="1 1"                                \
+    # -AsShotWhiteXY="0.31271 0.32902"                    \
+
+
+
+# ./exiftool                                              \
+#     -DNGVersion="1.4.0.0"                               \
+#     -DNGBackwardVersion="1.4.0.0"                       \
+#     -ColorMatrix1="1 0 0 0 1 0 0 0 1"                   \
+#     -ColorMatrix2="1 0 0 0 1 0 0 0 1"                   \
+#     -CameraCalibration1="1 0 0 0 1 0 0 0 1"             \
+#     -CameraCalibration2="1 0 0 0 1 0 0 0 1"             \
+#     -ForwardMatrix1="1 0 0 0 1 0 0 0 1"                 \
+#     -ForwardMatrix2="1 0 0 0 1 0 0 0 1"                 \
+#     -CalibrationIlluminant1=D50                         \
+#     -CalibrationIlluminant2=D50                         \
+#     -AsShotNeutral="0.34567 0.35850"                    \
+#     -AnalogBalance="1 1 1"                              \
+#     -IFD0:BlackLevel=0                                  \
+#     -IFD0:WhiteLevel=65535                              \
+#     -PhotometricInterpretation="Color Filter Array"     \
+#     -SamplesPerPixel=1                                  \
+#     -IFD0:CFARepeatPatternDim="2 2"                     \
+#     -IFD0:CFAPattern2="1 0 2 1"                         \
+#     -overwrite_original                                 \
+#     "$dng"                                              \
 
         
-
-        
-
+# ./exiftool                                              \
+#     -DNGVersion="1.4.0.0"                               \
+#     -DNGBackwardVersion="1.4.0.0"                       \
+#     -ColorMatrix1="1 0 0 0 1 0 0 0 1"                   \
+#     -ForwardMatrix1="1 0 0 0 1 0 0 0 1"                 \
+#     -CameraCalibration1="1 0 0 0 1 0 0 0 1"             \
+#     -CalibrationIlluminant1=D65                         \
+#     -ColorMatrix2="1 0 0 0 1 0 0 0 1"                   \
+#     -ForwardMatrix2="1 0 0 0 1 0 0 0 1"                 \
+#     -CameraCalibration2="1 0 0 0 1 0 0 0 1"             \
+#     -CalibrationIlluminant2=D65                         \
+#     -AnalogBalance="1 1 1"                              \
+#     -IFD0:BlackLevel=0                                  \
+#     -IFD0:WhiteLevel=65535                              \
+#     -PhotometricInterpretation="Color Filter Array"     \
+#     -SamplesPerPixel=1                                  \
+#     -IFD0:CFARepeatPatternDim="2 2"                     \
+#     -IFD0:CFAPattern2="1 0 2 1"                         \
+#     -overwrite_original                                 \
+#     "$dng"                                              \
+#
 
 
         

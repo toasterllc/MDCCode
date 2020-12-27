@@ -17,7 +17,7 @@ public:
             if (ir) throw std::runtime_error(std::string("fstat failed: ") + strerror(errno));
             _state.len = st.st_size;
             
-            const void* data = mmap(nullptr, _state.len, PROT_READ, MAP_PRIVATE, _state.fd, 0);
+            void* data = mmap(nullptr, _state.len, PROT_READ|PROT_WRITE, MAP_PRIVATE, _state.fd, 0);
             if (data == MAP_FAILED) throw std::runtime_error(std::string("mmap failed: ") + strerror(errno));
             _state.data = data;
         
@@ -40,6 +40,10 @@ public:
     
     ~Mmap() {
         _reset();
+    }
+    
+    void* data() {
+        return _state.data;
     }
     
     const void* data() const {
@@ -65,7 +69,7 @@ private:
     
     struct {
         int fd = -1;
-        const void* data = nullptr;
+        void* data = nullptr;
         size_t len = 0;
     } _state;
 };

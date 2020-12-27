@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IccProfile>
+    <Header>
+        <CreationDateTime>2020-02-09T11:44:00</CreationDateTime>
+        <ProfileVersion>4.3.0.0</ProfileVersion>
+        <ProfileDeviceClass>scnr</ProfileDeviceClass>
+        <DataColourSpace>RGB </DataColourSpace>
+        <PCS>XYZ </PCS>
+        <DeviceAttributes ReflectiveOrTransparency="reflective" GlossyOrMatte="glossy" MediaPolarity="positive" MediaColour="colour"/>
+        <ProfileFlags EmbeddedInFile="false" UseWithEmbeddedDataOnly="false"/>
+        <RenderingIntent>Perceptual</RenderingIntent>
+        <PCSIlluminant> <XYZNumber X="0.96422" Y="1" Z="0.8249"/> </PCSIlluminant>
+    </Header>
+
+    <Tags>
+        <profileDescriptionTag> <multiLocalizedUnicodeType>
+          <LocalizedText LanguageCountry="enUS">Description</LocalizedText>
+        </multiLocalizedUnicodeType> </profileDescriptionTag>
+        
+        <copyrightTag> <multiLocalizedUnicodeType>
+          <LocalizedText LanguageCountry="enUS">Copyright</LocalizedText>
+        </multiLocalizedUnicodeType> </copyrightTag>
+        
+        <mediaWhitePointTag> <XYZArrayType> <XYZNumber X="1" Y="1" Z="1"/> </XYZArrayType> </mediaWhitePointTag>
+        
+        <redColorantTag> <XYZArrayType> <XYZNumber      X="1"           Y="0"       Z="0"/> </XYZArrayType> </redColorantTag>
+        <greenColorantTag> <XYZArrayType> <XYZNumber    X="0"           Y="1"       Z="0"/> </XYZArrayType> </greenColorantTag>
+        <blueColorantTag> <XYZArrayType> <XYZNumber     X="0"           Y="0"       Z="1"/> </XYZArrayType> </blueColorantTag>
+        
+        <redTRCTag> <curveType> <Curve> </Curve> </curveType> </redTRCTag>
+        <greenTRCTag> <curveType> <Curve> </Curve> </curveType> </greenTRCTag>
+        <blueTRCTag> <curveType> <Curve> </Curve> </curveType> </blueTRCTag>
+    </Tags>
+</IccProfile>

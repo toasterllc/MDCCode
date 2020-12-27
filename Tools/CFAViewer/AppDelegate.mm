@@ -9,6 +9,7 @@
 #import "Mmap.h"
 #import "Util.h"
 #import "Mat.h"
+
 using namespace CFAViewer;
 using namespace MetalTypes;
 using namespace ImageLayerTypes;
@@ -225,15 +226,26 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     Image _image;
 }
 
+static double srgbFromLinearSRGB(double x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    if (x <= 0.0031308) return 12.92*x;
+    return 1.055*pow(x, 1/2.4) - .055;
+}
+
 - (void)awakeFromNib {
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
-    _imageData = Mmap("/Users/dave/Desktop/img.cfa");
+//    _imageData = Mmap("/Users/dave/Desktop/img.cfa");
+    _imageData = Mmap("/Users/dave/Desktop/gray-16bit.cfa");
+//    _imageData = Mmap("/Users/dave/Desktop/gray-dark-16bit.cfa");
+    
+    constexpr size_t ImageWidth = 256;
+    constexpr size_t ImageHeight = 256;
     
 //    Mmap imageData("/Users/dave/repos/ImageProcessing/PureColor.cfa");
-    constexpr size_t ImageWidth = 2304;
-    constexpr size_t ImageHeight = 1296;
+//    constexpr size_t ImageWidth = 256;
+//    constexpr size_t ImageHeight = 256;
     _image = {
         .width = ImageWidth,
         .height = ImageHeight,
@@ -245,6 +257,244 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     [[_mainView imageLayer] setHistogramChangedHandler:^(ImageLayer*) {
         [weakSelf _updateHistograms];
     }];
+    
+    // XYZ.D65 -> XYZ.D50 -> LSRGB.D50
+    
+    // ## XYZ->RGB
+    // "If the input XYZ color is not relative to the same reference
+    // white as the RGB system, you must first apply a chromatic
+    // adaptation transform to the XYZ color to convert it from its
+    // own reference white to the reference white of the RGB system."
+    
+    // ## RGB->XYZ
+    // "The XYZ values will be relative to the same reference white
+    // as the RGB system. If you want XYZ relative to a different
+    // reference white, you must apply a chromatic adaptation
+    // transform to the XYZ color to convert it from the reference
+    // white of the RGB system to the desired reference white."
+    
+    const Mat<double,3,3> XYZ_D50_From_XYZ_D65(
+        1.0478112,  0.0228866,  -0.0501270,
+        0.0295424,  0.9904844,  -0.0170491,
+        -0.0092345, 0.0150436,  0.7521316
+    );
+    
+    const Mat<double,3,3> XYZ_D65_From_XYZ_D50_Scaling(
+        0.9857398,  0.0000000,  0.0000000,
+        0.0000000,  1.0000000,  0.0000000,
+        0.0000000,  0.0000000,  1.3194581
+    );
+    
+    const Mat<double,3,3> XYZ_D65_From_XYZ_D50_Bradford(
+        0.9555766,  -0.0230393, 0.0631636,
+        -0.0282895, 1.0099416,  0.0210077,
+        0.0122982,  -0.0204830, 1.3299098
+    );
+    
+    const Mat<double,3,3> XYZ_D65_From_XYZ_D50_VonKries(
+        0.9845002,  -0.0546158, 0.0676324,
+        -0.0059992, 1.0047864,  0.0012095,
+        0.0000000,  0.0000000,  1.3194581
+    );
+    
+    const Mat<double,3,3> XYZ_From_LSRGB(
+        0.4124564,  0.3575761,  0.1804375,
+        0.2126729,  0.7151522,  0.0721750,
+        0.0193339,  0.1191920,  0.9503041
+    );
+    
+    const Mat<double,3,3> LSRGB_From_XYZ(
+        3.2404542,  -1.5371385, -0.4985314,
+        -0.9692660, 1.8760108,  0.0415560,
+        0.0556434,  -0.2040259, 1.0572252
+    );
+    
+    
+    {
+        printf(
+            "Assuming raw values are XYZ.D50\n"
+            "Chromatic adaptation: Bradford\n"
+            "SRGB Gamma: complex\n"
+        );
+        
+        Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+        color = color/0xFFFF;
+        Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Bradford*color;
+        Color3 color_srgb = Color3(
+            srgbFromLinearSRGB(color_linearSRGB[0]),
+            srgbFromLinearSRGB(color_linearSRGB[1]),
+            srgbFromLinearSRGB(color_linearSRGB[2])
+        );
+        printf("%s\n", color_srgb.str(3).c_str());
+    }
+    
+    
+    
+//    // TODO: try not applying srgb gamma
+//    // TODO: try applying simple srgb gamma
+//    
+//    // SRGB gamma: complex
+//    {
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D65\n"
+//                "Chromatic adaptation: none\n"
+//                "SRGB Gamma: complex\n"
+//            );
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*color;
+//            Color3 color_srgb = Color3(
+//                srgbFromLinearSRGB(color_linearSRGB[0]),
+//                srgbFromLinearSRGB(color_linearSRGB[1]),
+//                srgbFromLinearSRGB(color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//        
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D50\n"
+//                "Chromatic adaptation: XYZ scaling\n"
+//                "SRGB Gamma: complex\n"
+//            );
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Scaling*color;
+//            Color3 color_srgb = Color3(
+//                srgbFromLinearSRGB(color_linearSRGB[0]),
+//                srgbFromLinearSRGB(color_linearSRGB[1]),
+//                srgbFromLinearSRGB(color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//        
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D50\n"
+//                "Chromatic adaptation: Bradford\n"
+//                "SRGB Gamma: complex\n"
+//            );
+//            
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Bradford*color;
+//            Color3 color_srgb = Color3(
+//                srgbFromLinearSRGB(color_linearSRGB[0]),
+//                srgbFromLinearSRGB(color_linearSRGB[1]),
+//                srgbFromLinearSRGB(color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//        
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D50\n"
+//                "Chromatic adaptation: Von Kries\n"
+//                "SRGB Gamma: complex\n"
+//            );
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_VonKries*color;
+//            Color3 color_srgb = Color3(
+//                srgbFromLinearSRGB(color_linearSRGB[0]),
+//                srgbFromLinearSRGB(color_linearSRGB[1]),
+//                srgbFromLinearSRGB(color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//        
+//        {
+//            printf(
+//                "Assuming raw values are SRGB.D65\n"
+//                "Chromatic adaptation: none\n"
+//                "SRGB Gamma: complex\n"
+//            );
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = color;
+//            Color3 color_srgb = Color3(
+//                srgbFromLinearSRGB(color_linearSRGB[0]),
+//                srgbFromLinearSRGB(color_linearSRGB[1]),
+//                srgbFromLinearSRGB(color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//    }
+//    
+//    
+//    
+//    // SRGB gamma: none
+//    {
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D65\n"
+//                "Chromatic adaptation: none\n"
+//                "SRGB Gamma: none\n"
+//            );
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*color;
+//            Color3 color_srgb = Color3(
+//                (color_linearSRGB[0]),
+//                (color_linearSRGB[1]),
+//                (color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//        
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D50\n"
+//                "Chromatic adaptation: XYZ scaling\n"
+//                "SRGB Gamma: none\n"
+//            );
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Scaling*color;
+//            Color3 color_srgb = Color3(
+//                (color_linearSRGB[0]),
+//                (color_linearSRGB[1]),
+//                (color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//        
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D50\n"
+//                "Chromatic adaptation: Bradford\n"
+//                "SRGB Gamma: none\n"
+//            );
+//            
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Bradford*color;
+//            Color3 color_srgb = Color3(
+//                (color_linearSRGB[0]),
+//                (color_linearSRGB[1]),
+//                (color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//        
+//        {
+//            printf(
+//                "Assuming raw values are XYZ.D50\n"
+//                "Chromatic adaptation: Von Kries\n"
+//                "SRGB Gamma: none\n"
+//            );
+//            Color3 color((double)_image.pixels[0], (double)_image.pixels[0], (double)_image.pixels[0]);
+//            color = color/0xFFFF;
+//            Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_VonKries*color;
+//            Color3 color_srgb = Color3(
+//                (color_linearSRGB[0]),
+//                (color_linearSRGB[1]),
+//                (color_linearSRGB[2])
+//            );
+//            printf("%s\n", color_srgb.str(3).c_str());
+//        }
+//    }
 }
 
 - (void)controlTextDidChange:(NSNotification*)note {

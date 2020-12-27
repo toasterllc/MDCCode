@@ -8,8 +8,8 @@ static void printUsage() {
     printf("  cfa2dng <InputFile.cfa> <OutputFile.dng>\n\n");
 }
 
-constexpr size_t ImageWidth = 2304;
-constexpr size_t ImageHeight = 1296;
+constexpr size_t ImageWidth = 256;
+constexpr size_t ImageHeight = 256;
 
 //IMAGEIO_EXTERN const CFStringRef  kCGImagePropertyDNGVersion  IMAGEIO_AVAILABLE_STARTING(10.5, 4.0);
 //IMAGEIO_EXTERN const CFStringRef  kCGImagePropertyDNGBackwardVersion  IMAGEIO_AVAILABLE_STARTING(10.5, 4.0);
@@ -118,6 +118,12 @@ int main(int argc, const char* argv[]) {
         const char* inputFilePath = argv[1];
         const char* outputFilePath = argv[2];
         Mmap mmap(inputFilePath);
+        
+//        uint16_t* pixels = (uint16_t*)mmap.data();
+//        size_t len = mmap.len()/sizeof(*pixels);
+//        for (size_t i=0; i<len; i++) {
+//            pixels[i] = 2048;
+//        }
         
         constexpr size_t bitsPerComponent = 16;
         CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray(); // TODO: needs to be released

@@ -28,7 +28,7 @@ vertex VertexOutput ImageLayer_VertexShader(
 float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint x, int dx, uint y, int dy) {
     x += clamp(dx, -((int)x), (int)(ctx.imageWidth-1-x));
     y += clamp(dy, -((int)y), (int)(ctx.imageHeight-1-y));
-    return (float)pxs[(y*ctx.imageWidth)+x] / ImagePixelMax;
+    return (float)pxs[(y*ctx.imageWidth)+x] / 0xFFFF;
 }
 
 float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
@@ -145,7 +145,7 @@ uint3 binFromColor(float3 color) {
     };
 }
 
-static float srgbFromLinearSRGB(float x) {
+static float srgbFromLSRGB(float x) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     if (x <= 0.0031308) return 12.92*x;
     return 1.055*pow(x, 1/2.4) - .055;
@@ -164,31 +164,39 @@ fragment float4 ImageLayer_FragmentShader(
     //  Row2    G R G R
     //  Row3    B G B G
     uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
-    float3 inputColor(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-    float3x3 colorMatrix(ctx.colorMatrix.c0, ctx.colorMatrix.c1, ctx.colorMatrix.c2);
-    float3 outputColor_xyz = colorMatrix*inputColor;
+    float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+    const float3x3 XYZD50_From_CameraRaw(ctx.colorMatrix.c0, ctx.colorMatrix.c1, ctx.colorMatrix.c2);
+    float3 outputColor_XYZD50 = XYZD50_From_CameraRaw*inputColor_cameraRaw;
+    
+    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+    const float3x3 XYZD65_From_XYZD50_Bradford = transpose(float3x3(
+        0.9555766,  -0.0230393, 0.0631636,
+        -0.0282895, 1.0099416,  0.0210077,
+        0.0122982,  -0.0204830, 1.3299098
+    ));
+    
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 LinearSRGBD65_From_XYZD65(
-        3.2404542, -0.9692660, 0.0556434,
-        -1.5371385, 1.8760108, -0.2040259,
-        -0.4985314, 0.0415560, 1.0572252
-    );
-    float3 outputColor_linearSRGB = LinearSRGBD65_From_XYZD65*outputColor_xyz;
-    float3 outputColor_srgb = float3{
-        srgbFromLinearSRGB(outputColor_linearSRGB[0]),
-        srgbFromLinearSRGB(outputColor_linearSRGB[1]),
-        srgbFromLinearSRGB(outputColor_linearSRGB[2])
+    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
+        3.2404542,  -1.5371385, -0.4985314,
+        -0.9692660, 1.8760108,  0.0415560,
+        0.0556434,  -0.2040259, 1.0572252
+    ));
+    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50_Bradford * outputColor_XYZD50;
+    float3 outputColor_SRGB = float3{
+        srgbFromLSRGB(outputColor_LSRGB[0]),
+        srgbFromLSRGB(outputColor_LSRGB[1]),
+        srgbFromLSRGB(outputColor_LSRGB[2])
     };
     
-    uint3 inputColorBin = binFromColor(inputColor);
+    uint3 inputColorBin = binFromColor(inputColor_cameraRaw);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.r[inputColorBin.r], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.g[inputColorBin.g], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.b[inputColorBin.b], 1, memory_order_relaxed);
     
-    uint3 outputColorBin = binFromColor(outputColor_srgb);
+    uint3 outputColorBin = binFromColor(outputColor_SRGB);
     atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.r[outputColorBin.r], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.g[outputColorBin.g], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.b[outputColorBin.b], 1, memory_order_relaxed);
     
-    return float4(outputColor_srgb, 1);
+    return float4(outputColor_SRGB, 1);
 }

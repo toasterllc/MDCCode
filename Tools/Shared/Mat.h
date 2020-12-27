@@ -66,7 +66,7 @@ public:
         return (trans()*(*this)).inv()*trans();
     }
     
-    // Multiply
+    // Matrix multiply
     template <size_t P>
     Mat<T,M,P> operator*(const Mat<T,N,P>& x) const {
         Mat<T,M,P> r;
@@ -74,6 +74,55 @@ public:
             vDSP_mmul(vals, 1, x.vals, 1, r.vals, 1, M, P, N);
         else if constexpr(std::is_same_v<T, double>)
             vDSP_mmulD(vals, 1, x.vals, 1, r.vals, 1, M, P, N);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Scalar add
+    Mat<T,M,N> operator+(const T& x) const {
+        Mat<T,M,N> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_vsadd(vals, 1, &x, r.vals, 1, M*N);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_vsaddD(vals, 1, &x, r.vals, 1, M*N);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Scalar subtract
+    Mat<T,M,N> operator-(const T& x) const {
+        const T xn = -x;
+        Mat<T,M,N> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_vsadd(vals, 1, &xn, r.vals, 1, M*N);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_vsaddD(vals, 1, &xn, r.vals, 1, M*N);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Scalar multiply
+    Mat<T,M,N> operator*(const T& x) const {
+        Mat<T,M,N> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_vsmul(vals, 1, &x, r.vals, 1, M*N);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_vsmulD(vals, 1, &x, r.vals, 1, M*N);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Scalar divide
+    Mat<T,M,N> operator/(const T& x) const {
+        Mat<T,M,N> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_vsdiv(vals, 1, &x, r.vals, 1, M*N);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_vsdivD(vals, 1, &x, r.vals, 1, M*N);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
