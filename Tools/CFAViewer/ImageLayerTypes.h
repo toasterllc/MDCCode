@@ -3,10 +3,10 @@
 namespace CFAViewer {
     namespace ImageLayerTypes {
         struct RenderContext {
-            MetalTypes::ColorMatrix colorMatrix = {
-                {1, 0, 0},
-                {0, 1, 0},
-                {0, 0, 1},
+            simd::float3x3 colorMatrix = {
+                simd::float3{1,0,0},
+                simd::float3{0,1,0},
+                simd::float3{0,0,1},
             };
             
             uint32_t viewWidth = 0;

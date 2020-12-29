@@ -145,7 +145,7 @@ uint3 binFromColor(float3 color) {
     };
 }
 
-static float srgbFromLSRGB(float x) {
+static float SRGBFromLSRGB(float x) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     if (x <= 0.0031308) return 12.92*x;
     return 1.055*pow(x, 1/2.4) - .055;
@@ -165,15 +165,7 @@ fragment float4 ImageLayer_FragmentShader(
     //  Row3    B G B G
     uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
     float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-    const float3x3 XYZD50_From_CameraRaw(ctx.colorMatrix.c0, ctx.colorMatrix.c1, ctx.colorMatrix.c2);
-    float3 outputColor_XYZD50 = XYZD50_From_CameraRaw*inputColor_cameraRaw;
-    
-    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-    const float3x3 XYZD65_From_XYZD50_Bradford = transpose(float3x3(
-        0.9555766,  -0.0230393, 0.0631636,
-        -0.0282895, 1.0099416,  0.0210077,
-        0.0122982,  -0.0204830, 1.3299098
-    ));
+    const float3x3 XYZD65_From_CameraRaw = ctx.colorMatrix;
     
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
@@ -181,17 +173,22 @@ fragment float4 ImageLayer_FragmentShader(
         -0.9692660, 1.8760108,  0.0415560,
         0.0556434,  -0.2040259, 1.0572252
     ));
-    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50_Bradford * outputColor_XYZD50;
-    float3 outputColor_SRGB = float3{
-        srgbFromLSRGB(outputColor_LSRGB[0]),
-        srgbFromLSRGB(outputColor_LSRGB[1]),
-        srgbFromLSRGB(outputColor_LSRGB[2])
-    };
+    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_CameraRaw * inputColor_cameraRaw;
+    float3 outputColor_SRGB = saturate(float3{
+        SRGBFromLSRGB(outputColor_LSRGB[0]),
+        SRGBFromLSRGB(outputColor_LSRGB[1]),
+        SRGBFromLSRGB(outputColor_LSRGB[2])
+    });
     
     uint3 inputColorBin = binFromColor(inputColor_cameraRaw);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.r[inputColorBin.r], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.g[inputColorBin.g], 1, memory_order_relaxed);
     atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.b[inputColorBin.b], 1, memory_order_relaxed);
+    
+    // If any of the input raw-camera-space channels was saturated, saturate the corresponding output channel
+    if (inputColor_cameraRaw.r >= 1) outputColor_SRGB.r = 1;
+    if (inputColor_cameraRaw.g >= 1) outputColor_SRGB.g = 1;
+    if (inputColor_cameraRaw.b >= 1) outputColor_SRGB.b = 1;
     
     uint3 outputColorBin = binFromColor(outputColor_SRGB);
     atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.r[outputColorBin.r], 1, memory_order_relaxed);

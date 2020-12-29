@@ -5,6 +5,14 @@ class Mat {
 public:
     Mat() {}
     
+    Mat(const T v[]) {
+        memcpy(vals, v, sizeof(vals));
+    }
+    
+    Mat(T v[]) {
+        memcpy(vals, v, sizeof(vals));
+    }
+    
     template <typename... Ts>
     Mat(Ts... vals) : vals{vals...} {
         static_assert(sizeof...(vals)==M*N, "invalid number of values");

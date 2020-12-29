@@ -114,7 +114,7 @@ using namespace CFAViewer::ImageLayerTypes;
     [self setNeedsDisplay];
 }
 
-- (void)updateColorMatrix:(const ColorMatrix&)colorMatrix {
+- (void)updateColorMatrix:(const simd::float3x3&)colorMatrix {
     _ctx.colorMatrix = colorMatrix;
     [self setNeedsDisplay];
 }

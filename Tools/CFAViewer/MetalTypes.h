@@ -14,12 +14,6 @@ namespace CFAViewer {
         using ImagePixel = uint16_t;
         MetalConst ImagePixel ImagePixelMax = 0x0FFF; // 12 bit values
         
-        struct ColorMatrix {
-            vector_float3 c0;
-            vector_float3 c1;
-            vector_float3 c2;
-        };
-        
         struct Histogram {
             static MetalConst size_t Count = 1<<12;
             uint32_t r[Count];

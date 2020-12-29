@@ -14,7 +14,7 @@ namespace CFAViewer::ImageLayerTypes {
 
 @interface ImageLayer : CAMetalLayer
 - (void)updateImage:(const CFAViewer::ImageLayerTypes::Image&)image;
-- (void)updateColorMatrix:(const CFAViewer::MetalTypes::ColorMatrix&)colorMatrix;
+- (void)updateColorMatrix:(const simd::float3x3&)colorMatrix;
 - (void)setHistogramChangedHandler:(ImageLayerHistogramChangedHandler)histogramChangedHandler;
 - (CFAViewer::MetalTypes::Histogram)inputHistogram;
 - (CFAViewer::MetalTypes::Histogram)outputHistogram;
