@@ -312,7 +312,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     IBOutlet NSMenuItem* _showColorCheckerCirclesMenuItem;
     
     IBOutlet NSTextField* _colorText_cameraRaw;
-    IBOutlet NSTextField* _colorText_XYZ_d50;
+    IBOutlet NSTextField* _colorText_XYZ_D65;
     IBOutlet NSTextField* _colorText_SRGB_D65;
     
     bool _colorCheckerCirclesVisible;
@@ -352,78 +352,6 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     if (!points.empty()) {
         [_mainView setColorCheckerPositions:points];
     }
-    
-    // XYZ.D65 -> XYZ.D50 -> LSRGB.D50
-    
-    // ## XYZ->RGB
-    // "If the input XYZ color is not relative to the same reference
-    // white as the RGB system, you must first apply a chromatic
-    // adaptation transform to the XYZ color to convert it from its
-    // own reference white to the reference white of the RGB system."
-    
-    // ## RGB->XYZ
-    // "The XYZ values will be relative to the same reference white
-    // as the RGB system. If you want XYZ relative to a different
-    // reference white, you must apply a chromatic adaptation
-    // transform to the XYZ color to convert it from the reference
-    // white of the RGB system to the desired reference white."
-    
-    const ColorMatrix XYZ_D50_From_XYZ_D65(
-        1.0478112,  0.0228866,  -0.0501270,
-        0.0295424,  0.9904844,  -0.0170491,
-        -0.0092345, 0.0150436,  0.7521316
-    );
-    
-    const ColorMatrix XYZ_D65_From_XYZ_D50_Scaling(
-        0.9857398,  0.0000000,  0.0000000,
-        0.0000000,  1.0000000,  0.0000000,
-        0.0000000,  0.0000000,  1.3194581
-    );
-    
-    const ColorMatrix XYZ_D65_From_XYZ_D50_Bradford(
-        0.9555766,  -0.0230393, 0.0631636,
-        -0.0282895, 1.0099416,  0.0210077,
-        0.0122982,  -0.0204830, 1.3299098
-    );
-    
-    const ColorMatrix XYZ_D65_From_XYZ_D50_VonKries(
-        0.9845002,  -0.0546158, 0.0676324,
-        -0.0059992, 1.0047864,  0.0012095,
-        0.0000000,  0.0000000,  1.3194581
-    );
-    
-    const ColorMatrix XYZ_From_LSRGB(
-        0.4124564,  0.3575761,  0.1804375,
-        0.2126729,  0.7151522,  0.0721750,
-        0.0193339,  0.1191920,  0.9503041
-    );
-    
-    const ColorMatrix LSRGB_From_XYZ(
-        3.2404542,  -1.5371385, -0.4985314,
-        -0.9692660, 1.8760108,  0.0415560,
-        0.0556434,  -0.2040259, 1.0572252
-    );
-    
-    {
-        Mmap grayData("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/gray-16bit.cfa");
-        ImagePixel* grayPixels = (ImagePixel*)grayData.data();
-        
-        printf(
-            "Assuming raw values are XYZ.D50\n"
-            "Chromatic adaptation: Bradford\n"
-            "SRGB Gamma: complex\n"
-        );
-        
-        Color3 color((double)grayPixels[0], (double)grayPixels[0], (double)grayPixels[0]);
-        color = color/0xFFFF;
-        Color3 color_linearSRGB = LSRGB_From_XYZ*XYZ_D65_From_XYZ_D50_Bradford*color;
-        Color3 color_srgb = Color3(
-            SRGBFromLSRGB(color_linearSRGB[0]),
-            SRGBFromLSRGB(color_linearSRGB[1]),
-            SRGBFromLSRGB(color_linearSRGB[2])
-        );
-        printf("%s\n", color_srgb.str(3).c_str());
-    }
 }
 
 - (IBAction)identityButtonPressed:(id)sender {
@@ -431,8 +359,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 }
 
 - (void)_resetColorMatrix {
-    double ident[9] = {1,0,0,0,1,0,0,0,1};
-    [self _updateColorMatrix:ident];
+    [self _updateColorMatrix:{1.,0.,0.,0.,1.,0.,0.,0.,1.}];
 }
 
 - (void)controlTextDidChange:(NSNotification*)note {
@@ -726,7 +653,7 @@ static ColorXYZD65 XYZFromXYY(const ColorXYYD65& xyy) {
     
     [_colorText_cameraRaw setStringValue:
         [NSString stringWithFormat:@"%f %f %f", color_cameraRaw[0], color_cameraRaw[1], color_cameraRaw[2]]];
-    [_colorText_XYZ_d50 setStringValue:
+    [_colorText_XYZ_D65 setStringValue:
         [NSString stringWithFormat:@"%f %f %f", color_XYZD65[0], color_XYZD65[1], color_XYZD65[2]]];
     [_colorText_SRGB_D65 setStringValue:
         [NSString stringWithFormat:@"%f %f %f", color_SRGBD65[0], color_SRGBD65[1], color_SRGBD65[2]]];
