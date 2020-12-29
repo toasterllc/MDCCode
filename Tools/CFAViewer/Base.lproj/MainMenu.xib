@@ -696,7 +696,7 @@
                 <subviews>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kbI-BK-MGm">
                         <rect key="frame" x="18" y="764" width="364" height="16"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Color matrix (camera raw to XYZ.D50)" id="Chd-sJ-4mL">
+                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Color matrix (camera raw to XYZ.D65)" id="Chd-sJ-4mL">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
