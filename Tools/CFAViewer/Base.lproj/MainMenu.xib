@@ -16,7 +16,7 @@
             <connections>
                 <outlet property="_colorMatrixTextField" destination="rvZ-kB-DXu" id="p8n-9z-W1i"/>
                 <outlet property="_colorText_SRGB_D65" destination="wL3-uf-dpp" id="si5-64-W2A"/>
-                <outlet property="_colorText_XYZ_D65" destination="uWQ-FQ-fcu" id="Zyo-9o-nLo"/>
+                <outlet property="_colorText_XYZ_D50" destination="uWQ-FQ-fcu" id="Wnv-Uw-Fln"/>
                 <outlet property="_colorText_cameraRaw" destination="70j-FK-iLi" id="bFt-9x-167"/>
                 <outlet property="_inputHistogramView" destination="osY-3C-qNQ" id="Ou4-HW-UsG"/>
                 <outlet property="_mainView" destination="EiT-Mj-1SZ" id="Jdu-Qd-kK8"/>
@@ -696,7 +696,7 @@
                 <subviews>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kbI-BK-MGm">
                         <rect key="frame" x="18" y="764" width="364" height="16"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Color matrix (camera raw to XYZ.D65)" id="Chd-sJ-4mL">
+                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Color matrix (camera raw to XYZ.D50)" id="Chd-sJ-4mL">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -768,7 +768,7 @@
                         <constraints>
                             <constraint firstAttribute="width" constant="100" id="1g0-J9-zSn"/>
                         </constraints>
-                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="XYZ.D65" id="Wf0-HM-jx9">
+                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="XYZ.D50" id="Wf0-HM-jx9">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -813,7 +813,7 @@
                         <rect key="frame" x="319" y="757" width="66" height="27"/>
                         <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="label" size="11"/>
+                            <font key="font" metaFont="controlContent" size="11"/>
                         </buttonCell>
                         <connections>
                             <action selector="identityButtonPressed:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>

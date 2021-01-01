@@ -16,8 +16,8 @@ using namespace ImageLayerTypes;
 
 using ColorMatrix = Mat<double,3,3>;
 using Color3 = Mat<double,3,1>;
-using ColorXYYD65 = Color3;
-using ColorXYZD65 = Color3;
+using ColorXYYD50 = Color3;
+using ColorXYZD50 = Color3;
 using ColorSRGBD65 = Color3;
 using ColorCameraRaw = Color3;
 
@@ -312,7 +312,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     IBOutlet NSMenuItem* _showColorCheckerCirclesMenuItem;
     
     IBOutlet NSTextField* _colorText_cameraRaw;
-    IBOutlet NSTextField* _colorText_XYZ_D65;
+    IBOutlet NSTextField* _colorText_XYZ_D50;
     IBOutlet NSTextField* _colorText_SRGB_D65;
     
     bool _colorCheckerCirclesVisible;
@@ -586,30 +586,43 @@ static double LSRGBFromSRGB(double x) {
     return pow((x+.055)/1.055, 2.4);
 }
 
-static ColorXYZD65 XYZFromSRGB(const ColorSRGBD65& srgb) {
+static ColorXYZD50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const ColorMatrix XYZFromLSRGB(
+    const ColorMatrix XYZD65_From_LSRGBD65(
         0.4124564, 0.3575761, 0.1804375,
         0.2126729, 0.7151522, 0.0721750,
         0.0193339, 0.1191920, 0.9503041
     );
     
+    const ColorMatrix XYZD50_From_XYZD65(
+        1.0478112,  0.0228866,  -0.0501270,
+         0.0295424, 0.9904844,  -0.0170491,
+        -0.0092345, 0.0150436,  0.7521316
+    );
+    
     // SRGB -> linear SRGB
-    const Color3 lsrgb(LSRGBFromSRGB(srgb[0]), LSRGBFromSRGB(srgb[1]), LSRGBFromSRGB(srgb[2]));
-    // Linear SRGB -> XYZ
-    return XYZFromLSRGB*lsrgb;
+    const Color3 lsrgb_d65(LSRGBFromSRGB(srgb_d65[0]), LSRGBFromSRGB(srgb_d65[1]), LSRGBFromSRGB(srgb_d65[2]));
+    // Linear SRGB -> XYZ.D65 -> XYZ.D50
+    return XYZD50_From_XYZD65 * XYZD65_From_LSRGBD65 * lsrgb_d65;
 }
 
-static ColorSRGBD65 SRGBFromXYZ(const ColorXYZD65& xyz) {
+static ColorSRGBD65 SRGBFromXYZ(const ColorXYZD50& xyz_d50) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+    const ColorMatrix XYZD65_From_XYZD50(
+        0.9555766,  -0.0230393, 0.0631636,
+        -0.0282895, 1.0099416,  0.0210077,
+        0.0122982,  -0.0204830, 1.3299098
+    );
+    
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const ColorMatrix LSRGBFromXYZ(
+    const ColorMatrix LSRGBD65_From_XYZD65(
         3.2404542,  -1.5371385, -0.4985314,
         -0.9692660,  1.8760108,  0.0415560,
         0.0556434,  -0.2040259,  1.0572252
     );
     
-    // XYZ -> linear SRGB
-    const Color3 lsrgb = LSRGBFromXYZ*xyz;
+    // XYZ.D65 -> XYZ.D50 -> linear SRGB
+    const Color3 lsrgb = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * xyz_d50;
     
     // Linear SRGB -> SRGB
     return ColorSRGBD65(
@@ -619,7 +632,7 @@ static ColorSRGBD65 SRGBFromXYZ(const ColorXYZD65& xyz) {
     );
 }
 
-static ColorXYYD65 XYYFromXYZ(const ColorXYZD65& xyz) {
+static ColorXYYD50 XYYFromXYZ(const ColorXYZD50& xyz) {
     const double denom = xyz[0]+xyz[1]+xyz[2];
     const double x = xyz[0]/denom;
     const double y = xyz[1]/denom;
@@ -627,7 +640,7 @@ static ColorXYYD65 XYYFromXYZ(const ColorXYZD65& xyz) {
     return {x, y, Y};
 }
 
-static ColorXYZD65 XYZFromXYY(const ColorXYYD65& xyy) {
+static ColorXYZD50 XYZFromXYY(const ColorXYYD50& xyy) {
     const double X = (xyy[0]*xyy[2])/xyy[1];
     const double Y = xyy[2];
     const double Z = ((1.-xyy[0]-xyy[1])*xyy[2])/xyy[1];
@@ -648,13 +661,13 @@ static ColorXYZD65 XYZFromXYY(const ColorXYYD65& xyy) {
     const uint32_t width = round(eyeDropperRect.size.width*_image.width);
     const uint32_t height = round(eyeDropperRect.size.height*_image.height);
     const ColorCameraRaw color_cameraRaw = sampleImageRect(_image, x, y, width, height);
-    const ColorXYZD65 color_XYZD65 = _colorMatrix*color_cameraRaw;
-    const ColorSRGBD65 color_SRGBD65 = SRGBFromXYZ(color_XYZD65);
+    const ColorXYZD50 color_XYZD50 = _colorMatrix*color_cameraRaw;
+    const ColorSRGBD65 color_SRGBD65 = SRGBFromXYZ(color_XYZD50);
     
     [_colorText_cameraRaw setStringValue:
         [NSString stringWithFormat:@"%f %f %f", color_cameraRaw[0], color_cameraRaw[1], color_cameraRaw[2]]];
-    [_colorText_XYZ_D65 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", color_XYZD65[0], color_XYZD65[1], color_XYZD65[2]]];
+    [_colorText_XYZ_D50 setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", color_XYZD50[0], color_XYZD50[1], color_XYZD50[2]]];
     [_colorText_SRGB_D65 setStringValue:
         [NSString stringWithFormat:@"%f %f %f", color_SRGBD65[0], color_SRGBD65[1], color_SRGBD65[2]]];
 }
@@ -680,10 +693,10 @@ static ColorXYZD65 XYZFromXYY(const ColorXYYD65& xyy) {
     i = 0;
     for (ColorSRGBD65 c : ColorCheckerColors) {
         // Convert the color from SRGB -> XYZ -> XYY
-        ColorXYZD65 cxyy = XYYFromXYZ(XYZFromSRGB(c));
+        ColorXYZD50 cxyy = XYYFromXYZ(XYZFromSRGB(c));
         cxyy[2] /= 3; // Adjust luminance
         
-        const ColorXYZD65 cxyz = XYZFromXYY(cxyy);
+        const ColorXYZD50 cxyz = XYZFromXYY(cxyy);
         b[i+0] = cxyz[0];
         b[i+1] = cxyz[1];
         b[i+2] = cxyz[2];

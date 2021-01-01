@@ -24,9 +24,9 @@
         
         <mediaWhitePointTag> <XYZArrayType> <XYZNumber X="1" Y="1" Z="1"/> </XYZArrayType> </mediaWhitePointTag>
         
-        <redColorantTag> <XYZArrayType> <XYZNumber      X="2.942464"    Y="-0.310210"   Z="-0.675905"/> </XYZArrayType> </redColorantTag>
-        <greenColorantTag> <XYZArrayType> <XYZNumber    X="1.051732"    Y="4.638322"    Z="-2.114415"/> </XYZArrayType> </greenColorantTag>
-        <blueColorantTag> <XYZArrayType> <XYZNumber     X="1.339899"    Y="-0.501141"   Z="11.476543"/> </XYZArrayType> </blueColorantTag>
+        <redColorantTag> <XYZArrayType> <XYZNumber      X="1.020365"    Y="-0.094041"   Z="-0.185454"/> </XYZArrayType> </redColorantTag>
+        <greenColorantTag> <XYZArrayType> <XYZNumber    X="0.469498"    Y="1.600099"    Z="-0.500015"/> </XYZArrayType> </greenColorantTag>
+        <blueColorantTag> <XYZArrayType> <XYZNumber     X="0.238144"    Y="-0.264193"   Z="2.858680"/> </XYZArrayType> </blueColorantTag>
         
         <redTRCTag> <curveType> <Curve> </Curve> </curveType> </redTRCTag>
         <greenTRCTag> <curveType> <Curve> </Curve> </curveType> </greenTRCTag>

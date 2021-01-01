@@ -165,7 +165,14 @@ fragment float4 ImageLayer_FragmentShader(
     //  Row3    B G B G
     uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
     float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-    const float3x3 XYZD65_From_CameraRaw = ctx.colorMatrix;
+    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+    
+    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
+        0.9555766,  -0.0230393, 0.0631636,
+        -0.0282895, 1.0099416,  0.0210077,
+        0.0122982,  -0.0204830, 1.3299098
+    ));
     
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
@@ -173,7 +180,7 @@ fragment float4 ImageLayer_FragmentShader(
         -0.9692660, 1.8760108,  0.0415560,
         0.0556434,  -0.2040259, 1.0572252
     ));
-    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_CameraRaw * inputColor_cameraRaw;
+    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZD50_From_CameraRaw * inputColor_cameraRaw;
     float3 outputColor_SRGB = saturate(float3{
         SRGBFromLSRGB(outputColor_LSRGB[0]),
         SRGBFromLSRGB(outputColor_LSRGB[1]),
