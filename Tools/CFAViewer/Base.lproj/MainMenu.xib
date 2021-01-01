@@ -621,11 +621,24 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="View" id="HyV-fh-RgO">
                         <items>
-                            <menuItem title="Show Color Checker Circles" id="snW-S8-Cw5">
+                            <menuItem title="Color Checker Circles" id="W1c-zL-IwA">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="showHideColorCheckerCircles:" target="Voe-Tx-rLC" id="YO1-P3-72z"/>
-                                </connections>
+                                <menu key="submenu" title="Color Checker Circles" id="9LB-LU-xey">
+                                    <items>
+                                        <menuItem title="Show" id="snW-S8-Cw5">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="showHideColorCheckerCircles:" target="Voe-Tx-rLC" id="YO1-P3-72z"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Reset" id="v5e-nf-X6e">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="resetColorCheckerCircles:" target="Voe-Tx-rLC" id="OMe-TY-ON5"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="3Lp-C0-fgx"/>
                         </items>

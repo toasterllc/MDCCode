@@ -5,24 +5,15 @@ using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
 
 struct VertexOutput {
-    float4 viewPosition [[position]];
-    float2 pixelPosition;
+    float4 pos [[position]];
+//    float2 pixelPosition;
 };
 
 vertex VertexOutput ImageLayer_VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
-    const float4 unitPosition = SquareVert[SquareVertIdx[vidx]];
-    const float2 pixelPosition = {
-        ((unitPosition.x+1)/2)*(ctx.imageWidth),
-        ((unitPosition.y+1)/2)*(ctx.imageHeight),
-    };
-    
-    return VertexOutput{
-        unitPosition,
-        pixelPosition
-    };
+    return VertexOutput{SquareVert[SquareVertIdx[vidx]]};
 }
 
 #define SamplePtr constant ImagePixel*
@@ -595,6 +586,58 @@ float SRGBFromLSRGB(float x) {
     return 1.055*pow(x, 1/2.4) - .055;
 }
 
+
+fragment float4 ImageLayer_Debayer(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant ImagePixel* pxs [[buffer(1)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    //    if (pos.y == 5) return float4(1,0,0,1);
+    
+    // ## Bilinear debayering
+    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
+//    return float4(1, 0, 0, 1);
+}
+
+fragment float4 ImageLayer_ColorAdjust(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+    
+    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
+        0.9555766,  -0.0230393, 0.0631636,
+        -0.0282895, 1.0099416,  0.0210077,
+        0.0122982,  -0.0204830, 1.3299098
+    ));
+    
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
+        3.2404542,  -1.5371385, -0.4985314,
+        -0.9692660, 1.8760108,  0.0415560,
+        0.0556434,  -0.2040259, 1.0572252
+    ));
+    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZD50_From_CameraRaw * inputColor_cameraRaw;
+    float3 outputColor_SRGB = saturate(float3{
+        SRGBFromLSRGB(outputColor_LSRGB[0]),
+        SRGBFromLSRGB(outputColor_LSRGB[1]),
+        SRGBFromLSRGB(outputColor_LSRGB[2])
+    });
+    return float4(outputColor_SRGB, 1);
+    
+//    uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
+//    const float4 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.viewPosition.xy);
+////    const float3 inputColor_cameraRaw = texture.read(pos).rgb;
+////    return float4(inputColor_cameraRaw, 1);
+//    return inputColor_cameraRaw;
+//    return float4(interpolated.pixelPosition.x/ctx.viewWidth, interpolated.pixelPosition.y/ctx.viewHeight, 0, 1);
+}
+
+
 fragment float4 ImageLayer_FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
@@ -607,23 +650,23 @@ fragment float4 ImageLayer_FragmentShader(
     //  Row1    B G B G
     //  Row2    G R G R
     //  Row3    B G B G
-    uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
+    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     
     // ## Bilinear debayering
-//    float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+    float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
     
     // ## LMMSE debayering
-    const int redX = 1;
-    const int redY = 0;
-    const int green = 1 - ((redX + redY) & 1);
-    float3 inputColor_cameraRaw;
-    inputColor_cameraRaw.g =
-        sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
-    inputColor_cameraRaw.r = inputColor_cameraRaw.g -
-        sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-    inputColor_cameraRaw.b = inputColor_cameraRaw.g -
-        sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+//    const int redX = 1;
+//    const int redY = 0;
+//    const int green = 1 - ((redX + redY) & 1);
+//    float3 inputColor_cameraRaw;
+//    inputColor_cameraRaw.g =
+//        sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
+//    inputColor_cameraRaw.r = inputColor_cameraRaw.g -
+//        sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+//    inputColor_cameraRaw.b = inputColor_cameraRaw.g -
+//        sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
     const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(

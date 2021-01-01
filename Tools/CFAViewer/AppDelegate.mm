@@ -84,7 +84,8 @@ const ColorSRGBD65 ColorCheckerColors[ColorCheckerCount] {
     _imageLayer = [ImageLayer new];
     [_rootLayer addSublayer:_imageLayer];
     [_rootLayer setLayoutManager:self];
-    [_imageLayer setAffineTransform:CGAffineTransformMakeScale(1, -1)];
+//    [_imageLayer setSublayerTransform:CATransform3DMakeScale(1, -1, 1)];
+//    [_imageLayer setAffineTransform:CGAffineTransformMakeScale(1, -1)];
     
     _eyeDropperLayer = [CALayer new];
     [_eyeDropperLayer setActions:LayerNullActions()];
@@ -132,20 +133,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     
     // Apply the initial color checker positions, if they haven't been positioned yet
     if (!_colorCheckersPositioned) {
-        const size_t ColorCheckerWidth = 6;
-        const size_t ColorCheckerHeight = 4;
-        const CGSize size = [_imageLayer bounds].size;
-        size_t i = 0;
-        for (size_t y=0; y<ColorCheckerHeight; y++) {
-            for (size_t x=0; x<ColorCheckerWidth; x++, i++) {
-                const CGPoint p = {
-                    .5*size.width  + x*(_colorCheckerCircleRadius+10),
-                    .5*size.height + y*(_colorCheckerCircleRadius+10)
-                };
-                CAShapeLayer* circle = _colorCheckerCircles[i];
-                [circle setPosition:p];
-            }
-        }
+        [self resetColorCheckerPositions];
         _colorCheckersPositioned = true;
     }
     
@@ -201,9 +189,27 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     CGRect r = [_eyeDropperLayer frame];
     r.origin.x /= layerSize.width;
     r.origin.y /= layerSize.height;
+    r.origin.y = 1-r.origin.y; // Flip Y so the origin is at the top-left
     r.size.width /= layerSize.width;
     r.size.height /= layerSize.height;
     return r;
+}
+
+- (void)resetColorCheckerPositions {
+    const size_t ColorCheckerWidth = 6;
+    const size_t ColorCheckerHeight = 4;
+    const CGSize size = [_imageLayer bounds].size;
+    size_t i = 0;
+    for (size_t y=0; y<ColorCheckerHeight; y++) {
+        for (size_t x=0; x<ColorCheckerWidth; x++, i++) {
+            const CGPoint p = {
+                .5*size.width  + x*(_colorCheckerCircleRadius+10),
+                .5*size.height - y*(_colorCheckerCircleRadius+10)
+            };
+            CAShapeLayer* circle = _colorCheckerCircles[i];
+            [circle setPosition:p];
+        }
+    }
 }
 
 - (std::vector<CGPoint>)colorCheckerPositions {
@@ -213,6 +219,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         CGPoint p = [l position];
         p.x /= layerSize.width;
         p.y /= layerSize.height;
+        p.y = 1-p.y; // Flip Y, so that the origin of our return value is the top-left
         r.push_back(p);
     }
     return r;
@@ -224,6 +231,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     size_t i = 0;
     for (CALayer* l : _colorCheckerCircles) {
         CGPoint p = points[i];
+        p.y = 1-p.y; // Flip Y, since the origin of the supplied points is the top-left
         p.x *= layerSize.width;
         p.y *= layerSize.height;
         [l setPosition:p];
@@ -651,6 +659,11 @@ static ColorXYZD50 XYZFromXYY(const ColorXYYD50& xyy) {
 	_colorCheckerCirclesVisible = !_colorCheckerCirclesVisible;
     [_mainView setColorCheckerCirclesVisible:_colorCheckerCirclesVisible];
     [_showColorCheckerCirclesMenuItem setState:(_colorCheckerCirclesVisible ? NSControlStateValueOn : NSControlStateValueOff)];
+    [self colorCheckerPositionsChanged];
+}
+
+- (IBAction)resetColorCheckerCircles:(id)sender {
+    [_mainView resetColorCheckerPositions];
     [self colorCheckerPositionsChanged];
 }
 

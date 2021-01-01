@@ -14,12 +14,10 @@ using namespace CFAViewer::ImageLayerTypes;
 @implementation ImageLayer {
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
-    id<MTLRenderPipelineState> _pipelineState;
-    id<MTLDepthStencilState> _depthStencilState;
+    id<MTLLibrary> _library;
+    id<MTLRenderPipelineState> _debayerPipelineState;
+    id<MTLRenderPipelineState> _colorAdjustPipelineState;
     ImageLayerHistogramChangedHandler _histogramChangedHandler;
-    
-    id<MTLTexture> _depthTexture;
-    MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
     
     RenderContext _ctx;
     id<MTLBuffer> _pixelData;
@@ -42,40 +40,20 @@ using namespace CFAViewer::ImageLayerTypes;
     
     _commandQueue = [_device newCommandQueue];
     
-    id<MTLLibrary> library = [_device newDefaultLibraryWithBundle:
-        [NSBundle bundleForClass:[self class]] error:nil];
-    Assert(library, return nil);
-    
-    id<MTLFunction> vertexShader = [library newFunctionWithName:@"ImageLayer_VertexShader"];
-    Assert(vertexShader, return nil);
-    
-    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"ImageLayer_FragmentShader"];
-    Assert(fragmentShader, return nil);
-    
-    MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
-    [pipelineDescriptor setVertexFunction:vertexShader];
-    [pipelineDescriptor setFragmentFunction:fragmentShader];
-    
-    pipelineDescriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
-    pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
-    _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
-    Assert(_pipelineState, return nil);
-    
-    MTLDepthStencilDescriptor* depthStencilDescriptor = [MTLDepthStencilDescriptor new];
-    depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
-    depthStencilDescriptor.depthWriteEnabled = true;
-    _depthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
-    
-    _depthAttachment = [MTLRenderPassDepthAttachmentDescriptor new];
-    [_depthAttachment setLoadAction:MTLLoadActionClear];
-    [_depthAttachment setStoreAction:MTLStoreActionDontCare];
-    [_depthAttachment setClearDepth:1];
+    _library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
+    Assert(_library, return nil);
     
     _inputHistogramBuf = [_device newBufferWithBytesNoCopy:&_inputHistogram
         length:sizeof(_inputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
     
     _outputHistogramBuf = [_device newBufferWithBytesNoCopy:&_outputHistogram
         length:sizeof(_outputHistogram) options:MTLResourceStorageModeShared deallocator:nil];
+    
+    // We have multiple render passes
+    // -> so a fragment shader's input is the previous shader's output
+    // -> so the drawable's texture needs to support sampling
+    // -> so framebufferOnly=false to allow sampling
+    [self setFramebufferOnly:false];
     
     return self;
 }
@@ -131,27 +109,106 @@ using namespace CFAViewer::ImageLayerTypes;
     return _outputHistogram;
 }
 
-- (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
-    NSParameterAssert(drawableTexture);
+
+
+
+- (id<MTLRenderPipelineState>)_debayerPipelineState {
+    if (_debayerPipelineState) return _debayerPipelineState;
     
-    const NSUInteger width = [drawableTexture width];
-    const NSUInteger height = [drawableTexture height];
-    if (!_depthTexture || width!=[_depthTexture width] || height!=[_depthTexture height]) {
-        // The _depthTexture doesn't exist or our size changed, so re-create the depth texture
-        MTLTextureDescriptor* desc =
-            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
-            width:width height:height mipmapped:false];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setSampleCount:1];
-        [desc setUsage:MTLTextureUsageUnknown];
-        [desc setStorageMode:MTLStorageModePrivate];
-        
-        _depthTexture = [_device newTextureWithDescriptor:desc];
-        [_depthAttachment setTexture:_depthTexture];
-    }
+    id<MTLFunction> vertexShader = [_library newFunctionWithName:@"ImageLayer_VertexShader"];
+    Assert(vertexShader, return nil);
     
-    return _depthAttachment;
+    id<MTLFunction> fragmentShader = [_library newFunctionWithName:@"ImageLayer_Debayer"];
+    Assert(fragmentShader, return nil);
+    
+    MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
+    [pipelineDescriptor setVertexFunction:vertexShader];
+    [pipelineDescriptor setFragmentFunction:fragmentShader];
+    
+    [pipelineDescriptor colorAttachments][0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+    _debayerPipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
+    Assert(_debayerPipelineState, return nil);
+    return _debayerPipelineState;
 }
+
+- (void)_debayerRenderPass:(id<MTLCommandBuffer>)cmdBuf texture:(id<MTLTexture>)texture {
+    NSParameterAssert(cmdBuf);
+    NSParameterAssert(texture);
+    
+    MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
+    [[renderPassDescriptor colorAttachments][0] setTexture:texture];
+    [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+    [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
+    [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
+    id<MTLRenderCommandEncoder> renderEncoder = [cmdBuf renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    
+    [renderEncoder setRenderPipelineState:[self _debayerPipelineState]];
+    [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+    [renderEncoder setCullMode:MTLCullModeNone];
+    
+    [renderEncoder setVertexBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [renderEncoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [renderEncoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
+    
+    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+        vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
+    
+    [renderEncoder endEncoding];
+}
+
+
+
+
+
+
+
+- (id<MTLRenderPipelineState>)_colorAdjustPipelineState {
+    if (_colorAdjustPipelineState) return _colorAdjustPipelineState;
+    
+    id<MTLFunction> vertexShader = [_library newFunctionWithName:@"ImageLayer_VertexShader"];
+    Assert(vertexShader, return nil);
+    
+    id<MTLFunction> fragmentShader = [_library newFunctionWithName:@"ImageLayer_ColorAdjust"];
+    Assert(fragmentShader, return nil);
+    
+    MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
+    [pipelineDescriptor setVertexFunction:vertexShader];
+    [pipelineDescriptor setFragmentFunction:fragmentShader];
+    
+    [pipelineDescriptor colorAttachments][0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+    _colorAdjustPipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
+    Assert(_colorAdjustPipelineState, return nil);
+    return _colorAdjustPipelineState;
+}
+
+- (void)_colorAdjustRenderPass:(id<MTLCommandBuffer>)cmdBuf texture:(id<MTLTexture>)texture {
+    NSParameterAssert(cmdBuf);
+    NSParameterAssert(texture);
+    
+    MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
+    [[renderPassDescriptor colorAttachments][0] setTexture:texture];
+    [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
+    [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
+    [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
+    id<MTLRenderCommandEncoder> renderEncoder = [cmdBuf renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    
+    [renderEncoder setRenderPipelineState:[self _colorAdjustPipelineState]];
+    [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+    [renderEncoder setCullMode:MTLCullModeNone];
+    
+    [renderEncoder setVertexBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [renderEncoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [renderEncoder setFragmentTexture:texture atIndex:0];
+    
+    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+        vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
+    
+    [renderEncoder endEncoding];
+}
+
+
+
+
 
 - (void)display {
     
@@ -174,45 +231,23 @@ using namespace CFAViewer::ImageLayerTypes;
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
     
-    id<MTLTexture> drawableTexture = [drawable texture];
-    Assert(drawableTexture, return);
+    id<MTLTexture> texture = [drawable texture];
+    Assert(texture, return);
     
-    MTLRenderPassDepthAttachmentDescriptor* depthAttachment = [self _depthAttachmentForDrawableTexture:drawableTexture];
-    Assert(depthAttachment, return);
+    id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
     
-    MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-    [renderPassDescriptor setDepthAttachment:depthAttachment];
-    renderPassDescriptor.colorAttachments[0].texture = drawable.texture;
-    [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-    [[renderPassDescriptor colorAttachments][0] setClearColor:{0, 0, 0, 1}];
-    [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
+    // De-bayer render pass
+    [self _debayerRenderPass:cmdBuf texture:texture];
     
-    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    // Color-adjust render pass
+    [self _colorAdjustRenderPass:cmdBuf texture:texture];
     
-    [renderEncoder setRenderPipelineState:_pipelineState];
-    [renderEncoder setDepthStencilState:_depthStencilState];
-    [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
-    [renderEncoder setCullMode:MTLCullModeNone];
-    
-    // Only try to render if we have a _pixelData
-    [renderEncoder setVertexBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-    
-    [renderEncoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-    [renderEncoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
-    [renderEncoder setFragmentBuffer:_inputHistogramBuf offset:0 atIndex:2];
-    [renderEncoder setFragmentBuffer:_outputHistogramBuf offset:0 atIndex:3];
-    
-    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-        vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
-    
-    [renderEncoder endEncoding];
-    [commandBuffer presentDrawable:drawable];
-    [commandBuffer commit];
+    [cmdBuf presentDrawable:drawable];
+    [cmdBuf commit];
 //    auto startTime = MyTime::Now();
     // Wait for the render to complete, since the lock needs to be
     // held because the shader accesses _state
-    [commandBuffer waitUntilCompleted];
+    [cmdBuf waitUntilCompleted];
     
     // Notify that our histogram changed
     if (_histogramChangedHandler) _histogramChangedHandler(self);
