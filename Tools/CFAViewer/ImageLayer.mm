@@ -25,6 +25,10 @@ using namespace CFAViewer::ImageLayerTypes;
     RenderContext _ctx;
     id<MTLBuffer> _pixelData;
     
+    id<MTLBuffer> _sampleBuf_cameraRaw;
+    id<MTLBuffer> _sampleBuf_XYZD50;
+    id<MTLBuffer> _sampleBuf_SRGBD65;
+    
     Histogram _inputHistogram __attribute__((aligned(4096)));
     id<MTLBuffer> _inputHistogramBuf;
     Histogram _outputHistogram __attribute__((aligned(4096)));
@@ -45,6 +49,10 @@ using namespace CFAViewer::ImageLayerTypes;
     
     _library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
     Assert(_library, return nil);
+    
+    _sampleBuf_cameraRaw = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
+    _sampleBuf_XYZD50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
+    _sampleBuf_SRGBD65 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
     
 //    _highlightsBuf = [_device newBufferWithBytesNoCopy:&_highlights
 //        length:sizeof(_highlights) options:MTLResourceStorageModeShared deallocator:nil];
@@ -169,19 +177,12 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     _outputHistogram = Histogram();
     
     // Update our drawable size using our view size (in pixels)
-    const CGFloat scale = [self contentsScale];
-    CGSize viewSizePx = [self bounds].size;
-    viewSizePx.width *= scale;
-    viewSizePx.height *= scale;
-    [self setDrawableSize:viewSizePx];
-    
-    _ctx.viewWidth = (uint32_t)lround(viewSizePx.width);
-    _ctx.viewHeight = (uint32_t)lround(viewSizePx.height);
+    [self setDrawableSize:{(CGFloat)_ctx.imageWidth, (CGFloat)_ctx.imageHeight}];
     
     MTLTextureDescriptor* textureDesc = [MTLTextureDescriptor new];
     [textureDesc setTextureType:MTLTextureType2D];
-    [textureDesc setWidth:_ctx.viewWidth];
-    [textureDesc setHeight:_ctx.viewHeight];
+    [textureDesc setWidth:_ctx.imageWidth];
+    [textureDesc setHeight:_ctx.imageHeight];
     [textureDesc setPixelFormat:MTLPixelFormatRGBA32Float];
     [textureDesc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
     id<MTLTexture> texture = [_device newTextureWithDescriptor:textureDesc];
@@ -199,10 +200,11 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         // ImageLayer_DebayerLMMSE
         // ImageLayer_DebayerBilinear
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DebayerLMMSE"
+        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DebayerBilinear"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
                 [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
+                [encoder setFragmentBuffer:_sampleBuf_cameraRaw offset:0 atIndex:2];
             }
         ];
     }
@@ -247,6 +249,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_LSRGBD65FromXYYD50"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBuffer:_sampleBuf_XYZD50 offset:0 atIndex:1];
                 [encoder setFragmentTexture:texture atIndex:0];
             }
         ];
@@ -318,6 +321,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_SRGBGamma"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBuffer:_sampleBuf_SRGBD65 offset:0 atIndex:1];
                 [encoder setFragmentTexture:texture atIndex:0];
             }
         ];
@@ -420,16 +424,133 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     }
 }
 
-- (simd::float3)sampleCameraRaw:(CGRect)rect {
-    return {};
+//- (float)_sampleX:(int32_t)x y:(int32_t)y {
+//    NSParameterAssert(x>=0 && x<_ctx.imageWidth);
+//    NSParameterAssert(y>=0 && y<_ctx.imageHeight);
+//    const ImagePixel* pixels = (const ImagePixel*)[_pixelData contents];
+//    return (float)pixels[y*_ctx.imageWidth+x] / ImagePixelMax;
+//}
+//
+//- (simd::float3)sampleCameraRaw:(CGRect)rect {
+//    //  Row0    G1  R
+//    //  Row1    B   G2
+//    int32_t left = std::clamp((int32_t)round(rect.origin.x), 0, (int32_t)_ctx.imageWidth);
+//    int32_t right = std::clamp((int32_t)round(rect.origin.x+rect.size.width), 0, (int32_t)_ctx.imageWidth);
+//    int32_t top = std::clamp((int32_t)round(rect.origin.y), 0, (int32_t)_ctx.imageHeight);
+//    int32_t bottom = std::clamp((int32_t)round(rect.origin.y+rect.size.height), 0, (int32_t)_ctx.imageHeight);
+//    simd::float3 color = {0,0,0};
+//    int32_t i = 0;
+//    for (int32_t y=top; y<bottom; y++) {
+//        for (int32_t x=left; x<right; x++, i++) {
+//            const bool r = (!(y%2) && (x%2));
+//            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
+//            const bool b = ((y%2) && !(x%2));
+//            const float val = [self _sampleX:x y:y];
+//            if (r)      color[0] += val;
+//            else if (g) color[1] += val;
+//            else if (b) color[2] += val;
+//        }
+//    }
+//    color /= i;
+//    return color;
+//}
+
+- (void)setSampleRect:(CGRect)rect {
+    rect.origin.x *= _ctx.imageWidth;
+    rect.origin.y *= _ctx.imageHeight;
+    rect.size.width *= _ctx.imageWidth;
+    rect.size.height *= _ctx.imageHeight;
+    _ctx.sampleRect = {
+        .left = (uint32_t)std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)_ctx.imageWidth),
+        .right = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)_ctx.imageWidth),
+        .top = (uint32_t)std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_ctx.imageHeight),
+        .bottom = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_ctx.imageHeight),
+    };
+    
+    _sampleBuf_cameraRaw = [_device newBufferWithLength:
+        sizeof(simd::float3)*std::max((uint32_t)1, _ctx.sampleRect.count())
+        options:MTLResourceStorageModeShared];
+    
+    _sampleBuf_XYZD50 = [_device newBufferWithLength:
+        sizeof(simd::float3)*std::max((uint32_t)1, _ctx.sampleRect.count())
+        options:MTLResourceStorageModeShared];
+    
+    _sampleBuf_SRGBD65 = [_device newBufferWithLength:
+        sizeof(simd::float3)*std::max((uint32_t)1, _ctx.sampleRect.count())
+        options:MTLResourceStorageModeShared];
+    
+    [self display];
 }
 
-- (simd::float3)sampleXYZD50:(CGRect)rect {
-    return {};
+- (simd::float3)sampleCameraRaw {
+    assert(_sampleBuf_cameraRaw);
+    const simd::float3* vals = (simd::float3*)[_sampleBuf_cameraRaw contents];
+    size_t i = 0;
+    simd::float3 c = {};
+    simd::uint3 count = {};
+    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
+        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
+            const bool r = (!(y%2) && (x%2));
+            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
+            const bool b = ((y%2) && !(x%2));
+            if (r) count[0]++;
+            if (g) count[1]++;
+            if (b) count[2]++;
+            c += vals[i];
+        }
+    }
+    if (count[0]) c[0] /= count[0];
+    if (count[1]) c[1] /= count[1];
+    if (count[2]) c[2] /= count[2];
+    return c;
 }
 
-- (simd::float3)sampleSRGBD65:(CGRect)rect {
-    return {};
+//- (simd::float3)sampleCameraRaw {
+//    assert(_sampleBuf_cameraRaw);
+//    const float* vals = (float*)[_sampleBuf_cameraRaw contents];
+//    size_t i = 0;
+//    simd::float3 c = {0,0,0};
+//    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
+//        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
+//            const bool r = (!(y%2) && (x%2));
+//            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
+//            const bool b = ((y%2) && !(x%2));
+//            const float val = vals[i];
+//            if (r)      c[0] += val;
+//            else if (g) c[1] += val;
+//            else if (b) c[2] += val;
+//        }
+//    }
+//    c /= i;
+//    return c;
+//}
+
+- (simd::float3)sampleXYZD50 {
+    assert(_sampleBuf_XYZD50);
+    const simd::float3* vals = (simd::float3*)[_sampleBuf_XYZD50 contents];
+    size_t i = 0;
+    simd::float3 c = {0,0,0};
+    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
+        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
+            c += vals[i];
+        }
+    }
+    c /= i;
+    return c;
+}
+
+- (simd::float3)sampleSRGBD65 {
+    assert(_sampleBuf_SRGBD65);
+    const simd::float3* vals = (simd::float3*)[_sampleBuf_SRGBD65 contents];
+    size_t i = 0;
+    simd::float3 c = {0,0,0};
+    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
+        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
+            c += vals[i];
+        }
+    }
+    c /= i;
+    return c;
 }
 
 @end

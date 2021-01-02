@@ -19,8 +19,9 @@ namespace CFAViewer::ImageLayerTypes {
 - (CFAViewer::MetalTypes::Histogram)inputHistogram;
 - (CFAViewer::MetalTypes::Histogram)outputHistogram;
 
-- (simd::float3)sampleCameraRaw:(CGRect)rect;
-- (simd::float3)sampleXYZD50:(CGRect)rect;
-- (simd::float3)sampleSRGBD65:(CGRect)rect;
+- (void)setSampleRect:(CGRect)rect;
+- (simd::float3)sampleCameraRaw;
+- (simd::float3)sampleXYZD50;
+- (simd::float3)sampleSRGBD65;
 
 @end

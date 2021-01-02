@@ -24,7 +24,7 @@ using ColorCameraRaw = Color3;
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 
 @interface NSObject ()
-- (void)eyeDropperRectChanged;
+- (void)sampleRectChanged;
 - (void)colorCheckerPositionsChanged;
 @end
 
@@ -69,7 +69,7 @@ const ColorSRGBD65 ColorCheckerColors[ColorCheckerCount] {
 @implementation MainView {
     CALayer* _rootLayer;
     ImageLayer* _imageLayer;
-    CALayer* _eyeDropperLayer;
+    CALayer* _sampleLayer;
     CGFloat _colorCheckerCircleRadius;
     bool _colorCheckerCirclesVisible;
     bool _colorCheckersPositioned;
@@ -87,11 +87,11 @@ const ColorSRGBD65 ColorCheckerColors[ColorCheckerCount] {
 //    [_imageLayer setSublayerTransform:CATransform3DMakeScale(1, -1, 1)];
 //    [_imageLayer setAffineTransform:CGAffineTransformMakeScale(1, -1)];
     
-    _eyeDropperLayer = [CALayer new];
-    [_eyeDropperLayer setActions:LayerNullActions()];
-    [_eyeDropperLayer setBorderColor:(CGColorRef)SRGBColor(1, 0, 0, 1)];
-    [_eyeDropperLayer setBorderWidth:1];
-    [_imageLayer addSublayer:_eyeDropperLayer];
+    _sampleLayer = [CALayer new];
+    [_sampleLayer setActions:LayerNullActions()];
+    [_sampleLayer setBorderColor:(CGColorRef)SRGBColor(1, 0, 0, 1)];
+    [_sampleLayer setBorderWidth:1];
+    [_imageLayer addSublayer:_sampleLayer];
     
     // Create our color checker circles if they don't exist yet
     size_t i = 0;
@@ -171,9 +171,10 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
             CGRect frame;
             frame.origin = start;
             frame.size = {end.x-start.x, end.y-start.y};
-            [_eyeDropperLayer setFrame:frame];
-            [_delegate eyeDropperRectChanged];
+            [_sampleLayer setFrame:frame];
+            [_delegate sampleRectChanged];
         });
+//        [_delegate sampleRectChanged];
     }
 }
 
@@ -184,9 +185,9 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     }
 }
 
-- (CGRect)eyeDropperRect {
+- (CGRect)sampleRect {
     const CGSize layerSize = [_imageLayer bounds].size;
-    CGRect r = [_eyeDropperLayer frame];
+    CGRect r = [_sampleLayer frame];
     r.origin.x /= layerSize.width;
     r.origin.y /= layerSize.height;
     r.origin.y = 1-r.origin.y; // Flip Y so the origin is at the top-left
@@ -667,22 +668,20 @@ static ColorXYZD50 XYZFromXYY(const ColorXYYD50& xyy) {
     [self colorCheckerPositionsChanged];
 }
 
-- (void)eyeDropperRectChanged {
-    const CGRect eyeDropperRect = [_mainView eyeDropperRect];
-    const uint32_t x = round(eyeDropperRect.origin.x*_image.width);
-    const uint32_t y = round(eyeDropperRect.origin.y*_image.height);
-    const uint32_t width = round(eyeDropperRect.size.width*_image.width);
-    const uint32_t height = round(eyeDropperRect.size.height*_image.height);
-    const ColorCameraRaw color_cameraRaw = sampleImageRect(_image, x, y, width, height);
-    const ColorXYZD50 color_XYZD50 = _colorMatrix*color_cameraRaw;
-    const ColorSRGBD65 color_SRGBD65 = SRGBFromXYZ(color_XYZD50);
+- (void)sampleRectChanged {
+    const CGRect sampleRect = [_mainView sampleRect];
+    [[_mainView imageLayer] setSampleRect:sampleRect];
+    
+    const simd::float3 sample_cameraRaw = [[_mainView imageLayer] sampleCameraRaw];
+    const simd::float3 sample_XYZD50 = [[_mainView imageLayer] sampleXYZD50];
+    const simd::float3 sample_SRGBD65 = [[_mainView imageLayer] sampleSRGBD65];
     
     [_colorText_cameraRaw setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", color_cameraRaw[0], color_cameraRaw[1], color_cameraRaw[2]]];
+        [NSString stringWithFormat:@"%f %f %f", sample_cameraRaw[0], sample_cameraRaw[1], sample_cameraRaw[2]]];
     [_colorText_XYZ_D50 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", color_XYZD50[0], color_XYZD50[1], color_XYZD50[2]]];
+        [NSString stringWithFormat:@"%f %f %f", sample_XYZD50[0], sample_XYZD50[1], sample_XYZD50[2]]];
     [_colorText_SRGB_D65 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", color_SRGBD65[0], color_SRGBD65[1], color_SRGBD65[2]]];
+        [NSString stringWithFormat:@"%f %f %f", sample_SRGBD65[0], sample_SRGBD65[1], sample_SRGBD65[2]]];
 }
 
 - (void)colorCheckerPositionsChanged {

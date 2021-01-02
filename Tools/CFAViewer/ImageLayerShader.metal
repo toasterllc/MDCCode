@@ -601,14 +601,27 @@ float3 XYZFromXYY(const float3 xyy) {
 fragment float4 ImageLayer_DebayerBilinear(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
+    device float3* samples [[buffer(2)]],
     VertexOutput interpolated [[stage_in]]
 ) {
-    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
-    //    if (pos.y == 5) return float4(1,0,0,1);
+    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    const float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+    
+    if (pos.x >= ctx.sampleRect.left &&
+        pos.x < ctx.sampleRect.right &&
+        pos.y >= ctx.sampleRect.top &&
+        pos.y < ctx.sampleRect.bottom) {
+        const bool red = (!(pos.y%2) && (pos.x%2));
+        const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+        const bool blue = ((pos.y%2) && !(pos.x%2));
+        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
+        const float3 sample = float3(red ? c.r : 0., green ? c.g : 0., blue ? c.b : 0.);
+        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
+    }
     
     // ## Bilinear debayering
 //    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
-    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
+    return float4(c, 1);
 //    return float4(1, 0, 0, 1);
 }
 
@@ -646,8 +659,8 @@ fragment float4 ImageLayer_XYYD50FromCameraRaw(
 ) {
     const float3 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
-    float3 outputColor_XYYD50 = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
-    return float4(outputColor_XYYD50, 1);
+    const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
+    return float4(c, 1);
 }
 
 fragment float4 ImageLayer_XYYD50FromXYZD50(
@@ -707,6 +720,7 @@ fragment float4 ImageLayer_ClipRGB(
 
 fragment float4 ImageLayer_LSRGBD65FromXYYD50(
     constant RenderContext& ctx [[buffer(0)]],
+    device float3* samples [[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
     VertexOutput interpolated [[stage_in]]
 ) {
@@ -726,8 +740,19 @@ fragment float4 ImageLayer_LSRGBD65FromXYYD50(
         0.0556434,  -0.2040259, 1.0572252
     ));
     
-    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZFromXYY(inputColor_XYYD50);
-    return float4(outputColor_LSRGB, 1);
+    const float3 c_XYZD50 = XYZFromXYY(inputColor_XYYD50);
+    const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
+    
+    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    if (pos.x >= ctx.sampleRect.left &&
+        pos.x < ctx.sampleRect.right &&
+        pos.y >= ctx.sampleRect.top &&
+        pos.y < ctx.sampleRect.bottom) {
+        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
+        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = c_XYZD50;
+    }
+    
+    return float4(c_LSRGBD65, 1);
 }
 
 
@@ -830,16 +855,27 @@ fragment float4 ImageLayer_FixHighlights(
 
 fragment float4 ImageLayer_SRGBGamma(
     constant RenderContext& ctx [[buffer(0)]],
+    device float3* samples [[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
     VertexOutput interpolated [[stage_in]]
 ) {
     const float3 lsrgb = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
-    float3 outputColor_SRGB = float3{
+    float3 c_SRGB = float3{
         SRGBFromLSRGB(lsrgb[0]),
         SRGBFromLSRGB(lsrgb[1]),
         SRGBFromLSRGB(lsrgb[2])
     };
-    return float4(outputColor_SRGB, 1);
+    
+    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    if (pos.x >= ctx.sampleRect.left &&
+        pos.x < ctx.sampleRect.right &&
+        pos.y >= ctx.sampleRect.top &&
+        pos.y < ctx.sampleRect.bottom) {
+        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
+        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = c_SRGB;
+    }
+    
+    return float4(c_SRGB, 1);
 }
 
 fragment float4 ImageLayer_Display(
