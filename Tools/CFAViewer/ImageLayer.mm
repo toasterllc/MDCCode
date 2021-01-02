@@ -17,6 +17,7 @@ using namespace CFAViewer::ImageLayerTypes;
     id<MTLLibrary> _library;
     id<MTLRenderPipelineState> _debayerPipelineState;
     id<MTLRenderPipelineState> _colorAdjustPipelineState;
+    id<MTLRenderPipelineState> _srgbGammaPipelineState;
     ImageLayerHistogramChangedHandler _histogramChangedHandler;
     
     RenderContext _ctx;
@@ -210,6 +211,66 @@ using namespace CFAViewer::ImageLayerTypes;
 
 
 
+
+
+
+
+- (id<MTLRenderPipelineState>)_srgbGammaPipelineState {
+    if (_srgbGammaPipelineState) return _srgbGammaPipelineState;
+    
+    id<MTLFunction> vertexShader = [_library newFunctionWithName:@"ImageLayer_VertexShader"];
+    Assert(vertexShader, return nil);
+    
+    id<MTLFunction> fragmentShader = [_library newFunctionWithName:@"ImageLayer_SRGBGamma"];
+    Assert(fragmentShader, return nil);
+    
+    MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
+    [pipelineDescriptor setVertexFunction:vertexShader];
+    [pipelineDescriptor setFragmentFunction:fragmentShader];
+    
+    [pipelineDescriptor colorAttachments][0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+    _srgbGammaPipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
+    Assert(_srgbGammaPipelineState, return nil);
+    return _srgbGammaPipelineState;
+}
+
+- (void)_srgbGammaRenderPass:(id<MTLCommandBuffer>)cmdBuf texture:(id<MTLTexture>)texture {
+    NSParameterAssert(cmdBuf);
+    NSParameterAssert(texture);
+    
+    MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
+    [[renderPassDescriptor colorAttachments][0] setTexture:texture];
+    [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
+    [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
+    [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
+    id<MTLRenderCommandEncoder> renderEncoder = [cmdBuf renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    
+    [renderEncoder setRenderPipelineState:[self _srgbGammaPipelineState]];
+    [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+    [renderEncoder setCullMode:MTLCullModeNone];
+    
+    [renderEncoder setVertexBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [renderEncoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [renderEncoder setFragmentTexture:texture atIndex:0];
+    
+    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+        vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
+    
+    [renderEncoder endEncoding];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 - (void)display {
     
     // Short-circuit if we don't have any image data
@@ -241,6 +302,9 @@ using namespace CFAViewer::ImageLayerTypes;
     
     // Color-adjust render pass
     [self _colorAdjustRenderPass:cmdBuf texture:texture];
+    
+    // Apply SRGB gamma
+    [self _srgbGammaRenderPass:cmdBuf texture:texture];
     
     [cmdBuf presentDrawable:drawable];
     [cmdBuf commit];

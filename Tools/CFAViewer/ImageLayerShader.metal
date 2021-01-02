@@ -622,19 +622,21 @@ fragment float4 ImageLayer_ColorAdjust(
         0.0556434,  -0.2040259, 1.0572252
     ));
     float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZD50_From_CameraRaw * inputColor_cameraRaw;
+    return float4(outputColor_LSRGB, 1);
+}
+
+fragment float4 ImageLayer_SRGBGamma(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 lsrgb = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
     float3 outputColor_SRGB = saturate(float3{
-        SRGBFromLSRGB(outputColor_LSRGB[0]),
-        SRGBFromLSRGB(outputColor_LSRGB[1]),
-        SRGBFromLSRGB(outputColor_LSRGB[2])
+        SRGBFromLSRGB(lsrgb[0]),
+        SRGBFromLSRGB(lsrgb[1]),
+        SRGBFromLSRGB(lsrgb[2])
     });
     return float4(outputColor_SRGB, 1);
-    
-//    uint2 pos = {(uint)interpolated.pixelPosition.x, (uint)interpolated.pixelPosition.y};
-//    const float4 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.viewPosition.xy);
-////    const float3 inputColor_cameraRaw = texture.read(pos).rgb;
-////    return float4(inputColor_cameraRaw, 1);
-//    return inputColor_cameraRaw;
-//    return float4(interpolated.pixelPosition.x/ctx.viewWidth, interpolated.pixelPosition.y/ctx.viewHeight, 0, 1);
 }
 
 
