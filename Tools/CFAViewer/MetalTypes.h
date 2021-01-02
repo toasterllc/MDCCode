@@ -31,6 +31,12 @@ namespace CFAViewer {
             HistogramFloat() : r{}, g{}, b{} {}
         };
         
+        struct Vals3 {
+            uint32_t x = 0;
+            uint32_t y = 0;
+            uint32_t z = 0;
+        };
+        
         // Unique vertexes (defines a unit square)
         MetalConst vector_float4 SquareVert[4] = {
             { 1,  1, 0, 1},

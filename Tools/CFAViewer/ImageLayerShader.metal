@@ -586,8 +586,19 @@ float SRGBFromLSRGB(float x) {
     return 1.055*pow(x, 1/2.4) - .055;
 }
 
+float3 XYYFromXYZ(const float3 xyz) {
+    const float denom = xyz[0] + xyz[1] + xyz[2];
+    return {xyz[0]/denom, xyz[1]/denom, xyz[1]};
+}
 
-fragment float4 ImageLayer_Debayer(
+float3 XYZFromXYY(const float3 xyy) {
+    const float X = (xyy[0]*xyy[2])/xyy[1];
+    const float Y = xyy[2];
+    const float Z = ((1.-xyy[0]-xyy[1])*xyy[2])/xyy[1];
+    return {X, Y, Z};
+}
+
+fragment float4 ImageLayer_DebayerBilinear(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
     VertexOutput interpolated [[stage_in]]
@@ -596,9 +607,130 @@ fragment float4 ImageLayer_Debayer(
     //    if (pos.y == 5) return float4(1,0,0,1);
     
     // ## Bilinear debayering
+//    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
     return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
 //    return float4(1, 0, 0, 1);
 }
+
+fragment float4 ImageLayer_DebayerLMMSE(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant ImagePixel* pxs [[buffer(1)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    const int redX = 1;
+    const int redY = 0;
+    const int green = 1 - ((redX + redY) & 1);
+    float3 c;
+    c.g =       sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
+    c.r = c.g - sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+    c.b = c.g - sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+    return float4(c, 1);
+}
+
+fragment float4 ImageLayer_XYZD50FromCameraRaw(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+    float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
+    return float4(outputColor_XYZD50, 1);
+}
+
+fragment float4 ImageLayer_XYYD50FromCameraRaw(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+    float3 outputColor_XYYD50 = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
+    return float4(outputColor_XYYD50, 1);
+}
+
+fragment float4 ImageLayer_XYYD50FromXYZD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    return float4(XYYFromXYZ(c), 1);
+}
+
+fragment float4 ImageLayer_XYZD50FromXYYD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    return float4(XYZFromXYY(c), 1);
+}
+
+constant uint UIntNormalizeVal = 65535;
+fragment float4 ImageLayer_NormalizeXYYLuminance(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant Vals3& maxValsXYY[[buffer(1)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float maxY = (float)maxValsXYY.z/UIntNormalizeVal;
+    float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    c[2] /= maxY;
+    return float4(c, 1);
+}
+
+fragment float4 ImageLayer_NormalizeRGB(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant Vals3& maxValsRGB[[buffer(1)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float denom = (float)max3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
+    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb / denom;
+    return float4(c, 1);
+}
+
+fragment float4 ImageLayer_ClipRGB(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant Vals3& maxValsRGB[[buffer(1)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+//    const float m = .7;
+    const float m = (float)min3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
+    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
+}
+
+
+fragment float4 ImageLayer_LSRGBD65FromXYYD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 inputColor_XYYD50 = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    
+    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
+        0.9555766,  -0.0230393, 0.0631636,
+        -0.0282895, 1.0099416,  0.0210077,
+        0.0122982,  -0.0204830, 1.3299098
+    ));
+    
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
+        3.2404542,  -1.5371385, -0.4985314,
+        -0.9692660, 1.8760108,  0.0415560,
+        0.0556434,  -0.2040259, 1.0572252
+    ));
+    
+    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZFromXYY(inputColor_XYYD50);
+    return float4(outputColor_LSRGB, 1);
+}
+
+
 
 fragment float4 ImageLayer_ColorAdjust(
     constant RenderContext& ctx [[buffer(0)]],
@@ -625,107 +757,187 @@ fragment float4 ImageLayer_ColorAdjust(
     return float4(outputColor_LSRGB, 1);
 }
 
+// Atomically sets the value at `dst` if `val` is greater than it
+void setIfGreater(volatile device atomic_uint& dst, uint val) {
+    uint current = (device uint&)dst;
+    while (val > current) {
+        if (atomic_compare_exchange_weak_explicit(&dst, &current, val,
+            memory_order_relaxed, memory_order_relaxed)) break;
+    }
+}
+
+fragment float4 ImageLayer_FindMaxVals(
+    constant RenderContext& ctx [[buffer(0)]],
+    device Vals3& highlights [[buffer(1)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    const float3 lsrgbfloat = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    uint3 lsrgb = uint3(lsrgbfloat * UIntNormalizeVal);
+    
+    setIfGreater((device atomic_uint&)highlights.x, lsrgb.r);
+    setIfGreater((device atomic_uint&)highlights.y, lsrgb.g);
+    setIfGreater((device atomic_uint&)highlights.z, lsrgb.b);
+    
+    return float4(lsrgbfloat, 1);
+}
+
+
+
+//fragment float4 ImageLayer_Debayer(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    constant ImagePixel* pxs [[buffer(1)]],
+//    VertexOutput interpolated [[stage_in]]
+//) {
+//    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+//    //    if (pos.y == 5) return float4(1,0,0,1);
+//    
+//    // ## Bilinear debayering
+////    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
+//    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
+////    return float4(1, 0, 0, 1);
+//}
+
+fragment float4 ImageLayer_FixHighlights(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant ImagePixel* pxs [[buffer(1)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    // LMMSE
+    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    const int redX = 1;
+    const int redY = 0;
+    const int green = 1 - ((redX + redY) & 1);
+    float3 craw;
+    craw.g =          sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
+    craw.r = craw.g - sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+    craw.b = craw.g - sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+    if (craw.r>=1 || craw.g>=1 || craw.b>=1) return float4(1, 1, 1, 1);
+    float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    return float4(c, 1);
+    
+    
+//    // Bilinear
+//    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+//    const float3 craw = float3(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+//    float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+//    if (craw.r >= 1) c.r = 1;
+//    if (craw.g >= 1) c.g = 1;
+//    if (craw.b >= 1) c.b = 1;
+//    return float4(c, 1);
+}
+
 fragment float4 ImageLayer_SRGBGamma(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
     VertexOutput interpolated [[stage_in]]
 ) {
     const float3 lsrgb = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
-    float3 outputColor_SRGB = saturate(float3{
+    float3 outputColor_SRGB = float3{
         SRGBFromLSRGB(lsrgb[0]),
         SRGBFromLSRGB(lsrgb[1]),
         SRGBFromLSRGB(lsrgb[2])
-    });
+    };
     return float4(outputColor_SRGB, 1);
 }
 
-
-fragment float4 ImageLayer_FragmentShader(
+fragment float4 ImageLayer_Display(
     constant RenderContext& ctx [[buffer(0)]],
-    constant ImagePixel* pxs [[buffer(1)]],
-    device Histogram& inputHistogram [[buffer(2)]],
-    device Histogram& outputHistogram [[buffer(3)]],
+    texture2d<float> texture [[texture(0)]],
     VertexOutput interpolated [[stage_in]]
 ) {
-    // Bayer pattern:
-    //  Row0    G R G R
-    //  Row1    B G B G
-    //  Row2    G R G R
-    //  Row3    B G B G
-    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
-    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
-    
-    // ## Bilinear debayering
-    float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-    
-    // ## LMMSE debayering
-//    const int redX = 1;
-//    const int redY = 0;
-//    const int green = 1 - ((redX + redY) & 1);
-//    float3 inputColor_cameraRaw;
-//    inputColor_cameraRaw.g =
-//        sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
-//    inputColor_cameraRaw.r = inputColor_cameraRaw.g -
-//        sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-//    inputColor_cameraRaw.b = inputColor_cameraRaw.g -
-//        sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-    
-    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
-        0.9555766,  -0.0230393, 0.0631636,
-        -0.0282895, 1.0099416,  0.0210077,
-        0.0122982,  -0.0204830, 1.3299098
-    ));
-    
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
-        3.2404542,  -1.5371385, -0.4985314,
-        -0.9692660, 1.8760108,  0.0415560,
-        0.0556434,  -0.2040259, 1.0572252
-    ));
-    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZD50_From_CameraRaw * inputColor_cameraRaw;
-    float3 outputColor_SRGB = saturate(float3{
-        SRGBFromLSRGB(outputColor_LSRGB[0]),
-        SRGBFromLSRGB(outputColor_LSRGB[1]),
-        SRGBFromLSRGB(outputColor_LSRGB[2])
-    });
-    
-    const float thresh = 1;
-    if (inputColor_cameraRaw.r >= thresh) outputColor_SRGB.r = 1;
-    if (inputColor_cameraRaw.g >= thresh) outputColor_SRGB.g = 1;
-    if (inputColor_cameraRaw.b >= thresh) outputColor_SRGB.b = 1;
-    
-    uint3 inputColorBin = binFromColor(inputColor_cameraRaw);
-    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.r[inputColorBin.r], 1, memory_order_relaxed);
-    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.g[inputColorBin.g], 1, memory_order_relaxed);
-    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.b[inputColorBin.b], 1, memory_order_relaxed);
-    
-    // If any of the input raw-camera-space channels was saturated, saturate the corresponding output channel
-    
-//    if (inputColor_cameraRaw.r>=1 || inputColor_cameraRaw.g>=1 || inputColor_cameraRaw.b>=1) {
-//        outputColor_SRGB.r = 1;
-//        outputColor_SRGB.g = 0;
-//        outputColor_SRGB.b = 0;
-//    }
-    
-//    if (inputColor_cameraRaw.r >= 1) outputColor_SRGB.r = 1;
-//    if (inputColor_cameraRaw.g >= 1) outputColor_SRGB.g = 1;
-//    if (inputColor_cameraRaw.b >= 1) outputColor_SRGB.b = 1;
-    
-//    const float thresh = 254.5/255;
-    
-//    if (pos.x==2133 && pos.y==350) {
-//        if (inputColor_cameraRaw.g >= .9999) outputColor_SRGB.g = 1;
-////        outputColor_SRGB.r = 0;
-////        outputColor_SRGB.g = 1;
-////        outputColor_SRGB.b = 0;
-////        outputColor_SRGB = {0,0,0};
-//    }
-    
-    uint3 outputColorBin = binFromColor(outputColor_SRGB);
-    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.r[outputColorBin.r], 1, memory_order_relaxed);
-    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.g[outputColorBin.g], 1, memory_order_relaxed);
-    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.b[outputColorBin.b], 1, memory_order_relaxed);
-    
-    return float4(outputColor_SRGB, 1);
+    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    return float4(c, 1);
 }
+
+
+//fragment float4 ImageLayer_FragmentShader(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    constant ImagePixel* pxs [[buffer(1)]],
+//    device Histogram& inputHistogram [[buffer(2)]],
+//    device Histogram& outputHistogram [[buffer(3)]],
+//    VertexOutput interpolated [[stage_in]]
+//) {
+//    // Bayer pattern:
+//    //  Row0    G R G R
+//    //  Row1    B G B G
+//    //  Row2    G R G R
+//    //  Row3    B G B G
+//    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+//    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+//    
+//    // ## Bilinear debayering
+//    float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+//    
+//    // ## LMMSE debayering
+////    const int redX = 1;
+////    const int redY = 0;
+////    const int green = 1 - ((redX + redY) & 1);
+////    float3 inputColor_cameraRaw;
+////    inputColor_cameraRaw.g =
+////        sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
+////    inputColor_cameraRaw.r = inputColor_cameraRaw.g -
+////        sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+////    inputColor_cameraRaw.b = inputColor_cameraRaw.g -
+////        sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+//    
+//    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+//    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
+//        0.9555766,  -0.0230393, 0.0631636,
+//        -0.0282895, 1.0099416,  0.0210077,
+//        0.0122982,  -0.0204830, 1.3299098
+//    ));
+//    
+//    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+//    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
+//        3.2404542,  -1.5371385, -0.4985314,
+//        -0.9692660, 1.8760108,  0.0415560,
+//        0.0556434,  -0.2040259, 1.0572252
+//    ));
+//    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZD50_From_CameraRaw * inputColor_cameraRaw;
+//    float3 outputColor_SRGB = saturate(float3{
+//        SRGBFromLSRGB(outputColor_LSRGB[0]),
+//        SRGBFromLSRGB(outputColor_LSRGB[1]),
+//        SRGBFromLSRGB(outputColor_LSRGB[2])
+//    });
+//    
+//    const float thresh = 1;
+//    if (inputColor_cameraRaw.r >= thresh) outputColor_SRGB.r = 1;
+//    if (inputColor_cameraRaw.g >= thresh) outputColor_SRGB.g = 1;
+//    if (inputColor_cameraRaw.b >= thresh) outputColor_SRGB.b = 1;
+//    
+//    uint3 inputColorBin = binFromColor(inputColor_cameraRaw);
+//    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.r[inputColorBin.r], 1, memory_order_relaxed);
+//    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.g[inputColorBin.g], 1, memory_order_relaxed);
+//    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.b[inputColorBin.b], 1, memory_order_relaxed);
+//    
+//    // If any of the input raw-camera-space channels was saturated, saturate the corresponding output channel
+//    
+////    if (inputColor_cameraRaw.r>=1 || inputColor_cameraRaw.g>=1 || inputColor_cameraRaw.b>=1) {
+////        outputColor_SRGB.r = 1;
+////        outputColor_SRGB.g = 0;
+////        outputColor_SRGB.b = 0;
+////    }
+//    
+////    if (inputColor_cameraRaw.r >= 1) outputColor_SRGB.r = 1;
+////    if (inputColor_cameraRaw.g >= 1) outputColor_SRGB.g = 1;
+////    if (inputColor_cameraRaw.b >= 1) outputColor_SRGB.b = 1;
+//    
+////    const float thresh = 254.5/255;
+//    
+////    if (pos.x==2133 && pos.y==350) {
+////        if (inputColor_cameraRaw.g >= .9999) outputColor_SRGB.g = 1;
+//////        outputColor_SRGB.r = 0;
+//////        outputColor_SRGB.g = 1;
+//////        outputColor_SRGB.b = 0;
+//////        outputColor_SRGB = {0,0,0};
+////    }
+//    
+//    uint3 outputColorBin = binFromColor(outputColor_SRGB);
+//    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.r[outputColorBin.r], 1, memory_order_relaxed);
+//    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.g[outputColorBin.g], 1, memory_order_relaxed);
+//    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.b[outputColorBin.b], 1, memory_order_relaxed);
+//    
+//    return float4(outputColor_SRGB, 1);
+//}

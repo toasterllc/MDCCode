@@ -11,8 +11,8 @@ InTrash=false
 Auto=false
 Clip=0
 Compensation=0
-Brightness=0
-Contrast=0
+Brightness=5
+Contrast=5
 Saturation=0
 Black=0
 HighlightCompr=0
@@ -27,8 +27,8 @@ Curve=0;
 Curve2=0;
 
 [HLRecovery]
-Enabled=false
-Method=Blend
+Enabled=true
+Method=Color
 
 [Retinex]
 Enabled=false
@@ -64,9 +64,9 @@ TransmissionCurve=1;0;0.5;0.34999999999999998;0.34999999999999998;0.599999999999
 GainTransmissionCurve=1;0;0.10000000000000001;0.34999999999999998;0;0.25;0.25;0.34999999999999998;0.34999999999999998;0.69999999999999996;0.25;0.34999999999999998;0.34999999999999998;1;0.10000000000000001;0;0;
 
 [Local Contrast]
-Enabled=false
-Radius=80
-Amount=0.20000000000000001
+Enabled=true
+Radius=100
+Amount=0.050000000000000003
 Darkness=1
 Lightness=1
 
@@ -121,58 +121,58 @@ ClCurve=0;
 
 [Sharpening]
 Enabled=false
-Contrast=20
+Contrast=200
 Method=usm
-Radius=0.5
-BlurRadius=0.20000000000000001
-Amount=200
-Threshold=20;80;2000;1200;
+Radius=2.1000000000000001
+BlurRadius=0.35999999999999999
+Amount=1000
+Threshold=0;60;2000;1200;
 OnlyEdges=false
 EdgedetectionRadius=1.8999999999999999
 EdgeTolerance=1800
 HalocontrolEnabled=false
 HalocontrolAmount=85
-DeconvRadius=0.75
+DeconvRadius=2.5
 DeconvAmount=100
-DeconvDamping=0
-DeconvIterations=30
+DeconvDamping=83
+DeconvIterations=100
 
 [Vibrance]
 Enabled=false
-Pastels=0
-Saturated=0
+Pastels=10
+Saturated=10
 PSThreshold=0;75;
 ProtectSkins=false
-AvoidColorShift=true
+AvoidColorShift=false
 PastSatTog=true
 SkinTonesCurve=0;
 
 [SharpenEdge]
-Enabled=false
+Enabled=true
 Passes=2
-Strength=50
+Strength=40
 ThreeChannels=false
 
 [SharpenMicro]
 Enabled=false
 Matrix=false
 Strength=20
-Contrast=20
+Contrast=53
 Uniformity=5
 
 [White Balance]
 Enabled=false
-Setting=Camera
-Temperature=6490
-Green=1.002
+Setting=Custom
+Temperature=6661
+Green=1
 Equal=1
 TemperatureBias=0
 
 [Color appearance]
 Enabled=false
-Degree=90
+Degree=100
 AutoDegree=true
-Degreeout=90
+Degreeout=85
 AutoDegreeout=true
 Surround=Average
 Surrsrc=Average
@@ -191,7 +191,7 @@ H-Hue=0
 RSTProtection=0
 AdaptScene=2000
 AutoAdapscen=true
-YbScene=18
+YbScene=30
 Autoybscen=true
 SurrSource=false
 Gamut=true
@@ -210,30 +210,30 @@ Curve2=0;
 Curve3=0;
 
 [Impulse Denoising]
-Enabled=false
-Threshold=50
+Enabled=true
+Threshold=75
 
 [Defringing]
 Enabled=false
-Radius=2
-Threshold=13
+Radius=0.69999999999999996
+Threshold=14
 HueCurve=1;0.16666666699999999;0;0.34999999999999998;0.34999999999999998;0.34699999999999998;0;0.34999999999999998;0.34999999999999998;0.51366742600000004;0;0.34999999999999998;0.34999999999999998;0.66894457100000004;0;0.34999999999999998;0.34999999999999998;0.82877752459999998;0.97835991;0.34999999999999998;0.34999999999999998;0.99088838270000001;0;0.34999999999999998;0.34999999999999998;
 
 [Dehaze]
-Enabled=false
-Strength=50
+Enabled=true
+Strength=35
 ShowDepthMap=false
-Depth=25
+Depth=10
 Luminance=false
 
 [Directional Pyramid Denoising]
-Enabled=false
+Enabled=true
 Enhance=false
 Median=false
-Luma=0
-Ldetail=0
-Chroma=15
-Method=Lab
+Luma=40
+Ldetail=90
+Chroma=4.062079906463623
+Method=RGB
 LMethod=SLI
 CMethod=MAN
 C2Method=AUTO
@@ -241,9 +241,9 @@ SMethod=shal
 MedMethod=soft
 RGBMethod=soft
 MethodMed=Lonly
-Redchro=0
-Bluechro=0
-Gamma=1.7
+Redchro=-1.2116490602493286
+Bluechro=8.4828815460205078
+Gamma=2
 Passes=1
 LCurve=1;0.050000000000000003;0.14999999999999999;0.34999999999999998;0.34999999999999998;0.55000000000000004;0.040000000000000001;0.34999999999999998;0.34999999999999998;
 CCCurve=1;0.050000000000000003;0.5;0.34999999999999998;0.34999999999999998;0.34999999999999998;0.050000000000000003;0.34999999999999998;0.34999999999999998;
@@ -258,17 +258,17 @@ ReweightingIterates=0
 
 [FattalToneMapping]
 Enabled=false
-Threshold=30
-Amount=20
+Threshold=300
+Amount=5
 Anchor=50
 
 [Shadows & Highlights]
 Enabled=false
-Highlights=0
-HighlightTonalWidth=70
-Shadows=0
-ShadowTonalWidth=30
-Radius=40
+Highlights=44
+HighlightTonalWidth=35
+Shadows=25
+ShadowTonalWidth=64
+Radius=77
 Lab=false
 
 [Crop]
@@ -321,7 +321,7 @@ CenterY=0
 
 [PCVignette]
 Enabled=false
-Strength=0.59999999999999998
+Strength=-0.25
 Feather=50
 Roundness=50
 
@@ -348,7 +348,7 @@ AllowUpscaling=false
 
 [PostDemosaicSharpening]
 Enabled=true
-Contrast=19
+Contrast=20
 AutoContrast=true
 AutoRadius=true
 DeconvRadius=0.77000000000000002
@@ -374,7 +374,7 @@ DeconvDamping=0
 DeconvIterations=100
 
 [Color Management]
-InputProfile=file:/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/ICCProfile.icc
+InputProfile=file:/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/ICCProfile2.icc
 ToneCurve=false
 ApplyLookTable=true
 ApplyBaselineExposureOffset=true
@@ -545,8 +545,8 @@ Bluehigh=0
 Autosat=true
 OpacityCurve=1;0;0.29999999999999999;0.34999999999999998;0;0.25;0.80000000000000004;0.34999999999999998;0.34999999999999998;0.69999999999999996;0.80000000000000004;0.34999999999999998;0.34999999999999998;1;0.29999999999999999;0;0;
 ColorCurve=1;0.050000000000000003;0.62;0.25;0.25;0.58499999999999996;0.11;0.25;0.25;
-SatProtectionThreshold=30
-SaturatedOpacity=80
+SatProtectionThreshold=15
+SaturatedOpacity=5
 Strength=50
 HighlightsColorSaturation=60;80;
 ShadowsColorSaturation=80;208;
@@ -589,8 +589,8 @@ HotDeadPixelThresh=100
 PreExposure=1
 
 [RAW Bayer]
-Method=fast
-Border=4
+Method=lmmse
+Border=0
 ImageNum=1
 CcSteps=0
 PreBlack0=0
