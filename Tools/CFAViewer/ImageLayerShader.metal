@@ -717,6 +717,16 @@ fragment float4 ImageLayer_ClipRGB(
     return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
 }
 
+fragment float4 ImageLayer_DecreaseLuminance(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput interpolated [[stage_in]]
+) {
+    float3 c_XYYD50 = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    c_XYYD50[2] /= 1;
+    return float4(c_XYYD50, 1);
+}
+
 
 fragment float4 ImageLayer_LSRGBD65FromXYYD50(
     constant RenderContext& ctx [[buffer(0)]],

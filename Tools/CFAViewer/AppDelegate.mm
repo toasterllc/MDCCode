@@ -190,9 +190,9 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     CGRect r = [_sampleLayer frame];
     r.origin.x /= layerSize.width;
     r.origin.y /= layerSize.height;
-    r.origin.y = 1-r.origin.y; // Flip Y so the origin is at the top-left
     r.size.width /= layerSize.width;
     r.size.height /= layerSize.height;
+    r.origin.y = 1-r.origin.y-r.size.height; // Flip Y so the origin is at the top-left
     return r;
 }
 
@@ -535,29 +535,6 @@ static double sampleB(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static ColorCameraRaw sampleImageRect(Image& img, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
-    uint32_t left = std::clamp((int32_t)x, (int32_t)0, (int32_t)img.width-1);
-    uint32_t right = std::clamp((int32_t)x+(int32_t)width, (int32_t)0, (int32_t)img.width-1)+1;
-    uint32_t bottom = std::clamp((int32_t)y, (int32_t)0, (int32_t)img.height-1);
-    uint32_t top = std::clamp((int32_t)y+(int32_t)height, (int32_t)0, (int32_t)img.height-1)+1;
-    
-    ColorCameraRaw c;
-    uint32_t i = 0;
-    for (uint32_t iy=bottom; iy<top; iy++) {
-        for (uint32_t ix=left; ix<right; ix++) {
-            c[0] += sampleR(img, ix, iy);
-            c[1] += sampleG(img, ix, iy);
-            c[2] += sampleB(img, ix, iy);
-            i++;
-        }
-    }
-    
-    c[0] /= i;
-    c[1] /= i;
-    c[2] /= i;
-    return c;
-}
-
 static ColorCameraRaw sampleImageCircle(Image& img, uint32_t x, uint32_t y, uint32_t radius) {
     uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
     uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
@@ -581,12 +558,6 @@ static ColorCameraRaw sampleImageCircle(Image& img, uint32_t x, uint32_t y, uint
     c[1] /= i;
     c[2] /= i;
     return c;
-}
-
-static double SRGBFromLSRGB(double x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    if (x <= 0.0031308) return 12.92*x;
-    return 1.055*pow(x, 1/2.4) - .055;
 }
 
 static double LSRGBFromSRGB(double x) {
@@ -613,32 +584,6 @@ static ColorXYZD50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     const Color3 lsrgb_d65(LSRGBFromSRGB(srgb_d65[0]), LSRGBFromSRGB(srgb_d65[1]), LSRGBFromSRGB(srgb_d65[2]));
     // Linear SRGB -> XYZ.D65 -> XYZ.D50
     return XYZD50_From_XYZD65 * XYZD65_From_LSRGBD65 * lsrgb_d65;
-}
-
-static ColorSRGBD65 SRGBFromXYZ(const ColorXYZD50& xyz_d50) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-    const ColorMatrix XYZD65_From_XYZD50(
-        0.9555766,  -0.0230393, 0.0631636,
-        -0.0282895, 1.0099416,  0.0210077,
-        0.0122982,  -0.0204830, 1.3299098
-    );
-    
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const ColorMatrix LSRGBD65_From_XYZD65(
-        3.2404542,  -1.5371385, -0.4985314,
-        -0.9692660,  1.8760108,  0.0415560,
-        0.0556434,  -0.2040259,  1.0572252
-    );
-    
-    // XYZ.D65 -> XYZ.D50 -> linear SRGB
-    const Color3 lsrgb = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * xyz_d50;
-    
-    // Linear SRGB -> SRGB
-    return ColorSRGBD65(
-        SRGBFromLSRGB(lsrgb[0]),
-        SRGBFromLSRGB(lsrgb[1]),
-        SRGBFromLSRGB(lsrgb[2])
-    );
 }
 
 static ColorXYYD50 XYYFromXYZ(const ColorXYZD50& xyz) {

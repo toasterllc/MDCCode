@@ -3,7 +3,7 @@
 namespace CFAViewer {
     template <typename Fn>
     inline void TrackMouse(NSWindow* win, NSEvent* ev, Fn fn) {
-        for (;;) {
+        for (;;) @autoreleasepool {
             const bool done = ([ev type] == NSEventTypeLeftMouseUp);
             fn(ev, done);
             if (done) {

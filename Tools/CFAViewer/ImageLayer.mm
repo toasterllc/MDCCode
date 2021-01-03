@@ -219,26 +219,11 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         ];
     }
     
-//    // Find the max values for {x,y,Y}, so that we can normalize Y (luminance) to 1
-//    id<MTLBuffer> maxValsBuf = [_device newBufferWithLength:sizeof(Vals3) options:MTLResourceStorageModeShared];
+//    // Decrease luminance
 //    {
-//        // Zero the max vals buffer
-//        memset([maxValsBuf contents], 0, sizeof(Vals3));
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_FindMaxVals"
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DecreaseLuminance"
 //            block:^(id<MTLRenderCommandEncoder> encoder) {
 //                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBuffer:maxValsBuf offset:0 atIndex:1];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-//    
-//    // Normalize XYY luminance
-//    {
-////        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_NormalizeXYYLuminance"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBuffer:maxValsBuf offset:0 atIndex:1];
 //                [encoder setFragmentTexture:texture atIndex:0];
 //            }
 //        ];
@@ -255,67 +240,6 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         ];
     }
     
-//    // Correct highlights
-//    {
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_FixHighlights"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-    
-//    // Find the max rgb values
-//    id<MTLBuffer> maxValsBuf = [_device newBufferWithLength:sizeof(Vals3) options:MTLResourceStorageModeShared];
-//    {
-//        // Zero the max vals buffer
-//        memset([maxValsBuf contents], 0, sizeof(Vals3));
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_FindMaxVals"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBuffer:maxValsBuf offset:0 atIndex:1];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-    
-//    // Normalize RGB
-//    {
-////        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_NormalizeRGB"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBuffer:maxValsBuf offset:0 atIndex:1];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-    
-//    // Clip RGB
-//    {
-////        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_ClipRGB"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBuffer:maxValsBuf offset:0 atIndex:1];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-    
-//    // Find the max values
-//    id<MTLBuffer> maxValsBuf2 = [_device newBufferWithLength:sizeof(Vals3) options:MTLResourceStorageModeShared];
-//    {
-//        // Zero the max vals buffer
-//        memset([maxValsBuf2 contents], 0, sizeof(Vals3));
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_FindMaxVals"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBuffer:maxValsBuf2 offset:0 atIndex:1];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-    
     // Apply SRGB gamma
     {
         [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_SRGBGamma"
@@ -326,36 +250,6 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             }
         ];
     }
-    
-//    // XYZ.D50 from camera raw pass
-//    {
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_XYZD50FromXYYD50"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-    
-//    // XYY.D50 from camera raw pass
-//    {
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_XYYD50FromCameraRaw"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
-    
-//    // De-bayer render pass
-//    [self _xyzd50FromCameraRawRenderPass:cmdBuf texture:texture];
-//    
-////    // Color-adjust render pass
-////    [self _colorAdjustRenderPass:cmdBuf texture:texture];
-    
-//    
-//    // Apply SRGB gamma
-//    [self _srgbGammaRenderPass:cmdBuf texture:texture];
     
     // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
     {
@@ -466,6 +360,9 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         .top = (uint32_t)std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_ctx.imageHeight),
         .bottom = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_ctx.imageHeight),
     };
+    
+    if (_ctx.sampleRect.left == _ctx.sampleRect.right) _ctx.sampleRect.right++;
+    if (_ctx.sampleRect.top == _ctx.sampleRect.bottom) _ctx.sampleRect.bottom++;
     
     _sampleBuf_cameraRaw = [_device newBufferWithLength:
         sizeof(simd::float3)*std::max((uint32_t)1, _ctx.sampleRect.count())
