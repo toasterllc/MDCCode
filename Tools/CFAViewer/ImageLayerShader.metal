@@ -723,7 +723,7 @@ fragment float4 ImageLayer_DecreaseLuminance(
     VertexOutput interpolated [[stage_in]]
 ) {
     float3 c_XYYD50 = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
-    c_XYYD50[2] /= 1;
+    c_XYYD50[2] /= 3;
     return float4(c_XYYD50, 1);
 }
 

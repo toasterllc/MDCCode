@@ -219,15 +219,15 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         ];
     }
     
-//    // Decrease luminance
-//    {
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DecreaseLuminance"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentTexture:texture atIndex:0];
-//            }
-//        ];
-//    }
+    // Decrease luminance
+    {
+        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DecreaseLuminance"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:texture atIndex:0];
+            }
+        ];
+    }
     
     // XYY.D50 -> LSRGB.D65
     {

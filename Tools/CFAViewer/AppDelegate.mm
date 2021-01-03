@@ -162,15 +162,17 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         }
     }
     
-    // Otherwise, handle eye dropper functionality
+    // Otherwise, handle sampler functionality
     {
         const CGPoint start = p;
         TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
             const CGPoint end = [_imageLayer convertPoint:[ev locationInWindow]
                 fromLayer:[[win contentView] layer]];
-            CGRect frame;
-            frame.origin = start;
-            frame.size = {end.x-start.x, end.y-start.y};
+            CGRect frame = {start, {end.x-start.x, end.y-start.y}};
+            if ([ev modifierFlags] & NSEventModifierFlagShift) {
+                frame.size.height = (frame.size.height >= 0 ? 1 : -1) * fabs(frame.size.width);
+            }
+            frame = CGRectStandardize(frame);
             [_sampleLayer setFrame:frame];
             [_delegate sampleRectChanged];
         });
@@ -651,7 +653,7 @@ static ColorXYZD50 XYZFromXYY(const ColorXYYD50& xyy) {
     for (ColorSRGBD65 c : ColorCheckerColors) {
         // Convert the color from SRGB -> XYZ -> XYY
         ColorXYZD50 cxyy = XYYFromXYZ(XYZFromSRGB(c));
-        cxyy[2] /= 3; // Adjust luminance
+//        cxyy[2] /= 3; // Adjust luminance
         
         const ColorXYZD50 cxyz = XYZFromXYY(cxyy);
         b[i+0] = cxyz[0];

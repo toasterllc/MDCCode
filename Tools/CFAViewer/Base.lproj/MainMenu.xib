@@ -759,7 +759,7 @@
                     </customView>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xoy-54-fme">
                         <rect key="frame" x="18" y="160" width="364" height="16"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Eye Dropper" id="aIX-fK-mJJ">
+                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Sampler" id="aIX-fK-mJJ">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -826,7 +826,7 @@
                         <rect key="frame" x="319" y="757" width="66" height="27"/>
                         <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="controlContent" size="11"/>
+                            <font key="font" metaFont="menu" size="11"/>
                         </buttonCell>
                         <connections>
                             <action selector="identityButtonPressed:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
