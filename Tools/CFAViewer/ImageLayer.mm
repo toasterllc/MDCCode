@@ -136,7 +136,10 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     const Mat<double,3,3> CameraRaw_D50_From_XYZ_D50 = cm.inv();
     
     // maxY = maximum luminance possible, given the color matrix `cm`
-    const double maxY = std::max(0.,cm[3]) + std::max(0.,cm[4]) + std::max(0.,cm[5]);
+//    const double maxY = std::max(0.,cm[3]) + std::max(0.,cm[4]) + std::max(0.,cm[5]);
+    
+    // Luminance to apply to the primaries
+    const double maxY = 6.5;
     
     // Enumerate the primaries in the CIE RGB colorspace, and convert them to XYY
     Color_XYY_D50 redPoint_XYY_D50          = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(1.,0.,0.));
