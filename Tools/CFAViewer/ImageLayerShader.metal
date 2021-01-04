@@ -6,14 +6,22 @@ using namespace CFAViewer::ImageLayerTypes;
 
 struct VertexOutput {
     float4 pos [[position]];
-//    float2 pixelPosition;
+    float2 posUnit;
 };
 
 vertex VertexOutput ImageLayer_VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
-    return VertexOutput{SquareVert[SquareVertIdx[vidx]]};
+    VertexOutput r = {
+        .pos = SquareVert[SquareVertIdx[vidx]],
+        .posUnit = SquareVert[SquareVertIdx[vidx]].xy,
+    };
+    
+    r.posUnit += 1;
+    r.posUnit /= 2;
+    r.posUnit.y = 1-r.posUnit.y;
+    return r;
 }
 
 #define SamplePtr constant ImagePixel*
@@ -602,10 +610,10 @@ fragment float4 ImageLayer_DebayerBilinear(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
     device float3* samples [[buffer(2)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
-    const float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
     
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
@@ -619,18 +627,47 @@ fragment float4 ImageLayer_DebayerBilinear(
         samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
     }
     
+//    const uint BlackX = 504;
+//    const uint BlackWidth = 8;
+//    if (pos.y >= BlackX && pos.y < BlackX+BlackWidth) {
+//        c = float3(0,0,0);
+//    }
+    
     // ## Bilinear debayering
 //    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
     return float4(c, 1);
 //    return float4(1, 0, 0, 1);
 }
 
+fragment float4 ImageLayer_Downsample(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant uint8_t& downsampleFactor [[buffer(1)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float2 q(1./ctx.imageWidth, 1./ctx.imageHeight);
+    const sampler s = sampler(address::mirrored_repeat);
+    const float2 startPos = in.posUnit - q*((downsampleFactor-1)/2.);
+    float2 pos = startPos;
+    float4 c = 0;
+    for (uint iy=0; iy<downsampleFactor; iy++) {
+        pos.x = startPos.x;
+        for (uint ix=0; ix<downsampleFactor; ix++) {
+            c += texture.sample(s, pos);
+            pos.x += q.x;
+        }
+        pos.y += q.y;
+    }
+    c /= (downsampleFactor*downsampleFactor);
+    return c;
+}
+
 fragment float4 ImageLayer_DebayerLMMSE(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
     const int redX = 1;
     const int redY = 0;
     const int green = 1 - ((redX + redY) & 1);
@@ -644,9 +681,9 @@ fragment float4 ImageLayer_DebayerLMMSE(
 fragment float4 ImageLayer_XYZD50FromCameraRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 inputColor_cameraRaw = texture.sample({}, in.posUnit).rgb;
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
     return float4(outputColor_XYZD50, 1);
@@ -655,9 +692,9 @@ fragment float4 ImageLayer_XYZD50FromCameraRaw(
 fragment float4 ImageLayer_XYYD50FromCameraRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 inputColor_cameraRaw = texture.sample({}, in.posUnit).rgb;
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
     return float4(c, 1);
@@ -666,18 +703,18 @@ fragment float4 ImageLayer_XYYD50FromCameraRaw(
 fragment float4 ImageLayer_XYYD50FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 c = texture.sample({}, in.posUnit).rgb;
     return float4(XYYFromXYZ(c), 1);
 }
 
 fragment float4 ImageLayer_XYZD50FromXYYD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 c = texture.sample({}, in.posUnit).rgb;
     return float4(XYZFromXYY(c), 1);
 }
 
@@ -686,10 +723,10 @@ fragment float4 ImageLayer_NormalizeXYYLuminance(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsXYY[[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
     const float maxY = (float)maxValsXYY.z/UIntNormalizeVal;
-    float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    float3 c = texture.sample({}, in.posUnit).rgb;
     c[2] /= maxY;
     return float4(c, 1);
 }
@@ -698,10 +735,10 @@ fragment float4 ImageLayer_NormalizeRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsRGB[[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
     const float denom = (float)max3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb / denom;
+    const float3 c = texture.sample({}, in.posUnit).rgb / denom;
     return float4(c, 1);
 }
 
@@ -709,32 +746,43 @@ fragment float4 ImageLayer_ClipRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsRGB[[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
 //    const float m = .7;
     const float m = (float)min3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 c = texture.sample({}, in.posUnit).rgb;
     return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
 }
 
 fragment float4 ImageLayer_DecreaseLuminance(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYYD50 = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
-    c_XYYD50[2] /= 3;
+    float3 c_XYYD50 = texture.sample({}, in.posUnit).rgb;
+    c_XYYD50[2] /= 10;
     return float4(c_XYYD50, 1);
 }
 
+fragment float4 ImageLayer_DecreaseLuminanceXYZD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    float3 c_XYZD50 = texture.sample({}, in.posUnit).rgb;
+    float3 c_XYYD50 = XYYFromXYZ(c_XYZD50);
+    c_XYYD50[2] /= 3;
+    return float4(XYZFromXYY(c_XYYD50), 1);
+}
 
-fragment float4 ImageLayer_LSRGBD65FromXYYD50(
+
+fragment float4 ImageLayer_LSRGBD65FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     device float3* samples [[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_XYYD50 = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 c_XYZD50 = texture.sample({}, in.posUnit).rgb;
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
     const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
@@ -750,10 +798,9 @@ fragment float4 ImageLayer_LSRGBD65FromXYYD50(
         0.0556434,  -0.2040259, 1.0572252
     ));
     
-    const float3 c_XYZD50 = XYZFromXYY(inputColor_XYYD50);
     const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
     
-    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
         pos.y >= ctx.sampleRect.top &&
@@ -765,14 +812,52 @@ fragment float4 ImageLayer_LSRGBD65FromXYYD50(
     return float4(c_LSRGBD65, 1);
 }
 
+//fragment float4 ImageLayer_LSRGBD65FromXYYD50(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    device float3* samples [[buffer(1)]],
+//    texture2d<float> texture [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const float3 inputColor_XYYD50 = texture.sample({}, in.posUnit).rgb;
+//    
+//    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+//    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
+//        0.9555766,  -0.0230393, 0.0631636,
+//        -0.0282895, 1.0099416,  0.0210077,
+//        0.0122982,  -0.0204830, 1.3299098
+//    ));
+//    
+//    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+//    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
+//        3.2404542,  -1.5371385, -0.4985314,
+//        -0.9692660, 1.8760108,  0.0415560,
+//        0.0556434,  -0.2040259, 1.0572252
+//    ));
+//    
+//    const float3 c_XYZD50 = XYZFromXYY(inputColor_XYYD50);
+//    const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
+//    
+//    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+//    if (pos.x >= ctx.sampleRect.left &&
+//        pos.x < ctx.sampleRect.right &&
+//        pos.y >= ctx.sampleRect.top &&
+//        pos.y < ctx.sampleRect.bottom) {
+//        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
+//        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = c_XYZD50;
+//    }
+//    
+//    return float4(c_LSRGBD65, 1);
+//}
+
+
 
 
 fragment float4 ImageLayer_ColorAdjust(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 inputColor_cameraRaw = texture.sample({}, in.posUnit).rgb;
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
@@ -805,9 +890,9 @@ fragment float4 ImageLayer_FindMaxVals(
     constant RenderContext& ctx [[buffer(0)]],
     device Vals3& highlights [[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgbfloat = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 lsrgbfloat = texture.sample({}, in.posUnit).rgb;
     uint3 lsrgb = uint3(lsrgbfloat * UIntNormalizeVal);
     
     setIfGreater((device atomic_uint&)highlights.x, lsrgb.r);
@@ -822,9 +907,9 @@ fragment float4 ImageLayer_FindMaxVals(
 //fragment float4 ImageLayer_Debayer(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    constant ImagePixel* pxs [[buffer(1)]],
-//    VertexOutput interpolated [[stage_in]]
+//    VertexOutput in [[stage_in]]
 //) {
-//    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+//    uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
 //    //    if (pos.y == 5) return float4(1,0,0,1);
 //    
 //    // ## Bilinear debayering
@@ -835,48 +920,217 @@ fragment float4 ImageLayer_FindMaxVals(
 
 fragment float4 ImageLayer_FixHighlights(
     constant RenderContext& ctx [[buffer(0)]],
-    constant ImagePixel* pxs [[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    // LMMSE
-    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
-    const int redX = 1;
-    const int redY = 0;
-    const int green = 1 - ((redX + redY) & 1);
-    float3 craw;
-    craw.g =          sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
-    craw.r = craw.g - sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-    craw.b = craw.g - sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-    if (craw.r>=1 || craw.g>=1 || craw.b>=1) return float4(1, 1, 1, 1);
-    float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    float3 c = texture.sample({}, in.posUnit).rgb;
+    
+    uint goodCount = 0;
+    if (c.r < 1) goodCount++;
+    if (c.g < 1) goodCount++;
+    if (c.b < 1) goodCount++;
+    
+//    if (goodCount == 0) return float4(ctx.whitePoint_CamRaw_D50, 1);
+    
+    switch (goodCount) {
+    case 0: return float4(ctx.whitePoint_CamRaw_D50, 1);
+    
+    case 1: {
+        // Green+blue are saturated
+        if (c.r < 1)        return float4((c.r/ctx.greenBluePoint_CamRaw_D50)*ctx.greenBluePoint_CamRaw_D50, 1);
+        // Red+blue are saturated
+        else if (c.g < 1)   return float4((c.g/ctx.redBluePoint_CamRaw_D50)*ctx.redBluePoint_CamRaw_D50, 1);
+        // Red+green are saturated
+        else if (c.b < 1)   return float4((c.b/ctx.redGreenPoint_CamRaw_D50)*ctx.redGreenPoint_CamRaw_D50, 1);
+    }
+    
+    case 2: {
+        // Blue is saturated
+        if (c.r<1 && c.g<1)         return  float4(
+                                                .5*((c.r/ctx.bluePoint_CamRaw_D50)*ctx.bluePoint_CamRaw_D50) +
+                                                .5*((c.g/ctx.bluePoint_CamRaw_D50)*ctx.bluePoint_CamRaw_D50),
+                                            1);
+        // Green is saturated
+        else if (c.r<1 && c.b<1)    return  float4(
+                                                .5*((c.r/ctx.greenPoint_CamRaw_D50)*ctx.greenPoint_CamRaw_D50) +
+                                                .5*((c.b/ctx.greenPoint_CamRaw_D50)*ctx.greenPoint_CamRaw_D50),
+                                            1);
+        // Red is saturated
+        else if (c.g<1 && c.b<1)    return  float4(
+                                                .5*((c.g/ctx.redPoint_CamRaw_D50)*ctx.redPoint_CamRaw_D50) +
+                                                .5*((c.b/ctx.redPoint_CamRaw_D50)*ctx.redPoint_CamRaw_D50),
+                                            1);
+    }
+    
+//    case 1: {
+//        float factor = 0;
+//        if (c.r < 1)        factor = c.r / ctx.whitePoint_CamRaw_D50.r;
+//        else if (c.g < 1)   factor = c.g / ctx.whitePoint_CamRaw_D50.g;
+//        else if (c.b < 1)   factor = c.b / ctx.whitePoint_CamRaw_D50.b;
+//        return float4(factor*ctx.whitePoint_CamRaw_D50, 1);
+//    }
+//    
+//    case 2: {
+//        const float3 factors = float3(
+//            c.r/ctx.whitePoint_CamRaw_D50.r,
+//            c.g/ctx.whitePoint_CamRaw_D50.g,
+//            c.b/ctx.whitePoint_CamRaw_D50.b
+//        );
+//        float factor = 0;
+//        if (c.r<1 && c.g<1)         factor = (factors.r+factors.g)/2;
+//        else if (c.r<1 && c.b<1)    factor = (factors.r+factors.b)/2;
+//        else                        factor = (factors.g+factors.b)/2;
+//        return float4(factor*ctx.whitePoint_CamRaw_D50, 1);
+//    }
+    }
+    
     return float4(c, 1);
     
+//    if (c.r>=1 && c.g>=1 && c.b>=1) c = ctx.whitePoint_CamRaw_D50;
     
-//    // Bilinear
-//    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+//    if (c.r >= 1) c.r = ctx.whitePoint_CamRaw_D50.r;
+//    if (c.g >= 1) c.g = ctx.whitePoint_CamRaw_D50.g;
+//    if (c.b >= 1) c.b = ctx.whitePoint_CamRaw_D50.b;
+    
+//    if (max3(c.r, c.g, c.b) >= 1.) {
+//        // For any pixel that has an over-exposed channel, replace that
+//        // pixel with the whitepoint in raw camera space.
+//        return float4(ctx.whitePoint_CamRaw_D50, 1);
+//    }
+    
+}
+
+//fragment float4 ImageLayer_FixHighlights(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    constant ImagePixel* pxs [[buffer(1)]],
+//    texture2d<float> texture [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+////    // LMMSE
+////    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+////    const int redX = 1;
+////    const int redY = 0;
+////    const int green = 1 - ((redX + redY) & 1);
+////    float3 craw;
+////    craw.g =          sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
+////    craw.r = craw.g - sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+////    craw.b = craw.g - sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
+////    if (craw.r>=1 || craw.g>=1 || craw.b>=1) return float4(1, 1, 1, 1);
+////    float3 c = texture.sample(sampler(coord::pixel), in.pos.xy).rgb;
+////    return float4(c, 1);
+//    
+//    
+//    // Bilinear debayer
+//    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
 //    const float3 craw = float3(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-//    float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
-//    if (craw.r >= 1) c.r = 1;
-//    if (craw.g >= 1) c.g = 1;
-//    if (craw.b >= 1) c.b = 1;
+//    float3 c = texture.sample(sampler(coord::pixel), in.pos.xy).rgb;
+//    if (craw.r>=254./255 || craw.g>=254./255 || craw.b>=254./255) c = float3(1,1,1);
+////    if (craw.r >= 250./255) c.r = 1;
+////    if (craw.g >= 250./255) c.g = 1;
+////    if (craw.b >= 250./255) c.b = 1;
 //    return float4(c, 1);
+//}
+
+fragment float4 ImageLayer_FixHighlightsPropagation(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> texture [[texture(0)]],
+    texture2d<float> smallRaw [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    float3 c = texture.sample({}, in.posUnit).rgb;
+//    return float4(c, 1);
+    
+    uint goodCount = 0;
+    if (c.r < 1) goodCount++;
+    if (c.g < 1) goodCount++;
+    if (c.b < 1) goodCount++;
+    
+    if (goodCount < 3) {
+        // Find a reference pixel
+        const float2 q(1./smallRaw.get_width(), 1./smallRaw.get_height());
+        const sampler s = sampler(address::mirrored_repeat);
+        float3 cref(0);
+        uint i = 0;
+        for (i=0; i<1000; i++) {
+            float2 d((i+1)*q.x, (i+1)*q.y);
+            // -1 -1
+            cref = smallRaw.sample(s, in.posUnit + float2(-1*d.x, -1*d.y)).rgb;
+            if (cref.r<1 && cref.g<1 && cref.b<1) break;
+            // -1 +1
+            cref = smallRaw.sample(s, in.posUnit + float2(-1*d.x, +1*d.y)).rgb;
+            if (cref.r<1 && cref.g<1 && cref.b<1) break;
+            // +1 -1
+            cref = smallRaw.sample(s, in.posUnit + float2(+1*d.x, -1*d.y)).rgb;
+            if (cref.r<1 && cref.g<1 && cref.b<1) break;
+            // +1 +1
+            cref = smallRaw.sample(s, in.posUnit + float2(+1*d.x, +1*d.y)).rgb;
+            if (cref.r<1 && cref.g<1 && cref.b<1) break;
+        }
+        
+        switch (goodCount) {
+        case 0: {
+            c = cref / min3(cref.r, cref.g, cref.b);
+            break;
+        }
+        
+        case 1: {
+            c = float3(0,0,0);
+            break;
+        }
+        
+        case 2: {
+            c = float3(0,0,0);
+            break;
+        }}
+    }
+//    c = float3(0,0,0);
+    return float4(c, 1);
+    
+//    if (c)
+//    
+//    const float2 q(1./downsampledTexture.get_width(), 1./downsampledTexture.get_height());
+//    const sampler s = sampler(address::mirrored_repeat);
+//    const float2 startPos = in.posUnit - q*((Factor-1)/2.);
+//    float2 pos = startPos;
+//    for (uint iy=0; iy<Factor; iy++) {
+//        pos.x = startPos.x;
+//        for (uint ix=0; ix<Factor; ix++) {
+//            c += texture.sample(s, pos);
+//            pos.x += q.x;
+//        }
+//        pos.y += q.y;
+//    }
+//    return c;
+//    
+//    
+//    
+//    if (smallRaw.) {
+//    
+//    }
+//    uint i = 0;
+//    for (i=0; i<10; i++) {
+//        
+//    }
+//    
+//    // Find a reference pixel
+//    
+////    return texture.sample(sampler(), in.posUnit);
 }
 
 fragment float4 ImageLayer_SRGBGamma(
     constant RenderContext& ctx [[buffer(0)]],
     device float3* samples [[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgb = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 lsrgb = texture.sample({}, in.posUnit).rgb;
     float3 c_SRGB = float3{
         SRGBFromLSRGB(lsrgb[0]),
         SRGBFromLSRGB(lsrgb[1]),
         SRGBFromLSRGB(lsrgb[2])
     };
     
-    const uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
         pos.y >= ctx.sampleRect.top &&
@@ -891,9 +1145,9 @@ fragment float4 ImageLayer_SRGBGamma(
 fragment float4 ImageLayer_Display(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> texture [[texture(0)]],
-    VertexOutput interpolated [[stage_in]]
+    VertexOutput in [[stage_in]]
 ) {
-    const float3 c = texture.sample(sampler(coord::pixel), interpolated.pos.xy).rgb;
+    const float3 c = texture.sample({}, in.posUnit).rgb;
     return float4(c, 1);
 }
 
@@ -903,14 +1157,14 @@ fragment float4 ImageLayer_Display(
 //    constant ImagePixel* pxs [[buffer(1)]],
 //    device Histogram& inputHistogram [[buffer(2)]],
 //    device Histogram& outputHistogram [[buffer(3)]],
-//    VertexOutput interpolated [[stage_in]]
+//    VertexOutput in [[stage_in]]
 //) {
 //    // Bayer pattern:
 //    //  Row0    G R G R
 //    //  Row1    B G B G
 //    //  Row2    G R G R
 //    //  Row3    B G B G
-//    uint2 pos = {(uint)interpolated.pos.x, (uint)interpolated.pos.y};
+//    uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
 //    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
 //    
 //    // ## Bilinear debayering

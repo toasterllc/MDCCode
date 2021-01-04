@@ -1,4 +1,5 @@
 #pragma once
+#import <Accelerate/Accelerate.h>
 
 template <typename T, size_t M, size_t N>
 class Mat {

@@ -1,5 +1,6 @@
 #import <QuartzCore/QuartzCore.h>
 #import "ImageLayerTypes.h"
+#import "Mat.h"
 
 @class ImageLayer;
 using ImageLayerHistogramChangedHandler = void(^)(ImageLayer*);
@@ -14,7 +15,7 @@ namespace CFAViewer::ImageLayerTypes {
 
 @interface ImageLayer : CAMetalLayer
 - (void)updateImage:(const CFAViewer::ImageLayerTypes::Image&)image;
-- (void)updateColorMatrix:(const simd::float3x3&)colorMatrix;
+- (void)setColorMatrix:(const Mat<double,3,3>&)cm;
 - (void)setHistogramChangedHandler:(ImageLayerHistogramChangedHandler)histogramChangedHandler;
 - (CFAViewer::MetalTypes::Histogram)inputHistogram;
 - (CFAViewer::MetalTypes::Histogram)outputHistogram;

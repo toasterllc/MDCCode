@@ -1,5 +1,4 @@
 #import "BaseView.h"
-#import <Accelerate/Accelerate.h>
 #import <memory>
 #import <iostream>
 #import <regex>
@@ -9,6 +8,7 @@
 #import "Mmap.h"
 #import "Util.h"
 #import "Mat.h"
+#import "ColorUtil.h"
 
 using namespace CFAViewer;
 using namespace MetalTypes;
@@ -16,8 +16,8 @@ using namespace ImageLayerTypes;
 
 using ColorMatrix = Mat<double,3,3>;
 using Color3 = Mat<double,3,1>;
-using ColorXYYD50 = Color3;
-using ColorXYZD50 = Color3;
+using Color_XYY_D50 = Color3;
+using Color_XYZ_D50 = Color3;
 using ColorSRGBD65 = Color3;
 using ColorCameraRaw = Color3;
 
@@ -400,11 +400,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 - (void)_updateColorMatrix:(const ColorMatrix&)colorMatrix {
     _colorMatrix = colorMatrix;
     
-    [[_mainView imageLayer] updateColorMatrix:simd::float3x3{
-        simd::float3{(float)_colorMatrix[0], (float)_colorMatrix[3], (float)_colorMatrix[6]},
-        simd::float3{(float)_colorMatrix[1], (float)_colorMatrix[4], (float)_colorMatrix[7]},
-        simd::float3{(float)_colorMatrix[2], (float)_colorMatrix[5], (float)_colorMatrix[8]},
-    }];
+    [[_mainView imageLayer] setColorMatrix:colorMatrix];
     
     [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
         @"%f %f %f\n"
@@ -568,7 +564,7 @@ static double LSRGBFromSRGB(double x) {
     return pow((x+.055)/1.055, 2.4);
 }
 
-static ColorXYZD50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
+static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     const ColorMatrix XYZD65_From_LSRGBD65(
         0.4124564, 0.3575761, 0.1804375,
@@ -586,21 +582,6 @@ static ColorXYZD50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     const Color3 lsrgb_d65(LSRGBFromSRGB(srgb_d65[0]), LSRGBFromSRGB(srgb_d65[1]), LSRGBFromSRGB(srgb_d65[2]));
     // Linear SRGB -> XYZ.D65 -> XYZ.D50
     return XYZD50_From_XYZD65 * XYZD65_From_LSRGBD65 * lsrgb_d65;
-}
-
-static ColorXYYD50 XYYFromXYZ(const ColorXYZD50& xyz) {
-    const double denom = xyz[0]+xyz[1]+xyz[2];
-    const double x = xyz[0]/denom;
-    const double y = xyz[1]/denom;
-    const double Y = xyz[1];
-    return {x, y, Y};
-}
-
-static ColorXYZD50 XYZFromXYY(const ColorXYYD50& xyy) {
-    const double X = (xyy[0]*xyy[2])/xyy[1];
-    const double Y = xyy[2];
-    const double Z = ((1.-xyy[0]-xyy[1])*xyy[2])/xyy[1];
-    return {X, Y, Z};
 }
 
 - (IBAction)showHideColorCheckerCircles:(id)sender {
@@ -652,10 +633,10 @@ static ColorXYZD50 XYZFromXYY(const ColorXYYD50& xyy) {
     i = 0;
     for (ColorSRGBD65 c : ColorCheckerColors) {
         // Convert the color from SRGB -> XYZ -> XYY
-        ColorXYZD50 cxyy = XYYFromXYZ(XYZFromSRGB(c));
+        Color_XYZ_D50 cxyy = ColorUtil::XYYFromXYZ(XYZFromSRGB(c));
 //        cxyy[2] /= 3; // Adjust luminance
         
-        const ColorXYZD50 cxyz = XYZFromXYY(cxyy);
+        const Color_XYZ_D50 cxyz = ColorUtil::XYZFromXYY(cxyy);
         b[i+0] = cxyz[0];
         b[i+1] = cxyz[1];
         b[i+2] = cxyz[2];
