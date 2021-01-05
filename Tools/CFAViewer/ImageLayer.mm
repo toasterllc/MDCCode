@@ -246,19 +246,67 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     // Update our drawable size using our view size (in pixels)
     [self setDrawableSize:{(CGFloat)_ctx.imageWidth, (CGFloat)_ctx.imageHeight}];
     
-    id<MTLTexture> rawTexture = nil;
+    id<MTLTexture> rawTxt = nil;
     {
         MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
         [desc setTextureType:MTLTextureType2D];
         [desc setWidth:_ctx.imageWidth];
         [desc setHeight:_ctx.imageHeight];
-        [desc setPixelFormat:MTLPixelFormatRGBA32Float];
+        [desc setPixelFormat:MTLPixelFormatR32Float];
         [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        rawTexture = [_device newTextureWithDescriptor:desc];
-        Assert(rawTexture, return);
+        rawTxt = [_device newTextureWithDescriptor:desc];
+        Assert(rawTxt, return);
     }
     
-    id<MTLTexture> texture = nil;
+    id<MTLTexture> filteredHTxt = nil;
+    {
+        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+        [desc setTextureType:MTLTextureType2D];
+        [desc setWidth:_ctx.imageWidth];
+        [desc setHeight:_ctx.imageHeight];
+        [desc setPixelFormat:MTLPixelFormatR32Float];
+        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
+        filteredHTxt = [_device newTextureWithDescriptor:desc];
+        Assert(filteredHTxt, return);
+    }
+    
+    id<MTLTexture> filteredVTxt = nil;
+    {
+        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+        [desc setTextureType:MTLTextureType2D];
+        [desc setWidth:_ctx.imageWidth];
+        [desc setHeight:_ctx.imageHeight];
+        [desc setPixelFormat:MTLPixelFormatR32Float];
+        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
+        filteredVTxt = [_device newTextureWithDescriptor:desc];
+        Assert(filteredVTxt, return);
+    }
+    
+    id<MTLTexture> diffHTxt = nil;
+    {
+        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+        [desc setTextureType:MTLTextureType2D];
+        [desc setWidth:_ctx.imageWidth];
+        [desc setHeight:_ctx.imageHeight];
+        [desc setPixelFormat:MTLPixelFormatR32Float];
+        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
+        diffHTxt = [_device newTextureWithDescriptor:desc];
+        Assert(diffHTxt, return);
+    }
+    
+    id<MTLTexture> diffVTxt = nil;
+    {
+        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+        [desc setTextureType:MTLTextureType2D];
+        [desc setWidth:_ctx.imageWidth];
+        [desc setHeight:_ctx.imageHeight];
+        [desc setPixelFormat:MTLPixelFormatR32Float];
+        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
+        diffVTxt = [_device newTextureWithDescriptor:desc];
+        Assert(diffVTxt, return);
+    }
+    
+    id<MTLTexture> txt = nil;
     {
         MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
         [desc setTextureType:MTLTextureType2D];
@@ -266,8 +314,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         [desc setHeight:_ctx.imageHeight];
         [desc setPixelFormat:MTLPixelFormatRGBA32Float];
         [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        texture = [_device newTextureWithDescriptor:desc];
-        Assert(texture, return);
+        txt = [_device newTextureWithDescriptor:desc];
+        Assert(txt, return);
     }
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
@@ -278,123 +326,183 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
     
-    // De-bayer render pass
+    // Load the pixels into a texture
     {
-        // ImageLayer_DebayerLMMSE
-        // ImageLayer_DebayerBilinear
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DebayerBilinear"
+        [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_LoadRaw"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
                 [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
-                [encoder setFragmentBuffer:_sampleBuf_cameraRaw offset:0 atIndex:2];
             }
         ];
     }
     
-    // Fix highlights
-    {
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_FixHighlights"
-            block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentTexture:texture atIndex:0];
-            }
-        ];
-    }
-    
-//    // Down-sample raw de-bayered image
+//    // Load the pixels into a texture
 //    {
-//        [self _renderPass:cmdBuf texture:smallRawTexture name:@"ImageLayer_Downsample"
+//        [self _renderPass:cmdBuf texture:rawTexture name:@"ImageLayer_VoidReturn"
 //            block:^(id<MTLRenderCommandEncoder> encoder) {
 //                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentBytes:&SmallRawTextureDownsampleFactor
-//                    length:sizeof(SmallRawTextureDownsampleFactor) atIndex:1];
+//                [encoder setFragmentTexture:rawTexture atIndex:0];
+//            }
+//        ];
+//    }
+    
+    // Horizontal interpolation
+    {
+        [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_HInterp"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+            }
+        ];
+    }
+    
+    // Vertical interpolation
+    {
+        [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_VInterp"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+            }
+        ];
+    }
+    
+    // Calculate DiffH
+    {
+        [self _renderPass:cmdBuf texture:diffHTxt name:@"ImageLayer_NoiseEst"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:filteredHTxt atIndex:1];
+            }
+        ];
+    }
+    
+    // Calculate DiffV
+    {
+        [self _renderPass:cmdBuf texture:diffVTxt name:@"ImageLayer_NoiseEst"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:filteredVTxt atIndex:1];
+            }
+        ];
+    }
+    
+    // Smooth DiffH
+    {
+        [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_SmoothH"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:diffHTxt atIndex:0];
+            }
+        ];
+    }
+    
+    // Smooth DiffV
+    {
+        [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_SmoothV"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:diffVTxt atIndex:0];
+            }
+        ];
+    }
+    
+    
+    
+//    // Vertical interpolation
+//    {
+//        [self _renderPass:cmdBuf texture:filteredVTexture name:@"ImageLayer_NoiseEst"
+//            block:^(id<MTLRenderCommandEncoder> encoder) {
+//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+//                [encoder setFragmentTexture:rawTexture atIndex:0];
+//            }
+//        ];
+//    }
+    
+//    // De-bayer render pass
+//    {
+//        // ImageLayer_DebayerLMMSE
+//        // ImageLayer_DebayerBilinear
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DebayerBilinear"
+//            block:^(id<MTLRenderCommandEncoder> encoder) {
+//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+//                [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
+//                [encoder setFragmentBuffer:_sampleBuf_cameraRaw offset:0 atIndex:2];
+//            }
+//        ];
+//    }
+    
+//    // Fix highlights
+//    {
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_FixHighlights"
+//            block:^(id<MTLRenderCommandEncoder> encoder) {
+//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
 //                [encoder setFragmentTexture:texture atIndex:0];
 //            }
 //        ];
 //    }
 //    
-//    // Fix highlights
+//    // Camera raw -> XYY.D50
 //    {
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_FixHighlightsPropagation"
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_XYYD50FromCameraRaw"
 //            block:^(id<MTLRenderCommandEncoder> encoder) {
 //                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
 //                [encoder setFragmentTexture:texture atIndex:0];
-//                [encoder setFragmentTexture:smallRawTexture atIndex:1];
 //            }
 //        ];
 //    }
-    
-    // Camera raw -> XYY.D50
-    {
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_XYYD50FromCameraRaw"
-            block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentTexture:texture atIndex:0];
-            }
-        ];
-    }
-    
-    // Decrease luminance
-    {
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DecreaseLuminance"
-            block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentTexture:texture atIndex:0];
-            }
-        ];
-    }
-    
-    // XYY.D50 -> XYZ.D50
-    {
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_XYZD50FromXYYD50"
-            block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentBuffer:_sampleBuf_XYZD50 offset:0 atIndex:1];
-                [encoder setFragmentTexture:texture atIndex:0];
-            }
-        ];
-    }
-    
+//    
 //    // Decrease luminance
 //    {
-//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DecreaseLuminanceXYZD50"
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DecreaseLuminance"
 //            block:^(id<MTLRenderCommandEncoder> encoder) {
 //                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
 //                [encoder setFragmentTexture:texture atIndex:0];
-//                [encoder setFragmentTexture:rawTexture atIndex:1];
 //            }
 //        ];
 //    }
-    
-    // XYZ.D50 -> LSRGB.D65
-    {
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_LSRGBD65FromXYZD50"
-            block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentBuffer:_sampleBuf_XYZD50 offset:0 atIndex:1];
-                [encoder setFragmentTexture:texture atIndex:0];
-            }
-        ];
-    }
-    
-    
-    // Apply SRGB gamma
-    {
-        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_SRGBGamma"
-            block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentBuffer:_sampleBuf_SRGBD65 offset:0 atIndex:1];
-                [encoder setFragmentTexture:texture atIndex:0];
-            }
-        ];
-    }
+//    
+//    // XYY.D50 -> XYZ.D50
+//    {
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_XYZD50FromXYYD50"
+//            block:^(id<MTLRenderCommandEncoder> encoder) {
+//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+//                [encoder setFragmentBuffer:_sampleBuf_XYZD50 offset:0 atIndex:1];
+//                [encoder setFragmentTexture:texture atIndex:0];
+//            }
+//        ];
+//    }
+//    
+//    // XYZ.D50 -> LSRGB.D65
+//    {
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_LSRGBD65FromXYZD50"
+//            block:^(id<MTLRenderCommandEncoder> encoder) {
+//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+//                [encoder setFragmentBuffer:_sampleBuf_XYZD50 offset:0 atIndex:1];
+//                [encoder setFragmentTexture:texture atIndex:0];
+//            }
+//        ];
+//    }
+//    
+//    
+//    // Apply SRGB gamma
+//    {
+//        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_SRGBGamma"
+//            block:^(id<MTLRenderCommandEncoder> encoder) {
+//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+//                [encoder setFragmentBuffer:_sampleBuf_SRGBD65 offset:0 atIndex:1];
+//                [encoder setFragmentTexture:texture atIndex:0];
+//            }
+//        ];
+//    }
     
     // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
     {
         [self _renderPass:cmdBuf texture:[drawable texture] name:@"ImageLayer_Display"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentTexture:texture atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
             }
         ];
     }

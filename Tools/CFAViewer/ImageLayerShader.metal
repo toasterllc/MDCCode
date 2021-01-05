@@ -606,6 +606,174 @@ float3 XYZFromXYY(const float3 xyy) {
     return {X, Y, Z};
 }
 
+fragment float ImageLayer_LoadRaw(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant ImagePixel* pxs [[buffer(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    return (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
+}
+
+
+static int mirrorClamp(uint N, int n) {
+    const int Ni = (int)N;
+    if (n < 0) return -n;
+    else if (n >= Ni) return 2*(Ni-1)-n;
+    else return n;
+}
+
+static int2 mirrorClamp(uint2 N, int2 n) {
+    return {mirrorClamp(N.x, n.x), mirrorClamp(N.y, n.y)};
+}
+
+static float2 mirrorClampF(uint2 N, int2 n) {
+    return {(float)mirrorClamp(N.x, n.x), (float)mirrorClamp(N.y, n.y)};
+}
+
+
+fragment float ImageLayer_HInterp(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
+    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
+    const sampler s = sampler(coord::pixel);
+    return  -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-2,+0))).r     +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-1,+0))).r     +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+1,+0))).r     +
+            -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+2,+0))).r     ;
+}
+
+fragment float ImageLayer_VInterp(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
+    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
+    const sampler s = sampler(coord::pixel);
+    return  -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-2))).r     +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-1))).r     +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+1))).r     +
+            -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+2))).r     ;
+}
+
+fragment float ImageLayer_NoiseEst(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> filteredTxt [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    const sampler s;
+    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+    const float raw = rawTxt.sample(s, in.posUnit).r;
+    const float filtered = filteredTxt.sample(s, in.posUnit).r;
+    if (green)  return raw-filtered;
+    else        return filtered-raw;
+}
+
+fragment float ImageLayer_SmoothH(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
+    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
+    const sampler s = sampler(coord::pixel);
+    return  0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-4,+0))).r     +
+            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-3,+0))).r     +
+            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-2,+0))).r     +
+            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-1,+0))).r     +
+            0.2031250*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
+            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+1,+0))).r     +
+            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+2,+0))).r     +
+            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+3,+0))).r     +
+            0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+4,+0))).r     ;
+}
+
+fragment float ImageLayer_SmoothV(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
+    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
+    const sampler s = sampler(coord::pixel);
+    return  0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-4))).r     +
+            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-3))).r     +
+            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-2))).r     +
+            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-1))).r     +
+            0.2031250*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
+            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+1))).r     +
+            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+2))).r     +
+            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+3))).r     +
+            0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+4))).r     ;
+}
+
+
+
+
+// This is just 2 passes of ImageLayer_NoiseEst combined into 1
+// In our profiling, this wasn't any faster than calling ImageLayer_NoiseEst twice
+//fragment void ImageLayer_NoiseEst2(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> rawTxt [[texture(0)]],
+//    texture2d<float> filteredHTxt [[texture(1)]],
+//    texture2d<float> filteredVTxt [[texture(2)]],
+//    texture2d<float, access::read_write> diffH [[texture(3)]],
+//    texture2d<float, access::read_write> diffV [[texture(4)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const uint2 pos(in.pos.x, in.pos.y);
+//    const sampler s;
+//    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+//    const float raw = rawTxt.sample(s, in.posUnit).r;
+//    const float filteredH = filteredHTxt.sample(s, in.posUnit).r;
+//    const float filteredV = filteredVTxt.sample(s, in.posUnit).r;
+//    if (green) {
+//        diffH.write(float4(raw-filteredH), pos);
+//        diffV.write(float4(raw-filteredV), pos);
+//    } else {
+//        diffH.write(float4(filteredH-raw), pos);
+//        diffV.write(float4(filteredV-raw), pos);
+//    }
+//}
+
+
+
+
+
+fragment void ImageLayer_VoidReturn(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float, access::read_write> texture [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    texture.write(float4(1), pos);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 fragment float4 ImageLayer_DebayerBilinear(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
