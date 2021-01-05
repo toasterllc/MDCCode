@@ -351,17 +351,21 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         ];
     }
     
-    // Calculate green channel
+    // Calculate txt.g
     {
-        [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcGreen"
+        [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcG"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
                 [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:filteredHTxt atIndex:1];
+                [encoder setFragmentTexture:diffHTxt atIndex:2];
+                [encoder setFragmentTexture:filteredVTxt atIndex:3];
+                [encoder setFragmentTexture:diffVTxt atIndex:4];
             }
         ];
     }
     
-    // Calculate diffGRTxt
+    // Calculate diffGRTxt.r
     {
         const bool modeGR = true;
         [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
@@ -375,7 +379,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         ];
     }
     
-    // Calculate diffGBTxt
+    // Calculate diffGBTxt.b
     {
         const bool modeGR = false;
         [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
@@ -389,17 +393,69 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         ];
     }
     
+    // Calculate diffGRTxt.b
+    {
+        const bool modeGR = true;
+        [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcDiagAvgDiffGRGB"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:1];
+                [encoder setFragmentTexture:diffGRTxt atIndex:2];
+            }
+        ];
+    }
     
+    // Calculate diffGBTxt.r
+    {
+        const bool modeGR = false;
+        [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcDiagAvgDiffGRGB"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:1];
+                [encoder setFragmentTexture:diffGBTxt atIndex:2];
+            }
+        ];
+    }
     
-//    // Vertical interpolation
-//    {
-//        [self _renderPass:cmdBuf texture:filteredVTexture name:@"ImageLayer_NoiseEst"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentTexture:rawTexture atIndex:0];
-//            }
-//        ];
-//    }
+    // Calculate diffGRTxt.g
+    {
+        [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcAxialAvgDiffGRGB"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:1];
+                [encoder setFragmentTexture:diffGRTxt atIndex:2];
+            }
+        ];
+    }
+    
+    // Calculate diffGBTxt.g
+    {
+        [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcAxialAvgDiffGRGB"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:1];
+                [encoder setFragmentTexture:diffGBTxt atIndex:2];
+            }
+        ];
+    }
+    
+    // Calculate txt.rb
+    {
+        [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcRB"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:0];
+                [encoder setFragmentTexture:diffGRTxt atIndex:1];
+                [encoder setFragmentTexture:diffGBTxt atIndex:2];
+            }
+        ];
+    }
     
 //    // De-bayer render pass
 //    {

@@ -615,7 +615,7 @@ fragment float ImageLayer_LoadRaw(
 //    const float2 a = float2(u2);
 //    
 //    return a.x==8 && a.y==257;
-    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    const uint2 pos = uint2(in.pos.xy);
     return (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
 }
 
@@ -635,6 +635,25 @@ static float2 mirrorClampF(uint2 N, int2 n) {
     return {(float)mirrorClamp(N.x, n.x), (float)mirrorClamp(N.y, n.y)};
 }
 
+template <typename T>
+float sampleR(texture2d<float> txt, T pos) {
+    return txt.sample(coord::pixel, float2(pos)).r;
+}
+
+template <typename T>
+float sampleR(texture2d<float> txt, T pos, int2 delta) {
+    return sampleR(txt, int2(pos)+delta);
+}
+
+template <typename T>
+float3 sampleRGB(texture2d<float> txt, T pos) {
+    return txt.sample(coord::pixel, float2(pos)).rgb;
+}
+
+template <typename T>
+float3 sampleRGB(texture2d<float> txt, T pos, int2 delta) {
+    return sampleRGB(txt, int2(pos)+delta);
+}
 
 fragment float ImageLayer_LMMSE_Interp5(
     constant RenderContext& ctx [[buffer(0)]],
@@ -643,7 +662,7 @@ fragment float ImageLayer_LMMSE_Interp5(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 dim(ctx.imageWidth, ctx.imageHeight);
-    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
+    const int2 pos = int2(in.pos.xy);
     const sampler s = sampler(coord::pixel);
     return  -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-2:+0,!h?-2:+0))).r    +
             +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-1:+0,!h?-1:+0))).r    +
@@ -658,7 +677,7 @@ fragment float ImageLayer_LMMSE_NoiseEst(
     texture2d<float> filteredTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const uint2 pos = uint2(in.pos.xy);
     const sampler s;
     const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
     const float raw = rawTxt.sample(s, in.posUnit).r;
@@ -674,7 +693,7 @@ fragment float ImageLayer_LMMSE_Smooth9(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 dim(ctx.imageWidth, ctx.imageHeight);
-    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
+    const int2 pos = int2(in.pos.xy);
     const sampler s = sampler(coord::pixel);
     return  0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-4:+0,!h?-4:+0))).r     +
             0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-3:+0,!h?-3:+0))).r     +
@@ -689,7 +708,7 @@ fragment float ImageLayer_LMMSE_Smooth9(
 
 constant bool UseZhangCodeEst = false;
 
-fragment float4 ImageLayer_LMMSE_CalcGreen(
+fragment float4 ImageLayer_LMMSE_CalcG(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> filteredHTxt [[texture(1)]],
@@ -698,11 +717,10 @@ fragment float4 ImageLayer_LMMSE_CalcGreen(
     texture2d<float> diffVTxt [[texture(4)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool blue = ((pos.y%2) && !(pos.x%2));
-    const sampler s = sampler(coord::pixel);
-    const float raw = rawTxt.sample(s, float2(pos)).r;
+    const float raw = sampleR(rawTxt, pos);
     float g = 0;
     if (red || blue) {
         const int M = 4;
@@ -726,10 +744,10 @@ fragment float4 ImageLayer_LMMSE_CalcGreen(
         float Rh = 0;
         for (int m=m0; m <= m1; m++) {
             float Temp = 0;
-            Temp = filteredHTxt.sample(s, float2(pos+int2(m,0))).r;
+            Temp = sampleR(filteredHTxt, pos, {m,0});
             mom1 += Temp;
             ph += Temp*Temp;
-            Temp -= diffHTxt.sample(s, float2(pos+int2(m,0))).r;
+            Temp -= sampleR(diffHTxt, pos, {m,0});
             Rh += Temp*Temp;
         }
         
@@ -737,11 +755,11 @@ fragment float4 ImageLayer_LMMSE_CalcGreen(
         // Compute mh = mean_m FilteredH[i + m]
         if (!UseZhangCodeEst) mh = mom1/(2*M + 1);
         // Compute mh as in Zhang's MATLAB code
-        else mh = filteredHTxt.sample(s, float2(pos)).r;
+        else mh = sampleR(filteredHTxt, pos);
         
         ph = ph/(2*M) - mom1*mom1/(2*M*(2*M + 1));
         Rh = Rh/(2*M + 1) + DivEpsilon;
-        float h = mh + (ph/(ph + Rh))*(diffHTxt.sample(s, float2(pos)).r-mh);
+        float h = mh + (ph/(ph + Rh))*(sampleR(diffHTxt,pos)-mh);
         float H = ph - (ph/(ph + Rh))*ph + DivEpsilon;
         
         // Adjust loop indices for top and bottom boundaries
@@ -760,10 +778,10 @@ fragment float4 ImageLayer_LMMSE_CalcGreen(
         float Rv = 0;
         for (int m=m0; m<=m1; m++) {
             float Temp = 0;
-            Temp = filteredVTxt.sample(s, float2(pos+int2(0,m))).r;
+            Temp = sampleR(filteredVTxt, pos, {0,m});
             mom1 += Temp;
             pv += Temp*Temp;
-            Temp -= diffVTxt.sample(s, float2(pos+int2(0,m))).r;
+            Temp -= sampleR(diffVTxt, pos, {0,m});
             Rv += Temp*Temp;
         }
         
@@ -771,11 +789,11 @@ fragment float4 ImageLayer_LMMSE_CalcGreen(
         // Compute mv = mean_m FilteredV[i + m]
         if (!UseZhangCodeEst) mv = mom1/(2*M + 1);
         // Compute mv as in Zhang's MATLAB code
-        else mv = filteredVTxt.sample(s, float2(pos)).r;
+        else mv = sampleR(filteredVTxt, pos);
         
         pv = pv/(2*M) - mom1*mom1/(2*M*(2*M + 1));
         Rv = Rv/(2*M + 1) + DivEpsilon;
-        float v = mv + (pv/(pv + Rv))*(diffVTxt.sample(s, float2(pos)).r - mv);
+        float v = mv + (pv/(pv + Rv))*(sampleR(diffVTxt,pos)-mv);
         float V = pv - (pv/(pv + Rv))*pv + DivEpsilon;
         
         // Fuse the directional estimates to obtain the green component
@@ -796,20 +814,135 @@ fragment float ImageLayer_LMMSE_CalcDiffGRGB(
     texture2d<float> txt [[texture(1)]],
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
-) { 
-    const uint2 pos(in.pos.x, in.pos.y);
+) {
+    const uint2 pos = uint2(in.pos.xy);
     const bool redPx = (!(pos.y%2) && (pos.x%2));
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
-    const sampler s = sampler(coord::pixel);
     
     if ((modeGR && redPx) || (!modeGR && bluePx)) {
-        const float raw = rawTxt.sample(s, float2(pos)).r;
-        const float g = txt.sample(s, float2(pos)).r;
+        const float raw = sampleR(rawTxt, pos);
+        const float g = sampleRGB(txt, pos).g;
+//        return g-raw;
         return g-raw;
     }
     
     // Pass-through
-    return diffTxt.sample(s, float2(pos)).r;
+    return sampleR(diffTxt, pos);
+}
+
+float diagAvg(texture2d<float> txt, uint2 pos) {
+    const int2 lu(-1,-1);
+    const int2 ld(-1,+1);
+    const int2 ru(+1,-1);
+    const int2 rd(+1,+1);
+    if (pos.y == 0) {
+        if (pos.x == 0)
+            return sampleR(txt,pos,rd);
+        else if (pos.x < txt.get_width()-1)
+            return (sampleR(txt,pos,ld)+sampleR(txt,pos,rd))/2;
+        else
+            return sampleR(txt,pos,ld);
+    
+    } else if (pos.y < txt.get_height()-1) {
+        if (pos.x == 0)
+            return (sampleR(txt,pos,ru)+sampleR(txt,pos,rd))/2;
+        else if (pos.x < txt.get_width()-1)
+            return (sampleR(txt,pos,lu)+sampleR(txt,pos,ru)+
+                    sampleR(txt,pos,ld)+sampleR(txt,pos,rd))/4;
+        else    
+            return (sampleR(txt,pos,lu)+sampleR(txt,pos,ld))/2;
+    
+    } else {
+        if (pos.x == 0)
+            return sampleR(txt,pos,ru);
+        else if (pos.x < txt.get_width()-1)
+            return (sampleR(txt,pos,lu)+sampleR(txt,pos,ru))/2;
+        else
+            return sampleR(txt,pos,lu);
+    }
+}
+
+fragment float ImageLayer_LMMSE_CalcDiagAvgDiffGRGB(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant bool& modeGR [[buffer(1)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> txt [[texture(1)]],
+    texture2d<float> diffTxt [[texture(2)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos = uint2(in.pos.xy);
+    const bool redPx = (!(pos.y%2) && (pos.x%2));
+    const bool bluePx = ((pos.y%2) && !(pos.x%2));
+    
+    if ((modeGR && bluePx) || (!modeGR && redPx)) {
+        return diagAvg(diffTxt, pos);
+    }
+    
+    // Pass-through
+    return sampleR(diffTxt, pos);
+}
+
+float axialAvg(texture2d<float> txt, uint2 pos) {
+    const int2 l(-1,+0);
+    const int2 r(+1,+0);
+    const int2 u(+0,-1);
+    const int2 d(+0,+1);
+    if (pos.y == 0) {
+        if (pos.x == 0)
+            return (sampleR(txt,pos,r)+sampleR(txt,pos,d))/2;
+        else if (pos.x < txt.get_width()-1)
+            return (sampleR(txt,pos,l)+sampleR(txt,pos,r)+2*sampleR(txt,pos,d))/4;
+        else
+            return (sampleR(txt,pos,l)+sampleR(txt,pos,d))/2;
+    
+    } else if (pos.y < txt.get_height()-1) {
+        if (pos.x == 0)
+            return (2*sampleR(txt,pos,r)+sampleR(txt,pos,u)+sampleR(txt,pos,d))/4;
+        else if (pos.x < txt.get_width()-1)
+            return (sampleR(txt,pos,l)+sampleR(txt,pos,r)+
+                    sampleR(txt,pos,u)+sampleR(txt,pos,d))/4;
+        else
+            return (2*sampleR(txt,pos,l)+sampleR(txt,pos,u)+sampleR(txt,pos,d))/4;
+    
+    } else {
+        if (pos.x == 0)
+            return (sampleR(txt,pos,r)+sampleR(txt,pos,u))/2;
+        else if (pos.x < txt.get_width()-1)
+            return (sampleR(txt,pos,l)+sampleR(txt,pos,r)+2*sampleR(txt,pos,u))/4;
+        else
+            return (sampleR(txt,pos,l)+sampleR(txt,pos,u))/2;
+    }
+}
+
+fragment float ImageLayer_LMMSE_CalcAxialAvgDiffGRGB(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> txt [[texture(1)]],
+    texture2d<float> diffTxt [[texture(2)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos = uint2(in.pos.xy);
+    const bool greenPx = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+    if (greenPx) {
+        return axialAvg(diffTxt, pos);
+    }
+    
+    // Pass-through
+    return sampleR(diffTxt, pos);
+}
+
+fragment float4 ImageLayer_LMMSE_CalcRB(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    texture2d<float> diffGR [[texture(1)]],
+    texture2d<float> diffGB [[texture(2)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos = uint2(in.pos.xy);
+    const float g = sampleRGB(txt, pos).g;
+    const float dgr = sampleR(diffGR, pos);
+    const float dgb = sampleR(diffGB, pos);
+    return float4(g-dgr, g, g-dgb, 1);
 }
 
 
@@ -825,7 +958,7 @@ fragment float ImageLayer_LMMSE_CalcDiffGRGB(
 //    texture2d<float, access::read_write> diffV [[texture(4)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    const uint2 pos(in.pos.x, in.pos.y);
+//    const uint2 pos = uint2(in.pos.xy);
 //    const sampler s;
 //    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
 //    const float raw = rawTxt.sample(s, in.posUnit).r;
@@ -863,7 +996,7 @@ fragment float4 ImageLayer_DebayerBilinear(
     device float3* samples [[buffer(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    const uint2 pos = uint2(in.pos.xy);
     float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
     
     if (pos.x >= ctx.sampleRect.left &&
@@ -918,7 +1051,7 @@ fragment float4 ImageLayer_DebayerLMMSE(
     constant ImagePixel* pxs [[buffer(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    const uint2 pos = uint2(in.pos.xy);
     const int redX = 1;
     const int redY = 0;
     const int green = 1 - ((redX + redY) & 1);
@@ -1051,7 +1184,7 @@ fragment float4 ImageLayer_LSRGBD65FromXYZD50(
     
     const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
     
-    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    const uint2 pos = uint2(in.pos.xy);
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
         pos.y >= ctx.sampleRect.top &&
@@ -1422,7 +1555,7 @@ fragment float4 ImageLayer_SRGBGamma(
         SRGBFromLSRGB(lsrgb[2])
     };
     
-    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+    const uint2 pos = uint2(in.pos.xy);
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
         pos.y >= ctx.sampleRect.top &&
