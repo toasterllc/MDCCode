@@ -609,16 +609,25 @@ float3 XYZFromXYY(const float3 xyy) {
 fragment float ImageLayer_LoadRaw(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
+    device float3* samples [[buffer(2)]],
     VertexOutput in [[stage_in]]
 ) {
-//    const uint2 u2(8, 256);
-//    const float2 a = float2(u2);
-//    
-//    return a.x==8 && a.y==257;
     const uint2 pos = uint2(in.pos.xy);
-    return (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
+    const float v = (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
+    if (pos.x >= ctx.sampleRect.left &&
+        pos.x < ctx.sampleRect.right &&
+        pos.y >= ctx.sampleRect.top &&
+        pos.y < ctx.sampleRect.bottom) {
+        const bool red = (!(pos.y%2) && (pos.x%2));
+        const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+        const bool blue = ((pos.y%2) && !(pos.x%2));
+        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
+        const float3 sample = float3(red ? v : 0., green ? v : 0., blue ? v : 0.);
+        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
+    }
+    
+    return v;
 }
-
 
 static int mirrorClamp(uint N, int n) {
     const int Ni = (int)N;
@@ -1302,120 +1311,141 @@ fragment float4 ImageLayer_FindMaxVals(
 ////    return float4(1, 0, 0, 1);
 //}
 
-fragment float4 ImageLayer_FixHighlights(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    float3 c = texture.sample({}, in.posUnit).rgb;
-    
+//fragment float4 ImageLayer_FixHighlights(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> texture [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    float3 c = texture.sample({}, in.posUnit).rgb;
+//    
+////    uint goodCount = 0;
+////    if (c.r < 1) goodCount++;
+////    if (c.g < 1) goodCount++;
+////    if (c.b < 1) goodCount++;
+////    
+////    if (goodCount == 0) return float4(ctx.whitePoint_CamRaw_D50, 1);
+//    
+////    switch (goodCount) {
+////    case 0: return float4(ctx.whitePoint_CamRaw_D50, 1);
+////    
+////    case 1: {
+////        // Green+blue are saturated
+////        if (c.r < 1)        return float4((c.r/ctx.greenBluePoint_CamRaw_D50)*ctx.greenBluePoint_CamRaw_D50, 1);
+////        // Red+blue are saturated
+////        else if (c.g < 1)   return float4((c.g/ctx.redBluePoint_CamRaw_D50)*ctx.redBluePoint_CamRaw_D50, 1);
+////        // Red+green are saturated
+////        else if (c.b < 1)   return float4((c.b/ctx.redGreenPoint_CamRaw_D50)*ctx.redGreenPoint_CamRaw_D50, 1);
+////    }
+////    
+////    case 2: {
+////        // Blue is saturated
+////        if (c.r<1 && c.g<1)         return  float4(
+////                                                .5*((c.r/ctx.bluePoint_CamRaw_D50)*ctx.bluePoint_CamRaw_D50) +
+////                                                .5*((c.g/ctx.bluePoint_CamRaw_D50)*ctx.bluePoint_CamRaw_D50),
+////                                            1);
+////        // Green is saturated
+////        else if (c.r<1 && c.b<1)    return  float4(
+////                                                .5*((c.r/ctx.greenPoint_CamRaw_D50)*ctx.greenPoint_CamRaw_D50) +
+////                                                .5*((c.b/ctx.greenPoint_CamRaw_D50)*ctx.greenPoint_CamRaw_D50),
+////                                            1);
+////        // Red is saturated
+////        else if (c.g<1 && c.b<1)    return  float4(
+////                                                .5*((c.g/ctx.redPoint_CamRaw_D50)*ctx.redPoint_CamRaw_D50) +
+////                                                .5*((c.b/ctx.redPoint_CamRaw_D50)*ctx.redPoint_CamRaw_D50),
+////                                            1);
+////    }
+////    
+//////    case 1: {
+//////        float factor = 0;
+//////        if (c.r < 1)        factor = c.r / ctx.whitePoint_CamRaw_D50.r;
+//////        else if (c.g < 1)   factor = c.g / ctx.whitePoint_CamRaw_D50.g;
+//////        else if (c.b < 1)   factor = c.b / ctx.whitePoint_CamRaw_D50.b;
+//////        return float4(factor*ctx.whitePoint_CamRaw_D50, 1);
+//////    }
+//////    
+//////    case 2: {
+//////        const float3 factors = float3(
+//////            c.r/ctx.whitePoint_CamRaw_D50.r,
+//////            c.g/ctx.whitePoint_CamRaw_D50.g,
+//////            c.b/ctx.whitePoint_CamRaw_D50.b
+//////        );
+//////        float factor = 0;
+//////        if (c.r<1 && c.g<1)         factor = (factors.r+factors.g)/2;
+//////        else if (c.r<1 && c.b<1)    factor = (factors.r+factors.b)/2;
+//////        else                        factor = (factors.g+factors.b)/2;
+//////        return float4(factor*ctx.whitePoint_CamRaw_D50, 1);
+//////    }
+////    }
+//    
+////    if (c.r>=1 && c.g>=1 && c.b>=1) c = ctx.whitePoint_CamRaw_D50;
+////    if (c.r>=1 || c.g>=1 || c.b>=1) c = ctx.whitePoint_CamRaw_D50;
+//    
+////    if (c.r >= 1) c.r = ctx.whitePoint_CamRaw_D50.r;
+////    if (c.g >= 1) c.g = ctx.whitePoint_CamRaw_D50.g;
+////    if (c.b >= 1) c.b = ctx.whitePoint_CamRaw_D50.b;
+//    
+//    
 //    uint goodCount = 0;
 //    if (c.r < 1) goodCount++;
 //    if (c.g < 1) goodCount++;
 //    if (c.b < 1) goodCount++;
 //    
-//    if (goodCount == 0) return float4(ctx.whitePoint_CamRaw_D50, 1);
-    
 //    switch (goodCount) {
 //    case 0: return float4(ctx.whitePoint_CamRaw_D50, 1);
 //    
 //    case 1: {
 //        // Green+blue are saturated
-//        if (c.r < 1)        return float4((c.r/ctx.greenBluePoint_CamRaw_D50)*ctx.greenBluePoint_CamRaw_D50, 1);
+//        if (c.r < 1)        return float4((c.r/ctx.whitePoint_CamRaw_D50.r)*ctx.whitePoint_CamRaw_D50, 1);
 //        // Red+blue are saturated
-//        else if (c.g < 1)   return float4((c.g/ctx.redBluePoint_CamRaw_D50)*ctx.redBluePoint_CamRaw_D50, 1);
+//        else if (c.g < 1)   return float4((c.g/ctx.whitePoint_CamRaw_D50.g)*ctx.whitePoint_CamRaw_D50, 1);
 //        // Red+green are saturated
-//        else if (c.b < 1)   return float4((c.b/ctx.redGreenPoint_CamRaw_D50)*ctx.redGreenPoint_CamRaw_D50, 1);
+//        else if (c.b < 1)   return float4((c.b/ctx.whitePoint_CamRaw_D50.b)*ctx.whitePoint_CamRaw_D50, 1);
 //    }
 //    
 //    case 2: {
 //        // Blue is saturated
-//        if (c.r<1 && c.g<1)         return  float4(
-//                                                .5*((c.r/ctx.bluePoint_CamRaw_D50)*ctx.bluePoint_CamRaw_D50) +
-//                                                .5*((c.g/ctx.bluePoint_CamRaw_D50)*ctx.bluePoint_CamRaw_D50),
-//                                            1);
+//        if (c.r<1 && c.g<1)         return float4(
+//                                        .5*((c.r/ctx.whitePoint_CamRaw_D50.r)*ctx.whitePoint_CamRaw_D50)+
+//                                        .5*((c.g/ctx.whitePoint_CamRaw_D50.g)*ctx.whitePoint_CamRaw_D50),
+//                                    1);
 //        // Green is saturated
-//        else if (c.r<1 && c.b<1)    return  float4(
-//                                                .5*((c.r/ctx.greenPoint_CamRaw_D50)*ctx.greenPoint_CamRaw_D50) +
-//                                                .5*((c.b/ctx.greenPoint_CamRaw_D50)*ctx.greenPoint_CamRaw_D50),
-//                                            1);
+//        else if (c.r<1 && c.b<1)    return float4(
+//                                        .5*((c.r/ctx.whitePoint_CamRaw_D50.r)*ctx.whitePoint_CamRaw_D50)+
+//                                        .5*((c.b/ctx.whitePoint_CamRaw_D50.b)*ctx.whitePoint_CamRaw_D50),
+//                                    1);
 //        // Red is saturated
-//        else if (c.g<1 && c.b<1)    return  float4(
-//                                                .5*((c.g/ctx.redPoint_CamRaw_D50)*ctx.redPoint_CamRaw_D50) +
-//                                                .5*((c.b/ctx.redPoint_CamRaw_D50)*ctx.redPoint_CamRaw_D50),
-//                                            1);
-//    }
+//        else if (c.g<1 && c.b<1)    return float4(
+//                                        .5*((c.g/ctx.whitePoint_CamRaw_D50.g)*ctx.whitePoint_CamRaw_D50)+
+//                                        .5*((c.b/ctx.whitePoint_CamRaw_D50.b)*ctx.whitePoint_CamRaw_D50),
+//                                    1);
+//    }}
 //    
-////    case 1: {
-////        float factor = 0;
-////        if (c.r < 1)        factor = c.r / ctx.whitePoint_CamRaw_D50.r;
-////        else if (c.g < 1)   factor = c.g / ctx.whitePoint_CamRaw_D50.g;
-////        else if (c.b < 1)   factor = c.b / ctx.whitePoint_CamRaw_D50.b;
-////        return float4(factor*ctx.whitePoint_CamRaw_D50, 1);
+//    
+//    
+//    return float4(c, 1);
+//    
+////    if (c.r>=1 && c.g>=1 && c.b>=1) c = ctx.whitePoint_CamRaw_D50;
+//    
+////    if (max3(c.r, c.g, c.b) >= 1.) {
+////        // For any pixel that has an over-exposed channel, replace that
+////        // pixel with the whitepoint in raw camera space.
+////        return float4(ctx.whitePoint_CamRaw_D50, 1);
 ////    }
-////    
-////    case 2: {
-////        const float3 factors = float3(
-////            c.r/ctx.whitePoint_CamRaw_D50.r,
-////            c.g/ctx.whitePoint_CamRaw_D50.g,
-////            c.b/ctx.whitePoint_CamRaw_D50.b
-////        );
-////        float factor = 0;
-////        if (c.r<1 && c.g<1)         factor = (factors.r+factors.g)/2;
-////        else if (c.r<1 && c.b<1)    factor = (factors.r+factors.b)/2;
-////        else                        factor = (factors.g+factors.b)/2;
-////        return float4(factor*ctx.whitePoint_CamRaw_D50, 1);
-////    }
-//    }
-    
-//    if (c.r>=1 && c.g>=1 && c.b>=1) c = ctx.whitePoint_CamRaw_D50;
-//    if (c.r>=1 || c.g>=1 || c.b>=1) c = ctx.whitePoint_CamRaw_D50;
-    
-//    if (c.r >= 1) c.r = ctx.whitePoint_CamRaw_D50.r;
-//    if (c.g >= 1) c.g = ctx.whitePoint_CamRaw_D50.g;
-//    if (c.b >= 1) c.b = ctx.whitePoint_CamRaw_D50.b;
-    
-    
-    uint goodCount = 0;
-    if (c.r < 1) goodCount++;
-    if (c.g < 1) goodCount++;
-    if (c.b < 1) goodCount++;
-    
-    switch (goodCount) {
-    case 0: return float4(ctx.whitePoint_CamRaw_D50, 1);
-    
-    case 1: {
-        // Green+blue are saturated
-        if (c.r < 1)        return float4((c.r/ctx.whitePoint_CamRaw_D50.r)*ctx.whitePoint_CamRaw_D50, 1);
-        // Red+blue are saturated
-        else if (c.g < 1)   return float4((c.g/ctx.whitePoint_CamRaw_D50.g)*ctx.whitePoint_CamRaw_D50, 1);
-        // Red+green are saturated
-        else if (c.b < 1)   return float4((c.b/ctx.whitePoint_CamRaw_D50.b)*ctx.whitePoint_CamRaw_D50, 1);
-    }
-    
-    case 2: {
-        // Blue is saturated
-        if (c.r<1 && c.g<1)         return float4(
-                                        .5*((c.r/ctx.whitePoint_CamRaw_D50.r)*ctx.whitePoint_CamRaw_D50)+
-                                        .5*((c.g/ctx.whitePoint_CamRaw_D50.g)*ctx.whitePoint_CamRaw_D50),
-                                    1);
-        // Green is saturated
-        else if (c.r<1 && c.b<1)    return float4(
-                                        .5*((c.r/ctx.whitePoint_CamRaw_D50.r)*ctx.whitePoint_CamRaw_D50)+
-                                        .5*((c.b/ctx.whitePoint_CamRaw_D50.b)*ctx.whitePoint_CamRaw_D50),
-                                    1);
-        // Red is saturated
-        else if (c.g<1 && c.b<1)    return float4(
-                                        .5*((c.g/ctx.whitePoint_CamRaw_D50.g)*ctx.whitePoint_CamRaw_D50)+
-                                        .5*((c.b/ctx.whitePoint_CamRaw_D50.b)*ctx.whitePoint_CamRaw_D50),
-                                    1);
-    }}
-    
-    
-    
+//    
+//}
+
+
+
+
+
+fragment float4 ImageLayer_FixHighlights(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    float3 c = sampleRGB(txt, in.pos.xy);
+    if (c.r>=.98 || c.g>=.98 || c.b>=.98) c = ctx.whitePoint_CamRaw_D50;
     return float4(c, 1);
-    
-//    if (c.r>=1 && c.g>=1 && c.b>=1) c = ctx.whitePoint_CamRaw_D50;
     
 //    if (max3(c.r, c.g, c.b) >= 1.) {
 //        // For any pixel that has an over-exposed channel, replace that
@@ -1424,6 +1454,13 @@ fragment float4 ImageLayer_FixHighlights(
 //    }
     
 }
+
+
+
+
+
+
+
 
 //fragment float4 ImageLayer_FixHighlights(
 //    constant RenderContext& ctx [[buffer(0)]],
