@@ -235,8 +235,19 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     [encoder endEncoding];
 }
 
+- (id<MTLTexture>)_newTexture:(MTLPixelFormat)fmt {
+    MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+    [desc setTextureType:MTLTextureType2D];
+    [desc setWidth:_ctx.imageWidth];
+    [desc setHeight:_ctx.imageHeight];
+    [desc setPixelFormat:fmt];
+    [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
+    id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
+    Assert(txt, return nil);
+    return txt;
+}
+
 - (void)display {
-    
     // Short-circuit if we don't have any image data
     if (!_pixelData) return;
     
@@ -246,83 +257,17 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     // Update our drawable size using our view size (in pixels)
     [self setDrawableSize:{(CGFloat)_ctx.imageWidth, (CGFloat)_ctx.imageHeight}];
     
-    id<MTLTexture> rawTxt = nil;
-    {
-        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setWidth:_ctx.imageWidth];
-        [desc setHeight:_ctx.imageHeight];
-        [desc setPixelFormat:MTLPixelFormatR32Float];
-        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        rawTxt = [_device newTextureWithDescriptor:desc];
-        Assert(rawTxt, return);
-    }
-    
-    id<MTLTexture> filteredHTxt = nil;
-    {
-        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setWidth:_ctx.imageWidth];
-        [desc setHeight:_ctx.imageHeight];
-        [desc setPixelFormat:MTLPixelFormatR32Float];
-        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        filteredHTxt = [_device newTextureWithDescriptor:desc];
-        Assert(filteredHTxt, return);
-    }
-    
-    id<MTLTexture> filteredVTxt = nil;
-    {
-        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setWidth:_ctx.imageWidth];
-        [desc setHeight:_ctx.imageHeight];
-        [desc setPixelFormat:MTLPixelFormatR32Float];
-        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        filteredVTxt = [_device newTextureWithDescriptor:desc];
-        Assert(filteredVTxt, return);
-    }
-    
-    id<MTLTexture> diffHTxt = nil;
-    {
-        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setWidth:_ctx.imageWidth];
-        [desc setHeight:_ctx.imageHeight];
-        [desc setPixelFormat:MTLPixelFormatR32Float];
-        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        diffHTxt = [_device newTextureWithDescriptor:desc];
-        Assert(diffHTxt, return);
-    }
-    
-    id<MTLTexture> diffVTxt = nil;
-    {
-        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setWidth:_ctx.imageWidth];
-        [desc setHeight:_ctx.imageHeight];
-        [desc setPixelFormat:MTLPixelFormatR32Float];
-        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        diffVTxt = [_device newTextureWithDescriptor:desc];
-        Assert(diffVTxt, return);
-    }
-    
-    id<MTLTexture> txt = nil;
-    {
-        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setWidth:_ctx.imageWidth];
-        [desc setHeight:_ctx.imageHeight];
-        [desc setPixelFormat:MTLPixelFormatRGBA32Float];
-        [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
-        txt = [_device newTextureWithDescriptor:desc];
-        Assert(txt, return);
-    }
+    id<MTLTexture> rawTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> filteredHTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> filteredVTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> diffHTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> diffVTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> diffGRTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> diffGBTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> txt = [self _newTexture:MTLPixelFormatRGBA32Float];
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
-    
-    id<MTLTexture> drawableTexture = [drawable texture];
-    Assert(drawableTexture, return);
     
     id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
     
@@ -336,21 +281,13 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         ];
     }
     
-//    // Load the pixels into a texture
-//    {
-//        [self _renderPass:cmdBuf texture:rawTexture name:@"ImageLayer_VoidReturn"
-//            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentTexture:rawTexture atIndex:0];
-//            }
-//        ];
-//    }
-    
     // Horizontal interpolation
     {
-        [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_HInterp"
+        const bool h = true;
+        [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_LMMSE_Interp5"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                 [encoder setFragmentTexture:rawTxt atIndex:0];
             }
         ];
@@ -358,9 +295,11 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     // Vertical interpolation
     {
-        [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_VInterp"
+        const bool h = false;
+        [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_LMMSE_Interp5"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                 [encoder setFragmentTexture:rawTxt atIndex:0];
             }
         ];
@@ -368,7 +307,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     // Calculate DiffH
     {
-        [self _renderPass:cmdBuf texture:diffHTxt name:@"ImageLayer_NoiseEst"
+        [self _renderPass:cmdBuf texture:diffHTxt name:@"ImageLayer_LMMSE_NoiseEst"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
                 [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -379,7 +318,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     // Calculate DiffV
     {
-        [self _renderPass:cmdBuf texture:diffVTxt name:@"ImageLayer_NoiseEst"
+        [self _renderPass:cmdBuf texture:diffVTxt name:@"ImageLayer_LMMSE_NoiseEst"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
                 [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -390,9 +329,11 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     // Smooth DiffH
     {
-        [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_SmoothH"
+        const bool h = true;
+        [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_LMMSE_Smooth9"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                 [encoder setFragmentTexture:diffHTxt atIndex:0];
             }
         ];
@@ -400,10 +341,50 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     // Smooth DiffV
     {
-        [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_SmoothV"
+        const bool h = false;
+        [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_LMMSE_Smooth9"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                 [encoder setFragmentTexture:diffVTxt atIndex:0];
+            }
+        ];
+    }
+    
+    // Calculate green channel
+    {
+        [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcGreen"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+            }
+        ];
+    }
+    
+    // Calculate diffGRTxt
+    {
+        const bool modeGR = true;
+        [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:1];
+                [encoder setFragmentTexture:diffGRTxt atIndex:2];
+            }
+        ];
+    }
+    
+    // Calculate diffGBTxt
+    {
+        const bool modeGR = false;
+        [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:1];
+                [encoder setFragmentTexture:diffGBTxt atIndex:2];
             }
         ];
     }
@@ -502,7 +483,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         [self _renderPass:cmdBuf texture:[drawable texture] name:@"ImageLayer_Display"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:txt atIndex:0];
             }
         ];
     }

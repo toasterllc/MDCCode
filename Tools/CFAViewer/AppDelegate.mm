@@ -365,15 +365,15 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         [_mainView setColorCheckerPositions:points];
     }
     
-    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
-        const uint32_t count = 100;
-        auto startTime = MyTime::Now();
-        for (int i=0; i<count; i++) {
-            [[self->_mainView imageLayer] display];
-        }
-        auto durationNs = MyTime::DurationNs(startTime);
-        printf("Duration: %f ms\n", ((double)durationNs/count)/1000000);
-    }];
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
+//        const uint32_t count = 100;
+//        auto startTime = MyTime::Now();
+//        for (int i=0; i<count; i++) {
+//            [[self->_mainView imageLayer] display];
+//        }
+//        auto durationNs = MyTime::DurationNs(startTime);
+//        printf("Duration: %f ms\n", ((double)durationNs/count)/1000000);
+//    }];
 }
 
 - (IBAction)identityButtonPressed:(id)sender {

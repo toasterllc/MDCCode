@@ -611,6 +611,10 @@ fragment float ImageLayer_LoadRaw(
     constant ImagePixel* pxs [[buffer(1)]],
     VertexOutput in [[stage_in]]
 ) {
+//    const uint2 u2(8, 256);
+//    const float2 a = float2(u2);
+//    
+//    return a.x==8 && a.y==257;
     const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
     return (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
 }
@@ -632,37 +636,23 @@ static float2 mirrorClampF(uint2 N, int2 n) {
 }
 
 
-fragment float ImageLayer_HInterp(
+fragment float ImageLayer_LMMSE_Interp5(
     constant RenderContext& ctx [[buffer(0)]],
+    constant bool& h [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 dim(ctx.imageWidth, ctx.imageHeight);
     const int2 pos = {(int)in.pos.x, (int)in.pos.y};
     const sampler s = sampler(coord::pixel);
-    return  -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-2,+0))).r     +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-1,+0))).r     +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+1,+0))).r     +
-            -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+2,+0))).r     ;
+    return  -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-2:+0,!h?-2:+0))).r    +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-1:+0,!h?-1:+0))).r    +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+0:+0,!h?+0:+0))).r    +
+            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+1:+0,!h?+1:+0))).r    +
+            -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+2:+0,!h?+2:+0))).r    ;
 }
 
-fragment float ImageLayer_VInterp(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
-    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
-    const sampler s = sampler(coord::pixel);
-    return  -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-2))).r     +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-1))).r     +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+1))).r     +
-            -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+2))).r     ;
-}
-
-fragment float ImageLayer_NoiseEst(
+fragment float ImageLayer_LMMSE_NoiseEst(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> filteredTxt [[texture(1)]],
@@ -677,49 +667,155 @@ fragment float ImageLayer_NoiseEst(
     else        return filtered-raw;
 }
 
-fragment float ImageLayer_SmoothH(
+fragment float ImageLayer_LMMSE_Smooth9(
     constant RenderContext& ctx [[buffer(0)]],
+    constant bool& h [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 dim(ctx.imageWidth, ctx.imageHeight);
     const int2 pos = {(int)in.pos.x, (int)in.pos.y};
     const sampler s = sampler(coord::pixel);
-    return  0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-4,+0))).r     +
-            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-3,+0))).r     +
-            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-2,+0))).r     +
-            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(-1,+0))).r     +
-            0.2031250*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
-            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+1,+0))).r     +
-            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+2,+0))).r     +
-            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+3,+0))).r     +
-            0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+4,+0))).r     ;
+    return  0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-4:+0,!h?-4:+0))).r     +
+            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-3:+0,!h?-3:+0))).r     +
+            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-2:+0,!h?-2:+0))).r     +
+            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-1:+0,!h?-1:+0))).r     +
+            0.2031250*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+0:+0,!h?+0:+0))).r     +
+            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+1:+0,!h?+1:+0))).r     +
+            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+2:+0,!h?+2:+0))).r     +
+            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+3:+0,!h?+3:+0))).r     +
+            0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+4:+0,!h?+4:+0))).r     ;
 }
 
-fragment float ImageLayer_SmoothV(
+constant bool UseZhangCodeEst = false;
+
+fragment float4 ImageLayer_LMMSE_CalcGreen(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> filteredHTxt [[texture(1)]],
+    texture2d<float> diffHTxt [[texture(2)]],
+    texture2d<float> filteredVTxt [[texture(3)]],
+    texture2d<float> diffVTxt [[texture(4)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
-    const int2 pos = {(int)in.pos.x, (int)in.pos.y};
+    const int2 pos(in.pos.x, in.pos.y);
+    const bool red = (!(pos.y%2) && (pos.x%2));
+    const bool blue = ((pos.y%2) && !(pos.x%2));
     const sampler s = sampler(coord::pixel);
-    return  0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-4))).r     +
-            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-3))).r     +
-            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-2))).r     +
-            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,-1))).r     +
-            0.2031250*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+0))).r     +
-            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+1))).r     +
-            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+2))).r     +
-            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+3))).r     +
-            0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(+0,+4))).r     ;
+    const float raw = rawTxt.sample(s, float2(pos)).r;
+    float g = 0;
+    if (red || blue) {
+        const int M = 4;
+        const float DivEpsilon = 0.1/(255*255);
+        
+        // Adjust loop indices m = -M,...,M when necessary to
+        // compensate for left and right boundaries.  We effectively
+        // do zero-padded boundary handling.
+        int m0 = (pos.x>=M ? -M : -pos.x);
+        int m1 = (pos.x<(int)ctx.imageWidth-M ? M : (int)ctx.imageWidth-pos.x-1);
+        
+        // The following computes
+        // ph =   var   FilteredH[i + m]
+        //      m=-M,...,M
+        // Rh =   mean  (FilteredH[i + m] - DiffH[i + m])^2
+        //      m=-M,...,M
+        // h = LMMSE estimate
+        // H = LMMSE estimate accuracy (estimated variance of h)
+        float mom1 = 0;
+        float ph = 0;
+        float Rh = 0;
+        for (int m=m0; m <= m1; m++) {
+            float Temp = 0;
+            Temp = filteredHTxt.sample(s, float2(pos+int2(m,0))).r;
+            mom1 += Temp;
+            ph += Temp*Temp;
+            Temp -= diffHTxt.sample(s, float2(pos+int2(m,0))).r;
+            Rh += Temp*Temp;
+        }
+        
+        float mh = 0;
+        // Compute mh = mean_m FilteredH[i + m]
+        if (!UseZhangCodeEst) mh = mom1/(2*M + 1);
+        // Compute mh as in Zhang's MATLAB code
+        else mh = filteredHTxt.sample(s, float2(pos)).r;
+        
+        ph = ph/(2*M) - mom1*mom1/(2*M*(2*M + 1));
+        Rh = Rh/(2*M + 1) + DivEpsilon;
+        float h = mh + (ph/(ph + Rh))*(diffHTxt.sample(s, float2(pos)).r-mh);
+        float H = ph - (ph/(ph + Rh))*ph + DivEpsilon;
+        
+        // Adjust loop indices for top and bottom boundaries
+        m0 = (pos.y>=M ? -M : -pos.y);
+        m1 = (pos.y<(int)ctx.imageHeight-M ? M : (int)ctx.imageHeight-pos.y-1);
+        
+        // The following computes
+        // pv =   var   FilteredV[i + m]
+        //      m=-M,...,M
+        // Rv =   mean  (FilteredV[i + m] - DiffV[i + m])^2
+        //      m=-M,...,M
+        // v = LMMSE estimate
+        // V = LMMSE estimate accuracy (estimated variance of v)
+        mom1 = 0;
+        float pv = 0;
+        float Rv = 0;
+        for (int m=m0; m<=m1; m++) {
+            float Temp = 0;
+            Temp = filteredVTxt.sample(s, float2(pos+int2(0,m))).r;
+            mom1 += Temp;
+            pv += Temp*Temp;
+            Temp -= diffVTxt.sample(s, float2(pos+int2(0,m))).r;
+            Rv += Temp*Temp;
+        }
+        
+        float mv = 0;
+        // Compute mv = mean_m FilteredV[i + m]
+        if (!UseZhangCodeEst) mv = mom1/(2*M + 1);
+        // Compute mv as in Zhang's MATLAB code
+        else mv = filteredVTxt.sample(s, float2(pos)).r;
+        
+        pv = pv/(2*M) - mom1*mom1/(2*M*(2*M + 1));
+        Rv = Rv/(2*M + 1) + DivEpsilon;
+        float v = mv + (pv/(pv + Rv))*(diffVTxt.sample(s, float2(pos)).r - mv);
+        float V = pv - (pv/(pv + Rv))*pv + DivEpsilon;
+        
+        // Fuse the directional estimates to obtain the green component
+        g = raw + (V*h + H*v) / (H + V);
+    
+    } else {
+        // This is a green pixel -- return its value directly
+        g = raw;
+    }
+    
+    return float4(0, g, 0, 1);
 }
 
+fragment float ImageLayer_LMMSE_CalcDiffGRGB(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant bool& modeGR [[buffer(1)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> txt [[texture(1)]],
+    texture2d<float> diffTxt [[texture(2)]],
+    VertexOutput in [[stage_in]]
+) { 
+    const uint2 pos(in.pos.x, in.pos.y);
+    const bool redPx = (!(pos.y%2) && (pos.x%2));
+    const bool bluePx = ((pos.y%2) && !(pos.x%2));
+    const sampler s = sampler(coord::pixel);
+    
+    if ((modeGR && redPx) || (!modeGR && bluePx)) {
+        const float raw = rawTxt.sample(s, float2(pos)).r;
+        const float g = txt.sample(s, float2(pos)).r;
+        return g-raw;
+    }
+    
+    // Pass-through
+    return diffTxt.sample(s, float2(pos)).r;
+}
 
 
 
 // This is just 2 passes of ImageLayer_NoiseEst combined into 1
-// In our profiling, this wasn't any faster than calling ImageLayer_NoiseEst twice
+// TODO: profile this again. remember though that the -nextDrawable/-waitUntilCompleted pattern will cause our minimum render time to be the display refresh rate (16ms). so instead, for each iteration, we should only count the time _after_ -nextDrawable completes to the time after -waitUntilCompleted completes
 //fragment void ImageLayer_NoiseEst2(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    texture2d<float> rawTxt [[texture(0)]],
@@ -743,19 +839,6 @@ fragment float ImageLayer_SmoothV(
 //        diffV.write(float4(filteredV-raw), pos);
 //    }
 //}
-
-
-
-
-
-fragment void ImageLayer_VoidReturn(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float, access::read_write> texture [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
-    texture.write(float4(1), pos);
-}
 
 
 
