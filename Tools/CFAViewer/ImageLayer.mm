@@ -142,31 +142,19 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     const double maxY = 6.5;
     
     // Enumerate the primaries in the CIE RGB colorspace, and convert them to XYY
-    Color_XYY_D50 redPoint_XYY_D50          = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(1.,0.,0.));
-    Color_XYY_D50 greenPoint_XYY_D50        = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(0.,1.,0.));
-    Color_XYY_D50 bluePoint_XYY_D50         = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(0.,0.,1.));
-    Color_XYY_D50 redGreenPoint_XYY_D50     = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(1.,1.,0.));
-    Color_XYY_D50 redBluePoint_XYY_D50      = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(1.,0.,1.));
-    Color_XYY_D50 greenBluePoint_XYY_D50    = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(0.,1.,1.));
-    Color_XYY_D50 whitePoint_XYY_D50        = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(1.,1.,1.));
+    Color_XYY_D50 whitePoint_XYY_D50 = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(1.,1.,1.));
     
     // Set the luminance of every color to the maximum luminance possible
-    redPoint_XYY_D50[2]         = maxY;
-    greenPoint_XYY_D50[2]       = maxY;
-    bluePoint_XYY_D50[2]        = maxY;
-    redGreenPoint_XYY_D50[2]    = maxY;
-    redBluePoint_XYY_D50[2]     = maxY;
-    greenBluePoint_XYY_D50[2]   = maxY;
-    whitePoint_XYY_D50[2]       = maxY;
+    whitePoint_XYY_D50[2] = maxY;
     
-    _ctx.redPoint_CamRaw_D50        = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(redPoint_XYY_D50));
-    _ctx.greenPoint_CamRaw_D50      = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(greenPoint_XYY_D50));
-    _ctx.bluePoint_CamRaw_D50       = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(bluePoint_XYY_D50));
-    _ctx.redGreenPoint_CamRaw_D50   = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(redGreenPoint_XYY_D50));
-    _ctx.redBluePoint_CamRaw_D50    = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(redBluePoint_XYY_D50));
-    _ctx.greenBluePoint_CamRaw_D50  = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(greenBluePoint_XYY_D50));
-    _ctx.whitePoint_CamRaw_D50      = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(whitePoint_XYY_D50));
+    _ctx.whitePoint_XYY_D50 = simdFromMat(whitePoint_XYY_D50);
+    _ctx.whitePoint_CamRaw_D50 = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(whitePoint_XYY_D50));
     
+    [self setNeedsDisplay];
+}
+
+- (void)setHighlightFactor:(const Mat<double,3,1>&)hf {
+    _ctx.highlightFactor = simdFromMat(hf);
     [self setNeedsDisplay];
 }
 
@@ -278,6 +266,17 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
                 [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
                 [encoder setFragmentBuffer:_sampleBuf_cameraRaw offset:0 atIndex:2];
+            }
+        ];
+    }
+    
+    
+    // Fix highlights
+    {
+        [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_FixHighlightsRaw"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
             }
         ];
     }
@@ -473,13 +472,14 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 //            }
 //        ];
 //    }
-//    
+    
 //    // Fix highlights
 //    {
 //        [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_FixHighlights"
 //            block:^(id<MTLRenderCommandEncoder> encoder) {
 //                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-//                [encoder setFragmentTexture:txt atIndex:0];
+//                [encoder setFragmentTexture:rawTxt atIndex:0];
+//                [encoder setFragmentTexture:txt atIndex:1];
 //            }
 //        ];
 //    }

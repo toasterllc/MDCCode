@@ -327,6 +327,15 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     IBOutlet NSTextField* _colorText_XYZ_D50;
     IBOutlet NSTextField* _colorText_SRGB_D65;
     
+    IBOutlet NSSlider* _highlightFactorRedSlider;
+    IBOutlet NSTextField* _highlightFactorRedLabel;
+    
+    IBOutlet NSSlider* _highlightFactorGreenSlider;
+    IBOutlet NSTextField* _highlightFactorGreenLabel;
+    
+    IBOutlet NSSlider* _highlightFactorBlueSlider;
+    IBOutlet NSTextField* _highlightFactorBlueLabel;
+    
     bool _colorCheckerCirclesVisible;
     float _colorCheckerCircleRadius;
     
@@ -605,6 +614,16 @@ static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
 - (IBAction)resetColorCheckerCircles:(id)sender {
     [_mainView resetColorCheckerPositions];
     [self colorCheckerPositionsChanged];
+}
+
+- (IBAction)highlightFactorSliderChanged:(id)sender {
+    const double r = [_highlightFactorRedSlider doubleValue];
+    const double g = [_highlightFactorGreenSlider doubleValue];
+    const double b = [_highlightFactorBlueSlider doubleValue];
+    [[_mainView imageLayer] setHighlightFactor:Mat<double,3,1>(r,g,b)];
+    [_highlightFactorRedLabel setStringValue:[NSString stringWithFormat:@"%.3f", r]];
+    [_highlightFactorGreenLabel setStringValue:[NSString stringWithFormat:@"%.3f", g]];
+    [_highlightFactorBlueLabel setStringValue:[NSString stringWithFormat:@"%.3f", b]];
 }
 
 - (void)sampleRectChanged {

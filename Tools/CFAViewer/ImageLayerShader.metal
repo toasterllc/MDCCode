@@ -646,22 +646,22 @@ static float2 mirrorClampF(uint2 N, int2 n) {
 
 template <typename T>
 float sampleR(texture2d<float> txt, T pos) {
-    return txt.sample(coord::pixel, float2(pos)).r;
+    return txt.sample(coord::pixel, float2(pos.xy)).r;
 }
 
 template <typename T>
 float sampleR(texture2d<float> txt, T pos, int2 delta) {
-    return sampleR(txt, int2(pos)+delta);
+    return sampleR(txt, int2(pos.xy)+delta);
 }
 
 template <typename T>
 float3 sampleRGB(texture2d<float> txt, T pos) {
-    return txt.sample(coord::pixel, float2(pos)).rgb;
+    return txt.sample(coord::pixel, float2(pos.xy)).rgb;
 }
 
 template <typename T>
 float3 sampleRGB(texture2d<float> txt, T pos, int2 delta) {
-    return sampleRGB(txt, int2(pos)+delta);
+    return sampleRGB(txt, int2(pos.xy)+delta);
 }
 
 fragment float ImageLayer_LMMSE_Interp5(
@@ -1073,10 +1073,10 @@ fragment float4 ImageLayer_DebayerLMMSE(
 
 fragment float4 ImageLayer_XYZD50FromCameraRaw(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = texture.sample({}, in.posUnit).rgb;
+    const float3 inputColor_cameraRaw = sampleRGB(txt, in.pos);
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
     return float4(outputColor_XYZD50, 1);
@@ -1084,10 +1084,10 @@ fragment float4 ImageLayer_XYZD50FromCameraRaw(
 
 fragment float4 ImageLayer_XYYD50FromCameraRaw(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = texture.sample({}, in.posUnit).rgb;
+    const float3 inputColor_cameraRaw = sampleRGB(txt, in.pos);
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
     return float4(c, 1);
@@ -1095,19 +1095,19 @@ fragment float4 ImageLayer_XYYD50FromCameraRaw(
 
 fragment float4 ImageLayer_XYYD50FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = texture.sample({}, in.posUnit).rgb;
+    const float3 c = sampleRGB(txt, in.pos);
     return float4(XYYFromXYZ(c), 1);
 }
 
 fragment float4 ImageLayer_XYZD50FromXYYD50(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = texture.sample({}, in.posUnit).rgb;
+    const float3 c = sampleRGB(txt, in.pos);
     return float4(XYZFromXYY(c), 1);
 }
 
@@ -1115,11 +1115,11 @@ constant uint UIntNormalizeVal = 65535;
 fragment float4 ImageLayer_NormalizeXYYLuminance(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsXYY[[buffer(1)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const float maxY = (float)maxValsXYY.z/UIntNormalizeVal;
-    float3 c = texture.sample({}, in.posUnit).rgb;
+    float3 c = sampleRGB(txt, in.pos);
     c[2] /= maxY;
     return float4(c, 1);
 }
@@ -1127,42 +1127,42 @@ fragment float4 ImageLayer_NormalizeXYYLuminance(
 fragment float4 ImageLayer_NormalizeRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsRGB[[buffer(1)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const float denom = (float)max3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = texture.sample({}, in.posUnit).rgb / denom;
+    const float3 c = sampleRGB(txt, in.pos) / denom;
     return float4(c, 1);
 }
 
 fragment float4 ImageLayer_ClipRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsRGB[[buffer(1)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
 //    const float m = .7;
     const float m = (float)min3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = texture.sample({}, in.posUnit).rgb;
+    const float3 c = sampleRGB(txt, in.pos);
     return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
 }
 
 fragment float4 ImageLayer_DecreaseLuminance(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYYD50 = texture.sample({}, in.posUnit).rgb;
+    float3 c_XYYD50 = sampleRGB(txt, in.pos);
     c_XYYD50[2] /= 4.5;
     return float4(c_XYYD50, 1);
 }
 
 fragment float4 ImageLayer_DecreaseLuminanceXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYZD50 = texture.sample({}, in.posUnit).rgb;
+    float3 c_XYZD50 = sampleRGB(txt, in.pos);
     float3 c_XYYD50 = XYYFromXYZ(c_XYZD50);
     c_XYYD50[2] /= 3;
     return float4(XYZFromXYY(c_XYYD50), 1);
@@ -1172,10 +1172,10 @@ fragment float4 ImageLayer_DecreaseLuminanceXYZD50(
 fragment float4 ImageLayer_LSRGBD65FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     device float3* samples [[buffer(1)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c_XYZD50 = texture.sample({}, in.posUnit).rgb;
+    const float3 c_XYZD50 = sampleRGB(txt, in.pos);
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
     const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
@@ -1247,10 +1247,10 @@ fragment float4 ImageLayer_LSRGBD65FromXYZD50(
 
 fragment float4 ImageLayer_ColorAdjust(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = texture.sample({}, in.posUnit).rgb;
+    const float3 inputColor_cameraRaw = sampleRGB(txt, in.pos);
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
@@ -1282,10 +1282,10 @@ void setIfGreater(volatile device atomic_uint& dst, uint val) {
 fragment float4 ImageLayer_FindMaxVals(
     constant RenderContext& ctx [[buffer(0)]],
     device Vals3& highlights [[buffer(1)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgbfloat = texture.sample({}, in.posUnit).rgb;
+    const float3 lsrgbfloat = sampleRGB(txt, in.pos);
     uint3 lsrgb = uint3(lsrgbfloat * UIntNormalizeVal);
     
     setIfGreater((device atomic_uint&)highlights.x, lsrgb.r);
@@ -1434,26 +1434,190 @@ fragment float4 ImageLayer_FindMaxVals(
 //    
 //}
 
+template <typename T>
+float max(T v) {
+    return max3(v.r, v.g, v.b);
+}
 
+float labf(float x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_Lab.html
+    const float e = 216./24389.;
+    const float k = 24389./27.;
+    return (x>e ? pow(x, 1./3) : (k*x+16)/116);
+}
 
+float3 labf(float3 xyz) {
+    return float3(labf(xyz.x), labf(xyz.y), labf(xyz.z));
+}
 
+float3 labFromXYZ(float3 white_XYZ, float3 c_XYZ) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_Lab.html
+    const float3 r = c_XYZ/white_XYZ;
+    const float3 f = labf(r);
+    const float l = 116*f.y-16;
+    const float a = 500*(f.x-f.y);
+    const float b = 200*(f.y-f.z);
+    return float3(l,a,b);
+}
 
-fragment float4 ImageLayer_FixHighlights(
+fragment float ImageLayer_FixHighlightsRaw(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = sampleRGB(txt, in.pos.xy);
-    if (c.r>=.98 || c.g>=.98 || c.b>=.98) c = ctx.whitePoint_CamRaw_D50;
-    return float4(c, 1);
+    const uint2 pos = uint2(in.pos.xy);
+    const bool red = (!(pos.y%2) && (pos.x%2));
+    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+    const bool blue = ((pos.y%2) && !(pos.x%2));
+    float craw = sampleR(rawTxt, in.pos);
+    float crawl = sampleR(rawTxt, in.pos, {-1,+0});
+    float crawr = sampleR(rawTxt, in.pos, {+1,+0});
+    float crawu = sampleR(rawTxt, in.pos, {+0,-1});
+    float crawd = sampleR(rawTxt, in.pos, {+0,+1});
+    float crawul = 0;//sampleR(rawTxt, in.pos, {-1,-1});
+    float crawur = 0;//sampleR(rawTxt, in.pos, {+1,-1});
+    float crawdl = 0;//sampleR(rawTxt, in.pos, {-1,+1});
+    float crawdr = 0;//sampleR(rawTxt, in.pos, {+1,+1});
+    float thresh = 1;
     
-//    if (max3(c.r, c.g, c.b) >= 1.) {
-//        // For any pixel that has an over-exposed channel, replace that
-//        // pixel with the whitepoint in raw camera space.
-//        return float4(ctx.whitePoint_CamRaw_D50, 1);
+    if (craw>=thresh) {
+        if (crawl>=thresh || crawr>=thresh || crawu>=thresh || crawd>=thresh) {
+//            if (red) {
+//                craw *= ctx.highlightFactor.r;
+//            } else if (green) {
+//                craw *= ctx.highlightFactor.g;
+//            } else if (blue) {
+//                craw *= ctx.highlightFactor.b;
+//            }
+            
+            if (red) {
+                craw *= 0.9607;
+            } else if (green) {
+                craw *= 1.3936;
+            } else if (blue) {
+                craw *= 1.0114;
+            }
+            
+            
+        
+        } else {
+            if (red) {
+                craw *= 1;
+            } else if (green) {
+                craw = 2.82*(.25*crawl+.25*crawr+.25*crawu*+.25*crawd);
+            } else if (blue) {
+                craw *= 1;
+            }
+        }
+    }
+    
+//    if (craw >= thresh      ||
+//        crawl >= thresh     ||
+//        crawr >= thresh     ||
+//        crawu >= thresh     ||
+//        crawd >= thresh     ||
+//        crawul >= thresh    ||
+//        crawur >= thresh    ||
+//        crawdl >= thresh    ||
+//        crawdr >= thresh    ) {
+//        craw = 0;
 //    }
     
+    return craw;
 }
+
+//fragment float4 ImageLayer_FixHighlights(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> rawTxt [[texture(0)]],
+//    texture2d<float> txt [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const float craw = sampleR(rawTxt, in.pos);
+//    const float crawl = sampleR(rawTxt, in.pos, {-1,+0});
+//    const float crawr = sampleR(rawTxt, in.pos, {+1,+0});
+//    const float crawu = sampleR(rawTxt, in.pos, {+0,-1});
+//    const float crawd = sampleR(rawTxt, in.pos, {+0,+1});
+//    const float crawul = 0;//sampleR(rawTxt, in.pos, {-1,-1});
+//    const float crawur = 0;//sampleR(rawTxt, in.pos, {+1,-1});
+//    const float crawdl = 0;//sampleR(rawTxt, in.pos, {-1,+1});
+//    const float crawdr = 0;//sampleR(rawTxt, in.pos, {+1,+1});
+//    const float thresh = 1;
+//    
+//    float3 c_CamRaw = sampleRGB(txt, in.pos);
+//    const float3 c_XYZ = ctx.colorMatrix*c_CamRaw;
+//    const float3 highlight_XYZ = ctx.colorMatrix*float3(1);
+//    const float3 D50_XYZ(0.96422, 1, 0.82521);
+//    const float3 highlight_LAB = labFromXYZ(D50_XYZ, highlight_XYZ);
+//    const float3 c_LAB = labFromXYZ(D50_XYZ, c_XYZ);
+//    const float highlight_dist = distance(highlight_LAB, c_LAB);
+//    
+//    if (craw >= thresh      ||
+//        crawl >= thresh     ||
+//        crawr >= thresh     ||
+//        crawu >= thresh     ||
+//        crawd >= thresh     ||
+//        crawul >= thresh    ||
+//        crawur >= thresh    ||
+//        crawdl >= thresh    ||
+//        crawdr >= thresh    ) {
+//        c_CamRaw = 0;
+//    }
+//    
+//    return float4(c_CamRaw, 1);
+//}
+
+//fragment float4 ImageLayer_FixHighlights(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> rawTxt [[texture(0)]],
+//    texture2d<float> txt [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const float craw = sampleR(rawTxt, in.pos);
+//    const float crawl = sampleR(rawTxt, in.pos, {-1,+0});
+//    const float crawr = sampleR(rawTxt, in.pos, {+1,+0});
+//    const float crawu = sampleR(rawTxt, in.pos, {+0,-1});
+//    const float crawd = sampleR(rawTxt, in.pos, {+0,+1});
+//    const float crawul = 0;//sampleR(rawTxt, in.pos, {-1,-1});
+//    const float crawur = 0;//sampleR(rawTxt, in.pos, {+1,-1});
+//    const float crawdl = 0;//sampleR(rawTxt, in.pos, {-1,+1});
+//    const float crawdr = 0;//sampleR(rawTxt, in.pos, {+1,+1});
+//    const float thresh = 1;
+//    
+//    float3 c_CamRaw = sampleRGB(txt, in.pos);
+//    const float3 c_XYZ = ctx.colorMatrix*c_CamRaw;
+//    const float3 highlight_XYZ = ctx.colorMatrix*float3(1);
+//    const float3 D50_XYZ(0.96422, 1, 0.82521);
+//    const float3 highlight_LAB = labFromXYZ(D50_XYZ, highlight_XYZ);
+//    const float3 c_LAB = labFromXYZ(D50_XYZ, c_XYZ);
+//    const float highlight_dist = distance(highlight_LAB, c_LAB);
+//    
+//    if (craw >= thresh      ||
+//        crawl >= thresh     ||
+//        crawr >= thresh     ||
+//        crawu >= thresh     ||
+//        crawd >= thresh     ||
+//        crawul >= thresh    ||
+//        crawur >= thresh    ||
+//        crawdl >= thresh    ||
+//        crawdr >= thresh    ) {
+//        c_CamRaw = 0;
+//    }
+//    
+//    return float4(c_CamRaw, 1);
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1493,99 +1657,99 @@ fragment float4 ImageLayer_FixHighlights(
 //    return float4(c, 1);
 //}
 
-fragment float4 ImageLayer_FixHighlightsPropagation(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
-    texture2d<float> smallRaw [[texture(1)]],
-    VertexOutput in [[stage_in]]
-) {
-    float3 c = texture.sample({}, in.posUnit).rgb;
-//    return float4(c, 1);
-    
-    uint goodCount = 0;
-    if (c.r < 1) goodCount++;
-    if (c.g < 1) goodCount++;
-    if (c.b < 1) goodCount++;
-    
-    if (goodCount < 3) {
-        // Find a reference pixel
-        const float2 q(1./smallRaw.get_width(), 1./smallRaw.get_height());
-        const sampler s = sampler(address::mirrored_repeat);
-        float3 cref(0);
-        uint i = 0;
-        for (i=0; i<1000; i++) {
-            float2 d((i+1)*q.x, (i+1)*q.y);
-            // -1 -1
-            cref = smallRaw.sample(s, in.posUnit + float2(-1*d.x, -1*d.y)).rgb;
-            if (cref.r<1 && cref.g<1 && cref.b<1) break;
-            // -1 +1
-            cref = smallRaw.sample(s, in.posUnit + float2(-1*d.x, +1*d.y)).rgb;
-            if (cref.r<1 && cref.g<1 && cref.b<1) break;
-            // +1 -1
-            cref = smallRaw.sample(s, in.posUnit + float2(+1*d.x, -1*d.y)).rgb;
-            if (cref.r<1 && cref.g<1 && cref.b<1) break;
-            // +1 +1
-            cref = smallRaw.sample(s, in.posUnit + float2(+1*d.x, +1*d.y)).rgb;
-            if (cref.r<1 && cref.g<1 && cref.b<1) break;
-        }
-        
-        switch (goodCount) {
-        case 0: {
-            c = cref / min3(cref.r, cref.g, cref.b);
-            break;
-        }
-        
-        case 1: {
-            c = float3(0,0,0);
-            break;
-        }
-        
-        case 2: {
-            c = float3(0,0,0);
-            break;
-        }}
-    }
-//    c = float3(0,0,0);
-    return float4(c, 1);
-    
-//    if (c)
+//fragment float4 ImageLayer_FixHighlightsPropagation(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> txt [[texture(0)]],
+//    texture2d<float> smallRaw [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    float3 c = sampleRGB(txt, in.pos);
+////    return float4(c, 1);
 //    
-//    const float2 q(1./downsampledTexture.get_width(), 1./downsampledTexture.get_height());
-//    const sampler s = sampler(address::mirrored_repeat);
-//    const float2 startPos = in.posUnit - q*((Factor-1)/2.);
-//    float2 pos = startPos;
-//    for (uint iy=0; iy<Factor; iy++) {
-//        pos.x = startPos.x;
-//        for (uint ix=0; ix<Factor; ix++) {
-//            c += texture.sample(s, pos);
-//            pos.x += q.x;
+//    uint goodCount = 0;
+//    if (c.r < 1) goodCount++;
+//    if (c.g < 1) goodCount++;
+//    if (c.b < 1) goodCount++;
+//    
+//    if (goodCount < 3) {
+//        // Find a reference pixel
+//        const float2 q(1./smallRaw.get_width(), 1./smallRaw.get_height());
+//        const sampler s = sampler(address::mirrored_repeat);
+//        float3 cref(0);
+//        uint i = 0;
+//        for (i=0; i<1000; i++) {
+//            float2 d((i+1)*q.x, (i+1)*q.y);
+//            // -1 -1
+//            cref = smallRaw.sample(s, in.posUnit + float2(-1*d.x, -1*d.y)).rgb;
+//            if (cref.r<1 && cref.g<1 && cref.b<1) break;
+//            // -1 +1
+//            cref = smallRaw.sample(s, in.posUnit + float2(-1*d.x, +1*d.y)).rgb;
+//            if (cref.r<1 && cref.g<1 && cref.b<1) break;
+//            // +1 -1
+//            cref = smallRaw.sample(s, in.posUnit + float2(+1*d.x, -1*d.y)).rgb;
+//            if (cref.r<1 && cref.g<1 && cref.b<1) break;
+//            // +1 +1
+//            cref = smallRaw.sample(s, in.posUnit + float2(+1*d.x, +1*d.y)).rgb;
+//            if (cref.r<1 && cref.g<1 && cref.b<1) break;
 //        }
-//        pos.y += q.y;
-//    }
-//    return c;
-//    
-//    
-//    
-//    if (smallRaw.) {
-//    
-//    }
-//    uint i = 0;
-//    for (i=0; i<10; i++) {
 //        
+//        switch (goodCount) {
+//        case 0: {
+//            c = cref / min3(cref.r, cref.g, cref.b);
+//            break;
+//        }
+//        
+//        case 1: {
+//            c = float3(0,0,0);
+//            break;
+//        }
+//        
+//        case 2: {
+//            c = float3(0,0,0);
+//            break;
+//        }}
 //    }
+////    c = float3(0,0,0);
+//    return float4(c, 1);
 //    
-//    // Find a reference pixel
-//    
-////    return texture.sample(sampler(), in.posUnit);
-}
+////    if (c)
+////    
+////    const float2 q(1./downsampledTexture.get_width(), 1./downsampledTexture.get_height());
+////    const sampler s = sampler(address::mirrored_repeat);
+////    const float2 startPos = in.posUnit - q*((Factor-1)/2.);
+////    float2 pos = startPos;
+////    for (uint iy=0; iy<Factor; iy++) {
+////        pos.x = startPos.x;
+////        for (uint ix=0; ix<Factor; ix++) {
+////            c += texture.sample(s, pos);
+////            pos.x += q.x;
+////        }
+////        pos.y += q.y;
+////    }
+////    return c;
+////    
+////    
+////    
+////    if (smallRaw.) {
+////    
+////    }
+////    uint i = 0;
+////    for (i=0; i<10; i++) {
+////        
+////    }
+////    
+////    // Find a reference pixel
+////    
+//////    return texture.sample(sampler(), in.posUnit);
+//}
 
 fragment float4 ImageLayer_SRGBGamma(
     constant RenderContext& ctx [[buffer(0)]],
     device float3* samples [[buffer(1)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgb = texture.sample({}, in.posUnit).rgb;
+    const float3 lsrgb = sampleRGB(txt, in.pos);
     float3 c_SRGB = float3{
         SRGBFromLSRGB(lsrgb[0]),
         SRGBFromLSRGB(lsrgb[1]),
@@ -1606,10 +1770,10 @@ fragment float4 ImageLayer_SRGBGamma(
 
 fragment float4 ImageLayer_Display(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> texture [[texture(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = texture.sample({}, in.posUnit).rgb;
+    const float3 c = sampleRGB(txt, in.pos);
     return float4(c, 1);
 }
 
