@@ -327,14 +327,26 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     IBOutlet NSTextField* _colorText_XYZ_D50;
     IBOutlet NSTextField* _colorText_SRGB_D65;
     
-    IBOutlet NSSlider* _highlightFactorRedSlider;
-    IBOutlet NSTextField* _highlightFactorRedLabel;
+    IBOutlet NSSlider*      _highlightFactorR0Slider;
+    IBOutlet NSTextField*   _highlightFactorR0Label;
+    IBOutlet NSSlider*      _highlightFactorR1Slider;
+    IBOutlet NSTextField*   _highlightFactorR1Label;
+    IBOutlet NSSlider*      _highlightFactorR2Slider;
+    IBOutlet NSTextField*   _highlightFactorR2Label;
     
-    IBOutlet NSSlider* _highlightFactorGreenSlider;
-    IBOutlet NSTextField* _highlightFactorGreenLabel;
+    IBOutlet NSSlider*      _highlightFactorG0Slider;
+    IBOutlet NSTextField*   _highlightFactorG0Label;
+    IBOutlet NSSlider*      _highlightFactorG1Slider;
+    IBOutlet NSTextField*   _highlightFactorG1Label;
+    IBOutlet NSSlider*      _highlightFactorG2Slider;
+    IBOutlet NSTextField*   _highlightFactorG2Label;
     
-    IBOutlet NSSlider* _highlightFactorBlueSlider;
-    IBOutlet NSTextField* _highlightFactorBlueLabel;
+    IBOutlet NSSlider*      _highlightFactorB0Slider;
+    IBOutlet NSTextField*   _highlightFactorB0Label;
+    IBOutlet NSSlider*      _highlightFactorB1Slider;
+    IBOutlet NSTextField*   _highlightFactorB1Label;
+    IBOutlet NSSlider*      _highlightFactorB2Slider;
+    IBOutlet NSTextField*   _highlightFactorB2Label;
     
     bool _colorCheckerCirclesVisible;
     float _colorCheckerCircleRadius;
@@ -617,13 +629,30 @@ static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
 }
 
 - (IBAction)highlightFactorSliderChanged:(id)sender {
-    const double r = [_highlightFactorRedSlider doubleValue];
-    const double g = [_highlightFactorGreenSlider doubleValue];
-    const double b = [_highlightFactorBlueSlider doubleValue];
-    [[_mainView imageLayer] setHighlightFactor:Mat<double,3,1>(r,g,b)];
-    [_highlightFactorRedLabel setStringValue:[NSString stringWithFormat:@"%.3f", r]];
-    [_highlightFactorGreenLabel setStringValue:[NSString stringWithFormat:@"%.3f", g]];
-    [_highlightFactorBlueLabel setStringValue:[NSString stringWithFormat:@"%.3f", b]];
+    Mat<double,3,3> highlightFactor(
+        [_highlightFactorR0Slider doubleValue],
+        [_highlightFactorR1Slider doubleValue],
+        [_highlightFactorR2Slider doubleValue],
+        
+        [_highlightFactorG0Slider doubleValue],
+        [_highlightFactorG1Slider doubleValue],
+        [_highlightFactorG2Slider doubleValue],
+        
+        [_highlightFactorB0Slider doubleValue],
+        [_highlightFactorB1Slider doubleValue],
+        [_highlightFactorB2Slider doubleValue]
+    );
+    
+    [[_mainView imageLayer] setHighlightFactor:highlightFactor];
+    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[0]]];
+    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[1]]];
+    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[2]]];
+    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[3]]];
+    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[4]]];
+    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[5]]];
+    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[6]]];
+    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[7]]];
+    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[8]]];
     [self sampleRectChanged];
 }
 

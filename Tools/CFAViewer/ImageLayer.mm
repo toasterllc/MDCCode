@@ -155,8 +155,10 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     [self setNeedsDisplay];
 }
 
-- (void)setHighlightFactor:(const Mat<double,3,1>&)hf {
-    _ctx.highlightFactor = simdFromMat(hf);
+- (void)setHighlightFactor:(const Mat<double,3,3>&)hf {
+    _ctx.highlightFactorR = {(float)hf[0], (float)hf[1], (float)hf[2]};
+    _ctx.highlightFactorG = {(float)hf[3], (float)hf[4], (float)hf[5]};
+    _ctx.highlightFactorB = {(float)hf[6], (float)hf[7], (float)hf[8]};
     [self setNeedsDisplay];
 }
 

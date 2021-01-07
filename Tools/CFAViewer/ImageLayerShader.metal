@@ -1099,6 +1099,7 @@ fragment float4 ImageLayer_XYYD50FromCameraRaw(
 ) {
     const float3 inputColor_cameraRaw = sampleRGB(txt, in.pos);
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+//    const float3x3 XYZD50_From_CameraRaw(1);
     const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
     return float4(c, 1);
 }
@@ -1470,80 +1471,208 @@ float3 labFromXYZ(float3 white_XYZ, float3 c_XYZ) {
     return float3(l,a,b);
 }
 
+class Float3x3 {
+public:
+    Float3x3(texture2d<float> txt, uint2 pos) {
+        _c[0] = sampleR(txt, pos, {-1,-1});
+        _c[1] = sampleR(txt, pos, {+0,-1});
+        _c[2] = sampleR(txt, pos, {+1,-1});
+        
+        _c[3] = sampleR(txt, pos, {-1,+0});
+        _c[4] = sampleR(txt, pos, {+0,+0});
+        _c[5] = sampleR(txt, pos, {+1,+0});
+        
+        _c[6] = sampleR(txt, pos, {-1,+1});
+        _c[7] = sampleR(txt, pos, {+0,+1});
+        _c[8] = sampleR(txt, pos, {+1,+1});
+    }
+    
+    thread float& get(int x=0, int y=0) {
+        return _c[((y+1)*3)+(x+1)];
+    }
+    
+private:
+    float _c[9];
+};
 
-
-
+//float cget(float3x3 cm, int2 pos) {
+//    return cm[pos.y+1][pos.x+1];
+//}
+//
+//float cset(float3x3 cm, int2 pos, float c) {
+//    return cm[pos.y+1][pos.x+1] = c;
+//}
 
 fragment float ImageLayer_FixHighlightsRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    //  Row0    G R G R
-    //  Row1    B G B G
-    //  Row2    G R G R
-    //  Row3    B G B G
-    
     const uint2 pos = uint2(in.pos.xy);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool greenr = (!(pos.y%2) && !(pos.x%2));
     const bool greenb = ((pos.y%2) && (pos.x%2));
     const bool blue = ((pos.y%2) && !(pos.x%2));
-    float craw = sampleR(rawTxt, in.pos);
-    float crawl = sampleR(rawTxt, in.pos, {-1,+0});
-    float crawr = sampleR(rawTxt, in.pos, {+1,+0});
-    float crawu = sampleR(rawTxt, in.pos, {+0,-1});
-    float crawd = sampleR(rawTxt, in.pos, {+0,+1});
-    float crawul = sampleR(rawTxt, in.pos, {-1,-1});
-    float crawur = sampleR(rawTxt, in.pos, {+1,-1});
-    float crawdl = sampleR(rawTxt, in.pos, {-1,+1});
-    float crawdr = sampleR(rawTxt, in.pos, {+1,+1});
+    Float3x3 c(rawTxt, pos);
+    
+    const float3 csat = ctx.whitePoint_CamRaw_D50;
+//    const float3 csat(1.1300929235, 1.6132952108, 1);
     float thresh = 1;
     
-    if (craw >= thresh) {
-        uint goodCount = 0;
-        if (crawl < thresh) goodCount++;
-        if (crawr < thresh) goodCount++;
-        if (crawu < thresh) goodCount++;
-        if (crawd < thresh) goodCount++;
+    // Short-circuit if this pixel isn't saturated
+    if (c.get() < thresh) return c.get();
+    
+//    // Patch up the saturated values in `c`
+//    if (red) {
+//        //  Row0    G R G R
+//        //  Row1    B G B G
+//        //  Row2    G * G R
+//        //  Row3    B G B G
+//        if (c.get(-1,-1) >= thresh) c.get(-1,-1) = csat.b;
+//        if (c.get(+0,-1) >= thresh) c.get(+0,-1) = csat.g;
+//        if (c.get(+1,-1) >= thresh) c.get(+1,-1) = csat.b;
+//        
+//        if (c.get(-1,+0) >= thresh) c.get(-1,+0) = csat.g;
+//        if (c.get(+0,+0) >= thresh) c.get(+0,+0) = csat.r;
+//        if (c.get(+1,+0) >= thresh) c.get(+1,+0) = csat.g;
+//        
+//        if (c.get(-1,+1) >= thresh) c.get(-1,+1) = csat.b;
+//        if (c.get(+0,+1) >= thresh) c.get(+0,+1) = csat.g;
+//        if (c.get(+1,+1) >= thresh) c.get(+1,+1) = csat.b;
+//    
+//    } else if (greenr) {
+//        //  Row0    G R G R
+//        //  Row1    B G B G
+//        //  Row2    G R * R
+//        //  Row3    B G B G
+//        if (c.get(-1,-1) >= thresh) c.get(-1,-1) = csat.g;
+//        if (c.get(+0,-1) >= thresh) c.get(+0,-1) = csat.b;
+//        if (c.get(+1,-1) >= thresh) c.get(+1,-1) = csat.g;
+//        
+//        if (c.get(-1,+0) >= thresh) c.get(-1,+0) = csat.r;
+//        if (c.get(+0,+0) >= thresh) c.get(+0,+0) = csat.g;
+//        if (c.get(+1,+0) >= thresh) c.get(+1,+0) = csat.r;
+//        
+//        if (c.get(-1,+1) >= thresh) c.get(-1,+1) = csat.g;
+//        if (c.get(+0,+1) >= thresh) c.get(+0,+1) = csat.b;
+//        if (c.get(+1,+1) >= thresh) c.get(+1,+1) = csat.g;
+//    
+//    } else if (greenb) {
+//        //  Row0    G R G R
+//        //  Row1    B * B G
+//        //  Row2    G R G R
+//        //  Row3    B G B G
+//        if (c.get(-1,-1) >= thresh) c.get(-1,-1) = csat.g;
+//        if (c.get(+0,-1) >= thresh) c.get(+0,-1) = csat.r;
+//        if (c.get(+1,-1) >= thresh) c.get(+1,-1) = csat.g;
+//        
+//        if (c.get(-1,+0) >= thresh) c.get(-1,+0) = csat.b;
+//        if (c.get(+0,+0) >= thresh) c.get(+0,+0) = csat.g;
+//        if (c.get(+1,+0) >= thresh) c.get(+1,+0) = csat.b;
+//        
+//        if (c.get(-1,+1) >= thresh) c.get(-1,+1) = csat.g;
+//        if (c.get(+0,+1) >= thresh) c.get(+0,+1) = csat.r;
+//        if (c.get(+1,+1) >= thresh) c.get(+1,+1) = csat.g;
+//    
+//    } else if (blue) {
+//        //  Row0    G R G R
+//        //  Row1    B G * G
+//        //  Row2    G R G R
+//        //  Row3    B G B G
+//        if (c.get(-1,-1) >= thresh) c.get(-1,-1) = csat.r;
+//        if (c.get(+0,-1) >= thresh) c.get(+0,-1) = csat.g;
+//        if (c.get(+1,-1) >= thresh) c.get(+1,-1) = csat.r;
+//        
+//        if (c.get(-1,+0) >= thresh) c.get(-1,+0) = csat.g;
+//        if (c.get(+0,+0) >= thresh) c.get(+0,+0) = csat.b;
+//        if (c.get(+1,+0) >= thresh) c.get(+1,+0) = csat.g;
+//        
+//        if (c.get(-1,+1) >= thresh) c.get(-1,+1) = csat.r;
+//        if (c.get(+0,+1) >= thresh) c.get(+0,+1) = csat.g;
+//        if (c.get(+1,+1) >= thresh) c.get(+1,+1) = csat.r;
+//    }
+//    
+//    if (red) {
+//        //  Row0    G R G R
+//        //  Row1    B G B G
+//        //  Row2    G * G R
+//        //  Row3    B G B G
+//        
+//        const float r = ctx.highlightFactorR.r * (c.get(+0,+0));
+//        const float g = ctx.highlightFactorR.g * (c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1));
+//        const float b = ctx.highlightFactorR.b * (c.get(-1,-1)+c.get(-1,+1)+c.get(+1,-1)+c.get(+1,+1));
+//        return (r+g+b)/9;
+//    
+//    } else if (greenr) {
+//        //  Row0    G R G R
+//        //  Row1    B G B G
+//        //  Row2    G R * R
+//        //  Row3    B G B G
+//        
+//        const float r = ctx.highlightFactorG.r * (c.get(-1,+0)+c.get(+1,+0));
+//        const float g = ctx.highlightFactorG.g * (c.get(+0,+0)+c.get(-1,-1)+c.get(-1,+1)+c.get(+1,-1)+c.get(+1,+1));
+//        const float b = ctx.highlightFactorG.b * (c.get(+0,-1)+c.get(+0,+1));
+//        return (r+g+b)/9;
+//    
+//    } else if (greenb) {
+//        //  Row0    G R G R
+//        //  Row1    B * B G
+//        //  Row2    G R G R
+//        //  Row3    B G B G
+//        
+//        const float r = ctx.highlightFactorG.r * (c.get(+0,-1)+c.get(+0,+1));
+//        const float g = ctx.highlightFactorG.g * (c.get(+0,+0)+c.get(-1,-1)+c.get(-1,+1)+c.get(+1,-1)+c.get(+1,+1));
+//        const float b = ctx.highlightFactorG.b * (c.get(-1,+0)+c.get(+1,+0));
+//        return (r+g+b)/9;
+//    
+//    } else if (blue) {
+//        //  Row0    G R G R
+//        //  Row1    B G * G
+//        //  Row2    G R G R
+//        //  Row3    B G B G
+//        
+//        const float r = ctx.highlightFactorB.r * (c.get(-1,-1)+c.get(-1,+1)+c.get(+1,-1)+c.get(+1,+1));
+//        const float g = ctx.highlightFactorB.g * (c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1));
+//        const float b = ctx.highlightFactorB.b * (c.get(+0,+0));
+//        return (r+g+b)/9;
+//    }
+//    
+//    return 0;
+    
+    //  Row0    G R G R
+    //  Row1    B G B G
+    //  Row2    G R G R
+    //  Row3    B G B G
+    
+    uint goodCount = 0;
+    if (c.get(-1,+0) < thresh) goodCount++;
+    if (c.get(+1,+0) < thresh) goodCount++;
+    if (c.get(+0,-1) < thresh) goodCount++;
+    if (c.get(+0,+1) < thresh) goodCount++;
+    if (goodCount == 0) {
+        if (red) {
+            c.get() *= 1.02765;
+        } else if (greenr || greenb) {
+            c.get() *= 1.46705;
+        } else if (blue) {
+            c.get() *= 0.90935;
+        }
         
-        uint diagGoodCount = 0;
-        if (crawul < thresh) diagGoodCount++;
-        if (crawur < thresh) diagGoodCount++;
-        if (crawdl < thresh) diagGoodCount++;
-        if (crawdr < thresh) diagGoodCount++;
-        
-        if (goodCount == 0) {
-            if (red) {
-                craw *= 1.02765;
-            } else if (greenr || greenb) {
-                craw *= 1.46705;
-            } else if (blue) {
-                craw *= 0.90935;
-            }
-            
-        } else {
-            crawul = (crawul<thresh ? crawul : 0);
-            crawur = (crawur<thresh ? crawur : 0);
-            crawdl = (crawdl<thresh ? crawdl : 0);
-            crawdr = (crawdr<thresh ? crawdr : 0);
-            
-            if (red) {
+    } else {
+        if (red) {
 //                craw = ctx.highlightFactor.r*(crawul+crawur+crawdl+crawdr)/4;
-            
-            } else if (greenr) {
-                craw = 1.587*(crawl+crawr+crawu+crawd)/4;
-            
-            } else if (greenb) {
-                craw = 1.551*(crawl+crawr+crawu+crawd)/4;
-            
-            } else if (blue) {
+        
+        } else if (greenr) {
+            c.get() = 1.587*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+        
+        } else if (greenb) {
+            c.get() = 1.551*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+        
+        } else if (blue) {
 //                craw = ctx.highlightFactor.b*(crawul+crawur+crawdl+crawdr)/4;
-            }
         }
     }
-    
-    return craw;
+    return c.get();
 }
 
 

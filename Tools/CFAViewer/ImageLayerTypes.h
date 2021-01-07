@@ -12,7 +12,9 @@ namespace CFAViewer {
             simd::float3 whitePoint_XYY_D50;
             simd::float3 whitePoint_CamRaw_D50;
             
-            simd::float3 highlightFactor = {1,1,1};
+            simd::float3 highlightFactorR = {1,1,1};
+            simd::float3 highlightFactorG = {1,1,1};
+            simd::float3 highlightFactorB = {1,1,1};
             
             struct {
                 uint32_t left = 0;
