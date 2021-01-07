@@ -1500,34 +1500,20 @@ fragment float ImageLayer_FixHighlightsRaw(
     float crawdr = sampleR(rawTxt, in.pos, {+1,+1});
     float thresh = 1;
     
-    if (craw>=thresh) {
-        if (crawl>=thresh || crawr>=thresh || crawu>=thresh || crawd>=thresh) {
-//            if (red) {
-//                craw = ctx.whitePoint_CamRaw_D50.r;
-//            } else if (greenr || greenb) {
-//                craw = ctx.whitePoint_CamRaw_D50.g;
-//            } else if (blue) {
-//                craw = ctx.whitePoint_CamRaw_D50.b;
-//            }
-            
-            
-//            if (red) {
-//                craw *= ctx.highlightFactor.r;
-//            } else if (greenr || greenb) {
-//                craw *= ctx.highlightFactor.g;
-//            } else if (blue) {
-//                craw *= ctx.highlightFactor.b;
-//            }
-            
-//            // looks good, but has a blueish tint when decreasing luminance too much
-//            if (red) {
-//                craw *= 0.9607;
-//            } else if (greenr || greenb) {
-//                craw *= 1.3936;
-//            } else if (blue) {
-//                craw *= 1.0114;
-//            }
-            
+    if (craw >= thresh) {
+        uint goodCount = 0;
+        if (crawl < thresh) goodCount++;
+        if (crawr < thresh) goodCount++;
+        if (crawu < thresh) goodCount++;
+        if (crawd < thresh) goodCount++;
+        
+        uint diagGoodCount = 0;
+        if (crawul < thresh) diagGoodCount++;
+        if (crawur < thresh) diagGoodCount++;
+        if (crawdl < thresh) diagGoodCount++;
+        if (crawdr < thresh) diagGoodCount++;
+        
+        if (goodCount == 0) {
             if (red) {
                 craw *= 1.02765;
             } else if (greenr || greenb) {
@@ -1537,37 +1523,22 @@ fragment float ImageLayer_FixHighlightsRaw(
             }
             
         } else {
+            crawul = (crawul<thresh ? crawul : 0);
+            crawur = (crawur<thresh ? crawur : 0);
+            crawdl = (crawdl<thresh ? crawdl : 0);
+            crawdr = (crawdr<thresh ? crawdr : 0);
+            
             if (red) {
-                craw *= 1;
+//                craw = ctx.highlightFactor.r*(crawul+crawur+crawdl+crawdr)/4;
             
-//            } else if (greenr) {
-//                const float b = crawu+crawd;
-//                const float r = crawl+crawr;
-//                craw = ctx.highlightFactor.b*b/4 + ctx.highlightFactor.r*r/4;
-//            
-//            } else if (greenb) {
-//                const float r = crawu+crawd;
-//                const float b = crawl+crawr;
-//                craw = ctx.highlightFactor.b*b/4 + ctx.highlightFactor.r*r/4;
-            
-            
-            // best so far
             } else if (greenr) {
                 craw = 1.587*(crawl+crawr+crawu+crawd)/4;
             
-            // best so far
             } else if (greenb) {
                 craw = 1.551*(crawl+crawr+crawu+crawd)/4;
             
-//            } else if (greenr) {
-//                craw = ctx.highlightFactor.r*(crawl+crawr+crawu+crawd)/4;
-//            
-//            } else if (greenb) {
-//                craw = ctx.highlightFactor.b*(crawl+crawr+crawu+crawd)/4;
-            
-            
             } else if (blue) {
-                craw *= 1;
+//                craw = ctx.highlightFactor.b*(crawul+crawur+crawdl+crawdr)/4;
             }
         }
     }
