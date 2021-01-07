@@ -64,29 +64,49 @@ const ColorSRGBD65 ColorCheckerColors[ColorCheckerCount] {
     {   0x34/255.   ,   0x34/255.   ,   0x34/255.   },
 };
 
-@interface MainView : BaseView <CALayoutManager>
+@interface MainView : BaseView <CALayoutManager, NSGestureRecognizerDelegate>
 @end
 
 @implementation MainView {
+    CALayer* _viewLayer;
     CALayer* _rootLayer;
+    CGPoint _rootLayerOffset;
     ImageLayer* _imageLayer;
     CALayer* _sampleLayer;
     CGFloat _colorCheckerCircleRadius;
     bool _colorCheckerCirclesVisible;
     bool _colorCheckersPositioned;
     std::vector<CAShapeLayer*> _colorCheckerCircles;
+    
+    CGFloat _zoomScale;
+    struct {
+        struct {
+            CGFloat startZoomScale;
+            CGFloat multiplier;
+        } magnify;
+        
+        struct {
+            bool pan;
+        } panZoom;
+    } _gesture;
+    
     IBOutlet id _delegate;
 }
 
 - (void)commonInit {
     [super commonInit];
-    _rootLayer = [self layer];
+    _viewLayer = [self layer];
+    
+    _rootLayer = [CALayer new];
+    [_rootLayer setActions:LayerNullActions()];
+    [_viewLayer addSublayer:_rootLayer];
+    [_viewLayer setLayoutManager:self];
+    
     _colorCheckerCircleRadius = 1;
     _imageLayer = [ImageLayer new];
+    [_imageLayer setMagnificationFilter:kCAFilterNearest];
     [_rootLayer addSublayer:_imageLayer];
     [_rootLayer setLayoutManager:self];
-//    [_imageLayer setSublayerTransform:CATransform3DMakeScale(1, -1, 1)];
-//    [_imageLayer setAffineTransform:CGAffineTransformMakeScale(1, -1)];
     
     _sampleLayer = [CALayer new];
     [_sampleLayer setActions:LayerNullActions()];
@@ -107,7 +127,49 @@ const ColorSRGBD65 ColorCheckerColors[ColorCheckerCount] {
         
         i++;
     }
+    
+    _zoomScale = 1;
+    NSMagnificationGestureRecognizer* magnify = [[NSMagnificationGestureRecognizer alloc] initWithTarget:self
+        action:@selector(_handleMagnify:)];
+    [magnify setDelegate:self];
+    [self addGestureRecognizer:magnify];
 }
+
+- (void)_setZoomScale:(CGFloat)zoomScale anchor:(CGPoint)anchor {
+    const CGFloat MinScale = .25;
+    const CGFloat MaxScale = 20;
+    
+    _zoomScale = std::clamp(zoomScale, MinScale, MaxScale);
+    
+    CGPoint anchorBefore = [_viewLayer convertPoint:anchor fromLayer:_rootLayer];
+    [_rootLayer setTransform:CATransform3DMakeScale(_zoomScale, _zoomScale, 1)];
+    CGPoint anchorAfter = [_viewLayer convertPoint:anchor fromLayer:_rootLayer];
+    
+    // Adjust the position of `_rootLayer` so that the anchor point stays in the same position
+    _rootLayerOffset = {_rootLayerOffset.x+anchorBefore.x-anchorAfter.x, _rootLayerOffset.y+anchorBefore.y-anchorAfter.y};
+//    [rootLayer setNeedsLayout];
+//    [_viewLayer layoutIfNeeded];
+    [_viewLayer setNeedsLayout];
+//    CGRect frame = [_rootLayer frame];
+//    frame.origin.x -= anchorAfter.x-anchorBefore.x;
+//    frame.origin.y -= anchorAfter.y-anchorBefore.y;
+//    [_rootLayer setFrame:frame];
+}
+
+- (void)_handleMagnify:(NSMagnificationGestureRecognizer*)recognizer {
+    if ([recognizer state] == NSGestureRecognizerStateBegan) {
+        _gesture.magnify.startZoomScale = _zoomScale;
+        _gesture.magnify.multiplier = .5;
+        if ([recognizer magnification] > 0) {
+            _gesture.magnify.multiplier *= 20;
+        }
+    }
+    
+    CGFloat k = 1+(_gesture.magnify.multiplier*[recognizer magnification]);
+    CGPoint anchor = [_rootLayer convertPoint:[recognizer locationInView:self] fromLayer:_viewLayer];
+    [self _setZoomScale:k*_gesture.magnify.startZoomScale anchor:anchor];
+}
+
 
 - (ImageLayer*)imageLayer {
     return _imageLayer;
@@ -164,25 +226,46 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     }
     
     // Otherwise, handle sampler functionality
-    {
-        const CGPoint start = p;
-        TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
-            const CGPoint end = [_imageLayer convertPoint:[ev locationInWindow]
-                fromLayer:[[win contentView] layer]];
-            CGRect frame = {start, {end.x-start.x, end.y-start.y}};
-            if ([ev modifierFlags] & NSEventModifierFlagShift) {
-                frame.size.height = (frame.size.height >= 0 ? 1 : -1) * fabs(frame.size.width);
-            }
-            frame = CGRectStandardize(frame);
-            [_sampleLayer setFrame:frame];
-            [_delegate sampleRectChanged];
-        });
-//        [_delegate sampleRectChanged];
+    const CGPoint start = p;
+    TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
+        const CGPoint end = [_imageLayer convertPoint:[ev locationInWindow]
+            fromLayer:[[win contentView] layer]];
+        CGRect frame = {start, {end.x-start.x, end.y-start.y}};
+        if ([ev modifierFlags] & NSEventModifierFlagShift) {
+            frame.size.height = (frame.size.height >= 0 ? 1 : -1) * fabs(frame.size.width);
+        }
+        frame = CGRectStandardize(frame);
+        [_sampleLayer setFrame:frame];
+        [_delegate sampleRectChanged];
+    });
+}
+
+- (void)scrollWheel:(NSEvent*)event {
+    if ([event phase] & NSEventPhaseBegan) {
+        _gesture.panZoom.pan = !([event modifierFlags]&NSEventModifierFlagCommand);
+    }
+    
+    // Pan
+    if (_gesture.panZoom.pan) {
+        _rootLayerOffset = {_rootLayerOffset.x+[event scrollingDeltaX]/3, _rootLayerOffset.y-[event scrollingDeltaY]/3};
+        [_viewLayer setNeedsLayout];
+    
+    // Zoom
+    } else {
+        CGPoint anchor = [_rootLayer convertPoint:[self convertPoint:[event locationInWindow] fromView:nil] fromLayer:_viewLayer];
+        [self _setZoomScale:_zoomScale-[event scrollingDeltaY]/100 anchor:anchor];
     }
 }
 
 - (void)layoutSublayersOfLayer:(CALayer*)layer {
-    if (layer == _rootLayer) {
+    if (layer == _viewLayer) {
+        CGRect bounds = [_viewLayer bounds];
+        [_rootLayer setBounds:bounds];
+        
+        CGPoint pos = {CGRectGetMidX(bounds), CGRectGetMidY(bounds)};
+        [_rootLayer setPosition:{pos.x+_rootLayerOffset.x, pos.y+_rootLayerOffset.y}];
+    
+    } else if (layer == _rootLayer) {
         CGSize layerSize = [_rootLayer bounds].size;
         [_imageLayer setPosition:{layerSize.width/2, layerSize.height/2}];
     }

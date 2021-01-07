@@ -1660,16 +1660,20 @@ fragment float ImageLayer_FixHighlightsRaw(
         
     } else {
         if (red) {
-//                craw = ctx.highlightFactor.r*(crawul+crawur+crawdl+crawdr)/4;
+//            c.get() = ctx.highlightFactorR.r*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            c.get() = 1.018*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         
         } else if (greenr) {
+//            c.get() = ctx.highlightFactorR.g*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
             c.get() = 1.587*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         
         } else if (greenb) {
+//            c.get() = ctx.highlightFactorR.b*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
             c.get() = 1.551*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         
         } else if (blue) {
-//                craw = ctx.highlightFactor.b*(crawul+crawur+crawdl+crawdr)/4;
+//            c.get() = ctx.highlightFactorG.r*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            c.get() = 0.983*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         }
     }
     return c.get();
