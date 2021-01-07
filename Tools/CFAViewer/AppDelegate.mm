@@ -624,6 +624,7 @@ static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     [_highlightFactorRedLabel setStringValue:[NSString stringWithFormat:@"%.3f", r]];
     [_highlightFactorGreenLabel setStringValue:[NSString stringWithFormat:@"%.3f", g]];
     [_highlightFactorBlueLabel setStringValue:[NSString stringWithFormat:@"%.3f", b]];
+    [self sampleRectChanged];
 }
 
 - (void)sampleRectChanged {

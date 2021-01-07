@@ -629,39 +629,49 @@ fragment float ImageLayer_LoadRaw(
     return v;
 }
 
-static int mirrorClamp(uint N, int n) {
-    const int Ni = (int)N;
-    if (n < 0) return -n;
-    else if (n >= Ni) return 2*(Ni-1)-n;
-    else return n;
+
+
+//static int mirrorClamp(uint N, int n) {
+//    const int Ni = (int)N;
+//    if (n < 0) return -n;
+//    else if (n >= Ni) return 2*(Ni-1)-n;
+//    else return n;
+//}
+//
+//static int2 mirrorClamp(uint2 N, int2 n) {
+//    return {mirrorClamp(N.x, n.x), mirrorClamp(N.y, n.y)};
+//}
+
+//float2 mirrorClampF(uint2 N, int2 n) {
+//    return {(float)mirrorClamp(N.x, n.x), (float)mirrorClamp(N.y, n.y)};
+//}
+
+
+template <typename P>
+uint mirrorClamp(uint bound, P pt, int delta=0) {
+    const int ptd = (int)pt+delta;
+    if (ptd < 0) return -ptd;
+    if (ptd >= (int)bound) return 2*((int)bound-1)-ptd;
+    return ptd;
 }
 
-static int2 mirrorClamp(uint2 N, int2 n) {
-    return {mirrorClamp(N.x, n.x), mirrorClamp(N.y, n.y)};
-}
-
-static float2 mirrorClampF(uint2 N, int2 n) {
-    return {(float)mirrorClamp(N.x, n.x), (float)mirrorClamp(N.y, n.y)};
+template <typename P>
+uint2 mirrorClamp2(uint2 bound, P pt, int2 delta=0) {
+    return {
+        mirrorClamp(bound.x, pt.x, delta.x),
+        mirrorClamp(bound.y, pt.y, delta.y)
+    };
 }
 
 template <typename T>
-float sampleR(texture2d<float> txt, T pos) {
-    return txt.sample(coord::pixel, float2(pos.xy)).r;
+float3 sampleRGB(texture2d<float> txt, T pos, int2 delta=0) {
+    const uint2 bounds(txt.get_width(), txt.get_height());
+    return txt.sample(coord::pixel, float2(mirrorClamp2(bounds, pos.xy, delta))).rgb;
 }
 
 template <typename T>
-float sampleR(texture2d<float> txt, T pos, int2 delta) {
-    return sampleR(txt, int2(pos.xy)+delta);
-}
-
-template <typename T>
-float3 sampleRGB(texture2d<float> txt, T pos) {
-    return txt.sample(coord::pixel, float2(pos.xy)).rgb;
-}
-
-template <typename T>
-float3 sampleRGB(texture2d<float> txt, T pos, int2 delta) {
-    return sampleRGB(txt, int2(pos.xy)+delta);
+float sampleR(texture2d<float> txt, T pos, int2 delta=0) {
+    return sampleRGB(txt, pos, delta).r;
 }
 
 fragment float ImageLayer_LMMSE_Interp5(
@@ -673,11 +683,11 @@ fragment float ImageLayer_LMMSE_Interp5(
     const uint2 dim(ctx.imageWidth, ctx.imageHeight);
     const int2 pos = int2(in.pos.xy);
     const sampler s = sampler(coord::pixel);
-    return  -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-2:+0,!h?-2:+0))).r    +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-1:+0,!h?-1:+0))).r    +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+0:+0,!h?+0:+0))).r    +
-            +0.5*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+1:+0,!h?+1:+0))).r    +
-            -.25*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+2:+0,!h?+2:+0))).r    ;
+    return  -.25*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-2:+0,!h?-2:+0)))).r    +
+            +0.5*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-1:+0,!h?-1:+0)))).r    +
+            +0.5*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+0:+0,!h?+0:+0)))).r    +
+            +0.5*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+1:+0,!h?+1:+0)))).r    +
+            -.25*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+2:+0,!h?+2:+0)))).r    ;
 }
 
 fragment float ImageLayer_LMMSE_NoiseEst(
@@ -704,15 +714,15 @@ fragment float ImageLayer_LMMSE_Smooth9(
     const uint2 dim(ctx.imageWidth, ctx.imageHeight);
     const int2 pos = int2(in.pos.xy);
     const sampler s = sampler(coord::pixel);
-    return  0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-4:+0,!h?-4:+0))).r     +
-            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-3:+0,!h?-3:+0))).r     +
-            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-2:+0,!h?-2:+0))).r     +
-            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?-1:+0,!h?-1:+0))).r     +
-            0.2031250*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+0:+0,!h?+0:+0))).r     +
-            0.1796875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+1:+0,!h?+1:+0))).r     +
-            0.1171875*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+2:+0,!h?+2:+0))).r     +
-            0.0703125*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+3:+0,!h?+3:+0))).r     +
-            0.0312500*rawTxt.sample(s, mirrorClampF(dim, pos+int2(h?+4:+0,!h?+4:+0))).r     ;
+    return  0.0312500*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-4:+0,!h?-4:+0)))).r     +
+            0.0703125*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-3:+0,!h?-3:+0)))).r     +
+            0.1171875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-2:+0,!h?-2:+0)))).r     +
+            0.1796875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-1:+0,!h?-1:+0)))).r     +
+            0.2031250*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+0:+0,!h?+0:+0)))).r     +
+            0.1796875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+1:+0,!h?+1:+0)))).r     +
+            0.1171875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+2:+0,!h?+2:+0)))).r     +
+            0.0703125*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+3:+0,!h?+3:+0)))).r     +
+            0.0312500*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+4:+0,!h?+4:+0)))).r     ;
 }
 
 constant bool UseZhangCodeEst = false;
@@ -1460,71 +1470,170 @@ float3 labFromXYZ(float3 white_XYZ, float3 c_XYZ) {
     return float3(l,a,b);
 }
 
+
+
+
+
 fragment float ImageLayer_FixHighlightsRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
+    //  Row0    G R G R
+    //  Row1    B G B G
+    //  Row2    G R G R
+    //  Row3    B G B G
+    
     const uint2 pos = uint2(in.pos.xy);
     const bool red = (!(pos.y%2) && (pos.x%2));
-    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+    const bool greenr = (!(pos.y%2) && !(pos.x%2));
+    const bool greenb = ((pos.y%2) && (pos.x%2));
     const bool blue = ((pos.y%2) && !(pos.x%2));
     float craw = sampleR(rawTxt, in.pos);
     float crawl = sampleR(rawTxt, in.pos, {-1,+0});
     float crawr = sampleR(rawTxt, in.pos, {+1,+0});
     float crawu = sampleR(rawTxt, in.pos, {+0,-1});
     float crawd = sampleR(rawTxt, in.pos, {+0,+1});
-    float crawul = 0;//sampleR(rawTxt, in.pos, {-1,-1});
-    float crawur = 0;//sampleR(rawTxt, in.pos, {+1,-1});
-    float crawdl = 0;//sampleR(rawTxt, in.pos, {-1,+1});
-    float crawdr = 0;//sampleR(rawTxt, in.pos, {+1,+1});
+    float crawul = sampleR(rawTxt, in.pos, {-1,-1});
+    float crawur = sampleR(rawTxt, in.pos, {+1,-1});
+    float crawdl = sampleR(rawTxt, in.pos, {-1,+1});
+    float crawdr = sampleR(rawTxt, in.pos, {+1,+1});
     float thresh = 1;
     
     if (craw>=thresh) {
         if (crawl>=thresh || crawr>=thresh || crawu>=thresh || crawd>=thresh) {
 //            if (red) {
+//                craw = ctx.whitePoint_CamRaw_D50.r;
+//            } else if (greenr || greenb) {
+//                craw = ctx.whitePoint_CamRaw_D50.g;
+//            } else if (blue) {
+//                craw = ctx.whitePoint_CamRaw_D50.b;
+//            }
+            
+            
+//            if (red) {
 //                craw *= ctx.highlightFactor.r;
-//            } else if (green) {
+//            } else if (greenr || greenb) {
 //                craw *= ctx.highlightFactor.g;
 //            } else if (blue) {
 //                craw *= ctx.highlightFactor.b;
 //            }
             
+//            // looks good, but has a blueish tint when decreasing luminance too much
+//            if (red) {
+//                craw *= 0.9607;
+//            } else if (greenr || greenb) {
+//                craw *= 1.3936;
+//            } else if (blue) {
+//                craw *= 1.0114;
+//            }
+            
             if (red) {
-                craw *= 0.9607;
-            } else if (green) {
-                craw *= 1.3936;
+                craw *= 1.02765;
+            } else if (greenr || greenb) {
+                craw *= 1.46705;
             } else if (blue) {
-                craw *= 1.0114;
+                craw *= 0.90935;
             }
             
-            
-        
         } else {
             if (red) {
                 craw *= 1;
-            } else if (green) {
-                craw = 2.82*(.25*crawl+.25*crawr+.25*crawu*+.25*crawd);
+            
+//            } else if (greenr) {
+//                const float b = crawu+crawd;
+//                const float r = crawl+crawr;
+//                craw = ctx.highlightFactor.b*b/4 + ctx.highlightFactor.r*r/4;
+//            
+//            } else if (greenb) {
+//                const float r = crawu+crawd;
+//                const float b = crawl+crawr;
+//                craw = ctx.highlightFactor.b*b/4 + ctx.highlightFactor.r*r/4;
+            
+            
+            // best so far
+            } else if (greenr) {
+                craw = 1.587*(crawl+crawr+crawu+crawd)/4;
+            
+            // best so far
+            } else if (greenb) {
+                craw = 1.551*(crawl+crawr+crawu+crawd)/4;
+            
+//            } else if (greenr) {
+//                craw = ctx.highlightFactor.r*(crawl+crawr+crawu+crawd)/4;
+//            
+//            } else if (greenb) {
+//                craw = ctx.highlightFactor.b*(crawl+crawr+crawu+crawd)/4;
+            
+            
             } else if (blue) {
                 craw *= 1;
             }
         }
     }
     
-//    if (craw >= thresh      ||
-//        crawl >= thresh     ||
-//        crawr >= thresh     ||
-//        crawu >= thresh     ||
-//        crawd >= thresh     ||
-//        crawul >= thresh    ||
-//        crawur >= thresh    ||
-//        crawdl >= thresh    ||
-//        crawdr >= thresh    ) {
-//        craw = 0;
-//    }
-    
     return craw;
 }
+
+
+
+
+
+
+//fragment float ImageLayer_FixHighlightsRaw(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> rawTxt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    //  Row0    G R G R
+//    //  Row1    B G B G
+//    //  Row2    G R G R
+//    //  Row3    B G B G
+//    
+//    const uint2 pos = uint2(in.pos.xy);
+//    const bool red = (!(pos.y%2) && (pos.x%2));
+//    const bool greenr = (!(pos.y%2) && !(pos.x%2));
+//    const bool greenb = ((pos.y%2) && (pos.x%2));
+//    const bool blue = ((pos.y%2) && !(pos.x%2));
+//    const uint2 bounds(rawTxt.get_width(), rawTxt.get_height());
+//    float craw      = sampleR(rawTxt, in.pos, {+0,+0});
+//    float crawl     = sampleR(rawTxt, in.pos, {-1,+0});
+//    float crawr     = sampleR(rawTxt, in.pos, {+1,+0});
+//    float crawu     = sampleR(rawTxt, in.pos, {+0,-1});
+//    float crawd     = sampleR(rawTxt, in.pos, {+0,+1});
+//    float crawul    = sampleR(rawTxt, in.pos, {-1,-1});
+//    float crawur    = sampleR(rawTxt, in.pos, {+1,-1});
+//    float crawdl    = sampleR(rawTxt, in.pos, {-1,+1});
+//    float crawdr    = sampleR(rawTxt, in.pos, {+1,+1});
+//    float thresh = 1;
+//    
+//    if (craw>=thresh) {
+////        if (crawl>=thresh && crawr>=thresh && crawu>=thresh && crawd>=thresh &&
+////            crawul>=thresh && crawur>=thresh && crawdl>=thresh && crawdr>=thresh) {
+////            
+////            
+////        }
+//        
+//        return (crawl+crawr+crawu+crawd+crawul+crawur+crawdl+crawdr)/20;
+//        
+////        return (crawl+crawr+crawu+crawd+crawul+crawur+crawdl+crawdr)/20;
+//    }
+//    
+//    
+//    // repros
+////    if (craw>=thresh) {
+////        if (crawl>=thresh && crawr>=thresh && crawu>=thresh && crawd>=thresh &&
+////            crawul>=thresh && crawur>=thresh && crawdl>=thresh && crawdr>=thresh) {
+////            
+////            craw *= 0.9607;
+////        
+////        } else if (greenr || greenb) {
+////            return 0;
+////        }
+////    }
+//    
+//    return 0;
+//}
 
 //fragment float4 ImageLayer_FixHighlights(
 //    constant RenderContext& ctx [[buffer(0)]],

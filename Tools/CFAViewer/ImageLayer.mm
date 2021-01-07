@@ -52,6 +52,8 @@ using namespace CFAViewer::ImageLayerTypes;
     _library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
     Assert(_library, return nil);
     
+    _pipelineStates = [NSMutableDictionary new];
+    
     _sampleBuf_cameraRaw = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
     _sampleBuf_XYZD50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
     _sampleBuf_SRGBD65 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
@@ -245,6 +247,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     // Update our drawable size using our view size (in pixels)
     [self setDrawableSize:{(CGFloat)_ctx.imageWidth, (CGFloat)_ctx.imageHeight}];
     
+    id<MTLTexture> rawOriginalTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> rawTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> filteredHTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> filteredVTxt = [self _newTexture:MTLPixelFormatR32Float];
@@ -261,7 +264,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     // Load the pixels into a texture
     {
-        [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_LoadRaw"
+        [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_LoadRaw"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
                 [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
@@ -276,7 +279,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_FixHighlightsRaw"
             block:^(id<MTLRenderCommandEncoder> encoder) {
                 [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentTexture:rawTxt atIndex:0];
+                [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
             }
         ];
     }
@@ -524,7 +527,6 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             }
         ];
     }
-    
     
     // Apply SRGB gamma
     {

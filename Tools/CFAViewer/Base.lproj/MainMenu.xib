@@ -832,7 +832,7 @@
                         <rect key="frame" x="319" y="898" width="66" height="27"/>
                         <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="message" size="11"/>
+                            <font key="font" metaFont="label" size="11"/>
                         </buttonCell>
                         <connections>
                             <action selector="identityButtonPressed:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -840,28 +840,28 @@
                     </button>
                     <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Th-eO-8Sc">
                         <rect key="frame" x="18" y="181" width="311" height="19"/>
-                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="2" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
+                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
                         <connections>
                             <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="ZFW-Ay-lx2"/>
                         </connections>
                     </slider>
                     <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="upA-f1-hue">
                         <rect key="frame" x="18" y="158" width="311" height="19"/>
-                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="2" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Q0d-Td-jQG"/>
+                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="Q0d-Td-jQG"/>
                         <connections>
                             <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="dCt-ZE-JVe"/>
                         </connections>
                     </slider>
                     <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zQK-wl-iSr">
                         <rect key="frame" x="18" y="135" width="311" height="19"/>
-                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="2" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Fyy-IZ-Lc2"/>
+                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="Fyy-IZ-Lc2"/>
                         <connections>
                             <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="2Aw-qb-xlR"/>
                         </connections>
                     </slider>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="q61-MO-178">
                         <rect key="frame" x="345" y="183" width="37" height="16"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Label" id="nuy-kE-ySz">
+                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Label" id="nuy-kE-ySz">
                             <font key="font" usesAppearanceFont="YES"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -869,7 +869,7 @@
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SVG-zB-67p">
                         <rect key="frame" x="345" y="160" width="37" height="16"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Label" id="Au2-C9-SAQ">
+                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Label" id="Au2-C9-SAQ">
                             <font key="font" usesAppearanceFont="YES"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -877,7 +877,7 @@
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IQj-1K-ea4">
                         <rect key="frame" x="345" y="137" width="37" height="16"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Label" id="1yP-Jk-oNV">
+                        <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Label" id="1yP-Jk-oNV">
                             <font key="font" usesAppearanceFont="YES"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
