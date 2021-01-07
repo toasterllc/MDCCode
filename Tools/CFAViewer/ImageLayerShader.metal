@@ -1660,7 +1660,32 @@ fragment float ImageLayer_FixHighlightsRaw(
         
     } else {
         if (red) {
-//            c.get() = ctx.highlightFactorR.r*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+//            uint gcount = 0;
+//            float g = 0;
+//            if (c.get(-1,-1) < thresh) { g += c.get(-1,-1); gcount++; };
+//            if (c.get(+1,-1) < thresh) { g += c.get(+1,-1); gcount++; };
+//            if (c.get(-1,+1) < thresh) { g += c.get(-1,+1); gcount++; };
+//            if (c.get(+1,+1) < thresh) { g += c.get(+1,+1); gcount++; };
+//            g /= gcount;
+//            
+//            uint bcount = 0;
+//            float b = 0;
+//            if (c.get(-1,+0) < thresh) { g += c.get(-1,+0); bcount++; };
+//            if (c.get(+1,+0) < thresh) { g += c.get(+1,+0); bcount++; };
+//            if (c.get(+0,-1) < thresh) { g += c.get(+0,-1); bcount++; };
+//            if (c.get(+0,+1) < thresh) { g += c.get(+0,+1); bcount++; };
+//            b /= bcount;
+//            
+//            if (gcount && bcount) {
+//                c.get() = (ctx.highlightFactorR.g*g) + (ctx.highlightFactorR.b*b);
+//            } else if (gcount) {
+//                c.get() = (ctx.highlightFactorR.g*g);
+//            } else if (bcount) {
+//                c.get() = (ctx.highlightFactorR.b*b);
+//            }
+            
+//            c.get() =   ctx.highlightFactorR.r*(c.get(-1,-1)+c.get(+1,-1)+c.get(-1,+1)+c.get(+1,+1))/8 +
+//                        ctx.highlightFactorR.g*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/8;
             c.get() = 1.018*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         
         } else if (greenr) {
