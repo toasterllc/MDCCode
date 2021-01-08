@@ -1651,11 +1651,11 @@ fragment float ImageLayer_FixHighlightsRaw(
     if (c.get(+0,+1) < thresh) goodCount++;
     if (goodCount == 0) {
         if (red) {
-            c.get() *= 1.02765;
+            c.get() *= 1.1300929235;
         } else if (greenr || greenb) {
-            c.get() *= 1.46705;
+            c.get() *= 1.6132952108;
         } else if (blue) {
-            c.get() *= 0.90935;
+            c.get() *= 1;
         }
         
     } else {
@@ -1686,19 +1686,19 @@ fragment float ImageLayer_FixHighlightsRaw(
             
 //            c.get() =   ctx.highlightFactorR.r*(c.get(-1,-1)+c.get(+1,-1)+c.get(-1,+1)+c.get(+1,+1))/8 +
 //                        ctx.highlightFactorR.g*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/8;
-            c.get() = 1.018*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            c.get() = 1.051*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         
         } else if (greenr) {
 //            c.get() = ctx.highlightFactorR.g*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
-            c.get() = 1.587*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            c.get() = 1.544*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         
         } else if (greenb) {
 //            c.get() = ctx.highlightFactorR.b*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
-            c.get() = 1.551*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            c.get() = 1.544*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         
         } else if (blue) {
 //            c.get() = ctx.highlightFactorG.r*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
-            c.get() = 0.983*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            c.get() = 1.195*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
         }
     }
     return c.get();
