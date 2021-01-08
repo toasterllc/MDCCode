@@ -68,9 +68,9 @@ const Color_SRGB_D65 ColorCheckerColors[ColorCheckerCount] {
     ImageLayer* _imageLayer;
     CALayer* _sampleLayer;
     CGFloat _colorCheckerCircleRadius;
-    bool _colorCheckerCirclesVisible;
+    bool _colorCheckersEnabled;
     bool _colorCheckersPositioned;
-    std::vector<CAShapeLayer*> _colorCheckerCircles;
+    std::vector<CAShapeLayer*> _colorCheckers;
     
     CGFloat _zoomScale;
     struct {
@@ -115,9 +115,9 @@ const Color_SRGB_D65 ColorCheckerColors[ColorCheckerCount] {
         setCircleRadius(circle, _colorCheckerCircleRadius);
         [circle setFillColor:(CGColorRef)SRGBColor(c[0], c[1], c[2], 1)];
         [circle setActions:LayerNullActions()];
-        [circle setHidden:!_colorCheckerCirclesVisible];
+        [circle setHidden:!_colorCheckersEnabled];
         [_imageLayer addSublayer:circle];
-        _colorCheckerCircles.push_back(circle);
+        _colorCheckers.push_back(circle);
         
         i++;
     }
@@ -171,7 +171,7 @@ const Color_SRGB_D65 ColorCheckerColors[ColorCheckerCount] {
 
 // `p` is in coordinates of _layer
 - (CAShapeLayer*)_findColorCheckerCircle:(CGPoint)p {
-    for (CAShapeLayer* c : _colorCheckerCircles) {
+    for (CAShapeLayer* c : _colorCheckers) {
         const CGPoint cp = [c position];
         if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _colorCheckerCircleRadius) {
             return c;
@@ -185,8 +185,8 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     [c setBounds:{0,0,r*2,r*2}];
 }
 
-- (void)setColorCheckerCirclesVisible:(bool)visible {
-    _colorCheckerCirclesVisible = visible;
+- (void)setColorCheckersVisible:(bool)visible {
+    _colorCheckersEnabled = visible;
     
     // Apply the initial color checker positions, if they haven't been positioned yet
     if (!_colorCheckersPositioned) {
@@ -194,8 +194,8 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         _colorCheckersPositioned = true;
     }
     
-    for (CAShapeLayer* circle : _colorCheckerCircles) {
-        [circle setHidden:!_colorCheckerCirclesVisible];
+    for (CAShapeLayer* circle : _colorCheckers) {
+        [circle setHidden:!_colorCheckersEnabled];
     }
 }
 
@@ -205,7 +205,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         fromLayer:[[win contentView] layer]];
     
     // Handle circle being clicked
-    if (_colorCheckerCirclesVisible) {
+    if (_colorCheckersEnabled) {
         CAShapeLayer* circle = [self _findColorCheckerCircle:p];
         if (circle) {
             TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
@@ -287,7 +287,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
                 .5*size.width  + x*(_colorCheckerCircleRadius+10),
                 .5*size.height - y*(_colorCheckerCircleRadius+10)
             };
-            CAShapeLayer* circle = _colorCheckerCircles[i];
+            CAShapeLayer* circle = _colorCheckers[i];
             [circle setPosition:p];
         }
     }
@@ -296,7 +296,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 - (std::vector<CGPoint>)colorCheckerPositions {
     const CGSize layerSize = [_imageLayer bounds].size;
     std::vector<CGPoint> r;
-    for (CALayer* l : _colorCheckerCircles) {
+    for (CALayer* l : _colorCheckers) {
         CGPoint p = [l position];
         p.x /= layerSize.width;
         p.y /= layerSize.height;
@@ -310,7 +310,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     assert(points.size() == ColorCheckerCount);
     const CGSize layerSize = [_imageLayer bounds].size;
     size_t i = 0;
-    for (CALayer* l : _colorCheckerCircles) {
+    for (CALayer* l : _colorCheckers) {
         CGPoint p = points[i];
         p.y = 1-p.y; // Flip Y, since the origin of the supplied points is the top-left
         p.x *= layerSize.width;
@@ -323,7 +323,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 
 - (void)setColorCheckerCircleRadius:(CGFloat)r {
     _colorCheckerCircleRadius = r;
-    for (CAShapeLayer* c : _colorCheckerCircles) {
+    for (CAShapeLayer* c : _colorCheckers) {
         setCircleRadius(c, _colorCheckerCircleRadius);
     }
 }
@@ -399,10 +399,15 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     IBOutlet MainView* _mainView;
     
     IBOutlet NSSwitch* _liveSwitch;
+    
+    IBOutlet NSButton* _colorCheckersEnabledButton;
+    IBOutlet NSButton* _resetColorCheckersButton;
+    
     IBOutlet HistogramView* _inputHistogramView;
     IBOutlet HistogramView* _outputHistogramView;
     IBOutlet NSTextField* _colorMatrixTextField;
-    IBOutlet NSMenuItem* _showColorCheckerCirclesMenuItem;
+    
+    IBOutlet NSButton* _debayerLMMSEGammaEnabledButton;
     
     IBOutlet NSTextField* _colorText_cameraRaw;
     IBOutlet NSTextField* _colorText_XYZ_D50;
@@ -429,7 +434,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     IBOutlet NSSlider*      _highlightFactorB2Slider;
     IBOutlet NSTextField*   _highlightFactorB2Label;
     
-    bool _colorCheckerCirclesVisible;
+    bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
     
     struct {
@@ -478,6 +483,10 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         [_mainView setColorCheckerPositions:points];
     }
     
+    [self _setDebayerLMMSEGammaEnabled:true];
+    
+//    [self _setColorCheckersEnabled:false];
+    
 //    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
 //        const uint32_t count = 100;
 //        auto startTime = MyTime::Now();
@@ -490,6 +499,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 }
 
 - (IBAction)identityButtonPressed:(id)sender {
+    [self _setColorCheckersEnabled:false];
     [self _resetColorMatrix];
 }
 
@@ -564,6 +574,18 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         [NSString stringWithFormat:@"%f %f %f", _state.sample_XYZ_D50[0], _state.sample_XYZ_D50[1], _state.sample_XYZ_D50[2]]];
     [_colorText_SRGB_D65 setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _state.sample_SRGB_D65[0], _state.sample_SRGB_D65[1], _state.sample_SRGB_D65[2]]];
+}
+
+- (void)_setColorCheckersEnabled:(bool)en {
+    _colorCheckersEnabled = en;
+    [_colorCheckersEnabledButton setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
+    [_mainView setColorCheckersVisible:_colorCheckersEnabled];
+    [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
+    
+    if (_colorCheckersEnabled) {
+        [self colorCheckerPositionsChanged];
+    }
 }
 
 //  Row0    G1  R  G1  R
@@ -737,16 +759,22 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
     NSLog(@"liveSwitchToggled");
 }
 
-- (IBAction)showHideColorCheckerCircles:(id)sender {
-	_colorCheckerCirclesVisible = !_colorCheckerCirclesVisible;
-    [_mainView setColorCheckerCirclesVisible:_colorCheckerCirclesVisible];
-    [_showColorCheckerCirclesMenuItem setState:(_colorCheckerCirclesVisible ? NSControlStateValueOn : NSControlStateValueOff)];
+- (IBAction)toggleColorCheckers:(id)sender {
+    [self _setColorCheckersEnabled:([_colorCheckersEnabledButton state]==NSControlStateValueOn)];
+}
+
+- (IBAction)resetColorCheckers:(id)sender {
+    [_mainView resetColorCheckerPositions];
     [self colorCheckerPositionsChanged];
 }
 
-- (IBAction)resetColorCheckerCircles:(id)sender {
-    [_mainView resetColorCheckerPositions];
-    [self colorCheckerPositionsChanged];
+- (IBAction)debayerOptionsChanged:(id)sender {
+    [self _setDebayerLMMSEGammaEnabled:([_debayerLMMSEGammaEnabledButton state]==NSControlStateValueOn)];
+}
+
+- (void)_setDebayerLMMSEGammaEnabled:(bool)en {
+    [_debayerLMMSEGammaEnabledButton setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [[_mainView imageLayer] setDebayerLMMSEGammaEnabled:en];
 }
 
 - (IBAction)highlightFactorSliderChanged:(id)sender {

@@ -18,6 +18,7 @@ namespace CFAViewer::ImageLayerTypes {
 
 - (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)image;
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
+- (void)setDebayerLMMSEGammaEnabled:(bool)en;
 - (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
 - (void)setSampleRect:(CGRect)rect;
 // `handler` is called on a background queue when histograms/sample data changes

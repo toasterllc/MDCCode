@@ -27,13 +27,14 @@ using namespace ColorUtil;
     struct {
         std::mutex lock; // Protects this struct
         RenderContext ctx;
-        id<MTLBuffer> pixelData;
+        bool debayerLMMSEGammaEnabled = false;
+        id<MTLBuffer> pixelData = nil;
         
-        id<MTLBuffer> sampleBuf_CamRaw_D50;
-        id<MTLBuffer> sampleBuf_XYZ_D50;
-        id<MTLBuffer> sampleBuf_SRGB_D65;
+        id<MTLBuffer> sampleBuf_CamRaw_D50 = nil;
+        id<MTLBuffer> sampleBuf_XYZ_D50 = nil;
+        id<MTLBuffer> sampleBuf_SRGB_D65 = nil;
         
-        ImageLayerDataChangedHandler dataChangedHandler;
+        ImageLayerDataChangedHandler dataChangedHandler = nil;
     } _state;
     
     Histogram _inputHistogram __attribute__((aligned(4096)));
@@ -151,6 +152,12 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     _state.ctx.whitePoint_XYY_D50 = simdFromMat(whitePoint_XYY_D50);
     _state.ctx.whitePoint_CamRaw_D50 = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(whitePoint_XYY_D50));
     
+    [self setNeedsDisplay];
+}
+
+- (void)setDebayerLMMSEGammaEnabled:(bool)en {
+    auto lock = std::lock_guard(_state.lock);
+    _state.debayerLMMSEGammaEnabled = en;
     [self setNeedsDisplay];
 }
 
@@ -287,6 +294,16 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     // LMMSE Debayer
     {
+        // Gamma before
+        if (_state.debayerLMMSEGammaEnabled) {
+            [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_LMMSE_Gamma"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:rawTxt atIndex:0];
+                }
+            ];
+        }
+        
         // Horizontal interpolation
         {
             const bool h = true;
@@ -459,6 +476,16 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                     [encoder setFragmentTexture:txt atIndex:0];
                     [encoder setFragmentTexture:diffGRTxt atIndex:1];
                     [encoder setFragmentTexture:diffGBTxt atIndex:2];
+                }
+            ];
+        }
+        
+        // Gamma after
+        if (_state.debayerLMMSEGammaEnabled) {
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_Degamma"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:txt atIndex:0];
                 }
             ];
         }

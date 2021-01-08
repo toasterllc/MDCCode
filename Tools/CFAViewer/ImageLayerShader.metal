@@ -588,12 +588,6 @@ uint3 binFromColor(float3 color) {
     };
 }
 
-float SRGBFromLSRGB(float x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    if (x <= 0.0031308) return 12.92*x;
-    return 1.055*pow(x, 1/2.4) - .055;
-}
-
 float3 XYYFromXYZ(const float3 xyz) {
     const float denom = xyz[0] + xyz[1] + xyz[2];
     return {xyz[0]/denom, xyz[1]/denom, xyz[1]};
@@ -672,6 +666,35 @@ float3 sampleRGB(texture2d<float> txt, T pos, int2 delta=0) {
 template <typename T>
 float sampleR(texture2d<float> txt, T pos, int2 delta=0) {
     return sampleRGB(txt, pos, delta).r;
+}
+
+float SRGBGamma(float x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    if (x <= 0.0031308) return 12.92*x;
+    return 1.055*pow(x, 1/2.4)-.055;
+}
+
+float InverseSRGBGamma(float x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    if (x <= 0.04045) return x/12.92;
+    return pow((x+.055)/1.055, 2.4);
+}
+
+fragment float ImageLayer_LMMSE_Gamma(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    return SRGBGamma(sampleR(rawTxt, in.pos));
+}
+
+fragment float4 ImageLayer_LMMSE_Degamma(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float3 c = sampleRGB(txt, in.pos);
+    return float4(InverseSRGBGamma(c.r), InverseSRGBGamma(c.g), InverseSRGBGamma(c.b), 1);
 }
 
 fragment float ImageLayer_LMMSE_Interp5(
@@ -1985,11 +2008,11 @@ fragment float4 ImageLayer_SRGBGamma(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgb = sampleRGB(txt, in.pos);
+    const float3 c_LSRGB = sampleRGB(txt, in.pos);
     float3 c_SRGB = float3{
-        SRGBFromLSRGB(lsrgb[0]),
-        SRGBFromLSRGB(lsrgb[1]),
-        SRGBFromLSRGB(lsrgb[2])
+        SRGBGamma(c_LSRGB.r),
+        SRGBGamma(c_LSRGB.g),
+        SRGBGamma(c_LSRGB.b)
     };
     
     const uint2 pos = uint2(in.pos.xy);
