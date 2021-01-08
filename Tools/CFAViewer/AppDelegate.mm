@@ -494,6 +494,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 }
 
 - (void)_resetColorMatrix {
+    auto lock = std::unique_lock(_state.lock);
     [self _updateColorMatrix:{1.,0.,0.,0.,1.,0.,0.,0.,1.}];
 }
 
@@ -518,11 +519,12 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         return;
     }
     
+    auto lock = std::unique_lock(_state.lock);
     [self _updateColorMatrix:vals.data()];
 }
 
+// _state.lock must be held
 - (void)_updateColorMatrix:(const ColorMatrix&)colorMatrix {
-    auto lock = std::unique_lock(_state.lock);
     _state.colorMatrix = colorMatrix;
     
     [[_mainView imageLayer] setColorMatrix:colorMatrix];
@@ -782,7 +784,6 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
 
 - (void)colorCheckerPositionsChanged {
     auto lock = std::unique_lock(_state.lock);
-    
     auto points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorCheckerCount);
     
