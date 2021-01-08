@@ -1515,8 +1515,6 @@ fragment float ImageLayer_FixHighlightsRaw(
     const bool blue = ((pos.y%2) && !(pos.x%2));
     Float3x3 c(rawTxt, pos);
     
-    const float3 csat = ctx.whitePoint_CamRaw_D50;
-//    const float3 csat(1.1300929235, 1.6132952108, 1);
     float thresh = 1;
     
     // Short-circuit if this pixel isn't saturated

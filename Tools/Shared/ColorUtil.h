@@ -2,10 +2,13 @@
 #import "Mat.h"
 
 namespace ColorUtil {
+    using ColorMatrix = Mat<double,3,3>;
     using Color3 = Mat<double,3,1>;
     using Color_XYY_D50 = Color3;
     using Color_XYZ_D50 = Color3;
     using Color_CIERGB_E = Color3;
+    using Color_SRGB_D65 = Color3;
+    using Color_CamRaw_D50 = Color3;
     
     inline Color_XYY_D50 XYYFromXYZ(const Color_XYZ_D50& xyz) {
         const double denom = xyz[0]+xyz[1]+xyz[2];

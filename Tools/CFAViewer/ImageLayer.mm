@@ -12,6 +12,7 @@
 using namespace CFAViewer;
 using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
+using namespace ColorUtil;
 
 @implementation ImageLayer {
     id<MTLDevice> _device;
@@ -22,14 +23,18 @@ using namespace CFAViewer::ImageLayerTypes;
 //    id<MTLRenderPipelineState> _colorAdjustPipelineState;
 //    id<MTLRenderPipelineState> _findHighlightsPipelineState;
 //    id<MTLRenderPipelineState> _srgbGammaPipelineState;
-    ImageLayerHistogramChangedHandler _histogramChangedHandler;
     
-    RenderContext _ctx;
-    id<MTLBuffer> _pixelData;
-    
-    id<MTLBuffer> _sampleBuf_cameraRaw;
-    id<MTLBuffer> _sampleBuf_XYZD50;
-    id<MTLBuffer> _sampleBuf_SRGBD65;
+    struct {
+        std::mutex lock; // Protects this struct
+        RenderContext ctx;
+        id<MTLBuffer> pixelData;
+        
+        id<MTLBuffer> sampleBuf_CamRaw_D50;
+        id<MTLBuffer> sampleBuf_XYZ_D50;
+        id<MTLBuffer> sampleBuf_SRGB_D65;
+        
+        ImageLayerDataChangedHandler dataChangedHandler;
+    } _state;
     
     Histogram _inputHistogram __attribute__((aligned(4096)));
     id<MTLBuffer> _inputHistogramBuf;
@@ -54,51 +59,46 @@ using namespace CFAViewer::ImageLayerTypes;
     
     _pipelineStates = [NSMutableDictionary new];
     
-    _sampleBuf_cameraRaw = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
-    _sampleBuf_XYZD50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
-    _sampleBuf_SRGBD65 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
-    
-//    _highlightsBuf = [_device newBufferWithBytesNoCopy:&_highlights
-//        length:sizeof(_highlights) options:MTLResourceStorageModeShared deallocator:nil];
-    
-    // We have multiple render passes
-    // -> so a fragment shader's input is the previous shader's output
-    // -> so the drawable's texture needs to support sampling
-    // -> so framebufferOnly=false to allow sampling
-    [self setFramebufferOnly:false];
+    auto lock = std::lock_guard(_state.lock);
+        _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
+        _state.sampleBuf_XYZ_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
+        _state.sampleBuf_SRGB_D65 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
     
     return self;
 }
 
-- (void)updateImage:(const Image&)image {
+- (void)setImage:(const Image&)image {
     // If we don't have pixel data, ensure that our image has 0 pixels
     NSParameterAssert(image.pixels || (image.width*image.height)==0);
+    
+    auto lock = std::lock_guard(_state.lock);
+    
     const size_t pixelCount = image.width*image.height;
     
     // Reset image size in case something fails
-    _ctx.imageWidth = 0;
-    _ctx.imageHeight = 0;
+    _state.ctx.imageWidth = 0;
+    _state.ctx.imageHeight = 0;
     
     const size_t len = pixelCount*sizeof(ImagePixel);
     if (len) {
-        if (!_pixelData || [_pixelData length]<len) {
-            _pixelData = [_device newBufferWithLength:len options:MTLResourceCPUCacheModeDefaultCache];
-            Assert(_pixelData, return);
+        if (!_state.pixelData || [_state.pixelData length]<len) {
+            _state.pixelData = [_device newBufferWithLength:len options:MTLResourceCPUCacheModeDefaultCache];
+            Assert(_state.pixelData, return);
         }
         
         // Copy the pixel data into the Metal buffer
-        memcpy([_pixelData contents], image.pixels, len);
+        memcpy([_state.pixelData contents], image.pixels, len);
         
         // Set the image size now that we have image data
-        _ctx.imageWidth = image.width;
-        _ctx.imageHeight = image.height;
+        _state.ctx.imageWidth = image.width;
+        _state.ctx.imageHeight = image.height;
     
     } else {
-        _pixelData = nil;
+        _state.pixelData = nil;
     }
     
     const CGFloat scale = [self contentsScale];
-    [self setBounds:{0, 0, _ctx.imageWidth/scale, _ctx.imageHeight/scale}];
+    [self setBounds:{0, 0, _state.ctx.imageWidth/scale, _state.ctx.imageHeight/scale}];
     [self setNeedsDisplay];
 }
 
@@ -115,9 +115,8 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
 }
 
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm {
-    using namespace ColorUtil;
-    
-    _ctx.colorMatrix = simdFromMat(cm);
+    auto lock = std::lock_guard(_state.lock);
+    _state.ctx.colorMatrix = simdFromMat(cm);
     
     // From "How the CIE 1931 Color-Matching Functions Were
     // Derived from Wright–Guild Data", page 19
@@ -149,21 +148,18 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     // Set the luminance of every color to the maximum luminance possible
     whitePoint_XYY_D50[2] = maxY;
     
-    _ctx.whitePoint_XYY_D50 = simdFromMat(whitePoint_XYY_D50);
-    _ctx.whitePoint_CamRaw_D50 = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(whitePoint_XYY_D50));
+    _state.ctx.whitePoint_XYY_D50 = simdFromMat(whitePoint_XYY_D50);
+    _state.ctx.whitePoint_CamRaw_D50 = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(whitePoint_XYY_D50));
     
     [self setNeedsDisplay];
 }
 
 - (void)setHighlightFactor:(const Mat<double,3,3>&)hf {
-    _ctx.highlightFactorR = {(float)hf[0], (float)hf[1], (float)hf[2]};
-    _ctx.highlightFactorG = {(float)hf[3], (float)hf[4], (float)hf[5]};
-    _ctx.highlightFactorB = {(float)hf[6], (float)hf[7], (float)hf[8]};
+    auto lock = std::lock_guard(_state.lock);
+    _state.ctx.highlightFactorR = {(float)hf[0], (float)hf[1], (float)hf[2]};
+    _state.ctx.highlightFactorG = {(float)hf[3], (float)hf[4], (float)hf[5]};
+    _state.ctx.highlightFactorB = {(float)hf[6], (float)hf[7], (float)hf[8]};
     [self setNeedsDisplay];
-}
-
-- (void)setHistogramChangedHandler:(ImageLayerHistogramChangedHandler)histogramChangedHandler {
-    _histogramChangedHandler = histogramChangedHandler;
 }
 
 - (MetalTypes::Histogram)inputHistogram {
@@ -199,6 +195,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
 }
 
 using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
+// _state.lock must be held
 - (void)_renderPass:(id<MTLCommandBuffer>)cmdBuf texture:(id<MTLTexture>)texture
     name:(NSString*)name block:(NS_NOESCAPE RenderPassBlock)block {
     
@@ -217,7 +214,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     [encoder setRenderPipelineState:[self _pipelineState:name format:[texture pixelFormat]]];
     [encoder setFrontFacingWinding:MTLWindingCounterClockwise];
     [encoder setCullMode:MTLCullModeNone];
-    [encoder setVertexBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+    [encoder setVertexBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
     
     block(encoder);
     
@@ -227,11 +224,12 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     [encoder endEncoding];
 }
 
+// _state.lock must be held
 - (id<MTLTexture>)_newTexture:(MTLPixelFormat)fmt {
     MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
     [desc setTextureType:MTLTextureType2D];
-    [desc setWidth:_ctx.imageWidth];
-    [desc setHeight:_ctx.imageHeight];
+    [desc setWidth:_state.ctx.imageWidth];
+    [desc setHeight:_state.ctx.imageHeight];
     [desc setPixelFormat:fmt];
     [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
     id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
@@ -240,14 +238,16 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 }
 
 - (void)display {
+    auto lock = std::lock_guard(_state.lock);
+    
     // Short-circuit if we don't have any image data
-    if (!_pixelData) return;
+    if (!_state.pixelData) return;
     
     _inputHistogram = Histogram();
     _outputHistogram = Histogram();
     
     // Update our drawable size using our view size (in pixels)
-    [self setDrawableSize:{(CGFloat)_ctx.imageWidth, (CGFloat)_ctx.imageHeight}];
+    [self setDrawableSize:{(CGFloat)_state.ctx.imageWidth, (CGFloat)_state.ctx.imageHeight}];
     
     id<MTLTexture> rawOriginalTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> rawTxt = [self _newTexture:MTLPixelFormatR32Float];
@@ -268,19 +268,18 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_LoadRaw"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
-                [encoder setFragmentBuffer:_sampleBuf_cameraRaw offset:0 atIndex:2];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                [encoder setFragmentBuffer:_state.pixelData offset:0 atIndex:1];
+                [encoder setFragmentBuffer:_state.sampleBuf_CamRaw_D50 offset:0 atIndex:2];
             }
         ];
     }
-    
     
     // Fix highlights
     {
         [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_FixHighlightsRaw"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                 [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
             }
         ];
@@ -293,7 +292,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool h = true;
             [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_LMMSE_Interp5"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                 }
@@ -305,7 +304,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool h = false;
             [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_LMMSE_Interp5"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                 }
@@ -316,7 +315,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
             [self _renderPass:cmdBuf texture:diffHTxt name:@"ImageLayer_LMMSE_NoiseEst"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:filteredHTxt atIndex:1];
                 }
@@ -327,7 +326,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
             [self _renderPass:cmdBuf texture:diffVTxt name:@"ImageLayer_LMMSE_NoiseEst"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:filteredVTxt atIndex:1];
                 }
@@ -339,7 +338,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool h = true;
             [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_LMMSE_Smooth9"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                     [encoder setFragmentTexture:diffHTxt atIndex:0];
                 }
@@ -351,7 +350,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool h = false;
             [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_LMMSE_Smooth9"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
                     [encoder setFragmentTexture:diffVTxt atIndex:0];
                 }
@@ -362,7 +361,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
             [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcG"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:filteredHTxt atIndex:1];
                     [encoder setFragmentTexture:diffHTxt atIndex:2];
@@ -377,7 +376,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool modeGR = true;
             [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:1];
@@ -391,7 +390,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool modeGR = false;
             [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:1];
@@ -405,7 +404,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool modeGR = true;
             [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcDiagAvgDiffGRGB"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:1];
@@ -419,7 +418,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             const bool modeGR = false;
             [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcDiagAvgDiffGRGB"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:1];
@@ -432,7 +431,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
             [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcAxialAvgDiffGRGB"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:1];
                     [encoder setFragmentTexture:diffGRTxt atIndex:2];
@@ -444,7 +443,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
             [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcAxialAvgDiffGRGB"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:1];
                     [encoder setFragmentTexture:diffGBTxt atIndex:2];
@@ -456,7 +455,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
             [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcRB"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:0];
                     [encoder setFragmentTexture:diffGRTxt atIndex:1];
                     [encoder setFragmentTexture:diffGBTxt atIndex:2];
@@ -471,7 +470,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 //        // ImageLayer_DebayerBilinear
 //        [self _renderPass:cmdBuf texture:texture name:@"ImageLayer_DebayerBilinear"
 //            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+//                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
 //                [encoder setFragmentBuffer:_pixelData offset:0 atIndex:1];
 //                [encoder setFragmentBuffer:_sampleBuf_cameraRaw offset:0 atIndex:2];
 //            }
@@ -482,7 +481,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 //    {
 //        [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_FixHighlights"
 //            block:^(id<MTLRenderCommandEncoder> encoder) {
-//                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+//                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
 //                [encoder setFragmentTexture:rawTxt atIndex:0];
 //                [encoder setFragmentTexture:txt atIndex:1];
 //            }
@@ -493,7 +492,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYYD50FromCameraRaw"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                 [encoder setFragmentTexture:txt atIndex:0];
             }
         ];
@@ -503,7 +502,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DecreaseLuminance"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                 [encoder setFragmentTexture:txt atIndex:0];
             }
         ];
@@ -513,7 +512,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYZD50FromXYYD50"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                 [encoder setFragmentTexture:txt atIndex:0];
             }
         ];
@@ -523,8 +522,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LSRGBD65FromXYZD50"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentBuffer:_sampleBuf_XYZD50 offset:0 atIndex:1];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
                 [encoder setFragmentTexture:txt atIndex:0];
             }
         ];
@@ -534,8 +533,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_SRGBGamma"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
-                [encoder setFragmentBuffer:_sampleBuf_SRGBD65 offset:0 atIndex:1];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                [encoder setFragmentBuffer:_state.sampleBuf_SRGB_D65 offset:0 atIndex:1];
                 [encoder setFragmentTexture:txt atIndex:0];
             }
         ];
@@ -545,7 +544,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     {
         [self _renderPass:cmdBuf texture:[drawable texture] name:@"ImageLayer_Display"
             block:^(id<MTLRenderCommandEncoder> encoder) {
-                [encoder setFragmentBytes:&_ctx length:sizeof(_ctx) atIndex:0];
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                 [encoder setFragmentTexture:txt atIndex:0];
             }
         ];
@@ -574,7 +573,12 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 //    );
     
     // Notify that our histogram changed
-    if (_histogramChangedHandler) _histogramChangedHandler(self);
+    auto dataChangedHandler = _state.dataChangedHandler;
+    if (dataChangedHandler) {
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+            dataChangedHandler(self);
+        });
+    }
     
 //    size_t i = 0;
 //    for (const auto& count : _inputHistogram.r) {
@@ -640,43 +644,62 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 //}
 
 - (void)setSampleRect:(CGRect)rect {
-    rect.origin.x *= _ctx.imageWidth;
-    rect.origin.y *= _ctx.imageHeight;
-    rect.size.width *= _ctx.imageWidth;
-    rect.size.height *= _ctx.imageHeight;
-    _ctx.sampleRect = {
-        .left = (uint32_t)std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)_ctx.imageWidth),
-        .right = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)_ctx.imageWidth),
-        .top = (uint32_t)std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_ctx.imageHeight),
-        .bottom = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_ctx.imageHeight),
+    auto lock = std::lock_guard(_state.lock);
+    auto& ctx = _state.ctx;
+    
+    rect.origin.x *= ctx.imageWidth;
+    rect.origin.y *= ctx.imageHeight;
+    rect.size.width *= ctx.imageWidth;
+    rect.size.height *= ctx.imageHeight;
+    ctx.sampleRect = {
+        .left = (uint32_t)std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)ctx.imageWidth),
+        .right = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)ctx.imageWidth),
+        .top = (uint32_t)std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)ctx.imageHeight),
+        .bottom = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)ctx.imageHeight),
     };
     
-    if (_ctx.sampleRect.left == _ctx.sampleRect.right) _ctx.sampleRect.right++;
-    if (_ctx.sampleRect.top == _ctx.sampleRect.bottom) _ctx.sampleRect.bottom++;
+    if (ctx.sampleRect.left == ctx.sampleRect.right) ctx.sampleRect.right++;
+    if (ctx.sampleRect.top == ctx.sampleRect.bottom) ctx.sampleRect.bottom++;
     
-    _sampleBuf_cameraRaw = [_device newBufferWithLength:
-        sizeof(simd::float3)*std::max((uint32_t)1, _ctx.sampleRect.count())
+    _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:
+        sizeof(simd::float3)*std::max((uint32_t)1, ctx.sampleRect.count())
         options:MTLResourceStorageModeShared];
     
-    _sampleBuf_XYZD50 = [_device newBufferWithLength:
-        sizeof(simd::float3)*std::max((uint32_t)1, _ctx.sampleRect.count())
+    _state.sampleBuf_XYZ_D50 = [_device newBufferWithLength:
+        sizeof(simd::float3)*std::max((uint32_t)1, ctx.sampleRect.count())
         options:MTLResourceStorageModeShared];
     
-    _sampleBuf_SRGBD65 = [_device newBufferWithLength:
-        sizeof(simd::float3)*std::max((uint32_t)1, _ctx.sampleRect.count())
+    _state.sampleBuf_SRGB_D65 = [_device newBufferWithLength:
+        sizeof(simd::float3)*std::max((uint32_t)1, ctx.sampleRect.count())
         options:MTLResourceStorageModeShared];
     
-    [self display];
+    [self setNeedsDisplay];
 }
 
-- (simd::float3)sampleCameraRaw {
-    assert(_sampleBuf_cameraRaw);
-    const simd::float3* vals = (simd::float3*)[_sampleBuf_cameraRaw contents];
+- (void)setDataChangedHandler:(ImageLayerDataChangedHandler)handler {
+    auto lock = std::lock_guard(_state.lock);
+    _state.dataChangedHandler = handler;
+}
+
+template <typename T>
+std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
+    std::unique_ptr<T[]> p(new T[[buf length]/sizeof(T)]);
+    memcpy(p.get(), [buf contents], [buf length]);
+    return p;
+}
+
+- (Color_CamRaw_D50)sample_CamRaw_D50 {
+    // Copy _state.sampleBuf_CamRaw_D50 locally
+    auto lock = std::unique_lock(_state.lock);
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleBuf_CamRaw_D50);
+        auto rect = _state.ctx.sampleRect;
+    lock.unlock();
+    
     size_t i = 0;
     simd::double3 c = {};
     simd::uint3 count = {};
-    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
-        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
+    for (size_t y=rect.top; y<rect.bottom; y++) {
+        for (size_t x=rect.left; x<rect.right; x++, i++) {
             const bool r = (!(y%2) && (x%2));
             const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
             const bool b = ((y%2) && !(x%2));
@@ -693,53 +716,41 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     return {(float)c[0], (float)c[1], (float)c[2]};
 }
 
-//- (simd::float3)sampleCameraRaw {
-//    assert(_sampleBuf_cameraRaw);
-//    const float* vals = (float*)[_sampleBuf_cameraRaw contents];
-//    size_t i = 0;
-//    simd::float3 c = {0,0,0};
-//    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
-//        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
-//            const bool r = (!(y%2) && (x%2));
-//            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
-//            const bool b = ((y%2) && !(x%2));
-//            const float val = vals[i];
-//            if (r)      c[0] += val;
-//            else if (g) c[1] += val;
-//            else if (b) c[2] += val;
-//        }
-//    }
-//    c /= i;
-//    return c;
-//}
-
-- (simd::float3)sampleXYZD50 {
-    assert(_sampleBuf_XYZD50);
-    const simd::float3* vals = (simd::float3*)[_sampleBuf_XYZD50 contents];
+- (Color_XYZ_D50)sample_XYZ_D50 {
+    // Copy _state.sampleBuf_XYZ_D50 locally
+    auto lock = std::unique_lock(_state.lock);
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleBuf_XYZ_D50);
+        auto rect = _state.ctx.sampleRect;
+    lock.unlock();
+    
     size_t i = 0;
     simd::double3 c = {0,0,0};
-    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
-        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
+    for (size_t y=rect.top; y<rect.bottom; y++) {
+        for (size_t x=rect.left; x<rect.right; x++, i++) {
             const simd::float3& val = vals[i];
             c += {(double)val[0], (double)val[1], (double)val[2]};
         }
     }
-    c /= i;
+    if (i) c /= i;
     return {(float)c[0], (float)c[1], (float)c[2]};
 }
 
-- (simd::float3)sampleSRGBD65 {
-    assert(_sampleBuf_SRGBD65);
-    const simd::float3* vals = (simd::float3*)[_sampleBuf_SRGBD65 contents];
+- (Color_SRGB_D65)sample_SRGB_D65 {
+    // Copy _state.sampleBuf_SRGB_D65 locally
+    auto lock = std::unique_lock(_state.lock);
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleBuf_SRGB_D65);
+        auto rect = _state.ctx.sampleRect;
+    lock.unlock();
+    
     size_t i = 0;
     simd::double3 c = {0,0,0};
-    for (size_t y=_ctx.sampleRect.top; y<_ctx.sampleRect.bottom; y++) {
-        for (size_t x=_ctx.sampleRect.left; x<_ctx.sampleRect.right; x++, i++) {
+    for (size_t y=rect.top; y<rect.bottom; y++) {
+        for (size_t x=rect.left; x<rect.right; x++, i++) {
             const simd::float3& val = vals[i];
             c += {(double)val[0], (double)val[1], (double)val[2]};
         }
     }
-    c /= i;
+    if (i) c /= i;
     return {(float)c[0], (float)c[1], (float)c[2]};
 }
 

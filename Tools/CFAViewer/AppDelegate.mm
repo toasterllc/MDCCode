@@ -14,13 +14,7 @@
 using namespace CFAViewer;
 using namespace MetalTypes;
 using namespace ImageLayerTypes;
-
-using ColorMatrix = Mat<double,3,3>;
-using Color3 = Mat<double,3,1>;
-using Color_XYY_D50 = Color3;
-using Color_XYZ_D50 = Color3;
-using ColorSRGBD65 = Color3;
-using ColorCameraRaw = Color3;
+using namespace ColorUtil;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 
@@ -30,7 +24,7 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 @end
 
 constexpr size_t ColorCheckerCount = 24;
-const ColorSRGBD65 ColorCheckerColors[ColorCheckerCount] {
+const Color_SRGB_D65 ColorCheckerColors[ColorCheckerCount] {
     // Row 0
     {   0x73/255.   ,   0x52/255.   ,   0x44/255.   },
     {   0xc2/255.   ,   0x96/255.   ,   0x82/255.   },
@@ -116,7 +110,7 @@ const ColorSRGBD65 ColorCheckerColors[ColorCheckerCount] {
     
     // Create our color checker circles if they don't exist yet
     size_t i = 0;
-    for (const ColorSRGBD65& c : ColorCheckerColors) {
+    for (const Color_SRGB_D65& c : ColorCheckerColors) {
         CAShapeLayer* circle = [CAShapeLayer new];
         setCircleRadius(circle, _colorCheckerCircleRadius);
         [circle setFillColor:(CGColorRef)SRGBColor(c[0], c[1], c[2], 1)];
@@ -236,8 +230,8 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         }
         frame = CGRectStandardize(frame);
         [_sampleLayer setFrame:frame];
-        [_delegate sampleRectChanged];
     });
+    [_delegate sampleRectChanged];
 }
 
 - (void)scrollWheel:(NSEvent*)event {
@@ -342,14 +336,16 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 @implementation HistogramView {
     NSTextField* _label;
     NSTrackingArea* _trackingArea;
+    HistogramLayer* _layer;
 }
 + (Class)layerClass                 { return [HistogramLayer class];    }
-- (HistogramLayer*)histogramLayer   { return (id)[self layer];          }
+- (HistogramLayer*)histogramLayer   { return _layer;                    }
 
 - (void)commonInit {
     [super commonInit];
-    
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    
+    _layer = (id)[self layer];
     
     _label = [[NSTextField alloc] initWithFrame:NSZeroRect];
     [_label setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -401,6 +397,8 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 
 @implementation AppDelegate {
     IBOutlet MainView* _mainView;
+    
+    IBOutlet NSSwitch* _liveSwitch;
     IBOutlet HistogramView* _inputHistogramView;
     IBOutlet HistogramView* _outputHistogramView;
     IBOutlet NSTextField* _colorMatrixTextField;
@@ -434,32 +432,43 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     bool _colorCheckerCirclesVisible;
     float _colorCheckerCircleRadius;
     
-    ColorMatrix _colorMatrix;
-    Mmap _imageData;
-    Image _image;
+    struct {
+        std::mutex lock; // Protects this struct
+        
+        ColorMatrix colorMatrix;
+        Mmap imageData;
+        Image image;
+        
+        Color_CamRaw_D50 sample_CamRaw_D50;
+        Color_XYZ_D50 sample_XYZ_D50;
+        Color_SRGB_D65 sample_SRGB_D65;
+    } _state;
 }
 
 - (void)awakeFromNib {
-    _colorCheckerCircleRadius = 10;
-    [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
-    
-    _colorMatrix = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
-    
-    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
-    
     constexpr size_t ImageWidth = 2304;
     constexpr size_t ImageHeight = 1296;
     
-    _image = {
-        .width = ImageWidth,
-        .height = ImageHeight,
-        .pixels = (MetalTypes::ImagePixel*)_imageData.data(),
-    };
-    [[_mainView imageLayer] updateImage:_image];
+    _colorCheckerCircleRadius = 10;
+    [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
+    
+    auto lock = std::unique_lock(_state.lock);
+        _state.colorMatrix = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
+        _state.imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
+        
+        _state.image = {
+            .width = ImageWidth,
+            .height = ImageHeight,
+            .pixels = (MetalTypes::ImagePixel*)_state.imageData.data(),
+        };
+        
+        [[_mainView imageLayer] setImage:_state.image];
+    lock.unlock();
     
     __weak auto weakSelf = self;
-    [[_mainView imageLayer] setHistogramChangedHandler:^(ImageLayer*) {
+    [[_mainView imageLayer] setDataChangedHandler:^(ImageLayer*) {
         [weakSelf _updateHistograms];
+        [weakSelf _updateSampleColors];
     }];
     
     [self _resetColorMatrix];
@@ -513,7 +522,8 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 }
 
 - (void)_updateColorMatrix:(const ColorMatrix&)colorMatrix {
-    _colorMatrix = colorMatrix;
+    auto lock = std::unique_lock(_state.lock);
+    _state.colorMatrix = colorMatrix;
     
     [[_mainView imageLayer] setColorMatrix:colorMatrix];
     
@@ -521,15 +531,37 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
         @"%f %f %f\n"
         @"%f %f %f\n"
         @"%f %f %f\n",
-        _colorMatrix[0], _colorMatrix[1], _colorMatrix[2],
-        _colorMatrix[3], _colorMatrix[4], _colorMatrix[5],
-        _colorMatrix[6], _colorMatrix[7], _colorMatrix[8]
+        _state.colorMatrix[0], _state.colorMatrix[1], _state.colorMatrix[2],
+        _state.colorMatrix[3], _state.colorMatrix[4], _state.colorMatrix[5],
+        _state.colorMatrix[6], _state.colorMatrix[7], _state.colorMatrix[8]
     ]];
 }
 
 - (void)_updateHistograms {
     [[_inputHistogramView histogramLayer] updateHistogram:[[_mainView imageLayer] inputHistogram]];
     [[_outputHistogramView histogramLayer] updateHistogram:[[_mainView imageLayer] outputHistogram]];
+}
+
+- (void)_updateSampleColors {
+    auto lock = std::unique_lock(_state.lock);
+    _state.sample_CamRaw_D50 = [[_mainView imageLayer] sample_CamRaw_D50];
+    _state.sample_XYZ_D50 = [[_mainView imageLayer] sample_XYZ_D50];
+    _state.sample_SRGB_D65 = [[_mainView imageLayer] sample_SRGB_D65];
+    
+    CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+        [self _updateSampleColorsText];
+    });
+    CFRunLoopWakeUp(CFRunLoopGetMain());
+}
+
+- (void)_updateSampleColorsText {
+    auto lock = std::unique_lock(_state.lock);
+    [_colorText_cameraRaw setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _state.sample_CamRaw_D50[0], _state.sample_CamRaw_D50[1], _state.sample_CamRaw_D50[2]]];
+    [_colorText_XYZ_D50 setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _state.sample_XYZ_D50[0], _state.sample_XYZ_D50[1], _state.sample_XYZ_D50[2]]];
+    [_colorText_SRGB_D65 setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _state.sample_SRGB_D65[0], _state.sample_SRGB_D65[1], _state.sample_SRGB_D65[2]]];
 }
 
 //  Row0    G1  R  G1  R
@@ -648,13 +680,13 @@ static double sampleB(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static ColorCameraRaw sampleImageCircle(Image& img, uint32_t x, uint32_t y, uint32_t radius) {
+static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, uint32_t radius) {
     uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
     uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
     uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
     uint32_t top = std::clamp((int32_t)y+(int32_t)radius, (int32_t)0, (int32_t)img.height-1)+1;
     
-    ColorCameraRaw c;
+    Color_CamRaw_D50 c;
     uint32_t i = 0;
     for (uint32_t iy=bottom; iy<top; iy++) {
         for (uint32_t ix=left; ix<right; ix++) {
@@ -679,7 +711,7 @@ static double LSRGBFromSRGB(double x) {
     return pow((x+.055)/1.055, 2.4);
 }
 
-static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
+static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     const ColorMatrix XYZD65_From_LSRGBD65(
         0.4124564, 0.3575761, 0.1804375,
@@ -697,6 +729,10 @@ static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     const Color3 lsrgb_d65(LSRGBFromSRGB(srgb_d65[0]), LSRGBFromSRGB(srgb_d65[1]), LSRGBFromSRGB(srgb_d65[2]));
     // Linear SRGB -> XYZ.D65 -> XYZ.D50
     return XYZD50_From_XYZD65 * XYZD65_From_LSRGBD65 * lsrgb_d65;
+}
+
+- (IBAction)liveSwitchToggled:(id)sender {
+    NSLog(@"liveSwitchToggled");
 }
 
 - (IBAction)showHideColorCheckerCircles:(id)sender {
@@ -742,29 +778,20 @@ static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
 - (void)sampleRectChanged {
     const CGRect sampleRect = [_mainView sampleRect];
     [[_mainView imageLayer] setSampleRect:sampleRect];
-    
-    const simd::float3 sample_cameraRaw = [[_mainView imageLayer] sampleCameraRaw];
-    const simd::float3 sample_XYZD50 = [[_mainView imageLayer] sampleXYZD50];
-    const simd::float3 sample_SRGBD65 = [[_mainView imageLayer] sampleSRGBD65];
-    
-    [_colorText_cameraRaw setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", sample_cameraRaw[0], sample_cameraRaw[1], sample_cameraRaw[2]]];
-    [_colorText_XYZ_D50 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", sample_XYZD50[0], sample_XYZD50[1], sample_XYZD50[2]]];
-    [_colorText_SRGB_D65 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", sample_SRGBD65[0], sample_SRGBD65[1], sample_SRGBD65[2]]];
 }
 
 - (void)colorCheckerPositionsChanged {
+    auto lock = std::unique_lock(_state.lock);
+    
     auto points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorCheckerCount);
     
     Mat<double,ColorCheckerCount,3> A; // Colors that we have
     size_t i = 0;
     for (const CGPoint& p : points) {
-        ColorCameraRaw c = sampleImageCircle(_image,
-            round(p.x*_image.width),
-            round(p.y*_image.height),
+        Color_CamRaw_D50 c = sampleImageCircle(_state.image,
+            round(p.x*_state.image.width),
+            round(p.y*_state.image.height),
             _colorCheckerCircleRadius);
         A[i+0] = c[0];
         A[i+1] = c[1];
@@ -774,7 +801,7 @@ static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     
     Mat<double,ColorCheckerCount,3> b; // Colors that we want
     i = 0;
-    for (ColorSRGBD65 c : ColorCheckerColors) {
+    for (Color_SRGB_D65 c : ColorCheckerColors) {
         // Convert the color from SRGB -> XYZ -> XYY
         Color_XYZ_D50 cxyy = ColorUtil::XYYFromXYZ(XYZFromSRGB(c));
 //        cxyy[2] /= 3; // Adjust luminance
@@ -789,9 +816,6 @@ static Color_XYZ_D50 XYZFromSRGB(const ColorSRGBD65& srgb_d65) {
     // Calculate the color matrix (x = (At*A)^-1 * At * b)
     auto x = (A.pinv() * b).trans();
     [self _updateColorMatrix:x];
-    printf("Color matrix:\n%s\n", x.str().c_str());
-    printf("Color matrix inverted:\n%s\n", x.inv().str().c_str());
-    
     [self prefsSetColorCheckerPositions:points];
     
 //    NSMutableArray* nspoints = [NSMutableArray new];

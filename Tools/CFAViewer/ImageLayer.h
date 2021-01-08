@@ -1,9 +1,10 @@
 #import <QuartzCore/QuartzCore.h>
 #import "ImageLayerTypes.h"
 #import "Mat.h"
+#import "ColorUtil.h"
 
 @class ImageLayer;
-using ImageLayerHistogramChangedHandler = void(^)(ImageLayer*);
+using ImageLayerDataChangedHandler = void(^)(ImageLayer*);
 
 namespace CFAViewer::ImageLayerTypes {
     struct Image {
@@ -14,16 +15,19 @@ namespace CFAViewer::ImageLayerTypes {
 };
 
 @interface ImageLayer : CAMetalLayer
-- (void)updateImage:(const CFAViewer::ImageLayerTypes::Image&)image;
+
+- (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)image;
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
 - (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
-- (void)setHistogramChangedHandler:(ImageLayerHistogramChangedHandler)histogramChangedHandler;
+- (void)setSampleRect:(CGRect)rect;
+// `handler` is called on a background queue when histograms/sample data changes
+- (void)setDataChangedHandler:(ImageLayerDataChangedHandler)handler;
+
 - (CFAViewer::MetalTypes::Histogram)inputHistogram;
 - (CFAViewer::MetalTypes::Histogram)outputHistogram;
 
-- (void)setSampleRect:(CGRect)rect;
-- (simd::float3)sampleCameraRaw;
-- (simd::float3)sampleXYZD50;
-- (simd::float3)sampleSRGBD65;
+- (ColorUtil::Color_CamRaw_D50)sample_CamRaw_D50;
+- (ColorUtil::Color_XYZ_D50)sample_XYZ_D50;
+- (ColorUtil::Color_SRGB_D65)sample_SRGB_D65;
 
 @end
