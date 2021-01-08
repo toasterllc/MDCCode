@@ -10,6 +10,9 @@
 #import "Mat.h"
 #import "ColorUtil.h"
 #import "MyTime.h"
+#import "MainView.h"
+#import "HistogramView.h"
+#import "ColorChecker.h"
 
 using namespace CFAViewer;
 using namespace MetalTypes;
@@ -18,380 +21,7 @@ using namespace ColorUtil;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 
-@interface NSObject ()
-- (void)sampleRectChanged;
-- (void)colorCheckerPositionsChanged;
-@end
-
-constexpr size_t ColorCheckerCount = 24;
-const Color_SRGB_D65 ColorCheckerColors[ColorCheckerCount] {
-    // Row 0
-    {   0x73/255.   ,   0x52/255.   ,   0x44/255.   },
-    {   0xc2/255.   ,   0x96/255.   ,   0x82/255.   },
-    {   0x62/255.   ,   0x7a/255.   ,   0x9d/255.   },
-    {   0x57/255.   ,   0x6c/255.   ,   0x43/255.   },
-    {   0x85/255.   ,   0x80/255.   ,   0xb1/255.   },
-    {   0x67/255.   ,   0xbd/255.   ,   0xaa/255.   },
-    
-    // Row 1
-    {   0xd6/255.   ,   0x7e/255.   ,   0x2c/255.   },
-    {   0x50/255.   ,   0x5b/255.   ,   0xa6/255.   },
-    {   0xc1/255.   ,   0x5a/255.   ,   0x63/255.   },
-    {   0x5e/255.   ,   0x3c/255.   ,   0x6c/255.   },
-    {   0x9d/255.   ,   0xbc/255.   ,   0x40/255.   },
-    {   0xe0/255.   ,   0xa3/255.   ,   0x2e/255.   },
-    
-    // Row 2
-    {   0x38/255.   ,   0x3d/255.   ,   0x96/255.   },
-    {   0x46/255.   ,   0x94/255.   ,   0x49/255.   },
-    {   0xaf/255.   ,   0x36/255.   ,   0x3c/255.   },
-    {   0xe7/255.   ,   0xc7/255.   ,   0x1f/255.   },
-    {   0xbb/255.   ,   0x56/255.   ,   0x95/255.   },
-    {   0x08/255.   ,   0x85/255.   ,   0xa1/255.   },
-    
-    // Row 3
-    {   0xf3/255.   ,   0xf3/255.   ,   0xf2/255.   },
-    {   0xc8/255.   ,   0xc8/255.   ,   0xc8/255.   },
-    {   0xa0/255.   ,   0xa0/255.   ,   0xa0/255.   },
-    {   0x7a/255.   ,   0x7a/255.   ,   0x79/255.   },
-    {   0x55/255.   ,   0x55/255.   ,   0x55/255.   },
-    {   0x34/255.   ,   0x34/255.   ,   0x34/255.   },
-};
-
-@interface MainView : BaseView <CALayoutManager, NSGestureRecognizerDelegate>
-@end
-
-@implementation MainView {
-    CALayer* _viewLayer;
-    CALayer* _rootLayer;
-    CGPoint _rootLayerOffset;
-    ImageLayer* _imageLayer;
-    CALayer* _sampleLayer;
-    CGFloat _colorCheckerCircleRadius;
-    bool _colorCheckersEnabled;
-    bool _colorCheckersPositioned;
-    std::vector<CAShapeLayer*> _colorCheckers;
-    
-    CGFloat _zoomScale;
-    struct {
-        struct {
-            CGFloat startZoomScale;
-            CGFloat multiplier;
-        } magnify;
-        
-        struct {
-            bool pan;
-        } panZoom;
-    } _gesture;
-    
-    IBOutlet id _delegate;
-}
-
-- (void)commonInit {
-    [super commonInit];
-    _viewLayer = [self layer];
-    
-    _rootLayer = [CALayer new];
-    [_rootLayer setActions:LayerNullActions()];
-    [_viewLayer addSublayer:_rootLayer];
-    [_viewLayer setLayoutManager:self];
-    
-    _colorCheckerCircleRadius = 1;
-    _imageLayer = [ImageLayer new];
-    [_imageLayer setMagnificationFilter:kCAFilterNearest];
-    [_rootLayer addSublayer:_imageLayer];
-    [_rootLayer setLayoutManager:self];
-    
-    _sampleLayer = [CALayer new];
-    [_sampleLayer setActions:LayerNullActions()];
-    [_sampleLayer setBorderColor:(CGColorRef)SRGBColor(1, 0, 0, 1)];
-    [_sampleLayer setBorderWidth:1];
-    [_imageLayer addSublayer:_sampleLayer];
-    
-    // Create our color checker circles if they don't exist yet
-    size_t i = 0;
-    for (const Color_SRGB_D65& c : ColorCheckerColors) {
-        CAShapeLayer* circle = [CAShapeLayer new];
-        setCircleRadius(circle, _colorCheckerCircleRadius);
-        [circle setFillColor:(CGColorRef)SRGBColor(c[0], c[1], c[2], 1)];
-        [circle setActions:LayerNullActions()];
-        [circle setHidden:!_colorCheckersEnabled];
-        [_imageLayer addSublayer:circle];
-        _colorCheckers.push_back(circle);
-        
-        i++;
-    }
-    
-    _zoomScale = 1;
-    NSMagnificationGestureRecognizer* magnify = [[NSMagnificationGestureRecognizer alloc] initWithTarget:self
-        action:@selector(_handleMagnify:)];
-    [magnify setDelegate:self];
-    [self addGestureRecognizer:magnify];
-}
-
-- (void)_setZoomScale:(CGFloat)zoomScale anchor:(CGPoint)anchor {
-    const CGFloat MinScale = .25;
-    const CGFloat MaxScale = 20;
-    
-    _zoomScale = std::clamp(zoomScale, MinScale, MaxScale);
-    
-    CGPoint anchorBefore = [_viewLayer convertPoint:anchor fromLayer:_rootLayer];
-    [_rootLayer setTransform:CATransform3DMakeScale(_zoomScale, _zoomScale, 1)];
-    CGPoint anchorAfter = [_viewLayer convertPoint:anchor fromLayer:_rootLayer];
-    
-    // Adjust the position of `_rootLayer` so that the anchor point stays in the same position
-    _rootLayerOffset = {_rootLayerOffset.x+anchorBefore.x-anchorAfter.x, _rootLayerOffset.y+anchorBefore.y-anchorAfter.y};
-//    [rootLayer setNeedsLayout];
-//    [_viewLayer layoutIfNeeded];
-    [_viewLayer setNeedsLayout];
-//    CGRect frame = [_rootLayer frame];
-//    frame.origin.x -= anchorAfter.x-anchorBefore.x;
-//    frame.origin.y -= anchorAfter.y-anchorBefore.y;
-//    [_rootLayer setFrame:frame];
-}
-
-- (void)_handleMagnify:(NSMagnificationGestureRecognizer*)recognizer {
-    if ([recognizer state] == NSGestureRecognizerStateBegan) {
-        _gesture.magnify.startZoomScale = _zoomScale;
-        _gesture.magnify.multiplier = .5;
-        if ([recognizer magnification] > 0) {
-            _gesture.magnify.multiplier *= 20;
-        }
-    }
-    
-    CGFloat k = 1+(_gesture.magnify.multiplier*[recognizer magnification]);
-    CGPoint anchor = [_rootLayer convertPoint:[recognizer locationInView:self] fromLayer:_viewLayer];
-    [self _setZoomScale:k*_gesture.magnify.startZoomScale anchor:anchor];
-}
-
-
-- (ImageLayer*)imageLayer {
-    return _imageLayer;
-}
-
-// `p` is in coordinates of _layer
-- (CAShapeLayer*)_findColorCheckerCircle:(CGPoint)p {
-    for (CAShapeLayer* c : _colorCheckers) {
-        const CGPoint cp = [c position];
-        if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _colorCheckerCircleRadius) {
-            return c;
-        }
-    }
-    return nil;
-}
-
-static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
-    [c setPath:(CGPathRef)CFBridgingRelease(CGPathCreateWithEllipseInRect({0,0,r*2,r*2}, nil))];
-    [c setBounds:{0,0,r*2,r*2}];
-}
-
-- (void)setColorCheckersVisible:(bool)visible {
-    _colorCheckersEnabled = visible;
-    
-    // Apply the initial color checker positions, if they haven't been positioned yet
-    if (!_colorCheckersPositioned) {
-        [self resetColorCheckerPositions];
-        _colorCheckersPositioned = true;
-    }
-    
-    for (CAShapeLayer* circle : _colorCheckers) {
-        [circle setHidden:!_colorCheckersEnabled];
-    }
-}
-
-- (void)mouseDown:(NSEvent*)ev {
-    NSWindow* win = [self window];
-    const CGPoint p = [_imageLayer convertPoint:[ev locationInWindow]
-        fromLayer:[[win contentView] layer]];
-    
-    // Handle circle being clicked
-    if (_colorCheckersEnabled) {
-        CAShapeLayer* circle = [self _findColorCheckerCircle:p];
-        if (circle) {
-            TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
-                const CGPoint p = [_imageLayer convertPoint:[ev locationInWindow]
-                    fromLayer:[[win contentView] layer]];
-                [circle setPosition:p];
-            });
-            
-            [_delegate colorCheckerPositionsChanged];
-            return;
-        }
-    }
-    
-    // Otherwise, handle sampler functionality
-    const CGPoint start = p;
-    TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
-        const CGPoint end = [_imageLayer convertPoint:[ev locationInWindow]
-            fromLayer:[[win contentView] layer]];
-        CGRect frame = {start, {end.x-start.x, end.y-start.y}};
-        if ([ev modifierFlags] & NSEventModifierFlagShift) {
-            frame.size.height = (frame.size.height >= 0 ? 1 : -1) * fabs(frame.size.width);
-        }
-        frame = CGRectStandardize(frame);
-        [_sampleLayer setFrame:frame];
-    });
-    [_delegate sampleRectChanged];
-}
-
-- (void)scrollWheel:(NSEvent*)event {
-    if ([event phase] & NSEventPhaseBegan) {
-        _gesture.panZoom.pan = !([event modifierFlags]&NSEventModifierFlagCommand);
-    }
-    
-    // Pan
-    if (_gesture.panZoom.pan) {
-        _rootLayerOffset = {_rootLayerOffset.x+[event scrollingDeltaX]/3, _rootLayerOffset.y-[event scrollingDeltaY]/3};
-        [_viewLayer setNeedsLayout];
-    
-    // Zoom
-    } else {
-        CGPoint anchor = [_rootLayer convertPoint:[self convertPoint:[event locationInWindow] fromView:nil] fromLayer:_viewLayer];
-        [self _setZoomScale:_zoomScale-[event scrollingDeltaY]/100 anchor:anchor];
-    }
-}
-
-- (void)layoutSublayersOfLayer:(CALayer*)layer {
-    if (layer == _viewLayer) {
-        CGRect bounds = [_viewLayer bounds];
-        [_rootLayer setBounds:bounds];
-        
-        CGPoint pos = {CGRectGetMidX(bounds), CGRectGetMidY(bounds)};
-        [_rootLayer setPosition:{pos.x+_rootLayerOffset.x, pos.y+_rootLayerOffset.y}];
-    
-    } else if (layer == _rootLayer) {
-        CGSize layerSize = [_rootLayer bounds].size;
-        [_imageLayer setPosition:{layerSize.width/2, layerSize.height/2}];
-    }
-}
-
-- (CGRect)sampleRect {
-    const CGSize layerSize = [_imageLayer bounds].size;
-    CGRect r = [_sampleLayer frame];
-    r.origin.x /= layerSize.width;
-    r.origin.y /= layerSize.height;
-    r.size.width /= layerSize.width;
-    r.size.height /= layerSize.height;
-    r.origin.y = 1-r.origin.y-r.size.height; // Flip Y so the origin is at the top-left
-    return r;
-}
-
-- (void)resetColorCheckerPositions {
-    const size_t ColorCheckerWidth = 6;
-    const size_t ColorCheckerHeight = 4;
-    const CGSize size = [_imageLayer bounds].size;
-    size_t i = 0;
-    for (size_t y=0; y<ColorCheckerHeight; y++) {
-        for (size_t x=0; x<ColorCheckerWidth; x++, i++) {
-            const CGPoint p = {
-                .5*size.width  + x*(_colorCheckerCircleRadius+10),
-                .5*size.height - y*(_colorCheckerCircleRadius+10)
-            };
-            CAShapeLayer* circle = _colorCheckers[i];
-            [circle setPosition:p];
-        }
-    }
-}
-
-- (std::vector<CGPoint>)colorCheckerPositions {
-    const CGSize layerSize = [_imageLayer bounds].size;
-    std::vector<CGPoint> r;
-    for (CALayer* l : _colorCheckers) {
-        CGPoint p = [l position];
-        p.x /= layerSize.width;
-        p.y /= layerSize.height;
-        p.y = 1-p.y; // Flip Y, so that the origin of our return value is the top-left
-        r.push_back(p);
-    }
-    return r;
-}
-
-- (void)setColorCheckerPositions:(const std::vector<CGPoint>&)points {
-    assert(points.size() == ColorCheckerCount);
-    const CGSize layerSize = [_imageLayer bounds].size;
-    size_t i = 0;
-    for (CALayer* l : _colorCheckers) {
-        CGPoint p = points[i];
-        p.y = 1-p.y; // Flip Y, since the origin of the supplied points is the top-left
-        p.x *= layerSize.width;
-        p.y *= layerSize.height;
-        [l setPosition:p];
-        i++;
-    }
-    _colorCheckersPositioned = true;
-}
-
-- (void)setColorCheckerCircleRadius:(CGFloat)r {
-    _colorCheckerCircleRadius = r;
-    for (CAShapeLayer* c : _colorCheckers) {
-        setCircleRadius(c, _colorCheckerCircleRadius);
-    }
-}
-
-@end
-
-@interface HistogramView : BaseView
-@end
-
-@implementation HistogramView {
-    NSTextField* _label;
-    NSTrackingArea* _trackingArea;
-    HistogramLayer* _layer;
-}
-+ (Class)layerClass                 { return [HistogramLayer class];    }
-- (HistogramLayer*)histogramLayer   { return _layer;                    }
-
-- (void)commonInit {
-    [super commonInit];
-    [self setTranslatesAutoresizingMaskIntoConstraints:false];
-    
-    _layer = (id)[self layer];
-    
-    _label = [[NSTextField alloc] initWithFrame:NSZeroRect];
-    [_label setTranslatesAutoresizingMaskIntoConstraints:false];
-    [_label setEditable:false];
-    [_label setBordered:false];
-    [_label setDrawsBackground:false];
-    [_label setHidden:true];
-    [self addSubview:_label];
-    
-    [[[_label trailingAnchor] constraintEqualToAnchor:[self trailingAnchor]
-        constant:-20] setActive:true];
-    [[[_label topAnchor] constraintEqualToAnchor:[self topAnchor]
-        constant:20] setActive:true];
-    [_label setTextColor:[NSColor redColor]];
-    
-    _trackingArea = [[NSTrackingArea alloc] initWithRect:NSZeroRect
-        options:NSTrackingMouseEnteredAndExited|NSTrackingMouseMoved|
-                NSTrackingActiveInKeyWindow|NSTrackingInVisibleRect
-        owner:self userInfo:nil];
-    [self addTrackingArea:_trackingArea];
-}
-
-- (void)mouseEntered:(NSEvent*)event {
-    [self _updateLabel:[self convertPoint:[event locationInWindow] fromView:nil]];
-    [_label setHidden:false];
-}
-
-- (void)mouseMoved:(NSEvent*)event {
-    [self _updateLabel:[self convertPoint:[event locationInWindow] fromView:nil]];
-    [_label setHidden:false];
-}
-
-- (void)mouseExited:(NSEvent*)event {
-    [self _updateLabel:[self convertPoint:[event locationInWindow] fromView:nil]];
-    [_label setHidden:true];
-}
-
-- (void)_updateLabel:(CGPoint)p {
-    CGPoint val = [[self histogramLayer] valueFromPoint:p];
-    [_label setStringValue:[NSString stringWithFormat:@"%.1f %.1f", val.x, val.y]];
-}
-
-@end
-
-
-@interface AppDelegate : NSObject <NSApplicationDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate, MainViewDelegate>
 @property(weak) IBOutlet NSWindow* window;
 @end
 
@@ -550,8 +180,8 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 }
 
 - (void)_updateHistograms {
-    [[_inputHistogramView histogramLayer] updateHistogram:[[_mainView imageLayer] inputHistogram]];
-    [[_outputHistogramView histogramLayer] updateHistogram:[[_mainView imageLayer] outputHistogram]];
+    [[_inputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] inputHistogram]];
+    [[_outputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] outputHistogram]];
 }
 
 - (void)_updateSampleColors {
@@ -584,7 +214,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
     
     if (_colorCheckersEnabled) {
-        [self colorCheckerPositionsChanged];
+        [self mainViewColorCheckerPositionsChanged:nil];
     }
 }
 
@@ -765,7 +395,7 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
 
 - (IBAction)resetColorCheckers:(id)sender {
     [_mainView resetColorCheckerPositions];
-    [self colorCheckerPositionsChanged];
+    [self mainViewColorCheckerPositionsChanged:nil];
 }
 
 - (IBAction)debayerOptionsChanged:(id)sender {
@@ -802,20 +432,20 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
     [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[6]]];
     [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[7]]];
     [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[8]]];
-    [self sampleRectChanged];
+    [self mainViewSampleRectChanged:nil];
 }
 
-- (void)sampleRectChanged {
+- (void)mainViewSampleRectChanged:(MainView*)v {
     const CGRect sampleRect = [_mainView sampleRect];
     [[_mainView imageLayer] setSampleRect:sampleRect];
 }
 
-- (void)colorCheckerPositionsChanged {
+- (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
     auto lock = std::unique_lock(_state.lock);
     auto points = [_mainView colorCheckerPositions];
-    assert(points.size() == ColorCheckerCount);
+    assert(points.size() == ColorChecker::Count);
     
-    Mat<double,ColorCheckerCount,3> A; // Colors that we have
+    Mat<double,ColorChecker::Count,3> A; // Colors that we have
     size_t i = 0;
     for (const CGPoint& p : points) {
         Color_CamRaw_D50 c = sampleImageCircle(_state.image,
@@ -828,9 +458,9 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
         i += 3;
     }
     
-    Mat<double,ColorCheckerCount,3> b; // Colors that we want
+    Mat<double,ColorChecker::Count,3> b; // Colors that we want
     i = 0;
-    for (Color_SRGB_D65 c : ColorCheckerColors) {
+    for (Color_SRGB_D65 c : ColorChecker::Colors) {
         // Convert the color from SRGB -> XYZ -> XYY
         Color_XYZ_D50 cxyy = ColorUtil::XYYFromXYZ(XYZFromSRGB(c));
 //        cxyy[2] /= 3; // Adjust luminance
@@ -857,7 +487,7 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
 - (std::vector<CGPoint>)prefsColorCheckerPositions {
     NSArray* nspoints = [[NSUserDefaults standardUserDefaults] objectForKey:ColorCheckerPositionsKey];
     std::vector<CGPoint> points;
-    if ([nspoints count] != ColorCheckerCount) return {};
+    if ([nspoints count] != ColorChecker::Count) return {};
     if (![nspoints isKindOfClass:[NSArray class]]) return {};
     for (NSArray* nspoint : nspoints) {
         if (![nspoint isKindOfClass:[NSArray class]]) return {};

@@ -17,6 +17,8 @@
 		55B9747824C50A81000B2633 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747724C50A81000B2633 /* Cocoa.framework */; };
 		55B9747A24C50A86000B2633 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747924C50A86000B2633 /* Metal.framework */; };
 		55B9747C24C50A8A000B2633 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747B24C50A8A000B2633 /* QuartzCore.framework */; };
+		55E98EB625A920030062B458 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E98EB425A920030062B458 /* MainView.mm */; };
+		55E98EB925A920890062B458 /* HistogramView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E98EB725A920880062B458 /* HistogramView.mm */; };
 		55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC87258966FE0089A441 /* BaseView.mm */; };
 		55EBCC8D258966FE0089A441 /* ImageLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC88258966FE0089A441 /* ImageLayer.mm */; };
 		55EBCC8E258966FE0089A441 /* ImageLayerShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC89258966FE0089A441 /* ImageLayerShader.metal */; };
@@ -53,6 +55,11 @@
 		55B9747724C50A81000B2633 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		55B9747924C50A86000B2633 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		55B9747B24C50A8A000B2633 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		55E98EB425A920030062B458 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
+		55E98EB525A920030062B458 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
+		55E98EB725A920880062B458 /* HistogramView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HistogramView.mm; sourceTree = "<group>"; };
+		55E98EB825A920880062B458 /* HistogramView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HistogramView.h; sourceTree = "<group>"; };
+		55E98EBB25A921D80062B458 /* ColorChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorChecker.h; sourceTree = "<group>"; };
 		55EBCC86258966FE0089A441 /* ImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayer.h; sourceTree = "<group>"; };
 		55EBCC87258966FE0089A441 /* BaseView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BaseView.mm; sourceTree = "<group>"; };
 		55EBCC88258966FE0089A441 /* ImageLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageLayer.mm; sourceTree = "<group>"; };
@@ -123,12 +130,17 @@
 				552E7D5A24C9316900438AAF /* CFAViewer.entitlements */,
 				559D8E0E2593EAB200836B47 /* Util.h */,
 				55B9745D24C504E2000B2633 /* AppDelegate.mm */,
+				55E98EBB25A921D80062B458 /* ColorChecker.h */,
+				55E98EB525A920030062B458 /* MainView.h */,
+				55E98EB425A920030062B458 /* MainView.mm */,
 				55EBCC9B2589E5A00089A441 /* MetalTypes.h */,
 				55EBCC8A258966FE0089A441 /* ImageLayerTypes.h */,
 				55EBCC89258966FE0089A441 /* ImageLayerShader.metal */,
 				55EBCC86258966FE0089A441 /* ImageLayer.h */,
 				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
 				55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */,
+				55E98EB825A920880062B458 /* HistogramView.h */,
+				55E98EB725A920880062B458 /* HistogramView.mm */,
 				55EBCC912589C3570089A441 /* HistogramLayer.h */,
 				55EBCC902589C3570089A441 /* HistogramLayer.mm */,
 				55EBCC932589C3960089A441 /* HistogramLayerShader.metal */,
@@ -234,8 +246,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				55EBCC922589C3570089A441 /* HistogramLayer.mm in Sources */,
+				55E98EB925A920890062B458 /* HistogramView.mm in Sources */,
 				55B9746624C504E2000B2633 /* main.m in Sources */,
 				55EBCC942589C3960089A441 /* HistogramLayerShader.metal in Sources */,
+				55E98EB625A920030062B458 /* MainView.mm in Sources */,
 				55EBCC8D258966FE0089A441 /* ImageLayer.mm in Sources */,
 				55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */,
 				55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */,

@@ -1,4 +1,5 @@
 #include <libgen.h>
+#include <os/log.h>
 
 #define Assert(condition, ...) ({                                                   \
     bool b = (bool)(condition);                                                     \

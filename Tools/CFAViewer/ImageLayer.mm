@@ -1,12 +1,9 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
 #import <mutex>
-#import <vector>
-#import <os/log.h>
 #import "ImageLayer.h"
 #import "ImageLayerTypes.h"
 #import "Assert.h"
-#import "MyTime.h"
 #import "Util.h"
 #import "ColorUtil.h"
 using namespace CFAViewer;

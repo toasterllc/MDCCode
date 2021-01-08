@@ -1,7 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
 #import <mutex>
-#import <os/log.h>
 #import "HistogramLayer.h"
 #import "HistogramLayerTypes.h"
 #import "Assert.h"
@@ -81,7 +80,7 @@ using namespace HistogramLayerTypes;
     return self;
 }
 
-- (void)updateHistogram:(const MetalTypes::Histogram&)histogram {
+- (void)setHistogram:(const MetalTypes::Histogram&)histogram {
     auto lock = std::unique_lock(_state.lock);
     _state.histogram = histogram;
 //    _state.histogram.r[0] = 5000000;
