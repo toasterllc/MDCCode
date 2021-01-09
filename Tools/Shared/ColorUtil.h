@@ -24,4 +24,36 @@ namespace ColorUtil {
         const double Z = ((1.-xyy[0]-xyy[1])*xyy[2])/xyy[1];
         return {X, Y, Z};
     }
+    
+    inline double SRGBGamma(double x) {
+        // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+        if (x <= 0.0031308) return 12.92*x;
+        return 1.055*pow(x, 1/2.4)-.055;
+    }
+
+    inline double InverseSRGBGamma(double x) {
+        // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+        if (x <= 0.04045) return x/12.92;
+        return pow((x+.055)/1.055, 2.4);
+    }
+    
+    inline Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
+        // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+        const ColorMatrix XYZD65_From_LSRGBD65(
+            0.4124564, 0.3575761, 0.1804375,
+            0.2126729, 0.7151522, 0.0721750,
+            0.0193339, 0.1191920, 0.9503041
+        );
+        
+        const ColorMatrix XYZD50_From_XYZD65(
+            1.0478112,  0.0228866,  -0.0501270,
+             0.0295424, 0.9904844,  -0.0170491,
+            -0.0092345, 0.0150436,  0.7521316
+        );
+        
+        // SRGB -> linear SRGB
+        const Color3 lsrgb_d65(InverseSRGBGamma(srgb_d65[0]), InverseSRGBGamma(srgb_d65[1]), InverseSRGBGamma(srgb_d65[2]));
+        // Linear SRGB -> XYZ.D65 -> XYZ.D50
+        return XYZD50_From_XYZD65 * XYZD65_From_LSRGBD65 * lsrgb_d65;
+    }
 }

@@ -4,6 +4,7 @@
 #include "SendRight.h"
 #include "USBInterface.h"
 #include "RuntimeError.h"
+#include "IOServiceWatcher.h"
 
 class USBDevice {
 public:
@@ -39,13 +40,15 @@ public:
     USBDevice() {}
     
     // Constructor: accept a SendRight
-    USBDevice(SendRight&& service) {
+    USBDevice(const SendRight& service) {
         try {
             assert(service);
             
+            _state.service = service;
+            
             IOCFPlugInInterface** plugin = nullptr;
             SInt32 score = 0;
-            IOReturn kr = IOCreatePlugInInterfaceForService(service.port(), kIOUSBDeviceUserClientTypeID,
+            IOReturn kr = IOCreatePlugInInterfaceForService(_state.service.port(), kIOUSBDeviceUserClientTypeID,
                 kIOCFPlugInInterfaceID, &plugin, &score);
             if (kr != KERN_SUCCESS) throw std::runtime_error("IOCreatePlugInInterfaceForService failed");
             if (!plugin) throw std::runtime_error("IOCreatePlugInInterfaceForService returned NULL plugin");
@@ -131,6 +134,10 @@ public:
         if (ior != kIOReturnSuccess) throw RuntimeError("DeviceRequest() failed: 0x0x%x", ior);
     }
     
+    IOServiceWatcher createWatcher(dispatch_queue_t queue, IOServiceWatcher::Handler handler) {
+        return IOServiceWatcher(_state.service, queue, handler);
+    }
+    
 private:
     
     void _reset() {
@@ -140,11 +147,13 @@ private:
             // the device is open.
             // It'll be closed when the object is deallocated.
             (*_state.interface)->Release(_state.interface);
-            _state.interface = nullptr;
         }
+        
+        _state = {};
     }
     
     struct {
+        SendRight service;
         IOUSBDeviceInterface** interface = nullptr;
         std::vector<USBInterface> usbInterfaces;
         bool usbInterfacesInit = false;

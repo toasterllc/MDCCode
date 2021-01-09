@@ -717,7 +717,7 @@
                                         <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="ktH-HS-6VN">
                                             <rect key="frame" x="18" y="1080" width="42" height="24"/>
                                             <connections>
-                                                <action selector="liveSwitchToggled:" target="Voe-Tx-rLC" id="W1i-lr-DP7"/>
+                                                <action selector="_liveSwitchAction:" target="Voe-Tx-rLC" id="W1i-lr-DP7"/>
                                             </connections>
                                         </switch>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PZc-YF-PY7">
@@ -861,28 +861,28 @@
                                                 <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="identityButtonPressed:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
+                                                <action selector="_identityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
                                             </connections>
                                         </button>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Th-eO-8Sc">
                                             <rect key="frame" x="18" y="230" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="ZFW-Ay-lx2"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="ZFW-Ay-lx2"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="upA-f1-hue">
                                             <rect key="frame" x="18" y="207" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="Q0d-Td-jQG"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="dCt-ZE-JVe"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="dCt-ZE-JVe"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zQK-wl-iSr">
                                             <rect key="frame" x="18" y="184" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="Fyy-IZ-Lc2"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="2Aw-qb-xlR"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="2Aw-qb-xlR"/>
                                             </connections>
                                         </slider>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="q61-MO-178">
@@ -922,21 +922,21 @@
                                             <rect key="frame" x="18" y="145" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="E9t-YK-KI3"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="UTA-GJ-eDs"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="UTA-GJ-eDs"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KIo-4m-3AR">
                                             <rect key="frame" x="18" y="122" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="Ztg-Sb-m0f"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="yan-YN-hVD"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="yan-YN-hVD"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="k5K-pT-L2W">
                                             <rect key="frame" x="18" y="99" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="OFM-Wq-V2m"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="ywM-ZS-Pa3"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="ywM-ZS-Pa3"/>
                                             </connections>
                                         </slider>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xlP-aa-4HM">
@@ -976,21 +976,21 @@
                                             <rect key="frame" x="18" y="64" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="LuR-mM-FuK"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="PNb-D9-1g5"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="PNb-D9-1g5"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9jB-cM-ghW">
                                             <rect key="frame" x="18" y="41" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="xDZ-Hu-ZBD"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="GLQ-xe-74y"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="GLQ-xe-74y"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2iy-ao-YZy">
                                             <rect key="frame" x="18" y="18" width="304" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="sYw-a4-a33"/>
                                             <connections>
-                                                <action selector="highlightFactorSliderChanged:" target="Voe-Tx-rLC" id="qlY-ud-hP4"/>
+                                                <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="qlY-ud-hP4"/>
                                             </connections>
                                         </slider>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Dec-Qn-Kgz">
@@ -1033,7 +1033,7 @@
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="toggleColorCheckers:" target="Voe-Tx-rLC" id="bEl-zY-fpf"/>
+                                                <action selector="_colorCheckersCheckboxAction:" target="Voe-Tx-rLC" id="bEl-zY-fpf"/>
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="TTP-R6-3Sa">
@@ -1043,7 +1043,7 @@
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="debayerOptionsChanged:" target="Voe-Tx-rLC" id="viE-iO-Qno"/>
+                                                <action selector="_debayerOptionsAction:" target="Voe-Tx-rLC" id="viE-iO-Qno"/>
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BTk-ZC-PdV">
@@ -1053,7 +1053,7 @@
                                                 <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="resetColorCheckers:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
+                                                <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
                                             </connections>
                                         </button>
                                         <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="yhU-He-3kN">

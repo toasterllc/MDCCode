@@ -3,6 +3,8 @@
 #import <iostream>
 #import <regex>
 #import <vector>
+#import <IOKit/IOKitLib.h>
+#import <IOKit/IOMessage.h>
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Mmap.h"
@@ -14,6 +16,7 @@
 #import "HistogramView.h"
 #import "ColorChecker.h"
 #import "MDCDevice.h"
+#import "IOServiceMatcher.h"
 #import "IOServiceWatcher.h"
 
 using namespace CFAViewer;
@@ -69,7 +72,9 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
     
-    IOServiceWatcher _serviceWatcher;
+    IOServiceMatcher _serviceWatcher;
+    MDCDevice _mdcDevice;
+    IOServiceWatcher _mdcDeviceWatcher;
     
     struct {
         std::mutex lock; // Protects this struct
@@ -114,34 +119,60 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     
     [self _setDebayerLMMSEGammaEnabled:true];
     
-    auto points = [self prefsColorCheckerPositions];
+    auto points = [self _prefsColorCheckerPositions];
     if (!points.empty()) {
         [_mainView setColorCheckerPositions:points];
     }
     
-    _serviceWatcher = IOServiceWatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(), ^(SendRight&& service) {
+    [self _setMDCDevice:MDCDevice()];
+    _serviceWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(), ^(SendRight&& service) {
         [weakSelf _handleUSBDevice:std::move(service)];
     });
 }
 
-- (IBAction)identityButtonPressed:(id)sender {
-    [self _setColorCheckersEnabled:false];
-    [self _resetColorMatrix];
-}
+#pragma mark - MDCDevice
 
 - (void)_handleUSBDevice:(SendRight&&)service {
-    NSLog(@"GOT USB DEVICE");
+    MDCDevice device;
+    try {
+        device = std::move(service);
+    } catch (...) {
+        NSLog(@"Failed to create MDCDevice (it probably needs to be bootloaded)");
+    }
+    [self _setMDCDevice:std::move(device)];
 }
 
-- (void)_resetColorMatrix {
-    auto lock = std::unique_lock(_state.lock);
-    [self _updateColorMatrix:{1.,0.,0.,0.,1.,0.,0.,0.,1.}];
+- (void)_setMDCDevice:(MDCDevice&&)device {
+    _mdcDevice = std::move(device);
+    // Watch the MDCDevice so we know when it's terminated
+    if (_mdcDevice) {
+        __weak auto weakSelf = self;
+        _mdcDeviceWatcher = _mdcDevice.createWatcher(dispatch_get_main_queue(), ^(uint32_t msgType, void* msgArg) {
+            [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
+        });
+    }
+    
+    [_liveSwitch setState:NSControlStateValueOff];
+    [_liveSwitch setEnabled:_mdcDevice];
 }
+
+- (void)_handleMDCDeviceNotificationType:(uint32_t)msgType arg:(void*)msgArg {
+    if (msgType == kIOMessageServiceIsTerminated) {
+        [self _setMDCDevice:MDCDevice()];
+    }
+}
+
+#pragma mark - Color Matrix
 
 - (void)controlTextDidChange:(NSNotification*)note {
     if ([note object] == _colorMatrixTextField) {
         [self _updateColorMatrixFromString:[[_colorMatrixTextField stringValue] UTF8String]];
     }
+}
+
+- (void)_resetColorMatrix {
+    auto lock = std::unique_lock(_state.lock);
+    [self _updateColorMatrix:{1.,0.,0.,0.,1.,0.,0.,0.,1.}];
 }
 
 - (void)_updateColorMatrixFromString:(const std::string&)str {
@@ -179,10 +210,14 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     ]];
 }
 
+#pragma mark - Histograms
+
 - (void)_updateHistograms {
     [[_inputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] inputHistogram]];
     [[_outputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] outputHistogram]];
 }
+
+#pragma mark - Sample
 
 - (void)_updateSampleColors {
     auto lock = std::unique_lock(_state.lock);
@@ -204,18 +239,6 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
         [NSString stringWithFormat:@"%f %f %f", _state.sample_XYZ_D50[0], _state.sample_XYZ_D50[1], _state.sample_XYZ_D50[2]]];
     [_colorText_SRGB_D65 setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _state.sample_SRGB_D65[0], _state.sample_SRGB_D65[1], _state.sample_SRGB_D65[2]]];
-}
-
-- (void)_setColorCheckersEnabled:(bool)en {
-    _colorCheckersEnabled = en;
-    [_colorCheckersEnabledButton setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-    [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
-    [_mainView setColorCheckersVisible:_colorCheckersEnabled];
-    [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
-    
-    if (_colorCheckersEnabled) {
-        [self mainViewColorCheckerPositionsChanged:nil];
-    }
 }
 
 //  Row0    G1  R  G1  R
@@ -359,46 +382,39 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     return c;
 }
 
-static double LSRGBFromSRGB(double x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    if (x <= 0.04045) return x/12.92;
-    return pow((x+.055)/1.055, 2.4);
+#pragma mark - UI
+
+- (IBAction)_liveSwitchAction:(id)sender {
+    NSLog(@"_liveSwitchAction");
 }
 
-static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const ColorMatrix XYZD65_From_LSRGBD65(
-        0.4124564, 0.3575761, 0.1804375,
-        0.2126729, 0.7151522, 0.0721750,
-        0.0193339, 0.1191920, 0.9503041
-    );
+- (IBAction)_identityButtonAction:(id)sender {
+    [self _setColorCheckersEnabled:false];
+    [self _resetColorMatrix];
+}
+
+- (void)_setColorCheckersEnabled:(bool)en {
+    _colorCheckersEnabled = en;
+    [_colorCheckersEnabledButton setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
+    [_mainView setColorCheckersVisible:_colorCheckersEnabled];
+    [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
     
-    const ColorMatrix XYZD50_From_XYZD65(
-        1.0478112,  0.0228866,  -0.0501270,
-         0.0295424, 0.9904844,  -0.0170491,
-        -0.0092345, 0.0150436,  0.7521316
-    );
-    
-    // SRGB -> linear SRGB
-    const Color3 lsrgb_d65(LSRGBFromSRGB(srgb_d65[0]), LSRGBFromSRGB(srgb_d65[1]), LSRGBFromSRGB(srgb_d65[2]));
-    // Linear SRGB -> XYZ.D65 -> XYZ.D50
-    return XYZD50_From_XYZD65 * XYZD65_From_LSRGBD65 * lsrgb_d65;
+    if (_colorCheckersEnabled) {
+        [self mainViewColorCheckerPositionsChanged:nil];
+    }
 }
 
-- (IBAction)liveSwitchToggled:(id)sender {
-    NSLog(@"liveSwitchToggled");
-}
-
-- (IBAction)toggleColorCheckers:(id)sender {
+- (IBAction)_colorCheckersCheckboxAction:(id)sender {
     [self _setColorCheckersEnabled:([_colorCheckersEnabledButton state]==NSControlStateValueOn)];
 }
 
-- (IBAction)resetColorCheckers:(id)sender {
+- (IBAction)_resetColorCheckersButtonAction:(id)sender {
     [_mainView resetColorCheckerPositions];
     [self mainViewColorCheckerPositionsChanged:nil];
 }
 
-- (IBAction)debayerOptionsChanged:(id)sender {
+- (IBAction)_debayerOptionsAction:(id)sender {
     [self _setDebayerLMMSEGammaEnabled:([_debayerLMMSEGammaEnabledButton state]==NSControlStateValueOn)];
 }
 
@@ -407,7 +423,7 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
     [[_mainView imageLayer] setDebayerLMMSEGammaEnabled:en];
 }
 
-- (IBAction)highlightFactorSliderChanged:(id)sender {
+- (IBAction)_highlightFactorSliderAction:(id)sender {
     Mat<double,3,3> highlightFactor(
         [_highlightFactorR0Slider doubleValue],
         [_highlightFactorR1Slider doubleValue],
@@ -434,6 +450,8 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
     [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[8]]];
     [self mainViewSampleRectChanged:nil];
 }
+
+#pragma mark - MainViewDelegate
 
 - (void)mainViewSampleRectChanged:(MainView*)v {
     const CGRect sampleRect = [_mainView sampleRect];
@@ -475,7 +493,7 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
     // Calculate the color matrix (x = (At*A)^-1 * At * b)
     auto x = (A.pinv() * b).trans();
     [self _updateColorMatrix:x];
-    [self prefsSetColorCheckerPositions:points];
+    [self _prefsSetColorCheckerPositions:points];
     
 //    NSMutableArray* nspoints = [NSMutableArray new];
 //    for (const CGPoint& p : points) {
@@ -484,7 +502,9 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
 //    [[NSUserDefaults standardUserDefaults] setObject:nspoints forKey:ColorCheckerPositionsKey];
 }
 
-- (std::vector<CGPoint>)prefsColorCheckerPositions {
+#pragma mark - Prefs
+
+- (std::vector<CGPoint>)_prefsColorCheckerPositions {
     NSArray* nspoints = [[NSUserDefaults standardUserDefaults] objectForKey:ColorCheckerPositionsKey];
     std::vector<CGPoint> points;
     if ([nspoints count] != ColorChecker::Count) return {};
@@ -502,7 +522,7 @@ static Color_XYZ_D50 XYZFromSRGB(const Color_SRGB_D65& srgb_d65) {
     return points;
 }
 
-- (void)prefsSetColorCheckerPositions:(const std::vector<CGPoint>&)points {
+- (void)_prefsSetColorCheckerPositions:(const std::vector<CGPoint>&)points {
     NSMutableArray* nspoints = [NSMutableArray new];
     for (const CGPoint& p : points) {
         [nspoints addObject:@[@(p.x), @(p.y)]];

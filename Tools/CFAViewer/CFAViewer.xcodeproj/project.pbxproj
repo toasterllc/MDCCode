@@ -61,7 +61,8 @@
 		55E98EB825A920880062B458 /* HistogramView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HistogramView.h; sourceTree = "<group>"; };
 		55E98EBB25A921D80062B458 /* ColorChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorChecker.h; sourceTree = "<group>"; };
 		55E98EBD25A92EAF0062B458 /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/Shared/STAppTypes.h; sourceTree = "<group>"; };
-		55E98EBE25A930780062B458 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
+		55E98EBE25A930780062B458 /* IOServiceMatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceMatcher.h; sourceTree = "<group>"; };
+		55E98ED225A9577A0062B458 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
 		55EBCC86258966FE0089A441 /* ImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayer.h; sourceTree = "<group>"; };
 		55EBCC87258966FE0089A441 /* BaseView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BaseView.mm; sourceTree = "<group>"; };
 		55EBCC88258966FE0089A441 /* ImageLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageLayer.mm; sourceTree = "<group>"; };
@@ -107,7 +108,8 @@
 				55671A2B257E94BD00C1CDA4 /* MyTime.h */,
 				55671A2D257E94BD00C1CDA4 /* RuntimeError.h */,
 				55671A33257E94BD00C1CDA4 /* SendRight.h */,
-				55E98EBE25A930780062B458 /* IOServiceWatcher.h */,
+				55E98EBE25A930780062B458 /* IOServiceMatcher.h */,
+				55E98ED225A9577A0062B458 /* IOServiceWatcher.h */,
 				55671A32257E94BD00C1CDA4 /* USBDevice.h */,
 				55671A2E257E94BD00C1CDA4 /* USBInterface.h */,
 				55671A2A257E94BD00C1CDA4 /* USBPipe.h */,
