@@ -7,15 +7,18 @@
 
 class USBDevice {
 public:
-    template <typename T>
-    static std::vector<T> FindDevices(uint16_t vid, uint16_t pid) {
-        std::vector<T> devices;
+    static NSDictionary* MatchingDictionary(uint16_t vid, uint16_t pid) {
         NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
         match[@kIOPropertyMatchKey] = @{
             @"idVendor": @(vid),
             @"idProduct": @(pid),
         };
-        
+        return match;
+    }
+    
+    template <typename T>
+    static std::vector<T> FindDevice(NSDictionary* match) {
+        std::vector<T> devices;
         io_iterator_t ioServicesIter = MACH_PORT_NULL;
         kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (CFDictionaryRef)CFBridgingRetain(match), &ioServicesIter);
         if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceGetMatchingServices failed: 0x%x", kr);

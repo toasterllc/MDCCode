@@ -60,6 +60,8 @@
 		55E98EB725A920880062B458 /* HistogramView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HistogramView.mm; sourceTree = "<group>"; };
 		55E98EB825A920880062B458 /* HistogramView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HistogramView.h; sourceTree = "<group>"; };
 		55E98EBB25A921D80062B458 /* ColorChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorChecker.h; sourceTree = "<group>"; };
+		55E98EBD25A92EAF0062B458 /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/Shared/STAppTypes.h; sourceTree = "<group>"; };
+		55E98EBE25A930780062B458 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
 		55EBCC86258966FE0089A441 /* ImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayer.h; sourceTree = "<group>"; };
 		55EBCC87258966FE0089A441 /* BaseView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BaseView.mm; sourceTree = "<group>"; };
 		55EBCC88258966FE0089A441 /* ImageLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageLayer.mm; sourceTree = "<group>"; };
@@ -105,9 +107,11 @@
 				55671A2B257E94BD00C1CDA4 /* MyTime.h */,
 				55671A2D257E94BD00C1CDA4 /* RuntimeError.h */,
 				55671A33257E94BD00C1CDA4 /* SendRight.h */,
+				55E98EBE25A930780062B458 /* IOServiceWatcher.h */,
 				55671A32257E94BD00C1CDA4 /* USBDevice.h */,
 				55671A2E257E94BD00C1CDA4 /* USBInterface.h */,
 				55671A2A257E94BD00C1CDA4 /* USBPipe.h */,
+				55E98EBD25A92EAF0062B458 /* STAppTypes.h */,
 			);
 			name = Shared;
 			path = ../Shared;
@@ -129,8 +133,8 @@
 				55671A34257E94C000C1CDA4 /* Shared */,
 				552E7D5A24C9316900438AAF /* CFAViewer.entitlements */,
 				559D8E0E2593EAB200836B47 /* Util.h */,
-				55B9745D24C504E2000B2633 /* AppDelegate.mm */,
 				55E98EBB25A921D80062B458 /* ColorChecker.h */,
+				55B9745D24C504E2000B2633 /* AppDelegate.mm */,
 				55E98EB525A920030062B458 /* MainView.h */,
 				55E98EB425A920030062B458 /* MainView.mm */,
 				55EBCC9B2589E5A00089A441 /* MetalTypes.h */,

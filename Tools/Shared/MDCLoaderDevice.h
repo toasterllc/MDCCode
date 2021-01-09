@@ -6,8 +6,8 @@
 
 class MDCLoaderDevice : public USBDevice {
 public:
-    static std::vector<MDCLoaderDevice> FindDevices() {
-        return USBDevice::FindDevices<MDCLoaderDevice>(1155, 57105);
+    static std::vector<MDCLoaderDevice> FindDevice() {
+        return USBDevice::FindDevice<MDCLoaderDevice>(1155, 57105);
     }
     
     // Default constructor: empty

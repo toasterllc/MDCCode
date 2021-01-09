@@ -13,6 +13,8 @@
 #import "MainView.h"
 #import "HistogramView.h"
 #import "ColorChecker.h"
+#import "MDCDevice.h"
+#import "IOServiceWatcher.h"
 
 using namespace CFAViewer;
 using namespace MetalTypes;
@@ -67,6 +69,8 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
     
+    IOServiceWatcher _serviceWatcher;
+    
     struct {
         std::mutex lock; // Protects this struct
         
@@ -108,29 +112,25 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     
     [self _resetColorMatrix];
     
+    [self _setDebayerLMMSEGammaEnabled:true];
+    
     auto points = [self prefsColorCheckerPositions];
     if (!points.empty()) {
         [_mainView setColorCheckerPositions:points];
     }
     
-    [self _setDebayerLMMSEGammaEnabled:true];
-    
-//    [self _setColorCheckersEnabled:false];
-    
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
-//        const uint32_t count = 100;
-//        auto startTime = MyTime::Now();
-//        for (int i=0; i<count; i++) {
-//            [[self->_mainView imageLayer] display];
-//        }
-//        auto durationNs = MyTime::DurationNs(startTime);
-//        printf("Duration: %f ms\n", ((double)durationNs/count)/1000000);
-//    }];
+    _serviceWatcher = IOServiceWatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(), ^(SendRight&& service) {
+        [weakSelf _handleUSBDevice:std::move(service)];
+    });
 }
 
 - (IBAction)identityButtonPressed:(id)sender {
     [self _setColorCheckersEnabled:false];
     [self _resetColorMatrix];
+}
+
+- (void)_handleUSBDevice:(SendRight&&)service {
+    NSLog(@"GOT USB DEVICE");
 }
 
 - (void)_resetColorMatrix {
