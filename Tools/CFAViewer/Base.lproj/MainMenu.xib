@@ -39,10 +39,10 @@
                 <outlet property="_highlightFactorR2Label" destination="IQj-1K-ea4" id="6wO-s3-7GB"/>
                 <outlet property="_highlightFactorR2Slider" destination="zQK-wl-iSr" id="ITp-2R-6fS"/>
                 <outlet property="_inputHistogramView" destination="osY-3C-qNQ" id="Ou4-HW-UsG"/>
-                <outlet property="_liveSwitch" destination="ktH-HS-6VN" id="BXt-8M-ng7"/>
                 <outlet property="_mainView" destination="EiT-Mj-1SZ" id="Jdu-Qd-kK8"/>
                 <outlet property="_outputHistogramView" destination="4k6-Ff-4m2" id="Hxv-tX-8oC"/>
                 <outlet property="_resetColorCheckersButton" destination="BTk-ZC-PdV" id="DL9-SA-mW0"/>
+                <outlet property="_streamImagesSwitch" destination="ktH-HS-6VN" id="BXt-8M-ng7"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -717,12 +717,12 @@
                                         <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="ktH-HS-6VN">
                                             <rect key="frame" x="18" y="1080" width="42" height="24"/>
                                             <connections>
-                                                <action selector="_liveSwitchAction:" target="Voe-Tx-rLC" id="W1i-lr-DP7"/>
+                                                <action selector="_streamImagesSwitchAction:" target="Voe-Tx-rLC" id="W1i-lr-DP7"/>
                                             </connections>
                                         </switch>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PZc-YF-PY7">
-                                            <rect key="frame" x="64" y="1085" width="29" height="16"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Live" id="7tF-ny-LX5">
+                                            <rect key="frame" x="64" y="1085" width="48" height="16"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Stream" id="7tF-ny-LX5">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

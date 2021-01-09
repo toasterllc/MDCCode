@@ -18,6 +18,7 @@
 #import "MDCDevice.h"
 #import "IOServiceMatcher.h"
 #import "IOServiceWatcher.h"
+#import "MDCUtil.h"
 
 using namespace CFAViewer;
 using namespace MetalTypes;
@@ -33,7 +34,7 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 @implementation AppDelegate {
     IBOutlet MainView* _mainView;
     
-    IBOutlet NSSwitch* _liveSwitch;
+    IBOutlet NSSwitch* _streamImagesSwitch;
     
     IBOutlet NSButton* _colorCheckersEnabledButton;
     IBOutlet NSButton* _resetColorCheckersButton;
@@ -78,15 +79,18 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     
     struct {
         std::mutex lock; // Protects this struct
-        
-        ColorMatrix colorMatrix;
-        Mmap imageData;
-        Image image;
-        
-        Color_CamRaw_D50 sample_CamRaw_D50;
-        Color_XYZ_D50 sample_XYZ_D50;
-        Color_SRGB_D65 sample_SRGB_D65;
-    } _state;
+        std::condition_variable signal;
+        bool running = false;
+        bool cancel = false;
+    } _streamImages;
+    
+    ColorMatrix _colorMatrix;
+    Mmap _imageData;
+    Image _image;
+    
+    Color_CamRaw_D50 _sample_CamRaw_D50;
+    Color_XYZ_D50 _sample_XYZ_D50;
+    Color_SRGB_D65 _sample_SRGB_D65;
 }
 
 - (void)awakeFromNib {
@@ -96,18 +100,16 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
-    auto lock = std::unique_lock(_state.lock);
-        _state.colorMatrix = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
-        _state.imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
-        
-        _state.image = {
-            .width = ImageWidth,
-            .height = ImageHeight,
-            .pixels = (MetalTypes::ImagePixel*)_state.imageData.data(),
-        };
-        
-        [[_mainView imageLayer] setImage:_state.image];
-    lock.unlock();
+    _colorMatrix = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
+    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
+    
+    _image = {
+        .width = ImageWidth,
+        .height = ImageHeight,
+        .pixels = (MetalTypes::ImagePixel*)_imageData.data(),
+    };
+    
+    [[_mainView imageLayer] setImage:_image];
     
     __weak auto weakSelf = self;
     [[_mainView imageLayer] setDataChangedHandler:^(ImageLayer*) {
@@ -128,6 +130,10 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     _serviceWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(), ^(SendRight&& service) {
         [weakSelf _handleUSBDevice:std::move(service)];
     });
+    
+    [NSThread detachNewThreadWithBlock:^{
+        [self _threadReadInputCommands];
+    }];
 }
 
 #pragma mark - MDCDevice
@@ -135,30 +141,189 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 - (void)_handleUSBDevice:(SendRight&&)service {
     MDCDevice device;
     try {
-        device = std::move(service);
+        device = MDCDevice(std::move(service));
     } catch (...) {
-        NSLog(@"Failed to create MDCDevice (it probably needs to be bootloaded)");
+        fprintf(stderr, "Failed to create MDCDevice (it probably needs to be bootloaded)\n");
     }
     [self _setMDCDevice:std::move(device)];
 }
 
+// Throws on error
+- (void)_initMDCDevice:(const MDCDevice&)device {
+    // Reset the device to put it back in a pre-defined state
+    device.reset();
+    device.pixReset();
+    device.pixConfig();
+}
+
 - (void)_setMDCDevice:(MDCDevice&&)device {
+    // Disable streaming
+    [self _setStreamImagesEnabled:false];
+    
     _mdcDevice = std::move(device);
+    [_streamImagesSwitch setEnabled:_mdcDevice];
+    
     // Watch the MDCDevice so we know when it's terminated
     if (_mdcDevice) {
         __weak auto weakSelf = self;
-        _mdcDeviceWatcher = _mdcDevice.createWatcher(dispatch_get_main_queue(), ^(uint32_t msgType, void* msgArg) {
-            [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
-        });
+        try {
+            [self _initMDCDevice:_mdcDevice];
+            _mdcDeviceWatcher = _mdcDevice.createWatcher(dispatch_get_main_queue(), ^(uint32_t msgType, void* msgArg) {
+                [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
+            });
+        
+        } catch (...) {
+            // If something goes wrong, assume the device was disconnected
+            [self _setMDCDevice:MDCDevice()];
+        }
     }
-    
-    [_liveSwitch setState:NSControlStateValueOff];
-    [_liveSwitch setEnabled:_mdcDevice];
 }
 
 - (void)_handleMDCDeviceNotificationType:(uint32_t)msgType arg:(void*)msgArg {
     if (msgType == kIOMessageServiceIsTerminated) {
         [self _setMDCDevice:MDCDevice()];
+    }
+}
+
+- (void)_threadReadInputCommands {
+    for (;;) {
+        std::string line;
+        std::getline(std::cin, line);
+        
+        std::vector<std::string> argStrs;
+        std::stringstream argStream(line);
+        std::string argStr;
+        while (std::getline(argStream, argStr, ' ')) {
+            if (!argStr.empty()) argStrs.push_back(argStr);
+        }
+        
+        __weak auto weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf _handleInputCommand:argStrs];
+        });
+    }
+}
+
+- (void)_threadStreamImages:(MDCDevice)device {
+    using namespace STApp;
+    assert(device);
+    
+    ImageLayer* layer = [_mainView imageLayer];
+    
+    // Reset the device to put it back in a pre-defined state
+    device.reset();
+    
+    const PixStatus pixStatus = device.pixStatus();
+    // Start Pix stream
+    device.pixStartStream();
+    
+    const size_t pixelCount = pixStatus.width*pixStatus.height;
+    auto pixels = std::make_unique<Pixel[]>(pixelCount);
+    for (int count=0;; count++) {
+        try {
+            // Check if we've been cancelled
+            bool cancel = false;
+            _streamImages.lock.lock();
+                cancel = _streamImages.cancel;
+            _streamImages.lock.unlock();
+            if (cancel) break;
+            
+            // Read an image, timing-out after 1s so we can check the device status,
+            // in case it reports a streaming error
+            device.pixReadImage(pixels.get(), pixelCount, 1000);
+            
+            Image image = {
+                .width = pixStatus.width,
+                .height = pixStatus.height,
+                .pixels = pixels.get(),
+            };
+            [layer setImage:image];
+        
+        } catch (const std::exception& e) {
+            PixState pixState = PixState::Idle;
+            try {
+                pixState = device.pixStatus().state;
+            } catch (const std::exception& e) {
+                printf("pixStatus() failed: %s\n", e.what());
+                break;
+            }
+            
+            if (pixState != PixState::Streaming) {
+                printf("pixStatus.state != PixState::Streaming\n");
+                break;
+            }
+        }
+    }
+    
+    // Notify that our thread has exited
+    _streamImages.lock.lock();
+        _streamImages.running = false;
+        _streamImages.signal.notify_all();
+    _streamImages.lock.unlock();
+}
+
+- (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {
+    MDCUtil::Args args;
+    try {
+        args = MDCUtil::ParseArgs(cmdStrs);
+    
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
+        MDCUtil::PrintUsage();
+        return;
+    }
+    
+    if (!_mdcDevice) {
+        fprintf(stderr, "No MDC device connected\n\n");
+        return;
+    }
+    
+    // Disable streaming before we talk to the device
+    bool oldStreamImagesEnabled = [self _streamImagesEnabled];
+    [self _setStreamImagesEnabled:false];
+    
+    try {
+        MDCUtil::Run(_mdcDevice, args);
+    
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Error: %s\n\n", e.what());
+        return;
+    }
+    
+    // Re-enable streaming (if it was enabled previously)
+    if (oldStreamImagesEnabled) [self _setStreamImagesEnabled:true];
+}
+
+- (bool)_streamImagesEnabled {
+    auto lock = std::unique_lock(_streamImages.lock);
+    return _streamImages.running;
+}
+
+- (void)_setStreamImagesEnabled:(bool)en {
+    // Cancel streaming and wait for it to stop
+    for (;;) {
+        auto lock = std::unique_lock(_streamImages.lock);
+        if (!_streamImages.running) break;
+        _streamImages.cancel = true;
+        _streamImages.signal.wait(lock);
+    }
+    
+    [_streamImagesSwitch setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    
+    if (en) {
+        assert(_mdcDevice); // Verify that we have a valid device, since we're trying to enable image streaming
+        
+        // Kick off a new streaming thread
+        _streamImages.lock.lock();
+            _streamImages.running = true;
+            _streamImages.cancel = false;
+            _streamImages.signal.notify_all();
+        _streamImages.lock.unlock();
+        
+        MDCDevice device = _mdcDevice;
+        [NSThread detachNewThreadWithBlock:^{
+            [self _threadStreamImages:device];
+        }];
     }
 }
 
@@ -171,7 +336,6 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 }
 
 - (void)_resetColorMatrix {
-    auto lock = std::unique_lock(_state.lock);
     [self _updateColorMatrix:{1.,0.,0.,0.,1.,0.,0.,0.,1.}];
 }
 
@@ -190,13 +354,11 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
         return;
     }
     
-    auto lock = std::unique_lock(_state.lock);
     [self _updateColorMatrix:vals.data()];
 }
 
-// _state.lock must be held
 - (void)_updateColorMatrix:(const ColorMatrix&)colorMatrix {
-    _state.colorMatrix = colorMatrix;
+    _colorMatrix = colorMatrix;
     
     [[_mainView imageLayer] setColorMatrix:colorMatrix];
     
@@ -204,9 +366,9 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
         @"%f %f %f\n"
         @"%f %f %f\n"
         @"%f %f %f\n",
-        _state.colorMatrix[0], _state.colorMatrix[1], _state.colorMatrix[2],
-        _state.colorMatrix[3], _state.colorMatrix[4], _state.colorMatrix[5],
-        _state.colorMatrix[6], _state.colorMatrix[7], _state.colorMatrix[8]
+        _colorMatrix[0], _colorMatrix[1], _colorMatrix[2],
+        _colorMatrix[3], _colorMatrix[4], _colorMatrix[5],
+        _colorMatrix[6], _colorMatrix[7], _colorMatrix[8]
     ]];
 }
 
@@ -220,25 +382,29 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 #pragma mark - Sample
 
 - (void)_updateSampleColors {
-    auto lock = std::unique_lock(_state.lock);
-    _state.sample_CamRaw_D50 = [[_mainView imageLayer] sample_CamRaw_D50];
-    _state.sample_XYZ_D50 = [[_mainView imageLayer] sample_XYZ_D50];
-    _state.sample_SRGB_D65 = [[_mainView imageLayer] sample_SRGB_D65];
+    // Make sure we're not on the main thread, since calculating the average sample can take some time
+    assert(![NSThread isMainThread]);
+    
+    auto sample_CamRaw_D50 = [[_mainView imageLayer] sample_CamRaw_D50];
+    auto sample_XYZ_D50 = [[_mainView imageLayer] sample_XYZ_D50];
+    auto sample_SRGB_D65 = [[_mainView imageLayer] sample_SRGB_D65];
     
     CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+        self->_sample_CamRaw_D50 = sample_CamRaw_D50;
+        self->_sample_XYZ_D50 = sample_XYZ_D50;
+        self->_sample_SRGB_D65 = sample_SRGB_D65;
         [self _updateSampleColorsText];
     });
     CFRunLoopWakeUp(CFRunLoopGetMain());
 }
 
 - (void)_updateSampleColorsText {
-    auto lock = std::unique_lock(_state.lock);
     [_colorText_cameraRaw setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _state.sample_CamRaw_D50[0], _state.sample_CamRaw_D50[1], _state.sample_CamRaw_D50[2]]];
+        [NSString stringWithFormat:@"%f %f %f", _sample_CamRaw_D50[0], _sample_CamRaw_D50[1], _sample_CamRaw_D50[2]]];
     [_colorText_XYZ_D50 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _state.sample_XYZ_D50[0], _state.sample_XYZ_D50[1], _state.sample_XYZ_D50[2]]];
+        [NSString stringWithFormat:@"%f %f %f", _sample_XYZ_D50[0], _sample_XYZ_D50[1], _sample_XYZ_D50[2]]];
     [_colorText_SRGB_D65 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _state.sample_SRGB_D65[0], _state.sample_SRGB_D65[1], _state.sample_SRGB_D65[2]]];
+        [NSString stringWithFormat:@"%f %f %f", _sample_SRGB_D65[0], _sample_SRGB_D65[1], _sample_SRGB_D65[2]]];
 }
 
 //  Row0    G1  R  G1  R
@@ -384,8 +550,8 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 
 #pragma mark - UI
 
-- (IBAction)_liveSwitchAction:(id)sender {
-    NSLog(@"_liveSwitchAction");
+- (IBAction)_streamImagesSwitchAction:(id)sender {
+    [self _setStreamImagesEnabled:([_streamImagesSwitch state]==NSControlStateValueOn)];
 }
 
 - (IBAction)_identityButtonAction:(id)sender {
@@ -459,16 +625,15 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 }
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
-    auto lock = std::unique_lock(_state.lock);
     auto points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorChecker::Count);
     
     Mat<double,ColorChecker::Count,3> A; // Colors that we have
     size_t i = 0;
     for (const CGPoint& p : points) {
-        Color_CamRaw_D50 c = sampleImageCircle(_state.image,
-            round(p.x*_state.image.width),
-            round(p.y*_state.image.height),
+        Color_CamRaw_D50 c = sampleImageCircle(_image,
+            round(p.x*_image.width),
+            round(p.y*_image.height),
             _colorCheckerCircleRadius);
         A[i+0] = c[0];
         A[i+1] = c[1];
