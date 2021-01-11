@@ -27,6 +27,12 @@ using namespace ColorUtil;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 
+struct PixConfig {
+    uint16_t coarseIntegrationTime = 0;
+    uint16_t fineIntegrationTime = 0;
+    uint8_t analogGain = 0;
+};
+
 @interface AppDelegate : NSObject <NSApplicationDelegate, MainViewDelegate>
 @property(weak) IBOutlet NSWindow* window;
 @end
@@ -35,6 +41,15 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     IBOutlet MainView* _mainView;
     
     IBOutlet NSSwitch* _streamImagesSwitch;
+    
+    IBOutlet NSSlider* _coarseIntegrationTimeSlider;
+    IBOutlet NSTextField* _coarseIntegrationTimeLabel;
+    
+    IBOutlet NSSlider* _fineIntegrationTimeSlider;
+    IBOutlet NSTextField* _fineIntegrationTimeLabel;
+    
+    IBOutlet NSSwitch* _analogGainSlider;
+    IBOutlet NSTextField* _analogGainLabel;
     
     IBOutlet NSButton* _colorCheckersEnabledButton;
     IBOutlet NSButton* _resetColorCheckersButton;
@@ -76,6 +91,8 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     IOServiceMatcher _serviceWatcher;
     MDCDevice _mdcDevice;
     IOServiceWatcher _mdcDeviceWatcher;
+    
+    PixConfig _pixConfig;
     
     struct {
         std::mutex lock; // Protects this struct
@@ -126,6 +143,10 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
         [_mainView setColorCheckerPositions:points];
     }
     
+    [self _setCoarseIntegrationTime:0];
+    [self _setFineIntegrationTime:0];
+    [self _setAnalogGain:0];
+    
     [self _setMDCDevice:MDCDevice()];
     _serviceWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(), ^(SendRight&& service) {
         [weakSelf _handleUSBDevice:std::move(service)];
@@ -149,11 +170,21 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 }
 
 // Throws on error
-- (void)_initMDCDevice:(const MDCDevice&)device {
+static void initMDCDevice(const MDCDevice& device) {
     // Reset the device to put it back in a pre-defined state
     device.reset();
     device.pixReset();
     device.pixConfig();
+}
+
+// Throws on error
+static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
+    // Set coarse_integration_time
+    device.pixI2CWrite(0x3012, cfg.coarseIntegrationTime);
+    // Set fine_integration_time
+    device.pixI2CWrite(0x3014, cfg.fineIntegrationTime);
+    // Set analog_gain
+    device.pixI2CWrite(0x3060, cfg.analogGain);
 }
 
 - (void)_setMDCDevice:(MDCDevice&&)device {
@@ -167,7 +198,7 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     if (_mdcDevice) {
         __weak auto weakSelf = self;
         try {
-            [self _initMDCDevice:_mdcDevice];
+            initMDCDevice(_mdcDevice);
             _mdcDeviceWatcher = _mdcDevice.createWatcher(dispatch_get_main_queue(), ^(uint32_t msgType, void* msgArg) {
                 [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
             });
@@ -312,6 +343,13 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
     
     if (en) {
         assert(_mdcDevice); // Verify that we have a valid device, since we're trying to enable image streaming
+        
+        // Reset the device to put it back in a pre-defined state
+        // so that we can talk to it
+        _mdcDevice.reset();
+        
+        // Configure the device
+        configMDCDevice(_mdcDevice, _pixConfig);
         
         // Kick off a new streaming thread
         _streamImages.lock.lock();
@@ -552,6 +590,39 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 
 - (IBAction)_streamImagesSwitchAction:(id)sender {
     [self _setStreamImagesEnabled:([_streamImagesSwitch state]==NSControlStateValueOn)];
+}
+
+- (IBAction)_streamSettingsAction:(id)sender {
+    [self _setCoarseIntegrationTime:[_coarseIntegrationTimeSlider doubleValue]];
+    [self _setFineIntegrationTime:[_fineIntegrationTimeSlider doubleValue]];
+    [self _setAnalogGain:[_analogGainSlider doubleValue]];
+    
+    if ([self _streamImagesEnabled]) {
+        [self _setStreamImagesEnabled:false];
+        [self _setStreamImagesEnabled:true];
+    }
+}
+
+- (void)_setCoarseIntegrationTime:(double)intTime {
+    _pixConfig.coarseIntegrationTime = intTime*16384;
+    [_coarseIntegrationTimeSlider setDoubleValue:intTime];
+    [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
+        (uintmax_t)_pixConfig.coarseIntegrationTime]];
+}
+
+- (void)_setFineIntegrationTime:(double)intTime {
+    _pixConfig.fineIntegrationTime = intTime*UINT16_MAX;
+    [_fineIntegrationTimeSlider setDoubleValue:intTime];
+    [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
+        (uintmax_t)_pixConfig.fineIntegrationTime]];
+}
+
+- (void)_setAnalogGain:(double)gain {
+    const uint32_t i = gain*0x3F;
+    _pixConfig.analogGain = i;
+    [_analogGainSlider setDoubleValue:gain];
+    [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju",
+        (uintmax_t)_pixConfig.analogGain]];
 }
 
 - (IBAction)_identityButtonAction:(id)sender {
