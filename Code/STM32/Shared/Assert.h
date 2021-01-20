@@ -1,12 +1,12 @@
 #pragma once
-#include "Abort.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
 inline void Assert(bool x) {
-    if (!x) Abort();
+    if (!x) abort();
 }
 
 //#define AssertArg(x)
 inline void AssertArg(bool x) {
-    if (!x) Abort();
+    if (!x) abort();
 }

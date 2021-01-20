@@ -1,5 +1,4 @@
 #include "QSPI.h"
-#include "Abort.h"
 #include "Assert.h"
 
 QSPI::QSPI(Mode mode, uint8_t clkDivider, Align align) :
@@ -189,5 +188,5 @@ void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device) {
 }
 
 void HAL_QSPI_ErrorCallback(QSPI_HandleTypeDef* device) {
-    Abort();
+    abort();
 }

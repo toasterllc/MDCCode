@@ -1,6 +1,5 @@
 #include "System.h"
 #include "Assert.h"
-#include "Abort.h"
 #include "SystemClock.h"
 #include "Startup.h"
 
@@ -482,7 +481,7 @@ void System::_pixI2CRead(uint16_t addr) {
     }
     // Timeout getting response from ICE40
     // This should never happen, since it indicates a Verilog error or a hardware failure.
-    Abort();
+    abort();
 }
 
 void System::_pixI2CWrite(uint16_t addr, uint16_t val) {
@@ -499,7 +498,7 @@ void System::_pixI2CWrite(uint16_t addr, uint16_t val) {
     }
     // Timeout getting response from ICE40
     // This should never happen, since it indicates a Verilog error or a hardware failure.
-    Abort();
+    abort();
 }
 
 
@@ -768,7 +767,7 @@ void System::_handleUSBEvent(const USB::Event& ev) {
     
     default: {
         // Invalid event type
-        Abort();
+        abort();
     }}
 }
 
@@ -798,7 +797,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
         break;
     }
     
-    // PixStream
+    // PixStartStream
     case Cmd::Op::PixStartStream: {
         if (_pixStatus.state == PixState::Idle) {
             _pixStatus.state = PixState::Streaming;
@@ -1137,6 +1136,16 @@ void System::_pixStartImage() {
     }
 }
 
+[[noreturn]] void System::_abort() {
+    for (bool x=true;; x=!x) {
+        _led0.write(x);
+        _led1.write(x);
+        _led2.write(x);
+        _led3.write(x);
+        HAL_Delay(500);
+    }
+}
+
 System Sys;
 
 int main() {
@@ -1146,4 +1155,8 @@ int main() {
         Sys._handleEvent();
     }
     return 0;
+}
+
+[[noreturn]] void abort() {
+    Sys._abort();
 }

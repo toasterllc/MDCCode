@@ -1,7 +1,6 @@
 #include "usbd_core.h"
 #include "stm32f7xx.h"
 #include "stm32f7xx_hal.h"
-#include "Abort.h"
 #include "Assert.h"
 #include "SystemClock.h"
 
@@ -90,7 +89,7 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
   }
   else
   {
-    Abort();
+    abort();
   }
     // Set Speed
   USBD_LL_SetSpeed((USBD_HandleTypeDef*)hpcd->pData, speed);
