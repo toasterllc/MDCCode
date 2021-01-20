@@ -465,7 +465,7 @@ ICE40::PixGetStatusResp System::_pixGetStatus() {
     return _ice40Transfer<PixGetStatusResp>(_qspi, PixGetStatusMsg());
 }
 
-void System::_pixRead(uint16_t addr) {
+void System::_pixI2CRead(uint16_t addr) {
     _ice40Transfer(_qspi, PixI2CTransactionMsg(false, 2, addr, 0));
     
     // Wait for the I2C transaction to complete
@@ -485,7 +485,7 @@ void System::_pixRead(uint16_t addr) {
     Abort();
 }
 
-void System::_pixWrite(uint16_t addr, uint16_t val) {
+void System::_pixI2CWrite(uint16_t addr, uint16_t val) {
     _ice40Transfer(_qspi, PixI2CTransactionMsg(true, 2, addr, val));
     
     // Wait for the I2C transaction to complete
@@ -525,7 +525,7 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    
 //    // Sanity-check pix comms by reading a known register
 //    {
-//        const uint16_t chipVersion = _pixRead(0x3000);
+//        const uint16_t chipVersion = _pixI2CRead(0x3000);
 //        // TODO: we probably don't want to check the version number in production, in case the version number changes?
 //        // also the 0x3000 isn't read-only, so in theory it could change
 //        Assert(chipVersion == 0x2604);
@@ -533,12 +533,12 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    
 //    // Configure internal register initialization
 //    {
-//        _pixWrite(0x3052, 0xA114);
+//        _pixI2CWrite(0x3052, 0xA114);
 //    }
 //    
 //    // Start internal register initialization
 //    {
-//        _pixWrite(0x304A, 0x0070);
+//        _pixI2CWrite(0x304A, 0x0070);
 //    }
 //    
 //    // Wait 150k EXTCLK (24MHz) periods
@@ -550,63 +550,63 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    // Enable parallel interface (R0x301A[7]=1), disable serial interface to save power (R0x301A[12]=1)
 //    // (Default value of 0x301A is 0x0058)
 //    {
-//        _pixWrite(0x301A, 0x10D8);
+//        _pixI2CWrite(0x301A, 0x10D8);
 //    }
 //    
 //    // Set pre_pll_clk_div
 //    {
-////        _pixWrite(0x302E, 0x0002);  // /2 -> CLK_OP=98 MHz
-////        _pixWrite(0x302E, 0x0004);  // /4 -> CLK_OP=49 MHz (Default)
-////        _pixWrite(0x302E, 0x003F);  // /63
+////        _pixI2CWrite(0x302E, 0x0002);  // /2 -> CLK_OP=98 MHz
+////        _pixI2CWrite(0x302E, 0x0004);  // /4 -> CLK_OP=49 MHz (Default)
+////        _pixI2CWrite(0x302E, 0x003F);  // /63
 //    }
 //    
 //    // Set pll_multiplier
 //    {
-////        _pixWrite(0x3030, 0x0062);  // *98 (Default)
-////        _pixWrite(0x3030, 0x0031);  // *49
+////        _pixI2CWrite(0x3030, 0x0062);  // *98 (Default)
+////        _pixI2CWrite(0x3030, 0x0031);  // *49
 //    }
 //    
 //    // Set vt_pix_clk_div
 //    {
-////        _pixWrite(0x302A, 0x0006);  // /6 (Default)
-////        _pixWrite(0x302A, 0x001F);  // /31
+////        _pixI2CWrite(0x302A, 0x0006);  // /6 (Default)
+////        _pixI2CWrite(0x302A, 0x001F);  // /31
 //    }
 //    
 //    // Set op_pix_clk_div
 //    {
-////        _pixWrite(0x3036, 0x000A);
+////        _pixI2CWrite(0x3036, 0x000A);
 //    }
 //    
 //    // Set output slew rate
 //    {
-////        _pixWrite(0x306E, 0x0010);  // Slow
-////        _pixWrite(0x306E, 0x9010);  // Medium (default)
-//        _pixWrite(0x306E, 0xFC10);  // Fast
+////        _pixI2CWrite(0x306E, 0x0010);  // Slow
+////        _pixI2CWrite(0x306E, 0x9010);  // Medium (default)
+//        _pixI2CWrite(0x306E, 0xFC10);  // Fast
 //    }
 //    
 //    // Set data_pedestal
 //    {
-////        _pixWrite(0x301E, 0x00A8);  // Default
-////        _pixWrite(0x301E, 0x0000);
+////        _pixI2CWrite(0x301E, 0x00A8);  // Default
+////        _pixI2CWrite(0x301E, 0x0000);
 //    }
 //    
 //    // Set test data colors
 //    {
 ////        // Set test_data_red
-////        _pixWrite(0x3072, 0x0B2A);  // AAA
-////        _pixWrite(0x3072, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3072, 0x0B2A);  // AAA
+////        _pixI2CWrite(0x3072, 0x0FFF);  // FFF
 ////
 ////        // Set test_data_greenr
-////        _pixWrite(0x3074, 0x0C3B);  // BBB
-////        _pixWrite(0x3074, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3074, 0x0C3B);  // BBB
+////        _pixI2CWrite(0x3074, 0x0FFF);  // FFF
 ////
 ////        // Set test_data_blue
-////        _pixWrite(0x3076, 0x0D4C);  // CCC
-////        _pixWrite(0x3076, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3076, 0x0D4C);  // CCC
+////        _pixI2CWrite(0x3076, 0x0FFF);  // FFF
 ////
 ////        // Set test_data_greenb
-////        _pixWrite(0x3078, 0x0C3B);  // BBB
-////        _pixWrite(0x3078, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3078, 0x0C3B);  // BBB
+////        _pixI2CWrite(0x3078, 0x0FFF);  // FFF
 //    }
 //    
 //    // Set test_pattern_mode
@@ -616,11 +616,11 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //        // 2: Full color bar test pattern
 //        // 3: Fade-to-gray color bar test pattern
 //        // 256: Walking 1s test pattern (12 bit)
-////        _pixWrite(0x3070, 0x0000);  // Normal operation
-////        _pixWrite(0x3070, 0x0001);  // Solid color
-////        _pixWrite(0x3070, 0x0002);  // Color bars
-////        _pixWrite(0x3070, 0x0003);  // Fade-to-gray
-////        _pixWrite(0x3070, 0x0100);  // Walking 1s
+////        _pixI2CWrite(0x3070, 0x0000);  // Normal operation
+////        _pixI2CWrite(0x3070, 0x0001);  // Solid color
+////        _pixI2CWrite(0x3070, 0x0002);  // Color bars
+////        _pixI2CWrite(0x3070, 0x0003);  // Fade-to-gray
+////        _pixI2CWrite(0x3070, 0x0100);  // Walking 1s
 //    }
 //    
 //    // Set serial_format
@@ -628,7 +628,7 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    // *** The datasheet doesn't mention this. :(
 //    // *** Discovered looking at Linux kernel source.
 //    {
-//        _pixWrite(0x31AE, 0x0301);
+//        _pixI2CWrite(0x31AE, 0x0301);
 //    }
 //    
 //    // Set data_format_bits
@@ -637,58 +637,58 @@ void System::_pixWrite(uint16_t addr, uint16_t val) {
 //    //   This register should be programmed to 0x0C0C when
 //    //   using the parallel interface."
 //    {
-//        _pixWrite(0x31AC, 0x0C0C);
+//        _pixI2CWrite(0x31AC, 0x0C0C);
 //    }
 //    
 //    // Set row_speed
 //    {
-////        _pixWrite(0x3028, 0x0000);  // 0 cycle delay
-////        _pixWrite(0x3028, 0x0010);  // 1/2 cycle delay (default)
+////        _pixI2CWrite(0x3028, 0x0000);  // 0 cycle delay
+////        _pixI2CWrite(0x3028, 0x0010);  // 1/2 cycle delay (default)
 //    }
 //
 //    // Set the x-start address
 //    {
-////        _pixWrite(0x3004, 0x0006);  // Default
-////        _pixWrite(0x3004, 0x0010);
+////        _pixI2CWrite(0x3004, 0x0006);  // Default
+////        _pixI2CWrite(0x3004, 0x0010);
 //    }
 //
 //    // Set the x-end address
 //    {
-////        _pixWrite(0x3008, 0x0905);  // Default
-////        _pixWrite(0x3008, 0x01B1);
+////        _pixI2CWrite(0x3008, 0x0905);  // Default
+////        _pixI2CWrite(0x3008, 0x01B1);
 //    }
 //
 //    // Set the y-start address
 //    {
-////        _pixWrite(0x3002, 0x007C);  // Default
-////        _pixWrite(0x3002, 0x007C);
+////        _pixI2CWrite(0x3002, 0x007C);  // Default
+////        _pixI2CWrite(0x3002, 0x007C);
 //    }
 //
 //    // Set the y-end address
 //    {
-////        _pixWrite(0x3006, 0x058b);  // Default
-////        _pixWrite(0x3006, 0x016B);
+////        _pixI2CWrite(0x3006, 0x058b);  // Default
+////        _pixI2CWrite(0x3006, 0x016B);
 //    }
 //    
 //    // Implement "Recommended Default Register Changes and Sequencer"
 //    {
-//        _pixWrite(0x3ED2, 0x0146);
-//        _pixWrite(0x3EDA, 0x88BC);
-//        _pixWrite(0x3EDC, 0xAA63);
-//        _pixWrite(0x305E, 0x00A0);
+//        _pixI2CWrite(0x3ED2, 0x0146);
+//        _pixI2CWrite(0x3EDA, 0x88BC);
+//        _pixI2CWrite(0x3EDC, 0xAA63);
+//        _pixI2CWrite(0x305E, 0x00A0);
 //    }
 //    
 //    // Disable embedded_data (first 2 rows of statistic info)
 //    // See AR0134_RR_D.pdf for info on statistics format
 //    {
-////        _pixWrite(0x3064, 0x1902);  // Stats enabled (default)
-//        _pixWrite(0x3064, 0x1802);  // Stats disabled
+////        _pixI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
+//        _pixI2CWrite(0x3064, 0x1802);  // Stats disabled
 //    }
 //    
 //    // Start streaming
 //    // (Previous value of 0x301A is 0x10D8, as set above)
 //    {
-//        _pixWrite(0x301A, 0x10DC);
+//        _pixI2CWrite(0x301A, 0x10DC);
 //    }
 //    
 //    // Capture a frame
@@ -793,8 +793,8 @@ void System::_handleCmd(const USB::Cmd& ev) {
     // PixI2CTransaction
     case Cmd::Op::PixI2CTransaction: {
         auto& arg = cmd.arg.pixI2CTransaction;
-        if (arg.write)  _pixWrite(arg.addr, arg.val);
-        else            _pixRead(arg.addr);
+        if (arg.write)  _pixI2CWrite(arg.addr, arg.val);
+        else            _pixI2CRead(arg.addr);
         break;
     }
     
@@ -940,7 +940,7 @@ void System::_pixReset() {
 //    
 //    // Sanity-check pix comms by reading a known register
 //    {
-//        const uint16_t chipVersion = _pixRead(0x3000);
+//        const uint16_t chipVersion = _pixI2CRead(0x3000);
 //        // TODO: we probably don't want to check the version number in production, in case the version number changes?
 //        // also the 0x3000 isn't read-only, so in theory it could change
 //        Assert(chipVersion == 0x2604);
@@ -948,12 +948,12 @@ void System::_pixReset() {
 //    
 //    // Configure internal register initialization
 //    {
-//        _pixWrite(0x3052, 0xA114);
+//        _pixI2CWrite(0x3052, 0xA114);
 //    }
 //    
 //    // Start internal register initialization
 //    {
-//        _pixWrite(0x304A, 0x0070);
+//        _pixI2CWrite(0x304A, 0x0070);
 //    }
 //    
 //    // Wait 150k EXTCLK (24MHz) periods
@@ -965,63 +965,63 @@ void System::_pixReset() {
 //    // Enable parallel interface (R0x301A[7]=1), disable serial interface to save power (R0x301A[12]=1)
 //    // (Default value of 0x301A is 0x0058)
 //    {
-//        _pixWrite(0x301A, 0x10D8);
+//        _pixI2CWrite(0x301A, 0x10D8);
 //    }
 //    
 //    // Set pre_pll_clk_div
 //    {
-////        _pixWrite(0x302E, 0x0002);  // /2 -> CLK_OP=98 MHz
-////        _pixWrite(0x302E, 0x0004);  // /4 -> CLK_OP=49 MHz (Default)
-////        _pixWrite(0x302E, 0x003F);  // /63
+////        _pixI2CWrite(0x302E, 0x0002);  // /2 -> CLK_OP=98 MHz
+////        _pixI2CWrite(0x302E, 0x0004);  // /4 -> CLK_OP=49 MHz (Default)
+////        _pixI2CWrite(0x302E, 0x003F);  // /63
 //    }
 //    
 //    // Set pll_multiplier
 //    {
-////        _pixWrite(0x3030, 0x0062);  // *98 (Default)
-////        _pixWrite(0x3030, 0x0031);  // *49
+////        _pixI2CWrite(0x3030, 0x0062);  // *98 (Default)
+////        _pixI2CWrite(0x3030, 0x0031);  // *49
 //    }
 //    
 //    // Set vt_pix_clk_div
 //    {
-////        _pixWrite(0x302A, 0x0006);  // /6 (Default)
-////        _pixWrite(0x302A, 0x001F);  // /31
+////        _pixI2CWrite(0x302A, 0x0006);  // /6 (Default)
+////        _pixI2CWrite(0x302A, 0x001F);  // /31
 //    }
 //    
 //    // Set op_pix_clk_div
 //    {
-////        _pixWrite(0x3036, 0x000A);
+////        _pixI2CWrite(0x3036, 0x000A);
 //    }
 //    
 //    // Set output slew rate
 //    {
-////        _pixWrite(0x306E, 0x0010);  // Slow
-////        _pixWrite(0x306E, 0x9010);  // Medium (default)
-//        _pixWrite(0x306E, 0xFC10);  // Fast
+////        _pixI2CWrite(0x306E, 0x0010);  // Slow
+////        _pixI2CWrite(0x306E, 0x9010);  // Medium (default)
+//        _pixI2CWrite(0x306E, 0xFC10);  // Fast
 //    }
 //    
 //    // Set data_pedestal
 //    {
-////        _pixWrite(0x301E, 0x00A8);  // Default
-////        _pixWrite(0x301E, 0x0000);
+////        _pixI2CWrite(0x301E, 0x00A8);  // Default
+////        _pixI2CWrite(0x301E, 0x0000);
 //    }
 //    
 //    // Set test data colors
 //    {
 ////        // Set test_data_red
-////        _pixWrite(0x3072, 0x0B2A);  // AAA
-////        _pixWrite(0x3072, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3072, 0x0B2A);  // AAA
+////        _pixI2CWrite(0x3072, 0x0FFF);  // FFF
 ////
 ////        // Set test_data_greenr
-////        _pixWrite(0x3074, 0x0C3B);  // BBB
-////        _pixWrite(0x3074, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3074, 0x0C3B);  // BBB
+////        _pixI2CWrite(0x3074, 0x0FFF);  // FFF
 ////
 ////        // Set test_data_blue
-////        _pixWrite(0x3076, 0x0D4C);  // CCC
-////        _pixWrite(0x3076, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3076, 0x0D4C);  // CCC
+////        _pixI2CWrite(0x3076, 0x0FFF);  // FFF
 ////
 ////        // Set test_data_greenb
-////        _pixWrite(0x3078, 0x0C3B);  // BBB
-////        _pixWrite(0x3078, 0x0FFF);  // FFF
+////        _pixI2CWrite(0x3078, 0x0C3B);  // BBB
+////        _pixI2CWrite(0x3078, 0x0FFF);  // FFF
 //    }
 //    
 //    // Set test_pattern_mode
@@ -1031,11 +1031,11 @@ void System::_pixReset() {
 //        // 2: Full color bar test pattern
 //        // 3: Fade-to-gray color bar test pattern
 //        // 256: Walking 1s test pattern (12 bit)
-////        _pixWrite(0x3070, 0x0000);  // Normal operation
-////        _pixWrite(0x3070, 0x0001);  // Solid color
-////        _pixWrite(0x3070, 0x0002);  // Color bars
-////        _pixWrite(0x3070, 0x0003);  // Fade-to-gray
-////        _pixWrite(0x3070, 0x0100);  // Walking 1s
+////        _pixI2CWrite(0x3070, 0x0000);  // Normal operation
+////        _pixI2CWrite(0x3070, 0x0001);  // Solid color
+////        _pixI2CWrite(0x3070, 0x0002);  // Color bars
+////        _pixI2CWrite(0x3070, 0x0003);  // Fade-to-gray
+////        _pixI2CWrite(0x3070, 0x0100);  // Walking 1s
 //    }
 //    
 //    // Set serial_format
@@ -1043,7 +1043,7 @@ void System::_pixReset() {
 //    // *** The datasheet doesn't mention this. :(
 //    // *** Discovered looking at Linux kernel source.
 //    {
-//        _pixWrite(0x31AE, 0x0301);
+//        _pixI2CWrite(0x31AE, 0x0301);
 //    }
 //    
 //    // Set data_format_bits
@@ -1052,58 +1052,58 @@ void System::_pixReset() {
 //    //   This register should be programmed to 0x0C0C when
 //    //   using the parallel interface."
 //    {
-//        _pixWrite(0x31AC, 0x0C0C);
+//        _pixI2CWrite(0x31AC, 0x0C0C);
 //    }
 //    
 //    // Set row_speed
 //    {
-////        _pixWrite(0x3028, 0x0000);  // 0 cycle delay
-////        _pixWrite(0x3028, 0x0010);  // 1/2 cycle delay (default)
+////        _pixI2CWrite(0x3028, 0x0000);  // 0 cycle delay
+////        _pixI2CWrite(0x3028, 0x0010);  // 1/2 cycle delay (default)
 //    }
 //
 //    // Set the x-start address
 //    {
-////        _pixWrite(0x3004, 0x0006);  // Default
-////        _pixWrite(0x3004, 0x0010);
+////        _pixI2CWrite(0x3004, 0x0006);  // Default
+////        _pixI2CWrite(0x3004, 0x0010);
 //    }
 //
 //    // Set the x-end address
 //    {
-////        _pixWrite(0x3008, 0x0905);  // Default
-////        _pixWrite(0x3008, 0x01B1);
+////        _pixI2CWrite(0x3008, 0x0905);  // Default
+////        _pixI2CWrite(0x3008, 0x01B1);
 //    }
 //
 //    // Set the y-start address
 //    {
-////        _pixWrite(0x3002, 0x007C);  // Default
-////        _pixWrite(0x3002, 0x007C);
+////        _pixI2CWrite(0x3002, 0x007C);  // Default
+////        _pixI2CWrite(0x3002, 0x007C);
 //    }
 //
 //    // Set the y-end address
 //    {
-////        _pixWrite(0x3006, 0x058b);  // Default
-////        _pixWrite(0x3006, 0x016B);
+////        _pixI2CWrite(0x3006, 0x058b);  // Default
+////        _pixI2CWrite(0x3006, 0x016B);
 //    }
 //    
 //    // Implement "Recommended Default Register Changes and Sequencer"
 //    {
-//        _pixWrite(0x3ED2, 0x0146);
-//        _pixWrite(0x3EDA, 0x88BC);
-//        _pixWrite(0x3EDC, 0xAA63);
-//        _pixWrite(0x305E, 0x00A0);
+//        _pixI2CWrite(0x3ED2, 0x0146);
+//        _pixI2CWrite(0x3EDA, 0x88BC);
+//        _pixI2CWrite(0x3EDC, 0xAA63);
+//        _pixI2CWrite(0x305E, 0x00A0);
 //    }
 //    
 //    // Disable embedded_data (first 2 rows of statistic info)
 //    // See AR0134_RR_D.pdf for info on statistics format
 //    {
-////        _pixWrite(0x3064, 0x1902);  // Stats enabled (default)
-//        _pixWrite(0x3064, 0x1802);  // Stats disabled
+////        _pixI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
+//        _pixI2CWrite(0x3064, 0x1802);  // Stats disabled
 //    }
 //    
 //    // Start streaming
 //    // (Previous value of 0x301A is 0x10D8, as set above)
 //    {
-//        _pixWrite(0x301A, 0x10DC);
+//        _pixI2CWrite(0x301A, 0x10DC);
 //    }
 //    
 //    // Tell ICE40 to do a capture
