@@ -12,7 +12,7 @@
 module Top(
     input wire          clk24mhz,
     
-    output wire[3:0]    led,
+    output reg[3:0]     led = 0,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -46,12 +46,10 @@ module Top(
     wire write_ready;
     reg write_trigger = 0;
     wire[15:0] write_data;
-    wire write_done;
     
     wire read_ready;
     reg read_trigger = 0;
     wire[15:0] read_data;
-    wire read_done;
     
     localparam BlockSize = 16;
     
@@ -69,12 +67,10 @@ module Top(
         .write_ready(write_ready),
         .write_trigger(write_trigger),
         .write_data(write_data),
-        .write_done(write_done),
         
         .read_ready(read_ready),
         .read_trigger(read_trigger),
         .read_data(read_data),
-        .read_done(read_done),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -89,12 +85,16 @@ module Top(
     );
     
     reg[3:0] state = 0;
-    reg[$clog2(BlockSize)-1:0] word_idx = 0;
-    assign write_data = cmd_block^word_idx;
-    wire[15:0] read_data_expected = cmd_block^word_idx;
-    reg[7:0] abortCounter = 0;
+    reg[`RegWidth(BlockSize-1)-1:0] word_idx = 0;
+    // assign write_data = cmd_block^word_idx;
+    // wire[15:0] read_data_expected = cmd_block^word_idx;
     
-    always @(posedge clk24mhz) begin
+    assign write_data = word_idx;
+    wire[15:0] read_data_expected = word_idx;
+    
+    reg[9:0] abortCounter = 0;
+    
+    always @(posedge clk) begin
         cmd <= `RAMController_Cmd_None;
         write_trigger <= 0;
         read_trigger <= 0;
@@ -114,13 +114,15 @@ module Top(
         2: begin
             write_trigger <= 1;
             if (write_ready && write_trigger) begin
-                $display("Wrote word: %h", write_data);
+                $display("Wrote word: %h @ %h", write_data, word_idx);
                 word_idx <= word_idx+1;
-            end
-            
-            if (write_done) begin
-                $display("Write done @ block %x", cmd_block);
-                state <= 3;
+                
+                // Check if we're done writing to this block
+                if (&word_idx) begin
+                    $display("Write done @ block %x", cmd_block);
+                    write_trigger <= 0;
+                    state <= 3;
+                end
             end
         end
         
@@ -142,17 +144,19 @@ module Top(
                 if (read_data === read_data_expected) begin
                     $display("Read word: %h (expected: %h) ✅", read_data, read_data_expected);
                 end else begin
-                    led <= 4'b1111;
                     $display("Read word: %h (expected: %h) ❌", read_data, read_data_expected);
-                    `Finish;
+                    led <= 4'b1111;
+                    // `Finish;
                 end
                 word_idx <= word_idx+1;
-            end
-            
-            if (read_done) begin
-                $display("Read done @ block %x", cmd_block);
-                cmd_block <= cmd_block+1;
-                state <= 0;
+                
+                // Check if we're done reading to this block
+                if (&word_idx) begin
+                    $display("Read done @ block %x", cmd_block);
+                    read_trigger <= 0;
+                    cmd_block <= cmd_block+1;
+                    state <= 0;
+                end
             end
         end
         endcase
