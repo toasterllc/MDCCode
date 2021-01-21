@@ -233,7 +233,10 @@ module Top(
     //     MsgCycleCount=(`Msg_Len/4)+1.
     //
     //   - Commands use 4 lines (spi_d[3:0]), so we divide `Msg_Len by 4.
-    //
+    //     Commands use only 4 lines, instead of all 8 lines used for responses,
+    //     because dual-QSPI doesn't allow that, since dual-QSPI is meant to control
+    //     two separate flash devices, so it outputs the same data on spi_d[3:0] that
+    //     it does on spi_d[7:4].
     localparam MsgCycleCount = (`Msg_Len/4)+1;
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
     reg[0:0] spi_doutCounter = 0;
@@ -283,6 +286,7 @@ module Top(
         
         end else begin
             // Commands only use 4 lines (spi_d[3:0]) because it's quadspi.
+            // See MsgCycleCount comment above.
             spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
             spi_dinCounter <= spi_dinCounter-1;
             spi_doutReg <= spi_doutReg<<4|4'hF;

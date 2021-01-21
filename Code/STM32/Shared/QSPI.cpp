@@ -89,7 +89,7 @@ void QSPI::reset() {
     IRQState irq;
     irq.disable();
     
-    // Aborting whatever is underway (if anything)
+    // Abort whatever is underway (if anything)
     HAL_QSPI_Abort(&_device);
     
     // Reset channels to clear pending events

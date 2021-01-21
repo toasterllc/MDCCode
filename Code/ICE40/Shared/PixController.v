@@ -305,6 +305,7 @@ module PixController #(
         end
         
         Ctrl_State_Capture+2: begin
+            // Wait for the fifoIn state machine to start
             if (ctrl_fifoInStarted) begin
                 ctrl_state <= Ctrl_State_Capture+3;
             end
