@@ -26,18 +26,18 @@ module RAMController #(
     `define RowBits                 AddrWidth-BankWidth-1           -: RowWidth
     `define ColBits                 AddrWidth-BankWidth-RowWidth-1  -: ColWidth
     
-    localparam BlockSizeCeilLog2    = $clog2(BlockSize),
-    localparam BlockSizeCeilPow2    = 1<<BlockSizeCeilLog2,
+    localparam BlockSizeRegWidth    = `RegWidth(BlockSize-1),
+    localparam BlockSizeCeilPow2    = 1<<BlockSizeRegWidth,
     localparam BlockCount           = WordCount/BlockSizeCeilPow2,
-    localparam BlockWidth           = $clog2(BlockCount)
+    localparam BlockCountRegWidth   = `RegWidth(BlockCount-1)
 )(
     input wire                  clk,            // Clock
     
     // TODO: consider re-ordering: cmd_block, cmd_write, cmd_trigger
     // Command port (clock domain: `clk`)
-    input wire[1:0]             cmd,            // CmdWrite/CmdRead/CmdStop
-    // input wire                  cmd_trigger,    // Start the command
-    input wire[BlockWidth-1:0]  cmd_block,      // Block index
+    input wire[1:0]                         cmd,        // CmdWrite/CmdRead/CmdStop
+    input wire[BlockWidth-1:0]              cmd_block,  // Block index
+    input wire[`RegWidth(BlockSize)-1:0]    cmd_len,    // Length to read/write (max value: BlockSize)
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port (clock domain: `clk`)
@@ -722,7 +722,7 @@ module RAMController #(
             read_done <= 0;
             
             data_addr <= AddrFromBlock(cmd_block);
-            data_counter <= BlockSize;
+            data_counter <= cmd_len;
             
             case (cmd)
             `RAMController_Cmd_Write:   data_restartState <= Data_State_WriteStart;
