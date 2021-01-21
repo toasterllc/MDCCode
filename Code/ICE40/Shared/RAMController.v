@@ -567,7 +567,7 @@ module RAMController #(
                     // $display("[RAM-CTRL] Data_State_Write");
                     write_ready <= 1; // Accept more data
                     if (write_trigger) begin
-                        $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, write_data);
+                        // $display("[RAM-CTRL] Wrote mem[%h] = %h", data_addr, write_data);
                         if (data_write_issueCmd) ramA <= data_addr[`ColBits]; // Supply the column address
                         ramDQOut <= write_data; // Supply data to be written
                         ramDQOutEn <= 1;
@@ -589,7 +589,7 @@ module RAMController #(
                         end
                         
                     end else begin
-                        $display("[RAM-CTRL] Restart write");
+                        // $display("[RAM-CTRL] Restart write");
                         // The data flow was interrupted, so we need to re-issue the
                         // write command when the flow starts again.
                         data_write_issueCmd <= 1;

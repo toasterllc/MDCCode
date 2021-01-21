@@ -165,7 +165,7 @@ module mobile_sdr (
     parameter LOAD_MODE        = 6'b100000 ;    // 32
     parameter CKE_DISABLE      = 6'b011111 ;    // 
 
-    parameter DEBUG = 1;
+    parameter DEBUG = 0;
 
 //----------------------------------------
 // Error codes and reporting
@@ -254,6 +254,22 @@ module mobile_sdr (
         reg   [part_mem_bits     : 0] memory_index;
         initial mem_used = 0;
     `endif
+    
+    // // DKECK: Initialize the entire memory to 16'hCAFE
+    // // DKECK: We added this to ensure that the DQM lines work as expected, because this module still prints
+    // // DKECK: debug read/write messages when DQM should mask the read/writes.
+    // // DKECK: In the write case, these initialization values show us (via the debug messages) that when DQM
+    // // DKECK: is masking the write, this module just writes the value that's already stored in the memory,
+    // // DKECK: so DQM is working.
+    // integer icounter;
+    // initial begin
+    //     $display("full_mem_bits: %d / DQ_BITS: %d", full_mem_bits, DQ_BITS);
+    //     $display("Initializing memory...");
+    //     for (icounter=0; icounter<(1<<full_mem_bits); icounter++) begin
+    //         mem_array[icounter] = 16'hCAFE;
+    //     end
+    //     $display("Finished init mem_array");
+    // end
 
 //------------- Integer Declarations --------------
     integer                      ck_cntr_initial                          ;

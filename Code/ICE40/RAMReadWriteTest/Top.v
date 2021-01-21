@@ -86,13 +86,29 @@ module Top(
     
     reg[3:0] state = 0;
     reg[`RegWidth(BlockSize-1)-1:0] word_idx = 0;
-    // assign write_data = cmd_block^word_idx;
-    // wire[15:0] read_data_expected = cmd_block^word_idx;
     
-    assign write_data = word_idx;
-    wire[15:0] read_data_expected = word_idx;
+    assign write_data = cmd_block^word_idx;
+    wire[15:0] read_data_expected = cmd_block^word_idx;
+    // assign write_data = word_idx;
+    // wire[15:0] read_data_expected = word_idx;
     
     reg[9:0] abortCounter = 0;
+    
+    // initial begin
+    //     wait(!clk);
+    //     cmd = `RAMController_Cmd_Write;
+    //     wait(clk);
+    //     wait(!clk);
+    //     cmd = `RAMController_Cmd_None;
+    //
+    //     write_trigger = 1;
+    //
+    //     // Wait for writing to start
+    //     while (!(write_ready && write_trigger)) begin
+    //         wait(clk);
+    //         wait(!clk);
+    //     end
+    // end
     
     always @(posedge clk) begin
         cmd <= `RAMController_Cmd_None;
@@ -146,7 +162,7 @@ module Top(
                 end else begin
                     $display("Read word: %h (expected: %h) ❌", read_data, read_data_expected);
                     led <= 4'b1111;
-                    // `Finish;
+                    `Finish;
                 end
                 word_idx <= word_idx+1;
                 
