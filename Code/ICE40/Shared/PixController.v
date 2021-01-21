@@ -27,7 +27,6 @@ module PixController #(
     
     // Status port (clock domain: `clk`)
     output reg          status_captureDone = 0,
-    output wire         status_capturePixelDropped,
     output reg          status_readoutStarted = 0,
     
     // Pix port (clock domain: `pix_dclk`)
@@ -193,7 +192,6 @@ module PixController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg fifoIn_pixelDropped = 0;
     reg[2:0] fifoIn_state = 0;
     always @(posedge pix_dclk) begin
         fifoIn_rst <= 0; // Pulse
@@ -207,7 +205,6 @@ module PixController #(
         // Reset FIFO / ourself
         1: begin
             fifoIn_rst <= 1;
-            fifoIn_pixelDropped <= 0;
             fifoIn_state <= 2;
         end
         
@@ -249,21 +246,11 @@ module PixController #(
         if (fifoIn_captureTrigger) begin
             fifoIn_state <= 1;
         end
-        
-        // Watch for dropped pixels
-        if (fifoIn_write_trigger && !fifoIn_write_ready) begin
-            fifoIn_pixelDropped <= 1;
-            $display("[PIXCTRL:FIFO] Pixel dropped ❌");
-            `Finish;
-        end
     end
     
     // ====================
     // Control State Machine
     // ====================
-    `Sync(status_capturePixelDroppedSync, fifoIn_pixelDropped, posedge, clk);
-    assign status_capturePixelDropped = status_capturePixelDroppedSync;
-    
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +3
     localparam Ctrl_State_Readout   = 5; // +1

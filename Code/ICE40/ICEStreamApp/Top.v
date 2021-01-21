@@ -120,7 +120,6 @@ module Top(
     wire        pixctrl_readout_trigger;
     wire[15:0]  pixctrl_readout_data;
     wire        pixctrl_status_captureDone;
-    wire        pixctrl_status_capturePixelDropped;
     wire        pixctrl_status_readoutStarted;
     PixController #(
         .ClkFreq(Pix_Clk_Freq),
@@ -137,7 +136,6 @@ module Top(
         .readout_data(pixctrl_readout_data),
         
         .status_captureDone(pixctrl_status_captureDone),
-        .status_capturePixelDropped(pixctrl_status_capturePixelDropped),
         .status_readoutStarted(pixctrl_status_readoutStarted),
         
         .pix_dclk(pix_dclk),
@@ -258,7 +256,6 @@ module Top(
         `LeftBits(spi_doutReg, 0, 4)    // Low 4 bits:  4 bits of byte 0
     };
     
-    `Sync(spi_pixctrlStatusCapturePixelDropped, pixctrl_status_capturePixelDropped, posedge, spi_clk);
     `ToggleAck(spi_pixReadoutStarted, spi_pixReadoutStartedAck, pix_readoutStarted, posedge, spi_clk);
     
     assign pixctrl_readout_clk = spi_clk;
@@ -370,7 +367,6 @@ module Top(
                     // Use `CaptureDone` bit to signal whether we can readout,
                     // not whether the capture has merely been written to RAM
                     spi_resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= spi_pixReadoutReady;
-                    spi_resp[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= spi_pixctrlStatusCapturePixelDropped;
                     spi_state <= SPI_State_RespOut;
                 end
                 

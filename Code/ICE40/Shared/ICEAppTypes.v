@@ -77,7 +77,6 @@
 `define     Resp_Arg_PixGetStatus_I2CErr_Bits                   62:62
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
-`define     Resp_Arg_PixGetStatus_CapturePixelDropped_Bits      44:44
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
