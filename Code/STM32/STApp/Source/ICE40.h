@@ -161,7 +161,7 @@ public:
         // over-reading, otherwise the end of the QSPI transaction
         // causes one more word to be read than wanted, and we'd drop
         // that word if not for this counter.
-        PixReadoutMsg(uint8_t srcBlock, size_t wordCount) {
+        PixReadoutMsg(uint8_t srcBlock, bool captureNext, size_t wordCount) {
             AssertArg(wordCount);
             // Supply the value to load into the ICE40 counter.
             // Put the burden of this calculation on the STM32,
@@ -174,7 +174,7 @@ public:
             payload[3] = (counter&0xFF00)>>8;
             payload[4] = (counter&0x00FF)>>0;
             payload[5] = 0;
-            payload[6] = srcBlock&0x7;
+            payload[6] = (captureNext ? 0x8 : 0x0) | (srcBlock&0x7);
         }
     };
     

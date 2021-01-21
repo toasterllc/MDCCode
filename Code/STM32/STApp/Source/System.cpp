@@ -886,9 +886,12 @@ void System::_recvPixDataFromICE40() {
     
     // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
     const size_t pixCount = std::min(_pixRemLen, _pixBufs.writeBuf().cap/sizeof(Pixel));
+    // Determine whether this is the last readout, and therefore the ice40 should automatically
+    // capture the next image when readout is done.
+    const bool captureNext = (pixCount == _pixRemLen);
     _pixBufs.writeBuf().len = pixCount; // The `.len` field to indicate the number of pixels (not byte length)
     
-    _ice40TransferAsync(_qspi, PixReadoutMsg(0, pixCount),
+    _ice40TransferAsync(_qspi, PixReadoutMsg(0, captureNext, pixCount),
         _pixBufs.writeBuf().data,
         _pixBufs.writeBuf().len*sizeof(Pixel));
 }

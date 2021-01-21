@@ -27,7 +27,7 @@ module RAMController #(
     `define ColBits                 AddrWidth-BankWidth-RowWidth-1  -: ColWidth
     
     localparam BlockSizeRegWidth    = `RegWidth(BlockSize-1),
-    localparam BlockSizeCeilPow2    = 1<<BlockSizeRegWidth,
+    localparam BlockSizeCeilPow2    = 64'b1<<BlockSizeRegWidth,
     localparam BlockCount           = WordCount/BlockSizeCeilPow2,
     localparam BlockCountRegWidth   = `RegWidth(BlockCount-1)
 )(
@@ -35,23 +35,20 @@ module RAMController #(
     
     // TODO: consider re-ordering: cmd_block, cmd_write, cmd_trigger
     // Command port (clock domain: `clk`)
-    input wire[1:0]                         cmd,        // CmdWrite/CmdRead/CmdStop
-    input wire[BlockWidth-1:0]              cmd_block,  // Block index
-    input wire[`RegWidth(BlockSize)-1:0]    cmd_len,    // Length to read/write (max value: BlockSize)
+    input wire[1:0]             cmd,                // CmdWrite/CmdRead/CmdStop
+    input wire[BlockCountRegWidth-1:0]  cmd_block,  // Block index
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port (clock domain: `clk`)
     output reg                  write_ready = 0,    // `write_data` accepted
     input wire                  write_trigger,      // Only effective if `write_ready`=1
     input wire[WordWidth-1:0]   write_data,         // Data to write to RAM
-    output reg                  write_done,         // Writing to the block is complete
     
     // TODO: consider re-ordering: read_data, read_trigger, read_ready
     // Read port (clock domain: `clk`)
     output reg                  read_ready = 0,     // `read_data` valid
     input wire                  read_trigger,       // Only effective if `read_ready`=1
     output wire[WordWidth-1:0]  read_data,          // Data read from RAM
-    output reg                  read_done,          // Reading from the block is complete
     
     // RAM port (clock domain: `ram_clk`)
     output wire                 ram_clk,        // Clock
@@ -111,8 +108,8 @@ module RAMController #(
     endfunction
     
     function[AddrWidth-1:0] AddrFromBlock;
-        input[BlockWidth-1:0] block;
-        AddrFromBlock = block << BlockSizeCeilLog2;
+        input[BlockCountRegWidth-1:0] block;
+        AddrFromBlock = block << BlockSizeRegWidth;
     endfunction
     
     // ====================
@@ -329,13 +326,13 @@ module RAMController #(
     // Data State Machine Registers
     // ====================
     localparam Data_State_Idle              = 0;    // +0
-    localparam Data_State_WriteStart        = 1;    // +1
-    localparam Data_State_Write             = 3;    // +1
-    localparam Data_State_ReadStart         = 5;    // +1
-    localparam Data_State_Read              = 7;    // +2
-    localparam Data_State_Finish            = 10;   // +0
-    localparam Data_State_Delay             = 11;   // +0
-    localparam Data_State_Count             = 12;
+    localparam Data_State_WriteStart        = 1;    // +0
+    localparam Data_State_Write             = 2;    // +1
+    localparam Data_State_ReadStart         = 4;    // +0
+    localparam Data_State_Read              = 5;    // +2
+    localparam Data_State_Finish            = 8;    // +0
+    localparam Data_State_Delay             = 9;    // +0
+    localparam Data_State_Count             = 10;
     localparam Data_State_Width             = `RegWidth(Data_State_Count-1);
     
     reg[Data_State_Width-1:0] data_state = 0;
@@ -343,7 +340,6 @@ module RAMController #(
     reg[Data_State_Width-1:0] data_restartState = 0;
     
     reg[AddrWidth-1:0] data_addr = 0;
-    reg[`RegWidth(BlockSize)-1:0] data_counter = 0;
     
     localparam Data_BankActivateDelay = (
         // T_RCD: ensure "bank activate to read/write time".
@@ -394,10 +390,7 @@ module RAMController #(
         
         // Reset by default
         write_ready <= 0;
-        write_done <= 0;
         read_ready <= 0;
-        read_done <= 0;
-        
         
         // Reset RAM cmd state
         ramCmd <= RAM_Cmd_Nop;
@@ -553,18 +546,6 @@ module RAMController #(
                 end
                 
                 Data_State_WriteStart: begin
-                    if (data_counter) begin
-                        data_state <= Data_State_WriteStart+1;
-                    
-                    end else begin
-                        // We're done writing
-                        write_done <= 1;
-                        data_state <= Data_State_Idle;
-                        data_restartState <= Data_State_Idle;
-                    end
-                end
-                
-                Data_State_WriteStart+1: begin
                     // $display("[RAM-CTRL] Data_State_Start");
                     // Activate the bank+row
                     ramCmd <= RAM_Cmd_BankActivate;
@@ -593,11 +574,10 @@ module RAMController #(
                         ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                         if (data_write_issueCmd) ramCmd <= RAM_Cmd_Write; // Give write command
                         data_addr <= data_addr+1;
-                        data_counter <= data_counter-1;
                         data_write_issueCmd <= 0; // Reset after we issue the write command
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || data_counter===1) begin
+                        if (&data_addr[`ColBits]) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Override `write_ready=1` above since we can't handle new data in the next state
                             write_ready <= 0;
@@ -617,18 +597,6 @@ module RAMController #(
                 end
                 
                 Data_State_ReadStart: begin
-                    if (data_counter) begin
-                        data_state <= Data_State_ReadStart+1;
-                    
-                    end else begin
-                        // We're done reading
-                        read_done <= 1;
-                        data_state <= Data_State_Idle;
-                        data_restartState <= Data_State_Idle;
-                    end
-                end
-                
-                Data_State_ReadStart+1: begin
                     // $display("[RAM-CTRL] Data_State_ReadStart");
                     // Activate the bank+row
                     ramCmd <= RAM_Cmd_BankActivate;
@@ -666,10 +634,9 @@ module RAMController #(
                         // $display("[RAM-CTRL] Read mem[%h] = %h", data_addr, read_data);
                         ramDQM <= RAM_DQM_Unmasked; // Unmask the data
                         data_addr <= data_addr+1;
-                        data_counter <= data_counter-1;
                         
                         // Handle reaching the end of a row or the end of block
-                        if (&data_addr[`ColBits] || data_counter===1) begin
+                        if (&data_addr[`ColBits]) begin
                             // $display("[RAM-CTRL] End of row / end of block");
                             // Abort reading
                             data_delayCounter <= Data_FinishDelay;
@@ -717,12 +684,9 @@ module RAMController #(
         if (cmd !== `RAMController_Cmd_None) begin
             // Override our _ready/_done flags if we're starting a new command on the next cycle
             write_ready <= 0;
-            write_done <= 0;
             read_ready <= 0;
-            read_done <= 0;
             
             data_addr <= AddrFromBlock(cmd_block);
-            data_counter <= cmd_len;
             
             case (cmd)
             `RAMController_Cmd_Write:   data_restartState <= Data_State_WriteStart;

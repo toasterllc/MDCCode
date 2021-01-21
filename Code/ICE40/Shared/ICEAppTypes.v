@@ -62,6 +62,7 @@
 `define Msg_Type_PixReadout                                     `Msg_Type_Len'h06
 `define     Msg_Arg_PixReadout_Counter_Len                      16
 `define     Msg_Arg_PixReadout_Counter_Bits                     31:16
+`define     Msg_Arg_PixReadout_CaptureNext_Bits                 3:3
 `define     Msg_Arg_PixReadout_SrcBlock_Bits                    2:0
 
 `define Msg_Type_PixI2CTransaction                              `Msg_Type_Len'h07
@@ -89,6 +90,7 @@ localparam ImageWidth = 2304;
 localparam ImageHeight = 1296;
 `endif
 
-localparam ImagePixelCount = ImageWidth*ImageHeight;
+localparam ImageStatsHeight = 2; // 2 rows for embedded statistics (histogram)
+localparam ImageSizeMax = ImageWidth*(ImageHeight+ImageStatsHeight);
 
 `endif

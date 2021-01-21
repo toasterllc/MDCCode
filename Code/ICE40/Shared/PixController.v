@@ -11,7 +11,7 @@
 
 module PixController #(
     parameter ClkFreq = 24_000_000,
-    parameter ImageSize = 256*256
+    parameter ImageSizeMax = 256*256
 )(
     input wire          clk,
     
@@ -55,30 +55,26 @@ module PixController #(
     wire        ramctrl_write_ready;
     reg         ramctrl_write_trigger = 0;
     reg[15:0]   ramctrl_write_data = 0;
-    wire        ramctrl_write_done;
     wire        ramctrl_read_ready;
     wire        ramctrl_read_trigger;
     wire[15:0]  ramctrl_read_data;
-    wire        ramctrl_read_done;
     
     RAMController #(
         .ClkFreq(ClkFreq),
-        .BlockSize(ImageSize)
+        .BlockSize(ImageSizeMax)
     ) RAMController (
         .clk(clk),
         
-        .cmd_block(ramctrl_cmd_block),
         .cmd(ramctrl_cmd),
+        .cmd_block(ramctrl_cmd_block),
         
         .write_ready(ramctrl_write_ready),
         .write_trigger(ramctrl_write_trigger),
         .write_data(ramctrl_write_data),
-        .write_done(ramctrl_write_done),
         
         .read_ready(ramctrl_read_ready),
         .read_trigger(ramctrl_read_trigger),
         .read_data(ramctrl_read_data),
-        .read_done(ramctrl_read_done),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -192,6 +188,11 @@ module PixController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
+    reg fifoIn_done = 0;
+    // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
+    // `ToggleAck(ctrl_fifoInDone, ctrl_fifoInDoneAck, fifoIn_done, posedge, clk);
+    `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
+    
     reg[2:0] fifoIn_state = 0;
     always @(posedge pix_dclk) begin
         fifoIn_rst <= 0; // Pulse
@@ -205,6 +206,7 @@ module PixController #(
         // Reset FIFO / ourself
         1: begin
             fifoIn_rst <= 1;
+            fifoIn_done <= 0;
             fifoIn_state <= 2;
         end
         
@@ -238,6 +240,7 @@ module PixController #(
             
             if (!pix_fv_reg) begin
                 $display("[PIXCTRL:FIFO] Frame end");
+                fifoIn_done <= 1;
                 fifoIn_state <= 0;
             end
         end
@@ -314,10 +317,9 @@ module PixController #(
                 ramctrl_write_trigger <= 1;
             end
             
-            // We're finished when RAMController says we've received all the pixels.
-            // (RAMController knows when it's written the entire block, and we
-            // define RAMController's block size as the image size.)
-            if (ramctrl_write_done) begin
+            // We're finished when the FIFO doesn't have data, and the fifoIn state
+            // machine signals that it's done receiving data.
+            if (!fifoIn_read_ready && ctrl_fifoInDone) begin
                 $display("[PIXCTRL:Capture] Finished");
                 status_captureDone <= 1;
                 ctrl_state <= Ctrl_State_Idle;

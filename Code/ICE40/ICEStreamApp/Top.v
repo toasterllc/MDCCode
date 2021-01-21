@@ -123,7 +123,7 @@ module Top(
     wire        pixctrl_status_readoutStarted;
     PixController #(
         .ClkFreq(Pix_Clk_Freq),
-        .ImageSize(ImageWidth*ImageHeight)
+        .ImageSizeMax(ImageSizeMax)
     ) PixController (
         .clk(pix_clk),
         
@@ -157,18 +157,15 @@ module Top(
     
     reg spi_pixCaptureTrigger = 0;
     `TogglePulse(pix_captureTrigger, spi_pixCaptureTrigger, posedge, pix_clk);
-    reg pix_pixctrlReadoutReadyPrev = 0;
-    `Sync(pix_pixctrlReadoutReady, pixctrl_readout_ready, posedge, pix_clk);
     reg pix_readoutStarted = 0;
     
     localparam Pix_State_Idle       = 0;    // +0
     localparam Pix_State_Capture    = 1;    // +1
-    localparam Pix_State_Readout    = 3;    // +1
-    localparam Pix_State_Count      = 5;
+    localparam Pix_State_Readout    = 3;    // +0
+    localparam Pix_State_Count      = 4;
     reg[`RegWidth(Pix_State_Count-1)-1:0] pix_state = 0;
     always @(posedge pix_clk) begin
         pixctrl_cmd <= `PixController_Cmd_None;
-        pix_pixctrlReadoutReadyPrev <= pix_pixctrlReadoutReady;
         
         case (pix_state)
         Pix_State_Idle: begin
@@ -192,14 +189,7 @@ module Top(
             // Wait for readout to start, and then signal so via pix_readoutStarted
             if (pixctrl_status_readoutStarted) begin
                 pix_readoutStarted <= !pix_readoutStarted;
-                pix_state <= Pix_State_Readout+1;
-            end
-        end
-        
-        Pix_State_Readout+1: begin
-            // Wait for readout to complete, and then start a new capture
-            if (pix_pixctrlReadoutReadyPrev && !pix_pixctrlReadoutReady) begin
-                pix_state <= Pix_State_Capture;
+                pix_state <= Pix_State_Idle;
             end
         end
         endcase
@@ -245,6 +235,7 @@ module Top(
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     reg[`Msg_Arg_PixReadout_Counter_Len-1:0] spi_pixReadoutCounter = 0;
     reg spi_pixReadoutDone = 0;
+    reg spi_pixReadoutCaptureNext = 0;
     
     wire spi_cs;
     reg spi_d_outEn = 0;
@@ -337,6 +328,7 @@ module Top(
                     if (spi_pixReadoutStarted) spi_pixReadoutStartedAck <= !spi_pixReadoutStartedAck;
                     
                     spi_pixReadoutCounter <= spi_msgArg[`Msg_Arg_PixReadout_Counter_Bits];
+                    spi_pixReadoutCaptureNext <= spi_msgArg[`Msg_Arg_PixReadout_CaptureNext_Bits];
                     spi_pixReadoutDone <= 0;
                     spi_state <= SPI_State_PixOut;
                 end
@@ -396,6 +388,9 @@ module Top(
                 end
                 
                 if (spi_pixReadoutDone) begin
+                    if (spi_pixReadoutCaptureNext) begin
+                        spi_pixCaptureTrigger <= !spi_pixCaptureTrigger;
+                    end
                     spi_state <= SPI_State_Nop;
                 end
             end
@@ -671,8 +666,9 @@ module Testbench();
             for (row=0; row<ImageHeight; row++) begin
                 for (i=0; i<ImageWidth/transferPixelCount; i++) begin
                     arg[`Msg_Arg_PixReadout_Counter_Bits] = (transferPixelCount-1)*2;
+                    arg[`Msg_Arg_PixReadout_CaptureNext_Bits] = (row===(ImageHeight-1) && i===((ImageWidth/transferPixelCount)-1));
                     arg[`Msg_Arg_PixReadout_SrcBlock_Bits] = 0;
-                
+                    
                     SendMsg(`Msg_Type_PixReadout, arg, transferPixelCount*2);
                     pixRow = (pixRow<<(transferPixelCount*2*8))|resp;
                 end
