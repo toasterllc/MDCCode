@@ -882,7 +882,6 @@ void System::_handlePixUSBEvent(const USB::Signal& ev) {
     }
 }
 
-
 // Arrange for pix data to be received from ICE40
 void System::_recvPixDataFromICE40() {
     Assert(_pixBufs.writable());

@@ -113,14 +113,15 @@ module Top(
     // ====================
     // PixController
     // ====================
-    reg[1:0]    pixctrl_cmd = 0;
-    reg[2:0]    pixctrl_cmd_ramBlock = 0;
-    wire        pixctrl_readout_clk;
-    wire        pixctrl_readout_ready;
-    wire        pixctrl_readout_trigger;
-    wire[15:0]  pixctrl_readout_data;
-    wire        pixctrl_status_captureDone;
-    wire        pixctrl_status_readoutStarted;
+    reg[1:0]                            pixctrl_cmd = 0;
+    reg[2:0]                            pixctrl_cmd_ramBlock = 0;
+    wire                                pixctrl_readout_clk;
+    wire                                pixctrl_readout_ready;
+    wire                                pixctrl_readout_trigger;
+    wire[15:0]                          pixctrl_readout_data;
+    wire                                pixctrl_status_captureDone;
+    wire[`RegWidth(ImageSizeMax)-1:0]   pixctrl_status_capturePixelCount;
+    wire                                pixctrl_status_readoutStarted;
     PixController #(
         .ClkFreq(Pix_Clk_Freq),
         .ImageSizeMax(ImageSizeMax)
@@ -136,6 +137,7 @@ module Top(
         .readout_data(pixctrl_readout_data),
         
         .status_captureDone(pixctrl_status_captureDone),
+        .status_capturePixelCount(pixctrl_status_capturePixelCount),
         .status_readoutStarted(pixctrl_status_readoutStarted),
         
         .pix_dclk(pix_dclk),
@@ -359,6 +361,7 @@ module Top(
                     // Use `CaptureDone` bit to signal whether we can readout,
                     // not whether the capture has merely been written to RAM
                     spi_resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= spi_pixReadoutReady;
+                    spi_resp[`Resp_Arg_PixGetStatus_CapturePixelCount_Bits] <= pixctrl_status_capturePixelCount;
                     spi_state <= SPI_State_RespOut;
                 end
                 
@@ -656,7 +659,7 @@ module Testbench();
                 // Request Pix status
                 SendMsg(`Msg_Type_PixGetStatus, 0, 8);
             end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
-            $display("[STM32] Readout ready ✅");
+            $display("[STM32] Readout ready ✅ (pixel count: %0d)", resp[`Resp_Arg_PixGetStatus_CapturePixelCount_Bits]);
             
             // 1 pixels     counter=0
             // 2 pixels     counter=2

@@ -26,8 +26,9 @@ module PixController #(
     output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
-    output reg          status_captureDone = 0,
-    output reg          status_readoutStarted = 0,
+    output reg                                  status_captureDone = 0,
+    output wire[`RegWidth(ImageSizeMax)-1:0]    status_capturePixelCount,
+    output reg                                  status_readoutStarted = 0,
     
     // Pix port (clock domain: `pix_dclk`)
     input wire          pix_dclk,
@@ -188,6 +189,9 @@ module PixController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
+    reg[`RegWidth(ImageSizeMax)-1:0] fifoIn_pixelCount = 0;
+    assign status_capturePixelCount = fifoIn_pixelCount;
+    
     reg fifoIn_done = 0;
     // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     // `ToggleAck(ctrl_fifoInDone, ctrl_fifoInDoneAck, fifoIn_done, posedge, clk);
@@ -198,6 +202,9 @@ module PixController #(
         fifoIn_rst <= 0; // Pulse
         fifoIn_writeEn <= 0; // Reset by default
         
+        // Count the number of pixels in each image
+        if (fifoIn_write_trigger) fifoIn_pixelCount <= fifoIn_pixelCount+1;
+        
         case (fifoIn_state)
         // Idle: wait to be triggered
         0: begin
@@ -207,6 +214,7 @@ module PixController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
+            fifoIn_pixelCount <= 0;
             fifoIn_state <= 2;
         end
         
