@@ -86,10 +86,13 @@ module Top(
         // DataFromBlockAndWordIdx = wordIdx;
         // DataFromBlockAndWordIdx = {~block[20:18], ~wordIdx, wordIdx, block[20:16]} ^ ~(block[15:0]);
         
-        // DataFromBlockAndWordIdx = {1'b1, ~wordIdx[21:18], ~block, block, wordIdx[20:16]} ^ ~(wordIdx[15:0]);
-        
-        // For BlockSize = 128
+`ifdef SIM
+        // ### For BlockSize = 128
         DataFromBlockAndWordIdx = wordIdx^block;
+`else
+        // ### For BlockSize = 2304*1296
+        DataFromBlockAndWordIdx = {1'b1, ~wordIdx[21:18], ~block, block, wordIdx[20:16]} ^ ~(wordIdx[15:0]);
+`endif
         
         // DataFromBlockAndWordIdx = 0;
         // DataFromBlockAndWordIdx = ~0;
