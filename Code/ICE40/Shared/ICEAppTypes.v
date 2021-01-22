@@ -86,7 +86,6 @@ localparam ImageWidth = 32;
 localparam ImageHeight = 4;
 `else
 localparam ImageWidth = 2304;
-// localparam ImageHeight = 1296;
 localparam ImageHeight = 1296;
 `endif
 

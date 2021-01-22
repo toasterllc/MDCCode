@@ -672,16 +672,16 @@ module Testbench();
                     SendMsg(`Msg_Type_PixReadout, arg, transferPixelCount*2);
                     pixRow = (pixRow<<(transferPixelCount*2*8))|resp;
                 end
-            
+                
                 $display("Row %04d: %h", row, pixRow);
             end
         end
     end endtask
-
+    
     task TestPixI2CWriteRead; begin
         reg[`Msg_Arg_Len-1:0] arg;
         reg done;
-
+        
         // ====================
         // Test PixI2C Write (len=2)
         // ====================
@@ -691,7 +691,7 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
         arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'hCAFE;
         SendMsg(`Msg_Type_PixI2CTransaction, arg, 0);
-
+        
         done = 0;
         while (!done) begin
             SendMsg(`Msg_Type_PixGetStatus, 0, 8);
@@ -703,13 +703,13 @@ module Testbench();
 
             done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
         end
-
+        
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
             $display("[STM32] Write success ✅");
         end else begin
             $display("[STM32] Write failed ❌");
         end
-
+        
         // ====================
         // Test PixI2C Read (len=2)
         // ====================
@@ -718,7 +718,7 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
         SendMsg(`Msg_Type_PixI2CTransaction, arg, 0);
-
+        
         done = 0;
         while (!done) begin
             SendMsg(`Msg_Type_PixGetStatus, 0, 8);
@@ -730,20 +730,20 @@ module Testbench();
 
             done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
         end
-
+        
         if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
             $display("[STM32] Read success ✅");
         end else begin
             $display("[STM32] Read failed ❌");
         end
-
+        
         if (resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] === 16'hCAFE) begin
             $display("[STM32] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
         end else begin
             $display("[STM32] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
             `Finish;
         end
-
+        
         // ====================
         // Test PixI2C Write (len=1)
         // ====================

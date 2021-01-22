@@ -39,9 +39,9 @@ private:
     QSPI _qspi;
     
     STApp::PixStatus _pixStatus = {
-        .width = 2304,
-        .height = 1296,
         .state = STApp::PixState::Idle,
+        .width = 0,
+        .height = 0,
         .i2cErr = false,
         .i2cReadVal = 0,
     };

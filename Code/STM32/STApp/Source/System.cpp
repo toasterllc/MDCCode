@@ -799,8 +799,11 @@ void System::_handleCmd(const USB::Cmd& ev) {
     
     // PixStartStream
     case Cmd::Op::PixStartStream: {
+        auto& arg = cmd.arg.pixStream;
         if (_pixStatus.state == PixState::Idle) {
             _pixStatus.state = PixState::Streaming;
+            _pixStatus.width = arg.width;
+            _pixStatus.height = arg.height;
             _pixTest = cmd.arg.pixStream.test;
             _ice40Transfer(_qspi, PixCaptureMsg(0));
             _pixStartImage();

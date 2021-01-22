@@ -14,6 +14,11 @@ public:
         return USBDevice::FindDevice<MDCDevice>(MatchingDictionary());
     }
     
+    static constexpr size_t ImageStatsHeight = 2; // embedded statistical rows (histogram)
+    static constexpr size_t ImageWidth = 2304;
+    static constexpr size_t ImageHeight = 1296+ImageStatsHeight;
+    static constexpr size_t ImagePixelCount = ImageWidth*ImageHeight;
+    
     // Default constructor: empty
     MDCDevice() {}
     
@@ -222,11 +227,11 @@ public:
             pixI2CWrite(0x305E, 0x00A0);
         }
         
-        // Disable embedded_data (first 2 rows of statistic info)
+        // Enable/disable embedded_data (2 extra rows of statistical info)
         // See AR0134_RR_D.pdf for info on statistics format
         {
-//            pixI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
-            pixI2CWrite(0x3064, 0x1802);  // Stats disabled
+            pixI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
+//            pixI2CWrite(0x3064, 0x1802);  // Stats disabled
         }
         
         // Set coarse integration time
@@ -285,7 +290,13 @@ public:
         using namespace STApp;
         Cmd cmd = {
             .op = Cmd::Op::PixStartStream,
-            .arg = { .pixStream = { .test = false, } }
+            .arg = {
+                .pixStream = {
+                    .width = ImageWidth,
+                    .height = ImageHeight,
+                    .test = false,
+                },
+            },
         };
         cmdOutPipe.write(cmd);
     }

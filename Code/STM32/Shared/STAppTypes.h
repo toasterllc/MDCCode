@@ -47,6 +47,8 @@ namespace STApp {
             } pixI2CTransaction;
             
             struct __attribute__((packed)) {
+                uint16_t width;
+                uint16_t height;
                 uint8_t test;
             } pixStream;
             
@@ -65,9 +67,9 @@ namespace STApp {
     };
     
     struct PixStatus {
+        PixState state;
         uint16_t width;
         uint16_t height;
-        PixState state;
         uint8_t i2cErr;
         uint16_t i2cReadVal;
     } __attribute__((packed));

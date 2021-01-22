@@ -111,9 +111,6 @@ struct PixConfig {
 }
 
 - (void)awakeFromNib {
-    constexpr size_t ImageWidth = 2304;
-    constexpr size_t ImageHeight = 1296;
-    
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
@@ -121,8 +118,8 @@ struct PixConfig {
     _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
     
     _image = {
-        .width = ImageWidth,
-        .height = ImageHeight,
+        .width = MDCDevice::ImageWidth,
+        .height = MDCDevice::ImageHeight,
         .pixels = (MetalTypes::ImagePixel*)_imageData.data(),
     };
     
@@ -243,12 +240,10 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     
     // Reset the device to put it back in a pre-defined state
     device.reset();
-    
-    const PixStatus pixStatus = device.pixStatus();
     // Start Pix stream
     device.pixStartStream();
     
-    const size_t pixelCount = pixStatus.width*pixStatus.height;
+    const size_t pixelCount = MDCDevice::ImagePixelCount;
     auto pixels = std::make_unique<Pixel[]>(pixelCount);
     for (int count=0;; count++) {
         try {
@@ -264,8 +259,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             device.pixReadImage(pixels.get(), pixelCount, 1000);
             
             Image image = {
-                .width = pixStatus.width,
-                .height = pixStatus.height,
+                .width = MDCDevice::ImageWidth,
+                .height = MDCDevice::ImageHeight,
                 .pixels = pixels.get(),
             };
             [layer setImage:image];
