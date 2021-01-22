@@ -73,13 +73,15 @@
 `define     Msg_Arg_PixI2CTransaction_RegAddr_Bits              31:16
 `define     Msg_Arg_PixI2CTransaction_WriteData_Bits            15:0
 
-`define Msg_Type_PixGetStatus                                   `Msg_Type_Len'h08
-`define     Resp_Arg_PixGetStatus_I2CDone_Bits                  63:63
-`define     Resp_Arg_PixGetStatus_I2CErr_Bits                   62:62
-`define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
-`define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
-`define     Resp_Arg_PixGetStatus_CaptureImageWidth_Bits        44:33
-`define     Resp_Arg_PixGetStatus_CaptureImageHeight_Bits       32:21
+`define Msg_Type_PixI2CStatus                                   `Msg_Type_Len'h08
+`define     Resp_Arg_PixI2CStatus_Done_Bits                     63:63
+`define     Resp_Arg_PixI2CStatus_Err_Bits                      62:62
+`define     Resp_Arg_PixI2CStatus_ReadData_Bits                 61:46
+
+`define Msg_Type_PixCaptureStatus                               `Msg_Type_Len'h09
+`define     Resp_Arg_PixCaptureStatus_Done_Bits                 63:63
+`define     Resp_Arg_PixCaptureStatus_ImageWidth_Bits           62:51
+`define     Resp_Arg_PixCaptureStatus_ImageHeight_Bits          50:39
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 

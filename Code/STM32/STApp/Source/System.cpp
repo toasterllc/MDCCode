@@ -20,8 +20,10 @@ using PixResetMsg = ICE40::PixResetMsg;
 using PixCaptureMsg = ICE40::PixCaptureMsg;
 using PixReadoutMsg = ICE40::PixReadoutMsg;
 using PixI2CTransactionMsg = ICE40::PixI2CTransactionMsg;
-using PixGetStatusMsg = ICE40::PixGetStatusMsg;
-using PixGetStatusResp = ICE40::PixGetStatusResp;
+using PixI2CStatusMsg = ICE40::PixI2CStatusMsg;
+using PixI2CStatusResp = ICE40::PixI2CStatusResp;
+using PixCaptureStatusMsg = ICE40::PixCaptureStatusMsg;
+using PixCaptureStatusResp = ICE40::PixCaptureStatusResp;
 
 using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
 using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
@@ -460,8 +462,8 @@ SDGetStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
 
 
 
-ICE40::PixGetStatusResp System::_pixGetStatus() {
-    return _ice40Transfer<PixGetStatusResp>(_qspi, PixGetStatusMsg());
+ICE40::PixI2CStatusResp System::_pixI2CStatus() {
+    return _ice40Transfer<PixI2CStatusResp>(_qspi, PixI2CStatusMsg());
 }
 
 void System::_pixI2CRead(uint16_t addr) {
@@ -471,11 +473,11 @@ void System::_pixI2CRead(uint16_t addr) {
     const uint32_t MaxAttempts = 1000;
     for (uint32_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) HAL_Delay(1);
-        auto status = _pixGetStatus();
-        _pixStatus.i2cErr = status.i2cErr();
+        auto status = _pixI2CStatus();
+        _pixStatus.i2cErr = status.err();
         if (_pixStatus.i2cErr) return;
-        if (status.i2cDone()) {
-            _pixStatus.i2cReadVal = status.i2cReadData();
+        if (status.done()) {
+            _pixStatus.i2cReadVal = status.readData();
             return;
         }
     }
@@ -491,14 +493,18 @@ void System::_pixI2CWrite(uint16_t addr, uint16_t val) {
     const uint32_t MaxAttempts = 1000;
     for (uint32_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) HAL_Delay(1);
-        auto status = _pixGetStatus();
-        _pixStatus.i2cErr = status.i2cErr();
+        auto status = _pixI2CStatus();
+        _pixStatus.i2cErr = status.err();
         if (_pixStatus.i2cErr) return;
-        if (status.i2cDone()) return;
+        if (status.done()) return;
     }
     // Timeout getting response from ICE40
     // This should never happen, since it indicates a Verilog error or a hardware failure.
     abort();
+}
+
+ICE40::PixCaptureStatusResp System::_pixCaptureStatus() {
+    return _ice40Transfer<PixCaptureStatusResp>(_qspi, PixCaptureStatusMsg());
 }
 
 
@@ -1122,21 +1128,21 @@ void System::_pixStartImage() {
     // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
     const uint32_t MaxDelayMs = 500;
     const uint32_t startTime = HAL_GetTick();
-    ICE40::PixGetStatusResp status;
+    ICE40::PixCaptureStatusResp status;
     for (;;) {
-        status = _pixGetStatus();
-        if (status.captureDone() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
+        status = _pixCaptureStatus();
+        if (status.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
     }
     
     // If readout isn't ready after our timeout, set our error state for the host to observe
-    if (!status.captureDone()) {
+    if (!status.done()) {
         _pixStatus.state = PixState::Error;
         return;
     }
     
     // Start readout
-    const uint16_t imageWidth = status.captureImageWidth();
-    const uint16_t imageHeight = status.captureImageHeight();
+    const uint16_t imageWidth = status.imageWidth();
+    const uint16_t imageHeight = status.imageHeight();
     _pixStatus.size = {
         .width = imageWidth,
         .height = imageHeight,

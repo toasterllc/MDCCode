@@ -351,21 +351,19 @@ module Top(
                     pixi2c_cmd_trigger <= !pixi2c_cmd_trigger;
                 end
                 
-                `Msg_Type_PixGetStatus: begin
-                    // $display("[SPI] Got Msg_Type_PixGetStatus [I2CDone:%b, I2CErr:%b, I2CReadData:%b ReadoutReady:%b]",
-                    //     !spi_pixi2c_done_,
-                    //     pixi2c_status_err,
-                    //     pixi2c_status_readData,
-                    //     spi_pixReadoutReady
-                    // );
-                    spi_resp[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !spi_pixi2c_done_;
-                    spi_resp[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
-                    spi_resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
+                `Msg_Type_PixI2CStatus: begin
+                    spi_resp[`Resp_Arg_PixI2CStatus_Done_Bits] <= !spi_pixi2c_done_;
+                    spi_resp[`Resp_Arg_PixI2CStatus_Err_Bits] <= pixi2c_status_err;
+                    spi_resp[`Resp_Arg_PixI2CStatus_ReadData_Bits] <= pixi2c_status_readData;
+                    spi_state <= SPI_State_RespOut;
+                end
+                
+                `Msg_Type_PixCaptureStatus: begin
                     // Use `CaptureDone` bit to signal whether we can readout,
                     // not whether the capture has merely been written to RAM
-                    spi_resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= spi_pixReadoutReady;
-                    spi_resp[`Resp_Arg_PixGetStatus_CaptureImageWidth_Bits] <= pixctrl_status_captureImageWidth;
-                    spi_resp[`Resp_Arg_PixGetStatus_CaptureImageHeight_Bits] <= pixctrl_status_captureImageHeight;
+                    spi_resp[`Resp_Arg_PixCaptureStatus_Done_Bits] <= spi_pixReadoutReady;
+                    spi_resp[`Resp_Arg_PixCaptureStatus_ImageWidth_Bits] <= pixctrl_status_captureImageWidth;
+                    spi_resp[`Resp_Arg_PixCaptureStatus_ImageHeight_Bits] <= pixctrl_status_captureImageHeight;
                     spi_state <= SPI_State_RespOut;
                 end
                 
@@ -663,11 +661,11 @@ module Testbench();
             $display("[STM32] Waiting until readout is ready...");
             do begin
                 // Request Pix status
-                SendMsg(`Msg_Type_PixGetStatus, 0, 8);
-            end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
+                SendMsg(`Msg_Type_PixCaptureStatus, 0, 8);
+            end while(!resp[`Resp_Arg_PixCaptureStatus_Done_Bits]);
             $display("[STM32] Readout ready ✅ (image size: %0d x %0d)",
-                resp[`Resp_Arg_PixGetStatus_CaptureImageWidth_Bits],
-                resp[`Resp_Arg_PixGetStatus_CaptureImageHeight_Bits],
+                resp[`Resp_Arg_PixCaptureStatus_ImageWidth_Bits],
+                resp[`Resp_Arg_PixCaptureStatus_ImageHeight_Bits],
             );
             
             // 1 pixels     counter=0
@@ -706,17 +704,17 @@ module Testbench();
         
         done = 0;
         while (!done) begin
-            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            SendMsg(`Msg_Type_PixI2CStatus, 0, 8);
             $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+                resp[`Resp_Arg_PixI2CStatus_Done_Bits],
+                resp[`Resp_Arg_PixI2CStatus_Err_Bits],
+                resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]
             );
-
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+            
+            done = resp[`Resp_Arg_PixI2CStatus_Done_Bits];
         end
         
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+        if (!resp[`Resp_Arg_PixI2CStatus_Err_Bits]) begin
             $display("[STM32] Write success ✅");
         end else begin
             $display("[STM32] Write failed ❌");
@@ -733,26 +731,26 @@ module Testbench();
         
         done = 0;
         while (!done) begin
-            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            SendMsg(`Msg_Type_PixI2CStatus, 0, 8);
             $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+                resp[`Resp_Arg_PixI2CStatus_Done_Bits],
+                resp[`Resp_Arg_PixI2CStatus_Err_Bits],
+                resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]
             );
-
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+            
+            done = resp[`Resp_Arg_PixI2CStatus_Done_Bits];
         end
         
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+        if (!resp[`Resp_Arg_PixI2CStatus_Err_Bits]) begin
             $display("[STM32] Read success ✅");
         end else begin
             $display("[STM32] Read failed ❌");
         end
         
-        if (resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] === 16'hCAFE) begin
-            $display("[STM32] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
+        if (resp[`Resp_Arg_PixI2CStatus_ReadData_Bits] === 16'hCAFE) begin
+            $display("[STM32] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]);
         end else begin
-            $display("[STM32] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
+            $display("[STM32] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]);
             `Finish;
         end
         
@@ -765,25 +763,25 @@ module Testbench();
         arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
         arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'h0037;
         SendMsg(`Msg_Type_PixI2CTransaction, arg, 0);
-
+        
         done = 0;
         while (!done) begin
-            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            SendMsg(`Msg_Type_PixI2CStatus, 0, 8);
             $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+                resp[`Resp_Arg_PixI2CStatus_Done_Bits],
+                resp[`Resp_Arg_PixI2CStatus_Err_Bits],
+                resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]
             );
-
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+            
+            done = resp[`Resp_Arg_PixI2CStatus_Done_Bits];
         end
-
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+        
+        if (!resp[`Resp_Arg_PixI2CStatus_Err_Bits]) begin
             $display("[STM32] Write success ✅");
         end else begin
             $display("[STM32] Write failed ❌");
         end
-
+        
         // ====================
         // Test PixI2C Read (len=1)
         // ====================
@@ -795,26 +793,26 @@ module Testbench();
 
         done = 0;
         while (!done) begin
-            SendMsg(`Msg_Type_PixGetStatus, 0, 8);
+            SendMsg(`Msg_Type_PixI2CStatus, 0, 8);
             $display("[STM32] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+                resp[`Resp_Arg_PixI2CStatus_Done_Bits],
+                resp[`Resp_Arg_PixI2CStatus_Err_Bits],
+                resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]
             );
 
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+            done = resp[`Resp_Arg_PixI2CStatus_Done_Bits];
         end
 
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+        if (!resp[`Resp_Arg_PixI2CStatus_Err_Bits]) begin
             $display("[STM32] Read success ✅");
         end else begin
             $display("[STM32] Read failed ❌");
         end
 
-        if ((resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF) === 16'h0037) begin
-            $display("[STM32] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
+        if ((resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]&16'h00FF) === 16'h0037) begin
+            $display("[STM32] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]&16'h00FF);
         end else begin
-            $display("[STM32] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
+            $display("[STM32] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixI2CStatus_ReadData_Bits]&16'h00FF);
         end
     end endtask
     

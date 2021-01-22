@@ -16,9 +16,11 @@ private:
         ICE40::SDSendCmdMsg::RespType respType = ICE40::SDSendCmdMsg::RespTypes::Len48,
         ICE40::SDSendCmdMsg::DatInType datInType = ICE40::SDSendCmdMsg::DatInTypes::None);
     
-    ICE40::PixGetStatusResp _pixGetStatus();
+    ICE40::PixI2CStatusResp _pixI2CStatus();
     void _pixI2CRead(uint16_t addr);
     void _pixI2CWrite(uint16_t addr, uint16_t val);
+    
+    ICE40::PixCaptureStatusResp _pixCaptureStatus();
     
     void _reset(bool usbResetFinish);
     void _handleEvent();

@@ -192,19 +192,28 @@ public:
         }
     };
     
-    struct PixGetStatusMsg : Msg {
-        PixGetStatusMsg() {
+    struct PixI2CStatusMsg : Msg {
+        PixI2CStatusMsg() {
             type = 0x08;
         }
     };
     
-    struct PixGetStatusResp : Resp {
-        bool i2cDone() const                { return getBit(63);        }
-        bool i2cErr() const                 { return getBit(62);        }
-        uint16_t i2cReadData() const        { return getBits(61,46);    }
-        bool captureDone() const            { return getBit(45);        }
-        uint16_t captureImageWidth() const  { return getBits(44,33);    }
-        uint16_t captureImageHeight() const { return getBits(32,21);    }
+    struct PixI2CStatusResp : Resp {
+        bool done() const               { return getBit(63);        }
+        bool err() const                { return getBit(62);        }
+        uint16_t readData() const       { return getBits(61,46);    }
+    };
+    
+    struct PixCaptureStatusMsg : Msg {
+        PixCaptureStatusMsg() {
+            type = 0x09;
+        }
+    };
+    
+    struct PixCaptureStatusResp : Resp {
+        bool done() const               { return getBit(63);        }
+        uint16_t imageWidth() const     { return getBits(62,51);    }
+        uint16_t imageHeight() const    { return getBits(50,39);    }
     };
     
 private:
