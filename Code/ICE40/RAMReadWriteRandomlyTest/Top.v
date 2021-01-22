@@ -69,21 +69,28 @@ module Top(
     localparam BlockSize = 2304*1296;
 `endif
     
-    localparam WordIdxWidth = $clog2(BlockSize);
+    localparam WordIdxWidth = `RegWidth(BlockSize-1);
     localparam BlockLimit = {BlockWidth{1'b1}};
+    
+    // initial begin
+    //     $display("BlockWidth: %0d", BlockWidth);
+    //     $display("WordIdxWidth: %0d", WordIdxWidth);
+    //     $finish;
+    // end
     
     function[15:0] DataFromBlockAndWordIdx;
         input[BlockWidth-1:0] block;
         input[WordIdxWidth-1:0] wordIdx;
-
+        
         // DataFromBlockAndWordIdx = block;
         // DataFromBlockAndWordIdx = wordIdx;
         // DataFromBlockAndWordIdx = {~block[20:18], ~wordIdx, wordIdx, block[20:16]} ^ ~(block[15:0]);
-
-        DataFromBlockAndWordIdx = {1'b1, ~wordIdx[21:18], ~block, block, wordIdx[20:16]} ^ ~(wordIdx[15:0]);
         
-        // DataFromBlockAndWordIdx = wordIdx^block;
-
+        // DataFromBlockAndWordIdx = {1'b1, ~wordIdx[21:18], ~block, block, wordIdx[20:16]} ^ ~(wordIdx[15:0]);
+        
+        // For BlockSize = 128
+        DataFromBlockAndWordIdx = wordIdx^block;
+        
         // DataFromBlockAndWordIdx = 0;
         // DataFromBlockAndWordIdx = ~0;
         // DataFromBlockAndWordIdx = 16'hABCD;
@@ -97,14 +104,14 @@ module Top(
     endfunction
     
     // ====================
-    // Clock (93 MHz)
+    // Clock (84 MHz)
     // ====================
-    localparam ClkFreq = 93_000_000;
+    localparam ClkFreq = 84_000_000;
     wire clk;
     ClockGen #(
         .FREQ(ClkFreq),
         .DIVR(0),
-        .DIVF(30),
+        .DIVF(27),
         .DIVQ(3),
         .FILTER_RANGE(2)
     ) ClockGen(.clkRef(clk24mhz), .clk(clk));
@@ -113,9 +120,7 @@ module Top(
     reg[BlockWidth-1:0] cmd_block = 0;
     reg[1:0] cmd = 0;
     wire write_ready;
-    wire write_done;
     wire read_ready;
-    wire read_done;
     reg write_trigger = 0;
     wire write_triggerActual;
     reg read_trigger = 0;
@@ -137,12 +142,10 @@ module Top(
         .write_ready(write_ready),
         .write_trigger(write_triggerActual),
         .write_data(write_data),
-        .write_done(write_done),
         
         .read_ready(read_ready),
         .read_trigger(read_triggerActual),
         .read_data(read_data),
-        .read_done(read_done),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -248,16 +251,16 @@ module Top(
                     state <= State_Error;
                 end
                 wordIdx <= wordIdx+1;
-            end
-            
-            if (read_done) begin
-                read_trigger <= 0;
-                if (blockCount) begin
-                    cmd_block <= cmd_block+1;
-                    blockCount <= blockCount-1;
-                    state <= State_ReadAll+1;
-                end else begin
-                    state <= State_Idle;
+                
+                if (&wordIdx) begin
+                    read_trigger <= 0;
+                    if (blockCount) begin
+                        cmd_block <= cmd_block+1;
+                        blockCount <= blockCount-1;
+                        state <= State_ReadAll+1;
+                    end else begin
+                        state <= State_Idle;
+                    end
                 end
             end
         end
@@ -295,16 +298,16 @@ module Top(
                     state <= State_Error;
                 end
                 wordIdx <= wordIdx+1;
-            end
-            
-            if (read_done) begin
-                read_trigger <= 0;
-                if (blockCount) begin
-                    cmd_block <= cmd_block+1;
-                    blockCount <= blockCount-1;
-                    state <= State_ReadSeq+1;
-                end else begin
-                    state <= State_Idle;
+                
+                if (&wordIdx) begin
+                    read_trigger <= 0;
+                    if (blockCount) begin
+                        cmd_block <= cmd_block+1;
+                        blockCount <= blockCount-1;
+                        state <= State_ReadSeq+1;
+                    end else begin
+                        state <= State_Idle;
+                    end
                 end
             end
         end
@@ -337,11 +340,11 @@ module Top(
                     state <= State_Error;
                 end
                 wordIdx <= wordIdx+1;
-            end
-            
-            if (read_done) begin
-                read_trigger <= 0;
-                state <= State_Idle;
+                
+                if (&wordIdx) begin
+                    read_trigger <= 0;
+                    state <= State_Idle;
+                end
             end
         end
         
@@ -374,16 +377,16 @@ module Top(
             if (write_ready && write_triggerActual) begin
                 $display("Write word: %0h[%0h] = %0h", cmd_block, wordIdx, write_data);
                 wordIdx <= wordIdx+1;
-            end
-            
-            if (write_done) begin
-                write_trigger <= 0;
-                if (blockCount) begin
-                    cmd_block <= cmd_block+1;
-                    blockCount <= blockCount-1;
-                    state <= State_WriteAll+1;
-                end else begin
-                    state <= State_Idle;
+                
+                if (&wordIdx) begin
+                    write_trigger <= 0;
+                    if (blockCount) begin
+                        cmd_block <= cmd_block+1;
+                        blockCount <= blockCount-1;
+                        state <= State_WriteAll+1;
+                    end else begin
+                        state <= State_Idle;
+                    end
                 end
             end
         end
@@ -416,16 +419,16 @@ module Top(
             if (write_ready && write_triggerActual) begin
                 $display("Write word: %0h[%0h] = %0h", cmd_block, wordIdx, write_data);
                 wordIdx <= wordIdx+1;
-            end
-            
-            if (write_done) begin
-                write_trigger <= 0;
-                if (blockCount) begin
-                    cmd_block <= cmd_block+1;
-                    blockCount <= blockCount-1;
-                    state <= State_WriteSeq+1;
-                end else begin
-                    state <= State_Idle;
+                
+                if (&wordIdx) begin
+                    write_trigger <= 0;
+                    if (blockCount) begin
+                        cmd_block <= cmd_block+1;
+                        blockCount <= blockCount-1;
+                        state <= State_WriteSeq+1;
+                    end else begin
+                        state <= State_Idle;
+                    end
                 end
             end
         end
@@ -453,11 +456,10 @@ module Top(
             if (write_ready && write_triggerActual) begin
                 $display("Write word: %0h[%0h] = %0h", cmd_block, wordIdx, write_data);
                 wordIdx <= wordIdx+1;
-            end
-            
-            if (write_done) begin
-                write_trigger <= 0;
-                state <= State_Idle;
+                if (&wordIdx) begin
+                    write_trigger <= 0;
+                    state <= State_Idle;
+                end
             end
         end
         
