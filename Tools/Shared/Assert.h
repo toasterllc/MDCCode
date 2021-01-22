@@ -1,3 +1,4 @@
+#pragma once
 #include <libgen.h>
 #include <os/log.h>
 

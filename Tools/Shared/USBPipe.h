@@ -40,7 +40,7 @@ public:
         uint32_t len32 = (uint32_t)sizeof(t);
         IOReturn ior = (*_interface.interface())->ReadPipeTO(_interface.interface(), _idx, &t, &len32, 0, timeout);
         if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: 0x%x", ior);
-        if (len32 != sizeof(t)) throw RuntimeError("ReadPipe() returned bad length; expected %ju bytes, got %ju bytes",
+        if (len32 != sizeof(t)) throw RuntimeError("ReadPipe() returned bad length (expected %ju bytes, got %ju bytes)",
             (uintmax_t)sizeof(t), (uintmax_t)len32);
     }
     
@@ -48,7 +48,7 @@ public:
         uint32_t len32 = (uint32_t)len;
         IOReturn ior = (*_interface.interface())->ReadPipeTO(_interface.interface(), _idx, buf, &len32, 0, timeout);
         if (ior != kIOReturnSuccess) throw RuntimeError("ReadPipe() failed: 0x%x", ior);
-        if (len32 != len) throw RuntimeError("ReadPipe() returned bad length; expected %ju bytes, got %ju bytes",
+        if (len32 != len) throw RuntimeError("ReadPipe() returned bad length (expected %ju bytes, got %ju bytes)",
             (uintmax_t)len, (uintmax_t)len32);
     }
     

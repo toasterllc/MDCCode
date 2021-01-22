@@ -203,6 +203,8 @@ public:
         bool i2cErr() const                 { return getBit(62);        }
         uint16_t i2cReadData() const        { return getBits(61,46);    }
         bool captureDone() const            { return getBit(45);        }
+        uint16_t captureImageWidth() const  { return getBits(44,33);    }
+        uint16_t captureImageHeight() const { return getBits(32,21);    }
     };
     
 private:

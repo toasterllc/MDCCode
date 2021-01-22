@@ -120,11 +120,13 @@ module Top(
     wire                                pixctrl_readout_trigger;
     wire[15:0]                          pixctrl_readout_data;
     wire                                pixctrl_status_captureDone;
-    wire[`RegWidth(ImageSizeMax)-1:0]   pixctrl_status_capturePixelCount;
+    wire[`RegWidth(ImageWidthMax)-1:0]  pixctrl_status_captureImageWidth;
+    wire[`RegWidth(ImageHeightMax)-1:0] pixctrl_status_captureImageHeight;
     wire                                pixctrl_status_readoutStarted;
     PixController #(
         .ClkFreq(Pix_Clk_Freq),
-        .ImageSizeMax(ImageSizeMax)
+        .ImageWidthMax(ImageWidthMax),
+        .ImageHeightMax(ImageHeightMax)
     ) PixController (
         .clk(pix_clk),
         
@@ -137,7 +139,8 @@ module Top(
         .readout_data(pixctrl_readout_data),
         
         .status_captureDone(pixctrl_status_captureDone),
-        .status_capturePixelCount(pixctrl_status_capturePixelCount),
+        .status_captureImageWidth(pixctrl_status_captureImageWidth),
+        .status_captureImageHeight(pixctrl_status_captureImageHeight),
         .status_readoutStarted(pixctrl_status_readoutStarted),
         
         .pix_dclk(pix_dclk),
@@ -361,7 +364,8 @@ module Top(
                     // Use `CaptureDone` bit to signal whether we can readout,
                     // not whether the capture has merely been written to RAM
                     spi_resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= spi_pixReadoutReady;
-                    spi_resp[`Resp_Arg_PixGetStatus_CapturePixelCount_Bits] <= pixctrl_status_capturePixelCount;
+                    spi_resp[`Resp_Arg_PixGetStatus_CaptureImageWidth_Bits] <= pixctrl_status_captureImageWidth;
+                    spi_resp[`Resp_Arg_PixGetStatus_CaptureImageHeight_Bits] <= pixctrl_status_captureImageHeight;
                     spi_state <= SPI_State_RespOut;
                 end
                 
@@ -473,6 +477,8 @@ module Testbench();
     
     Top Top(.*);
     
+    localparam ImageWidth = 32;
+    localparam ImageHeight = 4;
     PixSim #(
         .ImageWidth(ImageWidth),
         .ImageHeight(ImageHeight)
@@ -659,7 +665,10 @@ module Testbench();
                 // Request Pix status
                 SendMsg(`Msg_Type_PixGetStatus, 0, 8);
             end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
-            $display("[STM32] Readout ready ✅ (pixel count: %0d)", resp[`Resp_Arg_PixGetStatus_CapturePixelCount_Bits]);
+            $display("[STM32] Readout ready ✅ (image size: %0d x %0d)",
+                resp[`Resp_Arg_PixGetStatus_CaptureImageWidth_Bits],
+                resp[`Resp_Arg_PixGetStatus_CaptureImageHeight_Bits],
+            );
             
             // 1 pixels     counter=0
             // 2 pixels     counter=2

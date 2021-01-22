@@ -78,19 +78,12 @@
 `define     Resp_Arg_PixGetStatus_I2CErr_Bits                   62:62
 `define     Resp_Arg_PixGetStatus_I2CReadData_Bits              61:46
 `define     Resp_Arg_PixGetStatus_CaptureDone_Bits              45:45
-`define     Resp_Arg_PixGetStatus_CapturePixelCount_Bits        44:23
+`define     Resp_Arg_PixGetStatus_CaptureImageWidth_Bits        44:33
+`define     Resp_Arg_PixGetStatus_CaptureImageHeight_Bits       32:21
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
-`ifdef SIM
-localparam ImageWidth = 32;
-localparam ImageHeight = 4;
-`else
-localparam ImageWidth = 2304;
-localparam ImageHeight = 1296;
-`endif
-
-localparam ImageStatsHeight = 2; // 2 rows for embedded statistics (histogram)
-localparam ImageSizeMax = ImageWidth*(ImageHeight+ImageStatsHeight);
+localparam ImageWidthMax = 2304;
+localparam ImageHeightMax = 1296+2; // +2 rows for embedded statistics (histogram)
 
 `endif

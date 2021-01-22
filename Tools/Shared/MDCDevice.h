@@ -1,11 +1,15 @@
+#pragma once
 #include "USBDevice.h"
 #include "USBInterface.h"
 #include "USBPipe.h"
 #include "SendRight.h"
 #include "STAppTypes.h"
+#include "TimeInstant.h"
 
 class MDCDevice : public USBDevice {
 public:
+    using Milliseconds = uint32_t;
+    
     static NSDictionary* MatchingDictionary() {
         return USBDevice::MatchingDictionary(1155, 57105);
     }
@@ -13,11 +17,6 @@ public:
     static std::vector<MDCDevice> FindDevice() {
         return USBDevice::FindDevice<MDCDevice>(MatchingDictionary());
     }
-    
-    static constexpr size_t ImageStatsHeight = 2; // embedded statistical rows (histogram)
-    static constexpr size_t ImageWidth = 2304;
-    static constexpr size_t ImageHeight = 1296+ImageStatsHeight;
-    static constexpr size_t ImagePixelCount = ImageWidth*ImageHeight;
     
     // Default constructor: empty
     MDCDevice() {}
@@ -286,22 +285,28 @@ public:
         if (status.i2cErr) throw std::runtime_error("device reported i2c error");
     }
     
-    void pixStartStream() const {
+    STApp::PixStatus pixStartStream(Milliseconds timeout=1000) const {
         using namespace STApp;
         Cmd cmd = {
             .op = Cmd::Op::PixStartStream,
             .arg = {
-                .pixStream = {
-                    .width = ImageWidth,
-                    .height = ImageHeight,
+                .pixStartStream = {
                     .test = false,
                 },
             },
         };
         cmdOutPipe.write(cmd);
+        
+        // Poll pixStatus until the image size is valid
+        const TimeInstant startTime;
+        for (;;) {
+            const STApp::PixStatus status = pixStatus();
+            if (status.size.valid) return status;
+            if (startTime.durationMs() > timeout) throw std::runtime_error("timeout waiting for streaming to start");
+        }
     }
     
-    void pixReadImage(STApp::Pixel* pixels, size_t count, USBPipe::Milliseconds timeout=0) const {
+    void pixReadImage(STApp::Pixel* pixels, size_t count, Milliseconds timeout=0) const {
         pixInPipe.readBuf(pixels, count*sizeof(STApp::Pixel), timeout);
     }
     

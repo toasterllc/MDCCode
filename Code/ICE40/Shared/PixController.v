@@ -11,7 +11,9 @@
 
 module PixController #(
     parameter ClkFreq = 24_000_000,
-    parameter ImageSizeMax = 256*256
+    parameter ImageWidthMax = 256,
+    parameter ImageHeightMax = 256,
+    localparam ImageSizeMax = ImageWidthMax*ImageHeightMax
 )(
     input wire          clk,
     
@@ -27,7 +29,8 @@ module PixController #(
     
     // Status port (clock domain: `clk`)
     output reg                                  status_captureDone = 0,
-    output wire[`RegWidth(ImageSizeMax)-1:0]    status_capturePixelCount,
+    output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
+    output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
     output reg                                  status_readoutStarted = 0,
     
     // Pix port (clock domain: `pix_dclk`)
@@ -189,8 +192,13 @@ module PixController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg[`RegWidth(ImageSizeMax)-1:0] fifoIn_pixelCount = 0;
-    assign status_capturePixelCount = fifoIn_pixelCount;
+    reg[`RegWidth(ImageWidthMax)-1:0] fifoIn_imageWidth = 0;
+    reg[`RegWidth(ImageHeightMax)-1:0] fifoIn_imageHeight = 0;
+    assign status_captureImageWidth = fifoIn_imageWidth;
+    assign status_captureImageHeight = fifoIn_imageHeight;
+    
+    wire fifoIn_lv = pix_lv_reg;
+    reg fifoIn_lvPrev = 0;
     
     reg fifoIn_done = 0;
     // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
@@ -201,9 +209,15 @@ module PixController #(
     always @(posedge pix_dclk) begin
         fifoIn_rst <= 0; // Pulse
         fifoIn_writeEn <= 0; // Reset by default
+        fifoIn_lvPrev <= fifoIn_lv;
         
-        // Count the number of pixels in each image
-        if (fifoIn_write_trigger) fifoIn_pixelCount <= fifoIn_pixelCount+1;
+        if (fifoIn_write_trigger) begin
+            // Count the width of the image
+            if (!fifoIn_lvPrev) fifoIn_imageWidth <= 1;
+            else                fifoIn_imageWidth <= fifoIn_imageWidth+1;
+            // Count the height of the image
+            if (!fifoIn_lvPrev) fifoIn_imageHeight <= fifoIn_imageHeight+1;
+        end
         
         case (fifoIn_state)
         // Idle: wait to be triggered
@@ -214,7 +228,8 @@ module PixController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
-            fifoIn_pixelCount <= 0;
+            fifoIn_imageWidth <= 0;
+            fifoIn_imageHeight <= 0;
             fifoIn_state <= 2;
         end
         

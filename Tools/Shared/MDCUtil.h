@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <string>
 #include <iostream>
@@ -9,7 +10,6 @@
 #include "USBInterface.h"
 #include "USBPipe.h"
 #include "STAppTypes.h"
-#include "MyTime.h"
 #include "RuntimeError.h"
 #include "MDCDevice.h"
 
@@ -139,19 +139,20 @@ private:
     }
     
     static void _PixStream(const Args& args, MDCDevice& device) {
-        using namespace STApp;
-        const PixStatus pixStatus = device.pixStatus();
-        const size_t pixelCount = pixStatus.width*pixStatus.height;
-        
-        // Start Pix stream
-        device.pixStartStream();
-        
-        auto pixels = std::make_unique<Pixel[]>(pixelCount);
-        for (;;) {
-            device.pixReadImage(pixels.get(), pixelCount);
-            printf("Got %ju pixels (%ju x %ju)\n",
-                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
-        }
+        abort(); // TODO: update to use image size reported by device.pixStatus() -- but we need to wait for the image size to be valid
+//        using namespace STApp;
+//        const PixStatus pixStatus = device.pixStatus();
+//        const size_t pixelCount = pixStatus.width*pixStatus.height;
+//        
+//        // Start Pix stream
+//        device.pixStartStream();
+//        
+//        auto pixels = std::make_unique<Pixel[]>(pixelCount);
+//        for (;;) {
+//            device.pixReadImage(pixels.get(), pixelCount);
+//            printf("Got %ju pixels (%ju x %ju)\n",
+//                (uintmax_t)pixelCount, (uintmax_t)pixStatus.width, (uintmax_t)pixStatus.height);
+//        }
     }
     
     static void _LEDSet(const Args& args, MDCDevice& device) {
@@ -171,93 +172,95 @@ private:
     }
     
     static void _TestResetStream(const Args& args, MDCDevice& device) {
-        // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
-        using namespace STApp;
-        
-        // Get Pix info
-        const PixStatus pixStatus = device.pixStatus();
-        const size_t pixelCount = pixStatus.width*pixStatus.height;
-        auto pixels = std::make_unique<Pixel[]>(pixelCount);
-        for (;;) {
-            // Start Pix stream
-            device.pixStartStream();
-            
-            // Read data and make sure it's synchronized (by making
-            // sure it starts with the magic number)
-            printf("Reading from PixIn...\n");
-            for (int i=0; i<3; i++) {
-                device.pixReadImage(pixels.get(), pixelCount);
-                uint32_t magicNum = 0;
-                memcpy(&magicNum, pixels.get(), sizeof(magicNum));
-                if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
-            }
-            printf("-> Done\n\n");
-            
-            // De-synchronize the data by performing a truncated read
-            printf("Corrupting PixIn endpoint...\n");
-            for (int i=0; i<3; i++) {
-                uint8_t buf[512];
-                device.pixInPipe.read(buf, sizeof(buf));
-            }
-            printf("-> Done\n\n");
-            
-            // Recover device
-            printf("Recovering device...\n");
-            device.reset();
-            printf("-> Done\n\n");
-        }
+        abort(); // TODO: update to use image size reported by device.pixStatus() -- but we need to wait for the image size to be valid
+//        // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
+//        using namespace STApp;
+//        
+//        // Get Pix info
+//        const PixStatus pixStatus = device.pixStatus();
+//        const size_t pixelCount = pixStatus.width*pixStatus.height;
+//        auto pixels = std::make_unique<Pixel[]>(pixelCount);
+//        for (;;) {
+//            // Start Pix stream
+//            device.pixStartStream();
+//            
+//            // Read data and make sure it's synchronized (by making
+//            // sure it starts with the magic number)
+//            printf("Reading from PixIn...\n");
+//            for (int i=0; i<3; i++) {
+//                device.pixReadImage(pixels.get(), pixelCount);
+//                uint32_t magicNum = 0;
+//                memcpy(&magicNum, pixels.get(), sizeof(magicNum));
+//                if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
+//            }
+//            printf("-> Done\n\n");
+//            
+//            // De-synchronize the data by performing a truncated read
+//            printf("Corrupting PixIn endpoint...\n");
+//            for (int i=0; i<3; i++) {
+//                uint8_t buf[512];
+//                device.pixInPipe.read(buf, sizeof(buf));
+//            }
+//            printf("-> Done\n\n");
+//            
+//            // Recover device
+//            printf("Recovering device...\n");
+//            device.reset();
+//            printf("-> Done\n\n");
+//        }
     }
     
     static void _TestResetStreamInc(const Args& args, MDCDevice& device) {
-        // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
-        using namespace STApp;
-        
-        // Get Pix info
-        const PixStatus pixStatus = device.pixStatus();
-        const size_t pixelCount = pixStatus.width*pixStatus.height;
-        auto pixels = std::make_unique<Pixel[]>(pixelCount);
-        for (;;) {
-            // Start Pix stream
-            device.pixStartStream();
-            
-            // Read data and make sure it's synchronized (by making
-            // sure it starts with the magic number)
-            printf("Reading from PixIn...\n");
-            for (int i=0; i<3; i++) {
-                device.pixReadImage(pixels.get(), pixelCount);
-                uint32_t magicNum = 0;
-                memcpy(&magicNum, pixels.get(), sizeof(magicNum));
-                if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
-                
-                // Verify that the values are incrementing numbers
-                std::optional<uint16_t> lastNum;
-                // Start off past the magic number
-                for (size_t i=2; i<pixelCount; i++) {
-                    const uint16_t num = pixels[i];
-                    if (lastNum) {
-                        uint16_t expected = *lastNum+1;
-                        if (num != expected) {
-                            throw RuntimeError("invalid number; expected: 0x%04x, got: 0x%04x", expected, num);
-                        }
-                    }
-                    lastNum = num;
-                }
-            }
-            printf("-> Done\n\n");
-            
-            // De-synchronize the data by performing a truncated read
-            printf("Corrupting PixIn endpoint...\n");
-            for (int i=0; i<3; i++) {
-                uint8_t buf[512];
-                device.pixInPipe.read(buf, sizeof(buf));
-            }
-            printf("-> Done\n\n");
-            
-            // Recover device
-            printf("Recovering device...\n");
-            device.reset();
-            printf("-> Done\n\n");
-        }
+        abort(); // TODO: update to use image size reported by device.pixStatus() -- but we need to wait for the image size to be valid
+//        // TODO: for this to work we need to enable a test mode on the device, and fill the first byte of every transfer with a counter
+//        using namespace STApp;
+//        
+//        // Get Pix info
+//        const PixStatus pixStatus = device.pixStatus();
+//        const size_t pixelCount = pixStatus.width*pixStatus.height;
+//        auto pixels = std::make_unique<Pixel[]>(pixelCount);
+//        for (;;) {
+//            // Start Pix stream
+//            device.pixStartStream();
+//            
+//            // Read data and make sure it's synchronized (by making
+//            // sure it starts with the magic number)
+//            printf("Reading from PixIn...\n");
+//            for (int i=0; i<3; i++) {
+//                device.pixReadImage(pixels.get(), pixelCount);
+//                uint32_t magicNum = 0;
+//                memcpy(&magicNum, pixels.get(), sizeof(magicNum));
+//                if (magicNum != PixTestMagicNumber) throw std::runtime_error("invalid magic number");
+//                
+//                // Verify that the values are incrementing numbers
+//                std::optional<uint16_t> lastNum;
+//                // Start off past the magic number
+//                for (size_t i=2; i<pixelCount; i++) {
+//                    const uint16_t num = pixels[i];
+//                    if (lastNum) {
+//                        uint16_t expected = *lastNum+1;
+//                        if (num != expected) {
+//                            throw RuntimeError("invalid number; expected: 0x%04x, got: 0x%04x", expected, num);
+//                        }
+//                    }
+//                    lastNum = num;
+//                }
+//            }
+//            printf("-> Done\n\n");
+//            
+//            // De-synchronize the data by performing a truncated read
+//            printf("Corrupting PixIn endpoint...\n");
+//            for (int i=0; i<3; i++) {
+//                uint8_t buf[512];
+//                device.pixInPipe.read(buf, sizeof(buf));
+//            }
+//            printf("-> Done\n\n");
+//            
+//            // Recover device
+//            printf("Recovering device...\n");
+//            device.reset();
+//            printf("-> Done\n\n");
+//        }
     }
 
 };

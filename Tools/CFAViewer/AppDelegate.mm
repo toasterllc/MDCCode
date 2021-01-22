@@ -11,7 +11,7 @@
 #import "Util.h"
 #import "Mat.h"
 #import "ColorUtil.h"
-#import "MyTime.h"
+#import "TimeInstant.h"
 #import "MainView.h"
 #import "HistogramView.h"
 #import "ColorChecker.h"
@@ -118,8 +118,8 @@ struct PixConfig {
     _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
     
     _image = {
-        .width = MDCDevice::ImageWidth,
-        .height = MDCDevice::ImageHeight,
+        .width = 2304,
+        .height = 1296,
         .pixels = (MetalTypes::ImagePixel*)_imageData.data(),
     };
     
@@ -160,8 +160,8 @@ struct PixConfig {
     MDCDevice device;
     try {
         device = MDCDevice(std::move(service));
-    } catch (...) {
-        fprintf(stderr, "Failed to create MDCDevice (it probably needs to be bootloaded)\n");
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Failed to create MDCDevice (it probably needs to be bootloaded): %s\n", e.what());
     }
     [self _setMDCDevice:std::move(device)];
 }
@@ -200,7 +200,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
                 [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
             });
         
-        } catch (...) {
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Failed to initialize MDCDevice: %s\n", e.what());
             // If something goes wrong, assume the device was disconnected
             [self _setMDCDevice:MDCDevice()];
         }
@@ -237,16 +238,14 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     assert(device);
     
     ImageLayer* layer = [_mainView imageLayer];
-    
-    // Reset the device to put it back in a pre-defined state
-    device.reset();
-    // Start Pix stream
-    device.pixStartStream();
-    
-    const size_t pixelCount = MDCDevice::ImagePixelCount;
-    auto pixels = std::make_unique<Pixel[]>(pixelCount);
-    for (int count=0;; count++) {
-        try {
+    try {
+        // Reset the device to put it back in a pre-defined state
+        device.reset();
+        // Start Pix stream
+        const STApp::PixStatus pixStatus = device.pixStartStream();
+        const size_t pixelCount = pixStatus.size.width*pixStatus.size.height;
+        auto pixels = std::make_unique<Pixel[]>(pixelCount);
+        for (;;) {
             // Check if we've been cancelled
             bool cancel = false;
             _streamImages.lock.lock();
@@ -258,26 +257,24 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             // in case it reports a streaming error
             device.pixReadImage(pixels.get(), pixelCount, 1000);
             
-            Image image = {
-                .width = MDCDevice::ImageWidth,
-                .height = MDCDevice::ImageHeight,
+            const Image image = {
+                .width = pixStatus.size.width,
+                .height = pixStatus.size.height,
                 .pixels = pixels.get(),
             };
             [layer setImage:image];
-        
+        }
+    
+    } catch (const std::exception& e) {
+        PixState pixState = PixState::Idle;
+        try {
+            pixState = device.pixStatus().state;
         } catch (const std::exception& e) {
-            PixState pixState = PixState::Idle;
-            try {
-                pixState = device.pixStatus().state;
-            } catch (const std::exception& e) {
-                printf("pixStatus() failed: %s\n", e.what());
-                break;
-            }
-            
-            if (pixState != PixState::Streaming) {
-                printf("pixStatus.state != PixState::Streaming\n");
-                break;
-            }
+            printf("pixStatus() failed: %s\n", e.what());
+        }
+        
+        if (pixState != PixState::Streaming) {
+            printf("pixStatus.state != PixState::Streaming\n");
         }
     }
     

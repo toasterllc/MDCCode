@@ -47,10 +47,8 @@ namespace STApp {
             } pixI2CTransaction;
             
             struct __attribute__((packed)) {
-                uint16_t width;
-                uint16_t height;
                 uint8_t test;
-            } pixStream;
+            } pixStartStream;
             
             struct __attribute__((packed)) {
                 uint8_t idx;
@@ -59,6 +57,7 @@ namespace STApp {
         } arg;
         
     } __attribute__((packed));
+    static_assert(sizeof(Cmd)==6, "Cmd: invalid size");
     
     enum class PixState : uint8_t {
         Idle,
@@ -66,17 +65,20 @@ namespace STApp {
         Error,
     };
     
+    struct PixSize {
+        uint16_t width = 0;
+        uint16_t height = 0;
+        uint8_t valid = 0;
+    } __attribute__((packed));
+    
     struct PixStatus {
-        PixState state;
-        uint16_t width;
-        uint16_t height;
-        uint8_t i2cErr;
-        uint16_t i2cReadVal;
+        PixState state = PixState::Idle;
+        PixSize size;
+        uint8_t i2cErr = 0;
+        uint16_t i2cReadVal = 0;
     } __attribute__((packed));
     
     using Pixel = uint16_t;
     
     const uint32_t PixTestMagicNumber = 0xCAFEBABE;
-    
-    static_assert(sizeof(Cmd)==6, "Cmd: invalid size");
 }

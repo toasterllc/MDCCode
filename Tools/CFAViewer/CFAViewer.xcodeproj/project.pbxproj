@@ -29,7 +29,7 @@
 /* Begin PBXFileReference section */
 		552E7D5A24C9316900438AAF /* CFAViewer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CFAViewer.entitlements; sourceTree = "<group>"; };
 		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
-		55671A2B257E94BD00C1CDA4 /* MyTime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyTime.h; sourceTree = "<group>"; };
+		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55671A2C257E94BD00C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55671A2D257E94BD00C1CDA4 /* RuntimeError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
 		55671A2E257E94BD00C1CDA4 /* USBInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
@@ -105,7 +105,7 @@
 				55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */,
 				55671A3A2580178100C1CDA4 /* MDCUtil.h */,
 				55671A31257E94BD00C1CDA4 /* Mmap.h */,
-				55671A2B257E94BD00C1CDA4 /* MyTime.h */,
+				55671A2B257E94BD00C1CDA4 /* TimeInstant.h */,
 				55671A2D257E94BD00C1CDA4 /* RuntimeError.h */,
 				55671A33257E94BD00C1CDA4 /* SendRight.h */,
 				55E98EBE25A930780062B458 /* IOServiceMatcher.h */,

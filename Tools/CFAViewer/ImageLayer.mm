@@ -576,25 +576,9 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     [cmdBuf presentDrawable:drawable];
     [cmdBuf commit];
-//    auto startTime = MyTime::Now();
     // Wait for the render to complete, since the lock needs to be
     // held because the shader accesses _state
     [cmdBuf waitUntilCompleted];
-    
-//    Vals3 maxVals;
-//    memcpy(&maxVals, [maxValsBuf contents], sizeof(maxVals));
-//    printf("Max channel values 1: %f %f %f\n",
-//        (float)maxVals.x/UINT16_MAX,
-//        (float)maxVals.y/UINT16_MAX,
-//        (float)maxVals.z/UINT16_MAX
-//    );
-//    
-//    memcpy(&maxVals, [maxValsBuf2 contents], sizeof(maxVals));
-//    printf("Max channel values 2: %f %f %f\n",
-//        (float)maxVals.x/UINT16_MAX,
-//        (float)maxVals.y/UINT16_MAX,
-//        (float)maxVals.z/UINT16_MAX
-//    );
     
     // Notify that our histogram changed
     auto dataChangedHandler = _state.dataChangedHandler;
@@ -603,16 +587,6 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             dataChangedHandler(self);
         });
     }
-    
-//    size_t i = 0;
-//    for (const auto& count : _inputHistogram.r) {
-//        printf("[%ju] %ju\n", (uintmax_t)i, (uintmax_t)count);
-//        i++;
-//    }
-    
-//    printf("Duration: %ju\n", (uintmax_t)MyTime::DurationNs(startTime));
-//    printf("%ju\n", (uintmax_t)_histogram.counts[0].load());
-    
 }
 
 - (void)setContentsScale:(CGFloat)scale {

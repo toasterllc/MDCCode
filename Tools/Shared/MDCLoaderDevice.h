@@ -1,3 +1,4 @@
+#pragma once
 #include "USBDevice.h"
 #include "USBInterface.h"
 #include "USBPipe.h"

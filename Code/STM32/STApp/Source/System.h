@@ -38,13 +38,7 @@ private:
     USB _usb;
     QSPI _qspi;
     
-    STApp::PixStatus _pixStatus = {
-        .state = STApp::PixState::Idle,
-        .width = 0,
-        .height = 0,
-        .i2cErr = false,
-        .i2cReadVal = 0,
-    };
+    STApp::PixStatus _pixStatus;
     bool _pixTest = false;
     bool _pixTestFirstTransfer = false;
     BufQueue<2> _pixBufs;

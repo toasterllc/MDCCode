@@ -799,12 +799,11 @@ void System::_handleCmd(const USB::Cmd& ev) {
     
     // PixStartStream
     case Cmd::Op::PixStartStream: {
-        auto& arg = cmd.arg.pixStream;
+        auto& arg = cmd.arg.pixStartStream;
         if (_pixStatus.state == PixState::Idle) {
             _pixStatus.state = PixState::Streaming;
-            _pixStatus.width = arg.width;
-            _pixStatus.height = arg.height;
-            _pixTest = cmd.arg.pixStream.test;
+            _pixStatus.size = {}; // Reset so .valid=false
+            _pixTest = arg.test;
             _ice40Transfer(_qspi, PixCaptureMsg(0));
             _pixStartImage();
         }
@@ -1118,27 +1117,34 @@ void System::_pixReset() {
 
 void System::_pixStartImage() {
     Assert(_pixStatus.state == PixState::Streaming); // We should only be called while streaming
-    // Start the next transfer
-    _pixRemLen = _pixStatus.width*_pixStatus.height;
-    _pixTestFirstTransfer = true;
     
+    // Start the next transfer
     // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
     const uint32_t MaxDelayMs = 500;
-    bool readoutReady = false;
-    uint32_t startTime = HAL_GetTick();
-    while (!readoutReady && (HAL_GetTick()-startTime)<MaxDelayMs) {
-        readoutReady = _pixGetStatus().captureDone();
+    const uint32_t startTime = HAL_GetTick();
+    ICE40::PixGetStatusResp status;
+    for (;;) {
+        status = _pixGetStatus();
+        if (status.captureDone() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
     }
     
-    
-    // Start readout if it's ready
-    if (readoutReady) {
-        _recvPixDataFromICE40();
-    
-    // Otherwise set our error state for the host to observe
-    } else {
+    // If readout isn't ready after our timeout, set our error state for the host to observe
+    if (!status.captureDone()) {
         _pixStatus.state = PixState::Error;
+        return;
     }
+    
+    // Start readout
+    const uint16_t imageWidth = status.captureImageWidth();
+    const uint16_t imageHeight = status.captureImageHeight();
+    _pixStatus.size = {
+        .width = imageWidth,
+        .height = imageHeight,
+        .valid = true,
+    };
+    _pixRemLen = imageWidth*imageHeight;
+    _pixTestFirstTransfer = true;
+    _recvPixDataFromICE40();
 }
 
 [[noreturn]] void System::_abort() {
