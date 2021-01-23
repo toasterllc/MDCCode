@@ -47,8 +47,12 @@ module PixSim #(
             // Output a row
             pix_lv = 1;
             for (col=0; col<ImageWidth; col=col+1) begin
-                pix_d = row;
-                // pix_d = col;
+                // Test histogram
+                if (!(row%4) && !(col%4)) begin
+                    pix_d = 12'hFFF; // Highlight
+                end else begin
+                    pix_d = 12'h000; // Shadow
+                end
                 wait(clk);
                 wait(!clk);
             end

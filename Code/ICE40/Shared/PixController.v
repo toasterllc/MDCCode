@@ -31,6 +31,8 @@ module PixController #(
     output reg                                  status_captureDone = 0,
     output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
     output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
+    output wire[17:0]                           status_captureHighlightCount,
+    output wire[17:0]                           status_captureShadowCount,
     output reg                                  status_readoutStarted = 0,
     
     // Pix port (clock domain: `pix_dclk`)
@@ -194,11 +196,18 @@ module PixController #(
     
     reg[`RegWidth(ImageWidthMax)-1:0] fifoIn_imageWidth = 0;
     reg[`RegWidth(ImageHeightMax)-1:0] fifoIn_imageHeight = 0;
+    reg[17:0] fifoIn_highlightCount = 0;
+    reg[17:0] fifoIn_shadowCount = 0;
     assign status_captureImageWidth = fifoIn_imageWidth;
     assign status_captureImageHeight = fifoIn_imageHeight;
+    assign status_captureHighlightCount = fifoIn_highlightCount;
+    assign status_captureShadowCount = fifoIn_shadowCount;
     
     wire fifoIn_lv = pix_lv_reg;
+    wire fifoIn_fv = pix_fv_reg;
     reg fifoIn_lvPrev = 0;
+    reg[1:0] fifoIn_x = 0;
+    reg[1:0] fifoIn_y = 0;
     
     reg fifoIn_done = 0;
     // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
@@ -219,6 +228,22 @@ module PixController #(
             if (!fifoIn_lvPrev) fifoIn_imageHeight <= fifoIn_imageHeight+1;
         end
         
+        if (!fifoIn_lv) fifoIn_x <= 0;
+        else            fifoIn_x <= fifoIn_x+1;
+        
+        if (!fifoIn_fv)                         fifoIn_y <= 0;
+        else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
+        
+        if (fifoIn_write_trigger && !fifoIn_x && !fifoIn_y) begin
+            // Look at the high bits to determine if it's a highlight or shadow
+            case (`LeftBits(pix_d_reg, 0, 4))
+            // Highlight
+            4'b1111:    fifoIn_highlightCount <= fifoIn_highlightCount+1;
+            // Shadow
+            4'b0000:    fifoIn_shadowCount <= fifoIn_shadowCount+1;
+            endcase
+        end
+        
         case (fifoIn_state)
         // Idle: wait to be triggered
         0: begin
@@ -230,6 +255,8 @@ module PixController #(
             fifoIn_done <= 0;
             fifoIn_imageWidth <= 0;
             fifoIn_imageHeight <= 0;
+            fifoIn_highlightCount <= 0;
+            fifoIn_shadowCount <= 0;
             fifoIn_state <= 2;
         end
         

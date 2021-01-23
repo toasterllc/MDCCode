@@ -82,6 +82,8 @@
 `define     Resp_Arg_PixCaptureStatus_Done_Bits                 63:63
 `define     Resp_Arg_PixCaptureStatus_ImageWidth_Bits           62:51
 `define     Resp_Arg_PixCaptureStatus_ImageHeight_Bits          50:39
+`define     Resp_Arg_PixCaptureStatus_HighlightCount_Bits       38:21
+`define     Resp_Arg_PixCaptureStatus_ShadowCount_Bits          20:3
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 

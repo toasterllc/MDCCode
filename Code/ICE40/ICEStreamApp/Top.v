@@ -122,6 +122,8 @@ module Top(
     wire                                pixctrl_status_captureDone;
     wire[`RegWidth(ImageWidthMax)-1:0]  pixctrl_status_captureImageWidth;
     wire[`RegWidth(ImageHeightMax)-1:0] pixctrl_status_captureImageHeight;
+    wire[17:0]                          pixctrl_status_captureHighlightCount;
+    wire[17:0]                          pixctrl_status_captureShadowCount;
     wire                                pixctrl_status_readoutStarted;
     PixController #(
         .ClkFreq(Pix_Clk_Freq),
@@ -141,6 +143,8 @@ module Top(
         .status_captureDone(pixctrl_status_captureDone),
         .status_captureImageWidth(pixctrl_status_captureImageWidth),
         .status_captureImageHeight(pixctrl_status_captureImageHeight),
+        .status_captureHighlightCount(pixctrl_status_captureHighlightCount),
+        .status_captureShadowCount(pixctrl_status_captureShadowCount),
         .status_readoutStarted(pixctrl_status_readoutStarted),
         
         .pix_dclk(pix_dclk),
@@ -364,6 +368,8 @@ module Top(
                     spi_resp[`Resp_Arg_PixCaptureStatus_Done_Bits] <= spi_pixReadoutReady;
                     spi_resp[`Resp_Arg_PixCaptureStatus_ImageWidth_Bits] <= pixctrl_status_captureImageWidth;
                     spi_resp[`Resp_Arg_PixCaptureStatus_ImageHeight_Bits] <= pixctrl_status_captureImageHeight;
+                    spi_resp[`Resp_Arg_PixCaptureStatus_HighlightCount_Bits] <= pixctrl_status_captureHighlightCount;
+                    spi_resp[`Resp_Arg_PixCaptureStatus_ShadowCount_Bits] <= pixctrl_status_captureShadowCount;
                     spi_state <= SPI_State_RespOut;
                 end
                 
@@ -663,9 +669,11 @@ module Testbench();
                 // Request Pix status
                 SendMsg(`Msg_Type_PixCaptureStatus, 0, 8);
             end while(!resp[`Resp_Arg_PixCaptureStatus_Done_Bits]);
-            $display("[STM32] Readout ready ✅ (image size: %0d x %0d)",
+            $display("[STM32] Readout ready ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
                 resp[`Resp_Arg_PixCaptureStatus_ImageWidth_Bits],
                 resp[`Resp_Arg_PixCaptureStatus_ImageHeight_Bits],
+                resp[`Resp_Arg_PixCaptureStatus_HighlightCount_Bits],
+                resp[`Resp_Arg_PixCaptureStatus_ShadowCount_Bits],
             );
             
             // 1 pixels     counter=0
