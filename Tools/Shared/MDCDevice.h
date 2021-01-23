@@ -229,8 +229,8 @@ public:
         // Enable/disable embedded_data (2 extra rows of statistical info)
         // See AR0134_RR_D.pdf for info on statistics format
         {
-            pixI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
-//            pixI2CWrite(0x3064, 0x1802);  // Stats disabled
+//            pixI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
+            pixI2CWrite(0x3064, 0x1802);  // Stats disabled
         }
         
         // Set coarse integration time
