@@ -214,6 +214,8 @@ public:
         bool done() const               { return getBit(63);        }
         uint16_t imageWidth() const     { return getBits(62,51);    }
         uint16_t imageHeight() const    { return getBits(50,39);    }
+        uint32_t highlightCount() const { return getBits(38,21);    }
+        uint32_t shadowCount() const    { return getBits(20,3);     }
     };
     
 private:

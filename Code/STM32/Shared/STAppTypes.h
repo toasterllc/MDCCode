@@ -78,6 +78,13 @@ namespace STApp {
         uint16_t i2cReadVal = 0;
     } __attribute__((packed));
     
+    struct PixHeader {
+        uint16_t width = 0;
+        uint16_t height = 0;
+        uint32_t highlightCount = 0;
+        uint32_t shadowCount = 0;
+    } __attribute__((packed));
+    
     using Pixel = uint16_t;
     
     const uint32_t PixTestMagicNumber = 0xCAFEBABE;
