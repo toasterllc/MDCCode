@@ -680,7 +680,7 @@ float InverseSRGBGamma(float x) {
     return pow((x+.055)/1.055, 2.4);
 }
 
-fragment float ImageLayer_LMMSE_Gamma(
+fragment float ImageLayer_DebayerLMMSE_Gamma(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -688,7 +688,7 @@ fragment float ImageLayer_LMMSE_Gamma(
     return SRGBGamma(sampleR(rawTxt, in.pos));
 }
 
-fragment float4 ImageLayer_LMMSE_Degamma(
+fragment float4 ImageLayer_DebayerLMMSE_Degamma(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -697,7 +697,7 @@ fragment float4 ImageLayer_LMMSE_Degamma(
     return float4(InverseSRGBGamma(c.r), InverseSRGBGamma(c.g), InverseSRGBGamma(c.b), 1);
 }
 
-fragment float ImageLayer_LMMSE_Interp5(
+fragment float ImageLayer_DebayerLMMSE_Interp5(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& h [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
@@ -713,7 +713,7 @@ fragment float ImageLayer_LMMSE_Interp5(
             -.25*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+2:+0,!h?+2:+0)))).r    ;
 }
 
-fragment float ImageLayer_LMMSE_NoiseEst(
+fragment float ImageLayer_DebayerLMMSE_NoiseEst(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> filteredTxt [[texture(1)]],
@@ -728,7 +728,7 @@ fragment float ImageLayer_LMMSE_NoiseEst(
     else        return filtered-raw;
 }
 
-fragment float ImageLayer_LMMSE_Smooth9(
+fragment float ImageLayer_DebayerLMMSE_Smooth9(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& h [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
@@ -750,7 +750,7 @@ fragment float ImageLayer_LMMSE_Smooth9(
 
 constant bool UseZhangCodeEst = false;
 
-fragment float4 ImageLayer_LMMSE_CalcG(
+fragment float4 ImageLayer_DebayerLMMSE_CalcG(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> filteredHTxt [[texture(1)]],
@@ -849,7 +849,7 @@ fragment float4 ImageLayer_LMMSE_CalcG(
     return float4(0, g, 0, 1);
 }
 
-fragment float ImageLayer_LMMSE_CalcDiffGRGB(
+fragment float ImageLayer_DebayerLMMSE_CalcDiffGRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& modeGR [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
@@ -904,7 +904,7 @@ float diagAvg(texture2d<float> txt, uint2 pos) {
     }
 }
 
-fragment float ImageLayer_LMMSE_CalcDiagAvgDiffGRGB(
+fragment float ImageLayer_DebayerLMMSE_CalcDiagAvgDiffGRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& modeGR [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
@@ -956,7 +956,7 @@ float axialAvg(texture2d<float> txt, uint2 pos) {
     }
 }
 
-fragment float ImageLayer_LMMSE_CalcAxialAvgDiffGRGB(
+fragment float ImageLayer_DebayerLMMSE_CalcAxialAvgDiffGRGB(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
@@ -973,7 +973,7 @@ fragment float ImageLayer_LMMSE_CalcAxialAvgDiffGRGB(
     return sampleR(diffTxt, pos);
 }
 
-fragment float4 ImageLayer_LMMSE_CalcRB(
+fragment float4 ImageLayer_DebayerLMMSE_CalcRB(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     texture2d<float> diffGR [[texture(1)]],

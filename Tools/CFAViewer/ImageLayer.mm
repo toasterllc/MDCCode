@@ -329,7 +329,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
             // Gamma before
             if (_state.debayerLMMSEGammaEnabled) {
-                [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_LMMSE_Gamma"
+                [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_DebayerLMMSE_Gamma"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -340,7 +340,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Horizontal interpolation
             {
                 const bool h = true;
-                [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_LMMSE_Interp5"
+                [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_DebayerLMMSE_Interp5"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
@@ -352,7 +352,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Vertical interpolation
             {
                 const bool h = false;
-                [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_LMMSE_Interp5"
+                [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_DebayerLMMSE_Interp5"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
@@ -363,7 +363,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             
             // Calculate DiffH
             {
-                [self _renderPass:cmdBuf texture:diffHTxt name:@"ImageLayer_LMMSE_NoiseEst"
+                [self _renderPass:cmdBuf texture:diffHTxt name:@"ImageLayer_DebayerLMMSE_NoiseEst"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -374,7 +374,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             
             // Calculate DiffV
             {
-                [self _renderPass:cmdBuf texture:diffVTxt name:@"ImageLayer_LMMSE_NoiseEst"
+                [self _renderPass:cmdBuf texture:diffVTxt name:@"ImageLayer_DebayerLMMSE_NoiseEst"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -386,7 +386,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Smooth DiffH
             {
                 const bool h = true;
-                [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_LMMSE_Smooth9"
+                [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer_DebayerLMMSE_Smooth9"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
@@ -398,7 +398,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Smooth DiffV
             {
                 const bool h = false;
-                [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_LMMSE_Smooth9"
+                [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer_DebayerLMMSE_Smooth9"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
@@ -409,7 +409,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             
             // Calculate txt.g
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcG"
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DebayerLMMSE_CalcG"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -424,7 +424,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Calculate diffGRTxt.r
             {
                 const bool modeGR = true;
-                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
+                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_DebayerLMMSE_CalcDiffGRGB"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
@@ -438,7 +438,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Calculate diffGBTxt.b
             {
                 const bool modeGR = false;
-                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcDiffGRGB"
+                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_DebayerLMMSE_CalcDiffGRGB"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
@@ -452,7 +452,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Calculate diffGRTxt.b
             {
                 const bool modeGR = true;
-                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcDiagAvgDiffGRGB"
+                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_DebayerLMMSE_CalcDiagAvgDiffGRGB"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
@@ -466,7 +466,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Calculate diffGBTxt.r
             {
                 const bool modeGR = false;
-                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcDiagAvgDiffGRGB"
+                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_DebayerLMMSE_CalcDiagAvgDiffGRGB"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
@@ -479,7 +479,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             
             // Calculate diffGRTxt.g
             {
-                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_LMMSE_CalcAxialAvgDiffGRGB"
+                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer_DebayerLMMSE_CalcAxialAvgDiffGRGB"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -491,7 +491,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             
             // Calculate diffGBTxt.g
             {
-                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_LMMSE_CalcAxialAvgDiffGRGB"
+                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer_DebayerLMMSE_CalcAxialAvgDiffGRGB"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -503,7 +503,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             
             // Calculate txt.rb
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_CalcRB"
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DebayerLMMSE_CalcRB"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:txt atIndex:0];
@@ -515,7 +515,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             
             // Gamma after
             if (_state.debayerLMMSEGammaEnabled) {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LMMSE_Degamma"
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DebayerLMMSE_Degamma"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                         [encoder setFragmentTexture:txt atIndex:0];
