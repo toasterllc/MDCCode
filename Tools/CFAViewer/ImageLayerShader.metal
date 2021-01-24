@@ -1021,7 +1021,7 @@ fragment float4 ImageLayer_DebayerLMMSE_CalcRB(
 
 
 
-float r(texture2d<float> rawTxt, uint2 pos) {
+float ImageLayer_DebayerBilinear_R(texture2d<float> rawTxt, uint2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1057,7 +1057,7 @@ float r(texture2d<float> rawTxt, uint2 pos) {
     }
 }
 
-float g(texture2d<float> rawTxt, uint2 pos) {
+float ImageLayer_DebayerBilinear_G(texture2d<float> rawTxt, uint2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1092,7 +1092,7 @@ float g(texture2d<float> rawTxt, uint2 pos) {
     }
 }
 
-float b(texture2d<float> rawTxt, uint2 pos) {
+float ImageLayer_DebayerBilinear_B(texture2d<float> rawTxt, uint2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1133,7 +1133,12 @@ fragment float4 ImageLayer_DebayerBilinear(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos = uint2(in.pos.xy);
-    return float4(r(rawTxt, pos), g(rawTxt, pos), b(rawTxt, pos), 1);
+    return float4(
+        ImageLayer_DebayerBilinear_R(rawTxt, pos),
+        ImageLayer_DebayerBilinear_G(rawTxt, pos),
+        ImageLayer_DebayerBilinear_B(rawTxt, pos),
+        1
+    );
 }
 
 
