@@ -803,15 +803,10 @@ void System::_handleCmd(const USB::Cmd& ev) {
         break;
     }
     
-    // PixStartStream
-    case Cmd::Op::PixStartStream: {
-        auto& arg = cmd.arg.pixStartStream;
+    // PixCapture
+    case Cmd::Op::PixCapture: {
         if (_pixStatus.state == PixState::Idle) {
-            _pixStatus.state = PixState::Streaming;
-            _pixStatus.size = {}; // Reset so .valid=false
-            _pixTest = arg.test;
-            _ice40Transfer(_qspi, PixCaptureMsg(0));
-            _pixStartImage();
+            _pixCapture();
         }
         break;
     }
@@ -838,7 +833,7 @@ void System::_handleCmd(const USB::Cmd& ev) {
 }
 
 void System::_handleQSPIEvent(const QSPI::Signal& ev) {
-    Assert(_pixStatus.state == PixState::Streaming); // We should only be called while streaming
+    Assert(_pixStatus.state == PixState::Capturing); // We should only be called while capturing
     Assert(_pixBufs.writable());
     
     const bool wasReadable = _pixBufs.readable();
@@ -863,7 +858,7 @@ void System::_handleQSPIEvent(const QSPI::Signal& ev) {
 }
 
 void System::_handlePixUSBEvent(const USB::Signal& ev) {
-    Assert(_pixStatus.state == PixState::Streaming); // We should only be called while streaming
+    Assert(_pixStatus.state == PixState::Capturing); // We should only be called while capturing
     Assert(_pixBufs.readable());
     const bool wasWritable = _pixBufs.writable();
     
@@ -882,8 +877,10 @@ void System::_handlePixUSBEvent(const USB::Signal& ev) {
             _recvPixDataFromICE40();
         }
     } else if (!_pixBufs.readable()) {
+        _pixStatus.state = PixState::Idle;
+        
         // We're done sending this image, start the next one
-        _pixStartImage();
+//        _pixCapture();
     }
 }
 
@@ -892,32 +889,23 @@ void System::_recvPixDataFromICE40() {
     Assert(_pixBufs.writable());
     
     // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
-    const size_t pixCount = std::min(_pixRemLen, _pixBufs.writeBuf().cap/sizeof(Pixel));
+    const size_t len = std::min(_pixRemLen, _pixBufs.writeBuf().cap);
     // Determine whether this is the last readout, and therefore the ice40 should automatically
     // capture the next image when readout is done.
-    const bool captureNext = (pixCount == _pixRemLen);
-    _pixBufs.writeBuf().len = pixCount; // The `.len` field to indicate the number of pixels (not byte length)
+//    const bool captureNext = (len == _pixRemLen);
+    const bool captureNext = false;
+    _pixBufs.writeBuf().len = len;
     
-    _ice40TransferAsync(_qspi, PixReadoutMsg(0, captureNext, pixCount),
+    _ice40TransferAsync(_qspi, PixReadoutMsg(0, captureNext, len/sizeof(Pixel)),
         _pixBufs.writeBuf().data,
-        _pixBufs.writeBuf().len*sizeof(Pixel));
+        _pixBufs.writeBuf().len);
 }
 
 // Arrange for pix data to be sent over USB
 void System::_sendPixDataOverUSB() {
     Assert(_pixBufs.readable());
     const auto& buf = _pixBufs.readBuf();
-    
-    // In test mode, if this is the initial transfer for an image
-    // being sent to the host, overwrite the beginning of the
-    // transfer with the image's number.
-    if (_pixTest && _pixTestFirstTransfer) {
-        const uint32_t magicNum = STApp::PixTestMagicNumber;
-        memcpy(buf.data, &magicNum, sizeof(magicNum));
-        _pixTestFirstTransfer = false;
-    }
-    
-    _usb.pixSend(buf.data, buf.len*sizeof(Pixel)); // The `.len` field to indicate the number of pixels (not byte length)
+    _usb.pixSend(buf.data, buf.len);
 }
 
 void System::_pixReset() {
@@ -1121,10 +1109,14 @@ void System::_pixReset() {
 //    }
 //}
 
-void System::_pixStartImage() {
-    Assert(_pixStatus.state == PixState::Streaming); // We should only be called while streaming
+void System::_pixCapture() {
+    Assert(_pixStatus.state == PixState::Idle); // We should only be called while idle
     
-    // Start the next transfer
+    _pixStatus.state = PixState::Capturing;
+    
+    // Tell ice40 to perform a capture
+    _ice40Transfer(_qspi, PixCaptureMsg(0));
+    
     // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
     const uint32_t MaxDelayMs = 500;
     const uint32_t startTime = HAL_GetTick();
@@ -1140,16 +1132,24 @@ void System::_pixStartImage() {
         return;
     }
     
-    // Start readout
     const uint16_t imageWidth = status.imageWidth();
     const uint16_t imageHeight = status.imageHeight();
-    _pixStatus.size = {
+    
+    // Enqueue the PixHeader to be sent over USB
+    auto& buf = _pixBufs.writeBuf();
+    PixHeader& hdr = *((PixHeader*)buf.data);
+    hdr = PixHeader{
         .width = imageWidth,
         .height = imageHeight,
-        .valid = true,
+        .highlightCount = status.highlightCount(),
+        .shadowCount = status.shadowCount(),
     };
-    _pixRemLen = imageWidth*imageHeight;
-    _pixTestFirstTransfer = true;
+    buf.len = sizeof(PixHeader);
+    _pixBufs.writeEnqueue();
+    _sendPixDataOverUSB();
+    
+    // Start readout from ice40
+    _pixRemLen = imageWidth*imageHeight*sizeof(Pixel);
     _recvPixDataFromICE40();
 }
 

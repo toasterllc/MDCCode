@@ -33,7 +33,7 @@ private:
     void _sendPixDataOverUSB();
     void _pixReset();
 //    void _pixConfig();
-    void _pixStartImage();
+    void _pixCapture();
     void _abort();
     
     // Peripherals
@@ -41,8 +41,6 @@ private:
     QSPI _qspi;
     
     STApp::PixStatus _pixStatus;
-    bool _pixTest = false;
-    bool _pixTestFirstTransfer = false;
     BufQueue<2> _pixBufs;
     size_t _pixRemLen = 0;
     

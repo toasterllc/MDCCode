@@ -137,6 +137,18 @@ public:
         // Set test data colors
         {
 //            // Set test_data_red
+//            pixI2CWrite(0x3072, 0x0FFF);
+//    
+//            // Set test_data_greenr
+//            pixI2CWrite(0x3074, 0x0FFF);
+//    
+//            // Set test_data_blue
+//            pixI2CWrite(0x3076, 0x0FFF);
+//    
+//            // Set test_data_greenb
+//            pixI2CWrite(0x3078, 0x0FFF);
+            
+//            // Set test_data_red
 //            pixI2CWrite(0x3072, 0x0B2A);  // AAA
 //            pixI2CWrite(0x3072, 0x0FFF);  // FFF
 //    
@@ -164,9 +176,9 @@ public:
             // 2: Full color bar test pattern
             // 3: Fade-to-gray color bar test pattern
             // 256: Walking 1s test pattern (12 bit)
-            pixI2CWrite(0x3070, 0x0000);  // Normal operation
+//            pixI2CWrite(0x3070, 0x0000);  // Normal operation
 //            pixI2CWrite(0x3070, 0x0001);  // Solid color
-//            pixI2CWrite(0x3070, 0x0002);  // Color bars
+            pixI2CWrite(0x3070, 0x0002);  // Color bars
 //            pixI2CWrite(0x3070, 0x0003);  // Fade-to-gray
 //            pixI2CWrite(0x3070, 0x0100);  // Walking 1s
         }
@@ -285,30 +297,28 @@ public:
         if (status.i2cErr) throw std::runtime_error("device reported i2c error");
     }
     
-    STApp::PixStatus pixStartStream(Milliseconds timeout=1000) const {
+    STApp::PixHeader pixCapture(STApp::Pixel* pixels, size_t cap, Milliseconds timeout=1000) const {
         using namespace STApp;
         Cmd cmd = {
-            .op = Cmd::Op::PixStartStream,
-            .arg = {
-                .pixStartStream = {
-                    .test = false,
-                },
-            },
+            .op = Cmd::Op::PixCapture,
         };
         cmdOutPipe.write(cmd);
         
-        // Poll pixStatus until the image size is valid
-        const TimeInstant startTime;
-        for (;;) {
-            const STApp::PixStatus status = pixStatus();
-            if (status.size.valid) return status;
-            if (startTime.durationMs() > timeout) throw std::runtime_error("timeout waiting for streaming to start");
-        }
+        PixHeader hdr;
+        pixInPipe.read(hdr, timeout);
+        
+        const size_t imageLen = hdr.width*hdr.height*sizeof(Pixel);
+        if (imageLen > cap)
+            throw RuntimeError("buffer capacity too small (image length: %ju bytes, buffer capacity: %ju bytes)",
+                (uintmax_t)imageLen, (uintmax_t)cap);
+        
+        pixInPipe.readBuf(pixels, imageLen, timeout);
+        return hdr;
     }
     
-    void pixReadImage(STApp::Pixel* pixels, size_t count, Milliseconds timeout=0) const {
-        pixInPipe.readBuf(pixels, count*sizeof(STApp::Pixel), timeout);
-    }
+//    void pixReadImage(STApp::Pixel* pixels, size_t count, Milliseconds timeout=0) const {
+//        pixInPipe.readBuf(pixels, count*sizeof(STApp::Pixel), timeout);
+//    }
     
     USBPipe cmdOutPipe;
     USBPipe cmdInPipe;

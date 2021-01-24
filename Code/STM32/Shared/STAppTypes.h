@@ -28,7 +28,7 @@ namespace STApp {
             PixGetStatus,
             PixReset,
             PixI2CTransaction,
-            PixStartStream,
+            PixCapture,
             LEDSet,
         };
         
@@ -47,8 +47,7 @@ namespace STApp {
             } pixI2CTransaction;
             
             struct __attribute__((packed)) {
-                uint8_t test;
-            } pixStartStream;
+            } pixCapture;
             
             struct __attribute__((packed)) {
                 uint8_t idx;
@@ -61,19 +60,12 @@ namespace STApp {
     
     enum class PixState : uint8_t {
         Idle,
-        Streaming,
+        Capturing,
         Error,
     };
     
-    struct PixSize {
-        uint16_t width = 0;
-        uint16_t height = 0;
-        uint8_t valid = 0;
-    } __attribute__((packed));
-    
     struct PixStatus {
         PixState state = PixState::Idle;
-        PixSize size;
         uint8_t i2cErr = 0;
         uint16_t i2cReadVal = 0;
     } __attribute__((packed));
@@ -86,6 +78,4 @@ namespace STApp {
     } __attribute__((packed));
     
     using Pixel = uint16_t;
-    
-    const uint32_t PixTestMagicNumber = 0xCAFEBABE;
 }

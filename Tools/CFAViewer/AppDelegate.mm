@@ -241,10 +241,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     try {
         // Reset the device to put it back in a pre-defined state
         device.reset();
-        // Start Pix stream
-        const STApp::PixStatus pixStatus = device.pixStartStream();
-        const size_t pixelCount = pixStatus.size.width*pixStatus.size.height;
-        auto pixels = std::make_unique<Pixel[]>(pixelCount);
+        const size_t pixelBufCap = 2000*2000*sizeof(Pixel);
+        auto pixelBuf = std::make_unique<Pixel[]>(pixelBufCap);
         for (;;) {
             // Check if we've been cancelled
             bool cancel = false;
@@ -253,19 +251,30 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             _streamImages.lock.unlock();
             if (cancel) break;
             
-            // Read an image, timing-out after 1s so we can check the device status,
+            // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
-            device.pixReadImage(pixels.get(), pixelCount, 1000);
+            const STApp::PixHeader pixStatus = device.pixCapture(pixelBuf.get(), pixelBufCap, 1000);
+            
+            const uint32_t SubsampleFactor = 16;
+            const uint32_t pixelCount = (uint32_t)pixStatus.width*(uint32_t)pixStatus.height;
+            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
+            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
+            const float highlightFraction = (float)highlightCount/pixelCount;
+            const float shadowFraction = (float)shadowCount/pixelCount;
+            
+            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
             
             const Image image = {
-                .width = pixStatus.size.width,
-                .height = pixStatus.size.height,
-                .pixels = pixels.get(),
+                .width = pixStatus.width,
+                .height = pixStatus.height,
+                .pixels = pixelBuf.get(),
             };
             [layer setImage:image];
         }
     
     } catch (const std::exception& e) {
+        printf("Streaming failed: %s\n", e.what());
+        
         PixState pixState = PixState::Idle;
         try {
             pixState = device.pixStatus().state;
@@ -273,8 +282,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             printf("pixStatus() failed: %s\n", e.what());
         }
         
-        if (pixState != PixState::Streaming) {
-            printf("pixStatus.state != PixState::Streaming\n");
+        if (pixState != PixState::Capturing) {
+            printf("pixStatus.state != PixState::Capturing\n");
         }
     }
     

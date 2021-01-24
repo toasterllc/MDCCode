@@ -474,110 +474,110 @@ float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, ui
     return (float)pxs[(y*ctx.imageWidth)+x] / ImagePixelMax;
 }
 
-float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
-//    return px(ctx, pxs, pos.x, 0, pos.y, 0);
-    
-    if (pos.y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want R
-        // Sample @ y-1, y+1
-        if (pos.x % 2) return .5*px(ctx, pxs, pos.x, 0, pos.y, -1) + .5*px(ctx, pxs, pos.x, 0, pos.y, +1);
-        
-        // Have B
-        // Want R
-        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        else return .25*px(ctx, pxs, pos.x, -1, pos.y, -1) +
-                    .25*px(ctx, pxs, pos.x, -1, pos.y, +1) +
-                    .25*px(ctx, pxs, pos.x, +1, pos.y, -1) +
-                    .25*px(ctx, pxs, pos.x, +1, pos.y, +1) ;
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want R
-        // Sample @ this pixel
-        if (pos.x % 2) return px(ctx, pxs, pos.x, 0, pos.y, 0);
-        
-        // Have G
-        // Want R
-        // Sample @ x-1 and x+1
-        else return .5*px(ctx, pxs, pos.x, -1, pos.y, 0) + .5*px(ctx, pxs, pos.x, +1, pos.y, 0);
-    }
-}
-
-float g(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
-//    return px(ctx, pxs, pos.x, 0, pos.y, 0);
-    
-    if (pos.y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want G
-        // Sample @ this pixel
-        if (pos.x % 2) return px(ctx, pxs, pos.x, 0, pos.y, 0);
-        
-        // Have B
-        // Want G
-        // Sample @ x-1, x+1, y-1, y+1
-        else return .25*px(ctx, pxs, pos.x, -1, pos.y, 0) +
-                    .25*px(ctx, pxs, pos.x, +1, pos.y, 0) +
-                    .25*px(ctx, pxs, pos.x, 0, pos.y, -1) +
-                    .25*px(ctx, pxs, pos.x, 0, pos.y, +1) ;
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want G
-        // Sample @ x-1, x+1, y-1, y+1
-        if (pos.x % 2) return   .25*px(ctx, pxs, pos.x, -1, pos.y, 0) +
-                                .25*px(ctx, pxs, pos.x, +1, pos.y, 0) +
-                                .25*px(ctx, pxs, pos.x, 0, pos.y, -1) +
-                                .25*px(ctx, pxs, pos.x, 0, pos.y, +1) ;
-        
-        // Have G
-        // Want G
-        // Sample @ this pixel
-        else return px(ctx, pxs, pos.x, 0, pos.y, 0);
-    }
-}
-
-float b(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
-//    return px(ctx, pxs, pos.x, 0, pos.y, 0);
-    
-    if (pos.y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want B
-        // Sample @ x-1, x+1
-        if (pos.x % 2) return .5*px(ctx, pxs, pos.x, -1, pos.y, 0) + .5*px(ctx, pxs, pos.x, +1, pos.y, 0);
-        
-        // Have B
-        // Want B
-        // Sample @ this pixel
-        else return px(ctx, pxs, pos.x, 0, pos.y, 0);
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want B
-        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        if (pos.x % 2) return   .25*px(ctx, pxs, pos.x, -1, pos.y, -1) +
-                                .25*px(ctx, pxs, pos.x, -1, pos.y, +1) +
-                                .25*px(ctx, pxs, pos.x, +1, pos.y, -1) +
-                                .25*px(ctx, pxs, pos.x, +1, pos.y, +1) ;
-        
-        // Have G
-        // Want B
-        // Sample @ y-1, y+1
-        else return .5*px(ctx, pxs, pos.x, 0, pos.y, -1) + .5*px(ctx, pxs, pos.x, 0, pos.y, +1);
-    }
-}
+//float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
+//    
+//    if (pos.y % 2) {
+//        // ROW = B G B G ...
+//        
+//        // Have G
+//        // Want R
+//        // Sample @ y-1, y+1
+//        if (pos.x % 2) return .5*px(ctx, pxs, pos.x, 0, pos.y, -1) + .5*px(ctx, pxs, pos.x, 0, pos.y, +1);
+//        
+//        // Have B
+//        // Want R
+//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+//        else return .25*px(ctx, pxs, pos.x, -1, pos.y, -1) +
+//                    .25*px(ctx, pxs, pos.x, -1, pos.y, +1) +
+//                    .25*px(ctx, pxs, pos.x, +1, pos.y, -1) +
+//                    .25*px(ctx, pxs, pos.x, +1, pos.y, +1) ;
+//    
+//    } else {
+//        // ROW = G R G R ...
+//        
+//        // Have R
+//        // Want R
+//        // Sample @ this pixel
+//        if (pos.x % 2) return px(ctx, pxs, pos.x, 0, pos.y, 0);
+//        
+//        // Have G
+//        // Want R
+//        // Sample @ x-1 and x+1
+//        else return .5*px(ctx, pxs, pos.x, -1, pos.y, 0) + .5*px(ctx, pxs, pos.x, +1, pos.y, 0);
+//    }
+//}
+//
+//float g(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
+//    
+//    if (pos.y % 2) {
+//        // ROW = B G B G ...
+//        
+//        // Have G
+//        // Want G
+//        // Sample @ this pixel
+//        if (pos.x % 2) return px(ctx, pxs, pos.x, 0, pos.y, 0);
+//        
+//        // Have B
+//        // Want G
+//        // Sample @ x-1, x+1, y-1, y+1
+//        else return .25*px(ctx, pxs, pos.x, -1, pos.y, 0) +
+//                    .25*px(ctx, pxs, pos.x, +1, pos.y, 0) +
+//                    .25*px(ctx, pxs, pos.x, 0, pos.y, -1) +
+//                    .25*px(ctx, pxs, pos.x, 0, pos.y, +1) ;
+//    
+//    } else {
+//        // ROW = G R G R ...
+//        
+//        // Have R
+//        // Want G
+//        // Sample @ x-1, x+1, y-1, y+1
+//        if (pos.x % 2) return   .25*px(ctx, pxs, pos.x, -1, pos.y, 0) +
+//                                .25*px(ctx, pxs, pos.x, +1, pos.y, 0) +
+//                                .25*px(ctx, pxs, pos.x, 0, pos.y, -1) +
+//                                .25*px(ctx, pxs, pos.x, 0, pos.y, +1) ;
+//        
+//        // Have G
+//        // Want G
+//        // Sample @ this pixel
+//        else return px(ctx, pxs, pos.x, 0, pos.y, 0);
+//    }
+//}
+//
+//float b(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
+//    
+//    if (pos.y % 2) {
+//        // ROW = B G B G ...
+//        
+//        // Have G
+//        // Want B
+//        // Sample @ x-1, x+1
+//        if (pos.x % 2) return .5*px(ctx, pxs, pos.x, -1, pos.y, 0) + .5*px(ctx, pxs, pos.x, +1, pos.y, 0);
+//        
+//        // Have B
+//        // Want B
+//        // Sample @ this pixel
+//        else return px(ctx, pxs, pos.x, 0, pos.y, 0);
+//    
+//    } else {
+//        // ROW = G R G R ...
+//        
+//        // Have R
+//        // Want B
+//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+//        if (pos.x % 2) return   .25*px(ctx, pxs, pos.x, -1, pos.y, -1) +
+//                                .25*px(ctx, pxs, pos.x, -1, pos.y, +1) +
+//                                .25*px(ctx, pxs, pos.x, +1, pos.y, -1) +
+//                                .25*px(ctx, pxs, pos.x, +1, pos.y, +1) ;
+//        
+//        // Have G
+//        // Want B
+//        // Sample @ y-1, y+1
+//        else return .5*px(ctx, pxs, pos.x, 0, pos.y, -1) + .5*px(ctx, pxs, pos.x, 0, pos.y, +1);
+//    }
+//}
 
 uint3 binFromColor(float3 color) {
     const uint32_t maxBin = (uint32_t)(sizeof(Histogram::r)/sizeof(*Histogram::r))-1;
@@ -1021,49 +1021,170 @@ fragment float4 ImageLayer_LMMSE_CalcRB(
 
 
 
+float r(texture2d<float> rawTxt, uint2 pos) {
+    if (pos.y % 2) {
+        // ROW = B G B G ...
+        
+        // Have G
+        // Want R
+        // Sample @ y-1, y+1
+        if (pos.x % 2) return .5*sampleR(rawTxt, pos, {+0,-1}) + .5*sampleR(rawTxt, pos, {+0,+1});
+        
+        // Have B
+        // Want R
+        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+        else return .25*sampleR(rawTxt, pos, {-1,-1}) +
+                    .25*sampleR(rawTxt, pos, {-1,+1}) +
+                    .25*sampleR(rawTxt, pos, {+1,-1}) +
+                    .25*sampleR(rawTxt, pos, {+1,+1}) ;
+        
+        
+        
+        
+    
+    } else {
+        // ROW = G R G R ...
+        
+        // Have R
+        // Want R
+        // Sample @ this pixel
+        if (pos.x % 2) return sampleR(rawTxt, pos, {+0,+0});
+        
+        // Have G
+        // Want R
+        // Sample @ x-1 and x+1
+        else return .5*sampleR(rawTxt, pos, {-1,+0}) + .5*sampleR(rawTxt, pos, {+1,+0});
+    }
+}
 
+float g(texture2d<float> rawTxt, uint2 pos) {
+    if (pos.y % 2) {
+        // ROW = B G B G ...
+        
+        // Have G
+        // Want G
+        // Sample @ this pixel
+        if (pos.x % 2) return sampleR(rawTxt, pos, {+0,+0});
+        
+        // Have B
+        // Want G
+        // Sample @ x-1, x+1, y-1, y+1
+        else return .25*sampleR(rawTxt, pos, {-1,+0}) +
+                    .25*sampleR(rawTxt, pos, {+1,+0}) +
+                    .25*sampleR(rawTxt, pos, {+0,-1}) +
+                    .25*sampleR(rawTxt, pos, {+0,+1}) ;
+    
+    } else {
+        // ROW = G R G R ...
+        
+        // Have R
+        // Want G
+        // Sample @ x-1, x+1, y-1, y+1
+        if (pos.x % 2) return   .25*sampleR(rawTxt, pos, {-1,+0}) +
+                                .25*sampleR(rawTxt, pos, {+1,+0}) +
+                                .25*sampleR(rawTxt, pos, {+0,-1}) +
+                                .25*sampleR(rawTxt, pos, {+0,+1}) ;
+        
+        // Have G
+        // Want G
+        // Sample @ this pixel
+        else return sampleR(rawTxt, pos, {+0,+0});
+    }
+}
 
-
-
-
-
-
+float b(texture2d<float> rawTxt, uint2 pos) {
+    if (pos.y % 2) {
+        // ROW = B G B G ...
+        
+        // Have G
+        // Want B
+        // Sample @ x-1, x+1
+        if (pos.x % 2) return .5*sampleR(rawTxt, pos, {-1,+0}) + .5*sampleR(rawTxt, pos, {+1,+0});
+        
+        // Have B
+        // Want B
+        // Sample @ this pixel
+        else return sampleR(rawTxt, pos, {+0,+0});
+    
+    } else {
+        // ROW = G R G R ...
+        
+        // Have R
+        // Want B
+        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+        if (pos.x % 2) return   .25*sampleR(rawTxt, pos, {-1,-1}) +
+                                .25*sampleR(rawTxt, pos, {-1,+1}) +
+                                .25*sampleR(rawTxt, pos, {+1,-1}) +
+                                .25*sampleR(rawTxt, pos, {+1,+1}) ;
+        
+        // Have G
+        // Want B
+        // Sample @ y-1, y+1
+        else return .5*sampleR(rawTxt, pos, {+0,-1}) + .5*sampleR(rawTxt, pos, {+0,+1});
+    }
+}
 
 
 
 
 fragment float4 ImageLayer_DebayerBilinear(
     constant RenderContext& ctx [[buffer(0)]],
-    constant ImagePixel* pxs [[buffer(1)]],
-    device float3* samples [[buffer(2)]],
+    texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos = uint2(in.pos.xy);
-    float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-    
-    if (pos.x >= ctx.sampleRect.left &&
-        pos.x < ctx.sampleRect.right &&
-        pos.y >= ctx.sampleRect.top &&
-        pos.y < ctx.sampleRect.bottom) {
-        const bool red = (!(pos.y%2) && (pos.x%2));
-        const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-        const bool blue = ((pos.y%2) && !(pos.x%2));
-        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
-        const float3 sample = float3(red ? c.r : 0., green ? c.g : 0., blue ? c.b : 0.);
-        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
-    }
-    
-//    const uint BlackX = 504;
-//    const uint BlackWidth = 8;
-//    if (pos.y >= BlackX && pos.y < BlackX+BlackWidth) {
-//        c = float3(0,0,0);
-//    }
-    
-    // ## Bilinear debayering
-//    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
-    return float4(c, 1);
-//    return float4(1, 0, 0, 1);
+    return float4(r(rawTxt, pos), g(rawTxt, pos), b(rawTxt, pos), 1);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//fragment float4 ImageLayer_DebayerBilinear(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    constant ImagePixel* pxs [[buffer(1)]],
+//    device float3* samples [[buffer(2)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const uint2 pos = uint2(in.pos.xy);
+//    float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
+//    
+//    if (pos.x >= ctx.sampleRect.left &&
+//        pos.x < ctx.sampleRect.right &&
+//        pos.y >= ctx.sampleRect.top &&
+//        pos.y < ctx.sampleRect.bottom) {
+//        const bool red = (!(pos.y%2) && (pos.x%2));
+//        const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+//        const bool blue = ((pos.y%2) && !(pos.x%2));
+//        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
+//        const float3 sample = float3(red ? c.r : 0., green ? c.g : 0., blue ? c.b : 0.);
+//        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
+//    }
+//    
+////    const uint BlackX = 504;
+////    const uint BlackWidth = 8;
+////    if (pos.y >= BlackX && pos.y < BlackX+BlackWidth) {
+////        c = float3(0,0,0);
+////    }
+//    
+//    // ## Bilinear debayering
+////    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
+//    return float4(c, 1);
+////    return float4(1, 0, 0, 1);
+//}
 
 fragment float4 ImageLayer_Downsample(
     constant RenderContext& ctx [[buffer(0)]],
