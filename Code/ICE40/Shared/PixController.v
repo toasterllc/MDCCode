@@ -236,11 +236,11 @@ module PixController #(
         
         if (fifoIn_write_trigger && !fifoIn_x && !fifoIn_y) begin
             // Look at the high bits to determine if it's a highlight or shadow
-            case (`LeftBits(pix_d_reg, 0, 4))
+            case (`LeftBits(pix_d_reg, 0, 7))
             // Highlight
-            4'b1111:    fifoIn_highlightCount <= fifoIn_highlightCount+1;
+            7'b1111_111:   fifoIn_highlightCount <= fifoIn_highlightCount+1;
             // Shadow
-            4'b0000:    fifoIn_shadowCount <= fifoIn_shadowCount+1;
+            7'b0000_000:   fifoIn_shadowCount <= fifoIn_shadowCount+1;
             endcase
         end
         

@@ -137,16 +137,16 @@ public:
         // Set test data colors
         {
 //            // Set test_data_red
-//            pixI2CWrite(0x3072, 0x0FFF);
-//    
+//            pixI2CWrite(0x3072, 0x0000);
+//            
 //            // Set test_data_greenr
-//            pixI2CWrite(0x3074, 0x0FFF);
-//    
+//            pixI2CWrite(0x3074, 0x0000);
+//            
 //            // Set test_data_blue
-//            pixI2CWrite(0x3076, 0x0FFF);
-//    
+//            pixI2CWrite(0x3076, 0x0000);
+//            
 //            // Set test_data_greenb
-//            pixI2CWrite(0x3078, 0x0FFF);
+//            pixI2CWrite(0x3078, 0x0000);
             
 //            // Set test_data_red
 //            pixI2CWrite(0x3072, 0x0B2A);  // AAA
@@ -176,9 +176,9 @@ public:
             // 2: Full color bar test pattern
             // 3: Fade-to-gray color bar test pattern
             // 256: Walking 1s test pattern (12 bit)
-//            pixI2CWrite(0x3070, 0x0000);  // Normal operation
+            pixI2CWrite(0x3070, 0x0000);  // Normal operation
 //            pixI2CWrite(0x3070, 0x0001);  // Solid color
-            pixI2CWrite(0x3070, 0x0002);  // Color bars
+//            pixI2CWrite(0x3070, 0x0002);  // Color bars
 //            pixI2CWrite(0x3070, 0x0003);  // Fade-to-gray
 //            pixI2CWrite(0x3070, 0x0100);  // Walking 1s
         }
