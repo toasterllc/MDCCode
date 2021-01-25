@@ -1118,7 +1118,7 @@ void System::_pixCapture() {
     _ice40Transfer(_qspi, PixCaptureMsg(0));
     
     // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
-    const uint32_t MaxDelayMs = 500;
+    const uint32_t MaxDelayMs = 1000;
     const uint32_t startTime = HAL_GetTick();
     ICE40::PixCaptureStatusResp status;
     for (;;) {

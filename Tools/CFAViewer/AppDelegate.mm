@@ -243,6 +243,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
         device.reset();
         const size_t pixelBufCap = 2000*2000*sizeof(Pixel);
         auto pixelBuf = std::make_unique<Pixel[]>(pixelBufCap);
+        
+        float intTime = .5;
         for (;;) {
             // Check if we've been cancelled
             bool cancel = false;
@@ -254,22 +256,42 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
             const STApp::PixHeader pixStatus = device.pixCapture(pixelBuf.get(), pixelBufCap, 1000);
-            
-            const uint32_t SubsampleFactor = 16;
-            const uint32_t pixelCount = (uint32_t)pixStatus.width*(uint32_t)pixStatus.height;
-            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
-            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
-            const float highlightFraction = (float)highlightCount/pixelCount;
-            const float shadowFraction = (float)shadowCount/pixelCount;
-            
-            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
-            
             const Image image = {
                 .width = pixStatus.width,
                 .height = pixStatus.height,
                 .pixels = pixelBuf.get(),
             };
             [layer setImage:image];
+            
+            // Adjust exposure
+            const uint32_t SubsampleFactor = 16;
+            const uint32_t pixelCount = (uint32_t)pixStatus.width*(uint32_t)pixStatus.height;
+            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
+            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
+            const float highlightFraction = (float)highlightCount/pixelCount;
+            const float shadowFraction = (float)shadowCount/pixelCount;
+            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+            
+            const float AdjustThreshold = 0.1;
+            const float AdjustDelta = 1.1;
+            bool updateIntTime = false;
+            if (shadowFraction > AdjustThreshold) {
+                // Increase exposure
+                intTime *= AdjustDelta;
+                updateIntTime = true;
+            } else if (highlightFraction > AdjustThreshold) {
+                // Decrease exposure
+                intTime /= AdjustDelta;
+                updateIntTime = true;
+            }
+            
+            intTime = std::clamp(intTime, 0.f, 1.f);
+            const float gain = intTime/3;
+            
+            if (updateIntTime) {
+                device.pixI2CWrite(0x3012, intTime*16384);
+                device.pixI2CWrite(0x3060, gain*63);
+            }
         }
     
     } catch (const std::exception& e) {
