@@ -312,10 +312,9 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             const float shadowFraction = (float)shadowCount/pixelCount;
 //            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
             
-            const float AdjustDelta = 1.1;
             const float diff = shadowFraction-highlightFraction;
             const float absdiff = fabs(diff);
-            const float adjust = 1.+2*diff;
+            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
             
             bool updateIntTime = false;
             if (absdiff > .01) {
