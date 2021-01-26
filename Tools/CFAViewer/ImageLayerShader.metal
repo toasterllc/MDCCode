@@ -1271,6 +1271,79 @@ fragment float4 ImageLayer_XYZD50FromXYYD50(
     return float4(XYZFromXYY(c), 1);
 }
 
+float LabfInv(float x) {
+    // From https://en.wikipedia.org/wiki/CIELAB_color_space
+    const float d = 6./29;
+    if (x > d)  return pow(x, 3);
+    else        return 3*d*d*(x - 4./29);
+}
+
+float3 XYZFromLab(float3 white_XYZ, float3 c_Lab) {
+    // From https://en.wikipedia.org/wiki/CIELAB_color_space
+    const float k = (c_Lab.x+16)/116;
+    const float X = white_XYZ.x * LabfInv(k+c_Lab.y/500);
+    const float Y = white_XYZ.y * LabfInv(k);
+    const float Z = white_XYZ.z * LabfInv(k-c_Lab.z/200);
+    return float3(X,Y,Z);
+}
+
+float Labf(float x) {
+    const float d = 6./29;
+    const float d3 = d*d*d;
+    if (x > d3) return pow(x, 1./3);
+    else        return (x/(3*d*d)) + 4./29;
+}
+
+float3 LabFromXYZ(float3 white_XYZ, float3 c_XYZ) {
+    const float k = Labf(c_XYZ.y/white_XYZ.y);
+    const float L = 116*k - 16;
+    const float a = 500*(Labf(c_XYZ.x/white_XYZ.x) - k);
+    const float b = 200*(k - Labf(c_XYZ.z/white_XYZ.z));
+    return float3(L,a,b);
+}
+
+fragment float4 ImageLayer_LabD50FromXYZD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float3 D50(0.96422, 1.00000, 0.82521);
+    return float4(LabFromXYZ(D50, sampleRGB(txt, in.pos)), 1);
+}
+
+fragment float4 ImageLayer_XYZD50FromLabD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float3 D50(0.96422, 1.00000, 0.82521);
+    return float4(XYZFromLab(D50, sampleRGB(txt, in.pos)), 1);
+}
+
+fragment float ImageLayer_ExtractL(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    return sampleR(txt, in.pos);
+}
+
+fragment float4 ImageLayer_EnhanceContrast(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    texture2d<float> blurredLTxt [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float blurredL = sampleR(blurredLTxt, in.pos);
+    float3 Lab = sampleRGB(txt, in.pos);
+    Lab[0] += (Lab[0]-blurredL)*0.2;
+    return float4(Lab, 1);
+    
+    
+//    float bufval = (lab->L[y][x] - buf[y][x]) * a;
+//    destination[y][x] = LIM(lab->L[y][x] + bufval, 0.0001f, 32767.f);
+}
+
 constant uint UIntNormalizeVal = 65535;
 fragment float4 ImageLayer_NormalizeXYYLuminance(
     constant RenderContext& ctx [[buffer(0)]],
@@ -1327,7 +1400,6 @@ fragment float4 ImageLayer_DecreaseLuminanceXYZD50(
     c_XYYD50[2] /= 3;
     return float4(XYZFromXYY(c_XYYD50), 1);
 }
-
 
 fragment float4 ImageLayer_LSRGBD65FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
@@ -1594,31 +1666,35 @@ fragment float4 ImageLayer_FindMaxVals(
 //    
 //}
 
-template <typename T>
-float max(T v) {
-    return max3(v.r, v.g, v.b);
-}
 
-float labf(float x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_Lab.html
-    const float e = 216./24389.;
-    const float k = 24389./27.;
-    return (x>e ? pow(x, 1./3) : (k*x+16)/116);
-}
 
-float3 labf(float3 xyz) {
-    return float3(labf(xyz.x), labf(xyz.y), labf(xyz.z));
-}
 
-float3 labFromXYZ(float3 white_XYZ, float3 c_XYZ) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_Lab.html
-    const float3 r = c_XYZ/white_XYZ;
-    const float3 f = labf(r);
-    const float l = 116*f.y-16;
-    const float a = 500*(f.x-f.y);
-    const float b = 200*(f.y-f.z);
-    return float3(l,a,b);
-}
+
+
+
+//float Labf(float x) {
+//    // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_Lab.html
+//    const float e = 216./24389.;
+//    const float k = 24389./27.;
+//    return (x>e ? pow(x, 1./3) : (k*x+16)/116);
+//}
+//
+//float3 Labf(float3 xyz) {
+//    return float3(Labf(xyz.x), Labf(xyz.y), Labf(xyz.z));
+//}
+//
+//float3 LabFromXYZ(float3 white_XYZ, float3 c_XYZ) {
+//    // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_Lab.html
+//    const float3 r = c_XYZ/white_XYZ;
+//    const float3 f = Labf(r);
+//    const float L = 116*f.y-16;
+//    const float a = 500*(f.x-f.y);
+//    const float b = 200*(f.y-f.z);
+//    return float3(L,a,b);
+//}
+
+
+
 
 class Float3x3 {
 public:

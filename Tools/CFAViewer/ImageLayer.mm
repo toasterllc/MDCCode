@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import <mutex>
 #import "ImageLayer.h"
 #import "ImageLayerTypes.h"
@@ -235,7 +236,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     [desc setWidth:_state.ctx.imageWidth];
     [desc setHeight:_state.ctx.imageHeight];
     [desc setPixelFormat:fmt];
-    [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead];
+    // TODO: most textures don't need `MTLTextureUsageShaderWrite`, add usage argument in case that speeds us up?
+    [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite];
     id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
     Assert(txt, return nil);
     return txt;
@@ -261,6 +263,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     id<MTLTexture> diffVTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> diffGRTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> diffGBTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> lTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> blurredLTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> txt = [self _newTexture:MTLPixelFormatRGBA32Float];
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
@@ -327,7 +331,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         
         // LMMSE Debayer
         {
-            // Gamma before
+            // Gamma before (improves quality of edges)
             if (_state.debayerLMMSEGammaEnabled) {
                 [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_DebayerLMMSE_Gamma"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
@@ -513,7 +517,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                 ];
             }
             
-            // Gamma after
+            // Gamma after (improves quality of edges)
             if (_state.debayerLMMSEGammaEnabled) {
                 [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DebayerLMMSE_Degamma"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
@@ -534,15 +538,15 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
-        // Decrease luminance
-        {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DecreaseLuminance"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
-        }
+//        // Decrease luminance
+//        {
+//            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DecreaseLuminance"
+//                block:^(id<MTLRenderCommandEncoder> encoder) {
+//                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//                    [encoder setFragmentTexture:txt atIndex:0];
+//                }
+//            ];
+//        }
         
         // XYY.D50 -> XYZ.D50
         {
@@ -553,6 +557,57 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                 }
             ];
         }
+        
+//        // Enhance contrast
+//        {
+//            // XYZ.D50 -> Lab.D50
+//            {
+//                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LabD50FromXYZD50"
+//                    block:^(id<MTLRenderCommandEncoder> encoder) {
+//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//                        [encoder setFragmentTexture:txt atIndex:0];
+//                    }
+//                ];
+//            }
+//            
+//            // Extract L
+//            {
+//                [self _renderPass:cmdBuf texture:lTxt name:@"ImageLayer_ExtractL"
+//                    block:^(id<MTLRenderCommandEncoder> encoder) {
+//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//                        [encoder setFragmentTexture:txt atIndex:0];
+//                    }
+//                ];
+//            }
+//            
+//            // Blur L channel
+//            {
+//                MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:_device sigma:80];
+//                [blur setEdgeMode:MPSImageEdgeModeClamp];
+//                [blur encodeToCommandBuffer:cmdBuf sourceTexture:lTxt destinationTexture:blurredLTxt];
+//            }
+//            
+//            // Enhance contrast
+//            {
+//                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_EnhanceContrast"
+//                    block:^(id<MTLRenderCommandEncoder> encoder) {
+//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//                        [encoder setFragmentTexture:txt atIndex:0];
+//                        [encoder setFragmentTexture:blurredLTxt atIndex:1];
+//                    }
+//                ];
+//            }
+//            
+//            // Lab.D50 -> XYZ.D50
+//            {
+//                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYZD50FromLabD50"
+//                    block:^(id<MTLRenderCommandEncoder> encoder) {
+//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//                        [encoder setFragmentTexture:txt atIndex:0];
+//                    }
+//                ];
+//            }
+//        }
         
         // XYZ.D50 -> LSRGB.D65
         {

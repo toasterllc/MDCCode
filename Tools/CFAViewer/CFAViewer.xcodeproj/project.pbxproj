@@ -19,6 +19,7 @@
 		55B9747C24C50A8A000B2633 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747B24C50A8A000B2633 /* QuartzCore.framework */; };
 		55E98EB625A920030062B458 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E98EB425A920030062B458 /* MainView.mm */; };
 		55E98EB925A920890062B458 /* HistogramView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E98EB725A920880062B458 /* HistogramView.mm */; };
+		55E98ED425BFBA800062B458 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E98ED325BFBA800062B458 /* MetalPerformanceShaders.framework */; };
 		55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC87258966FE0089A441 /* BaseView.mm */; };
 		55EBCC8D258966FE0089A441 /* ImageLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC88258966FE0089A441 /* ImageLayer.mm */; };
 		55EBCC8E258966FE0089A441 /* ImageLayerShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC89258966FE0089A441 /* ImageLayerShader.metal */; };
@@ -63,6 +64,7 @@
 		55E98EBD25A92EAF0062B458 /* STAppTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STAppTypes.h; path = ../../Code/STM32/Shared/STAppTypes.h; sourceTree = "<group>"; };
 		55E98EBE25A930780062B458 /* IOServiceMatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceMatcher.h; sourceTree = "<group>"; };
 		55E98ED225A9577A0062B458 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
+		55E98ED325BFBA800062B458 /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		55EBCC86258966FE0089A441 /* ImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayer.h; sourceTree = "<group>"; };
 		55EBCC87258966FE0089A441 /* BaseView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BaseView.mm; sourceTree = "<group>"; };
 		55EBCC88258966FE0089A441 /* ImageLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageLayer.mm; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55E98ED425BFBA800062B458 /* MetalPerformanceShaders.framework in Frameworks */,
 				559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */,
 				559D8E102594205300836B47 /* Accelerate.framework in Frameworks */,
 				55B9747824C50A81000B2633 /* Cocoa.framework in Frameworks */,
@@ -172,6 +175,7 @@
 		55B9747624C50A81000B2633 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				55E98ED325BFBA800062B458 /* MetalPerformanceShaders.framework */,
 				559D8E122598300700836B47 /* ApplicationServices.framework */,
 				559D8E0F2594205300836B47 /* Accelerate.framework */,
 				55671A37257E984E00C1CDA4 /* IOKit.framework */,

@@ -5,6 +5,7 @@
 #import <vector>
 #import <IOKit/IOKitLib.h>
 #import <IOKit/IOMessage.h>
+#import <simd/simd.h>
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Mmap.h"
@@ -110,7 +111,46 @@ struct PixConfig {
     Color_SRGB_D65 _sample_SRGB_D65;
 }
 
+//float LabfInv(float x) {
+//    // From https://en.wikipedia.org/wiki/CIELAB_color_space
+//    const float d = 6./29;
+//    if (x > d)  return pow(x, 3);
+//    else        return 3*d*d*(x - 4./29);
+//}
+//
+//simd::float3 XYZFromLab(simd::float3 white_XYZ, simd::float3 c_Lab) {
+//    // From https://en.wikipedia.org/wiki/CIELAB_color_space
+//    const float k = (c_Lab.x+16)/116;
+//    const float X = white_XYZ.x * LabfInv(k+c_Lab.y/500);
+//    const float Y = white_XYZ.y * LabfInv(k);
+//    const float Z = white_XYZ.z * LabfInv(k-c_Lab.z/200);
+//    return simd::float3{X,Y,Z};
+//}
+//
+//float Labf(float x) {
+//    const float d = 6./29;
+//    const float d3 = d*d*d;
+//    if (x > d3) return pow(x, 1./3);
+//    else        return (x/(3*d*d)) + 4./29;
+//}
+//
+//simd::float3 LabFromXYZ(simd::float3 white_XYZ, simd::float3 c_XYZ) {
+//    const float k = Labf(c_XYZ.y/white_XYZ.y);
+//    const float L = 116*k - 16;
+//    const float a = 500*(Labf(c_XYZ.x/white_XYZ.x) - k);
+//    const float b = 200*(k - Labf(c_XYZ.z/white_XYZ.z));
+//    return simd::float3{L,a,b};
+//}
+
 - (void)awakeFromNib {
+//    const simd::float3 D50_XYZ = {0.96422, 1.00000, 0.82521};
+//    const simd::float3 c_XYZ_D50 = {0.185938, 0.202315, 0.250133};
+//    const simd::float3 c_Lab_D50 = LabFromXYZ(D50_XYZ, c_XYZ_D50);
+//    const simd::float3 c_XYZ_D50_2 = XYZFromLab(D50_XYZ, c_Lab_D50);
+//    printf("Lab: %f %f %f\n", c_Lab_D50[0], c_Lab_D50[1], c_Lab_D50[2]);
+//    printf("XYZ: %f %f %f\n", c_XYZ_D50_2[0], c_XYZ_D50_2[1], c_XYZ_D50_2[2]);
+//    exit(0);
+    
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
@@ -270,28 +310,69 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
             const float highlightFraction = (float)highlightCount/pixelCount;
             const float shadowFraction = (float)shadowCount/pixelCount;
-            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+//            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
             
-            const float AdjustThreshold = 0.1;
             const float AdjustDelta = 1.1;
+            const float diff = shadowFraction-highlightFraction;
+            const float absdiff = fabs(diff);
+            const float adjust = 1.+2*diff;
+            
             bool updateIntTime = false;
-            if (shadowFraction > AdjustThreshold) {
-                // Increase exposure
-                intTime *= AdjustDelta;
-                updateIntTime = true;
-            } else if (highlightFraction > AdjustThreshold) {
-                // Decrease exposure
-                intTime /= AdjustDelta;
-                updateIntTime = true;
+            if (absdiff > .01) {
+                if (shadowFraction > highlightFraction) {
+                    // Increase exposure
+                    intTime *= adjust;
+                    updateIntTime = true;
+                
+                } else if (highlightFraction > shadowFraction) {
+                    // Decrease exposure
+                    intTime *= adjust;
+                    updateIntTime = true;
+                }
+                
+                intTime = std::clamp(intTime, 0.01f, 1.f);
+                const float gain = intTime/3;
+                
+                printf("adjust:%f\n"
+                       "shadowFraction:%f\n"
+                       "highlightFraction:%f\n"
+                       "intTime: %f\n\n",
+                       adjust,
+                       shadowFraction,
+                       highlightFraction,
+                       intTime
+                );
+                
+                if (updateIntTime) {
+                    device.pixI2CWrite(0x3012, intTime*16384);
+                    device.pixI2CWrite(0x3060, gain*63);
+                }
             }
             
-            intTime = std::clamp(intTime, 0.f, 1.f);
-            const float gain = intTime/3;
             
-            if (updateIntTime) {
-                device.pixI2CWrite(0x3012, intTime*16384);
-                device.pixI2CWrite(0x3060, gain*63);
-            }
+            
+//            const float ShadowAdjustThreshold = 0.1;
+//            const float HighlightAdjustThreshold = 0.1;
+//            const float AdjustDelta = 1.1;
+//            bool updateIntTime = false;
+//            if (shadowFraction > ShadowAdjustThreshold) {
+//                // Increase exposure
+//                intTime *= AdjustDelta;
+//                updateIntTime = true;
+//            
+//            } else if (highlightFraction > HighlightAdjustThreshold) {
+//                // Decrease exposure
+//                intTime /= AdjustDelta;
+//                updateIntTime = true;
+//            }
+//            
+//            intTime = std::clamp(intTime, 0.f, 1.f);
+//            const float gain = intTime/3;
+//            
+//            if (updateIntTime) {
+//                device.pixI2CWrite(0x3012, intTime*16384);
+//                device.pixI2CWrite(0x3060, gain*63);
+//            }
         }
     
     } catch (const std::exception& e) {
