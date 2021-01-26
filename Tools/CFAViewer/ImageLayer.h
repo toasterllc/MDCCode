@@ -12,6 +12,12 @@ namespace CFAViewer::ImageLayerTypes {
         uint32_t height = 0;
         CFAViewer::MetalTypes::ImagePixel* pixels = nullptr;
     };
+    
+    struct ContrastEnhancementOptions {
+        bool enable = false;
+        float amount = 0;
+        float radius = 0;
+    };
 };
 
 @interface ImageLayer : CAMetalLayer
@@ -19,6 +25,7 @@ namespace CFAViewer::ImageLayerTypes {
 - (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)image;
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
 - (void)setDebayerLMMSEGammaEnabled:(bool)en;
+- (void)setContrastEnhancementOptions:(const CFAViewer::ImageLayerTypes::ContrastEnhancementOptions&)opts;
 - (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
 - (void)setSampleRect:(CGRect)rect;
 // `handler` is called on a background queue when histograms/sample data changes

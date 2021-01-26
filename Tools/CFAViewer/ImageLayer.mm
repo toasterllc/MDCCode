@@ -26,6 +26,7 @@ using namespace ColorUtil;
         std::mutex lock; // Protects this struct
         RenderContext ctx;
         bool debayerLMMSEGammaEnabled = false;
+        ContrastEnhancementOptions contrastEnhancementOptions;
         id<MTLBuffer> pixelData = nil;
         
         id<MTLBuffer> sampleBuf_CamRaw_D50 = nil;
@@ -156,6 +157,12 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
 - (void)setDebayerLMMSEGammaEnabled:(bool)en {
     auto lock = std::lock_guard(_state.lock);
     _state.debayerLMMSEGammaEnabled = en;
+    [self setNeedsDisplay];
+}
+
+- (void)setContrastEnhancementOptions:(const ContrastEnhancementOptions&)opts {
+    auto lock = std::lock_guard(_state.lock);
+    _state.contrastEnhancementOptions = opts;
     [self setNeedsDisplay];
 }
 
@@ -538,15 +545,15 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
-//        // Decrease luminance
-//        {
-//            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DecreaseLuminance"
-//                block:^(id<MTLRenderCommandEncoder> encoder) {
-//                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                    [encoder setFragmentTexture:txt atIndex:0];
-//                }
-//            ];
-//        }
+        // Decrease luminance
+        {
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DecreaseLuminance"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:txt atIndex:0];
+                }
+            ];
+        }
         
         // XYY.D50 -> XYZ.D50
         {
@@ -558,56 +565,59 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
-//        // Enhance contrast
-//        {
-//            // XYZ.D50 -> Lab.D50
-//            {
-//                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LabD50FromXYZD50"
-//                    block:^(id<MTLRenderCommandEncoder> encoder) {
-//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                        [encoder setFragmentTexture:txt atIndex:0];
-//                    }
-//                ];
-//            }
-//            
-//            // Extract L
-//            {
-//                [self _renderPass:cmdBuf texture:lTxt name:@"ImageLayer_ExtractL"
-//                    block:^(id<MTLRenderCommandEncoder> encoder) {
-//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                        [encoder setFragmentTexture:txt atIndex:0];
-//                    }
-//                ];
-//            }
-//            
-//            // Blur L channel
-//            {
-//                MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:_device sigma:80];
-//                [blur setEdgeMode:MPSImageEdgeModeClamp];
-//                [blur encodeToCommandBuffer:cmdBuf sourceTexture:lTxt destinationTexture:blurredLTxt];
-//            }
-//            
-//            // Enhance contrast
-//            {
-//                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_EnhanceContrast"
-//                    block:^(id<MTLRenderCommandEncoder> encoder) {
-//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                        [encoder setFragmentTexture:txt atIndex:0];
-//                        [encoder setFragmentTexture:blurredLTxt atIndex:1];
-//                    }
-//                ];
-//            }
-//            
-//            // Lab.D50 -> XYZ.D50
-//            {
-//                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYZD50FromLabD50"
-//                    block:^(id<MTLRenderCommandEncoder> encoder) {
-//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                        [encoder setFragmentTexture:txt atIndex:0];
-//                    }
-//                ];
-//            }
-//        }
+        // Enhance contrast
+        if (_state.contrastEnhancementOptions.enable) {
+            // XYZ.D50 -> Lab.D50
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LabD50FromXYZD50"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Extract L
+            {
+                [self _renderPass:cmdBuf texture:lTxt name:@"ImageLayer_ExtractL"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Blur L channel
+            {
+                MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:_device
+                    sigma:_state.contrastEnhancementOptions.radius];
+                [blur setEdgeMode:MPSImageEdgeModeClamp];
+                [blur encodeToCommandBuffer:cmdBuf sourceTexture:lTxt destinationTexture:blurredLTxt];
+            }
+            
+            // Enhance contrast
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_EnhanceContrast"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        auto& amount = _state.contrastEnhancementOptions.amount;
+                        [encoder setFragmentBytes:&amount length:sizeof(amount) atIndex:1];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                        [encoder setFragmentTexture:blurredLTxt atIndex:1];
+                    }
+                ];
+            }
+            
+            // Lab.D50 -> XYZ.D50
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYZD50FromLabD50"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
+        }
         
         // XYZ.D50 -> LSRGB.D65
         {

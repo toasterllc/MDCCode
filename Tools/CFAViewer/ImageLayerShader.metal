@@ -1330,13 +1330,14 @@ fragment float ImageLayer_ExtractL(
 
 fragment float4 ImageLayer_EnhanceContrast(
     constant RenderContext& ctx [[buffer(0)]],
+    constant float& amount [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     texture2d<float> blurredLTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const float blurredL = sampleR(blurredLTxt, in.pos);
     float3 Lab = sampleRGB(txt, in.pos);
-    Lab[0] += (Lab[0]-blurredL)*0.2;
+    Lab[0] += (Lab[0]-blurredL)*amount;
     return float4(Lab, 1);
     
     

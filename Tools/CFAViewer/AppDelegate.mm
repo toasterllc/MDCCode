@@ -52,14 +52,20 @@ struct PixConfig {
     IBOutlet NSSwitch* _analogGainSlider;
     IBOutlet NSTextField* _analogGainLabel;
     
-    IBOutlet NSButton* _colorCheckersEnabledButton;
+    IBOutlet NSButton* _colorCheckersCheckbox;
     IBOutlet NSButton* _resetColorCheckersButton;
     
     IBOutlet HistogramView* _inputHistogramView;
     IBOutlet HistogramView* _outputHistogramView;
     IBOutlet NSTextField* _colorMatrixTextField;
     
-    IBOutlet NSButton* _debayerLMMSEGammaEnabledButton;
+    IBOutlet NSButton* _debayerLMMSEGammaCheckbox;
+    
+    IBOutlet NSButton* _enhanceContrastCheckbox;
+    IBOutlet NSSlider* _contrastAmountSlider;
+    IBOutlet NSTextField* _contrastAmountLabel;
+    IBOutlet NSSlider* _contrastRadiusSlider;
+    IBOutlet NSTextField* _contrastRadiusLabel;
     
     IBOutlet NSTextField* _colorText_cameraRaw;
     IBOutlet NSTextField* _colorText_XYZ_D50;
@@ -174,6 +180,12 @@ struct PixConfig {
     [self _resetColorMatrix];
     
     [self _setDebayerLMMSEGammaEnabled:true];
+    
+    [self _setContrastEnhancementOptions:{
+        .enable = true,
+        .amount = .2,
+        .radius = 80,
+    }];
     
     auto points = [self _prefsColorCheckerPositions];
     if (!points.empty()) {
@@ -735,7 +747,7 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 
 - (void)_setColorCheckersEnabled:(bool)en {
     _colorCheckersEnabled = en;
-    [_colorCheckersEnabledButton setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [_colorCheckersCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
     [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
     [_mainView setColorCheckersVisible:_colorCheckersEnabled];
     [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
@@ -746,7 +758,7 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 }
 
 - (IBAction)_colorCheckersCheckboxAction:(id)sender {
-    [self _setColorCheckersEnabled:([_colorCheckersEnabledButton state]==NSControlStateValueOn)];
+    [self _setColorCheckersEnabled:([_colorCheckersCheckbox state]==NSControlStateValueOn)];
 }
 
 - (IBAction)_resetColorCheckersButtonAction:(id)sender {
@@ -755,12 +767,33 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 }
 
 - (IBAction)_debayerOptionsAction:(id)sender {
-    [self _setDebayerLMMSEGammaEnabled:([_debayerLMMSEGammaEnabledButton state]==NSControlStateValueOn)];
+    [self _setDebayerLMMSEGammaEnabled:([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn)];
 }
 
 - (void)_setDebayerLMMSEGammaEnabled:(bool)en {
-    [_debayerLMMSEGammaEnabledButton setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [_debayerLMMSEGammaCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
     [[_mainView imageLayer] setDebayerLMMSEGammaEnabled:en];
+}
+
+- (IBAction)_contrastAction:(id)sender {
+    ContrastEnhancementOptions opts = {
+        .enable = [_enhanceContrastCheckbox state]==NSControlStateValueOn,
+        .amount = [_contrastAmountSlider floatValue],
+        .radius = [_contrastRadiusSlider floatValue],
+    };
+    [self _setContrastEnhancementOptions:opts];
+}
+
+- (void)_setContrastEnhancementOptions:(const ContrastEnhancementOptions&)opts {
+    [_enhanceContrastCheckbox setState:(opts.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+    
+    [_contrastAmountSlider setFloatValue:opts.amount];
+    [_contrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.amount]];
+    
+    [_contrastRadiusSlider setFloatValue:opts.radius];
+    [_contrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.radius]];
+    
+    [[_mainView imageLayer] setContrastEnhancementOptions:opts];
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {
