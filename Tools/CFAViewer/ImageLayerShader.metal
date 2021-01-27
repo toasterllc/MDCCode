@@ -1253,6 +1253,74 @@ fragment float4 ImageLayer_XYYD50FromCameraRaw(
     return float4(c, 1);
 }
 
+fragment float4 ImageLayer_Exposure(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant float& exposure [[buffer(1)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    float3 c = sampleRGB(txt, in.pos);
+    c[2] *= exposure;
+    return float4(c, 1);
+}
+
+float scurve(float x) {
+    return 1/(1+exp(-2*((2*x)-1)));
+}
+
+float bellcurve(float x) {
+    return exp(-pow(2.5*(x-.5), 4));
+}
+
+fragment float4 ImageLayer_Brightness(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant float& brightness [[buffer(1)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    
+//    float3 c = sampleRGB(txt, in.pos);
+//    const float b = bellcurve(c[0]/100)*brightness;
+//    c[0] = 100*b + c[0]*(1-b);
+//    return float4(c, 1);
+    
+//    float3 c = sampleRGB(txt, in.pos);
+//    const float b = bellcurve(c[0]/100)*brightness;
+//    c[0] += 100*b;
+//    return float4(c, 1);
+    
+    float3 c = sampleRGB(txt, in.pos);
+    const float b = bellcurve(c[0]/100)*brightness;
+    c[0] += 100*b;
+    return float4(c, 1);
+    
+//    float3 c = sampleRGB(txt, in.pos);
+//    const float b = scurve(c[0]/100)*brightness;
+//    c[0] = 100*b + c[0]*(1-b);
+//    return float4(c, 1);
+}
+
+fragment float4 ImageLayer_Contrast(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant float& contrast [[buffer(1)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    float3 c = sampleRGB(txt, in.pos);
+    c[0] = (contrast*(c[0]-50))+50;
+    return float4(c, 1);
+}
+
+fragment float4 ImageLayer_Saturation(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant float& contrast [[buffer(1)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    float3 c = sampleRGB(txt, in.pos);
+    return float4(c, 1);
+}
+
 fragment float4 ImageLayer_XYYD50FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],

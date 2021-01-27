@@ -882,7 +882,7 @@
                                             <rect key="frame" x="319" y="1236" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="label" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_identityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -1074,7 +1074,7 @@
                                             <rect key="frame" x="329" y="1263" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="label" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
@@ -1116,7 +1116,7 @@
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iZs-mw-rgQ" userLabel="Coarse Integration Time Slider">
                                             <rect key="frame" x="103" y="1020" width="199" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="qYu-Ad-rx7"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-5" maxValue="5" tickMarkPosition="above" sliderType="linear" id="qYu-Ad-rx7"/>
                                             <connections>
                                                 <action selector="_imageAdjustmentsAction:" target="Voe-Tx-rLC" id="I18-VV-OHk"/>
                                             </connections>
@@ -1142,7 +1142,7 @@
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iHy-kh-c6W" userLabel="Coarse Integration Time Slider">
                                             <rect key="frame" x="103" y="992" width="199" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="FR0-eA-Mcq"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="FR0-eA-Mcq"/>
                                             <connections>
                                                 <action selector="_imageAdjustmentsAction:" target="Voe-Tx-rLC" id="Crc-Ri-Ujz"/>
                                             </connections>
@@ -1168,7 +1168,7 @@
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="cXS-kH-qXh" userLabel="Coarse Integration Time Slider">
                                             <rect key="frame" x="103" y="964" width="199" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="cph-5p-ImK"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-2" maxValue="2" tickMarkPosition="above" sliderType="linear" id="cph-5p-ImK"/>
                                             <connections>
                                                 <action selector="_imageAdjustmentsAction:" target="Voe-Tx-rLC" id="8ge-FP-51I"/>
                                             </connections>
@@ -1194,7 +1194,7 @@
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3Dl-iZ-oiG" userLabel="Coarse Integration Time Slider">
                                             <rect key="frame" x="103" y="936" width="199" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="TYS-Vg-s4p"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="TYS-Vg-s4p"/>
                                             <connections>
                                                 <action selector="_imageAdjustmentsAction:" target="Voe-Tx-rLC" id="6cj-6Z-GNy"/>
                                             </connections>

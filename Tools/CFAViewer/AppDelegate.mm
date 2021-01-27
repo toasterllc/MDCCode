@@ -191,6 +191,11 @@ struct PixConfig {
     [self _setDebayerLMMSEGammaEnabled:true];
     
     [self _setImageAdjustments:{
+        .exposure = -2.4,
+        .brightness = .140,
+        .contrast = 0,
+        .saturation = 0,
+        
         .localContrast = {
             .enable = true,
             .amount = .2,
@@ -788,16 +793,33 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 
 - (IBAction)_imageAdjustmentsAction:(id)sender {
     const ImageAdjustments adj = {
+        .exposure = [_exposureSlider floatValue],
+        .brightness = [_brightnessSlider floatValue],
+        .contrast = [_contrastSlider floatValue],
+        .saturation = [_saturationSlider floatValue],
+        
         .localContrast = {
             .enable = [_localContrastCheckbox state]==NSControlStateValueOn,
             .amount = [_localContrastAmountSlider floatValue],
             .radius = [_localContrastRadiusSlider floatValue],
-        }
+        },
     };
     [self _setImageAdjustments:adj];
 }
 
 - (void)_setImageAdjustments:(const ImageAdjustments&)adj {
+    [_exposureSlider setFloatValue:adj.exposure];
+    [_exposureLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.exposure]];
+    
+    [_brightnessSlider setFloatValue:adj.brightness];
+    [_brightnessLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.brightness]];
+    
+    [_contrastSlider setFloatValue:adj.contrast];
+    [_contrastLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.contrast]];
+    
+    [_saturationSlider setFloatValue:adj.saturation];
+    [_saturationLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.saturation]];
+    
     [_localContrastCheckbox setState:(adj.localContrast.enable ? NSControlStateValueOn : NSControlStateValueOff)];
     
     [_localContrastAmountSlider setFloatValue:adj.localContrast.amount];

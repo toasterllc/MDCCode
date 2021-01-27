@@ -14,16 +14,16 @@ namespace CFAViewer::ImageLayerTypes {
     };
     
     struct ImageAdjustments {
+        float exposure = 0;
+        float brightness = 0;
+        float contrast = 0;
+        float saturation = 0;
+        
         struct {
             bool enable = false;
             float amount = 0;
             float radius = 0;
         } localContrast;
-        
-        float exposure = 0;
-        float brightness = 0;
-        float contrast = 0;
-        float saturation = 0;
     };
 };
 

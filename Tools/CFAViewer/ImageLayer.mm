@@ -545,15 +545,27 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
-        // Decrease luminance
+        // Exposure
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DecreaseLuminance"
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_Exposure"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
                     [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    const float exposure = pow(2, _state.imageAdjustments.exposure);
+                    [encoder setFragmentBytes:&exposure length:sizeof(exposure) atIndex:1];
                     [encoder setFragmentTexture:txt atIndex:0];
                 }
             ];
         }
+        
+//        // Decrease luminance
+//        {
+//            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DecreaseLuminance"
+//                block:^(id<MTLRenderCommandEncoder> encoder) {
+//                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//                    [encoder setFragmentTexture:txt atIndex:0];
+//                }
+//            ];
+//        }
         
         // XYY.D50 -> XYZ.D50
         {
@@ -565,18 +577,53 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
-        // Local contrast
+        // XYZ.D50 -> Lab.D50
+        {
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LabD50FromXYZD50"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:txt atIndex:0];
+                }
+            ];
+        }
+        
+        // Brightness
+        {
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_Brightness"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    auto brightness = _state.imageAdjustments.brightness;
+                    [encoder setFragmentBytes:&brightness length:sizeof(brightness) atIndex:1];
+                    [encoder setFragmentTexture:txt atIndex:0];
+                }
+            ];
+        }
+        
+        // Contrast
+        {
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_Contrast"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    const float contrast = pow(2, _state.imageAdjustments.contrast);
+                    [encoder setFragmentBytes:&contrast length:sizeof(contrast) atIndex:1];
+                    [encoder setFragmentTexture:txt atIndex:0];
+                }
+            ];
+        }
+        
+        // Saturation
+        {
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_Saturation"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    const float contrast = pow(2, _state.imageAdjustments.contrast);
+                    [encoder setFragmentBytes:&contrast length:sizeof(contrast) atIndex:1];
+                    [encoder setFragmentTexture:txt atIndex:0];
+                }
+            ];
+        }
+        
         if (_state.imageAdjustments.localContrast.enable) {
-            // XYZ.D50 -> Lab.D50
-            {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LabD50FromXYZD50"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
-            }
-            
             // Extract L
             {
                 [self _renderPass:cmdBuf texture:lTxt name:@"ImageLayer_ExtractL"
@@ -607,16 +654,16 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                     }
                 ];
             }
-            
-            // Lab.D50 -> XYZ.D50
-            {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYZD50FromLabD50"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
-            }
+        }
+        
+        // Lab.D50 -> XYZ.D50
+        {
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYZD50FromLabD50"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:txt atIndex:0];
+                }
+            ];
         }
         
         // XYZ.D50 -> LSRGB.D65
