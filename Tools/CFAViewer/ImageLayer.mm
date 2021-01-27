@@ -26,7 +26,7 @@ using namespace ColorUtil;
         std::mutex lock; // Protects this struct
         RenderContext ctx;
         bool debayerLMMSEGammaEnabled = false;
-        ContrastEnhancementOptions contrastEnhancementOptions;
+        ImageAdjustments imageAdjustments;
         id<MTLBuffer> pixelData = nil;
         
         id<MTLBuffer> sampleBuf_CamRaw_D50 = nil;
@@ -160,9 +160,9 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     [self setNeedsDisplay];
 }
 
-- (void)setContrastEnhancementOptions:(const ContrastEnhancementOptions&)opts {
+- (void)setImageAdjustments:(const CFAViewer::ImageLayerTypes::ImageAdjustments&)adj {
     auto lock = std::lock_guard(_state.lock);
-    _state.contrastEnhancementOptions = opts;
+    _state.imageAdjustments = adj;
     [self setNeedsDisplay];
 }
 
@@ -565,8 +565,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
-        // Enhance contrast
-        if (_state.contrastEnhancementOptions.enable) {
+        // Local contrast
+        if (_state.imageAdjustments.localContrast.enable) {
             // XYZ.D50 -> Lab.D50
             {
                 [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LabD50FromXYZD50"
@@ -590,17 +590,17 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             // Blur L channel
             {
                 MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:_device
-                    sigma:_state.contrastEnhancementOptions.radius];
+                    sigma:_state.imageAdjustments.localContrast.radius];
                 [blur setEdgeMode:MPSImageEdgeModeClamp];
                 [blur encodeToCommandBuffer:cmdBuf sourceTexture:lTxt destinationTexture:blurredLTxt];
             }
             
-            // Enhance contrast
+            // Local contrast
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_EnhanceContrast"
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LocalContrast"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        auto& amount = _state.contrastEnhancementOptions.amount;
+                        auto& amount = _state.imageAdjustments.localContrast.amount;
                         [encoder setFragmentBytes:&amount length:sizeof(amount) atIndex:1];
                         [encoder setFragmentTexture:txt atIndex:0];
                         [encoder setFragmentTexture:blurredLTxt atIndex:1];

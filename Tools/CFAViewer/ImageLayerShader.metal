@@ -1328,7 +1328,7 @@ fragment float ImageLayer_ExtractL(
     return sampleR(txt, in.pos);
 }
 
-fragment float4 ImageLayer_EnhanceContrast(
+fragment float4 ImageLayer_LocalContrast(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& amount [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],

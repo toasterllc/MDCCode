@@ -181,10 +181,12 @@ struct PixConfig {
     
     [self _setDebayerLMMSEGammaEnabled:true];
     
-    [self _setContrastEnhancementOptions:{
-        .enable = true,
-        .amount = .2,
-        .radius = 80,
+    [self _setImageAdjustments:{
+        .localContrast = {
+            .enable = true,
+            .amount = .2,
+            .radius = 80,
+        },
     }];
     
     auto points = [self _prefsColorCheckerPositions];
@@ -775,25 +777,27 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     [[_mainView imageLayer] setDebayerLMMSEGammaEnabled:en];
 }
 
-- (IBAction)_contrastAction:(id)sender {
-    ContrastEnhancementOptions opts = {
-        .enable = [_enhanceContrastCheckbox state]==NSControlStateValueOn,
-        .amount = [_contrastAmountSlider floatValue],
-        .radius = [_contrastRadiusSlider floatValue],
+- (IBAction)_imageAdjustmentsAction:(id)sender {
+    const ImageAdjustments adj = {
+        .localContrast = {
+            .enable = [_enhanceContrastCheckbox state]==NSControlStateValueOn,
+            .amount = [_contrastAmountSlider floatValue],
+            .radius = [_contrastRadiusSlider floatValue],
+        }
     };
-    [self _setContrastEnhancementOptions:opts];
+    [self _setImageAdjustments:adj];
 }
 
-- (void)_setContrastEnhancementOptions:(const ContrastEnhancementOptions&)opts {
-    [_enhanceContrastCheckbox setState:(opts.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+- (void)_setImageAdjustments:(const ImageAdjustments&)adj {
+    [_enhanceContrastCheckbox setState:(adj.localContrast.enable ? NSControlStateValueOn : NSControlStateValueOff)];
     
-    [_contrastAmountSlider setFloatValue:opts.amount];
-    [_contrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.amount]];
+    [_contrastAmountSlider setFloatValue:adj.localContrast.amount];
+    [_contrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.amount]];
     
-    [_contrastRadiusSlider setFloatValue:opts.radius];
-    [_contrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.radius]];
+    [_contrastRadiusSlider setFloatValue:adj.localContrast.radius];
+    [_contrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.radius]];
     
-    [[_mainView imageLayer] setContrastEnhancementOptions:opts];
+    [[_mainView imageLayer] setImageAdjustments:adj];
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {

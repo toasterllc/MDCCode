@@ -874,7 +874,7 @@
                                             <rect key="frame" x="319" y="1123" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="label" size="11"/>
+                                                <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_identityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -1066,7 +1066,7 @@
                                             <rect key="frame" x="329" y="1150" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="label" size="11"/>
+                                                <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
@@ -1099,7 +1099,7 @@
                                             </textFieldCell>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ojQ-A0-d2a">
-                                            <rect key="frame" x="18" y="884" width="52" height="16"/>
+                                            <rect key="frame" x="38" y="884" width="52" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Amount" id="3Le-mU-pvK">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1107,10 +1107,10 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="yZM-Fz-P7W" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="86" y="881" width="216" height="19"/>
+                                            <rect key="frame" x="106" y="881" width="196" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="p7M-OZ-eT1"/>
                                             <connections>
-                                                <action selector="_contrastAction:" target="Voe-Tx-rLC" id="D7k-SZ-US4"/>
+                                                <action selector="_imageAdjustmentsAction:" target="Voe-Tx-rLC" id="D7k-SZ-US4"/>
                                             </connections>
                                         </slider>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6sK-KP-lMd" userLabel="Coarse Integration Time Label">
@@ -1125,7 +1125,7 @@
                                             </textFieldCell>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="x4z-0U-eCW">
-                                            <rect key="frame" x="18" y="856" width="52" height="16"/>
+                                            <rect key="frame" x="38" y="856" width="52" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Radius" id="nsE-9X-t4P">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1133,10 +1133,10 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Brp-Px-E6d" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="86" y="853" width="216" height="19"/>
+                                            <rect key="frame" x="106" y="853" width="196" height="19"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="200" tickMarkPosition="above" sliderType="linear" id="rfn-T1-boj"/>
                                             <connections>
-                                                <action selector="_contrastAction:" target="Voe-Tx-rLC" id="xpD-FK-7iN"/>
+                                                <action selector="_imageAdjustmentsAction:" target="Voe-Tx-rLC" id="xpD-FK-7iN"/>
                                             </connections>
                                         </slider>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sHm-KX-87O" userLabel="Coarse Integration Time Label">
@@ -1236,21 +1236,21 @@
                                             </textFieldCell>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xhF-4C-KiH">
-                                            <rect key="frame" x="18" y="938" width="78" height="16"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="CONTRAST" id="BWf-ir-QGo">
+                                            <rect key="frame" x="18" y="938" width="151" height="16"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="IMAGE ADJUSTMENTS" id="BWf-ir-QGo">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9BP-nP-E8G">
-                                            <rect key="frame" x="18" y="910" width="130" height="18"/>
-                                            <buttonCell key="cell" type="check" title="Enhance Contrast" bezelStyle="regularSquare" imagePosition="left" inset="2" id="RY7-r6-u5U">
+                                            <rect key="frame" x="18" y="910" width="110" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Local Contrast" bezelStyle="regularSquare" imagePosition="left" inset="2" id="RY7-r6-u5U">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="_contrastAction:" target="Voe-Tx-rLC" id="BPH-qb-XK2"/>
+                                                <action selector="_imageAdjustmentsAction:" target="Voe-Tx-rLC" id="BPH-qb-XK2"/>
                                             </connections>
                                         </button>
                                     </subviews>
@@ -1321,10 +1321,10 @@
                                         <constraint firstItem="lTd-T5-f7w" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="20" id="Rmi-jx-TzE"/>
                                         <constraint firstItem="wL3-uf-dpp" firstAttribute="centerY" secondItem="A3f-eO-2vD" secondAttribute="centerY" id="SWn-aS-CSB"/>
                                         <constraint firstItem="zQK-wl-iSr" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="20" id="SlD-zO-Kt7"/>
-                                        <constraint firstItem="x4z-0U-eCW" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="20" id="Ssp-QZ-OqU"/>
+                                        <constraint firstItem="x4z-0U-eCW" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="40" id="Ssp-QZ-OqU"/>
                                         <constraint firstItem="Xhb-vy-YOh" firstAttribute="leading" secondItem="9jB-cM-ghW" secondAttribute="trailing" constant="20" id="SvT-dA-cWm"/>
                                         <constraint firstAttribute="trailing" secondItem="1GV-0H-WTo" secondAttribute="trailing" id="TCr-q0-UcI"/>
-                                        <constraint firstItem="ojQ-A0-d2a" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="20" id="U9d-Ac-LUW"/>
+                                        <constraint firstItem="ojQ-A0-d2a" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="40" id="U9d-Ac-LUW"/>
                                         <constraint firstItem="k5K-pT-L2W" firstAttribute="top" secondItem="KIo-4m-3AR" secondAttribute="bottom" constant="8" id="UAR-Kg-kKf"/>
                                         <constraint firstAttribute="trailing" secondItem="wL3-uf-dpp" secondAttribute="trailing" constant="20" id="Ui5-QF-oeO"/>
                                         <constraint firstItem="1Th-eO-8Sc" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="20" id="UlQ-oc-HmF"/>

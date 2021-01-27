@@ -13,10 +13,17 @@ namespace CFAViewer::ImageLayerTypes {
         CFAViewer::MetalTypes::ImagePixel* pixels = nullptr;
     };
     
-    struct ContrastEnhancementOptions {
-        bool enable = false;
-        float amount = 0;
-        float radius = 0;
+    struct ImageAdjustments {
+        struct {
+            bool enable = false;
+            float amount = 0;
+            float radius = 0;
+        } localContrast;
+        
+        float exposure = 0;
+        float brightness = 0;
+        float contrast = 0;
+        float saturation = 0;
     };
 };
 
@@ -25,7 +32,7 @@ namespace CFAViewer::ImageLayerTypes {
 - (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)image;
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
 - (void)setDebayerLMMSEGammaEnabled:(bool)en;
-- (void)setContrastEnhancementOptions:(const CFAViewer::ImageLayerTypes::ContrastEnhancementOptions&)opts;
+- (void)setImageAdjustments:(const CFAViewer::ImageLayerTypes::ImageAdjustments&)adj;
 - (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
 - (void)setSampleRect:(CGRect)rect;
 // `handler` is called on a background queue when histograms/sample data changes
