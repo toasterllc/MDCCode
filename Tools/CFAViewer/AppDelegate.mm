@@ -61,11 +61,20 @@ struct PixConfig {
     
     IBOutlet NSButton* _debayerLMMSEGammaCheckbox;
     
-    IBOutlet NSButton* _enhanceContrastCheckbox;
-    IBOutlet NSSlider* _contrastAmountSlider;
-    IBOutlet NSTextField* _contrastAmountLabel;
-    IBOutlet NSSlider* _contrastRadiusSlider;
-    IBOutlet NSTextField* _contrastRadiusLabel;
+    IBOutlet NSSlider* _exposureSlider;
+    IBOutlet NSTextField* _exposureLabel;
+    IBOutlet NSSlider* _brightnessSlider;
+    IBOutlet NSTextField* _brightnessLabel;
+    IBOutlet NSSlider* _contrastSlider;
+    IBOutlet NSTextField* _contrastLabel;
+    IBOutlet NSSlider* _saturationSlider;
+    IBOutlet NSTextField* _saturationLabel;
+    
+    IBOutlet NSButton* _localContrastCheckbox;
+    IBOutlet NSSlider* _localContrastAmountSlider;
+    IBOutlet NSTextField* _localContrastAmountLabel;
+    IBOutlet NSSlider* _localContrastRadiusSlider;
+    IBOutlet NSTextField* _localContrastRadiusLabel;
     
     IBOutlet NSTextField* _colorText_cameraRaw;
     IBOutlet NSTextField* _colorText_XYZ_D50;
@@ -780,22 +789,22 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 - (IBAction)_imageAdjustmentsAction:(id)sender {
     const ImageAdjustments adj = {
         .localContrast = {
-            .enable = [_enhanceContrastCheckbox state]==NSControlStateValueOn,
-            .amount = [_contrastAmountSlider floatValue],
-            .radius = [_contrastRadiusSlider floatValue],
+            .enable = [_localContrastCheckbox state]==NSControlStateValueOn,
+            .amount = [_localContrastAmountSlider floatValue],
+            .radius = [_localContrastRadiusSlider floatValue],
         }
     };
     [self _setImageAdjustments:adj];
 }
 
 - (void)_setImageAdjustments:(const ImageAdjustments&)adj {
-    [_enhanceContrastCheckbox setState:(adj.localContrast.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+    [_localContrastCheckbox setState:(adj.localContrast.enable ? NSControlStateValueOn : NSControlStateValueOff)];
     
-    [_contrastAmountSlider setFloatValue:adj.localContrast.amount];
-    [_contrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.amount]];
+    [_localContrastAmountSlider setFloatValue:adj.localContrast.amount];
+    [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.amount]];
     
-    [_contrastRadiusSlider setFloatValue:adj.localContrast.radius];
-    [_contrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.radius]];
+    [_localContrastRadiusSlider setFloatValue:adj.localContrast.radius];
+    [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.radius]];
     
     [[_mainView imageLayer] setImageAdjustments:adj];
 }
