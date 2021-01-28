@@ -280,9 +280,9 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     
     [self _setImageAdjustments:{
         .exposure = -2.4,
-        .brightness = 0.14,
-        .contrast = 0.224,
-        .saturation = 0.05,
+        .brightness = 0.203,
+        .contrast = 0.6,
+        .saturation = 0.1,
         
         .localContrast = {
             .enable = true,
