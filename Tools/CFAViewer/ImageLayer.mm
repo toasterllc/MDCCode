@@ -604,7 +604,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_Contrast"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
                     [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    const float contrast = pow(2, _state.imageAdjustments.contrast);
+                    const float contrast = _state.imageAdjustments.contrast;
                     [encoder setFragmentBytes:&contrast length:sizeof(contrast) atIndex:1];
                     [encoder setFragmentTexture:txt atIndex:0];
                 }

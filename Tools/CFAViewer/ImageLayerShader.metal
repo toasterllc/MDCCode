@@ -1411,6 +1411,10 @@ fragment float4 ImageLayer_Brightness(
 //    return float4(c, 1);
 //}
 
+float bellcurve(float width, int plateau, float x) {
+    return exp(-pow(width*x, plateau));
+}
+
 fragment float4 ImageLayer_Contrast(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& contrast [[buffer(1)]],
@@ -1418,7 +1422,8 @@ fragment float4 ImageLayer_Contrast(
     VertexOutput in [[stage_in]]
 ) {
     float3 c = sampleRGB(txt, in.pos);
-    c[0] = (contrast*(c[0]-50))+50;
+    const float k = 1+((bellcurve(2.7, 4, (c[0]/100)-.5))*contrast);
+    c[0] = (k*(c[0]-50))+50;
     return float4(c, 1);
 }
 
