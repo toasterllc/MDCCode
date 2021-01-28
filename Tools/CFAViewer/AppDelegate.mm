@@ -157,7 +157,82 @@ struct PixConfig {
 //    return simd::float3{L,a,b};
 //}
 
+float nothighlights(float x) {
+    if (x < 0) return 0;
+    return exp(-pow(x+.1, 10));
+}
+
+float notshadows(float x) {
+    if (x > 1) return 1;
+    return exp(-pow(x-1.1, 10));
+}
+
+float Luv_u(simd::float3 c_XYZ) {
+    return 4*c_XYZ.x/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
+}
+
+float Luv_v(simd::float3 c_XYZ) {
+    return 9*c_XYZ.y/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
+}
+
+simd::float3 LuvFromXYZ(simd::float3 white_XYZ, simd::float3 c_XYZ) {
+    const float k1 = 24389./27;
+    const float k2 = 216./24389;
+    const float y = c_XYZ.y/white_XYZ.y;
+    const float L = (y<=k2 ? k1*y : 116*pow(y, 1./3)-16);
+    const float u_ = Luv_u(c_XYZ);
+    const float v_ = Luv_v(c_XYZ);
+    const float uw_ = Luv_u(white_XYZ);
+    const float vw_ = Luv_v(white_XYZ);
+    const float u = 13*L*(u_-uw_);
+    const float v = 13*L*(v_-vw_);
+    return simd::float3{L,u,v};
+}
+
+simd::float3 XYZFromLuv(simd::float3 white_XYZ, simd::float3 c_Luv) {
+    const float uw_ = Luv_u(white_XYZ);
+    const float vw_ = Luv_v(white_XYZ);
+    const float u_ = c_Luv[1]/(13*c_Luv[0]) + uw_;
+    const float v_ = c_Luv[2]/(13*c_Luv[0]) + vw_;
+    const float Y = white_XYZ.y*(c_Luv[0]<=8 ? c_Luv[0]*(27./24389) : pow((c_Luv[0]+16)/116, 3));
+    const float X = Y*(9*u_)/(4*v_);
+    const float Z = Y*(12-3*u_-20*v_)/(4*v_);
+    return simd::float3{X,Y,Z};
+}
+
+simd::float3 LCHuvFromLuv(simd::float3 c_Luv) {
+    const float L = c_Luv[0];
+    const float C = sqrt(c_Luv[1]*c_Luv[1] + c_Luv[2]*c_Luv[2]);
+    const float H = atan2f(c_Luv[2], c_Luv[1]);
+    return {L,C,H};
+}
+
+simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
+    const float L = c_LCHuv[0];
+    const float u = c_LCHuv[1]*cos(c_LCHuv[2]);
+    const float v = c_LCHuv[1]*sin(c_LCHuv[2]);
+    return {L,u,v};
+}
+
 - (void)awakeFromNib {
+//    const simd::float3 D50_XYZ = {0.96422, 1.00000, 0.82521};
+//    const simd::float3 c_XYZ_D50 = {0.280097, 0.303140, 0.353856};
+//    const simd::float3 c_Luv_D50 = LuvFromXYZ(D50_XYZ, c_XYZ_D50);
+//    const simd::float3 c_LCHuv_D50 = LCHuvFromLuv(c_Luv_D50);
+//    const simd::float3 c_Luv_D50_2 = LuvFromLCHuv(c_LCHuv_D50);
+//    const simd::float3 c_XYZ_D50_2 = XYZFromLuv(D50_XYZ, c_Luv_D50_2);
+//    printf("c_XYZ_D50:\t\t%f %f %f\n", c_XYZ_D50[0], c_XYZ_D50[1], c_XYZ_D50[2]);
+//    printf("c_Luv_D50:\t\t%f %f %f\n", c_Luv_D50[0], c_Luv_D50[1], c_Luv_D50[2]);
+//    printf("c_LCHuv_D50:\t%f %f %f\n", c_LCHuv_D50[0], c_LCHuv_D50[1], c_LCHuv_D50[2]);
+//    printf("c_Luv_D50_2:\t%f %f %f\n", c_Luv_D50_2[0], c_Luv_D50_2[1], c_Luv_D50_2[2]);
+//    printf("c_XYZ_D50_2:\t%f %f %f\n", c_XYZ_D50_2[0], c_XYZ_D50_2[1], c_XYZ_D50_2[2]);
+//    exit(0);
+    
+    
+    
+//    printf("%f\n", nothighlights(-10));
+//    printf("%f\n", notshadows(3));
+//    return;
 //    const simd::float3 D50_XYZ = {0.96422, 1.00000, 0.82521};
 //    const simd::float3 c_XYZ_D50 = {0.185938, 0.202315, 0.250133};
 //    const simd::float3 c_Lab_D50 = LabFromXYZ(D50_XYZ, c_XYZ_D50);
@@ -190,14 +265,27 @@ struct PixConfig {
     
     [self _setDebayerLMMSEGammaEnabled:true];
     
+//    [self _setImageAdjustments:{
+//        .exposure = -2.4,
+//        .brightness = .14,
+//        .contrast = 0,
+//        .saturation = 0,
+//        
+//        .localContrast = {
+//            .enable = true,
+//            .amount = .2,
+//            .radius = 80,
+//        },
+//    }];
+    
     [self _setImageAdjustments:{
         .exposure = -2.4,
-        .brightness = .140,
+        .brightness = .05,
         .contrast = 0,
         .saturation = 0,
         
         .localContrast = {
-            .enable = true,
+            .enable = false,
             .amount = .2,
             .radius = 80,
         },

@@ -611,18 +611,6 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
-        // Saturation
-        {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_Saturation"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    const float contrast = pow(2, _state.imageAdjustments.contrast);
-                    [encoder setFragmentBytes:&contrast length:sizeof(contrast) atIndex:1];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
-        }
-        
         if (_state.imageAdjustments.localContrast.enable) {
             // Extract L
             {
@@ -664,6 +652,65 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                     [encoder setFragmentTexture:txt atIndex:0];
                 }
             ];
+        }
+        
+        // Saturation
+        {
+            // XYZ.D50 -> Luv.D50
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LuvD50FromXYZD50"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Luv.D50 -> LCHuv.D50
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LCHuvFromLuv"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Saturation
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_Saturation"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        const float sat = pow(2, 2*_state.imageAdjustments.saturation);
+                        [encoder setFragmentBytes:&sat length:sizeof(sat) atIndex:1];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
+            
+            // LCHuv.D50 -> Luv.D50
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_LuvFromLCHuv"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Luv.D50 -> XYZ.D50
+            {
+                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_XYZD50FromLuvD50"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
+                        [encoder setFragmentTexture:txt atIndex:0];
+                    }
+                ];
+            }
         }
         
         // XYZ.D50 -> LSRGB.D65

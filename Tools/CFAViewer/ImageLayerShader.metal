@@ -597,7 +597,57 @@ float3 XYZFromXYY(const float3 xyy) {
     const float X = (xyy[0]*xyy[2])/xyy[1];
     const float Y = xyy[2];
     const float Z = ((1.-xyy[0]-xyy[1])*xyy[2])/xyy[1];
-    return {X, Y, Z};
+    return {X,Y,Z};
+}
+
+
+
+
+float Luv_u(float3 c_XYZ) {
+    return 4*c_XYZ.x/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
+}
+
+float Luv_v(float3 c_XYZ) {
+    return 9*c_XYZ.y/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
+}
+
+float3 LuvFromXYZ(float3 white_XYZ, float3 c_XYZ) {
+    const float k1 = 24389./27;
+    const float k2 = 216./24389;
+    const float y = c_XYZ.y/white_XYZ.y;
+    const float L = (y<=k2 ? k1*y : 116*pow(y, 1./3)-16);
+    const float u_ = Luv_u(c_XYZ);
+    const float v_ = Luv_v(c_XYZ);
+    const float uw_ = Luv_u(white_XYZ);
+    const float vw_ = Luv_v(white_XYZ);
+    const float u = 13*L*(u_-uw_);
+    const float v = 13*L*(v_-vw_);
+    return {L,u,v};
+}
+
+float3 XYZFromLuv(float3 white_XYZ, float3 c_Luv) {
+    const float uw_ = Luv_u(white_XYZ);
+    const float vw_ = Luv_v(white_XYZ);
+    const float u_ = c_Luv[1]/(13*c_Luv[0]) + uw_;
+    const float v_ = c_Luv[2]/(13*c_Luv[0]) + vw_;
+    const float Y = white_XYZ.y*(c_Luv[0]<=8 ? c_Luv[0]*(27./24389) : pow((c_Luv[0]+16)/116, 3));
+    const float X = Y*(9*u_)/(4*v_);
+    const float Z = Y*(12-3*u_-20*v_)/(4*v_);
+    return {X,Y,Z};
+}
+
+float3 LCHuvFromLuv(float3 c_Luv) {
+    const float L = c_Luv[0];
+    const float C = sqrt(c_Luv[1]*c_Luv[1] + c_Luv[2]*c_Luv[2]);
+    const float H = atan2(c_Luv[2], c_Luv[1]);
+    return {L,C,H};
+}
+
+float3 LuvFromLCHuv(float3 c_LCHuv) {
+    const float L = c_LCHuv[0];
+    const float u = c_LCHuv[1]*cos(c_LCHuv[2]);
+    const float v = c_LCHuv[1]*sin(c_LCHuv[2]);
+    return {L,u,v};
 }
 
 fragment float ImageLayer_LoadRaw(
@@ -1272,33 +1322,94 @@ float bellcurve(float x) {
     return exp(-pow(2.5*(x-.5), 4));
 }
 
+//float nothighlights(float x) {
+//    if (x < 0) return 0;
+//    return exp(-pow(fabs(x+.1), 4));
+//}
+//
+//float notshadows(float x) {
+//    if (x > 1) return 1;
+//    return exp(-pow(fabs(x-1.1), 4));
+//}
+
+
+float nothighlights(float x) {
+    if (x < 0) return 0;
+    return exp(-pow(fabs(x+.3), 4));
+}
+
+float notshadows(float x) {
+    if (x > 1) return 1;
+    return exp(-pow(fabs(x-1.3), 4));
+}
+
+
+
 fragment float4 ImageLayer_Brightness(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& brightness [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    
+
 //    float3 c = sampleRGB(txt, in.pos);
-//    const float b = bellcurve(c[0]/100)*brightness;
-//    c[0] = 100*b + c[0]*(1-b);
-//    return float4(c, 1);
-    
-//    float3 c = sampleRGB(txt, in.pos);
-//    const float b = bellcurve(c[0]/100)*brightness;
-//    c[0] += 100*b;
+////    const float k = 1;
+//    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
+////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
+//    c[0] += 100*k*brightness;
 //    return float4(c, 1);
     
     float3 c = sampleRGB(txt, in.pos);
-    const float b = bellcurve(c[0]/100)*brightness;
-    c[0] += 100*b;
+    c[0] = 100*brightness + c[0]*(1-brightness);
     return float4(c, 1);
-    
-//    float3 c = sampleRGB(txt, in.pos);
-//    const float b = scurve(c[0]/100)*brightness;
-//    c[0] = 100*b + c[0]*(1-b);
-//    return float4(c, 1);
 }
+
+
+
+//fragment float4 ImageLayer_Brightness(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    constant float& brightness [[buffer(1)]],
+//    texture2d<float> txt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    float3 c = sampleRGB(txt, in.pos);
+////    const float k = 1;
+//    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
+////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
+//    c[0] += 100*k*brightness;
+//    return float4(c, 1);
+//    
+////    float3 c = sampleRGB(txt, in.pos);
+////    const float b = bellcurve(c[0]/100)*brightness;
+////    c[0] = 100*b + c[0]*(1-b);
+////    return float4(c, 1);
+//    
+////    float3 c = sampleRGB(txt, in.pos);
+////    const float b = bellcurve(c[0]/100)*brightness;
+////    c[0] += 100*b;
+////    return float4(c, 1);
+//    
+////    float3 c = sampleRGB(txt, in.pos);
+////    const float b = bellcurve(c[0]/100)*brightness;
+////    c[0] += 100*b;
+////    return float4(c, 1);
+//    
+////    float3 c = sampleRGB(txt, in.pos);
+////    const float b = scurve(c[0]/100)*brightness;
+////    c[0] = 100*b + c[0]*(1-b);
+////    return float4(c, 1);
+//}
+
+//fragment float4 ImageLayer_Brightness(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    constant float& brightness [[buffer(1)]],
+//    texture2d<float> txt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    float3 c = sampleRGB(txt, in.pos);
+//    c[0] += 100*brightness;
+//    return float4(c, 1);
+//}
 
 fragment float4 ImageLayer_Contrast(
     constant RenderContext& ctx [[buffer(0)]],
@@ -1313,11 +1424,12 @@ fragment float4 ImageLayer_Contrast(
 
 fragment float4 ImageLayer_Saturation(
     constant RenderContext& ctx [[buffer(0)]],
-    constant float& contrast [[buffer(1)]],
+    constant float& saturation [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     float3 c = sampleRGB(txt, in.pos);
+    c[1] *= saturation;
     return float4(c, 1);
 }
 
@@ -1338,6 +1450,54 @@ fragment float4 ImageLayer_XYZD50FromXYYD50(
     const float3 c = sampleRGB(txt, in.pos);
     return float4(XYZFromXYY(c), 1);
 }
+
+
+fragment float4 ImageLayer_LuvD50FromXYZD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float3 c = sampleRGB(txt, in.pos);
+    const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
+    return float4(LuvFromXYZ(D50_XYZ, c), 1);
+}
+
+fragment float4 ImageLayer_XYZD50FromLuvD50(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float3 c = sampleRGB(txt, in.pos);
+    const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
+    return float4(XYZFromLuv(D50_XYZ, c), 1);
+}
+
+fragment float4 ImageLayer_LCHuvFromLuv(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float3 c = sampleRGB(txt, in.pos);
+    return float4(LCHuvFromLuv(c), 1);
+}
+
+fragment float4 ImageLayer_LuvFromLCHuv(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float3 c = sampleRGB(txt, in.pos);
+    return float4(LuvFromLCHuv(c), 1);
+}
+
+
+
+
+
+
+
+
+
 
 float LabfInv(float x) {
     // From https://en.wikipedia.org/wiki/CIELAB_color_space
