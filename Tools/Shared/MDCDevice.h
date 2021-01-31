@@ -307,12 +307,12 @@ public:
         PixHeader hdr;
         pixInPipe.read(hdr, timeout);
         
-        const size_t imageLen = hdr.width*hdr.height*sizeof(Pixel);
+        const size_t imageLen = hdr.width*hdr.height;
         if (imageLen > cap)
-            throw RuntimeError("buffer capacity too small (image length: %ju bytes, buffer capacity: %ju bytes)",
+            throw RuntimeError("buffer capacity too small (image length: %ju pixels, buffer capacity: %ju pixels)",
                 (uintmax_t)imageLen, (uintmax_t)cap);
         
-        pixInPipe.readBuf(pixels, imageLen, timeout);
+        pixInPipe.readBuf(pixels, imageLen*sizeof(Pixel), timeout);
         return hdr;
     }
     

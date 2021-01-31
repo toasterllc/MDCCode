@@ -265,19 +265,6 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     
     [self _setDebayerLMMSEGammaEnabled:true];
     
-//    [self _setImageAdjustments:{
-//        .exposure = -2.4,
-//        .brightness = .14,
-//        .contrast = 0,
-//        .saturation = 0,
-//        
-//        .localContrast = {
-//            .enable = true,
-//            .amount = .2,
-//            .radius = 80,
-//        },
-//    }];
-    
     [self _setImageAdjustments:{
         .exposure = -2.4,
         .brightness = 0.203,
@@ -397,8 +384,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     try {
         // Reset the device to put it back in a pre-defined state
         device.reset();
-        const size_t pixelBufCap = 2000*2000*sizeof(Pixel);
-        auto pixelBuf = std::make_unique<Pixel[]>(pixelBufCap);
+        const size_t pixelBufCount = 2000*2000;
+        auto pixelBuf = std::make_unique<Pixel[]>(pixelBufCount);
         
         float intTime = .5;
         for (;;) {
@@ -411,7 +398,7 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             
             // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
-            const STApp::PixHeader pixStatus = device.pixCapture(pixelBuf.get(), pixelBufCap, 1000);
+            const STApp::PixHeader pixStatus = device.pixCapture(pixelBuf.get(), pixelBufCount, 1000);
             const Image image = {
                 .width = pixStatus.width,
                 .height = pixStatus.height,

@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdexcept>
 #include <string>
+#include <unistd.h>
 
 class Mmap {
 public:

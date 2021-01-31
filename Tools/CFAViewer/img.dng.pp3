@@ -10,9 +10,9 @@ InTrash=false
 [Exposure]
 Auto=false
 Clip=0
-Compensation=0
-Brightness=5
-Contrast=5
+Compensation=-2.5
+Brightness=25
+Contrast=30
 Saturation=0
 Black=0
 HighlightCompr=0
@@ -64,7 +64,7 @@ TransmissionCurve=1;0;0.5;0.34999999999999998;0.34999999999999998;0.599999999999
 GainTransmissionCurve=1;0;0.10000000000000001;0.34999999999999998;0;0.25;0.25;0.34999999999999998;0.34999999999999998;0.69999999999999996;0.25;0.34999999999999998;0.34999999999999998;1;0.10000000000000001;0;0;
 
 [Local Contrast]
-Enabled=true
+Enabled=false
 Radius=100
 Amount=0.050000000000000003
 Darkness=1
@@ -148,7 +148,7 @@ PastSatTog=true
 SkinTonesCurve=0;
 
 [SharpenEdge]
-Enabled=true
+Enabled=false
 Passes=2
 Strength=40
 ThreeChannels=false
@@ -210,7 +210,7 @@ Curve2=0;
 Curve3=0;
 
 [Impulse Denoising]
-Enabled=true
+Enabled=false
 Threshold=75
 
 [Defringing]
@@ -220,19 +220,19 @@ Threshold=14
 HueCurve=1;0.16666666699999999;0;0.34999999999999998;0.34999999999999998;0.34699999999999998;0;0.34999999999999998;0.34999999999999998;0.51366742600000004;0;0.34999999999999998;0.34999999999999998;0.66894457100000004;0;0.34999999999999998;0.34999999999999998;0.82877752459999998;0.97835991;0.34999999999999998;0.34999999999999998;0.99088838270000001;0;0.34999999999999998;0.34999999999999998;
 
 [Dehaze]
-Enabled=true
+Enabled=false
 Strength=35
 ShowDepthMap=false
 Depth=10
 Luminance=false
 
 [Directional Pyramid Denoising]
-Enabled=true
+Enabled=false
 Enhance=false
 Median=false
 Luma=40
 Ldetail=90
-Chroma=4.062079906463623
+Chroma=4.0599999999999996
 Method=RGB
 LMethod=SLI
 CMethod=MAN
@@ -241,8 +241,8 @@ SMethod=shal
 MedMethod=soft
 RGBMethod=soft
 MethodMed=Lonly
-Redchro=-1.2116490602493286
-Bluechro=8.4828815460205078
+Redchro=-1.2
+Bluechro=8.5
 Gamma=2
 Passes=1
 LCurve=1;0.050000000000000003;0.14999999999999999;0.34999999999999998;0.34999999999999998;0.55000000000000004;0.040000000000000001;0.34999999999999998;0.34999999999999998;
@@ -275,8 +275,8 @@ Lab=false
 Enabled=false
 X=0
 Y=0
-W=2296
-H=1288
+W=2304
+H=1296
 FixedRatio=true
 Ratio=As Image
 Orientation=As Image
@@ -347,7 +347,7 @@ Height=900
 AllowUpscaling=false
 
 [PostDemosaicSharpening]
-Enabled=true
+Enabled=false
 Contrast=20
 AutoContrast=true
 AutoRadius=true
@@ -374,7 +374,7 @@ DeconvDamping=0
 DeconvIterations=100
 
 [Color Management]
-InputProfile=file:/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/ICCProfile2.icc
+InputProfile=file:/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/ICCProfile3.icc
 ToneCurve=false
 ApplyLookTable=true
 ApplyBaselineExposureOffset=true
@@ -580,7 +580,7 @@ FlatFieldAutoClipControl=false
 FlatFieldClipControl=0
 CA=true
 CAAvoidColourshift=true
-CAAutoIterations=2
+CAAutoIterations=4
 CARed=0
 CABlue=0
 HotPixelFilter=false
