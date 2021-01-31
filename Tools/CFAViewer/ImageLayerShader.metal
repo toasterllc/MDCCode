@@ -674,7 +674,6 @@ fragment float ImageLayer_LoadRaw(
 }
 
 
-
 //static int mirrorClamp(uint N, int n) {
 //    const int Ni = (int)N;
 //    if (n < 0) return -n;
@@ -753,14 +752,12 @@ fragment float ImageLayer_DebayerLMMSE_Interp5(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
     const int2 pos = int2(in.pos.xy);
-    const sampler s = sampler(coord::pixel);
-    return  -.25*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-2:+0,!h?-2:+0)))).r    +
-            +0.5*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-1:+0,!h?-1:+0)))).r    +
-            +0.5*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+0:+0,!h?+0:+0)))).r    +
-            +0.5*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+1:+0,!h?+1:+0)))).r    +
-            -.25*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+2:+0,!h?+2:+0)))).r    ;
+    return  -.25*sampleR(rawTxt, pos, {h?-2:+0,!h?-2:+0})   +
+            +0.5*sampleR(rawTxt, pos, {h?-1:+0,!h?-1:+0})   +
+            +0.5*sampleR(rawTxt, pos, {h?+0:+0,!h?+0:+0})   +
+            +0.5*sampleR(rawTxt, pos, {h?+1:+0,!h?+1:+0})   +
+            -.25*sampleR(rawTxt, pos, {h?+2:+0,!h?+2:+0})   ;
 }
 
 fragment float ImageLayer_DebayerLMMSE_NoiseEst(
@@ -772,8 +769,8 @@ fragment float ImageLayer_DebayerLMMSE_NoiseEst(
     const uint2 pos = uint2(in.pos.xy);
     const sampler s;
     const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-    const float raw = rawTxt.sample(s, in.posUnit).r;
-    const float filtered = filteredTxt.sample(s, in.posUnit).r;
+    const float raw = sampleR(rawTxt, pos);
+    const float filtered = sampleR(filteredTxt, pos);
     if (green)  return raw-filtered;
     else        return filtered-raw;
 }
@@ -784,18 +781,16 @@ fragment float ImageLayer_DebayerLMMSE_Smooth9(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 dim(ctx.imageWidth, ctx.imageHeight);
     const int2 pos = int2(in.pos.xy);
-    const sampler s = sampler(coord::pixel);
-    return  0.0312500*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-4:+0,!h?-4:+0)))).r     +
-            0.0703125*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-3:+0,!h?-3:+0)))).r     +
-            0.1171875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-2:+0,!h?-2:+0)))).r     +
-            0.1796875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?-1:+0,!h?-1:+0)))).r     +
-            0.2031250*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+0:+0,!h?+0:+0)))).r     +
-            0.1796875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+1:+0,!h?+1:+0)))).r     +
-            0.1171875*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+2:+0,!h?+2:+0)))).r     +
-            0.0703125*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+3:+0,!h?+3:+0)))).r     +
-            0.0312500*rawTxt.sample(s, float2(mirrorClamp2(dim, pos, int2(h?+4:+0,!h?+4:+0)))).r     ;
+    return  0.0312500*sampleR(rawTxt, pos, {h?-4:+0,!h?-4:+0})     +
+            0.0703125*sampleR(rawTxt, pos, {h?-3:+0,!h?-3:+0})     +
+            0.1171875*sampleR(rawTxt, pos, {h?-2:+0,!h?-2:+0})     +
+            0.1796875*sampleR(rawTxt, pos, {h?-1:+0,!h?-1:+0})     +
+            0.2031250*sampleR(rawTxt, pos, {h?+0:+0,!h?+0:+0})     +
+            0.1796875*sampleR(rawTxt, pos, {h?+1:+0,!h?+1:+0})     +
+            0.1171875*sampleR(rawTxt, pos, {h?+2:+0,!h?+2:+0})     +
+            0.0703125*sampleR(rawTxt, pos, {h?+3:+0,!h?+3:+0})     +
+            0.0312500*sampleR(rawTxt, pos, {h?+4:+0,!h?+4:+0})     ;
 }
 
 constant bool UseZhangCodeEst = false;
@@ -1203,7 +1198,30 @@ fragment float4 ImageLayer_DebayerBilinear(
 
 
 
+fragment float ImageLayer_InterpolateBlue(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos = uint2(in.pos.xy);
+    return ImageLayer_DebayerBilinear_B(rawTxt, pos);
+}
 
+
+//fragment float ImageLayer_Scale(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> blueTxt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const uint2 bounds(txt.get_width(), txt.get_height());
+//    return blueTxt.sample(coord::pixel, float2(mirrorClamp2(bounds, pos.xy, delta))).rgb;
+//    
+//    blueTxt.sample(coord::pixel, float2(mirrorClamp2(bounds, pos.xy, delta))).rgb
+//    
+//    
+//    const uint2 pos = uint2(in.pos.xy);
+//    return ImageLayer_DebayerBilinear_B(rawTxt, pos);
+//}
 
 
 
