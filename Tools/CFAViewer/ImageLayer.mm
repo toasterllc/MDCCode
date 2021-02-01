@@ -263,6 +263,10 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     [self setDrawableSize:{(CGFloat)_state.ctx.imageWidth, (CGFloat)_state.ctx.imageHeight}];
     
     id<MTLTexture> rawOriginalTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> blueTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> scaledBlueTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> redTxt = [self _newTexture:MTLPixelFormatR32Float];
+    id<MTLTexture> scaledRedTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> rawTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> filteredHTxt = [self _newTexture:MTLPixelFormatR32Float];
     id<MTLTexture> filteredVTxt = [self _newTexture:MTLPixelFormatR32Float];
@@ -324,6 +328,74 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                     [encoder setFragmentBuffer:_state.sampleBuf_CamRaw_D50 offset:0 atIndex:2];
                 }
             ];
+        }
+        
+        // Scale blue channel
+        {
+            // Interpolate blue channel
+            {
+                [self _renderPass:cmdBuf texture:blueTxt name:@"ImageLayer_InterpolateBlue"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Scale blue channel
+            {
+                [self _renderPass:cmdBuf texture:scaledBlueTxt name:@"ImageLayer_ScaleBlue"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:blueTxt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Resample blue channel into raw
+            {
+                [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_ResampleBlue"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
+                        [encoder setFragmentTexture:scaledBlueTxt atIndex:1];
+                    }
+                ];
+            }
+        }
+        
+        // Scale red channel
+        {
+            // Interpolate red channel
+            {
+                [self _renderPass:cmdBuf texture:redTxt name:@"ImageLayer_InterpolateRed"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Scale red channel
+            {
+                [self _renderPass:cmdBuf texture:scaledRedTxt name:@"ImageLayer_ScaleRed"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:redTxt atIndex:0];
+                    }
+                ];
+            }
+            
+            // Resample red channel into raw
+            {
+                [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_ResampleRed"
+                    block:^(id<MTLRenderCommandEncoder> encoder) {
+                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                        [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
+                        [encoder setFragmentTexture:scaledRedTxt atIndex:1];
+                    }
+                ];
+            }
         }
         
         // Fix highlights

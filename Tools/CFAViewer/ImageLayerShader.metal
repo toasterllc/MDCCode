@@ -656,7 +656,7 @@ fragment float ImageLayer_LoadRaw(
     device float3* samples [[buffer(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const float v = (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
@@ -766,7 +766,7 @@ fragment float ImageLayer_DebayerLMMSE_NoiseEst(
     texture2d<float> filteredTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const sampler s;
     const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
     const float raw = sampleR(rawTxt, pos);
@@ -902,7 +902,7 @@ fragment float ImageLayer_DebayerLMMSE_CalcDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const bool redPx = (!(pos.y%2) && (pos.x%2));
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
     
@@ -957,7 +957,7 @@ fragment float ImageLayer_DebayerLMMSE_CalcDiagAvgDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const bool redPx = (!(pos.y%2) && (pos.x%2));
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
     
@@ -1008,7 +1008,7 @@ fragment float ImageLayer_DebayerLMMSE_CalcAxialAvgDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const bool greenPx = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
     if (greenPx) {
         return axialAvg(diffTxt, pos);
@@ -1025,7 +1025,7 @@ fragment float4 ImageLayer_DebayerLMMSE_CalcRB(
     texture2d<float> diffGB [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const float g = sampleRGB(txt, pos).g;
     const float dgr = sampleR(diffGR, pos);
     const float dgb = sampleR(diffGB, pos);
@@ -1045,7 +1045,7 @@ fragment float4 ImageLayer_DebayerLMMSE_CalcRB(
 //    texture2d<float, access::read_write> diffV [[texture(4)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    const uint2 pos = uint2(in.pos.xy);
+//    const uint2 pos(in.pos.x, in.pos.y);
 //    const sampler s;
 //    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
 //    const float raw = rawTxt.sample(s, in.posUnit).r;
@@ -1177,7 +1177,7 @@ fragment float4 ImageLayer_DebayerBilinear(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     return float4(
         ImageLayer_DebayerBilinear_R(rawTxt, pos),
         ImageLayer_DebayerBilinear_G(rawTxt, pos),
@@ -1203,25 +1203,81 @@ fragment float ImageLayer_InterpolateBlue(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     return ImageLayer_DebayerBilinear_B(rawTxt, pos);
 }
 
 
-//fragment float ImageLayer_Scale(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> blueTxt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const uint2 bounds(txt.get_width(), txt.get_height());
-//    return blueTxt.sample(coord::pixel, float2(mirrorClamp2(bounds, pos.xy, delta))).rgb;
-//    
-//    blueTxt.sample(coord::pixel, float2(mirrorClamp2(bounds, pos.xy, delta))).rgb
-//    
-//    
-//    const uint2 pos = uint2(in.pos.xy);
-//    return ImageLayer_DebayerBilinear_B(rawTxt, pos);
-//}
+fragment float ImageLayer_ScaleBlue(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> blueTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float kx = pow(2, ctx.highlightFactorR[0]*.005);
+    const float ky = pow(2, ctx.highlightFactorR[1]*.005);
+    const float2 pos = {
+        ((in.posUnit.x-.5)*kx)+.5,
+        ((in.posUnit.y-.5)*ky)+.5
+    };
+    return blueTxt.sample(filter::linear, pos).r;
+}
+
+fragment float ImageLayer_ResampleBlue(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> blueTxt [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    const bool blue = ((pos.y%2) && !(pos.x%2));
+    if (blue) return sampleR(blueTxt, pos);
+    return sampleR(rawTxt, pos);
+}
+
+
+
+
+
+
+
+
+
+fragment float ImageLayer_InterpolateRed(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    return ImageLayer_DebayerBilinear_R(rawTxt, pos);
+}
+
+
+fragment float ImageLayer_ScaleRed(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> redTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float kx = pow(2, ctx.highlightFactorG[0]*.005);
+    const float ky = pow(2, ctx.highlightFactorG[1]*.005);
+    const float2 pos = {
+        ((in.posUnit.x-.5)*kx)+.5,
+        ((in.posUnit.y-.5)*ky)+.5
+    };
+    return redTxt.sample(filter::linear, pos).r;
+}
+
+fragment float ImageLayer_ResampleRed(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> redTxt [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    const bool red = (!(pos.y%2) && (pos.x%2));
+    if (red) return sampleR(redTxt, pos);
+    return sampleR(rawTxt, pos);
+}
+
 
 
 
@@ -1232,7 +1288,7 @@ fragment float ImageLayer_InterpolateBlue(
 //    device float3* samples [[buffer(2)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    const uint2 pos = uint2(in.pos.xy);
+//    const uint2 pos(in.pos.x, in.pos.y);
 //    float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
 //    
 //    if (pos.x >= ctx.sampleRect.left &&
@@ -1287,7 +1343,7 @@ fragment float4 ImageLayer_DebayerLMMSE(
     constant ImagePixel* pxs [[buffer(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const int redX = 1;
     const int redY = 0;
     const int green = 1 - ((redX + redY) & 1);
@@ -1677,7 +1733,7 @@ fragment float4 ImageLayer_LSRGBD65FromXYZD50(
     
     const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
     
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
         pos.y >= ctx.sampleRect.top &&
@@ -1769,8 +1825,8 @@ fragment float4 ImageLayer_FindMaxVals(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgbfloat = sampleRGB(txt, in.pos);
-    uint3 lsrgb = uint3(lsrgbfloat * UIntNormalizeVal);
+    const float3 lsrgbfloat = sampleRGB(txt, in.pos)*UIntNormalizeVal;
+    const uint3 lsrgb(lsrgbfloat.x, lsrgbfloat.y, lsrgbfloat.z);
     
     setIfGreater((device atomic_uint&)highlights.x, lsrgb.r);
     setIfGreater((device atomic_uint&)highlights.y, lsrgb.g);
@@ -1985,7 +2041,7 @@ fragment float ImageLayer_FixHighlightsRaw(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool greenr = (!(pos.y%2) && !(pos.x%2));
     const bool greenb = ((pos.y%2) && (pos.x%2));
@@ -2194,7 +2250,7 @@ fragment float ImageLayer_FixHighlightsRaw(
 //    //  Row2    G R G R
 //    //  Row3    B G B G
 //    
-//    const uint2 pos = uint2(in.pos.xy);
+//    const uint2 pos(in.pos.x, in.pos.y);
 //    const bool red = (!(pos.y%2) && (pos.x%2));
 //    const bool greenr = (!(pos.y%2) && !(pos.x%2));
 //    const bool greenb = ((pos.y%2) && (pos.x%2));
@@ -2469,7 +2525,7 @@ fragment float4 ImageLayer_SRGBGamma(
         SRGBGamma(c_LSRGB.b)
     };
     
-    const uint2 pos = uint2(in.pos.xy);
+    const uint2 pos(in.pos.x, in.pos.y);
     if (pos.x >= ctx.sampleRect.left &&
         pos.x < ctx.sampleRect.right &&
         pos.y >= ctx.sampleRect.top &&
