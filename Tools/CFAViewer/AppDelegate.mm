@@ -20,6 +20,7 @@
 #import "IOServiceMatcher.h"
 #import "IOServiceWatcher.h"
 #import "MDCUtil.h"
+#import "Assert.h"
 
 using namespace CFAViewer;
 using namespace MetalTypes;
@@ -245,7 +246,13 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
     _colorMatrix = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
-    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
+    
+    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-new.cfa");
+//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-Good-SSERemoved-FactorOutGInterp-FactorOutLPHPFilters-Float1.cfa");
+    
+//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-GoodSSERemoved-1.cfa");
+//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-GoodSSERemoved-65535.cfa");
+//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-GoodSSERemoved-FactorOutGInterp-ButBadBorders.cfa");
     
     _image = {
         .width = 2304,
@@ -793,6 +800,43 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 }
 
 #pragma mark - UI
+
+- (void)_saveImage:(NSString*)path {
+    id image = [[_mainView imageLayer] CGImage];
+    Assert(image, return);
+    
+    id imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
+        (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
+    CGImageDestinationAddImage((CGImageDestinationRef)imageDest, (CGImageRef)image, nullptr);
+    CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
+}
+
+- (IBAction)saveDocument:(id)sender {
+    static NSString*const LastImageNameKey = @"LastImageName";
+    NSSavePanel* panel = [NSSavePanel savePanel];
+    
+    NSString* fileName = [[NSUserDefaults standardUserDefaults] objectForKey:LastImageNameKey];
+    if (!fileName) fileName = @"image.png";
+    [panel setNameFieldStringValue:fileName];
+    
+    __weak auto weakSelf = self;
+    __weak auto weakPanel = panel;
+    [panel beginSheetModalForWindow:_window completionHandler:^(NSInteger result) {
+        if (result != NSModalResponseOK) return;
+        
+        auto panel = weakPanel;
+        Assert(panel, return);
+        auto strongSelf = weakSelf;
+        Assert(strongSelf, return);
+        
+        NSString* path = [[panel URL] path];
+        
+        [[NSUserDefaults standardUserDefaults]
+            setObject:[path lastPathComponent] forKey:LastImageNameKey];
+        
+        [strongSelf _saveImage:path];
+    }];
+}
 
 - (IBAction)_streamImagesSwitchAction:(id)sender {
     [self _setStreamImagesEnabled:([_streamImagesSwitch state]==NSControlStateValueOn)];

@@ -145,19 +145,9 @@
                                     <action selector="performClose:" target="-1" id="HmO-Ls-i7Q"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Save…" keyEquivalent="s" id="pxx-59-PXV">
+                            <menuItem title="Save Image…" keyEquivalent="s" id="pxx-59-PXV">
                                 <connections>
                                     <action selector="saveDocument:" target="-1" id="teZ-XB-qJY"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Save As…" keyEquivalent="S" id="Bw7-FT-i3A">
-                                <connections>
-                                    <action selector="saveDocumentAs:" target="-1" id="mDf-zr-I0C"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Revert to Saved" keyEquivalent="r" id="KaW-ft-85H">
-                                <connections>
-                                    <action selector="revertDocumentToSaved:" target="-1" id="iJ3-Pv-kwq"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="aJh-i4-bef"/>
@@ -882,7 +872,7 @@
                                             <rect key="frame" x="319" y="1236" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="label" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_identityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -1074,7 +1064,7 @@
                                             <rect key="frame" x="329" y="1263" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="label" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>

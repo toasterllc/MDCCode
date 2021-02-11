@@ -236,22 +236,29 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     [encoder endEncoding];
 }
 
+- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt {
+    return [self _newTextureWithPixelFormat:fmt
+        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)];
+}
+
 // _state.lock must be held
-- (id<MTLTexture>)_newTexture:(MTLPixelFormat)fmt {
+- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt
+    usage:(MTLTextureUsage)usage {
+    
     MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
     [desc setTextureType:MTLTextureType2D];
     [desc setWidth:_state.ctx.imageWidth];
     [desc setHeight:_state.ctx.imageHeight];
     [desc setPixelFormat:fmt];
-    // TODO: most textures don't need `MTLTextureUsageShaderWrite`, add usage argument in case that speeds us up?
-    [desc setUsage:MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite];
+    [desc setUsage:usage];
     id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
     Assert(txt, return nil);
     return txt;
 }
 
-- (void)display {
-    auto lock = std::lock_guard(_state.lock);
+// Lock must be held
+- (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
+    NSParameterAssert(outTxt);
     
     // Short-circuit if we don't have any image data
     if (!_state.pixelData) return;
@@ -259,27 +266,22 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     _inputHistogram = Histogram();
     _outputHistogram = Histogram();
     
-    // Update our drawable size using our view size (in pixels)
-    [self setDrawableSize:{(CGFloat)_state.ctx.imageWidth, (CGFloat)_state.ctx.imageHeight}];
-    
-    id<MTLTexture> rawOriginalTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> blueTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> scaledBlueTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> redTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> scaledRedTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> rawTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> filteredHTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> filteredVTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> diffHTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> diffVTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> diffGRTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> diffGBTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> lTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> blurredLTxt = [self _newTexture:MTLPixelFormatR32Float];
-    id<MTLTexture> txt = [self _newTexture:MTLPixelFormatRGBA32Float];
-    
-    id<CAMetalDrawable> drawable = [self nextDrawable];
-    Assert(drawable, return);
+    id<MTLTexture> rawOriginalTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> blueTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> scaledBlueTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> redTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> scaledRedTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> rawTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> filteredHTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> filteredVTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> diffHTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> diffVTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> diffGRTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> diffGBTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> lTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> blurredLTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
+        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite)];
+    id<MTLTexture> txt = [self _newTextureWithPixelFormat:MTLPixelFormatRGBA32Float];
     
     id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
     
@@ -309,7 +311,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 //        
 //        // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
 //        {
-//            [self _renderPass:cmdBuf texture:[drawable texture] name:@"ImageLayer_Display"
+//            [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer_Display"
 //                block:^(id<MTLRenderCommandEncoder> encoder) {
 //                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
 //                    [encoder setFragmentTexture:txt atIndex:0];
@@ -809,16 +811,27 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         
         // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
         {
-            [self _renderPass:cmdBuf texture:[drawable texture] name:@"ImageLayer_Display"
+            [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer_Display"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
                     [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:txt atIndex:0];
                 }
             ];
         }
+        
+        // If outTxt isn't framebuffer-only, then do a blit-sync, which is
+        // apparently required for [outTxt getBytes:] to work, which
+        // -CGImage uses.
+        {
+            if (![outTxt isFramebufferOnly]) {
+                id<MTLBlitCommandEncoder> blit = [cmdBuf blitCommandEncoder];
+                [blit synchronizeTexture:outTxt slice:0 level:0];
+                [blit endEncoding];
+            }
+        }
     }
     
-    [cmdBuf presentDrawable:drawable];
+    if (drawable) [cmdBuf presentDrawable:drawable];
     [cmdBuf commit];
     // Wait for the render to complete, since the lock needs to be
     // held because the shader accesses _state
@@ -831,6 +844,45 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             dataChangedHandler(self);
         });
     }
+}
+
+- (void)display {
+    auto lock = std::lock_guard(_state.lock);
+    
+    // Update our drawable size using our view size (in pixels)
+    [self setDrawableSize:{(CGFloat)_state.ctx.imageWidth, (CGFloat)_state.ctx.imageHeight}];
+    
+    id<CAMetalDrawable> drawable = [self nextDrawable];
+    Assert(drawable, return);
+    
+    id<MTLTexture> txt = [drawable texture];
+    Assert(txt, return);
+    
+    [self _displayToTexture:txt drawable:drawable];
+}
+
+- (id)CGImage {
+    auto lock = std::lock_guard(_state.lock);
+    id<MTLTexture> txt = [self _newTextureWithPixelFormat:MTLPixelFormatBGRA8Unorm
+        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)];
+    [self _displayToTexture:txt drawable:nil];
+    const NSUInteger w = [txt width];
+    const NSUInteger h = [txt height];
+    
+    uint32_t opts = kCGImageAlphaNoneSkipFirst;
+    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, 8, w*4, SRGBColorSpace(), opts));
+    Assert(ctx, return nil);
+    
+    uint8_t* data = (uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
+    [txt getBytes:data bytesPerRow:w*4 fromRegion:MTLRegionMake2D(0, 0, w, h) mipmapLevel:0];
+    
+    // BGRA -> ARGB
+    for (size_t i=0; i<w*h*4; i+=4) {
+        std::swap(data[i], data[i+3]);
+        std::swap(data[i+1], data[i+2]);
+    }
+    
+    return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
 }
 
 - (void)setContentsScale:(CGFloat)scale {
@@ -925,7 +977,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 
 template <typename T>
 std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
-    std::unique_ptr<T[]> p(new T[[buf length]/sizeof(T)]);
+    auto p = std::make_unique<T[]>([buf length]/sizeof(T));
     memcpy(p.get(), [buf contents], [buf length]);
     return p;
 }

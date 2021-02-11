@@ -45,4 +45,6 @@ namespace CFAViewer::ImageLayerTypes {
 - (ColorUtil::Color_XYZ_D50)sample_XYZ_D50;
 - (ColorUtil::Color_SRGB_D65)sample_SRGB_D65;
 
+- (id)CGImage;
+
 @end
