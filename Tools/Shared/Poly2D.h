@@ -41,7 +41,7 @@ public:
         for (size_t a=0, i=0; a<Order; a++) {
             for (size_t b=0; b<Order; b++, i++) {
                 const T k = std::pow(y,a)*std::pow(x,b);
-                r += k*_x[i];
+                r += k*_x.at(i);
             }
         }
         return r;

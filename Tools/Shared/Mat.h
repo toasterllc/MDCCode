@@ -178,6 +178,16 @@ public:
         return vals[i];
     }
     
+    T& at(size_t i) {
+        assert(i < std::size(vals));
+        return vals[i];
+    }
+    
+    const T& at(size_t i) const {
+        assert(i < std::size(vals));
+        return vals[i];
+    }
+    
     T& at(size_t y, size_t x) {
         assert(y < H);
         assert(x < W);
