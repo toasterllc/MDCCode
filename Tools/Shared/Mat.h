@@ -43,19 +43,17 @@ public:
     Mat<T,H,W> inv() const {
         static_assert(H==W, "not a square matrix");
         
-        Mat<T,H,H> r;
-        memcpy(r.vals, vals, sizeof(vals));
-        
+        Mat<T,H,H> r = *this;
         __CLPK_integer m = H;
         __CLPK_integer err = 0;
         __CLPK_integer pivot[m];
         T tmp[m];
         if constexpr(std::is_same_v<T, float>) {
             sgetrf_(&m, &m, r.vals, &m, pivot, &err);
-            if (err) throw std::runtime_error("dgetrf_ failed");
+            if (err) throw std::runtime_error("sgetrf_ failed");
             
             sgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
-            if (err) throw std::runtime_error("dgetri_ failed");
+            if (err) throw std::runtime_error("sgetri_ failed");
         
         } else if constexpr(std::is_same_v<T, double>) {
             dgetrf_(&m, &m, r.vals, &m, pivot, &err);
@@ -97,25 +95,25 @@ public:
         return r;
     }
     
-    // Matrix add
+    // Scalar multiply
+    Mat<T,H,W> operator*(const T& x) const {
+        Mat<T,H,W> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_vsmul(vals, 1, &x, r.vals, 1, H*W);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_vsmulD(vals, 1, &x, r.vals, 1, H*W);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Element-wise add
     Mat<T,H,W> operator+(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r;
         if constexpr(std::is_same_v<T, float>)
             vDSP_vadd(vals, 1, x.vals, 1, r.vals, 1, H*W);
         else if constexpr(std::is_same_v<T, double>)
             vDSP_vaddD(vals, 1, x.vals, 1, r.vals, 1, H*W);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    // Matrix subtract
-    Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
-        Mat<T,H,W> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_vsub(vals, 1, x.vals, 1, r.vals, 1, H*W);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_vsubD(vals, 1, x.vals, 1, r.vals, 1, H*W);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -128,6 +126,18 @@ public:
             vDSP_vsadd(vals, 1, &x, r.vals, 1, H*W);
         else if constexpr(std::is_same_v<T, double>)
             vDSP_vsaddD(vals, 1, &x, r.vals, 1, H*W);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Element-wise subtract
+    Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
+        Mat<T,H,W> r;
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_vsub(vals, 1, x.vals, 1, r.vals, 1, H*W);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_vsubD(vals, 1, x.vals, 1, r.vals, 1, H*W);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -146,13 +156,13 @@ public:
         return r;
     }
     
-    // Scalar multiply
-    Mat<T,H,W> operator*(const T& x) const {
+    // Element-wise divide
+    Mat<T,H,W> operator/(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r;
         if constexpr(std::is_same_v<T, float>)
-            vDSP_vsmul(vals, 1, &x, r.vals, 1, H*W);
+            vDSP_vdiv(x.vals, 1, vals, 1, r.vals, 1, H*W);
         else if constexpr(std::is_same_v<T, double>)
-            vDSP_vsmulD(vals, 1, &x, r.vals, 1, H*W);
+            vDSP_vdivD(x.vals, 1, vals, 1, r.vals, 1, H*W);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -169,6 +179,63 @@ public:
             static_assert(_AlwaysFalse<T>);
         return r;
     }
+    
+    T norm() const {
+        __CLPK_integer m = H;
+        __CLPK_integer n = W;
+        if constexpr(std::is_same_v<T, float>)
+            return slange_((char*)"1", &m, &n, vals, &m, nullptr);
+        else if constexpr(std::is_same_v<T, double>)
+            return dlange_((char*)"1", &m, &n, (T*)vals, &m, nullptr);
+        else
+            static_assert(_AlwaysFalse<T>);
+    }
+    
+//    static float rcondf() {
+//        return 1./(norm() * inv().norm());
+//    }
+//    
+//    static double rcond() {
+//        return 1./(norm() * inv().norm());
+//    }
+    
+    T rcond() const {
+        return rcond(inv());
+    }
+    
+    // Optimized rcond() version, in case the inverse has already been calculated
+    T rcond(const Mat<T,H,W>& inverse) const {
+        return T(1)/(norm() * inverse.norm());
+    }
+    
+    
+//    // RCOND
+//    T rcond() const {
+//        Mat<T,H,H> lufact = *this;
+//        __CLPK_integer m = H;
+//        __CLPK_integer n = W;
+//        __CLPK_integer err = 0;
+//        __CLPK_integer pivot[m];
+//        T tmp[m];
+//        if constexpr(std::is_same_v<T, float>) {
+//            T norm1 = slange_("1", &m, &n, vals, &m, nullptr);
+//            
+//            sgetrf_(&m, &m, lufact.vals, &m, pivot, &err);
+//            if (err) throw std::runtime_error("sgetrf_ failed");
+//            
+//            sgecon_("1", &m, lufact.vals, &n, &norm1, <#__CLPK_real *__rcond#>, <#__CLPK_real *__work#>, <#__CLPK_integer *__iwork#>, <#__CLPK_integer *__info#>)
+//        
+//        } else if constexpr(std::is_same_v<T, double>) {
+//            dgetrf_(&m, &m, r.vals, &m, pivot, &err);
+//            if (err) throw std::runtime_error("dgetrf_ failed");
+//            
+//            
+//        
+//        } else {
+//            static_assert(_AlwaysFalse<T>);
+//        }
+//        return r;
+//    }
     
     T& operator[](size_t i) {
         return vals[i];

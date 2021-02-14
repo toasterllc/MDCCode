@@ -22,6 +22,8 @@
 //   M(y^3)(x^0) + N(y^3)(x^1) + O(y^3)(x^2) + P(y^3)(x^3)
 // 
 
+static int count = 0;
+
 #if FLAVOR==3
 
 template <typename T, size_t Order>
@@ -32,27 +34,80 @@ public:
     // `pts` is a vector of x,y,z triplets
     // `wts` is the weight to apply to each triplet
     Poly2D(const std::vector<T>& pts, const std::vector<T>& wts) {
+//        for (size_t pti=0, wti=0; pti<pts.size(); pti+=3, wti++) {
+//            printf("%.12f %.12f %.12f\n", pts.at(pti+0), pts.at(pti+1), pts.at(pti+2));
+//        }
+//        exit(0);
+        
         for (size_t pti=0, wti=0; pti<pts.size(); pti+=3, wti++) {
             _addPoint(wts.at(wti), pts.at(pti+0), pts.at(pti+1), pts.at(pti+2));
         }
         
-//        for (size_t y=0; y<_Terms; y++) {
-//            for (size_t x=0; x<_Terms; x++) {
-//                printf("A: %.3f\n", _A.at(y,x));
-//            }
-//        }
-//        exit(0);
+        printf("A=[ ");
+        for (size_t y=0; y<_Terms; y++) {
+            if (y) printf("; ");
+            for (size_t x=0; x<_Terms; x++) {
+                printf("%.12f ", _A.at(y,x));
+            }
+        }
+        printf("]\n");
         
+        auto Ainv = _A.inv();
+        auto Apinv = _A.pinv();
+        auto Adiv = Ainv/Apinv;
+        
+        printf("Ainv/Apinv:\n");
+        for (const double& x : Adiv.vals) {
+            printf("%.3f ", x);
+        }
+        printf("\n\n\n");
+        
+//        printf("Ainv.vals[0] = %f\n", Ainv.vals[0]);
+//        printf("Apinv.vals[0] = %f\n", Apinv.vals[0]);
+//        printf("/ = %f\n", Ainv.vals[0]/Apinv.vals[0]);
+//        
+//        printf("Ainv.vals[1] = %f\n", Ainv.vals[1]);
+//        printf("Apinv.vals[1] = %f\n", Apinv.vals[1]);
+//        printf("/ = %f\n", Ainv.vals[1]/Apinv.vals[1]);
+        
+        exit(0);
+        
+//        printf("b=[ ");
 //        for (size_t y=0; y<_Terms; y++) {
-//            printf("b: %.3f\n", _b[y]);
+//            if (y) printf(";\n");
+//            printf("%.12f ", _b[y]);
 //        }
+//        printf("]\n");
 //        exit(0);
         
 //        // Solve for the 2D polynomial coefficients
 //        _x = _A.pinv()*_b;
         
-        // Solve for the 2D polynomial coefficients
-        _x = _A.inv()*_b;
+//            auto inv = _A.inv();
+//            T rcond = _A.rcond(inv);
+//            printf("rcond: %.3e\n", rcond);
+//            exit(0);
+        
+//        if (count == 7) {
+            // Solve for the 2D polynomial coefficients
+//            _x = _A.pinv()*_b;
+//        } else {
+//            // Solve for the 2D polynomial coefficients
+            _x = _A.inv()*_b;
+//        }
+        
+        count++;
+        
+
+        
+//        printf("z = ");
+//        for (int y=0, i=0; y<Order; y++) {
+//            for (int x=0; x<Order; x++, i++) {
+//                printf("+ %.12f y^(%d) x^(%d) ", _x.at(i), y, x);
+//            }
+//        }
+//        printf("\n");
+//        exit(0);
         
 //        for (const T& coeff : _x.vals) {
 //            printf("Coeffs: %.3f\n", coeff);
