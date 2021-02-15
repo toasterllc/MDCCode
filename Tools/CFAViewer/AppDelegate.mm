@@ -1016,8 +1016,32 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
         i += 3;
     }
     
-    // Calculate the color matrix (x = (At*A)^-1 * At * b)
-    auto x = (A.pinv() * b).trans();
+    // Print A
+    {
+        printf("A=[ ");
+        for (size_t y=0; y<A.h; y++) {
+            if (y) printf("; ");
+            for (size_t x=0; x<A.w; x++) {
+                printf("%.15f ", A.at(y,x));
+            }
+        }
+        printf("]\n");
+    }
+    
+    // Print b
+    {
+        printf("b=[ ");
+        for (size_t y=0; y<b.h; y++) {
+            if (y) printf("; ");
+            for (size_t x=0; x<b.w; x++) {
+                printf("%.15f ", b.at(y,x));
+            }
+        }
+        printf("]\n");
+    }
+    
+    // Solve Ax=b for the color matrix
+    Mat<double,3,3> x = A.solve(b);
     [self _updateColorMatrix:x];
     [self _prefsSetColorCheckerPositions:points];
     

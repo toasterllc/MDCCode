@@ -39,34 +39,34 @@ public:
         return r;
     }
     
-//    // Inverse
-//    Mat<T,H,W> inv() const {
-//        static_assert(H==W, "not a square matrix");
-//        
-//        Mat<T,H,H> r = *this;
-//        __CLPK_integer m = H;
-//        __CLPK_integer err = 0;
-//        __CLPK_integer pivot[m];
-//        T tmp[m];
-//        if constexpr(std::is_same_v<T, float>) {
-//            sgetrf_(&m, &m, r.vals, &m, pivot, &err);
-//            if (err) throw std::runtime_error("sgetrf_ failed");
-//            
-//            sgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
-//            if (err) throw std::runtime_error("sgetri_ failed");
-//        
-//        } else if constexpr(std::is_same_v<T, double>) {
-//            dgetrf_(&m, &m, r.vals, &m, pivot, &err);
-//            if (err) throw std::runtime_error("dgetrf_ failed");
-//            
-//            dgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
-//            if (err) throw std::runtime_error("dgetri_ failed");
-//        
-//        } else {
-//            static_assert(_AlwaysFalse<T>);
-//        }
-//        return r;
-//    }
+    // Inverse
+    Mat<T,H,W> inv() const {
+        static_assert(H==W, "not a square matrix");
+        
+        Mat<T,H,H> r = *this;
+        __CLPK_integer m = H;
+        __CLPK_integer err = 0;
+        __CLPK_integer pivot[m];
+        T tmp[m];
+        if constexpr(std::is_same_v<T, float>) {
+            sgetrf_(&m, &m, r.vals, &m, pivot, &err);
+            if (err) throw std::runtime_error("sgetrf_ failed");
+            
+            sgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
+            if (err) throw std::runtime_error("sgetri_ failed");
+        
+        } else if constexpr(std::is_same_v<T, double>) {
+            dgetrf_(&m, &m, r.vals, &m, pivot, &err);
+            if (err) throw std::runtime_error("dgetrf_ failed");
+            
+            dgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
+            if (err) throw std::runtime_error("dgetri_ failed");
+        
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
+        return r;
+    }
     
 //    // Moore-Penrose inverse
 //    Mat<T,W,H> pinv() const {
@@ -223,91 +223,140 @@ public:
         return r;
     }
     
+    
     // Solve `Ax=b` for x, where the receiver is A
-    Mat<T,W,1> solve(const Mat<T,H,1>& bconst) const {
-        // 2 iterations: first iteration gets the size of `work`,
-        // second iteration performs calculation
-        const size_t maxHW = std::max(H,W);
-        __CLPK_integer h = H;
-        __CLPK_integer w = W;
-        __CLPK_integer nrhs = 1;
-        __CLPK_integer ldb = maxHW;
-        __CLPK_integer jpvt[W] = {};
-        __CLPK_integer rank = 0;
-        T rcond = std::numeric_limits<T>::epsilon();
-        Mat<T,H,W> A = *this;
-        Mat<T,maxHW,1> bx = bconst;
+    template <size_t N>
+    Mat<T,W,N> solve(const Mat<T,H,N>& bconst) const {
+        static_assert(H>=W, "matrix size must have H >= W");
+        __CLPK_integer m = H;
+        __CLPK_integer n = (__CLPK_integer)W;
+        __CLPK_integer nrhs = N;
+        __CLPK_integer lda = m;
+        __CLPK_integer ldb = m;
+        Mat<T,W,H> A = trans(); // LAPACK requires column-major order
+        Mat<T,N,H> bx = bconst.trans(); // LAPACK requires column-major order
         __CLPK_integer err = 0;
-        __CLPK_integer lwork = -1;
-        for (__CLPK_integer i=0; i<2; i++) {
-            T work[std::max(1,lwork)];
-            if constexpr(std::is_same_v<T, float>)
-                sgelsy_(&h, &w, &nrhs, A.vals, &h, bx.vals, &ldb, jpvt, &rcond,
-                    &rank, work, &lwork, &err);
-            else if constexpr(std::is_same_v<T, double>)
-                dgelsy_(&h, &w, &nrhs, A.vals, &h, bx.vals, &ldb, jpvt, &rcond,
-                    &rank, work, &lwork, &err);
-            else
-                static_assert(_AlwaysFalse<T>);
+        
+        T work[1024] = {};
+        __CLPK_integer lwork = std::size(work);
+        if constexpr(std::is_same_v<T, float>)
+            sgels_((char*)"N", &m, &n, &nrhs,
+                A.vals, &lda,
+                bx.vals, &ldb,
+                work, &lwork, &err
+            );
             
-            if (err) throw std::runtime_error("failed to solve");
-            lwork = work[0];
-        }
-        return Mat<T,W,1>(bx.vals);
+        else if constexpr(std::is_same_v<T, double>)
+            dgels_((char*)"N", &m, &n, &nrhs,
+                A.vals, &lda,
+                bx.vals, &ldb,
+                work, &lwork, &err
+            );
+        
+        else
+            static_assert(_AlwaysFalse<T>);
+        
+        if (err) throw std::runtime_error("failed to solve");
+        return Mat<T,W,N>(bx.vals);
     }
     
+    
 //    // Solve `Ax=b` for x, where the receiver is A
-//    Mat<T,H,1> solve2(const Mat<T,H,1>& bb) const {
-//        static_assert(H==W, "matrix must be square");
-//        Mat<T,H,W> A = *this;
-//        Mat<T,H,1> b = bb;
-//        Mat<T,H,1> x;
-//        for (size_t y=0; y<H-1; y++) {
-//            // Find the row with the max element
-//            T maxElm = std::fabs(A.at(y,y));
-//            size_t maxElmY = y;
-//            for (size_t i=y+1; i<H; i++) {
-//                if (std::fabs(A.at(i,y)) > maxElm) {
-//                    maxElm = A.at(i,y);
-//                    maxElmY = i;
-//                }
-//            }
+//    template <size_t N>
+//    Mat<T,W,N> solve(const Mat<T,H,N>& bconst) const {
+//        static_assert(H>=W, "matrix size must have H >= W");
+//        // 2 iterations: first iteration gets the size of `work`,
+//        // second iteration performs calculation
+//        __CLPK_integer lwork = -1;
+//        for (__CLPK_integer i=0; i<2; i++) {
+//            __CLPK_integer m = H;
+//            __CLPK_integer n = (__CLPK_integer)w;
+//            __CLPK_integer nrhs = N;
+//            __CLPK_integer lda = m;
+//            __CLPK_integer ldb = m;
 //            
-//            // Swap the two rows if needed
-//            if (maxElmY != y) {
-//                for (size_t i=y; i<H; i++) {
-//                    std::swap(A.at(y,i), A.at(maxElmY,i));
-//                }
-//                std::swap(b[y], b[maxElmY]);
-//            }
+////            __CLPK_integer h = H;
+////            __CLPK_integer w = W;
+////            __CLPK_integer nrhs = N;
+////            __CLPK_integer ldb = H;
+//            __CLPK_integer jpvt[W] = {};
+//            __CLPK_integer rank = 0;
+//    //        T rcond = .1;
+//            T rcond = std::numeric_limits<T>::epsilon();
+//            Mat<T,H,W> A = *this;
+//            Mat<T,H,N> bx = bconst;
+//            __CLPK_integer err = 0;
 //            
-//            if (A.at(y,y) == 0) {
-//                throw std::runtime_error("failed to solve");
-//            }
+//            T work[std::max(1,lwork)];
+//            memset(work, 0, std::max(1,lwork)*sizeof(T));
+//            if constexpr(std::is_same_v<T, float>)
+//                sgelsy_(&m, &n, &nrhs, A.vals, &lda, bx.vals, &ldb, jpvt, &rcond,
+//                    &rank, work, &lwork, &err);
+//            else if constexpr(std::is_same_v<T, double>)
+//                dgelsy_(&m, &n, &nrhs, A.vals, &lda, bx.vals, &ldb, jpvt, &rcond,
+//                    &rank, work, &lwork, &err);
+//            else
+//                static_assert(_AlwaysFalse<T>);
 //            
-//            // Forward substitution
-//            for (size_t j=y+1; j<H; j++) {
-//                const T k = -A.at(j,y) / A.at(y,y);
-//                for (size_t i=y; i<H; i++) {
-//                    A.at(j,i) += k*A.at(y,i);
-//                }
-//                b[j] += k*b[y];
-//            }
+//            if (err) throw std::runtime_error("failed to solve");
+//            lwork = work[0];
+//            if (i) return Mat<T,W,N>(bx.vals);
 //        }
-//        
-//        // Backward substitution
-//        for (size_t y=H-1;; y--) {
-//            x[y] = b[y];
-//            
-//            for (size_t i=y+1; i<H; i++) {
-//                x[y] -= A.at(y,i)*x[i];
-//            }
-//            
-//            x[y] /= A.at(y,y);
-//            if (!y) break;
-//        }
-//        return x;
+//        exit(0);
 //    }
+    
+    // Solve `Ax=b` for x, where the receiver is A
+    Mat<T,H,1> solve2(const Mat<T,H,1>& bb) const {
+        static_assert(H==W, "matrix must be square");
+        Mat<T,H,W> A = *this;
+        Mat<T,H,1> b = bb;
+        Mat<T,H,1> x;
+        for (size_t y=0; y<H-1; y++) {
+            // Find the row with the max element
+            T maxElm = std::fabs(A.at(y,y));
+            size_t maxElmY = y;
+            for (size_t i=y+1; i<H; i++) {
+                if (std::fabs(A.at(i,y)) > maxElm) {
+                    maxElm = A.at(i,y);
+                    maxElmY = i;
+                }
+            }
+            
+            // Swap the two rows if needed
+            if (maxElmY != y) {
+                for (size_t i=y; i<H; i++) {
+                    std::swap(A.at(y,i), A.at(maxElmY,i));
+                }
+                std::swap(b[y], b[maxElmY]);
+            }
+            
+            if (A.at(y,y) == 0) {
+                throw std::runtime_error("failed to solve");
+            }
+            
+            // Forward substitution
+            for (size_t j=y+1; j<H; j++) {
+                const T k = -A.at(j,y) / A.at(y,y);
+                for (size_t i=y; i<H; i++) {
+                    A.at(j,i) += k*A.at(y,i);
+                }
+                b[j] += k*b[y];
+            }
+        }
+        
+        // Backward substitution
+        for (size_t y=H-1;; y--) {
+            x[y] = b[y];
+            
+            for (size_t i=y+1; i<H; i++) {
+                x[y] -= A.at(y,i)*x[i];
+            }
+            
+            x[y] /= A.at(y,y);
+            if (!y) break;
+        }
+        return x;
+    }
     
 //    T norm() const {
 //        __CLPK_integer m = H;
