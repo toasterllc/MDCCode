@@ -8,15 +8,18 @@ public:
     
     Mat(const T v[]) {
         memcpy(vals, v, sizeof(vals));
+        _transToColMaj();
     }
     
     Mat(T v[]) {
         memcpy(vals, v, sizeof(vals));
+        _transToColMaj();
     }
     
     template <typename... Ts>
-    Mat(Ts... vals) : vals{vals...} {
-        static_assert(sizeof...(vals)==H*W, "invalid number of values");
+    Mat(Ts... vs) : vals{vs...} {
+        static_assert(sizeof...(vs)==H*W, "invalid number of values");
+        _transToColMaj();
     }
     
     // Copy constructor: use copy assignment operator
@@ -233,8 +236,8 @@ public:
         __CLPK_integer nrhs = N;
         __CLPK_integer lda = m;
         __CLPK_integer ldb = m;
-        Mat<T,W,H> A = trans(); // LAPACK requires column-major order
-        Mat<T,N,H> bx = bconst.trans(); // LAPACK requires column-major order
+        Mat<T,H,W> A = *this;
+        Mat<T,H,N> bx = bconst;
         __CLPK_integer err = 0;
         
         T work[1024] = {};
@@ -257,7 +260,15 @@ public:
             static_assert(_AlwaysFalse<T>);
         
         if (err) throw std::runtime_error("failed to solve");
-        return Mat<T,W,N>(bx.vals);
+        
+        // Fill the solution
+        Mat<T,W,N> r;
+        for (size_t y=0; y<W; y++) {
+            for (size_t x=0; x<N; x++) {
+                r.at(y,x) = bx.at(y,x);
+            }
+        }
+        return r;
     }
     
     
@@ -436,13 +447,15 @@ public:
     T& at(size_t y, size_t x) {
         assert(y < H);
         assert(x < W);
-        return vals[y*W+x];
+        // `vals` is in colum-major format
+        return vals[x*H+y];
     }
     
     const T& at(size_t y, size_t x) const {
         assert(y < H);
         assert(x < W);
-        return vals[y*W+x];
+        // `vals` is in colum-major format
+        return vals[x*H+y];
     }
     
     std::string str(int precision=6) const {
@@ -450,7 +463,7 @@ public:
         ss.precision(precision);
         for (size_t y=0; y<H; y++) {
             for (size_t x=0; x<W; x++) {
-                ss << vals[y*W+x] << " ";
+                ss << vals.at(y,x) << " ";
             }
             ss << "\n";
         }
@@ -461,10 +474,22 @@ public:
 //        return &vals[i*N];
 //    }
     
-    T vals[H*W] = {};
+    T vals[H*W] = {}; // Column-major order
     const size_t h = H;
     const size_t w = W;
     
 private:
     template <class...> static constexpr std::false_type _AlwaysFalse;
+    
+    void _transToColMaj() {
+        auto valsConst = std::make_unique<T[]>(H*W);
+        std::copy(vals, vals+std::size(vals), valsConst.get());
+        
+        if constexpr(std::is_same_v<T, float>)
+            vDSP_mtrans(valsConst.get(), 1, vals, 1, W, H);
+        else if constexpr(std::is_same_v<T, double>)
+            vDSP_mtransD(valsConst.get(), 1, vals, 1, W, H);
+        else
+            static_assert(_AlwaysFalse<T>);
+    }
 };
