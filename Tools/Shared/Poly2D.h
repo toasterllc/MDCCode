@@ -52,15 +52,15 @@ public:
         }
         printf("]\n");
         
-        auto Ainv = _A.inv();
-        auto Apinv = _A.pinv();
-        auto Adiv = Ainv/Apinv;
-        
-        printf("Ainv/Apinv:\n");
-        for (const double& x : Adiv.vals) {
-            printf("%.3f ", x);
-        }
-        printf("\n\n\n");
+//        auto Ainv = _A.inv();
+//        auto Apinv = _A.pinv();
+//        auto Adiv = Ainv/Apinv;
+//        
+//        printf("Ainv/Apinv:\n");
+//        for (const double& x : Adiv.vals) {
+//            printf("%.3f ", x);
+//        }
+//        printf("\n\n\n");
         
 //        printf("Ainv.vals[0] = %f\n", Ainv.vals[0]);
 //        printf("Apinv.vals[0] = %f\n", Apinv.vals[0]);
@@ -69,16 +69,16 @@ public:
 //        printf("Ainv.vals[1] = %f\n", Ainv.vals[1]);
 //        printf("Apinv.vals[1] = %f\n", Apinv.vals[1]);
 //        printf("/ = %f\n", Ainv.vals[1]/Apinv.vals[1]);
-        
-        exit(0);
-        
-//        printf("b=[ ");
-//        for (size_t y=0; y<_Terms; y++) {
-//            if (y) printf(";\n");
-//            printf("%.12f ", _b[y]);
-//        }
-//        printf("]\n");
+//        
 //        exit(0);
+        
+        printf("b=[ ");
+        for (size_t y=0; y<_Terms; y++) {
+            if (y) printf(";\n");
+            printf("%.12f ", _b[y]);
+        }
+        printf("]\n");
+        exit(0);
         
 //        // Solve for the 2D polynomial coefficients
 //        _x = _A.pinv()*_b;
