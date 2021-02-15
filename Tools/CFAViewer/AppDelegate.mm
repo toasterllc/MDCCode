@@ -617,9 +617,9 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
         @"%f %f %f\n"
         @"%f %f %f\n"
         @"%f %f %f\n",
-        _colorMatrix[0], _colorMatrix[1], _colorMatrix[2],
-        _colorMatrix[3], _colorMatrix[4], _colorMatrix[5],
-        _colorMatrix[6], _colorMatrix[7], _colorMatrix[8]
+        _colorMatrix.at(0,0), _colorMatrix.at(0,1), _colorMatrix.at(0,2),
+        _colorMatrix.at(1,0), _colorMatrix.at(1,1), _colorMatrix.at(1,2),
+        _colorMatrix.at(2,0), _colorMatrix.at(2,1), _colorMatrix.at(2,2)
     ]];
 }
 
@@ -966,15 +966,15 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     );
     
     [[_mainView imageLayer] setHighlightFactor:highlightFactor];
-    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[0]]];
-    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[1]]];
-    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[2]]];
-    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[3]]];
-    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[4]]];
-    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[5]]];
-    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[6]]];
-    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[7]]];
-    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[8]]];
+    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,0)]];
+    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,1)]];
+    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,2)]];
+    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,0)]];
+    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,1)]];
+    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,2)]];
+    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,0)]];
+    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,1)]];
+    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,2)]];
     [self mainViewSampleRectChanged:nil];
 }
 
@@ -990,30 +990,31 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     assert(points.size() == ColorChecker::Count);
     
     Mat<double,ColorChecker::Count,3> A; // Colors that we have
-    size_t i = 0;
+    size_t y = 0;
     for (const CGPoint& p : points) {
         Color_CamRaw_D50 c = sampleImageCircle(_image,
             round(p.x*_image.width),
             round(p.y*_image.height),
             _colorCheckerCircleRadius);
-        A[i+0] = c[0];
-        A[i+1] = c[1];
-        A[i+2] = c[2];
-        i += 3;
+        A.at(y,0) = c[0];
+        A.at(y,1) = c[1];
+        A.at(y,2) = c[2];
+        y++;
     }
     
     Mat<double,ColorChecker::Count,3> b; // Colors that we want
-    i = 0;
+    y = 0;
     for (Color_SRGB_D65 c : ColorChecker::Colors) {
         // Convert the color from SRGB -> XYZ -> XYY
-        Color_XYZ_D50 cxyy = ColorUtil::XYYFromXYZ(XYZFromSRGB(c));
-//        cxyy[2] /= 3; // Adjust luminance
+        Color_XYZ_D50 cxyy = XYYFromXYZ(XYZFromSRGB(c));
+        const Color_XYZ_D50 cxyz = XYZFromXYY(cxyy);
         
-        const Color_XYZ_D50 cxyz = ColorUtil::XYZFromXYY(cxyy);
-        b[i+0] = cxyz[0];
-        b[i+1] = cxyz[1];
-        b[i+2] = cxyz[2];
-        i += 3;
+        printf("AAA %s\n", cxyz.str().c_str());
+        
+        b.at(y,0) = cxyz[0];
+        b.at(y,1) = cxyz[1];
+        b.at(y,2) = cxyz[2];
+        y++;
     }
     
     // Print A
@@ -1041,7 +1042,7 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     }
     
     // Solve Ax=b for the color matrix
-    Mat<double,3,3> x = A.solve(b);
+    ColorMatrix x = A.solve(b);
     [self _updateColorMatrix:x];
     [self _prefsSetColorCheckerPositions:points];
     

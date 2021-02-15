@@ -227,9 +227,61 @@ public:
     }
     
     
+    
     // Solve `Ax=b` for x, where the receiver is A
     template <size_t N>
     Mat<T,W,N> solve(const Mat<T,H,N>& bconst) const {
+        static_assert(H>=W, "matrix size must have H >= W");
+        
+        __CLPK_integer h = H;
+        __CLPK_integer w = W;
+        __CLPK_integer nrhs = N;
+        Mat<T,H,W> A = *this;
+        Mat<T,H,N> bx = bconst;
+        __CLPK_integer err = 0;
+        
+        // 2 iterations: first iteration gets the size of `work`,
+        // second iteration performs calculation
+        __CLPK_integer lwork = -1;
+        for (__CLPK_integer i=0; i<2; i++) {
+            T work[std::max(1,lwork)];
+            if constexpr(std::is_same_v<T, float>)
+                sgels_(
+                    (char*)"N", &h, &w, &nrhs,
+                    A.vals, &h,
+                    bx.vals, &h,
+                    work, &lwork, &err
+                );
+                
+            else if constexpr(std::is_same_v<T, double>)
+                dgels_(
+                    (char*)"N", &h, &w, &nrhs,
+                    A.vals, &h,
+                    bx.vals, &h,
+                    work, &lwork, &err
+                );
+            
+            else
+                static_assert(_AlwaysFalse<T>);
+            
+            if (err) throw std::runtime_error("failed to solve");
+            lwork = work[0];
+        }
+        
+        // Copy each column into the destination matrix
+        Mat<T,W,N> r;
+        for (size_t x=0; x<N; x++) {
+            T* col = &bx.at(0,x);
+            std::copy(col, col+W, &r.at(0,x));
+        }
+        return r;
+    }
+    
+    
+    
+    // Solve `Ax=b` for x, where the receiver is A
+    template <size_t N>
+    Mat<T,W,N> solve22(const Mat<T,H,N>& bconst) const {
         static_assert(H>=W, "matrix size must have H >= W");
         __CLPK_integer m = H;
         __CLPK_integer n = (__CLPK_integer)W;
@@ -427,10 +479,12 @@ public:
 //    }
     
     T& operator[](size_t i) {
+        static_assert(H==1 || W==1, "subscript operator can only be used on vectors");
         return vals[i];
     }
     
     const T& operator[](size_t i) const {
+        static_assert(H==1 || W==1, "subscript operator can only be used on vectors");
         return vals[i];
     }
     
@@ -463,7 +517,7 @@ public:
         ss.precision(precision);
         for (size_t y=0; y<H; y++) {
             for (size_t x=0; x<W; x++) {
-                ss << vals.at(y,x) << " ";
+                ss << at(y,x) << " ";
             }
             ss << "\n";
         }

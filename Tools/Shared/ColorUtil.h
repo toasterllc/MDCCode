@@ -17,7 +17,7 @@ namespace ColorUtil {
         const double Y = xyz[1];
         return {x, y, Y};
     }
-
+    
     inline Color_XYZ_D50 XYZFromXYY(const Color_XYY_D50& xyy) {
         const double X = (xyy[0]*xyy[2])/xyy[1];
         const double Y = xyy[2];
@@ -30,7 +30,7 @@ namespace ColorUtil {
         if (x <= 0.0031308) return 12.92*x;
         return 1.055*pow(x, 1/2.4)-.055;
     }
-
+    
     inline double InverseSRGBGamma(double x) {
         // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
         if (x <= 0.04045) return x/12.92;

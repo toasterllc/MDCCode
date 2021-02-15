@@ -104,9 +104,9 @@ using namespace ColorUtil;
 
 static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
     return {
-        simd::float3{(float)m[0], (float)m[3], (float)m[6]},
-        simd::float3{(float)m[1], (float)m[4], (float)m[7]},
-        simd::float3{(float)m[2], (float)m[5], (float)m[8]},
+        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
+        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
+        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
     };
 }
 
@@ -168,9 +168,9 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
 
 - (void)setHighlightFactor:(const Mat<double,3,3>&)hf {
     auto lock = std::lock_guard(_state.lock);
-    _state.ctx.highlightFactorR = {(float)hf[0], (float)hf[1], (float)hf[2]};
-    _state.ctx.highlightFactorG = {(float)hf[3], (float)hf[4], (float)hf[5]};
-    _state.ctx.highlightFactorB = {(float)hf[6], (float)hf[7], (float)hf[8]};
+    _state.ctx.highlightFactorR = {(float)hf.at(0,0), (float)hf.at(0,1), (float)hf.at(0,2)};
+    _state.ctx.highlightFactorG = {(float)hf.at(1,0), (float)hf.at(1,1), (float)hf.at(1,2)};
+    _state.ctx.highlightFactorB = {(float)hf.at(2,0), (float)hf.at(2,1), (float)hf.at(2,2)};
     [self setNeedsDisplay];
 }
 
