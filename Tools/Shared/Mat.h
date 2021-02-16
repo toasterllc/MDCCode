@@ -8,18 +8,18 @@ public:
     
     Mat(const T v[]) {
         memcpy(vals, v, sizeof(vals));
-        _transToColMaj();
+        _transVals(); // Transpose `vals` to put in column-major order
     }
     
     Mat(T v[]) {
         memcpy(vals, v, sizeof(vals));
-        _transToColMaj();
+        _transVals(); // Transpose `vals` to put in column-major order
     }
     
     template <typename... Ts>
     Mat(Ts... vs) : vals{vs...} {
         static_assert(sizeof...(vs)==H*W, "invalid number of values");
-        _transToColMaj();
+        _transVals(); // Transpose `vals` to put in column-major order
     }
     
     // Copy constructor: use copy assignment operator
@@ -33,12 +33,11 @@ public:
     // Transpose
     Mat<T,W,H> trans() const {
         Mat<T,W,H> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_mtrans(vals, 1, r.vals, 1, W, H);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_mtransD(vals, 1, r.vals, 1, W, H);
-        else
-            static_assert(_AlwaysFalse<T>);
+        for (size_t y=0; y<H; y++) {
+            for (size_t x=0; x<W; x++) {
+                r.at(x,y) = at(y,x);
+            }
+        }
         return r;
     }
     
@@ -71,6 +70,7 @@ public:
         return r;
     }
     
+    // NOTE: we were in the middle of re-writing this to use the SVD method, when we discovered that using the pinv/inv isn't the best way to solve Ax=b, so we abandoned it. Keeping it around in case we need it and want to complete it in the future...
 //    // Moore-Penrose inverse
 //    Mat<T,W,H> pinv() const {
 //        Mat<T,H,H> r = *this;
@@ -130,12 +130,29 @@ public:
     
     // Matrix multiply
     template <size_t N>
-    Mat<T,H,N> operator*(const Mat<T,W,N>& x) const {
+    Mat<T,H,N> operator*(const Mat<T,W,N>& b) const {
+        const auto& a = *this;
         Mat<T,H,N> r;
         if constexpr(std::is_same_v<T, float>)
-            vDSP_mmul(vals, 1, x.vals, 1, r.vals, 1, H, N, W);
+            cblas_sgemm(
+                CblasColMajor, CblasNoTrans, CblasNoTrans,
+                (int)a.rows, (int)b.cols, (int)a.cols,
+                1, // alpha
+                a.vals, (int)a.rows,
+                b.vals, (int)b.rows,
+                0, // beta
+                r.vals, (int)r.rows
+            );
         else if constexpr(std::is_same_v<T, double>)
-            vDSP_mmulD(vals, 1, x.vals, 1, r.vals, 1, H, N, W);
+            cblas_dgemm(
+                CblasColMajor, CblasNoTrans, CblasNoTrans,
+                (int)a.rows, (int)b.cols, (int)a.cols,
+                1, // alpha
+                a.vals, (int)a.rows,
+                b.vals, (int)b.rows,
+                0, // beta
+                r.vals, (int)r.rows
+            );
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -143,72 +160,11 @@ public:
     
     // Scalar multiply
     Mat<T,H,W> operator*(const T& x) const {
-        Mat<T,H,W> r;
+        Mat<T,H,W> r = *this;
         if constexpr(std::is_same_v<T, float>)
-            vDSP_vsmul(vals, 1, &x, r.vals, 1, H*W);
+            cblas_sscal(H*W, x, vals, 1);
         else if constexpr(std::is_same_v<T, double>)
-            vDSP_vsmulD(vals, 1, &x, r.vals, 1, H*W);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    // Element-wise add
-    Mat<T,H,W> operator+(const Mat<T,H,W>& x) const {
-        Mat<T,H,W> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_vadd(vals, 1, x.vals, 1, r.vals, 1, H*W);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_vaddD(vals, 1, x.vals, 1, r.vals, 1, H*W);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    // Scalar add
-    Mat<T,H,W> operator+(const T& x) const {
-        Mat<T,H,W> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_vsadd(vals, 1, &x, r.vals, 1, H*W);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_vsaddD(vals, 1, &x, r.vals, 1, H*W);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    // Element-wise subtract
-    Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
-        Mat<T,H,W> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_vsub(vals, 1, x.vals, 1, r.vals, 1, H*W);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_vsubD(vals, 1, x.vals, 1, r.vals, 1, H*W);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    // Scalar subtract
-    Mat<T,H,W> operator-(const T& x) const {
-        const T xn = -x;
-        Mat<T,H,W> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_vsadd(vals, 1, &xn, r.vals, 1, H*W);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_vsaddD(vals, 1, &xn, r.vals, 1, H*W);
-        else
-            static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    // Element-wise divide
-    Mat<T,H,W> operator/(const Mat<T,H,W>& x) const {
-        Mat<T,H,W> r;
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_vdiv(x.vals, 1, vals, 1, r.vals, 1, H*W);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_vdivD(x.vals, 1, vals, 1, r.vals, 1, H*W);
+            cblas_dscal(H*W, x, vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -216,17 +172,76 @@ public:
     
     // Scalar divide
     Mat<T,H,W> operator/(const T& x) const {
-        Mat<T,H,W> r;
+        Mat<T,H,W> r = *this;
         if constexpr(std::is_same_v<T, float>)
-            vDSP_vsdiv(vals, 1, &x, r.vals, 1, H*W);
+            cblas_sscal(H*W, T(1)/x, vals, 1);
         else if constexpr(std::is_same_v<T, double>)
-            vDSP_vsdivD(vals, 1, &x, r.vals, 1, H*W);
+            cblas_dscal(H*W, T(1)/x, vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
     }
     
+//    // Element-wise divide
+//    Mat<T,H,W> operator/(const Mat<T,H,W>& x) const {
+//        Mat<T,H,W> r;
+//        if constexpr(std::is_same_v<T, float>)
+//            vDSP_vdiv(x.vals, 1, vals, 1, r.vals, 1, H*W);
+//        else if constexpr(std::is_same_v<T, double>)
+//            vDSP_vdivD(x.vals, 1, vals, 1, r.vals, 1, H*W);
+//        else
+//            static_assert(_AlwaysFalse<T>);
+//        return r;
+//    }
     
+    // Element-wise add
+    Mat<T,H,W> operator+(const Mat<T,H,W>& x) const {
+        Mat<T,H,W> r = *this;
+        if constexpr(std::is_same_v<T, float>)
+            catlas_saxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
+        else if constexpr(std::is_same_v<T, double>)
+            catlas_daxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+//    // Scalar add
+//    Mat<T,H,W> operator+(const T& x) const {
+//        Mat<T,H,W> r;
+//        if constexpr(std::is_same_v<T, float>)
+//            vDSP_vsadd(vals, 1, &x, r.vals, 1, H*W);
+//        else if constexpr(std::is_same_v<T, double>)
+//            vDSP_vsaddD(vals, 1, &x, r.vals, 1, H*W);
+//        else
+//            static_assert(_AlwaysFalse<T>);
+//        return r;
+//    }
+    
+    // Element-wise subtract
+    Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
+        Mat<T,H,W> r = *this;
+        if constexpr(std::is_same_v<T, float>)
+            catlas_saxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
+        else if constexpr(std::is_same_v<T, double>)
+            catlas_daxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+//    // Scalar subtract
+//    Mat<T,H,W> operator-(const T& x) const {
+//        const T xn = -x;
+//        Mat<T,H,W> r;
+//        if constexpr(std::is_same_v<T, float>)
+//            vDSP_vsadd(vals, 1, &xn, r.vals, 1, H*W);
+//        else if constexpr(std::is_same_v<T, double>)
+//            vDSP_vsaddD(vals, 1, &xn, r.vals, 1, H*W);
+//        else
+//            static_assert(_AlwaysFalse<T>);
+//        return r;
+//    }
     
     // Solve `Ax=b` for x, where the receiver is A
     template <size_t N>
@@ -529,21 +544,24 @@ public:
 //    }
     
     T vals[H*W] = {}; // Column-major order
-    const size_t h = H;
-    const size_t w = W;
+    static constexpr size_t h = H;
+    static constexpr size_t w = W;
+    static constexpr size_t rows = H;
+    static constexpr size_t cols = W;
     
 private:
     template <class...> static constexpr std::false_type _AlwaysFalse;
     
-    void _transToColMaj() {
-        auto valsConst = std::make_unique<T[]>(H*W);
+    void _transVals() {
+        // Transpose `vals`
+        // Create a temporary copy of `vals`
+        auto valsConst = std::make_unique<T[]>(std::size(vals));
         std::copy(vals, vals+std::size(vals), valsConst.get());
         
-        if constexpr(std::is_same_v<T, float>)
-            vDSP_mtrans(valsConst.get(), 1, vals, 1, W, H);
-        else if constexpr(std::is_same_v<T, double>)
-            vDSP_mtransD(valsConst.get(), 1, vals, 1, W, H);
-        else
-            static_assert(_AlwaysFalse<T>);
+        for (size_t y=0, i=0; y<H; y++) {
+            for (size_t x=0; x<W; x++, i++) {
+                at(y,x) = valsConst[i];
+            }
+        }
     }
 };

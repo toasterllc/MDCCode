@@ -1009,40 +1009,14 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
         Color_XYZ_D50 cxyy = XYYFromXYZ(XYZFromSRGB(c));
         const Color_XYZ_D50 cxyz = XYZFromXYY(cxyy);
         
-        printf("AAA %s\n", cxyz.str().c_str());
-        
         b.at(y,0) = cxyz[0];
         b.at(y,1) = cxyz[1];
         b.at(y,2) = cxyz[2];
         y++;
     }
     
-    // Print A
-    {
-        printf("A=[ ");
-        for (size_t y=0; y<A.h; y++) {
-            if (y) printf("; ");
-            for (size_t x=0; x<A.w; x++) {
-                printf("%.15f ", A.at(y,x));
-            }
-        }
-        printf("]\n");
-    }
-    
-    // Print b
-    {
-        printf("b=[ ");
-        for (size_t y=0; y<b.h; y++) {
-            if (y) printf("; ");
-            for (size_t x=0; x<b.w; x++) {
-                printf("%.15f ", b.at(y,x));
-            }
-        }
-        printf("]\n");
-    }
-    
     // Solve Ax=b for the color matrix
-    ColorMatrix x = A.solve(b);
+    ColorMatrix x = A.solve(b).trans();
     [self _updateColorMatrix:x];
     [self _prefsSetColorCheckerPositions:points];
     

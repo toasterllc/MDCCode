@@ -53,6 +53,7 @@ namespace ColorUtil {
         
         // SRGB -> linear SRGB
         const Color3 lsrgb_d65(InverseSRGBGamma(srgb_d65[0]), InverseSRGBGamma(srgb_d65[1]), InverseSRGBGamma(srgb_d65[2]));
+        
         // Linear SRGB -> XYZ.D65 -> XYZ.D50
         return XYZD50_From_XYZD65 * XYZD65_From_LSRGBD65 * lsrgb_d65;
     }
