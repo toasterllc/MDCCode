@@ -43,14 +43,17 @@ public:
             _addPoint(wts.at(wti), pts.at(pti+0), pts.at(pti+1), pts.at(pti+2));
         }
         
-        printf("A=[ ");
-        for (size_t y=0; y<_Terms; y++) {
-            if (y) printf("; ");
-            for (size_t x=0; x<_Terms; x++) {
-                printf("%.12f ", _A.at(y,x));
-            }
-        }
-        printf("]\n");
+        printf("A=%s\n", _A.str().c_str());
+        printf("b=%s\n", _b.str().c_str());
+        
+//        printf("A=[ ");
+//        for (size_t y=0; y<_Terms; y++) {
+//            if (y) printf("; ");
+//            for (size_t x=0; x<_Terms; x++) {
+//                printf("%.12f ", _A.at(y,x));
+//            }
+//        }
+//        printf("]\n");
         
 //        auto Ainv = _A.inv();
 //        auto Apinv = _A.pinv();
@@ -72,13 +75,13 @@ public:
 //        
 //        exit(0);
         
-        printf("b=[ ");
-        for (size_t y=0; y<_Terms; y++) {
-            if (y) printf(";\n");
-            printf("%.12f ", _b[y]);
-        }
-        printf("]\n");
-        exit(0);
+//        printf("b=[ ");
+//        for (size_t y=0; y<_Terms; y++) {
+//            if (y) printf(";\n");
+//            printf("%.12f ", _b[y]);
+//        }
+//        printf("]\n");
+//        exit(0);
         
 //        // Solve for the 2D polynomial coefficients
 //        _x = _A.pinv()*_b;
@@ -93,12 +96,17 @@ public:
 //            _x = _A.pinv()*_b;
 //        } else {
 //            // Solve for the 2D polynomial coefficients
-            _x = _A.inv()*_b;
+//            _x = _A.inv()*_b;
 //        }
         
-        count++;
+//        count++;
         
-
+        _x = _A.solve(_b);
+        
+//        printf("_A.solve(_b)=%s\n", _A.solve(_b).str().c_str());
+//        printf("_A.solve22(_b)=%s\n", _A.solve22(_b).str().c_str());
+//        printf("_A.solve2(_b)=%s\n", _A.solve2(_b).str().c_str());
+//        exit(0);
         
 //        printf("z = ");
 //        for (int y=0, i=0; y<Order; y++) {

@@ -162,9 +162,9 @@ public:
     Mat<T,H,W> operator*(const T& x) const {
         Mat<T,H,W> r = *this;
         if constexpr(std::is_same_v<T, float>)
-            cblas_sscal(H*W, x, vals, 1);
+            cblas_sscal(H*W, x, r.vals, 1);
         else if constexpr(std::is_same_v<T, double>)
-            cblas_dscal(H*W, x, vals, 1);
+            cblas_dscal(H*W, x, r.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -174,9 +174,9 @@ public:
     Mat<T,H,W> operator/(const T& x) const {
         Mat<T,H,W> r = *this;
         if constexpr(std::is_same_v<T, float>)
-            cblas_sscal(H*W, T(1)/x, vals, 1);
+            cblas_sscal(H*W, T(1)/x, r.vals, 1);
         else if constexpr(std::is_same_v<T, double>)
-            cblas_dscal(H*W, T(1)/x, vals, 1);
+            cblas_dscal(H*W, T(1)/x, r.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -530,12 +530,15 @@ public:
     std::string str(int precision=6) const {
         std::stringstream ss;
         ss.precision(precision);
+        ss << "[ ";
         for (size_t y=0; y<H; y++) {
             for (size_t x=0; x<W; x++) {
-                ss << at(y,x) << " ";
+                ss << at(y,x);
+                if (x != W-1) ss << " ";
             }
-            ss << "\n";
+            if (y != H-1) ss << " ;" << "\n";
         }
+        ss << " ]";
         return ss.str();
     }
     
