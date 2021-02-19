@@ -285,41 +285,43 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
     
-//    // Pass-through (bilinear debayer only)
-//    {
-//        // Load the pixels into a texture
-//        {
-//            [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_LoadRaw"
-//                block:^(id<MTLRenderCommandEncoder> encoder) {
-//                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                    [encoder setFragmentBuffer:_state.pixelData offset:0 atIndex:1];
-//                    [encoder setFragmentBuffer:_state.sampleBuf_CamRaw_D50 offset:0 atIndex:2];
-//                }
-//            ];
-//        }
-//        
-//        // De-bayer render pass
-//        {
-//            // ImageLayer_DebayerBilinear
-//            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DebayerBilinear"
-//                block:^(id<MTLRenderCommandEncoder> encoder) {
-//                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                    [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
-//                }
-//            ];
-//        }
-//        
-//        // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-//        {
-//            [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer_Display"
-//                block:^(id<MTLRenderCommandEncoder> encoder) {
-//                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                    [encoder setFragmentTexture:txt atIndex:0];
-//                }
-//            ];
-//        }
-//    }
+    // Pass-through (bilinear debayer only)
+//    if (false)
+    {
+        // Load the pixels into a texture
+        {
+            [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_LoadRaw"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentBuffer:_state.pixelData offset:0 atIndex:1];
+                    [encoder setFragmentBuffer:_state.sampleBuf_CamRaw_D50 offset:0 atIndex:2];
+                }
+            ];
+        }
+        
+        // De-bayer render pass
+        {
+            // ImageLayer_DebayerBilinear
+            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer_DebayerBilinear"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
+                }
+            ];
+        }
+        
+        // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
+        {
+            [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer_Display"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:txt atIndex:0];
+                }
+            ];
+        }
+    }
     
+    if (false)
     {
         // Load the pixels into a texture
         {
@@ -818,16 +820,16 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                 }
             ];
         }
-        
-        // If outTxt isn't framebuffer-only, then do a blit-sync, which is
-        // apparently required for [outTxt getBytes:] to work, which
-        // -CGImage uses.
-        {
-            if (![outTxt isFramebufferOnly]) {
-                id<MTLBlitCommandEncoder> blit = [cmdBuf blitCommandEncoder];
-                [blit synchronizeTexture:outTxt slice:0 level:0];
-                [blit endEncoding];
-            }
+    }
+    
+    // If outTxt isn't framebuffer-only, then do a blit-sync, which is
+    // apparently required for [outTxt getBytes:] to work, which
+    // -CGImage uses.
+    {
+        if (![outTxt isFramebufferOnly]) {
+            id<MTLBlitCommandEncoder> blit = [cmdBuf blitCommandEncoder];
+            [blit synchronizeTexture:outTxt slice:0 level:0];
+            [blit endEncoding];
         }
     }
     
