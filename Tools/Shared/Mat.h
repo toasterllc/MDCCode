@@ -233,12 +233,12 @@ public:
     
     T* col(size_t x) {
         assert(x < W);
-        return vals[x*H];
+        return &vals[x*H];
     }
     
     const T* col(size_t x) const {
         assert(x < W);
-        return vals[x*H];
+        return &vals[x*H];
     }
     
     std::string str(int precision=6) const {
