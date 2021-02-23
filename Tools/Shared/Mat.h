@@ -231,6 +231,16 @@ public:
         return vals[x*H+y];
     }
     
+    T* col(size_t x) {
+        assert(x < W);
+        return vals[x*H];
+    }
+    
+    const T* col(size_t x) const {
+        assert(x < W);
+        return vals[x*H];
+    }
+    
     std::string str(int precision=6) const {
         std::stringstream ss;
         ss.precision(precision);
