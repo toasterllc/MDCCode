@@ -43,7 +43,7 @@ namespace Interp::Linear {
 
 #pragma mark - Linear4
 namespace Interp::Linear4 {
-    struct InterpOffset {
+    struct Dir {
         ssize_t y = 0;
         ssize_t x = 0;
         
@@ -56,16 +56,16 @@ namespace Interp::Linear4 {
         }
     };
     
-    // Returns a row of `A` (for the matrix equation `Ax=b`) for a given offset `off`
-    Mat<double,16,1> calcA(const Mat<double,3,3>& a, const InterpOffset& off) {
-        // Fill in the terms of `A` in the correct slot for the sign of `off`
+    // Returns a row of `A` (for the matrix equation `Ax=b`) for a given direction `dir`
+    Mat<double,16,1> calcA(const Mat<double,3,3>& a, const Dir& dir) {
+        // Fill in the terms of `A` in the correct slot for the direction `dir`
         Mat<double,16,1> A;
         const Mat<double,4,1> terms = Linear::interp2D({
-            a.at(1      ,1), a.at(1      ,1+off.x),
-            a.at(1+off.y,1), a.at(1+off.y,1+off.x)
+            a.at(1      ,1), a.at(1      ,1+dir.x),
+            a.at(1+dir.y,1), a.at(1+dir.y,1+dir.x)
         });
         
-        for (size_t i=0, y=4*off.index(); i<4; i++, y++) {
+        for (size_t i=0, y=4*dir.index(); i<4; i++, y++) {
             A[y] = terms[i];
         }
         return A;
@@ -75,7 +75,7 @@ namespace Interp::Linear4 {
     Mat<double,1,1> calcb(const Mat<double,3,3>& a) {
         constexpr double Y = -4.5;
         constexpr double X = 9;
-        const InterpOffset YXOff = {(Y>=0?1:-1), (X>=0?1:-1)};
+        const Dir YXOff = {(Y>=0?1:-1), (X>=0?1:-1)};
         
         // Calculate each term: ky^y * kx^x
         Mat<double,1,16> yx;
@@ -135,7 +135,7 @@ namespace Interp::Cubic {
         }
         return r;
     }
-
+    
     Mat<double,16,1> interp2D(const Mat<double,4,4>& z) {
         return interp( // Interpolate along Y axis
             interp<1>(z.at(0,0), z.at(0,1), z.at(0,2), z.at(0,3)), // Interpolate along X axis (point set 0)
