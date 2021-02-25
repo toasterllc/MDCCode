@@ -17,14 +17,14 @@ namespace Interp::Linear {
         }
         return r;
     }
-
+    
     Mat<double,4,1> interp2D(const Mat<double,2,2>& a) {
         return interp( // Interpolate along Y axis
             interp<1>({a.at(0,0)}, {a.at(0,1)}), // Interpolate along X axis (first set of points)
             interp<1>({a.at(1,0)}, {a.at(1,1)})  // Interpolate along X axis (second set of points)
         );
     }
-
+    
     // Returns a row of `b` for the matrix equation `Ax=b`
     Mat<double,1,1> calcb(const Mat<double,2,2>& a) {
         // Calculate each term: ky^y * kx^x
@@ -101,6 +101,55 @@ namespace Interp::Linear4 {
         }
         
         return yx*bcol;
+    }
+}
+
+
+
+
+
+
+
+#pragma mark - Quadratic
+namespace Interp::Quadratic {
+    // interp() computes `k2 x^2 + k1 x + k0` (where k2/k1/k0 are set such that
+    // f(-1)=a0, f(0)=a1, and f(1)=a2) and stores the terms as separate rows in
+    // the result matrix. 
+    // Since the result represents the individual terms of the interpolation,
+    // it can be used as a row of `A` in the matrix equation `Ax=b`, to solve
+    // for `x`.
+    template <size_t H>
+    Mat<double,H*3,1> interp(Mat<double,H,1> a0, Mat<double,H,1> a1, Mat<double,H,1> a2) {
+        Mat<double,H*3,1> r;
+        for (size_t y=0; y<H; y++) {
+            r[0*H+y] = +.5*a0[y]-1.*a1[y]+.5*a2[y]; // x^2 term
+            r[1*H+y] = -.5*a0[y]         +.5*a2[y]; // x^1 term
+            r[2*H+y] =                   +1.*a2[y]; // x^0 term
+        }
+        return r;
+    }
+    
+    Mat<double,9,1> interp2D(const Mat<double,3,3>& a) {
+        return interp( // Interpolate along Y axis
+            interp<1>({a.at(0,0)}, {a.at(0,1)}, {a.at(0,2)}), // Interpolate along X axis (first set of points)
+            interp<1>({a.at(1,0)}, {a.at(1,1)}, {a.at(1,2)}), // Interpolate along X axis (second set of points)
+            interp<1>({a.at(2,0)}, {a.at(2,1)}, {a.at(2,2)})  // Interpolate along X axis (third set of points)
+        );
+    }
+    
+    // Returns a row of `b` for the matrix equation `Ax=b`
+    Mat<double,1,1> calcb(const Mat<double,3,3>& a) {
+        // Calculate each term: ky^y * kx^x
+        constexpr double Y = -4.5;
+        constexpr double X = 9;
+        Mat<double,1,9> yx;
+        for (ssize_t y=2, i=0; y>=0; y--) {
+            for (ssize_t x=2; x>=0; x--, i++) {
+                yx.at(i) = pow(Y,y)*pow(X,x);
+            }
+        }
+        
+        return yx*interp2D(a);
     }
 }
 
