@@ -1,6 +1,22 @@
+#pragma once
 #import "Mat.h"
 
 #pragma mark - Linear
+
+namespace Interp {
+    // Returns `x` for the matrix equation `Ax=b`
+    template <size_t Order>
+    Mat<double,1,(Order+1)*(Order+1)> calcTerms2D(double ky, double kx) {
+        // Calculate each term: ky^y * kx^x
+        Mat<double,1,(Order+1)*(Order+1)> yx;
+        for (ssize_t y=Order, i=0; y>=0; y--) {
+            for (ssize_t x=Order; x>=0; x--, i++) {
+                yx.at(i) = pow(ky,y)*pow(kx,x);
+            }
+        }
+        return yx;
+    }
+}
 
 namespace Interp::Linear {
     // interp() computes (a1-a0)x+b and stores the terms as separate
@@ -25,20 +41,32 @@ namespace Interp::Linear {
         );
     }
     
-    // Returns a row of `b` for the matrix equation `Ax=b`
-    Mat<double,1,1> calcb(const Mat<double,2,2>& a) {
-        // Calculate each term: ky^y * kx^x
-        constexpr double Y = -4.5;
-        constexpr double X = 9;
-        Mat<double,1,4> yx;
-        for (ssize_t y=1, i=0; y>=0; y--) {
-            for (ssize_t x=1; x>=0; x--, i++) {
-                yx.at(i) = pow(Y,y)*pow(X,x);
-            }
-        }
-        
-        return yx*interp2D(a);
-    }
+//    // Returns `x` for the matrix equation `Ax=b`
+//    Mat<double,1,4> calcTerms2D(double ky, double kx) {
+//        // Calculate each term: ky^y * kx^x
+//        Mat<double,1,4> yx;
+//        for (ssize_t y=1, i=0; y>=0; y--) {
+//            for (ssize_t x=1; x>=0; x--, i++) {
+//                yx.at(i) = pow(ky,y)*pow(kx,x);
+//            }
+//        }
+//        return yx;
+//    }
+//    
+//    // Returns a row of `b` for the matrix equation `Ax=b`
+//    Mat<double,1,1> calcb(const Mat<double,2,2>& a) {
+//        // Calculate each term: ky^y * kx^x
+//        constexpr double Y = -4.5;
+//        constexpr double X = 9;
+//        Mat<double,1,4> yx;
+//        for (ssize_t y=1, i=0; y>=0; y--) {
+//            for (ssize_t x=1; x>=0; x--, i++) {
+//                yx.at(i) = pow(Y,y)*pow(X,x);
+//            }
+//        }
+//        
+//        return yx*interp2D(a);
+//    }
 }
 
 #pragma mark - Linear4
@@ -137,20 +165,17 @@ namespace Interp::Quadratic {
         );
     }
     
-    // Returns a row of `b` for the matrix equation `Ax=b`
-    Mat<double,1,1> calcb(const Mat<double,3,3>& a) {
-        // Calculate each term: ky^y * kx^x
-        constexpr double Y = -4.5;
-        constexpr double X = 9;
-        Mat<double,1,9> yx;
-        for (ssize_t y=2, i=0; y>=0; y--) {
-            for (ssize_t x=2; x>=0; x--, i++) {
-                yx.at(i) = pow(Y,y)*pow(X,x);
-            }
-        }
-        
-        return yx*interp2D(a);
-    }
+//    // Returns `x` for the matrix equation `Ax=b`
+//    Mat<double,1,9> calcTerms2D(double ky, double kx) {
+//        // Calculate each term: ky^y * kx^x
+//        Mat<double,1,9> yx;
+//        for (ssize_t y=2, i=0; y>=0; y--) {
+//            for (ssize_t x=2; x>=0; x--, i++) {
+//                yx.at(i) = pow(ky,y)*pow(kx,x);
+//            }
+//        }
+//        return yx;
+//    }
 }
 
 
