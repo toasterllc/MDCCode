@@ -152,7 +152,7 @@ namespace Interp::Quadratic {
         for (size_t y=0; y<H; y++) {
             r[0*H+y] = +.5*a0[y]-1.*a1[y]+.5*a2[y]; // x^2 term
             r[1*H+y] = -.5*a0[y]         +.5*a2[y]; // x^1 term
-            r[2*H+y] =                   +1.*a2[y]; // x^0 term
+            r[2*H+y] =          +1.*a1[y]         ; // x^0 term
         }
         return r;
     }
