@@ -24,6 +24,7 @@ using namespace ColorUtil;
     
     struct {
         std::mutex lock; // Protects this struct
+        bool rawMode = false;
         RenderContext ctx;
         bool debayerLMMSEGammaEnabled = false;
         ImageAdjustments imageAdjustments;
@@ -99,6 +100,12 @@ using namespace ColorUtil;
     
     const CGFloat scale = [self contentsScale];
     [self setBounds:{0, 0, _state.ctx.imageWidth/scale, _state.ctx.imageHeight/scale}];
+    [self setNeedsDisplay];
+}
+
+- (void)setRawMode:(bool)rawMode {
+    auto lock = std::lock_guard(_state.lock);
+    _state.rawMode = rawMode;
     [self setNeedsDisplay];
 }
 
@@ -285,9 +292,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
     
-    // Pass-through (bilinear debayer only)
-//    if (false)
-    {
+    // Raw mode (bilinear debayer only)
+    if (_state.rawMode) {
         // Load the pixels into a texture
         {
             [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_LoadRaw"
@@ -319,10 +325,8 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                 }
             ];
         }
-    }
     
-    if (false)
-    {
+    } else {
         // Load the pixels into a texture
         {
             [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer_LoadRaw"

@@ -136,9 +136,33 @@ public:
         return r;
     }
     
+    // Element-wise add-assign
+    Mat<T,H,W> operator+=(const Mat<T,H,W>& x) {
+        Mat<T,H,W>& r = *this;
+        if constexpr(std::is_same_v<T, float>)
+            catlas_saxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
+        else if constexpr(std::is_same_v<T, double>)
+            catlas_daxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
     // Element-wise subtract
     Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
+        if constexpr(std::is_same_v<T, float>)
+            catlas_saxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
+        else if constexpr(std::is_same_v<T, double>)
+            catlas_daxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
+        else
+            static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Element-wise subtract-assign
+    Mat<T,H,W> operator-=(const Mat<T,H,W>& x) {
+        Mat<T,H,W>& r = *this;
         if constexpr(std::is_same_v<T, float>)
             catlas_saxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
         else if constexpr(std::is_same_v<T, double>)

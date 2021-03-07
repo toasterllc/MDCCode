@@ -30,6 +30,7 @@ namespace CFAViewer::ImageLayerTypes {
 @interface ImageLayer : CAMetalLayer
 
 - (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)image;
+- (void)setRawMode:(bool)rawMode;
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
 - (void)setDebayerLMMSEGammaEnabled:(bool)en;
 - (void)setImageAdjustments:(const CFAViewer::ImageLayerTypes::ImageAdjustments&)adj;
