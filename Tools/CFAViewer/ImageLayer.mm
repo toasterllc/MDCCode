@@ -338,6 +338,16 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
             ];
         }
         
+        // Fix highlights
+        {
+            [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_FixHighlightsRaw"
+                block:^(id<MTLRenderCommandEncoder> encoder) {
+                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                    [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
+                }
+            ];
+        }
+        
         // Scale blue channel
         {
             // Interpolate blue channel
@@ -404,16 +414,6 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
                     }
                 ];
             }
-        }
-        
-        // Fix highlights
-        {
-            [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer_FixHighlightsRaw"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
-                }
-            ];
         }
         
         // LMMSE Debayer
