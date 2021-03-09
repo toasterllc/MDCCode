@@ -1,7 +1,14 @@
 #import "MetalTypes.h"
+#import "Enum.h"
 
 namespace CFAViewer {
     namespace ImageLayerTypes {
+        Enum(uint8_t, PxColor, PxColors,
+            Red     = 0,
+            Green   = 1,
+            Blue    = 2,
+        );
+        
         struct RenderContext {
             simd::float3x3 colorMatrix = {
                 simd::float3{1,0,0},
@@ -33,9 +40,16 @@ namespace CFAViewer {
             uint32_t imageWidth = 0;
             uint32_t imageHeight = 0;
             
-            // Returns the number of image pixels that will be rendered
-            uint32_t pixelCount() const {
-                return imageWidth*imageHeight;
+            PxColor cfa[2][2] = {{
+                PxColors::Green,
+                PxColors::Red,
+            }, {
+                PxColors::Blue,
+                PxColors::Green,
+            }};
+            
+            PxColor cfaColor(size_t x, size_t y) MetalConst {
+                return cfa[y&1][x&1];
             }
         };
     };

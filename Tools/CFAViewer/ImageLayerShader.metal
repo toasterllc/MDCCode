@@ -1,15 +1,13 @@
 #import <metal_stdlib>
+#import "ImageLayerShaderTypes.h"
 #import "ImageLayerTypes.h"
 using namespace metal;
 using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
 
-struct VertexOutput {
-    float4 pos [[position]];
-    float2 posUnit;
-};
+namespace ImageLayer {
 
-vertex VertexOutput ImageLayer_VertexShader(
+vertex VertexOutput VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
@@ -650,7 +648,7 @@ float3 LuvFromLCHuv(float3 c_LCHuv) {
     return {L,u,v};
 }
 
-fragment float ImageLayer_LoadRaw(
+fragment float LoadRaw(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
     device float3* samples [[buffer(2)]],
@@ -729,7 +727,7 @@ float InverseSRGBGamma(float x) {
     return pow((x+.055)/1.055, 2.4);
 }
 
-fragment float ImageLayer_DebayerLMMSE_Gamma(
+fragment float DebayerLMMSE_Gamma(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -737,7 +735,7 @@ fragment float ImageLayer_DebayerLMMSE_Gamma(
     return SRGBGamma(sampleR(rawTxt, in.pos));
 }
 
-fragment float4 ImageLayer_DebayerLMMSE_Degamma(
+fragment float4 DebayerLMMSE_Degamma(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -746,13 +744,13 @@ fragment float4 ImageLayer_DebayerLMMSE_Degamma(
     return float4(InverseSRGBGamma(c.r), InverseSRGBGamma(c.g), InverseSRGBGamma(c.b), 1);
 }
 
-fragment float ImageLayer_DebayerLMMSE_Interp5(
+fragment float DebayerLMMSE_Interp5(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& h [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos(in.pos.x, in.pos.y);
     return  -.25*sampleR(rawTxt, pos, {h?-2:+0,!h?-2:+0})   +
             +0.5*sampleR(rawTxt, pos, {h?-1:+0,!h?-1:+0})   +
             +0.5*sampleR(rawTxt, pos, {h?+0:+0,!h?+0:+0})   +
@@ -760,7 +758,7 @@ fragment float ImageLayer_DebayerLMMSE_Interp5(
             -.25*sampleR(rawTxt, pos, {h?+2:+0,!h?+2:+0})   ;
 }
 
-fragment float ImageLayer_DebayerLMMSE_NoiseEst(
+fragment float DebayerLMMSE_NoiseEst(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> filteredTxt [[texture(1)]],
@@ -775,13 +773,13 @@ fragment float ImageLayer_DebayerLMMSE_NoiseEst(
     else        return filtered-raw;
 }
 
-fragment float ImageLayer_DebayerLMMSE_Smooth9(
+fragment float DebayerLMMSE_Smooth9(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& h [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos(in.pos.x, in.pos.y);
     return  0.0312500*sampleR(rawTxt, pos, {h?-4:+0,!h?-4:+0})     +
             0.0703125*sampleR(rawTxt, pos, {h?-3:+0,!h?-3:+0})     +
             0.1171875*sampleR(rawTxt, pos, {h?-2:+0,!h?-2:+0})     +
@@ -795,7 +793,7 @@ fragment float ImageLayer_DebayerLMMSE_Smooth9(
 
 constant bool UseZhangCodeEst = false;
 
-fragment float4 ImageLayer_DebayerLMMSE_CalcG(
+fragment float4 DebayerLMMSE_CalcG(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> filteredHTxt [[texture(1)]],
@@ -804,7 +802,7 @@ fragment float4 ImageLayer_DebayerLMMSE_CalcG(
     texture2d<float> diffVTxt [[texture(4)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos(in.pos.x, in.pos.y);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool blue = ((pos.y%2) && !(pos.x%2));
     const float raw = sampleR(rawTxt, pos);
@@ -894,7 +892,7 @@ fragment float4 ImageLayer_DebayerLMMSE_CalcG(
     return float4(0, g, 0, 1);
 }
 
-fragment float ImageLayer_DebayerLMMSE_CalcDiffGRGB(
+fragment float DebayerLMMSE_CalcDiffGRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& modeGR [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
@@ -949,7 +947,7 @@ float diagAvg(texture2d<float> txt, uint2 pos) {
     }
 }
 
-fragment float ImageLayer_DebayerLMMSE_CalcDiagAvgDiffGRGB(
+fragment float DebayerLMMSE_CalcDiagAvgDiffGRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant bool& modeGR [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
@@ -1001,7 +999,7 @@ float axialAvg(texture2d<float> txt, uint2 pos) {
     }
 }
 
-fragment float ImageLayer_DebayerLMMSE_CalcAxialAvgDiffGRGB(
+fragment float DebayerLMMSE_CalcAxialAvgDiffGRGB(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
@@ -1018,7 +1016,7 @@ fragment float ImageLayer_DebayerLMMSE_CalcAxialAvgDiffGRGB(
     return sampleR(diffTxt, pos);
 }
 
-fragment float4 ImageLayer_DebayerLMMSE_CalcRB(
+fragment float4 DebayerLMMSE_CalcRB(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     texture2d<float> diffGR [[texture(1)]],
@@ -1034,9 +1032,9 @@ fragment float4 ImageLayer_DebayerLMMSE_CalcRB(
 
 
 
-// This is just 2 passes of ImageLayer_NoiseEst combined into 1
+// This is just 2 passes of NoiseEst combined into 1
 // TODO: profile this again. remember though that the -nextDrawable/-waitUntilCompleted pattern will cause our minimum render time to be the display refresh rate (16ms). so instead, for each iteration, we should only count the time _after_ -nextDrawable completes to the time after -waitUntilCompleted completes
-//fragment void ImageLayer_NoiseEst2(
+//fragment void NoiseEst2(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    texture2d<float> rawTxt [[texture(0)]],
 //    texture2d<float> filteredHTxt [[texture(1)]],
@@ -1066,7 +1064,7 @@ fragment float4 ImageLayer_DebayerLMMSE_CalcRB(
 
 
 
-float ImageLayer_DebayerBilinear_R(texture2d<float> rawTxt, uint2 pos) {
+float DebayerBilinear_R(texture2d<float> rawTxt, uint2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1102,7 +1100,7 @@ float ImageLayer_DebayerBilinear_R(texture2d<float> rawTxt, uint2 pos) {
     }
 }
 
-float ImageLayer_DebayerBilinear_G(texture2d<float> rawTxt, uint2 pos) {
+float DebayerBilinear_G(texture2d<float> rawTxt, uint2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1137,7 +1135,7 @@ float ImageLayer_DebayerBilinear_G(texture2d<float> rawTxt, uint2 pos) {
     }
 }
 
-float ImageLayer_DebayerBilinear_B(texture2d<float> rawTxt, uint2 pos) {
+float DebayerBilinear_B(texture2d<float> rawTxt, uint2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1172,16 +1170,16 @@ float ImageLayer_DebayerBilinear_B(texture2d<float> rawTxt, uint2 pos) {
 
 
 
-fragment float4 ImageLayer_DebayerBilinear(
+fragment float4 DebayerBilinear(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
     return float4(
-        ImageLayer_DebayerBilinear_R(rawTxt, pos),
-        ImageLayer_DebayerBilinear_G(rawTxt, pos),
-        ImageLayer_DebayerBilinear_B(rawTxt, pos),
+        DebayerBilinear_R(rawTxt, pos),
+        DebayerBilinear_G(rawTxt, pos),
+        DebayerBilinear_B(rawTxt, pos),
         1
     );
 }
@@ -1198,17 +1196,17 @@ fragment float4 ImageLayer_DebayerBilinear(
 
 
 
-fragment float ImageLayer_InterpolateBlue(
+fragment float InterpolateBlue(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
-    return ImageLayer_DebayerBilinear_B(rawTxt, pos);
+    return DebayerBilinear_B(rawTxt, pos);
 }
 
 
-fragment float ImageLayer_ScaleBlue(
+fragment float ScaleBlue(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> blueTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1222,7 +1220,7 @@ fragment float ImageLayer_ScaleBlue(
     return blueTxt.sample(filter::linear, pos).r;
 }
 
-fragment float ImageLayer_ResampleBlue(
+fragment float ResampleBlue(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> blueTxt [[texture(1)]],
@@ -1242,17 +1240,17 @@ fragment float ImageLayer_ResampleBlue(
 
 
 
-fragment float ImageLayer_InterpolateRed(
+fragment float InterpolateRed(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
-    return ImageLayer_DebayerBilinear_R(rawTxt, pos);
+    return DebayerBilinear_R(rawTxt, pos);
 }
 
 
-fragment float ImageLayer_ScaleRed(
+fragment float ScaleRed(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> redTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1266,7 +1264,7 @@ fragment float ImageLayer_ScaleRed(
     return redTxt.sample(filter::linear, pos).r;
 }
 
-fragment float ImageLayer_ResampleRed(
+fragment float ResampleRed(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> redTxt [[texture(1)]],
@@ -1282,7 +1280,7 @@ fragment float ImageLayer_ResampleRed(
 
 
 
-//fragment float4 ImageLayer_DebayerBilinear(
+//fragment float4 DebayerBilinear(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    constant ImagePixel* pxs [[buffer(1)]],
 //    device float3* samples [[buffer(2)]],
@@ -1315,7 +1313,7 @@ fragment float ImageLayer_ResampleRed(
 ////    return float4(1, 0, 0, 1);
 //}
 
-fragment float4 ImageLayer_Downsample(
+fragment float4 Downsample(
     constant RenderContext& ctx [[buffer(0)]],
     constant uint8_t& downsampleFactor [[buffer(1)]],
     texture2d<float> texture [[texture(0)]],
@@ -1338,7 +1336,7 @@ fragment float4 ImageLayer_Downsample(
     return c;
 }
 
-fragment float4 ImageLayer_DebayerLMMSE(
+fragment float4 DebayerLMMSE(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImagePixel* pxs [[buffer(1)]],
     VertexOutput in [[stage_in]]
@@ -1354,7 +1352,7 @@ fragment float4 ImageLayer_DebayerLMMSE(
     return float4(c, 1);
 }
 
-fragment float4 ImageLayer_XYZD50FromCameraRaw(
+fragment float4 XYZD50FromCameraRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1365,7 +1363,7 @@ fragment float4 ImageLayer_XYZD50FromCameraRaw(
     return float4(outputColor_XYZD50, 1);
 }
 
-fragment float4 ImageLayer_XYYD50FromCameraRaw(
+fragment float4 XYYD50FromCameraRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1377,7 +1375,7 @@ fragment float4 ImageLayer_XYYD50FromCameraRaw(
     return float4(c, 1);
 }
 
-fragment float4 ImageLayer_Exposure(
+fragment float4 Exposure(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& exposure [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1419,7 +1417,7 @@ float notshadows(float x) {
 
 
 
-fragment float4 ImageLayer_Brightness(
+fragment float4 Brightness(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& brightness [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1440,7 +1438,7 @@ fragment float4 ImageLayer_Brightness(
 
 
 
-//fragment float4 ImageLayer_Brightness(
+//fragment float4 Brightness(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    constant float& brightness [[buffer(1)]],
 //    texture2d<float> txt [[texture(0)]],
@@ -1474,7 +1472,7 @@ fragment float4 ImageLayer_Brightness(
 ////    return float4(c, 1);
 //}
 
-//fragment float4 ImageLayer_Brightness(
+//fragment float4 Brightness(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    constant float& brightness [[buffer(1)]],
 //    texture2d<float> txt [[texture(0)]],
@@ -1489,7 +1487,7 @@ float bellcurve(float width, int plateau, float x) {
     return exp(-pow(width*x, plateau));
 }
 
-fragment float4 ImageLayer_Contrast(
+fragment float4 Contrast(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& contrast [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1501,7 +1499,7 @@ fragment float4 ImageLayer_Contrast(
     return float4(c, 1);
 }
 
-fragment float4 ImageLayer_Saturation(
+fragment float4 Saturation(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& saturation [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1512,7 +1510,7 @@ fragment float4 ImageLayer_Saturation(
     return float4(c, 1);
 }
 
-fragment float4 ImageLayer_XYYD50FromXYZD50(
+fragment float4 XYYD50FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1521,7 +1519,7 @@ fragment float4 ImageLayer_XYYD50FromXYZD50(
     return float4(XYYFromXYZ(c), 1);
 }
 
-fragment float4 ImageLayer_XYZD50FromXYYD50(
+fragment float4 XYZD50FromXYYD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1531,7 +1529,7 @@ fragment float4 ImageLayer_XYZD50FromXYYD50(
 }
 
 
-fragment float4 ImageLayer_LuvD50FromXYZD50(
+fragment float4 LuvD50FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1541,7 +1539,7 @@ fragment float4 ImageLayer_LuvD50FromXYZD50(
     return float4(LuvFromXYZ(D50_XYZ, c), 1);
 }
 
-fragment float4 ImageLayer_XYZD50FromLuvD50(
+fragment float4 XYZD50FromLuvD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1551,7 +1549,7 @@ fragment float4 ImageLayer_XYZD50FromLuvD50(
     return float4(XYZFromLuv(D50_XYZ, c), 1);
 }
 
-fragment float4 ImageLayer_LCHuvFromLuv(
+fragment float4 LCHuvFromLuv(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1560,7 +1558,7 @@ fragment float4 ImageLayer_LCHuvFromLuv(
     return float4(LCHuvFromLuv(c), 1);
 }
 
-fragment float4 ImageLayer_LuvFromLCHuv(
+fragment float4 LuvFromLCHuv(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1609,7 +1607,7 @@ float3 LabFromXYZ(float3 white_XYZ, float3 c_XYZ) {
     return float3(L,a,b);
 }
 
-fragment float4 ImageLayer_LabD50FromXYZD50(
+fragment float4 LabD50FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1618,7 +1616,7 @@ fragment float4 ImageLayer_LabD50FromXYZD50(
     return float4(LabFromXYZ(D50, sampleRGB(txt, in.pos)), 1);
 }
 
-fragment float4 ImageLayer_XYZD50FromLabD50(
+fragment float4 XYZD50FromLabD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1627,7 +1625,7 @@ fragment float4 ImageLayer_XYZD50FromLabD50(
     return float4(XYZFromLab(D50, sampleRGB(txt, in.pos)), 1);
 }
 
-fragment float ImageLayer_ExtractL(
+fragment float ExtractL(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1635,7 +1633,7 @@ fragment float ImageLayer_ExtractL(
     return sampleR(txt, in.pos);
 }
 
-fragment float4 ImageLayer_LocalContrast(
+fragment float4 LocalContrast(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& amount [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1653,7 +1651,7 @@ fragment float4 ImageLayer_LocalContrast(
 }
 
 constant uint UIntNormalizeVal = 65535;
-fragment float4 ImageLayer_NormalizeXYYLuminance(
+fragment float4 NormalizeXYYLuminance(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsXYY[[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1665,7 +1663,7 @@ fragment float4 ImageLayer_NormalizeXYYLuminance(
     return float4(c, 1);
 }
 
-fragment float4 ImageLayer_NormalizeRGB(
+fragment float4 NormalizeRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsRGB[[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1676,7 +1674,7 @@ fragment float4 ImageLayer_NormalizeRGB(
     return float4(c, 1);
 }
 
-fragment float4 ImageLayer_ClipRGB(
+fragment float4 ClipRGB(
     constant RenderContext& ctx [[buffer(0)]],
     constant Vals3& maxValsRGB[[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1688,7 +1686,7 @@ fragment float4 ImageLayer_ClipRGB(
     return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
 }
 
-fragment float4 ImageLayer_DecreaseLuminance(
+fragment float4 DecreaseLuminance(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1698,7 +1696,7 @@ fragment float4 ImageLayer_DecreaseLuminance(
     return float4(c_XYYD50, 1);
 }
 
-fragment float4 ImageLayer_DecreaseLuminanceXYZD50(
+fragment float4 DecreaseLuminanceXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1709,7 +1707,7 @@ fragment float4 ImageLayer_DecreaseLuminanceXYZD50(
     return float4(XYZFromXYY(c_XYYD50), 1);
 }
 
-fragment float4 ImageLayer_LSRGBD65FromXYZD50(
+fragment float4 LSRGBD65FromXYZD50(
     constant RenderContext& ctx [[buffer(0)]],
     device float3* samples [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1745,7 +1743,7 @@ fragment float4 ImageLayer_LSRGBD65FromXYZD50(
     return float4(c_LSRGBD65, 1);
 }
 
-//fragment float4 ImageLayer_LSRGBD65FromXYYD50(
+//fragment float4 LSRGBD65FromXYYD50(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    device float3* samples [[buffer(1)]],
 //    texture2d<float> texture [[texture(0)]],
@@ -1785,7 +1783,7 @@ fragment float4 ImageLayer_LSRGBD65FromXYZD50(
 
 
 
-fragment float4 ImageLayer_ColorAdjust(
+fragment float4 ColorAdjust(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -1819,7 +1817,7 @@ void setIfGreater(volatile device atomic_uint& dst, uint val) {
     }
 }
 
-fragment float4 ImageLayer_FindMaxVals(
+fragment float4 FindMaxVals(
     constant RenderContext& ctx [[buffer(0)]],
     device Vals3& highlights [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -1837,7 +1835,7 @@ fragment float4 ImageLayer_FindMaxVals(
 
 
 
-//fragment float4 ImageLayer_Debayer(
+//fragment float4 Debayer(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    constant ImagePixel* pxs [[buffer(1)]],
 //    VertexOutput in [[stage_in]]
@@ -1851,7 +1849,7 @@ fragment float4 ImageLayer_FindMaxVals(
 ////    return float4(1, 0, 0, 1);
 //}
 
-//fragment float4 ImageLayer_FixHighlights(
+//fragment float4 FixHighlights(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    texture2d<float> texture [[texture(0)]],
 //    VertexOutput in [[stage_in]]
@@ -2036,7 +2034,7 @@ private:
 //    return cm[pos.y+1][pos.x+1] = c;
 //}
 
-fragment float ImageLayer_FixHighlightsRaw(
+fragment float FixHighlightsRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -2240,7 +2238,7 @@ fragment float ImageLayer_FixHighlightsRaw(
 
 
 
-//fragment float ImageLayer_FixHighlightsRaw(
+//fragment float FixHighlightsRaw(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    texture2d<float> rawTxt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
@@ -2295,7 +2293,7 @@ fragment float ImageLayer_FixHighlightsRaw(
 //    return 0;
 //}
 
-//fragment float4 ImageLayer_FixHighlights(
+//fragment float4 FixHighlights(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    texture2d<float> rawTxt [[texture(0)]],
 //    texture2d<float> txt [[texture(1)]],
@@ -2335,7 +2333,7 @@ fragment float ImageLayer_FixHighlightsRaw(
 //    return float4(c_CamRaw, 1);
 //}
 
-//fragment float4 ImageLayer_FixHighlights(
+//fragment float4 FixHighlights(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    texture2d<float> rawTxt [[texture(0)]],
 //    texture2d<float> txt [[texture(1)]],
@@ -2395,7 +2393,7 @@ fragment float ImageLayer_FixHighlightsRaw(
 
 
 
-//fragment float4 ImageLayer_FixHighlights(
+//fragment float4 FixHighlights(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    constant ImagePixel* pxs [[buffer(1)]],
 //    texture2d<float> texture [[texture(0)]],
@@ -2426,7 +2424,7 @@ fragment float ImageLayer_FixHighlightsRaw(
 //    return float4(c, 1);
 //}
 
-//fragment float4 ImageLayer_FixHighlightsPropagation(
+//fragment float4 FixHighlightsPropagation(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    texture2d<float> txt [[texture(0)]],
 //    texture2d<float> smallRaw [[texture(1)]],
@@ -2512,7 +2510,7 @@ fragment float ImageLayer_FixHighlightsRaw(
 //////    return texture.sample(sampler(), in.posUnit);
 //}
 
-fragment float4 ImageLayer_SRGBGamma(
+fragment float4 SRGBGamma(
     constant RenderContext& ctx [[buffer(0)]],
     device float3* samples [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
@@ -2537,7 +2535,7 @@ fragment float4 ImageLayer_SRGBGamma(
     return float4(c_SRGB, 1);
 }
 
-fragment float4 ImageLayer_Display(
+fragment float4 Display(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -2546,8 +2544,17 @@ fragment float4 ImageLayer_Display(
     return float4(c, 1);
 }
 
+fragment float4 DisplayR(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const float c = sampleR(txt, in.pos);
+    return float4(c, c, c, 1);
+}
 
-//fragment float4 ImageLayer_FragmentShader(
+
+//fragment float4 FragmentShader(
 //    constant RenderContext& ctx [[buffer(0)]],
 //    constant ImagePixel* pxs [[buffer(1)]],
 //    device Histogram& inputHistogram [[buffer(2)]],
@@ -2636,3 +2643,5 @@ fragment float4 ImageLayer_Display(
 //    
 //    return float4(outputColor_SRGB, 1);
 //}
+
+} // namespace ImageLayer
