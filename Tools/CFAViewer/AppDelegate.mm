@@ -271,6 +271,8 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-[-3,-3]-Corrected.cfa");
     
 //    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img.cfa");
+//    [[_mainView imageLayer] setRawMode:true];
+    
 //    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-new.cfa");
 //    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-Good-SSERemoved-FactorOutGInterp-FactorOutLPHPFilters-Float1.cfa");
     

@@ -246,16 +246,34 @@ fragment float ApplyCorrection(
     case CFAColor::Blue:    shift = {shiftsBX(tidx.x,tidx.y), shiftsBY(tidx.x,tidx.y)}; break;
     }
     
-    shift.x = clamp(shift.x, -4., 4.);
-    shift.y = clamp(shift.y, -4., 4.);
+    const float ShiftLimit = 4;
+    const float Alpha = .25;
+    const float Beta = .5;
+    
+    shift.x = clamp(shift.x, -ShiftLimit, ShiftLimit);
+    shift.y = clamp(shift.y, -ShiftLimit, ShiftLimit);
     
     const float g = Sample::R(interpG, pos);
-    const float gShift = interpG.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r;
-    const float gShiftRBDelta = gShift - Sample::R(rawTxt, pos);
+    const float rb = Sample::R(rawTxt, pos);
+    const float gShifted = interpG.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r;
+    const float gShiftedRBDelta = gShifted - rb;
+    const float rbInterp = g - gShiftedRBDelta;
+    const float grbDelta = g - rb;
     
+    float rbCorrected = rb;
+    if (abs(rbInterp-rb) < Alpha*(rbInterp+rb)) {
+        if (abs(gShiftedRBDelta) < abs(grbDelta)) {
+            rbCorrected = rbInterp;
+        }
+    }
     
+    if (grbDelta*gShiftedRBDelta < 0) {
+        if (abs(gShiftedRBDelta/grbDelta) < 5) {
+            rbCorrected = g - Beta*(grbDelta+gShiftedRBDelta);
+        }
+    }
     
-    return 0;
+    return rbCorrected;
 }
 
 
