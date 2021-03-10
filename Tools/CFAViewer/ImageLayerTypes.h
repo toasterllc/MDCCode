@@ -3,7 +3,7 @@
 
 namespace CFAViewer {
     namespace ImageLayerTypes {
-        enum class PxColor : uint8_t {
+        enum class CFAColor : uint8_t {
             Red     = 0,
             Green   = 1,
             Blue    = 2,
@@ -40,21 +40,21 @@ namespace CFAViewer {
             uint32_t imageWidth = 0;
             uint32_t imageHeight = 0;
             
-            PxColor cfa[2][2] = {{
-                PxColor::Green,
-                PxColor::Red,
+            CFAColor cfa[2][2] = {{
+                CFAColor::Green,
+                CFAColor::Red,
             }, {
-                PxColor::Blue,
-                PxColor::Green,
+                CFAColor::Blue,
+                CFAColor::Green,
             }};
             
             template <typename T>
-            PxColor cfaColor(T x, T y) MetalConst {
+            CFAColor cfaColor(T x, T y) MetalConst {
                 return cfa[y&1][x&1];
             }
             
             template <typename T>
-            PxColor cfaColor(T pos) MetalConst {
+            CFAColor cfaColor(T pos) MetalConst {
                 return cfaColor(pos.x, pos.y);
             }
         };

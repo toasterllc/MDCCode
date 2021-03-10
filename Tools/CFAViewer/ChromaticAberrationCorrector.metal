@@ -82,12 +82,12 @@ fragment float WhiteBalanceForward(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
-    const PxColor c = ctx.cfaColor(pos);
+    const CFAColor c = ctx.cfaColor(pos);
     const float s = Sample::R(rawTxt, pos);
     switch (c) {
-    case PxColor::Red:     return s*WhiteBalanceRed;
-    case PxColor::Green:   return s*WhiteBalanceGreen;
-    case PxColor::Blue:    return s*WhiteBalanceBlue;
+    case CFAColor::Red:     return s*WhiteBalanceRed;
+    case CFAColor::Green:   return s*WhiteBalanceGreen;
+    case CFAColor::Blue:    return s*WhiteBalanceBlue;
     default:                return 0;
     }
 }
@@ -98,12 +98,12 @@ fragment float WhiteBalanceReverse(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
-    const PxColor c = ctx.cfaColor(pos);
+    const CFAColor c = ctx.cfaColor(pos);
     const float s = Sample::R(rawTxt, pos);
     switch (c) {
-    case PxColor::Red:     return s/WhiteBalanceRed;
-    case PxColor::Green:   return s/WhiteBalanceGreen;
-    case PxColor::Blue:    return s/WhiteBalanceBlue;
+    case CFAColor::Red:     return s/WhiteBalanceRed;
+    case CFAColor::Green:   return s/WhiteBalanceGreen;
+    case CFAColor::Blue:    return s/WhiteBalanceBlue;
     default:                return 0;
     }
 }
@@ -115,9 +115,9 @@ fragment float InterpG(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
-    const PxColor c = ctx.cfaColor(pos);
+    const CFAColor c = ctx.cfaColor(pos);
     // Green pixel: pass-through
-    if (c == PxColor::Green) return Sample::R(rawTxt, pos);
+    if (c == CFAColor::Green) return Sample::R(rawTxt, pos);
     
     // Red/blue pixel: directional weighted average
     const uint2 bounds(rawTxt.get_width(), rawTxt.get_height());
@@ -170,8 +170,8 @@ fragment float CalcRBGDelta(
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
     switch (ctx.cfaColor(pos)) {
-    case PxColor::Red:
-    case PxColor::Blue: {
+    case CFAColor::Red:
+    case CFAColor::Blue: {
         const float rb = Sample::R(rawTxt, pos);
         const float g = Sample::R(interpG, pos);
         return rb-g;
@@ -189,8 +189,8 @@ fragment float CalcSlopeX(
     const uint2 bounds(txt.get_width(), txt.get_height());
 #define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
     switch (ctx.cfaColor(pos)) {
-    case PxColor::Red:
-    case PxColor::Blue:
+    case CFAColor::Red:
+    case CFAColor::Blue:
         return
             ( 3./16)*(PX(+1,+1) - PX(-1,+1)) +
             (10./16)*(PX(+1, 0) - PX(-1, 0)) +
@@ -213,8 +213,8 @@ fragment float CalcSlopeY(
     const uint2 bounds(txt.get_width(), txt.get_height());
 #define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
     switch (ctx.cfaColor(pos)) {
-    case PxColor::Red:
-    case PxColor::Blue:
+    case CFAColor::Red:
+    case CFAColor::Blue:
         return
             ( 3./16)*(PX(+1,+1) - PX(+1,-1)) +
             (10./16)*(PX( 0,+1) - PX( 0,-1)) +
@@ -235,9 +235,9 @@ fragment float ApplyCorrection(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
-    const PxColor c = ctx.cfaColor(pos);
+    const CFAColor c = ctx.cfaColor(pos);
     // Green pixel: pass through
-    if (c == PxColor::Green) return Sample::R(txt, pos);
+    if (c == CFAColor::Green) return Sample::R(txt, pos);
     
     return 0;
 }

@@ -291,11 +291,11 @@ private:
 template <typename T>
 class ColorDir {
 public:
-    T& operator()(PxColor color, TileDir dir) {
+    T& operator()(CFAColor color, TileDir dir) {
         return _t[((uint8_t)color)>>1][(uint8_t)dir];
     }
     
-    const T& operator()(PxColor color, TileDir dir) const {
+    const T& operator()(CFAColor color, TileDir dir) const {
         return _t[((uint8_t)color)>>1][(uint8_t)dir];
     }
 private:
@@ -311,7 +311,7 @@ struct TileTerms {
 //template <typename T>
 //class ColorDirDict {
 //public:
-//    T& operator()(PxColor color, TileDir dir) {
+//    T& operator()(CFAColor color, TileDir dir) {
 //        return _t[(uint8_t)color][(uint8_t)dir];
 //    }
 //private:
@@ -320,7 +320,7 @@ struct TileTerms {
 //
 //class TileTerms {
 //public:
-//    double& operator()(PxColor color, TileDir dir, size_t idx) {
+//    double& operator()(CFAColor color, TileDir dir, size_t idx) {
 //        return _terms[(uint8_t)color][(uint8_t)dir][idx];
 //    }
 //    
@@ -442,11 +442,11 @@ struct TileShift {
             ColorDir<TileTerms> terms;
             for (int32_t y=grid.y.tileOffset(ty); y<grid.y.tileOffset(ty)+TileSize; y++) {
                 int32_t x = grid.x.tileOffset(tx);
-                if (_state.ctx.cfaColor(x,y) == PxColor::Green) {
+                if (_state.ctx.cfaColor(x,y) == CFAColor::Green) {
                     x++;
                 }
                 
-                const PxColor c = _state.ctx.cfaColor(x,y);
+                const CFAColor c = _state.ctx.cfaColor(x,y);
                 for (; x<grid.x.tileOffset(tx)+TileSize; x+=2) {
                     const double gSlopeX =
                         ( 3./16)*(interpGPx.px(x+1,y+1) - interpGPx.px(x-1,y+1)) +
@@ -471,7 +471,7 @@ struct TileShift {
                 }
             }
             
-            for (PxColor c : {PxColor::Red, PxColor::Blue}) {
+            for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
                     // Skip this tile if the shift denominator is too small
                     if (terms(c,dir).t2 < Eps) continue; // Prevent divide by 0
@@ -488,7 +488,7 @@ struct TileShift {
 //                        .weight =   ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ))
 //                    };
 //                    
-//                    if (c == PxColor::Red) {
+//                    if (c == CFAColor::Red) {
 //                        printf("[%zu %zu]: shift=%f weight=%f\n",
 //                            tx, ty,
 //                            shift, weight
@@ -501,7 +501,7 @@ struct TileShift {
     
     for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
         for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
-            for (PxColor c : {PxColor::Red, PxColor::Blue}) {
+            for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
                     const double x = grid.x.tileNormalizedCenter<double>(tx);
                     const double y = grid.y.tileNormalizedCenter<double>(ty);
@@ -515,14 +515,14 @@ struct TileShift {
         block:^(id<MTLRenderCommandEncoder> encoder) {
             [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
             [encoder setFragmentBytes:&grid length:sizeof(grid) atIndex:1];
-            [encoder setFragmentBytes:&shifts(PxColor::Red,Dir::X)
-                length:sizeof(shifts(PxColor::Red,Dir::X)) atIndex:2];
-            [encoder setFragmentBytes:&shifts(PxColor::Red,Dir::Y)
-                length:sizeof(shifts(PxColor::Red,Dir::Y)) atIndex:3];
-            [encoder setFragmentBytes:&shifts(PxColor::Blue,Dir::X)
-                length:sizeof(shifts(PxColor::Blue,Dir::X)) atIndex:4];
-            [encoder setFragmentBytes:&shifts(PxColor::Blue,Dir::Y)
-                length:sizeof(shifts(PxColor::Blue,Dir::Y)) atIndex:5];
+            [encoder setFragmentBytes:&shifts(CFAColor::Red,Dir::X)
+                length:sizeof(shifts(CFAColor::Red,Dir::X)) atIndex:2];
+            [encoder setFragmentBytes:&shifts(CFAColor::Red,Dir::Y)
+                length:sizeof(shifts(CFAColor::Red,Dir::Y)) atIndex:3];
+            [encoder setFragmentBytes:&shifts(CFAColor::Blue,Dir::X)
+                length:sizeof(shifts(CFAColor::Blue,Dir::X)) atIndex:4];
+            [encoder setFragmentBytes:&shifts(CFAColor::Blue,Dir::Y)
+                length:sizeof(shifts(CFAColor::Blue,Dir::Y)) atIndex:5];
             [encoder setFragmentTexture:rawTxt atIndex:0];
         }
     ];
@@ -530,7 +530,7 @@ struct TileShift {
 //    ColorDir<Poly> polys;
 //    for (size_t ty=0; ty<grid.tileCountY(); ty++) {
 //        for (size_t tx=0; tx<grid.tileCountX(); tx++) {
-//            for (PxColor c : {PxColor::Red, PxColor::Blue}) {
+//            for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
 //                for (Dir dir : {Dir::X, Dir::Y}) {
 //                    polys(c,dir).addPoint(<#double wt#>, <#double x#>, <#double y#>, <#double z#>)
 //                    // Skip this tile if the shift denominator is too small
@@ -541,7 +541,7 @@ struct TileShift {
 //                        .weight =   ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ))
 //                    };
 //                    
-////                    if (c == PxColor::Red) {
+////                    if (c == CFAColor::Red) {
 ////                        printf("[%zu %zu]: shift=%f weight=%f\n",
 ////                            tx, ty,
 ////                            shift, weight
