@@ -80,16 +80,26 @@ namespace CFAViewer {
                 tileCount = (_axisSize/_tileSize) + (_leftSlice?1:0) + (_rightSlice?1:0);
             }
             
-            uint32_t tileOffset(uint32_t idx) const {
+            // tileOffset(): returns of the offset for the tile at a given index.
+            // Border tiles and interior tiles will overlap.
+            uint32_t tileOffset(uint32_t idx) MetalConst {
                 if (_leftSlice && idx==0) return 0;
                 if (_rightSlice && idx==tileCount-1) return _axisSize-_tileSize;
                 return _leftSlice + _tileSize*(_leftSlice ? idx-1 : idx);
             }
             
-            // Templated to support doubles, while still also being
-            // usable from Metal shader contexts
+            // tileIndex(): returns the index for a tile at the given offset.
+            // For border tiles that overlap interior tiles, gives precedence to interior tiles.
+            uint32_t tileIndex(uint32_t off) MetalConst {
+                if (off < _leftSlice) return 0;
+                if (off >= _axisSize-_rightSlice) return tileCount-1;
+                return ((off-_leftSlice)/_tileSize) + (_leftSlice?1:0);
+            }
+            
+            // Templated to allow support for doubles, while also being usable
+            // from Metal shader contexts (which doesn't support doubles).
             template <typename T>
-            T tileNormalizedCenter(uint32_t idx) const {
+            T tileNormalizedCenter(uint32_t idx) MetalConst {
                 return ((T)tileOffset(idx) + (T)_tileSize/2) / _axisSize;
             }
             
@@ -120,8 +130,13 @@ namespace CFAViewer {
         class TileShifts {
         private:
             static MetalConst size_t _MaxLen = 20;
+            float _shifts[_MaxLen][_MaxLen]; // _shifts[TileY][TileX]
+        
         public:
-            float shifts[_MaxLen][_MaxLen]; // shifts[TileY][TileX]
+#if !__METAL_VERSION__
+            float& operator()(uint32_t x, uint32_t y) { return _shifts[y][x]; }
+#endif
+            MetalConst float& operator()(uint32_t x, uint32_t y) MetalConst { return _shifts[y][x]; }
         };
     };
 };

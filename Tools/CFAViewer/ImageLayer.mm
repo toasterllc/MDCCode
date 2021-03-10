@@ -337,6 +337,12 @@ struct TileShift {
 - (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
     NSParameterAssert(outTxt);
     
+//    TileAxis axis(211, 100);
+//    for (uint32_t off=0; off<250; off++) {
+//        printf("off=%u idx=%u\n", off, axis.tileIndex(off));
+//    }
+//    exit(0);
+    
     // Short-circuit if we don't have any image data
     if (!_state.pixelData) return;
     
@@ -433,11 +439,11 @@ struct TileShift {
     
     for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
         for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
-            printf("[%u %u]: X:%u-%u Y:%u-%u\n",
-                tx, ty,
-                grid.x.tileOffset(tx), grid.x.tileOffset(tx)+TileSize-1,
-                grid.y.tileOffset(ty), grid.y.tileOffset(ty)+TileSize-1
-            );
+//            printf("[%u %u]: X:%u-%u Y:%u-%u\n",
+//                tx, ty,
+//                grid.x.tileOffset(tx), grid.x.tileOffset(tx)+TileSize-1,
+//                grid.y.tileOffset(ty), grid.y.tileOffset(ty)+TileSize-1
+//            );
             
             ColorDir<TileTerms> terms;
             for (int32_t y=grid.y.tileOffset(ty); y<grid.y.tileOffset(ty)+TileSize; y++) {
@@ -505,7 +511,7 @@ struct TileShift {
                 for (Dir dir : {Dir::X, Dir::Y}) {
                     const double x = grid.x.tileNormalizedCenter<double>(tx);
                     const double y = grid.y.tileNormalizedCenter<double>(ty);
-                    shifts(c,dir).shifts[ty][tx] = polys(c,dir).eval(x, y);
+                    shifts(c,dir)(tx,ty) = polys(c,dir).eval(x,y);
                 }
             }
         }

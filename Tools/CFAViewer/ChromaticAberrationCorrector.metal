@@ -232,12 +232,19 @@ fragment float ApplyCorrection(
     constant TileShifts& shiftsBX [[buffer(4)]],
     constant TileShifts& shiftsBY [[buffer(5)]],
     texture2d<float> txt [[texture(0)]],
+    texture2d<float> interpG [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
+    const uint2 tidx(grid.x.tileIndex(pos.x), grid.y.tileIndex(pos.y));
     const CFAColor c = ctx.cfaColor(pos);
-    // Green pixel: pass through
-    if (c == CFAColor::Green) return Sample::R(txt, pos);
+    
+    float2 shift;
+    switch (c) {
+    case CFAColor::Red:     shift = {shiftsRX(tidx.x,tidx.y), shiftsRY(tidx.x,tidx.y)}; break;
+    case CFAColor::Green:   return Sample::R(txt, pos); // Green pixel: pass through
+    case CFAColor::Blue:    shift = {shiftsBX(tidx.x,tidx.y), shiftsBY(tidx.x,tidx.y)}; break;
+    }
     
     return 0;
 }
