@@ -180,49 +180,49 @@ fragment float CalcRBGDelta(
     }
 }
 
-fragment float CalcSlopeX(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const uint2 pos(in.pos.x, in.pos.y);
-    const uint2 bounds(txt.get_width(), txt.get_height());
-#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
-    switch (ctx.cfaColor(pos)) {
-    case CFAColor::Red:
-    case CFAColor::Blue:
-        return
-            ( 3./16)*(PX(+1,+1) - PX(-1,+1)) +
-            (10./16)*(PX(+1, 0) - PX(-1, 0)) +
-            ( 3./16)*(PX(+1,-1) - PX(-1,-1)) ;
-    default:
-        return 0;
-    }
-#undef PX
-}
-
-fragment float CalcSlopeY(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-//    return floor(in.pos.x)/100 + floor(in.pos.y)/100;
-    const uint2 pos(in.pos.x, in.pos.y);
-//    if (pos.y>=10 && pos.y<600) return 1;
-//    return 0;
-    const uint2 bounds(txt.get_width(), txt.get_height());
-#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
-    switch (ctx.cfaColor(pos)) {
-    case CFAColor::Red:
-    case CFAColor::Blue:
-        return
-            ( 3./16)*(PX(+1,+1) - PX(+1,-1)) +
-            (10./16)*(PX( 0,+1) - PX( 0,-1)) +
-            ( 3./16)*(PX(-1,+1) - PX(-1,-1)) ;
-    default: return 0;
-    }
-#undef PX
-}
+//fragment float CalcSlopeX(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> txt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const uint2 pos(in.pos.x, in.pos.y);
+//    const uint2 bounds(txt.get_width(), txt.get_height());
+//#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
+//    switch (ctx.cfaColor(pos)) {
+//    case CFAColor::Red:
+//    case CFAColor::Blue:
+//        return
+//            ( 3./16)*(PX(+1,+1) - PX(-1,+1)) +
+//            (10./16)*(PX(+1, 0) - PX(-1, 0)) +
+//            ( 3./16)*(PX(+1,-1) - PX(-1,-1)) ;
+//    default:
+//        return 0;
+//    }
+//#undef PX
+//}
+//
+//fragment float CalcSlopeY(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> txt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+////    return floor(in.pos.x)/100 + floor(in.pos.y)/100;
+//    const uint2 pos(in.pos.x, in.pos.y);
+////    if (pos.y>=10 && pos.y<600) return 1;
+////    return 0;
+//    const uint2 bounds(txt.get_width(), txt.get_height());
+//#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
+//    switch (ctx.cfaColor(pos)) {
+//    case CFAColor::Red:
+//    case CFAColor::Blue:
+//        return
+//            ( 3./16)*(PX(+1,+1) - PX(+1,-1)) +
+//            (10./16)*(PX( 0,+1) - PX( 0,-1)) +
+//            ( 3./16)*(PX(-1,+1) - PX(-1,-1)) ;
+//    default: return 0;
+//    }
+//#undef PX
+//}
 
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
@@ -231,7 +231,7 @@ fragment float ApplyCorrection(
     constant TileShifts& shiftsRY [[buffer(3)]],
     constant TileShifts& shiftsBX [[buffer(4)]],
     constant TileShifts& shiftsBY [[buffer(5)]],
-    texture2d<float> txt [[texture(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> interpG [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -242,9 +242,18 @@ fragment float ApplyCorrection(
     float2 shift;
     switch (c) {
     case CFAColor::Red:     shift = {shiftsRX(tidx.x,tidx.y), shiftsRY(tidx.x,tidx.y)}; break;
-    case CFAColor::Green:   return Sample::R(txt, pos); // Green pixel: pass through
+    case CFAColor::Green:   return Sample::R(rawTxt, pos); // Green pixel: pass through
     case CFAColor::Blue:    shift = {shiftsBX(tidx.x,tidx.y), shiftsBY(tidx.x,tidx.y)}; break;
     }
+    
+    shift.x = clamp(shift.x, -4., 4.);
+    shift.y = clamp(shift.y, -4., 4.);
+    
+    const float g = Sample::R(interpG, pos);
+    const float gShift = interpG.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r;
+    const float gShiftRBDelta = gShift - Sample::R(rawTxt, pos);
+    
+    
     
     return 0;
 }

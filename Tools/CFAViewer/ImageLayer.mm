@@ -530,6 +530,7 @@ struct TileShift {
             [encoder setFragmentBytes:&shifts(CFAColor::Blue,Dir::Y)
                 length:sizeof(shifts(CFAColor::Blue,Dir::Y)) atIndex:5];
             [encoder setFragmentTexture:rawTxt atIndex:0];
+            [encoder setFragmentTexture:interpGTxt atIndex:1];
         }
     ];
     
