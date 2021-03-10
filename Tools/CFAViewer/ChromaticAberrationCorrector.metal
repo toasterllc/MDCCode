@@ -226,6 +226,11 @@ fragment float CalcSlopeY(
 
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
+    constant TileGrid& grid [[buffer(1)]],
+    constant TileShifts& shiftsRX [[buffer(2)]],
+    constant TileShifts& shiftsRY [[buffer(3)]],
+    constant TileShifts& shiftsBX [[buffer(4)]],
+    constant TileShifts& shiftsBY [[buffer(5)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {

@@ -50,7 +50,7 @@ public:
         _b = _b+kwt*z;
     }
     
-    T eval(T x, T y) const {
+    T eval(T x, T y) {
         // Solve the system if we haven't done so yet
         if (!_x) _x = _A.solve(_b);
         

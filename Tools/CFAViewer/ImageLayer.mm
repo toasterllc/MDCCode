@@ -266,65 +266,6 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     return txt;
 }
 
-class TileGrid {
-public:
-    TileGrid(size_t imageWidth, size_t imageHeight, size_t tileSize) :
-    _imageWidth(imageWidth),
-    _imageHeight(imageHeight),
-    _tileSize(tileSize) {
-        const size_t excessX = _imageWidth%tileSize;
-        const size_t excessY = _imageHeight%tileSize;
-        const size_t rightSlice = excessX/2;
-        const size_t bottomSlice = excessY/2;
-        const size_t leftSlice = excessX-rightSlice;
-        const size_t topSlice = excessY-bottomSlice;
-        
-        // X offsets
-        {
-            // Left slice
-            if (leftSlice) _offX.push_back(0);
-            for (size_t x=leftSlice; x<_imageWidth-tileSize+1; x+=tileSize) {
-                _offX.push_back(x);
-            }
-            // Right slice
-            if (rightSlice) _offX.push_back(_imageWidth-tileSize);
-        }
-        
-        // Y offsets
-        {
-            // Top slice
-            if (topSlice) _offY.push_back(0);
-            for (size_t y=topSlice; y<_imageHeight-tileSize+1; y+=tileSize) {
-                _offY.push_back(y);
-            }
-            // Bottom slice
-            if (bottomSlice) _offY.push_back(_imageHeight-tileSize);
-        }
-    }
-    
-    size_t tileCountX() const { return _offX.size(); }
-    size_t tileCountY() const { return _offY.size(); }
-    
-    size_t tileOffsetX(size_t idx) const { return _offX[idx]; }
-    size_t tileOffsetY(size_t idx) const { return _offY[idx]; }
-    
-    double tileNormalizedCenterX(size_t idx) const {
-        return ((double)tileOffsetX(idx) + (double)_tileSize/2) / _imageWidth;
-    }
-    
-    double tileNormalizedCenterY(size_t idx) const {
-        return ((double)tileOffsetY(idx) + (double)_tileSize/2) / _imageHeight;
-    }
-    
-private:
-    std::vector<size_t> _offX;
-    std::vector<size_t> _offY;
-    
-    const size_t _imageWidth = 0;
-    const size_t _imageHeight = 0;
-    const size_t _tileSize = 0;
-};
-
 template <typename T>
 class BufSampler {
 public:
@@ -347,15 +288,14 @@ private:
     const T* _buf = nullptr;
 };
 
-enum class TileDir : uint8_t {
-    X = 0,
-    Y = 1,
-};
-
 template <typename T>
 class ColorDir {
 public:
     T& operator()(PxColor color, TileDir dir) {
+        return _t[((uint8_t)color)>>1][(uint8_t)dir];
+    }
+    
+    const T& operator()(PxColor color, TileDir dir) const {
         return _t[((uint8_t)color)>>1][(uint8_t)dir];
     }
 private:
@@ -479,31 +419,35 @@ struct TileShift {
     BufSampler<float> interpGPx([interpGTxt width], [interpGTxt height], interpGBuf);
     
     constexpr double Eps = 1e-5;
-    constexpr size_t TileSize = 128;
+    constexpr uint32_t TileSize = 128;
     using Dir = TileDir;
     using Poly = Poly2D<double,4>;
     
     TileGrid grid(_state.ctx.imageWidth, _state.ctx.imageHeight, TileSize);
     ColorDir<Poly> polys;
+    ColorDir<TileShifts> shifts;
 //    ColorDir<TileShift> shifts[grid.tileCountY()][grid.tileCountX()];
     
-    for (size_t ty=0; ty<grid.tileCountY(); ty++) {
-        for (size_t tx=0; tx<grid.tileCountX(); tx++) {
-//            printf("[%zu %zu]: X:%zu-%zu Y:%zu-%zu\n",
-//                tx, ty,
-//                tiles.tileX(tx), tiles.tileX(tx)+TileSize-1,
-//                tiles.tileY(ty), tiles.tileY(ty)+TileSize-1
-//            );
+//    printf("%u\n", grid.y.tileOffset(11));
+//    exit(0);
+    
+    for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
+        for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
+            printf("[%u %u]: X:%u-%u Y:%u-%u\n",
+                tx, ty,
+                grid.x.tileOffset(tx), grid.x.tileOffset(tx)+TileSize-1,
+                grid.y.tileOffset(ty), grid.y.tileOffset(ty)+TileSize-1
+            );
             
             ColorDir<TileTerms> terms;
-            for (ssize_t y=grid.tileOffsetY(ty); y<grid.tileOffsetY(ty)+TileSize; y++) {
-                ssize_t x = grid.tileOffsetX(tx);
+            for (int32_t y=grid.y.tileOffset(ty); y<grid.y.tileOffset(ty)+TileSize; y++) {
+                int32_t x = grid.x.tileOffset(tx);
                 if (_state.ctx.cfaColor(x,y) == PxColor::Green) {
                     x++;
                 }
                 
                 const PxColor c = _state.ctx.cfaColor(x,y);
-                for (; x<grid.tileOffsetX(tx)+TileSize; x+=2) {
+                for (; x<grid.x.tileOffset(tx)+TileSize; x+=2) {
                     const double gSlopeX =
                         ( 3./16)*(interpGPx.px(x+1,y+1) - interpGPx.px(x-1,y+1)) +
                         (10./16)*(interpGPx.px(x+1,y  ) - interpGPx.px(x-1,y  )) +
@@ -534,8 +478,8 @@ struct TileShift {
                     
                     const double shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
                     const double weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
-                    const double x = grid.tileNormalizedCenterX(tx);
-                    const double y = grid.tileNormalizedCenterY(ty);
+                    const double x = grid.x.tileNormalizedCenter<double>(tx);
+                    const double y = grid.y.tileNormalizedCenter<double>(ty);
                     
                     polys(c,dir).addPoint(weight, x, y, shift);
                     
@@ -554,6 +498,34 @@ struct TileShift {
             }
         }
     }
+    
+    for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
+        for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
+            for (PxColor c : {PxColor::Red, PxColor::Blue}) {
+                for (Dir dir : {Dir::X, Dir::Y}) {
+                    const double x = grid.x.tileNormalizedCenter<double>(tx);
+                    const double y = grid.y.tileNormalizedCenter<double>(ty);
+                    shifts(c,dir).shifts[ty][tx] = polys(c,dir).eval(x, y);
+                }
+            }
+        }
+    }
+    
+    [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::ApplyCorrection"
+        block:^(id<MTLRenderCommandEncoder> encoder) {
+            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+            [encoder setFragmentBytes:&grid length:sizeof(grid) atIndex:1];
+            [encoder setFragmentBytes:&shifts(PxColor::Red,Dir::X)
+                length:sizeof(shifts(PxColor::Red,Dir::X)) atIndex:2];
+            [encoder setFragmentBytes:&shifts(PxColor::Red,Dir::Y)
+                length:sizeof(shifts(PxColor::Red,Dir::Y)) atIndex:3];
+            [encoder setFragmentBytes:&shifts(PxColor::Blue,Dir::X)
+                length:sizeof(shifts(PxColor::Blue,Dir::X)) atIndex:4];
+            [encoder setFragmentBytes:&shifts(PxColor::Blue,Dir::Y)
+                length:sizeof(shifts(PxColor::Blue,Dir::Y)) atIndex:5];
+            [encoder setFragmentTexture:rawTxt atIndex:0];
+        }
+    ];
     
 //    ColorDir<Poly> polys;
 //    for (size_t ty=0; ty<grid.tileCountY(); ty++) {

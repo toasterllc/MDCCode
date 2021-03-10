@@ -9,6 +9,12 @@
 #define MetalConst constant
 #endif
 
+#if !__METAL_VERSION__
+#define MetalDevice
+#else
+#define MetalDevice device
+#endif
+
 namespace CFAViewer {
     namespace MetalTypes {
         using ImagePixel = uint16_t;
