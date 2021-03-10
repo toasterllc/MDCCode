@@ -72,6 +72,41 @@ constant float Eps = 1e-5;
 //    };
 //}
 
+constant float WhiteBalanceRed = 0.296587/0.203138;
+constant float WhiteBalanceGreen = 0.296587/0.296587;
+constant float WhiteBalanceBlue = 0.296587/0.161148;
+
+fragment float WhiteBalanceForward(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    const PxColor c = ctx.cfaColor(pos);
+    const float s = Sample::R(rawTxt, pos);
+    switch (c) {
+    case PxColor::Red:     return s*WhiteBalanceRed;
+    case PxColor::Green:   return s*WhiteBalanceGreen;
+    case PxColor::Blue:    return s*WhiteBalanceBlue;
+    default:                return 0;
+    }
+}
+
+fragment float WhiteBalanceReverse(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    const PxColor c = ctx.cfaColor(pos);
+    const float s = Sample::R(rawTxt, pos);
+    switch (c) {
+    case PxColor::Red:     return s/WhiteBalanceRed;
+    case PxColor::Green:   return s/WhiteBalanceGreen;
+    case PxColor::Blue:    return s/WhiteBalanceBlue;
+    default:                return 0;
+    }
+}
 
 // Interpolate the G channel using a directional weighted average
 fragment float InterpG(
@@ -79,17 +114,15 @@ fragment float InterpG(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
-    const int x = pos.x;
-    const int y = pos.y;
-    const PxColor c = ctx.cfaColor(x, y);
+    const uint2 pos(in.pos.x, in.pos.y);
+    const PxColor c = ctx.cfaColor(pos);
     // Green pixel: pass-through
-    if (c == PxColors::Green) return Sample::R(rawTxt, pos);
+    if (c == PxColor::Green) return Sample::R(rawTxt, pos);
     
     // Red/blue pixel: directional weighted average
     const uint2 bounds(rawTxt.get_width(), rawTxt.get_height());
     
-#define PX(dx,dy) Sample::R(rawTxt, Clamp::Edge(bounds, int2{x+(dx),y+(dy)}))
+#define PX(dx,dy) Sample::R(rawTxt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
     
     const float ku =
         1/(Eps+pow(
@@ -128,5 +161,81 @@ fragment float InterpG(
     
 #undef PX
 }
+
+fragment float CalcRBGDelta(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> interpG [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    switch (ctx.cfaColor(pos)) {
+    case PxColor::Red:
+    case PxColor::Blue: {
+        const float rb = Sample::R(rawTxt, pos);
+        const float g = Sample::R(interpG, pos);
+        return rb-g;
+    }
+    default: return 0;
+    }
+}
+
+fragment float CalcSlopeX(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    const uint2 bounds(txt.get_width(), txt.get_height());
+#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
+    switch (ctx.cfaColor(pos)) {
+    case PxColor::Red:
+    case PxColor::Blue:
+        return
+            ( 3./16)*(PX(+1,+1) - PX(-1,+1)) +
+            (10./16)*(PX(+1, 0) - PX(-1, 0)) +
+            ( 3./16)*(PX(+1,-1) - PX(-1,-1)) ;
+    default:
+        return 0;
+    }
+#undef PX
+}
+
+fragment float CalcSlopeY(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+//    return floor(in.pos.x)/100 + floor(in.pos.y)/100;
+    const uint2 pos(in.pos.x, in.pos.y);
+//    if (pos.y>=10 && pos.y<600) return 1;
+//    return 0;
+    const uint2 bounds(txt.get_width(), txt.get_height());
+#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
+    switch (ctx.cfaColor(pos)) {
+    case PxColor::Red:
+    case PxColor::Blue:
+        return
+            ( 3./16)*(PX(+1,+1) - PX(+1,-1)) +
+            (10./16)*(PX( 0,+1) - PX( 0,-1)) +
+            ( 3./16)*(PX(-1,+1) - PX(-1,-1)) ;
+    default: return 0;
+    }
+#undef PX
+}
+
+fragment float ApplyCorrection(
+    constant RenderContext& ctx [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const uint2 pos(in.pos.x, in.pos.y);
+    const PxColor c = ctx.cfaColor(pos);
+    // Green pixel: pass through
+    if (c == PxColor::Green) return Sample::R(txt, pos);
+    
+    return 0;
+}
+
 
 }

@@ -2,11 +2,14 @@
 #import <Metal/Metal.h>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import <mutex>
+#import <vector>
 #import "ImageLayer.h"
 #import "ImageLayerTypes.h"
 #import "Assert.h"
 #import "Util.h"
 #import "ColorUtil.h"
+#import "TimeInstant.h"
+#import "Poly2D.h"
 using namespace CFAViewer;
 using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
@@ -263,6 +266,133 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     return txt;
 }
 
+class TileGrid {
+public:
+    TileGrid(size_t imageWidth, size_t imageHeight, size_t tileSize) :
+    _imageWidth(imageWidth),
+    _imageHeight(imageHeight),
+    _tileSize(tileSize) {
+        const size_t excessX = _imageWidth%tileSize;
+        const size_t excessY = _imageHeight%tileSize;
+        const size_t rightSlice = excessX/2;
+        const size_t bottomSlice = excessY/2;
+        const size_t leftSlice = excessX-rightSlice;
+        const size_t topSlice = excessY-bottomSlice;
+        
+        // X offsets
+        {
+            // Left slice
+            if (leftSlice) _offX.push_back(0);
+            for (size_t x=leftSlice; x<_imageWidth-tileSize+1; x+=tileSize) {
+                _offX.push_back(x);
+            }
+            // Right slice
+            if (rightSlice) _offX.push_back(_imageWidth-tileSize);
+        }
+        
+        // Y offsets
+        {
+            // Top slice
+            if (topSlice) _offY.push_back(0);
+            for (size_t y=topSlice; y<_imageHeight-tileSize+1; y+=tileSize) {
+                _offY.push_back(y);
+            }
+            // Bottom slice
+            if (bottomSlice) _offY.push_back(_imageHeight-tileSize);
+        }
+    }
+    
+    size_t tileCountX() const { return _offX.size(); }
+    size_t tileCountY() const { return _offY.size(); }
+    
+    size_t tileOffsetX(size_t idx) const { return _offX[idx]; }
+    size_t tileOffsetY(size_t idx) const { return _offY[idx]; }
+    
+    double tileNormalizedCenterX(size_t idx) const {
+        return ((double)tileOffsetX(idx) + (double)_tileSize/2) / _imageWidth;
+    }
+    
+    double tileNormalizedCenterY(size_t idx) const {
+        return ((double)tileOffsetY(idx) + (double)_tileSize/2) / _imageHeight;
+    }
+    
+private:
+    std::vector<size_t> _offX;
+    std::vector<size_t> _offY;
+    
+    const size_t _imageWidth = 0;
+    const size_t _imageHeight = 0;
+    const size_t _tileSize = 0;
+};
+
+template <typename T>
+class BufSampler {
+public:
+    BufSampler(size_t imageWidth, size_t imageHeight, id<MTLBuffer> buf) :
+    _imageWidth(imageWidth),
+    _imageHeight(imageHeight) {
+        _buf = (T*)[buf contents];
+    }
+    
+    T px(ssize_t x, ssize_t y) const {
+        x = std::clamp(x, (ssize_t)0, (ssize_t)_imageWidth-1);
+        y = std::clamp(y, (ssize_t)0, (ssize_t)_imageHeight-1);
+        const size_t idx = (y*_imageWidth)+x;
+        return _buf[idx];
+    }
+    
+private:
+    const size_t _imageWidth = 0;
+    const size_t _imageHeight = 0;
+    const T* _buf = nullptr;
+};
+
+enum class TileDir : uint8_t {
+    X = 0,
+    Y = 1,
+};
+
+template <typename T>
+class ColorDir {
+public:
+    T& operator()(PxColor color, TileDir dir) {
+        return _t[((uint8_t)color)>>1][(uint8_t)dir];
+    }
+private:
+    T _t[2][2] = {}; // _t[color][dir]; only red/blue colors allowed
+};
+
+struct TileTerms {
+    double t0 = 0;
+    double t1 = 0;
+    double t2 = 0;
+};
+
+//template <typename T>
+//class ColorDirDict {
+//public:
+//    T& operator()(PxColor color, TileDir dir) {
+//        return _t[(uint8_t)color][(uint8_t)dir];
+//    }
+//private:
+//    T _t[3][2] = {};  // _t[color][dir][idx]
+//};
+//
+//class TileTerms {
+//public:
+//    double& operator()(PxColor color, TileDir dir, size_t idx) {
+//        return _terms[(uint8_t)color][(uint8_t)dir][idx];
+//    }
+//    
+//private:
+//    double _terms[3][2][3] = {}; // _terms[color][dir][idx]
+//};
+
+struct TileShift {
+    double shift = 0;
+    double weight = 0;
+};
+
 // Lock must be held
 - (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
     NSParameterAssert(outTxt);
@@ -274,6 +404,13 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     _outputHistogram = Histogram();
     
     id<MTLTexture> rawOriginalTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> interpGTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> rbgDeltaTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> gSlopeXTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> gSlopeYTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    id<MTLTexture> tmpTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
+        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite)];
+    
     id<MTLTexture> rawTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
     id<MTLTexture> filteredHTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
     id<MTLTexture> filteredVTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
@@ -288,8 +425,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
     
-    // Load the pixels into a texture
-    [self _renderPass:cmdBuf texture:rawOriginalTxt name:@"ImageLayer::LoadRaw"
+    [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer::LoadRaw"
         block:^(id<MTLRenderCommandEncoder> encoder) {
             [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
             [encoder setFragmentBuffer:_state.pixelData offset:0 atIndex:1];
@@ -297,19 +433,279 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         }
     ];
     
-    // ImageLayer_DebayerBilinear
-    [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::InterpG"
-        block:^(id<MTLRenderCommandEncoder> encoder) {
-            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-            [encoder setFragmentTexture:rawOriginalTxt atIndex:0];
-        }
-    ];
-    
-    // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-    [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer::DisplayR"
+    [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::WhiteBalanceForward"
         block:^(id<MTLRenderCommandEncoder> encoder) {
             [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
             [encoder setFragmentTexture:rawTxt atIndex:0];
+        }
+    ];
+    
+    [self _renderPass:cmdBuf texture:interpGTxt name:@"ChromaticAberrationCorrector::InterpG"
+        block:^(id<MTLRenderCommandEncoder> encoder) {
+            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+            [encoder setFragmentTexture:rawTxt atIndex:0];
+        }
+    ];
+    
+    id<MTLBuffer> rawBuf = [_device newBufferWithLength:4*_state.ctx.imageWidth*_state.ctx.imageHeight
+        options:MTLResourceCPUCacheModeDefaultCache];
+    
+    id<MTLBuffer> interpGBuf = [_device newBufferWithLength:4*_state.ctx.imageWidth*_state.ctx.imageHeight
+        options:MTLResourceCPUCacheModeDefaultCache];
+    
+    id<MTLBlitCommandEncoder> blit = [cmdBuf blitCommandEncoder];
+    
+    [blit copyFromTexture:rawTxt sourceSlice:0 sourceLevel:0 sourceOrigin:{}
+        sourceSize:{[rawTxt width], [rawTxt height], 1} toBuffer:rawBuf
+        destinationOffset:0 destinationBytesPerRow:4*[rawTxt width]
+        destinationBytesPerImage:4*[rawTxt width]*[rawTxt height]];
+    
+    [blit copyFromTexture:interpGTxt sourceSlice:0 sourceLevel:0 sourceOrigin:{}
+        sourceSize:{[interpGTxt width], [interpGTxt height], 1} toBuffer:interpGBuf
+        destinationOffset:0 destinationBytesPerRow:4*[interpGTxt width]
+        destinationBytesPerImage:4*[interpGTxt width]*[interpGTxt height]];
+    [blit endEncoding];
+    
+    [cmdBuf commit];
+    // Wait for the render to complete, since the lock needs to be
+    // held because the shader accesses _state
+    [cmdBuf waitUntilCompleted];
+    
+//    NSLog(@"interpGTxt:%@\n\nbuffer:%p\n", interpGTxt, [interpGTxt buffer]);
+//    NSLog(@"interpGBuf:%@\n\ncontents: %p\n\n", interpGBuf, [interpGBuf contents]);
+//    exit(0);
+    
+    BufSampler<float> rawPx([rawTxt width], [rawTxt height], rawBuf);
+    BufSampler<float> interpGPx([interpGTxt width], [interpGTxt height], interpGBuf);
+    
+    constexpr double Eps = 1e-5;
+    constexpr size_t TileSize = 128;
+    using Dir = TileDir;
+    using Poly = Poly2D<double,4>;
+    
+    TileGrid grid(_state.ctx.imageWidth, _state.ctx.imageHeight, TileSize);
+    ColorDir<Poly> polys;
+//    ColorDir<TileShift> shifts[grid.tileCountY()][grid.tileCountX()];
+    
+    for (size_t ty=0; ty<grid.tileCountY(); ty++) {
+        for (size_t tx=0; tx<grid.tileCountX(); tx++) {
+//            printf("[%zu %zu]: X:%zu-%zu Y:%zu-%zu\n",
+//                tx, ty,
+//                tiles.tileX(tx), tiles.tileX(tx)+TileSize-1,
+//                tiles.tileY(ty), tiles.tileY(ty)+TileSize-1
+//            );
+            
+            ColorDir<TileTerms> terms;
+            for (ssize_t y=grid.tileOffsetY(ty); y<grid.tileOffsetY(ty)+TileSize; y++) {
+                ssize_t x = grid.tileOffsetX(tx);
+                if (_state.ctx.cfaColor(x,y) == PxColor::Green) {
+                    x++;
+                }
+                
+                const PxColor c = _state.ctx.cfaColor(x,y);
+                for (; x<grid.tileOffsetX(tx)+TileSize; x+=2) {
+                    const double gSlopeX =
+                        ( 3./16)*(interpGPx.px(x+1,y+1) - interpGPx.px(x-1,y+1)) +
+                        (10./16)*(interpGPx.px(x+1,y  ) - interpGPx.px(x-1,y  )) +
+                        ( 3./16)*(interpGPx.px(x+1,y-1) - interpGPx.px(x-1,y-1)) ;
+                    
+                    const double gSlopeY =
+                        ( 3./16)*(interpGPx.px(x+1,y+1) - interpGPx.px(x+1,y-1)) +
+                        (10./16)*(interpGPx.px(x  ,y+1) - interpGPx.px(x  ,y-1)) +
+                        ( 3./16)*(interpGPx.px(x-1,y+1) - interpGPx.px(x-1,y-1)) ;
+                    
+                    const double rbgDelta(rawPx.px(x,y) - interpGPx.px(x,y));
+                    
+                    terms(c,Dir::X).t0 = rbgDelta*rbgDelta;
+                    terms(c,Dir::Y).t0 = rbgDelta*rbgDelta;
+                    
+                    terms(c,Dir::X).t1 = gSlopeX*rbgDelta;
+                    terms(c,Dir::Y).t1 = gSlopeY*rbgDelta;
+                    
+                    terms(c,Dir::X).t2 = gSlopeX*gSlopeX;
+                    terms(c,Dir::Y).t2 = gSlopeY*gSlopeY;
+                }
+            }
+            
+            for (PxColor c : {PxColor::Red, PxColor::Blue}) {
+                for (Dir dir : {Dir::X, Dir::Y}) {
+                    // Skip this tile if the shift denominator is too small
+                    if (terms(c,dir).t2 < Eps) continue; // Prevent divide by 0
+                    
+                    const double shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
+                    const double weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
+                    const double x = grid.tileNormalizedCenterX(tx);
+                    const double y = grid.tileNormalizedCenterY(ty);
+                    
+                    polys(c,dir).addPoint(weight, x, y, shift);
+                    
+//                    shifts[ty][tx](c,dir) = {
+//                        .shift  = 2*( terms(c,dir).t1 /        terms(c,dir).t2 ),
+//                        .weight =   ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ))
+//                    };
+//                    
+//                    if (c == PxColor::Red) {
+//                        printf("[%zu %zu]: shift=%f weight=%f\n",
+//                            tx, ty,
+//                            shift, weight
+//                        );
+//                    }
+                }
+            }
+        }
+    }
+    
+//    ColorDir<Poly> polys;
+//    for (size_t ty=0; ty<grid.tileCountY(); ty++) {
+//        for (size_t tx=0; tx<grid.tileCountX(); tx++) {
+//            for (PxColor c : {PxColor::Red, PxColor::Blue}) {
+//                for (Dir dir : {Dir::X, Dir::Y}) {
+//                    polys(c,dir).addPoint(<#double wt#>, <#double x#>, <#double y#>, <#double z#>)
+//                    // Skip this tile if the shift denominator is too small
+//                    if (terms(c,dir).t2 < Eps) continue; // Prevent divide by 0
+//                    
+//                    shifts[ty][tx](c,dir) = {
+//                        .shift  = 2*( terms(c,dir).t1 /        terms(c,dir).t2 ),
+//                        .weight =   ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ))
+//                    };
+//                    
+////                    if (c == PxColor::Red) {
+////                        printf("[%zu %zu]: shift=%f weight=%f\n",
+////                            tx, ty,
+////                            shift, weight
+////                        );
+////                    }
+//                }
+//            }
+//        }
+//    }
+//    
+//    ColorDir<std::vector<double>> polyPoints;
+//    ColorDir<std::vector<double>> polyWeights;
+//    for (size_t ty=0; ty<grid.tileCountY(); ty++) {
+//        for (size_t tx=0; tx<grid.tileCountX(); tx++) {
+//            
+//        }
+//    }
+//    
+//    using TilePoly = Poly2D<double,4>;
+//    ColorDir<TilePoly> polys;
+    
+    
+    
+//    exit(0);
+    
+//    for (int i=0; i<100; i++) {
+//        float px = 0;
+//        [interpGTxt getBytes:&px bytesPerRow:4*[interpGTxt width] fromRegion:MTLRegionMake2D(i, 0, 1, 1) mipmapLevel:0];
+//        printf("%f\n", px);
+//    }
+//    exit(0);
+    
+    cmdBuf = [_commandQueue commandBuffer];
+    
+//    [self _renderPass:cmdBuf texture:rbgDeltaTxt name:@"ChromaticAberrationCorrector::CalcRBGDelta"
+//        block:^(id<MTLRenderCommandEncoder> encoder) {
+//            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//            [encoder setFragmentTexture:rawTxt atIndex:0];
+//            [encoder setFragmentTexture:interpGTxt atIndex:1];
+//        }
+//    ];
+//    
+//    [self _renderPass:cmdBuf texture:gSlopeXTxt name:@"ChromaticAberrationCorrector::CalcSlopeX"
+//        block:^(id<MTLRenderCommandEncoder> encoder) {
+//            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//            [encoder setFragmentTexture:interpGTxt atIndex:0];
+//        }
+//    ];
+//    
+//    [self _renderPass:cmdBuf texture:gSlopeYTxt name:@"ChromaticAberrationCorrector::CalcSlopeY"
+//        block:^(id<MTLRenderCommandEncoder> encoder) {
+//            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//            [encoder setFragmentTexture:interpGTxt atIndex:0];
+//        }
+//    ];
+//    
+//    {
+//        MPSImageIntegralOfSquares* integral = [[MPSImageIntegralOfSquares alloc] initWithDevice:_device];
+//        [integral setEdgeMode:MPSImageEdgeModeClamp];
+//        [integral encodeToCommandBuffer:cmdBuf sourceTexture:gSlopeYTxt destinationTexture:tmpTxt];
+//        constexpr NSInteger Size = 128;
+//        for (int y=0; y<1296/Size; y++) {
+//            // rbgDelta
+//            for (int x=0; x<2304/Size; x++) {
+//                // Set source region
+//                [integral setOffset:MPSOffset{x*Size,y*Size,0}];
+//                // Set destination region
+//                [integral setClipRect:MTLRegionMake2D(x*Size, y*Size, Size, Size)];
+//                [integral encodeToCommandBuffer:cmdBuf sourceTexture:gSlopeXTxt destinationTexture:tmpTxt];
+//            }
+//            
+//            // dg_y
+//            for (int x=0; x<2304/Size; x++) {
+//                // Set source region
+//                [integral setOffset:MPSOffset{x*Size,y*Size,0}];
+//                // Set destination region
+//                [integral setClipRect:MTLRegionMake2D(x*Size, y*Size, Size, Size)];
+//                [integral encodeToCommandBuffer:cmdBuf sourceTexture:gSlopeXTxt destinationTexture:tmpTxt];
+//            }
+//            
+//            // dg_x
+//            for (int x=0; x<2304/Size; x++) {
+//                // Set source region
+//                [integral setOffset:MPSOffset{x*Size,y*Size,0}];
+//                // Set destination region
+//                [integral setClipRect:MTLRegionMake2D(x*Size, y*Size, Size, Size)];
+//                [integral encodeToCommandBuffer:cmdBuf sourceTexture:gSlopeYTxt destinationTexture:tmpTxt];
+//            }
+//            
+//            // dg_y * rbgDelta
+//            for (int x=0; x<2304/Size; x++) {
+//                // Set source region
+//                [integral setOffset:MPSOffset{x*Size,y*Size,0}];
+//                // Set destination region
+//                [integral setClipRect:MTLRegionMake2D(x*Size, y*Size, Size, Size)];
+//                [integral encodeToCommandBuffer:cmdBuf sourceTexture:gSlopeYTxt destinationTexture:tmpTxt];
+//            }
+//            
+//            // dg_x * rbgDelta
+//            for (int x=0; x<2304/Size; x++) {
+//                // Set source region
+//                [integral setOffset:MPSOffset{x*Size,y*Size,0}];
+//                // Set destination region
+//                [integral setClipRect:MTLRegionMake2D(x*Size, y*Size, Size, Size)];
+//                [integral encodeToCommandBuffer:cmdBuf sourceTexture:gSlopeYTxt destinationTexture:tmpTxt];
+//            }
+//        }
+//        
+//        // Debug
+////        id<MTLBlitCommandEncoder> blit = [cmdBuf blitCommandEncoder];
+////        [blit synchronizeTexture:tmpTxt slice:0 level:0];
+////        [blit endEncoding];
+////        
+////        if (drawable) [cmdBuf presentDrawable:drawable];
+////        [cmdBuf commit];
+////        // Wait for the render to complete, since the lock needs to be
+////        // held because the shader accesses _state
+////        [cmdBuf waitUntilCompleted];
+////        float px = 0;
+////        [tmpTxt getBytes:&px bytesPerRow:4*[tmpTxt width] fromRegion:MTLRegionMake2D(2, 2, 1, 1) mipmapLevel:0];
+////        const float* tmpTxtBuf = (const float*)[[tmpTxt buffer] contents];
+////        printf("%f\n", px);
+////        exit(0);
+//    }
+    
+    [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::WhiteBalanceReverse"
+        block:^(id<MTLRenderCommandEncoder> encoder) {
+            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+            [encoder setFragmentTexture:rawTxt atIndex:0];
+        }
+    ];
+    
+    [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer::DisplayR"
+        block:^(id<MTLRenderCommandEncoder> encoder) {
+            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+            [encoder setFragmentTexture:tmpTxt atIndex:0];
         }
     ];
     
@@ -828,7 +1224,9 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     id<MTLTexture> txt = [drawable texture];
     Assert(txt, return);
     
+    TimeInstant start;
     [self _displayToTexture:txt drawable:drawable];
+    printf("Display took %f\n", start.durationMs()/1000.);
 }
 
 - (id)CGImage {
@@ -840,14 +1238,14 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     const NSUInteger h = [txt height];
     
     uint32_t opts = kCGImageAlphaNoneSkipFirst;
-    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, 8, w*4, SRGBColorSpace(), opts));
+    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, 8, 4*w, SRGBColorSpace(), opts));
     Assert(ctx, return nil);
     
     uint8_t* data = (uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
-    [txt getBytes:data bytesPerRow:w*4 fromRegion:MTLRegionMake2D(0, 0, w, h) mipmapLevel:0];
+    [txt getBytes:data bytesPerRow:4*w fromRegion:MTLRegionMake2D(0, 0, w, h) mipmapLevel:0];
     
     // BGRA -> ARGB
-    for (size_t i=0; i<w*h*4; i+=4) {
+    for (size_t i=0; i<4*w*h; i+=4) {
         std::swap(data[i], data[i+3]);
         std::swap(data[i+1], data[i+2]);
     }

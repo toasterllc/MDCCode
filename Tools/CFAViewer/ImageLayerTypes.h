@@ -3,11 +3,11 @@
 
 namespace CFAViewer {
     namespace ImageLayerTypes {
-        Enum(uint8_t, PxColor, PxColors,
+        enum class PxColor : uint8_t {
             Red     = 0,
             Green   = 1,
             Blue    = 2,
-        );
+        };
         
         struct RenderContext {
             simd::float3x3 colorMatrix = {
@@ -41,15 +41,21 @@ namespace CFAViewer {
             uint32_t imageHeight = 0;
             
             PxColor cfa[2][2] = {{
-                PxColors::Green,
-                PxColors::Red,
+                PxColor::Green,
+                PxColor::Red,
             }, {
-                PxColors::Blue,
-                PxColors::Green,
+                PxColor::Blue,
+                PxColor::Green,
             }};
             
-            PxColor cfaColor(size_t x, size_t y) MetalConst {
+            template <typename T>
+            PxColor cfaColor(T x, T y) MetalConst {
                 return cfa[y&1][x&1];
+            }
+            
+            template <typename T>
+            PxColor cfaColor(T pos) MetalConst {
+                return cfaColor(pos.x, pos.y);
             }
         };
     };
