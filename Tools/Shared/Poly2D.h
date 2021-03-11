@@ -64,7 +64,7 @@ public:
         return r;
     }
     
-private:
+//private:
     static constexpr size_t _Terms = Order*Order;
     
     Mat<T,_Terms,_Terms> _A; // x,y points

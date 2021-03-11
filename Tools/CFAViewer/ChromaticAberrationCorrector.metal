@@ -165,7 +165,7 @@ fragment float InterpG(
 fragment float CalcRBGDelta(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
-    texture2d<float> interpG [[texture(1)]],
+    texture2d<float> gInterp [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
@@ -173,7 +173,7 @@ fragment float CalcRBGDelta(
     case CFAColor::Red:
     case CFAColor::Blue: {
         const float rb = Sample::R(rawTxt, pos);
-        const float g = Sample::R(interpG, pos);
+        const float g = Sample::R(gInterp, pos);
         return rb-g;
     }
     default: return 0;
@@ -224,6 +224,33 @@ fragment float CalcRBGDelta(
 //#undef PX
 //}
 
+template<typename T>
+constexpr T intp(T a, T b, T c)
+{
+    // calculate a * b + (1 - a) * c
+    // following is valid:
+    // intp(a, b+x, c+x) = intp(a, b, c) + x
+    // intp(a, b*x, c*x) = intp(a, b, c) * x
+    return a * (b - c) + c;
+}
+
+const float pxInterp(texture2d<float> txt, float x, float y) {
+    const int2 posInt = {(int)x, (int)y};
+    const float2 posFrac = {abs(x-posInt.x), abs(y-posInt.y)};
+    const int2 posDelta = {(x>=0?1:-1), (y>=0?1:-1)};
+    
+    // Bilinear interpolation
+    const float a = Sample::R(txt, int2{posInt.x,               posInt.y            });
+    const float b = Sample::R(txt, int2{posInt.x+posDelta.x,    posInt.y            });
+    const float c = Sample::R(txt, int2{posInt.x,               posInt.y+posDelta.y });
+    const float d = Sample::R(txt, int2{posInt.x+posDelta.x,    posInt.y+posDelta.y });
+    
+    return  (1-posFrac.y)*(1-posFrac.x) * a +
+            (1-posFrac.y)*(  posFrac.x) * b +
+            (  posFrac.y)*(1-posFrac.x) * c +
+            (  posFrac.y)*(  posFrac.x) * d ;
+}
+
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
     constant TileGrid& grid [[buffer(1)]],
@@ -232,12 +259,14 @@ fragment float ApplyCorrection(
     constant TileShifts& shiftsBX [[buffer(4)]],
     constant TileShifts& shiftsBY [[buffer(5)]],
     texture2d<float> rawTxt [[texture(0)]],
-    texture2d<float> interpG [[texture(1)]],
+    texture2d<float> gInterp [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos(in.pos.x, in.pos.y);
     const uint2 tidx(grid.x.tileIndex(pos.x), grid.y.tileIndex(pos.y));
     const CFAColor c = ctx.cfaColor(pos);
+    
+//    return ((float)tidx.x+(float)tidx.y)/(grid.x.tileCount+grid.y.tileCount);
     
     float2 shift;
     switch (c) {
@@ -246,33 +275,122 @@ fragment float ApplyCorrection(
     case CFAColor::Blue:    shift = {shiftsBX(tidx.x,tidx.y), shiftsBY(tidx.x,tidx.y)}; break;
     }
     
-    const float ShiftLimit = 4;
-    const float Alpha = .25;
-    const float Beta = .5;
+    const float shiftLimit = 4;
+    const float alpha = .25;
+    const float beta = .5;
     
-    shift.x = clamp(shift.x, -ShiftLimit, ShiftLimit);
-    shift.y = clamp(shift.y, -ShiftLimit, ShiftLimit);
+//    shift.x = clamp(shift.x, -shiftLimit, shiftLimit);
+//    shift.y = clamp(shift.y, -shiftLimit, shiftLimit);
+//    
+//    const float g_px = Sample::R(gInterp, pos);
+//    const float rb_px = Sample::R(rawTxt, pos);
+//    const float g_interp = gInterp.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r;
+//    const float grbdiff = g_interp - rb_px;
+//    const float g_rb_diff_interp = grbdiff;
+//    const float rb_interp = g_px - g_rb_diff_interp;
+//    const float g_rb_diff = g_px - rb_px;
+//    
+//    float rbCorrected = rb_px;
+//    if (abs(rb_interp-rb_px) < alpha*(rb_interp+rb_px)) {
+//        if (abs(g_rb_diff_interp) < abs(g_rb_diff)) {
+//            rbCorrected = g_px - g_rb_diff_interp;
+//        }
+//    }
+//    
+//    if (g_rb_diff*g_rb_diff_interp < 0) {
+//        // The colour difference interpolation overshot the correction, just desaturate
+//        if (abs(g_rb_diff_interp/g_rb_diff) < 5) {
+//            rbCorrected = g_px - beta*(g_rb_diff+g_rb_diff_interp);
+//        }
+//    }
+//    
+//    return rbCorrected;
     
-    const float g = Sample::R(interpG, pos);
-    const float rb = Sample::R(rawTxt, pos);
-    const float gShifted = interpG.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r;
-    const float gShiftedRBDelta = gShifted - rb;
-    const float rbInterp = g - gShiftedRBDelta;
-    const float grbDelta = g - rb;
+    const float g_px = Sample::R(gInterp, pos);
+    const float rb_px = Sample::R(rawTxt, pos);
     
-    float rbCorrected = rb;
-    if (abs(rbInterp-rb) < Alpha*(rbInterp+rb)) {
-        if (abs(gShiftedRBDelta) < abs(grbDelta)) {
-            rbCorrected = rbInterp;
+    // polynomial fit coefficients
+    // residual CA shift amount within a tile
+    float shifthfrac = {};
+    float shiftvfrac = {};
+    
+    // Fill shiftvfloor/shiftvceil/...
+    int shiftvfloor = 0;
+    int shiftvceil = 0;
+    int shifthfloor = 0;
+    int shifthceil = 0;
+    
+    {
+        // some parameters for the bilinear interpolation
+        shiftvfloor = floor((float)shift.y);
+        shiftvceil = ceil((float)shift.y);
+        if (shift.y < 0.0) {
+            float tmp = shiftvfloor;
+            shiftvfloor = shiftvceil;
+            shiftvceil = tmp;
+        }
+        shiftvfrac = abs(shift.y - shiftvfloor);
+        
+        shifthfloor = floor((float)shift.x);
+        shifthceil = ceil((float)shift.x);
+        if (shift.x < 0.0) {
+            float tmp = shifthfloor;
+            shifthfloor = shifthceil;
+            shifthceil = tmp;
+        }
+        shifthfrac = abs(shift.x - shifthfloor);
+    }
+    
+    float grbdiff = 0;
+    {
+        const int yf = pos.y + shiftvfloor;
+        const int yc = pos.y + shiftvceil;
+        const int xf = pos.x + shifthfloor;
+        const int xc = pos.x + shifthceil;
+        // Perform CA correction using colour ratios or colour differences
+        const float g_interp_h_floor = intp(shifthfrac,
+            Sample::R(gInterp,int2{xc,yf}),
+            Sample::R(gInterp,int2{xf,yf})
+        );
+        const float g_interp_h_ceil = intp(shifthfrac,
+            Sample::R(gInterp,int2{xc,yc}),
+            Sample::R(gInterp,int2{xf,yc})
+        );
+        // g_int is bilinear interpolation of G at CA shift point
+//        const float g_interp = intp(shiftvfrac, g_interp_h_ceil, g_interp_h_floor);
+//        const float g_interp = pxInterp(gInterp, pos.x+shift.x, pos.y+shift.y);
+        const float g_interp = gInterp.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r;
+//        const float g_interp = gInterp.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r;
+//        float2 pos2 = float2(pos.x, pos.y)+shift;
+//        pos2.x = (int)pos2.x;
+//        pos2.y = (int)pos2.y;
+//        const float g_interp = gInterp.sample(sampler(coord::pixel, filter::linear), pos2).r;
+//        return gInterp.sample({coord::pixel, filter::linear}, float2(pos.x, pos.y)+shift).r - intp(shiftvfrac, g_interp_h_ceil, g_interp_h_floor);
+        // Determine R/B at grid points using colour differences at shift point plus
+        // interpolated G value at grid point. But first we need to interpolate
+        // GR/GB to grid points...
+        grbdiff = g_interp - rb_px;
+    }
+    
+    float g_rb_diff_interp = grbdiff;
+    
+    // Now determine R/B at grid points using interpolated colour differences and interpolated G value at grid point
+    const float rb_interp = g_px - g_rb_diff_interp;
+    const float g_rb_diff = g_px - rb_px;
+    
+    float rbCorrected = rb_px;
+    if (abs(rb_interp-rb_px) < alpha*(rb_interp+rb_px)) {
+        if (abs(g_rb_diff_interp) < abs(g_rb_diff)) {
+            rbCorrected = g_px - g_rb_diff_interp;
         }
     }
     
-    if (grbDelta*gShiftedRBDelta < 0) {
-        if (abs(gShiftedRBDelta/grbDelta) < 5) {
-            rbCorrected = g - Beta*(grbDelta+gShiftedRBDelta);
+    if (g_rb_diff*g_rb_diff_interp < 0) {
+        // The colour difference interpolation overshot the correction, just desaturate
+        if (abs(g_rb_diff_interp/g_rb_diff) < 5) {
+            rbCorrected = g_px - beta*(g_rb_diff+g_rb_diff_interp);
         }
     }
-    
     return rbCorrected;
 }
 
