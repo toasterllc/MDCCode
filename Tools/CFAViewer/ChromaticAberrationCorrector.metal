@@ -217,33 +217,6 @@ fragment float CalcRBGDelta(
 //#undef PX
 //}
 
-template<typename T>
-constexpr T intp(T a, T b, T c)
-{
-    // calculate a * b + (1 - a) * c
-    // following is valid:
-    // intp(a, b+x, c+x) = intp(a, b, c) + x
-    // intp(a, b*x, c*x) = intp(a, b, c) * x
-    return a * (b - c) + c;
-}
-
-const float pxInterp(texture2d<float> txt, float x, float y) {
-    const int2 posInt = {(int)x, (int)y};
-    const float2 posFrac = {abs(x-posInt.x), abs(y-posInt.y)};
-    const int2 posDelta = {(x>=0?1:-1), (y>=0?1:-1)};
-    
-    // Bilinear interpolation
-    const float a = Sample::R(txt, int2{posInt.x,               posInt.y            });
-    const float b = Sample::R(txt, int2{posInt.x+posDelta.x,    posInt.y            });
-    const float c = Sample::R(txt, int2{posInt.x,               posInt.y+posDelta.y });
-    const float d = Sample::R(txt, int2{posInt.x+posDelta.x,    posInt.y+posDelta.y });
-    
-    return  (1-posFrac.y)*(1-posFrac.x) * a +
-            (1-posFrac.y)*(  posFrac.x) * b +
-            (  posFrac.y)*(1-posFrac.x) * c +
-            (  posFrac.y)*(  posFrac.x) * d ;
-}
-
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
     constant TileGrid& grid [[buffer(1)]],
