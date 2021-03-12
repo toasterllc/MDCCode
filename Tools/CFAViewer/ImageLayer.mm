@@ -286,6 +286,103 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     return txt;
 }
 
+class TileAxis {
+private:
+    static uint32_t _tileCount(uint32_t axisSize, uint32_t tileSize) {
+        const uint32_t count = axisSize/tileSize;
+        const uint32_t excess = axisSize%tileSize;
+        const uint32_t rightSlice = excess/2;
+        const uint32_t leftSlice = excess-rightSlice;
+        return count + (leftSlice?1:0) + (rightSlice?1:0);
+    }
+    
+public:
+    TileAxis(uint32_t axisSize, uint32_t tileSize, uint32_t tileOverlap) {
+        _axisSize = axisSize;
+        _tileSize = tileSize;
+        _tileOverlap = tileOverlap;
+        
+        // Calculate number of full tiles (ignoring excess)
+        tileCount = (_axisSize-_tileOverlap)/(_tileSize-_tileOverlap);
+        // w: width of full tiles (ignoring excess)
+        const uint32_t w = tileCount*_tileSize - (tileCount ? (tileCount-1)*_tileOverlap : 0);
+        // Calculate total excess on left/right
+        const uint32_t excess = _axisSize-w;
+        // Calculate right/left excess. Update tile count if we have either.
+        _rightExcess = excess/2;
+        if (_rightExcess) tileCount++;
+        _leftExcess = excess-_rightExcess;
+        if (_leftExcess) tileCount++;
+    }
+    
+    // tileOffset(): returns of the offset for the tile at a given index.
+    // Border tiles and interior tiles will overlap.
+    uint32_t tileOffset(uint32_t idx) const {
+        if (_leftExcess && idx==0) return 0;
+        if (_rightExcess && idx==tileCount-1) return _axisSize-_tileSize;
+        return _leftExcess + (_tileSize-_tileOverlap)*(_leftExcess ? idx-1 : idx);
+    }
+    
+    bool excessTile(uint32_t idx) const {
+        if (_leftExcess && idx==0) return true;
+        if (_rightExcess && idx==tileCount-1) return true;
+        return false;
+    }
+    
+//    // tileIndex(): returns the index for a tile at the given offset.
+//    // For border tiles that overlap interior tiles, gives precedence to interior tiles.
+//    uint32_t tileIndex(uint32_t off) const {
+//        if (off < _leftExcess) return 0;
+//        if (off >= _axisSize-_rightExcess) return tileCount-1;
+//        return ((off-_leftExcess)/_tileSize) + (_leftExcess?1:0);
+//    }
+    
+    // Templated to allow support for doubles, while also being usable
+    // from Metal shader contexts (which doesn't support doubles).
+    template <typename T>
+    T tileNormalizedCenter(uint32_t idx) const {
+        return ((T)tileOffset(idx) + (T)_tileSize/2) / _axisSize;
+    }
+    
+    uint32_t tileCount = 0;
+    
+private:
+    uint32_t _axisSize = 0;
+    uint32_t _tileSize = 0;
+    uint32_t _tileOverlap = 0;
+    uint32_t _leftExcess = 0;
+    uint32_t _rightExcess = 0;
+};
+
+class TileGrid {
+public:
+    TileGrid(uint32_t imageWidth, uint32_t imageHeight, uint32_t tileSize, uint32_t tileOverlap) :
+    x(imageWidth, tileSize, tileOverlap),
+    y(imageHeight, tileSize, tileOverlap) {}
+    
+    const TileAxis x;
+    const TileAxis y;
+};
+
+enum class TileDir : uint8_t {
+    X = 0,
+    Y = 1,
+};
+
+template <typename T>
+class ColorDir {
+public:
+    T& operator()(CFAColor color, TileDir dir) {
+        return _t[((uint8_t)color)>>1][(uint8_t)dir];
+    }
+    
+    const T& operator()(CFAColor color, TileDir dir) const {
+        return _t[((uint8_t)color)>>1][(uint8_t)dir];
+    }
+private:
+    T _t[2][2] = {}; // _t[color][dir]; only red/blue colors allowed
+};
+
 template <typename T>
 class BufSampler {
 public:
@@ -308,49 +405,10 @@ private:
     const T* _buf = nullptr;
 };
 
-template <typename T>
-class ColorDir {
-public:
-    T& operator()(CFAColor color, TileDir dir) {
-        return _t[((uint8_t)color)>>1][(uint8_t)dir];
-    }
-    
-    const T& operator()(CFAColor color, TileDir dir) const {
-        return _t[((uint8_t)color)>>1][(uint8_t)dir];
-    }
-private:
-    T _t[2][2] = {}; // _t[color][dir]; only red/blue colors allowed
-};
-
 struct TileTerms {
     double t0 = 0;
     double t1 = 0;
     double t2 = 0;
-};
-
-//template <typename T>
-//class ColorDirDict {
-//public:
-//    T& operator()(CFAColor color, TileDir dir) {
-//        return _t[(uint8_t)color][(uint8_t)dir];
-//    }
-//private:
-//    T _t[3][2] = {};  // _t[color][dir][idx]
-//};
-//
-//class TileTerms {
-//public:
-//    double& operator()(CFAColor color, TileDir dir, size_t idx) {
-//        return _terms[(uint8_t)color][(uint8_t)dir][idx];
-//    }
-//    
-//private:
-//    double _terms[3][2][3] = {}; // _terms[color][dir][idx]
-//};
-
-struct TileShift {
-    double shift = 0;
-    double weight = 0;
 };
 
 - (id<MTLTexture>)_correctChromaticAberrationIteration:(id<MTLTexture>)rawTxt gInterpTxt:(id<MTLTexture>)gInterpTxt {
