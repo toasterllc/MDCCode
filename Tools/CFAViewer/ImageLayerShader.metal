@@ -99,7 +99,7 @@ fragment float LoadRaw(
     device float3* samples [[buffer(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     const float v = (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
     if (pos.x >= (int)ctx.sampleRect.left &&
         pos.x < (int)ctx.sampleRect.right &&
@@ -133,7 +133,7 @@ fragment float DebayerLMMSE_Gamma(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return SRGBGammaForward(Sample::R(rawTxt, int2(in.pos.xy)));
+    return SRGBGammaForward(Sample::R(rawTxt, int2(in.pos.x, in.pos.y)));
 }
 
 fragment float4 DebayerLMMSE_Degamma(
@@ -141,7 +141,7 @@ fragment float4 DebayerLMMSE_Degamma(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     return float4(SRGBGammaReverse(c.r), SRGBGammaReverse(c.g), SRGBGammaReverse(c.b), 1);
 }
 
@@ -165,7 +165,7 @@ fragment float DebayerLMMSE_NoiseEst(
     texture2d<float> filteredTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     const sampler s;
     const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
     const float raw = Sample::R(rawTxt, pos);
@@ -185,7 +185,7 @@ fragment float DebayerLMMSE_NoiseEst(
 //    texture2d<float, access::read_write> diffV [[texture(4)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    const int2 pos = int2(in.pos.xy);
+//    const int2 pos = int2(in.pos.x, in.pos.y);
 //    const sampler s;
 //    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
 //    const float raw = Sample::R(rawTxt, pos);
@@ -328,7 +328,17 @@ fragment float DebayerLMMSE_CalcDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    int2 pos = int2(in.pos.xy);
+//    int2 pos = int2(in.pos.x, in.pos.y);
+//    float2 fpos = in.pos.xy;
+//    int2 ipos = int2(fpos);
+//    if (ipos.x!=(int)fpos.x || ipos.y!=(int)fpos.y) return 1;
+//    return 0;
+//    volatile int2 pos2 = int2(in.pos.x, in.pos.y);
+//    pos = pos2;
+//    if (pos.x!=pos2.x || pos.y!=pos2.y) return 1;
+//    return 0;
+//    return 1;
     const bool redPx = (!(pos.y%2) && (pos.x%2));
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
     
@@ -384,7 +394,7 @@ fragment float DebayerLMMSE_CalcDiagAvgDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     const bool redPx = (!(pos.y%2) && (pos.x%2));
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
     
@@ -436,7 +446,7 @@ fragment float DebayerLMMSE_CalcAxialAvgDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     const bool greenPx = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
     if (greenPx) return axialAvg(diffTxt, pos);
     
@@ -451,7 +461,7 @@ fragment float4 DebayerLMMSE_CalcRB(
     texture2d<float> diffGB [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     const float g = Sample::RGB(txt, pos).g;
     const float dgr = Sample::R(diffGR, pos);
     const float dgb = Sample::R(diffGB, pos);
@@ -558,7 +568,7 @@ fragment float4 DebayerBilinear(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     return float4(
         DebayerBilinear_R(rawTxt, pos),
         DebayerBilinear_G(rawTxt, pos),
@@ -572,7 +582,7 @@ fragment float4 XYZD50FromCameraRaw(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
     return float4(outputColor_XYZD50, 1);
@@ -583,7 +593,7 @@ fragment float4 XYYD50FromCameraRaw(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
 //    const float3x3 XYZD50_From_CameraRaw(1);
     const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
@@ -596,7 +606,7 @@ fragment float4 Exposure(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     c[2] *= exposure;
     return float4(c, 1);
 }
@@ -639,14 +649,14 @@ fragment float4 Brightness(
     VertexOutput in [[stage_in]]
 ) {
 
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+//    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
 ////    const float k = 1;
 //    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
 ////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
 //    c[0] += 100*k*brightness;
 //    return float4(c, 1);
     
-    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     c[0] = 100*brightness + c[0]*(1-brightness);
     return float4(c, 1);
 }
@@ -659,29 +669,29 @@ fragment float4 Brightness(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+//    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
 ////    const float k = 1;
 //    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
 ////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
 //    c[0] += 100*k*brightness;
 //    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] = 100*b + c[0]*(1-b);
 ////    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] += 100*b;
 ////    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] += 100*b;
 ////    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
 ////    const float b = scurve(c[0]/100)*brightness;
 ////    c[0] = 100*b + c[0]*(1-b);
 ////    return float4(c, 1);
@@ -693,7 +703,7 @@ fragment float4 Brightness(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+//    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
 //    c[0] += 100*brightness;
 //    return float4(c, 1);
 //}
@@ -708,7 +718,7 @@ fragment float4 Contrast(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     const float k = 1+((bellcurve(2.7, 4, (c[0]/100)-.5))*contrast);
     c[0] = (k*(c[0]-50))+50;
     return float4(c, 1);
@@ -720,7 +730,7 @@ fragment float4 Saturation(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     c[1] *= saturation;
     return float4(c, 1);
 }
@@ -730,7 +740,7 @@ fragment float4 XYYD50FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     return float4(XYYFromXYZ(c), 1);
 }
 
@@ -739,7 +749,7 @@ fragment float4 XYZD50FromXYYD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     return float4(XYZFromXYY(c), 1);
 }
 
@@ -749,7 +759,7 @@ fragment float4 LuvD50FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
     return float4(LuvFromXYZ(D50_XYZ, c), 1);
 }
@@ -759,7 +769,7 @@ fragment float4 XYZD50FromLuvD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
     return float4(XYZFromLuv(D50_XYZ, c), 1);
 }
@@ -769,7 +779,7 @@ fragment float4 LCHuvFromLuv(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     return float4(LCHuvFromLuv(c), 1);
 }
 
@@ -778,7 +788,7 @@ fragment float4 LuvFromLCHuv(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     return float4(LuvFromLCHuv(c), 1);
 }
 
@@ -828,7 +838,7 @@ fragment float4 LabD50FromXYZD50(
     VertexOutput in [[stage_in]]
 ) {
     const float3 D50(0.96422, 1.00000, 0.82521);
-    return float4(LabFromXYZ(D50, Sample::RGB(txt, int2(in.pos.xy))), 1);
+    return float4(LabFromXYZ(D50, Sample::RGB(txt, int2(in.pos.x, in.pos.y))), 1);
 }
 
 fragment float4 XYZD50FromLabD50(
@@ -837,7 +847,7 @@ fragment float4 XYZD50FromLabD50(
     VertexOutput in [[stage_in]]
 ) {
     const float3 D50(0.96422, 1.00000, 0.82521);
-    return float4(XYZFromLab(D50, Sample::RGB(txt, int2(in.pos.xy))), 1);
+    return float4(XYZFromLab(D50, Sample::RGB(txt, int2(in.pos.x, in.pos.y))), 1);
 }
 
 fragment float ExtractL(
@@ -845,7 +855,7 @@ fragment float ExtractL(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return Sample::R(txt, int2(in.pos.xy));
+    return Sample::R(txt, int2(in.pos.x, in.pos.y));
 }
 
 fragment float4 LocalContrast(
@@ -855,8 +865,8 @@ fragment float4 LocalContrast(
     texture2d<float> blurredLTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float blurredL = Sample::R(blurredLTxt, int2(in.pos.xy));
-    float3 Lab = Sample::RGB(txt, int2(in.pos.xy));
+    const float blurredL = Sample::R(blurredLTxt, int2(in.pos.x, in.pos.y));
+    float3 Lab = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     Lab[0] += (Lab[0]-blurredL)*amount;
     return float4(Lab, 1);
     
@@ -873,7 +883,7 @@ fragment float4 NormalizeXYYLuminance(
     VertexOutput in [[stage_in]]
 ) {
     const float maxY = (float)maxValsXYY.z/UIntNormalizeVal;
-    float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     c[2] /= maxY;
     return float4(c, 1);
 }
@@ -885,7 +895,7 @@ fragment float4 NormalizeRGB(
     VertexOutput in [[stage_in]]
 ) {
     const float denom = (float)max3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy)) / denom;
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y)) / denom;
     return float4(c, 1);
 }
 
@@ -897,7 +907,7 @@ fragment float4 ClipRGB(
 ) {
 //    const float m = .7;
     const float m = (float)min3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
 }
 
@@ -906,7 +916,7 @@ fragment float4 DecreaseLuminance(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYYD50 = Sample::RGB(txt, int2(in.pos.xy));
+    float3 c_XYYD50 = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     c_XYYD50[2] /= 4.5;
     return float4(c_XYYD50, 1);
 }
@@ -916,7 +926,7 @@ fragment float4 DecreaseLuminanceXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYZD50 = Sample::RGB(txt, int2(in.pos.xy));
+    float3 c_XYZD50 = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     float3 c_XYYD50 = XYYFromXYZ(c_XYZD50);
     c_XYYD50[2] /= 3;
     return float4(XYZFromXYY(c_XYYD50), 1);
@@ -928,7 +938,7 @@ fragment float4 LSRGBD65FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c_XYZD50 = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c_XYZD50 = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
     const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
@@ -946,7 +956,7 @@ fragment float4 LSRGBD65FromXYZD50(
     
     const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
     
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     if (pos.x >= (int)ctx.sampleRect.left &&
         pos.x < (int)ctx.sampleRect.right &&
         pos.y >= (int)ctx.sampleRect.top &&
@@ -966,7 +976,7 @@ fragment float4 ColorAdjust(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
@@ -1001,7 +1011,7 @@ fragment float4 FindMaxVals(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgbfloat = Sample::RGB(txt, int2(in.pos.xy))*UIntNormalizeVal;
+    const float3 lsrgbfloat = Sample::RGB(txt, int2(in.pos.x, in.pos.y))*UIntNormalizeVal;
     const uint3 lsrgb(lsrgbfloat.x, lsrgbfloat.y, lsrgbfloat.z);
     
     setIfGreater((device atomic_uint&)highlights.x, lsrgb.r);
@@ -1049,7 +1059,7 @@ fragment float FixHighlightsRaw(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool greenr = (!(pos.y%2) && !(pos.x%2));
     const bool greenb = ((pos.y%2) && (pos.x%2));
@@ -1249,14 +1259,14 @@ fragment float4 SRGBGamma(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c_LSRGB = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c_LSRGB = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     float3 c_SRGB = float3{
         SRGBGammaForward(c_LSRGB.r),
         SRGBGammaForward(c_LSRGB.g),
         SRGBGammaForward(c_LSRGB.b)
     };
     
-    const int2 pos = int2(in.pos.xy);
+    const int2 pos = int2(in.pos.x, in.pos.y);
     if (pos.x >= (int)ctx.sampleRect.left &&
         pos.x < (int)ctx.sampleRect.right &&
         pos.y >= (int)ctx.sampleRect.top &&
@@ -1273,7 +1283,7 @@ fragment float4 Display(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.x, in.pos.y));
     return float4(c, 1);
 }
 
@@ -1282,7 +1292,7 @@ fragment float4 DisplayR(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float c = Sample::R(txt, int2(in.pos.xy));
+    const float c = Sample::R(txt, int2(in.pos.x, in.pos.y));
     return float4(c, c, c, 1);
 }
 
