@@ -472,7 +472,7 @@ float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, ui
     return (float)pxs[(y*ctx.imageWidth)+x] / ImagePixelMax;
 }
 
-//float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+//float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, int2 pos) {
 ////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
 //    
 //    if (pos.y % 2) {
@@ -506,7 +506,7 @@ float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, ui
 //    }
 //}
 //
-//float g(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+//float g(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, int2 pos) {
 ////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
 //    
 //    if (pos.y % 2) {
@@ -543,7 +543,7 @@ float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, ui
 //    }
 //}
 //
-//float b(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint2 pos) {
+//float b(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, int2 pos) {
 ////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
 //    
 //    if (pos.y % 2) {
@@ -654,12 +654,12 @@ fragment float LoadRaw(
     device float3* samples [[buffer(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const float v = (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
-    if (pos.x >= ctx.sampleRect.left &&
-        pos.x < ctx.sampleRect.right &&
-        pos.y >= ctx.sampleRect.top &&
-        pos.y < ctx.sampleRect.bottom) {
+    if (pos.x >= (int)ctx.sampleRect.left &&
+        pos.x < (int)ctx.sampleRect.right &&
+        pos.y >= (int)ctx.sampleRect.top &&
+        pos.y < (int)ctx.sampleRect.bottom) {
         const bool red = (!(pos.y%2) && (pos.x%2));
         const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
         const bool blue = ((pos.y%2) && !(pos.x%2));
@@ -688,30 +688,26 @@ fragment float LoadRaw(
 //}
 
 
-template <typename P>
-uint mirrorClamp(uint bound, P pt, int delta=0) {
-    const int ptd = (int)pt+delta;
+uint mirrorClamp(uint bound, int pt, int delta=0) {
+    const int ptd = pt+delta;
     if (ptd < 0) return -ptd;
     if (ptd >= (int)bound) return 2*((int)bound-1)-ptd;
     return ptd;
 }
 
-template <typename P>
-uint2 mirrorClamp2(uint2 bound, P pt, int2 delta=0) {
+uint2 mirrorClamp(uint2 bound, int2 pt, int2 delta=0) {
     return {
         mirrorClamp(bound.x, pt.x, delta.x),
         mirrorClamp(bound.y, pt.y, delta.y)
     };
 }
 
-template <typename T>
-float3 sampleRGB(texture2d<float> txt, T pos, int2 delta=0) {
+float3 sampleRGB(texture2d<float> txt, int2 pos, int2 delta=0) {
     const uint2 bounds(txt.get_width(), txt.get_height());
-    return txt.sample(coord::pixel, float2(mirrorClamp2(bounds, pos.xy, delta))).rgb;
+    return txt.sample(coord::pixel, float2(mirrorClamp(bounds, pos.xy, delta))+float2(.5,.5)).rgb;
 }
 
-template <typename T>
-float sampleR(texture2d<float> txt, T pos, int2 delta=0) {
+float sampleR(texture2d<float> txt, int2 pos, int2 delta=0) {
     return sampleRGB(txt, pos, delta).r;
 }
 
@@ -732,7 +728,7 @@ fragment float DebayerLMMSE_Gamma(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return SRGBGamma(sampleR(rawTxt, in.pos));
+    return SRGBGamma(sampleR(rawTxt, int2(in.pos.xy)));
 }
 
 fragment float4 DebayerLMMSE_Degamma(
@@ -740,7 +736,7 @@ fragment float4 DebayerLMMSE_Degamma(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     return float4(InverseSRGBGamma(c.r), InverseSRGBGamma(c.g), InverseSRGBGamma(c.b), 1);
 }
 
@@ -764,7 +760,7 @@ fragment float DebayerLMMSE_NoiseEst(
     texture2d<float> filteredTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const sampler s;
     const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
     const float raw = sampleR(rawTxt, pos);
@@ -900,7 +896,7 @@ fragment float DebayerLMMSE_CalcDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const bool redPx = (!(pos.y%2) && (pos.x%2));
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
     
@@ -915,7 +911,7 @@ fragment float DebayerLMMSE_CalcDiffGRGB(
     return sampleR(diffTxt, pos);
 }
 
-float diagAvg(texture2d<float> txt, uint2 pos) {
+float diagAvg(texture2d<float> txt, int2 pos) {
     const int2 lu(-1,-1);
     const int2 ld(-1,+1);
     const int2 ru(+1,-1);
@@ -923,15 +919,15 @@ float diagAvg(texture2d<float> txt, uint2 pos) {
     if (pos.y == 0) {
         if (pos.x == 0)
             return sampleR(txt,pos,rd);
-        else if (pos.x < txt.get_width()-1)
+        else if (pos.x < (int)txt.get_width()-1)
             return (sampleR(txt,pos,ld)+sampleR(txt,pos,rd))/2;
         else
             return sampleR(txt,pos,ld);
     
-    } else if (pos.y < txt.get_height()-1) {
+    } else if (pos.y < (int)txt.get_height()-1) {
         if (pos.x == 0)
             return (sampleR(txt,pos,ru)+sampleR(txt,pos,rd))/2;
-        else if (pos.x < txt.get_width()-1)
+        else if (pos.x < (int)txt.get_width()-1)
             return (sampleR(txt,pos,lu)+sampleR(txt,pos,ru)+
                     sampleR(txt,pos,ld)+sampleR(txt,pos,rd))/4;
         else    
@@ -940,7 +936,7 @@ float diagAvg(texture2d<float> txt, uint2 pos) {
     } else {
         if (pos.x == 0)
             return sampleR(txt,pos,ru);
-        else if (pos.x < txt.get_width()-1)
+        else if (pos.x < (int)txt.get_width()-1)
             return (sampleR(txt,pos,lu)+sampleR(txt,pos,ru))/2;
         else
             return sampleR(txt,pos,lu);
@@ -955,7 +951,7 @@ fragment float DebayerLMMSE_CalcDiagAvgDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const bool redPx = (!(pos.y%2) && (pos.x%2));
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
     
@@ -967,7 +963,7 @@ fragment float DebayerLMMSE_CalcDiagAvgDiffGRGB(
     return sampleR(diffTxt, pos);
 }
 
-float axialAvg(texture2d<float> txt, uint2 pos) {
+float axialAvg(texture2d<float> txt, int2 pos) {
     const int2 l(-1,+0);
     const int2 r(+1,+0);
     const int2 u(+0,-1);
@@ -975,15 +971,15 @@ float axialAvg(texture2d<float> txt, uint2 pos) {
     if (pos.y == 0) {
         if (pos.x == 0)
             return (sampleR(txt,pos,r)+sampleR(txt,pos,d))/2;
-        else if (pos.x < txt.get_width()-1)
+        else if (pos.x < (int)txt.get_width()-1)
             return (sampleR(txt,pos,l)+sampleR(txt,pos,r)+2*sampleR(txt,pos,d))/4;
         else
             return (sampleR(txt,pos,l)+sampleR(txt,pos,d))/2;
     
-    } else if (pos.y < txt.get_height()-1) {
+    } else if (pos.y < (int)txt.get_height()-1) {
         if (pos.x == 0)
             return (2*sampleR(txt,pos,r)+sampleR(txt,pos,u)+sampleR(txt,pos,d))/4;
-        else if (pos.x < txt.get_width()-1)
+        else if (pos.x < (int)txt.get_width()-1)
             return (sampleR(txt,pos,l)+sampleR(txt,pos,r)+
                     sampleR(txt,pos,u)+sampleR(txt,pos,d))/4;
         else
@@ -992,7 +988,7 @@ float axialAvg(texture2d<float> txt, uint2 pos) {
     } else {
         if (pos.x == 0)
             return (sampleR(txt,pos,r)+sampleR(txt,pos,u))/2;
-        else if (pos.x < txt.get_width()-1)
+        else if (pos.x < (int)txt.get_width()-1)
             return (sampleR(txt,pos,l)+sampleR(txt,pos,r)+2*sampleR(txt,pos,u))/4;
         else
             return (sampleR(txt,pos,l)+sampleR(txt,pos,u))/2;
@@ -1006,7 +1002,7 @@ fragment float DebayerLMMSE_CalcAxialAvgDiffGRGB(
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const bool greenPx = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
     if (greenPx) {
         return axialAvg(diffTxt, pos);
@@ -1023,7 +1019,7 @@ fragment float4 DebayerLMMSE_CalcRB(
     texture2d<float> diffGB [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const float g = sampleRGB(txt, pos).g;
     const float dgr = sampleR(diffGR, pos);
     const float dgb = sampleR(diffGB, pos);
@@ -1043,7 +1039,7 @@ fragment float4 DebayerLMMSE_CalcRB(
 //    texture2d<float, access::read_write> diffV [[texture(4)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    const uint2 pos(in.pos.x, in.pos.y);
+//    const int2 pos = int2(in.pos.xy);
 //    const sampler s;
 //    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
 //    const float raw = sampleR(rawTxt, pos);
@@ -1065,7 +1061,7 @@ fragment float4 DebayerLMMSE_CalcRB(
 
 
 
-float DebayerBilinear_R(texture2d<float> rawTxt, uint2 pos) {
+float DebayerBilinear_R(texture2d<float> rawTxt, int2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1101,7 +1097,7 @@ float DebayerBilinear_R(texture2d<float> rawTxt, uint2 pos) {
     }
 }
 
-float DebayerBilinear_G(texture2d<float> rawTxt, uint2 pos) {
+float DebayerBilinear_G(texture2d<float> rawTxt, int2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1136,7 +1132,7 @@ float DebayerBilinear_G(texture2d<float> rawTxt, uint2 pos) {
     }
 }
 
-float DebayerBilinear_B(texture2d<float> rawTxt, uint2 pos) {
+float DebayerBilinear_B(texture2d<float> rawTxt, int2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
         
@@ -1176,7 +1172,7 @@ fragment float4 DebayerBilinear(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     return float4(
         DebayerBilinear_R(rawTxt, pos),
         DebayerBilinear_G(rawTxt, pos),
@@ -1208,7 +1204,7 @@ fragment float4 DebayerBilinear(
 //    device float3* samples [[buffer(2)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    const uint2 pos(in.pos.x, in.pos.y);
+//    const int2 pos = int2(in.pos.xy);
 //    float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
 //    
 //    if (pos.x >= ctx.sampleRect.left &&
@@ -1240,7 +1236,7 @@ fragment float4 DebayerLMMSE(
     constant ImagePixel* pxs [[buffer(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const int redX = 1;
     const int redY = 0;
     const int green = 1 - ((redX + redY) & 1);
@@ -1256,7 +1252,7 @@ fragment float4 XYZD50FromCameraRaw(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = sampleRGB(txt, in.pos);
+    const float3 inputColor_cameraRaw = sampleRGB(txt, int2(in.pos.xy));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
     return float4(outputColor_XYZD50, 1);
@@ -1267,7 +1263,7 @@ fragment float4 XYYD50FromCameraRaw(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = sampleRGB(txt, in.pos);
+    const float3 inputColor_cameraRaw = sampleRGB(txt, int2(in.pos.xy));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
 //    const float3x3 XYZD50_From_CameraRaw(1);
     const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
@@ -1280,7 +1276,7 @@ fragment float4 Exposure(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = sampleRGB(txt, in.pos);
+    float3 c = sampleRGB(txt, int2(in.pos.xy));
     c[2] *= exposure;
     return float4(c, 1);
 }
@@ -1323,14 +1319,14 @@ fragment float4 Brightness(
     VertexOutput in [[stage_in]]
 ) {
 
-//    float3 c = sampleRGB(txt, in.pos);
+//    float3 c = sampleRGB(txt, int2(in.pos.xy));
 ////    const float k = 1;
 //    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
 ////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
 //    c[0] += 100*k*brightness;
 //    return float4(c, 1);
     
-    float3 c = sampleRGB(txt, in.pos);
+    float3 c = sampleRGB(txt, int2(in.pos.xy));
     c[0] = 100*brightness + c[0]*(1-brightness);
     return float4(c, 1);
 }
@@ -1343,29 +1339,29 @@ fragment float4 Brightness(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    float3 c = sampleRGB(txt, in.pos);
+//    float3 c = sampleRGB(txt, int2(in.pos.xy));
 ////    const float k = 1;
 //    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
 ////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
 //    c[0] += 100*k*brightness;
 //    return float4(c, 1);
 //    
-////    float3 c = sampleRGB(txt, in.pos);
+////    float3 c = sampleRGB(txt, int2(in.pos.xy));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] = 100*b + c[0]*(1-b);
 ////    return float4(c, 1);
 //    
-////    float3 c = sampleRGB(txt, in.pos);
+////    float3 c = sampleRGB(txt, int2(in.pos.xy));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] += 100*b;
 ////    return float4(c, 1);
 //    
-////    float3 c = sampleRGB(txt, in.pos);
+////    float3 c = sampleRGB(txt, int2(in.pos.xy));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] += 100*b;
 ////    return float4(c, 1);
 //    
-////    float3 c = sampleRGB(txt, in.pos);
+////    float3 c = sampleRGB(txt, int2(in.pos.xy));
 ////    const float b = scurve(c[0]/100)*brightness;
 ////    c[0] = 100*b + c[0]*(1-b);
 ////    return float4(c, 1);
@@ -1377,7 +1373,7 @@ fragment float4 Brightness(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    float3 c = sampleRGB(txt, in.pos);
+//    float3 c = sampleRGB(txt, int2(in.pos.xy));
 //    c[0] += 100*brightness;
 //    return float4(c, 1);
 //}
@@ -1392,7 +1388,7 @@ fragment float4 Contrast(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = sampleRGB(txt, in.pos);
+    float3 c = sampleRGB(txt, int2(in.pos.xy));
     const float k = 1+((bellcurve(2.7, 4, (c[0]/100)-.5))*contrast);
     c[0] = (k*(c[0]-50))+50;
     return float4(c, 1);
@@ -1404,7 +1400,7 @@ fragment float4 Saturation(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = sampleRGB(txt, in.pos);
+    float3 c = sampleRGB(txt, int2(in.pos.xy));
     c[1] *= saturation;
     return float4(c, 1);
 }
@@ -1414,7 +1410,7 @@ fragment float4 XYYD50FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     return float4(XYYFromXYZ(c), 1);
 }
 
@@ -1423,7 +1419,7 @@ fragment float4 XYZD50FromXYYD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     return float4(XYZFromXYY(c), 1);
 }
 
@@ -1433,7 +1429,7 @@ fragment float4 LuvD50FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
     return float4(LuvFromXYZ(D50_XYZ, c), 1);
 }
@@ -1443,7 +1439,7 @@ fragment float4 XYZD50FromLuvD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
     return float4(XYZFromLuv(D50_XYZ, c), 1);
 }
@@ -1453,7 +1449,7 @@ fragment float4 LCHuvFromLuv(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     return float4(LCHuvFromLuv(c), 1);
 }
 
@@ -1462,7 +1458,7 @@ fragment float4 LuvFromLCHuv(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     return float4(LuvFromLCHuv(c), 1);
 }
 
@@ -1512,7 +1508,7 @@ fragment float4 LabD50FromXYZD50(
     VertexOutput in [[stage_in]]
 ) {
     const float3 D50(0.96422, 1.00000, 0.82521);
-    return float4(LabFromXYZ(D50, sampleRGB(txt, in.pos)), 1);
+    return float4(LabFromXYZ(D50, sampleRGB(txt, int2(in.pos.xy))), 1);
 }
 
 fragment float4 XYZD50FromLabD50(
@@ -1521,7 +1517,7 @@ fragment float4 XYZD50FromLabD50(
     VertexOutput in [[stage_in]]
 ) {
     const float3 D50(0.96422, 1.00000, 0.82521);
-    return float4(XYZFromLab(D50, sampleRGB(txt, in.pos)), 1);
+    return float4(XYZFromLab(D50, sampleRGB(txt, int2(in.pos.xy))), 1);
 }
 
 fragment float ExtractL(
@@ -1529,7 +1525,7 @@ fragment float ExtractL(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return sampleR(txt, in.pos);
+    return sampleR(txt, int2(in.pos.xy));
 }
 
 fragment float4 LocalContrast(
@@ -1539,8 +1535,8 @@ fragment float4 LocalContrast(
     texture2d<float> blurredLTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float blurredL = sampleR(blurredLTxt, in.pos);
-    float3 Lab = sampleRGB(txt, in.pos);
+    const float blurredL = sampleR(blurredLTxt, int2(in.pos.xy));
+    float3 Lab = sampleRGB(txt, int2(in.pos.xy));
     Lab[0] += (Lab[0]-blurredL)*amount;
     return float4(Lab, 1);
     
@@ -1557,7 +1553,7 @@ fragment float4 NormalizeXYYLuminance(
     VertexOutput in [[stage_in]]
 ) {
     const float maxY = (float)maxValsXYY.z/UIntNormalizeVal;
-    float3 c = sampleRGB(txt, in.pos);
+    float3 c = sampleRGB(txt, int2(in.pos.xy));
     c[2] /= maxY;
     return float4(c, 1);
 }
@@ -1569,7 +1565,7 @@ fragment float4 NormalizeRGB(
     VertexOutput in [[stage_in]]
 ) {
     const float denom = (float)max3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = sampleRGB(txt, in.pos) / denom;
+    const float3 c = sampleRGB(txt, int2(in.pos.xy)) / denom;
     return float4(c, 1);
 }
 
@@ -1581,7 +1577,7 @@ fragment float4 ClipRGB(
 ) {
 //    const float m = .7;
     const float m = (float)min3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
 }
 
@@ -1590,7 +1586,7 @@ fragment float4 DecreaseLuminance(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYYD50 = sampleRGB(txt, in.pos);
+    float3 c_XYYD50 = sampleRGB(txt, int2(in.pos.xy));
     c_XYYD50[2] /= 4.5;
     return float4(c_XYYD50, 1);
 }
@@ -1600,7 +1596,7 @@ fragment float4 DecreaseLuminanceXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYZD50 = sampleRGB(txt, in.pos);
+    float3 c_XYZD50 = sampleRGB(txt, int2(in.pos.xy));
     float3 c_XYYD50 = XYYFromXYZ(c_XYZD50);
     c_XYYD50[2] /= 3;
     return float4(XYZFromXYY(c_XYYD50), 1);
@@ -1612,7 +1608,7 @@ fragment float4 LSRGBD65FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c_XYZD50 = sampleRGB(txt, in.pos);
+    const float3 c_XYZD50 = sampleRGB(txt, int2(in.pos.xy));
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
     const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
@@ -1630,11 +1626,11 @@ fragment float4 LSRGBD65FromXYZD50(
     
     const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
     
-    const uint2 pos(in.pos.x, in.pos.y);
-    if (pos.x >= ctx.sampleRect.left &&
-        pos.x < ctx.sampleRect.right &&
-        pos.y >= ctx.sampleRect.top &&
-        pos.y < ctx.sampleRect.bottom) {
+    const int2 pos = int2(in.pos.xy);
+    if (pos.x >= (int)ctx.sampleRect.left &&
+        pos.x < (int)ctx.sampleRect.right &&
+        pos.y >= (int)ctx.sampleRect.top &&
+        pos.y < (int)ctx.sampleRect.bottom) {
         const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
         samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = c_XYZD50;
     }
@@ -1650,7 +1646,7 @@ fragment float4 ColorAdjust(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = sampleRGB(txt, in.pos);
+    const float3 inputColor_cameraRaw = sampleRGB(txt, int2(in.pos.xy));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
@@ -1685,7 +1681,7 @@ fragment float4 FindMaxVals(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgbfloat = sampleRGB(txt, in.pos)*UIntNormalizeVal;
+    const float3 lsrgbfloat = sampleRGB(txt, int2(in.pos.xy))*UIntNormalizeVal;
     const uint3 lsrgb(lsrgbfloat.x, lsrgbfloat.y, lsrgbfloat.z);
     
     setIfGreater((device atomic_uint&)highlights.x, lsrgb.r);
@@ -1698,7 +1694,7 @@ fragment float4 FindMaxVals(
 
 class Float3x3 {
 public:
-    Float3x3(texture2d<float> txt, uint2 pos) {
+    Float3x3(texture2d<float> txt, int2 pos) {
         _c[0] = sampleR(txt, pos, {-1,-1});
         _c[1] = sampleR(txt, pos, {+0,-1});
         _c[2] = sampleR(txt, pos, {+1,-1});
@@ -1733,7 +1729,7 @@ fragment float FixHighlightsRaw(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const uint2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool greenr = (!(pos.y%2) && !(pos.x%2));
     const bool greenb = ((pos.y%2) && (pos.x%2));
@@ -1942,7 +1938,7 @@ fragment float FixHighlightsRaw(
 //    //  Row2    G R G R
 //    //  Row3    B G B G
 //    
-//    const uint2 pos(in.pos.x, in.pos.y);
+//    const int2 pos = int2(in.pos.xy);
 //    const bool red = (!(pos.y%2) && (pos.x%2));
 //    const bool greenr = (!(pos.y%2) && !(pos.x%2));
 //    const bool greenb = ((pos.y%2) && (pos.x%2));
@@ -2004,7 +2000,7 @@ fragment float FixHighlightsRaw(
 //    const float crawdr = 0;//sampleR(rawTxt, in.pos, {+1,+1});
 //    const float thresh = 1;
 //    
-//    float3 c_CamRaw = sampleRGB(txt, in.pos);
+//    float3 c_CamRaw = sampleRGB(txt, int2(in.pos.xy));
 //    const float3 c_XYZ = ctx.colorMatrix*c_CamRaw;
 //    const float3 highlight_XYZ = ctx.colorMatrix*float3(1);
 //    const float3 D50_XYZ(0.96422, 1, 0.82521);
@@ -2044,7 +2040,7 @@ fragment float FixHighlightsRaw(
 //    const float crawdr = 0;//sampleR(rawTxt, in.pos, {+1,+1});
 //    const float thresh = 1;
 //    
-//    float3 c_CamRaw = sampleRGB(txt, in.pos);
+//    float3 c_CamRaw = sampleRGB(txt, int2(in.pos.xy));
 //    const float3 c_XYZ = ctx.colorMatrix*c_CamRaw;
 //    const float3 highlight_XYZ = ctx.colorMatrix*float3(1);
 //    const float3 D50_XYZ(0.96422, 1, 0.82521);
@@ -2089,18 +2085,18 @@ fragment float4 SRGBGamma(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c_LSRGB = sampleRGB(txt, in.pos);
+    const float3 c_LSRGB = sampleRGB(txt, int2(in.pos.xy));
     float3 c_SRGB = float3{
         SRGBGamma(c_LSRGB.r),
         SRGBGamma(c_LSRGB.g),
         SRGBGamma(c_LSRGB.b)
     };
     
-    const uint2 pos(in.pos.x, in.pos.y);
-    if (pos.x >= ctx.sampleRect.left &&
-        pos.x < ctx.sampleRect.right &&
-        pos.y >= ctx.sampleRect.top &&
-        pos.y < ctx.sampleRect.bottom) {
+    const int2 pos = int2(in.pos.xy);
+    if (pos.x >= (int)ctx.sampleRect.left &&
+        pos.x < (int)ctx.sampleRect.right &&
+        pos.y >= (int)ctx.sampleRect.top &&
+        pos.y < (int)ctx.sampleRect.bottom) {
         const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
         samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = c_SRGB;
     }
@@ -2113,7 +2109,7 @@ fragment float4 Display(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = sampleRGB(txt, in.pos);
+    const float3 c = sampleRGB(txt, int2(in.pos.xy));
     return float4(c, 1);
 }
 
@@ -2122,7 +2118,7 @@ fragment float4 DisplayR(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float c = sampleR(txt, in.pos);
+    const float c = sampleR(txt, int2(in.pos.xy));
     return float4(c, c, c, 1);
 }
 
@@ -2139,7 +2135,7 @@ fragment float4 DisplayR(
 //    //  Row1    B G B G
 //    //  Row2    G R G R
 //    //  Row3    B G B G
-//    uint2 pos = {(uint)in.pos.x, (uint)in.pos.y};
+//    int2 pos = {(uint)in.pos.x, (uint)in.pos.y};
 //    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
 //    
 //    // ## Bilinear debayering
