@@ -377,6 +377,7 @@ struct TileShift {
         sourceSize:{[gInterpTxt width], [gInterpTxt height], 1} toBuffer:gInterpBuf
         destinationOffset:0 destinationBytesPerRow:4*[gInterpTxt width]
         destinationBytesPerImage:4*[gInterpTxt width]*[gInterpTxt height]];
+    
     [blit endEncoding];
     
     [cmdBuf commit];
@@ -395,12 +396,15 @@ struct TileShift {
     
     constexpr double Eps = 1e-5;
     constexpr uint32_t TileSize = 128;
+    constexpr uint32_t TileOverlap = 16;
     using Dir = TileDir;
     using Poly = Poly2D<double,4>;
     
-    TileGrid grid(_state.ctx.imageWidth, _state.ctx.imageHeight, TileSize);
+    TileGrid grid(_state.ctx.imageWidth, _state.ctx.imageHeight, TileSize, TileOverlap);
     ColorDir<Poly> polys;
     ColorDir<TileShifts> shifts;
+    
+    
 //    ColorDir<TileShift> shifts[grid.tileCountY()][grid.tileCountX()];
     
 //    printf("%u\n", grid.y.tileOffset(11));

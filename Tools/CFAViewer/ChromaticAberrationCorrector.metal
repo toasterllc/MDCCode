@@ -229,7 +229,8 @@ fragment float ApplyCorrection(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos(in.pos.x, in.pos.y);
-    const uint2 tidx(grid.x.tileIndex(pos.x), grid.y.tileIndex(pos.y));
+    const uint2 tidx = 0;
+//    const uint2 tidx(grid.x.tileIndex(pos.x), grid.y.tileIndex(pos.y));
     const CFAColor c = ctx.cfaColor(pos);
     
     float2 shift;

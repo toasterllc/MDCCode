@@ -70,36 +70,50 @@ namespace CFAViewer {
             }
             
         public:
-            TileAxis(uint32_t axisSize, uint32_t tileSize) {
+            TileAxis(uint32_t axisSize, uint32_t tileSize, uint32_t tileOverlap) {
                 _axisSize = axisSize;
                 _tileSize = tileSize;
+                _tileOverlap = tileOverlap;
                 
-                const uint32_t excess = _axisSize%_tileSize;
-                _rightSlice = excess/2;
-                _leftSlice = excess-_rightSlice;
-                tileCount = (_axisSize/_tileSize) + (_leftSlice?1:0) + (_rightSlice?1:0);
+                // Calculate number of full tiles (ignoring excess)
+                tileCount = (_axisSize-_tileOverlap)/(_tileSize-_tileOverlap);
+                // w: width of full tiles (ignoring excess)
+                const uint32_t w = tileCount*_tileSize - (tileCount ? (tileCount-1)*_tileOverlap : 0);
+                // Calculate total excess on left/right
+                const uint32_t excess = _axisSize-w;
+                // Calculate right/left excess. Update tile count if we have either.
+                _rightExcess = excess/2;
+                if (_rightExcess) tileCount++;
+                _leftExcess = excess-_rightExcess;
+                if (_leftExcess) tileCount++;
             }
             
             // tileOffset(): returns of the offset for the tile at a given index.
             // Border tiles and interior tiles will overlap.
-            uint32_t tileOffset(uint32_t idx) MetalConst {
-                if (_leftSlice && idx==0) return 0;
-                if (_rightSlice && idx==tileCount-1) return _axisSize-_tileSize;
-                return _leftSlice + _tileSize*(_leftSlice ? idx-1 : idx);
+            uint32_t tileOffset(uint32_t idx) const {
+                if (_leftExcess && idx==0) return 0;
+                if (_rightExcess && idx==tileCount-1) return _axisSize-_tileSize;
+                return _leftExcess + (_tileSize-_tileOverlap)*(_leftExcess ? idx-1 : idx);
             }
             
-            // tileIndex(): returns the index for a tile at the given offset.
-            // For border tiles that overlap interior tiles, gives precedence to interior tiles.
-            uint32_t tileIndex(uint32_t off) MetalConst {
-                if (off < _leftSlice) return 0;
-                if (off >= _axisSize-_rightSlice) return tileCount-1;
-                return ((off-_leftSlice)/_tileSize) + (_leftSlice?1:0);
+            bool excessTile(uint32_t idx) const {
+                if (_leftExcess && idx==0) return true;
+                if (_rightExcess && idx==tileCount-1) return true;
+                return false;
             }
+            
+        //    // tileIndex(): returns the index for a tile at the given offset.
+        //    // For border tiles that overlap interior tiles, gives precedence to interior tiles.
+        //    uint32_t tileIndex(uint32_t off) const {
+        //        if (off < _leftExcess) return 0;
+        //        if (off >= _axisSize-_rightExcess) return tileCount-1;
+        //        return ((off-_leftExcess)/_tileSize) + (_leftExcess?1:0);
+        //    }
             
             // Templated to allow support for doubles, while also being usable
             // from Metal shader contexts (which doesn't support doubles).
             template <typename T>
-            T tileNormalizedCenter(uint32_t idx) MetalConst {
+            T tileNormalizedCenter(uint32_t idx) const {
                 return ((T)tileOffset(idx) + (T)_tileSize/2) / _axisSize;
             }
             
@@ -108,15 +122,16 @@ namespace CFAViewer {
         private:
             uint32_t _axisSize = 0;
             uint32_t _tileSize = 0;
-            uint32_t _leftSlice = 0;
-            uint32_t _rightSlice = 0;
+            uint32_t _tileOverlap = 0;
+            uint32_t _leftExcess = 0;
+            uint32_t _rightExcess = 0;
         };
-        
+
         class TileGrid {
         public:
-            TileGrid(uint32_t imageWidth, uint32_t imageHeight, uint32_t tileSize) :
-            x(imageWidth, tileSize),
-            y(imageHeight, tileSize) {}
+            TileGrid(uint32_t imageWidth, uint32_t imageHeight, uint32_t tileSize, uint32_t tileOverlap) :
+            x(imageWidth, tileSize, tileOverlap),
+            y(imageHeight, tileSize, tileOverlap) {}
             
             const TileAxis x;
             const TileAxis y;
