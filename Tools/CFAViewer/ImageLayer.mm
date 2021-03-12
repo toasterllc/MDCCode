@@ -685,15 +685,15 @@ struct TileTerms {
         
         // LMMSE Debayer
         {
-            // Gamma before (improves quality of edges)
-            if (_state.debayerLMMSEGammaEnabled) {
-                [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer::DebayerLMMSE_Gamma"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                    }
-                ];
-            }
+//            // Gamma before (improves quality of edges)
+//            if (_state.debayerLMMSEGammaEnabled) {
+//                [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer::DebayerLMMSE_Gamma"
+//                    block:^(id<MTLRenderCommandEncoder> encoder) {
+//                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//                        [encoder setFragmentTexture:rawTxt atIndex:0];
+//                    }
+//                ];
+//            }
             
             // Horizontal interpolation
             {

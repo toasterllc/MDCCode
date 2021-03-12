@@ -339,15 +339,15 @@ fragment float DebayerLMMSE_CalcDiffGRGB(
 //    if (pos.x!=pos2.x || pos.y!=pos2.y) return 1;
 //    return 0;
 //    return 1;
-    const bool redPx = (!(pos.y%2) && (pos.x%2));
-    const bool bluePx = ((pos.y%2) && !(pos.x%2));
-    
-    if ((modeGR && redPx) || (!modeGR && bluePx)) {
-        const float raw = Sample::R(rawTxt, pos);
-        const float g = Sample::RGB(txt, pos).g;
+//    const bool redPx = (!(pos.y%2) && (pos.x%2));
+//    const bool bluePx = ((pos.y%2) && !(pos.x%2));
+//    
+//    if ((modeGR && redPx) || (!modeGR && bluePx)) {
+//        const float raw = Sample::R(rawTxt, pos);
+//        const float g = Sample::RGB(txt, pos).g;
+////        return g-raw;
 //        return g-raw;
-        return g-raw;
-    }
+//    }
     
     // Pass-through
     return Sample::R(diffTxt, pos);
