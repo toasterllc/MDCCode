@@ -1,53 +1,20 @@
 #import <metal_stdlib>
+#import "MetalUtil.h"
 #import "ImageLayerTypes.h"
-#import "ImageLayerShaderTypes.h"
 using namespace metal;
 using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
 
-namespace Clamp {
-    template <typename Pt>
-    uint Edge(uint bound, Pt pt, int delta=0) {
-        const int ptd = (int)pt+delta;
-        if (ptd < 0) return 0;
-        if (ptd >= (int)bound) return bound-1;
-        return ptd;
-    }
-
-    template <typename Pt>
-    uint2 Edge(uint2 bound, Pt pt, int2 delta=0) {
-        return {
-            Edge(bound.x, pt.x, delta.x),
-            Edge(bound.y, pt.y, delta.y)
-        };
-    }
-    
-    template <typename Pt>
-    uint Mirror(uint bound, Pt pt, int delta=0) {
-        const int ptd = (int)pt+delta;
-        if (ptd < 0) return -ptd;
-        if (ptd >= (int)bound) return 2*((int)bound-1)-ptd;
-        return ptd;
-    }
-
-    template <typename Pt>
-    uint2 Mirror(uint2 bound, Pt pt, int2 delta=0) {
-        return {
-            Mirror(bound.x, pt.x, delta.x),
-            Mirror(bound.y, pt.y, delta.y)
-        };
-    }
-}
-
-namespace Sample {
-    float3 RGB(texture2d<float> txt, int2 pos, int2 delta=0) {
-        return txt.sample(coord::pixel, float2(pos.x+delta.x+.5, pos.y+delta.y+.5)).rgb;
-    }
-    
-    float R(texture2d<float> txt, int2 pos, int2 delta=0) {
-        return RGB(txt, pos, delta).r;
-    }
-}
+//// Mirror-clamped sample
+//namespace Sample {
+//    float3 RGB(texture2d<float> txt, int2 pos, int2 delta=0) {
+//        return txt.sample(coord::pixel, float2(pos.x+delta.x+.5, pos.y+delta.y+.5)).rgb;
+//    }
+//    
+//    float R(texture2d<float> txt, int2 pos, int2 delta=0) {
+//        return RGB(txt, pos, delta).r;
+//    }
+//}
 
 namespace ChromaticAberrationCorrector {
 
@@ -115,10 +82,8 @@ fragment float InterpolateG(
     // Green pixel: pass-through
     if (c == CFAColor::Green) return Sample::R(raw, pos);
     
-    // TODO: mirrorClamp values that are out of range of the image
-    
     // Red/blue pixel: directional weighted average, preferring the direction with least change
-#define PX(dx,dy) Sample::R(raw, pos, {(dx),(dy)})
+#define PX(dx,dy) Sample::R(Sample::MirrorClamp, raw, pos+int2{(dx),(dy)})
     const float ku =
         1/(Eps+pow(
             abs(PX(  0 , +1 ) - PX( 0 , -1 )) +
@@ -220,13 +185,13 @@ fragment float CalcRBGDelta(
 //}
 
 float gshift(texture2d<float> gInterp, float2 shift, int2 pos) {
-    const sampler samplr(coord::pixel, filter::linear);
-    return gInterp.sample(samplr, float2(pos.x+.5, pos.y+.5)+shift).r;
+    pos = Clamp::Mirror({gInterp.get_width(), gInterp.get_height()}, pos);
+    return gInterp.sample({coord::pixel, filter::linear}, float2(pos)+shift+float2(.5,.5)).r;
 }
 
 float grbdiff(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
     const float gShift = gshift(gInterp, shift, pos);
-    const float rb = Sample::R(raw, pos);
+    const float rb = Sample::R(Sample::MirrorClamp, raw, pos);
     return gShift - rb;
 }
 
@@ -287,7 +252,6 @@ fragment float ApplyCorrection(
             shift.y >= 0 ? -2 : 2,
         };
         
-        // TODO: we should mirror clamp gshift/grbdiff values that go out of range
         // Gradient weights using difference from G at CA shift points and G at grid points
         const float w00 = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{0  ,  0})));
         const float wx0 = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{d.x,  0})));
