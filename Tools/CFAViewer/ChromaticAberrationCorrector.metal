@@ -76,12 +76,12 @@ constant float WhiteBalanceBlue = 0.296587/0.161148;
 
 fragment float WhiteBalanceForward(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos(in.pos.x, in.pos.y);
     const CFAColor c = ctx.cfaColor(pos);
-    const float s = Sample::R(rawTxt, pos);
+    const float s = Sample::R(raw, pos);
     switch (c) {
     case CFAColor::Red:     return s*WhiteBalanceRed;
     case CFAColor::Green:   return s*WhiteBalanceGreen;
@@ -91,12 +91,12 @@ fragment float WhiteBalanceForward(
 
 fragment float WhiteBalanceReverse(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos(in.pos.x, in.pos.y);
     const CFAColor c = ctx.cfaColor(pos);
-    const float s = Sample::R(rawTxt, pos);
+    const float s = Sample::R(raw, pos);
     switch (c) {
     case CFAColor::Red:     return s/WhiteBalanceRed;
     case CFAColor::Green:   return s/WhiteBalanceGreen;
@@ -105,18 +105,20 @@ fragment float WhiteBalanceReverse(
 }
 
 // Interpolate the G channel using a directional weighted average
-fragment float InterpG(
+fragment float InterpolateG(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos(in.pos.x, in.pos.y);
     const CFAColor c = ctx.cfaColor(pos);
     // Green pixel: pass-through
-    if (c == CFAColor::Green) return Sample::R(rawTxt, pos);
+    if (c == CFAColor::Green) return Sample::R(raw, pos);
+    
+    // TODO: mirrorClamp values that are out of range of the image
     
     // Red/blue pixel: directional weighted average, preferring the direction with least change
-#define PX(dx,dy) Sample::R(rawTxt, pos, {(dx),(dy)})
+#define PX(dx,dy) Sample::R(raw, pos, {(dx),(dy)})
     const float ku =
         1/(Eps+pow(
             abs(PX(  0 , +1 ) - PX( 0 , -1 )) +
@@ -157,7 +159,7 @@ fragment float InterpG(
 
 fragment float CalcRBGDelta(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     texture2d<float> gInterp [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -165,7 +167,7 @@ fragment float CalcRBGDelta(
     switch (ctx.cfaColor(pos)) {
     case CFAColor::Red:
     case CFAColor::Blue: {
-        const float rb = Sample::R(rawTxt, pos);
+        const float rb = Sample::R(raw, pos);
         const float g = Sample::R(gInterp, pos);
         return rb-g;
     }
@@ -217,14 +219,25 @@ fragment float CalcRBGDelta(
 //#undef PX
 //}
 
+float gshift(texture2d<float> gInterp, float2 shift, int2 pos) {
+    const sampler samplr(coord::pixel, filter::linear);
+    return gInterp.sample(samplr, float2(pos.x+.5, pos.y+.5)+shift).r;
+}
+
+float grbdiff(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
+    const float gShift = gshift(gInterp, shift, pos);
+    const float rb = Sample::R(raw, pos);
+    return gShift - rb;
+}
+
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     texture2d<float> gInterp [[texture(1)]],
-    texture2d<float> shiftsRX [[texture(2)]],
-    texture2d<float> shiftsRY [[texture(3)]],
-    texture2d<float> shiftsBX [[texture(4)]],
-    texture2d<float> shiftsBY [[texture(5)]],
+    texture2d<float> shiftsRedX [[texture(2)]],
+    texture2d<float> shiftsRedY [[texture(3)]],
+    texture2d<float> shiftsBlueX [[texture(4)]],
+    texture2d<float> shiftsBlueY [[texture(5)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos(in.pos.x, in.pos.y);
@@ -234,51 +247,73 @@ fragment float ApplyCorrection(
     switch (c) {
     case CFAColor::Red:
         shift = {
-            shiftsRX.sample(filter::linear, in.posUnit).r,
-            shiftsRY.sample(filter::linear, in.posUnit).r
+            shiftsRedX.sample(filter::linear, in.posUnit).r,
+            shiftsRedY.sample(filter::linear, in.posUnit).r
         };
         break;
     case CFAColor::Green:
-        return Sample::R(rawTxt, pos); // Green pixel: pass through
+        return Sample::R(raw, pos); // Green pixel: pass through
     case CFAColor::Blue:
         shift = {
-            shiftsBX.sample(filter::linear, in.posUnit).r,
-            shiftsBY.sample(filter::linear, in.posUnit).r
+            shiftsBlueX.sample(filter::linear, in.posUnit).r,
+            shiftsBlueY.sample(filter::linear, in.posUnit).r
         };
         break;
     }
     
-    const float shiftLimit = 4;
-    const float Alpha = .25;
-    const float Beta = .5;
+    constexpr float ShiftLimit = 4;
+    constexpr float Alpha = .25;
+    constexpr float Beta = .5;
     
-    shift.x = clamp(shift.x, -shiftLimit, shiftLimit);
-    shift.y = clamp(shift.y, -shiftLimit, shiftLimit);
+    shift.x = clamp(shift.x, -ShiftLimit, ShiftLimit);
+    shift.y = clamp(shift.y, -ShiftLimit, ShiftLimit);
     
     const sampler samplr(coord::pixel, filter::linear);
     const float g = Sample::R(gInterp, pos);
-    const float rb = Sample::R(rawTxt, pos);
-    const float gShift = gInterp.sample(samplr, float2(pos.x+.5, pos.y+.5)+shift).r;
-    const float gshiftRBDelta = gShift - rb;
-    const float rbInterp = g - gshiftRBDelta;
+    const float rb = Sample::R(raw, pos);
+    const float gShift = gshift(gInterp, shift, pos);
+    const float gShiftRBDelta = gShift - rb;
+    const float rbInterp = g - gShiftRBDelta;
     const float grbDelta = g - rb;
     
     float rbCorrected = rb;
     if (abs(rbInterp-rb) < Alpha*(rbInterp+rb)) {
-        if (abs(gshiftRBDelta) < abs(grbDelta)) {
+        if (abs(gShiftRBDelta) < abs(grbDelta)) {
             rbCorrected = rbInterp;
+        }
+    } else {
+        const int2 d = {
+            shift.x >= 0 ? -2 : 2,
+            shift.y >= 0 ? -2 : 2,
+        };
+        
+        // TODO: we should mirror clamp gshift/grbdiff values that go out of range
+        // Gradient weights using difference from G at CA shift points and G at grid points
+        const float w00 = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{0  ,  0})));
+        const float wx0 = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{d.x,  0})));
+        const float w0y = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{0  ,d.y})));
+        const float wxy = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{d.x,d.y})));
+        const float numer =
+            w00 * grbdiff(raw, gInterp, shift, pos+int2{0  ,  0}) +
+            wx0 * grbdiff(raw, gInterp, shift, pos+int2{d.x,  0}) +
+            w0y * grbdiff(raw, gInterp, shift, pos+int2{0  ,d.y}) +
+            wxy * grbdiff(raw, gInterp, shift, pos+int2{d.x,d.y}) ;
+        const float denom = w00+wx0+w0y+wxy;
+        const float gShiftRBDelta = numer/denom;
+        
+        if (abs(gShiftRBDelta) < abs(grbDelta)) {
+            rbCorrected = g - gShiftRBDelta;
         }
     }
     
-    if (grbDelta*gshiftRBDelta < 0) {
+    if (grbDelta*gShiftRBDelta < 0) {
         // The colour difference interpolation overshot the correction, just desaturate
-        if (abs(gshiftRBDelta/grbDelta) < 5) {
-            rbCorrected = g - Beta*(grbDelta+gshiftRBDelta);
+        if (abs(gShiftRBDelta/grbDelta) < 5) {
+            rbCorrected = g - Beta*(grbDelta+gShiftRBDelta);
         }
     }
     
     return rbCorrected;
 }
 
-
-}
+} // namespace ChromaticAberrationCorrector

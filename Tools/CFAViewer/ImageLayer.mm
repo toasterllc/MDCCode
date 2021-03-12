@@ -353,25 +353,9 @@ struct TileShift {
     double weight = 0;
 };
 
-- (void)_correctChromaticAberration:(id<MTLTexture>)rawTxt {
-    id<MTLTexture> gInterpTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+- (id<MTLTexture>)_correctChromaticAberrationIteration:(id<MTLTexture>)rawTxt gInterpTxt:(id<MTLTexture>)gInterpTxt {
     id<MTLTexture> raw2Txt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    
     id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
-    
-    [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::WhiteBalanceForward"
-        block:^(id<MTLRenderCommandEncoder> encoder) {
-            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-            [encoder setFragmentTexture:rawTxt atIndex:0];
-        }
-    ];
-    
-    [self _renderPass:cmdBuf texture:gInterpTxt name:@"ChromaticAberrationCorrector::InterpG"
-        block:^(id<MTLRenderCommandEncoder> encoder) {
-            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-            [encoder setFragmentTexture:rawTxt atIndex:0];
-        }
-    ];
     
     id<MTLBuffer> rawBuf = [_device newBufferWithLength:4*_state.ctx.imageWidth*_state.ctx.imageHeight
         options:MTLResourceCPUCacheModeDefaultCache];
@@ -415,22 +399,9 @@ struct TileShift {
     
     TileGrid grid(_state.ctx.imageWidth, _state.ctx.imageHeight, TileSize, TileOverlap);
     ColorDir<Poly> polys;
-    ColorDir<TileShifts> shifts;
-    
-    
-//    ColorDir<TileShift> shifts[grid.tileCountY()][grid.tileCountX()];
-    
-//    printf("%u\n", grid.y.tileOffset(11));
-//    exit(0);
     
     for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
         for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
-//            printf("[%u %u]: X:%u-%u Y:%u-%u\n",
-//                tx, ty,
-//                grid.x.tileOffset(tx), grid.x.tileOffset(tx)+TileSize-1,
-//                grid.y.tileOffset(ty), grid.y.tileOffset(ty)+TileSize-1
-//            );
-            
             ColorDir<TileTerms> terms;
             for (int32_t y=grid.y.tileOffset(ty); y<grid.y.tileOffset(ty)+TileSize; y++) {
                 int32_t x = grid.x.tileOffset(tx);
@@ -474,53 +445,34 @@ struct TileShift {
                     const double y = grid.y.tileNormalizedCenter<double>(ty);
                     
                     polys(c,dir).addPoint(weight, x, y, shift);
-                    
-//                    shifts[ty][tx](c,dir) = {
-//                        .shift  = 2*( terms(c,dir).t1 /        terms(c,dir).t2 ),
-//                        .weight =   ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ))
-//                    };
-//                    
-//                    if (c == CFAColor::Red) {
-//                        printf("[%zu %zu]: shift=%f weight=%f\n",
-//                            tx, ty,
-//                            shift, weight
-//                        );
-//                    }
                 }
             }
         }
     }
     
-//    for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
-//        for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
-//            for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
-//                for (Dir dir : {Dir::X, Dir::Y}) {
-//                    const double x = grid.x.tileNormalizedCenter<double>(tx);
-//                    const double y = grid.y.tileNormalizedCenter<double>(ty);
-//                    shifts(c,dir)(tx,ty) = polys(c,dir).eval(x,y);
-//                }
-//            }
-//        }
-//    }
-    
-    constexpr size_t ShiftTextureWidth = 25;
+    constexpr size_t ShiftTextureWidth = 20;
     constexpr size_t ShiftTextureSize = sizeof(float)*ShiftTextureWidth*ShiftTextureWidth;
-    ColorDir<id<MTLBuffer>> shiftBufs;
-    ColorDir<float*> shiftBufContents;
     ColorDir<id<MTLTexture>> shiftTxts;
     blit = [cmdBuf blitCommandEncoder];
     for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
         for (Dir dir : {Dir::X, Dir::Y}) {
             id<MTLBuffer> buf = [_device newBufferWithLength:ShiftTextureSize
                 options:MTLResourceCPUCacheModeDefaultCache];
+            float* bufContents = (float*)[buf contents];
             id<MTLTexture> txt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
                 width:ShiftTextureWidth
                 height:ShiftTextureWidth
                 usage:MTLTextureUsageShaderRead];
             
-            shiftBufs(c,dir) = buf;
-            shiftBufContents(c,dir) = (float*)[buf contents];
             shiftTxts(c,dir) = txt;
+            
+            for (uint32_t y=0, i=0; y<ShiftTextureWidth; y++) {
+                for (uint32_t x=0; x<ShiftTextureWidth; x++, i++) {
+                    const float xf = (x+.5)/ShiftTextureWidth;
+                    const float yf = (y+.5)/ShiftTextureWidth;
+                    bufContents[i] = polys(c,dir).eval(xf,yf);
+                }
+            }
             
             [blit copyFromBuffer:buf sourceOffset:0 sourceBytesPerRow:sizeof(float)*ShiftTextureWidth
                 sourceBytesPerImage:ShiftTextureSize sourceSize:{ShiftTextureWidth, ShiftTextureWidth, 1}
@@ -528,33 +480,6 @@ struct TileShift {
         }
     }
     [blit endEncoding];
-    
-    for (uint32_t y=0, i=0; y<ShiftTextureWidth; y++) {
-        for (uint32_t x=0; x<ShiftTextureWidth; x++, i++) {
-            const float xf = (x+.5)/ShiftTextureWidth;
-            const float yf = (y+.5)/ShiftTextureWidth;
-            for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
-                for (Dir dir : {Dir::X, Dir::Y}) {
-                    shiftBufContents(c,dir)[i] = polys(c,dir).eval(xf,yf);
-                }
-            }
-        }
-    }
-    
-//    for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
-//        for (Dir dir : {Dir::X, Dir::Y}) {
-//            printf("c=%s dir=%s\n",
-//                (c==CFAColor::Red ? "red" : "blue"),
-//                (dir==Dir::X ? "X" : "Y")
-//            );
-//            for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
-//                for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
-//                    printf("shifts(%u,%u) = %f;\n", tx, ty, shifts(c,dir)(tx,ty));
-//                }
-//            }
-//            printf("\n\n");
-//        }
-//    }
     
     [self _renderPass:cmdBuf texture:raw2Txt name:@"ChromaticAberrationCorrector::ApplyCorrection"
         block:^(id<MTLRenderCommandEncoder> encoder) {
@@ -569,14 +494,47 @@ struct TileShift {
         }
     ];
     
-    [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::WhiteBalanceReverse"
-        block:^(id<MTLRenderCommandEncoder> encoder) {
-            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-            [encoder setFragmentTexture:raw2Txt atIndex:0];
-        }
-    ];
-    
     [cmdBuf commit];
+    
+    return raw2Txt;
+}
+
+- (void)_correctChromaticAberration:(id<MTLTexture>)rawTxt iterations:(NSUInteger)iterations {
+    id<MTLTexture> gInterpTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+    {
+        id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
+        [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::WhiteBalanceForward"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+            }
+        ];
+        
+        [self _renderPass:cmdBuf texture:gInterpTxt name:@"ChromaticAberrationCorrector::InterpolateG"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                [encoder setFragmentTexture:rawTxt atIndex:0];
+            }
+        ];
+        
+        [cmdBuf commit];
+    }
+    
+    id<MTLTexture> cacTxt = rawTxt;
+    for (NSUInteger i=0; i<iterations; i++) {
+        cacTxt = [self _correctChromaticAberrationIteration:cacTxt gInterpTxt:gInterpTxt];
+    }
+    
+    {
+        id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
+        [self _renderPass:cmdBuf texture:rawTxt name:@"ChromaticAberrationCorrector::WhiteBalanceReverse"
+            block:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+                [encoder setFragmentTexture:cacTxt atIndex:0];
+            }
+        ];
+        [cmdBuf commit];
+    }
 }
 
 // Lock must be held
@@ -627,7 +585,7 @@ struct TileShift {
     [cmdBuf commit];
     
     if (_state.correctChromaticAberration) {
-        [self _correctChromaticAberration:rawTxt];
+        [self _correctChromaticAberration:rawTxt iterations:2];
     }
     
     cmdBuf = [_commandQueue commandBuffer];
