@@ -5,37 +5,9 @@ using namespace metal;
 using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
 
-//// Mirror-clamped sample
-//namespace Sample {
-//    float3 RGB(texture2d<float> txt, int2 pos, int2 delta=0) {
-//        return txt.sample(coord::pixel, float2(pos.x+delta.x+.5, pos.y+delta.y+.5)).rgb;
-//    }
-//    
-//    float R(texture2d<float> txt, int2 pos, int2 delta=0) {
-//        return RGB(txt, pos, delta).r;
-//    }
-//}
-
 namespace ChromaticAberrationCorrector {
 
 constant float Eps = 1e-5;
-
-
-//template <typename Pt>
-//uint edgeClamp(uint bound, Pt pt, int delta=0) {
-//    const int ptd = (int)pt+delta;
-//    if (ptd < 0) return 0;
-//    if (ptd >= (int)bound) return bound-1;
-//    return ptd;
-//}
-//
-//template <typename Pt>
-//uint2 edgeClamp(uint2 bound, Pt pt, int2 delta=0) {
-//    return {
-//        edgeClamp(bound.x, pt.x, delta.x),
-//        edgeClamp(bound.y, pt.y, delta.y)
-//    };
-//}
 
 constant float WhiteBalanceRed = 0.296587/0.203138;
 constant float WhiteBalanceGreen = 0.296587/0.296587;

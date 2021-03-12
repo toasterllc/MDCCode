@@ -133,7 +133,7 @@ fragment float DebayerLMMSE_Gamma(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return SRGBGammaForward(Sample::R(Sample::MirrorClamp, rawTxt, int2(in.pos.xy)));
+    return SRGBGammaForward(Sample::R(rawTxt, int2(in.pos.xy)));
 }
 
 fragment float4 DebayerLMMSE_Degamma(
@@ -141,7 +141,7 @@ fragment float4 DebayerLMMSE_Degamma(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     return float4(SRGBGammaReverse(c.r), SRGBGammaReverse(c.g), SRGBGammaReverse(c.b), 1);
 }
 
@@ -168,8 +168,8 @@ fragment float DebayerLMMSE_NoiseEst(
     const int2 pos = int2(in.pos.xy);
     const sampler s;
     const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-    const float raw = Sample::R(Sample::MirrorClamp, rawTxt, pos);
-    const float filtered = Sample::R(Sample::MirrorClamp, filteredTxt, pos);
+    const float raw = Sample::R(rawTxt, pos);
+    const float filtered = Sample::R(filteredTxt, pos);
     if (green)  return raw-filtered;
     else        return filtered-raw;
 }
@@ -188,9 +188,9 @@ fragment float DebayerLMMSE_NoiseEst(
 //    const int2 pos = int2(in.pos.xy);
 //    const sampler s;
 //    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-//    const float raw = Sample::R(Sample::MirrorClamp, rawTxt, pos);
-//    const float filteredH = Sample::R(Sample::MirrorClamp, filteredHTxt, pos);
-//    const float filteredV = Sample::R(Sample::MirrorClamp, filteredVTxt, pos);
+//    const float raw = Sample::R(rawTxt, pos);
+//    const float filteredH = Sample::R(filteredHTxt, pos);
+//    const float filteredV = Sample::R(filteredVTxt, pos);
 //    
 //    if (green) {
 //        diffH.write(float4(raw-filteredH), pos);
@@ -233,7 +233,7 @@ fragment float4 DebayerLMMSE_CalcG(
     const int2 pos(in.pos.x, in.pos.y);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool blue = ((pos.y%2) && !(pos.x%2));
-    const float raw = Sample::R(Sample::MirrorClamp, rawTxt, pos);
+    const float raw = Sample::R(rawTxt, pos);
     float g = 0;
     if (red || blue) {
         const int M = 4;
@@ -268,11 +268,11 @@ fragment float4 DebayerLMMSE_CalcG(
         // Compute mh = mean_m FilteredH[i + m]
         if (!UseZhangCodeEst) mh = mom1/(2*M + 1);
         // Compute mh as in Zhang's MATLAB code
-        else mh = Sample::R(Sample::MirrorClamp, filteredHTxt, pos);
+        else mh = Sample::R(filteredHTxt, pos);
         
         ph = ph/(2*M) - mom1*mom1/(2*M*(2*M + 1));
         Rh = Rh/(2*M + 1) + DivEpsilon;
-        float h = mh + (ph/(ph + Rh))*(Sample::R(Sample::MirrorClamp, diffHTxt,pos)-mh);
+        float h = mh + (ph/(ph + Rh))*(Sample::R(diffHTxt,pos)-mh);
         float H = ph - (ph/(ph + Rh))*ph + DivEpsilon;
         
         // Adjust loop indices for top and bottom boundaries
@@ -302,11 +302,11 @@ fragment float4 DebayerLMMSE_CalcG(
         // Compute mv = mean_m FilteredV[i + m]
         if (!UseZhangCodeEst) mv = mom1/(2*M + 1);
         // Compute mv as in Zhang's MATLAB code
-        else mv = Sample::R(Sample::MirrorClamp, filteredVTxt, pos);
+        else mv = Sample::R(filteredVTxt, pos);
         
         pv = pv/(2*M) - mom1*mom1/(2*M*(2*M + 1));
         Rv = Rv/(2*M + 1) + DivEpsilon;
-        float v = mv + (pv/(pv + Rv))*(Sample::R(Sample::MirrorClamp, diffVTxt,pos)-mv);
+        float v = mv + (pv/(pv + Rv))*(Sample::R(diffVTxt,pos)-mv);
         float V = pv - (pv/(pv + Rv))*pv + DivEpsilon;
         
         // Fuse the directional estimates to obtain the green component
@@ -333,46 +333,47 @@ fragment float DebayerLMMSE_CalcDiffGRGB(
     const bool bluePx = ((pos.y%2) && !(pos.x%2));
     
     if ((modeGR && redPx) || (!modeGR && bluePx)) {
-        const float raw = Sample::R(Sample::MirrorClamp, rawTxt, pos);
-        const float g = Sample::RGB(Sample::MirrorClamp, txt, pos).g;
+        const float raw = Sample::R(rawTxt, pos);
+        const float g = Sample::RGB(txt, pos).g;
 //        return g-raw;
         return g-raw;
     }
     
     // Pass-through
-    return Sample::R(Sample::MirrorClamp, diffTxt, pos);
+    return Sample::R(diffTxt, pos);
 }
 
 float diagAvg(texture2d<float> txt, int2 pos) {
+#define PX(d) Sample::R(Sample::MirrorClamp, txt, pos+(d))
     const int2 lu(-1,-1);
     const int2 ld(-1,+1);
     const int2 ru(+1,-1);
     const int2 rd(+1,+1);
     if (pos.y == 0) {
         if (pos.x == 0)
-            return Sample::R(Sample::MirrorClamp, txt,pos+rd);
+            return PX(rd);
         else if (pos.x < (int)txt.get_width()-1)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+ld)+Sample::R(Sample::MirrorClamp, txt,pos+rd))/2;
+            return (PX(ld)+PX(rd))/2;
         else
-            return Sample::R(Sample::MirrorClamp, txt,pos+ld);
+            return PX(ld);
     
     } else if (pos.y < (int)txt.get_height()-1) {
         if (pos.x == 0)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+ru)+Sample::R(Sample::MirrorClamp, txt,pos+rd))/2;
+            return (PX(ru)+PX(rd))/2;
         else if (pos.x < (int)txt.get_width()-1)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+lu)+Sample::R(Sample::MirrorClamp, txt,pos+ru)+
-                    Sample::R(Sample::MirrorClamp, txt,pos+ld)+Sample::R(Sample::MirrorClamp, txt,pos+rd))/4;
+            return (PX(lu)+PX(ru)+PX(ld)+PX(rd))/4;
         else    
-            return (Sample::R(Sample::MirrorClamp, txt,pos+lu)+Sample::R(Sample::MirrorClamp, txt,pos+ld))/2;
+            return (PX(lu)+PX(ld))/2;
     
     } else {
         if (pos.x == 0)
-            return Sample::R(Sample::MirrorClamp, txt,pos+ru);
+            return PX(ru);
         else if (pos.x < (int)txt.get_width()-1)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+lu)+Sample::R(Sample::MirrorClamp, txt,pos+ru))/2;
+            return (PX(lu)+PX(ru))/2;
         else
-            return Sample::R(Sample::MirrorClamp, txt,pos+lu);
+            return PX(lu);
     }
+#undef PX
 }
 
 fragment float DebayerLMMSE_CalcDiagAvgDiffGRGB(
@@ -396,35 +397,36 @@ fragment float DebayerLMMSE_CalcDiagAvgDiffGRGB(
 }
 
 float axialAvg(texture2d<float> txt, int2 pos) {
+#define PX(d) Sample::R(Sample::MirrorClamp, txt, pos+(d))
     const int2 l(-1,+0);
     const int2 r(+1,+0);
     const int2 u(+0,-1);
     const int2 d(+0,+1);
     if (pos.y == 0) {
         if (pos.x == 0)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+r)+Sample::R(Sample::MirrorClamp, txt,pos+d))/2;
+            return (PX(r)+PX(d))/2;
         else if (pos.x < (int)txt.get_width()-1)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+l)+Sample::R(Sample::MirrorClamp, txt,pos+r)+2*Sample::R(Sample::MirrorClamp, txt,pos+d))/4;
+            return (PX(l)+PX(r)+2*PX(d))/4;
         else
-            return (Sample::R(Sample::MirrorClamp, txt,pos+l)+Sample::R(Sample::MirrorClamp, txt,pos+d))/2;
+            return (PX(l)+PX(d))/2;
     
     } else if (pos.y < (int)txt.get_height()-1) {
         if (pos.x == 0)
-            return (2*Sample::R(Sample::MirrorClamp, txt,pos+r)+Sample::R(Sample::MirrorClamp, txt,pos+u)+Sample::R(Sample::MirrorClamp, txt,pos+d))/4;
+            return (2*PX(r)+PX(u)+PX(d))/4;
         else if (pos.x < (int)txt.get_width()-1)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+l)+Sample::R(Sample::MirrorClamp, txt,pos+r)+
-                    Sample::R(Sample::MirrorClamp, txt,pos+u)+Sample::R(Sample::MirrorClamp, txt,pos+d))/4;
+            return (PX(l)+PX(r)+PX(u)+PX(d))/4;
         else
-            return (2*Sample::R(Sample::MirrorClamp, txt,pos+l)+Sample::R(Sample::MirrorClamp, txt,pos+u)+Sample::R(Sample::MirrorClamp, txt,pos+d))/4;
+            return (2*PX(l)+PX(u)+PX(d))/4;
     
     } else {
         if (pos.x == 0)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+r)+Sample::R(Sample::MirrorClamp, txt,pos+u))/2;
+            return (PX(r)+PX(u))/2;
         else if (pos.x < (int)txt.get_width()-1)
-            return (Sample::R(Sample::MirrorClamp, txt,pos+l)+Sample::R(Sample::MirrorClamp, txt,pos+r)+2*Sample::R(Sample::MirrorClamp, txt,pos+u))/4;
+            return (PX(l)+PX(r)+2*PX(u))/4;
         else
-            return (Sample::R(Sample::MirrorClamp, txt,pos+l)+Sample::R(Sample::MirrorClamp, txt,pos+u))/2;
+            return (PX(l)+PX(u))/2;
     }
+#undef PX
 }
 
 fragment float DebayerLMMSE_CalcAxialAvgDiffGRGB(
@@ -436,12 +438,10 @@ fragment float DebayerLMMSE_CalcAxialAvgDiffGRGB(
 ) {
     const int2 pos = int2(in.pos.xy);
     const bool greenPx = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-    if (greenPx) {
-        return axialAvg(diffTxt, pos);
-    }
+    if (greenPx) return axialAvg(diffTxt, pos);
     
     // Pass-through
-    return Sample::R(Sample::MirrorClamp, diffTxt, pos);
+    return Sample::R(diffTxt, pos);
 }
 
 fragment float4 DebayerLMMSE_CalcRB(
@@ -452,9 +452,9 @@ fragment float4 DebayerLMMSE_CalcRB(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const float g = Sample::RGB(Sample::MirrorClamp, txt, pos).g;
-    const float dgr = Sample::R(Sample::MirrorClamp, diffGR, pos);
-    const float dgb = Sample::R(Sample::MirrorClamp, diffGB, pos);
+    const float g = Sample::RGB(txt, pos).g;
+    const float dgr = Sample::R(diffGR, pos);
+    const float dgb = Sample::R(diffGB, pos);
     return float4(g-dgr, g, g-dgb, 1);
 }
 
@@ -462,7 +462,7 @@ fragment float4 DebayerLMMSE_CalcRB(
 
 
 
-
+#define PX(x,y) Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{x,y})
 float DebayerBilinear_R(texture2d<float> rawTxt, int2 pos) {
     if (pos.y % 2) {
         // ROW = B G B G ...
@@ -470,19 +470,12 @@ float DebayerBilinear_R(texture2d<float> rawTxt, int2 pos) {
         // Have G
         // Want R
         // Sample @ y-1, y+1
-        if (pos.x % 2) return .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,-1}) + .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+1});
+        if (pos.x % 2) return .5*PX(+0,-1) + .5*PX(+0,+1);
         
         // Have B
         // Want R
         // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        else return .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,-1}) +
-                    .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,+1}) +
-                    .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,-1}) +
-                    .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,+1}) ;
-        
-        
-        
-        
+        else return .25*PX(-1,-1) + .25*PX(-1,+1) + .25*PX(+1,-1) + .25*PX(+1,+1) ;
     
     } else {
         // ROW = G R G R ...
@@ -490,12 +483,12 @@ float DebayerBilinear_R(texture2d<float> rawTxt, int2 pos) {
         // Have R
         // Want R
         // Sample @ this pixel
-        if (pos.x % 2) return Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+0});
+        if (pos.x % 2) return PX(+0,+0);
         
         // Have G
         // Want R
         // Sample @ x-1 and x+1
-        else return .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,+0}) + .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,+0});
+        else return .5*PX(-1,+0) + .5*PX(+1,+0);
     }
 }
 
@@ -506,15 +499,12 @@ float DebayerBilinear_G(texture2d<float> rawTxt, int2 pos) {
         // Have G
         // Want G
         // Sample @ this pixel
-        if (pos.x % 2) return Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+0});
+        if (pos.x % 2) return PX(+0,+0);
         
         // Have B
         // Want G
         // Sample @ x-1, x+1, y-1, y+1
-        else return .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,+0}) +
-                    .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,+0}) +
-                    .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,-1}) +
-                    .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+1}) ;
+        else return .25*PX(-1,+0) + .25*PX(+1,+0) + .25*PX(+0,-1) + .25*PX(+0,+1) ;
     
     } else {
         // ROW = G R G R ...
@@ -522,15 +512,12 @@ float DebayerBilinear_G(texture2d<float> rawTxt, int2 pos) {
         // Have R
         // Want G
         // Sample @ x-1, x+1, y-1, y+1
-        if (pos.x % 2) return   .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,+0}) +
-                                .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,+0}) +
-                                .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,-1}) +
-                                .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+1}) ;
+        if (pos.x % 2) return .25*PX(-1,+0) + .25*PX(+1,+0) + .25*PX(+0,-1) + .25*PX(+0,+1) ;
         
         // Have G
         // Want G
         // Sample @ this pixel
-        else return Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+0});
+        else return PX(+0,+0);
     }
 }
 
@@ -541,12 +528,12 @@ float DebayerBilinear_B(texture2d<float> rawTxt, int2 pos) {
         // Have G
         // Want B
         // Sample @ x-1, x+1
-        if (pos.x % 2) return .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,+0}) + .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,+0});
+        if (pos.x % 2) return .5*PX(-1,+0) + .5*PX(+1,+0);
         
         // Have B
         // Want B
         // Sample @ this pixel
-        else return Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+0});
+        else return PX(+0,+0);
     
     } else {
         // ROW = G R G R ...
@@ -554,18 +541,15 @@ float DebayerBilinear_B(texture2d<float> rawTxt, int2 pos) {
         // Have R
         // Want B
         // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        if (pos.x % 2) return   .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,-1}) +
-                                .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{-1,+1}) +
-                                .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,-1}) +
-                                .25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+1,+1}) ;
+        if (pos.x % 2) return .25*PX(-1,-1) + .25*PX(-1,+1) + .25*PX(+1,-1) + .25*PX(+1,+1) ;
         
         // Have G
         // Want B
         // Sample @ y-1, y+1
-        else return .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,-1}) + .5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{+0,+1});
+        else return .5*PX(+0,-1) + .5*PX(+0,+1);
     }
 }
-
+#undef PX
 
 
 
@@ -588,7 +572,7 @@ fragment float4 XYZD50FromCameraRaw(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
     return float4(outputColor_XYZD50, 1);
@@ -599,7 +583,7 @@ fragment float4 XYYD50FromCameraRaw(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
 //    const float3x3 XYZD50_From_CameraRaw(1);
     const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
@@ -612,7 +596,7 @@ fragment float4 Exposure(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.xy));
     c[2] *= exposure;
     return float4(c, 1);
 }
@@ -655,14 +639,14 @@ fragment float4 Brightness(
     VertexOutput in [[stage_in]]
 ) {
 
-//    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
 ////    const float k = 1;
 //    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
 ////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
 //    c[0] += 100*k*brightness;
 //    return float4(c, 1);
     
-    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.xy));
     c[0] = 100*brightness + c[0]*(1-brightness);
     return float4(c, 1);
 }
@@ -675,29 +659,29 @@ fragment float4 Brightness(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
 ////    const float k = 1;
 //    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
 ////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
 //    c[0] += 100*k*brightness;
 //    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] = 100*b + c[0]*(1-b);
 ////    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] += 100*b;
 ////    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
 ////    const float b = bellcurve(c[0]/100)*brightness;
 ////    c[0] += 100*b;
 ////    return float4(c, 1);
 //    
-////    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
 ////    const float b = scurve(c[0]/100)*brightness;
 ////    c[0] = 100*b + c[0]*(1-b);
 ////    return float4(c, 1);
@@ -709,7 +693,7 @@ fragment float4 Brightness(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
 //    c[0] += 100*brightness;
 //    return float4(c, 1);
 //}
@@ -724,7 +708,7 @@ fragment float4 Contrast(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.xy));
     const float k = 1+((bellcurve(2.7, 4, (c[0]/100)-.5))*contrast);
     c[0] = (k*(c[0]-50))+50;
     return float4(c, 1);
@@ -736,7 +720,7 @@ fragment float4 Saturation(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.xy));
     c[1] *= saturation;
     return float4(c, 1);
 }
@@ -746,7 +730,7 @@ fragment float4 XYYD50FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     return float4(XYYFromXYZ(c), 1);
 }
 
@@ -755,7 +739,7 @@ fragment float4 XYZD50FromXYYD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     return float4(XYZFromXYY(c), 1);
 }
 
@@ -765,7 +749,7 @@ fragment float4 LuvD50FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
     return float4(LuvFromXYZ(D50_XYZ, c), 1);
 }
@@ -775,7 +759,7 @@ fragment float4 XYZD50FromLuvD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
     return float4(XYZFromLuv(D50_XYZ, c), 1);
 }
@@ -785,7 +769,7 @@ fragment float4 LCHuvFromLuv(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     return float4(LCHuvFromLuv(c), 1);
 }
 
@@ -794,7 +778,7 @@ fragment float4 LuvFromLCHuv(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     return float4(LuvFromLCHuv(c), 1);
 }
 
@@ -844,7 +828,7 @@ fragment float4 LabD50FromXYZD50(
     VertexOutput in [[stage_in]]
 ) {
     const float3 D50(0.96422, 1.00000, 0.82521);
-    return float4(LabFromXYZ(D50, Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy))), 1);
+    return float4(LabFromXYZ(D50, Sample::RGB(txt, int2(in.pos.xy))), 1);
 }
 
 fragment float4 XYZD50FromLabD50(
@@ -853,7 +837,7 @@ fragment float4 XYZD50FromLabD50(
     VertexOutput in [[stage_in]]
 ) {
     const float3 D50(0.96422, 1.00000, 0.82521);
-    return float4(XYZFromLab(D50, Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy))), 1);
+    return float4(XYZFromLab(D50, Sample::RGB(txt, int2(in.pos.xy))), 1);
 }
 
 fragment float ExtractL(
@@ -861,7 +845,7 @@ fragment float ExtractL(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return Sample::R(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    return Sample::R(txt, int2(in.pos.xy));
 }
 
 fragment float4 LocalContrast(
@@ -871,8 +855,8 @@ fragment float4 LocalContrast(
     texture2d<float> blurredLTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float blurredL = Sample::R(Sample::MirrorClamp, blurredLTxt, int2(in.pos.xy));
-    float3 Lab = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float blurredL = Sample::R(blurredLTxt, int2(in.pos.xy));
+    float3 Lab = Sample::RGB(txt, int2(in.pos.xy));
     Lab[0] += (Lab[0]-blurredL)*amount;
     return float4(Lab, 1);
     
@@ -889,7 +873,7 @@ fragment float4 NormalizeXYYLuminance(
     VertexOutput in [[stage_in]]
 ) {
     const float maxY = (float)maxValsXYY.z/UIntNormalizeVal;
-    float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    float3 c = Sample::RGB(txt, int2(in.pos.xy));
     c[2] /= maxY;
     return float4(c, 1);
 }
@@ -901,7 +885,7 @@ fragment float4 NormalizeRGB(
     VertexOutput in [[stage_in]]
 ) {
     const float denom = (float)max3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy)) / denom;
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy)) / denom;
     return float4(c, 1);
 }
 
@@ -913,7 +897,7 @@ fragment float4 ClipRGB(
 ) {
 //    const float m = .7;
     const float m = (float)min3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
 }
 
@@ -922,7 +906,7 @@ fragment float4 DecreaseLuminance(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYYD50 = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    float3 c_XYYD50 = Sample::RGB(txt, int2(in.pos.xy));
     c_XYYD50[2] /= 4.5;
     return float4(c_XYYD50, 1);
 }
@@ -932,7 +916,7 @@ fragment float4 DecreaseLuminanceXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    float3 c_XYZD50 = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    float3 c_XYZD50 = Sample::RGB(txt, int2(in.pos.xy));
     float3 c_XYYD50 = XYYFromXYZ(c_XYZD50);
     c_XYYD50[2] /= 3;
     return float4(XYZFromXYY(c_XYYD50), 1);
@@ -944,7 +928,7 @@ fragment float4 LSRGBD65FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c_XYZD50 = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c_XYZD50 = Sample::RGB(txt, int2(in.pos.xy));
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
     const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
@@ -982,7 +966,7 @@ fragment float4 ColorAdjust(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
     const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
     
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
@@ -1017,7 +1001,7 @@ fragment float4 FindMaxVals(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 lsrgbfloat = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy))*UIntNormalizeVal;
+    const float3 lsrgbfloat = Sample::RGB(txt, int2(in.pos.xy))*UIntNormalizeVal;
     const uint3 lsrgb(lsrgbfloat.x, lsrgbfloat.y, lsrgbfloat.z);
     
     setIfGreater((device atomic_uint&)highlights.x, lsrgb.r);
@@ -1265,7 +1249,7 @@ fragment float4 SRGBGamma(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c_LSRGB = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c_LSRGB = Sample::RGB(txt, int2(in.pos.xy));
     float3 c_SRGB = float3{
         SRGBGammaForward(c_LSRGB.r),
         SRGBGammaForward(c_LSRGB.g),
@@ -1289,7 +1273,7 @@ fragment float4 Display(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
     return float4(c, 1);
 }
 
@@ -1298,7 +1282,7 @@ fragment float4 DisplayR(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float c = Sample::R(Sample::MirrorClamp, txt, int2(in.pos.xy));
+    const float c = Sample::R(txt, int2(in.pos.xy));
     return float4(c, c, c, 1);
 }
 
