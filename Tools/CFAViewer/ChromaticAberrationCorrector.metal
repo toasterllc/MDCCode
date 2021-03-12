@@ -219,25 +219,33 @@ fragment float CalcRBGDelta(
 
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
-    constant TileGrid& grid [[buffer(1)]],
-    constant TileShifts& shiftsRX [[buffer(2)]],
-    constant TileShifts& shiftsRY [[buffer(3)]],
-    constant TileShifts& shiftsBX [[buffer(4)]],
-    constant TileShifts& shiftsBY [[buffer(5)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> gInterp [[texture(1)]],
+    texture2d<float> shiftsRX [[texture(2)]],
+    texture2d<float> shiftsRY [[texture(3)]],
+    texture2d<float> shiftsBX [[texture(4)]],
+    texture2d<float> shiftsBY [[texture(5)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos(in.pos.x, in.pos.y);
-    const uint2 tidx = 0;
-//    const uint2 tidx(grid.x.tileIndex(pos.x), grid.y.tileIndex(pos.y));
     const CFAColor c = ctx.cfaColor(pos);
     
-    float2 shift;
+    float2 shift = 0;
     switch (c) {
-    case CFAColor::Red:     shift = {shiftsRX(tidx.x,tidx.y), shiftsRY(tidx.x,tidx.y)}; break;
-    case CFAColor::Green:   return Sample::R(rawTxt, pos); // Green pixel: pass through
-    case CFAColor::Blue:    shift = {shiftsBX(tidx.x,tidx.y), shiftsBY(tidx.x,tidx.y)}; break;
+    case CFAColor::Red:
+        shift = {
+            shiftsRX.sample(filter::linear, in.posUnit).r,
+            shiftsRY.sample(filter::linear, in.posUnit).r
+        };
+        break;
+    case CFAColor::Green:
+        return Sample::R(rawTxt, pos); // Green pixel: pass through
+    case CFAColor::Blue:
+        shift = {
+            shiftsBX.sample(filter::linear, in.posUnit).r,
+            shiftsBY.sample(filter::linear, in.posUnit).r
+        };
+        break;
     }
     
     const float shiftLimit = 4;

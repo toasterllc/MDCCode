@@ -253,19 +253,32 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     [encoder endEncoding];
 }
 
+// _state.lock must be held
 - (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt {
     return [self _newTextureWithPixelFormat:fmt
+        width:_state.ctx.imageWidth
+        height:_state.ctx.imageHeight
         usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)];
 }
 
 // _state.lock must be held
 - (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt
     usage:(MTLTextureUsage)usage {
+    return [self _newTextureWithPixelFormat:fmt
+        width:_state.ctx.imageWidth
+        height:_state.ctx.imageHeight
+        usage:usage];
+}
+
+- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt
+    width:(NSUInteger)width
+    height:(NSUInteger)height
+    usage:(MTLTextureUsage)usage {
     
     MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
     [desc setTextureType:MTLTextureType2D];
-    [desc setWidth:_state.ctx.imageWidth];
-    [desc setHeight:_state.ctx.imageHeight];
+    [desc setWidth:width];
+    [desc setHeight:height];
     [desc setPixelFormat:fmt];
     [desc setUsage:usage];
     id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
@@ -478,47 +491,81 @@ struct TileShift {
         }
     }
     
-    for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
-        for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
+//    for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
+//        for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
+//            for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
+//                for (Dir dir : {Dir::X, Dir::Y}) {
+//                    const double x = grid.x.tileNormalizedCenter<double>(tx);
+//                    const double y = grid.y.tileNormalizedCenter<double>(ty);
+//                    shifts(c,dir)(tx,ty) = polys(c,dir).eval(x,y);
+//                }
+//            }
+//        }
+//    }
+    
+    constexpr size_t ShiftTextureWidth = 25;
+    constexpr size_t ShiftTextureSize = sizeof(float)*ShiftTextureWidth*ShiftTextureWidth;
+    ColorDir<id<MTLBuffer>> shiftBufs;
+    ColorDir<float*> shiftBufContents;
+    ColorDir<id<MTLTexture>> shiftTxts;
+    blit = [cmdBuf blitCommandEncoder];
+    for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
+        for (Dir dir : {Dir::X, Dir::Y}) {
+            id<MTLBuffer> buf = [_device newBufferWithLength:ShiftTextureSize
+                options:MTLResourceCPUCacheModeDefaultCache];
+            id<MTLTexture> txt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
+                width:ShiftTextureWidth
+                height:ShiftTextureWidth
+                usage:MTLTextureUsageShaderRead];
+            
+            shiftBufs(c,dir) = buf;
+            shiftBufContents(c,dir) = (float*)[buf contents];
+            shiftTxts(c,dir) = txt;
+            
+            [blit copyFromBuffer:buf sourceOffset:0 sourceBytesPerRow:sizeof(float)*ShiftTextureWidth
+                sourceBytesPerImage:ShiftTextureSize sourceSize:{ShiftTextureWidth, ShiftTextureWidth, 1}
+                toTexture:txt destinationSlice:0 destinationLevel:0 destinationOrigin:{0,0,0}];
+        }
+    }
+    [blit endEncoding];
+    
+    for (uint32_t y=0, i=0; y<ShiftTextureWidth; y++) {
+        for (uint32_t x=0; x<ShiftTextureWidth; x++, i++) {
+            const float xf = (x+.5)/ShiftTextureWidth;
+            const float yf = (y+.5)/ShiftTextureWidth;
             for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
-                    const double x = grid.x.tileNormalizedCenter<double>(tx);
-                    const double y = grid.y.tileNormalizedCenter<double>(ty);
-                    shifts(c,dir)(tx,ty) = polys(c,dir).eval(x,y);
+                    shiftBufContents(c,dir)[i] = polys(c,dir).eval(xf,yf);
                 }
             }
         }
     }
     
-    for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
-        for (Dir dir : {Dir::X, Dir::Y}) {
-            printf("c=%s dir=%s\n",
-                (c==CFAColor::Red ? "red" : "blue"),
-                (dir==Dir::X ? "X" : "Y")
-            );
-            for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
-                for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
-                    printf("shifts(%u,%u) = %f;\n", tx, ty, shifts(c,dir)(tx,ty));
-                }
-            }
-            printf("\n\n");
-        }
-    }
+//    for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
+//        for (Dir dir : {Dir::X, Dir::Y}) {
+//            printf("c=%s dir=%s\n",
+//                (c==CFAColor::Red ? "red" : "blue"),
+//                (dir==Dir::X ? "X" : "Y")
+//            );
+//            for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
+//                for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
+//                    printf("shifts(%u,%u) = %f;\n", tx, ty, shifts(c,dir)(tx,ty));
+//                }
+//            }
+//            printf("\n\n");
+//        }
+//    }
     
     [self _renderPass:cmdBuf texture:raw2Txt name:@"ChromaticAberrationCorrector::ApplyCorrection"
         block:^(id<MTLRenderCommandEncoder> encoder) {
             [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
             [encoder setFragmentBytes:&grid length:sizeof(grid) atIndex:1];
-            [encoder setFragmentBytes:&shifts(CFAColor::Red,Dir::X)
-                length:sizeof(shifts(CFAColor::Red,Dir::X)) atIndex:2];
-            [encoder setFragmentBytes:&shifts(CFAColor::Red,Dir::Y)
-                length:sizeof(shifts(CFAColor::Red,Dir::Y)) atIndex:3];
-            [encoder setFragmentBytes:&shifts(CFAColor::Blue,Dir::X)
-                length:sizeof(shifts(CFAColor::Blue,Dir::X)) atIndex:4];
-            [encoder setFragmentBytes:&shifts(CFAColor::Blue,Dir::Y)
-                length:sizeof(shifts(CFAColor::Blue,Dir::Y)) atIndex:5];
             [encoder setFragmentTexture:rawTxt atIndex:0];
             [encoder setFragmentTexture:gInterpTxt atIndex:1];
+            [encoder setFragmentTexture:shiftTxts(CFAColor::Red,Dir::X) atIndex:2];
+            [encoder setFragmentTexture:shiftTxts(CFAColor::Red,Dir::Y) atIndex:3];
+            [encoder setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::X) atIndex:4];
+            [encoder setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::Y) atIndex:5];
         }
     ];
     
