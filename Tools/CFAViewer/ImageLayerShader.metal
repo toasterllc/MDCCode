@@ -22,561 +22,6 @@ vertex VertexOutput VertexShader(
     return r;
 }
 
-#define SamplePtr constant ImagePixel*
-
-int32_t symclamp(int32_t N, int32_t n) {
-    if (n < 0)          return -n;
-    else if (n >= N)    return 2*((int)N-1)-n;
-    else                return n;
-}
-
-float sample(SamplePtr in, int32_t width, int32_t height, int x, int y) {
-//    printf("sample(%d %d)\n", x, y);
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    return (float)in[y*width+x]/ImagePixelMax;
-}
-
-float sampleFilteredH(SamplePtr in, int32_t width, int32_t height, int x, int y) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    const float coeff[5] = {-0.25f, 0.5f, 0.5f, 0.5f, -0.25f};
-    float accum = 0;
-    for (int i=0, ix=x-2; i<5; i++, ix++) {
-        const float k = coeff[i];
-        accum += k*sample(in, width, height, ix, y);
-    }
-    return accum;
-}
-
-float sampleFilteredV(SamplePtr in, int32_t width, int32_t height, int x, int y) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    const float coeff[] = {-0.25f, 0.5f, 0.5f, 0.5f, -0.25f};
-    float accum = 0;
-    for (int i=0, iy=y-2; i<5; i++, iy++) {
-        const float k = coeff[i];
-        accum += k*sample(in, width, height, x, iy);
-    }
-    return accum;
-}
-
-float sampleDiffH(SamplePtr in, int32_t width, int32_t height, int green, int x, int y) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    float r = sample(in, width, height, x, y) - sampleFilteredH(in, width, height, x, y);
-    if (((x+y) & 1) != green) r *= -1;
-    return r;
-}
-
-float sampleDiffV(SamplePtr in, int32_t width, int32_t height, int green, int x, int y) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    float r = sample(in, width, height, x, y) - sampleFilteredV(in, width, height, x, y);
-    if (((x+y) & 1) != green) r *= -1;
-    return r;
-}
-
-float sampleDiffHSmoothed(SamplePtr in, int32_t width, int32_t height, int green, int x, int y) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    const float coeff[] = {0.03125f, 0.0703125f, 0.1171875f,
-                           0.1796875f, 0.203125f, 0.1796875f,
-                           0.1171875f, 0.0703125f, 0.03125f
-    };
-    float accum = 0;
-    for (int i=0, ix=x-4; i<9; i++, ix++) {
-        const float k = coeff[i];
-        accum += k*sampleDiffH(in, width, height, green, ix, y);
-    }
-    return accum;
-}
-
-float sampleDiffVSmoothed(SamplePtr in, int32_t width, int32_t height, int green, int x, int y) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    
-    const float coeff[] = {0.03125f, 0.0703125f, 0.1171875f,
-                           0.1796875f, 0.203125f, 0.1796875f,
-                           0.1171875f, 0.0703125f, 0.03125f
-    };
-    float accum = 0;
-    for (int i=0, iy=y-4; i<9; i++, iy++) {
-        const float k = coeff[i];
-        accum += k*sampleDiffV(in, width, height, green, x, iy);
-    }
-    return accum;
-}
-
-float sampleOutputGreen(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int x, int y
-) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    
-    // Window size for estimating LMMSE statistics
-    const int M = 4;
-    // Small value added in denominators to avoid divide-by-zero
-    const float DivEpsilon = 0.1f/(255*255);
-    
-    if (((x+y) & 1) != green) {
-        // (x,y) is a red or blue location
-        // Adjust loop indices m = -M,...,M when necessary to
-        // compensate for left and right boundaries.  We effectively
-        // do zero-padded boundary handling.
-        int m0 = (x >= M) ? -M : -x;
-        int m1 = (x < width - M) ? M : (width - x - 1);
-        
-        // The following computes
-        // ph = var FilteredH[i + m]
-        //   m=-M,...,M
-        // Rh = mean(FilteredH[i + m] - DiffH[i + m])^2
-        //   m=-M,...,M
-        // h = LMMSE estimate
-        // H = LMMSE estimate accuracy (estimated variance of h)
-        float mom1 = 0;
-        float ph = 0;
-        float Rh = 0;
-        for (int m=m0; m<=m1; m++) {
-            float Temp = sampleDiffHSmoothed(in, width, height, green, x+m, y);
-            mom1 += Temp;
-            ph += Temp*Temp;
-            Temp -= sampleDiffH(in, width, height, green, x+m, y);
-            Rh += Temp*Temp;
-        }
-        
-        // useZhangCodeEst=0: Compute mh = mean_m FilteredH[i + m]
-        // useZhangCodeEst=1: Compute mh as in Zhang's MATLAB code
-        const float mh = (!useZhangCodeEst ? mom1/(2*M + 1) : sampleDiffHSmoothed(in, width, height, green, x, y));
-        
-        ph = ph/(2*M) - mom1*mom1/(2*M*(2*M + 1));
-        Rh = Rh/(2*M + 1) + DivEpsilon;
-        float h = mh + (ph/(ph + Rh))*(sampleDiffH(in, width, height, green, x, y) - mh);
-        float H = ph - (ph/(ph + Rh))*ph + DivEpsilon;
-        
-        // Adjust loop indices for top and bottom boundaries.
-        m0 = (y >= M) ? -M : -y;
-        m1 = (y < height - M) ? M : (height - y - 1);
-        
-        // The following computes
-        // pv = var FilteredV[i + m]
-        //      m = -M,...,M
-        // Rv = mean(FilteredV[i + m] - DiffV[i + m])^2
-        //      m = -M,...,M
-        // v = LMMSE estimate
-        // V = LMMSE estimate accuracy (estimated variance of v)
-        mom1 = 0;
-        float pv = 0;
-        float Rv = 0;
-        for (int m=m0; m<=m1; m++) {
-            float Temp = sampleDiffVSmoothed(in, width, height, green, x, y+m);
-            mom1 += Temp;
-            pv += Temp*Temp;
-            Temp -= sampleDiffV(in, width, height, green, x, y+m);
-            Rv += Temp*Temp;
-        }
-        
-        // useZhangCodeEst=0: Compute mv = mean_m FilteredV[i + m]
-        // useZhangCodeEst=1: Compute mv as in Zhang's MATLAB code
-        const float mv = (!useZhangCodeEst ? mom1/(2*M + 1) : sampleDiffVSmoothed(in, width, height, green, x, y));
-        
-        pv = pv/(2*M) - mom1*mom1/(2*M*(2*M + 1));
-        Rv = Rv/(2*M + 1) + DivEpsilon;
-        float v = mv + (pv/(pv + Rv))*(sampleDiffV(in, width, height, green, x, y) - mv);
-        float V = pv - (pv/(pv + Rv))*pv + DivEpsilon;
-        
-        // Fuse the directional estimates to obtain the green component
-        return sample(in, width, height, x, y) + (V*h + H*v) / (H + V);
-    
-    } else {
-        return sample(in, width, height, x, y);
-    }
-}
-
-float sampleDiffGR(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    
-    if (((x+y) & 1)!=green && (y&1)==redY) {
-        return sampleOutputGreen(in, width, height, useZhangCodeEst, green, x, y) - sample(in, width, height, x, y);
-    } else {
-        return sampleDiffH(in, width, height, green, x, y);
-    }
-}
-
-float sampleDiffGB(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    
-    if (((x+y) & 1)!=green && (y&1)!=redY) {
-        return sampleOutputGreen(in, width, height, useZhangCodeEst, green, x, y) - sample(in, width, height, x, y);
-    } else {
-        return sampleDiffV(in, width, height, green, x, y);
-    }
-}
-
-float sampleDiagAvgDiffGR(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    
-    assert(((x+y) & 1) != green);
-    assert((y&1) != redY);
-    
-    const int32_t L = 0; // Left
-    const int32_t R = 1; // Right
-    
-    // Down
-    float d[] = {
-        sampleDiffGR(in, width, height, useZhangCodeEst, green, redY, x-1, y+1),
-        sampleDiffGR(in, width, height, useZhangCodeEst, green, redY, x+1, y+1)
-    };
-    
-    // Up
-    float u[] = {
-        sampleDiffGR(in, width, height, useZhangCodeEst, green, redY, x-1, y-1),
-        sampleDiffGR(in, width, height, useZhangCodeEst, green, redY, x+1, y-1)
-    };
-    
-    if (y == 0) {
-        if (x == 0)             return d[R];
-        else if (x < width-1)   return (d[L] + d[R]) / 2;
-        else                    return d[L];
-    
-    } else if (y < height-1) {
-        if (x == 0)             return (u[R] + d[R]) / 2;
-        else if (x < width-1)   return (u[L] + u[R] + d[L] + d[R]) / 4;
-        else                    return (u[L] + d[L]) / 2;
-    
-    } else {
-        if (x == 0)             return u[R];
-        else if (x < width-1)   return (u[L] + u[R]) / 2;
-        else                    return u[L];
-    }
-}
-
-float sampleDiagAvgDiffGB(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    
-    assert(((x+y) & 1) != green);
-    assert((y&1) == redY);
-    
-    const int32_t L = 0; // Left
-    const int32_t R = 1; // Right
-    
-    // Down
-    float d[] = {
-        sampleDiffGB(in, width, height, useZhangCodeEst, green, redY, x-1, y+1),
-        sampleDiffGB(in, width, height, useZhangCodeEst, green, redY, x+1, y+1)
-    };
-    
-    // Up
-    float u[] = {
-        sampleDiffGB(in, width, height, useZhangCodeEst, green, redY, x-1, y-1),
-        sampleDiffGB(in, width, height, useZhangCodeEst, green, redY, x+1, y-1)
-    };
-    
-    if (y == 0) {
-        if (x == 0)             return d[R];
-        else if (x < width-1)   return (d[L] + d[R]) / 2;
-        else                    return d[L];
-    
-    } else if (y < height-1) {
-        if (x == 0)             return (u[R] + d[R]) / 2;
-        else if (x < width-1)   return (u[L] + u[R] + d[L] + d[R]) / 4;
-        else                    return (u[L] + d[L]) / 2;
-    
-    } else {
-        if (x == 0)             return u[R];
-        else if (x < width-1)   return (u[L] + u[R]) / 2;
-        else                    return u[L];
-    }
-}
-
-float sampleDiagAvgDiffGR_OrDiffGR(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    assert(((x+y) & 1) != green);
-    
-    if ((y&1) != redY) {
-        return sampleDiagAvgDiffGR(in, width, height, useZhangCodeEst, green, redY, x, y);
-    } else {
-        return sampleDiffGR(in, width, height, useZhangCodeEst, green, redY, x, y);
-    }
-}
-
-float sampleDiagAvgDiffGB_OrDiffGB(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    x = symclamp(width, x);
-    y = symclamp(height, y);
-    assert(((x+y) & 1) != green);
-    
-    if ((y&1) == redY) {
-        return sampleDiagAvgDiffGB(in, width, height, useZhangCodeEst, green, redY, x, y);
-    } else {
-        return sampleDiffGB(in, width, height, useZhangCodeEst, green, redY, x, y);
-    }
-}
-
-float sampleAxialAvgDiffGR(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    assert(((x+y) & 1) == green);
-    
-    const float l = sampleDiagAvgDiffGR_OrDiffGR(in, width, height, useZhangCodeEst, green, redY, x-1, y);
-    const float r = sampleDiagAvgDiffGR_OrDiffGR(in, width, height, useZhangCodeEst, green, redY, x+1, y);
-    const float u = sampleDiagAvgDiffGR_OrDiffGR(in, width, height, useZhangCodeEst, green, redY, x, y-1);
-    const float d = sampleDiagAvgDiffGR_OrDiffGR(in, width, height, useZhangCodeEst, green, redY, x, y+1);
-    if (y == 0) {
-        if (x == 0)             return (r + d) / 2;
-        else if (x < width - 1) return (l + r + 2*d) / 4;
-        else                    return (l + d) / 2;
-    
-    } else if (y < height - 1) {
-        if (x == 0)             return (2*r + u + d) / 4;
-        else if (x < width - 1) return (l + r + u + d) / 4;
-        else                    return (2*l + u + d) / 4;
-    
-    } else {
-        if (x == 0)             return (r + u)/2;
-        else if (x < width - 1) return (l + r + 2*u) / 4;
-        else                    return (l + u) / 2;
-    }
-}
-
-float sampleAxialAvgDiffGB(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    assert(((x+y) & 1) == green);
-    
-    const float l = sampleDiagAvgDiffGB_OrDiffGB(in, width, height, useZhangCodeEst, green, redY, x-1, y);
-    const float r = sampleDiagAvgDiffGB_OrDiffGB(in, width, height, useZhangCodeEst, green, redY, x+1, y);
-    const float u = sampleDiagAvgDiffGB_OrDiffGB(in, width, height, useZhangCodeEst, green, redY, x, y-1);
-    const float d = sampleDiagAvgDiffGB_OrDiffGB(in, width, height, useZhangCodeEst, green, redY, x, y+1);
-    if (y == 0) {
-        if (x == 0)             return (r + d) / 2;
-        else if (x < width - 1) return (l + r + 2*d) / 4;
-        else                    return (l + d) / 2;
-    
-    } else if (y < height - 1) {
-        if (x == 0)             return (2*r + u + d) / 4;
-        else if (x < width - 1) return (l + r + u + d) / 4;
-        else                    return (2*l + u + d) / 4;
-    
-    } else {
-        if (x == 0)             return (r + u)/2;
-        else if (x < width - 1) return (l + r + 2*u) / 4;
-        else                    return (l + u) / 2;
-    }
-}
-
-float sampleDiffGR_Final(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    
-    if (((x+y) & 1) == green) {
-        return sampleAxialAvgDiffGR(in, width, height, useZhangCodeEst, green, redY, x, y);
-    
-    } else if ((y&1) != redY) {
-        return sampleDiagAvgDiffGR(in, width, height, useZhangCodeEst, green, redY, x, y);
-    
-    } else {
-        return sampleDiffGR(in, width, height, useZhangCodeEst, green, redY, x, y);
-    }
-}
-
-float sampleDiffGB_Final(
-    SamplePtr in,
-    int width, int height,
-    int useZhangCodeEst,
-    int green, int redY,
-    int x, int y
-) {
-    assert(x>=0 && x<width);
-    assert(y>=0 && y<height);
-    
-    if (((x+y) & 1) == green) {
-        return sampleAxialAvgDiffGB(in, width, height, useZhangCodeEst, green, redY, x, y);
-    
-    } else if ((y&1) == redY) {
-        return sampleDiagAvgDiffGB(in, width, height, useZhangCodeEst, green, redY, x, y);
-    
-    } else {
-        return sampleDiffGB(in, width, height, useZhangCodeEst, green, redY, x, y);
-    }
-}
-
-
-
-
-
-float px(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, uint x, int dx, uint y, int dy) {
-    x += clamp(dx, -((int)x), (int)(ctx.imageWidth-1-x));
-    y += clamp(dy, -((int)y), (int)(ctx.imageHeight-1-y));
-    return (float)pxs[(y*ctx.imageWidth)+x] / ImagePixelMax;
-}
-
-//float r(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, int2 pos) {
-////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
-//    
-//    if (pos.y % 2) {
-//        // ROW = B G B G ...
-//        
-//        // Have G
-//        // Want R
-//        // Sample @ y-1, y+1
-//        if (pos.x % 2) return .5*px(ctx, pxs, pos.x, 0, pos.y, -1) + .5*px(ctx, pxs, pos.x, 0, pos.y, +1);
-//        
-//        // Have B
-//        // Want R
-//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-//        else return .25*px(ctx, pxs, pos.x, -1, pos.y, -1) +
-//                    .25*px(ctx, pxs, pos.x, -1, pos.y, +1) +
-//                    .25*px(ctx, pxs, pos.x, +1, pos.y, -1) +
-//                    .25*px(ctx, pxs, pos.x, +1, pos.y, +1) ;
-//    
-//    } else {
-//        // ROW = G R G R ...
-//        
-//        // Have R
-//        // Want R
-//        // Sample @ this pixel
-//        if (pos.x % 2) return px(ctx, pxs, pos.x, 0, pos.y, 0);
-//        
-//        // Have G
-//        // Want R
-//        // Sample @ x-1 and x+1
-//        else return .5*px(ctx, pxs, pos.x, -1, pos.y, 0) + .5*px(ctx, pxs, pos.x, +1, pos.y, 0);
-//    }
-//}
-//
-//float g(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, int2 pos) {
-////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
-//    
-//    if (pos.y % 2) {
-//        // ROW = B G B G ...
-//        
-//        // Have G
-//        // Want G
-//        // Sample @ this pixel
-//        if (pos.x % 2) return px(ctx, pxs, pos.x, 0, pos.y, 0);
-//        
-//        // Have B
-//        // Want G
-//        // Sample @ x-1, x+1, y-1, y+1
-//        else return .25*px(ctx, pxs, pos.x, -1, pos.y, 0) +
-//                    .25*px(ctx, pxs, pos.x, +1, pos.y, 0) +
-//                    .25*px(ctx, pxs, pos.x, 0, pos.y, -1) +
-//                    .25*px(ctx, pxs, pos.x, 0, pos.y, +1) ;
-//    
-//    } else {
-//        // ROW = G R G R ...
-//        
-//        // Have R
-//        // Want G
-//        // Sample @ x-1, x+1, y-1, y+1
-//        if (pos.x % 2) return   .25*px(ctx, pxs, pos.x, -1, pos.y, 0) +
-//                                .25*px(ctx, pxs, pos.x, +1, pos.y, 0) +
-//                                .25*px(ctx, pxs, pos.x, 0, pos.y, -1) +
-//                                .25*px(ctx, pxs, pos.x, 0, pos.y, +1) ;
-//        
-//        // Have G
-//        // Want G
-//        // Sample @ this pixel
-//        else return px(ctx, pxs, pos.x, 0, pos.y, 0);
-//    }
-//}
-//
-//float b(constant RenderContext& ctx [[buffer(0)]], constant ImagePixel* pxs, int2 pos) {
-////    return px(ctx, pxs, pos.x, 0, pos.y, 0);
-//    
-//    if (pos.y % 2) {
-//        // ROW = B G B G ...
-//        
-//        // Have G
-//        // Want B
-//        // Sample @ x-1, x+1
-//        if (pos.x % 2) return .5*px(ctx, pxs, pos.x, -1, pos.y, 0) + .5*px(ctx, pxs, pos.x, +1, pos.y, 0);
-//        
-//        // Have B
-//        // Want B
-//        // Sample @ this pixel
-//        else return px(ctx, pxs, pos.x, 0, pos.y, 0);
-//    
-//    } else {
-//        // ROW = G R G R ...
-//        
-//        // Have R
-//        // Want B
-//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-//        if (pos.x % 2) return   .25*px(ctx, pxs, pos.x, -1, pos.y, -1) +
-//                                .25*px(ctx, pxs, pos.x, -1, pos.y, +1) +
-//                                .25*px(ctx, pxs, pos.x, +1, pos.y, -1) +
-//                                .25*px(ctx, pxs, pos.x, +1, pos.y, +1) ;
-//        
-//        // Have G
-//        // Want B
-//        // Sample @ y-1, y+1
-//        else return .5*px(ctx, pxs, pos.x, 0, pos.y, -1) + .5*px(ctx, pxs, pos.x, 0, pos.y, +1);
-//    }
-//}
-
 uint3 binFromColor(float3 color) {
     const uint32_t maxBin = (uint32_t)(sizeof(Histogram::r)/sizeof(*Histogram::r))-1;
     return {
@@ -671,37 +116,13 @@ fragment float LoadRaw(
     return v;
 }
 
-
-//uint mirrorClamp(uint bound, int pt, int delta=0) {
-//    const int ptd = pt+delta;
-//    if (ptd < 0) return -ptd;
-//    if (ptd >= (int)bound) return 2*((int)bound-1)-ptd;
-//    return ptd;
-//}
-//
-//uint2 mirrorClamp(uint2 bound, int2 pt, int2 delta=0) {
-//    return {
-//        mirrorClamp(bound.x, pt.x, delta.x),
-//        mirrorClamp(bound.y, pt.y, delta.y)
-//    };
-//}
-
-//float3 Sample::RGB(Sample::MirrorClamp, texture2d<float> txt, int2 pos) {
-//    const uint2 bounds(txt.get_width(), txt.get_height());
-//    return txt.sample(coord::pixel, float2(mirrorClamp(bounds, pos.xy))+float2(.5,.5)).rgb;
-//}
-//
-//float Sample::R(Sample::MirrorClamp, texture2d<float> txt, int2 pos) {
-//    return Sample::RGB(Sample::MirrorClamp, txt, pos).r;
-//}
-
-float SRGBGamma(float x) {
+float SRGBGammaForward(float x) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     if (x <= 0.0031308) return 12.92*x;
     return 1.055*pow(x, 1/2.4)-.055;
 }
 
-float InverseSRGBGamma(float x) {
+float SRGBGammaReverse(float x) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     if (x <= 0.04045) return x/12.92;
     return pow((x+.055)/1.055, 2.4);
@@ -712,7 +133,7 @@ fragment float DebayerLMMSE_Gamma(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return SRGBGamma(Sample::R(Sample::MirrorClamp, rawTxt, int2(in.pos.xy)));
+    return SRGBGammaForward(Sample::R(Sample::MirrorClamp, rawTxt, int2(in.pos.xy)));
 }
 
 fragment float4 DebayerLMMSE_Degamma(
@@ -721,7 +142,7 @@ fragment float4 DebayerLMMSE_Degamma(
     VertexOutput in [[stage_in]]
 ) {
     const float3 c = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
-    return float4(InverseSRGBGamma(c.r), InverseSRGBGamma(c.g), InverseSRGBGamma(c.b), 1);
+    return float4(SRGBGammaReverse(c.r), SRGBGammaReverse(c.g), SRGBGammaReverse(c.b), 1);
 }
 
 fragment float DebayerLMMSE_Interp5(
@@ -752,6 +173,33 @@ fragment float DebayerLMMSE_NoiseEst(
     if (green)  return raw-filtered;
     else        return filtered-raw;
 }
+
+// This is just 2 passes of NoiseEst combined into 1
+// TODO: profile this again. remember though that the -nextDrawable/-waitUntilCompleted pattern will cause our minimum render time to be the display refresh rate (16ms). so instead, for each iteration, we should only count the time _after_ -nextDrawable completes to the time after -waitUntilCompleted completes
+//fragment void NoiseEst2(
+//    constant RenderContext& ctx [[buffer(0)]],
+//    texture2d<float> rawTxt [[texture(0)]],
+//    texture2d<float> filteredHTxt [[texture(1)]],
+//    texture2d<float> filteredVTxt [[texture(2)]],
+//    texture2d<float, access::read_write> diffH [[texture(3)]],
+//    texture2d<float, access::read_write> diffV [[texture(4)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//    const sampler s;
+//    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+//    const float raw = Sample::R(Sample::MirrorClamp, rawTxt, pos);
+//    const float filteredH = Sample::R(Sample::MirrorClamp, filteredHTxt, pos);
+//    const float filteredV = Sample::R(Sample::MirrorClamp, filteredVTxt, pos);
+//    
+//    if (green) {
+//        diffH.write(float4(raw-filteredH), pos);
+//        diffV.write(float4(raw-filteredV), pos);
+//    } else {
+//        diffH.write(float4(filteredH-raw), pos);
+//        diffV.write(float4(filteredV-raw), pos);
+//    }
+//}
 
 fragment float DebayerLMMSE_Smooth9(
     constant RenderContext& ctx [[buffer(0)]],
@@ -1012,36 +460,6 @@ fragment float4 DebayerLMMSE_CalcRB(
 
 
 
-// This is just 2 passes of NoiseEst combined into 1
-// TODO: profile this again. remember though that the -nextDrawable/-waitUntilCompleted pattern will cause our minimum render time to be the display refresh rate (16ms). so instead, for each iteration, we should only count the time _after_ -nextDrawable completes to the time after -waitUntilCompleted completes
-//fragment void NoiseEst2(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> rawTxt [[texture(0)]],
-//    texture2d<float> filteredHTxt [[texture(1)]],
-//    texture2d<float> filteredVTxt [[texture(2)]],
-//    texture2d<float, access::read_write> diffH [[texture(3)]],
-//    texture2d<float, access::read_write> diffV [[texture(4)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const int2 pos = int2(in.pos.xy);
-//    const sampler s;
-//    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-//    const float raw = Sample::R(Sample::MirrorClamp, rawTxt, pos);
-//    const float filteredH = Sample::R(Sample::MirrorClamp, filteredHTxt, pos);
-//    const float filteredV = Sample::R(Sample::MirrorClamp, filteredVTxt, pos);
-//    
-//    if (green) {
-//        diffH.write(float4(raw-filteredH), pos);
-//        diffV.write(float4(raw-filteredV), pos);
-//    } else {
-//        diffH.write(float4(filteredH-raw), pos);
-//        diffV.write(float4(filteredV-raw), pos);
-//    }
-//}
-
-
-
-
 
 
 
@@ -1163,72 +581,6 @@ fragment float4 DebayerBilinear(
         DebayerBilinear_B(rawTxt, pos),
         1
     );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//fragment float4 DebayerBilinear(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    constant ImagePixel* pxs [[buffer(1)]],
-//    device float3* samples [[buffer(2)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const int2 pos = int2(in.pos.xy);
-//    float3 c(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-//    
-//    if (pos.x >= ctx.sampleRect.left &&
-//        pos.x < ctx.sampleRect.right &&
-//        pos.y >= ctx.sampleRect.top &&
-//        pos.y < ctx.sampleRect.bottom) {
-//        const bool red = (!(pos.y%2) && (pos.x%2));
-//        const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-//        const bool blue = ((pos.y%2) && !(pos.x%2));
-//        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
-//        const float3 sample = float3(red ? c.r : 0., green ? c.g : 0., blue ? c.b : 0.);
-//        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
-//    }
-//    
-////    const uint BlackX = 504;
-////    const uint BlackWidth = 8;
-////    if (pos.y >= BlackX && pos.y < BlackX+BlackWidth) {
-////        c = float3(0,0,0);
-////    }
-//    
-//    // ## Bilinear debayering
-////    return float4(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos), 1);
-//    return float4(c, 1);
-////    return float4(1, 0, 0, 1);
-//}
-
-fragment float4 DebayerLMMSE(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant ImagePixel* pxs [[buffer(1)]],
-    VertexOutput in [[stage_in]]
-) {
-    const int2 pos = int2(in.pos.xy);
-    const int redX = 1;
-    const int redY = 0;
-    const int green = 1 - ((redX + redY) & 1);
-    float3 c;
-    c.g =       sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
-    c.r = c.g - sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-    c.b = c.g - sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-    return float4(c, 1);
 }
 
 fragment float4 XYZD50FromCameraRaw(
@@ -1907,162 +1259,6 @@ fragment float FixHighlightsRaw(
     return c.get();
 }
 
-
-
-
-
-
-//fragment float FixHighlightsRaw(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> rawTxt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    //  Row0    G R G R
-//    //  Row1    B G B G
-//    //  Row2    G R G R
-//    //  Row3    B G B G
-//    
-//    const int2 pos = int2(in.pos.xy);
-//    const bool red = (!(pos.y%2) && (pos.x%2));
-//    const bool greenr = (!(pos.y%2) && !(pos.x%2));
-//    const bool greenb = ((pos.y%2) && (pos.x%2));
-//    const bool blue = ((pos.y%2) && !(pos.x%2));
-//    const uint2 bounds(rawTxt.get_width(), rawTxt.get_height());
-//    float craw      = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+0,+0});
-//    float crawl     = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,+0});
-//    float crawr     = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,+0});
-//    float crawu     = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+0,-1});
-//    float crawd     = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+0,+1});
-//    float crawul    = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,-1});
-//    float crawur    = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,-1});
-//    float crawdl    = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,+1});
-//    float crawdr    = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,+1});
-//    float thresh = 1;
-//    
-//    if (craw>=thresh) {
-////        if (crawl>=thresh && crawr>=thresh && crawu>=thresh && crawd>=thresh &&
-////            crawul>=thresh && crawur>=thresh && crawdl>=thresh && crawdr>=thresh) {
-////            
-////            
-////        }
-//        
-//        return (crawl+crawr+crawu+crawd+crawul+crawur+crawdl+crawdr)/20;
-//        
-////        return (crawl+crawr+crawu+crawd+crawul+crawur+crawdl+crawdr)/20;
-//    }
-//    
-//    
-//    // repros
-////    if (craw>=thresh) {
-////        if (crawl>=thresh && crawr>=thresh && crawu>=thresh && crawd>=thresh &&
-////            crawul>=thresh && crawur>=thresh && crawdl>=thresh && crawdr>=thresh) {
-////            
-////            craw *= 0.9607;
-////        
-////        } else if (greenr || greenb) {
-////            return 0;
-////        }
-////    }
-//    
-//    return 0;
-//}
-
-//fragment float4 FixHighlights(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> rawTxt [[texture(0)]],
-//    texture2d<float> txt [[texture(1)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const float craw = Sample::R(Sample::MirrorClamp, rawTxt, in.pos);
-//    const float crawl = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,+0});
-//    const float crawr = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,+0});
-//    const float crawu = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+0,-1});
-//    const float crawd = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+0,+1});
-//    const float crawul = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,-1});
-//    const float crawur = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,-1});
-//    const float crawdl = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,+1});
-//    const float crawdr = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,+1});
-//    const float thresh = 1;
-//    
-//    float3 c_CamRaw = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
-//    const float3 c_XYZ = ctx.colorMatrix*c_CamRaw;
-//    const float3 highlight_XYZ = ctx.colorMatrix*float3(1);
-//    const float3 D50_XYZ(0.96422, 1, 0.82521);
-//    const float3 highlight_LAB = labFromXYZ(D50_XYZ, highlight_XYZ);
-//    const float3 c_LAB = labFromXYZ(D50_XYZ, c_XYZ);
-//    const float highlight_dist = distance(highlight_LAB, c_LAB);
-//    
-//    if (craw >= thresh      ||
-//        crawl >= thresh     ||
-//        crawr >= thresh     ||
-//        crawu >= thresh     ||
-//        crawd >= thresh     ||
-//        crawul >= thresh    ||
-//        crawur >= thresh    ||
-//        crawdl >= thresh    ||
-//        crawdr >= thresh    ) {
-//        c_CamRaw = 0;
-//    }
-//    
-//    return float4(c_CamRaw, 1);
-//}
-
-//fragment float4 FixHighlights(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> rawTxt [[texture(0)]],
-//    texture2d<float> txt [[texture(1)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const float craw = Sample::R(Sample::MirrorClamp, rawTxt, in.pos);
-//    const float crawl = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,+0});
-//    const float crawr = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,+0});
-//    const float crawu = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+0,-1});
-//    const float crawd = Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+0,+1});
-//    const float crawul = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,-1});
-//    const float crawur = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,-1});
-//    const float crawdl = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {-1,+1});
-//    const float crawdr = 0;//Sample::R(Sample::MirrorClamp, rawTxt, in.pos, {+1,+1});
-//    const float thresh = 1;
-//    
-//    float3 c_CamRaw = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
-//    const float3 c_XYZ = ctx.colorMatrix*c_CamRaw;
-//    const float3 highlight_XYZ = ctx.colorMatrix*float3(1);
-//    const float3 D50_XYZ(0.96422, 1, 0.82521);
-//    const float3 highlight_LAB = labFromXYZ(D50_XYZ, highlight_XYZ);
-//    const float3 c_LAB = labFromXYZ(D50_XYZ, c_XYZ);
-//    const float highlight_dist = distance(highlight_LAB, c_LAB);
-//    
-//    if (craw >= thresh      ||
-//        crawl >= thresh     ||
-//        crawr >= thresh     ||
-//        crawu >= thresh     ||
-//        crawd >= thresh     ||
-//        crawul >= thresh    ||
-//        crawur >= thresh    ||
-//        crawdl >= thresh    ||
-//        crawdr >= thresh    ) {
-//        c_CamRaw = 0;
-//    }
-//    
-//    return float4(c_CamRaw, 1);
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 fragment float4 SRGBGamma(
     constant RenderContext& ctx [[buffer(0)]],
     device float3* samples [[buffer(1)]],
@@ -2071,9 +1267,9 @@ fragment float4 SRGBGamma(
 ) {
     const float3 c_LSRGB = Sample::RGB(Sample::MirrorClamp, txt, int2(in.pos.xy));
     float3 c_SRGB = float3{
-        SRGBGamma(c_LSRGB.r),
-        SRGBGamma(c_LSRGB.g),
-        SRGBGamma(c_LSRGB.b)
+        SRGBGammaForward(c_LSRGB.r),
+        SRGBGammaForward(c_LSRGB.g),
+        SRGBGammaForward(c_LSRGB.b)
     };
     
     const int2 pos = int2(in.pos.xy);
@@ -2105,96 +1301,5 @@ fragment float4 DisplayR(
     const float c = Sample::R(Sample::MirrorClamp, txt, int2(in.pos.xy));
     return float4(c, c, c, 1);
 }
-
-
-//fragment float4 FragmentShader(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    constant ImagePixel* pxs [[buffer(1)]],
-//    device Histogram& inputHistogram [[buffer(2)]],
-//    device Histogram& outputHistogram [[buffer(3)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    // Bayer pattern:
-//    //  Row0    G R G R
-//    //  Row1    B G B G
-//    //  Row2    G R G R
-//    //  Row3    B G B G
-//    int2 pos = {(uint)in.pos.x, (uint)in.pos.y};
-//    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
-//    
-//    // ## Bilinear debayering
-//    float3 inputColor_cameraRaw(r(ctx, pxs, pos), g(ctx, pxs, pos), b(ctx, pxs, pos));
-//    
-//    // ## LMMSE debayering
-////    const int redX = 1;
-////    const int redY = 0;
-////    const int green = 1 - ((redX + redY) & 1);
-////    float3 inputColor_cameraRaw;
-////    inputColor_cameraRaw.g =
-////        sampleOutputGreen(pxs, ctx.imageWidth, ctx.imageHeight, false, green, pos.x, pos.y);
-////    inputColor_cameraRaw.r = inputColor_cameraRaw.g -
-////        sampleDiffGR_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-////    inputColor_cameraRaw.b = inputColor_cameraRaw.g -
-////        sampleDiffGB_Final(pxs, ctx.imageWidth, ctx.imageHeight, false, green, redY, pos.x, pos.y);
-//    
-//    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-//    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
-//        0.9555766,  -0.0230393, 0.0631636,
-//        -0.0282895, 1.0099416,  0.0210077,
-//        0.0122982,  -0.0204830, 1.3299098
-//    ));
-//    
-//    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-//    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
-//        3.2404542,  -1.5371385, -0.4985314,
-//        -0.9692660, 1.8760108,  0.0415560,
-//        0.0556434,  -0.2040259, 1.0572252
-//    ));
-//    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZD50_From_CameraRaw * inputColor_cameraRaw;
-//    float3 outputColor_SRGB = saturate(float3{
-//        SRGBFromLSRGB(outputColor_LSRGB[0]),
-//        SRGBFromLSRGB(outputColor_LSRGB[1]),
-//        SRGBFromLSRGB(outputColor_LSRGB[2])
-//    });
-//    
-//    const float thresh = 1;
-//    if (inputColor_cameraRaw.r >= thresh) outputColor_SRGB.r = 1;
-//    if (inputColor_cameraRaw.g >= thresh) outputColor_SRGB.g = 1;
-//    if (inputColor_cameraRaw.b >= thresh) outputColor_SRGB.b = 1;
-//    
-//    uint3 inputColorBin = binFromColor(inputColor_cameraRaw);
-//    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.r[inputColorBin.r], 1, memory_order_relaxed);
-//    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.g[inputColorBin.g], 1, memory_order_relaxed);
-//    atomic_fetch_add_explicit((device atomic_uint*)&inputHistogram.b[inputColorBin.b], 1, memory_order_relaxed);
-//    
-//    // If any of the input raw-camera-space channels was saturated, saturate the corresponding output channel
-//    
-////    if (inputColor_cameraRaw.r>=1 || inputColor_cameraRaw.g>=1 || inputColor_cameraRaw.b>=1) {
-////        outputColor_SRGB.r = 1;
-////        outputColor_SRGB.g = 0;
-////        outputColor_SRGB.b = 0;
-////    }
-//    
-////    if (inputColor_cameraRaw.r >= 1) outputColor_SRGB.r = 1;
-////    if (inputColor_cameraRaw.g >= 1) outputColor_SRGB.g = 1;
-////    if (inputColor_cameraRaw.b >= 1) outputColor_SRGB.b = 1;
-//    
-////    const float thresh = 254.5/255;
-//    
-////    if (pos.x==2133 && pos.y==350) {
-////        if (inputColor_cameraRaw.g >= .9999) outputColor_SRGB.g = 1;
-//////        outputColor_SRGB.r = 0;
-//////        outputColor_SRGB.g = 1;
-//////        outputColor_SRGB.b = 0;
-//////        outputColor_SRGB = {0,0,0};
-////    }
-//    
-//    uint3 outputColorBin = binFromColor(outputColor_SRGB);
-//    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.r[outputColorBin.r], 1, memory_order_relaxed);
-//    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.g[outputColorBin.g], 1, memory_order_relaxed);
-//    atomic_fetch_add_explicit((device atomic_uint*)&outputHistogram.b[outputColorBin.b], 1, memory_order_relaxed);
-//    
-//    return float4(outputColor_SRGB, 1);
-//}
 
 } // namespace ImageLayer

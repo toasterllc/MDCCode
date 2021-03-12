@@ -678,6 +678,9 @@ struct TileTerms {
                     [encoder setFragmentTexture:rawTxt atIndex:0];
                 }
             ];
+            // TODO: figure out a better way to do this. Once we start using an
+            // TODO: MTLHeap (or similar) does that solve this?
+            std::swap(rawTxt, raw2Txt);
         }
         
         // LMMSE Debayer
@@ -687,7 +690,7 @@ struct TileTerms {
                 [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer::DebayerLMMSE_Gamma"
                     block:^(id<MTLRenderCommandEncoder> encoder) {
                         [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:raw2Txt atIndex:0];
+                        [encoder setFragmentTexture:rawTxt atIndex:0];
                     }
                 ];
             }
