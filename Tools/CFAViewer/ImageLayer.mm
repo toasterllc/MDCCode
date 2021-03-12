@@ -582,14 +582,6 @@ struct TileShift {
         }
     ];
     
-    [cmdBuf commit];
-    
-    if (_state.correctChromaticAberration) {
-        [self _correctChromaticAberration:rawTxt iterations:2];
-    }
-    
-    cmdBuf = [_commandQueue commandBuffer];
-    
     // Raw mode (bilinear debayer only)
     if (_state.rawMode) {
         // De-bayer render pass
@@ -614,6 +606,12 @@ struct TileShift {
         }
     
     } else {
+        if (_state.correctChromaticAberration) {
+            [cmdBuf commit];
+            [self _correctChromaticAberration:rawTxt iterations:2];
+            cmdBuf = [_commandQueue commandBuffer];
+        }
+        
         // Fix highlights
         {
             [self _renderPass:cmdBuf texture:raw2Txt name:@"ImageLayer::FixHighlightsRaw"
