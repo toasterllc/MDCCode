@@ -788,7 +788,6 @@ struct TileTerms {
                         [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
                         [encoder setFragmentTexture:txt atIndex:1];
-                        [encoder setFragmentTexture:diffGRTxt atIndex:2];
                     }
                 ];
             }
@@ -802,7 +801,6 @@ struct TileTerms {
                         [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
                         [encoder setFragmentTexture:rawTxt atIndex:0];
                         [encoder setFragmentTexture:txt atIndex:1];
-                        [encoder setFragmentTexture:diffGBTxt atIndex:2];
                     }
                 ];
             }

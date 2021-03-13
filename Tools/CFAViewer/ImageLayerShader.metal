@@ -325,7 +325,6 @@ fragment float DebayerLMMSE_CalcDiffGRGB(
     constant bool& modeGR [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
-    texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
@@ -339,8 +338,7 @@ fragment float DebayerLMMSE_CalcDiffGRGB(
         return g-raw;
     }
     
-    // Pass-through
-    return Sample::R(diffTxt, pos);
+    return 0;
 }
 
 float diagAvg(texture2d<float> txt, int2 pos) {
