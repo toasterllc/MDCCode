@@ -105,11 +105,13 @@ fragment float LoadRaw(
         pos.x < (int)ctx.sampleRect.right &&
         pos.y >= (int)ctx.sampleRect.top &&
         pos.y < (int)ctx.sampleRect.bottom) {
-        const bool red = (!(pos.y%2) && (pos.x%2));
-        const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-        const bool blue = ((pos.y%2) && !(pos.x%2));
+        const CFAColor c = ctx.cfaColor(pos);
         const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
-        const float3 sample = float3(red ? v : 0., green ? v : 0., blue ? v : 0.);
+        const float3 sample = float3(
+            c==CFAColor::Red   ? v : 0.,
+            c==CFAColor::Green ? v : 0.,
+            c==CFAColor::Blue  ? v : 0.
+        );
         samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
     }
     
@@ -167,11 +169,11 @@ fragment float DebayerLMMSE_NoiseEst(
 ) {
     const int2 pos = int2(in.pos.xy);
     const sampler s;
-    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
+    const CFAColor c = ctx.cfaColor(pos);
     const float raw = Sample::R(rawTxt, pos);
     const float filtered = Sample::R(filteredTxt, pos);
-    if (green)  return raw-filtered;
-    else        return filtered-raw;
+    if (c == CFAColor::Green) return raw-filtered;
+    else                      return filtered-raw;
 }
 
 // This is just 2 passes of NoiseEst combined into 1
@@ -231,11 +233,10 @@ fragment float4 DebayerLMMSE_CalcG(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const bool red = (!(pos.y%2) && (pos.x%2));
-    const bool blue = ((pos.y%2) && !(pos.x%2));
+    const CFAColor c = ctx.cfaColor(pos);
     const float raw = Sample::R(rawTxt, pos);
     float g = 0;
-    if (red || blue) {
+    if (c==CFAColor::Red || c==CFAColor::Blue) {
         const int M = 4;
         const float DivEpsilon = 0.1/(255*255);
         
@@ -1048,16 +1049,14 @@ fragment float FixHighlightsRaw(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const bool red = (!(pos.y%2) && (pos.x%2));
-    const bool greenr = (!(pos.y%2) && !(pos.x%2));
-    const bool greenb = ((pos.y%2) && (pos.x%2));
-    const bool blue = ((pos.y%2) && !(pos.x%2));
-    Float3x3 c(rawTxt, pos);
+    const CFAColor c = ctx.cfaColor(pos);
+    const CFAColor cn = ctx.cfaColor(pos.x+1,pos.y);
+    Float3x3 s(rawTxt, pos);
     
     float thresh = 1;
     
     // Short-circuit if this pixel isn't saturated
-    if (c.get() < thresh) return c.get();
+    if (s.get() < thresh) return s.get();
     
 //    // Patch up the saturated values in `c`
 //    if (red) {
@@ -1182,21 +1181,19 @@ fragment float FixHighlightsRaw(
     //  Row3    B G B G
     
     uint goodCount = 0;
-    if (c.get(-1,+0) < thresh) goodCount++;
-    if (c.get(+1,+0) < thresh) goodCount++;
-    if (c.get(+0,-1) < thresh) goodCount++;
-    if (c.get(+0,+1) < thresh) goodCount++;
+    if (s.get(-1,+0) < thresh) goodCount++;
+    if (s.get(+1,+0) < thresh) goodCount++;
+    if (s.get(+0,-1) < thresh) goodCount++;
+    if (s.get(+0,+1) < thresh) goodCount++;
     if (goodCount == 0) {
-        if (red) {
-            c.get() *= 1.1300929235;
-        } else if (greenr || greenb) {
-            c.get() *= 1.6132952108;
-        } else if (blue) {
-            c.get() *= 1;
+        switch (c) {
+        case CFAColor::Red:     s.get() *= 1.1300929235; break;
+        case CFAColor::Green:   s.get() *= 1.6132952108; break;
+        case CFAColor::Blue:    s.get() *= 1; break;
         }
         
     } else {
-        if (red) {
+        if (c == CFAColor::Red) {
 //            uint gcount = 0;
 //            float g = 0;
 //            if (c.get(-1,-1) < thresh) { g += c.get(-1,-1); gcount++; };
@@ -1223,22 +1220,22 @@ fragment float FixHighlightsRaw(
             
 //            c.get() =   ctx.highlightFactorR.r*(c.get(-1,-1)+c.get(+1,-1)+c.get(-1,+1)+c.get(+1,+1))/8 +
 //                        ctx.highlightFactorR.g*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/8;
-            c.get() = 1.051*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            s.get() = 1.051*(s.get(-1,+0)+s.get(+1,+0)+s.get(+0,-1)+s.get(+0,+1))/4;
         
-        } else if (greenr) {
+        } else if (c==CFAColor::Green && cn==CFAColor::Red) {
 //            c.get() = ctx.highlightFactorR.g*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
-            c.get() = 1.544*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            s.get() = 1.544*(s.get(-1,+0)+s.get(+1,+0)+s.get(+0,-1)+s.get(+0,+1))/4;
         
-        } else if (greenb) {
+        } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
 //            c.get() = ctx.highlightFactorR.b*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
-            c.get() = 1.544*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            s.get() = 1.544*(s.get(-1,+0)+s.get(+1,+0)+s.get(+0,-1)+s.get(+0,+1))/4;
         
-        } else if (blue) {
+        } else if (c == CFAColor::Blue) {
 //            c.get() = ctx.highlightFactorG.r*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
-            c.get() = 1.195*(c.get(-1,+0)+c.get(+1,+0)+c.get(+0,-1)+c.get(+0,+1))/4;
+            s.get() = 1.195*(s.get(-1,+0)+s.get(+1,+0)+s.get(+0,-1)+s.get(+0,+1))/4;
         }
     }
-    return c.get();
+    return s.get();
 }
 
 fragment float4 SRGBGamma(
