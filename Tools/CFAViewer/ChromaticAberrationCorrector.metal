@@ -18,7 +18,7 @@ fragment float WhiteBalanceForward(
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const CFAColor c = ctx.cfaColor(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
@@ -33,7 +33,7 @@ fragment float WhiteBalanceReverse(
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const CFAColor c = ctx.cfaColor(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
@@ -49,7 +49,7 @@ fragment float InterpolateG(
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const CFAColor c = ctx.cfaColor(pos);
     // Green pixel: pass-through
     if (c == CFAColor::Green) return Sample::R(raw, pos);
@@ -100,7 +100,7 @@ fragment float CalcRBGDelta(
     texture2d<float> gInterp [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     switch (ctx.cfaColor(pos)) {
     case CFAColor::Red:
     case CFAColor::Blue: {
@@ -117,7 +117,7 @@ fragment float CalcRBGDelta(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]
 //) {
-//    const int2 pos(in.pos.x, in.pos.y);
+//    const int2 pos = int2(in.pos.xy);
 //    const uint2 bounds(txt.get_width(), txt.get_height());
 //#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
 //    switch (ctx.cfaColor(pos)) {
@@ -139,7 +139,7 @@ fragment float CalcRBGDelta(
 //    VertexOutput in [[stage_in]]
 //) {
 ////    return floor(in.pos.x)/100 + floor(in.pos.y)/100;
-//    const int2 pos(in.pos.x, in.pos.y);
+//    const int2 pos = int2(in.pos.xy);
 ////    if (pos.y>=10 && pos.y<600) return 1;
 ////    return 0;
 //    const uint2 bounds(txt.get_width(), txt.get_height());
@@ -177,7 +177,7 @@ fragment float ApplyCorrection(
     texture2d<float> shiftsBlueY [[texture(5)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const CFAColor c = ctx.cfaColor(pos);
     
     float2 shift = 0;

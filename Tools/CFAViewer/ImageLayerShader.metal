@@ -151,7 +151,7 @@ fragment float DebayerLMMSE_Interp5(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     return  -.25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-2:+0,!h?-2:+0})   +
             +0.5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-1:+0,!h?-1:+0})   +
             +0.5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+0:+0,!h?+0:+0})   +
@@ -207,7 +207,7 @@ fragment float DebayerLMMSE_Smooth9(
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     return  0.0312500*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-4:+0,!h?-4:+0})     +
             0.0703125*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-3:+0,!h?-3:+0})     +
             0.1171875*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-2:+0,!h?-2:+0})     +
@@ -230,7 +230,7 @@ fragment float4 DebayerLMMSE_CalcG(
     texture2d<float> diffVTxt [[texture(4)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(in.pos.x, in.pos.y);
+    const int2 pos = int2(in.pos.xy);
     const bool red = (!(pos.y%2) && (pos.x%2));
     const bool blue = ((pos.y%2) && !(pos.x%2));
     const float raw = Sample::R(rawTxt, pos);
