@@ -156,13 +156,13 @@ fragment float CalcRBGDelta(
 //#undef PX
 //}
 
-float gshift(texture2d<float> gInterp, float2 shift, int2 pos) {
+float gShiftCalc(texture2d<float> gInterp, float2 shift, int2 pos) {
     pos = Clamp::Mirror({gInterp.get_width(), gInterp.get_height()}, pos);
     return gInterp.sample({coord::pixel, filter::linear}, float2(pos)+shift+float2(.5,.5)).r;
 }
 
-float grbdiff(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
-    const float gShift = gshift(gInterp, shift, pos);
+float gShiftRBDeltaCalc(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
+    const float gShift = gShiftCalc(gInterp, shift, pos);
     const float rb = Sample::R(Sample::MirrorClamp, raw, pos);
     return gShift - rb;
 }
@@ -201,50 +201,50 @@ fragment float ApplyCorrection(
     constexpr float ShiftLimit = 4;
     constexpr float Alpha = .25;
     constexpr float Beta = .5;
+    constexpr float Gamma = 5;
     
     shift.x = clamp(shift.x, -ShiftLimit, ShiftLimit);
     shift.y = clamp(shift.y, -ShiftLimit, ShiftLimit);
     
-    const sampler samplr(coord::pixel, filter::linear);
     const float g = Sample::R(gInterp, pos);
     const float rb = Sample::R(raw, pos);
-    const float gShift = gshift(gInterp, shift, pos);
-    const float gShiftRBDelta = gShift - rb;
+    const float gShiftRBDelta = gShiftRBDeltaCalc(raw, gInterp, shift, pos);
     const float rbInterp = g - gShiftRBDelta;
     const float grbDelta = g - rb;
-    
     float rbCorrected = rb;
-    if (abs(rbInterp-rb) < Alpha*(rbInterp+rb)) {
-        if (abs(gShiftRBDelta) < abs(grbDelta)) {
-            rbCorrected = rbInterp;
-        }
-    } else {
-        const int2 d = {
-            shift.x >= 0 ? -2 : 2,
-            shift.y >= 0 ? -2 : 2,
-        };
-        
-        // Gradient weights using difference from G at CA shift points and G at grid points
-        const float w00 = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{0  ,  0})));
-        const float wx0 = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{d.x,  0})));
-        const float w0y = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{0  ,d.y})));
-        const float wxy = 1 / (Eps + abs(g - gshift(gInterp, shift, pos+int2{d.x,d.y})));
-        const float numer =
-            w00 * grbdiff(raw, gInterp, shift, pos+int2{0  ,  0}) +
-            wx0 * grbdiff(raw, gInterp, shift, pos+int2{d.x,  0}) +
-            w0y * grbdiff(raw, gInterp, shift, pos+int2{0  ,d.y}) +
-            wxy * grbdiff(raw, gInterp, shift, pos+int2{d.x,d.y}) ;
-        const float denom = w00+wx0+w0y+wxy;
-        const float gShiftRBDelta = numer/denom;
-        
-        if (abs(gShiftRBDelta) < abs(grbDelta)) {
-            rbCorrected = g - gShiftRBDelta;
-        }
-    }
     
-    if (grbDelta*gShiftRBDelta < 0) {
+    if (grbDelta*gShiftRBDelta >= 0) {
+        if (abs(rbInterp-rb) < Alpha*(rbInterp+rb)) {
+            if (abs(gShiftRBDelta) < abs(grbDelta)) {
+                rbCorrected = rbInterp;
+            }
+        } else {
+            const int2 d = {
+                shift.x >= 0 ? -2 : 2,
+                shift.y >= 0 ? -2 : 2,
+            };
+            
+            // Gradient weights using difference from G at CA shift points and G at grid points
+            const float w00 = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{0  ,  0})));
+            const float wx0 = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{d.x,  0})));
+            const float w0y = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{0  ,d.y})));
+            const float wxy = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{d.x,d.y})));
+            const float numer =
+                w00 * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{0  ,  0}) +
+                wx0 * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{d.x,  0}) +
+                w0y * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{0  ,d.y}) +
+                wxy * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{d.x,d.y}) ;
+            const float denom = w00+wx0+w0y+wxy;
+            const float gShiftRBDelta = numer/denom;
+            
+            if (abs(gShiftRBDelta) < abs(grbDelta)) {
+                rbCorrected = g - gShiftRBDelta;
+            }
+        }
+    
+    } else {
         // The colour difference interpolation overshot the correction, just desaturate
-        if (abs(gShiftRBDelta/grbDelta) < 5) {
+        if (abs(gShiftRBDelta/grbDelta) < Gamma) {
             rbCorrected = g - Beta*(grbDelta+gShiftRBDelta);
         }
     }
