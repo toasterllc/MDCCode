@@ -156,13 +156,13 @@ fragment float CalcRBGDelta(
 //#undef PX
 //}
 
-float ḡCalc(texture2d<float> gInterp, float2 shift, int2 pos) {
+float ḡ(texture2d<float> gInterp, float2 shift, int2 pos) {
     pos = Clamp::Mirror({gInterp.get_width(), gInterp.get_height()}, pos);
     return gInterp.sample({coord::pixel, filter::linear}, float2(pos)+shift+float2(.5,.5)).r;
 }
 
 //float ΔḡrCalc(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
-//    const float ḡ = ḡCalc(gInterp, shift, pos);
+//    const float ḡ = ḡ(gInterp, shift, pos);
 //    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
 //    return ḡ - r;
 //}
@@ -178,9 +178,9 @@ fragment float ApplyCorrection(
     VertexOutput in [[stage_in]]
 ) {
     constexpr float ShiftLimit = 4;
-    constexpr float Alpha = .25;
-    constexpr float Beta = .5;
-    constexpr float Gamma = 5;
+    constexpr float α = 2;
+    constexpr float β = .5;
+    constexpr float γ = 5;
     
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = ctx.cfaColor(pos);
@@ -210,7 +210,7 @@ fragment float ApplyCorrection(
     const float r = Sample::R(raw, pos);
     const float Δgr = g - r;
     // Δḡr: correction factor; difference between ḡ (shifted g) and rb
-    const float Δḡr = ḡCalc(gInterp, shift, pos) - r;
+    const float Δḡr = ḡ(gInterp, shift, pos) - r;
     // r̄: guess for rb using Δḡr (correction factor)
     const float r̄ = g - Δḡr;
     float rCorrected = r;
@@ -218,22 +218,26 @@ fragment float ApplyCorrection(
     // Only apply correction if the correction factor (Δḡr) is in the same direction
     // as the raw g-rb delta (Δgr), otherwise the correction factor overshot.
     if ((Δḡr>=0) == (Δgr>=0)) {
-        if (abs(r̄-r) < Alpha*(r̄+r)) {
+        // Only use r̄ if the average of it and the raw rb is greater than α times
+        // the magnitude of their difference.
+        if (.5*(r̄+r) > α*abs(r̄-r)) {
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is
             // less than the magnitude of the raw g-rb delta (Δgr).
-            if (abs(Δḡr) < abs(Δgr)) {
+            if (abs(Δḡr) <= abs(Δgr)) {
                 rCorrected = r̄;
             }
+        
+        // Otherwise, redefine Δḡr as the weighted average of
         } else {
             const int2 d = {
                 shift.x>=0 ? -2 : 2,
                 shift.y>=0 ? -2 : 2,
             };
             
-            const float ḡxy = ḡCalc(gInterp, shift, pos+int2{0  ,  0});
-            const float ḡx̄y = ḡCalc(gInterp, shift, pos+int2{d.x,  0});
-            const float ḡxȳ = ḡCalc(gInterp, shift, pos+int2{0  ,d.y});
-            const float ḡx̄ȳ = ḡCalc(gInterp, shift, pos+int2{d.x,d.y});
+            const float ḡxy = ḡ(gInterp, shift, pos+int2{0  ,  0});
+            const float ḡx̄y = ḡ(gInterp, shift, pos+int2{d.x,  0});
+            const float ḡxȳ = ḡ(gInterp, shift, pos+int2{0  ,d.y});
+            const float ḡx̄ȳ = ḡ(gInterp, shift, pos+int2{d.x,d.y});
             
             const float rxy = Sample::R(Sample::MirrorClamp, raw, pos+int2{0  ,  0});
             const float rx̄y = Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,  0});
@@ -241,10 +245,10 @@ fragment float ApplyCorrection(
             const float rx̄ȳ = Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,d.y});
             
             // Gradient weights using difference from G at CA shift points and G at grid points
-            const float wxy = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{0  ,  0})));
-            const float wx̄y = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{d.x,  0})));
-            const float wxȳ = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{0  ,d.y})));
-            const float wx̄ȳ = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{d.x,d.y})));
+            const float wxy = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{0  ,  0})));
+            const float wx̄y = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{d.x,  0})));
+            const float wxȳ = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{0  ,d.y})));
+            const float wx̄ȳ = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{d.x,d.y})));
             const float Δḡr = (wxy * (ḡxy-rxy)  +
                                wx̄y * (ḡx̄y-rx̄y)  +
                                wxȳ * (ḡxȳ-rxȳ)  +
@@ -259,8 +263,8 @@ fragment float ApplyCorrection(
     // The correction factor (Δḡr) overshot, so use a weighted average of r̄ and r instead.
     } else {
         // The colour difference interpolation overshot the correction, just desaturate
-        if (abs(Δḡr/Δgr) < Gamma) {
-            rCorrected = Beta*r̄ + (1-Beta)*r;
+        if (abs(Δḡr/Δgr) < γ) {
+            rCorrected = β*r̄ + (1-β)*r;
         }
     }
     
