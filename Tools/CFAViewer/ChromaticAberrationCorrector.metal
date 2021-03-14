@@ -217,8 +217,8 @@ fragment float ApplyCorrection(
             }
         }
     
-    // γ correction: the correction factor (Δḡr) overshot; use a weighted average
-    // of r̄ and r.
+    // γ correction: the correction factor (Δḡr) overshot;
+    // use a weighted average of r̄ and r.
     } else {
         // To reduce artifacts, only allow γ correction if Δgr/Δḡr is above a threshold.
         if (abs(Δgr/Δḡr) >= γthresh) {
