@@ -112,50 +112,6 @@ fragment float CalcRBGDelta(
     }
 }
 
-//fragment float CalcSlopeX(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const int2 pos = int2(in.pos.xy);
-//    const uint2 bounds(txt.get_width(), txt.get_height());
-//#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
-//    switch (ctx.cfaColor(pos)) {
-//    case CFAColor::Red:
-//    case CFAColor::Blue:
-//        return
-//            ( 3./16)*(PX(+1,+1) - PX(-1,+1)) +
-//            (10./16)*(PX(+1, 0) - PX(-1, 0)) +
-//            ( 3./16)*(PX(+1,-1) - PX(-1,-1)) ;
-//    default:
-//        return 0;
-//    }
-//#undef PX
-//}
-//
-//fragment float CalcSlopeY(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-////    return floor(in.pos.x)/100 + floor(in.pos.y)/100;
-//    const int2 pos = int2(in.pos.xy);
-////    if (pos.y>=10 && pos.y<600) return 1;
-////    return 0;
-//    const uint2 bounds(txt.get_width(), txt.get_height());
-//#define PX(dx,dy) Sample::R(txt, Clamp::Edge(bounds, pos, {(dx),(dy)}))
-//    switch (ctx.cfaColor(pos)) {
-//    case CFAColor::Red:
-//    case CFAColor::Blue:
-//        return
-//            ( 3./16)*(PX(+1,+1) - PX(+1,-1)) +
-//            (10./16)*(PX( 0,+1) - PX( 0,-1)) +
-//            ( 3./16)*(PX(-1,+1) - PX(-1,-1)) ;
-//    default: return 0;
-//    }
-//#undef PX
-//}
-
 float ḡcalc(texture2d<float> gInterp, float2 shift, int2 pos) {
     pos = Clamp::Mirror({gInterp.get_width(), gInterp.get_height()}, pos);
     return gInterp.sample({coord::pixel, filter::linear}, float2(pos)+shift+float2(.5,.5)).r;
@@ -213,6 +169,9 @@ fragment float ApplyCorrection(
     // as the raw g-rb delta (Δgr), otherwise the correction factor overshot.
     if ((Δḡr>=0) == (Δgr>=0)) {
         // α correction: only use if [average of r̄,r]/|r̄-r| is greater than a threshold.
+        // In other words, prefer α correction for pixels whose raw and corrected
+        // rb values closely match (denominator), particularly if either is a bright
+        // pixel (numerator).
         if ((.5*(r̄+r))/abs(r̄-r) >= αthresh) {
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is
             // less than the magnitude of the raw g-rb delta (Δgr).
@@ -258,8 +217,8 @@ fragment float ApplyCorrection(
             }
         }
     
-    // γ correction: the correction factor (Δḡr) overshot, so use
-    // a weighted average of r̄ and r instead.
+    // γ correction: the correction factor (Δḡr) overshot; use a weighted average
+    // of r̄ and r.
     } else {
         // To reduce artifacts, only allow γ correction if Δgr/Δḡr is above a threshold.
         if (abs(Δgr/Δḡr) >= γthresh) {
