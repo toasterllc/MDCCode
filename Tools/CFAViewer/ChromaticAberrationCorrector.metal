@@ -156,16 +156,10 @@ fragment float CalcRBGDelta(
 //#undef PX
 //}
 
-float ḡ(texture2d<float> gInterp, float2 shift, int2 pos) {
+float ḡcalc(texture2d<float> gInterp, float2 shift, int2 pos) {
     pos = Clamp::Mirror({gInterp.get_width(), gInterp.get_height()}, pos);
     return gInterp.sample({coord::pixel, filter::linear}, float2(pos)+shift+float2(.5,.5)).r;
 }
-
-//float ΔḡrCalc(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
-//    const float ḡ = ḡ(gInterp, shift, pos);
-//    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
-//    return ḡ - r;
-//}
 
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
@@ -178,9 +172,9 @@ fragment float ApplyCorrection(
     VertexOutput in [[stage_in]]
 ) {
     constexpr float ShiftLimit = 4;
-    constexpr float α = 2;
-    constexpr float β = .5;
-    constexpr float γ = 5;
+    constexpr float αthresh = 2; // Threshold to allow α correction
+    constexpr float γthresh = .2; // Threshold to allow γ correction
+    constexpr float γfactor = .5; // Weight to apply to r̄ vs r when doing γ correction
     
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = ctx.cfaColor(pos);
@@ -210,61 +204,66 @@ fragment float ApplyCorrection(
     const float r = Sample::R(raw, pos);
     const float Δgr = g - r;
     // Δḡr: correction factor; difference between ḡ (shifted g) and rb
-    const float Δḡr = ḡ(gInterp, shift, pos) - r;
-    // r̄: guess for rb using Δḡr (correction factor)
+    const float Δḡr = ḡcalc(gInterp, shift, pos) - r;
+    // r̄: corrected rb using Δḡr (correction factor)
     const float r̄ = g - Δḡr;
     float rCorrected = r;
     
-    // Only apply correction if the correction factor (Δḡr) is in the same direction
+    // α/β correction: only allow if the correction factor (Δḡr) is in the same direction
     // as the raw g-rb delta (Δgr), otherwise the correction factor overshot.
     if ((Δḡr>=0) == (Δgr>=0)) {
-        // Only use r̄ if the average of it and the raw rb is greater than α times
-        // the magnitude of their difference.
-        if (.5*(r̄+r) > α*abs(r̄-r)) {
+        // α correction: only use if [average of r̄,r]/|r̄-r| is greater than a threshold.
+        if ((.5*(r̄+r))/abs(r̄-r) >= αthresh) {
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is
             // less than the magnitude of the raw g-rb delta (Δgr).
             if (abs(Δḡr) <= abs(Δgr)) {
                 rCorrected = r̄;
             }
         
-        // Otherwise, redefine Δḡr as the weighted average of
+        // β correction: recompute Δḡr as the weighted average of ḡ-r at the four
+        // points in the shift direction, where more weight is given to the
+        // directions where ḡ and g match.
         } else {
             const int2 d = {
                 shift.x>=0 ? -2 : 2,
                 shift.y>=0 ? -2 : 2,
             };
             
-            const float ḡxy = ḡ(gInterp, shift, pos+int2{0  ,  0});
-            const float ḡx̄y = ḡ(gInterp, shift, pos+int2{d.x,  0});
-            const float ḡxȳ = ḡ(gInterp, shift, pos+int2{0  ,d.y});
-            const float ḡx̄ȳ = ḡ(gInterp, shift, pos+int2{d.x,d.y});
+            const float4 ḡ(
+                ḡcalc(gInterp, shift, pos+int2{0  ,  0}),
+                ḡcalc(gInterp, shift, pos+int2{d.x,  0}),
+                ḡcalc(gInterp, shift, pos+int2{0  ,d.y}),
+                ḡcalc(gInterp, shift, pos+int2{d.x,d.y})
+            );
             
-            const float rxy = Sample::R(Sample::MirrorClamp, raw, pos+int2{0  ,  0});
-            const float rx̄y = Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,  0});
-            const float rxȳ = Sample::R(Sample::MirrorClamp, raw, pos+int2{0  ,d.y});
-            const float rx̄ȳ = Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,d.y});
+            const float4 r(
+                Sample::R(Sample::MirrorClamp, raw, pos+int2{0  ,  0}),
+                Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,  0}),
+                Sample::R(Sample::MirrorClamp, raw, pos+int2{0  ,d.y}),
+                Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,d.y})
+            );
             
-            // Gradient weights using difference from G at CA shift points and G at grid points
-            const float wxy = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{0  ,  0})));
-            const float wx̄y = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{d.x,  0})));
-            const float wxȳ = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{0  ,d.y})));
-            const float wx̄ȳ = 1 / (Eps + abs(g - ḡ(gInterp, shift, pos+int2{d.x,d.y})));
-            const float Δḡr = (wxy * (ḡxy-rxy)  +
-                               wx̄y * (ḡx̄y-rx̄y)  +
-                               wxȳ * (ḡxȳ-rxȳ)  +
-                               wx̄ȳ * (ḡx̄ȳ-rx̄ȳ)) /
-                               (wxy+wx̄y+wxȳ+wx̄ȳ);
+            // w: directional weights, where more weight is given to the
+            // directions where ḡ and g match.
+            const float4 w = 1 / (Eps + abs(ḡ-g));
+            // Δḡr: correction factor; apply weights to ḡ-r, sum them,
+            // and normalize with combined weight.
+            const float Δḡr = dot(w*(ḡ-r),1) / dot(w,1); // ∑ w*(ḡ-r) / ∑ w
+            const float r̄ = g - Δḡr;
             
+            // Only use r̄ if the magnitude of the correction factor (Δḡr) is
+            // less than the magnitude of the raw g-rb delta (Δgr).
             if (abs(Δḡr) < abs(Δgr)) {
-                rCorrected = g - Δḡr;
+                rCorrected = r̄;
             }
         }
     
-    // The correction factor (Δḡr) overshot, so use a weighted average of r̄ and r instead.
+    // γ correction: the correction factor (Δḡr) overshot, so use
+    // a weighted average of r̄ and r instead.
     } else {
-        // The colour difference interpolation overshot the correction, just desaturate
-        if (abs(Δḡr/Δgr) < γ) {
-            rCorrected = β*r̄ + (1-β)*r;
+        // To reduce artifacts, only allow γ correction if Δgr/Δḡr is above a threshold.
+        if (abs(Δgr/Δḡr) >= γthresh) {
+            rCorrected = γfactor*r̄ + (1-γfactor)*r;
         }
     }
     
