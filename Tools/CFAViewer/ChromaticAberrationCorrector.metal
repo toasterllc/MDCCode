@@ -104,9 +104,9 @@ fragment float CalcRBGDelta(
     switch (ctx.cfaColor(pos)) {
     case CFAColor::Red:
     case CFAColor::Blue: {
-        const float rb = Sample::R(raw, pos);
+        const float r = Sample::R(raw, pos);
         const float g = Sample::R(gInterp, pos);
-        return rb-g;
+        return r-g;
     }
     case CFAColor::Green: return 0;
     }
@@ -156,16 +156,16 @@ fragment float CalcRBGDelta(
 //#undef PX
 //}
 
-float gShiftCalc(texture2d<float> gInterp, float2 shift, int2 pos) {
+float ḡCalc(texture2d<float> gInterp, float2 shift, int2 pos) {
     pos = Clamp::Mirror({gInterp.get_width(), gInterp.get_height()}, pos);
     return gInterp.sample({coord::pixel, filter::linear}, float2(pos)+shift+float2(.5,.5)).r;
 }
 
-float gShiftRBDeltaCalc(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
-    const float gShift = gShiftCalc(gInterp, shift, pos);
-    const float rb = Sample::R(Sample::MirrorClamp, raw, pos);
-    return gShift - rb;
-}
+//float ΔḡrCalc(texture2d<float> raw, texture2d<float> gInterp, float2 shift, int2 pos) {
+//    const float ḡ = ḡCalc(gInterp, shift, pos);
+//    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+//    return ḡ - r;
+//}
 
 fragment float ApplyCorrection(
     constant RenderContext& ctx [[buffer(0)]],
@@ -177,6 +177,11 @@ fragment float ApplyCorrection(
     texture2d<float> shiftsBlueY [[texture(5)]],
     VertexOutput in [[stage_in]]
 ) {
+    constexpr float ShiftLimit = 4;
+    constexpr float Alpha = .25;
+    constexpr float Beta = .5;
+    constexpr float Gamma = 5;
+    
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = ctx.cfaColor(pos);
     
@@ -188,68 +193,78 @@ fragment float ApplyCorrection(
             shiftsRedY.sample(filter::linear, in.posUnit).r
         };
         break;
-    case CFAColor::Green:
-        return Sample::R(raw, pos); // Green pixel: pass through
     case CFAColor::Blue:
         shift = {
             shiftsBlueX.sample(filter::linear, in.posUnit).r,
             shiftsBlueY.sample(filter::linear, in.posUnit).r
         };
         break;
+    case CFAColor::Green:
+        return Sample::R(raw, pos); // Green pixel: pass through
     }
-    
-    constexpr float ShiftLimit = 4;
-    constexpr float Alpha = .25;
-    constexpr float Beta = .5;
-    constexpr float Gamma = 5;
     
     shift.x = clamp(shift.x, -ShiftLimit, ShiftLimit);
     shift.y = clamp(shift.y, -ShiftLimit, ShiftLimit);
     
     const float g = Sample::R(gInterp, pos);
-    const float rb = Sample::R(raw, pos);
-    const float gShiftRBDelta = gShiftRBDeltaCalc(raw, gInterp, shift, pos);
-    const float rbInterp = g - gShiftRBDelta;
-    const float grbDelta = g - rb;
-    float rbCorrected = rb;
+    const float r = Sample::R(raw, pos);
+    const float Δgr = g - r;
+    // Δḡr: correction factor; difference between ḡ (shifted g) and rb
+    const float Δḡr = ḡCalc(gInterp, shift, pos) - r;
+    // r̄: guess for rb using Δḡr (correction factor)
+    const float r̄ = g - Δḡr;
+    float rCorrected = r;
     
-    if (grbDelta*gShiftRBDelta >= 0) {
-        if (abs(rbInterp-rb) < Alpha*(rbInterp+rb)) {
-            if (abs(gShiftRBDelta) < abs(grbDelta)) {
-                rbCorrected = rbInterp;
+    // Only apply correction if the correction factor (Δḡr) is in the same direction
+    // as the raw g-rb delta (Δgr), otherwise the correction factor overshot.
+    if ((Δḡr>=0) == (Δgr>=0)) {
+        if (abs(r̄-r) < Alpha*(r̄+r)) {
+            // Only use r̄ if the magnitude of the correction factor (Δḡr) is
+            // less than the magnitude of the raw g-rb delta (Δgr).
+            if (abs(Δḡr) < abs(Δgr)) {
+                rCorrected = r̄;
             }
         } else {
             const int2 d = {
-                shift.x >= 0 ? -2 : 2,
-                shift.y >= 0 ? -2 : 2,
+                shift.x>=0 ? -2 : 2,
+                shift.y>=0 ? -2 : 2,
             };
             
-            // Gradient weights using difference from G at CA shift points and G at grid points
-            const float w00 = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{0  ,  0})));
-            const float wx0 = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{d.x,  0})));
-            const float w0y = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{0  ,d.y})));
-            const float wxy = 1 / (Eps + abs(g - gShiftCalc(gInterp, shift, pos+int2{d.x,d.y})));
-            const float numer =
-                w00 * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{0  ,  0}) +
-                wx0 * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{d.x,  0}) +
-                w0y * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{0  ,d.y}) +
-                wxy * gShiftRBDeltaCalc(raw, gInterp, shift, pos+int2{d.x,d.y}) ;
-            const float denom = w00+wx0+w0y+wxy;
-            const float gShiftRBDelta = numer/denom;
+            const float ḡxy = ḡCalc(gInterp, shift, pos+int2{0  ,  0});
+            const float ḡx̄y = ḡCalc(gInterp, shift, pos+int2{d.x,  0});
+            const float ḡxȳ = ḡCalc(gInterp, shift, pos+int2{0  ,d.y});
+            const float ḡx̄ȳ = ḡCalc(gInterp, shift, pos+int2{d.x,d.y});
             
-            if (abs(gShiftRBDelta) < abs(grbDelta)) {
-                rbCorrected = g - gShiftRBDelta;
+            const float rxy = Sample::R(Sample::MirrorClamp, raw, pos+int2{0  ,  0});
+            const float rx̄y = Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,  0});
+            const float rxȳ = Sample::R(Sample::MirrorClamp, raw, pos+int2{0  ,d.y});
+            const float rx̄ȳ = Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,d.y});
+            
+            // Gradient weights using difference from G at CA shift points and G at grid points
+            const float wxy = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{0  ,  0})));
+            const float wx̄y = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{d.x,  0})));
+            const float wxȳ = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{0  ,d.y})));
+            const float wx̄ȳ = 1 / (Eps + abs(g - ḡCalc(gInterp, shift, pos+int2{d.x,d.y})));
+            const float Δḡr = (wxy * (ḡxy-rxy)  +
+                               wx̄y * (ḡx̄y-rx̄y)  +
+                               wxȳ * (ḡxȳ-rxȳ)  +
+                               wx̄ȳ * (ḡx̄ȳ-rx̄ȳ)) /
+                               (wxy+wx̄y+wxȳ+wx̄ȳ);
+            
+            if (abs(Δḡr) < abs(Δgr)) {
+                rCorrected = g - Δḡr;
             }
         }
     
+    // The correction factor (Δḡr) overshot, so use a weighted average of r̄ and r instead.
     } else {
         // The colour difference interpolation overshot the correction, just desaturate
-        if (abs(gShiftRBDelta/grbDelta) < Gamma) {
-            rbCorrected = g - Beta*(grbDelta+gShiftRBDelta);
+        if (abs(Δḡr/Δgr) < Gamma) {
+            rCorrected = Beta*r̄ + (1-Beta)*r;
         }
     }
     
-    return rbCorrected;
+    return rCorrected;
 }
 
 } // namespace ChromaticAberrationCorrector

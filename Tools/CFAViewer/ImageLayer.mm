@@ -479,13 +479,13 @@ struct TileTerms {
                         (10./16)*(gInterpPx.px(x  ,y+1) - gInterpPx.px(x  ,y-1)) +
                         ( 3./16)*(gInterpPx.px(x-1,y+1) - gInterpPx.px(x-1,y-1)) ;
                     
-                    const double rbgDelta = rawPx.px(x,y) - gInterpPx.px(x,y);
+                    const double rgDelta = rawPx.px(x,y) - gInterpPx.px(x,y);
                     
-                    terms(c,Dir::X).t0 += rbgDelta*rbgDelta;
-                    terms(c,Dir::Y).t0 += rbgDelta*rbgDelta;
+                    terms(c,Dir::X).t0 += rgDelta*rgDelta;
+                    terms(c,Dir::Y).t0 += rgDelta*rgDelta;
                     
-                    terms(c,Dir::X).t1 += gSlopeX*rbgDelta;
-                    terms(c,Dir::Y).t1 += gSlopeY*rbgDelta;
+                    terms(c,Dir::X).t1 += gSlopeX*rgDelta;
+                    terms(c,Dir::Y).t1 += gSlopeY*rgDelta;
                     
                     terms(c,Dir::X).t2 += gSlopeX*gSlopeX;
                     terms(c,Dir::Y).t2 += gSlopeY*gSlopeY;
@@ -611,7 +611,7 @@ struct TileTerms {
     _inputHistogram = Histogram();
     _outputHistogram = Histogram();
     
-//    id<MTLTexture> rbgDeltaTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
+//    id<MTLTexture> rgDeltaTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
 //    id<MTLTexture> gSlopeXTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
 //    id<MTLTexture> gSlopeYTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
 //    id<MTLTexture> tmpTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
