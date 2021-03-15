@@ -62,41 +62,39 @@ fragment float InterpolateG(
     
     // Red/blue pixel: directional weighted average, preferring the direction with least change
 #define PX(dx,dy) Sample::R(Sample::MirrorClamp, raw, pos+int2{(dx),(dy)})
-    const float ku =
-        1/(Eps+pow(
-            abs(PX(  0 , +1 ) - PX( 0 , -1 )) +
-            abs(PX(  0 ,  0 ) - PX( 0 , -2 )) +
-            abs(PX(  0 , -1 ) - PX( 0 , -3 )) ,
-        2));
     
-    const float kd =
-        1/(Eps+pow(
-            abs(PX(  0 , -1 ) - PX( 0 , +1 )) +
-            abs(PX(  0 ,  0 ) - PX( 0 , +2 )) +
-            abs(PX(  0 , +1 ) - PX( 0 , +3 )) ,
-        2));
+    // Derivative in 4 directions
+    const float4 δ(
+        // Up
+        abs(PX(  0 , +1 ) - PX( 0 , -1 )) +
+        abs(PX(  0 ,  0 ) - PX( 0 , -2 )) +
+        abs(PX(  0 , -1 ) - PX( 0 , -3 )) ,
+        // Down
+        abs(PX(  0 , -1 ) - PX( 0 , +1 )) +
+        abs(PX(  0 ,  0 ) - PX( 0 , +2 )) +
+        abs(PX(  0 , +1 ) - PX( 0 , +3 )) ,
+        // Left
+        abs(PX( +1 ,  0 ) - PX( -1 , 0 )) +
+        abs(PX(  0 ,  0 ) - PX( -2 , 0 )) +
+        abs(PX( -1 ,  0 ) - PX( -3 , 0 )) ,
+        // Right
+        abs(PX( -1 ,  0 ) - PX( +1 , 0 )) +
+        abs(PX(  0 ,  0 ) - PX( +2 , 0 )) +
+        abs(PX( +1 ,  0 ) - PX( +3 , 0 ))
+    );
     
-    const float kl =
-        1/(Eps+pow(
-            abs(PX( +1 ,  0 ) - PX( -1 , 0 )) +
-            abs(PX(  0 ,  0 ) - PX( -2 , 0 )) +
-            abs(PX( -1 ,  0 ) - PX( -3 , 0 )) ,
-        2));
+    const float4 r(
+        PX(  0 , -1 ),
+        PX(  0 , +1 ),
+        PX( -1 ,  0 ),
+        PX( +1 ,  0 )
+    );
     
-    const float kr =
-        1/(Eps+pow(
-            abs(PX( -1 ,  0 ) - PX( +1 , 0 )) +
-            abs(PX(  0 ,  0 ) - PX( +2 , 0 )) +
-            abs(PX( +1 ,  0 ) - PX( +3 , 0 )) ,
-        2));
-    
-    return (
-        ku * PX(  0 , -1 ) +
-        kd * PX(  0 , +1 ) +
-        kl * PX( -1 ,  0 ) +
-        kr * PX( +1 ,  0 )
-    ) / (ku + kd + kl + kr);
-    
+    // Weights: 1/δ^2
+    const float4 w = 1/(Eps+pow(δ,2));
+    // Result: apply weights to δ, sum them, and normalize
+    // with combined weight.
+    return dot(w*r,1) / dot(w,1);
 #undef PX
 }
 
