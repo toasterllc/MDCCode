@@ -176,7 +176,7 @@ fragment float ApplyCorrection(
     if ((Δḡr>=0) == (Δgr>=0)) {
         // α correction: only use if [average of r̄,r]/|r̄-r| is greater than a threshold.
         // In other words, prefer α correction for pixels whose raw and corrected
-        // rb values closely match (denominator), particularly if either is a bright
+        // rb values closely match (denominator), especially if either is a bright
         // pixel (numerator).
         if ((.5*(r̄+r))/abs(r̄-r) >= αthresh) {
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is
