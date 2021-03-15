@@ -17,7 +17,7 @@
 		55B9747824C50A81000B2633 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747724C50A81000B2633 /* Cocoa.framework */; };
 		55B9747A24C50A86000B2633 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747924C50A86000B2633 /* Metal.framework */; };
 		55B9747C24C50A8A000B2633 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747B24C50A8A000B2633 /* QuartzCore.framework */; };
-		55DE384425F6DA2400AD2223 /* ChromaticAberrationCorrector.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55DE384325F6DA2400AD2223 /* ChromaticAberrationCorrector.metal */; };
+		55DE384425F6DA2400AD2223 /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55DE384325F6DA2400AD2223 /* Defringe.metal */; };
 		55E98EB625A920030062B458 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E98EB425A920030062B458 /* MainView.mm */; };
 		55E98EB925A920890062B458 /* HistogramView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E98EB725A920880062B458 /* HistogramView.mm */; };
 		55E98ED425BFBA800062B458 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E98ED325BFBA800062B458 /* MetalPerformanceShaders.framework */; };
@@ -43,7 +43,11 @@
 		55671A35257E94C000C1CDA4 /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55671A3A2580178100C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
-		5583289625FB62C400730B6A /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
+		5583289625FB62C400730B6A /* MetalShaderUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalShaderUtil.h; sourceTree = "<group>"; };
+		558328AF25FE15E800730B6A /* Defringe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
+		558328B225FE18A100730B6A /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
+		558328B425FF612D00730B6A /* ImageFilterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageFilterTypes.h; sourceTree = "<group>"; };
+		558328B625FF775700730B6A /* DefringeTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DefringeTypes.h; sourceTree = "<group>"; };
 		5584A49125A2FC4A00C9FC5C /* ColorUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorUtil.h; sourceTree = "<group>"; };
 		559D8E0E2593EAB200836B47 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -58,7 +62,7 @@
 		55B9747724C50A81000B2633 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		55B9747924C50A86000B2633 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		55B9747B24C50A8A000B2633 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		55DE384325F6DA2400AD2223 /* ChromaticAberrationCorrector.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ChromaticAberrationCorrector.metal; sourceTree = "<group>"; };
+		55DE384325F6DA2400AD2223 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
 		55DE385B25F83EFB00AD2223 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
 		55E98EB425A920030062B458 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
 		55E98EB525A920030062B458 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
@@ -148,12 +152,16 @@
 				55E98EB525A920030062B458 /* MainView.h */,
 				55E98EB425A920030062B458 /* MainView.mm */,
 				55EBCC9B2589E5A00089A441 /* MetalTypes.h */,
-				5583289625FB62C400730B6A /* MetalUtil.h */,
+				558328B225FE18A100730B6A /* MetalUtil.h */,
+				5583289625FB62C400730B6A /* MetalShaderUtil.h */,
 				55EBCC8A258966FE0089A441 /* ImageLayerTypes.h */,
 				55EBCC89258966FE0089A441 /* ImageLayerShader.metal */,
-				55DE384325F6DA2400AD2223 /* ChromaticAberrationCorrector.metal */,
 				55EBCC86258966FE0089A441 /* ImageLayer.h */,
 				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
+				558328B425FF612D00730B6A /* ImageFilterTypes.h */,
+				558328B625FF775700730B6A /* DefringeTypes.h */,
+				55DE384325F6DA2400AD2223 /* Defringe.metal */,
+				558328AF25FE15E800730B6A /* Defringe.h */,
 				55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */,
 				55E98EB825A920880062B458 /* HistogramView.h */,
 				55E98EB725A920880062B458 /* HistogramView.mm */,
@@ -271,7 +279,7 @@
 				55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */,
 				55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */,
 				55EBCC8E258966FE0089A441 /* ImageLayerShader.metal in Sources */,
-				55DE384425F6DA2400AD2223 /* ChromaticAberrationCorrector.metal in Sources */,
+				55DE384425F6DA2400AD2223 /* Defringe.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -326,7 +334,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;

@@ -1,11 +1,17 @@
 #import <metal_stdlib>
-#import "MetalUtil.h"
+#import "MetalShaderUtil.h"
+#import "ImageFilterTypes.h"
 #import "ImageLayerTypes.h"
+#import "DefringeTypes.h"
 using namespace metal;
 using namespace CFAViewer::MetalTypes;
+using namespace CFAViewer::ImageFilter;
 using namespace CFAViewer::ImageLayerTypes;
+using namespace CFAViewer::ImageFilter::DefringeTypes;
 
-namespace ChromaticAberrationCorrector {
+namespace CFAViewer {
+namespace ImageFilter {
+namespace Defringe {
 
 constant float Eps = 1e-5;
 
@@ -14,12 +20,12 @@ constant float WhiteBalanceGreen = 0.296587/0.296587;
 constant float WhiteBalanceBlue = 0.296587/0.161148;
 
 fragment float WhiteBalanceForward(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant Options& opts [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = ctx.cfaColor(pos);
+    const CFAColor c = opts.cfaDesc.color(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
     case CFAColor::Red:     return s*WhiteBalanceRed;
@@ -29,12 +35,12 @@ fragment float WhiteBalanceForward(
 }
 
 fragment float WhiteBalanceReverse(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant Options& opts [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = ctx.cfaColor(pos);
+    const CFAColor c = opts.cfaDesc.color(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
     case CFAColor::Red:     return s/WhiteBalanceRed;
@@ -45,12 +51,12 @@ fragment float WhiteBalanceReverse(
 
 // Interpolate the G channel using a directional weighted average
 fragment float InterpolateG(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant Options& opts [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = ctx.cfaColor(pos);
+    const CFAColor c = opts.cfaDesc.color(pos);
     // Green pixel: pass-through
     if (c == CFAColor::Green) return Sample::R(raw, pos);
     
@@ -95,13 +101,13 @@ fragment float InterpolateG(
 }
 
 fragment float CalcRBGDelta(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant Options& opts [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> gInterp [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    switch (ctx.cfaColor(pos)) {
+    switch (opts.cfaDesc.color(pos)) {
     case CFAColor::Red:
     case CFAColor::Blue: {
         const float r = Sample::R(raw, pos);
@@ -118,7 +124,7 @@ float ḡcalc(texture2d<float> gInterp, float2 shift, int2 pos) {
 }
 
 fragment float ApplyCorrection(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant Options& opts [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> gInterp [[texture(1)]],
     texture2d<float> shiftsRedX [[texture(2)]],
@@ -133,7 +139,7 @@ fragment float ApplyCorrection(
     constexpr float γfactor = .5; // Weight to apply to r̄ vs r when doing γ correction
     
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = ctx.cfaColor(pos);
+    const CFAColor c = opts.cfaDesc.color(pos);
     
     float2 shift = 0;
     switch (c) {
@@ -229,4 +235,6 @@ fragment float ApplyCorrection(
     return rCorrected;
 }
 
-} // namespace ChromaticAberrationCorrector
+} // namespace Defringe
+} // namespace ImageFilter
+} // namespace CFAViewer

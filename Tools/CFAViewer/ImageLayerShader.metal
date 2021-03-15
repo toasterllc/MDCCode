@@ -1,5 +1,5 @@
 #import <metal_stdlib>
-#import "MetalUtil.h"
+#import "MetalShaderUtil.h"
 #import "ImageLayerTypes.h"
 using namespace metal;
 using namespace CFAViewer::MetalTypes;
