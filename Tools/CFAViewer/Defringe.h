@@ -341,7 +341,7 @@ namespace CFAViewer::ImageFilter {
             }
             
             id<MTLTexture> tmp = MetalUtil::CreateTexture(_heap, MTLPixelFormatR32Float, w, h);
-            _rm.renderPass("CFAViewer::ImageFilter::Defringe::ApplyCorrection", raw,
+            _rm.renderPass("CFAViewer::ImageFilter::Defringe::ApplyCorrection", tmp,
                 [&](id<MTLRenderCommandEncoder> enc) {
                     [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
                     [enc setFragmentBytes:&grid length:sizeof(grid) atIndex:1];

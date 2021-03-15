@@ -677,8 +677,11 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     
     } else {
         if (_state.correctChromaticAberration) {
+            [cmdBuf commit];
+            
             DefringeTypes::Options opts;
             _state.defringe.run(opts, rawTxt);
+            
             cmdBuf = [_commandQueue commandBuffer];
         }
         
