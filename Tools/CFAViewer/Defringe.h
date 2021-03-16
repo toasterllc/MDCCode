@@ -169,20 +169,14 @@ namespace CFAViewer::ImageFilter {
             double t2 = 0;
         };
         
-        static constexpr uint32_t TileSize = 128;
-        static constexpr uint32_t TileOverlap = 16;
-        static constexpr double Eps = 1e-5;
-        
         void _defringe(const DefringeTypes::Options& opts,
             id<MTLTexture> raw, id<MTLTexture> gInterp) {
             
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
-            TileGrid grid((uint32_t)w, (uint32_t)h, TileSize, TileOverlap);
-            
             // Solve for the 2D polynomials that minimize the g-r/b difference
-            ColorDir<Poly> polys = _solveForPolys(opts, grid, raw, gInterp);
+            ColorDir<Poly> polys = _solveForPolys(opts, raw, gInterp);
             
             constexpr size_t ShiftTextureWidth = 20;
             constexpr size_t ShiftTextureSize = sizeof(float)*ShiftTextureWidth*ShiftTextureWidth;
@@ -268,7 +262,11 @@ namespace CFAViewer::ImageFilter {
         //
         //   Using this formula, we can perform a least squares regression to solve for x.
         //   We solve for this shift in the x and y directions independently.
-        ColorDir<Poly> _solveForPolys(const DefringeTypes::Options& opts, const TileGrid& grid, id<MTLTexture> raw, id<MTLTexture> gInterp) {
+        static constexpr uint32_t TileSize = 128;
+        static constexpr uint32_t TileOverlap = 16;
+        static constexpr double Eps = 1e-5;
+        
+        ColorDir<Poly> _solveForPolys(const DefringeTypes::Options& opts, id<MTLTexture> raw, id<MTLTexture> gInterp) {
             
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
@@ -290,6 +288,7 @@ namespace CFAViewer::ImageFilter {
             BufSampler<float> rawPx(w, h, _rawBuf);
             BufSampler<float> gInterpPx(w, h, _gInterpBuf);
             
+            TileGrid grid((uint32_t)w, (uint32_t)h, TileSize, TileOverlap);
             ColorDir<Poly> polys;
             for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
                 for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
