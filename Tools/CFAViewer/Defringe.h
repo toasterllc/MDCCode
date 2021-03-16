@@ -232,10 +232,36 @@ namespace CFAViewer::ImageFilter {
             _rm.copy(tmp, raw);
         }
         
-        // _solveForPolys(): solve for a polynomial that supplies the shift amount
-        // across all tiles.
-        // Each polynomial is for a single color and direction, so there are 4
-        // polynomials: redX, redY, blueX, blueY.
+        // _solveForPolys(): this function returns a 2D polynomial whose value is
+        // the shift amount (at a particular {x,y} point) to apply to the g channel
+        // to minimize the difference between g and r/b. This function returns a
+        // polynomial for each color and direction, so there are 4 polynomials
+        // returned: redX, redY, blueX, blueY.
+        //
+        // Deriving this 2D polynomial requires 2 stages:
+        //   - Stage 1: for each tile, solve for the shift amount that minimizes the
+        //              difference between the g and r/b channels (see theory below).
+        //   - Stage 2: smooth and interpolate the per-tile shift values by solving
+        //              for a 2D polynomial whose independent variable is the {x,y}
+        //              coordinate of the tile, and the dependent variable is the
+        //              shift amount.
+        // =========================
+        // The theory behind Stage 1 (solving for the per-tile shift between the g and r/b
+        // channels is):
+        //
+        //   Take two single-dimensional continuous functions: f(t) and g(t). Assume:
+        //     1. f'(t) = d/dt[f(t)]     f'(t) is the derivative of f(t)
+        //     2. g(t) = f(t+x)          g(t) is a time-shifted version of f(t)
+        //
+        //   f(t+x) can be approximated using the tangent line of f(t) at t, thus assuming
+        //   that f(t) has constant slope in the neighborhood of `t`:
+        //     g(t) = f(t+x) ≈ f(t) + x f'(t)
+        //
+        //   Solving for x (the amount that g(t) is shifted relative to f(t)):
+        //     x ≈ (g(t) - f(t)) / f'(t)
+        //
+        //   Using this formula, we can perform a least squares regression to solve for x.
+        //   We solve for this shift in the x and y directions independently.
         ColorDir<Poly> _solveForPolys(const DefringeTypes::Options& opts, const TileGrid& grid, id<MTLTexture> raw, id<MTLTexture> gInterp) {
             
             const NSUInteger w = [raw width];
@@ -295,12 +321,15 @@ namespace CFAViewer::ImageFilter {
                     
                     // For each color and direction, solve for the shift amount and
                     // its associated weight for this tile.
-                    
                     for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                         for (Dir dir : {Dir::X, Dir::Y}) {
                             // Skip this tile if the shift denominator is too small
                             if (terms(c,dir).t2 < Eps) continue; // Prevent divide by 0
                             
+                            // Multiply the shift by 2, because the result of the regression
+                            // will be normalized to a magnitude of 1, but it needs to be
+                            // normalized to a magnitude of 2, since the g pixels in the CFA
+                            // occur every 2 pixels.
                             const double shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
                             const double weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
                             const double x = grid.x.tileNormalizedCenter<double>(tx);
