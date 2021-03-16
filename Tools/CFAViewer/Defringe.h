@@ -180,6 +180,8 @@ namespace CFAViewer::ImageFilter {
             const NSUInteger h = [raw height];
             
             TileGrid grid((uint32_t)w, (uint32_t)h, TileSize, TileOverlap);
+            
+            // Solve for the 2D polynomials that minimize the g-r/b difference
             ColorDir<Poly> polys = _solveForPolys(opts, grid, raw, gInterp);
             
             constexpr size_t ShiftTextureWidth = 20;
@@ -195,6 +197,10 @@ namespace CFAViewer::ImageFilter {
                 }
             }
             
+            // Using the 2D polynomials, create small textures containing the shift
+            // amounts across the image.
+            // The final fragment shader will simply sample these textures to
+            // determine the appropriate shift amount to use for each pixel.
             ColorDir<id<MTLTexture>> shiftTxts;
             for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
@@ -216,11 +222,11 @@ namespace CFAViewer::ImageFilter {
                 }
             }
             
+            // Finally apply the defringe correction
             id<MTLTexture> tmp = MetalUtil::CreateTexture(_heap, MTLPixelFormatR32Float, w, h);
             _rm.renderPass("CFAViewer::ImageFilter::Defringe::ApplyCorrection", tmp,
                 [&](id<MTLRenderCommandEncoder> enc) {
                     [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
-                    [enc setFragmentBytes:&grid length:sizeof(grid) atIndex:1];
                     [enc setFragmentTexture:raw atIndex:0];
                     [enc setFragmentTexture:gInterp atIndex:1];
                     [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::X) atIndex:2];
@@ -320,7 +326,8 @@ namespace CFAViewer::ImageFilter {
                     }
                     
                     // For each color and direction, solve for the shift amount and
-                    // its associated weight for this tile.
+                    // its associated weight for this tile, and add this tile's
+                    // datapoint to the 2D polynomial regression.
                     for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                         for (Dir dir : {Dir::X, Dir::Y}) {
                             // Skip this tile if the shift denominator is too small
