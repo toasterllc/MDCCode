@@ -24,12 +24,40 @@ namespace CFAViewer::ImageFilter {
             
             MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
             [[renderPassDescriptor colorAttachments][0] setTexture:txt];
-            [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
             [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
+            [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
             [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
             id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:renderPassDescriptor];
             
             [enc setRenderPipelineState:_pipelineState(name, [txt pixelFormat])];
+            [enc setFrontFacingWinding:MTLWindingCounterClockwise];
+            [enc setCullMode:MTLCullModeNone];
+            
+            fn(enc);
+            
+            [enc drawPrimitives:MTLPrimitiveTypeTriangle
+                vertexStart:0 vertexCount:CFAViewer::MetalTypes::SquareVertIdxCount];
+            
+            [enc endEncoding];
+        }
+        
+        template <typename Fn>
+        void renderPass(
+            const std::string& name,
+            NSUInteger width,
+            NSUInteger height,
+            Fn fn
+        ) {
+            MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
+            [renderPassDescriptor setRenderTargetWidth:width];
+            [renderPassDescriptor setRenderTargetHeight:height];
+            [renderPassDescriptor setDefaultRasterSampleCount:1];
+            [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
+            [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionDontCare];
+            [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionDontCare];
+            id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:renderPassDescriptor];
+            
+            [enc setRenderPipelineState:_pipelineState(name, MTLPixelFormatInvalid)];
             [enc setFrontFacingWinding:MTLWindingCounterClockwise];
             [enc setCullMode:MTLCullModeNone];
             

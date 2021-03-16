@@ -12,6 +12,29 @@ struct Options {
     uint32_t iterations = 2;
 };
 
+struct PolyCoeffs {
+    float k[16] = {};
+};
+
+enum class Dir : uint8_t {
+    X = 0,
+    Y = 1,
+};
+
+template <typename T>
+class ColorDir {
+public:
+    MetalDevice T& operator()(CFAColor color, Dir dir) {
+        return _t[((uint8_t)color)>>1][(uint8_t)dir];
+    }
+    
+    MetalConst T& operator()(CFAColor color, Dir dir) MetalConst {
+        return _t[((uint8_t)color)>>1][(uint8_t)dir];
+    }
+private:
+    T _t[2][2] = {}; // _t[color][dir]; only red/blue colors allowed
+};
+
 } // namespace DefringeType
 } // namespace ImageFilter
 } // namespace CFAViewer

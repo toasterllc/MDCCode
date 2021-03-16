@@ -51,6 +51,10 @@ namespace CFAViewer::ImageFilter {
     
     private:
         using Poly = Poly2D<double,4>;
+        using Dir = DefringeTypes::Dir;
+        template <typename T>
+        using ColorDir = DefringeTypes::ColorDir<T>;
+        using PolyCoeffs = DefringeTypes::PolyCoeffs;
         
         class TileAxis {
         private:
@@ -122,25 +126,6 @@ namespace CFAViewer::ImageFilter {
             const TileAxis y;
         };
         
-        enum class Dir : uint8_t {
-            X = 0,
-            Y = 1,
-        };
-        
-        template <typename T>
-        class ColorDir {
-        public:
-            T& operator()(CFAColor color, Dir dir) {
-                return _t[((uint8_t)color)>>1][(uint8_t)dir];
-            }
-            
-            const T& operator()(CFAColor color, Dir dir) const {
-                return _t[((uint8_t)color)>>1][(uint8_t)dir];
-            }
-        private:
-            T _t[2][2] = {}; // _t[color][dir]; only red/blue colors allowed
-        };
-        
         template <typename T>
         class BufSampler {
         public:
@@ -178,45 +163,39 @@ namespace CFAViewer::ImageFilter {
             // Solve for the 2D polynomials that minimize the g-r/b difference
             ColorDir<Poly> polys = _solveForPolys(opts, raw, gInterp);
             
-            constexpr size_t ShiftTextureWidth = 20;
-            constexpr size_t ShiftTextureSize = sizeof(float)*ShiftTextureWidth*ShiftTextureWidth;
-            
-            // Populate _shiftTxtBufs
-            if (!_shiftTxtBufs(CFAColor::Red,Dir::X)) {
-                for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
-                    for (Dir dir : {Dir::X, Dir::Y}) {
-                        _shiftTxtBufs(c,dir) = [_dev newBufferWithLength:ShiftTextureSize
-                            options:MTLResourceCPUCacheModeDefaultCache];
-                    }
-                }
-            }
-            
             // Using the 2D polynomials, create small textures containing the shift
             // amounts across the image.
             // The final fragment shader will simply sample these textures to
             // determine the appropriate shift amount to use for each pixel.
+            constexpr size_t ShiftTextureWidth = 20;
+            ColorDir<PolyCoeffs> polyCoeffs;
             ColorDir<id<MTLTexture>> shiftTxts;
             for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
-                    id<MTLBuffer> buf = _shiftTxtBufs(c,dir);
-                    float* bufContents = (float*)[buf contents];
-                    id<MTLTexture> txt = MetalUtil::CreateTexture(_heap, MTLPixelFormatR32Float, ShiftTextureWidth, ShiftTextureWidth);
+                    const auto& coeffs = polys(c,dir).coeffs().vals;
+                    std::copy(coeffs, coeffs+std::size(coeffs), polyCoeffs(c,dir).k);
                     
-                    shiftTxts(c,dir) = txt;
-                    
-                    for (uint32_t y=0, i=0; y<ShiftTextureWidth; y++) {
-                        for (uint32_t x=0; x<ShiftTextureWidth; x++, i++) {
-                            const float xf = (x+.5)/ShiftTextureWidth;
-                            const float yf = (y+.5)/ShiftTextureWidth;
-                            bufContents[i] = polys(c,dir).eval(xf,yf);
-                        }
-                    }
-                    
-                    _rm.copy(buf, txt);
+                    shiftTxts(c,dir) = MetalUtil::CreateTexture(_heap, MTLPixelFormatR32Float,
+                        ShiftTextureWidth, ShiftTextureWidth,
+                        (MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite));
                 }
             }
             
-            // Finally apply the defringe correction
+            _rm.renderPass("CFAViewer::ImageFilter::Defringe::CalcShiftTxts",
+                ShiftTextureWidth, ShiftTextureWidth,
+                [&](id<MTLRenderCommandEncoder> enc) {
+                    [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
+                    [enc setFragmentBytes:&polyCoeffs length:sizeof(polyCoeffs) atIndex:1];
+                    [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::X) atIndex:0];
+                    [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::Y) atIndex:1];
+                    [enc setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::X) atIndex:2];
+                    [enc setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::Y) atIndex:3];
+                });
+            
+            // Apply the defringe correction.
+            // We have to render to `tmp` (not `raw`), because
+            // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
+            // which would introduce a data race if we rendered to `raw` while also sampling it.
             id<MTLTexture> tmp = MetalUtil::CreateTexture(_heap, MTLPixelFormatR32Float, w, h);
             _rm.renderPass("CFAViewer::ImageFilter::Defringe::ApplyCorrection", tmp,
                 [&](id<MTLRenderCommandEncoder> enc) {
@@ -257,10 +236,11 @@ namespace CFAViewer::ImageFilter {
         //   that f(t) has constant slope in the neighborhood of `t`:
         //     g(t) = f(t+x) ≈ f(t) + x f'(t)
         //
-        //   Solving for x (the amount that g(t) is shifted relative to f(t)):
-        //     x ≈ (g(t) - f(t)) / f'(t)
+        //   Rearranging into the form of the standard matrix equation `Ax=b`:
+        //     f'(t) x ≈ g(t) - f(t)
         //
-        //   Using this formula, we can perform a least squares regression to solve for x.
+        //   Using this formula, we can perform a least squares regression to solve for x
+        //   (the amount that g(t) is shifted relative to f(t)).
         //   We solve for this shift in the x and y directions independently.
         static constexpr uint32_t TileSize = 128;
         static constexpr uint32_t TileOverlap = 16;
@@ -355,7 +335,6 @@ namespace CFAViewer::ImageFilter {
         id<MTLCommandQueue> _q = nil;
         id<MTLBuffer> _rawBuf = nil;
         id<MTLBuffer> _gInterpBuf = nil;
-        ColorDir<id<MTLBuffer>> _shiftTxtBufs;
         RenderManager _rm;
     };
 };
