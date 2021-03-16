@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
+#import <queue>
+#import <thread>
 #import "MetalTypes.h"
 #import "MetalUtil.h"
 #import "ImageFilterTypes.h"
@@ -8,6 +10,14 @@
 
 namespace CFAViewer::ImageFilter {
     class Defringe {
+    private:
+        using Poly = Poly2D<double,4>;
+        using Dir = DefringeTypes::Dir;
+        template <typename T>
+        using ColorDir = DefringeTypes::ColorDir<T>;
+        using Options = DefringeTypes::Options;
+        using PolyCoeffs = DefringeTypes::PolyCoeffs;
+    
     public:
         Defringe() {}
         Defringe(id<MTLDevice> dev, id<MTLHeap> heap, id<MTLCommandQueue> q) :
@@ -17,7 +27,7 @@ namespace CFAViewer::ImageFilter {
         _rm(_dev, [_dev newDefaultLibrary], _q) {
         }
         
-        void run(const DefringeTypes::Options& opts, id<MTLTexture> raw) {
+        void run(const Options& opts, id<MTLTexture> raw) {
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
@@ -50,12 +60,6 @@ namespace CFAViewer::ImageFilter {
         }
     
     private:
-        using Poly = Poly2D<double,4>;
-        using Dir = DefringeTypes::Dir;
-        template <typename T>
-        using ColorDir = DefringeTypes::ColorDir<T>;
-        using PolyCoeffs = DefringeTypes::PolyCoeffs;
-        
         class TileAxis {
         private:
             static uint32_t _tileCount(uint32_t axisSize, uint32_t tileSize) {
@@ -148,13 +152,7 @@ namespace CFAViewer::ImageFilter {
             const T* _buf = nullptr;
         };
         
-        struct TileTerms {
-            double t0 = 0;
-            double t1 = 0;
-            double t2 = 0;
-        };
-        
-        void _defringe(const DefringeTypes::Options& opts,
+        void _defringe(const Options& opts,
             id<MTLTexture> raw, id<MTLTexture> gInterp) {
             
             const NSUInteger w = [raw width];
@@ -246,7 +244,7 @@ namespace CFAViewer::ImageFilter {
         static constexpr uint32_t TileOverlap = 16;
         static constexpr double Eps = 1e-5;
         
-        ColorDir<Poly> _solveForPolys(const DefringeTypes::Options& opts, id<MTLTexture> raw, id<MTLTexture> gInterp) {
+        ColorDir<Poly> _solveForPolys(const Options& opts, id<MTLTexture> raw, id<MTLTexture> gInterp) {
             
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
@@ -269,65 +267,134 @@ namespace CFAViewer::ImageFilter {
             BufSampler<float> gInterpPx(w, h, _gInterpBuf);
             
             TileGrid grid((uint32_t)w, (uint32_t)h, TileSize, TileOverlap);
+            ColorDir<std::mutex> polyLocks;
             ColorDir<Poly> polys;
+            
+            struct TilePos {
+                uint32_t x = 0;
+                uint32_t y = 0;
+            };
+            
+            // Populate `tiles`, the work queue for the worker threads
+            std::mutex tilesLock;
+            std::queue<TilePos> tiles;
             for (uint32_t ty=0; ty<grid.y.tileCount; ty++) {
                 for (uint32_t tx=0; tx<grid.x.tileCount; tx++) {
-                    ColorDir<TileTerms> terms;
-                    for (int32_t y=grid.y.tileOffset(ty); y<grid.y.tileOffset(ty)+TileSize; y++) {
-                        int32_t x = grid.x.tileOffset(tx);
-                        if (opts.cfaDesc.color(x,y) == CFAColor::Green) {
-                            x++;
-                        }
-                        
-                        const CFAColor c = opts.cfaDesc.color(x,y);
-                        for (; x<grid.x.tileOffset(tx)+TileSize; x+=2) {
-                            const double gSlopeX =
-                                ( 3./16)*(gInterpPx.px(x+1,y+1) - gInterpPx.px(x-1,y+1)) +
-                                (10./16)*(gInterpPx.px(x+1,y  ) - gInterpPx.px(x-1,y  )) +
-                                ( 3./16)*(gInterpPx.px(x+1,y-1) - gInterpPx.px(x-1,y-1)) ;
-                            
-                            const double gSlopeY =
-                                ( 3./16)*(gInterpPx.px(x+1,y+1) - gInterpPx.px(x+1,y-1)) +
-                                (10./16)*(gInterpPx.px(x  ,y+1) - gInterpPx.px(x  ,y-1)) +
-                                ( 3./16)*(gInterpPx.px(x-1,y+1) - gInterpPx.px(x-1,y-1)) ;
-                            
-                            const double rgDelta = rawPx.px(x,y) - gInterpPx.px(x,y);
-                            
-                            terms(c,Dir::X).t0 += rgDelta*rgDelta;
-                            terms(c,Dir::Y).t0 += rgDelta*rgDelta;
-                            
-                            terms(c,Dir::X).t1 += gSlopeX*rgDelta;
-                            terms(c,Dir::Y).t1 += gSlopeY*rgDelta;
-                            
-                            terms(c,Dir::X).t2 += gSlopeX*gSlopeX;
-                            terms(c,Dir::Y).t2 += gSlopeY*gSlopeY;
-                        }
-                    }
-                    
-                    // For each color and direction, solve for the shift amount and
-                    // its associated weight for this tile, and add this tile's
-                    // datapoint to the 2D polynomial regression.
-                    for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
-                        for (Dir dir : {Dir::X, Dir::Y}) {
-                            // Skip this tile if the shift denominator is too small
-                            if (terms(c,dir).t2 < Eps) continue; // Prevent divide by 0
-                            
-                            // Multiply the shift by 2, because the result of the regression
-                            // will be normalized to a magnitude of 1, but it needs to be
-                            // normalized to a magnitude of 2, since the g pixels in the CFA
-                            // occur every 2 pixels.
-                            const double shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
-                            const double weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
-                            const double x = grid.x.tileNormalizedCenter<double>(tx);
-                            const double y = grid.y.tileNormalizedCenter<double>(ty);
-                            
-                            polys(c,dir).addPoint(weight, x, y, shift);
-                        }
-                    }
+                    tiles.push({tx,ty});
                 }
             }
             
+            // Spawn N worker threads (N=number of cores)
+            // Each thread calculates the shift for a specific tile and updates `polys` when complete.
+            // The work is complete when all threads have exited.
+            std::vector<std::thread> workers;
+            for (int i=0; i<std::max(1,(int)std::thread::hardware_concurrency()); i++) {
+                workers.emplace_back([&](){
+                    for (;;) {
+                        auto lock = std::unique_lock(tilesLock);
+                            if (tiles.empty()) return;
+                            TilePos tilePos = tiles.front();
+                            tiles.pop();
+                        lock.unlock();
+                        
+                        const ColorDir<TileShift> tileShift = _calcTileShift(opts, grid,
+                            rawPx, gInterpPx, tilePos.x, tilePos.y);
+                        
+                        for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
+                            for (Dir dir : {Dir::X, Dir::Y}) {
+                                auto lock = std::unique_lock(polyLocks(c,dir));
+                                polys(c,dir).addPoint(
+                                    tileShift(c,dir).weight,
+                                    tileShift(c,dir).x,
+                                    tileShift(c,dir).y,
+                                    tileShift(c,dir).shift
+                                );
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Wait for workers to complete
+            for (std::thread& t : workers) t.join();
+            
             return polys;
+        }
+        
+        struct TileShift {
+            double shift = 0;
+            double weight = 0;
+            double x = 0;
+            double y = 0;
+        };
+        
+        ColorDir<TileShift> _calcTileShift(
+            const Options& opts,
+            const TileGrid& grid,
+            const BufSampler<float>& raw,
+            const BufSampler<float>& gInterp,
+            uint32_t tx,
+            uint32_t ty
+        ) {
+            struct TileTerms {
+                double t0 = 0;
+                double t1 = 0;
+                double t2 = 0;
+            };
+            
+            ColorDir<TileTerms> terms;
+            for (int32_t y=grid.y.tileOffset(ty); y<grid.y.tileOffset(ty)+TileSize; y++) {
+                int32_t x = grid.x.tileOffset(tx);
+                if (opts.cfaDesc.color(x,y) == CFAColor::Green) {
+                    x++;
+                }
+                
+                const CFAColor c = opts.cfaDesc.color(x,y);
+                for (; x<grid.x.tileOffset(tx)+TileSize; x+=2) {
+                    const double gSlopeX =
+                        ( 3./16)*(gInterp.px(x+1,y+1) - gInterp.px(x-1,y+1)) +
+                        (10./16)*(gInterp.px(x+1,y  ) - gInterp.px(x-1,y  )) +
+                        ( 3./16)*(gInterp.px(x+1,y-1) - gInterp.px(x-1,y-1)) ;
+                    
+                    const double gSlopeY =
+                        ( 3./16)*(gInterp.px(x+1,y+1) - gInterp.px(x+1,y-1)) +
+                        (10./16)*(gInterp.px(x  ,y+1) - gInterp.px(x  ,y-1)) +
+                        ( 3./16)*(gInterp.px(x-1,y+1) - gInterp.px(x-1,y-1)) ;
+                    
+                    const double rgDelta = raw.px(x,y) - gInterp.px(x,y);
+                    
+                    terms(c,Dir::X).t0 += rgDelta*rgDelta;
+                    terms(c,Dir::Y).t0 += rgDelta*rgDelta;
+                    
+                    terms(c,Dir::X).t1 += gSlopeX*rgDelta;
+                    terms(c,Dir::Y).t1 += gSlopeY*rgDelta;
+                    
+                    terms(c,Dir::X).t2 += gSlopeX*gSlopeX;
+                    terms(c,Dir::Y).t2 += gSlopeY*gSlopeY;
+                }
+            }
+            
+            // For each color and direction, solve for the shift amount and
+            // its associated weight for this tile, and add this tile's
+            // datapoint to the 2D polynomial regression.
+            ColorDir<TileShift> shifts;
+            for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
+                for (Dir dir : {Dir::X, Dir::Y}) {
+                    // Skip this tile if the shift denominator is too small
+                    if (terms(c,dir).t2 < Eps) continue; // Prevent divide by 0
+                    
+                    // Multiply the shift by 2, because the result of the regression
+                    // will be normalized to a magnitude of 1, but it needs to be
+                    // normalized to a magnitude of 2, since the g pixels in the CFA
+                    // occur every 2 pixels.
+                    shifts(c,dir).shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
+                    shifts(c,dir).weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
+                    shifts(c,dir).x = grid.x.tileNormalizedCenter<double>(tx);
+                    shifts(c,dir).y = grid.y.tileNormalizedCenter<double>(ty);
+                }
+            }
+            
+            return shifts;
         }
         
         id<MTLDevice> _dev = nil;
