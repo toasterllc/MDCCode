@@ -22,6 +22,9 @@
 // 
 template <typename T, size_t Order>
 class Poly2D {
+private:
+    static constexpr size_t _Terms = Order*Order;
+    
 public:
     // Add a point/solution triplet `(x,y,z)` with weight `wt`
     void addPoint(T wt, T x, T y, T z) {
@@ -51,22 +54,25 @@ public:
     }
     
     T eval(T x, T y) {
-        // Solve the system if we haven't done so yet
-        if (!_x) _x = _A.solve(_b);
+        const auto& k = coeffs();
         
         T r = 0;
         for (size_t a=0, i=0; a<Order; a++) {
             for (size_t b=0; b<Order; b++, i++) {
-                const T k = std::pow(y,a)*std::pow(x,b);
-                r += k*(*_x).at(i);
+                const T term = std::pow(y,a)*std::pow(x,b);
+                r += k.at(i)*term;
             }
         }
         return r;
     }
     
-//private:
-    static constexpr size_t _Terms = Order*Order;
+    const Mat<T,_Terms,1>& coeffs() {
+        // Solve the system if we haven't done so yet
+        if (!_x) _x = _A.solve(_b);
+        return *_x;
+    }
     
+private:
     Mat<T,_Terms,_Terms> _A; // x,y points
     std::optional<Mat<T,_Terms,1>> _x; // Coefficients (solution to linear system)
     Mat<T,_Terms,1> _b; // z points
