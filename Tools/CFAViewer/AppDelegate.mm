@@ -24,6 +24,7 @@
 
 using namespace CFAViewer;
 using namespace MetalTypes;
+using namespace ImageFilter;
 using namespace ImageLayerTypes;
 using namespace ColorUtil;
 
@@ -56,8 +57,20 @@ struct PixConfig {
     IBOutlet NSButton* _colorCheckersCheckbox;
     IBOutlet NSButton* _resetColorCheckersButton;
     
-    IBOutlet HistogramView* _inputHistogramView;
-    IBOutlet HistogramView* _outputHistogramView;
+    IBOutlet NSButton* _defringeCheckbox;
+    IBOutlet NSSlider* _defringeRoundsSlider;
+    IBOutlet NSTextField* _defringeRoundsLabel;
+    IBOutlet NSSlider* _defringeαThresholdSlider;
+    IBOutlet NSTextField* _defringeαThresholdLabel;
+    IBOutlet NSSlider* _defringeγThresholdSlider;
+    IBOutlet NSTextField* _defringeγThresholdLabel;
+    IBOutlet NSSlider* _defringeγFactorSlider;
+    IBOutlet NSTextField* _defringeγFactorLabel;
+    IBOutlet NSSlider* _defringeδFactorSlider;
+    IBOutlet NSTextField* _defringeδFactorLabel;
+    
+    IBOutlet NSButton* _reconstructHighlightsCheckbox;
+    
     IBOutlet NSTextField* _colorMatrixTextField;
     
     IBOutlet NSButton* _debayerLMMSEGammaCheckbox;
@@ -76,6 +89,9 @@ struct PixConfig {
     IBOutlet NSTextField* _localContrastAmountLabel;
     IBOutlet NSSlider* _localContrastRadiusSlider;
     IBOutlet NSTextField* _localContrastRadiusLabel;
+    
+    IBOutlet HistogramView* _inputHistogramView;
+    IBOutlet HistogramView* _outputHistogramView;
     
     IBOutlet NSTextField* _colorText_cameraRaw;
     IBOutlet NSTextField* _colorText_XYZ_D50;
@@ -216,73 +232,10 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 }
 
 - (void)awakeFromNib {
-//    const simd::float3 D50_XYZ = {0.96422, 1.00000, 0.82521};
-//    const simd::float3 c_XYZ_D50 = {0.280097, 0.303140, 0.353856};
-//    const simd::float3 c_Luv_D50 = LuvFromXYZ(D50_XYZ, c_XYZ_D50);
-//    const simd::float3 c_LCHuv_D50 = LCHuvFromLuv(c_Luv_D50);
-//    const simd::float3 c_Luv_D50_2 = LuvFromLCHuv(c_LCHuv_D50);
-//    const simd::float3 c_XYZ_D50_2 = XYZFromLuv(D50_XYZ, c_Luv_D50_2);
-//    printf("c_XYZ_D50:\t\t%f %f %f\n", c_XYZ_D50[0], c_XYZ_D50[1], c_XYZ_D50[2]);
-//    printf("c_Luv_D50:\t\t%f %f %f\n", c_Luv_D50[0], c_Luv_D50[1], c_Luv_D50[2]);
-//    printf("c_LCHuv_D50:\t%f %f %f\n", c_LCHuv_D50[0], c_LCHuv_D50[1], c_LCHuv_D50[2]);
-//    printf("c_Luv_D50_2:\t%f %f %f\n", c_Luv_D50_2[0], c_Luv_D50_2[1], c_Luv_D50_2[2]);
-//    printf("c_XYZ_D50_2:\t%f %f %f\n", c_XYZ_D50_2[0], c_XYZ_D50_2[1], c_XYZ_D50_2[2]);
-//    exit(0);
-    
-    
-    
-//    printf("%f\n", nothighlights(-10));
-//    printf("%f\n", notshadows(3));
-//    return;
-//    const simd::float3 D50_XYZ = {0.96422, 1.00000, 0.82521};
-//    const simd::float3 c_XYZ_D50 = {0.185938, 0.202315, 0.250133};
-//    const simd::float3 c_Lab_D50 = LabFromXYZ(D50_XYZ, c_XYZ_D50);
-//    const simd::float3 c_XYZ_D50_2 = XYZFromLab(D50_XYZ, c_Lab_D50);
-//    printf("Lab: %f %f %f\n", c_Lab_D50[0], c_Lab_D50[1], c_Lab_D50[2]);
-//    printf("XYZ: %f %f %f\n", c_XYZ_D50_2[0], c_XYZ_D50_2[1], c_XYZ_D50_2[2]);
-//    exit(0);
-    
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
-    _colorMatrix = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
-    
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img-[+2,+2]-Corrected.cfa");
-//    [[_mainView imageLayer] setRawMode:true];
-    
-//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-new.cfa");
-    
-    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img.cfa");
-    [[_mainView imageLayer] setCorrectChromaticAberration:true];
-//    [[_mainView imageLayer] setRawMode:true];
-    
-    
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img.cfa");
-    
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img-[+2,+2].cfa");
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img-[+2,+2]-Corrected.cfa");
-//    [[_mainView imageLayer] setRawMode:true];
-    
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img-[-2,-2].cfa");
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img-[-2,-2]-Corrected.cfa");
-    
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img.cfa");
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img-Corrected.cfa");
-    
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-Img-[-2,-2]-Corrected.cfa");
-    
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-[-3,-3].cfa");
-//    _imageData = Mmap("/Users/dave/Desktop/CFAFromPNG/OffsetTest-[-3,-3]-Corrected.cfa");
-    
-//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img.cfa");
-//    [[_mainView imageLayer] setCorrectChromaticAberration:true];
-    
-//    [[_mainView imageLayer] setRawMode:true];
-    
-//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-new.cfa");
-//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-Good-SSERemoved-FactorOutGInterp-FactorOutLPHPFilters-Float1.cfa");
-    
-//    _imageData = Mmap("/Users/dave/Desktop/ChromaticAberrationCorrection/img-CAC-Good-SSERemoved-FactorOutGInterp-FactorOutLPHPFilters-Float1-TileGrid.cfa");
+    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
     
     _image = {
         .width = 2304,
@@ -299,6 +252,10 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     }];
     
     [self _resetColorMatrix];
+    
+    [self _setDefringe:true options:DefringeTypes::Options{}];
+    
+    [self _setReconstructHighlights:true];
     
     [self _setDebayerLMMSEGammaEnabled:true];
     
@@ -922,38 +879,86 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     }
 }
 
-- (IBAction)_colorCheckersCheckboxAction:(id)sender {
-    [self _setColorCheckersEnabled:([_colorCheckersCheckbox state]==NSControlStateValueOn)];
-}
-
 - (IBAction)_resetColorCheckersButtonAction:(id)sender {
     [_mainView resetColorCheckerPositions];
     [self mainViewColorCheckerPositionsChanged:nil];
 }
 
-- (IBAction)_debayerOptionsAction:(id)sender {
-    [self _setDebayerLMMSEGammaEnabled:([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn)];
+- (void)_setDefringe:(bool)en options:(const DefringeTypes::Options&)opts {
+    [_defringeCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [[_mainView imageLayer] setDefringe:en];
+    
+    [_defringeRoundsSlider setIntValue:opts.rounds];
+    [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.rounds]];
+    
+    [_defringeαThresholdSlider setFloatValue:opts.αthresh];
+    [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.αthresh]];
+    
+    [_defringeγThresholdSlider setFloatValue:opts.γthresh];
+    [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γthresh]];
+    
+    [_defringeγFactorSlider setFloatValue:opts.γfactor];
+    [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γfactor]];
+    
+    [_defringeδFactorSlider setFloatValue:opts.δfactor];
+    [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.δfactor]];
+    
+    [[_mainView imageLayer] setDefringeOptions:opts];
 }
 
-- (void)_setDebayerLMMSEGammaEnabled:(bool)en {
-    [_debayerLMMSEGammaCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-    [[_mainView imageLayer] setDebayerLMMSEGammaEnabled:en];
+- (void)_setReconstructHighlights:(bool)en {
+    [_reconstructHighlightsCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [[_mainView imageLayer] setReconstructHighlights:en];
 }
 
 - (IBAction)_imageAdjustmentsAction:(id)sender {
-    const ImageAdjustments adj = {
-        .exposure = [_exposureSlider floatValue],
-        .brightness = [_brightnessSlider floatValue],
-        .contrast = [_contrastSlider floatValue],
-        .saturation = [_saturationSlider floatValue],
+    // Color checkers
+    {
+        [self _setColorCheckersEnabled:([_colorCheckersCheckbox state]==NSControlStateValueOn)];
+    }
+    
+    // Corrections
+    {
+        // Defringe
+        {
+            const DefringeTypes::Options opts = {
+                .rounds = (uint32_t)[_defringeRoundsSlider intValue],
+                .αthresh = [_defringeαThresholdSlider floatValue],
+                .γthresh = [_defringeγThresholdSlider floatValue],
+                .γfactor = [_defringeγFactorSlider floatValue],
+                .δfactor = [_defringeδFactorSlider floatValue],
+            };
+            
+            [self _setDefringe:([_defringeCheckbox state]==NSControlStateValueOn) options:opts];
+        }
         
-        .localContrast = {
-            .enable = [_localContrastCheckbox state]==NSControlStateValueOn,
-            .amount = [_localContrastAmountSlider floatValue],
-            .radius = [_localContrastRadiusSlider floatValue],
-        },
-    };
-    [self _setImageAdjustments:adj];
+        // Reconstruct Highlights
+        {
+            [self _setReconstructHighlights:([_reconstructHighlightsCheckbox state]==NSControlStateValueOn)];
+        }
+    }
+    
+    // Debayer
+    {
+        [self _setDebayerLMMSEGammaEnabled:([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn)];
+    }
+    
+    // Image adjustments
+    {
+        const ImageAdjustments adj = {
+            .exposure = [_exposureSlider floatValue],
+            .brightness = [_brightnessSlider floatValue],
+            .contrast = [_contrastSlider floatValue],
+            .saturation = [_saturationSlider floatValue],
+            
+            .localContrast = {
+                .enable = [_localContrastCheckbox state]==NSControlStateValueOn,
+                .amount = [_localContrastAmountSlider floatValue],
+                .radius = [_localContrastRadiusSlider floatValue],
+            },
+        };
+        [self _setImageAdjustments:adj];
+    }
 }
 
 - (void)_setImageAdjustments:(const ImageAdjustments&)adj {
@@ -978,6 +983,11 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.radius]];
     
     [[_mainView imageLayer] setImageAdjustments:adj];
+}
+
+- (void)_setDebayerLMMSEGammaEnabled:(bool)en {
+    [_debayerLMMSEGammaCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [[_mainView imageLayer] setDebayerLMMSEGammaEnabled:en];
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {

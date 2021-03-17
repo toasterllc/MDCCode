@@ -167,9 +167,6 @@ fragment float ApplyCorrection(
     VertexOutput in [[stage_in]]
 ) {
     constexpr float ShiftLimit = 4;
-    constexpr float αthresh = 2; // Threshold to allow α correction
-    constexpr float γthresh = .2; // Threshold to allow γ correction
-    constexpr float γfactor = .5; // Weight to apply to r̄ vs r when doing γ correction
     
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = opts.cfaDesc.color(pos);
@@ -211,7 +208,7 @@ fragment float ApplyCorrection(
         // In other words, prefer α correction for pixels whose raw and corrected
         // rb values closely match (denominator), especially if either is a bright
         // pixel (numerator).
-        if ((.5*(r̄+r))/abs(r̄-r) >= αthresh) {
+        if ((.5*(r̄+r))/abs(r̄-r) >= opts.αthresh) {
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is
             // less than the magnitude of the raw g-rb delta (Δgr).
             if (abs(Δḡr) <= abs(Δgr)) {
@@ -260,8 +257,8 @@ fragment float ApplyCorrection(
     // use a weighted average of r̄ and r.
     } else {
         // To reduce artifacts, only allow γ correction if Δgr/Δḡr is above a threshold.
-        if (abs(Δgr/Δḡr) >= γthresh) {
-            rCorrected = γfactor*r̄ + (1-γfactor)*r;
+        if (abs(Δgr/Δḡr) >= opts.γthresh) {
+            rCorrected = opts.γfactor*r̄ + (1-opts.γfactor)*r;
         }
     }
     

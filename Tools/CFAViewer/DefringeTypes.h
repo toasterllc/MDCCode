@@ -1,4 +1,5 @@
 #import "MetalTypes.h"
+#import "ImageFilterTypes.h"
 
 namespace CFAViewer {
 namespace ImageFilter {
@@ -6,10 +7,12 @@ namespace DefringeTypes {
 
 struct Options {
     CFADesc cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green};
+    uint32_t rounds = 2;
     float αthresh = 2; // Threshold to allow α correction
     float γthresh = .2; // Threshold to allow γ correction
     float γfactor = .5; // Weight to apply to r̄ vs r when doing γ correction
-    uint32_t iterations = 2;
+    float δfactor = 10./16; // Weight to apply to center vs adjacent pixels when
+                            // computing derivative, when solving for tile shift
 };
 
 struct PolyCoeffs {

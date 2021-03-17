@@ -46,7 +46,7 @@ namespace CFAViewer::ImageFilter {
                     [enc setFragmentTexture:raw atIndex:0];
                 });
             
-            for (uint32_t i=0; i<opts.iterations; i++) {
+            for (uint32_t i=0; i<opts.rounds; i++) {
                 _defringe(opts, raw, gInterp);
             }
             
@@ -322,10 +322,10 @@ namespace CFAViewer::ImageFilter {
         }
         
         struct TileShift {
-            double shift = 0;
-            double weight = 0;
             double x = 0;
             double y = 0;
+            double shift = 0;
+            double weight = 0;
         };
         
         ColorDir<TileShift> _calcTileShift(
@@ -351,15 +351,17 @@ namespace CFAViewer::ImageFilter {
                 
                 const CFAColor c = opts.cfaDesc.color(x,y);
                 for (; x<grid.x.tileOffset(tx)+TileSize; x+=2) {
+                    const double k = opts.δfactor;
+                    const double kadj = (1-opts.δfactor)/2;
                     const double gSlopeX =
-                        ( 3./16)*(gInterp.px(x+1,y+1) - gInterp.px(x-1,y+1)) +
-                        (10./16)*(gInterp.px(x+1,y  ) - gInterp.px(x-1,y  )) +
-                        ( 3./16)*(gInterp.px(x+1,y-1) - gInterp.px(x-1,y-1)) ;
+                        kadj*(gInterp.px(x+1,y+1) - gInterp.px(x-1,y+1)) +
+                        k   *(gInterp.px(x+1,y  ) - gInterp.px(x-1,y  )) +
+                        kadj*(gInterp.px(x+1,y-1) - gInterp.px(x-1,y-1)) ;
                     
                     const double gSlopeY =
-                        ( 3./16)*(gInterp.px(x+1,y+1) - gInterp.px(x+1,y-1)) +
-                        (10./16)*(gInterp.px(x  ,y+1) - gInterp.px(x  ,y-1)) +
-                        ( 3./16)*(gInterp.px(x-1,y+1) - gInterp.px(x-1,y-1)) ;
+                        kadj*(gInterp.px(x+1,y+1) - gInterp.px(x+1,y-1)) +
+                        k   *(gInterp.px(x  ,y+1) - gInterp.px(x  ,y-1)) +
+                        kadj*(gInterp.px(x-1,y+1) - gInterp.px(x-1,y-1)) ;
                     
                     const double rgDelta = raw.px(x,y) - gInterp.px(x,y);
                     
@@ -387,10 +389,10 @@ namespace CFAViewer::ImageFilter {
                     // will be normalized to a magnitude of 1, but it needs to be
                     // normalized to a magnitude of 2, since the g pixels in the CFA
                     // occur every 2 pixels.
-                    shifts(c,dir).shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
-                    shifts(c,dir).weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
                     shifts(c,dir).x = grid.x.tileNormalizedCenter<double>(tx);
                     shifts(c,dir).y = grid.y.tileNormalizedCenter<double>(ty);
+                    shifts(c,dir).shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
+                    shifts(c,dir).weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
                 }
             }
             

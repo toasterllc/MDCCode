@@ -1,5 +1,6 @@
 #import <QuartzCore/QuartzCore.h>
 #import "ImageLayerTypes.h"
+#import "DefringeTypes.h"
 #import "Mat.h"
 #import "ColorUtil.h"
 
@@ -31,11 +32,19 @@ namespace CFAViewer::ImageLayerTypes {
 
 - (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)image;
 - (void)setRawMode:(bool)rawMode;
-- (void)setCorrectChromaticAberration:(bool)correctChromaticAberration;
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
+
+- (void)setDefringe:(bool)en;
+- (void)setDefringeOptions:(const CFAViewer::ImageFilter::DefringeTypes::Options&)opts;
+
+- (void)setReconstructHighlights:(bool)en;
+
 - (void)setDebayerLMMSEGammaEnabled:(bool)en;
+
 - (void)setImageAdjustments:(const CFAViewer::ImageLayerTypes::ImageAdjustments&)adj;
+
 - (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
+
 - (void)setSampleRect:(CGRect)rect;
 // `handler` is called on a background queue when histograms/sample data changes
 - (void)setDataChangedHandler:(ImageLayerDataChangedHandler)handler;
