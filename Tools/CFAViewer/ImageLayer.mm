@@ -393,7 +393,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         
         // Fix highlights
         if (_state.reconstructHighlights) {
-            [self _renderPass:cmdBuf texture:raw2Txt name:@"ImageLayer::FixHighlightsRaw"
+            [self _renderPass:cmdBuf texture:raw2Txt name:@"ImageLayer::ReconstructHighlights"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
                     [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];

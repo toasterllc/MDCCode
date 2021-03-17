@@ -1043,7 +1043,7 @@ private:
 //    return cm[pos.y+1][pos.x+1] = c;
 //}
 
-fragment float FixHighlightsRaw(
+fragment float ReconstructHighlights(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
