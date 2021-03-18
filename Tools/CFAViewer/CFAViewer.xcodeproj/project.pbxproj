@@ -11,6 +11,7 @@
 		55460A03260326180037A5AC /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 554609FD2602C26A0037A5AC /* DebayerBilinear.metal */; };
 		55460A04260326180037A5AC /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55DE384325F6DA2400AD2223 /* Defringe.metal */; };
 		55460A05260326180037A5AC /* HistogramLayerShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC932589C3960089A441 /* HistogramLayerShader.metal */; };
+		55460A1A260342FD0037A5AC /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A19260342FD0037A5AC /* Renderer.metal */; };
 		55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55671A37257E984E00C1CDA4 /* IOKit.framework */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
@@ -36,6 +37,7 @@
 		554609FB2602C08A0037A5AC /* DebayerLMMSE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebayerLMMSE.h; sourceTree = "<group>"; };
 		554609FD2602C26A0037A5AC /* DebayerBilinear.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerBilinear.metal; sourceTree = "<group>"; };
 		554609FF2603032A0037A5AC /* ImageFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageFilter.h; sourceTree = "<group>"; };
+		55460A19260342FD0037A5AC /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55671A2C257E94BD00C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
@@ -172,6 +174,7 @@
 				55EBCC86258966FE0089A441 /* ImageLayer.h */,
 				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
 				554609FC2602C0940037A5AC /* ImageFilters */,
+				55460A19260342FD0037A5AC /* Renderer.metal */,
 				554609F926001F670037A5AC /* Renderer.h */,
 				55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */,
 				55E98EB825A920880062B458 /* HistogramView.h */,
@@ -283,6 +286,7 @@
 			files = (
 				55EBCC922589C3570089A441 /* HistogramLayer.mm in Sources */,
 				55E98EB925A920890062B458 /* HistogramView.mm in Sources */,
+				55460A1A260342FD0037A5AC /* Renderer.metal in Sources */,
 				55460A05260326180037A5AC /* HistogramLayerShader.metal in Sources */,
 				55B9746624C504E2000B2633 /* main.m in Sources */,
 				55E98EB625A920030062B458 /* MainView.mm in Sources */,
@@ -346,7 +350,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;

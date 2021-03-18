@@ -26,29 +26,33 @@ namespace CFAViewer {
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
-            id<MTLTexture> gInterp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            
             renderer().render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
-                [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
-                    [enc setFragmentTexture:raw atIndex:0];
-                });
+                // Buffer args
+                opts.cfaDesc,
+                // Texture args
+                raw
+            );
             
-            renderer().render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
-                [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
-                    [enc setFragmentTexture:raw atIndex:0];
-                });
-            
-            for (uint32_t i=0; i<opts.rounds; i++) {
-                _defringe(opts, raw, gInterp);
+            {
+                id<MTLTexture> gInterp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+                renderer().render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
+                    // Buffer args
+                    opts.cfaDesc,
+                    // Texture args
+                    raw
+                );
+                
+                for (uint32_t i=0; i<opts.rounds; i++) {
+                    _defringe(opts, raw, gInterp);
+                }
             }
             
             renderer().render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
-                [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
-                    [enc setFragmentTexture:raw atIndex:0];
-                });
+                // Buffer args
+                opts.cfaDesc,
+                // Texture args
+                raw
+            );
             
             renderer().commit();
         }
@@ -196,22 +200,18 @@ namespace CFAViewer {
             
             renderer().render("CFAViewer::Shader::Defringe::CalcShiftTxts",
                 ShiftTextureWidth, ShiftTextureWidth,
-                [&](id<MTLRenderCommandEncoder> enc) {
-                    Renderer::SetBufferArgs(enc,
-                        opts.cfaDesc,
-                        polyCoeffs(CFAColor::Red,Dir::X),
-                        polyCoeffs(CFAColor::Red,Dir::Y),
-                        polyCoeffs(CFAColor::Blue,Dir::X),
-                        polyCoeffs(CFAColor::Blue,Dir::Y)
-                    );
-                    
-                    Renderer::SetTextureArgs(enc,
-                        shiftTxts(CFAColor::Red,Dir::X),
-                        shiftTxts(CFAColor::Red,Dir::Y),
-                        shiftTxts(CFAColor::Blue,Dir::X),
-                        shiftTxts(CFAColor::Blue,Dir::Y)
-                    );
-                });
+                // Buffer args
+                opts.cfaDesc,
+                polyCoeffs(CFAColor::Red,Dir::X),
+                polyCoeffs(CFAColor::Red,Dir::Y),
+                polyCoeffs(CFAColor::Blue,Dir::X),
+                polyCoeffs(CFAColor::Blue,Dir::Y),
+                // Texture args
+                shiftTxts(CFAColor::Red,Dir::X),
+                shiftTxts(CFAColor::Red,Dir::Y),
+                shiftTxts(CFAColor::Blue,Dir::X),
+                shiftTxts(CFAColor::Blue,Dir::Y)
+            );
             
             // Apply the defringe correction.
             // We have to render to `tmp` (not `raw`), because
@@ -219,20 +219,20 @@ namespace CFAViewer {
             // which would introduce a data race if we rendered to `raw` while also sampling it.
             id<MTLTexture> tmp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             renderer().render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
-                [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
-                    [enc setFragmentBytes:&opts.αthresh length:sizeof(opts.αthresh) atIndex:1];
-                    [enc setFragmentBytes:&opts.γthresh length:sizeof(opts.γthresh) atIndex:2];
-                    [enc setFragmentBytes:&opts.γfactor length:sizeof(opts.γfactor) atIndex:3];
-                    [enc setFragmentBytes:&opts.δfactor length:sizeof(opts.δfactor) atIndex:4];
-                    
-                    [enc setFragmentTexture:raw atIndex:0];
-                    [enc setFragmentTexture:gInterp atIndex:1];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::X) atIndex:2];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::Y) atIndex:3];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::X) atIndex:4];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::Y) atIndex:5];
-                });
+                // Buffer args
+                opts.cfaDesc,
+                opts.αthresh,
+                opts.γthresh,
+                opts.γfactor,
+                opts.δfactor,
+                // Texture args
+                raw,
+                gInterp,
+                shiftTxts(CFAColor::Red,Dir::X),
+                shiftTxts(CFAColor::Red,Dir::Y),
+                shiftTxts(CFAColor::Blue,Dir::X),
+                shiftTxts(CFAColor::Blue,Dir::Y)
+            );
             
             renderer().copy(tmp, raw);
         }

@@ -26,6 +26,8 @@ fragment float WhiteBalanceForward(
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
     const float s = Sample::R(raw, pos);
+//    if (c != CFAColor::Red && c != CFAColor::Green && c != CFAColor::Blue) return 0;
+//    return 1;
     switch (c) {
     case CFAColor::Red:     return s*WhiteBalanceRed;
     case CFAColor::Green:   return s*WhiteBalanceGreen;

@@ -15,11 +15,11 @@ namespace CFAViewer {
         }
         
         // Render pass to a target texture
-        template <typename Fn>
+        template <typename... Args>
         void render(
             const std::string& name,
             id<MTLTexture> txt,
-            Fn fn
+            Args&... args
         ) {
             NSParameterAssert(txt);
             
@@ -34,7 +34,7 @@ namespace CFAViewer {
             [enc setFrontFacingWinding:MTLWindingCounterClockwise];
             [enc setCullMode:MTLCullModeNone];
             
-            fn(enc);
+            Renderer::_SetBufferArgs(enc, 0, args...);
             
             [enc drawPrimitives:MTLPrimitiveTypeTriangle
                 vertexStart:0 vertexCount:CFAViewer::MetalUtil::SquareVertIdxCount];
@@ -44,12 +44,12 @@ namespace CFAViewer {
         
         // Render pass with no target texture
         // (Fragment shaders typically use texture.write() in this case)
-        template <typename Fn>
+        template <typename... Args>
         void render(
             const std::string& name,
             NSUInteger width,
             NSUInteger height,
-            Fn fn
+            Args&... args
         ) {
             MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
             [desc setRenderTargetWidth:width];
@@ -64,7 +64,7 @@ namespace CFAViewer {
             [enc setFrontFacingWinding:MTLWindingCounterClockwise];
             [enc setCullMode:MTLCullModeNone];
             
-            fn(enc);
+            Renderer::_SetBufferArgs(enc, 0, args...);
             
             [enc drawPrimitives:MTLPrimitiveTypeTriangle
                 vertexStart:0 vertexCount:CFAViewer::MetalUtil::SquareVertIdxCount];
@@ -141,34 +141,83 @@ namespace CFAViewer {
         }
         
         id<MTLDevice> dev = nil;
-        
-        template <typename T, typename... Ts>
-        static void SetBufferArgs(id<MTLRenderCommandEncoder> enc, T& t, Ts&... ts) {
-            _SetBufferArgs(enc, 0, t, ts...);
-        }
-        
-        template <typename... Ts>
-        static void SetTextureArgs(id<MTLRenderCommandEncoder> enc, id<MTLTexture> t, Ts... ts) {
-            _SetTextureArgs(enc, 0, t, ts...);
-        }
     
     private:
-        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+        void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
         
         template <typename T, typename... Ts>
-        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-            [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
-            _SetBufferArgs(enc, idx+1, ts...);
+        void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
+            if constexpr (!std::is_same<T,id<MTLTexture>>::value) {
+                if constexpr (std::is_same<T,id<MTLBuffer>>::value) {
+                    [enc setFragmentBuffer:t offset:0 atIndex:idx];
+                } else {
+                    [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
+                }
+                _SetBufferArgs(enc, idx+1, ts...);
+            } else {
+                // Start of texture arguments
+                _SetTextureArgs(enc, 0, t, ts...);
+            }
         }
         
-        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+        void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
         
-        template <typename... Ts>
-        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx,
-        id<MTLTexture> t, Ts... ts) {
+        template <typename T, typename... Ts>
+        void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
+            static_assert(std::is_same<T,id<MTLTexture>>::value);
             [enc setFragmentTexture:t atIndex:idx];
             _SetTextureArgs(enc, idx+1, ts...);
         }
+        
+//        template <typename... Ts>
+//        static void SetTextureArgs(id<MTLRenderCommandEncoder> enc, id<MTLTexture> t, Ts... ts) {
+//            _SetTextureArgs(enc, 0, t, ts...);
+//        }
+//        
+//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+//        
+//        template <typename T, typename... Ts>
+//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
+//            [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
+//            _SetBufferArgs(enc, idx+1, ts...);
+//        }
+//        
+//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+//        
+//        template <typename... Ts>
+//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx,
+//        id<MTLTexture> t, Ts... ts) {
+//            [enc setFragmentTexture:t atIndex:idx];
+//            _SetTextureArgs(enc, idx+1, ts...);
+//        }
+        
+        
+//        template <typename T, typename... Ts>
+//        static void SetBufferArgs(id<MTLRenderCommandEncoder> enc, T& t, Ts&... ts) {
+//            _SetBufferArgs(enc, 0, t, ts...);
+//        }
+//        
+//        template <typename... Ts>
+//        static void SetTextureArgs(id<MTLRenderCommandEncoder> enc, id<MTLTexture> t, Ts... ts) {
+//            _SetTextureArgs(enc, 0, t, ts...);
+//        }
+//        
+//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+//        
+//        template <typename T, typename... Ts>
+//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
+//            [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
+//            _SetBufferArgs(enc, idx+1, ts...);
+//        }
+//        
+//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+//        
+//        template <typename... Ts>
+//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx,
+//        id<MTLTexture> t, Ts... ts) {
+//            [enc setFragmentTexture:t atIndex:idx];
+//            _SetTextureArgs(enc, idx+1, ts...);
+//        }
         
         static size_t _BytesPerPixelForPixelFormat(MTLPixelFormat fmt) {
             switch (fmt) {
@@ -183,7 +232,7 @@ namespace CFAViewer {
             auto find = _pipelineStates.find(name);
             if (find != _pipelineStates.end()) return find->second;
             
-            id<MTLFunction> vertexShader = [_lib newFunctionWithName:@"ImageLayer::VertexShader"];
+            id<MTLFunction> vertexShader = [_lib newFunctionWithName:@"CFAViewer::Shader::Renderer::VertexShader"];
             Assert(vertexShader, return nil);
             id<MTLFunction> fragmentShader = [_lib newFunctionWithName:@(name.c_str())];
             Assert(fragmentShader, return nil);

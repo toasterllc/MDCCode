@@ -10,10 +10,11 @@ namespace CFAViewer {
         using ImageFilter::ImageFilter;
         void run(const CFADesc& cfaDesc, id<MTLTexture> raw, id<MTLTexture> rgb) {
             renderer().render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
-                [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&cfaDesc length:sizeof(cfaDesc) atIndex:0];
-                    [enc setFragmentTexture:raw atIndex:0];
-                });
+                // Buffer args
+                cfaDesc,
+                // Texture args
+                raw
+            );
         }
     };
 };
