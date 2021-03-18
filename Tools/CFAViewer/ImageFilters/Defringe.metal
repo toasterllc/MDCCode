@@ -1,16 +1,15 @@
 #import <metal_stdlib>
-#import "MetalShaderUtil.h"
+#import "MetalUtil.h"
 #import "ImageFilter.h"
-#import "ImageLayerTypes.h"
-#import "DefringeTypes.h"
 using namespace metal;
-using namespace CFAViewer::MetalTypes;
-using namespace CFAViewer::ImageFilter;
-using namespace CFAViewer::ImageLayerTypes;
-using namespace CFAViewer::ImageFilter::DefringeTypes;
+using namespace CFAViewer;
+using namespace CFAViewer::MetalUtil;
+using namespace CFAViewer::MetalUtil::Standard;
+using CFAColor = ImageFilter::CFAColor;
+using CFADesc = ImageFilter::CFADesc;
 
 namespace CFAViewer {
-namespace ImageFilter {
+namespace Shader {
 namespace Defringe {
 
 constant float Eps = 1e-5;
@@ -20,12 +19,12 @@ constant float WhiteBalanceGreen = 0.296587/0.296587;
 constant float WhiteBalanceBlue = 0.296587/0.161148;
 
 fragment float WhiteBalanceForward(
-    constant Options& opts [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = opts.cfaDesc.color(pos);
+    const CFAColor c = cfaDesc.color(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
     case CFAColor::Red:     return s*WhiteBalanceRed;
@@ -35,12 +34,12 @@ fragment float WhiteBalanceForward(
 }
 
 fragment float WhiteBalanceReverse(
-    constant Options& opts [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = opts.cfaDesc.color(pos);
+    const CFAColor c = cfaDesc.color(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
     case CFAColor::Red:     return s/WhiteBalanceRed;
@@ -51,12 +50,12 @@ fragment float WhiteBalanceReverse(
 
 // Interpolate the G channel using a directional weighted average
 fragment float InterpolateG(
-    constant Options& opts [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = opts.cfaDesc.color(pos);
+    const CFAColor c = cfaDesc.color(pos);
     // Green pixel: pass-through
     if (c == CFAColor::Green) return Sample::R(raw, pos);
     
@@ -99,13 +98,13 @@ fragment float InterpolateG(
 }
 
 fragment float CalcRBGDelta(
-    constant Options& opts [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> gInterp [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    switch (opts.cfaDesc.color(pos)) {
+    switch (cfaDesc.color(pos)) {
     case CFAColor::Red:
     case CFAColor::Blue: {
         const float r = Sample::R(raw, pos);
@@ -116,21 +115,24 @@ fragment float CalcRBGDelta(
     }
 }
 
-float evalPoly(constant PolyCoeffs& coeffs, float2 pos) {
+float evalPoly(constant float* coeffs, float2 pos) {
     constexpr int Order = 4;
     float r = 0;
     for (int a=0, i=0; a<Order; a++) {
         for (int b=0; b<Order; b++, i++) {
             const float term = pow(pos.y,a)*pow(pos.x,b);
-            r += coeffs.k[i]*term;
+            r += coeffs[i]*term;
         }
     }
     return r;
 }
 
 fragment void CalcShiftTxts(
-    constant Options& opts [[buffer(0)]],
-    constant ColorDir<PolyCoeffs>& polyCoeffs [[buffer(1)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant float* polyCoeffsRedX [[buffer(1)]],
+    constant float* polyCoeffsRedY [[buffer(2)]],
+    constant float* polyCoeffsBlueX [[buffer(3)]],
+    constant float* polyCoeffsBlueY [[buffer(4)]],
     texture2d<float,access::read_write> shiftsRedX [[texture(0)]],
     texture2d<float,access::read_write> shiftsRedY [[texture(1)]],
     texture2d<float,access::read_write> shiftsBlueX [[texture(2)]],
@@ -139,10 +141,10 @@ fragment void CalcShiftTxts(
 ) {
     const int2 pos = int2(in.pos.xy);
     const float4 vals(
-        evalPoly(polyCoeffs(CFAColor::Red,  Dir::X), in.posUnit),
-        evalPoly(polyCoeffs(CFAColor::Red,  Dir::Y), in.posUnit),
-        evalPoly(polyCoeffs(CFAColor::Blue, Dir::X), in.posUnit),
-        evalPoly(polyCoeffs(CFAColor::Blue, Dir::Y), in.posUnit)
+        evalPoly(polyCoeffsRedX, in.posUnit),
+        evalPoly(polyCoeffsRedY, in.posUnit),
+        evalPoly(polyCoeffsBlueX, in.posUnit),
+        evalPoly(polyCoeffsBlueY, in.posUnit)
     );
     
     shiftsRedX.write(vals[0], ushort2(pos));
@@ -157,7 +159,11 @@ float ḡcalc(texture2d<float> gInterp, float2 shift, int2 pos) {
 }
 
 fragment float ApplyCorrection(
-    constant Options& opts [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant float& αthresh [[buffer(1)]],
+    constant float& γthresh [[buffer(2)]],
+    constant float& γfactor [[buffer(3)]],
+    constant float& δfactor [[buffer(4)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> gInterp [[texture(1)]],
     texture2d<float> shiftsRedX [[texture(2)]],
@@ -169,7 +175,7 @@ fragment float ApplyCorrection(
     constexpr float ShiftLimit = 4;
     
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = opts.cfaDesc.color(pos);
+    const CFAColor c = cfaDesc.color(pos);
     
     float2 shift = 0;
     switch (c) {
@@ -208,7 +214,7 @@ fragment float ApplyCorrection(
         // In other words, prefer α correction for pixels whose raw and corrected
         // rb values closely match (denominator), especially if either is a bright
         // pixel (numerator).
-        if ((.5*(r̄+r))/abs(r̄-r) >= opts.αthresh) {
+        if ((.5*(r̄+r))/abs(r̄-r) >= αthresh) {
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is
             // less than the magnitude of the raw g-rb delta (Δgr).
             if (abs(Δḡr) <= abs(Δgr)) {
@@ -257,8 +263,8 @@ fragment float ApplyCorrection(
     // use a weighted average of r̄ and r.
     } else {
         // To reduce artifacts, only allow γ correction if Δgr/Δḡr is above a threshold.
-        if (abs(Δgr/Δḡr) >= opts.γthresh) {
-            rCorrected = opts.γfactor*r̄ + (1-opts.γfactor)*r;
+        if (abs(Δgr/Δḡr) >= γthresh) {
+            rCorrected = γfactor*r̄ + (1-γfactor)*r;
         }
     }
     
@@ -266,5 +272,5 @@ fragment float ApplyCorrection(
 }
 
 } // namespace Defringe
-} // namespace ImageFilter
+} // namespace Shader
 } // namespace CFAViewer

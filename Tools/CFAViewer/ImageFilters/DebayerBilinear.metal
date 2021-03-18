@@ -1,12 +1,15 @@
 #import <metal_stdlib>
-#import "MetalShaderUtil.h"
+#import "MetalUtil.h"
 #import "ImageFilter.h"
 using namespace metal;
-using namespace CFAViewer::MetalTypes;
-using namespace CFAViewer::ImageFilter;
+using namespace CFAViewer;
+using namespace CFAViewer::MetalUtil;
+using namespace CFAViewer::MetalUtil::Standard;
+using CFAColor = ImageFilter::CFAColor;
+using CFADesc = ImageFilter::CFADesc;
 
 namespace CFAViewer {
-namespace ImageFilter {
+namespace Shader {
 namespace DebayerBilinear {
 
 #define PX(x,y) Sample::R(Sample::MirrorClamp, raw, pos+int2{x,y})
@@ -114,5 +117,5 @@ fragment float4 Debayer(
 }
 
 } // namespace DebayerBilinear
-} // namespace ImageFilter
+} // namespace Shader
 } // namespace CFAViewer

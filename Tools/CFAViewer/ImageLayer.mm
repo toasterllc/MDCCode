@@ -13,9 +13,8 @@
 #import "Defringe.h"
 #import "DebayerBilinear.h"
 using namespace CFAViewer;
-using namespace CFAViewer::MetalTypes;
+using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::ImageLayerTypes;
-using namespace CFAViewer::ImageFilter;
 using namespace ColorUtil;
 
 @implementation ImageLayer {
@@ -33,11 +32,15 @@ using namespace ColorUtil;
         std::mutex lock; // Protects this struct
         bool rawMode = false;
         
+        Renderer renderer;
+        
         DebayerBilinear debayerBilinearFilter;
         
-        bool defringe = false;
-        DefringeTypes::Options defringeOptions;
-        Defringe defringeFilter;
+        struct {
+            bool en = false;
+            Defringe::Options options;
+            Defringe filter;
+        } defringe;
         
         bool reconstructHighlights = false;
         
@@ -82,8 +85,9 @@ using namespace ColorUtil;
     _pipelineStates = [NSMutableDictionary new];
     
     auto lock = std::lock_guard(_state.lock);
-        _state.debayerBilinearFilter = DebayerBilinear(_device, _commandQueue);
-        _state.defringeFilter = Defringe(_device, _heap, _commandQueue);
+        _state.renderer = Renderer(_device, _library, _commandQueue, _heap);
+        _state.debayerBilinearFilter = DebayerBilinear(_state.renderer);
+        _state.defringe.filter = Defringe(_state.renderer);
         
         _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
         _state.sampleBuf_XYZ_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
@@ -187,13 +191,13 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
 
 - (void)setDefringe:(bool)en {
     auto lock = std::lock_guard(_state.lock);
-    _state.defringe = en;
+    _state.defringe.en = en;
     [self setNeedsDisplay];
 }
 
-- (void)setDefringeOptions:(const DefringeTypes::Options&)opts {
+- (void)setDefringeOptions:(const Defringe::Options&)opts {
     auto lock = std::lock_guard(_state.lock);
-    _state.defringeOptions = opts;
+    _state.defringe.options = opts;
     [self setNeedsDisplay];
 }
 
@@ -223,11 +227,11 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     [self setNeedsDisplay];
 }
 
-- (MetalTypes::Histogram)inputHistogram {
+- (MetalUtil::Histogram)inputHistogram {
     return _inputHistogram;
 }
 
-- (MetalTypes::Histogram)outputHistogram {
+- (MetalUtil::Histogram)outputHistogram {
     return _outputHistogram;
 }
 
@@ -280,7 +284,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     block(encoder);
     
     [encoder drawPrimitives:MTLPrimitiveTypeTriangle
-        vertexStart:0 vertexCount:MetalTypes::SquareVertIdxCount];
+        vertexStart:0 vertexCount:MetalUtil::SquareVertIdxCount];
     
     [encoder endEncoding];
 }
@@ -369,7 +373,7 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         {
 //            _state.debayerBilinearFilter.run(<#const CFADesc &cfaDesc#>, rawTxt, txt);
             // ImageLayer_DebayerBilinear
-            [self _renderPass:cmdBuf texture:txt name:@"CFAViewer::ImageFilter::DebayerBilinear::Debayer"
+            [self _renderPass:cmdBuf texture:txt name:@"CFAViewer::Shader::DebayerBilinear::Debayer"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
                     [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];
@@ -388,10 +392,10 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         }
     
     } else {
-        if (_state.defringe) {
+        if (_state.defringe.en) {
             [cmdBuf commit];
             
-            _state.defringeFilter.run(_state.defringeOptions, rawTxt);
+            _state.defringe.filter.run(_state.defringe.options, rawTxt);
             
             cmdBuf = [_commandQueue commandBuffer];
         }

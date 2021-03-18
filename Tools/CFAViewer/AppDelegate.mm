@@ -23,8 +23,7 @@
 #import "Assert.h"
 
 using namespace CFAViewer;
-using namespace MetalTypes;
-using namespace ImageFilter;
+using namespace MetalUtil;
 using namespace ImageLayerTypes;
 using namespace ColorUtil;
 
@@ -236,12 +235,12 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
     _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
-    [[_mainView imageLayer] setRawMode:true];
+//    [[_mainView imageLayer] setRawMode:true];
     
     _image = {
         .width = 2304,
         .height = 1296,
-        .pixels = (MetalTypes::ImagePixel*)_imageData.data(),
+        .pixels = (MetalUtil::ImagePixel*)_imageData.data(),
     };
     
     [[_mainView imageLayer] setImage:_image];
@@ -254,7 +253,7 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     
     [self _resetColorMatrix];
     
-    [self _setDefringe:true options:DefringeTypes::Options{}];
+    [self _setDefringe:true options:Defringe::Options{}];
     
     [self _setReconstructHighlights:true];
     
@@ -885,7 +884,7 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     [self mainViewColorCheckerPositionsChanged:nil];
 }
 
-- (void)_setDefringe:(bool)en options:(const DefringeTypes::Options&)opts {
+- (void)_setDefringe:(bool)en options:(const Defringe::Options&)opts {
     [_defringeCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
     [[_mainView imageLayer] setDefringe:en];
     
@@ -922,7 +921,7 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     {
         // Defringe
         {
-            const DefringeTypes::Options opts = {
+            const Defringe::Options opts = {
                 .rounds = (uint32_t)[_defringeRoundsSlider intValue],
                 .αthresh = [_defringeαThresholdSlider floatValue],
                 .γthresh = [_defringeγThresholdSlider floatValue],

@@ -3,31 +3,32 @@
 #import <unordered_map>
 #import <string>
 #import "Assert.h"
-#import "MetalTypes.h"
-#import "ImageFilter.h"
+#import "MetalUtil.h"
 
-namespace CFAViewer::ImageFilter {
-    class RenderManager {
+namespace CFAViewer {
+    class Renderer {
     public:
-        RenderManager() {}
-        RenderManager(id<MTLDevice> dev, id<MTLLibrary> lib, id<MTLCommandQueue> q)
-        : _dev(dev), _lib(lib), _q(q) {
+        Renderer() {}
+        Renderer(id<MTLDevice> dev, id<MTLLibrary> lib,
+        id<MTLCommandQueue> commandQueue, id<MTLHeap> heap) :
+        dev(dev), _lib(lib), _commandQueue(commandQueue), _heap(heap) {
         }
         
+        // Render pass to a target texture
         template <typename Fn>
-        void renderPass(
+        void render(
             const std::string& name,
             id<MTLTexture> txt,
             Fn fn
         ) {
             NSParameterAssert(txt);
             
-            MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-            [[renderPassDescriptor colorAttachments][0] setTexture:txt];
-            [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
-            [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
-            [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
-            id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:renderPassDescriptor];
+            MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
+            [[desc colorAttachments][0] setTexture:txt];
+            [[desc colorAttachments][0] setClearColor:{0,0,0,1}];
+            [[desc colorAttachments][0] setLoadAction:MTLLoadActionLoad];
+            [[desc colorAttachments][0] setStoreAction:MTLStoreActionStore];
+            id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
             
             [enc setRenderPipelineState:_pipelineState(name, [txt pixelFormat])];
             [enc setFrontFacingWinding:MTLWindingCounterClockwise];
@@ -36,26 +37,28 @@ namespace CFAViewer::ImageFilter {
             fn(enc);
             
             [enc drawPrimitives:MTLPrimitiveTypeTriangle
-                vertexStart:0 vertexCount:CFAViewer::MetalTypes::SquareVertIdxCount];
+                vertexStart:0 vertexCount:CFAViewer::MetalUtil::SquareVertIdxCount];
             
             [enc endEncoding];
         }
         
+        // Render pass with no target texture
+        // (Fragment shaders typically use texture.write() in this case)
         template <typename Fn>
-        void renderPass(
+        void render(
             const std::string& name,
             NSUInteger width,
             NSUInteger height,
             Fn fn
         ) {
-            MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-            [renderPassDescriptor setRenderTargetWidth:width];
-            [renderPassDescriptor setRenderTargetHeight:height];
-            [renderPassDescriptor setDefaultRasterSampleCount:1];
-            [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
-            [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionDontCare];
-            [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionDontCare];
-            id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:renderPassDescriptor];
+            MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
+            [desc setRenderTargetWidth:width];
+            [desc setRenderTargetHeight:height];
+            [desc setDefaultRasterSampleCount:1];
+            [[desc colorAttachments][0] setClearColor:{0,0,0,1}];
+            [[desc colorAttachments][0] setLoadAction:MTLLoadActionDontCare];
+            [[desc colorAttachments][0] setStoreAction:MTLStoreActionDontCare];
+            id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
             
             [enc setRenderPipelineState:_pipelineState(name, MTLPixelFormatInvalid)];
             [enc setFrontFacingWinding:MTLWindingCounterClockwise];
@@ -64,7 +67,7 @@ namespace CFAViewer::ImageFilter {
             fn(enc);
             
             [enc drawPrimitives:MTLPrimitiveTypeTriangle
-                vertexStart:0 vertexCount:CFAViewer::MetalTypes::SquareVertIdxCount];
+                vertexStart:0 vertexCount:CFAViewer::MetalUtil::SquareVertIdxCount];
             
             [enc endEncoding];
         }
@@ -104,8 +107,25 @@ namespace CFAViewer::ImageFilter {
             [blit endEncoding];
         }
         
+        id<MTLTexture> createTexture(
+            MTLPixelFormat fmt,
+            NSUInteger width, NSUInteger height,
+            MTLTextureUsage usage=(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)
+        ) {
+            MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+            [desc setTextureType:MTLTextureType2D];
+            [desc setStorageMode:MTLStorageModePrivate];
+            [desc setWidth:width];
+            [desc setHeight:height];
+            [desc setPixelFormat:fmt];
+            [desc setUsage:usage];
+            id<MTLTexture> txt = [_heap newTextureWithDescriptor:desc];
+            Assert(txt, return nil);
+            return txt;
+        }
+        
         id<MTLCommandBuffer> cmdBuf() {
-            if (!_cmdBuf) _cmdBuf = [_q commandBuffer];
+            if (!_cmdBuf) _cmdBuf = [_commandQueue commandBuffer];
             return _cmdBuf;
         }
         
@@ -119,8 +139,37 @@ namespace CFAViewer::ImageFilter {
             [_cmdBuf waitUntilCompleted];
             _cmdBuf = nil;
         }
+        
+        id<MTLDevice> dev = nil;
+        
+        template <typename T, typename... Ts>
+        static void SetBufferArgs(id<MTLRenderCommandEncoder> enc, T& t, Ts&... ts) {
+            _SetBufferArgs(enc, 0, t, ts...);
+        }
+        
+        template <typename... Ts>
+        static void SetTextureArgs(id<MTLRenderCommandEncoder> enc, id<MTLTexture> t, Ts... ts) {
+            _SetTextureArgs(enc, 0, t, ts...);
+        }
     
     private:
+        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+        
+        template <typename T, typename... Ts>
+        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
+            [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
+            _SetBufferArgs(enc, idx+1, ts...);
+        }
+        
+        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+        
+        template <typename... Ts>
+        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx,
+        id<MTLTexture> t, Ts... ts) {
+            [enc setFragmentTexture:t atIndex:idx];
+            _SetTextureArgs(enc, idx+1, ts...);
+        }
+        
         static size_t _BytesPerPixelForPixelFormat(MTLPixelFormat fmt) {
             switch (fmt) {
             case MTLPixelFormatR32Float:    return sizeof(float);
@@ -143,17 +192,17 @@ namespace CFAViewer::ImageFilter {
             [desc setVertexFunction:vertexShader];
             [desc setFragmentFunction:fragmentShader];
             [[desc colorAttachments][0] setPixelFormat:fmt];
-            id<MTLRenderPipelineState> ps = [_dev newRenderPipelineStateWithDescriptor:desc
+            id<MTLRenderPipelineState> ps = [dev newRenderPipelineStateWithDescriptor:desc
                 error:nil];
             Assert(ps, return nil);
             _pipelineStates.insert(find, {name, ps});
             return ps;
         }
         
-        id<MTLDevice> _dev = nil;
         id <MTLLibrary> _lib = nil;
-        id <MTLCommandQueue> _q = nil;
+        id <MTLCommandQueue> _commandQueue = nil;
         std::unordered_map<std::string,id<MTLRenderPipelineState>> _pipelineStates;
         id<MTLCommandBuffer> _cmdBuf = nil;
+        id<MTLHeap> _heap = nil;
     };
 };

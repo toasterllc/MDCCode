@@ -1,25 +1,15 @@
 #import <metal_stdlib>
-#import "MetalShaderUtil.h"
+#import "MetalUtil.h"
 #import "ImageLayerTypes.h"
 using namespace metal;
-using namespace CFAViewer::MetalTypes;
+using namespace CFAViewer::MetalUtil;
+using namespace CFAViewer::MetalUtil::Standard;
 using namespace CFAViewer::ImageLayerTypes;
 
 namespace ImageLayer {
 
-vertex VertexOutput VertexShader(
-    constant RenderContext& ctx [[buffer(0)]],
-    uint vidx [[vertex_id]]
-) {
-    VertexOutput r = {
-        .pos = SquareVert[SquareVertIdx[vidx]],
-        .posUnit = SquareVert[SquareVertIdx[vidx]].xy,
-    };
-    
-    r.posUnit += 1;
-    r.posUnit /= 2;
-    r.posUnit.y = 1-r.posUnit.y;
-    return r;
+vertex VertexOutput VertexShader(uint vidx [[vertex_id]]) {
+    return Standard::VertexShader(vidx);
 }
 
 uint3 binFromColor(float3 color) {

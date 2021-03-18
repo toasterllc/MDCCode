@@ -2,47 +2,41 @@
 #import <Metal/Metal.h>
 #import <queue>
 #import <thread>
-#import "MetalTypes.h"
-#import "MetalUtil.h"
+#import "Poly2D.h"
+#import "Renderer.h"
 #import "ImageFilter.h"
-#import "DefringeTypes.h"
-#import "RenderManager.h"
+#import "MetalUtil.h"
 
-namespace CFAViewer::ImageFilter {
-    class Defringe {
-    private:
-        using Poly = Poly2D<double,4>;
-        using Dir = DefringeTypes::Dir;
-        template <typename T>
-        using ColorDir = DefringeTypes::ColorDir<T>;
-        using Options = DefringeTypes::Options;
-        using PolyCoeffs = DefringeTypes::PolyCoeffs;
-    
+namespace CFAViewer {
+    class Defringe : public ImageFilter {
     public:
-        Defringe() {}
-        Defringe(id<MTLDevice> dev, id<MTLHeap> heap, id<MTLCommandQueue> q) :
-        _dev(dev),
-        _heap(heap),
-        _q(q),
-        _rm(_dev, [_dev newDefaultLibrary], _q) {
-        }
+        using ImageFilter::ImageFilter;
+        
+        struct Options {
+            CFADesc cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green};
+            uint32_t rounds = 2;
+            float αthresh = 2; // Threshold to allow α correction
+            float γthresh = .2; // Threshold to allow γ correction
+            float γfactor = .5; // Weight to apply to r̄ vs r when doing γ correction
+            float δfactor = 10./16; // Weight to apply to center vs adjacent pixels when
+                                    // computing derivative, when solving for tile shift
+        };
         
         void run(const Options& opts, id<MTLTexture> raw) {
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
-            id<MTLTexture> gInterp = MetalUtil::CreateTexture(_heap,
-                MTLPixelFormatR32Float, w, h);
+            id<MTLTexture> gInterp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             
-            _rm.renderPass("CFAViewer::ImageFilter::Defringe::WhiteBalanceForward", raw,
+            renderer().render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
                 [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
+                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
                     [enc setFragmentTexture:raw atIndex:0];
                 });
             
-            _rm.renderPass("CFAViewer::ImageFilter::Defringe::InterpolateG", gInterp,
+            renderer().render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
                 [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
+                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
                     [enc setFragmentTexture:raw atIndex:0];
                 });
             
@@ -50,16 +44,37 @@ namespace CFAViewer::ImageFilter {
                 _defringe(opts, raw, gInterp);
             }
             
-            _rm.renderPass("CFAViewer::ImageFilter::Defringe::WhiteBalanceReverse", raw,
+            renderer().render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
                 [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
+                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
                     [enc setFragmentTexture:raw atIndex:0];
                 });
             
-            _rm.commit();
+            renderer().commit();
         }
     
     private:
+        using Poly = Poly2D<double,4>;
+
+        enum class Dir : uint8_t {
+            X = 0,
+            Y = 1,
+        };
+
+        template <typename T>
+        class ColorDir {
+        public:
+            T& operator()(CFAColor color, Dir dir) {
+                return _t[((uint8_t)color)>>1][(uint8_t)dir];
+            }
+            
+            const T& operator()(CFAColor color, Dir dir) const {
+                return _t[((uint8_t)color)>>1][(uint8_t)dir];
+            }
+        private:
+            T _t[2][2] = {}; // _t[color][dir]; only red/blue colors allowed
+        };
+        
         class TileAxis {
         private:
             static uint32_t _tileCount(uint32_t axisSize, uint32_t tileSize) {
@@ -166,38 +181,51 @@ namespace CFAViewer::ImageFilter {
             // The final fragment shader will simply sample these textures to
             // determine the appropriate shift amount to use for each pixel.
             constexpr size_t ShiftTextureWidth = 20;
-            ColorDir<PolyCoeffs> polyCoeffs;
+            ColorDir<float[16]> polyCoeffs;
             ColorDir<id<MTLTexture>> shiftTxts;
             for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
                     const auto& coeffs = polys(c,dir).coeffs().vals;
-                    std::copy(coeffs, coeffs+std::size(coeffs), polyCoeffs(c,dir).k);
+                    std::copy(coeffs, coeffs+std::size(coeffs), polyCoeffs(c,dir));
                     
-                    shiftTxts(c,dir) = MetalUtil::CreateTexture(_heap, MTLPixelFormatR32Float,
+                    shiftTxts(c,dir) = renderer().createTexture(MTLPixelFormatR32Float,
                         ShiftTextureWidth, ShiftTextureWidth,
                         (MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite));
                 }
             }
             
-            _rm.renderPass("CFAViewer::ImageFilter::Defringe::CalcShiftTxts",
+            renderer().render("CFAViewer::Shader::Defringe::CalcShiftTxts",
                 ShiftTextureWidth, ShiftTextureWidth,
                 [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
-                    [enc setFragmentBytes:&polyCoeffs length:sizeof(polyCoeffs) atIndex:1];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::X) atIndex:0];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::Y) atIndex:1];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::X) atIndex:2];
-                    [enc setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::Y) atIndex:3];
+                    Renderer::SetBufferArgs(enc,
+                        opts.cfaDesc,
+                        polyCoeffs(CFAColor::Red,Dir::X),
+                        polyCoeffs(CFAColor::Red,Dir::Y),
+                        polyCoeffs(CFAColor::Blue,Dir::X),
+                        polyCoeffs(CFAColor::Blue,Dir::Y)
+                    );
+                    
+                    Renderer::SetTextureArgs(enc,
+                        shiftTxts(CFAColor::Red,Dir::X),
+                        shiftTxts(CFAColor::Red,Dir::Y),
+                        shiftTxts(CFAColor::Blue,Dir::X),
+                        shiftTxts(CFAColor::Blue,Dir::Y)
+                    );
                 });
             
             // Apply the defringe correction.
             // We have to render to `tmp` (not `raw`), because
             // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
             // which would introduce a data race if we rendered to `raw` while also sampling it.
-            id<MTLTexture> tmp = MetalUtil::CreateTexture(_heap, MTLPixelFormatR32Float, w, h);
-            _rm.renderPass("CFAViewer::ImageFilter::Defringe::ApplyCorrection", tmp,
+            id<MTLTexture> tmp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            renderer().render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
                 [&](id<MTLRenderCommandEncoder> enc) {
-                    [enc setFragmentBytes:&opts length:sizeof(opts) atIndex:0];
+                    [enc setFragmentBytes:&opts.cfaDesc length:sizeof(opts.cfaDesc) atIndex:0];
+                    [enc setFragmentBytes:&opts.αthresh length:sizeof(opts.αthresh) atIndex:1];
+                    [enc setFragmentBytes:&opts.γthresh length:sizeof(opts.γthresh) atIndex:2];
+                    [enc setFragmentBytes:&opts.γfactor length:sizeof(opts.γfactor) atIndex:3];
+                    [enc setFragmentBytes:&opts.δfactor length:sizeof(opts.δfactor) atIndex:4];
+                    
                     [enc setFragmentTexture:raw atIndex:0];
                     [enc setFragmentTexture:gInterp atIndex:1];
                     [enc setFragmentTexture:shiftTxts(CFAColor::Red,Dir::X) atIndex:2];
@@ -206,7 +234,7 @@ namespace CFAViewer::ImageFilter {
                     [enc setFragmentTexture:shiftTxts(CFAColor::Blue,Dir::Y) atIndex:5];
                 });
             
-            _rm.copy(tmp, raw);
+            renderer().copy(tmp, raw);
         }
         
         // _solveForPolys(): this function returns a 2D polynomial whose value is
@@ -250,18 +278,18 @@ namespace CFAViewer::ImageFilter {
             const NSUInteger h = [raw height];
             const size_t bufLen = w*h*sizeof(float);
             if (!_rawBuf || [_rawBuf length]<bufLen) {
-                _rawBuf = [_dev newBufferWithLength:bufLen
+                _rawBuf = [renderer().dev newBufferWithLength:bufLen
                     options:MTLResourceCPUCacheModeDefaultCache];
             }
             
             if (!_gInterpBuf || [_gInterpBuf length]<bufLen) {
-                _gInterpBuf = [_dev newBufferWithLength:bufLen
+                _gInterpBuf = [renderer().dev newBufferWithLength:bufLen
                     options:MTLResourceCPUCacheModeDefaultCache];
             }
             
-            _rm.copy(raw, _rawBuf);
-            _rm.copy(gInterp, _gInterpBuf);
-            _rm.commitAndWait();
+            renderer().copy(raw, _rawBuf);
+            renderer().copy(gInterp, _gInterpBuf);
+            renderer().commitAndWait();
             
             BufSampler<float> rawPx(w, h, _rawBuf);
             BufSampler<float> gInterpPx(w, h, _gInterpBuf);
@@ -399,11 +427,7 @@ namespace CFAViewer::ImageFilter {
             return shifts;
         }
         
-        id<MTLDevice> _dev = nil;
-        id<MTLHeap> _heap = nil;
-        id<MTLCommandQueue> _q = nil;
         id<MTLBuffer> _rawBuf = nil;
         id<MTLBuffer> _gInterpBuf = nil;
-        RenderManager _rm;
     };
 };

@@ -1,4 +1,4 @@
-#import "MetalTypes.h"
+#import "MetalUtil.h"
 
 namespace CFAViewer {
     namespace HistogramLayerTypes {

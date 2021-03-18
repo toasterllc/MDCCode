@@ -7,7 +7,7 @@
 #import "ColorChecker.h"
 
 using namespace CFAViewer;
-using namespace MetalTypes;
+using namespace MetalUtil;
 using namespace ImageLayerTypes;
 using namespace ColorUtil;
 

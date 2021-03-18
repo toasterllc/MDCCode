@@ -1,7 +1,7 @@
 #import <metal_stdlib>
 #import "HistogramLayerTypes.h"
 using namespace metal;
-using namespace CFAViewer::MetalTypes;
+using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::HistogramLayerTypes;
 
 struct VertexOutput {

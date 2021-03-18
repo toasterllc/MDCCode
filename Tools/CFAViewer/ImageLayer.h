@@ -1,6 +1,6 @@
 #import <QuartzCore/QuartzCore.h>
 #import "ImageLayerTypes.h"
-#import "DefringeTypes.h"
+#import "Defringe.h"
 #import "Mat.h"
 #import "ColorUtil.h"
 #import "ImageFilter.h"
@@ -13,7 +13,7 @@ namespace CFAViewer::ImageLayerTypes {
 //        CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
-        CFAViewer::MetalTypes::ImagePixel* pixels = nullptr;
+        CFAViewer::MetalUtil::ImagePixel* pixels = nullptr;
     };
     
     struct ImageAdjustments {
@@ -37,7 +37,7 @@ namespace CFAViewer::ImageLayerTypes {
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
 
 - (void)setDefringe:(bool)en;
-- (void)setDefringeOptions:(const CFAViewer::ImageFilter::DefringeTypes::Options&)opts;
+- (void)setDefringeOptions:(const CFAViewer::Defringe::Options&)opts;
 
 - (void)setReconstructHighlights:(bool)en;
 
@@ -51,8 +51,8 @@ namespace CFAViewer::ImageLayerTypes {
 // `handler` is called on a background queue when histograms/sample data changes
 - (void)setDataChangedHandler:(ImageLayerDataChangedHandler)handler;
 
-- (CFAViewer::MetalTypes::Histogram)inputHistogram;
-- (CFAViewer::MetalTypes::Histogram)outputHistogram;
+- (CFAViewer::MetalUtil::Histogram)inputHistogram;
+- (CFAViewer::MetalUtil::Histogram)outputHistogram;
 
 - (ColorUtil::Color_CamRaw_D50)sample_CamRaw_D50;
 - (ColorUtil::Color_XYZ_D50)sample_XYZ_D50;

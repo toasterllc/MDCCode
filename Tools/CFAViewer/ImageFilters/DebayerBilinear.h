@@ -1,29 +1,19 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "MetalTypes.h"
 #import "MetalUtil.h"
 #import "ImageFilter.h"
-#import "RenderManager.h"
+#import "Renderer.h"
 
-namespace CFAViewer::ImageFilter {
-    class DebayerBilinear {
+namespace CFAViewer {
+    class DebayerBilinear : public ImageFilter {
     public:
-        DebayerBilinear() {}
-        DebayerBilinear(id<MTLDevice> dev, id<MTLCommandQueue> q) :
-        _dev(dev),
-        _rm(_dev, [_dev newDefaultLibrary], q) {
-        }
-        
+        using ImageFilter::ImageFilter;
         void run(const CFADesc& cfaDesc, id<MTLTexture> raw, id<MTLTexture> rgb) {
-            _rm.renderPass("CFAViewer::ImageFilter::DebayerBilinear::Debayer", rgb,
+            renderer().render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
                 [&](id<MTLRenderCommandEncoder> enc) {
                     [enc setFragmentBytes:&cfaDesc length:sizeof(cfaDesc) atIndex:0];
                     [enc setFragmentTexture:raw atIndex:0];
                 });
         }
-    
-    private:
-        id<MTLDevice> _dev = nil;
-        RenderManager _rm;
     };
 };

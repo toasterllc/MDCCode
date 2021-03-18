@@ -6,7 +6,7 @@
 #import "Assert.h"
 #import "Util.h"
 using namespace CFAViewer;
-using namespace MetalTypes;
+using namespace MetalUtil;
 using namespace HistogramLayerTypes;
 
 @implementation HistogramLayer {
@@ -80,7 +80,7 @@ using namespace HistogramLayerTypes;
     return self;
 }
 
-- (void)setHistogram:(const MetalTypes::Histogram&)histogram {
+- (void)setHistogram:(const MetalUtil::Histogram&)histogram {
     auto lock = std::unique_lock(_state.lock);
     _state.histogram = histogram;
 //    _state.histogram.r[0] = 5000000;
@@ -216,7 +216,7 @@ float sampleRange(float unitRange0, float unitRange1, const uint32_t(& bins)[N])
     [renderEncoder setFragmentBuffer:_state.histogramBuf offset:0 atIndex:1];
     
     [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0
-        vertexCount:MetalTypes::SquareVertIdxCount];
+        vertexCount:MetalUtil::SquareVertIdxCount];
     
     [renderEncoder endEncoding];
     [commandBuffer presentDrawable:drawable];
