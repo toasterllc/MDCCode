@@ -1,18 +1,18 @@
 #import <simd/simd.h>
-#if !__METAL_VERSION__
-#import <atomic>
+
+#ifdef __METAL_VERSION__
+#define MetalShaderContext 1
+#else
+#define MetalShaderContext 0
 #endif
 
-#if !__METAL_VERSION__
-#define MetalConst const
-#else
+#if MetalShaderContext
 #define MetalConst constant
-#endif
-
-#if !__METAL_VERSION__
-#define MetalDevice
-#else
 #define MetalDevice device
+#else
+#import <atomic>
+#define MetalConst const
+#define MetalDevice
 #endif
 
 namespace CFAViewer {

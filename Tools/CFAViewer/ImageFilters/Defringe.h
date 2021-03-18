@@ -4,7 +4,7 @@
 #import <thread>
 #import "MetalTypes.h"
 #import "MetalUtil.h"
-#import "ImageFilterTypes.h"
+#import "ImageFilter.h"
 #import "DefringeTypes.h"
 #import "RenderManager.h"
 

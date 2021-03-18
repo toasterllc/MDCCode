@@ -11,6 +11,7 @@
 #import "TimeInstant.h"
 #import "Poly2D.h"
 #import "Defringe.h"
+#import "DebayerBilinear.h"
 using namespace CFAViewer;
 using namespace CFAViewer::MetalTypes;
 using namespace CFAViewer::ImageLayerTypes;
@@ -31,6 +32,8 @@ using namespace ColorUtil;
     struct {
         std::mutex lock; // Protects this struct
         bool rawMode = false;
+        
+        DebayerBilinear debayerBilinearFilter;
         
         bool defringe = false;
         DefringeTypes::Options defringeOptions;
@@ -79,6 +82,7 @@ using namespace ColorUtil;
     _pipelineStates = [NSMutableDictionary new];
     
     auto lock = std::lock_guard(_state.lock);
+        _state.debayerBilinearFilter = DebayerBilinear(_device, _commandQueue);
         _state.defringeFilter = Defringe(_device, _heap, _commandQueue);
         
         _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
@@ -363,8 +367,9 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     if (_state.rawMode) {
         // De-bayer render pass
         {
+//            _state.debayerBilinearFilter.run(<#const CFADesc &cfaDesc#>, rawTxt, txt);
             // ImageLayer_DebayerBilinear
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::DebayerBilinear"
+            [self _renderPass:cmdBuf texture:txt name:@"CFAViewer::ImageFilter::DebayerBilinear::Debayer"
                 block:^(id<MTLRenderCommandEncoder> encoder) {
                     [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
                     [encoder setFragmentTexture:rawTxt atIndex:0];

@@ -1,6 +1,6 @@
 #import <metal_stdlib>
 #import "MetalShaderUtil.h"
-#import "ImageFilterTypes.h"
+#import "ImageFilter.h"
 #import "ImageLayerTypes.h"
 #import "DefringeTypes.h"
 using namespace metal;

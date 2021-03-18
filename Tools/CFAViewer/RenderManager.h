@@ -4,7 +4,7 @@
 #import <string>
 #import "Assert.h"
 #import "MetalTypes.h"
-#import "ImageFilterTypes.h"
+#import "ImageFilter.h"
 
 namespace CFAViewer::ImageFilter {
     class RenderManager {

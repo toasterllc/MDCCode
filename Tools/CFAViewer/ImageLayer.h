@@ -3,12 +3,14 @@
 #import "DefringeTypes.h"
 #import "Mat.h"
 #import "ColorUtil.h"
+#import "ImageFilter.h"
 
 @class ImageLayer;
 using ImageLayerDataChangedHandler = void(^)(ImageLayer*);
 
 namespace CFAViewer::ImageLayerTypes {
     struct Image {
+//        CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
         CFAViewer::MetalTypes::ImagePixel* pixels = nullptr;

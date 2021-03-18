@@ -1,5 +1,5 @@
 #import "MetalTypes.h"
-#import "ImageFilterTypes.h"
+#import "ImageFilter.h"
 
 namespace CFAViewer {
 namespace ImageFilter {

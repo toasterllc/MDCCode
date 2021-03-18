@@ -457,115 +457,6 @@ fragment float4 DebayerLMMSE_CalcRB(
     return float4(g-dgr, g, g-dgb, 1);
 }
 
-
-
-
-
-#define PX(x,y) Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{x,y})
-float DebayerBilinear_R(texture2d<float> rawTxt, int2 pos) {
-    if (pos.y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want R
-        // Sample @ y-1, y+1
-        if (pos.x % 2) return .5*PX(+0,-1) + .5*PX(+0,+1);
-        
-        // Have B
-        // Want R
-        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        else return .25*PX(-1,-1) + .25*PX(-1,+1) + .25*PX(+1,-1) + .25*PX(+1,+1) ;
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want R
-        // Sample @ this pixel
-        if (pos.x % 2) return PX(+0,+0);
-        
-        // Have G
-        // Want R
-        // Sample @ x-1 and x+1
-        else return .5*PX(-1,+0) + .5*PX(+1,+0);
-    }
-}
-
-float DebayerBilinear_G(texture2d<float> rawTxt, int2 pos) {
-    if (pos.y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want G
-        // Sample @ this pixel
-        if (pos.x % 2) return PX(+0,+0);
-        
-        // Have B
-        // Want G
-        // Sample @ x-1, x+1, y-1, y+1
-        else return .25*PX(-1,+0) + .25*PX(+1,+0) + .25*PX(+0,-1) + .25*PX(+0,+1) ;
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want G
-        // Sample @ x-1, x+1, y-1, y+1
-        if (pos.x % 2) return .25*PX(-1,+0) + .25*PX(+1,+0) + .25*PX(+0,-1) + .25*PX(+0,+1) ;
-        
-        // Have G
-        // Want G
-        // Sample @ this pixel
-        else return PX(+0,+0);
-    }
-}
-
-float DebayerBilinear_B(texture2d<float> rawTxt, int2 pos) {
-    if (pos.y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want B
-        // Sample @ x-1, x+1
-        if (pos.x % 2) return .5*PX(-1,+0) + .5*PX(+1,+0);
-        
-        // Have B
-        // Want B
-        // Sample @ this pixel
-        else return PX(+0,+0);
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want B
-        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        if (pos.x % 2) return .25*PX(-1,-1) + .25*PX(-1,+1) + .25*PX(+1,-1) + .25*PX(+1,+1) ;
-        
-        // Have G
-        // Want B
-        // Sample @ y-1, y+1
-        else return .5*PX(+0,-1) + .5*PX(+0,+1);
-    }
-}
-#undef PX
-
-
-
-fragment float4 DebayerBilinear(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const int2 pos = int2(in.pos.xy);
-    return float4(
-        DebayerBilinear_R(rawTxt, pos),
-        DebayerBilinear_G(rawTxt, pos),
-        DebayerBilinear_B(rawTxt, pos),
-        1
-    );
-}
-
 fragment float4 XYZD50FromCameraRaw(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
@@ -600,102 +491,16 @@ fragment float4 Exposure(
     return float4(c, 1);
 }
 
-float scurve(float x) {
-    return 1/(1+exp(-2*((2*x)-1)));
-}
-
-float bellcurve(float x) {
-    return exp(-pow(2.5*(x-.5), 4));
-}
-
-//float nothighlights(float x) {
-//    if (x < 0) return 0;
-//    return exp(-pow(fabs(x+.1), 4));
-//}
-//
-//float notshadows(float x) {
-//    if (x > 1) return 1;
-//    return exp(-pow(fabs(x-1.1), 4));
-//}
-
-
-float nothighlights(float x) {
-    if (x < 0) return 0;
-    return exp(-pow(fabs(x+.3), 4));
-}
-
-float notshadows(float x) {
-    if (x > 1) return 1;
-    return exp(-pow(fabs(x-1.3), 4));
-}
-
-
-
 fragment float4 Brightness(
     constant RenderContext& ctx [[buffer(0)]],
     constant float& brightness [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-////    const float k = 1;
-//    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
-////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
-//    c[0] += 100*k*brightness;
-//    return float4(c, 1);
-    
     float3 c = Sample::RGB(txt, int2(in.pos.xy));
     c[0] = 100*brightness + c[0]*(1-brightness);
     return float4(c, 1);
 }
-
-
-
-//fragment float4 Brightness(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    constant float& brightness [[buffer(1)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-////    const float k = 1;
-//    const float k = (brightness >= 0 ? nothighlights(c[0]/100) : notshadows(c[0]/100));
-////    c[0] = 100*k*brightness + c[0]*(1-(k*brightness));
-//    c[0] += 100*k*brightness;
-//    return float4(c, 1);
-//    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-////    const float b = bellcurve(c[0]/100)*brightness;
-////    c[0] = 100*b + c[0]*(1-b);
-////    return float4(c, 1);
-//    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-////    const float b = bellcurve(c[0]/100)*brightness;
-////    c[0] += 100*b;
-////    return float4(c, 1);
-//    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-////    const float b = bellcurve(c[0]/100)*brightness;
-////    c[0] += 100*b;
-////    return float4(c, 1);
-//    
-////    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-////    const float b = scurve(c[0]/100)*brightness;
-////    c[0] = 100*b + c[0]*(1-b);
-////    return float4(c, 1);
-//}
-
-//fragment float4 Brightness(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    constant float& brightness [[buffer(1)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-//    c[0] += 100*brightness;
-//    return float4(c, 1);
-//}
 
 float bellcurve(float width, int plateau, float x) {
     return exp(-pow(width*x, plateau));

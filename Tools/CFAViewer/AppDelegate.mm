@@ -236,6 +236,7 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
     _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
+    [[_mainView imageLayer] setRawMode:true];
     
     _image = {
         .width = 2304,
