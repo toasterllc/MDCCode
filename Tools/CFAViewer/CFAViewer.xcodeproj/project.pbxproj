@@ -33,7 +33,6 @@
 /* Begin PBXFileReference section */
 		552E7D5A24C9316900438AAF /* CFAViewer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CFAViewer.entitlements; sourceTree = "<group>"; };
 		554609F926001F670037A5AC /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
-		554609FA2602C08A0037A5AC /* DebayerBilinear.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebayerBilinear.h; sourceTree = "<group>"; };
 		554609FB2602C08A0037A5AC /* DebayerLMMSE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebayerLMMSE.h; sourceTree = "<group>"; };
 		554609FD2602C26A0037A5AC /* DebayerBilinear.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerBilinear.metal; sourceTree = "<group>"; };
 		554609FF2603032A0037A5AC /* ImageFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageFilter.h; sourceTree = "<group>"; };
@@ -113,7 +112,6 @@
 			isa = PBXGroup;
 			children = (
 				554609FF2603032A0037A5AC /* ImageFilter.h */,
-				554609FA2602C08A0037A5AC /* DebayerBilinear.h */,
 				554609FD2602C26A0037A5AC /* DebayerBilinear.metal */,
 				554609FB2602C08A0037A5AC /* DebayerLMMSE.h */,
 				558328AF25FE15E800730B6A /* Defringe.h */,
@@ -360,7 +358,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				MTL_HEADER_SEARCH_PATHS = "../../Code/Shared .";
+				MTL_HEADER_SEARCH_PATHS = "../../Code/Shared . ./ImageFilters";
 				SDKROOT = macosx;
 			};
 			name = Release;

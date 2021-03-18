@@ -107,6 +107,16 @@ namespace CFAViewer {
             [blit endEncoding];
         }
         
+        void sync(id<MTLTexture> txt) {
+            id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
+            [blit synchronizeTexture:txt slice:0 level:0];
+            [blit endEncoding];
+        }
+        
+        void present(id<CAMetalDrawable> drawable) {
+            [cmdBuf() presentDrawable:drawable];
+        }
+        
         id<MTLTexture> createTexture(
             MTLPixelFormat fmt,
             NSUInteger width, NSUInteger height,
@@ -149,8 +159,10 @@ namespace CFAViewer {
         void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
             if constexpr (!std::is_same<T,id<MTLTexture>>::value) {
                 if constexpr (std::is_same<T,id<MTLBuffer>>::value) {
+                    NSLog(@"??? Encode buffer arg %p [len:%zu] @ %zu", &t, sizeof(t), idx);
                     [enc setFragmentBuffer:t offset:0 atIndex:idx];
                 } else {
+                    NSLog(@"Encode buffer arg %p [len:%zu] @ %zu", &t, sizeof(t), idx);
                     [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
                 }
                 _SetBufferArgs(enc, idx+1, ts...);
@@ -165,59 +177,10 @@ namespace CFAViewer {
         template <typename T, typename... Ts>
         void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
             static_assert(std::is_same<T,id<MTLTexture>>::value);
+            NSLog(@"Encode texture arg %p @ %zu", t, idx);
             [enc setFragmentTexture:t atIndex:idx];
             _SetTextureArgs(enc, idx+1, ts...);
         }
-        
-//        template <typename... Ts>
-//        static void SetTextureArgs(id<MTLRenderCommandEncoder> enc, id<MTLTexture> t, Ts... ts) {
-//            _SetTextureArgs(enc, 0, t, ts...);
-//        }
-//        
-//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
-//        
-//        template <typename T, typename... Ts>
-//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-//            [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
-//            _SetBufferArgs(enc, idx+1, ts...);
-//        }
-//        
-//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
-//        
-//        template <typename... Ts>
-//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx,
-//        id<MTLTexture> t, Ts... ts) {
-//            [enc setFragmentTexture:t atIndex:idx];
-//            _SetTextureArgs(enc, idx+1, ts...);
-//        }
-        
-        
-//        template <typename T, typename... Ts>
-//        static void SetBufferArgs(id<MTLRenderCommandEncoder> enc, T& t, Ts&... ts) {
-//            _SetBufferArgs(enc, 0, t, ts...);
-//        }
-//        
-//        template <typename... Ts>
-//        static void SetTextureArgs(id<MTLRenderCommandEncoder> enc, id<MTLTexture> t, Ts... ts) {
-//            _SetTextureArgs(enc, 0, t, ts...);
-//        }
-//        
-//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
-//        
-//        template <typename T, typename... Ts>
-//        static void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-//            [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
-//            _SetBufferArgs(enc, idx+1, ts...);
-//        }
-//        
-//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
-//        
-//        template <typename... Ts>
-//        static void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx,
-//        id<MTLTexture> t, Ts... ts) {
-//            [enc setFragmentTexture:t atIndex:idx];
-//            _SetTextureArgs(enc, idx+1, ts...);
-//        }
         
         static size_t _BytesPerPixelForPixelFormat(MTLPixelFormat fmt) {
             switch (fmt) {

@@ -1,14 +1,9 @@
 #import "MetalUtil.h"
 #import "Enum.h"
+#import "ImageFilter.h"
 
 namespace CFAViewer {
     namespace ImageLayerTypes {
-        enum class CFAColor : uint8_t {
-            Red     = 0,
-            Green   = 1,
-            Blue    = 2,
-        };
-        
         struct RenderContext {
             simd::float3x3 colorMatrix = {
                 simd::float3{1,0,0},
@@ -40,23 +35,7 @@ namespace CFAViewer {
             uint32_t imageWidth = 0;
             uint32_t imageHeight = 0;
             
-            CFAColor cfa[2][2] = {{
-                CFAColor::Green,
-                CFAColor::Red,
-            }, {
-                CFAColor::Blue,
-                CFAColor::Green,
-            }};
-            
-            template <typename T>
-            CFAColor cfaColor(T x, T y) MetalConst {
-                return cfa[y&1][x&1];
-            }
-            
-            template <typename T>
-            CFAColor cfaColor(T pos) MetalConst {
-                return cfaColor(pos.x, pos.y);
-            }
+            ImageFilter::CFADesc cfaDesc;
         };
     };
 };

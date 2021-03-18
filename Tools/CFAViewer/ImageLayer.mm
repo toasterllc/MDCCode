@@ -11,7 +11,6 @@
 #import "TimeInstant.h"
 #import "Poly2D.h"
 #import "Defringe.h"
-#import "DebayerBilinear.h"
 using namespace CFAViewer;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::ImageLayerTypes;
@@ -33,8 +32,6 @@ using namespace ColorUtil;
         bool rawMode = false;
         
         Renderer renderer;
-        
-        DebayerBilinear debayerBilinearFilter;
         
         struct {
             bool en = false;
@@ -86,7 +83,6 @@ using namespace ColorUtil;
     
     auto lock = std::lock_guard(_state.lock);
         _state.renderer = Renderer(_device, _library, _commandQueue, _heap);
-        _state.debayerBilinearFilter = DebayerBilinear(_state.renderer);
         _state.defringe.filter = Defringe(_state.renderer);
         
         _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
@@ -107,6 +103,7 @@ using namespace ColorUtil;
     // Reset image size in case something fails
     _state.ctx.imageWidth = 0;
     _state.ctx.imageHeight = 0;
+    _state.ctx.cfaDesc = image.cfaDesc;
     
     const size_t len = pixelCount*sizeof(ImagePixel);
     if (len) {
@@ -357,44 +354,39 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite)];
     id<MTLTexture> txt = [self _newTextureWithPixelFormat:MTLPixelFormatRGBA32Float];
     
-    id<MTLCommandBuffer> cmdBuf = [_commandQueue commandBuffer];
-    
-    [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer::LoadRaw"
-        block:^(id<MTLRenderCommandEncoder> encoder) {
-            [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-            [encoder setFragmentBuffer:_state.pixelData offset:0 atIndex:1];
-            [encoder setFragmentBuffer:_state.sampleBuf_CamRaw_D50 offset:0 atIndex:2];
-        }
-    ];
+    _state.renderer.render("ImageLayer::LoadRaw", rawTxt,
+        // Buffer args
+        _state.ctx,
+        _state.pixelData,
+        _state.sampleBuf_CamRaw_D50
+        // Texture args
+    );
     
     // Raw mode (bilinear debayer only)
     if (_state.rawMode) {
-        // De-bayer render pass
-        {
-//            _state.debayerBilinearFilter.run(<#const CFADesc &cfaDesc#>, rawTxt, txt);
-            // ImageLayer_DebayerBilinear
-            [self _renderPass:cmdBuf texture:txt name:@"CFAViewer::Shader::DebayerBilinear::Debayer"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:rawTxt atIndex:0];
-                }
-            ];
-        }
+        // De-bayer
+        _state.renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", txt,
+            // Buffer args
+            _state.ctx.cfaDesc,
+            // Texture args
+            rawTxt
+        );
         
-        // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-        {
-            [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer::Display"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
-        }
+        // Final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
+        _state.renderer.render("ImageLayer::Display", outTxt,
+            // Buffer args
+            _state.ctx,
+            // Texture args
+            txt
+        );
     
     } else {
+        id<MTLCommandBuffer> cmdBuf = nil;
+        
         if (_state.defringe.en) {
             [cmdBuf commit];
             
+            _state.defringe.options.cfaDesc = _state.ctx.cfaDesc;
             _state.defringe.filter.run(_state.defringe.options, rawTxt);
             
             cmdBuf = [_commandQueue commandBuffer];
@@ -827,17 +819,14 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
     // -CGImage uses.
     {
         if (![outTxt isFramebufferOnly]) {
-            id<MTLBlitCommandEncoder> blit = [cmdBuf blitCommandEncoder];
-            [blit synchronizeTexture:outTxt slice:0 level:0];
-            [blit endEncoding];
+            _state.renderer.sync(outTxt);
         }
     }
     
-    if (drawable) [cmdBuf presentDrawable:drawable];
-    [cmdBuf commit];
+    if (drawable) _state.renderer.present(drawable);
     // Wait for the render to complete, since the lock needs to be
     // held because the shader accesses _state
-    [cmdBuf waitUntilCompleted];
+    _state.renderer.commitAndWait();
     
     // Notify that our histogram changed
     auto dataChangedHandler = _state.dataChangedHandler;

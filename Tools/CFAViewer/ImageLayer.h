@@ -10,7 +10,10 @@ using ImageLayerDataChangedHandler = void(^)(ImageLayer*);
 
 namespace CFAViewer::ImageLayerTypes {
     struct Image {
-//        CFADesc cfaDesc;
+        using CFADesc = ImageFilter::CFADesc;
+        using CFAColor = ImageFilter::CFAColor;
+        
+        CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
         CFAViewer::MetalUtil::ImagePixel* pixels = nullptr;

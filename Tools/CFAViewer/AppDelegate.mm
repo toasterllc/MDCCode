@@ -26,6 +26,8 @@ using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImageLayerTypes;
 using namespace ColorUtil;
+using CFADesc = ImageFilter::CFADesc;
+using CFAColor = ImageFilter::CFAColor;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 
@@ -238,6 +240,7 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //    [[_mainView imageLayer] setRawMode:true];
     
     _image = {
+        .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
         .width = 2304,
         .height = 1296,
         .pixels = (MetalUtil::ImagePixel*)_imageData.data(),
@@ -394,6 +397,7 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             // in case it reports a streaming error
             const STApp::PixHeader pixStatus = device.pixCapture(pixelBuf.get(), pixelBufCount, 1000);
             const Image image = {
+                .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
                 .width = pixStatus.width,
                 .height = pixStatus.height,
                 .pixels = pixelBuf.get(),

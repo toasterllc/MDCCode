@@ -13,7 +13,7 @@ namespace CFAViewer {
         using ImageFilter::ImageFilter;
         
         struct Options {
-            CFADesc cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green};
+            CFADesc cfaDesc;
             uint32_t rounds = 2;
             float αthresh = 2; // Threshold to allow α correction
             float γthresh = .2; // Threshold to allow γ correction

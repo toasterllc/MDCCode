@@ -5,6 +5,8 @@ using namespace metal;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::MetalUtil::Standard;
 using namespace CFAViewer::ImageLayerTypes;
+using CFADesc = CFAViewer::ImageFilter::CFADesc;
+using CFAColor = CFAViewer::ImageFilter::CFAColor;
 
 namespace ImageLayer {
 
@@ -95,7 +97,7 @@ fragment float LoadRaw(
         pos.x < (int)ctx.sampleRect.right &&
         pos.y >= (int)ctx.sampleRect.top &&
         pos.y < (int)ctx.sampleRect.bottom) {
-        const CFAColor c = ctx.cfaColor(pos);
+        const CFAColor c = ctx.cfaDesc.color(pos);
         const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
         const float3 sample = float3(
             c==CFAColor::Red   ? v : 0.,
@@ -159,7 +161,7 @@ fragment float DebayerLMMSE_NoiseEst(
 ) {
     const int2 pos = int2(in.pos.xy);
     const sampler s;
-    const CFAColor c = ctx.cfaColor(pos);
+    const CFAColor c = ctx.cfaDesc.color(pos);
     const float raw = Sample::R(rawTxt, pos);
     const float filtered = Sample::R(filteredTxt, pos);
     if (c == CFAColor::Green) return raw-filtered;
@@ -223,7 +225,7 @@ fragment float4 DebayerLMMSE_CalcG(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = ctx.cfaColor(pos);
+    const CFAColor c = ctx.cfaDesc.color(pos);
     const float raw = Sample::R(rawTxt, pos);
     float g = 0;
     if (c==CFAColor::Red || c==CFAColor::Blue) {
@@ -844,8 +846,8 @@ fragment float ReconstructHighlights(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = ctx.cfaColor(pos);
-    const CFAColor cn = ctx.cfaColor(pos.x+1,pos.y);
+    const CFAColor c = ctx.cfaDesc.color(pos);
+    const CFAColor cn = ctx.cfaDesc.color(pos.x+1,pos.y);
     Float3x3 s(rawTxt, pos);
     
     float thresh = 1;

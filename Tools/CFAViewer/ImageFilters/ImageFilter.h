@@ -16,10 +16,11 @@ public:
     };
 
     struct CFADesc {
+        CFADesc() {}
         CFADesc(CFAColor tl, CFAColor tr, CFAColor bl, CFAColor br) :
         desc{{tl,tr},{bl,br}} {}
         
-        CFAColor desc[2][2];
+        CFAColor desc[2][2] = {};
         
         template <typename T>
         CFAColor color(T x, T y) MetalConst {
