@@ -3,7 +3,6 @@
 #import <queue>
 #import <thread>
 #import "Poly2D.h"
-#import "Renderer.h"
 #import "ImageFilter.h"
 #import "MetalUtil.h"
 

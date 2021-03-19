@@ -184,8 +184,7 @@ fragment float4 Contrast(
 }
 
 fragment float4 Saturation(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant float& saturation [[buffer(1)]],
+    constant float& saturation [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -214,7 +213,6 @@ fragment float4 XYZD50FromXYYD50(
 
 
 fragment float4 LuvD50FromXYZD50(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -224,7 +222,6 @@ fragment float4 LuvD50FromXYZD50(
 }
 
 fragment float4 XYZD50FromLuvD50(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -234,7 +231,6 @@ fragment float4 XYZD50FromLuvD50(
 }
 
 fragment float4 LCHuvFromLuv(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -243,7 +239,6 @@ fragment float4 LCHuvFromLuv(
 }
 
 fragment float4 LuvFromLCHuv(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {

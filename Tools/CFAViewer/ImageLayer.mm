@@ -12,6 +12,7 @@
 #import "Poly2D.h"
 #import "Defringe.h"
 #import "DebayerLMMSE.h"
+#import "Saturation.h"
 using namespace CFAViewer;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::ImageLayerTypes;
@@ -43,6 +44,8 @@ using namespace ColorUtil;
             DebayerLMMSE::Options options;
             DebayerLMMSE filter;
         } debayerLMMSE;
+        
+        Saturation saturationFilter;
         
         bool reconstructHighlights = false;
         
@@ -89,6 +92,7 @@ using namespace ColorUtil;
         _state.renderer = Renderer(_device, _library, _commandQueue);
         _state.defringe.filter = Defringe(_state.renderer);
         _state.debayerLMMSE.filter = DebayerLMMSE(_state.renderer);
+        _state.saturationFilter = Saturation(_state.renderer);
         
         _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
         _state.sampleBuf_XYZ_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
@@ -429,53 +433,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         }
         
         // Saturation
-        {
-            // XYZ.D50 -> Luv.D50
-            {
-                _state.renderer.render("ImageLayer::LuvD50FromXYZD50", rgb,
-                    _state.ctx,
-                    _state.sampleBuf_XYZ_D50,
-                    rgb
-                );
-            }
-            
-            // Luv.D50 -> LCHuv.D50
-            {
-                _state.renderer.render("ImageLayer::LCHuvFromLuv", rgb,
-                    _state.ctx,
-                    _state.sampleBuf_XYZ_D50,
-                    rgb
-                );
-            }
-            
-            // Saturation
-            {
-                const float sat = pow(2, 2*_state.imageAdjustments.saturation);
-                _state.renderer.render("ImageLayer::Saturation", rgb,
-                    _state.ctx,
-                    sat,
-                    rgb
-                );
-            }
-            
-            // LCHuv.D50 -> Luv.D50
-            {
-                _state.renderer.render("ImageLayer::LuvFromLCHuv", rgb,
-                    _state.ctx,
-                    _state.sampleBuf_XYZ_D50,
-                    rgb
-                );
-            }
-            
-            // Luv.D50 -> XYZ.D50
-            {
-                _state.renderer.render("ImageLayer::XYZD50FromLuvD50", rgb,
-                    _state.ctx,
-                    _state.sampleBuf_XYZ_D50,
-                    rgb
-                );
-            }
-        }
+        _state.saturationFilter.run(_state.imageAdjustments.saturation, rgb);
         
         // XYZ.D50 -> LSRGB.D65
         {

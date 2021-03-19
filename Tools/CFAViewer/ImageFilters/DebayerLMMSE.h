@@ -2,7 +2,6 @@
 #import <Metal/Metal.h>
 #import "MetalUtil.h"
 #import "ImageFilter.h"
-#import "Renderer.h"
 
 namespace CFAViewer {
     class DebayerLMMSE : public ImageFilter {
