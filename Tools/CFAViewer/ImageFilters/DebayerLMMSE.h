@@ -19,12 +19,6 @@ namespace CFAViewer {
             const NSUInteger h = [rawOriginal height];
             
             Renderer::Txt raw = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            Renderer::Txt filteredHTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            Renderer::Txt filteredVTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            Renderer::Txt diffHTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            Renderer::Txt diffVTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            Renderer::Txt diffGRTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            Renderer::Txt diffGBTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             
             // Copy `rawOriginal` so we can modify it
             renderer().copy(rawOriginal, raw);
@@ -38,6 +32,7 @@ namespace CFAViewer {
             }
             
             // Horizontal interpolation
+            Renderer::Txt filteredHTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool h = true;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::Interp5", filteredHTxt,
@@ -49,6 +44,7 @@ namespace CFAViewer {
             }
             
             // Vertical interpolation
+            Renderer::Txt filteredVTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool h = false;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::Interp5", filteredVTxt,
@@ -60,6 +56,7 @@ namespace CFAViewer {
             }
             
             // Calculate DiffH
+            Renderer::Txt diffHTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             {
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffHTxt,
                     // Buffer args
@@ -71,6 +68,7 @@ namespace CFAViewer {
             }
             
             // Calculate DiffV
+            Renderer::Txt diffVTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             {
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffVTxt,
                     // Buffer args
@@ -118,6 +116,7 @@ namespace CFAViewer {
             }
             
             // Calculate diffGRTxt.r
+            Renderer::Txt diffGRTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool modeGR = true;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGRTxt,
@@ -131,6 +130,7 @@ namespace CFAViewer {
             }
             
             // Calculate diffGBTxt.b
+            Renderer::Txt diffGBTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool modeGR = false;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGBTxt,

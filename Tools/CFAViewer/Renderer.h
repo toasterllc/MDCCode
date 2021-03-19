@@ -25,15 +25,16 @@ namespace CFAViewer {
             Txt(Txt&& x) { *this = std::move(x); }
             // Move assignment operator
             Txt& operator=(Txt&& x) {
-                _state = x._state;
-                x._state = {};
+                if (this != &x) {
+                    _recycle();
+                    _state = x._state;
+                    x._state = {};
+                }
                 return *this;
             }
             
             ~Txt() {
-                if (_state.renderer) {
-                    _state.renderer->_recycleTxt(_state.txt);
-                }
+                _recycle();
             }
             
         private:
@@ -43,6 +44,11 @@ namespace CFAViewer {
                 Renderer* renderer = nullptr;
                 id<MTLTexture> txt = nil;
             } _state;
+            
+            void _recycle() {
+                if (_state.renderer) _state.renderer->_recycleTxt(_state.txt);
+                _state = {};
+            }
             
             friend class Renderer;
         };
