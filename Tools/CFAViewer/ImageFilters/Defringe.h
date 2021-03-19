@@ -278,12 +278,12 @@ namespace CFAViewer {
             const size_t bufLen = w*h*sizeof(float);
             if (!_rawBuf || [_rawBuf length]<bufLen) {
                 _rawBuf = [renderer().dev newBufferWithLength:bufLen
-                    options:MTLResourceCPUCacheModeDefaultCache];
+                    options:MTLResourceStorageModeShared];
             }
             
             if (!_gInterpBuf || [_gInterpBuf length]<bufLen) {
                 _gInterpBuf = [renderer().dev newBufferWithLength:bufLen
-                    options:MTLResourceCPUCacheModeDefaultCache];
+                    options:MTLResourceStorageModeShared];
             }
             
             renderer().copy(raw, _rawBuf);

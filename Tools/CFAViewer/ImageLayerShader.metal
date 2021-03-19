@@ -330,31 +330,6 @@ fragment float4 LSRGBD65FromXYZD50(
 
 
 
-fragment float4 ColorAdjust(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
-    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
-    
-    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
-        0.9555766,  -0.0230393, 0.0631636,
-        -0.0282895, 1.0099416,  0.0210077,
-        0.0122982,  -0.0204830, 1.3299098
-    ));
-    
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
-        3.2404542,  -1.5371385, -0.4985314,
-        -0.9692660, 1.8760108,  0.0415560,
-        0.0556434,  -0.2040259, 1.0572252
-    ));
-    float3 outputColor_LSRGB = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * XYZD50_From_CameraRaw * inputColor_cameraRaw;
-    return float4(outputColor_LSRGB, 1);
-}
-
 // Atomically sets the value at `dst` if `val` is greater than it
 void setIfGreater(volatile device atomic_uint& dst, uint val) {
     uint current = (device uint&)dst;
@@ -404,14 +379,6 @@ public:
 private:
     float _c[9];
 };
-
-//float cget(float3x3 cm, int2 pos) {
-//    return cm[pos.y+1][pos.x+1];
-//}
-//
-//float cset(float3x3 cm, int2 pos, float c) {
-//    return cm[pos.y+1][pos.x+1] = c;
-//}
 
 fragment float ReconstructHighlights(
     constant RenderContext& ctx [[buffer(0)]],
