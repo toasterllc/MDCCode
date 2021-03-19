@@ -53,9 +53,9 @@ using namespace ColorUtil;
         ImageAdjustments imageAdjustments;
         id<MTLBuffer> pixelData = nil;
         
-        id<MTLBuffer> sampleBuf_CamRaw_D50 = nil;
-        id<MTLBuffer> sampleBuf_XYZ_D50 = nil;
-        id<MTLBuffer> sampleBuf_SRGB_D65 = nil;
+        Renderer::Buf sampleBuf_CamRaw_D50;
+        Renderer::Buf sampleBuf_XYZ_D50;
+        Renderer::Buf sampleBuf_SRGB_D65;
         
         ImageLayerDataChangedHandler dataChangedHandler = nil;
     } _state;
@@ -94,9 +94,9 @@ using namespace ColorUtil;
         _state.debayerLMMSE.filter = DebayerLMMSE(_state.renderer);
         _state.saturationFilter = Saturation(_state.renderer);
         
-        _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
-        _state.sampleBuf_XYZ_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
-        _state.sampleBuf_SRGB_D65 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
+        _state.sampleBuf_CamRaw_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleBuf_XYZ_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleBuf_SRGB_D65 = _state.renderer.createBuffer(sizeof(simd::float3));
     
     return self;
 }
@@ -117,8 +117,7 @@ using namespace ColorUtil;
     const size_t len = pixelCount*sizeof(ImagePixel);
     if (len) {
         if (!_state.pixelData || [_state.pixelData length]<len) {
-            _state.pixelData = [_device newBufferWithLength:len
-                options:MTLResourceStorageModeShared];
+            _state.pixelData = _state.renderer.createBuffer(len);
             Assert(_state.pixelData, return);
         }
         
@@ -596,17 +595,17 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     if (ctx.sampleRect.left == ctx.sampleRect.right) ctx.sampleRect.right++;
     if (ctx.sampleRect.top == ctx.sampleRect.bottom) ctx.sampleRect.bottom++;
     
-    _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:
-        sizeof(simd::float3)*std::max((uint32_t)1, ctx.sampleRect.count())
-        options:MTLResourceStorageModeShared];
+    _state.sampleBuf_CamRaw_D50 =
+        _state.renderer.createBuffer(sizeof(simd::float3)*std::max((uint32_t)1,
+        ctx.sampleRect.count()));
     
-    _state.sampleBuf_XYZ_D50 = [_device newBufferWithLength:
-        sizeof(simd::float3)*std::max((uint32_t)1, ctx.sampleRect.count())
-        options:MTLResourceStorageModeShared];
+    _state.sampleBuf_XYZ_D50 =
+        _state.renderer.createBuffer(sizeof(simd::float3)*std::max((uint32_t)1,
+        ctx.sampleRect.count()));
     
-    _state.sampleBuf_SRGB_D65 = [_device newBufferWithLength:
-        sizeof(simd::float3)*std::max((uint32_t)1, ctx.sampleRect.count())
-        options:MTLResourceStorageModeShared];
+    _state.sampleBuf_SRGB_D65 =
+        _state.renderer.createBuffer(sizeof(simd::float3)*std::max((uint32_t)1,
+        ctx.sampleRect.count()));
     
     [self setNeedsDisplay];
 }

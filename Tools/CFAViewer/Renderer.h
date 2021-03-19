@@ -207,6 +207,7 @@ namespace CFAViewer {
             
             id<MTLBuffer> buf = [dev newBufferWithLength:len
                 options:MTLResourceStorageModeShared];
+            Assert(buf, return Buf());
             return Buf(*this, buf);
         }
         
@@ -233,8 +234,11 @@ namespace CFAViewer {
         
         template <typename T, typename... Ts>
         void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-            if constexpr (!std::is_same<T,id<MTLTexture>>::value && !std::is_same<T,Txt>::value) {
-                if constexpr (std::is_same<T,id<MTLBuffer>>::value) {
+            if constexpr (!std::is_same<T,Txt>::value &&
+                          !std::is_same<T,id<MTLTexture>>::value) {
+                if constexpr (std::is_same<T,Buf>::value) {
+                    [enc setFragmentBuffer:(id<MTLBuffer>)t offset:0 atIndex:idx];
+                } else if constexpr (std::is_same<T,id<MTLBuffer>>::value) {
                     [enc setFragmentBuffer:t offset:0 atIndex:idx];
                 } else {
                     [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];

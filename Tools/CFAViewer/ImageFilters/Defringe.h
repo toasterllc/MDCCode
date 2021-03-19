@@ -276,22 +276,15 @@ namespace CFAViewer {
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             const size_t bufLen = w*h*sizeof(float);
-            if (!_rawBuf || [_rawBuf length]<bufLen) {
-                _rawBuf = [renderer().dev newBufferWithLength:bufLen
-                    options:MTLResourceStorageModeShared];
-            }
+            Renderer::Buf rawBuf = renderer().createBuffer(bufLen);
+            Renderer::Buf gInterpBuf = renderer().createBuffer(bufLen);
             
-            if (!_gInterpBuf || [_gInterpBuf length]<bufLen) {
-                _gInterpBuf = [renderer().dev newBufferWithLength:bufLen
-                    options:MTLResourceStorageModeShared];
-            }
-            
-            renderer().copy(raw, _rawBuf);
-            renderer().copy(gInterp, _gInterpBuf);
+            renderer().copy(raw, rawBuf);
+            renderer().copy(gInterp, gInterpBuf);
             renderer().commitAndWait();
             
-            BufSampler<float> rawPx(w, h, _rawBuf);
-            BufSampler<float> gInterpPx(w, h, _gInterpBuf);
+            BufSampler<float> rawPx(w, h, rawBuf);
+            BufSampler<float> gInterpPx(w, h, gInterpBuf);
             
             TileGrid grid((uint32_t)w, (uint32_t)h, TileSize, TileOverlap);
             ColorDir<std::mutex> polyLocks;
@@ -425,8 +418,5 @@ namespace CFAViewer {
             
             return shifts;
         }
-        
-        id<MTLBuffer> _rawBuf = nil;
-        id<MTLBuffer> _gInterpBuf = nil;
     };
 };
