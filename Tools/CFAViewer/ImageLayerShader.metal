@@ -208,31 +208,6 @@ fragment float4 XYZD50FromLabD50(
     return float4(XYZFromLab(D50, Sample::RGB(txt, int2(in.pos.xy))), 1);
 }
 
-fragment float ExtractL(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    return Sample::R(txt, int2(in.pos.xy));
-}
-
-fragment float4 LocalContrast(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant float& amount [[buffer(1)]],
-    texture2d<float> txt [[texture(0)]],
-    texture2d<float> blurredLTxt [[texture(1)]],
-    VertexOutput in [[stage_in]]
-) {
-    const float blurredL = Sample::R(blurredLTxt, int2(in.pos.xy));
-    float3 Lab = Sample::RGB(txt, int2(in.pos.xy));
-    Lab[0] += (Lab[0]-blurredL)*amount;
-    return float4(Lab, 1);
-    
-    
-//    float bufval = (lab->L[y][x] - buf[y][x]) * a;
-//    destination[y][x] = LIM(lab->L[y][x] + bufval, 0.0001f, 32767.f);
-}
-
 constant uint UIntNormalizeVal = 65535;
 fragment float4 NormalizeXYYLuminance(
     constant RenderContext& ctx [[buffer(0)]],

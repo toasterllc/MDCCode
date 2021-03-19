@@ -13,6 +13,7 @@
 #import "Defringe.h"
 #import "DebayerLMMSE.h"
 #import "Saturation.h"
+#import "LocalContrast.h"
 using namespace CFAViewer;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::ImageLayerTypes;
@@ -382,39 +383,11 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // Local contrast
         if (_state.imageAdjustments.localContrast.enable) {
-            // Extract L
-            Renderer::Txt lTxt = _state.renderer.createTexture(MTLPixelFormatR32Float,
-                _state.ctx.imageWidth, _state.ctx.imageHeight);
-            {
-                _state.renderer.render("ImageLayer::ExtractL", lTxt,
-                    _state.ctx,
-                    rgb
-                );
-            }
-            
-            // Blur L channel
-            Renderer::Txt blurredLTxt = _state.renderer.createTexture(MTLPixelFormatR32Float,
-                _state.ctx.imageWidth, _state.ctx.imageHeight,
-                MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
-            
-            {
-                MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:_device
-                    sigma:_state.imageAdjustments.localContrast.radius];
-                [blur setEdgeMode:MPSImageEdgeModeClamp];
-                [blur encodeToCommandBuffer:_state.renderer.cmdBuf()
-                    sourceTexture:lTxt destinationTexture:blurredLTxt];
-            }
-            
-            // Local contrast
-            {
-                auto& amount = _state.imageAdjustments.localContrast.amount;
-                _state.renderer.render("ImageLayer::LocalContrast", rgb,
-                    _state.ctx,
-                    amount,
-                    rgb,
-                    blurredLTxt
-                );
-            }
+            const LocalContrast::Options opts = {
+                .amount = _state.imageAdjustments.localContrast.amount,
+                .radius = _state.imageAdjustments.localContrast.radius,
+            };
+            LocalContrast::Run(_state.renderer, opts, rgb);
         }
         
         // Lab.D50 -> XYZ.D50
