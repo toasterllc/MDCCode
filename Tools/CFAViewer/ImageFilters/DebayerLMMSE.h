@@ -122,6 +122,7 @@ namespace CFAViewer {
                 const bool modeGR = true;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGRTxt,
                     // Buffer args
+                    opts.cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -134,6 +135,7 @@ namespace CFAViewer {
                 const bool modeGR = false;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGBTxt,
                     // Buffer args
+                    opts.cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -146,6 +148,7 @@ namespace CFAViewer {
                 const bool modeGR = true;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGRTxt,
                     // Buffer args
+                    opts.cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -159,6 +162,7 @@ namespace CFAViewer {
                 const bool modeGR = false;
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGBTxt,
                     // Buffer args
+                    opts.cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -170,6 +174,8 @@ namespace CFAViewer {
             // Calculate diffGRTxt.g
             {
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGRTxt,
+                    // Buffer args
+                    opts.cfaDesc,
                     // Texture args
                     raw,
                     rgb,
@@ -180,6 +186,8 @@ namespace CFAViewer {
             // Calculate diffGBTxt.g
             {
                 renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGBTxt,
+                    // Buffer args
+                    opts.cfaDesc,
                     // Texture args
                     raw,
                     rgb,

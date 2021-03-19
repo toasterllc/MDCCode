@@ -211,16 +211,15 @@ fragment float4 CalcG(
 }
 
 fragment float CalcDiffGRGB(
-    constant bool& modeGR [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant bool& modeGR [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const bool redPx = (!(pos.y%2) && (pos.x%2));
-    const bool bluePx = ((pos.y%2) && !(pos.x%2));
-    
-    if ((modeGR && redPx) || (!modeGR && bluePx)) {
+    const CFAColor c = cfaDesc.color(pos);
+    if ((modeGR && c==CFAColor::Red) || (!modeGR && c==CFAColor::Blue)) {
         const float raw = Sample::R(rawTxt, pos);
         const float g = Sample::RGB(txt, pos).g;
         return g-raw;
@@ -263,17 +262,17 @@ float diagAvg(texture2d<float> txt, int2 pos) {
 }
 
 fragment float CalcDiagAvgDiffGRGB(
-    constant bool& modeGR [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant bool& modeGR [[buffer(1)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const bool redPx = (!(pos.y%2) && (pos.x%2));
-    const bool bluePx = ((pos.y%2) && !(pos.x%2));
+    const CFAColor c = cfaDesc.color(pos);
     
-    if ((modeGR && bluePx) || (!modeGR && redPx)) {
+    if ((modeGR && c==CFAColor::Blue) || (!modeGR && c==CFAColor::Red)) {
         return diagAvg(diffTxt, pos);
     }
     
@@ -315,14 +314,15 @@ float axialAvg(texture2d<float> txt, int2 pos) {
 }
 
 fragment float CalcAxialAvgDiffGRGB(
+    constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const bool greenPx = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-    if (greenPx) return axialAvg(diffTxt, pos);
+    const CFAColor c = cfaDesc.color(pos);
+    if (c == CFAColor::Green) return axialAvg(diffTxt, pos);
     
     // Pass-through
     return Sample::R(diffTxt, pos);
