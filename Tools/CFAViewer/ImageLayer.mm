@@ -383,11 +383,8 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // Local contrast
         if (_state.imageAdjustments.localContrast.enable) {
-            const LocalContrast::Options opts = {
-                .amount = _state.imageAdjustments.localContrast.amount,
-                .radius = _state.imageAdjustments.localContrast.radius,
-            };
-            LocalContrast::Run(_state.renderer, opts, rgb);
+            LocalContrast::Run(_state.renderer, _state.imageAdjustments.localContrast.amount,
+                _state.imageAdjustments.localContrast.radius, rgb);
         }
         
         // Lab.D50 -> XYZ.D50
