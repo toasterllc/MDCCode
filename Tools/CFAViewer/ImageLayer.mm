@@ -328,23 +328,11 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
 - (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
     NSParameterAssert(outTxt);
     
-//    TileAxis axis(211, 100);
-//    for (uint32_t off=0; off<250; off++) {
-//        printf("off=%u idx=%u\n", off, axis.tileIndex(off));
-//    }
-//    exit(0);
-    
     // Short-circuit if we don't have any image data
     if (!_state.pixelData) return;
     
     _inputHistogram = Histogram();
     _outputHistogram = Histogram();
-    
-//    id<MTLTexture> rgDeltaTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-//    id<MTLTexture> gSlopeXTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-//    id<MTLTexture> gSlopeYTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-//    id<MTLTexture> tmpTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
-//        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite)];
     
     Renderer::Txt raw = _state.renderer.createTexture(MTLPixelFormatR32Float,
         _state.ctx.imageWidth, _state.ctx.imageHeight);

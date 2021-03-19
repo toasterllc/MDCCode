@@ -11,19 +11,6 @@
 namespace CFAViewer {
     class Renderer {
     public:
-//        class Txt {
-//            operator id<MTLTexture>() const { return _txt; }
-//        private:
-//            Txt(Renderer& renderer, id<MTLTexture> txt) : _renderer(renderer), _txt(txt) {}
-//            ~Txt() { _renderer._recycleTxt(_txt); }
-//            
-//            Renderer _renderer;
-//            id<MTLTexture> _txt = nil;
-//            
-//            friend class Renderer;
-//        };
-        
-        
         class Txt {
         public:
             operator id<MTLTexture>() const { return _state.txt; }
@@ -186,7 +173,6 @@ namespace CFAViewer {
             // We don't have a cached texture matching the criteria, so create a new one
             MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
             [desc setTextureType:MTLTextureType2D];
-//            [desc setStorageMode:MTLStorageModePrivate];
             [desc setWidth:width];
             [desc setHeight:height];
             [desc setPixelFormat:fmt];

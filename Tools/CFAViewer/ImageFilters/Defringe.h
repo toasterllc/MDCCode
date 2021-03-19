@@ -258,8 +258,8 @@ namespace CFAViewer {
         //     1. f'(t) = d/dt[f(t)]     f'(t) is the derivative of f(t)
         //     2. g(t) = f(t+x)          g(t) is a time-shifted version of f(t)
         //
-        //   f(t+x) can be approximated using the tangent line of f(t) at t, thus assuming
-        //   that f(t) has constant slope in the neighborhood of `t`:
+        //   f(t+x) can be approximated using the tangent line of f(t) at t, assuming
+        //   that f(t) has constant slope in the neighborhood of `t`. Therefore:
         //     g(t) = f(t+x) ≈ f(t) + x f'(t)
         //
         //   Rearranging into the form of the standard matrix equation `Ax=b`:
@@ -267,7 +267,7 @@ namespace CFAViewer {
         //
         //   Using this formula, we can perform a least squares regression to solve for x
         //   (the amount that g(t) is shifted relative to f(t)).
-        //   We solve for this shift in the x and y directions independently.
+        //   We solve for this shift indepedently for the x/y directions and red/blue colors.
         static constexpr uint32_t TileSize = 128;
         static constexpr uint32_t TileOverlap = 16;
         static constexpr double Eps = 1e-5;
