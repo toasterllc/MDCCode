@@ -15,6 +15,7 @@
 		55460A1C2603CEAF0037A5AC /* DebayerLMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A1B2603CEAF0037A5AC /* DebayerLMMSE.metal */; };
 		55460A3326047ED60037A5AC /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3226047ED60037A5AC /* Saturation.metal */; };
 		55460A3626049F0C0037A5AC /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3526049F0C0037A5AC /* LocalContrast.metal */; };
+		55460A382604A6100037A5AC /* ImageLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A372604A6100037A5AC /* ImageLayer.metal */; };
 		55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55671A37257E984E00C1CDA4 /* IOKit.framework */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
@@ -46,6 +47,7 @@
 		55460A3226047ED60037A5AC /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
 		55460A3426049ED00037A5AC /* LocalContrast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55460A3526049F0C0037A5AC /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
+		55460A372604A6100037A5AC /* ImageLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageLayer.metal; sourceTree = "<group>"; };
 		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55671A2C257E94BD00C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
@@ -186,9 +188,10 @@
 				55EBCC8A258966FE0089A441 /* ImageLayerTypes.h */,
 				55EBCC86258966FE0089A441 /* ImageLayer.h */,
 				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
+				55460A372604A6100037A5AC /* ImageLayer.metal */,
 				554609FC2602C0940037A5AC /* ImageFilters */,
-				55460A19260342FD0037A5AC /* Renderer.metal */,
 				554609F926001F670037A5AC /* Renderer.h */,
+				55460A19260342FD0037A5AC /* Renderer.metal */,
 				55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */,
 				55E98EB825A920880062B458 /* HistogramView.h */,
 				55E98EB725A920880062B458 /* HistogramView.mm */,
@@ -298,6 +301,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55EBCC922589C3570089A441 /* HistogramLayer.mm in Sources */,
+				55460A382604A6100037A5AC /* ImageLayer.metal in Sources */,
 				55E98EB925A920890062B458 /* HistogramView.mm in Sources */,
 				55460A1A260342FD0037A5AC /* Renderer.metal in Sources */,
 				55460A05260326180037A5AC /* HistogramLayerShader.metal in Sources */,

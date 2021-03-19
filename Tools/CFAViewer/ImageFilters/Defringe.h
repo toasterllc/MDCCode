@@ -56,12 +56,12 @@ namespace CFAViewer::ImageFilter {
 
     private:
         using Poly = Poly2D<double,4>;
-
+        
         enum class Dir : uint8_t {
             X = 0,
             Y = 1,
         };
-
+        
         template <typename T>
         class ColorDir {
         public:

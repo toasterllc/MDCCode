@@ -11,10 +11,6 @@ namespace CFAViewer {
 namespace Shader {
 namespace ImageFilter {
 
-vertex VertexOutput VertexShader(uint vidx [[vertex_id]]) {
-    return Standard::VertexShader(vidx);
-}
-
 uint3 binFromColor(float3 color) {
     const uint32_t maxBin = (uint32_t)(sizeof(Histogram::r)/sizeof(*Histogram::r))-1;
     return {

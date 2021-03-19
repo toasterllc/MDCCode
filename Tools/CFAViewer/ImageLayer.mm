@@ -205,7 +205,7 @@ static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
     NSParameterAssert(name);
     id<MTLRenderPipelineState> ps = _pipelineStates[name];
     if (!ps) {
-        id<MTLFunction> vertexShader = [_library newFunctionWithName:@"CFAViewer::Shader::ImageFilter::VertexShader"];
+        id<MTLFunction> vertexShader = [_library newFunctionWithName:@"CFAViewer::Shader::ImageLayer::VertexShader"];
         Assert(vertexShader, return nil);
         id<MTLFunction> fragmentShader = [_library newFunctionWithName:name];
         Assert(fragmentShader, return nil);
