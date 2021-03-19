@@ -117,7 +117,8 @@ using namespace ColorUtil;
     const size_t len = pixelCount*sizeof(ImagePixel);
     if (len) {
         if (!_state.pixelData || [_state.pixelData length]<len) {
-            _state.pixelData = [_device newBufferWithLength:len options:MTLResourceCPUCacheModeDefaultCache];
+            _state.pixelData = [_device newBufferWithLength:len
+                options:MTLResourceStorageModeShared];
             Assert(_state.pixelData, return);
         }
         

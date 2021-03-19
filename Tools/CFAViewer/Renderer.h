@@ -3,6 +3,7 @@
 #import <unordered_map>
 #import <queue>
 #import <string>
+#import <list>
 #import <functional>
 #import "Assert.h"
 #import "MetalUtil.h"
@@ -11,20 +12,21 @@
 namespace CFAViewer {
     class Renderer {
     public:
-        class Txt {
+        template <typename T>
+        class Resource {
         public:
-            operator id<MTLTexture>() const { return _state.txt; }
+            operator T() const { return _state.resource; }
             
             // Default constructor
-            Txt() {}
+            Resource() {}
             // Copy constructor: illegal
-            Txt(const Txt& x) = delete;
+            Resource(const Resource& x) = delete;
             // Copy assignment operator: illegal
-            Txt& operator=(const Txt& x) = delete;
+            Resource& operator=(const Resource& x) = delete;
             // Move constructor: use move assignment operator
-            Txt(Txt&& x) { *this = std::move(x); }
+            Resource(Resource&& x) { *this = std::move(x); }
             // Move assignment operator
-            Txt& operator=(Txt&& x) {
+            Resource& operator=(Resource&& x) {
                 if (this != &x) {
                     _recycle();
                     _state = x._state;
@@ -33,25 +35,28 @@ namespace CFAViewer {
                 return *this;
             }
             
-            ~Txt() {
+            ~Resource() {
                 _recycle();
             }
             
         private:
-            Txt(Renderer& renderer, id<MTLTexture> txt) : _state{&renderer, txt} {}
+            Resource(Renderer& renderer, T resource) : _state{&renderer, resource} {}
             
             struct {
                 Renderer* renderer = nullptr;
-                id<MTLTexture> txt = nil;
+                T resource = nil;
             } _state;
             
             void _recycle() {
-                if (_state.renderer) _state.renderer->_recycleTxt(_state.txt);
+                if (_state.renderer) _state.renderer->_recycle(_state.resource);
                 _state = {};
             }
             
             friend class Renderer;
         };
+        
+        using Txt = Resource<id<MTLTexture>>;
+        using Buf = Resource<id<MTLBuffer>>;
         
         Renderer() {}
         Renderer(id<MTLDevice> dev, id<MTLLibrary> lib,
@@ -188,6 +193,23 @@ namespace CFAViewer {
             return Txt(*this, txt);
         }
         
+        Buf createBuffer(NSUInteger len) {
+            // Return an existing buffer if its length is between len and 2*len
+            for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
+                id<MTLBuffer> buf = *it;
+                const NSUInteger bufLen = [buf length];
+                if (bufLen>=len && bufLen<=2*len) {
+                    Buf b(*this, buf);
+                    _bufs.erase(it);
+                    return b;
+                }
+            }
+            
+            id<MTLBuffer> buf = [dev newBufferWithLength:len
+                options:MTLResourceStorageModeShared];
+            return Buf(*this, buf);
+        }
+        
         id<MTLCommandBuffer> cmdBuf() {
             if (!_cmdBuf) _cmdBuf = [_commandQueue commandBuffer];
             return _cmdBuf;
@@ -247,8 +269,12 @@ namespace CFAViewer {
             }
         }
         
-        void _recycleTxt(id<MTLTexture> txt) {
+        void _recycle(id<MTLTexture> txt) {
             _txts[txt].push(txt);
+        }
+        
+        void _recycle(id<MTLBuffer> buf) {
+            _bufs.push_back(buf);
         }
         
         id<MTLRenderPipelineState> _pipelineState(const std::string& name, MTLPixelFormat fmt) {
@@ -303,14 +329,37 @@ namespace CFAViewer {
             MTLTextureUsage _usage = MTLTextureUsageUnknown;
         };
         
+//        class BufKey {
+//        public:
+//            BufKey(id<MTLBuffer> buf) : _len([buf length]) {}
+//            BufKey(NSUInteger len) : _len(len) {}
+//            
+//            bool operator==(const BufKey& x) const {
+//                return _len==x._len;
+//            }
+//            
+//            size_t hash() const {
+//                return HashInts(_len);
+//            }
+//            
+//            struct Hash {
+//                size_t operator()(const BufKey& x) const { return x.hash(); }
+//            };
+//        
+//        private:
+//            NSUInteger _len = 0;
+//        };
+        
         id <MTLLibrary> _lib = nil;
         id <MTLCommandQueue> _commandQueue = nil;
         std::unordered_map<std::string,id<MTLRenderPipelineState>> _pipelineStates;
         std::unordered_map<TxtKey,std::queue<id<MTLTexture>>,TxtKey::Hash> _txts;
+        std::list<id<MTLBuffer>> _bufs;
         id<MTLCommandBuffer> _cmdBuf = nil;
         
         template <class...> static constexpr std::false_type _AlwaysFalse;
         
-        friend class Txt;
+        friend class Resource<id<MTLTexture>>;
+        friend class Resource<id<MTLBuffer>>;
     };
 };
