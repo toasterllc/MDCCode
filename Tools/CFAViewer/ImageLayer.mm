@@ -145,47 +145,9 @@ static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
     };
 }
 
-static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
-    return {(float)m[0], (float)m[1], (float)m[2]};
-}
-
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm {
     auto lock = std::lock_guard(_state.lock);
     _state.ctx.colorMatrix = simdFromMat(cm);
-    
-    // From "How the CIE 1931 Color-Matching Functions Were
-    // Derived from Wright–Guild Data", page 19
-    const Mat<double,3,3> XYZ_E_From_CIERGB_E(
-        0.49000, 0.31000, 0.20000,
-        0.17697, 0.81240, 0.01063,
-        0.00000, 0.01000, 0.99000
-    );
-    
-    // Bradform chromatic adaptation: XYZ.E -> XYZ.D50
-    const Mat<double,3,3> XYZ_D50_From_XYZ_E(
-         0.9977545, -0.0041632, -0.0293713,
-        -0.0097677,  1.0183168, -0.0085490,
-        -0.0074169,  0.0134416,  0.8191853
-    );
-    
-    const Mat<double,3,3> XYZ_D50_From_CIERGB_E = XYZ_D50_From_XYZ_E * XYZ_E_From_CIERGB_E;
-    const Mat<double,3,3> CameraRaw_D50_From_XYZ_D50 = cm.inv();
-    
-    // maxY = maximum luminance possible, given the color matrix `cm`
-//    const double maxY = std::max(0.,cm[3]) + std::max(0.,cm[4]) + std::max(0.,cm[5]);
-    
-    // Luminance to apply to the primaries
-    const double maxY = 6.5;
-    
-    // Enumerate the primaries in the CIE RGB colorspace, and convert them to XYY
-    Color_XYY_D50 whitePoint_XYY_D50 = XYYFromXYZ(XYZ_D50_From_CIERGB_E * Color_CIERGB_E(1.,1.,1.));
-    
-    // Set the luminance of every color to the maximum luminance possible
-    whitePoint_XYY_D50[2] = maxY;
-    
-    _state.ctx.whitePoint_XYY_D50 = simdFromMat(whitePoint_XYY_D50);
-    _state.ctx.whitePoint_CamRaw_D50 = simdFromMat(CameraRaw_D50_From_XYZ_D50 * XYZFromXYY(whitePoint_XYY_D50));
-    
     [self setNeedsDisplay];
 }
 
@@ -243,7 +205,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     NSParameterAssert(name);
     id<MTLRenderPipelineState> ps = _pipelineStates[name];
     if (!ps) {
-        id<MTLFunction> vertexShader = [_library newFunctionWithName:@"ImageLayer::VertexShader"];
+        id<MTLFunction> vertexShader = [_library newFunctionWithName:@"CFAViewer::Shader::ImageFilter::VertexShader"];
         Assert(vertexShader, return nil);
         id<MTLFunction> fragmentShader = [_library newFunctionWithName:name];
         Assert(fragmentShader, return nil);
@@ -272,7 +234,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     Renderer::Txt raw = _state.renderer.createTexture(MTLPixelFormatR32Float,
         _state.ctx.imageWidth, _state.ctx.imageHeight);
     
-    _state.renderer.render("ImageLayer::LoadRaw", raw,
+    _state.renderer.render("CFAViewer::Shader::ImageFilter::LoadRaw", raw,
         // Buffer args
         _state.ctx,
         _state.pixelData,
@@ -304,7 +266,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
             Renderer::Txt tmp = _state.renderer.createTexture(MTLPixelFormatR32Float,
                 _state.ctx.imageWidth, _state.ctx.imageHeight);
             
-            _state.renderer.render("ImageLayer::ReconstructHighlights", tmp,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::ReconstructHighlights", tmp,
                 // Buffer args
                 _state.ctx,
                 // Texture args
@@ -321,7 +283,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // Camera raw -> XYY.D50
         {
-            _state.renderer.render("ImageLayer::XYYD50FromCameraRaw", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::XYYD50FromCameraRaw", rgb,
                 _state.ctx,
                 rgb
             );
@@ -330,24 +292,16 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         // Exposure
         {
             const float exposure = pow(2, _state.imageAdjustments.exposure);
-            _state.renderer.render("ImageLayer::Exposure", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::Exposure", rgb,
                 _state.ctx,
                 exposure,
                 rgb
             );
         }
         
-//        // Decrease luminance
-//        {
-//            _state.renderer.render("ImageLayer::DecreaseLuminance", txt,
-//                _state.ctx,
-//                txt
-//            );
-//        }
-        
         // XYY.D50 -> XYZ.D50
         {
-            _state.renderer.render("ImageLayer::XYZD50FromXYYD50", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::XYZD50FromXYYD50", rgb,
                 _state.ctx,
                 rgb
             );
@@ -355,7 +309,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // XYZ.D50 -> Lab.D50
         {
-            _state.renderer.render("ImageLayer::LabD50FromXYZD50", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::LabD50FromXYZD50", rgb,
                 _state.ctx,
                 rgb
             );
@@ -363,20 +317,18 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // Brightness
         {
-            auto brightness = _state.imageAdjustments.brightness;
-            _state.renderer.render("ImageLayer::Brightness", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::Brightness", rgb,
                 _state.ctx,
-                brightness,
+                _state.imageAdjustments.brightness,
                 rgb
             );
         }
         
         // Contrast
         {
-            const float contrast = _state.imageAdjustments.contrast;
-            _state.renderer.render("ImageLayer::Contrast", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::Contrast", rgb,
                 _state.ctx,
-                contrast,
+                _state.imageAdjustments.contrast,
                 rgb
             );
         }
@@ -389,7 +341,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // Lab.D50 -> XYZ.D50
         {
-            _state.renderer.render("ImageLayer::XYZD50FromLabD50", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::XYZD50FromLabD50", rgb,
                 _state.ctx,
                 rgb
             );
@@ -400,7 +352,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // XYZ.D50 -> LSRGB.D65
         {
-            _state.renderer.render("ImageLayer::LSRGBD65FromXYZD50", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::LSRGBD65FromXYZD50", rgb,
                 _state.ctx,
                 _state.sampleBuf_XYZ_D50,
                 rgb
@@ -409,7 +361,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // Apply SRGB gamma
         {
-            _state.renderer.render("ImageLayer::SRGBGamma", rgb,
+            _state.renderer.render("CFAViewer::Shader::ImageFilter::SRGBGamma", rgb,
                 _state.ctx,
                 _state.sampleBuf_SRGB_D65,
                 rgb
@@ -418,7 +370,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     }
     
     // Final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-    _state.renderer.render("ImageLayer::Display", outTxt,
+    _state.renderer.render("CFAViewer::Shader::ImageFilter::Display", outTxt,
         // Buffer args
         _state.ctx,
         // Texture args

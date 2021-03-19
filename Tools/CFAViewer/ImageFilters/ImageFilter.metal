@@ -7,7 +7,9 @@ using namespace CFAViewer::MetalUtil::Standard;
 using namespace CFAViewer::ImageLayerTypes;
 using namespace CFAViewer::ImageFilter;
 
-namespace ImageLayer {
+namespace CFAViewer {
+namespace Shader {
+namespace ImageFilter {
 
 vertex VertexOutput VertexShader(uint vidx [[vertex_id]]) {
     return Standard::VertexShader(vidx);
@@ -230,39 +232,6 @@ fragment float4 NormalizeRGB(
     const float denom = (float)max3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
     const float3 c = Sample::RGB(txt, int2(in.pos.xy)) / denom;
     return float4(c, 1);
-}
-
-fragment float4 ClipRGB(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant Vals3& maxValsRGB[[buffer(1)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-//    const float m = .7;
-    const float m = (float)min3(maxValsRGB.x, maxValsRGB.y, maxValsRGB.z)/UIntNormalizeVal;
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
-    return float4(min(m, c.r), min(m, c.g), min(m, c.b), 1);
-}
-
-fragment float4 DecreaseLuminance(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    float3 c_XYYD50 = Sample::RGB(txt, int2(in.pos.xy));
-    c_XYYD50[2] /= 4.5;
-    return float4(c_XYYD50, 1);
-}
-
-fragment float4 DecreaseLuminanceXYZD50(
-    constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    float3 c_XYZD50 = Sample::RGB(txt, int2(in.pos.xy));
-    float3 c_XYYD50 = XYYFromXYZ(c_XYZD50);
-    c_XYYD50[2] /= 3;
-    return float4(XYZFromXYY(c_XYYD50), 1);
 }
 
 fragment float4 LSRGBD65FromXYZD50(
@@ -593,3 +562,5 @@ fragment float4 DisplayR(
 }
 
 } // namespace ImageLayer
+} // namespace Shader
+} // namespace CFAViewer
