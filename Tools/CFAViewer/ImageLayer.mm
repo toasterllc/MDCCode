@@ -11,6 +11,7 @@
 #import "TimeInstant.h"
 #import "Poly2D.h"
 #import "Defringe.h"
+#import "DebayerLMMSE.h"
 using namespace CFAViewer;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::ImageLayerTypes;
@@ -19,7 +20,6 @@ using namespace ColorUtil;
 @implementation ImageLayer {
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
-    id<MTLHeap> _heap;
     id<MTLLibrary> _library;
     NSMutableDictionary* _pipelineStates;
 //    id<MTLRenderPipelineState> _debayerPipelineState;
@@ -39,10 +39,14 @@ using namespace ColorUtil;
             Defringe filter;
         } defringe;
         
+        struct {
+            DebayerLMMSE::Options options;
+            DebayerLMMSE filter;
+        } debayerLMMSE;
+        
         bool reconstructHighlights = false;
         
         RenderContext ctx;
-        bool debayerLMMSEGammaEnabled = false;
         ImageAdjustments imageAdjustments;
         id<MTLBuffer> pixelData = nil;
         
@@ -71,10 +75,10 @@ using namespace ColorUtil;
     
     _commandQueue = [_device newCommandQueue];
     
-    MTLHeapDescriptor* desc = [MTLHeapDescriptor new];
-    [desc setSize:128*1024*1024];
-//    [desc setStorageMode:MTLStorageModeManaged];
-    _heap = [_device newHeapWithDescriptor:desc];
+//    MTLHeapDescriptor* desc = [MTLHeapDescriptor new];
+//    [desc setSize:128*1024*1024];
+////    [desc setStorageMode:MTLStorageModeManaged];
+//    _heap = [_device newHeapWithDescriptor:desc];
     
     _library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
     Assert(_library, return nil);
@@ -82,8 +86,9 @@ using namespace ColorUtil;
     _pipelineStates = [NSMutableDictionary new];
     
     auto lock = std::lock_guard(_state.lock);
-        _state.renderer = Renderer(_device, _library, _commandQueue, _heap);
+        _state.renderer = Renderer(_device, _library, _commandQueue);
         _state.defringe.filter = Defringe(_state.renderer);
+        _state.debayerLMMSE.filter = DebayerLMMSE(_state.renderer);
         
         _state.sampleBuf_CamRaw_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
         _state.sampleBuf_XYZ_D50 = [_device newBufferWithLength:sizeof(simd::float3) options:MTLResourceStorageModeShared];
@@ -204,9 +209,9 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     [self setNeedsDisplay];
 }
 
-- (void)setDebayerLMMSEGammaEnabled:(bool)en {
+- (void)setDebayerLMMSEApplyGamma:(bool)en {
     auto lock = std::lock_guard(_state.lock);
-    _state.debayerLMMSEGammaEnabled = en;
+    _state.debayerLMMSE.options.applyGamma = en;
     [self setNeedsDisplay];
 }
 
@@ -256,68 +261,68 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     return ps;
 }
 
-using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
-// _state.lock must be held
-- (void)_renderPass:(id<MTLCommandBuffer>)cmdBuf texture:(id<MTLTexture>)texture
-    name:(NSString*)name block:(NS_NOESCAPE RenderPassBlock)block {
-    
-    NSParameterAssert(cmdBuf);
-    NSParameterAssert(texture);
-    NSParameterAssert(name);
-    NSParameterAssert(block);
-    
-    MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-    [[renderPassDescriptor colorAttachments][0] setTexture:texture];
-    [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
-    [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
-    [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
-    id<MTLRenderCommandEncoder> encoder = [cmdBuf renderCommandEncoderWithDescriptor:renderPassDescriptor];
-    
-    [encoder setRenderPipelineState:[self _pipelineState:name format:[texture pixelFormat]]];
-    [encoder setFrontFacingWinding:MTLWindingCounterClockwise];
-    [encoder setCullMode:MTLCullModeNone];
-    [encoder setVertexBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-    
-    block(encoder);
-    
-    [encoder drawPrimitives:MTLPrimitiveTypeTriangle
-        vertexStart:0 vertexCount:MetalUtil::SquareVertIdxCount];
-    
-    [encoder endEncoding];
-}
-
-// _state.lock must be held
-- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt {
-    return [self _newTextureWithPixelFormat:fmt
-        width:_state.ctx.imageWidth
-        height:_state.ctx.imageHeight
-        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)];
-}
-
-// _state.lock must be held
-- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt
-    usage:(MTLTextureUsage)usage {
-    return [self _newTextureWithPixelFormat:fmt
-        width:_state.ctx.imageWidth
-        height:_state.ctx.imageHeight
-        usage:usage];
-}
-
-- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt
-    width:(NSUInteger)width
-    height:(NSUInteger)height
-    usage:(MTLTextureUsage)usage {
-    
-    MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-    [desc setTextureType:MTLTextureType2D];
-    [desc setWidth:width];
-    [desc setHeight:height];
-    [desc setPixelFormat:fmt];
-    [desc setUsage:usage];
-    id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
-    Assert(txt, return nil);
-    return txt;
-}
+//using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
+//// _state.lock must be held
+//- (void)_renderPass:(id<MTLCommandBuffer>)cmdBuf texture:(id<MTLTexture>)texture
+//    name:(NSString*)name block:(NS_NOESCAPE RenderPassBlock)block {
+//    
+//    NSParameterAssert(cmdBuf);
+//    NSParameterAssert(texture);
+//    NSParameterAssert(name);
+//    NSParameterAssert(block);
+//    
+//    MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
+//    [[renderPassDescriptor colorAttachments][0] setTexture:texture];
+//    [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
+//    [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,1}];
+//    [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
+//    id<MTLRenderCommandEncoder> encoder = [cmdBuf renderCommandEncoderWithDescriptor:renderPassDescriptor];
+//    
+//    [encoder setRenderPipelineState:[self _pipelineState:name format:[texture pixelFormat]]];
+//    [encoder setFrontFacingWinding:MTLWindingCounterClockwise];
+//    [encoder setCullMode:MTLCullModeNone];
+//    [encoder setVertexBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
+//    
+//    block(encoder);
+//    
+//    [encoder drawPrimitives:MTLPrimitiveTypeTriangle
+//        vertexStart:0 vertexCount:MetalUtil::SquareVertIdxCount];
+//    
+//    [encoder endEncoding];
+//}
+//
+//// _state.lock must be held
+//- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt {
+//    return [self _newTextureWithPixelFormat:fmt
+//        width:_state.ctx.imageWidth
+//        height:_state.ctx.imageHeight
+//        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)];
+//}
+//
+//// _state.lock must be held
+//- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt
+//    usage:(MTLTextureUsage)usage {
+//    return [self _newTextureWithPixelFormat:fmt
+//        width:_state.ctx.imageWidth
+//        height:_state.ctx.imageHeight
+//        usage:usage];
+//}
+//
+//- (id<MTLTexture>)_newTextureWithPixelFormat:(MTLPixelFormat)fmt
+//    width:(NSUInteger)width
+//    height:(NSUInteger)height
+//    usage:(MTLTextureUsage)usage {
+//    
+//    MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+//    [desc setTextureType:MTLTextureType2D];
+//    [desc setWidth:width];
+//    [desc setHeight:height];
+//    [desc setPixelFormat:fmt];
+//    [desc setUsage:usage];
+//    id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
+//    Assert(txt, return nil);
+//    return txt;
+//}
 
 // Lock must be held
 - (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
@@ -341,20 +346,10 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 //    id<MTLTexture> tmpTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
 //        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite)];
     
-    id<MTLTexture> rawTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> raw2Txt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> filteredHTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> filteredVTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> diffHTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> diffVTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> diffGRTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> diffGBTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> lTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float];
-    id<MTLTexture> blurredLTxt = [self _newTextureWithPixelFormat:MTLPixelFormatR32Float
-        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite)];
-    id<MTLTexture> txt = [self _newTextureWithPixelFormat:MTLPixelFormatRGBA32Float];
+    Renderer::Txt raw = _state.renderer.createTexture(MTLPixelFormatR32Float,
+        _state.ctx.imageWidth, _state.ctx.imageHeight);
     
-    _state.renderer.render("ImageLayer::LoadRaw", rawTxt,
+    _state.renderer.render("ImageLayer::LoadRaw", raw,
         // Buffer args
         _state.ctx,
         _state.pixelData,
@@ -362,465 +357,233 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
         // Texture args
     );
     
+    Renderer::Txt rgb = _state.renderer.createTexture(MTLPixelFormatRGBA32Float,
+        _state.ctx.imageWidth, _state.ctx.imageHeight);
+    
     // Raw mode (bilinear debayer only)
     if (_state.rawMode) {
         // De-bayer
-        _state.renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", txt,
+        _state.renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
             // Buffer args
             _state.ctx.cfaDesc,
             // Texture args
-            rawTxt
-        );
-        
-        // Final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-        _state.renderer.render("ImageLayer::Display", outTxt,
-            // Buffer args
-            _state.ctx,
-            // Texture args
-            txt
+            raw
         );
     
     } else {
-        id<MTLCommandBuffer> cmdBuf = nil;
-        
         if (_state.defringe.en) {
-            [cmdBuf commit];
-            
             _state.defringe.options.cfaDesc = _state.ctx.cfaDesc;
-            _state.defringe.filter.run(_state.defringe.options, rawTxt);
-            
-            cmdBuf = [_commandQueue commandBuffer];
+            _state.defringe.filter.run(_state.defringe.options, raw);
         }
         
-        // Fix highlights
+        // Reconstruct highlights
         if (_state.reconstructHighlights) {
-            [self _renderPass:cmdBuf texture:raw2Txt name:@"ImageLayer::ReconstructHighlights"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:rawTxt atIndex:0];
-                }
-            ];
-            // TODO: figure out a better way to do this. Once we start using an
-            // TODO: MTLHeap (or similar) does that solve this?
-            std::swap(rawTxt, raw2Txt);
+            Renderer::Txt tmp = _state.renderer.createTexture(MTLPixelFormatR32Float,
+                _state.ctx.imageWidth, _state.ctx.imageHeight);
+            
+            _state.renderer.render("ImageLayer::ReconstructHighlights", tmp,
+                // Buffer args
+                _state.ctx,
+                // Texture args
+                raw
+            );
+            raw = std::move(tmp);
         }
         
         // LMMSE Debayer
         {
-            // Gamma before (improves quality of edges)
-            if (_state.debayerLMMSEGammaEnabled) {
-                [self _renderPass:cmdBuf texture:rawTxt name:@"ImageLayer::DebayerLMMSE_Gamma"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                    }
-                ];
-            }
-            
-            // Horizontal interpolation
-            {
-                const bool h = true;
-                [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer::DebayerLMMSE_Interp5"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                    }
-                ];
-            }
-            
-            // Vertical interpolation
-            {
-                const bool h = false;
-                [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer::DebayerLMMSE_Interp5"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                    }
-                ];
-            }
-            
-            // Calculate DiffH
-            {
-                [self _renderPass:cmdBuf texture:diffHTxt name:@"ImageLayer::DebayerLMMSE_NoiseEst"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:filteredHTxt atIndex:1];
-                    }
-                ];
-            }
-            
-            // Calculate DiffV
-            {
-                [self _renderPass:cmdBuf texture:diffVTxt name:@"ImageLayer::DebayerLMMSE_NoiseEst"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:filteredVTxt atIndex:1];
-                    }
-                ];
-            }
-            
-            // Smooth DiffH
-            {
-                const bool h = true;
-                [self _renderPass:cmdBuf texture:filteredHTxt name:@"ImageLayer::DebayerLMMSE_Smooth9"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
-                        [encoder setFragmentTexture:diffHTxt atIndex:0];
-                    }
-                ];
-            }
-            
-            // Smooth DiffV
-            {
-                const bool h = false;
-                [self _renderPass:cmdBuf texture:filteredVTxt name:@"ImageLayer::DebayerLMMSE_Smooth9"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&h length:sizeof(h) atIndex:1];
-                        [encoder setFragmentTexture:diffVTxt atIndex:0];
-                    }
-                ];
-            }
-            
-            // Calculate txt.g
-            {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::DebayerLMMSE_CalcG"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:filteredHTxt atIndex:1];
-                        [encoder setFragmentTexture:diffHTxt atIndex:2];
-                        [encoder setFragmentTexture:filteredVTxt atIndex:3];
-                        [encoder setFragmentTexture:diffVTxt atIndex:4];
-                    }
-                ];
-            }
-            
-            // Calculate diffGRTxt.r
-            {
-                const bool modeGR = true;
-                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer::DebayerLMMSE_CalcDiffGRGB"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:1];
-                    }
-                ];
-            }
-            
-            // Calculate diffGBTxt.b
-            {
-                const bool modeGR = false;
-                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer::DebayerLMMSE_CalcDiffGRGB"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:1];
-                    }
-                ];
-            }
-            
-            // Calculate diffGRTxt.b
-            {
-                const bool modeGR = true;
-                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer::DebayerLMMSE_CalcDiagAvgDiffGRGB"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:1];
-                        [encoder setFragmentTexture:diffGRTxt atIndex:2];
-                    }
-                ];
-            }
-            
-            // Calculate diffGBTxt.r
-            {
-                const bool modeGR = false;
-                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer::DebayerLMMSE_CalcDiagAvgDiffGRGB"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBytes:&modeGR length:sizeof(modeGR) atIndex:1];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:1];
-                        [encoder setFragmentTexture:diffGBTxt atIndex:2];
-                    }
-                ];
-            }
-            
-            // Calculate diffGRTxt.g
-            {
-                [self _renderPass:cmdBuf texture:diffGRTxt name:@"ImageLayer::DebayerLMMSE_CalcAxialAvgDiffGRGB"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:1];
-                        [encoder setFragmentTexture:diffGRTxt atIndex:2];
-                    }
-                ];
-            }
-            
-            // Calculate diffGBTxt.g
-            {
-                [self _renderPass:cmdBuf texture:diffGBTxt name:@"ImageLayer::DebayerLMMSE_CalcAxialAvgDiffGRGB"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:rawTxt atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:1];
-                        [encoder setFragmentTexture:diffGBTxt atIndex:2];
-                    }
-                ];
-            }
-            
-            // Calculate txt.rb
-            {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::DebayerLMMSE_CalcRB"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                        [encoder setFragmentTexture:diffGRTxt atIndex:1];
-                        [encoder setFragmentTexture:diffGBTxt atIndex:2];
-                    }
-                ];
-            }
-            
-            // Gamma after (improves quality of edges)
-            if (_state.debayerLMMSEGammaEnabled) {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::DebayerLMMSE_Degamma"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
-            }
+            _state.debayerLMMSE.options.cfaDesc = _state.ctx.cfaDesc;
+            _state.debayerLMMSE.filter.run(_state.debayerLMMSE.options, raw, rgb);
         }
         
         // Camera raw -> XYY.D50
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::XYYD50FromCameraRaw"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            _state.renderer.render("ImageLayer::XYYD50FromCameraRaw", rgb,
+                _state.ctx,
+                rgb
+            );
         }
         
         // Exposure
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::Exposure"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    const float exposure = pow(2, _state.imageAdjustments.exposure);
-                    [encoder setFragmentBytes:&exposure length:sizeof(exposure) atIndex:1];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            const float exposure = pow(2, _state.imageAdjustments.exposure);
+            _state.renderer.render("ImageLayer::Exposure", rgb,
+                _state.ctx,
+                exposure,
+                rgb
+            );
         }
         
 //        // Decrease luminance
 //        {
-//            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::DecreaseLuminance"
-//                block:^(id<MTLRenderCommandEncoder> encoder) {
-//                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-//                    [encoder setFragmentTexture:txt atIndex:0];
-//                }
-//            ];
+//            _state.renderer.render("ImageLayer::DecreaseLuminance", txt,
+//                _state.ctx,
+//                txt
+//            );
 //        }
         
         // XYY.D50 -> XYZ.D50
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::XYZD50FromXYYD50"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            _state.renderer.render("ImageLayer::XYZD50FromXYYD50", rgb,
+                _state.ctx,
+                rgb
+            );
         }
         
         // XYZ.D50 -> Lab.D50
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::LabD50FromXYZD50"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            _state.renderer.render("ImageLayer::LabD50FromXYZD50", rgb,
+                _state.ctx,
+                rgb
+            );
         }
         
         // Brightness
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::Brightness"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    auto brightness = _state.imageAdjustments.brightness;
-                    [encoder setFragmentBytes:&brightness length:sizeof(brightness) atIndex:1];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            auto brightness = _state.imageAdjustments.brightness;
+            _state.renderer.render("ImageLayer::Brightness", rgb,
+                _state.ctx,
+                brightness,
+                rgb
+            );
         }
         
         // Contrast
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::Contrast"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    const float contrast = _state.imageAdjustments.contrast;
-                    [encoder setFragmentBytes:&contrast length:sizeof(contrast) atIndex:1];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            const float contrast = _state.imageAdjustments.contrast;
+            _state.renderer.render("ImageLayer::Contrast", rgb,
+                _state.ctx,
+                contrast,
+                rgb
+            );
         }
         
         // Local contrast
         if (_state.imageAdjustments.localContrast.enable) {
             // Extract L
+            Renderer::Txt lTxt = _state.renderer.createTexture(MTLPixelFormatR32Float,
+                _state.ctx.imageWidth, _state.ctx.imageHeight);
             {
-                [self _renderPass:cmdBuf texture:lTxt name:@"ImageLayer::ExtractL"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
+                _state.renderer.render("ImageLayer::ExtractL", lTxt,
+                    _state.ctx,
+                    rgb
+                );
             }
             
             // Blur L channel
+            Renderer::Txt blurredLTxt = _state.renderer.createTexture(MTLPixelFormatR32Float,
+                _state.ctx.imageWidth, _state.ctx.imageHeight,
+                MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
+            
             {
                 MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:_device
                     sigma:_state.imageAdjustments.localContrast.radius];
                 [blur setEdgeMode:MPSImageEdgeModeClamp];
-                [blur encodeToCommandBuffer:cmdBuf sourceTexture:lTxt destinationTexture:blurredLTxt];
+                [blur encodeToCommandBuffer:_state.renderer.cmdBuf()
+                    sourceTexture:lTxt destinationTexture:blurredLTxt];
             }
             
             // Local contrast
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::LocalContrast"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        auto& amount = _state.imageAdjustments.localContrast.amount;
-                        [encoder setFragmentBytes:&amount length:sizeof(amount) atIndex:1];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                        [encoder setFragmentTexture:blurredLTxt atIndex:1];
-                    }
-                ];
+                auto& amount = _state.imageAdjustments.localContrast.amount;
+                _state.renderer.render("ImageLayer::LocalContrast", rgb,
+                    _state.ctx,
+                    amount,
+                    rgb,
+                    blurredLTxt
+                );
             }
         }
         
         // Lab.D50 -> XYZ.D50
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::XYZD50FromLabD50"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            _state.renderer.render("ImageLayer::XYZD50FromLabD50", rgb,
+                _state.ctx,
+                rgb
+            );
         }
         
         // Saturation
         {
             // XYZ.D50 -> Luv.D50
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::LuvD50FromXYZD50"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
+                _state.renderer.render("ImageLayer::LuvD50FromXYZD50", rgb,
+                    _state.ctx,
+                    _state.sampleBuf_XYZ_D50,
+                    rgb
+                );
             }
             
             // Luv.D50 -> LCHuv.D50
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::LCHuvFromLuv"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
+                _state.renderer.render("ImageLayer::LCHuvFromLuv", rgb,
+                    _state.ctx,
+                    _state.sampleBuf_XYZ_D50,
+                    rgb
+                );
             }
             
             // Saturation
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::Saturation"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        const float sat = pow(2, 2*_state.imageAdjustments.saturation);
-                        [encoder setFragmentBytes:&sat length:sizeof(sat) atIndex:1];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
+                const float sat = pow(2, 2*_state.imageAdjustments.saturation);
+                _state.renderer.render("ImageLayer::Saturation", rgb,
+                    _state.ctx,
+                    sat,
+                    rgb
+                );
             }
             
             // LCHuv.D50 -> Luv.D50
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::LuvFromLCHuv"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
+                _state.renderer.render("ImageLayer::LuvFromLCHuv", rgb,
+                    _state.ctx,
+                    _state.sampleBuf_XYZ_D50,
+                    rgb
+                );
             }
             
             // Luv.D50 -> XYZ.D50
             {
-                [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::XYZD50FromLuvD50"
-                    block:^(id<MTLRenderCommandEncoder> encoder) {
-                        [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                        [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
-                        [encoder setFragmentTexture:txt atIndex:0];
-                    }
-                ];
+                _state.renderer.render("ImageLayer::XYZD50FromLuvD50", rgb,
+                    _state.ctx,
+                    _state.sampleBuf_XYZ_D50,
+                    rgb
+                );
             }
         }
         
         // XYZ.D50 -> LSRGB.D65
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::LSRGBD65FromXYZD50"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentBuffer:_state.sampleBuf_XYZ_D50 offset:0 atIndex:1];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            _state.renderer.render("ImageLayer::LSRGBD65FromXYZD50", rgb,
+                _state.ctx,
+                _state.sampleBuf_XYZ_D50,
+                rgb
+            );
         }
         
         // Apply SRGB gamma
         {
-            [self _renderPass:cmdBuf texture:txt name:@"ImageLayer::SRGBGamma"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentBuffer:_state.sampleBuf_SRGB_D65 offset:0 atIndex:1];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
-        }
-        
-        // Run the final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-        {
-            [self _renderPass:cmdBuf texture:outTxt name:@"ImageLayer::Display"
-                block:^(id<MTLRenderCommandEncoder> encoder) {
-                    [encoder setFragmentBytes:&_state.ctx length:sizeof(_state.ctx) atIndex:0];
-                    [encoder setFragmentTexture:txt atIndex:0];
-                }
-            ];
+            _state.renderer.render("ImageLayer::SRGBGamma", rgb,
+                _state.ctx,
+                _state.sampleBuf_SRGB_D65,
+                rgb
+            );
         }
     }
+    
+    // Final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
+    _state.renderer.render("ImageLayer::Display", outTxt,
+        // Buffer args
+        _state.ctx,
+        // Texture args
+        rgb
+    );
     
     // If outTxt isn't framebuffer-only, then do a blit-sync, which is
     // apparently required for [outTxt getBytes:] to work, which
     // -CGImage uses.
-    {
-        if (![outTxt isFramebufferOnly]) {
-            _state.renderer.sync(outTxt);
-        }
+    if (![outTxt isFramebufferOnly]) {
+        _state.renderer.sync(outTxt);
     }
     
     if (drawable) _state.renderer.present(drawable);
@@ -856,8 +619,9 @@ using RenderPassBlock = void(^)(id<MTLRenderCommandEncoder>);
 
 - (id)CGImage {
     auto lock = std::lock_guard(_state.lock);
-    id<MTLTexture> txt = [self _newTextureWithPixelFormat:MTLPixelFormatBGRA8Unorm
-        usage:(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)];
+    Renderer::Txt txt = _state.renderer.createTexture(MTLPixelFormatBGRA8Unorm,
+        _state.ctx.imageWidth, _state.ctx.imageHeight,
+        MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     [self _displayToTexture:txt drawable:nil];
     const NSUInteger w = [txt width];
     const NSUInteger h = [txt height];

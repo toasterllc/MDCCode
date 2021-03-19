@@ -34,7 +34,7 @@ namespace CFAViewer {
             );
             
             {
-                id<MTLTexture> gInterp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+                Renderer::Txt gInterp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
                 renderer().render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
                     // Buffer args
                     opts.cfaDesc,
@@ -186,7 +186,7 @@ namespace CFAViewer {
             // determine the appropriate shift amount to use for each pixel.
             constexpr size_t ShiftTextureWidth = 20;
             ColorDir<float[16]> polyCoeffs;
-            ColorDir<id<MTLTexture>> shiftTxts;
+            ColorDir<Renderer::Txt> shiftTxts;
             for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
                     const auto& coeffs = polys(c,dir).coeffs().vals;
@@ -217,7 +217,7 @@ namespace CFAViewer {
             // We have to render to `tmp` (not `raw`), because
             // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
             // which would introduce a data race if we rendered to `raw` while also sampling it.
-            id<MTLTexture> tmp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt tmp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
             renderer().render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
                 // Buffer args
                 opts.cfaDesc,

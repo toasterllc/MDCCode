@@ -44,7 +44,7 @@ namespace CFAViewer::ImageLayerTypes {
 
 - (void)setReconstructHighlights:(bool)en;
 
-- (void)setDebayerLMMSEGammaEnabled:(bool)en;
+- (void)setDebayerLMMSEApplyGamma:(bool)en;
 
 - (void)setImageAdjustments:(const CFAViewer::ImageLayerTypes::ImageAdjustments&)adj;
 

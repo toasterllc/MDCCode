@@ -260,7 +260,7 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     
     [self _setReconstructHighlights:true];
     
-    [self _setDebayerLMMSEGammaEnabled:true];
+    [self _setDebayerLMMSEApplyGamma:true];
     
     [self _setImageAdjustments:{
         .exposure = -2.4,
@@ -944,7 +944,7 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     
     // Debayer
     {
-        [self _setDebayerLMMSEGammaEnabled:([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn)];
+        [self _setDebayerLMMSEApplyGamma:([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn)];
     }
     
     // Image adjustments
@@ -989,9 +989,9 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     [[_mainView imageLayer] setImageAdjustments:adj];
 }
 
-- (void)_setDebayerLMMSEGammaEnabled:(bool)en {
+- (void)_setDebayerLMMSEApplyGamma:(bool)en {
     [_debayerLMMSEGammaCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-    [[_mainView imageLayer] setDebayerLMMSEGammaEnabled:en];
+    [[_mainView imageLayer] setDebayerLMMSEApplyGamma:en];
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {

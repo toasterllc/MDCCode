@@ -1,17 +1,69 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import <unordered_map>
+#import <queue>
 #import <string>
+#import <functional>
 #import "Assert.h"
 #import "MetalUtil.h"
+#import "HashInts.h"
 
 namespace CFAViewer {
     class Renderer {
     public:
+//        class Txt {
+//            operator id<MTLTexture>() const { return _txt; }
+//        private:
+//            Txt(Renderer& renderer, id<MTLTexture> txt) : _renderer(renderer), _txt(txt) {}
+//            ~Txt() { _renderer._recycleTxt(_txt); }
+//            
+//            Renderer _renderer;
+//            id<MTLTexture> _txt = nil;
+//            
+//            friend class Renderer;
+//        };
+        
+        
+        class Txt {
+        public:
+            operator id<MTLTexture>() const { return _state.txt; }
+            
+            // Default constructor
+            Txt() {}
+            // Copy constructor: illegal
+            Txt(const Txt& x) = delete;
+            // Copy assignment operator: illegal
+            Txt& operator=(const Txt& x) = delete;
+            // Move constructor: use move assignment operator
+            Txt(Txt&& x) { *this = std::move(x); }
+            // Move assignment operator
+            Txt& operator=(Txt&& x) {
+                _state = x._state;
+                x._state = {};
+                return *this;
+            }
+            
+            ~Txt() {
+                if (_state.renderer) {
+                    _state.renderer->_recycleTxt(_state.txt);
+                }
+            }
+            
+        private:
+            Txt(Renderer& renderer, id<MTLTexture> txt) : _state{&renderer, txt} {}
+            
+            struct {
+                Renderer* renderer = nullptr;
+                id<MTLTexture> txt = nil;
+            } _state;
+            
+            friend class Renderer;
+        };
+        
         Renderer() {}
         Renderer(id<MTLDevice> dev, id<MTLLibrary> lib,
-        id<MTLCommandQueue> commandQueue, id<MTLHeap> heap) :
-        dev(dev), _lib(lib), _commandQueue(commandQueue), _heap(heap) {
+        id<MTLCommandQueue> commandQueue) :
+        dev(dev), _lib(lib), _commandQueue(commandQueue) {
         }
         
         // Render pass to a target texture
@@ -117,21 +169,31 @@ namespace CFAViewer {
             [cmdBuf() presentDrawable:drawable];
         }
         
-        id<MTLTexture> createTexture(
+        Txt createTexture(
             MTLPixelFormat fmt,
             NSUInteger width, NSUInteger height,
             MTLTextureUsage usage=(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)
         ) {
+            // Check if we already have a texture matching the given criteria
+            TxtKey key(fmt, width, height, usage);
+            auto& txts = _txts[key];
+            if (!txts.empty()) {
+                Txt txt(*this, txts.front());
+                txts.pop();
+                return txt;
+            }
+            
+            // We don't have a cached texture matching the criteria, so create a new one
             MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
             [desc setTextureType:MTLTextureType2D];
-            [desc setStorageMode:MTLStorageModePrivate];
+//            [desc setStorageMode:MTLStorageModePrivate];
             [desc setWidth:width];
             [desc setHeight:height];
             [desc setPixelFormat:fmt];
             [desc setUsage:usage];
-            id<MTLTexture> txt = [_heap newTextureWithDescriptor:desc];
-            Assert(txt, return nil);
-            return txt;
+            id<MTLTexture> txt = [dev newTextureWithDescriptor:desc];
+            Assert(txt, return Txt());
+            return Txt(*this, txt);
         }
         
         id<MTLCommandBuffer> cmdBuf() {
@@ -157,12 +219,10 @@ namespace CFAViewer {
         
         template <typename T, typename... Ts>
         void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-            if constexpr (!std::is_same<T,id<MTLTexture>>::value) {
+            if constexpr (!std::is_same<T,id<MTLTexture>>::value && !std::is_same<T,Txt>::value) {
                 if constexpr (std::is_same<T,id<MTLBuffer>>::value) {
-                    NSLog(@"??? Encode buffer arg %p [len:%zu] @ %zu", &t, sizeof(t), idx);
                     [enc setFragmentBuffer:t offset:0 atIndex:idx];
                 } else {
-                    NSLog(@"Encode buffer arg %p [len:%zu] @ %zu", &t, sizeof(t), idx);
                     [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
                 }
                 _SetBufferArgs(enc, idx+1, ts...);
@@ -176,9 +236,14 @@ namespace CFAViewer {
         
         template <typename T, typename... Ts>
         void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-            static_assert(std::is_same<T,id<MTLTexture>>::value);
-            NSLog(@"Encode texture arg %p @ %zu", t, idx);
-            [enc setFragmentTexture:t atIndex:idx];
+            if constexpr (std::is_same<T,Txt>::value) {
+                [enc setFragmentTexture:(id<MTLTexture>)t atIndex:idx];
+            } else if constexpr (std::is_same<T,id<MTLTexture>>::value) {
+                [enc setFragmentTexture:t atIndex:idx];
+            } else {
+                static_assert(_AlwaysFalse<T>);
+            }
+            
             _SetTextureArgs(enc, idx+1, ts...);
         }
         
@@ -188,6 +253,10 @@ namespace CFAViewer {
             case MTLPixelFormatRGBA32Float: return 4*sizeof(float);
             default:                        abort();
             }
+        }
+        
+        void _recycleTxt(id<MTLTexture> txt) {
+            _txts[txt].push(txt);
         }
         
         id<MTLRenderPipelineState> _pipelineState(const std::string& name, MTLPixelFormat fmt) {
@@ -211,10 +280,45 @@ namespace CFAViewer {
             return ps;
         }
         
+        class TxtKey {
+        public:
+            TxtKey(id<MTLTexture> txt) :
+            _fmt([txt pixelFormat]), _width([txt width]), _height([txt height]), _usage([txt usage]) {}
+            
+            TxtKey(MTLPixelFormat fmt, NSUInteger width, NSUInteger height, MTLTextureUsage usage) :
+            _fmt(fmt), _width(width), _height(height), _usage(usage) {}
+            
+            bool operator==(const TxtKey& x) const {
+                return
+                    _fmt==x._fmt        &&
+                    _width==x._width    &&
+                    _height==x._height  &&
+                    _usage==x._usage    ;
+            }
+            
+            size_t hash() const {
+                return HashInts(_fmt, _width, _height, _usage);
+            }
+            
+            struct Hash {
+                size_t operator()(const TxtKey& x) const { return x.hash(); }
+            };
+        
+        private:
+            MTLPixelFormat _fmt = MTLPixelFormatInvalid;
+            NSUInteger _width = 0;
+            NSUInteger _height = 0;
+            MTLTextureUsage _usage = MTLTextureUsageUnknown;
+        };
+        
         id <MTLLibrary> _lib = nil;
         id <MTLCommandQueue> _commandQueue = nil;
         std::unordered_map<std::string,id<MTLRenderPipelineState>> _pipelineStates;
+        std::unordered_map<TxtKey,std::queue<id<MTLTexture>>,TxtKey::Hash> _txts;
         id<MTLCommandBuffer> _cmdBuf = nil;
-        id<MTLHeap> _heap = nil;
+        
+        template <class...> static constexpr std::false_type _AlwaysFalse;
+        
+        friend class Txt;
     };
 };
