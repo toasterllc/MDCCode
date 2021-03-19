@@ -9,10 +9,8 @@
 using ImageLayerDataChangedHandler = void(^)(ImageLayer*);
 
 namespace CFAViewer::ImageLayerTypes {
+    using namespace CFAViewer::ImageFilter;
     struct Image {
-        using CFADesc = ImageFilter::CFADesc;
-        using CFAColor = ImageFilter::CFAColor;
-        
         CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
@@ -40,7 +38,7 @@ namespace CFAViewer::ImageLayerTypes {
 - (void)setColorMatrix:(const Mat<double,3,3>&)cm;
 
 - (void)setDefringe:(bool)en;
-- (void)setDefringeOptions:(const CFAViewer::Defringe::Options&)opts;
+- (void)setDefringeOptions:(const CFAViewer::ImageFilter::Defringe::Options&)opts;
 
 - (void)setReconstructHighlights:(bool)en;
 

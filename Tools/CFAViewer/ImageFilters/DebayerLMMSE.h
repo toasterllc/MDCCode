@@ -3,38 +3,38 @@
 #import "MetalUtil.h"
 #import "ImageFilter.h"
 
-namespace CFAViewer {
-    class DebayerLMMSE : public ImageFilter {
+namespace CFAViewer::ImageFilter {
+    class DebayerLMMSE {
     public:
-        using ImageFilter::ImageFilter;
-        
         struct Options {
             CFADesc cfaDesc;
             bool applyGamma = false;
         };
         
-        void run(const Options& opts, id<MTLTexture> rawOriginal, id<MTLTexture> rgb) {
+        static void Run(Renderer& renderer, const Options& opts,
+            id<MTLTexture> rawOriginal, id<MTLTexture> rgb) {
+            
             const NSUInteger w = [rawOriginal width];
             const NSUInteger h = [rawOriginal height];
             
-            Renderer::Txt raw = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt raw = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             
             // Copy `rawOriginal` so we can modify it
-            renderer().copy(rawOriginal, raw);
+            renderer.copy(rawOriginal, raw);
             
             // Gamma before (improves quality of edges)
             if (opts.applyGamma) {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::GammaForward", raw,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::GammaForward", raw,
                     // Texture args
                     raw
                 );
             }
             
             // Horizontal interpolation
-            Renderer::Txt filteredHTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt filteredHTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool h = true;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::Interp5", filteredHTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::Interp5", filteredHTxt,
                     // Buffer args
                     h,
                     // Texture args
@@ -43,10 +43,10 @@ namespace CFAViewer {
             }
             
             // Vertical interpolation
-            Renderer::Txt filteredVTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt filteredVTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool h = false;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::Interp5", filteredVTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::Interp5", filteredVTxt,
                     // Buffer args
                     h,
                     // Texture args
@@ -55,9 +55,9 @@ namespace CFAViewer {
             }
             
             // Calculate DiffH
-            Renderer::Txt diffHTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt diffHTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffHTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffHTxt,
                     // Buffer args
                     opts.cfaDesc,
                     // Texture args
@@ -67,9 +67,9 @@ namespace CFAViewer {
             }
             
             // Calculate DiffV
-            Renderer::Txt diffVTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt diffVTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffVTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffVTxt,
                     // Buffer args
                     opts.cfaDesc,
                     // Texture args
@@ -81,7 +81,7 @@ namespace CFAViewer {
             // Smooth DiffH
             {
                 const bool h = true;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::Smooth9", filteredHTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::Smooth9", filteredHTxt,
                     // Buffer args
                     h,
                     // Texture args
@@ -92,7 +92,7 @@ namespace CFAViewer {
             // Smooth DiffV
             {
                 const bool h = false;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::Smooth9", filteredVTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::Smooth9", filteredVTxt,
                     // Buffer args
                     h,
                     // Texture args
@@ -102,7 +102,7 @@ namespace CFAViewer {
             
             // Calculate rgb.g
             {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcG", rgb,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcG", rgb,
                     // Buffer args
                     opts.cfaDesc,
                     // Texture args
@@ -115,10 +115,10 @@ namespace CFAViewer {
             }
             
             // Calculate diffGRTxt.r
-            Renderer::Txt diffGRTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt diffGRTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool modeGR = true;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGRTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGRTxt,
                     // Buffer args
                     opts.cfaDesc,
                     modeGR,
@@ -129,10 +129,10 @@ namespace CFAViewer {
             }
             
             // Calculate diffGBTxt.b
-            Renderer::Txt diffGBTxt = renderer().createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt diffGBTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             {
                 const bool modeGR = false;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGBTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGBTxt,
                     // Buffer args
                     opts.cfaDesc,
                     modeGR,
@@ -145,7 +145,7 @@ namespace CFAViewer {
             // Calculate diffGRTxt.b
             {
                 const bool modeGR = true;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGRTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGRTxt,
                     // Buffer args
                     opts.cfaDesc,
                     modeGR,
@@ -159,7 +159,7 @@ namespace CFAViewer {
             // Calculate diffGBTxt.r
             {
                 const bool modeGR = false;
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGBTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGBTxt,
                     // Buffer args
                     opts.cfaDesc,
                     modeGR,
@@ -172,7 +172,7 @@ namespace CFAViewer {
             
             // Calculate diffGRTxt.g
             {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGRTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGRTxt,
                     // Buffer args
                     opts.cfaDesc,
                     // Texture args
@@ -184,7 +184,7 @@ namespace CFAViewer {
             
             // Calculate diffGBTxt.g
             {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGBTxt,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGBTxt,
                     // Buffer args
                     opts.cfaDesc,
                     // Texture args
@@ -196,7 +196,7 @@ namespace CFAViewer {
             
             // Calculate rgb.rb
             {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::CalcRB", rgb,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcRB", rgb,
                     // Texture args
                     rgb,
                     diffGRTxt,
@@ -206,7 +206,7 @@ namespace CFAViewer {
             
             // Gamma after (improves quality of edges)
             if (opts.applyGamma) {
-                renderer().render("CFAViewer::Shader::DebayerLMMSE::GammaReverse", rgb,
+                renderer.render("CFAViewer::Shader::DebayerLMMSE::GammaReverse", rgb,
                     // Texture args
                     rgb
                 );

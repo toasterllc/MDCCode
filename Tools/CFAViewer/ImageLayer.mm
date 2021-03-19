@@ -37,13 +37,9 @@ using namespace ColorUtil;
         struct {
             bool en = false;
             Defringe::Options options;
-            Defringe filter;
         } defringe;
         
-        struct {
-            DebayerLMMSE::Options options;
-            DebayerLMMSE filter;
-        } debayerLMMSE;
+        DebayerLMMSE::Options debayerLMMSEOptions;
         
         Saturation saturationFilter;
         
@@ -90,9 +86,6 @@ using namespace ColorUtil;
     
     auto lock = std::lock_guard(_state.lock);
         _state.renderer = Renderer(_device, _library, _commandQueue);
-        _state.defringe.filter = Defringe(_state.renderer);
-        _state.debayerLMMSE.filter = DebayerLMMSE(_state.renderer);
-        _state.saturationFilter = Saturation(_state.renderer);
         
         _state.sampleBuf_CamRaw_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
         _state.sampleBuf_XYZ_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
@@ -215,7 +208,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
 
 - (void)setDebayerLMMSEApplyGamma:(bool)en {
     auto lock = std::lock_guard(_state.lock);
-    _state.debayerLMMSE.options.applyGamma = en;
+    _state.debayerLMMSEOptions.applyGamma = en;
     [self setNeedsDisplay];
 }
 
@@ -302,7 +295,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
     } else {
         if (_state.defringe.en) {
             _state.defringe.options.cfaDesc = _state.ctx.cfaDesc;
-            _state.defringe.filter.run(_state.defringe.options, raw);
+            Defringe::Run(_state.renderer, _state.defringe.options, raw);
         }
         
         // Reconstruct highlights
@@ -321,8 +314,8 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         
         // LMMSE Debayer
         {
-            _state.debayerLMMSE.options.cfaDesc = _state.ctx.cfaDesc;
-            _state.debayerLMMSE.filter.run(_state.debayerLMMSE.options, raw, rgb);
+            _state.debayerLMMSEOptions.cfaDesc = _state.ctx.cfaDesc;
+            DebayerLMMSE::Run(_state.renderer, _state.debayerLMMSEOptions, raw, rgb);
         }
         
         // Camera raw -> XYY.D50
@@ -433,7 +426,7 @@ static simd::float3 simdFromMat(const Mat<double,3,1>& m) {
         }
         
         // Saturation
-        _state.saturationFilter.run(_state.imageAdjustments.saturation, rgb);
+        Saturation::Run(_state.renderer, _state.imageAdjustments.saturation, rgb);
         
         // XYZ.D50 -> LSRGB.D65
         {

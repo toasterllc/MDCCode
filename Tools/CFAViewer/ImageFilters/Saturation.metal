@@ -5,8 +5,7 @@ using namespace metal;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::MetalUtil::Standard;
 using namespace CFAViewer::ImageLayerTypes;
-using CFADesc = CFAViewer::ImageFilter::CFADesc;
-using CFAColor = CFAViewer::ImageFilter::CFAColor;
+using namespace CFAViewer::ImageFilter;
 
 namespace CFAViewer {
 namespace Shader {

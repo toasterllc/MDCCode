@@ -6,11 +6,9 @@
 #import "ImageFilter.h"
 #import "MetalUtil.h"
 
-namespace CFAViewer {
-    class Defringe : public ImageFilter {
+namespace CFAViewer::ImageFilter {
+    class Defringe {
     public:
-        using ImageFilter::ImageFilter;
-        
         struct Options {
             CFADesc cfaDesc;
             uint32_t rounds = 2;
@@ -21,11 +19,11 @@ namespace CFAViewer {
                                     // computing derivative, when solving for tile shift
         };
         
-        void run(const Options& opts, id<MTLTexture> raw) {
+        static void Run(Renderer& renderer, const Options& opts, id<MTLTexture> raw) {
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
-            renderer().render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
+            renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
                 // Buffer args
                 opts.cfaDesc,
                 // Texture args
@@ -33,8 +31,8 @@ namespace CFAViewer {
             );
             
             {
-                Renderer::Txt gInterp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-                renderer().render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
+                Renderer::Txt gInterp = renderer.createTexture(MTLPixelFormatR32Float, w, h);
+                renderer.render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
                     // Buffer args
                     opts.cfaDesc,
                     // Texture args
@@ -42,20 +40,20 @@ namespace CFAViewer {
                 );
                 
                 for (uint32_t i=0; i<opts.rounds; i++) {
-                    _defringe(opts, raw, gInterp);
+                    _defringe(renderer, opts, raw, gInterp);
                 }
             }
             
-            renderer().render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
+            renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
                 // Buffer args
                 opts.cfaDesc,
                 // Texture args
                 raw
             );
             
-            renderer().commit();
+            renderer.commit();
         }
-    
+
     private:
         using Poly = Poly2D<double,4>;
 
@@ -170,14 +168,14 @@ namespace CFAViewer {
             const T* _buf = nullptr;
         };
         
-        void _defringe(const Options& opts,
+        static void _defringe(Renderer& renderer, const Options& opts,
             id<MTLTexture> raw, id<MTLTexture> gInterp) {
             
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
             // Solve for the 2D polynomials that minimize the g-r/b difference
-            ColorDir<Poly> polys = _solveForPolys(opts, raw, gInterp);
+            ColorDir<Poly> polys = _solveForPolys(renderer, opts, raw, gInterp);
             
             // Using the 2D polynomials, create small textures containing the shift
             // amounts across the image.
@@ -191,13 +189,13 @@ namespace CFAViewer {
                     const auto& coeffs = polys(c,dir).coeffs().vals;
                     std::copy(coeffs, coeffs+std::size(coeffs), polyCoeffs(c,dir));
                     
-                    shiftTxts(c,dir) = renderer().createTexture(MTLPixelFormatR32Float,
+                    shiftTxts(c,dir) = renderer.createTexture(MTLPixelFormatR32Float,
                         ShiftTextureWidth, ShiftTextureWidth,
                         (MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite));
                 }
             }
             
-            renderer().render("CFAViewer::Shader::Defringe::CalcShiftTxts",
+            renderer.render("CFAViewer::Shader::Defringe::CalcShiftTxts",
                 ShiftTextureWidth, ShiftTextureWidth,
                 // Buffer args
                 opts.cfaDesc,
@@ -216,8 +214,8 @@ namespace CFAViewer {
             // We have to render to `tmp` (not `raw`), because
             // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
             // which would introduce a data race if we rendered to `raw` while also sampling it.
-            Renderer::Txt tmp = renderer().createTexture(MTLPixelFormatR32Float, w, h);
-            renderer().render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
+            Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, w, h);
+            renderer.render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
                 // Buffer args
                 opts.cfaDesc,
                 opts.αthresh,
@@ -233,7 +231,7 @@ namespace CFAViewer {
                 shiftTxts(CFAColor::Blue,Dir::Y)
             );
             
-            renderer().copy(tmp, raw);
+            renderer.copy(tmp, raw);
         }
         
         // _solveForPolys(): this function returns a 2D polynomial whose value is
@@ -271,17 +269,18 @@ namespace CFAViewer {
         static constexpr uint32_t TileOverlap = 16;
         static constexpr double Eps = 1e-5;
         
-        ColorDir<Poly> _solveForPolys(const Options& opts, id<MTLTexture> raw, id<MTLTexture> gInterp) {
+        static ColorDir<Poly> _solveForPolys(Renderer& renderer, const Options& opts,
+            id<MTLTexture> raw, id<MTLTexture> gInterp) {
             
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             const size_t bufLen = w*h*sizeof(float);
-            Renderer::Buf rawBuf = renderer().createBuffer(bufLen);
-            Renderer::Buf gInterpBuf = renderer().createBuffer(bufLen);
+            Renderer::Buf rawBuf = renderer.createBuffer(bufLen);
+            Renderer::Buf gInterpBuf = renderer.createBuffer(bufLen);
             
-            renderer().copy(raw, rawBuf);
-            renderer().copy(gInterp, gInterpBuf);
-            renderer().commitAndWait();
+            renderer.copy(raw, rawBuf);
+            renderer.copy(gInterp, gInterpBuf);
+            renderer.commitAndWait();
             
             BufSampler<float> rawPx(w, h, rawBuf);
             BufSampler<float> gInterpPx(w, h, gInterpBuf);
@@ -317,7 +316,7 @@ namespace CFAViewer {
                             tiles.pop();
                         lock.unlock();
                         
-                        const ColorDir<TileShift> tileShift = _calcTileShift(opts, grid,
+                        const ColorDir<TileShift> tileShift = _calcTileShift(renderer, opts, grid,
                             rawPx, gInterpPx, tilePos.x, tilePos.y);
                         
                         for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
@@ -348,7 +347,8 @@ namespace CFAViewer {
             double weight = 0;
         };
         
-        ColorDir<TileShift> _calcTileShift(
+        static ColorDir<TileShift> _calcTileShift(
+            Renderer& renderer,
             const Options& opts,
             const TileGrid& grid,
             const BufSampler<float>& raw,

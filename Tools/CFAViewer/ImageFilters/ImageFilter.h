@@ -7,14 +7,13 @@
 
 namespace CFAViewer {
 
-class ImageFilter {
-public:
+namespace ImageFilter {
     enum class CFAColor : uint8_t {
         Red     = 0,
         Green   = 1,
         Blue    = 2,
     };
-
+    
     struct CFADesc {
         CFADesc() {}
         CFADesc(CFAColor tl, CFAColor tr, CFAColor bl, CFAColor br) :
@@ -32,19 +31,6 @@ public:
             return color(pos.x, pos.y);
         }
     };
-    
-#if !MetalShaderContext
-    ImageFilter() {}
-    ImageFilter(Renderer& renderer) : _renderer(&renderer) {}
-    
-    Renderer& renderer() {
-        assert(_renderer);
-        return *_renderer;
-    }
-    
-private:
-    Renderer* _renderer = nullptr;
-#endif
 };
 
 } // namespace CFAViewer

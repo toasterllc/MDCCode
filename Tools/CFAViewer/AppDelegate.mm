@@ -26,8 +26,7 @@ using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImageLayerTypes;
 using namespace ColorUtil;
-using CFADesc = ImageFilter::CFADesc;
-using CFAColor = ImageFilter::CFAColor;
+using namespace ImageFilter;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 
@@ -256,7 +255,7 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     
     [self _resetColorMatrix];
     
-    [self _setDefringe:true options:Defringe::Options{}];
+    [self _setDefringe:true options:ImageFilter::Defringe::Options{}];
     
     [self _setReconstructHighlights:true];
     
@@ -888,7 +887,7 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     [self mainViewColorCheckerPositionsChanged:nil];
 }
 
-- (void)_setDefringe:(bool)en options:(const Defringe::Options&)opts {
+- (void)_setDefringe:(bool)en options:(const ImageFilter::Defringe::Options&)opts {
     [_defringeCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
     [[_mainView imageLayer] setDefringe:en];
     
