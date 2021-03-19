@@ -12,29 +12,29 @@ namespace CFAViewer {
             id<MTLTexture> txt = xyz_d50;
             
             // XYZ.D50 -> Luv.D50
-            renderer().render("ImageLayer::LuvD50FromXYZD50", txt,
+            renderer().render("CFAViewer::Shader::Saturation::LuvD50FromXYZD50", txt,
                 txt
             );
             
             // Luv.D50 -> LCHuv.D50
-            renderer().render("ImageLayer::LCHuvFromLuv", txt,
+            renderer().render("CFAViewer::Shader::Saturation::LCHuvFromLuv", txt,
                 txt
             );
             
             // Saturation
             const float satpow = pow(2, 2*sat);
-            renderer().render("ImageLayer::Saturation", txt,
+            renderer().render("CFAViewer::Shader::Saturation::Saturation", txt,
                 satpow,
                 txt
             );
             
             // LCHuv.D50 -> Luv.D50
-            renderer().render("ImageLayer::LuvFromLCHuv", txt,
+            renderer().render("CFAViewer::Shader::Saturation::LuvFromLCHuv", txt,
                 txt
             );
             
             // Luv.D50 -> XYZ.D50
-            renderer().render("ImageLayer::XYZD50FromLuvD50", txt,
+            renderer().render("CFAViewer::Shader::Saturation::XYZD50FromLuvD50", txt,
                 txt
             );
         }
