@@ -120,7 +120,7 @@ public:
             // Camera raw -> XYY.D50
             {
                 const simd::float3x3 colorMatrix = _simdFromMat(opts.colorMatrix);
-                renderer.render("CFAViewer::Shader::ImagePipeline::XYYD50FromCameraRaw", rgb,
+                renderer.render("CFAViewer::Shader::ImagePipeline::XYYD50FromCamRaw", rgb,
                     // Buffer args
                     colorMatrix,
                     // Texture args

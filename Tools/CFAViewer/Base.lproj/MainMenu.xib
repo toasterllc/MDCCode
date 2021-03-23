@@ -24,7 +24,7 @@
                 <outlet property="_colorMatrixTextField" destination="rvZ-kB-DXu" id="p8n-9z-W1i"/>
                 <outlet property="_colorText_SRGB_D65" destination="wL3-uf-dpp" id="si5-64-W2A"/>
                 <outlet property="_colorText_XYZ_D50" destination="uWQ-FQ-fcu" id="Wnv-Uw-Fln"/>
-                <outlet property="_colorText_cameraRaw" destination="70j-FK-iLi" id="bFt-9x-167"/>
+                <outlet property="_colorText_camRaw" destination="70j-FK-iLi" id="bFt-9x-167"/>
                 <outlet property="_contrastLabel" destination="kzO-GG-ZYP" id="cv5-Pp-HCi"/>
                 <outlet property="_contrastSlider" destination="cXS-kH-qXh" id="yW4-N7-AJZ"/>
                 <outlet property="_debayerLMMSEGammaCheckbox" destination="TTP-R6-3Sa" id="bQQ-82-D8u"/>
@@ -884,7 +884,7 @@
                                             <rect key="frame" x="319" y="1471" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="controlContent" size="11"/>
+                                                <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_identityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -1076,7 +1076,7 @@
                                             <rect key="frame" x="329" y="1498" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="controlContent" size="11"/>
+                                                <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>

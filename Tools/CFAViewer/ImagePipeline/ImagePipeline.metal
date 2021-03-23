@@ -68,26 +68,26 @@ float SRGBGammaReverse(float x) {
     return pow((x+.055)/1.055, 2.4);
 }
 
-fragment float4 XYZD50FromCameraRaw(
+fragment float4 XYZD50FromCamRaw(
     constant float3x3& colorMatrix [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
-    const float3x3 XYZD50_From_CameraRaw = colorMatrix;
-    float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
+    const float3 inputColor_camRaw = Sample::RGB(txt, int2(in.pos.xy));
+    const float3x3 XYZD50_From_CamRaw = colorMatrix;
+    float3 outputColor_XYZD50 = XYZD50_From_CamRaw * inputColor_camRaw;
     return float4(outputColor_XYZD50, 1);
 }
 
-fragment float4 XYYD50FromCameraRaw(
+fragment float4 XYYD50FromCamRaw(
     constant float3x3& colorMatrix [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
-    const float3x3 XYZD50_From_CameraRaw = colorMatrix;
-//    const float3x3 XYZD50_From_CameraRaw(1);
-    const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
+    const float3 inputColor_camRaw = Sample::RGB(txt, int2(in.pos.xy));
+    const float3x3 XYZD50_From_CamRaw = colorMatrix;
+//    const float3x3 XYZD50_From_CamRaw(1);
+    const float3 c = XYYFromXYZ(XYZD50_From_CamRaw * inputColor_camRaw);
     return float4(c, 1);
 }
 

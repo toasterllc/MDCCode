@@ -93,7 +93,7 @@ struct PixConfig {
     IBOutlet HistogramView* _inputHistogramView;
     IBOutlet HistogramView* _outputHistogramView;
     
-    IBOutlet NSTextField* _colorText_cameraRaw;
+    IBOutlet NSTextField* _colorText_camRaw;
     IBOutlet NSTextField* _colorText_XYZ_D50;
     IBOutlet NSTextField* _colorText_SRGB_D65;
     
@@ -677,7 +677,7 @@ static ColorMatrix _colorMatrixFromString(const std::string& str) {
 }
 
 - (void)_updateSampleColorsText {
-    [_colorText_cameraRaw setStringValue:
+    [_colorText_camRaw setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _sample_CamRaw_D50[0], _sample_CamRaw_D50[1], _sample_CamRaw_D50[2]]];
     [_colorText_XYZ_D50 setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _sample_XYZ_D50[0], _sample_XYZ_D50[1], _sample_XYZ_D50[2]]];
