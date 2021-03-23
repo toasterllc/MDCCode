@@ -926,33 +926,6 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     [self _updateColorMatrix];
 }
 
-//- (void)_setDefringe:(bool)en options:(const ImagePipeline::Defringe::Options&)opts {
-//    [_defringeCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-//    [[_mainView imageLayer] setDefringe:en];
-//    
-//    [_defringeRoundsSlider setIntValue:opts.rounds];
-//    [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.rounds]];
-//    
-//    [_defringeαThresholdSlider setFloatValue:opts.αthresh];
-//    [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.αthresh]];
-//    
-//    [_defringeγThresholdSlider setFloatValue:opts.γthresh];
-//    [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γthresh]];
-//    
-//    [_defringeγFactorSlider setFloatValue:opts.γfactor];
-//    [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γfactor]];
-//    
-//    [_defringeδFactorSlider setFloatValue:opts.δfactor];
-//    [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.δfactor]];
-//    
-//    [[_mainView imageLayer] setDefringeOptions:opts];
-//}
-//
-//- (void)_setReconstructHighlights:(bool)en {
-//    [_reconstructHighlightsCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-//    [[_mainView imageLayer] setReconstructHighlights:en];
-//}
-
 - (IBAction)_colorCheckersAction:(id)sender {
     [self _setColorCheckersEnabled:([_colorCheckersCheckbox state]==NSControlStateValueOn)];
     if (_colorCheckersEnabled) {
@@ -1067,37 +1040,7 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     [[_mainView imageLayer] setOptions:_imgOpts];
 }
 
-//- (void)_setDebayerLMMSEApplyGamma:(bool)en {
-//    [_debayerLMMSEGammaCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-//    [[_mainView imageLayer] setDebayerLMMSEApplyGamma:en];
-//}
-
 - (IBAction)_highlightFactorSliderAction:(id)sender {
-//    Mat<double,3,3> highlightFactor(
-//        [_highlightFactorR0Slider doubleValue],
-//        [_highlightFactorR1Slider doubleValue],
-//        [_highlightFactorR2Slider doubleValue],
-//        
-//        [_highlightFactorG0Slider doubleValue],
-//        [_highlightFactorG1Slider doubleValue],
-//        [_highlightFactorG2Slider doubleValue],
-//        
-//        [_highlightFactorB0Slider doubleValue],
-//        [_highlightFactorB1Slider doubleValue],
-//        [_highlightFactorB2Slider doubleValue]
-//    );
-//    
-//    [[_mainView imageLayer] setHighlightFactor:highlightFactor];
-//    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,0)]];
-//    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,1)]];
-//    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,2)]];
-//    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,0)]];
-//    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,1)]];
-//    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,2)]];
-//    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,0)]];
-//    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,1)]];
-//    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,2)]];
-//    [self mainViewSampleRectChanged:nil];
 }
 
 #pragma mark - MainViewDelegate

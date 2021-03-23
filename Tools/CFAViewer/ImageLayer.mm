@@ -18,10 +18,6 @@ using namespace ImagePipeline;
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
     id<MTLLibrary> _library;
-//    id<MTLRenderPipelineState> _debayerPipelineState;
-//    id<MTLRenderPipelineState> _colorAdjustPipelineState;
-//    id<MTLRenderPipelineState> _findHighlightsPipelineState;
-//    id<MTLRenderPipelineState> _srgbGammaPipelineState;
     
     struct {
         std::mutex lock; // Protects this struct
@@ -49,11 +45,6 @@ using namespace ImagePipeline;
     [self setPixelFormat:MTLPixelFormatBGRA8Unorm];
     
     _commandQueue = [_device newCommandQueue];
-    
-//    MTLHeapDescriptor* desc = [MTLHeapDescriptor new];
-//    [desc setSize:128*1024*1024];
-////    [desc setStorageMode:MTLStorageModeManaged];
-//    _heap = [_device newHeapWithDescriptor:desc];
     
     _library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
     Assert(_library, return nil);
@@ -110,22 +101,6 @@ using namespace ImagePipeline;
     _state.opts = opts;
     [self setNeedsDisplay];
 }
-
-//static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
-//    return {
-//        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
-//        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
-//        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
-//    };
-//}
-
-//- (void)setHighlightFactor:(const Mat<double,3,3>&)hf {
-//    auto lock = std::lock_guard(_state.lock);
-//    _state.ctx.highlightFactorR = {(float)hf.at(0,0), (float)hf.at(0,1), (float)hf.at(0,2)};
-//    _state.ctx.highlightFactorG = {(float)hf.at(1,0), (float)hf.at(1,1), (float)hf.at(1,2)};
-//    _state.ctx.highlightFactorB = {(float)hf.at(2,0), (float)hf.at(2,1), (float)hf.at(2,2)};
-//    [self setNeedsDisplay];
-//}
 
 - (MetalUtil::Histogram)inputHistogram {
     return _inputHistogram;
@@ -223,37 +198,6 @@ using namespace ImagePipeline;
         CFRunLoopWakeUp(CFRunLoopGetMain());
     }
 }
-
-//- (float)_sampleX:(int32_t)x y:(int32_t)y {
-//    NSParameterAssert(x>=0 && x<_ctx.imageWidth);
-//    NSParameterAssert(y>=0 && y<_ctx.imageHeight);
-//    const ImagePixel* pixels = (const ImagePixel*)[_pixelData contents];
-//    return (float)pixels[y*_ctx.imageWidth+x] / ImagePixelMax;
-//}
-//
-//- (simd::float3)sampleCameraRaw:(CGRect)rect {
-//    //  Row0    G1  R
-//    //  Row1    B   G2
-//    int32_t left = std::clamp((int32_t)round(rect.origin.x), 0, (int32_t)_ctx.imageWidth);
-//    int32_t right = std::clamp((int32_t)round(rect.origin.x+rect.size.width), 0, (int32_t)_ctx.imageWidth);
-//    int32_t top = std::clamp((int32_t)round(rect.origin.y), 0, (int32_t)_ctx.imageHeight);
-//    int32_t bottom = std::clamp((int32_t)round(rect.origin.y+rect.size.height), 0, (int32_t)_ctx.imageHeight);
-//    simd::float3 color = {0,0,0};
-//    int32_t i = 0;
-//    for (int32_t y=top; y<bottom; y++) {
-//        for (int32_t x=left; x<right; x++, i++) {
-//            const bool r = (!(y%2) && (x%2));
-//            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
-//            const bool b = ((y%2) && !(x%2));
-//            const float val = [self _sampleX:x y:y];
-//            if (r)      color[0] += val;
-//            else if (g) color[1] += val;
-//            else if (b) color[2] += val;
-//        }
-//    }
-//    color /= i;
-//    return color;
-//}
 
 - (void)setSampleRect:(CGRect)rect {
     auto lock = std::lock_guard(_state.lock);

@@ -334,27 +334,6 @@ namespace CFAViewer {
             MTLTextureUsage _usage = MTLTextureUsageUnknown;
         };
         
-//        class BufKey {
-//        public:
-//            BufKey(id<MTLBuffer> buf) : _len([buf length]) {}
-//            BufKey(NSUInteger len) : _len(len) {}
-//            
-//            bool operator==(const BufKey& x) const {
-//                return _len==x._len;
-//            }
-//            
-//            size_t hash() const {
-//                return HashInts(_len);
-//            }
-//            
-//            struct Hash {
-//                size_t operator()(const BufKey& x) const { return x.hash(); }
-//            };
-//        
-//        private:
-//            NSUInteger _len = 0;
-//        };
-        
         id <MTLLibrary> _lib = nil;
         id <MTLCommandQueue> _commandQueue = nil;
         std::unordered_map<std::string,id<MTLRenderPipelineState>> _pipelineStates;

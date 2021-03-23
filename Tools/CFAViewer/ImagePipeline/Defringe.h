@@ -353,6 +353,10 @@ namespace CFAViewer::ImagePipeline {
             double weight = 0;
         };
         
+        // Calculate the shift for a given tile.
+        // We solve for the shift indepedently for the x/y directions and red/blue colors,
+        // so there are 4 TileShifts returned: redX, redY, blueX, blueY.
+        // See theory explained above.
         static ColorDir<TileShift> _calcTileShift(
             Renderer& renderer,
             const CFADesc& cfaDesc,
@@ -404,8 +408,7 @@ namespace CFAViewer::ImagePipeline {
             }
             
             // For each color and direction, solve for the shift amount and
-            // its associated weight for this tile, and add this tile's
-            // datapoint to the 2D polynomial regression.
+            // its associated weight for this tile.
             ColorDir<TileShift> shifts;
             for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
@@ -418,8 +421,8 @@ namespace CFAViewer::ImagePipeline {
                     // occur every 2 pixels.
                     shifts(c,dir).x = grid.x.tileNormalizedCenter<double>(tx);
                     shifts(c,dir).y = grid.y.tileNormalizedCenter<double>(ty);
-                    shifts(c,dir).shift = 2*( terms(c,dir).t1 /        terms(c,dir).t2 );
-                    shifts(c,dir).weight =  ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
+                    shifts(c,dir).shift  = 2*( terms(c,dir).t1 /        terms(c,dir).t2  );
+                    shifts(c,dir).weight =   ( terms(c,dir).t2 / (Eps + terms(c,dir).t0 ));
                 }
             }
             

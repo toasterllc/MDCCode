@@ -24,8 +24,6 @@ namespace CFAViewer::ImageLayerTypes {
 - (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)img;
 - (void)setOptions:(const CFAViewer::ImageLayerTypes::Options&)opts;
 
-//- (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
-
 - (void)setSampleRect:(CGRect)rect;
 // `handler` is called on a background queue when histograms/sample data changes
 - (void)setDataChangedHandler:(ImageLayerDataChangedHandler)handler;
