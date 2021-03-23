@@ -26,12 +26,7 @@ using namespace ImagePipeline;
     struct {
         std::mutex lock; // Protects this struct
         Renderer renderer;
-        struct {
-            CFADesc cfaDesc;
-            uint32_t width = 0;
-            uint32_t height = 0;
-            Renderer::Buf pixels;
-        } img;
+        Pipeline::Image img;
         Pipeline::Options opts;
         Pipeline::SampleOptions sampleOpts;
         ImageLayerDataChangedHandler dataChangedHandler = nil;
@@ -142,14 +137,7 @@ using namespace ImagePipeline;
 
 // Lock must be held
 - (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
-    const ImagePipeline::Pipeline::Image img = {
-        .cfaDesc = _state.img.cfaDesc,
-        .width = _state.img.width,
-        .height = _state.img.height,
-        .pixels = _state.img.pixels,
-    };
-    
-    ImagePipeline::Pipeline::Run(_state.renderer, img,
+    ImagePipeline::Pipeline::Run(_state.renderer, _state.img,
         _state.opts, _state.sampleOpts, outTxt);
     
     // If outTxt isn't framebuffer-only, then do a blit-sync, which is

@@ -1107,6 +1107,10 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     [[_mainView imageLayer] setSampleRect:sampleRect];
 }
 
+- (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
+    [self _updateColorMatrix];
+}
+
 - (void)_updateColorMatrix {
     auto points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorChecker::Count);

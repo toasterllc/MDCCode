@@ -16,7 +16,7 @@ public:
         CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
-        id<MTLBuffer> pixels = nil;
+        Renderer::Buf pixels;
     };
     
     struct Options {
@@ -53,9 +53,9 @@ public:
     
     struct SampleOptions {
         SampleRect rect;
-        id<MTLBuffer> camRaw_D50;
-        id<MTLBuffer> xyz_D50;
-        id<MTLBuffer> srgb_D65;
+        Renderer::Buf camRaw_D50;
+        Renderer::Buf xyz_D50;
+        Renderer::Buf srgb_D65;
     };
     
     static void Run(
