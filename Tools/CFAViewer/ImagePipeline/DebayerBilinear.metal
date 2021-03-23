@@ -13,7 +13,7 @@ namespace DebayerBilinear {
 
 #define PX(x,y) Sample::R(Sample::MirrorClamp, raw, pos+int2{x,y})
 float r(constant CFADesc& cfaDesc, texture2d<float> raw, int2 pos) {
-    const CFAColor c = cfaDesc.color(pos.x, pos.y);
+    const CFAColor c = cfaDesc.color(pos);
     const CFAColor cn = cfaDesc.color(pos.x+1, pos.y);
     if (c==CFAColor::Blue || cn==CFAColor::Blue) {
         // ROW = B G B G ...
@@ -44,7 +44,7 @@ float r(constant CFADesc& cfaDesc, texture2d<float> raw, int2 pos) {
 }
 
 float g(constant CFADesc& cfaDesc, texture2d<float> raw, int2 pos) {
-    const CFAColor c = cfaDesc.color(pos.x, pos.y);
+    const CFAColor c = cfaDesc.color(pos);
     const CFAColor cn = cfaDesc.color(pos.x+1, pos.y);
     if (c==CFAColor::Blue || cn==CFAColor::Blue) {
         // ROW = B G B G ...
@@ -75,7 +75,7 @@ float g(constant CFADesc& cfaDesc, texture2d<float> raw, int2 pos) {
 }
 
 float b(constant CFADesc& cfaDesc, texture2d<float> raw, int2 pos) {
-    const CFAColor c = cfaDesc.color(pos.x, pos.y);
+    const CFAColor c = cfaDesc.color(pos);
     const CFAColor cn = cfaDesc.color(pos.x+1, pos.y);
     if (c==CFAColor::Blue || cn==CFAColor::Blue) {
         // ROW = B G B G ...
