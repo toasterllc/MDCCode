@@ -1074,10 +1074,8 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     Mat<double,ColorChecker::Count,3> b; // Colors that we want
     y = 0;
     for (Color_SRGB_D65 c : ColorChecker::Colors) {
-        // Convert the color from SRGB -> XYZ -> XYY
-        Color_XYZ_D50 cxyy = XYYFromXYZ(XYZFromSRGB(c));
-        const Color_XYZ_D50 cxyz = XYZFromXYY(cxyy);
-        
+        // Convert the color from SRGB.D65 -> XYZ.D50
+        const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
         b.at(y,0) = cxyz[0];
         b.at(y,1) = cxyz[1];
         b.at(y,2) = cxyz[2];
