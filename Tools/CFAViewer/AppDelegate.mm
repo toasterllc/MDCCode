@@ -21,12 +21,12 @@
 #import "IOServiceWatcher.h"
 #import "MDCUtil.h"
 #import "Assert.h"
+#import "ImagePipelineTypes.h"
 
 using namespace CFAViewer;
 using namespace MetalUtil;
-using namespace ImageLayerTypes;
 using namespace ColorUtil;
-using namespace ImageFilter;
+using namespace ImagePipeline;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 
@@ -134,9 +134,9 @@ struct PixConfig {
         bool cancel = false;
     } _streamImages;
     
-    ColorMatrix _colorMatrix;
-    Mmap _imageData;
-    Image _image;
+    Mmap _imgData;
+    ImageLayerTypes::Image _img;
+    ImageLayerTypes::Options _imgOpts;
     
     Color_CamRaw_D50 _sample_CamRaw_D50;
     Color_XYZ_D50 _sample_XYZ_D50;
@@ -235,17 +235,17 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
-    _imageData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
+    _imgData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
 //    [[_mainView imageLayer] setRawMode:true];
     
-    _image = {
+    _img = {
         .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
         .width = 2304,
         .height = 1296,
-        .pixels = (MetalUtil::ImagePixel*)_imageData.data(),
+        .pixels = (MetalUtil::ImagePixel*)_imgData.data(),
     };
     
-    [[_mainView imageLayer] setImage:_image];
+    [[_mainView imageLayer] setImage:_img];
     
     __weak auto weakSelf = self;
     [[_mainView imageLayer] setDataChangedHandler:^(ImageLayer*) {
@@ -253,26 +253,81 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
         [weakSelf _updateSampleColors];
     }];
     
-    [self _resetColorMatrix];
-    
-    [self _setDefringe:true options:ImageFilter::Defringe::Options{}];
-    
-    [self _setReconstructHighlights:true];
-    
-    [self _setDebayerLMMSEApplyGamma:true];
-    
-    [self _setImageAdjustments:{
+    _imgOpts = {
+        .rawMode = false,
+        
+        .defringe = {
+            .en = true,
+        },
+        
+        .reconstructHighlights = true,
+        
+        .debayerLMMSE = {
+            .applyGamma = true,
+        },
+        
         .exposure = -2.4,
         .brightness = 0.203,
         .contrast = 0.6,
         .saturation = 0.1,
         
         .localContrast = {
-            .enable = true,
+            .en = true,
             .amount = .2,
             .radius = 80,
         },
-    }];
+    };
+    
+    [self _updateImageOptions];
+    
+//    bool rawMode = false;
+//    
+//    struct {
+//        bool en = false;
+//        Defringe::Options options;
+//    } defringe;
+//    
+//    bool reconstructHighlights = false;
+//    
+//    struct {
+//        bool applyGamma = false;
+//    } debayerLMMSE;
+//    
+//    simd::float3x3 colorMatrix = {
+//        simd::float3{1,0,0},
+//        simd::float3{0,1,0},
+//        simd::float3{0,0,1},
+//    };
+//    
+//    float exposure = 0;
+//    float brightness = 0;
+//    float contrast = 0;
+//    float saturation = 0;
+//    
+//    struct {
+//        bool enable = false;
+//        float amount = 0;
+//        float radius = 0;
+//    } localContrast;
+    
+//    [self _setDefringe:true options:ImagePipeline::Defringe::Options{}];
+//    
+//    [self _setReconstructHighlights:true];
+//    
+//    [self _setDebayerLMMSEApplyGamma:true];
+    
+//    [self _setImageAdjustments:{
+//        .exposure = -2.4,
+//        .brightness = 0.203,
+//        .contrast = 0.6,
+//        .saturation = 0.1,
+//        
+//        .localContrast = {
+//            .enable = true,
+//            .amount = .2,
+//            .radius = 80,
+//        },
+//    }];
     
     auto points = [self _prefsColorCheckerPositions];
     if (!points.empty()) {
@@ -395,13 +450,13 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
             const STApp::PixHeader pixStatus = device.pixCapture(pixelBuf.get(), pixelBufCount, 1000);
-            const Image image = {
+            const ImageLayerTypes::Image img = {
                 .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
                 .width = pixStatus.width,
                 .height = pixStatus.height,
                 .pixels = pixelBuf.get(),
             };
-            [layer setImage:image];
+            [layer setImage:img];
             
             // Adjust exposure
             const uint32_t SubsampleFactor = 16;
@@ -572,15 +627,12 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
 
 - (void)controlTextDidChange:(NSNotification*)note {
     if ([note object] == _colorMatrixTextField) {
-        [self _updateColorMatrixFromString:[[_colorMatrixTextField stringValue] UTF8String]];
+        _imgOpts.colorMatrix = _colorMatrixFromString([[_colorMatrixTextField stringValue] UTF8String]);
+        [self _updateImageOptions];
     }
 }
 
-- (void)_resetColorMatrix {
-    [self _updateColorMatrix:{1.,0.,0.,0.,1.,0.,0.,0.,1.}];
-}
-
-- (void)_updateColorMatrixFromString:(const std::string&)str {
+static ColorMatrix _colorMatrixFromString(const std::string& str) {
     const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
     auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
     auto end = std::sregex_iterator();
@@ -592,25 +644,10 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     
     if (vals.size() != 9) {
         NSLog(@"Failed to parse color matrix");
-        return;
+        return {};
     }
     
-    [self _updateColorMatrix:vals.data()];
-}
-
-- (void)_updateColorMatrix:(const ColorMatrix&)colorMatrix {
-    _colorMatrix = colorMatrix;
-    
-    [[_mainView imageLayer] setColorMatrix:colorMatrix];
-    
-    [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
-        @"%f %f %f\n"
-        @"%f %f %f\n"
-        @"%f %f %f\n",
-        _colorMatrix.at(0,0), _colorMatrix.at(0,1), _colorMatrix.at(0,2),
-        _colorMatrix.at(1,0), _colorMatrix.at(1,1), _colorMatrix.at(1,2),
-        _colorMatrix.at(2,0), _colorMatrix.at(2,1), _colorMatrix.at(2,2)
-    ]];
+    return vals.data();
 }
 
 #pragma mark - Histograms
@@ -653,7 +690,7 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
 //  Row2    G1  R  G1  R
 //  Row3    B   G2 B   G2
 
-static double px(Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
+static double px(ImageLayerTypes::Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
     int32_t xc = (int32_t)x + dx;
     int32_t yc = (int32_t)y + dy;
     xc = std::clamp(xc, (int32_t)0, (int32_t)img.width-1);
@@ -661,7 +698,7 @@ static double px(Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
     return (double)img.pixels[(yc*img.width)+xc] / ImagePixelMax;
 }
 
-static double sampleR(Image& img, uint32_t x, uint32_t y) {
+static double sampleR(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
     if (y % 2) {
         // ROW = B G B G ...
         
@@ -693,7 +730,7 @@ static double sampleR(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static double sampleG(Image& img, uint32_t x, uint32_t y) {
+static double sampleG(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
 //    return px(img, x, 0, y, 0);
     
     if (y % 2) {
@@ -730,7 +767,7 @@ static double sampleG(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static double sampleB(Image& img, uint32_t x, uint32_t y) {
+static double sampleB(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
 //    return px(img, x, 0, y, 0);
     
     if (y % 2) {
@@ -764,7 +801,7 @@ static double sampleB(Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, uint32_t radius) {
+static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t x, uint32_t y, uint32_t radius) {
     uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
     uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
     uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
@@ -867,158 +904,200 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
 
 - (IBAction)_identityButtonAction:(id)sender {
     [self _setColorCheckersEnabled:false];
-    [self _resetColorMatrix];
+    _imgOpts.colorMatrix = {
+        1.,0.,0.,
+        0.,1.,0.,
+        0.,0.,1.
+    };
+    [self _updateImageOptions];
 }
 
 - (void)_setColorCheckersEnabled:(bool)en {
     _colorCheckersEnabled = en;
-    [_colorCheckersCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+    [_colorCheckersCheckbox setState:
+        (_colorCheckersEnabled ? NSControlStateValueOn : NSControlStateValueOff)];
     [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
     [_mainView setColorCheckersVisible:_colorCheckersEnabled];
     [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
-    
-    if (_colorCheckersEnabled) {
-        [self mainViewColorCheckerPositionsChanged:nil];
-    }
 }
 
 - (IBAction)_resetColorCheckersButtonAction:(id)sender {
     [_mainView resetColorCheckerPositions];
-    [self mainViewColorCheckerPositionsChanged:nil];
+    [self _updateColorMatrix];
 }
 
-- (void)_setDefringe:(bool)en options:(const ImageFilter::Defringe::Options&)opts {
-    [_defringeCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-    [[_mainView imageLayer] setDefringe:en];
-    
-    [_defringeRoundsSlider setIntValue:opts.rounds];
-    [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.rounds]];
-    
-    [_defringeαThresholdSlider setFloatValue:opts.αthresh];
-    [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.αthresh]];
-    
-    [_defringeγThresholdSlider setFloatValue:opts.γthresh];
-    [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γthresh]];
-    
-    [_defringeγFactorSlider setFloatValue:opts.γfactor];
-    [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γfactor]];
-    
-    [_defringeδFactorSlider setFloatValue:opts.δfactor];
-    [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.δfactor]];
-    
-    [[_mainView imageLayer] setDefringeOptions:opts];
-}
+//- (void)_setDefringe:(bool)en options:(const ImagePipeline::Defringe::Options&)opts {
+//    [_defringeCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+//    [[_mainView imageLayer] setDefringe:en];
+//    
+//    [_defringeRoundsSlider setIntValue:opts.rounds];
+//    [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.rounds]];
+//    
+//    [_defringeαThresholdSlider setFloatValue:opts.αthresh];
+//    [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.αthresh]];
+//    
+//    [_defringeγThresholdSlider setFloatValue:opts.γthresh];
+//    [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γthresh]];
+//    
+//    [_defringeγFactorSlider setFloatValue:opts.γfactor];
+//    [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.γfactor]];
+//    
+//    [_defringeδFactorSlider setFloatValue:opts.δfactor];
+//    [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.δfactor]];
+//    
+//    [[_mainView imageLayer] setDefringeOptions:opts];
+//}
+//
+//- (void)_setReconstructHighlights:(bool)en {
+//    [_reconstructHighlightsCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+//    [[_mainView imageLayer] setReconstructHighlights:en];
+//}
 
-- (void)_setReconstructHighlights:(bool)en {
-    [_reconstructHighlightsCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-    [[_mainView imageLayer] setReconstructHighlights:en];
-}
-
-- (IBAction)_imageAdjustmentsAction:(id)sender {
-    // Color checkers
-    {
-        [self _setColorCheckersEnabled:([_colorCheckersCheckbox state]==NSControlStateValueOn)];
+- (IBAction)_colorCheckersAction:(id)sender {
+    [self _setColorCheckersEnabled:([_colorCheckersCheckbox state]==NSControlStateValueOn)];
+    if (_colorCheckersEnabled) {
+        [self _updateColorMatrix];
     }
-    
-    // Corrections
-    {
-        // Defringe
-        {
-            const Defringe::Options opts = {
-                .rounds = (uint32_t)[_defringeRoundsSlider intValue],
-                .αthresh = [_defringeαThresholdSlider floatValue],
-                .γthresh = [_defringeγThresholdSlider floatValue],
-                .γfactor = [_defringeγFactorSlider floatValue],
-                .δfactor = [_defringeδFactorSlider floatValue],
-            };
-            
-            [self _setDefringe:([_defringeCheckbox state]==NSControlStateValueOn) options:opts];
+}
+
+- (IBAction)_imageOptionsAction:(id)sender {
+    _imgOpts.defringe = {
+        .en = ([_defringeCheckbox state]==NSControlStateValueOn),
+        .opts = {
+            .rounds = (uint32_t)[_defringeRoundsSlider intValue],
+            .αthresh = [_defringeαThresholdSlider floatValue],
+            .γthresh = [_defringeγThresholdSlider floatValue],
+            .γfactor = [_defringeγFactorSlider floatValue],
+            .δfactor = [_defringeδFactorSlider floatValue],
         }
+    };
+    
+    _imgOpts.reconstructHighlights = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
+    
+    _imgOpts.debayerLMMSE = {
+        .applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn),
+    };
+    
+    _imgOpts.exposure = [_exposureSlider floatValue];
+    _imgOpts.brightness = [_brightnessSlider floatValue];
+    _imgOpts.contrast = [_contrastSlider floatValue];
+    _imgOpts.saturation = [_saturationSlider floatValue];
+    
+    _imgOpts.localContrast = {
+        .en = ([_localContrastCheckbox state]==NSControlStateValueOn),
+        .amount = [_localContrastAmountSlider floatValue],
+        .radius = [_localContrastRadiusSlider floatValue],
+    };
+    
+    [self _updateImageOptions];
+}
+
+- (void)_updateImageOptions {
+    // Defringe
+    {
+        [_defringeCheckbox setState:(_imgOpts.defringe.en ? NSControlStateValueOn : NSControlStateValueOff)];
         
-        // Reconstruct Highlights
-        {
-            [self _setReconstructHighlights:([_reconstructHighlightsCheckbox state]==NSControlStateValueOn)];
-        }
+        [_defringeRoundsSlider setIntValue:_imgOpts.defringe.opts.rounds];
+        [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)_imgOpts.defringe.opts.rounds]];
+        
+        [_defringeαThresholdSlider setFloatValue:_imgOpts.defringe.opts.αthresh];
+        [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.defringe.opts.αthresh]];
+        
+        [_defringeγThresholdSlider setFloatValue:_imgOpts.defringe.opts.γthresh];
+        [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.defringe.opts.γthresh]];
+        
+        [_defringeγFactorSlider setFloatValue:_imgOpts.defringe.opts.γfactor];
+        [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
+            _imgOpts.defringe.opts.γfactor]];
+        
+        [_defringeδFactorSlider setFloatValue:_imgOpts.defringe.opts.δfactor];
+        [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
+            _imgOpts.defringe.opts.δfactor]];
     }
     
-    // Debayer
+    // Reconstruct Highlights
     {
-        [self _setDebayerLMMSEApplyGamma:([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn)];
+        [_reconstructHighlightsCheckbox setState:(_imgOpts.reconstructHighlights ?
+            NSControlStateValueOn : NSControlStateValueOff)];
     }
     
-    // Image adjustments
+    // LMMSE
     {
-        const ImageAdjustments adj = {
-            .exposure = [_exposureSlider floatValue],
-            .brightness = [_brightnessSlider floatValue],
-            .contrast = [_contrastSlider floatValue],
-            .saturation = [_saturationSlider floatValue],
-            
-            .localContrast = {
-                .enable = [_localContrastCheckbox state]==NSControlStateValueOn,
-                .amount = [_localContrastAmountSlider floatValue],
-                .radius = [_localContrastRadiusSlider floatValue],
-            },
-        };
-        [self _setImageAdjustments:adj];
+        [_debayerLMMSEGammaCheckbox setState:(_imgOpts.debayerLMMSE.applyGamma ?
+            NSControlStateValueOn : NSControlStateValueOff)];
     }
+    
+    // Color matrix
+    {
+        [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
+            @"%f %f %f\n"
+            @"%f %f %f\n"
+            @"%f %f %f\n",
+            _imgOpts.colorMatrix.at(0,0), _imgOpts.colorMatrix.at(0,1), _imgOpts.colorMatrix.at(0,2),
+            _imgOpts.colorMatrix.at(1,0), _imgOpts.colorMatrix.at(1,1), _imgOpts.colorMatrix.at(1,2),
+            _imgOpts.colorMatrix.at(2,0), _imgOpts.colorMatrix.at(2,1), _imgOpts.colorMatrix.at(2,2)
+        ]];
+    }
+    
+    {
+        [_exposureSlider setFloatValue:_imgOpts.exposure];
+        [_exposureLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.exposure]];
+        
+        [_brightnessSlider setFloatValue:_imgOpts.brightness];
+        [_brightnessLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.brightness]];
+        
+        [_contrastSlider setFloatValue:_imgOpts.contrast];
+        [_contrastLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.contrast]];
+        
+        [_saturationSlider setFloatValue:_imgOpts.saturation];
+        [_saturationLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.saturation]];
+    }
+    
+    // Local contrast
+    {
+        [_localContrastCheckbox setState:(_imgOpts.localContrast.en ? NSControlStateValueOn : NSControlStateValueOff)];
+        
+        [_localContrastAmountSlider setFloatValue:_imgOpts.localContrast.amount];
+        [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.localContrast.amount]];
+        
+        [_localContrastRadiusSlider setFloatValue:_imgOpts.localContrast.radius];
+        [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.localContrast.radius]];
+    }
+    
+    [[_mainView imageLayer] setOptions:_imgOpts];
 }
 
-- (void)_setImageAdjustments:(const ImageAdjustments&)adj {
-    [_exposureSlider setFloatValue:adj.exposure];
-    [_exposureLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.exposure]];
-    
-    [_brightnessSlider setFloatValue:adj.brightness];
-    [_brightnessLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.brightness]];
-    
-    [_contrastSlider setFloatValue:adj.contrast];
-    [_contrastLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.contrast]];
-    
-    [_saturationSlider setFloatValue:adj.saturation];
-    [_saturationLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.saturation]];
-    
-    [_localContrastCheckbox setState:(adj.localContrast.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-    
-    [_localContrastAmountSlider setFloatValue:adj.localContrast.amount];
-    [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.amount]];
-    
-    [_localContrastRadiusSlider setFloatValue:adj.localContrast.radius];
-    [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", adj.localContrast.radius]];
-    
-    [[_mainView imageLayer] setImageAdjustments:adj];
-}
-
-- (void)_setDebayerLMMSEApplyGamma:(bool)en {
-    [_debayerLMMSEGammaCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
-    [[_mainView imageLayer] setDebayerLMMSEApplyGamma:en];
-}
+//- (void)_setDebayerLMMSEApplyGamma:(bool)en {
+//    [_debayerLMMSEGammaCheckbox setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
+//    [[_mainView imageLayer] setDebayerLMMSEApplyGamma:en];
+//}
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {
-    Mat<double,3,3> highlightFactor(
-        [_highlightFactorR0Slider doubleValue],
-        [_highlightFactorR1Slider doubleValue],
-        [_highlightFactorR2Slider doubleValue],
-        
-        [_highlightFactorG0Slider doubleValue],
-        [_highlightFactorG1Slider doubleValue],
-        [_highlightFactorG2Slider doubleValue],
-        
-        [_highlightFactorB0Slider doubleValue],
-        [_highlightFactorB1Slider doubleValue],
-        [_highlightFactorB2Slider doubleValue]
-    );
-    
-    [[_mainView imageLayer] setHighlightFactor:highlightFactor];
-    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,0)]];
-    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,1)]];
-    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,2)]];
-    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,0)]];
-    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,1)]];
-    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,2)]];
-    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,0)]];
-    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,1)]];
-    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,2)]];
-    [self mainViewSampleRectChanged:nil];
+//    Mat<double,3,3> highlightFactor(
+//        [_highlightFactorR0Slider doubleValue],
+//        [_highlightFactorR1Slider doubleValue],
+//        [_highlightFactorR2Slider doubleValue],
+//        
+//        [_highlightFactorG0Slider doubleValue],
+//        [_highlightFactorG1Slider doubleValue],
+//        [_highlightFactorG2Slider doubleValue],
+//        
+//        [_highlightFactorB0Slider doubleValue],
+//        [_highlightFactorB1Slider doubleValue],
+//        [_highlightFactorB2Slider doubleValue]
+//    );
+//    
+//    [[_mainView imageLayer] setHighlightFactor:highlightFactor];
+//    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,0)]];
+//    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,1)]];
+//    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(0,2)]];
+//    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,0)]];
+//    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,1)]];
+//    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(1,2)]];
+//    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,0)]];
+//    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,1)]];
+//    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor.at(2,2)]];
+//    [self mainViewSampleRectChanged:nil];
 }
 
 #pragma mark - MainViewDelegate
@@ -1028,16 +1107,16 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     [[_mainView imageLayer] setSampleRect:sampleRect];
 }
 
-- (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
+- (void)_updateColorMatrix {
     auto points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorChecker::Count);
     
     Mat<double,ColorChecker::Count,3> A; // Colors that we have
     size_t y = 0;
     for (const CGPoint& p : points) {
-        Color_CamRaw_D50 c = sampleImageCircle(_image,
-            round(p.x*_image.width),
-            round(p.y*_image.height),
+        Color_CamRaw_D50 c = sampleImageCircle(_img,
+            round(p.x*_img.width),
+            round(p.y*_img.height),
             _colorCheckerCircleRadius);
         A.at(y,0) = c[0];
         A.at(y,1) = c[1];
@@ -1059,15 +1138,9 @@ static Color_CamRaw_D50 sampleImageCircle(Image& img, uint32_t x, uint32_t y, ui
     }
     
     // Solve Ax=b for the color matrix
-    ColorMatrix x = A.solve(b).trans();
-    [self _updateColorMatrix:x];
+    _imgOpts.colorMatrix = A.solve(b).trans();
+    [self _updateImageOptions];
     [self _prefsSetColorCheckerPositions:points];
-    
-//    NSMutableArray* nspoints = [NSMutableArray new];
-//    for (const CGPoint& p : points) {
-//        [nspoints addObject:[NSValue valueWithPoint:p]];
-//    }
-//    [[NSUserDefaults standardUserDefaults] setObject:nspoints forKey:ColorCheckerPositionsKey];
 }
 
 #pragma mark - Prefs

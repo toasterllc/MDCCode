@@ -1,17 +1,12 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import "MetalUtil.h"
-#import "ImageFilter.h"
+#import "ImagePipelineTypes.h"
 
-namespace CFAViewer::ImageFilter {
+namespace CFAViewer::ImagePipeline {
     class DebayerLMMSE {
     public:
-        struct Options {
-            CFADesc cfaDesc;
-            bool applyGamma = false;
-        };
-        
-        static void Run(Renderer& renderer, const Options& opts,
+        static void Run(Renderer& renderer, const CFADesc& cfaDesc, bool applyGamma,
             id<MTLTexture> rawOriginal, id<MTLTexture> rgb) {
             
             const NSUInteger w = [rawOriginal width];
@@ -23,7 +18,7 @@ namespace CFAViewer::ImageFilter {
             renderer.copy(rawOriginal, raw);
             
             // Gamma before (improves quality of edges)
-            if (opts.applyGamma) {
+            if (applyGamma) {
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::GammaForward", raw,
                     // Texture args
                     raw
@@ -59,7 +54,7 @@ namespace CFAViewer::ImageFilter {
             {
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffHTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     // Texture args
                     raw,
                     filteredHTxt
@@ -71,7 +66,7 @@ namespace CFAViewer::ImageFilter {
             {
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::NoiseEst", diffVTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     // Texture args
                     raw,
                     filteredVTxt
@@ -104,7 +99,7 @@ namespace CFAViewer::ImageFilter {
             {
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcG", rgb,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     // Texture args
                     raw,
                     filteredHTxt,
@@ -120,7 +115,7 @@ namespace CFAViewer::ImageFilter {
                 const bool modeGR = true;
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGRTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -134,7 +129,7 @@ namespace CFAViewer::ImageFilter {
                 const bool modeGR = false;
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiffGRGB", diffGBTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -147,7 +142,7 @@ namespace CFAViewer::ImageFilter {
                 const bool modeGR = true;
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGRTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -161,7 +156,7 @@ namespace CFAViewer::ImageFilter {
                 const bool modeGR = false;
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGBTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     modeGR,
                     // Texture args
                     raw,
@@ -174,7 +169,7 @@ namespace CFAViewer::ImageFilter {
             {
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGRTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     // Texture args
                     raw,
                     rgb,
@@ -186,7 +181,7 @@ namespace CFAViewer::ImageFilter {
             {
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGBTxt,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     // Texture args
                     raw,
                     rgb,
@@ -205,7 +200,7 @@ namespace CFAViewer::ImageFilter {
             }
             
             // Gamma after (improves quality of edges)
-            if (opts.applyGamma) {
+            if (applyGamma) {
                 renderer.render("CFAViewer::Shader::DebayerLMMSE::GammaReverse", rgb,
                     // Texture args
                     rgb

@@ -1,11 +1,11 @@
 #import <metal_stdlib>
 #import "MetalUtil.h"
-#import "ImageFilter.h"
+#import "ImagePipelineTypes.h"
 using namespace metal;
 using namespace CFAViewer;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::MetalUtil::Standard;
-using namespace CFAViewer::ImageFilter;
+using namespace CFAViewer::ImagePipeline;
 
 namespace CFAViewer {
 namespace Shader {

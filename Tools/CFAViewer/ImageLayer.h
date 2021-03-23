@@ -1,52 +1,30 @@
 #import <QuartzCore/QuartzCore.h>
-#import "ImageLayerTypes.h"
-#import "Defringe.h"
+#import "MetalUtil.h"
 #import "Mat.h"
 #import "ColorUtil.h"
-#import "ImageFilter.h"
+#import "ImagePipelineTypes.h"
+#import "ImagePipeline.h"
 
 @class ImageLayer;
 using ImageLayerDataChangedHandler = void(^)(ImageLayer*);
 
 namespace CFAViewer::ImageLayerTypes {
-    using namespace CFAViewer::ImageFilter;
     struct Image {
-        CFADesc cfaDesc;
+        ImagePipeline::CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
-        CFAViewer::MetalUtil::ImagePixel* pixels = nullptr;
+        MetalUtil::ImagePixel* pixels = nullptr;
     };
     
-    struct ImageAdjustments {
-        float exposure = 0;
-        float brightness = 0;
-        float contrast = 0;
-        float saturation = 0;
-        
-        struct {
-            bool enable = false;
-            float amount = 0;
-            float radius = 0;
-        } localContrast;
-    };
-};
+    using Options = CFAViewer::ImagePipeline::Pipeline::Options;
+}
 
 @interface ImageLayer : CAMetalLayer
 
-- (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)image;
-- (void)setRawMode:(bool)rawMode;
-- (void)setColorMatrix:(const Mat<double,3,3>&)cm;
+- (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)img;
+- (void)setOptions:(const CFAViewer::ImageLayerTypes::Options&)opts;
 
-- (void)setDefringe:(bool)en;
-- (void)setDefringeOptions:(const CFAViewer::ImageFilter::Defringe::Options&)opts;
-
-- (void)setReconstructHighlights:(bool)en;
-
-- (void)setDebayerLMMSEApplyGamma:(bool)en;
-
-- (void)setImageAdjustments:(const CFAViewer::ImageLayerTypes::ImageAdjustments&)adj;
-
-- (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
+//- (void)setHighlightFactor:(const Mat<double,3,3>&)hf;
 
 - (void)setSampleRect:(CGRect)rect;
 // `handler` is called on a background queue when histograms/sample data changes

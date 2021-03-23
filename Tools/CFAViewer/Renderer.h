@@ -59,8 +59,7 @@ namespace CFAViewer {
         using Buf = Resource<id<MTLBuffer>>;
         
         Renderer() {}
-        Renderer(id<MTLDevice> dev, id<MTLLibrary> lib,
-        id<MTLCommandQueue> commandQueue) :
+        Renderer(id<MTLDevice> dev, id<MTLLibrary> lib, id<MTLCommandQueue> commandQueue) :
         dev(dev), _lib(lib), _commandQueue(commandQueue) {
         }
         
@@ -234,11 +233,12 @@ namespace CFAViewer {
         
         template <typename T, typename... Ts>
         void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-            if constexpr (!std::is_same<T,Txt>::value &&
-                          !std::is_same<T,id<MTLTexture>>::value) {
-                if constexpr (std::is_same<T,Buf>::value) {
+            using U = typename std::remove_cv<T>::type;
+            if constexpr (!std::is_same<U,Txt>::value &&
+                          !std::is_same<U,id<MTLTexture>>::value) {
+                if constexpr (std::is_same<U,Buf>::value) {
                     [enc setFragmentBuffer:(id<MTLBuffer>)t offset:0 atIndex:idx];
-                } else if constexpr (std::is_same<T,id<MTLBuffer>>::value) {
+                } else if constexpr (std::is_same<U,id<MTLBuffer>>::value) {
                     [enc setFragmentBuffer:t offset:0 atIndex:idx];
                 } else {
                     [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
@@ -254,12 +254,13 @@ namespace CFAViewer {
         
         template <typename T, typename... Ts>
         void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
-            if constexpr (std::is_same<T,Txt>::value) {
+            using U = typename std::remove_cv<T>::type;
+            if constexpr (std::is_same<U,Txt>::value) {
                 [enc setFragmentTexture:(id<MTLTexture>)t atIndex:idx];
-            } else if constexpr (std::is_same<T,id<MTLTexture>>::value) {
+            } else if constexpr (std::is_same<U,id<MTLTexture>>::value) {
                 [enc setFragmentTexture:t atIndex:idx];
             } else {
-                static_assert(_AlwaysFalse<T>);
+                static_assert(_AlwaysFalse<U>);
             }
             
             _SetTextureArgs(enc, idx+1, ts...);

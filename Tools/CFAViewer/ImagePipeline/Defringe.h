@@ -3,14 +3,13 @@
 #import <queue>
 #import <thread>
 #import "Poly2D.h"
-#import "ImageFilter.h"
+#import "ImagePipelineTypes.h"
 #import "MetalUtil.h"
 
-namespace CFAViewer::ImageFilter {
+namespace CFAViewer::ImagePipeline {
     class Defringe {
     public:
         struct Options {
-            CFADesc cfaDesc;
             uint32_t rounds = 2;
             float αthresh = 2; // Threshold to allow α correction
             float γthresh = .2; // Threshold to allow γ correction
@@ -19,13 +18,13 @@ namespace CFAViewer::ImageFilter {
                                     // computing derivative, when solving for tile shift
         };
         
-        static void Run(Renderer& renderer, const Options& opts, id<MTLTexture> raw) {
+        static void Run(Renderer& renderer, const CFADesc& cfaDesc, const Options& opts, id<MTLTexture> raw) {
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
             renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
                 // Buffer args
-                opts.cfaDesc,
+                cfaDesc,
                 // Texture args
                 raw
             );
@@ -34,19 +33,19 @@ namespace CFAViewer::ImageFilter {
                 Renderer::Txt gInterp = renderer.createTexture(MTLPixelFormatR32Float, w, h);
                 renderer.render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
                     // Buffer args
-                    opts.cfaDesc,
+                    cfaDesc,
                     // Texture args
                     raw
                 );
                 
                 for (uint32_t i=0; i<opts.rounds; i++) {
-                    _defringe(renderer, opts, raw, gInterp);
+                    _defringe(renderer, cfaDesc, opts, raw, gInterp);
                 }
             }
             
             renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
                 // Buffer args
-                opts.cfaDesc,
+                cfaDesc,
                 // Texture args
                 raw
             );
@@ -168,14 +167,16 @@ namespace CFAViewer::ImageFilter {
             const T* _buf = nullptr;
         };
         
-        static void _defringe(Renderer& renderer, const Options& opts,
-            id<MTLTexture> raw, id<MTLTexture> gInterp) {
+        static void _defringe(Renderer& renderer,
+            const CFADesc& cfaDesc, const Options& opts,
+            id<MTLTexture> raw, id<MTLTexture> gInterp
+        ) {
             
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             
             // Solve for the 2D polynomials that minimize the g-r/b difference
-            ColorDir<Poly> polys = _solveForPolys(renderer, opts, raw, gInterp);
+            ColorDir<Poly> polys = _solveForPolys(renderer, cfaDesc, opts, raw, gInterp);
             
             // Using the 2D polynomials, create small textures containing the shift
             // amounts across the image.
@@ -198,7 +199,7 @@ namespace CFAViewer::ImageFilter {
             renderer.render("CFAViewer::Shader::Defringe::CalcShiftTxts",
                 ShiftTextureWidth, ShiftTextureWidth,
                 // Buffer args
-                opts.cfaDesc,
+                cfaDesc,
                 polyCoeffs(CFAColor::Red,Dir::X),
                 polyCoeffs(CFAColor::Red,Dir::Y),
                 polyCoeffs(CFAColor::Blue,Dir::X),
@@ -217,7 +218,7 @@ namespace CFAViewer::ImageFilter {
             Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, w, h);
             renderer.render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
                 // Buffer args
-                opts.cfaDesc,
+                cfaDesc,
                 opts.αthresh,
                 opts.γthresh,
                 opts.γfactor,
@@ -269,8 +270,10 @@ namespace CFAViewer::ImageFilter {
         static constexpr uint32_t TileOverlap = 16;
         static constexpr double Eps = 1e-5;
         
-        static ColorDir<Poly> _solveForPolys(Renderer& renderer, const Options& opts,
-            id<MTLTexture> raw, id<MTLTexture> gInterp) {
+        static ColorDir<Poly> _solveForPolys(Renderer& renderer,
+            const CFADesc& cfaDesc, const Options& opts,
+            id<MTLTexture> raw, id<MTLTexture> gInterp
+        ) {
             
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
@@ -316,8 +319,11 @@ namespace CFAViewer::ImageFilter {
                             tiles.pop();
                         lock.unlock();
                         
-                        const ColorDir<TileShift> tileShift = _calcTileShift(renderer, opts, grid,
-                            rawPx, gInterpPx, tilePos.x, tilePos.y);
+                        const ColorDir<TileShift> tileShift = _calcTileShift(
+                            renderer, cfaDesc, opts, grid,
+                            rawPx, gInterpPx,
+                            tilePos.x, tilePos.y
+                        );
                         
                         for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                             for (Dir dir : {Dir::X, Dir::Y}) {
@@ -349,6 +355,7 @@ namespace CFAViewer::ImageFilter {
         
         static ColorDir<TileShift> _calcTileShift(
             Renderer& renderer,
+            const CFADesc& cfaDesc,
             const Options& opts,
             const TileGrid& grid,
             const BufSampler<float>& raw,
@@ -365,11 +372,11 @@ namespace CFAViewer::ImageFilter {
             ColorDir<TileTerms> terms;
             for (int32_t y=grid.y.tileOffset(ty); y<grid.y.tileOffset(ty)+TileSize; y++) {
                 int32_t x = grid.x.tileOffset(tx);
-                if (opts.cfaDesc.color(x,y) == CFAColor::Green) {
+                if (cfaDesc.color(x,y) == CFAColor::Green) {
                     x++;
                 }
                 
-                const CFAColor c = opts.cfaDesc.color(x,y);
+                const CFAColor c = cfaDesc.color(x,y);
                 for (; x<grid.x.tileOffset(tx)+TileSize; x+=2) {
                     const double k = opts.δfactor;
                     const double kadj = (1-opts.δfactor)/2;

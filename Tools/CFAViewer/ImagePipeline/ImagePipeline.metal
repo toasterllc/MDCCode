@@ -1,15 +1,14 @@
 #import <metal_stdlib>
 #import "MetalUtil.h"
-#import "ImageLayerTypes.h"
+#import "ImagePipelineTypes.h"
 using namespace metal;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::MetalUtil::Standard;
-using namespace CFAViewer::ImageLayerTypes;
-using namespace CFAViewer::ImageFilter;
+using namespace CFAViewer::ImagePipeline;
 
 namespace CFAViewer {
 namespace Shader {
-namespace ImageFilter {
+namespace ImagePipeline {
 
 uint3 binFromColor(float3 color) {
     const uint32_t maxBin = (uint32_t)(sizeof(Histogram::r)/sizeof(*Histogram::r))-1;
@@ -33,25 +32,25 @@ float3 XYZFromXYY(const float3 xyy) {
 }
 
 fragment float LoadRaw(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant ImagePixel* pxs [[buffer(1)]],
-    device float3* samples [[buffer(2)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant uint32_t& imageWidth [[buffer(1)]],
+    constant uint32_t& imageHeight [[buffer(2)]],
+    constant ImagePixel* pxs [[buffer(3)]],
+    constant SampleRect& sampleRect [[buffer(4)]],
+    device float3* samples [[buffer(5)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const float v = (float)pxs[ctx.imageWidth*pos.y + pos.x] / ImagePixelMax;
-    if (pos.x >= (int)ctx.sampleRect.left &&
-        pos.x < (int)ctx.sampleRect.right &&
-        pos.y >= (int)ctx.sampleRect.top &&
-        pos.y < (int)ctx.sampleRect.bottom) {
-        const CFAColor c = ctx.cfaDesc.color(pos);
-        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
+    const float v = (float)pxs[imageWidth*pos.y + pos.x] / ImagePixelMax;
+    if (sampleRect.contains(pos)) {
+        const CFAColor c = cfaDesc.color(pos);
+        const int2 samplePos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
         const float3 sample = float3(
             c==CFAColor::Red   ? v : 0.,
             c==CFAColor::Green ? v : 0.,
             c==CFAColor::Blue  ? v : 0.
         );
-        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = sample;
+        samples[samplePos.y*sampleRect.width() + samplePos.x] = sample;
     }
     
     return v;
@@ -70,31 +69,30 @@ float SRGBGammaReverse(float x) {
 }
 
 fragment float4 XYZD50FromCameraRaw(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant float3x3& colorMatrix [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
-    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+    const float3x3 XYZD50_From_CameraRaw = colorMatrix;
     float3 outputColor_XYZD50 = XYZD50_From_CameraRaw * inputColor_cameraRaw;
     return float4(outputColor_XYZD50, 1);
 }
 
 fragment float4 XYYD50FromCameraRaw(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant float3x3& colorMatrix [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const float3 inputColor_cameraRaw = Sample::RGB(txt, int2(in.pos.xy));
-    const float3x3 XYZD50_From_CameraRaw = ctx.colorMatrix;
+    const float3x3 XYZD50_From_CameraRaw = colorMatrix;
 //    const float3x3 XYZD50_From_CameraRaw(1);
     const float3 c = XYYFromXYZ(XYZD50_From_CameraRaw * inputColor_cameraRaw);
     return float4(c, 1);
 }
 
 fragment float4 Exposure(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant float& exposure [[buffer(1)]],
+    constant float& exposure [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -104,8 +102,7 @@ fragment float4 Exposure(
 }
 
 fragment float4 Brightness(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant float& brightness [[buffer(1)]],
+    constant float& brightness [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -119,8 +116,7 @@ float bellcurve(float width, int plateau, float x) {
 }
 
 fragment float4 Contrast(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant float& contrast [[buffer(1)]],
+    constant float& contrast [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -131,7 +127,6 @@ fragment float4 Contrast(
 }
 
 fragment float4 XYYD50FromXYZD50(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -140,7 +135,6 @@ fragment float4 XYYD50FromXYZD50(
 }
 
 fragment float4 XYZD50FromXYYD50(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -189,7 +183,6 @@ float3 LabFromXYZ(float3 white_XYZ, float3 c_XYZ) {
 }
 
 fragment float4 LabD50FromXYZD50(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -198,7 +191,6 @@ fragment float4 LabD50FromXYZD50(
 }
 
 fragment float4 XYZD50FromLabD50(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -208,8 +200,7 @@ fragment float4 XYZD50FromLabD50(
 
 constant uint UIntNormalizeVal = 65535;
 fragment float4 NormalizeXYYLuminance(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant Vals3& maxValsXYY[[buffer(1)]],
+    constant Vals3& maxValsXYY[[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -220,8 +211,7 @@ fragment float4 NormalizeXYYLuminance(
 }
 
 fragment float4 NormalizeRGB(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant Vals3& maxValsRGB[[buffer(1)]],
+    constant Vals3& maxValsRGB[[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -231,7 +221,7 @@ fragment float4 NormalizeRGB(
 }
 
 fragment float4 LSRGBD65FromXYZD50(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant SampleRect& sampleRect [[buffer(0)]],
     device float3* samples [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -255,12 +245,9 @@ fragment float4 LSRGBD65FromXYZD50(
     const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
     
     const int2 pos = int2(in.pos.xy);
-    if (pos.x >= (int)ctx.sampleRect.left &&
-        pos.x < (int)ctx.sampleRect.right &&
-        pos.y >= (int)ctx.sampleRect.top &&
-        pos.y < (int)ctx.sampleRect.bottom) {
-        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
-        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = c_XYZD50;
+    if (sampleRect.contains(pos)) {
+        const int2 samplePos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
+        samples[samplePos.y*sampleRect.width() + samplePos.x] = c_XYZD50;
     }
     
     return float4(c_LSRGBD65, 1);
@@ -279,8 +266,7 @@ void setIfGreater(volatile device atomic_uint& dst, uint val) {
 }
 
 fragment float4 FindMaxVals(
-    constant RenderContext& ctx [[buffer(0)]],
-    device Vals3& highlights [[buffer(1)]],
+    device Vals3& highlights [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -320,13 +306,13 @@ private:
 };
 
 fragment float ReconstructHighlights(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> rawTxt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = ctx.cfaDesc.color(pos);
-    const CFAColor cn = ctx.cfaDesc.color(pos.x+1,pos.y);
+    const CFAColor c = cfaDesc.color(pos);
+    const CFAColor cn = cfaDesc.color(pos.x+1,pos.y);
     Float3x3 s(rawTxt, pos);
     
     float thresh = 1;
@@ -515,7 +501,7 @@ fragment float ReconstructHighlights(
 }
 
 fragment float4 SRGBGamma(
-    constant RenderContext& ctx [[buffer(0)]],
+    constant SampleRect& sampleRect [[buffer(0)]],
     device float3* samples [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -528,19 +514,15 @@ fragment float4 SRGBGamma(
     };
     
     const int2 pos = int2(in.pos.xy);
-    if (pos.x >= (int)ctx.sampleRect.left &&
-        pos.x < (int)ctx.sampleRect.right &&
-        pos.y >= (int)ctx.sampleRect.top &&
-        pos.y < (int)ctx.sampleRect.bottom) {
-        const uint2 samplePos = {pos.x-ctx.sampleRect.left, pos.y-ctx.sampleRect.top};
-        samples[samplePos.y*ctx.sampleRect.width() + samplePos.x] = c_SRGB;
+    if (sampleRect.contains(pos)) {
+        const int2 samplePos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
+        samples[samplePos.y*sampleRect.width() + samplePos.x] = c_SRGB;
     }
     
     return float4(c_SRGB, 1);
 }
 
 fragment float4 Display(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -549,7 +531,6 @@ fragment float4 Display(
 }
 
 fragment float4 DisplayR(
-    constant RenderContext& ctx [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {

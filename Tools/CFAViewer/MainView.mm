@@ -8,7 +8,6 @@
 
 using namespace CFAViewer;
 using namespace MetalUtil;
-using namespace ImageLayerTypes;
 using namespace ColorUtil;
 
 @interface MainView () <CALayoutManager, NSGestureRecognizerDelegate>

@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "ImageFilter.h"
+#import "ImagePipelineTypes.h"
 #import "MetalUtil.h"
 
-namespace CFAViewer::ImageFilter {
+namespace CFAViewer::ImagePipeline {
     class Saturation {
     public:
         static void Run(Renderer& renderer, float sat, id<MTLTexture> xyz_d50) {

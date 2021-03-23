@@ -4,26 +4,20 @@
 #import <mutex>
 #import <vector>
 #import "ImageLayer.h"
-#import "ImageLayerTypes.h"
 #import "Assert.h"
 #import "Util.h"
 #import "ColorUtil.h"
 #import "TimeInstant.h"
-#import "Poly2D.h"
-#import "Defringe.h"
-#import "DebayerLMMSE.h"
-#import "Saturation.h"
-#import "LocalContrast.h"
+#import "ImagePipeline.h"
 using namespace CFAViewer;
-using namespace CFAViewer::MetalUtil;
-using namespace CFAViewer::ImageLayerTypes;
+using namespace MetalUtil;
 using namespace ColorUtil;
+using namespace ImagePipeline;
 
 @implementation ImageLayer {
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
     id<MTLLibrary> _library;
-    NSMutableDictionary* _pipelineStates;
 //    id<MTLRenderPipelineState> _debayerPipelineState;
 //    id<MTLRenderPipelineState> _colorAdjustPipelineState;
 //    id<MTLRenderPipelineState> _findHighlightsPipelineState;
@@ -31,29 +25,15 @@ using namespace ColorUtil;
     
     struct {
         std::mutex lock; // Protects this struct
-        bool rawMode = false;
-        
         Renderer renderer;
-        
         struct {
-            bool en = false;
-            Defringe::Options options;
-        } defringe;
-        
-        DebayerLMMSE::Options debayerLMMSEOptions;
-        
-        Saturation saturationFilter;
-        
-        bool reconstructHighlights = false;
-        
-        RenderContext ctx;
-        ImageAdjustments imageAdjustments;
-        id<MTLBuffer> pixelData = nil;
-        
-        Renderer::Buf sampleBuf_CamRaw_D50;
-        Renderer::Buf sampleBuf_XYZ_D50;
-        Renderer::Buf sampleBuf_SRGB_D65;
-        
+            CFADesc cfaDesc;
+            uint32_t width = 0;
+            uint32_t height = 0;
+            Renderer::Buf pixels;
+        } img;
+        Pipeline::Options opts;
+        Pipeline::SampleOptions sampleOpts;
         ImageLayerDataChangedHandler dataChangedHandler = nil;
     } _state;
     
@@ -83,111 +63,74 @@ using namespace ColorUtil;
     _library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
     Assert(_library, return nil);
     
-    _pipelineStates = [NSMutableDictionary new];
-    
     auto lock = std::lock_guard(_state.lock);
         _state.renderer = Renderer(_device, _library, _commandQueue);
-        
-        _state.sampleBuf_CamRaw_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleBuf_XYZ_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleBuf_SRGB_D65 = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.camRaw_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.xyz_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.srgb_D65 = _state.renderer.createBuffer(sizeof(simd::float3));
     
     return self;
 }
 
-- (void)setImage:(const Image&)image {
+
+- (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)img {
     // If we don't have pixel data, ensure that our image has 0 pixels
-    NSParameterAssert(image.pixels || (image.width*image.height)==0);
+    NSParameterAssert(img.pixels || (img.width*img.height)==0);
     
     auto lock = std::lock_guard(_state.lock);
     
-    const size_t pixelCount = image.width*image.height;
+    const size_t pixelCount = img.width*img.height;
     
     // Reset image size in case something fails
-    _state.ctx.imageWidth = 0;
-    _state.ctx.imageHeight = 0;
-    _state.ctx.cfaDesc = image.cfaDesc;
+    _state.img.width = 0;
+    _state.img.height = 0;
+    _state.img.cfaDesc = img.cfaDesc;
     
     const size_t len = pixelCount*sizeof(ImagePixel);
     if (len) {
-        if (!_state.pixelData || [_state.pixelData length]<len) {
-            _state.pixelData = _state.renderer.createBuffer(len);
-            Assert(_state.pixelData, return);
+        if (!_state.img.pixels || [_state.img.pixels length]<len) {
+            _state.img.pixels = _state.renderer.createBuffer(len);
+            Assert(_state.img.pixels, return);
         }
         
         // Copy the pixel data into the Metal buffer
-        memcpy([_state.pixelData contents], image.pixels, len);
+        memcpy([_state.img.pixels contents], img.pixels, len);
         
         // Set the image size now that we have image data
-        _state.ctx.imageWidth = image.width;
-        _state.ctx.imageHeight = image.height;
+        _state.img.width = img.width;
+        _state.img.height = img.height;
     
     } else {
-        _state.pixelData = nil;
+        _state.img.pixels = Renderer::Buf();
     }
     
     const CGFloat scale = [self contentsScale];
-    [self setBounds:{0, 0, _state.ctx.imageWidth/scale, _state.ctx.imageHeight/scale}];
+    [self setBounds:{0, 0, _state.img.width/scale, _state.img.height/scale}];
     [self setNeedsDisplay];
 }
 
-- (void)setRawMode:(bool)rawMode {
+
+- (void)setOptions:(const CFAViewer::ImageLayerTypes::Options&)opts {
     auto lock = std::lock_guard(_state.lock);
-    _state.rawMode = rawMode;
+    _state.opts = opts;
     [self setNeedsDisplay];
 }
 
-static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
-    return {
-        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
-        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
-        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
-    };
-}
+//static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
+//    return {
+//        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
+//        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
+//        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
+//    };
+//}
 
-- (void)setColorMatrix:(const Mat<double,3,3>&)cm {
-    auto lock = std::lock_guard(_state.lock);
-    _state.ctx.colorMatrix = simdFromMat(cm);
-    [self setNeedsDisplay];
-}
-
-- (void)setDefringe:(bool)en {
-    auto lock = std::lock_guard(_state.lock);
-    _state.defringe.en = en;
-    [self setNeedsDisplay];
-}
-
-- (void)setDefringeOptions:(const Defringe::Options&)opts {
-    auto lock = std::lock_guard(_state.lock);
-    _state.defringe.options = opts;
-    [self setNeedsDisplay];
-}
-
-- (void)setReconstructHighlights:(bool)en {
-    auto lock = std::lock_guard(_state.lock);
-    _state.reconstructHighlights = en;
-    [self setNeedsDisplay];
-}
-
-- (void)setDebayerLMMSEApplyGamma:(bool)en {
-    auto lock = std::lock_guard(_state.lock);
-    _state.debayerLMMSEOptions.applyGamma = en;
-    [self setNeedsDisplay];
-}
-
-- (void)setImageAdjustments:(const ImageAdjustments&)adj {
-    auto lock = std::lock_guard(_state.lock);
-    _state.imageAdjustments = adj;
-    [self setNeedsDisplay];
-}
-
-- (void)setHighlightFactor:(const Mat<double,3,3>&)hf {
-    auto lock = std::lock_guard(_state.lock);
-    _state.ctx.highlightFactorR = {(float)hf.at(0,0), (float)hf.at(0,1), (float)hf.at(0,2)};
-    _state.ctx.highlightFactorG = {(float)hf.at(1,0), (float)hf.at(1,1), (float)hf.at(1,2)};
-    _state.ctx.highlightFactorB = {(float)hf.at(2,0), (float)hf.at(2,1), (float)hf.at(2,2)};
-    [self setNeedsDisplay];
-}
+//- (void)setHighlightFactor:(const Mat<double,3,3>&)hf {
+//    auto lock = std::lock_guard(_state.lock);
+//    _state.ctx.highlightFactorR = {(float)hf.at(0,0), (float)hf.at(0,1), (float)hf.at(0,2)};
+//    _state.ctx.highlightFactorG = {(float)hf.at(1,0), (float)hf.at(1,1), (float)hf.at(1,2)};
+//    _state.ctx.highlightFactorB = {(float)hf.at(2,0), (float)hf.at(2,1), (float)hf.at(2,2)};
+//    [self setNeedsDisplay];
+//}
 
 - (MetalUtil::Histogram)inputHistogram {
     return _inputHistogram;
@@ -197,185 +140,17 @@ static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
     return _outputHistogram;
 }
 
-- (id<MTLRenderPipelineState>)_pipelineState:(NSString*)name {
-    return [self _pipelineState:name format:MTLPixelFormatRGBA32Float];
-}
-
-- (id<MTLRenderPipelineState>)_pipelineState:(NSString*)name format:(MTLPixelFormat)format {
-    NSParameterAssert(name);
-    id<MTLRenderPipelineState> ps = _pipelineStates[name];
-    if (!ps) {
-        id<MTLFunction> vertexShader = [_library newFunctionWithName:@"CFAViewer::Shader::ImageLayer::VertexShader"];
-        Assert(vertexShader, return nil);
-        id<MTLFunction> fragmentShader = [_library newFunctionWithName:name];
-        Assert(fragmentShader, return nil);
-        
-        MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
-        [pipelineDescriptor setVertexFunction:vertexShader];
-        [pipelineDescriptor setFragmentFunction:fragmentShader];
-        [[pipelineDescriptor colorAttachments][0] setPixelFormat:format];
-        ps = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
-        Assert(ps, return nil);
-        _pipelineStates[name] = ps;
-    }
-    return ps;
-}
-
 // Lock must be held
 - (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
-    NSParameterAssert(outTxt);
+    const ImagePipeline::Pipeline::Image img = {
+        .cfaDesc = _state.img.cfaDesc,
+        .width = _state.img.width,
+        .height = _state.img.height,
+        .pixels = _state.img.pixels,
+    };
     
-    // Short-circuit if we don't have any image data
-    if (!_state.pixelData) return;
-    
-    _inputHistogram = Histogram();
-    _outputHistogram = Histogram();
-    
-    Renderer::Txt raw = _state.renderer.createTexture(MTLPixelFormatR32Float,
-        _state.ctx.imageWidth, _state.ctx.imageHeight);
-    
-    _state.renderer.render("CFAViewer::Shader::ImageFilter::LoadRaw", raw,
-        // Buffer args
-        _state.ctx,
-        _state.pixelData,
-        _state.sampleBuf_CamRaw_D50
-        // Texture args
-    );
-    
-    Renderer::Txt rgb = _state.renderer.createTexture(MTLPixelFormatRGBA32Float,
-        _state.ctx.imageWidth, _state.ctx.imageHeight);
-    
-    // Raw mode (bilinear debayer only)
-    if (_state.rawMode) {
-        // De-bayer
-        _state.renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
-            // Buffer args
-            _state.ctx.cfaDesc,
-            // Texture args
-            raw
-        );
-    
-    } else {
-        if (_state.defringe.en) {
-            _state.defringe.options.cfaDesc = _state.ctx.cfaDesc;
-            Defringe::Run(_state.renderer, _state.defringe.options, raw);
-        }
-        
-        // Reconstruct highlights
-        if (_state.reconstructHighlights) {
-            Renderer::Txt tmp = _state.renderer.createTexture(MTLPixelFormatR32Float,
-                _state.ctx.imageWidth, _state.ctx.imageHeight);
-            
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::ReconstructHighlights", tmp,
-                // Buffer args
-                _state.ctx,
-                // Texture args
-                raw
-            );
-            raw = std::move(tmp);
-        }
-        
-        // LMMSE Debayer
-        {
-            _state.debayerLMMSEOptions.cfaDesc = _state.ctx.cfaDesc;
-            DebayerLMMSE::Run(_state.renderer, _state.debayerLMMSEOptions, raw, rgb);
-        }
-        
-        // Camera raw -> XYY.D50
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::XYYD50FromCameraRaw", rgb,
-                _state.ctx,
-                rgb
-            );
-        }
-        
-        // Exposure
-        {
-            const float exposure = pow(2, _state.imageAdjustments.exposure);
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::Exposure", rgb,
-                _state.ctx,
-                exposure,
-                rgb
-            );
-        }
-        
-        // XYY.D50 -> XYZ.D50
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::XYZD50FromXYYD50", rgb,
-                _state.ctx,
-                rgb
-            );
-        }
-        
-        // XYZ.D50 -> Lab.D50
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::LabD50FromXYZD50", rgb,
-                _state.ctx,
-                rgb
-            );
-        }
-        
-        // Brightness
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::Brightness", rgb,
-                _state.ctx,
-                _state.imageAdjustments.brightness,
-                rgb
-            );
-        }
-        
-        // Contrast
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::Contrast", rgb,
-                _state.ctx,
-                _state.imageAdjustments.contrast,
-                rgb
-            );
-        }
-        
-        // Local contrast
-        if (_state.imageAdjustments.localContrast.enable) {
-            LocalContrast::Run(_state.renderer, _state.imageAdjustments.localContrast.amount,
-                _state.imageAdjustments.localContrast.radius, rgb);
-        }
-        
-        // Lab.D50 -> XYZ.D50
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::XYZD50FromLabD50", rgb,
-                _state.ctx,
-                rgb
-            );
-        }
-        
-        // Saturation
-        Saturation::Run(_state.renderer, _state.imageAdjustments.saturation, rgb);
-        
-        // XYZ.D50 -> LSRGB.D65
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::LSRGBD65FromXYZD50", rgb,
-                _state.ctx,
-                _state.sampleBuf_XYZ_D50,
-                rgb
-            );
-        }
-        
-        // Apply SRGB gamma
-        {
-            _state.renderer.render("CFAViewer::Shader::ImageFilter::SRGBGamma", rgb,
-                _state.ctx,
-                _state.sampleBuf_SRGB_D65,
-                rgb
-            );
-        }
-    }
-    
-    // Final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-    _state.renderer.render("CFAViewer::Shader::ImageFilter::Display", outTxt,
-        // Buffer args
-        _state.ctx,
-        // Texture args
-        rgb
-    );
+    ImagePipeline::Pipeline::Run(_state.renderer, img,
+        _state.opts, _state.sampleOpts, outTxt);
     
     // If outTxt isn't framebuffer-only, then do a blit-sync, which is
     // apparently required for [outTxt getBytes:] to work, which
@@ -402,7 +177,7 @@ static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
     auto lock = std::lock_guard(_state.lock);
     
     // Update our drawable size using our view size (in pixels)
-    [self setDrawableSize:{(CGFloat)_state.ctx.imageWidth, (CGFloat)_state.ctx.imageHeight}];
+    [self setDrawableSize:{(CGFloat)_state.img.width, (CGFloat)_state.img.height}];
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
@@ -418,7 +193,7 @@ static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
 - (id)CGImage {
     auto lock = std::lock_guard(_state.lock);
     Renderer::Txt txt = _state.renderer.createTexture(MTLPixelFormatBGRA8Unorm,
-        _state.ctx.imageWidth, _state.ctx.imageHeight,
+        _state.img.width, _state.img.height,
         MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     [self _displayToTexture:txt drawable:nil];
     const NSUInteger w = [txt width];
@@ -494,33 +269,32 @@ static simd::float3x3 simdFromMat(const Mat<double,3,3>& m) {
 
 - (void)setSampleRect:(CGRect)rect {
     auto lock = std::lock_guard(_state.lock);
-    auto& ctx = _state.ctx;
+    auto& img = _state.img;
+    auto& sampleOpts = _state.sampleOpts;
+    auto& sampleRect = sampleOpts.rect;
     
-    rect.origin.x *= ctx.imageWidth;
-    rect.origin.y *= ctx.imageHeight;
-    rect.size.width *= ctx.imageWidth;
-    rect.size.height *= ctx.imageHeight;
-    ctx.sampleRect = {
-        .left = (uint32_t)std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)ctx.imageWidth),
-        .right = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)ctx.imageWidth),
-        .top = (uint32_t)std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)ctx.imageHeight),
-        .bottom = (uint32_t)std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)ctx.imageHeight),
+    rect.origin.x *= img.width;
+    rect.origin.y *= img.height;
+    rect.size.width *= img.width;
+    rect.size.height *= img.height;
+    sampleRect = {
+        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)img.width),
+        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)img.width),
+        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)img.height),
+        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)img.height),
     };
     
-    if (ctx.sampleRect.left == ctx.sampleRect.right) ctx.sampleRect.right++;
-    if (ctx.sampleRect.top == ctx.sampleRect.bottom) ctx.sampleRect.bottom++;
+    if (sampleRect.left == sampleRect.right) sampleRect.right++;
+    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
     
-    _state.sampleBuf_CamRaw_D50 =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max((uint32_t)1,
-        ctx.sampleRect.count()));
+    sampleOpts.camRaw_D50 =
+        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
-    _state.sampleBuf_XYZ_D50 =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max((uint32_t)1,
-        ctx.sampleRect.count()));
+    sampleOpts.xyz_D50 =
+        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
-    _state.sampleBuf_SRGB_D65 =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max((uint32_t)1,
-        ctx.sampleRect.count()));
+    sampleOpts.srgb_D65 =
+        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     [self setNeedsDisplay];
 }
@@ -540,8 +314,8 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
 - (Color_CamRaw_D50)sample_CamRaw_D50 {
     // Copy _state.sampleBuf_CamRaw_D50 locally
     auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleBuf_CamRaw_D50);
-        auto rect = _state.ctx.sampleRect;
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.camRaw_D50);
+        auto rect = _state.sampleOpts.rect;
     lock.unlock();
     
     size_t i = 0;
@@ -568,8 +342,8 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
 - (Color_XYZ_D50)sample_XYZ_D50 {
     // Copy _state.sampleBuf_XYZ_D50 locally
     auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleBuf_XYZ_D50);
-        auto rect = _state.ctx.sampleRect;
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyz_D50);
+        auto rect = _state.sampleOpts.rect;
     lock.unlock();
     
     size_t i = 0;
@@ -587,8 +361,8 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
 - (Color_SRGB_D65)sample_SRGB_D65 {
     // Copy _state.sampleBuf_SRGB_D65 locally
     auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleBuf_SRGB_D65);
-        auto rect = _state.ctx.sampleRect;
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.srgb_D65);
+        auto rect = _state.sampleOpts.rect;
     lock.unlock();
     
     size_t i = 0;

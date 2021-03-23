@@ -1,9 +1,10 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "ImageFilter.h"
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
+#import "ImagePipelineTypes.h"
 #import "MetalUtil.h"
 
-namespace CFAViewer::ImageFilter {
+namespace CFAViewer::ImagePipeline {
     class LocalContrast {
     public:
         static void Run(Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {
