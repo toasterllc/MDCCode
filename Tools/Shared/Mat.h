@@ -232,11 +232,13 @@ public:
     }
     
     T& at(size_t i) {
+        static_assert(H==1 || W==1, "not a 1D matrix");
         assert(i < std::size(vals));
         return vals[i];
     }
     
     const T& at(size_t i) const {
+        static_assert(H==1 || W==1, "not a 1D matrix");
         assert(i < std::size(vals));
         return vals[i];
     }
