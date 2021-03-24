@@ -267,7 +267,11 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
             }
         },
         
-        .reconstructHighlights = true,
+        .reconstructHighlights = {
+            .en = true,
+            .badPixelFactors    = {1.130, 1.613, 1.000},
+            .goodPixelFactors   = {1.051, 1.544, 1.195},
+        },
         
         .debayerLMMSE = {
             .applyGamma = true,
@@ -954,7 +958,7 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     _imgOpts.defringe.opts.γfactor = [_defringeγFactorSlider floatValue];
     _imgOpts.defringe.opts.δfactor = [_defringeδFactorSlider floatValue];
     
-    _imgOpts.reconstructHighlights = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
+    _imgOpts.reconstructHighlights.en = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
     
     _imgOpts.debayerLMMSE.applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn);
     
@@ -995,7 +999,7 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     
     // Reconstruct Highlights
     {
-        [_reconstructHighlightsCheckbox setState:(_imgOpts.reconstructHighlights ?
+        [_reconstructHighlightsCheckbox setState:(_imgOpts.reconstructHighlights.en ?
             NSControlStateValueOn : NSControlStateValueOff)];
     }
     

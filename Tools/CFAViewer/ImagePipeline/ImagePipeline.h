@@ -27,7 +27,11 @@ public:
             Defringe::Options opts;
         } defringe;
         
-        bool reconstructHighlights = false;
+        struct {
+            bool en = false;
+            Mat<double,3,1> badPixelFactors = {1.,1.,1.};
+            Mat<double,3,1> goodPixelFactors = {1.,1.,1.};
+        } reconstructHighlights;
         
         struct {
             bool applyGamma = false;
@@ -99,13 +103,18 @@ public:
             }
             
             // Reconstruct highlights
-            if (opts.reconstructHighlights) {
+            if (opts.reconstructHighlights.en) {
+                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
+                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
+                
                 Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
                     img.width, img.height);
                 
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
                     // Buffer args
                     img.cfaDesc,
+                    badPixelFactors,
+                    goodPixelFactors,
                     // Texture args
                     raw
                 );
@@ -223,6 +232,12 @@ public:
     }
     
 private:
+    static simd::float3 _simdFromMat(const Mat<double,3,1>& m) {
+        return {
+            simd::float3{(float)m[0], (float)m[1], (float)m[2]},
+        };
+    }
+    
     static simd::float3x3 _simdFromMat(const Mat<double,3,3>& m) {
         return {
             simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
