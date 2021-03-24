@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include "USBDevice.h"
 #include "USBInterface.h"
 #include "USBPipe.h"

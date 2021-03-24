@@ -145,7 +145,7 @@ int main(int argc, const char* argv[]) {
     
     std::vector<MDCLoaderDevice> devices;
     try {
-        devices = MDCLoaderDevice::FindDevices();
+        devices = MDCLoaderDevice::FindDevice();
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed to find MDC loader devices: %s\n\n", e.what());
         return 1;

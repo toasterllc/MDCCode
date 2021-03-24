@@ -7,8 +7,12 @@
 
 class MDCLoaderDevice : public USBDevice {
 public:
+    static NSDictionary* MatchingDictionary() {
+        return USBDevice::MatchingDictionary(1155, 57105);
+    }
+    
     static std::vector<MDCLoaderDevice> FindDevice() {
-        return USBDevice::FindDevice<MDCLoaderDevice>(1155, 57105);
+        return USBDevice::FindDevice<MDCLoaderDevice>(MatchingDictionary());
     }
     
     // Default constructor: empty

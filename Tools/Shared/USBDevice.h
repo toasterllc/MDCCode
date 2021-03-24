@@ -1,6 +1,7 @@
 #pragma once
 #include <IOKit/IOKitLib.h>
 #include <vector>
+#include <cassert>
 #include "SendRight.h"
 #include "USBInterface.h"
 #include "RuntimeError.h"

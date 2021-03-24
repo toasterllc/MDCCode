@@ -1,5 +1,6 @@
 #pragma once
 #include <mach/port.h>
+#include <cassert>
 
 class SendRight {
 public:

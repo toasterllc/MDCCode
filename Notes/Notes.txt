@@ -1,5 +1,11 @@
 - Future
     
+    - Measure color matrix for real
+        - Get/print a real color chart
+        - Use a spectrometer to measure the colors
+        - Use a standardized illuminant (a calibrated light? the sun? uncalibrated light that
+          we measure with a spectrometer?) to take a photo of the color chart
+    
     - If SD card initialization communication doesn't work, consider switching from NTB0102GF -> NTS0102GF.
       NTS0102GF is better suited for open-drain usage, which might apply to us since we're using pull-up resistors.
       The downside is that NTS0102GF has more capacitance on its IO lines (11pF typical, while NTB0102GF is 7.5 pF typical).
@@ -49,9 +55,6 @@
         - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => only 50mV away from 1.8V rail
         - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
     
-    - U11 pins SD_DATx pins are out of order on Rev3
-        - Probably doesn't matter because we're likely getting rid of these ICs anyway
-    
     - STM32 QSPI: make frequency a parameter
         - For STLoader, it needs to be <24MHz for configuring ICE40
         - For STApp, it can be as high as ctrl_clk can go depending on the Verilog
@@ -64,6 +67,50 @@
     
     - Add power domain control
         - Controlled by MSP430
+    
+    X U11 pins SD_DATx pins are out of order on Rev3
+        X Doesn't matter because we're getting rid of these ICs anyway
+
+
+- Image processing todo
+
+    - Implement more sophisticated white balance for Defringe filter
+        - To operate correctly, the raw data input into the Defringe filter needs to be white-balanced.
+        - Currently, we're just white balancing using hard-coded constants, but that probably doesn't
+          work well with all illuminants.
+    
+    - Implement auto white balance (AWB)
+        - Applied after applying color matrix
+            - The color matrix is the first phase that corrects the image sensor output to match ground truth.
+            - AWB is the second phase that adjusts the image to match what a human would observe in person.
+        
+        - Potential algorithm 1:
+            - Break image into tiles
+            - For tiles meeting certain critera (no edges, aren't over-exposed):
+                - Measure the minimum perceptual distance (using Luv colorspace or similar) between
+                  the average color of this tile, and the curve that connects a cool illuminant and
+                  a warm illuminant. If this distance is below a threshold, add this tile to a
+                  "white reference list"
+            - Now we have a list of "white reference" tiles. Use these tiles to guess a proper point
+              on the cool-warm illuminant arc, thus setting the white balance
+        
+        - Potential algorithm 2:
+            - Use areas that are nearly over-exposed but aren't quite, and assume they should be white?
+                - The idea being that over-exposed areas should be white, but the areas that are nearly over-exposed,
+                  but aren't quite, reflect the color of the illuminant
+            - Alternatively, don't assume these areas should be white, but rather use them to determine
+              the point on the cool-warm illuminant curve that we should use, thus setting the white balance
+    
+    - Implement auto exposure
+        - Determine the distribution of pixel brightness, and apply some function to spread out the
+          brightness distribution across the entire range
+    
+    - Correct fixed-pattern noise
+        http://www.moria.de/tech/image-sensors/preparation/
+        - Saved as "ImageSensors-NoiseFiltering.webarchive"
+        - If you set inttime=0, fixed pattern noise seems to be maximized
+    
+    - Implement dead pixel correction
 
 
 
