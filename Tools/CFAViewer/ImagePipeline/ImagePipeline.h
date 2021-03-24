@@ -69,20 +69,36 @@ public:
         const SampleOptions& sampleOpts,
         id<MTLTexture> outTxt
     ) {
+        const uint32_t w = img.width;
+        const uint32_t h = img.height;
         
         Renderer::Txt raw = renderer.createTexture(MTLPixelFormatR32Float,
             img.width, img.height);
         
-        renderer.render("CFAViewer::Shader::ImagePipeline::LoadRaw", raw,
-            // Buffer args
-            img.cfaDesc,
-            img.width,
-            img.height,
-            img.pixels,
-            sampleOpts.rect,
-            sampleOpts.camRaw_D50
-            // Texture args
-        );
+        // Load `raw`
+        {
+            renderer.render("CFAViewer::Shader::ImagePipeline::LoadRaw", raw,
+                // Buffer args
+                img.cfaDesc,
+                img.width,
+                img.height,
+                img.pixels
+                // Texture args
+            );
+        }
+        
+        // Fill `sampleOpts.camRaw_D50`
+        {
+            renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
+                w, h,
+                // Buffer args
+                img.cfaDesc,
+                sampleOpts.rect,
+                sampleOpts.camRaw_D50,
+                // Texture args
+                raw
+            );
+        }
         
         Renderer::Txt rgb = renderer.createTexture(MTLPixelFormatRGBA32Float,
             img.width, img.height);
@@ -201,12 +217,22 @@ public:
             // Saturation
             Saturation::Run(renderer, opts.saturation, rgb);
             
+            // Fill `sampleOpts.xyz_D50`
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
+                    w, h,
+                    // Buffer args
+                    img.cfaDesc,
+                    sampleOpts.rect,
+                    sampleOpts.xyz_D50,
+                    // Texture args
+                    rgb
+                );
+            }
+            
             // XYZ.D50 -> LSRGB.D65
             {
                 renderer.render("CFAViewer::Shader::ImagePipeline::LSRGBD65FromXYZD50", rgb,
-                    // Buffer args
-                    sampleOpts.rect,
-                    sampleOpts.xyz_D50,
                     // Texture args
                     rgb
                 );
@@ -215,7 +241,17 @@ public:
             // Apply SRGB gamma
             {
                 renderer.render("CFAViewer::Shader::ImagePipeline::SRGBGamma", rgb,
+                    // Texture args
+                    rgb
+                );
+            }
+            
+            // Fill `sampleOpts.srgb_D65`
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
+                    w, h,
                     // Buffer args
+                    img.cfaDesc,
                     sampleOpts.rect,
                     sampleOpts.srgb_D65,
                     // Texture args

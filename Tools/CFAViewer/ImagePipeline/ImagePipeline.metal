@@ -36,24 +36,45 @@ fragment float LoadRaw(
     constant uint32_t& imageWidth [[buffer(1)]],
     constant uint32_t& imageHeight [[buffer(2)]],
     constant ImagePixel* pxs [[buffer(3)]],
-    constant SampleRect& sampleRect [[buffer(4)]],
-    device float3* samples [[buffer(5)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const float v = (float)pxs[imageWidth*pos.y + pos.x] / ImagePixelMax;
+    return v;
+}
+
+fragment void SampleRaw(
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant SampleRect& sampleRect [[buffer(1)]],
+    device float3* samples [[buffer(2)]],
+    texture2d<float> raw [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
     if (sampleRect.contains(pos)) {
         const CFAColor c = cfaDesc.color(pos);
-        const int2 samplePos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
-        const float3 sample = float3(
-            c==CFAColor::Red   ? v : 0.,
-            c==CFAColor::Green ? v : 0.,
-            c==CFAColor::Blue  ? v : 0.
+        const int2 spos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
+        const float3 s = float3(
+            c==CFAColor::Red   ? Sample::R(raw, pos) : 0.,
+            c==CFAColor::Green ? Sample::R(raw, pos) : 0.,
+            c==CFAColor::Blue  ? Sample::R(raw, pos) : 0.
         );
-        samples[samplePos.y*sampleRect.width() + samplePos.x] = sample;
+        samples[spos.y*sampleRect.width() + spos.x] = s;
     }
-    
-    return v;
+}
+
+fragment void SampleRGB(
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant SampleRect& sampleRect [[buffer(1)]],
+    device float3* samples [[buffer(2)]],
+    texture2d<float> rgb [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    if (sampleRect.contains(pos)) {
+        const int2 samplePos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
+        samples[samplePos.y*sampleRect.width() + samplePos.x] = Sample::RGB(rgb, pos);
+    }
 }
 
 float SRGBGammaForward(float x) {
@@ -222,7 +243,6 @@ fragment float4 NormalizeRGB(
 
 fragment float4 LSRGBD65FromXYZD50(
     constant SampleRect& sampleRect [[buffer(0)]],
-    device float3* samples [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -243,13 +263,6 @@ fragment float4 LSRGBD65FromXYZD50(
     ));
     
     const float3 c_LSRGBD65 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_XYZD50;
-    
-    const int2 pos = int2(in.pos.xy);
-    if (sampleRect.contains(pos)) {
-        const int2 samplePos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
-        samples[samplePos.y*sampleRect.width() + samplePos.x] = c_XYZD50;
-    }
-    
     return float4(c_LSRGBD65, 1);
 }
 
@@ -282,23 +295,15 @@ fragment float4 FindMaxVals(
 
 fragment float4 SRGBGamma(
     constant SampleRect& sampleRect [[buffer(0)]],
-    device float3* samples [[buffer(1)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const float3 c_LSRGB = Sample::RGB(txt, int2(in.pos.xy));
-    float3 c_SRGB = float3{
+    const float3 c_SRGB = float3{
         SRGBGammaForward(c_LSRGB.r),
         SRGBGammaForward(c_LSRGB.g),
         SRGBGammaForward(c_LSRGB.b)
     };
-    
-    const int2 pos = int2(in.pos.xy);
-    if (sampleRect.contains(pos)) {
-        const int2 samplePos = {pos.x-sampleRect.left, pos.y-sampleRect.top};
-        samples[samplePos.y*sampleRect.width() + samplePos.x] = c_SRGB;
-    }
-    
     return float4(c_SRGB, 1);
 }
 
