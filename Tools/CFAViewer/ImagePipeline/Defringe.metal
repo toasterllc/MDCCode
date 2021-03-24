@@ -13,12 +13,9 @@ namespace Defringe {
 
 constant float Eps = 1e-5;
 
-constant float WhiteBalanceRed = 0.296587/0.203138;
-constant float WhiteBalanceGreen = 0.296587/0.296587;
-constant float WhiteBalanceBlue = 0.296587/0.161148;
-
 fragment float WhiteBalanceForward(
     constant CFADesc& cfaDesc [[buffer(0)]],
+    constant float3& whiteBalanceFactors [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -26,14 +23,15 @@ fragment float WhiteBalanceForward(
     const CFAColor c = cfaDesc.color(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
-    case CFAColor::Red:     return s*WhiteBalanceRed;
-    case CFAColor::Green:   return s*WhiteBalanceGreen;
-    case CFAColor::Blue:    return s*WhiteBalanceBlue;
+    case CFAColor::Red:     return s*whiteBalanceFactors.r;
+    case CFAColor::Green:   return s*whiteBalanceFactors.g;
+    case CFAColor::Blue:    return s*whiteBalanceFactors.b;
     }
 }
 
 fragment float WhiteBalanceReverse(
     constant CFADesc& cfaDesc [[buffer(0)]],
+    constant float3& whiteBalanceFactors [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -41,9 +39,9 @@ fragment float WhiteBalanceReverse(
     const CFAColor c = cfaDesc.color(pos);
     const float s = Sample::R(raw, pos);
     switch (c) {
-    case CFAColor::Red:     return s/WhiteBalanceRed;
-    case CFAColor::Green:   return s/WhiteBalanceGreen;
-    case CFAColor::Blue:    return s/WhiteBalanceBlue;
+    case CFAColor::Red:     return s/whiteBalanceFactors.r;
+    case CFAColor::Green:   return s/whiteBalanceFactors.g;
+    case CFAColor::Blue:    return s/whiteBalanceFactors.b;
     }
 }
 

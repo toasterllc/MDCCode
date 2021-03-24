@@ -258,12 +258,25 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
         
         .defringe = {
             .en = true,
+            .opts = {
+                .whiteBalanceFactors = {
+                    0.296587/0.203138,  // Red
+                    0.296587/0.296587,  // Green
+                    0.296587/0.161148,  // Blue
+                }
+            }
         },
         
         .reconstructHighlights = true,
         
         .debayerLMMSE = {
             .applyGamma = true,
+        },
+        
+        .colorMatrix = {
+            +3.040751, +1.406093, +0.746958,
+            -0.293108, +4.785811, -0.756907,
+            -0.578106, -1.496914, +8.609732,
         },
         
         .exposure = -2.4,
@@ -934,33 +947,25 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
 }
 
 - (IBAction)_imageOptionsAction:(id)sender {
-    _imgOpts.defringe = {
-        .en = ([_defringeCheckbox state]==NSControlStateValueOn),
-        .opts = {
-            .rounds = (uint32_t)[_defringeRoundsSlider intValue],
-            .αthresh = [_defringeαThresholdSlider floatValue],
-            .γthresh = [_defringeγThresholdSlider floatValue],
-            .γfactor = [_defringeγFactorSlider floatValue],
-            .δfactor = [_defringeδFactorSlider floatValue],
-        }
-    };
+    _imgOpts.defringe.en = ([_defringeCheckbox state]==NSControlStateValueOn);
+    _imgOpts.defringe.opts.rounds = (uint32_t)[_defringeRoundsSlider intValue];
+    _imgOpts.defringe.opts.αthresh = [_defringeαThresholdSlider floatValue];
+    _imgOpts.defringe.opts.γthresh = [_defringeγThresholdSlider floatValue];
+    _imgOpts.defringe.opts.γfactor = [_defringeγFactorSlider floatValue];
+    _imgOpts.defringe.opts.δfactor = [_defringeδFactorSlider floatValue];
     
     _imgOpts.reconstructHighlights = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
     
-    _imgOpts.debayerLMMSE = {
-        .applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn),
-    };
+    _imgOpts.debayerLMMSE.applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn);
     
     _imgOpts.exposure = [_exposureSlider floatValue];
     _imgOpts.brightness = [_brightnessSlider floatValue];
     _imgOpts.contrast = [_contrastSlider floatValue];
     _imgOpts.saturation = [_saturationSlider floatValue];
     
-    _imgOpts.localContrast = {
-        .en = ([_localContrastCheckbox state]==NSControlStateValueOn),
-        .amount = [_localContrastAmountSlider floatValue],
-        .radius = [_localContrastRadiusSlider floatValue],
-    };
+    _imgOpts.localContrast.en = ([_localContrastCheckbox state]==NSControlStateValueOn);
+    _imgOpts.localContrast.amount = [_localContrastAmountSlider floatValue];
+    _imgOpts.localContrast.radius = [_localContrastRadiusSlider floatValue];
     
     [self _updateImageOptions];
 }

@@ -10,6 +10,7 @@ namespace CFAViewer::ImagePipeline {
     class Defringe {
     public:
         struct Options {
+            Mat<double,3,1> whiteBalanceFactors = {1.,1.,1.};
             uint32_t rounds = 2;
             float αthresh = 2; // Threshold to allow α correction
             float γthresh = .2; // Threshold to allow γ correction
@@ -19,12 +20,19 @@ namespace CFAViewer::ImagePipeline {
         };
         
         static void Run(Renderer& renderer, const CFADesc& cfaDesc, const Options& opts, id<MTLTexture> raw) {
+            
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
+            const simd::float3 whiteBalanceFactors = {
+                (float)opts.whiteBalanceFactors[0],
+                (float)opts.whiteBalanceFactors[1],
+                (float)opts.whiteBalanceFactors[2]
+            };
             
             renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
                 // Buffer args
                 cfaDesc,
+                whiteBalanceFactors,
                 // Texture args
                 raw
             );
@@ -46,6 +54,7 @@ namespace CFAViewer::ImagePipeline {
             renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
                 // Buffer args
                 cfaDesc,
+                whiteBalanceFactors,
                 // Texture args
                 raw
             );
