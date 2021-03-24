@@ -53,24 +53,24 @@ fragment float Interp5(
 fragment float NoiseEst(
     constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
-    texture2d<float> filteredTxt [[texture(1)]],
+    texture2d<float> filtered [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const sampler s;
     const CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(raw, pos);
-    const float filtered = Sample::R(filteredTxt, pos);
-    if (c == CFAColor::Green) return r-filtered;
-    else                      return filtered-r;
+    const float f = Sample::R(filtered, pos);
+    if (c == CFAColor::Green) return r-f;
+    else                      return f-r;
 }
 
 // This is just 2 passes of NoiseEst combined into 1
 // TODO: profile this again. remember though that the -nextDrawable/-waitUntilCompleted pattern will cause our minimum render time to be the display refresh rate (16ms). so instead, for each iteration, we should only count the time _after_ -nextDrawable completes to the time after -waitUntilCompleted completes
 //fragment void NoiseEst2(
 //    texture2d<float> raw [[texture(0)]],
-//    texture2d<float> filteredHTxt [[texture(1)]],
-//    texture2d<float> filteredVTxt [[texture(2)]],
+//    texture2d<float> filteredH [[texture(1)]],
+//    texture2d<float> filteredV [[texture(2)]],
 //    texture2d<float, access::read_write> diffH [[texture(3)]],
 //    texture2d<float, access::read_write> diffV [[texture(4)]],
 //    VertexOutput in [[stage_in]]
@@ -79,8 +79,8 @@ fragment float NoiseEst(
 //    const sampler s;
 //    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
 //    const float r = Sample::R(raw, pos);
-//    const float filteredH = Sample::R(filteredHTxt, pos);
-//    const float filteredV = Sample::R(filteredVTxt, pos);
+//    const float filteredH = Sample::R(filteredH, pos);
+//    const float filteredV = Sample::R(filteredV, pos);
 //    
 //    if (green) {
 //        diffH.write(float4(raw-filteredH), pos);
@@ -113,10 +113,10 @@ constant bool UseZhangCodeEst = false;
 fragment float4 CalcG(
     constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
-    texture2d<float> filteredHTxt [[texture(1)]],
-    texture2d<float> diffHTxt [[texture(2)]],
-    texture2d<float> filteredVTxt [[texture(3)]],
-    texture2d<float> diffVTxt [[texture(4)]],
+    texture2d<float> filteredH [[texture(1)]],
+    texture2d<float> diffH [[texture(2)]],
+    texture2d<float> filteredV [[texture(3)]],
+    texture2d<float> diffV [[texture(4)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
@@ -145,10 +145,10 @@ fragment float4 CalcG(
         float Rh = 0;
         for (int m=m0; m <= m1; m++) {
             float Temp = 0;
-            Temp = Sample::R(Sample::MirrorClamp, filteredHTxt, pos+int2{m,0});
+            Temp = Sample::R(Sample::MirrorClamp, filteredH, pos+int2{m,0});
             mom1 += Temp;
             ph += Temp*Temp;
-            Temp -= Sample::R(Sample::MirrorClamp, diffHTxt, pos+int2{m,0});
+            Temp -= Sample::R(Sample::MirrorClamp, diffH, pos+int2{m,0});
             Rh += Temp*Temp;
         }
         
@@ -156,11 +156,11 @@ fragment float4 CalcG(
         // Compute mh = mean_m FilteredH[i + m]
         if (!UseZhangCodeEst) mh = mom1/(2*M + 1);
         // Compute mh as in Zhang's MATLAB code
-        else mh = Sample::R(filteredHTxt, pos);
+        else mh = Sample::R(filteredH, pos);
         
         ph = ph/(2*M) - mom1*mom1/(2*M*(2*M + 1));
         Rh = Rh/(2*M + 1) + DivEpsilon;
-        float h = mh + (ph/(ph + Rh))*(Sample::R(diffHTxt,pos)-mh);
+        float h = mh + (ph/(ph + Rh))*(Sample::R(diffH,pos)-mh);
         float H = ph - (ph/(ph + Rh))*ph + DivEpsilon;
         
         // Adjust loop indices for top and bottom boundaries
@@ -179,10 +179,10 @@ fragment float4 CalcG(
         float Rv = 0;
         for (int m=m0; m<=m1; m++) {
             float Temp = 0;
-            Temp = Sample::R(Sample::MirrorClamp, filteredVTxt, pos+int2{0,m});
+            Temp = Sample::R(Sample::MirrorClamp, filteredV, pos+int2{0,m});
             mom1 += Temp;
             pv += Temp*Temp;
-            Temp -= Sample::R(Sample::MirrorClamp, diffVTxt, pos+int2{0,m});
+            Temp -= Sample::R(Sample::MirrorClamp, diffV, pos+int2{0,m});
             Rv += Temp*Temp;
         }
         
@@ -190,11 +190,11 @@ fragment float4 CalcG(
         // Compute mv = mean_m FilteredV[i + m]
         if (!UseZhangCodeEst) mv = mom1/(2*M + 1);
         // Compute mv as in Zhang's MATLAB code
-        else mv = Sample::R(filteredVTxt, pos);
+        else mv = Sample::R(filteredV, pos);
         
         pv = pv/(2*M) - mom1*mom1/(2*M*(2*M + 1));
         Rv = Rv/(2*M + 1) + DivEpsilon;
-        float v = mv + (pv/(pv + Rv))*(Sample::R(diffVTxt,pos)-mv);
+        float v = mv + (pv/(pv + Rv))*(Sample::R(diffV,pos)-mv);
         float V = pv - (pv/(pv + Rv))*pv + DivEpsilon;
         
         // Fuse the directional estimates to obtain the green component
@@ -264,18 +264,18 @@ fragment float CalcDiagAvgDiffGRGB(
     constant bool& modeGR [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
-    texture2d<float> diffTxt [[texture(2)]],
+    texture2d<float> diff [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
     
     if ((modeGR && c==CFAColor::Blue) || (!modeGR && c==CFAColor::Red)) {
-        return diagAvg(diffTxt, pos);
+        return diagAvg(diff, pos);
     }
     
     // Pass-through
-    return Sample::R(Sample::MirrorClamp, diffTxt, pos);
+    return Sample::R(Sample::MirrorClamp, diff, pos);
 }
 
 float axialAvg(texture2d<float> txt, int2 pos) {
@@ -315,15 +315,15 @@ fragment float CalcAxialAvgDiffGRGB(
     constant CFADesc& cfaDesc [[buffer(0)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
-    texture2d<float> diffTxt [[texture(2)]],
+    texture2d<float> diff [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
-    if (c == CFAColor::Green) return axialAvg(diffTxt, pos);
+    if (c == CFAColor::Green) return axialAvg(diff, pos);
     
     // Pass-through
-    return Sample::R(diffTxt, pos);
+    return Sample::R(diff, pos);
 }
 
 fragment float4 CalcRB(

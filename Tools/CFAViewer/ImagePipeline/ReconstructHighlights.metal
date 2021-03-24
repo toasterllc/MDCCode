@@ -29,8 +29,7 @@ fragment float ReconstructHighlights(
     // Pass-through if this pixel isn't saturated
     if (s < Thresh) return s;
     
-    const uint good = (l<Thresh) + (r<Thresh) + (u<Thresh) + (d<Thresh);
-    if (good == 0) {
+    if (l>=Thresh && r>=Thresh && u>=Thresh && d>=Thresh) {
         switch (c) {
         case CFAColor::Red:     return badPixelFactors.r*s;
         case CFAColor::Green:   return badPixelFactors.g*s;
