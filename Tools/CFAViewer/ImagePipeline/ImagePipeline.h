@@ -87,7 +87,7 @@ public:
             );
         }
         
-        // Fill `sampleOpts.camRaw_D50`
+        // Sample: fill `sampleOpts.camRaw_D50`
         {
             renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
                 w, h,
@@ -217,7 +217,7 @@ public:
             // Saturation
             Saturation::Run(renderer, opts.saturation, rgb);
             
-            // Fill `sampleOpts.xyz_D50`
+            // Sample: fill `sampleOpts.xyz_D50`
             {
                 renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
                     w, h,
@@ -246,7 +246,7 @@ public:
                 );
             }
             
-            // Fill `sampleOpts.srgb_D65`
+            // Sample: fill `sampleOpts.srgb_D65`
             {
                 renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
                     w, h,
