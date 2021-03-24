@@ -23,10 +23,10 @@ float SRGBGammaReverse(float x) {
 }
 
 fragment float GammaForward(
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return SRGBGammaForward(Sample::R(rawTxt, int2(in.pos.xy)));
+    return SRGBGammaForward(Sample::R(raw, int2(in.pos.xy)));
 }
 
 fragment float4 GammaReverse(
@@ -39,36 +39,36 @@ fragment float4 GammaReverse(
 
 fragment float Interp5(
     constant bool& h [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    return  -.25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-2:+0,!h?-2:+0})   +
-            +0.5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-1:+0,!h?-1:+0})   +
-            +0.5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+0:+0,!h?+0:+0})   +
-            +0.5*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+1:+0,!h?+1:+0})   +
-            -.25*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+2:+0,!h?+2:+0})   ;
+    return  -.25*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?-2:+0,!h?-2:+0})   +
+            +0.5*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?-1:+0,!h?-1:+0})   +
+            +0.5*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+0:+0,!h?+0:+0})   +
+            +0.5*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+1:+0,!h?+1:+0})   +
+            -.25*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+2:+0,!h?+2:+0})   ;
 }
 
 fragment float NoiseEst(
     constant CFADesc& cfaDesc [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     texture2d<float> filteredTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const sampler s;
     const CFAColor c = cfaDesc.color(pos);
-    const float raw = Sample::R(rawTxt, pos);
+    const float r = Sample::R(raw, pos);
     const float filtered = Sample::R(filteredTxt, pos);
-    if (c == CFAColor::Green) return raw-filtered;
-    else                      return filtered-raw;
+    if (c == CFAColor::Green) return r-filtered;
+    else                      return filtered-r;
 }
 
 // This is just 2 passes of NoiseEst combined into 1
 // TODO: profile this again. remember though that the -nextDrawable/-waitUntilCompleted pattern will cause our minimum render time to be the display refresh rate (16ms). so instead, for each iteration, we should only count the time _after_ -nextDrawable completes to the time after -waitUntilCompleted completes
 //fragment void NoiseEst2(
-//    texture2d<float> rawTxt [[texture(0)]],
+//    texture2d<float> raw [[texture(0)]],
 //    texture2d<float> filteredHTxt [[texture(1)]],
 //    texture2d<float> filteredVTxt [[texture(2)]],
 //    texture2d<float, access::read_write> diffH [[texture(3)]],
@@ -78,7 +78,7 @@ fragment float NoiseEst(
 //    const int2 pos = int2(in.pos.xy);
 //    const sampler s;
 //    const bool green = ((!(pos.y%2) && !(pos.x%2)) || ((pos.y%2) && (pos.x%2)));
-//    const float raw = Sample::R(rawTxt, pos);
+//    const float r = Sample::R(raw, pos);
 //    const float filteredH = Sample::R(filteredHTxt, pos);
 //    const float filteredV = Sample::R(filteredVTxt, pos);
 //    
@@ -93,26 +93,26 @@ fragment float NoiseEst(
 
 fragment float Smooth9(
     constant bool& h [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    return  0.0312500*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-4:+0,!h?-4:+0})     +
-            0.0703125*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-3:+0,!h?-3:+0})     +
-            0.1171875*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-2:+0,!h?-2:+0})     +
-            0.1796875*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?-1:+0,!h?-1:+0})     +
-            0.2031250*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+0:+0,!h?+0:+0})     +
-            0.1796875*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+1:+0,!h?+1:+0})     +
-            0.1171875*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+2:+0,!h?+2:+0})     +
-            0.0703125*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+3:+0,!h?+3:+0})     +
-            0.0312500*Sample::R(Sample::MirrorClamp, rawTxt, pos+int2{h?+4:+0,!h?+4:+0})     ;
+    return  0.0312500*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?-4:+0,!h?-4:+0})     +
+            0.0703125*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?-3:+0,!h?-3:+0})     +
+            0.1171875*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?-2:+0,!h?-2:+0})     +
+            0.1796875*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?-1:+0,!h?-1:+0})     +
+            0.2031250*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+0:+0,!h?+0:+0})     +
+            0.1796875*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+1:+0,!h?+1:+0})     +
+            0.1171875*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+2:+0,!h?+2:+0})     +
+            0.0703125*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+3:+0,!h?+3:+0})     +
+            0.0312500*Sample::R(Sample::MirrorClamp, raw, pos+int2{h?+4:+0,!h?+4:+0})     ;
 }
 
 constant bool UseZhangCodeEst = false;
 
 fragment float4 CalcG(
     constant CFADesc& cfaDesc [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     texture2d<float> filteredHTxt [[texture(1)]],
     texture2d<float> diffHTxt [[texture(2)]],
     texture2d<float> filteredVTxt [[texture(3)]],
@@ -121,7 +121,7 @@ fragment float4 CalcG(
 ) {
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
-    const float raw = Sample::R(rawTxt, pos);
+    const float r = Sample::R(raw, pos);
     float g = 0;
     if (c==CFAColor::Red || c==CFAColor::Blue) {
         const int M = 4;
@@ -131,7 +131,7 @@ fragment float4 CalcG(
         // compensate for left and right boundaries.  We effectively
         // do zero-padded boundary handling.
         int m0 = (pos.x>=M ? -M : -pos.x);
-        int m1 = (pos.x<(int)rawTxt.get_width()-M ? M : (int)rawTxt.get_width()-pos.x-1);
+        int m1 = (pos.x<(int)raw.get_width()-M ? M : (int)raw.get_width()-pos.x-1);
         
         // The following computes
         // ph =   var   FilteredH[i + m]
@@ -165,7 +165,7 @@ fragment float4 CalcG(
         
         // Adjust loop indices for top and bottom boundaries
         m0 = (pos.y>=M ? -M : -pos.y);
-        m1 = (pos.y<(int)rawTxt.get_height()-M ? M : (int)rawTxt.get_height()-pos.y-1);
+        m1 = (pos.y<(int)raw.get_height()-M ? M : (int)raw.get_height()-pos.y-1);
         
         // The following computes
         // pv =   var   FilteredV[i + m]
@@ -198,11 +198,11 @@ fragment float4 CalcG(
         float V = pv - (pv/(pv + Rv))*pv + DivEpsilon;
         
         // Fuse the directional estimates to obtain the green component
-        g = raw + (V*h + H*v) / (H + V);
+        g = r + (V*h + H*v) / (H + V);
     
     } else {
         // This is a green pixel -- return its value directly
-        g = raw;
+        g = r;
     }
     
     return float4(0, g, 0, 1);
@@ -211,16 +211,16 @@ fragment float4 CalcG(
 fragment float CalcDiffGRGB(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant bool& modeGR [[buffer(1)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
     if ((modeGR && c==CFAColor::Red) || (!modeGR && c==CFAColor::Blue)) {
-        const float raw = Sample::R(rawTxt, pos);
+        const float r = Sample::R(raw, pos);
         const float g = Sample::RGB(txt, pos).g;
-        return g-raw;
+        return g-r;
     }
     
     return 0;
@@ -262,7 +262,7 @@ float diagAvg(texture2d<float> txt, int2 pos) {
 fragment float CalcDiagAvgDiffGRGB(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant bool& modeGR [[buffer(1)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
@@ -313,7 +313,7 @@ float axialAvg(texture2d<float> txt, int2 pos) {
 
 fragment float CalcAxialAvgDiffGRGB(
     constant CFADesc& cfaDesc [[buffer(0)]],
-    texture2d<float> rawTxt [[texture(0)]],
+    texture2d<float> raw [[texture(0)]],
     texture2d<float> txt [[texture(1)]],
     texture2d<float> diffTxt [[texture(2)]],
     VertexOutput in [[stage_in]]
