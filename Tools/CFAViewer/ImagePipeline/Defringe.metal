@@ -88,9 +88,9 @@ fragment float InterpolateG(
     
     // Weights: 1/δ^2
     const float4 w = 1/(Eps+pow(δ,2));
-    // Result: apply weights to δ, sum them, and normalize
+    // Result: apply weights to r, sum them, and normalize
     // with combined weight.
-    return dot(w*r,1) / dot(w,1);
+    return dot(w*r,1) / dot(w,1); // ∑ w*r / ∑ w
 #undef PX
 }
 
@@ -124,7 +124,7 @@ float evalPoly(constant float* coeffs, float2 pos) {
     return r;
 }
 
-fragment void CalcShiftTxts(
+fragment void GenerateShiftTxts(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant float* polyCoeffsRedX [[buffer(1)]],
     constant float* polyCoeffsRedY [[buffer(2)]],

@@ -205,7 +205,7 @@ namespace CFAViewer::ImagePipeline {
                 }
             }
             
-            renderer.render("CFAViewer::Shader::Defringe::CalcShiftTxts",
+            renderer.render("CFAViewer::Shader::Defringe::GenerateShiftTxts",
                 ShiftTextureWidth, ShiftTextureWidth,
                 // Buffer args
                 cfaDesc,

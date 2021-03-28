@@ -80,30 +80,15 @@
           work well with all illuminants.
     
     - Implement auto white balance (AWB)
-        - Applied after applying color matrix
-            - The color matrix is the first phase that corrects the image sensor output to match ground truth.
-            - AWB is the second phase that adjusts the image to match what a human would observe in person.
-        
-        - Potential algorithm 1:
-            - Break image into tiles
-            - For tiles meeting certain critera (no edges, aren't over-exposed):
-                - Measure the minimum perceptual distance (using Luv colorspace or similar) between
-                  the average color of this tile, and the curve that connects a cool illuminant and
-                  a warm illuminant. If this distance is below a threshold, add this tile to a
-                  "white reference list"
-            - Now we have a list of "white reference" tiles. Use these tiles to guess a proper point
-              on the cool-warm illuminant arc, thus setting the white balance
-        
-        - Potential algorithm 2:
-            - Use areas that are nearly over-exposed but aren't quite, and assume they should be white?
-                - The idea being that over-exposed areas should be white, but the areas that are nearly over-exposed,
-                  but aren't quite, reflect the color of the illuminant
-            - Alternatively, don't assume these areas should be white, but rather use them to determine
-              the point on the cool-warm illuminant curve that we should use, thus setting the white balance
+        - Apply as very first stage (before defringing and debayering)
+            - Defringe needs white-balanced image, so it makes sense to apply WB before defringing
     
     - Implement auto exposure
         - Determine the distribution of pixel brightness, and apply some function to spread out the
           brightness distribution across the entire range
+        - See:
+            https://twitter.com/CSProfKGD/status/1374463703345590272
+            https://github.com/mahmoudnafifi/Exposure_Correction
     
     - Correct fixed-pattern noise
         http://www.moria.de/tech/image-sensors/preparation/
