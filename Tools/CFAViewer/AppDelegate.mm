@@ -6,6 +6,7 @@
 #import <IOKit/IOKitLib.h>
 #import <IOKit/IOMessage.h>
 #import <simd/simd.h>
+#import <fstream>
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Mmap.h"
@@ -132,10 +133,16 @@ struct PixConfig {
         std::condition_variable signal;
         bool running = false;
         bool cancel = false;
+        
+        STApp::Pixel pixelBuf[2000*2000];
+        ImageLayerTypes::Image img = {
+            .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
+            .width = 0,
+            .height = 0,
+            .pixels = pixelBuf,
+        };
     } _streamImages;
     
-    Mmap _imgData;
-    ImageLayerTypes::Image _img;
     ImageLayerTypes::Options _imgOpts;
     
     Color_CamRaw_D50 _sample_CamRaw_D50;
@@ -235,17 +242,30 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
-    _imgData = Mmap("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
-//    [[_mainView imageLayer] setRawMode:true];
-    
-    _img = {
-        .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
-        .width = 2304,
-        .height = 1296,
-        .pixels = (MetalUtil::ImagePixel*)_imgData.data(),
-    };
-    
-    [[_mainView imageLayer] setImage:_img];
+    // Load our image from disk
+    {
+        auto lock = std::unique_lock(_streamImages.lock);
+//        Mmap imgData("/Users/dave/repos/C5/TestSet-AR0330-4/image001_sensorname_AR0330.cfa");
+//        Mmap imgData("/Users/dave/Desktop/AR0330TestImages/1.cfa");
+//        Mmap imgData("/Users/dave/Desktop/AR0330TestImages/1.cfa");
+//        Mmap imgData("/Users/dave/Desktop/ColorCheckerRaw.cfa");
+        Mmap imgData("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
+//        Mmap imgData("/Users/dave/Desktop/test.cfa");
+        
+//        _streamImages.img.width = 384;
+//        _streamImages.img.height = 256;
+        _streamImages.img.width = 2304;
+        _streamImages.img.height = 1296;
+        
+        const size_t len = _streamImages.img.width*_streamImages.img.height*sizeof(*_streamImages.img.pixels);
+        // Verify that the size of the file matches the the width/height of the image
+        assert(imgData.len() == len);
+        // Verify that our buffer is large enough to fit `len` bytes
+        assert(sizeof(_streamImages.pixelBuf) >= len);
+        memcpy(_streamImages.pixelBuf, imgData.data(), len);
+        
+        [[_mainView imageLayer] setImage:_streamImages.img];
+    }
     
     __weak auto weakSelf = self;
     [[_mainView imageLayer] setDataChangedHandler:^(ImageLayer*) {
@@ -452,28 +472,27 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     try {
         // Reset the device to put it back in a pre-defined state
         device.reset();
-        const size_t pixelBufCount = 2000*2000;
-        auto pixelBuf = std::make_unique<Pixel[]>(pixelBufCount);
         
         float intTime = .5;
+        const size_t tmpPixelBufLen = std::size(_streamImages.pixelBuf);
+        auto tmpPixelBuf = std::make_unique<STApp::Pixel[]>(tmpPixelBufLen);
         for (;;) {
-            // Check if we've been cancelled
-            bool cancel = false;
-            _streamImages.lock.lock();
-                cancel = _streamImages.cancel;
-            _streamImages.lock.unlock();
-            if (cancel) break;
-            
             // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
-            const STApp::PixHeader pixStatus = device.pixCapture(pixelBuf.get(), pixelBufCount, 1000);
-            const ImageLayerTypes::Image img = {
-                .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
-                .width = pixStatus.width,
-                .height = pixStatus.height,
-                .pixels = pixelBuf.get(),
-            };
-            [layer setImage:img];
+            const STApp::PixHeader pixStatus = device.pixCapture(tmpPixelBuf.get(), tmpPixelBufLen, 1000);
+            
+            auto lock = std::unique_lock(_streamImages.lock);
+                // Check if we've been cancelled
+                if (_streamImages.cancel) break;
+                
+                // Copy the image into our persistent buffer
+                const size_t len = pixStatus.width*pixStatus.height*sizeof(STApp::Pixel);
+                memcpy(_streamImages.pixelBuf, tmpPixelBuf.get(), len);
+                _streamImages.img.width = pixStatus.width;
+                _streamImages.img.height = pixStatus.height;
+            lock.unlock();
+            
+            [layer setImage:_streamImages.img];
             
             // Adjust exposure
             const uint32_t SubsampleFactor = 16;
@@ -846,13 +865,25 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
 #pragma mark - UI
 
 - (void)_saveImage:(NSString*)path {
-    id image = [[_mainView imageLayer] CGImage];
-    Assert(image, return);
+    const std::string ext([[[path pathExtension] lowercaseString] UTF8String]);
+    if (ext == "cfa") {
+        auto lock = std::unique_lock(_streamImages.lock);
+            std::ofstream f;
+            f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            f.open([path UTF8String]);
+            const size_t len = _streamImages.img.width*_streamImages.img.height*sizeof(*_streamImages.img.pixels);
+            f.write((char*)_streamImages.img.pixels, len);
+        lock.unlock();
     
-    id imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
-        (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
-    CGImageDestinationAddImage((CGImageDestinationRef)imageDest, (CGImageRef)image, nullptr);
-    CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
+    } else if (ext == "png") {
+        id image = [[_mainView imageLayer] CGImage];
+        Assert(image, return);
+        
+        id imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
+            (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
+        CGImageDestinationAddImage((CGImageDestinationRef)imageDest, (CGImageRef)image, nullptr);
+        CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
+    }
 }
 
 - (IBAction)saveDocument:(id)sender {
@@ -1068,27 +1099,44 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     assert(points.size() == ColorChecker::Count);
     
     Mat<double,ColorChecker::Count,3> A; // Colors that we have
-    size_t y = 0;
-    for (const CGPoint& p : points) {
-        Color_CamRaw_D50 c = sampleImageCircle(_img,
-            round(p.x*_img.width),
-            round(p.y*_img.height),
-            _colorCheckerCircleRadius);
-        A.at(y,0) = c[0];
-        A.at(y,1) = c[1];
-        A.at(y,2) = c[2];
-        y++;
+    {
+        auto lock = std::unique_lock(_streamImages.lock);
+        size_t y = 0;
+        for (const CGPoint& p : points) {
+            Color_CamRaw_D50 c = sampleImageCircle(_streamImages.img,
+                round(p.x*_streamImages.img.width),
+                round(p.y*_streamImages.img.height),
+                _colorCheckerCircleRadius);
+            A.at(y,0) = c[0];
+            A.at(y,1) = c[1];
+            A.at(y,2) = c[2];
+            y++;
+        }
     }
     
     Mat<double,ColorChecker::Count,3> b; // Colors that we want
-    y = 0;
-    for (Color_SRGB_D65 c : ColorChecker::Colors) {
-        // Convert the color from SRGB.D65 -> XYZ.D50
-        const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
-        b.at(y,0) = cxyz[0];
-        b.at(y,1) = cxyz[1];
-        b.at(y,2) = cxyz[2];
-        y++;
+    {
+        size_t y = 0;
+        for (Color_SRGB_D65 c : ColorChecker::Colors) {
+            
+//            // SRGB -> linear SRGB
+//            const Color3 lsrgb_d65(
+//                SRGBGammaReverse(c[0]),
+//                SRGBGammaReverse(c[1]),
+//                SRGBGammaReverse(c[2])
+//            );
+//            
+//            b.at(y,0) = lsrgb_d65[0];
+//            b.at(y,1) = lsrgb_d65[1];
+//            b.at(y,2) = lsrgb_d65[2];
+            
+            // Convert the color from SRGB.D65 -> XYZ.D50
+            const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
+            b.at(y,0) = cxyz[0];
+            b.at(y,1) = cxyz[1];
+            b.at(y,2) = cxyz[2];
+            y++;
+        }
     }
     
     // Solve Ax=b for the color matrix
