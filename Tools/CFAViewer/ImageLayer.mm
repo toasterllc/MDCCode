@@ -155,25 +155,23 @@ using namespace ImagePipeline;
 
 - (id)CGImage {
     auto lock = std::lock_guard(_state.lock);
-    Renderer::Txt txt = _state.renderer.createTexture(MTLPixelFormatBGRA8Unorm,
+    Renderer::Txt txt = _state.renderer.createTexture(MTLPixelFormatRGBA16Float,
         _state.img.width, _state.img.height,
         MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     [self _displayToTexture:txt drawable:nil];
-    const NSUInteger w = [txt width];
-    const NSUInteger h = [txt height];
+    const size_t w = [txt width];
+    const size_t h = [txt height];
+    const size_t componentsPerPixel = 4;
+    const size_t bytesPerComponent = 2;
+    const size_t bytesPerRow = componentsPerPixel*bytesPerComponent*w;
     
-    uint32_t opts = kCGImageAlphaNoneSkipFirst;
-    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, 8, 4*w, SRGBColorSpace(), opts));
+    const uint32_t opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Little;
+    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, bytesPerComponent*8, bytesPerRow,
+        SRGBColorSpace(), opts));
     Assert(ctx, return nil);
     
     uint8_t* data = (uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
-    [txt getBytes:data bytesPerRow:4*w fromRegion:MTLRegionMake2D(0, 0, w, h) mipmapLevel:0];
-    
-    // BGRA -> ARGB
-    for (size_t i=0; i<4*w*h; i+=4) {
-        std::swap(data[i], data[i+3]);
-        std::swap(data[i+1], data[i+2]);
-    }
+    [txt getBytes:data bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0];
     
     return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
 }

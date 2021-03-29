@@ -173,7 +173,7 @@ namespace CFAViewer {
         ) {
             // Check if we already have a texture matching the given criteria
             TxtKey key(fmt, width, height, usage);
-            auto& txts = _txts[key];
+            TxtQueue& txts = _txts[key];
             if (!txts.empty()) {
                 Txt txt(*this, txts.front());
                 txts.pop();
@@ -283,8 +283,8 @@ namespace CFAViewer {
         }
         
         id<MTLRenderPipelineState> _pipelineState(const std::string& name, MTLPixelFormat fmt) {
-            NSParameterAssert(name);
-            auto find = _pipelineStates.find(name);
+            PipelineStateKey key(name, fmt);
+            auto find = _pipelineStates.find(key);
             if (find != _pipelineStates.end()) return find->second;
             
             id<MTLFunction> vertexShader = [_lib newFunctionWithName:@"CFAViewer::Shader::Renderer::VertexShader"];
@@ -296,12 +296,35 @@ namespace CFAViewer {
             [desc setVertexFunction:vertexShader];
             [desc setFragmentFunction:fragmentShader];
             [[desc colorAttachments][0] setPixelFormat:fmt];
-            id<MTLRenderPipelineState> ps = [dev newRenderPipelineStateWithDescriptor:desc
-                error:nil];
+            id<MTLRenderPipelineState> ps = [dev newRenderPipelineStateWithDescriptor:desc error:nil];
             Assert(ps, return nil);
-            _pipelineStates.insert(find, {name, ps});
+            _pipelineStates.insert(find, {key, ps});
             return ps;
         }
+        
+        class PipelineStateKey {
+        public:
+            PipelineStateKey(const std::string& name, MTLPixelFormat fmt) :
+            _name(name), _fmt(fmt) {}
+            
+            bool operator==(const PipelineStateKey& x) const {
+                return
+                    _name==x._name      &&
+                    _fmt==x._fmt        ;
+            }
+            
+            size_t hash() const {
+                return std::hash<std::string>{}(_name) ^ HashInts(_fmt);
+            }
+            
+            struct Hash {
+                size_t operator()(const PipelineStateKey& x) const { return x.hash(); }
+            };
+        
+        private:
+            std::string _name;
+            MTLPixelFormat _fmt = MTLPixelFormatInvalid;
+        };
         
         class TxtKey {
         public:
@@ -334,10 +357,11 @@ namespace CFAViewer {
             MTLTextureUsage _usage = MTLTextureUsageUnknown;
         };
         
+        using TxtQueue = std::queue<id<MTLTexture>>;
         id <MTLLibrary> _lib = nil;
         id <MTLCommandQueue> _commandQueue = nil;
-        std::unordered_map<std::string,id<MTLRenderPipelineState>> _pipelineStates;
-        std::unordered_map<TxtKey,std::queue<id<MTLTexture>>,TxtKey::Hash> _txts;
+        std::unordered_map<PipelineStateKey,id<MTLRenderPipelineState>,PipelineStateKey::Hash> _pipelineStates;
+        std::unordered_map<TxtKey,TxtQueue,TxtKey::Hash> _txts;
         std::list<id<MTLBuffer>> _bufs;
         id<MTLCommandBuffer> _cmdBuf = nil;
         
