@@ -46,7 +46,7 @@ using namespace ImagePipeline;
     
     _commandQueue = [_device newCommandQueue];
     
-    _library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
+    _library = [_device newDefaultLibrary];
     Assert(_library, return nil);
     
     auto lock = std::lock_guard(_state.lock);
