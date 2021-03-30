@@ -53,7 +53,7 @@ public:
         return _state.data;
     }
     
-    size_t len() {
+    size_t len() const {
         return _state.len;
     }
     
