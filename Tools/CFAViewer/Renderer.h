@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 #import <unordered_map>
 #import <queue>
