@@ -11,13 +11,13 @@
 		55460A03260326180037A5AC /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 554609FD2602C26A0037A5AC /* DebayerBilinear.metal */; };
 		55460A04260326180037A5AC /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55DE384325F6DA2400AD2223 /* Defringe.metal */; };
 		55460A05260326180037A5AC /* HistogramLayerShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC932589C3960089A441 /* HistogramLayerShader.metal */; };
-		55460A1A260342FD0037A5AC /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A19260342FD0037A5AC /* Renderer.metal */; };
 		55460A1C2603CEAF0037A5AC /* DebayerLMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A1B2603CEAF0037A5AC /* DebayerLMMSE.metal */; };
 		55460A3326047ED60037A5AC /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3226047ED60037A5AC /* Saturation.metal */; };
 		55460A3626049F0C0037A5AC /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3526049F0C0037A5AC /* LocalContrast.metal */; };
 		55460A382604A6100037A5AC /* ImageLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A372604A6100037A5AC /* ImageLayer.metal */; };
 		55460A3B260AC5A00037A5AC /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */; };
 		55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55671A37257E984E00C1CDA4 /* IOKit.framework */; };
+		559C33D22613C111001903FD /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 559C33D02613C111001903FD /* Renderer.metal */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
 		55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55B9745D24C504E2000B2633 /* AppDelegate.mm */; };
@@ -37,11 +37,9 @@
 
 /* Begin PBXFileReference section */
 		552E7D5A24C9316900438AAF /* CFAViewer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CFAViewer.entitlements; sourceTree = "<group>"; };
-		554609F926001F670037A5AC /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		554609FB2602C08A0037A5AC /* DebayerLMMSE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebayerLMMSE.h; sourceTree = "<group>"; };
 		554609FD2602C26A0037A5AC /* DebayerBilinear.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerBilinear.metal; sourceTree = "<group>"; };
 		554609FF2603032A0037A5AC /* ImagePipeline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
-		55460A19260342FD0037A5AC /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		55460A1B2603CEAF0037A5AC /* DebayerLMMSE.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerLMMSE.metal; sourceTree = "<group>"; };
 		55460A30260416750037A5AC /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		55460A31260479EC0037A5AC /* Saturation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
@@ -66,6 +64,8 @@
 		55671A3A2580178100C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		558328AF25FE15E800730B6A /* Defringe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
 		5584A49125A2FC4A00C9FC5C /* ColorUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorUtil.h; sourceTree = "<group>"; };
+		559C33D02613C111001903FD /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
+		559C33D12613C111001903FD /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		559D8E0E2593EAB200836B47 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		559D8E1125954F7E00836B47 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
@@ -192,8 +192,8 @@
 				55EBCC86258966FE0089A441 /* ImageLayer.h */,
 				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
 				55460A372604A6100037A5AC /* ImageLayer.metal */,
-				554609F926001F670037A5AC /* Renderer.h */,
-				55460A19260342FD0037A5AC /* Renderer.metal */,
+				559C33D12613C111001903FD /* Renderer.h */,
+				559C33D02613C111001903FD /* Renderer.metal */,
 				554609FC2602C0940037A5AC /* ImagePipeline */,
 				55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */,
 				55E98EB825A920880062B458 /* HistogramView.h */,
@@ -306,7 +306,6 @@
 				55EBCC922589C3570089A441 /* HistogramLayer.mm in Sources */,
 				55460A382604A6100037A5AC /* ImageLayer.metal in Sources */,
 				55E98EB925A920890062B458 /* HistogramView.mm in Sources */,
-				55460A1A260342FD0037A5AC /* Renderer.metal in Sources */,
 				55460A05260326180037A5AC /* HistogramLayerShader.metal in Sources */,
 				55B9746624C504E2000B2633 /* main.m in Sources */,
 				55E98EB625A920030062B458 /* MainView.mm in Sources */,
@@ -314,6 +313,7 @@
 				55460A04260326180037A5AC /* Defringe.metal in Sources */,
 				55460A1C2603CEAF0037A5AC /* DebayerLMMSE.metal in Sources */,
 				55460A3B260AC5A00037A5AC /* ReconstructHighlights.metal in Sources */,
+				559C33D22613C111001903FD /* Renderer.metal in Sources */,
 				55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */,
 				55460A02260326180037A5AC /* ImagePipeline.metal in Sources */,
 				55460A3326047ED60037A5AC /* Saturation.metal in Sources */,

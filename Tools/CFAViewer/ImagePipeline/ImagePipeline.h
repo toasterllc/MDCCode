@@ -142,12 +142,44 @@ public:
                 DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
             }
             
-            // Camera raw -> XYY.D50
+            // White balance
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", rgb,
+                    // Texture args
+                    rgb
+                );
+            }
+            
+            // Camera raw -> LSRGB.D65
             {
                 const simd::float3x3 colorMatrix = _simdFromMat(opts.colorMatrix);
-                renderer.render("CFAViewer::Shader::ImagePipeline::XYYD50FromCamRaw", rgb,
+                renderer.render("CFAViewer::Shader::ImagePipeline::ApplyColorMatrix", rgb,
                     // Buffer args
                     colorMatrix,
+                    // Texture args
+                    rgb
+                );
+            }
+            
+            // LSRGB.D65 -> XYZ.D65
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::XYZD65FromLSRGBD65", rgb,
+                    // Texture args
+                    rgb
+                );
+            }
+            
+            // XYZ.D65 -> XYZ.D50
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::BradfordXYZD50FromXYZD65", rgb,
+                    // Texture args
+                    rgb
+                );
+            }
+            
+            // XYZ.D50 -> XYY.D50
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::XYYFromXYZ", rgb,
                     // Texture args
                     rgb
                 );
@@ -166,7 +198,7 @@ public:
             
             // XYY.D50 -> XYZ.D50
             {
-                renderer.render("CFAViewer::Shader::ImagePipeline::XYZD50FromXYYD50", rgb,
+                renderer.render("CFAViewer::Shader::ImagePipeline::XYZFromXYY", rgb,
                     // Texture args
                     rgb
                 );
@@ -230,9 +262,17 @@ public:
                 );
             }
             
-            // XYZ.D50 -> LSRGB.D65
+            // XYZ.D50 -> XYZ.D65
             {
-                renderer.render("CFAViewer::Shader::ImagePipeline::LSRGBD65FromXYZD50", rgb,
+                renderer.render("CFAViewer::Shader::ImagePipeline::BradfordXYZD65FromXYZD50", rgb,
+                    // Texture args
+                    rgb
+                );
+            }
+            
+            // XYZ.D65 -> LSRGB.D65
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::LSRGBD65FromXYZD65", rgb,
                     // Texture args
                     rgb
                 );

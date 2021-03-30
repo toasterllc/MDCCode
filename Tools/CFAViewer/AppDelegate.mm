@@ -249,8 +249,12 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        Mmap imgData("/Users/dave/Desktop/AR0330TestImages/1.cfa");
 //        Mmap imgData("/Users/dave/Desktop/AR0330TestImages/1.cfa");
 //        Mmap imgData("/Users/dave/Desktop/ColorCheckerRaw.cfa");
-        Mmap imgData("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
+//        Mmap imgData("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
 //        Mmap imgData("/Users/dave/Desktop/test.cfa");
+//        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/106.cfa");
+//        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/158.cfa");
+        
+        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-4pm/35.cfa");
         
 //        _streamImages.img.width = 384;
 //        _streamImages.img.height = 256;
@@ -468,6 +472,10 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     using namespace STApp;
     assert(device);
     
+    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
+    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
+    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
+    
     ImageLayer* layer = [_mainView imageLayer];
     try {
         // Reset the device to put it back in a pre-defined state
@@ -476,7 +484,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
         float intTime = .5;
         const size_t tmpPixelBufLen = std::size(_streamImages.pixelBuf);
         auto tmpPixelBuf = std::make_unique<STApp::Pixel[]>(tmpPixelBufLen);
-        for (;;) {
+        uint32_t saveIdx = 1;
+        for (uint32_t i=0;; i++) {
             // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
             const STApp::PixHeader pixStatus = device.pixCapture(tmpPixelBuf.get(), tmpPixelBufLen, 1000);
@@ -494,6 +503,17 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             
             [layer setImage:_streamImages.img];
             
+            if (!(i % 10)) {
+                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
+                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
+                std::ofstream f;
+                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+                f.open([imagePath UTF8String]);
+                f.write((char*)_streamImages.img.pixels, len);
+                saveIdx++;
+                printf("Saved %s\n", [imagePath UTF8String]);
+            }
+            
             // Adjust exposure
             const uint32_t SubsampleFactor = 16;
             const uint32_t pixelCount = (uint32_t)pixStatus.width*(uint32_t)pixStatus.height;
@@ -507,8 +527,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             const float absdiff = fabs(diff);
             const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
             
-            bool updateIntTime = false;
             if (absdiff > .01) {
+                bool updateIntTime = false;
                 if (shadowFraction > highlightFraction) {
                     // Increase exposure
                     intTime *= adjust;
@@ -520,7 +540,7 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
                     updateIntTime = true;
                 }
                 
-                intTime = std::clamp(intTime, 0.01f, 1.f);
+                intTime = std::clamp(intTime, 0.001f, 1.f);
                 const float gain = intTime/3;
                 
                 printf("adjust:%f\n"
@@ -1119,22 +1139,23 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
         size_t y = 0;
         for (Color_SRGB_D65 c : ColorChecker::Colors) {
             
-//            // SRGB -> linear SRGB
-//            const Color3 lsrgb_d65(
-//                SRGBGammaReverse(c[0]),
-//                SRGBGammaReverse(c[1]),
-//                SRGBGammaReverse(c[2])
-//            );
-//            
-//            b.at(y,0) = lsrgb_d65[0];
-//            b.at(y,1) = lsrgb_d65[1];
-//            b.at(y,2) = lsrgb_d65[2];
+            // SRGB -> linear SRGB
+            const Color3 lsrgb_d65(
+                SRGBGammaReverse(c[0]),
+                SRGBGammaReverse(c[1]),
+                SRGBGammaReverse(c[2])
+            );
             
-            // Convert the color from SRGB.D65 -> XYZ.D50
-            const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
-            b.at(y,0) = cxyz[0];
-            b.at(y,1) = cxyz[1];
-            b.at(y,2) = cxyz[2];
+            b.at(y,0) = lsrgb_d65[0];
+            b.at(y,1) = lsrgb_d65[1];
+            b.at(y,2) = lsrgb_d65[2];
+            
+//            // Convert the color from SRGB.D65 -> XYZ.D50
+//            const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
+//            b.at(y,0) = cxyz[0];
+//            b.at(y,1) = cxyz[1];
+//            b.at(y,2) = cxyz[2];
+            
             y++;
         }
     }
