@@ -29,13 +29,13 @@ namespace CFAViewer::ImagePipeline {
                 (float)opts.whiteBalanceFactors[2]
             };
             
-            renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
-                // Buffer args
-                cfaDesc,
-                whiteBalanceFactors,
-                // Texture args
-                raw
-            );
+//            renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceForward", raw,
+//                // Buffer args
+//                cfaDesc,
+//                whiteBalanceFactors,
+//                // Texture args
+//                raw
+//            );
             
             {
                 Renderer::Txt gInterp = renderer.createTexture(MTLPixelFormatR32Float, w, h);
@@ -51,13 +51,13 @@ namespace CFAViewer::ImagePipeline {
                 }
             }
             
-            renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
-                // Buffer args
-                cfaDesc,
-                whiteBalanceFactors,
-                // Texture args
-                raw
-            );
+//            renderer.render("CFAViewer::Shader::Defringe::WhiteBalanceReverse", raw,
+//                // Buffer args
+//                cfaDesc,
+//                whiteBalanceFactors,
+//                // Texture args
+//                raw
+//            );
             
             renderer.commit();
         }

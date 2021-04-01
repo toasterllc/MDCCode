@@ -112,46 +112,62 @@ fragment float4 XYYD50FromCamRaw(
     return float4(c, 1);
 }
 
-fragment float4 WhiteBalance(
-    texture2d<float> txt [[texture(0)]],
+fragment float WhiteBalance(
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant float3& wb [[buffer(1)]],
+    texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3x3 wb(
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 1
-    );
-    
-//    const float3x3 wb(
-//        1.4174, 0, 0,
-//        0, 1, 0,
-//        0, 0, 1.0887
-//    );
-    
-//    // image000010_sensorname_ChengCanon600D.png: C5 white balance
-//    const float3x3 wb(
-//        1.7859, 0, 0,
-//        0,      1, 0,
-//        0,      0, 1.3184
-//    );
-    
-    // ColorCheckerRaw: manual white balance
-//    const float3x3 wb(
-//        1.015462, 0.000000, 0.000000,
-//        0.000000, 1.000000, 0.000000,
-//        0.000000, 0.000000, 2.551048
-//    );
-    
-//    // image001_sensorname_AR0330.png: C5 white balance
-//    const float3x3 wb(
-//        1.307648, 0.000000, 0.000000,
-//        0.000000, 1.000000, 0.000000,
-//        0.000000, 0.000000, 1.275692
-//    );
-    
-    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
-    return float4(wb*c, 1);
+    const int2 pos = int2(in.pos.xy);
+    const CFAColor c = cfaDesc.color(pos);
+    const float s = Sample::R(raw, pos);
+    switch (c) {
+    case CFAColor::Red:     return wb.r*s;
+    case CFAColor::Green:   return wb.g*s;
+    case CFAColor::Blue:    return wb.b*s;
+    }
 }
+
+//fragment float4 WhiteBalance(
+//    texture2d<float> txt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const float3x3 wb(
+//        1, 0, 0,
+//        0, 1, 0,
+//        0, 0, 1
+//    );
+//    
+////    const float3x3 wb(
+////        1.4174, 0, 0,
+////        0, 1, 0,
+////        0, 0, 1.0887
+////    );
+//    
+////    // image000010_sensorname_ChengCanon600D.png: C5 white balance
+////    const float3x3 wb(
+////        1.7859, 0, 0,
+////        0,      1, 0,
+////        0,      0, 1.3184
+////    );
+//    
+//    // ColorCheckerRaw: manual white balance
+////    const float3x3 wb(
+////        1.015462, 0.000000, 0.000000,
+////        0.000000, 1.000000, 0.000000,
+////        0.000000, 0.000000, 2.551048
+////    );
+//    
+////    // image001_sensorname_AR0330.png: C5 white balance
+////    const float3x3 wb(
+////        1.307648, 0.000000, 0.000000,
+////        0.000000, 1.000000, 0.000000,
+////        0.000000, 0.000000, 1.275692
+////    );
+//    
+//    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+//    return float4(wb*c, 1);
+//}
 
 fragment float4 ApplyColorMatrix(
     constant float3x3& colorMatrix [[buffer(0)]],

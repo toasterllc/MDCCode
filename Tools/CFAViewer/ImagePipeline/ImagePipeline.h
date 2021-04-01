@@ -22,6 +22,8 @@ public:
     struct Options {
         bool rawMode = false;
         
+        Mat<double,3,1> whiteBalance = { 1.,1.,1. };
+        
         struct {
             bool en = false;
             Defringe::Options opts;
@@ -114,10 +116,6 @@ public:
             );
         
         } else {
-            if (opts.defringe.en) {
-                Defringe::Run(renderer, img.cfaDesc, opts.defringe.opts, raw);
-            }
-            
             // Reconstruct highlights
             if (opts.reconstructHighlights.en) {
                 const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
@@ -137,17 +135,25 @@ public:
                 raw = std::move(tmp);
             }
             
+            // White balance
+            {
+                const simd::float3 whiteBalance = _simdFromMat(opts.whiteBalance);
+                renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
+                    // Buffer args
+                    img.cfaDesc,
+                    whiteBalance,
+                    // Texture args
+                    raw
+                );
+            }
+            
+            if (opts.defringe.en) {
+                Defringe::Run(renderer, img.cfaDesc, opts.defringe.opts, raw);
+            }
+            
             // LMMSE Debayer
             {
                 DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
-            }
-            
-            // White balance
-            {
-                renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", rgb,
-                    // Texture args
-                    rgb
-                );
             }
             
             // Camera raw -> LSRGB.D65

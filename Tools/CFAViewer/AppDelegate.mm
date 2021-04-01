@@ -55,6 +55,8 @@ struct PixConfig {
     IBOutlet NSSwitch* _analogGainSlider;
     IBOutlet NSTextField* _analogGainLabel;
     
+    IBOutlet NSTextField* _whiteBalanceTextField;
+    
     IBOutlet NSButton* _colorCheckersCheckbox;
     IBOutlet NSButton* _resetColorCheckersButton;
     
@@ -254,7 +256,17 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/106.cfa");
 //        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/158.cfa");
         
-        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-4pm/35.cfa");
+        // Back yard
+        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/30.cfa");
+        
+        // Sue, backyard, color checker
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/35.cfa");
+        
+//        // Front yard, car
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/139.cfa");
+
+//        // Front of house
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/127.cfa");
         
 //        _streamImages.img.width = 384;
 //        _streamImages.img.height = 256;
@@ -280,8 +292,16 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     _imgOpts = {
         .rawMode = false,
         
-        .defringe = {
+        .reconstructHighlights = {
             .en = true,
+            .badPixelFactors    = {1.130, 1.613, 1.000},
+            .goodPixelFactors   = {1.051, 1.544, 1.195},
+        },
+        
+        .whiteBalance = { 1.368683, 1.000000, 1.513193 },
+        
+        .defringe = {
+            .en = false,
             .opts = {
                 .whiteBalanceFactors = {
                     0.296587/0.203138,  // Red
@@ -290,34 +310,52 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
                 }
             }
         },
-        
-        .reconstructHighlights = {
-            .en = true,
-            .badPixelFactors    = {1.130, 1.613, 1.000},
-            .goodPixelFactors   = {1.051, 1.544, 1.195},
-        },
-        
-        .debayerLMMSE = {
-            .applyGamma = true,
-        },
-        
-        .colorMatrix = {
-            +3.040751, +1.406093, +0.746958,
-            -0.293108, +4.785811, -0.756907,
-            -0.578106, -1.496914, +8.609732,
-        },
-        
-        .exposure = -2.4,
-        .brightness = 0.203,
-        .contrast = 0.6,
-        .saturation = 0.1,
-        
-        .localContrast = {
-            .en = true,
-            .amount = .2,
-            .radius = 80,
-        },
     };
+    
+    
+//    _imgOpts = {
+//        .rawMode = false,
+//        
+//        .whiteBalance = { 1., 1., 1. },
+//        
+//        .defringe = {
+//            .en = true,
+//            .opts = {
+//                .whiteBalanceFactors = {
+//                    0.296587/0.203138,  // Red
+//                    0.296587/0.296587,  // Green
+//                    0.296587/0.161148,  // Blue
+//                }
+//            }
+//        },
+//        
+//        .reconstructHighlights = {
+//            .en = true,
+//            .badPixelFactors    = {1.130, 1.613, 1.000},
+//            .goodPixelFactors   = {1.051, 1.544, 1.195},
+//        },
+//        
+//        .debayerLMMSE = {
+//            .applyGamma = true,
+//        },
+//        
+//        .colorMatrix = {
+//            +3.040751, +1.406093, +0.746958,
+//            -0.293108, +4.785811, -0.756907,
+//            -0.578106, -1.496914, +8.609732,
+//        },
+//        
+//        .exposure = -2.4,
+//        .brightness = 0.203,
+//        .contrast = 0.6,
+//        .saturation = 0.1,
+//        
+//        .localContrast = {
+//            .en = true,
+//            .amount = .2,
+//            .radius = 80,
+//        },
+//    };
     
     [self _updateImageOptions];
     
@@ -681,11 +719,22 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
 
 #pragma mark - Color Matrix
 
-- (void)controlTextDidChange:(NSNotification*)note {
-    if ([note object] == _colorMatrixTextField) {
-        _imgOpts.colorMatrix = _colorMatrixFromString([[_colorMatrixTextField stringValue] UTF8String]);
-        [self _updateImageOptions];
+static WhiteBalanceMatrix _whiteBalanceMatrixFromString(const std::string& str) {
+    const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
+    auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
+    auto end = std::sregex_iterator();
+    std::vector<double> vals;
+    
+    for (std::sregex_iterator i=begin; i!=end; i++) {
+        vals.push_back(std::stod(i->str()));
     }
+    
+    if (vals.size() != 3) {
+        NSLog(@"Failed to parse color matrix");
+        return {};
+    }
+    
+    return vals.data();
 }
 
 static ColorMatrix _colorMatrixFromString(const std::string& str) {
@@ -704,6 +753,17 @@ static ColorMatrix _colorMatrixFromString(const std::string& str) {
     }
     
     return vals.data();
+}
+
+- (void)controlTextDidChange:(NSNotification*)note {
+    if ([note object] == _whiteBalanceTextField) {
+        _imgOpts.whiteBalance = _whiteBalanceMatrixFromString([[_whiteBalanceTextField stringValue] UTF8String]);
+        [self _updateImageOptions];
+    
+    } else if ([note object] == _colorMatrixTextField) {
+        _imgOpts.colorMatrix = _colorMatrixFromString([[_colorMatrixTextField stringValue] UTF8String]);
+        [self _updateImageOptions];
+    }
 }
 
 #pragma mark - Histograms
@@ -970,7 +1030,12 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
         (uintmax_t)_pixConfig.analogGain]];
 }
 
-- (IBAction)_identityButtonAction:(id)sender {
+- (IBAction)_whiteBalanceIdentityButtonAction:(id)sender {
+    _imgOpts.whiteBalance = { 1.,1.,1. };
+    [self _updateImageOptions];
+}
+
+- (IBAction)_colorMatrixIdentityButtonAction:(id)sender {
     [self _setColorCheckersEnabled:false];
     _imgOpts.colorMatrix = {
         1.,0.,0.,
@@ -1026,6 +1091,13 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
 }
 
 - (void)_updateImageOptions {
+    // White balance matrix
+    {
+        [_whiteBalanceTextField setStringValue:[NSString stringWithFormat:
+            @"%f %f %f", _imgOpts.whiteBalance[0], _imgOpts.whiteBalance[1], _imgOpts.whiteBalance[2]
+        ]];
+    }
+    
     // Defringe
     {
         [_defringeCheckbox setState:(_imgOpts.defringe.en ? NSControlStateValueOn : NSControlStateValueOff)];

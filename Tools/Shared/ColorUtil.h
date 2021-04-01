@@ -2,6 +2,7 @@
 #import "Mat.h"
 
 namespace ColorUtil {
+    using WhiteBalanceMatrix = Mat<double,3,1>;
     using ColorMatrix = Mat<double,3,3>;
     using Color3 = Mat<double,3,1>;
     using Color_XYY_D50 = Color3;
