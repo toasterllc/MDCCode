@@ -1,10 +1,7 @@
 #import "BaseView.h"
-#import "ColorUtil.h"
 #import "Color.h"
 
 namespace ColorChecker {
-    using namespace ColorUtil;
-    
     constexpr size_t Count = 24;
     const Color<ColorSpace::SRGB> Colors[Count] {
         // Row 0

@@ -6,12 +6,10 @@
 #import "ImageLayer.h"
 #import "Assert.h"
 #import "Util.h"
-#import "ColorUtil.h"
 #import "TimeInstant.h"
 #import "ImagePipeline.h"
 using namespace CFAViewer;
 using namespace MetalUtil;
-using namespace ColorUtil;
 using namespace ImagePipeline;
 
 @implementation ImageLayer {

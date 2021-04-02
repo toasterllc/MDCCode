@@ -13,7 +13,6 @@
 #import "Mmap.h"
 #import "Util.h"
 #import "Mat.h"
-#import "ColorUtil.h"
 #import "TimeInstant.h"
 #import "MainView.h"
 #import "HistogramView.h"
@@ -28,7 +27,6 @@
 
 using namespace CFAViewer;
 using namespace MetalUtil;
-using namespace ColorUtil;
 using namespace ImagePipeline;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
@@ -728,7 +726,7 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
 
 #pragma mark - Color Matrix
 
-static WhiteBalanceMatrix _whiteBalanceMatrixFromString(const std::string& str) {
+static Mat<double,3,1> _whiteBalanceMatrixFromString(const std::string& str) {
     const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
     auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
     auto end = std::sregex_iterator();
@@ -746,7 +744,7 @@ static WhiteBalanceMatrix _whiteBalanceMatrixFromString(const std::string& str) 
     return vals.data();
 }
 
-static ColorMatrix _colorMatrixFromString(const std::string& str) {
+static Mat<double,3,3> _colorMatrixFromString(const std::string& str) {
     const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
     auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
     auto end = std::sregex_iterator();
@@ -926,13 +924,13 @@ static double sampleB(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
     }
 }
 
-static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t x, uint32_t y, uint32_t radius) {
+static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uint32_t x, uint32_t y, uint32_t radius) {
     uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
     uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
     uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
     uint32_t top = std::clamp((int32_t)y+(int32_t)radius, (int32_t)0, (int32_t)img.height-1)+1;
     
-    Color_CamRaw_D50 c;
+    Color<ColorSpace::Raw> c;
     uint32_t i = 0;
     for (uint32_t iy=bottom; iy<top; iy++) {
         for (uint32_t ix=left; ix<right; ix++) {
@@ -1205,7 +1203,7 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
         auto lock = std::unique_lock(_streamImages.lock);
         size_t y = 0;
         for (const CGPoint& p : points) {
-            Color_CamRaw_D50 c = sampleImageCircle(_streamImages.img,
+            Color<ColorSpace::Raw> c = sampleImageCircle(_streamImages.img,
                 round(p.x*_streamImages.img.width),
                 round(p.y*_streamImages.img.height),
                 _colorCheckerCircleRadius);

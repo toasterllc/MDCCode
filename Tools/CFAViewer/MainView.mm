@@ -3,12 +3,10 @@
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Util.h"
-#import "ColorUtil.h"
 #import "ColorChecker.h"
 
 using namespace CFAViewer;
 using namespace MetalUtil;
-using namespace ColorUtil;
 
 @interface MainView () <CALayoutManager, NSGestureRecognizerDelegate>
 @end
