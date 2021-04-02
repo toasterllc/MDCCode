@@ -269,8 +269,10 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        // Front of house
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/127.cfa");
         
-        // Sue, backyard, color checker
-        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/8.cfa");
+//        // Sue, living room, color checker
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/69.cfa");
+
+        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/indoor_night_176.cfa");
         
 //        _streamImages.img.width = 384;
 //        _streamImages.img.height = 256;
