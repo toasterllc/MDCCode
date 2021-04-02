@@ -156,7 +156,7 @@ public:
                 DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
             }
             
-            // Camera raw -> LSRGB.D65
+            // Camera raw -> ProPhotoRGB
             {
                 const simd::float3x3 colorMatrix = _simdFromMat(opts.colorMatrix);
                 renderer.render("CFAViewer::Shader::ImagePipeline::ApplyColorMatrix", rgb,
@@ -167,17 +167,9 @@ public:
                 );
             }
             
-            // LSRGB.D65 -> XYZ.D65
+            // ProPhotoRGB -> XYZ.D50
             {
-                renderer.render("CFAViewer::Shader::ImagePipeline::XYZD65FromLSRGBD65", rgb,
-                    // Texture args
-                    rgb
-                );
-            }
-            
-            // XYZ.D65 -> XYZ.D50
-            {
-                renderer.render("CFAViewer::Shader::ImagePipeline::BradfordXYZD50FromXYZD65", rgb,
+                renderer.render("CFAViewer::Shader::ImagePipeline::XYZD50FromProPhotoRGB", rgb,
                     // Texture args
                     rgb
                 );

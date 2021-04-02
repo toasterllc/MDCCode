@@ -23,6 +23,7 @@
 #import "MDCUtil.h"
 #import "Assert.h"
 #import "ImagePipelineTypes.h"
+#import "Color.h"
 
 using namespace CFAViewer;
 using namespace MetalUtil;
@@ -256,10 +257,10 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/106.cfa");
 //        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/158.cfa");
         
-        // Back yard
-        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/30.cfa");
+//        // Back yard
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/30.cfa");
         
-        // Sue, backyard, color checker
+//        // Sue, backyard, color checker
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/35.cfa");
         
 //        // Front yard, car
@@ -267,6 +268,9 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 
 //        // Front of house
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/127.cfa");
+        
+        // Sue, backyard, color checker
+        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/8.cfa");
         
 //        _streamImages.img.width = 384;
 //        _streamImages.img.height = 256;
@@ -1209,18 +1213,12 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
     Mat<double,ColorChecker::Count,3> b; // Colors that we want
     {
         size_t y = 0;
-        for (Color_SRGB_D65 c : ColorChecker::Colors) {
+        for (const auto& c : ColorChecker::Colors) {
             
-            // SRGB -> linear SRGB
-            const Color3 lsrgb_d65(
-                SRGBGammaReverse(c[0]),
-                SRGBGammaReverse(c[1]),
-                SRGBGammaReverse(c[2])
-            );
-            
-            b.at(y,0) = lsrgb_d65[0];
-            b.at(y,1) = lsrgb_d65[1];
-            b.at(y,2) = lsrgb_d65[2];
+            const Color<ColorSpace::ProPhotoRGB> ppc(c);
+            b.at(y,0) = ppc[0];
+            b.at(y,1) = ppc[1];
+            b.at(y,2) = ppc[2];
             
 //            // Convert the color from SRGB.D65 -> XYZ.D50
 //            const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);

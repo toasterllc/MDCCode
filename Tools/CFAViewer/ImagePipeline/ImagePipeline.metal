@@ -174,8 +174,8 @@ fragment float4 ApplyColorMatrix(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float3 inputColor_camRaw = Sample::RGB(txt, int2(in.pos.xy));
-    return float4(colorMatrix*inputColor_camRaw, 1);
+    const float3 c = Sample::RGB(txt, int2(in.pos.xy));
+    return float4(colorMatrix*c, 1);
 }
 
 fragment float4 Exposure(
@@ -312,12 +312,12 @@ fragment float4 BradfordXYZD65FromXYZD50(
     VertexOutput in [[stage_in]]
 ) {
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
+    const float3x3 M = transpose(float3x3(
         0.9555766,  -0.0230393, 0.0631636,
         -0.0282895, 1.0099416,  0.0210077,
         0.0122982,  -0.0204830, 1.3299098
     ));
-    return float4(XYZD65_From_XYZD50*Sample::RGB(txt, int2(in.pos.xy)), 1);
+    return float4(M*Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
 fragment float4 BradfordXYZD50FromXYZD65(
@@ -325,12 +325,12 @@ fragment float4 BradfordXYZD50FromXYZD65(
     VertexOutput in [[stage_in]]
 ) {
     // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-    const float3x3 XYZD65_From_XYZD50 = transpose(float3x3(
+    const float3x3 M = transpose(float3x3(
         1.0478112,  0.0228866,  -0.0501270,
          0.0295424, 0.9904844,  -0.0170491,
         -0.0092345, 0.0150436,  0.7521316
     ));
-    return float4(XYZD65_From_XYZD50*Sample::RGB(txt, int2(in.pos.xy)), 1);
+    return float4(M*Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
 
@@ -339,12 +339,12 @@ fragment float4 LSRGBD65FromXYZD65(
     VertexOutput in [[stage_in]]
 ) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 LSRGBD65_From_XYZD65 = transpose(float3x3(
+    const float3x3 M = transpose(float3x3(
         3.2404542,  -1.5371385, -0.4985314,
         -0.9692660, 1.8760108,  0.0415560,
         0.0556434,  -0.2040259, 1.0572252
     ));
-    return float4(LSRGBD65_From_XYZD65 * Sample::RGB(txt, int2(in.pos.xy)), 1);
+    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
 
@@ -353,12 +353,38 @@ fragment float4 XYZD65FromLSRGBD65(
     VertexOutput in [[stage_in]]
 ) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 XYZD65_From_LSRGBD65 = transpose(float3x3(
+    const float3x3 M = transpose(float3x3(
         0.4124564,  0.3575761,  0.1804375,
         0.2126729,  0.7151522,  0.0721750,
         0.0193339,  0.1191920,  0.9503041
     ));
-    return float4(XYZD65_From_LSRGBD65 * Sample::RGB(txt, int2(in.pos.xy)), 1);
+    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
+}
+
+fragment float4 XYZD50FromProPhotoRGB(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const float3x3 M = transpose(float3x3(
+        0.7976749,  0.1351917,  0.0313534,
+        0.2880402,  0.7118741,  0.0000857,
+        0.0000000,  0.0000000,  0.8252100
+    ));
+    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
+}
+
+fragment float4 ProPhotoRGBFromXYZD50(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const float3x3 M = transpose(float3x3(
+        1.3459433,  -0.2556075, -0.0511118,
+        -0.5445989, 1.5081673,  0.0205351,
+        0.0000000,  0.0000000,  1.2118128
+    ));
+    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
 //fragment float4 XYZD50FromLSRGBD65(

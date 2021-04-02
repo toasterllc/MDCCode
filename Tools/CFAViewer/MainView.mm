@@ -61,7 +61,7 @@ using namespace ColorUtil;
     
     // Create our color checker circles if they don't exist yet
     size_t i = 0;
-    for (const Color_SRGB_D65& c : ColorChecker::Colors) {
+    for (const auto& c : ColorChecker::Colors) {
         CAShapeLayer* circle = [CAShapeLayer new];
         setCircleRadius(circle, _colorCheckerCircleRadius);
         [circle setFillColor:(CGColorRef)SRGBColor(c[0], c[1], c[2], 1)];

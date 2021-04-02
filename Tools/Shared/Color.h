@@ -13,6 +13,9 @@ namespace White {
     struct D65 {
         static inline const Mat<double,3,1> XYZ = {0.95047, 1.00000, 1.08883};
     };
+    
+    struct Unknown {
+    };
 }
 
 namespace ColorSpace {
@@ -61,9 +64,10 @@ namespace ColorSpace {
     
     template <typename W>
     struct XYZ {
-        static Mat<double,3,1> ToXYZ(const Mat<double,3,1>& c) { return c; }
-        static Mat<double,3,1> FromXYZ(const Mat<double,3,1>& c) { return c; }
         using White = W;
+    };
+    
+    struct Raw {
     };
     
     // Linear SRGB
@@ -184,6 +188,7 @@ template <typename Space>
 class Color {
 public:
     Color() {}
+    Color(const Mat<double,3,1> m) : m(m) {}
     Color(double x0, double x1, double x2) : m(x0,x1,x2) {}
     
     // Direct conversion (SpaceSrc -> Space)
@@ -192,7 +197,7 @@ public:
     std::enable_if_t<ColorSpace::CanConvert<SpaceSrc,Space>::value, bool> = false
     >
     Color(const Color<SpaceSrc>& c) {
-        printf("Direct conversion\n");
+//        printf("Direct conversion\n");
         m = c.m;
         // Convert directly if possible
         m = ColorSpace::Convert(SpaceSrc{}, Space{}, m);
@@ -204,7 +209,7 @@ public:
     std::enable_if_t<!ColorSpace::CanConvert<SpaceSrc,Space>::value, bool> = false
     >
     Color(const Color<SpaceSrc>& c) {
-        printf("Indirect conversion\n");
+//        printf("Indirect conversion\n");
         m = c.m;
         
         // Convert from the source colorspace to XYZ (SpaceSrc.WhiteSrc -> XYZ.WhiteSrc)
@@ -228,6 +233,9 @@ public:
             m
         );
     }
+    
+//    operator Mat<double,3,1>() { return m; }
+//    operator const Mat<double,3,1>() const { return m; }
     
     double& operator[](size_t i) { return m[i]; }
     const double& operator[](size_t i) const { return m[i]; }
