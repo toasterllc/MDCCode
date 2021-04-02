@@ -72,19 +72,6 @@ namespace ColorSpace {
         static constexpr double G[] = {0.3000, 0.6000};
         static constexpr double B[] = {0.1500, 0.0600};
         using White = White::D65;
-        
-//        static Mat<double,3,1> From(SRGB, const Mat<double,3,1>& c) {
-//            // Reverse gamma
-//            return Mat<double,3,1>(GammaReverse(c[0]), GammaReverse(c[1]), GammaReverse(c[2]));
-//        }
-//        
-//        static Mat<double,3,1> ToXYZ(const Mat<double,3,1>& c) {
-//            return XYZFromRGBMatrix<LSRGB,White>()*c;
-//        }
-//        
-//        static Mat<double,3,1> FromXYZ(const Mat<double,3,1>& c) {
-//            return RGBFromXYZMatrix<LSRGB,White>()*c;
-//        }
     };
     
     struct SRGB {
@@ -104,32 +91,6 @@ namespace ColorSpace {
             if (x <= 0.04045) return x/12.92;
             return pow((x+.055)/1.055, 2.4);
         }
-        
-//        static Mat<double,3,1> From(LSRGB, const Mat<double,3,1>& c) {
-//            // Forward gamma
-//            return Mat<double,3,1>(GammaForward(c[0]), GammaForward(c[1]), GammaForward(c[2]));
-//        }
-//        
-//        static Mat<double,3,1> ToXYZ(const Mat<double,3,1>& c) {
-//            // Reverse gamma
-//            const Mat<double,3,1> lsrgb(
-//                GammaReverse(c[0]),
-//                GammaReverse(c[1]),
-//                GammaReverse(c[2])
-//            );
-//            return XYZFromRGBMatrix<SRGB,White>()*lsrgb;
-//        }
-//        
-//        template <typename W>
-//        static Mat<double,3,1> From(XYZ<W>, const Mat<double,3,1>& c) {
-//            const Mat<double,3,1> lsrgb = RGBFromXYZMatrix<SRGB,White>()*c;
-//            // Forward gamma
-//            return Mat<double,3,1>(
-//                GammaForward(lsrgb[0]),
-//                GammaForward(lsrgb[1]),
-//                GammaForward(lsrgb[2])
-//            );
-//        }
     };
     
     struct ProPhotoRGB {
@@ -137,14 +98,6 @@ namespace ColorSpace {
         static constexpr double G[] = {0.1596, 0.8404};
         static constexpr double B[] = {0.0366, 0.0001};
         using White = White::D50;
-        
-//        static Mat<double,3,1> ToXYZ(const Mat<double,3,1>& c) {
-//            return XYZFromRGBMatrix<ProPhotoRGB,White>()*c;
-//        }
-//        
-//        static Mat<double,3,1> FromXYZ(const Mat<double,3,1>& c) {
-//            return RGBFromXYZMatrix<ProPhotoRGB,White>()*c;
-//        }
     };
     
     // X<->X (converting between the same colorspace -- no-op)
@@ -185,11 +138,11 @@ namespace ColorSpace {
     }
     
     // LSRGB<->XYZ
-    Mat<double,3,1> Convert(LSRGB, XYZ<LSRGB::White>, const Mat<double,3,1>& c) {
+    inline Mat<double,3,1> Convert(LSRGB, XYZ<LSRGB::White>, const Mat<double,3,1>& c) {
         return XYZFromRGBMatrix<LSRGB>()*c;
     }
     
-    Mat<double,3,1> Convert(XYZ<LSRGB::White>, LSRGB, const Mat<double,3,1>& c) {
+    inline Mat<double,3,1> Convert(XYZ<LSRGB::White>, LSRGB, const Mat<double,3,1>& c) {
         return RGBFromXYZMatrix<LSRGB>()*c;
     }
     
@@ -203,20 +156,20 @@ namespace ColorSpace {
     }
     
     // SRGB<->XYZ (convert between LSRGB using SRGB gamma function)
-    Mat<double,3,1> Convert(SRGB, XYZ<SRGB::White>, const Mat<double,3,1>& c) {
+    inline Mat<double,3,1> Convert(SRGB, XYZ<SRGB::White>, const Mat<double,3,1>& c) {
         return XYZFromRGBMatrix<LSRGB>()*Convert(SRGB{}, LSRGB{}, c);
     }
     
-    Mat<double,3,1> Convert(XYZ<SRGB::White>, SRGB, const Mat<double,3,1>& c) {
+    inline Mat<double,3,1> Convert(XYZ<SRGB::White>, SRGB, const Mat<double,3,1>& c) {
         return Convert(LSRGB{}, SRGB{}, RGBFromXYZMatrix<LSRGB>()*c);
     }
     
     // ProPhotoRGB<->XYZ
-    Mat<double,3,1> Convert(ProPhotoRGB, XYZ<ProPhotoRGB::White>, const Mat<double,3,1>& c) {
+    inline Mat<double,3,1> Convert(ProPhotoRGB, XYZ<ProPhotoRGB::White>, const Mat<double,3,1>& c) {
         return XYZFromRGBMatrix<ProPhotoRGB>()*c;
     }
     
-    Mat<double,3,1> Convert(XYZ<ProPhotoRGB::White>, ProPhotoRGB, const Mat<double,3,1>& c) {
+    inline Mat<double,3,1> Convert(XYZ<ProPhotoRGB::White>, ProPhotoRGB, const Mat<double,3,1>& c) {
         return RGBFromXYZMatrix<ProPhotoRGB>()*c;
     }
     
@@ -225,21 +178,6 @@ namespace ColorSpace {
 
     template <typename Src, typename Dst>
     struct CanConvert<Src, Dst, std::void_t<decltype(Convert(Src{}, Dst{}, {}))>> : std::true_type {};
-    
-    
-//    template <typename Src, typename Dst>
-//    bool CanConvert() {
-//        
-//        if constexpr (std::is_same<decltype(Convert(Src{}, Dst{}, {})),Dst>::value) return true;
-//        return false;
-//    }
-    
-    
-//    template <typename T>
-//    auto CanConvert(T&& x, T&& y) -> decltype(x + y) { return true; }
-//    
-//    template <typename T>
-//    auto CanConvert(T&& x, T&& y) -> decltype(x + y) { return false; }
 }
 
 template <typename Space>
@@ -247,8 +185,6 @@ class Color {
 public:
     Color() {}
     Color(double x0, double x1, double x2) : m(x0,x1,x2) {}
-    
-    //    typename = decltype(ColorSpace::Convert(SpaceSrc{}, Space{}, {}))>
     
     // Direct conversion (SpaceSrc -> Space)
     template <typename SpaceSrc,
@@ -297,39 +233,4 @@ public:
     const double& operator[](size_t i) const { return m[i]; }
     
     Mat<double,3,1> m;
-    
-//private:
-//    template <typename WhiteSrc, typename WhiteDst>
-//    static Mat<double,3,1> _AdaptChromaticity(const Mat<double,3,1>& c) {
-//        // Pass-through if WhiteSrc==WhiteDst
-//        if constexpr (std::is_same<WhiteSrc,WhiteDst>::value) {
-////            printf("BYPASS CHROMATIC ADAPTATION\n");
-//            return c;
-//        }
-//        
-//        // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_xyY.html
-//        const Mat<double,3,3> BradfordForward(
-//            0.8951000,  0.2664000,  -0.1614000,
-//            -0.7502000, 1.7135000,  0.0367000,
-//             0.0389000, -0.0685000, 1.0296000
-//        );
-//        
-//        const Mat<double,3,3> BradfordReverse(
-//            0.9869929,  -0.1470543, 0.1599627,
-//             0.4323053, 0.5183603,  0.0492912,
-//            -0.0085287, 0.0400428,  0.9684867
-//        );
-//        
-//        const Mat<double,3,1> S = BradfordForward*WhiteSrc::XYZ;
-//        const Mat<double,3,1> D = BradfordForward*WhiteDst::XYZ;
-//        
-//        const Mat<double,3,3> K(
-//            D[0]/S[0],  0.,         0.,
-//            0.,         D[1]/S[1],  0.,
-//            0.,         0.,         D[2]/S[2]
-//        );
-//        
-//        const Mat<double,3,3> M = BradfordReverse*(K*BradfordForward);
-//        return M*c;
-//    }
 };
