@@ -1,7 +1,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import "MetalUtil.h"
 #import "Mat.h"
-#import "ColorUtil.h"
+#import "Color.h"
 #import "ImagePipelineTypes.h"
 #import "ImagePipeline.h"
 
@@ -31,9 +31,9 @@ namespace CFAViewer::ImageLayerTypes {
 - (CFAViewer::MetalUtil::Histogram)inputHistogram;
 - (CFAViewer::MetalUtil::Histogram)outputHistogram;
 
-- (ColorUtil::Color_CamRaw_D50)sample_CamRaw_D50;
-- (ColorUtil::Color_XYZ_D50)sample_XYZ_D50;
-- (ColorUtil::Color_SRGB_D65)sample_SRGB_D65;
+- (Color<ColorSpace::Raw>)sampleRaw;
+- (Color<ColorSpace::XYZD50>)sampleXYZD50;
+- (Color<ColorSpace::SRGB>)sampleSRGB;
 
 - (id)CGImage;
 

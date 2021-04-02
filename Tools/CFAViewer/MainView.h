@@ -5,10 +5,14 @@
 @protocol MainViewDelegate;
 
 @interface MainView : BaseView
+
+- (void)reset;
+
 - (ImageLayer*)imageLayer;
 - (void)setDelegate:(id<MainViewDelegate>)delegate;
 
 - (CGRect)sampleRect;
+
 - (std::vector<CGPoint>)colorCheckerPositions;
 - (void)setColorCheckerPositions:(const std::vector<CGPoint>&)points;
 - (void)resetColorCheckerPositions;

@@ -7,6 +7,7 @@
 #import <IOKit/IOMessage.h>
 #import <simd/simd.h>
 #import <fstream>
+#import <map>
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Mmap.h"
@@ -97,9 +98,9 @@ struct PixConfig {
     IBOutlet HistogramView* _inputHistogramView;
     IBOutlet HistogramView* _outputHistogramView;
     
-    IBOutlet NSTextField* _colorText_camRaw;
-    IBOutlet NSTextField* _colorText_XYZ_D50;
-    IBOutlet NSTextField* _colorText_SRGB_D65;
+    IBOutlet NSTextField* _colorText_Raw;
+    IBOutlet NSTextField* _colorText_XYZD50;
+    IBOutlet NSTextField* _colorText_SRGB;
     
     IBOutlet NSSlider*      _highlightFactorR0Slider;
     IBOutlet NSTextField*   _highlightFactorR0Label;
@@ -148,9 +149,9 @@ struct PixConfig {
     
     ImageLayerTypes::Options _imgOpts;
     
-    Color_CamRaw_D50 _sample_CamRaw_D50;
-    Color_XYZ_D50 _sample_XYZ_D50;
-    Color_SRGB_D65 _sample_SRGB_D65;
+    Color<ColorSpace::Raw> _sampleRaw;
+    Color<ColorSpace::XYZD50> _sampleXYZD50;
+    Color<ColorSpace::SRGB> _sampleSRGB;
 }
 
 //float LabfInv(float x) {
@@ -265,13 +266,13 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
         
 //        // Front yard, car
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/139.cfa");
-
+        
 //        // Front of house
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/127.cfa");
         
 //        // Sue, living room, color checker
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/69.cfa");
-
+        
         Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/indoor_night_176.cfa");
         
 //        _streamImages.img.width = 384;
@@ -431,6 +432,8 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
     [NSThread detachNewThreadWithBlock:^{
         [self _threadReadInputCommands];
     }];
+    
+    [self _tagStartSession];
 }
 
 #pragma mark - MDCDevice
@@ -785,26 +788,26 @@ static ColorMatrix _colorMatrixFromString(const std::string& str) {
     // Make sure we're not on the main thread, since calculating the average sample can take some time
     assert(![NSThread isMainThread]);
     
-    auto sample_CamRaw_D50 = [[_mainView imageLayer] sample_CamRaw_D50];
-    auto sample_XYZ_D50 = [[_mainView imageLayer] sample_XYZ_D50];
-    auto sample_SRGB_D65 = [[_mainView imageLayer] sample_SRGB_D65];
+    auto sampleRaw = [[_mainView imageLayer] sampleRaw];
+    auto sampleXYZD50 = [[_mainView imageLayer] sampleXYZD50];
+    auto sampleSRGB = [[_mainView imageLayer] sampleSRGB];
     
     CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
-        self->_sample_CamRaw_D50 = sample_CamRaw_D50;
-        self->_sample_XYZ_D50 = sample_XYZ_D50;
-        self->_sample_SRGB_D65 = sample_SRGB_D65;
+        self->_sampleRaw = sampleRaw;
+        self->_sampleXYZD50 = sampleXYZD50;
+        self->_sampleSRGB = sampleSRGB;
         [self _updateSampleColorsText];
     });
     CFRunLoopWakeUp(CFRunLoopGetMain());
 }
 
 - (void)_updateSampleColorsText {
-    [_colorText_camRaw setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _sample_CamRaw_D50[0], _sample_CamRaw_D50[1], _sample_CamRaw_D50[2]]];
-    [_colorText_XYZ_D50 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _sample_XYZ_D50[0], _sample_XYZ_D50[1], _sample_XYZ_D50[2]]];
-    [_colorText_SRGB_D65 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _sample_SRGB_D65[0], _sample_SRGB_D65[1], _sample_SRGB_D65[2]]];
+    [_colorText_Raw setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
+    [_colorText_XYZD50 setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
+    [_colorText_SRGB setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _sampleSRGB[0], _sampleSRGB[1], _sampleSRGB[2]]];
 }
 
 //  Row0    G1  R  G1  R
@@ -1186,6 +1189,7 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
 - (void)mainViewSampleRectChanged:(MainView*)v {
     const CGRect sampleRect = [_mainView sampleRect];
     [[_mainView imageLayer] setSampleRect:sampleRect];
+    [self _tagHandleSampleRectChanged];
 }
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
@@ -1264,6 +1268,91 @@ static Color_CamRaw_D50 sampleImageCircle(ImageLayerTypes::Image& img, uint32_t 
         [nspoints addObject:@[@(p.x), @(p.y)]];
     }
     [[NSUserDefaults standardUserDefaults] setObject:nspoints forKey:ColorCheckerPositionsKey];
+}
+
+
+
+
+
+
+
+
+
+namespace fs = std::filesystem;
+using IllumMap = std::map<const fs::path,Color<ColorSpace::Raw>>;
+
+static const fs::path _TagDir("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-All-FilteredGood");
+IllumMap _TagIllums;
+IllumMap::iterator _TagCurrentIllum = _TagIllums.end();
+
+static bool isCFAFile(const fs::path& path) {
+    return fs::is_regular_file(path) && path.extension() == ".cfa";
+}
+
+- (void)_tagStartSession {
+    for (const auto& f : fs::directory_iterator(_TagDir)) {
+        if (isCFAFile(f)) {
+            auto fname = f.path().filename().replace_extension();
+            _TagIllums[fname];
+        }
+    }
+    
+    _TagCurrentIllum = _TagIllums.begin();
+    [self _tagLoadImage];
+}
+
+- (IBAction)_tagPreviousImage:(id)sender {
+    if (_TagCurrentIllum == _TagIllums.begin()) {
+        NSBeep();
+        return;
+    }
+    _TagCurrentIllum--;
+    [self _tagLoadImage];
+}
+
+- (IBAction)_tagNextImage:(id)sender {
+    // Don't allow going further if we're already past the end,
+    // or the next item is past the end.
+    if (_TagCurrentIllum==_TagIllums.end() || std::next(_TagCurrentIllum)==_TagIllums.end()) {
+        NSBeep();
+        return;
+    }
+    _TagCurrentIllum++;
+    [self _tagLoadImage];
+}
+
+- (IBAction)_tagPrintStats:(id)sender {
+    for (const auto& i : _TagIllums) {
+        printf("{ \"%s\", { %f, %f, %f } },\n", i.first.c_str(), i.second[0], i.second[1], i.second[2]);
+    }
+}
+
+- (void)_tagLoadImage {
+    auto lock = std::unique_lock(_streamImages.lock);
+    const fs::path imgName = fs::path((*_TagCurrentIllum).first).replace_extension(".cfa");
+    Mmap imgData(_TagDir/imgName);
+    
+//        _streamImages.img.width = 384;
+//        _streamImages.img.height = 256;
+    _streamImages.img.width = 2304;
+    _streamImages.img.height = 1296;
+    
+    const size_t len = _streamImages.img.width*_streamImages.img.height*sizeof(*_streamImages.img.pixels);
+    // Verify that the size of the file matches the the width/height of the image
+    assert(imgData.len() == len);
+    // Verify that our buffer is large enough to fit `len` bytes
+    assert(sizeof(_streamImages.pixelBuf) >= len);
+    memcpy(_streamImages.pixelBuf, imgData.data(), len);
+    
+    [[_mainView imageLayer] setImage:_streamImages.img];
+    [_mainView reset];
+}
+
+- (void)_tagHandleSampleRectChanged {
+    [[_mainView imageLayer] display]; // Crappiness to force the sample to be updated
+    (*_TagCurrentIllum).second = [[_mainView imageLayer] sampleRaw];
+    [self _tagNextImage:nil];
+//    printf("sampleRaw: %f %f %f\n", sampleRaw[0], sampleRaw[1], sampleRaw[2]);
 }
 
 @end

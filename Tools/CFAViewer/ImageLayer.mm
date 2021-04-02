@@ -51,9 +51,9 @@ using namespace ImagePipeline;
     
     auto lock = std::lock_guard(_state.lock);
         _state.renderer = Renderer(_device, _library, _commandQueue);
-        _state.sampleOpts.camRaw_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleOpts.xyz_D50 = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleOpts.srgb_D65 = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.raw = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.xyzD50 = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.srgb = _state.renderer.createBuffer(sizeof(simd::float3));
     
     return self;
 }
@@ -217,13 +217,13 @@ using namespace ImagePipeline;
     if (sampleRect.left == sampleRect.right) sampleRect.right++;
     if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
     
-    sampleOpts.camRaw_D50 =
+    sampleOpts.raw =
         _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
-    sampleOpts.xyz_D50 =
+    sampleOpts.xyzD50 =
         _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
-    sampleOpts.srgb_D65 =
+    sampleOpts.srgb =
         _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     [self setNeedsDisplay];
@@ -241,10 +241,10 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
     return p;
 }
 
-- (Color_CamRaw_D50)sample_CamRaw_D50 {
-    // Copy _state.sampleBuf_CamRaw_D50 locally
+- (Color<ColorSpace::Raw>)sampleRaw {
+    // Copy _state.sampleOpts.raw locally
     auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.camRaw_D50);
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.raw);
         auto rect = _state.sampleOpts.rect;
     lock.unlock();
     
@@ -269,10 +269,10 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
     return {(float)c[0], (float)c[1], (float)c[2]};
 }
 
-- (Color_XYZ_D50)sample_XYZ_D50 {
-    // Copy _state.sampleBuf_XYZ_D50 locally
+- (Color<ColorSpace::XYZD50>)sampleXYZD50 {
+    // Copy _state.sampleOpts.xyzD50 locally
     auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyz_D50);
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
         auto rect = _state.sampleOpts.rect;
     lock.unlock();
     
@@ -288,10 +288,10 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
     return {(float)c[0], (float)c[1], (float)c[2]};
 }
 
-- (Color_SRGB_D65)sample_SRGB_D65 {
-    // Copy _state.sampleBuf_SRGB_D65 locally
+- (Color<ColorSpace::SRGB>)sampleSRGB {
+    // Copy _state.sampleOpts.srgb locally
     auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.srgb_D65);
+        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.srgb);
         auto rect = _state.sampleOpts.rect;
     lock.unlock();
     

@@ -22,9 +22,9 @@
                 <outlet property="_coarseIntegrationTimeSlider" destination="4YW-P1-qrT" id="X1l-jP-bx4"/>
                 <outlet property="_colorCheckersCheckbox" destination="lTd-T5-f7w" id="m4h-Uc-8uK"/>
                 <outlet property="_colorMatrixTextField" destination="rvZ-kB-DXu" id="p8n-9z-W1i"/>
-                <outlet property="_colorText_SRGB_D65" destination="wL3-uf-dpp" id="si5-64-W2A"/>
-                <outlet property="_colorText_XYZ_D50" destination="uWQ-FQ-fcu" id="Wnv-Uw-Fln"/>
-                <outlet property="_colorText_camRaw" destination="70j-FK-iLi" id="bFt-9x-167"/>
+                <outlet property="_colorText_Raw" destination="70j-FK-iLi" id="bFt-9x-167"/>
+                <outlet property="_colorText_SRGB" destination="wL3-uf-dpp" id="si5-64-W2A"/>
+                <outlet property="_colorText_XYZD50" destination="uWQ-FQ-fcu" id="Wnv-Uw-Fln"/>
                 <outlet property="_contrastLabel" destination="kzO-GG-ZYP" id="cv5-Pp-HCi"/>
                 <outlet property="_contrastSlider" destination="cXS-kH-qXh" id="yW4-N7-AJZ"/>
                 <outlet property="_debayerLMMSEGammaCheckbox" destination="TTP-R6-3Sa" id="bQQ-82-D8u"/>
@@ -174,6 +174,25 @@
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="print:" target="-1" id="qaZ-4w-aoO"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="LGi-mi-0Bq"/>
+                            <menuItem title="Previous Image" keyEquivalent="" id="Obi-ir-aIo">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_tagPreviousImage:" target="Voe-Tx-rLC" id="p7s-MH-mvW"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Next Image" keyEquivalent="" id="PZE-AZ-TTN">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_tagNextImage:" target="Voe-Tx-rLC" id="j5o-vV-jeM"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Print Stats" id="cSc-Ps-HKk">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_tagPrintStats:" target="Voe-Tx-rLC" id="e40-8b-Xkm"/>
                                 </connections>
                             </menuItem>
                         </items>
@@ -885,7 +904,7 @@
                                             <rect key="frame" x="319" y="1471" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="controlContent" size="11"/>
+                                                <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_colorMatrixIdentityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -1077,7 +1096,7 @@
                                             <rect key="frame" x="329" y="1498" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="controlContent" size="11"/>
+                                                <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
@@ -1547,7 +1566,7 @@
                                             <rect key="frame" x="319" y="1569" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cKq-CO-v4Z">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="controlContent" size="11"/>
+                                                <font key="font" metaFont="menu" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_whiteBalanceIdentityButtonAction:" target="Voe-Tx-rLC" id="2kN-Yb-ZXe"/>
@@ -1841,7 +1860,7 @@
                             <rect key="frame" x="0.0" y="1029" width="400" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="0.053404539385847771" horizontal="NO" id="9ve-T6-sMB">
+                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="9ve-T6-sMB">
                             <rect key="frame" x="384" y="0.0" width="16" height="1045"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>

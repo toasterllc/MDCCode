@@ -82,6 +82,15 @@ using namespace ColorUtil;
 
 #pragma mark - Public Methods
 
+- (void)reset {
+    [_sampleLayer setFrame:CGRectNull];
+    
+    _zoomScale = 1;
+    _rootLayerOffset = {0,0};
+    [_rootLayer setTransform:CATransform3DIdentity];
+    [_viewLayer setNeedsLayout];
+}
+
 - (ImageLayer*)imageLayer {
     return _imageLayer;
 }

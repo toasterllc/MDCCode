@@ -67,6 +67,10 @@ namespace ColorSpace {
         using White = W;
     };
     
+    using XYZD50 = XYZ<White::D50>;
+    using XYZD55 = XYZ<White::D55>;
+    using XYZD65 = XYZ<White::D65>;
+    
     struct Raw {
     };
     

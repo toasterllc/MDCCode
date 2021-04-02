@@ -59,9 +59,9 @@ public:
     
     struct SampleOptions {
         SampleRect rect;
-        Renderer::Buf camRaw_D50;
-        Renderer::Buf xyz_D50;
-        Renderer::Buf srgb_D65;
+        Renderer::Buf raw;
+        Renderer::Buf xyzD50;
+        Renderer::Buf srgb;
     };
     
     static void Run(
@@ -89,14 +89,14 @@ public:
             );
         }
         
-        // Sample: fill `sampleOpts.camRaw_D50`
+        // Sample: fill `sampleOpts.raw`
         {
             renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
                 w, h,
                 // Buffer args
                 img.cfaDesc,
                 sampleOpts.rect,
-                sampleOpts.camRaw_D50,
+                sampleOpts.raw,
                 // Texture args
                 raw
             );
@@ -247,14 +247,14 @@ public:
             // Saturation
             Saturation::Run(renderer, opts.saturation, rgb);
             
-            // Sample: fill `sampleOpts.xyz_D50`
+            // Sample: fill `sampleOpts.xyzD50`
             {
                 renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
                     w, h,
                     // Buffer args
                     img.cfaDesc,
                     sampleOpts.rect,
-                    sampleOpts.xyz_D50,
+                    sampleOpts.xyzD50,
                     // Texture args
                     rgb
                 );
@@ -284,14 +284,14 @@ public:
                 );
             }
             
-            // Sample: fill `sampleOpts.srgb_D65`
+            // Sample: fill `sampleOpts.srgb`
             {
                 renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
                     w, h,
                     // Buffer args
                     img.cfaDesc,
                     sampleOpts.rect,
-                    sampleOpts.srgb_D65,
+                    sampleOpts.srgb,
                     // Texture args
                     rgb
                 );

@@ -5,14 +5,15 @@
 #include <errno.h>
 #include <stdexcept>
 #include <string>
+#include <filesystem>
 #include <unistd.h>
 
 class Mmap {
 public:
     Mmap () {}
-    Mmap(const char* path) {
+    Mmap(const std::filesystem::path& path) {
         try {
-            _state.fd = open(path, O_RDONLY);
+            _state.fd = open(path.c_str(), O_RDONLY);
             if (_state.fd < 0) throw std::runtime_error(std::string("open failed: ") + strerror(errno));
             
             struct stat st;
