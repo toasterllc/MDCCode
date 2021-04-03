@@ -47,7 +47,6 @@
 		55671A35257E94C000C1CDA4 /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55671A3A2580178100C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
-		5584A49125A2FC4A00C9FC5C /* ColorUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorUtil.h; sourceTree = "<group>"; };
 		559C33BB2613B89B001903FD /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
 		559C33CB2613C0DF001903FD /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../CFAViewer/Renderer.metal; sourceTree = "<group>"; };
 		559C33CC2613C0DF001903FD /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../CFAViewer/Renderer.h; sourceTree = "<group>"; };
@@ -92,7 +91,6 @@
 			children = (
 				559D8E1125954F7E00836B47 /* Mat.h */,
 				559C34012616CA9B001903FD /* Color.h */,
-				5584A49125A2FC4A00C9FC5C /* ColorUtil.h */,
 				55EBCC8F25896F160089A441 /* Assert.h */,
 				55671A30257E94BD00C1CDA4 /* ELF32Binary.h */,
 				55671A2C257E94BD00C1CDA4 /* MDCDevice.h */,
