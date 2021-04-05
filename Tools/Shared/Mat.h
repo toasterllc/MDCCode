@@ -100,6 +100,16 @@ public:
         return r;
     }
     
+    // Element-wise multiply
+    Mat<T,H,W> mul(const Mat<T,H,W>& x) const {
+        Mat<T,H,W> r = *this;
+        // There's apparently no BLAS function to do element-wise vector multiplication
+        for (size_t i=0; i<H*W; i++) {
+            r.vals[i] *= x.vals[i];
+        }
+        return r;
+    }
+    
     // Scalar multiply
     Mat<T,H,W> operator*(const T& x) const {
         Mat<T,H,W> r = *this;
@@ -109,6 +119,16 @@ public:
             cblas_dscal(H*W, x, r.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Element-wise divide
+    Mat<T,H,W> div(const Mat<T,H,W>& x) const {
+        Mat<T,H,W> r = *this;
+        // There's apparently no BLAS function to do element-wise vector division
+        for (size_t i=0; i<H*W; i++) {
+            r.vals[i] /= x.vals[i];
+        }
         return r;
     }
     
