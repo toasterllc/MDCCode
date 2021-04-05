@@ -34,6 +34,7 @@
 		552E7D5A24C9316900438AAF /* PNGFromCFA.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PNGFromCFA.entitlements; sourceTree = "<group>"; };
 		55460A30260416750037A5AC /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		55460A5D2613B0C00037A5AC /* PNGFromCFA */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PNGFromCFA; sourceTree = BUILT_PRODUCTS_DIR; };
+		554B9168261A8EA700618ACA /* IllumsC5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IllumsC5.h; path = ../C5CalcErrorStats/IllumsC5.h; sourceTree = "<group>"; };
 		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55671A2C257E94BD00C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
@@ -146,6 +147,7 @@
 				559C33CC2613C0DF001903FD /* Renderer.h */,
 				559C33CB2613C0DF001903FD /* Renderer.metal */,
 				559C33E02613C200001903FD /* ImagePipeline */,
+				554B9168261A8EA700618ACA /* IllumsC5.h */,
 				55B9746524C504E2000B2633 /* main.mm */,
 				55B9747624C50A81000B2633 /* Frameworks */,
 				55B9745A24C504E2000B2633 /* Products */,

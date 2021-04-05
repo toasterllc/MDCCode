@@ -6,6 +6,7 @@
 #import <string>
 #import <list>
 #import <functional>
+#import <assert.h>
 #import "Assert.h"
 #import "MetalUtil.h"
 #import "HashInts.h"
@@ -71,7 +72,7 @@ namespace CFAViewer {
             id<MTLTexture> txt,
             Args&... args
         ) {
-            NSParameterAssert(txt);
+            assert(txt);
             
             MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
             [[desc colorAttachments][0] setTexture:txt];
