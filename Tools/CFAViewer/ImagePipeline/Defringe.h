@@ -259,7 +259,7 @@ namespace CFAViewer::ImagePipeline {
         //              shift amount.
         // =========================
         // The theory behind Stage 1 (solving for the per-tile shift between the g and r/b
-        // channels is):
+        // channels) is:
         //
         //   Take two single-dimensional continuous functions: f(t) and g(t). Assume:
         //     1. f'(t) = d/dt[f(t)]     f'(t) is the derivative of f(t)

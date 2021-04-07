@@ -35,6 +35,45 @@ MATFile* MATWorkspace = nullptr;
 //    }
 //}
 
+template <typename T, size_t Depth>
+bool _equal(T* a, T* b) {
+    constexpr double Eps = 1e-6;
+    for (size_t z=0, i=0; z<Depth; z++) {
+        for (size_t x=0; x<T::w; x++) {
+            for (size_t y=0; y<T::h; y++, i++) {
+                if (std::abs((a[z]).at(y,x) - (b[z]).at(y,x)) > Eps) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+template <typename T, size_t Depth>
+bool equal(T (&a)[Depth], T (&b)[Depth]) {
+    return _equal<T,Depth>(a, b);
+}
+
+template <typename T>
+bool equal(T& a, T& b) {
+    return _equal<T,1>(&a, &b);
+}
+
+template <typename T, size_t Depth>
+bool equal(T (&a)[Depth], const char* name) {
+    T b[Depth];
+    load(name, b);
+    return equal(a, b);
+}
+
+template <typename T>
+bool equal(T& a, const char* name) {
+    T b;
+    load(name, b);
+    return equal(a, b);
+}
+
 template <typename T, size_t H, size_t W, size_t Depth>
 void _load(const char* name, Mat<T,H,W>* var) {
     mxArray* mxa = matGetVariable(MATWorkspace, name);
@@ -79,19 +118,24 @@ static void ffccEvalModel(
     const Mat64c X_fft[2],
     const Mat<double,2,1>& Y
 ) {
-    Mat64c FX_fft[2] = {
-        X_fft[0].mul(F_fft[0]),
-        X_fft[1].mul(F_fft[1]),
-    };
+    Mat64c X_fft_Times_F_fft[2] = { X_fft[0].mul(F_fft[0]), X_fft[1].mul(F_fft[1]) };
+    assert(equal(X_fft_Times_F_fft, "X_fft_Times_F_fft"));
     
-    Mat64c X_fft_Times_F_fft[2];
-    load("X_fft_Times_F_fft", X_fft_Times_F_fft);
+    Mat64c FX_fft = X_fft_Times_F_fft[0] + X_fft_Times_F_fft[1];
+    assert(equal(FX_fft, "FX_fft"));
     
-    for (size_t z=0; z<2; z++) {
-        for (size_t z=0; z<2; z++) {
-            
-        }
-    }
+//    for (size_t z=0; z<2; z++) {
+//        for (size_t x=0; x<64; x++) {
+//            for (size_t y=0; y<64; y++) {
+//                auto theirs = X_fft_Times_F_fft[z].at(y,x);
+//                auto ours = FX_fft[z].at(y,x);
+//                auto diff = theirs-ours;
+//                if (std::abs(diff) > 0) {
+//                    printf("%f %f\n", diff.real(), diff.imag());
+//                }
+//            }
+//        }
+//    }
     
 //    FX_fft = sum(bsxfun(@times, X_fft, F_fft), 3);
     
@@ -424,6 +468,8 @@ int main(int argc, const char* argv[]) {
     load("B", B);
     load("X", X);
     
+    ffccEvalModel(F_fft, B, X, X_fft, Y);
+    
 //    struct {
 //        mxArray* F_fft = nullptr;
 //    } matlab;
@@ -441,8 +487,6 @@ int main(int argc, const char* argv[]) {
 //    mxClassID classID = mxGetClassID(matlab.F_fft);
 //    printf("%d\n", classID);
     return 0;
-    
-    ffccEvalModel(F_fft, B, X, X_fft, Y);
     
 //    argc = 2;
 //    argv = (const char*[]){"", "/Users/dave/Desktop/FFCCImageSets/Indoor-Night2-ColorChecker-Small/indoor_night2_25.png"};

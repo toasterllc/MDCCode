@@ -82,6 +82,7 @@ namespace ColorSpace {
         using White = White::D65;
     };
     
+    // SRGB with gamma applied
     struct SRGB {
         static constexpr double R[] = {0.6400, 0.3300};
         static constexpr double G[] = {0.3000, 0.6000};

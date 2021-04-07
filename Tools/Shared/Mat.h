@@ -110,6 +110,16 @@ public:
         return r;
     }
     
+    // Element-wise multiply-assign
+    Mat<T,H,W>& muleq(const Mat<T,H,W>& x) {
+        Mat<T,H,W>& r = *this;
+        // There's apparently no BLAS function to do element-wise vector multiplication
+        for (size_t i=0; i<H*W; i++) {
+            r.vals[i] *= x.vals[i];
+        }
+        return r;
+    }
+    
     // Scalar multiply
     Mat<T,H,W> operator*(const T& x) const {
         Mat<T,H,W> r = *this;
@@ -151,13 +161,19 @@ public:
             catlas_saxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
         else if constexpr(std::is_same_v<T, double>)
             catlas_daxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
-        else
+        else if constexpr(std::is_same_v<T, std::complex<float>>) {
+            const std::complex<float> one(1);
+            catlas_caxpby(H*W, &one, x.vals, 1, &one, r.vals, 1);
+        } else if constexpr(std::is_same_v<T, std::complex<double>>) {
+            const std::complex<double> one(1);
+            catlas_zaxpby(H*W, &one, x.vals, 1, &one, r.vals, 1);
+        } else
             static_assert(_AlwaysFalse<T>);
         return r;
     }
     
     // Element-wise add-assign
-    Mat<T,H,W> operator+=(const Mat<T,H,W>& x) {
+    Mat<T,H,W>& operator+=(const Mat<T,H,W>& x) {
         Mat<T,H,W>& r = *this;
         if constexpr(std::is_same_v<T, float>)
             catlas_saxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
@@ -181,7 +197,7 @@ public:
     }
     
     // Element-wise subtract-assign
-    Mat<T,H,W> operator-=(const Mat<T,H,W>& x) {
+    Mat<T,H,W>& operator-=(const Mat<T,H,W>& x) {
         Mat<T,H,W>& r = *this;
         if constexpr(std::is_same_v<T, float>)
             catlas_saxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
