@@ -1,5 +1,6 @@
 #pragma once
 #import <Accelerate/Accelerate.h>
+#import <type_traits>
 
 template <typename T, size_t H, size_t W>
 class Mat {
@@ -50,14 +51,14 @@ public:
         __CLPK_integer err = 0;
         __CLPK_integer pivot[m];
         T tmp[m];
-        if constexpr(std::is_same_v<T, float>) {
+        if constexpr (std::is_same_v<T, float>) {
             sgetrf_(&m, &m, r.vals, &m, pivot, &err);
             if (err) throw std::runtime_error("sgetrf_ failed");
             
             sgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
             if (err) throw std::runtime_error("sgetri_ failed");
         
-        } else if constexpr(std::is_same_v<T, double>) {
+        } else if constexpr (std::is_same_v<T, double>) {
             dgetrf_(&m, &m, r.vals, &m, pivot, &err);
             if (err) throw std::runtime_error("dgetrf_ failed");
             
@@ -75,7 +76,7 @@ public:
     Mat<T,H,N> operator*(const Mat<T,W,N>& b) const {
         const auto& a = *this;
         Mat<T,H,N> r;
-        if constexpr(std::is_same_v<T, float>)
+        if constexpr (std::is_same_v<T, float>)
             cblas_sgemm(
                 CblasColMajor, CblasNoTrans, CblasNoTrans,
                 (int)a.rows, (int)b.cols, (int)a.cols,
@@ -85,7 +86,7 @@ public:
                 0, // beta
                 r.vals, (int)r.rows
             );
-        else if constexpr(std::is_same_v<T, double>)
+        else if constexpr (std::is_same_v<T, double>)
             cblas_dgemm(
                 CblasColMajor, CblasNoTrans, CblasNoTrans,
                 (int)a.rows, (int)b.cols, (int)a.cols,
@@ -123,9 +124,9 @@ public:
     // Scalar multiply
     Mat<T,H,W> operator*(const T& x) const {
         Mat<T,H,W> r = *this;
-        if constexpr(std::is_same_v<T, float>)
+        if constexpr (std::is_same_v<T, float>)
             cblas_sscal(H*W, x, r.vals, 1);
-        else if constexpr(std::is_same_v<T, double>)
+        else if constexpr (std::is_same_v<T, double>)
             cblas_dscal(H*W, x, r.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
@@ -145,51 +146,85 @@ public:
     // Scalar divide
     Mat<T,H,W> operator/(const T& x) const {
         Mat<T,H,W> r = *this;
-        if constexpr(std::is_same_v<T, float>)
+        if constexpr (std::is_same_v<T, float>) {
             cblas_sscal(H*W, T(1)/x, r.vals, 1);
-        else if constexpr(std::is_same_v<T, double>)
+        } else if constexpr (std::is_same_v<T, double>) {
             cblas_dscal(H*W, T(1)/x, r.vals, 1);
-        else
+        } else if constexpr (std::is_same_v<T, std::complex<float>>) {
+            const std::complex<float> k(T(1)/x);
+            cblas_cscal(H*W, &k, r.vals, 1);
+        } else if constexpr (std::is_same_v<T, std::complex<double>>) {
+            const std::complex<double> k(T(1)/x);
+            cblas_zscal(H*W, &k, r.vals, 1);
+        } else {
             static_assert(_AlwaysFalse<T>);
+        }
+        return r;
+    }
+    
+    // Scalar divide-assign
+    Mat<T,H,W>& operator/=(const T& x) {
+        Mat<T,H,W>& r = *this;
+        if constexpr (std::is_same_v<T, float>) {
+            cblas_sscal(H*W, T(1)/x, r.vals, 1);
+        } else if constexpr (std::is_same_v<T, double>) {
+            cblas_dscal(H*W, T(1)/x, r.vals, 1);
+        } else if constexpr (std::is_same_v<T, std::complex<float>>) {
+            const std::complex<float> k(T(1)/x);
+            cblas_cscal(H*W, &k, r.vals, 1);
+        } else if constexpr (std::is_same_v<T, std::complex<double>>) {
+            const std::complex<double> k(T(1)/x);
+            cblas_zscal(H*W, &k, r.vals, 1);
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
         return r;
     }
     
     // Element-wise add
     Mat<T,H,W> operator+(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
-        if constexpr(std::is_same_v<T, float>)
+        if constexpr (std::is_same_v<T, float>) {
             catlas_saxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
-        else if constexpr(std::is_same_v<T, double>)
+        } else if constexpr (std::is_same_v<T, double>) {
             catlas_daxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
-        else if constexpr(std::is_same_v<T, std::complex<float>>) {
+        } else if constexpr (std::is_same_v<T, std::complex<float>>) {
             const std::complex<float> one(1);
             catlas_caxpby(H*W, &one, x.vals, 1, &one, r.vals, 1);
-        } else if constexpr(std::is_same_v<T, std::complex<double>>) {
+        } else if constexpr (std::is_same_v<T, std::complex<double>>) {
             const std::complex<double> one(1);
             catlas_zaxpby(H*W, &one, x.vals, 1, &one, r.vals, 1);
-        } else
+        } else {
             static_assert(_AlwaysFalse<T>);
+        }
         return r;
     }
     
     // Element-wise add-assign
     Mat<T,H,W>& operator+=(const Mat<T,H,W>& x) {
         Mat<T,H,W>& r = *this;
-        if constexpr(std::is_same_v<T, float>)
+        if constexpr (std::is_same_v<T, float>) {
             catlas_saxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
-        else if constexpr(std::is_same_v<T, double>)
+        } else if constexpr (std::is_same_v<T, double>) {
             catlas_daxpby(H*W, 1, x.vals, 1, 1, r.vals, 1);
-        else
+        } else if constexpr (std::is_same_v<T, std::complex<float>>) {
+            const std::complex<float> one(1);
+            catlas_caxpby(H*W, &one, x.vals, 1, &one, r.vals, 1);
+        } else if constexpr (std::is_same_v<T, std::complex<double>>) {
+            const std::complex<double> one(1);
+            catlas_zaxpby(H*W, &one, x.vals, 1, &one, r.vals, 1);
+        } else {
             static_assert(_AlwaysFalse<T>);
+        }
         return r;
     }
     
     // Element-wise subtract
     Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
-        if constexpr(std::is_same_v<T, float>)
+        if constexpr (std::is_same_v<T, float>)
             catlas_saxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
-        else if constexpr(std::is_same_v<T, double>)
+        else if constexpr (std::is_same_v<T, double>)
             catlas_daxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
@@ -199,61 +234,12 @@ public:
     // Element-wise subtract-assign
     Mat<T,H,W>& operator-=(const Mat<T,H,W>& x) {
         Mat<T,H,W>& r = *this;
-        if constexpr(std::is_same_v<T, float>)
+        if constexpr (std::is_same_v<T, float>)
             catlas_saxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
-        else if constexpr(std::is_same_v<T, double>)
+        else if constexpr (std::is_same_v<T, double>)
             catlas_daxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
-        return r;
-    }
-    
-    // Solve `Ax=b` for x, where the receiver is A
-    template <size_t N>
-    Mat<T,W,N> solve(const Mat<T,H,N>& bconst) const {
-        static_assert(H>=W, "matrix size must have H >= W");
-        
-        __CLPK_integer h = H;
-        __CLPK_integer w = W;
-        __CLPK_integer nrhs = N;
-        Mat<T,H,W> A = *this;
-        Mat<T,H,N> bx = bconst;
-        __CLPK_integer err = 0;
-        
-        // 2 iterations: first iteration gets the size of `work`,
-        // second iteration performs calculation
-        __CLPK_integer lwork = -1;
-        for (__CLPK_integer i=0; i<2; i++) {
-            T work[std::max(1,lwork)];
-            if constexpr(std::is_same_v<T, float>)
-                sgels_(
-                    (char*)"N", &h, &w, &nrhs,
-                    A.vals, &h,
-                    bx.vals, &h,
-                    work, &lwork, &err
-                );
-                
-            else if constexpr(std::is_same_v<T, double>)
-                dgels_(
-                    (char*)"N", &h, &w, &nrhs,
-                    A.vals, &h,
-                    bx.vals, &h,
-                    work, &lwork, &err
-                );
-            
-            else
-                static_assert(_AlwaysFalse<T>);
-            
-            if (err) throw std::runtime_error("failed to solve");
-            lwork = work[0];
-        }
-        
-        // Copy each column into the destination matrix
-        Mat<T,W,N> r;
-        for (size_t x=0; x<N; x++) {
-            T* col = &bx.at(0,x);
-            std::copy(col, col+W, &r.at(0,x));
-        }
         return r;
     }
     
@@ -318,6 +304,191 @@ public:
         return ss.str();
     }
     
+    // Solve `Ax=b` for x, where the receiver is A
+    template <size_t N>
+    Mat<T,W,N> solve(const Mat<T,H,N>& bconst) const {
+        static_assert(H>=W, "matrix size must have H >= W");
+        
+        __CLPK_integer h = H;
+        __CLPK_integer w = W;
+        __CLPK_integer nrhs = N;
+        Mat<T,H,W> A = *this;
+        Mat<T,H,N> bx = bconst;
+        __CLPK_integer err = 0;
+        
+        // 2 iterations: first iteration gets the size of `work`,
+        // second iteration performs calculation
+        __CLPK_integer lwork = -1;
+        for (__CLPK_integer i=0; i<2; i++) {
+            T work[std::max(1,lwork)];
+            if constexpr (std::is_same_v<T, float>)
+                sgels_(
+                    (char*)"N", &h, &w, &nrhs,
+                    A.vals, &h,
+                    bx.vals, &h,
+                    work, &lwork, &err
+                );
+                
+            else if constexpr (std::is_same_v<T, double>)
+                dgels_(
+                    (char*)"N", &h, &w, &nrhs,
+                    A.vals, &h,
+                    bx.vals, &h,
+                    work, &lwork, &err
+                );
+            
+            else
+                static_assert(_AlwaysFalse<T>);
+            
+            if (err) throw std::runtime_error("failed to solve");
+            lwork = work[0];
+        }
+        
+        // Copy each column into the destination matrix
+        Mat<T,W,N> r;
+        for (size_t x=0; x<N; x++) {
+            T* col = &bx.at(0,x);
+            std::copy(col, col+W, &r.at(0,x));
+        }
+        return r;
+    }
+    
+    auto fft() {
+        return _fft<kFFTDirection_Forward>();
+    }
+    
+    auto ifft() {
+        return _fft<kFFTDirection_Inverse>();
+    }
+    
+private:
+    template <typename I>
+    static constexpr bool _IsPowerOf2(I x) {
+        return x && ((x & (x-1)) == 0);
+    }
+    
+    template <typename I>
+    static I _Log2(I x) {
+        if (x == 0) return 0;
+        return flsll(x)-1;
+    }
+    
+    static constexpr bool _DimsPowerOf2 = _IsPowerOf2(H) && _IsPowerOf2(W);
+    
+    // FFT (Real -> Complex)
+    template<
+    int Dir, // kFFTDirection_Forward or kFFTDirection_Inverse
+    typename _T = T,
+    typename std::enable_if_t<_DimsPowerOf2, int> = 0,
+    typename std::enable_if_t<std::is_same_v<_T,float>||std::is_same_v<_T,double>, int> = 0
+    >
+    Mat<std::complex<T>,H,W> _fft() {
+        using Float = T;
+        constexpr size_t len = H*W;
+        Mat<std::complex<Float>,H,W> r;
+        FFTSetup<Float> s;
+        
+        auto outr = std::make_unique<Float[]>(len);
+        auto outi = std::make_unique<Float[]>(len);
+        
+        // Perform 2D FFT
+        if constexpr (std::is_same_v<Float, float>) {
+            vDSP_fft2d_zrop(s,
+                (DSPSplitComplex[]){vals,nullptr}, 1, 0,            // Input
+                (DSPSplitComplex[]){outr.get(),outi.get()}, 1, 0,   // Output
+                _Log2(W), _Log2(H),                                 // Dimensions
+                Dir
+            );
+        } else if constexpr (std::is_same_v<Float, double>) {
+            vDSP_fft2d_zropD(s,
+                (DSPDoubleSplitComplex[]){vals,nullptr}, 1, 0,          // Input
+                (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, 0, // Output
+                _Log2(W), _Log2(H),                                     // Dimensions
+                Dir
+            );
+        } else {
+            static_assert(_AlwaysFalse<Float>);
+        }
+        
+        // Join the real/imaginary parts into `r.vals`
+        if constexpr (std::is_same_v<Float, float>) {
+            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r.vals, 2, len);
+        } else if constexpr (std::is_same_v<Float, double>) {
+            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r.vals, 2, len);
+        } else {
+            static_assert(_AlwaysFalse<Float>);
+        }
+        
+        #warning do we want this? check what MATLAB does
+        // Normalize based on the length
+        r /= std::complex<Float>(len);
+        
+        return r;
+    }
+    
+    // FFT (Complex -> Complex)
+    template<
+    int Dir, // kFFTDirection_Forward or kFFTDirection_Inverse
+    typename _T = T,
+    typename std::enable_if_t<_DimsPowerOf2, int> = 0,
+    typename std::enable_if_t<std::is_same_v<_T,std::complex<float>>||std::is_same_v<_T,std::complex<double>>, int> = 0
+    >
+    Mat<T,H,W> _fft() {
+        using Float = typename T::value_type;
+        constexpr size_t len = H*W;
+        Mat<std::complex<Float>,H,W> r;
+        FFTSetup<Float> s;
+        
+        auto inr = std::make_unique<Float[]>(len);
+        auto ini = std::make_unique<Float[]>(len);
+        auto outr = std::make_unique<Float[]>(len);
+        auto outi = std::make_unique<Float[]>(len);
+        
+        // Separate the real/imaginary parts into `inr/ini`
+        if constexpr (std::is_same_v<Float, float>) {
+            vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){inr.get(),ini.get()}, 1, len);
+        } else if constexpr (std::is_same_v<Float, double>) {
+            vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){inr.get(),ini.get()}, 1, len);
+        } else {
+            static_assert(_AlwaysFalse<Float>);
+        }
+        
+        // Perform 2D FFT
+        if constexpr (std::is_same_v<Float, float>) {
+            vDSP_fft2d_zop(s,
+                (DSPSplitComplex[]){inr.get(),ini.get()}, 1, 0,     // Input
+                (DSPSplitComplex[]){outr.get(),outi.get()}, 1, 0,   // Output
+                _Log2(W), _Log2(H),                                 // Dimensions
+                Dir
+            );
+        } else if constexpr (std::is_same_v<Float, double>) {
+            vDSP_fft2d_zopD(s,
+                (DSPDoubleSplitComplex[]){inr.get(),ini.get()}, 1, 0,   // Input
+                (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, 0, // Output
+                _Log2(W), _Log2(H),                                     // Dimensions
+                Dir
+            );
+        } else {
+            static_assert(_AlwaysFalse<Float>);
+        }
+        
+        // Join the real/imaginary parts into `r.vals`
+        if constexpr (std::is_same_v<Float, float>) {
+            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r.vals, 2, len);
+        } else if constexpr (std::is_same_v<Float, double>) {
+            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r.vals, 2, len);
+        } else {
+            static_assert(_AlwaysFalse<Float>);
+        }
+        
+        // Normalize based on the length
+        r /= std::complex<Float>(len);
+        
+        return r;
+    }
+    
+public:
+    
     T vals[H*W] = {}; // Column-major order
     static constexpr size_t h = H;
     static constexpr size_t w = W;
@@ -325,6 +496,47 @@ public:
     static constexpr size_t cols = W;
     
 private:
+    template <typename FD>
+    class FFTSetup {
+    public:
+        FFTSetup() {
+            if constexpr (std::is_same_v<FD,float>)
+                _s = vDSP_create_fftsetup(std::max(H,W), 2);
+            else if constexpr (std::is_same_v<FD, double>)
+                _s = vDSP_create_fftsetupD(std::max(H,W), 2);
+            else
+                static_assert(_AlwaysFalse<FD>);
+            assert(_s);
+        }
+        
+        // Copy constructor: illegal
+        FFTSetup(const FFTSetup& x) = delete;
+        // Move constructor: illegal
+        FFTSetup(FFTSetup&& x) = delete;
+        
+        ~FFTSetup() {
+            if constexpr (std::is_same_v<FD,float>)
+                vDSP_destroy_fftsetup((::FFTSetup)_s);
+            else if constexpr (std::is_same_v<FD,double>)
+                vDSP_destroy_fftsetupD((::FFTSetupD)_s);
+            else
+                static_assert(_AlwaysFalse<FD>);
+        }
+        
+        template<
+        typename _FD = FD,
+        typename std::enable_if_t<std::is_same_v<_FD,float>, int> = 0>
+        operator ::FFTSetup() { return (::FFTSetup)_s; }
+        
+        template<
+        typename _FD = FD,
+        typename std::enable_if_t<std::is_same_v<_FD,double>, int> = 0>
+        operator ::FFTSetupD() { return (::FFTSetupD)_s; }
+    
+    private:
+        void* _s = nullptr;
+    };
+    
     template <class...> static constexpr std::false_type _AlwaysFalse;
     
     void _transVals() {
