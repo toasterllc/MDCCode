@@ -125,51 +125,66 @@ static void ffccEvalModel(
     assert(equal(FX_fft, "FX_fft"));
 //    FX_fft = FX_fft.trans();
     
-    constexpr size_t len = std::size(FX_fft.vals);
-    double FX_fft_r[len];
-    double FX_fft_i[len];
-    // Copy the real/imaginary parts into separate arrays
-    vDSP_ctozD((const DSPDoubleComplex*)FX_fft.vals, 2, (DSPDoubleSplitComplex[]){FX_fft_r,FX_fft_i}, 1, len);
-    
-    // Perform inverse FFT
-    const FFTSetupD setup = vDSP_create_fftsetupD(12, 2);
-    vDSP_fft2d_zipD(setup, (DSPDoubleSplitComplex[]){FX_fft_r,FX_fft_i}, 1, 0, 6, 6, kFFTDirection_Inverse);
-    
-    // Join the real/imaginary parts into the same array
-    vDSP_ztocD((DSPDoubleSplitComplex[]){FX_fft_r,FX_fft_i}, 1, (DSPDoubleComplex*)FX_fft.vals, 2, len);
-    
-    FX_fft /= std::complex<double>(len);
-    
+    Mat64c FXc = FX_fft.ifft();
     Mat64 FX;
-    for (size_t i=0; i<len; i++) {
-        FX.vals[i] = FX_fft.vals[i].real();
+    for (size_t i=0; i<std::size(FXc.vals); i++) {
+        FX.vals[i] = FXc.vals[i].real();
     }
     assert(equal(FX, "FX"));
-    FX.fft();
+//    printf("%s\n", FX.str().c_str());
     
-    {
-        Mat<float,64,64> a;
-        a.fft();
-        a.ifft();
-    }
+    Mat64c tmp = FX.fft();
+    printf("%s\n", tmp.str().c_str());
     
-    {
-        Mat<double,64,64> a;
-        a.fft();
-        a.ifft();
-    }
+//    constexpr size_t len = std::size(FX_fft.vals);
+//    double FX_fft_r[len];
+//    double FX_fft_i[len];
+//    // Copy the real/imaginary parts into separate arrays
+//    vDSP_ctozD((const DSPDoubleComplex*)FX_fft.vals, 2, (DSPDoubleSplitComplex[]){FX_fft_r,FX_fft_i}, 1, len);
+//    
+//    // Perform inverse FFT
+//    const FFTSetupD setup = vDSP_create_fftsetupD(12, 2);
+//    vDSP_fft2d_zipD(setup, (DSPDoubleSplitComplex[]){FX_fft_r,FX_fft_i}, 1, 0, 6, 6, kFFTDirection_Inverse);
+//    
+//    // Join the real/imaginary parts into the same array
+//    vDSP_ztocD((DSPDoubleSplitComplex[]){FX_fft_r,FX_fft_i}, 1, (DSPDoubleComplex*)FX_fft.vals, 2, len);
+//    
+//    FX_fft /= std::complex<double>(len);
+//    
+//    Mat64 FX;
+//    for (size_t i=0; i<len; i++) {
+//        FX.vals[i] = FX_fft.vals[i].real();
+//    }
+//    assert(equal(FX, "FX"));
     
-    {
-        Mat<std::complex<float>,64,64> a;
-        a.fft();
-        a.ifft();
-    }
     
-    {
-        Mat<std::complex<double>,64,64> a;
-        a.fft();
-        a.ifft();
-    }
+    
+    
+//    FX.fft();
+//    
+//    {
+//        Mat<float,64,64> a;
+//        a.fft();
+//        a.ifft();
+//    }
+//    
+//    {
+//        Mat<double,64,64> a;
+//        a.fft();
+//        a.ifft();
+//    }
+//    
+//    {
+//        Mat<std::complex<float>,64,64> a;
+//        a.fft();
+//        a.ifft();
+//    }
+//    
+//    {
+//        Mat<std::complex<double>,64,64> a;
+//        a.fft();
+//        a.ifft();
+//    }
     
 
     

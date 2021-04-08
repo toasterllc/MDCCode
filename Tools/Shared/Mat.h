@@ -419,7 +419,7 @@ private:
             static_assert(_AlwaysFalse<Float>);
         }
         
-        #warning do we want this? check what MATLAB does
+        #warning do we want this for the forward direction? check what MATLAB does
         // Normalize based on the length
         r /= std::complex<Float>(len);
         
@@ -496,16 +496,21 @@ public:
     static constexpr size_t cols = W;
     
 private:
-    template <typename FD>
+    template <typename Float>
     class FFTSetup {
     public:
         FFTSetup() {
-            if constexpr (std::is_same_v<FD,float>)
-                _s = vDSP_create_fftsetup(std::max(H,W), 2);
-            else if constexpr (std::is_same_v<FD, double>)
-                _s = vDSP_create_fftsetupD(std::max(H,W), 2);
-            else
-                static_assert(_AlwaysFalse<FD>);
+            if constexpr (std::is_same_v<Float,float>) {
+                printf("vDSP_create_fftsetup START %d \n", (int)std::max(H,W));
+                _s = vDSP_create_fftsetup(_Log2(std::max(H,W)), kFFTRadix2);
+                printf("vDSP_create_fftsetup END\n");
+            } else if constexpr (std::is_same_v<Float, double>) {
+                printf("vDSP_create_fftsetupD START %d \n", (int)std::max(H,W));
+                _s = vDSP_create_fftsetupD(_Log2(std::max(H,W)), kFFTRadix2);
+                printf("vDSP_create_fftsetupD END\n");
+            } else {
+                static_assert(_AlwaysFalse<Float>);
+            }
             assert(_s);
         }
         
@@ -515,22 +520,22 @@ private:
         FFTSetup(FFTSetup&& x) = delete;
         
         ~FFTSetup() {
-            if constexpr (std::is_same_v<FD,float>)
+            if constexpr (std::is_same_v<Float,float>)
                 vDSP_destroy_fftsetup((::FFTSetup)_s);
-            else if constexpr (std::is_same_v<FD,double>)
+            else if constexpr (std::is_same_v<Float,double>)
                 vDSP_destroy_fftsetupD((::FFTSetupD)_s);
             else
-                static_assert(_AlwaysFalse<FD>);
+                static_assert(_AlwaysFalse<Float>);
         }
         
         template<
-        typename _FD = FD,
-        typename std::enable_if_t<std::is_same_v<_FD,float>, int> = 0>
+        typename _Float = Float,
+        typename std::enable_if_t<std::is_same_v<_Float,float>, int> = 0>
         operator ::FFTSetup() { return (::FFTSetup)_s; }
         
         template<
-        typename _FD = FD,
-        typename std::enable_if_t<std::is_same_v<_FD,double>, int> = 0>
+        typename _Float = Float,
+        typename std::enable_if_t<std::is_same_v<_Float,double>, int> = 0>
         operator ::FFTSetupD() { return (::FFTSetupD)_s; }
     
     private:
