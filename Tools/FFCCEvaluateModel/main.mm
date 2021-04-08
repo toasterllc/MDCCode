@@ -11,15 +11,21 @@ using Mat64c = Mat<std::complex<double>,64,64>;
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
 MATFile* W_FBVM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FitBivariateVonMises.mat", "r");
 
-struct Params {
-    struct {
-        double VON_MISES_DIAGONAL_EPS = 0;
-    } HYPERPARAMS;
+struct FFCCModel {
+    struct Params {
+        struct {
+            double vonMisesDiagonalEps = 0;
+        } hyperparams;
+        
+        struct {
+            double binSize = 0;
+            double startingUV = 0;
+        } histogram;
+    };
     
-    struct {
-        double BIN_SIZE = 0;
-        double STARTING_UV = 0;
-    } HISTOGRAM;
+    Params params;
+    Mat64c F_fft[2];
+    Mat64 B;
 };
 
 template <typename T, size_t H, size_t W, size_t Depth>
@@ -131,10 +137,10 @@ struct VecSigma {
     Mat<double,2,2> sigma;
 };
 
-static VecSigma UVFromIdx(const Params& params, const VecSigma& idx) {
+static VecSigma UVFromIdx(const FFCCModel& model, const VecSigma& idx) {
     return VecSigma{
-        .vec = ((idx.vec-1)*params.HISTOGRAM.BIN_SIZE) + params.HISTOGRAM.STARTING_UV,
-        .sigma = idx.sigma * (params.HISTOGRAM.BIN_SIZE * params.HISTOGRAM.BIN_SIZE),
+        .vec = ((idx.vec-1)*model.params.histogram.binSize) + model.params.histogram.startingUV,
+        .sigma = idx.sigma * (model.params.histogram.binSize * model.params.histogram.binSize),
     };
 }
 
@@ -269,13 +275,11 @@ static Mat64 softmaxForward(const Mat64& H) {
 }
 
 static Mat<double,3,1> ffccEstimateIlluminant(
-    const Params& params,
-    const Mat64c F_fft[2],
-    const Mat64& B,
+    const FFCCModel& model,
     const Mat64 X[2],
     const Mat64c X_fft[2]
 ) {
-    Mat64c X_fft_Times_F_fft[2] = { X_fft[0].elmMul(F_fft[0]), X_fft[1].elmMul(F_fft[1]) };
+    Mat64c X_fft_Times_F_fft[2] = { X_fft[0].elmMul(model.F_fft[0]), X_fft[1].elmMul(model.F_fft[1]) };
     Mat64c FX_fft = X_fft_Times_F_fft[0] + X_fft_Times_F_fft[1];
     assert(equal(W_EM, FX_fft, "FX_fft"));
     
@@ -286,7 +290,7 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     }
     assert(equal(W_EM, FX, "FX"));
     
-    Mat64 H = FX+B;
+    Mat64 H = FX+model.B;
     assert(equal(W_EM, H, "H"));
     
     Mat64 P = softmaxForward(H);
@@ -295,8 +299,8 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     const VecSigma fit = fitBivariateVonMises(P);
     
     const Mat<double,2,2> VonMisesDiagEps(
-        params.HYPERPARAMS.VON_MISES_DIAGONAL_EPS, 0.,
-        0., params.HYPERPARAMS.VON_MISES_DIAGONAL_EPS
+        model.params.hyperparams.vonMisesDiagonalEps, 0.,
+        0., model.params.hyperparams.vonMisesDiagonalEps
     );
     
     const VecSigma idx = {
@@ -307,7 +311,7 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     assert(equal(W_EM, idx.vec, "mu_idx"));
     assert(equal(W_EM, idx.sigma, "Sigma_idx"));
     
-    const VecSigma uv = UVFromIdx(params, idx);
+    const VecSigma uv = UVFromIdx(model, idx);
     return RGBFromUV(uv.vec);
 }
 
@@ -320,45 +324,29 @@ static bool isPNGFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
-    Params params = {
-        .HYPERPARAMS = {
-            .VON_MISES_DIAGONAL_EPS = 0.148650889375340,    // std::pow(2, -2.75)
-        },
-        
-        .HISTOGRAM = {
-            .BIN_SIZE = 1./32,
-            .STARTING_UV = -0.531250,
+    FFCCModel model = {
+        .params = {
+            .hyperparams = {
+                .vonMisesDiagonalEps = 0.148650889375340,    // std::pow(2, -2.75)
+            },
+            
+            .histogram = {
+                .binSize = 1./32,
+                .startingUV = -0.531250,
+            },
         },
     };
+    load(W_EM, "F_fft", model.F_fft);
+    load(W_EM, "B", model.B);
     
-    Mat64c F_fft[2];
-    load(W_EM, "F_fft", F_fft);
-    Mat64c X_fft[2];
-    load(W_EM, "X_fft", X_fft);
-    Mat64 B;
-    load(W_EM, "B", B);
     Mat64 X[2];
     load(W_EM, "X", X);
+    Mat64c X_fft[2];
+    load(W_EM, "X_fft", X_fft);
     
-    Mat<double,3,1> illum = ffccEstimateIlluminant(params, F_fft, B, X, X_fft);
+    Mat<double,3,1> illum = ffccEstimateIlluminant(model, X, X_fft);
     printf("%f %f %f\n", illum[0], illum[1], illum[2]);
     
-//    struct {
-//        mxArray* F_fft = nullptr;
-//    } matlab;
-//    
-//    matlab.F_fft = matGetVariable(MATWorkspace, "F_fft");
-//    assert(matlab.F_fft);
-    
-//    std::complex<double>* arr = (std::complex<double>*)mxGetComplexDoubles(matlab.F_fft);
-//    printf("%f %f\n", arr[0].real(), arr[0].imag());
-//    printf("%f %f\n", arr[1].real(), arr[1].imag());
-//    
-//    mwSize dims = mxGetNumberOfDimensions(matlab.F_fft);
-//    LIBMMWMATRIX_PUBLISHED_API_EXTERN_C const mwSize *mxGetDimensions(const mxArray *pa);
-    
-//    mxClassID classID = mxGetClassID(matlab.F_fft);
-//    printf("%d\n", classID);
     return 0;
     
 //    argc = 2;
