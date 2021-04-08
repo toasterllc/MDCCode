@@ -475,11 +475,12 @@ private:
         }
         
         // Perform 2D FFT
-        // We're using the complex->complex FFT implementation instead of the real->complex
-        // one (vDSP_fft2d_zrip / vDSP_fft2d_zripD), even though the latter would be faster
-        // when the input data only contains real numbers.
+        // We're using the complex->complex FFT implementation (vDSP_fft2d_zip / vDSP_fft2d_zipD)
+        // instead of the real->complex one (vDSP_fft2d_zrip / vDSP_fft2d_zripD), even though
+        // the latter would be faster when the input data only contains real numbers.
         // This is because the real->complex version uses some strange output packing format
-        // that I haven't been able to decipher. See "Data Packing for Real FFTs":
+        // that I haven't been able to decipher and translate to the same format that MATLAB
+        // uses. See "Data Packing for Real FFTs":
         //   https://developer.apple.com/library/archive/documentation/Performance/Conceptual/vDSP_Programming_Guide/UsingFourierTransforms/UsingFourierTransforms.html
         if constexpr (std::is_same_v<Float, float>) {
             vDSP_fft2d_zip(s,
