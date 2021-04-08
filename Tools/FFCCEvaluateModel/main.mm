@@ -153,10 +153,9 @@ static VecSigma UVFromIdx(const VecSigma& idx) {
 
 template <typename T>
 Mat<T,3,1> RGBFromUV(const Mat<T,2,1>& uv) {
-    return {};
-//    Mat<T,3,1> rgb(std::exp(-uv[0]), 1., std::exp(-uv[1]));
-//    rgb /= sqrt(rgb.elmMul(rgb).sum());
-//    return rgb;
+    Mat<T,3,1> rgb(std::exp(-uv[0]), 1., std::exp(-uv[1]));
+    rgb /= sqrt(rgb.elmMul(rgb).sum());
+    return rgb;
 }
 
 
@@ -371,6 +370,7 @@ int main(int argc, const char* argv[]) {
     load(W_EM, "X", X);
     
     Mat<double,3,1> illum = ffccEstimateIlluminant(F_fft, B, X, X_fft, Y);
+    printf("%f %f %f\n", illum[0], illum[1], illum[2]);
     
 //    struct {
 //        mxArray* F_fft = nullptr;
