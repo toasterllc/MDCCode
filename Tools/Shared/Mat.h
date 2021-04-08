@@ -384,24 +384,31 @@ private:
     >
     Mat<std::complex<T>,H,W> _fft() {
         using Float = T;
-        constexpr size_t len = H*W;
+        constexpr size_t len = (H*(W/2));
         Mat<std::complex<Float>,H,W> r;
         FFTSetup<Float> s;
         
         auto outr = std::make_unique<Float[]>(len);
         auto outi = std::make_unique<Float[]>(len);
         
+        // Separate the real/imaginary parts into `inr/ini`
+        if constexpr (std::is_same_v<Float, float>) {
+            vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){outr.get(),outi.get()}, 1, len);
+        } else if constexpr (std::is_same_v<Float, double>) {
+            vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, len);
+        } else {
+            static_assert(_AlwaysFalse<Float>);
+        }
+        
         // Perform 2D FFT
         if constexpr (std::is_same_v<Float, float>) {
-            vDSP_fft2d_zrop(s,
-                (DSPSplitComplex[]){vals,nullptr}, 1, 0,            // Input
+            vDSP_fft2d_zrip(s,
                 (DSPSplitComplex[]){outr.get(),outi.get()}, 1, 0,   // Output
                 _Log2(W), _Log2(H),                                 // Dimensions
                 Dir
             );
         } else if constexpr (std::is_same_v<Float, double>) {
-            vDSP_fft2d_zropD(s,
-                (DSPDoubleSplitComplex[]){vals,nullptr}, 1, 0,          // Input
+            vDSP_fft2d_zripD(s,
                 (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, 0, // Output
                 _Log2(W), _Log2(H),                                     // Dimensions
                 Dir
@@ -409,6 +416,11 @@ private:
         } else {
             static_assert(_AlwaysFalse<Float>);
         }
+        
+        for (size_t i=0; i<len; i++) {
+            printf("%f %f\n", outr[i]/2, outi[i]/2);
+        }
+        exit(0);
         
         // Join the real/imaginary parts into `r.vals`
         if constexpr (std::is_same_v<Float, float>) {
@@ -419,9 +431,14 @@ private:
             static_assert(_AlwaysFalse<Float>);
         }
         
-        #warning do we want this for the forward direction? check what MATLAB does
-        // Normalize based on the length
-        r /= std::complex<Float>(len);
+        if constexpr (Dir == kFFTDirection_Forward) {
+            // Normalize based on the length
+            r /= std::complex<Float>(2);
+        
+        } else if constexpr (Dir == kFFTDirection_Inverse) {
+            // Normalize based on the length
+            r /= std::complex<Float>(len);
+        }
         
         return r;
     }
@@ -439,31 +456,27 @@ private:
         Mat<std::complex<Float>,H,W> r;
         FFTSetup<Float> s;
         
-        auto inr = std::make_unique<Float[]>(len);
-        auto ini = std::make_unique<Float[]>(len);
         auto outr = std::make_unique<Float[]>(len);
         auto outi = std::make_unique<Float[]>(len);
         
-        // Separate the real/imaginary parts into `inr/ini`
+        // Separate the real/imaginary parts into `outr/outi`
         if constexpr (std::is_same_v<Float, float>) {
-            vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){inr.get(),ini.get()}, 1, len);
+            vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){outr.get(),outi.get()}, 1, len);
         } else if constexpr (std::is_same_v<Float, double>) {
-            vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){inr.get(),ini.get()}, 1, len);
+            vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, len);
         } else {
             static_assert(_AlwaysFalse<Float>);
         }
         
         // Perform 2D FFT
         if constexpr (std::is_same_v<Float, float>) {
-            vDSP_fft2d_zop(s,
-                (DSPSplitComplex[]){inr.get(),ini.get()}, 1, 0,     // Input
+            vDSP_fft2d_zip(s,
                 (DSPSplitComplex[]){outr.get(),outi.get()}, 1, 0,   // Output
                 _Log2(W), _Log2(H),                                 // Dimensions
                 Dir
             );
         } else if constexpr (std::is_same_v<Float, double>) {
-            vDSP_fft2d_zopD(s,
-                (DSPDoubleSplitComplex[]){inr.get(),ini.get()}, 1, 0,   // Input
+            vDSP_fft2d_zipD(s,
                 (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, 0, // Output
                 _Log2(W), _Log2(H),                                     // Dimensions
                 Dir
@@ -481,8 +494,10 @@ private:
             static_assert(_AlwaysFalse<Float>);
         }
         
-        // Normalize based on the length
-        r /= std::complex<Float>(len);
+        // Scale result
+        if constexpr (Dir == kFFTDirection_Inverse) {
+            r /= std::complex<Float>(len);
+        }
         
         return r;
     }
@@ -501,13 +516,9 @@ private:
     public:
         FFTSetup() {
             if constexpr (std::is_same_v<Float,float>) {
-                printf("vDSP_create_fftsetup START %d \n", (int)std::max(H,W));
                 _s = vDSP_create_fftsetup(_Log2(std::max(H,W)), kFFTRadix2);
-                printf("vDSP_create_fftsetup END\n");
             } else if constexpr (std::is_same_v<Float, double>) {
-                printf("vDSP_create_fftsetupD START %d \n", (int)std::max(H,W));
                 _s = vDSP_create_fftsetupD(_Log2(std::max(H,W)), kFFTRadix2);
-                printf("vDSP_create_fftsetupD END\n");
             } else {
                 static_assert(_AlwaysFalse<Float>);
             }

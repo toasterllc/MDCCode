@@ -133,8 +133,34 @@ static void ffccEvalModel(
     assert(equal(FX, "FX"));
 //    printf("%s\n", FX.str().c_str());
     
-    Mat64c tmp = FX.fft();
-    printf("%s\n", tmp.str().c_str());
+    {
+        const auto& Their_FX_fft = FX_fft;
+        auto Our_FX_fft = FX.trans().fft();
+//        constexpr double Eps = .01;
+//        for (size_t i=0; i<std::size(FX.vals); i++) {
+//            const auto& their = Their_FX_fft.vals[i];
+//            auto& our = Our_FX_fft.vals[i];
+//            const auto delta = std::complex<double>(
+//                std::abs(their.real()-our.real()),
+//                std::abs(their.imag()-our.imag())
+//            );
+//            
+//            our.real(delta.real() < Eps);
+//            our.imag(delta.real() < Eps);
+//        }
+        
+//        printf("%s\n", Our_FX_fft.str().c_str());
+    }
+    
+//    {
+//        Mat64c Our_FX_fft = FXc.fft();
+//        assert(equal(Our_FX_fft, "FX_fft"));
+////        printf("%s\n", Our_FX_fft.str().c_str());
+////        assert(equal(FX, "FX"));
+//    }
+    
+    exit(0);
+    
     
 //    constexpr size_t len = std::size(FX_fft.vals);
 //    double FX_fft_r[len];
