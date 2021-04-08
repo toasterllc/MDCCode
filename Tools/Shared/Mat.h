@@ -506,7 +506,8 @@ private:
     // FFT
     template<
     int Dir, // kFFTDirection_Forward or kFFTDirection_Inverse
-    typename std::enable_if_t<_DimsPowerOf2, int> = 0
+    bool __DimsPowerOf2 = _DimsPowerOf2,
+    typename std::enable_if_t<__DimsPowerOf2, int> = 0
     >
     Mat<std::complex<Float>,H,W> _fft() {
         constexpr size_t len = H*W;
