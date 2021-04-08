@@ -134,8 +134,15 @@ static void ffccEvalModel(
 //    printf("%s\n", FX.str().c_str());
     
     {
-        const auto& Their_FX_fft = FX_fft;
-        auto Our_FX_fft = FX.trans().fft();
+        Mat64c Our_FX_fft = FX.fft();
+        Mat64c Our_FX = Our_FX_fft.ifft();
+        double maxDelta = 0;
+        for (size_t i=0; i<std::size(FX.vals); i++) {
+            maxDelta = std::max(maxDelta, (FX.vals[i]-Our_FX.vals[i].real()));
+        }
+        printf("maxDelta: %f\n", maxDelta);
+        
+//        assert(equal(Our_FX_fft, "FX_fft"));
 //        constexpr double Eps = .01;
 //        for (size_t i=0; i<std::size(FX.vals); i++) {
 //            const auto& their = Their_FX_fft.vals[i];

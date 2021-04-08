@@ -362,6 +362,12 @@ public:
     }
     
 private:
+    using Float = std::conditional_t<
+        std::is_same_v<T,float>||std::is_same_v<T,std::complex<float>>,
+        float,
+        double
+    >;
+    
     template <typename I>
     static constexpr bool _IsPowerOf2(I x) {
         return x && ((x & (x-1)) == 0);
@@ -375,83 +381,80 @@ private:
     
     static constexpr bool _DimsPowerOf2 = _IsPowerOf2(H) && _IsPowerOf2(W);
     
-    // FFT (Real -> Complex)
-    template<
-    int Dir, // kFFTDirection_Forward or kFFTDirection_Inverse
-    typename _T = T,
-    typename std::enable_if_t<_DimsPowerOf2, int> = 0,
-    typename std::enable_if_t<std::is_same_v<_T,float>||std::is_same_v<_T,double>, int> = 0
-    >
-    Mat<std::complex<T>,H,W> _fft() {
-        using Float = T;
-        constexpr size_t len = (H*(W/2));
-        Mat<std::complex<Float>,H,W> r;
-        FFTSetup<Float> s;
-        
-        auto outr = std::make_unique<Float[]>(len);
-        auto outi = std::make_unique<Float[]>(len);
-        
-        // Separate the real/imaginary parts into `inr/ini`
-        if constexpr (std::is_same_v<Float, float>) {
-            vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){outr.get(),outi.get()}, 1, len);
-        } else if constexpr (std::is_same_v<Float, double>) {
-            vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, len);
-        } else {
-            static_assert(_AlwaysFalse<Float>);
-        }
-        
-        // Perform 2D FFT
-        if constexpr (std::is_same_v<Float, float>) {
-            vDSP_fft2d_zrip(s,
-                (DSPSplitComplex[]){outr.get(),outi.get()}, 1, 0,   // Output
-                _Log2(W), _Log2(H),                                 // Dimensions
-                Dir
-            );
-        } else if constexpr (std::is_same_v<Float, double>) {
-            vDSP_fft2d_zripD(s,
-                (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, 0, // Output
-                _Log2(W), _Log2(H),                                     // Dimensions
-                Dir
-            );
-        } else {
-            static_assert(_AlwaysFalse<Float>);
-        }
-        
-        for (size_t i=0; i<len; i++) {
-            printf("%f %f\n", outr[i]/2, outi[i]/2);
-        }
-        exit(0);
-        
-        // Join the real/imaginary parts into `r.vals`
-        if constexpr (std::is_same_v<Float, float>) {
-            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r.vals, 2, len);
-        } else if constexpr (std::is_same_v<Float, double>) {
-            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r.vals, 2, len);
-        } else {
-            static_assert(_AlwaysFalse<Float>);
-        }
-        
-        if constexpr (Dir == kFFTDirection_Forward) {
-            // Normalize based on the length
-            r /= std::complex<Float>(2);
-        
-        } else if constexpr (Dir == kFFTDirection_Inverse) {
-            // Normalize based on the length
-            r /= std::complex<Float>(len);
-        }
-        
-        return r;
-    }
+//    // FFT (Real -> Complex)
+//    template<
+//    int Dir, // kFFTDirection_Forward or kFFTDirection_Inverse
+//    typename _T = T,
+//    typename std::enable_if_t<_DimsPowerOf2, int> = 0,
+//    typename std::enable_if_t<std::is_same_v<_T,float>||std::is_same_v<_T,double>, int> = 0
+//    >
+//    Mat<std::complex<T>,H,W> _fft() {
+//        using Float = T;
+//        constexpr size_t len = (H*(W/2));
+//        Mat<std::complex<Float>,H,W> r;
+//        FFTSetup<Float> s;
+//        
+//        auto outr = std::make_unique<Float[]>(len);
+//        auto outi = std::make_unique<Float[]>(len);
+//        
+//        // Separate the real/imaginary parts into `inr/ini`
+//        if constexpr (std::is_same_v<Float, float>) {
+//            vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){outr.get(),outi.get()}, 1, len);
+//        } else if constexpr (std::is_same_v<Float, double>) {
+//            vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, len);
+//        } else {
+//            static_assert(_AlwaysFalse<Float>);
+//        }
+//        
+//        // Perform 2D FFT
+//        if constexpr (std::is_same_v<Float, float>) {
+//            vDSP_fft2d_zrip(s,
+//                (DSPSplitComplex[]){outr.get(),outi.get()}, 1, 0,   // Output
+//                _Log2(W), _Log2(H),                                 // Dimensions
+//                Dir
+//            );
+//        } else if constexpr (std::is_same_v<Float, double>) {
+//            vDSP_fft2d_zripD(s,
+//                (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, 0, // Output
+//                _Log2(W), _Log2(H),                                     // Dimensions
+//                Dir
+//            );
+//        } else {
+//            static_assert(_AlwaysFalse<Float>);
+//        }
+//        
+//        for (size_t i=0; i<len; i++) {
+//            printf("%f %f\n", outr[i]/2, outi[i]/2);
+//        }
+//        exit(0);
+//        
+//        // Join the real/imaginary parts into `r.vals`
+//        if constexpr (std::is_same_v<Float, float>) {
+//            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r.vals, 2, len);
+//        } else if constexpr (std::is_same_v<Float, double>) {
+//            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r.vals, 2, len);
+//        } else {
+//            static_assert(_AlwaysFalse<Float>);
+//        }
+//        
+//        if constexpr (Dir == kFFTDirection_Forward) {
+//            // Normalize based on the length
+//            r /= std::complex<Float>(2);
+//        
+//        } else if constexpr (Dir == kFFTDirection_Inverse) {
+//            // Normalize based on the length
+//            r /= std::complex<Float>(len);
+//        }
+//        
+//        return r;
+//    }
     
-    // FFT (Complex -> Complex)
+    // FFT
     template<
     int Dir, // kFFTDirection_Forward or kFFTDirection_Inverse
-    typename _T = T,
-    typename std::enable_if_t<_DimsPowerOf2, int> = 0,
-    typename std::enable_if_t<std::is_same_v<_T,std::complex<float>>||std::is_same_v<_T,std::complex<double>>, int> = 0
+    typename std::enable_if_t<_DimsPowerOf2, int> = 0
     >
-    Mat<T,H,W> _fft() {
-        using Float = typename T::value_type;
+    Mat<std::complex<Float>,H,W> _fft() {
         constexpr size_t len = H*W;
         Mat<std::complex<Float>,H,W> r;
         FFTSetup<Float> s;
@@ -460,15 +463,24 @@ private:
         auto outi = std::make_unique<Float[]>(len);
         
         // Separate the real/imaginary parts into `outr/outi`
-        if constexpr (std::is_same_v<Float, float>) {
+        if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+            // We only have real values, so only copy those, and leave `outi` zero'd
+            std::copy(vals, vals+std::size(vals), outr.get());
+        } else if constexpr (std::is_same_v<T, std::complex<float>>) {
             vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){outr.get(),outi.get()}, 1, len);
-        } else if constexpr (std::is_same_v<Float, double>) {
+        } else if constexpr (std::is_same_v<T, std::complex<double>>) {
             vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, len);
         } else {
             static_assert(_AlwaysFalse<Float>);
         }
         
         // Perform 2D FFT
+        // We're using the complex->complex FFT implementation instead of the real->complex
+        // one (vDSP_fft2d_zrip / vDSP_fft2d_zripD), even though the latter would be faster
+        // when the input data only contains real numbers.
+        // This is because the real->complex version uses some strange output packing format
+        // that I haven't been able to decipher. See "Data Packing for Real FFTs":
+        //   https://developer.apple.com/library/archive/documentation/Performance/Conceptual/vDSP_Programming_Guide/UsingFourierTransforms/UsingFourierTransforms.html
         if constexpr (std::is_same_v<Float, float>) {
             vDSP_fft2d_zip(s,
                 (DSPSplitComplex[]){outr.get(),outi.get()}, 1, 0,   // Output
