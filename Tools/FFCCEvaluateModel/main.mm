@@ -22,17 +22,6 @@ struct Params {
     } HISTOGRAM;
 };
 
-Params params = {
-    .HYPERPARAMS = {
-        .VON_MISES_DIAGONAL_EPS = 0.148650889375340,    // std::pow(2, -2.75)
-    },
-    
-    .HISTOGRAM = {
-        .BIN_SIZE = 1./32,
-        .STARTING_UV = -0.531250,
-    },
-};
-
 template <typename T, size_t H, size_t W, size_t Depth>
 bool _equal(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
     constexpr double Eps = 1e-6;
@@ -142,45 +131,21 @@ struct VecSigma {
     Mat<double,2,2> sigma;
 };
 
-//static VecSigma UVFromIdx(const Mat<double,2,1>& idx, const Mat<double,2,2>& Sigma_idx) {
-
-static VecSigma UVFromIdx(const VecSigma& idx) {
+static VecSigma UVFromIdx(const Params& params, const VecSigma& idx) {
     return VecSigma{
         .vec = ((idx.vec-1)*params.HISTOGRAM.BIN_SIZE) + params.HISTOGRAM.STARTING_UV,
         .sigma = idx.sigma * (params.HISTOGRAM.BIN_SIZE * params.HISTOGRAM.BIN_SIZE),
     };
 }
 
-template <typename T>
-Mat<T,3,1> RGBFromUV(const Mat<T,2,1>& uv) {
-    Mat<T,3,1> rgb(std::exp(-uv[0]), 1., std::exp(-uv[1]));
+Mat<double,3,1> RGBFromUV(const Mat<double,2,1>& uv) {
+    Mat<double,3,1> rgb(std::exp(-uv[0]), 1., std::exp(-uv[1]));
     rgb /= sqrt(rgb.elmMul(rgb).sum());
     return rgb;
 }
 
-
-//function [uv, Sigma_uv] = IdxToUv(idx, Sigma_idx, params)
-//% Turn the one-indexed (i,j) coordinate into a (u,v) chroma coordinate.
-//% This function does no periodic "unwrapping".
-//% Can be called with three parameters in which case the second parameter is
-//% assumed to be a covariance matrix, or two parameters in which case the
-//% function behaves as:
-//%   uv = IdxToUV(idx, params)
-//
-//assert((nargin == 2) || (nargin == 3))
-//if nargin == 2
-//  params = Sigma_idx;
-//  Sigma_idx = [];
-//end
-//
-//uv = (idx - 1) * params.HISTOGRAM.BIN_SIZE + params.HISTOGRAM.STARTING_UV;
-//if ~isempty(Sigma_idx)
-//  Sigma_uv = Sigma_idx * (params.HISTOGRAM.BIN_SIZE.^2);
-//end
-
 static VecSigma fitBivariateVonMises(const Mat64& P) {
     constexpr size_t H = Mat64::Height;
-    constexpr size_t W = Mat64::Width;
     // Given a 2D PDF histogram (PMF), approximately fits a bivariate Von Mises
     // distribution to that PDF by computing the local moments. This produces a
     // center of mass of the PDF, where the PDF is assumed to lie on a torus rather
@@ -304,11 +269,11 @@ static Mat64 softmaxForward(const Mat64& H) {
 }
 
 static Mat<double,3,1> ffccEstimateIlluminant(
+    const Params& params,
     const Mat64c F_fft[2],
     const Mat64& B,
     const Mat64 X[2],
-    const Mat64c X_fft[2],
-    const Mat<double,2,1>& Y
+    const Mat64c X_fft[2]
 ) {
     Mat64c X_fft_Times_F_fft[2] = { X_fft[0].elmMul(F_fft[0]), X_fft[1].elmMul(F_fft[1]) };
     Mat64c FX_fft = X_fft_Times_F_fft[0] + X_fft_Times_F_fft[1];
@@ -329,7 +294,6 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     
     const VecSigma fit = fitBivariateVonMises(P);
     
-    #warning TODO: extract this constant from the model
     const Mat<double,2,2> VonMisesDiagEps(
         params.HYPERPARAMS.VON_MISES_DIAGONAL_EPS, 0.,
         0., params.HYPERPARAMS.VON_MISES_DIAGONAL_EPS
@@ -343,7 +307,7 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     assert(equal(W_EM, idx.vec, "mu_idx"));
     assert(equal(W_EM, idx.sigma, "Sigma_idx"));
     
-    const VecSigma uv = UVFromIdx(idx);
+    const VecSigma uv = UVFromIdx(params, idx);
     return RGBFromUV(uv.vec);
 }
 
@@ -356,20 +320,27 @@ static bool isPNGFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
+    Params params = {
+        .HYPERPARAMS = {
+            .VON_MISES_DIAGONAL_EPS = 0.148650889375340,    // std::pow(2, -2.75)
+        },
+        
+        .HISTOGRAM = {
+            .BIN_SIZE = 1./32,
+            .STARTING_UV = -0.531250,
+        },
+    };
+    
     Mat64c F_fft[2];
-    Mat64c X_fft[2];
-    Mat64 B;
-    Mat64 X[2];
-    Mat<double,2,1> Y;
-    
-    Mat<double,3,1> a;
-    
     load(W_EM, "F_fft", F_fft);
+    Mat64c X_fft[2];
     load(W_EM, "X_fft", X_fft);
+    Mat64 B;
     load(W_EM, "B", B);
+    Mat64 X[2];
     load(W_EM, "X", X);
     
-    Mat<double,3,1> illum = ffccEstimateIlluminant(F_fft, B, X, X_fft, Y);
+    Mat<double,3,1> illum = ffccEstimateIlluminant(params, F_fft, B, X, X_fft);
     printf("%f %f %f\n", illum[0], illum[1], illum[2]);
     
 //    struct {
