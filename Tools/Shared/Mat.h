@@ -79,22 +79,22 @@ public:
         if constexpr (std::is_same_v<T, float>)
             cblas_sgemm(
                 CblasColMajor, CblasNoTrans, CblasNoTrans,
-                (int)a.rows, (int)b.cols, (int)a.cols,
+                (int)a.Rows, (int)b.Cols, (int)a.Cols,
                 1, // alpha
-                a.vals, (int)a.rows,
-                b.vals, (int)b.rows,
+                a.vals, (int)a.Rows,
+                b.vals, (int)b.Rows,
                 0, // beta
-                r.vals, (int)r.rows
+                r.vals, (int)r.Rows
             );
         else if constexpr (std::is_same_v<T, double>)
             cblas_dgemm(
                 CblasColMajor, CblasNoTrans, CblasNoTrans,
-                (int)a.rows, (int)b.cols, (int)a.cols,
+                (int)a.Rows, (int)b.Cols, (int)a.Cols,
                 1, // alpha
-                a.vals, (int)a.rows,
-                b.vals, (int)b.rows,
+                a.vals, (int)a.Rows,
+                b.vals, (int)b.Rows,
                 0, // beta
-                r.vals, (int)r.rows
+                r.vals, (int)r.Rows
             );
         else
             static_assert(_AlwaysFalse<T>);
@@ -102,7 +102,7 @@ public:
     }
     
     // Element-wise multiply
-    Mat<T,H,W> mul(const Mat<T,H,W>& x) const {
+    Mat<T,H,W> elmMul(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
         // There's apparently no BLAS function to do element-wise vector multiplication
         for (size_t i=0; i<H*W; i++) {
@@ -112,7 +112,7 @@ public:
     }
     
     // Element-wise multiply-assign
-    Mat<T,H,W>& muleq(const Mat<T,H,W>& x) {
+    Mat<T,H,W>& elmMulEq(const Mat<T,H,W>& x) {
         Mat<T,H,W>& r = *this;
         // There's apparently no BLAS function to do element-wise vector multiplication
         for (size_t i=0; i<H*W; i++) {
@@ -134,7 +134,7 @@ public:
     }
     
     // Element-wise divide
-    Mat<T,H,W> div(const Mat<T,H,W>& x) const {
+    Mat<T,H,W> elmDiv(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
         // There's apparently no BLAS function to do element-wise vector division
         for (size_t i=0; i<H*W; i++) {
@@ -219,6 +219,20 @@ public:
         return r;
     }
     
+    // Scalar add
+    Mat<T,H,W> operator+(const T& x) const {
+        Mat<T,H,W> r = *this;
+        for (size_t i=0; i<H*W; i++) r.vals[i] += x;
+        return r;
+    }
+    
+    // Scalar add-assign
+    Mat<T,H,W> operator+=(const T& x) {
+        Mat<T,H,W>& r = *this;
+        for (size_t i=0; i<H*W; i++) r.vals[i] += x;
+        return r;
+    }
+    
     // Element-wise subtract
     Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
@@ -240,6 +254,20 @@ public:
             catlas_daxpby(H*W, 1, x.vals, 1, -1, r.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
+        return r;
+    }
+    
+    // Scalar subtract
+    Mat<T,H,W> operator-(const T& x) const {
+        Mat<T,H,W> r = *this;
+        for (size_t i=0; i<H*W; i++) r.vals[i] -= x;
+        return r;
+    }
+    
+    // Scalar subtract-assign
+    Mat<T,H,W> operator-=(const T& x) {
+        Mat<T,H,W>& r = *this;
+        for (size_t i=0; i<H*W; i++) r.vals[i] -= x;
         return r;
     }
     
@@ -349,6 +377,32 @@ public:
         for (size_t x=0; x<N; x++) {
             T* col = &bx.at(0,x);
             std::copy(col, col+W, &r.at(0,x));
+        }
+        return r;
+    }
+    
+    T sum() const {
+        T r{};
+        for (const T& x : vals) r += x;
+        return r;
+    }
+    
+    Mat<T,1,W> sumCols() const {
+        Mat<T,1,W> r;
+        for (size_t x=0; x<W; x++) {
+            double s = 0;
+            for (size_t y=0; y<H; y++) s += at(y,x);
+            r[x] = s;
+        }
+        return r;
+    }
+    
+    Mat<T,H,1> sumRows() const {
+        Mat<T,H,1> r;
+        for (size_t y=0; y<H; y++) {
+            double s = 0;
+            for (size_t x=0; x<W; x++) s += at(y,x);
+            r[y] = s;
         }
         return r;
     }
@@ -518,10 +572,10 @@ private:
 public:
     
     T vals[H*W] = {}; // Column-major order
-    static constexpr size_t h = H;
-    static constexpr size_t w = W;
-    static constexpr size_t rows = H;
-    static constexpr size_t cols = W;
+    static constexpr size_t Height = H;
+    static constexpr size_t Width = W;
+    static constexpr size_t Rows = H;
+    static constexpr size_t Cols = W;
     
 private:
     template <typename Float>
