@@ -701,9 +701,10 @@ void calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MT
             v
         );
         
-        const size_t len = sizeof(std::atomic_uint)*binCount*binCount;
-        Renderer::Buf binsBuf = renderer.createBuffer(len, MTLResourceStorageModeManaged);
-        memset([binsBuf contents], 0, len);
+        const size_t binsBufCount = binCount*binCount;
+        const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
+        Renderer::Buf binsBuf = renderer.createBuffer(binsBufLen, MTLResourceStorageModeManaged);
+        memset([binsBuf contents], 0, binsBufLen);
         
         renderer.render("CalcHistogram", W, H,
             // Buffer args
@@ -718,17 +719,15 @@ void calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MT
         renderer.sync(binsBuf);
         renderer.commitAndWait();
         
-        static_assert(sizeof(Mat64i::ValueType) == sizeof(std::atomic_uint));
-        auto ourHistInt = std::make_unique<Mat64i>();
-        assert(len == sizeof(Mat64i::vals));
-        memcpy(ourHistInt->vals, [binsBuf contents], len);
-        
         // Convert integer histogram to double histogram, to match MATLAB version
-        auto ourHist = std::make_unique<Mat64>();
-        std::copy(ourHistInt->vals, ourHistInt->vals+std::size(ourHistInt->vals), ourHist->vals);
+        const uint32_t* histInts = (uint32_t*)[binsBuf contents];
+        auto hist = std::make_unique<Mat64>();
+        static_assert(sizeof(*histInts) == sizeof(std::atomic_uint));
+        assert(binsBufCount == std::size(hist->vals));
+        std::copy(histInts, histInts+binsBufCount, hist->vals);
         
         // Compare MATLAB version of the histogram
-        assert(equal(W_FI, *ourHist, "Xctmp"));
+        assert(equal(W_FI, *hist, "Xctmp"));
     }
 }
 
