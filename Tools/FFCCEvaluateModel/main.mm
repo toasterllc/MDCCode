@@ -660,13 +660,43 @@ int main(int argc, const char* argv[]) {
         maskTxt
     );
     
-    // Perform 'MaskedLocalAbsoluteDeviation'
+    
+    
+    
+    
+    
+    
     Renderer::Txt imgAbsDevTxt = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
-    renderer.render("MaskedLocalAbsoluteDeviation", imgAbsDevTxt,
-        // Texture args
-        imgTxt,
+    renderer.render("LocalAbsoluteDeviationVal", imgAbsDevTxt,
+        imgTxt
+    );
+    
+//    renderer.render("ApplyMask", imgAbsDevTxt,
+//        imgAbsDevTxt,
+//        maskTxt
+//    );
+    
+    Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR16Unorm, W, H);
+    renderer.render("LocalAbsoluteDeviationCoeff", coeff,
         maskTxt
     );
+    
+    renderer.render("LocalAbsoluteDeviationX", imgAbsDevTxt,
+        coeff,
+        imgAbsDevTxt
+    );
+    
+//    // Perform 'MaskedLocalAbsoluteDeviation'
+//    renderer.render("MaskedLocalAbsoluteDeviation", imgAbsDevTxt,
+//        // Texture args
+//        imgTxt,
+//        maskTxt
+//    );
+//    
+//    renderer.sync(imgAbsDevTxt);
+//    renderer.commitAndWait();
+//    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/imgAbsDevTxt.png");
+//    exit(0);
     
     renderer.sync(imgMaskedTxt);
     renderer.sync(imgAbsDevTxt);
@@ -675,10 +705,26 @@ int main(int argc, const char* argv[]) {
     auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, imgMaskedTxt);
     assert(equal(W_FI, im_channels1->c, "im_channels1"));
     
-//    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/test.png");
-//    exit(0);
+    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/imgAbsDevTxt.png");
     
     auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDevTxt);
+    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
+    load(W_FI, "im_channels2", their_im_channels2->c);
+    
+    double maxDiff = 0;
+    for (int y=0; y<H; y++) {
+        for (int x=0; x<W; x++) {
+            for (int c=0; c<3; c++) {
+                const double ours = im_channels2->c[c].at(y,x);
+                const double theirs = their_im_channels2->c[c].at(y,x);
+                const double diff = std::abs(ours-theirs);
+                maxDiff = std::max(maxDiff, diff);
+            }
+        }
+    }
+    
+    printf("maxDiff: %f\n", maxDiff);
+    exit(0);
     assert(equal(W_FI, im_channels2->c, "im_channels2"));
     
 //    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();

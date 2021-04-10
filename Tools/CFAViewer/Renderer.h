@@ -67,6 +67,8 @@ namespace CFAViewer {
         
         static size_t SamplesPerPixel(MTLPixelFormat fmt) {
             switch (fmt) {
+            case MTLPixelFormatR8Unorm:     return 1;
+            case MTLPixelFormatR16Unorm:    return 1;
             case MTLPixelFormatR32Float:    return 1;
             case MTLPixelFormatRGBA16Unorm: return 4;
             case MTLPixelFormatRGBA16Float: return 4;
@@ -77,6 +79,8 @@ namespace CFAViewer {
         
         static size_t BytesPerSample(MTLPixelFormat fmt) {
             switch (fmt) {
+            case MTLPixelFormatR8Unorm:     return 1;
+            case MTLPixelFormatR16Unorm:    return 2;
             case MTLPixelFormatR32Float:    return 4;
             case MTLPixelFormatRGBA16Unorm: return 2;
             case MTLPixelFormatRGBA16Float: return 2;
@@ -326,10 +330,10 @@ namespace CFAViewer {
                 opts = kCGImageAlphaNoneSkipLast;
                 break;
             case MTLPixelFormatRGBA16Unorm:
-                opts = kCGImageAlphaNoneSkipLast|kCGBitmapByteOrder16Little;
+                opts = kCGImageAlphaNoneSkipLast|kCGBitmapByteOrder16Host;
                 break;
             case MTLPixelFormatRGBA16Float:
-                opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Little;
+                opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Host;
                 break;
             default:
                 throw std::runtime_error("invalid texture format");

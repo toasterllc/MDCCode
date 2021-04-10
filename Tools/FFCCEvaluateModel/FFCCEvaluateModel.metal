@@ -25,8 +25,79 @@ fragment float4 ApplyMask(
     const int2 pos = int2(in.pos.xy);
     const float3 s = Sample::RGB(img, pos);
     const float m = Sample::R(mask, pos);
-    return float4(s*m,1);
+    return float4(m*s,1);
 }
+
+
+
+
+
+
+
+
+
+fragment float4 LocalAbsoluteDeviationVal(
+    texture2d<float> img [[texture(0)]],
+    texture2d<float> mask [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define M(x,y) Sample::R(mask, pos+int2{x,y})
+#define I(x,y) Sample::RGB(img, pos+int2{x,y})
+#define S(x,y) (M(x,y) * abs(I(x,y)-sc))
+    const float3 sc = I(0,0);
+    const float3 s = (
+        S(-1,-1) + S(0,-1) + S(1,-1) +
+        S(-1, 0) +         + S(1, 0) +
+        S(-1, 1) + S(0, 1) + S(1, 1) );
+#undef S
+    return float4(s, 1);
+}
+
+//fragment float4 LocalAbsoluteDeviationNumer(
+//    texture2d<float> img [[texture(0)]],
+//    texture2d<float> mask [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//    const float m = Sample::R(mask, pos);
+//#define S(x,y) Sample::RGB(img, pos+int2{x,y})
+//    const float3 sc = S(0,0);
+//    const float3 s = (
+//        abs(S(-1,-1)-sc) + abs(S(0,-1)-sc) + abs(S(1,-1)-sc) +
+//        abs(S(-1, 0)-sc) +                 + abs(S(1, 0)-sc) +
+//        abs(S(-1, 1)-sc) + abs(S(0, 1)-sc) + abs(S(1, 1)-sc) );
+//#undef S
+//    return float4(m*s, 1);
+//}
+
+fragment float LocalAbsoluteDeviationCoeff(
+    texture2d<float> mask [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define M(x,y) Sample::R(mask, pos+int2{x,y})
+    return M(0,0) / (
+        M(-1,-1) + M(0,-1) + M(1,-1) +
+        M(-1, 0) +         + M(1, 0) +
+        M(-1, 1) + M(0, 1) + M(1, 1) );
+#undef M
+}
+
+fragment float4 LocalAbsoluteDeviationX(
+    texture2d<float> coeff [[texture(0)]],
+    texture2d<float> img [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+//    return float4(Sample::RGB(img, pos), 1);
+//    return float4(Sample::R(coeff, pos), Sample::R(coeff, pos), Sample::R(coeff, pos), 1);
+    return float4(Sample::R(coeff, pos) * Sample::RGB(img, pos), 1);
+}
+
+
+
+
 
 fragment float4 MaskedLocalAbsoluteDeviation(
     texture2d<float> img [[texture(0)]],
