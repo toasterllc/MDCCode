@@ -58,24 +58,25 @@ bool equal(const Mat<T,H,W>& a, const Mat<T,H,W>& b) {
 
 template <typename T, size_t H, size_t W, size_t Depth>
 bool equal(MATFile* f, const Mat<T,H,W> (&a)[Depth], const char* name) {
-    Mat<T,H,W> b[Depth];
-    load(f, name, b);
-    return equal(a, b);
+    struct MatArray { Mat<T,H,W> a[Depth]; };
+    auto b = std::make_unique<MatArray>();
+    load(f, name, (*b).a);
+    return equal(a, (*b).a);
 }
 
 template <typename T, size_t H, size_t W>
 bool equal(MATFile* f, const Mat<T,H,W>& a, const char* name) {
-    Mat<T,H,W> b;
-    load(f, name, b);
-    return equal(a, b);
+    auto b = std::make_unique<Mat<T,H,W>>();
+    load(f, name, *b);
+    return equal(a, *b);
 }
 
 template <typename T>
 bool equal(MATFile* f, const T& a, const char* name) {
-    Mat<T,1,1> A(a);
-    Mat<T,1,1> B;
-    load(f, name, B);
-    return equal(A, B);
+    auto A = std::make_unique<Mat<T,1,1>>(a);
+    auto B = std::make_unique<Mat<T,1,1>>();
+    load(f, name, *B);
+    return equal(*A, *B);
 }
 
 template <typename T, size_t H, size_t W, size_t Depth>
@@ -117,8 +118,8 @@ void load(MATFile* f, const char* name, Mat<T,H,W>& var) {
 
 template <typename T>
 void load(MATFile* f, const char* name, T& var) {
-    Mat<T,1,1> m;
-    _load<T,1,1,1>(f, name, &m);
+    auto m = std::make_unique<Mat<T,1,1>>();
+    _load<T,1,1,1>(f, name, m.get());
     var = m[0];
 }
 
@@ -326,26 +327,38 @@ static bool isPNGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".png";
 }
 
+
+
+
+
+
 template <typename T>
 class PNGImage {
 public:
-    PNGImage(const fs::path& path) {
-        NSData* imageData = [NSData dataWithContentsOfFile:@(path.c_str())];
-        assert(imageData);
-        
-        image = [NSBitmapImageRep imageRepWithData:imageData];
+    PNGImage(const fs::path& path) : PNGImage([NSData dataWithContentsOfFile:@(path.c_str())]) {}
+    
+    PNGImage(NSData* nsdata) {
+        image = [NSBitmapImageRep imageRepWithData:nsdata];
         assert(image);
         
         assert([image bitsPerSample] == 8*sizeof(T));
         width = [image pixelsWide];
         height = [image pixelsHigh];
-        samplesPerPixel = [image samplesPerPixel];
-        assert(samplesPerPixel == 4);
+        // samplesPerPixel = number of samples per pixel, including padding samples
+        // validSamplesPerPixel = number of samples per pixel, excluding padding samples
+        // For example, sometimes the alpha channel exists but isn't used, in which case:
+        //        samplesPerPixel = 4
+        //   validSamplesPerPixel = 3
+        samplesPerPixel = ([image bitsPerPixel]/8) / sizeof(T);
+        assert(samplesPerPixel==3 || samplesPerPixel==4);
+        validSamplesPerPixel = [image samplesPerPixel];
+        assert(validSamplesPerPixel==3 || validSamplesPerPixel==4);
         data = (T*)[image bitmapData];
         dataLen = width*height*samplesPerPixel*sizeof(T);
     }
     
     T sample(int y, int x, size_t channel) {
+        assert(channel < validSamplesPerPixel);
         const size_t sx = _mirrorClamp(width, x);
         const size_t sy = _mirrorClamp(height, y);
         const size_t idx = samplesPerPixel*(width*sy+sx) + channel;
@@ -357,6 +370,7 @@ public:
     size_t width = 0;
     size_t height = 0;
     size_t samplesPerPixel = 0;
+    size_t validSamplesPerPixel = 0;
     T* data = nullptr;
     size_t dataLen = 0;
     
@@ -587,30 +601,33 @@ int main(int argc, const char* argv[]) {
         renderer = Renderer(dev, lib, commandQueue);
     }
     
-    PNGImage<uint16_t> img("/Users/dave/matlab/test.png");
-//    PNGImage<uint16_t> img("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
+    PNGImage<uint16_t> img("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
     assert(img.height == H);
     assert(img.width == W);
     
-    NSUInteger pxs[4];
-    [img.image getPixel:pxs atX:1 y:0];
-    printf("pixel (1,0): %ju, alpha:%ju\n", (uintmax_t)pxs[0], (uintmax_t)pxs[3]);
-    exit(0);
-    
-    Mat<double,H,W> im_channels1[3];
+    struct ImageChannels { Mat<double,H,W> c[3]; };
+    auto im_channels1 = std::make_unique<ImageChannels>();
     for (int y=0; y<H; y++) {
         for (int x=0; x<W; x++) {
-            for (int c=0; c<3; c++) {
-//                im_channels1[c].at(y,x) = (double)img.sample(y,x,c) / 0xFFFF;
-                im_channels1[c].at(y,x) = img.sample(y,x,c);
-            }
+            const double r = (double)img.sample(y,x,0) / 0xFFFF;
+            const double g = (double)img.sample(y,x,1) / 0xFFFF;
+            const double b = (double)img.sample(y,x,2) / 0xFFFF;
+            const bool valid = (r>0 && g>0 && b>0);
+            im_channels1->c[0].at(y,x) = (valid ? r : 0);
+            im_channels1->c[1].at(y,x) = (valid ? g : 0);
+            im_channels1->c[2].at(y,x) = (valid ? b : 0);
         }
     }
+    assert(equal(W_FI, im_channels1->c, "im_channels1"));
     
-//    Mat<double,H,W> their_im_channels1[3];
-//    load(W_FI, "im_channels1", their_im_channels1);
-    assert(equal(W_FI, im_channels1, "im_channels1"));
+    
+    
     exit(0);
+    
+//    auto their_im_channels1 = std::make_unique<ImageChannels>();
+//    load(W_FI, "im_channels1", their_im_channels1->c);
+//    assert(equal(W_FI, im_channels1->c, "im"));
+//    exit(0);
     
 //    Renderer::Txt imgTxt = renderer.createTexture(MTLPixelFormatRGBA16Float, W, H);
 //    renderer.textureWrite(imgTxt, img.data, img.samplesPerPixel);
