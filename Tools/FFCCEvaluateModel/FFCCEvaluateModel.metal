@@ -145,16 +145,25 @@ fragment void CalcHistogram(
     atomic_fetch_add_explicit(&bins[bin], 1, memory_order_relaxed);
 }
 
-fragment float NormalizeHistogram(
+fragment float LoadHistogram(
     constant uint32_t& binCount [[buffer(0)]],
-    constant uint32_t& validPixelCount [[buffer(1)]],
-    constant uint32_t* bins [[buffer(2)]],
+    constant uint32_t* bins [[buffer(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const uint32_t bin = binForPos(binCount, pos.y, pos.x);
+    return (float)bins[bin];
+}
+
+fragment float NormalizeHistogram(
+    constant uint32_t& validPixelCount [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     constexpr float Eps = 1e-6;
     const int2 pos = int2(in.pos.xy);
-    const uint32_t bin = binForPos(binCount, pos.y, pos.x);
-    return (float)bins[bin];// / max(Eps, (float)validPixelCount);
+    const float s = Sample::R(txt, pos);
+    return s / max(Eps, (float)validPixelCount);
 }
 
 fragment float Transpose(

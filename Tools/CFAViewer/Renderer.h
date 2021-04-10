@@ -327,6 +327,12 @@ namespace CFAViewer {
             [txt getBytes:samples bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0];
         }
         
+        void bufferClear(id<MTLBuffer> buf) {
+            const NSUInteger len = [buf length];
+            memset([buf contents], 0, len);
+            [buf didModifyRange:{0,len}];
+        }
+        
         // Create a CGImage from a texture
         id /* CGImageRef */ createCGImage(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=_SRGBColorSpace()) {
             const size_t w = [txt width];

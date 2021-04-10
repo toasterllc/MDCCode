@@ -51,8 +51,8 @@ bool _equal(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
                 if (std::abs(va - vb) > Eps) {
                     std::cout << "(" << y << " " << x << ") " << va << " " << vb << "\n";
 //                    printf("(%zu %zu) %f %f\n", y, x, va, vb);
-//                    abort();
-//                    return false;
+                    abort();
+                    return false;
                 }
             }
         }
@@ -673,14 +673,9 @@ uint32_t binForPos(uint32_t binCount, uint32_t y, uint32_t x) {
     return x*binCount + y; // Column-major layout
 }
 
+int calcXIter = 1;
+
 Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MTLTexture> mask) {
-    {
-        renderer.sync(txt);
-        renderer.commitAndWait();
-        auto ours = MatImageFromTexture<double,H,W,3>(renderer, txt);
-        assert(equal(W_FI, ours->c, "im_channel"));
-    }
-    
     Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcU", u,
         // Texture args
@@ -689,9 +684,17 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     
     {
         renderer.sync(u);
+        auto& q = u;
         renderer.commitAndWait();
-        auto ours = MatImageFromTexture<double,H,W,1>(renderer, u);
-        assert(equal(W_FI, ours->c, "u"));
+        static MatImagePtr<double,H,W,1> q1;
+        static MatImagePtr<double,H,W,1> q2;
+        
+        if (!q1) q1 = MatImageFromTexture<double,H,W,1>(renderer, q);
+        else {
+            assert(!q2);
+            q2 = MatImageFromTexture<double,H,W,1>(renderer, q);
+            assert(equal(q1->c, q2->c));
+        }
     }
     
     Renderer::Txt v = renderer.createTexture(MTLPixelFormatR32Float, W, H);
@@ -702,14 +705,22 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     
     {
         renderer.sync(v);
+        auto& q = v;
         renderer.commitAndWait();
-        auto ours = MatImageFromTexture<double,H,W,1>(renderer, v);
-        assert(equal(W_FI, ours->c, "v"));
+        static MatImagePtr<double,H,W,1> q1;
+        static MatImagePtr<double,H,W,1> q2;
+        
+        if (!q1) q1 = MatImageFromTexture<double,H,W,1>(renderer, q);
+        else {
+            assert(!q2);
+            q2 = MatImageFromTexture<double,H,W,1>(renderer, q);
+            assert(equal(q1->c, q2->c));
+        }
     }
     
     using ValidPixelCount = uint32_t;
     Renderer::Buf validPixelCountBuf = renderer.createBuffer(sizeof(ValidPixelCount), MTLResourceStorageModeManaged);
-    memset([validPixelCountBuf contents], 0, sizeof(ValidPixelCount));
+    renderer.bufferClear(validPixelCountBuf);
     Renderer::Txt maskUV = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
     {
         const float thresh = model.params.histogram.minIntensity;
@@ -724,98 +735,19 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     }
     
     {
-        renderer.sync(validPixelCountBuf);
-        renderer.commitAndWait();
-        printf("validPixelCount: %u\n", *(uint32_t*)[validPixelCountBuf contents]);
-    }    
-    
-    
-    
-    {
-        renderer.sync(txt);
         renderer.sync(maskUV);
-        renderer.sync(u);
-        renderer.sync(v);
+        auto& q = maskUV;
         renderer.commitAndWait();
-        auto ours_txt = MatImageFromTexture<double,H,W,3>(renderer, txt);
-        auto ours_maskUV = MatImageFromTexture<double,H,W,1>(renderer, maskUV);
-        auto ours_u = MatImageFromTexture<double,H,W,1>(renderer, u);
-        auto ours_v = MatImageFromTexture<double,H,W,1>(renderer, v);
+        static MatImagePtr<double,H,W,1> q1;
+        static MatImagePtr<double,H,W,1> q2;
         
-        const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
-        const float binSize = model.params.histogram.binSize;
-        const float binMin = model.params.histogram.startingUV;
-        
-        {
-            const float r = ours_txt->c[0].at(14, 369);
-            const float g = ours_txt->c[1].at(14, 369);
-            const float b = ours_txt->c[2].at(14, 369);
-            const float u = log(g)-log(r);
-            const float v = log(g)-log(b);
-            const float biny = (u-binMin)/binSize;
-            const float binx = (v-binMin)/binSize;
-            printf("biny binx: %f %f\n", biny, binx);
+        if (!q1) q1 = MatImageFromTexture<double,H,W,1>(renderer, q);
+        else {
+            assert(!q2);
+            q2 = MatImageFromTexture<double,H,W,1>(renderer, q);
+            assert(equal(q1->c, q2->c));
         }
-        
-        uint32_t maskValidCount = 0;
-        for (int y=0; y<H; y++) {
-            for (int x=0; x<W; x++) {
-                const float m = ours_maskUV->c[0].at(y,x);
-                // Ignore this pixel if it's masked
-                if (m == 0) continue;
-                maskValidCount++;
-            }
-        }
-        
-        printf("maskValidCount: %d\n", maskValidCount);
-        
-        int targetBinCount = 0;
-        for (int y=0; y<H; y++) {
-            for (int x=0; x<W; x++) {
-                const float m = ours_maskUV->c[0].at(y,x);
-                // Ignore this pixel if it's masked
-                if (m == 0) continue;
-                
-                const float u = ours_u->c[0].at(y,x);
-                const float biny = 1 + Mod(round((u-binMin)/binSize), (float)binCount);
-                
-                const float v = ours_v->c[0].at(y,x);
-                const float binx = 1 + Mod(round((v-binMin)/binSize), (float)binCount);
-                
-                if (biny==11 && binx==5) {
-                    printf("AAA %f %f\n", (u-binMin)/binSize, (v-binMin)/binSize);
-                    targetBinCount++;
-                }
-                
-                
-                
-                
-                
-//                const uint32_t biny = round(ours_u->c[0].at(y,x));
-//                const uint32_t binx = round(ours_v->c[0].at(y,x));
-//                const uint32_t bin = binForPos(binCount, y, x);
-//                printf("%u %u\n", biny, binx);
-
-            }
-        }
-        
-        printf("targetBinCount: %d\n", targetBinCount);
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
     const float binSize = model.params.histogram.binSize;
@@ -831,9 +763,17 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     
     {
         renderer.sync(u);
+        auto& q = u;
         renderer.commitAndWait();
-        auto ours = MatImageFromTexture<double,H,W,1>(renderer, u);
-//        printf("%s\n", ours->c[0].str().c_str());
+        static MatImagePtr<double,H,W,1> q1;
+        static MatImagePtr<double,H,W,1> q2;
+        
+        if (!q1) q1 = MatImageFromTexture<double,H,W,1>(renderer, q);
+        else {
+            assert(!q2);
+            q2 = MatImageFromTexture<double,H,W,1>(renderer, q);
+            assert(equal(q1->c, q2->c));
+        }
     }
     
     renderer.render("CalcBinUV", v,
@@ -845,10 +785,25 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
         v
     );
     
+    {
+        renderer.sync(v);
+        auto& q = v;
+        renderer.commitAndWait();
+        static MatImagePtr<double,H,W,1> q1;
+        static MatImagePtr<double,H,W,1> q2;
+        
+        if (!q1) q1 = MatImageFromTexture<double,H,W,1>(renderer, q);
+        else {
+            assert(!q2);
+            q2 = MatImageFromTexture<double,H,W,1>(renderer, q);
+            assert(equal(q1->c, q2->c));
+        }
+    }
+    
     const size_t binsBufCount = binCount*binCount;
     const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
     Renderer::Buf binsBuf = renderer.createBuffer(binsBufLen, MTLResourceStorageModeManaged);
-    memset([binsBuf contents], 0, binsBufLen);
+    renderer.bufferClear(binsBuf);
     
     renderer.render("CalcHistogram", W, H,
         // Buffer args
@@ -860,27 +815,47 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
         maskUV
     );
     
-    
-    
-    
-    
-    
-    
     Renderer::Txt Xc = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
-    renderer.render("NormalizeHistogram", Xc,
+    renderer.render("LoadHistogram", Xc,
         // Buffer args
         binCount,
-        validPixelCountBuf,
         binsBuf
     );
     
     {
         renderer.sync(Xc);
+        auto& q = Xc;
+        renderer.commitAndWait();
+        static MatImagePtr<double,64,64,1> q1;
+        static MatImagePtr<double,64,64,1> q2;
+        
+        if (!q1) q1 = MatImageFromTexture<double,64,64,1>(renderer, q);
+        else {
+            assert(!q2);
+            q2 = MatImageFromTexture<double,64,64,1>(renderer, q);
+            assert(equal(q1->c, q2->c));
+        }
+    }
+    
+    {
+        renderer.sync(Xc);
         renderer.commitAndWait();
         auto ours = MatImageFromTexture<double,64,64,1>(renderer, Xc);
-        assert(equal(W_FI, ours->c, "Xctmp"));
+        
+        std::string varName("X"+std::to_string(calcXIter)+"_unnorm");
+        
+        assert(equal(W_FI, ours->c, varName.c_str()));
 //        printf("%s\n", ours->c[0].str().c_str());
     }
+    
+    renderer.render("NormalizeHistogram", Xc,
+        // Buffer args
+        validPixelCountBuf,
+        // Texture args
+        Xc
+    );
+    
+//    exit(0);
     
     Renderer::Txt XcTransposed = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
     renderer.render("Transpose", XcTransposed,
@@ -888,10 +863,8 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
         Xc
     );
     
-//    renderer.sync(maskedCountBuf);
     renderer.sync(XcTransposed);
     renderer.commitAndWait();
-    exit(0);
     
     // Convert integer histogram to double histogram, to match MATLAB version
     auto histFloats = renderer.textureRead<float>(XcTransposed);
@@ -902,23 +875,13 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     // order, since that's how textures are normally laid out...)
     std::copy(histFloats.begin(), histFloats.end(), hist->vals);
     
-    printf("hist=%s\n",hist->str().c_str());
-//    exit(0);
+    {
+        std::string varName("X"+std::to_string(calcXIter));
+        assert(equal(W_FI, *hist, varName.c_str()));
+//        printf("%s\n", ours->c[0].str().c_str());
+    }
     
-//    const float* histFloats = (uint32_t*)[binsBuf contents];
-//    auto hist = std::make_unique<Mat64>();
-//    static_assert(sizeof(*histInts) == sizeof(std::atomic_uint));
-//    assert(binsBufCount == std::size(hist->vals));
-//    std::copy(histInts, histInts+binsBufCount, hist->vals);
-    
-    
-//    const MaskedCount maskedCount = *(MaskedCount*)[maskedCountBuf contents];
-//    // Convert integer histogram to double histogram, to match MATLAB version
-//    const uint32_t* histInts = (uint32_t*)[binsBuf contents];
-//    auto hist = std::make_unique<Mat64>();
-//    static_assert(sizeof(*histInts) == sizeof(std::atomic_uint));
-//    assert(binsBufCount == std::size(hist->vals));
-//    std::copy(histInts, histInts+binsBufCount, hist->vals);
+    calcXIter++;
     return hist;
 }
 
@@ -954,8 +917,8 @@ void featurizeImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> i
     auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDev);
     assert(equal(W_FI, im_channels2->c, "im_channels2"));
     
-//    Mat64Ptr X1 = calcX(model, renderer, imgMasked, mask);
-//    assert(equal(W_FI, *X1, "X1")); // Compare MATLAB version of the histogram
+    Mat64Ptr X1 = calcX(model, renderer, imgMasked, mask);
+    assert(equal(W_FI, *X1, "X1")); // Compare MATLAB version of the histogram
     
     Mat64Ptr X2 = calcX(model, renderer, imgAbsDev, mask);
     assert(equal(W_FI, *X2, "X2")); // Compare MATLAB version of the histogram
