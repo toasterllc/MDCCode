@@ -138,11 +138,12 @@ void load(MATFile* f, const char* name, T& var) {
     var = m[0];
 }
 
-// modulo function that matches MATLAB's implementation
-// C fmod and MATLAB mod are the same for 
+// modulo function that matches MATLAB's implementation.
+// MATLAB's modulo function ensures that the sign of the
+// result matches the sign of the divisor.
 template <typename T>
 T mod(T a, T b) {
-    if (b == 0) return a; // Definition of MATLAB mod()
+    if (b == 0) return a; // From definition of MATLAB mod()
     const T r = std::fmod(a, b);
     if (r == 0) return 0;
     // If the sign of the remainder doesn't match the divisor,
@@ -285,11 +286,8 @@ static Mat64 softmaxForward(const Mat64& H) {
     r -= maxVal;
     // Raise e to each element in `r`
     for (double& x : r.vals) x = std::exp(x);
-    // Sum all elements
-    double sum = 0;
-    for (double x : r.vals) sum += x;
-    // Normalize `r` using the sum
-    for (double& x : r.vals) x /= sum;
+    // Normalize `r` using its sum
+    r /= r.sum();
     return r;
 }
 
@@ -735,7 +733,7 @@ int main(int argc, const char* argv[]) {
     FFCCModel model = {
         .params = {
             .hyperparams = {
-                .vonMisesDiagonalEps = 0.148650889375340,    // std::pow(2, -2.75)
+                .vonMisesDiagonalEps = 0.148650889375340, // 2^-2.75
             },
             
             .histogram = {
