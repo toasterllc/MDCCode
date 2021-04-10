@@ -139,8 +139,8 @@ fragment void CalcHistogram(
     const float m = Sample::R(mask, pos);
     // Ignore this pixel if it's masked
     if (m == 0) return;
-    const uint32_t y = round(Sample::R(u, pos))-1;
-    const uint32_t x = round(Sample::R(v, pos))-1;
+    const uint32_t y = round(Sample::R(u, pos)-1);
+    const uint32_t x = round(Sample::R(v, pos)-1);
     const uint32_t bin = binForPos(binCount, y, x);
     atomic_fetch_add_explicit(&bins[bin], 1, memory_order_relaxed);
 }
