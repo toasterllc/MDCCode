@@ -732,13 +732,30 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     
     
     {
+        renderer.sync(txt);
         renderer.sync(maskUV);
         renderer.sync(u);
         renderer.sync(v);
         renderer.commitAndWait();
+        auto ours_txt = MatImageFromTexture<double,H,W,3>(renderer, txt);
         auto ours_maskUV = MatImageFromTexture<double,H,W,1>(renderer, maskUV);
         auto ours_u = MatImageFromTexture<double,H,W,1>(renderer, u);
         auto ours_v = MatImageFromTexture<double,H,W,1>(renderer, v);
+        
+        const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
+        const float binSize = model.params.histogram.binSize;
+        const float binMin = model.params.histogram.startingUV;
+        
+        {
+            const float r = ours_txt->c[0].at(14, 369);
+            const float g = ours_txt->c[1].at(14, 369);
+            const float b = ours_txt->c[2].at(14, 369);
+            const float u = log(g)-log(r);
+            const float v = log(g)-log(b);
+            const float biny = (u-binMin)/binSize;
+            const float binx = (v-binMin)/binSize;
+            printf("biny binx: %f %f\n", biny, binx);
+        }
         
         uint32_t maskValidCount = 0;
         for (int y=0; y<H; y++) {
@@ -751,10 +768,6 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
         }
         
         printf("maskValidCount: %d\n", maskValidCount);
-        
-        const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
-        const float binSize = model.params.histogram.binSize;
-        const float binMin = model.params.histogram.startingUV;
         
         int targetBinCount = 0;
         for (int y=0; y<H; y++) {
