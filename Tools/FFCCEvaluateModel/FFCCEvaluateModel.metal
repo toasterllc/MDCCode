@@ -65,6 +65,67 @@ fragment float4 LocalAbsoluteDeviation(
 
 
 
+//fragment float4 Log(
+//    texture2d<float> img [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//    const float3 s = Sample::RGB(img, pos);
+//    return float4(log(s), 1);
+//}
+
+fragment float CalcU(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float3 s = Sample::RGB(txt, pos);
+    if (s.g==0 || s.r==0) return 0;
+    return log(s.g)-log(s.r);
+}
+
+fragment float CalcV(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float3 s = Sample::RGB(txt, pos);
+    if (s.g==0 || s.b==0) return 0;
+    return log(s.g)-log(s.b);
+}
+
+fragment float CalcMaskUV(
+    constant float& thresh [[buffer(0)]],
+    texture2d<float> mask [[texture(0)]],
+    texture2d<float> u [[texture(1)]],
+    texture2d<float> v [[texture(2)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float sm = Sample::R(mask, pos);
+    const float su = Sample::R(u, pos);
+    const float sv = Sample::R(v, pos);
+    if (sm<thresh || su<thresh || sv<thresh) return 0;
+    return 1;
+}
+
+//fragment float CreateUVMask(
+//    texture2d<float> u [[texture(0)]],
+//    texture2d<float> v [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//    const float3 su = Sample::R(u, pos);
+//    const float3 sv = Sample::R(v, pos);
+//    
+//    // If any of the pixels are 0, the mask is 0
+//    if (s.r==0 || s.g==0 || s.b==0) return 0;
+//    // Otherwise the mask is 1
+//    return 1;
+//}
+
+
+
 
 //fragment float4 MaskedLocalAbsoluteDeviation(
 //    texture2d<float> img [[texture(0)]],
