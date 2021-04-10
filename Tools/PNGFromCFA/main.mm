@@ -156,11 +156,11 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        0.,                     1., 0.,
 //        -0.0687922873207393,    0., 0.868851550191642
 //    );
-//    
-    const std::unordered_map<std::string,Color<ColorSpace::Raw>> C50Illuminants = {
-    #include "IllumsC5.h"
-    };
-    const Color<ColorSpace::Raw>& illum = C50Illuminants.at(path.filename().replace_extension());
+    
+//    const std::unordered_map<std::string,Color<ColorSpace::Raw>> C50Illuminants = {
+//    #include "IllumsC5.h"
+//    };
+//    const Color<ColorSpace::Raw>& illum = C50Illuminants.at(path.filename().replace_extension());
 //    const Color<ColorSpace::Raw>& illumRaw = C50Illuminants.at(path.filename().replace_extension());
 //    const Color<ColorSpace::Raw>& illum(C5IllumCorrectionMatrix*illumRaw.m);
     const size_t len = sizeof(uint16_t)*width*height;
@@ -169,53 +169,41 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     // Verify that the file size is what we expect, given the image width/height
     if (imgMmap.len() != len) throw std::runtime_error("invalid length");
     
-    // Create a Metal buffer, and copy the image contents into it
-    Renderer::Buf imgBuf = renderer.createBuffer(len);
-    memcpy([imgBuf contents], imgMmap.data(), len);
-    
+    // Create a texture from the raw CFA data
     Renderer::Txt raw = renderer.createTexture(MTLPixelFormatR32Float, width, height);
+    renderer.textureWrite(raw, (uint16_t*)imgMmap.data(), 1, sizeof(uint16_t), MetalUtil::ImagePixelMax);
     
-    // Load `raw`
-    renderer.render("CFAViewer::Shader::ImagePipeline::LoadRaw", raw,
-        // Buffer args
-        CFADesc,
-        width,
-        height,
-        imgBuf
-        // Texture args
-    );
-    
-    // Reconstruct highlights
-    {
-        const simd::float3 badPixelFactors = {1.130, 1.613, 1.000};
-        const simd::float3 goodPixelFactors = {1.051, 1.544, 1.195};
-        Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, width, height);
-        renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
-            // Buffer args
-            CFADesc,
-            badPixelFactors,
-            goodPixelFactors,
-            // Texture args
-            raw
-        );
-        raw = std::move(tmp);
-    }
-    
-    // White balance
-    {
-        const simd::float3 whiteBalance = {
-            (float)(illum[1]/illum[0]),
-            (float)(illum[1]/illum[1]),
-            (float)(illum[1]/illum[2])
-        };
-        renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
-            // Buffer args
-            CFADesc,
-            whiteBalance,
-            // Texture args
-            raw
-        );
-    }
+//    // Reconstruct highlights
+//    {
+//        const simd::float3 badPixelFactors = {1.130, 1.613, 1.000};
+//        const simd::float3 goodPixelFactors = {1.051, 1.544, 1.195};
+//        Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, width, height);
+//        renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
+//            // Buffer args
+//            CFADesc,
+//            badPixelFactors,
+//            goodPixelFactors,
+//            // Texture args
+//            raw
+//        );
+//        raw = std::move(tmp);
+//    }
+//    
+//    // White balance
+//    {
+//        const simd::float3 whiteBalance = {
+//            (float)(illum[1]/illum[0]),
+//            (float)(illum[1]/illum[1]),
+//            (float)(illum[1]/illum[2])
+//        };
+//        renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
+//            // Buffer args
+//            CFADesc,
+//            whiteBalance,
+//            // Texture args
+//            raw
+//        );
+//    }
     
     // LMMSE Debayer
     Renderer::Txt rgb = renderer.createTexture(MTLPixelFormatRGBA32Float, width, height);
@@ -258,14 +246,14 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //            rgb
 //        );
 //    }
-    
-    // Apply SRGB gamma
-    {
-        renderer.render("CFAViewer::Shader::ImagePipeline::SRGBGamma", rgb,
-            // Texture args
-            rgb
-        );
-    }
+//    
+//    // Apply SRGB gamma
+//    {
+//        renderer.render("CFAViewer::Shader::ImagePipeline::SRGBGamma", rgb,
+//            // Texture args
+//            rgb
+//        );
+//    }
     
     // Final display render pass
     Renderer::Txt rgba16 = renderer.createTexture(MTLPixelFormatRGBA16Float,
@@ -288,8 +276,8 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
-//    printf("D55 CCT: %.1f K\n", CCTFromXYChromaticity(0.332424, 0.347426));
-//    exit(0);
+    argc = 2;
+    argv = (const char*[]){"", "/Users/dave/Desktop/indoor_night2_132.cfa"};
     
     const uint32_t Width = 2304;
     const uint32_t Height = 1296;

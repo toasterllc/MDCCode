@@ -79,14 +79,9 @@ public:
         
         // Load `raw`
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::LoadRaw", raw,
-                // Buffer args
-                img.cfaDesc,
-                img.width,
-                img.height,
-                img.pixels
-                // Texture args
-            );
+            const size_t samplesPerPixel = 1;
+            const size_t bytesPerSample = sizeof(MetalUtil::ImagePixel);
+            renderer.textureWrite(raw, img.pixels, samplesPerPixel, bytesPerSample, MetalUtil::ImagePixelMax);
         }
         
         // Sample: fill `sampleOpts.raw`

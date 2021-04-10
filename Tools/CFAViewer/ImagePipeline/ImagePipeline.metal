@@ -31,17 +31,18 @@ float3 XYZFromXYY(const float3 xyy) {
     return {X,Y,Z};
 }
 
-fragment float LoadRaw(
-    constant CFADesc& cfaDesc [[buffer(0)]],
-    constant uint32_t& imageWidth [[buffer(1)]],
-    constant uint32_t& imageHeight [[buffer(2)]],
-    constant ImagePixel* pxs [[buffer(3)]],
-    VertexOutput in [[stage_in]]
-) {
-    const int2 pos = int2(in.pos.xy);
-    const float v = (float)pxs[imageWidth*pos.y + pos.x] / ImagePixelMax;
-    return v;
-}
+//// TODO: switch to renderer.textureWrite()
+//fragment float LoadRaw(
+//    constant CFADesc& cfaDesc [[buffer(0)]],
+//    constant uint32_t& imageWidth [[buffer(1)]],
+//    constant uint32_t& imageHeight [[buffer(2)]],
+//    constant ImagePixel* pxs [[buffer(3)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//    const float v = (float)pxs[imageWidth*pos.y + pos.x] / ImagePixelMax;
+//    return v;
+//}
 
 fragment void SampleRaw(
     constant CFADesc& cfaDesc [[buffer(0)]],

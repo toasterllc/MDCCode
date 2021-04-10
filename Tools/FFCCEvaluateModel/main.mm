@@ -1,8 +1,10 @@
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import <filesystem>
 #import <complex>
 #import "Mat.h"
+#import "Renderer.h"
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
+using namespace CFAViewer;
 namespace fs = std::filesystem;
 
 using Mat64 = Mat<double,64,64>;
@@ -10,6 +12,8 @@ using Mat64c = Mat<std::complex<double>,64,64>;
 
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
 MATFile* W_FBVM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FitBivariateVonMises.mat", "r");
+
+MATFile* W_FI = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FeaturizeImage.mat", "r");
 
 struct FFCCModel {
     struct Params {
@@ -31,12 +35,11 @@ struct FFCCModel {
 template <typename T, size_t H, size_t W, size_t Depth>
 bool _equal(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
     constexpr double Eps = 1e-6;
-    for (size_t z=0, i=0; z<Depth; z++) {
-        for (size_t x=0; x<W; x++) {
-            for (size_t y=0; y<H; y++, i++) {
-                if (std::abs(a[z].at(y,x) - b[z].at(y,x)) > Eps) {
-                    return false;
-                }
+    for (size_t z=0; z<Depth; z++) {
+        for (size_t i=0; i<H*W; i++) {
+            if (std::abs(a[z].vals[i] - b[z].vals[i]) > Eps) {
+                abort();
+                return false;
             }
         }
     }
@@ -323,7 +326,327 @@ static bool isPNGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".png";
 }
 
+template <typename T>
+class PNGImage {
+public:
+    PNGImage(const fs::path& path) {
+        NSData* imageData = [NSData dataWithContentsOfFile:@(path.c_str())];
+        assert(imageData);
+        
+        image = [NSBitmapImageRep imageRepWithData:imageData];
+        assert(image);
+        
+        assert([image bitsPerSample] == 8*sizeof(T));
+        width = [image pixelsWide];
+        height = [image pixelsHigh];
+        samplesPerPixel = [image samplesPerPixel];
+        assert(samplesPerPixel == 4);
+        data = (T*)[image bitmapData];
+        dataLen = width*height*samplesPerPixel*sizeof(T);
+    }
+    
+    T sample(int y, int x, size_t channel) {
+        const size_t sx = _mirrorClamp(width, x);
+        const size_t sy = _mirrorClamp(height, y);
+        const size_t idx = samplesPerPixel*(width*sy+sx) + channel;
+        assert(idx < dataLen);
+        return data[idx];
+    }
+    
+    NSBitmapImageRep* image = nullptr;
+    size_t width = 0;
+    size_t height = 0;
+    size_t samplesPerPixel = 0;
+    T* data = nullptr;
+    size_t dataLen = 0;
+    
+private:
+    static size_t _mirrorClamp(size_t N, int n) {
+        if (n < 0)                  return -n;
+        else if ((size_t)n >= N)    return 2*(N-1)-(size_t)n;
+        else                        return n;
+    }
+};
+
+struct InputImage {
+    Mat64 X[2];
+};
+
+static constexpr size_t H = 256;
+static constexpr size_t W = 455;
+
+struct ImageChannels {
+public:
+    ImageChannels() {}
+    
+    Mat<double,H,W>& operator[](size_t i) {
+        assert(i < 3);
+        return _c[i];
+    }
+    
+    const Mat<double,H,W>& operator[](size_t i) const {
+        assert(i < 3);
+        return _c[i];
+    }
+private:
+    Mat<double,H,W> _c[3];
+};
+
+// Compute a masked Local Absolute Deviation in sliding window fashion. The
+// window size is 3x3. Only positions where mask(x, y) == true are considered
+// in the absolute deviation computation. If the input image is between [a, b]
+// then the output image will be between [0, b-a].
+// This code with all mask(x ,y) == true should produce identical results to
+// LocalAbsoluteDeviation().
+ImageChannels MaskedLocalAbsoluteDeviation(const ImageChannels& im, const Mat<double,H,W>& mask) {
+    
+//    im_edge = {};
+//    for c = 1:size(im,3)
+//      numer = zeros(size(im,1), size(im,2), 'like', im);
+//      denom = zeros(size(im,1), size(im,2), 'like', im);
+//      for oi = -1:1
+//        for oj = -1:1
+//          if (oi == 0) && (oj == 0)
+//            continue
+//          end
+//          im_shift = im_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1, c);
+//          mask_shift = mask_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1);
+//          numer = numer + mask .* mask_shift .* abs(im_shift - im(:,:,c));
+//          denom = denom + mask .* mask_shift;
+//        end
+//      end
+//      if strcmp(im_class, 'double')
+//        im_edge{c} = numer ./ denom;
+//      else
+//        % This divide is ugly to make it match up with the non-masked code.
+//        im_edge{c} = bitshift(bitshift(numer, 3) ./ denom, -3);
+//      end
+//    end
+//    
+//    
+    return ImageChannels{};
+}
+
+//function im_edge = MaskedLocalAbsoluteDeviation(im, mask)
+//im_class = class(im);
+//
+//if strcmp(im_class, 'uint16')
+//  % Upgrade to 32-bit because we have minus here
+//  im = int32(im);
+//  im_pad = Pad1(im);
+//  mask = int32(mask);
+//  mask_pad = Pad1(mask);
+//elseif strcmp(im_class, 'uint8')
+//  % Upgrade to 16-bit because we have minus here
+//  im = int16(im);
+//  im_pad = Pad1(im);
+//  mask = int16(mask);
+//  mask_pad = Pad1(mask);
+//elseif strcmp(im_class, 'double')
+//  im_pad = Pad1(im);
+//  mask_pad = Pad1(mask);
+//else
+//  assert(0)
+//end
+//
+//im_edge = {};
+//for c = 1:size(im,3)
+//  numer = zeros(size(im,1), size(im,2), 'like', im);
+//  denom = zeros(size(im,1), size(im,2), 'like', im);
+//  for oi = -1:1
+//    for oj = -1:1
+//      if (oi == 0) && (oj == 0)
+//        continue
+//      end
+//      im_shift = im_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1, c);
+//      mask_shift = mask_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1);
+//      numer = numer + mask .* mask_shift .* abs(im_shift - im(:,:,c));
+//      denom = denom + mask .* mask_shift;
+//    end
+//  end
+//  if strcmp(im_class, 'double')
+//    im_edge{c} = numer ./ denom;
+//  else
+//    % This divide is ugly to make it match up with the non-masked code.
+//    im_edge{c} = bitshift(bitshift(numer, 3) ./ denom, -3);
+//  end
+//end
+//im_edge = cat(3, im_edge{:});
+//
+//if strcmp(im_class, 'uint16')
+//  % Convert back to 16-bit
+//  im_edge = uint16(im_edge);
+//elseif strcmp(im_class, 'uint8')
+//  % Convert back to 8-bit
+//  im_edge = uint8(im_edge);
+//end
+
+
+
+
+
+
+//static InputImage readImage(const fs::path& path) {
+//    PNGImage<uint16_t> img(path);
+//    assert(img.height == H);
+//    assert(img.width == W);
+//    
+//    #warning TODO: we need to mask out appropriate pixels (highlights=1 and shadows=0)
+//    ImageChannels im_channels1;
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            for (int c=0; c<3; c++) {
+//                im_channels1[c].at(y,x) = img.sample(y,x,c);
+//            }
+//        }
+//    }
+//    
+//    ImageChannels im_channels2;
+//    
+//    printf("%f\n", im_channels1[2].at(4,5));
+//    return {};
+//    
+//    
+//    
+////if isempty(mask)
+////  mask = true(size(im,1), size(im,2));
+////end
+////
+////im_channels = ChannelizeImage(im, mask);
+////
+////if isa(im, 'float')
+////  assert(all(im(:) <= 1));
+////  assert(all(im(:) >= 0));
+////end
+////
+////X = {};
+////for i_channel = 1:length(im_channels)
+////
+////  im_channel = im_channels{i_channel};
+////
+////  log_im_channel = {};
+////  for c = 1:size(im_channel, 3)
+////    log_im_channel{c} = log(double(im_channel(:,:,c)));
+////  end
+////  u = log_im_channel{2} - log_im_channel{1};
+////  v = log_im_channel{2} - log_im_channel{3};
+////
+////  % Masked pixels or those with invalid log-chromas (nan or inf) are
+////  % ignored.
+////  valid = ~isinf(u) & ~isinf(v) & ~isnan(u) & ~isnan(v) & mask;
+////
+////  % Pixels whose intensities are less than a (scaled) minimum_intensity are
+////  % ignored. This enables repeatable behavior for different input types,
+////  % otherwise we see behavior where the input type affects output features
+////  % strongly just by how intensity values get quantized to 0.
+////  if isa(im, 'float')
+////    min_val = params.HISTOGRAM.MINIMUM_INTENSITY;
+////  else
+////    min_val = intmax(class(im)) * params.HISTOGRAM.MINIMUM_INTENSITY;
+////  end
+////  valid = valid & all(im_channel >= min_val, 3);
+////
+////  Xc = Psplat2(u(valid), v(valid), ones(nnz(valid),1), ...
+////    params.HISTOGRAM.STARTING_UV, params.HISTOGRAM.BIN_SIZE, ...
+////    params.HISTOGRAM.NUM_BINS);
+////
+////  Xc = Xc / max(eps, sum(Xc(:)));
+////
+////  X{end+1} = Xc;
+////end
+////
+////X = cat(3, X{:});
+//    
+//    
+//    
+//}
+
+static void writePNG(Renderer& renderer, id<MTLTexture> txt, const fs::path& path) {
+    id img = renderer.createCGImage(txt);
+    if (!img) throw std::runtime_error("CGBitmapContextCreateImage returned nil");
+    
+    id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
+        (CFURLRef)[NSURL fileURLWithPath:@(path.c_str())], kUTTypePNG, 1, nullptr));
+    if (!imgDest) throw std::runtime_error("CGImageDestinationCreateWithURL returned nil");
+    CGImageDestinationAddImage((CGImageDestinationRef)imgDest, (CGImageRef)img, nullptr);
+    CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
+}
+
 int main(int argc, const char* argv[]) {
+    Renderer renderer;
+    {
+        id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+        assert(dev);
+        
+        auto metalLibPath = fs::path(argv[0]).replace_filename("default.metallib");
+        id<MTLLibrary> lib = [dev newLibraryWithFile:@(metalLibPath.c_str()) error:nil];
+        assert(lib);
+        id<MTLCommandQueue> commandQueue = [dev newCommandQueue];
+        assert(commandQueue);
+        
+        renderer = Renderer(dev, lib, commandQueue);
+    }
+    
+    PNGImage<uint16_t> img("/Users/dave/matlab/test.png");
+//    PNGImage<uint16_t> img("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
+    assert(img.height == H);
+    assert(img.width == W);
+    
+    NSUInteger pxs[4];
+    [img.image getPixel:pxs atX:1 y:0];
+    printf("pixel (1,0): %ju, alpha:%ju\n", (uintmax_t)pxs[0], (uintmax_t)pxs[3]);
+    exit(0);
+    
+    Mat<double,H,W> im_channels1[3];
+    for (int y=0; y<H; y++) {
+        for (int x=0; x<W; x++) {
+            for (int c=0; c<3; c++) {
+//                im_channels1[c].at(y,x) = (double)img.sample(y,x,c) / 0xFFFF;
+                im_channels1[c].at(y,x) = img.sample(y,x,c);
+            }
+        }
+    }
+    
+//    Mat<double,H,W> their_im_channels1[3];
+//    load(W_FI, "im_channels1", their_im_channels1);
+    assert(equal(W_FI, im_channels1, "im_channels1"));
+    exit(0);
+    
+//    Renderer::Txt imgTxt = renderer.createTexture(MTLPixelFormatRGBA16Float, W, H);
+//    renderer.textureWrite(imgTxt, img.data, img.samplesPerPixel);
+//    
+//    // Load pixel data into `txt`
+//    renderer.render("MaskedLocalAbsoluteDeviation", imgTxt,
+//        // Texture args
+//        imgTxt
+//    );
+//    
+//    renderer.sync(imgTxt);
+//    renderer.commitAndWait();
+//    
+//    writePNG(renderer, imgTxt, "/Users/dave/Desktop/test.png");
+//    
+//    exit(0);
+    
+//    #warning TODO: we need to mask out appropriate pixels (highlights=1 and shadows=0)
+//    ImageChannels im_channels1;
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            for (int c=0; c<3; c++) {
+//                im_channels1[c].at(y,x) = img.sample(y,x,c);
+//            }
+//        }
+//    }
+//    
+//    ImageChannels im_channels2;
+//    
+//    printf("%f\n", im_channels1[2].at(4,5));
+//    return {};
+//    
+//    
+//    readImage("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
+//    exit(0);
+    
     FFCCModel model = {
         .params = {
             .hyperparams = {
@@ -341,8 +664,9 @@ int main(int argc, const char* argv[]) {
     
     Mat64 X[2];
     load(W_EM, "X", X);
-    Mat64c X_fft[2];
-    load(W_EM, "X_fft", X_fft);
+    
+    const Mat64c X_fft[2] = {X[0].fft(), X[1].fft()};
+    assert(equal(W_EM, X_fft, "X_fft"));
     
     Mat<double,3,1> illum = ffccEstimateIlluminant(model, X, X_fft);
     printf("%f %f %f\n", illum[0], illum[1], illum[2]);

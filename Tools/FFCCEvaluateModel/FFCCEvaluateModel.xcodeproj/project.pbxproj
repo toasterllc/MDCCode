@@ -12,6 +12,10 @@
 		55958570261D82BE0008EC38 /* libmat.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5595856F261D82BE0008EC38 /* libmat.dylib */; };
 		55958572261D8AFF0008EC38 /* libmex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958571261D8AFF0008EC38 /* libmex.dylib */; };
 		55958574261D8B7C0008EC38 /* libmx.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958573261D8B7C0008EC38 /* libmx.dylib */; };
+		55958576261FCA180008EC38 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958575261FCA180008EC38 /* Cocoa.framework */; };
+		5595857F262008FD0008EC38 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5595857D262008FD0008EC38 /* Renderer.metal */; };
+		559585972620096D0008EC38 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559585962620096D0008EC38 /* Metal.framework */; };
+		5595859926200EDC0008EC38 /* FFCCEvaluateModel.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -36,6 +40,32 @@
 		5595856F261D82BE0008EC38 /* libmat.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmat.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/bin/maci64/libmat.dylib; sourceTree = "<group>"; };
 		55958571261D8AFF0008EC38 /* libmex.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmex.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/bin/maci64/libmex.dylib; sourceTree = "<group>"; };
 		55958573261D8B7C0008EC38 /* libmx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmx.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/bin/maci64/libmx.dylib; sourceTree = "<group>"; };
+		55958575261FCA180008EC38 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		5595857D262008FD0008EC38 /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../CFAViewer/Renderer.metal; sourceTree = "<group>"; };
+		5595857E262008FD0008EC38 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../CFAViewer/Renderer.h; sourceTree = "<group>"; };
+		559585812620093E0008EC38 /* USBPipe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
+		559585822620093E0008EC38 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
+		559585832620093E0008EC38 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
+		559585842620093E0008EC38 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
+		559585852620093E0008EC38 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
+		559585862620093E0008EC38 /* TimeInstant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
+		559585872620093E0008EC38 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
+		559585882620093E0008EC38 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
+		559585892620093E0008EC38 /* USBInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
+		5595858A2620093E0008EC38 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
+		5595858B2620093E0008EC38 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
+		5595858C2620093E0008EC38 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
+		5595858D2620093E0008EC38 /* IOServiceMatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceMatcher.h; sourceTree = "<group>"; };
+		5595858E2620093E0008EC38 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
+		5595858F2620093E0008EC38 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
+		559585902620093E0008EC38 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
+		559585912620093E0008EC38 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
+		559585922620093E0008EC38 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
+		559585942620094B0008EC38 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
+		559585952620094B0008EC38 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
+		559585962620096D0008EC38 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FFCCEvaluateModel.metal; sourceTree = "<group>"; };
+		5595859A26200FCC0008EC38 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,7 +73,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55958576261FCA180008EC38 /* Cocoa.framework in Frameworks */,
 				558C3605261D468B0040241D /* Accelerate.framework in Frameworks */,
+				559585972620096D0008EC38 /* Metal.framework in Frameworks */,
 				55958570261D82BE0008EC38 /* libmat.dylib in Frameworks */,
 				55958572261D8AFF0008EC38 /* libmex.dylib in Frameworks */,
 				55958574261D8B7C0008EC38 /* libmx.dylib in Frameworks */,
@@ -56,7 +88,13 @@
 		554B91AD261D349A00618ACA = {
 			isa = PBXGroup;
 			children = (
+				559585802620093E0008EC38 /* Shared */,
+				559585932620094B0008EC38 /* Shared */,
+				5595857E262008FD0008EC38 /* Renderer.h */,
+				5595857D262008FD0008EC38 /* Renderer.metal */,
 				558C3602261D3CE90040241D /* Mat.h */,
+				5595859A26200FCC0008EC38 /* MetalUtil.h */,
+				5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */,
 				558C3600261D34DF0040241D /* main.mm */,
 				554B91B7261D349A00618ACA /* Products */,
 				558C3603261D468B0040241D /* Frameworks */,
@@ -74,6 +112,8 @@
 		558C3603261D468B0040241D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				559585962620096D0008EC38 /* Metal.framework */,
+				55958575261FCA180008EC38 /* Cocoa.framework */,
 				55958573261D8B7C0008EC38 /* libmx.dylib */,
 				55958571261D8AFF0008EC38 /* libmex.dylib */,
 				5595856F261D82BE0008EC38 /* libmat.dylib */,
@@ -82,6 +122,42 @@
 				558C3604261D468B0040241D /* Accelerate.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		559585802620093E0008EC38 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				559585812620093E0008EC38 /* USBPipe.h */,
+				559585822620093E0008EC38 /* MDCUtil.h */,
+				559585832620093E0008EC38 /* Mat.h */,
+				559585842620093E0008EC38 /* Poly2D.h */,
+				559585852620093E0008EC38 /* MDCDevice.h */,
+				559585862620093E0008EC38 /* TimeInstant.h */,
+				559585872620093E0008EC38 /* Color.h */,
+				559585882620093E0008EC38 /* RuntimeError.h */,
+				559585892620093E0008EC38 /* USBInterface.h */,
+				5595858A2620093E0008EC38 /* MDCLoaderDevice.h */,
+				5595858B2620093E0008EC38 /* IOServiceWatcher.h */,
+				5595858C2620093E0008EC38 /* ELF32Binary.h */,
+				5595858D2620093E0008EC38 /* IOServiceMatcher.h */,
+				5595858E2620093E0008EC38 /* Mmap.h */,
+				5595858F2620093E0008EC38 /* Interp.h */,
+				559585902620093E0008EC38 /* Assert.h */,
+				559585912620093E0008EC38 /* USBDevice.h */,
+				559585922620093E0008EC38 /* SendRight.h */,
+			);
+			name = Shared;
+			path = ../Shared;
+			sourceTree = "<group>";
+		};
+		559585932620094B0008EC38 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				559585942620094B0008EC38 /* Enum.h */,
+				559585952620094B0008EC38 /* HashInts.h */,
+			);
+			name = Shared;
+			path = ../../Code/Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -142,70 +218,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				558C3601261D34DF0040241D /* main.mm in Sources */,
+				5595859926200EDC0008EC38 /* FFCCEvaluateModel.metal in Sources */,
+				5595857F262008FD0008EC38 /* Renderer.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		554B91BB261D349A00618ACA /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
-			};
-			name = Debug;
-		};
 		554B91BC261D349A00618ACA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -258,22 +278,13 @@
 			};
 			name = Release;
 		};
-		554B91BE261D349A00618ACA /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				LD_RUNPATH_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
-				LIBRARY_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
 		554B91BF261D349A00618ACA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				LD_RUNPATH_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
 				LIBRARY_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
+				MTL_HEADER_SEARCH_PATHS = "../CFAViewer ../../Code/Shared ../CFAViewer/ImagePipeline";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -284,7 +295,6 @@
 		554B91B1261D349A00618ACA /* Build configuration list for PBXProject "FFCCEvaluateModel" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				554B91BB261D349A00618ACA /* Debug */,
 				554B91BC261D349A00618ACA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -293,7 +303,6 @@
 		554B91BD261D349A00618ACA /* Build configuration list for PBXNativeTarget "FFCCEvaluateModel" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				554B91BE261D349A00618ACA /* Debug */,
 				554B91BF261D349A00618ACA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;

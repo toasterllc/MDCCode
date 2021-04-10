@@ -126,7 +126,7 @@ namespace CFAViewer {
         void copy(id<MTLTexture> src, id<MTLBuffer> dst) {
             const NSUInteger w = [src width];
             const NSUInteger h = [src height];
-            const NSUInteger bytesPerPixel = _BytesPerPixelForPixelFormat([src pixelFormat]);
+            const NSUInteger bytesPerPixel = _BytesPerPixel([src pixelFormat]);
             const NSUInteger bytesPerRow = w*bytesPerPixel;
             const NSUInteger bytesPerImage = h*bytesPerRow;
             id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
@@ -140,7 +140,7 @@ namespace CFAViewer {
         void copy(id<MTLBuffer> src, id<MTLTexture> dst) {
             const NSUInteger w = [dst width];
             const NSUInteger h = [dst height];
-            const NSUInteger bytesPerPixel = _BytesPerPixelForPixelFormat([dst pixelFormat]);
+            const NSUInteger bytesPerPixel = _BytesPerPixel([dst pixelFormat]);
             const NSUInteger bytesPerRow = w*bytesPerPixel;
             const NSUInteger bytesPerImage = h*bytesPerRow;
             id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
@@ -158,9 +158,9 @@ namespace CFAViewer {
             [blit endEncoding];
         }
         
-        void sync(id<MTLTexture> txt) {
+        void sync(id<MTLResource> rsrc) {
             id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
-            [blit synchronizeTexture:txt slice:0 level:0];
+            [blit synchronizeResource:rsrc];
             [blit endEncoding];
         }
         
@@ -176,22 +176,23 @@ namespace CFAViewer {
             // Check if we already have a texture matching the given criteria
             TxtKey key(fmt, width, height, usage);
             TxtQueue& txts = _txts[key];
+            // Check if we have a cached texture that matches our criteria
             if (!txts.empty()) {
-                Txt txt(*this, txts.front());
+                Txt txt = Txt(*this, txts.front());
                 txts.pop();
                 return txt;
+            } else {
+                // We don't have a cached texture matching the criteria, so create a new one
+                MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+                [desc setTextureType:MTLTextureType2D];
+                [desc setWidth:width];
+                [desc setHeight:height];
+                [desc setPixelFormat:fmt];
+                [desc setUsage:usage];
+                id<MTLTexture> txt = [dev newTextureWithDescriptor:desc];
+                Assert(txt, return Txt());
+                return Txt(*this, txt);
             }
-            
-            // We don't have a cached texture matching the criteria, so create a new one
-            MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-            [desc setTextureType:MTLTextureType2D];
-            [desc setWidth:width];
-            [desc setHeight:height];
-            [desc setPixelFormat:fmt];
-            [desc setUsage:usage];
-            id<MTLTexture> txt = [dev newTextureWithDescriptor:desc];
-            Assert(txt, return Txt());
-            return Txt(*this, txt);
         }
         
         Buf createBuffer(NSUInteger len) {
@@ -206,10 +207,114 @@ namespace CFAViewer {
                 }
             }
             
-            id<MTLBuffer> buf = [dev newBufferWithLength:len
-                options:MTLResourceStorageModeShared];
+            id<MTLBuffer> buf = [dev newBufferWithLength:len options:MTLResourceStorageModeShared];
             Assert(buf, return Buf());
             return Buf(*this, buf);
+        }
+        
+        // Write pixel data (from a raw pointer) to a texture
+        template <typename T>
+        void textureWrite(
+            id<MTLTexture> txt,
+            T* data,
+            size_t samplesPerPixel,
+            size_t bytesPerSample=sizeof(T),
+            uintmax_t maxValue=std::numeric_limits<T>::max()
+        ) {
+            // Create a Metal buffer, and copy the image contents into it
+            const size_t w = [txt width];
+            const size_t h = [txt height];
+            const size_t len = w*h*samplesPerPixel*sizeof(T);
+            Renderer::Buf buf = createBuffer(len);
+            memcpy([buf contents], data, len);
+            textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
+        }
+        
+        // Write pixel data (from a MTLBuffer) to a texture
+        void textureWrite(
+            id<MTLTexture> txt,
+            id<MTLBuffer> buf,
+            size_t samplesPerPixel,
+            size_t bytesPerSample,
+            uintmax_t maxValue
+        ) {
+            const MTLPixelFormat fmt = [txt pixelFormat];
+            const size_t w = [txt width];
+            const size_t h = [txt height];
+            const size_t inSamplesPerPixel = samplesPerPixel;
+            const size_t inBytesPerSample = bytesPerSample;
+            const size_t outSamplesPerPixel = _SamplesPerPixel(fmt);
+            
+            const char* fnName = nullptr;
+            if (inBytesPerSample == 1) {
+                if (outSamplesPerPixel == 1)         fnName = "CFAViewer::Shader::Renderer::LoadFloatFromU8";
+                else if (outSamplesPerPixel == 4)    fnName = "CFAViewer::Shader::Renderer::LoadFloat4FromU8";
+            } else if (inBytesPerSample == 2) {
+                if (outSamplesPerPixel == 1)         fnName = "CFAViewer::Shader::Renderer::LoadFloatFromU16";
+                else if (outSamplesPerPixel == 4)    fnName = "CFAViewer::Shader::Renderer::LoadFloat4FromU16";
+            }
+            if (!fnName) throw std::runtime_error("invalid input/output data format");
+            
+            const uint32_t w32 = (uint32_t)w;
+            const uint32_t h32 = (uint32_t)h;
+            const uint32_t inSamplesPerPixel32 = (uint32_t)inSamplesPerPixel;
+            const uint32_t maxValue32 = (uint32_t)maxValue;
+            // Load pixel data into `txt`
+            render(fnName, txt,
+                // Buffer args
+                w32,
+                h32,
+                inSamplesPerPixel32,
+                maxValue32,
+                buf
+                // Texture args
+            );
+        }
+        
+        // Read pixel data from a texture
+        void textureRead(id<MTLTexture> txt, void* data, size_t dataCap) {
+            const size_t w = [txt width];
+            const size_t h = [txt height];
+            const size_t bytesPerRow = _BytesPerPixel([txt pixelFormat])*w;
+            const size_t len = bytesPerRow*h;
+            assert(dataCap >= len);
+            [txt getBytes:data bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0];
+        }
+        
+        // Create a CGImage from a texture
+        id /* CGImageRef */ createCGImage(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=_SRGBColorSpace()) {
+            const size_t w = [txt width];
+            const size_t h = [txt height];
+            const MTLPixelFormat fmt = [txt pixelFormat];
+            const size_t samplesPerPixel = _SamplesPerPixel(fmt);
+            const size_t bytesPerSample = _BytesPerSample(fmt);
+            const size_t bytesPerRow = samplesPerPixel*bytesPerSample*w;
+            uint32_t opts = 0;
+            
+            // TODO: add support for more pixel formats as needed
+            switch (fmt) {
+            case MTLPixelFormatRGBA8Unorm:
+                opts = kCGImageAlphaNoneSkipLast;
+                break;
+            case MTLPixelFormatRGBA16Unorm:
+                opts = kCGImageAlphaNoneSkipLast|kCGBitmapByteOrder16Little;
+                break;
+            case MTLPixelFormatRGBA16Float:
+                opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Little;
+                break;
+            default:
+                throw std::runtime_error("invalid texture format");
+            }
+            
+            id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, bytesPerSample*8,
+                bytesPerRow, (CGColorSpaceRef)colorSpace, opts));
+            
+            if (!ctx) throw std::runtime_error("CGBitmapContextCreate returned nil");
+            
+            uint8_t* data = (uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
+            textureRead(txt, data, bytesPerRow*h);
+            
+            return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
         }
         
         id<MTLCommandBuffer> cmdBuf() {
@@ -268,12 +373,31 @@ namespace CFAViewer {
             _SetTextureArgs(enc, idx+1, ts...);
         }
         
-        static size_t _BytesPerPixelForPixelFormat(MTLPixelFormat fmt) {
+        static size_t _SamplesPerPixel(MTLPixelFormat fmt) {
             switch (fmt) {
-            case MTLPixelFormatR32Float:    return sizeof(float);
-            case MTLPixelFormatRGBA32Float: return 4*sizeof(float);
-            default:                        abort();
+            case MTLPixelFormatR32Float:    return 1;
+            case MTLPixelFormatRGBA16Float: return 4;
+            case MTLPixelFormatRGBA32Float: return 4;
+            default:                        throw std::runtime_error("invalid pixel format");
             }
+        }
+        
+        static size_t _BytesPerSample(MTLPixelFormat fmt) {
+            switch (fmt) {
+            case MTLPixelFormatR32Float:    return 4;
+            case MTLPixelFormatRGBA16Float: return 2;
+            case MTLPixelFormatRGBA32Float: return 4;
+            default:                        throw std::runtime_error("invalid pixel format");
+            }
+        }
+        
+        static size_t _BytesPerPixel(MTLPixelFormat fmt) {
+            return _SamplesPerPixel(fmt)*_BytesPerSample(fmt);
+        }
+        
+        static id _SRGBColorSpace() {
+            static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+            return (__bridge id)cs;
         }
         
         void _recycle(id<MTLTexture> txt) {

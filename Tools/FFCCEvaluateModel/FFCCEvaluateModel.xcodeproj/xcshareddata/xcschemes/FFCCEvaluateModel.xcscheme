@@ -14,16 +14,16 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "55460A5C2613B0C00037A5AC"
-               BuildableName = "PNGFromCFA"
-               BlueprintName = "PNGFromCFA"
-               ReferencedContainer = "container:PNGFromCFA.xcodeproj">
+               BlueprintIdentifier = "554B91B5261D349A00618ACA"
+               BuildableName = "FFCCEvaluateModel"
+               BlueprintName = "FFCCEvaluateModel"
+               ReferencedContainer = "container:FFCCEvaluateModel.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
@@ -31,10 +31,9 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      disableMainThreadChecker = "YES"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -45,10 +44,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "55460A5C2613B0C00037A5AC"
-            BuildableName = "PNGFromCFA"
-            BlueprintName = "PNGFromCFA"
-            ReferencedContainer = "container:PNGFromCFA.xcodeproj">
+            BlueprintIdentifier = "554B91B5261D349A00618ACA"
+            BuildableName = "FFCCEvaluateModel"
+            BlueprintName = "FFCCEvaluateModel"
+            ReferencedContainer = "container:FFCCEvaluateModel.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,15 +61,15 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "55460A5C2613B0C00037A5AC"
-            BuildableName = "PNGFromCFA"
-            BlueprintName = "PNGFromCFA"
-            ReferencedContainer = "container:PNGFromCFA.xcodeproj">
+            BlueprintIdentifier = "554B91B5261D349A00618ACA"
+            BuildableName = "FFCCEvaluateModel"
+            BlueprintName = "FFCCEvaluateModel"
+            ReferencedContainer = "container:FFCCEvaluateModel.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
-      buildConfiguration = "Release">
+      buildConfiguration = "Debug">
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
