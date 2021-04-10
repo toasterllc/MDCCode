@@ -27,7 +27,8 @@ public:
     Mat(const Mat& x) { *this = x; }
     // Copy assignment operator
     Mat& operator=(const Mat& x) {
-        memcpy(vals, x.vals, sizeof(vals));
+        std::copy(x.vals, x.vals+std::size(x.vals), vals);
+//        memcpy(vals, x.vals, sizeof(vals));
         return *this;
     }
     
@@ -577,6 +578,7 @@ public:
     static constexpr size_t Width = W;
     static constexpr size_t Rows = H;
     static constexpr size_t Cols = W;
+    using ValueType = T;
     
 private:
     template <typename Float>

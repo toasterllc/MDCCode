@@ -2,13 +2,16 @@
 #import <filesystem>
 #import <complex>
 #import <iostream>
+#import <atomic>
 #import "Mat.h"
+#import "Mod.h"
 #import "Renderer.h"
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
 using namespace CFAViewer;
 namespace fs = std::filesystem;
 
 using Mat64 = Mat<double,64,64>;
+using Mat64i = Mat<uint32_t,64,64>;
 using Mat64c = Mat<std::complex<double>,64,64>;
 
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
@@ -23,6 +26,7 @@ struct FFCCModel {
         } hyperparams;
         
         struct {
+            size_t binCount = 0;
             double binSize = 0;
             double startingUV = 0;
             double minIntensity = 0;
@@ -138,20 +142,6 @@ void load(MATFile* f, const char* name, T& var) {
     var = m[0];
 }
 
-// modulo function that matches MATLAB's implementation.
-// MATLAB's modulo function ensures that the sign of the
-// result matches the sign of the divisor.
-template <typename T>
-T mod(T a, T b) {
-    if (b == 0) return a; // From definition of MATLAB mod()
-    const T r = std::fmod(a, b);
-    if (r == 0) return 0;
-    // If the sign of the remainder doesn't match the divisor,
-    // add the divisor to make the signs match.
-    if ((r > 0) != (b > 0)) return r+b;
-    return r;
-}
-
 struct VecSigma {
     Mat<double,2,1> vec;
     Mat<double,2,2> sigma;
@@ -219,8 +209,8 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     assert(equal(W_FBVM, y2, "y2"));
     assert(equal(W_FBVM, x2, "x2"));
     
-    const double mu1 = mod(std::atan2(y1,x1), 2*M_PI) / angleStep;
-    const double mu2 = mod(std::atan2(y2,x2), 2*M_PI) / angleStep;
+    const double mu1 = Mod(std::atan2(y1,x1), 2*M_PI) / angleStep;
+    const double mu2 = Mod(std::atan2(y2,x2), 2*M_PI) / angleStep;
     assert(equal(W_FBVM, mu1, "mu1"));
     assert(equal(W_FBVM, mu2, "mu2"));
     
@@ -240,7 +230,7 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     }
     
     auto wrap = [](double x) {
-        return mod(x+(H/2)-1, (double)H)+1;
+        return Mod(x+(H/2)-1, (double)H)+1;
     };
     
     Mat<double,H,1> wrapped1;
@@ -610,15 +600,32 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
     assert([txt height] == H);
     assert([txt width] == W);
     
-    using Sample = uint16_t; // Only support 16-bit samples for now
     const MTLPixelFormat fmt = [txt pixelFormat];
-    assert(fmt==MTLPixelFormatR16Unorm || fmt==MTLPixelFormatRGBA16Unorm);
-    const size_t bytesPerSample = Renderer::BytesPerSample(fmt);
-    assert(bytesPerSample == sizeof(Sample));
+    bool srcUnorm = false;
+    switch (fmt) {
+    case MTLPixelFormatR16Unorm:
+    case MTLPixelFormatRGBA16Unorm:
+        srcUnorm = true;
+        break;
+    case MTLPixelFormatR32Float:
+        break;
+    default:
+        abort(); // Unsupported format
+    }
     const size_t samplesPerPixel = Renderer::SamplesPerPixel(fmt);
+    const size_t bytesPerSample = Renderer::BytesPerSample(fmt);
     const size_t sampleCount = samplesPerPixel*W*H;
-    auto samples = std::make_unique<Sample[]>(sampleCount);
-    renderer.textureRead(txt, samples.get(), sampleCount);
+    const size_t len = sampleCount*bytesPerSample;
+    auto buf = std::make_unique<uint8_t[]>(len);
+    uint16_t* bufU16 = (uint16_t*)buf.get();
+    float* bufFloat = (float*)buf.get();
+    if (bytesPerSample == 2) {
+        renderer.textureRead(txt, bufU16, sampleCount);
+    } else if (bytesPerSample == 4) {
+        renderer.textureRead(txt, bufFloat, sampleCount);
+    } else {
+        abort();
+    }
     
     auto matImage = std::make_unique<MatImage<T,H,W,Depth>>();
     for (int y=0; y<H; y++) {
@@ -626,10 +633,16 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
             for (int c=0; c<samplesPerPixel; c++) {
                 if (c < Depth) {
                     if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
-                        matImage->c[c].at(y,x) = (T)samples[samplesPerPixel*(y*W+x) + c] /
-                            std::numeric_limits<Sample>::max();
+                        if (srcUnorm) {
+                            // Source is unorm, destination is float: normalize
+                            matImage->c[c].at(y,x) = (T)bufU16[samplesPerPixel*(y*W+x)+c] / 65535;
+                        } else {
+                            // Source isn't a unorm, destination is float: just assign
+                            matImage->c[c].at(y,x) = bufFloat[samplesPerPixel*(y*W+x)+c];
+                        }
                     } else {
-                        matImage->c[c].at(y,x) = samples[samplesPerPixel*(y*W+x) + c];
+                        // Destination isn't float
+                        matImage->c[c].at(y,x) = bufU16[samplesPerPixel*(y*W+x)+c];
                     }
                 }
             }
@@ -653,47 +666,73 @@ void calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MT
     
     Renderer::Txt maskUV = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
     {
-        const float threshold = model.params.histogram.minIntensity;
+        const float thresh = model.params.histogram.minIntensity;
         renderer.render("CalcMaskUV", maskUV,
             // Buffer args
-            threshold,
+            thresh,
             // Texture args
-            mask,
-            u,
+            txt,
+            mask
+        );
+    }
+    
+    {
+        const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
+        const float binSize = model.params.histogram.binSize;
+        const float binMin = model.params.histogram.startingUV;
+        renderer.render("CalcBinUV", u,
+            // Buffer args
+            binCount,
+            binSize,
+            binMin,
+            // Texture args
+            u
+        );
+        
+        renderer.sync(u);
+        renderer.commitAndWait();
+        
+        renderer.render("CalcBinUV", v,
+            // Buffer args
+            binCount,
+            binSize,
+            binMin,
+            // Texture args
             v
         );
+        
+        const size_t len = sizeof(std::atomic_uint)*binCount*binCount;
+        Renderer::Buf binsBuf = renderer.createBuffer(len, MTLResourceStorageModeManaged);
+        memset([binsBuf contents], 0, len);
+        
+        renderer.render("CalcHistogram", W, H,
+            // Buffer args
+            binCount,
+            binsBuf,
+            // Texture args
+            u,
+            v,
+            maskUV
+        );
+        
+        renderer.sync(binsBuf);
+        renderer.commitAndWait();
+        
+        static_assert(sizeof(Mat64i::ValueType) == sizeof(std::atomic_uint));
+        auto ourHistInt = std::make_unique<Mat64i>();
+        assert(len == sizeof(Mat64i::vals));
+        memcpy(ourHistInt->vals, [binsBuf contents], len);
+        
+        // Convert integer histogram to double histogram, to match MATLAB version
+        auto ourHist = std::make_unique<Mat64>();
+        std::copy(ourHistInt->vals, ourHistInt->vals+std::size(ourHistInt->vals), ourHist->vals);
+        
+        // Compare MATLAB version of the histogram
+        assert(equal(W_FI, *ourHist, "Xctmp"));
     }
 }
 
-int main(int argc, const char* argv[]) {
-    Renderer renderer;
-    {
-        id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
-        assert(dev);
-        
-        auto metalLibPath = fs::path(argv[0]).replace_filename("default.metallib");
-        id<MTLLibrary> lib = [dev newLibraryWithFile:@(metalLibPath.c_str()) error:nil];
-        assert(lib);
-        id<MTLCommandQueue> commandQueue = [dev newCommandQueue];
-        assert(commandQueue);
-        
-        renderer = Renderer(dev, lib, commandQueue);
-    }
-    
-    PNGImage<uint16_t> png("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
-    assert(png.height == H);
-    assert(png.width == W);
-    
-    // Create a texture and load it with the data from `img`
-    Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
-    renderer.textureWrite(img, png.data, png.samplesPerPixel);
-    
-    Renderer::Txt mask = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
-    renderer.render("CreateMask", mask,
-        // Texture args
-        img
-    );
-    
+void featurizeImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt imgMasked = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
     renderer.render("ApplyMask", imgMasked,
         // Texture args
@@ -725,8 +764,38 @@ int main(int argc, const char* argv[]) {
     auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDev);
     assert(equal(W_FI, im_channels2->c, "im_channels2"));
     
+    calcX(model, renderer, imgMasked, mask);
+//    calcX(model, renderer, imgAbsDev, mask);
+}
+
+int main(int argc, const char* argv[]) {
+    Renderer renderer;
+    {
+        id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+        assert(dev);
+        
+        auto metalLibPath = fs::path(argv[0]).replace_filename("default.metallib");
+        id<MTLLibrary> lib = [dev newLibraryWithFile:@(metalLibPath.c_str()) error:nil];
+        assert(lib);
+        id<MTLCommandQueue> commandQueue = [dev newCommandQueue];
+        assert(commandQueue);
+        
+        renderer = Renderer(dev, lib, commandQueue);
+    }
     
+    PNGImage<uint16_t> png("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
+    assert(png.height == H);
+    assert(png.width == W);
     
+    // Create a texture and load it with the data from `img`
+    Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+    renderer.textureWrite(img, png.data, png.samplesPerPixel);
+    
+    Renderer::Txt mask = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
+    renderer.render("CreateMask", mask,
+        // Texture args
+        img
+    );
     
     
     
@@ -737,6 +806,7 @@ int main(int argc, const char* argv[]) {
             },
             
             .histogram = {
+                .binCount = 64,
                 .binSize = 1./32,
                 .startingUV = -0.531250,
                 .minIntensity = 1./256,
@@ -745,6 +815,9 @@ int main(int argc, const char* argv[]) {
     };
     load(W_EM, "F_fft", model.F_fft);
     load(W_EM, "B", model.B);
+    
+    featurizeImage(model, renderer, img, mask);
+    
     
     Mat64 X[2];
     load(W_EM, "X", X);

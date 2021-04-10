@@ -17,8 +17,6 @@ namespace CFAViewer {
         template <typename T>
         class Resource {
         public:
-            operator T() const { return _state.resource; }
-            
             // Default constructor
             Resource() {}
             // Copy constructor: illegal
@@ -40,6 +38,8 @@ namespace CFAViewer {
             ~Resource() {
                 _recycle();
             }
+            
+            operator T() const { return _state.resource; }
             
         private:
             Resource(Renderer& renderer, T resource) : _state{&renderer, resource} {}
@@ -223,7 +223,7 @@ namespace CFAViewer {
             }
         }
         
-        Buf createBuffer(NSUInteger len) {
+        Buf createBuffer(NSUInteger len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
             // Return an existing buffer if its length is between len and 2*len
             for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
                 id<MTLBuffer> buf = *it;
@@ -235,7 +235,7 @@ namespace CFAViewer {
                 }
             }
             
-            id<MTLBuffer> buf = [dev newBufferWithLength:len options:MTLResourceStorageModeShared];
+            id<MTLBuffer> buf = [dev newBufferWithLength:len options:opts];
             Assert(buf, return Buf());
             return Buf(*this, buf);
         }

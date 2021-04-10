@@ -1,6 +1,7 @@
 #import <metal_stdlib>
 #import "MetalUtil.h"
 #import "ImagePipelineTypes.h"
+#import "Mod.h"
 using namespace metal;
 using namespace CFAViewer::MetalUtil;
 using namespace CFAViewer::MetalUtil::Standard;
@@ -96,17 +97,46 @@ fragment float CalcV(
 
 fragment float CalcMaskUV(
     constant float& thresh [[buffer(0)]],
-    texture2d<float> mask [[texture(0)]],
-    texture2d<float> u [[texture(1)]],
-    texture2d<float> v [[texture(2)]],
+    texture2d<float> img [[texture(0)]],
+    texture2d<float> mask [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const float sm = Sample::R(mask, pos);
-    const float su = Sample::R(u, pos);
-    const float sv = Sample::R(v, pos);
-    if (sm<thresh || su<thresh || sv<thresh) return 0;
+    if (sm == 0) return 0;
+    const float3 si = Sample::RGB(img, pos);
+    if (si.r<thresh || si.g<thresh || si.b<thresh) return 0;
     return 1;
+}
+
+fragment float CalcBinUV(
+    constant uint32_t& binCount [[buffer(0)]],
+    constant float& binSize [[buffer(1)]],
+    constant float& binMin [[buffer(2)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float s = Sample::R(txt, pos);
+    return 1 + Mod(round((s-binMin)/binSize), (float)binCount);
+}
+
+fragment void CalcHistogram(
+    constant uint32_t& binCount [[buffer(0)]],
+    device atomic_uint* bins [[buffer(1)]],
+    texture2d<float> u [[texture(0)]],
+    texture2d<float> v [[texture(1)]],
+    texture2d<float> mask [[texture(2)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float m = Sample::R(mask, pos);
+    // Ignore this pixel if it's masked
+    if (m == 0) return;
+    const uint32_t y = round(Sample::R(u, pos));
+    const uint32_t x = round(Sample::R(v, pos));
+    const uint32_t i = (x-1)*binCount + (y-1); // Column-major index into `bins`
+    atomic_fetch_add_explicit(&bins[i], 1, memory_order_relaxed);
 }
 
 //fragment float CreateUVMask(

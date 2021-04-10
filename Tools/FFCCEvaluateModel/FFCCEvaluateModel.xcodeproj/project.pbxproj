@@ -32,6 +32,7 @@
 
 /* Begin PBXFileReference section */
 		554B91B6261D349A00618ACA /* FFCCEvaluateModel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FFCCEvaluateModel; sourceTree = BUILT_PRODUCTS_DIR; };
+		555A1C8F2621CC8E0056C014 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mod.h; path = ../Shared/Mod.h; sourceTree = "<group>"; };
 		558C3600261D34DF0040241D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		558C3602261D3CE90040241D /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
 		558C3604261D468B0040241D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -92,6 +93,7 @@
 				559585932620094B0008EC38 /* Shared */,
 				5595857E262008FD0008EC38 /* Renderer.h */,
 				5595857D262008FD0008EC38 /* Renderer.metal */,
+				555A1C8F2621CC8E0056C014 /* Mod.h */,
 				558C3602261D3CE90040241D /* Mat.h */,
 				5595859A26200FCC0008EC38 /* MetalUtil.h */,
 				5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */,
@@ -284,7 +286,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				LD_RUNPATH_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
 				LIBRARY_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
-				MTL_HEADER_SEARCH_PATHS = "../CFAViewer ../../Code/Shared ../CFAViewer/ImagePipeline";
+				MTL_HEADER_SEARCH_PATHS = "../CFAViewer ../Shared ../CFAViewer/ImagePipeline";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
