@@ -117,28 +117,9 @@ static simd::float3x3 SIMDFromMat(const Mat<double,3,3>& m) {
     };
 }
 
-static CGColorSpaceRef SRGBColorSpace() {
-    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    return cs;
-}
-
-static void writePNG(id<MTLTexture> txt, const fs::path& path) {
-    const size_t ComponentsPerPixel = 4; // RGBA
-    const size_t BytesPerComponent = 2; // 16-bit floats
-    const size_t w = [txt width];
-    const size_t h = [txt height];
-    const size_t bytesPerRow = ComponentsPerPixel*BytesPerComponent*w;
-    const uint32_t opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Little;
-    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, BytesPerComponent*8, bytesPerRow,
-        SRGBColorSpace(), opts));
-    
-    if (!ctx) throw std::runtime_error("CGBitmapContextCreate returned nil");
-    
-    uint8_t* data = (uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
-    [txt getBytes:data bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0];
-    
-    id img = CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
-    if (!img) throw std::runtime_error("CGBitmapContextCreateImage returned nil");
+static void writePNG(Renderer& renderer, id<MTLTexture> txt, const fs::path& path) {
+    id img = renderer.createCGImage(txt);
+    if (!img) throw std::runtime_error("renderer.createCGImage returned nil");
     
     id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
         (CFURLRef)[NSURL fileURLWithPath:@(path.c_str())], kUTTypePNG, 1, nullptr));
@@ -255,9 +236,21 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        );
 //    }
     
+    // Scale the image
+    {
+        const size_t heightScaled = 256;
+        const size_t widthScaled = (heightScaled*width)/height;
+        Renderer::Txt rgbScaled = renderer.createTexture(MTLPixelFormatRGBA32Float, widthScaled, heightScaled);
+        renderer.render("CFAViewer::Shader::ImagePipeline::Scale", rgbScaled,
+            // Texture args
+            rgb
+        );
+        rgb = std::move(rgbScaled);
+    }
+    
     // Final display render pass
     Renderer::Txt rgba16 = renderer.createTexture(MTLPixelFormatRGBA16Float,
-        width, height, MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+        [rgb width], [rgb height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     renderer.render("CFAViewer::Shader::ImagePipeline::Display", rgba16,
         // Texture args
         rgb
@@ -268,7 +261,7 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     
     const fs::path pngPath = fs::path(path).replace_extension(".png");
     std::cout << pngPath << "\n";
-    writePNG(rgba16, pngPath);
+    writePNG(renderer, rgba16, pngPath);
 }
 
 static bool isCFAFile(const fs::path& path) {
@@ -277,7 +270,7 @@ static bool isCFAFile(const fs::path& path) {
 
 int main(int argc, const char* argv[]) {
     argc = 2;
-    argv = (const char*[]){"", "/Users/dave/Desktop/indoor_night2_132.cfa"};
+    argv = (const char*[]){"", "/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker-Small"};
     
     const uint32_t Width = 2304;
     const uint32_t Height = 1296;

@@ -468,6 +468,13 @@ fragment float4 DisplayR(
     return float4(c, c, c, 1);
 }
 
+fragment float4 Scale(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    return float4(txt.sample({filter::linear}, in.posUnit).rgb, 1);
+}
+
 } // namespace ImagePipeline
 } // namespace Shader
 } // namespace CFAViewer
