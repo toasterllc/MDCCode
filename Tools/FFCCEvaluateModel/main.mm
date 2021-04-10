@@ -34,7 +34,7 @@ struct FFCCModel {
 
 template <typename T, size_t H, size_t W, size_t Depth>
 bool _equal(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
-    constexpr double Eps = 1e-6;
+    constexpr double Eps = 1e-5;
     for (size_t z=0; z<Depth; z++) {
         for (size_t i=0; i<H*W; i++) {
             if (std::abs(a[z].vals[i] - b[z].vals[i]) > Eps) {
@@ -586,6 +586,44 @@ static void writePNG(Renderer& renderer, id<MTLTexture> txt, const fs::path& pat
     CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
 }
 
+template <typename T, size_t H, size_t W, size_t Depth>
+struct MatImage { Mat<T,H,W> c[Depth]; };
+
+template <typename T, size_t H, size_t W, size_t Depth>
+using MatImagePtr = std::unique_ptr<MatImage<T,H,W,Depth>>;
+
+template <typename T, size_t H, size_t W, size_t Depth>
+MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> txt) {
+    assert([txt height] == H);
+    assert([txt width] == W);
+    
+    using Sample = uint16_t; // Only support 16-bit samples for now
+    const MTLPixelFormat fmt = [txt pixelFormat];
+    const size_t bytesPerSample = Renderer::BytesPerSample(fmt);
+    assert(bytesPerSample == sizeof(Sample));
+    const size_t samplesPerPixel = Renderer::SamplesPerPixel(fmt);
+    const size_t sampleCount = samplesPerPixel*W*H;
+    auto samples = std::make_unique<Sample[]>(sampleCount);
+    renderer.textureRead(txt, samples.get(), sampleCount);
+    
+    auto matImage = std::make_unique<MatImage<T,H,W,Depth>>();
+    for (int y=0; y<H; y++) {
+        for (int x=0; x<W; x++) {
+            for (int c=0; c<samplesPerPixel; c++) {
+                if (c < Depth) {
+                    if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+                        matImage->c[c].at(y,x) = (T)samples[samplesPerPixel*(y*W+x) + c] /
+                            std::numeric_limits<Sample>::max();
+                    } else {
+                        matImage->c[c].at(y,x) = samples[samplesPerPixel*(y*W+x) + c];
+                    }
+                }
+            }
+        }
+    }
+    return matImage;
+}
+
 int main(int argc, const char* argv[]) {
     Renderer renderer;
     {
@@ -605,24 +643,106 @@ int main(int argc, const char* argv[]) {
     assert(img.height == H);
     assert(img.width == W);
     
-    struct ImageChannels { Mat<double,H,W> c[3]; };
-    auto im_channels1 = std::make_unique<ImageChannels>();
-    for (int y=0; y<H; y++) {
-        for (int x=0; x<W; x++) {
-            const double r = (double)img.sample(y,x,0) / 0xFFFF;
-            const double g = (double)img.sample(y,x,1) / 0xFFFF;
-            const double b = (double)img.sample(y,x,2) / 0xFFFF;
-            const bool valid = (r>0 && g>0 && b>0);
-            im_channels1->c[0].at(y,x) = (valid ? r : 0);
-            im_channels1->c[1].at(y,x) = (valid ? g : 0);
-            im_channels1->c[2].at(y,x) = (valid ? b : 0);
-        }
-    }
+    // Create a texture and load it with the data from `img`
+    Renderer::Txt imgTxt = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+    renderer.textureWrite(imgTxt, img.data, img.samplesPerPixel);
+    
+    Renderer::Txt maskTxt = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
+    renderer.render("CreateMask", maskTxt,
+        // Texture args
+        imgTxt
+    );
+    
+    Renderer::Txt imgMaskedTxt = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+    renderer.render("ApplyMask", imgMaskedTxt,
+        // Texture args
+        imgTxt,
+        maskTxt
+    );
+    
+    // Perform 'MaskedLocalAbsoluteDeviation'
+    Renderer::Txt imgAbsDevTxt = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+    renderer.render("MaskedLocalAbsoluteDeviation", imgAbsDevTxt,
+        // Texture args
+        imgTxt,
+        maskTxt
+    );
+    
+    renderer.sync(imgMaskedTxt);
+    renderer.sync(imgAbsDevTxt);
+    renderer.commitAndWait();
+    
+    auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, imgMaskedTxt);
     assert(equal(W_FI, im_channels1->c, "im_channels1"));
     
+//    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/test.png");
+//    exit(0);
     
+    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDevTxt);
+    assert(equal(W_FI, im_channels2->c, "im_channels2"));
+    
+//    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
+//    load(W_FI, "im_channels2", their_im_channels2->c);
+//    
+//    double maxDiff = 0;
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            for (int c=0; c<3; c++) {
+//                const double ours = im_channels2->c[c].at(y,x);
+//                const double theirs = their_im_channels2->c[c].at(y,x);
+//                const double diff = std::abs(ours-theirs);
+//                maxDiff = std::max(maxDiff, diff);
+//            }
+//        }
+//    }
+//    
+//    printf("maxDiff: %f\n", maxDiff);
+    
+    
+    
+//    constexpr size_t len = 4*W*H;
+//    auto imageData = std::make_unique<uint16_t[]>(len);
+//    renderer.textureRead(imgTxt, imageData.get(), len);
+//    
+//    struct ImageChannels { Mat<double,H,W> c[3]; };
+//    auto im_channels1 = std::make_unique<ImageChannels>();
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            for (int c=0; c<3; c++) {
+//                im_channels1->c[c].at(y,x) = 0;
+//            }
+//        }
+//    }
+//    
+//    writePNG(renderer, imgTxt, "/Users/dave/Desktop/test.png");
     
     exit(0);
+    
+    
+    
+    
+    
+    
+    
+//    struct ImageChannels { Mat<double,H,W> c[3]; };
+//    auto im_channels1 = std::make_unique<ImageChannels>();
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            const double r = (double)img.sample(y,x,0) / 0xFFFF;
+//            const double g = (double)img.sample(y,x,1) / 0xFFFF;
+//            const double b = (double)img.sample(y,x,2) / 0xFFFF;
+//            const bool valid = (r>0 && g>0 && b>0);
+//            im_channels1->c[0].at(y,x) = (valid ? r : 0);
+//            im_channels1->c[1].at(y,x) = (valid ? g : 0);
+//            im_channels1->c[2].at(y,x) = (valid ? b : 0);
+//        }
+//    }
+//    assert(equal(W_FI, im_channels1->c, "im_channels1"));
+//    
+//    auto im_channels2 = std::make_unique<ImageChannels>();
+//    
+//    
+//    exit(0);
     
 //    auto their_im_channels1 = std::make_unique<ImageChannels>();
 //    load(W_FI, "im_channels1", their_im_channels1->c);
