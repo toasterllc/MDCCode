@@ -673,8 +673,6 @@ uint32_t binForPos(uint32_t binCount, uint32_t y, uint32_t x) {
     return x*binCount + y; // Column-major layout
 }
 
-int calcXIter = 1;
-
 Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MTLTexture> mask) {
     Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcU", u,
@@ -747,25 +745,12 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
         binsBuf
     );
     
-    {
-        renderer.sync(Xc);
-        renderer.commitAndWait();
-        auto ours = MatImageFromTexture<double,64,64,1>(renderer, Xc);
-        
-        std::string varName("X"+std::to_string(calcXIter)+"_unnorm");
-        
-        assert(equal(W_FI, ours->c, varName.c_str()));
-//        printf("%s\n", ours->c[0].str().c_str());
-    }
-    
     renderer.render("NormalizeHistogram", Xc,
         // Buffer args
         validPixelCountBuf,
         // Texture args
         Xc
     );
-    
-//    exit(0);
     
     Renderer::Txt XcTransposed = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
     renderer.render("Transpose", XcTransposed,
@@ -784,14 +769,6 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     // in column-major order. (If we didn't transpose it, it would be in row-major
     // order, since that's how textures are normally laid out...)
     std::copy(histFloats.begin(), histFloats.end(), hist->vals);
-    
-    {
-        std::string varName("X"+std::to_string(calcXIter));
-        assert(equal(W_FI, *hist, varName.c_str()));
-//        printf("%s\n", ours->c[0].str().c_str());
-    }
-    
-    calcXIter++;
     return hist;
 }
 
@@ -827,13 +804,11 @@ void featurizeImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> i
     auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDev);
     assert(equal(W_FI, im_channels2->c, "im_channels2"));
     
-    calcXIter = 1;
     Mat64Ptr X1 = calcX(model, renderer, imgMasked, mask);
-//    assert(equal(W_FI, *X1, "X1")); // Compare MATLAB version of the histogram
+    assert(equal(W_FI, *X1, "X1")); // Compare MATLAB version of the histogram
     
-    calcXIter = 2;
     Mat64Ptr X2 = calcX(model, renderer, imgAbsDev, mask);
-//    assert(equal(W_FI, *X2, "X2")); // Compare MATLAB version of the histogram
+    assert(equal(W_FI, *X2, "X2")); // Compare MATLAB version of the histogram
 }
 
 int main(int argc, const char* argv[]) {
