@@ -14,6 +14,8 @@ using Mat64 = Mat<double,64,64>;
 using Mat64i = Mat<uint32_t,64,64>;
 using Mat64c = Mat<std::complex<double>,64,64>;
 
+using Mat64Ptr = std::unique_ptr<Mat64>;
+
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
 MATFile* W_FBVM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FitBivariateVonMises.mat", "r");
 
@@ -651,7 +653,7 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
     return matImage;
 }
 
-void calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MTLTexture> mask) {
+Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MTLTexture> mask) {
     Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcU", u,
         // Texture args
@@ -664,71 +666,103 @@ void calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MT
         txt
     );
     
+    using ValidPixelCount = uint32_t;
+    Renderer::Buf validPixelCountBuf = renderer.createBuffer(sizeof(ValidPixelCount), MTLResourceStorageModeManaged);
+    memset([validPixelCountBuf contents], 0, sizeof(ValidPixelCount));
     Renderer::Txt maskUV = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
     {
         const float thresh = model.params.histogram.minIntensity;
         renderer.render("CalcMaskUV", maskUV,
             // Buffer args
             thresh,
+            validPixelCountBuf,
             // Texture args
             txt,
             mask
         );
     }
     
-    {
-        const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
-        const float binSize = model.params.histogram.binSize;
-        const float binMin = model.params.histogram.startingUV;
-        renderer.render("CalcBinUV", u,
-            // Buffer args
-            binCount,
-            binSize,
-            binMin,
-            // Texture args
-            u
-        );
-        
-        renderer.sync(u);
-        renderer.commitAndWait();
-        
-        renderer.render("CalcBinUV", v,
-            // Buffer args
-            binCount,
-            binSize,
-            binMin,
-            // Texture args
-            v
-        );
-        
-        const size_t binsBufCount = binCount*binCount;
-        const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
-        Renderer::Buf binsBuf = renderer.createBuffer(binsBufLen, MTLResourceStorageModeManaged);
-        memset([binsBuf contents], 0, binsBufLen);
-        
-        renderer.render("CalcHistogram", W, H,
-            // Buffer args
-            binCount,
-            binsBuf,
-            // Texture args
-            u,
-            v,
-            maskUV
-        );
-        
-        renderer.sync(binsBuf);
-        renderer.commitAndWait();
-        
-        // Convert integer histogram to double histogram, to match MATLAB version
-        const uint32_t* histInts = (uint32_t*)[binsBuf contents];
-        auto hist = std::make_unique<Mat64>();
-        static_assert(sizeof(*histInts) == sizeof(std::atomic_uint));
-        assert(binsBufCount == std::size(hist->vals));
-        std::copy(histInts, histInts+binsBufCount, hist->vals);
-        
-        // Compare MATLAB version of the histogram
-        assert(equal(W_FI, *hist, "Xctmp"));
-    }
+    const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
+    const float binSize = model.params.histogram.binSize;
+    const float binMin = model.params.histogram.startingUV;
+    renderer.render("CalcBinUV", u,
+        // Buffer args
+        binCount,
+        binSize,
+        binMin,
+        // Texture args
+        u
+    );
+    
+    renderer.render("CalcBinUV", v,
+        // Buffer args
+        binCount,
+        binSize,
+        binMin,
+        // Texture args
+        v
+    );
+    
+    const size_t binsBufCount = binCount*binCount;
+    const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
+    Renderer::Buf binsBuf = renderer.createBuffer(binsBufLen, MTLResourceStorageModeManaged);
+    memset([binsBuf contents], 0, binsBufLen);
+    
+    renderer.render("CalcHistogram", W, H,
+        // Buffer args
+        binCount,
+        binsBuf,
+        // Texture args
+        u,
+        v,
+        maskUV
+    );
+    
+    Renderer::Txt Xc = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
+    renderer.render("NormalizeHistogram", Xc,
+        // Buffer args
+        binCount,
+        validPixelCountBuf,
+        binsBuf
+    );
+    
+    Renderer::Txt XcTransposed = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
+    renderer.render("Transpose", XcTransposed,
+        // Texture args
+        Xc
+    );
+    
+//    renderer.sync(maskedCountBuf);
+    renderer.sync(XcTransposed);
+    renderer.commitAndWait();
+    
+    // Convert integer histogram to double histogram, to match MATLAB version
+    auto histFloats = renderer.textureRead<float>(XcTransposed);
+    auto hist = std::make_unique<Mat64>();
+    // Copy the floats into the matrix
+    // The source matrix (XcTransposed) is transposed, so the data is already
+    // in column-major order. (If we didn't transpose it, it would be in row-major
+    // order, since that's how textures are normally laid out...)
+    std::copy(histFloats.begin(), histFloats.end(), hist->vals);
+    
+    printf("hist=%s\n",hist->str().c_str());
+//    exit(0);
+    
+//    const float* histFloats = (uint32_t*)[binsBuf contents];
+//    auto hist = std::make_unique<Mat64>();
+//    static_assert(sizeof(*histInts) == sizeof(std::atomic_uint));
+//    assert(binsBufCount == std::size(hist->vals));
+//    std::copy(histInts, histInts+binsBufCount, hist->vals);
+    
+    
+//    const MaskedCount maskedCount = *(MaskedCount*)[maskedCountBuf contents];
+//    // Convert integer histogram to double histogram, to match MATLAB version
+//    const uint32_t* histInts = (uint32_t*)[binsBuf contents];
+//    auto hist = std::make_unique<Mat64>();
+//    static_assert(sizeof(*histInts) == sizeof(std::atomic_uint));
+//    assert(binsBufCount == std::size(hist->vals));
+//    std::copy(histInts, histInts+binsBufCount, hist->vals);
+    return hist;
 }
 
 void featurizeImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
@@ -763,7 +797,10 @@ void featurizeImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> i
     auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDev);
     assert(equal(W_FI, im_channels2->c, "im_channels2"));
     
-    calcX(model, renderer, imgMasked, mask);
+    Mat64Ptr X1 = calcX(model, renderer, imgMasked, mask);
+    // Compare MATLAB version of the histogram
+    assert(equal(W_FI, *X1, "X1"));
+    
 //    calcX(model, renderer, imgAbsDev, mask);
 }
 

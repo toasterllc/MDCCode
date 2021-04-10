@@ -97,6 +97,7 @@ fragment float CalcV(
 
 fragment float CalcMaskUV(
     constant float& thresh [[buffer(0)]],
+    device atomic_uint* validPixelCount [[buffer(1)]],
     texture2d<float> img [[texture(0)]],
     texture2d<float> mask [[texture(1)]],
     VertexOutput in [[stage_in]]
@@ -106,6 +107,7 @@ fragment float CalcMaskUV(
     if (sm == 0) return 0;
     const float3 si = Sample::RGB(img, pos);
     if (si.r<thresh || si.g<thresh || si.b<thresh) return 0;
+    atomic_fetch_add_explicit(validPixelCount, 1, memory_order_relaxed);
     return 1;
 }
 
@@ -121,6 +123,10 @@ fragment float CalcBinUV(
     return 1 + Mod(round((s-binMin)/binSize), (float)binCount);
 }
 
+uint32_t binForPos(uint32_t binCount, uint32_t y, uint32_t x) {
+    return x*binCount + y; // Column-major layout
+}
+
 fragment void CalcHistogram(
     constant uint32_t& binCount [[buffer(0)]],
     device atomic_uint* bins [[buffer(1)]],
@@ -133,10 +139,30 @@ fragment void CalcHistogram(
     const float m = Sample::R(mask, pos);
     // Ignore this pixel if it's masked
     if (m == 0) return;
-    const uint32_t y = round(Sample::R(u, pos));
-    const uint32_t x = round(Sample::R(v, pos));
-    const uint32_t i = (x-1)*binCount + (y-1); // Column-major index into `bins`
-    atomic_fetch_add_explicit(&bins[i], 1, memory_order_relaxed);
+    const uint32_t y = round(Sample::R(u, pos))-1;
+    const uint32_t x = round(Sample::R(v, pos))-1;
+    const uint32_t bin = binForPos(binCount, y, x);
+    atomic_fetch_add_explicit(&bins[bin], 1, memory_order_relaxed);
+}
+
+fragment float NormalizeHistogram(
+    constant uint32_t& binCount [[buffer(0)]],
+    constant uint32_t& validPixelCount [[buffer(1)]],
+    constant uint32_t* bins [[buffer(2)]],
+    VertexOutput in [[stage_in]]
+) {
+    constexpr float Eps = 1e-6;
+    const int2 pos = int2(in.pos.xy);
+    const uint32_t bin = binForPos(binCount, pos.y, pos.x);
+    return (float)bins[bin];// / max(Eps, (float)validPixelCount);
+}
+
+fragment float Transpose(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    return Sample::R(txt, pos.yx);
 }
 
 //fragment float CreateUVMask(
