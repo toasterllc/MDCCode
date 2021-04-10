@@ -599,6 +599,7 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
     
     using Sample = uint16_t; // Only support 16-bit samples for now
     const MTLPixelFormat fmt = [txt pixelFormat];
+    assert(fmt==MTLPixelFormatR16Unorm || fmt==MTLPixelFormatRGBA16Unorm);
     const size_t bytesPerSample = Renderer::BytesPerSample(fmt);
     assert(bytesPerSample == sizeof(Sample));
     const size_t samplesPerPixel = Renderer::SamplesPerPixel(fmt);
@@ -665,55 +666,71 @@ int main(int argc, const char* argv[]) {
     
     
     
-    
-    Renderer::Txt newImpl = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
-    renderer.render("LocalAbsoluteDeviationVal", newImpl,
-        imgTxt,
+    Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR32Float, W, H);
+    renderer.render("LocalAbsoluteDeviationCoeff", coeff,
         maskTxt
     );
     
-    
-//    renderer.sync(newImpl);
-//    renderer.commitAndWait();
-//    writePNG(renderer, newImpl, "/Users/dave/Desktop/newImpl.png");
-//    exit(0);
-    
-//    renderer.render("ApplyMask", imgAbsDevTxt,
-//        imgAbsDevTxt,
-//        maskTxt
-//    );
-//    
-//    Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR16Unorm, W, H);
-//    renderer.render("LocalAbsoluteDeviationCoeff", coeff,
-//        maskTxt
-//    );
-//    
-//    renderer.render("LocalAbsoluteDeviationX", imgAbsDevTxt,
-//        coeff,
-//        imgAbsDevTxt
-//    );
-    
-    // Perform 'MaskedLocalAbsoluteDeviation'
-    Renderer::Txt expected = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
-    renderer.render("MaskedLocalAbsoluteDeviation", expected,
-        // Texture args
+    Renderer::Txt imgAbsDevTxt = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+    renderer.render("LocalAbsoluteDeviation", imgAbsDevTxt,
         imgTxt,
-        maskTxt
+        maskTxt,
+        coeff
     );
     
-    renderer.sync(newImpl);
-    renderer.sync(expected);
+//    // Perform 'MaskedLocalAbsoluteDeviation'
+//    Renderer::Txt expected = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+//    renderer.render("MaskedLocalAbsoluteDeviation", expected,
+//        // Texture args
+//        imgTxt,
+//        maskTxt
+//    );
+    
+    renderer.sync(imgAbsDevTxt);
+//    renderer.sync(expected);
     renderer.commitAndWait();
     
-    std::vector<uint16_t> newImplSamples = renderer.textureRead<uint16_t>(newImpl);
-    std::vector<uint16_t> expectedSamples = renderer.textureRead<uint16_t>(expected);
-    assert(newImplSamples.size() == expectedSamples.size());
-    for (size_t i=0; i<newImplSamples.size(); i++) {
-        assert(newImplSamples[i] == expectedSamples[i]);
-    }
     
-    writePNG(renderer, expected, "/Users/dave/Desktop/expected.png");
-    exit(0);
+//    std::vector<uint16_t> imgAbsDevTxtSamples = renderer.textureRead<uint16_t>(imgAbsDevTxt);
+//    std::vector<uint16_t> expectedSamples = renderer.textureRead<uint16_t>(expected);
+//    assert(imgAbsDevTxtSamples.size() == expectedSamples.size());
+//    for (size_t i=0; i<imgAbsDevTxtSamples.size(); i++) {
+//        assert(imgAbsDevTxtSamples[i] == expectedSamples[i]);
+//    }
+//    exit(0);
+    
+    
+//    auto imgAbsDevTxtMat = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDevTxt);
+//    auto expectedMat = MatImageFromTexture<double,H,W,3>(renderer, expected);
+//    double maxDiff = 0;
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            for (int c=0; c<3; c++) {
+//                const double a = imgAbsDevTxtMat->c[c].at(y,x);
+//                const double b = expectedMat->c[c].at(y,x);
+//                const double diff = std::abs(a-b);
+////                if (diff > 1e-1) printf("(%d %d) %f %f\n", y,x,a,b);
+////                if (diff > maxDiff) printf("(%d %d) %f %f\n", y,x,a,b);
+//                maxDiff = std::max(maxDiff, diff);
+//            }
+//        }
+//    }
+//    
+//    printf("maxDiff: %f\n", maxDiff);
+//    exit(0);
+    
+    
+    
+//    std::vector<uint16_t> imgAbsDevTxtSamples = renderer.textureRead<uint16_t>(imgAbsDevTxt);
+//    std::vector<uint16_t> expectedSamples = renderer.textureRead<uint16_t>(expected);
+//    assert(imgAbsDevTxtSamples.size() == expectedSamples.size());
+//    for (size_t i=0; i<imgAbsDevTxtSamples.size(); i++) {
+//        assert(imgAbsDevTxtSamples[i] == expectedSamples[i]);
+//    }
+    
+//    writePNG(renderer, expected, "/Users/dave/Desktop/imgAbsDevTxt.png");
+//    writePNG(renderer, expected, "/Users/dave/Desktop/expected.png");
+//    exit(0);
     
 //    renderer.sync(imgMaskedTxt);
 //    renderer.sync(imgAbsDevTxt);
@@ -723,25 +740,26 @@ int main(int argc, const char* argv[]) {
 //    assert(equal(W_FI, im_channels1->c, "im_channels1"));
 //    
 //    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/imgAbsDevTxt.png");
-//    
-//    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDevTxt);
-//    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
-//    load(W_FI, "im_channels2", their_im_channels2->c);
-//    
-//    double maxDiff = 0;
-//    for (int y=0; y<H; y++) {
-//        for (int x=0; x<W; x++) {
-//            for (int c=0; c<3; c++) {
-//                const double ours = im_channels2->c[c].at(y,x);
-//                const double theirs = their_im_channels2->c[c].at(y,x);
-//                const double diff = std::abs(ours-theirs);
-//                maxDiff = std::max(maxDiff, diff);
-//            }
-//        }
-//    }
-//    
-//    printf("maxDiff: %f\n", maxDiff);
-//    exit(0);
+    
+    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDevTxt);
+    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
+    load(W_FI, "im_channels2", their_im_channels2->c);
+    
+    double maxDiff = 0;
+    for (int y=0; y<H; y++) {
+        for (int x=0; x<W; x++) {
+            for (int c=0; c<3; c++) {
+                const double a = im_channels2->c[c].at(y,x);
+                const double b = their_im_channels2->c[c].at(y,x);
+                const double diff = std::abs(a-b);
+//                if (diff > 1e-5) printf("(%d %d) %f %f\n", y,x,a,b);
+                maxDiff = std::max(maxDiff, diff);
+            }
+        }
+    }
+    
+    printf("maxDiff: %f\n", maxDiff);
+    exit(0);
 //    assert(equal(W_FI, im_channels2->c, "im_channels2"));
     
 //    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
