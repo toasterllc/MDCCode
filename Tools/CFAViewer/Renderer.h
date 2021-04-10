@@ -301,6 +301,20 @@ namespace CFAViewer {
         
         // Read samples from a texture
         template <typename T>
+        std::vector<T> textureRead(id<MTLTexture> txt) {
+            const size_t w = [txt width];
+            const size_t h = [txt height];
+            const MTLPixelFormat fmt = [txt pixelFormat];
+            const size_t samplesPerPixel = SamplesPerPixel(fmt);
+            const size_t len = samplesPerPixel*w*h;
+            std::vector<T> r;
+            r.resize(len);
+            textureRead(txt, r.data(), len);
+            return r;
+        }
+        
+        // Read samples from a texture
+        template <typename T>
         void textureRead(id<MTLTexture> txt, T* samples, size_t cap) {
             const size_t w = [txt width];
             const size_t h = [txt height];

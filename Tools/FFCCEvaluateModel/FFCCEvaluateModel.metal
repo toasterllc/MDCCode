@@ -46,11 +46,13 @@ fragment float4 LocalAbsoluteDeviationVal(
 #define I(x,y) Sample::RGB(img, pos+int2{x,y})
 #define S(x,y) (M(x,y) * abs(I(x,y)-sc))
     const float3 sc = I(0,0);
-    const float3 s = (
+    const float3 s = M(0,0) * (
         S(-1,-1) + S(0,-1) + S(1,-1) +
         S(-1, 0) +         + S(1, 0) +
         S(-1, 1) + S(0, 1) + S(1, 1) );
 #undef S
+#undef I
+#undef M
     return float4(s, 1);
 }
 
@@ -139,7 +141,7 @@ fragment float4 MaskedLocalAbsoluteDeviation(
 #undef M
 #undef S
     
-    return float4(numer/denom, 1);
+    return float4(numer, 1);
 
 //    const float3 num =
 //        abs(PX(-1,-1)-s) + abs(PX( 0,-1)-s) + abs(PX( 1,-1)-s) +

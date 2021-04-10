@@ -666,66 +666,83 @@ int main(int argc, const char* argv[]) {
     
     
     
-    Renderer::Txt imgAbsDevTxt = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
-    renderer.render("LocalAbsoluteDeviationVal", imgAbsDevTxt,
-        imgTxt
+    Renderer::Txt newImpl = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+    renderer.render("LocalAbsoluteDeviationVal", newImpl,
+        imgTxt,
+        maskTxt
     );
+    
+    
+//    renderer.sync(newImpl);
+//    renderer.commitAndWait();
+//    writePNG(renderer, newImpl, "/Users/dave/Desktop/newImpl.png");
+//    exit(0);
     
 //    renderer.render("ApplyMask", imgAbsDevTxt,
 //        imgAbsDevTxt,
 //        maskTxt
 //    );
-    
-    Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR16Unorm, W, H);
-    renderer.render("LocalAbsoluteDeviationCoeff", coeff,
-        maskTxt
-    );
-    
-    renderer.render("LocalAbsoluteDeviationX", imgAbsDevTxt,
-        coeff,
-        imgAbsDevTxt
-    );
-    
-//    // Perform 'MaskedLocalAbsoluteDeviation'
-//    renderer.render("MaskedLocalAbsoluteDeviation", imgAbsDevTxt,
-//        // Texture args
-//        imgTxt,
+//    
+//    Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR16Unorm, W, H);
+//    renderer.render("LocalAbsoluteDeviationCoeff", coeff,
 //        maskTxt
 //    );
 //    
-//    renderer.sync(imgAbsDevTxt);
-//    renderer.commitAndWait();
-//    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/imgAbsDevTxt.png");
-//    exit(0);
+//    renderer.render("LocalAbsoluteDeviationX", imgAbsDevTxt,
+//        coeff,
+//        imgAbsDevTxt
+//    );
     
-    renderer.sync(imgMaskedTxt);
-    renderer.sync(imgAbsDevTxt);
+    // Perform 'MaskedLocalAbsoluteDeviation'
+    Renderer::Txt expected = renderer.createTexture(MTLPixelFormatRGBA16Unorm, W, H);
+    renderer.render("MaskedLocalAbsoluteDeviation", expected,
+        // Texture args
+        imgTxt,
+        maskTxt
+    );
+    
+    renderer.sync(newImpl);
+    renderer.sync(expected);
     renderer.commitAndWait();
     
-    auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, imgMaskedTxt);
-    assert(equal(W_FI, im_channels1->c, "im_channels1"));
-    
-    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/imgAbsDevTxt.png");
-    
-    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDevTxt);
-    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
-    load(W_FI, "im_channels2", their_im_channels2->c);
-    
-    double maxDiff = 0;
-    for (int y=0; y<H; y++) {
-        for (int x=0; x<W; x++) {
-            for (int c=0; c<3; c++) {
-                const double ours = im_channels2->c[c].at(y,x);
-                const double theirs = their_im_channels2->c[c].at(y,x);
-                const double diff = std::abs(ours-theirs);
-                maxDiff = std::max(maxDiff, diff);
-            }
-        }
+    std::vector<uint16_t> newImplSamples = renderer.textureRead<uint16_t>(newImpl);
+    std::vector<uint16_t> expectedSamples = renderer.textureRead<uint16_t>(expected);
+    assert(newImplSamples.size() == expectedSamples.size());
+    for (size_t i=0; i<newImplSamples.size(); i++) {
+        assert(newImplSamples[i] == expectedSamples[i]);
     }
     
-    printf("maxDiff: %f\n", maxDiff);
+    writePNG(renderer, expected, "/Users/dave/Desktop/expected.png");
     exit(0);
-    assert(equal(W_FI, im_channels2->c, "im_channels2"));
+    
+//    renderer.sync(imgMaskedTxt);
+//    renderer.sync(imgAbsDevTxt);
+//    renderer.commitAndWait();
+//    
+//    auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, imgMaskedTxt);
+//    assert(equal(W_FI, im_channels1->c, "im_channels1"));
+//    
+//    writePNG(renderer, imgAbsDevTxt, "/Users/dave/Desktop/imgAbsDevTxt.png");
+//    
+//    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDevTxt);
+//    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
+//    load(W_FI, "im_channels2", their_im_channels2->c);
+//    
+//    double maxDiff = 0;
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            for (int c=0; c<3; c++) {
+//                const double ours = im_channels2->c[c].at(y,x);
+//                const double theirs = their_im_channels2->c[c].at(y,x);
+//                const double diff = std::abs(ours-theirs);
+//                maxDiff = std::max(maxDiff, diff);
+//            }
+//        }
+//    }
+//    
+//    printf("maxDiff: %f\n", maxDiff);
+//    exit(0);
+//    assert(equal(W_FI, im_channels2->c, "im_channels2"));
     
 //    auto their_im_channels2 = std::make_unique<MatImage<double,H,W,3>>();
 //    load(W_FI, "im_channels2", their_im_channels2->c);
@@ -761,9 +778,6 @@ int main(int argc, const char* argv[]) {
 //    }
 //    
 //    writePNG(renderer, imgTxt, "/Users/dave/Desktop/test.png");
-    
-    exit(0);
-    
     
     
     
