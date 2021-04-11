@@ -14,12 +14,13 @@ using Mat64 = Mat<double,64,64>;
 using Mat64i = Mat<uint32_t,64,64>;
 using Mat64c = Mat<std::complex<double>,64,64>;
 
-using Mat64Ptr = std::unique_ptr<Mat64>;
-
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
 MATFile* W_FBVM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FitBivariateVonMises.mat", "r");
 
 MATFile* W_FI = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FeaturizeImage.mat", "r");
+MATFile* W_PTD = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-PrecomputeTrainingData.mat", "r");
+MATFile* W_CV = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-CrossValidate.mat", "r");
+
 
 struct FFCCModel {
     struct Params {
@@ -41,30 +42,37 @@ struct FFCCModel {
 };
 
 template <typename T, size_t H, size_t W, size_t Depth>
-bool _equal(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
-    constexpr double Eps = 1e-5;
+double _rmsdiff(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
+    double r = 0;
     for (size_t z=0; z<Depth; z++) {
         for (size_t y=0; y<H; y++) {
             for (size_t x=0; x<W; x++) {
                 const T va = a[z].at(y,x);
                 const T vb = b[z].at(y,x);
-                if (std::abs(va - vb) > Eps) {
-                    std::cout << "(" << y << " " << x << ") " << va << " " << vb << "\n";
-//                    printf("(%zu %zu) %f %f\n", y, x, va, vb);
-//                    abort();
-//                    return false;
-                }
+                const double d = std::abs(va-vb); // Using abs() so that this works on complex numbers
+                r += d*d;
             }
         }
-//        for (size_t i=0; i<H*W; i++) {
-//            if (std::abs(a[z].vals[i] - b[z].vals[i]) > Eps) {
-//                printf("(%d %d) %f %f\n", y,x,a[z].vals[i],b[z].vals[i]);
-//                abort();
-//                return false;
-//            }
-//        }
     }
-    return true;
+    r /= H*W;
+    r = std::sqrt(r);
+    return r;
+}
+
+template <typename T, size_t H, size_t W, size_t Depth>
+double rmsdiff(const Mat<T,H,W> (&a)[Depth], const Mat<T,H,W> (&b)[Depth]) {
+    return _rmsdiff<T,H,W,Depth>(a, b);
+}
+
+template <typename T, size_t H, size_t W>
+double rmsdiff(const Mat<T,H,W>& a, const Mat<T,H,W>& b) {
+    return _rmsdiff<T,H,W,1>(&a, &b);
+}
+
+template <typename T, size_t H, size_t W, size_t Depth>
+bool _equal(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
+    constexpr double Eps = 1e-11;
+    return _rmsdiff<T,H,W,Depth>(a, b) < Eps;
 }
 
 template <typename T, size_t H, size_t W, size_t Depth>
@@ -227,9 +235,8 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     // distribution is very large with respect to the size of the histogram.
     
     Mat<double,H,1> bins;
-    for (size_t i=0; i<bins.Count; i++) {
-        bins[i] = i+1;
-    }
+    size_t i = 1;
+    for (double& x : bins) x = i++;
     
     auto wrap = [](double x) {
         return Mod(x+(H/2)-1, (double)H)+1;
@@ -669,7 +676,7 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
     return matImage;
 }
 
-Mat64Ptr calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+Mat64 calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcU", u,
         // Texture args
@@ -759,12 +766,12 @@ Mat64Ptr calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTextur
     
     // Convert integer histogram to double histogram, to match MATLAB version
     auto histFloats = renderer.textureRead<float>(XcTransposed);
-    auto hist = std::make_unique<Mat64>();
+    Mat64 hist;
     // Copy the floats into the matrix
     // The source matrix (XcTransposed) is transposed, so the data is already
     // in column-major order. (If we didn't transpose it, it would be in row-major
     // order, since that's how textures are normally laid out...)
-    std::copy(histFloats.begin(), histFloats.end(), hist->vals);
+    std::copy(histFloats.begin(), histFloats.end(), hist.vals);
     return hist;
 }
 
@@ -776,11 +783,14 @@ Renderer::Txt createMaskedImage(const FFCCModel& model, Renderer& renderer, id<M
         mask
     );
     
-    renderer.sync(maskedImg);
-    renderer.commitAndWait();
-    
-    auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, maskedImg);
-    assert(equal(W_FI, im_channels1->c, "im_channels1"));
+//    // Compare our result with MATLAB
+//    {
+//        renderer.sync(maskedImg);
+//        renderer.commitAndWait();
+//        
+//        auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, maskedImg);
+//        assert(equal(W_FI, im_channels1->c, "im_channels1"));
+//    }
     
     return maskedImg;
 }
@@ -800,11 +810,15 @@ Renderer::Txt createAbsDevImage(const FFCCModel& model, Renderer& renderer, id<M
         );
     }
     
-    renderer.sync(absDevImage);
-    renderer.commitAndWait();
+//    // Compare our result with MATLAB
+//    {
+//        renderer.sync(absDevImage);
+//        renderer.commitAndWait();
+//        
+//        auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, absDevImage);
+//        assert(equal(W_FI, im_channels2->c, "im_channels2"));
+//    }
     
-    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, absDevImage);
-    assert(equal(W_FI, im_channels2->c, "im_channels2"));
     return absDevImage;
 }
 
@@ -837,8 +851,6 @@ int main(int argc, const char* argv[]) {
         img
     );
     
-    
-    
     FFCCModel model = {
         .params = {
             .hyperparams = {
@@ -859,35 +871,53 @@ int main(int argc, const char* argv[]) {
     Renderer::Txt maskedImg = createMaskedImage(model, renderer, img, mask);
     Renderer::Txt absDevImg = createAbsDevImage(model, renderer, img, mask);
     
+    Mat64 X1 = calcXFromImage(model, renderer, maskedImg, mask);
+    Mat64 X2 = calcXFromImage(model, renderer, absDevImg, mask);
     
-    Mat64Ptr X1 = calcXFromImage(model, renderer, maskedImg, mask);
-    assert(equal(W_FI, *X1, "X1")); // Compare MATLAB version of the histogram
-    
-    Mat64Ptr X2 = calcXFromImage(model, renderer, absDevImg, mask);
-    assert(equal(W_FI, *X2, "X2")); // Compare MATLAB version of the histogram
-    
-    
-//    Mat64 X[2];
-//    load(W_EM, "X", X);
-    
+    // Compare to MATLAB version of X1/X2
     {
-        Mat64 X[2];
-        load(W_EM, "X", X);
-        assert(equal(*X1, X[0]));
-        
-        const Mat64c X_fft[2] = {X[0].fft(), X[1].fft()};
-        assert(equal(W_EM, X_fft, "X_fft"));
+        Mat64 our[2] = {X1,X2};
+        Mat64 their[2];
+        load(W_EM, "X", their);
+        // Our calculation of X differs from MATLAB's version because we use
+        // 32-bit floats (since we use the GPU), while MATLAB uses 64-bit doubles.
+        // So verify that our result matches theirs to close approximation, and then
+        // replace our X with MATLAB's version, so that the rest of our algorithm uses
+        // the same input at MATLAB. (Otherwise the algorithms they diverge further.)
+        assert(rmsdiff(our, their) < 1e-6);
+        X1 = their[0];
+        X2 = their[1];
     }
     
-    const Mat64c X1_fft = X1->fft();
-    const Mat64c X2_fft = X2->fft();
+    Mat64c X1_fft = X1.fft();
+    Mat64c X2_fft = X2.fft();
     
-    const Mat64c X_fft[2] = {X1->fft(), X2->fft()};
-    assert(equal(W_EM, X_fft, "X_fft"));
+    // Compare X1_fft/X2_fft to MATLAB version
+    {
+        Mat64c our[2] = {X1_fft,X2_fft};
+        Mat64c their[2];
+        load(W_EM, "X_fft", their);
+        
+        assert(equal(our, their));
+    }
+    
+    // Compare their_X1.fft()/their_X2.fft() to MATLAB's X1_fft/X2_fft, to compare our
+    // FFT implementation with MATLAB's FFT implementation
+    {
+        Mat64 their_X[2];
+        load(W_EM, "X", their_X);
+        
+        Mat64c our[2] = {their_X[0].fft(),their_X[1].fft()};
+        Mat64c their[2];
+        load(W_EM, "X_fft", their);
+        
+        assert(equal(our, their));
+    }
     
     Mat<double,3,1> illum = ffccEstimateIlluminant(model, X1_fft, X2_fft);
-    printf("%f %f %f\n", illum[0], illum[1], illum[2]);
+    assert(equal(W_CV, illum, "rgb_est"));
     
+    printf("%f %f %f\n", illum[0], illum[1], illum[2]);
     return 0;
     
 //    argc = 2;

@@ -1,6 +1,7 @@
 #pragma once
 #import <Accelerate/Accelerate.h>
 #import <type_traits>
+#import <iostream>
 
 template <typename T, size_t H, size_t W>
 class Mat {
@@ -308,13 +309,13 @@ public:
     T& at(size_t y, size_t x) {
         assert(y < H);
         assert(x < W);
-        return vals[x*H+y]; // `vals` is in colum-major format
+        return vals[x*H+y]; // `vals` is in column-major format
     }
     
     const T& at(size_t y, size_t x) const {
         assert(y < H);
         assert(x < W);
-        return vals[x*H+y]; // `vals` is in colum-major format
+        return vals[x*H+y]; // `vals` is in column-major format
     }
     
     T* col(size_t x) {
@@ -340,6 +341,10 @@ public:
         }
         ss << " ]";
         return ss.str();
+    }
+    
+    void print() {
+        std::cout << str(3) << "\n";
     }
     
     // Solve `Ax=b` for x, where the receiver is A
