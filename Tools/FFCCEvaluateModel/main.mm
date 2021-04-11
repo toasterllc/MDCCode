@@ -285,10 +285,10 @@ static Mat64 softmaxForward(const Mat64& H) {
 
 static Mat<double,3,1> ffccEstimateIlluminant(
     const FFCCModel& model,
-    const Mat64 X[2],
-    const Mat64c X_fft[2]
+    const Mat64c X1_fft,
+    const Mat64c X2_fft
 ) {
-    Mat64c X_fft_Times_F_fft[2] = { X_fft[0].elmMul(model.F_fft[0]), X_fft[1].elmMul(model.F_fft[1]) };
+    Mat64c X_fft_Times_F_fft[2] = { X1_fft.elmMul(model.F_fft[0]), X2_fft.elmMul(model.F_fft[1]) };
     Mat64c FX_fft = X_fft_Times_F_fft[0] + X_fft_Times_F_fft[1];
     assert(equal(W_EM, FX_fft, "FX_fft"));
     
@@ -669,21 +669,17 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
     return matImage;
 }
 
-uint32_t binForPos(uint32_t binCount, uint32_t y, uint32_t x) {
-    return x*binCount + y; // Column-major layout
-}
-
-Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, id<MTLTexture> mask) {
+Mat64Ptr calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcU", u,
         // Texture args
-        txt
+        img
     );
     
     Renderer::Txt v = renderer.createTexture(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcV", v,
         // Texture args
-        txt
+        img
     );
     
     using ValidPixelCount = uint32_t;
@@ -697,7 +693,7 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
             thresh,
             validPixelCountBuf,
             // Texture args
-            txt,
+            img,
             mask
         );
     }
@@ -772,43 +768,38 @@ Mat64Ptr calcX(const FFCCModel& model, Renderer& renderer, id<MTLTexture> txt, i
     return hist;
 }
 
-void featurizeImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
-    Renderer::Txt imgMasked = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
-    renderer.render("ApplyMask", imgMasked,
+Renderer::Txt createMaskedImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+    Renderer::Txt maskedImg = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    renderer.render("ApplyMask", maskedImg,
         // Texture args
         img,
         mask
     );
     
-    Renderer::Txt imgAbsDev = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, maskedImg);
+    assert(equal(W_FI, im_channels1->c, "im_channels1"));
+    
+    return maskedImg;
+}
+
+Renderer::Txt createAbsDevImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+    Renderer::Txt absDevImage = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
     {
         Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR32Float, W, H);
         renderer.render("LocalAbsoluteDeviationCoeff", coeff,
             mask
         );
         
-        renderer.render("LocalAbsoluteDeviation", imgAbsDev,
+        renderer.render("LocalAbsoluteDeviation", absDevImage,
             img,
             mask,
             coeff
         );
     }
     
-    renderer.sync(imgMasked);
-    renderer.sync(imgAbsDev);
-    renderer.commitAndWait();
-    
-    auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, imgMasked);
-    assert(equal(W_FI, im_channels1->c, "im_channels1"));
-    
-    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, imgAbsDev);
+    auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, absDevImage);
     assert(equal(W_FI, im_channels2->c, "im_channels2"));
-    
-    Mat64Ptr X1 = calcX(model, renderer, imgMasked, mask);
-    assert(equal(W_FI, *X1, "X1")); // Compare MATLAB version of the histogram
-    
-    Mat64Ptr X2 = calcX(model, renderer, imgAbsDev, mask);
-    assert(equal(W_FI, *X2, "X2")); // Compare MATLAB version of the histogram
+    return absDevImage;
 }
 
 int main(int argc, const char* argv[]) {
@@ -859,16 +850,27 @@ int main(int argc, const char* argv[]) {
     load(W_EM, "F_fft", model.F_fft);
     load(W_EM, "B", model.B);
     
-    featurizeImage(model, renderer, img, mask);
+    Renderer::Txt maskedImg = createMaskedImage(model, renderer, img, mask);
+    Renderer::Txt absDevImg = createAbsDevImage(model, renderer, img, mask);
     
     
-    Mat64 X[2];
-    load(W_EM, "X", X);
+    Mat64Ptr X1 = calcXFromImage(model, renderer, maskedImg, mask);
+    assert(equal(W_FI, *X1, "X1")); // Compare MATLAB version of the histogram
     
-    const Mat64c X_fft[2] = {X[0].fft(), X[1].fft()};
+    Mat64Ptr X2 = calcXFromImage(model, renderer, absDevImg, mask);
+    assert(equal(W_FI, *X2, "X2")); // Compare MATLAB version of the histogram
+    
+    
+//    Mat64 X[2];
+//    load(W_EM, "X", X);
+    
+    const Mat64c X1_fft = X1->fft();
+    const Mat64c X2_fft = X2->fft();
+    
+    const Mat64c X_fft[2] = {X1->fft(), X2->fft()};
     assert(equal(W_EM, X_fft, "X_fft"));
     
-    Mat<double,3,1> illum = ffccEstimateIlluminant(model, X, X_fft);
+    Mat<double,3,1> illum = ffccEstimateIlluminant(model, X1_fft, X2_fft);
     printf("%f %f %f\n", illum[0], illum[1], illum[2]);
     
     return 0;
