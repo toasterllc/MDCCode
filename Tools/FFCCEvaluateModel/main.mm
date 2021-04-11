@@ -178,7 +178,7 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     const double angleStep = (2*M_PI) / n;
     Mat<double,H,1> angles;
     double angle = 0;
-    for (double& x : angles.vals) {
+    for (double& x : angles) {
         x = angle;
         angle += angleStep;
     }
@@ -197,7 +197,7 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     
     Mat<double,H,1> sinAngles;
     Mat<double,H,1> cosAngles;
-    for (size_t i=0; i<std::size(angles.vals); i++) {
+    for (size_t i=0; i<angles.Count; i++) {
         sinAngles[i] = sin(angles[i]);
         cosAngles[i] = cos(angles[i]);
     }
@@ -227,7 +227,7 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     // distribution is very large with respect to the size of the histogram.
     
     Mat<double,H,1> bins;
-    for (size_t i=0; i<std::size(bins.vals); i++) {
+    for (size_t i=0; i<bins.Count; i++) {
         bins[i] = i+1;
     }
     
@@ -237,7 +237,7 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     
     Mat<double,H,1> wrapped1;
     Mat<double,H,1> wrapped2;
-    for (size_t i=0; i<std::size(wrapped1.vals); i++) {
+    for (size_t i=0; i<wrapped1.Count; i++) {
         wrapped1[i] = wrap(bins[i]-round(mu[0]));
         wrapped2[i] = wrap(bins[i]-round(mu[1]));
     }
@@ -273,11 +273,11 @@ static Mat64 softmaxForward(const Mat64& H) {
     Mat64 r = H;
     // Find the max value in `r`
     double maxVal = -INFINITY;
-    for (double x : r.vals) maxVal = std::max(maxVal, x);
+    for (double x : r) maxVal = std::max(maxVal, x);
     // Subtract `maxVal` from every element
     r -= maxVal;
     // Raise e to each element in `r`
-    for (double& x : r.vals) x = std::exp(x);
+    for (double& x : r) x = std::exp(x);
     // Normalize `r` using its sum
     r /= r.sum();
     return r;
@@ -294,7 +294,7 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     
     Mat64c FXc = FX_fft.ifft();
     Mat64 FX;
-    for (size_t i=0; i<std::size(FXc.vals); i++) {
+    for (size_t i=0; i<FXc.Count; i++) {
         FX.vals[i] = FXc.vals[i].real();
     }
     assert(equal(W_EM, FX, "FX"));
@@ -776,6 +776,9 @@ Renderer::Txt createMaskedImage(const FFCCModel& model, Renderer& renderer, id<M
         mask
     );
     
+    renderer.sync(maskedImg);
+    renderer.commitAndWait();
+    
     auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, maskedImg);
     assert(equal(W_FI, im_channels1->c, "im_channels1"));
     
@@ -796,6 +799,9 @@ Renderer::Txt createAbsDevImage(const FFCCModel& model, Renderer& renderer, id<M
             coeff
         );
     }
+    
+    renderer.sync(absDevImage);
+    renderer.commitAndWait();
     
     auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, absDevImage);
     assert(equal(W_FI, im_channels2->c, "im_channels2"));
@@ -863,6 +869,15 @@ int main(int argc, const char* argv[]) {
     
 //    Mat64 X[2];
 //    load(W_EM, "X", X);
+    
+    {
+        Mat64 X[2];
+        load(W_EM, "X", X);
+        assert(equal(*X1, X[0]));
+        
+        const Mat64c X_fft[2] = {X[0].fft(), X[1].fft()};
+        assert(equal(W_EM, X_fft, "X_fft"));
+    }
     
     const Mat64c X1_fft = X1->fft();
     const Mat64c X2_fft = X2->fft();
