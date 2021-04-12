@@ -7,12 +7,11 @@
 #import "Mod.h"
 #import "Renderer.h"
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
+#import "FFCC.h"
+#import "FFCCTrainedModel.h"
 using namespace CFAViewer;
+using namespace FFCC;
 namespace fs = std::filesystem;
-
-using Mat64 = Mat<double,64,64>;
-using Mat64i = Mat<uint32_t,64,64>;
-using Mat64c = Mat<std::complex<double>,64,64>;
 
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
 MATFile* W_FBVM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FitBivariateVonMises.mat", "r");
@@ -20,26 +19,6 @@ MATFile* W_FBVM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEval
 MATFile* W_FI = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FeaturizeImage.mat", "r");
 MATFile* W_PTD = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-PrecomputeTrainingData.mat", "r");
 MATFile* W_CV = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-CrossValidate.mat", "r");
-
-
-struct FFCCModel {
-    struct Params {
-        struct {
-            double vonMisesDiagonalEps = 0;
-        } hyperparams;
-        
-        struct {
-            size_t binCount = 0;
-            double binSize = 0;
-            double startingUV = 0;
-            double minIntensity = 0;
-        } histogram;
-    };
-    
-    Params params;
-    Mat64c F_fft[2];
-    Mat64 B;
-};
 
 template <typename T, size_t H, size_t W, size_t Depth>
 double _rmsdiff(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
@@ -157,7 +136,7 @@ struct VecSigma {
     Mat<double,2,2> sigma;
 };
 
-static VecSigma UVFromIdx(const FFCCModel& model, const VecSigma& idx) {
+static VecSigma UVFromIdx(const Model& model, const VecSigma& idx) {
     return VecSigma{
         .vec = ((idx.vec-1)*model.params.histogram.binSize) + model.params.histogram.startingUV,
         .sigma = idx.sigma * (model.params.histogram.binSize * model.params.histogram.binSize),
@@ -291,7 +270,7 @@ static Mat64 softmaxForward(const Mat64& H) {
 }
 
 static Mat<double,3,1> ffccEstimateIlluminant(
-    const FFCCModel& model,
+    const Model& model,
     const Mat64c X1_fft,
     const Mat64c X2_fft
 ) {
@@ -676,7 +655,7 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
     return matImage;
 }
 
-Mat64 calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+Mat64 calcXFromImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcU", u,
         // Texture args
@@ -775,7 +754,7 @@ Mat64 calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> 
     return hist;
 }
 
-Renderer::Txt createMaskedImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+Renderer::Txt createMaskedImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt maskedImg = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
     renderer.render("ApplyMask", maskedImg,
         // Texture args
@@ -795,7 +774,7 @@ Renderer::Txt createMaskedImage(const FFCCModel& model, Renderer& renderer, id<M
     return maskedImg;
 }
 
-Renderer::Txt createAbsDevImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+Renderer::Txt createAbsDevImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt absDevImage = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
     {
         Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR32Float, W, H);
@@ -820,6 +799,59 @@ Renderer::Txt createAbsDevImage(const FFCCModel& model, Renderer& renderer, id<M
 //    }
     
     return absDevImage;
+}
+
+static void printMat(const Mat64& m) {
+    uint32_t i = 0;
+    printf("{\n");
+    for (auto x : m) {
+        static_assert(sizeof(x) == 8);
+        const uint64_t u = ((uint64_t*)&x)[0];
+        if (i == 0) printf("    ");
+        else        printf(" ");
+        printf("0x%016jx,", (uintmax_t)u);
+        i++;
+        if (i == 4) {
+            printf("\n");
+            i = 0;
+        }
+    }
+    printf("};");
+}
+
+static void printMat(const Mat64c& m) {
+    uint32_t i = 0;
+    printf("{\n");
+    for (auto x : m) {
+        static_assert(sizeof(x) == 16);
+        const uint64_t real = ((uint64_t*)&x)[0];
+        const uint64_t imag = ((uint64_t*)&x)[1];
+        if (i == 0) printf("    ");
+        else        printf(" ");
+        printf("0x%016jx, 0x%016jx,", (uintmax_t)real, (uintmax_t)imag);
+        i++;
+        if (i == 2) {
+            printf("\n");
+            i = 0;
+        }
+    }
+    printf("};");
+}
+
+static void printModel(const Model& m) {
+    printf("const uint64_t F_fft0Vals[%ju] = ", (uintmax_t)m.F_fft[0].Count*(sizeof(m.F_fft[0][0])/sizeof(uint64_t)));
+    printMat(m.F_fft[0]);
+    printf("\n\n");
+    
+    printf("const uint64_t F_fft1Vals[%ju] = ", (uintmax_t)m.F_fft[1].Count*(sizeof(m.F_fft[1][0])/sizeof(uint64_t)));
+    printMat(m.F_fft[1]);
+    printf("\n\n");
+    
+    printf("const uint64_t BVals[%ju] = ", (uintmax_t)m.B.Count*(sizeof(m.B[0])/sizeof(uint64_t)));
+    printMat(m.B);
+    printf("\n\n");
+    
+    exit(0);
 }
 
 int main(int argc, const char* argv[]) {
@@ -851,28 +883,16 @@ int main(int argc, const char* argv[]) {
         img
     );
     
-    FFCCModel model = {
-        .params = {
-            .hyperparams = {
-                .vonMisesDiagonalEps = 0.148650889375340, // 2^-2.75
-            },
-            
-            .histogram = {
-                .binCount = 64,
-                .binSize = 1./32,
-                .startingUV = -0.531250,
-                .minIntensity = 1./256,
-            },
-        },
-    };
-    load(W_EM, "F_fft", model.F_fft);
-    load(W_EM, "B", model.B);
+//    load(W_EM, "F_fft", FFCCTrainedModel::Model.F_fft);
+//    load(W_EM, "B", FFCCTrainedModel::Model.B);
     
-    Renderer::Txt maskedImg = createMaskedImage(model, renderer, img, mask);
-    Renderer::Txt absDevImg = createAbsDevImage(model, renderer, img, mask);
+//    printModel(FFCCTrainedModel::Model);
     
-    Mat64 X1 = calcXFromImage(model, renderer, maskedImg, mask);
-    Mat64 X2 = calcXFromImage(model, renderer, absDevImg, mask);
+    Renderer::Txt maskedImg = createMaskedImage(FFCCTrainedModel::Model, renderer, img, mask);
+    Renderer::Txt absDevImg = createAbsDevImage(FFCCTrainedModel::Model, renderer, img, mask);
+    
+    Mat64 X1 = calcXFromImage(FFCCTrainedModel::Model, renderer, maskedImg, mask);
+    Mat64 X2 = calcXFromImage(FFCCTrainedModel::Model, renderer, absDevImg, mask);
     
     // Compare to MATLAB version of X1/X2
     {
@@ -914,7 +934,7 @@ int main(int argc, const char* argv[]) {
         assert(equal(our, their));
     }
     
-    Mat<double,3,1> illum = ffccEstimateIlluminant(model, X1_fft, X2_fft);
+    Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, X1_fft, X2_fft);
     assert(equal(W_CV, illum, "rgb_est"));
     
     printf("%f %f %f\n", illum[0], illum[1], illum[2]);

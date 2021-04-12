@@ -15,22 +15,31 @@ public:
         }
     }
     
-//    Mat(const T v[]) : Mat() {
-//        std::copy(v, v+Count, vals);
-//        _transVals(); // Transpose `vals` to put in column-major order
-//    }
-//    
-//    Mat(T v[]) : Mat() {
-//        std::copy(v, v+Count, vals);
-//        _transVals(); // Transpose `vals` to put in column-major order
-//    }
+    // Load from column-major array
+    Mat(const T v[]) : Mat() {
+        std::copy(v, v+Count, _state.vals);
+    }
     
+    // Load from column-major array
+    Mat(T v[]) : Mat() {
+        std::copy(v, v+Count, _state.vals);
+    }
+    
+    // Load from row-major parameter pack
     template <typename... Ts>
     Mat(Ts... ts) : Mat() {
         static_assert(sizeof...(ts)==Count, "invalid number of values");
         RowMajorIter i = beginRow();
         _load(i, ts...);
     }
+    
+//    struct ColumnMajorType {}; static constexpr auto ColumnMajor = ColumnMajorType();
+//    template <typename... Ts>
+//    Mat(ColumnMajorType, Ts... ts) : Mat() {
+//        static_assert(sizeof...(ts)==Count, "invalid number of values");
+//        auto i = begin();
+//        _load(i, ts...);
+//    }
     
     // Copy constructor: use copy assignment operator
     Mat(const Mat& x) : Mat() { *this = x; }
@@ -46,8 +55,7 @@ public:
     // *** default constructor does)!
     Mat(Mat&& x) { *this = std::move(x); }
     // Move assignment operator
-    // *** This leaves the source in an invalid state,
-    // *** and it cannot be used anymore!
+    // *** This leaves the source in an invalid state -- it cannot be used anymore!
     Mat& operator=(Mat&& x) {
         _state = std::move(x._state);
         x._state = {};
@@ -684,11 +692,12 @@ private:
     
     template <class...> static constexpr std::false_type _AlwaysFalse;
     
-    void _load(RowMajorIter& i) {}
+    template <typename Iter>
+    void _load(Iter& i) {}
     
-    // Load a parameter pack of elements (in row-major order), into `vals` (which is column-major order)
-    template <typename... Ts>
-    void _load(RowMajorIter& i, T& t, Ts&... ts) {
+    // Load a parameter pack of elements into `vals` using an iterator
+    template <typename Iter, typename... Ts>
+    void _load(Iter& i, T& t, Ts&... ts) {
         *i = t;
         i++;
         _load(i, ts...);

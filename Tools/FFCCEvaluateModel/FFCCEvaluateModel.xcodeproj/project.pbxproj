@@ -33,6 +33,8 @@
 /* Begin PBXFileReference section */
 		554B91B6261D349A00618ACA /* FFCCEvaluateModel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FFCCEvaluateModel; sourceTree = BUILT_PRODUCTS_DIR; };
 		555A1C8F2621CC8E0056C014 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mod.h; path = ../Shared/Mod.h; sourceTree = "<group>"; };
+		555A1CA9262413860056C014 /* FFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCC.h; sourceTree = "<group>"; };
+		555A1CAA262413C70056C014 /* FFCCTrainedModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCCTrainedModel.h; sourceTree = "<group>"; };
 		558C3600261D34DF0040241D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		558C3602261D3CE90040241D /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
 		558C3604261D468B0040241D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -97,6 +99,8 @@
 				558C3602261D3CE90040241D /* Mat.h */,
 				5595859A26200FCC0008EC38 /* MetalUtil.h */,
 				5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */,
+				555A1CAA262413C70056C014 /* FFCCTrainedModel.h */,
+				555A1CA9262413860056C014 /* FFCC.h */,
 				558C3600261D34DF0040241D /* main.mm */,
 				554B91B7261D349A00618ACA /* Products */,
 				558C3603261D468B0040241D /* Frameworks */,
