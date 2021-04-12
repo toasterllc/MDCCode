@@ -30,14 +30,14 @@ struct VecSigma {
     Mat<double,2,2> sigma;
 };
 
-static VecSigma UVForIdx(const Model& model, const VecSigma& idx) {
+static VecSigma uvForIdx(const Model& model, const VecSigma& idx) {
     return VecSigma{
         .vec = ((idx.vec-1)*model.params.histogram.binSize) + model.params.histogram.startingUV,
         .sigma = idx.sigma * (model.params.histogram.binSize * model.params.histogram.binSize),
     };
 }
 
-Mat<double,3,1> RGBForUV(const Mat<double,2,1>& uv) {
+Mat<double,3,1> rgbForUV(const Mat<double,2,1>& uv) {
     Mat<double,3,1> rgb(std::exp(-uv[0]), 1., std::exp(-uv[1]));
     rgb /= sqrt(rgb.elmMul(rgb).sum());
     return rgb;
@@ -278,8 +278,8 @@ static Mat<double,3,1> ffccEstimateIlluminant(
         img
     );
     
-    Renderer::Txt maskedImg = createMaskedImage(FFCCTrainedModel::Model, renderer, img, mask);
-    Renderer::Txt absDevImg = createAbsDevImage(FFCCTrainedModel::Model, renderer, img, mask);
+    const Renderer::Txt maskedImg = createMaskedImage(FFCCTrainedModel::Model, renderer, img, mask);
+    const Renderer::Txt absDevImg = createAbsDevImage(FFCCTrainedModel::Model, renderer, img, mask);
     
     const Mat64 X1 = calcXFromImage(FFCCTrainedModel::Model, renderer, maskedImg, mask);
     const Mat64 X2 = calcXFromImage(FFCCTrainedModel::Model, renderer, absDevImg, mask);
@@ -310,8 +310,8 @@ static Mat<double,3,1> ffccEstimateIlluminant(
         .sigma = fit.sigma + VonMisesDiagEps,
     };
     
-    const VecSigma uv = UVForIdx(model, idx);
-    return RGBForUV(uv.vec);
+    const VecSigma uv = uvForIdx(model, idx);
+    return rgbForUV(uv.vec);
 }
 
 static void processImageFile(Renderer& renderer, const fs::path& path) {
@@ -332,12 +332,6 @@ static void processImageFile(Renderer& renderer, const fs::path& path) {
 //        load(W_CV, "rgb_est", theirs);
 //        assert(rmsdiff(illum, theirs) < 1e-5);
 //    }
-    
-//    Mat<double,3,1> illum2 = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
-//    assert(equal(W_CV, illum2, "rgb_est"));
-//    std::cout << "illum2:\n" << illum2 << "\n\n";
-    
-    std::cout << "\n\n\n\n";
 }
 
 static bool isPNGFile(const fs::path& path) {
@@ -360,8 +354,10 @@ int main(int argc, const char* argv[]) {
         renderer = Renderer(dev, lib, commandQueue);
     }
     
-    argc = 2;
-    argv = (const char*[]){"", "/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png"};
+//    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png"};
+    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330"};
+    argc = std::size(args);
+    argv = args;
     
     for (int i=1; i<argc; i++) {
         const char* pathArg = argv[i];
