@@ -357,8 +357,12 @@ public:
         return ss.str();
     }
     
-    void print() {
-        std::cout << str(3) << "\n";
+    void print(int precision=6) {
+        std::cout << str(precision) << "\n";
+    }
+    
+    friend auto operator<<(std::ostream& s, Mat const& x) -> std::ostream& { 
+        return s << x.str();
     }
     
     // Solve `Ax=b` for x, where the receiver is A

@@ -9,9 +9,13 @@
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
 #import "FFCC.h"
 #import "FFCCTrainedModel.h"
+#import "BitmapImage.h"
 using namespace CFAViewer;
 using namespace FFCC;
 namespace fs = std::filesystem;
+
+static constexpr size_t H = 256;
+static constexpr size_t W = 455;
 
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
 MATFile* W_FBVM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-FitBivariateVonMises.mat", "r");
@@ -269,11 +273,209 @@ static Mat64 softmaxForward(const Mat64& H) {
     return r;
 }
 
+Renderer::Txt createMaskedImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+    Renderer::Txt maskedImg = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    renderer.render("ApplyMask", maskedImg,
+        // Texture args
+        img,
+        mask
+    );
+    
+//    // Compare our result with MATLAB
+//    {
+//        renderer.sync(maskedImg);
+//        renderer.commitAndWait();
+//        
+//        auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, maskedImg);
+//        assert(equal(W_FI, im_channels1->c, "im_channels1"));
+//    }
+    
+    return maskedImg;
+}
+
+Renderer::Txt createAbsDevImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+    Renderer::Txt absDevImage = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    {
+        Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR32Float, W, H);
+        renderer.render("LocalAbsoluteDeviationCoeff", coeff,
+            mask
+        );
+        
+        renderer.render("LocalAbsoluteDeviation", absDevImage,
+            img,
+            mask,
+            coeff
+        );
+    }
+    
+//    // Compare our result with MATLAB
+//    {
+//        renderer.sync(absDevImage);
+//        renderer.commitAndWait();
+//        
+//        auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, absDevImage);
+//        assert(equal(W_FI, im_channels2->c, "im_channels2"));
+//    }
+    
+    return absDevImage;
+}
+
+Mat64 calcXFromImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+    Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
+    renderer.render("CalcU", u,
+        // Texture args
+        img
+    );
+    
+    Renderer::Txt v = renderer.createTexture(MTLPixelFormatR32Float, W, H);
+    renderer.render("CalcV", v,
+        // Texture args
+        img
+    );
+    
+    using ValidPixelCount = uint32_t;
+    Renderer::Buf validPixelCountBuf = renderer.createBuffer(sizeof(ValidPixelCount), MTLResourceStorageModeManaged);
+    renderer.bufferClear(validPixelCountBuf);
+    Renderer::Txt maskUV = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
+    {
+        const float thresh = model.params.histogram.minIntensity;
+        renderer.render("CalcMaskUV", maskUV,
+            // Buffer args
+            thresh,
+            validPixelCountBuf,
+            // Texture args
+            img,
+            mask
+        );
+    }
+    
+    const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
+    const float binSize = model.params.histogram.binSize;
+    const float binMin = model.params.histogram.startingUV;
+    renderer.render("CalcBinUV", u,
+        // Buffer args
+        binCount,
+        binSize,
+        binMin,
+        // Texture args
+        u
+    );
+    
+    renderer.render("CalcBinUV", v,
+        // Buffer args
+        binCount,
+        binSize,
+        binMin,
+        // Texture args
+        v
+    );
+    
+    const size_t binsBufCount = binCount*binCount;
+    const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
+    Renderer::Buf binsBuf = renderer.createBuffer(binsBufLen, MTLResourceStorageModeManaged);
+    renderer.bufferClear(binsBuf);
+    
+    renderer.render("CalcHistogram", W, H,
+        // Buffer args
+        binCount,
+        binsBuf,
+        // Texture args
+        u,
+        v,
+        maskUV
+    );
+    
+    Renderer::Txt Xc = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
+    renderer.render("LoadHistogram", Xc,
+        // Buffer args
+        binCount,
+        binsBuf
+    );
+    
+    renderer.render("NormalizeHistogram", Xc,
+        // Buffer args
+        validPixelCountBuf,
+        // Texture args
+        Xc
+    );
+    
+    Renderer::Txt XcTransposed = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
+    renderer.render("Transpose", XcTransposed,
+        // Texture args
+        Xc
+    );
+    
+    renderer.sync(XcTransposed);
+    renderer.commitAndWait();
+    
+    // Convert integer histogram to double histogram, to match MATLAB version
+    auto histFloats = renderer.textureRead<float>(XcTransposed);
+    Mat64 hist;
+    // Copy the floats into the matrix
+    // The source matrix (XcTransposed) is transposed, so the data is already
+    // in column-major order. (If we didn't transpose it, it would be in row-major
+    // order, since that's how textures are normally laid out...)
+    std::copy(histFloats.begin(), histFloats.end(), hist.begin());
+    return hist;
+}
+
 static Mat<double,3,1> ffccEstimateIlluminant(
     const Model& model,
-    const Mat64c X1_fft,
-    const Mat64c X2_fft
+    Renderer& renderer,
+    id<MTLTexture> img
 ) {
+    Renderer::Txt mask = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
+    renderer.render("CreateMask", mask,
+        // Texture args
+        img
+    );
+    
+    Renderer::Txt maskedImg = createMaskedImage(FFCCTrainedModel::Model, renderer, img, mask);
+    Renderer::Txt absDevImg = createAbsDevImage(FFCCTrainedModel::Model, renderer, img, mask);
+    
+    Mat64 X1 = calcXFromImage(FFCCTrainedModel::Model, renderer, maskedImg, mask);
+    Mat64 X2 = calcXFromImage(FFCCTrainedModel::Model, renderer, absDevImg, mask);
+    
+    // Compare to MATLAB version of X1/X2
+    {
+        Mat64 our[2] = {X1,X2};
+        Mat64 their[2];
+        load(W_EM, "X", their);
+        // Our calculation of X differs from MATLAB's version because we use
+        // 32-bit floats (since we use the GPU), while MATLAB uses 64-bit doubles.
+        // So verify that our result matches theirs to close approximation, and then
+        // replace our X with MATLAB's version, so that the rest of our algorithm uses
+        // the same input at MATLAB. (Otherwise the algorithms they diverge further.)
+        assert(rmsdiff(our, their) < 1e-6);
+        X1 = their[0];
+        X2 = their[1];
+    }
+    
+    Mat64c X1_fft = X1.fft();
+    Mat64c X2_fft = X2.fft();
+    
+    // Compare X1_fft/X2_fft to MATLAB version
+    {
+        Mat64c our[2] = {X1_fft,X2_fft};
+        Mat64c their[2];
+        load(W_EM, "X_fft", their);
+        
+        assert(equal(our, their));
+    }
+    
+    // Compare their_X1.fft()/their_X2.fft() to MATLAB's X1_fft/X2_fft, to compare our
+    // FFT implementation with MATLAB's FFT implementation
+    {
+        Mat64 their_X[2];
+        load(W_EM, "X", their_X);
+        
+        Mat64c our[2] = {their_X[0].fft(), their_X[1].fft()};
+        Mat64c their[2];
+        load(W_EM, "X_fft", their);
+        
+        assert(equal(our, their));
+    }
+    
     Mat64c X_fft_Times_F_fft[2] = { X1_fft.elmMul(model.F_fft[0]), X2_fft.elmMul(model.F_fft[1]) };
     Mat64c FX_fft = X_fft_Times_F_fft[0] + X_fft_Times_F_fft[1];
     assert(equal(W_EM, FX_fft, "FX_fft"));
@@ -310,8 +512,24 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     return RGBFromUV(uv.vec);
 }
 
-static void processFile(const fs::path& path) {
+static void processFile(Renderer& renderer, const fs::path& path) {
+    BitmapImage<uint16_t> png(path);
+    assert(png.height == H);
+    assert(png.width == W);
     
+    // Create a texture and load it with the data from `img`
+    Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    renderer.textureWrite(img, png.data, png.samplesPerPixel);
+    
+    Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
+    assert(equal(W_CV, illum, "rgb_est"));
+    std::cout << "illum:\n" << illum << "\n\n";
+    
+    Mat<double,3,1> illum2 = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
+    assert(equal(W_CV, illum2, "rgb_est"));
+    std::cout << "illum2:\n" << illum2 << "\n\n";
+    
+    std::cout << "\n\n\n\n";
 }
 
 static bool isPNGFile(const fs::path& path) {
@@ -322,63 +540,9 @@ static bool isPNGFile(const fs::path& path) {
 
 
 
-
-template <typename T>
-class PNGImage {
-public:
-    PNGImage(const fs::path& path) : PNGImage([NSData dataWithContentsOfFile:@(path.c_str())]) {}
-    
-    PNGImage(NSData* nsdata) {
-        image = [NSBitmapImageRep imageRepWithData:nsdata];
-        assert(image);
-        
-        assert([image bitsPerSample] == 8*sizeof(T));
-        width = [image pixelsWide];
-        height = [image pixelsHigh];
-        // samplesPerPixel = number of samples per pixel, including padding samples
-        // validSamplesPerPixel = number of samples per pixel, excluding padding samples
-        // For example, sometimes the alpha channel exists but isn't used, in which case:
-        //        samplesPerPixel = 4
-        //   validSamplesPerPixel = 3
-        samplesPerPixel = ([image bitsPerPixel]/8) / sizeof(T);
-        assert(samplesPerPixel==3 || samplesPerPixel==4);
-        validSamplesPerPixel = [image samplesPerPixel];
-        assert(validSamplesPerPixel==3 || validSamplesPerPixel==4);
-        data = (T*)[image bitmapData];
-        dataLen = width*height*samplesPerPixel*sizeof(T);
-    }
-    
-    T sample(int y, int x, size_t channel) {
-        assert(channel < validSamplesPerPixel);
-        const size_t sx = _mirrorClamp(width, x);
-        const size_t sy = _mirrorClamp(height, y);
-        const size_t idx = samplesPerPixel*(width*sy+sx) + channel;
-        assert(idx < dataLen);
-        return data[idx];
-    }
-    
-    NSBitmapImageRep* image = nullptr;
-    size_t width = 0;
-    size_t height = 0;
-    size_t samplesPerPixel = 0;
-    size_t validSamplesPerPixel = 0;
-    T* data = nullptr;
-    size_t dataLen = 0;
-    
-private:
-    static size_t _mirrorClamp(size_t N, int n) {
-        if (n < 0)                  return -n;
-        else if ((size_t)n >= N)    return 2*(N-1)-(size_t)n;
-        else                        return n;
-    }
-};
-
 struct InputImage {
     Mat64 X[2];
 };
-
-static constexpr size_t H = 256;
-static constexpr size_t W = 455;
 
 struct ImageChannels {
 public:
@@ -492,7 +656,7 @@ ImageChannels MaskedLocalAbsoluteDeviation(const ImageChannels& im, const Mat<do
 
 
 //static InputImage readImage(const fs::path& path) {
-//    PNGImage<uint16_t> img(path);
+//    BitmapImage<uint16_t> img(path);
 //    assert(img.height == H);
 //    assert(img.width == W);
 //    
@@ -655,152 +819,6 @@ MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> 
     return matImage;
 }
 
-Mat64 calcXFromImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
-    Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
-    renderer.render("CalcU", u,
-        // Texture args
-        img
-    );
-    
-    Renderer::Txt v = renderer.createTexture(MTLPixelFormatR32Float, W, H);
-    renderer.render("CalcV", v,
-        // Texture args
-        img
-    );
-    
-    using ValidPixelCount = uint32_t;
-    Renderer::Buf validPixelCountBuf = renderer.createBuffer(sizeof(ValidPixelCount), MTLResourceStorageModeManaged);
-    renderer.bufferClear(validPixelCountBuf);
-    Renderer::Txt maskUV = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
-    {
-        const float thresh = model.params.histogram.minIntensity;
-        renderer.render("CalcMaskUV", maskUV,
-            // Buffer args
-            thresh,
-            validPixelCountBuf,
-            // Texture args
-            img,
-            mask
-        );
-    }
-    
-    const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
-    const float binSize = model.params.histogram.binSize;
-    const float binMin = model.params.histogram.startingUV;
-    renderer.render("CalcBinUV", u,
-        // Buffer args
-        binCount,
-        binSize,
-        binMin,
-        // Texture args
-        u
-    );
-    
-    renderer.render("CalcBinUV", v,
-        // Buffer args
-        binCount,
-        binSize,
-        binMin,
-        // Texture args
-        v
-    );
-    
-    const size_t binsBufCount = binCount*binCount;
-    const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
-    Renderer::Buf binsBuf = renderer.createBuffer(binsBufLen, MTLResourceStorageModeManaged);
-    renderer.bufferClear(binsBuf);
-    
-    renderer.render("CalcHistogram", W, H,
-        // Buffer args
-        binCount,
-        binsBuf,
-        // Texture args
-        u,
-        v,
-        maskUV
-    );
-    
-    Renderer::Txt Xc = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
-    renderer.render("LoadHistogram", Xc,
-        // Buffer args
-        binCount,
-        binsBuf
-    );
-    
-    renderer.render("NormalizeHistogram", Xc,
-        // Buffer args
-        validPixelCountBuf,
-        // Texture args
-        Xc
-    );
-    
-    Renderer::Txt XcTransposed = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
-    renderer.render("Transpose", XcTransposed,
-        // Texture args
-        Xc
-    );
-    
-    renderer.sync(XcTransposed);
-    renderer.commitAndWait();
-    
-    // Convert integer histogram to double histogram, to match MATLAB version
-    auto histFloats = renderer.textureRead<float>(XcTransposed);
-    Mat64 hist;
-    // Copy the floats into the matrix
-    // The source matrix (XcTransposed) is transposed, so the data is already
-    // in column-major order. (If we didn't transpose it, it would be in row-major
-    // order, since that's how textures are normally laid out...)
-    std::copy(histFloats.begin(), histFloats.end(), hist.begin());
-    return hist;
-}
-
-Renderer::Txt createMaskedImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
-    Renderer::Txt maskedImg = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
-    renderer.render("ApplyMask", maskedImg,
-        // Texture args
-        img,
-        mask
-    );
-    
-//    // Compare our result with MATLAB
-//    {
-//        renderer.sync(maskedImg);
-//        renderer.commitAndWait();
-//        
-//        auto im_channels1 = MatImageFromTexture<double,H,W,3>(renderer, maskedImg);
-//        assert(equal(W_FI, im_channels1->c, "im_channels1"));
-//    }
-    
-    return maskedImg;
-}
-
-Renderer::Txt createAbsDevImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
-    Renderer::Txt absDevImage = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
-    {
-        Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR32Float, W, H);
-        renderer.render("LocalAbsoluteDeviationCoeff", coeff,
-            mask
-        );
-        
-        renderer.render("LocalAbsoluteDeviation", absDevImage,
-            img,
-            mask,
-            coeff
-        );
-    }
-    
-//    // Compare our result with MATLAB
-//    {
-//        renderer.sync(absDevImage);
-//        renderer.commitAndWait();
-//        
-//        auto im_channels2 = MatImageFromTexture<double,H,W,3>(renderer, absDevImage);
-//        assert(equal(W_FI, im_channels2->c, "im_channels2"));
-//    }
-    
-    return absDevImage;
-}
-
 static void printMat(const Mat64& m) {
     uint32_t i = 0;
     printf("{\n");
@@ -869,96 +887,43 @@ int main(int argc, const char* argv[]) {
         renderer = Renderer(dev, lib, commandQueue);
     }
     
-    PNGImage<uint16_t> png("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
-    assert(png.height == H);
-    assert(png.width == W);
-    
-    // Create a texture and load it with the data from `img`
-    Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
-    renderer.textureWrite(img, png.data, png.samplesPerPixel);
-    
-    Renderer::Txt mask = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
-    renderer.render("CreateMask", mask,
-        // Texture args
-        img
-    );
-    
-//    load(W_EM, "F_fft", FFCCTrainedModel::Model.F_fft);
-//    load(W_EM, "B", FFCCTrainedModel::Model.B);
-    
-//    printModel(FFCCTrainedModel::Model);
-    
-    Renderer::Txt maskedImg = createMaskedImage(FFCCTrainedModel::Model, renderer, img, mask);
-    Renderer::Txt absDevImg = createAbsDevImage(FFCCTrainedModel::Model, renderer, img, mask);
-    
-    Mat64 X1 = calcXFromImage(FFCCTrainedModel::Model, renderer, maskedImg, mask);
-    Mat64 X2 = calcXFromImage(FFCCTrainedModel::Model, renderer, absDevImg, mask);
-    
-    // Compare to MATLAB version of X1/X2
-    {
-        Mat64 our[2] = {X1,X2};
-        Mat64 their[2];
-        load(W_EM, "X", their);
-        // Our calculation of X differs from MATLAB's version because we use
-        // 32-bit floats (since we use the GPU), while MATLAB uses 64-bit doubles.
-        // So verify that our result matches theirs to close approximation, and then
-        // replace our X with MATLAB's version, so that the rest of our algorithm uses
-        // the same input at MATLAB. (Otherwise the algorithms they diverge further.)
-        assert(rmsdiff(our, their) < 1e-6);
-        X1 = their[0];
-        X2 = their[1];
-    }
-    
-    Mat64c X1_fft = X1.fft();
-    Mat64c X2_fft = X2.fft();
-    
-    // Compare X1_fft/X2_fft to MATLAB version
-    {
-        Mat64c our[2] = {X1_fft,X2_fft};
-        Mat64c their[2];
-        load(W_EM, "X_fft", their);
-        
-        assert(equal(our, their));
-    }
-    
-    // Compare their_X1.fft()/their_X2.fft() to MATLAB's X1_fft/X2_fft, to compare our
-    // FFT implementation with MATLAB's FFT implementation
-    {
-        Mat64 their_X[2];
-        load(W_EM, "X", their_X);
-        
-        Mat64c our[2] = {their_X[0].fft(), their_X[1].fft()};
-        Mat64c their[2];
-        load(W_EM, "X_fft", their);
-        
-        assert(equal(our, their));
-    }
-    
-    Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, X1_fft, X2_fft);
-    assert(equal(W_CV, illum, "rgb_est"));
-    
-    printf("%f %f %f\n", illum[0], illum[1], illum[2]);
-    return 0;
-    
-//    argc = 2;
-//    argv = (const char*[]){"", "/Users/dave/Desktop/FFCCImageSets/Indoor-Night2-ColorChecker-Small/indoor_night2_25.png"};
+//    BitmapImage<uint16_t> png("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
+//    assert(png.height == H);
+//    assert(png.width == W);
 //    
-//    for (int i=1; i<argc; i++) {
-//        const char* pathArg = argv[i];
-//        
-//        // Regular file
-//        if (isPNGFile(pathArg)) {
-//            processFile(pathArg);
-//        
-//        // Directory
-//        } else if (fs::is_directory(pathArg)) {
-//            for (const auto& f : fs::directory_iterator(pathArg)) {
-//                if (isPNGFile(f)) {
-//                    processFile(f);
-//                }
-//            }
-//        }
-//    }
+//    // Create a texture and load it with the data from `img`
+//    Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+//    renderer.textureWrite(img, png.data, png.samplesPerPixel);
 //    
+//    Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
+//    assert(equal(W_CV, illum, "rgb_est"));
+//    std::cout << "illum:\n" << illum << "\n\n";
+//    
+//    Mat<double,3,1> illum2 = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
+//    assert(equal(W_CV, illum2, "rgb_est"));
+//    std::cout << "illum2:\n" << illum2 << "\n\n";
+//    
+//    return 0;
+    
+    argc = 2;
+    argv = (const char*[]){"", "/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png"};
+    
+    for (int i=1; i<argc; i++) {
+        const char* pathArg = argv[i];
+        
+        // Regular file
+        if (isPNGFile(pathArg)) {
+            processFile(renderer, pathArg);
+        
+        // Directory
+        } else if (fs::is_directory(pathArg)) {
+            for (const auto& f : fs::directory_iterator(pathArg)) {
+                if (isPNGFile(f)) {
+                    processFile(renderer, f);
+                }
+            }
+        }
+    }
+    
     return 0;
 }
