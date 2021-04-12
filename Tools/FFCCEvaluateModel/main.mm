@@ -72,10 +72,6 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     // columnwise sums of P and finding the moments on each axis independently.
     Mat<double,H,1> P1 = P.sumRows();
     Mat<double,H,1> P2 = P.sumCols().trans();
-    
-    assert(equal(W_FBVM, P1, "P1"));
-    assert(equal(W_FBVM, P2, "P2"));
-    
     Mat<double,H,1> sinAngles;
     Mat<double,H,1> cosAngles;
     for (size_t i=0; i<angles.Count; i++) {
@@ -87,19 +83,12 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
     const double x1 = P1.elmMul(cosAngles).sumCols()[0];
     const double y2 = P2.elmMul(sinAngles).sumCols()[0];
     const double x2 = P2.elmMul(cosAngles).sumCols()[0];
-    assert(equal(W_FBVM, y1, "y1"));
-    assert(equal(W_FBVM, x1, "x1"));
-    assert(equal(W_FBVM, y2, "y2"));
-    assert(equal(W_FBVM, x2, "x2"));
     
     const double mu1 = Mod(std::atan2(y1,x1), 2*M_PI) / angleStep;
     const double mu2 = Mod(std::atan2(y2,x2), 2*M_PI) / angleStep;
-    assert(equal(W_FBVM, mu1, "mu1"));
-    assert(equal(W_FBVM, mu2, "mu2"));
     
-    #warning we probably want to remove this +1 since our indexing is 0-based, not 1-based
+    #warning remove this +1 since our indexing is 0-based, not 1-based? we'll need to update downstream math too...
     const Mat<double,2,1> mu(mu1+1, mu2+1); // 1-indexing
-    assert(equal(W_FBVM, mu, "mu"));
     
     // Fit the covariance matrix of the distribution by finding the second moments
     // of the angles with respect to the mean. This can be done straightforwardly
@@ -122,29 +111,16 @@ static VecSigma fitBivariateVonMises(const Mat64& P) {
         wrapped2[i] = wrap(bins[i]-round(mu[1]));
     }
     
-    assert(equal(W_FBVM, wrapped1, "wrapped1"));
-    assert(equal(W_FBVM, wrapped2, "wrapped2"));
-    
     const double E1 = P1.elmMul(wrapped1).sumCols()[0];
     const double E2 = P2.elmMul(wrapped2).sumCols()[0];
-    
-    assert(equal(W_FBVM, E1, "E1"));
-    assert(equal(W_FBVM, E2, "E2"));
-    
     const double Sigma1 = P1.elmMul(wrapped1.elmMul(wrapped1)).sum() - (E1*E1);
     const double Sigma2 = P2.elmMul(wrapped2.elmMul(wrapped2)).sum() - (E2*E2);
     const double Sigma12 = P.elmMul(wrapped1*wrapped2.trans()).sum() - (E1*E2);
-    
-    assert(equal(W_FBVM, Sigma1, "Sigma1"));
-    assert(equal(W_FBVM, Sigma2, "Sigma2"));
-    assert(equal(W_FBVM, Sigma12, "Sigma12"));
     
     Mat<double,2,2> Sigma(
         Sigma1, Sigma12,
         Sigma12, Sigma2
     );
-    
-    assert(equal(W_FBVM, Sigma, "Sigma"));
     
     return VecSigma{mu, Sigma};
 }
@@ -305,65 +281,22 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     Renderer::Txt maskedImg = createMaskedImage(FFCCTrainedModel::Model, renderer, img, mask);
     Renderer::Txt absDevImg = createAbsDevImage(FFCCTrainedModel::Model, renderer, img, mask);
     
-    Mat64 X1 = calcXFromImage(FFCCTrainedModel::Model, renderer, maskedImg, mask);
-    Mat64 X2 = calcXFromImage(FFCCTrainedModel::Model, renderer, absDevImg, mask);
+    const Mat64 X1 = calcXFromImage(FFCCTrainedModel::Model, renderer, maskedImg, mask);
+    const Mat64 X2 = calcXFromImage(FFCCTrainedModel::Model, renderer, absDevImg, mask);
+    const Mat64c X1_fft = X1.fft();
+    const Mat64c X2_fft = X2.fft();
     
-    // Compare to MATLAB version of X1/X2
-    {
-        Mat64 our[2] = {X1,X2};
-        Mat64 their[2];
-        load(W_EM, "X", their);
-        // Our calculation of X differs from MATLAB's version because we use
-        // 32-bit floats (since we use the GPU), while MATLAB uses 64-bit doubles.
-        // So verify that our result matches theirs to close approximation, and then
-        // replace our X with MATLAB's version, so that the rest of our algorithm uses
-        // the same input at MATLAB. (Otherwise the algorithms they diverge further.)
-        assert(rmsdiff(our, their) < 1e-6);
-        X1 = their[0];
-        X2 = their[1];
-    }
+    const Mat64c X_fft_Times_F_fft[2] = { X1_fft.elmMul(model.F_fft[0]), X2_fft.elmMul(model.F_fft[1]) };
+    const Mat64c FX_fft = X_fft_Times_F_fft[0] + X_fft_Times_F_fft[1];
     
-    Mat64c X1_fft = X1.fft();
-    Mat64c X2_fft = X2.fft();
-    
-    // Compare X1_fft/X2_fft to MATLAB version
-    {
-        Mat64c our[2] = {X1_fft,X2_fft};
-        Mat64c their[2];
-        load(W_EM, "X_fft", their);
-        
-        assert(equal(our, their));
-    }
-    
-    // Compare their_X1.fft()/their_X2.fft() to MATLAB's X1_fft/X2_fft, to compare our
-    // FFT implementation with MATLAB's FFT implementation
-    {
-        Mat64 their_X[2];
-        load(W_EM, "X", their_X);
-        
-        Mat64c our[2] = {their_X[0].fft(), their_X[1].fft()};
-        Mat64c their[2];
-        load(W_EM, "X_fft", their);
-        
-        assert(equal(our, their));
-    }
-    
-    Mat64c X_fft_Times_F_fft[2] = { X1_fft.elmMul(model.F_fft[0]), X2_fft.elmMul(model.F_fft[1]) };
-    Mat64c FX_fft = X_fft_Times_F_fft[0] + X_fft_Times_F_fft[1];
-    assert(equal(W_EM, FX_fft, "FX_fft"));
-    
-    Mat64c FXc = FX_fft.ifft();
+    const Mat64c FXc = FX_fft.ifft();
     Mat64 FX;
     for (size_t i=0; i<FXc.Count; i++) {
         FX[i] = FXc[i].real();
     }
-    assert(equal(W_EM, FX, "FX"));
     
-    Mat64 H = FX+model.B;
-    assert(equal(W_EM, H, "H"));
-    
-    Mat64 P = softmaxForward(H);
-    assert(equal(W_EM, P, "P"));
+    const Mat64 H = FX+model.B;
+    const Mat64 P = softmaxForward(H);
     
     const VecSigma fit = fitBivariateVonMises(P);
     
@@ -376,9 +309,6 @@ static Mat<double,3,1> ffccEstimateIlluminant(
         .vec = fit.vec,
         .sigma = fit.sigma + VonMisesDiagEps,
     };
-    
-    assert(equal(W_EM, idx.vec, "mu_idx"));
-    assert(equal(W_EM, idx.sigma, "Sigma_idx"));
     
     const VecSigma uv = UVForIdx(model, idx);
     return RGBForUV(uv.vec);
@@ -393,13 +323,19 @@ static void processImageFile(Renderer& renderer, const fs::path& path) {
     Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
     renderer.textureWrite(img, png.data, png.samplesPerPixel);
     
-    Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
-    assert(equal(W_CV, illum, "rgb_est"));
+    const Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
     std::cout << "illum:\n" << illum << "\n\n";
     
-    Mat<double,3,1> illum2 = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
-    assert(equal(W_CV, illum2, "rgb_est"));
-    std::cout << "illum2:\n" << illum2 << "\n\n";
+//    // Compare illum to MATLAB version
+//    {
+//        Mat<double,3,1> theirs;
+//        load(W_CV, "rgb_est", theirs);
+//        assert(rmsdiff(illum, theirs) < 1e-5);
+//    }
+    
+//    Mat<double,3,1> illum2 = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
+//    assert(equal(W_CV, illum2, "rgb_est"));
+//    std::cout << "illum2:\n" << illum2 << "\n\n";
     
     std::cout << "\n\n\n\n";
 }

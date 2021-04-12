@@ -440,11 +440,11 @@ public:
         return r;
     }
     
-    auto fft() {
+    auto fft() const {
         return _fft<kFFTDirection_Forward>();
     }
     
-    auto ifft() {
+    auto ifft() const {
         return _fft<kFFTDirection_Inverse>();
     }
     
@@ -582,7 +582,7 @@ private:
     bool __DimsPowerOf2 = _DimsPowerOf2,
     typename std::enable_if_t<__DimsPowerOf2, int> = 0
     >
-    Mat<std::complex<Float>,H,W> _fft() {
+    Mat<std::complex<Float>,H,W> _fft() const {
         constexpr size_t len = Count;
         Mat<std::complex<Float>,H,W> r;
         FFTSetup<Float> s;
