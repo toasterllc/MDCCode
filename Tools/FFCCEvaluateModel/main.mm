@@ -512,7 +512,7 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     return RGBFromUV(uv.vec);
 }
 
-static void processFile(Renderer& renderer, const fs::path& path) {
+static void processImageFile(Renderer& renderer, const fs::path& path) {
     BitmapImage<uint16_t> png(path);
     assert(png.height == H);
     assert(png.width == W);
@@ -536,200 +536,6 @@ static bool isPNGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".png";
 }
 
-
-
-
-
-struct InputImage {
-    Mat64 X[2];
-};
-
-struct ImageChannels {
-public:
-    ImageChannels() {}
-    
-    Mat<double,H,W>& operator[](size_t i) {
-        assert(i < 3);
-        return _c[i];
-    }
-    
-    const Mat<double,H,W>& operator[](size_t i) const {
-        assert(i < 3);
-        return _c[i];
-    }
-private:
-    Mat<double,H,W> _c[3];
-};
-
-// Compute a masked Local Absolute Deviation in sliding window fashion. The
-// window size is 3x3. Only positions where mask(x, y) == true are considered
-// in the absolute deviation computation. If the input image is between [a, b]
-// then the output image will be between [0, b-a].
-// This code with all mask(x ,y) == true should produce identical results to
-// LocalAbsoluteDeviation().
-ImageChannels MaskedLocalAbsoluteDeviation(const ImageChannels& im, const Mat<double,H,W>& mask) {
-    
-//    im_edge = {};
-//    for c = 1:size(im,3)
-//      numer = zeros(size(im,1), size(im,2), 'like', im);
-//      denom = zeros(size(im,1), size(im,2), 'like', im);
-//      for oi = -1:1
-//        for oj = -1:1
-//          if (oi == 0) && (oj == 0)
-//            continue
-//          end
-//          im_shift = im_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1, c);
-//          mask_shift = mask_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1);
-//          numer = numer + mask .* mask_shift .* abs(im_shift - im(:,:,c));
-//          denom = denom + mask .* mask_shift;
-//        end
-//      end
-//      if strcmp(im_class, 'double')
-//        im_edge{c} = numer ./ denom;
-//      else
-//        % This divide is ugly to make it match up with the non-masked code.
-//        im_edge{c} = bitshift(bitshift(numer, 3) ./ denom, -3);
-//      end
-//    end
-//    
-//    
-    return ImageChannels{};
-}
-
-//function im_edge = MaskedLocalAbsoluteDeviation(im, mask)
-//im_class = class(im);
-//
-//if strcmp(im_class, 'uint16')
-//  % Upgrade to 32-bit because we have minus here
-//  im = int32(im);
-//  im_pad = Pad1(im);
-//  mask = int32(mask);
-//  mask_pad = Pad1(mask);
-//elseif strcmp(im_class, 'uint8')
-//  % Upgrade to 16-bit because we have minus here
-//  im = int16(im);
-//  im_pad = Pad1(im);
-//  mask = int16(mask);
-//  mask_pad = Pad1(mask);
-//elseif strcmp(im_class, 'double')
-//  im_pad = Pad1(im);
-//  mask_pad = Pad1(mask);
-//else
-//  assert(0)
-//end
-//
-//im_edge = {};
-//for c = 1:size(im,3)
-//  numer = zeros(size(im,1), size(im,2), 'like', im);
-//  denom = zeros(size(im,1), size(im,2), 'like', im);
-//  for oi = -1:1
-//    for oj = -1:1
-//      if (oi == 0) && (oj == 0)
-//        continue
-//      end
-//      im_shift = im_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1, c);
-//      mask_shift = mask_pad([1:size(im,1)] + oi + 1, [1:size(im,2)] + oj + 1);
-//      numer = numer + mask .* mask_shift .* abs(im_shift - im(:,:,c));
-//      denom = denom + mask .* mask_shift;
-//    end
-//  end
-//  if strcmp(im_class, 'double')
-//    im_edge{c} = numer ./ denom;
-//  else
-//    % This divide is ugly to make it match up with the non-masked code.
-//    im_edge{c} = bitshift(bitshift(numer, 3) ./ denom, -3);
-//  end
-//end
-//im_edge = cat(3, im_edge{:});
-//
-//if strcmp(im_class, 'uint16')
-//  % Convert back to 16-bit
-//  im_edge = uint16(im_edge);
-//elseif strcmp(im_class, 'uint8')
-//  % Convert back to 8-bit
-//  im_edge = uint8(im_edge);
-//end
-
-
-
-
-
-
-//static InputImage readImage(const fs::path& path) {
-//    BitmapImage<uint16_t> img(path);
-//    assert(img.height == H);
-//    assert(img.width == W);
-//    
-//    #warning TODO: we need to mask out appropriate pixels (highlights=1 and shadows=0)
-//    ImageChannels im_channels1;
-//    for (int y=0; y<H; y++) {
-//        for (int x=0; x<W; x++) {
-//            for (int c=0; c<3; c++) {
-//                im_channels1[c].at(y,x) = img.sample(y,x,c);
-//            }
-//        }
-//    }
-//    
-//    ImageChannels im_channels2;
-//    
-//    printf("%f\n", im_channels1[2].at(4,5));
-//    return {};
-//    
-//    
-//    
-////if isempty(mask)
-////  mask = true(size(im,1), size(im,2));
-////end
-////
-////im_channels = ChannelizeImage(im, mask);
-////
-////if isa(im, 'float')
-////  assert(all(im(:) <= 1));
-////  assert(all(im(:) >= 0));
-////end
-////
-////X = {};
-////for i_channel = 1:length(im_channels)
-////
-////  im_channel = im_channels{i_channel};
-////
-////  log_im_channel = {};
-////  for c = 1:size(im_channel, 3)
-////    log_im_channel{c} = log(double(im_channel(:,:,c)));
-////  end
-////  u = log_im_channel{2} - log_im_channel{1};
-////  v = log_im_channel{2} - log_im_channel{3};
-////
-////  % Masked pixels or those with invalid log-chromas (nan or inf) are
-////  % ignored.
-////  valid = ~isinf(u) & ~isinf(v) & ~isnan(u) & ~isnan(v) & mask;
-////
-////  % Pixels whose intensities are less than a (scaled) minimum_intensity are
-////  % ignored. This enables repeatable behavior for different input types,
-////  % otherwise we see behavior where the input type affects output features
-////  % strongly just by how intensity values get quantized to 0.
-////  if isa(im, 'float')
-////    min_val = params.HISTOGRAM.MINIMUM_INTENSITY;
-////  else
-////    min_val = intmax(class(im)) * params.HISTOGRAM.MINIMUM_INTENSITY;
-////  end
-////  valid = valid & all(im_channel >= min_val, 3);
-////
-////  Xc = Psplat2(u(valid), v(valid), ones(nnz(valid),1), ...
-////    params.HISTOGRAM.STARTING_UV, params.HISTOGRAM.BIN_SIZE, ...
-////    params.HISTOGRAM.NUM_BINS);
-////
-////  Xc = Xc / max(eps, sum(Xc(:)));
-////
-////  X{end+1} = Xc;
-////end
-////
-////X = cat(3, X{:});
-//    
-//    
-//    
-//}
-
 static void writePNG(Renderer& renderer, id<MTLTexture> txt, const fs::path& path) {
     id img = renderer.createCGImage(txt);
     if (!img) throw std::runtime_error("CGBitmapContextCreateImage returned nil");
@@ -741,83 +547,83 @@ static void writePNG(Renderer& renderer, id<MTLTexture> txt, const fs::path& pat
     CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
 }
 
-template <typename T, size_t H, size_t W, size_t Depth>
-struct MatImage { Mat<T,H,W> c[Depth]; };
-
-template <typename T, size_t H, size_t W, size_t Depth>
-using MatImagePtr = std::unique_ptr<MatImage<T,H,W,Depth>>;
-
-template <typename T, size_t H, size_t W, size_t Depth>
-MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> txt) {
-    assert([txt height] == H);
-    assert([txt width] == W);
-    
-    const MTLPixelFormat fmt = [txt pixelFormat];
-    bool srcUnorm = false;
-    switch (fmt) {
-    case MTLPixelFormatR8Unorm:
-    case MTLPixelFormatR16Unorm:
-    case MTLPixelFormatRGBA16Unorm:
-        srcUnorm = true;
-        break;
-    case MTLPixelFormatR32Float:
-    case MTLPixelFormatRGBA32Float:
-        break;
-    default:
-        abort(); // Unsupported format
-    }
-    const size_t samplesPerPixel = Renderer::SamplesPerPixel(fmt);
-    const size_t bytesPerSample = Renderer::BytesPerSample(fmt);
-    const size_t sampleCount = samplesPerPixel*W*H;
-    const size_t len = sampleCount*bytesPerSample;
-    auto buf = std::make_unique<uint8_t[]>(len);
-    uint8_t* bufU8 = (uint8_t*)buf.get();
-    uint16_t* bufU16 = (uint16_t*)buf.get();
-    float* bufFloat = (float*)buf.get();
-    if (bytesPerSample == 1) {
-        renderer.textureRead(txt, bufU8, sampleCount);
-    } else if (bytesPerSample == 2) {
-        renderer.textureRead(txt, bufU16, sampleCount);
-    } else if (bytesPerSample == 4) {
-        renderer.textureRead(txt, bufFloat, sampleCount);
-    } else {
-        abort();
-    }
-    
-    auto matImage = std::make_unique<MatImage<T,H,W,Depth>>();
-    for (int y=0; y<H; y++) {
-        for (int x=0; x<W; x++) {
-            for (int c=0; c<samplesPerPixel; c++) {
-                if (c < Depth) {
-                    if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
-                        if (srcUnorm) {
-                            if (bytesPerSample == 1) {
-                                // Source is unorm, destination is float: normalize
-                                matImage->c[c].at(y,x) = (T)bufU8[samplesPerPixel*(y*W+x)+c] / 255;
-                            } else if (bytesPerSample == 2) {
-                                // Source is unorm, destination is float: normalize
-                                matImage->c[c].at(y,x) = (T)bufU16[samplesPerPixel*(y*W+x)+c] / 65535;
-                            }
-
-                        } else {
-                            // Source isn't a unorm, destination is float: just assign
-                            matImage->c[c].at(y,x) = bufFloat[samplesPerPixel*(y*W+x)+c];
-                        }
-                    } else {
-                        if (bytesPerSample == 1) {
-                            // Destination isn't float
-                            matImage->c[c].at(y,x) = bufU8[samplesPerPixel*(y*W+x)+c];
-                        } else if (bytesPerSample == 2) {
-                            // Destination isn't float
-                            matImage->c[c].at(y,x) = bufU16[samplesPerPixel*(y*W+x)+c];
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return matImage;
-}
+//template <typename T, size_t H, size_t W, size_t Depth>
+//struct MatImage { Mat<T,H,W> c[Depth]; };
+//
+//template <typename T, size_t H, size_t W, size_t Depth>
+//using MatImagePtr = std::unique_ptr<MatImage<T,H,W,Depth>>;
+//
+//template <typename T, size_t H, size_t W, size_t Depth>
+//MatImagePtr<T,H,W,Depth> MatImageFromTexture(Renderer& renderer, id<MTLTexture> txt) {
+//    assert([txt height] == H);
+//    assert([txt width] == W);
+//    
+//    const MTLPixelFormat fmt = [txt pixelFormat];
+//    bool srcUnorm = false;
+//    switch (fmt) {
+//    case MTLPixelFormatR8Unorm:
+//    case MTLPixelFormatR16Unorm:
+//    case MTLPixelFormatRGBA16Unorm:
+//        srcUnorm = true;
+//        break;
+//    case MTLPixelFormatR32Float:
+//    case MTLPixelFormatRGBA32Float:
+//        break;
+//    default:
+//        abort(); // Unsupported format
+//    }
+//    const size_t samplesPerPixel = Renderer::SamplesPerPixel(fmt);
+//    const size_t bytesPerSample = Renderer::BytesPerSample(fmt);
+//    const size_t sampleCount = samplesPerPixel*W*H;
+//    const size_t len = sampleCount*bytesPerSample;
+//    auto buf = std::make_unique<uint8_t[]>(len);
+//    uint8_t* bufU8 = (uint8_t*)buf.get();
+//    uint16_t* bufU16 = (uint16_t*)buf.get();
+//    float* bufFloat = (float*)buf.get();
+//    if (bytesPerSample == 1) {
+//        renderer.textureRead(txt, bufU8, sampleCount);
+//    } else if (bytesPerSample == 2) {
+//        renderer.textureRead(txt, bufU16, sampleCount);
+//    } else if (bytesPerSample == 4) {
+//        renderer.textureRead(txt, bufFloat, sampleCount);
+//    } else {
+//        abort();
+//    }
+//    
+//    auto matImage = std::make_unique<MatImage<T,H,W,Depth>>();
+//    for (int y=0; y<H; y++) {
+//        for (int x=0; x<W; x++) {
+//            for (int c=0; c<samplesPerPixel; c++) {
+//                if (c < Depth) {
+//                    if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+//                        if (srcUnorm) {
+//                            if (bytesPerSample == 1) {
+//                                // Source is unorm, destination is float: normalize
+//                                matImage->c[c].at(y,x) = (T)bufU8[samplesPerPixel*(y*W+x)+c] / 255;
+//                            } else if (bytesPerSample == 2) {
+//                                // Source is unorm, destination is float: normalize
+//                                matImage->c[c].at(y,x) = (T)bufU16[samplesPerPixel*(y*W+x)+c] / 65535;
+//                            }
+//
+//                        } else {
+//                            // Source isn't a unorm, destination is float: just assign
+//                            matImage->c[c].at(y,x) = bufFloat[samplesPerPixel*(y*W+x)+c];
+//                        }
+//                    } else {
+//                        if (bytesPerSample == 1) {
+//                            // Destination isn't float
+//                            matImage->c[c].at(y,x) = bufU8[samplesPerPixel*(y*W+x)+c];
+//                        } else if (bytesPerSample == 2) {
+//                            // Destination isn't float
+//                            matImage->c[c].at(y,x) = bufU16[samplesPerPixel*(y*W+x)+c];
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    return matImage;
+//}
 
 static void printMat(const Mat64& m) {
     uint32_t i = 0;
@@ -887,24 +693,6 @@ int main(int argc, const char* argv[]) {
         renderer = Renderer(dev, lib, commandQueue);
     }
     
-//    BitmapImage<uint16_t> png("/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png");
-//    assert(png.height == H);
-//    assert(png.width == W);
-//    
-//    // Create a texture and load it with the data from `img`
-//    Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
-//    renderer.textureWrite(img, png.data, png.samplesPerPixel);
-//    
-//    Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
-//    assert(equal(W_CV, illum, "rgb_est"));
-//    std::cout << "illum:\n" << illum << "\n\n";
-//    
-//    Mat<double,3,1> illum2 = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
-//    assert(equal(W_CV, illum2, "rgb_est"));
-//    std::cout << "illum2:\n" << illum2 << "\n\n";
-//    
-//    return 0;
-    
     argc = 2;
     argv = (const char*[]){"", "/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png"};
     
@@ -913,13 +701,13 @@ int main(int argc, const char* argv[]) {
         
         // Regular file
         if (isPNGFile(pathArg)) {
-            processFile(renderer, pathArg);
+            processImageFile(renderer, pathArg);
         
         // Directory
         } else if (fs::is_directory(pathArg)) {
             for (const auto& f : fs::directory_iterator(pathArg)) {
                 if (isPNGFile(f)) {
-                    processFile(renderer, f);
+                    processImageFile(renderer, f);
                 }
             }
         }
