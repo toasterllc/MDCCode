@@ -7,12 +7,10 @@ template <typename T, size_t H, size_t W>
 class Mat {
 public:
     Mat() {
-        if constexpr (std::is_same_v<_Storage, _StorageInline>) {
-            _state.vals = _state.storage;
-        } else {
+        if constexpr (std::is_same_v<_Storage, _StorageHeap>) {
             _state.storage = std::make_unique<T[]>(Count);
-            _state.vals = _state.storage.get();
         }
+        _state.vals = &_state.storage[0];
     }
     
     // Load from column-major array
@@ -58,6 +56,7 @@ public:
     // *** This leaves the source in an invalid state -- it cannot be used anymore!
     Mat& operator=(Mat&& x) {
         _state = std::move(x._state);
+        _state.vals = &_state.storage[0];
         x._state = {};
         return *this;
     }
