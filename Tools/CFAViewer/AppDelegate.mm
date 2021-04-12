@@ -272,7 +272,7 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/69.cfa");
         
 //        Mmap imgData("/Users/dave/matlab/1.cfa");
-        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5TestSets/Outdoor-5pm-ColorChecker/outdoor_5pm_40.cfa");
+        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_42.cfa");
         
         _streamImages.img.width = 2304;
         _streamImages.img.height = 1296;
@@ -1357,7 +1357,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 - (void)_tagStartSession {
-//    return;
+    return;
 //    _TagIllums = {};
 //    for (const auto& f : fs::directory_iterator(_TagDir)) {
 //        if (isCFAFile(f)) {

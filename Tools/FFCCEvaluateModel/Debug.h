@@ -1,5 +1,7 @@
+#import <filesystem>
 #import "FFCC.h"
 #import "Renderer.h"
+#import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
 
 template <typename T, size_t H, size_t W, size_t Depth>
 double _rmsdiff(const Mat<T,H,W>* a, const Mat<T,H,W>* b) {
@@ -68,9 +70,9 @@ bool equal(MATFile* f, const T& a, const char* name) {
     return equal(*A, *B);
 }
 
+
 template <typename T, size_t H, size_t W, size_t Depth>
-void _load(MATFile* f, const char* name, Mat<T,H,W>* var) {
-    mxArray* mxa = matGetVariable(f, name);
+void _load(mxArray* mxa, Mat<T,H,W>* var) {
     assert(mxa);
     
     // Verify that the source and destination are both complex, or both not complex
@@ -96,74 +98,46 @@ void _load(MATFile* f, const char* name, Mat<T,H,W>* var) {
 }
 
 template <typename T, size_t H, size_t W, size_t Depth>
-void load(MATFile* f, const char* name, Mat<T,H,W> (&var)[Depth]) {
-    _load<T,H,W,Depth>(f, name, var);
+void load(mxArray* mxa, Mat<T,H,W> (&var)[Depth]) {
+    _load<T,H,W,Depth>(mxa, var);
 }
 
 template <typename T, size_t H, size_t W>
-void load(MATFile* f, const char* name, Mat<T,H,W>& var) {
-    _load<T,H,W,1>(f, name, &var);
+void load(mxArray* mxa, Mat<T,H,W>& var) {
+    _load<T,H,W,1>(mxa, &var);
 }
 
 template <typename T>
-void load(MATFile* f, const char* name, T& var) {
+void load(mxArray* mxa, T& var) {
     auto m = std::make_unique<Mat<T,1,1>>();
-    _load<T,1,1,1>(f, name, m.get());
+    _load<T,1,1,1>(mxa, m.get());
     var = m[0];
 }
 
-void printMat(const FFCC::Mat64& m) {
-    uint32_t i = 0;
-    printf("{\n");
-    for (auto x : m) {
-        static_assert(sizeof(x) == 8);
-        const uint64_t u = ((uint64_t*)&x)[0];
-        if (i == 0) printf("    ");
-        else        printf(" ");
-        printf("0x%016jx,", (uintmax_t)u);
-        i++;
-        if (i == 4) {
-            printf("\n");
-            i = 0;
-        }
-    }
-    printf("};");
+template <typename T>
+void load(MATFile* f, const char* name, T var) {
+    load(matGetVariable(f, name), var);
 }
 
-void printMat(const FFCC::Mat64c& m) {
-    uint32_t i = 0;
-    printf("{\n");
-    for (auto x : m) {
-        static_assert(sizeof(x) == 16);
-        const uint64_t real = ((uint64_t*)&x)[0];
-        const uint64_t imag = ((uint64_t*)&x)[1];
-        if (i == 0) printf("    ");
-        else        printf(" ");
-        printf("0x%016jx, 0x%016jx,", (uintmax_t)real, (uintmax_t)imag);
-        i++;
-        if (i == 2) {
-            printf("\n");
-            i = 0;
-        }
-    }
-    printf("};");
-}
 
-void printModel(const FFCC::Model& m) {
-    printf("const uint64_t F_fft0Vals[%ju] = ", (uintmax_t)m.F_fft[0].Count*(sizeof(m.F_fft[0][0])/sizeof(uint64_t)));
-    printMat(m.F_fft[0]);
-    printf("\n\n");
-    
-    printf("const uint64_t F_fft1Vals[%ju] = ", (uintmax_t)m.F_fft[1].Count*(sizeof(m.F_fft[1][0])/sizeof(uint64_t)));
-    printMat(m.F_fft[1]);
-    printf("\n\n");
-    
-    printf("const uint64_t BVals[%ju] = ", (uintmax_t)m.B.Count*(sizeof(m.B[0])/sizeof(uint64_t)));
-    printMat(m.B);
-    printf("\n\n");
-    
-    exit(0);
-}
+
+
+//template <typename T, size_t H, size_t W, size_t Depth>
+//void load(MATFile* f, const char* name, Mat<T,H,W> (&var)[Depth]) {
+//    _load<T,H,W,Depth>(matGetVariable(f, name), var);
+//}
+//
+//template <typename T, size_t H, size_t W>
+//void load(MATFile* f, const char* name, Mat<T,H,W>& var) {
+//    _load<T,H,W,1>(matGetVariable(f, name), &var);
+//}
+//
+//template <typename T>
+//void load(MATFile* f, const char* name, T& var) {
+//    auto m = std::make_unique<Mat<T,1,1>>();
+//    _load<T,1,1,1>(matGetVariable(f, name), m.get());
+//    var = m[0];
+//}
 
 template <typename T, size_t H, size_t W, size_t Depth>
 struct MatImage { Mat<T,H,W> c[Depth]; };

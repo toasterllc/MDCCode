@@ -25,6 +25,8 @@
 
 /* Begin PBXFileReference section */
 		554B9180261BA5B000618ACA /* IllumsGrayWorld.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsGrayWorld.h; sourceTree = "<group>"; };
+		555A1CAD2624404E0056C014 /* IllumsFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsFFCC.h; sourceTree = "<group>"; };
+		555A1CAE2624E0CE0056C014 /* IllumsFFCCMatlab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsFFCCMatlab.h; sourceTree = "<group>"; };
 		559C340C2617FEF1001903FD /* C5CalcErrorStats */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = C5CalcErrorStats; sourceTree = BUILT_PRODUCTS_DIR; };
 		559C340F2617FEF1001903FD /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		559C34162617FF4C001903FD /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Color.h; path = ../Shared/Color.h; sourceTree = "<group>"; };
@@ -52,8 +54,10 @@
 				559C34172617FF5C001903FD /* Mat.h */,
 				559C34162617FF4C001903FD /* Color.h */,
 				559C341C261950F3001903FD /* IllumsGroundTruth.h */,
-				559C341B261950F3001903FD /* IllumsC5.h */,
 				554B9180261BA5B000618ACA /* IllumsGrayWorld.h */,
+				559C341B261950F3001903FD /* IllumsC5.h */,
+				555A1CAD2624404E0056C014 /* IllumsFFCC.h */,
+				555A1CAE2624E0CE0056C014 /* IllumsFFCCMatlab.h */,
 				559C340F2617FEF1001903FD /* main.mm */,
 				559C340E2617FEF1001903FD /* C5CalcErrorStats */,
 				559C340D2617FEF1001903FD /* Products */,

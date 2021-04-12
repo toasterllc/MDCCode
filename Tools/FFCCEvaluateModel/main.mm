@@ -324,7 +324,12 @@ static void processImageFile(Renderer& renderer, const fs::path& path) {
     renderer.textureWrite(img, png.data, png.samplesPerPixel);
     
     const Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
-    std::cout << "illum:\n" << illum << "\n\n";
+    printf("{ \"%s\", { %f, %f, %f } },\n",
+        path.filename().replace_extension().c_str(),
+        illum[0], illum[1], illum[2]
+    );
+    
+    
     
 //    // Compare illum to MATLAB version
 //    {
