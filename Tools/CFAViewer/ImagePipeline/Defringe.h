@@ -196,8 +196,8 @@ namespace CFAViewer::ImagePipeline {
             ColorDir<Renderer::Txt> shiftTxts;
             for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
                 for (Dir dir : {Dir::X, Dir::Y}) {
-                    const auto& coeffs = polys(c,dir).coeffs().vals;
-                    std::copy(coeffs, coeffs+std::size(coeffs), polyCoeffs(c,dir));
+                    const auto& coeffs = polys(c,dir).coeffs();
+                    std::copy(coeffs.begin(), coeffs.end(), polyCoeffs(c,dir));
                     
                     shiftTxts(c,dir) = renderer.createTexture(MTLPixelFormatR32Float,
                         ShiftTextureWidth, ShiftTextureWidth,

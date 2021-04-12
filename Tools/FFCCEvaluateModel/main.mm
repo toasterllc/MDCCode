@@ -302,7 +302,7 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     Mat64c FXc = FX_fft.ifft();
     Mat64 FX;
     for (size_t i=0; i<FXc.Count; i++) {
-        FX.vals[i] = FXc.vals[i].real();
+        FX[i] = FXc[i].real();
     }
     assert(equal(W_EM, FX, "FX"));
     
@@ -771,7 +771,7 @@ Mat64 calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> 
     // The source matrix (XcTransposed) is transposed, so the data is already
     // in column-major order. (If we didn't transpose it, it would be in row-major
     // order, since that's how textures are normally laid out...)
-    std::copy(histFloats.begin(), histFloats.end(), hist.vals);
+    std::copy(histFloats.begin(), histFloats.end(), hist.begin());
     return hist;
 }
 
@@ -907,7 +907,7 @@ int main(int argc, const char* argv[]) {
         Mat64 their_X[2];
         load(W_EM, "X", their_X);
         
-        Mat64c our[2] = {their_X[0].fft(),their_X[1].fft()};
+        Mat64c our[2] = {their_X[0].fft(), their_X[1].fft()};
         Mat64c their[2];
         load(W_EM, "X_fft", their);
         

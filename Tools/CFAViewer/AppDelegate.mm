@@ -727,40 +727,38 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
 
 #pragma mark - Color Matrix
 
-static Mat<double,3,1> _whiteBalanceMatrixFromString(const std::string& str) {
+template<size_t H, size_t W>
+Mat<double,H,W> _matrixFromString(const std::string& str) {
     const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
     auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
     auto end = std::sregex_iterator();
-    std::vector<double> vals;
+    Mat<double,H,W> r;
     
-    for (std::sregex_iterator i=begin; i!=end; i++) {
-        vals.push_back(std::stod(i->str()));
+    auto rt = r.beginRow();
+    for (std::sregex_iterator si=begin; si!=end; si++) {
+        if (rt == r.endRow()) {
+            NSLog(@"Failed to parse color matrix");
+            return {};
+        }
+        *rt = std::stod(si->str());
+        rt++;
     }
     
-    if (vals.size() != 3) {
-        NSLog(@"Failed to parse color matrix");
+    // Verify that we had the exact right number of arguments
+    if (rt != r.endRow()) {
+        NSLog(@"Failed to parse matrix");
         return {};
     }
     
-    return vals.data();
+    return r;
+}
+
+static Mat<double,3,1> _whiteBalanceMatrixFromString(const std::string& str) {
+    return _matrixFromString<3,1>(str);
 }
 
 static Mat<double,3,3> _colorMatrixFromString(const std::string& str) {
-    const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
-    auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
-    auto end = std::sregex_iterator();
-    std::vector<double> vals;
-    
-    for (std::sregex_iterator i=begin; i!=end; i++) {
-        vals.push_back(std::stod(i->str()));
-    }
-    
-    if (vals.size() != 9) {
-        NSLog(@"Failed to parse color matrix");
-        return {};
-    }
-    
-    return vals.data();
+    return _matrixFromString<3,3>(str);
 }
 
 - (void)controlTextDidChange:(NSNotification*)note {

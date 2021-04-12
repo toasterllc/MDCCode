@@ -8,10 +8,10 @@ class Mat {
 public:
     Mat() {
         if constexpr (std::is_same_v<_Storage, _StorageInline>) {
-            vals = _storage;
+            _state.vals = _state.storage;
         } else {
-            _storage = std::make_unique<T[]>(Count);
-            vals = _storage.get();
+            _state.storage = std::make_unique<T[]>(Count);
+            _state.vals = _state.storage.get();
         }
     }
     
@@ -28,21 +28,31 @@ public:
     template <typename... Ts>
     Mat(Ts... ts) : Mat() {
         static_assert(sizeof...(ts)==Count, "invalid number of values");
-        _load(0, ts...);
+        RowMajorIter i = beginRow();
+        _load(i, ts...);
     }
     
     // Copy constructor: use copy assignment operator
     Mat(const Mat& x) : Mat() { *this = x; }
     // Copy assignment operator
     Mat& operator=(const Mat& x) {
-        std::copy(x.vals, x.vals+Count, vals);
+        std::copy(x._state.vals, x._state.vals+Count, _state.vals);
         return *this;
     }
     
-    // Move constructor: illegal
-    Mat(Mat&& x) = delete;
-    // Move assignment operator: illegal
-    Mat& operator=(Mat&& x) = delete;
+    // Move constructor: use move assignment operator
+    // *** Don't call the default constructor like we do in other cases,
+    // *** since we want to avoid allocating our storage (which the
+    // *** default constructor does)!
+    Mat(Mat&& x) { *this = std::move(x); }
+    // Move assignment operator
+    // *** This leaves the source in an invalid state,
+    // *** and it cannot be used anymore!
+    Mat& operator=(Mat&& x) {
+        _state = std::move(x._state);
+        x._state = {};
+        return *this;
+    }
     
     // Transpose
     Mat<T,W,H> trans() const {
@@ -65,17 +75,17 @@ public:
         __CLPK_integer pivot[m];
         T tmp[m];
         if constexpr (std::is_same_v<T, float>) {
-            sgetrf_(&m, &m, r.vals, &m, pivot, &err);
+            sgetrf_(&m, &m, r._state.vals, &m, pivot, &err);
             if (err) throw std::runtime_error("sgetrf_ failed");
             
-            sgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
+            sgetri_(&m, r._state.vals, &m, pivot, tmp, &m, &err);
             if (err) throw std::runtime_error("sgetri_ failed");
         
         } else if constexpr (std::is_same_v<T, double>) {
-            dgetrf_(&m, &m, r.vals, &m, pivot, &err);
+            dgetrf_(&m, &m, r._state.vals, &m, pivot, &err);
             if (err) throw std::runtime_error("dgetrf_ failed");
             
-            dgetri_(&m, r.vals, &m, pivot, tmp, &m, &err);
+            dgetri_(&m, r._state.vals, &m, pivot, tmp, &m, &err);
             if (err) throw std::runtime_error("dgetri_ failed");
         
         } else {
@@ -94,20 +104,20 @@ public:
                 CblasColMajor, CblasNoTrans, CblasNoTrans,
                 (int)a.Rows, (int)b.Cols, (int)a.Cols,
                 1, // alpha
-                a.vals, (int)a.Rows,
-                b.vals, (int)b.Rows,
+                a._state.vals, (int)a.Rows,
+                b._state.vals, (int)b.Rows,
                 0, // beta
-                r.vals, (int)r.Rows
+                r._state.vals, (int)r.Rows
             );
         else if constexpr (std::is_same_v<T, double>)
             cblas_dgemm(
                 CblasColMajor, CblasNoTrans, CblasNoTrans,
                 (int)a.Rows, (int)b.Cols, (int)a.Cols,
                 1, // alpha
-                a.vals, (int)a.Rows,
-                b.vals, (int)b.Rows,
+                a._state.vals, (int)a.Rows,
+                b._state.vals, (int)b.Rows,
                 0, // beta
-                r.vals, (int)r.Rows
+                r._state.vals, (int)r.Rows
             );
         else
             static_assert(_AlwaysFalse<T>);
@@ -119,7 +129,7 @@ public:
         Mat<T,H,W> r = *this;
         // There's apparently no BLAS function to do element-wise vector multiplication
         for (size_t i=0; i<Count; i++) {
-            r.vals[i] *= x.vals[i];
+            r._state.vals[i] *= x._state.vals[i];
         }
         return r;
     }
@@ -129,7 +139,7 @@ public:
         Mat<T,H,W>& r = *this;
         // There's apparently no BLAS function to do element-wise vector multiplication
         for (size_t i=0; i<Count; i++) {
-            r.vals[i] *= x.vals[i];
+            r._state.vals[i] *= x._state.vals[i];
         }
         return r;
     }
@@ -138,9 +148,9 @@ public:
     Mat<T,H,W> operator*(const T& x) const {
         Mat<T,H,W> r = *this;
         if constexpr (std::is_same_v<T, float>)
-            cblas_sscal(Count, x, r.vals, 1);
+            cblas_sscal(Count, x, r._state.vals, 1);
         else if constexpr (std::is_same_v<T, double>)
-            cblas_dscal(Count, x, r.vals, 1);
+            cblas_dscal(Count, x, r._state.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -151,7 +161,7 @@ public:
         Mat<T,H,W> r = *this;
         // There's apparently no BLAS function to do element-wise vector division
         for (size_t i=0; i<Count; i++) {
-            r.vals[i] /= x.vals[i];
+            r._state.vals[i] /= x._state.vals[i];
         }
         return r;
     }
@@ -160,15 +170,15 @@ public:
     Mat<T,H,W> operator/(const T& x) const {
         Mat<T,H,W> r = *this;
         if constexpr (std::is_same_v<T, float>) {
-            cblas_sscal(Count, T(1)/x, r.vals, 1);
+            cblas_sscal(Count, T(1)/x, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, double>) {
-            cblas_dscal(Count, T(1)/x, r.vals, 1);
+            cblas_dscal(Count, T(1)/x, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<float>>) {
             const std::complex<float> k(T(1)/x);
-            cblas_cscal(Count, &k, r.vals, 1);
+            cblas_cscal(Count, &k, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<double>>) {
             const std::complex<double> k(T(1)/x);
-            cblas_zscal(Count, &k, r.vals, 1);
+            cblas_zscal(Count, &k, r._state.vals, 1);
         } else {
             static_assert(_AlwaysFalse<T>);
         }
@@ -179,15 +189,15 @@ public:
     Mat<T,H,W>& operator/=(const T& x) {
         Mat<T,H,W>& r = *this;
         if constexpr (std::is_same_v<T, float>) {
-            cblas_sscal(Count, T(1)/x, r.vals, 1);
+            cblas_sscal(Count, T(1)/x, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, double>) {
-            cblas_dscal(Count, T(1)/x, r.vals, 1);
+            cblas_dscal(Count, T(1)/x, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<float>>) {
             const std::complex<float> k(T(1)/x);
-            cblas_cscal(Count, &k, r.vals, 1);
+            cblas_cscal(Count, &k, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<double>>) {
             const std::complex<double> k(T(1)/x);
-            cblas_zscal(Count, &k, r.vals, 1);
+            cblas_zscal(Count, &k, r._state.vals, 1);
         } else {
             static_assert(_AlwaysFalse<T>);
         }
@@ -198,15 +208,15 @@ public:
     Mat<T,H,W> operator+(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
         if constexpr (std::is_same_v<T, float>) {
-            catlas_saxpby(Count, 1, x.vals, 1, 1, r.vals, 1);
+            catlas_saxpby(Count, 1, x._state.vals, 1, 1, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, double>) {
-            catlas_daxpby(Count, 1, x.vals, 1, 1, r.vals, 1);
+            catlas_daxpby(Count, 1, x._state.vals, 1, 1, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<float>>) {
             const std::complex<float> one(1);
-            catlas_caxpby(Count, &one, x.vals, 1, &one, r.vals, 1);
+            catlas_caxpby(Count, &one, x._state.vals, 1, &one, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<double>>) {
             const std::complex<double> one(1);
-            catlas_zaxpby(Count, &one, x.vals, 1, &one, r.vals, 1);
+            catlas_zaxpby(Count, &one, x._state.vals, 1, &one, r._state.vals, 1);
         } else {
             static_assert(_AlwaysFalse<T>);
         }
@@ -217,15 +227,15 @@ public:
     Mat<T,H,W>& operator+=(const Mat<T,H,W>& x) {
         Mat<T,H,W>& r = *this;
         if constexpr (std::is_same_v<T, float>) {
-            catlas_saxpby(Count, 1, x.vals, 1, 1, r.vals, 1);
+            catlas_saxpby(Count, 1, x._state.vals, 1, 1, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, double>) {
-            catlas_daxpby(Count, 1, x.vals, 1, 1, r.vals, 1);
+            catlas_daxpby(Count, 1, x._state.vals, 1, 1, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<float>>) {
             const std::complex<float> one(1);
-            catlas_caxpby(Count, &one, x.vals, 1, &one, r.vals, 1);
+            catlas_caxpby(Count, &one, x._state.vals, 1, &one, r._state.vals, 1);
         } else if constexpr (std::is_same_v<T, std::complex<double>>) {
             const std::complex<double> one(1);
-            catlas_zaxpby(Count, &one, x.vals, 1, &one, r.vals, 1);
+            catlas_zaxpby(Count, &one, x._state.vals, 1, &one, r._state.vals, 1);
         } else {
             static_assert(_AlwaysFalse<T>);
         }
@@ -235,14 +245,14 @@ public:
     // Scalar add
     Mat<T,H,W> operator+(const T& x) const {
         Mat<T,H,W> r = *this;
-        for (size_t i=0; i<Count; i++) r.vals[i] += x;
+        for (size_t i=0; i<Count; i++) r._state.vals[i] += x;
         return r;
     }
     
     // Scalar add-assign
     Mat<T,H,W> operator+=(const T& x) {
         Mat<T,H,W>& r = *this;
-        for (size_t i=0; i<Count; i++) r.vals[i] += x;
+        for (size_t i=0; i<Count; i++) r._state.vals[i] += x;
         return r;
     }
     
@@ -250,9 +260,9 @@ public:
     Mat<T,H,W> operator-(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
         if constexpr (std::is_same_v<T, float>)
-            catlas_saxpby(Count, 1, x.vals, 1, -1, r.vals, 1);
+            catlas_saxpby(Count, 1, x._state.vals, 1, -1, r._state.vals, 1);
         else if constexpr (std::is_same_v<T, double>)
-            catlas_daxpby(Count, 1, x.vals, 1, -1, r.vals, 1);
+            catlas_daxpby(Count, 1, x._state.vals, 1, -1, r._state.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -262,9 +272,9 @@ public:
     Mat<T,H,W>& operator-=(const Mat<T,H,W>& x) {
         Mat<T,H,W>& r = *this;
         if constexpr (std::is_same_v<T, float>)
-            catlas_saxpby(Count, 1, x.vals, 1, -1, r.vals, 1);
+            catlas_saxpby(Count, 1, x._state.vals, 1, -1, r._state.vals, 1);
         else if constexpr (std::is_same_v<T, double>)
-            catlas_daxpby(Count, 1, x.vals, 1, -1, r.vals, 1);
+            catlas_daxpby(Count, 1, x._state.vals, 1, -1, r._state.vals, 1);
         else
             static_assert(_AlwaysFalse<T>);
         return r;
@@ -273,59 +283,55 @@ public:
     // Scalar subtract
     Mat<T,H,W> operator-(const T& x) const {
         Mat<T,H,W> r = *this;
-        for (size_t i=0; i<Count; i++) r.vals[i] -= x;
+        for (size_t i=0; i<Count; i++) r._state.vals[i] -= x;
         return r;
     }
     
     // Scalar subtract-assign
     Mat<T,H,W> operator-=(const T& x) {
         Mat<T,H,W>& r = *this;
-        for (size_t i=0; i<Count; i++) r.vals[i] -= x;
+        for (size_t i=0; i<Count; i++) r._state.vals[i] -= x;
         return r;
     }
     
     T& operator[](size_t i) {
-        static_assert(H==1 || W==1, "not a vector");
-        return vals[i];
+        return _state.vals[i];
     }
     
     const T& operator[](size_t i) const {
-        static_assert(H==1 || W==1, "not a vector");
-        return vals[i];
+        return _state.vals[i];
     }
     
     T& at(size_t i) {
-        static_assert(H==1 || W==1, "not a vector");
         assert(i < Count);
-        return vals[i];
+        return _state.vals[i];
     }
     
     const T& at(size_t i) const {
-        static_assert(H==1 || W==1, "not a vector");
         assert(i < Count);
-        return vals[i];
+        return _state.vals[i];
     }
     
     T& at(size_t y, size_t x) {
         assert(y < H);
         assert(x < W);
-        return vals[x*H+y]; // `vals` is in column-major format
+        return _state.vals[x*H+y]; // `vals` is in column-major format
     }
     
     const T& at(size_t y, size_t x) const {
         assert(y < H);
         assert(x < W);
-        return vals[x*H+y]; // `vals` is in column-major format
+        return _state.vals[x*H+y]; // `vals` is in column-major format
     }
     
     T* col(size_t x) {
         assert(x < W);
-        return &vals[x*H];
+        return &_state.vals[x*H];
     }
     
     const T* col(size_t x) const {
         assert(x < W);
-        return &vals[x*H];
+        return &_state.vals[x*H];
     }
     
     std::string str(int precision=6) const {
@@ -367,16 +373,16 @@ public:
             if constexpr (std::is_same_v<T, float>)
                 sgels_(
                     (char*)"N", &h, &w, &nrhs,
-                    A.vals, &h,
-                    bx.vals, &h,
+                    A._state.vals, &h,
+                    bx._state.vals, &h,
                     work, &lwork, &err
                 );
                 
             else if constexpr (std::is_same_v<T, double>)
                 dgels_(
                     (char*)"N", &h, &w, &nrhs,
-                    A.vals, &h,
-                    bx.vals, &h,
+                    A._state.vals, &h,
+                    bx._state.vals, &h,
                     work, &lwork, &err
                 );
             
@@ -430,38 +436,46 @@ public:
         return _fft<kFFTDirection_Inverse>();
     }
     
+private:
+    class RowMajorIter  {
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = T;
+        using pointer           = T*;
+        using reference         = T&;
+        
+        RowMajorIter(pointer ptr) : _cur(ptr), _end(_cur+Count) {}
+        
+        reference operator*() const { return *_cur; }
+        pointer operator->() { return _cur; }
+        RowMajorIter& operator++() {
+            const size_t rem = _end-_cur-1;
+            if (!rem)         _cur++;              // This was the last element, so increment to match end() iterator
+            else if (rem < H) _cur -= ((W-1)*H)-1; // Col=0, Row++
+            else              _cur += H;           // Next column
+            return *this;
+        }
+        
+        RowMajorIter operator++(int) { RowMajorIter tmp = *this; ++(*this); return tmp; }
+        friend bool operator== (const RowMajorIter& a, const RowMajorIter& b) { return a._cur == b._cur; };
+        friend bool operator!= (const RowMajorIter& a, const RowMajorIter& b) { return a._cur != b._cur; };
+        
+    private:
+        pointer _cur = nullptr;
+        pointer _end = nullptr;
+    };
+    
+public:
     // Iteration
-    auto begin() {
-        if constexpr (std::is_same_v<_Storage, _StorageInline>) {
-            return _storage;
-        } else {
-            return _storage.get();
-        }
-    }
+    auto begin()        { return _state.vals;       }
+    auto begin() const  { return _state.vals;       }
+    auto end()          { return _state.vals+Count; }
+    auto end() const    { return _state.vals+Count; }
     
-    auto end() {
-        if constexpr (std::is_same_v<_Storage, _StorageInline>) {
-            return _storage+Count;
-        } else {
-            return _storage.get()+Count;
-        }
-    }
-    
-    auto begin() const {
-        if constexpr (std::is_same_v<_Storage, _StorageInline>) {
-            return _storage;
-        } else {
-            return _storage.get();
-        }
-    }
-    
-    auto end() const {
-        if constexpr (std::is_same_v<_Storage, _StorageInline>) {
-            return _storage+Count;
-        } else {
-            return _storage.get()+Count;
-        }
-    }
+    // Row-major iteration
+    RowMajorIter beginRow() { return RowMajorIter(_state.vals);         }
+    RowMajorIter endRow()   { return RowMajorIter(_state.vals+Count);   }
     
 private:
     using Float = std::conditional_t<
@@ -529,11 +543,11 @@ private:
 //        }
 //        exit(0);
 //        
-//        // Join the real/imaginary parts into `r.vals`
+//        // Join the real/imaginary parts into `r._state.vals`
 //        if constexpr (std::is_same_v<Float, float>) {
-//            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r.vals, 2, len);
+//            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r._state.vals, 2, len);
 //        } else if constexpr (std::is_same_v<Float, double>) {
-//            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r.vals, 2, len);
+//            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r._state.vals, 2, len);
 //        } else {
 //            static_assert(_AlwaysFalse<Float>);
 //        }
@@ -567,11 +581,11 @@ private:
         // Separate the real/imaginary parts into `outr/outi`
         if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
             // We only have real values, so only copy those, and leave `outi` zero'd
-            std::copy(vals, vals+Count, outr.get());
+            std::copy(_state.vals, _state.vals+Count, outr.get());
         } else if constexpr (std::is_same_v<T, std::complex<float>>) {
-            vDSP_ctoz((const DSPComplex*)vals, 2, (DSPSplitComplex[]){outr.get(),outi.get()}, 1, len);
+            vDSP_ctoz((const DSPComplex*)_state.vals, 2, (DSPSplitComplex[]){outr.get(),outi.get()}, 1, len);
         } else if constexpr (std::is_same_v<T, std::complex<double>>) {
-            vDSP_ctozD((const DSPDoubleComplex*)vals, 2, (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, len);
+            vDSP_ctozD((const DSPDoubleComplex*)_state.vals, 2, (DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, len);
         } else {
             static_assert(_AlwaysFalse<Float>);
         }
@@ -600,11 +614,11 @@ private:
             static_assert(_AlwaysFalse<Float>);
         }
         
-        // Join the real/imaginary parts into `r.vals`
+        // Join the real/imaginary parts into `r._state.vals`
         if constexpr (std::is_same_v<Float, float>) {
-            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r.vals, 2, len);
+            vDSP_ztoc((DSPSplitComplex[]){outr.get(),outi.get()}, 1, (DSPComplex*)r._state.vals, 2, len);
         } else if constexpr (std::is_same_v<Float, double>) {
-            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r.vals, 2, len);
+            vDSP_ztocD((DSPDoubleSplitComplex[]){outr.get(),outi.get()}, 1, (DSPDoubleComplex*)r._state.vals, 2, len);
         } else {
             static_assert(_AlwaysFalse<Float>);
         }
@@ -618,8 +632,6 @@ private:
     }
     
 public:
-    
-    T* vals = nullptr; // Column-major order
     static constexpr size_t Height = H;
     static constexpr size_t Width = W;
     static constexpr size_t Rows = H;
@@ -672,36 +684,25 @@ private:
     
     template <class...> static constexpr std::false_type _AlwaysFalse;
     
-    void _load(size_t idx) {}
+    void _load(RowMajorIter& i) {}
     
     // Load a parameter pack of elements (in row-major order), into `vals` (which is column-major order)
     template <typename... Ts>
-    void _load(size_t idx, T& t, Ts&... ts) {
-        constexpr size_t LastIdx = Count-1;
-        vals[idx] = t;
-        
-        const size_t rem = LastIdx-idx;
-        if (!rem)           ;               // Done
-        else if (rem < H)   idx = H-rem;    // Return to first column and increment the row
-        else                idx += H;       // Go to next column
-        _load(idx, ts...);
+    void _load(RowMajorIter& i, T& t, Ts&... ts) {
+        *i = t;
+        i++;
+        _load(i, ts...);
     }
-    
-//    void _transVals() {
-//        // Transpose `vals`
-//        // Create a temporary copy of `vals`
-//        auto valsConst = std::make_unique<T[]>(Count);
-//        std::copy(vals, vals+Count, valsConst.get());
-//        
-//        for (size_t y=0, i=0; y<H; y++) {
-//            for (size_t x=0; x<W; x++, i++) {
-//                at(y,x) = valsConst[i];
-//            }
-//        }
-//    }
     
     using _StorageInline = T[Count];
     using _StorageHeap = std::unique_ptr<T[]>;
     using _Storage = std::conditional_t<Count*sizeof(T) < 128, _StorageInline, _StorageHeap>;
-    _Storage _storage;
+    
+    struct {
+        _Storage storage = {};
+        T* vals = nullptr;
+    } _state;
+    
+    template <typename, size_t, size_t>
+    friend class Mat;
 };
