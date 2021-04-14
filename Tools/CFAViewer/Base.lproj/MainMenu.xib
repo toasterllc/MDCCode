@@ -904,7 +904,7 @@
                                             <rect key="frame" x="319" y="1471" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="label" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_colorMatrixIdentityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -912,21 +912,21 @@
                                         </button>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Th-eO-8Sc">
                                             <rect key="frame" x="18" y="230" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="ZFW-Ay-lx2"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="upA-f1-hue">
                                             <rect key="frame" x="18" y="207" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="Q0d-Td-jQG"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Q0d-Td-jQG"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="dCt-ZE-JVe"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zQK-wl-iSr">
                                             <rect key="frame" x="18" y="184" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="Fyy-IZ-Lc2"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Fyy-IZ-Lc2"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="2Aw-qb-xlR"/>
                                             </connections>
@@ -966,21 +966,21 @@
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Shi-kw-rTa">
                                             <rect key="frame" x="18" y="145" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="E9t-YK-KI3"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="E9t-YK-KI3"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="UTA-GJ-eDs"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KIo-4m-3AR">
                                             <rect key="frame" x="18" y="122" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="Ztg-Sb-m0f"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Ztg-Sb-m0f"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="yan-YN-hVD"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="k5K-pT-L2W">
                                             <rect key="frame" x="18" y="99" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="OFM-Wq-V2m"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="OFM-Wq-V2m"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="ywM-ZS-Pa3"/>
                                             </connections>
@@ -1020,21 +1020,21 @@
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="NSW-Ho-NVP">
                                             <rect key="frame" x="18" y="64" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="LuR-mM-FuK"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="LuR-mM-FuK"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="PNb-D9-1g5"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9jB-cM-ghW">
                                             <rect key="frame" x="18" y="41" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="xDZ-Hu-ZBD"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="xDZ-Hu-ZBD"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="GLQ-xe-74y"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2iy-ao-YZy">
                                             <rect key="frame" x="18" y="18" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="2" tickMarkPosition="above" sliderType="linear" id="sYw-a4-a33"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="sYw-a4-a33"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="qlY-ud-hP4"/>
                                             </connections>
@@ -1096,7 +1096,7 @@
                                             <rect key="frame" x="329" y="1498" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="label" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
@@ -1566,7 +1566,7 @@
                                             <rect key="frame" x="319" y="1569" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cKq-CO-v4Z">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="label" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_whiteBalanceIdentityButtonAction:" target="Voe-Tx-rLC" id="2kN-Yb-ZXe"/>

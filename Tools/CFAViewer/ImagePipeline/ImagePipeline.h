@@ -113,8 +113,21 @@ public:
         } else {
             // Reconstruct highlights
             if (opts.reconstructHighlights.en) {
-                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
-                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
+                const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
+                const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
+                const double illumMax = std::max(std::max(illum[0], illum[1]), illum[2]);
+//                const Mat<double,3,1> illumSat = illum/illumMin;
+                const simd::float3 simdIllum = _simdFromMat(illum);
+                const simd::float3 simdIllumMax1 = _simdFromMat(illum/illumMax);
+                const simd::float3 simdIllumMin1 = _simdFromMat(illum/illumMin);
+//                const Mat<double,3,1> goodFactor(.68069948186528497409, 1., .77396373056994818652);
+//                const simd::float3 badPixelFactors = _simdFromMat(Mat<double,3,1>(0.,0.,0.));
+//                const simd::float3 goodPixelFactors = _simdFromMat(Mat<double,3,1>(1.,1.,1.));
+//                const simd::float3 badPixelFactors = _simdFromMat(illum);
+//                const simd::float3 goodPixelFactors = _simdFromMat(illum.elmMul(goodFactor));
+//                const simd::float3 goodPixelFactors = _simdFromMat(Mat<double,3,1>(0.,0.,0.));
+//                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
+//                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
                 
                 Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
                     img.width, img.height);
@@ -122,12 +135,38 @@ public:
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
                     // Buffer args
                     img.cfaDesc,
-                    badPixelFactors,
-                    goodPixelFactors,
+                    simdIllumMin1,
                     // Texture args
                     raw
                 );
+                
+//                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
+//                    img.width, img.height);
+//                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
+//                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
+//                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    badPixelFactors,
+//                    goodPixelFactors,
+//                    // Texture args
+//                    raw
+//                );
+                
                 raw = std::move(tmp);
+            }
+            
+            // Sample: fill `sampleOpts.xyzD50`
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
+                    w, h,
+                    // Buffer args
+                    img.cfaDesc,
+                    sampleOpts.rect,
+                    sampleOpts.xyzD50,
+                    // Texture args
+                    raw
+                );
             }
             
             // White balance
@@ -146,10 +185,18 @@ public:
                 Defringe::Run(renderer, img.cfaDesc, opts.defringe.opts, raw);
             }
             
-            // LMMSE Debayer
-            {
-                DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
-            }
+//            // LMMSE Debayer
+//            {
+//                DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
+//            }
+            
+            // De-bayer
+            renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
+                // Buffer args
+                img.cfaDesc,
+                // Texture args
+                raw
+            );
             
             // Camera raw -> ProPhotoRGB
             {
@@ -242,18 +289,18 @@ public:
             // Saturation
             Saturation::Run(renderer, opts.saturation, rgb);
             
-            // Sample: fill `sampleOpts.xyzD50`
-            {
-                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
-                    w, h,
-                    // Buffer args
-                    img.cfaDesc,
-                    sampleOpts.rect,
-                    sampleOpts.xyzD50,
-                    // Texture args
-                    rgb
-                );
-            }
+//            // Sample: fill `sampleOpts.xyzD50`
+//            {
+//                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
+//                    w, h,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    sampleOpts.rect,
+//                    sampleOpts.xyzD50,
+//                    // Texture args
+//                    rgb
+//                );
+//            }
             
             // XYZ.D50 -> XYZ.D65
             {
