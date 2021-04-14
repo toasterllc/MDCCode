@@ -113,6 +113,14 @@ public:
         } else {
             // Reconstruct highlights
             if (opts.reconstructHighlights.en) {
+                Renderer::Txt rgbHalf = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgbHalf,
+                    // Buffer args
+                    img.cfaDesc,
+                    // Texture args
+                    raw
+                );
+                
                 const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
                 const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
                 const double illumMax = std::max(std::max(illum[0], illum[1]), illum[2]);
@@ -137,7 +145,8 @@ public:
                     img.cfaDesc,
                     simdIllumMin1,
                     // Texture args
-                    raw
+                    raw,
+                    rgbHalf
                 );
                 
 //                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,

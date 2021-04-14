@@ -10,6 +10,32 @@ namespace CFAViewer {
 namespace Shader {
 namespace ImagePipeline {
 
+fragment float4 DebayerDownsample(
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    texture2d<float> raw [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos(2*(int)in.pos.x, 2*in.pos.y);
+    const CFAColor c = cfaDesc.color(pos+int2{0,0});
+    const CFAColor cn = cfaDesc.color(pos+int2{1,0});
+    const float s00 = Sample::R(Sample::MirrorClamp, raw, pos+int2{0,0});
+    const float s01 = Sample::R(Sample::MirrorClamp, raw, pos+int2{0,1});
+    const float s10 = Sample::R(Sample::MirrorClamp, raw, pos+int2{1,0});
+    const float s11 = Sample::R(Sample::MirrorClamp, raw, pos+int2{1,1});
+    
+    if (c == CFAColor::Red) {
+        return float4(s00,(s01+s10)/2,s11,1);
+    } else if (c==CFAColor::Green && cn==CFAColor::Red) {
+        return float4(s10,(s00+s11)/2,s01,1);
+    } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
+        return float4(s01,(s00+s11)/2,s10,1);
+    } else if (c == CFAColor::Blue) {
+        return float4(s11,(s01+s10)/2,s00,1);
+    }
+    return 0;
+}
+
+
 static float V(float x) {
     if (x > 0) return x;
     return 0;
@@ -45,120 +71,165 @@ static float avg(float a, float b, float c, float d, float e) {
 }
 
 static float sampleThresh(float thresh, texture2d<float> raw, int2 pos) {
-    const float x = Sample::R(Sample::MirrorClamp, raw,  pos);
+    const float x = Sample::R(Sample::MirrorClamp, raw, pos);
     if (x < thresh) return x;
     return 0;
 }
+
+
+
+
+
+
+
 
 fragment float ReconstructHighlights(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant float3& illum [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
+    texture2d<float> rgb [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     constexpr float Thresh = 1;
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
-    const CFAColor cn = cfaDesc.color(pos.x+1, pos.y);
-    const float s  = sampleThresh(Thresh, raw, pos+int2{+0,+0});
-    const float u  = sampleThresh(Thresh, raw, pos+int2{+0,-1});
-    const float d  = sampleThresh(Thresh, raw, pos+int2{+0,+1});
-    const float l  = sampleThresh(Thresh, raw, pos+int2{-1,+0});
-    const float r  = sampleThresh(Thresh, raw, pos+int2{+1,+0});
-    const float ul = sampleThresh(Thresh, raw, pos+int2{-1,-1});
-    const float ur = sampleThresh(Thresh, raw, pos+int2{+1,-1});
-    const float dl = sampleThresh(Thresh, raw, pos+int2{-1,+1});
-    const float dr = sampleThresh(Thresh, raw, pos+int2{+1,+1});
-//    if (s > 0) return s;
-    // If no pixel in the 3x3 neighborhood is saturated, then return the pixel
-    if (s>0 && u>0 && d>0 && l>0 && r>0 && ul>0 && ur>0 && dl>0 && dr>0) return s;
+    const float s_raw = Sample::R(Sample::MirrorClamp, raw, pos);
+    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
+    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+//    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit).rgb;
     
-    float r̄ = 0;
-    float ḡ = 0;
-    float b̄ = 0;
-    if (c == CFAColor::Red) {
-        r̄ = s;
-        ḡ = avg(u,d,l,r);
-        b̄ = avg(ul,ur,dl,dr);
-    } else if (c==CFAColor::Green && cn==CFAColor::Red) {
-        r̄ = avg(l,r);
-        ḡ = avg(s,ul,ur,dl,dr);
-        b̄ = avg(u,d);
-    } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
-        r̄ = avg(u,d);
-        ḡ = avg(s,ul,ur,dl,dr);
-        b̄ = avg(l,r);
-    } else if (c == CFAColor::Blue) {
-        ḡ = avg(u,d,l,r);
-        r̄ = avg(ul,ur,dl,dr);
-        b̄ = s;
-    }
+    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return s_raw;
     
-    const float kr = (r̄>0 ? r̄/illum.r : 0);
-    const float kg = (ḡ>0 ? ḡ/illum.g : 0);
-    const float kb = (b̄>0 ? b̄/illum.b : 0);
-    float k = avg(kr, kg, kb);
-//    // If the scale factor tries to reduce the , don't touch the pixel
-//    if (k < 1) {
-//        return s;
-//    }
-    
-    if (k == 0) {
-        k = 1;
-    }
-    
+    const float3 k3 = s_rgb/illum;
+    const float k = (k3.r+k3.g+k3.b)/3;
     const float3 i = k*illum;
-    
-//    // This scoped bit works well to prevent HR from being applied to the orange highlight,
-//    // by preventing short-circuiting if any of the scaled illuminant channels are less than
-//    // the average sampled channel. Ie -- only allow the correction to increase the the pixel value.
-//    {
-//        const float s  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+0,+0});
-//        const float u  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+0,-1});
-//        const float d  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+0,+1});
-//        const float l  = Sample::R(Sample::MirrorClamp, raw, pos+int2{-1,+0});
-//        const float r  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+1,+0});
-//        const float ul = Sample::R(Sample::MirrorClamp, raw, pos+int2{-1,-1});
-//        const float ur = Sample::R(Sample::MirrorClamp, raw, pos+int2{+1,-1});
-//        const float dl = Sample::R(Sample::MirrorClamp, raw, pos+int2{-1,+1});
-//        const float dr = Sample::R(Sample::MirrorClamp, raw, pos+int2{+1,+1});
-//        
-//        float r̄ = 0;
-//        float ḡ = 0;
-//        float b̄ = 0;
-//        if (c == CFAColor::Red) {
-//            r̄ = s;
-//            ḡ = avg(u,d,l,r);
-//            b̄ = avg(ul,ur,dl,dr);
-//        } else if (c==CFAColor::Green && cn==CFAColor::Red) {
-//            r̄ = avg(l,r);
-//            ḡ = avg(s,ul,ur,dl,dr);
-//            b̄ = avg(u,d);
-//        } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
-//            r̄ = avg(u,d);
-//            ḡ = avg(s,ul,ur,dl,dr);
-//            b̄ = avg(l,r);
-//        } else if (c == CFAColor::Blue) {
-//            ḡ = avg(u,d,l,r);
-//            r̄ = avg(ul,ur,dl,dr);
-//            b̄ = s;
-//        }
-//        
-//        const float Factor = 1;
-//        if (i.r<Factor*r̄ || i.g<Factor*ḡ || i.b<Factor*b̄) {
-//            return s;
-//        }
-//    }
-    
-    if (c == CFAColor::Red) {
-        return i.r;
-    } else if (c==CFAColor::Green) {
-        return i.g;
-    } else if (c == CFAColor::Blue) {
-        return i.b;
+    switch (c) {
+    case CFAColor::Red:     return i.r;
+    case CFAColor::Green:   return i.g;
+    case CFAColor::Blue:    return i.b;
     }
+    
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+//fragment float ReconstructHighlights(
+//    constant CFADesc& cfaDesc [[buffer(0)]],
+//    constant float3& illum [[buffer(1)]],
+//    texture2d<float> raw [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    constexpr float Thresh = 1;
+//    const int2 pos = int2(in.pos.xy);
+//    const CFAColor c = cfaDesc.color(pos);
+//    const CFAColor cn = cfaDesc.color(pos.x+1, pos.y);
+//    const float s  = sampleThresh(Thresh, raw, pos+int2{+0,+0});
+//    const float u  = sampleThresh(Thresh, raw, pos+int2{+0,-1});
+//    const float d  = sampleThresh(Thresh, raw, pos+int2{+0,+1});
+//    const float l  = sampleThresh(Thresh, raw, pos+int2{-1,+0});
+//    const float r  = sampleThresh(Thresh, raw, pos+int2{+1,+0});
+//    const float ul = sampleThresh(Thresh, raw, pos+int2{-1,-1});
+//    const float ur = sampleThresh(Thresh, raw, pos+int2{+1,-1});
+//    const float dl = sampleThresh(Thresh, raw, pos+int2{-1,+1});
+//    const float dr = sampleThresh(Thresh, raw, pos+int2{+1,+1});
+////    if (s > 0) return s;
+//    // If no pixel in the 3x3 neighborhood is saturated, then return the pixel
+//    if (s>0 && u>0 && d>0 && l>0 && r>0 && ul>0 && ur>0 && dl>0 && dr>0) return s;
+//    
+//    float r̄ = 0;
+//    float ḡ = 0;
+//    float b̄ = 0;
+//    if (c == CFAColor::Red) {
+//        r̄ = s;
+//        ḡ = avg(u,d,l,r);
+//        b̄ = avg(ul,ur,dl,dr);
+//    } else if (c==CFAColor::Green && cn==CFAColor::Red) {
+//        r̄ = avg(l,r);
+//        ḡ = avg(s,ul,ur,dl,dr);
+//        b̄ = avg(u,d);
+//    } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
+//        r̄ = avg(u,d);
+//        ḡ = avg(s,ul,ur,dl,dr);
+//        b̄ = avg(l,r);
+//    } else if (c == CFAColor::Blue) {
+//        ḡ = avg(u,d,l,r);
+//        r̄ = avg(ul,ur,dl,dr);
+//        b̄ = s;
+//    }
+//    
+//    const float kr = (r̄>0 ? r̄/illum.r : 0);
+//    const float kg = (ḡ>0 ? ḡ/illum.g : 0);
+//    const float kb = (b̄>0 ? b̄/illum.b : 0);
+//    float k = avg(kr, kg, kb);
+////    // If the scale factor tries to reduce the , don't touch the pixel
+////    if (k < 1) {
+////        return s;
+////    }
+//    
+//    if (k == 0) {
+//        k = 1;
+//    }
+//    
+//    const float3 i = k*illum;
+//    
+////    // This scoped bit works well to prevent HR from being applied to the orange highlight,
+////    // by preventing short-circuiting if any of the scaled illuminant channels are less than
+////    // the average sampled channel. Ie -- only allow the correction to increase the the pixel value.
+////    {
+////        const float s  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+0,+0});
+////        const float u  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+0,-1});
+////        const float d  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+0,+1});
+////        const float l  = Sample::R(Sample::MirrorClamp, raw, pos+int2{-1,+0});
+////        const float r  = Sample::R(Sample::MirrorClamp, raw, pos+int2{+1,+0});
+////        const float ul = Sample::R(Sample::MirrorClamp, raw, pos+int2{-1,-1});
+////        const float ur = Sample::R(Sample::MirrorClamp, raw, pos+int2{+1,-1});
+////        const float dl = Sample::R(Sample::MirrorClamp, raw, pos+int2{-1,+1});
+////        const float dr = Sample::R(Sample::MirrorClamp, raw, pos+int2{+1,+1});
+////        
+////        float r̄ = 0;
+////        float ḡ = 0;
+////        float b̄ = 0;
+////        if (c == CFAColor::Red) {
+////            r̄ = s;
+////            ḡ = avg(u,d,l,r);
+////            b̄ = avg(ul,ur,dl,dr);
+////        } else if (c==CFAColor::Green && cn==CFAColor::Red) {
+////            r̄ = avg(l,r);
+////            ḡ = avg(s,ul,ur,dl,dr);
+////            b̄ = avg(u,d);
+////        } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
+////            r̄ = avg(u,d);
+////            ḡ = avg(s,ul,ur,dl,dr);
+////            b̄ = avg(l,r);
+////        } else if (c == CFAColor::Blue) {
+////            ḡ = avg(u,d,l,r);
+////            r̄ = avg(ul,ur,dl,dr);
+////            b̄ = s;
+////        }
+////        
+////        const float Factor = 1;
+////        if (i.r<Factor*r̄ || i.g<Factor*ḡ || i.b<Factor*b̄) {
+////            return s;
+////        }
+////    }
+//    
+//    if (c == CFAColor::Red) {
+//        return i.r;
+//    } else if (c==CFAColor::Green) {
+//        return i.g;
+//    } else if (c == CFAColor::Blue) {
+//        return i.b;
+//    }
+//    return 0;
+//}
 
 
 
