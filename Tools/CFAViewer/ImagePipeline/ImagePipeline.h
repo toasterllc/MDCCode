@@ -145,22 +145,47 @@ public:
                     rgbHalf
                 );
                 
-//                for (int i=0; i<3; i++) {
+//                for (int i=0; i<10; i++) {
 //                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
-//                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurHighlightMap", tmp,
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::Blur", tmp,
 //                        // Texture args
 //                        highlightMap
 //                    );
 //                    highlightMap = std::move(tmp);
 //                }
                 
-//                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
-//                renderer.render("CFAViewer::Shader::ImagePipeline::DiffHighlightMap", diff,
+                {
+                    static bool a = false;
+                    if (!a) {
+                        renderer.debugShowTexture(highlightMap, nil);
+                        a = true;
+                    }
+                }
+                
+//                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
+//                renderer.render("CFAViewer::Shader::ImagePipeline::Diff", diff,
 //                    // Texture args
-//                    highlightMap
+//                    rgbHalf
 //                );
 //                
-//                renderer.debugShowTexture(diff, nil);
+//                for (int i=0; i<10; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::Blur", tmp,
+//                        // Texture args
+//                        diff
+//                    );
+//                    diff = std::move(tmp);
+//                }
+                
+//                for (int i=0; i<10; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurWithMask", tmp,
+//                        // Texture args
+//                        raw,
+//                        highlightMap
+//                    );
+//                    raw = std::move(tmp);
+//                }
                 
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
                     // Buffer args
@@ -168,6 +193,7 @@ public:
                     simdIllumMin1,
                     // Texture args
                     raw,
+                    rgbHalf,
                     highlightMap
                 );
                 

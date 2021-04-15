@@ -308,6 +308,10 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
             .goodPixelFactors   = {1.051, 1.544, 1.195},
         },
         
+        .debayerLMMSE = {
+            .applyGamma = true,
+        },
+        
 //        illum = 2.4743327397, 2.5535876543, 1
         .whiteBalance = { 0.691343/0.669886, 0.691343/0.691343, 0.691343/0.270734 },
 //        .whiteBalance = { 1.368683, 1.000000, 1.513193 },

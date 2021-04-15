@@ -78,65 +78,10 @@ static float sampleThresh(float thresh, texture2d<float> raw, int2 pos) {
 
 
 
-// Most basic version
-// Simply return illumant color, without scaling
-//fragment float ReconstructHighlights(
-//    constant CFADesc& cfaDesc [[buffer(0)]],
-//    constant float3& illum [[buffer(1)]],
-//    texture2d<float> raw [[texture(0)]],
-//    texture2d<float> rgb [[texture(1)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    constexpr float Thresh = 1;
-//    const int2 pos = int2(in.pos.xy);
-//    const CFAColor c = cfaDesc.color(pos);
-//    const float s_raw = Sample::R(Sample::MirrorClamp, raw, pos);
-//    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
-//    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
-//    
-//    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return s_raw;
-////    if (s_raw < Thresh) return s_raw;
-//    
-//    switch (c) {
-//    case CFAColor::Red:     return illum.r;
-//    case CFAColor::Green:   return illum.g;
-//    case CFAColor::Blue:    return illum.b;
-//    }
-//    return 0;
-//}
 
 
 
 
-
-//fragment float ReconstructHighlights(
-//    constant CFADesc& cfaDesc [[buffer(0)]],
-//    constant float3& illum [[buffer(1)]],
-//    texture2d<float> raw [[texture(0)]],
-//    texture2d<float> rgb [[texture(1)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    constexpr float Thresh = 1;
-//    const int2 pos = int2(in.pos.xy);
-//    const CFAColor c = cfaDesc.color(pos);
-//    const float s_raw = Sample::R(Sample::MirrorClamp, raw, pos);
-//    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
-//    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
-//    
-//    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return s_raw;
-//    
-//    const float3 k3 = s_rgb/illum;
-//    const float k = (k3.r+k3.g+k3.b)/3;
-//    const float3 i = k*illum;
-//    
-//    switch (c) {
-//    case CFAColor::Red:     return i.r;
-//    case CFAColor::Green:   return i.g;
-//    case CFAColor::Blue:    return i.b;
-//    }
-//    
-//    return 0;
-//}
 
 
 
@@ -161,12 +106,12 @@ fragment float CreateHighlightMap(
 
 
 
-fragment float BlurHighlightMap(
-    texture2d<float> map [[texture(0)]],
+fragment float Blur(
+    texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-#define PX(x,y) Sample::R(Sample::MirrorClamp, map, pos+int2{x,y})
+#define PX(x,y) Sample::R(Sample::MirrorClamp, txt, pos+int2{x,y})
     return (
         1*PX(-1,-1) + 2*PX(+0,-1) + 1*PX(+1,-1) +
         2*PX(-1,+0) + 4*PX(+0,+0) + 2*PX(+1,+0) +
@@ -196,34 +141,166 @@ fragment float DiffHighlightMap(
 }
 
 
+fragment float Diff(
+    texture2d<float> rgb [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define PX(x,y) Sample::RGB(Sample::MirrorClamp, rgb, pos+int2{x,y})
+    const float3 δx(
+        +1*PX(-1,-1) + +0*PX(+0,-1) + -1*PX(+1,-1) +
+        +2*PX(-1,+0) + +0*PX(+0,+0) + -2*PX(+1,+0) +
+        +1*PX(-1,+1) + +0*PX(+0,+1) + -1*PX(+1,+1)
+    );
+    
+    const float3 δy(
+        +1*PX(-1,-1) + +2*PX(+0,-1) + +1*PX(+1,-1) +
+        +0*PX(-1,+0) + +0*PX(+0,+0) + +0*PX(+1,+0) +
+        -1*PX(-1,+1) + -2*PX(+0,+1) + -1*PX(+1,+1)
+    );
+    
+#undef PX
+    const float2 δr(δx.r, δy.r);
+    const float2 δg(δx.g, δy.g);
+    const float2 δb(δx.b, δy.b);
+    const float δavg = (length(δr)+length(δg)+length(δb)) / 3;
+    return δavg;
+}
+
+
+
+fragment float BlurWithMask(
+    texture2d<float> raw [[texture(0)]],
+    texture2d<float> mask [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+    const float m = Sample::R(Sample::MirrorClamp, mask, pos);
+//    if (m == 0) return r;
+    
+#define PX(x,y) Sample::R(Sample::MirrorClamp, raw, pos+int2{x,y})
+    return (
+        1*PX(-1,-1) + 2*PX(+0,-1) + 1*PX(+1,-1) +
+        2*PX(-1,+0) + 4*PX(+0,+0) + 2*PX(+1,+0) +
+        1*PX(-1,+1) + 2*PX(+0,+1) + 1*PX(+1,+1) ) / 16;
+#undef PX
+}
+
+
+
 
 fragment float ReconstructHighlights(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant float3& illum [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
-    texture2d<float> map [[texture(1)]],
+    texture2d<float> rgb [[texture(1)]],
+    texture2d<float> map [[texture(2)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+    const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
     const float m = Sample::R(Sample::MirrorClamp, map, pos);
     if (m == 0) return r;
     
     switch (c) {
-    case CFAColor::Red:     return m*illum.r;
-    case CFAColor::Green:   return m*illum.g;
-    case CFAColor::Blue:    return m*illum.b;
+    case CFAColor::Red:     return (m)*illum.r;//+(1-m)*r;
+    case CFAColor::Green:   return (m)*illum.g;//+(1-m)*r;
+    case CFAColor::Blue:    return (m)*illum.b;//+(1-m)*r;
     }
-    
-//    switch (c) {
-//    case CFAColor::Red:     return m2*illum.r+(1-m2)*r;
-//    case CFAColor::Green:   return m2*illum.g+(1-m2)*r;
-//    case CFAColor::Blue:    return m2*illum.b+(1-m2)*r;
-//    }
-    
     return 0;
 }
+
+
+
+
+// Most basic version
+// Simply return illumant color, without scaling
+//fragment float ReconstructHighlights(
+//    constant CFADesc& cfaDesc [[buffer(0)]],
+//    constant float3& illum [[buffer(1)]],
+//    texture2d<float> raw [[texture(0)]],
+//    texture2d<float> rgb [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    constexpr float Thresh = 1;
+//    const int2 pos = int2(in.pos.xy);
+//    const CFAColor c = cfaDesc.color(pos);
+//    const float s_raw = Sample::R(Sample::MirrorClamp, raw, pos);
+//    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
+//    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+//    
+//    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return s_raw;
+////    if (s_raw < Thresh) return s_raw;
+//    
+//    switch (c) {
+//    case CFAColor::Red:     return illum.r;
+//    case CFAColor::Green:   return illum.g;
+//    case CFAColor::Blue:    return illum.b;
+//    }
+//    return 0;
+//}
+
+
+//fragment float ReconstructHighlights(
+//    constant CFADesc& cfaDesc [[buffer(0)]],
+//    constant float3& illum [[buffer(1)]],
+//    texture2d<float> raw [[texture(0)]],
+//    texture2d<float> rgb [[texture(1)]],
+//    texture2d<float> map [[texture(2)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//    const CFAColor c = cfaDesc.color(pos);
+//    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+//    const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
+//    const float m = Sample::R(Sample::MirrorClamp, map, pos);
+//    if (m == 0) return r;
+//    
+//    float savg = (s.r+s.g+s.b)/3;
+//    
+//    switch (c) {
+//    case CFAColor::Red:     return (m*illum.r);
+//    case CFAColor::Green:   return (m*illum.g);
+//    case CFAColor::Blue:    return (m*illum.b);
+//    }
+//    
+////    switch (c) {
+////    case CFAColor::Red:     return (m*illum.r);
+////    case CFAColor::Green:   return (m*illum.g);
+////    case CFAColor::Blue:    return (m*illum.b);
+////    }
+//    
+////    if (d > .8) return 0;
+////    return d;
+////    
+////    return d;
+////    
+////    constexpr float DThresh = .95;
+////    if (d >= DThresh) {
+////        switch (c) {
+////        case CFAColor::Red:     return (m*illum.r) + (1-m)*r;
+////        case CFAColor::Green:   return (m*illum.g) + (1-m)*r;
+////        case CFAColor::Blue:    return (m*illum.b) + (1-m)*r;
+////        }
+////    } else {
+////        switch (c) {
+////        case CFAColor::Red:     return m*illum.r;
+////        case CFAColor::Green:   return m*illum.g;
+////        case CFAColor::Blue:    return m*illum.b;
+////        }
+////    }
+////    
+////    switch (c) {
+////    case CFAColor::Red:     return m2*illum.r+(1-m2)*r;
+////    case CFAColor::Green:   return m2*illum.g+(1-m2)*r;
+////    case CFAColor::Blue:    return m2*illum.b+(1-m2)*r;
+////    }
+//    
+//    return 0;
+//}
 
 
 

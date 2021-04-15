@@ -126,8 +126,8 @@
 			children = (
 				55460A39260923360037A5AC /* ImagePipelineTypes.h */,
 				554609FF2603032A0037A5AC /* ImagePipeline.h */,
-				55EBCC89258966FE0089A441 /* ImagePipeline.metal */,
 				55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */,
+				55EBCC89258966FE0089A441 /* ImagePipeline.metal */,
 				554609FD2602C26A0037A5AC /* DebayerBilinear.metal */,
 				554609FB2602C08A0037A5AC /* DebayerLMMSE.h */,
 				55460A1B2603CEAF0037A5AC /* DebayerLMMSE.metal */,
