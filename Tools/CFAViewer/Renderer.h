@@ -334,7 +334,7 @@ namespace CFAViewer {
         }
         
         // Create a CGImage from a texture
-        id /* CGImageRef */ createCGImage(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=_SRGBColorSpace()) {
+        id /* CGImageRef */ createCGImage(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=nil) {
             const size_t w = [txt width];
             const size_t h = [txt height];
             const MTLPixelFormat fmt = [txt pixelFormat];
@@ -344,8 +344,23 @@ namespace CFAViewer {
             const size_t bytesPerRow = samplesPerPixel*bytesPerSample*w;
             uint32_t opts = 0;
             
-            // TODO: add support for more pixel formats as needed
+            // Add support for more pixel formats as needed...
             switch (fmt) {
+            // Gray
+            case MTLPixelFormatR8Unorm:
+                opts = 0;
+                break;
+            case MTLPixelFormatR16Unorm:
+                opts = kCGBitmapByteOrder16Host;
+                break;
+            case MTLPixelFormatR16Float:
+                opts = kCGBitmapFloatComponents|kCGBitmapByteOrder16Host;
+                break;
+            case MTLPixelFormatR32Float:
+                opts = kCGBitmapFloatComponents|kCGBitmapByteOrder32Host;
+                break;
+            
+            // Color
             case MTLPixelFormatRGBA8Unorm:
                 opts = kCGImageAlphaNoneSkipLast;
                 break;
@@ -355,8 +370,22 @@ namespace CFAViewer {
             case MTLPixelFormatRGBA16Float:
                 opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Host;
                 break;
+            case MTLPixelFormatRGBA32Float:
+                opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder32Host;
+                break;
             default:
                 throw std::runtime_error("invalid texture format");
+            }
+            
+            // Choose a colorspace if one wasn't supplied
+            if (!colorSpace) {
+                if (samplesPerPixel == 1) {
+                    colorSpace = _GrayColorSpace();
+                } else if (samplesPerPixel == 1) {
+                    colorSpace = _SRGBColorSpace();
+                } else {
+                    throw std::runtime_error("invalid texture format");
+                }
             }
             
             id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, bytesPerSample*8,
@@ -370,6 +399,21 @@ namespace CFAViewer {
             else if (bytesPerSample == 4)   textureRead(txt, (uint32_t*)data, sampleCount);
             else                            throw std::runtime_error("invalid bytesPerSample");
             return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
+        }
+        
+        void debugShowTexture(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=nil) {
+            const char* outputPath = "/tmp/tempimage.png";
+            
+            sync(txt);
+            commitAndWait();
+            
+            id img = createCGImage(txt, colorSpace);
+            assert(img);
+            NSURL* outputURL = [NSURL fileURLWithPath:@(outputPath)];
+            CGImageDestinationRef imageDest = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, nullptr);
+            CGImageDestinationAddImage(imageDest, (__bridge CGImageRef)img, nullptr);
+            CGImageDestinationFinalize(imageDest);
+            system((std::string("open ") + outputPath).c_str());
         }
         
         id<MTLCommandBuffer> cmdBuf() {
@@ -426,6 +470,11 @@ namespace CFAViewer {
             }
             
             _SetTextureArgs(enc, idx+1, ts...);
+        }
+        
+        static id _GrayColorSpace() {
+            static CGColorSpaceRef cs = CGColorSpaceCreateDeviceGray();
+            return (__bridge id)cs;
         }
         
         static id _SRGBColorSpace() {

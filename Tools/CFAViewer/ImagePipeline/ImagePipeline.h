@@ -137,17 +137,38 @@ public:
 //                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
 //                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
                 
-                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
-                    img.width, img.height);
+                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+                renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
+                    // Buffer args
+                    simdIllumMin1,
+                    // Texture args
+                    rgbHalf
+                );
                 
-                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
+//                renderer.debugShowTexture(highlightMap, nil);
+                
+                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
                     // Buffer args
                     img.cfaDesc,
                     simdIllumMin1,
                     // Texture args
                     raw,
-                    rgbHalf
+                    highlightMap
                 );
+                
+                
+                
+//                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
+//                    img.width, img.height);
+//                
+//                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    simdIllumMin1,
+//                    // Texture args
+//                    raw,
+//                    rgbHalf
+//                );
                 
 //                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
 //                    img.width, img.height);
@@ -161,8 +182,8 @@ public:
 //                    // Texture args
 //                    raw
 //                );
-                
-                raw = std::move(tmp);
+//                
+//                raw = std::move(tmp);
             }
             
             // Sample: fill `sampleOpts.xyzD50`

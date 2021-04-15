@@ -78,8 +78,86 @@ static float sampleThresh(float thresh, texture2d<float> raw, int2 pos) {
 
 
 
+// Most basic version
+// Simply return illumant color, without scaling
+//fragment float ReconstructHighlights(
+//    constant CFADesc& cfaDesc [[buffer(0)]],
+//    constant float3& illum [[buffer(1)]],
+//    texture2d<float> raw [[texture(0)]],
+//    texture2d<float> rgb [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    constexpr float Thresh = 1;
+//    const int2 pos = int2(in.pos.xy);
+//    const CFAColor c = cfaDesc.color(pos);
+//    const float s_raw = Sample::R(Sample::MirrorClamp, raw, pos);
+//    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
+//    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+//    
+//    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return s_raw;
+////    if (s_raw < Thresh) return s_raw;
+//    
+//    switch (c) {
+//    case CFAColor::Red:     return illum.r;
+//    case CFAColor::Green:   return illum.g;
+//    case CFAColor::Blue:    return illum.b;
+//    }
+//    return 0;
+//}
 
 
+
+
+
+//fragment float ReconstructHighlights(
+//    constant CFADesc& cfaDesc [[buffer(0)]],
+//    constant float3& illum [[buffer(1)]],
+//    texture2d<float> raw [[texture(0)]],
+//    texture2d<float> rgb [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    constexpr float Thresh = 1;
+//    const int2 pos = int2(in.pos.xy);
+//    const CFAColor c = cfaDesc.color(pos);
+//    const float s_raw = Sample::R(Sample::MirrorClamp, raw, pos);
+//    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
+//    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+//    
+//    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return s_raw;
+//    
+//    const float3 k3 = s_rgb/illum;
+//    const float k = (k3.r+k3.g+k3.b)/3;
+//    const float3 i = k*illum;
+//    
+//    switch (c) {
+//    case CFAColor::Red:     return i.r;
+//    case CFAColor::Green:   return i.g;
+//    case CFAColor::Blue:    return i.b;
+//    }
+//    
+//    return 0;
+//}
+
+
+
+
+
+
+fragment float CreateHighlightMap(
+    constant float3& illum [[buffer(0)]],
+    texture2d<float> rgb [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    constexpr float Thresh = 1;
+    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
+    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+    
+    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return 0;
+    
+    const float3 k3 = s_rgb/illum;
+    const float k = (k3.r+k3.g+k3.b)/3;
+    return k;
+}
 
 
 
@@ -87,26 +165,19 @@ fragment float ReconstructHighlights(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant float3& illum [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
-    texture2d<float> rgb [[texture(1)]],
+    texture2d<float> map [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    constexpr float Thresh = 1;
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
-    const float s_raw = Sample::R(Sample::MirrorClamp, raw, pos);
-    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
-    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
-//    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit).rgb;
+    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+    const float m = Sample::R(Sample::MirrorClamp, map, pos);
+    if (m == 0) return r;
     
-    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return s_raw;
-    
-    const float3 k3 = s_rgb/illum;
-    const float k = (k3.r+k3.g+k3.b)/3;
-    const float3 i = k*illum;
     switch (c) {
-    case CFAColor::Red:     return i.r;
-    case CFAColor::Green:   return i.g;
-    case CFAColor::Blue:    return i.b;
+    case CFAColor::Red:     return m*illum.r;
+    case CFAColor::Green:   return m*illum.g;
+    case CFAColor::Blue:    return m*illum.b;
     }
     
     return 0;
