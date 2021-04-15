@@ -143,7 +143,7 @@ static float sampleThresh(float thresh, texture2d<float> raw, int2 pos) {
 
 
 
-fragment float4 CreateHighlightMap(
+fragment float CreateHighlightMap(
     constant float3& illum [[buffer(0)]],
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
@@ -156,23 +156,22 @@ fragment float4 CreateHighlightMap(
     
     const float3 k3 = s_rgb/illum;
     const float k = (k3.r+k3.g+k3.b)/3;
-    return float4((k*illum)-s_rgb, 1);
+    return k;
 }
 
 
 
-fragment float4 BlurHighlightMap(
+fragment float BlurHighlightMap(
     texture2d<float> map [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-#define PX(x,y) Sample::RGB(Sample::MirrorClamp, map, pos+int2{x,y})
-    const float3 s = float3(
+#define PX(x,y) Sample::R(Sample::MirrorClamp, map, pos+int2{x,y})
+    return (
         1*PX(-1,-1) + 2*PX(+0,-1) + 1*PX(+1,-1) +
         2*PX(-1,+0) + 4*PX(+0,+0) + 2*PX(+1,+0) +
         1*PX(-1,+1) + 2*PX(+0,+1) + 1*PX(+1,+1) ) / 16;
 #undef PX
-    return float4(s,1);
 }
 
 
@@ -188,12 +187,13 @@ fragment float ReconstructHighlights(
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(Sample::MirrorClamp, raw, pos);
-    const float3 m = Sample::RGB(Sample::MirrorClamp, map, pos);
+    const float m = Sample::R(Sample::MirrorClamp, map, pos);
+    if (m == 0) return r;
     
     switch (c) {
-    case CFAColor::Red:     return r+m.r;
-    case CFAColor::Green:   return r+m.g;
-    case CFAColor::Blue:    return r+m.b;
+    case CFAColor::Red:     return m*illum.r;
+    case CFAColor::Green:   return m*illum.g;
+    case CFAColor::Blue:    return m*illum.b;
     }
     
     return 0;

@@ -137,7 +137,7 @@ public:
 //                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
 //                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
                 
-                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
+                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
                 renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
                     // Buffer args
                     simdIllumMax1,
@@ -145,14 +145,14 @@ public:
                     rgbHalf
                 );
                 
-                for (int i=0; i<10; i++) {
-                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
-                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurHighlightMap", tmp,
-                        // Texture args
-                        highlightMap
-                    );
-                    highlightMap = std::move(tmp);
-                }
+//                for (int i=0; i<3; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurHighlightMap", tmp,
+//                        // Texture args
+//                        highlightMap
+//                    );
+//                    highlightMap = std::move(tmp);
+//                }
                 
 //                renderer.debugShowTexture(highlightMap, nil);
                 
