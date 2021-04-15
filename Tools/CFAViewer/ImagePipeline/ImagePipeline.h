@@ -140,17 +140,26 @@ public:
                 Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
                 renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
                     // Buffer args
-                    simdIllumMin1,
+                    simdIllumMax1,
                     // Texture args
                     rgbHalf
                 );
+                
+//                for (int i=0; i<3; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurHighlightMap", tmp,
+//                        // Texture args
+//                        highlightMap
+//                    );
+//                    highlightMap = std::move(tmp);
+//                }
                 
 //                renderer.debugShowTexture(highlightMap, nil);
                 
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
                     // Buffer args
                     img.cfaDesc,
-                    simdIllumMin1,
+                    simdIllumMax1,
                     // Texture args
                     raw,
                     highlightMap

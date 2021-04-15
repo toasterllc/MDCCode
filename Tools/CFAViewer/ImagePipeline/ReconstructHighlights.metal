@@ -161,6 +161,22 @@ fragment float CreateHighlightMap(
 
 
 
+fragment float BlurHighlightMap(
+    texture2d<float> map [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define PX(x,y) Sample::R(Sample::MirrorClamp, map, pos+int2{x,y})
+    return (
+        1*PX(-1,-1) + 2*PX(+0,-1) + 1*PX(+1,-1) +
+        2*PX(-1,+0) + 4*PX(+0,+0) + 2*PX(+1,+0) +
+        1*PX(-1,+1) + 2*PX(+0,+1) + 1*PX(+1,+1) ) / 16;
+#undef PX
+}
+
+
+
+
 fragment float ReconstructHighlights(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant float3& illum [[buffer(1)]],
@@ -182,6 +198,30 @@ fragment float ReconstructHighlights(
     
     return 0;
 }
+
+
+
+//fragment float ReconstructHighlights(
+//    constant CFADesc& cfaDesc [[buffer(0)]],
+//    constant float3& illum [[buffer(1)]],
+//    texture2d<float> raw [[texture(0)]],
+//    texture2d<float> map [[texture(1)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//    const CFAColor c = cfaDesc.color(pos);
+//    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+//    const float m = Sample::R(Sample::MirrorClamp, map, pos);
+//    if (m == 0) return r;
+//    
+//    switch (c) {
+//    case CFAColor::Red:     return m*illum.r + (1-m)*r;
+//    case CFAColor::Green:   return m*illum.g + (1-m)*r;
+//    case CFAColor::Blue:    return m*illum.b + (1-m)*r;
+//    }
+//    
+//    return 0;
+//}
 
 
 
