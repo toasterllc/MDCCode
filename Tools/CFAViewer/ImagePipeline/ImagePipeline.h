@@ -140,7 +140,7 @@ public:
                 Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
                 renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
                     // Buffer args
-                    simdIllumMax1,
+                    simdIllumMin1,
                     // Texture args
                     rgbHalf
                 );
@@ -154,16 +154,36 @@ public:
 //                    highlightMap = std::move(tmp);
 //                }
                 
-//                renderer.debugShowTexture(highlightMap, nil);
+                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+                renderer.render("CFAViewer::Shader::ImagePipeline::DiffHighlightMap", diff,
+                    // Texture args
+                    highlightMap
+                );
+                
+//                renderer.debugShowTexture(diff, nil);
                 
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
                     // Buffer args
                     img.cfaDesc,
-                    simdIllumMax1,
+                    simdIllumMin1,
                     // Texture args
                     raw,
                     highlightMap
                 );
+                
+                
+//    constant float3& illum [[buffer(0)]],
+//    texture2d<float> raw [[texture(0)]],
+//    texture2d<float> diff [[texture(1)]],
+                
+//                renderer.render("CFAViewer::Shader::ImagePipeline::FixEdges", raw,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    simdIllumMin1,
+//                    // Texture args
+//                    raw,
+//                    diff
+//                );
                 
                 
                 
@@ -224,18 +244,18 @@ public:
                 Defringe::Run(renderer, img.cfaDesc, opts.defringe.opts, raw);
             }
             
-//            // LMMSE Debayer
-//            {
-//                DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
-//            }
+            // LMMSE Debayer
+            {
+                DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
+            }
             
-            // De-bayer
-            renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
-                // Buffer args
-                img.cfaDesc,
-                // Texture args
-                raw
-            );
+//            // De-bayer
+//            renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
+//                // Buffer args
+//                img.cfaDesc,
+//                // Texture args
+//                raw
+//            );
             
             // Camera raw -> ProPhotoRGB
             {

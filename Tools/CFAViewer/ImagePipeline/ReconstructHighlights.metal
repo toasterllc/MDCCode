@@ -174,6 +174,26 @@ fragment float BlurHighlightMap(
 #undef PX
 }
 
+fragment float DiffHighlightMap(
+    texture2d<float> map [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define PX(x,y) Sample::R(Sample::MirrorClamp, map, pos+int2{x,y})
+    const float2 δ(
+        // δx
+        +1*PX(-1,-1) + +0*PX(+0,-1) + -1*PX(+1,-1) +
+        +2*PX(-1,+0) + +0*PX(+0,+0) + -2*PX(+1,+0) +
+        +1*PX(-1,+1) + +0*PX(+0,+1) + -1*PX(+1,+1) ,
+        
+        // δy
+        +1*PX(-1,-1) + +2*PX(+0,-1) + +1*PX(+1,-1) +
+        +0*PX(-1,+0) + +0*PX(+0,+0) + +0*PX(+1,+0) +
+        -1*PX(-1,+1) + -2*PX(+0,+1) + -1*PX(+1,+1)
+    );
+#undef PX
+    return length(δ);
+}
 
 
 
@@ -197,6 +217,29 @@ fragment float ReconstructHighlights(
     }
     
     return 0;
+}
+
+
+
+
+fragment float FixEdges(
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant float3& illum [[buffer(1)]],
+    texture2d<float> raw [[texture(0)]],
+    texture2d<float> diff [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const CFAColor c = cfaDesc.color(pos);
+    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+    const float δ = Sample::R(Sample::MirrorClamp, diff, pos);
+    if (δ < .5) return r;
+    switch (c) {
+    case CFAColor::Red:     return illum.r;
+    case CFAColor::Green:   return illum.g;
+    case CFAColor::Blue:    return illum.b;
+    }
+//    return 0;
 }
 
 
