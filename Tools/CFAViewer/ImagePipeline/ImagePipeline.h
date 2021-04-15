@@ -154,12 +154,12 @@ public:
 //                    highlightMap = std::move(tmp);
 //                }
                 
-                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
-                renderer.render("CFAViewer::Shader::ImagePipeline::DiffHighlightMap", diff,
-                    // Texture args
-                    highlightMap
-                );
-                
+//                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+//                renderer.render("CFAViewer::Shader::ImagePipeline::DiffHighlightMap", diff,
+//                    // Texture args
+//                    highlightMap
+//                );
+//                
 //                renderer.debugShowTexture(diff, nil);
                 
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,

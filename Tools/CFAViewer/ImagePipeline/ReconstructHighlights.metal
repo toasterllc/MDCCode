@@ -216,6 +216,12 @@ fragment float ReconstructHighlights(
     case CFAColor::Blue:    return m*illum.b;
     }
     
+//    switch (c) {
+//    case CFAColor::Red:     return m2*illum.r+(1-m2)*r;
+//    case CFAColor::Green:   return m2*illum.g+(1-m2)*r;
+//    case CFAColor::Blue:    return m2*illum.b+(1-m2)*r;
+//    }
+    
     return 0;
 }
 
