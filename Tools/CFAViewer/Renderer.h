@@ -381,7 +381,7 @@ namespace CFAViewer {
             if (!colorSpace) {
                 if (samplesPerPixel == 1) {
                     colorSpace = _GrayColorSpace();
-                } else if (samplesPerPixel == 1) {
+                } else if (samplesPerPixel == 4) {
                     colorSpace = _SRGBColorSpace();
                 } else {
                     throw std::runtime_error("invalid texture format");
