@@ -76,15 +76,41 @@ static float sampleThresh(float thresh, texture2d<float> raw, int2 pos) {
     return 0;
 }
 
-
-
-
-
-
-
-
-
-
+fragment float4 ExpandHighlights(
+    texture2d<float> rgb [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define PX(x,y) Sample::RGB(Sample::MirrorClamp, rgb, pos+int2{x,y})
+    const float3 s = PX(+0,+0);
+    float3 vals[] = {
+        PX(-1,-1), PX(+0,-1), PX(+1,-1),
+        PX(-1,+0), s        , PX(+1,+0),
+        PX(-1,+1), PX(+0,+1), PX(+1,+1)
+    };
+#undef PX
+    float3 avg = 0;
+    float3 count = 0;
+    for (float3 x : vals) {
+        if (x.r >= s.r) {
+            avg.r += x.r;
+            count.r += 1;
+        }
+        
+        if (x.g >= s.g) {
+            avg.g += x.g;
+            count.g += 1;
+        }
+        
+        if (x.b >= s.b) {
+            avg.b += x.b;
+            count.b += 1;
+        }
+    }
+    
+    avg /= count;
+    return float4(avg, 1);
+}
 
 
 
@@ -93,7 +119,7 @@ fragment float CreateHighlightMap(
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    constexpr float Thresh = 1;
+    constexpr float Thresh = .99;
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
     

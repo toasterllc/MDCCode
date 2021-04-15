@@ -121,6 +121,28 @@ public:
                     raw
                 );
                 
+                for (int i=0; i<2; i++)
+                {
+                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                    renderer.render("CFAViewer::Shader::ImagePipeline::ExpandHighlights", tmp,
+                        // Buffer args
+                        img.cfaDesc,
+                        // Texture args
+                        rgbHalf
+                    );
+                    rgbHalf = std::move(tmp);
+                }
+                
+                {
+                    static bool a = false;
+                    if (!a) {
+                        renderer.debugShowTexture(rgbHalf, nil);
+                        a = true;
+                    }
+                }
+                
+                
+                
                 const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
                 const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
                 const double illumMax = std::max(std::max(illum[0], illum[1]), illum[2]);
@@ -153,14 +175,6 @@ public:
 //                    );
 //                    highlightMap = std::move(tmp);
 //                }
-                
-                {
-                    static bool a = false;
-                    if (!a) {
-                        renderer.debugShowTexture(highlightMap, nil);
-                        a = true;
-                    }
-                }
                 
 //                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
 //                renderer.render("CFAViewer::Shader::ImagePipeline::Diff", diff,
