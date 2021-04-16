@@ -117,14 +117,17 @@ fragment float4 ExpandHighlights(
 fragment float CreateHighlightMap(
     constant float3& illum [[buffer(0)]],
     texture2d<float> rgb [[texture(0)]],
+    texture2d<float> rgbLight [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     constexpr float Thresh = .99;
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
+    {
+        const float3 s_rgbLight = rgbLight.sample({filter::linear}, in.posUnit+off).rgb;
+        if (s_rgbLight.r<Thresh && s_rgbLight.g<Thresh && s_rgbLight.b<Thresh) return 0;
+    }
+    
     const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
-    
-    if (s_rgb.r<Thresh && s_rgb.g<Thresh && s_rgb.b<Thresh) return 0;
-    
     const float3 k3 = s_rgb/illum;
     const float k = (k3.r+k3.g+k3.b)/3;
     return k;
@@ -132,7 +135,7 @@ fragment float CreateHighlightMap(
 
 
 
-fragment float Blur(
+fragment float BlurR(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -142,6 +145,19 @@ fragment float Blur(
         1*PX(-1,-1) + 2*PX(+0,-1) + 1*PX(+1,-1) +
         2*PX(-1,+0) + 4*PX(+0,+0) + 2*PX(+1,+0) +
         1*PX(-1,+1) + 2*PX(+0,+1) + 1*PX(+1,+1) ) / 16;
+#undef PX
+}
+
+fragment float4 BlurRGB(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define PX(x,y) Sample::RGB(Sample::MirrorClamp, txt, pos+int2{x,y})
+    return float4((
+        1*PX(-1,-1) + 2*PX(+0,-1) + 1*PX(+1,-1) +
+        2*PX(-1,+0) + 4*PX(+0,+0) + 2*PX(+1,+0) +
+        1*PX(-1,+1) + 2*PX(+0,+1) + 1*PX(+1,+1) ) / 16, 1);
 #undef PX
 }
 

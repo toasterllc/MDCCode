@@ -121,6 +121,8 @@ public:
                     raw
                 );
                 
+                Renderer::Txt rgbLightHalf = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                renderer.copy(rgbHalf, rgbLightHalf);
                 for (int i=0; i<2; i++)
                 {
                     Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
@@ -128,18 +130,18 @@ public:
                         // Buffer args
                         img.cfaDesc,
                         // Texture args
-                        rgbHalf
+                        rgbLightHalf
                     );
-                    rgbHalf = std::move(tmp);
+                    rgbLightHalf = std::move(tmp);
                 }
                 
-                {
-                    static bool a = false;
-                    if (!a) {
-                        renderer.debugShowTexture(rgbHalf, nil);
-                        a = true;
-                    }
-                }
+//                {
+//                    static bool a = false;
+//                    if (!a) {
+//                        renderer.debugShowTexture(rgbLightHalf, nil);
+//                        a = true;
+//                    }
+//                }
                 
                 
                 
@@ -164,7 +166,8 @@ public:
                     // Buffer args
                     simdIllumMin1,
                     // Texture args
-                    rgbHalf
+                    rgbHalf,
+                    rgbLightHalf
                 );
                 
 //                for (int i=0; i<10; i++) {
