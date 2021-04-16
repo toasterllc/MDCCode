@@ -274,9 +274,11 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        Mmap imgData("/Users/dave/matlab/1.cfa");
         
         // Cabinet
-        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_26.cfa");
-        // Orange
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_26.cfa");
+//        // Orange
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_53.cfa");
+        // Floor
+        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_157.cfa");
         
         _streamImages.img.width = 2304;
         _streamImages.img.height = 1296;
@@ -1519,7 +1521,6 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 - (IBAction)_tagPreviousImage:(id)sender {
-    return;
     if (_TagCurrentIllum == _TagIllums.begin()) {
         NSBeep();
         return;
@@ -1529,7 +1530,6 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 - (IBAction)_tagNextImage:(id)sender {
-    return;
     // Don't allow going further if we're already past the end,
     // or the next item is past the end.
     if (_TagCurrentIllum==_TagIllums.end() || std::next(_TagCurrentIllum)==_TagIllums.end()) {
