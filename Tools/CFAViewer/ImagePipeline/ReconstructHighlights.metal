@@ -214,7 +214,26 @@ fragment float BlurWithMask(
 }
 
 
-
+fragment float PrimitiveReconstructHighlights(
+    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant float3& illum [[buffer(1)]],
+    texture2d<float> rawOrig [[texture(0)]],
+    texture2d<float> raw [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const CFAColor c = cfaDesc.color(pos);
+    const float ro = Sample::R(Sample::MirrorClamp, rawOrig, pos);
+    const float r = Sample::R(Sample::MirrorClamp, raw, pos);
+    if (ro < 1) return r;
+    
+    switch (c) {
+    case CFAColor::Red:     return illum.r;
+    case CFAColor::Green:   return illum.g;
+    case CFAColor::Blue:    return illum.b;
+    }
+    return 0;
+}
 
 fragment float ReconstructHighlights(
     constant CFADesc& cfaDesc [[buffer(0)]],
