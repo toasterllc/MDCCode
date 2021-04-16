@@ -247,17 +247,37 @@ fragment float4 BlurRGBA(
     };
 #undef PX
     
-    float4 r = 0;
-    float coeffSum = 0;
-    for (size_t i=0; i<sizeof(coeff)/sizeof(*coeff); i++) {
-        const float k = coeff[i];
-        const float4 v = vals[i];
-        if (v.a == 0) continue;
-        r += k*v;
-        coeffSum += k;
+    float3 color = 0;
+    // color = weighted average of neighbors' color, ignoring samples with alpha=0
+    {
+        float coeffSum = 0;
+        for (size_t i=0; i<sizeof(coeff)/sizeof(*coeff); i++) {
+            const float k = coeff[i];
+            const float4 v = vals[i];
+            if (v.a == 0) continue;
+            color += k*v.rgb;
+            coeffSum += k;
+        }
+        if (coeffSum > 0) {
+            color /= coeffSum;
+        }
     }
-    if (coeffSum == 0) return 0;
-    return r/coeffSum;
+    
+    // alpha = weighted average of neighbors' alpha, *not* ignoring samples with alpha=0
+    float alpha = 0;
+    {
+        float coeffSum = 0;
+        for (size_t i=0; i<sizeof(coeff)/sizeof(*coeff); i++) {
+            const float k = coeff[i];
+            const float4 v = vals[i];
+            alpha += k*v.a;
+            coeffSum += k;
+        }
+        if (coeffSum > 0) {
+            alpha /= coeffSum;
+        }
+    }
+    return float4(color, alpha);
 }
 
 fragment float4 SourceOver(
