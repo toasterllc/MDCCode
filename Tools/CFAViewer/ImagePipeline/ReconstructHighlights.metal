@@ -89,6 +89,7 @@ fragment float4 ExpandHighlights(
         PX(-1,+1), PX(+0,+1), PX(+1,+1)
     };
 #undef PX
+    
     float3 avg = 0;
     float3 count = 0;
     for (float3 x : vals) {
@@ -114,7 +115,52 @@ fragment float4 ExpandHighlights(
 
 
 
-fragment float CreateHighlightMap(
+
+fragment float4 BlurHighlights(
+    texture2d<float> rgb [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define PX(x,y) Sample::RGBA(Sample::MirrorClamp, rgb, pos+int2{x,y})
+    const float4 s = PX(+0,+0);
+    float4 vals[] = {
+        PX(-1,-1), PX(+0,-1), PX(+1,-1),
+        PX(-1,+0), s        , PX(+1,+0),
+        PX(-1,+1), PX(+0,+1), PX(+1,+1)
+    };
+#undef PX
+    
+    float4 avg = 0;
+    float4 count = 0;
+    for (float4 x : vals) {
+        if (x.r >= s.r) {
+            avg.r += x.r;
+            count.r += 1;
+        }
+        
+        if (x.g >= s.g) {
+            avg.g += x.g;
+            count.g += 1;
+        }
+        
+        if (x.b >= s.b) {
+            avg.b += x.b;
+            count.b += 1;
+        }
+        
+        if (x.a >= s.a) {
+            avg.a += x.a;
+            count.a += 1;
+        }
+    }
+    
+    avg /= count;
+    return avg;
+}
+
+
+
+fragment float4 CreateHighlightMap(
     constant float3& illum [[buffer(0)]],
     texture2d<float> rgb [[texture(0)]],
     texture2d<float> rgbLight [[texture(1)]],
@@ -124,13 +170,13 @@ fragment float CreateHighlightMap(
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     {
         const float3 s_rgbLight = rgbLight.sample({filter::linear}, in.posUnit+off).rgb;
-        if (s_rgbLight.r<Thresh && s_rgbLight.g<Thresh && s_rgbLight.b<Thresh) return 0;
+        if (s_rgbLight.r<Thresh && s_rgbLight.g<Thresh && s_rgbLight.b<Thresh) return float4(1,0,0,0);
     }
     
     const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
     const float3 k3 = s_rgb/illum;
     const float k = (k3.r+k3.g+k3.b)/3;
-    return k;
+    return float4(k*illum, 1);
 }
 
 
@@ -159,6 +205,73 @@ fragment float4 BlurRGB(
         2*PX(-1,+0) + 4*PX(+0,+0) + 2*PX(+1,+0) +
         1*PX(-1,+1) + 2*PX(+0,+1) + 1*PX(+1,+1) ) / 16, 1);
 #undef PX
+}
+
+//fragment float4 BlurRGBA(
+//    texture2d<float> txt [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const int2 pos = int2(in.pos.xy);
+//#define PX(x,y) Sample::RGBA(Sample::MirrorClamp, txt, pos+int2{x,y})
+//    const float4 vals[] = {
+//        (1./16)*PX(-1,-1) , (2./16)*PX(+0,-1) , (1./16)*PX(+1,-1) ,
+//        (2./16)*PX(-1,+0) , (4./16)*PX(+0,+0) , (2./16)*PX(+1,+0) ,
+//        (1./16)*PX(-1,+1) , (2./16)*PX(+0,+1) , (1./16)*PX(+1,+1) ,
+//    };
+//#undef PX
+//    
+//    float4 r = 0;
+//    for (float4 v : vals) {
+//        if (v.a == 0) continue;
+//        r += v;
+//    }
+//    return r;
+//}
+
+fragment float4 BlurRGBA(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float coeff[] = {
+        1 , 2 , 1 ,
+        2 , 4 , 2 ,
+        1 , 2 , 1 ,
+    };
+    
+#define PX(x,y) Sample::RGBA(Sample::MirrorClamp, txt, pos+int2{x,y})
+    const float4 vals[] = {
+        PX(-1,-1) , PX(+0,-1) , PX(+1,-1) ,
+        PX(-1,+0) , PX(+0,+0) , PX(+1,+0) ,
+        PX(-1,+1) , PX(+0,+1) , PX(+1,+1) ,
+    };
+#undef PX
+    
+    float4 r = 0;
+    float coeffSum = 0;
+    for (size_t i=0; i<sizeof(coeff)/sizeof(*coeff); i++) {
+        const float k = coeff[i];
+        const float4 v = vals[i];
+        if (v.a == 0) continue;
+        r += k*v;
+        coeffSum += k;
+    }
+    if (coeffSum == 0) return 0;
+    return r/coeffSum;
+}
+
+fragment float4 SourceOver(
+    texture2d<float> src [[texture(0)]],
+    texture2d<float> dst [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+//    return float4(1,1,1,0);
+    const int2 pos = int2(in.pos.xy);
+    const float4 a = Sample::RGBA(Sample::MirrorClamp, src, pos);
+    const float4 b = Sample::RGBA(Sample::MirrorClamp, dst, pos);
+    const float alpha = a.a+b.a*(1-a.a);
+    const float3 color = (alpha>0 ? (a.rgb*a.a + b.rgb*b.a*(1-a.a))/alpha : 0);
+    return float4(color, alpha);
 }
 
 fragment float4 BlurRGBIncrease(
@@ -261,14 +374,12 @@ fragment float ReconstructHighlights(
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(Sample::MirrorClamp, raw, pos);
-    const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
-    const float m = Sample::R(Sample::MirrorClamp, map, pos);
-    if (m == 0) return r;
+    const float4 m = Sample::RGBA(Sample::MirrorClamp, map, pos);
     
     switch (c) {
-    case CFAColor::Red:     return (m)*illum.r;//+(1-m)*r;
-    case CFAColor::Green:   return (m)*illum.g;//+(1-m)*r;
-    case CFAColor::Blue:    return (m)*illum.b;//+(1-m)*r;
+    case CFAColor::Red:     return m.a*m.r + (1-m.a)*r;
+    case CFAColor::Green:   return m.a*m.g + (1-m.a)*r;
+    case CFAColor::Blue:    return m.a*m.b + (1-m.a)*r;
     }
     return 0;
 }
