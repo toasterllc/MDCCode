@@ -196,6 +196,7 @@ namespace CFAViewer {
             [cmdBuf() presentDrawable:drawable];
         }
         
+        // TODO: rename to textureCreate to follow convention
         Txt createTexture(
             MTLPixelFormat fmt,
             NSUInteger width, NSUInteger height,
@@ -345,6 +346,7 @@ namespace CFAViewer {
             uint32_t opts = 0;
             
             // Add support for more pixel formats as needed...
+            bool premulAlpha = false;
             switch (fmt) {
             // Gray
             case MTLPixelFormatR8Unorm:
@@ -362,19 +364,35 @@ namespace CFAViewer {
             
             // Color
             case MTLPixelFormatRGBA8Unorm:
-                opts = kCGImageAlphaNoneSkipLast;
+                opts = kCGImageAlphaPremultipliedLast;
+                premulAlpha = true;
                 break;
             case MTLPixelFormatRGBA16Unorm:
-                opts = kCGImageAlphaNoneSkipLast|kCGBitmapByteOrder16Host;
+                opts = kCGImageAlphaPremultipliedLast|kCGBitmapByteOrder16Host;
+                premulAlpha = true;
                 break;
             case MTLPixelFormatRGBA16Float:
-                opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Host;
+                opts = kCGImageAlphaPremultipliedLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Host;
+                premulAlpha = true;
                 break;
             case MTLPixelFormatRGBA32Float:
-                opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder32Host;
+                opts = kCGImageAlphaPremultipliedLast|kCGBitmapFloatComponents|kCGBitmapByteOrder32Host;
+                premulAlpha = true;
                 break;
             default:
                 throw std::runtime_error("invalid texture format");
+            }
+            
+            if (premulAlpha) {
+                // Load pixel data into `txt`
+                Txt tmp = createTexture(fmt, w, h);
+                render("CFAViewer::Shader::Renderer::PremulAlpha", tmp,
+                    // Texture args
+                    txt
+                );
+                sync(tmp);
+                commitAndWait();
+                txt = tmp;
             }
             
             // Choose a colorspace if one wasn't supplied

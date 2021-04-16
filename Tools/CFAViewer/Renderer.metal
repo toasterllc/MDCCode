@@ -71,6 +71,15 @@ fragment float4 LoadFloat4FromU16(
     return LoadFloat4(w, h, samplesPerPixel, maxValue, data, int2(in.pos.xy));
 }
 
+fragment float4 PremulAlpha(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    float4 s = Sample::RGBA(txt, pos);
+    return float4(s.rgb*s.a, s.a);
+}
+
 } // namespace Renderer
 } // namespace Shader
 } // namespace ImageLayer
