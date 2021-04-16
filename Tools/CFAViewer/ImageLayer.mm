@@ -49,9 +49,9 @@ using namespace ImagePipeline;
     
     auto lock = std::lock_guard(_state.lock);
         _state.renderer = Renderer(_device, _library, _commandQueue);
-        _state.sampleOpts.raw = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleOpts.xyzD50 = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleOpts.srgb = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.raw = _state.renderer.bufferCreate(sizeof(simd::float3));
+        _state.sampleOpts.xyzD50 = _state.renderer.bufferCreate(sizeof(simd::float3));
+        _state.sampleOpts.srgb = _state.renderer.bufferCreate(sizeof(simd::float3));
     
     return self;
 }
@@ -73,7 +73,7 @@ using namespace ImagePipeline;
     const size_t len = pixelCount*sizeof(ImagePixel);
     if (len) {
         if (!_state.img.pixels || [_state.img.pixels length]<len) {
-            _state.img.pixels = _state.renderer.createBuffer(len);
+            _state.img.pixels = _state.renderer.bufferCreate(len);
             Assert(_state.img.pixels, return);
         }
         
@@ -153,7 +153,7 @@ using namespace ImagePipeline;
 
 - (id)CGImage {
     auto lock = std::lock_guard(_state.lock);
-    Renderer::Txt txt = _state.renderer.createTexture(MTLPixelFormatRGBA16Float,
+    Renderer::Txt txt = _state.renderer.textureCreate(MTLPixelFormatRGBA16Float,
         _state.img.width, _state.img.height,
         MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     [self _displayToTexture:txt drawable:nil];
@@ -216,13 +216,13 @@ using namespace ImagePipeline;
     if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
     
     sampleOpts.raw =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     sampleOpts.xyzD50 =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     sampleOpts.srgb =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     [self setNeedsDisplay];
 }

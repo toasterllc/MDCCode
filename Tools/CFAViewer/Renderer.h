@@ -197,7 +197,7 @@ namespace CFAViewer {
         }
         
         // TODO: rename to textureCreate to follow convention
-        Txt createTexture(
+        Txt textureCreate(
             MTLPixelFormat fmt,
             NSUInteger width, NSUInteger height,
             MTLTextureUsage usage=(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)
@@ -224,7 +224,7 @@ namespace CFAViewer {
             }
         }
         
-        Buf createBuffer(NSUInteger len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
+        Buf bufferCreate(NSUInteger len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
             // Return an existing buffer if its length is between len and 2*len
             for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
                 id<MTLBuffer> buf = *it;
@@ -254,7 +254,7 @@ namespace CFAViewer {
             const size_t w = [txt width];
             const size_t h = [txt height];
             const size_t len = w*h*samplesPerPixel*sizeof(T);
-            Renderer::Buf buf = createBuffer(len);
+            Renderer::Buf buf = bufferCreate(len);
             memcpy([buf contents], samples, len);
             textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
         }
@@ -385,7 +385,7 @@ namespace CFAViewer {
             
             if (premulAlpha) {
                 // Load pixel data into `txt`
-                Txt tmp = createTexture(fmt, w, h);
+                Txt tmp = textureCreate(fmt, w, h);
                 render("CFAViewer::Shader::Renderer::PremulAlpha", tmp,
                     // Texture args
                     txt

@@ -38,7 +38,7 @@ namespace CFAViewer::ImagePipeline {
 //            );
             
             {
-                Renderer::Txt gInterp = renderer.createTexture(MTLPixelFormatR32Float, w, h);
+                Renderer::Txt gInterp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
                 renderer.render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
                     // Buffer args
                     cfaDesc,
@@ -199,7 +199,7 @@ namespace CFAViewer::ImagePipeline {
                     const auto& coeffs = polys(c,dir).coeffs();
                     std::copy(coeffs.begin(), coeffs.end(), polyCoeffs(c,dir));
                     
-                    shiftTxts(c,dir) = renderer.createTexture(MTLPixelFormatR32Float,
+                    shiftTxts(c,dir) = renderer.textureCreate(MTLPixelFormatR32Float,
                         ShiftTextureWidth, ShiftTextureWidth,
                         (MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite));
                 }
@@ -224,7 +224,7 @@ namespace CFAViewer::ImagePipeline {
             // We have to render to `tmp` (not `raw`), because
             // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
             // which would introduce a data race if we rendered to `raw` while also sampling it.
-            Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
             renderer.render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
                 // Buffer args
                 cfaDesc,
@@ -287,8 +287,8 @@ namespace CFAViewer::ImagePipeline {
             const NSUInteger w = [raw width];
             const NSUInteger h = [raw height];
             const size_t bufLen = w*h*sizeof(float);
-            Renderer::Buf rawBuf = renderer.createBuffer(bufLen);
-            Renderer::Buf gInterpBuf = renderer.createBuffer(bufLen);
+            Renderer::Buf rawBuf = renderer.bufferCreate(bufLen);
+            Renderer::Buf gInterpBuf = renderer.bufferCreate(bufLen);
             
             renderer.copy(raw, rawBuf);
             renderer.copy(gInterp, gInterpBuf);

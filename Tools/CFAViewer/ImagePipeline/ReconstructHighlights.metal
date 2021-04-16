@@ -158,6 +158,44 @@ fragment float4 BlurHighlights(
     return avg;
 }
 
+fragment float4 NormalizeByMagnitude(
+    texture2d<float> rgb [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+#define PX(x,y) Sample::RGB(Sample::MirrorClamp, rgb, pos+int2{x,y})
+    const float3 s = PX(+0,+0);
+    float3 vals[] = {
+        PX(-1,-1), PX(+0,-1), PX(+1,-1),
+        PX(-1,+0), s        , PX(+1,+0),
+        PX(-1,+1), PX(+0,+1), PX(+1,+1)
+    };
+#undef PX
+    
+    float3 avg = 0;
+    float3 count = 0;
+    for (float3 x : vals) {
+        if (x.r >= s.r) {
+            avg.r += x.r;
+            count.r += 1;
+        }
+        
+        if (x.g >= s.g) {
+            avg.g += x.g;
+            count.g += 1;
+        }
+        
+        if (x.b >= s.b) {
+            avg.b += x.b;
+            count.b += 1;
+        }
+    }
+    
+    avg /= count;
+    return float4(avg, 1);
+}
+
+
 
 
 fragment float4 CreateHighlightMap(

@@ -74,7 +74,7 @@ public:
         const uint32_t w = img.width;
         const uint32_t h = img.height;
         
-        Renderer::Txt raw = renderer.createTexture(MTLPixelFormatR32Float,
+        Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float,
             img.width, img.height);
         
         // Load `raw`
@@ -97,7 +97,7 @@ public:
             );
         }
         
-        Renderer::Txt rgb = renderer.createTexture(MTLPixelFormatRGBA32Float,
+        Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float,
             img.width, img.height);
         
         // Raw mode (bilinear debayer only)
@@ -113,7 +113,7 @@ public:
         } else {
             // Reconstruct highlights
             if (opts.reconstructHighlights.en) {
-                Renderer::Txt rgbHalf = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                Renderer::Txt rgbHalf = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                 renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgbHalf,
                     // Buffer args
                     img.cfaDesc,
@@ -121,11 +121,22 @@ public:
                     raw
                 );
                 
-                Renderer::Txt rgbLightHalf = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                Renderer::Txt rgbLightHalf = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                 renderer.copy(rgbHalf, rgbLightHalf);
+                {
+                    Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                    renderer.render("CFAViewer::Shader::ImagePipeline::NormalizeByMagnitude", tmp,
+                        // Buffer args
+                        img.cfaDesc,
+                        // Texture args
+                        rgbLightHalf
+                    );
+                    rgbLightHalf = std::move(tmp);
+                }
+                
                 for (int i=0; i<3; i++)
                 {
-                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                    Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                     renderer.render("CFAViewer::Shader::ImagePipeline::ExpandHighlights", tmp,
                         // Buffer args
                         img.cfaDesc,
@@ -135,8 +146,16 @@ public:
                     rgbLightHalf = std::move(tmp);
                 }
                 
+//                {
+//                    static bool a = false;
+//                    if (!a) {
+//                        renderer.debugShowTexture(rgbHalf, nil);
+//                        a = true;
+//                    }
+//                }
+                
 //                for (int i=0; i<10; i++) {
-//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+//                    Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
 //                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurRGBIncrease", tmp,
 //                        // Texture args
 //                        rgbLightHalf
@@ -162,7 +181,7 @@ public:
 //                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
 //                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
                 
-                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
+                Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width, img.height);
                 renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
                     // Buffer args
                     simdIllumMin1,
@@ -171,11 +190,11 @@ public:
                     rgbLightHalf
                 );
                 
-                Renderer::Txt highlightMapBack = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
+                Renderer::Txt highlightMapBack = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width, img.height);
                 renderer.copy(highlightMap, highlightMapBack);
                 for (int i=0; i<2; i++) {
                     const float strength = -1;//opts.reconstructHighlights.badPixelFactors[0];
-                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
+                    Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width, img.height);
                     renderer.render("CFAViewer::Shader::ImagePipeline::BlurRGBA", tmp,
                         // Buffer args
                         strength,
@@ -227,7 +246,7 @@ public:
                 
                 
                 
-//                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
+//                Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float,
 //                    img.width, img.height);
 //                
 //                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
@@ -239,7 +258,7 @@ public:
 //                    rgbHalf
 //                );
                 
-//                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
+//                Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float,
 //                    img.width, img.height);
 //                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
 //                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
