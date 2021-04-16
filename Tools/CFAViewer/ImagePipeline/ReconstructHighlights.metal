@@ -275,6 +275,7 @@ fragment float4 BlurRGBA(
         }
         if (coeffSum > 0) {
             alpha /= coeffSum;
+            alpha = pow(alpha, 1-.1);
         }
     }
     return float4(color, alpha);

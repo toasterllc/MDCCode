@@ -174,7 +174,7 @@ public:
                 
                 Renderer::Txt highlightMapBack = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
                 renderer.copy(highlightMap, highlightMapBack);
-                for (int i=0; i<10; i++) {
+                for (int i=0; i<2; i++) {
                     Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
                     renderer.render("CFAViewer::Shader::ImagePipeline::BlurRGBA", tmp,
                         // Texture args
@@ -189,13 +189,13 @@ public:
                     highlightMapBack
                 );
                 
-                {
-                    static bool a = false;
-                    if (!a) {
-                        renderer.debugShowTexture(highlightMap, nil);
-                        a = true;
-                    }
-                }
+//                {
+//                    static bool a = false;
+//                    if (!a) {
+//                        renderer.debugShowTexture(highlightMap, nil);
+//                        a = true;
+//                    }
+//                }
                 
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
                     // Buffer args
