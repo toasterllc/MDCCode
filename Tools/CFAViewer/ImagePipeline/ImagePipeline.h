@@ -121,7 +121,7 @@ public:
                     raw
                 );
                 
-                for (int i=0; i<10; i++)
+                for (int i=0; i<2; i++)
                 {
                     Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                     renderer.render("CFAViewer::Shader::ImagePipeline::ExpandHighlights", tmp,
@@ -133,13 +133,13 @@ public:
                     rgbHalf = std::move(tmp);
                 }
                 
-//                {
-//                    static bool a = false;
-//                    if (!a) {
-//                        renderer.debugShowTexture(rgbHalf, nil);
-//                        a = true;
-//                    }
-//                }
+                {
+                    static bool a = false;
+                    if (!a) {
+                        renderer.debugShowTexture(rgbHalf, nil);
+                        a = true;
+                    }
+                }
                 
                 
                 
@@ -159,24 +159,22 @@ public:
 //                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
 //                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
                 
-                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
                 renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
                     // Buffer args
-                    img.cfaDesc,
-                    simdIllumMax1,
+                    simdIllumMin1,
                     // Texture args
-                    raw,
                     rgbHalf
                 );
                 
-                for (int i=0; i<10; i++) {
-                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
-                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurRGB", tmp,
-                        // Texture args
-                        highlightMap
-                    );
-                    highlightMap = std::move(tmp);
-                }
+//                for (int i=0; i<10; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::Blur", tmp,
+//                        // Texture args
+//                        highlightMap
+//                    );
+//                    highlightMap = std::move(tmp);
+//                }
                 
 //                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
 //                renderer.render("CFAViewer::Shader::ImagePipeline::Diff", diff,
@@ -206,8 +204,10 @@ public:
                 renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
                     // Buffer args
                     img.cfaDesc,
+                    simdIllumMin1,
                     // Texture args
                     raw,
+                    rgbHalf,
                     highlightMap
                 );
                 
