@@ -111,166 +111,38 @@ public:
             );
         
         } else {
-//            // Reconstruct highlights
-//            if (opts.reconstructHighlights.en) {
-//                Renderer::Txt rgbHalf = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
-//                renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgbHalf,
-//                    // Buffer args
-//                    img.cfaDesc,
-//                    // Texture args
-//                    raw
-//                );
-//                
-//                for (int i=0; i<2; i++)
-//                {
-//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
-//                    renderer.render("CFAViewer::Shader::ImagePipeline::ExpandHighlights", tmp,
-//                        // Buffer args
-//                        img.cfaDesc,
-//                        // Texture args
-//                        rgbHalf
-//                    );
-//                    rgbHalf = std::move(tmp);
-//                }
-//                
-//                {
-//                    static bool a = false;
-//                    if (!a) {
-//                        renderer.debugShowTexture(rgbHalf, nil);
-//                        a = true;
-//                    }
-//                }
-//                
-//                
-//                
-//                const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
-//                const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
-//                const double illumMax = std::max(std::max(illum[0], illum[1]), illum[2]);
-////                const Mat<double,3,1> illumSat = illum/illumMin;
-//                const simd::float3 simdIllum = _simdFromMat(illum);
-//                const simd::float3 simdIllumMax1 = _simdFromMat(illum/illumMax);
-//                const simd::float3 simdIllumMin1 = _simdFromMat(illum/illumMin);
-////                const Mat<double,3,1> goodFactor(.68069948186528497409, 1., .77396373056994818652);
-////                const simd::float3 badPixelFactors = _simdFromMat(Mat<double,3,1>(0.,0.,0.));
-////                const simd::float3 goodPixelFactors = _simdFromMat(Mat<double,3,1>(1.,1.,1.));
-////                const simd::float3 badPixelFactors = _simdFromMat(illum);
-////                const simd::float3 goodPixelFactors = _simdFromMat(illum.elmMul(goodFactor));
-////                const simd::float3 goodPixelFactors = _simdFromMat(Mat<double,3,1>(0.,0.,0.));
-////                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
-////                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
-//                
-//                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
-//                renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
-//                    // Buffer args
-//                    simdIllumMin1,
-//                    // Texture args
-//                    rgbHalf
-//                );
-//                
-////                for (int i=0; i<10; i++) {
-////                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
-////                    renderer.render("CFAViewer::Shader::ImagePipeline::Blur", tmp,
-////                        // Texture args
-////                        highlightMap
-////                    );
-////                    highlightMap = std::move(tmp);
-////                }
-//                
-////                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
-////                renderer.render("CFAViewer::Shader::ImagePipeline::Diff", diff,
-////                    // Texture args
-////                    rgbHalf
-////                );
-////                
-////                for (int i=0; i<10; i++) {
-////                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
-////                    renderer.render("CFAViewer::Shader::ImagePipeline::Blur", tmp,
-////                        // Texture args
-////                        diff
-////                    );
-////                    diff = std::move(tmp);
-////                }
-//                
-////                for (int i=0; i<10; i++) {
-////                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
-////                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurWithMask", tmp,
-////                        // Texture args
-////                        raw,
-////                        highlightMap
-////                    );
-////                    raw = std::move(tmp);
-////                }
-//                
-//                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
-//                    // Buffer args
-//                    img.cfaDesc,
-//                    simdIllumMin1,
-//                    // Texture args
-//                    raw,
-//                    rgbHalf,
-//                    highlightMap
-//                );
-//                
-//                
-////    constant float3& illum [[buffer(0)]],
-////    texture2d<float> raw [[texture(0)]],
-////    texture2d<float> diff [[texture(1)]],
-//                
-////                renderer.render("CFAViewer::Shader::ImagePipeline::FixEdges", raw,
-////                    // Buffer args
-////                    img.cfaDesc,
-////                    simdIllumMin1,
-////                    // Texture args
-////                    raw,
-////                    diff
-////                );
-//                
-//                
-//                
-////                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
-////                    img.width, img.height);
-////                
-////                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
-////                    // Buffer args
-////                    img.cfaDesc,
-////                    simdIllumMin1,
-////                    // Texture args
-////                    raw,
-////                    rgbHalf
-////                );
-//                
-////                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
-////                    img.width, img.height);
-////                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
-////                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
-////                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
-////                    // Buffer args
-////                    img.cfaDesc,
-////                    badPixelFactors,
-////                    goodPixelFactors,
-////                    // Texture args
-////                    raw
-////                );
-////                
-////                raw = std::move(tmp);
-//            }
-            
-            Renderer::Txt rawOrig = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
-            renderer.copy(raw, rawOrig);
-            
-            // White balance
-            {
-                const simd::float3 whiteBalance = _simdFromMat(opts.whiteBalance);
-                renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
+            // Reconstruct highlights
+            if (opts.reconstructHighlights.en) {
+                Renderer::Txt rgbHalf = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgbHalf,
                     // Buffer args
                     img.cfaDesc,
-                    whiteBalance,
                     // Texture args
                     raw
                 );
-            }
-            
-            {
+                
+                for (int i=0; i<2; i++)
+                {
+                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                    renderer.render("CFAViewer::Shader::ImagePipeline::ExpandHighlights", tmp,
+                        // Buffer args
+                        img.cfaDesc,
+                        // Texture args
+                        rgbHalf
+                    );
+                    rgbHalf = std::move(tmp);
+                }
+                
+                {
+                    static bool a = false;
+                    if (!a) {
+                        renderer.debugShowTexture(rgbHalf, nil);
+                        a = true;
+                    }
+                }
+                
+                
+                
                 const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
                 const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
                 const double illumMax = std::max(std::max(illum[0], illum[1]), illum[2]);
@@ -278,14 +150,109 @@ public:
                 const simd::float3 simdIllum = _simdFromMat(illum);
                 const simd::float3 simdIllumMax1 = _simdFromMat(illum/illumMax);
                 const simd::float3 simdIllumMin1 = _simdFromMat(illum/illumMin);
-                renderer.render("CFAViewer::Shader::ImagePipeline::PrimitiveReconstructHighlights", raw,
+//                const Mat<double,3,1> goodFactor(.68069948186528497409, 1., .77396373056994818652);
+//                const simd::float3 badPixelFactors = _simdFromMat(Mat<double,3,1>(0.,0.,0.));
+//                const simd::float3 goodPixelFactors = _simdFromMat(Mat<double,3,1>(1.,1.,1.));
+//                const simd::float3 badPixelFactors = _simdFromMat(illum);
+//                const simd::float3 goodPixelFactors = _simdFromMat(illum.elmMul(goodFactor));
+//                const simd::float3 goodPixelFactors = _simdFromMat(Mat<double,3,1>(0.,0.,0.));
+//                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
+//                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
+                
+                Renderer::Txt highlightMap = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+                renderer.render("CFAViewer::Shader::ImagePipeline::CreateHighlightMap", highlightMap,
+                    // Buffer args
+                    simdIllumMin1,
+                    // Texture args
+                    rgbHalf
+                );
+                
+//                for (int i=0; i<10; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::Blur", tmp,
+//                        // Texture args
+//                        highlightMap
+//                    );
+//                    highlightMap = std::move(tmp);
+//                }
+                
+//                Renderer::Txt diff = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
+//                renderer.render("CFAViewer::Shader::ImagePipeline::Diff", diff,
+//                    // Texture args
+//                    rgbHalf
+//                );
+//                
+//                for (int i=0; i<10; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width/2, img.height/2);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::Blur", tmp,
+//                        // Texture args
+//                        diff
+//                    );
+//                    diff = std::move(tmp);
+//                }
+                
+//                for (int i=0; i<10; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, img.width, img.height);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurWithMask", tmp,
+//                        // Texture args
+//                        raw,
+//                        highlightMap
+//                    );
+//                    raw = std::move(tmp);
+//                }
+                
+                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", raw,
                     // Buffer args
                     img.cfaDesc,
-                    simdIllumMax1,
+                    simdIllumMin1,
                     // Texture args
-                    rawOrig,
-                    raw
+                    raw,
+                    rgbHalf,
+                    highlightMap
                 );
+                
+                
+//    constant float3& illum [[buffer(0)]],
+//    texture2d<float> raw [[texture(0)]],
+//    texture2d<float> diff [[texture(1)]],
+                
+//                renderer.render("CFAViewer::Shader::ImagePipeline::FixEdges", raw,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    simdIllumMin1,
+//                    // Texture args
+//                    raw,
+//                    diff
+//                );
+                
+                
+                
+//                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
+//                    img.width, img.height);
+//                
+//                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    simdIllumMin1,
+//                    // Texture args
+//                    raw,
+//                    rgbHalf
+//                );
+                
+//                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
+//                    img.width, img.height);
+//                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
+//                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
+//                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    badPixelFactors,
+//                    goodPixelFactors,
+//                    // Texture args
+//                    raw
+//                );
+//                
+//                raw = std::move(tmp);
             }
             
             // Sample: fill `sampleOpts.xyzD50`
@@ -296,6 +263,18 @@ public:
                     img.cfaDesc,
                     sampleOpts.rect,
                     sampleOpts.xyzD50,
+                    // Texture args
+                    raw
+                );
+            }
+            
+            // White balance
+            {
+                const simd::float3 whiteBalance = _simdFromMat(opts.whiteBalance);
+                renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
+                    // Buffer args
+                    img.cfaDesc,
+                    whiteBalance,
                     // Texture args
                     raw
                 );
