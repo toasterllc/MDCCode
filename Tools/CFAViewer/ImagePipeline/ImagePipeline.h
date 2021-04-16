@@ -123,7 +123,7 @@ public:
                 
                 Renderer::Txt rgbLightHalf = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                 renderer.copy(rgbHalf, rgbLightHalf);
-                for (int i=0; i<2; i++)
+                for (int i=0; i<3; i++)
                 {
                     Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                     renderer.render("CFAViewer::Shader::ImagePipeline::ExpandHighlights", tmp,
@@ -134,6 +134,15 @@ public:
                     );
                     rgbLightHalf = std::move(tmp);
                 }
+                
+//                for (int i=0; i<10; i++) {
+//                    Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+//                    renderer.render("CFAViewer::Shader::ImagePipeline::BlurRGBIncrease", tmp,
+//                        // Texture args
+//                        rgbLightHalf
+//                    );
+//                    rgbLightHalf = std::move(tmp);
+//                }
                 
 //                {
 //                    static bool a = false;

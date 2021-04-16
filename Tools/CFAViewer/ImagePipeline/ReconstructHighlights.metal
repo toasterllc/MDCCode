@@ -161,6 +161,24 @@ fragment float4 BlurRGB(
 #undef PX
 }
 
+fragment float4 BlurRGBIncrease(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    const int2 pos = int2(in.pos.xy);
+    const float3 s = Sample::RGB(Sample::MirrorClamp, txt, pos);
+#define PX(x,y) Sample::RGB(Sample::MirrorClamp, txt, pos+int2{x,y})
+    float3 r = (
+        1*PX(-1,-1) + 2*PX(+0,-1) + 1*PX(+1,-1) +
+        2*PX(-1,+0) + 4*s         + 2*PX(+1,+0) +
+        1*PX(-1,+1) + 2*PX(+0,+1) + 1*PX(+1,+1) ) / 16;
+#undef PX
+    r.r = max(r.r, s.r);
+    r.g = max(r.g, s.g);
+    r.b = max(r.b, s.b);
+    return float4(r,1);
+}
+
 fragment float DiffHighlightMap(
     texture2d<float> map [[texture(0)]],
     VertexOutput in [[stage_in]]
