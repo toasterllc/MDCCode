@@ -106,27 +106,39 @@ namespace Sample {
     // Edge clamp
     struct EdgeClampType {}; constant auto EdgeClamp = EdgeClampType();
     
+    inline float4 RGBA(EdgeClampType, texture2d<float> txt, int2 pos) {
+        return txt.sample(coord::pixel, float2(pos.x+.5, pos.y+.5));
+    }
+    
     inline float3 RGB(EdgeClampType, texture2d<float> txt, int2 pos) {
-        return txt.sample(coord::pixel, float2(pos.x+.5, pos.y+.5)).rgb;
+        return RGBA(EdgeClamp, txt, pos).rgb;
     }
     
     inline float R(EdgeClampType, texture2d<float> txt, int2 pos) {
-        return RGB(EdgeClamp, txt, pos).r;
+        return RGBA(EdgeClamp, txt, pos).r;
     }
     
     // Mirror clamp
     struct MirrorClampType {}; constant auto MirrorClamp = MirrorClampType();
     
-    inline float3 RGB(MirrorClampType, texture2d<float> txt, int2 pos) {
+    inline float4 RGBA(MirrorClampType, texture2d<float> txt, int2 pos) {
         const uint2 bounds(txt.get_width(), txt.get_height());
-        return txt.sample(coord::pixel, float2(Clamp::Mirror(bounds, pos))+float2(.5,.5)).rgb;
+        return txt.sample(coord::pixel, float2(Clamp::Mirror(bounds, pos))+float2(.5,.5));
+    }
+    
+    inline float3 RGB(MirrorClampType, texture2d<float> txt, int2 pos) {
+        return RGBA(MirrorClamp, txt, pos).rgb;
     }
     
     inline float R(MirrorClampType, texture2d<float> txt, int2 pos) {
-        return RGB(MirrorClamp, txt, pos).r;
+        return RGBA(MirrorClamp, txt, pos).r;
     }
     
     // Default implementation calls EdgeClamp variant
+    inline float4 RGBA(texture2d<float> txt, int2 pos) {
+        return RGBA(EdgeClamp, txt, pos);
+    }
+    
     inline float3 RGB(texture2d<float> txt, int2 pos) {
         return RGB(EdgeClamp, txt, pos);
     }
