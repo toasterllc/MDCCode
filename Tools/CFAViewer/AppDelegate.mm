@@ -1519,6 +1519,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 - (IBAction)_tagPreviousImage:(id)sender {
+    return;
     if (_TagCurrentIllum == _TagIllums.begin()) {
         NSBeep();
         return;
@@ -1528,6 +1529,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 - (IBAction)_tagNextImage:(id)sender {
+    return;
     // Don't allow going further if we're already past the end,
     // or the next item is past the end.
     if (_TagCurrentIllum==_TagIllums.end() || std::next(_TagCurrentIllum)==_TagIllums.end()) {

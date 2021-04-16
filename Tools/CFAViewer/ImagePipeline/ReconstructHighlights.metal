@@ -229,6 +229,7 @@ fragment float4 BlurRGB(
 //}
 
 fragment float4 BlurRGBA(
+    constant float& strength [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -240,12 +241,16 @@ fragment float4 BlurRGBA(
     };
     
 #define PX(x,y) Sample::RGBA(Sample::MirrorClamp, txt, pos+int2{x,y})
+    const float4 s = PX(+0,+0);
     const float4 vals[] = {
         PX(-1,-1) , PX(+0,-1) , PX(+1,-1) ,
-        PX(-1,+0) , PX(+0,+0) , PX(+1,+0) ,
+        PX(-1,+0) , s         , PX(+1,+0) ,
         PX(-1,+1) , PX(+0,+1) , PX(+1,+1) ,
     };
 #undef PX
+    
+//    // Don't blur pixels that are fully opaque
+//    if (s.a != 1) return s;
     
     float3 color = 0;
     // color = weighted average of neighbors' color, ignoring samples with alpha=0
@@ -275,7 +280,7 @@ fragment float4 BlurRGBA(
         }
         if (coeffSum > 0) {
             alpha /= coeffSum;
-            alpha = pow(alpha, 1-.1);
+            alpha = pow(alpha, 1-strength);
         }
     }
     return float4(color, alpha);

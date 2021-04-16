@@ -912,7 +912,7 @@
                                         </button>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Th-eO-8Sc">
                                             <rect key="frame" x="18" y="230" width="304" height="19"/>
-                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
+                                            <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-2" maxValue="0.90000000000000002" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="ZFW-Ay-lx2"/>
                                             </connections>

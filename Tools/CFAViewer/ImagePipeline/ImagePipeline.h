@@ -171,23 +171,27 @@ public:
                     rgbLightHalf
                 );
                 
-                
                 Renderer::Txt highlightMapBack = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
                 renderer.copy(highlightMap, highlightMapBack);
                 for (int i=0; i<2; i++) {
+                    const float strength = -1;//opts.reconstructHighlights.badPixelFactors[0];
                     Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatRGBA32Float, img.width, img.height);
                     renderer.render("CFAViewer::Shader::ImagePipeline::BlurRGBA", tmp,
+                        // Buffer args
+                        strength,
                         // Texture args
                         highlightMapBack
                     );
                     highlightMapBack = std::move(tmp);
                 }
                 
-                renderer.render("CFAViewer::Shader::ImagePipeline::SourceOver", highlightMap,
-                    // Texture args
-                    highlightMap,
-                    highlightMapBack
-                );
+                highlightMap = std::move(highlightMapBack);
+                
+//                renderer.render("CFAViewer::Shader::ImagePipeline::SourceOver", highlightMap,
+//                    // Texture args
+//                    highlightMapBack,
+//                    highlightMap
+//                );
                 
 //                {
 //                    static bool a = false;
