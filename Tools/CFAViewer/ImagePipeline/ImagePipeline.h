@@ -121,10 +121,10 @@ public:
                     raw
                 );
                 
-                Renderer::Txt thresh = renderer.copy(rgb);
+                Renderer::Txt thresh = renderer.textureCreate(MTLPixelFormatR32Float, img.width/2, img.height/2);
                 renderer.render("CFAViewer::Shader::ReconstructHighlights::Normalize", thresh,
                     // Texture args
-                    thresh
+                    rgb
                 );
                 
                 for (int i=0; i<3; i++) {

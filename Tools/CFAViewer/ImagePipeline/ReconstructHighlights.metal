@@ -35,7 +35,7 @@ fragment float4 DebayerDownsample(
     return 0;
 }
 
-fragment float4 Normalize(
+fragment float Normalize(
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -43,44 +43,34 @@ fragment float4 Normalize(
     const int2 pos = int2(in.pos.xy);
     const float3 s = Sample::RGB(Sample::MirrorClamp, rgb, pos);
     const float mag = length(s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
-    return float4(s*mag, 1);
+    return mag;
 }
 
-fragment float4 ExpandHighlights(
-    texture2d<float> rgb [[texture(0)]],
+fragment float ExpandHighlights(
+    texture2d<float> thresh [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-#define PX(x,y) Sample::RGB(Sample::MirrorClamp, rgb, pos+int2{x,y})
-    const float3 s = PX(+0,+0);
-    float3 vals[] = {
+#define PX(x,y) Sample::R(Sample::MirrorClamp, thresh, pos+int2{x,y})
+    const float s = PX(+0,+0);
+    float vals[] = {
         PX(-1,-1), PX(+0,-1), PX(+1,-1),
         PX(-1,+0), s        , PX(+1,+0),
         PX(-1,+1), PX(+0,+1), PX(+1,+1)
     };
 #undef PX
     
-    float3 avg = 0;
-    float3 count = 0;
-    for (float3 x : vals) {
-        if (x.r >= s.r) {
-            avg.r += x.r;
-            count.r += 1;
-        }
-        
-        if (x.g >= s.g) {
-            avg.g += x.g;
-            count.g += 1;
-        }
-        
-        if (x.b >= s.b) {
-            avg.b += x.b;
-            count.b += 1;
+    float avg = 0;
+    float count = 0;
+    for (float x : vals) {
+        if (x >= s) {
+            avg += x;
+            count += 1;
         }
     }
     
     avg /= count;
-    return float4(avg, 1);
+    return avg;
 }
 
 fragment float2 CreateHighlightMap(
@@ -92,8 +82,8 @@ fragment float2 CreateHighlightMap(
     constexpr float Thresh = .85;
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     {
-        const float3 s_thresh = thresh.sample({filter::linear}, in.posUnit+off).rgb;
-        if (s_thresh.r<Thresh && s_thresh.g<Thresh && s_thresh.b<Thresh) return 0;
+        const float s_thresh = thresh.sample({filter::linear}, in.posUnit+off).r;
+        if (s_thresh < Thresh) return 0;
     }
     
     const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
