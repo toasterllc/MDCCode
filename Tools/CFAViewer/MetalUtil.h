@@ -114,6 +114,10 @@ namespace Sample {
         return RGBA(EdgeClamp, txt, pos).rgb;
     }
     
+    inline float2 RG(EdgeClampType, texture2d<float> txt, int2 pos) {
+        return RGBA(EdgeClamp, txt, pos).rg;
+    }
+    
     inline float R(EdgeClampType, texture2d<float> txt, int2 pos) {
         return RGBA(EdgeClamp, txt, pos).r;
     }
@@ -130,6 +134,10 @@ namespace Sample {
         return RGBA(MirrorClamp, txt, pos).rgb;
     }
     
+    inline float2 RG(MirrorClampType, texture2d<float> txt, int2 pos) {
+        return RGBA(MirrorClamp, txt, pos).rg;
+    }
+    
     inline float R(MirrorClampType, texture2d<float> txt, int2 pos) {
         return RGBA(MirrorClamp, txt, pos).r;
     }
@@ -141,6 +149,10 @@ namespace Sample {
     
     inline float3 RGB(texture2d<float> txt, int2 pos) {
         return RGB(EdgeClamp, txt, pos);
+    }
+    
+    inline float2 RG(texture2d<float> txt, int2 pos) {
+        return RG(EdgeClamp, txt, pos);
     }
     
     inline float R(texture2d<float> txt, int2 pos) {

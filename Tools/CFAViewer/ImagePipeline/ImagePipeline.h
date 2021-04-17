@@ -143,7 +143,7 @@ public:
                 const simd::float3 simdIllumMax1 = _simdFromMat(illum/illumMax);
                 const simd::float3 simdIllumMin1 = _simdFromMat(illum/illumMin);
                 
-                Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width, img.height);
+                Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRG32Float, img.width, img.height);
                 renderer.render("CFAViewer::Shader::ReconstructHighlights::CreateHighlightMap", highlightMap,
                     // Buffer args
                     simdIllumMin1,

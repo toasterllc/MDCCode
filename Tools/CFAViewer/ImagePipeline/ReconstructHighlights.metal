@@ -83,26 +83,26 @@ fragment float4 ExpandHighlights(
     return float4(avg, 1);
 }
 
-fragment float4 CreateHighlightMap(
+fragment float2 CreateHighlightMap(
     constant float3& illum [[buffer(0)]],
     texture2d<float> rgb [[texture(0)]],
-    texture2d<float> rgbLight [[texture(1)]],
+    texture2d<float> thresh [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     constexpr float Thresh = .85;
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     {
-        const float3 s_rgbLight = rgbLight.sample({filter::linear}, in.posUnit+off).rgb;
-        if (s_rgbLight.r<Thresh && s_rgbLight.g<Thresh && s_rgbLight.b<Thresh) return float4(1,0,0,0);
+        const float3 s_thresh = thresh.sample({filter::linear}, in.posUnit+off).rgb;
+        if (s_thresh.r<Thresh && s_thresh.g<Thresh && s_thresh.b<Thresh) return 0;
     }
     
     const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
     const float3 k3 = s_rgb/illum;
     const float k = (k3.r+k3.g+k3.b)/3;
-    return float4(k*illum, 1);
+    return float2(k, 1);
 }
 
-fragment float4 Blur(
+fragment float2 Blur(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -114,9 +114,9 @@ fragment float4 Blur(
         1 , 2 , 1 ,
     };
     
-#define PX(x,y) Sample::RGBA(Sample::MirrorClamp, txt, pos+int2{x,y})
-    const float4 s = PX(+0,+0);
-    const float4 vals[] = {
+#define PX(x,y) Sample::RG(Sample::MirrorClamp, txt, pos+int2{x,y})
+    const float2 s = PX(+0,+0);
+    const float2 vals[] = {
         PX(-1,-1) , PX(+0,-1) , PX(+1,-1) ,
         PX(-1,+0) , s         , PX(+1,+0) ,
         PX(-1,+1) , PX(+0,+1) , PX(+1,+1) ,
@@ -124,14 +124,16 @@ fragment float4 Blur(
 #undef PX
     
     // color = weighted average of neighbors' color, ignoring samples with alpha=0
-    float3 color = 0;
+    float color = 0;
     {
         float coeffSum = 0;
         for (size_t i=0; i<sizeof(coeff)/sizeof(*coeff); i++) {
             const float k = coeff[i];
-            const float4 v = vals[i];
-            if (v.a == 0) continue;
-            color += k*v.rgb;
+            const float2 v = vals[i];
+            // Ignore values with alpha=0
+            // (alpha channel is the green channel for RG textures)
+            if (v.g == 0) continue;
+            color += k*v.r;
             coeffSum += k;
         }
         if (coeffSum > 0) {
@@ -145,8 +147,8 @@ fragment float4 Blur(
         float coeffSum = 0;
         for (size_t i=0; i<sizeof(coeff)/sizeof(*coeff); i++) {
             const float k = coeff[i];
-            const float4 v = vals[i];
-            alpha += k*v.a;
+            const float2 v = vals[i];
+            alpha += k*v.g;
             coeffSum += k;
         }
         if (coeffSum > 0) {
@@ -154,7 +156,7 @@ fragment float4 Blur(
             alpha = pow(alpha, Strength);
         }
     }
-    return float4(color, alpha);
+    return float2(color, alpha);
 }
 
 fragment float ReconstructHighlights(
@@ -168,12 +170,14 @@ fragment float ReconstructHighlights(
     const int2 pos = int2(in.pos.xy);
     const CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(Sample::MirrorClamp, raw, pos);
-    const float4 m = Sample::RGBA(Sample::MirrorClamp, map, pos);
+    const float2 m = Sample::RG(Sample::MirrorClamp, map, pos);
+    const float mapFactor = m.r;
+    const float mapAlpha = m.g;
     
     switch (c) {
-    case CFAColor::Red:     return m.a*m.r + (1-m.a)*r;
-    case CFAColor::Green:   return m.a*m.g + (1-m.a)*r;
-    case CFAColor::Blue:    return m.a*m.b + (1-m.a)*r;
+    case CFAColor::Red:     return (mapAlpha)*mapFactor*illum.r + (1-mapAlpha)*r;
+    case CFAColor::Green:   return (mapAlpha)*mapFactor*illum.g + (1-mapAlpha)*r;
+    case CFAColor::Blue:    return (mapAlpha)*mapFactor*illum.b + (1-mapAlpha)*r;
     }
     return 0;
 }
