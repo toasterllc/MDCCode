@@ -121,8 +121,12 @@ public:
                     raw
                 );
                 
+                const simd::float3 debugFactors = {1.179, 0.649, 1.180};
+//                const simd::float3 debugFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
                 Renderer::Txt thresh = renderer.textureCreate(MTLPixelFormatR32Float, img.width/2, img.height/2);
                 renderer.render("CFAViewer::Shader::ReconstructHighlights::Normalize", thresh,
+                    // Buffer args
+                    debugFactors,
                     // Texture args
                     rgb
                 );
