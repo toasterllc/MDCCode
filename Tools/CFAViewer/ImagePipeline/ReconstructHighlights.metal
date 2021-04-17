@@ -79,7 +79,7 @@ fragment float2 CreateHighlightMap(
     texture2d<float> thresh [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    constexpr float Thresh = .85;
+    constexpr float Thresh = .80;
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     {
         const float s_thresh = thresh.sample({filter::linear}, in.posUnit+off).r;

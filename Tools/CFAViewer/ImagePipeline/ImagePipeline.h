@@ -127,14 +127,14 @@ public:
                     rgb
                 );
                 
-                for (int i=0; i<3; i++) {
-                    Renderer::Txt tmp = renderer.textureCreate(thresh);
-                    renderer.render("CFAViewer::Shader::ReconstructHighlights::ExpandHighlights", tmp,
-                        // Texture args
-                        thresh
-                    );
-                    thresh = std::move(tmp);
-                }
+//                for (int i=0; i<3; i++) {
+//                    Renderer::Txt tmp = renderer.textureCreate(thresh);
+//                    renderer.render("CFAViewer::Shader::ReconstructHighlights::ExpandHighlights", tmp,
+//                        // Texture args
+//                        thresh
+//                    );
+//                    thresh = std::move(tmp);
+//                }
                 
                 const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
                 const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
@@ -152,7 +152,7 @@ public:
                     thresh
                 );
                 
-                for (int i=0; i<2; i++) {
+                for (int i=0; i<1; i++) {
                     Renderer::Txt tmp = renderer.textureCreate(highlightMap);
                     renderer.render("CFAViewer::Shader::ReconstructHighlights::Blur", tmp,
                         // Texture args

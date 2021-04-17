@@ -274,11 +274,13 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        Mmap imgData("/Users/dave/matlab/1.cfa");
         
         // Cabinet
-        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_26.cfa");
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_26.cfa");
 //        // Orange
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_53.cfa");
         // Floor
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_157.cfa");
+        
+        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa");
         
         _streamImages.img.width = 2304;
         _streamImages.img.height = 1296;
@@ -315,7 +317,8 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
         },
         
 //        illum = 2.4743327397, 2.5535876543, 1
-        .whiteBalance = { 0.691343/0.669886, 0.691343/0.691343, 0.691343/0.270734 },
+        .whiteBalance = { 1.521915, 1.000000, 1.180553 }, // outdoor_5pm_45
+//        .whiteBalance = { 0.691343/0.669886, 0.691343/0.691343, 0.691343/0.270734 },
 //        .whiteBalance = { 1.368683, 1.000000, 1.513193 },
         
         .defringe = {
