@@ -12,6 +12,8 @@
 #import "HashInts.h"
 
 namespace CFAViewer {
+    // Renderer is a wrapper for Metal APIs to make them more convenient.
+    // Renderer particularly improves executing multiple fragment render passes.
     class Renderer {
     public:
         template <typename T>

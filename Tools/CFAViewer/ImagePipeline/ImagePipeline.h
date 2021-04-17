@@ -121,26 +121,28 @@ public:
                     raw
                 );
                 
-                Renderer::Txt rgbLightHalf = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
-                renderer.copy(rgbHalf, rgbLightHalf);
-                
+                Renderer::Txt rgbLightHalf = renderer.copy(rgbHalf);
                 {
-                    Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
-                    renderer.render("CFAViewer::Shader::ImagePipeline::NormalizeByMagnitude", tmp,
-                        // Buffer args
-                        img.cfaDesc,
+                    renderer.render("CFAViewer::Shader::ImagePipeline::NormalizeByMagnitude", rgbLightHalf,
                         // Texture args
                         rgbLightHalf
                     );
-                    rgbLightHalf = std::move(tmp);
                 }
+                
+//                {
+//                    static bool a = false;
+//                    if (!a) {
+//                        renderer.debugShowTexture(rgbLightHalf, nil);
+//                        a = true;
+//                    }
+//                }
+//                
+//                return;
                 
                 for (int i=0; i<3; i++)
                 {
-                    Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
+                    Renderer::Txt tmp = renderer.textureCreate(rgbLightHalf);
                     renderer.render("CFAViewer::Shader::ImagePipeline::ExpandHighlights", tmp,
-                        // Buffer args
-                        img.cfaDesc,
                         // Texture args
                         rgbLightHalf
                     );

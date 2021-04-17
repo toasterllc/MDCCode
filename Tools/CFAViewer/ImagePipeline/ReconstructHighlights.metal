@@ -162,37 +162,11 @@ fragment float4 NormalizeByMagnitude(
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
+    const float MagMax = length(float3(1,1,1)); // Maximum length of an RGB vector
     const int2 pos = int2(in.pos.xy);
-#define PX(x,y) Sample::RGB(Sample::MirrorClamp, rgb, pos+int2{x,y})
-    const float3 s = PX(+0,+0);
-    float3 vals[] = {
-        PX(-1,-1), PX(+0,-1), PX(+1,-1),
-        PX(-1,+0), s        , PX(+1,+0),
-        PX(-1,+1), PX(+0,+1), PX(+1,+1)
-    };
-#undef PX
-    
-    float3 avg = 0;
-    float3 count = 0;
-    for (float3 x : vals) {
-        if (x.r >= s.r) {
-            avg.r += x.r;
-            count.r += 1;
-        }
-        
-        if (x.g >= s.g) {
-            avg.g += x.g;
-            count.g += 1;
-        }
-        
-        if (x.b >= s.b) {
-            avg.b += x.b;
-            count.b += 1;
-        }
-    }
-    
-    avg /= count;
-    return float4(avg, 1);
+    const float3 s = Sample::RGB(Sample::MirrorClamp, rgb, pos);
+    const float mag = length(s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
+    return float4(s*mag, 1);
 }
 
 
@@ -204,7 +178,7 @@ fragment float4 CreateHighlightMap(
     texture2d<float> rgbLight [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    constexpr float Thresh = .99;
+    constexpr float Thresh = .85;
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     {
         const float3 s_rgbLight = rgbLight.sample({filter::linear}, in.posUnit+off).rgb;
