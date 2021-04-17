@@ -186,6 +186,24 @@ namespace CFAViewer {
             [blit endEncoding];
         }
         
+        void copy(id<MTLBuffer> src, id<MTLBuffer> dst) {
+            id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
+            [blit copyFromBuffer:src sourceOffset:0 toBuffer:dst destinationOffset:0 size:[src length]];
+            [blit endEncoding];
+        }
+        
+        Txt copy(id<MTLTexture> src) {
+            Txt dst = textureCreate(src);
+            copy(src, dst);
+            return dst;
+        }
+        
+        Buf copy(id<MTLBuffer> src) {
+            Buf dst = bufferCreate(src);
+            copy(src, dst);
+            return dst;
+        }
+        
         void sync(id<MTLResource> rsrc) {
             id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
             [blit synchronizeResource:rsrc];
@@ -196,7 +214,6 @@ namespace CFAViewer {
             [cmdBuf() presentDrawable:drawable];
         }
         
-        // TODO: rename to textureCreate to follow convention
         Txt textureCreate(
             MTLPixelFormat fmt,
             NSUInteger width, NSUInteger height,
@@ -224,12 +241,19 @@ namespace CFAViewer {
             }
         }
         
+        Txt textureCreate(id<MTLTexture> txt) {
+            assert(txt);
+            return textureCreate([txt pixelFormat], [txt width], [txt height], [txt usage]);
+        }
+        
         Buf bufferCreate(NSUInteger len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
-            // Return an existing buffer if its length is between len and 2*len
+            // Return an existing buffer if its length is between len and 2*len,
+            // and its options match `opts`
             for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
                 id<MTLBuffer> buf = *it;
                 const NSUInteger bufLen = [buf length];
-                if (bufLen>=len && bufLen<=2*len) {
+                const MTLResourceOptions bufOpts = [buf resourceOptions];
+                if (bufLen>=len && bufLen<=2*len && bufOpts==opts) {
                     Buf b(*this, buf);
                     _bufs.erase(it);
                     return b;
@@ -239,6 +263,11 @@ namespace CFAViewer {
             id<MTLBuffer> buf = [dev newBufferWithLength:len options:opts];
             Assert(buf, return Buf());
             return Buf(*this, buf);
+        }
+        
+        Buf bufferCreate(id<MTLBuffer> buf) {
+            assert(buf);
+            return bufferCreate([buf length], [buf resourceOptions]);
         }
         
         // Write samples (from a raw pointer) to a texture

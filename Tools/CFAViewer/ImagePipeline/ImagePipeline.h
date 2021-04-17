@@ -123,6 +123,7 @@ public:
                 
                 Renderer::Txt rgbLightHalf = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                 renderer.copy(rgbHalf, rgbLightHalf);
+                
                 {
                     Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
                     renderer.render("CFAViewer::Shader::ImagePipeline::NormalizeByMagnitude", tmp,
