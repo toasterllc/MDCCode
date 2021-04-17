@@ -75,16 +75,16 @@ fragment float ExpandHighlights(
 }
 
 fragment float2 CreateHighlightMap(
-    constant float3& illum [[buffer(0)]],
+    constant float& cutoff [[buffer(0)]],
+    constant float3& illum [[buffer(1)]],
     texture2d<float> rgb [[texture(0)]],
     texture2d<float> thresh [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    constexpr float Thresh = .80;
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     {
         const float s_thresh = thresh.sample({filter::linear}, in.posUnit+off).r;
-        if (s_thresh < Thresh) return 0;
+        if (s_thresh < cutoff) return 0;
     }
     
     const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
