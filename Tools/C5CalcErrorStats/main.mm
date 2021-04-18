@@ -125,7 +125,7 @@ int main(int argc, const char* argv[]) {
         assert(groundTruth.name == grayWorld.name);
         assert(groundTruth.name == c5.name);
         assert(groundTruth.name == ffcc.name);
-        assert(groundTruth.name == ffccMatlab.name);
+//        assert(groundTruth.name == ffccMatlab.name);
         const std::string& name = groundTruth.name;
         
         const Color<ColorSpace::Raw> illumGroundTruth   (groundTruth.c.m        /       groundTruth.c.m[1] );
