@@ -3,6 +3,7 @@
 #import "Renderer.h"
 #import "ImagePipelineTypes.h"
 #import "Defringe.h"
+#import "ReconstructHighlights.h"
 #import "DebayerLMMSE.h"
 #import "LocalContrast.h"
 #import "Saturation.h"
@@ -113,71 +114,8 @@ public:
         } else {
             // Reconstruct highlights
             if (opts.reconstructHighlights.en) {
-                Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, img.width/2, img.height/2);
-                renderer.render("CFAViewer::Shader::ReconstructHighlights::DebayerDownsample", rgb,
-                    // Buffer args
-                    img.cfaDesc,
-                    // Texture args
-                    raw
-                );
-                
-                Renderer::Txt thresh = renderer.textureCreate(MTLPixelFormatR32Float, img.width/2, img.height/2);
-                {
-                    const simd::float3 scale = {1.179, 0.649, 1.180};
-    //                const simd::float3 debugFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
-                    renderer.render("CFAViewer::Shader::ReconstructHighlights::Normalize", thresh,
-                        // Buffer args
-                        scale,
-                        // Texture args
-                        rgb
-                    );
-                }
-                
-//                for (int i=0; i<3; i++) {
-//                    Renderer::Txt tmp = renderer.textureCreate(thresh);
-//                    renderer.render("CFAViewer::Shader::ReconstructHighlights::ExpandHighlights", tmp,
-//                        // Texture args
-//                        thresh
-//                    );
-//                    thresh = std::move(tmp);
-//                }
-                
                 const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
-                const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
-                const double illumMax = std::max(std::max(illum[0], illum[1]), illum[2]);
-                const simd::float3 simdIllum = _simdFromMat(illum);
-                const simd::float3 simdIllumMax1 = _simdFromMat(illum/illumMax);
-                const simd::float3 simdIllumMin1 = _simdFromMat(illum/illumMin);
-                
-                const float cutoff = 0.7741562512;//opts.reconstructHighlights.badPixelFactors[0];
-                Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRG32Float, img.width, img.height);
-                renderer.render("CFAViewer::Shader::ReconstructHighlights::CreateHighlightMap", highlightMap,
-                    // Buffer args
-                    cutoff,
-                    simdIllumMin1,
-                    // Texture args
-                    rgb,
-                    thresh
-                );
-                
-                for (int i=0; i<1; i++) {
-                    Renderer::Txt tmp = renderer.textureCreate(highlightMap);
-                    renderer.render("CFAViewer::Shader::ReconstructHighlights::Blur", tmp,
-                        // Texture args
-                        highlightMap
-                    );
-                    highlightMap = std::move(tmp);
-                }
-                
-                renderer.render("CFAViewer::Shader::ReconstructHighlights::ReconstructHighlights", raw,
-                    // Buffer args
-                    img.cfaDesc,
-                    simdIllumMin1,
-                    // Texture args
-                    raw,
-                    rgb,
-                    highlightMap
-                );
+                ReconstructHighlights::Run(renderer, img.cfaDesc, illum, raw);
             }
             
             // Sample: fill `sampleOpts.xyzD50`
