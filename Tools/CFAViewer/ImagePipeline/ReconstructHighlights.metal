@@ -35,17 +35,17 @@ fragment float4 DebayerDownsample(
     return 0;
 }
 
-fragment float Normalize(
-    constant float3& scale [[buffer(0)]],
-    texture2d<float> rgb [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
-    const int2 pos = int2(in.pos.xy);
-    const float3 s = Sample::RGB(Sample::MirrorClamp, rgb, pos);
-    const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
-    return mag;
-}
+//fragment float Normalize(
+//    constant float3& scale [[buffer(0)]],
+//    texture2d<float> rgb [[texture(0)]],
+//    VertexOutput in [[stage_in]]
+//) {
+//    const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
+//    const int2 pos = int2(in.pos.xy);
+//    const float3 s = Sample::RGB(Sample::MirrorClamp, rgb, pos);
+//    const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
+//    return mag;
+//}
 
 fragment float ExpandHighlights(
     texture2d<float> thresh [[texture(0)]],
@@ -75,15 +75,18 @@ fragment float ExpandHighlights(
 }
 
 fragment float2 CreateHighlightMap(
-    constant float& cutoff [[buffer(0)]],
-    constant float3& illum [[buffer(1)]],
+    constant float3& scale [[buffer(0)]],
+    constant float& cutoff [[buffer(1)]],
+    constant float3& illum [[buffer(2)]],
     texture2d<float> rgb [[texture(0)]],
-    texture2d<float> thresh [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
+    // Normalize
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
     {
-        const float s_thresh = thresh.sample({filter::linear}, in.posUnit+off).r;
+        const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
+        const float3 s = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+        const float s_thresh = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
         if (s_thresh < cutoff) return 0;
     }
     
