@@ -36,14 +36,14 @@ fragment float4 DebayerDownsample(
 }
 
 fragment float Normalize(
-    constant float3& debugFactors [[buffer(0)]],
+    constant float3& scale [[buffer(0)]],
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float MagMax = length(float3(1,1,1)); // Maximum length of an RGB vector
+    const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
     const int2 pos = int2(in.pos.xy);
     const float3 s = Sample::RGB(Sample::MirrorClamp, rgb, pos);
-    const float mag = length(debugFactors*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
+    const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
     return mag;
 }
 

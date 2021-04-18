@@ -121,15 +121,17 @@ public:
                     raw
                 );
                 
-                const simd::float3 debugFactors = {1.179, 0.649, 1.180};
-//                const simd::float3 debugFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
                 Renderer::Txt thresh = renderer.textureCreate(MTLPixelFormatR32Float, img.width/2, img.height/2);
-                renderer.render("CFAViewer::Shader::ReconstructHighlights::Normalize", thresh,
-                    // Buffer args
-                    debugFactors,
-                    // Texture args
-                    rgb
-                );
+                {
+                    const simd::float3 scale = {1.179, 0.649, 1.180};
+    //                const simd::float3 debugFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
+                    renderer.render("CFAViewer::Shader::ReconstructHighlights::Normalize", thresh,
+                        // Buffer args
+                        scale,
+                        // Texture args
+                        rgb
+                    );
+                }
                 
 //                for (int i=0; i<3; i++) {
 //                    Renderer::Txt tmp = renderer.textureCreate(thresh);
@@ -147,7 +149,7 @@ public:
                 const simd::float3 simdIllumMax1 = _simdFromMat(illum/illumMax);
                 const simd::float3 simdIllumMin1 = _simdFromMat(illum/illumMin);
                 
-                const float cutoff = .8;//opts.reconstructHighlights.badPixelFactors[0];
+                const float cutoff = 0.7741562512;//opts.reconstructHighlights.badPixelFactors[0];
                 Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRG32Float, img.width, img.height);
                 renderer.render("CFAViewer::Shader::ReconstructHighlights::CreateHighlightMap", highlightMap,
                     // Buffer args
