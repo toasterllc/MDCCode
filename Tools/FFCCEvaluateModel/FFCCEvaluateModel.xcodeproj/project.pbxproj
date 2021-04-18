@@ -35,7 +35,6 @@
 		555A1C8F2621CC8E0056C014 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mod.h; path = ../Shared/Mod.h; sourceTree = "<group>"; };
 		555A1CA9262413860056C014 /* FFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCC.h; sourceTree = "<group>"; };
 		555A1CAA262413C70056C014 /* FFCCTrainedModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCCTrainedModel.h; sourceTree = "<group>"; };
-		555A1CAB2624334B0056C014 /* BitmapImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitmapImage.h; sourceTree = "<group>"; };
 		555A1CAC262435C60056C014 /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
 		555A1CB1262527C30056C014 /* FFCCTrainedModelVals.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCCTrainedModelVals.h; sourceTree = "<group>"; };
 		558C3600261D34DF0040241D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
@@ -72,6 +71,7 @@
 		559585962620096D0008EC38 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FFCCEvaluateModel.metal; sourceTree = "<group>"; };
 		5595859A26200FCC0008EC38 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
+		55E74406262A71B600472115 /* BitmapImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BitmapImage.h; path = ../Shared/BitmapImage.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,7 +100,7 @@
 				5595857D262008FD0008EC38 /* Renderer.metal */,
 				555A1C8F2621CC8E0056C014 /* Mod.h */,
 				558C3602261D3CE90040241D /* Mat.h */,
-				555A1CAB2624334B0056C014 /* BitmapImage.h */,
+				55E74406262A71B600472115 /* BitmapImage.h */,
 				5595859A26200FCC0008EC38 /* MetalUtil.h */,
 				5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */,
 				555A1CB1262527C30056C014 /* FFCCTrainedModelVals.h */,

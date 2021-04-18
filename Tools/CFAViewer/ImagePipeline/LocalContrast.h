@@ -11,13 +11,13 @@ namespace CFAViewer::ImagePipeline {
             const NSUInteger w = [rgb width];
             const NSUInteger h = [rgb height];
             // Extract L
-            Renderer::Txt lTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h);
+            Renderer::Txt lTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
             renderer.render("CFAViewer::Shader::LocalContrast::ExtractL", lTxt,
                 rgb
             );
             
             // Blur L channel
-            Renderer::Txt blurredLTxt = renderer.createTexture(MTLPixelFormatR32Float, w, h,
+            Renderer::Txt blurredLTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h,
                 MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
             MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:renderer.dev
                 sigma:radius];

@@ -272,7 +272,15 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/69.cfa");
         
 //        Mmap imgData("/Users/dave/matlab/1.cfa");
-        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_42.cfa");
+        
+        // Cabinet
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_26.cfa");
+//        // Orange
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_53.cfa");
+        // Floor
+//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_157.cfa");
+        
+        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa");
         
         _streamImages.img.width = 2304;
         _streamImages.img.height = 1296;
@@ -304,7 +312,14 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
             .goodPixelFactors   = {1.051, 1.544, 1.195},
         },
         
-        .whiteBalance = { 1.368683, 1.000000, 1.513193 },
+        .debayerLMMSE = {
+            .applyGamma = true,
+        },
+        
+//        illum = 2.4743327397, 2.5535876543, 1
+        .whiteBalance = { 1.521915, 1.000000, 1.180553 }, // outdoor_5pm_45
+//        .whiteBalance = { 0.691343/0.669886, 0.691343/0.691343, 0.691343/0.270734 },
+//        .whiteBalance = { 1.368683, 1.000000, 1.513193 },
         
         .defringe = {
             .en = false,
@@ -1179,6 +1194,42 @@ static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uin
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {
+    Mat<double,9,1> highlightFactor(
+        [_highlightFactorR0Slider doubleValue],
+        [_highlightFactorR1Slider doubleValue],
+        [_highlightFactorR2Slider doubleValue],
+        
+        [_highlightFactorG0Slider doubleValue],
+        [_highlightFactorG1Slider doubleValue],
+        [_highlightFactorG2Slider doubleValue],
+        
+        [_highlightFactorB0Slider doubleValue],
+        [_highlightFactorB1Slider doubleValue],
+        [_highlightFactorB2Slider doubleValue]
+    );
+    
+//    0.924
+//    1.368
+//    1.431
+//    
+//    0.959
+//    1.455
+//    1.491
+    
+    _imgOpts.reconstructHighlights.badPixelFactors = {highlightFactor[0], highlightFactor[1], highlightFactor[2]};
+    _imgOpts.reconstructHighlights.goodPixelFactors = {highlightFactor[3], highlightFactor[4], highlightFactor[5]};
+    [self _updateImageOptions];
+    
+    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[0]]];
+    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[1]]];
+    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[2]]];
+    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[3]]];
+    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[4]]];
+    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[5]]];
+    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[6]]];
+    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[7]]];
+    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[8]]];
+    [self mainViewSampleRectChanged:nil];
 }
 
 #pragma mark - MainViewDelegate
@@ -1458,7 +1509,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 - (void)_tagStartSession {
-//    return;
+    return;
 //    _TagIllums = {};
 //    for (const auto& f : fs::directory_iterator(_TagDir)) {
 //        if (isCFAFile(f)) {
@@ -1529,6 +1580,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 - (void)_tagHandleSampleRectChanged {
+    return;
     [[_mainView imageLayer] display]; // Crappiness to force the sample to be updated
     
     const Color<ColorSpace::Raw> c = [[_mainView imageLayer] sampleRaw];

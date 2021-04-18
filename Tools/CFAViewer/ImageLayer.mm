@@ -49,9 +49,9 @@ using namespace ImagePipeline;
     
     auto lock = std::lock_guard(_state.lock);
         _state.renderer = Renderer(_device, _library, _commandQueue);
-        _state.sampleOpts.raw = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleOpts.xyzD50 = _state.renderer.createBuffer(sizeof(simd::float3));
-        _state.sampleOpts.srgb = _state.renderer.createBuffer(sizeof(simd::float3));
+        _state.sampleOpts.raw = _state.renderer.bufferCreate(sizeof(simd::float3));
+        _state.sampleOpts.xyzD50 = _state.renderer.bufferCreate(sizeof(simd::float3));
+        _state.sampleOpts.srgb = _state.renderer.bufferCreate(sizeof(simd::float3));
     
     return self;
 }
@@ -73,7 +73,7 @@ using namespace ImagePipeline;
     const size_t len = pixelCount*sizeof(ImagePixel);
     if (len) {
         if (!_state.img.pixels || [_state.img.pixels length]<len) {
-            _state.img.pixels = _state.renderer.createBuffer(len);
+            _state.img.pixels = _state.renderer.bufferCreate(len);
             Assert(_state.img.pixels, return);
         }
         
@@ -153,7 +153,7 @@ using namespace ImagePipeline;
 
 - (id)CGImage {
     auto lock = std::lock_guard(_state.lock);
-    Renderer::Txt txt = _state.renderer.createTexture(MTLPixelFormatRGBA16Float,
+    Renderer::Txt txt = _state.renderer.textureCreate(MTLPixelFormatRGBA16Float,
         _state.img.width, _state.img.height,
         MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     [self _displayToTexture:txt drawable:nil];
@@ -216,13 +216,13 @@ using namespace ImagePipeline;
     if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
     
     sampleOpts.raw =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     sampleOpts.xyzD50 =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     sampleOpts.srgb =
-        _state.renderer.createBuffer(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
     
     [self setNeedsDisplay];
 }
@@ -268,23 +268,51 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
 }
 
 - (Color<ColorSpace::XYZD50>)sampleXYZD50 {
-    // Copy _state.sampleOpts.xyzD50 locally
+    // Copy _state.sampleOpts.raw locally
     auto lock = std::unique_lock(_state.lock);
         auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
         auto rect = _state.sampleOpts.rect;
     lock.unlock();
     
     size_t i = 0;
-    simd::double3 c = {0,0,0};
+    simd::double3 c = {};
+    simd::uint3 count = {};
     for (size_t y=rect.top; y<rect.bottom; y++) {
         for (size_t x=rect.left; x<rect.right; x++, i++) {
+            const bool r = (!(y%2) && (x%2));
+            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
+            const bool b = ((y%2) && !(x%2));
             const simd::float3& val = vals[i];
+            if (r) count[0]++;
+            if (g) count[1]++;
+            if (b) count[2]++;
             c += {(double)val[0], (double)val[1], (double)val[2]};
         }
     }
-    if (i) c /= i;
+    if (count[0]) c[0] /= count[0];
+    if (count[1]) c[1] /= count[1];
+    if (count[2]) c[2] /= count[2];
     return {(float)c[0], (float)c[1], (float)c[2]};
 }
+
+//- (Color<ColorSpace::XYZD50>)sampleXYZD50 {
+//    // Copy _state.sampleOpts.xyzD50 locally
+//    auto lock = std::unique_lock(_state.lock);
+//        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
+//        auto rect = _state.sampleOpts.rect;
+//    lock.unlock();
+//    
+//    size_t i = 0;
+//    simd::double3 c = {0,0,0};
+//    for (size_t y=rect.top; y<rect.bottom; y++) {
+//        for (size_t x=rect.left; x<rect.right; x++, i++) {
+//            const simd::float3& val = vals[i];
+//            c += {(double)val[0], (double)val[1], (double)val[2]};
+//        }
+//    }
+//    if (i) c /= i;
+//    return {(float)c[0], (float)c[1], (float)c[2]};
+//}
 
 - (Color<ColorSpace::SRGB>)sampleSRGB {
     // Copy _state.sampleOpts.srgb locally

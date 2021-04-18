@@ -90,7 +90,7 @@ fragment float InterpolateG(
     const float4 w = 1/(Eps+pow(δ,2));
     // Result: apply weights to r, sum them, and normalize
     // with combined weight.
-    return dot(w*r,1) / dot(w,1); // ∑ w*r / ∑ w
+    return dot(w*r,1) / dot(w,1); // Σ w*r / Σ w
 #undef PX
 }
 
@@ -246,7 +246,7 @@ fragment float ApplyCorrection(
             const float4 w = 1 / (Eps + abs(ḡ-g));
             // Δḡr: correction factor; apply weights to ḡ-r, sum them,
             // and normalize with combined weight.
-            const float Δḡr = dot(w*(ḡ-r),1) / dot(w,1); // ∑ w*(ḡ-r) / ∑ w
+            const float Δḡr = dot(w*(ḡ-r),1) / dot(w,1); // Σ w*(ḡ-r) / Σ w
             const float r̄ = g - Δḡr;
             
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is

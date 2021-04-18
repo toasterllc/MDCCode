@@ -3,6 +3,7 @@
 #import "Renderer.h"
 #import "ImagePipelineTypes.h"
 #import "Defringe.h"
+#import "ReconstructHighlights.h"
 #import "DebayerLMMSE.h"
 #import "LocalContrast.h"
 #import "Saturation.h"
@@ -74,7 +75,7 @@ public:
         const uint32_t w = img.width;
         const uint32_t h = img.height;
         
-        Renderer::Txt raw = renderer.createTexture(MTLPixelFormatR32Float,
+        Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float,
             img.width, img.height);
         
         // Load `raw`
@@ -97,7 +98,7 @@ public:
             );
         }
         
-        Renderer::Txt rgb = renderer.createTexture(MTLPixelFormatRGBA32Float,
+        Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float,
             img.width, img.height);
         
         // Raw mode (bilinear debayer only)
@@ -113,21 +114,21 @@ public:
         } else {
             // Reconstruct highlights
             if (opts.reconstructHighlights.en) {
-                const simd::float3 badPixelFactors = _simdFromMat(opts.reconstructHighlights.badPixelFactors);
-                const simd::float3 goodPixelFactors = _simdFromMat(opts.reconstructHighlights.goodPixelFactors);
-                
-                Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float,
-                    img.width, img.height);
-                
-                renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
+                const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
+                ReconstructHighlights::Run(renderer, img.cfaDesc, illum, raw);
+            }
+            
+            // Sample: fill `sampleOpts.xyzD50`
+            {
+                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
+                    w, h,
                     // Buffer args
                     img.cfaDesc,
-                    badPixelFactors,
-                    goodPixelFactors,
+                    sampleOpts.rect,
+                    sampleOpts.xyzD50,
                     // Texture args
                     raw
                 );
-                raw = std::move(tmp);
             }
             
             // White balance
@@ -242,18 +243,18 @@ public:
             // Saturation
             Saturation::Run(renderer, opts.saturation, rgb);
             
-            // Sample: fill `sampleOpts.xyzD50`
-            {
-                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
-                    w, h,
-                    // Buffer args
-                    img.cfaDesc,
-                    sampleOpts.rect,
-                    sampleOpts.xyzD50,
-                    // Texture args
-                    rgb
-                );
-            }
+//            // Sample: fill `sampleOpts.xyzD50`
+//            {
+//                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
+//                    w, h,
+//                    // Buffer args
+//                    img.cfaDesc,
+//                    sampleOpts.rect,
+//                    sampleOpts.xyzD50,
+//                    // Texture args
+//                    rgb
+//                );
+//            }
             
             // XYZ.D50 -> XYZ.D65
             {

@@ -81,6 +81,7 @@
 		55B9747B24C50A8A000B2633 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		55DE384325F6DA2400AD2223 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
 		55DE385B25F83EFB00AD2223 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
+		55E74408262BC9A600472115 /* ReconstructHighlights.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
 		55E98EB425A920030062B458 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
 		55E98EB525A920030062B458 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
 		55E98EB725A920880062B458 /* HistogramView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HistogramView.mm; sourceTree = "<group>"; };
@@ -126,8 +127,9 @@
 			children = (
 				55460A39260923360037A5AC /* ImagePipelineTypes.h */,
 				554609FF2603032A0037A5AC /* ImagePipeline.h */,
-				55EBCC89258966FE0089A441 /* ImagePipeline.metal */,
+				55E74408262BC9A600472115 /* ReconstructHighlights.h */,
 				55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */,
+				55EBCC89258966FE0089A441 /* ImagePipeline.metal */,
 				554609FD2602C26A0037A5AC /* DebayerBilinear.metal */,
 				554609FB2602C08A0037A5AC /* DebayerLMMSE.h */,
 				55460A1B2603CEAF0037A5AC /* DebayerLMMSE.metal */,
