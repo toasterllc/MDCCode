@@ -88,8 +88,9 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
-    argc = 2;
-    argv = (const char*[]){"", "/Users/dave/Desktop/Old/2021:4:4/C5TestSets/Outdoor-5pm-ColorChecker"};
+    const char* args[] = {"", "/Users/dave/Desktop/Old/2021:4:3/CFAViewerSession-All-FilteredGood"};
+    argc = std::size(args);
+    argv = args;
     
     for (int i=1; i<argc; i++) {
         const char* pathArg = argv[i];
