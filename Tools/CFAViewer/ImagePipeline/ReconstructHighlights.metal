@@ -35,63 +35,24 @@ fragment float4 DebayerDownsample(
     return 0;
 }
 
-//fragment float Normalize(
-//    constant float3& scale [[buffer(0)]],
-//    texture2d<float> rgb [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
-//    const int2 pos = int2(in.pos.xy);
-//    const float3 s = Sample::RGB(Sample::MirrorClamp, rgb, pos);
-//    const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
-//    return mag;
-//}
-
-fragment float ExpandHighlights(
-    texture2d<float> thresh [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const int2 pos = int2(in.pos.xy);
-#define PX(x,y) Sample::R(Sample::MirrorClamp, thresh, pos+int2{x,y})
-    const float s = PX(+0,+0);
-    float vals[] = {
-        PX(-1,-1), PX(+0,-1), PX(+1,-1),
-        PX(-1,+0), s        , PX(+1,+0),
-        PX(-1,+1), PX(+0,+1), PX(+1,+1)
-    };
-#undef PX
-    
-    float avg = 0;
-    float count = 0;
-    for (float x : vals) {
-        if (x >= s) {
-            avg += x;
-            count += 1;
-        }
-    }
-    
-    avg /= count;
-    return avg;
-}
-
 fragment float2 CreateHighlightMap(
     constant float3& scale [[buffer(0)]],
-    constant float& cutoff [[buffer(1)]],
+    constant float& thresh [[buffer(1)]],
     constant float3& illum [[buffer(2)]],
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    // Normalize
     const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
-    {
-        const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
-        const float3 s = rgb.sample({filter::linear}, in.posUnit+off).rgb;
-        const float s_thresh = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
-        if (s_thresh < cutoff) return 0;
-    }
     
-    const float3 s_rgb = rgb.sample({filter::linear}, in.posUnit+off).rgb;
-    const float3 k3 = s_rgb/illum;
+    // Calculate the magnitude of the current pixel and
+    // determine whether it's a highlight
+    const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
+    const float3 s = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+    const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
+    if (mag < thresh) return 0;
+    
+    // Return the brightness of the illuminant using the sampled values
+    const float3 k3 = s/illum;
     const float k = (k3.r+k3.g+k3.b)/3;
     return float2(k, 1);
 }
@@ -165,13 +126,13 @@ fragment float ReconstructHighlights(
     const CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(Sample::MirrorClamp, raw, pos);
     const float2 m = Sample::RG(Sample::MirrorClamp, map, pos);
-    const float mapFactor = m.r;
-    const float mapAlpha = m.g;
+    const float k = m.r; // Illuminant brightness
+    const float α = m.g; // Alpha channel
     
     switch (c) {
-    case CFAColor::Red:     return (mapAlpha)*mapFactor*illum.r + (1-mapAlpha)*r;
-    case CFAColor::Green:   return (mapAlpha)*mapFactor*illum.g + (1-mapAlpha)*r;
-    case CFAColor::Blue:    return (mapAlpha)*mapFactor*illum.b + (1-mapAlpha)*r;
+    case CFAColor::Red:     return (α)*k*illum.r + (1-α)*r;
+    case CFAColor::Green:   return (α)*k*illum.g + (1-α)*r;
+    case CFAColor::Blue:    return (α)*k*illum.b + (1-α)*r;
     }
     return 0;
 }

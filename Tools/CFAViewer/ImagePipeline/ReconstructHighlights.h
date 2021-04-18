@@ -17,24 +17,20 @@ namespace CFAViewer::ImagePipeline {
                 raw
             );
             
-//            Renderer::Txt thresh = renderer.textureCreate(MTLPixelFormatR32Float, w/2, h/2);
-//            renderer.render("CFAViewer::Shader::ReconstructHighlights::Normalize", thresh,
-//                // Buffer args
-//                scale,
-//                // Texture args
-//                rgb
-//            );
-            
-            const simd::float3 scale = {1.179, 0.649, 1.180}; // Empirically determined
-            const float cutoff = 0.7741562512; // Empirically determined
+            // `Scale` balances the raw colors from the sensor for the purpose
+            // of highlight reconstruction (empirically determined)
+            const simd::float3 Scale = {1.179, 0.649, 1.180};
+            // `Thresh` is the threshold at which pixels are considered for
+            // highlight reconstruction (empirically determined)
+            const float Thresh = 0.774;
             const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
             const Mat<double,3,1> illumMin1 = illum/illumMin;
             const simd::float3 simdIllumMin1 = {(float)illumMin1[0], (float)illumMin1[1], (float)illumMin1[2]};
             Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRG32Float, w, h);
             renderer.render("CFAViewer::Shader::ReconstructHighlights::CreateHighlightMap", highlightMap,
                 // Buffer args
-                scale,
-                cutoff,
+                Scale,
+                Thresh,
                 simdIllumMin1,
                 // Texture args
                 rgb
