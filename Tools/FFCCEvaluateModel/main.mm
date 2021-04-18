@@ -140,7 +140,7 @@ static Mat64 softmaxForward(const Mat64& H) {
 }
 
 Renderer::Txt createMaskedImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
-    Renderer::Txt maskedImg = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    Renderer::Txt maskedImg = renderer.textureCreate(MTLPixelFormatRGBA32Float, W, H);
     renderer.render("ApplyMask", maskedImg,
         // Texture args
         img,
@@ -151,9 +151,9 @@ Renderer::Txt createMaskedImage(const Model& model, Renderer& renderer, id<MTLTe
 }
 
 Renderer::Txt createAbsDevImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
-    Renderer::Txt absDevImage = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    Renderer::Txt absDevImage = renderer.textureCreate(MTLPixelFormatRGBA32Float, W, H);
     {
-        Renderer::Txt coeff = renderer.createTexture(MTLPixelFormatR32Float, W, H);
+        Renderer::Txt coeff = renderer.textureCreate(MTLPixelFormatR32Float, W, H);
         renderer.render("LocalAbsoluteDeviationCoeff", coeff,
             mask
         );
@@ -169,22 +169,22 @@ Renderer::Txt createAbsDevImage(const Model& model, Renderer& renderer, id<MTLTe
 }
 
 Mat64 calcXFromImage(const Model& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
-    Renderer::Txt u = renderer.createTexture(MTLPixelFormatR32Float, W, H);
+    Renderer::Txt u = renderer.textureCreate(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcU", u,
         // Texture args
         img
     );
     
-    Renderer::Txt v = renderer.createTexture(MTLPixelFormatR32Float, W, H);
+    Renderer::Txt v = renderer.textureCreate(MTLPixelFormatR32Float, W, H);
     renderer.render("CalcV", v,
         // Texture args
         img
     );
     
     using ValidPixelCount = uint32_t;
-    Renderer::Buf validPixelCountBuf = renderer.createBuffer(sizeof(ValidPixelCount), MTLResourceStorageModeManaged);
+    Renderer::Buf validPixelCountBuf = renderer.bufferCreate(sizeof(ValidPixelCount), MTLResourceStorageModeManaged);
     renderer.bufferClear(validPixelCountBuf);
-    Renderer::Txt maskUV = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
+    Renderer::Txt maskUV = renderer.textureCreate(MTLPixelFormatR8Unorm, W, H);
     {
         const float thresh = model.params.histogram.minIntensity;
         renderer.render("CalcMaskUV", maskUV,
@@ -220,7 +220,7 @@ Mat64 calcXFromImage(const Model& model, Renderer& renderer, id<MTLTexture> img,
     
     const size_t binsBufCount = binCount*binCount;
     const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
-    Renderer::Buf binsBuf = renderer.createBuffer(binsBufLen, MTLResourceStorageModeManaged);
+    Renderer::Buf binsBuf = renderer.bufferCreate(binsBufLen, MTLResourceStorageModeManaged);
     renderer.bufferClear(binsBuf);
     
     renderer.render("CalcHistogram", W, H,
@@ -233,7 +233,7 @@ Mat64 calcXFromImage(const Model& model, Renderer& renderer, id<MTLTexture> img,
         maskUV
     );
     
-    Renderer::Txt Xc = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
+    Renderer::Txt Xc = renderer.textureCreate(MTLPixelFormatR32Float, binCount, binCount);
     renderer.render("LoadHistogram", Xc,
         // Buffer args
         binCount,
@@ -247,7 +247,7 @@ Mat64 calcXFromImage(const Model& model, Renderer& renderer, id<MTLTexture> img,
         Xc
     );
     
-    Renderer::Txt XcTransposed = renderer.createTexture(MTLPixelFormatR32Float, binCount, binCount);
+    Renderer::Txt XcTransposed = renderer.textureCreate(MTLPixelFormatR32Float, binCount, binCount);
     renderer.render("Transpose", XcTransposed,
         // Texture args
         Xc
@@ -272,7 +272,7 @@ static Mat<double,3,1> ffccEstimateIlluminant(
     Renderer& renderer,
     id<MTLTexture> img
 ) {
-    Renderer::Txt mask = renderer.createTexture(MTLPixelFormatR8Unorm, W, H);
+    Renderer::Txt mask = renderer.textureCreate(MTLPixelFormatR8Unorm, W, H);
     renderer.render("CreateMask", mask,
         // Texture args
         img
@@ -320,7 +320,7 @@ static void processImageFile(Renderer& renderer, const fs::path& path) {
     assert(png.width == W);
     
     // Create a texture and load it with the data from `img`
-    Renderer::Txt img = renderer.createTexture(MTLPixelFormatRGBA32Float, W, H);
+    Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, W, H);
     renderer.textureWrite(img, png.data, png.samplesPerPixel);
     
     const Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
