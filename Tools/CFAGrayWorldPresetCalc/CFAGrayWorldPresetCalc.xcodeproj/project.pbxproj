@@ -23,16 +23,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		554B918A261BA68600618ACA /* CFAGrayWorldCalc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CFAGrayWorldCalc; sourceTree = BUILT_PRODUCTS_DIR; };
+		554B918A261BA68600618ACA /* CFAGrayWorldPresetCalc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CFAGrayWorldPresetCalc; sourceTree = BUILT_PRODUCTS_DIR; };
 		554B918D261BA68600618ACA /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		554B9194261BA79C00618ACA /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mmap.h; path = ../Shared/Mmap.h; sourceTree = "<group>"; };
 		554B9195261BA80B00618ACA /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImagePipelineTypes.h; path = ../CFAViewer/ImagePipeline/ImagePipelineTypes.h; sourceTree = "<group>"; };
 		554B9196261BA81200618ACA /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
 		554B9198261BA83500618ACA /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HashInts.h; path = ../../Code/Shared/HashInts.h; sourceTree = "<group>"; };
 		554B9199261BA87700618ACA /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Assert.h; path = ../Shared/Assert.h; sourceTree = "<group>"; };
-		55E74409262D48C200472115 /* CFAImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFAImage.h; sourceTree = "<group>"; };
-		55E7440B262D49B200472115 /* GrayWorld.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GrayWorld.h; sourceTree = "<group>"; };
+		55E74409262D48C200472115 /* CFAImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CFAImage.h; path = ../CFAGrayWorldCalc/CFAImage.h; sourceTree = "<group>"; };
+		55E7440B262D49B200472115 /* GrayWorld.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GrayWorld.h; path = ../CFAGrayWorldCalc/GrayWorld.h; sourceTree = "<group>"; };
 		55E7440C262D49E100472115 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
+		55E7440D262D502400472115 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Color.h; path = ../Shared/Color.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +53,7 @@
 				554B9198261BA83500618ACA /* HashInts.h */,
 				554B9194261BA79C00618ACA /* Mmap.h */,
 				55E7440C262D49E100472115 /* Mat.h */,
+				55E7440D262D502400472115 /* Color.h */,
 				554B9196261BA81200618ACA /* MetalUtil.h */,
 				554B9195261BA80B00618ACA /* ImagePipelineTypes.h */,
 				554B9199261BA87700618ACA /* Assert.h */,
@@ -65,7 +67,7 @@
 		554B918B261BA68600618ACA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				554B918A261BA68600618ACA /* CFAGrayWorldCalc */,
+				554B918A261BA68600618ACA /* CFAGrayWorldPresetCalc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,9 +75,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		554B9189261BA68600618ACA /* CFAGrayWorldCalc */ = {
+		554B9189261BA68600618ACA /* CFAGrayWorldPresetCalc */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 554B9191261BA68600618ACA /* Build configuration list for PBXNativeTarget "CFAGrayWorldCalc" */;
+			buildConfigurationList = 554B9191261BA68600618ACA /* Build configuration list for PBXNativeTarget "CFAGrayWorldPresetCalc" */;
 			buildPhases = (
 				554B9186261BA68600618ACA /* Sources */,
 				554B9187261BA68600618ACA /* Frameworks */,
@@ -85,9 +87,9 @@
 			);
 			dependencies = (
 			);
-			name = CFAGrayWorldCalc;
+			name = CFAGrayWorldPresetCalc;
 			productName = CFAGrayWorldCalc;
-			productReference = 554B918A261BA68600618ACA /* CFAGrayWorldCalc */;
+			productReference = 554B918A261BA68600618ACA /* CFAGrayWorldPresetCalc */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -104,7 +106,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 554B9185261BA68600618ACA /* Build configuration list for PBXProject "CFAGrayWorldCalc" */;
+			buildConfigurationList = 554B9185261BA68600618ACA /* Build configuration list for PBXProject "CFAGrayWorldPresetCalc" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -117,7 +119,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				554B9189261BA68600618ACA /* CFAGrayWorldCalc */,
+				554B9189261BA68600618ACA /* CFAGrayWorldPresetCalc */,
 			);
 		};
 /* End PBXProject section */
@@ -262,7 +264,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		554B9185261BA68600618ACA /* Build configuration list for PBXProject "CFAGrayWorldCalc" */ = {
+		554B9185261BA68600618ACA /* Build configuration list for PBXProject "CFAGrayWorldPresetCalc" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				554B918F261BA68600618ACA /* Debug */,
@@ -271,7 +273,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		554B9191261BA68600618ACA /* Build configuration list for PBXNativeTarget "CFAGrayWorldCalc" */ = {
+		554B9191261BA68600618ACA /* Build configuration list for PBXNativeTarget "CFAGrayWorldPresetCalc" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				554B9192261BA68600618ACA /* Debug */,

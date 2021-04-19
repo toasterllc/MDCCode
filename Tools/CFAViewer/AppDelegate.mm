@@ -316,8 +316,10 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
             .applyGamma = true,
         },
         
+        
+        
 //        illum = 2.4743327397, 2.5535876543, 1
-        .whiteBalance = { 1.521915, 1.000000, 1.180553 }, // outdoor_5pm_45
+        .whiteBalance = { 0.346606/0.383756, 0.346606/0.523701, 0.346606/0.346606 }, // outdoor_5pm_45
 //        .whiteBalance = { 0.691343/0.669886, 0.691343/0.691343, 0.691343/0.270734 },
 //        .whiteBalance = { 1.368683, 1.000000, 1.513193 },
         
@@ -1810,15 +1812,16 @@ static bool isCFAFile(const fs::path& path) {
         [[_mainView imageLayer] setImage:_streamImages.img];
     }
     
-    const Color<ColorSpace::Raw>& c = illum.c;
-    _imgOpts.whiteBalance = { c[1]/c[0], c[1]/c[1], c[1]/c[2] };
-    [self _updateImageOptions];
+//    const Color<ColorSpace::Raw>& c = illum.c;
+//    _imgOpts.whiteBalance = { c[1]/c[0], c[1]/c[1], c[1]/c[2] };
+//    [self _updateImageOptions];
     
     [_mainView reset];
 }
 
 - (void)_tagHandleSampleRectChanged {
-    return;
+//    return;
+    
     [[_mainView imageLayer] display]; // Crappiness to force the sample to be updated
     
     const Color<ColorSpace::Raw> c = [[_mainView imageLayer] sampleRaw];

@@ -2,7 +2,6 @@
 
 #if !MetalShaderContext
 #import <Metal/Metal.h>
-#import "Renderer.h"
 #endif // !MetalShaderContext
 
 namespace CFAViewer {
