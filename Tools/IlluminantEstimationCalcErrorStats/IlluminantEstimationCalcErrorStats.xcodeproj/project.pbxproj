@@ -24,16 +24,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		554B9180261BA5B000618ACA /* IllumsGrayWorld.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsGrayWorld.h; sourceTree = "<group>"; };
-		555A1CAD2624404E0056C014 /* IllumsFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsFFCC.h; sourceTree = "<group>"; };
-		555A1CAE2624E0CE0056C014 /* IllumsFFCCMatlab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsFFCCMatlab.h; sourceTree = "<group>"; };
-		559C340C2617FEF1001903FD /* C5CalcErrorStats */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = C5CalcErrorStats; sourceTree = BUILT_PRODUCTS_DIR; };
+		554B9180261BA5B000618ACA /* TrialsGrayWorld.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrialsGrayWorld.h; sourceTree = "<group>"; };
+		555A1CAD2624404E0056C014 /* TrialsFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrialsFFCC.h; sourceTree = "<group>"; };
+		555A1CAE2624E0CE0056C014 /* TrialsFFCCMatlab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrialsFFCCMatlab.h; sourceTree = "<group>"; };
+		559C340C2617FEF1001903FD /* IlluminantEstimationCalcErrorStats */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = IlluminantEstimationCalcErrorStats; sourceTree = BUILT_PRODUCTS_DIR; };
 		559C340F2617FEF1001903FD /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		559C34162617FF4C001903FD /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Color.h; path = ../Shared/Color.h; sourceTree = "<group>"; };
 		559C34172617FF5C001903FD /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
 		559C3419261846C6001903FD /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		559C341B261950F3001903FD /* IllumsC5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsC5.h; sourceTree = "<group>"; };
-		559C341C261950F3001903FD /* IllumsGroundTruth.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IllumsGroundTruth.h; sourceTree = "<group>"; };
+		559C341B261950F3001903FD /* TrialsC5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrialsC5.h; sourceTree = "<group>"; };
+		559C341C261950F3001903FD /* TrialsGroundTruth.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrialsGroundTruth.h; sourceTree = "<group>"; };
+		55E7440E262D540300472115 /* TrialsGrayWorldPreset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrialsGrayWorldPreset.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,13 +54,13 @@
 			children = (
 				559C34172617FF5C001903FD /* Mat.h */,
 				559C34162617FF4C001903FD /* Color.h */,
-				559C341C261950F3001903FD /* IllumsGroundTruth.h */,
-				554B9180261BA5B000618ACA /* IllumsGrayWorld.h */,
-				559C341B261950F3001903FD /* IllumsC5.h */,
-				555A1CAD2624404E0056C014 /* IllumsFFCC.h */,
-				555A1CAE2624E0CE0056C014 /* IllumsFFCCMatlab.h */,
+				559C341C261950F3001903FD /* TrialsGroundTruth.h */,
+				554B9180261BA5B000618ACA /* TrialsGrayWorld.h */,
+				559C341B261950F3001903FD /* TrialsC5.h */,
+				555A1CAD2624404E0056C014 /* TrialsFFCC.h */,
+				555A1CAE2624E0CE0056C014 /* TrialsFFCCMatlab.h */,
+				55E7440E262D540300472115 /* TrialsGrayWorldPreset.h */,
 				559C340F2617FEF1001903FD /* main.mm */,
-				559C340E2617FEF1001903FD /* C5CalcErrorStats */,
 				559C340D2617FEF1001903FD /* Products */,
 				559C3418261846C6001903FD /* Frameworks */,
 			);
@@ -68,16 +69,9 @@
 		559C340D2617FEF1001903FD /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				559C340C2617FEF1001903FD /* C5CalcErrorStats */,
+				559C340C2617FEF1001903FD /* IlluminantEstimationCalcErrorStats */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		559C340E2617FEF1001903FD /* C5CalcErrorStats */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = C5CalcErrorStats;
 			sourceTree = "<group>";
 		};
 		559C3418261846C6001903FD /* Frameworks */ = {
@@ -91,9 +85,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		559C340B2617FEF1001903FD /* C5CalcErrorStats */ = {
+		559C340B2617FEF1001903FD /* IlluminantEstimationCalcErrorStats */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 559C34132617FEF1001903FD /* Build configuration list for PBXNativeTarget "C5CalcErrorStats" */;
+			buildConfigurationList = 559C34132617FEF1001903FD /* Build configuration list for PBXNativeTarget "IlluminantEstimationCalcErrorStats" */;
 			buildPhases = (
 				559C34082617FEF1001903FD /* Sources */,
 				559C34092617FEF1001903FD /* Frameworks */,
@@ -103,9 +97,9 @@
 			);
 			dependencies = (
 			);
-			name = C5CalcErrorStats;
+			name = IlluminantEstimationCalcErrorStats;
 			productName = C5CalcErrorStats;
-			productReference = 559C340C2617FEF1001903FD /* C5CalcErrorStats */;
+			productReference = 559C340C2617FEF1001903FD /* IlluminantEstimationCalcErrorStats */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -122,7 +116,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 559C34072617FEF1001903FD /* Build configuration list for PBXProject "C5CalcErrorStats" */;
+			buildConfigurationList = 559C34072617FEF1001903FD /* Build configuration list for PBXProject "IlluminantEstimationCalcErrorStats" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -135,7 +129,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				559C340B2617FEF1001903FD /* C5CalcErrorStats */,
+				559C340B2617FEF1001903FD /* IlluminantEstimationCalcErrorStats */,
 			);
 		};
 /* End PBXProject section */
@@ -280,7 +274,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		559C34072617FEF1001903FD /* Build configuration list for PBXProject "C5CalcErrorStats" */ = {
+		559C34072617FEF1001903FD /* Build configuration list for PBXProject "IlluminantEstimationCalcErrorStats" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				559C34112617FEF1001903FD /* Debug */,
@@ -289,7 +283,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		559C34132617FEF1001903FD /* Build configuration list for PBXNativeTarget "C5CalcErrorStats" */ = {
+		559C34132617FEF1001903FD /* Build configuration list for PBXNativeTarget "IlluminantEstimationCalcErrorStats" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				559C34142617FEF1001903FD /* Debug */,

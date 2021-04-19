@@ -35,20 +35,27 @@ static void handleFile(const fs::path& path) {
     
     const Illum* illumPreset = nullptr;
     double illumPresetErr = INFINITY;
+    double illumPresetTotal = 0;
     for (const Illum& ip : IllumPresets) {
+        printf("colorAngle (gray-world vs %s): %.2f\n", ip.name.c_str(), colorAngle(grayWorldIllumColor, ip.color));
         double err = colorAngle(grayWorldIllumColor, ip.color);
         if (err < illumPresetErr) {
             illumPreset = &ip;
             illumPresetErr = err;
         }
+        illumPresetTotal += err;
     }
     
-    printf("{ \"%s\", { %f, %f, %f } }, // %s (gray-world vs preset Δ = %.2f degrees)\n",
+    const double confidence = 1-(illumPresetErr/illumPresetTotal);
+    printf("{ \"%s\", { %f, %f, %f } }, // %s (confidence = %.2f, gray-world vs preset Δ = %.2f degrees)\n",
         name.c_str(),
         illumPreset->color[0], illumPreset->color[1], illumPreset->color[2],
         illumPreset->name.c_str(),
+        confidence,
         illumPresetErr
     );
+    
+    printf("\n\n\n");
     
 }
 
