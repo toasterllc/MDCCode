@@ -15,7 +15,7 @@ fragment float4 DebayerDownsample(
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const int2 pos(2*(int)in.pos.x, 2*in.pos.y);
+    const int2 pos(2*(int)in.pos.x, 2*(int)in.pos.y);
     const CFAColor c = cfaDesc.color(pos+int2{0,0});
     const CFAColor cn = cfaDesc.color(pos+int2{1,0});
     const float s00 = Sample::R(Sample::MirrorClamp, raw, pos+int2{0,0});
@@ -42,12 +42,10 @@ fragment float2 CreateHighlightMap(
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    const float2 off = float2(0,-.5)/float2(rgb.get_width(),rgb.get_height());
-    
     // Calculate the magnitude of the current pixel and
     // determine whether it's a highlight
     const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
-    const float3 s = rgb.sample({filter::linear}, in.posUnit+off).rgb;
+    const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
     const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
     if (mag < thresh) return 0;
     
