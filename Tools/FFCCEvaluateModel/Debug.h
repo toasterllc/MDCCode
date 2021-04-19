@@ -115,7 +115,7 @@ void load(mxArray* mxa, T& var) {
 }
 
 template <typename T>
-void load(MATFile* f, const char* name, T var) {
+void load(MATFile* f, const char* name, T& var) {
     load(matGetVariable(f, name), var);
 }
 
