@@ -4,6 +4,7 @@
 #import "MetalUtil.h"
 #import "Color.h"
 #import "Renderer.h"
+#import "Mod.h"
 
 namespace CFAViewer::ImagePipeline {
 
