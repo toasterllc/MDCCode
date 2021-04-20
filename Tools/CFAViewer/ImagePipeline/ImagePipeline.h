@@ -59,7 +59,7 @@ public:
         Renderer::Buf xyzD50;
         Renderer::Buf srgb;
     };
-    
+    #warning TODO: return resulting texture instead?
     static void Run(Renderer& renderer, const Image& img, const Options& opts,
         const SampleOptions& sampleOpts, id<MTLTexture> outTxt
     );

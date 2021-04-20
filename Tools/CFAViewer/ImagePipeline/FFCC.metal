@@ -11,35 +11,6 @@ namespace CFAViewer {
 namespace Shader {
 namespace FFCC {
 
-fragment float4 DebayerDownsample(
-    constant CFADesc& cfaDesc [[buffer(0)]],
-    texture2d<float> raw [[texture(0)]],
-    texture2d<float> target [[texture(1)]],
-    VertexOutput in [[stage_in]]
-) {
-    // `halfPxOff` is the .5 offset converted to unity coordinates
-    const float2 halfPxOff = float2(.5)/float2(target.get_width(), target.get_height());
-    // Convert unity position -> integer coords for `raw`
-    const int2 pos = int2(round((in.posUnit.xy-halfPxOff) * float2(raw.get_width(), raw.get_height())));
-    const CFAColor c = cfaDesc.color(pos);
-    const CFAColor cn = cfaDesc.color(pos+int2{1,0});
-    const float s00 = Sample::R(Sample::MirrorClamp, raw, pos+int2{0,0});
-    const float s01 = Sample::R(Sample::MirrorClamp, raw, pos+int2{0,1});
-    const float s10 = Sample::R(Sample::MirrorClamp, raw, pos+int2{1,0});
-    const float s11 = Sample::R(Sample::MirrorClamp, raw, pos+int2{1,1});
-    
-    if (c == CFAColor::Red) {
-        return float4(s00,(s01+s10)/2,s11,1);
-    } else if (c==CFAColor::Green && cn==CFAColor::Red) {
-        return float4(s10,(s00+s11)/2,s01,1);
-    } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
-        return float4(s01,(s00+s11)/2,s10,1);
-    } else if (c == CFAColor::Blue) {
-        return float4(s11,(s01+s10)/2,s00,1);
-    }
-    return 0;
-}
-
 fragment float CreateMask(
     texture2d<float> img [[texture(0)]],
     VertexOutput in [[stage_in]]

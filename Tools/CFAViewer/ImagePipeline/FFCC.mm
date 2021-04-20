@@ -132,7 +132,7 @@ static Mat64 _calcXFromImage(const FFCC::Model& model, Renderer& renderer, id<MT
     renderer.sync(XcTransposed);
     renderer.commitAndWait();
     
-    // Convert integer histogram to double histogram, to match MATLAB version
+    // Copy the histogram from a texture -> Mat64
     std::vector<float> histFloats = renderer.textureRead<float>(XcTransposed);
     Mat64 hist;
     // Copy the floats into the matrix
@@ -222,7 +222,7 @@ FFCC::Vec3 FFCC::Run(
     const uint32_t w = 384;
     const uint32_t h = (uint32_t)((w*[raw height])/[raw width]);
     Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-    renderer.render(ShaderNamespace "DebayerDownsample", img,
+    renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", img,
         cfaDesc,
         raw,
         img
