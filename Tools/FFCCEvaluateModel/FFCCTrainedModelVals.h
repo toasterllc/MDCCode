@@ -1,4 +1,4 @@
-const uint64_t F_fft0Vals[8192] = {
+static const inline uint64_t F_fft0Vals[8192] = {
     0xc0be1487f3ece7c5, 0x0000000000000000, 0x40f4dd81ae8d2930, 0xc09369760ff86509,
     0x40b75086d1e91a96, 0x40b13f5cf7679930, 0x40b52893ff32c900, 0xc08bb87327f33def,
     0x40a1facb3d794257, 0xc0a2288d56881f3b, 0x4090fee5b3d8832d, 0xc093779651160b6b,
@@ -2049,7 +2049,7 @@ const uint64_t F_fft0Vals[8192] = {
     0x40b5f050e00e8a59, 0x40afe7f167602701, 0xc069aa6acb8aaa55, 0x40d1fab88f105314,
 };
 
-const uint64_t F_fft1Vals[8192] = {
+static const inline uint64_t F_fft1Vals[8192] = {
     0xbef1e2c35edeac31, 0x0000000000000000, 0x40d8b86ddd8ea95d, 0xc0d40fd7222ec59c,
     0x40d948fe4f6eb37a, 0xc0de82e00de73da1, 0xc0c7bfc3e198dda8, 0xc0c09e5a3b876e44,
     0xc0b53d5e33957201, 0x40d30813e52d11ac, 0x40c530cb2bbe2dd1, 0x40ce09eab89231b9,
@@ -4100,7 +4100,7 @@ const uint64_t F_fft1Vals[8192] = {
     0x40dbeb4f27d53fb7, 0x40d91bf4bb810c57, 0x40ac9e3586a7e547, 0xc0e2eb3919a29803,
 };
 
-const uint64_t BVals[4096] = {
+static const inline uint64_t BVals[4096] = {
     0x3ff836dfbb57f320, 0x3ff7d6522c5fa2d1, 0x3ff76ae3527de010, 0x3ff6f656a5f8d186,
     0x3ff67a26ee88b58a, 0x3ff5f6f538a5db12, 0x3ff56aa84d683ce5, 0x3ff4c9828cf6cc4c,
     0x3ff3e3606f556780, 0x3ff259acf42bed18, 0x3ff64bba72a0996e, 0x3ff19bfe0e400b2d,

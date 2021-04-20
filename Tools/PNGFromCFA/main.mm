@@ -151,14 +151,14 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     if (imgMmap.len() != len) throw std::runtime_error("invalid length");
     
     // Create a texture from the raw CFA data
-    Renderer::Txt raw = renderer.createTexture(MTLPixelFormatR32Float, width, height);
+    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
     renderer.textureWrite(raw, (uint16_t*)imgMmap.data(), 1, sizeof(uint16_t), MetalUtil::ImagePixelMax);
     
 //    // Reconstruct highlights
 //    {
 //        const simd::float3 badPixelFactors = {1.130, 1.613, 1.000};
 //        const simd::float3 goodPixelFactors = {1.051, 1.544, 1.195};
-//        Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, width, height);
+//        Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
 //        renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
 //            // Buffer args
 //            CFADesc,
@@ -187,7 +187,7 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //    }
     
     // LMMSE Debayer
-    Renderer::Txt rgb = renderer.createTexture(MTLPixelFormatRGBA32Float, width, height);
+    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, width, height);
     {
         DebayerLMMSE::Run(renderer, CFADesc, false, raw, rgb);
     }
@@ -238,9 +238,9 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     
     // Scale the image
     {
-        const size_t heightScaled = 256;
+        const size_t heightScaled = 216;
         const size_t widthScaled = (heightScaled*width)/height;
-        Renderer::Txt rgbScaled = renderer.createTexture(MTLPixelFormatRGBA32Float, widthScaled, heightScaled);
+        Renderer::Txt rgbScaled = renderer.textureCreate(MTLPixelFormatRGBA32Float, widthScaled, heightScaled);
         renderer.render("CFAViewer::Shader::ImagePipeline::Scale", rgbScaled,
             // Texture args
             rgb
@@ -249,7 +249,7 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     }
     
     // Final display render pass
-    Renderer::Txt rgba16 = renderer.createTexture(MTLPixelFormatRGBA16Float,
+    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
         [rgb width], [rgb height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     renderer.render("CFAViewer::Shader::ImagePipeline::Display", rgba16,
         // Texture args

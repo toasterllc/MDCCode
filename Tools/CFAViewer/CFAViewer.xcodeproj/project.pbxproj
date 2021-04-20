@@ -47,7 +47,7 @@
 		55460A3426049ED00037A5AC /* LocalContrast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55460A3526049F0C0037A5AC /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
 		55460A372604A6100037A5AC /* ImageLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageLayer.metal; sourceTree = "<group>"; };
-		55460A39260923360037A5AC /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
+		55460A39260923360037A5AC /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImagePipelineTypes.h; path = ../../FFCCEvaluateModel/ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };

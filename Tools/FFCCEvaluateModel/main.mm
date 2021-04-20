@@ -11,6 +11,9 @@
 #import "FFCCTrainedModel.h"
 #import "BitmapImage.h"
 #import "Debug.h"
+#import "Mmap.h"
+#import "EstimateIlluminantFFCC.h"
+#import "ImagePipelineTypes.h"
 using namespace CFAViewer;
 using namespace FFCC;
 namespace fs = std::filesystem;
@@ -315,15 +318,27 @@ static Mat<double,3,1> ffccEstimateIlluminant(
 }
 
 static void processImageFile(Renderer& renderer, const fs::path& path) {
-    BitmapImage<uint16_t> png(path);
-    assert(png.height == H);
-    assert(png.width == W);
+//    BitmapImage<uint16_t> png(path);
+//    assert(png.height == H);
+//    assert(png.width == W);
+//    
+//    // Create a texture and load it with the data from `img`
+//    Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, W, H);
+//    renderer.textureWrite(img, png.data, png.samplesPerPixel);
+//    
+//    const Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
     
-    // Create a texture and load it with the data from `img`
-    Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, W, H);
-    renderer.textureWrite(img, png.data, png.samplesPerPixel);
     
-    const Mat<double,3,1> illum = ffccEstimateIlluminant(FFCCTrainedModel::Model, renderer, img);
+    
+    using namespace CFAViewer::ImagePipeline;
+    const Mmap cfa(path);
+    // Create a texture from the raw CFA data
+    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, 2304, 1296);
+    renderer.textureWrite(raw, (uint16_t*)cfa.data(), 1, sizeof(uint16_t), MetalUtil::ImagePixelMax);
+    
+    const CFADesc cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green};
+    const Color<ColorSpace::Raw> illum = EstimateIlluminantFFCC::Run(renderer, cfaDesc, raw);
+    
     printf("{ \"%s\", { %f, %f, %f } },\n",
         path.filename().replace_extension().c_str(),
         illum[0], illum[1], illum[2]
@@ -341,6 +356,10 @@ static void processImageFile(Renderer& renderer, const fs::path& path) {
 
 static bool isPNGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".png";
+}
+
+static bool isCFAFile(const fs::path& path) {
+    return fs::is_regular_file(path) && path.extension() == ".cfa";
 }
 
 int main(int argc, const char* argv[]) {
@@ -369,18 +388,30 @@ int main(int argc, const char* argv[]) {
         const char* pathArg = argv[i];
         
         // Regular file
-        if (isPNGFile(pathArg)) {
+        if (isCFAFile(pathArg)) {
             processImageFile(renderer, pathArg);
         
         // Directory
         } else if (fs::is_directory(pathArg)) {
             for (const auto& f : fs::directory_iterator(pathArg)) {
-                if (isPNGFile(f)) {
+                if (isCFAFile(f)) {
                     processImageFile(renderer, f);
                 }
             }
         }
     }
+    
+//    using namespace CFAViewer::ImagePipeline;
+//    const Mmap cfa("/Users/dave/Desktop/Old/2021:4:3/CFAViewerSession-All-FilteredGood/outdoor_4pm_107.cfa");
+//    // Create a texture from the raw CFA data
+//    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, 2304, 1296);
+//    renderer.textureWrite(raw, (uint16_t*)cfa.data(), 1, sizeof(uint16_t), MetalUtil::ImagePixelMax);
+//    
+//    CFADesc cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green};
+//    EstimateIlluminantFFCC::Run(renderer, cfaDesc, raw);
+    
+    
+    
     
     return 0;
 }

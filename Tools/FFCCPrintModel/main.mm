@@ -52,15 +52,15 @@ int main(int argc, const char* argv[]) {
     load(mxGetField(matGetVariable(ModelFile, "model"), 0, "F_fft"), F_fft);
     load(mxGetField(matGetVariable(ModelFile, "model"), 0, "B"), B);
     
-    printf("const uint64_t F_fft0Vals[%ju] = ", (uintmax_t)F_fft[0].Count*(sizeof(F_fft[0][0])/sizeof(uint64_t)));
+    printf("static const uint64_t F_fft0Vals[%ju] = ", (uintmax_t)F_fft[0].Count*(sizeof(F_fft[0][0])/sizeof(uint64_t)));
     printMat(F_fft[0]);
     printf("\n\n");
     
-    printf("const uint64_t F_fft1Vals[%ju] = ", (uintmax_t)F_fft[1].Count*(sizeof(F_fft[1][0])/sizeof(uint64_t)));
+    printf("static const uint64_t F_fft1Vals[%ju] = ", (uintmax_t)F_fft[1].Count*(sizeof(F_fft[1][0])/sizeof(uint64_t)));
     printMat(F_fft[1]);
     printf("\n\n");
     
-    printf("const uint64_t BVals[%ju] = ", (uintmax_t)B.Count*(sizeof(B[0])/sizeof(uint64_t)));
+    printf("static const uint64_t BVals[%ju] = ", (uintmax_t)B.Count*(sizeof(B[0])/sizeof(uint64_t)));
     printMat(B);
     printf("\n\n");
     

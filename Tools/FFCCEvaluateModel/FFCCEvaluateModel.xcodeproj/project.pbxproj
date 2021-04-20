@@ -16,6 +16,7 @@
 		5595857F262008FD0008EC38 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5595857D262008FD0008EC38 /* Renderer.metal */; };
 		559585972620096D0008EC38 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559585962620096D0008EC38 /* Metal.framework */; };
 		5595859926200EDC0008EC38 /* FFCCEvaluateModel.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */; };
+		55B93E56262E442E00463F34 /* EstimateIlluminantFFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55B93E55262E442E00463F34 /* EstimateIlluminantFFCC.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -71,6 +72,11 @@
 		559585962620096D0008EC38 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FFCCEvaluateModel.metal; sourceTree = "<group>"; };
 		5595859A26200FCC0008EC38 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
+		55B93E53262E3F2300463F34 /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
+		55B93E54262E3F5E00463F34 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Color.h; path = ../Shared/Color.h; sourceTree = "<group>"; };
+		55B93E55262E442E00463F34 /* EstimateIlluminantFFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = EstimateIlluminantFFCC.metal; sourceTree = "<group>"; };
+		55B93E58262E49F200463F34 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImagePipelineTypes.h; path = ../CFAViewer/ImagePipeline/ImagePipelineTypes.h; sourceTree = "<group>"; };
+		55B93E59262E57B700463F34 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mmap.h; path = ../Shared/Mmap.h; sourceTree = "<group>"; };
 		55E74406262A71B600472115 /* BitmapImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BitmapImage.h; path = ../Shared/BitmapImage.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -100,13 +106,18 @@
 				5595857D262008FD0008EC38 /* Renderer.metal */,
 				555A1C8F2621CC8E0056C014 /* Mod.h */,
 				558C3602261D3CE90040241D /* Mat.h */,
+				55B93E59262E57B700463F34 /* Mmap.h */,
 				55E74406262A71B600472115 /* BitmapImage.h */,
 				5595859A26200FCC0008EC38 /* MetalUtil.h */,
+				55B93E58262E49F200463F34 /* ImagePipelineTypes.h */,
 				5595859826200EDC0008EC38 /* FFCCEvaluateModel.metal */,
 				555A1CB1262527C30056C014 /* FFCCTrainedModelVals.h */,
 				555A1CAA262413C70056C014 /* FFCCTrainedModel.h */,
 				555A1CA9262413860056C014 /* FFCC.h */,
+				55B93E53262E3F2300463F34 /* EstimateIlluminantFFCC.h */,
+				55B93E55262E442E00463F34 /* EstimateIlluminantFFCC.metal */,
 				555A1CAC262435C60056C014 /* Debug.h */,
+				55B93E54262E3F5E00463F34 /* Color.h */,
 				558C3600261D34DF0040241D /* main.mm */,
 				554B91B7261D349A00618ACA /* Products */,
 				558C3603261D468B0040241D /* Frameworks */,
@@ -231,6 +242,7 @@
 			files = (
 				558C3601261D34DF0040241D /* main.mm in Sources */,
 				5595859926200EDC0008EC38 /* FFCCEvaluateModel.metal in Sources */,
+				55B93E56262E442E00463F34 /* EstimateIlluminantFFCC.metal in Sources */,
 				5595857F262008FD0008EC38 /* Renderer.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -276,7 +288,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
