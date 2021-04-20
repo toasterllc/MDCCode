@@ -6,7 +6,7 @@
 
 namespace CFAViewer::ImagePipeline {
 
-class EstimateIlluminant {
+class EstimateIlluminantFFCC {
 public:
     static Color<ColorSpace::Raw> Run(Renderer& renderer, const CFADesc& cfaDesc, id<MTLTexture> raw) {
         return FFCC::EstimateIlluminant(_Model, renderer, cfaDesc, raw);

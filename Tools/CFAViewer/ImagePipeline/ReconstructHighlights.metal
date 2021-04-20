@@ -10,31 +10,6 @@ namespace CFAViewer {
 namespace Shader {
 namespace ReconstructHighlights {
 
-//fragment float4 DebayerDownsample(
-//    constant CFADesc& cfaDesc [[buffer(0)]],
-//    texture2d<float> raw [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const int2 pos(2*(int)in.pos.x, 2*(int)in.pos.y);
-//    const CFAColor c = cfaDesc.color(pos+int2{0,0});
-//    const CFAColor cn = cfaDesc.color(pos+int2{1,0});
-//    const float s00 = Sample::R(Sample::MirrorClamp, raw, pos+int2{0,0});
-//    const float s01 = Sample::R(Sample::MirrorClamp, raw, pos+int2{0,1});
-//    const float s10 = Sample::R(Sample::MirrorClamp, raw, pos+int2{1,0});
-//    const float s11 = Sample::R(Sample::MirrorClamp, raw, pos+int2{1,1});
-//    
-//    if (c == CFAColor::Red) {
-//        return float4(s00,(s01+s10)/2,s11,1);
-//    } else if (c==CFAColor::Green && cn==CFAColor::Red) {
-//        return float4(s10,(s00+s11)/2,s01,1);
-//    } else if (c==CFAColor::Green && cn==CFAColor::Blue) {
-//        return float4(s01,(s00+s11)/2,s10,1);
-//    } else if (c == CFAColor::Blue) {
-//        return float4(s11,(s01+s10)/2,s00,1);
-//    }
-//    return 0;
-//}
-
 fragment float2 CreateHighlightMap(
     constant float3& scale [[buffer(0)]],
     constant float& thresh [[buffer(1)]],

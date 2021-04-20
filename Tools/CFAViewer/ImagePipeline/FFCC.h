@@ -1,10 +1,8 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "ImagePipelineTypes.h"
-#import "MetalUtil.h"
-#import "Color.h"
+#import "Mat.h"
 #import "Renderer.h"
-#import "Mod.h"
+#import "ImagePipelineTypes.h"
 
 class FFCC {
 public:
