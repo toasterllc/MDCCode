@@ -9,7 +9,7 @@ using namespace CFAViewer::ImagePipeline;
 
 namespace CFAViewer {
 namespace Shader {
-namespace EstimateIlluminantFFCC {
+namespace FFCC {
 
 fragment float4 DebayerDownsample(
     constant CFADesc& cfaDesc [[buffer(0)]],

@@ -10,7 +10,7 @@
 #import "LocalContrast.h"
 #import "Saturation.h"
 #import "Mat.h"
-#import "EstimateIlluminantFFCC.h"
+#import "EstimateIlluminant.h"
 
 static simd::float3 simdForMat(const Mat<double,3,1>& m) {
     return {
@@ -76,7 +76,7 @@ void Pipeline::Run(
     
     } else {
         // Estimate illuminant
-        const Color<ColorSpace::Raw> illum = EstimateIlluminantFFCC::Run(renderer, img.cfaDesc, raw);
+        const Color<ColorSpace::Raw> illum = EstimateIlluminant::Run(renderer, img.cfaDesc, raw);
         
         // Reconstruct highlights
         if (opts.reconstructHighlights.en) {

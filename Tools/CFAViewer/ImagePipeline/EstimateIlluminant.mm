@@ -1,4 +1,24 @@
-static const inline uint64_t F_fft0Vals[8192] = {
+#import "EstimateIlluminant.h"
+using namespace CFAViewer::ImagePipeline;
+
+const FFCC::Model EstimateIlluminant::_Model = {
+    .params = {
+        .histogram = {
+            .binCount       = 64,           // params.HISTOGRAM.NUM_BINS
+            .binSize        = 1./32,        // params.HISTOGRAM.BIN_SIZE
+            .startingUV     = -0.531250,    // params.HISTOGRAM.STARTING_UV
+            .minIntensity   = 1./256,       // params.HISTOGRAM.MINIMUM_INTENSITY
+        },
+    },
+    
+    .F_fft = {
+        (std::complex<double>*)_F_fft0Vals,
+        (std::complex<double>*)_F_fft1Vals,
+    },
+    .B = (double*)_BVals,
+};
+
+const uint64_t EstimateIlluminant::_F_fft0Vals[] = {
     0xc0c5d6611d5e549a, 0x0000000000000000, 0x40f2149b20d9f037, 0xc0d634c9df637ea9,
     0x40d0bda4ca39ff95, 0xc0ccaccf2832fbed, 0xc08c9e0ec08d1622, 0x40b56aa5ab058524,
     0x40bcaa257695fc3b, 0x40d1a5ddddf07bcc, 0x40c0be87e27f2da4, 0x40d0b6ee40df9287,
@@ -2049,7 +2069,7 @@ static const inline uint64_t F_fft0Vals[8192] = {
     0x40e42c6d8fe2dc9b, 0x40e1530ca47dfae8, 0x40e01579a1b7c528, 0xc0a54a3baca1a4d9,
 };
 
-static const inline uint64_t F_fft1Vals[8192] = {
+const uint64_t EstimateIlluminant::_F_fft1Vals[] = {
     0xbee9f81e707a912e, 0x0000000000000000, 0x40f61eeb3f5077fb, 0x40b153c2d75239e4,
     0x40f0e5cd3f2ec252, 0x40e7b621f2e733b8, 0x40e7984839f45809, 0x40dce9b7035081f1,
     0x40e08e25eb94fb42, 0x40c152b92640f4d0, 0x40d84c6980556d3e, 0x40c7f4911897de42,
@@ -4100,7 +4120,7 @@ static const inline uint64_t F_fft1Vals[8192] = {
     0x40e08c38bc9ed148, 0x40a1734a5df626b7, 0x40ef98760d329e58, 0xc0e4e7da8f77aa37,
 };
 
-static const inline uint64_t BVals[4096] = {
+const uint64_t EstimateIlluminant::_BVals[] = {
     0x3fd712b6eec81c14, 0x3fd74b03f4d38575, 0x3fd774b8f58baab3, 0x3fd7857b35c14426,
     0x3fd76f3a4d22cfca, 0x3fd71ec5d4ba7bde, 0x3fd679cd059605c5, 0x3fd55bfb27a00536,
     0x3fd392b8c642f4bc, 0x3fd0d6cb07a0102a, 0x3fc98505d192ac40, 0x3fbb2684b19d0d58,

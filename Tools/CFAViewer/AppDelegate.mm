@@ -325,13 +325,6 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
         
         .defringe = {
             .en = false,
-            .opts = {
-                .whiteBalanceFactors = {
-                    0.296587/0.203138,  // Red
-                    0.296587/0.296587,  // Green
-                    0.296587/0.161148,  // Blue
-                }
-            }
         },
     };
     
@@ -343,13 +336,6 @@ simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
 //        
 //        .defringe = {
 //            .en = true,
-//            .opts = {
-//                .whiteBalanceFactors = {
-//                    0.296587/0.203138,  // Red
-//                    0.296587/0.296587,  // Green
-//                    0.296587/0.161148,  // Blue
-//                }
-//            }
 //        },
 //        
 //        .reconstructHighlights = {
