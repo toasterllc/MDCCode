@@ -58,21 +58,21 @@ private:
     static Vec3 _runFFCC(const FFCCModel& model, Renderer& renderer, const CFADesc& cfaDesc, id<MTLTexture> raw) {
         const uint32_t w = 384;
         const uint32_t h = (uint32_t)((w*[raw height])/[raw width]);
-        Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-        renderer.render(ShaderNamespace "DebayerDownsample", rgb,
+        Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
+        renderer.render(ShaderNamespace "DebayerDownsample", img,
             cfaDesc,
             raw,
-            rgb
+            img
         );
         
         Renderer::Txt mask = renderer.textureCreate(MTLPixelFormatR8Unorm, w, h);
         renderer.render(ShaderNamespace "CreateMask", mask,
             // Texture args
-            rgb
+            img
         );
         
-        const Renderer::Txt maskedImg = _createMaskedImage(renderer, rgb, mask);
-        const Renderer::Txt absDevImg = _createAbsDevImage(renderer, rgb, mask);
+        const Renderer::Txt maskedImg = _createMaskedImage(renderer, img, mask);
+        const Renderer::Txt absDevImg = _createAbsDevImage(renderer, img, mask);
         
         const Mat64 X1 = _calcXFromImage(model, renderer, maskedImg, mask);
         const Mat64 X2 = _calcXFromImage(model, renderer, absDevImg, mask);
@@ -96,26 +96,26 @@ private:
         return _rgbForUV(uv);
     }
     
-    static Renderer::Txt _createMaskedImage(Renderer& renderer, id<MTLTexture> rgb, id<MTLTexture> mask) {
-        Renderer::Txt maskedImg = renderer.textureCreate(rgb);
+    static Renderer::Txt _createMaskedImage(Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+        Renderer::Txt maskedImg = renderer.textureCreate(img);
         renderer.render(ShaderNamespace "ApplyMask", maskedImg,
             // Texture args
-            rgb,
+            img,
             mask
         );
         
         return maskedImg;
     }
     
-    static Renderer::Txt _createAbsDevImage(Renderer& renderer, id<MTLTexture> rgb, id<MTLTexture> mask) {
-        Renderer::Txt coeff = renderer.textureCreate(MTLPixelFormatR32Float, [rgb width], [rgb height]);
+    static Renderer::Txt _createAbsDevImage(Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+        Renderer::Txt coeff = renderer.textureCreate(MTLPixelFormatR32Float, [img width], [img height]);
         renderer.render(ShaderNamespace "LocalAbsoluteDeviationCoeff", coeff,
             mask
         );
         
-        Renderer::Txt absDevImage = renderer.textureCreate(rgb);
+        Renderer::Txt absDevImage = renderer.textureCreate(img);
         renderer.render(ShaderNamespace "LocalAbsoluteDeviation", absDevImage,
-            rgb,
+            img,
             mask,
             coeff
         );
@@ -123,20 +123,20 @@ private:
         return absDevImage;
     }
     
-    static Mat64 _calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> rgb, id<MTLTexture> mask) {
-        const uint32_t w = (uint32_t)[rgb width];
-        const uint32_t h = (uint32_t)[rgb height];
+    static Mat64 _calcXFromImage(const FFCCModel& model, Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
+        const uint32_t w = (uint32_t)[img width];
+        const uint32_t h = (uint32_t)[img height];
         
         Renderer::Txt u = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         renderer.render(ShaderNamespace "CalcU", u,
             // Texture args
-            rgb
+            img
         );
         
         Renderer::Txt v = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         renderer.render(ShaderNamespace "CalcV", v,
             // Texture args
-            rgb
+            img
         );
         
         using ValidPixelCount = uint32_t;
@@ -150,7 +150,7 @@ private:
                 thresh,
                 validPixelCountBuf,
                 // Texture args
-                rgb,
+                img,
                 mask
             );
         }

@@ -10,11 +10,12 @@ namespace CFAViewer::ImagePipeline {
             const size_t w = [raw width];
             const size_t h = [raw height];
             Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w/2, h/2);
-            renderer.render("CFAViewer::Shader::ReconstructHighlights::DebayerDownsample", rgb,
+            renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgb,
                 // Buffer args
                 cfaDesc,
                 // Texture args
-                raw
+                raw,
+                rgb
             );
             
             // `Scale` balances the raw colors from the sensor for the purpose

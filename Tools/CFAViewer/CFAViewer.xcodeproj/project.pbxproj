@@ -47,7 +47,6 @@
 		55460A3426049ED00037A5AC /* LocalContrast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55460A3526049F0C0037A5AC /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
 		55460A372604A6100037A5AC /* ImageLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageLayer.metal; sourceTree = "<group>"; };
-		55460A39260923360037A5AC /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImagePipelineTypes.h; path = ../../FFCCEvaluateModel/ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
@@ -70,6 +69,7 @@
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		559D8E1125954F7E00836B47 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		559D8E122598300700836B47 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
+		55B93E5A262E72A600463F34 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55B9745924C504E2000B2633 /* CFAViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CFAViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55B9745D24C504E2000B2633 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55B9745F24C504E2000B2633 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -125,7 +125,7 @@
 		554609FC2602C0940037A5AC /* ImagePipeline */ = {
 			isa = PBXGroup;
 			children = (
-				55460A39260923360037A5AC /* ImagePipelineTypes.h */,
+				55B93E5A262E72A600463F34 /* ImagePipelineTypes.h */,
 				554609FF2603032A0037A5AC /* ImagePipeline.h */,
 				55E74408262BC9A600472115 /* ReconstructHighlights.h */,
 				55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */,

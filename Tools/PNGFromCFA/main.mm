@@ -186,11 +186,20 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        );
 //    }
     
-    // LMMSE Debayer
-    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, width, height);
-    {
-        DebayerLMMSE::Run(renderer, CFADesc, false, raw, rgb);
-    }
+    const uint32_t scaledWidth = 384;
+    const uint32_t scaledHeight = (uint32_t)((scaledWidth*[raw height])/[raw width]);
+    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, scaledWidth, scaledHeight);
+    renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgb,
+        CFADesc,
+        raw,
+        rgb
+    );
+    
+//    // LMMSE Debayer
+//    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, width, height);
+//    {
+//        DebayerLMMSE::Run(renderer, CFADesc, false, raw, rgb);
+//    }
     
 //    // Camera raw -> ProPhotoRGB
 //    {
@@ -236,17 +245,17 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        );
 //    }
     
-    // Scale the image
-    {
-        const size_t heightScaled = 216;
-        const size_t widthScaled = (heightScaled*width)/height;
-        Renderer::Txt rgbScaled = renderer.textureCreate(MTLPixelFormatRGBA32Float, widthScaled, heightScaled);
-        renderer.render("CFAViewer::Shader::ImagePipeline::Scale", rgbScaled,
-            // Texture args
-            rgb
-        );
-        rgb = std::move(rgbScaled);
-    }
+//    // Scale the image
+//    {
+//        const size_t heightScaled = 216;
+//        const size_t widthScaled = (heightScaled*width)/height;
+//        Renderer::Txt rgbScaled = renderer.textureCreate(MTLPixelFormatRGBA32Float, widthScaled, heightScaled);
+//        renderer.render("CFAViewer::Shader::ImagePipeline::Scale", rgbScaled,
+//            // Texture args
+//            rgb
+//        );
+//        rgb = std::move(rgbScaled);
+//    }
     
     // Final display render pass
     Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
@@ -269,7 +278,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
-    const char* args[] = {"", "/Users/dave/Desktop/Old/2021:4:3/CFAViewerSession-All-FilteredGood"};
+    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-384x216"};
     argc = std::size(args);
     argv = args;
     
