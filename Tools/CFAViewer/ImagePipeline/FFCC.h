@@ -26,7 +26,7 @@ public:
         Mat64 B;
     };
     
-    static Vec3 EstimateIlluminant(
+    static Vec3 Run(
         const Model& model,
         CFAViewer::Renderer& renderer,
         const CFAViewer::ImagePipeline::CFADesc& cfaDesc,

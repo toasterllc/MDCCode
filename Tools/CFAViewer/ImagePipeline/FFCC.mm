@@ -212,7 +212,7 @@ static Vec3 _rgbForUV(const Vec2& uv) {
     return rgb;
 }
 
-FFCC::Vec3 FFCC::EstimateIlluminant(
+FFCC::Vec3 FFCC::Run(
     const FFCC::Model& model,
     Renderer& renderer,
     const CFADesc& cfaDesc,
