@@ -46,6 +46,7 @@ fragment float CreateMask(
 ) {
     const int2 pos = int2(in.pos.xy);
     const float3 s = Sample::RGB(img, pos);
+    #warning we should mask out highlights too right?
     // If any of the pixels are 0, the mask is 0
     if (s.r==0 || s.g==0 || s.b==0) return 0;
     // Otherwise the mask is 1
@@ -97,17 +98,6 @@ fragment float4 LocalAbsoluteDeviation(
     const float k = Sample::R(coeff, pos);
     return float4(k*s, 1);
 }
-
-
-
-//fragment float4 Log(
-//    texture2d<float> img [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const int2 pos = int2(in.pos.xy);
-//    const float3 s = Sample::RGB(img, pos);
-//    return float4(log(s), 1);
-//}
 
 fragment float CalcU(
     texture2d<float> txt [[texture(0)]],

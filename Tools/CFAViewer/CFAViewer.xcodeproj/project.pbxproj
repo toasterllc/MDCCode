@@ -20,6 +20,7 @@
 		559C33D22613C111001903FD /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 559C33D02613C111001903FD /* Renderer.metal */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
+		55AE80C0262E7AF300BA227C /* EstimateIlluminantFFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80BD262E7AF000BA227C /* EstimateIlluminantFFCC.metal */; };
 		55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55B9745D24C504E2000B2633 /* AppDelegate.mm */; };
 		55B9746024C504E2000B2633 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55B9745F24C504E2000B2633 /* Assets.xcassets */; };
 		55B9746324C504E2000B2633 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55B9746124C504E2000B2633 /* MainMenu.xib */; };
@@ -69,6 +70,10 @@
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		559D8E1125954F7E00836B47 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		559D8E122598300700836B47 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
+		55AE80BD262E7AF000BA227C /* EstimateIlluminantFFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = EstimateIlluminantFFCC.metal; sourceTree = "<group>"; };
+		55AE80BE262E7AF100BA227C /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
+		55AE80BF262E7AF100BA227C /* EstimateIlluminantFFCCTrainedModelVals.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminantFFCCTrainedModelVals.h; sourceTree = "<group>"; };
+		55AE80C1262E7BBC00BA227C /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
 		55B93E5A262E72A600463F34 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55B9745924C504E2000B2633 /* CFAViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CFAViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55B9745D24C504E2000B2633 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -127,6 +132,9 @@
 			children = (
 				55B93E5A262E72A600463F34 /* ImagePipelineTypes.h */,
 				554609FF2603032A0037A5AC /* ImagePipeline.h */,
+				55AE80BF262E7AF100BA227C /* EstimateIlluminantFFCCTrainedModelVals.h */,
+				55AE80BE262E7AF100BA227C /* EstimateIlluminantFFCC.h */,
+				55AE80BD262E7AF000BA227C /* EstimateIlluminantFFCC.metal */,
 				55E74408262BC9A600472115 /* ReconstructHighlights.h */,
 				55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */,
 				55EBCC89258966FE0089A441 /* ImagePipeline.metal */,
@@ -153,6 +161,7 @@
 				55671A2C257E94BD00C1CDA4 /* MDCDevice.h */,
 				55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */,
 				55671A3A2580178100C1CDA4 /* MDCUtil.h */,
+				55AE80C1262E7BBC00BA227C /* Mod.h */,
 				55671A31257E94BD00C1CDA4 /* Mmap.h */,
 				55671A2B257E94BD00C1CDA4 /* TimeInstant.h */,
 				55671A2D257E94BD00C1CDA4 /* RuntimeError.h */,
@@ -317,6 +326,7 @@
 				55460A3B260AC5A00037A5AC /* ReconstructHighlights.metal in Sources */,
 				559C33D22613C111001903FD /* Renderer.metal in Sources */,
 				55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */,
+				55AE80C0262E7AF300BA227C /* EstimateIlluminantFFCC.metal in Sources */,
 				55460A02260326180037A5AC /* ImagePipeline.metal in Sources */,
 				55460A3326047ED60037A5AC /* Saturation.metal in Sources */,
 				55460A3626049F0C0037A5AC /* LocalContrast.metal in Sources */,
@@ -401,7 +411,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MTL_HEADER_SEARCH_PATHS = "../../Code/Shared . ./ImagePipeline";
+				MTL_HEADER_SEARCH_PATHS = "../../Code/Shared . ./ImagePipeline ../Shared";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dave.CFAViewer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

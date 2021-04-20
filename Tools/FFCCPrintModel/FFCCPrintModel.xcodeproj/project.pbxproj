@@ -33,7 +33,6 @@
 		554B91B6261D349A00618ACA /* FFCCPrintModel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FFCCPrintModel; sourceTree = BUILT_PRODUCTS_DIR; };
 		555A1C8F2621CC8E0056C014 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mod.h; path = ../Shared/Mod.h; sourceTree = "<group>"; };
 		555A1CAF2624F6100056C014 /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Debug.h; path = ../FFCCEvaluateModel/Debug.h; sourceTree = "<group>"; };
-		555A1CB02624FA640056C014 /* FFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FFCC.h; path = ../FFCCEvaluateModel/FFCC.h; sourceTree = "<group>"; };
 		558C3600261D34DF0040241D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		558C3602261D3CE90040241D /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
 		558C3604261D468B0040241D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -97,7 +96,6 @@
 				558C3602261D3CE90040241D /* Mat.h */,
 				5595859A26200FCC0008EC38 /* MetalUtil.h */,
 				555A1CAF2624F6100056C014 /* Debug.h */,
-				555A1CB02624FA640056C014 /* FFCC.h */,
 				558C3600261D34DF0040241D /* main.mm */,
 				554B91B7261D349A00618ACA /* Products */,
 				558C3603261D468B0040241D /* Frameworks */,

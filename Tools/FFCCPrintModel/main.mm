@@ -1,12 +1,13 @@
 #import <Cocoa/Cocoa.h>
 #import "Debug.h"
-#import "FFCC.h"
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
 using namespace CFAViewer;
-using namespace FFCC;
 namespace fs = std::filesystem;
 
-void printMat(const FFCC::Mat64& m) {
+using Mat64 = Mat<double,64,64>;
+using Mat64c = Mat<std::complex<double>,64,64>;
+
+void printMat(const Mat64& m) {
     uint32_t i = 0;
     printf("{\n");
     for (auto x : m) {
@@ -24,7 +25,7 @@ void printMat(const FFCC::Mat64& m) {
     printf("};");
 }
 
-void printMat(const FFCC::Mat64c& m) {
+void printMat(const Mat64c& m) {
     uint32_t i = 0;
     printf("{\n");
     for (auto x : m) {
@@ -46,21 +47,21 @@ void printMat(const FFCC::Mat64c& m) {
 int main(int argc, const char* argv[]) {
     MATFile* ModelFile = matOpen("/Users/dave/repos/ffcc/models/AR0330.mat", "r");
     
-    FFCC::Mat64c F_fft[2];
-    FFCC::Mat64 B;
+    Mat64c F_fft[2];
+    Mat64 B;
     
     load(mxGetField(matGetVariable(ModelFile, "model"), 0, "F_fft"), F_fft);
     load(mxGetField(matGetVariable(ModelFile, "model"), 0, "B"), B);
     
-    printf("static const uint64_t F_fft0Vals[%ju] = ", (uintmax_t)F_fft[0].Count*(sizeof(F_fft[0][0])/sizeof(uint64_t)));
+    printf("static const inline uint64_t F_fft0Vals[%ju] = ", (uintmax_t)F_fft[0].Count*(sizeof(F_fft[0][0])/sizeof(uint64_t)));
     printMat(F_fft[0]);
     printf("\n\n");
     
-    printf("static const uint64_t F_fft1Vals[%ju] = ", (uintmax_t)F_fft[1].Count*(sizeof(F_fft[1][0])/sizeof(uint64_t)));
+    printf("static const inline uint64_t F_fft1Vals[%ju] = ", (uintmax_t)F_fft[1].Count*(sizeof(F_fft[1][0])/sizeof(uint64_t)));
     printMat(F_fft[1]);
     printf("\n\n");
     
-    printf("static const uint64_t BVals[%ju] = ", (uintmax_t)B.Count*(sizeof(B[0])/sizeof(uint64_t)));
+    printf("static const inline uint64_t BVals[%ju] = ", (uintmax_t)B.Count*(sizeof(B[0])/sizeof(uint64_t)));
     printMat(B);
     printf("\n\n");
     

@@ -37,7 +37,7 @@ private:
         Mat64 B;
     };
     
-    #include "FFCCTrainedModelVals.h"
+    #include "EstimateIlluminantFFCCTrainedModelVals.h"
     
     static const inline FFCCModel _Model = {
         .params = {
@@ -280,7 +280,6 @@ private:
         const double x1 = P1.elmMul(cosAngles).sumCols()[0];
         const double y2 = P2.elmMul(sinAngles).sumCols()[0];
         const double x2 = P2.elmMul(cosAngles).sumCols()[0];
-        
         const double mu1 = Mod(std::atan2(y1,x1), 2*M_PI) / angleStep;
         const double mu2 = Mod(std::atan2(y2,x2), 2*M_PI) / angleStep;
         return {mu1, mu2}; // 0-indexed; note that the MATLAB version is 1-indexed!

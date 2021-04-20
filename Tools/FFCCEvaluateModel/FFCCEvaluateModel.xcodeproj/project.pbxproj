@@ -34,7 +34,7 @@
 		554B91B6261D349A00618ACA /* FFCCEvaluateModel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FFCCEvaluateModel; sourceTree = BUILT_PRODUCTS_DIR; };
 		555A1C8F2621CC8E0056C014 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mod.h; path = ../Shared/Mod.h; sourceTree = "<group>"; };
 		555A1CAC262435C60056C014 /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
-		555A1CB1262527C30056C014 /* FFCCTrainedModelVals.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCCTrainedModelVals.h; sourceTree = "<group>"; };
+		555A1CB1262527C30056C014 /* EstimateIlluminantFFCCTrainedModelVals.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EstimateIlluminantFFCCTrainedModelVals.h; path = ../CFAViewer/ImagePipeline/EstimateIlluminantFFCCTrainedModelVals.h; sourceTree = "<group>"; };
 		558C3600261D34DF0040241D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		558C3602261D3CE90040241D /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
 		558C3604261D468B0040241D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -68,9 +68,9 @@
 		559585952620094B0008EC38 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		559585962620096D0008EC38 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		5595859A26200FCC0008EC38 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
-		55B93E53262E3F2300463F34 /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
+		55B93E53262E3F2300463F34 /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EstimateIlluminantFFCC.h; path = ../CFAViewer/ImagePipeline/EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
 		55B93E54262E3F5E00463F34 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Color.h; path = ../Shared/Color.h; sourceTree = "<group>"; };
-		55B93E55262E442E00463F34 /* EstimateIlluminantFFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = EstimateIlluminantFFCC.metal; sourceTree = "<group>"; };
+		55B93E55262E442E00463F34 /* EstimateIlluminantFFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = EstimateIlluminantFFCC.metal; path = ../CFAViewer/ImagePipeline/EstimateIlluminantFFCC.metal; sourceTree = "<group>"; };
 		55B93E58262E49F200463F34 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImagePipelineTypes.h; path = ../CFAViewer/ImagePipeline/ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55B93E59262E57B700463F34 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mmap.h; path = ../Shared/Mmap.h; sourceTree = "<group>"; };
 		55E74406262A71B600472115 /* BitmapImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BitmapImage.h; path = ../Shared/BitmapImage.h; sourceTree = "<group>"; };
@@ -107,7 +107,7 @@
 				55B93E54262E3F5E00463F34 /* Color.h */,
 				5595859A26200FCC0008EC38 /* MetalUtil.h */,
 				55B93E58262E49F200463F34 /* ImagePipelineTypes.h */,
-				555A1CB1262527C30056C014 /* FFCCTrainedModelVals.h */,
+				555A1CB1262527C30056C014 /* EstimateIlluminantFFCCTrainedModelVals.h */,
 				55B93E53262E3F2300463F34 /* EstimateIlluminantFFCC.h */,
 				55B93E55262E442E00463F34 /* EstimateIlluminantFFCC.metal */,
 				555A1CAC262435C60056C014 /* Debug.h */,

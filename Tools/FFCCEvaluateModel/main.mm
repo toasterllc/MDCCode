@@ -67,7 +67,8 @@ int main(int argc, const char* argv[]) {
     
 //    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png"};
 //    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330"};
-    const char* args[] = {"", "/Users/dave/Desktop/Old/2021:4:3/CFAViewerSession-All-FilteredGood"};
+//    const char* args[] = {"", "/Users/dave/Desktop/Old/2021:4:3/CFAViewerSession-All-FilteredGood"};
+    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-384x216"};
     argc = std::size(args);
     argv = args;
     

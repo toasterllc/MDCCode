@@ -8,6 +8,7 @@
 #import "LocalContrast.h"
 #import "Saturation.h"
 #import "Mat.h"
+#import "EstimateIlluminantFFCC.h"
 
 namespace CFAViewer::ImagePipeline {
 
@@ -112,10 +113,13 @@ public:
             );
         
         } else {
+            // Estimate illuminant
+            const Color<ColorSpace::Raw> illum = EstimateIlluminantFFCC::Run(renderer, img.cfaDesc, raw);
+            
             // Reconstruct highlights
             if (opts.reconstructHighlights.en) {
-                const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
-                ReconstructHighlights::Run(renderer, img.cfaDesc, illum, raw);
+//                const Mat<double,3,1> illum(1/opts.whiteBalance[0], 1/opts.whiteBalance[1], 1/opts.whiteBalance[2]);
+                ReconstructHighlights::Run(renderer, img.cfaDesc, illum.m, raw);
             }
             
             // Sample: fill `sampleOpts.xyzD50`
@@ -133,11 +137,14 @@ public:
             
             // White balance
             {
-                const simd::float3 whiteBalance = _simdFromMat(opts.whiteBalance);
+                const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+                const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+                const simd::float3 simdWB = _simdFromMat(wb);
+//                const simd::float3 whiteBalance = _simdFromMat(opts.whiteBalance);
                 renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
                     // Buffer args
                     img.cfaDesc,
-                    whiteBalance,
+                    simdWB,
                     // Texture args
                     raw
                 );
