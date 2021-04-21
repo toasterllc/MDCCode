@@ -229,6 +229,43 @@ struct PixConfig {
     return true;
 }
 
+static std::vector<std::string> split(const std::string& str, char delim) {
+    std::stringstream ss(str);
+    std::string part;
+    std::vector<std::string> parts;
+    while (std::getline(ss, part, delim)) {
+        parts.push_back(part);
+    }
+    return parts;
+}
+
+static bool less(const fs::path& a, const fs::path& b) {
+    const std::string aFilename = a.filename().replace_extension().string();
+    const std::string bFilename = b.filename().replace_extension().string();
+    const std::vector<std::string> aParts = split(aFilename, '_');
+    const std::vector<std::string> bParts = split(bFilename, '_');
+    
+    for (int i=0; i<(int)std::min(aParts.size(), bParts.size())-1; i++) {
+        const std::string& aPart = aParts[i];
+        const std::string& bPart = bParts[i];
+        if (aPart < bPart) return true;
+    }
+    
+    // If `aParts` and `bParts` have mismatched sizes, return a bool
+    // reflecting the smaller of them.
+    if (aParts.size() != bParts.size()) {
+        return (aParts.size() < bParts.size() ? true : false);
+    }
+    
+    const std::string& aLast = aParts.back();
+    const std::string& bLast = bParts.back();
+    
+    const int aLastInt = std::stoi(aLast);
+    const int bLastInt = std::stoi(bLast);
+    
+    return aLastInt < bLastInt;
+}
+
 static bool isCFAFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".cfa";
 }
@@ -250,6 +287,8 @@ static bool isCFAFile(const fs::path& path) {
             }
         }
     }
+    
+    std::sort(_imagePaths.begin(), _imagePaths.end(), less);
     
     // Load the first image
     _imagePathIter = _imagePaths.begin();
