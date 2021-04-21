@@ -616,8 +616,6 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
     _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
     _sampleSRGB = _averageRGB(rect, sampleBufs.srgb);
     
-    NSLog(@"%d %d", rect.left, rect.top);
-    
     [_colorText_Raw setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
     [_colorText_XYZD50 setStringValue:
@@ -916,8 +914,7 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
     opts.localContrast.radius = [_localContrastRadiusSlider floatValue];
     
     [[_mainView imageLayer] setNeedsDisplay];
-    
-//    [self _updateInspectorUI];
+    [self _updateInspectorUI];
 }
 
 - (void)_updateInspectorUI {

@@ -230,6 +230,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 #pragma mark - Overrides
 
 static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) {
+    // The mouse appears to be offset by 1/2 a pixel, so adjust for that
     const CGPoint off = {
         -(1/(2*[win backingScaleFactor])),
         +(1/(2*[win backingScaleFactor]))
