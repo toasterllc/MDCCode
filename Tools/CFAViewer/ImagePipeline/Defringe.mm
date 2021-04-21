@@ -100,28 +100,6 @@ public:
     const TileAxis y;
 };
 
-template <typename T>
-class BufSampler {
-public:
-    BufSampler(size_t imageWidth, size_t imageHeight, id<MTLBuffer> buf) :
-    _imageWidth(imageWidth),
-    _imageHeight(imageHeight) {
-        _buf = (T*)[buf contents];
-    }
-    
-    T px(ssize_t x, ssize_t y) const {
-        x = std::clamp(x, (ssize_t)0, (ssize_t)_imageWidth-1);
-        y = std::clamp(y, (ssize_t)0, (ssize_t)_imageHeight-1);
-        const size_t idx = (y*_imageWidth)+x;
-        return _buf[idx];
-    }
-    
-private:
-    const size_t _imageWidth = 0;
-    const size_t _imageHeight = 0;
-    const T* _buf = nullptr;
-};
-
 struct TileShift {
     double x = 0;
     double y = 0;
@@ -142,8 +120,8 @@ static ColorDir<TileShift> _calcTileShift(
     const CFADesc& cfaDesc,
     const Defringe::Options& opts,
     const TileGrid& grid,
-    const BufSampler<float>& raw,
-    const BufSampler<float>& gInterp,
+    const PixelSampler<float>& raw,
+    const PixelSampler<float>& gInterp,
     uint32_t tx,
     uint32_t ty
 ) {
@@ -256,8 +234,8 @@ static ColorDir<Poly> _solveForPolys(Renderer& renderer,
     renderer.copy(gInterp, gInterpBuf);
     renderer.commitAndWait();
     
-    BufSampler<float> rawPx(w, h, rawBuf);
-    BufSampler<float> gInterpPx(w, h, gInterpBuf);
+    PixelSampler<float> rawPx(w, h, (float*)[rawBuf contents]);
+    PixelSampler<float> gInterpPx(w, h, (float*)[gInterpBuf contents]);
     
     TileGrid grid((uint32_t)w, (uint32_t)h, TileSize, TileOverlap);
     ColorDir<std::mutex> polyLocks;

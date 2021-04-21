@@ -750,7 +750,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         for (int ix=left; ix<right; ix++) {
             if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
                 const CFAColor c = img.cfaDesc.color(ix, iy);
-                vals[(int)c] += sampler.sample(ix, iy);
+                vals[(int)c] += sampler.px(ix, iy);
                 counts[(int)c]++;
             }
         }
