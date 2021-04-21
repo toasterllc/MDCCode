@@ -26,6 +26,7 @@
 #import "ImagePipelineTypes.h"
 #import "Color.h"
 #import "ImagePipelineManager.h"
+#import "PixelSampler.h"
 using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImagePipeline;
@@ -168,7 +169,7 @@ struct PixConfig {
 - (void)awakeFromNib {
     __weak auto weakSelf = self;
     
-    _colorCheckerCircleRadius = 10;
+    _colorCheckerCircleRadius = 5;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
     _imagePipelineManager = [ImagePipelineManager new];
@@ -737,146 +738,30 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
         [NSString stringWithFormat:@"%f %f %f", _sampleSRGB[0], _sampleSRGB[1], _sampleSRGB[2]]];
 }
 
-//  Row0    G1  R  G1  R
-//  Row1    B   G2 B   G2
-//  Row2    G1  R  G1  R
-//  Row3    B   G2 B   G2
-
-//static double px(ImageLayerTypes::Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
-//    int32_t xc = (int32_t)x + dx;
-//    int32_t yc = (int32_t)y + dy;
-//    xc = std::clamp(xc, (int32_t)0, (int32_t)img.width-1);
-//    yc = std::clamp(yc, (int32_t)0, (int32_t)img.height-1);
-//    return (double)img.pixels[(yc*img.width)+xc] / ImagePixelMax;
-//}
-//
-//static double sampleR(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
-//    if (y % 2) {
-//        // ROW = B G B G ...
-//        
-//        // Have G
-//        // Want R
-//        // Sample @ y-1, y+1
-//        if (x % 2) return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
-//        
-//        // Have B
-//        // Want R
-//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-//        else return .25*px(img, x, -1, y, -1) +
-//                    .25*px(img, x, -1, y, +1) +
-//                    .25*px(img, x, +1, y, -1) +
-//                    .25*px(img, x, +1, y, +1) ;
-//    
-//    } else {
-//        // ROW = G R G R ...
-//        
-//        // Have R
-//        // Want R
-//        // Sample @ this pixel
-//        if (x % 2) return px(img, x, 0, y, 0);
-//        
-//        // Have G
-//        // Want R
-//        // Sample @ x-1 and x+1
-//        else return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
-//    }
-//}
-//
-//static double sampleG(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
-////    return px(img, x, 0, y, 0);
-//    
-//    if (y % 2) {
-//        // ROW = B G B G ...
-//        
-//        // Have G
-//        // Want G
-//        // Sample @ this pixel
-//        if (x % 2) return px(img, x, 0, y, 0);
-//        
-//        // Have B
-//        // Want G
-//        // Sample @ x-1, x+1, y-1, y+1
-//        else return .25*px(img, x, -1, y, 0) +
-//                    .25*px(img, x, +1, y, 0) +
-//                    .25*px(img, x, 0, y, -1) +
-//                    .25*px(img, x, 0, y, +1) ;
-//    
-//    } else {
-//        // ROW = G R G R ...
-//        
-//        // Have R
-//        // Want G
-//        // Sample @ x-1, x+1, y-1, y+1
-//        if (x % 2) return   .25*px(img, x, -1, y, 0) +
-//                            .25*px(img, x, +1, y, 0) +
-//                            .25*px(img, x, 0, y, -1) +
-//                            .25*px(img, x, 0, y, +1) ;
-//        
-//        // Have G
-//        // Want G
-//        // Sample @ this pixel
-//        else return px(img, x, 0, y, 0);
-//    }
-//}
-//
-//static double sampleB(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
-////    return px(img, x, 0, y, 0);
-//    
-//    if (y % 2) {
-//        // ROW = B G B G ...
-//        
-//        // Have G
-//        // Want B
-//        // Sample @ x-1, x+1
-//        if (x % 2) return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
-//        
-//        // Have B
-//        // Want B
-//        // Sample @ this pixel
-//        else return px(img, x, 0, y, 0);
-//    
-//    } else {
-//        // ROW = G R G R ...
-//        
-//        // Have R
-//        // Want B
-//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-//        if (x % 2) return   .25*px(img, x, -1, y, -1) +
-//                            .25*px(img, x, -1, y, +1) +
-//                            .25*px(img, x, +1, y, -1) +
-//                            .25*px(img, x, +1, y, +1) ;
-//        
-//        // Have G
-//        // Want B
-//        // Sample @ y-1, y+1
-//        else return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
-//    }
-//}
-//
-//static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uint32_t x, uint32_t y, uint32_t radius) {
-//    uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
-//    uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
-//    uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
-//    uint32_t top = std::clamp((int32_t)y+(int32_t)radius, (int32_t)0, (int32_t)img.height-1)+1;
-//    
-//    Color<ColorSpace::Raw> c;
-//    uint32_t i = 0;
-//    for (uint32_t iy=bottom; iy<top; iy++) {
-//        for (uint32_t ix=left; ix<right; ix++) {
-//            if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
-//                c[0] += sampleR(img, ix, iy);
-//                c[1] += sampleG(img, ix, iy);
-//                c[2] += sampleB(img, ix, iy);
-//                i++;
-//            }
-//        }
-//    }
-//    
-//    c[0] /= i;
-//    c[1] /= i;
-//    c[2] /= i;
-//    return c;
-//}
+static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, int x, int y, int radius) {
+    const int left      = std::clamp(x-radius, 0, (int)img.width -1  )   ;
+    const int right     = std::clamp(x+radius, 0, (int)img.width -1  )+1 ;
+    const int bottom    = std::clamp(y-radius, 0, (int)img.height-1  )   ;
+    const int top       = std::clamp(y+radius, 0, (int)img.height-1  )+1 ;
+    const auto sampler = PixelSampler(img.width, img.height, img.pixels);
+    uint32_t vals[3] = {};
+    uint32_t counts[3] = {};
+    for (int iy=bottom; iy<top; iy++) {
+        for (int ix=left; ix<right; ix++) {
+            if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
+                const CFAColor c = img.cfaDesc.color(ix, iy);
+                vals[(int)c] += sampler.sample(ix, iy);
+                counts[(int)c]++;
+            }
+        }
+    }
+    
+    Color<ColorSpace::Raw> r;
+    for (size_t i=0; i<3; i++) {
+        if (counts[i]) r[i] = (double)vals[i] / (ImagePixelMax*counts[i]);
+    }
+    return r;
+}
 
 #pragma mark - UI
 
@@ -1188,49 +1073,47 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
 }
 
 - (void)_updateColorMatrix {
-//    auto points = [_mainView colorCheckerPositions];
-//    assert(points.size() == ColorChecker::Count);
-//    
-//    Mat<double,ColorChecker::Count,3> A; // Colors that we have
-//    {
-//        auto lock = std::unique_lock(_streamImages.lock);
-//        size_t y = 0;
-//        for (const CGPoint& p : points) {
-//            Color<ColorSpace::Raw> c = sampleImageCircle(_streamImages.img,
-//                round(p.x*_streamImages.img.width),
-//                round(p.y*_streamImages.img.height),
-//                _colorCheckerCircleRadius);
-//            A.at(y,0) = c[0];
-//            A.at(y,1) = c[1];
-//            A.at(y,2) = c[2];
-//            y++;
-//        }
-//    }
-//    
-//    Mat<double,ColorChecker::Count,3> b; // Colors that we want
-//    {
-//        size_t y = 0;
-//        for (const auto& c : ColorChecker::Colors) {
-//            
-//            const Color<ColorSpace::ProPhotoRGB> ppc(c);
-//            b.at(y,0) = ppc[0];
-//            b.at(y,1) = ppc[1];
-//            b.at(y,2) = ppc[2];
-//            
-////            // Convert the color from SRGB.D65 -> XYZ.D50
-////            const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
-////            b.at(y,0) = cxyz[0];
-////            b.at(y,1) = cxyz[1];
-////            b.at(y,2) = cxyz[2];
-//            
-//            y++;
-//        }
-//    }
-//    
-//    // Solve Ax=b for the color matrix
-//    _imgOpts.colorMatrix = A.solve(b).trans();
-//    [self _updateInspectorUI];
-//    [self _prefsSetColorCheckerPositions:points];
+    auto points = [_mainView colorCheckerPositions];
+    assert(points.size() == ColorChecker::Count);
+    
+    Mat<double,ColorChecker::Count,3> A; // Colors that we have
+    {
+        size_t y = 0;
+        for (const CGPoint& p : points) {
+            const Color<ColorSpace::Raw> c = sampleImageCircle(
+                _rawImage.img,
+                round(p.x*_rawImage.img.width),
+                round(p.y*_rawImage.img.height),
+                _colorCheckerCircleRadius
+            );
+            A.at(y,0) = c[0];
+            A.at(y,1) = c[1];
+            A.at(y,2) = c[2];
+            y++;
+        }
+    }
+    
+    Mat<double,ColorChecker::Count,3> b; // Colors that we want
+    {
+        size_t y = 0;
+        for (const auto& c : ColorChecker::Colors) {
+            
+            const Color<ColorSpace::ProPhotoRGB> ppc(c);
+            b.at(y,0) = ppc[0];
+            b.at(y,1) = ppc[1];
+            b.at(y,2) = ppc[2];
+            
+            y++;
+        }
+    }
+    
+    // Solve `Ax=b` for `x`, which is the color matrix
+    auto& opts = _imagePipelineManager->options;
+    opts.colorMatrix = A.solve(b).trans();
+    [self _updateInspectorUI];
+    [[_mainView imageLayer] setNeedsDisplay];
+    
+    [self _prefsSetColorCheckerPositions:points];
 }
 
 #pragma mark - Prefs

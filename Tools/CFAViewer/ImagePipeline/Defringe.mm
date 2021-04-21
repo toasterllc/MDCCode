@@ -4,6 +4,7 @@
 #import "Renderer.h"
 #import "Poly2D.h"
 #import "ImagePipelineTypes.h"
+#import "PixelSampler.h"
 #import "MetalUtil.h"
 using namespace CFAViewer;
 using namespace ImagePipeline;
