@@ -15,6 +15,10 @@
 		55958576261FCA180008EC38 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958575261FCA180008EC38 /* Cocoa.framework */; };
 		5595857F262008FD0008EC38 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5595857D262008FD0008EC38 /* Renderer.metal */; };
 		559585972620096D0008EC38 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559585962620096D0008EC38 /* Metal.framework */; };
+		55AE80D0262FCC5400BA227C /* EstimateIlluminantFFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80CE262FCC5400BA227C /* EstimateIlluminantFFCC.mm */; };
+		55AE80D4262FCC6900BA227C /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80D1262FCC6900BA227C /* FFCC.metal */; };
+		55AE80D5262FCC6900BA227C /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80D3262FCC6900BA227C /* FFCC.mm */; };
+		55AE80D7262FCC8D00BA227C /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80D6262FCC8D00BA227C /* ImagePipeline.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -66,6 +70,12 @@
 		559585952620094B0008EC38 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		559585962620096D0008EC38 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		5595859A26200FCC0008EC38 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
+		55AE80CE262FCC5400BA227C /* EstimateIlluminantFFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = EstimateIlluminantFFCC.mm; path = ../CFAViewer/ImagePipeline/EstimateIlluminantFFCC.mm; sourceTree = "<group>"; };
+		55AE80CF262FCC5400BA227C /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EstimateIlluminantFFCC.h; path = ../CFAViewer/ImagePipeline/EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
+		55AE80D1262FCC6900BA227C /* FFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = FFCC.metal; path = ../CFAViewer/ImagePipeline/FFCC.metal; sourceTree = "<group>"; };
+		55AE80D2262FCC6900BA227C /* FFCC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FFCC.h; path = ../CFAViewer/ImagePipeline/FFCC.h; sourceTree = "<group>"; };
+		55AE80D3262FCC6900BA227C /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = FFCC.mm; path = ../CFAViewer/ImagePipeline/FFCC.mm; sourceTree = "<group>"; };
+		55AE80D6262FCC8D00BA227C /* ImagePipeline.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = ImagePipeline.metal; path = ../CFAViewer/ImagePipeline/ImagePipeline.metal; sourceTree = "<group>"; };
 		55B93E54262E3F5E00463F34 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Color.h; path = ../Shared/Color.h; sourceTree = "<group>"; };
 		55B93E58262E49F200463F34 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImagePipelineTypes.h; path = ../CFAViewer/ImagePipeline/ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55B93E59262E57B700463F34 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mmap.h; path = ../Shared/Mmap.h; sourceTree = "<group>"; };
@@ -103,7 +113,13 @@
 				55B93E54262E3F5E00463F34 /* Color.h */,
 				5595859A26200FCC0008EC38 /* MetalUtil.h */,
 				55B93E58262E49F200463F34 /* ImagePipelineTypes.h */,
+				55AE80D6262FCC8D00BA227C /* ImagePipeline.metal */,
 				555A1CAC262435C60056C014 /* Debug.h */,
+				55AE80D2262FCC6900BA227C /* FFCC.h */,
+				55AE80D1262FCC6900BA227C /* FFCC.metal */,
+				55AE80D3262FCC6900BA227C /* FFCC.mm */,
+				55AE80CF262FCC5400BA227C /* EstimateIlluminantFFCC.h */,
+				55AE80CE262FCC5400BA227C /* EstimateIlluminantFFCC.mm */,
 				558C3600261D34DF0040241D /* main.mm */,
 				554B91B7261D349A00618ACA /* Products */,
 				558C3603261D468B0040241D /* Frameworks */,
@@ -226,6 +242,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55AE80D0262FCC5400BA227C /* EstimateIlluminantFFCC.mm in Sources */,
+				55AE80D5262FCC6900BA227C /* FFCC.mm in Sources */,
+				55AE80D4262FCC6900BA227C /* FFCC.metal in Sources */,
+				55AE80D7262FCC8D00BA227C /* ImagePipeline.metal in Sources */,
 				558C3601261D34DF0040241D /* main.mm in Sources */,
 				5595857F262008FD0008EC38 /* Renderer.metal in Sources */,
 			);

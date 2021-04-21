@@ -8,137 +8,115 @@
 #import "Util.h"
 #import "TimeInstant.h"
 #import "ImagePipeline.h"
+#import "ImagePipelineManager.h"
 using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImagePipeline;
 
 @implementation ImageLayer {
-    id<MTLDevice> _device;
-    id<MTLCommandQueue> _commandQueue;
-    id<MTLLibrary> _library;
+    ImagePipelineManager* _ipm;
     
-    struct {
-        std::mutex lock; // Protects this struct
-        Renderer renderer;
-        Pipeline::Image img;
-        Pipeline::Options opts;
-        Pipeline::SampleOptions sampleOpts;
-        ImageLayerDataChangedHandler dataChangedHandler = nil;
-    } _state;
-    
-    Histogram _inputHistogram __attribute__((aligned(4096)));
-    id<MTLBuffer> _inputHistogramBuf;
-    Histogram _outputHistogram __attribute__((aligned(4096)));
-    id<MTLBuffer> _outputHistogramBuf;
+//    Histogram _inputHistogram __attribute__((aligned(4096)));
+//    id<MTLBuffer> _inputHistogramBuf;
+//    Histogram _outputHistogram __attribute__((aligned(4096)));
+//    id<MTLBuffer> _outputHistogramBuf;
 }
 
 - (instancetype)init {
     if (!(self = [super init])) return nil;
-    
     [self setActions:LayerNullActions()];
-    
-    _device = MTLCreateSystemDefaultDevice();
-    Assert(_device, return nil);
-    [self setDevice:_device];
-    [self setPixelFormat:MTLPixelFormatBGRA8Unorm];
-    
-    _commandQueue = [_device newCommandQueue];
-    
-    _library = [_device newDefaultLibrary];
-    Assert(_library, return nil);
-    
-    auto lock = std::lock_guard(_state.lock);
-        _state.renderer = Renderer(_device, _library, _commandQueue);
-        _state.sampleOpts.raw = _state.renderer.bufferCreate(sizeof(simd::float3));
-        _state.sampleOpts.xyzD50 = _state.renderer.bufferCreate(sizeof(simd::float3));
-        _state.sampleOpts.srgb = _state.renderer.bufferCreate(sizeof(simd::float3));
-    
     return self;
 }
 
-
-- (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)img {
-    // If we don't have pixel data, ensure that our image has 0 pixels
-    NSParameterAssert(img.pixels || (img.width*img.height)==0);
-    
-    auto lock = std::lock_guard(_state.lock);
-    
-    const size_t pixelCount = img.width*img.height;
-    
-    // Reset image size in case something fails
-    _state.img.width = 0;
-    _state.img.height = 0;
-    _state.img.cfaDesc = img.cfaDesc;
-    
-    const size_t len = pixelCount*sizeof(ImagePixel);
-    if (len) {
-        if (!_state.img.pixels || [_state.img.pixels length]<len) {
-            _state.img.pixels = _state.renderer.bufferCreate(len);
-            Assert(_state.img.pixels, return);
-        }
-        
-        // Copy the pixel data into the Metal buffer
-        memcpy([_state.img.pixels contents], img.pixels, len);
-        
-        // Set the image size now that we have image data
-        _state.img.width = img.width;
-        _state.img.height = img.height;
-    
-    } else {
-        _state.img.pixels = Renderer::Buf();
-    }
-    
-    const CGFloat scale = [self contentsScale];
-    [self setBounds:{0, 0, _state.img.width/scale, _state.img.height/scale}];
-    [self setNeedsDisplay];
+- (void)setImagePipelineManager:(ImagePipelineManager*)ipm {
+    _ipm = ipm;
+    [self setDevice:_ipm->renderer.dev];
 }
 
+//- (void)setImage:(const CFAViewer::ImageLayerTypes::Image&)img {
+//    // If we don't have pixel data, ensure that our image has 0 pixels
+//    NSParameterAssert(img.pixels || (img.width*img.height)==0);
+//    
+//    auto lock = std::lock_guard(_state.lock);
+//    
+//    const size_t pixelCount = img.width*img.height;
+//    
+//    // Reset image size in case something fails
+//    _state.img.width = 0;
+//    _state.img.height = 0;
+//    _state.img.cfaDesc = img.cfaDesc;
+//    
+//    const size_t len = pixelCount*sizeof(ImagePixel);
+//    if (len) {
+//        if (!_state.img.pixels || [_state.img.pixels length]<len) {
+//            _state.img.pixels = _state.renderer.bufferCreate(len);
+//            Assert(_state.img.pixels, return);
+//        }
+//        
+//        // Copy the pixel data into the Metal buffer
+//        memcpy([_state.img.pixels contents], img.pixels, len);
+//        
+//        // Set the image size now that we have image data
+//        _state.img.width = img.width;
+//        _state.img.height = img.height;
+//    
+//    } else {
+//        _state.img.pixels = Renderer::Buf();
+//    }
+//    
+//    const CGFloat scale = [self contentsScale];
+//    [self setBounds:{0, 0, _state.img.width/scale, _state.img.height/scale}];
+//    [self setNeedsDisplay];
+//}
+//
+//
+//- (void)setOptions:(const CFAViewer::ImageLayerTypes::Options&)opts {
+//    auto lock = std::lock_guard(_state.lock);
+//    _state.opts = opts;
+//    [self setNeedsDisplay];
+//}
 
-- (void)setOptions:(const CFAViewer::ImageLayerTypes::Options&)opts {
-    auto lock = std::lock_guard(_state.lock);
-    _state.opts = opts;
-    [self setNeedsDisplay];
-}
+//- (MetalUtil::Histogram)inputHistogram {
+//    return _inputHistogram;
+//}
+//
+//- (MetalUtil::Histogram)outputHistogram {
+//    return _outputHistogram;
+//}
 
-- (MetalUtil::Histogram)inputHistogram {
-    return _inputHistogram;
-}
-
-- (MetalUtil::Histogram)outputHistogram {
-    return _outputHistogram;
-}
-
-// Lock must be held
-- (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
-    ImagePipeline::Pipeline::Run(_state.renderer, _state.img,
-        _state.opts, _state.sampleOpts, outTxt);
-    
-    // If outTxt isn't framebuffer-only, then do a blit-sync, which is
-    // apparently required for [outTxt getBytes:] to work, which
-    // -CGImage uses.
-    if (![outTxt isFramebufferOnly]) {
-        _state.renderer.sync(outTxt);
-    }
-    
-    if (drawable) _state.renderer.present(drawable);
-    // Wait for the render to complete, since the lock needs to be
-    // held because the shader accesses _state
-    _state.renderer.commitAndWait();
-    
-    // Notify that our histogram changed
-    auto dataChangedHandler = _state.dataChangedHandler;
-    if (dataChangedHandler) {
-        dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
-            dataChangedHandler(self);
-        });
-    }
-}
+//// Lock must be held
+//- (void)_displayToTexture:(id<MTLTexture>)outTxt drawable:(id<CAMetalDrawable>)drawable {
+//    ImagePipeline::Pipeline::Run(_state.renderer, _state.img,
+//        _state.opts, _state.sampleOpts, outTxt);
+//    
+//    // If outTxt isn't framebuffer-only, then do a blit-sync, which is
+//    // apparently required for [outTxt getBytes:] to work, which
+//    // -CGImage uses.
+//    if (![outTxt isFramebufferOnly]) {
+//        _state.renderer.sync(outTxt);
+//    }
+//    
+//    if (drawable) _state.renderer.present(drawable);
+//    // Wait for the render to complete, since the lock needs to be
+//    // held because the shader accesses _state
+//    _state.renderer.commitAndWait();
+//    
+//    // Notify that our histogram changed
+//    auto dataChangedHandler = _state.dataChangedHandler;
+//    if (dataChangedHandler) {
+//        dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+//            dataChangedHandler(self);
+//        });
+//    }
+//}
 
 - (void)display {
-    auto lock = std::lock_guard(_state.lock);
+    if (!_ipm) return;
+    
+//    [self setBackgroundColor:[[NSColor blueColor] CGColor]];
     
     // Update our drawable size using our view size (in pixels)
-    [self setDrawableSize:{(CGFloat)_state.img.width, (CGFloat)_state.img.height}];
+    [self setDrawableSize:{(CGFloat)_ipm->rawImage.width, (CGFloat)_ipm->rawImage.height}];
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
@@ -147,32 +125,44 @@ using namespace ImagePipeline;
     Assert(txt, return);
     
     TimeInstant start;
-    [self _displayToTexture:txt drawable:drawable];
+    
+    [_ipm render];
+    _ipm->renderer.copy(_ipm->result.txt, txt);
+//    _ipm->renderer.debugShowTexture(_ipm->result.txt);
+    _ipm->renderer.present(drawable);
+    _ipm->renderer.commit();
+    
     printf("Display took %f\n", start.durationMs()/1000.);
+    
+//    if (drawable) _state.renderer.present(drawable);
+//    // Wait for the render to complete, since the lock needs to be
+//    // held because the shader accesses _state
+//    _state.renderer.commitAndWait();
+    
 }
 
-- (id)CGImage {
-    auto lock = std::lock_guard(_state.lock);
-    Renderer::Txt txt = _state.renderer.textureCreate(MTLPixelFormatRGBA16Float,
-        _state.img.width, _state.img.height,
-        MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
-    [self _displayToTexture:txt drawable:nil];
-    const size_t w = [txt width];
-    const size_t h = [txt height];
-    const size_t componentsPerPixel = 4;
-    const size_t bytesPerComponent = 2;
-    const size_t bytesPerRow = componentsPerPixel*bytesPerComponent*w;
-    
-    const uint32_t opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Little;
-    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, bytesPerComponent*8, bytesPerRow,
-        SRGBColorSpace(), opts));
-    Assert(ctx, return nil);
-    
-    uint8_t* data = (uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
-    [txt getBytes:data bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0];
-    
-    return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
-}
+//- (id)CGImage {
+//    auto lock = std::lock_guard(_state.lock);
+//    Renderer::Txt txt = _state.renderer.textureCreate(MTLPixelFormatRGBA16Float,
+//        _state.img.width, _state.img.height,
+//        MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+//    [self _displayToTexture:txt drawable:nil];
+//    const size_t w = [txt width];
+//    const size_t h = [txt height];
+//    const size_t componentsPerPixel = 4;
+//    const size_t bytesPerComponent = 2;
+//    const size_t bytesPerRow = componentsPerPixel*bytesPerComponent*w;
+//    
+//    const uint32_t opts = kCGImageAlphaNoneSkipLast|kCGBitmapFloatComponents|kCGBitmapByteOrder16Little;
+//    id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, bytesPerComponent*8, bytesPerRow,
+//        SRGBColorSpace(), opts));
+//    Assert(ctx, return nil);
+//    
+//    uint8_t* data = (uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
+//    [txt getBytes:data bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0];
+//    
+//    return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
+//}
 
 - (void)setContentsScale:(CGFloat)scale {
     [super setContentsScale:scale];
@@ -181,6 +171,11 @@ using namespace ImagePipeline;
 
 - (void)setNeedsDisplay {
     if ([NSThread isMainThread]) {
+        // Update our bounds
+        if (_ipm) {
+            const CGFloat scale = [self contentsScale];
+            [self setBounds:{0, 0, _ipm->rawImage.width/scale, _ipm->rawImage.height/scale}];
+        }
         [super setNeedsDisplay];
     
     } else {
@@ -195,110 +190,142 @@ using namespace ImagePipeline;
     }
 }
 
-- (void)setSampleRect:(CGRect)rect {
-    auto lock = std::lock_guard(_state.lock);
-    auto& img = _state.img;
-    auto& sampleOpts = _state.sampleOpts;
-    auto& sampleRect = sampleOpts.rect;
-    
-    rect.origin.x *= img.width;
-    rect.origin.y *= img.height;
-    rect.size.width *= img.width;
-    rect.size.height *= img.height;
-    sampleRect = {
-        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)img.width),
-        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)img.width),
-        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)img.height),
-        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)img.height),
-    };
-    
-    if (sampleRect.left == sampleRect.right) sampleRect.right++;
-    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
-    
-    sampleOpts.raw =
-        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
-    
-    sampleOpts.xyzD50 =
-        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
-    
-    sampleOpts.srgb =
-        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
-    
-    [self setNeedsDisplay];
-}
-
-- (void)setDataChangedHandler:(ImageLayerDataChangedHandler)handler {
-    auto lock = std::lock_guard(_state.lock);
-    _state.dataChangedHandler = handler;
-}
-
-template <typename T>
-std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
-    auto p = std::make_unique<T[]>([buf length]/sizeof(T));
-    memcpy(p.get(), [buf contents], [buf length]);
-    return p;
-}
-
-- (Color<ColorSpace::Raw>)sampleRaw {
-    // Copy _state.sampleOpts.raw locally
-    auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.raw);
-        auto rect = _state.sampleOpts.rect;
-    lock.unlock();
-    
-    size_t i = 0;
-    simd::double3 c = {};
-    simd::uint3 count = {};
-    for (size_t y=rect.top; y<rect.bottom; y++) {
-        for (size_t x=rect.left; x<rect.right; x++, i++) {
-            const bool r = (!(y%2) && (x%2));
-            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
-            const bool b = ((y%2) && !(x%2));
-            const simd::float3& val = vals[i];
-            if (r) count[0]++;
-            if (g) count[1]++;
-            if (b) count[2]++;
-            c += {(double)val[0], (double)val[1], (double)val[2]};
-        }
-    }
-    if (count[0]) c[0] /= count[0];
-    if (count[1]) c[1] /= count[1];
-    if (count[2]) c[2] /= count[2];
-    return {(float)c[0], (float)c[1], (float)c[2]};
-}
-
-- (Color<ColorSpace::XYZD50>)sampleXYZD50 {
-    // Copy _state.sampleOpts.raw locally
-    auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
-        auto rect = _state.sampleOpts.rect;
-    lock.unlock();
-    
-    size_t i = 0;
-    simd::double3 c = {};
-    simd::uint3 count = {};
-    for (size_t y=rect.top; y<rect.bottom; y++) {
-        for (size_t x=rect.left; x<rect.right; x++, i++) {
-            const bool r = (!(y%2) && (x%2));
-            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
-            const bool b = ((y%2) && !(x%2));
-            const simd::float3& val = vals[i];
-            if (r) count[0]++;
-            if (g) count[1]++;
-            if (b) count[2]++;
-            c += {(double)val[0], (double)val[1], (double)val[2]};
-        }
-    }
-    if (count[0]) c[0] /= count[0];
-    if (count[1]) c[1] /= count[1];
-    if (count[2]) c[2] /= count[2];
-    return {(float)c[0], (float)c[1], (float)c[2]};
-}
-
+//- (void)setSampleRect:(CGRect)rect {
+//    auto lock = std::lock_guard(_state.lock);
+//    auto& img = _state.img;
+//    auto& sampleOpts = _state.sampleOpts;
+//    auto& sampleRect = sampleOpts.rect;
+//    
+//    rect.origin.x *= img.width;
+//    rect.origin.y *= img.height;
+//    rect.size.width *= img.width;
+//    rect.size.height *= img.height;
+//    sampleRect = {
+//        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)img.width),
+//        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)img.width),
+//        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)img.height),
+//        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)img.height),
+//    };
+//    
+//    if (sampleRect.left == sampleRect.right) sampleRect.right++;
+//    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
+//    
+//    sampleOpts.raw =
+//        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+//    
+//    sampleOpts.xyzD50 =
+//        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+//    
+//    sampleOpts.srgb =
+//        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+//    
+//    [self setNeedsDisplay];
+//}
+//
+//- (void)setDataChangedHandler:(ImageLayerDataChangedHandler)handler {
+//    auto lock = std::lock_guard(_state.lock);
+//    _state.dataChangedHandler = handler;
+//}
+//
+//template <typename T>
+//std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
+//    auto p = std::make_unique<T[]>([buf length]/sizeof(T));
+//    memcpy(p.get(), [buf contents], [buf length]);
+//    return p;
+//}
+//
+//- (Color<ColorSpace::Raw>)sampleRaw {
+//    return {};
+//}
+//
 //- (Color<ColorSpace::XYZD50>)sampleXYZD50 {
-//    // Copy _state.sampleOpts.xyzD50 locally
+//    return {};
+//}
+//
+//- (Color<ColorSpace::SRGB>)sampleSRGB {
+//    return {};
+//}
+//
+
+//- (Color<ColorSpace::Raw>)sampleRaw {
+//    // Copy _state.sampleOpts.raw locally
+//    auto lock = std::unique_lock(_state.lock);
+//        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.raw);
+//        auto rect = _state.sampleOpts.rect;
+//    lock.unlock();
+//    
+//    size_t i = 0;
+//    simd::double3 c = {};
+//    simd::uint3 count = {};
+//    for (size_t y=rect.top; y<rect.bottom; y++) {
+//        for (size_t x=rect.left; x<rect.right; x++, i++) {
+//            const bool r = (!(y%2) && (x%2));
+//            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
+//            const bool b = ((y%2) && !(x%2));
+//            const simd::float3& val = vals[i];
+//            if (r) count[0]++;
+//            if (g) count[1]++;
+//            if (b) count[2]++;
+//            c += {(double)val[0], (double)val[1], (double)val[2]};
+//        }
+//    }
+//    if (count[0]) c[0] /= count[0];
+//    if (count[1]) c[1] /= count[1];
+//    if (count[2]) c[2] /= count[2];
+//    return {(float)c[0], (float)c[1], (float)c[2]};
+//}
+//
+//- (Color<ColorSpace::XYZD50>)sampleXYZD50 {
+//    // Copy _state.sampleOpts.raw locally
 //    auto lock = std::unique_lock(_state.lock);
 //        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
+//        auto rect = _state.sampleOpts.rect;
+//    lock.unlock();
+//    
+//    size_t i = 0;
+//    simd::double3 c = {};
+//    simd::uint3 count = {};
+//    for (size_t y=rect.top; y<rect.bottom; y++) {
+//        for (size_t x=rect.left; x<rect.right; x++, i++) {
+//            const bool r = (!(y%2) && (x%2));
+//            const bool g = ((!(y%2) && !(x%2)) || ((y%2) && (x%2)));
+//            const bool b = ((y%2) && !(x%2));
+//            const simd::float3& val = vals[i];
+//            if (r) count[0]++;
+//            if (g) count[1]++;
+//            if (b) count[2]++;
+//            c += {(double)val[0], (double)val[1], (double)val[2]};
+//        }
+//    }
+//    if (count[0]) c[0] /= count[0];
+//    if (count[1]) c[1] /= count[1];
+//    if (count[2]) c[2] /= count[2];
+//    return {(float)c[0], (float)c[1], (float)c[2]};
+//}
+//
+////- (Color<ColorSpace::XYZD50>)sampleXYZD50 {
+////    // Copy _state.sampleOpts.xyzD50 locally
+////    auto lock = std::unique_lock(_state.lock);
+////        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
+////        auto rect = _state.sampleOpts.rect;
+////    lock.unlock();
+////    
+////    size_t i = 0;
+////    simd::double3 c = {0,0,0};
+////    for (size_t y=rect.top; y<rect.bottom; y++) {
+////        for (size_t x=rect.left; x<rect.right; x++, i++) {
+////            const simd::float3& val = vals[i];
+////            c += {(double)val[0], (double)val[1], (double)val[2]};
+////        }
+////    }
+////    if (i) c /= i;
+////    return {(float)c[0], (float)c[1], (float)c[2]};
+////}
+//
+//- (Color<ColorSpace::SRGB>)sampleSRGB {
+//    // Copy _state.sampleOpts.srgb locally
+//    auto lock = std::unique_lock(_state.lock);
+//        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.srgb);
 //        auto rect = _state.sampleOpts.rect;
 //    lock.unlock();
 //    
@@ -313,24 +340,5 @@ std::unique_ptr<T[]> copyMTLBuffer(id<MTLBuffer> buf) {
 //    if (i) c /= i;
 //    return {(float)c[0], (float)c[1], (float)c[2]};
 //}
-
-- (Color<ColorSpace::SRGB>)sampleSRGB {
-    // Copy _state.sampleOpts.srgb locally
-    auto lock = std::unique_lock(_state.lock);
-        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.srgb);
-        auto rect = _state.sampleOpts.rect;
-    lock.unlock();
-    
-    size_t i = 0;
-    simd::double3 c = {0,0,0};
-    for (size_t y=rect.top; y<rect.bottom; y++) {
-        for (size_t x=rect.left; x<rect.right; x++, i++) {
-            const simd::float3& val = vals[i];
-            c += {(double)val[0], (double)val[1], (double)val[2]};
-        }
-    }
-    if (i) c /= i;
-    return {(float)c[0], (float)c[1], (float)c[2]};
-}
 
 @end

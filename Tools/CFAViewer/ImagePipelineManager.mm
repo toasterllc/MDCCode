@@ -1,0 +1,26 @@
+#import "ImagePipelineManager.h"
+using namespace CFAViewer;
+using namespace ImagePipeline;
+
+@implementation ImagePipelineManager
+
+- (instancetype)init {
+    if (!(self = [super init])) return nil;
+    
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
+    renderer = Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    
+    return self;
+}
+
+- (void)render {
+    // Clear `result` so that the Renderer::Txt and Renderer::Buf objects that
+    // it contains are destroyed before we render again, so they can be reused
+    // for this render run.
+    result = {};
+    result = ImagePipeline::Pipeline::Run(renderer, rawImage, options);
+    if (renderCallback) renderCallback();
+}
+
+@end

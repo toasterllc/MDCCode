@@ -3,22 +3,23 @@
 #import "Renderer.h"
 #import "Defringe.h"
 #import "Mat.h"
+#import "Color.h"
 
 namespace CFAViewer::ImagePipeline {
 
 class Pipeline {
 public:
-    struct Image {
+    struct RawImage {
         CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
-        Renderer::Buf pixels;
+        MetalUtil::ImagePixel* pixels = nullptr;
     };
     
     struct Options {
         bool rawMode = false;
         
-        Mat<double,3,1> whiteBalance = { 1.,1.,1. };
+        std::optional<Color<ColorSpace::Raw>> illum;
         
         struct {
             bool en = false;
@@ -27,8 +28,6 @@ public:
         
         struct {
             bool en = false;
-            Mat<double,3,1> badPixelFactors = {1.,1.,1.};
-            Mat<double,3,1> goodPixelFactors = {1.,1.,1.};
         } reconstructHighlights;
         
         struct {
@@ -51,18 +50,21 @@ public:
             float amount = 0;
             float radius = 0;
         } localContrast;
+        
+        SampleRect sampleRect;
     };
     
-    struct SampleOptions {
-        SampleRect rect;
-        Renderer::Buf raw;
-        Renderer::Buf xyzD50;
-        Renderer::Buf srgb;
+    struct Result {
+        Renderer::Txt txt;
+        Color<ColorSpace::Raw> illumEst; // Estimated illuminant
+        struct {
+            Renderer::Buf raw;
+            Renderer::Buf xyzD50;
+            Renderer::Buf srgb;
+        } sampleBufs;
     };
-    #warning TODO: return resulting texture instead?
-    static void Run(Renderer& renderer, const Image& img, const Options& opts,
-        const SampleOptions& sampleOpts, id<MTLTexture> outTxt
-    );
+    
+    static Result Run(Renderer& renderer, const RawImage& rawImg, const Options& opts);
 };
 
 } // namespace CFAViewer::ImagePipeline

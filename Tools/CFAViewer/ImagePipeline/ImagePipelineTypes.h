@@ -39,6 +39,7 @@ namespace ImagePipeline {
         int32_t width() MetalConst { return right-left; }
         int32_t height() MetalConst { return bottom-top; }
         int32_t count() MetalConst { return width()*height(); }
+        bool empty() MetalConst { return !width() || !height(); }
         
         bool contains(int32_t x, int32_t y) MetalConst {
             return

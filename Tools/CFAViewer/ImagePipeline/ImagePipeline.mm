@@ -28,72 +28,63 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
 
 namespace CFAViewer::ImagePipeline {
 
-void Pipeline::Run(
-    Renderer& renderer,
-    const Image& img,
-    const Options& opts,
-    const SampleOptions& sampleOpts,
-    id<MTLTexture> outTxt
-) {
-    const uint32_t w = img.width;
-    const uint32_t h = img.height;
+Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const Options& opts) {
+    const uint32_t w = rawImg.width;
+    const uint32_t h = rawImg.height;
     
-    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float,
-        img.width, img.height);
+    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
     
     // Load `raw`
     {
         const size_t samplesPerPixel = 1;
-        const size_t bytesPerSample = sizeof(MetalUtil::ImagePixel);
-        renderer.textureWrite(raw, img.pixels, samplesPerPixel, bytesPerSample, MetalUtil::ImagePixelMax);
+        const size_t bytesPerSample = sizeof(*rawImg.pixels);
+        renderer.textureWrite(raw, rawImg.pixels, samplesPerPixel, bytesPerSample, MetalUtil::ImagePixelMax);
     }
     
-    // Sample: fill `sampleOpts.raw`
+    const size_t sampleBufLen = sizeof(simd::float3) * std::max(1, opts.sampleRect.count());
+    Renderer::Buf sampleBufRaw = renderer.bufferCreate(sampleBufLen);
+    Renderer::Buf sampleBufXYZD50 = renderer.bufferCreate(sampleBufLen);
+    Renderer::Buf sampleBufSRGB = renderer.bufferCreate(sampleBufLen);
+    
+    // Sample: fill `sampleBufRaw`
     {
         renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
             w, h,
             // Buffer args
-            img.cfaDesc,
-            sampleOpts.rect,
-            sampleOpts.raw,
+            rawImg.cfaDesc,
+            opts.sampleRect,
+            sampleBufRaw,
             // Texture args
             raw
         );
     }
     
-    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float,
-        img.width, img.height);
+    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
+    Color<ColorSpace::Raw> illumEst;
     
     // Raw mode (bilinear debayer only)
     if (opts.rawMode) {
         // De-bayer
         renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
             // Buffer args
-            img.cfaDesc,
+            rawImg.cfaDesc,
             // Texture args
             raw
         );
     
     } else {
-        // Estimate illuminant
-        const Color<ColorSpace::Raw> illum = EstimateIlluminantFFCC::Run(renderer, img.cfaDesc, raw);
+        // Estimate illuminant, if an illuminant isn't provided in `opts.illum`
+        Color<ColorSpace::Raw> illum;
+        if (opts.illum) {
+            illum = *opts.illum;
+        } else {
+            illum = EstimateIlluminantFFCC::Run(renderer, rawImg.cfaDesc, raw);
+            illumEst = illum;
+        }
         
         // Reconstruct highlights
         if (opts.reconstructHighlights.en) {
-            ReconstructHighlights::Run(renderer, img.cfaDesc, illum.m, raw);
-        }
-        
-        // Sample: fill `sampleOpts.xyzD50`
-        {
-            renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
-                w, h,
-                // Buffer args
-                img.cfaDesc,
-                sampleOpts.rect,
-                sampleOpts.xyzD50,
-                // Texture args
-                raw
-            );
+            ReconstructHighlights::Run(renderer, rawImg.cfaDesc, illum.m, raw);
         }
         
         // White balance
@@ -103,7 +94,7 @@ void Pipeline::Run(
             const simd::float3 simdWB = simdForMat(wb);
             renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
                 // Buffer args
-                img.cfaDesc,
+                rawImg.cfaDesc,
                 simdWB,
                 // Texture args
                 raw
@@ -111,12 +102,12 @@ void Pipeline::Run(
         }
         
         if (opts.defringe.en) {
-            Defringe::Run(renderer, img.cfaDesc, opts.defringe.opts, raw);
+            Defringe::Run(renderer, rawImg.cfaDesc, opts.defringe.opts, raw);
         }
         
         // LMMSE Debayer
         {
-            DebayerLMMSE::Run(renderer, img.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
+            DebayerLMMSE::Run(renderer, rawImg.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
         }
         
         // Camera raw -> ProPhotoRGB
@@ -210,18 +201,18 @@ void Pipeline::Run(
         // Saturation
         Saturation::Run(renderer, opts.saturation, rgb);
         
-//            // Sample: fill `sampleOpts.xyzD50`
-//            {
-//                renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
-//                    w, h,
-//                    // Buffer args
-//                    img.cfaDesc,
-//                    sampleOpts.rect,
-//                    sampleOpts.xyzD50,
-//                    // Texture args
-//                    rgb
-//                );
-//            }
+        // Sample: fill `sampleBufXYZD50`
+        {
+            renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
+                w, h,
+                // Buffer args
+                rawImg.cfaDesc,
+                opts.sampleRect,
+                sampleBufXYZD50,
+                // Texture args
+                rgb
+            );
+        }
         
         // XYZ.D50 -> XYZ.D65
         {
@@ -247,25 +238,29 @@ void Pipeline::Run(
             );
         }
         
-        // Sample: fill `sampleOpts.srgb`
+        // Sample: fill `sampleBufSRGB`
         {
             renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
                 w, h,
                 // Buffer args
-                img.cfaDesc,
-                sampleOpts.rect,
-                sampleOpts.srgb,
+                rawImg.cfaDesc,
+                opts.sampleRect,
+                sampleBufSRGB,
                 // Texture args
                 rgb
             );
         }
     }
     
-    // Final display render pass (which converts the RGBA32Float -> BGRA8Unorm)
-    renderer.render("CFAViewer::Shader::ImagePipeline::Display", outTxt,
-        // Texture args
-        rgb
-    );
+    return Result{
+        .txt = std::move(rgb),
+        .illumEst = illumEst,
+        .sampleBufs = {
+            .raw = std::move(sampleBufRaw),
+            .xyzD50 = std::move(sampleBufXYZD50),
+            .srgb = std::move(sampleBufSRGB),
+        },
+    };
 }
 
 } // namespace CFAViewer::ImagePipeline

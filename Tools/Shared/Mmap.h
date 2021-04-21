@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <unistd.h>
 
+template <typename T=uint8_t>
 class Mmap {
 public:
     Mmap () {}
@@ -19,11 +20,11 @@ public:
             struct stat st;
             int ir = fstat(_state.fd, &st);
             if (ir) throw std::runtime_error(std::string("fstat failed: ") + strerror(errno));
-            _state.len = st.st_size;
+            _state.len = st.st_size/sizeof(T);
             
-            void* data = mmap(nullptr, _state.len, PROT_READ|PROT_WRITE, MAP_PRIVATE, _state.fd, 0);
+            void* data = mmap(nullptr, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, _state.fd, 0);
             if (data == MAP_FAILED) throw std::runtime_error(std::string("mmap failed: ") + strerror(errno));
-            _state.data = data;
+            _state.data = (T*)data;
         
         } catch (...) {
             _reset();
@@ -46,17 +47,10 @@ public:
         _reset();
     }
     
-    void* data() {
-        return _state.data;
-    }
-    
-    const void* data() const {
-        return _state.data;
-    }
-    
-    size_t len() const {
-        return _state.len;
-    }
+    T* data() { return _state.data; }
+    const T* data() const { return _state.data; }
+    // The number of T elements in `data`
+    size_t len() const { return _state.len; }
     
 private:
     void _reset() {
@@ -73,7 +67,7 @@ private:
     
     struct {
         int fd = -1;
-        void* data = nullptr;
+        T* data = nullptr;
         size_t len = 0;
     } _state;
 };

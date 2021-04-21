@@ -24,6 +24,7 @@
 #import "Assert.h"
 #import "ImagePipelineTypes.h"
 #import "Color.h"
+#import "ImagePipelineManager.h"
 
 using namespace CFAViewer;
 using namespace MetalUtil;
@@ -55,7 +56,7 @@ struct PixConfig {
     IBOutlet NSSwitch* _analogGainSlider;
     IBOutlet NSTextField* _analogGainLabel;
     
-    IBOutlet NSTextField* _whiteBalanceTextField;
+    IBOutlet NSTextField* _illumTextField;
     
     IBOutlet NSButton* _colorCheckersCheckbox;
     IBOutlet NSButton* _resetColorCheckersButton;
@@ -129,293 +130,82 @@ struct PixConfig {
     IOServiceWatcher _mdcDeviceWatcher;
     
     PixConfig _pixConfig;
+    ImagePipelineManager* _imagePipelineManager;
     
     struct {
         std::mutex lock; // Protects this struct
         std::condition_variable signal;
         bool running = false;
         bool cancel = false;
-        
-        STApp::Pixel pixelBuf[2200*2200];
-        ImageLayerTypes::Image img = {
-            .cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green},
-            .width = 0,
-            .height = 0,
-            .pixels = pixelBuf,
-        };
-    } _streamImages;
+        STApp::Pixel pixels[2200*2200];
+    } _streamImagesThread;
     
-    ImageLayerTypes::Options _imgOpts;
+    struct {
+        STApp::Pixel pixels[2200*2200];
+        Pipeline::RawImage img = {
+            .cfaDesc = {
+                CFAColor::Green, CFAColor::Red,
+                CFAColor::Blue, CFAColor::Green,
+            },
+            .width = 2304,
+            .height = 1296,
+            .pixels = pixels,
+        };
+    } _rawImage;
     
     Color<ColorSpace::Raw> _sampleRaw;
     Color<ColorSpace::XYZD50> _sampleXYZD50;
     Color<ColorSpace::SRGB> _sampleSRGB;
 }
 
-//float LabfInv(float x) {
-//    // From https://en.wikipedia.org/wiki/CIELAB_color_space
-//    const float d = 6./29;
-//    if (x > d)  return pow(x, 3);
-//    else        return 3*d*d*(x - 4./29);
-//}
-//
-//simd::float3 XYZFromLab(simd::float3 white_XYZ, simd::float3 c_Lab) {
-//    // From https://en.wikipedia.org/wiki/CIELAB_color_space
-//    const float k = (c_Lab.x+16)/116;
-//    const float X = white_XYZ.x * LabfInv(k+c_Lab.y/500);
-//    const float Y = white_XYZ.y * LabfInv(k);
-//    const float Z = white_XYZ.z * LabfInv(k-c_Lab.z/200);
-//    return simd::float3{X,Y,Z};
-//}
-//
-//float Labf(float x) {
-//    const float d = 6./29;
-//    const float d3 = d*d*d;
-//    if (x > d3) return pow(x, 1./3);
-//    else        return (x/(3*d*d)) + 4./29;
-//}
-//
-//simd::float3 LabFromXYZ(simd::float3 white_XYZ, simd::float3 c_XYZ) {
-//    const float k = Labf(c_XYZ.y/white_XYZ.y);
-//    const float L = 116*k - 16;
-//    const float a = 500*(Labf(c_XYZ.x/white_XYZ.x) - k);
-//    const float b = 200*(k - Labf(c_XYZ.z/white_XYZ.z));
-//    return simd::float3{L,a,b};
-//}
-
-float nothighlights(float x) {
-    if (x < 0) return 0;
-    return exp(-pow(x+.1, 10));
-}
-
-float notshadows(float x) {
-    if (x > 1) return 1;
-    return exp(-pow(x-1.1, 10));
-}
-
-float Luv_u(simd::float3 c_XYZ) {
-    return 4*c_XYZ.x/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
-}
-
-float Luv_v(simd::float3 c_XYZ) {
-    return 9*c_XYZ.y/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
-}
-
-simd::float3 LuvFromXYZ(simd::float3 white_XYZ, simd::float3 c_XYZ) {
-    const float k1 = 24389./27;
-    const float k2 = 216./24389;
-    const float y = c_XYZ.y/white_XYZ.y;
-    const float L = (y<=k2 ? k1*y : 116*pow(y, 1./3)-16);
-    const float u_ = Luv_u(c_XYZ);
-    const float v_ = Luv_v(c_XYZ);
-    const float uw_ = Luv_u(white_XYZ);
-    const float vw_ = Luv_v(white_XYZ);
-    const float u = 13*L*(u_-uw_);
-    const float v = 13*L*(v_-vw_);
-    return simd::float3{L,u,v};
-}
-
-simd::float3 XYZFromLuv(simd::float3 white_XYZ, simd::float3 c_Luv) {
-    const float uw_ = Luv_u(white_XYZ);
-    const float vw_ = Luv_v(white_XYZ);
-    const float u_ = c_Luv[1]/(13*c_Luv[0]) + uw_;
-    const float v_ = c_Luv[2]/(13*c_Luv[0]) + vw_;
-    const float Y = white_XYZ.y*(c_Luv[0]<=8 ? c_Luv[0]*(27./24389) : pow((c_Luv[0]+16)/116, 3));
-    const float X = Y*(9*u_)/(4*v_);
-    const float Z = Y*(12-3*u_-20*v_)/(4*v_);
-    return simd::float3{X,Y,Z};
-}
-
-simd::float3 LCHuvFromLuv(simd::float3 c_Luv) {
-    const float L = c_Luv[0];
-    const float C = sqrt(c_Luv[1]*c_Luv[1] + c_Luv[2]*c_Luv[2]);
-    const float H = atan2f(c_Luv[2], c_Luv[1]);
-    return {L,C,H};
-}
-
-simd::float3 LuvFromLCHuv(simd::float3 c_LCHuv) {
-    const float L = c_LCHuv[0];
-    const float u = c_LCHuv[1]*cos(c_LCHuv[2]);
-    const float v = c_LCHuv[1]*sin(c_LCHuv[2]);
-    return {L,u,v};
-}
-
 - (void)awakeFromNib {
+    __weak auto weakSelf = self;
+    
     _colorCheckerCircleRadius = 10;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
+    _imagePipelineManager = [ImagePipelineManager new];
+    _imagePipelineManager->rawImage = _rawImage.img;
+    _imagePipelineManager->renderCallback = [=]() {
+        [weakSelf _renderCallback];
+    };
+    [[_mainView imageLayer] setImagePipelineManager:_imagePipelineManager];
+    
     // Load our image from disk
     {
-        auto lock = std::unique_lock(_streamImages.lock);
-//        Mmap imgData("/Users/dave/repos/C5/TestSet-AR0330-4/image001_sensorname_AR0330.cfa");
-//        Mmap imgData("/Users/dave/Desktop/AR0330TestImages/1.cfa");
-//        Mmap imgData("/Users/dave/Desktop/AR0330TestImages/1.cfa");
-//        Mmap imgData("/Users/dave/Desktop/ColorCheckerRaw.cfa");
-//        Mmap imgData("/Users/dave/repos/MotionDetectorCamera/Tools/CFAViewer/img.cfa");
-//        Mmap imgData("/Users/dave/Desktop/test.cfa");
-//        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/106.cfa");
-//        Mmap imgData("/Users/dave/Desktop/CFAViewerSession-Outdoor-Noon/158.cfa");
+        Mmap<MetalUtil::ImagePixel> imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa");
         
-//        // Back yard
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/30.cfa");
-        
-//        // Sue, backyard, color checker
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/35.cfa");
-        
-//        // Front yard, car
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/139.cfa");
-        
-//        // Front of house
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Outdoor-4pm/127.cfa");
-        
-//        // Sue, living room, color checker
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:3:31/CFAViewerSession-Indoor-Night/69.cfa");
-        
-//        Mmap imgData("/Users/dave/matlab/1.cfa");
-        
-        // Cabinet
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_26.cfa");
-//        // Orange
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_53.cfa");
-        // Floor
-//        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker/indoor_night2_157.cfa");
-        
-        Mmap imgData("/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa");
-        
-        _streamImages.img.width = 2304;
-        _streamImages.img.height = 1296;
-//        _streamImages.img.width = 2601;
-//        _streamImages.img.height = 1732;
-        
-        const size_t len = _streamImages.img.width*_streamImages.img.height*sizeof(*_streamImages.img.pixels);
-        // Verify that the size of the file matches the the width/height of the image
-        assert(imgData.len() == len);
-        // Verify that our buffer is large enough to fit `len` bytes
-        assert(sizeof(_streamImages.pixelBuf) >= len);
-        memcpy(_streamImages.pixelBuf, imgData.data(), len);
-        
-        [[_mainView imageLayer] setImage:_streamImages.img];
+        const size_t pixelCount = _rawImage.img.width*_rawImage.img.height;
+        // Verify that the size of the file matches the size of the image
+        assert(imgData.len() == pixelCount);
+        std::copy(imgData.data(), imgData.data()+pixelCount, _rawImage.pixels);
+        [[_mainView imageLayer] setNeedsDisplay];
     }
     
-    __weak auto weakSelf = self;
-    [[_mainView imageLayer] setDataChangedHandler:^(ImageLayer*) {
-        [weakSelf _updateHistograms];
-        [weakSelf _updateSampleColors];
-    }];
+//    [[_mainView imageLayer] setDataChangedHandler:^(ImageLayer*) {
+//        [weakSelf _updateHistograms];
+//        [weakSelf _updateSampleColors];
+//    }];
     
-    _imgOpts = {
+    _imagePipelineManager->options = {
         .rawMode = false,
+        
+        .illum = std::nullopt,
         
         .reconstructHighlights = {
             .en = true,
-            .badPixelFactors    = {1.130, 1.613, 1.000},
-            .goodPixelFactors   = {1.051, 1.544, 1.195},
         },
         
         .debayerLMMSE = {
             .applyGamma = true,
         },
         
-        
-        
-//        illum = 2.4743327397, 2.5535876543, 1
-        .whiteBalance = { 0.346606/0.383756, 0.346606/0.523701, 0.346606/0.346606 }, // outdoor_5pm_45
-//        .whiteBalance = { 0.691343/0.669886, 0.691343/0.691343, 0.691343/0.270734 },
-//        .whiteBalance = { 1.368683, 1.000000, 1.513193 },
-        
         .defringe = {
             .en = false,
         },
     };
     
-    
-//    _imgOpts = {
-//        .rawMode = false,
-//        
-//        .whiteBalance = { 1., 1., 1. },
-//        
-//        .defringe = {
-//            .en = true,
-//        },
-//        
-//        .reconstructHighlights = {
-//            .en = true,
-//            .badPixelFactors    = {1.130, 1.613, 1.000},
-//            .goodPixelFactors   = {1.051, 1.544, 1.195},
-//        },
-//        
-//        .debayerLMMSE = {
-//            .applyGamma = true,
-//        },
-//        
-//        .colorMatrix = {
-//            +3.040751, +1.406093, +0.746958,
-//            -0.293108, +4.785811, -0.756907,
-//            -0.578106, -1.496914, +8.609732,
-//        },
-//        
-//        .exposure = -2.4,
-//        .brightness = 0.203,
-//        .contrast = 0.6,
-//        .saturation = 0.1,
-//        
-//        .localContrast = {
-//            .en = true,
-//            .amount = .2,
-//            .radius = 80,
-//        },
-//    };
-    
-    [self _updateImageOptions];
-    
-//    bool rawMode = false;
-//    
-//    struct {
-//        bool en = false;
-//        Defringe::Options options;
-//    } defringe;
-//    
-//    bool reconstructHighlights = false;
-//    
-//    struct {
-//        bool applyGamma = false;
-//    } debayerLMMSE;
-//    
-//    simd::float3x3 colorMatrix = {
-//        simd::float3{1,0,0},
-//        simd::float3{0,1,0},
-//        simd::float3{0,0,1},
-//    };
-//    
-//    float exposure = 0;
-//    float brightness = 0;
-//    float contrast = 0;
-//    float saturation = 0;
-//    
-//    struct {
-//        bool enable = false;
-//        float amount = 0;
-//        float radius = 0;
-//    } localContrast;
-    
-//    [self _setDefringe:true options:ImagePipeline::Defringe::Options{}];
-//    
-//    [self _setReconstructHighlights:true];
-//    
-//    [self _setDebayerLMMSEApplyGamma:true];
-    
-//    [self _setImageAdjustments:{
-//        .exposure = -2.4,
-//        .brightness = 0.203,
-//        .contrast = 0.6,
-//        .saturation = 0.1,
-//        
-//        .localContrast = {
-//            .enable = true,
-//            .amount = .2,
-//            .radius = 80,
-//        },
-//    }];
+    [self _updateInspectorUI];
     
     auto points = [self _prefsColorCheckerPositions];
     if (!points.empty()) {
@@ -518,142 +308,142 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
 }
 
 - (void)_threadStreamImages:(MDCDevice)device {
-    using namespace STApp;
-    assert(device);
-    
-    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
-    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
-    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
-    
-    ImageLayer* layer = [_mainView imageLayer];
-    try {
-        // Reset the device to put it back in a pre-defined state
-        device.reset();
-        
-        float intTime = .5;
-        const size_t tmpPixelBufLen = std::size(_streamImages.pixelBuf);
-        auto tmpPixelBuf = std::make_unique<STApp::Pixel[]>(tmpPixelBufLen);
-        uint32_t saveIdx = 1;
-        for (uint32_t i=0;; i++) {
-            // Capture an image, timing-out after 1s so we can check the device status,
-            // in case it reports a streaming error
-            const STApp::PixHeader pixStatus = device.pixCapture(tmpPixelBuf.get(), tmpPixelBufLen, 1000);
-            
-            auto lock = std::unique_lock(_streamImages.lock);
-                // Check if we've been cancelled
-                if (_streamImages.cancel) break;
-                
-                // Copy the image into our persistent buffer
-                const size_t len = pixStatus.width*pixStatus.height*sizeof(STApp::Pixel);
-                memcpy(_streamImages.pixelBuf, tmpPixelBuf.get(), len);
-                _streamImages.img.width = pixStatus.width;
-                _streamImages.img.height = pixStatus.height;
-            lock.unlock();
-            
-            [layer setImage:_streamImages.img];
-            
-            if (!(i % 10)) {
-                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
-                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
-                std::ofstream f;
-                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-                f.open([imagePath UTF8String]);
-                f.write((char*)_streamImages.img.pixels, len);
-                saveIdx++;
-                printf("Saved %s\n", [imagePath UTF8String]);
-            }
-            
-            // Adjust exposure
-            const uint32_t SubsampleFactor = 16;
-            const uint32_t pixelCount = (uint32_t)pixStatus.width*(uint32_t)pixStatus.height;
-            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
-            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
-            const float highlightFraction = (float)highlightCount/pixelCount;
-            const float shadowFraction = (float)shadowCount/pixelCount;
-//            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
-            
-            const float diff = shadowFraction-highlightFraction;
-            const float absdiff = fabs(diff);
-            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
-            
-            if (absdiff > .01) {
-                bool updateIntTime = false;
-                if (shadowFraction > highlightFraction) {
-                    // Increase exposure
-                    intTime *= adjust;
-                    updateIntTime = true;
-                
-                } else if (highlightFraction > shadowFraction) {
-                    // Decrease exposure
-                    intTime *= adjust;
-                    updateIntTime = true;
-                }
-                
-                intTime = std::clamp(intTime, 0.001f, 1.f);
-                const float gain = intTime/3;
-                
-                printf("adjust:%f\n"
-                       "shadowFraction:%f\n"
-                       "highlightFraction:%f\n"
-                       "intTime: %f\n\n",
-                       adjust,
-                       shadowFraction,
-                       highlightFraction,
-                       intTime
-                );
-                
-                if (updateIntTime) {
-                    device.pixI2CWrite(0x3012, intTime*16384);
-                    device.pixI2CWrite(0x3060, gain*63);
-                }
-            }
-            
-            
-            
-//            const float ShadowAdjustThreshold = 0.1;
-//            const float HighlightAdjustThreshold = 0.1;
-//            const float AdjustDelta = 1.1;
-//            bool updateIntTime = false;
-//            if (shadowFraction > ShadowAdjustThreshold) {
-//                // Increase exposure
-//                intTime *= AdjustDelta;
-//                updateIntTime = true;
+//    using namespace STApp;
+//    assert(device);
+//    
+//    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
+//    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
+//    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
+//    
+//    ImageLayer* layer = [_mainView imageLayer];
+//    try {
+//        // Reset the device to put it back in a pre-defined state
+//        device.reset();
+//        
+//        float intTime = .5;
+//        const size_t tmpPixelBufLen = std::size(_streamImages.pixelBuf);
+//        auto tmpPixelBuf = std::make_unique<STApp::Pixel[]>(tmpPixelBufLen);
+//        uint32_t saveIdx = 1;
+//        for (uint32_t i=0;; i++) {
+//            // Capture an image, timing-out after 1s so we can check the device status,
+//            // in case it reports a streaming error
+//            const STApp::PixHeader pixStatus = device.pixCapture(tmpPixelBuf.get(), tmpPixelBufLen, 1000);
 //            
-//            } else if (highlightFraction > HighlightAdjustThreshold) {
-//                // Decrease exposure
-//                intTime /= AdjustDelta;
-//                updateIntTime = true;
+//            auto lock = std::unique_lock(_streamImages.lock);
+//                // Check if we've been cancelled
+//                if (_streamImages.cancel) break;
+//                
+//                // Copy the image into our persistent buffer
+//                const size_t len = pixStatus.width*pixStatus.height*sizeof(STApp::Pixel);
+//                memcpy(_streamImages.img.pixels, tmpPixelBuf.get(), len);
+//                _streamImages.img.width = pixStatus.width;
+//                _streamImages.img.height = pixStatus.height;
+//            lock.unlock();
+//            
+//            [layer setNeedsDisplay];
+//            
+//            if (!(i % 10)) {
+//                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
+//                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
+//                std::ofstream f;
+//                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+//                f.open([imagePath UTF8String]);
+//                f.write((char*)_streamImages.img.pixels, len);
+//                saveIdx++;
+//                printf("Saved %s\n", [imagePath UTF8String]);
 //            }
 //            
-//            intTime = std::clamp(intTime, 0.f, 1.f);
-//            const float gain = intTime/3;
+//            // Adjust exposure
+//            const uint32_t SubsampleFactor = 16;
+//            const uint32_t pixelCount = (uint32_t)pixStatus.width*(uint32_t)pixStatus.height;
+//            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
+//            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
+//            const float highlightFraction = (float)highlightCount/pixelCount;
+//            const float shadowFraction = (float)shadowCount/pixelCount;
+////            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
 //            
-//            if (updateIntTime) {
-//                device.pixI2CWrite(0x3012, intTime*16384);
-//                device.pixI2CWrite(0x3060, gain*63);
+//            const float diff = shadowFraction-highlightFraction;
+//            const float absdiff = fabs(diff);
+//            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
+//            
+//            if (absdiff > .01) {
+//                bool updateIntTime = false;
+//                if (shadowFraction > highlightFraction) {
+//                    // Increase exposure
+//                    intTime *= adjust;
+//                    updateIntTime = true;
+//                
+//                } else if (highlightFraction > shadowFraction) {
+//                    // Decrease exposure
+//                    intTime *= adjust;
+//                    updateIntTime = true;
+//                }
+//                
+//                intTime = std::clamp(intTime, 0.001f, 1.f);
+//                const float gain = intTime/3;
+//                
+//                printf("adjust:%f\n"
+//                       "shadowFraction:%f\n"
+//                       "highlightFraction:%f\n"
+//                       "intTime: %f\n\n",
+//                       adjust,
+//                       shadowFraction,
+//                       highlightFraction,
+//                       intTime
+//                );
+//                
+//                if (updateIntTime) {
+//                    device.pixI2CWrite(0x3012, intTime*16384);
+//                    device.pixI2CWrite(0x3060, gain*63);
+//                }
 //            }
-        }
-    
-    } catch (const std::exception& e) {
-        printf("Streaming failed: %s\n", e.what());
-        
-        PixState pixState = PixState::Idle;
-        try {
-            pixState = device.pixStatus().state;
-        } catch (const std::exception& e) {
-            printf("pixStatus() failed: %s\n", e.what());
-        }
-        
-        if (pixState != PixState::Capturing) {
-            printf("pixStatus.state != PixState::Capturing\n");
-        }
-    }
-    
-    // Notify that our thread has exited
-    _streamImages.lock.lock();
-        _streamImages.running = false;
-        _streamImages.signal.notify_all();
-    _streamImages.lock.unlock();
+//            
+//            
+//            
+////            const float ShadowAdjustThreshold = 0.1;
+////            const float HighlightAdjustThreshold = 0.1;
+////            const float AdjustDelta = 1.1;
+////            bool updateIntTime = false;
+////            if (shadowFraction > ShadowAdjustThreshold) {
+////                // Increase exposure
+////                intTime *= AdjustDelta;
+////                updateIntTime = true;
+////            
+////            } else if (highlightFraction > HighlightAdjustThreshold) {
+////                // Decrease exposure
+////                intTime /= AdjustDelta;
+////                updateIntTime = true;
+////            }
+////            
+////            intTime = std::clamp(intTime, 0.f, 1.f);
+////            const float gain = intTime/3;
+////            
+////            if (updateIntTime) {
+////                device.pixI2CWrite(0x3012, intTime*16384);
+////                device.pixI2CWrite(0x3060, gain*63);
+////            }
+//        }
+//    
+//    } catch (const std::exception& e) {
+//        printf("Streaming failed: %s\n", e.what());
+//        
+//        PixState pixState = PixState::Idle;
+//        try {
+//            pixState = device.pixStatus().state;
+//        } catch (const std::exception& e) {
+//            printf("pixStatus() failed: %s\n", e.what());
+//        }
+//        
+//        if (pixState != PixState::Capturing) {
+//            printf("pixStatus.state != PixState::Capturing\n");
+//        }
+//    }
+//    
+//    // Notify that our thread has exited
+//    _streamImages.lock.lock();
+//        _streamImages.running = false;
+//        _streamImages.signal.notify_all();
+//    _streamImages.lock.unlock();
 }
 
 - (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {
@@ -689,17 +479,17 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
 }
 
 - (bool)_streamImagesEnabled {
-    auto lock = std::unique_lock(_streamImages.lock);
-    return _streamImages.running;
+    auto lock = std::unique_lock(_streamImagesThread.lock);
+    return _streamImagesThread.running;
 }
 
 - (void)_setStreamImagesEnabled:(bool)en {
     // Cancel streaming and wait for it to stop
     for (;;) {
-        auto lock = std::unique_lock(_streamImages.lock);
-        if (!_streamImages.running) break;
-        _streamImages.cancel = true;
-        _streamImages.signal.wait(lock);
+        auto lock = std::unique_lock(_streamImagesThread.lock);
+        if (!_streamImagesThread.running) break;
+        _streamImagesThread.cancel = true;
+        _streamImagesThread.signal.wait(lock);
     }
     
     [_streamImagesSwitch setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
@@ -715,11 +505,11 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
         configMDCDevice(_mdcDevice, _pixConfig);
         
         // Kick off a new streaming thread
-        _streamImages.lock.lock();
-            _streamImages.running = true;
-            _streamImages.cancel = false;
-            _streamImages.signal.notify_all();
-        _streamImages.lock.unlock();
+        _streamImagesThread.lock.lock();
+            _streamImagesThread.running = true;
+            _streamImagesThread.cancel = false;
+            _streamImagesThread.signal.notify_all();
+        _streamImagesThread.lock.unlock();
         
         MDCDevice device = _mdcDevice;
         [NSThread detachNewThreadWithBlock:^{
@@ -756,52 +546,111 @@ Mat<double,H,W> _matrixFromString(const std::string& str) {
     return r;
 }
 
-static Mat<double,3,1> _whiteBalanceMatrixFromString(const std::string& str) {
-    return _matrixFromString<3,1>(str);
-}
-
-static Mat<double,3,3> _colorMatrixFromString(const std::string& str) {
-    return _matrixFromString<3,3>(str);
+template <size_t H, size_t W>
+Mat<double,H,W> _matFromString(const std::string& str) {
+    return _matrixFromString<H,W>(str);
 }
 
 - (void)controlTextDidChange:(NSNotification*)note {
-    if ([note object] == _whiteBalanceTextField) {
-        _imgOpts.whiteBalance = _whiteBalanceMatrixFromString([[_whiteBalanceTextField stringValue] UTF8String]);
-        [self _updateImageOptions];
+    auto& opts = _imagePipelineManager->options;
+    if ([note object] == _illumTextField) {
+        opts.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
+        [self _updateInspectorUI];
+        [[_mainView imageLayer] setNeedsDisplay];
     
     } else if ([note object] == _colorMatrixTextField) {
-        _imgOpts.colorMatrix = _colorMatrixFromString([[_colorMatrixTextField stringValue] UTF8String]);
-        [self _updateImageOptions];
+        opts.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
+        [self _updateInspectorUI];
+        [[_mainView imageLayer] setNeedsDisplay];
     }
 }
 
 #pragma mark - Histograms
 
 - (void)_updateHistograms {
-    [[_inputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] inputHistogram]];
-    [[_outputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] outputHistogram]];
+//    [[_inputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] inputHistogram]];
+//    [[_outputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] outputHistogram]];
 }
 
 #pragma mark - Sample
 
 - (void)_updateSampleColors {
-    // Make sure we're not on the main thread, since calculating the average sample can take some time
-    assert(![NSThread isMainThread]);
-    
-    auto sampleRaw = [[_mainView imageLayer] sampleRaw];
-    auto sampleXYZD50 = [[_mainView imageLayer] sampleXYZD50];
-    auto sampleSRGB = [[_mainView imageLayer] sampleSRGB];
-    
-    CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
-        self->_sampleRaw = sampleRaw;
-        self->_sampleXYZD50 = sampleXYZD50;
-        self->_sampleSRGB = sampleSRGB;
-        [self _updateSampleColorsText];
-    });
-    CFRunLoopWakeUp(CFRunLoopGetMain());
+//    // Make sure we're not on the main thread, since calculating the average sample can take some time
+//    assert(![NSThread isMainThread]);
+//    
+//    auto sampleRaw = [[_mainView imageLayer] sampleRaw];
+//    auto sampleXYZD50 = [[_mainView imageLayer] sampleXYZD50];
+//    auto sampleSRGB = [[_mainView imageLayer] sampleSRGB];
+//    
+//    CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+//        self->_sampleRaw = sampleRaw;
+//        self->_sampleXYZD50 = sampleXYZD50;
+//        self->_sampleSRGB = sampleSRGB;
+//        [self _updateSampleColorsText];
+//    });
+//    CFRunLoopWakeUp(CFRunLoopGetMain());
 }
 
-- (void)_updateSampleColorsText {
+static Mat<double,3,1> _averageRaw(const SampleRect& rect, const CFADesc& cfaDesc, id<MTLBuffer> buf) {
+//    return {};
+//    // Copy _state.sampleOpts.raw locally
+//    auto lock = std::unique_lock(_state.lock);
+//        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.raw);
+//        auto rect = _state.sampleOpts.rect;
+//    lock.unlock();
+    
+    const simd::float3* vals = (simd::float3*)[buf contents];
+    assert([buf length]/sizeof(simd::float3) >= rect.count());
+    
+    size_t i = 0;
+    Mat<double,3,1> r;
+    uint32_t count[3] = {};
+    for (size_t y=rect.top; y<rect.bottom; y++) {
+        for (size_t x=rect.left; x<rect.right; x++, i++) {
+            const CFAColor c = cfaDesc.color(x, y);
+            const simd::float3& val = vals[i];
+            if (c == CFAColor::Red)     count[0]++;
+            if (c == CFAColor::Green)   count[1]++;
+            if (c == CFAColor::Blue)    count[2]++;
+            r += {(double)val[0], (double)val[1], (double)val[2]};
+        }
+    }
+    
+    if (count[0]) r[0] /= count[0];
+    if (count[1]) r[1] /= count[1];
+    if (count[2]) r[2] /= count[2];
+    return r;
+}
+
+static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
+    // Copy _state.sampleOpts.xyzD50 locally
+//    auto lock = std::unique_lock(_state.lock);
+//        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
+//        auto rect = _state.sampleOpts.rect;
+//    lock.unlock();
+    
+    const simd::float3* vals = (simd::float3*)[buf contents];
+    assert([buf length]/sizeof(simd::float3) >= rect.count());
+    
+    Mat<double,3,1> r;
+    size_t i = 0;
+    for (size_t y=rect.top; y<rect.bottom; y++) {
+        for (size_t x=rect.left; x<rect.right; x++, i++) {
+            const simd::float3& val = vals[i];
+            r += {(double)val[0], (double)val[1], (double)val[2]};
+        }
+    }
+    if (i) r /= i;
+    return r;
+}
+
+- (void)_updateSampleColorsUI {
+    const SampleRect rect = _imagePipelineManager->options.sampleRect;
+    const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
+    _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);
+    _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
+    _sampleSRGB = _averageRGB(rect, sampleBufs.srgb);
+    
     [_colorText_Raw setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
     [_colorText_XYZD50 setStringValue:
@@ -815,163 +664,161 @@ static Mat<double,3,3> _colorMatrixFromString(const std::string& str) {
 //  Row2    G1  R  G1  R
 //  Row3    B   G2 B   G2
 
-static double px(ImageLayerTypes::Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
-    int32_t xc = (int32_t)x + dx;
-    int32_t yc = (int32_t)y + dy;
-    xc = std::clamp(xc, (int32_t)0, (int32_t)img.width-1);
-    yc = std::clamp(yc, (int32_t)0, (int32_t)img.height-1);
-    return (double)img.pixels[(yc*img.width)+xc] / ImagePixelMax;
-}
-
-static double sampleR(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
-    if (y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want R
-        // Sample @ y-1, y+1
-        if (x % 2) return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
-        
-        // Have B
-        // Want R
-        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        else return .25*px(img, x, -1, y, -1) +
-                    .25*px(img, x, -1, y, +1) +
-                    .25*px(img, x, +1, y, -1) +
-                    .25*px(img, x, +1, y, +1) ;
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want R
-        // Sample @ this pixel
-        if (x % 2) return px(img, x, 0, y, 0);
-        
-        // Have G
-        // Want R
-        // Sample @ x-1 and x+1
-        else return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
-    }
-}
-
-static double sampleG(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
-//    return px(img, x, 0, y, 0);
-    
-    if (y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want G
-        // Sample @ this pixel
-        if (x % 2) return px(img, x, 0, y, 0);
-        
-        // Have B
-        // Want G
-        // Sample @ x-1, x+1, y-1, y+1
-        else return .25*px(img, x, -1, y, 0) +
-                    .25*px(img, x, +1, y, 0) +
-                    .25*px(img, x, 0, y, -1) +
-                    .25*px(img, x, 0, y, +1) ;
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want G
-        // Sample @ x-1, x+1, y-1, y+1
-        if (x % 2) return   .25*px(img, x, -1, y, 0) +
-                            .25*px(img, x, +1, y, 0) +
-                            .25*px(img, x, 0, y, -1) +
-                            .25*px(img, x, 0, y, +1) ;
-        
-        // Have G
-        // Want G
-        // Sample @ this pixel
-        else return px(img, x, 0, y, 0);
-    }
-}
-
-static double sampleB(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
-//    return px(img, x, 0, y, 0);
-    
-    if (y % 2) {
-        // ROW = B G B G ...
-        
-        // Have G
-        // Want B
-        // Sample @ x-1, x+1
-        if (x % 2) return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
-        
-        // Have B
-        // Want B
-        // Sample @ this pixel
-        else return px(img, x, 0, y, 0);
-    
-    } else {
-        // ROW = G R G R ...
-        
-        // Have R
-        // Want B
-        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
-        if (x % 2) return   .25*px(img, x, -1, y, -1) +
-                            .25*px(img, x, -1, y, +1) +
-                            .25*px(img, x, +1, y, -1) +
-                            .25*px(img, x, +1, y, +1) ;
-        
-        // Have G
-        // Want B
-        // Sample @ y-1, y+1
-        else return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
-    }
-}
-
-static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uint32_t x, uint32_t y, uint32_t radius) {
-    uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
-    uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
-    uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
-    uint32_t top = std::clamp((int32_t)y+(int32_t)radius, (int32_t)0, (int32_t)img.height-1)+1;
-    
-    Color<ColorSpace::Raw> c;
-    uint32_t i = 0;
-    for (uint32_t iy=bottom; iy<top; iy++) {
-        for (uint32_t ix=left; ix<right; ix++) {
-            if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
-                c[0] += sampleR(img, ix, iy);
-                c[1] += sampleG(img, ix, iy);
-                c[2] += sampleB(img, ix, iy);
-                i++;
-            }
-        }
-    }
-    
-    c[0] /= i;
-    c[1] /= i;
-    c[2] /= i;
-    return c;
-}
+//static double px(ImageLayerTypes::Image& img, uint32_t x, int32_t dx, uint32_t y, int32_t dy) {
+//    int32_t xc = (int32_t)x + dx;
+//    int32_t yc = (int32_t)y + dy;
+//    xc = std::clamp(xc, (int32_t)0, (int32_t)img.width-1);
+//    yc = std::clamp(yc, (int32_t)0, (int32_t)img.height-1);
+//    return (double)img.pixels[(yc*img.width)+xc] / ImagePixelMax;
+//}
+//
+//static double sampleR(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
+//    if (y % 2) {
+//        // ROW = B G B G ...
+//        
+//        // Have G
+//        // Want R
+//        // Sample @ y-1, y+1
+//        if (x % 2) return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
+//        
+//        // Have B
+//        // Want R
+//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+//        else return .25*px(img, x, -1, y, -1) +
+//                    .25*px(img, x, -1, y, +1) +
+//                    .25*px(img, x, +1, y, -1) +
+//                    .25*px(img, x, +1, y, +1) ;
+//    
+//    } else {
+//        // ROW = G R G R ...
+//        
+//        // Have R
+//        // Want R
+//        // Sample @ this pixel
+//        if (x % 2) return px(img, x, 0, y, 0);
+//        
+//        // Have G
+//        // Want R
+//        // Sample @ x-1 and x+1
+//        else return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
+//    }
+//}
+//
+//static double sampleG(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
+////    return px(img, x, 0, y, 0);
+//    
+//    if (y % 2) {
+//        // ROW = B G B G ...
+//        
+//        // Have G
+//        // Want G
+//        // Sample @ this pixel
+//        if (x % 2) return px(img, x, 0, y, 0);
+//        
+//        // Have B
+//        // Want G
+//        // Sample @ x-1, x+1, y-1, y+1
+//        else return .25*px(img, x, -1, y, 0) +
+//                    .25*px(img, x, +1, y, 0) +
+//                    .25*px(img, x, 0, y, -1) +
+//                    .25*px(img, x, 0, y, +1) ;
+//    
+//    } else {
+//        // ROW = G R G R ...
+//        
+//        // Have R
+//        // Want G
+//        // Sample @ x-1, x+1, y-1, y+1
+//        if (x % 2) return   .25*px(img, x, -1, y, 0) +
+//                            .25*px(img, x, +1, y, 0) +
+//                            .25*px(img, x, 0, y, -1) +
+//                            .25*px(img, x, 0, y, +1) ;
+//        
+//        // Have G
+//        // Want G
+//        // Sample @ this pixel
+//        else return px(img, x, 0, y, 0);
+//    }
+//}
+//
+//static double sampleB(ImageLayerTypes::Image& img, uint32_t x, uint32_t y) {
+////    return px(img, x, 0, y, 0);
+//    
+//    if (y % 2) {
+//        // ROW = B G B G ...
+//        
+//        // Have G
+//        // Want B
+//        // Sample @ x-1, x+1
+//        if (x % 2) return .5*px(img, x, -1, y, 0) + .5*px(img, x, +1, y, 0);
+//        
+//        // Have B
+//        // Want B
+//        // Sample @ this pixel
+//        else return px(img, x, 0, y, 0);
+//    
+//    } else {
+//        // ROW = G R G R ...
+//        
+//        // Have R
+//        // Want B
+//        // Sample @ {-1,-1}, {-1,+1}, {+1,-1}, {+1,+1}
+//        if (x % 2) return   .25*px(img, x, -1, y, -1) +
+//                            .25*px(img, x, -1, y, +1) +
+//                            .25*px(img, x, +1, y, -1) +
+//                            .25*px(img, x, +1, y, +1) ;
+//        
+//        // Have G
+//        // Want B
+//        // Sample @ y-1, y+1
+//        else return .5*px(img, x, 0, y, -1) + .5*px(img, x, 0, y, +1);
+//    }
+//}
+//
+//static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uint32_t x, uint32_t y, uint32_t radius) {
+//    uint32_t left = std::clamp((int32_t)x-(int32_t)radius, (int32_t)0, (int32_t)img.width-1);
+//    uint32_t right = std::clamp((int32_t)x+(int32_t)radius, (int32_t)0, (int32_t)img.width-1)+1;
+//    uint32_t bottom = std::clamp((int32_t)y-(int32_t)radius, (int32_t)0, (int32_t)img.height-1);
+//    uint32_t top = std::clamp((int32_t)y+(int32_t)radius, (int32_t)0, (int32_t)img.height-1)+1;
+//    
+//    Color<ColorSpace::Raw> c;
+//    uint32_t i = 0;
+//    for (uint32_t iy=bottom; iy<top; iy++) {
+//        for (uint32_t ix=left; ix<right; ix++) {
+//            if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
+//                c[0] += sampleR(img, ix, iy);
+//                c[1] += sampleG(img, ix, iy);
+//                c[2] += sampleB(img, ix, iy);
+//                i++;
+//            }
+//        }
+//    }
+//    
+//    c[0] /= i;
+//    c[1] /= i;
+//    c[2] /= i;
+//    return c;
+//}
 
 #pragma mark - UI
 
 - (void)_saveImage:(NSString*)path {
     const std::string ext([[[path pathExtension] lowercaseString] UTF8String]);
     if (ext == "cfa") {
-        auto lock = std::unique_lock(_streamImages.lock);
-            std::ofstream f;
-            f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            f.open([path UTF8String]);
-            const size_t len = _streamImages.img.width*_streamImages.img.height*sizeof(*_streamImages.img.pixels);
-            f.write((char*)_streamImages.img.pixels, len);
-        lock.unlock();
+        std::ofstream f;
+        f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        f.open([path UTF8String]);
+        const size_t pixelCount = _rawImage.img.width*_rawImage.img.height;
+        f.write((char*)_rawImage.pixels, pixelCount*sizeof(*_rawImage.pixels));
     
     } else if (ext == "png") {
-        id image = [[_mainView imageLayer] CGImage];
-        Assert(image, return);
+        id img = _imagePipelineManager->renderer.createCGImage(_imagePipelineManager->result.txt);
+        Assert(img, return);
         
-        id imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
+        id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
             (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
-        CGImageDestinationAddImage((CGImageDestinationRef)imageDest, (CGImageRef)image, nullptr);
-        CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
+        CGImageDestinationAddImage((CGImageDestinationRef)imgDest, (CGImageRef)img, nullptr);
+        CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
     }
 }
 
@@ -1039,19 +886,23 @@ static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uin
         (uintmax_t)_pixConfig.analogGain]];
 }
 
-- (IBAction)_whiteBalanceIdentityButtonAction:(id)sender {
-    _imgOpts.whiteBalance = { 1.,1.,1. };
-    [self _updateImageOptions];
+- (IBAction)_illumIdentityButtonAction:(id)sender {
+    auto& opts = _imagePipelineManager->options;
+    opts.illum = { 1.,1.,1. };
+    [self _updateInspectorUI];
+    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (IBAction)_colorMatrixIdentityButtonAction:(id)sender {
+    auto& opts = _imagePipelineManager->options;
     [self _setColorCheckersEnabled:false];
-    _imgOpts.colorMatrix = {
+    opts.colorMatrix = {
         1.,0.,0.,
         0.,1.,0.,
         0.,0.,1.
     };
-    [self _updateImageOptions];
+    [self _updateInspectorUI];
+    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (void)_setColorCheckersEnabled:(bool)en {
@@ -1076,68 +927,72 @@ static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uin
 }
 
 - (IBAction)_imageOptionsAction:(id)sender {
-    _imgOpts.defringe.en = ([_defringeCheckbox state]==NSControlStateValueOn);
-    _imgOpts.defringe.opts.rounds = (uint32_t)[_defringeRoundsSlider intValue];
-    _imgOpts.defringe.opts.αthresh = [_defringeαThresholdSlider floatValue];
-    _imgOpts.defringe.opts.γthresh = [_defringeγThresholdSlider floatValue];
-    _imgOpts.defringe.opts.γfactor = [_defringeγFactorSlider floatValue];
-    _imgOpts.defringe.opts.δfactor = [_defringeδFactorSlider floatValue];
+    auto& opts = _imagePipelineManager->options;
+    opts.defringe.en = ([_defringeCheckbox state]==NSControlStateValueOn);
+    opts.defringe.opts.rounds = (uint32_t)[_defringeRoundsSlider intValue];
+    opts.defringe.opts.αthresh = [_defringeαThresholdSlider floatValue];
+    opts.defringe.opts.γthresh = [_defringeγThresholdSlider floatValue];
+    opts.defringe.opts.γfactor = [_defringeγFactorSlider floatValue];
+    opts.defringe.opts.δfactor = [_defringeδFactorSlider floatValue];
     
-    _imgOpts.reconstructHighlights.en = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
+    opts.reconstructHighlights.en = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
     
-    _imgOpts.debayerLMMSE.applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn);
+    opts.debayerLMMSE.applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn);
     
-    _imgOpts.exposure = [_exposureSlider floatValue];
-    _imgOpts.brightness = [_brightnessSlider floatValue];
-    _imgOpts.contrast = [_contrastSlider floatValue];
-    _imgOpts.saturation = [_saturationSlider floatValue];
+    opts.exposure = [_exposureSlider floatValue];
+    opts.brightness = [_brightnessSlider floatValue];
+    opts.contrast = [_contrastSlider floatValue];
+    opts.saturation = [_saturationSlider floatValue];
     
-    _imgOpts.localContrast.en = ([_localContrastCheckbox state]==NSControlStateValueOn);
-    _imgOpts.localContrast.amount = [_localContrastAmountSlider floatValue];
-    _imgOpts.localContrast.radius = [_localContrastRadiusSlider floatValue];
+    opts.localContrast.en = ([_localContrastCheckbox state]==NSControlStateValueOn);
+    opts.localContrast.amount = [_localContrastAmountSlider floatValue];
+    opts.localContrast.radius = [_localContrastRadiusSlider floatValue];
     
-    [self _updateImageOptions];
+    [[_mainView imageLayer] setNeedsDisplay];
+    
+//    [self _updateInspectorUI];
 }
 
-- (void)_updateImageOptions {
-    // White balance matrix
+- (void)_updateInspectorUI {
+    const auto& opts = _imagePipelineManager->options;
+    // Illuminant matrix
     {
-        [_whiteBalanceTextField setStringValue:[NSString stringWithFormat:
-            @"%f %f %f", _imgOpts.whiteBalance[0], _imgOpts.whiteBalance[1], _imgOpts.whiteBalance[2]
-        ]];
+        if (_imagePipelineManager->options.illum) {
+            [self _updateIllumEstTextField:*_imagePipelineManager->options.illum];
+        }
     }
     
     // Defringe
     {
-        [_defringeCheckbox setState:(_imgOpts.defringe.en ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_defringeCheckbox setState:(opts.defringe.en ? NSControlStateValueOn : NSControlStateValueOff)];
         
-        [_defringeRoundsSlider setIntValue:_imgOpts.defringe.opts.rounds];
-        [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)_imgOpts.defringe.opts.rounds]];
+        [_defringeRoundsSlider setIntValue:opts.defringe.opts.rounds];
+        [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.defringe.opts.rounds]];
         
-        [_defringeαThresholdSlider setFloatValue:_imgOpts.defringe.opts.αthresh];
-        [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.defringe.opts.αthresh]];
+        [_defringeαThresholdSlider setFloatValue:opts.defringe.opts.αthresh];
+        [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.αthresh]];
         
-        [_defringeγThresholdSlider setFloatValue:_imgOpts.defringe.opts.γthresh];
-        [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.defringe.opts.γthresh]];
+        [_defringeγThresholdSlider setFloatValue:opts.defringe.opts.γthresh];
+        [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.γthresh]];
         
-        [_defringeγFactorSlider setFloatValue:_imgOpts.defringe.opts.γfactor];
+        [_defringeγFactorSlider setFloatValue:opts.defringe.opts.γfactor];
         [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
-            _imgOpts.defringe.opts.γfactor]];
+            opts.defringe.opts.γfactor]];
         
-        [_defringeδFactorSlider setFloatValue:_imgOpts.defringe.opts.δfactor];
+        [_defringeδFactorSlider setFloatValue:opts.defringe.opts.δfactor];
         [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
-            _imgOpts.defringe.opts.δfactor]];
+            opts.defringe.opts.δfactor]];
     }
     
     // Reconstruct Highlights
     {
-        [_reconstructHighlightsCheckbox setState:(_imgOpts.reconstructHighlights.en ?
+        [_reconstructHighlightsCheckbox setState:(opts.reconstructHighlights.en ?
             NSControlStateValueOn : NSControlStateValueOff)];
     }
     
     // LMMSE
     {
-        [_debayerLMMSEGammaCheckbox setState:(_imgOpts.debayerLMMSE.applyGamma ?
+        [_debayerLMMSEGammaCheckbox setState:(opts.debayerLMMSE.applyGamma ?
             NSControlStateValueOn : NSControlStateValueOff)];
     }
     
@@ -1147,85 +1002,127 @@ static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uin
             @"%f %f %f\n"
             @"%f %f %f\n"
             @"%f %f %f\n",
-            _imgOpts.colorMatrix.at(0,0), _imgOpts.colorMatrix.at(0,1), _imgOpts.colorMatrix.at(0,2),
-            _imgOpts.colorMatrix.at(1,0), _imgOpts.colorMatrix.at(1,1), _imgOpts.colorMatrix.at(1,2),
-            _imgOpts.colorMatrix.at(2,0), _imgOpts.colorMatrix.at(2,1), _imgOpts.colorMatrix.at(2,2)
+            opts.colorMatrix.at(0,0), opts.colorMatrix.at(0,1), opts.colorMatrix.at(0,2),
+            opts.colorMatrix.at(1,0), opts.colorMatrix.at(1,1), opts.colorMatrix.at(1,2),
+            opts.colorMatrix.at(2,0), opts.colorMatrix.at(2,1), opts.colorMatrix.at(2,2)
         ]];
     }
     
     {
-        [_exposureSlider setFloatValue:_imgOpts.exposure];
-        [_exposureLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.exposure]];
+        [_exposureSlider setFloatValue:opts.exposure];
+        [_exposureLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.exposure]];
         
-        [_brightnessSlider setFloatValue:_imgOpts.brightness];
-        [_brightnessLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.brightness]];
+        [_brightnessSlider setFloatValue:opts.brightness];
+        [_brightnessLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.brightness]];
         
-        [_contrastSlider setFloatValue:_imgOpts.contrast];
-        [_contrastLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.contrast]];
+        [_contrastSlider setFloatValue:opts.contrast];
+        [_contrastLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.contrast]];
         
-        [_saturationSlider setFloatValue:_imgOpts.saturation];
-        [_saturationLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.saturation]];
+        [_saturationSlider setFloatValue:opts.saturation];
+        [_saturationLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.saturation]];
     }
     
     // Local contrast
     {
-        [_localContrastCheckbox setState:(_imgOpts.localContrast.en ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_localContrastCheckbox setState:(opts.localContrast.en ? NSControlStateValueOn : NSControlStateValueOff)];
         
-        [_localContrastAmountSlider setFloatValue:_imgOpts.localContrast.amount];
-        [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.localContrast.amount]];
+        [_localContrastAmountSlider setFloatValue:opts.localContrast.amount];
+        [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.amount]];
         
-        [_localContrastRadiusSlider setFloatValue:_imgOpts.localContrast.radius];
-        [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", _imgOpts.localContrast.radius]];
+        [_localContrastRadiusSlider setFloatValue:opts.localContrast.radius];
+        [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.radius]];
     }
     
-    [[_mainView imageLayer] setOptions:_imgOpts];
+//    [[_mainView imageLayer] setOptions:opts];
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {
-    Mat<double,9,1> highlightFactor(
-        [_highlightFactorR0Slider doubleValue],
-        [_highlightFactorR1Slider doubleValue],
-        [_highlightFactorR2Slider doubleValue],
-        
-        [_highlightFactorG0Slider doubleValue],
-        [_highlightFactorG1Slider doubleValue],
-        [_highlightFactorG2Slider doubleValue],
-        
-        [_highlightFactorB0Slider doubleValue],
-        [_highlightFactorB1Slider doubleValue],
-        [_highlightFactorB2Slider doubleValue]
-    );
-    
-//    0.924
-//    1.368
-//    1.431
+//    Mat<double,9,1> highlightFactor(
+//        [_highlightFactorR0Slider doubleValue],
+//        [_highlightFactorR1Slider doubleValue],
+//        [_highlightFactorR2Slider doubleValue],
+//        
+//        [_highlightFactorG0Slider doubleValue],
+//        [_highlightFactorG1Slider doubleValue],
+//        [_highlightFactorG2Slider doubleValue],
+//        
+//        [_highlightFactorB0Slider doubleValue],
+//        [_highlightFactorB1Slider doubleValue],
+//        [_highlightFactorB2Slider doubleValue]
+//    );
 //    
-//    0.959
-//    1.455
-//    1.491
+//    [self _updateInspectorUI];
+//    
+//    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[0]]];
+//    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[1]]];
+//    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[2]]];
+//    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[3]]];
+//    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[4]]];
+//    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[5]]];
+//    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[6]]];
+//    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[7]]];
+//    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[8]]];
+//    [self mainViewSampleRectChanged:nil];
+}
+
+- (void)_updateIllumEstTextField:(const Color<ColorSpace::Raw>&)illumEst {
+    [_illumTextField setStringValue:[NSString stringWithFormat:
+        @"%f %f %f", illumEst[0], illumEst[1], illumEst[2]
+    ]];
+}
+
+- (void)_renderCallback {
+    // Commit and wait so we can read the sample buffers
+    _imagePipelineManager->renderer.commitAndWait();
     
-    _imgOpts.reconstructHighlights.badPixelFactors = {highlightFactor[0], highlightFactor[1], highlightFactor[2]};
-    _imgOpts.reconstructHighlights.goodPixelFactors = {highlightFactor[3], highlightFactor[4], highlightFactor[5]};
-    [self _updateImageOptions];
+    // If we weren't overriding the illuminant, update the inspector
+    // with the estimated illuminant from the image
+    if (!_imagePipelineManager->options.illum) {
+        [self _updateIllumEstTextField:_imagePipelineManager->result.illumEst];
+    }
     
-    [_highlightFactorR0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[0]]];
-    [_highlightFactorR1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[1]]];
-    [_highlightFactorR2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[2]]];
-    [_highlightFactorG0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[3]]];
-    [_highlightFactorG1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[4]]];
-    [_highlightFactorG2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[5]]];
-    [_highlightFactorB0Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[6]]];
-    [_highlightFactorB1Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[7]]];
-    [_highlightFactorB2Label setStringValue:[NSString stringWithFormat:@"%.3f", highlightFactor[8]]];
-    [self mainViewSampleRectChanged:nil];
+    [self _updateSampleColorsUI];
 }
 
 #pragma mark - MainViewDelegate
 
 - (void)mainViewSampleRectChanged:(MainView*)v {
-    const CGRect sampleRect = [_mainView sampleRect];
-    [[_mainView imageLayer] setSampleRect:sampleRect];
-    [self _tagHandleSampleRectChanged];
+    CGRect rect = [_mainView sampleRect];
+    rect.origin.x *= _rawImage.img.width;
+    rect.origin.y *= _rawImage.img.height;
+    rect.size.width *= _rawImage.img.width;
+    rect.size.height *= _rawImage.img.height;
+    SampleRect sampleRect = {
+        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)_rawImage.img.width),
+        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)_rawImage.img.width),
+        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_rawImage.img.height),
+        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_rawImage.img.height),
+    };
+    
+    if (sampleRect.left == sampleRect.right) sampleRect.right++;
+    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
+    
+    _imagePipelineManager->options.sampleRect = sampleRect;
+    [_imagePipelineManager render];
+    
+//    sampleOpts.raw =
+//        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+//    
+//    sampleOpts.xyzD50 =
+//        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+//    
+//    sampleOpts.srgb =
+//        _state.renderer.bufferCreate(sizeof(simd::float3)*std::max(1, sampleRect.count()));
+//    
+//    [self setNeedsDisplay];
+//}
+//    
+//    
+//    
+//    
+//    _imagePipelineManager->options.sampleRect = sampleRect;
+//    [[_mainView imageLayer] setSampleRect:sampleRect];
+//    [self _tagHandleSampleRectChanged];
 }
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
@@ -1233,49 +1130,49 @@ static Color<ColorSpace::Raw> sampleImageCircle(ImageLayerTypes::Image& img, uin
 }
 
 - (void)_updateColorMatrix {
-    auto points = [_mainView colorCheckerPositions];
-    assert(points.size() == ColorChecker::Count);
-    
-    Mat<double,ColorChecker::Count,3> A; // Colors that we have
-    {
-        auto lock = std::unique_lock(_streamImages.lock);
-        size_t y = 0;
-        for (const CGPoint& p : points) {
-            Color<ColorSpace::Raw> c = sampleImageCircle(_streamImages.img,
-                round(p.x*_streamImages.img.width),
-                round(p.y*_streamImages.img.height),
-                _colorCheckerCircleRadius);
-            A.at(y,0) = c[0];
-            A.at(y,1) = c[1];
-            A.at(y,2) = c[2];
-            y++;
-        }
-    }
-    
-    Mat<double,ColorChecker::Count,3> b; // Colors that we want
-    {
-        size_t y = 0;
-        for (const auto& c : ColorChecker::Colors) {
-            
-            const Color<ColorSpace::ProPhotoRGB> ppc(c);
-            b.at(y,0) = ppc[0];
-            b.at(y,1) = ppc[1];
-            b.at(y,2) = ppc[2];
-            
-//            // Convert the color from SRGB.D65 -> XYZ.D50
-//            const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
-//            b.at(y,0) = cxyz[0];
-//            b.at(y,1) = cxyz[1];
-//            b.at(y,2) = cxyz[2];
-            
-            y++;
-        }
-    }
-    
-    // Solve Ax=b for the color matrix
-    _imgOpts.colorMatrix = A.solve(b).trans();
-    [self _updateImageOptions];
-    [self _prefsSetColorCheckerPositions:points];
+//    auto points = [_mainView colorCheckerPositions];
+//    assert(points.size() == ColorChecker::Count);
+//    
+//    Mat<double,ColorChecker::Count,3> A; // Colors that we have
+//    {
+//        auto lock = std::unique_lock(_streamImages.lock);
+//        size_t y = 0;
+//        for (const CGPoint& p : points) {
+//            Color<ColorSpace::Raw> c = sampleImageCircle(_streamImages.img,
+//                round(p.x*_streamImages.img.width),
+//                round(p.y*_streamImages.img.height),
+//                _colorCheckerCircleRadius);
+//            A.at(y,0) = c[0];
+//            A.at(y,1) = c[1];
+//            A.at(y,2) = c[2];
+//            y++;
+//        }
+//    }
+//    
+//    Mat<double,ColorChecker::Count,3> b; // Colors that we want
+//    {
+//        size_t y = 0;
+//        for (const auto& c : ColorChecker::Colors) {
+//            
+//            const Color<ColorSpace::ProPhotoRGB> ppc(c);
+//            b.at(y,0) = ppc[0];
+//            b.at(y,1) = ppc[1];
+//            b.at(y,2) = ppc[2];
+//            
+////            // Convert the color from SRGB.D65 -> XYZ.D50
+////            const Color_XYZ_D50 cxyz = XYZD50FromSRGBD65(c);
+////            b.at(y,0) = cxyz[0];
+////            b.at(y,1) = cxyz[1];
+////            b.at(y,2) = cxyz[2];
+//            
+//            y++;
+//        }
+//    }
+//    
+//    // Solve Ax=b for the color matrix
+//    _imgOpts.colorMatrix = A.solve(b).trans();
+//    [self _updateInspectorUI];
+//    [self _prefsSetColorCheckerPositions:points];
 }
 
 #pragma mark - Prefs
@@ -1544,42 +1441,37 @@ static bool isCFAFile(const fs::path& path) {
     const fs::path imgFilename = fs::path(imgName).replace_extension(".cfa");
     std::cout << imgName.string() << "\n";
     {
-        auto lock = std::unique_lock(_streamImages.lock);
-        Mmap imgData(_TagDir/imgFilename);
-        
-        _streamImages.img.width = 2304;
-        _streamImages.img.height = 1296;
-        
-        const size_t len = _streamImages.img.width*_streamImages.img.height*sizeof(*_streamImages.img.pixels);
-        // Verify that the size of the file matches the the width/height of the image
-        assert(imgData.len() == len);
-        // Verify that our buffer is large enough to fit `len` bytes
-        assert(sizeof(_streamImages.pixelBuf) >= len);
-        memcpy(_streamImages.pixelBuf, imgData.data(), len);
-        [[_mainView imageLayer] setImage:_streamImages.img];
+        Mmap<MetalUtil::ImagePixel> imgData(_TagDir/imgFilename);
+        const size_t pixelCount = _rawImage.img.width*_rawImage.img.height;
+        // Verify that the size of the file matches the size of the image
+        assert(imgData.len() == pixelCount);
+        std::copy(imgData.data(), imgData.data()+pixelCount, _rawImage.pixels);
+        [[_mainView imageLayer] setNeedsDisplay];
     }
     
-    const Color<ColorSpace::Raw>& c = illum.c;
-    _imgOpts.whiteBalance = { c[1]/c[0], c[1]/c[1], c[1]/c[2] };
-    [self _updateImageOptions];
+//    const Color<ColorSpace::Raw>& c = illum.c;
+//    _imgOpts.whiteBalance = { c[1]/c[0], c[1]/c[1], c[1]/c[2] };
+//    [self _updateInspectorUI];
     
+    _imagePipelineManager->options.illum = std::nullopt;
+    _imagePipelineManager->options.sampleRect = {};
     [_mainView reset];
 }
 
 - (void)_tagHandleSampleRectChanged {
-//    return;
-    
-    [[_mainView imageLayer] display]; // Crappiness to force the sample to be updated
-    
-    const Color<ColorSpace::Raw> c = [[_mainView imageLayer] sampleRaw];
-    _imgOpts.whiteBalance = { c[1]/c[0], c[1]/c[1], c[1]/c[2] };
-    [self _updateImageOptions];
-    
-//    if (_TagCurrentIllum != _TagIllums.end()) {
-//        Illum& illum = (*_TagCurrentIllum);
-//        illum.c = c;
-//        [self _tagNextImage:nil];
-//    }
+////    return;
+//    
+//    [[_mainView imageLayer] display]; // Crappiness to force the sample to be updated
+//    
+//    const Color<ColorSpace::Raw> c = [[_mainView imageLayer] sampleRaw];
+////    _imgOpts.whiteBalance = { c[1]/c[0], c[1]/c[1], c[1]/c[2] };
+//    [self _updateInspectorUI];
+//    
+////    if (_TagCurrentIllum != _TagIllums.end()) {
+////        Illum& illum = (*_TagCurrentIllum);
+////        illum.c = c;
+////        [self _tagNextImage:nil];
+////    }
 }
 
 @end
