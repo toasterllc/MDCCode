@@ -1152,8 +1152,8 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
     // Commit and wait so we can read the sample buffers
     _imagePipelineManager->renderer.commitAndWait();
     
-    // If we weren't overriding the illuminant, update the inspector
-    // with the estimated illuminant from the image
+    // Update the estimated illuminant in the inspector UI,
+    // if we weren't overriding the illuminant
     if (!_imagePipelineManager->options.illum) {
         [self _updateIllumEstTextField:_imagePipelineManager->result.illumEst];
     }
