@@ -45,7 +45,7 @@ static Mat<double,3,3> CCMInterp(const CCM& lo, const CCM& hi, double cct) {
 }
 
 // Approximate CCT given xy chromaticity, using the Hernandez-Andres equation
-static double CCTFromXYChromaticity(double x, double y) {
+static double CCTForXYChromaticity(double x, double y) {
     const double xe[]   = { 0.3366,      0.3356     };
     const double ye[]   = { 0.1735,      0.1691     };
     const double A0[]   = { -949.86315,  36284.48953};
@@ -78,7 +78,7 @@ static CCM CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
         // Calculate CCT from current xy chromaticity estimate, and interpolate between
         // CCM1 and CCM2 based on that CCT
         CCM ccm2;
-        ccm2.cct = std::clamp(CCTFromXYChromaticity(x,y), CCM1.cct, CCM2.cct);
+        ccm2.cct = std::clamp(CCTForXYChromaticity(x,y), CCM1.cct, CCM2.cct);
         ccm2.m = CCMInterp(CCM1, CCM2, ccm2.cct);
         
         // Convert `illumRaw` to ProPhotoRGB coordinates using ccm2 (the new interpolated CCM)
