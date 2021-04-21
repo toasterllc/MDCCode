@@ -27,12 +27,12 @@ static const Scheme Schemes[] = {
         }
     },
     
-    {
-        .name = "C5",
-        .trials = {
-            #include "TrialsC5.h"
-        }
-    },
+//    {
+//        .name = "C5",
+//        .trials = {
+//            #include "TrialsC5.h"
+//        }
+//    },
     
     {
         .name = "FFCC",
@@ -48,12 +48,12 @@ static const Scheme Schemes[] = {
         }
     },
     
-    {
-        .name = "GrayWorldPreset",
-        .trials = {
-            #include "TrialsGrayWorldPreset.h"
-        }
-    },
+//    {
+//        .name = "GrayWorldPreset",
+//        .trials = {
+//            #include "TrialsGrayWorldPreset.h"
+//        }
+//    },
 };
 
 static double dot(const Color<ColorSpace::Raw>& a, const Color<ColorSpace::Raw>& b) {

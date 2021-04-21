@@ -5,9 +5,9 @@
 #include <cmath>
 #endif
 
-// modulo function that matches MATLAB's implementation.
-// MATLAB's modulo function ensures that the sign of the
-// result matches the sign of the divisor.
+// Mod() is a modulo function that matches MATLAB's implementation,
+// which ensures that the sign of the result matches the sign of
+// the divisor.
 template <typename T>
 T Mod(T a, T b) {
     if (b == 0) return a; // From definition of MATLAB mod()

@@ -90,7 +90,7 @@ public:
     
     void* sectionData(const Section& s) {
         _assertCanRead(s.off, s.size);
-        return (uint8_t*)_mmap.data()+s.off;
+        return _mmap.data()+s.off;
     }
     
 private:
@@ -153,7 +153,7 @@ private:
     T _read(size_t off) {
         _assertCanRead(off, sizeof(T));
         T r;
-        memcpy(&r, (uint8_t*)_mmap.data()+off, sizeof(T));
+        memcpy(&r, _mmap.data()+off, sizeof(T));
         return r;
     }
     
@@ -167,6 +167,6 @@ private:
         return str;
     }
     
-    Mmap _mmap;
+    Mmap<uint8_t> _mmap;
     uint32_t _entryPointAddr = 0;
 };

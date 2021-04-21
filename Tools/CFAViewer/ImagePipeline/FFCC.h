@@ -1,15 +1,18 @@
+#import <Foundation/Foundation.h>
+#import <Metal/Metal.h>
 #import "Mat.h"
+#import "Renderer.h"
+#import "ImagePipelineTypes.h"
 
-namespace FFCC {
+class FFCC {
+public:
     using Mat64 = Mat<double,64,64>;
     using Mat64c = Mat<std::complex<double>,64,64>;
+    using Vec2 = Mat<double,2,1>;
+    using Vec3 = Mat<double,3,1>;
     
     struct Model {
         struct Params {
-            struct {
-                double vonMisesDiagonalEps = 0;
-            } hyperparams;
-            
             struct {
                 size_t binCount = 0;
                 double binSize = 0;
@@ -22,4 +25,11 @@ namespace FFCC {
         Mat64c F_fft[2];
         Mat64 B;
     };
-}
+    
+    static Vec3 Run(
+        const Model& model,
+        CFAViewer::Renderer& renderer,
+        const CFAViewer::ImagePipeline::CFADesc& cfaDesc,
+        id<MTLTexture> raw
+    );
+};

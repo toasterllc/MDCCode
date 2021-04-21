@@ -164,8 +164,18 @@ public:
     }
     
     // Element-wise divide
-    Mat<T,H,W> elmDiv(const Mat<T,H,W>& x) const {
+    Mat<T,H,W> operator/(const Mat<T,H,W>& x) const {
         Mat<T,H,W> r = *this;
+        // There's apparently no BLAS function to do element-wise vector division
+        for (size_t i=0; i<Count; i++) {
+            r._state.vals[i] /= x._state.vals[i];
+        }
+        return r;
+    }
+    
+    // Element-wise divide-assign
+    Mat<T,H,W> operator/=(const Mat<T,H,W>& x) {
+        Mat<T,H,W>& r = *this;
         // There's apparently no BLAS function to do element-wise vector division
         for (size_t i=0; i<Count; i++) {
             r._state.vals[i] /= x._state.vals[i];

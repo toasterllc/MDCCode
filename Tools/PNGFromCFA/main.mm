@@ -45,7 +45,7 @@ static Mat<double,3,3> CCMInterp(const CCM& lo, const CCM& hi, double cct) {
 }
 
 // Approximate CCT given xy chromaticity, using the Hernandez-Andres equation
-static double CCTFromXYChromaticity(double x, double y) {
+static double CCTForXYChromaticity(double x, double y) {
     const double xe[]   = { 0.3366,      0.3356     };
     const double ye[]   = { 0.1735,      0.1691     };
     const double A0[]   = { -949.86315,  36284.48953};
@@ -78,7 +78,7 @@ static CCM CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
         // Calculate CCT from current xy chromaticity estimate, and interpolate between
         // CCM1 and CCM2 based on that CCT
         CCM ccm2;
-        ccm2.cct = std::clamp(CCTFromXYChromaticity(x,y), CCM1.cct, CCM2.cct);
+        ccm2.cct = std::clamp(CCTForXYChromaticity(x,y), CCM1.cct, CCM2.cct);
         ccm2.m = CCMInterp(CCM1, CCM2, ccm2.cct);
         
         // Convert `illumRaw` to ProPhotoRGB coordinates using ccm2 (the new interpolated CCM)
@@ -151,14 +151,14 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     if (imgMmap.len() != len) throw std::runtime_error("invalid length");
     
     // Create a texture from the raw CFA data
-    Renderer::Txt raw = renderer.createTexture(MTLPixelFormatR32Float, width, height);
+    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
     renderer.textureWrite(raw, (uint16_t*)imgMmap.data(), 1, sizeof(uint16_t), MetalUtil::ImagePixelMax);
     
 //    // Reconstruct highlights
 //    {
 //        const simd::float3 badPixelFactors = {1.130, 1.613, 1.000};
 //        const simd::float3 goodPixelFactors = {1.051, 1.544, 1.195};
-//        Renderer::Txt tmp = renderer.createTexture(MTLPixelFormatR32Float, width, height);
+//        Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
 //        renderer.render("CFAViewer::Shader::ImagePipeline::ReconstructHighlights", tmp,
 //            // Buffer args
 //            CFADesc,
@@ -186,11 +186,20 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        );
 //    }
     
-    // LMMSE Debayer
-    Renderer::Txt rgb = renderer.createTexture(MTLPixelFormatRGBA32Float, width, height);
-    {
-        DebayerLMMSE::Run(renderer, CFADesc, false, raw, rgb);
-    }
+    const uint32_t scaledWidth = 384;
+    const uint32_t scaledHeight = (uint32_t)((scaledWidth*[raw height])/[raw width]);
+    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, scaledWidth, scaledHeight);
+    renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgb,
+        CFADesc,
+        raw,
+        rgb
+    );
+    
+//    // LMMSE Debayer
+//    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, width, height);
+//    {
+//        DebayerLMMSE::Run(renderer, CFADesc, false, raw, rgb);
+//    }
     
 //    // Camera raw -> ProPhotoRGB
 //    {
@@ -236,20 +245,20 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        );
 //    }
     
-    // Scale the image
-    {
-        const size_t heightScaled = 256;
-        const size_t widthScaled = (heightScaled*width)/height;
-        Renderer::Txt rgbScaled = renderer.createTexture(MTLPixelFormatRGBA32Float, widthScaled, heightScaled);
-        renderer.render("CFAViewer::Shader::ImagePipeline::Scale", rgbScaled,
-            // Texture args
-            rgb
-        );
-        rgb = std::move(rgbScaled);
-    }
+//    // Scale the image
+//    {
+//        const size_t heightScaled = 216;
+//        const size_t widthScaled = (heightScaled*width)/height;
+//        Renderer::Txt rgbScaled = renderer.textureCreate(MTLPixelFormatRGBA32Float, widthScaled, heightScaled);
+//        renderer.render("CFAViewer::Shader::ImagePipeline::Scale", rgbScaled,
+//            // Texture args
+//            rgb
+//        );
+//        rgb = std::move(rgbScaled);
+//    }
     
     // Final display render pass
-    Renderer::Txt rgba16 = renderer.createTexture(MTLPixelFormatRGBA16Float,
+    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
         [rgb width], [rgb height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     renderer.render("CFAViewer::Shader::ImagePipeline::Display", rgba16,
         // Texture args
@@ -269,7 +278,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
-    const char* args[] = {"", "/Users/dave/Desktop/Old/2021:4:3/CFAViewerSession-All-FilteredGood"};
+    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-384x216"};
     argc = std::size(args);
     argv = args;
     
