@@ -84,7 +84,6 @@ fragment float Copy1To1(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-//    return 1;
     return Sample::R(txt, int2(in.pos.xy));
 }
 
@@ -92,7 +91,6 @@ fragment float4 Copy1To4(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-//    return 1;
     const float c = Sample::R(txt, int2(in.pos.xy));
     return float4(c,c,c,1);
 }
@@ -101,16 +99,7 @@ fragment float4 Copy4To4(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-//    return 1;
     return Sample::RGBA(txt, int2(in.pos.xy));
-}
-
-fragment float4 Test(
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    return Sample::RGBA(txt, int2(in.pos.xy));
-    return float4(.2,.3,.4,.5);
 }
 
 } // namespace Renderer

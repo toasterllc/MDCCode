@@ -182,11 +182,6 @@ struct PixConfig {
         [[_mainView imageLayer] setNeedsDisplay];
     }
     
-//    [[_mainView imageLayer] setDataChangedHandler:^(ImageLayer*) {
-//        [weakSelf _updateHistograms];
-//        [weakSelf _updateSampleColors];
-//    }];
-    
     _imagePipelineManager->options = {
         .rawMode = false,
         
@@ -574,33 +569,9 @@ Mat<double,H,W> _matFromString(const std::string& str) {
 
 #pragma mark - Sample
 
-- (void)_updateSampleColors {
-//    // Make sure we're not on the main thread, since calculating the average sample can take some time
-//    assert(![NSThread isMainThread]);
-//    
-//    auto sampleRaw = [[_mainView imageLayer] sampleRaw];
-//    auto sampleXYZD50 = [[_mainView imageLayer] sampleXYZD50];
-//    auto sampleSRGB = [[_mainView imageLayer] sampleSRGB];
-//    
-//    CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
-//        self->_sampleRaw = sampleRaw;
-//        self->_sampleXYZD50 = sampleXYZD50;
-//        self->_sampleSRGB = sampleSRGB;
-//        [self _updateSampleColorsText];
-//    });
-//    CFRunLoopWakeUp(CFRunLoopGetMain());
-}
-
 static Mat<double,3,1> _averageRaw(const SampleRect& rect, const CFADesc& cfaDesc, id<MTLBuffer> buf) {
-//    return {};
-//    // Copy _state.sampleOpts.raw locally
-//    auto lock = std::unique_lock(_state.lock);
-//        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.raw);
-//        auto rect = _state.sampleOpts.rect;
-//    lock.unlock();
-    
     const simd::float3* vals = (simd::float3*)[buf contents];
-    assert([buf length]/sizeof(simd::float3) >= rect.count());
+    assert([buf length] >= rect.count()*sizeof(simd::float3));
     
     size_t i = 0;
     Mat<double,3,1> r;
@@ -623,14 +594,8 @@ static Mat<double,3,1> _averageRaw(const SampleRect& rect, const CFADesc& cfaDes
 }
 
 static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
-    // Copy _state.sampleOpts.xyzD50 locally
-//    auto lock = std::unique_lock(_state.lock);
-//        auto vals = copyMTLBuffer<simd::float3>(_state.sampleOpts.xyzD50);
-//        auto rect = _state.sampleOpts.rect;
-//    lock.unlock();
-    
     const simd::float3* vals = (simd::float3*)[buf contents];
-    assert([buf length]/sizeof(simd::float3) >= rect.count());
+    assert([buf length] >= rect.count()*sizeof(simd::float3));
     
     Mat<double,3,1> r;
     size_t i = 0;
@@ -650,6 +615,8 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
     _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);
     _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
     _sampleSRGB = _averageRGB(rect, sampleBufs.srgb);
+    
+    NSLog(@"%d %d", rect.left, rect.top);
     
     [_colorText_Raw setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];

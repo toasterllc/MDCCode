@@ -183,7 +183,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 
 - (void)_setZoomScale:(CGFloat)zoomScale anchor:(CGPoint)anchor {
     const CGFloat MinScale = 1;
-    const CGFloat MaxScale = 50;
+    const CGFloat MaxScale = 200;
     
     _zoomScale = std::clamp(zoomScale, MinScale, MaxScale);
     
@@ -229,18 +229,26 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 
 #pragma mark - Overrides
 
+static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) {
+    const CGPoint off = {
+        -(1/(2*[win backingScaleFactor])),
+        +(1/(2*[win backingScaleFactor]))
+    };
+    const CGPoint pt = [layer convertPoint:[ev locationInWindow]
+        fromLayer:[[win contentView] layer]];
+    return {pt.x+off.x, pt.y+off.y};
+}
+
 - (void)mouseDown:(NSEvent*)ev {
     NSWindow* win = [self window];
-    const CGPoint p = [_imageLayer convertPoint:[ev locationInWindow]
-        fromLayer:[[win contentView] layer]];
+    const CGPoint p = eventPositionInLayer(win, _imageLayer, ev);
     
     // Handle circle being clicked
     if (_colorCheckersEnabled) {
         CAShapeLayer* circle = [self _findColorCheckerCircle:p];
         if (circle) {
             TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
-                const CGPoint p = [_imageLayer convertPoint:[ev locationInWindow]
-                    fromLayer:[[win contentView] layer]];
+                const CGPoint p = eventPositionInLayer(win, _imageLayer, ev);
                 [circle setPosition:p];
             });
             
@@ -252,8 +260,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     // Otherwise, handle sampler functionality
     const CGPoint start = p;
     TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
-        const CGPoint end = [_imageLayer convertPoint:[ev locationInWindow]
-            fromLayer:[[win contentView] layer]];
+        const CGPoint end = eventPositionInLayer(win, _imageLayer, ev);
         CGRect frame = {start, {end.x-start.x, end.y-start.y}};
         if ([ev modifierFlags] & NSEventModifierFlagShift) {
             frame.size.height = (frame.size.height >= 0 ? 1 : -1) * fabs(frame.size.width);

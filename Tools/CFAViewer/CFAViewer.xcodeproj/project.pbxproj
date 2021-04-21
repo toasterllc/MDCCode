@@ -14,7 +14,6 @@
 		55460A1C2603CEAF0037A5AC /* DebayerLMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A1B2603CEAF0037A5AC /* DebayerLMMSE.metal */; };
 		55460A3326047ED60037A5AC /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3226047ED60037A5AC /* Saturation.metal */; };
 		55460A3626049F0C0037A5AC /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3526049F0C0037A5AC /* LocalContrast.metal */; };
-		55460A382604A6100037A5AC /* ImageLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A372604A6100037A5AC /* ImageLayer.metal */; };
 		55460A3B260AC5A00037A5AC /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */; };
 		55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55671A37257E984E00C1CDA4 /* IOKit.framework */; };
 		559C33D22613C111001903FD /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 559C33D02613C111001903FD /* Renderer.metal */; };
@@ -52,7 +51,6 @@
 		55460A3226047ED60037A5AC /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
 		55460A3426049ED00037A5AC /* LocalContrast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55460A3526049F0C0037A5AC /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
-		55460A372604A6100037A5AC /* ImageLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageLayer.metal; sourceTree = "<group>"; };
 		55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
@@ -217,7 +215,6 @@
 				55EBCC9B2589E5A00089A441 /* MetalUtil.h */,
 				55EBCC86258966FE0089A441 /* ImageLayer.h */,
 				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
-				55460A372604A6100037A5AC /* ImageLayer.metal */,
 				55AE80CB262F5B3100BA227C /* ImagePipelineManager.h */,
 				55AE80CC262F5B3100BA227C /* ImagePipelineManager.mm */,
 				559C33D12613C111001903FD /* Renderer.h */,
@@ -332,7 +329,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				55EBCC922589C3570089A441 /* HistogramLayer.mm in Sources */,
-				55460A382604A6100037A5AC /* ImageLayer.metal in Sources */,
 				55E98EB925A920890062B458 /* HistogramView.mm in Sources */,
 				55460A05260326180037A5AC /* HistogramLayerShader.metal in Sources */,
 				55B9746624C504E2000B2633 /* main.m in Sources */,
