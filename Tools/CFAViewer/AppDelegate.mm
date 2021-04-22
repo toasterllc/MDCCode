@@ -181,6 +181,7 @@ struct PixConfig {
     
     // /Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa
     [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330-166-384x216/outdoor_5pm_43.cfa"}];
     
     _imagePipelineManager->options = {
         .rawMode = false,
@@ -1087,7 +1088,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
     const Mat<double,3,1> whiteBalance(factor/illum[0], factor/illum[1], factor/illum[2]);
     
-    constexpr size_t H = ColorChecker::Count+1;
+    constexpr size_t H = ColorChecker::Count;
     Mat<double,H,3> A; // Colors that we have
     {
         size_t y = 0;
@@ -1119,20 +1120,20 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         }
     }
     
-    // Constrain the least squares regression so that each row sums to 1
-    // in the resulting 3x3 color matrix.
-    //
-    // How: Use the same large number in a single row of `A` and `b`
-    // Why: We don't want the CCM, which is applied after white balancing,
-    //      to disturb the white balance. (Ie, a neutral color before
-    //      applying the CCM should be neutral after applying the CCM.)
-    //      This is accomplished by ensuring that each row of the CCM
-    //      sums to 1.
-    for (int i=0; i<3; i++) {
-        const double λ = 1e8;
-        A.at(H-1,i) = λ;
-        b.at(H-1,i) = λ;
-    }
+//    // Constrain the least squares regression so that each row sums to 1
+//    // in the resulting 3x3 color matrix.
+//    //
+//    // How: Use the same large number in a single row of `A` and `b`
+//    // Why: We don't want the CCM, which is applied after white balancing,
+//    //      to disturb the white balance. (Ie, a neutral color before
+//    //      applying the CCM should be neutral after applying the CCM.)
+//    //      This is accomplished by ensuring that each row of the CCM
+//    //      sums to 1.
+//    for (int i=0; i<3; i++) {
+//        const double λ = 1e8;
+//        A.at(H-1,i) = λ;
+//        b.at(H-1,i) = λ;
+//    }
     
     std::cout << A.str() << "\n\n";
     std::cout << b.str() << "\n\n";
