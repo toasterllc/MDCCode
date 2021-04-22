@@ -36,9 +36,9 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
     
     // Load `raw`
     {
-        const size_t samplesPerPixel = 1;
-        const size_t bytesPerSample = sizeof(*rawImg.pixels);
-        renderer.textureWrite(raw, rawImg.pixels, samplesPerPixel, bytesPerSample, MetalUtil::ImagePixelMax);
+        constexpr size_t SamplesPerPixel = 1;
+        constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
+        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, MetalUtil::ImagePixelMax);
     }
     
     const size_t sampleBufLen = sizeof(simd::float3) * std::max(1, opts.sampleRect.count());
