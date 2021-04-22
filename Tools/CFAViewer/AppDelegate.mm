@@ -1141,7 +1141,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     auto& opts = _imagePipelineManager->options;
     Mat<double,3,3> colorMatrix = A.solve(b).trans();
     
-    // Ensure that each row of `colorMatrix` sums to 1. See comment above.
+    // Force each row of `colorMatrix` sums to 1. See comment above.
     const Mat<double,3,1> rowSum = colorMatrix.sumRows();
     for (int y=0; y<3; y++) {
         for (int x=0; x<3; x++) {
@@ -1149,7 +1149,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         }
     }
     
-    opts.colorMatrix = A.solve(b).trans();
+    opts.colorMatrix = colorMatrix;
     [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];
     
