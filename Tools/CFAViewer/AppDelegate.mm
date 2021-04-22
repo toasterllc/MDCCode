@@ -143,6 +143,8 @@ struct PixConfig {
         bool running = false;
         bool cancel = false;
         STApp::Pixel pixels[2200*2200];
+        uint32_t width = 0;
+        uint32_t height = 0;
     } _streamImagesThread;
     
     struct {
@@ -418,143 +420,162 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     }
 }
 
+- (void)_handleStreamImage {
+    assert([NSThread isMainThread]);
+    
+    // Copy the image from `_streamImagesThread` into `_rawImage`
+    auto lock = std::unique_lock(_streamImagesThread.lock);
+        _rawImage.img.width = _streamImagesThread.width;
+        _rawImage.img.height = _streamImagesThread.height;
+        const size_t pixelCount = _streamImagesThread.width*_streamImagesThread.height;
+        std::copy(_streamImagesThread.pixels, _streamImagesThread.pixels+pixelCount, _rawImage.pixels);
+    lock.unlock();
+    
+    [[_mainView imageLayer] setNeedsDisplay];
+}
+
 - (void)_threadStreamImages:(MDCDevice)device {
-//    using namespace STApp;
-//    assert(device);
-//    
-//    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
-//    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
-//    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
-//    
-//    ImageLayer* layer = [_mainView imageLayer];
-//    try {
-//        // Reset the device to put it back in a pre-defined state
-//        device.reset();
-//        
-//        float intTime = .5;
-//        const size_t tmpPixelBufLen = std::size(_streamImages.pixelBuf);
-//        auto tmpPixelBuf = std::make_unique<STApp::Pixel[]>(tmpPixelBufLen);
-//        uint32_t saveIdx = 1;
-//        for (uint32_t i=0;; i++) {
-//            // Capture an image, timing-out after 1s so we can check the device status,
-//            // in case it reports a streaming error
-//            const STApp::PixHeader pixStatus = device.pixCapture(tmpPixelBuf.get(), tmpPixelBufLen, 1000);
+    using namespace STApp;
+    assert(device);
+    
+    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
+    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
+    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
+    
+    try {
+        // Reset the device to put it back in a pre-defined state
+        device.reset();
+        
+        float intTime = .5;
+        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
+        auto tmpPixels = std::make_unique<STApp::Pixel[]>(tmpPixelsCap);
+        uint32_t saveIdx = 1;
+        for (uint32_t i=0;; i++) {
+            // Capture an image, timing-out after 1s so we can check the device status,
+            // in case it reports a streaming error
+            const STApp::PixHeader pixStatus = device.pixCapture(tmpPixels.get(), tmpPixelsCap, 1000);
+            const size_t pixelCount = pixStatus.width*pixStatus.height;
+            
+            auto lock = std::unique_lock(_streamImagesThread.lock);
+                // Check if we've been cancelled
+                if (_streamImagesThread.cancel) break;
+                
+                // Copy the image into our persistent buffer
+                std::copy(tmpPixels.get(), tmpPixels.get()+pixelCount, _streamImagesThread.pixels);
+                _streamImagesThread.width = pixStatus.width;
+                _streamImagesThread.height = pixStatus.height;
+            lock.unlock();
+            
+            // Invoke -_handleStreamImage on the main thread.
+            // Don't use dispatch_async here, because dispatch_async's don't get drained
+            // while the runloop is run recursively, eg during mouse tracking.
+            __weak auto weakSelf = self;
+            CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+                [weakSelf _handleStreamImage];
+            });
+            CFRunLoopWakeUp(CFRunLoopGetMain());
+            
+            if (!(i % 10)) {
+                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
+                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
+                std::ofstream f;
+                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+                f.open([imagePath UTF8String]);
+                f.write((char*)_streamImagesThread.pixels, pixelCount*sizeof(STApp::Pixel));
+                saveIdx++;
+                printf("Saved %s\n", [imagePath UTF8String]);
+            }
+            
+            // Adjust exposure
+            const uint32_t SubsampleFactor = 16;
+            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
+            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
+            const float highlightFraction = (float)highlightCount/pixelCount;
+            const float shadowFraction = (float)shadowCount/pixelCount;
+//            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+            
+            const float diff = shadowFraction-highlightFraction;
+            const float absdiff = fabs(diff);
+            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
+            
+            if (absdiff > .01) {
+                bool updateIntTime = false;
+                if (shadowFraction > highlightFraction) {
+                    // Increase exposure
+                    intTime *= adjust;
+                    updateIntTime = true;
+                
+                } else if (highlightFraction > shadowFraction) {
+                    // Decrease exposure
+                    intTime *= adjust;
+                    updateIntTime = true;
+                }
+                
+                intTime = std::clamp(intTime, 0.001f, 1.f);
+                const float gain = intTime/3;
+                
+                printf("adjust:%f\n"
+                       "shadowFraction:%f\n"
+                       "highlightFraction:%f\n"
+                       "intTime: %f\n\n",
+                       adjust,
+                       shadowFraction,
+                       highlightFraction,
+                       intTime
+                );
+                
+                if (updateIntTime) {
+                    device.pixI2CWrite(0x3012, intTime*16384);
+                    device.pixI2CWrite(0x3060, gain*63);
+                }
+            }
+            
+            
+            
+//            const float ShadowAdjustThreshold = 0.1;
+//            const float HighlightAdjustThreshold = 0.1;
+//            const float AdjustDelta = 1.1;
+//            bool updateIntTime = false;
+//            if (shadowFraction > ShadowAdjustThreshold) {
+//                // Increase exposure
+//                intTime *= AdjustDelta;
+//                updateIntTime = true;
 //            
-//            auto lock = std::unique_lock(_streamImages.lock);
-//                // Check if we've been cancelled
-//                if (_streamImages.cancel) break;
-//                
-//                // Copy the image into our persistent buffer
-//                const size_t len = pixStatus.width*pixStatus.height*sizeof(STApp::Pixel);
-//                memcpy(_streamImages.img.pixels, tmpPixelBuf.get(), len);
-//                _streamImages.img.width = pixStatus.width;
-//                _streamImages.img.height = pixStatus.height;
-//            lock.unlock();
-//            
-//            [layer setNeedsDisplay];
-//            
-//            if (!(i % 10)) {
-//                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
-//                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
-//                std::ofstream f;
-//                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-//                f.open([imagePath UTF8String]);
-//                f.write((char*)_streamImages.img.pixels, len);
-//                saveIdx++;
-//                printf("Saved %s\n", [imagePath UTF8String]);
+//            } else if (highlightFraction > HighlightAdjustThreshold) {
+//                // Decrease exposure
+//                intTime /= AdjustDelta;
+//                updateIntTime = true;
 //            }
 //            
-//            // Adjust exposure
-//            const uint32_t SubsampleFactor = 16;
-//            const uint32_t pixelCount = (uint32_t)pixStatus.width*(uint32_t)pixStatus.height;
-//            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
-//            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
-//            const float highlightFraction = (float)highlightCount/pixelCount;
-//            const float shadowFraction = (float)shadowCount/pixelCount;
-////            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+//            intTime = std::clamp(intTime, 0.f, 1.f);
+//            const float gain = intTime/3;
 //            
-//            const float diff = shadowFraction-highlightFraction;
-//            const float absdiff = fabs(diff);
-//            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
-//            
-//            if (absdiff > .01) {
-//                bool updateIntTime = false;
-//                if (shadowFraction > highlightFraction) {
-//                    // Increase exposure
-//                    intTime *= adjust;
-//                    updateIntTime = true;
-//                
-//                } else if (highlightFraction > shadowFraction) {
-//                    // Decrease exposure
-//                    intTime *= adjust;
-//                    updateIntTime = true;
-//                }
-//                
-//                intTime = std::clamp(intTime, 0.001f, 1.f);
-//                const float gain = intTime/3;
-//                
-//                printf("adjust:%f\n"
-//                       "shadowFraction:%f\n"
-//                       "highlightFraction:%f\n"
-//                       "intTime: %f\n\n",
-//                       adjust,
-//                       shadowFraction,
-//                       highlightFraction,
-//                       intTime
-//                );
-//                
-//                if (updateIntTime) {
-//                    device.pixI2CWrite(0x3012, intTime*16384);
-//                    device.pixI2CWrite(0x3060, gain*63);
-//                }
+//            if (updateIntTime) {
+//                device.pixI2CWrite(0x3012, intTime*16384);
+//                device.pixI2CWrite(0x3060, gain*63);
 //            }
-//            
-//            
-//            
-////            const float ShadowAdjustThreshold = 0.1;
-////            const float HighlightAdjustThreshold = 0.1;
-////            const float AdjustDelta = 1.1;
-////            bool updateIntTime = false;
-////            if (shadowFraction > ShadowAdjustThreshold) {
-////                // Increase exposure
-////                intTime *= AdjustDelta;
-////                updateIntTime = true;
-////            
-////            } else if (highlightFraction > HighlightAdjustThreshold) {
-////                // Decrease exposure
-////                intTime /= AdjustDelta;
-////                updateIntTime = true;
-////            }
-////            
-////            intTime = std::clamp(intTime, 0.f, 1.f);
-////            const float gain = intTime/3;
-////            
-////            if (updateIntTime) {
-////                device.pixI2CWrite(0x3012, intTime*16384);
-////                device.pixI2CWrite(0x3060, gain*63);
-////            }
-//        }
-//    
-//    } catch (const std::exception& e) {
-//        printf("Streaming failed: %s\n", e.what());
-//        
-//        PixState pixState = PixState::Idle;
-//        try {
-//            pixState = device.pixStatus().state;
-//        } catch (const std::exception& e) {
-//            printf("pixStatus() failed: %s\n", e.what());
-//        }
-//        
-//        if (pixState != PixState::Capturing) {
-//            printf("pixStatus.state != PixState::Capturing\n");
-//        }
-//    }
-//    
-//    // Notify that our thread has exited
-//    _streamImages.lock.lock();
-//        _streamImages.running = false;
-//        _streamImages.signal.notify_all();
-//    _streamImages.lock.unlock();
+        }
+    
+    } catch (const std::exception& e) {
+        printf("Streaming failed: %s\n", e.what());
+        
+        PixState pixState = PixState::Idle;
+        try {
+            pixState = device.pixStatus().state;
+        } catch (const std::exception& e) {
+            printf("pixStatus() failed: %s\n", e.what());
+        }
+        
+        if (pixState != PixState::Capturing) {
+            printf("pixStatus.state != PixState::Capturing\n");
+        }
+    }
+    
+    // Notify that our thread has exited
+    _streamImagesThread.lock.lock();
+        _streamImagesThread.running = false;
+        _streamImagesThread.signal.notify_all();
+    _streamImagesThread.lock.unlock();
 }
 
 - (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {
