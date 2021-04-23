@@ -76,6 +76,8 @@ using namespace MetalUtil;
         action:@selector(_handleMagnify:)];
     [magnify setDelegate:self];
     [self addGestureRecognizer:magnify];
+    
+    [self registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
 }
 
 #pragma mark - Public Methods
@@ -301,6 +303,16 @@ static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) 
         CGSize layerSize = [_rootLayer bounds].size;
         [_imageLayer setPosition:{layerSize.width/2, layerSize.height/2}];
     }
+}
+
+#pragma mark - Drag & Drop
+
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
+    return [_delegate mainViewDraggingEntered:sender];
+}
+
+- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+    return [_delegate mainViewPerformDragOperation:sender];
 }
 
 @end
