@@ -23,4 +23,6 @@
 @protocol MainViewDelegate
 - (void)mainViewSampleRectChanged:(MainView*)v;
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v;
+- (NSDragOperation)mainViewDraggingEntered:(id<NSDraggingInfo>)sender;
+- (bool)mainViewPerformDragOperation:(id<NSDraggingInfo>)sender;
 @end

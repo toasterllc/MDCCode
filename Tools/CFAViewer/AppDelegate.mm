@@ -9,6 +9,7 @@
 #import <fstream>
 #import <filesystem>
 #import <map>
+#import <set>
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Mmap.h"
@@ -253,7 +254,9 @@ static bool less(const fs::path& a, const fs::path& b) {
     for (int i=0; i<(int)std::min(aParts.size(), bParts.size())-1; i++) {
         const std::string& aPart = aParts[i];
         const std::string& bPart = bParts[i];
-        if (aPart < bPart) return true;
+        if (aPart != bPart) {
+            return aPart<bPart;
+        }
     }
     
     // If `aParts` and `bParts` have mismatched sizes, return a bool
@@ -1205,6 +1208,44 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         [nspoints addObject:@[@(p.x), @(p.y)]];
     }
     [[NSUserDefaults standardUserDefaults] setObject:nspoints forKey:ColorCheckerPositionsKey];
+}
+
+
+#pragma mark - Drag & Drop
+static ImagePaths getPathsFromPasteboard(NSPasteboard* pb, const std::vector<std::string>& types) {
+    NSCParameterAssert(pb);
+    const std::set<fs::path> exts(types.begin(), types.end());
+    ImagePaths paths;
+    NSArray* urls = [pb readObjectsForClasses:@[[NSURL class]]
+        options:@{NSPasteboardURLReadingFileURLsOnlyKey:@YES}];
+    for (NSURL* url : urls) {
+        const fs::path p([url fileSystemRepresentation]);
+        // Allow directories
+        if (fs::is_directory(p)) {
+            paths.push_back(p);
+        } else if (fs::is_regular_file(p) && exts.find(p.extension())!=exts.end()) {
+            paths.push_back(p);
+        }
+    }
+    return paths;
+}
+
+static ImagePaths getPathsFromPasteboard(NSPasteboard* pb) {
+    NSCParameterAssert(pb);
+    return getPathsFromPasteboard(pb, {".cfa"});
+}
+
+- (NSDragOperation)mainViewDraggingEntered:(id<NSDraggingInfo>)sender {
+    if (!getPathsFromPasteboard([sender draggingPasteboard]).empty()) {
+        return NSDragOperationCopy;
+    }
+    return NSDragOperationNone;
+}
+
+- (bool)mainViewPerformDragOperation:(id<NSDraggingInfo>)sender {
+    const ImagePaths paths = getPathsFromPasteboard([sender draggingPasteboard]);
+    [self _loadImages:paths];
+    return true;
 }
 
 @end
