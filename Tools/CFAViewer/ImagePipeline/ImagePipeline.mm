@@ -12,13 +12,13 @@
 #import "Mat.h"
 #import "EstimateIlluminantFFCC.h"
 
-
 struct CCM {
     double cct = 0;
     Mat<double,3,3> m; // CamRaw -> ProPhotoRGB
 };
 
 // Indoor, night
+// Calculated from indoor_night2_200.cfa (by averaging the result with the identity matrix)
 const CCM CCM1 = {
     .cct = 3400, // Guess for indoor lighting
     .m = {
@@ -29,8 +29,10 @@ const CCM CCM1 = {
 };
 
 // Outdoor, 5pm
+// Calculated from outdoor_5pm_74.cfa (by averaging the result with the identity matrix)
 const CCM CCM2 = {
-    .cct = 6504, // D65
+    .cct = 6504,    // D65, guesstimated to find a value such that most images' illuminants
+                    // aren't capped at 6504 (via the CCMForIlluminant algorithm)
     .m = {
         0.856270500000000,  0.063702500000000,  0.080027000000000,
         -0.190480000000000, 1.265983000000000,  -0.075503000000000,
