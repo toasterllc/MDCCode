@@ -11,7 +11,7 @@ namespace CFAViewer {
 namespace Shader {
 namespace Defringe {
 
-constant float Eps = 1e-5;
+constant constexpr float ε = 1e-5;
 
 fragment float WhiteBalanceForward(
     constant CFADesc& cfaDesc [[buffer(0)]],
@@ -87,10 +87,11 @@ fragment float InterpolateG(
     );
     
     // Weights: 1/δ^2
-    const float4 w = 1/(Eps+pow(δ,2));
-    // Result: apply weights to r, sum them, and normalize
-    // with combined weight.
-    return dot(w*r,1) / dot(w,1); // Σ w*r / Σ w
+    const float4 k = 1 / (ε+pow(δ,2));
+    // Normalize the weights by dividing by their sum
+    const float4 w = k / dot(k,1);
+    // Result: apply weights to r and sum the result
+    return dot(w*r,1);
 #undef PX
 }
 
@@ -241,12 +242,13 @@ fragment float ApplyCorrection(
                 Sample::R(Sample::MirrorClamp, raw, pos+int2{d.x,d.y})
             );
             
-            // w: directional weights, where more weight is given to the
+            // k: directional weights, where more weight is given to the
             // directions where ḡ and g match.
-            const float4 w = 1 / (Eps + abs(ḡ-g));
-            // Δḡr: correction factor; apply weights to ḡ-r, sum them,
-            // and normalize with combined weight.
-            const float Δḡr = dot(w*(ḡ-r),1) / dot(w,1); // Σ w*(ḡ-r) / Σ w
+            const float4 k = 1 / (ε+abs(ḡ-g));
+            // Normalize the weights by dividing by their sum
+            const float4 w = k / dot(k,1);
+            // Δḡr: correction factor; apply weights to ḡ-r and sum the result
+            const float Δḡr = dot(w*(ḡ-r),1);
             const float r̄ = g - Δḡr;
             
             // Only use r̄ if the magnitude of the correction factor (Δḡr) is
