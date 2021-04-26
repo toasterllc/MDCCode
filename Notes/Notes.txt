@@ -72,18 +72,27 @@
         X Doesn't matter because we're getting rid of these ICs anyway
 
 
-- Image processing todo
+- Image pipeline todo
 
-    - Implement more sophisticated white balance for Defringe filter
-        - To operate correctly, the raw data input into the Defringe filter needs to be white-balanced.
-        - Currently, we're just white balancing using hard-coded constants, but that probably doesn't
-          work well with all illuminants.
+    - Speed up pipeline, especially Defringe and FFCC (illuminant estimation) stages
+        - Currently the whole pipeline can take ~200ms
     
-    - Implement auto white balance (AWB)
-        - Apply as very first stage (before defringing and debayering)
-            - Defringe needs white-balanced image, so it makes sense to apply WB before defringing
+    - Train FFCC (illuminant estimation) with more data and better data
     
-    - Implement auto exposure
+    - Improve highlight reconstruction
+        - In some cases HR makes some regions worse than if it didn’t kick in at all
+        - Highlights in the sky can be particularly bad -- it replaces large regions with blocks of white. 
+    
+    - Re-calculate color correction matrices
+        - Use real color checker
+        - Use a spectrometer to measure color checker squares
+        - Remember that our current CCMs are calculated by averaging the identity matrix with the calculated CCM
+            - We did this because it improves the output (at least when using our laser-jet printout of the colorchecker)
+        
+        - We should have more than 2 CCMs, and interpolate between the 2 that are the closest match
+          to a illuminant (as determined by the illuminant estimation algorithm)
+    
+    - Implement auto exposure / exposure correction in image pipeline
         - Determine the distribution of pixel brightness, and apply some function to spread out the
           brightness distribution across the entire range
         - See:
@@ -96,18 +105,32 @@
         - If you set inttime=0, fixed pattern noise seems to be maximized
     
     - Implement dead pixel correction
-
+    
+    √ Implement more sophisticated white balance for Defringe filter
+        - To operate correctly, the raw data input into the Defringe filter needs to be white-balanced.
+        - Currently, we're just white balancing using hard-coded constants, but that probably doesn't
+          work well with all illuminants.
+    
+    √ Implement auto white balance (AWB)
+        - Apply as very first stage (before defringing and debayering)
+            - Defringe needs white-balanced image, so it makes sense to apply WB before defringing
 
 
 - Rev3 todo
     
-    - Get ram_clk running comfortably at 120MHz (so we can use the SD clk)
+    √ Get ram_clk running comfortably at 120MHz (so we can use the SD clk)
         - Data arrives from the image sensor at ~100 MHz, so we need to be able to store it into RAM at a faster rate
+        √ 2021-4-25 Starting work on Rev4 board: we discovered that ice40 can't drive SD card pins much faster than 100 MHz,
+          so ram_clk only needs to be able to hit ~100MHz, which it should easily be able to hit.
+          See SDClockSignalIntegrity.
     
-    - Fix toggling strategy, so that every toggle signal is delayed by 1 cycle in the source clock domain
+    ? Fix toggling strategy, so that every toggle signal is delayed by 1 cycle in the source clock domain
+        ? 2021-4-25 Starting work on Rev4 board: Not sure if we need this anymore. Revisit in the future...
     
-    - Implement recovery strategy if the image sensor sends more/less data than we expect
+    √ Implement recovery strategy if the image sensor sends more/less data than we expect
         - If the image sensor sends too much data, BankFIFO will be partially filled, and there's no way to recover. The next image will fill up the bank, allowing partially-bad/partially-good data in the next capture.
+        √ 2021-4-25 Starting work on Rev4 board: I think we're good here:
+            √ We re-architected RAMController/PixController so that we can't get stuck in any state, and we can always re-issue commands
     
     
     
@@ -138,12 +161,15 @@
     
     
     - STM32: MSP430 puppetmaster emulation to:
-        - Configure SD card through ice40
-        - Configure image sensor (over i2c) through ice40
-        - Capture image to RAM through ice40
-        - Write image to SD card at a particular address through ice40
+        √ Configure SD card through ice40
+        √ Configure image sensor (over i2c) through ice40
+        √ Capture image to RAM through ice40
+        X Write image to SD card at a particular address through ice40
+            X We're not able to do this on the Rev3 board because of a bug on the PCB, which
+              prevents us from using the image sensor and SD card at the same time (because
+              we can only use one PLL on the ice40)
     
-    - STM32: readout images over USB at 480 Mbps
+    √ STM32: readout images over USB at 480 Mbps
     
     √ Program stm32 over USB
     √ Program ice40 over USB
