@@ -160,7 +160,7 @@
         √ Resp state machine: add ability to specify response length (since the CMD2 response is 136 bits)
     
     
-    - STM32: MSP430 puppetmaster emulation to:
+    √ STM32: MSP430 puppetmaster emulation to:
         √ Configure SD card through ice40
         √ Configure image sensor (over i2c) through ice40
         √ Capture image to RAM through ice40
@@ -176,18 +176,23 @@
 
 
 
+
+
+
+
+
 - Verilog
     
-    - Rev3: Update Verilog to assume a 24MHz input clock
+    √ Rev3: Update Verilog to assume a 24MHz input clock
     
-    - Rev3: Re-export pins from Eagle to create pins.pcf, since nets moved around
+    √ Rev3: Re-export pins from Eagle to create pins.pcf, since nets moved around
     
-    - Consider registering SB_IO inputs -- might speed up design? (via SB_IO.PIN_TYPE)
+    ? Consider registering SB_IO inputs -- might speed up design? (via SB_IO.PIN_TYPE)
     
-    - ADD attribute to AFIFO to prevent overhead:
+    ? ADD attribute to AFIFO to prevent overhead:
        /* synthesis syn_ramstyle="no_rw_check" */
     
-    - Rewrite SDRAMController for smaller size/better performance
+    √ Rewrite SDRAMController for smaller size/better performance
         - more pipelining if possible
         - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
         - change outputs on negative edge, sample inputs on positive edge
@@ -214,13 +219,6 @@
     - Add:
         /* synthesis syn_ramstyle="no_rw_check" */
         to AFIFO memories, to avoid unnecessary overhead
-
-
-
-
-
-
-
 
 
 - Rev3 board
