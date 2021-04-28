@@ -1,14 +1,104 @@
+- Rev4 todo
+
+    - STM32: Fix USB power supply
+        - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
+    
+    - ICE40: Fix pin layout so that both PLLs can be used
+        - When a PLL is used, the tile that it's on can only be used as an output pin (not an input pin). So make PLL IO tiles either outputs, or unused
+        - "PLL input path is shared with the IO input path of the IO tile it's in":
+            https://freenode.irclog.whitequark.org/yosys/2019-03-13
+            https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
+    
+    - Consider lowering 2V8 rail to 2V7-ish, so that it's easier to meet the SD card Vih in 3.3V mode
+        - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => only 50mV away from 1.8V rail
+        - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
+    
+    - Add motion detector
+    
+    - Add MSP430 (MSP430FR2422)
+        - Needs FRAM to store the bitmap of the SD card usage
+        - Needs connection to ICE40, to issue commands
+            - Options:
+                - 2-wire SPI (clk, data): connect MSP430 MOSI/MISO together, and ensure:
+                    - During Tx: MOSI=Driven
+                    - During Rx: MOSI=HighZ
+                    - 2021-4-28: confirmed that this technique should work by using the CurrentSensor Rev1 board
+                - 2-wire SPI (clk, data): shared MISO/MOSI (with resistor)
+                    - Con: Resistor would sink 1.8V/10k=.18 mA while slave is responding
+                - 2-wire SPI (clk, data): bitbang
+                    - Pro: No resistor
+                    - Con: More complicated software
+                    - Con: Not sure if this would be faster than using a resistor
+                - I2C
+                    - Con: 400kHz max speed
+        - Needs connection to STM32, so the STM32 can request bitmap of SD card usage
+            - Options:
+                - STM32 uses MSP430 debug interface to read bitmap directly from memory
+                    - Same interface used for programming MSP430
+                - 3 wire SPI (chip select, clk, data)
+                    - STM32 can be configured as bidirectional (SPI_CR1_BIDIMODE) so use the same line for both TX and RX
+        - Needs connection to power transistors to control ICE40/RAM/SD power rails
+        - Needs connection to motion detector
+        - Needs to be programmable from STM32
+        - Needs to be debuggable from STM32
+    
+    - Add power domain control
+        - Controlled by MSP430
+    
+    - Remove analog switches between SD card and ICE40
+        - They present too much capacitance
+        - (U11 SD_DATx pins are out of order on Rev3)
+
+- Preorder parts to de-risk
+    - STM32
+        - 90x (STM32F730I8K6) from Farnell UK
+            $6.03 each
+            - Try ordering 10 more from export.farnell.com in a week
+        - 10x (STM32F723IEK6 -- more expensive but pin-compatible) from Mouser
+            - Haven't ordered yet -- want to try ordering 10 more of the cheaper model first
+    
+    - ICE40
+        - 100x from DigiKey
+    
+    - AR0330CS
+    
+    - MSP430
+    
+    - SDRAM
+        W989D6DBGX6I        512 Mbit
+        AS4C8M16MSA-6BIN    128 Mbit
+    
+    - Motion sensor
+
 - Future
     
-    - Measure color matrix for real
-        - Get/print a real color chart
-        - Use a spectrometer to measure the colors
-        - Use a standardized illuminant (a calibrated light? the sun? uncalibrated light that
-          we measure with a spectrometer?) to take a photo of the color chart
-    
-    - If SD card initialization communication doesn't work, consider switching from NTB0102GF -> NTS0102GF.
-      NTS0102GF is better suited for open-drain usage, which might apply to us since we're using pull-up resistors.
-      The downside is that NTS0102GF has more capacitance on its IO lines (11pF typical, while NTB0102GF is 7.5 pF typical).
+    - Consider using a HyperRAM instead of SDRAM
+        - Pros:
+            - Fewer pins: only 24 pins instead of 54 SDRAM pins
+            - Doesn't need explicit refreshes, which simplifies RAMController Verilog
+            - Appears to have lower power consumption
+                - HyperRAM W956D8MBYA: 25 mA @ 200 MHz, VCC=2.0V
+                - AS4C8M16MSA SDRAM: 75 mA @ ? MHz, VCC=1.8V
+                - W989D6DBGX6I: 75 mA @ ? MHz, VCC=1.8V
+        
+        - Cons:
+            - Requires DDR signals to operate
+            - Unsure if ICE40 DDR outputs can operate fast enough
+                - Image sensor output = 12 bits @ 98 MHz == 1.176e9 bits/sec
+                - Clock setups:
+                    - Scheme50: HyperRAM clock @ 50 MHz -> 50e6 * 8 (bits per transfer) * 2 (transfers per clock) == .8e9 bits/sec (🚫 not fast enough)
+                        - DDR signals switch at 2x -> 100 MHz
+                    - Scheme75: HyperRAM clock @ 75 MHz -> 75e6 * 8 (bits per transfer) * 2 (transfers per clock) == 1.2e9 bits/sec (👍 fast enough)
+                        - DDR signals switch at 2x -> 150 MHz (😬 not sure if ICE40 DDR outputs can switch this fast)
+                            - See "Maximum sysIO Buffer Performance" below
+                    - Scheme90: HyperRAM clock @ 90 MHz -> 90e6 * 8 (bits per transfer) * 2 (transfers per clock) == 1.44e9 bits/sec (👍 fast enough)
+                        - DDR signals switch at 2x -> 180 MHz (😬 not sure if ICE40 DDR outputs can switch this fast)
+                            - See "Maximum sysIO Buffer Performance" below
+                - Even if we can squeak by with Scheme75/Scheme90 with 12-bit pixels, we probably couldn't with 14-bit pixels (which we might want to some day)
+                - From the "iCE40TM LP/HX Family Data Sheet":
+                    - Maximum sysIO Buffer Performance:
+                        - LVCMOS18: 155 MHz
+                            - Therefore, don't feel confident that we can DDR outputs at more than 155 MHz
     
     - Figure out battery power supply
         - How many batteries?
@@ -30,8 +120,6 @@
     - Add ESD suppression to MDC Programmer board. See FTDI docs, "2.2.1 Electrostatic Protection":
         https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
     
-    - Connect last pin of TagConnect to a free pin on the ice40 in case we need it for something
-    
     - Add USB inrush protection
     
     - Improve current sense resistor
@@ -39,37 +127,6 @@
         - Change value to .2Ω or .1Ω (depending on current range)
 
 
-
-- Rev4 todo
-
-    - STM32: Fix USB power supply
-        - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
-    
-    - ICE40: Fix pin layout so that both PLLs can be used
-        - When a PLL is used, the tile that it's on can only be used as an output pin (not an input pin). So make PLL IO tiles either outputs, or unused
-        - "PLL input path is shared with the IO input path of the IO tile it's in":
-            https://freenode.irclog.whitequark.org/yosys/2019-03-13
-            https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
-    
-    - Consider lowering 2V8 rail to 2V7-ish, so that it's easier to meet the SD card Vih in 3.3V mode
-        - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => only 50mV away from 1.8V rail
-        - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
-    
-    - STM32 QSPI: make frequency a parameter
-        - For STLoader, it needs to be <24MHz for configuring ICE40
-        - For STApp, it can be as high as ctrl_clk can go depending on the Verilog
-    
-    - Add motion detector
-    
-    - Add MSP430
-        - Needs FRAM to store the bitmap of the SD card usage
-        - Needs connection to STM32, so the STM32 can request bitmap of SD card usage
-    
-    - Add power domain control
-        - Controlled by MSP430
-    
-    X U11 pins SD_DATx pins are out of order on Rev3
-        X Doesn't matter because we're getting rid of these ICs anyway
 
 
 - Image pipeline todo
@@ -114,378 +171,3 @@
     √ Implement auto white balance (AWB)
         - Apply as very first stage (before defringing and debayering)
             - Defringe needs white-balanced image, so it makes sense to apply WB before defringing
-
-
-- Rev3 todo
-    
-    √ Get ram_clk running comfortably at 120MHz (so we can use the SD clk)
-        - Data arrives from the image sensor at ~100 MHz, so we need to be able to store it into RAM at a faster rate
-        √ 2021-4-25 Starting work on Rev4 board: we discovered that ice40 can't drive SD card pins much faster than 100 MHz,
-          so ram_clk only needs to be able to hit ~100MHz, which it should easily be able to hit.
-          See SDClockSignalIntegrity.
-    
-    ? Fix toggling strategy, so that every toggle signal is delayed by 1 cycle in the source clock domain
-        ? 2021-4-25 Starting work on Rev4 board: Not sure if we need this anymore. Revisit in the future...
-    
-    √ Implement recovery strategy if the image sensor sends more/less data than we expect
-        - If the image sensor sends too much data, BankFIFO will be partially filled, and there's no way to recover. The next image will fill up the bank, allowing partially-bad/partially-good data in the next capture.
-        √ 2021-4-25 Starting work on Rev4 board: I think we're good here:
-            √ We re-architected RAMController/PixController so that we can't get stuck in any state, and we can always re-issue commands
-    
-    
-    
-    - SDTest:
-        - Implement recovery mechanisms:
-            - CRC errors
-            - Respone timeout (response from card never starts)
-            - DatOut CRC status timeout (CRC status from card never starts)
-            - DatOut card-busy timeout (if card never de-asserts DAT0 to signal idle)
-            - DatIn timeout (if DatIn data from card never starts)
-            - Remove sd_respTimeout/sd_respTimeoutCounter mechanism since
-              we have to implement some kind of reset/abort mechanism anyway?
-              (For example, in the DatIn timeout case, we'll need to tell the
-              ICE40 to abort after 100ms. So we might as well use the same
-              mechanism for respone timeouts too?)
-        
-        √ Add a DatIn state machine (needed for CMD6)
-            √ Similar to Resp state machine: specify whether DatIn is expected as the result of a command
-            √ Add DatIn CRC checking
-                √ Use separate CRC16 instance than DatOut because it's faster
-            √ Add ability to capture part of the DatIn stream (so we can verify that the CMD6 'Access Mode' was successfully changed)
-        
-        √ Add ability to specify whether a response is expected as the result of a command
-            √ If so, start the Resp state machine
-            √ If not, don't start the Resp state machine
-        
-        √ Resp state machine: add ability to specify response length (since the CMD2 response is 136 bits)
-    
-    
-    √ STM32: MSP430 puppetmaster emulation to:
-        √ Configure SD card through ice40
-        √ Configure image sensor (over i2c) through ice40
-        √ Capture image to RAM through ice40
-        X Write image to SD card at a particular address through ice40
-            X We're not able to do this on the Rev3 board because of a bug on the PCB, which
-              prevents us from using the image sensor and SD card at the same time (because
-              we can only use one PLL on the ice40)
-    
-    √ STM32: readout images over USB at 480 Mbps
-    
-    √ Program stm32 over USB
-    √ Program ice40 over USB
-
-
-
-
-
-
-
-
-- Verilog
-    
-    √ Rev3: Update Verilog to assume a 24MHz input clock
-    
-    √ Rev3: Re-export pins from Eagle to create pins.pcf, since nets moved around
-    
-    ? Consider registering SB_IO inputs -- might speed up design? (via SB_IO.PIN_TYPE)
-    
-    ? ADD attribute to AFIFO to prevent overhead:
-       /* synthesis syn_ramstyle="no_rw_check" */
-    
-    √ Rewrite SDRAMController for smaller size/better performance
-        - more pipelining if possible
-        - command interface should include address+length, to provide countdown to client so it can tell when the command is complete
-        - change outputs on negative edge, sample inputs on positive edge
-    
-    - Figure out what yosys changes are needed to infer a BRAM correctly. currently we modified /usr/local/share/yosys/ice40/brams.txt:
-                bram $__ICE40_RAM4K_M0
-                  init 1
-                  abits 8
-                  dbits 16
-                  groups 2
-                  ports  1  1
-                  wrmode 0  1
-                  enable 1 16
-                  transp 1  1           <--- this line, changed from `transp 0  0` -> `transp 1  1`
-                  clocks 2  3
-                  clkpol 2  3
-                endbram
-                ...
-    
-    - ClockGen:
-        Synchronize 'locked' signal with clock
-            https://stackoverflow.com/questions/38030768/icestick-yosys-using-the-global-set-reset-gsr
-    
-    - Add:
-        /* synthesis syn_ramstyle="no_rw_check" */
-        to AFIFO memories, to avoid unnecessary overhead
-
-
-- Rev3 board
-    
-    √ Follow BoardFinalizationChecklist.txt:
-        √ Schematic: Verify that all parts have the correct footprint
-        √ Schematic: Renumber parts based on schematic so that part numbers are organized
-        √ Schematic: Export BOM and make sure all part numbers look good on Mouser
-        √ Layout: Ensure isolation on top/bottom layers is >= 10 mil
-          In the past we've had issues with solder bridging across a component's pad to the surrounding ground plane
-        √ Layout: Ensure all silkscreen labels are >= 20 mil (for readability)
-        √ Layout: Ensure silkscreen labels are unobscured
-        √ Layout: Add GND vias throughout board
-        √ Layout: Make sure there are no GNDX nets (which appear when copying vias)
-        √ Layout: Make sure vias are tented
-        √ Layout: Make sure top/bottom cream layers look sane
-        √ Layout: Make sure pins of BGA chips don't have cream applied
-        √ Layout: Miter board corners
-        √ Layout: Update RevX text on board
-        √ Order boards
-        √ Order stencils
-          Use 3 mil thickness (4 mil seems to apply solder that's too thick)
-        √ Order parts
-    
-    √ Verify that image sensor is centered within lens
-        Use offset defined in AR0330CS-old.pdf
-    
-    √ Verify that all STM32 pins are connected correctly
-    
-    √ Upgrade capacitors by derating them based on applied DC voltage
-    
-    √ Verify that vias are fully covered after upgrading capacitors
-    
-    √ Expose individual headers for ice40 ICE_PRG lines (ICE_SPI_D0, ICE_SPI_CS_, ICE_SPI_CLK, ICE_CRST_, ICE_CDONE),
-      in case STM32 programming is broken for some reason
-    
-    √ Fill in missing part numbers
-    
-    √ Length-match QUADSPI lines to STM32
-    
-    √ Length-match SDIO lines to SD card
-    
-    √ Remove extraneous 1V2/1V8/2V8 supply wires -- they should all be polygons now
-    
-    √ Fix USB jack model to the version that doesn't have plastic posts
-        Good part number: 10033526-N3222MLF
-    
-    √ Add USB connector to STM32
-    
-    √ Add USB ESD protection chip
-    
-    √ Add vias around SD socket GND connectors
-    
-    √ Add vias around USB connector GND pads
-    
-    √ Add proper image sensor i2c pullups:
-        - PIX_SDATA: needs a 1.5k-4.7k pullup according to AR0330CS datasheet
-        - PIX_SCLK: doesn't need a pullup since we'll always drive it from the master
-            - from the AR0330CS datasheet:
-                "the pull-up resistor is not required if the controller drives a valid logic level on SCLK at all times."
-                "the AR0330CS uses SCLK as an input only and therefore never drives it LOW."
-            - we'll save some power by not having a pullup burning power while driving the clock low
-    
-    √ Add pullup resistor to ice40 CDONE, since we no longer have a programmer board
-    
-    √ Expand STM32 trace width of power nets
-    
-    √ Expand ice40 trace width of power nets
-    
-    √ Add LEDs for STM32 debugging
-    
-    √ Add STM32F730I8 to handle:
-        √ USB High-Speed comms with computer
-        √ Program ice40 via 6 lines (SPI_SI, SPI_SO, SPI_SS_B, SPI_SCK, CDONE, CRESET_B)
-        - Read/write to SD card via ice40 (via QUADSPI interface)
-        - Stream images from image sensor (via QUADSPI interface)
-        - Read/write image sensor registers (via QUADSPI interface)
-        *** See USBChipNotes.txt for more info ***
-        
-        √ Add separate clock to drive STM32
-        √ Connnect 2xQuadSPI to ice40
-    
-    √ Route STM32 BOOT0 pin to header
-    √ Route STM32 NRST pin to header
-    
-    √ Increase 'isolate' on power planes
-        - When we soldered a jumper resistor, We accidentally shorted 1V2/1V8 and ground due to little isolation between the polygon pour and SMD pad
-    
-    √ Add additional SD card parts so we can use non-A2 cards
-        *** See SDCardInterfaceParts.txt ***
-    
-    √ Re-implement layout of power supplies
-        √ Use the largest wire traces possible
-    
-    √ Route ICE40 CRST_ to STM32 GPIO
-    √ Route ICE40 CDONE to STM32 GPIO
-    
-    √ Add STM32 debug header
-    
-    √ Add ICE40 debug header
-    
-    √ Center image sensor within lens
-    
-    √ Add lens/mount to board
-    
-    √ Change external clocks to 24 MHz (SIT8021AI-J4-18S-24.000000E)
-        Since 24 MHz clocks are more widely available
-
-
-
-
-
-
-
-- Programmer board todo
-    - We may not need the programmer anymore though?
-    
-    - Add inrush current protection to MDC Programmer board
-        - Currently it has way more than 10uF of capacitance on the +5V rail, which violates the USB spec
-    
-    √ Fix USB jack model to the version that doesn't have plastic posts
-        Good part number: 10033526-N3222MLF
-
-
-
-
-√ Rev2
-    
-    √ Renumber all components
-    
-    √ Clean up silkscreen component names
-        √ Make sure labels are large enough
-    
-    √ Make sure we're tenting vias
-    
-    √ Verify that we don't have any GNDN nets (GND7, GND8, ...), which appeared at one point
-    
-    √ Update RevX text
-    
-    √ Create programmer board using FT232H
-        √ Need mechanism to swap SO/SI lines to program flash vs. SRAM (see ice40 breakout board schematic)
-            - Created 'FTDI_FLASH_MODE' net controlled by FTDI
-        
-        √ Use level shifter with explicit inputs/outputs
-            - Our bidirectional level shifter doesn't work for our use case (likely due to its bidirectional behavior and weak drive strength)
-        
-        X Need jumper to isolate CS_ line of flash / ice40 (see breakout board schematic)
-            - Nevermind, we added a solder jumper to the board itself
-        
-        √ Add SPI lines for a debug interface, to permit fast image readout from the chip
-    
-    √ TPS63805:
-        √ "Separate AGND and PGND. Do not connect AGND and PGND directly at the IC."
-    
-    √ Expose AR0330 i2c lines for debugging
-    
-    √ Add SD card
-        - What pins need pull-up resistors?
-            - CMD, D[3:0].
-            - Does D3 need a pullup? Some designs omit it.
-                "The host shall pull-up all DAT0-3 lines by RDAT"
-                "When DAT3 is used for card detection, RDAT for DAT3 should be unconnected and another resistor should be connected to the ground."
-                    - We're not using D3 for card-detection, so it needs a pull-up
-    
-    √ Make VDD net larger?
-    
-    √ Cascade PG from 2V8 into 1V8, so that the image sensor's 1V8 rail turns on after its 2V8 (per power-on sequencing steps in the AR0330CS datasheet)
-    
-    √ Make VDD a ring around the edge of the board
-    
-    √ Make sure VDD_MIPI is connected to 2V8
-    
-    √ Add image sensor
-    
-    √ Move oscillator so it can supply both ice40 and the image sensor
-    
-    X Do we need to gate the enable of the oscillator until 1V8/2V8 are enabled? What does the image sensor require?
-        - 1V8 rail doesn't have a power-good output signal. The oscillator runs off the 1V8 rail anyway, so it won't start oscillating until the 1V8 comes up.
-    
-    √ Replace 2V5 rail with 2V8 instead, which will work with both the image sensor and ICE40
-    
-    √ Switch flash to W25Q80EWUXIE, since its tVSL=10us, as required by the ice40
-    
-    √ ICE40: loading from flash isn't working
-        √ Swap ICE_PRG_SO/ICE_PRG_SI pins entering flash chip. Currently we have the ICE40's SPI input connected to the flash's SPI input, and the ICE40's output connected to the flash's SPI output.
-        √ Make sure the chosen flash meets the "SPI PROM Requirements" criteria in "iCE40 Programming and Configuration" document
-            -> We'll meet these requirements by switching the flash chip to W25Q80EWUXIE
-    
-    √ TPS62801X_TPS6280X (U1/U2)
-        √ Fix pinout. The 1V8 and 1V2 rails are currently broken because the pins of the TPS* chips are scrambled for some reason.
-    
-    √ Use new EagleLibrary as a submodule
-    
-    √ Rename MOLEX-734120110 -> UFL-CONNECTOR, make MFG/PN custom attributes on the schematic
-    
-    √ Figure out a way to represent multiple component part numbers for: L1/L2/L3, 1V2 rail chip, 1V8 rail chip
-    
-    √ Update MFG/PN for all components on schematic
-    
-    √ Update EagleLibrary's description of all MDC-imported components
-    
-    √ Check TP4 connection: was it connected in Rev1? Why isn't connected in the Rev2 board right now?
-        - It used to be connected. I think we just deleted it somehow...
-
-
-
-
-- Buy
-    √ Lead-free solder
-        - See SolderProducts.txt
-    
-    √ Steel wool for soldering iron
-    
-    √ Kapton tape
-        https://www.amazon.com/RETERMIT-Resistant-Sublimation-Temperature-Polyimide/dp/B07MM38WLP/ref=sxin_2_ac_d_pm?ac_md=1-0-VW5kZXIgJDEw-ac_d_pm&cv_ct_cx=Kapton+Tape&dchild=1&keywords=Kapton+Tape&pd_rd_i=B07MM38WLP&pd_rd_r=9ccaae53-08dd-4dce-9e31-20301a4e83e1&pd_rd_w=cnkze&pd_rd_wg=qDdXZ&pf_rd_p=0e223c60-bcf8-4663-98f3-da892fbd4372&pf_rd_r=H9KG38T53AYDWN61ZRYC&psc=1&qid=1586830471&s=industrial&sr=1-1-22d05c05-1231-4126-b7c4-3e7a9c0027d0
-    
-    √ Flux
-        - See SolderProducts.txt
-    
-    
-    
-    
-    
-
-
-
-
-
-
-
-
-
-√ SDRAMController.v: figure out what to do with our Max(0, X-1) expressions, since they're now unsigned, since we switched up our functions return types...
-
-√ SDRAMController.v: mark all registers `= 0`
-√ SDRAMController.v: stop requiring an explicit reset signal, generate itself
-√ SDRAMController.v: make work with W989D6DBGX6I, which adds another address bit
-
-
-
-
-
-
-
-√ dev board schematic
-    √ ice40: connect CDONE/CRESET
-    √ ice40: connect SPI flash pins
-    √ connect LEDs
-    √ add ufl voltage test points
-    √ add a header for the pix_ IOs, so we can provide data to the dev board to write
-    √ update package sizes for all resistors, capacitors, and inductors
-    √ choose resistor products/packages
-    √ make sure inductor footprint allows any of our inductors to be soldered
-    √ add 0ohm/1ohm resistors for testing/isolation
-    √ consider removing some of the decoupling capacitors for ice40 power? the technote mentioned varying the 2 kinds of caps, so we can remove half...
-    √ verify all packages+pins are correct and match datasheets
-
-
-√ remove reset signal and see how that improves timing. need to decide whether we're going to use an explicit or implicit (configuration) reset
-    definitely makes design smaller. we should use the implicit reset since it simplifies everything. the only caveat is we'll have to keep an eye out for Synplify's warning:
-        removing sequential instance XXX because it does not drive other instances
-
-√ make Lattice tool 'high effort' in the synthesis options
-    no effect, design runs at the same speed
-
-√ can we improve the empty/full logic of AFIFO to use readOK / writeOK logic instead? that way our registers will be initialized correctly with readOK=0 and writeOK=0
-
-
-√ Iceboard_CopyImage: move pix_ IOs to the top-left instead of the top right, so they're closer to the RAM IOs. Does that improve speed?
-    Doesn't help much
