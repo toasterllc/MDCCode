@@ -4,6 +4,8 @@
         - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
     
     - ICE40: Fix pin layout so that both PLLs can be used
+        - Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
+        - Fix L5 PLL: ?
         - When a PLL is used, the tile that it's on can only be used as an output pin (not an input pin). So make PLL IO tiles either outputs, or unused
         - "PLL input path is shared with the IO input path of the IO tile it's in":
             https://freenode.irclog.whitequark.org/yosys/2019-03-13
@@ -109,10 +111,15 @@
     
     - SDRAM: for proper power-up, we may need a pulldown on cs_ and pullups on ras_/cas_/we_, since power is supposed to be applied while the input signals are in the NOP state.
     
-    - Add ESD suppression to MDC Programmer board. See FTDI docs, "2.2.1 Electrostatic Protection":
-        https://www.ftdichip.com/Support/Documents/AppNotes/AN_146_USB_Hardware_Design_Guidelines_for_FTDI_ICs.pdf
-    
     - Add USB inrush protection
+    
+    - Add system-level ESD protection
+        From MSP430 datasheet:
+            System-level ESD protection must be applied in compliance with the device-level ESD specification
+            to prevent electrical overstress or disturbing of data or code memory. See MSP430 System-Level
+            ESD Considerations for more information.
+            
+            Search for document titled: "MSP430 System-Level ESD Considerations"
     
     - Improve current sense resistor
         - Use low-tempco resistor
