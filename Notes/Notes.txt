@@ -89,7 +89,7 @@
                         - DDR signals switch at 2x -> 180 MHz (😬 not sure if ICE40 DDR outputs can switch this fast)
                             - See "Maximum sysIO Buffer Performance" below
                 - Even if we can squeak by with Scheme75/Scheme90 with 12-bit pixels, we probably couldn't with 14-bit pixels (which we might want to some day)
-                - From the "iCE40TM LP/HX Family Data Sheet":
+                - From the "iCE40 LP/HX Family Data Sheet":
                     - Maximum sysIO Buffer Performance:
                         - LVCMOS18: 155 MHz
                             - Therefore, don't feel confident that we can DDR outputs at more than 155 MHz

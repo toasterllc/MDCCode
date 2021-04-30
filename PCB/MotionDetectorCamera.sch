@@ -4406,7 +4406,7 @@ layer."</text>
 <label x="-45.72" y="35.56" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_DATA_VBAT" class="0">
+<net name="ICE_MSP_SPI_DATA_VBAT" class="0">
 <segment>
 <pinref part="U14" gate="B" pin="P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK"/>
 <pinref part="U14" gate="B" pin="P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS"/>
@@ -4421,7 +4421,7 @@ layer."</text>
 <label x="33.02" y="20.32" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_CLK_VBAT" class="0">
+<net name="ICE_MSP_SPI_CLK_VBAT" class="0">
 <segment>
 <pinref part="U14" gate="B" pin="P1.6/UCA0CLK/TA0CLK/TDI/TCLK"/>
 <wire x1="35.56" y1="63.5" x2="33.02" y2="63.5" width="0.1524" layer="91"/>
@@ -4433,7 +4433,7 @@ layer."</text>
 <label x="33.02" y="27.94" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_DATA_DIR" class="0">
+<net name="ICE_MSP_SPI_DATA_DIR" class="0">
 <segment>
 <pinref part="U14" gate="B" pin="P1.7/UCA0STE/TDO"/>
 <wire x1="35.56" y1="60.96" x2="33.02" y2="60.96" width="0.1524" layer="91"/>
@@ -4445,7 +4445,7 @@ layer."</text>
 <label x="33.02" y="17.78" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_AUX_VBAT" class="0">
+<net name="ICE_MSP_SPI_AUX_VBAT" class="0">
 <segment>
 <pinref part="U14" gate="C" pin="P2.2/TA1.1/A4"/>
 <wire x1="129.54" y1="73.66" x2="127" y2="73.66" width="0.1524" layer="91"/>
@@ -4457,7 +4457,7 @@ layer."</text>
 <label x="33.02" y="12.7" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_AUX_DIR" class="0">
+<net name="ICE_MSP_SPI_AUX_DIR" class="0">
 <segment>
 <pinref part="U14" gate="C" pin="P2.3/TA1.2/UCB0STE/A5"/>
 <wire x1="129.54" y1="71.12" x2="127" y2="71.12" width="0.1524" layer="91"/>
@@ -4469,21 +4469,21 @@ layer."</text>
 <label x="33.02" y="10.16" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_CLK" class="0">
+<net name="ICE_MSP_SPI_CLK" class="0">
 <segment>
 <pinref part="U15" gate="G$1" pin="B1"/>
 <wire x1="60.96" y1="27.94" x2="63.5" y2="27.94" width="0.1524" layer="91"/>
 <label x="63.5" y="27.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_DATA" class="0">
+<net name="ICE_MSP_SPI_DATA" class="0">
 <segment>
 <pinref part="U15" gate="G$1" pin="B2"/>
 <wire x1="60.96" y1="20.32" x2="63.5" y2="20.32" width="0.1524" layer="91"/>
 <label x="63.5" y="20.32" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="MSP_ICE_SPI_AUX" class="0">
+<net name="ICE_MSP_SPI_AUX" class="0">
 <segment>
 <pinref part="U15" gate="G$1" pin="B3"/>
 <wire x1="60.96" y1="12.7" x2="63.5" y2="12.7" width="0.1524" layer="91"/>
