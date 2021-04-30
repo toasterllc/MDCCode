@@ -1163,6 +1163,97 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.525" y="0.75"/>
 </polygon>
 </package>
+<package name="TI-MSP430FR2422IRHL" urn="urn:adsk.eagle:footprint:28409573/1" locally_modified="yes">
+<description>20-QFN, 0.50 mm pitch, 4.50 X 3.50 X 1.00 mm body, 3.05 X 2.05 mm thermal pad
+&lt;p&gt;20-pin QFN package with 0.50 mm pitch with body size 4.50 X 3.50 X 1.00 mm and thermal pad size 3.05 X 2.05 mm&lt;/p&gt;</description>
+<wire x1="1.8" y1="-2.3" x2="-1.8" y2="-2.3" width="0.05" layer="21"/>
+<wire x1="-1.8" y1="-2.3" x2="-1.8" y2="2.3" width="0.05" layer="21"/>
+<wire x1="-1.8" y1="2.3" x2="1.8" y2="2.3" width="0.05" layer="21"/>
+<wire x1="1.8" y1="2.3" x2="1.8" y2="-2.3" width="0.05" layer="21"/>
+<smd name="2" x="-1.6846" y="1.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="3" x="-1.6846" y="1.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="4" x="-1.6846" y="0.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="5" x="-1.6846" y="0.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="6" x="-1.6846" y="-0.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="7" x="-1.6846" y="-0.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="8" x="-1.6846" y="-1.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="9" x="-1.6846" y="-1.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="10" x="-0.75" y="-2.1846" dx="0.86" dy="0.26" layer="1" roundness="100" rot="R90"/>
+<smd name="11" x="0.75" y="-2.1846" dx="0.86" dy="0.26" layer="1" roundness="100" rot="R90"/>
+<smd name="12" x="1.6846" y="-1.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="13" x="1.6846" y="-1.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="14" x="1.6846" y="-0.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="15" x="1.6846" y="-0.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="16" x="1.6846" y="0.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="17" x="1.6846" y="0.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="18" x="1.6846" y="1.25" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="19" x="1.6846" y="1.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
+<smd name="20" x="0.75" y="2.1846" dx="0.86" dy="0.26" layer="1" roundness="100" rot="R90"/>
+<smd name="1" x="-0.75" y="2.1846" dx="0.86" dy="0.26" layer="1" roundness="100" rot="R90"/>
+<smd name="21" x="0" y="0" dx="2.05" dy="3.05" layer="1" thermals="no" cream="no"/>
+<text x="-1.8" y="2.969" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="21">
+<vertex x="-1.779" y="2.275"/>
+<vertex x="-1.779" y="1.475"/>
+<vertex x="-0.979" y="2.275"/>
+</polygon>
+<polygon width="0.05" layer="39">
+<vertex x="1.8" y="-2.3"/>
+<vertex x="-1.8" y="-2.3"/>
+<vertex x="-1.8" y="2.3"/>
+<vertex x="1.8" y="2.3"/>
+</polygon>
+<rectangle x1="-0.375" y1="1" x2="0.375" y2="2.6" layer="1"/>
+<rectangle x1="-0.375" y1="-2.6" x2="0.375" y2="-1" layer="1"/>
+<polygon width="0.127" layer="31">
+<vertex x="-0.4" y="1.1"/>
+<vertex x="-0.4" y="0.3"/>
+<vertex x="0.4" y="0.3"/>
+<vertex x="0.4" y="1.1"/>
+</polygon>
+<polygon width="0.127" layer="31">
+<vertex x="-0.4" y="-0.3"/>
+<vertex x="-0.4" y="-1.1"/>
+<vertex x="0.4" y="-1.1"/>
+<vertex x="0.4" y="-0.3"/>
+</polygon>
+</package>
+<package name="TI-SN74AXC4T774RSV" urn="urn:adsk.eagle:footprint:28411408/1" locally_modified="yes">
+<description>16-QFN, 0.40 mm pitch, 2.60 X 1.80 X 1.00 mm body
+&lt;p&gt;16-pin QFN package with 0.40 mm pitch with body size 2.60 X 1.80 X 1.00 mm&lt;/p&gt;</description>
+<wire x1="0.925" y1="-1.325" x2="-0.925" y2="-1.325" width="0.05" layer="21"/>
+<wire x1="-0.925" y1="-1.325" x2="-0.925" y2="1.325" width="0.05" layer="21"/>
+<wire x1="-0.925" y1="1.325" x2="0.925" y2="1.325" width="0.05" layer="21"/>
+<wire x1="0.925" y1="1.325" x2="0.925" y2="-1.325" width="0.05" layer="21"/>
+<smd name="1" x="-0.8451" y="0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="2" x="-0.8451" y="0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="3" x="-0.8451" y="-0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="4" x="-0.8451" y="-0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="5" x="-0.6" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<smd name="6" x="-0.2" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<smd name="7" x="0.2" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<smd name="8" x="0.6" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<smd name="9" x="0.8451" y="-0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="10" x="0.8451" y="-0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="11" x="0.8451" y="0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="12" x="0.8451" y="0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
+<smd name="13" x="0.6" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<smd name="14" x="0.2" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<smd name="15" x="-0.2" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<smd name="16" x="-0.6" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
+<text x="-0.9" y="1.985" size="0.762" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.925" y="-1.325"/>
+<vertex x="-0.925" y="-1.325"/>
+<vertex x="-0.925" y="1.325"/>
+<vertex x="0.925" y="1.325"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-0.9" y="1.3"/>
+<vertex x="-0.9" y="0.7"/>
+<vertex x="-0.3" y="1.3"/>
+</polygon>
+</package>
 </packages>
 <symbols>
 <symbol name="CAPACITOR">
@@ -2007,6 +2098,78 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="D+" x="-2.54" y="-7.62" visible="pin" length="short"/>
 <pin name="ID" x="-2.54" y="-12.7" visible="pin" length="short"/>
 <text x="0" y="-17.78" size="1.778" layer="95">USB ESD Protection</text>
+</symbol>
+<symbol name="TI-MSP430FR2422IRHL-A">
+<description>16 MHz MCU with 8KB FRAM, 2KB SRAM, 10-bit ADC, UART/SPI/I2C, timer</description>
+<wire x1="0" y1="-17.78" x2="0" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="25.4" y2="0" width="0.254" layer="94"/>
+<wire x1="25.4" y1="0" x2="25.4" y2="-17.78" width="0.254" layer="94"/>
+<wire x1="25.4" y1="-17.78" x2="0" y2="-17.78" width="0.254" layer="94"/>
+<text x="0" y="2.286" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<text x="0" y="-18.542" size="1.778" layer="95" align="top-left">&gt;PN</text>
+<pin name="VDD" x="-2.54" y="-2.54" length="short"/>
+<pin name="GND" x="-2.54" y="-5.08" length="short"/>
+<pin name="TEST/SBWTCK" x="-2.54" y="-12.7" length="short"/>
+<pin name="RST_/NMI/SBWTDIO" x="-2.54" y="-15.24" length="short"/>
+<pin name="GND_THERMALPAD" x="-2.54" y="-7.62" length="short"/>
+</symbol>
+<symbol name="TI-MSP430FR2422IRHL-B">
+<description>16 MHz MCU with 8KB FRAM, 2KB SRAM, 10-bit ADC, UART/SPI/I2C, timer</description>
+<wire x1="0" y1="-22.86" x2="0" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="50.8" y2="0" width="0.254" layer="94"/>
+<wire x1="50.8" y1="0" x2="50.8" y2="-22.86" width="0.254" layer="94"/>
+<wire x1="50.8" y1="-22.86" x2="0" y2="-22.86" width="0.254" layer="94"/>
+<text x="0" y="2.286" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<text x="0" y="-23.622" size="1.778" layer="95" align="top-left">&gt;PN</text>
+<pin name="P1.0/UCB0STE/A0/VEREF+" x="-2.54" y="-2.54" length="short"/>
+<pin name="P1.1/UCB0CLK/ACLK/A1/VREF+" x="-2.54" y="-5.08" length="short"/>
+<pin name="P1.2/UCB0SIMO/UCB0SDA/SMCLK/A2/VEREF-" x="-2.54" y="-7.62" length="short"/>
+<pin name="P1.3/UCB0SOMI/UCB0SCL/MCLK/A3" x="-2.54" y="-10.16" length="short"/>
+<pin name="P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK" x="-2.54" y="-12.7" length="short"/>
+<pin name="P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS" x="-2.54" y="-15.24" length="short"/>
+<pin name="P1.6/UCA0CLK/TA0CLK/TDI/TCLK" x="-2.54" y="-17.78" length="short"/>
+<pin name="P1.7/UCA0STE/TDO" x="-2.54" y="-20.32" length="short"/>
+</symbol>
+<symbol name="TI-MSP430FR2422IRHL-C">
+<description>16 MHz MCU with 8KB FRAM, 2KB SRAM, 10-bit ADC, UART/SPI/I2C, timer</description>
+<wire x1="0" y1="-20.32" x2="0" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="38.1" y2="0" width="0.254" layer="94"/>
+<wire x1="38.1" y1="0" x2="38.1" y2="-20.32" width="0.254" layer="94"/>
+<wire x1="38.1" y1="-20.32" x2="0" y2="-20.32" width="0.254" layer="94"/>
+<text x="0" y="2.286" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<text x="0" y="-21.082" size="1.778" layer="95" align="top-left">&gt;PN</text>
+<pin name="P2.0/UCA0TXD/UCA0SIMO/XOUT" x="-2.54" y="-2.54" length="short"/>
+<pin name="P2.1/UCA0RXD/UCA0SOMI/XIN" x="-2.54" y="-5.08" length="short"/>
+<pin name="P2.2/TA1.1/A4" x="-2.54" y="-7.62" length="short"/>
+<pin name="P2.3/TA1.2/UCB0STE/A5" x="-2.54" y="-10.16" length="short"/>
+<pin name="P2.4/TA1CLK/UCB0CLK/A6" x="-2.54" y="-12.7" length="short"/>
+<pin name="P2.5/UCB0SIMO/UCB0SDA/A7" x="-2.54" y="-15.24" length="short"/>
+<pin name="P2.6/UCB0SOMI/UCB0SCL" x="-2.54" y="-17.78" length="short"/>
+</symbol>
+<symbol name="TI-SN74AXC4T774RSV">
+<description>SN74AXC4T774 4-Bit Dual-Supply Bus Transceiver</description>
+<wire x1="0" y1="-40.64" x2="0" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="20.32" y2="0" width="0.254" layer="94"/>
+<wire x1="20.32" y1="0" x2="20.32" y2="-40.64" width="0.254" layer="94"/>
+<wire x1="20.32" y1="-40.64" x2="0" y2="-40.64" width="0.254" layer="94"/>
+<text x="0" y="2.286" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<text x="0" y="-41.402" size="1.778" layer="95" align="top-left">&gt;PN</text>
+<pin name="VCCA" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
+<pin name="A1" x="-2.54" y="-12.7" visible="pin" length="short"/>
+<pin name="A2" x="-2.54" y="-20.32" visible="pin" length="short"/>
+<pin name="A3" x="-2.54" y="-27.94" visible="pin" length="short"/>
+<pin name="A4" x="-2.54" y="-35.56" visible="pin" length="short"/>
+<pin name="B1" x="22.86" y="-12.7" visible="pin" length="short" rot="R180"/>
+<pin name="B2" x="22.86" y="-20.32" visible="pin" length="short" rot="R180"/>
+<pin name="B3" x="22.86" y="-27.94" visible="pin" length="short" rot="R180"/>
+<pin name="B4" x="22.86" y="-35.56" visible="pin" length="short" rot="R180"/>
+<pin name="DIR1" x="-2.54" y="-15.24" visible="pin" length="short"/>
+<pin name="DIR2" x="-2.54" y="-22.86" visible="pin" length="short"/>
+<pin name="DIR3" x="-2.54" y="-30.48" visible="pin" length="short"/>
+<pin name="DIR4" x="-2.54" y="-38.1" visible="pin" length="short"/>
+<pin name="VCCB" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="EN_" x="-2.54" y="-7.62" visible="pin" length="short"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3032,6 +3195,78 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="TI-MSP430FR2422IRHL" prefix="U">
+<gates>
+<gate name="A" symbol="TI-MSP430FR2422IRHL-A" x="0" y="0"/>
+<gate name="B" symbol="TI-MSP430FR2422IRHL-B" x="0" y="-27.94"/>
+<gate name="C" symbol="TI-MSP430FR2422IRHL-C" x="0" y="-60.96"/>
+</gates>
+<devices>
+<device name="" package="TI-MSP430FR2422IRHL">
+<connects>
+<connect gate="A" pin="GND" pad="6"/>
+<connect gate="A" pin="GND_THERMALPAD" pad="21"/>
+<connect gate="A" pin="RST_/NMI/SBWTDIO" pad="4"/>
+<connect gate="A" pin="TEST/SBWTCK" pad="3"/>
+<connect gate="A" pin="VDD" pad="5"/>
+<connect gate="B" pin="P1.0/UCB0STE/A0/VEREF+" pad="2"/>
+<connect gate="B" pin="P1.1/UCB0CLK/ACLK/A1/VREF+" pad="1"/>
+<connect gate="B" pin="P1.2/UCB0SIMO/UCB0SDA/SMCLK/A2/VEREF-" pad="20"/>
+<connect gate="B" pin="P1.3/UCB0SOMI/UCB0SCL/MCLK/A3" pad="19"/>
+<connect gate="B" pin="P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK" pad="17"/>
+<connect gate="B" pin="P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS" pad="16"/>
+<connect gate="B" pin="P1.6/UCA0CLK/TA0CLK/TDI/TCLK" pad="15"/>
+<connect gate="B" pin="P1.7/UCA0STE/TDO" pad="14"/>
+<connect gate="C" pin="P2.0/UCA0TXD/UCA0SIMO/XOUT" pad="8"/>
+<connect gate="C" pin="P2.1/UCA0RXD/UCA0SOMI/XIN" pad="7"/>
+<connect gate="C" pin="P2.2/TA1.1/A4" pad="13"/>
+<connect gate="C" pin="P2.3/TA1.2/UCB0STE/A5" pad="12"/>
+<connect gate="C" pin="P2.4/TA1CLK/UCB0CLK/A6" pad="11"/>
+<connect gate="C" pin="P2.5/UCB0SIMO/UCB0SDA/A7" pad="10"/>
+<connect gate="C" pin="P2.6/UCB0SOMI/UCB0SCL" pad="9"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Texas Instruments"/>
+<attribute name="PN" value="MSP430FR2422IRHL"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TI-SN74AXC4T774RSV" prefix="U">
+<gates>
+<gate name="G$1" symbol="TI-SN74AXC4T774RSV" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TI-SN74AXC4T774RSV">
+<connects>
+<connect gate="G$1" pin="A1" pad="1"/>
+<connect gate="G$1" pin="A2" pad="2"/>
+<connect gate="G$1" pin="A3" pad="3"/>
+<connect gate="G$1" pin="A4" pad="4"/>
+<connect gate="G$1" pin="B1" pad="12"/>
+<connect gate="G$1" pin="B2" pad="11"/>
+<connect gate="G$1" pin="B3" pad="10"/>
+<connect gate="G$1" pin="B4" pad="9"/>
+<connect gate="G$1" pin="DIR1" pad="15"/>
+<connect gate="G$1" pin="DIR2" pad="16"/>
+<connect gate="G$1" pin="DIR3" pad="5"/>
+<connect gate="G$1" pin="DIR4" pad="6"/>
+<connect gate="G$1" pin="EN_" pad="7"/>
+<connect gate="G$1" pin="GND" pad="8"/>
+<connect gate="G$1" pin="VCCA" pad="14"/>
+<connect gate="G$1" pin="VCCB" pad="13"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Texas Instruments"/>
+<attribute name="PN" value="SN74AXC4T774RSV"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -3643,6 +3878,17 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="TP4" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP5" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="TP7" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
+<part name="U14" library="EagleLibrary" deviceset="TI-MSP430FR2422IRHL" device=""/>
+<part name="U15" library="EagleLibrary" deviceset="TI-SN74AXC4T774RSV" device=""/>
+<part name="R33" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k"/>
+<part name="C73" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2n">
+<spice>
+<pinmapping spiceprefix="C">
+<pinmap gate="G$1" pin="1" pinorder="1"/>
+<pinmap gate="G$1" pin="2" pinorder="2"/>
+</pinmapping>
+</spice>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4055,6 +4301,200 @@ layer."</text>
 <wire x1="132.08" y1="127" x2="132.08" y2="129.54" width="0.1524" layer="91"/>
 <junction x="132.08" y="127"/>
 <label x="132.08" y="129.54" size="1.778" layer="95"/>
+</segment>
+</net>
+</nets>
+</sheet>
+<sheet>
+<description>MSP430</description>
+<plain>
+</plain>
+<instances>
+<instance part="U14" gate="A" x="-30.48" y="78.74" smashed="yes">
+<attribute name="NAME" x="-30.48" y="81.026" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="-30.48" y="60.198" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="U14" gate="B" x="38.1" y="81.28" smashed="yes">
+<attribute name="NAME" x="38.1" y="83.566" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="38.1" y="57.658" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="U14" gate="C" x="132.08" y="81.28" smashed="yes">
+<attribute name="NAME" x="132.08" y="83.566" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="132.08" y="60.198" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="U15" gate="G$1" x="38.1" y="40.64" smashed="yes">
+<attribute name="NAME" x="38.1" y="42.926" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="38.1" y="-0.762" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="R33" gate="G$1" x="-48.26" y="43.18" smashed="yes" rot="R90">
+<attribute name="NAME" x="-50.292" y="44.704" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="-50.292" y="42.164" size="1.778" layer="96" rot="R180"/>
+</instance>
+<instance part="C73" gate="G$1" x="-48.26" y="30.48" smashed="yes">
+<attribute name="NAME" x="-51.816" y="30.861" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="-51.816" y="28.321" size="1.778" layer="96" align="bottom-right"/>
+</instance>
+</instances>
+<busses>
+</busses>
+<nets>
+<net name="VBAT" class="0">
+<segment>
+<pinref part="U14" gate="A" pin="VDD"/>
+<wire x1="-33.02" y1="76.2" x2="-35.56" y2="76.2" width="0.1524" layer="91"/>
+<label x="-35.56" y="76.2" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="VCCA"/>
+<wire x1="35.56" y1="38.1" x2="33.02" y2="38.1" width="0.1524" layer="91"/>
+<label x="33.02" y="38.1" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="DIR1"/>
+<wire x1="35.56" y1="25.4" x2="33.02" y2="25.4" width="0.1524" layer="91"/>
+<label x="33.02" y="25.4" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="R33" gate="G$1" pin="2"/>
+<wire x1="-48.26" y1="48.26" x2="-48.26" y2="50.8" width="0.1524" layer="91"/>
+<label x="-48.26" y="50.8" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="GND" class="0">
+<segment>
+<pinref part="U14" gate="A" pin="GND"/>
+<wire x1="-33.02" y1="73.66" x2="-35.56" y2="73.66" width="0.1524" layer="91"/>
+<label x="-35.56" y="73.66" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U14" gate="A" pin="GND_THERMALPAD"/>
+<wire x1="-33.02" y1="71.12" x2="-33.02" y2="73.66" width="0.1524" layer="91"/>
+<junction x="-33.02" y="73.66"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="GND"/>
+<wire x1="35.56" y1="35.56" x2="33.02" y2="35.56" width="0.1524" layer="91"/>
+<pinref part="U15" gate="G$1" pin="EN_"/>
+<wire x1="35.56" y1="33.02" x2="35.56" y2="35.56" width="0.1524" layer="91"/>
+<junction x="35.56" y="35.56"/>
+<label x="33.02" y="35.56" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C73" gate="G$1" pin="2"/>
+<wire x1="-48.26" y1="25.4" x2="-48.26" y2="22.86" width="0.1524" layer="91"/>
+<label x="-48.26" y="22.86" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_TEST" class="0">
+<segment>
+<pinref part="U14" gate="A" pin="TEST/SBWTCK"/>
+<wire x1="-33.02" y1="66.04" x2="-35.56" y2="66.04" width="0.1524" layer="91"/>
+<label x="-35.56" y="66.04" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MSP_RST_" class="0">
+<segment>
+<pinref part="U14" gate="A" pin="RST_/NMI/SBWTDIO"/>
+<wire x1="-33.02" y1="63.5" x2="-35.56" y2="63.5" width="0.1524" layer="91"/>
+<label x="-35.56" y="63.5" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="R33" gate="G$1" pin="1"/>
+<wire x1="-48.26" y1="38.1" x2="-48.26" y2="35.56" width="0.1524" layer="91"/>
+<pinref part="C73" gate="G$1" pin="1"/>
+<wire x1="-48.26" y1="35.56" x2="-48.26" y2="33.02" width="0.1524" layer="91"/>
+<wire x1="-48.26" y1="35.56" x2="-45.72" y2="35.56" width="0.1524" layer="91"/>
+<junction x="-48.26" y="35.56"/>
+<label x="-45.72" y="35.56" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_DATA_VBAT" class="0">
+<segment>
+<pinref part="U14" gate="B" pin="P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK"/>
+<pinref part="U14" gate="B" pin="P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS"/>
+<wire x1="35.56" y1="68.58" x2="35.56" y2="66.04" width="0.1524" layer="91"/>
+<wire x1="35.56" y1="66.04" x2="33.02" y2="66.04" width="0.1524" layer="91"/>
+<junction x="35.56" y="66.04"/>
+<label x="33.02" y="66.04" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="A2"/>
+<wire x1="35.56" y1="20.32" x2="33.02" y2="20.32" width="0.1524" layer="91"/>
+<label x="33.02" y="20.32" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_CLK_VBAT" class="0">
+<segment>
+<pinref part="U14" gate="B" pin="P1.6/UCA0CLK/TA0CLK/TDI/TCLK"/>
+<wire x1="35.56" y1="63.5" x2="33.02" y2="63.5" width="0.1524" layer="91"/>
+<label x="33.02" y="63.5" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="A1"/>
+<wire x1="35.56" y1="27.94" x2="33.02" y2="27.94" width="0.1524" layer="91"/>
+<label x="33.02" y="27.94" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_DATA_DIR" class="0">
+<segment>
+<pinref part="U14" gate="B" pin="P1.7/UCA0STE/TDO"/>
+<wire x1="35.56" y1="60.96" x2="33.02" y2="60.96" width="0.1524" layer="91"/>
+<label x="33.02" y="60.96" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="DIR2"/>
+<wire x1="35.56" y1="17.78" x2="33.02" y2="17.78" width="0.1524" layer="91"/>
+<label x="33.02" y="17.78" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_AUX_VBAT" class="0">
+<segment>
+<pinref part="U14" gate="C" pin="P2.2/TA1.1/A4"/>
+<wire x1="129.54" y1="73.66" x2="127" y2="73.66" width="0.1524" layer="91"/>
+<label x="127" y="73.66" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="A3"/>
+<wire x1="35.56" y1="12.7" x2="33.02" y2="12.7" width="0.1524" layer="91"/>
+<label x="33.02" y="12.7" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_AUX_DIR" class="0">
+<segment>
+<pinref part="U14" gate="C" pin="P2.3/TA1.2/UCB0STE/A5"/>
+<wire x1="129.54" y1="71.12" x2="127" y2="71.12" width="0.1524" layer="91"/>
+<label x="127" y="71.12" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U15" gate="G$1" pin="DIR3"/>
+<wire x1="35.56" y1="10.16" x2="33.02" y2="10.16" width="0.1524" layer="91"/>
+<label x="33.02" y="10.16" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_CLK" class="0">
+<segment>
+<pinref part="U15" gate="G$1" pin="B1"/>
+<wire x1="60.96" y1="27.94" x2="63.5" y2="27.94" width="0.1524" layer="91"/>
+<label x="63.5" y="27.94" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_DATA" class="0">
+<segment>
+<pinref part="U15" gate="G$1" pin="B2"/>
+<wire x1="60.96" y1="20.32" x2="63.5" y2="20.32" width="0.1524" layer="91"/>
+<label x="63.5" y="20.32" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_ICE_SPI_AUX" class="0">
+<segment>
+<pinref part="U15" gate="G$1" pin="B3"/>
+<wire x1="60.96" y1="12.7" x2="63.5" y2="12.7" width="0.1524" layer="91"/>
+<label x="63.5" y="12.7" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="1V8" class="0">
+<segment>
+<pinref part="U15" gate="G$1" pin="VCCB"/>
+<wire x1="60.96" y1="38.1" x2="63.5" y2="38.1" width="0.1524" layer="91"/>
+<label x="63.5" y="38.1" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
