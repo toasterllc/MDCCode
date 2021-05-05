@@ -11,9 +11,10 @@
             https://freenode.irclog.whitequark.org/yosys/2019-03-13
             https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
     
-    - Consider lowering 2V8 rail to 2V7-ish, so that it's easier to meet the SD card Vih in 3.3V mode
+    X Consider lowering 2V8 rail to 2V7-ish, so that it's easier to meet the SD card Vih in 3.3V mode
         - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => only 50mV away from 1.8V rail
         - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
+        X The min voltage for the image sensor is 2.76V :(
     
     - Add motion detector
     
@@ -45,14 +46,16 @@
 
 - Preorder parts to de-risk
     - STM32
-        - 90x (STM32F730I8K6) from Farnell UK
+        √ 90x (STM32F730I8K6) from Farnell UK
+            √ Received
             $6.03 each
             - Try ordering 10 more from export.farnell.com in a week
         - 10x (STM32F723IEK6 -- more expensive but pin-compatible) from Mouser
             - Haven't ordered yet -- want to try ordering 10 more of the cheaper model first
     
     - ICE40
-        - 100x from DigiKey
+        √ 100x from DigiKey
+            √ Received
     
     - AR0330CS
     
@@ -63,6 +66,10 @@
         AS4C8M16MSA-6BIN    128 Mbit
     
     - Motion sensor
+
+
+
+
 
 - Future
     
