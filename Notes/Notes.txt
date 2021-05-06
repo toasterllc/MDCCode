@@ -53,6 +53,18 @@
     
     - Block power to STM32 when 1V8 is powered in battery mode
     
+    - Block clock to PIX while PIX is powered down
+        - Only needed if we're going to separate the PIX power domain
+            - If not, PIX will always be powered if the clock is powered, so we don't need to block the clock
+        - Have separate clocks for ICE and PIX, each powered by the respective power domain?
+    
+    - Block current into STM32's MSP_RST_ GPIO, due to the MSP_RST_ pull-up?
+        - Not sure if this is necessary since the current will be small. But we should quantify how small the current is:
+            - Use CurrentRanger to find out how much current enters an unpowered STM32's GPIO,
+              from a 47k resistor hooked to ~3.3V. Test on Rev3 board by removing an LED. (Or
+              test first without removing an LED, in case the current is small enough in that
+              case, and so we don't need to remove it.)
+    
     - Add power domain control
         - Controlled by MSP430
     
@@ -82,6 +94,7 @@
         AS4C8M16MSA-6BIN    128 Mbit
     
     - Motion sensor
+        EKMB1101111 ?
 
 
 
