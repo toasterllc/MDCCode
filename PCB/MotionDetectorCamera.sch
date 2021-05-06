@@ -1325,29 +1325,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </polygon>
 </package>
 </packages>
-<packages3d>
-<package3d name="SOT95P230X110-3N" urn="urn:adsk.eagle:package:28496830/1" type="model">
-<description>3-SOT23, 0.95 mm pitch, 2.30 mm span, 2.90 X 1.30 X 1.10 mm body
-&lt;p&gt;3-pin SOT23 package with 0.95 mm pitch, 2.30 mm span with body size 2.90 X 1.30 X 1.10 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="NEXPERIA-PMV27UPEAR"/>
-</packageinstances>
-</package3d>
-<package3d name="SOT65P210X110-3N" urn="urn:adsk.eagle:package:28496790/1" type="model">
-<description>3-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
-&lt;p&gt;3-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="TI-LM66100DCK"/>
-</packageinstances>
-</package3d>
-<package3d name="SON50P100X145X50-6N" urn="urn:adsk.eagle:package:28498965/1" type="model">
-<description>6-SON (DFN), 0.50 mm pitch, 1.45 X 1.00 X 0.50 mm body
-&lt;p&gt;6-pin SON (DFN) package with 0.50 mm pitch with body size 1.45 X 1.00 X 0.50 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="NEXPERIA-74LVC1G32GM"/>
-</packageinstances>
-</package3d>
-</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -3418,9 +3395,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="G" pad="1"/>
 <connect gate="G$1" pin="S" pad="2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28496830/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Nexperia"/>
@@ -3443,9 +3417,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="VIN" pad="1"/>
 <connect gate="G$1" pin="VOUT" pad="6"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28496790/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Texas Instruments"/>
@@ -3467,9 +3438,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="VDD" pad="6"/>
 <connect gate="G$1" pin="Y" pad="4"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28498965/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Nexperia"/>
@@ -4101,19 +4069,19 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </pinmapping>
 </spice>
 </part>
-<part name="Q1" library="EagleLibrary" deviceset="NEXPERIA-PMV27UPEAR" device="" package3d_urn="urn:adsk.eagle:package:28496830/1"/>
-<part name="U16" library="EagleLibrary" deviceset="TI-LM66100DCK" device="" package3d_urn="urn:adsk.eagle:package:28496790/1">
+<part name="Q1" library="EagleLibrary" deviceset="NEXPERIA-PMV27UPEAR" device=""/>
+<part name="U16" library="EagleLibrary" deviceset="TI-LM66100DCK" device="">
 <attribute name="PN" value="LM66100DCKT"/>
 </part>
 <part name="R34" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
-<part name="Q2" library="EagleLibrary" deviceset="NEXPERIA-PMV27UPEAR" device="" package3d_urn="urn:adsk.eagle:package:28496830/1"/>
-<part name="U17" library="EagleLibrary" deviceset="TI-LM66100DCK" device="" package3d_urn="urn:adsk.eagle:package:28496790/1">
+<part name="Q2" library="EagleLibrary" deviceset="NEXPERIA-PMV27UPEAR" device=""/>
+<part name="U17" library="EagleLibrary" deviceset="TI-LM66100DCK" device="">
 <attribute name="PN" value="LM66100DCKT"/>
 </part>
 <part name="R35" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
 <part name="R36" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
 <part name="R37" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
-<part name="U18" library="EagleLibrary" deviceset="NEXPERIA-74LVC1G32GM" device="" package3d_urn="urn:adsk.eagle:package:28498965/1"/>
+<part name="U18" library="EagleLibrary" deviceset="NEXPERIA-74LVC1G32GM" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4726,6 +4694,7 @@ during a negative voltage event."</text>
 <description>MSP430</description>
 <plain>
 <text x="101.6" y="35.56" size="2.54" layer="89" align="top-left">Hook up PWR_EN_MSP to a GPIO</text>
+<text x="-109.22" y="20.32" size="2.54" layer="89" align="top-left">MSP_RST_ Capacitance is too high for spy-bi-wire</text>
 </plain>
 <instances>
 <instance part="U14" gate="A" x="-30.48" y="78.74" smashed="yes">
@@ -8351,6 +8320,20 @@ SD_CMD = Z
 <label x="223.52" y="-99.06" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
+<net name="MSP_RST_" class="0">
+<segment>
+<pinref part="U12" gate="D" pin="PD7_A11"/>
+<wire x1="170.18" y1="-30.48" x2="172.72" y2="-30.48" width="0.1524" layer="91"/>
+<label x="172.72" y="-30.48" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_TEST" class="0">
+<segment>
+<pinref part="U12" gate="B" pin="PB3_A10"/>
+<wire x1="68.58" y1="-20.32" x2="71.12" y2="-20.32" width="0.1524" layer="91"/>
+<label x="71.12" y="-20.32" size="1.778" layer="95"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -8449,11 +8432,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 

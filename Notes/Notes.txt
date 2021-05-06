@@ -16,26 +16,42 @@
         - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
         X The min voltage for the image sensor is 2.76V :(
     
+    - Consider raising 1V8 rail to 1.85-1.90V, so that it's easier to meet the SD card Vih in 3.3V mode
+        - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => 50mV away from 1.8V rail, 150mV away from 1.9V rail
+        - MSP430        👍 VCC: 1.8 - 3.6
+        - ICE40         👍 VCCIO I/O Driver Supply Voltage: 1.71 - 3.46
+        - RAM           👍 Supply Voltage: 1.7 - 1.95 V
+        - AR0330        👍 Digital voltage: 1.7 – 1.9 V
+        - SD            👍 Input High Voltage VIH: 1.27 - 2.00 V
+        - STM32         👍 VDD: 1.7 - 3.6
+        - MotionSensor
+    
     - Add motion detector
     
     - Add MSP430 (MSP430FR2422)
         - Needs FRAM to store the bitmap of the SD card usage
-        - Needs connection to ICE40, to issue commands
+        √ Needs connection to ICE40, to issue commands
+            √ 2-wire SPI (clk, data): connect MSP430 MOSI/MISO together, and ensure:
+                - During Tx: MOSI=Driven
+                - During Rx: MOSI=HighZ
+                - 2021-4-28: confirmed that this technique should work by using the CurrentSensor Rev1 board
+        √ Needs connection to STM32, so the STM32 can request bitmap of SD card usage
             - Options:
-                - 2-wire SPI (clk, data): connect MSP430 MOSI/MISO together, and ensure:
-                    - During Tx: MOSI=Driven
-                    - During Rx: MOSI=HighZ
-                    - 2021-4-28: confirmed that this technique should work by using the CurrentSensor Rev1 board
-        - Needs connection to STM32, so the STM32 can request bitmap of SD card usage
-            - Options:
-                - STM32 uses MSP430 debug interface to read bitmap directly from memory
+                √ STM32 uses MSP430 debug interface to read bitmap directly from memory
                     - Same interface used for programming MSP430
                 - 3 wire SPI (chip select, clk, data)
                     - STM32 can be configured as bidirectional (SPI_CR1_BIDIMODE) so use the same line for both TX and RX
+                    - Pros:
+                    - Cons:
+                        - Requires extra wires
         - Needs connection to power transistors to control ICE40/RAM/SD power rails
         - Needs connection to motion detector
-        - Needs to be programmable from STM32
-        - Needs to be debuggable from STM32
+        - Needs to be programmable/debuggable from STM32
+            - Spy-bi-wire likely needs to be implemented by bit-banging 2 GPIOs (instead of using a
+              STM32 SPI peripheral), since, with SBW, every third clock reverses the data transfer
+              direction for a single clock (so that the slave can output TDO).
+    
+    - Block power to STM32 when 1V8 is powered in battery mode
     
     - Add power domain control
         - Controlled by MSP430
