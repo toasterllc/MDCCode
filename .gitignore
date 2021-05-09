@@ -2,7 +2,6 @@
 *.vvp
 *.bin
 *.blif
-*.asc
 tmp
 *.s#*
 *.b#*
