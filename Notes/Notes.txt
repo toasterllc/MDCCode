@@ -51,7 +51,7 @@
               STM32 SPI peripheral), since, with SBW, every third clock reverses the data transfer
               direction for a single clock (so that the slave can output TDO).
     
-    - Block power to STM32 when 1V8 is powered in battery mode
+    √ Block power to STM32 when 1V8 is powered in battery mode
     
     - Block clock to PIX while PIX is powered down
         - Only needed if we're going to separate the PIX power domain
@@ -67,6 +67,8 @@
     
     - Add power domain control
         - Controlled by MSP430
+    
+    - Add reverse polarity protection for the VDD_BAT
     
     - Remove analog switches between SD card and ICE40
         - They present too much capacitance
