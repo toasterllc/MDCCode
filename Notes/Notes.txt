@@ -68,7 +68,7 @@
     - Add power domain control
         - Controlled by MSP430
     
-    - Add reverse polarity protection for the VDD_BAT
+    √ Add reverse polarity protection for the VDD_BAT
     
     - Remove analog switches between SD card and ICE40
         - They present too much capacitance
