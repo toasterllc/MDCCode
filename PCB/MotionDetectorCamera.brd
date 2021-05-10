@@ -2261,13 +2261,18 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="R41" library="EagleLibrary" package="0402" value="100k" x="-13.208" y="-75.438" smashed="yes">
 <attribute name="NAME" x="-13.962" y="-74.882" size="0.508" layer="25" font="vector"/>
 </element>
-<element name="R35" library="EagleLibrary" package="0402" value="100k" x="-13.208" y="-77.978" smashed="yes">
+<element name="R35" library="EagleLibrary" package="0402" value="10k" x="-13.208" y="-77.978" smashed="yes">
 <attribute name="NAME" x="-13.962" y="-77.422" size="0.508" layer="25" font="vector"/>
 </element>
 <element name="Q2" library="EagleLibrary" package="NEXPERIA-TO-236AB" value="NEXPERIA-PMV27UPEAR" x="-12.7" y="-82.042" smashed="yes">
 <attribute name="MFG" value="Nexperia" x="-12.7" y="-82.042" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-13.344440625" y="-80.281740625" size="0.762" layer="25" font="vector"/>
 <attribute name="PN" value="PMV27UPEAR" x="-12.7" y="-82.042" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R42" library="EagleLibrary" package="0402" value="33" x="-13.208" y="-85.09" smashed="yes">
+<attribute name="MFG" value="Yageo" x="-13.208" y="-85.09" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-13.962" y="-84.534" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="RC0402FR-0733RL" x="-13.208" y="-85.09" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>
@@ -6581,11 +6586,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-11.9917" y1="-20.574" x2="-13.7783" y2="-68.9" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$19">
-<contactref element="Q3" pad="3"/>
 <contactref element="R38" pad="2"/>
 <contactref element="Q4" pad="1"/>
+<contactref element="R42" pad="1"/>
+<wire x1="-13.7783" y1="-57.724" x2="-13.6405" y2="-85.09" width="0" layer="19" extent="1-1"/>
 <wire x1="-12.7755" y1="-54.61" x2="-13.7783" y2="-57.724" width="0" layer="19" extent="1-1"/>
-<wire x1="-11.6217" y1="-46.99" x2="-12.7755" y2="-54.61" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_STM">
 <contactref element="Q4" pad="3"/>
@@ -6603,6 +6608,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R35" pad="1"/>
 <contactref element="Q3" pad="1"/>
 <wire x1="-13.7783" y1="-46.04" x2="-13.6405" y2="-77.978" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$33">
+<contactref element="R42" pad="2"/>
+<contactref element="Q3" pad="3"/>
+<wire x1="-11.6217" y1="-46.99" x2="-12.7755" y2="-85.09" width="0" layer="19" extent="1-1"/>
 </signal>
 </signals>
 <mfgpreviewcolors>

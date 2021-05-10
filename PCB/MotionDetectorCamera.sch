@@ -4145,8 +4145,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="Q1" library="EagleLibrary" deviceset="NEXPERIA-PMV27UPEAR" device=""/>
 <part name="R34" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
 <part name="R41" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
-<part name="R35" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
+<part name="R35" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
 <part name="Q2" library="EagleLibrary" deviceset="NEXPERIA-PMV27UPEAR" device=""/>
+<part name="R42" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="33">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-0733RL"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4384,12 +4388,12 @@ be less than VDD_BAT.</text>
 <instance part="Q3" gate="G$1" x="172.72" y="266.7" smashed="yes" rot="R90">
 <attribute name="NAME" x="179.07" y="270.764" size="1.778" layer="95" align="bottom-right"/>
 </instance>
-<instance part="R38" gate="G$1" x="165.1" y="259.08" smashed="yes" rot="R90">
-<attribute name="NAME" x="163.068" y="261.366" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="163.068" y="258.826" size="1.778" layer="96" rot="R180"/>
+<instance part="R38" gate="G$1" x="165.1" y="248.92" smashed="yes" rot="R90">
+<attribute name="NAME" x="163.068" y="251.206" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="163.068" y="248.666" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="Q4" gate="G$1" x="177.8" y="254" smashed="yes" rot="MR0">
-<attribute name="NAME" x="171.196" y="249.174" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<instance part="Q4" gate="G$1" x="177.8" y="243.84" smashed="yes" rot="MR0">
+<attribute name="NAME" x="171.196" y="239.014" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </instance>
 <instance part="R39" gate="G$1" x="198.12" y="429.26" smashed="yes" rot="R180">
 <attribute name="NAME" x="198.12" y="427.99" size="1.778" layer="95" align="top-left"/>
@@ -4420,6 +4424,12 @@ be less than VDD_BAT.</text>
 </instance>
 <instance part="Q2" gate="G$1" x="167.64" y="345.44" smashed="yes">
 <attribute name="NAME" x="177.038" y="341.63" size="1.778" layer="95" align="bottom-right"/>
+</instance>
+<instance part="R42" gate="G$1" x="172.72" y="259.08" smashed="yes" rot="R90">
+<attribute name="NAME" x="170.688" y="261.366" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="170.688" y="258.826" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="172.72" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="172.72" y="259.08" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -4488,11 +4498,11 @@ be less than VDD_BAT.</text>
 </segment>
 <segment>
 <pinref part="R38" gate="G$1" pin="1"/>
-<wire x1="165.1" y1="254" x2="167.64" y2="254" width="0.1524" layer="91"/>
+<wire x1="165.1" y1="243.84" x2="167.64" y2="243.84" width="0.1524" layer="91"/>
 <pinref part="Q4" gate="G$1" pin="S"/>
-<wire x1="165.1" y1="254" x2="162.56" y2="254" width="0.1524" layer="91"/>
-<junction x="165.1" y="254"/>
-<label x="162.56" y="254" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="165.1" y1="243.84" x2="162.56" y2="243.84" width="0.1524" layer="91"/>
+<junction x="165.1" y="243.84"/>
+<label x="162.56" y="243.84" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -4811,19 +4821,18 @@ be less than VDD_BAT.</text>
 </net>
 <net name="N$19" class="0">
 <segment>
-<pinref part="Q3" gate="G$1" pin="D"/>
-<wire x1="172.72" y1="261.62" x2="172.72" y2="264.16" width="0.1524" layer="91"/>
+<wire x1="172.72" y1="251.46" x2="172.72" y2="254" width="0.1524" layer="91"/>
 <pinref part="R38" gate="G$1" pin="2"/>
-<wire x1="172.72" y1="264.16" x2="172.72" y2="266.7" width="0.1524" layer="91"/>
-<wire x1="165.1" y1="264.16" x2="172.72" y2="264.16" width="0.1524" layer="91"/>
-<junction x="172.72" y="264.16"/>
+<wire x1="165.1" y1="254" x2="172.72" y2="254" width="0.1524" layer="91"/>
 <pinref part="Q4" gate="G$1" pin="G"/>
+<pinref part="R42" gate="G$1" pin="1"/>
+<junction x="172.72" y="254"/>
 </segment>
 </net>
 <net name="VDD_STM" class="0">
 <segment>
-<wire x1="177.8" y1="254" x2="180.34" y2="254" width="0.1524" layer="91"/>
-<label x="180.34" y="254" size="1.778" layer="95"/>
+<wire x1="177.8" y1="243.84" x2="180.34" y2="243.84" width="0.1524" layer="91"/>
+<label x="180.34" y="243.84" size="1.778" layer="95"/>
 <pinref part="Q4" gate="G$1" pin="D"/>
 </segment>
 </net>
@@ -4869,6 +4878,13 @@ be less than VDD_BAT.</text>
 <pinref part="R35" gate="G$1" pin="1"/>
 <pinref part="Q3" gate="G$1" pin="G"/>
 <wire x1="162.56" y1="271.78" x2="165.1" y2="271.78" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$33" class="0">
+<segment>
+<pinref part="R42" gate="G$1" pin="2"/>
+<pinref part="Q3" gate="G$1" pin="D"/>
+<wire x1="172.72" y1="264.16" x2="172.72" y2="266.7" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
