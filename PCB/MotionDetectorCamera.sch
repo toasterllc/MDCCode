@@ -4204,9 +4204,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="RC0402FR-0733RL"/>
 </part>
 <part name="Q2" library="EagleLibrary" deviceset="NEXPERIA-PMXB40UNEZ" device=""/>
-<part name="Q1" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
 <part name="R37" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
 <part name="R36" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
+<part name="Q3" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4485,9 +4485,6 @@ from passing through NFET.</text>
 <instance part="Q2" gate="G$1" x="175.26" y="261.62" smashed="yes" rot="MR0">
 <attribute name="NAME" x="168.91" y="257.302" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </instance>
-<instance part="Q1" gate="G$1" x="195.58" y="251.46" smashed="yes" rot="MR0">
-<attribute name="NAME" x="189.23" y="247.142" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-</instance>
 <instance part="R37" gate="G$1" x="165.1" y="269.24" smashed="yes" rot="R180">
 <attribute name="NAME" x="162.306" y="273.812" size="1.778" layer="95"/>
 <attribute name="VALUE" x="162.306" y="271.272" size="1.778" layer="96"/>
@@ -4495,6 +4492,9 @@ from passing through NFET.</text>
 <instance part="R36" gate="G$1" x="185.42" y="256.54" smashed="yes" rot="R90">
 <attribute name="NAME" x="183.388" y="258.826" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="183.388" y="256.286" size="1.778" layer="96" rot="R180"/>
+</instance>
+<instance part="Q3" gate="G$1" x="195.58" y="251.46" smashed="yes" rot="MR0">
+<attribute name="NAME" x="189.23" y="247.142" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </instance>
 </instances>
 <busses>
@@ -4569,8 +4569,8 @@ from passing through NFET.</text>
 <segment>
 <wire x1="185.42" y1="251.46" x2="182.88" y2="251.46" width="0.1524" layer="91"/>
 <label x="182.88" y="251.46" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="Q1" gate="G$1" pin="S"/>
 <pinref part="R36" gate="G$1" pin="1"/>
+<pinref part="Q3" gate="G$1" pin="S"/>
 <junction x="185.42" y="251.46"/>
 </segment>
 </net>
@@ -4847,7 +4847,7 @@ from passing through NFET.</text>
 <segment>
 <wire x1="195.58" y1="251.46" x2="198.12" y2="251.46" width="0.1524" layer="91"/>
 <label x="198.12" y="251.46" size="1.778" layer="95"/>
-<pinref part="Q1" gate="G$1" pin="D"/>
+<pinref part="Q3" gate="G$1" pin="D"/>
 </segment>
 </net>
 <net name="VDD_MSP" class="0">
@@ -4928,15 +4928,12 @@ from passing through NFET.</text>
 </net>
 <net name="N$9" class="0">
 <segment>
-<pinref part="Q1" gate="G$1" pin="G"/>
-<pinref part="Q1" gate="G$1" pin="G"/>
-<junction x="190.5" y="259.08"/>
-<junction x="190.5" y="259.08"/>
 <wire x1="190.5" y1="259.08" x2="190.5" y2="261.62" width="0.1524" layer="91"/>
 <pinref part="R34" gate="G$1" pin="1"/>
 <wire x1="185.42" y1="261.62" x2="190.5" y2="261.62" width="0.1524" layer="91"/>
 <pinref part="R36" gate="G$1" pin="2"/>
 <junction x="185.42" y="261.62"/>
+<pinref part="Q3" gate="G$1" pin="G"/>
 </segment>
 </net>
 <net name="N$15" class="0">

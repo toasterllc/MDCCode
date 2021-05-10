@@ -68,11 +68,14 @@
     - Add power domain control
         - Controlled by MSP430
     
-    √ Add reverse polarity protection for the VDD_BAT
-    
     - Remove analog switches between SD card and ICE40
         - They present too much capacitance
         - (U11 SD_DATx pins are out of order on Rev3)
+    
+    √ Add reverse polarity protection for the VDD_BAT
+
+
+
 
 - Preorder parts to de-risk
     - STM32
