@@ -12,6 +12,33 @@ Power Supply Muxing
     
 
 - Potential solutions
+    - LM66100
+        - Supply voltage: 1.5V – 5.5V
+        - May work for us, but Spice model is broken:
+            "We are currently aware of an issue on the LM66100 PSPICE model with regards to OR-ing with a PFET."
+        
+        - Might not work for VDD_MSP supply because LM66100's internal FET could conduct in battery mode,
+          where VIN (3V) > VOUT (1.8V)
+        
+        - rON
+            91-mΩ @ 3.6V
+        
+        - Quiescent Current
+            0.15 µA
+    
+    - MAX40203 (ideal diode)
+        - Supply voltage: 1.2V - 5.5V
+        - When disabled (EN = low), blocks voltages up to 6V in either direction
+        - EN should not be turned on before VDD
+        - Weak pullup on EN will cause power to be burned when plugged into USB 👎, since we'll drive it low
+        
+        - rON
+            160-mΩ @ 100mA
+            86-mΩ @ 500mA
+    
+        - Quiescent Current
+            0.3 µA
+    
     - Use discrete MOSFETs
         - 1 channel PMOS
             PMPB09R5VPX
@@ -106,35 +133,6 @@ Power Supply Muxing
                 $0.422 @ 100
                 r = 35mΩ @ -2.5V
                 A = 8.99
-        
-    
-
-    - MAX40203 (ideal diode)
-        - Supply voltage: 1.2V - 5.5V
-        - When disabled (EN = low), blocks voltages up to 6V in either direction
-        - EN should not be turned on before VDD
-        - Weak pullup on EN will cause power to be burned when plugged into USB 👎, since we'll drive it low
-        
-        - rON
-            160-mΩ @ 100mA
-            86-mΩ @ 500mA
-    
-        - Quiescent Current
-            0.3 µA
-
-    - LM66100
-        - Supply voltage: 1.5V – 5.5V
-        - May work for us, but Spice model is broken:
-            "We are currently aware of an issue on the LM66100 PSPICE model with regards to OR-ing with a PFET."
-        
-        - Might not work for VDD_MSP supply because LM66100's internal FET could conduct in battery mode,
-          where VIN (3V) > VOUT (1.8V)
-        
-        - rON
-            91-mΩ @ 3.6V
-        
-        - Quiescent Current
-            0.15 µA
 
     - TPS2116 (Power Mux with Manual and Priority Switchover)
         - Not available for sale yet 👎

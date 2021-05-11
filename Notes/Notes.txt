@@ -93,9 +93,9 @@
         - They present too much capacitance
         - (U11 SD_DATx pins are out of order on Rev3)
     
-    - Add current-sense resistor for VDD_BAT
+    - Add current-sense jumper for VDD_BAT
     
-    - Add current-sense resistor for VDD_USB
+    - Add current-sense jumper for VDD_USB
     
     √ Add reverse polarity protection for the VDD_BAT
 

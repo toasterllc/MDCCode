@@ -1332,29 +1332,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.1" y="-0.2"/>
 </polygon>
 </package>
-<package name="NEXPERIA-SOT1215">
-<description>6-SOT23, 0.95 mm pitch, 2.80 mm span, 2.90 X 1.63 X 1.00 mm body
-&lt;p&gt;6-pin SOT23 package with 0.95 mm pitch, 2.80 mm span with body size 2.90 X 1.63 X 1.00 mm&lt;/p&gt;</description>
-<smd name="2" x="-0.375" y="0.45" dx="0.35" dy="0.4" layer="1"/>
-<text x="-0.54" y="0.8174" size="0.762" layer="25" font="vector">&gt;NAME</text>
-<wire x1="0.55" y1="-0.5" x2="-0.55" y2="-0.5" width="0.05" layer="21"/>
-<wire x1="-0.55" y1="-0.5" x2="-0.55" y2="0.5" width="0.05" layer="21"/>
-<wire x1="-0.55" y1="0.5" x2="0.55" y2="0.5" width="0.05" layer="21"/>
-<wire x1="0.55" y1="0.5" x2="0.55" y2="-0.5" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="0.55" y="-0.5"/>
-<vertex x="-0.55" y="-0.5"/>
-<vertex x="-0.55" y="0.5"/>
-<vertex x="0.55" y="0.5"/>
-</polygon>
-<smd name="1" x="0.375" y="0.45" dx="0.35" dy="0.4" layer="1"/>
-<smd name="3" x="0" y="-0.45" dx="0.4" dy="0.4" layer="1"/>
-<polygon width="0.05" layer="21">
-<vertex x="-0.531" y="0.476"/>
-<vertex x="-0.531" y="-0.424"/>
-<vertex x="0.369" y="0.476"/>
-</polygon>
-</package>
 <package name="TI-LM66100DCK" urn="urn:adsk.eagle:footprint:28496798/1" locally_modified="yes">
 <description>3-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
 &lt;p&gt;3-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
@@ -1381,7 +1358,40 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.019" y="1.054"/>
 </polygon>
 </package>
+<package name="TI-TPS22916" urn="urn:adsk.eagle:footprint:28605522/1" locally_modified="yes">
+<description>4-BGA, collapsing, 0.40 mm pitch, 0.78 X 0.78 X 0.50 mm body
+&lt;p&gt;4-pin collapsing BGA package with 0.40 mm col pitch and 0.40 mm row pitch with body size 0.78 X 0.78 X 0.50 mm&lt;/p&gt;</description>
+<wire x1="0.405" y1="-0.405" x2="-0.405" y2="-0.405" width="0.05" layer="21"/>
+<wire x1="-0.405" y1="-0.405" x2="-0.405" y2="0.405" width="0.05" layer="21"/>
+<wire x1="-0.405" y1="0.405" x2="0.405" y2="0.405" width="0.05" layer="21"/>
+<wire x1="0.405" y1="0.405" x2="0.405" y2="-0.405" width="0.05" layer="21"/>
+<smd name="A1" x="-0.2" y="0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
+<smd name="A2" x="0.2" y="0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
+<smd name="B1" x="-0.2" y="-0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
+<smd name="B2" x="0.2" y="-0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
+<text x="-0.37338125" y="0.5135" size="0.508" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.405" y="-0.405"/>
+<vertex x="-0.405" y="-0.405"/>
+<vertex x="-0.405" y="0.405"/>
+<vertex x="0.405" y="0.405"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-0.4" y="0.4"/>
+<vertex x="-0.4" y="-0.4"/>
+<vertex x="0.4" y="0.4"/>
+</polygon>
+</package>
 </packages>
+<packages3d>
+<package3d name="BGA4C40P2X2_78X78X50N" urn="urn:adsk.eagle:package:28605511/1" type="model">
+<description>4-BGA, collapsing, 0.40 mm pitch, 0.78 X 0.78 X 0.50 mm body
+&lt;p&gt;4-pin collapsing BGA package with 0.40 mm col pitch and 0.40 mm row pitch with body size 0.78 X 0.78 X 0.50 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="TI-TPS22916"/>
+</packageinstances>
+</package3d>
+</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -2339,32 +2349,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="B" x="-2.54" y="-7.62" visible="off" length="middle"/>
 <pin name="Y" x="12.7" y="-5.08" visible="off" length="short" rot="R180"/>
 </symbol>
-<symbol name="NMOS">
-<wire x1="2.54" y1="0" x2="2.54" y2="2.54" width="0.254" layer="94"/>
-<wire x1="2.54" y1="2.54" x2="7.62" y2="2.54" width="0.254" layer="94"/>
-<wire x1="7.62" y1="2.54" x2="7.62" y2="0" width="0.254" layer="94"/>
-<wire x1="2.54" y1="3.81" x2="5.08" y2="3.81" width="0.254" layer="94"/>
-<pin name="D" x="0" y="0" visible="off" length="point"/>
-<pin name="S" x="10.16" y="0" visible="off" length="point" rot="R180"/>
-<pin name="G" x="5.08" y="7.62" visible="off" length="point" rot="R270"/>
-<wire x1="5.08" y1="3.81" x2="7.62" y2="3.81" width="0.254" layer="94"/>
-<wire x1="2.54" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<wire x1="7.62" y1="0" x2="10.16" y2="0" width="0.254" layer="94"/>
-<wire x1="5.08" y1="7.62" x2="5.08" y2="3.81" width="0.254" layer="94"/>
-<text x="2.794" y="-0.254" size="1.27" layer="95">D</text>
-<text x="7.366" y="-0.254" size="1.27" layer="95" align="bottom-right">S</text>
-<text x="1.27" y="0.762" size="1.778" layer="95" align="bottom-right">&gt;NAME</text>
-<wire x1="5.588" y1="-0.508" x2="5.588" y2="-1.27" width="0.254" layer="94"/>
-<wire x1="5.588" y1="-1.27" x2="5.588" y2="-2.032" width="0.254" layer="94"/>
-<wire x1="5.588" y1="-2.032" x2="4.318" y2="-1.27" width="0.254" layer="94"/>
-<wire x1="4.318" y1="-1.27" x2="5.588" y2="-0.508" width="0.254" layer="94"/>
-<wire x1="4.318" y1="-0.508" x2="4.318" y2="-1.27" width="0.254" layer="94"/>
-<wire x1="4.318" y1="-1.27" x2="4.318" y2="-2.032" width="0.254" layer="94"/>
-<wire x1="5.588" y1="-1.27" x2="7.62" y2="-1.27" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-1.27" x2="7.62" y2="0" width="0.254" layer="94"/>
-<wire x1="4.318" y1="-1.27" x2="2.54" y2="-1.27" width="0.254" layer="94"/>
-<wire x1="2.54" y1="-1.27" x2="2.54" y2="0" width="0.254" layer="94"/>
-</symbol>
 <symbol name="TI-LM66100DCK">
 <wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
 <wire x1="0" y1="-10.16" x2="17.78" y2="-10.16" width="0.254" layer="94"/>
@@ -2385,6 +2369,18 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="10.16" y1="-2.54" x2="10.16" y2="-4.064" width="0.254" layer="94"/>
 <wire x1="-2.54" y1="-2.54" x2="7.62" y2="-2.54" width="0.1524" layer="94"/>
 <wire x1="10.16" y1="-2.54" x2="20.32" y2="-2.54" width="0.1524" layer="94"/>
+</symbol>
+<symbol name="TI-TPS22916">
+<wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="0" y1="-12.7" x2="17.78" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="17.78" y1="-12.7" x2="17.78" y2="0" width="0.254" layer="94"/>
+<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="VOUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="EN" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<text x="0" y="-15.24" size="1.778" layer="95">&gt;PN</text>
+<text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
+<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3525,27 +3521,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="NEXPERIA-PMXB40UNEZ" prefix="Q">
-<description>N-channel MOSFET</description>
-<gates>
-<gate name="G$1" symbol="NMOS" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="NEXPERIA-SOT1215">
-<connects>
-<connect gate="G$1" pin="D" pad="3"/>
-<connect gate="G$1" pin="G" pad="1"/>
-<connect gate="G$1" pin="S" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Nexperia"/>
-<attribute name="PN" value="PMXB40UNEZ"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TI-LM66100DCK" prefix="U">
 <gates>
 <gate name="G$1" symbol="TI-LM66100DCK" x="0" y="0"/>
@@ -3559,6 +3534,29 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="VIN" pad="1"/>
 <connect gate="G$1" pin="VOUT" pad="6"/>
 </connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Texas Instruments"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TI-TPS22916" prefix="U">
+<gates>
+<gate name="G$1" symbol="TI-TPS22916" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TI-TPS22916">
+<connects>
+<connect gate="G$1" pin="EN" pad="B2"/>
+<connect gate="G$1" pin="GND" pad="B1"/>
+<connect gate="G$1" pin="VIN" pad="A2"/>
+<connect gate="G$1" pin="VOUT" pad="A1"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:28605511/1"/>
+</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Texas Instruments"/>
@@ -4203,19 +4201,14 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="R44" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
 <part name="Q6" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
 <part name="Q7" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
-<part name="R34" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="33">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-0733RL"/>
-</part>
-<part name="Q2" library="EagleLibrary" deviceset="NEXPERIA-PMXB40UNEZ" device=""/>
-<part name="R37" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
-<part name="R36" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
-<part name="Q3" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
 <part name="U16" library="EagleLibrary" deviceset="TI-LM66100DCK" device="">
 <attribute name="PN" value="LM66100DCKT"/>
 </part>
 <part name="U17" library="EagleLibrary" deviceset="TI-LM66100DCK" device="">
 <attribute name="PN" value="LM66100DCKT"/>
+</part>
+<part name="U19" library="EagleLibrary" deviceset="TI-TPS22916" device="" package3d_urn="urn:adsk.eagle:package:28605511/1">
+<attribute name="PN" value="TPS22916CYFPT"/>
 </part>
 </parts>
 <sheets>
@@ -4278,9 +4271,6 @@ layer."</text>
     voltages &gt; VDD_BAT are blocked from
     reaching the battery.</text>
 <wire x1="149.606" y1="401.32" x2="154.432" y2="413.766" width="0.1524" layer="95"/>
-<wire x1="168.148" y1="253.492" x2="178.308" y2="259.842" width="0.1524" layer="95"/>
-<text x="148.59" y="252.73" size="1.016" layer="95" align="top-left">Resistor blocks excessive current
-from passing through NFET.</text>
 <wire x1="141.986" y1="386.08" x2="146.812" y2="388.366" width="0.1524" layer="95"/>
 <text x="111.506" y="387.604" size="1.016" layer="95" align="top-left">Capacitor helps minimize reverse current spikes
 when battery is inserted with reverse polarity.</text>
@@ -4443,26 +4433,6 @@ when battery is inserted with reverse polarity.</text>
 <instance part="Q7" gate="G$1" x="193.04" y="368.3" smashed="yes" rot="MR0">
 <attribute name="NAME" x="186.69" y="363.982" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </instance>
-<instance part="R34" gate="G$1" x="180.34" y="261.62" smashed="yes" rot="R180">
-<attribute name="NAME" x="178.816" y="266.446" size="1.778" layer="95"/>
-<attribute name="VALUE" x="178.816" y="263.906" size="1.778" layer="96"/>
-<attribute name="MFG" x="180.34" y="261.62" size="1.778" layer="96" rot="R180" display="off"/>
-<attribute name="PN" x="180.34" y="261.62" size="1.778" layer="96" rot="R180" display="off"/>
-</instance>
-<instance part="Q2" gate="G$1" x="175.26" y="261.62" smashed="yes" rot="MR0">
-<attribute name="NAME" x="168.91" y="257.302" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-</instance>
-<instance part="R37" gate="G$1" x="165.1" y="269.24" smashed="yes" rot="R180">
-<attribute name="NAME" x="162.306" y="273.812" size="1.778" layer="95"/>
-<attribute name="VALUE" x="162.306" y="271.272" size="1.778" layer="96"/>
-</instance>
-<instance part="R36" gate="G$1" x="185.42" y="256.54" smashed="yes" rot="R90">
-<attribute name="NAME" x="183.388" y="258.826" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="183.388" y="256.286" size="1.778" layer="96" rot="R180"/>
-</instance>
-<instance part="Q3" gate="G$1" x="195.58" y="251.46" smashed="yes" rot="MR0">
-<attribute name="NAME" x="189.23" y="247.142" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-</instance>
 <instance part="U16" gate="G$1" x="180.34" y="398.78" smashed="yes">
 <attribute name="NAME" x="180.415" y="401.32" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
 <attribute name="PN" x="180.415" y="386.08" size="1.778" layer="95" ratio="10" rot="SR0"/>
@@ -4470,6 +4440,10 @@ when battery is inserted with reverse polarity.</text>
 <instance part="U17" gate="G$1" x="180.34" y="358.14" smashed="yes">
 <attribute name="NAME" x="180.415" y="360.68" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
 <attribute name="PN" x="180.415" y="345.44" size="1.778" layer="95" ratio="10" rot="SR0"/>
+</instance>
+<instance part="U19" gate="G$1" x="160.02" y="271.78" smashed="yes">
+<attribute name="PN" x="160.02" y="256.54" size="1.778" layer="95"/>
+<attribute name="NAME" x="160.02" y="272.542" size="1.778" layer="95"/>
 </instance>
 </instances>
 <busses>
@@ -4539,16 +4513,14 @@ when battery is inserted with reverse polarity.</text>
 <label x="223.52" y="152.4" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="185.42" y1="251.46" x2="182.88" y2="251.46" width="0.1524" layer="91"/>
-<label x="182.88" y="251.46" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="R36" gate="G$1" pin="1"/>
-<pinref part="Q3" gate="G$1" pin="S"/>
-<junction x="185.42" y="251.46"/>
-</segment>
-<segment>
 <pinref part="U17" gate="G$1" pin="VIN"/>
 <wire x1="177.8" y1="355.6" x2="175.26" y2="355.6" width="0.1524" layer="91"/>
 <label x="175.26" y="355.6" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U19" gate="G$1" pin="VIN"/>
+<wire x1="157.48" y1="269.24" x2="154.94" y2="269.24" width="0.1524" layer="91"/>
+<label x="154.94" y="269.24" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -4627,11 +4599,6 @@ when battery is inserted with reverse polarity.</text>
 <label x="134.62" y="347.98" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="165.1" y1="261.62" x2="162.56" y2="261.62" width="0.1524" layer="91"/>
-<label x="162.56" y="261.62" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="Q2" gate="G$1" pin="S"/>
-</segment>
-<segment>
 <pinref part="U16" gate="G$1" pin="GND"/>
 <wire x1="177.8" y1="391.16" x2="175.26" y2="391.16" width="0.1524" layer="91"/>
 <label x="175.26" y="391.16" size="1.778" layer="95" align="bottom-right"/>
@@ -4646,6 +4613,11 @@ when battery is inserted with reverse polarity.</text>
 <pinref part="U17" gate="G$1" pin="ST"/>
 <wire x1="177.8" y1="353.06" x2="177.8" y2="350.52" width="0.1524" layer="91"/>
 <junction x="177.8" y="350.52"/>
+</segment>
+<segment>
+<pinref part="U19" gate="G$1" pin="GND"/>
+<wire x1="157.48" y1="266.7" x2="154.94" y2="266.7" width="0.1524" layer="91"/>
+<label x="154.94" y="266.7" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -4790,14 +4762,14 @@ when battery is inserted with reverse polarity.</text>
 <label x="134.62" y="373.38" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="R37" gate="G$1" pin="2"/>
-<wire x1="160.02" y1="269.24" x2="157.48" y2="269.24" width="0.1524" layer="91"/>
-<label x="157.48" y="269.24" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <pinref part="U16" gate="G$1" pin="VIN"/>
 <wire x1="177.8" y1="396.24" x2="175.26" y2="396.24" width="0.1524" layer="91"/>
 <label x="175.26" y="396.24" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U19" gate="G$1" pin="EN"/>
+<wire x1="157.48" y1="261.62" x2="154.94" y2="261.62" width="0.1524" layer="91"/>
+<label x="154.94" y="261.62" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="VDD_BAT" class="0">
@@ -4833,9 +4805,9 @@ when battery is inserted with reverse polarity.</text>
 </net>
 <net name="VDD_STM" class="0">
 <segment>
-<wire x1="195.58" y1="251.46" x2="198.12" y2="251.46" width="0.1524" layer="91"/>
-<label x="198.12" y="251.46" size="1.778" layer="95"/>
-<pinref part="Q3" gate="G$1" pin="D"/>
+<pinref part="U19" gate="G$1" pin="VOUT"/>
+<wire x1="180.34" y1="269.24" x2="182.88" y2="269.24" width="0.1524" layer="91"/>
+<label x="182.88" y="269.24" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_MSP" class="0">
@@ -4884,28 +4856,6 @@ when battery is inserted with reverse polarity.</text>
 <pinref part="Q7" gate="G$1" pin="G"/>
 <wire x1="187.96" y1="375.92" x2="187.96" y2="378.46" width="0.1524" layer="91"/>
 <label x="187.96" y="378.46" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="N$9" class="0">
-<segment>
-<wire x1="190.5" y1="259.08" x2="190.5" y2="261.62" width="0.1524" layer="91"/>
-<pinref part="R34" gate="G$1" pin="1"/>
-<wire x1="185.42" y1="261.62" x2="190.5" y2="261.62" width="0.1524" layer="91"/>
-<pinref part="R36" gate="G$1" pin="2"/>
-<junction x="185.42" y="261.62"/>
-<pinref part="Q3" gate="G$1" pin="G"/>
-</segment>
-</net>
-<net name="N$15" class="0">
-<segment>
-<pinref part="Q2" gate="G$1" pin="D"/>
-<pinref part="R34" gate="G$1" pin="2"/>
-</segment>
-</net>
-<net name="N$22" class="0">
-<segment>
-<pinref part="R37" gate="G$1" pin="1"/>
-<pinref part="Q2" gate="G$1" pin="G"/>
 </segment>
 </net>
 <net name="VDD1" class="0">
@@ -7647,6 +7597,7 @@ SD_CMD = Z
 <wire x1="81.28" y1="-251.46" x2="81.28" y2="-233.68" width="0.1524" layer="95"/>
 <wire x1="81.28" y1="-233.68" x2="48.26" y2="-233.68" width="0.1524" layer="95"/>
 <text x="83.312" y="-163.322" size="1.27" layer="95" align="top-left">≤ 1%</text>
+<text x="215.9" y="-170.18" size="7.62" layer="89" align="top-left">Rename 1V8 -&gt; VDD_STM (on this sheet only though)</text>
 </plain>
 <instances>
 <instance part="U12" gate="A" x="7.62" y="-10.16" smashed="yes">
@@ -8661,6 +8612,11 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
+</note>
+<note version="8.3" severity="warning">
+Since Version 8.3, EAGLE supports the association of 3D packages
+with devices in libraries, schematics, and board files. Those 3D
+packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 
