@@ -1373,15 +1373,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </polygon>
 </package>
 </packages>
-<packages3d>
-<package3d name="DIOC2513X70N" urn="urn:adsk.eagle:package:28593278/1" type="model">
-<description>Chip, 2.50 X 1.30 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.50 X 1.30 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="VISHAY-DO-219AD"/>
-</packageinstances>
-</package3d>
-</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -2256,13 +2247,14 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS" x="-2.54" y="-15.24" length="short"/>
 <pin name="P1.6/UCA0CLK/TA0CLK/TDI/TCLK" x="-2.54" y="-17.78" length="short"/>
 <pin name="P1.7/UCA0STE/TDO" x="-2.54" y="-20.32" length="short"/>
+<text x="43.18" y="-2.54" size="1.778" layer="94">Port 1</text>
 </symbol>
 <symbol name="TI-MSP430FR2422IRHL-C">
 <description>16 MHz MCU with 8KB FRAM, 2KB SRAM, 10-bit ADC, UART/SPI/I2C, timer</description>
 <wire x1="0" y1="-20.32" x2="0" y2="0" width="0.254" layer="94"/>
-<wire x1="0" y1="0" x2="38.1" y2="0" width="0.254" layer="94"/>
-<wire x1="38.1" y1="0" x2="38.1" y2="-20.32" width="0.254" layer="94"/>
-<wire x1="38.1" y1="-20.32" x2="0" y2="-20.32" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="45.72" y2="0" width="0.254" layer="94"/>
+<wire x1="45.72" y1="0" x2="45.72" y2="-20.32" width="0.254" layer="94"/>
+<wire x1="45.72" y1="-20.32" x2="0" y2="-20.32" width="0.254" layer="94"/>
 <text x="0" y="2.286" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="0" y="-21.082" size="1.778" layer="95" align="top-left">&gt;PN</text>
 <pin name="P2.0/UCA0TXD/UCA0SIMO/XOUT" x="-2.54" y="-2.54" length="short"/>
@@ -2272,6 +2264,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="P2.4/TA1CLK/UCB0CLK/A6" x="-2.54" y="-12.7" length="short"/>
 <pin name="P2.5/UCB0SIMO/UCB0SDA/A7" x="-2.54" y="-15.24" length="short"/>
 <pin name="P2.6/UCB0SOMI/UCB0SCL" x="-2.54" y="-17.78" length="short"/>
+<text x="38.1" y="-2.54" size="1.778" layer="94">Port 2</text>
 </symbol>
 <symbol name="TI-SN74AXC4T774RSV">
 <description>SN74AXC4T774 4-Bit Dual-Supply Bus Transceiver</description>
@@ -3522,9 +3515,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="A" pad="2"/>
 <connect gate="G$1" pin="C" pad="1"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28593278/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Vishay"/>
@@ -4189,7 +4179,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </part>
 <part name="R43" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
 <part name="R44" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
-<part name="D1" library="EagleLibrary" deviceset="VISHAY-MSS2P2-M3/89A" device="" package3d_urn="urn:adsk.eagle:package:28593278/1"/>
+<part name="D1" library="EagleLibrary" deviceset="VISHAY-MSS2P2-M3/89A" device=""/>
 <part name="Q6" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
 <part name="Q7" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
 <part name="Q8" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
@@ -4298,6 +4288,7 @@ passing through NFET.</text>
 <wire x1="168.148" y1="253.492" x2="178.308" y2="259.842" width="0.1524" layer="95"/>
 <text x="148.59" y="252.73" size="1.016" layer="95" align="top-left">Resistor blocks excessive current
 from passing through NFET.</text>
+<text x="200.66" y="304.8" size="2.54" layer="89" align="top-left">VDD_USB will be higher than VDD when USB-powered (due to diode). Is that OK?</text>
 </plain>
 <instances>
 <instance part="C2" gate="G$1" x="152.4" y="208.28" smashed="yes">
@@ -5053,7 +5044,7 @@ from passing through NFET.</text>
 <label x="-45.72" y="35.56" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_DATA_VBAT" class="0">
+<net name="ICE_MSP_SPI_DATA_X" class="0">
 <segment>
 <pinref part="U14" gate="B" pin="P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK"/>
 <pinref part="U14" gate="B" pin="P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS"/>
@@ -5068,7 +5059,7 @@ from passing through NFET.</text>
 <label x="33.02" y="20.32" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_CLK_VBAT" class="0">
+<net name="ICE_MSP_SPI_CLK_X" class="0">
 <segment>
 <pinref part="U14" gate="B" pin="P1.6/UCA0CLK/TA0CLK/TDI/TCLK"/>
 <wire x1="35.56" y1="63.5" x2="33.02" y2="63.5" width="0.1524" layer="91"/>
@@ -5092,7 +5083,7 @@ from passing through NFET.</text>
 <label x="33.02" y="17.78" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_AUX_VBAT" class="0">
+<net name="ICE_MSP_SPI_AUX_X" class="0">
 <segment>
 <pinref part="U14" gate="C" pin="P2.2/TA1.1/A4"/>
 <wire x1="129.54" y1="73.66" x2="127" y2="73.66" width="0.1524" layer="91"/>
@@ -8573,13 +8564,6 @@ SD_CMD = Z
 <label x="30.48" y="-154.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDDIN" class="0">
-<segment>
-<pinref part="H1" gate="G$1" pin="9"/>
-<wire x1="226.06" y1="-99.06" x2="223.52" y2="-99.06" width="0.1524" layer="91"/>
-<label x="223.52" y="-99.06" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
 <net name="MSP_RST_" class="0">
 <segment>
 <pinref part="U12" gate="D" pin="PD7_A11"/>
@@ -8592,6 +8576,13 @@ SD_CMD = Z
 <pinref part="U12" gate="B" pin="PB3_A10"/>
 <wire x1="68.58" y1="-20.32" x2="71.12" y2="-20.32" width="0.1524" layer="91"/>
 <label x="71.12" y="-20.32" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="VDD_USB" class="0">
+<segment>
+<pinref part="H1" gate="G$1" pin="9"/>
+<wire x1="226.06" y1="-99.06" x2="223.52" y2="-99.06" width="0.1524" layer="91"/>
+<label x="223.52" y="-99.06" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 </nets>
@@ -8671,7 +8662,7 @@ Ferrite bead specs:
 <junction x="33.02" y="-7.62"/>
 </segment>
 </net>
-<net name="VDDIN" class="0">
+<net name="VDD_USB" class="0">
 <segment>
 <pinref part="FB1" gate="G$1" pin="P$2"/>
 <wire x1="50.8" y1="-7.62" x2="53.34" y2="-7.62" width="0.1524" layer="91"/>
@@ -8692,11 +8683,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 

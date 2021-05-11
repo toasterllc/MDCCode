@@ -53,6 +53,27 @@
     
     √ Block power to STM32 when 1V8 is powered in battery mode
     
+    - Figure out PIX / SD power domains:
+        Option1: separate power domains
+            - Description
+                - PIX power and SD power are independently controlled by MSP
+            
+            - Requirements
+                - Gate PIX power (PFET)
+                - Gate PIX clock
+                    - Option1: separate clock chip with enable tied to PIX power
+                    - Option2: tri-state buffer blocks clock signal while PIX isn't powered
+                - Gate SD power (PFET)
+        
+        Option2: same power domain
+            - Description
+                - PIX power and SD power are the same -- they're both powered or unpowered
+            
+            - Requirements
+                - Gate PIX clock
+                    - Option1: separate clock chip with enable tied to PIX power
+                    - Option2: tri-state buffer blocks clock signal while PIX isn't powered
+    
     - Block clock to PIX while PIX is powered down
         - Only needed if we're going to separate the PIX power domain
             - If not, PIX will always be powered if the clock is powered, so we don't need to block the clock
@@ -71,6 +92,10 @@
     - Remove analog switches between SD card and ICE40
         - They present too much capacitance
         - (U11 SD_DATx pins are out of order on Rev3)
+    
+    - Add current-sense resistor for VDD_BAT
+    
+    - Add current-sense resistor for VDD_USB
     
     √ Add reverse polarity protection for the VDD_BAT
 

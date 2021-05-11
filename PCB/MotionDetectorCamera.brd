@@ -1350,15 +1350,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </polygon>
 </package>
 </packages>
-<packages3d>
-<package3d name="DIOC2513X70N" urn="urn:adsk.eagle:package:28593278/1" type="model">
-<description>Chip, 2.50 X 1.30 X 0.70 mm body
-&lt;p&gt;Chip package with body size 2.50 X 1.30 X 0.70 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="VISHAY-DO-219AD"/>
-</packageinstances>
-</package3d>
-</packages3d>
 </library>
 </libraries>
 <attributes>
@@ -2282,7 +2273,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="R44" library="EagleLibrary" package="0402" value="100k" x="-13.208" y="-96.012" smashed="yes">
 <attribute name="NAME" x="-13.962" y="-95.456" size="0.508" layer="25" font="vector"/>
 </element>
-<element name="D1" library="EagleLibrary" package="VISHAY-DO-219AD" package3d_urn="urn:adsk.eagle:package:28593278/1" value="VISHAY-MSS2P2-M3/89A" x="-12.7" y="-105.918" smashed="yes">
+<element name="D1" library="EagleLibrary" package="VISHAY-DO-219AD" value="VISHAY-MSS2P2-M3/89A" x="-12.7" y="-105.918" smashed="yes">
 <attribute name="MFG" value="Vishay" x="-12.7" y="-105.918" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.1" y="-104.9544" size="0.889" layer="25" font="vector"/>
 <attribute name="PN" value="MSS2P2-M3/89A" x="-12.7" y="-105.918" size="1.778" layer="27" display="off"/>
@@ -5246,14 +5237,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="VDDIN">
 <contactref element="R3" pad="2"/>
-<contactref element="H1" pad="9"/>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="36.24071875" y="11.938"/>
 <vertex x="36.24071875" y="8.773165625"/>
 <vertex x="39.723059375" y="8.773165625"/>
 <vertex x="39.723059375" y="11.938"/>
 </polygon>
-<contactref element="FB1" pad="2"/>
 </signal>
 <signal name="N$16">
 <contactref element="R1" pad="2"/>
@@ -6562,14 +6551,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-13.6405" y1="-5.334" x2="-9.8126" y2="-0.266" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.6405" y1="-7.874" x2="-13.6405" y2="-5.334" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="ICE_MSP_SPI_DATA_VBAT">
+<signal name="ICE_MSP_SPI_DATA_X">
 <contactref element="U14" pad="17"/>
 <contactref element="U14" pad="16"/>
 <contactref element="U15" pad="2"/>
 <wire x1="-6.4434" y1="-0.766" x2="-14.0531" y2="-1.832" width="0" layer="19" extent="1-1"/>
 <wire x1="-6.4434" y1="-0.266" x2="-6.4434" y2="-0.766" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="ICE_MSP_SPI_CLK_VBAT">
+<signal name="ICE_MSP_SPI_CLK_X">
 <contactref element="U14" pad="15"/>
 <contactref element="U15" pad="1"/>
 <wire x1="-6.4434" y1="-1.266" x2="-14.0531" y2="-1.432" width="0" layer="19" extent="1-1"/>
@@ -6579,7 +6568,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U15" pad="16"/>
 <wire x1="-6.4434" y1="-1.766" x2="-13.808" y2="-0.7869" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="ICE_MSP_SPI_AUX_VBAT">
+<signal name="ICE_MSP_SPI_AUX_X">
 <contactref element="U14" pad="13"/>
 <contactref element="U15" pad="3"/>
 <wire x1="-6.4434" y1="-2.266" x2="-14.0531" y2="-2.232" width="0" layer="19" extent="1-1"/>
@@ -6603,9 +6592,13 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R43" pad="2"/>
 <contactref element="D1" pad="2"/>
 <contactref element="R37" pad="2"/>
+<contactref element="FB1" pad="2"/>
+<contactref element="H1" pad="9"/>
 <wire x1="-11.45" y1="-105.918" x2="-12.7755" y2="-138.176" width="0" layer="19" extent="1-1"/>
 <wire x1="-12.7755" y1="-93.472" x2="-11.45" y2="-105.918" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.9539" y1="-42.426" x2="-12.7755" y2="-93.472" width="0" layer="19" extent="1-1"/>
+<wire x1="36.523359375" y1="9.6494625" x2="-13.9539" y2="-42.426" width="0" layer="19" extent="1-16"/>
+<wire x1="37.731" y1="11.24" x2="36.523359375" y2="9.6494625" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="VDD_BAT">
 <contactref element="Q5" pad="5"/>
@@ -6736,11 +6729,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 </compatibility>
 </eagle>
