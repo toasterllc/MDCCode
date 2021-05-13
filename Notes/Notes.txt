@@ -24,7 +24,7 @@
     - Add motion detector
     
     - Add MSP430 (MSP430FR2422)
-        - Needs FRAM to store the bitmap of the SD card usage
+        √ Needs FRAM to store the bitmap of the SD card usage
         √ Needs connection to ICE40, to issue commands
             √ 2-wire SPI (clk, data): connect MSP430 MOSI/MISO together, and ensure:
                 - During Tx: MOSI=Driven
@@ -46,26 +46,18 @@
               direction for a single clock (so that the slave can output TDO).
         - Needs connection to motion detector
     
-    - Figure out PIX / SD power domains:
-        - Option1: separate power domains
-            - Description
-                - PIX power and SD power are independently controlled by MSP
-            
-            - Requirements
-                - Gate PIX power (PFET)
-                - Gate PIX clock
-                    - Option1: separate clock chip with enable tied to PIX power
-                    - Option2: tri-state buffer blocks clock signal while PIX isn't powered
-                - Gate SD power (PFET)
-        
-        - Option2: same power domain
-            - Description
-                - PIX power and SD power are the same -- they're both powered or unpowered
-            
-            - Requirements
-                - Gate PIX clock
-                    - Option1: separate clock chip with enable tied to PIX power
-                    - Option2: tri-state buffer blocks clock signal while PIX isn't powered
+    - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
+    
+    - Simulate power supply changes to make sure it still works
+    
+    - Connect ICE_MSP_* nets to ICE40
+    
+    √ Add power domain control
+        - Controlled by MSP430
+    
+    √ Remove analog switches between SD card and ICE40
+        - They present too much capacitance
+        - (Also, U11 SD_DATx pins are out of order on Rev3)
     
     √ Block clock to PIX while PIX is powered down
         - Only needed if we're going to separate the PIX power domain
@@ -73,14 +65,26 @@
         X Have separate clocks for ICE and PIX, each powered by the respective power domain?
             X No, extra the clock chip is expensive, while buffers are cheap
     
-    - Add power domain control
-        - Controlled by MSP430
-    
-    - Remove analog switches between SD card and ICE40
-        - They present too much capacitance
-        - (U11 SD_DATx pins are out of order on Rev3)
-    
-    - Replace VDDA/VDDB jumpers with some kind of port for easy current sensing
+    √ Implement PIX / SD power domains:
+        √ Option1: separate power domains
+            √ Description
+                - PIX power and SD power are independently controlled by MSP
+            
+            √ Requirements
+                √ Gate PIX power (PFET)
+                √ Gate PIX clock
+                    - Option1: separate clock chip with enable tied to PIX power
+                    - Option2: tri-state buffer blocks clock signal while PIX isn't powered
+                √ Gate SD power (PFET)
+        
+        X Option2: same power domain
+            - Description
+                - PIX power and SD power are the same -- they're both powered or unpowered
+            
+            - Requirements
+                - Gate PIX clock
+                    - Option1: separate clock chip with enable tied to PIX power
+                    - Option2: tri-state buffer blocks clock signal while PIX isn't powered
     
     √ Add reverse polarity protection for the VDD_BAT
     
