@@ -4080,6 +4080,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW08050000Z0EAC"/>
 </part>
+<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10M"/>
+<part name="R39" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10M"/>
 </parts>
 <sheets>
 <sheet>
@@ -4092,8 +4094,6 @@ PGND directly at the IC."
 "Connect AGND and PGND
 through a via at a different
 layer."</text>
-<text x="231.14" y="477.52" size="2.54" layer="89" align="top-left">Add 10M ohm pull-down resistor to VDD_USB, so that CE_ isn't floating</text>
-<text x="231.14" y="472.44" size="2.54" layer="89" align="top-left">Add 10M ohm pull-down resistor to VDD_BAT, so that VIN isn't floating</text>
 <text x="12.7" y="154.94" size="3.81" layer="95" align="top-left">VDD_STM
 - Battery: VDD_STM = Hi-Z
 - USB: VDD_STM = 1V8</text>
@@ -4106,7 +4106,6 @@ layer."</text>
 <text x="12.7" y="322.58" size="3.81" layer="95" align="top-left">1V2</text>
 <text x="12.7" y="274.32" size="3.81" layer="95" align="top-left">1V8</text>
 <text x="12.7" y="210.82" size="3.81" layer="95" align="top-left">2V8</text>
-<text x="231.14" y="467.36" size="2.54" layer="89" align="top-left">Add 10M ohm pull-down resistor to VDD_STM, so it's not floating</text>
 <text x="99.568" y="422.402" size="1.016" layer="95" align="top-left">This PFET serves 2 purposes for the battery power supply:
 
 1. Provides reverse polarity protection
@@ -4157,6 +4156,10 @@ high enough to disable the VDDB PFET).</text>
 <text x="259.334" y="409.194" size="1.016" layer="95" align="top-left">VDD_SRC_USB is a resistive version of VDD_USB that
 helps limit inrush current and ESD into the gates of
 our PFETs.</text>
+<text x="12.7" y="30.48" size="3.81" layer="95" align="top-left">Pulldown Resistors</text>
+<text x="12.7" y="25.4" size="2.032" layer="95" align="top-left">(This is needed to prevent VDD_BAT / VDD_USB from
+floating, since they're used as signals in addition to
+power.)</text>
 </plain>
 <instances>
 <instance part="C2" gate="G$1" x="129.54" y="314.96" smashed="yes">
@@ -4348,6 +4351,14 @@ our PFETs.</text>
 <attribute name="MFG" x="208.28" y="368.3" size="1.778" layer="96" rot="R180" display="off"/>
 <attribute name="PN" x="208.28" y="368.3" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
+<instance part="R3" gate="G$1" x="134.62" y="22.86" smashed="yes" rot="R90">
+<attribute name="NAME" x="133.35" y="25.4" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="133.35" y="22.86" size="1.778" layer="96" rot="R180"/>
+</instance>
+<instance part="R39" gate="G$1" x="152.4" y="22.86" smashed="yes" rot="R90">
+<attribute name="NAME" x="151.13" y="25.4" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="151.13" y="22.86" size="1.778" layer="96" rot="R180"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -4527,6 +4538,16 @@ our PFETs.</text>
 <wire x1="137.16" y1="55.88" x2="134.62" y2="55.88" width="0.1524" layer="91"/>
 <label x="134.62" y="55.88" size="1.778" layer="95" align="bottom-right"/>
 </segment>
+<segment>
+<pinref part="R3" gate="G$1" pin="1"/>
+<wire x1="134.62" y1="17.78" x2="134.62" y2="15.24" width="0.1524" layer="91"/>
+<label x="134.62" y="15.24" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="R39" gate="G$1" pin="1"/>
+<wire x1="152.4" y1="17.78" x2="152.4" y2="15.24" width="0.1524" layer="91"/>
+<label x="152.4" y="15.24" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="N$5" class="0">
 <segment>
@@ -4672,12 +4693,22 @@ our PFETs.</text>
 <label x="175.26" y="391.16" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U16" gate="G$1" pin="EN"/>
 </segment>
+<segment>
+<pinref part="R39" gate="G$1" pin="2"/>
+<wire x1="152.4" y1="27.94" x2="152.4" y2="30.48" width="0.1524" layer="91"/>
+<label x="152.4" y="30.48" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="VDD_BAT" class="0">
 <segment>
 <pinref part="Q5" gate="G$1" pin="D"/>
 <wire x1="134.62" y1="388.62" x2="132.08" y2="388.62" width="0.1524" layer="91"/>
 <label x="132.08" y="388.62" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="R3" gate="G$1" pin="2"/>
+<wire x1="134.62" y1="27.94" x2="134.62" y2="30.48" width="0.1524" layer="91"/>
+<label x="134.62" y="30.48" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_STM" class="0">

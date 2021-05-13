@@ -79,9 +79,7 @@
         - They present too much capacitance
         - (U11 SD_DATx pins are out of order on Rev3)
     
-    - Add current-sense jumper for VDD_BAT
-    
-    - Add current-sense jumper for VDD_USB
+    - Replace VDDA/VDDB jumpers with some kind of port for easy current sensing
     
     √ Add reverse polarity protection for the VDD_BAT
     
