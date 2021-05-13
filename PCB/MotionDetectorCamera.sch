@@ -4111,7 +4111,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="U14" library="EagleLibrary" deviceset="TI-MSP430FR2422IRHL" device=""/>
 <part name="U15" library="EagleLibrary" deviceset="TI-SN74AXC4T774RSV" device=""/>
 <part name="R33" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k"/>
-<part name="C73" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2n">
+<part name="C73" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="1n">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
@@ -4814,7 +4814,6 @@ when in USB mode.</text>
 <description>MSP</description>
 <plain>
 <text x="101.6" y="35.56" size="2.54" layer="89" align="top-left">Hook up PWR_EN_MSP to a GPIO</text>
-<text x="-109.22" y="20.32" size="2.54" layer="89" align="top-left">MSP_RST_ Capacitance is too high for spy-bi-wire</text>
 </plain>
 <instances>
 <instance part="U14" gate="A" x="-30.48" y="78.74" smashed="yes">

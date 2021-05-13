@@ -2244,7 +2244,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="R33" library="EagleLibrary" package="0402" value="47k" x="-13.208" y="-5.334" smashed="yes">
 <attribute name="NAME" x="-13.962" y="-4.778" size="0.508" layer="25" font="vector"/>
 </element>
-<element name="C73" library="EagleLibrary" package="0402" value="2n" x="-13.208" y="-7.874" smashed="yes">
+<element name="C73" library="EagleLibrary" package="0402" value="1n" x="-13.208" y="-7.874" smashed="yes">
 <attribute name="NAME" x="-13.962" y="-7.318" size="0.508" layer="25" font="vector"/>
 </element>
 <element name="U18" library="EagleLibrary" package="NEXPERIA-74LVC1G32GM" value="NEXPERIA-74LVC1G32GM" x="-13.462" y="-42.926" smashed="yes">

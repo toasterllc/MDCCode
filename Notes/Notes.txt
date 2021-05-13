@@ -11,11 +11,6 @@
             https://freenode.irclog.whitequark.org/yosys/2019-03-13
             https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
     
-    X Consider lowering 2V8 rail to 2V7-ish, so that it's easier to meet the SD card Vih in 3.3V mode
-        - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => only 50mV away from 1.8V rail
-        - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
-        X The min voltage for the image sensor is 2.76V :(
-    
     - Consider raising 1V8 rail to 1.85-1.90V, so that it's easier to meet the SD card Vih in 3.3V mode
         - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => 50mV away from 1.8V rail, 150mV away from 1.9V rail
         - MSP430        👍 VCC: 1.8 - 3.6
@@ -51,8 +46,6 @@
               STM32 SPI peripheral), since, with SBW, every third clock reverses the data transfer
               direction for a single clock (so that the slave can output TDO).
     
-    √ Block power to STM32 when 1V8 is powered in battery mode
-    
     - Figure out PIX / SD power domains:
         Option1: separate power domains
             - Description
@@ -79,15 +72,6 @@
             - If not, PIX will always be powered if the clock is powered, so we don't need to block the clock
         - Have separate clocks for ICE and PIX, each powered by the respective power domain?
     
-    - Block current into STM32's MSP_RST_ GPIO, due to the MSP_RST_ pull-up?
-        - Not sure if this is necessary since the current will be small. But we should quantify how small the current is:
-            - Use CurrentRanger to find out how much current enters an unpowered STM32's GPIO,
-              from a 47k resistor hooked to ~3.3V. Test on Rev3 board by removing an LED. (Or
-              test first without removing an LED, in case the current is small enough in that
-              case, and so we don't need to remove it.)
-            
-            - Did testing -- STM32 GPIO consumes 83 nA when the STM32 is unpowered
-    
     - Add power domain control
         - Controlled by MSP430
     
@@ -100,8 +84,27 @@
     - Add current-sense jumper for VDD_USB
     
     √ Add reverse polarity protection for the VDD_BAT
-
-
+    
+    √ Block power to STM32 when 1V8 is powered in battery mode
+    
+    X Consider lowering 2V8 rail to 2V7-ish, so that it's easier to meet the SD card Vih in 3.3V mode
+        - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => only 50mV away from 1.8V rail
+        - Vih(2.7V) = 0.625*VDD = .625*2.7 = 1.6875 V => 0.1125 => 113mV away from 1.8V rail
+        X The min voltage for the image sensor is 2.76V :(
+    
+    X Block current into STM32's MSP_RST_ GPIO, due to the MSP_RST_ pull-up?
+        - Not sure if this is necessary since the current will be small. But we should quantify how small the current is:
+            - Use CurrentRanger to find out how much current enters an unpowered STM32's GPIO,
+              from a 47k resistor hooked to ~3.3V. Test on Rev3 board by removing an LED. (Or
+              test first without removing an LED, in case the current is small enough in that
+              case, and so we don't need to remove it.)
+            
+            - Did testing -- STM32 GPIO consumes 83 nA when the STM32 is unpowered
+        
+        X Don't attempt to block the current. Most analog switches consume at least 100 nA just existing,
+          so that defeats the purpose since the current we're trying to block is 83 nA.
+          The only analog switch that would help is TMUX1101 (which consumes 3 nA),
+          but it's expensive ($0.704 - $1.187).
 
 
 - Preorder parts to de-risk
