@@ -12,6 +12,16 @@ Power Supply Muxing
     
 
 - Potential solutions
+    - TPS22916
+        - Supply voltage: 1V – 5.5V
+        - rON: 70 mΩ @ 3.6V, 200 mA
+        - VIN Shutdown Current: 0.01 µA
+        - VOUT to VIN leakage current: 0.30 µA (max)
+            - "We have data for the reverse spec that shows reverse currents as low as 100nA"
+        *** We should prefer this solution, because we can use it for the power supply muxing,
+        *** but also as a generic load switch for other parts of the design.
+        *** Also, its shutdown current is very low, so it'll work great as power-conserving load switch.
+    
     - LM66100
         - Supply voltage: 1.5V – 5.5V
         - May work for us, but Spice model is broken:
@@ -20,11 +30,9 @@ Power Supply Muxing
         - Might not work for VDD_MSP supply because LM66100's internal FET could conduct in battery mode,
           where VIN (3V) > VOUT (1.8V)
         
-        - rON
-            91-mΩ @ 3.6V
-        
-        - Quiescent Current
-            0.15 µA
+        - rON: 91 mΩ @ 3.6V, 200 mA
+        - VIN Shutdown Current: 0.15 µA
+        - VOUT to VIN leakage current: 0.20 µA (typ)
     
     - MAX40203 (ideal diode)
         - Supply voltage: 1.2V - 5.5V
@@ -32,12 +40,9 @@ Power Supply Muxing
         - EN should not be turned on before VDD
         - Weak pullup on EN will cause power to be burned when plugged into USB 👎, since we'll drive it low
         
-        - rON
-            160-mΩ @ 100mA
-            86-mΩ @ 500mA
-    
-        - Quiescent Current
-            0.3 µA
+        - rON: 100 mΩ @ 200 mA (based on plot of forward voltage vs forward current)
+        - VIN Shutdown Current: 0.13 µA
+        - VOUT to VIN leakage current: 0.36 µA (typ)
     
     - Use discrete MOSFETs
         - 1 channel PMOS
@@ -117,18 +122,18 @@ Power Supply Muxing
                 $0.368 @ 100
                 r = 30mΩ @ -2.5V
                 A = 19.36
-        
+            
             DMP2040USD-13
                 $0.262 @ 100
                 r = 52mΩ @ -2.5V
                 A = 29.4
-        
+            
             NTMD6P02R2G
                 $0.33 @ 752
                 r = 38mΩ @ -2.5V
                 A = 31
                 https://www.digikey.com/en/products/detail/on-semiconductor/NTMD6P02R2G/13506266
-        
+            
             QH8JA1TCR
                 $0.422 @ 100
                 r = 35mΩ @ -2.5V

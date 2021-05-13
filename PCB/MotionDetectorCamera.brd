@@ -2315,7 +2315,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="U19" library="EagleLibrary" package="TI-TPS22916" package3d_urn="urn:adsk.eagle:package:28605511/1" value="TI-TPS22916" x="-13.716" y="-153.67" smashed="yes">
 <attribute name="MFG" value="Texas Instruments" x="-13.716" y="-153.67" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.08938125" y="-153.1565" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="TPS22916CYFPT" x="-13.716" y="-153.67" size="1.778" layer="27" display="off"/>
+<attribute name="PN" value="TPS22916CNYFPR" x="-13.716" y="-153.67" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>

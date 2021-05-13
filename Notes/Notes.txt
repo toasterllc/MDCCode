@@ -109,7 +109,8 @@
         √ 90x (STM32F730I8K6) from Farnell UK
             √ Received
             $6.03 each
-            - Try ordering 10 more from export.farnell.com in a week
+            - Try ordering 10 more from export.farnell.com
+                "More stock available week commencing 14/06/21"
         - 10x (STM32F723IEK6 -- more expensive but pin-compatible) from Mouser
             - Haven't ordered yet -- want to try ordering 10 more of the cheaper model first
     

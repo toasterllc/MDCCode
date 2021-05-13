@@ -4208,7 +4208,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="LM66100DCKT"/>
 </part>
 <part name="U19" library="EagleLibrary" deviceset="TI-TPS22916" device="" package3d_urn="urn:adsk.eagle:package:28605511/1">
-<attribute name="PN" value="TPS22916CYFPT"/>
+<attribute name="PN" value="TPS22916CNYFPR"/>
 </part>
 </parts>
 <sheets>
