@@ -39,12 +39,12 @@
                     - Pros:
                     - Cons:
                         - Requires extra wires
-        - Needs connection to power transistors to control ICE40/RAM/SD power rails
-        - Needs connection to motion detector
-        - Needs to be programmable/debuggable from STM32
+        √ Needs connection to power transistors to control ICE40/RAM/SD power rails
+        √ Needs to be programmable/debuggable from STM32
             - Spy-bi-wire likely needs to be implemented by bit-banging 2 GPIOs (instead of using a
               STM32 SPI peripheral), since, with SBW, every third clock reverses the data transfer
               direction for a single clock (so that the slave can output TDO).
+        - Needs connection to motion detector
     
     - Figure out PIX / SD power domains:
         Option1: separate power domains
