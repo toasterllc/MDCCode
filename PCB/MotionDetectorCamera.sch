@@ -7697,7 +7697,6 @@ SD_CMD = Z
 <wire x1="81.28" y1="-251.46" x2="81.28" y2="-233.68" width="0.1524" layer="95"/>
 <wire x1="81.28" y1="-233.68" x2="48.26" y2="-233.68" width="0.1524" layer="95"/>
 <text x="83.312" y="-163.322" size="1.27" layer="95" align="top-left">≤ 1%</text>
-<text x="215.9" y="-170.18" size="7.62" layer="89" align="top-left">Rename 1V8 -&gt; VDD_STM (on this sheet only though)</text>
 </plain>
 <instances>
 <instance part="U12" gate="A" x="7.62" y="-10.16" smashed="yes">
@@ -7886,11 +7885,11 @@ SD_CMD = Z
 <attribute name="MFG" x="119.38" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="119.38" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="C51" gate="G$1" x="226.06" y="-22.86" smashed="yes">
-<attribute name="NAME" x="222.758" y="-22.987" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="222.758" y="-25.527" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="226.06" y="-22.86" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="226.06" y="-22.86" size="1.778" layer="96" display="off"/>
+<instance part="C51" gate="G$1" x="213.36" y="-20.32" smashed="yes">
+<attribute name="NAME" x="210.058" y="-20.447" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="210.058" y="-22.987" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="213.36" y="-20.32" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="213.36" y="-20.32" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="X2" gate="G$1" x="241.3" y="-17.78" smashed="yes">
 <attribute name="NAME" x="241.3" y="-17.018" size="1.778" layer="95"/>
@@ -8162,8 +8161,8 @@ SD_CMD = Z
 </segment>
 <segment>
 <pinref part="C51" gate="G$1" pin="2"/>
-<wire x1="226.06" y1="-27.94" x2="226.06" y2="-30.48" width="0.1524" layer="91"/>
-<label x="226.06" y="-30.48" size="1.778" layer="95"/>
+<wire x1="213.36" y1="-25.4" x2="213.36" y2="-27.94" width="0.1524" layer="91"/>
+<label x="213.36" y="-27.94" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R30" gate="G$1" pin="2"/>
@@ -8196,7 +8195,7 @@ SD_CMD = Z
 <label x="241.3" y="-99.06" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V8" class="0">
+<net name="VDD_1V8_STM" class="0">
 <segment>
 <pinref part="U12" gate="K" pin="VDD_C5"/>
 <pinref part="U12" gate="K" pin="VDD_N9"/>
@@ -8307,8 +8306,8 @@ SD_CMD = Z
 </segment>
 <segment>
 <pinref part="C51" gate="G$1" pin="1"/>
-<wire x1="226.06" y1="-20.32" x2="226.06" y2="-17.78" width="0.1524" layer="91"/>
-<label x="226.06" y="-17.78" size="1.778" layer="95"/>
+<wire x1="213.36" y1="-17.78" x2="213.36" y2="-15.24" width="0.1524" layer="91"/>
+<label x="213.36" y="-15.24" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="X2" gate="G$1" pin="VDD"/>

@@ -47,7 +47,7 @@
         - Needs connection to motion detector
     
     - Figure out PIX / SD power domains:
-        Option1: separate power domains
+        - Option1: separate power domains
             - Description
                 - PIX power and SD power are independently controlled by MSP
             
@@ -58,7 +58,7 @@
                     - Option2: tri-state buffer blocks clock signal while PIX isn't powered
                 - Gate SD power (PFET)
         
-        Option2: same power domain
+        - Option2: same power domain
             - Description
                 - PIX power and SD power are the same -- they're both powered or unpowered
             
@@ -67,10 +67,11 @@
                     - Option1: separate clock chip with enable tied to PIX power
                     - Option2: tri-state buffer blocks clock signal while PIX isn't powered
     
-    - Block clock to PIX while PIX is powered down
+    √ Block clock to PIX while PIX is powered down
         - Only needed if we're going to separate the PIX power domain
             - If not, PIX will always be powered if the clock is powered, so we don't need to block the clock
-        - Have separate clocks for ICE and PIX, each powered by the respective power domain?
+        X Have separate clocks for ICE and PIX, each powered by the respective power domain?
+            X No, extra the clock chip is expensive, while buffers are cheap
     
     - Add power domain control
         - Controlled by MSP430
