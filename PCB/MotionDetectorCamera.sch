@@ -1332,32 +1332,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.1" y="-0.2"/>
 </polygon>
 </package>
-<package name="TI-LM66100DCK" urn="urn:adsk.eagle:footprint:28496798/1" locally_modified="yes">
-<description>3-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
-&lt;p&gt;3-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
-<wire x1="0.7" y1="-1.075" x2="-0.7" y2="-1.075" width="0.05" layer="21"/>
-<wire x1="-0.7" y1="-1.075" x2="-0.7" y2="1.075" width="0.05" layer="21"/>
-<wire x1="-0.7" y1="1.075" x2="0.7" y2="1.075" width="0.05" layer="21"/>
-<wire x1="0.7" y1="1.075" x2="0.7" y2="-1.075" width="0.05" layer="21"/>
-<smd name="1" x="-0.9623" y="0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="3" x="-0.9623" y="-0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="5" x="0.9623" y="0" dx="1.1857" dy="0.3971" layer="1"/>
-<text x="-0.62738125" y="1.333259375" size="0.762" layer="25">&gt;NAME</text>
-<smd name="6" x="0.9623" y="0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="2" x="-0.9623" y="0" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="4" x="0.9623" y="-0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<polygon width="0.05" layer="39">
-<vertex x="0.7" y="-1.075"/>
-<vertex x="-0.7" y="-1.075"/>
-<vertex x="-0.7" y="1.075"/>
-<vertex x="0.7" y="1.075"/>
-</polygon>
-<polygon width="0.05" layer="21">
-<vertex x="-0.681" y="1.054"/>
-<vertex x="-0.681" y="0.354"/>
-<vertex x="0.019" y="1.054"/>
-</polygon>
-</package>
 <package name="TI-TPS22916" urn="urn:adsk.eagle:footprint:28605522/1" locally_modified="yes">
 <description>4-BGA, collapsing, 0.40 mm pitch, 0.78 X 0.78 X 0.50 mm body
 &lt;p&gt;4-pin collapsing BGA package with 0.40 mm col pitch and 0.40 mm row pitch with body size 0.78 X 0.78 X 0.50 mm&lt;/p&gt;</description>
@@ -2348,27 +2322,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="A" x="-2.54" y="-2.54" visible="off" length="middle"/>
 <pin name="B" x="-2.54" y="-7.62" visible="off" length="middle"/>
 <pin name="Y" x="12.7" y="-5.08" visible="off" length="short" rot="R180"/>
-</symbol>
-<symbol name="TI-LM66100DCK">
-<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="0" y1="-10.16" x2="17.78" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="17.78" y1="-10.16" x2="17.78" y2="0" width="0.254" layer="94"/>
-<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="CE_" x="20.32" y="-5.08" length="short" rot="R180"/>
-<pin name="GND" x="-2.54" y="-7.62" length="short"/>
-<pin name="VOUT" x="20.32" y="-2.54" visible="off" length="point" rot="R180"/>
-<pin name="VIN" x="-2.54" y="-2.54" visible="off" length="point"/>
-<pin name="ST" x="-2.54" y="-5.08" length="short"/>
-<text x="0.075" y="2.54" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left">&gt;NAME</text>
-<text x="0.075" y="-12.7" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
-<wire x1="7.62" y1="-0.635" x2="7.62" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-2.54" x2="7.62" y2="-4.445" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-4.445" x2="10.16" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-2.54" x2="7.62" y2="-0.635" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-1.016" x2="10.16" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-2.54" x2="10.16" y2="-4.064" width="0.254" layer="94"/>
-<wire x1="-2.54" y1="-2.54" x2="7.62" y2="-2.54" width="0.1524" layer="94"/>
-<wire x1="10.16" y1="-2.54" x2="20.32" y2="-2.54" width="0.1524" layer="94"/>
 </symbol>
 <symbol name="TI-TPS22916">
 <wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
@@ -3521,27 +3474,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TI-LM66100DCK" prefix="U">
-<gates>
-<gate name="G$1" symbol="TI-LM66100DCK" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="TI-LM66100DCK">
-<connects>
-<connect gate="G$1" pin="CE_" pad="3"/>
-<connect gate="G$1" pin="GND" pad="2"/>
-<connect gate="G$1" pin="ST" pad="5"/>
-<connect gate="G$1" pin="VIN" pad="1"/>
-<connect gate="G$1" pin="VOUT" pad="6"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Texas Instruments"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TI-TPS22916" prefix="U">
 <gates>
 <gate name="G$1" symbol="TI-TPS22916" x="0" y="0"/>
@@ -4197,19 +4129,19 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </pinmapping>
 </spice>
 </part>
-<part name="R43" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
-<part name="R44" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
+<part name="R44" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k"/>
 <part name="Q6" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
 <part name="Q7" library="EagleLibrary" deviceset="NEXPERIA-PMPB09R5VPX" device=""/>
-<part name="U16" library="EagleLibrary" deviceset="TI-LM66100DCK" device="">
-<attribute name="PN" value="LM66100DCKT"/>
-</part>
-<part name="U17" library="EagleLibrary" deviceset="TI-LM66100DCK" device="">
-<attribute name="PN" value="LM66100DCKT"/>
-</part>
 <part name="U19" library="EagleLibrary" deviceset="TI-TPS22916" device="" package3d_urn="urn:adsk.eagle:package:28605511/1">
 <attribute name="PN" value="TPS22916CNYFPR"/>
 </part>
+<part name="U20" library="EagleLibrary" deviceset="TI-TPS22916" device="" package3d_urn="urn:adsk.eagle:package:28605511/1">
+<attribute name="PN" value="TPS22916CNYFPR"/>
+</part>
+<part name="U16" library="EagleLibrary" deviceset="TI-TPS22916" device="" package3d_urn="urn:adsk.eagle:package:28605511/1">
+<attribute name="PN" value="TPS22916CNYFPR"/>
+</part>
+<part name="R34" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
 </parts>
 <sheets>
 <sheet>
@@ -4249,17 +4181,17 @@ layer."</text>
 <text x="15.24" y="322.58" size="3.81" layer="95" align="top-left">PWR_EN
 - Battery: PWR_EN = controlled by MSP
 - USB: PWR_EN = 1</text>
-<text x="12.7" y="381" size="3.81" layer="95" align="top-left">VDD_MSP
+<text x="12.7" y="375.92" size="3.81" layer="95" align="top-left">VDD_MSP
 - Battery: VDD_MSP = VDD_BAT
 - USB: VDD_MSP = 1V8</text>
-<text x="12.7" y="419.1" size="3.81" layer="95" align="top-left">VDD
+<text x="12.7" y="416.56" size="3.81" layer="95" align="top-left">VDD
 - Battery: VDD = VDD_BAT
 - USB: VDD = VDD_USB</text>
 <text x="15.24" y="213.36" size="3.81" layer="95" align="top-left">1V2</text>
 <text x="15.24" y="152.4" size="3.81" layer="95" align="top-left">1V8</text>
 <text x="15.24" y="76.2" size="3.81" layer="95" align="top-left">2V8</text>
 <text x="231.14" y="467.36" size="2.54" layer="89" align="top-left">Add 10M ohm pull-down resistor to VDD_STM, so it's not floating</text>
-<text x="135.89" y="430.53" size="1.016" layer="95" align="top-left">This PFET serves 2 purposes for the battery power supply:
+<text x="125.73" y="420.37" size="1.016" layer="95" align="top-left">This PFET serves 2 purposes for the battery power supply:
 
 1. Provides reverse polarity protection
     When battery terminals are reversed:
@@ -4270,10 +4202,21 @@ layer."</text>
     By pulling gate up when USB is connected,
     voltages &gt; VDD_BAT are blocked from
     reaching the battery.</text>
-<wire x1="149.606" y1="401.32" x2="154.432" y2="413.766" width="0.1524" layer="95"/>
-<wire x1="141.986" y1="386.08" x2="146.812" y2="388.366" width="0.1524" layer="95"/>
-<text x="111.506" y="387.604" size="1.016" layer="95" align="top-left">Capacitor helps minimize reverse current spikes
+<wire x1="149.606" y1="393.7" x2="149.606" y2="404.368" width="0.1524" layer="95"/>
+<wire x1="141.986" y1="378.46" x2="146.812" y2="380.746" width="0.1524" layer="95"/>
+<text x="111.506" y="379.984" size="1.016" layer="95" align="top-left">Capacitor helps minimize reverse current spikes
 when battery is inserted with reverse polarity.</text>
+<text x="96.774" y="350.774" size="1.016" layer="95" align="top-left">Pull-down is sized so that:
+
+- Battery mode: it's much less than the reverse
+leakage resistance (VOUT-&gt;VIN) of TPS22916,
+which is about 18 Meg ohms, so that VDD_USB
+isn't pulled high by TPS22916 (which would
+cause USB mode to be erronously enabled.)
+
+- USB mode: it doesn't draw too much current
+when in USB mode.</text>
+<wire x1="125.476" y1="340.868" x2="131.572" y2="342.646" width="0.1524" layer="95"/>
 </plain>
 <instances>
 <instance part="C2" gate="G$1" x="152.4" y="208.28" smashed="yes">
@@ -4412,38 +4355,38 @@ when battery is inserted with reverse polarity.</text>
 <attribute name="PN" x="175.26" y="302.26" size="1.778" layer="95"/>
 <attribute name="NAME" x="175.26" y="304.8" size="1.778" layer="95"/>
 </instance>
-<instance part="Q5" gate="G$1" x="142.24" y="396.24" smashed="yes">
-<attribute name="NAME" x="148.59" y="391.922" size="1.778" layer="95" align="bottom-right"/>
+<instance part="Q5" gate="G$1" x="142.24" y="388.62" smashed="yes">
+<attribute name="NAME" x="148.59" y="384.302" size="1.778" layer="95" align="bottom-right"/>
 </instance>
-<instance part="C74" gate="G$1" x="154.94" y="391.16" smashed="yes">
-<attribute name="NAME" x="152.146" y="390.271" size="1.778" layer="95" align="top-right"/>
-<attribute name="VALUE" x="152.146" y="387.731" size="1.778" layer="96" align="top-right"/>
-</instance>
-<instance part="R43" gate="G$1" x="134.62" y="365.76" smashed="yes" rot="R90">
-<attribute name="NAME" x="133.35" y="368.3" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="133.35" y="365.76" size="1.778" layer="96" rot="R180"/>
+<instance part="C74" gate="G$1" x="154.94" y="383.54" smashed="yes">
+<attribute name="NAME" x="152.146" y="382.651" size="1.778" layer="95" align="top-right"/>
+<attribute name="VALUE" x="152.146" y="380.111" size="1.778" layer="96" align="top-right"/>
 </instance>
 <instance part="R44" gate="G$1" x="134.62" y="355.6" smashed="yes" rot="R90">
 <attribute name="NAME" x="133.35" y="358.14" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="133.35" y="355.6" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="Q6" gate="G$1" x="193.04" y="408.94" smashed="yes" rot="MR0">
-<attribute name="NAME" x="186.69" y="404.622" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="NAME" x="189.23" y="404.622" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </instance>
 <instance part="Q7" gate="G$1" x="193.04" y="368.3" smashed="yes" rot="MR0">
 <attribute name="NAME" x="186.69" y="363.982" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </instance>
-<instance part="U16" gate="G$1" x="180.34" y="398.78" smashed="yes">
-<attribute name="NAME" x="180.415" y="401.32" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="180.415" y="386.08" size="1.778" layer="95" ratio="10" rot="SR0"/>
-</instance>
-<instance part="U17" gate="G$1" x="180.34" y="358.14" smashed="yes">
-<attribute name="NAME" x="180.415" y="360.68" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="180.415" y="345.44" size="1.778" layer="95" ratio="10" rot="SR0"/>
-</instance>
 <instance part="U19" gate="G$1" x="160.02" y="271.78" smashed="yes">
 <attribute name="PN" x="160.02" y="256.54" size="1.778" layer="95"/>
 <attribute name="NAME" x="160.02" y="272.542" size="1.778" layer="95"/>
+</instance>
+<instance part="U20" gate="G$1" x="182.88" y="401.32" smashed="yes">
+<attribute name="PN" x="182.88" y="386.08" size="1.778" layer="95"/>
+<attribute name="NAME" x="182.88" y="402.082" size="1.778" layer="95"/>
+</instance>
+<instance part="U16" gate="G$1" x="182.88" y="360.68" smashed="yes">
+<attribute name="PN" x="182.88" y="345.44" size="1.778" layer="95"/>
+<attribute name="NAME" x="182.88" y="361.442" size="1.778" layer="95"/>
+</instance>
+<instance part="R34" gate="G$1" x="134.62" y="345.44" smashed="yes" rot="R90">
+<attribute name="NAME" x="133.35" y="347.98" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="133.35" y="345.44" size="1.778" layer="96" rot="R180"/>
 </instance>
 </instances>
 <busses>
@@ -4494,16 +4437,14 @@ when battery is inserted with reverse polarity.</text>
 <label x="167.64" y="322.58" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="193.04" y1="408.94" x2="200.66" y2="408.94" width="0.1524" layer="91"/>
+<wire x1="193.04" y1="408.94" x2="205.74" y2="408.94" width="0.1524" layer="91"/>
 <label x="208.28" y="408.94" size="1.778" layer="95"/>
 <pinref part="Q6" gate="G$1" pin="D"/>
-<pinref part="U16" gate="G$1" pin="VOUT"/>
-<pinref part="U16" gate="G$1" pin="CE_"/>
-<wire x1="200.66" y1="408.94" x2="208.28" y2="408.94" width="0.1524" layer="91"/>
-<wire x1="200.66" y1="396.24" x2="200.66" y2="393.7" width="0.1524" layer="91"/>
-<junction x="200.66" y="396.24"/>
-<wire x1="200.66" y1="396.24" x2="200.66" y2="408.94" width="0.1524" layer="91"/>
-<junction x="200.66" y="408.94"/>
+<pinref part="U20" gate="G$1" pin="VOUT"/>
+<wire x1="205.74" y1="408.94" x2="208.28" y2="408.94" width="0.1524" layer="91"/>
+<wire x1="203.2" y1="398.78" x2="205.74" y2="398.78" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="398.78" x2="205.74" y2="408.94" width="0.1524" layer="91"/>
+<junction x="205.74" y="408.94"/>
 </segment>
 </net>
 <net name="1V8" class="0">
@@ -4513,14 +4454,14 @@ when battery is inserted with reverse polarity.</text>
 <label x="223.52" y="152.4" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U17" gate="G$1" pin="VIN"/>
-<wire x1="177.8" y1="355.6" x2="175.26" y2="355.6" width="0.1524" layer="91"/>
-<label x="175.26" y="355.6" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <pinref part="U19" gate="G$1" pin="VIN"/>
 <wire x1="157.48" y1="269.24" x2="154.94" y2="269.24" width="0.1524" layer="91"/>
 <label x="154.94" y="269.24" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U16" gate="G$1" pin="VIN"/>
+<wire x1="180.34" y1="358.14" x2="177.8" y2="358.14" width="0.1524" layer="91"/>
+<label x="177.8" y="358.14" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -4590,34 +4531,28 @@ when battery is inserted with reverse polarity.</text>
 </segment>
 <segment>
 <pinref part="C74" gate="G$1" pin="2"/>
-<wire x1="154.94" y1="386.08" x2="154.94" y2="383.54" width="0.1524" layer="91"/>
-<label x="154.94" y="383.54" size="1.778" layer="95" align="top-right"/>
-</segment>
-<segment>
-<pinref part="R44" gate="G$1" pin="1"/>
-<wire x1="134.62" y1="350.52" x2="134.62" y2="347.98" width="0.1524" layer="91"/>
-<label x="134.62" y="347.98" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="U16" gate="G$1" pin="GND"/>
-<wire x1="177.8" y1="391.16" x2="175.26" y2="391.16" width="0.1524" layer="91"/>
-<label x="175.26" y="391.16" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U16" gate="G$1" pin="ST"/>
-<wire x1="177.8" y1="393.7" x2="177.8" y2="391.16" width="0.1524" layer="91"/>
-<junction x="177.8" y="391.16"/>
-</segment>
-<segment>
-<pinref part="U17" gate="G$1" pin="GND"/>
-<wire x1="177.8" y1="350.52" x2="175.26" y2="350.52" width="0.1524" layer="91"/>
-<label x="175.26" y="350.52" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U17" gate="G$1" pin="ST"/>
-<wire x1="177.8" y1="353.06" x2="177.8" y2="350.52" width="0.1524" layer="91"/>
-<junction x="177.8" y="350.52"/>
+<wire x1="154.94" y1="378.46" x2="154.94" y2="375.92" width="0.1524" layer="91"/>
+<label x="154.94" y="375.92" size="1.778" layer="95" align="top-right"/>
 </segment>
 <segment>
 <pinref part="U19" gate="G$1" pin="GND"/>
 <wire x1="157.48" y1="266.7" x2="154.94" y2="266.7" width="0.1524" layer="91"/>
 <label x="154.94" y="266.7" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U20" gate="G$1" pin="GND"/>
+<wire x1="180.34" y1="396.24" x2="177.8" y2="396.24" width="0.1524" layer="91"/>
+<label x="177.8" y="396.24" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U16" gate="G$1" pin="GND"/>
+<wire x1="180.34" y1="355.6" x2="177.8" y2="355.6" width="0.1524" layer="91"/>
+<label x="177.8" y="355.6" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="R34" gate="G$1" pin="1"/>
+<wire x1="134.62" y1="340.36" x2="134.62" y2="337.82" width="0.1524" layer="91"/>
+<label x="134.62" y="337.82" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -4757,26 +4692,26 @@ when battery is inserted with reverse polarity.</text>
 <label x="160.02" y="309.88" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="R43" gate="G$1" pin="2"/>
-<wire x1="134.62" y1="370.84" x2="134.62" y2="373.38" width="0.1524" layer="91"/>
-<label x="134.62" y="373.38" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="U16" gate="G$1" pin="VIN"/>
-<wire x1="177.8" y1="396.24" x2="175.26" y2="396.24" width="0.1524" layer="91"/>
-<label x="175.26" y="396.24" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <pinref part="U19" gate="G$1" pin="EN"/>
 <wire x1="157.48" y1="261.62" x2="154.94" y2="261.62" width="0.1524" layer="91"/>
 <label x="154.94" y="261.62" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U20" gate="G$1" pin="VIN"/>
+<wire x1="180.34" y1="398.78" x2="177.8" y2="398.78" width="0.1524" layer="91"/>
+<label x="177.8" y="398.78" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="R44" gate="G$1" pin="2"/>
+<wire x1="134.62" y1="360.68" x2="134.62" y2="363.22" width="0.1524" layer="91"/>
+<label x="134.62" y="363.22" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_BAT" class="0">
 <segment>
 <pinref part="Q5" gate="G$1" pin="D"/>
-<wire x1="142.24" y1="396.24" x2="139.7" y2="396.24" width="0.1524" layer="91"/>
-<label x="139.7" y="396.24" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="142.24" y1="388.62" x2="139.7" y2="388.62" width="0.1524" layer="91"/>
+<label x="139.7" y="388.62" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="PWR_EN_MSP" class="0">
@@ -4813,39 +4748,37 @@ when battery is inserted with reverse polarity.</text>
 <net name="VDD_MSP" class="0">
 <segment>
 <pinref part="Q7" gate="G$1" pin="D"/>
-<wire x1="193.04" y1="368.3" x2="208.28" y2="368.3" width="0.1524" layer="91"/>
+<wire x1="193.04" y1="368.3" x2="205.74" y2="368.3" width="0.1524" layer="91"/>
 <label x="208.28" y="368.3" size="1.778" layer="95"/>
+<pinref part="U16" gate="G$1" pin="VOUT"/>
+<wire x1="205.74" y1="368.3" x2="208.28" y2="368.3" width="0.1524" layer="91"/>
+<wire x1="203.2" y1="358.14" x2="205.74" y2="358.14" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="358.14" x2="205.74" y2="368.3" width="0.1524" layer="91"/>
+<junction x="205.74" y="368.3"/>
 </segment>
 </net>
 <net name="N$34" class="0">
 <segment>
 <pinref part="Q5" gate="G$1" pin="S"/>
-<wire x1="152.4" y1="396.24" x2="154.94" y2="396.24" width="0.1524" layer="91"/>
+<wire x1="152.4" y1="388.62" x2="154.94" y2="388.62" width="0.1524" layer="91"/>
 <pinref part="C74" gate="G$1" pin="1"/>
-<wire x1="154.94" y1="396.24" x2="154.94" y2="393.7" width="0.1524" layer="91"/>
+<wire x1="154.94" y1="388.62" x2="154.94" y2="386.08" width="0.1524" layer="91"/>
 <wire x1="182.88" y1="408.94" x2="160.02" y2="408.94" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="408.94" x2="160.02" y2="396.24" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="396.24" x2="154.94" y2="396.24" width="0.1524" layer="91"/>
-<junction x="154.94" y="396.24"/>
+<wire x1="160.02" y1="408.94" x2="160.02" y2="388.62" width="0.1524" layer="91"/>
+<wire x1="160.02" y1="388.62" x2="154.94" y2="388.62" width="0.1524" layer="91"/>
+<junction x="154.94" y="388.62"/>
 <pinref part="Q6" gate="G$1" pin="S"/>
 <pinref part="Q7" gate="G$1" pin="S"/>
 <wire x1="182.88" y1="368.3" x2="160.02" y2="368.3" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="368.3" x2="160.02" y2="396.24" width="0.1524" layer="91"/>
-<junction x="160.02" y="396.24"/>
+<wire x1="160.02" y1="368.3" x2="160.02" y2="388.62" width="0.1524" layer="91"/>
+<junction x="160.02" y="388.62"/>
 </segment>
 </net>
 <net name="VDD_USB_EN" class="0">
 <segment>
 <pinref part="Q5" gate="G$1" pin="G"/>
-<wire x1="147.32" y1="403.86" x2="147.32" y2="406.4" width="0.1524" layer="91"/>
-<label x="147.32" y="406.4" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<pinref part="R43" gate="G$1" pin="1"/>
-<pinref part="R44" gate="G$1" pin="2"/>
-<wire x1="134.62" y1="360.68" x2="137.16" y2="360.68" width="0.1524" layer="91"/>
-<junction x="134.62" y="360.68"/>
-<label x="137.16" y="360.68" size="1.778" layer="95"/>
+<wire x1="147.32" y1="396.24" x2="147.32" y2="398.78" width="0.1524" layer="91"/>
+<label x="147.32" y="398.78" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="Q6" gate="G$1" pin="G"/>
@@ -4857,14 +4790,22 @@ when battery is inserted with reverse polarity.</text>
 <wire x1="187.96" y1="375.92" x2="187.96" y2="378.46" width="0.1524" layer="91"/>
 <label x="187.96" y="378.46" size="1.778" layer="95"/>
 </segment>
-</net>
-<net name="VDD1" class="0">
 <segment>
-<pinref part="U17" gate="G$1" pin="VOUT"/>
-<pinref part="U17" gate="G$1" pin="CE_"/>
-<wire x1="200.66" y1="355.6" x2="200.66" y2="353.06" width="0.1524" layer="91"/>
-<junction x="200.66" y="355.6"/>
-<wire x1="200.66" y1="355.6" x2="200.66" y2="368.3" width="0.1524" layer="91"/>
+<pinref part="R44" gate="G$1" pin="1"/>
+<pinref part="R34" gate="G$1" pin="2"/>
+<wire x1="134.62" y1="350.52" x2="137.16" y2="350.52" width="0.1524" layer="91"/>
+<junction x="134.62" y="350.52"/>
+<label x="137.16" y="350.52" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="U16" gate="G$1" pin="EN"/>
+<wire x1="180.34" y1="350.52" x2="177.8" y2="350.52" width="0.1524" layer="91"/>
+<label x="177.8" y="350.52" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<wire x1="180.34" y1="391.16" x2="177.8" y2="391.16" width="0.1524" layer="91"/>
+<label x="177.8" y="391.16" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U20" gate="G$1" pin="EN"/>
 </segment>
 </net>
 </nets>
