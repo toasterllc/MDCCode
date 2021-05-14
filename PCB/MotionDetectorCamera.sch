@@ -4180,8 +4180,8 @@ and dampen ringing on the PFET's gate.</text>
 <attribute name="NAME" x="182.372" y="359.156" size="1.778" layer="95"/>
 </instance>
 <instance part="R24" gate="G$1" x="190.5" y="375.92" smashed="yes">
-<attribute name="NAME" x="187.96" y="377.19" size="1.778" layer="95"/>
-<attribute name="VALUE" x="187.96" y="379.73" size="1.778" layer="96"/>
+<attribute name="NAME" x="187.96" y="379.73" size="1.778" layer="95"/>
+<attribute name="VALUE" x="187.96" y="377.19" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -4642,18 +4642,17 @@ and dampen ringing on the PFET's gate.</text>
 </net>
 <net name="VDDB_EN_" class="0">
 <segment>
-<pinref part="R24" gate="G$1" pin="2"/>
 <wire x1="195.58" y1="375.92" x2="198.12" y2="375.92" width="0.1524" layer="91"/>
 <label x="198.12" y="375.92" size="1.778" layer="95"/>
+<pinref part="R24" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$6" class="0">
 <segment>
 <pinref part="Q6" gate="G$1" pin="G"/>
-<pinref part="R24" gate="G$1" pin="1"/>
-<pinref part="R24" gate="G$1" pin="1"/>
 <junction x="185.42" y="375.92"/>
 <pinref part="R23" gate="G$1" pin="2"/>
+<pinref part="R24" gate="G$1" pin="1"/>
 </segment>
 </net>
 </nets>
@@ -6058,6 +6057,27 @@ below the chip.</text>
 <wire x1="149.86" y1="58.42" x2="152.4" y2="58.42" width="0.1524" layer="91"/>
 <label x="152.4" y="58.42" size="1.778" layer="95"/>
 <pinref part="U4" gate="C" pin="L4"/>
+</segment>
+</net>
+<net name="ICE_MSP_SPI_CLK" class="0">
+<segment>
+<pinref part="U4" gate="C" pin="K5"/>
+<wire x1="149.86" y1="43.18" x2="152.4" y2="43.18" width="0.1524" layer="91"/>
+<label x="152.4" y="43.18" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_MSP_SPI_DATA" class="0">
+<segment>
+<pinref part="U4" gate="C" pin="J3"/>
+<wire x1="149.86" y1="35.56" x2="152.4" y2="35.56" width="0.1524" layer="91"/>
+<label x="152.4" y="35.56" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_MSP_SPI_AUX" class="0">
+<segment>
+<pinref part="U4" gate="C" pin="J4"/>
+<wire x1="149.86" y1="33.02" x2="152.4" y2="33.02" width="0.1524" layer="91"/>
+<label x="152.4" y="33.02" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
