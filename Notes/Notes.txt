@@ -48,7 +48,7 @@
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
-    - Connect ICE_MSP_* nets to ICE40
+    √ Connect ICE_MSP_* nets to ICE40
     
     √ Simulate power supply changes to make sure it still works
         - Needed additional changes (switched back to using a diode for supplying VDDB in USB mode), but it simulates OK now
