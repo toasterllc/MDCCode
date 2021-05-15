@@ -1,3 +1,16 @@
+PMPB10UPX (Mouser)
+    ron: 10 mΩ
+    leakage: 1 uA max
+    area: 4 mm^2
+    price: 0.245 @ 100
+
+PMPB12EPX (Mouser)
+    ron: 15 mΩ
+    leakage: 1 uA max
+    area: 4 mm^2
+    price: 0.243 @ 100
+
+
 CSD22204W (ti.com)
     ron: 11.5 mΩ
     leakage: 4 uA max
@@ -9,18 +22,6 @@ CSD25404Q3 (ti.com)
     leakage: 1 uA max
     area: 10.89 mm^2
     price: 0.631 @ 100
-
-PMPB12EP (Mouser)
-    ron: 15 mΩ
-    leakage: 1 uA max
-    area: 4 mm^2
-    price: 0.243 @ 100
-
-PMPB10UP (Mouser)
-    ron: 10 mΩ
-    leakage: 1 uA max
-    area: 4 mm^2
-    price: 0.245 @ 100
 
 
 XXX

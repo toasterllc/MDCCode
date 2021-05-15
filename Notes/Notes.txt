@@ -48,6 +48,23 @@
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
+    - Switch RAM to AS4C8M16MSA-6BIN
+    
+    - Update PFET footprint / part number
+    
+    - Replace ESD chip with DT1446-04V-7
+    
+    - Replace load switches with AP22908
+    
+    - Switch clocks to SIT8021AI-J4-18S-16.000000E
+        - Reason: the 24 MHz version is more expensive, and Mouser doesn't have enough quantity
+    
+    - Update image sensor part number
+    
+    - Update BusinessOrders.txt
+    
+    - Figure out power rails, yet again
+    
     √ Connect ICE_MSP_* nets to ICE40
     
     √ Simulate power supply changes to make sure it still works
@@ -130,15 +147,72 @@
     - MSP430
     
     - SDRAM
-        W989D6DBGX6I        512 Mbit
         AS4C8M16MSA-6BIN    128 Mbit
+        W989D6DBGX6I        512 Mbit
+    
+    - Power supply chips
+        TPS62801YKAR
+        TPS62802YKAR
+        TPS63805YFFR
     
     - Motion sensor
-        EKMB1101111 ?
+        EKMB1107112
+            Type: Low Profile
+            Detection: 5m, 90° x 90°
+            Detection Zones: 32
+            Current: 1µA
+        
+        EKMB1110112
+            Type: Flat Square
+            Detection: 5m, 90° x 90°
+            Detection Zones: 40
+            Current: 1µA
+        
+        EKMB1103112
+            Type: Long Distance Detection
+            Detection: 12m, 92° x 102°
+            Detection Zones: 92
+            Current: 1µA
+            
+        EKMB1101112
+            Type: Standard Detection
+            Detection: 5m, 82° x 94°
+            Detection Zones: 64
+            Current: 1µA
 
 
-
-
+- Order
+    
+    * DigiKey
+        AP22908CN4-7 (load switch)
+    
+    * sierraic.com
+        TPS63805YFFR (2.8V supply)
+            - Mouser expects by 10/21/2021
+        STM32F730I8K6 (STM32)
+            - Waiting for quote for 15x
+    
+    * No stock
+        TPS62802YKAR (1.8V supply)
+            - Mouser expects by 8/5/2021
+        BKP1005EM100-T (ferrite bead)
+    
+    * Find LDO or buck for STM USB 3V rail
+    
+    √ Rochester
+        AR0330...
+    
+    √ TI
+        TPS62801YKAT (1.2V supply)
+        SN74AXC4T774RSVR (level shifter)
+    
+    √ Mouser
+        AS4C8M16MSA-6BIN (RAM)
+        MSP430FR2422
+        PMPB10UPX (PFET)
+        DT1446-04V-7 (ESD chip)
+        EKMB1107112 (motion sensor) -- only buy a few
+        SIT8021AI-J4-18S-16.000000E
 
 - Future
     

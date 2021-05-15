@@ -1,6 +1,27 @@
 Power Supply Muxing
 
-- Conditions
+- Requirements
+    - VDDA
+        - USB connected:    VDDA = 1V8
+        - Otherwise:        VDDA = VDD_BAT
+        
+        - Minimal rOn
+        - Leakage isn't a big concern
+    
+    - VDDB
+        - USB connected:    VDDB = VDD_USB
+        - Otherwise:
+            - VDDB_EN==1:   VDDB = VDD_BAT
+            - Otherwise:    VDDB = floating
+    
+    - Prevent reverse current
+    
+    
+    - Use depletion-mode switching NMOS to control USB-active signal:
+        - When USB isn't connected, it's a strong 0
+        - When USB is connected 
+
+- Test conditions
     VDD_USB = Hi-Z
     VDD_BAT = [-4,4]
     
@@ -148,7 +169,7 @@ Power Supply Muxing
         - rON = 89mΩ - 105mΩ
         - Quiescent Current
             8 µA 👎
-
+    
     - TPS2291xx
         - Quiescent current 👎
             2 µA @ 3.6 V
