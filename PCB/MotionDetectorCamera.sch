@@ -2562,8 +2562,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <deviceset name="ALLIANCE-AS4C8M16MSA-6BIN" prefix="U">
 <description>128M Low Power SDRAM</description>
 <gates>
-<gate name="A" symbol="ALLIANCE-AS4C8M16MSA-6BIN-A" x="0" y="-15.24"/>
-<gate name="B" symbol="ALLIANCE-AS4C8M16MSA-6BIN-B" x="37.78" y="0"/>
+<gate name="A" symbol="ALLIANCE-AS4C8M16MSA-6BIN-A" x="0" y="0"/>
+<gate name="B" symbol="ALLIANCE-AS4C8M16MSA-6BIN-B" x="53.02" y="0"/>
 </gates>
 <devices>
 <device name="" package="ALLIANCE-AS4C8M16MSA-6BIN">

@@ -48,9 +48,11 @@
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
-    - Switch RAM to ALLIANCE-AS4C8M16MSA-6BIN
-    
     - Update BusinessOrders.txt
+    
+    - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
+    
+    √ Switch RAM to ALLIANCE-AS4C8M16MSA-6BIN
     
     √ Replace ESD chip with DT1446-04V-7
     
@@ -135,6 +137,7 @@
             $6.03 each
             - Try ordering 10 more from export.farnell.com
                 "More stock available week commencing 14/06/21"
+                "More stock available week commencing 21/06/21"
         - 10x (STM32F723IEK6 -- more expensive but pin-compatible) from Mouser
             - Haven't ordered yet -- want to try ordering 10 more of the cheaper model first
     
