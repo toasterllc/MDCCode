@@ -48,7 +48,7 @@
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
-    - Switch RAM to AS4C8M16MSA-6BIN
+    - Switch RAM to ALLIANCE-AS4C8M16MSA-6BIN
     
     - Update BusinessOrders.txt
     

@@ -419,77 +419,77 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.5" y="0.7"/>
 </polygon>
 </package>
-<package name="W989D6DBGX6I">
+<package name="ALLIANCE-AS4C8M16MSA-6BIN">
 <description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
-<smd name="A1" x="-3.2" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="A2" x="-2.4" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="A3" x="-1.6" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="A7" x="1.6" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="A8" x="2.4" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="A9" x="3.2" y="3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="B1" x="-3.2" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="B2" x="-2.4" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="B3" x="-1.6" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="B7" x="1.6" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="B8" x="2.4" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="B9" x="3.2" y="2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="C1" x="-3.2" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="C2" x="-2.4" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="C3" x="-1.6" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="C7" x="1.6" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="C8" x="2.4" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="C9" x="3.2" y="1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="D1" x="-3.2" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="D2" x="-2.4" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="D3" x="-1.6" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="D7" x="1.6" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="D8" x="2.4" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="D9" x="3.2" y="0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="E1" x="-3.2" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="E2" x="-2.4" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="E3" x="-1.6" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="E7" x="1.6" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="E8" x="2.4" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="E9" x="3.2" y="0" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="F1" x="-3.2" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="F2" x="-2.4" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="F3" x="-1.6" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="F7" x="1.6" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="F8" x="2.4" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="F9" x="3.2" y="-0.8" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="G1" x="-3.2" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="G2" x="-2.4" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="G3" x="-1.6" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="G7" x="1.6" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="G8" x="2.4" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="G9" x="3.2" y="-1.6" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="H1" x="-3.2" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="H2" x="-2.4" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="H3" x="-1.6" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="H7" x="1.6" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="H8" x="2.4" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="H9" x="3.2" y="-2.4" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="J1" x="-3.2" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="J2" x="-2.4" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="J3" x="-1.6" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="J7" x="1.6" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="J8" x="2.4" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<smd name="J9" x="3.2" y="-3.2" dx="0.35" dy="0.35" layer="1" roundness="100" cream="no"/>
-<text x="-4.092" y="4.828" size="1.016" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-4" y1="-4.5" x2="-4" y2="4.5" width="0.05" layer="21"/>
-<wire x1="-4" y1="4.5" x2="4" y2="4.5" width="0.05" layer="21"/>
-<wire x1="4" y1="4.5" x2="4" y2="-4.5" width="0.05" layer="21"/>
-<wire x1="4" y1="-4.5" x2="-4" y2="-4.5" width="0.05" layer="21"/>
-<polygon width="0.05" layer="21">
-<vertex x="-4" y="4.5"/>
-<vertex x="-3.2" y="4.5"/>
-<vertex x="-4" y="3.7"/>
-</polygon>
+<smd name="A1" x="-3.2" y="3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="A2" x="-2.4" y="3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="A3" x="-1.6" y="3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="A7" x="1.6" y="3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="A8" x="2.4" y="3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="A9" x="3.2" y="3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="B1" x="-3.2" y="2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="B2" x="-2.4" y="2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="B3" x="-1.6" y="2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="B7" x="1.6" y="2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="B8" x="2.4" y="2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="B9" x="3.2" y="2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="C1" x="-3.2" y="1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="C2" x="-2.4" y="1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="C3" x="-1.6" y="1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="C7" x="1.6" y="1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="C8" x="2.4" y="1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="C9" x="3.2" y="1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="D1" x="-3.2" y="0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="D2" x="-2.4" y="0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="D3" x="-1.6" y="0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="D7" x="1.6" y="0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="D8" x="2.4" y="0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="D9" x="3.2" y="0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="E1" x="-3.2" y="0" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="E2" x="-2.4" y="0" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="E3" x="-1.6" y="0" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="E7" x="1.6" y="0" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="E8" x="2.4" y="0" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="E9" x="3.2" y="0" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="F1" x="-3.2" y="-0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="F2" x="-2.4" y="-0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="F3" x="-1.6" y="-0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="F7" x="1.6" y="-0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="F8" x="2.4" y="-0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="F9" x="3.2" y="-0.8" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="G1" x="-3.2" y="-1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="G2" x="-2.4" y="-1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="G3" x="-1.6" y="-1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="G7" x="1.6" y="-1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="G8" x="2.4" y="-1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="G9" x="3.2" y="-1.6" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="H1" x="-3.2" y="-2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="H2" x="-2.4" y="-2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="H3" x="-1.6" y="-2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="H7" x="1.6" y="-2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="H8" x="2.4" y="-2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="H9" x="3.2" y="-2.4" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="J1" x="-3.2" y="-3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="J2" x="-2.4" y="-3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="J3" x="-1.6" y="-3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="J7" x="1.6" y="-3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="J8" x="2.4" y="-3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<smd name="J9" x="3.2" y="-3.2" dx="0.33" dy="0.33" layer="1" roundness="100" cream="no"/>
+<text x="-3.958" y="4.178" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<wire x1="-4" y1="-4" x2="-4" y2="4" width="0.05" layer="21"/>
+<wire x1="-4" y1="4" x2="4" y2="4" width="0.05" layer="21"/>
+<wire x1="4" y1="4" x2="4" y2="-4" width="0.05" layer="21"/>
+<wire x1="4" y1="-4" x2="-4" y2="-4" width="0.05" layer="21"/>
 <polygon width="0.05" layer="39">
-<vertex x="4" y="-4.5"/>
-<vertex x="-4" y="-4.5"/>
-<vertex x="-4" y="4.5"/>
-<vertex x="4" y="4.5"/>
+<vertex x="4" y="-4"/>
+<vertex x="-4" y="-4"/>
+<vertex x="-4" y="4"/>
+<vertex x="4" y="4"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-3.976" y="3.968"/>
+<vertex x="-3.976" y="2.368"/>
+<vertex x="-2.576" y="3.968"/>
 </polygon>
 </package>
 <package name="ON-AR0330CS1C12SPKA0" urn="urn:adsk.eagle:footprint:18794472/1" locally_modified="yes">
@@ -1557,8 +1557,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="0.075" y="2.54" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left">&gt;NAME</text>
 <text x="0.075" y="-27.94" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
 </symbol>
-<symbol name="W989D6DBGX6I-B">
-<description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
+<symbol name="ALLIANCE-AS4C8M16MSA-6BIN-B">
+<description>128M Low Power SDRAM</description>
 <wire x1="0" y1="-71.12" x2="0" y2="0" width="0.254" layer="94"/>
 <wire x1="0" y1="0" x2="17.78" y2="0" width="0.254" layer="94"/>
 <wire x1="17.78" y1="0" x2="17.78" y2="-71.12" width="0.254" layer="94"/>
@@ -1579,7 +1579,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="A9" x="-5.08" y="-25.4" length="middle"/>
 <pin name="A10" x="-5.08" y="-27.94" length="middle"/>
 <pin name="A11" x="-5.08" y="-30.48" length="middle"/>
-<pin name="A12" x="-5.08" y="-33.02" length="middle"/>
 <pin name="BA0" x="-5.08" y="-48.26" length="middle"/>
 <pin name="BA1" x="-5.08" y="-50.8" length="middle"/>
 <pin name="CKE" x="22.86" y="-50.8" length="middle" rot="R180"/>
@@ -1601,7 +1600,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="DQ14" x="22.86" y="-43.18" length="middle" rot="R180"/>
 <pin name="DQ15" x="22.86" y="-45.72" length="middle" rot="R180"/>
 <pin name="LDQM" x="22.86" y="-66.04" length="middle" rot="R180"/>
-<pin name="NC" x="22.86" y="-60.96" length="middle" rot="R180"/>
 <pin name="UDQM" x="22.86" y="-68.58" length="middle" rot="R180"/>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="0" y="-73.66" size="1.778" layer="95">&gt;PN</text>
@@ -2003,8 +2001,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="0.254" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="0" y="-104.14" size="1.778" layer="95">&gt;PN</text>
 </symbol>
-<symbol name="W989D6DBGX6I-A">
-<description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
+<symbol name="ALLIANCE-AS4C8M16MSA-6BIN-A">
+<description>128M Low Power SDRAM</description>
 <wire x1="0" y1="-20.32" x2="0" y2="0" width="0.254" layer="94"/>
 <wire x1="0" y1="0" x2="30.48" y2="0" width="0.254" layer="94"/>
 <wire x1="30.48" y1="0" x2="30.48" y2="-20.32" width="0.254" layer="94"/>
@@ -2561,14 +2559,14 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="W989D6DBGX6I" prefix="U">
-<description>512Mbit SDRAM</description>
+<deviceset name="ALLIANCE-AS4C8M16MSA-6BIN" prefix="U">
+<description>128M Low Power SDRAM</description>
 <gates>
-<gate name="A" symbol="W989D6DBGX6I-A" x="0" y="-15.24"/>
-<gate name="B" symbol="W989D6DBGX6I-B" x="37.78" y="0"/>
+<gate name="A" symbol="ALLIANCE-AS4C8M16MSA-6BIN-A" x="0" y="-15.24"/>
+<gate name="B" symbol="ALLIANCE-AS4C8M16MSA-6BIN-B" x="37.78" y="0"/>
 </gates>
 <devices>
-<device name="" package="W989D6DBGX6I">
+<device name="" package="ALLIANCE-AS4C8M16MSA-6BIN">
 <connects>
 <connect gate="A" pin="VDDQ_A7" pad="A7"/>
 <connect gate="A" pin="VDDQ_B3" pad="B3"/>
@@ -2592,7 +2590,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="B" pin="A1" pad="H8"/>
 <connect gate="B" pin="A10" pad="H9"/>
 <connect gate="B" pin="A11" pad="G2"/>
-<connect gate="B" pin="A12" pad="G1"/>
 <connect gate="B" pin="A2" pad="J8"/>
 <connect gate="B" pin="A3" pad="J7"/>
 <connect gate="B" pin="A4" pad="J3"/>
@@ -2622,13 +2619,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="B" pin="DQ8" pad="E1"/>
 <connect gate="B" pin="DQ9" pad="D2"/>
 <connect gate="B" pin="LDQM" pad="E8"/>
-<connect gate="B" pin="NC" pad="E2"/>
 <connect gate="B" pin="UDQM" pad="F1"/>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MFG" value="Winbond"/>
-<attribute name="PN" value="W989D6DBGX6I"/>
+<attribute name="MFG" value="Alliance Memory"/>
+<attribute name="PN" value="AS4C8M16MSA-6BIN"/>
 </technology>
 </technologies>
 </device>
@@ -3464,7 +3460,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402-FX-9102GLF"/>
 </part>
-<part name="U6" library="EagleLibrary" deviceset="W989D6DBGX6I" device=""/>
+<part name="U6" library="EagleLibrary" deviceset="ALLIANCE-AS4C8M16MSA-6BIN" device=""/>
 <part name="C43" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <spice>
 <pinmapping spiceprefix="C">
@@ -5596,13 +5592,6 @@ below the chip.</text>
 <label x="215.9" y="40.64" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RAM_A12" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="D1"/>
-<wire x1="213.36" y1="50.8" x2="215.9" y2="50.8" width="0.1524" layer="91"/>
-<label x="215.9" y="50.8" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="RAM_DQ0" class="0">
 <segment>
 <pinref part="U4" gate="A" pin="B9"/>
@@ -6640,7 +6629,7 @@ between input and output when its VDD=0.</text>
 <busses>
 <bus name="RAM_A[0..12]">
 <segment>
-<wire x1="88.9" y1="27.94" x2="88.9" y2="-2.54" width="0.762" layer="92"/>
+<wire x1="88.9" y1="27.94" x2="88.9" y2="0" width="0.762" layer="92"/>
 <label x="87.884" y="12.7" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </bus>
@@ -6858,12 +6847,6 @@ between input and output when its VDD=0.</text>
 <segment>
 <pinref part="U6" gate="B" pin="A11"/>
 <wire x1="91.44" y1="0" x2="88.9" y2="0" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="RAM_A12" class="0">
-<segment>
-<pinref part="U6" gate="B" pin="A12"/>
-<wire x1="91.44" y1="-2.54" x2="88.9" y2="-2.54" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="RAM_DQ0" class="0">
