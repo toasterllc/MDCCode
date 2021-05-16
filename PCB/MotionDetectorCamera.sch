@@ -3999,6 +3999,7 @@ layer."</text>
 - USB:      VDD_A = 1V8</text>
 <text x="12.7" y="373.38" size="3.81" layer="95" align="top-left">VDD_B
 - Battery:  VDD_B = VDD_BAT
+    (controlled by MSP via !VDD_B_EN!)
 - USB:      VDD_B = VDD_USB</text>
 <text x="12.7" y="330.2" size="3.81" layer="95" align="top-left">VDD_1V2</text>
 <text x="12.7" y="281.94" size="3.81" layer="95" align="top-left">VDD_1V8</text>
@@ -4705,7 +4706,7 @@ and dampen ringing on the PFET's gate.</text>
 <label x="215.9" y="408.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_B_EN_" class="0">
+<net name="!VDD_B_EN!" class="0">
 <segment>
 <wire x1="195.58" y1="375.92" x2="198.12" y2="375.92" width="0.1524" layer="91"/>
 <label x="198.12" y="375.92" size="1.778" layer="95"/>
@@ -4915,7 +4916,7 @@ and dampen ringing on the PFET's gate.</text>
 <label x="63.5" y="38.1" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_B_EN_" class="0">
+<net name="!VDD_B_EN!" class="0">
 <segment>
 <pinref part="U14" gate="B" pin="P1.0/UCB0STE/A0/VEREF+"/>
 <wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>

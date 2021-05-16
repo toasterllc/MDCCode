@@ -5839,7 +5839,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-13.8945" y1="-32.52" x2="-12.273" y2="-47.394" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.6405" y1="-12.532" x2="-13.8945" y2="-32.52" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="VDD_B_EN_">
+<signal name="!VDD_B_EN!">
 <contactref element="U14" pad="2"/>
 <contactref element="R24" pad="2"/>
 <wire x1="-9.8126" y1="0.734" x2="-13.0295" y2="-43.442" width="0" layer="19" extent="1-1"/>

@@ -3,6 +3,8 @@
     - STM32: Fix USB power supply
         - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
     
+    - STM32: Make sure we're not using an GPIOs that are powered by VDDUSB
+    
     - ICE40: Fix pin layout so that both PLLs can be used
         - Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
         - Fix L5 PLL: ?
