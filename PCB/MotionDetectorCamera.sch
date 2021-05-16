@@ -1164,30 +1164,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-0.3" y="1.3"/>
 </polygon>
 </package>
-<package name="TI-TPS22916" urn="urn:adsk.eagle:footprint:28605522/1" locally_modified="yes">
-<description>4-BGA, collapsing, 0.40 mm pitch, 0.78 X 0.78 X 0.50 mm body
-&lt;p&gt;4-pin collapsing BGA package with 0.40 mm col pitch and 0.40 mm row pitch with body size 0.78 X 0.78 X 0.50 mm&lt;/p&gt;</description>
-<wire x1="0.405" y1="-0.405" x2="-0.405" y2="-0.405" width="0.05" layer="21"/>
-<wire x1="-0.405" y1="-0.405" x2="-0.405" y2="0.405" width="0.05" layer="21"/>
-<wire x1="-0.405" y1="0.405" x2="0.405" y2="0.405" width="0.05" layer="21"/>
-<wire x1="0.405" y1="0.405" x2="0.405" y2="-0.405" width="0.05" layer="21"/>
-<smd name="A1" x="-0.2" y="0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="A2" x="0.2" y="0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B1" x="-0.2" y="-0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<smd name="B2" x="0.2" y="-0.2" dx="0.2" dy="0.2" layer="1" roundness="100" thermals="no"/>
-<text x="-0.37338125" y="0.5135" size="0.508" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="39">
-<vertex x="0.405" y="-0.405"/>
-<vertex x="-0.405" y="-0.405"/>
-<vertex x="-0.405" y="0.405"/>
-<vertex x="0.405" y="0.405"/>
-</polygon>
-<polygon width="0.05" layer="21">
-<vertex x="-0.4" y="0.4"/>
-<vertex x="-0.4" y="-0.4"/>
-<vertex x="0.4" y="0.4"/>
-</polygon>
-</package>
 <package name="TI-SN74LVC1G126DCK" urn="urn:adsk.eagle:footprint:28651591/1" locally_modified="yes">
 <description>5-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
 &lt;p&gt;5-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
@@ -1300,6 +1276,32 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.395" y="0.3965"/>
 </polygon>
 </package>
+<package name="TI-TPS22919DCK" urn="urn:adsk.eagle:footprint:28686815/1" locally_modified="yes">
+<description>6-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
+&lt;p&gt;6-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
+<wire x1="0.7" y1="-1.075" x2="-0.7" y2="-1.075" width="0.05" layer="21"/>
+<wire x1="-0.7" y1="-1.075" x2="-0.7" y2="1.075" width="0.05" layer="21"/>
+<wire x1="-0.7" y1="1.075" x2="0.7" y2="1.075" width="0.05" layer="21"/>
+<wire x1="0.7" y1="1.075" x2="0.7" y2="-1.075" width="0.05" layer="21"/>
+<smd name="1" x="-0.9623" y="0.65" dx="1.1857" dy="0.3971" layer="1"/>
+<smd name="2" x="-0.9623" y="0" dx="1.1857" dy="0.3971" layer="1"/>
+<smd name="3" x="-0.9623" y="-0.65" dx="1.1857" dy="0.3971" layer="1"/>
+<smd name="4" x="0.9623" y="-0.65" dx="1.1857" dy="0.3971" layer="1"/>
+<smd name="5" x="0.9623" y="0" dx="1.1857" dy="0.3971" layer="1"/>
+<smd name="6" x="0.9623" y="0.65" dx="1.1857" dy="0.3971" layer="1"/>
+<text x="-0.6604" y="1.25451875" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.7" y="-1.075"/>
+<vertex x="-0.7" y="-1.075"/>
+<vertex x="-0.7" y="1.075"/>
+<vertex x="0.7" y="1.075"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-0.677" y="1.051"/>
+<vertex x="-0.677" y="-0.149"/>
+<vertex x="0.423" y="1.051"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="SOT65P210X110-5N" urn="urn:adsk.eagle:package:28651563/1" type="model">
@@ -1314,6 +1316,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 &lt;p&gt;4-pin collapsing BGA package with 0.35 mm col pitch and 0.35 mm row pitch with body size 0.77 X 0.77 X 0.50 mm&lt;/p&gt;</description>
 <packageinstances>
 <packageinstance name="MAXIM-MAX40203ANS+T"/>
+</packageinstances>
+</package3d>
+<package3d name="SOT65P210X110-6N" urn="urn:adsk.eagle:package:28686799/1" type="model">
+<description>6-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
+&lt;p&gt;6-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="TI-TPS22919DCK"/>
 </packageinstances>
 </package3d>
 </packages3d>
@@ -2202,18 +2211,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="5.842" y1="-1.27" x2="7.62" y2="-1.27" width="0.254" layer="94"/>
 <wire x1="7.62" y1="-1.27" x2="7.62" y2="0" width="0.254" layer="94"/>
 </symbol>
-<symbol name="TI-TPS22916">
-<wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
-<wire x1="0" y1="-12.7" x2="17.78" y2="-12.7" width="0.254" layer="94"/>
-<wire x1="17.78" y1="-12.7" x2="17.78" y2="0" width="0.254" layer="94"/>
-<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<pin name="VOUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
-<pin name="EN" x="-2.54" y="-10.16" visible="pin" length="short"/>
-<text x="0" y="-15.24" size="1.778" layer="95">&gt;PN</text>
-<text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
-<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
-</symbol>
 <symbol name="TI-SN74LVC1G126">
 <pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
 <pin name="IN" x="-2.54" y="-10.16" visible="pin" length="short"/>
@@ -2255,6 +2252,19 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="10.16" y1="-2.54" x2="10.16" y2="-4.064" width="0.254" layer="94"/>
 <wire x1="-2.54" y1="-2.54" x2="7.62" y2="-2.54" width="0.1524" layer="94"/>
 <wire x1="10.16" y1="-2.54" x2="20.32" y2="-2.54" width="0.1524" layer="94"/>
+</symbol>
+<symbol name="TI-TPS22919">
+<wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="0" y1="-12.7" x2="17.78" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="17.78" y1="-12.7" x2="17.78" y2="0" width="0.254" layer="94"/>
+<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="VOUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="EN" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<text x="0" y="-15.24" size="1.778" layer="95">&gt;PN</text>
+<text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
+<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
+<pin name="QOD" x="20.32" y="-5.08" visible="pin" length="short" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3271,26 +3281,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TI-TPS22916" prefix="U">
-<gates>
-<gate name="G$1" symbol="TI-TPS22916" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="TI-TPS22916">
-<connects>
-<connect gate="G$1" pin="EN" pad="B2"/>
-<connect gate="G$1" pin="GND" pad="B1"/>
-<connect gate="G$1" pin="VIN" pad="A2"/>
-<connect gate="G$1" pin="VOUT" pad="A1"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Texas Instruments"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TI-SN74LVC1G126" prefix="U">
 <gates>
 <gate name="G$1" symbol="TI-SN74LVC1G126" x="0" y="0"/>
@@ -3383,6 +3373,31 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <technology name="">
 <attribute name="MFG" value="Maxim Integrated"/>
 <attribute name="PN" value="MAX40203ANS+T"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TI-TPS22919DCK" prefix="U">
+<gates>
+<gate name="G$1" symbol="TI-TPS22919" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TI-TPS22919DCK">
+<connects>
+<connect gate="G$1" pin="EN" pad="3"/>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="QOD" pad="5"/>
+<connect gate="G$1" pin="VIN" pad="1"/>
+<connect gate="G$1" pin="VOUT" pad="6"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:28686799/1"/>
+</package3dinstances>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Texas Instruments"/>
+<attribute name="PN" value="TPS22919DCK"/>
 </technology>
 </technologies>
 </device>
@@ -3968,18 +3983,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </pinmapping>
 </spice>
 </part>
-<part name="U19" library="EagleLibrary" deviceset="TI-TPS22916" device="">
-<attribute name="PN" value="TPS22916CNYFPR"/>
-</part>
-<part name="U17" library="EagleLibrary" deviceset="TI-TPS22916" device="">
-<attribute name="PN" value="TPS22916CNYFPR"/>
-</part>
-<part name="U21" library="EagleLibrary" deviceset="TI-TPS22916" device="">
-<attribute name="PN" value="TPS22916CNYFPR"/>
-</part>
-<part name="U22" library="EagleLibrary" deviceset="TI-TPS22916" device="">
-<attribute name="PN" value="TPS22916CNYFPR"/>
-</part>
 <part name="R35" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW08050000Z0EAC"/>
@@ -4008,6 +4011,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
 <part name="U7" library="EagleLibrary" deviceset="MAXIM-MAX40203ANS+T" device="" package3d_urn="urn:adsk.eagle:package:28686739/1"/>
+<part name="U8" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
+<part name="U10" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
+<part name="U11" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
+<part name="U16" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
 </parts>
 <sheets>
 <sheet>
@@ -4023,12 +4030,12 @@ layer."</text>
 <text x="12.7" y="81.28" size="3.81" layer="95" align="top-left">VDD_1V8_STM
 - Battery:  VDD_1V8_STM = Hi-Z
 - USB:      VDD_1V8_STM = VDD_1V8</text>
-<text x="12.7" y="411.48" size="3.81" layer="95" align="top-left">VDDA
-- Battery:  VDDA = VDD_BAT
-- USB:      VDDA = 1V8</text>
-<text x="12.7" y="373.38" size="3.81" layer="95" align="top-left">VDDB
-- Battery:  VDDB = VDD_BAT
-- USB:      VDDB = VDD_USB</text>
+<text x="12.7" y="411.48" size="3.81" layer="95" align="top-left">VDD_A
+- Battery:  VDD_A = VDD_BAT
+- USB:      VDD_A = 1V8</text>
+<text x="12.7" y="373.38" size="3.81" layer="95" align="top-left">VDD_B
+- Battery:  VDD_B = VDD_BAT
+- USB:      VDD_B = VDD_USB</text>
 <text x="12.7" y="330.2" size="3.81" layer="95" align="top-left">VDD_1V2</text>
 <text x="12.7" y="281.94" size="3.81" layer="95" align="top-left">VDD_1V8</text>
 <text x="12.7" y="218.44" size="3.81" layer="95" align="top-left">VDD_2V8</text>
@@ -4197,22 +4204,6 @@ and dampen ringing on the PFET's gate.</text>
 <attribute name="NAME" x="144.526" y="382.651" size="1.778" layer="95" align="top-right"/>
 <attribute name="VALUE" x="144.526" y="380.111" size="1.778" layer="96" align="top-right"/>
 </instance>
-<instance part="U19" gate="G$1" x="139.7" y="78.74" smashed="yes">
-<attribute name="PN" x="139.7" y="63.5" size="1.778" layer="95"/>
-<attribute name="NAME" x="139.7" y="79.502" size="1.778" layer="95"/>
-</instance>
-<instance part="U17" gate="G$1" x="139.7" y="170.18" smashed="yes">
-<attribute name="PN" x="139.7" y="154.94" size="1.778" layer="95"/>
-<attribute name="NAME" x="139.7" y="170.942" size="1.778" layer="95"/>
-</instance>
-<instance part="U21" gate="G$1" x="139.7" y="139.7" smashed="yes">
-<attribute name="PN" x="139.7" y="124.46" size="1.778" layer="95"/>
-<attribute name="NAME" x="139.7" y="140.462" size="1.778" layer="95"/>
-</instance>
-<instance part="U22" gate="G$1" x="139.7" y="109.22" smashed="yes">
-<attribute name="PN" x="139.7" y="93.98" size="1.778" layer="95"/>
-<attribute name="NAME" x="139.7" y="109.982" size="1.778" layer="95"/>
-</instance>
 <instance part="R35" gate="G$1" x="208.28" y="408.94" smashed="yes" rot="R180">
 <attribute name="NAME" x="208.28" y="407.67" size="1.778" layer="95" align="top-left"/>
 <attribute name="VALUE" x="208.28" y="405.13" size="1.778" layer="96" align="top-left"/>
@@ -4268,11 +4259,27 @@ and dampen ringing on the PFET's gate.</text>
 <attribute name="NAME" x="180.415" y="403.86" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
 <attribute name="PN" x="180.415" y="388.62" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
+<instance part="U8" gate="G$1" x="139.7" y="170.18" smashed="yes">
+<attribute name="PN" x="139.7" y="154.94" size="1.778" layer="95"/>
+<attribute name="NAME" x="139.7" y="170.942" size="1.778" layer="95"/>
+</instance>
+<instance part="U10" gate="G$1" x="139.7" y="139.7" smashed="yes">
+<attribute name="PN" x="139.7" y="124.46" size="1.778" layer="95"/>
+<attribute name="NAME" x="139.7" y="140.462" size="1.778" layer="95"/>
+</instance>
+<instance part="U11" gate="G$1" x="139.7" y="109.22" smashed="yes">
+<attribute name="PN" x="139.7" y="93.98" size="1.778" layer="95"/>
+<attribute name="NAME" x="139.7" y="109.982" size="1.778" layer="95"/>
+</instance>
+<instance part="U16" gate="G$1" x="139.7" y="78.74" smashed="yes">
+<attribute name="PN" x="139.7" y="63.5" size="1.778" layer="95"/>
+<attribute name="NAME" x="139.7" y="79.502" size="1.778" layer="95"/>
+</instance>
 </instances>
 <busses>
 </busses>
 <nets>
-<net name="VDDB" class="0">
+<net name="VDD_B" class="0">
 <segment>
 <pinref part="U1" gate="G$1" pin="VIN"/>
 <wire x1="137.16" y1="325.12" x2="129.54" y2="325.12" width="0.1524" layer="91"/>
@@ -4334,9 +4341,9 @@ and dampen ringing on the PFET's gate.</text>
 <label x="200.66" y="279.4" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U19" gate="G$1" pin="VIN"/>
 <wire x1="137.16" y1="76.2" x2="134.62" y2="76.2" width="0.1524" layer="91"/>
 <label x="134.62" y="76.2" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U16" gate="G$1" pin="VIN"/>
 </segment>
 <segment>
 <wire x1="177.8" y1="398.78" x2="175.26" y2="398.78" width="0.1524" layer="91"/>
@@ -4346,9 +4353,9 @@ and dampen ringing on the PFET's gate.</text>
 <wire x1="177.8" y1="396.24" x2="177.8" y2="398.78" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="U17" gate="G$1" pin="VIN"/>
 <wire x1="137.16" y1="167.64" x2="134.62" y2="167.64" width="0.1524" layer="91"/>
 <label x="134.62" y="167.64" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U8" gate="G$1" pin="VIN"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -4415,9 +4422,9 @@ and dampen ringing on the PFET's gate.</text>
 <label x="147.32" y="375.92" size="1.778" layer="95" align="top-right"/>
 </segment>
 <segment>
-<pinref part="U19" gate="G$1" pin="GND"/>
 <wire x1="137.16" y1="73.66" x2="134.62" y2="73.66" width="0.1524" layer="91"/>
 <label x="134.62" y="73.66" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U16" gate="G$1" pin="GND"/>
 </segment>
 <segment>
 <wire x1="177.8" y1="393.7" x2="175.26" y2="393.7" width="0.1524" layer="91"/>
@@ -4425,19 +4432,19 @@ and dampen ringing on the PFET's gate.</text>
 <pinref part="U7" gate="G$1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="U17" gate="G$1" pin="GND"/>
 <wire x1="137.16" y1="165.1" x2="134.62" y2="165.1" width="0.1524" layer="91"/>
 <label x="134.62" y="165.1" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U8" gate="G$1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="U21" gate="G$1" pin="GND"/>
 <wire x1="137.16" y1="134.62" x2="134.62" y2="134.62" width="0.1524" layer="91"/>
 <label x="134.62" y="134.62" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U10" gate="G$1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="U22" gate="G$1" pin="GND"/>
 <wire x1="137.16" y1="104.14" x2="134.62" y2="104.14" width="0.1524" layer="91"/>
 <label x="134.62" y="104.14" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U11" gate="G$1" pin="GND"/>
 </segment>
 <segment>
 <pinref part="R3" gate="G$1" pin="1"/>
@@ -4483,14 +4490,14 @@ and dampen ringing on the PFET's gate.</text>
 <label x="210.82" y="218.44" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U21" gate="G$1" pin="VIN"/>
 <wire x1="137.16" y1="137.16" x2="134.62" y2="137.16" width="0.1524" layer="91"/>
 <label x="134.62" y="137.16" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U10" gate="G$1" pin="VIN"/>
 </segment>
 <segment>
-<pinref part="U22" gate="G$1" pin="VIN"/>
 <wire x1="137.16" y1="106.68" x2="134.62" y2="106.68" width="0.1524" layer="91"/>
 <label x="134.62" y="106.68" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U11" gate="G$1" pin="VIN"/>
 </segment>
 </net>
 <net name="N$12" class="0">
@@ -4570,9 +4577,9 @@ and dampen ringing on the PFET's gate.</text>
 </net>
 <net name="VDD_USB" class="0">
 <segment>
-<pinref part="U19" gate="G$1" pin="EN"/>
 <wire x1="137.16" y1="68.58" x2="134.62" y2="68.58" width="0.1524" layer="91"/>
 <label x="134.62" y="68.58" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U16" gate="G$1" pin="EN"/>
 </segment>
 <segment>
 <pinref part="R39" gate="G$1" pin="2"/>
@@ -4604,23 +4611,32 @@ and dampen ringing on the PFET's gate.</text>
 </net>
 <net name="VDD_1V8_STM" class="0">
 <segment>
-<pinref part="U19" gate="G$1" pin="VOUT"/>
 <wire x1="160.02" y1="76.2" x2="162.56" y2="76.2" width="0.1524" layer="91"/>
 <label x="162.56" y="76.2" size="1.778" layer="95"/>
+<pinref part="U16" gate="G$1" pin="VOUT"/>
+<pinref part="U16" gate="G$1" pin="QOD"/>
+<wire x1="160.02" y1="73.66" x2="160.02" y2="76.2" width="0.1524" layer="91"/>
+<junction x="160.02" y="76.2"/>
 </segment>
 </net>
 <net name="VDD_1V8_PIX" class="0">
 <segment>
-<pinref part="U17" gate="G$1" pin="VOUT"/>
 <wire x1="160.02" y1="167.64" x2="162.56" y2="167.64" width="0.1524" layer="91"/>
 <label x="162.56" y="167.64" size="1.778" layer="95"/>
+<pinref part="U8" gate="G$1" pin="VOUT"/>
+<pinref part="U8" gate="G$1" pin="QOD"/>
+<wire x1="160.02" y1="165.1" x2="160.02" y2="167.64" width="0.1524" layer="91"/>
+<junction x="160.02" y="167.64"/>
 </segment>
 </net>
 <net name="VDD_2V8_PIX" class="0">
 <segment>
-<pinref part="U21" gate="G$1" pin="VOUT"/>
 <wire x1="160.02" y1="137.16" x2="162.56" y2="137.16" width="0.1524" layer="91"/>
 <label x="162.56" y="137.16" size="1.778" layer="95"/>
+<pinref part="U10" gate="G$1" pin="VOUT"/>
+<pinref part="U10" gate="G$1" pin="QOD"/>
+<wire x1="160.02" y1="134.62" x2="160.02" y2="137.16" width="0.1524" layer="91"/>
+<junction x="160.02" y="137.16"/>
 </segment>
 </net>
 <net name="VDD_SRC_USB" class="0">
@@ -4666,30 +4682,33 @@ and dampen ringing on the PFET's gate.</text>
 </net>
 <net name="VDD_2V8_SD_EN" class="0">
 <segment>
-<pinref part="U22" gate="G$1" pin="EN"/>
 <wire x1="137.16" y1="99.06" x2="134.62" y2="99.06" width="0.1524" layer="91"/>
 <label x="134.62" y="99.06" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U11" gate="G$1" pin="EN"/>
 </segment>
 </net>
 <net name="VDD_2V8_PIX_EN" class="0">
 <segment>
-<pinref part="U21" gate="G$1" pin="EN"/>
 <wire x1="137.16" y1="129.54" x2="134.62" y2="129.54" width="0.1524" layer="91"/>
 <label x="134.62" y="129.54" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U10" gate="G$1" pin="EN"/>
 </segment>
 </net>
 <net name="VDD_1V8_PIX_EN" class="0">
 <segment>
-<pinref part="U17" gate="G$1" pin="EN"/>
 <wire x1="137.16" y1="160.02" x2="134.62" y2="160.02" width="0.1524" layer="91"/>
 <label x="134.62" y="160.02" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U8" gate="G$1" pin="EN"/>
 </segment>
 </net>
 <net name="VDD_2V8_SD" class="0">
 <segment>
-<pinref part="U22" gate="G$1" pin="VOUT"/>
 <wire x1="160.02" y1="106.68" x2="162.56" y2="106.68" width="0.1524" layer="91"/>
 <label x="162.56" y="106.68" size="1.778" layer="95"/>
+<pinref part="U11" gate="G$1" pin="VOUT"/>
+<pinref part="U11" gate="G$1" pin="QOD"/>
+<wire x1="160.02" y1="104.14" x2="160.02" y2="106.68" width="0.1524" layer="91"/>
+<junction x="160.02" y="106.68"/>
 </segment>
 </net>
 <net name="N$9" class="0">
@@ -4715,7 +4734,7 @@ and dampen ringing on the PFET's gate.</text>
 <pinref part="Q3" gate="G$1" pin="D"/>
 </segment>
 </net>
-<net name="VDDA" class="0">
+<net name="VDD_A" class="0">
 <segment>
 <pinref part="R35" gate="G$1" pin="1"/>
 <wire x1="213.36" y1="408.94" x2="215.9" y2="408.94" width="0.1524" layer="91"/>
@@ -4773,7 +4792,7 @@ and dampen ringing on the PFET's gate.</text>
 <busses>
 </busses>
 <nets>
-<net name="VDDA" class="0">
+<net name="VDD_A" class="0">
 <segment>
 <pinref part="U14" gate="A" pin="VDD"/>
 <wire x1="-33.02" y1="76.2" x2="-35.56" y2="76.2" width="0.1524" layer="91"/>
