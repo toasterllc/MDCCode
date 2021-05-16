@@ -50,20 +50,20 @@
     
     - Switch RAM to AS4C8M16MSA-6BIN
     
-    - Update PFET footprint / part number
-    
-    - Replace ESD chip with DT1446-04V-7
-    
-    - Replace load switches with AP22908
-    
-    - Switch clocks to SIT8021AI-J4-18S-16.000000E
-        - Reason: the 24 MHz version is more expensive, and Mouser doesn't have enough quantity
-    
-    - Update image sensor part number
-    
     - Update BusinessOrders.txt
     
-    - Figure out power rails, yet again
+    √ Replace ESD chip with DT1446-04V-7
+    
+    √ Replace load switches with TPS22919DCK
+    
+    √ Switch clocks to SIT8021AI-J4-18S-16.000000E
+        - Reason: the 24 MHz version is more expensive, and Mouser doesn't have enough quantity
+    
+    √ Update image sensor part number
+    
+    √ Figure out power rails, yet again
+    
+    √ Update PFET footprint / part number
     
     √ Connect ICE_MSP_* nets to ICE40
     
@@ -183,8 +183,12 @@
 
 - Order
     
-    * DigiKey
-        AP22908CN4-7 (load switch)
+    * TI
+        SN74LVC1G126DCKR (clock-blocking buffer)
+    
+    * Mouser
+        TPS22919DCK (load switch)
+        MAX40203ANS+T (ideal diode)
     
     * sierraic.com
         TPS63805YFFR (2.8V supply)

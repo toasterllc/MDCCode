@@ -1047,32 +1047,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="4.953" y="-1.905"/>
 </polygon>
 </package>
-<package name="TI-TPD4S012DRYR" urn="urn:adsk.eagle:footprint:19106717/1" locally_modified="yes">
-<description>6-SON (DFN), 0.50 mm pitch, 1.45 X 1.00 X 0.60 mm body
-&lt;p&gt;6-pin SON (DFN) package with 0.50 mm pitch with body size 1.45 X 1.00 X 0.60 mm&lt;/p&gt;</description>
-<wire x1="0.525" y1="-0.75" x2="-0.525" y2="-0.75" width="0.05" layer="21"/>
-<wire x1="-0.525" y1="-0.75" x2="-0.525" y2="0.75" width="0.05" layer="21"/>
-<wire x1="-0.525" y1="0.75" x2="0.525" y2="0.75" width="0.05" layer="21"/>
-<wire x1="0.525" y1="0.75" x2="0.525" y2="-0.75" width="0.05" layer="21"/>
-<smd name="1" x="-0.4951" y="0.5" dx="0.7098" dy="0.22" layer="1" roundness="100"/>
-<smd name="2" x="-0.4951" y="0" dx="0.7098" dy="0.22" layer="1" roundness="100"/>
-<smd name="3" x="-0.4951" y="-0.5" dx="0.7098" dy="0.22" layer="1" roundness="100"/>
-<smd name="4" x="0.4951" y="-0.5" dx="0.7098" dy="0.22" layer="1" roundness="100"/>
-<smd name="5" x="0.4951" y="0" dx="0.7098" dy="0.22" layer="1" roundness="100"/>
-<smd name="6" x="0.4951" y="0.5" dx="0.7098" dy="0.22" layer="1" roundness="100"/>
-<text x="-0.543559375" y="0.896640625" size="0.508" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="21">
-<vertex x="-0.525" y="0.75"/>
-<vertex x="-0.525" y="0.35"/>
-<vertex x="-0.125" y="0.75"/>
-</polygon>
-<polygon width="0.05" layer="39">
-<vertex x="0.525" y="-0.75"/>
-<vertex x="-0.525" y="-0.75"/>
-<vertex x="-0.525" y="0.75"/>
-<vertex x="0.525" y="0.75"/>
-</polygon>
-</package>
 <package name="TI-MSP430FR2422IRHL" urn="urn:adsk.eagle:footprint:28409573/1" locally_modified="yes">
 <description>20-QFN, 0.50 mm pitch, 4.50 X 3.50 X 1.00 mm body, 3.05 X 2.05 mm thermal pad
 &lt;p&gt;20-pin QFN package with 0.50 mm pitch with body size 4.50 X 3.50 X 1.00 mm and thermal pad size 3.05 X 2.05 mm&lt;/p&gt;</description>
@@ -1302,30 +1276,33 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.423" y="1.051"/>
 </polygon>
 </package>
+<package name="DIODESINC-DT1446-04V-7" urn="urn:adsk.eagle:footprint:28686926/1" locally_modified="yes">
+<description>6-SOTFL, 0.50 mm pitch, 1.63 mm span, 1.60 X 1.18 X 0.60 mm body
+&lt;p&gt;6-pin SOTFL package with 0.50 mm pitch, 1.63 mm span with body size 1.60 X 1.18 X 0.60 mm&lt;/p&gt;</description>
+<wire x1="0.625" y1="-0.85" x2="-0.625" y2="-0.85" width="0.05" layer="21"/>
+<wire x1="-0.625" y1="-0.85" x2="-0.625" y2="0.85" width="0.05" layer="21"/>
+<wire x1="-0.625" y1="0.85" x2="0.625" y2="0.85" width="0.05" layer="21"/>
+<wire x1="0.625" y1="0.85" x2="0.625" y2="-0.85" width="0.05" layer="21"/>
+<smd name="1" x="-0.7958" y="0.5" dx="0.5456" dy="0.3371" layer="1"/>
+<smd name="2" x="-0.7958" y="0" dx="0.5456" dy="0.3371" layer="1"/>
+<smd name="3" x="-0.7958" y="-0.5" dx="0.5456" dy="0.3371" layer="1"/>
+<smd name="4" x="0.7958" y="-0.5" dx="0.5456" dy="0.3371" layer="1"/>
+<smd name="5" x="0.7958" y="0" dx="0.5456" dy="0.3371" layer="1"/>
+<smd name="6" x="0.7958" y="0.5" dx="0.5456" dy="0.3371" layer="1"/>
+<text x="-0.56" y="1.0035" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.625" y="-0.85"/>
+<vertex x="-0.625" y="-0.85"/>
+<vertex x="-0.625" y="0.85"/>
+<vertex x="0.625" y="0.85"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-0.61" y="0.836"/>
+<vertex x="-0.61" y="-0.164"/>
+<vertex x="0.39" y="0.836"/>
+</polygon>
+</package>
 </packages>
-<packages3d>
-<package3d name="SOT65P210X110-5N" urn="urn:adsk.eagle:package:28651563/1" type="model">
-<description>5-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
-&lt;p&gt;5-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="TI-SN74LVC1G126DCK"/>
-</packageinstances>
-</package3d>
-<package3d name="BGA4C35P2X2_76X76X50N" urn="urn:adsk.eagle:package:28686739/1" type="model">
-<description>4-BGA, collapsing, 0.35 mm pitch, 0.77 X 0.77 X 0.50 mm body
-&lt;p&gt;4-pin collapsing BGA package with 0.35 mm col pitch and 0.35 mm row pitch with body size 0.77 X 0.77 X 0.50 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="MAXIM-MAX40203ANS+T"/>
-</packageinstances>
-</package3d>
-<package3d name="SOT65P210X110-6N" urn="urn:adsk.eagle:package:28686799/1" type="model">
-<description>6-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
-&lt;p&gt;6-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="TI-TPS22919DCK"/>
-</packageinstances>
-</package3d>
-</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -2098,19 +2075,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="0" y="-20.32" size="1.778" layer="95">MINI USB JACK</text>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 </symbol>
-<symbol name="TI-TPD4S012DRYR">
-<wire x1="0" y1="0" x2="10.16" y2="0" width="0.1524" layer="94"/>
-<wire x1="10.16" y1="0" x2="10.16" y2="-15.24" width="0.1524" layer="94"/>
-<wire x1="10.16" y1="-15.24" x2="0" y2="-15.24" width="0.1524" layer="94"/>
-<wire x1="0" y1="-15.24" x2="0" y2="0" width="0.1524" layer="94"/>
-<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
-<pin name="D-" x="-2.54" y="-10.16" visible="pin" length="short"/>
-<pin name="VBUS" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
-<pin name="D+" x="-2.54" y="-7.62" visible="pin" length="short"/>
-<pin name="ID" x="-2.54" y="-12.7" visible="pin" length="short"/>
-<text x="0" y="-17.78" size="1.778" layer="95">USB ESD Protection</text>
-</symbol>
 <symbol name="TI-MSP430FR2422IRHL-A">
 <description>16 MHz MCU with 8KB FRAM, 2KB SRAM, 10-bit ADC, UART/SPI/I2C, timer</description>
 <wire x1="0" y1="-17.78" x2="0" y2="0" width="0.254" layer="94"/>
@@ -2265,6 +2229,20 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
 <pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
 <pin name="QOD" x="20.32" y="-5.08" visible="pin" length="short" rot="R180"/>
+</symbol>
+<symbol name="DIODESINC-DT1446-04V-7">
+<wire x1="0" y1="0" x2="10.16" y2="0" width="0.1524" layer="94"/>
+<wire x1="10.16" y1="0" x2="10.16" y2="-20.32" width="0.1524" layer="94"/>
+<wire x1="10.16" y1="-20.32" x2="0" y2="-20.32" width="0.1524" layer="94"/>
+<wire x1="0" y1="-20.32" x2="0" y2="0" width="0.1524" layer="94"/>
+<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
+<pin name="IO2" x="-2.54" y="-12.7" visible="pin" length="short"/>
+<pin name="VDD" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<pin name="IO1" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<pin name="IO3" x="-2.54" y="-15.24" visible="pin" length="short"/>
+<text x="0" y="-22.86" size="1.778" layer="95">USB ESD Protection</text>
+<pin name="IO4" x="-2.54" y="-17.78" visible="pin" length="short"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -2708,7 +2686,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="ON Semiconductor"/>
-<attribute name="PN" value="AR0330CS1C12SPKA0"/>
 </technology>
 </technologies>
 </device>
@@ -3186,29 +3163,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TI-TPD4S012DRYR" prefix="U">
-<description>USB ESD diode</description>
-<gates>
-<gate name="G$1" symbol="TI-TPD4S012DRYR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="TI-TPD4S012DRYR">
-<connects>
-<connect gate="G$1" pin="D+" pad="1"/>
-<connect gate="G$1" pin="D-" pad="2"/>
-<connect gate="G$1" pin="GND" pad="4"/>
-<connect gate="G$1" pin="ID" pad="3"/>
-<connect gate="G$1" pin="VBUS" pad="6"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Texas Instruments"/>
-<attribute name="PN" value="TPD4S012DRYR"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TI-MSP430FR2422IRHL" prefix="U">
 <gates>
 <gate name="A" symbol="TI-MSP430FR2422IRHL-A" x="0" y="0"/>
@@ -3294,9 +3248,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="OUT" pad="4"/>
 <connect gate="G$1" pin="VDD" pad="5"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28651563/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Texas Instruments"/>
@@ -3366,9 +3317,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="VIN" pad="A1"/>
 <connect gate="G$1" pin="VOUT" pad="A2"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28686739/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Maxim Integrated"/>
@@ -3391,13 +3339,33 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="VIN" pad="1"/>
 <connect gate="G$1" pin="VOUT" pad="6"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28686799/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Texas Instruments"/>
 <attribute name="PN" value="TPS22919DCK"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="DIODESINC-DT1446-04V-7" prefix="U">
+<gates>
+<gate name="G$1" symbol="DIODESINC-DT1446-04V-7" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="DIODESINC-DT1446-04V-7">
+<connects>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="IO1" pad="1"/>
+<connect gate="G$1" pin="IO2" pad="3"/>
+<connect gate="G$1" pin="IO3" pad="4"/>
+<connect gate="G$1" pin="IO4" pad="6"/>
+<connect gate="G$1" pin="VDD" pad="5"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Diodes Incorporated"/>
+<attribute name="PN" value="DT1446-04V-7"/>
 </technology>
 </technologies>
 </device>
@@ -3679,7 +3647,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
 <part name="U5" library="EagleLibrary" deviceset="ON-AR0330CS1C12SPKA0" device="">
-<attribute name="PN" value="AR0330CS1C12SPKA0-CP2"/>
+<attribute name="PN" value="AR0330CS1C12SPKA0-CR"/>
 </part>
 <part name="C28" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
@@ -3734,7 +3702,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="X1" library="EagleLibrary" deviceset="SITIME-SIT8021" device="">
-<attribute name="PN" value="SIT8021AI-J4-18S-24.000000E"/>
+<attribute name="PN" value="SIT8021AI-J4-18S-16.000000E"/>
 </part>
 <part name="U9" library="EagleLibrary" deviceset="MICROSD-SOCKET" device=""/>
 <part name="C47" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
@@ -3872,7 +3840,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="PN" value="GCM155R71H103JA55D"/>
 </part>
 <part name="X2" library="EagleLibrary" deviceset="SITIME-SIT8021" device="">
-<attribute name="PN" value="SIT8021AI-J4-18S-24.000000E"/>
+<attribute name="PN" value="SIT8021AI-J4-18S-16.000000E"/>
 </part>
 <part name="TP10" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="L1" library="EagleLibrary" deviceset="INDUCTOR" device="0806" value="470n">
@@ -3933,7 +3901,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="BKP1005EM100-T"/>
 </part>
-<part name="U13" library="EagleLibrary" deviceset="TI-TPD4S012DRYR" device=""/>
 <part name="C1" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
@@ -3993,7 +3960,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </part>
 <part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10M"/>
 <part name="R39" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10M"/>
-<part name="U18" library="EagleLibrary" deviceset="TI-SN74LVC1G126" device="" package3d_urn="urn:adsk.eagle:package:28651563/1">
+<part name="U18" library="EagleLibrary" deviceset="TI-SN74LVC1G126" device="">
 <attribute name="PN" value="SN74LVC1G126DCKR"/>
 </part>
 <part name="R23" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
@@ -4010,11 +3977,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="Q3" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
-<part name="U7" library="EagleLibrary" deviceset="MAXIM-MAX40203ANS+T" device="" package3d_urn="urn:adsk.eagle:package:28686739/1"/>
-<part name="U8" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
-<part name="U10" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
-<part name="U11" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
-<part name="U16" library="EagleLibrary" deviceset="TI-TPS22919DCK" device="" package3d_urn="urn:adsk.eagle:package:28686799/1"/>
+<part name="U7" library="EagleLibrary" deviceset="MAXIM-MAX40203ANS+T" device=""/>
+<part name="U8" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
+<part name="U10" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
+<part name="U11" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
+<part name="U16" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
+<part name="U17" library="EagleLibrary" deviceset="DIODESINC-DT1446-04V-7" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4225,8 +4193,8 @@ and dampen ringing on the PFET's gate.</text>
 <attribute name="VALUE" x="151.13" y="30.48" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="R23" gate="G$1" x="180.34" y="375.92" smashed="yes">
-<attribute name="NAME" x="177.8" y="377.19" size="1.778" layer="95"/>
-<attribute name="VALUE" x="177.8" y="379.73" size="1.778" layer="96"/>
+<attribute name="NAME" x="177.8" y="379.73" size="1.778" layer="95"/>
+<attribute name="VALUE" x="177.8" y="377.19" size="1.778" layer="96"/>
 </instance>
 <instance part="R6" gate="G$1" x="233.68" y="416.56" smashed="yes" rot="R90">
 <attribute name="NAME" x="232.41" y="419.1" size="1.778" layer="95" rot="R180"/>
@@ -4741,7 +4709,7 @@ and dampen ringing on the PFET's gate.</text>
 <label x="215.9" y="408.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDDB_EN_" class="0">
+<net name="VDD_B_EN_" class="0">
 <segment>
 <wire x1="195.58" y1="375.92" x2="198.12" y2="375.92" width="0.1524" layer="91"/>
 <label x="198.12" y="375.92" size="1.778" layer="95"/>
@@ -4951,7 +4919,7 @@ and dampen ringing on the PFET's gate.</text>
 <label x="63.5" y="38.1" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDDB_EN_" class="0">
+<net name="VDD_B_EN_" class="0">
 <segment>
 <pinref part="U14" gate="B" pin="P1.0/UCB0STE/A0/VEREF+"/>
 <wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
@@ -8144,8 +8112,8 @@ Ferrite bead specs:
 <attribute name="MFG" x="43.18" y="-7.62" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="43.18" y="-7.62" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U13" gate="G$1" x="35.56" y="-35.56" smashed="yes">
-<attribute name="NAME" x="35.56" y="-35.306" size="1.778" layer="95"/>
+<instance part="U17" gate="G$1" x="35.56" y="-35.56" smashed="yes">
+<attribute name="NAME" x="35.56" y="-33.02" size="1.778" layer="95" align="top-left"/>
 </instance>
 </instances>
 <busses>
@@ -8156,11 +8124,11 @@ Ferrite bead specs:
 <pinref part="J2" gate="G$1" pin="GND"/>
 <wire x1="22.86" y1="-10.16" x2="30.48" y2="-10.16" width="0.1524" layer="91"/>
 <label x="35.56" y="-10.16" size="1.778" layer="95"/>
-<pinref part="U13" gate="G$1" pin="GND"/>
 <wire x1="30.48" y1="-10.16" x2="35.56" y2="-10.16" width="0.1524" layer="91"/>
 <wire x1="33.02" y1="-40.64" x2="30.48" y2="-40.64" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="-40.64" x2="30.48" y2="-10.16" width="0.1524" layer="91"/>
 <junction x="30.48" y="-10.16"/>
+<pinref part="U17" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="USB_D+" class="0">
@@ -8168,11 +8136,11 @@ Ferrite bead specs:
 <pinref part="J2" gate="G$1" pin="D+"/>
 <label x="35.56" y="-17.78" size="1.778" layer="95"/>
 <wire x1="22.86" y1="-17.78" x2="27.94" y2="-17.78" width="0.1524" layer="91"/>
-<pinref part="U13" gate="G$1" pin="D+"/>
 <wire x1="27.94" y1="-17.78" x2="35.56" y2="-17.78" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="-43.18" x2="27.94" y2="-43.18" width="0.1524" layer="91"/>
-<wire x1="27.94" y1="-43.18" x2="27.94" y2="-17.78" width="0.1524" layer="91"/>
+<wire x1="33.02" y1="-45.72" x2="27.94" y2="-45.72" width="0.1524" layer="91"/>
+<wire x1="27.94" y1="-45.72" x2="27.94" y2="-17.78" width="0.1524" layer="91"/>
 <junction x="27.94" y="-17.78"/>
+<pinref part="U17" gate="G$1" pin="IO1"/>
 </segment>
 </net>
 <net name="USB_D-" class="0">
@@ -8180,11 +8148,11 @@ Ferrite bead specs:
 <pinref part="J2" gate="G$1" pin="D-"/>
 <label x="35.56" y="-20.32" size="1.778" layer="95"/>
 <wire x1="22.86" y1="-20.32" x2="25.4" y2="-20.32" width="0.1524" layer="91"/>
-<pinref part="U13" gate="G$1" pin="D-"/>
 <wire x1="25.4" y1="-20.32" x2="35.56" y2="-20.32" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="-45.72" x2="25.4" y2="-45.72" width="0.1524" layer="91"/>
-<wire x1="25.4" y1="-45.72" x2="25.4" y2="-20.32" width="0.1524" layer="91"/>
+<wire x1="33.02" y1="-48.26" x2="25.4" y2="-48.26" width="0.1524" layer="91"/>
+<wire x1="25.4" y1="-48.26" x2="25.4" y2="-20.32" width="0.1524" layer="91"/>
 <junction x="25.4" y="-20.32"/>
+<pinref part="U17" gate="G$1" pin="IO2"/>
 </segment>
 </net>
 <net name="N$54" class="0">
@@ -8193,9 +8161,9 @@ Ferrite bead specs:
 <pinref part="FB1" gate="G$1" pin="P$1"/>
 <wire x1="22.86" y1="-7.62" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="33.02" y1="-7.62" x2="43.18" y2="-7.62" width="0.1524" layer="91"/>
-<pinref part="U13" gate="G$1" pin="VBUS"/>
 <wire x1="33.02" y1="-38.1" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
 <junction x="33.02" y="-7.62"/>
+<pinref part="U17" gate="G$1" pin="VDD"/>
 </segment>
 </net>
 <net name="VDD_USB" class="0">
@@ -8219,11 +8187,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 
