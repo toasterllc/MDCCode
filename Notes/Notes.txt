@@ -2,6 +2,7 @@
 
     - STM32: Fix USB power supply
         - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
+        √ Make sure to add necessary capacitors too
     
     - STM32: Make sure we're not using an GPIOs that are powered by VDDUSB
     
@@ -53,6 +54,16 @@
     - Update BusinessOrders.txt
     
     - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
+    
+    - Make sure we don't have too much capacitance on VDD_USB
+    
+    - Add crystal so MSP430 can keep track of time
+    
+    - Consider leaving MSP430 ACLK pin disconnected, so we can measure crystal frequency on it
+    
+    √ Make sure 3V3 LDO starts up after VDD_1V8_STM
+    
+    √ Add caps to 3V3 LDO output
     
     √ Switch RAM to ALLIANCE-AS4C8M16MSA-6BIN
     
