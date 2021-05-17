@@ -53,7 +53,7 @@
     
     - Make sure we don't have too much capacitance on VDD_USB
     
-    - Rename nets containing '24MHz' since we replaced the clock chip to be 16MHz
+    √ Rename nets containing '24MHz' since we replaced the clock chip to be 16MHz
     
     √ STM32: Fix USB power supply
         - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board

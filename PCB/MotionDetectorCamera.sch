@@ -5644,7 +5644,7 @@ below the chip.</text>
 <label x="149.86" y="-93.98" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="ICE_PIX_CLK24MHZ" class="0">
+<net name="ICE_PIX_CLK16MHZ" class="0">
 <segment>
 <pinref part="U4" gate="B" pin="C11"/>
 <wire x1="88.9" y1="63.5" x2="91.44" y2="63.5" width="0.1524" layer="91"/>
@@ -6686,7 +6686,7 @@ between input and output when its VDD=0.</text>
 <label x="91.44" y="-10.16" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_PIX_CLK24MHZ" class="0">
+<net name="ICE_PIX_CLK16MHZ" class="0">
 <segment>
 <pinref part="U18" gate="G$1" pin="IN"/>
 <wire x1="81.28" y1="0" x2="78.74" y2="0" width="0.1524" layer="91"/>
@@ -6865,7 +6865,7 @@ between input and output when its VDD=0.</text>
 <label x="116.84" y="43.18" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="PIX_CLK24MHZ" class="0">
+<net name="PIX_CLK16MHZ" class="0">
 <segment>
 <pinref part="U18" gate="G$1" pin="OUT"/>
 <wire x1="101.6" y1="0" x2="104.14" y2="0" width="0.1524" layer="91"/>
@@ -8233,7 +8233,7 @@ between input and output when its VDD=0.</text>
 <label x="71.12" y="-17.78" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="STM_CLK24MHZ" class="0">
+<net name="STM_CLK16MHZ" class="0">
 <segment>
 <pinref part="X2" gate="G$1" pin="OUT"/>
 <wire x1="259.08" y1="-22.86" x2="261.62" y2="-22.86" width="0.1524" layer="91"/>
