@@ -4270,6 +4270,18 @@ after its VDD</text>
 <text x="179.578" y="257.302" size="1.016" layer="95" align="top-left">Requirements:
 - 1%
 - TCR &lt;= ±200 ppm/°C</text>
+<text x="12.7" y="274.32" size="1.016" layer="95" align="top-left">We're using 1.9V instead of 1.8V purely to
+help meet the Vih of the SD card when it's
+in 3.3V mode.
+
+In 3.3V mode, the SD card is supposed to
+be supplied 3.3V signals, but the ICE40
+gives it 1.9V signals instead. We're doing
+this because we haven't found a good
+method of switching the signal voltage
+without introducing capacitance on the
+signalling lines (which can greatly impact
+the 100MHz high-speed mode).</text>
 </plain>
 <instances>
 <instance part="C2" gate="G$1" x="129.54" y="322.58" smashed="yes">
