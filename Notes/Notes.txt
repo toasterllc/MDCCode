@@ -59,7 +59,7 @@
     
     - Add crystal so MSP430 can keep track of time
     
-    - Consider leaving MSP430 ACLK pin disconnected, so we can measure crystal frequency on it
+    √ Consider leaving MSP430 ACLK pin disconnected, so we can measure crystal frequency on it
     
     √ Make sure 3V3 LDO starts up after VDD_1V8_STM
     

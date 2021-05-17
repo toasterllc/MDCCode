@@ -6306,9 +6306,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-13.6405" y1="-12.532" x2="-13.8945" y2="-32.52" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="!VDD_B_EN!">
-<contactref element="U14" pad="2"/>
 <contactref element="R24" pad="2"/>
-<wire x1="-9.8126" y1="0.734" x2="-13.0295" y2="-43.442" width="0" layer="19" extent="1-1"/>
+<contactref element="U14" pad="11"/>
+<wire x1="-7.378" y1="-3.2006" x2="-13.0295" y2="-43.442" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_2V8_SD_EN">
 <contactref element="U14" pad="19"/>
@@ -6321,9 +6321,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-7.378" y1="1.1686" x2="-14.0623" y2="-65.15" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_1V8_PIX_EN">
-<contactref element="U14" pad="1"/>
 <contactref element="U8" pad="3"/>
-<wire x1="-8.878" y1="1.1686" x2="-14.0623" y2="-61.25" width="0" layer="19" extent="1-1"/>
+<contactref element="U14" pad="2"/>
+<wire x1="-9.8126" y1="0.734" x2="-14.0623" y2="-61.25" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_2V8_SD">
 <contactref element="U9" pad="VDD"/>

@@ -4873,6 +4873,8 @@ after its VDD</text>
 <sheet>
 <description>MSP</description>
 <plain>
+<text x="35.052" y="77.724" size="0.762" layer="95" align="top-right">Leaving P1.1 unpopulated so ACLK can
+be observed without side-effects</text>
 </plain>
 <instances>
 <instance part="U14" gate="A" x="-30.48" y="78.74" smashed="yes">
@@ -5064,16 +5066,16 @@ after its VDD</text>
 </net>
 <net name="!VDD_B_EN!" class="0">
 <segment>
-<pinref part="U14" gate="B" pin="P1.0/UCB0STE/A0/VEREF+"/>
-<wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
-<label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="129.54" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
+<label x="127" y="68.58" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U14" gate="C" pin="P2.4/TA1CLK/UCB0CLK/A6"/>
 </segment>
 </net>
 <net name="VDD_1V8_PIX_EN" class="0">
 <segment>
-<pinref part="U14" gate="B" pin="P1.1/UCB0CLK/ACLK/A1/VREF+"/>
-<wire x1="35.56" y1="76.2" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
-<label x="33.02" y="76.2" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
+<label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U14" gate="B" pin="P1.0/UCB0STE/A0/VEREF+"/>
 </segment>
 </net>
 <net name="VDD_2V8_PIX_EN" class="0">
