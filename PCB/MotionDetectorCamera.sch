@@ -4137,7 +4137,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </parts>
 <sheets>
 <sheet>
-<description>Power</description>
+<description>VDD</description>
 <plain>
 <text x="165.1" y="193.04" size="1.016" layer="95" align="top-left">"Separate AGND and PGND.
 Do not connect AGND and
@@ -5234,6 +5234,17 @@ variance due to temperature and DC bias</text>
 <junction x="119.38" y="96.52"/>
 </segment>
 </net>
+</nets>
+</sheet>
+<sheet>
+<description>MOTION</description>
+<plain>
+</plain>
+<instances>
+</instances>
+<busses>
+</busses>
+<nets>
 </nets>
 </sheet>
 <sheet>

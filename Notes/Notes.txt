@@ -1,6 +1,6 @@
 - Rev4 todo
     
-    - STM32: Make sure we're not using an GPIOs that are powered by VDDUSB, since they'll use VDDUSB, and not 1.8V
+    - STM32: Make sure we're not using any GPIOs that are powered by VDDUSB, since they'll use VDDUSB, and not 1.8V
     
     - ICE40: Fix pin layout so that both PLLs can be used
         - Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
