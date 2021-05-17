@@ -4,9 +4,9 @@
     
     - Update BusinessOrders.txt
     
-    - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
-    
     - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
+    
+    √ Compact wires going to RAM now that we no longer have an A12 net (ball G1)
     
     √ ICE40: Fix pin layout so that both PLLs can be used
         √ Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)

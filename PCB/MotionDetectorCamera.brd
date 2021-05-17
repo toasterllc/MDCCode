@@ -9,7 +9,7 @@
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
-<layer number="2" name="Ground" color="16" fill="1" visible="yes" active="yes"/>
+<layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
 <layer number="5" name="Route5" color="19" fill="1" visible="no" active="no"/>
@@ -22,40 +22,40 @@
 <layer number="12" name="Route12" color="20" fill="1" visible="no" active="no"/>
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
-<layer number="15" name="Power" color="42" fill="1" visible="yes" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
+<layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
 <layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
 <layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
 <layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
-<layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
 <layer number="51" name="tDocu" color="7" fill="1" visible="no" active="yes"/>
@@ -4231,15 +4231,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U6" pad="F2"/>
 <wire x1="7.842184375" y1="33.211665625" x2="7.6547" y2="33.02418125" width="0.127" layer="1"/>
 <wire x1="7.6547" y1="33.02418125" x2="7.11984375" y2="33.02418125" width="0.127" layer="1"/>
-<wire x1="7.11984375" y1="33.02418125" x2="6.8072" y2="32.7115375" width="0.127" layer="1"/>
-<contactref element="U4" pad="F2"/>
-<wire x1="6.8072" y1="32.7115375" x2="6.8072" y2="28.4481125" width="0.127" layer="1"/>
-<wire x1="6.8072" y1="28.4481125" x2="8.1789125" y2="27.0764" width="0.127" layer="1"/>
-<wire x1="8.1789125" y1="27.0764" x2="9.9516375" y2="27.0764" width="0.127" layer="1"/>
-<wire x1="9.9516375" y1="27.0764" x2="10.5478375" y2="27.6726" width="0.127" layer="1"/>
-<wire x1="10.5478375" y1="27.6726" x2="13.708959375" y2="27.6726" width="0.127" layer="1"/>
-<wire x1="14.068559375" y1="27.313" x2="14.0744" y2="27.313" width="0.127" layer="1"/>
-<wire x1="13.708959375" y1="27.6726" x2="14.068559375" y2="27.313" width="0.127" layer="1"/>
+<wire x1="7.11984375" y1="33.02418125" x2="6.91641875" y2="32.82075625" width="0.127" layer="1"/>
+<wire x1="6.91641875" y1="32.82075625" x2="6.91641875" y2="28.6386125" width="0.127" layer="1"/>
+<wire x1="6.91641875" y1="28.6386125" x2="8.2678125" y2="27.28721875" width="0.127" layer="1"/>
+<wire x1="8.2678125" y1="27.28721875" x2="9.865278125" y2="27.28721875" width="0.127" layer="1"/>
+<wire x1="9.865278125" y1="27.28721875" x2="10.21203125" y2="27.633971875" width="0.127" layer="1"/>
+<contactref element="U4" pad="E1"/>
+<wire x1="10.21203125" y1="27.633971875" x2="10.250659375" y2="27.6726" width="0.127" layer="1"/>
+<wire x1="10.250659375" y1="27.6726" x2="10.691059375" y2="28.113" width="0.127" layer="1"/>
+<wire x1="10.691059375" y1="28.113" x2="13.2744" y2="28.113" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQM0">
 <contactref element="U6" pad="E8"/>
@@ -4257,14 +4257,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="RAM_DQM1">
 <contactref element="U6" pad="F1"/>
-<wire x1="7.276496875" y1="32.64598125" x2="7.0612" y2="32.430684375" width="0.127" layer="1"/>
-<contactref element="U4" pad="E1"/>
-<wire x1="7.0612" y1="32.430684375" x2="7.0612" y2="28.553325" width="0.127" layer="1"/>
-<wire x1="7.0612" y1="28.553325" x2="8.284125" y2="27.3304" width="0.127" layer="1"/>
-<wire x1="8.284125" y1="27.3304" x2="9.846425" y2="27.3304" width="0.127" layer="1"/>
-<wire x1="9.846425" y1="27.3304" x2="10.620025" y2="28.104" width="0.127" layer="1"/>
-<wire x1="13.2654" y1="28.104" x2="13.2744" y2="28.113" width="0.127" layer="1"/>
-<wire x1="10.620025" y1="28.104" x2="13.2654" y2="28.104" width="0.127" layer="1"/>
+<wire x1="7.276496875" y1="32.64598125" x2="7.205978125" y2="32.5754625" width="0.127" layer="1"/>
+<wire x1="7.205978125" y1="32.5754625" x2="7.205978125" y2="28.73620625" width="0.127" layer="1"/>
+<wire x1="7.205978125" y1="28.73620625" x2="8.390803125" y2="27.55138125" width="0.127" layer="1"/>
+<wire x1="8.390803125" y1="27.55138125" x2="9.757525" y2="27.55138125" width="0.127" layer="1"/>
+<wire x1="9.757525" y1="27.55138125" x2="10.7561625" y2="28.55001875" width="0.127" layer="1"/>
+<contactref element="U4" pad="E2"/>
+<wire x1="10.7561625" y1="28.55001875" x2="13.63738125" y2="28.55001875" width="0.127" layer="1"/>
+<wire x1="13.63738125" y1="28.55001875" x2="14.0744" y2="28.113" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_A0">
 <contactref element="U6" pad="H7"/>
@@ -4416,14 +4416,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U6" pad="G2"/>
 <wire x1="8.40786875" y1="32.64598125" x2="8.220384375" y2="32.458496875" width="0.127" layer="1"/>
 <wire x1="8.220384375" y1="32.458496875" x2="7.68553125" y2="32.458496875" width="0.127" layer="1"/>
-<wire x1="7.68553125" y1="32.458496875" x2="7.3152" y2="32.088165625" width="0.127" layer="1"/>
-<contactref element="U4" pad="E2"/>
-<wire x1="7.3152" y1="32.088165625" x2="7.3152" y2="28.6585375" width="0.127" layer="1"/>
-<wire x1="7.3152" y1="28.6585375" x2="8.3893375" y2="27.5844" width="0.127" layer="1"/>
-<wire x1="8.3893375" y1="27.5844" x2="9.7412125" y2="27.5844" width="0.127" layer="1"/>
-<wire x1="9.7412125" y1="27.5844" x2="10.657453125" y2="28.500640625" width="0.127" layer="1"/>
-<wire x1="13.686759375" y1="28.500640625" x2="14.0744" y2="28.113" width="0.127" layer="1"/>
-<wire x1="10.657453125" y1="28.500640625" x2="13.686759375" y2="28.500640625" width="0.127" layer="1"/>
+<wire x1="7.68553125" y1="32.458496875" x2="7.4676" y2="32.240565625" width="0.127" layer="1"/>
+<wire x1="7.4676" y1="32.240565625" x2="7.4676" y2="31.940496875" width="0.127" layer="1"/>
+<wire x1="7.5565" y1="31.851596875" x2="7.5565" y2="28.7601375" width="0.127" layer="1"/>
+<wire x1="7.5565" y1="31.851596875" x2="7.4676" y2="31.940496875" width="0.127" layer="1"/>
+<wire x1="7.5565" y1="28.7601375" x2="8.49601875" y2="27.82061875" width="0.127" layer="1"/>
+<wire x1="8.49601875" y1="27.82061875" x2="9.631990625" y2="27.82061875" width="0.127" layer="1"/>
+<contactref element="U4" pad="D1"/>
+<wire x1="10.724371875" y1="28.913" x2="13.2744" y2="28.913" width="0.127" layer="1"/>
+<wire x1="9.631990625" y1="27.82061875" x2="10.724371875" y2="28.913" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ0">
 <contactref element="U6" pad="A8"/>
@@ -4530,105 +4531,117 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="RAM_DQ8">
 <contactref element="U6" pad="E1"/>
-<wire x1="6.7108125" y1="33.211665625" x2="6.5532" y2="33.054053125" width="0.127" layer="1"/>
-<contactref element="U4" pad="F1"/>
-<wire x1="6.5532" y1="33.054053125" x2="6.5532" y2="28.3429" width="0.127" layer="1"/>
-<wire x1="6.5532" y1="28.3429" x2="8.0737" y2="26.8224" width="0.127" layer="1"/>
-<wire x1="8.0737" y1="26.8224" x2="10.05685" y2="26.8224" width="0.127" layer="1"/>
-<wire x1="10.05685" y1="26.8224" x2="10.53345" y2="27.299" width="0.127" layer="1"/>
-<wire x1="13.2604" y1="27.299" x2="13.2744" y2="27.313" width="0.127" layer="1"/>
-<wire x1="10.53345" y1="27.299" x2="13.2604" y2="27.299" width="0.127" layer="1"/>
+<wire x1="6.7108125" y1="33.211665625" x2="6.63701875" y2="33.137871875" width="0.127" layer="1"/>
+<wire x1="6.63701875" y1="33.137871875" x2="6.63701875" y2="28.518159375" width="0.127" layer="1"/>
+<wire x1="6.63701875" y1="28.518159375" x2="8.147359375" y2="27.00781875" width="0.127" layer="1"/>
+<wire x1="8.147359375" y1="27.00781875" x2="9.95270625" y2="27.00781875" width="0.127" layer="1"/>
+<wire x1="9.95270625" y1="27.00781875" x2="10.6502875" y2="27.7054" width="0.127" layer="1"/>
+<wire x1="10.6502875" y1="27.7054" x2="13.682" y2="27.7054" width="0.127" layer="1"/>
+<contactref element="U4" pad="F2"/>
+<wire x1="13.682" y1="27.7054" x2="14.0744" y2="27.313" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ9">
 <contactref element="U6" pad="D2"/>
-<contactref element="U4" pad="G1"/>
-<wire x1="7.863275" y1="26.3144" x2="6.0452" y2="28.132475" width="0.127" layer="1"/>
-<wire x1="7.863275" y1="26.3144" x2="10.267275" y2="26.3144" width="0.127" layer="1"/>
-<wire x1="10.267275" y1="26.3144" x2="10.456875" y2="26.504" width="0.127" layer="1"/>
+<wire x1="7.898834375" y1="26.482040625" x2="6.0452" y2="28.335675" width="0.127" layer="1"/>
+<wire x1="7.898834375" y1="26.482040625" x2="10.206315625" y2="26.482040625" width="0.127" layer="1"/>
+<wire x1="10.206315625" y1="26.482040625" x2="10.664134375" y2="26.939859375" width="0.127" layer="1"/>
 <wire x1="5.77963125" y1="33.62595625" x2="5.77963125" y2="33.928746875" width="0.127" layer="1"/>
 <wire x1="5.77963125" y1="33.928746875" x2="5.99373125" y2="34.142846875" width="0.127" layer="1"/>
 <wire x1="6.510621875" y1="34.142846875" x2="6.7108125" y2="34.3430375" width="0.127" layer="1"/>
 <wire x1="6.0452" y1="33.3603875" x2="5.77963125" y2="33.62595625" width="0.127" layer="1"/>
 <wire x1="5.99373125" y1="34.142846875" x2="6.510621875" y2="34.142846875" width="0.127" layer="1"/>
-<wire x1="6.0452" y1="28.132475" x2="6.0452" y2="33.3603875" width="0.127" layer="1"/>
-<wire x1="13.2654" y1="26.504" x2="13.2744" y2="26.513" width="0.127" layer="1"/>
-<wire x1="10.456875" y1="26.504" x2="13.2654" y2="26.504" width="0.127" layer="1"/>
+<wire x1="6.0452" y1="28.335675" x2="6.0452" y2="33.3603875" width="0.127" layer="1"/>
+<contactref element="U4" pad="G2"/>
+<wire x1="10.664134375" y1="26.939859375" x2="13.646578125" y2="26.939859375" width="0.127" layer="1"/>
+<wire x1="13.646578125" y1="26.939859375" x2="14.0734375" y2="26.513" width="0.127" layer="1"/>
+<wire x1="14.0734375" y1="26.513" x2="14.0744" y2="26.513" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ10">
 <contactref element="U6" pad="D1"/>
-<contactref element="U4" pad="G2"/>
-<wire x1="7.9684875" y1="26.5684" x2="6.2992" y2="28.2376875" width="0.127" layer="1"/>
-<wire x1="7.9684875" y1="26.5684" x2="10.1620625" y2="26.5684" width="0.127" layer="1"/>
-<wire x1="10.1620625" y1="26.5684" x2="10.4661625" y2="26.8725" width="0.127" layer="1"/>
+<wire x1="8.00913125" y1="26.74111875" x2="6.2992" y2="28.45105" width="0.127" layer="1"/>
+<wire x1="8.00913125" y1="26.74111875" x2="10.08078125" y2="26.74111875" width="0.127" layer="1"/>
 <wire x1="6.2992" y1="33.623278125" x2="6.145128125" y2="33.77735" width="0.127" layer="1"/>
-<wire x1="6.2992" y1="28.2376875" x2="6.2992" y2="33.623278125" width="0.127" layer="1"/>
-<wire x1="13.7149" y1="26.8725" x2="14.0744" y2="26.513" width="0.127" layer="1"/>
-<wire x1="10.4661625" y1="26.8725" x2="13.7149" y2="26.8725" width="0.127" layer="1"/>
+<wire x1="6.2992" y1="28.45105" x2="6.2992" y2="33.623278125" width="0.127" layer="1"/>
+<contactref element="U4" pad="F1"/>
+<wire x1="10.08078125" y1="26.74111875" x2="10.6526625" y2="27.313" width="0.127" layer="1"/>
+<wire x1="10.6526625" y1="27.313" x2="13.2744" y2="27.313" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ11">
 <contactref element="U6" pad="C2"/>
-<contactref element="U4" pad="H1"/>
 <wire x1="5.42804375" y1="34.708534375" x2="5.21394375" y2="34.494434375" width="0.127" layer="1"/>
 <wire x1="6.145128125" y1="34.908721875" x2="5.944940625" y2="34.708534375" width="0.127" layer="1"/>
 <wire x1="5.944940625" y1="34.708534375" x2="5.42804375" y2="34.708534375" width="0.127" layer="1"/>
 <wire x1="5.21394375" y1="34.494434375" x2="5.21394375" y2="33.44124375" width="0.127" layer="1"/>
 <wire x1="5.21394375" y1="33.44124375" x2="5.5372" y2="33.1179875" width="0.127" layer="1"/>
-<wire x1="5.5372" y1="27.92205" x2="7.76025" y2="25.699" width="0.127" layer="1"/>
-<wire x1="5.5372" y1="33.1179875" x2="5.5372" y2="27.92205" width="0.127" layer="1"/>
-<wire x1="13.2604" y1="25.699" x2="13.2744" y2="25.713" width="0.127" layer="1"/>
-<wire x1="7.76025" y1="25.699" x2="13.2604" y2="25.699" width="0.127" layer="1"/>
+<wire x1="5.5372" y1="28.069371875" x2="7.65865" y2="25.947921875" width="0.127" layer="1"/>
+<wire x1="5.5372" y1="33.1179875" x2="5.5372" y2="28.069371875" width="0.127" layer="1"/>
+<contactref element="U4" pad="H2"/>
+<wire x1="10.753384375" y1="26.16018125" x2="13.636415625" y2="26.16018125" width="0.127" layer="1"/>
+<wire x1="14.0744" y1="25.713" x2="14.0744" y2="25.722196875" width="0.127" layer="1"/>
+<wire x1="14.0744" y1="25.722196875" x2="13.636415625" y2="26.16018125" width="0.127" layer="1"/>
+<wire x1="7.65865" y1="25.947921875" x2="10.541125" y2="25.947921875" width="0.127" layer="1"/>
+<wire x1="10.541125" y1="25.947921875" x2="10.753384375" y2="26.16018125" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ12">
 <contactref element="U6" pad="C1"/>
-<contactref element="U4" pad="H2"/>
 <wire x1="5.579440625" y1="34.3430375" x2="5.579440625" y2="34.087771875" width="0.127" layer="1"/>
 <wire x1="5.579440625" y1="34.087771875" x2="5.52563125" y2="34.0339625" width="0.127" layer="1"/>
 <wire x1="5.52563125" y1="34.0339625" x2="5.52563125" y2="33.48876875" width="0.127" layer="1"/>
 <wire x1="5.52563125" y1="33.48876875" x2="5.7912" y2="33.2232" width="0.127" layer="1"/>
-<wire x1="5.7912" y1="28.0272625" x2="7.7580625" y2="26.0604" width="0.127" layer="1"/>
-<wire x1="7.7580625" y1="26.0604" x2="10.3724875" y2="26.0604" width="0.127" layer="1"/>
-<wire x1="10.3724875" y1="26.0604" x2="10.39210625" y2="26.08001875" width="0.127" layer="1"/>
-<wire x1="5.7912" y1="33.2232" x2="5.7912" y2="28.0272625" width="0.127" layer="1"/>
-<wire x1="13.70738125" y1="26.08001875" x2="14.0744" y2="25.713" width="0.127" layer="1"/>
-<wire x1="10.39210625" y1="26.08001875" x2="13.70738125" y2="26.08001875" width="0.127" layer="1"/>
+<wire x1="5.7912" y1="28.207603125" x2="7.786003125" y2="26.2128" width="0.127" layer="1"/>
+<wire x1="7.786003125" y1="26.2128" x2="10.319146875" y2="26.2128" width="0.127" layer="1"/>
+<wire x1="5.7912" y1="33.2232" x2="5.7912" y2="28.207603125" width="0.127" layer="1"/>
+<contactref element="U4" pad="G1"/>
+<wire x1="10.319146875" y1="26.2128" x2="10.619346875" y2="26.513" width="0.127" layer="1"/>
+<wire x1="10.619346875" y1="26.513" x2="13.2744" y2="26.513" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ13">
 <contactref element="U6" pad="B2"/>
-<contactref element="U4" pad="J1"/>
 <wire x1="4.8623625" y1="35.27421875" x2="4.648259375" y2="35.060115625" width="0.127" layer="1"/>
 <wire x1="4.648259375" y1="35.060115625" x2="4.648259375" y2="33.288503125" width="0.127" layer="1"/>
 <wire x1="4.648259375" y1="33.288503125" x2="5.0292" y2="32.9075625" width="0.127" layer="1"/>
 <wire x1="5.579440625" y1="35.474409375" x2="5.37925" y2="35.27421875" width="0.127" layer="1"/>
 <wire x1="5.37925" y1="35.27421875" x2="4.8623625" y2="35.27421875" width="0.127" layer="1"/>
-<wire x1="5.0292" y1="27.711625" x2="7.836825" y2="24.904" width="0.127" layer="1"/>
-<wire x1="5.0292" y1="32.9075625" x2="5.0292" y2="27.711625" width="0.127" layer="1"/>
-<wire x1="13.2654" y1="24.904" x2="13.2744" y2="24.913" width="0.127" layer="1"/>
-<wire x1="7.836825" y1="24.904" x2="13.2654" y2="24.904" width="0.127" layer="1"/>
+<wire x1="5.0292" y1="27.813225" x2="7.440584375" y2="25.401840625" width="0.127" layer="1"/>
+<wire x1="5.0292" y1="32.9075625" x2="5.0292" y2="27.813225" width="0.127" layer="1"/>
+<contactref element="U4" pad="J2"/>
+<wire x1="10.914425" y1="25.401840625" x2="7.440584375" y2="25.401840625" width="0.127" layer="1"/>
+<wire x1="13.646959375" y1="25.3725" x2="13.1333625" y2="25.3725" width="0.127" layer="1"/>
+<wire x1="13.1333625" y1="25.3725" x2="12.894459375" y2="25.611403125" width="0.127" layer="1"/>
+<wire x1="14.0744" y1="24.913" x2="14.0744" y2="24.945059375" width="0.127" layer="1"/>
+<wire x1="14.0744" y1="24.945059375" x2="13.646959375" y2="25.3725" width="0.127" layer="1"/>
+<wire x1="12.894459375" y1="25.611403125" x2="11.1239875" y2="25.611403125" width="0.127" layer="1"/>
+<wire x1="11.1239875" y1="25.611403125" x2="10.914425" y2="25.401840625" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ14">
 <contactref element="U6" pad="B1"/>
-<contactref element="U4" pad="J2"/>
 <wire x1="5.01375625" y1="34.908721875" x2="5.01375625" y2="34.6534625" width="0.127" layer="1"/>
 <wire x1="5.01375625" y1="34.6534625" x2="4.95994375" y2="34.59965" width="0.127" layer="1"/>
 <wire x1="4.95994375" y1="34.59965" x2="4.95994375" y2="33.33603125" width="0.127" layer="1"/>
 <wire x1="4.95994375" y1="33.33603125" x2="5.2832" y2="33.012775" width="0.127" layer="1"/>
-<wire x1="5.2832" y1="27.8168375" x2="7.825196875" y2="25.274840625" width="0.127" layer="1"/>
-<wire x1="5.2832" y1="33.012775" x2="5.2832" y2="27.8168375" width="0.127" layer="1"/>
-<wire x1="13.712559375" y1="25.274840625" x2="14.0744" y2="24.913" width="0.127" layer="1"/>
-<wire x1="7.825196875" y1="25.274840625" x2="13.712559375" y2="25.274840625" width="0.127" layer="1"/>
+<wire x1="5.2832" y1="27.93875625" x2="7.553415625" y2="25.668540625" width="0.127" layer="1"/>
+<wire x1="5.2832" y1="33.012775" x2="5.2832" y2="27.93875625" width="0.127" layer="1"/>
+<contactref element="U4" pad="H1"/>
+<wire x1="7.553415625" y1="25.668540625" x2="10.8017" y2="25.668540625" width="0.127" layer="1"/>
+<wire x1="13.106759375" y1="25.880640625" x2="13.2744" y2="25.713" width="0.127" layer="1"/>
+<wire x1="13.106759375" y1="25.880640625" x2="11.0138" y2="25.880640625" width="0.127" layer="1"/>
+<wire x1="11.0138" y1="25.880640625" x2="10.8017" y2="25.668540625" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_DQ15">
 <contactref element="U6" pad="A2"/>
-<contactref element="U4" pad="K2"/>
 <wire x1="4.220865625" y1="35.839903125" x2="3.620975" y2="35.2400125" width="0.127" layer="1"/>
 <wire x1="3.620975" y1="35.2400125" x2="3.620975" y2="33.956575" width="0.127" layer="1"/>
 <wire x1="3.620975" y1="33.956575" x2="4.7752" y2="32.80235" width="0.127" layer="1"/>
 <wire x1="5.01375625" y1="36.04009375" x2="4.813565625" y2="35.839903125" width="0.127" layer="1"/>
 <wire x1="4.813565625" y1="35.839903125" x2="4.220865625" y2="35.839903125" width="0.127" layer="1"/>
-<wire x1="4.7752" y1="27.6064125" x2="7.906871875" y2="24.474740625" width="0.127" layer="1"/>
+<wire x1="4.7752" y1="27.6064125" x2="7.2363125" y2="25.1453" width="0.127" layer="1"/>
 <wire x1="4.7752" y1="32.80235" x2="4.7752" y2="27.6064125" width="0.127" layer="1"/>
-<wire x1="13.712659375" y1="24.474740625" x2="14.0744" y2="24.113" width="0.127" layer="1"/>
-<wire x1="7.906871875" y1="24.474740625" x2="13.712659375" y2="24.474740625" width="0.127" layer="1"/>
+<contactref element="U4" pad="J1"/>
+<wire x1="7.2363125" y1="25.1453" x2="11.04321875" y2="25.1453" width="0.127" layer="1"/>
+<wire x1="13.2007375" y1="24.913" x2="12.75945625" y2="25.35428125" width="0.127" layer="1"/>
+<wire x1="13.2007375" y1="24.913" x2="13.2744" y2="24.913" width="0.127" layer="1"/>
+<wire x1="11.04321875" y1="25.1453" x2="11.2522" y2="25.35428125" width="0.127" layer="1"/>
+<wire x1="11.2522" y1="25.35428125" x2="12.75945625" y2="25.35428125" width="0.127" layer="1"/>
 </signal>
 <signal name="RAM_BA1">
 <contactref element="U6" pad="G8"/>

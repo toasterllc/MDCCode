@@ -5962,20 +5962,6 @@ below the chip.</text>
 <label x="215.9" y="45.72" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RAM_CLK" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="F2"/>
-<wire x1="213.36" y1="33.02" x2="215.9" y2="33.02" width="0.1524" layer="91"/>
-<label x="215.9" y="33.02" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQM1" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="E1"/>
-<wire x1="213.36" y1="43.18" x2="215.9" y2="43.18" width="0.1524" layer="91"/>
-<label x="215.9" y="43.18" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="RAM_A0" class="0">
 <segment>
 <pinref part="U4" gate="A" pin="D5"/>
@@ -6051,69 +6037,6 @@ below the chip.</text>
 <wire x1="33.02" y1="63.5" x2="35.56" y2="63.5" width="0.1524" layer="91"/>
 <label x="35.56" y="63.5" size="1.778" layer="95"/>
 <pinref part="U4" gate="A" pin="A2"/>
-</segment>
-</net>
-<net name="RAM_A11" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="E2"/>
-<wire x1="213.36" y1="40.64" x2="215.9" y2="40.64" width="0.1524" layer="91"/>
-<label x="215.9" y="40.64" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ8" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="F1"/>
-<wire x1="213.36" y1="35.56" x2="215.9" y2="35.56" width="0.1524" layer="91"/>
-<label x="215.9" y="35.56" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ9" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="G1"/>
-<wire x1="213.36" y1="25.4" x2="215.9" y2="25.4" width="0.1524" layer="91"/>
-<label x="215.9" y="25.4" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ10" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="G2"/>
-<wire x1="213.36" y1="22.86" x2="215.9" y2="22.86" width="0.1524" layer="91"/>
-<label x="215.9" y="22.86" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ11" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="H1"/>
-<wire x1="213.36" y1="17.78" x2="215.9" y2="17.78" width="0.1524" layer="91"/>
-<label x="215.9" y="17.78" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ12" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="H2"/>
-<wire x1="213.36" y1="15.24" x2="215.9" y2="15.24" width="0.1524" layer="91"/>
-<label x="215.9" y="15.24" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ13" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="J1"/>
-<wire x1="213.36" y1="10.16" x2="215.9" y2="10.16" width="0.1524" layer="91"/>
-<label x="215.9" y="10.16" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ14" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="J2"/>
-<wire x1="213.36" y1="7.62" x2="215.9" y2="7.62" width="0.1524" layer="91"/>
-<label x="215.9" y="7.62" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="RAM_DQ15" class="0">
-<segment>
-<pinref part="U4" gate="D" pin="K2"/>
-<wire x1="213.36" y1="2.54" x2="215.9" y2="2.54" width="0.1524" layer="91"/>
-<label x="215.9" y="2.54" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="RAM_BA1" class="0">
@@ -6612,6 +6535,83 @@ below the chip.</text>
 <wire x1="149.86" y1="43.18" x2="152.4" y2="43.18" width="0.1524" layer="91"/>
 <label x="152.4" y="43.18" size="1.778" layer="95"/>
 <pinref part="U4" gate="C" pin="K5"/>
+</segment>
+</net>
+<net name="RAM_A11" class="0">
+<segment>
+<wire x1="213.36" y1="50.8" x2="215.9" y2="50.8" width="0.1524" layer="91"/>
+<label x="215.9" y="50.8" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="D1"/>
+</segment>
+</net>
+<net name="RAM_DQM1" class="0">
+<segment>
+<wire x1="213.36" y1="40.64" x2="215.9" y2="40.64" width="0.1524" layer="91"/>
+<label x="215.9" y="40.64" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="E2"/>
+</segment>
+</net>
+<net name="RAM_CLK" class="0">
+<segment>
+<wire x1="213.36" y1="43.18" x2="215.9" y2="43.18" width="0.1524" layer="91"/>
+<label x="215.9" y="43.18" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="E1"/>
+</segment>
+</net>
+<net name="RAM_DQ8" class="0">
+<segment>
+<wire x1="213.36" y1="33.02" x2="215.9" y2="33.02" width="0.1524" layer="91"/>
+<label x="215.9" y="33.02" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="F2"/>
+</segment>
+</net>
+<net name="RAM_DQ10" class="0">
+<segment>
+<wire x1="213.36" y1="35.56" x2="215.9" y2="35.56" width="0.1524" layer="91"/>
+<label x="215.9" y="35.56" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="F1"/>
+</segment>
+</net>
+<net name="RAM_DQ9" class="0">
+<segment>
+<wire x1="213.36" y1="22.86" x2="215.9" y2="22.86" width="0.1524" layer="91"/>
+<label x="215.9" y="22.86" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="G2"/>
+</segment>
+</net>
+<net name="RAM_DQ12" class="0">
+<segment>
+<wire x1="213.36" y1="25.4" x2="215.9" y2="25.4" width="0.1524" layer="91"/>
+<label x="215.9" y="25.4" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="G1"/>
+</segment>
+</net>
+<net name="RAM_DQ11" class="0">
+<segment>
+<wire x1="213.36" y1="15.24" x2="215.9" y2="15.24" width="0.1524" layer="91"/>
+<label x="215.9" y="15.24" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="H2"/>
+</segment>
+</net>
+<net name="RAM_DQ14" class="0">
+<segment>
+<wire x1="213.36" y1="17.78" x2="215.9" y2="17.78" width="0.1524" layer="91"/>
+<label x="215.9" y="17.78" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="H1"/>
+</segment>
+</net>
+<net name="RAM_DQ13" class="0">
+<segment>
+<wire x1="213.36" y1="7.62" x2="215.9" y2="7.62" width="0.1524" layer="91"/>
+<label x="215.9" y="7.62" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="J2"/>
+</segment>
+</net>
+<net name="RAM_DQ15" class="0">
+<segment>
+<wire x1="213.36" y1="10.16" x2="215.9" y2="10.16" width="0.1524" layer="91"/>
+<label x="215.9" y="10.16" size="1.778" layer="95"/>
+<pinref part="U4" gate="D" pin="J1"/>
 </segment>
 </net>
 </nets>
