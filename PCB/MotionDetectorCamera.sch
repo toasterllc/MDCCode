@@ -4165,6 +4165,22 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="U19" library="EagleLibrary" deviceset="PANASONIC-EKMB110711X" device="">
 <attribute name="PN" value="EKMB1107112"/>
 </part>
+<part name="C50" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
+<attribute name="MFG" value="KEMET"/>
+<attribute name="PN" value="C0805C106K8PACTU"/>
+</part>
+<part name="C77" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
+</part>
+<part name="C75" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
+<attribute name="MFG" value="KEMET"/>
+<attribute name="PN" value="C0805C106K8PACTU"/>
+</part>
+<part name="C76" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4209,8 +4225,8 @@ when battery is inserted with reverse polarity.</text>
 <text x="12.7" y="142.24" size="3.81" layer="95" align="top-left">VDD_2V8_IMG</text>
 <text x="12.7" y="111.76" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
 <wire x1="141.986" y1="411.226" x2="129.032" y2="411.226" width="0.1524" layer="95"/>
-<text x="12.7" y="-12.7" size="3.81" layer="95" align="top-left">Pulldown Resistors</text>
-<text x="12.7" y="-17.78" size="2.032" layer="95" align="top-left">(This is needed to prevent VDD_BAT / VDD_USB from
+<text x="12.7" y="-2.54" size="3.81" layer="95" align="top-left">Pulldown Resistors</text>
+<text x="12.7" y="-7.62" size="2.032" layer="95" align="top-left">(This is needed to prevent VDD_BAT / VDD_USB from
 floating, since they're used as signals in addition to
 power.)</text>
 <text x="241.554" y="409.194" size="1.016" layer="95" align="top-left">Pull-down is sized so that:
@@ -4377,13 +4393,13 @@ after its VDD</text>
 <attribute name="MFG" x="208.28" y="368.3" size="1.778" layer="96" rot="R180" display="off"/>
 <attribute name="PN" x="208.28" y="368.3" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
-<instance part="R3" gate="G$1" x="134.62" y="-20.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="133.35" y="-17.78" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="133.35" y="-20.32" size="1.778" layer="96" rot="R180"/>
+<instance part="R3" gate="G$1" x="134.62" y="-10.16" smashed="yes" rot="R90">
+<attribute name="NAME" x="133.35" y="-7.62" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="133.35" y="-10.16" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="R39" gate="G$1" x="152.4" y="-20.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="151.13" y="-17.78" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="151.13" y="-20.32" size="1.778" layer="96" rot="R180"/>
+<instance part="R39" gate="G$1" x="152.4" y="-10.16" smashed="yes" rot="R90">
+<attribute name="NAME" x="151.13" y="-7.62" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="151.13" y="-10.16" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="R23" gate="G$1" x="180.34" y="375.92" smashed="yes">
 <attribute name="NAME" x="177.8" y="379.73" size="1.778" layer="95"/>
@@ -4625,13 +4641,13 @@ after its VDD</text>
 </segment>
 <segment>
 <pinref part="R3" gate="G$1" pin="1"/>
-<wire x1="134.62" y1="-25.4" x2="134.62" y2="-27.94" width="0.1524" layer="91"/>
-<label x="134.62" y="-27.94" size="1.778" layer="95"/>
+<wire x1="134.62" y1="-15.24" x2="134.62" y2="-17.78" width="0.1524" layer="91"/>
+<label x="134.62" y="-17.78" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R39" gate="G$1" pin="1"/>
-<wire x1="152.4" y1="-25.4" x2="152.4" y2="-27.94" width="0.1524" layer="91"/>
-<label x="152.4" y="-27.94" size="1.778" layer="95"/>
+<wire x1="152.4" y1="-15.24" x2="152.4" y2="-17.78" width="0.1524" layer="91"/>
+<label x="152.4" y="-17.78" size="1.778" layer="95"/>
 </segment>
 <segment>
 <wire x1="233.68" y1="401.32" x2="233.68" y2="398.78" width="0.1524" layer="91"/>
@@ -4775,8 +4791,8 @@ after its VDD</text>
 </segment>
 <segment>
 <pinref part="R39" gate="G$1" pin="2"/>
-<wire x1="152.4" y1="-15.24" x2="152.4" y2="-12.7" width="0.1524" layer="91"/>
-<label x="152.4" y="-12.7" size="1.778" layer="95"/>
+<wire x1="152.4" y1="-5.08" x2="152.4" y2="-2.54" width="0.1524" layer="91"/>
+<label x="152.4" y="-2.54" size="1.778" layer="95"/>
 </segment>
 <segment>
 <wire x1="233.68" y1="421.64" x2="233.68" y2="424.18" width="0.1524" layer="91"/>
@@ -4807,8 +4823,8 @@ after its VDD</text>
 </segment>
 <segment>
 <pinref part="R3" gate="G$1" pin="2"/>
-<wire x1="134.62" y1="-15.24" x2="134.62" y2="-12.7" width="0.1524" layer="91"/>
-<label x="134.62" y="-12.7" size="1.778" layer="95"/>
+<wire x1="134.62" y1="-5.08" x2="134.62" y2="-2.54" width="0.1524" layer="91"/>
+<label x="134.62" y="-2.54" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_1V8_STM" class="0">
@@ -5020,13 +5036,13 @@ and DC bias</text>
 <attribute name="NAME" x="38.1" y="42.926" size="1.778" layer="95" align="top-left"/>
 <attribute name="PN" x="38.1" y="-0.762" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="R33" gate="G$1" x="-63.5" y="40.64" smashed="yes" rot="R90">
-<attribute name="NAME" x="-65.532" y="42.164" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="-65.532" y="39.624" size="1.778" layer="96" rot="R180"/>
+<instance part="R33" gate="G$1" x="-66.04" y="63.5" smashed="yes" rot="R90">
+<attribute name="NAME" x="-68.072" y="65.024" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="-68.072" y="62.484" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="C73" gate="G$1" x="-63.5" y="27.94" smashed="yes">
-<attribute name="NAME" x="-67.056" y="28.321" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="-67.056" y="25.781" size="1.778" layer="96" align="bottom-right"/>
+<instance part="C73" gate="G$1" x="-66.04" y="50.8" smashed="yes">
+<attribute name="NAME" x="-69.596" y="51.181" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="-69.596" y="48.641" size="1.778" layer="96" align="bottom-right"/>
 </instance>
 <instance part="X3" gate="G$1" x="121.92" y="99.06" smashed="yes">
 <attribute name="NAME" x="121.92" y="101.346" size="1.778" layer="95" align="top-left"/>
@@ -5042,6 +5058,18 @@ and DC bias</text>
 <attribute name="VALUE" x="134.874" y="91.059" size="1.778" layer="96"/>
 <attribute name="MFG" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="C50" gate="G$1" x="-58.42" y="83.82" smashed="yes">
+<attribute name="MFG" x="-35.56" y="38.1" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="-35.56" y="38.1" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="-55.626" y="83.439" size="1.778" layer="95"/>
+<attribute name="VALUE" x="-55.626" y="80.899" size="1.778" layer="96"/>
+</instance>
+<instance part="C77" gate="G$1" x="-68.58" y="83.82" smashed="yes">
+<attribute name="PN" x="-83.82" y="25.4" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="-83.82" y="25.4" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="-65.786" y="83.439" size="1.778" layer="95"/>
+<attribute name="VALUE" x="-65.786" y="80.899" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -5065,8 +5093,14 @@ and DC bias</text>
 </segment>
 <segment>
 <pinref part="R33" gate="G$1" pin="2"/>
-<wire x1="-63.5" y1="45.72" x2="-63.5" y2="48.26" width="0.1524" layer="91"/>
-<label x="-63.5" y="48.26" size="1.778" layer="95"/>
+<wire x1="-66.04" y1="68.58" x2="-66.04" y2="71.12" width="0.1524" layer="91"/>
+<label x="-66.04" y="71.12" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="C77" gate="G$1" pin="1"/>
+<pinref part="C50" gate="G$1" pin="1"/>
+<wire x1="-68.58" y1="86.36" x2="-58.42" y2="86.36" width="0.1524" layer="91"/>
+<label x="-68.58" y="86.36" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -5088,8 +5122,8 @@ and DC bias</text>
 </segment>
 <segment>
 <pinref part="C73" gate="G$1" pin="2"/>
-<wire x1="-63.5" y1="22.86" x2="-63.5" y2="20.32" width="0.1524" layer="91"/>
-<label x="-63.5" y="20.32" size="1.778" layer="95"/>
+<wire x1="-66.04" y1="45.72" x2="-66.04" y2="43.18" width="0.1524" layer="91"/>
+<label x="-66.04" y="43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C46" gate="G$1" pin="2"/>
@@ -5100,6 +5134,12 @@ and DC bias</text>
 <pinref part="C49" gate="G$1" pin="2"/>
 <wire x1="132.08" y1="88.9" x2="132.08" y2="86.36" width="0.1524" layer="91"/>
 <label x="132.08" y="86.36" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="C50" gate="G$1" pin="2"/>
+<wire x1="-58.42" y1="78.74" x2="-68.58" y2="78.74" width="0.1524" layer="91"/>
+<label x="-68.58" y="78.74" size="1.778" layer="95" align="top-left"/>
+<pinref part="C77" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="MSP_TEST" class="0">
@@ -5117,12 +5157,12 @@ and DC bias</text>
 </segment>
 <segment>
 <pinref part="R33" gate="G$1" pin="1"/>
-<wire x1="-63.5" y1="35.56" x2="-63.5" y2="33.02" width="0.1524" layer="91"/>
+<wire x1="-66.04" y1="58.42" x2="-66.04" y2="55.88" width="0.1524" layer="91"/>
 <pinref part="C73" gate="G$1" pin="1"/>
-<wire x1="-63.5" y1="33.02" x2="-63.5" y2="30.48" width="0.1524" layer="91"/>
-<wire x1="-63.5" y1="33.02" x2="-60.96" y2="33.02" width="0.1524" layer="91"/>
-<junction x="-63.5" y="33.02"/>
-<label x="-60.96" y="33.02" size="1.778" layer="95"/>
+<wire x1="-66.04" y1="55.88" x2="-66.04" y2="53.34" width="0.1524" layer="91"/>
+<wire x1="-66.04" y1="55.88" x2="-63.5" y2="55.88" width="0.1524" layer="91"/>
+<junction x="-66.04" y="55.88"/>
+<label x="-63.5" y="55.88" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_DATA_X" class="0">
@@ -5284,6 +5324,18 @@ and DC bias</text>
 <attribute name="NAME" x="0" y="2.54" size="1.778" layer="95" align="top-left"/>
 <attribute name="PN" x="0" y="-10.16" size="1.778" layer="95"/>
 </instance>
+<instance part="C75" gate="G$1" x="-27.94" y="-2.54" smashed="yes">
+<attribute name="NAME" x="-25.654" y="-2.667" size="1.778" layer="95"/>
+<attribute name="VALUE" x="-25.654" y="-5.207" size="1.778" layer="96"/>
+<attribute name="MFG" x="-27.94" y="-2.54" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="-27.94" y="-2.54" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="C76" gate="G$1" x="-35.56" y="-2.54" smashed="yes">
+<attribute name="PN" x="-5.08" y="0" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="-43.688" y="-3.175" size="1.778" layer="95"/>
+<attribute name="VALUE" x="-43.688" y="-5.715" size="1.778" layer="96"/>
+<attribute name="MFG" x="-35.56" y="-2.54" size="1.778" layer="96" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -5294,12 +5346,24 @@ and DC bias</text>
 <wire x1="-2.54" y1="-2.54" x2="-5.08" y2="-2.54" width="0.1524" layer="91"/>
 <label x="-5.08" y="-2.54" size="1.778" layer="95" align="bottom-right"/>
 </segment>
+<segment>
+<pinref part="C75" gate="G$1" pin="1"/>
+<label x="-35.56" y="0" size="1.778" layer="95"/>
+<pinref part="C76" gate="G$1" pin="1"/>
+<wire x1="-27.94" y1="0" x2="-35.56" y2="0" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="GND" class="0">
 <segment>
 <pinref part="U19" gate="G$1" pin="GND"/>
 <wire x1="-2.54" y1="-5.08" x2="-5.08" y2="-5.08" width="0.1524" layer="91"/>
 <label x="-5.08" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C75" gate="G$1" pin="2"/>
+<label x="-35.56" y="-7.62" size="1.778" layer="95" align="top-left"/>
+<pinref part="C76" gate="G$1" pin="2"/>
+<wire x1="-35.56" y1="-7.62" x2="-27.94" y2="-7.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="MOTION_SIGNAL" class="0">

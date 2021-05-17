@@ -26,13 +26,13 @@
     
     - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
     
-    - Make sure we don't have too much capacitance on VDD_USB
+    - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
     
-    - Add bypass capacitors to MSP430
+    √ Add bypass capacitor to motion sensor
+    
+    √ Add bypass capacitors to MSP430
         - Reference current sensor design
         - Reference datasheet / MSP guide
-    
-    - Add bypass capacitors to motion sensor
     
     √ Add MSP430 (MSP430FR2422)
         √ Needs FRAM to store the bitmap of the SD card usage
@@ -229,8 +229,6 @@
         TPS62802YKAR (1.8V supply)
             - Mouser expects by 8/5/2021
         BKP1005EM100-T (ferrite bead)
-    
-    * Find LDO or buck for STM USB 3V rail
     
     √ Rochester
         AR0330...
