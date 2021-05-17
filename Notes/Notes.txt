@@ -172,6 +172,8 @@
     
     - EKMB1107112 (motion sensor -- need to test first before mass order)
     
+    - EPSON-MC-306 (32kHz crystal -- need to test first before mass order)
+    
     - TPS22919DCK (load switch)
     
     - MAX40203ANS+T (ideal diode)
