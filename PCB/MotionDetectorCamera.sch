@@ -7590,6 +7590,10 @@ between input and output when its VDD=0.</text>
 &gt;1uF @ 3.3V bias</text>
 <text x="67.056" y="-220.218" size="1.016" layer="95" align="top-left">Derated to meet suggested
 &gt;1uF @ 1.8V bias</text>
+<text x="29.718" y="-40.386" size="0.508" layer="95" align="top-left">PA11 and PA12 are powered by VDDUSB,
+so don't use them!  (As outputs they'll
+drive a higher voltage; as inputs, they'll
+expect a higher voltage.)</text>
 </plain>
 <instances>
 <instance part="U12" gate="A" x="7.62" y="-10.16" smashed="yes">

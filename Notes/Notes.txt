@@ -1,7 +1,5 @@
 - Rev4 todo
     
-    - STM32: Make sure we're not using any GPIOs that are powered by VDDUSB, since they'll use VDDUSB, and not 1.8V
-    
     - ICE40: Fix pin layout so that both PLLs can be used
         - Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
         - Fix L5 PLL: ?
@@ -27,6 +25,9 @@
     - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
     
     - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
+    
+    √ STM32: Make sure we're not using any GPIOs that are powered by VDDUSB, since they'll use VDDUSB, and not 1.8V
+        "VDDUSB: ... supply voltage for PA11,PA12, PB14 and PB15 pins"
     
     √ Add bypass capacitor to motion sensor
     
