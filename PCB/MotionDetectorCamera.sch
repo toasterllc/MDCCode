@@ -1351,16 +1351,16 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1.352" y="-1.861"/>
 </polygon>
 </package>
+<package name="PANASONIC-EKMB110711X">
+<text x="-3.017140625" y="5.811340625" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<circle x="0" y="0" radius="5.5" width="0.127" layer="21"/>
+<circle x="0" y="0" radius="2.54" width="0.127" layer="21"/>
+<pad name="1" x="-2.54" y="0" drill="0.65"/>
+<pad name="3" x="2.54" y="0" drill="0.65"/>
+<pad name="2" x="0" y="2.54" drill="0.65"/>
+<circle x="0" y="0" radius="5.5" width="0.127" layer="39"/>
+</package>
 </packages>
-<packages3d>
-<package3d name="SOT95P280X130-5N" urn="urn:adsk.eagle:package:28687033/1" type="model">
-<description>5-SOT23, 0.95 mm pitch, 2.80 mm span, 2.90 X 1.60 X 1.30 mm body
-&lt;p&gt;5-pin SOT23 package with 0.95 mm pitch, 2.80 mm span with body size 2.90 X 1.60 X 1.30 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="MICROCHIP-MIC550X-SOT23-5"/>
-</packageinstances>
-</package3d>
-</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -2327,6 +2327,17 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="-2.54" y1="-2.54" x2="-0.508" y2="-2.54" width="0.1524" layer="94"/>
 <wire x1="3.048" y1="-2.54" x2="5.08" y2="-2.54" width="0.1524" layer="94"/>
 <pin name="B" x="5.08" y="-2.54" visible="off" length="point"/>
+</symbol>
+<symbol name="PANASONIC-EKMB110711X">
+<wire x1="0" y1="0" x2="17.78" y2="0" width="0.1524" layer="94"/>
+<wire x1="17.78" y1="0" x2="17.78" y2="-7.62" width="0.1524" layer="94"/>
+<wire x1="17.78" y1="-7.62" x2="0" y2="-7.62" width="0.1524" layer="94"/>
+<wire x1="0" y1="-7.62" x2="0" y2="0" width="0.1524" layer="94"/>
+<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
+<pin name="VDD" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<text x="0" y="-10.16" size="1.778" layer="95">&gt;PN</text>
+<pin name="OUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3465,9 +3476,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <connect gate="G$1" pin="VIN" pad="1"/>
 <connect gate="G$1" pin="VOUT" pad="5"/>
 </connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:28687033/1"/>
-</package3dinstances>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Microchip"/>
@@ -3476,7 +3484,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="EPSON-MC-306" prefix="Y">
+<deviceset name="EPSON-MC-306" prefix="X">
 <gates>
 <gate name="G$1" symbol="CRYSTAL" x="0" y="0"/>
 </gates>
@@ -3489,6 +3497,26 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Epson"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="PANASONIC-EKMB110711X" prefix="U">
+<description>Motion sensor</description>
+<gates>
+<gate name="G$1" symbol="PANASONIC-EKMB110711X" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="PANASONIC-EKMB110711X">
+<connects>
+<connect gate="G$1" pin="GND" pad="3"/>
+<connect gate="G$1" pin="OUT" pad="2"/>
+<connect gate="G$1" pin="VDD" pad="1"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Panasonic"/>
 </technology>
 </technologies>
 </device>
@@ -4106,7 +4134,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="U11" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="U16" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="U17" library="EagleLibrary" deviceset="DIODESINC-DT1446-04V-7" device=""/>
-<part name="U13" library="EagleLibrary" deviceset="MICROCHIP-MIC550X" device="" package3d_urn="urn:adsk.eagle:package:28687033/1">
+<part name="U13" library="EagleLibrary" deviceset="MICROCHIP-MIC550X" device="">
 <attribute name="PN" value="MIC5504-3.3YM5-TR"/>
 </part>
 <part name="C44" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
@@ -4117,7 +4145,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
-<part name="Y1" library="EagleLibrary" deviceset="EPSON-MC-306" device="">
+<part name="X3" library="EagleLibrary" deviceset="EPSON-MC-306" device="">
 <attribute name="PN" value="MC-306 32.7680K-E3:ROHS"/>
 </part>
 <part name="C46" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="9p">
@@ -4133,6 +4161,9 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <part name="C49" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="9p">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="CC0402BRNPO9BN9R0"/>
+</part>
+<part name="U19" library="EagleLibrary" deviceset="PANASONIC-EKMB110711X" device="">
+<attribute name="PN" value="EKMB1107112"/>
 </part>
 </parts>
 <sheets>
@@ -4969,7 +5000,8 @@ C_L = 6 pF (from crystal datasheet)
 
 Therefore, C = 9 pF</text>
 <text x="141.732" y="93.472" size="1.016" layer="95" align="top-left">Use NP0 dialectric capacitors to minimize
-variance due to temperature and DC bias</text>
+capacitance variation due to temperature
+and DC bias</text>
 </plain>
 <instances>
 <instance part="U14" gate="A" x="-30.48" y="78.74" smashed="yes">
@@ -4996,7 +5028,7 @@ variance due to temperature and DC bias</text>
 <attribute name="NAME" x="-67.056" y="28.321" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="-67.056" y="25.781" size="1.778" layer="96" align="bottom-right"/>
 </instance>
-<instance part="Y1" gate="G$1" x="121.92" y="99.06" smashed="yes">
+<instance part="X3" gate="G$1" x="121.92" y="99.06" smashed="yes">
 <attribute name="NAME" x="121.92" y="101.346" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="C46" gate="G$1" x="114.3" y="93.98" smashed="yes">
@@ -5214,7 +5246,7 @@ variance due to temperature and DC bias</text>
 </net>
 <net name="N$14" class="0">
 <segment>
-<pinref part="Y1" gate="G$1" pin="B"/>
+<pinref part="X3" gate="G$1" pin="B"/>
 <wire x1="127" y1="96.52" x2="127" y2="78.74" width="0.1524" layer="91"/>
 <pinref part="U14" gate="C" pin="P2.0/UCA0TXD/UCA0SIMO/XOUT"/>
 <wire x1="127" y1="78.74" x2="129.54" y2="78.74" width="0.1524" layer="91"/>
@@ -5227,11 +5259,18 @@ variance due to temperature and DC bias</text>
 <segment>
 <pinref part="U14" gate="C" pin="P2.1/UCA0RXD/UCA0SOMI/XIN"/>
 <wire x1="129.54" y1="76.2" x2="119.38" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="Y1" gate="G$1" pin="A"/>
+<pinref part="X3" gate="G$1" pin="A"/>
 <wire x1="119.38" y1="76.2" x2="119.38" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="C46" gate="G$1" pin="1"/>
 <wire x1="114.3" y1="96.52" x2="119.38" y2="96.52" width="0.1524" layer="91"/>
 <junction x="119.38" y="96.52"/>
+</segment>
+</net>
+<net name="MOTION_SIGNAL" class="0">
+<segment>
+<pinref part="U14" gate="C" pin="P2.5/UCB0SIMO/UCB0SDA/A7"/>
+<wire x1="129.54" y1="66.04" x2="127" y2="66.04" width="0.1524" layer="91"/>
+<label x="127" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 </nets>
@@ -5241,10 +5280,35 @@ variance due to temperature and DC bias</text>
 <plain>
 </plain>
 <instances>
+<instance part="U19" gate="G$1" x="0" y="0" smashed="yes">
+<attribute name="NAME" x="0" y="2.54" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="0" y="-10.16" size="1.778" layer="95"/>
+</instance>
 </instances>
 <busses>
 </busses>
 <nets>
+<net name="VDD_A" class="0">
+<segment>
+<pinref part="U19" gate="G$1" pin="VDD"/>
+<wire x1="-2.54" y1="-2.54" x2="-5.08" y2="-2.54" width="0.1524" layer="91"/>
+<label x="-5.08" y="-2.54" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="GND" class="0">
+<segment>
+<pinref part="U19" gate="G$1" pin="GND"/>
+<wire x1="-2.54" y1="-5.08" x2="-5.08" y2="-5.08" width="0.1524" layer="91"/>
+<label x="-5.08" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MOTION_SIGNAL" class="0">
+<segment>
+<pinref part="U19" gate="G$1" pin="OUT"/>
+<wire x1="20.32" y1="-2.54" x2="22.86" y2="-2.54" width="0.1524" layer="91"/>
+<label x="22.86" y="-2.54" size="1.778" layer="95"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -8482,11 +8546,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 

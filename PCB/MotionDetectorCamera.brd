@@ -1281,16 +1281,16 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1.352" y="-1.861"/>
 </polygon>
 </package>
+<package name="PANASONIC-EKMB110711X">
+<text x="-3.017140625" y="5.811340625" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<circle x="0" y="0" radius="5.5" width="0.127" layer="21"/>
+<circle x="0" y="0" radius="2.54" width="0.127" layer="21"/>
+<pad name="1" x="-2.54" y="0" drill="0.65"/>
+<pad name="3" x="2.54" y="0" drill="0.65"/>
+<pad name="2" x="0" y="2.54" drill="0.65"/>
+<circle x="0" y="0" radius="5.5" width="0.127" layer="39"/>
+</package>
 </packages>
-<packages3d>
-<package3d name="SOT95P280X130-5N" urn="urn:adsk.eagle:package:28687033/1" type="model">
-<description>5-SOT23, 0.95 mm pitch, 2.80 mm span, 2.90 X 1.60 X 1.30 mm body
-&lt;p&gt;5-pin SOT23 package with 0.95 mm pitch, 2.80 mm span with body size 2.90 X 1.60 X 1.30 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="MICROCHIP-MIC550X-SOT23-5"/>
-</packageinstances>
-</package3d>
-</packages3d>
 </library>
 </libraries>
 <attributes>
@@ -2201,7 +2201,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-14.16" y="-74.8965" size="1.016" layer="25" font="vector"/>
 <attribute name="PN" value="DT1446-04V-7" x="-13.6" y="-75.9" size="1.778" layer="27" display="off"/>
 </element>
-<element name="U13" library="EagleLibrary" package="MICROCHIP-MIC550X-SOT23-5" package3d_urn="urn:adsk.eagle:package:28687033/1" value="MICROCHIP-MIC550X" x="-12.8" y="-80.2" smashed="yes">
+<element name="U13" library="EagleLibrary" package="MICROCHIP-MIC550X-SOT23-5" value="MICROCHIP-MIC550X" x="-12.8" y="-80.2" smashed="yes">
 <attribute name="MFG" value="Microchip" x="-12.8" y="-80.2" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-13.689" y="-78.4581" size="1.016" layer="25" font="vector"/>
 <attribute name="PN" value="MIC5504-3.3YM5-TR" x="-12.8" y="-80.2" size="1.778" layer="27" display="off"/>
@@ -2216,7 +2216,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-14.354" y="-84.944" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="TMK105CBJ225KV-F" x="-13.6" y="-85.5" size="1.778" layer="27" display="off"/>
 </element>
-<element name="Y1" library="EagleLibrary" package="EPSON-MC-306" value="EPSON-MC-306" x="-10.5" y="-91.5" smashed="yes">
+<element name="X3" library="EagleLibrary" package="EPSON-MC-306" value="EPSON-MC-306" x="-10.5" y="-91.5" smashed="yes">
 <attribute name="MFG" value="Epson" x="-10.5" y="-91.5" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.3010625" y="-88.4130375" size="1.27" layer="25" font="vector"/>
 <attribute name="PN" value="MC-306 32.7680K-E3:ROHS" x="-10.5" y="-91.5" size="1.778" layer="27" display="off"/>
@@ -2230,6 +2230,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MFG" value="Yageo" x="-13.6" y="-97.9" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.354" y="-97.344" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="CC0402BRNPO9BN9R0" x="-13.6" y="-97.9" size="1.778" layer="27" display="off"/>
+</element>
+<element name="U19" library="EagleLibrary" package="PANASONIC-EKMB110711X" value="PANASONIC-EKMB110711X" x="-2.7" y="-64.8" smashed="yes">
+<attribute name="MFG" value="Panasonic" x="-2.7" y="-64.8" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-5.717140625" y="-58.988659375" size="1.27" layer="25" font="vector"/>
+<attribute name="PN" value="EKMB1107112" x="-2.7" y="-64.8" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>
@@ -3456,8 +3461,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C45" pad="2"/>
 <contactref element="C46" pad="2"/>
 <contactref element="C49" pad="2"/>
+<contactref element="U19" pad="3"/>
 <wire x1="-13.1675" y1="-95.5" x2="-13.1675" y2="-97.9" width="0" layer="19" extent="1-1"/>
-<wire x1="-13.1675" y1="-85.5" x2="-13.1675" y2="-95.5" width="0" layer="19" extent="1-1"/>
+<wire x1="-0.16" y1="-64.8" x2="-13.1675" y2="-95.5" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.1675" y1="-85.5" x2="-0.16" y2="-64.8" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.0675" y1="-83.1" x2="-13.1675" y2="-85.5" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.0644" y1="-80.2" x2="-13.0675" y2="-83.1" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.3958" y1="-75.9" x2="-14.0644" y2="-80.2" width="0" layer="19" extent="1-1"/>
@@ -6438,6 +6445,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U15" pad="14"/>
 <contactref element="U15" pad="15"/>
 <contactref element="R33" pad="2"/>
+<contactref element="U19" pad="1"/>
+<wire x1="-13.5754" y1="-18.042" x2="-5.24" y2="-64.8" width="0" layer="19" extent="1-1"/>
 <wire x1="-12.7755" y1="-5.334" x2="-13.5754" y2="-18.042" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.008" y1="-0.7869" x2="-12.7755" y2="-5.334" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.408" y1="-0.7869" x2="-13.008" y2="-0.7869" width="0" layer="19" extent="1-1"/>
@@ -6462,7 +6471,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="28.6754" y1="16.6624" x2="29.681740625" y2="16.835121875" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="N$14">
-<contactref element="Y1" pad="4"/>
+<contactref element="X3" pad="4"/>
 <contactref element="U14" pad="8"/>
 <contactref element="C49" pad="1"/>
 <wire x1="-13.25" y1="-89.9" x2="-14.0325" y2="-97.9" width="0" layer="19" extent="1-1"/>
@@ -6470,10 +6479,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="N$17">
 <contactref element="U14" pad="7"/>
-<contactref element="Y1" pad="1"/>
+<contactref element="X3" pad="1"/>
 <contactref element="C46" pad="1"/>
 <wire x1="-13.25" y1="-93.1" x2="-14.0325" y2="-95.5" width="0" layer="19" extent="1-1"/>
 <wire x1="-9.8126" y1="-1.766" x2="-13.25" y2="-93.1" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="MOTION_SIGNAL">
+<contactref element="U19" pad="2"/>
+<contactref element="U14" pad="10"/>
+<wire x1="-8.878" y1="-3.2006" x2="-2.7" y2="-62.26" width="0" layer="19" extent="1-1"/>
 </signal>
 </signals>
 <mfgpreviewcolors>
@@ -6494,11 +6508,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 </compatibility>
 </eagle>

@@ -20,9 +20,21 @@
         - STM32         👍 VDD: 1.7 - 3.6
         - MotionSensor
     
-    - Add motion detector
+    - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
-    - Add MSP430 (MSP430FR2422)
+    - Update BusinessOrders.txt
+    
+    - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
+    
+    - Make sure we don't have too much capacitance on VDD_USB
+    
+    - Add bypass capacitors to MSP430
+        - Reference current sensor design
+        - Reference datasheet / MSP guide
+    
+    - Add bypass capacitors to motion sensor
+    
+    √ Add MSP430 (MSP430FR2422)
         √ Needs FRAM to store the bitmap of the SD card usage
         √ Needs connection to ICE40, to issue commands
             √ 2-wire SPI (clk, data): connect MSP430 MOSI/MISO together, and ensure:
@@ -43,15 +55,9 @@
             - Spy-bi-wire likely needs to be implemented by bit-banging 2 GPIOs (instead of using a
               STM32 SPI peripheral), since, with SBW, every third clock reverses the data transfer
               direction for a single clock (so that the slave can output TDO).
-        - Needs connection to motion detector
+        √ Needs connection to motion detector
     
-    - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
-    
-    - Update BusinessOrders.txt
-    
-    - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
-    
-    - Make sure we don't have too much capacitance on VDD_USB
+    √ Add motion detector
     
     √ Rename nets containing '24MHz' since we replaced the clock chip to be 16MHz
     
