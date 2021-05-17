@@ -4189,6 +4189,10 @@ the design uses this PLL</text>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
+<part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="12.1k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X1212FTL"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4263,6 +4267,9 @@ after its VDD</text>
 1uF @ 5.5V bias</text>
 <text x="172.974" y="25.146" size="1.016" layer="95" align="top-left">Derated to meet suggested
 1uF @ 5.5V bias</text>
+<text x="179.578" y="257.302" size="1.016" layer="95" align="top-left">Requirements:
+- 1%
+- TCR &lt;= ±200 ppm/°C</text>
 </plain>
 <instances>
 <instance part="C2" gate="G$1" x="129.54" y="322.58" smashed="yes">
@@ -4476,6 +4483,12 @@ after its VDD</text>
 <attribute name="VALUE" x="134.366" y="22.479" size="1.778" layer="96"/>
 <attribute name="MFG" x="114.3" y="30.48" size="1.778" layer="96" display="off"/>
 </instance>
+<instance part="R25" gate="G$1" x="170.18" y="256.54" smashed="yes" rot="R90">
+<attribute name="NAME" x="172.212" y="257.302" size="1.778" layer="95"/>
+<attribute name="VALUE" x="172.212" y="254.762" size="1.778" layer="96"/>
+<attribute name="MFG" x="170.18" y="256.54" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="170.18" y="256.54" size="1.778" layer="96" rot="R90" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -4565,12 +4578,6 @@ after its VDD</text>
 <label x="185.42" y="309.88" size="1.778" layer="95" align="top-right"/>
 <wire x1="167.64" y1="309.88" x2="185.42" y2="309.88" width="0.1524" layer="91"/>
 <pinref part="C3" gate="G$1" pin="2"/>
-</segment>
-<segment>
-<pinref part="U2" gate="G$1" pin="MODE"/>
-<label x="185.42" y="264.16" size="1.778" layer="95" align="top-right"/>
-<wire x1="167.64" y1="264.16" x2="185.42" y2="264.16" width="0.1524" layer="91"/>
-<pinref part="C6" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="U3" gate="G$1" pin="GND"/>
@@ -4676,6 +4683,16 @@ after its VDD</text>
 <pinref part="C45" gate="G$1" pin="2"/>
 <wire x1="132.08" y1="20.32" x2="132.08" y2="17.78" width="0.1524" layer="91"/>
 <label x="132.08" y="17.78" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C6" gate="G$1" pin="2"/>
+<wire x1="185.42" y1="264.16" x2="185.42" y2="261.62" width="0.1524" layer="91"/>
+<label x="185.42" y="261.62" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="R25" gate="G$1" pin="1"/>
+<wire x1="170.18" y1="251.46" x2="170.18" y2="248.92" width="0.1524" layer="91"/>
+<label x="170.18" y="248.92" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -4996,6 +5013,14 @@ after its VDD</text>
 <wire x1="160.02" y1="43.18" x2="162.56" y2="43.18" width="0.1524" layer="91"/>
 <wire x1="165.1" y1="27.94" x2="165.1" y2="30.48" width="0.1524" layer="91"/>
 <label x="165.1" y="30.48" size="1.778" layer="95" align="top-left"/>
+</segment>
+</net>
+<net name="N$21" class="0">
+<segment>
+<pinref part="U2" gate="G$1" pin="MODE"/>
+<wire x1="167.64" y1="264.16" x2="170.18" y2="264.16" width="0.1524" layer="91"/>
+<pinref part="R25" gate="G$1" pin="2"/>
+<wire x1="170.18" y1="264.16" x2="170.18" y2="261.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

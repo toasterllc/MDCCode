@@ -2256,6 +2256,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-14.354" y="-111.744" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="-13.6" y="-112.3" size="1.778" layer="27" display="off"/>
 </element>
+<element name="R25" library="EagleLibrary" package="0402" value="12.1k" x="-13.6" y="-114.7" smashed="yes">
+<attribute name="MFG" value="Walsin" x="-13.6" y="-114.7" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-14.354" y="-114.144" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="WR04X1212FTL" x="-13.6" y="-114.7" size="1.778" layer="27" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="VDD_B">
@@ -2892,8 +2897,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="GND">
 <contactref element="U1" pad="C1"/>
 <contactref element="C3" pad="2"/>
-<contactref element="U2" pad="C1"/>
-<contactref element="C6" pad="2"/>
 <contactref element="U3" pad="C2"/>
 <contactref element="U3" pad="C3"/>
 <contactref element="U3" pad="C1"/>
@@ -3486,6 +3489,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C77" pad="2"/>
 <contactref element="C75" pad="2"/>
 <contactref element="C76" pad="2"/>
+<contactref element="C6" pad="2"/>
+<contactref element="R25" pad="1"/>
+<wire x1="-13.1675" y1="-112.3" x2="-14.0325" y2="-114.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-11.9246" y1="-109.9" x2="-13.1675" y2="-112.3" width="0" layer="19" extent="1-1"/>
 <wire x1="-10.8675" y1="-106.7" x2="-11.9246" y2="-109.9" width="0" layer="19" extent="1-1"/>
 <wire x1="-11.9246" y1="-101.1" x2="-10.8675" y2="-106.7" width="0" layer="19" extent="1-1"/>
@@ -3732,8 +3738,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="32.213278125" y1="39.933878125" x2="31.150559375" y2="39.6875" width="0" layer="19" extent="16-16"/>
 <wire x1="32.215721875" y1="41.686478125" x2="31.150559375" y2="41.9735" width="0" layer="19" extent="16-16"/>
 <wire x1="33.063178125" y1="38.3766" x2="32.213278125" y2="39.933878125" width="0" layer="19" extent="16-16"/>
-<wire x1="33.875978125" y1="38.3766" x2="33.063178125" y2="38.3766" width="0" layer="19" extent="16-16"/>
-<wire x1="36.1823" y1="38.7121375" x2="33.875978125" y2="38.3766" width="0" layer="19" extent="16-16"/>
+<wire x1="36.1823" y1="38.7121375" x2="33.063178125" y2="38.3766" width="0" layer="19" extent="16-16"/>
 <wire x1="18.4658" y1="27.6599" x2="23.581359375" y2="29.49448125" width="0" layer="19" extent="16-16"/>
 <wire x1="18.0744" y1="27.313" x2="18.4658" y2="27.6599" width="0" layer="19" extent="1-16"/>
 <wire x1="17.6784" y1="27.7114" x2="18.0744" y2="27.313" width="0" layer="19" extent="1-1"/>
@@ -6524,6 +6529,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U19" pad="2"/>
 <contactref element="U14" pad="10"/>
 <wire x1="-8.878" y1="-3.2006" x2="-2.7" y2="-62.26" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$21">
+<contactref element="U2" pad="C1"/>
+<contactref element="R25" pad="2"/>
+<wire x1="33.875978125" y1="38.3766" x2="-13.1675" y2="-114.7" width="0" layer="19" extent="1-16"/>
 </signal>
 </signals>
 <mfgpreviewcolors>
