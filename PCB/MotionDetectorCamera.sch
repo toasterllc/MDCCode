@@ -4205,18 +4205,18 @@ PGND directly at the IC."
 "Connect AGND and PGND
 through a via at a different
 layer."</text>
-<text x="12.7" y="81.28" size="3.81" layer="95" align="top-left">VDD_1V8_STM
-- Battery:  VDD_1V8_STM = HiZ
-- USB:      VDD_1V8_STM = VDD_1V8</text>
+<text x="12.7" y="81.28" size="3.81" layer="95" align="top-left">VDD_1V9_STM
+- Battery:  VDD_1V9_STM = HiZ
+- USB:      VDD_1V9_STM = VDD_1V9</text>
 <text x="12.7" y="411.48" size="3.81" layer="95" align="top-left">VDD_A
 - Battery:  VDD_A = VDD_BAT
-- USB:      VDD_A = 1V8</text>
+- USB:      VDD_A = 1V9</text>
 <text x="12.7" y="373.38" size="3.81" layer="95" align="top-left">VDD_B
 - Battery:  VDD_B = HiZ / VDD_BAT
     (controlled by MSP via !VDD_B_EN!)
 - USB:      VDD_B = VDD_USB</text>
 <text x="12.7" y="330.2" size="3.81" layer="95" align="top-left">VDD_1V2</text>
-<text x="12.7" y="281.94" size="3.81" layer="95" align="top-left">VDD_1V8</text>
+<text x="12.7" y="281.94" size="3.81" layer="95" align="top-left">VDD_1V9</text>
 <text x="12.7" y="218.44" size="3.81" layer="95" align="top-left">VDD_2V8</text>
 <text x="99.568" y="422.402" size="1.016" layer="95" align="top-left">This PFET serves 2 purposes for the battery power supply:
 
@@ -4233,7 +4233,7 @@ layer."</text>
 <wire x1="134.366" y1="378.46" x2="139.192" y2="380.746" width="0.1524" layer="95"/>
 <text x="103.886" y="379.984" size="1.016" layer="95" align="top-left">Capacitor helps minimize reverse current spikes
 when battery is inserted with reverse polarity.</text>
-<text x="12.7" y="172.72" size="3.81" layer="95" align="top-left">VDD_1V8_IMG</text>
+<text x="12.7" y="172.72" size="3.81" layer="95" align="top-left">VDD_1V9_IMG</text>
 <text x="12.7" y="142.24" size="3.81" layer="95" align="top-left">VDD_2V8_IMG</text>
 <text x="12.7" y="111.76" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
 <wire x1="141.986" y1="411.226" x2="129.032" y2="411.226" width="0.1524" layer="95"/>
@@ -4548,7 +4548,7 @@ after its VDD</text>
 <label x="215.9" y="368.3" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V8" class="0">
+<net name="VDD_1V9" class="0">
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
 <wire x1="198.12" y1="279.4" x2="200.66" y2="279.4" width="0.1524" layer="91"/>
@@ -4852,7 +4852,7 @@ after its VDD</text>
 <label x="134.62" y="-2.54" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V8_STM" class="0">
+<net name="VDD_1V9_STM" class="0">
 <segment>
 <wire x1="160.02" y1="76.2" x2="162.56" y2="76.2" width="0.1524" layer="91"/>
 <label x="162.56" y="76.2" size="1.778" layer="95"/>
@@ -4867,7 +4867,7 @@ after its VDD</text>
 <label x="134.62" y="40.64" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="VDD_1V8_IMG" class="0">
+<net name="VDD_1V9_IMG" class="0">
 <segment>
 <wire x1="160.02" y1="167.64" x2="162.56" y2="167.64" width="0.1524" layer="91"/>
 <label x="162.56" y="167.64" size="1.778" layer="95"/>
@@ -4942,7 +4942,7 @@ after its VDD</text>
 <pinref part="U10" gate="G$1" pin="EN"/>
 </segment>
 </net>
-<net name="VDD_1V8_IMG_EN" class="0">
+<net name="VDD_1V9_IMG_EN" class="0">
 <segment>
 <wire x1="137.16" y1="160.02" x2="134.62" y2="160.02" width="0.1524" layer="91"/>
 <label x="134.62" y="160.02" size="1.778" layer="95" align="bottom-right"/>
@@ -5282,7 +5282,7 @@ and DC bias</text>
 <label x="63.5" y="12.7" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V8" class="0">
+<net name="VDD_1V9" class="0">
 <segment>
 <pinref part="U15" gate="G$1" pin="VCCB"/>
 <wire x1="60.96" y1="38.1" x2="63.5" y2="38.1" width="0.1524" layer="91"/>
@@ -5296,7 +5296,7 @@ and DC bias</text>
 <pinref part="U14" gate="C" pin="P2.4/TA1CLK/UCB0CLK/A6"/>
 </segment>
 </net>
-<net name="VDD_1V8_IMG_EN" class="0">
+<net name="VDD_1V9_IMG_EN" class="0">
 <segment>
 <wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
 <label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
@@ -5640,7 +5640,7 @@ below the chip.</text>
 <busses>
 </busses>
 <nets>
-<net name="VDD_1V8" class="0">
+<net name="VDD_1V9" class="0">
 <segment>
 <pinref part="C17" gate="G$1" pin="1"/>
 <pinref part="C18" gate="G$1" pin="1"/>
@@ -6735,7 +6735,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V8_IMG" class="0">
+<net name="VDD_1V9_IMG" class="0">
 <segment>
 <pinref part="U5" gate="A" pin="VDD_IO"/>
 <wire x1="71.12" y1="45.72" x2="68.58" y2="45.72" width="0.1524" layer="91"/>
@@ -7110,7 +7110,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V8" class="0">
+<net name="VDD_1V9" class="0">
 <segment>
 <pinref part="C43" gate="G$1" pin="1"/>
 <pinref part="C42" gate="G$1" pin="1"/>
@@ -7482,7 +7482,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V8_SD" class="0">
+<net name="VDD_1V9_SD" class="0">
 <segment>
 <pinref part="R22" gate="G$1" pin="2"/>
 <wire x1="-20.32" y1="-55.88" x2="-20.32" y2="-53.34" width="0.1524" layer="91"/>
@@ -8125,7 +8125,7 @@ expect a higher voltage.)</text>
 <label x="241.3" y="-99.06" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V8_STM" class="0">
+<net name="VDD_1V9_STM" class="0">
 <segment>
 <pinref part="U12" gate="K" pin="VDD_C5"/>
 <pinref part="U12" gate="K" pin="VDD_N9"/>

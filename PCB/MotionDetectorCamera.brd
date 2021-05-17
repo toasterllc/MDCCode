@@ -2334,7 +2334,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="25.0952" y1="38.2907625" x2="24.6888" y2="38.6407625" width="0" layer="19" extent="16-16"/>
 <wire x1="-13.5754" y1="-21.344" x2="38.117778125" y2="5.4102" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="VDD_1V8">
+<signal name="VDD_1V9">
 <contactref element="C43" pad="1"/>
 <contactref element="C42" pad="1"/>
 <contactref element="C25" pad="1"/>
@@ -6205,7 +6205,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="Q1" pad="5" route="any" routetag="G$1.D"/>
 <wire x1="-13.0295" y1="-23.884" x2="-12.273" y2="-46.094" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="VDD_1V8_STM">
+<signal name="VDD_1V9_STM">
 <contactref element="U12" pad="C5"/>
 <contactref element="U12" pad="N9"/>
 <contactref element="U12" pad="C7"/>
@@ -6280,7 +6280,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="18.5848" y1="17.7528" x2="21.67451875" y2="18.313403125" width="0" layer="19" extent="16-16"/>
 <wire x1="18.4919" y1="16.9672" x2="18.5848" y2="17.7528" width="0" layer="19" extent="16-16"/>
 </signal>
-<signal name="VDD_1V8_IMG">
+<signal name="VDD_1V9_IMG">
 <contactref element="U5" pad="E5"/>
 <contactref element="U5" pad="D2"/>
 <contactref element="U5" pad="A7"/>
@@ -6403,7 +6403,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U10" pad="3"/>
 <wire x1="-7.378" y1="1.1686" x2="-14.0623" y2="-65.15" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="VDD_1V8_IMG_EN">
+<signal name="VDD_1V9_IMG_EN">
 <contactref element="U8" pad="3"/>
 <contactref element="U14" pad="2"/>
 <wire x1="-9.8126" y1="0.734" x2="-14.0623" y2="-61.25" width="0" layer="19" extent="1-1"/>
@@ -6446,7 +6446,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U5" pad="D7"/>
 <wire x1="-11.9917" y1="-30.63" x2="44.043" y2="27.2998" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="VDD_1V8_SD">
+<signal name="VDD_1V9_SD">
 <contactref element="R22" pad="2"/>
 <contactref element="R21" pad="2"/>
 <contactref element="R20" pad="2"/>
