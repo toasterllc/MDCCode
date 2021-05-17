@@ -1,13 +1,5 @@
 - Rev4 PCB Todo
     
-    - ICE40: Fix pin layout so that both PLLs can be used
-        - Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
-        - Fix L5 PLL: ?
-        - When a PLL is used, the tile that it's on can only be used as an output pin (not an input pin). So make PLL IO tiles either outputs, or unused
-        - "PLL input path is shared with the IO input path of the IO tile it's in":
-            https://freenode.irclog.whitequark.org/yosys/2019-03-13
-            https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
-    
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
     - Update BusinessOrders.txt
@@ -15,6 +7,14 @@
     - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
     
     - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
+    
+    √ ICE40: Fix pin layout so that both PLLs can be used
+        √ Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
+        √ Fix L5 PLL
+        - When a PLL is used, the tile that it's on can only be used as an output pin (not an input pin). So make PLL IO tiles either outputs, or unused
+        - "PLL input path is shared with the IO input path of the IO tile it's in":
+            https://freenode.irclog.whitequark.org/yosys/2019-03-13
+            https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
     
     √ Raise 1.8V rail to 1.85-1.90V so that it's easier to meet the SD card Vih in 3.3V mode
         - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => 50mV away from 1.8V rail, 150mV away from 1.9V rail
