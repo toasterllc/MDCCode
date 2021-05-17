@@ -7447,9 +7447,9 @@ between input and output when its VDD=0.</text>
 <wire x1="86.36" y1="-251.46" x2="86.36" y2="-233.68" width="0.1524" layer="95"/>
 <wire x1="86.36" y1="-233.68" x2="48.26" y2="-233.68" width="0.1524" layer="95"/>
 <text x="83.312" y="-163.322" size="1.27" layer="95" align="top-left">≤ 1%</text>
-<text x="67.056" y="-245.872" size="1.016" layer="95" align="top-left">Derated to hit suggested
+<text x="67.056" y="-245.872" size="1.016" layer="95" align="top-left">Derated to meet suggested
 &gt;1uF @ 3.3V bias</text>
-<text x="67.056" y="-220.218" size="1.016" layer="95" align="top-left">Derated to hit suggested
+<text x="67.056" y="-220.218" size="1.016" layer="95" align="top-left">Derated to meet suggested
 &gt;1uF @ 1.8V bias</text>
 </plain>
 <instances>

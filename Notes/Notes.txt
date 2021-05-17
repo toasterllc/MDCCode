@@ -1,10 +1,6 @@
 - Rev4 todo
-
-    - STM32: Fix USB power supply
-        - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
-        √ Make sure to add necessary capacitors too
     
-    - STM32: Make sure we're not using an GPIOs that are powered by VDDUSB
+    - STM32: Make sure we're not using an GPIOs that are powered by VDDUSB, since they'll use VDDUSB, and not 1.8V
     
     - ICE40: Fix pin layout so that both PLLs can be used
         - Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
@@ -58,6 +54,10 @@
     - Make sure we don't have too much capacitance on VDD_USB
     
     - Rename nets containing '24MHz' since we replaced the clock chip to be 16MHz
+    
+    √ STM32: Fix USB power supply
+        - VDD_USB (ball H13) should be supplied with 3-3.6V, but for some reason we tied it to 1V8 on the Rev3 board
+        √ Make sure to add necessary capacitors too
     
     √ Figure out ICE40 NVCM programming
         - We should be able to program NVCM from STM32, because:
