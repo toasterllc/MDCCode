@@ -1,4 +1,4 @@
-- Rev4 todo
+- Rev4 PCB Todo
     
     - ICE40: Fix pin layout so that both PLLs can be used
         - Fix B6 PLL: swap A6 and B6 (RAM_DQM0 is output-only)
@@ -160,82 +160,46 @@
           but it's expensive ($0.704 - $1.187).
 
 
+- Rev4 Verilog Todo
+
+    - Update SDRAM controller for new part (Winbond -> Alliance)
+    - Update Verilog to use 16 MHz clock, instead of 24 MHz
+
+
 - Preorder parts to de-risk
-    - STM32
-        √ 90x (STM32F730I8K6) from Farnell UK
-            √ Received
-            $6.03 each
-            - Try ordering 10 more from export.farnell.com
-                "More stock available week commencing 14/06/21"
-                "More stock available week commencing 21/06/21"
-        - 10x (STM32F723IEK6 -- more expensive but pin-compatible) from Mouser
-            - Haven't ordered yet -- want to try ordering 10 more of the cheaper model first
     
-    - ICE40
-        √ 100x from DigiKey
-            √ Received
+    - SN74LVC1G126DCKR (clock-blocking buffer)
     
-    - AR0330CS
+    - EKMB1107112 (motion sensor -- need to test first before mass order)
     
-    - MSP430
+    - TPS22919DCK (load switch)
     
-    - SDRAM
-        AS4C8M16MSA-6BIN    128 Mbit
-        W989D6DBGX6I        512 Mbit
+    - MAX40203ANS+T (ideal diode)
+        - Mouser expects by 6/4/2021
     
-    - Power supply chips
-        TPS62801YKAR
-        TPS62802YKAR
-        TPS63805YFFR
+    - TPS62802YKAR (1.8V supply)
+        - Mouser expects by 8/5/2021
     
-    - Motion sensor
-        EKMB1107112
-            Type: Low Profile
-            Detection: 5m, 90° x 90°
-            Detection Zones: 32
-            Current: 1µA
-        
-        EKMB1110112
-            Type: Flat Square
-            Detection: 5m, 90° x 90°
-            Detection Zones: 40
-            Current: 1µA
-        
-        EKMB1103112
-            Type: Long Distance Detection
-            Detection: 12m, 92° x 102°
-            Detection Zones: 92
-            Current: 1µA
-            
-        EKMB1101112
-            Type: Standard Detection
-            Detection: 5m, 82° x 94°
-            Detection Zones: 64
-            Current: 1µA
-
-
-- Order
+    - TPS63805YFFR (2.8V supply)
+        - Mouser expects by 10/21/2021
+        - sierraic.com has stock
     
-    * TI
-        SN74LVC1G126DCKR (clock-blocking buffer)
-    
-    * Mouser
-        TPS22919DCK (load switch)
-        MAX40203ANS+T (ideal diode)
-    
-    * sierraic.com
-        TPS63805YFFR (2.8V supply)
-            - Mouser expects by 10/21/2021
-        STM32F730I8K6 (STM32)
+    - STM32F730I8K6 / STM32F723IEK6 -- 15x
+        - STM32F723IEK6 is more-expensive but pin-compatible with STM32F730I8K6
+        - sierraic.com has stock
             - Waiting for quote for 15x
     
-    * No stock
-        TPS62802YKAR (1.8V supply)
-            - Mouser expects by 8/5/2021
-        BKP1005EM100-T (ferrite bead)
+    - BKP1005EM100-T (ferrite bead)
+        - Mouser expects by 6/22/2021
+    
+    √ Farnell UK
+        STM32F730I8K6 (90x)
+    
+    √ DigiKey
+        ICE40 (100x)
     
     √ Rochester
-        AR0330...
+        AR0330CS1C12SPKA0-CR
     
     √ TI
         TPS62801YKAT (1.2V supply)
@@ -248,6 +212,8 @@
         DT1446-04V-7 (ESD chip)
         EKMB1107112 (motion sensor) -- only buy a few
         SIT8021AI-J4-18S-16.000000E
+
+
 
 - Future
     
