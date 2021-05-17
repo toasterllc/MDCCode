@@ -2,9 +2,9 @@
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
-    - Update BusinessOrders.txt
-    
     - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
+    
+    √ Update BusinessOrders.txt
     
     √ Compact wires going to RAM now that we no longer have an A12 net (ball G1)
     
@@ -194,12 +194,6 @@
     - BKP1005EM100-T (ferrite bead)
         - Mouser expects by 6/22/2021
     
-    √ Farnell UK
-        STM32F730I8K6 (90x)
-    
-    √ DigiKey
-        ICE40 (100x)
-    
     √ Rochester
         AR0330CS1C12SPKA0-CR
     
@@ -214,7 +208,12 @@
         DT1446-04V-7 (ESD chip)
         EKMB1107112 (motion sensor) -- only buy a few
         SIT8021AI-J4-18S-16.000000E
-
+    
+    √ DigiKey
+        ICE40 (100x)
+    
+    √ Farnell UK
+        STM32F730I8K6 (90x)
 
 
 - Future
