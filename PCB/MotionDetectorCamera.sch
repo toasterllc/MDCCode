@@ -1327,6 +1327,30 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.17" y="1.476"/>
 </polygon>
 </package>
+<package name="EPSON-MC-306">
+<description>16-QFN, 0.40 mm pitch, 2.60 X 1.80 X 0.55 mm body
+&lt;p&gt;16-pin QFN package with 0.40 mm pitch with body size 2.60 X 1.80 X 0.55 mm&lt;/p&gt;</description>
+<smd name="1" x="-2.75" y="-1.6" dx="1.3" dy="1.9" layer="1"/>
+<smd name="2" x="2.75" y="-1.6" dx="1.3" dy="1.9" layer="1"/>
+<smd name="3" x="2.75" y="1.6" dx="1.3" dy="1.9" layer="1"/>
+<smd name="4" x="-2.75" y="1.6" dx="1.3" dy="1.9" layer="1"/>
+<text x="-3.8010625" y="3.0869625" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<wire x1="4" y1="-1.9" x2="-4" y2="-1.9" width="0.05" layer="21"/>
+<wire x1="-4" y1="-1.9" x2="-4" y2="1.9" width="0.05" layer="21"/>
+<wire x1="-4" y1="1.9" x2="4" y2="1.9" width="0.05" layer="21"/>
+<wire x1="4" y1="1.9" x2="4" y2="-1.9" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="4" y="-1.9"/>
+<vertex x="-4" y="-1.9"/>
+<vertex x="-4" y="1.9"/>
+<vertex x="4" y="1.9"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-3.952" y="0.5"/>
+<vertex x="-3.952" y="-1.861"/>
+<vertex x="-1.352" y="-1.861"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="SOT95P280X130-5N" urn="urn:adsk.eagle:package:28687033/1" type="model">
@@ -2287,6 +2311,22 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
 <text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
 <text x="0.075" y="-15.3641" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
+</symbol>
+<symbol name="CRYSTAL">
+<description>DRAM Chip Mobile LPSDR SDRAM 512M-Bit 32Mx16 1.8V 54-Pin VFBGA</description>
+<wire x1="0" y1="-5.08" x2="0" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="2.54" y2="0" width="0.254" layer="94"/>
+<wire x1="2.54" y1="0" x2="2.54" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="2.54" y1="-5.08" x2="0" y2="-5.08" width="0.254" layer="94"/>
+<text x="0" y="2.286" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<text x="0" y="-5.842" size="1.778" layer="95" align="top-left">&gt;PN</text>
+<pin name="A" x="-2.54" y="-2.54" visible="off" length="point"/>
+<wire x1="-0.508" y1="-1.27" x2="-0.508" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="-0.508" y1="-2.54" x2="-0.508" y2="-3.81" width="0.254" layer="94"/>
+<wire x1="3.048" y1="-1.27" x2="3.048" y2="-3.81" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="-2.54" x2="-0.508" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="3.048" y1="-2.54" x2="5.08" y2="-2.54" width="0.1524" layer="94"/>
+<pin name="B" x="5.08" y="-2.54" visible="off" length="point"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3436,6 +3476,24 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="EPSON-MC-306" prefix="Y">
+<gates>
+<gate name="G$1" symbol="CRYSTAL" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="EPSON-MC-306">
+<connects>
+<connect gate="G$1" pin="A" pad="1"/>
+<connect gate="G$1" pin="B" pad="4"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Epson"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -4059,6 +4117,23 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
+<part name="Y1" library="EagleLibrary" deviceset="EPSON-MC-306" device="">
+<attribute name="PN" value="MC-306 32.7680K-E3:ROHS"/>
+</part>
+<part name="C46" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="9p">
+<spice>
+<pinmapping spiceprefix="C">
+<pinmap gate="G$1" pin="1" pinorder="1"/>
+<pinmap gate="G$1" pin="2" pinorder="2"/>
+</pinmapping>
+</spice>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="CC0402BRNPO9BN9R0"/>
+</part>
+<part name="C49" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="9p">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="CC0402BRNPO9BN9R0"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4129,10 +4204,10 @@ and dampen ringing on the PFET's gate.</text>
 <text x="101.854" y="38.354" size="1.016" layer="95" align="top-left">STM32's VDDUSB is supposed to rise
 after its VDD</text>
 <wire x1="126.492" y1="37.846" x2="128.524" y2="39.37" width="0.1524" layer="95"/>
-<text x="129.286" y="25.4" size="1.016" layer="95" align="top-right">Derated to hit suggested
+<text x="129.286" y="25.4" size="1.016" layer="95" align="top-right">Derated to meet suggested
 1uF @ 5.5V bias</text>
-<text x="172.974" y="25.146" size="1.016" layer="95" align="top-left">Derated to hit suggested
-&gt;1uF @ 3.3V bias</text>
+<text x="172.974" y="25.146" size="1.016" layer="95" align="top-left">Derated to meet suggested
+1uF @ 5.5V bias</text>
 </plain>
 <instances>
 <instance part="C2" gate="G$1" x="129.54" y="322.58" smashed="yes">
@@ -4875,6 +4950,26 @@ after its VDD</text>
 <plain>
 <text x="35.052" y="77.724" size="0.762" layer="95" align="top-right">Leaving P1.1 unpopulated so ACLK can
 be observed without side-effects</text>
+<text x="106.426" y="128.524" size="1.016" layer="95" align="top-left">From "MSP430TM 32-kHz Crystal Oscillators",
+section "Effective Load Capacitance":
+
+Crystal capacitor values are calculated using:
+    C_L = (C + C_para) / 2
+
+Where:
+    C_L = load capacitance from crystal datasheet
+    C = capacitor value to solve for
+    C_para = parasitic capacitance of MSP pin + trace
+
+C_para = 2pF (MSP capacitance per pin)
+                 + 1 pF (estimated trace capacitance)
+             = 3 pF
+
+C_L = 6 pF (from crystal datasheet)
+
+Therefore, C = 9 pF</text>
+<text x="141.732" y="93.472" size="1.016" layer="95" align="top-left">Use NP0 dialectric capacitors to minimize
+variance due to temperature and DC bias</text>
 </plain>
 <instances>
 <instance part="U14" gate="A" x="-30.48" y="78.74" smashed="yes">
@@ -4900,6 +4995,21 @@ be observed without side-effects</text>
 <instance part="C73" gate="G$1" x="-63.5" y="27.94" smashed="yes">
 <attribute name="NAME" x="-67.056" y="28.321" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="-67.056" y="25.781" size="1.778" layer="96" align="bottom-right"/>
+</instance>
+<instance part="Y1" gate="G$1" x="121.92" y="99.06" smashed="yes">
+<attribute name="NAME" x="121.92" y="101.346" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="C46" gate="G$1" x="114.3" y="93.98" smashed="yes">
+<attribute name="NAME" x="111.506" y="93.599" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="111.506" y="91.059" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="114.3" y="93.98" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="114.3" y="93.98" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="C49" gate="G$1" x="132.08" y="93.98" smashed="yes">
+<attribute name="NAME" x="134.874" y="93.599" size="1.778" layer="95"/>
+<attribute name="VALUE" x="134.874" y="91.059" size="1.778" layer="96"/>
+<attribute name="MFG" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -4948,6 +5058,16 @@ be observed without side-effects</text>
 <pinref part="C73" gate="G$1" pin="2"/>
 <wire x1="-63.5" y1="22.86" x2="-63.5" y2="20.32" width="0.1524" layer="91"/>
 <label x="-63.5" y="20.32" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="C46" gate="G$1" pin="2"/>
+<wire x1="114.3" y1="88.9" x2="114.3" y2="86.36" width="0.1524" layer="91"/>
+<label x="114.3" y="86.36" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C49" gate="G$1" pin="2"/>
+<wire x1="132.08" y1="88.9" x2="132.08" y2="86.36" width="0.1524" layer="91"/>
+<label x="132.08" y="86.36" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="MSP_TEST" class="0">
@@ -5090,6 +5210,28 @@ be observed without side-effects</text>
 <pinref part="U14" gate="B" pin="P1.3/UCB0SOMI/UCB0SCL/MCLK/A3"/>
 <wire x1="35.56" y1="71.12" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
 <label x="33.02" y="71.12" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="N$14" class="0">
+<segment>
+<pinref part="Y1" gate="G$1" pin="B"/>
+<wire x1="127" y1="96.52" x2="127" y2="78.74" width="0.1524" layer="91"/>
+<pinref part="U14" gate="C" pin="P2.0/UCA0TXD/UCA0SIMO/XOUT"/>
+<wire x1="127" y1="78.74" x2="129.54" y2="78.74" width="0.1524" layer="91"/>
+<pinref part="C49" gate="G$1" pin="1"/>
+<wire x1="132.08" y1="96.52" x2="127" y2="96.52" width="0.1524" layer="91"/>
+<junction x="127" y="96.52"/>
+</segment>
+</net>
+<net name="N$17" class="0">
+<segment>
+<pinref part="U14" gate="C" pin="P2.1/UCA0RXD/UCA0SOMI/XIN"/>
+<wire x1="129.54" y1="76.2" x2="119.38" y2="76.2" width="0.1524" layer="91"/>
+<pinref part="Y1" gate="G$1" pin="A"/>
+<wire x1="119.38" y1="76.2" x2="119.38" y2="96.52" width="0.1524" layer="91"/>
+<pinref part="C46" gate="G$1" pin="1"/>
+<wire x1="114.3" y1="96.52" x2="119.38" y2="96.52" width="0.1524" layer="91"/>
+<junction x="119.38" y="96.52"/>
 </segment>
 </net>
 </nets>

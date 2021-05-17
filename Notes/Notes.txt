@@ -57,7 +57,14 @@
     
     - Make sure we don't have too much capacitance on VDD_USB
     
-    - Add crystal so MSP430 can keep track of time
+    - Rename nets containing '24MHz' since we replaced the clock chip to be 16MHz
+    
+    √ Figure out ICE40 NVCM programming
+        - We should be able to program NVCM from STM32, because:
+            - NVCM is programmed using the same SPI interface used for configuring its RAM
+            - We're already supplying 2.8V to ICE40's VPP_2V5, which is between the 2.3-3 V range for NVCM programming
+    
+    √ Add crystal so MSP430 can keep track of time
     
     √ Consider leaving MSP430 ACLK pin disconnected, so we can measure crystal frequency on it
     
