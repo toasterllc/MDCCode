@@ -1418,6 +1418,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="D5" x="27.94" y="-55.88" length="short" rot="R180"/>
 <pin name="D7" x="27.94" y="-58.42" length="short" rot="R180"/>
 <text x="0" y="-63.5" size="1.778" layer="95">&gt;PN</text>
+<text x="17.78" y="-37.084" size="0.762" layer="95" align="top-right">PLL tile
+B6 must be an output if
+the design uses this PLL</text>
+<wire x1="20.066" y1="-38.1" x2="18.542" y2="-38.1" width="0.254" layer="95"/>
 </symbol>
 <symbol name="LATTICE-ICE40HX4K-BG121-B">
 <wire x1="0" y1="-55.88" x2="0" y2="0" width="0.254" layer="94"/>
@@ -1476,6 +1480,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pin name="J8" x="27.94" y="-43.18" length="short" rot="R180"/>
 <pin name="H7" x="27.94" y="-45.72" length="short" rot="R180"/>
 <pin name="H9" x="27.94" y="-48.26" length="short" rot="R180"/>
+<text x="18.034" y="-11.684" size="0.762" layer="95" align="top-right">PLL tile
+L5 must be an output if
+the design uses this PLL</text>
+<wire x1="20.32" y1="-12.7" x2="18.796" y2="-12.7" width="0.254" layer="95"/>
 </symbol>
 <symbol name="LATTICE-ICE40HX4K-BG121-D">
 <wire x1="0" y1="-68.58" x2="0" y2="0" width="0.254" layer="94"/>
