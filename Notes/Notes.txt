@@ -8,15 +8,18 @@
             https://freenode.irclog.whitequark.org/yosys/2019-03-13
             https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
     
-    - Consider raising 1V8 rail to 1.85-1.90V, so that it's easier to meet the SD card Vih in 3.3V mode
+    - Raise 1.8V rail to 1.85-1.90V so that it's easier to meet the SD card Vih in 3.3V mode
         - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => 50mV away from 1.8V rail, 150mV away from 1.9V rail
-        - MSP430        👍 VCC: 1.8 - 3.6
-        - ICE40         👍 VCCIO I/O Driver Supply Voltage: 1.71 - 3.46
-        - RAM           👍 Supply Voltage: 1.7 - 1.95 V
-        - AR0330        👍 Digital voltage: 1.7 – 1.9 V
-        - SD            👍 Input High Voltage VIH: 1.27 - 2.00 V
-        - STM32         👍 VDD: 1.7 - 3.6
-        - MotionSensor
+        - MSP430        👍  VCC: 1.8 - 3.6
+        - ICE40         👍  VCCIO I/O Driver Supply Voltage: 1.71 - 3.46
+        - RAM           👍  Supply Voltage: 1.7 - 1.95 V
+        - AR0330        👍  Digital voltage: 1.7 – 1.9 V
+        - SD            👍  Input High Voltage VIH: 1.27 - 2.00 V
+        - STM32         👍  VDD: 1.7 - 3.6
+        - Motion Sensor 👍🏻  VDD: 2.3 - 4 (1.9V will underpower the motion sensor, but that's OK because
+                            it'll only get powered by 1.9V in USB mode -- not battery mode -- and we don't
+                            need the motion sensor to work in USB mode anyway. In battery mode, it'll be
+                            powered by the 3V battery voltage.)
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
