@@ -8,7 +8,15 @@
             https://freenode.irclog.whitequark.org/yosys/2019-03-13
             https://logs.timvideos.us/%23yosys/%23yosys.2019-03-13.log.html
     
-    - Raise 1.8V rail to 1.85-1.90V so that it's easier to meet the SD card Vih in 3.3V mode
+    - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
+    
+    - Update BusinessOrders.txt
+    
+    - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
+    
+    - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
+    
+    √ Raise 1.8V rail to 1.85-1.90V so that it's easier to meet the SD card Vih in 3.3V mode
         - Vih(2.8V) = 0.625*VDD = .625*2.8 = 1.75 V => 50mV away from 1.8V rail, 150mV away from 1.9V rail
         - MSP430        👍  VCC: 1.8 - 3.6
         - ICE40         👍  VCCIO I/O Driver Supply Voltage: 1.71 - 3.46
@@ -20,14 +28,6 @@
                             it'll only get powered by 1.9V in USB mode -- not battery mode -- and we don't
                             need the motion sensor to work in USB mode anyway. In battery mode, it'll be
                             powered by the 3V battery voltage.)
-    
-    - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
-    
-    - Update BusinessOrders.txt
-    
-    - Compact wires going to RAM now that we no longer have an A12 net (ball G1)
-    
-    - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
     
     √ STM32: Make sure we're not using any GPIOs that are powered by VDDUSB, since they'll use VDDUSB, and not 1.8V
         "VDDUSB: ... supply voltage for PA11,PA12, PB14 and PB15 pins"
