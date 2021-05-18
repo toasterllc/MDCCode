@@ -4181,14 +4181,6 @@ the design uses this PLL</text>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="C75" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
-</part>
-<part name="C76" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM155R61H104KE19D"/>
-</part>
 <part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="12.1k">
 <attribute name="MFG" value="Walsin"/>
 <attribute name="PN" value="WR04X1212FTL"/>
@@ -4211,6 +4203,11 @@ the design uses this PLL</text>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
 <part name="C82" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
+<attribute name="MFG" value="Taiyo Yuden"/>
+<attribute name="PN" value="TMK105CBJ225KV-F"/>
+</part>
+<part name="TP11" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
+<part name="C83" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
@@ -5172,8 +5169,6 @@ to limit USB inrush current</text>
 <sheet>
 <description>MSP</description>
 <plain>
-<text x="35.052" y="77.724" size="0.762" layer="95" align="top-right">Leaving P1.1 unpopulated so ACLK can
-be observed without side-effects</text>
 <text x="106.426" y="128.524" size="1.016" layer="95" align="top-left">From "MSP430TM 32-kHz Crystal Oscillators",
 section "Effective Load Capacitance":
 
@@ -5195,6 +5190,8 @@ Therefore, C = 9 pF</text>
 <text x="141.732" y="93.472" size="1.016" layer="95" align="top-left">Use NP0 dialectric capacitors to minimize
 capacitance variation due to temperature
 and DC bias</text>
+<text x="0.254" y="76.962" size="0.762" layer="95">ACLK
+test point</text>
 </plain>
 <instances>
 <instance part="U14" gate="A" x="-30.48" y="78.74" smashed="yes">
@@ -5247,6 +5244,9 @@ and DC bias</text>
 <attribute name="MFG" x="-83.82" y="25.4" size="1.778" layer="96" display="off"/>
 <attribute name="NAME" x="-65.786" y="83.439" size="1.778" layer="95"/>
 <attribute name="VALUE" x="-65.786" y="80.899" size="1.778" layer="96"/>
+</instance>
+<instance part="TP11" gate="G$1" x="5.08" y="76.2" smashed="yes" rot="R90">
+<attribute name="NAME" x="5.08" y="76.2" size="1.778" layer="95" rot="R180"/>
 </instance>
 </instances>
 <busses>
@@ -5490,6 +5490,13 @@ and DC bias</text>
 <label x="127" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
+<net name="N$22" class="0">
+<segment>
+<pinref part="U14" gate="B" pin="P1.1/UCB0CLK/ACLK/A1/VREF+"/>
+<pinref part="TP11" gate="G$1" pin="X"/>
+<wire x1="35.56" y1="76.2" x2="5.08" y2="76.2" width="0.1524" layer="91"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -5501,17 +5508,11 @@ and DC bias</text>
 <attribute name="NAME" x="0" y="2.54" size="1.778" layer="95" align="top-left"/>
 <attribute name="PN" x="0" y="-10.16" size="1.778" layer="95"/>
 </instance>
-<instance part="C75" gate="G$1" x="-27.94" y="-2.54" smashed="yes">
-<attribute name="NAME" x="-25.654" y="-2.667" size="1.778" layer="95"/>
-<attribute name="VALUE" x="-25.654" y="-5.207" size="1.778" layer="96"/>
-<attribute name="MFG" x="-27.94" y="-2.54" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="-27.94" y="-2.54" size="1.778" layer="96" display="off"/>
-</instance>
-<instance part="C76" gate="G$1" x="-35.56" y="-2.54" smashed="yes">
-<attribute name="PN" x="-5.08" y="0" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="-43.688" y="-3.175" size="1.778" layer="95"/>
-<attribute name="VALUE" x="-43.688" y="-5.715" size="1.778" layer="96"/>
-<attribute name="MFG" x="-35.56" y="-2.54" size="1.778" layer="96" display="off"/>
+<instance part="C83" gate="G$1" x="-17.78" y="-2.54" smashed="yes">
+<attribute name="PN" x="-35.56" y="2.54" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="-21.082" y="-2.921" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="-21.082" y="-5.461" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="-35.56" y="2.54" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -5524,10 +5525,9 @@ and DC bias</text>
 <label x="-5.08" y="-2.54" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="C75" gate="G$1" pin="1"/>
-<label x="-35.56" y="0" size="1.778" layer="95"/>
-<pinref part="C76" gate="G$1" pin="1"/>
-<wire x1="-27.94" y1="0" x2="-35.56" y2="0" width="0.1524" layer="91"/>
+<pinref part="C83" gate="G$1" pin="1"/>
+<wire x1="-17.78" y1="0" x2="-17.78" y2="2.54" width="0.1524" layer="91"/>
+<label x="-17.78" y="2.54" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -5537,10 +5537,9 @@ and DC bias</text>
 <label x="-5.08" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="C75" gate="G$1" pin="2"/>
-<label x="-35.56" y="-7.62" size="1.778" layer="95" align="top-left"/>
-<pinref part="C76" gate="G$1" pin="2"/>
-<wire x1="-35.56" y1="-7.62" x2="-27.94" y2="-7.62" width="0.1524" layer="91"/>
+<pinref part="C83" gate="G$1" pin="2"/>
+<wire x1="-17.78" y1="-7.62" x2="-17.78" y2="-10.16" width="0.1524" layer="91"/>
+<label x="-17.78" y="-10.16" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="MOTION_SIGNAL" class="0">

@@ -2,6 +2,8 @@
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
+    - Add connector for battery pack
+    
     √ Limit USB inrush current
         - Also make sure no one's using VDD_USB directly -- only use the inrush-limited net
         - Options:
