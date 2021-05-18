@@ -2258,6 +2258,36 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-14.354" y="-114.144" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="WR04X1212FTL" x="-13.6" y="-114.7" size="1.778" layer="27" display="off"/>
 </element>
+<element name="U20" library="EagleLibrary" package="TI-TPS22919DCK" value="TI-TPS22919DCK" x="-13.208" y="-118.618" smashed="yes">
+<attribute name="MFG" value="Texas Instruments" x="-13.208" y="-118.618" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-13.8684" y="-117.36348125" size="1.016" layer="25" font="vector"/>
+<attribute name="PN" value="TPS22919DCK" x="-13.208" y="-118.618" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C78" library="EagleLibrary" package="0402" value="2.2u" x="-13.462" y="-121.158" smashed="yes">
+<attribute name="MFG" value="Taiyo Yuden" x="-13.462" y="-121.158" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-14.216" y="-120.602" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="TMK105CBJ225KV-F" x="-13.462" y="-121.158" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C79" library="EagleLibrary" package="0402" value="2.2u" x="-13.462" y="-123.698" smashed="yes">
+<attribute name="MFG" value="Taiyo Yuden" x="-13.462" y="-123.698" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-14.216" y="-123.142" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="TMK105CBJ225KV-F" x="-13.462" y="-123.698" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C80" library="EagleLibrary" package="0402" value="2.2u" x="-13.462" y="-126.238" smashed="yes">
+<attribute name="MFG" value="Taiyo Yuden" x="-13.462" y="-126.238" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-14.216" y="-125.682" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="TMK105CBJ225KV-F" x="-13.462" y="-126.238" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C81" library="EagleLibrary" package="0402" value="2.2u" x="-13.462" y="-128.778" smashed="yes">
+<attribute name="MFG" value="Taiyo Yuden" x="-13.462" y="-128.778" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-14.216" y="-128.222" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="TMK105CBJ225KV-F" x="-13.462" y="-128.778" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C82" library="EagleLibrary" package="0402" value="2.2u" x="-13.462" y="-131.318" smashed="yes">
+<attribute name="MFG" value="Taiyo Yuden" x="-13.462" y="-131.318" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-14.216" y="-130.762" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="TMK105CBJ225KV-F" x="-13.462" y="-131.318" size="1.778" layer="27" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="VDD_B">
@@ -3427,6 +3457,18 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C76" pad="2"/>
 <contactref element="C6" pad="2"/>
 <contactref element="R25" pad="1"/>
+<contactref element="U20" pad="2"/>
+<contactref element="C78" pad="2"/>
+<contactref element="C79" pad="2"/>
+<contactref element="C80" pad="2"/>
+<contactref element="C81" pad="2"/>
+<contactref element="C82" pad="2"/>
+<wire x1="-13.0295" y1="-128.778" x2="-13.0295" y2="-131.318" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.0295" y1="-126.238" x2="-13.0295" y2="-128.778" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.0295" y1="-123.698" x2="-13.0295" y2="-126.238" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.0295" y1="-121.158" x2="-13.0295" y2="-123.698" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.1703" y1="-118.618" x2="-13.0295" y2="-121.158" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.0325" y1="-114.7" x2="-14.1703" y2="-118.618" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.1675" y1="-112.3" x2="-14.0325" y2="-114.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-11.9246" y1="-109.9" x2="-13.1675" y2="-112.3" width="0" layer="19" extent="1-1"/>
 <wire x1="-10.8675" y1="-106.7" x2="-11.9246" y2="-109.9" width="0" layer="19" extent="1-1"/>
@@ -5740,21 +5782,21 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-12.3629" y1="-2.232" x2="15.6744" y2="24.913" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_USB">
-<contactref element="FB1" pad="2"/>
 <contactref element="H1" pad="9"/>
 <contactref element="R39" pad="2"/>
 <contactref element="R6" pad="2"/>
-<contactref element="D1" pad="2"/>
 <contactref element="U16" pad="3"/>
 <contactref element="U13" pad="1"/>
 <contactref element="C45" pad="1"/>
+<contactref element="D1" pad="2"/>
+<contactref element="U20" pad="6"/>
+<wire x1="-14.0325" y1="-85.5" x2="-12.2457" y2="-117.968" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.0644" y1="-79.25" x2="-14.0325" y2="-85.5" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.0623" y1="-72.95" x2="-14.0644" y2="-79.25" width="0" layer="19" extent="1-1"/>
 <wire x1="-11.45" y1="-40.902" x2="-14.0623" y2="-72.95" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.0295" y1="-35.06" x2="-11.45" y2="-40.902" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.0295" y1="-26.424" x2="-13.0295" y2="-35.06" width="0" layer="19" extent="1-1"/>
-<wire x1="36.523359375" y1="9.6494625" x2="-13.0295" y2="-26.424" width="0" layer="19" extent="1-16"/>
-<wire x1="37.731" y1="11.24" x2="36.523359375" y2="9.6494625" width="0" layer="19" extent="16-16"/>
+<wire x1="37.731" y1="11.24" x2="-13.0295" y2="-26.424" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="VDD_BAT">
 <contactref element="R3" pad="2"/>
@@ -6094,6 +6136,23 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U2" pad="C1"/>
 <contactref element="R25" pad="2"/>
 <wire x1="33.875978125" y1="38.3766" x2="-13.1675" y2="-114.7" width="0" layer="19" extent="1-16"/>
+</signal>
+<signal name="VDD_USB_IN">
+<contactref element="U20" pad="1"/>
+<contactref element="U20" pad="3"/>
+<contactref element="FB1" pad="2"/>
+<contactref element="C78" pad="1"/>
+<contactref element="C79" pad="1"/>
+<contactref element="C80" pad="1"/>
+<contactref element="C81" pad="1"/>
+<contactref element="C82" pad="1"/>
+<wire x1="-13.8945" y1="-128.778" x2="-13.8945" y2="-131.318" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.8945" y1="-126.238" x2="-13.8945" y2="-128.778" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.8945" y1="-123.698" x2="-13.8945" y2="-126.238" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.8945" y1="-121.158" x2="-13.8945" y2="-123.698" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.1703" y1="-119.268" x2="-13.8945" y2="-121.158" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.1703" y1="-117.968" x2="-14.1703" y2="-119.268" width="0" layer="19" extent="1-1"/>
+<wire x1="36.523359375" y1="9.6494625" x2="-14.1703" y2="-117.968" width="0" layer="19" extent="1-16"/>
 </signal>
 </signals>
 <mfgpreviewcolors>

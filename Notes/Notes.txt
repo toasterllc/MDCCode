@@ -2,7 +2,21 @@
     
     - Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
-    - Make sure we don't have too much capacitance on VDD_USB, or find a way to limit inrush current
+    √ Limit USB inrush current
+        - Also make sure no one's using VDD_USB directly -- only use the inrush-limited net
+        - Options:
+            LM3525MX-H/NOPB
+                $0.849 @ 100
+            
+            TPS2001DDBVT
+            
+            MIC94090YC6-TR
+                Soft-start isn't configurable
+                $0.25 @ 100
+            
+            TPS22919DCK
+                Already using in our design
+                $0.177 @ 100
     
     √ Update BusinessOrders.txt
     
@@ -175,6 +189,7 @@
     - EPSON-MC-306 (32kHz crystal -- need to test first before mass order)
     
     - TPS22919DCK (load switch)
+        - Mouser expects by 6/4/2021
     
     - MAX40203ANS+T (ideal diode)
         - Mouser expects by 6/4/2021
