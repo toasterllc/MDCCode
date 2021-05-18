@@ -1789,27 +1789,32 @@ the design uses this PLL</text>
 </symbol>
 <symbol name="STM-STM32F730I8-A">
 <wire x1="0" y1="-43.18" x2="0" y2="0" width="0.254" layer="94"/>
-<wire x1="0" y1="0" x2="15.24" y2="0" width="0.254" layer="94"/>
-<wire x1="15.24" y1="0" x2="15.24" y2="-43.18" width="0.254" layer="94"/>
-<wire x1="15.24" y1="-43.18" x2="0" y2="-43.18" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="27.94" y2="0" width="0.254" layer="94"/>
+<wire x1="27.94" y1="0" x2="27.94" y2="-43.18" width="0.254" layer="94"/>
+<wire x1="27.94" y1="-43.18" x2="0" y2="-43.18" width="0.254" layer="94"/>
 <text x="0.254" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="0" y="-45.72" size="1.778" layer="95">&gt;PN</text>
-<pin name="PA0_N3" x="20.32" y="-2.54" length="middle" rot="R180"/>
-<pin name="PA1_N2" x="20.32" y="-5.08" length="middle" rot="R180"/>
-<pin name="PA10_D15" x="20.32" y="-27.94" length="middle" rot="R180"/>
-<pin name="PA11_C15" x="20.32" y="-30.48" length="middle" rot="R180"/>
-<pin name="PA12_B15" x="20.32" y="-33.02" length="middle" rot="R180"/>
-<pin name="PA13_A15" x="20.32" y="-35.56" length="middle" rot="R180"/>
-<pin name="PA14_A14" x="20.32" y="-38.1" length="middle" rot="R180"/>
-<pin name="PA15_A13" x="20.32" y="-40.64" length="middle" rot="R180"/>
-<pin name="PA2_P2" x="20.32" y="-7.62" length="middle" rot="R180"/>
-<pin name="PA3_R2" x="20.32" y="-10.16" length="middle" rot="R180"/>
-<pin name="PA4_N4" x="20.32" y="-12.7" length="middle" rot="R180"/>
-<pin name="PA5_P4" x="20.32" y="-15.24" length="middle" rot="R180"/>
-<pin name="PA6_P3" x="20.32" y="-17.78" length="middle" rot="R180"/>
-<pin name="PA7_R3" x="20.32" y="-20.32" length="middle" rot="R180"/>
-<pin name="PA8_F15" x="20.32" y="-22.86" length="middle" rot="R180"/>
-<pin name="PA9_E15" x="20.32" y="-25.4" length="middle" rot="R180"/>
+<pin name="PA0_N3" x="33.02" y="-2.54" length="middle" rot="R180"/>
+<pin name="PA1_N2" x="33.02" y="-5.08" length="middle" rot="R180"/>
+<pin name="PA10_D15" x="33.02" y="-27.94" length="middle" rot="R180"/>
+<pin name="PA11_C15" x="33.02" y="-30.48" length="middle" rot="R180"/>
+<pin name="PA12_B15" x="33.02" y="-33.02" length="middle" rot="R180"/>
+<pin name="PA13_A15" x="33.02" y="-35.56" length="middle" rot="R180"/>
+<pin name="PA14_A14" x="33.02" y="-38.1" length="middle" rot="R180"/>
+<pin name="PA15_A13" x="33.02" y="-40.64" length="middle" rot="R180"/>
+<pin name="PA2_P2" x="33.02" y="-7.62" length="middle" rot="R180"/>
+<pin name="PA3_R2" x="33.02" y="-10.16" length="middle" rot="R180"/>
+<pin name="PA4_N4" x="33.02" y="-12.7" length="middle" rot="R180"/>
+<pin name="PA5_P4" x="33.02" y="-15.24" length="middle" rot="R180"/>
+<pin name="PA6_P3" x="33.02" y="-17.78" length="middle" rot="R180"/>
+<pin name="PA7_R3" x="33.02" y="-20.32" length="middle" rot="R180"/>
+<pin name="PA8_F15" x="33.02" y="-22.86" length="middle" rot="R180"/>
+<pin name="PA9_E15" x="33.02" y="-25.4" length="middle" rot="R180"/>
+<text x="12.7" y="-30.226" size="0.762" layer="95" align="top-right">Powered by VDDUSB;
+Only use with voltages
+tolerant of VDDUSB</text>
+<wire x1="14.986" y1="-30.48" x2="13.462" y2="-30.48" width="0.254" layer="95"/>
+<wire x1="14.986" y1="-33.02" x2="13.462" y2="-33.02" width="0.254" layer="95"/>
 </symbol>
 <symbol name="STM-STM32F730I8-B">
 <pin name="PB0_R5" x="20.32" y="-2.54" length="middle" rot="R180"/>
@@ -7823,15 +7828,11 @@ between input and output when its VDD=0.</text>
 &gt;1uF @ 3.3V bias</text>
 <text x="67.056" y="-220.218" size="1.016" layer="95" align="top-left">Derated to meet suggested
 &gt;1uF @ 1.8V bias</text>
-<text x="29.718" y="-40.386" size="0.508" layer="95" align="top-left">PA11 and PA12 are powered by VDDUSB,
-so don't use them!  (As outputs they'll
-drive a higher voltage; as inputs, they'll
-expect a higher voltage.)</text>
 </plain>
 <instances>
-<instance part="U12" gate="A" x="7.62" y="-10.16" smashed="yes">
-<attribute name="NAME" x="7.874" y="-7.62" size="1.778" layer="95" align="top-left"/>
-<attribute name="PN" x="7.62" y="-55.88" size="1.778" layer="95"/>
+<instance part="U12" gate="A" x="-5.08" y="-10.16" smashed="yes">
+<attribute name="NAME" x="-4.826" y="-7.62" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="-5.08" y="-55.88" size="1.778" layer="95"/>
 </instance>
 <instance part="U12" gate="B" x="48.26" y="-10.16" smashed="yes">
 <attribute name="NAME" x="48.514" y="-7.62" size="1.778" layer="95" align="top-left"/>
