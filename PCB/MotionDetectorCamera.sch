@@ -605,37 +605,37 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </polygon>
 </package>
 <package name="MOLEX-1051620001">
-<smd name="CLK" x="5" y="0.5" dx="0.5" dy="1" layer="1"/>
-<text x="0.442" y="8.6419" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<smd name="VDD" x="6.1" y="0.5" dx="0.5" dy="1" layer="1"/>
-<smd name="VSS" x="3.9" y="0.5" dx="0.5" dy="1" layer="1"/>
-<smd name="DAT0" x="2.8" y="0.5" dx="0.5" dy="1" layer="1"/>
-<smd name="DAT1" x="1.7" y="0.5" dx="0.5" dy="1" layer="1"/>
-<smd name="CMD" x="7.2" y="0.5" dx="0.5" dy="1" layer="1"/>
-<smd name="DAT3" x="8.3" y="0.5" dx="0.5" dy="1" layer="1"/>
-<smd name="DAT2" x="9.4" y="0.5" dx="0.5" dy="1" layer="1"/>
-<smd name="DET" x="11.16" y="3.18" dx="0.72" dy="0.78" layer="1"/>
-<smd name="GND1" x="11.175" y="4.45" dx="1.05" dy="1.08" layer="1"/>
-<smd name="GND2" x="11.175" y="7.06" dx="1.05" dy="1.2" layer="1"/>
-<smd name="NC1" x="3.705" y="7.735" dx="2.91" dy="0.55" layer="1"/>
-<smd name="NC2" x="7.895" y="7.735" dx="2.91" dy="0.55" layer="1"/>
-<smd name="GND3" x="0.525" y="6.49" dx="1.05" dy="1.2" layer="1"/>
-<smd name="GND4" x="0.525" y="3.305" dx="1.05" dy="2.39" layer="1"/>
-<wire x1="0.525" y1="7.735" x2="0.525" y2="-8" width="0.05" layer="21"/>
-<wire x1="0.525" y1="-8" x2="11.175" y2="-8" width="0.05" layer="21"/>
-<wire x1="11.175" y1="-8" x2="11.175" y2="7.735" width="0.05" layer="21"/>
-<wire x1="11.175" y1="7.735" x2="0.525" y2="7.735" width="0.05" layer="21"/>
+<smd name="CLK" x="-0.85" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<text x="-5.408" y="8.7744" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<smd name="VDD" x="0.25" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<smd name="VSS" x="-1.95" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<smd name="DAT0" x="-3.05" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<smd name="DAT1" x="-4.15" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<smd name="CMD" x="1.35" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<smd name="DAT3" x="2.45" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<smd name="DAT2" x="3.55" y="0.6325" dx="0.5" dy="1" layer="1"/>
+<smd name="DET" x="5.31" y="3.3125" dx="0.72" dy="0.78" layer="1"/>
+<smd name="GND1" x="5.325" y="4.5825" dx="1.05" dy="1.08" layer="1"/>
+<smd name="GND2" x="5.325" y="7.1925" dx="1.05" dy="1.2" layer="1"/>
+<smd name="NC1" x="-2.145" y="7.8675" dx="2.91" dy="0.55" layer="1"/>
+<smd name="NC2" x="2.045" y="7.8675" dx="2.91" dy="0.55" layer="1"/>
+<smd name="GND3" x="-5.325" y="6.6225" dx="1.05" dy="1.2" layer="1"/>
+<smd name="GND4" x="-5.325" y="3.4375" dx="1.05" dy="2.39" layer="1"/>
+<wire x1="-5.325" y1="7.8675" x2="-5.325" y2="-7.8675" width="0.05" layer="21"/>
+<wire x1="-5.325" y1="-7.8675" x2="5.325" y2="-7.8675" width="0.05" layer="21"/>
+<wire x1="5.325" y1="-7.8675" x2="5.325" y2="7.8675" width="0.05" layer="21"/>
+<wire x1="5.325" y1="7.8675" x2="-5.325" y2="7.8675" width="0.05" layer="21"/>
 <polygon width="0.05" layer="39">
-<vertex x="0.525" y="7.735"/>
-<vertex x="0.525" y="-8"/>
-<vertex x="11.175" y="-8"/>
-<vertex x="11.175" y="7.735"/>
+<vertex x="-5.325" y="7.8675"/>
+<vertex x="-5.325" y="-7.8675"/>
+<vertex x="5.325" y="-7.8675"/>
+<vertex x="5.325" y="7.8675"/>
 </polygon>
 <polygon width="0.05" layer="41">
-<vertex x="0.825" y="7.435"/>
-<vertex x="0.825" y="0.8"/>
-<vertex x="10.975" y="0.8"/>
-<vertex x="10.975" y="7.435"/>
+<vertex x="-5.025" y="7.5675"/>
+<vertex x="-5.025" y="0.9325"/>
+<vertex x="5.125" y="0.9325"/>
+<vertex x="5.125" y="7.5675"/>
 </polygon>
 </package>
 <package name="TEST-POINT">
