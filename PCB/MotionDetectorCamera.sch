@@ -1074,7 +1074,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="19" x="1.6846" y="1.75" dx="0.86" dy="0.26" layer="1" roundness="100"/>
 <smd name="20" x="0.75" y="2.1846" dx="0.86" dy="0.26" layer="1" roundness="100" rot="R90"/>
 <smd name="1" x="-0.75" y="2.1846" dx="0.86" dy="0.26" layer="1" roundness="100" rot="R90"/>
-<smd name="21" x="0" y="0" dx="2.05" dy="3.05" layer="1" thermals="no" cream="no"/>
+<smd name="21" x="0" y="0" dx="1" dy="1" layer="1" thermals="no" cream="no"/>
 <text x="-1.8" y="2.969" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="21">
 <vertex x="-1.779" y="2.275"/>
@@ -1087,8 +1087,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1.8" y="2.3"/>
 <vertex x="1.8" y="2.3"/>
 </polygon>
-<rectangle x1="-0.375" y1="1" x2="0.375" y2="2.6" layer="1"/>
-<rectangle x1="-0.375" y1="-2.6" x2="0.375" y2="-1" layer="1"/>
 <polygon width="0.127" layer="31">
 <vertex x="-0.4" y="1.1"/>
 <vertex x="-0.4" y="0.3"/>
@@ -1100,6 +1098,34 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-0.4" y="-1.1"/>
 <vertex x="0.4" y="-1.1"/>
 <vertex x="0.4" y="-0.3"/>
+</polygon>
+<polygon width="0.05" layer="1">
+<vertex x="-0.375" y="2.6"/>
+<vertex x="-0.375" y="1.525"/>
+<vertex x="-1.025" y="1.525"/>
+<vertex x="-1.025" y="-1.525"/>
+<vertex x="-0.375" y="-1.525"/>
+<vertex x="-0.375" y="-2.6"/>
+<vertex x="0.375" y="-2.6"/>
+<vertex x="0.375" y="-1.525"/>
+<vertex x="1.025" y="-1.525"/>
+<vertex x="1.025" y="1.525"/>
+<vertex x="0.375" y="1.525"/>
+<vertex x="0.375" y="2.6"/>
+</polygon>
+<polygon width="0.05" layer="29">
+<vertex x="-0.375" y="2.6"/>
+<vertex x="-0.375" y="1.525"/>
+<vertex x="-1.025" y="1.525"/>
+<vertex x="-1.025" y="-1.525"/>
+<vertex x="-0.375" y="-1.525"/>
+<vertex x="-0.375" y="-2.6"/>
+<vertex x="0.375" y="-2.6"/>
+<vertex x="0.375" y="-1.525"/>
+<vertex x="1.025" y="-1.525"/>
+<vertex x="1.025" y="1.525"/>
+<vertex x="0.375" y="1.525"/>
+<vertex x="0.375" y="2.6"/>
 </polygon>
 </package>
 <package name="TI-SN74AXC4T774RSV" urn="urn:adsk.eagle:footprint:28411408/1" locally_modified="yes">
