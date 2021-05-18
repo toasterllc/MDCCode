@@ -1,4 +1,8 @@
-- Rev4 PCB Todo
+- Rev4 Layout Todo
+    - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
+
+
+- Rev4 Schematic Todo
     
     √ Replace VDD_A/VDD_B jumpers with something that allows easy current sensing
     
