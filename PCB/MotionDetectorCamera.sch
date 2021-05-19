@@ -3949,8 +3949,6 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="RC0402FR-0756KL"/>
 </part>
 <part name="TP6" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="TP8" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="TP9" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="J1" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device="">
 <attribute name="MFG" value="Marshall Electronics"/>
 <attribute name="PN" value="V-LH4"/>
@@ -6786,12 +6784,6 @@ between input and output when its VDD=0.</text>
 <attribute name="MFG" x="35.56" y="43.18" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="35.56" y="43.18" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="TP8" gate="G$1" x="149.86" y="10.16" smashed="yes">
-<attribute name="NAME" x="149.86" y="10.922" size="1.778" layer="95"/>
-</instance>
-<instance part="TP9" gate="G$1" x="149.86" y="5.08" smashed="yes">
-<attribute name="NAME" x="150.114" y="5.588" size="1.778" layer="95"/>
-</instance>
 <instance part="J1" gate="G$1" x="228.6" y="55.88" smashed="yes">
 <attribute name="NAME" x="228.6" y="56.642" size="1.778" layer="95"/>
 <attribute name="MFG" x="228.6" y="55.88" size="1.778" layer="96" display="off"/>
@@ -7112,22 +7104,12 @@ between input and output when its VDD=0.</text>
 <wire x1="154.94" y1="50.8" x2="152.4" y2="50.8" width="0.1524" layer="91"/>
 <label x="152.4" y="50.8" size="1.778" layer="95" align="bottom-right"/>
 </segment>
-<segment>
-<pinref part="TP8" gate="G$1" pin="X"/>
-<wire x1="149.86" y1="10.16" x2="147.32" y2="10.16" width="0.1524" layer="91"/>
-<label x="147.32" y="10.16" size="1.778" layer="95" align="bottom-right"/>
-</segment>
 </net>
 <net name="IMG_SDATA" class="0">
 <segment>
 <pinref part="U5" gate="B" pin="SDATA"/>
 <wire x1="154.94" y1="48.26" x2="152.4" y2="48.26" width="0.1524" layer="91"/>
 <label x="152.4" y="48.26" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<pinref part="TP9" gate="G$1" pin="X"/>
-<wire x1="149.86" y1="5.08" x2="147.32" y2="5.08" width="0.1524" layer="91"/>
-<label x="147.32" y="5.08" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="R17" gate="G$1" pin="2"/>
