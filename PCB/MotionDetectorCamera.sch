@@ -4239,6 +4239,10 @@ tolerant of VDDUSB</text>
 <part name="J4" library="EagleLibrary" deviceset="JUMPER" device=""/>
 <part name="J5" library="EagleLibrary" deviceset="JUMPER" device=""/>
 <part name="J6" library="EagleLibrary" deviceset="JUMPER" device=""/>
+<part name="C75" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -6690,7 +6694,7 @@ below the chip.</text>
 <text x="15.24" y="48.26" size="1.778" layer="95" align="bottom-right">VDD Bypassing</text>
 <text x="15.24" y="20.32" size="1.778" layer="95" align="bottom-right">VDD_IO Bypassing</text>
 <text x="15.24" y="5.08" size="1.778" layer="95" align="bottom-right">VDD_PLL Bypassing</text>
-<text x="48.26" y="-3.556" size="1.016" layer="95" align="top-left">This buffer blocks the clock while the PIX domain isn't
+<text x="159.766" y="85.344" size="1.016" layer="95" align="top-left">This buffer blocks the clock while the PIX domain isn't
 powered. It works simply by taking advantage of the
 buffer's "I_Off" behavior, which guarantees no leakage
 between input and output when its VDD=0.</text>
@@ -6799,9 +6803,15 @@ between input and output when its VDD=0.</text>
 <attribute name="MFG" x="116.84" y="50.8" size="1.778" layer="96" rot="R270" display="off"/>
 <attribute name="PN" x="116.84" y="50.8" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="U18" gate="G$1" x="83.82" y="10.16" smashed="yes">
-<attribute name="PN" x="93.98" y="-5.08" size="1.778" layer="95" align="top-left"/>
-<attribute name="NAME" x="93.98" y="5.842" size="1.778" layer="95" align="top-left"/>
+<instance part="U18" gate="G$1" x="167.64" y="109.22" smashed="yes">
+<attribute name="PN" x="177.8" y="93.98" size="1.778" layer="95" align="top-left"/>
+<attribute name="NAME" x="177.8" y="104.902" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="C75" gate="G$1" x="132.842" y="101.092" smashed="yes">
+<attribute name="NAME" x="130.556" y="100.711" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="130.556" y="98.171" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="132.842" y="101.092" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="132.842" y="101.092" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -6854,13 +6864,18 @@ between input and output when its VDD=0.</text>
 </segment>
 <segment>
 <pinref part="U18" gate="G$1" pin="EN"/>
-<wire x1="81.28" y1="5.08" x2="78.74" y2="5.08" width="0.1524" layer="91"/>
-<label x="78.74" y="5.08" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="165.1" y1="104.14" x2="162.56" y2="104.14" width="0.1524" layer="91"/>
+<label x="162.56" y="104.14" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U18" gate="G$1" pin="VDD"/>
-<wire x1="91.44" y1="7.62" x2="91.44" y2="10.16" width="0.1524" layer="91"/>
-<label x="91.44" y="10.16" size="1.778" layer="95"/>
+<wire x1="175.26" y1="106.68" x2="175.26" y2="109.22" width="0.1524" layer="91"/>
+<label x="175.26" y="109.22" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="C75" gate="G$1" pin="1"/>
+<wire x1="132.842" y1="103.632" x2="132.842" y2="106.172" width="0.1524" layer="91"/>
+<label x="132.842" y="106.172" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -6932,15 +6947,20 @@ between input and output when its VDD=0.</text>
 </segment>
 <segment>
 <pinref part="U18" gate="G$1" pin="GND"/>
-<wire x1="91.44" y1="-7.62" x2="91.44" y2="-10.16" width="0.1524" layer="91"/>
-<label x="91.44" y="-10.16" size="1.778" layer="95"/>
+<wire x1="175.26" y1="91.44" x2="175.26" y2="88.9" width="0.1524" layer="91"/>
+<label x="175.26" y="88.9" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="C75" gate="G$1" pin="2"/>
+<wire x1="132.842" y1="96.012" x2="132.842" y2="93.472" width="0.1524" layer="91"/>
+<label x="132.842" y="93.472" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="ICE_IMG_CLK16MHZ" class="0">
 <segment>
 <pinref part="U18" gate="G$1" pin="IN"/>
-<wire x1="81.28" y1="0" x2="78.74" y2="0" width="0.1524" layer="91"/>
-<label x="78.74" y="0" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="165.1" y1="99.06" x2="162.56" y2="99.06" width="0.1524" layer="91"/>
+<label x="162.56" y="99.06" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="VDD_2V8_IMG" class="0">
@@ -7118,8 +7138,8 @@ between input and output when its VDD=0.</text>
 <net name="IMG_CLK16MHZ" class="0">
 <segment>
 <pinref part="U18" gate="G$1" pin="OUT"/>
-<wire x1="101.6" y1="0" x2="104.14" y2="0" width="0.1524" layer="91"/>
-<label x="104.14" y="0" size="1.778" layer="95"/>
+<wire x1="185.42" y1="99.06" x2="187.96" y2="99.06" width="0.1524" layer="91"/>
+<label x="187.96" y="99.06" size="1.778" layer="95"/>
 </segment>
 <segment>
 <wire x1="152.4" y1="60.96" x2="154.94" y2="60.96" width="0.1524" layer="91"/>
