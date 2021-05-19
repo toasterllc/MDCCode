@@ -193,9 +193,11 @@
     
     - EKMB1107112 (motion sensor -- need to test first before mass order)
     
-    - EPSON-MC-306 (32kHz crystal -- need to test first before mass order)
+    - MC-306 32.7680K-E3:ROHS (32kHz crystal -- need to test first before mass order)
+        - Mouser expects by 5/20/2021
     
     - TPS22919DCK (load switch)
+        - In stock at DigiKey
         - Mouser expects by 6/4/2021
     
     - MAX40203ANS+T (ideal diode)
@@ -214,7 +216,7 @@
             - Waiting for quote for 15x
     
     - BKP1005EM100-T (ferrite bead)
-        - Mouser expects by 6/22/2021
+        - Mouser expects by 6/8/2021
     
     √ Rochester
         AR0330CS1C12SPKA0-CR
