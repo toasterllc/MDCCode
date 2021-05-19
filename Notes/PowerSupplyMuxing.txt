@@ -32,6 +32,26 @@ Power Supply Muxing
     VDD_BAT = [-4,4]
     
 
+- Diodes
+    RB168MM-40TFTR
+        Reverse leakage: 50 nA
+        Voltage drop: 600 mV
+        Max current: 1 A
+        Price: $0.171 @ 100
+    
+    PMEG60T10ELPX
+        Reverse leakage: 130 nA
+        Voltage drop: 520 mV
+        Max current: 1.4 A
+        Price: $0.167 @ 100
+    
+    MSS2P2-M3/89A
+        Reverse leakage: 250,000 nA
+        Voltage drop: 600 mA
+        Max current: 2 A
+        Price: $0.158 @ 100
+
+
 - Potential solutions
     - TPS22916
         - Supply voltage: 1V – 5.5V
