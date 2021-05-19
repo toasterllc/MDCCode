@@ -1,5 +1,6 @@
 - Rev4 Layout Todo
     - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
+    - Length-match SD lines
 
 
 - Rev4 Schematic Todo

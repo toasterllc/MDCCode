@@ -6557,34 +6557,6 @@ below the chip.</text>
 <pinref part="U4" gate="A" pin="B9"/>
 </segment>
 </net>
-<net name="SD_DAT0" class="0">
-<segment>
-<wire x1="149.86" y1="66.04" x2="152.4" y2="66.04" width="0.1524" layer="91"/>
-<label x="152.4" y="66.04" size="1.778" layer="95"/>
-<pinref part="U4" gate="C" pin="L1"/>
-</segment>
-</net>
-<net name="SD_DAT1" class="0">
-<segment>
-<wire x1="149.86" y1="63.5" x2="152.4" y2="63.5" width="0.1524" layer="91"/>
-<label x="152.4" y="63.5" size="1.778" layer="95"/>
-<pinref part="U4" gate="C" pin="L2"/>
-</segment>
-</net>
-<net name="SD_DAT3" class="0">
-<segment>
-<wire x1="149.86" y1="60.96" x2="152.4" y2="60.96" width="0.1524" layer="91"/>
-<label x="152.4" y="60.96" size="1.778" layer="95"/>
-<pinref part="U4" gate="C" pin="L3"/>
-</segment>
-</net>
-<net name="SD_DAT2" class="0">
-<segment>
-<wire x1="149.86" y1="58.42" x2="152.4" y2="58.42" width="0.1524" layer="91"/>
-<label x="152.4" y="58.42" size="1.778" layer="95"/>
-<pinref part="U4" gate="C" pin="L4"/>
-</segment>
-</net>
 <net name="RAM_A11" class="0">
 <segment>
 <wire x1="213.36" y1="50.8" x2="215.9" y2="50.8" width="0.1524" layer="91"/>
@@ -6676,25 +6648,53 @@ below the chip.</text>
 <pinref part="U4" gate="D" pin="K2"/>
 </segment>
 </net>
-<net name="SD_CLK" class="0">
+<net name="ICE_MSP_SPI_AUX" class="0">
 <segment>
-<wire x1="149.86" y1="55.88" x2="152.4" y2="55.88" width="0.1524" layer="91"/>
-<label x="152.4" y="55.88" size="1.778" layer="95"/>
-<pinref part="U4" gate="C" pin="L5"/>
+<wire x1="149.86" y1="48.26" x2="152.4" y2="48.26" width="0.1524" layer="91"/>
+<label x="152.4" y="48.26" size="1.778" layer="95"/>
+<pinref part="U4" gate="C" pin="K3"/>
 </segment>
 </net>
-<net name="SD_CMD" class="0">
+<net name="SD_DAT1" class="0">
+<segment>
+<wire x1="149.86" y1="66.04" x2="152.4" y2="66.04" width="0.1524" layer="91"/>
+<label x="152.4" y="66.04" size="1.778" layer="95"/>
+<pinref part="U4" gate="C" pin="L1"/>
+</segment>
+</net>
+<net name="SD_DAT0" class="0">
+<segment>
+<wire x1="149.86" y1="63.5" x2="152.4" y2="63.5" width="0.1524" layer="91"/>
+<label x="152.4" y="63.5" size="1.778" layer="95"/>
+<pinref part="U4" gate="C" pin="L2"/>
+</segment>
+</net>
+<net name="SD_CLK" class="0">
+<segment>
+<wire x1="149.86" y1="60.96" x2="152.4" y2="60.96" width="0.1524" layer="91"/>
+<label x="152.4" y="60.96" size="1.778" layer="95"/>
+<pinref part="U4" gate="C" pin="L3"/>
+</segment>
+</net>
+<net name="SD_DAT2" class="0">
 <segment>
 <wire x1="149.86" y1="43.18" x2="152.4" y2="43.18" width="0.1524" layer="91"/>
 <label x="152.4" y="43.18" size="1.778" layer="95"/>
 <pinref part="U4" gate="C" pin="K5"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_AUX" class="0">
+<net name="SD_CMD" class="0">
 <segment>
-<wire x1="149.86" y1="48.26" x2="152.4" y2="48.26" width="0.1524" layer="91"/>
-<label x="152.4" y="48.26" size="1.778" layer="95"/>
-<pinref part="U4" gate="C" pin="K3"/>
+<wire x1="149.86" y1="45.72" x2="152.4" y2="45.72" width="0.1524" layer="91"/>
+<label x="152.4" y="45.72" size="1.778" layer="95"/>
+<pinref part="U4" gate="C" pin="K4"/>
+</segment>
+</net>
+<net name="SD_DAT3" class="0">
+<segment>
+<wire x1="149.86" y1="58.42" x2="152.4" y2="58.42" width="0.1524" layer="91"/>
+<label x="152.4" y="58.42" size="1.778" layer="95"/>
+<pinref part="U4" gate="C" pin="L4"/>
 </segment>
 </net>
 </nets>
