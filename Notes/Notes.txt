@@ -1,6 +1,7 @@
 - Rev4 Layout Todo
     - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
     - Length-match SD lines
+    - Make sure there are no parts inside the lens holder
 
 
 - Rev4 Schematic Todo
