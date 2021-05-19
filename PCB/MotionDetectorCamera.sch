@@ -8538,7 +8538,7 @@ between input and output when its VDD=0.</text>
 <sheet>
 <description>USB</description>
 <plain>
-<text x="40.894" y="-1.524" size="0.508" layer="97">Low-pass filter using ferrite bead and bulk capacitance on +VDD net.
+<text x="51.054" y="-1.524" size="0.508" layer="97">Low-pass filter using ferrite bead and bulk capacitance on +VDD net.
 Based on CurrentSensor design.
 
 Ferrite bead specs:
@@ -8551,13 +8551,13 @@ Ferrite bead specs:
 <instance part="J2" gate="G$1" x="5.08" y="-5.08" smashed="yes">
 <attribute name="NAME" x="5.08" y="-2.54" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="FB1" gate="G$1" x="43.18" y="-7.62" smashed="yes">
-<attribute name="NAME" x="43.18" y="-5.08" size="1.778" layer="95"/>
-<attribute name="MFG" x="43.18" y="-7.62" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="43.18" y="-7.62" size="1.778" layer="96" display="off"/>
+<instance part="FB1" gate="G$1" x="53.34" y="-7.62" smashed="yes">
+<attribute name="NAME" x="53.34" y="-5.08" size="1.778" layer="95"/>
+<attribute name="MFG" x="53.34" y="-7.62" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="53.34" y="-7.62" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U17" gate="G$1" x="35.56" y="-35.56" smashed="yes">
-<attribute name="NAME" x="35.56" y="-33.02" size="1.778" layer="95" align="top-left"/>
+<instance part="U17" gate="G$1" x="45.72" y="-35.56" smashed="yes">
+<attribute name="NAME" x="45.72" y="-33.02" size="1.778" layer="95" align="top-left"/>
 </instance>
 </instances>
 <busses>
@@ -8566,55 +8566,65 @@ Ferrite bead specs:
 <net name="GND" class="0">
 <segment>
 <pinref part="J2" gate="G$1" pin="GND"/>
-<wire x1="22.86" y1="-10.16" x2="30.48" y2="-10.16" width="0.1524" layer="91"/>
-<label x="35.56" y="-10.16" size="1.778" layer="95"/>
-<wire x1="30.48" y1="-10.16" x2="35.56" y2="-10.16" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="-40.64" x2="30.48" y2="-40.64" width="0.1524" layer="91"/>
-<wire x1="30.48" y1="-40.64" x2="30.48" y2="-10.16" width="0.1524" layer="91"/>
-<junction x="30.48" y="-10.16"/>
+<wire x1="22.86" y1="-10.16" x2="40.64" y2="-10.16" width="0.1524" layer="91"/>
+<label x="45.72" y="-10.16" size="1.778" layer="95"/>
+<wire x1="40.64" y1="-10.16" x2="45.72" y2="-10.16" width="0.1524" layer="91"/>
+<wire x1="43.18" y1="-40.64" x2="40.64" y2="-40.64" width="0.1524" layer="91"/>
+<wire x1="40.64" y1="-40.64" x2="40.64" y2="-10.16" width="0.1524" layer="91"/>
+<junction x="40.64" y="-10.16"/>
 <pinref part="U17" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="USB_D+" class="0">
 <segment>
 <pinref part="J2" gate="G$1" pin="D+"/>
-<label x="35.56" y="-17.78" size="1.778" layer="95"/>
-<wire x1="22.86" y1="-17.78" x2="27.94" y2="-17.78" width="0.1524" layer="91"/>
-<wire x1="27.94" y1="-17.78" x2="35.56" y2="-17.78" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="-45.72" x2="27.94" y2="-45.72" width="0.1524" layer="91"/>
-<wire x1="27.94" y1="-45.72" x2="27.94" y2="-17.78" width="0.1524" layer="91"/>
-<junction x="27.94" y="-17.78"/>
-<pinref part="U17" gate="G$1" pin="IO1"/>
+<label x="45.72" y="-17.78" size="1.778" layer="95"/>
+<wire x1="22.86" y1="-17.78" x2="35.56" y2="-17.78" width="0.1524" layer="91"/>
+<pinref part="U17" gate="G$1" pin="IO2"/>
+<wire x1="35.56" y1="-17.78" x2="45.72" y2="-17.78" width="0.1524" layer="91"/>
+<wire x1="35.56" y1="-48.26" x2="43.18" y2="-48.26" width="0.1524" layer="91"/>
+<wire x1="35.56" y1="-48.26" x2="35.56" y2="-17.78" width="0.1524" layer="91"/>
+<junction x="35.56" y="-17.78"/>
 </segment>
 </net>
 <net name="USB_D-" class="0">
 <segment>
 <pinref part="J2" gate="G$1" pin="D-"/>
-<label x="35.56" y="-20.32" size="1.778" layer="95"/>
-<wire x1="22.86" y1="-20.32" x2="25.4" y2="-20.32" width="0.1524" layer="91"/>
-<wire x1="25.4" y1="-20.32" x2="35.56" y2="-20.32" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="-48.26" x2="25.4" y2="-48.26" width="0.1524" layer="91"/>
-<wire x1="25.4" y1="-48.26" x2="25.4" y2="-20.32" width="0.1524" layer="91"/>
-<junction x="25.4" y="-20.32"/>
-<pinref part="U17" gate="G$1" pin="IO2"/>
+<label x="45.72" y="-20.32" size="1.778" layer="95"/>
+<wire x1="22.86" y1="-20.32" x2="38.1" y2="-20.32" width="0.1524" layer="91"/>
+<wire x1="38.1" y1="-20.32" x2="45.72" y2="-20.32" width="0.1524" layer="91"/>
+<junction x="38.1" y="-20.32"/>
+<pinref part="U17" gate="G$1" pin="IO1"/>
+<wire x1="38.1" y1="-45.72" x2="38.1" y2="-20.32" width="0.1524" layer="91"/>
+<wire x1="38.1" y1="-45.72" x2="43.18" y2="-45.72" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$54" class="0">
 <segment>
 <pinref part="J2" gate="G$1" pin="VCC"/>
 <pinref part="FB1" gate="G$1" pin="P$1"/>
-<wire x1="22.86" y1="-7.62" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
+<wire x1="22.86" y1="-7.62" x2="30.48" y2="-7.62" width="0.1524" layer="91"/>
+<wire x1="30.48" y1="-7.62" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="33.02" y1="-7.62" x2="43.18" y2="-7.62" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="-38.1" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
-<junction x="33.02" y="-7.62"/>
+<wire x1="43.18" y1="-7.62" x2="53.34" y2="-7.62" width="0.1524" layer="91"/>
+<wire x1="43.18" y1="-38.1" x2="43.18" y2="-7.62" width="0.1524" layer="91"/>
+<junction x="43.18" y="-7.62"/>
 <pinref part="U17" gate="G$1" pin="VDD"/>
+<pinref part="U17" gate="G$1" pin="IO3"/>
+<wire x1="43.18" y1="-50.8" x2="33.02" y2="-50.8" width="0.1524" layer="91"/>
+<wire x1="33.02" y1="-50.8" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
+<junction x="33.02" y="-7.62"/>
+<pinref part="U17" gate="G$1" pin="IO4"/>
+<wire x1="43.18" y1="-53.34" x2="30.48" y2="-53.34" width="0.1524" layer="91"/>
+<wire x1="30.48" y1="-53.34" x2="30.48" y2="-7.62" width="0.1524" layer="91"/>
+<junction x="30.48" y="-7.62"/>
 </segment>
 </net>
 <net name="VDD_USB_IN" class="0">
 <segment>
 <pinref part="FB1" gate="G$1" pin="P$2"/>
-<wire x1="50.8" y1="-7.62" x2="53.34" y2="-7.62" width="0.1524" layer="91"/>
-<label x="53.34" y="-7.62" size="1.778" layer="95"/>
+<wire x1="60.96" y1="-7.62" x2="63.5" y2="-7.62" width="0.1524" layer="91"/>
+<label x="63.5" y="-7.62" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
