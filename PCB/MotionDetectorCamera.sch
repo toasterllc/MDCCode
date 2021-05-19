@@ -8499,20 +8499,6 @@ between input and output when its VDD=0.</text>
 <label x="30.48" y="-154.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="MSP_RST_" class="0">
-<segment>
-<pinref part="U12" gate="D" pin="PD7_A11"/>
-<wire x1="170.18" y1="-30.48" x2="172.72" y2="-30.48" width="0.1524" layer="91"/>
-<label x="172.72" y="-30.48" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="MSP_TEST" class="0">
-<segment>
-<pinref part="U12" gate="B" pin="PB3_A10"/>
-<wire x1="68.58" y1="-20.32" x2="71.12" y2="-20.32" width="0.1524" layer="91"/>
-<label x="71.12" y="-20.32" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="VDD_3V3_STM" class="0">
 <segment>
 <pinref part="U12" gate="K" pin="VDDUSB_H13"/>
@@ -8531,6 +8517,20 @@ between input and output when its VDD=0.</text>
 <pinref part="H1" gate="G$1" pin="9"/>
 <wire x1="226.06" y1="-99.06" x2="223.52" y2="-99.06" width="0.1524" layer="91"/>
 <label x="223.52" y="-99.06" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+</net>
+<net name="MSP_TEST" class="0">
+<segment>
+<wire x1="68.58" y1="-15.24" x2="71.12" y2="-15.24" width="0.1524" layer="91"/>
+<label x="71.12" y="-15.24" size="1.778" layer="95"/>
+<pinref part="U12" gate="B" pin="PB1_R4"/>
+</segment>
+</net>
+<net name="MSP_RST_" class="0">
+<segment>
+<wire x1="68.58" y1="-12.7" x2="71.12" y2="-12.7" width="0.1524" layer="91"/>
+<label x="71.12" y="-12.7" size="1.778" layer="95"/>
+<pinref part="U12" gate="B" pin="PB0_R5"/>
 </segment>
 </net>
 </nets>
