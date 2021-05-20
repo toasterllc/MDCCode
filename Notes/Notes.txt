@@ -3,6 +3,7 @@
     - Length-match SD lines
     - Length-match RAM lines
     - Length-match STM<->ICE SPI lines
+    - Length-match USB+/USB- lines
     - Make sure there are no parts inside the lens holder
     - Make sure we're following the layout guidelines for crystals
     - Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
