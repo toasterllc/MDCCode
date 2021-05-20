@@ -8856,6 +8856,11 @@ between input and output when its VDD=0.</text>
 <wire x1="231.14" y1="-45.72" x2="231.14" y2="-43.18" width="0.1524" layer="91"/>
 <label x="231.14" y="-43.18" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U12" gate="E" pin="PE10_R9"/>
+<wire x1="27.94" y1="-99.06" x2="30.48" y2="-99.06" width="0.1524" layer="91"/>
+<label x="30.48" y="-99.06" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="STM_LED2" class="0">
 <segment>
@@ -8863,12 +8868,22 @@ between input and output when its VDD=0.</text>
 <wire x1="215.9" y1="-45.72" x2="215.9" y2="-43.18" width="0.1524" layer="91"/>
 <label x="215.9" y="-43.18" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U12" gate="E" pin="PE7_R8"/>
+<wire x1="27.94" y1="-91.44" x2="30.48" y2="-91.44" width="0.1524" layer="91"/>
+<label x="30.48" y="-91.44" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="STM_LED3" class="0">
 <segment>
 <pinref part="LED7" gate="G$1" pin="A"/>
 <wire x1="200.66" y1="-45.72" x2="200.66" y2="-43.18" width="0.1524" layer="91"/>
 <label x="200.66" y="-43.18" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="U12" gate="F" pin="PF14_R7"/>
+<wire x1="68.58" y1="-109.22" x2="71.12" y2="-109.22" width="0.1524" layer="91"/>
+<label x="71.12" y="-109.22" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
