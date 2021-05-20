@@ -8,7 +8,7 @@
 </settings>
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
@@ -22,33 +22,33 @@
 <layer number="12" name="Route12" color="20" fill="1" visible="no" active="no"/>
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
-<layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
+<layer number="15" name="Power" color="42" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
-<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="no" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
-<layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="20" name="Dimension" color="24" fill="1" visible="no" active="yes"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="yes"/>
 <layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
 <layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
 <layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
 <layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
@@ -5867,12 +5867,20 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="-0.508" y="27.840940625"/>
 </polygon>
 <polygon width="0.127" layer="15" thermals="no">
-<vertex x="-2.032" y="10.414"/>
+<vertex x="-2.032" y="16.256"/>
 <vertex x="-2.032" y="8.382"/>
 <vertex x="16.256" y="8.382"/>
 <vertex x="16.256" y="18.120359375"/>
-<vertex x="8.636" y="18.120359375"/>
-<vertex x="8.636" y="10.414"/>
+<vertex x="8.3693" y="18.120359375"/>
+<vertex x="8.3693" y="11.70178125"/>
+<vertex x="0.762" y="11.70178125"/>
+<vertex x="0.762" y="14.732"/>
+<vertex x="4.572" y="14.732"/>
+<vertex x="4.572" y="30.226"/>
+<vertex x="-2.54" y="30.226"/>
+<vertex x="-2.54" y="18.8468"/>
+<vertex x="-0.762" y="18.8468"/>
+<vertex x="-0.762" y="16.256"/>
 </polygon>
 <via x="11.160759375" y="14.5288" extent="1-16" drill="0.381" diameter="0.254"/>
 <via x="12.73301875" y="16.390621875" extent="1-16" drill="0.381" diameter="0.254"/>
@@ -5917,8 +5925,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <wire x1="11.287759375" y1="12.827696875" x2="11.287759375" y2="14.4018" width="0.508" layer="16"/>
 <wire x1="11.287759375" y1="14.4018" x2="11.160759375" y2="14.5288" width="0.508" layer="16"/>
-<wire x1="11.287759375" y1="12.827696875" x2="10.280925" y2="10.684784375" width="0" layer="19" extent="16-16"/>
-<wire x1="-1.24" y1="27.2046" x2="11.86434375" y2="17.769840625" width="0" layer="19" extent="1-1"/>
+<via x="8.636" y="11.176" extent="1-16" drill="0.381"/>
+<via x="8.636" y="10.414" extent="1-16" drill="0.381"/>
+<via x="8.636" y="9.652" extent="1-16" drill="0.381"/>
+<polygon width="0.127" layer="16" thermals="no">
+<vertex x="8.382" y="11.43"/>
+<vertex x="8.382" y="9.349740625"/>
+<vertex x="11.30808125" y="9.349740625"/>
+<vertex x="11.30808125" y="11.43"/>
+</polygon>
 </signal>
 <signal name="N$6">
 <contactref element="R23" pad="2"/>
