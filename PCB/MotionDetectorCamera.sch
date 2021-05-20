@@ -1390,8 +1390,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <pad name="1" x="-2.54" y="0" drill="0.65"/>
 <pad name="3" x="2.54" y="0" drill="0.65"/>
 <pad name="2" x="0" y="2.54" drill="0.65"/>
-<circle x="0" y="0" radius="5.5" width="0.127" layer="39"/>
-<circle x="0" y="0" radius="5.5" width="0.127" layer="41"/>
+<circle x="0" y="0" radius="1.778" width="7.62" layer="39"/>
+<circle x="0" y="0" radius="1.778" width="7.62" layer="41"/>
 </package>
 <package name="AMPHENOL-10129380-902002ALF">
 <description>Chip, 1.00 X 0.50 X 0.50 mm body

@@ -4,7 +4,8 @@
     - Make sure there are no parts inside the lens holder
     - Make sure we're following the layout guidelines for crystals
     - Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
-    - Add lots of fround vias
+    - Add lots of ground vias
+    - Make sure 2x 1V2 bypass capacitors at the bottom-right of the ice40 are positioned well
 
 - Rev4 Schematic Todo
     
