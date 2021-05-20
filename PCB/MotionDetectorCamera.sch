@@ -1726,47 +1726,47 @@ the design uses this PLL</text>
 <wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
 <text x="0" y="-30.48" size="1.778" layer="95">&gt;PN</text>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
-<pin name="AGND" x="-2.54" y="-10.16" visible="pin" length="short"/>
-<pin name="DGND" x="-2.54" y="-25.4" visible="pin" length="short"/>
-<pin name="VAA" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<pin name="VAAHV_NPIX" x="-2.54" y="-5.08" visible="pin" length="short"/>
-<pin name="VAA_PIX" x="-2.54" y="-7.62" visible="pin" length="short"/>
-<pin name="VDD" x="-2.54" y="-15.24" visible="pin" length="short"/>
-<pin name="VDD_IO" x="-2.54" y="-17.78" visible="pin" length="short"/>
-<pin name="VDD_MIPI" x="-2.54" y="-20.32" visible="pin" length="short"/>
-<pin name="VDD_PLL" x="-2.54" y="-22.86" visible="pin" length="short"/>
+<pin name="AGND" x="-2.54" y="-10.16" length="short"/>
+<pin name="DGND" x="-2.54" y="-25.4" length="short"/>
+<pin name="VAA" x="-2.54" y="-2.54" length="short"/>
+<pin name="VAAHV_NPIX" x="-2.54" y="-5.08" length="short"/>
+<pin name="VAA_PIX" x="-2.54" y="-7.62" length="short"/>
+<pin name="VDD" x="-2.54" y="-15.24" length="short"/>
+<pin name="VDD_IO" x="-2.54" y="-17.78" length="short"/>
+<pin name="VDD_MIPI" x="-2.54" y="-20.32" length="short"/>
+<pin name="VDD_PLL" x="-2.54" y="-22.86" length="short"/>
 </symbol>
 <symbol name="ON-AR0330CS1C12SPKA0-B">
-<pin name="CLK_N" x="-2.54" y="-25.4" visible="pin" length="short"/>
-<pin name="CLK_P" x="-2.54" y="-27.94" visible="pin" length="short"/>
-<pin name="DATA2_N" x="-2.54" y="-30.48" visible="pin" length="short"/>
-<pin name="DATA2_P" x="-2.54" y="-33.02" visible="pin" length="short"/>
-<pin name="DATA_N" x="-2.54" y="-35.56" visible="pin" length="short"/>
-<pin name="DATA_P" x="-2.54" y="-38.1" visible="pin" length="short"/>
-<pin name="DOUT0" x="33.02" y="-30.48" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT1" x="33.02" y="-27.94" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT2" x="33.02" y="-25.4" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT3" x="33.02" y="-22.86" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT4" x="33.02" y="-20.32" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT5" x="33.02" y="-17.78" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT6" x="33.02" y="-15.24" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT7" x="33.02" y="-12.7" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT8" x="33.02" y="-10.16" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT9" x="33.02" y="-7.62" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT10" x="33.02" y="-5.08" visible="pin" length="short" rot="R180"/>
-<pin name="DOUT11" x="33.02" y="-2.54" visible="pin" length="short" rot="R180"/>
-<pin name="EXTCLK" x="-2.54" y="-7.62" visible="pin" length="short"/>
-<pin name="FLASH" x="33.02" y="-43.18" visible="pin" length="short" rot="R180"/>
-<pin name="FRAME_VALID" x="33.02" y="-40.64" visible="pin" length="short" rot="R180"/>
-<pin name="LINE_VALID" x="33.02" y="-38.1" visible="pin" length="short" rot="R180"/>
-<pin name="PIXCLK" x="33.02" y="-35.56" visible="pin" length="short" rot="R180"/>
-<pin name="RST_" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<pin name="SADDR" x="-2.54" y="-15.24" visible="pin" length="short"/>
-<pin name="SCLK" x="-2.54" y="-17.78" visible="pin" length="short"/>
-<pin name="SDATA" x="-2.54" y="-20.32" visible="pin" length="short"/>
-<pin name="SHUTTER" x="33.02" y="-45.72" visible="pin" length="short" rot="R180"/>
-<pin name="TEST" x="-2.54" y="-43.18" visible="pin" length="short"/>
-<pin name="TRIGGER" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<pin name="CLK_N" x="-2.54" y="-25.4" length="short"/>
+<pin name="CLK_P" x="-2.54" y="-27.94" length="short"/>
+<pin name="DATA2_N" x="-2.54" y="-30.48" length="short"/>
+<pin name="DATA2_P" x="-2.54" y="-33.02" length="short"/>
+<pin name="DATA_N" x="-2.54" y="-35.56" length="short"/>
+<pin name="DATA_P" x="-2.54" y="-38.1" length="short"/>
+<pin name="DOUT0" x="33.02" y="-30.48" length="short" rot="R180"/>
+<pin name="DOUT1" x="33.02" y="-27.94" length="short" rot="R180"/>
+<pin name="DOUT2" x="33.02" y="-25.4" length="short" rot="R180"/>
+<pin name="DOUT3" x="33.02" y="-22.86" length="short" rot="R180"/>
+<pin name="DOUT4" x="33.02" y="-20.32" length="short" rot="R180"/>
+<pin name="DOUT5" x="33.02" y="-17.78" length="short" rot="R180"/>
+<pin name="DOUT6" x="33.02" y="-15.24" length="short" rot="R180"/>
+<pin name="DOUT7" x="33.02" y="-12.7" length="short" rot="R180"/>
+<pin name="DOUT8" x="33.02" y="-10.16" length="short" rot="R180"/>
+<pin name="DOUT9" x="33.02" y="-7.62" length="short" rot="R180"/>
+<pin name="DOUT10" x="33.02" y="-5.08" length="short" rot="R180"/>
+<pin name="DOUT11" x="33.02" y="-2.54" length="short" rot="R180"/>
+<pin name="EXTCLK" x="-2.54" y="-7.62" length="short"/>
+<pin name="FLASH" x="33.02" y="-43.18" length="short" rot="R180"/>
+<pin name="FRAME_VALID" x="33.02" y="-40.64" length="short" rot="R180"/>
+<pin name="LINE_VALID" x="33.02" y="-38.1" length="short" rot="R180"/>
+<pin name="PIXCLK" x="33.02" y="-35.56" length="short" rot="R180"/>
+<pin name="RST_" x="-2.54" y="-2.54" length="short"/>
+<pin name="SADDR" x="-2.54" y="-15.24" length="short"/>
+<pin name="SCLK" x="-2.54" y="-17.78" length="short"/>
+<pin name="SDATA" x="-2.54" y="-20.32" length="short"/>
+<pin name="SHUTTER" x="33.02" y="-45.72" length="short" rot="R180"/>
+<pin name="TEST" x="-2.54" y="-43.18" length="short"/>
+<pin name="TRIGGER" x="-2.54" y="-10.16" length="short"/>
 <wire x1="0" y1="0" x2="0" y2="-48.26" width="0.254" layer="94"/>
 <wire x1="0" y1="-48.26" x2="30.48" y2="-48.26" width="0.254" layer="94"/>
 <wire x1="30.48" y1="-48.26" x2="30.48" y2="0" width="0.254" layer="94"/>
@@ -4235,9 +4235,9 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
 <part name="TP11" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="C83" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
-<attribute name="MFG" value="Taiyo Yuden"/>
-<attribute name="PN" value="TMK105CBJ225KV-F"/>
+<part name="C83" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="J3" library="EagleLibrary" deviceset="JUMPER" device=""/>
 <part name="J4" library="EagleLibrary" deviceset="JUMPER" device=""/>
@@ -4254,6 +4254,14 @@ tolerant of VDDUSB</text>
 <part name="C84" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
+</part>
+<part name="C85" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
+</part>
+<part name="C86" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 </parts>
 <sheets>
@@ -5305,6 +5313,18 @@ test point</text>
 <instance part="TP11" gate="G$1" x="5.08" y="76.2" smashed="yes" rot="R90">
 <attribute name="NAME" x="5.08" y="76.2" size="1.778" layer="95" rot="R180"/>
 </instance>
+<instance part="C85" gate="G$1" x="-2.54" y="35.56" smashed="yes">
+<attribute name="PN" x="-20.32" y="40.64" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="-6.096" y="36.957" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="-6.096" y="34.417" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="-20.32" y="40.64" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="C86" gate="G$1" x="96.52" y="35.56" smashed="yes">
+<attribute name="PN" x="78.74" y="40.64" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="92.964" y="36.957" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="92.964" y="34.417" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="78.74" y="40.64" size="1.778" layer="96" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -5335,6 +5355,11 @@ test point</text>
 <wire x1="35.56" y1="17.78" x2="33.02" y2="17.78" width="0.1524" layer="91"/>
 <label x="33.02" y="17.78" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U15" gate="G$1" pin="DIR2"/>
+</segment>
+<segment>
+<pinref part="C85" gate="G$1" pin="1"/>
+<wire x1="-2.54" y1="38.1" x2="-2.54" y2="40.64" width="0.1524" layer="91"/>
+<label x="-2.54" y="40.64" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -5374,6 +5399,16 @@ test point</text>
 <wire x1="-58.42" y1="78.74" x2="-68.58" y2="78.74" width="0.1524" layer="91"/>
 <label x="-68.58" y="78.74" size="1.778" layer="95" align="top-left"/>
 <pinref part="C77" gate="G$1" pin="2"/>
+</segment>
+<segment>
+<pinref part="C85" gate="G$1" pin="2"/>
+<wire x1="-2.54" y1="30.48" x2="-2.54" y2="27.94" width="0.1524" layer="91"/>
+<label x="-2.54" y="27.94" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C86" gate="G$1" pin="2"/>
+<wire x1="96.52" y1="30.48" x2="96.52" y2="27.94" width="0.1524" layer="91"/>
+<label x="96.52" y="27.94" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="MSP_TEST" class="0">
@@ -5488,6 +5523,11 @@ test point</text>
 <pinref part="U15" gate="G$1" pin="VCCB"/>
 <wire x1="60.96" y1="38.1" x2="63.5" y2="38.1" width="0.1524" layer="91"/>
 <label x="63.5" y="38.1" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="C86" gate="G$1" pin="1"/>
+<wire x1="96.52" y1="38.1" x2="96.52" y2="40.64" width="0.1524" layer="91"/>
+<label x="96.52" y="40.64" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="!VDD_B_EN!" class="0">
@@ -6833,13 +6873,11 @@ between input and output when its VDD=0.</text>
 <net name="VDD_1V9_IMG" class="0">
 <segment>
 <pinref part="U5" gate="A" pin="VDD_IO"/>
-<wire x1="71.12" y1="45.72" x2="68.58" y2="45.72" width="0.1524" layer="91"/>
-<label x="68.58" y="45.72" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
+<wire x1="71.12" y1="45.72" x2="71.12" y2="48.26" width="0.1524" layer="91"/>
 <pinref part="U5" gate="A" pin="VDD"/>
-<wire x1="71.12" y1="48.26" x2="68.58" y2="48.26" width="0.1524" layer="91"/>
-<label x="68.58" y="48.26" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="71.12" y1="48.26" x2="66.04" y2="48.26" width="0.1524" layer="91"/>
+<label x="66.04" y="48.26" size="1.778" layer="95" align="bottom-right"/>
+<junction x="71.12" y="48.26"/>
 </segment>
 <segment>
 <pinref part="C33" gate="G$1" pin="1"/>
@@ -6888,13 +6926,13 @@ between input and output when its VDD=0.</text>
 <net name="GND" class="0">
 <segment>
 <pinref part="U5" gate="A" pin="AGND"/>
-<wire x1="71.12" y1="53.34" x2="68.58" y2="53.34" width="0.1524" layer="91"/>
-<label x="68.58" y="53.34" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="71.12" y1="53.34" x2="66.04" y2="53.34" width="0.1524" layer="91"/>
+<label x="66.04" y="53.34" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U5" gate="A" pin="DGND"/>
-<wire x1="71.12" y1="38.1" x2="68.58" y2="38.1" width="0.1524" layer="91"/>
-<label x="68.58" y="38.1" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="71.12" y1="38.1" x2="66.04" y2="38.1" width="0.1524" layer="91"/>
+<label x="66.04" y="38.1" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U5" gate="B" pin="TEST"/>
@@ -6985,20 +7023,20 @@ between input and output when its VDD=0.</text>
 </segment>
 <segment>
 <pinref part="U5" gate="A" pin="VAA"/>
-<wire x1="71.12" y1="60.96" x2="68.58" y2="60.96" width="0.1524" layer="91"/>
-<label x="68.58" y="60.96" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="71.12" y1="60.96" x2="66.04" y2="60.96" width="0.1524" layer="91"/>
+<label x="66.04" y="60.96" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U5" gate="A" pin="VAA_PIX"/>
-<wire x1="71.12" y1="55.88" x2="68.58" y2="55.88" width="0.1524" layer="91"/>
-<label x="68.58" y="55.88" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="71.12" y1="55.88" x2="66.04" y2="55.88" width="0.1524" layer="91"/>
+<label x="66.04" y="55.88" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U5" gate="A" pin="VDD_MIPI"/>
 <pinref part="U5" gate="A" pin="VDD_PLL"/>
-<label x="68.58" y="43.18" size="1.778" layer="95" align="bottom-right"/>
+<label x="66.04" y="43.18" size="1.778" layer="95" align="bottom-right"/>
 <wire x1="71.12" y1="43.18" x2="71.12" y2="40.64" width="0.1524" layer="91"/>
-<wire x1="71.12" y1="43.18" x2="68.58" y2="43.18" width="0.1524" layer="91"/>
+<wire x1="71.12" y1="43.18" x2="66.04" y2="43.18" width="0.1524" layer="91"/>
 <junction x="71.12" y="43.18"/>
 </segment>
 <segment>
