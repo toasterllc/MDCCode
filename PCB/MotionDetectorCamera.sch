@@ -4121,12 +4121,6 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="KEMET"/>
 <attribute name="PN" value="C0805C106K8PACTU"/>
 </part>
-<part name="TP1" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="TP2" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="TP3" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="TP4" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="TP5" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="TP7" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="U14" library="EagleLibrary" deviceset="TI-MSP430FR2422IRHL" device=""/>
 <part name="U15" library="EagleLibrary" deviceset="TI-SN74AXC4T774RSV" device=""/>
 <part name="R33" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k"/>
@@ -5925,24 +5919,6 @@ below the chip.</text>
 <attribute name="MFG" x="68.58" y="-101.6" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="68.58" y="-101.6" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="TP1" gate="G$1" x="17.78" y="-114.3" smashed="yes" rot="R180">
-<attribute name="NAME" x="7.62" y="-114.3" size="1.778" layer="95" align="bottom-right"/>
-</instance>
-<instance part="TP2" gate="G$1" x="17.78" y="-119.38" smashed="yes" rot="R180">
-<attribute name="NAME" x="7.62" y="-119.38" size="1.778" layer="95" align="bottom-right"/>
-</instance>
-<instance part="TP3" gate="G$1" x="17.78" y="-129.54" smashed="yes" rot="R180">
-<attribute name="NAME" x="7.62" y="-129.54" size="1.778" layer="95" align="bottom-right"/>
-</instance>
-<instance part="TP4" gate="G$1" x="17.78" y="-124.46" smashed="yes" rot="R180">
-<attribute name="NAME" x="7.62" y="-124.46" size="1.778" layer="95" align="bottom-right"/>
-</instance>
-<instance part="TP5" gate="G$1" x="17.78" y="-139.7" smashed="yes" rot="R180">
-<attribute name="NAME" x="7.62" y="-139.7" size="1.778" layer="95" align="bottom-right"/>
-</instance>
-<instance part="TP7" gate="G$1" x="17.78" y="-134.62" smashed="yes" rot="R180">
-<attribute name="NAME" x="7.62" y="-134.62" size="1.778" layer="95" align="bottom-right"/>
-</instance>
 <instance part="LED1" gate="G$1" x="185.42" y="-35.56" smashed="yes">
 <attribute name="NAME" x="188.976" y="-40.132" size="1.778" layer="95" rot="R90"/>
 <attribute name="MFG" x="185.42" y="-35.56" size="1.778" layer="96" display="off"/>
@@ -6390,11 +6366,6 @@ below the chip.</text>
 <wire x1="76.2" y1="-101.6" x2="73.66" y2="-101.6" width="0.1524" layer="91"/>
 <pinref part="R14" gate="G$1" pin="2"/>
 </segment>
-<segment>
-<pinref part="TP5" gate="G$1" pin="X"/>
-<wire x1="17.78" y1="-139.7" x2="20.32" y2="-139.7" width="0.1524" layer="91"/>
-<label x="20.32" y="-139.7" size="1.778" layer="95"/>
-</segment>
 </net>
 <net name="ICE_CRST_" class="0">
 <segment>
@@ -6405,22 +6376,12 @@ below the chip.</text>
 <wire x1="78.74" y1="-114.3" x2="81.28" y2="-114.3" width="0.1524" layer="91"/>
 <wire x1="81.28" y1="-114.3" x2="81.28" y2="-96.52" width="0.1524" layer="91"/>
 </segment>
-<segment>
-<pinref part="TP7" gate="G$1" pin="X"/>
-<wire x1="17.78" y1="-134.62" x2="20.32" y2="-134.62" width="0.1524" layer="91"/>
-<label x="20.32" y="-134.62" size="1.778" layer="95"/>
-</segment>
 </net>
 <net name="ICE_ST_SPI_D1" class="0">
 <segment>
 <pinref part="U4" gate="E" pin="SPI_SO_K9"/>
 <wire x1="86.36" y1="-83.82" x2="81.28" y2="-83.82" width="0.1524" layer="91"/>
 <label x="80.772" y="-83.82" size="1.778" layer="95" rot="MR0"/>
-</segment>
-<segment>
-<pinref part="TP2" gate="G$1" pin="X"/>
-<wire x1="17.78" y1="-119.38" x2="20.32" y2="-119.38" width="0.1524" layer="91"/>
-<label x="20.32" y="-119.38" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_ST_SPI_D0" class="0">
@@ -6429,11 +6390,6 @@ below the chip.</text>
 <wire x1="86.36" y1="-81.28" x2="81.28" y2="-81.28" width="0.1524" layer="91"/>
 <label x="80.772" y="-81.28" size="1.778" layer="95" rot="MR0"/>
 </segment>
-<segment>
-<pinref part="TP1" gate="G$1" pin="X"/>
-<wire x1="17.78" y1="-114.3" x2="20.32" y2="-114.3" width="0.1524" layer="91"/>
-<label x="20.32" y="-114.3" size="1.778" layer="95"/>
-</segment>
 </net>
 <net name="ICE_ST_SPI_CLK" class="0">
 <segment>
@@ -6441,22 +6397,12 @@ below the chip.</text>
 <wire x1="86.36" y1="-88.9" x2="81.28" y2="-88.9" width="0.1524" layer="91"/>
 <label x="80.772" y="-88.9" size="1.778" layer="95" rot="MR0"/>
 </segment>
-<segment>
-<pinref part="TP4" gate="G$1" pin="X"/>
-<wire x1="17.78" y1="-124.46" x2="20.32" y2="-124.46" width="0.1524" layer="91"/>
-<label x="20.32" y="-124.46" size="1.778" layer="95"/>
-</segment>
 </net>
 <net name="ICE_ST_SPI_CS_" class="0">
 <segment>
 <pinref part="U4" gate="E" pin="SPI_SS_B_K10"/>
 <wire x1="86.36" y1="-86.36" x2="81.28" y2="-86.36" width="0.1524" layer="91"/>
 <label x="80.772" y="-86.36" size="1.778" layer="95" rot="MR0"/>
-</segment>
-<segment>
-<pinref part="TP3" gate="G$1" pin="X"/>
-<wire x1="17.78" y1="-129.54" x2="20.32" y2="-129.54" width="0.1524" layer="91"/>
-<label x="20.32" y="-129.54" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_LED0" class="0">

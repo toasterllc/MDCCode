@@ -1,12 +1,15 @@
 - Rev4 Layout Todo
     - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
     - Length-match SD lines
+    - Length-match RAM lines
+    - Length-match STM<->ICE SPI lines
     - Make sure there are no parts inside the lens holder
     - Make sure we're following the layout guidelines for crystals
     - Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
     - Add lots of ground vias
-    - Make sure 2x 1V2 bypass capacitors at the bottom-right of the ice40 are positioned well
+    - Make sure 2x 1V2 bypass capacitors at the bottom-left of the ice40 are positioned well
     - Make all via diameters 'auto'
+    - Rotate image sensor?
 
 - Rev4 Schematic Todo
     
@@ -190,9 +193,13 @@
 - Rev4 Verilog Todo
 
     - Update SDRAM controller for new part (Winbond -> Alliance)
+    
     - Update Verilog to use 16 MHz clock, instead of 24 MHz
+    
     - If we end up removing SD card pullups in favor of ice40 internal ones:
       make sure these pullups are enabled on the SB_IO instantiation
+    
+    - Rename PIX -> IMG
 
 - Preorder parts to de-risk
     
