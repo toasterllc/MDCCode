@@ -2459,33 +2459,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="15.2781" y="26.924" extent="1-16" drill="0.254"/>
 <via x="19.2786" y="27.7114" extent="1-16" drill="0.254"/>
 <via x="17.703803125" y="25.354278125" extent="1-16" drill="0.254"/>
-<polygon width="0.127" layer="15" thermals="no">
-<vertex x="14.8844" y="27.3304"/>
-<vertex x="14.8844" y="26.6192"/>
-<vertex x="16.5862" y="26.6192"/>
-<vertex x="16.5862" y="20.828"/>
-<vertex x="22.5044" y="20.828"/>
-<vertex x="22.5044" y="24.3332"/>
-<vertex x="20.4459375" y="24.3332"/>
-<vertex x="18.8214" y="25.9577375"/>
-<vertex x="18.8214" y="27.305"/>
-<vertex x="18.923" y="27.4066"/>
-<vertex x="19.6342" y="27.4066"/>
-<vertex x="19.6342" y="28.0162"/>
-<vertex x="19.5834" y="28.067"/>
-<vertex x="19.4056" y="28.067"/>
-<vertex x="17.3482" y="30.1244"/>
-<vertex x="15.8242" y="30.1244"/>
-<vertex x="15.8242" y="29.2608"/>
-<vertex x="15.494" y="28.9306"/>
-<vertex x="14.9352" y="28.9306"/>
-<vertex x="14.9352" y="28.2448"/>
-<vertex x="14.9098" y="28.2194"/>
-<vertex x="15.7226" y="28.2194"/>
-<vertex x="15.748" y="28.194"/>
-<vertex x="15.748" y="27.3812"/>
-<vertex x="15.6972" y="27.3304"/>
-</polygon>
 <via x="21.4376" y="33.185096875" extent="1-16" drill="0.381"/>
 <via x="21.4376" y="32.514540625" extent="1-16" drill="0.381"/>
 <contactref element="R15" pad="1"/>
@@ -3334,14 +3307,28 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="15.2781" y="26.1112" extent="1-16" drill="0.254"/>
 <via x="19.2786" y="26.1112" extent="1-16" drill="0.254"/>
 <polygon width="0.127" layer="15" thermals="no" rank="3">
-<vertex x="21.9456" y="21.6916"/>
+<vertex x="21.9456" y="24.384"/>
+<vertex x="20.574" y="24.384"/>
+<vertex x="19.05" y="25.908"/>
+<vertex x="19.05" y="27.178"/>
+<vertex x="19.812" y="27.178"/>
+<vertex x="19.812" y="28.194"/>
+<vertex x="17.78" y="30.226"/>
+<vertex x="15.748" y="30.226"/>
+<vertex x="15.748" y="29.21"/>
+<vertex x="14.732" y="29.21"/>
+<vertex x="14.732" y="27.94"/>
+<vertex x="15.494" y="27.94"/>
+<vertex x="15.494" y="27.686"/>
+<vertex x="14.732" y="27.686"/>
+<vertex x="14.732" y="26.416"/>
+<vertex x="16.51" y="26.416"/>
+<vertex x="16.51" y="21.6916"/>
 <vertex x="11.2014" y="21.6916"/>
 <vertex x="11.2014" y="30.3784"/>
 <vertex x="16.7005" y="35.8775"/>
 <vertex x="20.977859375" y="35.8775"/>
-<vertex x="20.977859375" y="33.6677"/>
-<vertex x="20.574" y="33.6677"/>
-<vertex x="20.574" y="31.46551875"/>
+<vertex x="20.977859375" y="31.46551875"/>
 <vertex x="21.9456" y="31.46551875"/>
 </polygon>
 <contactref element="C13" pad="1"/>
