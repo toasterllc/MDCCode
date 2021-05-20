@@ -6470,6 +6470,11 @@ below the chip.</text>
 <wire x1="198.12" y1="-33.02" x2="198.12" y2="-30.48" width="0.1524" layer="91"/>
 <label x="198.12" y="-30.48" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U4" gate="A" pin="C9"/>
+<wire x1="33.02" y1="15.24" x2="35.56" y2="15.24" width="0.1524" layer="91"/>
+<label x="35.56" y="15.24" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="IMG_LV" class="0">
 <segment>
@@ -6912,6 +6917,11 @@ below the chip.</text>
 <wire x1="160.02" y1="-33.02" x2="160.02" y2="-30.48" width="0.1524" layer="91"/>
 <label x="160.02" y="-30.48" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U4" gate="B" pin="B11"/>
+<wire x1="88.9" y1="66.04" x2="91.44" y2="66.04" width="0.1524" layer="91"/>
+<label x="91.44" y="66.04" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="ICE_LED2" class="0">
 <segment>
@@ -6919,12 +6929,22 @@ below the chip.</text>
 <wire x1="172.72" y1="-33.02" x2="172.72" y2="-30.48" width="0.1524" layer="91"/>
 <label x="172.72" y="-30.48" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U4" gate="A" pin="A11"/>
+<wire x1="33.02" y1="40.64" x2="35.56" y2="40.64" width="0.1524" layer="91"/>
+<label x="35.56" y="40.64" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="ICE_LED1" class="0">
 <segment>
 <pinref part="LED1" gate="G$1" pin="A"/>
 <wire x1="185.42" y1="-33.02" x2="185.42" y2="-30.48" width="0.1524" layer="91"/>
 <label x="185.42" y="-30.48" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="U4" gate="A" pin="A10"/>
+<wire x1="33.02" y1="43.18" x2="35.56" y2="43.18" width="0.1524" layer="91"/>
+<label x="35.56" y="43.18" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
