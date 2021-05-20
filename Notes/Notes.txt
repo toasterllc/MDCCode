@@ -4,7 +4,7 @@
     - Make sure there are no parts inside the lens holder
     - Make sure we're following the layout guidelines for crystals
     - Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
-
+    - Add lots of fround vias
 
 - Rev4 Schematic Todo
     
@@ -189,7 +189,8 @@
 
     - Update SDRAM controller for new part (Winbond -> Alliance)
     - Update Verilog to use 16 MHz clock, instead of 24 MHz
-
+    - If we end up removing SD card pullups in favor of ice40 internal ones:
+      make sure these pullups are enabled on the SB_IO instantiation
 
 - Preorder parts to de-risk
     
