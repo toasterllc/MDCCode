@@ -6407,11 +6407,6 @@ below the chip.</text>
 </net>
 <net name="ICE_LED0" class="0">
 <segment>
-<pinref part="U4" gate="D" pin="E3"/>
-<wire x1="213.36" y1="38.1" x2="215.9" y2="38.1" width="0.1524" layer="91"/>
-<label x="215.9" y="38.1" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="LED4" gate="G$1" pin="A"/>
 <wire x1="198.12" y1="-33.02" x2="198.12" y2="-30.48" width="0.1524" layer="91"/>
 <label x="198.12" y="-30.48" size="1.778" layer="95"/>
