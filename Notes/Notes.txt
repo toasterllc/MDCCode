@@ -6,6 +6,7 @@
     - Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
     - Add lots of ground vias
     - Make sure 2x 1V2 bypass capacitors at the bottom-right of the ice40 are positioned well
+    - Make all via diameters 'auto'
 
 - Rev4 Schematic Todo
     
