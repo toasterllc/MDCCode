@@ -10,6 +10,7 @@
     - Make sure 2x 1V2 bypass capacitors at the bottom-left of the ice40 are positioned well
     - Make all via diameters 'auto'
     - Rotate image sensor?
+    - Smash every component to bring back their labels (we may have deleted some)
 
 - Rev4 Schematic Todo
     
