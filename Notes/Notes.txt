@@ -12,6 +12,7 @@
     - Make all via diameters 'auto'
     - Rotate image sensor?
     - Smash every component to bring back their labels (we may have deleted some)
+    - Fill gaps in power layer
 
 - Rev4 Schematic Todo
     
