@@ -43,20 +43,6 @@
 `endif
 
 
-`ifndef TogglePulse_v
-`define TogglePulse_v
-
-// Generates a single-cycle pulse on `out`, in clock domain `clk`,
-// when the async signal `in` toggles.
-`define TogglePulse(out, in, edge, clk)                         \
-    reg[2:0] `Var3(out,in,clk) = 0;                             \
-    wire out = `Var3(out,in,clk)[2]!==`Var3(out,in,clk)[1];     \
-    always @(edge clk)                                          \
-        `Var3(out,in,clk) <= (`Var3(out,in,clk)<<1)|in
-
-`endif
-
-
 
 
 `ifndef PixController_v
@@ -128,12 +114,6 @@ module PixController #(
     // Pixel input state machine
     // ====================
     reg fifoIn_writeEn = 0;
-    
-    reg ctrl_fifoInCaptureTrigger = 0;
-    `TogglePulse(fifoIn_captureTrigger, ctrl_fifoInCaptureTrigger, posedge, pix_dclk);
-    
-    reg fifoIn_started = 0;
-    `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
     reg[`RegWidth(ImageWidthMax)-1:0] fifoIn_imageWidth = 0;
     reg[`RegWidth(ImageHeightMax)-1:0] fifoIn_imageHeight = 0;
