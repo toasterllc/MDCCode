@@ -108,15 +108,7 @@ module PixController #(
     input wire          pix_fv,
     input wire          pix_lv,
     
-    output wire         ram_cke,
-    output wire[1:0]    ram_ba,
     output wire[12:0]   ram_a,
-    output wire         ram_cs_,
-    output wire         ram_ras_,
-    output wire         ram_cas_,
-    output wire         ram_we_,
-    output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq
 );
     reg[2:0]    ramctrl_cmd_block = 0;
     reg[1:0]    ramctrl_cmd = 0;
@@ -282,9 +274,6 @@ module Top(
     output wire         pix_sclk,
     inout wire          pix_sdata,
     
-    // RAM port
-    output wire         ram_cke,
-    output wire[1:0]    ram_ba,
     output wire[12:0]   ram_a,
     output wire         ram_cs_,
     output wire         ram_ras_,
@@ -338,14 +327,6 @@ module Top(
         .pix_fv(pix_fv),
         .pix_lv(pix_lv),
         
-        .ram_cke(ram_cke),
-        .ram_ba(ram_ba),
         .ram_a(ram_a),
-        .ram_cs_(ram_cs_),
-        .ram_ras_(ram_ras_),
-        .ram_cas_(ram_cas_),
-        .ram_we_(ram_we_),
-        .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq)
     );
 endmodule
