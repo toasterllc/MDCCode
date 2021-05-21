@@ -1034,8 +1034,6 @@ module PixI2CMaster #(
     input wire          clk,
     
     // Command port
-    input wire[6:0]     cmd_slaveAddr,
-    input wire[15:0]    cmd_writeData,
     input wire          cmd_trigger, // Toggle
     
     // Status port
@@ -1153,7 +1151,7 @@ module PixI2CMaster #(
             // *** again. This second time is when provide dir=1 (read).
             // *** See i2c docs for more information on how reads are performed.
             State_Start+2: begin
-                dataOutShiftReg <= {cmd_slaveAddr, 1'b0 /* dir=0 (write, see comment above) */};
+                dataOutShiftReg <= 0;
                 dataOutCounter <= 7;
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
@@ -1257,7 +1255,7 @@ module PixI2CMaster #(
             
             // Shift out low 8 bits of data
             State_WriteData: begin
-                dataOutShiftReg <= cmd_writeData[7:0];
+                dataOutShiftReg <= 0;
                 dataOutCounter <= 7;
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
@@ -1772,7 +1770,6 @@ module Top(
     localparam PixI2CSlaveAddr = 7'h10;
     reg pixi2c_cmd_write = 0;
     reg pixi2c_cmd_dataLen = 0;
-    reg[15:0] pixi2c_cmd_writeData = 0;
     reg pixi2c_cmd_trigger = 0;
     wire pixi2c_status_done;
     wire pixi2c_status_err;
@@ -1785,8 +1782,6 @@ module Top(
     ) PixI2CMaster (
         .clk(clk24mhz),
         
-        .cmd_slaveAddr(PixI2CSlaveAddr),
-        .cmd_writeData(pixi2c_cmd_writeData),
         .cmd_trigger(pixi2c_cmd_trigger), // Toggle
         
         .status_done(pixi2c_status_done), // Toggle
