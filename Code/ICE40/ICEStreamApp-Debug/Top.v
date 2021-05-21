@@ -48,22 +48,6 @@
 `endif
 
 
-
-`ifndef ToggleAck_v
-`define ToggleAck_v
-
-// `out` is set (in the clock domain `clk`) when the async signal `in` toggles.
-// `out` is cleared when `ack` is toggled.
-`define ToggleAck(out, ack, in, edge, clk)                      \
-    reg[1:0] `Var4(out,ack,in,clk) = 0;                         \
-    reg ack=0;                                                  \
-    wire out = (ack !== `Var4(out,ack,in,clk)[1]);              \
-    always @(edge clk)                                          \
-        `Var4(out,ack,in,clk) <= (`Var4(out,ack,in,clk)<<1)|in
-
-`endif
-
-
 `ifndef TogglePulse_v
 `define TogglePulse_v
 
@@ -963,27 +947,10 @@ module PixController #(
     // ====================
     // Input FIFO (Pixels->RAM)
     // ====================
-    reg fifoIn_rst = 0;
-    wire fifoIn_write_ready;
+    wire fifoIn_write_ready = 1'b1;
     wire fifoIn_write_trigger;
-    wire[15:0] fifoIn_write_data;
-    wire fifoIn_read_ready;
-    wire fifoIn_read_trigger;
-    wire[15:0] fifoIn_read_data;
-    
-    AFIFO AFIFO_fifoIn(
-        .rst_(!fifoIn_rst),
-        
-        .w_clk(pix_dclk),
-        .w_ready(fifoIn_write_ready),
-        .w_trigger(fifoIn_write_trigger),
-        .w_data(fifoIn_write_data),
-        
-        .r_clk(clk),
-        .r_ready(fifoIn_read_ready),
-        .r_trigger(fifoIn_read_trigger),
-        .r_data(fifoIn_read_data)
-    );
+    wire fifoIn_read_ready = 1'b1;
+    wire[15:0] fifoIn_read_data = {4'b0, pix_d_reg};
     
     // ====================
     // Pin: pix_d
@@ -1100,7 +1067,6 @@ module PixController #(
     // ====================
     // Connect input FIFO write -> pixel data
     assign fifoIn_write_trigger = fifoIn_writeEn && pix_lv_reg;
-    assign fifoIn_write_data = {4'b0, pix_d_reg};
     
     // Connect input FIFO read -> RAM write
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
