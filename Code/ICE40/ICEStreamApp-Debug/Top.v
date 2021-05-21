@@ -92,10 +92,8 @@ module PixController #(
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
-    output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
-    output reg                                  status_captureDone = 0,
     output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
     output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
     output reg                                  status_readoutStarted = 0,
@@ -175,7 +173,6 @@ module PixController #(
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
         fifoOut_rst <= 0;
-        status_captureDone <= 0;
         status_readoutStarted <= 0;
         ramctrl_write_trigger <= 0;
         
@@ -227,7 +224,6 @@ module PixController #(
             // machine signals that it's done receiving data.
             if (!fifoIn_read_ready && ctrl_fifoInDone) begin
                 $display("[PIXCTRL:Capture] Finished");
-                status_captureDone <= 1;
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
@@ -245,9 +241,6 @@ module PixController #(
     assign fifoOut_write_trigger = ramctrl_read_ready;
     assign ramctrl_read_trigger = fifoOut_write_ready;
     assign fifoOut_write_data = ramctrl_read_data;
-    
-    // Connect output FIFO read -> readout port
-    assign readout_data = fifoOut_read_data;
 endmodule
 
 `endif
@@ -292,17 +285,12 @@ module Top(
     // ====================
     // PixController
     // ====================
-    wire[15:0]                          pixctrl_readout_data;
-    wire                                pixctrl_status_captureDone;
     wire[`RegWidth(ImageWidthMax)-1:0]  pixctrl_status_captureImageWidth;
     wire[`RegWidth(ImageHeightMax)-1:0] pixctrl_status_captureImageHeight;
     wire                                pixctrl_status_readoutStarted;
     PixController PixController (
         .clk(clk24mhz),
         
-        .readout_data(pixctrl_readout_data),
-        
-        .status_captureDone(pixctrl_status_captureDone),
         .status_captureImageWidth(pixctrl_status_captureImageWidth),
         .status_captureImageHeight(pixctrl_status_captureImageHeight),
         .status_readoutStarted(pixctrl_status_readoutStarted),
