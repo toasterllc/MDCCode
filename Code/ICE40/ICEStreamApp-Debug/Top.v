@@ -1051,20 +1051,6 @@ module PixI2CMaster #(
     // Width of `delay`
     localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);
     
-    localparam State_Idle       = 0;    // +0
-    localparam State_Start      = 1;    // +2
-    localparam State_ShiftOut   = 4;    // +7
-    localparam State_RegAddr    = 12;   // +1
-    localparam State_WriteData  = 14;   // +1
-    localparam State_ReadData   = 16;   // +8
-    localparam State_ACK        = 25;   // +3
-    localparam State_StopOK     = 29;   // +0
-    localparam State_StopFail   = 30;   // +0
-    localparam State_Stop       = 31;   // +2
-    localparam State_Count      = 34;
-    
-    reg[$clog2(State_Count)-1:0] state = 0;
-    reg[$clog2(State_Count)-1:0] nextState = 0;
     reg ack = 0;
     reg[7:0] dataOutShiftReg = 0;
     wire dataOut = dataOutShiftReg[7];
@@ -1073,7 +1059,6 @@ module PixI2CMaster #(
     reg[3:0] dataInCounter = 0;
     assign status_readData = dataInShiftReg[15:0];
     wire dataIn;
-    reg[DelayWidth-1:0] delay = 0;
     reg clkOut = 0;
     
     // ====================
@@ -1102,19 +1087,9 @@ module PixI2CMaster #(
     );
     
     always @(posedge clk) begin
-        if (delay) begin
-            delay <= delay-1;
-        
-        end else begin
-            case (state)
-            State_Idle: begin
-                clkOut <= 1;
-                dataOutShiftReg <= ~0;
-                delay <= I2CQuarterCycleDelay;
-                state <= State_Idle;
-            end
-            endcase
-        end
+        clkOut <= 1;
+        dataOutShiftReg <= ~0;
+        state <= State_Idle;
     end
 endmodule
 
