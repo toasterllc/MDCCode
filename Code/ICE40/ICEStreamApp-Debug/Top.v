@@ -1033,9 +1033,6 @@ module PixI2CMaster #(
 )(
     input wire          clk,
     
-    // Command port
-    input wire          cmd_trigger, // Toggle
-    
     // Status port
     output reg          status_done = 0, // Toggle
     output reg          status_err = 0,
@@ -1078,8 +1075,6 @@ module PixI2CMaster #(
     wire dataIn;
     reg[DelayWidth-1:0] delay = 0;
     reg clkOut = 0;
-    
-    `ToggleAck(trigger, triggerAck, cmd_trigger, posedge, clk);
     
     // ====================
     // i2c_clk
@@ -1125,12 +1120,9 @@ module PixI2CMaster #(
             // Issue start condition (SDA=1->0 while SCL=1),
             // Delay 1/4 cycle
             State_Start: begin
-                if (trigger) begin
-                    triggerAck <= !triggerAck; // Acknowlege the trigger
-                    dataOutShiftReg <= 0; // Start condition
-                    delay <= I2CQuarterCycleDelay;
-                    state <= State_Start+1;
-                end
+                dataOutShiftReg <= 0; // Start condition
+                delay <= I2CQuarterCycleDelay;
+                state <= State_Start+1;
             end
             
             // SCL=0,
@@ -1770,7 +1762,6 @@ module Top(
     localparam PixI2CSlaveAddr = 7'h10;
     reg pixi2c_cmd_write = 0;
     reg pixi2c_cmd_dataLen = 0;
-    reg pixi2c_cmd_trigger = 0;
     wire pixi2c_status_done;
     wire pixi2c_status_err;
     wire[15:0] pixi2c_status_readData;
@@ -1781,8 +1772,6 @@ module Top(
         .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
     ) PixI2CMaster (
         .clk(clk24mhz),
-        
-        .cmd_trigger(pixi2c_cmd_trigger), // Toggle
         
         .status_done(pixi2c_status_done), // Toggle
         .status_err(pixi2c_status_err),
