@@ -40,11 +40,6 @@
 `define RegWidth11(a,b,c,d,e,f,g,h,i,j,y)       (`RegWidth10(a,b,c,d,e,f,g,h,i,j)   > `RegWidth(y) ? `RegWidth10(a,b,c,d,e,f,g,h,i,j)   : `RegWidth(y))
 `define RegWidth12(a,b,c,d,e,f,g,h,i,j,k,y)     (`RegWidth11(a,b,c,d,e,f,g,h,i,j,k) > `RegWidth(y) ? `RegWidth11(a,b,c,d,e,f,g,h,i,j,k) : `RegWidth(y))
 
-// Sub: a-b, clipping to 0
-`define Sub(a,b) ((a) > (b) ? ((a)-(b)) : 0)
-
-`define DivCeil(n, d) (((n)+(d)-1)/(d))
-
 `endif
 
 
@@ -72,6 +67,9 @@
 `define RAMController_Cmd_Stop      2'b11
 
 `endif
+
+
+
 
 `ifndef PixController_v
 `define PixController_v
@@ -110,8 +108,6 @@ module PixController #(
     input wire          pix_fv,
     input wire          pix_lv,
     
-    // RAM port (clock domain: `ram_clk`)
-    output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
     output wire[12:0]   ram_a,
@@ -287,7 +283,6 @@ module Top(
     inout wire          pix_sdata,
     
     // RAM port
-    output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
     output wire[12:0]   ram_a,
@@ -343,7 +338,6 @@ module Top(
         .pix_fv(pix_fv),
         .pix_lv(pix_lv),
         
-        .ram_clk(ram_clk),
         .ram_cke(ram_cke),
         .ram_ba(ram_ba),
         .ram_a(ram_a),
