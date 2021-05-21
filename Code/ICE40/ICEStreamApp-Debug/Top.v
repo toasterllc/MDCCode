@@ -826,35 +826,6 @@ module PixController #(
     wire        ramctrl_read_trigger;
     wire[15:0]  ramctrl_read_data;
     
-    RAMController #(
-        .ClkFreq(ClkFreq),
-        .BlockSize(ImageSizeMax)
-    ) RAMController (
-        .clk(clk),
-        
-        .cmd(ramctrl_cmd),
-        .cmd_block(ramctrl_cmd_block),
-        
-        .write_ready(ramctrl_write_ready),
-        .write_trigger(ramctrl_write_trigger),
-        .write_data(ramctrl_write_data),
-        
-        .read_ready(ramctrl_read_ready),
-        .read_trigger(ramctrl_read_trigger),
-        .read_data(ramctrl_read_data),
-        
-        .ram_clk(ram_clk),
-        .ram_cke(ram_cke),
-        .ram_ba(ram_ba),
-        .ram_a(ram_a),
-        .ram_cs_(ram_cs_),
-        .ram_ras_(ram_ras_),
-        .ram_cas_(ram_cas_),
-        .ram_we_(ram_we_),
-        .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq)
-    );
-    
     // ====================
     // Input FIFO (Pixels->RAM)
     // ====================
@@ -875,6 +846,8 @@ module PixController #(
             .D_IN_0(pix_d_reg[i])
         );
     end
+    
+    assign ram_a[11:0] = pix_d_reg[11:0];
     
     // ====================
     // Pixel input state machine
