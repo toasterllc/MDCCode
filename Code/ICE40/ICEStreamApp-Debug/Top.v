@@ -1027,36 +1027,13 @@ endmodule
 `ifndef PixI2CMaster_v
 `define PixI2CMaster_v
 
-module PixI2CMaster #(
-    parameter ClkFreq       = 24_000_000,   // `clk` frequency
-    parameter I2CClkFreq    = 400_000       // `i2c_clk` frequency
-)(
-    input wire          clk,
-    
-    // Status port
-    output reg          status_done = 0, // Toggle
-    output reg          status_err = 0,
-    output wire[15:0]   status_readData,
-    
-    // I2C port
-    output wire         i2c_clk,
-    inout wire          i2c_data
+module PixI2CMaster(
+    input wire clk,
+    inout wire i2c_data
 );
-    // I2CQuarterCycleDelay: number of `clk` cycles for a quarter of the `i2c_clk` cycle to elapse.
-    // DivCeil() is necessary to perform the quarter-cycle calculation, so that the
-    // division is ceiled to the nearest clock cycle. (Ie -- slower than I2CClkFreq is OK, faster is not.)
-    // -1 for the value that should be stored in a counter.
-    localparam I2CQuarterCycleDelay = `DivCeil(ClkFreq, 4*I2CClkFreq)-1;
-    
-    // Width of `delay`
-    localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);
-    
     reg dataOut = 0;
     reg clkOut = 0;
     
-    // ====================
-    // i2c_data
-    // ====================
     SB_IO #(
         .PIN_TYPE(6'b1101_00)
     ) SB_IO_i2c_data (
@@ -1531,28 +1508,8 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    // ====================
-    // PixI2CMaster
-    // ====================
-    localparam PixI2CSlaveAddr = 7'h10;
-    reg pixi2c_cmd_write = 0;
-    reg pixi2c_cmd_dataLen = 0;
-    wire pixi2c_status_done;
-    wire pixi2c_status_err;
-    wire[15:0] pixi2c_status_readData;
-    `ToggleAck(spi_pixi2c_done_, spi_pixi2c_doneAck, pixi2c_status_done, posedge, spi_clk);
-    
-    PixI2CMaster #(
-        .ClkFreq(24_000_000),
-        .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
-    ) PixI2CMaster (
+    PixI2CMaster PixI2CMaster (
         .clk(clk24mhz),
-        
-        .status_done(pixi2c_status_done), // Toggle
-        .status_err(pixi2c_status_err),
-        .status_readData(pixi2c_status_readData),
-        
-        .i2c_clk(pix_sclk),
         .i2c_data(pix_sdata)
     );
     
@@ -1590,12 +1547,8 @@ module Top(
     wire[17:0]                          pixctrl_status_captureHighlightCount;
     wire[17:0]                          pixctrl_status_captureShadowCount;
     wire                                pixctrl_status_readoutStarted;
-    PixController #(
-        .ClkFreq(Pix_Clk_Freq),
-        .ImageWidthMax(ImageWidthMax),
-        .ImageHeightMax(ImageHeightMax)
-    ) PixController (
-        .clk(pix_clk),
+    PixController PixController (
+        .clk(clk24mhz),
         
         .cmd(pixctrl_cmd),
         .cmd_ramBlock(pixctrl_cmd_ramBlock),
