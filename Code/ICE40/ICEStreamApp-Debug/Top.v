@@ -207,17 +207,9 @@ module Top(
     input wire[11:0]    pix_d,
     input wire          pix_fv,
     input wire          pix_lv,
-    output reg          pix_rst_ = 0,
-    output wire         pix_sclk,
     inout wire          pix_sdata,
     
     output wire[12:0]   ram_a,
-    output wire         ram_cs_,
-    output wire         ram_ras_,
-    output wire         ram_cas_,
-    output wire         ram_we_,
-    output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq
 );
     SB_IO #(
         .PIN_TYPE(6'b1101_00)
