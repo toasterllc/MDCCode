@@ -20,3 +20,10 @@ ICEStreamApp-Rotated
         Max frequency: 137.31
     Average frequency: 121.28
      Median frequency: 122.13
+
+
+ICEStreamApp-Rotated, after moving dclk to F11
+    Min frequency: 108.40
+    Max frequency: 147.91
+Average frequency: 125.70
+ Median frequency: 125.60

@@ -7,7 +7,7 @@ set_io led[1]               F3      -pullup no
 set_io led[2]               F4      -pullup no
 set_io led[3]               G3      -pullup no
 
-set_io pix_dclk             H10     -pullup no
+set_io pix_dclk             F11     -pullup no
 set_io pix_d[0]             E8      -pullup no
 set_io pix_d[1]             D10     -pullup no
 set_io pix_d[2]             G11     -pullup no
@@ -24,8 +24,8 @@ set_io pix_d[11]            G10     -pullup no
 set_io pix_fv               E11     -pullup no
 set_io pix_lv               E10     -pullup no
 set_io pix_rst_             D11     -pullup no
-set_io pix_sclk             F10     -pullup no
-set_io pix_sdata            F11     -pullup no
+set_io pix_sclk             H10     -pullup no
+set_io pix_sdata            F10     -pullup no
 
 set_io ram_a[0]             D5      -pullup no
 set_io ram_a[1]             A3      -pullup no
