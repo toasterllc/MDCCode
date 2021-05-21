@@ -1022,37 +1022,6 @@ endmodule
 
 `endif
 
-
-
-`ifndef PixI2CMaster_v
-`define PixI2CMaster_v
-
-module PixI2CMaster(
-    input wire clk,
-    inout wire i2c_data
-);
-    reg dataOut = 0;
-    reg clkOut = 0;
-    
-    SB_IO #(
-        .PIN_TYPE(6'b1101_00)
-    ) SB_IO_i2c_data (
-        .INPUT_CLK(clk),
-        .OUTPUT_CLK(clk),
-        .PACKAGE_PIN(i2c_data),
-        .OUTPUT_ENABLE(!dataOut),
-        .D_OUT_0(dataOut),
-        .D_IN_0()
-    );
-    
-    always @(posedge clk) begin
-        dataOut <= ~0;
-        state <= State_Idle;
-    end
-endmodule
-
-`endif
-
 `ifndef PixController_v
 `define PixController_v
 
@@ -1508,9 +1477,15 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    PixI2CMaster PixI2CMaster (
-        .clk(clk24mhz),
-        .i2c_data(pix_sdata)
+    SB_IO #(
+        .PIN_TYPE(6'b1101_00)
+    ) SB_IO_i2c_data (
+        .INPUT_CLK(clk24mhz),
+        .OUTPUT_CLK(clk24mhz),
+        .PACKAGE_PIN(pix_sdata),
+        .OUTPUT_ENABLE(0),
+        .D_OUT_0(),
+        .D_IN_0()
     );
     
     
