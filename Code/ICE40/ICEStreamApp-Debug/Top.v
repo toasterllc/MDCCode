@@ -1051,26 +1051,8 @@ module PixI2CMaster #(
     // Width of `delay`
     localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);
     
-    reg ack = 0;
-    reg[7:0] dataOutShiftReg = 0;
-    wire dataOut = dataOutShiftReg[7];
-    reg[2:0] dataOutCounter = 0;
-    reg[15:0] dataInShiftReg = 0;
-    reg[3:0] dataInCounter = 0;
-    assign status_readData = dataInShiftReg[15:0];
-    wire dataIn;
+    reg dataOut = 0;
     reg clkOut = 0;
-    
-    // ====================
-    // i2c_clk
-    // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b0101_01)
-    ) SB_IO_i2c_clk (
-        .OUTPUT_CLK(clk),
-        .PACKAGE_PIN(i2c_clk),
-        .D_OUT_0(clkOut)
-    );
     
     // ====================
     // i2c_data
@@ -1083,12 +1065,11 @@ module PixI2CMaster #(
         .PACKAGE_PIN(i2c_data),
         .OUTPUT_ENABLE(!dataOut),
         .D_OUT_0(dataOut),
-        .D_IN_0(dataIn)
+        .D_IN_0()
     );
     
     always @(posedge clk) begin
-        clkOut <= 1;
-        dataOutShiftReg <= ~0;
+        dataOut <= ~0;
         state <= State_Idle;
     end
 endmodule
