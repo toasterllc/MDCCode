@@ -58,18 +58,6 @@
 
 
 
-`ifndef RAMController_v
-`define RAMController_v
-
-`define RAMController_Cmd_None      2'b00
-`define RAMController_Cmd_Write     2'b01
-`define RAMController_Cmd_Read      2'b10
-`define RAMController_Cmd_Stop      2'b11
-
-`endif
-
-
-
 
 `ifndef PixController_v
 `define PixController_v
@@ -106,8 +94,6 @@ module PixController #(
     
     output wire[12:0]   ram_a,
 );
-    reg[2:0]    ramctrl_cmd_block = 0;
-    reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
     reg         ramctrl_write_trigger = 0;
     reg[15:0]   ramctrl_write_data = 0;
@@ -171,7 +157,6 @@ module PixController #(
     localparam Ctrl_State_Count     = 7;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
-        ramctrl_cmd <= `RAMController_Cmd_None;
         fifoOut_rst <= 0;
         status_readoutStarted <= 0;
         ramctrl_write_trigger <= 0;
@@ -184,28 +169,11 @@ module PixController #(
         Ctrl_State_Capture: begin
             $display("[PIXCTRL:Capture] Triggered");
             // Supply 'Write' RAM command
-            ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd <= `RAMController_Cmd_Write;
             $display("[PIXCTRL:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
         Ctrl_State_Capture+1: begin
-            // Wait for the write command to be consumed, and for the RAMController
-            // to be ready to write.
-            // This is necessary because the RAMController/SDRAM takes some time to
-            // initialize upon power on. If we attempted a capture during this time,
-            // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
-            // be ready to write yet.
-            if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
-                $display("[PIXCTRL:Capture] Waiting for FIFO to reset...");
-                // Start the FIFO data flow now that RAMController is ready to write
-                ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
-                ctrl_state <= Ctrl_State_Capture+2;
-            end
-        end
-        
-        Ctrl_State_Capture+2: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             
