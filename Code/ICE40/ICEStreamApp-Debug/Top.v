@@ -43,38 +43,7 @@
 // Sub: a-b, clipping to 0
 `define Sub(a,b) ((a) > (b) ? ((a)-(b)) : 0)
 
-`define Stringify(x) `"x```"
-
-`define Fits(container, value) ($size(container) >= `RegWidth(value))
-
-`define LeftBit(r, idx)         r[$size(r)-(idx)-1]
-`define LeftBits(r, idx, len)   r[($size(r)-(idx)-1) -: (len)]
-
-`ifdef SIM
-    `define Assert(cond) do if (!(cond)) begin $error("Assertion failed: %s (%s:%0d)", `Stringify(cond), `__FILE__, `__LINE__); $finish; end while (0)
-`else
-    `define Assert(cond)
-`endif
-
-`ifdef SIM
-    `define Finish $finish
-`else
-    `define Finish
-`endif
-
 `define DivCeil(n, d) (((n)+(d)-1)/(d))
-
-`endif
-
-
-`ifndef Sync_v
-`define Sync_v
-
-// Synchronizes an async signal `in` into the clock domain `clk`
-`define Sync(out, in, edge, clk)                                \
-    reg out=0, `Var3(out,in,clk)=0;                             \
-    always @(edge clk)                                          \
-        {out, `Var3(out,in,clk)} <= {`Var3(out,in,clk), in}
 
 `endif
 
@@ -953,9 +922,6 @@ module PixController #(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    // ====================
-    // RAMController
-    // ====================
     reg[2:0]    ramctrl_cmd_block = 0;
     reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
@@ -1057,9 +1023,6 @@ module PixController #(
     reg[1:0] fifoIn_y = 0;
     
     reg fifoIn_done = 0;
-    // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
-    // `ToggleAck(ctrl_fifoInDone, ctrl_fifoInDoneAck, fifoIn_done, posedge, clk);
-    `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     
     // ====================
     // Control State Machine
@@ -1078,6 +1041,7 @@ module PixController #(
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
+            ctrl_state <= Ctrl_State_Capture;
         end
         
         Ctrl_State_Capture: begin
@@ -1105,13 +1069,6 @@ module PixController #(
         end
         
         Ctrl_State_Capture+2: begin
-            // Wait for the fifoIn state machine to start
-            if (ctrl_fifoInStarted) begin
-                ctrl_state <= Ctrl_State_Capture+3;
-            end
-        end
-        
-        Ctrl_State_Capture+3: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             
@@ -1135,32 +1092,7 @@ module PixController #(
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
-        
-        Ctrl_State_Readout: begin
-            $display("[PIXCTRL:Readout] Triggered");
-            // Supply 'Read' RAM command
-            ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd <= `RAMController_Cmd_Read;
-            // Reset output FIFO
-            fifoOut_rst <= 1;
-            ctrl_state <= Ctrl_State_Readout+1;
-        end
-        
-        Ctrl_State_Readout+1: begin
-            // Wait for the read command and FIFO reset to be consumed
-            if (ramctrl_cmd===`RAMController_Cmd_None && !fifoOut_rst) begin
-                status_readoutStarted <= 1;
-                ctrl_state <= Ctrl_State_Idle;
-            end
-        end
         endcase
-        
-        if (cmd !== `PixController_Cmd_None) begin
-            case (cmd)
-            `PixController_Cmd_Capture:     ctrl_state <= Ctrl_State_Capture;
-            `PixController_Cmd_Readout:     ctrl_state <= Ctrl_State_Readout;
-            endcase
-        end
     end
     
     // ====================
@@ -1182,7 +1114,6 @@ module PixController #(
     assign readout_ready = fifoOut_read_ready;
     assign fifoOut_read_trigger = readout_trigger;
     assign readout_data = fifoOut_read_data;
-    
 endmodule
 
 `endif
