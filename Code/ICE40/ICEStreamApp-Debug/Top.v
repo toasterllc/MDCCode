@@ -92,8 +92,6 @@ module PixController #(
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
-    output wire         readout_ready,
-    input wire          readout_trigger,
     output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
@@ -249,8 +247,6 @@ module PixController #(
     assign fifoOut_write_data = ramctrl_read_data;
     
     // Connect output FIFO read -> readout port
-    assign readout_ready = fifoOut_read_ready;
-    assign fifoOut_read_trigger = readout_trigger;
     assign readout_data = fifoOut_read_data;
 endmodule
 
@@ -296,11 +292,6 @@ module Top(
     // ====================
     // PixController
     // ====================
-    reg[1:0]                            pixctrl_cmd = 0;
-    reg[2:0]                            pixctrl_cmd_ramBlock = 0;
-    wire                                pixctrl_readout_clk;
-    wire                                pixctrl_readout_ready;
-    wire                                pixctrl_readout_trigger;
     wire[15:0]                          pixctrl_readout_data;
     wire                                pixctrl_status_captureDone;
     wire[`RegWidth(ImageWidthMax)-1:0]  pixctrl_status_captureImageWidth;
@@ -309,12 +300,6 @@ module Top(
     PixController PixController (
         .clk(clk24mhz),
         
-        .cmd(pixctrl_cmd),
-        .cmd_ramBlock(pixctrl_cmd_ramBlock),
-        
-        .readout_clk(pixctrl_readout_clk),
-        .readout_ready(pixctrl_readout_ready),
-        .readout_trigger(pixctrl_readout_trigger),
         .readout_data(pixctrl_readout_data),
         
         .status_captureDone(pixctrl_status_captureDone),
