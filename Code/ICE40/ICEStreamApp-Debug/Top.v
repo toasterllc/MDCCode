@@ -8,34 +8,6 @@
 
 `include "ICEAppTypes.v"
 
-`ifndef Delay_v
-`define Delay_v
-
-module Delay #(
-    parameter Count = 1
-)(
-    input wire in,
-    output wire out
-);
-    wire[Count:0] bits;
-    assign bits[0] = in;
-    assign out = bits[Count];
-    genvar i;
-    for (i=0; i<Count; i=i+1) begin
-        SB_LUT4 #(
-            .LUT_INIT(16'bxxxx_xxxx_xxxx_xx10)
-        ) SB_LUT4(
-            .I3(1'b0),
-            .I2(1'b0),
-            .I1(1'b0),
-            .I0(bits[i]),
-            .O(bits[i+1])
-        );
-    end
-endmodule
-
-`endif
-
 
 `ifndef Util_v
 `define Util_v
@@ -105,88 +77,6 @@ endmodule
         {out, `Var3(out,in,clk)} <= {`Var3(out,in,clk), in}
 
 `endif
-
-
-`ifndef ClockGen_v
-`define ClockGen_v
-
-`timescale 1ps/1ps
-
-module ClockGen #(
-    // 100MHz by default
-    parameter FREQ=100000000,
-    parameter DIVR=0,
-    parameter DIVF=66,
-    parameter DIVQ=3,
-    parameter FILTER_RANGE=1
-)(
-    input wire clkRef,
-    output wire clk,
-    output wire rst
-);
-    wire locked;
-    wire pllClk;
-    assign clk = pllClk&locked;
-    
-`ifdef SIM
-    reg simClk;
-    reg[3:0] simLockedCounter;
-    assign pllClk = simClk;
-    assign locked = &simLockedCounter;
-    
-    initial begin
-        simClk = 0;
-        simLockedCounter = 0;
-        forever begin
-            #(`DivCeil(1000000000000, 2*FREQ));
-            simClk = !simClk;
-            
-            if (!simClk & !locked) begin
-                simLockedCounter = simLockedCounter+1;
-            end
-        end
-    end
-
-`else
-    SB_PLL40_CORE #(
-		.FEEDBACK_PATH("SIMPLE"),
-		.DIVR(DIVR),
-		.DIVF(DIVF),
-		.DIVQ(DIVQ),
-		.FILTER_RANGE(FILTER_RANGE)
-    ) pll (
-		.LOCK(locked),
-		.RESETB(1'b1),
-		.BYPASS(1'b0),
-		.REFERENCECLK(clkRef),
-		.PLLOUTCORE(pllClk)
-    );
-`endif
-    
-    // Generate `rst`
-    reg init = 0;
-    reg[15:0] rst_;
-    assign rst = !rst_[$size(rst_)-1];
-    always @(posedge clk)
-        if (!init) begin
-            rst_ <= 1;
-            init <= 1;
-        end else if (rst) begin
-            rst_ <= rst_<<1;
-        end
-    
-    // TODO: should we only output clk if locked==1? that way, if clients receive a clock, they know it's stable?
-    
-    // // Generate `rst`
-    // reg[15:0] rstCounter;
-    // always @(posedge clk)
-    //     if (!locked) rstCounter <= 0;
-    //     else if (rst) rstCounter <= rstCounter+1;
-    // assign rst = !(&rstCounter);
-endmodule
-
-`endif
-
 
 
 
@@ -420,15 +310,7 @@ module RAMController #(
         AddrFromBlock = block << BlockSizeRegWidth;
     endfunction
     
-    // ====================
-    // ram_clk
-    // ====================
-    Delay #(
-        .Count(RAMClkDelay)
-    ) Delay(
-        .in(clk),
-        .out(ram_clk)
-    );
+    assign ram_clk = clk;
     
     // ====================
     // ram_cke
@@ -1487,25 +1369,6 @@ module Top(
         .D_OUT_0(),
         .D_IN_0()
     );
-    
-    
-    
-    
-    
-    
-    
-    // ====================
-    // Pix Clock (108 MHz)
-    // ====================
-    localparam Pix_Clk_Freq = 108_000_000;
-    wire pix_clk;
-    ClockGen #(
-        .FREQ(Pix_Clk_Freq),
-        .DIVR(0),
-        .DIVF(35),
-        .DIVQ(3),
-        .FILTER_RANGE(2)
-    ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
     
     // ====================
     // PixController
