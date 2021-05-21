@@ -1060,30 +1060,6 @@ module PixController #(
     end
     
     // ====================
-    // Pin: pix_fv
-    // ====================
-    wire pix_fv_reg;
-    SB_IO #(
-        .PIN_TYPE(6'b0000_00)
-    ) SB_IO_pix_fv (
-        .INPUT_CLK(pix_dclk),
-        .PACKAGE_PIN(pix_fv),
-        .D_IN_0(pix_fv_reg)
-    );
-    
-    // ====================
-    // Pin: pix_lv
-    // ====================
-    wire pix_lv_reg;
-    SB_IO #(
-        .PIN_TYPE(6'b0000_00)
-    ) SB_IO_pix_lv (
-        .INPUT_CLK(pix_dclk),
-        .PACKAGE_PIN(pix_lv),
-        .D_IN_0(pix_lv_reg)
-    );
-    
-    // ====================
     // Pixel input state machine
     // ====================
     reg fifoIn_writeEn = 0;
@@ -1109,81 +1085,6 @@ module PixController #(
     // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     // `ToggleAck(ctrl_fifoInDone, ctrl_fifoInDoneAck, fifoIn_done, posedge, clk);
     `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
-    
-    reg[2:0] fifoIn_state = 0;
-    always @(posedge pix_dclk) begin
-        fifoIn_rst <= 0; // Pulse
-        fifoIn_writeEn <= 0; // Reset by default
-        fifoIn_lvPrev <= fifoIn_lv;
-        
-        if (fifoIn_write_trigger) begin
-            // Count the width of the image
-            if (!fifoIn_lvPrev) fifoIn_imageWidth <= 1;
-            else                fifoIn_imageWidth <= fifoIn_imageWidth+1;
-            // Count the height of the image
-            if (!fifoIn_lvPrev) fifoIn_imageHeight <= fifoIn_imageHeight+1;
-        end
-        
-        if (!fifoIn_lv) fifoIn_x <= 0;
-        else            fifoIn_x <= fifoIn_x+1;
-        
-        if (!fifoIn_fv)                         fifoIn_y <= 0;
-        else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
-        
-        case (fifoIn_state)
-        // Idle: wait to be triggered
-        0: begin
-        end
-        
-        // Reset FIFO / ourself
-        1: begin
-            fifoIn_rst <= 1;
-            fifoIn_done <= 0;
-            fifoIn_imageWidth <= 0;
-            fifoIn_imageHeight <= 0;
-            fifoIn_state <= 2;
-        end
-        
-        // Wait for FIFO to be done resetting
-        2: begin
-            if (!fifoIn_rst) begin
-                fifoIn_started <= !fifoIn_started;
-                fifoIn_state <= 3;
-            end
-        end
-        
-        // Wait for the frame to be invalid
-        3: begin
-            if (!pix_fv_reg) begin
-                $display("[PIXCTRL:FIFO] Waiting for frame invalid...");
-                fifoIn_state <= 4;
-            end
-        end
-        
-        // Wait for the frame to start
-        4: begin
-            if (pix_fv_reg) begin
-                $display("[PIXCTRL:FIFO] Frame start");
-                fifoIn_state <= 5;
-            end
-        end
-        
-        // Wait until the end of the frame
-        5: begin
-            fifoIn_writeEn <= 1;
-            
-            if (!pix_fv_reg) begin
-                $display("[PIXCTRL:FIFO] Frame end");
-                fifoIn_done <= 1;
-                fifoIn_state <= 0;
-            end
-        end
-        endcase
-        
-        if (fifoIn_captureTrigger) begin
-            fifoIn_state <= 1;
-        end
-    end
     
     // ====================
     // Control State Machine
