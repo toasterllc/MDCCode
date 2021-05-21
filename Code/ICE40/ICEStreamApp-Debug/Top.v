@@ -1020,31 +1020,6 @@ module PixController #(
     );
     
     // ====================
-    // Output FIFO (RAM->Output)
-    // ====================
-    reg fifoOut_rst = 0;
-    wire fifoOut_write_ready;
-    wire fifoOut_write_trigger;
-    wire[15:0] fifoOut_write_data;
-    wire fifoOut_read_ready;
-    wire fifoOut_read_trigger;
-    wire[15:0] fifoOut_read_data;
-    
-    AFIFO AFIFO_fifoOut(
-        .rst_(!fifoOut_rst),
-        
-        .w_clk(clk),
-        .w_ready(fifoOut_write_ready),
-        .w_trigger(fifoOut_write_trigger),
-        .w_data(fifoOut_write_data),
-        
-        .r_clk(readout_clk),
-        .r_ready(fifoOut_read_ready),
-        .r_trigger(fifoOut_read_trigger),
-        .r_data(fifoOut_read_data)
-    );
-    
-    // ====================
     // Pin: pix_d
     // ====================
     genvar i;
