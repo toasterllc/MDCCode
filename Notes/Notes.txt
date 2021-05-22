@@ -1,18 +1,18 @@
 - Rev4 Layout Todo
-    - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
     - Length-match SD lines
     - Length-match RAM lines
     - Length-match STM<->ICE SPI lines
     - Length-match USB+/USB- lines
+    - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
     - Make sure there are no parts inside the lens holder
     - Make sure we're following the layout guidelines for crystals
     - Add lots of ground vias throughout board
     - Make sure 2x 1V2 bypass capacitors at the bottom-left of the ice40 are positioned well
     - Make all via diameters 'auto'
-    - Rotate image sensor?
     - Smash every component to bring back their labels (we may have deleted some)
     - Fill gaps in power layer
     - Make sure we don't have any 6-mil traces
+    √ Rotate image sensor
     √ Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
 
 - Rev4 Schematic Todo
@@ -230,6 +230,8 @@
     
     - STM32F730I8K6 / STM32F723IEK6 -- 15x
         - STM32F723IEK6 is more-expensive but pin-compatible with STM32F730I8K6
+        - export.farnell.com
+            "More stock available week commencing 28/06/21"
         - sierraic.com has stock
             - Waiting for quote for 15x
     
