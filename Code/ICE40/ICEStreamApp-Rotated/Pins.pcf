@@ -1,6 +1,4 @@
-# Rev3 board / ICE40HX4K-BG121
-
-set_io clk24mhz             C11     -pullup no
+set_io clk16mhz             C11     -pullup no
 
 set_io led[0]               E3      -pullup no
 set_io led[1]               F3      -pullup no
