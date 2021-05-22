@@ -1,9 +1,13 @@
 set_io clk16mhz             C11     -pullup no
 
-set_io led[0]               E3      -pullup no
-set_io led[1]               F3      -pullup no
-set_io led[2]               F4      -pullup no
-set_io led[3]               G3      -pullup no
+set_io led[0]               C9      -pullup no
+set_io led[1]               A10     -pullup no
+set_io led[2]               A11     -pullup no
+set_io led[3]               B11     -pullup no
+
+set_io msp_spi_aux          K3      -pullup no
+set_io msp_spi_clk          K1      -pullup no
+set_io msp_spi_data         K2      -pullup no
 
 set_io pix_dclk             F11     -pullup no
 set_io pix_d[0]             E8      -pullup no
@@ -17,17 +21,16 @@ set_io pix_d[7]             G8      -pullup no
 set_io pix_d[8]             J10     -pullup no
 set_io pix_d[9]             J11     -pullup no
 set_io pix_d[10]            H11     -pullup no
-set_io pix_d[11]            G10     -pullup no
-
+set_io pix_d[11]            H10     -pullup no
 set_io pix_fv               E11     -pullup no
 set_io pix_lv               E10     -pullup no
 set_io pix_rst_             D11     -pullup no
-set_io pix_sclk             H10     -pullup no
+set_io pix_sclk             G10     -pullup no
 set_io pix_sdata            F10     -pullup no
 
 set_io ram_a[0]             D5      -pullup no
-set_io ram_a[1]             A3      -pullup no
-set_io ram_a[2]             A2      -pullup no
+set_io ram_a[1]             B3      -pullup no
+set_io ram_a[2]             B2      -pullup no
 set_io ram_a[3]             A1      -pullup no
 set_io ram_a[4]             B1      -pullup no
 set_io ram_a[5]             C2      -pullup no
@@ -35,56 +38,49 @@ set_io ram_a[6]             C4      -pullup no
 set_io ram_a[7]             D2      -pullup no
 set_io ram_a[8]             C1      -pullup no
 set_io ram_a[9]             C3      -pullup no
-set_io ram_a[10]            B2      -pullup no
-set_io ram_a[11]            E2      -pullup no
-set_io ram_a[12]            D1      -pullup no
+set_io ram_a[10]            A2      -pullup no
+set_io ram_a[11]            D1      -pullup no
 set_io ram_ba[0]            C7      -pullup no
-set_io ram_ba[1]            A4      -pullup no
+set_io ram_ba[1]            B4      -pullup no
 set_io ram_cas_             D7      -pullup no
 set_io ram_cke              D3      -pullup no
-set_io ram_clk              F2      -pullup no
-set_io ram_cs_              B3      -pullup no
-set_io ram_dqm[0]           A6      -pullup no
-set_io ram_dqm[1]           E1      -pullup no
-set_io ram_dq[0]            B9      -pullup no
-set_io ram_dq[1]            B8      -pullup no
-set_io ram_dq[2]            A9      -pullup no
-set_io ram_dq[3]            B7      -pullup no
-set_io ram_dq[4]            A8      -pullup no
-set_io ram_dq[5]            B6      -pullup no    # Comment out to allow PLL to be used
-set_io ram_dq[6]            A7      -pullup no
-set_io ram_dq[7]            B5      -pullup no
-set_io ram_dq[8]            F1      -pullup no
-set_io ram_dq[9]            G1      -pullup no
-set_io ram_dq[10]           G2      -pullup no
-set_io ram_dq[11]           H1      -pullup no
-set_io ram_dq[12]           H2      -pullup no
-set_io ram_dq[13]           J1      -pullup no
-set_io ram_dq[14]           J2      -pullup no
-set_io ram_dq[15]           K2      -pullup no
-set_io ram_ras_             A5      -pullup no
-set_io ram_we_              B4      -pullup no
+set_io ram_clk              E1      -pullup no
+set_io ram_cs_              A3      -pullup no
+set_io ram_dqm[0]           B6      -pullup no
+set_io ram_dqm[1]           E2      -pullup no
+set_io ram_dq[0]            A9      -pullup no
+set_io ram_dq[1]            A8      -pullup no
+set_io ram_dq[2]            B9      -pullup no
+set_io ram_dq[3]            A7      -pullup no
+set_io ram_dq[4]            B8      -pullup no
+set_io ram_dq[5]            A6      -pullup no
+set_io ram_dq[6]            B7      -pullup no
+set_io ram_dq[7]            A5      -pullup no
+set_io ram_dq[8]            F2      -pullup no
+set_io ram_dq[9]            G2      -pullup no
+set_io ram_dq[10]           F1      -pullup no
+set_io ram_dq[11]           H2      -pullup no
+set_io ram_dq[12]           G1      -pullup no
+set_io ram_dq[13]           J2      -pullup no
+set_io ram_dq[14]           H1      -pullup no
+set_io ram_dq[15]           J1      -pullup no
+set_io ram_ras_             B5      -pullup no
+set_io ram_we_              A4      -pullup no
 
-set_io sdcard_clk           K4      -pullup no
-set_io sdcard_cmd           L3      -pullup no
-set_io sdcard_dat[0]        L2      -pullup no
-set_io sdcard_dat[1]        K3      -pullup no
-# set_io sdcard_dat[2]        L5      -pullup no    # Comment out to allow PLL to be used
-set_io sdcard_dat[3]        L4      -pullup no
-set_io sdcard_init          L1      -pullup no
+set_io sd_clk               L3      -pullup no
+set_io sd_cmd               K4      -pullup no
+set_io sd_dat[0]            L2      -pullup no
+set_io sd_dat[1]            L1      -pullup no
+set_io sd_dat[2]            K5      -pullup no
+set_io sd_dat[3]            L4      -pullup no
 
-set_io spi_clk              L10
-set_io spi_cs_              K10
-set_io spi_d[0]             J9
-set_io spi_d[1]             K9
-set_io spi_d[2]             L7
-set_io spi_d[3]             K6
-set_io spi_d[4]             J7
-set_io spi_d[5]             K7
-set_io spi_d[6]             H7
-set_io spi_d[7]             L8
-
-set_io ctrl_clk             L10
-set_io ctrl_rst             K10
-set_io ctrl_di              J9
-set_io ctrl_do              K9
+set_io spi_clk              L10     -pullup no
+set_io spi_cs_              K10     -pullup no
+set_io spi_d[0]             J9      -pullup no
+set_io spi_d[1]             K9      -pullup no
+set_io spi_d[2]             L7      -pullup no
+set_io spi_d[3]             K6      -pullup no
+set_io spi_d[4]             J7      -pullup no
+set_io spi_d[5]             K7      -pullup no
+set_io spi_d[6]             H7      -pullup no
+set_io spi_d[7]             L8      -pullup no
