@@ -12,6 +12,7 @@
     - Rotate image sensor?
     - Smash every component to bring back their labels (we may have deleted some)
     - Fill gaps in power layer
+    - Make sure we don't have any 6-mil traces
     √ Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
 
 - Rev4 Schematic Todo
