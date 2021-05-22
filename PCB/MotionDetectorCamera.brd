@@ -2007,10 +2007,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="18.5829" y="19.2840625" size="0.508" layer="25" font="vector" rot="R90"/>
 <attribute name="PN" value="CRCW040210K0FKEDC" x="19.1389" y="20.0380625" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R17" library="EagleLibrary" package="0402" value="4.7k" x="82.430621875" y="41.043859375" smashed="yes" rot="R90">
-<attribute name="MFG" value="Vishay" x="82.430621875" y="41.043859375" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="NAME" x="81.874621875" y="40.289859375" size="0.508" layer="25" font="vector" rot="R90"/>
-<attribute name="PN" value="CRCW04024K70FKEDC" x="82.430621875" y="41.043859375" size="1.778" layer="27" rot="R90" display="off"/>
+<element name="R17" library="EagleLibrary" package="0402" value="4.7k" x="38.04855" y="24.37891875" smashed="yes">
+<attribute name="MFG" value="Vishay" x="38.04855" y="24.37891875" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="37.29455" y="24.93491875" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="CRCW04024K70FKEDC" x="38.04855" y="24.37891875" size="1.778" layer="27" display="off"/>
 </element>
 <element name="J2" library="EagleLibrary" package="AMPHENOL-10033526-N3222MLF" value="MINI-USB-JACK" x="35.56" y="5.207" smashed="yes">
 <attribute name="MFG" value="Amphenol FCI" x="24.384" y="16.891" size="1.778" layer="27" display="off"/>
@@ -4613,13 +4613,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R17" pad="2"/>
 <wire x1="40.7422" y1="25.807" x2="40.42918125" y2="25.49398125" width="0.127" layer="1"/>
 <wire x1="40.42918125" y1="25.49398125" x2="39.73321875" y2="25.49398125" width="0.127" layer="1"/>
-<wire x1="39.73321875" y1="25.49398125" x2="39.103296875" y2="24.864059375" width="0.127" layer="1"/>
+<wire x1="39.73321875" y1="25.49398125" x2="39.108378125" y2="24.869140625" width="0.127" layer="1"/>
 <wire x1="24.0991875" y1="26.8986" x2="20.8888" y2="26.8986" width="0.127" layer="1"/>
-<wire x1="26.133728125" y1="24.864059375" x2="24.0991875" y2="26.8986" width="0.127" layer="1"/>
+<wire x1="26.128646875" y1="24.869140625" x2="24.0991875" y2="26.8986" width="0.127" layer="1"/>
 <wire x1="20.8888" y1="26.8986" x2="20.4744" y2="27.313" width="0.127" layer="1"/>
 <contactref element="U4" pad="F10"/>
-<wire x1="26.133728125" y1="24.864059375" x2="39.103296875" y2="24.864059375" width="0.127" layer="1"/>
-<wire x1="40.7422" y1="25.807" x2="82.430621875" y2="41.476359375" width="0" layer="19" extent="1-1"/>
+<wire x1="26.128646875" y1="24.869140625" x2="38.48105" y2="24.869140625" width="0.127" layer="1"/>
+<wire x1="38.608" y1="24.869140625" x2="39.108378125" y2="24.869140625" width="0.127" layer="1"/>
+<wire x1="38.48105" y1="24.37891875" x2="38.48105" y2="24.869140625" width="0.127" layer="1"/>
+<wire x1="38.48105" y1="24.869140625" x2="38.608" y2="24.869140625" width="0.127" layer="1"/>
 </signal>
 <signal name="SD_CLK">
 <contactref element="U9" pad="CLK"/>
@@ -5565,8 +5567,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="45.974" y="27.111959375"/>
 <vertex x="45.974" y="27.80791875"/>
 </polygon>
-<wire x1="45.72778125" y1="35.23048125" x2="82.430621875" y2="40.611359375" width="0" layer="19" extent="1-16"/>
-<wire x1="42.6922" y1="27.757" x2="43.3422" y2="28.407" width="0" layer="19" extent="1-1"/>
+<wire x1="40.429178125" y1="24.823421875" x2="37.61605" y2="24.37891875" width="0" layer="19" extent="1-1"/>
+<wire x1="43.3422" y1="28.407" x2="42.6922" y2="27.757" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_2V8_IMG">
 <contactref element="C28" pad="1"/>
