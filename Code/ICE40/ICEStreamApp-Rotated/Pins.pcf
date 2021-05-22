@@ -1,4 +1,4 @@
-set_io clk16mhz             C11     -pullup no
+set_io clk24mhz             C11     -pullup no
 
 set_io led[0]               C9      -pullup no
 set_io led[1]               A10     -pullup no

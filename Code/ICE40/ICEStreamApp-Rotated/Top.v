@@ -24,7 +24,7 @@
 `timescale 1ns/1ps
 
 module Top(
-    input wire          clk16mhz,
+    input wire          clk24mhz,
     
     input wire          spi_clk,
     input wire          spi_cs_,
@@ -67,14 +67,14 @@ module Top(
     `ToggleAck(spi_pixi2c_done_, spi_pixi2c_doneAck, pixi2c_status_done, posedge, spi_clk);
     
     PixI2CMaster #(
-        .ClkFreq(16_000_000),
+        .ClkFreq(24_000_000),
 `ifdef SIM
         .I2CClkFreq(4_000_000)
 `else
         .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
 `endif
     ) PixI2CMaster (
-        .clk(clk16mhz),
+        .clk(clk24mhz),
         
         .cmd_slaveAddr(PixI2CSlaveAddr),
         .cmd_write(pixi2c_cmd_write),
@@ -108,7 +108,7 @@ module Top(
         .DIVF(35),
         .DIVQ(3),
         .FILTER_RANGE(2)
-    ) ClockGen_pix_clk(.clkRef(clk16mhz), .clk(pix_clk));
+    ) ClockGen_pix_clk(.clkRef(clk24mhz), .clk(pix_clk));
     
     // ====================
     // PixController
@@ -452,7 +452,7 @@ endmodule
 
 `ifdef SIM
 module Testbench();
-    reg         clk16mhz = 0;
+    reg         clk24mhz = 0;
     
     reg         spi_clk = 0;
     reg         spi_cs_ = 0;
@@ -519,10 +519,10 @@ module Testbench();
     
     initial begin
         forever begin
-            clk16mhz = 0;
-            #32;
-            clk16mhz = 1;
-            #32;
+            clk24mhz = 0;
+            #21;
+            clk24mhz = 1;
+            #21;
         end
     end
     
