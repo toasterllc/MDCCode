@@ -2347,6 +2347,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="39.941759375" y="24.467440625" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="40.497759375" y="23.713440625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
+<element name="C88" library="EagleLibrary" package="0402" value="100n" x="46.1264" y="27.43708125" smashed="yes" rot="MR180">
+<attribute name="MFG" value="Murata" x="46.1264" y="27.43708125" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="45.3724" y="26.88108125" size="0.508" layer="26" font="vector" rot="MR180"/>
+<attribute name="PN" value="GRM155R61H104KE19D" x="46.1264" y="27.43708125" size="1.778" layer="28" rot="MR180" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="VDD_B">
@@ -3247,8 +3252,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="44.9834" y="26.1239" extent="1-16" drill="0.254"/>
 <via x="44.985940625" y="25.49651875" extent="1-16" drill="0.254"/>
 <via x="43.741340625" y="24.71928125" extent="1-16" drill="0.254"/>
-<via x="41.094659375" y="24.805640625" extent="1-16" drill="0.254"/>
+<via x="41.32071875" y="24.683721875" extent="1-16" drill="0.254"/>
 <contactref element="C34" pad="2"/>
+<contactref element="C88" pad="2"/>
 <wire x1="68.7971625" y1="27.98388125" x2="71.6253" y2="30.374940625" width="0" layer="19" extent="16-16"/>
 <wire x1="67.531928125" y1="27.98388125" x2="68.7971625" y2="27.98388125" width="0" layer="19" extent="16-16"/>
 <wire x1="67.584159375" y1="30.374940625" x2="67.531928125" y2="27.98388125" width="0" layer="19" extent="16-16"/>
@@ -5530,10 +5536,17 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="40.894" y="23.876"/>
 <vertex x="40.894" y="25.041859375"/>
 </polygon>
+<contactref element="C88" pad="1"/>
+<polygon width="0.127" layer="16" thermals="no">
+<vertex x="44.752259375" y="27.80791875"/>
+<vertex x="44.752259375" y="27.111959375"/>
+<vertex x="45.974" y="27.111959375"/>
+<vertex x="45.974" y="27.80791875"/>
+</polygon>
 <wire x1="69.7007" y1="31.024940625" x2="82.430621875" y2="40.611359375" width="0" layer="19" extent="1-16"/>
 <wire x1="69.7007" y1="30.374940625" x2="69.7007" y2="31.024940625" width="0" layer="19" extent="16-16"/>
 <wire x1="65.001459375" y1="27.98388125" x2="69.7007" y2="30.374940625" width="0" layer="19" extent="16-16"/>
-<wire x1="45.753015625" y1="24.499940625" x2="65.001459375" y2="27.98388125" width="0" layer="19" extent="16-16"/>
+<wire x1="45.6939" y1="27.43708125" x2="65.001459375" y2="27.98388125" width="0" layer="19" extent="16-16"/>
 <wire x1="43.3422" y1="28.407" x2="42.6922" y2="27.757" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_2V8_IMG">

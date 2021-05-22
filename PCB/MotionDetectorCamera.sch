@@ -4312,6 +4312,10 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
+<part name="C88" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -7012,6 +7016,12 @@ between input and output when its VDD=0.</text>
 <attribute name="MFG" x="25.4" y="43.18" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="25.4" y="43.18" size="1.778" layer="96" display="off"/>
 </instance>
+<instance part="C88" gate="G$1" x="45.72" y="22.86" smashed="yes">
+<attribute name="NAME" x="43.434" y="22.479" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="43.434" y="19.939" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="45.72" y="22.86" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="45.72" y="22.86" size="1.778" layer="96" display="off"/>
+</instance>
 </instances>
 <busses>
 <bus name="IMG_D[0..11]">
@@ -7042,6 +7052,9 @@ between input and output when its VDD=0.</text>
 <pinref part="C36" gate="G$1" pin="1"/>
 <wire x1="35.56" y1="25.4" x2="25.4" y2="25.4" width="0.1524" layer="91"/>
 <label x="25.4" y="25.908" size="1.778" layer="95"/>
+<pinref part="C88" gate="G$1" pin="1"/>
+<wire x1="45.72" y1="25.4" x2="35.56" y2="25.4" width="0.1524" layer="91"/>
+<junction x="35.56" y="25.4"/>
 </segment>
 <segment>
 <pinref part="R16" gate="G$1" pin="2"/>
@@ -7119,6 +7132,9 @@ between input and output when its VDD=0.</text>
 <pinref part="C37" gate="G$1" pin="2"/>
 <wire x1="25.4" y1="17.78" x2="35.56" y2="17.78" width="0.1524" layer="91"/>
 <label x="25.4" y="17.272" size="1.778" layer="95" align="top-left"/>
+<pinref part="C88" gate="G$1" pin="2"/>
+<wire x1="45.72" y1="17.78" x2="35.56" y2="17.78" width="0.1524" layer="91"/>
+<junction x="35.56" y="17.78"/>
 </segment>
 <segment>
 <pinref part="C38" gate="G$1" pin="2"/>
