@@ -3916,10 +3916,6 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Vishay"/>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
-<part name="C34" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
-</part>
 <part name="C35" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
@@ -4311,6 +4307,10 @@ tolerant of VDDUSB</text>
 <part name="R27" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
+</part>
+<part name="C34" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 </parts>
 <sheets>
@@ -6979,12 +6979,6 @@ between input and output when its VDD=0.</text>
 <attribute name="MFG" x="167.64" y="101.6" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="167.64" y="101.6" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="C34" gate="G$1" x="25.4" y="43.18" smashed="yes">
-<attribute name="PN" x="25.4" y="43.18" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="22.606" y="42.799" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="22.606" y="40.259" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="25.4" y="43.18" size="1.778" layer="96" display="off"/>
-</instance>
 <instance part="C35" gate="G$1" x="35.56" y="43.18" smashed="yes">
 <attribute name="NAME" x="33.274" y="42.799" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="33.274" y="40.259" size="1.778" layer="96" align="bottom-right"/>
@@ -7011,6 +7005,12 @@ between input and output when its VDD=0.</text>
 <attribute name="VALUE" x="130.556" y="98.171" size="1.778" layer="96" align="bottom-right"/>
 <attribute name="MFG" x="132.842" y="101.092" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="132.842" y="101.092" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="C34" gate="G$1" x="25.4" y="43.18" smashed="yes">
+<attribute name="NAME" x="23.114" y="42.799" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="23.114" y="40.259" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="25.4" y="43.18" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="25.4" y="43.18" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -7050,9 +7050,9 @@ between input and output when its VDD=0.</text>
 </segment>
 <segment>
 <pinref part="C35" gate="G$1" pin="1"/>
-<pinref part="C34" gate="G$1" pin="1"/>
 <wire x1="35.56" y1="45.72" x2="25.4" y2="45.72" width="0.1524" layer="91"/>
 <label x="25.4" y="46.228" size="1.778" layer="95"/>
+<pinref part="C34" gate="G$1" pin="1"/>
 </segment>
 <segment>
 <pinref part="R17" gate="G$1" pin="1"/>
@@ -7127,10 +7127,10 @@ between input and output when its VDD=0.</text>
 <label x="25.4" y="2.032" size="1.778" layer="95" align="top-left"/>
 </segment>
 <segment>
-<pinref part="C34" gate="G$1" pin="2"/>
 <pinref part="C35" gate="G$1" pin="2"/>
 <wire x1="25.4" y1="38.1" x2="35.56" y2="38.1" width="0.1524" layer="91"/>
 <label x="25.4" y="37.592" size="1.778" layer="95" align="top-left"/>
+<pinref part="C34" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="J1" gate="G$1" pin="GND1"/>

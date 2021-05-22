@@ -1781,11 +1781,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="65.557459375" y="26.79738125" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="CRCW040210K0FKEDC" x="65.001459375" y="27.55138125" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
-<element name="C34" library="EagleLibrary" package="0805" value="10u" x="66.2711375" y="20.1422" smashed="yes" rot="MR90">
-<attribute name="MFG" value="KEMET" x="66.2711375" y="20.1422" size="1.778" layer="28" rot="MR90" display="off"/>
-<attribute name="NAME" x="67.2718375" y="18.6732" size="0.762" layer="26" font="vector" rot="MR90"/>
-<attribute name="PN" value="C0805C106K8PACTU" x="66.2711375" y="20.1422" size="1.778" layer="28" rot="MR90" display="off"/>
-</element>
 <element name="C35" library="EagleLibrary" package="0402" value="100n" x="44.4423875" y="24.3306625" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Murata" x="44.4423875" y="24.3306625" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="43.8863875" y="25.0846625" size="0.508" layer="26" font="vector" rot="MR270"/>
@@ -2347,6 +2342,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="22.43655" y="6.5306" size="0.508" layer="25" font="vector" rot="R180"/>
 <attribute name="PN" value="CRGP0402F1K8" x="21.68255" y="9.3726" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
+<element name="C34" library="EagleLibrary" package="0402" value="100n" x="40.497759375" y="23.713440625" smashed="yes" rot="MR270">
+<attribute name="MFG" value="Murata" x="40.497759375" y="23.713440625" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="39.941759375" y="24.467440625" size="0.508" layer="26" font="vector" rot="MR270"/>
+<attribute name="PN" value="GRM155R61H104KE19D" x="40.497759375" y="23.713440625" size="1.778" layer="28" rot="MR270" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="VDD_B">
@@ -2795,7 +2795,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C37" pad="2"/>
 <contactref element="C38" pad="2"/>
 <contactref element="C39" pad="2"/>
-<contactref element="C34" pad="2"/>
 <contactref element="C35" pad="2"/>
 <contactref element="X1" pad="4"/>
 <contactref element="X1" pad="1"/>
@@ -3249,11 +3248,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="44.985940625" y="25.49651875" extent="1-16" drill="0.254"/>
 <via x="43.741340625" y="24.71928125" extent="1-16" drill="0.254"/>
 <via x="41.094659375" y="24.805640625" extent="1-16" drill="0.254"/>
+<contactref element="C34" pad="2"/>
 <wire x1="68.7971625" y1="27.98388125" x2="71.6253" y2="30.374940625" width="0" layer="19" extent="16-16"/>
 <wire x1="67.531928125" y1="27.98388125" x2="68.7971625" y2="27.98388125" width="0" layer="19" extent="16-16"/>
 <wire x1="67.584159375" y1="30.374940625" x2="67.531928125" y2="27.98388125" width="0" layer="19" extent="16-16"/>
-<wire x1="66.2711375" y1="21.0176" x2="67.531928125" y2="27.98388125" width="0" layer="19" extent="16-16"/>
-<wire x1="51.7525" y1="13.3451625" x2="66.2711375" y2="21.0176" width="0" layer="19" extent="16-16"/>
+<wire x1="50.8" y1="40.386" x2="67.584159375" y2="30.374940625" width="0" layer="19" extent="16-16"/>
 <wire x1="40.0922" y1="26.457" x2="40.7422" y2="27.107" width="0" layer="19" extent="1-1"/>
 <wire x1="37.58781875" y1="23.721059375" x2="35.2063" y2="22.0987" width="0" layer="19" extent="16-16"/>
 <wire x1="37.61605" y1="28.023825" x2="40.0922" y2="26.457" width="0" layer="19" extent="1-1"/>
@@ -4375,9 +4374,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U4" pad="J10"/>
 <wire x1="20.8776" y1="24.5098" x2="20.4744" y2="24.913" width="0.127" layer="1"/>
 <wire x1="21.02371875" y1="24.36368125" x2="24.147778125" y2="24.36368125" width="0.127" layer="16"/>
-<wire x1="41.529" y1="22.77618125" x2="43.019978125" y2="24.267159375" width="0.127" layer="16"/>
-<wire x1="41.529" y1="22.77618125" x2="36.8554" y2="22.77618125" width="0.127" layer="16"/>
-<wire x1="36.8554" y1="22.77618125" x2="35.7505" y2="23.88108125" width="0.127" layer="16"/>
+<wire x1="41.50868125" y1="22.7558625" x2="43.019978125" y2="24.267159375" width="0.127" layer="16"/>
+<wire x1="41.50868125" y1="22.7558625" x2="36.87571875" y2="22.7558625" width="0.127" layer="16"/>
+<wire x1="36.87571875" y1="22.7558625" x2="35.7505" y2="23.88108125" width="0.127" layer="16"/>
 <wire x1="35.7505" y1="23.88108125" x2="24.630378125" y2="23.88108125" width="0.127" layer="16"/>
 <wire x1="24.147778125" y1="24.36368125" x2="24.630378125" y2="23.88108125" width="0.127" layer="16"/>
 </signal>
@@ -5404,7 +5403,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C36" pad="1"/>
 <contactref element="R16" pad="2"/>
 <contactref element="C35" pad="1"/>
-<contactref element="C34" pad="1"/>
 <contactref element="R17" pad="1"/>
 <contactref element="U18" pad="1"/>
 <contactref element="U18" pad="5"/>
@@ -5525,10 +5523,16 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="46.482" y="23.876"/>
 <vertex x="46.482" y="25.656540625"/>
 </polygon>
+<contactref element="C34" pad="1"/>
+<polygon width="0.127" layer="16" thermals="no" rank="2">
+<vertex x="40.132" y="25.041859375"/>
+<vertex x="40.132" y="23.876"/>
+<vertex x="40.894" y="23.876"/>
+<vertex x="40.894" y="25.041859375"/>
+</polygon>
 <wire x1="69.7007" y1="31.024940625" x2="82.430621875" y2="40.611359375" width="0" layer="19" extent="1-16"/>
 <wire x1="69.7007" y1="30.374940625" x2="69.7007" y2="31.024940625" width="0" layer="19" extent="16-16"/>
 <wire x1="65.001459375" y1="27.98388125" x2="69.7007" y2="30.374940625" width="0" layer="19" extent="16-16"/>
-<wire x1="66.2711375" y1="19.2668" x2="65.001459375" y2="27.98388125" width="0" layer="19" extent="16-16"/>
 <wire x1="45.753015625" y1="24.499940625" x2="65.001459375" y2="27.98388125" width="0" layer="19" extent="16-16"/>
 <wire x1="43.3422" y1="28.407" x2="42.6922" y2="27.757" width="0" layer="19" extent="1-1"/>
 </signal>
@@ -5563,7 +5567,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="43.18" y="23.9014"/>
 <vertex x="48.836578125" y="23.9014"/>
 </polygon>
-<via x="40.41648125" y="28.077159375" extent="1-16" drill="0.254"/>
+<via x="39.65448125" y="28.077159375" extent="1-16" drill="0.254"/>
 <via x="43.13428125" y="30.500321875" extent="1-16" drill="0.254"/>
 <via x="44.9834" y="29.375103125" extent="1-16" drill="0.254"/>
 <polygon width="0.127" layer="1" thermals="no">
@@ -5599,13 +5603,13 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="38.1" y="28.956"/>
 <vertex x="38.1" y="27.432"/>
-<vertex x="40.706040625" y="27.432"/>
-<vertex x="40.706040625" y="28.956"/>
+<vertex x="40.198040625" y="27.432"/>
+<vertex x="40.198040625" y="28.956"/>
 </polygon>
 <polygon width="0.127" layer="1" thermals="no" rank="2">
 <vertex x="38.1" y="28.448"/>
-<vertex x="40.64" y="28.448"/>
-<vertex x="40.64" y="27.432"/>
+<vertex x="40.17518125" y="28.448"/>
+<vertex x="40.17518125" y="27.432"/>
 <vertex x="38.1" y="27.432"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
@@ -5618,7 +5622,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <wire x1="65.659559375" y1="30.374940625" x2="65.659559375" y2="31.024940625" width="0" layer="19" extent="16-16"/>
 <wire x1="44.9834" y1="29.375103125" x2="65.659559375" y2="30.374940625" width="0" layer="19" extent="16-16"/>
-<wire x1="40.41648125" y1="28.077159375" x2="43.3422" y2="29.707" width="0" layer="19" extent="1-1"/>
+<wire x1="40.0922" y1="28.407" x2="43.3422" y2="29.707" width="0" layer="19" extent="1-1"/>
 <wire x1="40.0922" y1="25.157" x2="40.0922" y2="27.757" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_SRC_USB">
