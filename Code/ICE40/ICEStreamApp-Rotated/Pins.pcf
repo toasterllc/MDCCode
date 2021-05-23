@@ -1,13 +1,13 @@
 set_io clk16mhz             C11     -pullup no
 
-# set_io led[0]               C9      -pullup no
-# set_io led[1]               A10     -pullup no
-# set_io led[2]               A11     -pullup no
-# set_io led[3]               B11     -pullup no
-#
-# set_io msp_spi_aux          K3      -pullup no
-# set_io msp_spi_clk          K1      -pullup no
-# set_io msp_spi_data         K2      -pullup no
+set_io led[0]               C9      -pullup no
+set_io led[1]               A10     -pullup no
+set_io led[2]               A11     -pullup no
+set_io led[3]               B11     -pullup no
+
+set_io msp_spi_aux          K3      -pullup no
+set_io msp_spi_clk          K1      -pullup no
+set_io msp_spi_data         K2      -pullup no
 
 set_io pix_dclk             F11     -pullup no
 set_io pix_d[0]             E8      -pullup no
@@ -68,12 +68,12 @@ set_io ram_dq[15]           K2      -pullup no
 set_io ram_ras_             A5      -pullup no
 set_io ram_we_              B4      -pullup no
 
-# set_io sd_clk               L3      -pullup no
-# set_io sd_cmd               K4      -pullup no
-# set_io sd_dat[0]            L2      -pullup no
-# set_io sd_dat[1]            L1      -pullup no
-# set_io sd_dat[2]            K5      -pullup no
-# set_io sd_dat[3]            L4      -pullup no
+set_io sd_clk               L3      -pullup no
+set_io sd_cmd               K4      -pullup no
+set_io sd_dat[0]            L2      -pullup no
+set_io sd_dat[1]            L1      -pullup no
+set_io sd_dat[2]            K5      -pullup no
+set_io sd_dat[3]            L4      -pullup no
 
 set_io spi_clk              L10     -pullup no
 set_io spi_cs_              K10     -pullup no
