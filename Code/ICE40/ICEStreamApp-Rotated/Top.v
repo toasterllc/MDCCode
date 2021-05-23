@@ -42,7 +42,7 @@ module Top(
     output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
-    output wire[11:0]   ram_a,
+    output wire[12:0]   ram_a,
     output wire         ram_cs_,
     output wire         ram_ras_,
     output wire         ram_cas_,
@@ -469,7 +469,7 @@ module Testbench();
     wire        ram_clk;
     wire        ram_cke;
     wire[1:0]   ram_ba;
-    wire[11:0]  ram_a;
+    wire[12:0]  ram_a;
     wire        ram_cs_;
     wire        ram_ras_;
     wire        ram_cas_;
