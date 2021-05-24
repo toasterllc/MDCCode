@@ -1,8 +1,11 @@
+# DKeck: This script needs to be kept up-to-date with the specific version of yosys being used.
+# DKeck: The commands issued by this script should be extracted via `yosys -h synth_ice40`.
+
 begin:
     read_verilog -D ICE40_HX -lib -specify +/ice40/cells_sim.v
-    # DKeck: Added this opt_clean pass because unused modules inexpicably
-    # changed the output performance/size (by as much as 10%)
-    opt_clean
+    # # DKeck: Added this opt_clean pass because unused modules inexpicably
+    # # changed the output performance/size (by as much as 10%)
+    # opt_clean
     hierarchy -check -top Top
     proc
 
@@ -15,6 +18,8 @@ coarse:
     opt_expr
     opt_clean
     check
+    opt -nodffe -nosdff
+    fsm
     opt
     wreduce
     peepopt
@@ -27,8 +32,6 @@ coarse:
     wreduce t:$mul
     alumacc
     opt
-    fsm
-    opt -fast
     memory -nomap
     opt_clean
 
@@ -49,12 +52,10 @@ map_gates:
     ice40_opt
 
 map_ffs:
-    dff2dffe -direct-match $_DFF_*
     dfflegalize -cell $_DFF_?_ 0 -cell $_DFFE_?P_ 0 -cell $_DFF_?P?_ 0 -cell $_DFFE_?P?P_ 0 -cell $_SDFF_?P?_ 0 -cell $_SDFFCE_?P?P_ 0 -cell $_DLATCH_?_ x -mince -1
     techmap -map +/ice40/ff_map.v
     opt_expr -mux_undef
     simplemap
-    ice40_ffssr
     ice40_opt -full
 
 map_luts:
@@ -74,6 +75,7 @@ check:
     hierarchy -check
     stat
     check -noinit
+    blackbox =A:whitebox
 
 json:
     write_json Top.json
