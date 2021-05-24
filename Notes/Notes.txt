@@ -1,6 +1,6 @@
 - Rev4 Layout Todo
-    - Length-match SD lines
     - Length-match RAM lines
+    - Length-match SD lines
     - Length-match STM<->ICE SPI lines
     - Length-match USB+/USB- lines
     - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
@@ -206,10 +206,14 @@
     
     - Rename PIX -> IMG
     
-    - We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
-        - Optimizing highlight/shadow counting appears to help significantly. Options:
-            1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
+    √ We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
+        √ Optimizing highlight/shadow counting appears to help significantly. Options:
+            √ 1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
             2. Move highlight/shadow counting out of PixController and into a separate command issued to ICE40, specifically for calculating stats on the image stored in RAM
+
+
+
+
 
 - Preorder parts to de-risk
     
