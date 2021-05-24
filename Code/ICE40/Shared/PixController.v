@@ -208,6 +208,8 @@ module PixController #(
     reg fifoIn_lvPrev = 0;
     reg[1:0] fifoIn_x = 0;
     reg[1:0] fifoIn_y = 0;
+    reg fifoIn_countStat = 0;
+    reg[11:0] fifoIn_countStatPx = 0;
     
     reg fifoIn_done = 0;
     // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
@@ -234,9 +236,13 @@ module PixController #(
         if (!fifoIn_fv)                         fifoIn_y <= 0;
         else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
         
-        if (fifoIn_write_trigger && !fifoIn_x && !fifoIn_y) begin
+        // Count pixel stats (number of highlights/shadows)
+        // We're pipelining `fifoIn_countStat` and `fifoIn_countStatPx` here for performance
+        fifoIn_countStat <= (fifoIn_write_trigger && !fifoIn_x && !fifoIn_y);
+        fifoIn_countStatPx <= pix_d_reg;
+        if (fifoIn_countStat) begin
             // Look at the high bits to determine if it's a highlight or shadow
-            case (`LeftBits(pix_d_reg, 0, 7))
+            case (`LeftBits(fifoIn_countStatPx, 0, 7))
             // Highlight
             7'b1111_111:   fifoIn_highlightCount <= fifoIn_highlightCount+1;
             // Shadow
