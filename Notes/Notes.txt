@@ -205,6 +205,11 @@
       make sure these pullups are enabled on the SB_IO instantiation
     
     - Rename PIX -> IMG
+    
+    - We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
+        - Optimizing highlight/shadow counting appears to help significantly. Options:
+            1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
+            2. Move highlight/shadow counting out of PixController and into a separate command issued to ICE40, specifically for calculating stats on the image stored in RAM
 
 - Preorder parts to de-risk
     
