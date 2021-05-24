@@ -17,7 +17,7 @@ module RAMController #(
     localparam WordWidth            = 16,
     localparam BankWidth            = 2,
     localparam RowWidth             = 12,
-    localparam ColWidth             = 10,
+    localparam ColWidth             = 9,
     localparam DQMWidth             = 2,
     
     localparam AddrWidth            = BankWidth+RowWidth+ColWidth,

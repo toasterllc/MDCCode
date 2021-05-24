@@ -123,11 +123,11 @@ module mobile_sdr (
 
     // Size Parameters based on Part Width
 
-    parameter ADDR_BITS        =      13; // Set this parameter to control how many Address bits are used
-    parameter ROW_BITS         =      13; // Set this parameter to control how many Row bits are used
+    parameter ADDR_BITS        =      12; // Set this parameter to control how many Address bits are used
+    parameter ROW_BITS         =      12; // Set this parameter to control how many Row bits are used
     parameter DQ_BITS          =      16; // Set this parameter to control how many Data bits are used
     parameter DM_BITS          =       2; // Set this parameter to control how many DM bits are used
-    parameter COL_BITS         =      10; // Set this parameter to control how many Column bits are used
+    parameter COL_BITS         =       9; // Set this parameter to control how many Column bits are used
     parameter BA_BITS          =       2; // Bank bits
 
     // Other Parameters

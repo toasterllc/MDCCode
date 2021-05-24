@@ -114,7 +114,7 @@ module Top(
     // PixController
     // ====================
     reg[1:0]                            pixctrl_cmd = 0;
-    reg[2:0]                            pixctrl_cmd_ramBlock = 0;
+    reg[0:0]                            pixctrl_cmd_ramBlock = 0;
     wire                                pixctrl_readout_clk;
     wire                                pixctrl_readout_ready;
     wire                                pixctrl_readout_trigger;
@@ -519,10 +519,8 @@ module Testbench();
     
     initial begin
         forever begin
-            clk16mhz = 0;
-            #32;
-            clk16mhz = 1;
-            #32;
+            #32 // 16 MHz
+            clk16mhz = !clk16mhz;
         end
     end
     

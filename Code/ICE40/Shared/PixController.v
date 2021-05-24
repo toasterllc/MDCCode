@@ -19,7 +19,7 @@ module PixController #(
     
     // Command port (clock domain: `clk`)
     input wire[1:0]     cmd,
-    input wire[2:0]     cmd_ramBlock,
+    input wire[0:0]     cmd_ramBlock,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
@@ -45,7 +45,7 @@ module PixController #(
     output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
-    output wire[12:0]   ram_a,
+    output wire[11:0]   ram_a,
     output wire         ram_cs_,
     output wire         ram_ras_,
     output wire         ram_cas_,
@@ -56,7 +56,7 @@ module PixController #(
     // ====================
     // RAMController
     // ====================
-    reg[2:0]    ramctrl_cmd_block = 0;
+    reg[0:0]    ramctrl_cmd_block = 0;
     reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
     reg         ramctrl_write_trigger = 0;
