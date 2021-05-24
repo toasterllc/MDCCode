@@ -1,6 +1,6 @@
 - Rev4 Layout Todo
-    - Length-match SD lines
     - Length-match RAM lines
+    - Length-match SD lines
     - Length-match STM<->ICE SPI lines
     - Length-match USB+/USB- lines
     - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
@@ -12,6 +12,7 @@
     - Smash every component to bring back their labels (we may have deleted some)
     - Fill gaps in power layer
     - Make sure we don't have any 6-mil traces
+    - Test Verilog mockup of SD card I/O to make sure new layout works with SD card
     √ Rotate image sensor
     √ Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
 
@@ -204,6 +205,15 @@
       make sure these pullups are enabled on the SB_IO instantiation
     
     - Rename PIX -> IMG
+    
+    √ We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
+        √ Optimizing highlight/shadow counting appears to help significantly. Options:
+            √ 1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
+            2. Move highlight/shadow counting out of PixController and into a separate command issued to ICE40, specifically for calculating stats on the image stored in RAM
+
+
+
+
 
 - Preorder parts to de-risk
     
