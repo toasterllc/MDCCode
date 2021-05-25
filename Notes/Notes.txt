@@ -1,5 +1,6 @@
 - Rev4 Layout Todo
-    - Length-match SD lines
+    - Add ground header?
+    - Length-match IMG lines
     - Length-match STM<->ICE SPI lines
     - Length-match USB+/USB- lines
     - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
@@ -12,9 +13,15 @@
     - Fill gaps in power layer
     - Make sure we don't have any 6-mil traces
     - Test Verilog mockup of SD card I/O to make sure new layout works with SD card
+    - Remove unnecessary test points
+    - Make sure lens holder and motion sensor have the same Y position
+    √ Length-match SD lines
     √ Length-match RAM lines
     √ Rotate image sensor
     √ Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
+
+
+
 
 - Rev4 Schematic Todo
     
@@ -195,6 +202,8 @@
           but it's expensive ($0.704 - $1.187).
 
 
+
+
 - Rev4 Verilog Todo
 
     - Update SDRAM controller for new part (Winbond -> Alliance)
@@ -214,29 +223,23 @@
 
 
 
+- Rev4 Board Test Checklist
+    - Verify that the clock-blocking buffer blocks the clock to IMG when VDD_1V9_IMG=0
+    
+    - Verify that when battery powered:
+        VDD_A = VDD_BAT
+        VDD_B = HiZ / VDD_BAT (controlled by MSP)
+    
+    - Verify that when USB powered:
+        VDD_A = 1.9V
+        VDD_B = VDD_USB - V_diode_forward ~= 4.5V
+
+
 
 - Preorder parts to de-risk
     
-    - SN74LVC1G126DCKR (clock-blocking buffer)
-    
     - EKMB1107112 (motion sensor -- need to test first before mass order)
-    
-    - MC-306 32.7680K-E3:ROHS (32kHz crystal -- need to test first before mass order)
-        - Mouser expects by 5/20/2021
-    
-    - TPS22919DCK (load switch)
-        - In stock at DigiKey
-        - Mouser expects by 6/4/2021
-    
-    - MAX40203ANS+T (ideal diode)
-        - Mouser expects by 6/4/2021
-    
-    - TPS62802YKAR (1.8V supply)
-        - Mouser expects by 8/5/2021
-    
-    - TPS63805YFFR (2.8V supply)
-        - Mouser expects by 10/21/2021
-        - sierraic.com has stock
+        - Mouser in stock
     
     - STM32F730I8K6 / STM32F723IEK6 -- 15x
         - STM32F723IEK6 is more-expensive but pin-compatible with STM32F730I8K6
@@ -245,8 +248,18 @@
         - sierraic.com has stock
             - Waiting for quote for 15x
     
-    - BKP1005EM100-T (ferrite bead)
-        - Mouser expects by 6/8/2021
+    √ Mouser
+        MIC5504-3.3YM5-TR (3.3V LDO)
+        MC-306 32.7680K-E3:ROHS (32 kHz crystal)
+        MAX40203ANS+T (ideal diode)
+        TPS62802YKAR (1.8V supply)
+        TPS63805YFFR (2.8V supply)
+            - sierraic.com has stock too
+        BKP1005EM100-T (ferrite bead)
+    
+    √ TI
+        SN74LVC1G126DCKR (clock-blocking buffer)
+        TPS22919DCK / TPS22919QDCKRQ1 (load switch)
     
     √ Rochester
         AR0330CS1C12SPKA0-CR
