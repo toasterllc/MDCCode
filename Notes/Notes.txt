@@ -1,5 +1,4 @@
 - Rev4 Layout Todo
-    - Length-match RAM lines
     - Length-match SD lines
     - Length-match STM<->ICE SPI lines
     - Length-match USB+/USB- lines
@@ -13,6 +12,7 @@
     - Fill gaps in power layer
     - Make sure we don't have any 6-mil traces
     - Test Verilog mockup of SD card I/O to make sure new layout works with SD card
+    √ Length-match RAM lines
     √ Rotate image sensor
     √ Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
 
