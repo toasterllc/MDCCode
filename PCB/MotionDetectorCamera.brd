@@ -2477,9 +2477,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="1.127759375" y="14.478"/>
 <vertex x="4.8514" y="14.478"/>
 <vertex x="4.8514" y="41.148"/>
-<vertex x="10.668" y="41.148"/>
-<vertex x="10.668" y="38.989"/>
-<vertex x="24.892" y="38.989"/>
+<vertex x="24.892" y="41.148"/>
 <vertex x="24.892" y="36.421059375"/>
 </polygon>
 <contactref element="C40" pad="1"/>
@@ -2561,9 +2559,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="24.95041875" y="29.601159375"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
-<vertex x="25.054559375" y="30.11678125"/>
-<vertex x="25.054559375" y="29.225240625"/>
-<vertex x="26.42108125" y="29.225240625"/>
+<vertex x="24.947878125" y="30.11678125"/>
+<vertex x="24.947878125" y="29.1592"/>
+<vertex x="26.42108125" y="29.1592"/>
 <vertex x="26.42108125" y="30.11678125"/>
 </polygon>
 <via x="8.130540625" y="37.477696875" extent="1-16" drill="0.381"/>
@@ -2707,7 +2705,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="47.444659375" y="36.007040625" extent="1-16" drill="0.381"/>
 <via x="48.0568" y="36.007040625" extent="1-16" drill="0.381"/>
 <via x="48.6664" y="36.007040625" extent="1-16" drill="0.381"/>
-<wire x1="25.1126" y1="29.785840625" x2="22.2497" y2="32.3088" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="GND">
 <contactref element="U1" pad="C1"/>
@@ -3072,7 +3069,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="27.6987" y="20.233640625" extent="1-16" drill="0.254"/>
 <via x="24.3713" y="31.208978125" extent="1-16" drill="0.381"/>
-<via x="20.40381875" y="39.16171875" extent="1-16" drill="0.381"/>
+<via x="21.082" y="37.487859375" extent="1-16" drill="0.381"/>
 <via x="20.40381875" y="38.229540625" extent="1-16" drill="0.381"/>
 <via x="24.239221875" y="11.460478125" extent="1-16" drill="0.381"/>
 <via x="8.376921875" y="34.31031875" extent="1-16" drill="0.254"/>
