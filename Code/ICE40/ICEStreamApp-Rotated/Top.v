@@ -48,7 +48,12 @@ module Top(
     output wire         ram_cas_,
     output wire         ram_we_,
     output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq
+    inout wire[15:0]    ram_dq,
+    
+    // SD port
+    output wire         sd_clk,
+    inout wire          sd_cmd,
+    inout wire[3:0]     sd_dat
     
     // output reg[3:0]     led = 0
 );
@@ -441,6 +446,53 @@ module Top(
             .D_OUT_0(spi_d_out[i]),
             .D_IN_0(spi_d_in[i])
         );
+    end
+    
+    
+    assign sd_clk = clk16mhz;
+    reg sd_cmdOutEn = 0;
+    reg sd_cmdOut = 0;
+    wire sd_cmdIn;
+    
+    // sd_cmd
+    SB_IO #(
+        .PIN_TYPE(6'b1101_00),
+        .PULLUP(1'b0)
+    ) SB_IO_sd_cmd (
+        .INPUT_CLK(sd_clk),
+        .OUTPUT_CLK(sd_clk),
+        .PACKAGE_PIN(sd_cmd),
+        .OUTPUT_ENABLE(sd_cmdOutEn),
+        .D_OUT_0(sd_cmdOut),
+        .D_IN_0(sd_cmdIn)
+    );
+    
+    // ====================
+    // Pin: sd_dat[3:0]
+    // ====================
+    reg sd_datOutEn = 0;
+    reg sd_datOut = 0;
+    wire[3:0] sd_datIn;
+    genvar i;
+    for (i=0; i<4; i=i+1) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_00)
+        ) SB_IO_sdcard_dat (
+            .INPUT_CLK(sd_clk),
+            .OUTPUT_CLK(sd_clk),
+            .PACKAGE_PIN(sd_dat[i]),
+            .OUTPUT_ENABLE(sd_datOutEn),
+            .D_OUT_0(sd_datOut),
+            .D_IN_0(sd_datIn[i])
+        );
+    end
+    
+    always @(posedge clk16mhz) begin
+        sd_cmdOutEn <= !sd_cmdOutEn;
+        sd_cmdOut <= |sd_datIn;
+        
+        sd_datOutEn <= !sd_datOutEn;
+        sd_datOut <= sd_cmdIn;
     end
 endmodule
 
