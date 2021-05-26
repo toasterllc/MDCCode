@@ -2351,6 +2351,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="45.3724" y="26.88108125" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="46.1264" y="27.43708125" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
+<element name="J7" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="7.0612" y="4.51968125" smashed="yes" rot="MR0">
+<attribute name="MFG" value="Amphenol" x="13.9192" y="12.39368125" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="9.008521875" y="7.518859375" size="1.27" layer="26" font="vector" rot="MR0"/>
+<attribute name="PN" value="10129380-902002ALF" x="13.9192" y="12.39368125" size="1.778" layer="28" rot="MR0" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="VDD_B">
@@ -3291,6 +3296,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="10.39621875" y="13.63218125" extent="1-16" drill="0.381"/>
 <via x="15.494" y="18.796" extent="1-16" drill="0.381"/>
 <via x="16.256" y="17.526" extent="1-16" drill="0.381"/>
+<contactref element="J7" pad="1"/>
+<contactref element="J7" pad="2"/>
+<via x="5.334" y="1.27" extent="1-16" drill="0.381"/>
+<via x="6.096" y="1.27" extent="1-16" drill="0.381"/>
+<via x="7.922259375" y="4.777740625" extent="1-16" drill="0.381"/>
+<via x="8.684259375" y="4.777740625" extent="1-16" drill="0.381"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
 <contactref element="U4" pad="C11"/>

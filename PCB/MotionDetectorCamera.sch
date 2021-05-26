@@ -4316,6 +4316,7 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
+<part name="J7" library="EagleLibrary" deviceset="JUMPER" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4677,6 +4678,9 @@ behavior, to limit USB inrush current</text>
 <attribute name="VALUE" x="131.064" y="62.357" size="1.778" layer="96" align="bottom-right"/>
 <attribute name="MFG" x="116.84" y="68.58" size="1.778" layer="96" display="off"/>
 </instance>
+<instance part="J7" gate="G$1" x="129.54" y="337.82" smashed="yes">
+<attribute name="NAME" x="128.27" y="340.36" size="1.778" layer="95" align="top-left"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -4941,6 +4945,14 @@ behavior, to limit USB inrush current</text>
 <pinref part="C87" gate="G$1" pin="2"/>
 <wire x1="134.62" y1="58.42" x2="134.62" y2="55.88" width="0.1524" layer="91"/>
 <label x="134.62" y="55.88" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="J7" gate="G$1" pin="1"/>
+<wire x1="129.54" y1="332.74" x2="127" y2="332.74" width="0.1524" layer="91"/>
+<pinref part="J7" gate="G$1" pin="2"/>
+<wire x1="132.08" y1="332.74" x2="129.54" y2="332.74" width="0.1524" layer="91"/>
+<junction x="129.54" y="332.74"/>
+<label x="127" y="332.74" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$5" class="0">
