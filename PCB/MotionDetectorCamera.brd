@@ -126,6 +126,10 @@ Rev 3</text>
 <wire x1="31.460440625" y1="13.045440625" x2="31.308040625" y2="13.688059375" width="0.0762" layer="25"/>
 <wire x1="20.2819" y1="9.32941875" x2="20.685759375" y2="9.45388125" width="0.0762" layer="25"/>
 <wire x1="18.542" y1="30.48" x2="18.145759375" y2="30.452059375" width="0.0762" layer="26"/>
+<text x="12.359640625" y="-0.045715625" size="0.508" layer="26" font="vector" ratio="10" rot="MR0">VDD_BAT_IN</text>
+<wire x1="10.393678125" y1="0.637540625" x2="10.213340625" y2="1.04648125" width="0.0762" layer="26"/>
+<text x="6.517640625" y="-0.045715625" size="0.508" layer="26" font="vector" ratio="10" rot="MR0">GND</text>
+<wire x1="6.075678125" y1="0.637540625" x2="5.91058125" y2="1.043940625" width="0.0762" layer="26"/>
 </plain>
 <libraries>
 <library name="EagleLibrary">
@@ -1757,7 +1761,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="C51" library="EagleLibrary" package="0402" value="100n" x="38.04855" y="28.023825" smashed="yes" rot="R180">
 <attribute name="MFG" value="Murata" x="38.04855" y="28.023825" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="38.36313125" y="27.11730625" size="0.508" layer="25" font="vector" rot="R180"/>
+<attribute name="NAME" x="38.69586875" y="27.503384375" size="0.508" layer="25" font="vector" rot="R180"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="38.04855" y="28.023825" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C52" library="EagleLibrary" package="0805" value="10u" x="45.753015625" y="23.624540625" smashed="yes" rot="MR270">
@@ -1846,7 +1850,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="RC0402FR-0756KL" x="0.497840625" y="17.442175" size="1.778" layer="27" rot="R225" display="off"/>
 </element>
 <element name="TP2" library="EagleLibrary" package="TEST-POINT" value="TEST-POINT" x="22.7076" y="29.4894" smashed="yes">
-<attribute name="NAME" x="22.1996" y="27.5304" size="0.508" layer="25" font="vector" align="bottom-center"/>
+<attribute name="NAME" x="22.824440625" y="29.8926" size="0.508" layer="25" font="vector" align="bottom-center"/>
 </element>
 <element name="J6" library="EagleLibrary" package="S-MOUNT-LENS-HOLDER" value="S-MOUNT-LENS-HOLDER" x="42.1374" y="27.142" smashed="yes" rot="R90">
 <attribute name="MFG" value="Marshall Electronics" x="42.1374" y="27.142" size="1.778" layer="27" rot="R90" display="off"/>
@@ -2254,7 +2258,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="J2" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="11.18351875" y="4.01168125" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Amphenol" x="4.32551875" y="-4.11631875" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="10.760196875" y="1.012503125" size="1.27" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="12.703296875" y="1.01758125" size="1.27" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="10129380-902002ALF" x="4.32551875" y="-4.11631875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="J4" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="30.3046375" y="8.05028125" smashed="yes" rot="MR90">
@@ -2369,7 +2373,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="J5" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="7.0612" y="4.01168125" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Amphenol" x="13.9192" y="11.88568125" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="7.86044375" y="-0.1875" size="1.27" layer="26" font="vector" rot="MR0"/>
+<attribute name="NAME" x="4.81244375" y="5.6545" size="1.27" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="10129380-902002ALF" x="13.9192" y="11.88568125" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 </elements>
