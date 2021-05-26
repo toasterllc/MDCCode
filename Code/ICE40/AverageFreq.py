@@ -65,11 +65,14 @@ def executeTrial(_):
         pcfFilePath,
         '--pcf-allow-unconstrained',
     ]
+    
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    p = re.compile('Info: Max frequency for clock.*'+re.escape(clkName))
+    outputLines = proc.stdout.decode("utf-8").splitlines()
     
     # nextpnr should output 2 lines matching the clock string (and we want the second one)
-    clkLines = [ s for s in proc.stdout.decode("utf-8").splitlines() if p.match(s) ]
+    p = re.compile('.*: Max frequency for clock.*'+re.escape(clkName))
+    clkLines = [ s for s in outputLines if p.match(s) ]
+    
     assert len(clkLines) == 2
     clkLine = clkLines[1]
     
