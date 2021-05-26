@@ -3673,8 +3673,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="LED4" library="EagleLibrary" deviceset="LED" device="">
 <attribute name="MFG" value="OSRAM"/>
@@ -3773,8 +3773,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="C36" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
@@ -3793,8 +3793,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="C30" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
@@ -3813,8 +3813,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="C63" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <spice>
@@ -3862,8 +3862,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C41" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
 <attribute name="MFG" value="Bourns"/>
@@ -3898,12 +3898,12 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C33" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="C39" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="U17" library="EagleLibrary" deviceset="ON-AR0330CS1C12SPKA0" device="">
 <attribute name="PN" value="AR0330CS1C12SPKA0-CR"/>
@@ -4089,8 +4089,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="CRCW040210K0FKEDC"/>
 </part>
 <part name="C67" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GCM155R71H103JA55D"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="X3" library="EagleLibrary" deviceset="SITIME-SIT8021" device="">
 <attribute name="PN" value="SIT8021AI-J4-18S-16.000000E"/>

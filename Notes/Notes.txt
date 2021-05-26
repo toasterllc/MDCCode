@@ -1,5 +1,5 @@
 - Rev4 Layout Todo
-    - Assign missing part numbers
+    √ Assign missing part numbers
     √ Smash every component to bring back their labels (we may have deleted some)
     √ Test Verilog mockup of SD card I/O to make sure new layout works with SD card
         - Tested by adding SB_IO instances to ICEStreamApp-Rotated

@@ -8,8 +8,8 @@
 </settings>
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
-<layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="2" name="Ground" color="16" fill="1" visible="yes" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
 <layer number="5" name="Route5" color="19" fill="1" visible="no" active="no"/>
@@ -22,40 +22,40 @@
 <layer number="12" name="Route12" color="20" fill="1" visible="no" active="no"/>
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
-<layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
+<layer number="15" name="Power" color="42" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="yes"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
 <layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
-<layer number="34" name="bFinish" color="6" fill="6" visible="yes" active="yes"/>
+<layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
-<layer number="36" name="bGlue" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
 <layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
 <layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
 <layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
-<layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
 <layer number="51" name="tDocu" color="7" fill="1" visible="no" active="yes"/>
@@ -1592,9 +1592,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </autorouter>
 <elements>
 <element name="C44" library="EagleLibrary" package="0402" value="10n" x="24.9148" y="29.4894" smashed="yes" rot="MR0">
-<attribute name="MFG" value="Murata" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="MFG" value="Samsung" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="26.171721875" y="28.41218125" size="0.508" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="C64" library="EagleLibrary" package="0805" value="10u" x="6.9216" y="37.0078" smashed="yes" rot="MR45">
 <attribute name="MFG" value="KEMET" x="6.9216" y="37.0078" size="1.778" layer="28" rot="MR45" display="off"/>
@@ -1612,9 +1612,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="GRM155R61H104KE19D" x="69.6976" y="75.3364" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C35" library="EagleLibrary" package="0402" value="10n" x="22.7076" y="22.4028" smashed="yes" rot="MR180">
-<attribute name="MFG" value="Murata" x="22.7076" y="22.4028" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Samsung" x="22.7076" y="22.4028" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="22.2076" y="21.8468" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="22.7076" y="22.4028" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="22.7076" y="22.4028" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C36" library="EagleLibrary" package="0402" value="100n" x="22.6822" y="32.3088" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="22.6822" y="32.3088" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -1622,9 +1622,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="GRM155R61H104KE19D" x="74.7522" y="84.3788" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C37" library="EagleLibrary" package="0402" value="10n" x="22.6822" y="33.185096875" smashed="yes" rot="MR180">
-<attribute name="MFG" value="Murata" x="22.6822" y="33.185096875" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Samsung" x="22.6822" y="33.185096875" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="24.34628125" y="33.378396875" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="22.6822" y="33.185096875" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="22.6822" y="33.185096875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C6" library="EagleLibrary" package="0805" value="10u" x="24.2444" y="40.4468625" smashed="yes" rot="MR0">
 <attribute name="MFG" value="KEMET" x="24.2444" y="40.4468625" size="1.778" layer="28" rot="MR0" display="off"/>
@@ -1637,9 +1637,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="GRM155R61H104KE19D" x="-8.1492625" y="-30.96981875" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="C31" library="EagleLibrary" package="0402" value="10n" x="10.9007375" y="24.50378125" smashed="yes" rot="MR0">
-<attribute name="MFG" value="Murata" x="10.9007375" y="24.50378125" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="MFG" value="Samsung" x="10.9007375" y="24.50378125" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="11.6547375" y="25.05978125" size="0.508" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="10.9007375" y="24.50378125" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="10.9007375" y="24.50378125" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="C7" library="EagleLibrary" package="0805" value="10u" x="22.357078125" y="38.691821875" smashed="yes" rot="MR0">
 <attribute name="MFG" value="KEMET" x="22.357078125" y="38.691821875" size="1.778" layer="28" rot="MR0" display="off"/>
@@ -1737,9 +1737,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="GRM155R61H104KE19D" x="23.114" y="31.242" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C41" library="EagleLibrary" package="0402" value="10n" x="23.114" y="30.2006" smashed="yes" rot="MR180">
-<attribute name="MFG" value="Murata" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Samsung" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="22.04504375" y="29.601421875" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R17" library="EagleLibrary" package="0402" value="100" x="15.21205625" y="24.25191875" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Bourns" x="15.407634375" y="24.884375" size="1.778" layer="28" rot="MR90" display="off"/>
@@ -1782,14 +1782,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="GRM155R61H104KE19D" x="16.4846" y="27.5336" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C33" library="EagleLibrary" package="0402" value="10n" x="18.4658" y="28.0924" smashed="yes" rot="MR270">
-<attribute name="MFG" value="Murata" x="18.4658" y="28.0924" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="MFG" value="Samsung" x="18.4658" y="28.0924" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="18.6718" y="27.050621875" size="0.508" layer="26" font="vector" rot="MR270"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="18.4658" y="28.0924" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="18.4658" y="28.0924" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="C39" library="EagleLibrary" package="0402" value="10n" x="16.0274" y="26.2382" smashed="yes" rot="MR270">
-<attribute name="MFG" value="Murata" x="16.0274" y="26.2382" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="MFG" value="Samsung" x="16.0274" y="26.2382" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="14.8745" y="26.8398" size="0.508" layer="26" font="vector" rot="MR270"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="16.0274" y="26.2382" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="16.0274" y="26.2382" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="U17" library="EagleLibrary" package="ON-AR0330CS1C12SPKA0" value="ON-AR0330CS1C12SPKA0" x="42.1374" y="27.142" smashed="yes" rot="R90">
 <attribute name="MFG" value="ON Semiconductor" x="42.1374" y="27.142" size="1.778" layer="27" rot="R90" display="off"/>
@@ -2030,9 +2030,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="CRCW040210K0FKEDC" x="24.50591875" y="17.078959375" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="C67" library="EagleLibrary" package="0402" value="10n" x="18.0594" y="16.9672" smashed="yes" rot="MR0">
-<attribute name="MFG" value="Murata" x="18.0594" y="19.7866" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="MFG" value="Samsung" x="18.0594" y="19.7866" size="1.778" layer="28" rot="MR0" display="off"/>
 <attribute name="NAME" x="17.076040625" y="16.654521875" size="0.508" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="GCM155R71H103JA55D" x="18.0594" y="19.7866" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="PN" value="CL05B103KB5NNNC" x="18.0594" y="19.7866" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="X3" library="EagleLibrary" package="SITIME-SIT8021" value="SITIME-SIT8021" x="18.0848" y="17.9578" smashed="yes" rot="MR270">
 <attribute name="MFG" value="SiTime" x="20.3962" y="17.9578" size="1.778" layer="28" rot="MR270" display="off"/>
@@ -2450,10 +2450,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U5" pad="A2"/>
 <contactref element="U5" pad="A3"/>
 <polygon width="0.127" layer="15" isolate="0.254" thermals="no" rank="6">
-<vertex x="-24.8158" y="47.5488"/>
-<vertex x="-24.8158" y="-5.5626"/>
-<vertex x="59.0042" y="-5.5626"/>
-<vertex x="59.0042" y="47.5488"/>
+<vertex x="-15.1638" y="48.3108"/>
+<vertex x="-15.1638" y="-4.2926"/>
+<vertex x="58.4962" y="-4.2926"/>
+<vertex x="58.4962" y="48.3108"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="46.7487" y="6.469378125"/>
@@ -2829,10 +2829,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="17.6784" y="26.924" extent="1-16" drill="0.254"/>
 <via x="16.8656" y="26.924" extent="1-16" drill="0.254"/>
 <polygon width="0.127" layer="2" isolate="0.254" thermals="no" rank="6">
-<vertex x="-23.8506" y="46.5836"/>
-<vertex x="-23.8506" y="-4.5212"/>
-<vertex x="58.1406" y="-4.5212"/>
-<vertex x="58.1406" y="46.5836"/>
+<vertex x="-14.1986" y="47.3456"/>
+<vertex x="-14.1986" y="-3.2512"/>
+<vertex x="57.6326" y="-3.2512"/>
+<vertex x="57.6326" y="47.3456"/>
 </polygon>
 <via x="16.8656" y="26.1112" extent="1-16" drill="0.254"/>
 <polygon width="0.1524" layer="1" thermals="no">
@@ -2852,16 +2852,16 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="23.876" y="33.235896875" extent="1-16" drill="0.381"/>
 <via x="23.8887" y="23.1419375" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="1" isolate="0.254" thermals="no" rank="6">
-<vertex x="-23.114" y="45.6692"/>
-<vertex x="-23.114" y="-3.5306"/>
-<vertex x="57.277" y="-3.5306"/>
-<vertex x="57.277" y="45.6692"/>
+<vertex x="-13.462" y="46.4312"/>
+<vertex x="-13.462" y="-2.2606"/>
+<vertex x="56.769" y="-2.2606"/>
+<vertex x="56.769" y="46.4312"/>
 </polygon>
 <polygon width="0.127" layer="16" isolate="0.254" thermals="no" rank="6">
-<vertex x="-25.5524" y="48.5648"/>
-<vertex x="-25.5524" y="-6.604"/>
-<vertex x="59.8424" y="-6.604"/>
-<vertex x="59.8424" y="48.5648"/>
+<vertex x="-15.9004" y="49.3268"/>
+<vertex x="-15.9004" y="-5.334"/>
+<vertex x="59.3344" y="-5.334"/>
+<vertex x="59.3344" y="49.3268"/>
 </polygon>
 <contactref element="C32" pad="2"/>
 <contactref element="C38" pad="2"/>
