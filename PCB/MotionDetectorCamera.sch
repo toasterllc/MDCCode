@@ -4156,7 +4156,10 @@ tolerant of VDDUSB</text>
 </part>
 <part name="U12" library="EagleLibrary" deviceset="TI-MSP430FR2422IRHL" device=""/>
 <part name="U13" library="EagleLibrary" deviceset="TI-SN74AXC4T774RSV" device=""/>
-<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k"/>
+<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X473 JTL"/>
+</part>
 <part name="C26" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="1n">
 <spice>
 <pinmapping spiceprefix="C">
@@ -4164,6 +4167,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="CC0402MRX7R9BB102"/>
 </part>
 <part name="C2" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <spice>
@@ -4178,11 +4183,23 @@ tolerant of VDDUSB</text>
 <part name="U16" library="EagleLibrary" deviceset="TI-SN74LVC1G126" device="">
 <attribute name="PN" value="SN74LVC1G126DCKR"/>
 </part>
-<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
-<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k"/>
-<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k"/>
+<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402JR-07100KL"/>
+</part>
+<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0402-FX-1001GLF"/>
+</part>
+<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402JR-07100KL"/>
+</part>
 <part name="D1" library="EagleLibrary" deviceset="ROHM-RB168MM-40TFTR" device=""/>
-<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k"/>
+<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0402-FX-1001GLF"/>
+</part>
 <part name="Q2" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
@@ -4576,14 +4593,52 @@ behavior, to limit USB inrush current</text>
 <instance part="R3" gate="G$1" x="195.58" y="373.38" smashed="yes">
 <attribute name="NAME" x="193.04" y="377.19" size="1.778" layer="95"/>
 <attribute name="VALUE" x="193.04" y="374.65" size="1.778" layer="96"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R1" gate="G$1" x="157.48" y="444.5" smashed="yes" rot="R90">
 <attribute name="NAME" x="156.21" y="447.04" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="156.21" y="444.5" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="157.48" y="444.5" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="444.5" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="R2" gate="G$1" x="157.48" y="434.34" smashed="yes" rot="R90">
 <attribute name="NAME" x="156.21" y="436.88" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="156.21" y="434.34" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="D1" gate="G$1" x="195.58" y="353.06" smashed="yes">
 <attribute name="NAME" x="197.612" y="356.616" size="1.778" layer="95"/>
@@ -4591,6 +4646,8 @@ behavior, to limit USB inrush current</text>
 <instance part="R4" gate="G$1" x="205.74" y="373.38" smashed="yes">
 <attribute name="NAME" x="203.2" y="377.19" size="1.778" layer="95"/>
 <attribute name="VALUE" x="203.2" y="374.65" size="1.778" layer="96"/>
+<attribute name="PN" x="205.74" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="205.74" y="373.38" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="Q2" gate="G$1" x="149.86" y="386.08" smashed="yes">
 <attribute name="NAME" x="161.29" y="387.35" size="1.778" layer="95" align="bottom-right"/>
@@ -5425,10 +5482,14 @@ test point</text>
 <instance part="R11" gate="G$1" x="-66.04" y="63.5" smashed="yes" rot="R90">
 <attribute name="NAME" x="-68.072" y="65.024" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="-68.072" y="62.484" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="-66.04" y="63.5" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="-66.04" y="63.5" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C26" gate="G$1" x="-66.04" y="50.8" smashed="yes">
 <attribute name="NAME" x="-69.596" y="51.181" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="-69.596" y="48.641" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="-66.04" y="50.8" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="-66.04" y="50.8" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="X1" gate="G$1" x="121.92" y="99.06" smashed="yes">
 <attribute name="NAME" x="121.92" y="101.346" size="1.778" layer="95" align="top-left"/>

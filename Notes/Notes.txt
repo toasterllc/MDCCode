@@ -285,6 +285,12 @@
 
 - Future
     
+    - Add a zener diode to VDD_BAT_IN to protect from over-voltage
+        - Zeners have significant leakage though. Use a mosfet instead?
+            
+    
+    ? Add a zener diode to VDD_USB_IN to protect from over-voltage
+    
     - Consider using a HyperRAM instead of SDRAM
         - Pros:
             - Fewer pins: only 24 pins instead of 54 SDRAM pins
