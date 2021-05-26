@@ -8,7 +8,7 @@
 </settings>
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
@@ -23,33 +23,33 @@
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
 <layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
-<layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
-<layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
+<layer number="34" name="bFinish" color="6" fill="6" visible="yes" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
+<layer number="36" name="bGlue" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
@@ -113,17 +113,19 @@
 Rev 3</text>
 <wire x1="18.6080375" y1="2.2072625" x2="18.204178125" y2="2.649221875" width="0.0762" layer="26"/>
 <wire x1="20.139659375" y1="1.369059375" x2="20.139659375" y2="2.385059375" width="0.0762" layer="26"/>
-<wire x1="27.38881875" y1="4.340859375" x2="26.924" y2="6.35" width="0.0762" layer="26"/>
+<wire x1="27.2288" y1="5.173978125" x2="26.924" y2="6.35" width="0.0762" layer="26"/>
 <wire x1="25.791159375" y1="10.853421875" x2="25.80131875" y2="11.013440625" width="0.0762" layer="26"/>
 <wire x1="19.4208375" y1="15.8851625" x2="19.812" y2="17.272" width="0.0762" layer="26"/>
 <wire x1="29.156659375" y1="16.69541875" x2="28.75788125" y2="16.6141375" width="0.0762" layer="26"/>
-<wire x1="22.58821875" y1="29.68751875" x2="21.993859375" y2="29.3497" width="0.0762" layer="26"/>
 <wire x1="8.128" y1="34.544" x2="7.366" y2="33.782" width="0.0762" layer="26"/>
 <wire x1="10.5283" y1="37.00271875" x2="9.7663" y2="36.24071875" width="0.0762" layer="26"/>
 <wire x1="19.255740625" y1="7.792721875" x2="19.095721875" y2="7.44728125" width="0.0762" layer="26"/>
-<wire x1="36.598859375" y1="29.17698125" x2="37.086540625" y2="28.9026625" width="0.0762" layer="25"/>
+<wire x1="36.8579375" y1="28.900121875" x2="37.086540625" y2="28.9026625" width="0.0762" layer="25"/>
 <wire x1="3.921759375" y1="16.634459375" x2="3.1623" y2="15.902940625" width="0.0762" layer="25"/>
 <wire x1="2.99211875" y1="12.28851875" x2="2.8600375" y2="12.68221875" width="0.0762" layer="25"/>
+<wire x1="31.460440625" y1="13.045440625" x2="31.308040625" y2="13.688059375" width="0.0762" layer="25"/>
+<wire x1="20.2819" y1="9.32941875" x2="20.685759375" y2="9.45388125" width="0.0762" layer="25"/>
+<wire x1="18.542" y1="30.48" x2="18.145759375" y2="30.452059375" width="0.0762" layer="26"/>
 </plain>
 <libraries>
 <library name="EagleLibrary">
@@ -1535,7 +1537,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <elements>
 <element name="C44" library="EagleLibrary" package="0402" value="10n" x="24.9148" y="29.4894" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="27.7008" y="29.837121875" size="0.508" layer="26" font="vector" rot="MR0"/>
+<attribute name="NAME" x="26.171721875" y="28.41218125" size="0.508" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="24.9148" y="29.4894" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="C64" library="EagleLibrary" package="0805" value="10u" x="6.9216" y="37.0078" smashed="yes" rot="MR45">
@@ -1635,17 +1637,17 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="R8" library="EagleLibrary" package="0805" value="0" x="46.5886375" y="12.4333" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Vishay" x="46.5886375" y="12.4333" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="45.1196375" y="11.4326" size="0.762" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="45.1196375" y="14.198659375" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CRCW08050000Z0EAC" x="46.5886375" y="12.4333" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R9" library="EagleLibrary" package="0402" value="422k" x="46.7996" y="9.398" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Bourns" x="46.7996" y="9.398" size="1.778" layer="28" rot="MR90" display="off"/>
-<attribute name="NAME" x="47.3556" y="8.644" size="0.508" layer="26" font="vector" rot="MR90"/>
+<attribute name="NAME" x="46.5936" y="10.422" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="CR0402-FX-4223GLF" x="46.7996" y="9.398" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
 <element name="R10" library="EagleLibrary" package="0402" value="91k" x="45.936" y="8.4582" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Bourns" x="45.936" y="8.4582" size="1.778" layer="28" rot="MR90" display="off"/>
-<attribute name="NAME" x="46.492" y="7.7042" size="0.508" layer="26" font="vector" rot="MR90"/>
+<attribute name="NAME" x="44.8029" y="7.56958125" size="0.508" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="CR0402-FX-9102GLF" x="45.936" y="8.4582" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
 <element name="U3" library="EagleLibrary" package="TI-TPS6280XYKAR" value="TI-TPS6280XYKAR" x="24.6888" y="38.4657625" smashed="yes" rot="MR270">
@@ -1660,7 +1662,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="U5" library="EagleLibrary" package="TI-TPS63805YFFR" value="TI-TPS63805YFFR" x="48.2854" y="8.1026" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Texas Instruments" x="48.2854" y="8.1026" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="47.4474" y="6.7306" size="0.508" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="47.366121875" y="9.89798125" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="TPS63805YFFR" x="48.2854" y="8.1026" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="U18" library="EagleLibrary" package="ALLIANCE-AS4C8M16MSA-6BIN" value="ALLIANCE-AS4C8M16MSA-6BIN" x="8.97355625" y="35.474409375" smashed="yes" rot="R45">
@@ -1680,7 +1682,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="C41" library="EagleLibrary" package="0402" value="10n" x="23.114" y="30.2006" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Murata" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="20.772503125" y="29.570940625" size="0.508" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="22.04504375" y="29.601421875" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="GCM155R71H103JA55D" x="23.114" y="30.2006" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R17" library="EagleLibrary" package="0402" value="100" x="15.21205625" y="24.25191875" smashed="yes" rot="MR90">
@@ -1775,7 +1777,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="C57" library="EagleLibrary" package="0402" value="100n" x="38.04855" y="28.956" smashed="yes" rot="R180">
 <attribute name="MFG" value="Murata" x="38.04855" y="28.956" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="36.53433125" y="29.6039625" size="0.508" layer="25" font="vector" rot="R180"/>
+<attribute name="NAME" x="36.22699375" y="29.489665625" size="0.508" layer="25" font="vector" rot="R270"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="38.04855" y="28.956" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C59" library="EagleLibrary" package="0805" value="10u" x="41.89983125" y="32.5094625" smashed="yes" rot="MR0">
@@ -1844,7 +1846,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="RC0402FR-0756KL" x="0.497840625" y="17.442175" size="1.778" layer="27" rot="R225" display="off"/>
 </element>
 <element name="TP2" library="EagleLibrary" package="TEST-POINT" value="TEST-POINT" x="22.7076" y="29.4894" smashed="yes">
-<attribute name="NAME" x="22.7076" y="29.8164" size="0.508" layer="25" font="vector" align="bottom-center"/>
+<attribute name="NAME" x="22.1996" y="27.5304" size="0.508" layer="25" font="vector" align="bottom-center"/>
 </element>
 <element name="J6" library="EagleLibrary" package="S-MOUNT-LENS-HOLDER" value="S-MOUNT-LENS-HOLDER" x="42.1374" y="27.142" smashed="yes" rot="R90">
 <attribute name="MFG" value="Marshall Electronics" x="42.1374" y="27.142" size="1.778" layer="27" rot="R90" display="off"/>
@@ -1958,7 +1960,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="R32" library="EagleLibrary" package="0402" value="3k" x="31.023565625" y="14.67998125" smashed="yes" rot="R90">
 <attribute name="MFG" value="Yageo" x="31.023565625" y="14.67998125" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="NAME" x="31.229565625" y="15.70398125" size="0.508" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="31.869646875" y="11.7085625" size="0.508" layer="25" font="vector" rot="R90"/>
 <attribute name="PN" value="AC0402FR-073KL" x="31.023565625" y="14.67998125" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="C68" library="EagleLibrary" package="0402" value="100n" x="19.9136" y="14.6913625" smashed="yes" rot="R270">
@@ -1996,7 +1998,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="L3" library="EagleLibrary" package="0806" value="470n" x="50.7238" y="8.128" smashed="yes" rot="MR90">
 <attribute name="MFG" value="Murata" x="50.7238" y="8.128" size="1.778" layer="28" rot="MR90" display="off"/>
-<attribute name="NAME" x="51.8375" y="6.625" size="0.762" layer="26" font="vector" rot="MR90"/>
+<attribute name="NAME" x="51.91878125" y="6.89678125" size="0.762" layer="26" font="vector" rot="MR90"/>
 <attribute name="PN" value="DFE201612E-R47M=P2" x="50.7238" y="8.128" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
 <element name="LED8" library="EagleLibrary" package="LED-0603" value="LED" x="23.74355" y="9.651996875" smashed="yes" rot="R180">
@@ -2046,22 +2048,22 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="C11" library="EagleLibrary" package="0805" value="10u" x="49.0982" y="3.896359375" smashed="yes" rot="MR180">
 <attribute name="MFG" value="KEMET" x="49.0982" y="3.896359375" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="47.6292" y="2.895659375" size="0.762" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="44.8352" y="4.165659375" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="C0805C106K8PACTU" x="49.0982" y="3.896359375" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C12" library="EagleLibrary" package="0805" value="10u" x="49.0982" y="5.659121875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="KEMET" x="49.0982" y="5.659121875" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="47.6292" y="4.658421875" size="0.762" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="44.8352" y="5.928421875" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="C0805C106K8PACTU" x="49.0982" y="5.659121875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C13" library="EagleLibrary" package="0805" value="10u" x="49.781459375" y="12.42821875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="KEMET" x="49.781459375" y="12.42821875" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="48.312459375" y="11.42751875" size="0.762" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="52.376459375" y="12.69751875" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="C0805C106K8PACTU" x="49.781459375" y="12.42821875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C14" library="EagleLibrary" package="0805" value="10u" x="49.784" y="10.668" smashed="yes" rot="MR180">
 <attribute name="MFG" value="KEMET" x="49.784" y="10.668" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="48.315" y="9.6673" size="0.762" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="52.22151875" y="10.8103" size="0.762" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="C0805C106K8PACTU" x="49.784" y="10.668" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="U12" library="EagleLibrary" package="TI-MSP430FR2422IRHL" value="TI-MSP430FR2422IRHL" x="13.462" y="13.208" smashed="yes" rot="R90">
@@ -2204,7 +2206,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="U2" library="EagleLibrary" package="TI-TPS22919DCK" value="TI-TPS22919DCK" x="25.8107375" y="7.2542" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Texas Instruments" x="25.8107375" y="7.2542" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="26.58821875" y="4.1046" size="1.016" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="26.9387375" y="4.935178125" size="1.016" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="TPS22919DCK" x="25.8107375" y="7.2542" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="C4" library="EagleLibrary" package="0402" value="2.2u" x="25.33538125" y="9.3271" smashed="yes" rot="MR180">
@@ -2247,7 +2249,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="J3" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="23.314559375" y="3.508759375" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Amphenol" x="23.314559375" y="3.508759375" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="20.31538125" y="5.45608125" size="1.27" layer="26" font="vector" rot="MR270"/>
+<attribute name="NAME" x="22.522640625" y="1.27778125" size="1.27" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="10129380-902002ALF" x="23.314559375" y="3.508759375" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="J2" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="11.18351875" y="4.01168125" smashed="yes" rot="MR180">
