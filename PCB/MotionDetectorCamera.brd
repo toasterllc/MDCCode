@@ -6712,8 +6712,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="30.226" y="6.604"/>
 <vertex x="30.226" y="12.7"/>
 <vertex x="36.068" y="12.7"/>
-<vertex x="36.068" y="23.022559375"/>
-<vertex x="30.48" y="23.022559375"/>
+<vertex x="36.068" y="22.606"/>
+<vertex x="33.2714625" y="22.606"/>
+<vertex x="33.2714625" y="23.114"/>
+<vertex x="30.48" y="23.114"/>
 <vertex x="30.48" y="21.844"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no">
