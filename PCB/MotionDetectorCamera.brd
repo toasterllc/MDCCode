@@ -7473,6 +7473,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="18.25751875" y="2.131059375"/>
 <vertex x="18.25751875" y="10.4394"/>
 </polygon>
+<polygon width="0.127" layer="1" pour="cutout" thermals="no">
+<vertex x="4.1783" y="16.4693625"/>
+<vertex x="5.72389375" y="14.923771875"/>
+<vertex x="5.9410625" y="15.140940625"/>
+<vertex x="4.39546875" y="16.68653125"/>
+</polygon>
 </signal>
 </signals>
 <mfgpreviewcolors>
