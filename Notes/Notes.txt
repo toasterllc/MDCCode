@@ -1,6 +1,5 @@
 - Rev4 Layout Todo
     - Add ground header?
-    - Length-match IMG lines
     - Length-match STM<->ICE SPI lines
     - Length-match USB+/USB- lines
     - Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
@@ -15,6 +14,7 @@
     - Test Verilog mockup of SD card I/O to make sure new layout works with SD card
     - Remove unnecessary test points
     - Make sure lens holder and motion sensor have the same Y position
+    √ Length-match IMG lines
     √ Length-match SD lines
     √ Length-match RAM lines
     √ Rotate image sensor
