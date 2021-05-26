@@ -1363,10 +1363,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <package name="EPSON-MC-306">
 <description>16-QFN, 0.40 mm pitch, 2.60 X 1.80 X 0.55 mm body
 &lt;p&gt;16-pin QFN package with 0.40 mm pitch with body size 2.60 X 1.80 X 0.55 mm&lt;/p&gt;</description>
-<smd name="1" x="-2.75" y="-1.6" dx="1.3" dy="1.9" layer="1"/>
-<smd name="2" x="2.75" y="-1.6" dx="1.3" dy="1.9" layer="1"/>
-<smd name="3" x="2.75" y="1.6" dx="1.3" dy="1.9" layer="1"/>
-<smd name="4" x="-2.75" y="1.6" dx="1.3" dy="1.9" layer="1"/>
+<smd name="1" x="-2.75" y="-1.6" dx="1.3" dy="1.9" layer="1" cream="no"/>
+<smd name="2" x="2.75" y="-1.6" dx="1.3" dy="1.9" layer="1" cream="no"/>
+<smd name="3" x="2.75" y="1.6" dx="1.3" dy="1.9" layer="1" cream="no"/>
+<smd name="4" x="-2.75" y="1.6" dx="1.3" dy="1.9" layer="1" cream="no"/>
 <text x="-3.8010625" y="3.0869625" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <wire x1="4" y1="-1.9" x2="-4" y2="-1.9" width="0.05" layer="21"/>
 <wire x1="-4" y1="-1.9" x2="-4" y2="1.9" width="0.05" layer="21"/>
@@ -1382,6 +1382,30 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-3.952" y="0.5"/>
 <vertex x="-3.952" y="-1.861"/>
 <vertex x="-1.352" y="-1.861"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="-3.1" y="2.3"/>
+<vertex x="-3.1" y="0.9"/>
+<vertex x="-2.4" y="0.9"/>
+<vertex x="-2.4" y="2.3"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="-3.1" y="-0.9"/>
+<vertex x="-3.1" y="-2.3"/>
+<vertex x="-2.4" y="-2.3"/>
+<vertex x="-2.4" y="-0.9"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="2.4" y="2.3"/>
+<vertex x="2.4" y="0.9"/>
+<vertex x="3.1" y="0.9"/>
+<vertex x="3.1" y="2.3"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="2.4" y="-0.9"/>
+<vertex x="2.4" y="-2.3"/>
+<vertex x="3.1" y="-2.3"/>
+<vertex x="3.1" y="-0.9"/>
 </polygon>
 </package>
 <package name="PANASONIC-EKMB110711X">
@@ -1409,6 +1433,18 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-2" y="-2.8"/>
 <vertex x="2" y="-2.8"/>
 <vertex x="2" y="2.8"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="-1.6" y="2.4"/>
+<vertex x="-1.6" y="1"/>
+<vertex x="-0.9" y="1"/>
+<vertex x="-0.9" y="2.4"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="0.9" y="-1"/>
+<vertex x="0.9" y="-2.4"/>
+<vertex x="1.6" y="-2.4"/>
+<vertex x="1.6" y="-1"/>
 </polygon>
 </package>
 </packages>
