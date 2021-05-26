@@ -2811,7 +2811,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="X1" pad="4"/>
 <contactref element="X1" pad="1"/>
 <contactref element="C25" pad="2"/>
-<wire x1="24.4823" y1="29.4894" x2="24.4094" y2="29.5623" width="0.2032" layer="16"/>
 <contactref element="U9" pad="GND3"/>
 <contactref element="U9" pad="GND1"/>
 <contactref element="U9" pad="GND2"/>
@@ -2909,9 +2908,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="26.004521875" y="38.6181625"/>
 </polygon>
 <wire x1="48.2854" y1="8.1026" x2="48.6854" y2="8.1026" width="0.254" layer="16"/>
-<wire x1="47.8854" y1="8.1026" x2="47.09921875" y2="8.1026" width="0.2794" layer="16"/>
+<wire x1="47.8854" y1="8.1026" x2="47.09921875" y2="8.1026" width="0.254" layer="16"/>
 <via x="47.09921875" y="8.1026" extent="1-16" drill="0.381"/>
-<wire x1="48.6854" y1="8.1026" x2="49.39791875" y2="8.1026" width="0.2794" layer="16"/>
+<wire x1="48.6854" y1="8.1026" x2="49.39791875" y2="8.1026" width="0.254" layer="16"/>
 <via x="49.39791875" y="8.1026" extent="1-16" drill="0.381"/>
 <via x="47.012859375" y="6.99008125" extent="1-16" drill="0.254"/>
 <wire x1="47.8854" y1="7.7026" x2="47.725378125" y2="7.7026" width="0.254" layer="16"/>
@@ -3457,8 +3456,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C21" pad="1"/>
 <contactref element="C22" pad="1"/>
 <contactref element="U4" pad="C10"/>
-<wire x1="20.4744" y1="29.713" x2="20.8731125" y2="30.1117125" width="0.2032" layer="1"/>
-<wire x1="20.8731125" y1="30.1117125" x2="20.962653125" y2="30.1117" width="0.2032" layer="1"/>
 <via x="20.962653125" y="30.1117" extent="1-16" drill="0.254"/>
 <via x="21.87448125" y="31.257240625" extent="1-16" drill="0.381"/>
 <via x="21.88971875" y="30.18028125" extent="1-16" drill="0.381"/>
@@ -3517,6 +3514,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="-0.458471875" y="11.479528125"/>
 <vertex x="1.065528125" y="9.955528125"/>
 <vertex x="2.05866875" y="10.94866875"/>
+</polygon>
+<polygon width="0.127" layer="1" thermals="no">
+<vertex x="20.32" y="30.3149"/>
+<vertex x="20.32" y="29.59861875"/>
+<vertex x="21.19121875" y="29.59861875"/>
+<vertex x="21.19121875" y="30.3149"/>
 </polygon>
 </signal>
 <signal name="N$12">
