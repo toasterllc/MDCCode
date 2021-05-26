@@ -1,5 +1,5 @@
 - Rev4 Layout Todo
-    - Make sure we're following the layout guidelines for crystals
+    √ Make sure we're following the layout guidelines for crystals
     - Smash every component to bring back their labels (we may have deleted some)
     - Fill gaps in power layer
     - Test Verilog mockup of SD card I/O to make sure new layout works with SD card

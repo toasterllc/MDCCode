@@ -3305,6 +3305,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="11.330240625" y1="7.9756" x2="12.065" y2="7.9756" width="0.508" layer="1"/>
 <wire x1="17.660621875" y1="8.0257" x2="17.610521875" y2="7.9756" width="0.508" layer="1"/>
 <wire x1="17.610521875" y1="7.9756" x2="16.8656" y2="7.9756" width="0.508" layer="1"/>
+<wire x1="12.065" y1="7.9756" x2="16.8656" y2="7.9756" width="0.508" layer="1"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
 <contactref element="U4" pad="C11"/>
