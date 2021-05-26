@@ -21,3 +21,6 @@ Will also work:
             - STM32F723ICK6 -- 256 KB of Flash
             - STM32F723IEK6 -- 512 KB of Flash
 
+    - STM32F733IEK6
+        - Has USB HS PHY
+        - UFBGA176 package
