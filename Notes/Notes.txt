@@ -1,13 +1,13 @@
 - Rev4 Layout Todo
     - Make sure we're following the layout guidelines for crystals
     - Add lots of ground vias throughout board
-    - Make sure 2x 1V2 bypass capacitors at the bottom-left of the ice40 are positioned well
     - Make all via diameters 'auto'
     - Smash every component to bring back their labels (we may have deleted some)
     - Fill gaps in power layer
     - Make sure we don't have any 6-mil traces
     - Test Verilog mockup of SD card I/O to make sure new layout works with SD card
     - Remove unnecessary test points
+    √ Make sure 2x 1V2 bypass capacitors at the bottom-left of the ice40 are positioned well
     √ Make sure there are no parts inside the lens holder
     √ Make sure wires beneath motion sensor aren't at risk of being shorted to circuitry on the bottom of the motion sensor
     √ Add ground header?
