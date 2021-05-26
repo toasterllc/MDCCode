@@ -1,4 +1,4 @@
-- Rev4 Layout Todo
+√ Rev4 Layout Todo
     √ Assign missing part numbers
     √ Smash every component to bring back their labels (we may have deleted some)
     √ Test Verilog mockup of SD card I/O to make sure new layout works with SD card
