@@ -5261,7 +5261,7 @@ behavior, to limit USB inrush current</text>
 <pinref part="J3" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="!VDD_B_EN!" class="0">
+<net name="VDD_B_EN_" class="0">
 <segment>
 <wire x1="210.82" y1="373.38" x2="213.36" y2="373.38" width="0.1524" layer="91"/>
 <label x="213.36" y="373.38" size="1.778" layer="95"/>
@@ -5641,7 +5641,7 @@ test point</text>
 <label x="96.52" y="40.64" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="!VDD_B_EN!" class="0">
+<net name="VDD_B_EN_" class="0">
 <segment>
 <wire x1="129.54" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
 <label x="127" y="68.58" size="1.778" layer="95" align="bottom-right"/>
