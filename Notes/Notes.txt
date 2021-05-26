@@ -1,6 +1,7 @@
 - Rev4 Layout Todo
-    - Test Verilog mockup of SD card I/O to make sure new layout works with SD card
     - Smash every component to bring back their labels (we may have deleted some)
+    √ Test Verilog mockup of SD card I/O to make sure new layout works with SD card
+        - Tested by adding SB_IO instances to ICEStreamApp-Rotated
     √ Fill gaps in power layer
     √ Make sure we're following the layout guidelines for crystals
     √ Make sure we don't have any 6-mil traces
