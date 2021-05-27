@@ -1,11 +1,15 @@
 √ Rev5 Todo
 
     For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
+    
+    Replace 0-ohm resistors with solder jumpers
 
 
 - Additional parts to order
     Solder paste
+        SMD4300SNL10
     Jumpers
+        SNT-100-BK-G
 
 
 √ Rev4 Layout Todo
@@ -220,16 +224,16 @@
     
     - Update Verilog to use 16 MHz clock, instead of 24 MHz
     
-    - If we end up removing SD card pullups in favor of ice40 internal ones:
-      make sure these pullups are enabled on the SB_IO instantiation
-    
     - Rename PIX -> IMG
     
     √ We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
         √ Optimizing highlight/shadow counting appears to help significantly. Options:
             √ 1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
             2. Move highlight/shadow counting out of PixController and into a separate command issued to ICE40, specifically for calculating stats on the image stored in RAM
-
+    
+    X If we end up removing SD card pullups in favor of ice40 internal ones:
+      make sure these pullups are enabled on the SB_IO instantiation
+          - We kept the pullups
 
 
 
