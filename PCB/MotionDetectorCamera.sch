@@ -3687,8 +3687,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="U3" library="EagleLibrary" deviceset="TI-TPS6280XYKAR" device="">
 <attribute name="PN" value="TPS62801YKAR"/>
@@ -3700,8 +3700,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="U4" library="EagleLibrary" deviceset="TI-TPS6280XYKAR" device="">
 <attribute name="PN" value="TPS62802YKAR"/>
@@ -3714,8 +3714,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C10" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <spice>
@@ -3724,8 +3724,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="422k">
 <attribute name="MFG" value="Bourns"/>
@@ -3743,8 +3743,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C61" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
@@ -3823,8 +3823,8 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C62" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <spice>
@@ -3837,24 +3837,24 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="R19" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW040210K0FKEDC"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
 <part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
 </part>
 <part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW08050000Z0EAC"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0805JR-070RL"/>
 </part>
 <part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW08050000Z0EAC"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0805JR-070RL"/>
 </part>
 <part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW08050000Z0EAC"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0805JR-070RL"/>
 </part>
 <part name="U15" library="EagleLibrary" deviceset="LATTICE-ICE40HX4K-BG121" device=""/>
 <part name="C40" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
@@ -3870,8 +3870,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="CR0402AJW-101GAS"/>
 </part>
 <part name="C45" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C46" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -3882,8 +3882,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="CR0402AJW-101GAS"/>
 </part>
 <part name="C42" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C43" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -3909,48 +3909,48 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="AR0330CS1C12SPKA0-CR"/>
 </part>
 <part name="C48" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C49" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C50" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C51" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C52" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C53" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C56" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C57" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C59" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C60" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="R20" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW040210K0FKEDC"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
 <part name="C55" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -3961,32 +3961,32 @@ tolerant of VDDUSB</text>
 </part>
 <part name="J7" library="EagleLibrary" deviceset="MICROSD-SOCKET" device=""/>
 <part name="C65" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C66" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R22" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-0756KL"/>
+<part name="R22" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X473 JTL"/>
 </part>
-<part name="R23" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-0756KL"/>
+<part name="R23" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X473 JTL"/>
 </part>
-<part name="R24" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-0756KL"/>
+<part name="R24" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X473 JTL"/>
 </part>
-<part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-0756KL"/>
+<part name="R25" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X473 JTL"/>
 </part>
-<part name="R26" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="56k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-0756KL"/>
+<part name="R26" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X473 JTL"/>
 </part>
 <part name="TP2" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="J6" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device="">
@@ -4085,8 +4085,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="R31" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW040210K0FKEDC"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
 <part name="C67" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <attribute name="MFG" value="Samsung"/>
@@ -4118,12 +4118,12 @@ tolerant of VDDUSB</text>
 </part>
 <part name="H1" library="EagleLibrary" deviceset="HEADER-2X5" device=""/>
 <part name="R18" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW040210K0FKEDC"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
-<part name="R21" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="4.7k">
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PN" value="CRCW04024K70FKEDC"/>
+<part name="R21" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
 <part name="J8" library="EagleLibrary" deviceset="MINI-USB-JACK" device=""/>
 <part name="FB1" library="EagleLibrary" deviceset="FERRITE-BEAD" device="0402" value="FERRITE-BEAD0402">
@@ -4131,28 +4131,28 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="BKP1005EM100-T"/>
 </part>
 <part name="C5" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C8" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C11" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C12" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C13" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C14" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="U12" library="EagleLibrary" deviceset="TI-MSP430FR2422IRHL" device=""/>
 <part name="U13" library="EagleLibrary" deviceset="TI-SN74AXC4T774RSV" device=""/>
@@ -4177,15 +4177,15 @@ tolerant of VDDUSB</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="U16" library="EagleLibrary" deviceset="TI-SN74LVC1G126" device="">
 <attribute name="PN" value="SN74LVC1G126DCKR"/>
 </part>
 <part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402JR-07100KL"/>
+<attribute name="PN" value="RC0402FR-10100KL"/>
 </part>
 <part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k">
 <attribute name="MFG" value="Bourns"/>
@@ -4193,7 +4193,7 @@ tolerant of VDDUSB</text>
 </part>
 <part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402JR-07100KL"/>
+<attribute name="PN" value="RC0402FR-10100KL"/>
 </part>
 <part name="D1" library="EagleLibrary" deviceset="ROHM-RB168MM-40TFTR" device=""/>
 <part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k">
@@ -4247,8 +4247,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="EKMB1107112"/>
 </part>
 <part name="C25" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C24" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -4293,12 +4293,12 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="C1" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PN" value="C0805C106K8PACTU"/>
+<attribute name="MFG" value="Samsung"/>
+<attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
@@ -6282,12 +6282,12 @@ below the chip.</text>
 <segment>
 <pinref part="R17" gate="G$1" pin="2"/>
 <wire x1="-2.54" y1="-91.44" x2="-7.62" y2="-91.44" width="0.1524" layer="91"/>
-<label x="-7.62" y="-91.44" size="1.778" layer="95"/>
+<label x="-7.62" y="-91.44" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="R16" gate="G$1" pin="2"/>
 <wire x1="-2.54" y1="-71.12" x2="-7.62" y2="-71.12" width="0.1524" layer="91"/>
-<label x="-7.62" y="-71.12" size="1.778" layer="95"/>
+<label x="-7.62" y="-71.12" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="C31" gate="G$1" pin="1"/>
