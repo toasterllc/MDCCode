@@ -1,0 +1,11 @@
+For MSP430G2553 running at 16 MHz
+
+For 9600bps, following steps in "10.3.10 Setting a Baud Rate":
+    fBRCLK = fSMCLK = 16 MHz
+
+UCBRx = INT( N / 16 ) = INT ( 1666.6666666667 / 16 ) = 104
+UCBRSx = 0
+UCBRFx = round((N/16 - INT( N / 16 )) * 16)
+       = round((104.1666666667 - 104) * 16)
+       = round(0.1666666667 * 16)
+       = 3
