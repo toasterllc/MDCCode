@@ -3,6 +3,8 @@
     For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
     
     Replace 0-ohm resistors with solder jumpers
+    
+    Fix motion sensor layout (we swapped the VDD and GND pins)
 
 
 
