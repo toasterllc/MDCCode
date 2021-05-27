@@ -11,13 +11,22 @@ static void txchar(uint8_t c) {
 
 // Override write to route to UART.
 // We're assuming all writes are for printf...
-void print(const char* str) {
+static void print(const char* str) {
     while (*str) {
         uint8_t b = *str;
-        if (b == '\n') txchar('\r');
+        // if (b == '\n') txchar('\r');
         txchar(b);
         str++;
     }
+}
+
+static bool buttonAsserted() {
+    // Active low
+    return !(P1IN & BIT3);
+}
+
+static bool motionAsserted() {
+    return (P1IN & BIT4);
 }
 
 int main() {
@@ -70,24 +79,34 @@ int main() {
         UCA0CTL1 &= ~UCSWRST;
     }
     
-    // ## Configure P1.3 as an input
+    // ## Configure P1.3 as an input with pull-up resistor
+    // ## (Button S2 drives to ground when pressed.)
     {
-        P1OUT   |= BIT3;
+        P1OUT   |=  BIT3;
         P1DIR   &= ~BIT3;
         P1SEL   &= ~BIT3;
         P1SEL2  &= ~BIT3;
-        P1REN   |= BIT3;
+        P1REN   |=  BIT3;
+    }
+    
+    // ## Configure P1.4 as an input with pull-down resistor
+    // ## (Motion sensor drives high when motion is detected.)
+    {
+        P1OUT   &= ~BIT4;
+        P1DIR   &= ~BIT4;
+        P1SEL   &= ~BIT4;
+        P1SEL2  &= ~BIT4;
+        P1REN   |=  BIT4;
     }
     
     for (;;) {
-        // Wait for button press
-        while (P1IN & BIT3);
+        // Wait while no input is asserted
+        while (!buttonAsserted() && !motionAsserted());
+        print("Motion\n");
         __delay_cycles(1600000); // Debounce
         
-        print("Motion\n");
-        
-        // Wait for button release
-        while (!(P1IN & BIT3));
+        // Wait while any input is asserted
+        while (buttonAsserted() || motionAsserted());
         __delay_cycles(1600000); // Debounce
     }
     
