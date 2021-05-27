@@ -255,12 +255,10 @@
     - EKMB1107112 (motion sensor -- need to test first before mass order)
         - Mouser in stock
     
-    - STM32F730I8K6 / STM32F723IEK6 -- 15x
-        - STM32F723IEK6 is more-expensive but pin-compatible with STM32F730I8K6
-        - export.farnell.com
-            "More stock available week commencing 28/06/21"
-        - sierraic.com has stock
-            - Waiting for quote for 15x
+    √ DigiKey
+        √ STM32F730I8K6 / STM32F723IEK6 / STM32F733IEK6
+            - Ordered 15x more (to get to 105x)
+            - STM32F723IEK6 / STM32F733IEK6 are more-expensive but pin-compatible with STM32F730I8K6
     
     √ Mouser
         MIC5504-3.3YM5-TR (3.3V LDO)
