@@ -4187,18 +4187,18 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-10100KL"/>
 </part>
-<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k">
-<attribute name="MFG" value="Bourns"/>
-<attribute name="PN" value="CR0402-FX-1001GLF"/>
+<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="3k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="AC0402FR-073KL"/>
 </part>
 <part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402FR-10100KL"/>
 </part>
 <part name="D1" library="EagleLibrary" deviceset="ROHM-RB168MM-40TFTR" device=""/>
-<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1k">
-<attribute name="MFG" value="Bourns"/>
-<attribute name="PN" value="CR0402-FX-1001GLF"/>
+<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="3k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="AC0402FR-073KL"/>
 </part>
 <part name="Q2" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
@@ -4424,11 +4424,13 @@ USB mode to be erronously enabled.)
 
 - USB mode: it doesn't draw too much current</text>
 <text x="165.1" y="446.024" size="1.016" layer="95" align="top-left">Limits inrush current and ESD into the gates of
-our PFETs.</text>
+our PFETs. (Using 3k instead of 1k to consolidate
+resistor values.)</text>
 <wire x1="160.02" y1="444.5" x2="164.338" y2="444.5" width="0.1524" layer="95"/>
 <wire x1="160.02" y1="434.34" x2="164.338" y2="434.34" width="0.1524" layer="95"/>
 <text x="213.36" y="379.984" size="1.016" layer="95" align="top-left">Limits the drive strength to limit inrush current
-and dampen ringing on the PFET's gate.</text>
+and dampen ringing on the PFET's gate. (Using
+3k instead of 1k to consolidate resistor values.)</text>
 <wire x1="208.28" y1="374.904" x2="212.598" y2="378.46" width="0.1524" layer="95"/>
 <text x="12.7" y="7.62" size="3.81" layer="95" align="top-left">VDD_3V3_STM
 - Battery:  VDD_3V3_STM = HiZ

@@ -3,6 +3,10 @@
     For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
 
 
+- Additional parts to order
+    Solder paste
+    Jumpers
+
 
 √ Rev4 Layout Todo
     √ Assign missing part numbers
@@ -27,9 +31,7 @@
     √ Move MSP_TEST and MSP_RST_ nets to bottom-left of STM32
 
 
-- Additional parts to order
-    Solder paste
-    Jumpers
+
 
 - Rev4 Schematic Todo
     
