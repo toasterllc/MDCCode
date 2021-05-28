@@ -5,7 +5,12 @@
     Replace 0-ohm resistors with solder jumpers
     
     Fix motion sensor layout (we swapped the VDD and GND pins)
-
+    
+    Make board left/right borders smaller
+    
+    Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
+        Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
+        See CrystalPartOptions.txt for other parts
 
 
 - Rev4 Verilog Todo
