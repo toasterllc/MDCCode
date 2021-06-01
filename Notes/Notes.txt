@@ -11,6 +11,9 @@
     Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
         Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
         See CrystalPartOptions.txt for other parts
+    
+    Replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM) if we need more FRAM/SRAM 
+
 
 
 - Rev4 Verilog Todo
