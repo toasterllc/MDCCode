@@ -1,9 +1,12 @@
 #pragma once
 #include "Assert.h"
+#include "Util.h"
 #include "stm32f7xx.h"
 
 class SystemClock {
 public:
+    static constexpr uint32_t CPUClkFreqMHz = 128;
+    
     static void Init() {
         // Configure the main internal regulator output voltage
         {
@@ -52,5 +55,11 @@ public:
             HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
             Assert(hr == HAL_OK);
         }
+    }
+    
+    // Delay for at least `ns` nanoseconds
+    static void DelayNs(uint32_t ns) {
+        const uint32_t cycles = DivCeil((uint32_t)ns*CPUClkFreqMHz, (uint32_t)1000);
+        for (volatile uint32_t i=0; i<cycles; i++);
     }
 };

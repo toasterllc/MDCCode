@@ -109,6 +109,11 @@ void System::init() {
     _super::init();
     _usb.init();
     _qspi.init();
+    
+    constexpr uint32_t SBWHalfCycle = 63; // 1/2 cycle of 8 MHz clock, in nanoseconds
+    _mspTest.write(0);
+    _mspRst_.write(0);
+    SystemClock::DelayNs(SBWHalfCycle);
 }
 
 
@@ -814,8 +819,8 @@ void System::_handleCmd(const USB::Cmd& ev) {
     // LEDSet
     case Cmd::Op::LEDSet: {
         switch (cmd.arg.ledSet.idx) {
-        case 0: _led0.write(cmd.arg.ledSet.on); break;
-        case 1: _led1.write(cmd.arg.ledSet.on); break;
+//        case 0: _led0.write(cmd.arg.ledSet.on); break;
+//        case 1: _led1.write(cmd.arg.ledSet.on); break;
         case 2: _led2.write(cmd.arg.ledSet.on); break;
         case 3: _led3.write(cmd.arg.ledSet.on); break;
         }
@@ -1155,8 +1160,8 @@ void System::_pixCapture() {
 
 [[noreturn]] void System::_abort() {
     for (bool x=true;; x=!x) {
-        _led0.write(x);
-        _led1.write(x);
+//        _led0.write(x);
+//        _led1.write(x);
         _led2.write(x);
         _led3.write(x);
         HAL_Delay(500);

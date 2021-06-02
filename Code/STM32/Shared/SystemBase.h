@@ -5,8 +5,8 @@ template <typename T>
 class SystemBase {
 public:
     SystemBase() :
-    _led0(GPIOE, GPIO_PIN_12),
-    _led1(GPIOE, GPIO_PIN_15),
+    _mspTest(GPIOE, GPIO_PIN_12),
+    _mspRst_(GPIOE, GPIO_PIN_15),
     _led2(GPIOB, GPIO_PIN_10),
     _led3(GPIOB, GPIO_PIN_11) {
     }
@@ -33,15 +33,15 @@ protected:
         __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         
         // Configure our LEDs
-        _led0.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _led1.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _mspTest.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _mspRst_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
     // LEDs
-    GPIO _led0;
-    GPIO _led1;
+    GPIO _mspTest;
+    GPIO _mspRst_;
     GPIO _led2;
     GPIO _led3;
 };
