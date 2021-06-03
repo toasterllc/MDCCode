@@ -39,25 +39,15 @@ public:
     }
     
     void enable() {
-        if (!_prevEnValid) {
-            _prevEn = Enable();
-            _prevEnValid = true;
-        } else {
-            // _prevEnValid was already `true`, so make sure the new IRQ state
-            // matches the previous IRQ state.
-            Assert(_prevEn);
-        }
+        Assert(!_prevEnValid);
+        _prevEn = Enable();
+        _prevEnValid = true;
     }
     
     void disable() {
-        if (!_prevEnValid) {
-            _prevEn = Disable();
-            _prevEnValid = true;
-        } else {
-            // _prevEnValid was already `true`, so make sure the new IRQ state
-            // matches the previous IRQ state.
-            Assert(!_prevEn);
-        }
+        Assert(!_prevEnValid);
+        _prevEn = Disable();
+        _prevEnValid = true;
     }
     
     void restore() {
