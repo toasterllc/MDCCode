@@ -19,6 +19,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5514B57B2668473C000B27EB /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
 		554F17882543ED5400F67066 /* ST */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ST; sourceTree = "<group>"; };
 		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
 		5563E119253A8B3D00BCC0F7 /* STApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STApp; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -41,6 +42,7 @@
 			isa = PBXGroup;
 			children = (
 				55844C1A2575D51A008737ED /* Shared */,
+				5514B57B2668473C000B27EB /* Shared */,
 				554F17892543ED5400F67066 /* Source */,
 				554F17882543ED5400F67066 /* ST */,
 				556875D5254A165200B774CE /* Linker.ld */,

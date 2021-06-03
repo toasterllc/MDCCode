@@ -105,15 +105,201 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
     qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
 }
 
+class MSP430 {
+private:
+    using TMS = bool;
+    static constexpr TMS TMS0 = false;
+    static constexpr TMS TMS1 = true;
+    static constexpr TMS TMSX = false; // Don't care
+    
+    using TDI = bool;
+    static constexpr TDI TDI0 = false;
+    static constexpr TDI TDI1 = true;
+    static constexpr TDI TDIX = false; // Don't care
+    
+    using TDO = bool;
+    static constexpr TDO TDO0 = false;
+    static constexpr TDO TDO1 = true;
+    static constexpr TDO TDOX = false; // Don't care
+    
+    static void _delay() {
+        constexpr uint32_t SpyBiWireDelayCount = 0;
+        for (volatile uint32_t i=0; i<SpyBiWireDelayCount; i++);
+    }
+    
+    // Perform a single Spy-bi-wire I/O cycle
+    TDO _sbwio(TMS tms, TDI tdi) {
+        // ## Write TMS
+        {
+            _sbwTDIO.write(tms);
+            _delay();
+            
+            _sbwTCK.write(0);
+            _delay();
+            _sbwTCK.write(1);
+            _delay();
+        }
+        
+        // ## Write TDI
+        {
+            _sbwTDIO.write(tdi);
+            _delay();
+            
+            _sbwTCK.write(0);
+            _delay();
+            _sbwTCK.write(1);
+            // Stop driving SBWTDIO, in preparation for the slave to start driving it
+            _sbwTDIO.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _delay();
+        }
+        
+        // ## Read TDO
+        TDO tdo = TDO0;
+        {
+            _sbwTCK.write(0);
+            _delay();
+            // Read the TDO value, driven by the slave, while SBWTCK=0
+            tdo = _sbwTDIO.read();
+            _sbwTCK.write(1);
+            _delay();
+            _sbwTDIO.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // Start driving SBWTDIO again
+        }
+        
+        return tdo;
+    }
+    
+    void _startShiftIR() {
+        // <-- Run-Test/Idle
+        _sbwio(TMS1, TDIX);
+        // <-- Select DR-Scan
+        _sbwio(TMS1, TDIX);
+        // <-- Select IR-Scan
+        _sbwio(TMS0, TDIX);
+        // <-- Capture-IR
+        _sbwio(TMS0, TDIX);
+        // <-- Shift-IR
+    }
+    
+    uint8_t _shift8(uint8_t dout) {
+        // <-- Shift-DR / Shift-IR
+        uint8_t din = 0;
+        for (int i=0; i<8; i++) {
+            const TMS tms = (i<=6 ? TMS0 : TMS1); // Final bit needs TMS=1
+            din <<= 1;
+            din |= _sbwio(tms, dout&0x1);
+            dout >>= 1;
+        }
+        
+        // <-- Exit1-DR / Exit1-IR
+        _sbwio(TMS1, TDOX);
+        // <-- Update-DR / Update-IR
+        _sbwio(TMS0, TDOX);
+        // <-- Run-Test/Idle
+        
+        return din;
+    }
+    
+    GPIO& _mspTest;
+    GPIO& _mspRst_;
+    GPIO& _sbwTCK;
+    GPIO& _sbwTDIO;
+    
+public:
+    MSP430(GPIO& mspTest, GPIO& mspRst_) :
+    _mspTest(mspTest), _mspRst_(mspRst_),
+    _sbwTCK(mspTest), _sbwTDIO(mspRst_)
+    {}
+    
+    void go() {
+        IRQState state;
+        state.disable();
+        
+        // ## Reset pin states
+        {
+            _mspTest.write(0);
+            _mspRst_.write(1);
+            _delay();
+        }
+        
+        // ## Reset the MSP430 so that it starts from a known state
+        {
+            _mspRst_.write(0);
+            _delay();
+            _mspRst_.write(1);
+            _delay();
+        }
+        
+        // ## Enable SBW interface
+        {
+            // Assert TEST
+            _mspTest.write(1);
+            _delay();
+        }
+        
+        // ## Choose 2-wire/Spy-bi-wire mode
+        {
+            // SBWTDIO=1, and apply a single clock to SBWTCK
+            _sbwTDIO.write(1);
+            _delay();
+            _sbwTCK.write(0);
+            _delay();
+            _sbwTCK.write(1);
+            _delay();
+        }
+
+        // ## Reset JTAG state machine
+        {
+            // TMS=1 for 6 clocks
+            for (int i=0; i<100; i++) {
+                _sbwio(TMS1, TDIX);
+            }
+            // <-- Test-Logic-Reset
+            
+            // TMS=0 for 1 clock
+            _sbwio(TMS0, TDIX);
+            // <-- Run-Test/Idle
+            
+            // Fuse check: toggle TMS twice
+            _sbwio(TMS1, TDIX);
+            // <-- Select DR-Scan
+            _sbwio(TMS0, TDIX);
+            // <-- Capture DR
+            _sbwio(TMS1, TDIX);
+            // <-- Exit1-DR
+            _sbwio(TMS0, TDIX);
+            // <-- Pause-DR
+            _sbwio(TMS1, TDIX);
+            // <-- Exit2-DR
+            _sbwio(TMS0, TDIX);
+            _sbwio(TMS1, TDIX);
+            _sbwio(TMS0, TDIX);
+            
+            // In SBW mode, the fuse check causes the JTAG state machine to change states,
+            // so we need to explicitly return to the Run-Test/Idle state.
+            // (This isn't necessary in 4-wire JTAG mode, since the state machine doesn't
+            // change states when performing the fuse check.)
+            _sbwio(TMS1, TDIX);
+            // <-- Update-DR
+            _sbwio(TMS0, TDIX);
+            // <-- Run-Test/Idle
+        }
+        
+        // ##
+        {
+            _startShiftIR();
+            volatile uint8_t jtagID = _shift8(0xC8);
+            for (;;);
+        }
+    }
+};
+
 void System::init() {
     _super::init();
     _usb.init();
     _qspi.init();
     
-    constexpr uint32_t SBWHalfCycle = 63; // 1/2 cycle of 8 MHz clock, in nanoseconds
-    _mspTest.write(0);
-    _mspRst_.write(0);
-    SystemClock::DelayNs(SBWHalfCycle);
+    MSP430 msp(_mspTest, _mspRst_);
+    msp.go();
 }
 
 
