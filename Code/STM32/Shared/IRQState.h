@@ -5,21 +5,28 @@
 class IRQState {
 public:
     
-    static bool Disable() {
+    static bool Enabled() {
         // __get_PRIMASK() returns whether interrupts were masked, while
         // we return whether interrupts were enabled.
-        bool en = !__get_PRIMASK();
+        return !__get_PRIMASK();
+    }
+    
+    static bool Enable() {
+        const bool en = Enabled();
+        __enable_irq();
+        return en;
+    }
+    
+    static bool Disable() {
+        const bool en = Enabled();
         __disable_irq();
         return en;
     }
     
     static void Restore(bool en) {
         if (en) __enable_irq();
+        else __disable_irq();
     }
-    
-//    static void Enable() {
-//        __enable_irq();
-//    }
     
     static void Sleep() {
         HAL_SuspendTick();
@@ -31,15 +38,36 @@ public:
         restore();
     }
     
+    void enable() {
+        if (!_prevEnValid) {
+            _prevEn = Enable();
+            _prevEnValid = true;
+        } else {
+            // _prevEnValid was already `true`, so make sure the new IRQ state
+            // matches the previous IRQ state.
+            Assert(_prevEn);
+        }
+    }
+    
     void disable() {
-        _oldEnabled = Disable();
+        if (!_prevEnValid) {
+            _prevEn = Disable();
+            _prevEnValid = true;
+        } else {
+            // _prevEnValid was already `true`, so make sure the new IRQ state
+            // matches the previous IRQ state.
+            Assert(!_prevEn);
+        }
     }
     
     void restore() {
-        Restore(_oldEnabled);
-        _oldEnabled = false;
+        if (_prevEnValid) {
+            Restore(_prevEn);
+            _prevEnValid = false;
+        }
     }
     
 private:
-    bool _oldEnabled = false;
+    bool _prevEn = false;
+    bool _prevEnValid = false;
 };

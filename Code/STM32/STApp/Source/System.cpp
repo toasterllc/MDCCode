@@ -122,9 +122,15 @@ private:
     static constexpr TDO TDO1 = true;
     static constexpr TDO TDOX = false; // Don't care
     
-    static void _delay() {
+    void _sbwDelay() {
         constexpr uint32_t SpyBiWireDelayCount = 0;
         for (volatile uint32_t i=0; i<SpyBiWireDelayCount; i++);
+    }
+    
+    void _delayMs(uint32_t ms) {
+        IRQState irq;
+        irq.enable();
+        HAL_Delay(ms);
     }
     
     // Perform a single Spy-bi-wire I/O cycle
@@ -132,36 +138,36 @@ private:
         // ## Write TMS
         {
             _sbwTDIO.write(tms);
-            _delay();
+            _sbwDelay();
             
             _sbwTCK.write(0);
-            _delay();
+            _sbwDelay();
             _sbwTCK.write(1);
-            _delay();
+            _sbwDelay();
         }
         
         // ## Write TDI
         {
             _sbwTDIO.write(tdi);
-            _delay();
+            _sbwDelay();
             
             _sbwTCK.write(0);
-            _delay();
+            _sbwDelay();
             _sbwTCK.write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
             _sbwTDIO.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-            _delay();
+            _sbwDelay();
         }
         
         // ## Read TDO
         TDO tdo = TDO0;
         {
             _sbwTCK.write(0);
-            _delay();
+            _sbwDelay();
             // Read the TDO value, driven by the slave, while SBWTCK=0
             tdo = _sbwTDIO.read();
             _sbwTCK.write(1);
-            _delay();
+            _sbwDelay();
             _sbwTDIO.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // Start driving SBWTDIO again
         }
         
@@ -214,6 +220,7 @@ private:
     GPIO& _mspRst_;
     GPIO& _sbwTCK;
     GPIO& _sbwTDIO;
+    IRQState _irq;
     
 public:
     MSP430(GPIO& mspTest, GPIO& mspRst_) :
@@ -222,8 +229,13 @@ public:
     {}
     
     void go() {
-        IRQState state;
-        state.disable();
+        _irq.disable();
+        
+        #define IR_CNTRL_SIG_16BIT	    0xC8	/* 0x13 */
+        #define IR_CNTRL_SIG_CAPTURE	0x28	/* 0x14 */
+        #define IR_JMB_EXCHANGE         0x86    /* 0x61 */
+//        #define IR_CNTRL_SIG_16BIT	0x13
+//        #define IR_CNTRL_SIG_CAPTURE	0x14
         
         // ## JTAG entry, attempt 1
         {
@@ -232,34 +244,34 @@ public:
                 _mspTest.write(0);
                 _mspRst_.write(1);
                 for (uint32_t i=0; i<65535; i++) {
-                    _delay();
+                    _sbwDelay();
                 }
             }
             
             // ## Reset the MSP430 so that it starts from a known state
             {
                 _mspRst_.write(0);
-                _delay();
+                _sbwDelay();
                 _mspRst_.write(1);
-                _delay();
+                _sbwDelay();
             }
             
             // ## Enable SBW interface
             {
                 // Assert TEST
                 _mspTest.write(1);
-                _delay();
+                _sbwDelay();
             }
             
             // ## Choose 2-wire/Spy-bi-wire mode
             {
                 // SBWTDIO=1, and apply a single clock to SBWTCK
                 _sbwTDIO.write(1);
-                _delay();
+                _sbwDelay();
                 _sbwTCK.write(0);
-                _delay();
+                _sbwDelay();
                 _sbwTCK.write(1);
-                _delay();
+                _sbwDelay();
             }
 
             // ## Reset JTAG state machine
@@ -298,10 +310,6 @@ public:
             
             // Try to read JTAG ID
             {
-                #define IR_CNTRL_SIG_16BIT	0xC8	/* 0x13 */
-                #define IR_CNTRL_SIG_CAPTURE	0x28	/* 0x14 */
-//                #define IR_CNTRL_SIG_16BIT	0x13
-//                #define IR_CNTRL_SIG_CAPTURE	0x14
                 _startShiftIR();
                 _shift<uint8_t>(IR_CNTRL_SIG_16BIT);
                 
@@ -311,7 +319,93 @@ public:
                 volatile uint8_t jtagID = _shift<uint8_t>(IR_CNTRL_SIG_CAPTURE);
                 for (;;);
             }
-        }        
+        }
+        
+        // ## JTAG entry, attempt 2
+        {
+            // ## Reset pin states
+            {
+                _mspTest.write(0);
+                _mspRst_.write(1);
+                for (uint32_t i=0; i<65535; i++) {
+                    _sbwDelay();
+                }
+            }
+            
+            // ## Reset the MSP430 so that it starts from a known state
+            {
+                _mspRst_.write(0);
+                _sbwDelay();
+            }
+            
+            // ## Enable SBW interface
+            {
+                // Assert TEST
+                _mspTest.write(1);
+                _sbwDelay();
+            }
+            
+            // ## Choose 2-wire/Spy-bi-wire mode
+            {
+                // SBWTDIO=1, and apply a single clock to SBWTCK
+                _sbwTDIO.write(1);
+                _sbwDelay();
+                _sbwTCK.write(0);
+                _sbwDelay();
+                _sbwTCK.write(1);
+                _sbwDelay();
+            }
+            
+            // ## Reset JTAG state machine
+            {
+                // TMS=1 for 6 clocks
+                for (int i=0; i<100; i++) {
+                    _sbwio(TMS1, TDIX);
+                }
+                // <-- Test-Logic-Reset
+                
+                // TMS=0 for 1 clock
+                _sbwio(TMS0, TDIX);
+                // <-- Run-Test/Idle
+                
+                // Fuse check: toggle TMS twice
+                _sbwio(TMS1, TDIX);
+                // <-- Select DR-Scan
+                _sbwio(TMS0, TDIX);
+                // <-- Capture DR
+                _sbwio(TMS1, TDIX);
+                // <-- Exit1-DR
+                _sbwio(TMS0, TDIX);
+                // <-- Pause-DR
+                _sbwio(TMS1, TDIX);
+                // <-- Exit2-DR
+                
+                // In SBW mode, the fuse check causes the JTAG state machine to change states,
+                // so we need to explicitly return to the Run-Test/Idle state.
+                // (This isn't necessary in 4-wire JTAG mode, since the state machine doesn't
+                // change states when performing the fuse check.)
+                _sbwio(TMS1, TDIX);
+                // <-- Update-DR
+                _sbwio(TMS0, TDIX);
+                // <-- Run-Test/Idle
+            }
+            
+            {
+                _startShiftIR();
+                _shift<uint8_t>(IR_JMB_EXCHANGE);
+                
+                _startShiftDR();
+                _shift<uint16_t>(0xA55A);
+            }
+            
+            // ## Reset the MSP430 so that it starts from a known state
+            {
+                _mspRst_.write(1);
+                _sbwDelay();
+            }
+        }
+        
+        _irq.enable();
     }
 };
 
