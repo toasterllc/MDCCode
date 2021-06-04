@@ -122,7 +122,7 @@ private:
     static constexpr TDO TDO1 = true;
     static constexpr TDO TDOX = false; // Don't care
     
-    void _sbwDelay(uint32_t count=0) {
+    void _sbwDelay(uint32_t count=10) {
         for (volatile uint32_t i=0; i<count; i++);
     }
     
@@ -406,7 +406,7 @@ private:
         irq.disable();
         {
             _mspTest.write(0);                  //5
-            _delayUs(1);
+            _sbwDelay();
             // phase 4 -> TEST pin to 1, no change on RST pin
             // for Spy-Bi-Wire
             _mspTest.write(1);      //7
@@ -440,7 +440,7 @@ private:
         {
             _mspTest.write(0);
             // phase 3
-            _delayUs(1);
+            _sbwDelay();
             // phase 4 -> TEST pin to 1, no change on RST pin
             // for Spy-Bi-Wire
             _mspTest.write(1);  
@@ -473,7 +473,7 @@ private:
         _mspTest.write(0);  //5
 
         // phase 3
-        _delayUs(1);
+        _sbwDelay();
 
         // phase 4 -> TEST pin to 1, no change on RST pin
         // for 4-wire JTAG
@@ -621,7 +621,7 @@ private:
         {
             _mspRst_.write(1);
         }
-        _delayUs(1); 
+        _sbwDelay();
         
         // phase 4 -> TEST pin to 1, no change on RST pin
         if(states == RSTLOW_SBW || states == RSTHIGH_SBW)
@@ -805,7 +805,7 @@ private:
     
     uint16_t magicPattern(void)
     {
-        uint16_t deviceJtagID = 0;
+        volatile uint16_t deviceJtagID = 0;
         
         // Enable the JTAG interface to the device.
         ConnectJTAG();
@@ -866,7 +866,7 @@ private:
     
     uint16_t GetCoreID(void) {
         uint16_t i;
-        uint16_t JtagId = 0;  //initialize JtagId with an invalid value
+        volatile uint16_t JtagId = 0;  //initialize JtagId with an invalid value
         for (i = 0; i < MAX_ENTRY_TRY; i++)
         {
             // release JTAG/TEST signals to safely reset the test logic
@@ -926,7 +926,7 @@ private:
             _sbwDelay();
             
             _sbwTCK.write(0);
-            _sbwDelay();
+            _sbwDelay(0);
             _sbwTCK.write(1);
             _sbwDelay();
         }
@@ -937,10 +937,11 @@ private:
             _sbwDelay();
             
             _sbwTCK.write(0);
-            _sbwDelay();
+            _sbwDelay(0);
             _sbwTCK.write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
             _sbwTDIO.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            for (;;);
             _sbwDelay();
         }
         
@@ -948,17 +949,18 @@ private:
         TDO tdo = TDO0;
         {
             _sbwTCK.write(0);
-            _sbwDelay();
+            _sbwDelay(0);
             // Read the TDO value, driven by the slave, while SBWTCK=0
             tdo = _sbwTDIO.read();
             _sbwTCK.write(1);
+            
             _sbwDelay();
             _sbwTDIO.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // Start driving SBWTDIO again
         }
         
-//        if (tdo == TDO0) {
-//            for (;;);
-//        }
+        if (tdo == TDO0) {
+            for (;;);
+        }
         
         return tdo;
     }
