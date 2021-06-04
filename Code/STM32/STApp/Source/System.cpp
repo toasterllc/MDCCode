@@ -236,6 +236,11 @@ private:
     //! \brief JTAG identification value for 430Xv2 architecture FR59XX devices
     #define JTAG_ID99                  0x99
     
+    #define RSTLOW_SBW   0
+    #define RSTLOW_JTAG  1
+    #define RSTHIGH_SBW  2
+    #define RSTHIGH_JTAG 3
+    
     #define F_BYTE                     8
     #define F_WORD                     16
     uint16_t AllShifts(uint8_t Format, uint32_t Data)
@@ -447,6 +452,39 @@ private:
         _delayMs(5);
     }
     
+    //! \brief Function to start the JTAG communication - RST line high - device starts
+    //! code execution   
+    void EntrySequences_RstHigh_JTAG()
+    {
+        _mspTest.write(0);    //1
+        _delayMs(4); // reset TEST logic
+
+        _mspRst_.write(1);    //2
+        
+        _mspTest.write(1);    //3
+        _delayMs(20); // activate TEST logic
+
+        // phase 1
+        _mspRst_.write(0);    //4
+        _delayUs(60);
+
+        // phase 2 -> TEST pin to 0, no change on RST pin
+        // for 4-wire JTAG clear Test pin
+        _mspTest.write(0);  //5
+
+        // phase 3
+        _delayUs(1);
+
+        // phase 4 -> TEST pin to 1, no change on RST pin
+        // for 4-wire JTAG
+        _mspTest.write(1);//7
+        _delayUs(60);
+
+        // phase 5
+        _mspRst_.write(1);
+        _delayMs(5);
+    }
+    
     uint16_t IR_Shift(uint8_t instruction)
     {
 //        // JTAG FSM state = Run-Test/Idle
@@ -533,6 +571,238 @@ private:
         // now in Run/Test Idle
     }
     
+    void StartJtagJSbw(uint8_t states)
+    {
+        // reset TEST logic  
+        _mspTest.write(0);
+        _delayMs(20);             // delay 20ms
+        
+        if(states == RSTLOW_SBW || states == RSTLOW_JTAG)
+        {   
+            // Set Reset pin 0
+            _mspRst_.write(0);
+        }
+        else
+        {   
+            // Set Reset pin = 1 
+            _mspRst_.write(1);
+        }  
+
+        _mspTest.write(1);
+        // activate TEST logic
+        _delayMs(25); 
+
+        // phase 1
+        if(states == RSTLOW_JTAG || states == RSTHIGH_JTAG)
+        {
+            //Set Reset pin =0 
+            _mspRst_.write(0);
+        }
+        else
+        {
+            _mspRst_.write(1);
+        }  
+        _delayUs(40); 
+        
+        // phase 2 -> TEST pin to 0, no change on RST pin
+        if(states == RSTLOW_SBW || states == RSTHIGH_SBW)
+        { 
+            // for Spy-Bi-Wire
+          //  JTAGOUT &= ~SBWCLK;
+        }
+        else
+        { 
+            // for 4-wire JTAG
+            _mspTest.write(0);
+        }
+        
+        // phase 3
+        if(states == RSTLOW_JTAG)
+        {
+            _mspRst_.write(1);
+        }
+        _delayUs(1); 
+        
+        // phase 4 -> TEST pin to 1, no change on RST pin
+        if(states == RSTLOW_SBW || states == RSTHIGH_SBW)
+        { 
+            // for Spy-Bi-Wire
+         //   JTAGOUT |=   SBWCLK;
+        }
+        else
+        { 
+            // for 4-wire JTAG
+            _mspTest.write(1);
+        }
+        _delayUs(40); 
+        
+        // phase 5
+        if(states == RSTHIGH_JTAG)
+        {
+            _mspRst_.write(1);
+        }
+        _delayMs(5);    
+    }
+    
+    //----------------------------------------------------------------------------
+    //! \brief Shift a value into TDI (MSB first) and simultaneously shift out a 
+    //! value from TDO (MSB first).
+    //! \param word Format (number of bits shifted, 8 (F_BYTE), 16 (F_WORD), 
+    //! 20 (F_ADDR) or 32 (F_LONG))
+    //! \param long Data (data to be shifted into TDI)
+    //! \return unsigned long (scanned TDO value)
+    uint16_t jsbw_Shift(uint8_t Format, uint32_t Data)
+    {
+        return AllShifts(Format, Data);
+    }
+    
+    
+    
+    
+    
+//    uint16_t AllShifts(uint8_t Format, uint32_t Data)
+//    {
+//        uint16_t TDOword = 0x00000000;
+//        uint16_t MSB = 0x00000000;
+//
+//        switch(Format)
+//        {
+//        case F_BYTE: MSB = 0x0080;
+//         break;
+//        case F_WORD: MSB = 0x8000;
+//         break;
+//        default: // this is an unsupported format, function will just return 0
+//         abort();
+//        }
+//        // shift in bits
+//        for (int i = Format; i > 0; i--)
+//        {
+//            bool tdo_bit = false;
+//            if (i == 1)                     // last bit requires TMS=1; TDO one bit before TDI
+//            {
+//              tdo_bit = ((Data & MSB) == 0) ? _sbwio(TMS1, TDI0) : _sbwio(TMS1, TDI1);
+//            }
+//            else
+//            {
+//              tdo_bit = ((Data & MSB) == 0) ? _sbwio(TMS0, TDI0) : _sbwio(TMS0, TDI1);
+//            }
+//            Data <<= 1;
+//            if (tdo_bit)
+//                TDOword++;
+//            if (i > 1)
+//                TDOword <<= 1;               // TDO could be any port pin
+//        }
+//        _sbwio(TMS1, TDI1);                 // update IR
+////        if (TCLK_saved & SBWDATO)
+////        {
+////            TMSL_TDIH();
+////        }
+////        else
+////        {
+////            TMSL_TDIL();
+////        }
+//        _sbwio(TMS0, TDI0);                 // update IR
+//
+//        return(TDOword);
+//    }    
+
+    
+    
+    
+    
+    
+    //----------------------------------------------------------------------------
+    //! \brief Function for shifting a new instruction into the JTAG instruction
+    //! register through JSBW (MSB first, but with interchanged MSB - LSB, to
+    //! simply use the same shifting function Shift()).
+    //! \param instruction (8 bit JTAG instruction)
+    //! \return word (TDOword - value shifted out from TDO: JTAG identification)
+    uint32_t jsbw_IR_Shift(uint8_t instruction)
+    {
+        // JTAG FSM state = Select DR-Scan
+        _sbwio(TMS1, TDI1);
+
+        // JTAG FSM state = Select IR-Scan
+        _sbwio(TMS0, TDI1);
+        // JTAG FSM state = Capture-IR
+        _sbwio(TMS0, TDI1);
+        // JTAG FSM state = Shift-IR, Shift in TDI (8-bit)
+        return(jsbw_Shift(F_BYTE, instruction));
+        // JTAG FSM state = Run-Test/Idle
+    }
+    
+    //----------------------------------------------------------------------------
+    //! \brief Function for shifting data into the JTAG data register through JSBW 
+    //! (MSB first, but with interchanged MSB - LSB, to simply use the same shifting 
+    //! function Shift()).
+    //! \param data
+    //! \return word (TDOword - value shifted out from TDO: JTAG identification)
+    uint32_t jsbw_DR_Shift(uint32_t data)
+    {
+//        // JTAG FSM state = Run-Test/Idle
+//        if (TCLK_saved & SBWDATO)
+//        {
+//            TMSH_TDIH();
+//        }
+//        else
+//        {
+//            TMSH_TDIL();
+//        }
+        _sbwio(TMS1, TDI0);
+        
+        // JTAG FSM state = Select DR-Scan
+        _sbwio(TMS0, TDI1);
+        // JTAG FSM state = Capture-DR
+        _sbwio(TMS0, TDI1);
+        // JTAG FSM state = Shift-DR, Shift in TDI (16-bit)
+        return(jsbw_Shift(F_WORD, data));
+        // JTAG FSM state = Run-Test/Idle
+    }
+    
+    //----------------------------------------------------------------------------
+    //! \brief Function for applying the magic pattern via JSBW.
+    void JsbwMagicPattern(void)
+    {
+        jsbw_IR_Shift(IR_JMB_EXCHANGE);
+        _delayMs(10);       
+        jsbw_DR_Shift(0x0001);
+        _delayMs(10);    
+        jsbw_DR_Shift(0xA55A);    
+        _delayMs(15);        
+    }
+    
+    //----------------------------------------------------------------------------
+    //! \brief Releases the JSBW logic.
+    void jRelease(void)
+    {
+        // drive target RST/SBWTDIO pin high
+        _mspRst_.write(1);
+        _delayMs(1);
+        // drive target TEST/SBWTCK pin low
+        _mspTest.write(0);
+    }
+    
+    //----------------------------------------------------------------------------
+    //! \brief Set JTAG pins to output direction - from REP430F to target
+    void configure_IO_JTAG(void)
+    {
+//        TDI_dir( 1 );
+//        TEST_dir( 1 );
+//        TMS_dir( 1 );
+//        RST_dir( 1 );
+//        TCK_dir( 1 );
+    }
+    
+    //----------------------------------------------------------------------------
+    //! \brief Function for resetting the JTAG lock via JSBW.
+    void jsbwJtagUnlock(void)
+    {    
+        jsbw_IR_Shift(IR_TEST_3V_REG);
+        _delayMs(10);  
+        jsbw_DR_Shift(0x4020);
+        _delayMs(10);
+    }
+    
     uint16_t magicPattern(void)
     {
         uint16_t deviceJtagID = 0;
@@ -563,43 +833,41 @@ private:
                 DR_Shift16(0x4020);
             }
             return deviceJtagID;
-        }        
+        }
         
         // if Device is in LPM.x5 -> reset IO lock of JTAG pins and Configure it for debug
-    //#ifdef LPM5_ACTIVATED
-    //    {
-    //        ConnectJTAG();
-    //        StartJtagJSbw(RSTLOW_SBW);        
-    //        ResetTAP();
-    //        JsbwMagicPattern();
-    //        jRelease();          
-    //        _delayMs(60); 
-    //        
-    //        // reset JTAG lock
-    //        configure_IO_JTAG();                    
-    //        StartJtagJSbw(RSTHIGH_SBW);   
-    //        ResetTAP();
-    //        jsbwJtagUnlock();
-    //        _delayMs(60); 
-    //        
-    //        configure_IO_JTAG();
-    //        EntrySequences_RstHigh_JTAG();      
-    //        ResetTAP();  // reset TAP state machine -> Run-Test/Idle    
-    //        _delayMs(60); 
-    //        deviceJtagID = IR_Shift(IR_CNTRL_SIG_CAPTURE);
-    //        if(deviceJtagID == JTAG_ID91)
-    //        {
-    //            return deviceJtagID;
-    //        }
-    //    } 
-    //#endif
+        {
+            ConnectJTAG();
+            StartJtagJSbw(RSTLOW_SBW);        
+            ResetTAP();
+            JsbwMagicPattern();
+            jRelease();          
+            _delayMs(60); 
+            
+            // reset JTAG lock
+            configure_IO_JTAG();                    
+            StartJtagJSbw(RSTHIGH_SBW);   
+            ResetTAP();
+            jsbwJtagUnlock();
+            _delayMs(60); 
+            
+            configure_IO_JTAG();
+            EntrySequences_RstHigh_JTAG();      
+            ResetTAP();  // reset TAP state machine -> Run-Test/Idle    
+            _delayMs(60); 
+            deviceJtagID = IR_Shift(IR_CNTRL_SIG_CAPTURE);
+            if(deviceJtagID == JTAG_ID91)
+            {
+                return deviceJtagID;
+            }
+        } 
         return 1;  // return 1 as an invalid JTAG ID
     }
     
     uint16_t GetCoreID(void) {
         uint16_t i;
         uint16_t JtagId = 0;  //initialize JtagId with an invalid value
-        for (i = 0;/* i < MAX_ENTRY_TRY*/; i++)
+        for (i = 0; i < MAX_ENTRY_TRY; i++)
         {
             // release JTAG/TEST signals to safely reset the test logic
             StopJtag();
@@ -687,6 +955,10 @@ private:
             _sbwDelay();
             _sbwTDIO.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // Start driving SBWTDIO again
         }
+        
+//        if (tdo == TDO0) {
+//            for (;;);
+//        }
         
         return tdo;
     }
