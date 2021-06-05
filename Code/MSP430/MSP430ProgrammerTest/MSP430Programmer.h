@@ -1119,7 +1119,7 @@ word GetCoreID (void)
 {
     word i;
     volatile word JtagId = 0;  //initialize JtagId with an invalid value
-    for (i = 0;/* i < MAX_ENTRY_TRY*/; i++)
+    for (i = 0; i < MAX_ENTRY_TRY; i++)
     {
         // release JTAG/TEST signals to safely reset the test logic
         StopJtag();        
@@ -1141,35 +1141,28 @@ word GetCoreID (void)
         JtagId = (word)IR_Shift(IR_CNTRL_SIG_CAPTURE);  
          
         // break if a valid JTAG ID is being returned
-        if((JtagId == JTAG_ID91) || (JtagId == JTAG_ID99) || (JtagId == JTAG_ID98))                     //****************************
+        if((JtagId == JTAG_ID91) || (JtagId == JTAG_ID99) || (JtagId == JTAG_ID98))
         {
-            break;
+            return JtagId;
         }
     }
     if(i >= MAX_ENTRY_TRY)
-    {         
+    {
     // if connected device is MSP4305438 JTAG Mailbox is not usable
 #ifdef ACTIVATE_MAGIC_PATTERN
         for(i = 0; i < MAX_ENTRY_TRY; i++)
         {
             // if no JTAG ID is returns -> apply magic pattern to stop user cd excecution 
             JtagId = magicPattern();
-          
-            if((JtagId == 1) || (i >= MAX_ENTRY_TRY))
+            if((JtagId == JTAG_ID91) || (JtagId == JTAG_ID99) || (JtagId == JTAG_ID98))
             {
-                // if magic pattern failed and 4 tries passed -> return status error
-                return(STATUS_ERROR);
-            }
-            else
-            {
-                break; 
+                return JtagId;
             }
         }
         // For MSP430F5438 family mailbox is not functional in reset state.
         // Because of this issue the magicPattern is not usable on MSP430F5438 family devices
-#else
-    return(STATUS_ERROR);
 #endif
+        return(STATUS_ERROR);
     }
     if((JtagId == JTAG_ID91) || (JtagId == JTAG_ID99) || (JtagId == JTAG_ID98))                        //****************************
     {
