@@ -113,6 +113,5 @@ int main() {
         __delay_cycles(8000000); // Debounce
     }
     
-    
     return 0;
 }

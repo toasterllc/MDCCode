@@ -50,17 +50,15 @@ private:
     
     void _tapReset() {
         // ## Reset JTAG state machine
-        {
-            // TMS=1 for 6 clocks
-            for (int i=0; i<6; i++) {
-                _sbwio(TMS1, TDIX);
-            }
-            // <-- Test-Logic-Reset
-            
-            // TMS=0 for 1 clock
-            _sbwio(TMS0, TDIX);
-            // <-- Run-Test/Idle
+        // TMS=1 for 6 clocks
+        for (int i=0; i<6; i++) {
+            _sbwio(TMS1, TDIX);
         }
+        // <-- Test-Logic-Reset
+        
+        // TMS=0 for 1 clock
+        _sbwio(TMS0, TDIX);
+        // <-- Run-Test/Idle
     }
     
     void _startShiftIR() {
@@ -129,7 +127,7 @@ private:
     }
     
     // Using std::common_type here to prevent auto type deduction,
-    // thus requiring `T` to be explicit
+    // because we want `T` to be explicit.
     template <typename T>
     T _shift(typename std::common_type<T>::type dout) {
         // <-- Shift-DR / Shift-IR
