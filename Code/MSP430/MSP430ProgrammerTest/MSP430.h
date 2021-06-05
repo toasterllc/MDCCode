@@ -97,51 +97,6 @@ public:
     //! \brief Holds the last value of TCLK before entering a JTAG sequence
     bool TCLK_saved = true;
     
-    bool TSTRead() {
-        return P1IN & BIT4;
-    }
-    
-    bool RSTRead() {
-        return P1IN & BIT5;
-    }
-    
-    void TSTWrite(bool x) {
-        if (x)  P1OUT   |=  BIT4;
-        else    P1OUT   &= ~BIT4;
-    }
-    
-    void RSTWrite(bool x) {
-        if (x)  P1OUT   |=  BIT5;
-        else    P1OUT   &= ~BIT5;
-    }
-    
-    void TSTDir(bool out) {
-        if (out)    P1DIR   |=  BIT4;
-        else        P1DIR   &= ~BIT4;
-    }
-    
-    void RSTDir(bool out) {
-        if (out)    P1DIR   |=  BIT5;
-        else        P1DIR   &= ~BIT5;
-    }
-    
-    #define TCKRead     TSTRead
-    #define TDIORead    RSTRead
-    #define TCKWrite    TSTWrite
-    #define TDIOWrite   RSTWrite
-    #define TCKDir      TSTDir
-    #define TDIODir     RSTDir
-    
-    
-    #define CPUFreqMHz 16
-    #define DelayUs(us) __delay_cycles(CPUFreqMHz*us);
-    
-    void DelayMs(uint32_t ms) {
-        for (volatile uint32_t i=0; i<ms; i++) {
-            DelayUs(1000);
-        }
-    }
-    
     
     
     
@@ -150,61 +105,61 @@ public:
     
     //! \brief Delay function as a transition between SBW time slots
     void nNOPS() {
-        DelayUs(1);
+        _delayUs(1);
     }
     
     //! \brief SBW macro: set TMS signal
     void TMSH() {
-        TDIOWrite(1);
+        _tdio.write(1);
         nNOPS();
-        TCKWrite(0);
+        _tck.write(0);
         nNOPS();
-        TCKWrite(1);
+        _tck.write(1);
     }
     
     //! \brief SBW macro: clear TMS signal
     void TMSL() {
-        TDIOWrite(0);
+        _tdio.write(0);
         nNOPS();
-        TCKWrite(0);
+        _tck.write(0);
         nNOPS();
-        TCKWrite(1);
+        _tck.write(1);
     }
 
     //! \brief SBW macro: Set TDI = 1
     void TDIH() {
-        TDIOWrite(1);
+        _tdio.write(1);
         nNOPS();
-        TCKWrite(0);
+        _tck.write(0);
         nNOPS();
-        TCKWrite(1);
+        _tck.write(1);
     }
     //! \brief SBW macro: clear TDI signal
     void TDIL() {
-        TDIOWrite(0);
+        _tdio.write(0);
         nNOPS();
-        TCKWrite(0);
+        _tck.write(0);
         nNOPS();
-        TCKWrite(1);
+        _tck.write(1);
     }
     //! \brief SBW macro: TDO cycle without reading TDO
     void TDOsbw() {
-        TDIODir(0);
+        _tdio.config(0);
         nNOPS();
-        TCKWrite(0);
+        _tck.write(0);
         nNOPS();
-        TCKWrite(1);
-        TDIODir(1);
+        _tck.write(1);
+        _tdio.config(1);
     }
     //! \brief SBW macro: TDO cycle with TDO read
     void TDO_RD() {
-        TDIODir(0);
+        _tdio.config(0);
         nNOPS();
-        TCKWrite(0);
+        _tck.write(0);
         nNOPS();
-        tdo_bit = TDIORead();
-        TCKWrite(1);
-        TDIODir(1);
+        tdo_bit = _tdio.read();
+        _tck.write(1);
+        _tdio.config(1);
     }
 
 
@@ -271,13 +226,13 @@ public:
     void ConnectJTAG()
     {
         // drive JTAG/TEST signals
-        TSTDir(0);
-        RSTDir(0);
-        TSTWrite(0);
-        RSTWrite(0);
-        TSTDir(1);
-        RSTDir(1);
-        DelayMs(15);
+        _test.config(0);
+        _rst_.config(0);
+        _test.write(0);
+        _rst_.write(0);
+        _test.config(1);
+        _rst_.config(1);
+        _delayMs(15);
     }
 
     //----------------------------------------------------------------------------
@@ -285,9 +240,9 @@ public:
     void StopJtag()
     {
         // release JTAG/TEST signals
-        TSTDir(0);
-        RSTDir(0);
-        DelayMs(15);
+        _test.config(0);
+        _rst_.config(0);
+        _delayMs(15);
     }
 
     //----------------------------------------------------------------------------
@@ -405,30 +360,30 @@ public:
     //! code execution   
     void EntrySequences_RstHigh_SBW()
     {
-        TSTWrite(0);
-        DelayMs(4);
+        _test.write(0);
+        _delayMs(4);
 
-        RSTWrite(1);
+        _rst_.write(1);
         
-        TSTWrite(1);
-        DelayMs(20);
+        _test.write(1);
+        _delayMs(20);
 
         // phase 1
-        RSTWrite(1);
-        DelayUs(60);
+        _rst_.write(1);
+        _delayUs(60);
 
         // phase 2 -> TEST pin to 0, no change on RST pin
         // for Spy-Bi-Wire
-        TSTWrite(0);
+        _test.write(0);
         // phase 3
-        DelayUs(1);
+        _delayUs(1);
         // phase 4 -> TEST pin to 1, no change on RST pin
         // for Spy-Bi-Wire
-        TSTWrite(1);
-        DelayUs(60);
+        _test.write(1);
+        _delayUs(60);
 
         // phase 5
-        DelayMs(5);
+        _delayMs(5);
     }
 
     //----------------------------------------------------------------------------
