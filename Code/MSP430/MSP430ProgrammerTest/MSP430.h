@@ -99,6 +99,21 @@ public:
     //! \brief Holds the last value of TCLK before entering a JTAG sequence
     bool TCLK_saved = true;
     
+    void _tapReset() {
+        // ## Reset JTAG state machine
+        {
+            // TMS=1 for 6 clocks
+            for (int i=0; i<6; i++) {
+                _sbwio(TMS1, TDIX);
+            }
+            // <-- Test-Logic-Reset
+            
+            // TMS=0 for 1 clock
+            _sbwio(TMS0, TDIX);
+            // <-- Run-Test/Idle
+        }
+    }
+    
     void _startShiftIR() {
         // <-- Run-Test/Idle
         _sbwio(TMS1, TDIX);
@@ -280,30 +295,6 @@ public:
         TDIL();
         TDO_RD();
     }
-
-    //----------------------------------------------------------------------------
-    //! \brief Function to set up the JTAG pins
-    void ConnectJTAG()
-    {
-        // drive JTAG/TEST signals
-        _test.config(0);
-        _rst_.config(0);
-        _test.write(0);
-        _rst_.write(0);
-        _test.config(1);
-        _rst_.config(1);
-        _delayMs(15);
-    }
-
-    //----------------------------------------------------------------------------
-    //! \brief Function to stop the JTAG communication by releasing the JTAG signals
-    void StopJtag()
-    {
-        // release JTAG/TEST signals
-        _test.config(0);
-        _rst_.config(0);
-        _delayMs(15);
-    }
     
     // Using std::common_type here to prevent auto type deduction,
     // thus requiring `T` to be explicit
@@ -390,21 +381,6 @@ public:
        return(TDOword);
     }
 
-
-
-    //----------------------------------------------------------------------------
-    //! \brief Reset target JTAG interface and perform fuse-HW check.
-    void ResetTAP() {
-        // Reset JTAG FSM
-        for (int i=0; i<6; i++) {
-            _sbwio(TMS1, TDI1);
-        }
-        // JTAG FSM is now in Test-Logic-Reset
-        _sbwio(TMS0, TDI1);
-        // now in Run/Test Idle
-    }
-
-
     //----------------------------------------------------------------------------
     //! \brief Function for shifting a new instruction into the JTAG instruction
     //! register through TDI (MSB first, but with interchanged MSB - LSB, to
@@ -438,32 +414,20 @@ public:
     //----------------------------------------------------------------------------
     //! \brief Function to start the JTAG communication - RST line high - device starts
     //! code execution   
-    void EntrySequences_RstHigh_SBW()
-    {
-        _test.write(0);
-        _delayMs(4);
-
+    void EntrySequences_RstHigh_SBW() {
+        // RST_=1
         _rst_.write(1);
-        
-        _test.write(1);
-        _delayMs(20);
-
-        // phase 1
-        _rst_.write(1);
-        _delayUs(60);
-
-        // phase 2 -> TEST pin to 0, no change on RST pin
-        // for Spy-Bi-Wire
-        _test.write(0);
-        // phase 3
         _delayUs(1);
-        // phase 4 -> TEST pin to 1, no change on RST pin
-        // for Spy-Bi-Wire
+        
+        // Assert TEST and wait for it to be accepted
         _test.write(1);
-        _delayUs(60);
-
-        // phase 5
-        _delayMs(5);
+        _delayMs(1);
+        
+        // Clock TEST
+        _test.write(0);
+        _delayUs(1);
+        _test.write(1);
+        _delayUs(1);
     }
 
     //----------------------------------------------------------------------------
@@ -483,16 +447,34 @@ public:
             {
                 _rst_.write(0);
                 _delayUs(1);
+            }
+            
+            // ## Enable test mode
+            {
+                // RST=1
                 _rst_.write(1);
+                _delayUs(1);
+                // Assert TEST
+                _test.write(1);
                 _delayUs(1);
             }
             
-            // Apply again 4wire/SBW entry Sequence. 
-            // set ResetPin =1    
-            EntrySequences_RstHigh_SBW();
-            // reset TAP state machine -> Run-Test/Idle
-            ResetTAP();
-            // shift out JTAG ID
+            // ## Choose 2-wire/Spy-bi-wire mode
+            {
+                // TDIO=1 while applying a single clock to TCK
+                _tdio.write(1);
+                
+                _delayUs(1);
+                _tck.write(0);
+                _delayUs(1);
+                _tck.write(1);
+                _delayUs(1);
+            }
+            
+            // ## Reset JTAG state machine (test access port, TAP)
+            {
+                _tapReset();
+            }
             
             _startShiftIR();
             const uint16_t jid = _shift<uint8_t>(IR_CNTRL_SIG_CAPTURE);
@@ -527,12 +509,12 @@ public:
 //            {
 //                _mspRst_.write(0);
 //                _sbwDelay();
-//                _mspRst_.write(1);
-//                _sbwDelay();
 //            }
 //            
 //            // ## Enable SBW interface
 //            {
+//                _mspRst_.write(1);
+//                _sbwDelay();
 //                // Assert TEST
 //                _mspTest.write(1);
 //                _sbwDelay();
