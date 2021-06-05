@@ -1,3 +1,5 @@
+#include <msp430g2553.h>
+
 using byte = uint8_t;
 using word = uint16_t;
 
@@ -206,27 +208,31 @@ bool TCLK_saved = true;
 
 
 bool TSTRead() {
-    #error implement
+    return P1IN & BIT4;
 }
 
 bool RSTRead() {
-    #error implement
+    return P1IN & BIT5;
 }
 
 void TSTWrite(bool x) {
-    #error implement
+    if (x)  P1OUT   |=  BIT4;
+    else    P1OUT   &= ~BIT4;
 }
 
 void RSTWrite(bool x) {
-    #error implement
+    if (x)  P1OUT   |=  BIT5;
+    else    P1OUT   &= ~BIT5;
 }
 
 void TSTDir(bool out) {
-    #error implement
+    if (out)    P1DIR   |=  BIT4;
+    else        P1DIR   &= ~BIT4;
 }
 
 void RSTDir(bool out) {
-    #error implement
+    if (out)    P1DIR   |=  BIT5;
+    else        P1DIR   &= ~BIT5;
 }
 
 #define TCKRead     TSTRead
@@ -237,17 +243,13 @@ void RSTDir(bool out) {
 #define TDIODir     RSTDir
 
 
-
-
-
-
+#define CPUFreqMHz 16
+#define DelayUs(us) __delay_cycles(CPUFreqMHz*us);
 
 void DelayMs(uint32_t ms) {
-    #error implement
-}
-
-void DelayUs(uint32_t us) {
-    #error implement
+    for (volatile uint32_t i=0; i<ms; i++) {
+        DelayUs(1000);
+    }
 }
 
 
@@ -258,7 +260,7 @@ void DelayUs(uint32_t us) {
 
 //! \brief Delay function as a transition between SBW time slots
 void nNOPS() {
-    #error implement
+    DelayUs(1);
 }
 
 //! \brief SBW macro: set TMS signal
@@ -1167,7 +1169,7 @@ word GetCoreID (void)
         // Because of this issue the magicPattern is not usable on MSP430F5438 family devices
 #else
     return(STATUS_ERROR);
-#endif   
+#endif
     }
     if((JtagId == JTAG_ID91) || (JtagId == JTAG_ID99) || (JtagId == JTAG_ID98))                        //****************************
     {

@@ -103,16 +103,24 @@ int main() {
     //
     // }
     
+    // for (int i=0;; i++) {
+    //     // Wait while no input is asserted
+    //     while (!buttonAsserted());
+    //     printf("Hello %i\r\n", i);
+    //     __delay_cycles(1600000); // Debounce
+    //
+    //     // Wait while any input is asserted
+    //     while (buttonAsserted());
+    //     __delay_cycles(1600000); // Debounce
+    // }
+    
+    
     for (;;) {
-        // Wait while no input is asserted
-        while (!buttonAsserted());
-        printf("Hello\r\n");
-        __delay_cycles(1600000); // Debounce
-        
-        // Wait while any input is asserted
-        while (buttonAsserted());
-        __delay_cycles(1600000); // Debounce
+        uint16_t coreID = GetCoreID();
+        printf("CoreID %x\r\n", coreID);
+        DelayMs(500);
     }
+    
     
     return 0;
 }
