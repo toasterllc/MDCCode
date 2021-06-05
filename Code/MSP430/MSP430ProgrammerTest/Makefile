@@ -21,7 +21,7 @@ debug: all
 
 install: all
 	$(MSPDEBUG) rf2500 "prog $(DEVICE).out"
-	$(MSPDEBUG) rf2500 "verify $(DEVICE).out"
+    # $(MSPDEBUG) rf2500 "verify $(DEVICE).out"
 
 clean:
 	rm -Rf *.o *.out *.map

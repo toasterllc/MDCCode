@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
-#include "MSP430Programmer.h"
+#include "MSP430.h"
 #include "printf.h"
 
 int putchar(int c) {
@@ -16,6 +16,10 @@ static bool buttonAsserted() {
     // Active low
     return !(P1IN & BIT3);
 }
+
+GPIO<4> _mspTest;
+GPIO<5> _mspRst;
+MSP430 _msp(_mspTest, _mspRst);
 
 int main() {
     // ## Stop watchdog timer
@@ -103,11 +107,10 @@ int main() {
     //     __delay_cycles(1600000); // Debounce
     // }
     
-    
     for (;;) {
-        uint16_t coreID = GetJTAGID();
+        uint16_t coreID = _msp.GetJTAGID();
         printf("CoreID %x\r\n", coreID);
-        DelayMs(500);
+        __delay_cycles(8000000); // Debounce
     }
     
     
