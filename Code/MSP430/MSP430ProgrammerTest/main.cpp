@@ -12,17 +12,6 @@ int putchar(int c) {
     return c;
 }
 
-// // Override write to route to UART.
-// // We're assuming all writes are for printf...
-// static void print(const char* str) {
-//     while (*str) {
-//         uint8_t b = *str;
-//         if (b == '\n') txchar('\r');
-//         txchar(b);
-//         str++;
-//     }
-// }
-
 static bool buttonAsserted() {
     // Active low
     return !(P1IN & BIT3);
@@ -116,7 +105,7 @@ int main() {
     
     
     for (;;) {
-        uint16_t coreID = GetCoreID();
+        uint16_t coreID = GetJTAGID();
         printf("CoreID %x\r\n", coreID);
         DelayMs(500);
     }

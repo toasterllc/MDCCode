@@ -1,0 +1,79 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXFileReference section */
+		5514B583266BFEE8000B27EB /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../main.cpp; sourceTree = "<group>"; };
+		5514B584266BFEE8000B27EB /* printf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = printf.cpp; path = ../printf.cpp; sourceTree = "<group>"; };
+		5514B585266BFEE8000B27EB /* printf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = printf.h; path = ../printf.h; sourceTree = "<group>"; };
+		5514B586266BFEFF000B27EB /* MSP430Programmer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MSP430Programmer.h; path = ../MSP430Programmer.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		5514B57C266BFEDD000B27EB = {
+			isa = PBXGroup;
+			children = (
+				5514B586266BFEFF000B27EB /* MSP430Programmer.h */,
+				5514B585266BFEE8000B27EB /* printf.h */,
+				5514B584266BFEE8000B27EB /* printf.cpp */,
+				5514B583266BFEE8000B27EB /* main.cpp */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		5514B57D266BFEDD000B27EB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1140;
+			};
+			buildConfigurationList = 5514B580266BFEDD000B27EB /* Build configuration list for PBXProject "MSP430ProgrammerTest" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5514B57C266BFEDD000B27EB;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		5514B581266BFEDD000B27EB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		5514B582266BFEDD000B27EB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5514B580266BFEDD000B27EB /* Build configuration list for PBXProject "MSP430ProgrammerTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5514B581266BFEDD000B27EB /* Debug */,
+				5514B582266BFEDD000B27EB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5514B57D266BFEDD000B27EB /* Project object */;
+}
