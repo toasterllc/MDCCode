@@ -1,5 +1,6 @@
 #pragma once
 #include <msp430g2553.h>
+#include <stddef.h>
 #include "GPIO.h"
 
 template <typename GPIOT, typename GPIOR>
@@ -103,6 +104,96 @@ public:
     
     
     
+    void _startShiftIR() {
+        // <-- Run-Test/Idle
+        _sbwio(TMS1, TDIX);
+        // <-- Select DR-Scan
+        _sbwio(TMS1, TDIX);
+        // <-- Select IR-Scan
+        _sbwio(TMS0, TDIX);
+        // <-- Capture-IR
+        _sbwio(TMS0, TDIX);
+        // <-- Shift-IR
+    }
+    
+    void _startShiftDR() {
+        // <-- Run-Test/Idle
+        _sbwio(TMS1, TDIX);
+        // <-- Select DR-Scan
+        _sbwio(TMS0, TDIX);
+        // <-- Capture-IR
+        _sbwio(TMS0, TDIX);
+        // <-- Shift-DR
+    }
+    
+    template <typename T>
+    T _shift(T dout) {
+        // <-- Shift-DR / Shift-IR
+        T din = 0;
+        for (size_t i=0; i<sizeof(T)*8; i++) {
+            const TMS tms = (i<((sizeof(T)*8)-1) ? TMS0 : TMS1); // Final bit needs TMS=1
+            din <<= 1;
+            din |= _sbwio(tms, dout&0x1);
+            dout >>= 1;
+        }
+        
+        // <-- Exit1-DR / Exit1-IR
+        _sbwio(TMS1, TDOX);
+        // <-- Update-DR / Update-IR
+        _sbwio(TMS0, TDOX);
+        // <-- Run-Test/Idle
+        
+        return din;
+    }
+    
+    
+    // Perform a single Spy-bi-wire I/O cycle
+    TDO _sbwio(TMS tms, TDI tdi) {
+        // ## Write TMS
+        {
+            _tdio.write(tms);
+            _delayUs(1);
+            
+            _tck.write(0);
+            _delayUs(1);
+            _tck.write(1);
+            _delayUs(1);
+        }
+        
+        // ## Write TDI
+        {
+            _tdio.write(tdi);
+            _delayUs(1);
+            
+            _tck.write(0);
+            _delayUs(1);
+            _tck.write(1);
+            // Stop driving SBWTDIO, in preparation for the slave to start driving it
+            _tdio.config(0);
+            _delayUs(1);
+        }
+        
+        // ## Read TDO
+        TDO tdo = TDO0;
+        {
+            _tck.write(0);
+            _delayUs(1);
+            // Read the TDO value, driven by the slave, while SBWTCK=0
+            tdo = _tdio.read();
+            _tck.write(1);
+            
+            _delayUs(1);
+            // Start driving SBWTDIO again
+            _tdio.config(1);
+        }
+        
+        return tdo;
+    }
+    
+    
+    
+    
+    
     //! \brief Delay function as a transition between SBW time slots
     void nNOPS() {
         _delayUs(1);
@@ -165,56 +256,56 @@ public:
 
     //  combinations of sbw-cycles (TMS, TDI, TDO)
     //---------------------------------
-    void TMSL_TDIL(void)
+    void TMSL_TDIL()
     {
         TMSL();
         TDIL();
         TDOsbw();
     }
     //---------------------------------
-    void TMSH_TDIL(void)
+    void TMSH_TDIL()
     {
         TMSH();
         TDIL();
         TDOsbw();
     }
     //------------------------------------
-    void TMSL_TDIH(void)
+    void TMSL_TDIH()
     {
         TMSL();
         TDIH();
         TDOsbw();
     }
     //-------------------------------------
-    void TMSH_TDIH(void)
+    void TMSH_TDIH()
     {
         TMSH();
         TDIH();
         TDOsbw();
     }
     //------------------------------------
-    void TMSL_TDIH_TDOrd(void)
+    void TMSL_TDIH_TDOrd()
     {
         TMSL();
         TDIH();
         TDO_RD();
     }
     //------------------------------------
-    void TMSL_TDIL_TDOrd(void)
+    void TMSL_TDIL_TDOrd()
     {
         TMSL();
         TDIL();
         TDO_RD();
     }
     //------------------------------------
-    void TMSH_TDIH_TDOrd(void)
+    void TMSH_TDIH_TDOrd()
     {
         TMSH();
         TDIH();
         TDO_RD();
     }
     //------------------------------------
-    void TMSH_TDIL_TDOrd(void)
+    void TMSH_TDIL_TDOrd()
     {
         TMSH();
         TDIL();
@@ -311,16 +402,13 @@ public:
 
     //----------------------------------------------------------------------------
     //! \brief Reset target JTAG interface and perform fuse-HW check.
-    void ResetTAP(void)
-    {
-        uint16_t i;
+    void ResetTAP() {
         // Reset JTAG FSM
-        for (i=6; i>0; i--)
-        {
-            TMSH_TDIH();
+        for (int i=0; i<6; i++) {
+            _sbwio(TMS1, TDI1);
         }
         // JTAG FSM is now in Test-Logic-Reset
-        TMSL_TDIH();
+        _sbwio(TMS0, TDI1);
         // now in Run/Test Idle
     }
 
@@ -392,8 +480,7 @@ public:
     //! otherwise)
     uint16_t GetJTAGID() {
         uint16_t jid = 0;
-        for (int i=0; i < MAX_ENTRY_TRY; i++)
-        {
+        for (int i=0; i < MAX_ENTRY_TRY; i++) {
             // release JTAG/TEST signals to safely reset the test logic
             StopJtag();
             // establish the physical connection to the JTAG interface
@@ -453,11 +540,11 @@ public:
 //            // ## Choose 2-wire/Spy-bi-wire mode
 //            {
 //                // SBWTDIO=1, and apply a single clock to SBWTCK
-//                _sbwTDIO.write(1);
+//                _tdio.write(1);
 //                _sbwDelay();
-//                _sbwTCK.write(0);
+//                _tck.write(0);
 //                _sbwDelay();
-//                _sbwTCK.write(1);
+//                _tck.write(1);
 //                _sbwDelay();
 //            }
 //
@@ -535,11 +622,11 @@ public:
 //            // ## Choose 2-wire/Spy-bi-wire mode
 //            {
 //                // SBWTDIO=1, and apply a single clock to SBWTCK
-//                _sbwTDIO.write(1);
+//                _tdio.write(1);
 //                _sbwDelay();
-//                _sbwTCK.write(0);
+//                _tck.write(0);
 //                _sbwDelay();
-//                _sbwTCK.write(1);
+//                _tck.write(1);
 //                _sbwDelay();
 //            }
 //            
