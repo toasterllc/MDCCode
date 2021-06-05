@@ -17,7 +17,7 @@ public:
             .Alternate = alt,
         };
         
-        HAL_GPIO_DeInit(_port, _pin);
+//        HAL_GPIO_DeInit(_port, _pin);
         HAL_GPIO_Init(_port, &cfg);
     }
     

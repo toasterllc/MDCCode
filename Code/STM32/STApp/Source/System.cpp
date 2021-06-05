@@ -122,7 +122,7 @@ private:
     static constexpr TDO TDO1 = true;
     static constexpr TDO TDOX = false; // Don't care
     
-    void _sbwDelay(uint32_t count=0) {
+    void _sbwDelay(uint32_t count=100) {
         for (volatile uint32_t i=0; i<count; i++);
     }
     
@@ -151,7 +151,27 @@ public:
     {}
     
     void go() {
-        volatile uint16_t coreID = GetCoreID();
+        _mspTest.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _mspTest.write(0);
+        
+        for (;;) {
+            _mspRst_.write(1);
+            _mspRst_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _sbwDelay();
+            _mspRst_.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _sbwDelay(1000);
+            
+            _mspRst_.write(0);
+            _mspRst_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _sbwDelay();
+            _mspRst_.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _sbwDelay(1000);
+        }
+        
+        
+        
+        
+//        volatile uint16_t coreID = GetCoreID();
         for (;;);
     }
     

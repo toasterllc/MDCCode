@@ -1120,7 +1120,7 @@ word GetCoreID (void)
     
     word i;
     volatile word JtagId = 0;  //initialize JtagId with an invalid value
-    for (i = 0; /*i < MAX_ENTRY_TRY*/; i++)
+    for (i = 0;/* i < MAX_ENTRY_TRY*/; i++)
     {
         // release JTAG/TEST signals to safely reset the test logic
         StopJtag();        
