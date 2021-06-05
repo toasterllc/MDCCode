@@ -108,7 +108,7 @@ int main() {
     // }
     
     for (;;) {
-        uint16_t coreID = _msp.GetJTAGID();
+        uint16_t coreID = _msp.getJTAGID();
         printf("CoreID %x\r\n", coreID);
         __delay_cycles(8000000); // Debounce
     }
