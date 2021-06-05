@@ -1,6 +1,7 @@
 #pragma once
 #include <msp430g2553.h>
 #include <stddef.h>
+#include <type_traits>
 #include "GPIO.h"
 
 template <typename GPIOT, typename GPIOR>
@@ -58,11 +59,11 @@ public:
     
     // Instructions for the JTAG control signal register
     //! \brief Set the JTAG control signal register
-    #define IR_CNTRL_SIG_16BIT         0xC8   // original value: 0x13
+    #define IR_CNTRL_SIG_16BIT         0x13
     //! \brief Read out the JTAG control signal register
-    #define IR_CNTRL_SIG_CAPTURE       0x28   // original value: 0x14
+    #define IR_CNTRL_SIG_CAPTURE       0x14
     //! \brief Release the CPU from JTAG control
-    #define IR_CNTRL_SIG_RELEASE       0xA8   // original value: 0x15
+    #define IR_CNTRL_SIG_RELEASE       0x15
     
     // Instructions for the JTAG data register
     //! \brief Set the MSP430 MDB to a specific 16-bit value with the next 
@@ -125,27 +126,6 @@ public:
         _sbwio(TMS0, TDIX);
         // <-- Shift-DR
     }
-    
-    template <typename T>
-    T _shift(T dout) {
-        // <-- Shift-DR / Shift-IR
-        T din = 0;
-        for (size_t i=0; i<sizeof(T)*8; i++) {
-            const TMS tms = (i<((sizeof(T)*8)-1) ? TMS0 : TMS1); // Final bit needs TMS=1
-            din <<= 1;
-            din |= _sbwio(tms, dout&0x1);
-            dout >>= 1;
-        }
-        
-        // <-- Exit1-DR / Exit1-IR
-        _sbwio(TMS1, TDOX);
-        // <-- Update-DR / Update-IR
-        _sbwio(TMS0, TDOX);
-        // <-- Run-Test/Idle
-        
-        return din;
-    }
-    
     
     // Perform a single Spy-bi-wire I/O cycle
     TDO _sbwio(TMS tms, TDI tdi) {
@@ -335,7 +315,30 @@ public:
         _rst_.config(0);
         _delayMs(15);
     }
-
+    
+    // Using std::common_type here to prevent auto type deduction,
+    // thus requiring `T` to be explicit
+    template <typename T>
+    T _shift(typename std::common_type<T>::type dout) {
+        // <-- Shift-DR / Shift-IR
+        T din = 0;
+        for (size_t i=0; i<sizeof(T)*8; i++) {
+            const TMS tms = (i<((sizeof(T)*8)-1) ? TMS0 : TMS1); // Final bit needs TMS=1
+            din <<= 1;
+            din |= _sbwio(tms, dout&0x1);
+            dout >>= 1;
+        }
+        
+        // <-- Exit1-DR / Exit1-IR
+        _sbwio(TMS1, TDOX);
+        // <-- Update-DR / Update-IR
+        _sbwio(TMS0, TDOX);
+        // <-- Run-Test/Idle
+        
+        return din;
+    }
+    
+    
     //----------------------------------------------------------------------------
     //! \brief Shift a value into TDI (MSB first) and simultaneously shift out a 
     //! value from TDO (MSB first).
@@ -479,7 +482,6 @@ public:
     //! \return word (STATUS_OK if correct JTAG ID was returned, STATUS_ERROR 
     //! otherwise)
     uint16_t GetJTAGID() {
-        uint16_t jid = 0;
         for (int i=0; i < MAX_ENTRY_TRY; i++) {
             // release JTAG/TEST signals to safely reset the test logic
             StopJtag();
@@ -491,11 +493,10 @@ public:
             // reset TAP state machine -> Run-Test/Idle
             ResetTAP();
             // shift out JTAG ID
-            jid = (uint16_t)IR_Shift(IR_CNTRL_SIG_CAPTURE);
-             
-            // break if a valid JTAG ID is being returned
-            if(jid == JTAG_ID98)
-            {
+            
+            _startShiftIR();
+            const uint16_t jid = _shift<uint8_t>(IR_CNTRL_SIG_CAPTURE);
+            if (jid == JTAG_ID98) {
                 return jid;
             }
         }
