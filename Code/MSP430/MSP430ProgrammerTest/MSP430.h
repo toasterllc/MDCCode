@@ -99,12 +99,6 @@ public:
     //! \brief Holds the last value of TCLK before entering a JTAG sequence
     bool TCLK_saved = true;
     
-    
-    
-    
-    
-    
-    
     void _startShiftIR() {
         // <-- Run-Test/Idle
         _sbwio(TMS1, TDIX);
@@ -174,60 +168,55 @@ public:
     
     
     
-    //! \brief Delay function as a transition between SBW time slots
-    void nNOPS() {
-        _delayUs(1);
-    }
-    
     //! \brief SBW macro: set TMS signal
     void TMSH() {
         _tdio.write(1);
-        nNOPS();
+        _delayUs(1);
         _tck.write(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(1);
     }
     
     //! \brief SBW macro: clear TMS signal
     void TMSL() {
         _tdio.write(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(1);
     }
 
     //! \brief SBW macro: Set TDI = 1
     void TDIH() {
         _tdio.write(1);
-        nNOPS();
+        _delayUs(1);
         _tck.write(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(1);
     }
     //! \brief SBW macro: clear TDI signal
     void TDIL() {
         _tdio.write(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(1);
     }
     //! \brief SBW macro: TDO cycle without reading TDO
     void TDOsbw() {
         _tdio.config(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(1);
         _tdio.config(1);
     }
     //! \brief SBW macro: TDO cycle with TDO read
     void TDO_RD() {
         _tdio.config(0);
-        nNOPS();
+        _delayUs(1);
         _tck.write(0);
-        nNOPS();
+        _delayUs(1);
         tdo_bit = _tdio.read();
         _tck.write(1);
         _tdio.config(1);
