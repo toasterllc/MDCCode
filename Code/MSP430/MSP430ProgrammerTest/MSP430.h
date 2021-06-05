@@ -472,10 +472,21 @@ public:
     //! otherwise)
     uint16_t GetJTAGID() {
         for (int i=0; i < MAX_ENTRY_TRY; i++) {
-            // release JTAG/TEST signals to safely reset the test logic
-            StopJtag();
-            // establish the physical connection to the JTAG interface
-            ConnectJTAG();
+            // ## Reset pin states
+            {
+                _test.write(0);
+                _rst_.write(1);
+                _delayMs(10);
+            }
+            
+            // ## Reset the MSP430 so that it starts from a known state
+            {
+                _rst_.write(0);
+                _delayUs(1);
+                _rst_.write(1);
+                _delayUs(1);
+            }
+            
             // Apply again 4wire/SBW entry Sequence. 
             // set ResetPin =1    
             EntrySequences_RstHigh_SBW();
