@@ -7,20 +7,32 @@
 template <typename GPIOT, typename GPIOR>
 class MSP430 {
 private:
-    using TMS = bool;
-    static constexpr TMS TMS0 = false;
-    static constexpr TMS TMS1 = true;
-    static constexpr TMS TMSX = false; // Don't care
+    static constexpr uint8_t TMS0 = false;
+    static constexpr uint8_t TMS1 = true;
+    static constexpr uint8_t TMSX = false; // Don't care
     
-    using TDI = bool;
-    static constexpr TDI TDI0 = false;
-    static constexpr TDI TDI1 = true;
-    static constexpr TDI TDIX = false; // Don't care
+    static constexpr uint8_t TDI0 = false;
+    static constexpr uint8_t TDI1 = true;
+    static constexpr uint8_t TDIX = false; // Don't care
     
-    using TDO = bool;
-    static constexpr TDO TDO0 = false;
-    static constexpr TDO TDO1 = true;
-    static constexpr TDO TDOX = false; // Don't care
+    static constexpr uint8_t TDO0 = false;
+    static constexpr uint8_t TDO1 = true;
+    static constexpr uint8_t TDOX = false; // Don't care
+    
+    static constexpr uint8_t IR_CNTRL_SIG_16BIT     = 0x13;
+    static constexpr uint8_t IR_CNTRL_SIG_CAPTURE   = 0x14;
+    static constexpr uint8_t IR_CNTRL_SIG_RELEASE   = 0x15;
+    
+    static constexpr uint8_t IR_DATA_16BIT          = 0x41;
+    static constexpr uint8_t IR_DATA_QUICK          = 0x43;
+    
+    static constexpr uint8_t IR_ADDR_16BIT          = 0x83;
+    static constexpr uint8_t IR_ADDR_CAPTURE        = 0x84;
+    static constexpr uint8_t IR_DATA_TO_ADDR        = 0x85;
+    static constexpr uint8_t IR_BYPASS              = 0xFF;
+    static constexpr uint8_t IR_DATA_CAPTURE        = 0x42;
+    
+    static constexpr uint8_t JTAG_ID                = 0x98;
     
     #define CPUFreqMHz 16
     #define _delayUs(us) __delay_cycles(CPUFreqMHz*us);
@@ -35,42 +47,6 @@ private:
     GPIOR& _rst_;
     #define _tck _test
     #define _tdio _rst_
-    
-public:
-    MSP430(GPIOT& test, GPIOR& rst_) :
-    _test(test), _rst_(rst_)
-    {}
-    
-    // Instructions for the JTAG control signal register
-    //! \brief Set the JTAG control signal register
-    #define IR_CNTRL_SIG_16BIT         0x13
-    //! \brief Read out the JTAG control signal register
-    #define IR_CNTRL_SIG_CAPTURE       0x14
-    //! \brief Release the CPU from JTAG control
-    #define IR_CNTRL_SIG_RELEASE       0x15
-    
-    // Instructions for the JTAG data register
-    //! \brief Set the MSP430 MDB to a specific 16-bit value with the next 
-    //! 16-bit data access 
-    #define IR_DATA_16BIT              0x82   // original value: 0x41
-    //! \brief Set the MSP430 MDB to a specific 16-bit value (RAM only)
-    #define IR_DATA_QUICK              0xC2   // original value: 0x43
-    
-    // Instructions for the JTAG address register
-    //! \brief Set the MSP430 MAB to a specific 16-bit value
-    //! \details Use the 20-bit macro for 430X and 430Xv2 architectures
-    #define IR_ADDR_16BIT              0xC1   // original value: 0x83
-    //! \brief Read out the MAB data on the next 16/20-bit data access
-    #define IR_ADDR_CAPTURE            0x21   // original value: 0x84
-    //! \brief Set the MSP430 MDB with a specific 16-bit value and write
-    //! it to the memory address which is currently on the MAB
-    #define IR_DATA_TO_ADDR            0xA1   // original value: 0x85
-    //! \brief Bypass instruction - TDI input is shifted to TDO as an output
-    #define IR_BYPASS                  0xFF   // original value: 0xFF
-    #define IR_DATA_CAPTURE            0x42
-    
-    //! \brief JTAG identification value for 430Xv2 architecture FR4XX/FR2xx devices
-    #define JTAG_ID98                  0x98
     
     void _tapReset() {
         // ## Reset JTAG state machine
@@ -110,7 +86,7 @@ public:
     }
     
     // Perform a single Spy-bi-wire I/O cycle
-    TDO _sbwio(TMS tms, TDI tdi) {
+    uint8_t _sbwio(uint8_t tms, uint8_t tdi) {
         // ## Write TMS
         {
             _tdio.write(tms);
@@ -136,7 +112,7 @@ public:
         }
         
         // ## Read TDO
-        TDO tdo = TDO0;
+        uint8_t tdo = TDO0;
         {
             _tck.write(0);
             _delayUs(1);
@@ -159,7 +135,7 @@ public:
         // <-- Shift-DR / Shift-IR
         T din = 0;
         for (size_t i=0; i<sizeof(T)*8; i++) {
-            const TMS tms = (i<((sizeof(T)*8)-1) ? TMS0 : TMS1); // Final bit needs TMS=1
+            const uint8_t tms = (i<((sizeof(T)*8)-1) ? TMS0 : TMS1); // Final bit needs TMS=1
             din <<= 1;
             din |= _sbwio(tms, dout&0x1);
             dout >>= 1;
@@ -174,7 +150,12 @@ public:
         return din;
     }
     
-    uint16_t GetJTAGID() {
+public:
+    MSP430(GPIOT& test, GPIOR& rst_) :
+    _test(test), _rst_(rst_)
+    {}
+    
+    uint16_t getJTAGID() {
         for (int i=0; i<10; i++) {
             // ## Reset pin states
             {
@@ -216,11 +197,11 @@ public:
                 _tapReset();
             }
             
-            // ## 
+            // ## Shift out the JTAG ID
             {
                 _startShiftIR();
                 const uint16_t jid = _shift<uint8_t>(IR_CNTRL_SIG_CAPTURE);
-                if (jid == JTAG_ID98) {
+                if (jid == JTAG_ID) {
                     return jid;
                 }
             }
