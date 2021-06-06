@@ -81,35 +81,9 @@ int main() {
         P1REN   |=  BIT3;
     }
     
-    // // ## Configure P1.4 as an input with pull-down resistor
-    // // ## (Motion sensor drives high when motion is detected.)
-    // {
-    //     P1OUT   &= ~BIT4;
-    //     P1DIR   &= ~BIT4;
-    //     P1SEL   &= ~BIT4;
-    //     P1SEL2  &= ~BIT4;
-    //     P1REN   |=  BIT4;
-    // }
-    
-    // for (;;) {
-    //     volatile uint16_t coreID = GetCoreID();
-    //
-    // }
-    
-    // for (int i=0;; i++) {
-    //     // Wait while no input is asserted
-    //     while (!buttonAsserted());
-    //     printf("Hello %i\r\n", i);
-    //     __delay_cycles(1600000); // Debounce
-    //
-    //     // Wait while any input is asserted
-    //     while (buttonAsserted());
-    //     __delay_cycles(1600000); // Debounce
-    // }
-    
     for (;;) {
-        uint16_t coreID = _msp.getJTAGID();
-        printf("CoreID %x\r\n", coreID);
+        const bool r = _msp.connect();
+//        printf("Connect: %s\r\n", (r ? "ok" : "failed"));
         __delay_cycles(8000000); // Debounce
     }
     
