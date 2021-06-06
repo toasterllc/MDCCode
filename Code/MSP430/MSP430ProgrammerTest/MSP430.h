@@ -37,31 +37,30 @@ private:
                 (x&(1<<0))<<7 ;
     }
     
-    static constexpr uint8_t IR_CNTRL_SIG_16BIT     = _Reverse(0x13);
-    static constexpr uint8_t IR_CNTRL_SIG_CAPTURE   = _Reverse(0x14);
-    static constexpr uint8_t IR_CNTRL_SIG_RELEASE   = _Reverse(0x15);
-    static constexpr uint8_t IR_COREIP_ID           = _Reverse(0x17);
+    static constexpr uint8_t _IR_CNTRL_SIG_16BIT    = _Reverse(0x13);
+    static constexpr uint8_t _IR_CNTRL_SIG_CAPTURE  = _Reverse(0x14);
+    static constexpr uint8_t _IR_CNTRL_SIG_RELEASE  = _Reverse(0x15);
+    static constexpr uint8_t _IR_COREIP_ID          = _Reverse(0x17);
     
-    static constexpr uint8_t IR_DATA_16BIT          = _Reverse(0x41);
-    static constexpr uint8_t IR_DATA_CAPTURE        = _Reverse(0x42);
-    static constexpr uint8_t IR_DATA_QUICK          = _Reverse(0x43);
+    static constexpr uint8_t _IR_DATA_16BIT         = _Reverse(0x41);
+    static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);
+    static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);
     
-    static constexpr uint8_t IR_ADDR_16BIT          = _Reverse(0x83);
-    static constexpr uint8_t IR_ADDR_CAPTURE        = _Reverse(0x84);
-    static constexpr uint8_t IR_DATA_TO_ADDR        = _Reverse(0x85);
-    static constexpr uint8_t IR_DEVICE_ID           = _Reverse(0x87);
+    static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);
+    static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);
+    static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);
+    static constexpr uint8_t _IR_DEVICE_ID          = _Reverse(0x87);
     
-    static constexpr uint8_t IR_BYPASS              = _Reverse(0xFF);
+    static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);
     
-    static constexpr uint8_t JTAGID                 = 0x98;
-    static constexpr uint16_t DeviceID              = 0x8311;
-    
-    static constexpr uint32_t SafePC                = 0x00000004;
+    static constexpr uint8_t _JTAGID                = 0x98;
+    static constexpr uint16_t _DeviceID             = 0x8312;
+    static constexpr uint32_t _SafePC               = 0x00000004;
     
     #define CPUFreqMHz 16
     #define _delayUs(us) __delay_cycles(CPUFreqMHz*us);
     
-    void _delayMs(uint32_t ms) {
+    static void _delayMs(uint32_t ms) {
         for (volatile uint32_t i=0; i<ms; i++) {
             _delayUs(1000);
         }
@@ -195,22 +194,22 @@ private:
         return din;
     }
     
-    uint8_t _readJTAGID() {
-        return _shiftIR(IR_CNTRL_SIG_CAPTURE);
+    uint8_t _read_JTAGID() {
+        return _shiftIR(_IR_CNTRL_SIG_CAPTURE);
     }
     
     bool _readJTAGFuseBlown() {
-        _shiftIR(IR_CNTRL_SIG_CAPTURE);
+        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
         return _shiftDR<16>(0xAAAA) == 0x5555;
     }
     
     uint32_t _readCoreID() {
-        _shiftIR(IR_COREIP_ID);
+        _shiftIR(_IR_COREIP_ID);
         return _shiftDR<16>(0);
     }
     
-    uint32_t _readDeviceIDAddr() {
-        _shiftIR(IR_DEVICE_ID);
+    uint32_t _read_DeviceIDAddr() {
+        _shiftIR(_IR_DEVICE_ID);
         return _shiftDR<20>(0);
     }
     
@@ -227,13 +226,13 @@ private:
         
         _tclkSet(0);
         // Take over bus control during clock LOW phase
-        _shiftIR(IR_DATA_16BIT);
+        _shiftIR(_IR_DATA_16BIT);
         _tclkSet(1);
         _shiftDR<16>(pcHigh | movInstr);
         _tclkSet(0);
-        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
         _shiftDR<16>(0x1400);
-        _shiftIR(IR_DATA_16BIT);
+        _shiftIR(_IR_DATA_16BIT);
         _tclkSet(0);
         _tclkSet(1);
         _shiftDR<16>(pcLow);
@@ -241,17 +240,17 @@ private:
         _tclkSet(1);
         _shiftDR<16>(0x4303);
         _tclkSet(0);
-        _shiftIR(IR_ADDR_CAPTURE);
+        _shiftIR(_IR_ADDR_CAPTURE);
         _shiftDR<20>(0);
     }
     
     void _readMem(uint32_t addr, uint16_t* dst, uint32_t len) {
         _setPC(addr);
         _tclkSet(1);
-        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
         _shiftDR<16>(0x0501);
-        _shiftIR(IR_ADDR_CAPTURE);
-        _shiftIR(IR_DATA_QUICK);
+        _shiftIR(_IR_ADDR_CAPTURE);
+        _shiftIR(_IR_DATA_QUICK);
         
         for (; len; len--) {
             _tclkSet(1);
@@ -260,25 +259,25 @@ private:
             dst++;
         }
         
-        _setPC(SafePC);
+        _setPC(_SafePC);
         _tclkSet(1);
     }
     
     void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
         while (len) {
             _tclkSet(0);
-            _shiftIR(IR_CNTRL_SIG_16BIT);
+            _shiftIR(_IR_CNTRL_SIG_16BIT);
             _shiftDR<16>(0x0500);
             
-            _shiftIR(IR_ADDR_16BIT);
+            _shiftIR(_IR_ADDR_16BIT);
             _shiftDR<20>(addr);
             _tclkSet(1);
             
             // Only apply data during clock high phase
-            _shiftIR(IR_DATA_TO_ADDR);
+            _shiftIR(_IR_DATA_TO_ADDR);
             _shiftDR<16>(*src);
             _tclkSet(0);
-            _shiftIR(IR_CNTRL_SIG_16BIT);
+            _shiftIR(_IR_CNTRL_SIG_16BIT);
             _shiftDR<16>(0x0501);
             _tclkSet(1);
             // One or more cycle, so CPU is driving correct MAB
@@ -301,25 +300,25 @@ private:
         _tclkSet(1);
         
         // Prepare access to the JTAG CNTRL SIG register
-        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
         // Release CPUSUSP signal and apply POR signal
         _shiftDR<16>(0x0C01);
         // Release POR signal again
         _shiftDR<16>(0x0401);
         
         // Set PC to 'safe' memory location
-        _shiftIR(IR_DATA_16BIT);
+        _shiftIR(_IR_DATA_16BIT);
         _tclkSet(0);
         _tclkSet(1);
         _tclkSet(0);
         _tclkSet(1);
-        _shiftDR<16>(SafePC);
+        _shiftDR<16>(_SafePC);
         // PC is set to 0x4 - MAB value can be 0x6 or 0x8
         
         // Drive safe address into PC
         _tclkSet(0);
         _tclkSet(1);
-        _shiftIR(IR_DATA_CAPTURE);
+        _shiftIR(_IR_DATA_CAPTURE);
         // Two more clocks to release CPU internal POR delay signals
         _tclkSet(0);
         _tclkSet(1);
@@ -327,7 +326,7 @@ private:
         _tclkSet(1);
         
         // Set CPUSUSP signal again
-        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
         _shiftDR<16>(0x0501);
         // One more clock
         _tclkSet(0);
@@ -336,11 +335,11 @@ private:
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        _shiftIR(IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
+        _shiftIR(_IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
         _writeMem(0x01CC, 0x5A80);
         
         // Check if device is in Full-Emulation-State and return status
-        _shiftIR(IR_CNTRL_SIG_CAPTURE);
+        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
         if (!(_shiftDR<16>(0) & 0x0301)) {
             return false;
         }
@@ -355,7 +354,6 @@ public:
     
     bool connect() {
         for (int i=0; i<3; i++) {
-//            printf("Attempt %i\r\n", i);
             // ## Reset pin states
             {
                 _test.write(0);
@@ -398,7 +396,7 @@ public:
             
             // ## Validate the JTAG ID
             {
-                if (_readJTAGID() != JTAGID) {
+                if (_read_JTAGID() != _JTAGID) {
                     printf("JTAG ID bad\r\n");
                     continue; // Try again
                 }
@@ -424,7 +422,7 @@ public:
             {
                 // Set device into JTAG mode + read
                 {
-                    _shiftIR(IR_CNTRL_SIG_16BIT);
+                    _shiftIR(_IR_CNTRL_SIG_16BIT);
                     _shiftDR<16>(0x1501);
                 }
                 
@@ -432,7 +430,7 @@ public:
                 {
                     bool sync = false;
                     for (int i=0; i<3 && !sync; i++) {
-                        _shiftIR(IR_CNTRL_SIG_CAPTURE);
+                        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
                         const uint16_t cpuStatus = _shiftDR<16>(0) & 0x0200;
 //                        printf("CPU status: %x\r\n", cpuStatus);
                         sync = cpuStatus & 0x0200;
@@ -454,10 +452,10 @@ public:
                 
                 // Read device ID
                 {
-                    const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
+                    const uint32_t deviceIDAddr = _read_DeviceIDAddr()+4;
                     uint16_t deviceID = 0;
                     _readMem(deviceIDAddr, &deviceID, 1);
-                    if (deviceID != DeviceID) {
+                    if (deviceID != _DeviceID) {
                         printf("Bad device ID (deviceIDAddr=%x, deviceID=%x)\r\n", (uint16_t)deviceIDAddr, deviceID);
                     }
                 }
@@ -471,8 +469,11 @@ public:
         return false;
     }
     
-    bool read(uint32_t src, uint8_t* dst, uint32_t len) {
-        return false;
+    void read(uint32_t addr, uint16_t* dst, uint32_t len) {
+        _readMem(addr, dst, len);
     }
     
+    void write(uint32_t addr, uint16_t* src, uint32_t len) {
+        _writeMem(addr, src, len);
+    }
 };
