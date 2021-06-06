@@ -218,133 +218,133 @@ private:
         return _shiftDR<ShiftType::Addr>(0);
     }
     
-//    void _tclkSet(TCLK x) {
-//        // ## Write TMS
-//        {
-//            _tdio.write(0);
-//            _delayUs(1);
-//            
-//            _tck.write(0);
-//            _delayUs(1);
-//            
-//            // Restore saved value of TCLK during TCK=0 period
-//            _tdio.write(_tclkSaved);
-//            
-//            _tck.write(1);
-//            _delayUs(1);
-//        }
-//        
-//        // ## Write TDI=TCLK
-//        {
-//            _tdio.write(x);
-//            _delayUs(1);
-//            
-//            _tck.write(0);
-//            _delayUs(1);
-//            
-//            _tck.write(1);
-//            // Stop driving SBWTDIO, in preparation for the slave to start driving it
-//            _tdio.config(0);
-//            _delayUs(1);
-//        }
-//        
-//        // ## Read TDO
-//        {
-//            _tck.write(0);
-//            _delayUs(1);
-//            
-//            _tck.write(1);
-//            _delayUs(1);
-//            
-//            // Start driving SBWTDIO again
-//            _tdio.config(1);
-//        }
-//        
-//        _tclkSaved = x;
-//    }
-//    
-//    void _tclkCycle() {
-//        _tclkSet(0);
-//        _tclkSet(1);
-//    }
-//    
-//    // Using std::common_type here to prevent auto type deduction,
-//    // because we want `T` to be explicit.
-//    template <typename T>
-//    void _writeMem(uint32_t addr, typename std::common_type<T>::type data) {
-//        _tclkSet(0);
-//        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
-//        if constexpr (std::is_same_v<T, uint8_t>) {
-//            _shiftDR<ShiftType::Word>(0x0510);
-//        } else if constexpr (std::is_same_v<T, uint16_t>) {
-//            _shiftDR<ShiftType::Word>(0x0500);
-//        } else {
-//            static_assert(_AlwaysFalse<T>);
-//        }
-//        
-//        _shiftIR<ShiftType::Byte>(IR_ADDR_16BIT);
-//        _shiftDR<ShiftType::Addr>(addr);
-//        _tclkSet(1);
-//        
-//        // Only apply data during clock high phase
-//        _shiftIR<ShiftType::Byte>(IR_DATA_TO_ADDR);
-//        _shiftDR<ShiftType::Word>(data);           // Shift in 16 bits
-//        _tclkSet(0);
-//        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
-//        _shiftDR<ShiftType::Word>(0x0501);
-//        _tclkSet(1);
-//        // One or more cycle, so CPU is driving correct MAB
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        // Processor is now again in Init State
-//    }
-//    
-//    bool _resetCPU() {
-//        // One clock to empty the pipe
-//        _tclkCycle();
-//        
-//        // Prepare access to the JTAG CNTRL SIG register
-//        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
-//        // Release CPUSUSP signal and apply POR signal
-//        _shiftIR<ShiftType::Word>(0x0C01);
-//        // Release POR signal again
-//        _shiftIR<ShiftType::Word>(0x0401);
-//        
-//        // Set PC to 'safe' memory location
-//        _shiftIR<ShiftType::Byte>(IR_DATA_16BIT);
-//        _tclkCycle();
-//        _tclkCycle();
-//        _shiftIR<ShiftType::Word>(0x0004);
-//        // PC is set to 0x4 - MAB value can be 0x6 or 0x8
-//        
-//        // Drive safe address into PC
-//        _tclkCycle();
-//        _shiftIR<ShiftType::Byte>(IR_DATA_CAPTURE); // TODO: is this necessary?
-//        
-//        // Two more clocks to release CPU internal POR delay signals
-//        _tclkCycle();
-//        _tclkCycle();
-//        
-//        // Set CPUSUSP signal again
-//        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
-//        _shiftIR<ShiftType::Word>(0x0501);
-//        // One more clock
-//        _tclkCycle();
-//        // <- CPU in 'Full-Emulation-State'
-//        
-//        // Disable Watchdog Timer on target device now by setting the HOLD signal
-//        // in the WDT_CNTRL register
-//        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
-//        _writeMem<uint16_t>(0x01CC, 0x5A80);
-//        
-//        // Check if device is in Full-Emulation-State again and return status
-//        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
-//        if (!(_shiftIR<ShiftType::Word>(0) & 0x0301)) {
-//            return false;
-//        }
-//        
-//        return true;
-//    }
+    void _tclkSet(TCLK x) {
+        // ## Write TMS
+        {
+            _tdio.write(0);
+            _delayUs(1);
+            
+            _tck.write(0);
+            _delayUs(1);
+            
+            // Restore saved value of TCLK during TCK=0 period
+            _tdio.write(_tclkSaved);
+            
+            _tck.write(1);
+            _delayUs(1);
+        }
+        
+        // ## Write TDI=TCLK
+        {
+            _tdio.write(x);
+            _delayUs(1);
+            
+            _tck.write(0);
+            _delayUs(1);
+            
+            _tck.write(1);
+            // Stop driving SBWTDIO, in preparation for the slave to start driving it
+            _tdio.config(0);
+            _delayUs(1);
+        }
+        
+        // ## Read TDO
+        {
+            _tck.write(0);
+            _delayUs(1);
+            
+            _tck.write(1);
+            _delayUs(1);
+            
+            // Start driving SBWTDIO again
+            _tdio.config(1);
+        }
+        
+        _tclkSaved = x;
+    }
+    
+    void _tclkCycle() {
+        _tclkSet(0);
+        _tclkSet(1);
+    }
+    
+    // Using std::common_type here to prevent auto type deduction,
+    // because we want `T` to be explicit.
+    template <typename T>
+    void _writeMem(uint32_t addr, typename std::common_type<T>::type data) {
+        _tclkSet(0);
+        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
+        if constexpr (std::is_same_v<T, uint8_t>) {
+            _shiftDR<ShiftType::Word>(0x0510);
+        } else if constexpr (std::is_same_v<T, uint16_t>) {
+            _shiftDR<ShiftType::Word>(0x0500);
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
+        
+        _shiftIR<ShiftType::Byte>(IR_ADDR_16BIT);
+        _shiftDR<ShiftType::Addr>(addr);
+        _tclkSet(1);
+        
+        // Only apply data during clock high phase
+        _shiftIR<ShiftType::Byte>(IR_DATA_TO_ADDR);
+        _shiftDR<ShiftType::Word>(data);           // Shift in 16 bits
+        _tclkSet(0);
+        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
+        _shiftDR<ShiftType::Word>(0x0501);
+        _tclkSet(1);
+        // One or more cycle, so CPU is driving correct MAB
+        _tclkSet(0);
+        _tclkSet(1);
+        // Processor is now again in Init State
+    }
+    
+    bool _resetCPU() {
+        // One clock to empty the pipe
+        _tclkCycle();
+        
+        // Prepare access to the JTAG CNTRL SIG register
+        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
+        // Release CPUSUSP signal and apply POR signal
+        _shiftDR<ShiftType::Word>(0x0C01);
+        // Release POR signal again
+        _shiftDR<ShiftType::Word>(0x0401);
+        
+        // Set PC to 'safe' memory location
+        _shiftIR<ShiftType::Byte>(IR_DATA_16BIT);
+        _tclkCycle();
+        _tclkCycle();
+        _shiftDR<ShiftType::Word>(0x0004);
+        // PC is set to 0x4 - MAB value can be 0x6 or 0x8
+        
+        // Drive safe address into PC
+        _tclkCycle();
+        _shiftIR<ShiftType::Byte>(IR_DATA_CAPTURE); // TODO: is this necessary?
+        
+        // Two more clocks to release CPU internal POR delay signals
+        _tclkCycle();
+        _tclkCycle();
+        
+        // Set CPUSUSP signal again
+        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
+        _shiftDR<ShiftType::Word>(0x0501);
+        // One more clock
+        _tclkCycle();
+        // <- CPU in 'Full-Emulation-State'
+        
+        // Disable Watchdog Timer on target device now by setting the HOLD signal
+        // in the WDT_CNTRL register
+        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
+        _writeMem<uint16_t>(0x01CC, 0x5A80);
+        
+        // Check if device is in Full-Emulation-State again and return status
+        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
+        if (!(_shiftDR<ShiftType::Word>(0) & 0x0301)) {
+            return false;
+        }
+        
+        return true;
+    }
     
     template <class...> static std::false_type _AlwaysFalse;
     
@@ -437,20 +437,21 @@ public:
 //                        printf("CPU status: %x\r\n", cpuStatus);
                         sync = cpuStatus & 0x0200;
                     }
+                    
                     if (!sync) {
                         printf("Failed to sync CPU\r\n");
                         continue; // Try again
                     }
                 }
                 
-//                // Reset CPU
-//                {
-//                    if (!_resetCPU()) {
-//                        printf("Reset CPU failed\r\n");
-//                        continue;  // Try again
-//                    }
-//                }
-//                
+                // Reset CPU
+                {
+                    if (!_resetCPU()) {
+                        printf("Reset CPU failed\r\n");
+                        continue;  // Try again
+                    }
+                }
+                
 //                // Read device ID
 //                {
 //                    const uint32_t deviceIDAddr = _readDeviceIDAddr();
