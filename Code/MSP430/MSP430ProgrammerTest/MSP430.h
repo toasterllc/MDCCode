@@ -54,7 +54,7 @@ private:
     static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);
     
     static constexpr uint8_t _JTAGID                = 0x98;
-    static constexpr uint16_t _DeviceID             = 0x8312;
+    static constexpr uint16_t _DeviceID             = 0x8311;
     static constexpr uint32_t _SafePC               = 0x00000004;
     
     #define CPUFreqMHz 16
@@ -446,7 +446,7 @@ public:
                 {
                     if (!_resetCPU()) {
                         printf("Reset CPU failed\r\n");
-                        continue;  // Try again
+                        continue; // Try again
                     }
                 }
                 
@@ -457,6 +457,7 @@ public:
                     _readMem(deviceIDAddr, &deviceID, 1);
                     if (deviceID != _DeviceID) {
                         printf("Bad device ID (deviceIDAddr=%x, deviceID=%x)\r\n", (uint16_t)deviceIDAddr, deviceID);
+                        continue; // Try again
                     }
                 }
             }
@@ -467,6 +468,19 @@ public:
         
         // Too many failures
         return false;
+    }
+    
+    void disconnect() {
+        // ## Disable test mode
+        // Assert RST_
+        _rst_.write(0);
+        _delayMs(1);
+        // Deassert TEST
+        _test.write(0);
+        _delayMs(1);
+        // Deassert RST_
+        _rst_.write(1);
+        _delayMs(1);
     }
     
     void read(uint32_t addr, uint16_t* dst, uint32_t len) {

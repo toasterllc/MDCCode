@@ -83,8 +83,12 @@ int main() {
     
     for (;;) {
         const bool r = _msp.connect();
-//        printf("Connect: %s\r\n", (r ? "ok" : "failed"));
-        __delay_cycles(8000000); // Debounce
+        printf("Connect: %i\r\n", r);
+        __delay_cycles(8000000);
+        
+        _msp.disconnect();
+        printf("Disconnect\r\n");
+        __delay_cycles(8000000);
     }
     
     return 0;
