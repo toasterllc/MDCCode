@@ -8,17 +8,25 @@
 template <typename GPIOT, typename GPIOR>
 class MSP430 {
 private:
-    static constexpr uint8_t TMS0 = 0;
-    static constexpr uint8_t TMS1 = 1;
-    static constexpr uint8_t TMSX = 0; // Don't care
+    using TMS = bool;
+    static constexpr TMS TMS0 = 0;
+    static constexpr TMS TMS1 = 1;
+    static constexpr TMS TMSX = 0; // Don't care
     
-    static constexpr uint8_t TDI0 = 0;
-    static constexpr uint8_t TDI1 = 1;
-    static constexpr uint8_t TDIX = 0; // Don't care
+    using TDI = bool;
+    static constexpr TDI TDI0 = 0;
+    static constexpr TDI TDI1 = 1;
+    static constexpr TDI TDIX = 0; // Don't care
     
-    static constexpr uint8_t TDO0 = 0;
-    static constexpr uint8_t TDO1 = 1;
-    static constexpr uint8_t TDOX = 0; // Don't care
+    using TDO = bool;
+    static constexpr TDO TDO0 = 0;
+    static constexpr TDO TDO1 = 1;
+    static constexpr TDO TDOX = 0; // Don't care
+    
+    using TCLK = bool;
+    static constexpr TCLK TCLK0 = 0;
+    static constexpr TCLK TCLK1 = 1;
+    static constexpr TCLK TCLKX = 0; // Don't care
     
     static constexpr uint8_t IR_CNTRL_SIG_16BIT     = 0x13;
     static constexpr uint8_t IR_CNTRL_SIG_CAPTURE   = 0x14;
@@ -52,6 +60,8 @@ private:
     #define _tck _test
     #define _tdio _rst_
     
+    TCLK _tclkSaved = TCLK1;
+    
     void _tapReset() {
         // ## Reset JTAG state machine
         // TMS=1 for 6 clocks
@@ -67,23 +77,23 @@ private:
     
     void _startShiftIR() {
         // <-- Run-Test/Idle
-        _sbwio(TMS1, TDIX);
+        _sbwio(TMS1, _tclkSaved);
         // <-- Select DR-Scan
-        _sbwio(TMS1, TDIX);
+        _sbwio(TMS1, TDI1);
         // <-- Select IR-Scan
-        _sbwio(TMS0, TDIX);
+        _sbwio(TMS0, TDI1);
         // <-- Capture-IR
-        _sbwio(TMS0, TDIX);
+        _sbwio(TMS0, TDI1);
         // <-- Shift-IR
     }
     
     void _startShiftDR() {
         // <-- Run-Test/Idle
-        _sbwio(TMS1, TDIX);
+        _sbwio(TMS1, _tclkSaved);
         // <-- Select DR-Scan
-        _sbwio(TMS0, TDIX);
+        _sbwio(TMS0, TDI1);
         // <-- Capture-IR
-        _sbwio(TMS0, TDIX);
+        _sbwio(TMS0, TDI1);
         // <-- Shift-DR
     }
     
@@ -96,6 +106,7 @@ private:
             
             _tck.write(0);
             _delayUs(1);
+            
             _tck.write(1);
             _delayUs(1);
         }
@@ -107,6 +118,7 @@ private:
             
             _tck.write(0);
             _delayUs(1);
+            
             _tck.write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
             _tdio.config(0);
@@ -180,7 +192,9 @@ private:
     
     bool _readJTAGFuseBlown() {
         _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
-        return _shiftDR<ShiftType::Word>(0xAAAA) == 0x5555;
+        const uint16_t status = _shiftDR<ShiftType::Word>(0xAAAA);
+//        printf("JTAG fuse status: %x\r\n", status);
+        return status == 0x5555;
     }
     
     uint32_t _readCoreID() {
@@ -193,8 +207,56 @@ private:
         return _shiftDR<ShiftType::Addr>(0);
     }
     
-    void _tclkSet(uint8_t x) {
-        _sbwio(TMS0, (x ? TDI1 : TDI0));
+    void _tclkSet(TCLK x) {
+        // ## Write TMS
+        {
+            _tdio.write(0);
+            _delayUs(1);
+            
+            _tck.write(0);
+            _delayUs(1);
+            
+            // Restore saved value of TCLK during TCK=0 period
+            _tdio.write(_tclkSaved);
+            
+            _tck.write(1);
+            _delayUs(1);
+        }
+        
+        // ## Write TDI=TCLK
+        {
+            _tdio.write(x);
+            _delayUs(1);
+            
+            _tck.write(0);
+            _delayUs(1);
+            
+            _tck.write(1);
+            // Stop driving SBWTDIO, in preparation for the slave to start driving it
+            _tdio.config(0);
+            _delayUs(1);
+        }
+        
+        // ## Read TDO
+        uint8_t tdo = TDO0;
+        {
+            _tck.write(0);
+            _delayUs(1);
+            // Read the TDO value, driven by the slave, while SBWTCK=0
+            tdo = _tdio.read();
+            _tck.write(1);
+            
+            _delayUs(1);
+            // Start driving SBWTDIO again
+            _tdio.config(1);
+        }
+        
+        return tdo;
+        
+        
+        
+        _sbwio(TMS0, x);
+        _tclkSaved = x;
     }
     
     void _tclkCycle() {
@@ -227,7 +289,7 @@ private:
         _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
         _shiftDR<ShiftType::Word>(0x0501);
         _tclkSet(1);
-        // one or more cycle, so CPU is driving correct MAB
+        // One or more cycle, so CPU is driving correct MAB
         _tclkSet(0);
         _tclkSet(1);
         // Processor is now again in Init State
@@ -289,6 +351,7 @@ public:
     
     bool connect() {
         for (int i=0; i<3; i++) {
+//            printf("Attempt %i\r\n", i);
             // ## Reset pin states
             {
                 _test.write(0);
@@ -329,9 +392,10 @@ public:
                 _tapReset();
             }
             
-            // ## Verify the JTAG ID
+            // ## Validate the JTAG ID
             {
                 if (_readJTAGID() != JTAGID) {
+                    printf("JTAG ID bad\r\n");
                     continue; // Try again
                 }
             }
@@ -339,37 +403,54 @@ public:
             // ## Check JTAG fuse blown state
             {
                 if (_readJTAGFuseBlown()) {
+                    printf("JTAG fuse blown\r\n");
                     continue; // Try again
                 }
             }
             
-            // ## Verify that the Core ID is valid
+            // ## Validate the Core ID
             {
                 if (_readCoreID() == 0) {
+                    printf("Core ID BAD\r\n");
                     continue; // Try again
                 }
             }
             
-            // ## Verify that the Device ID is valid
+            // ## Validate the Device ID
             {
-                _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
                 // Set device into JTAG mode + read
-                _shiftDR<ShiftType::Word>(0x1501);
-                
-                if (_shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE) != JTAGID) {
-                    continue; // Try again
+                {
+                    _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
+                    _shiftDR<ShiftType::Word>(0x1501);
                 }
                 
-                bool sync = false;
-                for (int i=0; i<50 && !sync; i++) {
-                    sync = _shiftDR<ShiftType::Word>(0) & 0x0200;
+                // Wait until CPU is sync'd
+                {
+                    bool sync = false;
+                    for (int i=0; i<3 && !sync; i++) {
+                        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
+                        const uint16_t cpuStatus = _shiftDR<ShiftType::Word>(0) & 0x0200;
+                        printf("CPU status: %x\r\n", cpuStatus);
+                        sync = cpuStatus & 0x0200;
+                    }
+                    if (!sync) {
+                        printf("Failed to sync CPU\r\n");
+                        continue; // Try again
+                    }
                 }
-                if (!sync) continue; // Try again
                 
                 // Reset CPU
-                if (!_resetCPU()) continue;  // Try again
+                {
+                    if (!_resetCPU()) {
+                        printf("Reset CPU failed\r\n");
+                        continue;  // Try again
+                    }
+                }
                 
-                const uint32_t deviceIDAddr = _readDeviceIDAddr();
+                // Read device ID
+                {
+                    const uint32_t deviceIDAddr = _readDeviceIDAddr();
+                }
             }
             
             // Nothing failed!
