@@ -1,7 +1,5 @@
 #pragma once
 #include <msp430g2553.h>
-#include <stddef.h>
-#include <type_traits>
 #include "GPIO.h"
 #include "printf.h"
 
@@ -56,7 +54,7 @@ private:
     static constexpr uint8_t IR_BYPASS              = _Reverse(0xFF);
     
     static constexpr uint8_t JTAGID                 = 0x98;
-    static constexpr uint16_t DeviceID              = 0x8311;
+    static constexpr uint16_t DeviceID              = 0x8312;
     
     static constexpr uint32_t SafePC                = 0x00000004;
     
@@ -112,7 +110,7 @@ private:
     }
     
     // Perform a single Spy-bi-wire I/O cycle
-    uint8_t _sbwio(TMS tms, TDI tdi) {
+    uint8_t _sbwio(TMS tms, TDI tdi, bool restoreSavedTCLK=false) {
         // ## Write TMS
         {
             _tdio.write(tms);
@@ -120,6 +118,13 @@ private:
             
             _tck.write(0);
             _delayUs(1);
+            
+            if (restoreSavedTCLK) {
+                // Restore saved value of TCLK during TCK=0 period.
+                // "To provide only a falling edge for ClrTCLK, the SBWTDIO signal
+                // must be set high before entering the TDI slot."
+                _tdio.write(_tclkSaved);
+            }
             
             _tck.write(1);
             _delayUs(1);
@@ -147,8 +152,8 @@ private:
             // Read the TDO value, driven by the slave, while SBWTCK=0
             tdo = _tdio.read();
             _tck.write(1);
-            
             _delayUs(1);
+            
             // Start driving SBWTDIO again
             _tdio.config(1);
         }
@@ -196,9 +201,7 @@ private:
     
     bool _readJTAGFuseBlown() {
         _shiftIR(IR_CNTRL_SIG_CAPTURE);
-        const uint16_t status = _shiftDR<16>(0xAAAA);
-//        printf("JTAG fuse status: %x\r\n", status);
-        return status == 0x5555;
+        return _shiftDR<16>(0xAAAA) == 0x5555;
     }
     
     uint32_t _readCoreID() {
@@ -211,55 +214,9 @@ private:
         return _shiftDR<20>(0);
     }
     
-    // TODO: move this logic into _shift
-    void _tclkSet(TCLK x) {
-        // ## Write TMS
-        {
-            _tdio.write(0);
-            _delayUs(1);
-            
-            _tck.write(0);
-            _delayUs(1);
-            
-            // Restore saved value of TCLK during TCK=0 period
-            _tdio.write(_tclkSaved);
-            
-            _tck.write(1);
-            _delayUs(1);
-        }
-        
-        // ## Write TDI=TCLK
-        {
-            _tdio.write(x);
-            _delayUs(1);
-            
-            _tck.write(0);
-            _delayUs(1);
-            
-            _tck.write(1);
-            // Stop driving SBWTDIO, in preparation for the slave to start driving it
-            _tdio.config(0);
-            _delayUs(1);
-        }
-        
-        // ## Read TDO
-        {
-            _tck.write(0);
-            _delayUs(1);
-            
-            _tck.write(1);
-            _delayUs(1);
-            
-            // Start driving SBWTDIO again
-            _tdio.config(1);
-        }
-        
-        _tclkSaved = x;
-    }
-    
-    void _tclkCycle() {
-        _tclkSet(0);
-        _tclkSet(1);
+    void _tclkSet(TCLK tclk) {
+        _sbwio(TMS0, tclk, true);
+        _tclkSaved = tclk;
     }
     
     // CPU must be in Full-Emulation-State
@@ -340,7 +297,8 @@ private:
     
     bool _resetCPU() {
         // One clock to empty the pipe
-        _tclkCycle();
+        _tclkSet(0);
+        _tclkSet(1);
         
         // Prepare access to the JTAG CNTRL SIG register
         _shiftIR(IR_CNTRL_SIG_16BIT);
@@ -351,24 +309,29 @@ private:
         
         // Set PC to 'safe' memory location
         _shiftIR(IR_DATA_16BIT);
-        _tclkCycle();
-        _tclkCycle();
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _tclkSet(1);
         _shiftDR<16>(SafePC);
         // PC is set to 0x4 - MAB value can be 0x6 or 0x8
         
         // Drive safe address into PC
-        _tclkCycle();
-        _shiftIR(IR_DATA_CAPTURE); // TODO: is this necessary?
-        
+        _tclkSet(0);
+        _tclkSet(1);
+        _shiftIR(IR_DATA_CAPTURE);
         // Two more clocks to release CPU internal POR delay signals
-        _tclkCycle();
-        _tclkCycle();
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _tclkSet(1);
         
         // Set CPUSUSP signal again
         _shiftIR(IR_CNTRL_SIG_16BIT);
         _shiftDR<16>(0x0501);
         // One more clock
-        _tclkCycle();
+        _tclkSet(0);
+        _tclkSet(1);
         // <- CPU in Full-Emulation-State
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
