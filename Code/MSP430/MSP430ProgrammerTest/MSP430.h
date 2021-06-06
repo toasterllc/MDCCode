@@ -56,6 +56,9 @@ private:
     static constexpr uint8_t IR_BYPASS              = _Reverse(0xFF);
     
     static constexpr uint8_t JTAGID                 = 0x98;
+    static constexpr uint16_t DeviceID              = 0x8311;
+    
+    static constexpr uint32_t SafePC                = 0x00000004;
     
     #define CPUFreqMHz 16
     #define _delayUs(us) __delay_cycles(CPUFreqMHz*us);
@@ -153,20 +156,14 @@ private:
         return tdo;
     }
     
-    enum class ShiftType : uint8_t {
-        Byte    = 8,
-        Word    = 16,
-        Addr    = 20,
-    };
-    
     // Shifts `dout` MSB first
-    template <ShiftType T>
+    template <uint8_t W>
     uint32_t _shift(uint32_t dout) {
-        const uint32_t mask = 1<<((uint8_t)T-1);
+        const uint32_t mask = (uint32_t)1<<(W-1);
         // <-- Shift-DR / Shift-IR
         uint32_t din = 0;
-        for (uint8_t i=0; i<(uint8_t)T; i++) {
-            const TMS tms = (i<((uint8_t)T-1) ? TMS0 : TMS1); // Final bit needs TMS=1
+        for (uint8_t i=0; i<W; i++) {
+            const TMS tms = (i<(W-1) ? TMS0 : TMS1); // Final bit needs TMS=1
             din <<= 1;
             din |= _sbwio(tms, dout&mask);
             dout <<= 1;
@@ -178,46 +175,43 @@ private:
         _sbwio(TMS0, _tclkSaved);
         // <-- Run-Test/Idle
         
-        if constexpr (T == ShiftType::Addr) {
-            din = ((din&0xF)<<16) | (din>>4);
-        }
-        
         return din;
     }
     
-    template <ShiftType T>
-    uint32_t _shiftIR(uint32_t d) {
+    uint8_t _shiftIR(uint8_t d) {
         _startShiftIR();
-        return _shift<T>(d);
+        return _shift<8>(d);
     }
     
-    template <ShiftType T>
+    template <uint8_t W>
     uint32_t _shiftDR(uint32_t d) {
         _startShiftDR();
-        return _shift<T>(d);
+        uint32_t din = _shift<W>(d);
+        return din;
     }
     
     uint8_t _readJTAGID() {
-        return _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
+        return _shiftIR(IR_CNTRL_SIG_CAPTURE);
     }
     
     bool _readJTAGFuseBlown() {
-        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
-        const uint16_t status = _shiftDR<ShiftType::Word>(0xAAAA);
+        _shiftIR(IR_CNTRL_SIG_CAPTURE);
+        const uint16_t status = _shiftDR<16>(0xAAAA);
 //        printf("JTAG fuse status: %x\r\n", status);
         return status == 0x5555;
     }
     
     uint32_t _readCoreID() {
-        _shiftIR<ShiftType::Byte>(IR_COREIP_ID);
-        return _shiftDR<ShiftType::Word>(0);
+        _shiftIR(IR_COREIP_ID);
+        return _shiftDR<16>(0);
     }
     
     uint32_t _readDeviceIDAddr() {
-        _shiftIR<ShiftType::Byte>(IR_DEVICE_ID);
-        return _shiftDR<ShiftType::Addr>(0);
+        _shiftIR(IR_DEVICE_ID);
+        return _shiftDR<20>(0);
     }
     
+    // TODO: move this logic into _shift
     void _tclkSet(TCLK x) {
         // ## Write TMS
         {
@@ -268,30 +262,77 @@ private:
         _tclkSet(1);
     }
     
+    // CPU must be in Full-Emulation-State
+    void _setPC(uint32_t addr) {
+        constexpr uint16_t movInstr = 0x0080;
+        const uint16_t pcHigh = ((addr>>8)&0xF00);
+        const uint16_t pcLow = ((addr & 0xFFFF));
+        
+        _tclkSet(0);
+        // Take over bus control during clock LOW phase
+        _shiftIR(IR_DATA_16BIT);
+        _tclkSet(1);
+        _shiftDR<16>(pcHigh | movInstr);
+        _tclkSet(0);
+        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x1400);
+        _shiftIR(IR_DATA_16BIT);
+        _tclkSet(0);
+        _tclkSet(1);
+        _shiftDR<16>(pcLow);
+        _tclkSet(0);
+        _tclkSet(1);
+        _shiftDR<16>(0x4303);
+        _tclkSet(0);
+        _shiftIR(IR_ADDR_CAPTURE);
+        _shiftDR<20>(0);
+    }
+    
+    // Using std::common_type here to prevent auto type deduction,
+    // because we want `T` to be explicit.
+    void _readMem(uint32_t addr, uint16_t* dst, uint32_t len) {
+        _setPC(addr);
+        _tclkSet(1);
+        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x0501);
+        _shiftIR(IR_ADDR_CAPTURE);
+        _shiftIR(IR_DATA_QUICK);
+        
+        for (; len; len--) {
+            _tclkSet(1);
+            _tclkSet(0);
+            *dst = _shiftDR<16>(0);
+            dst++;
+        }
+        
+        _setPC(SafePC);
+        _tclkSet(1);
+    }
+    
     // Using std::common_type here to prevent auto type deduction,
     // because we want `T` to be explicit.
     template <typename T>
     void _writeMem(uint32_t addr, typename std::common_type<T>::type data) {
         _tclkSet(0);
-        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
+        _shiftIR(IR_CNTRL_SIG_16BIT);
         if constexpr (std::is_same_v<T, uint8_t>) {
-            _shiftDR<ShiftType::Word>(0x0510);
+            _shiftDR<16>(0x0510);
         } else if constexpr (std::is_same_v<T, uint16_t>) {
-            _shiftDR<ShiftType::Word>(0x0500);
+            _shiftDR<16>(0x0500);
         } else {
             static_assert(_AlwaysFalse<T>);
         }
         
-        _shiftIR<ShiftType::Byte>(IR_ADDR_16BIT);
-        _shiftDR<ShiftType::Addr>(addr);
+        _shiftIR(IR_ADDR_16BIT);
+        _shiftDR<20>(addr);
         _tclkSet(1);
         
         // Only apply data during clock high phase
-        _shiftIR<ShiftType::Byte>(IR_DATA_TO_ADDR);
-        _shiftDR<ShiftType::Word>(data);           // Shift in 16 bits
+        _shiftIR(IR_DATA_TO_ADDR);
+        _shiftDR<16>(data);
         _tclkSet(0);
-        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
-        _shiftDR<ShiftType::Word>(0x0501);
+        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x0501);
         _tclkSet(1);
         // One or more cycle, so CPU is driving correct MAB
         _tclkSet(0);
@@ -304,42 +345,42 @@ private:
         _tclkCycle();
         
         // Prepare access to the JTAG CNTRL SIG register
-        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
+        _shiftIR(IR_CNTRL_SIG_16BIT);
         // Release CPUSUSP signal and apply POR signal
-        _shiftDR<ShiftType::Word>(0x0C01);
+        _shiftDR<16>(0x0C01);
         // Release POR signal again
-        _shiftDR<ShiftType::Word>(0x0401);
+        _shiftDR<16>(0x0401);
         
         // Set PC to 'safe' memory location
-        _shiftIR<ShiftType::Byte>(IR_DATA_16BIT);
+        _shiftIR(IR_DATA_16BIT);
         _tclkCycle();
         _tclkCycle();
-        _shiftDR<ShiftType::Word>(0x0004);
+        _shiftDR<16>(SafePC);
         // PC is set to 0x4 - MAB value can be 0x6 or 0x8
         
         // Drive safe address into PC
         _tclkCycle();
-        _shiftIR<ShiftType::Byte>(IR_DATA_CAPTURE); // TODO: is this necessary?
+        _shiftIR(IR_DATA_CAPTURE); // TODO: is this necessary?
         
         // Two more clocks to release CPU internal POR delay signals
         _tclkCycle();
         _tclkCycle();
         
         // Set CPUSUSP signal again
-        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
-        _shiftDR<ShiftType::Word>(0x0501);
+        _shiftIR(IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x0501);
         // One more clock
         _tclkCycle();
-        // <- CPU in 'Full-Emulation-State'
+        // <- CPU in Full-Emulation-State
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
+        _shiftIR(IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
         _writeMem<uint16_t>(0x01CC, 0x5A80);
         
         // Check if device is in Full-Emulation-State again and return status
-        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
-        if (!(_shiftDR<ShiftType::Word>(0) & 0x0301)) {
+        _shiftIR(IR_CNTRL_SIG_CAPTURE);
+        if (!(_shiftDR<16>(0) & 0x0301)) {
             return false;
         }
         
@@ -424,16 +465,16 @@ public:
             {
                 // Set device into JTAG mode + read
                 {
-                    _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_16BIT);
-                    _shiftDR<ShiftType::Word>(0x1501);
+                    _shiftIR(IR_CNTRL_SIG_16BIT);
+                    _shiftDR<16>(0x1501);
                 }
                 
                 // Wait until CPU is sync'd
                 {
                     bool sync = false;
                     for (int i=0; i<3 && !sync; i++) {
-                        _shiftIR<ShiftType::Byte>(IR_CNTRL_SIG_CAPTURE);
-                        const uint16_t cpuStatus = _shiftDR<ShiftType::Word>(0) & 0x0200;
+                        _shiftIR(IR_CNTRL_SIG_CAPTURE);
+                        const uint16_t cpuStatus = _shiftDR<16>(0) & 0x0200;
 //                        printf("CPU status: %x\r\n", cpuStatus);
                         sync = cpuStatus & 0x0200;
                     }
@@ -452,10 +493,15 @@ public:
                     }
                 }
                 
-//                // Read device ID
-//                {
-//                    const uint32_t deviceIDAddr = _readDeviceIDAddr();
-//                }
+                // Read device ID
+                {
+                    const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
+                    uint16_t deviceID = 0;
+                    _readMem(deviceIDAddr, &deviceID, 1);
+                    if (deviceID != DeviceID) {
+                        printf("Bad device ID (deviceIDAddr=%x, deviceID=%x)\r\n", (uint16_t)deviceIDAddr, deviceID);
+                    }
+                }
             }
             
             // Nothing failed!
