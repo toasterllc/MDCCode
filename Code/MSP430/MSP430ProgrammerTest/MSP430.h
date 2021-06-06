@@ -288,8 +288,6 @@ private:
         _shiftDR<20>(0);
     }
     
-    // Using std::common_type here to prevent auto type deduction,
-    // because we want `T` to be explicit.
     void _readMem(uint32_t addr, uint16_t* dst, uint32_t len) {
         _setPC(addr);
         _tclkSet(1);
@@ -309,35 +307,35 @@ private:
         _tclkSet(1);
     }
     
-    // Using std::common_type here to prevent auto type deduction,
-    // because we want `T` to be explicit.
-    template <typename T>
-    void _writeMem(uint32_t addr, typename std::common_type<T>::type data) {
-        _tclkSet(0);
-        _shiftIR(IR_CNTRL_SIG_16BIT);
-        if constexpr (std::is_same_v<T, uint8_t>) {
-            _shiftDR<16>(0x0510);
-        } else if constexpr (std::is_same_v<T, uint16_t>) {
+    void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
+        while (len) {
+            _tclkSet(0);
+            _shiftIR(IR_CNTRL_SIG_16BIT);
             _shiftDR<16>(0x0500);
-        } else {
-            static_assert(_AlwaysFalse<T>);
+            
+            _shiftIR(IR_ADDR_16BIT);
+            _shiftDR<20>(addr);
+            _tclkSet(1);
+            
+            // Only apply data during clock high phase
+            _shiftIR(IR_DATA_TO_ADDR);
+            _shiftDR<16>(*src);
+            _tclkSet(0);
+            _shiftIR(IR_CNTRL_SIG_16BIT);
+            _shiftDR<16>(0x0501);
+            _tclkSet(1);
+            // One or more cycle, so CPU is driving correct MAB
+            _tclkSet(0);
+            _tclkSet(1);
+            
+            addr += 2;
+            src++;
+            len--;
         }
-        
-        _shiftIR(IR_ADDR_16BIT);
-        _shiftDR<20>(addr);
-        _tclkSet(1);
-        
-        // Only apply data during clock high phase
-        _shiftIR(IR_DATA_TO_ADDR);
-        _shiftDR<16>(data);
-        _tclkSet(0);
-        _shiftIR(IR_CNTRL_SIG_16BIT);
-        _shiftDR<16>(0x0501);
-        _tclkSet(1);
-        // One or more cycle, so CPU is driving correct MAB
-        _tclkSet(0);
-        _tclkSet(1);
-        // Processor is now again in Init State
+    }
+    
+    void _writeMem(uint32_t addr, uint16_t val) {
+        _writeMem(addr, &val, 1);
     }
     
     bool _resetCPU() {
@@ -376,9 +374,9 @@ private:
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
         _shiftIR(IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
-        _writeMem<uint16_t>(0x01CC, 0x5A80);
+        _writeMem(0x01CC, 0x5A80);
         
-        // Check if device is in Full-Emulation-State again and return status
+        // Check if device is in Full-Emulation-State and return status
         _shiftIR(IR_CNTRL_SIG_CAPTURE);
         if (!(_shiftDR<16>(0) & 0x0301)) {
             return false;
@@ -386,8 +384,6 @@ private:
         
         return true;
     }
-    
-    template <class...> static std::false_type _AlwaysFalse;
     
 public:
     MSP430(GPIOT& test, GPIOR& rst_) :
