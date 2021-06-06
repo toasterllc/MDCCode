@@ -54,7 +54,7 @@ private:
     static constexpr uint8_t IR_BYPASS              = _Reverse(0xFF);
     
     static constexpr uint8_t JTAGID                 = 0x98;
-    static constexpr uint16_t DeviceID              = 0x8312;
+    static constexpr uint16_t DeviceID              = 0x8311;
     
     static constexpr uint32_t SafePC                = 0x00000004;
     
