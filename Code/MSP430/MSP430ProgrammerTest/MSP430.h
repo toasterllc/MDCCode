@@ -162,9 +162,9 @@ private:
         }
         
         // <-- Exit1-DR / Exit1-IR
-        _sbwio(TMS1, TDOX);
+        _sbwio(TMS1, TDO1);
         // <-- Update-DR / Update-IR
-        _sbwio(TMS0, TDOX);
+        _sbwio(TMS0, _tclkSaved);
         // <-- Run-Test/Idle
         
         if constexpr (T == ShiftType::Addr) {
@@ -238,24 +238,17 @@ private:
         }
         
         // ## Read TDO
-        uint8_t tdo = TDO0;
         {
             _tck.write(0);
             _delayUs(1);
-            // Read the TDO value, driven by the slave, while SBWTCK=0
-            tdo = _tdio.read();
-            _tck.write(1);
             
+            _tck.write(1);
             _delayUs(1);
+            
             // Start driving SBWTDIO again
             _tdio.config(1);
         }
         
-        return tdo;
-        
-        
-        
-        _sbwio(TMS0, x);
         _tclkSaved = x;
     }
     
@@ -462,7 +455,7 @@ public:
     }
     
     bool read(uint32_t src, uint8_t* dst, uint32_t len) {
-        
+        return false;
     }
     
 };
