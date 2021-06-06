@@ -46,6 +46,9 @@ private:
     static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);
     static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);
     
+    static constexpr uint8_t _IR_DATA_PSA           = _Reverse(0x44);
+    static constexpr uint8_t _IR_SHIFT_OUT_PSA      = _Reverse(0x46);
+    
     static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);
     static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);
     static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);
@@ -208,7 +211,7 @@ private:
         return _shiftDR<16>(0);
     }
     
-    uint32_t _read_DeviceIDAddr() {
+    uint32_t _readDeviceIDAddr() {
         _shiftIR(_IR_DEVICE_ID);
         return _shiftDR<20>(0);
     }
@@ -292,6 +295,42 @@ private:
     
     void _writeMem(uint32_t addr, uint16_t val) {
         _writeMem(addr, &val, 1);
+    }
+    
+    uint16_t _calcChecksum(uint32_t addr, uint32_t len) {
+        _resetCPU();
+        _setPC(addr);
+        _tclkSet(1);
+        
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x0501);
+        
+        _shiftIR(_IR_DATA_16BIT);
+        _shiftDR<16>(addr-2);
+        
+        _shiftIR(_IR_DATA_PSA);
+        
+        for (uint32_t i=0; i<len; i++) {
+            _tclkSet(0);
+            _sbwio(TMS1, TDI1);
+            // <- Select DR-Scan
+            _sbwio(TMS0, TDI1);
+            // <- Capture-DR
+            _sbwio(TMS0, TDI1);
+            // <- Shift-DR
+            _sbwio(TMS1, TDI1);
+            // <- Exit1-DR
+            _sbwio(TMS1, TDI1);
+            // <- Update-DR
+            _sbwio(TMS0, TDI1);
+            // <- Run-Test/Idle
+            _tclkSet(1);
+        }
+        
+        _shiftIR(_IR_SHIFT_OUT_PSA);
+        const uint16_t checksum = _shiftDR<16>(0);
+        _resetCPU();
+        return checksum;
     }
     
     bool _resetCPU() {
@@ -452,7 +491,7 @@ public:
                 
                 // Read device ID
                 {
-                    const uint32_t deviceIDAddr = _read_DeviceIDAddr()+4;
+                    const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
                     uint16_t deviceID = 0;
                     _readMem(deviceIDAddr, &deviceID, 1);
                     if (deviceID != _DeviceID) {
@@ -489,5 +528,10 @@ public:
     
     void write(uint32_t addr, uint16_t* src, uint32_t len) {
         _writeMem(addr, src, len);
+    }
+    
+    void verify(uint32_t addr, uint32_t len) {
+        const uint16_t checksum = _calcChecksum(addr, len);
+        printf("checksum: %x\r\n", checksum);
     }
 };

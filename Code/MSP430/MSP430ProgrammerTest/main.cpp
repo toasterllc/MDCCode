@@ -86,6 +86,8 @@ int main() {
         printf("Connect: %i\r\n", r);
         __delay_cycles(8000000);
         
+        _msp.verify(0xE300, (0xFFFF-0xE300)/2);
+        
         _msp.disconnect();
         printf("Disconnect\r\n");
         __delay_cycles(8000000);
