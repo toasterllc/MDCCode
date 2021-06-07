@@ -200,7 +200,7 @@ private:
         return din;
     }
     
-    uint8_t _read_JTAGID() {
+    uint8_t _readJTAGID() {
         return _shiftIR(_IR_CNTRL_SIG_CAPTURE);
     }
     
@@ -222,6 +222,73 @@ private:
     void _tclkSet(TCLK tclk) {
         _sbwio(TMS0, tclk, true);
         _tclkSaved = tclk;
+    }
+    
+    bool _resetCPU() {
+        // One clock to empty the pipe
+        _tclkSet(0);
+        _tclkSet(1);
+        
+        // Prepare access to the JTAG CNTRL SIG register
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
+        // Release CPUSUSP signal and apply POR signal
+        _shiftDR<16>(0x0C01);
+        // Release POR signal again
+        _shiftDR<16>(0x0401);
+        
+        // Set PC to 'safe' memory location
+        _shiftIR(_IR_DATA_16BIT);
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _tclkSet(1);
+        _shiftDR<16>(_SafePC);
+        // PC is set to 0x4 - MAB value can be 0x6 or 0x8
+        
+        // Drive safe address into PC
+        _tclkSet(0);
+        _tclkSet(1);
+        _shiftIR(_IR_DATA_CAPTURE);
+        // Two more clocks to release CPU internal POR delay signals
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _tclkSet(1);
+        
+        // Set CPUSUSP signal again
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x0501);
+        // One more clock
+        _tclkSet(0);
+        _tclkSet(1);
+        // <- CPU in Full-Emulation-State
+        
+        // Disable Watchdog Timer on target device now by setting the HOLD signal
+        // in the WDT_CNTRL register
+        _writeMem(0x01CC, 0x5A80);
+        
+        // Check if device is in Full-Emulation-State and return status
+        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+        if (!(_shiftDR<16>(0) & 0x0301)) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    bool _disableMPU() {
+        constexpr uint16_t PasswordMask = 0xFF00;
+        constexpr uint16_t Password = 0xA500;
+        constexpr uint16_t MPUMask = 0x0003;
+        constexpr uint16_t MPUDisabled = 0x0000;
+        uint16_t val = 0;
+        _readMem(_SYSCFG0Addr, &val, 1);
+        val &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
+        val |= (Password|MPUDisabled); // Password
+        _writeMem(_SYSCFG0Addr, &val, 1);
+        // Verify that the MPU protection bits are cleared
+        _readMem(_SYSCFG0Addr, &val, 1);
+        return (val&MPUMask) == MPUDisabled;
     }
     
     // CPU must be in Full-Emulation-State
@@ -250,46 +317,6 @@ private:
         _shiftDR<20>(0);
     }
     
-//    //----------------------------------------------------------------------------
-//    //! \brief This function reads one byte/word from a given address in memory
-//    //! \param[in] word Format (F_BYTE or F_WORD)
-//    //! \param[in] word Addr (address of memory)
-//    //! \return word (content of the addressed memory location)
-//    void _readMem(uint32_t addr, uint16_t* dst, uint32_t len) {
-//        while (len) {
-//            _resetCPU();
-//            _delayMs(1);
-//            
-//            // Check Init State at the beginning
-//            _shiftIR(_IR_CNTRL_SIG_CAPTURE);
-//            if (!(_shiftDR<16>(0) & 0x0301)) {
-//                printf("READMEM NOT IN FES\r\n");
-//                for (;;);
-//            }
-//            
-//            // Read Memory
-//            _tclkSet(0);
-//            _shiftIR(_IR_CNTRL_SIG_16BIT);
-//            _shiftDR<16>(0x0501);             // Set word read
-//            _shiftIR(_IR_ADDR_16BIT);
-//            _shiftDR<20>(addr);                   // Set address
-//            _shiftIR(_IR_DATA_TO_ADDR);
-//            _tclkSet(1);
-//            _tclkSet(0);
-//            
-//            *dst = _shiftDR<16>(0);       // Shift out 16 bits
-//            dst++;
-//            len--;
-//            addr += 2;
-//            
-//            _tclkSet(1);
-//            _tclkSet(0);
-//            _tclkSet(1);
-//            // Processor is now again in Init State
-//        }
-//    }
-    
-    // QUICK VERSION
     void _readMem(uint32_t addr, uint16_t* dst, uint32_t len) {
         _setPC(addr);
         _tclkSet(1);
@@ -304,17 +331,6 @@ private:
             *dst = _shiftDR<16>(0);
             dst++;
         }
-        
-//        _setPC(_SafePC);
-//        _tclkSet(1);
-//        
-//        // Check Init State at the beginning
-//        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
-//        if (!(_shiftDR<16>(0) & 0x0301)) {
-//            printf("READMEM NOT IN FES AFTER READ\r\n");
-//        }
-//        
-//        _resetCPU();
     }
     
     void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
@@ -398,73 +414,6 @@ private:
         return crc;
     }
     
-    bool _resetCPU() {
-        // One clock to empty the pipe
-        _tclkSet(0);
-        _tclkSet(1);
-        
-        // Prepare access to the JTAG CNTRL SIG register
-        _shiftIR(_IR_CNTRL_SIG_16BIT);
-        // Release CPUSUSP signal and apply POR signal
-        _shiftDR<16>(0x0C01);
-        // Release POR signal again
-        _shiftDR<16>(0x0401);
-        
-        // Set PC to 'safe' memory location
-        _shiftIR(_IR_DATA_16BIT);
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
-        _shiftDR<16>(_SafePC);
-        // PC is set to 0x4 - MAB value can be 0x6 or 0x8
-        
-        // Drive safe address into PC
-        _tclkSet(0);
-        _tclkSet(1);
-        _shiftIR(_IR_DATA_CAPTURE);
-        // Two more clocks to release CPU internal POR delay signals
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
-        
-        // Set CPUSUSP signal again
-        _shiftIR(_IR_CNTRL_SIG_16BIT);
-        _shiftDR<16>(0x0501);
-        // One more clock
-        _tclkSet(0);
-        _tclkSet(1);
-        // <- CPU in Full-Emulation-State
-        
-        // Disable Watchdog Timer on target device now by setting the HOLD signal
-        // in the WDT_CNTRL register
-        _writeMem(0x01CC, 0x5A80);
-        
-        // Check if device is in Full-Emulation-State and return status
-        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
-        if (!(_shiftDR<16>(0) & 0x0301)) {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    bool _disableMPU() {
-        constexpr uint16_t PasswordMask = 0xFF00;
-        constexpr uint16_t Password = 0xA500;
-        constexpr uint16_t MPUMask = 0x0003;
-        constexpr uint16_t MPUDisabled = 0x0000;
-        uint16_t val = 0;
-        _readMem(_SYSCFG0Addr, &val, 1);
-        val &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
-        val |= (Password|MPUDisabled); // Password
-        _writeMem(_SYSCFG0Addr, &val, 1);
-        // Verify that the MPU protection bits are cleared
-        _readMem(_SYSCFG0Addr, &val, 1);
-        return (val&MPUMask) == MPUDisabled;
-    }
-    
 public:
     MSP430(GPIOT& test, GPIOR& rst_) :
     _test(test), _rst_(rst_)
@@ -514,7 +463,7 @@ public:
             
             // ## Validate the JTAG ID
             {
-                if (_read_JTAGID() != _JTAGID) {
+                if (_readJTAGID() != _JTAGID) {
                     printf("JTAG ID bad\r\n");
                     continue; // Try again
                 }
