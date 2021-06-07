@@ -441,7 +441,7 @@ public:
                 _delayUs(1);
                 // Assert TEST
                 _test.write(1);
-                _delayUs(1);
+                _delayMs(1);
             }
             
             // ## Choose 2-wire/Spy-bi-wire mode
