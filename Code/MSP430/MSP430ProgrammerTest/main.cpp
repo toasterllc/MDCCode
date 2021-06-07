@@ -4,13 +4,14 @@
 #include <inttypes.h>
 #include <iterator>
 #include "MSP430.h"
+extern "C" {
 #include "mspprintf.h"
+}
 
-extern "C" int putchar(int c) {
+extern "C" void mspputchar(int c) {
     while (!(UC0IFG & UCA0TXIFG));
     UCA0TXBUF = c;
     while (!(UC0IFG & UCA0TXIFG));
-    return c;
 }
 
 static bool buttonAsserted() {
@@ -106,7 +107,6 @@ int main() {
 //            _msp.read(AddrStart, &val, 1);
 //            mspprintf("val: %x\r\n", val);
 //        }
-        
         
         // Test writing/reading/CRC verify
         {

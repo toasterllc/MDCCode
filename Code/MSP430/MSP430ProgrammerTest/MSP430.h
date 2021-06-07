@@ -1,7 +1,9 @@
 #pragma once
 #include <msp430g2553.h>
 #include "GPIO.h"
+extern "C" {
 #include "mspprintf.h"
+}
 
 template <typename GPIOT, typename GPIOR>
 class MSP430 {
