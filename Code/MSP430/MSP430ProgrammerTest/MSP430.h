@@ -1,9 +1,6 @@
 #pragma once
 #include <msp430g2553.h>
 #include "GPIO.h"
-extern "C" {
-#include "mspprintf.h"
-}
 
 template <typename GPIOT, typename GPIOR>
 class MSP430 {
@@ -278,6 +275,14 @@ private:
         return true;
     }
     
+    bool _waitForCPUSync() {
+        for (int i=0; i<50; i++) {
+            _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+            if (_shiftDR<16>(0) & 0x0200) return true;
+        }
+        return false;
+    }
+    
     bool _disableMPU() {
         constexpr uint16_t PasswordMask = 0xFF00;
         constexpr uint16_t Password = 0xA500;
@@ -381,7 +386,6 @@ private:
     }
     
     uint16_t _calcCRC(uint32_t addr, uint32_t len) {
-//        _resetCPU();
         _setPC(addr);
         _tclkSet(1);
         
@@ -464,7 +468,6 @@ public:
             // ## Validate the JTAG ID
             {
                 if (_readJTAGID() != _JTAGID) {
-                    mspprintf("JTAG ID bad\r\n");
                     continue; // Try again
                 }
             }
@@ -472,7 +475,6 @@ public:
             // ## Check JTAG fuse blown state
             {
                 if (_readJTAGFuseBlown()) {
-                    mspprintf("JTAG fuse blown\r\n");
                     continue; // Try again
                 }
             }
@@ -480,7 +482,6 @@ public:
             // ## Validate the Core ID
             {
                 if (_readCoreID() == 0) {
-                    mspprintf("Core ID BAD\r\n");
                     continue; // Try again
                 }
             }
@@ -495,24 +496,14 @@ public:
                 
                 // Wait until CPU is sync'd
                 {
-                    bool sync = false;
-                    for (int i=0; i<3 && !sync; i++) {
-                        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
-                        const uint16_t cpuStatus = _shiftDR<16>(0) & 0x0200;
-//                        mspprintf("CPU status: %x\r\n", cpuStatus);
-                        sync = cpuStatus & 0x0200;
-                    }
-                    
-                    if (!sync) {
-                        mspprintf("Failed to sync CPU\r\n");
-                        continue; // Try again
+                    if (!_waitForCPUSync()) {
+                        continue;
                     }
                 }
                 
                 // Reset CPU
                 {
                     if (!_resetCPU()) {
-                        mspprintf("Reset CPU failed\r\n");
                         continue; // Try again
                     }
                 }
@@ -522,9 +513,7 @@ public:
                     const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
                     uint16_t deviceID = 0;
                     _readMem(deviceIDAddr, &deviceID, 1);
-//                    mspprintf("deviceIDAddr=%X, deviceID=%x\r\n", deviceIDAddr, deviceID);
                     if (deviceID != _DeviceID) {
-                        mspprintf("Bad device ID (deviceIDAddr=%X, deviceID=%x)\r\n", deviceIDAddr, deviceID);
                         continue; // Try again
                     }
                 }
@@ -532,7 +521,6 @@ public:
                 // Disable MPU
                 {
                     if (!_disableMPU()) {
-                        mspprintf("Failed to disable MPU\r\n");
                         continue; // Try again
                     }
                 }
@@ -576,8 +564,6 @@ public:
     }
     
     bool verifyCRC(uint32_t addr, uint32_t len) {
-        const uint16_t crc = _calcCRC(addr, len);
-        mspprintf("their crc=%x, our crc=%x\r\n", crc, _crc);
-        return crc==_crc;
+        return _crc == _calcCRC(addr, len);
     }
 };

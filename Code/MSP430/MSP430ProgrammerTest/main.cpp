@@ -14,11 +14,6 @@ extern "C" void mspputchar(int c) {
     while (!(UC0IFG & UCA0TXIFG));
 }
 
-static bool buttonAsserted() {
-    // Active low
-    return !(P1IN & BIT3);
-}
-
 GPIO<4> _mspTest;
 GPIO<5> _mspRst;
 MSP430 _msp(_mspTest, _mspRst);
@@ -84,29 +79,14 @@ int main() {
     }
     
     for (uint16_t i=0xCAFE;;) {
-        const bool r = _msp.connect();
-        mspprintf("Connect: %d\r\n", r);
+        const bool connectOK = _msp.connect();
+        mspprintf("Connect: %d\r\n", connectOK);
         __delay_cycles(8000000);
+        if (!connectOK) continue;
         
-        constexpr uint16_t DeviceIDAddr = 0x00001A04;
         constexpr uint16_t AddrStart = 0xE300;
         constexpr uint16_t AddrEnd = 0xFF7F;
         constexpr uint16_t Len = (AddrEnd-AddrStart+1)/2;
-        
-//        // Test writing / CRC
-//        {
-//            _msp.resetCRC();
-//            const uint16_t val = 0x1234;
-//            _msp.write(AddrStart, &val, 1);
-//            _msp.verifyCRC(AddrStart, 1);
-//        }
-        
-//        // Test reading
-//        {
-//            uint16_t val = 0;
-//            _msp.read(AddrStart, &val, 1);
-//            mspprintf("val: %x\r\n", val);
-//        }
         
         // Test writing/reading/CRC verify
         for (int ii=0; ii<3; ii++)
@@ -130,45 +110,6 @@ int main() {
             }
             i++;
         }
-        
-        
-        
-//        // Test writing/reading
-//        {
-//            uint16_t val = 0;
-//            _msp.read(AddrStart, &val, 1);
-//            mspprintf("AAA *AddrStart=%x\r\n", val);
-//            
-//            _msp.read(DeviceIDAddr, &val, 1);
-//            mspprintf("BBB *DeviceIDAddr=%x\r\n", val);
-//            
-//            val = i;
-//            _msp.write(AddrStart, &val, 1);
-//            mspprintf("CCC WROTE %x\r\n", val);
-//            
-//            _msp.read(DeviceIDAddr, &val, 1);
-//            mspprintf("EEE *DeviceIDAddr=%x\r\n", val);
-//            
-//            val = 0;
-//            _msp.read(AddrStart, &val, 1);
-//            mspprintf("DDD *AddrStart=%x\r\n", val);
-//            
-//            _msp.read(DeviceIDAddr, &val, 1);
-//            mspprintf("EEE *DeviceIDAddr=%x\r\n", val);
-//        }
-        
-//        uint16_t val = 0;
-//        _msp.read(AddrStart, &val, 1);
-//        mspprintf("val: %x\r\n", val);
-        
-//        uint16_t val = 0;
-//        _msp.read(AddrStart, &val, 1);
-//        mspprintf("val: %x\r\n", val);
-//        
-//        _msp.verifyCRC(AddrStart, 1);
-//        
-//        _msp.write(AddrStart, );
-//        _msp.verifyCRC(AddrStart, 1);
         
         _msp.disconnect();
         mspprintf("Disconnect\r\n");
