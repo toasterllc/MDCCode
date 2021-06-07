@@ -219,8 +219,6 @@ private:
         return _shiftDR<20>(0);
     }
     
-    
-    
     void _tclkSet(TCLK tclk) {
         _sbwio(TMS0, tclk, true);
         _tclkSaved = tclk;
