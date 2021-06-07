@@ -412,11 +412,15 @@ private:
         _shiftIR(_IR_DATA_QUICK);
         _tclkSet(0);
         
-        for (; len>1; len--) {
+        for (; len; len--) {
             _tclkSet(1);
             _shiftDR<16>(*src);
             src++;
             _tclkSet(0);
+            if (len == 1) {
+                _shiftIR(_IR_CNTRL_SIG_16BIT);
+                _shiftDR<16>(0x0501);
+            }
         }
         
 //        _shiftDR<16>(*src);
