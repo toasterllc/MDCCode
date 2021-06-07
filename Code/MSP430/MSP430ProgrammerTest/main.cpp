@@ -83,7 +83,7 @@ int main() {
         P1REN   |=  BIT3;
     }
     
-    for (uint16_t i=0xCAFE;; i++) {
+    for (uint16_t i=0xCAFE;;) {
         const bool r = _msp.connect();
         mspprintf("Connect: %d\r\n", r);
         __delay_cycles(8000000);
@@ -109,6 +109,7 @@ int main() {
 //        }
         
         // Test writing/reading/CRC verify
+        for (int ii=0; ii<3; ii++)
         {
             uint16_t data[8];
             uint16_t x = 0;
@@ -124,6 +125,10 @@ int main() {
             _msp.write(AddrStart, data, std::size(data));
             const bool crcOK = _msp.verifyCRC(AddrStart, std::size(data));
             mspprintf("crcOK = %d\r\n", crcOK);
+            if (!crcOK) {
+                for (;;);
+            }
+            i++;
         }
         
         

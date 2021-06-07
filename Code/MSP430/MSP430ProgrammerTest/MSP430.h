@@ -411,9 +411,7 @@ private:
         }
         
         _shiftIR(_IR_SHIFT_OUT_PSA);
-        const uint16_t crc = _shiftDR<16>(0);
-//        _resetCPU();
-        return crc;
+        return _shiftDR<16>(0);
     }
     
 public:
