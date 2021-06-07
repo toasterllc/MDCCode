@@ -13,6 +13,7 @@
 		5514B586266BFEFF000B27EB /* MSP430.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MSP430.h; path = ../MSP430.h; sourceTree = "<group>"; };
 		5514B587266C071A000B27EB /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GPIO.h; path = ../GPIO.h; sourceTree = "<group>"; };
 		5514B588266C0770000B27EB /* msp430g2553.h.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = msp430g2553.h.txt; path = ../msp430g2553.h.txt; sourceTree = "<group>"; };
+		5514B589266DF1DE000B27EB /* msp430fr2422.h.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = msp430fr2422.h.txt; path = ../msp430fr2422.h.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -20,6 +21,7 @@
 			isa = PBXGroup;
 			children = (
 				5514B588266C0770000B27EB /* msp430g2553.h.txt */,
+				5514B589266DF1DE000B27EB /* msp430fr2422.h.txt */,
 				5514B587266C071A000B27EB /* GPIO.h */,
 				5514B586266BFEFF000B27EB /* MSP430.h */,
 				5514B585266BFEE8000B27EB /* printf.h */,

@@ -1,2 +1,2 @@
 #pragma once
-void printf(const char *format, ...);
+int printf(const char* fmt, ...);

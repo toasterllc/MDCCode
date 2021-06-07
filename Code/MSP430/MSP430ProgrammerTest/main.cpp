@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <array>
 #include "MSP430.h"
 #include "printf.h"
 
@@ -81,7 +82,7 @@ int main() {
         P1REN   |=  BIT3;
     }
     
-    for (int i=0;; i++) {
+    for (uint16_t i=0xCAFE;; i++) {
         const bool r = _msp.connect();
         printf("Connect: %d\r\n", r);
         __delay_cycles(8000000);
@@ -107,30 +108,49 @@ int main() {
 //        }
         
         
-        
-        // Test writing/reading
+        // Test writing/reading/CRC verify
         {
-            uint16_t val = 0;
-            _msp.read(AddrStart, &val, 1);
-            printf("AAA *AddrStart=%x\r\n", val);
+            uint16_t data[8];
+            uint16_t x = 0;
+            printf("Writing: ");
+            for (uint16_t& d : data) {
+                d = i+x;
+                x++;
+                printf("%x ", d);
+            }
+            printf("\r\n");
             
-            _msp.read(DeviceIDAddr, &val, 1);
-            printf("BBB *DeviceIDAddr=%x\r\n", val);
-            
-            val = i;
-            _msp.write(AddrStart, &val, 1);
-            printf("CCC WROTE %x\r\n", val);
-            
-            _msp.read(DeviceIDAddr, &val, 1);
-            printf("EEE *DeviceIDAddr=%x\r\n", val);
-            
-            val = 0;
-            _msp.read(AddrStart, &val, 1);
-            printf("DDD *AddrStart=%x\r\n", val);
-            
-            _msp.read(DeviceIDAddr, &val, 1);
-            printf("EEE *DeviceIDAddr=%x\r\n", val);
+            _msp.resetCRC();
+            _msp.write(AddrStart, data, std::size(data));
+            const bool crcOK = _msp.verifyCRC(AddrStart, std::size(data));
+            printf("crcOK = %d\r\n", crcOK);
         }
+        
+        
+        
+//        // Test writing/reading
+//        {
+//            uint16_t val = 0;
+//            _msp.read(AddrStart, &val, 1);
+//            printf("AAA *AddrStart=%x\r\n", val);
+//            
+//            _msp.read(DeviceIDAddr, &val, 1);
+//            printf("BBB *DeviceIDAddr=%x\r\n", val);
+//            
+//            val = i;
+//            _msp.write(AddrStart, &val, 1);
+//            printf("CCC WROTE %x\r\n", val);
+//            
+//            _msp.read(DeviceIDAddr, &val, 1);
+//            printf("EEE *DeviceIDAddr=%x\r\n", val);
+//            
+//            val = 0;
+//            _msp.read(AddrStart, &val, 1);
+//            printf("DDD *AddrStart=%x\r\n", val);
+//            
+//            _msp.read(DeviceIDAddr, &val, 1);
+//            printf("EEE *DeviceIDAddr=%x\r\n", val);
+//        }
         
 //        uint16_t val = 0;
 //        _msp.read(AddrStart, &val, 1);

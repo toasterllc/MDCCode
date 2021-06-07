@@ -379,7 +379,7 @@ private:
     }
     
     uint16_t _calcCRC(uint32_t addr, uint32_t len) {
-        _resetCPU();
+//        _resetCPU();
         _setPC(addr);
         _tclkSet(1);
         
@@ -410,7 +410,7 @@ private:
         
         _shiftIR(_IR_SHIFT_OUT_PSA);
         const uint16_t crc = _shiftDR<16>(0);
-        _resetCPU();
+//        _resetCPU();
         return crc;
     }
     
@@ -577,7 +577,7 @@ public:
     
     bool verifyCRC(uint32_t addr, uint32_t len) {
         const uint16_t crc = _calcCRC(addr, len);
-        printf("crc=%x, _crc=%x\r\n", crc, _crc);
+        printf("their crc=%x, our crc=%x\r\n", crc, _crc);
         return crc==_crc;
     }
 };
