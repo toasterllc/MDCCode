@@ -91,40 +91,52 @@ int main() {
         constexpr uint32_t AddrEnd = 0xFF80;
         constexpr uint32_t Len = (AddrEnd-AddrStart)/2;
         
-        // Test writing/reading/CRC verify
-        {
-//            const uint16_t data[4] = {0x1111, 0x2222, 0x3333, 0x4444};
-//            const uint16_t data[4] = {0x3333, 0x4444, 0x5555, 0x6666};
-//            const uint16_t data[4] = {0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD};
-//            const uint16_t data[4] = {0xFFFF, 0xEEEE, 0xDDDD, 0xCCCC};
-            uint16_t data[4] = {};
-            for (uint16_t& d : data) {
-                d = i;
-                if (i == 0xFFFF) i = 0x0000;
-                else i += 0x1111;
-            }
-            
-            mspprintf("Write: ");
-            for (const uint16_t& d : data) {
-                mspprintf("%x ", d);
-            }
-            mspprintf("\r\n");
-//            _msp.write(AddrStart, data, std::size(data));
-            _msp.write(AddrStart+0, data+0, 1);
-            _msp.write(AddrStart+2, data+1, 1);
-            _msp.write(AddrStart+4, data+2, 1);
-            _msp.write(AddrStart+6, data+3, 1);
+        mspprintf("Writing...\r\n");
+        _msp.resetCRC();
+        _msp.write(AddrStart, (uint16_t*)(0xC000), Len);
+        
+        mspprintf("Checking CRC...\r\n");
+        const bool crcOK = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
+        mspprintf("crcOK = %d\r\n", crcOK);
+        if (!crcOK) {
+            for (;;);
         }
         
-        {
-            uint16_t data[4] = {};
-            _msp.read(AddrStart, data, std::size(data));
-            mspprintf("Read: ");
-            for (uint16_t& d : data) {
-                mspprintf("%x ", d);
-            }
-            mspprintf("\r\n");
-        }
+        
+//        // Test writing/reading/CRC verify
+//        {
+////            const uint16_t data[4] = {0x1111, 0x2222, 0x3333, 0x4444};
+////            const uint16_t data[4] = {0x3333, 0x4444, 0x5555, 0x6666};
+////            const uint16_t data[4] = {0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD};
+////            const uint16_t data[4] = {0xFFFF, 0xEEEE, 0xDDDD, 0xCCCC};
+//            uint16_t data[4] = {};
+//            for (uint16_t& d : data) {
+//                d = i;
+//                if (i == 0xFFFF) i = 0x0000;
+//                else i += 0x1111;
+//            }
+//            
+//            mspprintf("Write: ");
+//            for (const uint16_t& d : data) {
+//                mspprintf("%x ", d);
+//            }
+//            mspprintf("\r\n");
+//            _msp.write(AddrStart, data, std::size(data));
+////            _msp.write(AddrStart+0, data+0, 1);
+////            _msp.write(AddrStart+2, data+1, 1);
+////            _msp.write(AddrStart+4, data+2, 1);
+////            _msp.write(AddrStart+6, data+3, 1);
+//        }
+//        
+//        {
+//            uint16_t data[4] = {};
+//            _msp.read(AddrStart, data, std::size(data));
+//            mspprintf("Read: ");
+//            for (uint16_t& d : data) {
+//                mspprintf("%x ", d);
+//            }
+//            mspprintf("\r\n");
+//        }
         
         
         
