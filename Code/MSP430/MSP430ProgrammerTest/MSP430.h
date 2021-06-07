@@ -1,7 +1,7 @@
 #pragma once
 #include <msp430g2553.h>
 #include "GPIO.h"
-#include "printf.h"
+#include "mspprintf.h"
 
 template <typename GPIOT, typename GPIOR>
 class MSP430 {
@@ -464,7 +464,7 @@ public:
             // ## Validate the JTAG ID
             {
                 if (_readJTAGID() != _JTAGID) {
-                    printf("JTAG ID bad\r\n");
+                    mspprintf("JTAG ID bad\r\n");
                     continue; // Try again
                 }
             }
@@ -472,7 +472,7 @@ public:
             // ## Check JTAG fuse blown state
             {
                 if (_readJTAGFuseBlown()) {
-                    printf("JTAG fuse blown\r\n");
+                    mspprintf("JTAG fuse blown\r\n");
                     continue; // Try again
                 }
             }
@@ -480,7 +480,7 @@ public:
             // ## Validate the Core ID
             {
                 if (_readCoreID() == 0) {
-                    printf("Core ID BAD\r\n");
+                    mspprintf("Core ID BAD\r\n");
                     continue; // Try again
                 }
             }
@@ -499,12 +499,12 @@ public:
                     for (int i=0; i<3 && !sync; i++) {
                         _shiftIR(_IR_CNTRL_SIG_CAPTURE);
                         const uint16_t cpuStatus = _shiftDR<16>(0) & 0x0200;
-//                        printf("CPU status: %x\r\n", cpuStatus);
+//                        mspprintf("CPU status: %x\r\n", cpuStatus);
                         sync = cpuStatus & 0x0200;
                     }
                     
                     if (!sync) {
-                        printf("Failed to sync CPU\r\n");
+                        mspprintf("Failed to sync CPU\r\n");
                         continue; // Try again
                     }
                 }
@@ -512,7 +512,7 @@ public:
                 // Reset CPU
                 {
                     if (!_resetCPU()) {
-                        printf("Reset CPU failed\r\n");
+                        mspprintf("Reset CPU failed\r\n");
                         continue; // Try again
                     }
                 }
@@ -522,9 +522,9 @@ public:
                     const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
                     uint16_t deviceID = 0;
                     _readMem(deviceIDAddr, &deviceID, 1);
-//                    printf("deviceIDAddr=%X, deviceID=%x\r\n", deviceIDAddr, deviceID);
+//                    mspprintf("deviceIDAddr=%X, deviceID=%x\r\n", deviceIDAddr, deviceID);
                     if (deviceID != _DeviceID) {
-                        printf("Bad device ID (deviceIDAddr=%X, deviceID=%x)\r\n", deviceIDAddr, deviceID);
+                        mspprintf("Bad device ID (deviceIDAddr=%X, deviceID=%x)\r\n", deviceIDAddr, deviceID);
                         continue; // Try again
                     }
                 }
@@ -532,7 +532,7 @@ public:
                 // Disable MPU
                 {
                     if (!_disableMPU()) {
-                        printf("Failed to disable MPU\r\n");
+                        mspprintf("Failed to disable MPU\r\n");
                         continue; // Try again
                     }
                 }
@@ -577,7 +577,7 @@ public:
     
     bool verifyCRC(uint32_t addr, uint32_t len) {
         const uint16_t crc = _calcCRC(addr, len);
-        printf("their crc=%x, our crc=%x\r\n", crc, _crc);
+        mspprintf("their crc=%x, our crc=%x\r\n", crc, _crc);
         return crc==_crc;
     }
 };

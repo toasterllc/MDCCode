@@ -1,7 +1,7 @@
 /******************************************************************************
- *                          Reusable MSP430 printf()
+ *                          Reusable MSP430 mspprintf()
  *
- * Description: This printf function was written by oPossum and originally
+ * Description: This mspprintf function was written by oPossum and originally
  *              posted on the 43oh.com forums. For more information on this
  *              code, please see the link below.
  *
@@ -20,7 +20,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-int putchar(int c);
+extern "C" int putchar(int c);
 
 static const unsigned long dv[] = {
 //  4294967296      // 32 bit unsigned max
@@ -60,7 +60,7 @@ static void puth(unsigned n) {
     putchar(hex[n & 15]);
 }
 
-int printf(const char* fmt, ...) {
+int mspprintf(const char* fmt, ...) {
     int8_t c = 0;
     int16_t i = 0;
     int32_t n = 0;

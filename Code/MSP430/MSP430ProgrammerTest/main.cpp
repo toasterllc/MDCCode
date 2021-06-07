@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
-#include <array>
+#include <iterator>
 #include "MSP430.h"
-#include "printf.h"
+#include "mspprintf.h"
 
-int putchar(int c) {
+extern "C" int putchar(int c) {
     while (!(UC0IFG & UCA0TXIFG));
     UCA0TXBUF = c;
     while (!(UC0IFG & UCA0TXIFG));
@@ -84,7 +84,7 @@ int main() {
     
     for (uint16_t i=0xCAFE;; i++) {
         const bool r = _msp.connect();
-        printf("Connect: %d\r\n", r);
+        mspprintf("Connect: %d\r\n", r);
         __delay_cycles(8000000);
         
         constexpr uint16_t DeviceIDAddr = 0x00001A04;
@@ -104,7 +104,7 @@ int main() {
 //        {
 //            uint16_t val = 0;
 //            _msp.read(AddrStart, &val, 1);
-//            printf("val: %x\r\n", val);
+//            mspprintf("val: %x\r\n", val);
 //        }
         
         
@@ -112,18 +112,18 @@ int main() {
         {
             uint16_t data[8];
             uint16_t x = 0;
-            printf("Writing: ");
+            mspprintf("Writing: ");
             for (uint16_t& d : data) {
                 d = i+x;
                 x++;
-                printf("%x ", d);
+                mspprintf("%x ", d);
             }
-            printf("\r\n");
+            mspprintf("\r\n");
             
             _msp.resetCRC();
             _msp.write(AddrStart, data, std::size(data));
             const bool crcOK = _msp.verifyCRC(AddrStart, std::size(data));
-            printf("crcOK = %d\r\n", crcOK);
+            mspprintf("crcOK = %d\r\n", crcOK);
         }
         
         
@@ -132,33 +132,33 @@ int main() {
 //        {
 //            uint16_t val = 0;
 //            _msp.read(AddrStart, &val, 1);
-//            printf("AAA *AddrStart=%x\r\n", val);
+//            mspprintf("AAA *AddrStart=%x\r\n", val);
 //            
 //            _msp.read(DeviceIDAddr, &val, 1);
-//            printf("BBB *DeviceIDAddr=%x\r\n", val);
+//            mspprintf("BBB *DeviceIDAddr=%x\r\n", val);
 //            
 //            val = i;
 //            _msp.write(AddrStart, &val, 1);
-//            printf("CCC WROTE %x\r\n", val);
+//            mspprintf("CCC WROTE %x\r\n", val);
 //            
 //            _msp.read(DeviceIDAddr, &val, 1);
-//            printf("EEE *DeviceIDAddr=%x\r\n", val);
+//            mspprintf("EEE *DeviceIDAddr=%x\r\n", val);
 //            
 //            val = 0;
 //            _msp.read(AddrStart, &val, 1);
-//            printf("DDD *AddrStart=%x\r\n", val);
+//            mspprintf("DDD *AddrStart=%x\r\n", val);
 //            
 //            _msp.read(DeviceIDAddr, &val, 1);
-//            printf("EEE *DeviceIDAddr=%x\r\n", val);
+//            mspprintf("EEE *DeviceIDAddr=%x\r\n", val);
 //        }
         
 //        uint16_t val = 0;
 //        _msp.read(AddrStart, &val, 1);
-//        printf("val: %x\r\n", val);
+//        mspprintf("val: %x\r\n", val);
         
 //        uint16_t val = 0;
 //        _msp.read(AddrStart, &val, 1);
-//        printf("val: %x\r\n", val);
+//        mspprintf("val: %x\r\n", val);
 //        
 //        _msp.verifyCRC(AddrStart, 1);
 //        
@@ -166,7 +166,7 @@ int main() {
 //        _msp.verifyCRC(AddrStart, 1);
         
         _msp.disconnect();
-        printf("Disconnect\r\n");
+        mspprintf("Disconnect\r\n");
         __delay_cycles(8000000);
     }
     

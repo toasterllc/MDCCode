@@ -1,4 +1,4 @@
-OBJECTS=main.o printf.o
+OBJECTS=mspprintf.o main.o
 
 GCC_DIR = ~/ti/msp430-gcc/bin
 SUPPORT_FILE_DIRECTORY = ~/ti/msp430-gcc/include
