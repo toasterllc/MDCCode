@@ -45,6 +45,8 @@ private:
     static constexpr uint8_t _IR_DATA_PSA           = _Reverse(0x44);
     static constexpr uint8_t _IR_SHIFT_OUT_PSA      = _Reverse(0x46);
     
+    static constexpr uint8_t _IR_JMB_EXCHANGE       = _Reverse(0x61);
+    
     static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);
     static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);
     static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);
@@ -565,12 +567,164 @@ private:
         return _shiftDR<16>(0);
     }
     
+//    void _erase() {
+//        _shiftIR(_IR_JMB_EXCHANGE);
+//        _shiftDR<16>(0xA55A); // Magic pattern
+//        _shiftDR<16>(0x1A1A); // Erase
+////        _delayMs(100); // Wait for erase to complete
+//    }
+    
+    
+    void EntrySequences_RstLow_SBW()
+    {
+        _test.write(0);                //1
+        _delayMs(1);       // reset TEST logic
+        
+        _rst_.write(0);                //2
+        _delayMs(50);
+          
+        _test.write(1);                //3
+        _delayMs(100);     // activate TEST logic
+
+        // phase 1
+        _rst_.write(1);                //4
+        _delayUs(40);
+
+        // phase 2 -> TEST pin to 0, no change on RST pin
+        // for Spy-Bi-Wire
+        _test.write(0);                  //5
+           
+        _delayUs(1);
+
+        // phase 4 -> TEST pin to 1, no change on RST pin
+        // for Spy-Bi-Wire
+        _test.write(1);      //7
+        _delayUs(40);
+        _delayMs(5);
+    }
+    
+    void EntrySequences_RstHigh_SBW()
+    {
+        _test.write(0);    //1
+        _delayMs(4); // reset TEST logic
+
+        _rst_.write(1);    //2
+        
+        _test.write(1);    //3
+        _delayMs(20); // activate TEST logic
+
+        // phase 1
+        _rst_.write(1);    //4
+        _delayUs(60);
+
+        // phase 2 -> TEST pin to 0, no change on RST pin
+        // for Spy-Bi-Wire
+        _test.write(0);  
+
+        // phase 3
+        _delayUs(1);
+        // phase 4 -> TEST pin to 1, no change on RST pin
+        // for Spy-Bi-Wire
+        _test.write(1);  
+        _delayUs(60);
+
+        // phase 5
+        _delayMs(5);
+    }
+    
+    void i_WriteJmbIn32(unsigned short dataX,unsigned short dataY) {
+        // Constants for JTAG mailbox data exchange
+        //! \brief JTAG mailbox constant - 
+        #define OUT1RDY 0x0008
+        //! \brief JTAG mailbox constant - 
+        #define IN0RDY  0x0001
+        //! \brief JTAG mailbox constant - 
+        #define JMB32B  0x0010
+        //! \brief JTAG mailbox constant - 
+        #define OUTREQ  0x0004
+        //! \brief JTAG mailbox constant - 
+        #define INREQ   0x0001
+        //! \brief JTAG mailbox mode 32 bit - 
+        #define MAIL_BOX_32BIT 0x10
+        //! \brief JTAG mailbox moede 16 bit - 
+        #define MAIL_BOX_16BIT 0x00
+        
+        unsigned short sJMBINCTL;
+        unsigned short sJMBIN0,sJMBIN1;
+        unsigned long Timeout = 0;
+
+        sJMBIN0 = (unsigned short)(dataX & 0x0000FFFF);
+        sJMBIN1 = (unsigned short)(dataY & 0x0000FFFF);
+        sJMBINCTL =  JMB32B | INREQ;
+
+        _shiftIR(_IR_JMB_EXCHANGE); 
+        do {
+            Timeout++;
+            if(Timeout >= 3000)
+            {
+                mspprintf("i_WriteJmbIn32 timeout\r\n");
+                for (;;);
+            }
+        }
+        while(!(_shiftDR<16>(0x0000) & IN0RDY) && Timeout < 3000);
+
+        if (Timeout < 3000) {
+            sJMBINCTL = 0x11;
+            _shiftDR<16>(sJMBINCTL) ;
+            _shiftDR<16>(sJMBIN0);
+            _shiftDR<16>(sJMBIN1);
+        }
+    }
+    
+    void SyncJtag_AssertPor() {
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x1501);                  // Set device into JTAG mode + read
+        
+        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+        // wait for sync
+        int i = 0;
+        while(!(_shiftDR<16>(0) & 0x0200) && i < 50)
+        {
+            i++;
+        };
+        // continues if sync was successful
+        if (i >= 50) {
+            mspprintf("SyncJtag_AssertPor: too many retries\r\n");
+            for (;;);
+        }
+        
+        _resetCPU();
+    }
+    
+    void _erase() {
+        _test.write(0);
+        _rst_.write(0);
+        _delayMs(200);
+        
+        EntrySequences_RstLow_SBW();
+        
+        _tapReset();
+        
+        i_WriteJmbIn32(0xA55A, 0x1A1A);
+        // restart device
+        _test.write(0);
+        _rst_.write(1);
+        _delayMs(200);
+        
+        EntrySequences_RstHigh_SBW();
+        _tapReset();
+        _delayMs(60);
+        
+        SyncJtag_AssertPor();
+    }
+    
+    
 public:
     MSP430(GPIOT& test, GPIOR& rst_) :
     _test(test), _rst_(rst_)
     {}
     
-    bool connect() {
+    bool connect(bool allowErase=false) {
         for (int i=0; i<3; i++) {
             // ## Reset pin states
             {
@@ -619,6 +773,12 @@ public:
             // ## Check JTAG fuse blown state
             if (_readJTAGFuseBlown()) {
                 mspprintf("BBB\r\n");
+                // If the JTAG fuse is blown, we can only recover by erasing the device
+                if (allowErase) {
+                    mspprintf("Attempting erase\r\n");
+                    _erase();
+                    mspprintf("-> Done\r\n");
+                }
                 continue; // Try again
             }
             

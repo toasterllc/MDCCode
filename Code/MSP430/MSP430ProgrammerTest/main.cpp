@@ -80,9 +80,8 @@ int main() {
     
     __delay_cycles(20000000);
     
-    uint16_t i = 0;
     for (;;) {
-        const bool connectOK = _msp.connect();
+        const bool connectOK = _msp.connect(true);
         mspprintf("Connect: %d\r\n", connectOK);
         __delay_cycles(8000000);
         if (!connectOK) continue;
