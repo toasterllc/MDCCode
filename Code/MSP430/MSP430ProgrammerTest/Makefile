@@ -9,8 +9,8 @@ CXX      = $(GCC_DIR)/msp430-elf-g++
 GDB      = $(GCC_DIR)/msp430-elf-gdb
 MSPDEBUG = ~/repos/mspdebug/mspdebug
 
-CFLAGS   = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -std=c11 -O0 -g -Wall -Wno-format
-CXXFLAGS = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -std=c++17 -O0 -g -Wall -Wno-format
+CFLAGS   = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -std=c11 -Ofast -g -Wall -Wno-format
+CXXFLAGS = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -std=c++17 -Ofast -g -Wall -Wno-format
 LFLAGS   = -L $(SUPPORT_FILE_DIRECTORY) -T $(DEVICE).ld -Wl,-Map=$(DEVICE).map
 
 all: ${OBJECTS}

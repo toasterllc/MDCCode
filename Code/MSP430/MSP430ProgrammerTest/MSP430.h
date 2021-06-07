@@ -108,6 +108,7 @@ private:
     }
     
     // Perform a single Spy-bi-wire I/O cycle
+    __attribute__((noinline))
     uint8_t _sbwio(TMS tms, TDI tdi, bool restoreSavedTCLK=false) {
         // ## Write TMS
         {
@@ -161,6 +162,7 @@ private:
     
     // Shifts `dout` MSB first
     template <uint8_t W>
+    __attribute__((noinline))
     uint32_t _shift(uint32_t dout) {
         const uint32_t mask = (uint32_t)1<<(W-1);
         // <-- Shift-DR / Shift-IR
