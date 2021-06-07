@@ -448,8 +448,8 @@ public:
             {
                 // TDIO=1 while applying a single clock to TCK
                 _tdio.write(1);
-                
                 _delayUs(1);
+                
                 _tck.write(0);
                 _delayUs(1);
                 _tck.write(1);
