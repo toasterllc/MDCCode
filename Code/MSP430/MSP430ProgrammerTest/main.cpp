@@ -81,23 +81,30 @@ int main() {
     __delay_cycles(20000000);
     
     for (;;) {
-        const bool connectOK = _msp.connect(true);
-        mspprintf("Connect: %d\r\n", connectOK);
         __delay_cycles(8000000);
-        if (!connectOK) continue;
+        
+        mspprintf("Connecting\r\n");
+        auto s = _msp.connect();
+        mspprintf("-> %d\r\n", (uint8_t)s);
+        if (s == _msp.Status::JTAGDisabled) {
+            mspprintf("JTAG disabled; attempting erase...\r\n");
+            s = _msp.erase();
+            mspprintf("-> %d\r\n", (uint8_t)s);
+            continue;
+        }
         
         constexpr uint32_t AddrStart = 0xE300;
         constexpr uint32_t AddrEnd = 0xFF80;
         constexpr uint32_t Len = (AddrEnd-AddrStart)/2;
         
-        mspprintf("Writing...\r\n");
+        mspprintf("Writing\r\n");
         _msp.resetCRC();
         _msp.write(AddrStart, (uint16_t*)(0xC000), Len);
         
-        mspprintf("Checking CRC...\r\n");
-        const bool crcOK = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
-        mspprintf("crcOK = %d\r\n", crcOK);
-        if (!crcOK) {
+        mspprintf("Checking CRC\r\n");
+        s = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
+        mspprintf("-> %d\r\n", (uint8_t)s);
+        if (s != _msp.Status::OK) {
             for (;;);
         }
         

@@ -596,48 +596,24 @@ private:
         _delayMs(5);
     }
     
-    void i_WriteJmbIn32(unsigned short dataX,unsigned short dataY) {
-        // Constants for JTAG mailbox data exchange
-        //! \brief JTAG mailbox constant - 
-        #define OUT1RDY 0x0008
-        //! \brief JTAG mailbox constant - 
-        #define IN0RDY  0x0001
-        //! \brief JTAG mailbox constant - 
-        #define JMB32B  0x0010
-        //! \brief JTAG mailbox constant - 
-        #define OUTREQ  0x0004
-        //! \brief JTAG mailbox constant - 
-        #define INREQ   0x0001
-        //! \brief JTAG mailbox mode 32 bit - 
-        #define MAIL_BOX_32BIT 0x10
-        //! \brief JTAG mailbox moede 16 bit - 
-        #define MAIL_BOX_16BIT 0x00
+    bool _jmbErase() {
+        constexpr uint16_t MailboxReady = 0x0001; // Mailbox ready flag
+        constexpr uint16_t Width32 = 0x0010; // 32-bit operation
+        constexpr uint16_t DirWrite = 0x0001; // Direction = writing into mailbox
+        constexpr uint16_t MagicNum = 0xA55A;
+        constexpr uint16_t EraseCmd = 0x1A1A;
         
-        unsigned short sJMBINCTL;
-        unsigned short sJMBIN0,sJMBIN1;
-        unsigned long Timeout = 0;
-
-        sJMBIN0 = (unsigned short)(dataX & 0x0000FFFF);
-        sJMBIN1 = (unsigned short)(dataY & 0x0000FFFF);
-        sJMBINCTL =  JMB32B | INREQ;
-
-        _shiftIR(_IR_JMB_EXCHANGE); 
-        do {
-            Timeout++;
-            if(Timeout >= 3000)
-            {
-                mspprintf("i_WriteJmbIn32 timeout\r\n");
-                for (;;);
-            }
+        _shiftIR(_IR_JMB_EXCHANGE);
+        bool ready = false;
+        for (int i=0; i<3000 && !ready; i++) {
+            ready = _shiftDR<16>(0) & MailboxReady;
         }
-        while(!(_shiftDR<16>(0x0000) & IN0RDY) && Timeout < 3000);
-
-        if (Timeout < 3000) {
-            sJMBINCTL = 0x11;
-            _shiftDR<16>(sJMBINCTL) ;
-            _shiftDR<16>(sJMBIN0);
-            _shiftDR<16>(sJMBIN1);
-        }
+        if (!ready) return false; // Timeout
+        
+        _shiftDR<16>(Width32 | DirWrite);
+        _shiftDR<16>(MagicNum);
+        _shiftDR<16>(EraseCmd);
+        return true;
     }
     
     void SyncJtag_AssertPor() {
@@ -660,25 +636,53 @@ private:
         _cpuReset();
     }
     
-    void _erase() {
+    void _jtagStart(bool rst_) {
+        // ## Reset pin states
+        {
+            _test.write(0);
+            _rst_.write(1);
+            _delayMs(10);
+        }
+        
+        // ## Reset the MSP430 so that it starts from a known state
+        {
+            _rst_.write(0);
+            _delayUs(0);
+        }
+        
+        // ## Enable test mode
+        {
+            // Apply the supplied reset state, `rst_`
+            _rst_.write(rst_);
+            _delayUs(0);
+            // Assert TEST
+            _test.write(1);
+            _delayMs(1);
+        }
+        
+        // ## Choose 2-wire/Spy-bi-wire mode
+        {
+            // TDIO=1 while applying a single clock to TCK
+            _tdio.write(1);
+            _delayUs(0);
+            
+            _tck.write(0);
+            _delayUs(0);
+            _tck.write(1);
+            _delayUs(0);
+        }
+    }
+    
+    void _jtagEnd() {
+        // Deassert TEST
         _test.write(0);
+        _delayMs(1);
+        
+        // Pulse reset
         _rst_.write(0);
-        _delayMs(200);
-        
-        EntrySequences_RstLow_SBW();
-        _tapReset();
-        
-        i_WriteJmbIn32(0xA55A, 0x1A1A);
-        // restart device
-        _test.write(0);
+        _delayUs(0);
         _rst_.write(1);
-        _delayMs(200);
-        
-//        EntrySequences_RstHigh_SBW();
-//        _tapReset();
-//        _delayMs(60);
-//        
-//        SyncJtag_AssertPor();
+        _delayUs(0);
     }
     
 //    void _erase() {
@@ -696,75 +700,43 @@ private:
 //    }
     
 public:
+    enum class Status {
+        OK,
+        Error,
+        JTAGDisabled,
+    };
+    
     MSP430(GPIOT& test, GPIOR& rst_) :
     _test(test), _rst_(rst_)
     {}
     
-    bool connect(bool allowErase=false) {
+    Status connect() {
         for (int i=0; i<3; i++) {
-            // ## Reset pin states
-            {
-                _test.write(0);
-                _rst_.write(1);
-                _delayMs(10);
-            }
+            // Perform JTAG entry sequence with RST_=1
+            _jtagStart(1);
             
-            // ## Reset the MSP430 so that it starts from a known state
-            {
-                _rst_.write(0);
-                _delayUs(0);
-            }
-            
-            // ## Enable test mode
-            {
-                // RST=1
-                _rst_.write(1);
-                _delayUs(0);
-                // Assert TEST
-                _test.write(1);
-                _delayMs(1);
-            }
-            
-            // ## Choose 2-wire/Spy-bi-wire mode
-            {
-                // TDIO=1 while applying a single clock to TCK
-                _tdio.write(1);
-                _delayUs(0);
-                
-                _tck.write(0);
-                _delayUs(0);
-                _tck.write(1);
-                _delayUs(0);
-            }
-            
-            // ## Reset JTAG state machine (test access port, TAP)
+            // Reset JTAG state machine (test access port, TAP)
             _tapReset();
             
-            // ## Validate the JTAG ID
+            // Validate the JTAG ID
             if (_readJTAGID() != _JTAGID) {
                 mspprintf("AAA\r\n");
                 continue; // Try again
             }
             
-            // ## Check JTAG fuse blown state
+            // Check JTAG fuse blown state
             if (_readJTAGFuseBlown()) {
                 mspprintf("BBB\r\n");
-                // If the JTAG fuse is blown, we can only recover by erasing the device
-                if (allowErase) {
-                    mspprintf("Attempting erase\r\n");
-                    _erase();
-                    mspprintf("-> Done\r\n");
-                }
-                continue; // Try again
+                return Status::JTAGDisabled;
             }
             
-            // ## Validate the Core ID
+            // Validate the Core ID
             if (_readCoreID() == 0) {
                 mspprintf("CCC\r\n");
                 continue; // Try again
             }
             
-            // ## Validate the Device ID
+            // Validate the Device ID
             {
                 // Set device into JTAG mode + read
                 _shiftIR(_IR_CNTRL_SIG_16BIT);
@@ -799,24 +771,28 @@ public:
             }
             
             // Nothing failed!
-            return true;
+            return Status::OK;
         }
         
         // Too many failures
-        return false;
+        return Status::Error;
     }
     
     void disconnect() {
-        // ## Disable test mode
-        // Assert RST_
-        _rst_.write(0);
-        _delayMs(1);
-        // Deassert TEST
-        _test.write(0);
-        _delayMs(1);
-        // Deassert RST_
-        _rst_.write(1);
-        _delayMs(1);
+        _jtagEnd();
+    }
+    
+    Status erase() {
+        // Perform JTAG entry sequence with RST_=0
+        _jtagStart(0);
+        // Reset JTAG TAP
+        _tapReset();
+        
+        bool r = _jmbErase();
+        if (!r) return Status::Error;
+        
+        _jtagEnd();
+        return Status::OK;
     }
     
     void read(uint32_t addr, uint16_t* dst, uint32_t len) {
@@ -836,7 +812,7 @@ public:
         _crcValid = false;
     }
     
-    bool verifyCRC(uint32_t addr, uint32_t len) {
-        return _crc == _calcCRC(addr, len);
+    Status verifyCRC(uint32_t addr, uint32_t len) {
+        return (_crc==_calcCRC(addr, len) ? Status::OK : Status::Error);
     }
 };
