@@ -78,7 +78,7 @@ int main() {
         P1REN   |=  BIT3;
     }
     
-    for (uint16_t i=0xCAFE;;) {
+    for (;;) {
         const bool connectOK = _msp.connect();
         mspprintf("Connect: %d\r\n", connectOK);
         __delay_cycles(8000000);
@@ -89,9 +89,28 @@ int main() {
         constexpr uint32_t Len = (AddrEnd-AddrStart)/2;
         
         // Test writing/reading/CRC verify
-        mspprintf("Writing...\r\n");
-        _msp.resetCRC();
-        _msp.write(AddrStart, (uint16_t*)(0xC000), Len);
+        {
+            const uint16_t data[4] = {0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE};
+            mspprintf("Write: ");
+            for (const uint16_t& d : data) {
+                mspprintf("%x ", d);
+            }
+            mspprintf("\r\n");
+            _msp.write(AddrStart, data, std::size(data));
+        }
+        
+        {
+            uint16_t data[4] = {};
+            _msp.read(AddrStart, data, std::size(data));
+            mspprintf("Read: ");
+            for (uint16_t& d : data) {
+                mspprintf("%x ", d);
+            }
+            mspprintf("\r\n");
+        }
+        
+        
+        
         
 //        uint16_t data[8];
 //        uint16_t x = 0;
@@ -104,12 +123,12 @@ int main() {
 //        }
 //        mspprintf("Done\r\n");
         
-        mspprintf("Checking CRC...\r\n");
-        const bool crcOK = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
-        mspprintf("crcOK = %d\r\n", crcOK);
-        if (!crcOK) {
-            for (;;);
-        }
+//        mspprintf("Checking CRC...\r\n");
+//        const bool crcOK = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
+//        mspprintf("crcOK = %d\r\n", crcOK);
+//        if (!crcOK) {
+//            for (;;);
+//        }
         
         
         

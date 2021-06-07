@@ -113,10 +113,10 @@ private:
         // ## Write TMS
         {
             _tdio.write(tms);
-            _delayUs(1);
+            _delayUs(0);
             
             _tck.write(0);
-            _delayUs(1);
+            _delayUs(0);
             
             if (restoreSavedTCLK) {
                 // Restore saved value of TCLK during TCK=0 period.
@@ -126,32 +126,32 @@ private:
             }
             
             _tck.write(1);
-            _delayUs(1);
+            _delayUs(0);
         }
         
         // ## Write TDI
         {
             _tdio.write(tdi);
-            _delayUs(1);
+            _delayUs(0);
             
             _tck.write(0);
-            _delayUs(1);
+            _delayUs(0);
             
             _tck.write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
             _tdio.config(0);
-            _delayUs(1);
+            _delayUs(0);
         }
         
         // ## Read TDO
         uint8_t tdo = TDO0;
         {
             _tck.write(0);
-            _delayUs(1);
+            _delayUs(0);
             // Read the TDO value, driven by the slave, while SBWTCK=0
             tdo = _tdio.read();
             _tck.write(1);
-            _delayUs(1);
+            _delayUs(0);
             
             // Start driving SBWTDIO again
             _tdio.config(1);
@@ -336,6 +336,44 @@ private:
         }
     }
     
+    
+//void WriteMemQuick_430X(unsigned long StartAddr, unsigned long Length, word *DataArray)
+//{
+//    unsigned long i;
+//
+//    // Initialize writing:
+//    SetPC_430X(StartAddr-4);
+//    HaltCPU();
+//
+//    ClrTCLK();
+//    IR_Shift(IR_CNTRL_SIG_16BIT);
+//    DR_Shift16(0x2408);             // Set RW to write
+//    IR_Shift(IR_DATA_QUICK);
+//    for (i = 0; i < Length; i++)
+//    {
+//        DR_Shift16(DataArray[i]);   // Shift in the write data
+//        SetTCLK();
+//        ClrTCLK();                  // Increment PC by 2
+//    }
+//    ReleaseCPU();
+//}
+    
+    
+    void _writeMemQuick(uint32_t addr, const uint16_t* src, uint32_t len) {
+        _setPC(addr);
+        _tclkSet(0);
+        _shiftIR(_IR_CNTRL_SIG_16BIT);
+        _shiftDR<16>(0x0500);
+        _shiftIR(_IR_DATA_QUICK);
+        
+        for (; len; len--) {
+            _tclkSet(1);
+            _shiftDR<16>(*src);
+            src++;
+            _tclkSet(0);
+        }
+    }
+    
     void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
         constexpr uint16_t Poly = 0x0805;
         while (len) {
@@ -431,14 +469,14 @@ public:
             // ## Reset the MSP430 so that it starts from a known state
             {
                 _rst_.write(0);
-                _delayUs(1);
+                _delayUs(0);
             }
             
             // ## Enable test mode
             {
                 // RST=1
                 _rst_.write(1);
-                _delayUs(1);
+                _delayUs(0);
                 // Assert TEST
                 _test.write(1);
                 _delayMs(1);
@@ -448,12 +486,12 @@ public:
             {
                 // TDIO=1 while applying a single clock to TCK
                 _tdio.write(1);
-                _delayUs(1);
+                _delayUs(0);
                 
                 _tck.write(0);
-                _delayUs(1);
+                _delayUs(0);
                 _tck.write(1);
-                _delayUs(1);
+                _delayUs(0);
             }
             
             // ## Reset JTAG state machine (test access port, TAP)
@@ -534,7 +572,8 @@ public:
             _crc = addr-2;
             _crcValid = true;
         }
-        _writeMem(addr, src, len);
+//        _writeMem(addr, src, len);
+        _writeMemQuick(addr, src, len);
     }
     
     void resetCRC() {
