@@ -109,8 +109,8 @@ int main() {
             for (;;);
         }
         
+        mspprintf("Disconnecting\r\n");
         _msp.disconnect();
-        mspprintf("Disconnect\r\n");
         __delay_cycles(8000000);
     }
     
