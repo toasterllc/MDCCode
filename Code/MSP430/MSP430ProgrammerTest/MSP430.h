@@ -59,6 +59,7 @@ private:
     static constexpr uint8_t _JTAGID                = 0x98;
     static constexpr uint16_t _DeviceID             = 0x8311;
     static constexpr uint32_t _SafePC               = 0x00000004;
+    static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
     
     #define CPUFreqMHz 16
     #define _delayUs(us) __delay_cycles(CPUFreqMHz*us);
@@ -449,6 +450,21 @@ private:
         return true;
     }
     
+    bool _disableMPU() {
+        constexpr uint16_t PasswordMask = 0xFF00;
+        constexpr uint16_t Password = 0xA500;
+        constexpr uint16_t MPUMask = 0x0003;
+        constexpr uint16_t MPUDisabled = 0x0000;
+        uint16_t val = 0;
+        _readMem(_SYSCFG0Addr, &val, 1);
+        val &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
+        val |= (Password|MPUDisabled); // Password
+        _writeMem(_SYSCFG0Addr, &val, 1);
+        // Verify that the MPU protection bits are cleared
+        _readMem(_SYSCFG0Addr, &val, 1);
+        return (val&MPUMask) == MPUDisabled;
+    }
+    
 public:
     MSP430(GPIOT& test, GPIOR& rst_) :
     _test(test), _rst_(rst_)
@@ -560,6 +576,14 @@ public:
 //                    printf("deviceIDAddr=%X, deviceID=%x\r\n", deviceIDAddr, deviceID);
                     if (deviceID != _DeviceID) {
                         printf("Bad device ID (deviceIDAddr=%X, deviceID=%x)\r\n", deviceIDAddr, deviceID);
+                        continue; // Try again
+                    }
+                }
+                
+                // Disable MPU
+                {
+                    if (!_disableMPU()) {
+                        printf("Failed to disable MPU\r\n");
                         continue; // Try again
                     }
                 }

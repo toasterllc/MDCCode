@@ -81,7 +81,7 @@ int main() {
         P1REN   |=  BIT3;
     }
     
-    for (;;) {
+    for (int i=0;; i++) {
         const bool r = _msp.connect();
         printf("Connect: %d\r\n", r);
         __delay_cycles(8000000);
@@ -107,6 +107,7 @@ int main() {
 //        }
         
         
+        
         // Test writing/reading
         {
             uint16_t val = 0;
@@ -116,31 +117,19 @@ int main() {
             _msp.read(DeviceIDAddr, &val, 1);
             printf("BBB *DeviceIDAddr=%x\r\n", val);
             
-            val = 0x1234;
+            val = i;
             _msp.write(AddrStart, &val, 1);
-            printf("CCC WROTE\r\n");
+            printf("CCC WROTE %x\r\n", val);
+            
+            _msp.read(DeviceIDAddr, &val, 1);
+            printf("EEE *DeviceIDAddr=%x\r\n", val);
             
             val = 0;
             _msp.read(AddrStart, &val, 1);
             printf("DDD *AddrStart=%x\r\n", val);
             
-            val = 0x1234;
-            _msp.write(AddrStart, &val, 1);
-            printf("EEE WROTE\r\n");
-            
-            val = 0;
-            _msp.read(AddrStart, &val, 1);
-            printf("FFF *AddrStart=%x\r\n", val);
-            
             _msp.read(DeviceIDAddr, &val, 1);
-            printf("GGG *DeviceIDAddr=%x\r\n", val);
-            
-            _msp.read(DeviceIDAddr, &val, 1);
-            printf("HHH *DeviceIDAddr=%x\r\n", val);
-            
-            _msp.read(DeviceIDAddr, &val, 1);
-            printf("III *DeviceIDAddr=%x\r\n", val);
-            
+            printf("EEE *DeviceIDAddr=%x\r\n", val);
         }
         
 //        uint16_t val = 0;
