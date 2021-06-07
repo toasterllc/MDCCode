@@ -402,7 +402,8 @@ private:
     
     
     
-    void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
+//     Works when writing to FRAM, but seems to fail when writing to WDT register
+    void _writeMemQuick(uint32_t addr, const uint16_t* src, uint32_t len) {
         constexpr uint16_t Poly = 0x0805;
         _setPC(addr-2);
         _tclkSet(1);
@@ -410,27 +411,56 @@ private:
         _shiftDR<16>(0x0500);
         _shiftIR(_IR_DATA_QUICK);
         _tclkSet(0);
-        _tclkSet(1);
         
-        for (; len; len--) {
-//            // Update CRC
-//            {
-//                if (_crc & 0x8000) {
-//                    _crc ^= Poly;
-//                    _crc <<= 1;
-//                    _crc |= 0x0001;
-//                } else {
-//                    _crc <<= 1;
-//                }
-//                
-//                _crc ^= *src;
-//            }
-            
+        for (; len>1; len--) {
             _tclkSet(1);
             _shiftDR<16>(*src);
             src++;
             _tclkSet(0);
         }
+        
+//        _shiftDR<16>(*src);
+//        _tclkSet(0);
+        
+        
+//        _setPC(_SafePC);
+        
+//        constexpr uint16_t Poly = 0x0805;
+//        _setPC(addr-2);
+//        _tclkSet(1);
+//        _shiftIR(_IR_CNTRL_SIG_16BIT);
+//        _shiftDR<16>(0x0500);
+//        _shiftIR(_IR_DATA_QUICK);
+//        _tclkSet(0);
+//        
+//        for (; len; len--) {
+////            // Update CRC
+////            {
+////                if (_crc & 0x8000) {
+////                    _crc ^= Poly;
+////                    _crc <<= 1;
+////                    _crc |= 0x0001;
+////                } else {
+////                    _crc <<= 1;
+////                }
+////                
+////                _crc ^= *src;
+////            }
+//            
+//            _tclkSet(1);
+//            _shiftDR<16>(*src);
+//            src++;
+//            _tclkSet(0);
+//        }
+        
+//        _shiftIR(_IR_DATA_16BIT);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        _shiftDR<16>(_SafePC);
+        
+//        _setPC(_SafePC);
         
 //        // Words 1,2,3 works
 //        _setPC(addr);
@@ -485,54 +515,54 @@ private:
 //        }
 //    }
     
-//    void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
-//        constexpr uint16_t Poly = 0x0805;
-//        while (len) {
-//            // Update CRC
-//            {
-//                if (_crc & 0x8000) {
-//                    _crc ^= Poly;
-//                    _crc <<= 1;
-//                    _crc |= 0x0001;
-//                } else {
-//                    _crc <<= 1;
-//                }
-//                
-//                _crc ^= *src;
-//            }
-//            
-//            _tclkSet(0);
-//            _shiftIR(_IR_CNTRL_SIG_16BIT);
-//            _shiftDR<16>(0x0500);
-//            
-//            _shiftIR(_IR_ADDR_16BIT);
-//            _shiftDR<20>(addr);
-//            _tclkSet(1);
-//            
-//            // Only apply data during clock high phase
-//            _shiftIR(_IR_DATA_TO_ADDR);
-//            _shiftDR<16>(*src);
-//            _tclkSet(0);
-//            _shiftIR(_IR_CNTRL_SIG_16BIT);
-//            _shiftDR<16>(0x0501);
-//            _tclkSet(1);
-//            // One or more cycle, so CPU is driving correct MAB
-//            _tclkSet(0);
-//            _tclkSet(1);
-//            
-//            addr += 2;
-//            src++;
-//            len--;
-//        }
-//    }
+    void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
+        constexpr uint16_t Poly = 0x0805;
+        while (len) {
+            // Update CRC
+            {
+                if (_crc & 0x8000) {
+                    _crc ^= Poly;
+                    _crc <<= 1;
+                    _crc |= 0x0001;
+                } else {
+                    _crc <<= 1;
+                }
+                
+                _crc ^= *src;
+            }
+            
+            _tclkSet(0);
+            _shiftIR(_IR_CNTRL_SIG_16BIT);
+            _shiftDR<16>(0x0500);
+            
+            _shiftIR(_IR_ADDR_16BIT);
+            _shiftDR<20>(addr);
+            _tclkSet(1);
+            
+            // Only apply data during clock high phase
+            _shiftIR(_IR_DATA_TO_ADDR);
+            _shiftDR<16>(*src);
+            _tclkSet(0);
+            _shiftIR(_IR_CNTRL_SIG_16BIT);
+            _shiftDR<16>(0x0501);
+            _tclkSet(1);
+            // One or more cycle, so CPU is driving correct MAB
+            _tclkSet(0);
+            _tclkSet(1);
+            
+            addr += 2;
+            src++;
+            len--;
+        }
+    }
     
     void _writeMem(uint32_t addr, uint16_t val) {
         _writeMem(addr, &val, 1);
     }
     
-//    void _writeMemQuick(uint32_t addr, uint16_t val) {
-//        _writeMemQuick(addr, &val, 1);
-//    }
+    void _writeMemQuick(uint32_t addr, uint16_t val) {
+        _writeMemQuick(addr, &val, 1);
+    }
     
     uint16_t _calcCRC(uint32_t addr, uint32_t len) {
         _setPC(addr);
@@ -565,35 +595,6 @@ private:
         
         _shiftIR(_IR_SHIFT_OUT_PSA);
         return _shiftDR<16>(0);
-    }
-    
-    
-    void EntrySequences_RstLow_SBW()
-    {
-        _test.write(0);                //1
-        _delayMs(1);       // reset TEST logic
-        
-        _rst_.write(0);                //2
-        _delayMs(50);
-          
-        _test.write(1);                //3
-        _delayMs(100);     // activate TEST logic
-
-        // phase 1
-        _rst_.write(1);                //4
-        _delayUs(40);
-
-        // phase 2 -> TEST pin to 0, no change on RST pin
-        // for Spy-Bi-Wire
-        _test.write(0);                  //5
-           
-        _delayUs(1);
-
-        // phase 4 -> TEST pin to 1, no change on RST pin
-        // for Spy-Bi-Wire
-        _test.write(1);      //7
-        _delayUs(40);
-        _delayMs(5);
     }
     
     bool _jmbErase() {
@@ -805,7 +806,7 @@ public:
             _crcValid = true;
         }
 //        _writeMem(addr, src, len);
-        _writeMem(addr, src, len);
+        _writeMemQuick(addr, src, len);
     }
     
     void resetCRC() {
