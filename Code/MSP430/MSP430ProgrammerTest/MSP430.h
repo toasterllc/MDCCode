@@ -1,9 +1,9 @@
 #pragma once
 #include <msp430g2553.h>
 #include "GPIO.h"
-extern "C" {
-#include "mspprintf.h"
-}
+//extern "C" {
+//#include "mspprintf.h"
+//}
 
 template <typename GPIOT, typename GPIOR>
 class MSP430 {
@@ -265,13 +265,12 @@ private:
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        uint16_t wdt = 0;
-        _readMem(0x01CC, &wdt, 1);
-        mspprintf("AAA wdt = %x\r\n", wdt);
+//        uint16_t wdt = 0;
+//        _readMem(0x01CC, &wdt, 1);
+//        mspprintf("AAA wdt = %x\r\n", wdt);
         _writeMem(0x01CC, 0x5A80);
-        _readMem(0x01CC, &wdt, 1);
-        mspprintf("BBB wdt = %x\r\n", wdt);
-//        for (;;);
+//        _readMem(0x01CC, &wdt, 1);
+//        mspprintf("BBB wdt = %x\r\n", wdt);
         
         // Check if device is in Full-Emulation-State and return status
         _shiftIR(_IR_CNTRL_SIG_CAPTURE);
@@ -430,10 +429,6 @@ private:
         _writeMem(addr, &val, 1);
     }
     
-//    void _writeMemQuick(uint32_t addr, uint16_t val) {
-//        _writeMemQuick(addr, &val, 1);
-//    }
-    
     uint16_t _calcCRC(uint32_t addr, uint32_t len) {
         _setPC(addr);
         _tclkSet(1);
@@ -487,26 +482,6 @@ private:
         return true;
     }
     
-    void SyncJtag_AssertPor() {
-        _shiftIR(_IR_CNTRL_SIG_16BIT);
-        _shiftDR<16>(0x1501);                  // Set device into JTAG mode + read
-        
-        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
-        // wait for sync
-        int i = 0;
-        while(!(_shiftDR<16>(0) & 0x0200) && i < 50)
-        {
-            i++;
-        };
-        // continues if sync was successful
-        if (i >= 50) {
-            mspprintf("SyncJtag_AssertPor: too many retries\r\n");
-            for (;;);
-        }
-        
-        _cpuReset();
-    }
-    
     void _jtagStart(bool rst_) {
         // ## Reset pin states
         {
@@ -556,20 +531,6 @@ private:
         _delayUs(0);
     }
     
-//    void _erase() {
-//        i_WriteJmbIn32(0xA55A, 0x1A1A);
-//        // restart device
-//        _test.write(0);
-//        _rst_.write(1);
-//        _delayMs(200);
-//        
-//        EntrySequences_RstHigh_SBW();
-//        _tapReset();
-//        _delayMs(60);
-//        
-//        SyncJtag_AssertPor();
-//    }
-    
 public:
     enum class Status {
         OK,
@@ -591,19 +552,16 @@ public:
             
             // Validate the JTAG ID
             if (_readJTAGID() != _JTAGID) {
-                mspprintf("AAA\r\n");
                 continue; // Try again
             }
             
             // Check JTAG fuse blown state
             if (_readJTAGFuseBlown()) {
-                mspprintf("BBB\r\n");
                 return Status::JTAGDisabled;
             }
             
             // Validate the Core ID
             if (_readCoreID() == 0) {
-                mspprintf("CCC\r\n");
                 continue; // Try again
             }
             
@@ -615,13 +573,11 @@ public:
                 
                 // Wait until CPU is sync'd
                 if (!_waitForCPUSync()) {
-                    mspprintf("DDD\r\n");
                     continue;
                 }
                 
                 // Reset CPU
                 if (!_cpuReset()) {
-                    mspprintf("EEE\r\n");
                     continue; // Try again
                 }
                 
@@ -630,14 +586,12 @@ public:
                 uint16_t deviceID = 0;
                 _readMem(deviceIDAddr, &deviceID, 1);
                 if (deviceID != _DeviceID) {
-                    mspprintf("FFF\r\n");
                     continue; // Try again
                 }
             }
             
             // Disable MPU (so we can write to FRAM)
             if (!_disableMPU()) {
-                mspprintf("GGG\r\n");
                 continue; // Try again
             }
             
@@ -675,7 +629,6 @@ public:
             _crc = addr-2;
             _crcValid = true;
         }
-//        _writeMem(addr, src, len);
         _writeMem(addr, src, len);
     }
     

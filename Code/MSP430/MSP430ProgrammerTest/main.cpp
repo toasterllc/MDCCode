@@ -97,100 +97,19 @@ int main() {
         constexpr uint32_t AddrEnd = 0xFF80;
         constexpr uint32_t Len = (AddrEnd-AddrStart)/2;
         
-        // Reset memory
-        {
-            const uint16_t data[] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
-            _msp.write(AddrStart, data, std::size(data));
-        }
+        mspprintf("Writing\r\n");
+        _msp.resetCRC();
+        _msp.write(AddrStart, (uint16_t*)(0xC000), Len);
+        mspprintf("-> Done\r\n");
         
-        // Read memory
-        {
-            uint16_t data[4] = {};
-            _msp.read(AddrStart, data, std::size(data));
-            mspprintf("Read: ");
-            for (uint16_t& d : data) {
-                mspprintf("%x ", d);
-            }
-            mspprintf("\r\n");
-        }
-        
-        // Test writing/reading/CRC verify
-        {
-//            const uint16_t data[] = {0xCCCC, 0xDDDD};
-            const uint16_t data[] = {0xAAAA, 0xBBBB};
-//            const uint16_t data[] = {0xAAAA, 0xBBBB};
-//            const uint16_t data[] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
-//            const uint16_t data[4] = {0x1111, 0x2222};
-//            const uint16_t data[4] = {0x3333, 0x4444};
-//            const uint16_t data[4] = {0xAAAA, 0xBBBB};
-//            const uint16_t data[4] = {0xFFFF, 0xEEEE};
-            
-            mspprintf("Write: ");
-            for (const uint16_t& d : data) {
-                mspprintf("%x ", d);
-            }
-            mspprintf("\r\n");
-            
-            _msp.write(AddrStart+2, data, std::size(data));
-        }
-        
-        {
-            uint16_t data[4] = {};
-            _msp.read(AddrStart, data, std::size(data));
-            mspprintf("Read: ");
-            for (uint16_t& d : data) {
-                mspprintf("%x ", d);
-            }
-            mspprintf("\r\n");
+        mspprintf("Checking CRC\r\n");
+        s = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
+        mspprintf("-> %d\r\n", (uint8_t)s);
+        if (s != _msp.Status::OK) {
+            for (;;);
         }
         
         for (;;);
-        
-        
-        
-        
-//        uint16_t data[8];
-//        uint16_t x = 0;
-//        for (uint32_t addr=AddrStart; addr<AddrEnd; addr+=sizeof(data)) {
-//            for (uint16_t& d : data) {
-//                d = i;
-//                i++;
-//            }
-//            _msp.write(addr, data, std::size(data));
-//        }
-//        mspprintf("Done\r\n");
-        
-//        mspprintf("Checking CRC...\r\n");
-//        const bool crcOK = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
-//        mspprintf("crcOK = %d\r\n", crcOK);
-//        if (!crcOK) {
-//            for (;;);
-//        }
-        
-        
-        
-//        // Test writing/reading/CRC verify
-//        for (int ii=0; ii<3; ii++)
-//        {
-//            uint16_t data[8];
-//            uint16_t x = 0;
-//            mspprintf("Writing: ");
-//            for (uint16_t& d : data) {
-//                d = i+x;
-//                x++;
-//                mspprintf("%x ", d);
-//            }
-//            mspprintf("\r\n");
-//            
-//            _msp.resetCRC();
-//            _msp.write(AddrStart, data, std::size(data));
-//            const bool crcOK = _msp.verifyCRC(AddrStart, std::size(data));
-//            mspprintf("crcOK = %d\r\n", crcOK);
-//            if (!crcOK) {
-//                for (;;);
-//            }
-//            i++;
-//        }
         
         _msp.disconnect();
         mspprintf("Disconnect\r\n");
