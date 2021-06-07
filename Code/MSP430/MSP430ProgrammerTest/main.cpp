@@ -78,6 +78,9 @@ int main() {
         P1REN   |=  BIT3;
     }
     
+    __delay_cycles(20000000);
+    
+    uint16_t i = 0;
     for (;;) {
         const bool connectOK = _msp.connect();
         mspprintf("Connect: %d\r\n", connectOK);
@@ -90,13 +93,27 @@ int main() {
         
         // Test writing/reading/CRC verify
         {
-            const uint16_t data[4] = {0xBBBB, 0xCCCC, 0xDDDD, 0xEEEE};
+//            const uint16_t data[4] = {0x1111, 0x2222, 0x3333, 0x4444};
+//            const uint16_t data[4] = {0x3333, 0x4444, 0x5555, 0x6666};
+//            const uint16_t data[4] = {0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD};
+//            const uint16_t data[4] = {0xFFFF, 0xEEEE, 0xDDDD, 0xCCCC};
+            uint16_t data[4] = {};
+            for (uint16_t& d : data) {
+                d = i;
+                if (i == 0xFFFF) i = 0x0000;
+                else i += 0x1111;
+            }
+            
             mspprintf("Write: ");
             for (const uint16_t& d : data) {
                 mspprintf("%x ", d);
             }
             mspprintf("\r\n");
-            _msp.write(AddrStart, data, std::size(data));
+//            _msp.write(AddrStart, data, std::size(data));
+            _msp.write(AddrStart+0, data+0, 1);
+            _msp.write(AddrStart+2, data+1, 1);
+            _msp.write(AddrStart+4, data+2, 1);
+            _msp.write(AddrStart+6, data+3, 1);
         }
         
         {

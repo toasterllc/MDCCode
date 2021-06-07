@@ -1,6 +1,9 @@
 #pragma once
 #include <msp430g2553.h>
 #include "GPIO.h"
+extern "C" {
+#include "mspprintf.h"
+}
 
 template <typename GPIOT, typename GPIOR>
 class MSP430 {
@@ -260,7 +263,13 @@ private:
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        _writeMem(0x01CC, 0x5A80);
+        uint16_t wdt = 0;
+        _readMem(0x01CC, &wdt, 1);
+        mspprintf("AAA wdt = %x\r\n", wdt);
+        _writeMemQuick(0x01CC, 0x5A80);
+        _readMem(0x01CC, &wdt, 1);
+        mspprintf("BBB wdt = %x\r\n", wdt);
+//        for (;;);
         
         // Check if device is in Full-Emulation-State and return status
         _shiftIR(_IR_CNTRL_SIG_CAPTURE);
@@ -359,12 +368,47 @@ private:
 //}
     
     
+    
+//    void _writeMemQuick(uint32_t addr, const uint16_t* src, uint32_t len) {
+//        // Word 0 works
+//        _setPC(addr);
+//        _tclkSet(0);
+//        _shiftIR(_IR_CNTRL_SIG_16BIT);
+//        _shiftDR<16>(0x0500);
+//        _shiftIR(_IR_DATA_QUICK);
+//        _tclkSet(1);
+//        
+//        _shiftDR<16>(*src);
+//        src++;
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        
+//        // Words 1,2,3 works
+//        _setPC(addr);
+//        _tclkSet(1);
+//        _shiftIR(_IR_CNTRL_SIG_16BIT);
+//        _shiftDR<16>(0x0500);
+//        _shiftIR(_IR_DATA_QUICK);
+//        
+//        for (; len; len--) {
+//            _shiftDR<16>(*src);
+//            src++;
+//            _tclkSet(0);
+//            _tclkSet(1);
+//        }
+//    }
+    
+    
+    
     void _writeMemQuick(uint32_t addr, const uint16_t* src, uint32_t len) {
-        _setPC(addr);
-        _tclkSet(0);
+        // Word 0 works
+        _setPC(addr-2);
+        _tclkSet(1);
         _shiftIR(_IR_CNTRL_SIG_16BIT);
         _shiftDR<16>(0x0500);
         _shiftIR(_IR_DATA_QUICK);
+        _tclkSet(0);
+        _tclkSet(1);
         
         for (; len; len--) {
             _tclkSet(1);
@@ -372,7 +416,59 @@ private:
             src++;
             _tclkSet(0);
         }
+        
+//        // Words 1,2,3 works
+//        _setPC(addr);
+//        _tclkSet(1);
+//        _shiftIR(_IR_CNTRL_SIG_16BIT);
+//        _shiftDR<16>(0x0500);
+//        _shiftIR(_IR_DATA_QUICK);
+//        
+//        for (; len; len--) {
+//            _shiftDR<16>(*src);
+//            src++;
+//            _tclkSet(0);
+//            _tclkSet(1);
+//        }
     }
+    
+    
+    
+    // Works when writing to WDT register
+//    void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
+//        // Word 0 works
+//        _setPC(addr);
+//        _tclkSet(0);
+//        _shiftIR(_IR_CNTRL_SIG_16BIT);
+//        _shiftDR<16>(0x0500);
+//        _shiftIR(_IR_DATA_QUICK);
+//        _tclkSet(1);
+//        
+//        _shiftDR<16>(*src);
+//        src++;
+//        _tclkSet(0);
+//        _tclkSet(1);
+//    }
+    
+    
+    // Works when writing to FRAM, but seems to fail when writing to WDT register
+//    void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
+//        _setPC(addr-2);
+//        _tclkSet(1);
+//        _shiftIR(_IR_CNTRL_SIG_16BIT);
+//        _shiftDR<16>(0x0500);
+//        _shiftIR(_IR_DATA_QUICK);
+//        _shiftDR<16>(0);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        
+//        for (; len; len--) {
+//            _shiftDR<16>(*src);
+//            src++;
+//            _tclkSet(0);
+//            _tclkSet(1);
+//        }
+//    }
     
     void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
         constexpr uint16_t Poly = 0x0805;
@@ -417,6 +513,10 @@ private:
     
     void _writeMem(uint32_t addr, uint16_t val) {
         _writeMem(addr, &val, 1);
+    }
+    
+    void _writeMemQuick(uint32_t addr, uint16_t val) {
+        _writeMemQuick(addr, &val, 1);
     }
     
     uint16_t _calcCRC(uint32_t addr, uint32_t len) {
