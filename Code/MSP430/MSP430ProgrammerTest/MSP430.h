@@ -219,6 +219,8 @@ private:
         return _shiftDR<20>(0);
     }
     
+    
+    
     void _tclkSet(TCLK tclk) {
         _sbwio(TMS0, tclk, true);
         _tclkSaved = tclk;
@@ -265,11 +267,10 @@ private:
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-//        uint16_t wdt = 0;
-//        _readMem(0x01CC, &wdt, 1);
+//        uint16_t wdt = _readMem(0x01CC);
 //        mspprintf("AAA wdt = %x\r\n", wdt);
         _writeMem(0x01CC, 0x5A80);
-//        _readMem(0x01CC, &wdt, 1);
+//        wdt = _readMem(0x01CC);
 //        mspprintf("BBB wdt = %x\r\n", wdt);
         
         // Check if device is in Full-Emulation-State and return status
@@ -294,14 +295,12 @@ private:
         constexpr uint16_t Password = 0xA500;
         constexpr uint16_t MPUMask = 0x0003;
         constexpr uint16_t MPUDisabled = 0x0000;
-        uint16_t val = 0;
-        _readMem(_SYSCFG0Addr, &val, 1);
-        val &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
-        val |= (Password|MPUDisabled); // Password
-        _writeMem(_SYSCFG0Addr, &val, 1);
+        uint16_t reg = _readMem(_SYSCFG0Addr);
+        reg &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
+        reg |= (Password|MPUDisabled); // Password
+        _writeMem(_SYSCFG0Addr, reg);
         // Verify that the MPU protection bits are cleared
-        _readMem(_SYSCFG0Addr, &val, 1);
-        return (val&MPUMask) == MPUDisabled;
+        return (_readMem(_SYSCFG0Addr)&MPUMask) == MPUDisabled;
     }
     
     // CPU must be in Full-Emulation-State
@@ -344,6 +343,12 @@ private:
             *dst = _shiftDR<16>(0);
             dst++;
         }
+    }
+    
+    uint16_t _readMem(uint32_t addr) {
+        uint16_t r = 0;
+        _readMem(addr, &r, 1);
+        return r;
     }
     
     // This is a custom implementation using the 'quick' writing technique.
@@ -565,26 +570,24 @@ public:
                 continue; // Try again
             }
             
+            // Set device into JTAG mode + read
+            _shiftIR(_IR_CNTRL_SIG_16BIT);
+            _shiftDR<16>(0x1501);
+            
+            // Wait until CPU is sync'd
+            if (!_waitForCPUSync()) {
+                continue;
+            }
+            
+            // Reset CPU
+            if (!_cpuReset()) {
+                continue; // Try again
+            }
+            
             // Validate the Device ID
             {
-                // Set device into JTAG mode + read
-                _shiftIR(_IR_CNTRL_SIG_16BIT);
-                _shiftDR<16>(0x1501);
-                
-                // Wait until CPU is sync'd
-                if (!_waitForCPUSync()) {
-                    continue;
-                }
-                
-                // Reset CPU
-                if (!_cpuReset()) {
-                    continue; // Try again
-                }
-                
-                // Read device ID
                 const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
-                uint16_t deviceID = 0;
-                _readMem(deviceIDAddr, &deviceID, 1);
+                uint16_t deviceID = _readMem(deviceIDAddr);
                 if (deviceID != _DeviceID) {
                     continue; // Try again
                 }
