@@ -75,6 +75,8 @@ private:
     #define _tdio _rst_
     
     TCLK _tclkSaved = TCLK1;
+    uint16_t _crc = 0;
+    bool _crcValid = false;
     
     void _tapReset() {
         // ## Reset JTAG state machine
@@ -247,6 +249,46 @@ private:
         _shiftDR<20>(0);
     }
     
+//    //----------------------------------------------------------------------------
+//    //! \brief This function reads one byte/word from a given address in memory
+//    //! \param[in] word Format (F_BYTE or F_WORD)
+//    //! \param[in] word Addr (address of memory)
+//    //! \return word (content of the addressed memory location)
+//    void _readMem(uint32_t addr, uint16_t* dst, uint32_t len) {
+//        while (len) {
+//            _resetCPU();
+//            _delayMs(1);
+//            
+//            // Check Init State at the beginning
+//            _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+//            if (!(_shiftDR<16>(0) & 0x0301)) {
+//                printf("READMEM NOT IN FES\r\n");
+//                for (;;);
+//            }
+//            
+//            // Read Memory
+//            _tclkSet(0);
+//            _shiftIR(_IR_CNTRL_SIG_16BIT);
+//            _shiftDR<16>(0x0501);             // Set word read
+//            _shiftIR(_IR_ADDR_16BIT);
+//            _shiftDR<20>(addr);                   // Set address
+//            _shiftIR(_IR_DATA_TO_ADDR);
+//            _tclkSet(1);
+//            _tclkSet(0);
+//            
+//            *dst = _shiftDR<16>(0);       // Shift out 16 bits
+//            dst++;
+//            len--;
+//            addr += 2;
+//            
+//            _tclkSet(1);
+//            _tclkSet(0);
+//            _tclkSet(1);
+//            // Processor is now again in Init State
+//        }
+//    }
+    
+    // QUICK VERSION
     void _readMem(uint32_t addr, uint16_t* dst, uint32_t len) {
         _setPC(addr);
         _tclkSet(1);
@@ -262,12 +304,34 @@ private:
             dst++;
         }
         
-        _setPC(_SafePC);
-        _tclkSet(1);
+//        _setPC(_SafePC);
+//        _tclkSet(1);
+//        
+//        // Check Init State at the beginning
+//        _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+//        if (!(_shiftDR<16>(0) & 0x0301)) {
+//            printf("READMEM NOT IN FES AFTER READ\r\n");
+//        }
+//        
+//        _resetCPU();
     }
     
     void _writeMem(uint32_t addr, const uint16_t* src, uint32_t len) {
+        constexpr uint16_t Poly = 0x0805;
         while (len) {
+            // Update CRC
+            {
+                if (_crc & 0x8000) {
+                    _crc ^= Poly;
+                    _crc <<= 1;
+                    _crc |= 0x0001;
+                } else {
+                    _crc <<= 1;
+                }
+                
+                _crc ^= *src;
+            }
+            
             _tclkSet(0);
             _shiftIR(_IR_CNTRL_SIG_16BIT);
             _shiftDR<16>(0x0500);
@@ -297,7 +361,7 @@ private:
         _writeMem(addr, &val, 1);
     }
     
-    uint16_t _calcChecksum(uint32_t addr, uint32_t len) {
+    uint16_t _calcCRC(uint32_t addr, uint32_t len) {
         _resetCPU();
         _setPC(addr);
         _tclkSet(1);
@@ -328,9 +392,9 @@ private:
         }
         
         _shiftIR(_IR_SHIFT_OUT_PSA);
-        const uint16_t checksum = _shiftDR<16>(0);
+        const uint16_t crc = _shiftDR<16>(0);
         _resetCPU();
-        return checksum;
+        return crc;
     }
     
     bool _resetCPU() {
@@ -374,7 +438,6 @@ private:
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        _shiftIR(_IR_CNTRL_SIG_CAPTURE); // TODO: is this necessary?
         _writeMem(0x01CC, 0x5A80);
         
         // Check if device is in Full-Emulation-State and return status
@@ -494,8 +557,9 @@ public:
                     const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
                     uint16_t deviceID = 0;
                     _readMem(deviceIDAddr, &deviceID, 1);
+//                    printf("deviceIDAddr=%X, deviceID=%x\r\n", deviceIDAddr, deviceID);
                     if (deviceID != _DeviceID) {
-                        printf("Bad device ID (deviceIDAddr=%x, deviceID=%x)\r\n", (uint16_t)deviceIDAddr, deviceID);
+                        printf("Bad device ID (deviceIDAddr=%X, deviceID=%x)\r\n", deviceIDAddr, deviceID);
                         continue; // Try again
                     }
                 }
@@ -526,12 +590,21 @@ public:
         _readMem(addr, dst, len);
     }
     
-    void write(uint32_t addr, uint16_t* src, uint32_t len) {
+    void write(uint32_t addr, const uint16_t* src, uint32_t len) {
+        if (!_crcValid) {
+            _crc = addr-2;
+            _crcValid = true;
+        }
         _writeMem(addr, src, len);
     }
     
-    void verify(uint32_t addr, uint32_t len) {
-        const uint16_t checksum = _calcChecksum(addr, len);
-        printf("checksum: %x\r\n", checksum);
+    void resetCRC() {
+        _crcValid = false;
+    }
+    
+    bool verifyCRC(uint32_t addr, uint32_t len) {
+        const uint16_t crc = _calcCRC(addr, len);
+        printf("crc=%x, _crc=%x\r\n", crc, _crc);
+        return crc==_crc;
     }
 };

@@ -18,6 +18,7 @@
  ******************************************************************************/
 
 #include <stdarg.h>
+#include <stdint.h>
 
 int putchar(int c);
 
@@ -61,42 +62,55 @@ static void puth(unsigned n) {
 
 void printf(const char *format, ...)
 {
-	char c;
-	int i;
-	long n;
-
+	int8_t c = 0;
+	int16_t i = 0;
+	int32_t n = 0;
+    
 	va_list a;
 	va_start(a, format);
-	while((c = *format++)) {
-		if(c == '%') {
-			switch(c = *format++) {
+	while ((c = *format++)) {
+		if (c == '%') {
+			switch (c = *format++) {
 				case 's': // String
                     for (const char* s=va_arg(a, const char*); *s; s++) putchar(*s);
 					break;
-				case 'c':// Char
+				case 'c': // Char
 					putchar(va_arg(a, int));
-				break;
-				case 'i':// 16 bit Integer
-				case 'u':// 16 bit Unsigned
+                    break;
+				case 'd': // i16
+				case 'u': // u16
 					i = va_arg(a, int);
-					if(c == 'i' && i < 0) i = -i, putchar('-');
-					xtoa((unsigned)i, dv + 5);
-				break;
-				case 'l':// 32 bit Long
-				case 'n':// 32 bit uNsigned loNg
-					n = va_arg(a, long);
-					if(c == 'l' && n < 0) n = -n, putchar('-');
-					xtoa((unsigned long)n, dv);
-				break;
-				case 'x':// 16 bit heXadecimal
+					if (c == 'd' && i < 0) i = -i, putchar('-');
+					xtoa((uint16_t)i, dv + 5);
+                    break;
+				case 'l': // i32
+				case 'n': // u32
+					n = va_arg(a, int32_t);
+					if (c == 'l' && n < 0) n = -n, putchar('-');
+					xtoa((uint32_t)n, dv);
+                    break;
+				case 'x': // u16, hex
 					i = va_arg(a, int);
 					puth(i >> 12);
 					puth(i >> 8);
 					puth(i >> 4);
 					puth(i);
-				break;
-				case 0: return;
-				default: goto bad_fmt;
+                    break;
+				case 'X': // u32, hex
+					n = va_arg(a, uint32_t);
+					puth(n >> 28);
+					puth(n >> 24);
+					puth(n >> 20);
+					puth(n >> 16);
+					puth(n >> 12);
+					puth(n >> 8);
+					puth(n >> 4);
+					puth(n);
+                    break;
+				case 0:
+                    return;
+				default:
+                    goto bad_fmt;
 			}
 		} else
 			bad_fmt: putchar(c);

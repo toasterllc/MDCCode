@@ -83,10 +83,78 @@ int main() {
     
     for (;;) {
         const bool r = _msp.connect();
-        printf("Connect: %i\r\n", r);
+        printf("Connect: %d\r\n", r);
         __delay_cycles(8000000);
         
-        _msp.verify(0xE300, (0xFFFF-0xE300)/2);
+        constexpr uint16_t DeviceIDAddr = 0x00001A04;
+        constexpr uint16_t AddrStart = 0xE300;
+        constexpr uint16_t AddrEnd = 0xFF7F;
+        constexpr uint16_t Len = (AddrEnd-AddrStart+1)/2;
+        
+//        // Test writing / CRC
+//        {
+//            _msp.resetCRC();
+//            const uint16_t val = 0x1234;
+//            _msp.write(AddrStart, &val, 1);
+//            _msp.verifyCRC(AddrStart, 1);
+//        }
+        
+//        // Test reading
+//        {
+//            uint16_t val = 0;
+//            _msp.read(AddrStart, &val, 1);
+//            printf("val: %x\r\n", val);
+//        }
+        
+        
+        // Test writing/reading
+        {
+            uint16_t val = 0;
+            _msp.read(AddrStart, &val, 1);
+            printf("AAA *AddrStart=%x\r\n", val);
+            
+            _msp.read(DeviceIDAddr, &val, 1);
+            printf("BBB *DeviceIDAddr=%x\r\n", val);
+            
+            val = 0x1234;
+            _msp.write(AddrStart, &val, 1);
+            printf("CCC WROTE\r\n");
+            
+            val = 0;
+            _msp.read(AddrStart, &val, 1);
+            printf("DDD *AddrStart=%x\r\n", val);
+            
+            val = 0x1234;
+            _msp.write(AddrStart, &val, 1);
+            printf("EEE WROTE\r\n");
+            
+            val = 0;
+            _msp.read(AddrStart, &val, 1);
+            printf("FFF *AddrStart=%x\r\n", val);
+            
+            _msp.read(DeviceIDAddr, &val, 1);
+            printf("GGG *DeviceIDAddr=%x\r\n", val);
+            
+            _msp.read(DeviceIDAddr, &val, 1);
+            printf("HHH *DeviceIDAddr=%x\r\n", val);
+            
+            _msp.read(DeviceIDAddr, &val, 1);
+            printf("III *DeviceIDAddr=%x\r\n", val);
+            
+        }
+        
+//        uint16_t val = 0;
+//        _msp.read(AddrStart, &val, 1);
+//        printf("val: %x\r\n", val);
+        
+//        uint16_t val = 0;
+//        _msp.read(AddrStart, &val, 1);
+//        printf("val: %x\r\n", val);
+//        
+//        _msp.verifyCRC(AddrStart, 1);
+//        
+//        _msp.write(AddrStart, );
+//        _msp.verifyCRC(AddrStart, 1);
         
         _msp.disconnect();
         printf("Disconnect\r\n");
