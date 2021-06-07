@@ -1,6 +1,5 @@
 #pragma once
 #include "Assert.h"
-#include "Util.h"
 #include "stm32f7xx.h"
 
 class SystemClock {
@@ -20,8 +19,8 @@ public:
             cfg.PLL.PLLState = RCC_PLL_ON;
             cfg.PLL.PLLSource = RCC_PLLSOURCE_HSE;
             cfg.PLL.PLLM = 12;
-            cfg.PLL.PLLN = 96;
-            cfg.PLL.PLLP = RCC_PLLP_DIV6;
+            cfg.PLL.PLLN = 128;
+            cfg.PLL.PLLP = RCC_PLLP_DIV2;
             cfg.PLL.PLLQ = 2;
             
             HAL_StatusTypeDef hr = HAL_RCC_OscConfig(&cfg);
@@ -37,7 +36,7 @@ public:
             cfg.APB1CLKDivider = RCC_HCLK_DIV4;
             cfg.APB2CLKDivider = RCC_HCLK_DIV2;
             
-            HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_1);
+            HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
             Assert(hr == HAL_OK);
         }
         
