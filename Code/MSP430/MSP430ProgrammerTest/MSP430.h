@@ -26,14 +26,8 @@ private:
     static constexpr TCLK TCLKX = 0; // Don't care
     
     static constexpr uint8_t _Reverse(uint8_t x) {
-        return  (x&(1<<7))>>7 |
-                (x&(1<<6))>>5 |
-                (x&(1<<5))>>3 |
-                (x&(1<<4))>>1 |
-                (x&(1<<3))<<1 |
-                (x&(1<<2))<<3 |
-                (x&(1<<1))<<5 |
-                (x&(1<<0))<<7 ;
+        return (x&(1<<7))>>7 | (x&(1<<6))>>5 | (x&(1<<5))>>3 | (x&(1<<4))>>1 |
+               (x&(1<<3))<<1 | (x&(1<<2))<<3 | (x&(1<<1))<<5 | (x&(1<<0))<<7 ;
     }
     
     static constexpr uint8_t _IR_CNTRL_SIG_16BIT    = _Reverse(0x13);
@@ -461,69 +455,51 @@ public:
             }
             
             // ## Reset JTAG state machine (test access port, TAP)
-            {
-                _tapReset();
-            }
+            _tapReset();
             
             // ## Validate the JTAG ID
-            {
-                if (_readJTAGID() != _JTAGID) {
-                    continue; // Try again
-                }
+            if (_readJTAGID() != _JTAGID) {
+                continue; // Try again
             }
             
             // ## Check JTAG fuse blown state
-            {
-                if (_readJTAGFuseBlown()) {
-                    continue; // Try again
-                }
+            if (_readJTAGFuseBlown()) {
+                continue; // Try again
             }
             
             // ## Validate the Core ID
-            {
-                if (_readCoreID() == 0) {
-                    continue; // Try again
-                }
+            if (_readCoreID() == 0) {
+                continue; // Try again
             }
             
             // ## Validate the Device ID
             {
                 // Set device into JTAG mode + read
-                {
-                    _shiftIR(_IR_CNTRL_SIG_16BIT);
-                    _shiftDR<16>(0x1501);
-                }
+                _shiftIR(_IR_CNTRL_SIG_16BIT);
+                _shiftDR<16>(0x1501);
                 
                 // Wait until CPU is sync'd
-                {
-                    if (!_waitForCPUSync()) {
-                        continue;
-                    }
+                if (!_waitForCPUSync()) {
+                    continue;
                 }
                 
                 // Reset CPU
-                {
-                    if (!_resetCPU()) {
-                        continue; // Try again
-                    }
+                if (!_resetCPU()) {
+                    continue; // Try again
                 }
                 
                 // Read device ID
-                {
-                    const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
-                    uint16_t deviceID = 0;
-                    _readMem(deviceIDAddr, &deviceID, 1);
-                    if (deviceID != _DeviceID) {
-                        continue; // Try again
-                    }
+                const uint32_t deviceIDAddr = _readDeviceIDAddr()+4;
+                uint16_t deviceID = 0;
+                _readMem(deviceIDAddr, &deviceID, 1);
+                if (deviceID != _DeviceID) {
+                    continue; // Try again
                 }
-                
-                // Disable MPU
-                {
-                    if (!_disableMPU()) {
-                        continue; // Try again
-                    }
-                }
+            }
+            
+            // Disable MPU (so we can write to FRAM)
+            if (!_disableMPU()) {
+                continue; // Try again
             }
             
             // Nothing failed!
