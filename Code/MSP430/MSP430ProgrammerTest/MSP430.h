@@ -224,7 +224,7 @@ private:
         _tclkSaved = tclk;
     }
     
-    bool _resetCPU() {
+    bool _cpuReset() {
         // One clock to empty the pipe
         _tclkSet(0);
         _tclkSet(1);
@@ -567,13 +567,6 @@ private:
         return _shiftDR<16>(0);
     }
     
-//    void _erase() {
-//        _shiftIR(_IR_JMB_EXCHANGE);
-//        _shiftDR<16>(0xA55A); // Magic pattern
-//        _shiftDR<16>(0x1A1A); // Erase
-////        _delayMs(100); // Wait for erase to complete
-//    }
-    
     
     void EntrySequences_RstLow_SBW()
     {
@@ -600,35 +593,6 @@ private:
         // for Spy-Bi-Wire
         _test.write(1);      //7
         _delayUs(40);
-        _delayMs(5);
-    }
-    
-    void EntrySequences_RstHigh_SBW()
-    {
-        _test.write(0);    //1
-        _delayMs(4); // reset TEST logic
-
-        _rst_.write(1);    //2
-        
-        _test.write(1);    //3
-        _delayMs(20); // activate TEST logic
-
-        // phase 1
-        _rst_.write(1);    //4
-        _delayUs(60);
-
-        // phase 2 -> TEST pin to 0, no change on RST pin
-        // for Spy-Bi-Wire
-        _test.write(0);  
-
-        // phase 3
-        _delayUs(1);
-        // phase 4 -> TEST pin to 1, no change on RST pin
-        // for Spy-Bi-Wire
-        _test.write(1);  
-        _delayUs(60);
-
-        // phase 5
         _delayMs(5);
     }
     
@@ -693,7 +657,7 @@ private:
             for (;;);
         }
         
-        _resetCPU();
+        _cpuReset();
     }
     
     void _erase() {
@@ -702,7 +666,6 @@ private:
         _delayMs(200);
         
         EntrySequences_RstLow_SBW();
-        
         _tapReset();
         
         i_WriteJmbIn32(0xA55A, 0x1A1A);
@@ -711,13 +674,26 @@ private:
         _rst_.write(1);
         _delayMs(200);
         
-        EntrySequences_RstHigh_SBW();
-        _tapReset();
-        _delayMs(60);
-        
-        SyncJtag_AssertPor();
+//        EntrySequences_RstHigh_SBW();
+//        _tapReset();
+//        _delayMs(60);
+//        
+//        SyncJtag_AssertPor();
     }
     
+//    void _erase() {
+//        i_WriteJmbIn32(0xA55A, 0x1A1A);
+//        // restart device
+//        _test.write(0);
+//        _rst_.write(1);
+//        _delayMs(200);
+//        
+//        EntrySequences_RstHigh_SBW();
+//        _tapReset();
+//        _delayMs(60);
+//        
+//        SyncJtag_AssertPor();
+//    }
     
 public:
     MSP430(GPIOT& test, GPIOR& rst_) :
@@ -801,7 +777,7 @@ public:
                 }
                 
                 // Reset CPU
-                if (!_resetCPU()) {
+                if (!_cpuReset()) {
                     mspprintf("EEE\r\n");
                     continue; // Try again
                 }
