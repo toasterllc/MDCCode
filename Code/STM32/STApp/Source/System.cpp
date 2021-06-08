@@ -115,11 +115,15 @@ void System::init() {
 //        mspprintf("Connecting\r\n");
         auto s = _msp.connect();
 //        mspprintf("-> %d\r\n", (uint8_t)s);
-        if (s == _msp.Status::JTAGDisabled) {
-//            mspprintf("JTAG disabled; attempting erase...\r\n");
-            s = _msp.erase();
-//            mspprintf("-> %d\r\n", (uint8_t)s);
-            continue;
+        if (s != _msp.Status::OK) {
+            if (s == _msp.Status::JTAGDisabled) {
+    //            mspprintf("JTAG disabled; attempting erase...\r\n");
+                s = _msp.erase();
+    //            mspprintf("-> %d\r\n", (uint8_t)s);
+                continue;
+            } else {
+                abort();
+            }
         }
         
         constexpr uint32_t AddrStart = 0xE300;
