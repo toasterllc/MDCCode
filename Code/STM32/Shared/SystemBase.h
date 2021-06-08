@@ -1,5 +1,6 @@
 #include "GPIO.h"
 #include "SystemClock.h"
+#include "MSP430.h"
 
 template <typename T>
 class SystemBase {
@@ -28,15 +29,15 @@ protected:
         __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         
         // Configure our LEDs
-        _mspTest.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _mspRst_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
+    using MSPTest = GPIO<GPIOPortE, GPIO_PIN_12>;
+    using MSPRst_ = GPIO<GPIOPortE, GPIO_PIN_15>;
+    MSP430<MSPTest,MSPRst_,SystemClock::CPUFreqMHz> _msp;
+    
     // LEDs
-    GPIO<GPIOPortE, GPIO_PIN_12> _mspTest;
-    GPIO<GPIOPortE, GPIO_PIN_15> _mspRst_;
     GPIO<GPIOPortB, GPIO_PIN_10> _led2;
     GPIO<GPIOPortB, GPIO_PIN_11> _led3;
 };

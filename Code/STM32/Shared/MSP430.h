@@ -1,30 +1,10 @@
 #pragma once
-#include <msp430g2553.h>
 #include "GPIO.h"
+#include "IRQState.h"
 
-template <typename GPIOT, typename GPIOR, uint8_t CPUFreq>
+template <typename GPIOTest, typename GPIORst_, uint8_t CPUFreqMHz>
 class MSP430 {
 private:
-    using TMS = bool;
-    static constexpr TMS TMS0 = 0;
-    static constexpr TMS TMS1 = 1;
-    static constexpr TMS TMSX = 0; // Don't care
-    
-    using TDI = bool;
-    static constexpr TDI TDI0 = 0;
-    static constexpr TDI TDI1 = 1;
-    static constexpr TDI TDIX = 0; // Don't care
-    
-    using TDO = bool;
-    static constexpr TDO TDO0 = 0;
-    static constexpr TDO TDO1 = 1;
-    static constexpr TDO TDOX = 0; // Don't care
-    
-    using TCLK = bool;
-    static constexpr TCLK TCLK0 = 0;
-    static constexpr TCLK TCLK1 = 1;
-    static constexpr TCLK TCLKX = 0; // Don't care
-    
     static constexpr uint8_t _Reverse(uint8_t x) {
         return (x&(1<<7))>>7 | (x&(1<<6))>>5 | (x&(1<<5))>>3 | (x&(1<<4))>>1 |
                (x&(1<<3))<<1 | (x&(1<<2))<<3 | (x&(1<<1))<<5 | (x&(1<<0))<<7 ;
@@ -56,8 +36,10 @@ private:
     static constexpr uint32_t _SafePC               = 0x00000004;
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
     
-    #define CPUFreqMHz 16
-    #define _delayUs(us) __delay_cycles(CPUFreqMHz*us);
+    static void _delayUs(uint32_t us) {
+        const uint32_t cycles = CPUFreqMHz*us;
+        for (volatile uint32_t i=0; i<cycles; i++);
+    }
     
     static void _delayMs(uint32_t ms) {
         IRQState irq;
@@ -65,54 +47,54 @@ private:
         HAL_Delay(ms);
     }
     
-    GPIOT& _test;
-    GPIOR& _rst_;
-    #define _tck _test
-    #define _tdio _rst_
+    GPIOTest _test;
+    GPIORst_ _rst_;
+    GPIOTest _tck;
+    GPIORst_ _tdio;
     
-    TCLK _tclkSaved = TCLK1;
+    bool _tclkSaved = 1;
     uint16_t _crc = 0;
     bool _crcValid = false;
     
     void _tapReset() {
-        // ## Reset JTAG state machine
+        // Reset JTAG state machine
         // TMS=1 for 6 clocks
         for (int i=0; i<6; i++) {
-            _sbwio(TMS1, TDIX);
+            _sbwio(1, 0);
         }
         // <-- Test-Logic-Reset
         
         // TMS=0 for 1 clock
-        _sbwio(TMS0, TDIX);
+        _sbwio(0, 0);
         // <-- Run-Test/Idle
     }
     
     void _startShiftIR() {
         // <-- Run-Test/Idle
-        _sbwio(TMS1, _tclkSaved);
+        _sbwio(1, _tclkSaved);
         // <-- Select DR-Scan
-        _sbwio(TMS1, TDI1);
+        _sbwio(1, 1);
         // <-- Select IR-Scan
-        _sbwio(TMS0, TDI1);
+        _sbwio(0, 1);
         // <-- Capture-IR
-        _sbwio(TMS0, TDI1);
+        _sbwio(0, 1);
         // <-- Shift-IR
     }
     
     void _startShiftDR() {
         // <-- Run-Test/Idle
-        _sbwio(TMS1, _tclkSaved);
+        _sbwio(1, _tclkSaved);
         // <-- Select DR-Scan
-        _sbwio(TMS0, TDI1);
+        _sbwio(0, 1);
         // <-- Capture-IR
-        _sbwio(TMS0, TDI1);
+        _sbwio(0, 1);
         // <-- Shift-DR
     }
     
     // Perform a single Spy-bi-wire I/O cycle
     __attribute__((noinline))
-    uint8_t _sbwio(TMS tms, TDI tdi, bool restoreSavedTCLK=false) {
-        // ## Write TMS
+    bool _sbwio(bool tms, bool tdi, bool restoreSavedTCLK=false) {
+        // Write TMS
         {
             _tdio.write(tms);
             _delayUs(0);
@@ -131,7 +113,7 @@ private:
             _delayUs(0);
         }
         
-        // ## Write TDI
+        // Write TDI
         {
             _tdio.write(tdi);
             _delayUs(0);
@@ -141,12 +123,12 @@ private:
             
             _tck.write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
-            _tdio.config(0);
+            _tdio.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
             _delayUs(0);
         }
         
-        // ## Read TDO
-        uint8_t tdo = TDO0;
+        // Read TDO
+        bool tdo = 0;
         {
             _tck.write(0);
             _delayUs(0);
@@ -156,7 +138,7 @@ private:
             _delayUs(0);
             
             // Start driving SBWTDIO again
-            _tdio.config(1);
+            _tdio.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         }
         
         return tdo;
@@ -170,16 +152,16 @@ private:
         // <-- Shift-DR / Shift-IR
         uint32_t din = 0;
         for (uint8_t i=0; i<W; i++) {
-            const TMS tms = (i<(W-1) ? TMS0 : TMS1); // Final bit needs TMS=1
+            const bool tms = (i<(W-1) ? 0 : 1); // Final bit needs TMS=1
             din <<= 1;
             din |= _sbwio(tms, dout&mask);
             dout <<= 1;
         }
         
         // <-- Exit1-DR / Exit1-IR
-        _sbwio(TMS1, TDO1);
+        _sbwio(1, 1);
         // <-- Update-DR / Update-IR
-        _sbwio(TMS0, _tclkSaved);
+        _sbwio(0, _tclkSaved);
         // <-- Run-Test/Idle
         
         return din;
@@ -216,8 +198,8 @@ private:
         return _shiftDR<20>(0);
     }
     
-    void _tclkSet(TCLK tclk) {
-        _sbwio(TMS0, tclk, true);
+    void _tclkSet(bool tclk) {
+        _sbwio(0, tclk, true);
         _tclkSaved = tclk;
     }
     
@@ -439,17 +421,17 @@ private:
         
         for (uint32_t i=0; i<len; i++) {
             _tclkSet(0);
-            _sbwio(TMS1, TDI1);
+            _sbwio(1, 1);
             // <- Select DR-Scan
-            _sbwio(TMS0, TDI1);
+            _sbwio(0, 1);
             // <- Capture-DR
-            _sbwio(TMS0, TDI1);
+            _sbwio(0, 1);
             // <- Shift-DR
-            _sbwio(TMS1, TDI1);
+            _sbwio(1, 1);
             // <- Exit1-DR
-            _sbwio(TMS1, TDI1);
+            _sbwio(1, 1);
             // <- Update-DR
-            _sbwio(TMS0, TDI1);
+            _sbwio(0, 1);
             // <- Run-Test/Idle
             _tclkSet(1);
         }
@@ -479,20 +461,23 @@ private:
     }
     
     void _jtagStart(bool rst_) {
-        // ## Reset pin states
+        // Reset pin states
         {
+            _test.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _rst_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            
             _test.write(0);
             _rst_.write(1);
             _delayMs(10);
         }
         
-        // ## Reset the MSP430 so that it starts from a known state
+        // Reset the MSP430 so that it starts from a known state
         {
             _rst_.write(0);
             _delayUs(0);
         }
         
-        // ## Enable test mode
+        // Enable test mode
         {
             // Apply the supplied reset state, `rst_`
             _rst_.write(rst_);
@@ -502,7 +487,7 @@ private:
             _delayMs(1);
         }
         
-        // ## Choose 2-wire/Spy-bi-wire mode
+        // Choose 2-wire/Spy-bi-wire mode
         {
             // TDIO=1 while applying a single clock to TCK
             _tdio.write(1);
@@ -534,9 +519,7 @@ public:
         JTAGDisabled,
     };
     
-    MSP430(GPIOT& test, GPIOR& rst_) :
-    _test(test), _rst_(rst_)
-    {}
+    MSP430() {}
     
     Status connect() {
         for (int i=0; i<3; i++) {
