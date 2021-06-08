@@ -852,8 +852,8 @@ void System::_handleCmd(const USB::Cmd& ev) {
         switch (cmd.arg.ledSet.idx) {
 //        case 0: _led0.write(cmd.arg.ledSet.on); break;
 //        case 1: _led1.write(cmd.arg.ledSet.on); break;
-        case 2: _led2.write(cmd.arg.ledSet.on); break;
-        case 3: _led3.write(cmd.arg.ledSet.on); break;
+        case 2: _LED2::Write(cmd.arg.ledSet.on); break;
+        case 3: _LED3::Write(cmd.arg.ledSet.on); break;
         }
         
         break;
@@ -1193,8 +1193,8 @@ void System::_pixCapture() {
     for (bool x=true;; x=!x) {
 //        _led0.write(x);
 //        _led1.write(x);
-        _led2.write(x);
-        _led3.write(x);
+        _LED2::Write(x);
+        _LED3::Write(x);
         HAL_Delay(500);
     }
 }

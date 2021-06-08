@@ -2,7 +2,7 @@
 #include "GPIO.h"
 #include "IRQState.h"
 
-template <typename GPIOTest, typename GPIORst_, uint8_t CPUFreqMHz>
+template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
 class MSP430 {
 private:
     static constexpr uint8_t _Reverse(uint8_t x) {
@@ -36,21 +36,19 @@ private:
     static constexpr uint32_t _SafePC               = 0x00000004;
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
     
-    static void _delayUs(uint32_t us) {
+    static void _DelayUs(uint32_t us) {
         const uint32_t cycles = CPUFreqMHz*us;
         for (volatile uint32_t i=0; i<cycles; i++);
     }
     
-    static void _delayMs(uint32_t ms) {
+    static void _DelayMs(uint32_t ms) {
         IRQState irq;
         irq.enable();
         HAL_Delay(ms);
     }
     
-    GPIOTest _test;
-    GPIORst_ _rst_;
-    GPIOTest _tck;
-    GPIORst_ _tdio;
+    using _TCK = Test;
+    using _TDIO = Rst_;
     
     bool _tclkSaved = 1;
     uint16_t _crc = 0;
@@ -96,49 +94,49 @@ private:
     bool _sbwio(bool tms, bool tdi, bool restoreSavedTCLK=false) {
         // Write TMS
         {
-            _tdio.write(tms);
-            _delayUs(0);
+            _TDIO::Write(tms);
+            _DelayUs(0);
             
-            _tck.write(0);
-            _delayUs(0);
+            _TCK::Write(0);
+            _DelayUs(0);
             
             if (restoreSavedTCLK) {
                 // Restore saved value of TCLK during TCK=0 period.
                 // "To provide only a falling edge for ClrTCLK, the SBWTDIO signal
                 // must be set high before entering the TDI slot."
-                _tdio.write(_tclkSaved);
+                _TDIO::Write(_tclkSaved);
             }
             
-            _tck.write(1);
-            _delayUs(0);
+            _TCK::Write(1);
+            _DelayUs(0);
         }
         
         // Write TDI
         {
-            _tdio.write(tdi);
-            _delayUs(0);
+            _TDIO::Write(tdi);
+            _DelayUs(0);
             
-            _tck.write(0);
-            _delayUs(0);
+            _TCK::Write(0);
+            _DelayUs(0);
             
-            _tck.write(1);
+            _TCK::Write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
-            _tdio.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-            _delayUs(0);
+            _TDIO::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _DelayUs(0);
         }
         
         // Read TDO
         bool tdo = 0;
         {
-            _tck.write(0);
-            _delayUs(0);
+            _TCK::Write(0);
+            _DelayUs(0);
             // Read the TDO value, driven by the slave, while SBWTCK=0
-            tdo = _tdio.read();
-            _tck.write(1);
-            _delayUs(0);
+            tdo = _TDIO::Read();
+            _TCK::Write(1);
+            _DelayUs(0);
             
             // Start driving SBWTDIO again
-            _tdio.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _TDIO::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         }
         
         return tdo;
@@ -463,53 +461,53 @@ private:
     void _jtagStart(bool rst_) {
         // Reset pin states
         {
-            _test.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-            _rst_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            Rst_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
             
-            _test.write(0);
-            _rst_.write(1);
-            _delayMs(10);
+            Test::Write(0);
+            Rst_::Write(1);
+            _DelayMs(10);
         }
         
         // Reset the MSP430 so that it starts from a known state
         {
-            _rst_.write(0);
-            _delayUs(0);
+            Rst_::Write(0);
+            _DelayUs(0);
         }
         
         // Enable test mode
         {
             // Apply the supplied reset state, `rst_`
-            _rst_.write(rst_);
-            _delayUs(0);
+            Rst_::Write(rst_);
+            _DelayUs(0);
             // Assert TEST
-            _test.write(1);
-            _delayMs(1);
+            Test::Write(1);
+            _DelayMs(1);
         }
         
         // Choose 2-wire/Spy-bi-wire mode
         {
             // TDIO=1 while applying a single clock to TCK
-            _tdio.write(1);
-            _delayUs(0);
+            _TDIO::Write(1);
+            _DelayUs(0);
             
-            _tck.write(0);
-            _delayUs(0);
-            _tck.write(1);
-            _delayUs(0);
+            _TCK::Write(0);
+            _DelayUs(0);
+            _TCK::Write(1);
+            _DelayUs(0);
         }
     }
     
     void _jtagEnd() {
         // Deassert TEST
-        _test.write(0);
-        _delayMs(1);
+        Test::Write(0);
+        _DelayMs(1);
         
         // Pulse reset
-        _rst_.write(0);
-        _delayUs(0);
-        _rst_.write(1);
-        _delayUs(0);
+        Rst_::Write(0);
+        _DelayUs(0);
+        Rst_::Write(1);
+        _DelayUs(0);
     }
     
 public:

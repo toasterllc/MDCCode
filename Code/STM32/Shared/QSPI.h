@@ -44,16 +44,16 @@ private:
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
     
-    GPIO<GPIOPortB, GPIO_PIN_2>  _clk;
-    GPIO<GPIOPortB, GPIO_PIN_6>  _cs;
-    GPIO<GPIOPortC, GPIO_PIN_9>  _d0;
-    GPIO<GPIOPortC, GPIO_PIN_10> _d1;
-    GPIO<GPIOPortF, GPIO_PIN_7>  _d2;
-    GPIO<GPIOPortF, GPIO_PIN_6>  _d3;
-    GPIO<GPIOPortH, GPIO_PIN_2>  _d4;
-    GPIO<GPIOPortH, GPIO_PIN_3>  _d5;
-    GPIO<GPIOPortG, GPIO_PIN_9>  _d6;
-    GPIO<GPIOPortG, GPIO_PIN_14> _d7;
+    using _Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
+    using _CS = GPIO<GPIOPortB, GPIO_PIN_6>;
+    using _D0 = GPIO<GPIOPortC, GPIO_PIN_9>;
+    using _D1 = GPIO<GPIOPortC, GPIO_PIN_10>;
+    using _D2 = GPIO<GPIOPortF, GPIO_PIN_7>;
+    using _D3 = GPIO<GPIOPortF, GPIO_PIN_6>;
+    using _D4 = GPIO<GPIOPortH, GPIO_PIN_2>;
+    using _D5 = GPIO<GPIOPortH, GPIO_PIN_3>;
+    using _D6 = GPIO<GPIOPortG, GPIO_PIN_9>;
+    using _D7 = GPIO<GPIOPortG, GPIO_PIN_14>;
     
     void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device);
     friend void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device);

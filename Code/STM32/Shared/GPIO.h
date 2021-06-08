@@ -22,7 +22,7 @@ GPIOPort(GPIOPortI, GPIOI_BASE);
 template <GPIO_TypeDef& Port, uint16_t Pin>
 class GPIO {
 public:
-    void config(uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alt) {
+    static void Config(uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alt) {
         GPIO_InitTypeDef cfg = {
             .Pin = Pin,
             .Mode = mode,
@@ -34,11 +34,11 @@ public:
         HAL_GPIO_Init(&Port, &cfg);
     }
     
-    bool read() {
+    static bool Read() {
         return HAL_GPIO_ReadPin(&Port, Pin)==GPIO_PIN_SET;
     }
     
-    void write(bool x) {
+    static void Write(bool x) {
         HAL_GPIO_WritePin(&Port, Pin, (x ? GPIO_PIN_SET : GPIO_PIN_RESET));
     }
 };
