@@ -4,12 +4,7 @@
 template <typename T>
 class SystemBase {
 public:
-    SystemBase() :
-    _mspTest(GPIOE, GPIO_PIN_12),
-    _mspRst_(GPIOE, GPIO_PIN_15),
-    _led2(GPIOB, GPIO_PIN_10),
-    _led3(GPIOB, GPIO_PIN_11) {
-    }
+    SystemBase() {}
 
 protected:
     void init() {
@@ -40,8 +35,8 @@ protected:
     }
     
     // LEDs
-    GPIO _mspTest;
-    GPIO _mspRst_;
-    GPIO _led2;
-    GPIO _led3;
+    GPIO<GPIOPortE, GPIO_PIN_12> _mspTest;
+    GPIO<GPIOPortE, GPIO_PIN_15> _mspRst_;
+    GPIO<GPIOPortB, GPIO_PIN_10> _led2;
+    GPIO<GPIOPortB, GPIO_PIN_11> _led3;
 };
