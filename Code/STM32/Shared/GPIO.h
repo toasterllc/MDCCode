@@ -1,15 +1,23 @@
 #pragma once
 #include "stm32f7xx.h"
+#include "Util.h"
 
-extern "C" GPIO_TypeDef GPIOPortA;
-extern "C" GPIO_TypeDef GPIOPortB;
-extern "C" GPIO_TypeDef GPIOPortC;
-extern "C" GPIO_TypeDef GPIOPortD;
-extern "C" GPIO_TypeDef GPIOPortE;
-extern "C" GPIO_TypeDef GPIOPortF;
-extern "C" GPIO_TypeDef GPIOPortG;
-extern "C" GPIO_TypeDef GPIOPortH;
-extern "C" GPIO_TypeDef GPIOPortI;
+#define GPIOPort(name, addr)                            \
+    extern "C" GPIO_TypeDef name;                       \
+    __asm__(                                            \
+        ".global " #name                        "\n"    \
+        ".equ    " #name ", " Stringify(addr)   "\n"    \
+    )
+
+GPIOPort(GPIOPortA, GPIOA_BASE);
+GPIOPort(GPIOPortB, GPIOB_BASE);
+GPIOPort(GPIOPortC, GPIOC_BASE);
+GPIOPort(GPIOPortD, GPIOD_BASE);
+GPIOPort(GPIOPortE, GPIOE_BASE);
+GPIOPort(GPIOPortF, GPIOF_BASE);
+GPIOPort(GPIOPortG, GPIOG_BASE);
+GPIOPort(GPIOPortH, GPIOH_BASE);
+GPIOPort(GPIOPortI, GPIOI_BASE);
 
 template <GPIO_TypeDef& Port, uint16_t Pin>
 class GPIO {
