@@ -1,0 +1,13 @@
+set_io clk24mhz            C11      -pullup no
+
+set_io led[0]              E3       -pullup no
+set_io led[1]              F3       -pullup no
+set_io led[2]              F4       -pullup no
+set_io led[3]              G3       -pullup no
+
+set_io sd_clk              K4       -pullup no
+set_io sd_cmd              L3       -pullup no
+set_io sd_dat[0]           L2       -pullup no
+set_io sd_dat[1]           K3       -pullup no
+set_io sd_dat[2]           L5       -pullup no
+set_io sd_dat[3]           L4       -pullup no
