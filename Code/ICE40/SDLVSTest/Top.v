@@ -77,20 +77,30 @@ module Top(
         
         case (state)
         0: begin
-            led <= 4'h8;
-            state <= 1;
+            sd_clk <= 0;
+            
+            sd_cmdOut <= 0;
+            sd_cmdOutEn <= 1;
+            
+            sd_datOut <= 0;
+            sd_datOutEn <= 1;
         end
         
         1: begin
+            led <= 4'h8;
+            state <= state+1;
+        end
+        
+        2: begin
             if (slowClkPulse) begin
                 led <= led-1;
                 if (led === 4'h1) begin
-                    state <= 2;
+                    state <= state+1;
                 end
             end
         end
         
-        2: begin
+        3: begin
             // led <= ~led;
         end
         endcase
