@@ -22,7 +22,7 @@ module Top(
     // ====================
     // Slow Clock (1.4 Hz)
     // ====================
-    reg[18:0] slowClkCounter = 0;
+    reg[17:0] slowClkCounter = 0;
     always @(posedge clk) begin
         slowClkCounter <= slowClkCounter+1;
     end
@@ -71,7 +71,7 @@ module Top(
     // ====================
     // State Machine
     // ====================
-    reg[1:0] state = 0;
+    reg[7:0] state = 0;
     always @(posedge clk) begin
         prevSlowClk <= slowClk;
         
@@ -82,12 +82,14 @@ module Top(
             sd_cmdOut <= 0;
             sd_cmdOutEn <= 1;
             
-            sd_datOut <= 0;
-            sd_datOutEn <= 1;
+            sd_datOut <= 4'b0000;
+            sd_datOutEn <= 4'b1111;
+            
+            state <= state+1;
         end
         
         1: begin
-            led <= 4'h8;
+            led <= 4'b0111;
             state <= state+1;
         end
         
@@ -101,25 +103,42 @@ module Top(
         end
         
         3: begin
-            // led <= ~led;
+            led <= 4'b1111;
+            if (slowClkPulse) begin
+                state <= state+1;
+            end
+        end
+        
+        4: begin
+            led <= 0;
+            // Let go of DAT2 so it gets pulled up
+            sd_datOutEn[2] <= 0;
+            state <= state+1;
+        end
+        
+        5: begin
+            // Wait state
+            state <= state+1;
+        end
+        
+        6: begin
+            // Wait state
+            state <= state+1;
+        end
+        
+        7: begin
+            // Wait state
+            state <= state+1;
+        end
+        
+        8: begin
+            if (slowClkPulse) begin
+                led[3] <= ~led[3];
+                led[2] <= ~led[2];
+                led[1] <= ~led[1];
+            end
+            led[0] <= sd_datIn[2];
         end
         endcase
     end
-    
-    // // ====================
-    // // Slow Clock (375 kHz)
-    // // ====================
-    // reg[23:0] wideCounter = 0;
-    // always @(posedge clk24mhz) begin
-    //     led <= `LeftBits(wideCounter, 0, 4);
-    //     wideCounter <= wideCounter+1;
-    // end
-    
-    // // ====================
-    // // Nets
-    // // ====================
-    // assign led[3:0] = {4{fastClk}};
-    // assign sd_clk = fastClk;
-    // assign sd_cmd = fastClk;
-    // assign sd_dat[3:0] = {4{fastClk}};
 endmodule
