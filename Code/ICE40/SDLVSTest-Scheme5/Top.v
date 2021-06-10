@@ -68,12 +68,15 @@ module Top(
     reg prevSlowClk = 0;
     wire slowClkPulse = slowClk && !prevSlowClk;
     
+    reg[2:0] pulseCounter = 0;
+    
     // ====================
     // State Machine
     // ====================
     reg[7:0] state = 0;
     always @(posedge clk) begin
         prevSlowClk <= slowClk;
+        pulseCounter <= pulseCounter-1;
         
         case (state)
         0: begin
@@ -109,29 +112,31 @@ module Top(
             end
         end
         
+        // Start LVS identification
         4: begin
             led <= 0;
-            // Let go of DAT2 so it gets pulled up
-            sd_datOutEn[2] <= 0;
+            // Start clock pulse
+            sd_clk <= 1;
+            pulseCounter <= ~0;
             state <= state+1;
         end
         
         5: begin
-            // Wait state
-            state <= state+1;
+            // Wait until pulse is complete
+            if (!pulseCounter) begin
+                state <= state+1;
+            end
         end
         
         6: begin
-            // Wait state
+            // End clock pulse
+            sd_clk <= 0;
+            // Stop driving DAT2, since the SD card is about to start driving it high
+            sd_datOutEn[2] <= 0;
             state <= state+1;
         end
         
         7: begin
-            // Wait state
-            state <= state+1;
-        end
-        
-        8: begin
             if (slowClkPulse) begin
                 led[3] <= ~led[3];
                 led[2] <= ~led[2];
