@@ -68,7 +68,7 @@ module Top(
     reg prevSlowClk = 0;
     wire slowClkPulse = slowClk && !prevSlowClk;
     
-    reg[2:0] pulseCounter = 0;
+    reg[11:0] delay = 0;
     
     // ====================
     // State Machine
@@ -76,7 +76,7 @@ module Top(
     reg[7:0] state = 0;
     always @(posedge clk) begin
         prevSlowClk <= slowClk;
-        pulseCounter <= pulseCounter-1;
+        delay <= delay-1;
         
         case (state)
         0: begin
@@ -117,13 +117,13 @@ module Top(
             led <= 0;
             // Start clock pulse
             sd_clk <= 1;
-            pulseCounter <= ~0;
+            delay <= 3'h7;
             state <= state+1;
         end
         
         5: begin
             // Wait until pulse is complete
-            if (!pulseCounter) begin
+            if (!delay) begin
                 state <= state+1;
             end
         end
@@ -131,12 +131,20 @@ module Top(
         6: begin
             // End clock pulse
             sd_clk <= 0;
-            // Stop driving DAT2, since the SD card is about to start driving it high
-            sd_datOutEn[2] <= 0;
+            // Delay
+            delay <= ~0;
             state <= state+1;
         end
         
         7: begin
+            if (!delay) begin
+                // Stop driving DAT2, since the SD card is about to start driving it high
+                sd_datOutEn[2] <= 0;
+                state <= state+1;
+            end
+        end
+        
+        8: begin
             if (slowClkPulse) begin
                 led[3] <= ~led[3];
                 led[2] <= ~led[2];
