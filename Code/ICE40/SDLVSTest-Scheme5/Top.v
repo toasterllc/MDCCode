@@ -5,7 +5,10 @@
 
 module Top(
     input wire clk24mhz,
-    output reg[3:0] led = 0,
+    
+    output reg[2:0] led = 0,
+    
+    output wire sd_pwr_openDrainEn_,
     output reg sd_clk = 0,
     inout wire sd_cmd,
     inout wire[3:0] sd_dat,
@@ -28,6 +31,31 @@ module Top(
     end
     wire slowClk = `LeftBit(slowClkCounter, 0);
     
+    // ====================
+    // Pin: sd_pwr_openDrainEn_
+    // ====================
+    reg sd_pwr_en = 0;
+    SB_IO #(
+        .PIN_TYPE(6'b1101_00)
+    ) SB_IO_i2c_data (
+        .INPUT_CLK(clk),
+        .OUTPUT_CLK(clk),
+        .PACKAGE_PIN(sd_pwr_openDrainEn_),
+        .OUTPUT_ENABLE(!sd_pwr_en),
+        .D_OUT_0(sd_pwr_en),
+        .D_IN_0()
+    );
+    
+    // reg sd_pwr_en = 0;
+    // assign sd_pwr_openDrainEn_ = (sd_pwr_en ? 1'b0 : 1'bz);
+    // SB_IO #(
+    //     .PIN_TYPE(6'b1010_01)
+    // ) SB_IO_sd_pwr_openDrainEn_ (
+    //     .PACKAGE_PIN(sd_pwr_openDrainEn_),
+    //     .OUTPUT_ENABLE(1'b0),
+    //     .D_OUT_0(1'b0),
+    // );
+   
     // ====================
     // Pin: sd_cmd
     // ====================
@@ -65,103 +93,119 @@ module Top(
         );
     end
     
+    // ====================
+    // slowClkPulse
+    // ====================
     reg prevSlowClk = 0;
     wire slowClkPulse = slowClk && !prevSlowClk;
     
-    reg[11:0] delay = 0;
-    
     // ====================
-    // State Machine
+    // Toggle SD Power
     // ====================
-    reg[7:0] state = 0;
     always @(posedge clk) begin
         prevSlowClk <= slowClk;
-        delay <= delay-1;
-        
-        case (state)
-        0: begin
-            sd_clk <= 0;
-            
-            sd_cmdOut <= 0;
-            sd_cmdOutEn <= 1;
-            
-            sd_datOut[0] <= 0;
-            sd_datOutEn[0] <= 1;
-            
-            sd_datOut[1] <= 0;
-            sd_datOutEn[1] <= 1;
-            
-            sd_datOut[2] <= 0;
-            sd_datOutEn[2] <= 0;
-            
-            sd_datOut[3] <= 0;
-            sd_datOutEn[3] <= 1;
-            
-            state <= state+1;
+        if (slowClkPulse) begin
+            led <= ~led;
+            // sd_pwr_openDrainEn_ <= !sd_pwr_openDrainEn_;
+            sd_pwr_en <= !sd_pwr_en;
         end
-        
-        1: begin
-            led <= 4'b0111;
-            state <= state+1;
-        end
-        
-        2: begin
-            if (slowClkPulse) begin
-                led <= led-1;
-                if (led === 4'h1) begin
-                    state <= state+1;
-                end
-            end
-        end
-        
-        3: begin
-            led <= 4'b1111;
-            if (slowClkPulse) begin
-                state <= state+1;
-            end
-        end
-        
-        // Start LVS identification
-        4: begin
-            led <= 0;
-            // Start clock pulse
-            sd_clk <= 1;
-            delay <= 3'd10;
-            state <= state+1;
-        end
-        
-        5: begin
-            // Wait until pulse is complete
-            if (!delay) begin
-                state <= state+1;
-            end
-        end
-        
-        6: begin
-            // End clock pulse
-            sd_clk <= 0;
-            // Delay
-            // delay <= 3'd10;
-            state <= state+1;
-        end
-        
-        // 7: begin
-        //     if (!delay) begin
-        //         // // Stop driving DAT2, since the SD card is about to start driving it high
-        //         // sd_datOutEn[2] <= 0;
-        //         state <= state+1;
-        //     end
-        // end
-        
-        7: begin
-            led <= sd_datIn;
-            // if (slowClkPulse) begin
-            //     led[3] <= ~led[3];
-            //     led[2] <= ~led[2];
-            //     led[1] <= ~led[1];
-            // end
-            // led[0] <= sd_datIn[2];
-        end
-        endcase
     end
+    
+    
+    
+    // // ====================
+    // // State Machine
+    // // ====================
+    // reg[11:0] delay = 0;
+    // reg[7:0] state = 0;
+    // always @(posedge clk) begin
+    //     prevSlowClk <= slowClk;
+    //     delay <= delay-1;
+    //
+    //     case (state)
+    //     0: begin
+    //         sd_clk <= 0;
+    //
+    //         sd_cmdOut <= 0;
+    //         sd_cmdOutEn <= 1;
+    //
+    //         sd_datOut[0] <= 0;
+    //         sd_datOutEn[0] <= 1;
+    //
+    //         sd_datOut[1] <= 0;
+    //         sd_datOutEn[1] <= 1;
+    //
+    //         sd_datOut[2] <= 0;
+    //         sd_datOutEn[2] <= 0;
+    //
+    //         sd_datOut[3] <= 0;
+    //         sd_datOutEn[3] <= 1;
+    //
+    //         state <= state+1;
+    //     end
+    //
+    //     1: begin
+    //         led <= 4'b0111;
+    //         state <= state+1;
+    //     end
+    //
+    //     2: begin
+    //         if (slowClkPulse) begin
+    //             led <= led-1;
+    //             if (led === 4'h1) begin
+    //                 state <= state+1;
+    //             end
+    //         end
+    //     end
+    //
+    //     3: begin
+    //         led <= 4'b1111;
+    //         if (slowClkPulse) begin
+    //             state <= state+1;
+    //         end
+    //     end
+    //
+    //     // Start LVS identification
+    //     4: begin
+    //         led <= 0;
+    //         // Start clock pulse
+    //         sd_clk <= 1;
+    //         delay <= 3'd10;
+    //         state <= state+1;
+    //     end
+    //
+    //     5: begin
+    //         // Wait until pulse is complete
+    //         if (!delay) begin
+    //             state <= state+1;
+    //         end
+    //     end
+    //
+    //     6: begin
+    //         // End clock pulse
+    //         sd_clk <= 0;
+    //         // Delay
+    //         // delay <= 3'd10;
+    //         state <= state+1;
+    //     end
+    //
+    //     // 7: begin
+    //     //     if (!delay) begin
+    //     //         // // Stop driving DAT2, since the SD card is about to start driving it high
+    //     //         // sd_datOutEn[2] <= 0;
+    //     //         state <= state+1;
+    //     //     end
+    //     // end
+    //
+    //     7: begin
+    //         led <= sd_datIn;
+    //         // if (slowClkPulse) begin
+    //         //     led[3] <= ~led[3];
+    //         //     led[2] <= ~led[2];
+    //         //     led[1] <= ~led[1];
+    //         // end
+    //         // led[0] <= sd_datIn[2];
+    //     end
+    //     endcase
+    // end
 endmodule
