@@ -17,12 +17,23 @@
 
 
 - Rev4 Verilog Todo
-
-    - Update SDRAM controller for new part (Winbond -> Alliance)
     
-    - Update Verilog to use 16 MHz clock, instead of 24 MHz
+    - Bodge VDD_A to 2V8 so that MSP430 is powered properly
     
-    - Rename PIX -> IMG
+    - Bodge STM_LEDX to MSPLevelShifter
+    
+    - Swap motion sensor VDD/GND pins when soldering
+    
+    √ Test whether we can get LVS identification working
+        - It works!
+        - See SDLVSTest-Scheme5
+        - Need to implement in SDController.v
+    
+    - Update STM32/ICE40 to use 16 MHz clock, instead of 24 MHz
+    
+    - Verilog: Update SDRAM controller for new part (Winbond -> Alliance)
+    
+    - Verilog: Rename PIX -> IMG
     
     √ We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
         √ Optimizing highlight/shadow counting appears to help significantly. Options:
@@ -32,6 +43,7 @@
     X If we end up removing SD card pullups in favor of ice40 internal ones:
       make sure these pullups are enabled on the SB_IO instantiation
           - We kept the pullups
+
 
 
 
@@ -48,18 +60,11 @@
 
 
 
-- Preorder parts to de-risk
-    
-    - EKMB1107112 (motion sensor -- need to test first before mass order)
-        - Mouser in stock
-
-
 
 - Future
     
     - Add a zener diode to VDD_BAT_IN to protect from over-voltage
         - Zeners have significant leakage though. Use a mosfet instead?
-            
     
     ? Add a zener diode to VDD_USB_IN to protect from over-voltage
     

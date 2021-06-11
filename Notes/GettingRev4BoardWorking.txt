@@ -1,9 +1,0 @@
-# Getting Rev4 board working
-
-Bodge VDD_A to 2V8 so that MSP430 is powered properly
-
-Bodge STM_LEDX to MSPLevelShifter
-
-Try to get LVS identification working
-
-Need to update ICE40/STM32 code to accept 16MHz clock
