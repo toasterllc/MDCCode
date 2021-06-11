@@ -1,7 +1,6 @@
 `ifndef SDController_v
 `define SDController_v
 
-`include "AFIFO.v"
 `include "Util.v"
 `include "VariableDelay.v"
 `include "CRC7.v"
