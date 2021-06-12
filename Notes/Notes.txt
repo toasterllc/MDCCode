@@ -1,22 +1,100 @@
 - Rev5 Todo
 
-    For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
+    - For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
     
-    Replace 0-ohm resistors with solder jumpers
+    - Replace 0-ohm resistors with solder jumpers
     
-    Fix motion sensor layout (we swapped the VDD and GND pins)
+    - Fix motion sensor layout (we swapped the VDD and GND pins)
     
-    Make board left/right borders smaller
+    - Make board left/right borders smaller
     
-    Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
-        Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
-        See CrystalPartOptions.txt for other parts
+    - Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
+        - Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
+        - See CrystalPartOptions.txt for other parts
     
-    Replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM) if we need more FRAM/SRAM 
+    - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
+    
+    - MSP430: fix power supply when plugged into USB
+        - Problem: MSP430 needs a voltage higher than 2V to reliably start up, due to SVS
+        - Solutions:
+            √ Option1: Replace MAX40203 with LDO
+                - LDO requirements
+                    - LDO input = VDD_B
+                    - LDO output = 2.5V - 3.3V (use >2.4V so the motion sensor is powered)
+                    - Needs enable, controlled by VDD_SRC_USB
+                    - Needs to allow output voltage to be high while LDO is off (in battery mode)
+                    - Needs reverse current protection (in case battery voltage is higher)
+                    - Can't have an output discharge circuit (otherwise it'll draw current when disabled, in battery mode)
+                
+                - Still need to use level shifter for MSP's TEST/RST_ nets, since MSP's Vih is
+                  still too high (.75*2.5=1.875, which is too high to be driven by STM running at 1.8V)
+                
+                - Part options:
+                    TPS706
+                        Input voltage: 2.7-6.5 V
+                        Output voltage: 1.2-5 V
+                        Enable voltage: 0-6.5 V
+                        Reverse current (current flowing into OUT pin @ VOUT=3V, VIN=VEN=0V): 100nA
+            
+            - Option2: Make VDD_A=VDD_2V8
+                X This won't work in battery mode because the MAX40203's voltage input needs to be lower than the battery voltage, otherwise we'll charge the battery
+                - But how do we handle STM comms since STM runs at 1.8V?
+                    - We can't connect directly to STM because MSP430 Vih=2.1 (>1.9V of STM) 👎
+                    - Use level shifter. We'll need to free up a spot though
+                - Confirm with simulation that the power topology still works (no reverse voltage into battery, etc)
+            
+            - Option3: Make power supply start at >2.1V, then settle at 1.9V
+                - How do we do that?
+                    - Might not be possible with TPS62802 since its output levels are digitally selected, not analog
+                        - We would need a variable resistence on TPS62802 MODE pin
+                            - Complicated
+                    - Charge pump circuit that's only active at power on?
+    
+    - Fix MSP level shifter net names:
+        - ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
+        - ICE_MSP_SPI_DATA is actually ICE_MSP_SPI_CLK
+    
+    - Find solution for ICE40's VOH(min)=[1.5,1.7] < SD's VIH(min)=1.75
+        √ Solution: only use LVS ('A2') SD cards, and implement LVS identification protocol
+            √ Need to figure out how LVS identification works
+                - Working
+                    - See SDLVSTest-Scheme5
+            - Pros:
+                - Simple
+                - Keep existing SD infrastructure
+            - Cons:
+                - LVS SD cards ('A2') aren't as readily available
+                - LVS SD cards are more expensive
+            
+            - LVS cards:
+                https://www.neweggbusiness.com/product/product.aspx?item=9b-20-215-138&tpk=9b-20-215-138
+                https://www.neweggbusiness.com/product/product.aspx?item=9b-20-175-006&tpk=9b-20-175-006
+        
+        - Solution: switch to eMMC
+            - For example: https://lcsc.com/product-detail/FLASH_TOSHIBA-THGBMJG6C1LBAIL_C524518.html
+            - Pros:
+                - No voltage switching required
+            - Cons:
+                - Aren't easily sourced
+                - More expensive
+        
+        - Solution: implement voltage switching
+            - We could use 2 PFETs to switch between voltages, but we'd want break-before-make
+              logic, so we'd need to engineer a solution that prevents the voltage from dipping
+              below 1.8V when switching the supplies.
+            
+            - Pros:
+                - Proper solution per the SD spec
+            - Cons:
+                - Complicated
+                    - Would require 1 or 2 more IOs to control the PFETs (either from ICE40 or MSP430)
+                - Not sure if ICE40 allows VCCIO to change dynamically
+        
+        - Solution: do nothing and test whether ICE40's VOH is actually a problem in practice
 
 
 
-- Rev4 Verilog Todo
+- Rev4 Todo
     
     - Bodge VDD_A to 2V8 so that MSP430 is powered properly
     
