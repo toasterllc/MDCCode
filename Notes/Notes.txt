@@ -1,6 +1,60 @@
+- Rev4 Todo
+    
+    - Bodge VDD_A to 2V8 so that MSP430 is powered properly
+    
+    - Bodge STM_LEDX to MSPLevelShifter
+    
+    - Swap motion sensor VDD/GND pins when soldering
+    
+    - Update STM32/ICE40 to use 16 MHz clock, instead of 24 MHz
+    
+    - Verilog: Update SDRAM controller for new part (Winbond -> Alliance)
+    
+    - Verilog: Rename PIX -> IMG
+    
+    √ Test whether we can get LVS identification working
+        - It works!
+        - See SDLVSTest-Scheme5
+        - Need to implement in SDController.v
+    
+    √ We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
+        √ Optimizing highlight/shadow counting appears to help significantly. Options:
+            √ 1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
+            2. Move highlight/shadow counting out of PixController and into a separate command issued to ICE40, specifically for calculating stats on the image stored in RAM
+    
+    X If we end up removing SD card pullups in favor of ice40 internal ones:
+        - Make sure these pullups are enabled on the SB_IO instantiation
+            - Nevermind, we kept the pullups
+
+
+
+
+- Rev4 Board Test Checklist
+    - Verify that the clock-blocking buffer blocks the clock to IMG when VDD_1V9_IMG=0
+    
+    - Verify that when battery powered:
+        VDD_A = VDD_BAT
+        VDD_B = HiZ / VDD_BAT (controlled by MSP)
+    
+    - Verify that when USB powered:
+        VDD_A = 1.9V
+        VDD_B = VDD_USB - V_diode_forward ~= 4.5V
+
+
+
+
+
+
+
+
+
+
+
 - Rev5 Todo
 
     - For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
+    
+    - Switch USB receptacle to USB-C
     
     - Replace 0-ohm resistors with solder jumpers
     
@@ -48,7 +102,53 @@
                     - Might not be possible with TPS62802 since its output levels are digitally selected, not analog
                         - We would need a variable resistence on TPS62802 MODE pin
                             - Complicated
-                    - Charge pump circuit that's only active at power on?
+                    - Some kind of crazy charge pump circuit that's only active at power on?
+    
+    - MSP430: fix level shifting
+        - Since MSP430 is now running at 2.5V, we need to level-shift ICE_MSP_SPI_CLK/ICE_MSP_SPI_DATA and MSP_TEST/MSP_RST_
+        
+        X Solution: 74AUP1T34
+            X No direction pin
+            - Pros
+                - Low leakage (.2uA)
+            - Cons
+                - Max voltage is 3.6V
+        
+        - Solution: 2x NXB0102/NTB0102 level shifters
+            - Pros
+                - Simple
+                - Small package (2.1*2 == 4.2 mm^2)
+                - 1 STM pin for MSP_RST
+                - 1 ICE pin for DOUT/DIN
+            - Cons
+                - Medium-ish leakage current (1uA @ 25C)
+        
+        - Solution: NTZD3155C NFET/PFETs (see schematics in notebook)
+            - Pros
+                - Low leakage
+            - Cons
+                - 2 STM pins for MSP_RST_
+                - 2 ICE pins for DOUT/DIN
+                - Large package (2.56*4 == 10.24 mm^2)
+                - Need 4x + 3 resistors
+        
+        X Solution: use 2x SN74LVC2T45
+            X Only has 1 direction pin
+            - Medium-ish leakage current (1uA @ 25C)
+            - One for ICE_MSP_SPI_CLK / ICE_MSP_SPI_DATA (direction controlled by MSP430)
+            - One for MSP_TEST / MSP_RST_ (direction controlled by STM32)
+        
+        - Solution: NFET with pull-up resistor (ie open drain)
+            - Pros
+                - Very low leakage when off
+                    - Most datasheets are very conservative
+                    - See https://electronics.stackexchange.com/questions/98597/low-drain-source-mosfet-leakage
+                    - NTND31015NZTAG -- IDSS=100pA @ 25C
+                    - XLLGA6 -- IDSS=100pA @ 25C
+            - Cons
+                - Not bi-directional:
+                    - We'll need separate nets for SPI DOUT and DIN
+                    - Can't use for MSP_RST_
     
     - Fix MSP level shifter net names:
         - ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
@@ -94,47 +194,9 @@
 
 
 
-- Rev4 Todo
-    
-    - Bodge VDD_A to 2V8 so that MSP430 is powered properly
-    
-    - Bodge STM_LEDX to MSPLevelShifter
-    
-    - Swap motion sensor VDD/GND pins when soldering
-    
-    √ Test whether we can get LVS identification working
-        - It works!
-        - See SDLVSTest-Scheme5
-        - Need to implement in SDController.v
-    
-    - Update STM32/ICE40 to use 16 MHz clock, instead of 24 MHz
-    
-    - Verilog: Update SDRAM controller for new part (Winbond -> Alliance)
-    
-    - Verilog: Rename PIX -> IMG
-    
-    √ We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
-        √ Optimizing highlight/shadow counting appears to help significantly. Options:
-            √ 1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
-            2. Move highlight/shadow counting out of PixController and into a separate command issued to ICE40, specifically for calculating stats on the image stored in RAM
-    
-    X If we end up removing SD card pullups in favor of ice40 internal ones:
-      make sure these pullups are enabled on the SB_IO instantiation
-          - We kept the pullups
 
 
 
-
-- Rev4 Board Test Checklist
-    - Verify that the clock-blocking buffer blocks the clock to IMG when VDD_1V9_IMG=0
-    
-    - Verify that when battery powered:
-        VDD_A = VDD_BAT
-        VDD_B = HiZ / VDD_BAT (controlled by MSP)
-    
-    - Verify that when USB powered:
-        VDD_A = 1.9V
-        VDD_B = VDD_USB - V_diode_forward ~= 4.5V
 
 
 
