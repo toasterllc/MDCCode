@@ -70,49 +70,41 @@
     
     - MSP430: fix power supply when plugged into USB
         - Problem: MSP430 needs a voltage higher than 2V to reliably start up, due to SVS
-        - Solutions:
-            √ Option1: Replace MAX40203 with LDO
-                - LDO requirements
-                    - LDO input = VDD_B
-                    - LDO output = 2.5V - 3.3V (use >2.4V so the motion sensor is powered)
-                    - Needs enable, controlled by VDD_SRC_USB
-                    - Needs to allow output voltage to be high while LDO is off (in battery mode)
-                    - Needs reverse current protection (in case battery voltage is higher)
-                    - Can't have an output discharge circuit (otherwise it'll draw current when disabled, in battery mode)
-                
-                - Still need to use level shifter for MSP's TEST/RST_ nets, since MSP's Vih is
-                  still too high (.75*2.5=1.875, which is too high to be driven by STM running at 1.8V)
-                
-                - Part options:
-                    TPS706
-                        Input voltage: 2.7-6.5 V
-                        Output voltage: 1.2-5 V
-                        Enable voltage: 0-6.5 V
-                        Reverse current (current flowing into OUT pin @ VOUT=3V, VIN=VEN=0V): 100nA
+        √ Solution: Replace MAX40203 with TPS706 LDO
+            - LDO requirements
+                - LDO input = VDD_B
+                - LDO output = 2.5V - 3.3V (use >2.4V so the motion sensor is powered)
+                - Needs enable, controlled by VDD_SRC_USB
+                - Needs to allow output voltage to be high while LDO is off (in battery mode)
+                - Needs reverse current protection (in case battery voltage is higher)
+                - Can't have an output discharge circuit (otherwise it'll draw current when disabled, in battery mode)
             
-            - Option2: Make VDD_A=VDD_2V8
-                X This won't work in battery mode because the MAX40203's voltage input needs to be lower than the battery voltage, otherwise we'll charge the battery
-                - But how do we handle STM comms since STM runs at 1.8V?
-                    - We can't connect directly to STM because MSP430 Vih=2.1 (>1.9V of STM) 👎
-                    - Use level shifter. We'll need to free up a spot though
-                - Confirm with simulation that the power topology still works (no reverse voltage into battery, etc)
+            - Still need to use level shifter for MSP's TEST/RST_ nets, since MSP's Vih is
+              still too high (.75*2.5=1.875, which is too high to be driven by STM running at 1.8V)
             
-            - Option3: Make power supply start at >2.1V, then settle at 1.9V
-                - How do we do that?
-                    - Might not be possible with TPS62802 since its output levels are digitally selected, not analog
-                        - We would need a variable resistence on TPS62802 MODE pin
-                            - Complicated
-                    - Some kind of crazy charge pump circuit that's only active at power on?
+            - Part options:
+                TPS706
+                    Input voltage: 2.7-6.5 V
+                    Output voltage: 1.2-5 V
+                    Enable voltage: 0-6.5 V
+                    Reverse current (current flowing into OUT pin @ VOUT=3V, VIN=VEN=0V): 100nA
+        
+        - Solution: Make VDD_A=VDD_2V8
+            X This won't work in battery mode because the MAX40203's voltage input needs to be lower than the battery voltage, otherwise we'll charge the battery
+            - But how do we handle STM comms since STM runs at 1.8V?
+                - We can't connect directly to STM because MSP430 Vih=2.1 (>1.9V of STM) 👎
+                - Use level shifter. We'll need to free up a spot though
+            - Confirm with simulation that the power topology still works (no reverse voltage into battery, etc)
+        
+        - Solution: Make power supply start at >2.1V, then settle at 1.9V
+            - How do we do that?
+                - Might not be possible with TPS62802 since its output levels are digitally selected, not analog
+                    - We would need a variable resistence on TPS62802 MODE pin
+                        - Complicated
+                - Some kind of crazy charge pump circuit that's only active at power on?
     
     - MSP430: fix level shifting
         - Since MSP430 is now running at 2.5V, we need to level-shift ICE_MSP_SPI_CLK/ICE_MSP_SPI_DATA and MSP_TEST/MSP_RST_
-        
-        X Solution: 74AUP1T34
-            X No direction pin
-            - Pros
-                - Low leakage (.2uA)
-            - Cons
-                - Max voltage is 3.6V
         
         - Solution: 2x NXB0102/NTB0102 level shifters
             - Pros
@@ -126,35 +118,34 @@
         - Solution: NTZD3155C NFET/PFETs (see schematics in notebook)
             - Pros
                 - Low leakage
+                    - Most datasheets are very conservative
+                    - See https://electronics.stackexchange.com/questions/98597/low-drain-source-mosfet-leakage
+                    - NTND31015NZTAG -- IDSS=100pA @ 25C
+                    - XLLGA6 -- IDSS=100pA @ 25C
             - Cons
                 - 2 STM pins for MSP_RST_
                 - 2 ICE pins for DOUT/DIN
                 - Large package (2.56*4 == 10.24 mm^2)
                 - Need 4x + 3 resistors
         
+        X Solution: 74AUP1T34
+            X No direction pin
+            - Pros
+                - Low leakage (.2uA)
+            - Cons
+                - Max voltage is 3.6V
+        
         X Solution: use 2x SN74LVC2T45
             X Only has 1 direction pin
             - Medium-ish leakage current (1uA @ 25C)
             - One for ICE_MSP_SPI_CLK / ICE_MSP_SPI_DATA (direction controlled by MSP430)
             - One for MSP_TEST / MSP_RST_ (direction controlled by STM32)
-        
-        - Solution: NFET with pull-up resistor (ie open drain)
-            - Pros
-                - Very low leakage when off
-                    - Most datasheets are very conservative
-                    - See https://electronics.stackexchange.com/questions/98597/low-drain-source-mosfet-leakage
-                    - NTND31015NZTAG -- IDSS=100pA @ 25C
-                    - XLLGA6 -- IDSS=100pA @ 25C
-            - Cons
-                - Not bi-directional:
-                    - We'll need separate nets for SPI DOUT and DIN
-                    - Can't use for MSP_RST_
     
     - Fix MSP level shifter net names:
         - ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
         - ICE_MSP_SPI_DATA is actually ICE_MSP_SPI_CLK
     
-    - Find solution for ICE40's VOH(min)=[1.5,1.7] < SD's VIH(min)=1.75
+    √ Find solution for ICE40's VOH(min)=[1.5,1.7] < SD's VIH(min)=1.75
         √ Solution: only use LVS ('A2') SD cards, and implement LVS identification protocol
             √ Need to figure out how LVS identification works
                 - Working
