@@ -2,7 +2,10 @@
     
     - Bodge VDD_A to 2V8 so that MSP430 is powered properly
     
-    - Bodge STM_LEDX to MSPLevelShifter
+    - Fix MSP_RST_/MSP_TEST logic levels
+        *** Before bodging, just try programming MSP first. It's possible that 1.8V will meet MSP's Vih... ***
+        - Option: Sever the MSP_RST_/MSP_TEST connections to MSP, wire them to MSPLevelShifter, then wire the output back to the MSP_RST_/MSP_TEST pins?
+        - Option: Bodge STM_LED0/STM_LED1 -> MSPLevelShifter -> MSP_RST_/MSP_TEST
     
     - Swap motion sensor VDD/GND pins when soldering
     
@@ -52,6 +55,8 @@
 
 - Rev5 Todo
 
+    - Switch 1V9 back to 1V8, now that we've solved the SD card Vih by using LVS
+    
     - For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
     
     - Switch USB receptacle to USB-C
@@ -82,14 +87,14 @@
             - Still need to use level shifter for MSP's TEST/RST_ nets, since MSP's Vih is
               still too high (.75*2.5=1.875, which is too high to be driven by STM running at 1.8V)
             
-            - Part options:
+            - LDO options:
                 TPS706
                     Input voltage: 2.7-6.5 V
                     Output voltage: 1.2-5 V
                     Enable voltage: 0-6.5 V
                     Reverse current (current flowing into OUT pin @ VOUT=3V, VIN=VEN=0V): 100nA
         
-        - Solution: Make VDD_A=VDD_2V8
+        - Solution: Make VDD_A=VDD_2V8, via MAX40203
             X This won't work in battery mode because the MAX40203's voltage input needs to be lower than the battery voltage, otherwise we'll charge the battery
             - But how do we handle STM comms since STM runs at 1.8V?
                 - We can't connect directly to STM because MSP430 Vih=2.1 (>1.9V of STM) 👎
@@ -106,16 +111,51 @@
     - MSP430: fix level shifting
         - Since MSP430 is now running at 2.5V, we need to level-shift ICE_MSP_SPI_CLK/ICE_MSP_SPI_DATA and MSP_TEST/MSP_RST_
         
-        - Solution: 2x NXB0102/NTB0102 level shifters
+        - Bench-testing current of NTB0102
+            - Supply current <5nA when A1=A2=VDDA=2.5V and B1=B2=VDDB=0V
+                - Same ballpark as reported in "Typical supply current" section of the datasheet 
+        
+        √ Solution: 2x Nexperia NXB0102/NTB0102 level shifters
+            - TI TXB0102 / TXB0302 would also work
+                - They don't publish 'supply current' though; power consumption might be higher
+            
+            - Need to adjust MSP_RST_ pin:
+                - Remove pullup (rely on internal ~31k pullup)
+                    - Reason: Internal pullup is already on the low side, and the external one will act in parallel, reducing overall resistance further
+                    - Reason: "Any pull-up or pull-down resistors used must be kept higher than 50 kΩ"
+                - Reduce capacitor to <70pF (reuse cap used elsewhere in design whatever other capacitor)
+                    - Reason: "NXB0102 [can] drive capacitive loads of up to 70 pF"
+            
+            - MSP_RST_ Calculations
+                - Because MSP430 has internal pullup (measured: 31k, datasheet: 20k-50k) that's on the low side,
+                  the level shifter's VOL and MSP's VIL need to be compared.
+                    - Worst case:
+                        - NXB0102 output driver = 6k
+                            - 6k=4k*1.5 -- assumed worst-case value; TI level shifters assume 4.5k as worst-case, so 6k is conservative
+                        - MSP430 RST pullup = 20k (from datasheet)
+                        - NXB0102 VOL = (6k/(20k+6k)) * 2.5V == 0.577
+                        - MSP430 VIL = 0.625 (.25*2.5, from datasheet)
+                        √ VOL=0.577 < VIL=0.625
+                            - Therefore in the worst-case, NXB0102's VOL will still trigger a low value for MSP
+            
+            - Price
+                $0.202 / channel [NTB0102]
             - Pros
                 - Simple
                 - Small package (2.1*2 == 4.2 mm^2)
                 - 1 STM pin for MSP_RST
                 - 1 ICE pin for DOUT/DIN
             - Cons
-                - Medium-ish leakage current (1uA @ 25C)
+                - Low current: 10nA @ 25C
         
-        - Solution: NTZD3155C NFET/PFETs (see schematics in notebook)
+        - Solution: NFET/PFETs (see schematics in notebook)
+            - Parts
+                - PMCXB900UE / PMCXB900UEL / PMCXB1000UE
+                    - Physically small (1.1 mm^2 * 4 == 4.4 mm^2 total area)
+                - NTZD3155C
+                    - Physically large (2.56 mm^2)
+            - Price
+                $0.202 / channel [PMCXB900UE]
             - Pros
                 - Low leakage
                     - Most datasheets are very conservative
@@ -125,8 +165,50 @@
             - Cons
                 - 2 STM pins for MSP_RST_
                 - 2 ICE pins for DOUT/DIN
-                - Large package (2.56*4 == 10.24 mm^2)
-                - Need 4x + 3 resistors
+                - Complicated: need 4x + 3-10 resistors (number of resistors depends on how fast we want rising edge to be for the various nets)
+        
+        - Solution: 2x Nexperia 74AVC2T245
+            - Price
+                $0.208 / channel
+            - Pros
+                - Simple
+                - Smallish (2.52 mm^2 *2 == 5.04 mm^2 total area)
+            - Cons
+                - 2 STM pins for MSP_RST_
+                - 2 ICE pins for DOUT/DIN
+                - Medium current: .1 uA according to "Typical total supply current"
+        
+        - Solution: 4x SN74LVC1T45YZPR
+            - Price
+                $0.253 / channel
+            - Pros
+            - Cons
+                - 2 STM pins for MSP_RST_
+                - 2 ICE pins for DOUT/DIN
+                - Medium-ish leakage current (1uA @ 25C)
+        
+        - Solution: 2x TI SN74AVC2T245
+            - Price
+                $??? / channel
+            - Pros
+                - Simple
+            - Cons
+                - 2 STM pins for MSP_RST_
+                - 2 ICE pins for DOUT/DIN
+                - Medium-ish leakage current (.5uA @ 25C)
+                - No stock
+        
+        X Solution: 2x 74AVC2T45GN / 74AVC2T45GS
+            X Only 1 direction pin
+            - Price
+                $0.14-0.16 / channel
+            - Pros
+                - Simple
+                - Small (1.2 mm^2 *2 == 2.4x mm^2 total area)
+            - Cons
+                - 2 STM pins for MSP_RST_
+                - 2 ICE pins for DOUT/DIN
+                - Medium-ish leakage current (.5 uA @ 25C)
         
         X Solution: 74AUP1T34
             X No direction pin
