@@ -1223,30 +1223,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-0.125" y="1.024"/>
 </polygon>
 </package>
-<package name="MAXIM-MAX40203ANS+T" urn="urn:adsk.eagle:footprint:28686744/1" locally_modified="yes">
-<description>4-BGA, collapsing, 0.35 mm pitch, 0.77 X 0.77 X 0.50 mm body
-&lt;p&gt;4-pin collapsing BGA package with 0.35 mm col pitch and 0.35 mm row pitch with body size 0.77 X 0.77 X 0.50 mm&lt;/p&gt;</description>
-<wire x1="0.395" y1="-0.3965" x2="-0.395" y2="-0.3965" width="0.05" layer="21"/>
-<wire x1="-0.395" y1="-0.3965" x2="-0.395" y2="0.3965" width="0.05" layer="21"/>
-<wire x1="-0.395" y1="0.3965" x2="0.395" y2="0.3965" width="0.05" layer="21"/>
-<wire x1="0.395" y1="0.3965" x2="0.395" y2="-0.3965" width="0.05" layer="21"/>
-<smd name="A1" x="-0.175" y="0.175" dx="0.18" dy="0.18" layer="1" roundness="100" thermals="no" cream="no"/>
-<smd name="A2" x="0.175" y="0.175" dx="0.18" dy="0.18" layer="1" roundness="100" thermals="no" cream="no"/>
-<smd name="B1" x="-0.175" y="-0.175" dx="0.18" dy="0.18" layer="1" roundness="100" thermals="no" cream="no"/>
-<smd name="B2" x="0.175" y="-0.175" dx="0.18" dy="0.18" layer="1" roundness="100" thermals="no" cream="no"/>
-<text x="-0.36321875" y="0.48341875" size="0.762" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="21">
-<vertex x="-0.371" y="0.371"/>
-<vertex x="-0.371" y="-0.329"/>
-<vertex x="0.329" y="0.371"/>
-</polygon>
-<polygon width="0.05" layer="39">
-<vertex x="0.395" y="-0.3965"/>
-<vertex x="-0.395" y="-0.3965"/>
-<vertex x="-0.395" y="0.3965"/>
-<vertex x="0.395" y="0.3965"/>
-</polygon>
-</package>
 <package name="TI-TPS22919DCK" urn="urn:adsk.eagle:footprint:28686815/1" locally_modified="yes">
 <description>6-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
 &lt;p&gt;6-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
@@ -1439,7 +1415,43 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.525" y="0.7"/>
 </polygon>
 </package>
+<package name="TI-TPS706XXDRV" urn="urn:adsk.eagle:footprint:29349340/1" locally_modified="yes">
+<description>6-SON (DFN), 0.65 mm pitch, 2.00 X 2.00 X 0.80 mm body, 1.60 X 1.00 mm thermal pad
+&lt;p&gt;6-pin SON (DFN) package with 0.65 mm pitch with body size 2.00 X 2.00 X 0.80 mm and thermal pad size 1.60 X 1.00 mm&lt;/p&gt;</description>
+<wire x1="1.05" y1="-1.05" x2="-1.05" y2="-1.05" width="0.05" layer="21"/>
+<wire x1="-1.05" y1="-1.05" x2="-1.05" y2="1.05" width="0.05" layer="21"/>
+<wire x1="-1.05" y1="1.05" x2="1.05" y2="1.05" width="0.05" layer="21"/>
+<wire x1="1.05" y1="1.05" x2="1.05" y2="-1.05" width="0.05" layer="21"/>
+<smd name="1" x="-1.0206" y="0.65" dx="0.688" dy="0.32" layer="1" roundness="100"/>
+<smd name="2" x="-1.0206" y="0" dx="0.688" dy="0.32" layer="1" roundness="100"/>
+<smd name="3" x="-1.0206" y="-0.65" dx="0.688" dy="0.32" layer="1" roundness="100"/>
+<smd name="4" x="1.0206" y="-0.65" dx="0.688" dy="0.32" layer="1" roundness="100"/>
+<smd name="5" x="1.0206" y="0" dx="0.688" dy="0.32" layer="1" roundness="100"/>
+<smd name="6" x="1.0206" y="0.65" dx="0.688" dy="0.32" layer="1" roundness="100"/>
+<smd name="7" x="0" y="0" dx="1" dy="1.6" layer="1" thermals="no"/>
+<text x="-1.059" y="1.191" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="-1.05" y="1.05"/>
+<vertex x="-1.05" y="-1.05"/>
+<vertex x="1.05" y="-1.05"/>
+<vertex x="1.05" y="1.05"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-1.03" y="1.035"/>
+<vertex x="-1.03" y="-0.265"/>
+<vertex x="0.17" y="1.035"/>
+</polygon>
+</package>
 </packages>
+<packages3d>
+<package3d name="SON65P200X200X80-7T100X160N" urn="urn:adsk.eagle:package:29349339/1" type="model">
+<description>6-SON (DFN), 0.65 mm pitch, 2.00 X 2.00 X 0.80 mm body, 1.60 X 1.00 mm thermal pad
+&lt;p&gt;6-pin SON (DFN) package with 0.65 mm pitch with body size 2.00 X 2.00 X 0.80 mm and thermal pad size 1.60 X 1.00 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="TI-TPS706XXDRV"/>
+</packageinstances>
+</package3d>
+</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -2320,26 +2332,6 @@ tolerant of VDDUSB</text>
 <wire x1="5.08" y1="0" x2="5.08" y2="-1.524" width="0.254" layer="94"/>
 <text x="2.032" y="3.556" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
-<symbol name="MAXIM-MAX40203ANS+T">
-<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="0" y1="-10.16" x2="17.78" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="17.78" y1="-10.16" x2="17.78" y2="0" width="0.254" layer="94"/>
-<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="GND" x="-2.54" y="-7.62" visible="pin" length="short"/>
-<pin name="VOUT" x="20.32" y="-2.54" visible="off" length="point" rot="R180"/>
-<pin name="VIN" x="-2.54" y="-2.54" visible="off" length="point"/>
-<pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
-<text x="0.075" y="2.54" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left">&gt;NAME</text>
-<text x="0.075" y="-12.7" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
-<wire x1="7.62" y1="-0.635" x2="7.62" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-2.54" x2="7.62" y2="-4.445" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-4.445" x2="10.16" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-2.54" x2="7.62" y2="-0.635" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-1.016" x2="10.16" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-2.54" x2="10.16" y2="-4.064" width="0.254" layer="94"/>
-<wire x1="-2.54" y1="-2.54" x2="7.62" y2="-2.54" width="0.1524" layer="94"/>
-<wire x1="10.16" y1="-2.54" x2="20.32" y2="-2.54" width="0.1524" layer="94"/>
-</symbol>
 <symbol name="TI-TPS22919">
 <wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
 <wire x1="0" y1="-12.7" x2="17.78" y2="-12.7" width="0.254" layer="94"/>
@@ -2435,6 +2427,18 @@ tolerant of VDDUSB</text>
 <pin name="B2" x="22.86" y="-20.32" visible="pin" length="short" rot="R180"/>
 <pin name="VCCB" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
 <text x="0" y="-27.94" size="1.778" layer="95">Level Shifter</text>
+</symbol>
+<symbol name="TI-TPS706">
+<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="0" y1="-10.16" x2="17.78" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="17.78" y1="-10.16" x2="17.78" y2="0" width="0.254" layer="94"/>
+<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="VOUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
+<text x="0.075" y="-12.8241" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
+<pin name="GND" x="-2.54" y="-7.62" visible="pin" length="short"/>
+<pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3462,27 +3466,6 @@ tolerant of VDDUSB</text>
 </device>
 </devices>
 </deviceset>
-<deviceset name="MAXIM-MAX40203ANS+T" prefix="U">
-<gates>
-<gate name="G$1" symbol="MAXIM-MAX40203ANS+T" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="MAXIM-MAX40203ANS+T">
-<connects>
-<connect gate="G$1" pin="EN" pad="B1"/>
-<connect gate="G$1" pin="GND" pad="B2"/>
-<connect gate="G$1" pin="VIN" pad="A1"/>
-<connect gate="G$1" pin="VOUT" pad="A2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Maxim Integrated"/>
-<attribute name="PN" value="MAX40203ANS+T"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TI-TPS22919DCK" prefix="U">
 <gates>
 <gate name="G$1" symbol="TI-TPS22919" x="0" y="0"/>
@@ -3625,6 +3608,29 @@ tolerant of VDDUSB</text>
 <technology name="">
 <attribute name="MFG" value="NXP"/>
 <attribute name="PN" value="NTB0102GF"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TI-TPS706" prefix="U">
+<gates>
+<gate name="G$1" symbol="TI-TPS706" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TI-TPS706XXDRV">
+<connects>
+<connect gate="G$1" pin="EN" pad="4"/>
+<connect gate="G$1" pin="GND" pad="3 7"/>
+<connect gate="G$1" pin="VIN" pad="6"/>
+<connect gate="G$1" pin="VOUT" pad="1"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:29349339/1"/>
+</package3dinstances>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Texas Instruments"/>
 </technology>
 </technologies>
 </device>
@@ -3842,8 +3848,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
-<attribute name="MFG" value="Bourns"/>
-<attribute name="PN" value="CR0402AJW-101GAS"/>
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100R"/>
 </part>
 <part name="C45" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="Samsung"/>
@@ -3854,8 +3860,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="R16" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
-<attribute name="MFG" value="Bourns"/>
-<attribute name="PN" value="CR0402AJW-101GAS"/>
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100R"/>
 </part>
 <part name="C42" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="Samsung"/>
@@ -4152,22 +4158,14 @@ tolerant of VDDUSB</text>
 <part name="U16" library="EagleLibrary" deviceset="TI-SN74LVC1G126" device="">
 <attribute name="PN" value="SN74LVC1G126DCKR"/>
 </part>
-<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-10100KL"/>
-</part>
-<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="3k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="AC0402FR-073KL"/>
-</part>
-<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402FR-10100KL"/>
+<part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100R"/>
 </part>
 <part name="D1" library="EagleLibrary" deviceset="ROHM-RB168MM-40TFTR" device=""/>
-<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="3k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="AC0402FR-073KL"/>
+<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100R"/>
 </part>
 <part name="Q2" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
@@ -4178,7 +4176,6 @@ tolerant of VDDUSB</text>
 <part name="Q3" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
-<part name="U1" library="EagleLibrary" deviceset="MAXIM-MAX40203ANS+T" device=""/>
 <part name="U6" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="U7" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="U8" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
@@ -4328,6 +4325,17 @@ tolerant of VDDUSB</text>
 <part name="J5" library="EagleLibrary" deviceset="JUMPER" device=""/>
 <part name="U21" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
 <part name="U22" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
+<part name="U1" library="EagleLibrary" deviceset="TI-TPS706" device="" package3d_urn="urn:adsk.eagle:package:29349339/1">
+<attribute name="PN" value="TPS70630DRV"/>
+</part>
+<part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
+<attribute name="MFG" value="Taiyo Yuden"/>
+<attribute name="PN" value="TMK105CBJ225KV-F"/>
+</part>
+<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="91k">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0402-FX-9102GLF"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4353,7 +4361,7 @@ layer."</text>
 <text x="12.7" y="317.5" size="3.81" layer="95" align="top-left">VDD_1V2</text>
 <text x="12.7" y="269.24" size="3.81" layer="95" align="top-left">VDD_1V9</text>
 <text x="12.7" y="205.74" size="3.81" layer="95" align="top-left">VDD_2V8</text>
-<text x="114.808" y="419.862" size="1.016" layer="95" align="top-left">This PFET serves 2 purposes for the battery power supply:
+<text x="109.728" y="412.242" size="1.016" layer="95" align="top-left">This PFET serves 2 purposes for the battery power supply:
 
 1. Provides reverse polarity protection
     When battery terminals are reversed:
@@ -4364,32 +4372,17 @@ layer."</text>
     By pulling gate up when USB is connected,
     voltages &gt; VDD_BAT are blocked from
     reaching the battery.</text>
-<wire x1="157.226" y1="391.16" x2="157.226" y2="408.686" width="0.1524" layer="95"/>
-<wire x1="149.606" y1="375.92" x2="154.432" y2="378.206" width="0.1524" layer="95"/>
-<text x="119.126" y="377.444" size="1.016" layer="95" align="top-left">Capacitor helps minimize reverse current spikes
+<wire x1="149.606" y1="378.206" x2="154.432" y2="378.206" width="0.1524" layer="95"/>
+<text x="119.126" y="379.984" size="1.016" layer="95" align="top-left">Capacitor helps minimize reverse current spikes
 when battery is inserted with reverse polarity.</text>
 <text x="12.7" y="160.02" size="3.81" layer="95" align="top-left">VDD_1V9_IMG</text>
 <text x="12.7" y="129.54" size="3.81" layer="95" align="top-left">VDD_2V8_IMG</text>
 <text x="12.7" y="99.06" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
-<wire x1="157.226" y1="408.686" x2="144.272" y2="408.686" width="0.1524" layer="95"/>
-<text x="165.354" y="437.134" size="1.016" layer="95" align="top-left">Pull-down is sized so that:
-
-- Battery mode: it's much less than the gate
-leakage resistance of the PFETs, which is
-about 50 Meg ohms, so that VDD_USB isn't
-pulled high by the leakage (which would cause
-USB mode to be erronously enabled.)
-
-- USB mode: it doesn't draw too much current</text>
-<text x="165.1" y="446.024" size="1.016" layer="95" align="top-left">Limits inrush current and ESD into the gates of
-our PFETs. (Using 3k instead of 1k to consolidate
-resistor values.)</text>
-<wire x1="160.02" y1="444.5" x2="164.338" y2="444.5" width="0.1524" layer="95"/>
-<wire x1="160.02" y1="434.34" x2="164.338" y2="434.34" width="0.1524" layer="95"/>
-<text x="213.36" y="379.984" size="1.016" layer="95" align="top-left">Limits the drive strength to limit inrush current
-and dampen ringing on the PFET's gate. (Using
-3k instead of 1k to consolidate resistor values.)</text>
-<wire x1="208.28" y1="374.904" x2="212.598" y2="378.46" width="0.1524" layer="95"/>
+<wire x1="151.13" y1="388.62" x2="139.192" y2="401.066" width="0.1524" layer="95"/>
+<wire x1="157.48" y1="421.64" x2="161.798" y2="421.64" width="0.1524" layer="95"/>
+<text x="220.98" y="379.984" size="1.016" layer="95" align="top-left">Limits drive strength to limit inrush current
+and dampen ringing on the PFET's gate.</text>
+<wire x1="215.9" y1="374.904" x2="220.218" y2="378.46" width="0.1524" layer="95"/>
 <text x="12.7" y="7.62" size="3.81" layer="95" align="top-left">VDD_3V3_STM
 - Battery:  VDD_3V3_STM = HiZ
 - USB:      VDD_3V3_STM = 3V3</text>
@@ -4413,15 +4406,23 @@ method of switching the signal voltage
 without introducing capacitance on the
 signalling lines (which can greatly impact
 the 100MHz high-speed mode).</text>
-<text x="165.862" y="338.836" size="1.016" layer="95" align="top-left">Using load switch purely for its soft-start
-behavior, to limit USB inrush current</text>
+<text x="165.862" y="338.836" size="1.016" layer="95" align="top-left">Using load switch for 2 reasons:
+
+- soft-start behavior, to limit USB inrush current
+
+- QOD behavior, which ensures VDD_USB is
+grounded with low impedance when
+battery-powered, so that VDD_USB can be
+used as a state signal</text>
 <text x="150.368" y="345.694" size="1.016" layer="95" align="top-right">Ceff = 1uF @ 5.5V bias</text>
-<text x="196.088" y="349.504" size="1.016" layer="95" align="top-left">Schottky Diode requirements:
+<text x="198.628" y="349.504" size="1.016" layer="95" align="top-left">Schottky Diode requirements:
     - Low reverse leakage (minimize battery
       power loss, since battery will reverse bias)
 
     - Low forward voltage</text>
 <text x="12.7" y="71.12" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
+<text x="162.56" y="422.91" size="1.016" layer="95" align="top-left">Limits drive strength to limit inrush current
+and dampen ringing on the PFET's gate.</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="129.54" y="309.88" smashed="yes">
@@ -4550,80 +4551,32 @@ behavior, to limit USB inrush current</text>
 <attribute name="PN" x="162.56" y="381" size="1.778" layer="96" display="off"/>
 <attribute name="MFG" x="162.56" y="381" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R3" gate="G$1" x="195.58" y="373.38" smashed="yes">
-<attribute name="NAME" x="193.04" y="377.19" size="1.778" layer="95"/>
-<attribute name="VALUE" x="193.04" y="374.65" size="1.778" layer="96"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="195.58" y="373.38" size="1.778" layer="96" display="off"/>
+<instance part="R1" gate="G$1" x="154.94" y="421.64" smashed="yes" rot="R90">
+<attribute name="NAME" x="153.67" y="424.18" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="153.67" y="421.64" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="154.94" y="421.64" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="154.94" y="421.64" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="R1" gate="G$1" x="157.48" y="444.5" smashed="yes" rot="R90">
-<attribute name="NAME" x="156.21" y="447.04" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="156.21" y="444.5" size="1.778" layer="96" rot="R180"/>
-<attribute name="MFG" x="157.48" y="444.5" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="444.5" size="1.778" layer="96" rot="R90" display="off"/>
+<instance part="D1" gate="G$1" x="200.66" y="353.06" smashed="yes">
+<attribute name="NAME" x="202.692" y="356.616" size="1.778" layer="95"/>
 </instance>
-<instance part="R2" gate="G$1" x="157.48" y="434.34" smashed="yes" rot="R90">
-<attribute name="NAME" x="156.21" y="436.88" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="156.21" y="434.34" size="1.778" layer="96" rot="R180"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="MFG" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="157.48" y="434.34" size="1.778" layer="96" rot="R90" display="off"/>
-</instance>
-<instance part="D1" gate="G$1" x="195.58" y="353.06" smashed="yes">
-<attribute name="NAME" x="197.612" y="356.616" size="1.778" layer="95"/>
-</instance>
-<instance part="R4" gate="G$1" x="205.74" y="373.38" smashed="yes">
-<attribute name="NAME" x="203.2" y="377.19" size="1.778" layer="95"/>
-<attribute name="VALUE" x="203.2" y="374.65" size="1.778" layer="96"/>
-<attribute name="PN" x="205.74" y="373.38" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="205.74" y="373.38" size="1.778" layer="96" display="off"/>
+<instance part="R4" gate="G$1" x="213.36" y="373.38" smashed="yes">
+<attribute name="NAME" x="210.82" y="377.19" size="1.778" layer="95"/>
+<attribute name="VALUE" x="210.82" y="374.65" size="1.778" layer="96"/>
+<attribute name="PN" x="213.36" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="213.36" y="373.38" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="Q2" gate="G$1" x="149.86" y="386.08" smashed="yes">
 <attribute name="NAME" x="161.29" y="387.35" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="PN" x="149.86" y="386.08" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="Q1" gate="G$1" x="205.74" y="406.4" smashed="yes" rot="MR0">
-<attribute name="NAME" x="204.47" y="407.162" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-<attribute name="PN" x="205.74" y="406.4" size="1.778" layer="96" rot="MR0" display="off"/>
+<instance part="Q1" gate="G$1" x="213.36" y="406.4" smashed="yes" rot="MR0">
+<attribute name="NAME" x="212.09" y="407.162" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="PN" x="213.36" y="406.4" size="1.778" layer="96" rot="MR0" display="off"/>
 </instance>
-<instance part="Q3" gate="G$1" x="205.74" y="365.76" smashed="yes" rot="MR0">
-<attribute name="NAME" x="204.47" y="366.522" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-<attribute name="PN" x="205.74" y="365.76" size="1.778" layer="96" rot="MR0" display="off"/>
-</instance>
-<instance part="U1" gate="G$1" x="195.58" y="398.78" smashed="yes">
-<attribute name="NAME" x="195.655" y="401.32" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="195.655" y="386.08" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<instance part="Q3" gate="G$1" x="213.36" y="365.76" smashed="yes" rot="MR0">
+<attribute name="NAME" x="212.09" y="366.522" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="PN" x="213.36" y="365.76" size="1.778" layer="96" rot="MR0" display="off"/>
 </instance>
 <instance part="U6" gate="G$1" x="167.64" y="157.48" smashed="yes">
 <attribute name="PN" x="167.64" y="142.24" size="1.778" layer="95"/>
@@ -4697,11 +4650,11 @@ behavior, to limit USB inrush current</text>
 <attribute name="VALUE" x="131.064" y="26.797" size="1.778" layer="96" align="bottom-right"/>
 <attribute name="MFG" x="116.84" y="33.02" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="J1" gate="G$1" x="243.84" y="411.48" smashed="yes">
-<attribute name="NAME" x="242.57" y="414.02" size="1.778" layer="95" align="top-left"/>
+<instance part="J1" gate="G$1" x="251.46" y="411.48" smashed="yes">
+<attribute name="NAME" x="250.19" y="414.02" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="J3" gate="G$1" x="243.84" y="370.84" smashed="yes">
-<attribute name="NAME" x="242.57" y="373.38" size="1.778" layer="95" align="top-left"/>
+<instance part="J3" gate="G$1" x="251.46" y="370.84" smashed="yes">
+<attribute name="NAME" x="250.19" y="373.38" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="J2" gate="G$1" x="129.54" y="391.16" smashed="yes">
 <attribute name="NAME" x="128.27" y="393.7" size="1.778" layer="95" align="top-left"/>
@@ -4709,17 +4662,17 @@ behavior, to limit USB inrush current</text>
 <instance part="J4" gate="G$1" x="129.54" y="358.14" smashed="yes">
 <attribute name="NAME" x="128.27" y="360.68" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="C1" gate="G$1" x="226.06" y="401.32" smashed="yes">
-<attribute name="NAME" x="229.108" y="401.701" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="229.108" y="399.161" size="1.778" layer="96" align="top-left"/>
-<attribute name="PN" x="226.06" y="401.32" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="226.06" y="401.32" size="1.778" layer="96" display="off"/>
+<instance part="C1" gate="G$1" x="233.68" y="401.32" smashed="yes">
+<attribute name="NAME" x="236.728" y="401.701" size="1.778" layer="95" align="top-left"/>
+<attribute name="VALUE" x="236.728" y="399.161" size="1.778" layer="96" align="top-left"/>
+<attribute name="PN" x="233.68" y="401.32" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="233.68" y="401.32" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C3" gate="G$1" x="226.06" y="360.68" smashed="yes">
-<attribute name="NAME" x="229.108" y="361.061" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="229.108" y="358.521" size="1.778" layer="96" align="top-left"/>
-<attribute name="PN" x="226.06" y="360.68" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="226.06" y="360.68" size="1.778" layer="96" display="off"/>
+<instance part="C3" gate="G$1" x="233.68" y="360.68" smashed="yes">
+<attribute name="NAME" x="236.728" y="361.061" size="1.778" layer="95" align="top-left"/>
+<attribute name="VALUE" x="236.728" y="358.521" size="1.778" layer="96" align="top-left"/>
+<attribute name="PN" x="233.68" y="360.68" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="233.68" y="360.68" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U9" gate="G$1" x="167.64" y="68.58" smashed="yes">
 <attribute name="PN" x="167.64" y="53.34" size="1.778" layer="95"/>
@@ -4733,6 +4686,22 @@ behavior, to limit USB inrush current</text>
 </instance>
 <instance part="J5" gate="G$1" x="129.54" y="337.82" smashed="yes">
 <attribute name="NAME" x="128.27" y="340.36" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="U1" gate="G$1" x="203.2" y="398.78" smashed="yes">
+<attribute name="NAME" x="203.275" y="399.6719" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="203.275" y="385.9559" size="1.778" layer="95" ratio="10" rot="SR0"/>
+</instance>
+<instance part="C27" gate="G$1" x="175.26" y="396.24" smashed="yes">
+<attribute name="PN" x="157.48" y="401.32" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="178.562" y="395.351" size="1.778" layer="95"/>
+<attribute name="VALUE" x="178.562" y="392.811" size="1.778" layer="96"/>
+<attribute name="MFG" x="157.48" y="401.32" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="R2" gate="G$1" x="203.2" y="373.38" smashed="yes">
+<attribute name="NAME" x="200.66" y="377.19" size="1.778" layer="95"/>
+<attribute name="VALUE" x="200.66" y="374.65" size="1.778" layer="96"/>
+<attribute name="MFG" x="203.2" y="373.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="203.2" y="373.38" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -4788,8 +4757,8 @@ behavior, to limit USB inrush current</text>
 <label x="132.08" y="182.88" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="246.38" y1="365.76" x2="248.92" y2="365.76" width="0.1524" layer="91"/>
-<label x="248.92" y="365.76" size="1.778" layer="95"/>
+<wire x1="254" y1="365.76" x2="256.54" y2="365.76" width="0.1524" layer="91"/>
+<label x="256.54" y="365.76" size="1.778" layer="95"/>
 <pinref part="J3" gate="G$1" pin="2"/>
 </segment>
 </net>
@@ -4803,13 +4772,6 @@ behavior, to limit USB inrush current</text>
 <wire x1="165.1" y1="33.02" x2="162.56" y2="33.02" width="0.1524" layer="91"/>
 <label x="162.56" y="33.02" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U10" gate="G$1" pin="VIN"/>
-</segment>
-<segment>
-<wire x1="193.04" y1="396.24" x2="190.5" y2="396.24" width="0.1524" layer="91"/>
-<label x="190.5" y="396.24" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U1" gate="G$1" pin="EN"/>
-<pinref part="U1" gate="G$1" pin="VIN"/>
-<wire x1="193.04" y1="393.7" x2="193.04" y2="396.24" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <wire x1="165.1" y1="154.94" x2="162.56" y2="154.94" width="0.1524" layer="91"/>
@@ -4900,11 +4862,6 @@ behavior, to limit USB inrush current</text>
 <pinref part="U10" gate="G$1" pin="GND"/>
 </segment>
 <segment>
-<wire x1="193.04" y1="391.16" x2="190.5" y2="391.16" width="0.1524" layer="91"/>
-<label x="190.5" y="391.16" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U1" gate="G$1" pin="GND"/>
-</segment>
-<segment>
 <wire x1="165.1" y1="147.32" x2="162.56" y2="147.32" width="0.1524" layer="91"/>
 <label x="162.56" y="147.32" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U6" gate="G$1" pin="GND"/>
@@ -4918,11 +4875,6 @@ behavior, to limit USB inrush current</text>
 <wire x1="165.1" y1="86.36" x2="162.56" y2="86.36" width="0.1524" layer="91"/>
 <label x="162.56" y="86.36" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U8" gate="G$1" pin="GND"/>
-</segment>
-<segment>
-<wire x1="157.48" y1="429.26" x2="157.48" y2="426.72" width="0.1524" layer="91"/>
-<label x="157.48" y="426.72" size="1.778" layer="95"/>
-<pinref part="R2" gate="G$1" pin="1"/>
 </segment>
 <segment>
 <pinref part="U11" gate="G$1" pin="GND"/>
@@ -4981,13 +4933,13 @@ behavior, to limit USB inrush current</text>
 </segment>
 <segment>
 <pinref part="C1" gate="G$1" pin="2"/>
-<wire x1="226.06" y1="396.24" x2="226.06" y2="393.7" width="0.1524" layer="91"/>
-<label x="226.06" y="393.7" size="1.778" layer="95"/>
+<wire x1="233.68" y1="396.24" x2="233.68" y2="393.7" width="0.1524" layer="91"/>
+<label x="233.68" y="393.7" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C3" gate="G$1" pin="2"/>
-<wire x1="226.06" y1="355.6" x2="226.06" y2="353.06" width="0.1524" layer="91"/>
-<label x="226.06" y="353.06" size="1.778" layer="95"/>
+<wire x1="233.68" y1="355.6" x2="233.68" y2="353.06" width="0.1524" layer="91"/>
+<label x="233.68" y="353.06" size="1.778" layer="95"/>
 </segment>
 <segment>
 <wire x1="165.1" y1="58.42" x2="162.56" y2="58.42" width="0.1524" layer="91"/>
@@ -5006,6 +4958,16 @@ behavior, to limit USB inrush current</text>
 <wire x1="132.08" y1="332.74" x2="129.54" y2="332.74" width="0.1524" layer="91"/>
 <junction x="129.54" y="332.74"/>
 <label x="127" y="332.74" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U1" gate="G$1" pin="GND"/>
+<wire x1="200.66" y1="391.16" x2="198.12" y2="391.16" width="0.1524" layer="91"/>
+<label x="198.12" y="391.16" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C27" gate="G$1" pin="2"/>
+<wire x1="175.26" y1="391.16" x2="175.26" y2="388.62" width="0.1524" layer="91"/>
+<label x="175.26" y="388.62" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -5138,8 +5100,8 @@ behavior, to limit USB inrush current</text>
 <pinref part="U10" gate="G$1" pin="EN"/>
 </segment>
 <segment>
-<wire x1="157.48" y1="449.58" x2="157.48" y2="452.12" width="0.1524" layer="91"/>
-<label x="157.48" y="452.12" size="1.778" layer="95"/>
+<wire x1="154.94" y1="426.72" x2="154.94" y2="429.26" width="0.1524" layer="91"/>
+<label x="154.94" y="429.26" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="R1" gate="G$1" pin="2"/>
 </segment>
 <segment>
@@ -5155,12 +5117,28 @@ behavior, to limit USB inrush current</text>
 <segment>
 <pinref part="D1" gate="G$1" pin="A"/>
 <pinref part="U2" gate="G$1" pin="VOUT"/>
-<wire x1="190.5" y1="353.06" x2="193.04" y2="353.06" width="0.1524" layer="91"/>
-<wire x1="193.04" y1="353.06" x2="195.58" y2="353.06" width="0.1524" layer="91"/>
-<wire x1="193.04" y1="353.06" x2="193.04" y2="337.82" width="0.1524" layer="91"/>
-<wire x1="193.04" y1="337.82" x2="208.28" y2="337.82" width="0.1524" layer="91"/>
-<junction x="193.04" y="353.06"/>
+<wire x1="190.5" y1="353.06" x2="195.58" y2="353.06" width="0.1524" layer="91"/>
+<wire x1="195.58" y1="353.06" x2="200.66" y2="353.06" width="0.1524" layer="91"/>
+<wire x1="195.58" y1="353.06" x2="195.58" y2="337.82" width="0.1524" layer="91"/>
+<wire x1="195.58" y1="337.82" x2="208.28" y2="337.82" width="0.1524" layer="91"/>
+<junction x="195.58" y="353.06"/>
 <label x="208.28" y="337.82" size="1.778" layer="95"/>
+<pinref part="U2" gate="G$1" pin="QOD"/>
+<wire x1="190.5" y1="350.52" x2="190.5" y2="353.06" width="0.1524" layer="91"/>
+<junction x="190.5" y="353.06"/>
+</segment>
+<segment>
+<pinref part="U1" gate="G$1" pin="VIN"/>
+<wire x1="200.66" y1="396.24" x2="198.12" y2="396.24" width="0.1524" layer="91"/>
+<pinref part="U1" gate="G$1" pin="EN"/>
+<wire x1="200.66" y1="396.24" x2="200.66" y2="393.7" width="0.1524" layer="91"/>
+<junction x="200.66" y="396.24"/>
+<label x="198.12" y="396.24" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C27" gate="G$1" pin="1"/>
+<wire x1="175.26" y1="398.78" x2="175.26" y2="401.32" width="0.1524" layer="91"/>
+<label x="175.26" y="401.32" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_1V9_STM" class="0">
@@ -5198,45 +5176,25 @@ behavior, to limit USB inrush current</text>
 <junction x="187.96" y="124.46"/>
 </segment>
 </net>
-<net name="VDD_SRC_USB" class="0">
-<segment>
-<wire x1="154.94" y1="393.7" x2="154.94" y2="396.24" width="0.1524" layer="91"/>
-<label x="154.94" y="396.24" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="Q2" gate="G$1" pin="G"/>
-</segment>
-<segment>
-<wire x1="200.66" y1="414.02" x2="200.66" y2="416.56" width="0.1524" layer="91"/>
-<label x="200.66" y="416.56" size="1.778" layer="95"/>
-<pinref part="Q1" gate="G$1" pin="G"/>
-</segment>
-<segment>
-<wire x1="157.48" y1="439.42" x2="160.02" y2="439.42" width="0.1524" layer="91"/>
-<junction x="157.48" y="439.42"/>
-<label x="160.02" y="439.42" size="1.778" layer="95"/>
-<pinref part="R1" gate="G$1" pin="1"/>
-<pinref part="R2" gate="G$1" pin="2"/>
-</segment>
-</net>
 <net name="N$19" class="0">
 <segment>
-<wire x1="195.58" y1="406.4" x2="167.64" y2="406.4" width="0.1524" layer="91"/>
+<wire x1="203.2" y1="406.4" x2="167.64" y2="406.4" width="0.1524" layer="91"/>
 <pinref part="C2" gate="G$1" pin="1"/>
 <wire x1="160.02" y1="386.08" x2="162.56" y2="386.08" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="386.08" x2="162.56" y2="386.08" width="0.1524" layer="91"/>
 <junction x="162.56" y="386.08"/>
 <wire x1="162.56" y1="386.08" x2="162.56" y2="383.54" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="406.4" x2="167.64" y2="386.08" width="0.1524" layer="91"/>
-<wire x1="195.58" y1="365.76" x2="187.96" y2="365.76" width="0.1524" layer="91"/>
-<wire x1="187.96" y1="365.76" x2="167.64" y2="365.76" width="0.1524" layer="91"/>
+<wire x1="203.2" y1="365.76" x2="198.12" y2="365.76" width="0.1524" layer="91"/>
+<wire x1="198.12" y1="365.76" x2="167.64" y2="365.76" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="386.08" x2="167.64" y2="365.76" width="0.1524" layer="91"/>
 <junction x="167.64" y="386.08"/>
 <pinref part="Q2" gate="G$1" pin="S"/>
 <pinref part="Q1" gate="G$1" pin="S"/>
 <pinref part="Q3" gate="G$1" pin="S"/>
-<pinref part="R3" gate="G$1" pin="1"/>
-<wire x1="190.5" y1="373.38" x2="187.96" y2="373.38" width="0.1524" layer="91"/>
-<wire x1="187.96" y1="373.38" x2="187.96" y2="365.76" width="0.1524" layer="91"/>
-<junction x="187.96" y="365.76"/>
+<wire x1="198.12" y1="373.38" x2="198.12" y2="365.76" width="0.1524" layer="91"/>
+<junction x="198.12" y="365.76"/>
+<pinref part="R2" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="VDD_SD_EN" class="0">
@@ -5277,57 +5235,55 @@ behavior, to limit USB inrush current</text>
 </net>
 <net name="N$9" class="0">
 <segment>
-<wire x1="205.74" y1="406.4" x2="218.44" y2="406.4" width="0.1524" layer="91"/>
-<wire x1="215.9" y1="396.24" x2="218.44" y2="396.24" width="0.1524" layer="91"/>
-<wire x1="218.44" y1="396.24" x2="218.44" y2="406.4" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="406.4" x2="226.06" y2="406.4" width="0.1524" layer="91"/>
+<wire x1="223.52" y1="396.24" x2="226.06" y2="396.24" width="0.1524" layer="91"/>
+<wire x1="226.06" y1="396.24" x2="226.06" y2="406.4" width="0.1524" layer="91"/>
 <pinref part="Q1" gate="G$1" pin="D"/>
-<pinref part="U1" gate="G$1" pin="VOUT"/>
 <pinref part="J1" gate="G$1" pin="1"/>
-<wire x1="243.84" y1="406.4" x2="226.06" y2="406.4" width="0.1524" layer="91"/>
-<junction x="218.44" y="406.4"/>
-<pinref part="C1" gate="G$1" pin="1"/>
-<wire x1="226.06" y1="406.4" x2="218.44" y2="406.4" width="0.1524" layer="91"/>
-<wire x1="226.06" y1="403.86" x2="226.06" y2="406.4" width="0.1524" layer="91"/>
+<wire x1="251.46" y1="406.4" x2="233.68" y2="406.4" width="0.1524" layer="91"/>
 <junction x="226.06" y="406.4"/>
+<pinref part="C1" gate="G$1" pin="1"/>
+<wire x1="233.68" y1="406.4" x2="226.06" y2="406.4" width="0.1524" layer="91"/>
+<wire x1="233.68" y1="403.86" x2="233.68" y2="406.4" width="0.1524" layer="91"/>
+<junction x="233.68" y="406.4"/>
+<pinref part="U1" gate="G$1" pin="VOUT"/>
 </segment>
 </net>
 <net name="N$15" class="0">
 <segment>
-<wire x1="205.74" y1="365.76" x2="208.28" y2="365.76" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="365.76" x2="215.9" y2="365.76" width="0.1524" layer="91"/>
 <pinref part="D1" gate="G$1" pin="C"/>
-<wire x1="208.28" y1="365.76" x2="226.06" y2="365.76" width="0.1524" layer="91"/>
-<wire x1="226.06" y1="365.76" x2="243.84" y2="365.76" width="0.1524" layer="91"/>
-<wire x1="203.2" y1="353.06" x2="208.28" y2="353.06" width="0.1524" layer="91"/>
-<wire x1="208.28" y1="353.06" x2="208.28" y2="365.76" width="0.1524" layer="91"/>
-<junction x="208.28" y="365.76"/>
+<wire x1="215.9" y1="365.76" x2="233.68" y2="365.76" width="0.1524" layer="91"/>
+<wire x1="233.68" y1="365.76" x2="251.46" y2="365.76" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="353.06" x2="215.9" y2="353.06" width="0.1524" layer="91"/>
+<wire x1="215.9" y1="353.06" x2="215.9" y2="365.76" width="0.1524" layer="91"/>
+<junction x="215.9" y="365.76"/>
 <pinref part="Q3" gate="G$1" pin="D"/>
 <pinref part="J3" gate="G$1" pin="1"/>
 <pinref part="C3" gate="G$1" pin="1"/>
-<wire x1="226.06" y1="363.22" x2="226.06" y2="365.76" width="0.1524" layer="91"/>
-<junction x="226.06" y="365.76"/>
+<wire x1="233.68" y1="363.22" x2="233.68" y2="365.76" width="0.1524" layer="91"/>
+<junction x="233.68" y="365.76"/>
 </segment>
 </net>
 <net name="VDD_A" class="0">
 <segment>
-<wire x1="246.38" y1="406.4" x2="248.92" y2="406.4" width="0.1524" layer="91"/>
-<label x="248.92" y="406.4" size="1.778" layer="95"/>
+<wire x1="254" y1="406.4" x2="256.54" y2="406.4" width="0.1524" layer="91"/>
+<label x="256.54" y="406.4" size="1.778" layer="95"/>
 <pinref part="J1" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="VDD_B_EN_" class="0">
 <segment>
-<wire x1="210.82" y1="373.38" x2="213.36" y2="373.38" width="0.1524" layer="91"/>
-<label x="213.36" y="373.38" size="1.778" layer="95"/>
+<wire x1="218.44" y1="373.38" x2="220.98" y2="373.38" width="0.1524" layer="91"/>
+<label x="220.98" y="373.38" size="1.778" layer="95"/>
 <pinref part="R4" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$6" class="0">
 <segment>
-<pinref part="R3" gate="G$1" pin="2"/>
 <pinref part="R4" gate="G$1" pin="1"/>
 <pinref part="Q3" gate="G$1" pin="G"/>
-<junction x="200.66" y="373.38"/>
-<junction x="200.66" y="373.38"/>
+<pinref part="R2" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="VDD_3V3_STM" class="0">
@@ -5391,6 +5347,17 @@ behavior, to limit USB inrush current</text>
 <wire x1="187.96" y1="66.04" x2="190.5" y2="66.04" width="0.1524" layer="91"/>
 <junction x="187.96" y="66.04"/>
 <label x="190.5" y="66.04" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="N$3" class="0">
+<segment>
+<pinref part="Q2" gate="G$1" pin="G"/>
+<wire x1="154.94" y1="393.7" x2="154.94" y2="416.56" width="0.1524" layer="91"/>
+<junction x="154.94" y="416.56"/>
+<pinref part="R1" gate="G$1" pin="1"/>
+<wire x1="208.28" y1="414.02" x2="208.28" y2="416.56" width="0.1524" layer="91"/>
+<pinref part="Q1" gate="G$1" pin="G"/>
+<wire x1="154.94" y1="416.56" x2="208.28" y2="416.56" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
@@ -9000,6 +8967,11 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
+</note>
+<note version="8.3" severity="warning">
+Since Version 8.3, EAGLE supports the association of 3D packages
+with devices in libraries, schematics, and board files. Those 3D
+packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 

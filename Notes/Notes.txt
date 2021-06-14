@@ -73,13 +73,13 @@
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
     
-    - MSP430: fix power supply when plugged into USB
+    √ MSP430: fix power supply when plugged into USB
         - Problem: MSP430 needs a voltage higher than 2V to reliably start up, due to SVS
         √ Solution: Replace MAX40203 with TPS706 LDO
             - LDO requirements
                 - LDO input = VDD_B
                 - LDO output = 2.5V - 3.3V (use >2.4V so the motion sensor is powered)
-                - Needs enable, controlled by VDD_SRC_USB
+                - Needs enable, controlled by VDD_USB
                 - Needs to allow output voltage to be high while LDO is off (in battery mode)
                 - Needs reverse current protection (in case battery voltage is higher)
                 - Can't have an output discharge circuit (otherwise it'll draw current when disabled, in battery mode)
