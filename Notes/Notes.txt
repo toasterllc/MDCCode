@@ -68,7 +68,7 @@
     - Make board left/right borders smaller
     
     - Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
-        - Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
+        √ Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
         - See CrystalPartOptions.txt for other parts
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
@@ -108,10 +108,10 @@
                         - Complicated
                 - Some kind of crazy charge pump circuit that's only active at power on?
     
-    - MSP430: fix level shifting
+    √ MSP430: fix level shifting
         - Since MSP430 is now running at 2.5V, we need to level-shift ICE_MSP_SPI_CLK/ICE_MSP_SPI_DATA and MSP_TEST/MSP_RST_
         
-        - Bench-testing current of NTB0102
+        - Bench-testing supply current of NTB0102
             - Supply current <5nA when A1=A2=VDDA=2.5V and B1=B2=VDDB=0V
                 - Same ballpark as reported in "Typical supply current" section of the datasheet 
         
@@ -223,7 +223,7 @@
             - One for ICE_MSP_SPI_CLK / ICE_MSP_SPI_DATA (direction controlled by MSP430)
             - One for MSP_TEST / MSP_RST_ (direction controlled by STM32)
     
-    - Fix MSP level shifter net names:
+    √ Fix MSP level shifter net names:
         - ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
         - ICE_MSP_SPI_DATA is actually ICE_MSP_SPI_CLK
     

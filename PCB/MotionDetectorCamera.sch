@@ -1129,42 +1129,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.375" y="2.6"/>
 </polygon>
 </package>
-<package name="TI-SN74AXC4T774RSV" urn="urn:adsk.eagle:footprint:28411408/1" locally_modified="yes">
-<description>16-QFN, 0.40 mm pitch, 2.60 X 1.80 X 1.00 mm body
-&lt;p&gt;16-pin QFN package with 0.40 mm pitch with body size 2.60 X 1.80 X 1.00 mm&lt;/p&gt;</description>
-<wire x1="0.925" y1="-1.325" x2="-0.925" y2="-1.325" width="0.05" layer="21"/>
-<wire x1="-0.925" y1="-1.325" x2="-0.925" y2="1.325" width="0.05" layer="21"/>
-<wire x1="-0.925" y1="1.325" x2="0.925" y2="1.325" width="0.05" layer="21"/>
-<wire x1="0.925" y1="1.325" x2="0.925" y2="-1.325" width="0.05" layer="21"/>
-<smd name="1" x="-0.8451" y="0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="2" x="-0.8451" y="0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="3" x="-0.8451" y="-0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="4" x="-0.8451" y="-0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="5" x="-0.6" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<smd name="6" x="-0.2" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<smd name="7" x="0.2" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<smd name="8" x="0.6" y="-1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<smd name="9" x="0.8451" y="-0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="10" x="0.8451" y="-0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="11" x="0.8451" y="0.2" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="12" x="0.8451" y="0.6" dx="0.8098" dy="0.22" layer="1" roundness="100"/>
-<smd name="13" x="0.6" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<smd name="14" x="0.2" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<smd name="15" x="-0.2" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<smd name="16" x="-0.6" y="1.2451" dx="0.8098" dy="0.22" layer="1" roundness="100" rot="R90"/>
-<text x="-0.9" y="1.985" size="0.762" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="39">
-<vertex x="0.925" y="-1.325"/>
-<vertex x="-0.925" y="-1.325"/>
-<vertex x="-0.925" y="1.325"/>
-<vertex x="0.925" y="1.325"/>
-</polygon>
-<polygon width="0.05" layer="21">
-<vertex x="-0.9" y="1.3"/>
-<vertex x="-0.9" y="0.7"/>
-<vertex x="-0.3" y="1.3"/>
-</polygon>
-</package>
 <package name="TI-SN74LVC1G126DCK" urn="urn:adsk.eagle:footprint:28651591/1" locally_modified="yes">
 <description>5-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
 &lt;p&gt;5-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
@@ -1445,6 +1409,34 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.9" y="-2.4"/>
 <vertex x="1.6" y="-2.4"/>
 <vertex x="1.6" y="-1"/>
+</polygon>
+</package>
+<package name="NXP-NTB0102GF" urn="urn:adsk.eagle:footprint:22413770/1" locally_modified="yes">
+<description>DFN4, 1.00 X 1.35 X 0.50 mm body
+&lt;p&gt;DFN4 package with body size 1.00 X 1.35 X 0.50 mm&lt;/p&gt;</description>
+<smd name="2" x="-0.275" y="0.175" dx="0.4131" dy="0.22" layer="1"/>
+<smd name="3" x="-0.275" y="-0.175" dx="0.4131" dy="0.22" layer="1"/>
+<smd name="6" x="0.275" y="-0.175" dx="0.4131" dy="0.22" layer="1"/>
+<smd name="7" x="0.275" y="0.175" dx="0.4131" dy="0.22" layer="1"/>
+<text x="-0.512" y="0.829" size="0.635" layer="25" font="vector">&gt;NAME</text>
+<smd name="1" x="-0.275" y="0.525" dx="0.4131" dy="0.22" layer="1"/>
+<smd name="8" x="0.275" y="0.525" dx="0.4131" dy="0.22" layer="1"/>
+<smd name="4" x="-0.275" y="-0.525" dx="0.4131" dy="0.22" layer="1"/>
+<smd name="5" x="0.275" y="-0.525" dx="0.4131" dy="0.22" layer="1"/>
+<polygon width="0.05" layer="21">
+<vertex x="-0.5" y="0.7"/>
+<vertex x="-0.5" y="0"/>
+<vertex x="0.2" y="0.7"/>
+</polygon>
+<wire x1="0.525" y1="-0.7" x2="-0.525" y2="-0.7" width="0.05" layer="21"/>
+<wire x1="-0.525" y1="-0.7" x2="-0.525" y2="0.7" width="0.05" layer="21"/>
+<wire x1="-0.525" y1="0.7" x2="0.525" y2="0.7" width="0.05" layer="21"/>
+<wire x1="0.525" y1="0.7" x2="0.525" y2="-0.7" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="0.525" y="-0.7"/>
+<vertex x="-0.525" y="-0.7"/>
+<vertex x="-0.525" y="0.7"/>
+<vertex x="0.525" y="0.7"/>
 </polygon>
 </package>
 </packages>
@@ -2280,31 +2272,6 @@ tolerant of VDDUSB</text>
 <pin name="P2.6/UCB0SOMI/UCB0SCL" x="-2.54" y="-17.78" length="short"/>
 <text x="38.1" y="-2.54" size="1.778" layer="94">Port 2</text>
 </symbol>
-<symbol name="TI-SN74AXC4T774RSV">
-<description>SN74AXC4T774 4-Bit Dual-Supply Bus Transceiver</description>
-<wire x1="0" y1="-40.64" x2="0" y2="0" width="0.254" layer="94"/>
-<wire x1="0" y1="0" x2="20.32" y2="0" width="0.254" layer="94"/>
-<wire x1="20.32" y1="0" x2="20.32" y2="-40.64" width="0.254" layer="94"/>
-<wire x1="20.32" y1="-40.64" x2="0" y2="-40.64" width="0.254" layer="94"/>
-<text x="0" y="2.286" size="1.778" layer="95" align="top-left">&gt;NAME</text>
-<text x="0" y="-41.402" size="1.778" layer="95" align="top-left">&gt;PN</text>
-<pin name="VCCA" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
-<pin name="A1" x="-2.54" y="-12.7" visible="pin" length="short"/>
-<pin name="A2" x="-2.54" y="-20.32" visible="pin" length="short"/>
-<pin name="A3" x="-2.54" y="-27.94" visible="pin" length="short"/>
-<pin name="A4" x="-2.54" y="-35.56" visible="pin" length="short"/>
-<pin name="B1" x="22.86" y="-12.7" visible="pin" length="short" rot="R180"/>
-<pin name="B2" x="22.86" y="-20.32" visible="pin" length="short" rot="R180"/>
-<pin name="B3" x="22.86" y="-27.94" visible="pin" length="short" rot="R180"/>
-<pin name="B4" x="22.86" y="-35.56" visible="pin" length="short" rot="R180"/>
-<pin name="DIR1" x="-2.54" y="-15.24" visible="pin" length="short"/>
-<pin name="DIR2" x="-2.54" y="-22.86" visible="pin" length="short"/>
-<pin name="DIR3" x="-2.54" y="-30.48" visible="pin" length="short"/>
-<pin name="DIR4" x="-2.54" y="-38.1" visible="pin" length="short"/>
-<pin name="VCCB" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
-<pin name="EN_" x="-2.54" y="-7.62" visible="pin" length="short"/>
-</symbol>
 <symbol name="PMOS">
 <wire x1="2.54" y1="0" x2="2.54" y2="2.54" width="0.254" layer="94"/>
 <wire x1="2.54" y1="2.54" x2="7.62" y2="2.54" width="0.254" layer="94"/>
@@ -2451,6 +2418,23 @@ tolerant of VDDUSB</text>
 <text x="-1.27" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <pin name="1" x="0" y="-5.08" visible="pad" length="short" rot="R90"/>
 <pin name="2" x="2.54" y="-5.08" visible="pad" length="short" rot="R90"/>
+</symbol>
+<symbol name="NXP-NTB0102">
+<pin name="A1" x="-2.54" y="-15.24" visible="pin" length="short"/>
+<wire x1="0" y1="-22.86" x2="0" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="20.32" y2="0" width="0.254" layer="94"/>
+<wire x1="20.32" y1="0" x2="20.32" y2="-22.86" width="0.254" layer="94"/>
+<wire x1="20.32" y1="-22.86" x2="0" y2="-22.86" width="0.254" layer="94"/>
+<text x="0" y="-25.4" size="1.778" layer="95">&gt;PN</text>
+<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<pin name="B1" x="22.86" y="-15.24" visible="pin" length="short" rot="R180"/>
+<pin name="OE" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<pin name="VCCA" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="GND" x="-2.54" y="-5.08" visible="pin" length="short"/>
+<pin name="A2" x="-2.54" y="-20.32" visible="pin" length="short"/>
+<pin name="B2" x="22.86" y="-20.32" visible="pin" length="short" rot="R180"/>
+<pin name="VCCB" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
+<text x="0" y="-27.94" size="1.778" layer="95">Level Shifter</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -3408,39 +3392,6 @@ tolerant of VDDUSB</text>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TI-SN74AXC4T774RSV" prefix="U">
-<gates>
-<gate name="G$1" symbol="TI-SN74AXC4T774RSV" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="TI-SN74AXC4T774RSV">
-<connects>
-<connect gate="G$1" pin="A1" pad="1"/>
-<connect gate="G$1" pin="A2" pad="2"/>
-<connect gate="G$1" pin="A3" pad="3"/>
-<connect gate="G$1" pin="A4" pad="4"/>
-<connect gate="G$1" pin="B1" pad="12"/>
-<connect gate="G$1" pin="B2" pad="11"/>
-<connect gate="G$1" pin="B3" pad="10"/>
-<connect gate="G$1" pin="B4" pad="9"/>
-<connect gate="G$1" pin="DIR1" pad="15"/>
-<connect gate="G$1" pin="DIR2" pad="16"/>
-<connect gate="G$1" pin="DIR3" pad="5"/>
-<connect gate="G$1" pin="DIR4" pad="6"/>
-<connect gate="G$1" pin="EN_" pad="7"/>
-<connect gate="G$1" pin="GND" pad="8"/>
-<connect gate="G$1" pin="VCCA" pad="14"/>
-<connect gate="G$1" pin="VCCB" pad="13"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Texas Instruments"/>
-<attribute name="PN" value="SN74AXC4T774RSV"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TI-SN74LVC1G126" prefix="U">
 <gates>
 <gate name="G$1" symbol="TI-SN74LVC1G126" x="0" y="0"/>
@@ -3649,6 +3600,31 @@ tolerant of VDDUSB</text>
 <technology name="">
 <attribute name="MFG" value="Amphenol"/>
 <attribute name="PN" value="10129380-902002ALF"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="NXP-NTB0102" prefix="U">
+<gates>
+<gate name="G$1" symbol="NXP-NTB0102" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="NXP-NTB0102GF">
+<connects>
+<connect gate="G$1" pin="A1" pad="5"/>
+<connect gate="G$1" pin="A2" pad="4"/>
+<connect gate="G$1" pin="B1" pad="8"/>
+<connect gate="G$1" pin="B2" pad="1"/>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="OE" pad="6"/>
+<connect gate="G$1" pin="VCCA" pad="3"/>
+<connect gate="G$1" pin="VCCB" pad="7"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="NXP"/>
+<attribute name="PN" value="NTB0102GF"/>
 </technology>
 </technologies>
 </device>
@@ -4155,20 +4131,13 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="U12" library="EagleLibrary" deviceset="TI-MSP430FR2422IRHL" device=""/>
-<part name="U13" library="EagleLibrary" deviceset="TI-SN74AXC4T774RSV" device=""/>
-<part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="47k">
-<attribute name="MFG" value="Walsin"/>
-<attribute name="PN" value="WR04X473 JTL"/>
-</part>
-<part name="C26" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="1n">
+<part name="C26" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="22p">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="CC0402MRX7R9BB102"/>
 </part>
 <part name="C2" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <spice>
@@ -4229,20 +4198,15 @@ tolerant of VDDUSB</text>
 <part name="X1" library="EagleLibrary" deviceset="EPSON-MC-306" device="">
 <attribute name="PN" value="MC-306 32.7680K-E3:ROHS"/>
 </part>
-<part name="C22" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="9p">
+<part name="C22" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="22p">
 <spice>
 <pinmapping spiceprefix="C">
 <pinmap gate="G$1" pin="1" pinorder="1"/>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="CC0402BRNPO9BN9R0"/>
 </part>
-<part name="C23" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="9p">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="CC0402BRNPO9BN9R0"/>
-</part>
+<part name="C23" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="22p"/>
 <part name="U14" library="EagleLibrary" deviceset="PANASONIC-EKMB110711X" device="">
 <attribute name="PN" value="EKMB1107112"/>
 </part>
@@ -4299,14 +4263,6 @@ tolerant of VDDUSB</text>
 <part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="Samsung"/>
 <attribute name="PN" value="CL21A106KOQNNNE"/>
-</part>
-<part name="C27" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM155R61H104KE19D"/>
-</part>
-<part name="C28" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
-<attribute name="MFG" value="Murata"/>
-<attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="U9" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="C18" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
@@ -4370,6 +4326,8 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="J5" library="EagleLibrary" deviceset="JUMPER" device=""/>
+<part name="U21" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
+<part name="U22" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -5455,14 +5413,41 @@ C_para = 2pF (MSP capacitance per pin)
                  + 1 pF (estimated trace capacitance)
              = 3 pF
 
-C_L = 6 pF (from crystal datasheet)
+C_L = 12.5 pF (from crystal datasheet)
 
-Therefore, C = 9 pF</text>
+Therefore, C = 22 pF</text>
 <text x="141.732" y="93.472" size="1.016" layer="95" align="top-left">Use NP0 dialectric capacitors to minimize
 capacitance variation due to temperature
 and DC bias</text>
 <text x="0.254" y="76.962" size="0.762" layer="95">ACLK
 test point</text>
+<text x="-30.48" y="32.512" size="1.016" layer="95" align="top-right">Use VCCB side for VDD_A because VCCB
+has a wider supply voltage range (1.65-5.5 V),
+giving us more flexibility in the battery
+voltage.</text>
+<text x="-112.268" y="61.214" size="1.016" layer="95" align="top-left">Don't use a pullup resistor on MSP_RST_!!
+
+MSP430FR* has an internal 20k-50k pullup, which
+is already on the low end for correct operation of
+the level shifter, which requires weak pullups.
+
+Adding an external resistor lowers the pullup
+resistance further (parallel resistors), worsening
+the level shifter's VOL.</text>
+<text x="60.96" y="32.512" size="1.016" layer="95" align="top-right">Use VCCB side for VDD_A because VCCB
+has a wider supply voltage range (1.65-5.5 V),
+giving us more flexibility in the battery
+voltage.</text>
+<text x="-64.008" y="58.674" size="1.016" layer="95" align="top-left">Don't use the recommended 1nF capacitor!!
+
+For correct operation of the level shifter,
+we need a much lower capacitance on MSP_RST,
+because the level shifter can't drive large
+capacitive loads.
+
+Since the recommended 1nF capacitor is for
+noise suppression, we should be able to get
+away with a smaller capacitor.</text>
 </plain>
 <instances>
 <instance part="U12" gate="A" x="-30.48" y="78.74" smashed="yes">
@@ -5477,21 +5462,9 @@ test point</text>
 <attribute name="NAME" x="132.08" y="83.566" size="1.778" layer="95" align="top-left"/>
 <attribute name="PN" x="132.08" y="60.198" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="U13" gate="G$1" x="38.1" y="40.64" smashed="yes">
-<attribute name="NAME" x="38.1" y="42.926" size="1.778" layer="95" align="top-left"/>
-<attribute name="PN" x="38.1" y="-0.762" size="1.778" layer="95" align="top-left"/>
-</instance>
-<instance part="R11" gate="G$1" x="-66.04" y="63.5" smashed="yes" rot="R90">
-<attribute name="NAME" x="-68.072" y="65.024" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="-68.072" y="62.484" size="1.778" layer="96" rot="R180"/>
-<attribute name="MFG" x="-66.04" y="63.5" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="-66.04" y="63.5" size="1.778" layer="96" rot="R90" display="off"/>
-</instance>
-<instance part="C26" gate="G$1" x="-66.04" y="50.8" smashed="yes">
-<attribute name="NAME" x="-69.596" y="51.181" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="-69.596" y="48.641" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="-66.04" y="50.8" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="-66.04" y="50.8" size="1.778" layer="96" display="off"/>
+<instance part="C26" gate="G$1" x="-71.12" y="55.88" smashed="yes">
+<attribute name="NAME" x="-74.676" y="56.261" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="-74.676" y="53.721" size="1.778" layer="96" align="bottom-right"/>
 </instance>
 <instance part="X1" gate="G$1" x="121.92" y="99.06" smashed="yes">
 <attribute name="NAME" x="121.92" y="101.346" size="1.778" layer="95" align="top-left"/>
@@ -5499,14 +5472,10 @@ test point</text>
 <instance part="C22" gate="G$1" x="114.3" y="93.98" smashed="yes">
 <attribute name="NAME" x="111.506" y="93.599" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="111.506" y="91.059" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="114.3" y="93.98" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="114.3" y="93.98" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C23" gate="G$1" x="132.08" y="93.98" smashed="yes">
 <attribute name="NAME" x="134.874" y="93.599" size="1.778" layer="95"/>
 <attribute name="VALUE" x="134.874" y="91.059" size="1.778" layer="96"/>
-<attribute name="MFG" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C25" gate="G$1" x="-58.42" y="83.82" smashed="yes">
 <attribute name="MFG" x="-35.56" y="38.1" size="1.778" layer="96" display="off"/>
@@ -5523,17 +5492,13 @@ test point</text>
 <instance part="TP1" gate="G$1" x="5.08" y="76.2" smashed="yes" rot="R90">
 <attribute name="NAME" x="5.08" y="76.2" size="1.778" layer="95" rot="R180"/>
 </instance>
-<instance part="C27" gate="G$1" x="-2.54" y="35.56" smashed="yes">
-<attribute name="PN" x="-20.32" y="40.64" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="-6.096" y="36.957" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="-6.096" y="34.417" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="-20.32" y="40.64" size="1.778" layer="96" display="off"/>
+<instance part="U21" gate="G$1" x="83.82" y="38.1" smashed="yes" rot="MR0">
+<attribute name="PN" x="83.82" y="12.7" size="1.778" layer="95" rot="MR0"/>
+<attribute name="NAME" x="83.82" y="40.64" size="1.778" layer="95" rot="MR0" align="top-left"/>
 </instance>
-<instance part="C28" gate="G$1" x="96.52" y="35.56" smashed="yes">
-<attribute name="PN" x="78.74" y="40.64" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="92.964" y="36.957" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="92.964" y="34.417" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="78.74" y="40.64" size="1.778" layer="96" display="off"/>
+<instance part="U22" gate="G$1" x="-7.62" y="38.1" smashed="yes" rot="MR0">
+<attribute name="PN" x="-7.62" y="12.7" size="1.778" layer="95" rot="MR0"/>
+<attribute name="NAME" x="-7.62" y="40.64" size="1.778" layer="95" rot="MR0" align="top-left"/>
 </instance>
 </instances>
 <busses>
@@ -5546,30 +5511,20 @@ test point</text>
 <label x="-35.56" y="76.2" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U13" gate="G$1" pin="VCCA"/>
-<wire x1="35.56" y1="38.1" x2="33.02" y2="38.1" width="0.1524" layer="91"/>
-<label x="33.02" y="38.1" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<pinref part="R11" gate="G$1" pin="2"/>
-<wire x1="-66.04" y1="68.58" x2="-66.04" y2="71.12" width="0.1524" layer="91"/>
-<label x="-66.04" y="71.12" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="C24" gate="G$1" pin="1"/>
 <pinref part="C25" gate="G$1" pin="1"/>
 <wire x1="-68.58" y1="86.36" x2="-58.42" y2="86.36" width="0.1524" layer="91"/>
 <label x="-68.58" y="86.36" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="35.56" y1="17.78" x2="33.02" y2="17.78" width="0.1524" layer="91"/>
-<label x="33.02" y="17.78" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U13" gate="G$1" pin="DIR2"/>
+<pinref part="U21" gate="G$1" pin="VCCB"/>
+<wire x1="60.96" y1="35.56" x2="58.42" y2="35.56" width="0.1524" layer="91"/>
+<label x="58.42" y="35.56" size="1.778" layer="95" rot="MR0"/>
 </segment>
 <segment>
-<pinref part="C27" gate="G$1" pin="1"/>
-<wire x1="-2.54" y1="38.1" x2="-2.54" y2="40.64" width="0.1524" layer="91"/>
-<label x="-2.54" y="40.64" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U22" gate="G$1" pin="VCCB"/>
+<wire x1="-30.48" y1="35.56" x2="-33.02" y2="35.56" width="0.1524" layer="91"/>
+<label x="-33.02" y="35.56" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -5582,17 +5537,9 @@ test point</text>
 <junction x="-33.02" y="73.66"/>
 </segment>
 <segment>
-<pinref part="U13" gate="G$1" pin="GND"/>
-<wire x1="35.56" y1="35.56" x2="33.02" y2="35.56" width="0.1524" layer="91"/>
-<pinref part="U13" gate="G$1" pin="EN_"/>
-<wire x1="35.56" y1="33.02" x2="35.56" y2="35.56" width="0.1524" layer="91"/>
-<junction x="35.56" y="35.56"/>
-<label x="33.02" y="35.56" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <pinref part="C26" gate="G$1" pin="2"/>
-<wire x1="-66.04" y1="45.72" x2="-66.04" y2="43.18" width="0.1524" layer="91"/>
-<label x="-66.04" y="43.18" size="1.778" layer="95"/>
+<wire x1="-71.12" y1="50.8" x2="-71.12" y2="48.26" width="0.1524" layer="91"/>
+<label x="-71.12" y="48.26" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C22" gate="G$1" pin="2"/>
@@ -5611,14 +5558,14 @@ test point</text>
 <pinref part="C24" gate="G$1" pin="2"/>
 </segment>
 <segment>
-<pinref part="C27" gate="G$1" pin="2"/>
-<wire x1="-2.54" y1="30.48" x2="-2.54" y2="27.94" width="0.1524" layer="91"/>
-<label x="-2.54" y="27.94" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U21" gate="G$1" pin="GND"/>
+<wire x1="86.36" y1="33.02" x2="88.9" y2="33.02" width="0.1524" layer="91"/>
+<label x="88.9" y="33.02" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="C28" gate="G$1" pin="2"/>
-<wire x1="96.52" y1="30.48" x2="96.52" y2="27.94" width="0.1524" layer="91"/>
-<label x="96.52" y="27.94" size="1.778" layer="95"/>
+<wire x1="-5.08" y1="33.02" x2="-2.54" y2="33.02" width="0.1524" layer="91"/>
+<label x="-2.54" y="33.02" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<pinref part="U22" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="MSP_TEST" class="0">
@@ -5626,6 +5573,11 @@ test point</text>
 <pinref part="U12" gate="A" pin="TEST/SBWTCK"/>
 <wire x1="-33.02" y1="66.04" x2="-35.56" y2="66.04" width="0.1524" layer="91"/>
 <label x="-35.56" y="66.04" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<wire x1="-30.48" y1="22.86" x2="-33.02" y2="22.86" width="0.1524" layer="91"/>
+<label x="-33.02" y="22.86" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U22" gate="G$1" pin="B1"/>
 </segment>
 </net>
 <net name="MSP_RST_" class="0">
@@ -5635,13 +5587,15 @@ test point</text>
 <label x="-35.56" y="63.5" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="R11" gate="G$1" pin="1"/>
-<wire x1="-66.04" y1="58.42" x2="-66.04" y2="55.88" width="0.1524" layer="91"/>
 <pinref part="C26" gate="G$1" pin="1"/>
-<wire x1="-66.04" y1="55.88" x2="-66.04" y2="53.34" width="0.1524" layer="91"/>
-<wire x1="-66.04" y1="55.88" x2="-63.5" y2="55.88" width="0.1524" layer="91"/>
-<junction x="-66.04" y="55.88"/>
-<label x="-63.5" y="55.88" size="1.778" layer="95"/>
+<wire x1="-71.12" y1="60.96" x2="-71.12" y2="58.42" width="0.1524" layer="91"/>
+<wire x1="-71.12" y1="60.96" x2="-68.58" y2="60.96" width="0.1524" layer="91"/>
+<label x="-68.58" y="60.96" size="1.778" layer="95"/>
+</segment>
+<segment>
+<wire x1="-30.48" y1="17.78" x2="-33.02" y2="17.78" width="0.1524" layer="91"/>
+<label x="-33.02" y="17.78" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U22" gate="G$1" pin="B2"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_DATA_X" class="0">
@@ -5654,9 +5608,9 @@ test point</text>
 <label x="33.02" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="35.56" y1="27.94" x2="33.02" y2="27.94" width="0.1524" layer="91"/>
-<label x="33.02" y="27.94" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U13" gate="G$1" pin="A1"/>
+<pinref part="U21" gate="G$1" pin="B2"/>
+<wire x1="60.96" y1="17.78" x2="58.42" y2="17.78" width="0.1524" layer="91"/>
+<label x="58.42" y="17.78" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_CLK_X" class="0">
@@ -5666,78 +5620,42 @@ test point</text>
 <label x="33.02" y="63.5" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="35.56" y1="20.32" x2="33.02" y2="20.32" width="0.1524" layer="91"/>
-<label x="33.02" y="20.32" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U13" gate="G$1" pin="A2"/>
+<pinref part="U21" gate="G$1" pin="B1"/>
+<wire x1="60.96" y1="22.86" x2="58.42" y2="22.86" width="0.1524" layer="91"/>
+<label x="58.42" y="22.86" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_DATA_DIR" class="0">
-<segment>
-<wire x1="35.56" y1="25.4" x2="33.02" y2="25.4" width="0.1524" layer="91"/>
-<label x="33.02" y="25.4" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U13" gate="G$1" pin="DIR1"/>
-</segment>
 <segment>
 <wire x1="35.56" y1="71.12" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
 <label x="33.02" y="71.12" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U12" gate="B" pin="P1.3/UCB0SOMI/UCB0SCL/MCLK/A3"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_AUX_X" class="0">
-<segment>
-<pinref part="U13" gate="G$1" pin="A3"/>
-<wire x1="35.56" y1="12.7" x2="33.02" y2="12.7" width="0.1524" layer="91"/>
-<label x="33.02" y="12.7" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<wire x1="35.56" y1="60.96" x2="33.02" y2="60.96" width="0.1524" layer="91"/>
-<label x="33.02" y="60.96" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U12" gate="B" pin="P1.7/UCA0STE/TDO"/>
-</segment>
-</net>
-<net name="ICE_MSP_SPI_AUX_DIR" class="0">
-<segment>
-<pinref part="U13" gate="G$1" pin="DIR3"/>
-<wire x1="35.56" y1="10.16" x2="33.02" y2="10.16" width="0.1524" layer="91"/>
-<label x="33.02" y="10.16" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<wire x1="129.54" y1="73.66" x2="127" y2="73.66" width="0.1524" layer="91"/>
-<label x="127" y="73.66" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U12" gate="C" pin="P2.2/TA1.1/A4"/>
-</segment>
-</net>
 <net name="ICE_MSP_SPI_CLK" class="0">
 <segment>
-<pinref part="U13" gate="G$1" pin="B1"/>
-<wire x1="60.96" y1="27.94" x2="63.5" y2="27.94" width="0.1524" layer="91"/>
-<label x="63.5" y="27.94" size="1.778" layer="95"/>
+<pinref part="U21" gate="G$1" pin="A1"/>
+<wire x1="86.36" y1="22.86" x2="88.9" y2="22.86" width="0.1524" layer="91"/>
+<label x="88.9" y="22.86" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_DATA" class="0">
 <segment>
-<pinref part="U13" gate="G$1" pin="B2"/>
-<wire x1="60.96" y1="20.32" x2="63.5" y2="20.32" width="0.1524" layer="91"/>
-<label x="63.5" y="20.32" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_MSP_SPI_AUX" class="0">
-<segment>
-<pinref part="U13" gate="G$1" pin="B3"/>
-<wire x1="60.96" y1="12.7" x2="63.5" y2="12.7" width="0.1524" layer="91"/>
-<label x="63.5" y="12.7" size="1.778" layer="95"/>
+<pinref part="U21" gate="G$1" pin="A2"/>
+<wire x1="86.36" y1="17.78" x2="88.9" y2="17.78" width="0.1524" layer="91"/>
+<label x="88.9" y="17.78" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_1V9" class="0">
 <segment>
-<pinref part="U13" gate="G$1" pin="VCCB"/>
-<wire x1="60.96" y1="38.1" x2="63.5" y2="38.1" width="0.1524" layer="91"/>
-<label x="63.5" y="38.1" size="1.778" layer="95"/>
+<pinref part="U21" gate="G$1" pin="VCCA"/>
+<wire x1="86.36" y1="35.56" x2="88.9" y2="35.56" width="0.1524" layer="91"/>
+<label x="88.9" y="35.56" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="C28" gate="G$1" pin="1"/>
-<wire x1="96.52" y1="38.1" x2="96.52" y2="40.64" width="0.1524" layer="91"/>
-<label x="96.52" y="40.64" size="1.778" layer="95"/>
+<pinref part="U21" gate="G$1" pin="OE"/>
+<wire x1="86.36" y1="27.94" x2="88.9" y2="27.94" width="0.1524" layer="91"/>
+<label x="88.9" y="27.94" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_B_EN_" class="0">
@@ -5802,6 +5720,32 @@ test point</text>
 <wire x1="129.54" y1="71.12" x2="127" y2="71.12" width="0.1524" layer="91"/>
 <label x="127" y="71.12" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U12" gate="C" pin="P2.3/TA1.2/UCB0STE/A5"/>
+</segment>
+</net>
+<net name="VDD_1V9_STM" class="0">
+<segment>
+<wire x1="-5.08" y1="35.56" x2="-2.54" y2="35.56" width="0.1524" layer="91"/>
+<label x="-2.54" y="35.56" size="1.778" layer="95"/>
+<pinref part="U22" gate="G$1" pin="VCCA"/>
+</segment>
+<segment>
+<wire x1="-5.08" y1="27.94" x2="-2.54" y2="27.94" width="0.1524" layer="91"/>
+<label x="-2.54" y="27.94" size="1.778" layer="95"/>
+<pinref part="U22" gate="G$1" pin="OE"/>
+</segment>
+</net>
+<net name="MSP_TEST_X" class="0">
+<segment>
+<pinref part="U22" gate="G$1" pin="A1"/>
+<wire x1="-5.08" y1="22.86" x2="-2.54" y2="22.86" width="0.1524" layer="91"/>
+<label x="-2.54" y="22.86" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_RST_X_" class="0">
+<segment>
+<pinref part="U22" gate="G$1" pin="A2"/>
+<wire x1="-5.08" y1="17.78" x2="-2.54" y2="17.78" width="0.1524" layer="91"/>
+<label x="-2.54" y="17.78" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
@@ -6770,13 +6714,6 @@ below the chip.</text>
 <wire x1="213.36" y1="2.54" x2="215.9" y2="2.54" width="0.1524" layer="91"/>
 <label x="215.9" y="2.54" size="1.778" layer="95"/>
 <pinref part="U15" gate="D" pin="K2"/>
-</segment>
-</net>
-<net name="ICE_MSP_SPI_AUX" class="0">
-<segment>
-<wire x1="149.86" y1="48.26" x2="152.4" y2="48.26" width="0.1524" layer="91"/>
-<label x="152.4" y="48.26" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="K3"/>
 </segment>
 </net>
 <net name="N$20" class="0">
@@ -8884,20 +8821,6 @@ between input and output when its VDD=0.</text>
 <label x="223.52" y="-99.06" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="MSP_TEST" class="0">
-<segment>
-<wire x1="68.58" y1="-15.24" x2="71.12" y2="-15.24" width="0.1524" layer="91"/>
-<label x="71.12" y="-15.24" size="1.778" layer="95"/>
-<pinref part="U19" gate="B" pin="PB1_R4"/>
-</segment>
-</net>
-<net name="MSP_RST_" class="0">
-<segment>
-<wire x1="68.58" y1="-12.7" x2="71.12" y2="-12.7" width="0.1524" layer="91"/>
-<label x="71.12" y="-12.7" size="1.778" layer="95"/>
-<pinref part="U19" gate="B" pin="PB0_R5"/>
-</segment>
-</net>
 <net name="N$29" class="0">
 <segment>
 <pinref part="LED7" gate="G$1" pin="C"/>
@@ -8953,6 +8876,20 @@ between input and output when its VDD=0.</text>
 <wire x1="27.94" y1="-104.14" x2="30.48" y2="-104.14" width="0.1524" layer="91"/>
 <label x="30.48" y="-104.14" size="1.778" layer="95"/>
 <pinref part="U19" gate="E" pin="PE12_R10"/>
+</segment>
+</net>
+<net name="MSP_RST_X_" class="0">
+<segment>
+<wire x1="68.58" y1="-12.7" x2="71.12" y2="-12.7" width="0.1524" layer="91"/>
+<label x="71.12" y="-12.7" size="1.778" layer="95"/>
+<pinref part="U19" gate="B" pin="PB0_R5"/>
+</segment>
+</net>
+<net name="MSP_TEST_X" class="0">
+<segment>
+<wire x1="68.58" y1="-15.24" x2="71.12" y2="-15.24" width="0.1524" layer="91"/>
+<label x="71.12" y="-15.24" size="1.778" layer="95"/>
+<pinref part="U19" gate="B" pin="PB1_R4"/>
 </segment>
 </net>
 </nets>
