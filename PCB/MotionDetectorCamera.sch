@@ -5216,13 +5216,9 @@ through ST pin (IST) = 1mA</text>
 </segment>
 <segment>
 <pinref part="U13" gate="G$1" pin="VIN"/>
-<pinref part="U13" gate="G$1" pin="EN"/>
-<wire x1="208.28" y1="398.78" x2="208.28" y2="396.24" width="0.1524" layer="91"/>
 <junction x="208.28" y="398.78"/>
 <wire x1="185.42" y1="398.78" x2="195.58" y2="398.78" width="0.1524" layer="91"/>
 <wire x1="195.58" y1="398.78" x2="208.28" y2="398.78" width="0.1524" layer="91"/>
-<wire x1="185.42" y1="398.78" x2="185.42" y2="419.1" width="0.1524" layer="91"/>
-<label x="185.42" y="419.1" size="1.778" layer="95"/>
 <pinref part="U2" gate="G$1" pin="VOUT"/>
 <junction x="185.42" y="398.78"/>
 <pinref part="U2" gate="G$1" pin="QOD"/>
@@ -5233,6 +5229,8 @@ through ST pin (IST) = 1mA</text>
 <pinref part="D3" gate="G$1" pin="C"/>
 <wire x1="215.9" y1="406.4" x2="208.28" y2="406.4" width="0.1524" layer="91"/>
 <wire x1="208.28" y1="406.4" x2="208.28" y2="398.78" width="0.1524" layer="91"/>
+<pinref part="U13" gate="G$1" pin="EN"/>
+<wire x1="208.28" y1="396.24" x2="208.28" y2="398.78" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="VDD_1V9_STM" class="0">
@@ -7054,7 +7052,7 @@ below the chip.</text>
 <text x="15.24" y="48.26" size="1.778" layer="95" align="bottom-right">VDD Bypassing</text>
 <text x="15.24" y="20.32" size="1.778" layer="95" align="bottom-right">VDD_IO Bypassing</text>
 <text x="15.24" y="5.08" size="1.778" layer="95" align="bottom-right">VDD_PLL Bypassing</text>
-<text x="159.766" y="85.344" size="1.016" layer="95" align="top-left">This buffer blocks the clock while the PIX domain isn't
+<text x="159.766" y="85.344" size="1.016" layer="95" align="top-left">This buffer blocks the clock while the IMG domain isn't
 powered. It works simply by taking advantage of the
 buffer's "I_Off" behavior, which guarantees no leakage
 between input and output when its VDD=0.</text>
