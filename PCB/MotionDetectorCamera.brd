@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
+<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="no" altdistance="0.001" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
@@ -146,6 +146,7 @@ Rev 4</text>
 BOOT</text>
 <wire x1="29.6316375" y1="11.10741875" x2="31.252159375" y2="12.8778" width="0.0762" layer="26"/>
 <wire x1="31.1556375" y1="10.436859375" x2="31.341059375" y2="10.881359375" width="0.0762" layer="26"/>
+<rectangle x1="-4.986" y1="3.586" x2="-2.986" y2="5.686" layer="1"/>
 </plain>
 <libraries>
 <library name="EagleLibrary">
@@ -1438,16 +1439,33 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.25" y="0.5"/>
 </polygon>
 </package>
+<package name="NEXPERIA-SOT363" urn="urn:adsk.eagle:footprint:29433204/1" locally_modified="yes">
+<description>6-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
+&lt;p&gt;6-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
+<wire x1="0.675" y1="-1.1" x2="-0.675" y2="-1.1" width="0.05" layer="21"/>
+<wire x1="-0.675" y1="-1.1" x2="-0.675" y2="1.1" width="0.05" layer="21"/>
+<wire x1="-0.675" y1="1.1" x2="0.675" y2="1.1" width="0.05" layer="21"/>
+<wire x1="0.675" y1="1.1" x2="0.675" y2="-1.1" width="0.05" layer="21"/>
+<smd name="1" x="-0.9704" y="0.65" dx="0.9884" dy="0.41" layer="1"/>
+<smd name="2" x="-0.9704" y="0" dx="0.9884" dy="0.41" layer="1"/>
+<smd name="3" x="-0.9704" y="-0.65" dx="0.9884" dy="0.41" layer="1"/>
+<smd name="4" x="0.9704" y="-0.65" dx="0.9884" dy="0.41" layer="1"/>
+<smd name="5" x="0.9704" y="0" dx="0.9884" dy="0.41" layer="1"/>
+<smd name="6" x="0.9704" y="0.65" dx="0.9884" dy="0.41" layer="1"/>
+<text x="-0.6604" y="1.220378125" size="0.762" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.675" y="-1.1"/>
+<vertex x="-0.675" y="-1.1"/>
+<vertex x="-0.675" y="1.1"/>
+<vertex x="0.675" y="1.1"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-0.657" y="1.077"/>
+<vertex x="-0.657" y="0.077"/>
+<vertex x="0.243" y="1.077"/>
+</polygon>
+</package>
 </packages>
-<packages3d>
-<package3d name="SON65P201X201X63-7T86X155N" urn="urn:adsk.eagle:package:29410991/1" type="model">
-<description>6-SON (DFN), 0.65 mm pitch, 2.01 X 2.01 X 0.63 mm body, 1.55 X 0.86 mm thermal pad
-&lt;p&gt;6-pin SON (DFN) package with 0.65 mm pitch with body size 2.01 X 2.01 X 0.63 mm and thermal pad size 1.55 X 0.86 mm&lt;/p&gt;</description>
-<packageinstances>
-<packageinstance name="DIODESINC-AP7366-SN-7"/>
-</packageinstances>
-</package3d>
-</packages3d>
 </library>
 </libraries>
 <attributes>
@@ -2465,7 +2483,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-15.232" y="-98.25" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="" x="-14.478" y="-98.806" size="1.778" layer="27" display="off"/>
 </element>
-<element name="U13" library="EagleLibrary" package="DIODESINC-AP7366-SN-7" package3d_urn="urn:adsk.eagle:package:29410991/1" value="DIODESINC-AP7366-SN-7" x="-14.224" y="-107.442" smashed="yes">
+<element name="U13" library="EagleLibrary" package="DIODESINC-AP7366-SN-7" value="DIODESINC-AP7366-SN-7" x="-14.224" y="-107.442" smashed="yes">
 <attribute name="MFG" value="Diodes Incorporated" x="-14.224" y="-102.616" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-15.298421875" y="-106.23828125" size="1.016" layer="25" font="vector"/>
 <attribute name="PN" value="AP7366-SN-7" x="-14.224" y="-102.616" size="1.778" layer="27" display="off"/>
@@ -2489,6 +2507,100 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MFG" value="" x="-14.478" y="-115.316" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-12.692" y="-109.426" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="" x="-14.478" y="-115.316" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R11" library="EagleLibrary" package="0402" value="" x="-14.7" y="-119.4" smashed="yes">
+<attribute name="NAME" x="-15.454" y="-118.844" size="0.508" layer="25" font="vector"/>
+</element>
+<element name="C1" library="EagleLibrary" package="0402" value="" x="-14.7" y="-121.8" smashed="yes">
+<attribute name="NAME" x="-15.454" y="-121.244" size="0.508" layer="25" font="vector"/>
+</element>
+<element name="U24" library="EagleLibrary" package="NEXPERIA-SOT363" value="NEXPERIA-74LVC1G98-BUFFER" x="-14.4" y="-125.2" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.4" y="-125.2" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.0604" y="-123.979621875" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="74LVC1G98GW,125" x="-14.4" y="-125.2" size="1.778" layer="27" display="off"/>
+</element>
+<element name="U1" library="EagleLibrary" package="NEXPERIA-SOT363" value="NEXPERIA-74LVC1G98-NOR" x="-14.4" y="-131.1" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.4" y="-131.1" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.0604" y="-129.879621875" size="0.762" layer="25" font="vector"/>
+</element>
+<element name="U25" library="EagleLibrary" package="NEXPERIA-SOT363" value="NEXPERIA-74LVC1G98-INVERTER" x="-14.4" y="-134.6" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.4" y="-134.6" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.0604" y="-133.379621875" size="0.762" layer="25" font="vector"/>
+</element>
+<element name="U26" library="EagleLibrary" package="NEXPERIA-SOT363" value="NEXPERIA-74LVC1G98-NAND" x="-14.4" y="-138.1" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.4" y="-138.1" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.0604" y="-136.879621875" size="0.762" layer="25" font="vector"/>
+</element>
+<element name="Q1" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="-14.5" y="-141.5" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.5" y="-141.5" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.452" y="-140.4056" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="PMPB10UPX" x="-14.5" y="-141.5" size="1.778" layer="27" display="off"/>
+</element>
+<element name="Q5" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="-14.5" y="-144.8" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.5" y="-144.8" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.452" y="-143.7056" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="PMPB10UPX" x="-14.5" y="-144.8" size="1.778" layer="27" display="off"/>
+</element>
+<element name="Q6" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="-14.5" y="-148.1" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.5" y="-148.1" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.452" y="-147.0056" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="PMPB10UPX" x="-14.5" y="-148.1" size="1.778" layer="27" display="off"/>
+</element>
+<element name="J9" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="-13.5" y="-154.1" smashed="yes">
+<attribute name="MFG" value="Amphenol" x="-20.2" y="-146.3" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.447321875" y="-151.100821875" size="1.27" layer="25" font="vector"/>
+<attribute name="PN" value="10129380-902002ALF" x="-20.2" y="-146.3" size="1.778" layer="27" display="off"/>
+</element>
+<element name="Q8" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="-14.5" y="-166.9" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.5" y="-162.5" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.452" y="-165.8056" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="PMPB10UPX" x="-14.5" y="-162.5" size="1.778" layer="27" display="off"/>
+</element>
+<element name="Q9" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="-11.8" y="-166.9" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.5" y="-165.8" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-12.752" y="-165.8056" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="PMPB10UPX" x="-14.5" y="-165.8" size="1.778" layer="27" display="off"/>
+</element>
+<element name="J10" library="EagleLibrary" package="AMPHENOL-10129380-902002ALF" value="JUMPER" x="-13.5" y="-161.8" smashed="yes">
+<attribute name="MFG" value="Amphenol" x="-20.2" y="-164" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.447321875" y="-158.800821875" size="1.27" layer="25" font="vector"/>
+<attribute name="PN" value="10129380-902002ALF" x="-20.2" y="-164" size="1.778" layer="27" display="off"/>
+</element>
+<element name="U27" library="EagleLibrary" package="TI-TPS22919DCK" value="TI-TPS22919DCK" x="-14.3" y="-170.7" smashed="yes">
+<attribute name="MFG" value="Texas Instruments" x="-14.3" y="-170.7" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-14.9604" y="-169.44548125" size="1.016" layer="25" font="vector"/>
+<attribute name="PN" value="TPS22919DCK" x="-14.3" y="-170.7" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R35" library="EagleLibrary" package="0402" value="10k" x="-14.7" y="-173.1" smashed="yes">
+<attribute name="MFG" value="" x="-14.7" y="-173.1" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.454" y="-172.544" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="" x="-14.7" y="-173.1" size="1.778" layer="27" display="off"/>
+</element>
+<element name="Q7" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="-14.5" y="-176.4" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.5" y="-176.4" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.452" y="-175.3056" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="PMPB10UPX" x="-14.5" y="-176.4" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R36" library="EagleLibrary" package="0402" value="100k" x="-14.7" y="-178.8" smashed="yes">
+<attribute name="MFG" value="" x="-14.7" y="-178.8" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.454" y="-178.244" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="" x="-14.7" y="-178.8" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C2" library="EagleLibrary" package="0402" value="2.2u" x="-14.7" y="-181.2" smashed="yes">
+<attribute name="NAME" x="-15.454" y="-180.644" size="0.508" layer="25" font="vector"/>
+</element>
+<element name="R37" library="EagleLibrary" package="0402" value="100k" x="-14.7" y="-183.6" smashed="yes">
+<attribute name="MFG" value="" x="-14.7" y="-183.6" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.454" y="-183.044" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="" x="-14.7" y="-183.6" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R38" library="EagleLibrary" package="0402" value="100" x="-14.7" y="-186" smashed="yes">
+<attribute name="MFG" value="" x="-14.7" y="-186" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.454" y="-185.444" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="" x="-14.7" y="-186" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C3" library="EagleLibrary" package="0402" value="100n" x="-14.7" y="-188.4" smashed="yes">
+<attribute name="NAME" x="-15.454" y="-187.844" size="0.508" layer="25" font="vector"/>
 </element>
 </elements>
 <signals>
@@ -3444,7 +3556,33 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U13" pad="2"/>
 <contactref element="R1" pad="1"/>
 <contactref element="C28" pad="2"/>
-<wire x1="-12.3705" y1="-109.982" x2="-15.2003" y2="-107.442" width="0" layer="19" extent="1-1"/>
+<contactref element="C1" pad="2"/>
+<contactref element="U24" pad="3"/>
+<contactref element="U24" pad="2"/>
+<contactref element="U1" pad="2"/>
+<contactref element="U25" pad="6"/>
+<contactref element="U25" pad="3"/>
+<contactref element="U25" pad="2"/>
+<contactref element="U26" pad="1"/>
+<contactref element="U26" pad="2"/>
+<contactref element="Q1" pad="3"/>
+<contactref element="U27" pad="2"/>
+<contactref element="R36" pad="2"/>
+<contactref element="R37" pad="1"/>
+<wire x1="-14.2675" y1="-178.8" x2="-15.1325" y2="-183.6" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.2623" y1="-170.7" x2="-14.2675" y2="-178.8" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.435" y1="-142.15" x2="-15.2623" y2="-170.7" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-138.1" x2="-15.435" y2="-142.15" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-137.45" x2="-15.3704" y2="-138.1" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-135.25" x2="-15.3704" y2="-137.45" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-134.6" x2="-15.3704" y2="-135.25" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.4296" y1="-133.95" x2="-15.3704" y2="-134.6" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-131.1" x2="-13.4296" y2="-133.95" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-125.85" x2="-15.3704" y2="-131.1" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-125.2" x2="-15.3704" y2="-125.85" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.2675" y1="-121.8" x2="-15.3704" y2="-125.2" width="0" layer="19" extent="1-1"/>
+<wire x1="-12.3705" y1="-109.982" x2="-14.2675" y2="-121.8" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.2003" y1="-107.442" x2="-12.3705" y2="-109.982" width="0" layer="19" extent="1-1"/>
 <wire x1="-9.5386" y1="-106.934" x2="-12.3705" y2="-109.982" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.413" y1="-94.376" x2="-15.2003" y2="-107.442" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.0455" y1="-81.788" x2="-15.413" y2="-94.376" width="0" layer="19" extent="1-1"/>
@@ -6906,6 +7044,18 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R34" pad="2"/>
 <contactref element="C89" pad="1"/>
 <contactref element="R33" pad="2"/>
+<contactref element="R11" pad="1"/>
+<contactref element="U24" pad="5"/>
+<contactref element="U24" pad="1"/>
+<contactref element="U1" pad="1"/>
+<contactref element="U26" pad="5"/>
+<contactref element="U26" pad="3"/>
+<wire x1="-13.4296" y1="-138.1" x2="-15.3704" y2="-138.75" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-130.45" x2="-13.4296" y2="-138.1" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.4296" y1="-125.2" x2="-15.3704" y2="-130.45" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.3704" y1="-124.55" x2="-13.4296" y2="-125.2" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.1325" y1="-119.4" x2="-15.3704" y2="-124.55" width="0" layer="19" extent="1-1"/>
+<wire x1="-11.429" y1="-90.424" x2="-15.1325" y2="-119.4" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.8454" y1="-79.248" x2="-11.429" y2="-90.424" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.0455" y1="-75.946" x2="-14.8454" y2="-79.248" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.2617" y1="-70.104" x2="-14.0455" y2="-75.946" width="0" layer="19" extent="1-1"/>
@@ -7720,6 +7870,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="32.560259375" y="4.318"/>
 <vertex x="32.560259375" y="7.366"/>
 </polygon>
+<contactref element="J10" pad="1"/>
+<wire x1="32.0196375" y1="6.78028125" x2="-14.77" y2="-160.085" width="0" layer="19" extent="1-16"/>
+<wire x1="36.523359375" y1="9.6494625" x2="32.0196375" y2="6.78028125" width="0" layer="19" extent="16-16"/>
+<wire x1="37.731" y1="11.24" x2="36.523359375" y2="9.6494625" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="N$22">
 <contactref element="U12" pad="1"/>
@@ -7892,6 +8046,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R34" pad="1"/>
 <contactref element="Q2" pad="8"/>
 <contactref element="Q2" pad="4"/>
+<contactref element="U1" pad="5"/>
+<contactref element="U1" pad="3"/>
+<contactref element="U25" pad="5"/>
+<wire x1="-13.4296" y1="-131.1" x2="-15.3704" y2="-131.75" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.4296" y1="-134.6" x2="-15.3704" y2="-131.75" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.478" y1="-94.501" x2="-13.4296" y2="-131.1" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.543" y1="-94.376" x2="-14.478" y2="-94.501" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.9105" y1="-75.946" x2="-13.543" y2="-94.376" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.413" y1="-44.196" x2="-14.9105" y2="-75.946" width="0" layer="19" extent="1-1"/>
@@ -7906,6 +8066,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="VDD_BAT_IN">
 <contactref element="J2" pad="1"/>
+<contactref element="J9" pad="1"/>
+<wire x1="-14.732" y1="-51.117" x2="-14.77" y2="-152.385" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$32">
 <contactref element="Q3" pad="3"/>
@@ -7959,6 +8121,145 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-11.5055" y1="-109.982" x2="-14.9105" y2="-109.982" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.2477" y1="-106.792" x2="-14.9105" y2="-109.982" width="0" layer="19" extent="1-1"/>
 </signal>
+<signal name="N$33">
+<contactref element="R11" pad="2"/>
+<contactref element="C1" pad="1"/>
+<contactref element="U24" pad="6"/>
+<wire x1="-15.1325" y1="-121.8" x2="-13.4296" y2="-124.55" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.2675" y1="-119.4" x2="-15.1325" y2="-121.8" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="VDD_USB_DELAY">
+<contactref element="U24" pad="4"/>
+<contactref element="U1" pad="6"/>
+<contactref element="U26" pad="6"/>
+<wire x1="-13.4296" y1="-130.45" x2="-13.4296" y2="-137.45" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.4296" y1="-125.85" x2="-13.4296" y2="-130.45" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$34">
+<contactref element="U1" pad="4"/>
+<contactref element="U25" pad="1"/>
+<wire x1="-13.4296" y1="-131.75" x2="-15.3704" y2="-133.95" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="VDD_BAT_EN_">
+<contactref element="U25" pad="4"/>
+<contactref element="Q5" pad="3"/>
+<contactref element="Q6" pad="3"/>
+<wire x1="-15.435" y1="-145.45" x2="-15.435" y2="-148.75" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.4296" y1="-135.25" x2="-15.435" y2="-145.45" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="VDD_USB_EN_">
+<contactref element="U26" pad="4"/>
+<contactref element="R35" pad="2"/>
+<contactref element="Q9" pad="3"/>
+<contactref element="Q8" pad="3"/>
+<wire x1="-15.435" y1="-167.55" x2="-14.2675" y2="-173.1" width="0" layer="19" extent="1-1"/>
+<wire x1="-12.735" y1="-167.55" x2="-15.435" y2="-167.55" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.4296" y1="-138.75" x2="-12.735" y2="-167.55" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$37">
+<contactref element="Q5" pad="2" route="any" routetag="G$1.D"/>
+<contactref element="Q5" pad="7" route="any" routetag="G$1.D"/>
+<contactref element="Q5" pad="1" route="any" routetag="G$1.D"/>
+<contactref element="Q5" pad="5" route="any" routetag="G$1.D"/>
+<contactref element="Q5" pad="6" route="any" routetag="G$1.D"/>
+<contactref element="Q6" pad="2" route="any" routetag="G$1.D"/>
+<contactref element="Q6" pad="7" route="any" routetag="G$1.D"/>
+<contactref element="Q6" pad="1" route="any" routetag="G$1.D"/>
+<contactref element="Q6" pad="5" route="any" routetag="G$1.D"/>
+<contactref element="Q6" pad="6" route="any" routetag="G$1.D"/>
+<wire x1="-13.565" y1="-144.8" x2="-13.565" y2="-147.45" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$40">
+<contactref element="Q1" pad="4"/>
+<contactref element="Q1" pad="8"/>
+<contactref element="Q5" pad="4"/>
+<contactref element="Q5" pad="8"/>
+<wire x1="-14.5" y1="-145.575" x2="-13.565" y2="-145.45" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.5" y1="-142.275" x2="-14.5" y2="-145.575" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.565" y1="-142.15" x2="-14.5" y2="-142.275" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$42">
+<contactref element="J9" pad="2"/>
+<contactref element="Q1" pad="2" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="7" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="1" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="5" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="6" route="any" routetag="G$1.D"/>
+<wire x1="-13.565" y1="-141.5" x2="-12.23" y2="-155.815" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$41">
+<contactref element="Q8" pad="2" route="any" routetag="G$1.D"/>
+<contactref element="Q8" pad="7" route="any" routetag="G$1.D"/>
+<contactref element="Q8" pad="1" route="any" routetag="G$1.D"/>
+<contactref element="Q8" pad="5" route="any" routetag="G$1.D"/>
+<contactref element="Q8" pad="6" route="any" routetag="G$1.D"/>
+<contactref element="Q9" pad="2" route="any" routetag="G$1.D"/>
+<contactref element="Q9" pad="7" route="any" routetag="G$1.D"/>
+<contactref element="Q9" pad="1" route="any" routetag="G$1.D"/>
+<contactref element="Q9" pad="5" route="any" routetag="G$1.D"/>
+<contactref element="Q9" pad="6" route="any" routetag="G$1.D"/>
+<wire x1="-12.735" y1="-166.25" x2="-13.565" y2="-166.25" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="VDD_USB2">
+<contactref element="U27" pad="6"/>
+<contactref element="U27" pad="5"/>
+<contactref element="Q8" pad="4"/>
+<contactref element="Q8" pad="8"/>
+<wire x1="-13.3377" y1="-170.05" x2="-13.3377" y2="-170.7" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.565" y1="-167.55" x2="-13.3377" y2="-170.05" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.5" y1="-167.675" x2="-13.565" y2="-167.55" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$44">
+<contactref element="U27" pad="1"/>
+<contactref element="U27" pad="3"/>
+<contactref element="J10" pad="2"/>
+<wire x1="-15.2623" y1="-170.05" x2="-15.2623" y2="-171.35" width="0" layer="19" extent="1-1"/>
+<wire x1="-12.23" y1="-163.515" x2="-15.2623" y2="-170.05" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$45">
+<contactref element="Q9" pad="4"/>
+<contactref element="Q9" pad="8"/>
+<contactref element="R35" pad="1"/>
+<wire x1="-11.8" y1="-167.675" x2="-15.1325" y2="-173.1" width="0" layer="19" extent="1-1"/>
+<wire x1="-10.865" y1="-167.55" x2="-11.8" y2="-167.675" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$46">
+<contactref element="Q6" pad="4"/>
+<contactref element="Q6" pad="8"/>
+<wire x1="-14.5" y1="-148.875" x2="-13.565" y2="-148.75" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$38">
+<contactref element="C2" pad="1"/>
+<contactref element="R37" pad="2"/>
+<contactref element="R38" pad="1"/>
+<contactref element="Q7" pad="3"/>
+<wire x1="-14.2675" y1="-183.6" x2="-15.1325" y2="-186" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.1325" y1="-181.2" x2="-14.2675" y2="-183.6" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.435" y1="-177.05" x2="-15.1325" y2="-181.2" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$43">
+<contactref element="C2" pad="2"/>
+<contactref element="Q7" pad="4"/>
+<contactref element="Q7" pad="8"/>
+<contactref element="R36" pad="1"/>
+<wire x1="-15.1325" y1="-178.8" x2="-14.2675" y2="-181.2" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.5" y1="-177.175" x2="-15.1325" y2="-178.8" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.565" y1="-177.05" x2="-14.5" y2="-177.175" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$47">
+<contactref element="C3" pad="1"/>
+<contactref element="R38" pad="2"/>
+<wire x1="-14.2675" y1="-186" x2="-15.1325" y2="-188.4" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$48">
+<contactref element="C3" pad="2"/>
+<contactref element="Q7" pad="2" route="any" routetag="G$1.D"/>
+<contactref element="Q7" pad="7" route="any" routetag="G$1.D"/>
+<contactref element="Q7" pad="1" route="any" routetag="G$1.D"/>
+<contactref element="Q7" pad="5" route="any" routetag="G$1.D"/>
+<contactref element="Q7" pad="6" route="any" routetag="G$1.D"/>
+<wire x1="-13.565" y1="-176.4" x2="-14.2675" y2="-188.4" width="0" layer="19" extent="1-1"/>
+</signal>
 </signals>
 <mfgpreviewcolors>
 <mfgpreviewcolor name="soldermaskcolor" color="0xC8008000"/>
@@ -7978,11 +8279,6 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
-</note>
-<note version="8.3" severity="warning">
-Since Version 8.3, EAGLE supports the association of 3D packages
-with devices in libraries, schematics, and board files. Those 3D
-packages will not be understood (or retained) with this version.
 </note>
 </compatibility>
 </eagle>
