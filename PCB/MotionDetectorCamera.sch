@@ -1378,6 +1378,23 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0" y="1.02"/>
 </polygon>
 </package>
+<package name="JUMPER-SOLDER">
+<description>Chip, 1.00 X 0.50 X 0.50 mm body
+&lt;p&gt;Chip package with body size 1.00 X 0.50 X 0.50 mm&lt;/p&gt;</description>
+<smd name="1" x="-0.4" y="0" dx="0.65" dy="0.6" layer="1" cream="no"/>
+<smd name="2" x="0.4" y="0" dx="0.65" dy="0.6" layer="1" cream="no"/>
+<text x="-0.754" y="0.556" size="0.508" layer="25" font="vector">&gt;NAME</text>
+<wire x1="-0.85" y1="0.4" x2="-0.85" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="-0.85" y1="-0.4" x2="0.85" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="0.85" y1="-0.4" x2="0.85" y2="0.4" width="0.05" layer="21"/>
+<wire x1="0.85" y1="0.4" x2="-0.85" y2="0.4" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-0.85" y="0.4"/>
+<vertex x="-0.85" y="-0.4"/>
+<vertex x="0.85" y="-0.4"/>
+<vertex x="0.85" y="0.4"/>
+</polygon>
+</package>
 </packages>
 <symbols>
 <symbol name="CAPACITOR">
@@ -3418,7 +3435,7 @@ tolerant of VDDUSB</text>
 <gate name="G$1" symbol="JUMPER" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="AMPHENOL-10129380-902002ALF">
+<device name="-AMPHENOL-10129380-902002ALF" package="AMPHENOL-10129380-902002ALF">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
@@ -3428,6 +3445,15 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Amphenol"/>
 <attribute name="PN" value="10129380-902002ALF"/>
 </technology>
+</technologies>
+</device>
+<device name="-SOLDER" package="JUMPER-SOLDER">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -3724,18 +3750,6 @@ tolerant of VDDUSB</text>
 <part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
 <attribute name="MFG" value="TE Connectivity"/>
 <attribute name="PN" value="CRGP0402F1K8"/>
-</part>
-<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0805JR-070RL"/>
-</part>
-<part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0805JR-070RL"/>
-</part>
-<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0805" value="0">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0805JR-070RL"/>
 </part>
 <part name="U15" library="EagleLibrary" deviceset="LATTICE-ICE40HX4K-BG121" device=""/>
 <part name="C40" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
@@ -4151,7 +4165,7 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="J5" library="EagleLibrary" deviceset="JUMPER" device=""/>
+<part name="J5" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="U21" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
 <part name="U22" library="EagleLibrary" deviceset="NXP-NTB0102" device=""/>
 <part name="Q1" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
@@ -4163,7 +4177,7 @@ tolerant of VDDUSB</text>
 <part name="Q6" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
-<part name="J9" library="EagleLibrary" deviceset="JUMPER" device=""/>
+<part name="J9" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="Q7" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
@@ -4181,7 +4195,7 @@ tolerant of VDDUSB</text>
 <attribute name="PN" value=""/>
 </part>
 <part name="C3" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n"/>
-<part name="J10" library="EagleLibrary" deviceset="JUMPER" device=""/>
+<part name="J10" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="D1" library="EagleLibrary" deviceset="ROHM-RB161MM-20TR" device=""/>
 <part name="D5" library="EagleLibrary" deviceset="ROHM-RB161MM-20TR" device=""/>
 <part name="R39" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
@@ -4200,8 +4214,8 @@ tolerant of VDDUSB</text>
 <part name="Q10" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
-<part name="J11" library="EagleLibrary" deviceset="JUMPER" device=""/>
-<part name="J12" library="EagleLibrary" deviceset="JUMPER" device=""/>
+<part name="J11" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
+<part name="J12" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="U28" library="EagleLibrary" deviceset="NEXPERIA-74LVC1G98-NOR" device=""/>
 <part name="C91" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="Samsung"/>
@@ -4247,6 +4261,9 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
+<part name="J1" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER"/>
+<part name="J2" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER"/>
+<part name="J3" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER"/>
 </parts>
 <sheets>
 <sheet>
@@ -4363,24 +4380,6 @@ ringing on the PFET's gate</text>
 <attribute name="VALUE" x="234.95" y="185.42" size="1.778" layer="96" rot="R180"/>
 <attribute name="MFG" x="236.22" y="187.96" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="236.22" y="187.96" size="1.778" layer="96" rot="R90" display="off"/>
-</instance>
-<instance part="R5" gate="G$1" x="243.84" y="312.42" smashed="yes" rot="R180">
-<attribute name="NAME" x="243.84" y="311.15" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="243.84" y="308.61" size="1.778" layer="96" align="top-left"/>
-<attribute name="MFG" x="243.84" y="312.42" size="1.778" layer="96" rot="R180" display="off"/>
-<attribute name="PN" x="243.84" y="312.42" size="1.778" layer="96" rot="R180" display="off"/>
-</instance>
-<instance part="R6" gate="G$1" x="243.84" y="266.7" smashed="yes" rot="R180">
-<attribute name="NAME" x="243.84" y="265.43" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="243.84" y="262.89" size="1.778" layer="96" align="top-left"/>
-<attribute name="MFG" x="243.84" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
-<attribute name="PN" x="243.84" y="266.7" size="1.778" layer="96" rot="R180" display="off"/>
-</instance>
-<instance part="R8" gate="G$1" x="243.84" y="205.74" smashed="yes" rot="R180">
-<attribute name="NAME" x="243.84" y="204.47" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="243.84" y="201.93" size="1.778" layer="96" align="top-left"/>
-<attribute name="MFG" x="243.84" y="205.74" size="1.778" layer="96" rot="R180" display="off"/>
-<attribute name="PN" x="243.84" y="205.74" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
 <instance part="L1" gate="G$1" x="210.82" y="312.42" smashed="yes">
 <attribute name="NAME" x="210.82" y="317.5" size="1.778" layer="95"/>
@@ -4622,6 +4621,15 @@ ringing on the PFET's gate</text>
 <attribute name="MFG" x="396.24" y="381" size="1.778" layer="96" rot="R270" display="off"/>
 <attribute name="PN" x="396.24" y="381" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
+<instance part="J1" gate="G$1" x="238.76" y="317.5" smashed="yes">
+<attribute name="NAME" x="237.49" y="320.04" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="J2" gate="G$1" x="238.76" y="271.78" smashed="yes">
+<attribute name="NAME" x="237.49" y="274.32" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="J3" gate="G$1" x="238.76" y="210.82" smashed="yes">
+<attribute name="NAME" x="237.49" y="213.36" size="1.778" layer="95" align="top-left"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -4679,9 +4687,9 @@ ringing on the PFET's gate</text>
 </net>
 <net name="VDD_1V8" class="0">
 <segment>
-<pinref part="R6" gate="G$1" pin="1"/>
-<wire x1="248.92" y1="266.7" x2="251.46" y2="266.7" width="0.1524" layer="91"/>
-<label x="251.46" y="266.7" size="1.778" layer="95"/>
+<wire x1="241.3" y1="266.7" x2="243.84" y2="266.7" width="0.1524" layer="91"/>
+<label x="243.84" y="266.7" size="1.778" layer="95"/>
+<pinref part="J2" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <wire x1="205.74" y1="35.56" x2="203.2" y2="35.56" width="0.1524" layer="91"/>
@@ -4909,9 +4917,9 @@ ringing on the PFET's gate</text>
 </net>
 <net name="VDD_1V2" class="0">
 <segment>
-<pinref part="R5" gate="G$1" pin="1"/>
-<wire x1="248.92" y1="312.42" x2="251.46" y2="312.42" width="0.1524" layer="91"/>
-<label x="251.46" y="312.42" size="1.778" layer="95"/>
+<wire x1="241.3" y1="312.42" x2="243.84" y2="312.42" width="0.1524" layer="91"/>
+<label x="243.84" y="312.42" size="1.778" layer="95"/>
+<pinref part="J1" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$4" class="0">
@@ -4923,9 +4931,9 @@ ringing on the PFET's gate</text>
 </net>
 <net name="VDD_2V8" class="0">
 <segment>
-<pinref part="R8" gate="G$1" pin="1"/>
-<wire x1="248.92" y1="205.74" x2="251.46" y2="205.74" width="0.1524" layer="91"/>
-<label x="251.46" y="205.74" size="1.778" layer="95"/>
+<wire x1="241.3" y1="205.74" x2="243.84" y2="205.74" width="0.1524" layer="91"/>
+<label x="243.84" y="205.74" size="1.778" layer="95"/>
+<pinref part="J3" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <wire x1="205.74" y1="124.46" x2="203.2" y2="124.46" width="0.1524" layer="91"/>
@@ -4977,7 +4985,6 @@ ringing on the PFET's gate</text>
 </net>
 <net name="N$16" class="0">
 <segment>
-<pinref part="R5" gate="G$1" pin="2"/>
 <pinref part="U3" gate="G$1" pin="VOS"/>
 <pinref part="C7" gate="G$1" pin="1"/>
 <wire x1="231.14" y1="312.42" x2="223.52" y2="312.42" width="0.1524" layer="91"/>
@@ -4988,11 +4995,11 @@ ringing on the PFET's gate</text>
 <junction x="231.14" y="312.42"/>
 <wire x1="238.76" y1="312.42" x2="231.14" y2="312.42" width="0.1524" layer="91"/>
 <pinref part="L1" gate="G$1" pin="2"/>
+<pinref part="J1" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$8" class="0">
 <segment>
-<pinref part="R6" gate="G$1" pin="2"/>
 <junction x="231.14" y="266.7"/>
 <pinref part="C10" gate="G$1" pin="1"/>
 <wire x1="231.14" y1="266.7" x2="223.52" y2="266.7" width="0.1524" layer="91"/>
@@ -5003,6 +5010,7 @@ ringing on the PFET's gate</text>
 <junction x="231.14" y="264.16"/>
 <wire x1="238.76" y1="266.7" x2="231.14" y2="266.7" width="0.1524" layer="91"/>
 <pinref part="L2" gate="G$1" pin="2"/>
+<pinref part="J2" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$18" class="0">
@@ -5016,11 +5024,11 @@ ringing on the PFET's gate</text>
 <junction x="236.22" y="205.74"/>
 <wire x1="220.98" y1="205.74" x2="236.22" y2="205.74" width="0.1524" layer="91"/>
 <wire x1="236.22" y1="205.74" x2="238.76" y2="205.74" width="0.1524" layer="91"/>
-<pinref part="R8" gate="G$1" pin="2"/>
 <pinref part="C13" gate="G$1" pin="1"/>
 <pinref part="C14" gate="G$1" pin="1"/>
 <wire x1="220.98" y1="200.66" x2="220.98" y2="205.74" width="0.1524" layer="91"/>
 <junction x="220.98" y="205.74"/>
+<pinref part="J3" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="VDD_USB" class="0">

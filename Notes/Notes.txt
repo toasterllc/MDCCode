@@ -62,17 +62,17 @@
         - 249k resistor? (2x 100k + 1x 47k)
         √ 4.7uF capacitor (2-3x 2.2uF)
     
-    - Switch 1V9 back to 1V8, now that we've solved the SD card Vih by using LVS
-    
     - Switch USB receptacle to USB-C
-    
-    - Replace 0-ohm resistors with solder jumpers
     
     - Fix motion sensor layout (we swapped the VDD and GND pins)
     
     - Make board left/right borders smaller
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
+    
+    √ Replace 0-ohm resistors with solder jumpers
+    
+    √ Switch 1V9 back to 1V8, now that we've solved the SD card Vih by using LVS
     
     √ Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
         √ Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
