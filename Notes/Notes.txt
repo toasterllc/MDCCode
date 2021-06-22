@@ -54,16 +54,15 @@
 
 
 - Rev5 Todo
-
-    - Use Nexperia 74LVC1G98GW,125 logic gate for:
-        - Schmitt trigger for delayed USB signal
-        - NAND/OR gates for controlling VDD_BAT/VDD_USB PFETs
-        - IMG clock-blocking buffer (replace TI part)
-        - VDD_B_EN OR gate (inputs: VDD_B_EN from MSP, VDD_USB)
+    
+    - Consolidate parts
+        - 4.7uF capacitor (2-3x 2.2uF)
+        - 3k resistor (3x 1k)
+        - 91k resistor (2x 47k? how will that affect buck output? consider tempco!)
+        - 422k resistor (4x 100k + 2x 10k? how will that affect buck output? consider tempco!)
+        - 249k resistor? (2x 100k + 1x 47k)
     
     - Switch 1V9 back to 1V8, now that we've solved the SD card Vih by using LVS
-    
-    - For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
     
     - Switch USB receptacle to USB-C
     
@@ -79,7 +78,7 @@
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
     
-    - Fix power system to ensure that reverse current into battery/USB isn't possible
+    √ Fix power system to ensure that reverse current into battery/USB isn't possible
         - Need to bench test LM66100
             - Things to test:
                 - Ramp up USB (BAT) while BAT (USB) is already supplying power
@@ -94,6 +93,13 @@
                 - Disconnect USB (BAT) while BAT (USB) is supplying power
                     - In other words, disconnect the power source that isn't supply power
                     - Reverse current?
+    
+    √ Use Nexperia 74LVC1G98GW,125 logic gate for:
+        √ IMG clock-blocking buffer (replace TI part)
+        √ VDD_B_EN OR gate (inputs: VDD_B_EN from MSP, VDD_USB)
+    
+    √ MSP430: fix power supply, again
+        √ Switched to a slow-on/fast-off break-before-make power rail solution
     
     √ MSP430: fix power supply when plugged into USB
         - Problem: MSP430 needs a voltage higher than 2V to reliably start up, due to SVS

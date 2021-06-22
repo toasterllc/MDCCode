@@ -1129,31 +1129,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.375" y="2.6"/>
 </polygon>
 </package>
-<package name="TI-SN74LVC1G126DCK" urn="urn:adsk.eagle:footprint:28651591/1" locally_modified="yes">
-<description>5-SOT23, 0.65 mm pitch, 2.10 mm span, 2.00 X 1.25 X 1.10 mm body
-&lt;p&gt;5-pin SOT23 package with 0.65 mm pitch, 2.10 mm span with body size 2.00 X 1.25 X 1.10 mm&lt;/p&gt;</description>
-<wire x1="0.7" y1="-1.075" x2="-0.7" y2="-1.075" width="0.05" layer="21"/>
-<wire x1="-0.7" y1="-1.075" x2="-0.7" y2="1.075" width="0.05" layer="21"/>
-<wire x1="-0.7" y1="1.075" x2="0.7" y2="1.075" width="0.05" layer="21"/>
-<wire x1="0.7" y1="1.075" x2="0.7" y2="-1.075" width="0.05" layer="21"/>
-<smd name="1" x="-0.9623" y="0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="2" x="-0.9623" y="0" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="3" x="-0.9623" y="-0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="4" x="0.9623" y="-0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<smd name="5" x="0.9623" y="0.65" dx="1.1857" dy="0.3971" layer="1"/>
-<text x="-0.7" y="1.2375" size="0.762" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.05" layer="39">
-<vertex x="0.7" y="-1.075"/>
-<vertex x="-0.7" y="-1.075"/>
-<vertex x="-0.7" y="1.075"/>
-<vertex x="0.7" y="1.075"/>
-</polygon>
-<polygon width="0.05" layer="21">
-<vertex x="-0.683" y="1.059"/>
-<vertex x="-0.683" y="0.359"/>
-<vertex x="-0.083" y="1.059"/>
-</polygon>
-</package>
 <package name="ROHM-SOD-123FL" urn="urn:adsk.eagle:footprint:28823522/1" locally_modified="yes">
 <description>SODFL, 3.50 mm span, 2.60 X 1.60 X 0.90 mm body
 &lt;p&gt;SODFL package with 3.50 mm span with body size 2.60 X 1.60 X 0.90 mm&lt;/p&gt;</description>
@@ -2270,18 +2245,6 @@ tolerant of VDDUSB</text>
 <wire x1="4.572" y1="-1.27" x2="2.54" y2="-1.27" width="0.254" layer="94"/>
 <wire x1="5.842" y1="-1.27" x2="7.62" y2="-1.27" width="0.254" layer="94"/>
 </symbol>
-<symbol name="TI-SN74LVC1G126">
-<pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
-<pin name="IN" x="-2.54" y="-10.16" visible="pin" length="short"/>
-<pin name="VDD" x="7.62" y="-2.54" visible="off" length="short" rot="R270"/>
-<pin name="GND" x="7.62" y="-17.78" visible="off" length="short" rot="R90"/>
-<pin name="OUT" x="17.78" y="-10.16" visible="off" length="short" rot="R180"/>
-<wire x1="0" y1="0" x2="0" y2="-20.32" width="0.254" layer="94"/>
-<wire x1="0" y1="-20.32" x2="15.24" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="15.24" y1="-10.16" x2="0" y2="0" width="0.254" layer="94"/>
-<text x="10.16" y="-15.24" size="1.778" layer="95" align="top-left">&gt;PN</text>
-<text x="10.16" y="-4.318" size="1.778" layer="95" align="top-left">&gt;NAME</text>
-</symbol>
 <symbol name="DIODE">
 <pin name="A" x="0" y="0" visible="off" length="short"/>
 <pin name="C" x="7.62" y="0" visible="off" length="short" rot="R180"/>
@@ -2391,6 +2354,26 @@ tolerant of VDDUSB</text>
 <wire x1="11.938" y1="-5.08" x2="15.24" y2="-5.08" width="0.1524" layer="94"/>
 <text x="2.032" y="-1.016" size="0.508" layer="94">VDD</text>
 <text x="2.032" y="-9.652" size="0.508" layer="94">GND</text>
+</symbol>
+<symbol name="NEXPERIA-74LVC1G98-BUFFER">
+<pin name="IN" x="-2.54" y="-5.08" visible="off" length="short"/>
+<pin name="VDD" x="2.54" y="0" visible="off" length="point" rot="R270"/>
+<pin name="GND" x="2.54" y="-10.16" visible="off" length="point" rot="R90"/>
+<pin name="OUT" x="10.16" y="-5.08" visible="off" length="point" rot="R180"/>
+<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="0" y1="-10.16" x2="8.128" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="8.128" y1="-5.08" x2="0" y2="0" width="0.254" layer="94"/>
+<text x="5.08" y="-1.778" size="1.778" layer="95">&gt;NAME</text>
+<wire x1="2.54" y1="-1.524" x2="2.54" y2="0" width="0.1524" layer="94"/>
+<wire x1="2.54" y1="-10.16" x2="2.54" y2="-8.636" width="0.1524" layer="94"/>
+<wire x1="8.128" y1="-5.08" x2="10.16" y2="-5.08" width="0.1524" layer="94"/>
+<wire x1="2.032" y1="-3.81" x2="3.302" y2="-3.81" width="0.1524" layer="94"/>
+<wire x1="3.302" y1="-3.81" x2="4.572" y2="-3.81" width="0.1524" layer="94"/>
+<wire x1="0.762" y1="-6.35" x2="3.302" y2="-6.35" width="0.1524" layer="94"/>
+<wire x1="3.302" y1="-3.81" x2="3.302" y2="-6.35" width="0.1524" layer="94"/>
+<wire x1="2.032" y1="-3.81" x2="2.032" y2="-6.35" width="0.1524" layer="94"/>
+<text x="2.032" y="-2.921" size="0.508" layer="94">VDD</text>
+<text x="2.032" y="-7.62" size="0.508" layer="94">GND</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -3348,27 +3331,6 @@ tolerant of VDDUSB</text>
 </device>
 </devices>
 </deviceset>
-<deviceset name="TI-SN74LVC1G126" prefix="U">
-<gates>
-<gate name="G$1" symbol="TI-SN74LVC1G126" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="TI-SN74LVC1G126DCK">
-<connects>
-<connect gate="G$1" pin="EN" pad="1"/>
-<connect gate="G$1" pin="GND" pad="3"/>
-<connect gate="G$1" pin="IN" pad="2"/>
-<connect gate="G$1" pin="OUT" pad="4"/>
-<connect gate="G$1" pin="VDD" pad="5"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Texas Instruments"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="PMOS" prefix="Q">
 <description>PMOS MOSFET transistor</description>
 <gates>
@@ -3557,6 +3519,26 @@ tolerant of VDDUSB</text>
 <connect gate="G$1" pin="IN2" pad="6"/>
 <connect gate="G$1" pin="OUT" pad="4"/>
 <connect gate="G$1" pin="VDD" pad="3 5"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Nexperia"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="NEXPERIA-74LVC1G98-BUFFER" prefix="U">
+<gates>
+<gate name="G$1" symbol="NEXPERIA-74LVC1G98-BUFFER" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="NEXPERIA-SOT363">
+<connects>
+<connect gate="G$1" pin="GND" pad="2 3"/>
+<connect gate="G$1" pin="IN" pad="6"/>
+<connect gate="G$1" pin="OUT" pad="4"/>
+<connect gate="G$1" pin="VDD" pad="1 5"/>
 </connects>
 <technologies>
 <technology name="">
@@ -4075,9 +4057,6 @@ tolerant of VDDUSB</text>
 </pinmapping>
 </spice>
 </part>
-<part name="U16" library="EagleLibrary" deviceset="TI-SN74LVC1G126" device="">
-<attribute name="PN" value="SN74LVC1G126DCKR"/>
-</part>
 <part name="U6" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="U7" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="U8" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
@@ -4276,6 +4255,7 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value=""/>
 <attribute name="PN" value=""/>
 </part>
+<part name="U1" library="EagleLibrary" deviceset="NEXPERIA-74LVC1G98-BUFFER" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -6958,7 +6938,7 @@ below the chip.</text>
 <text x="15.24" y="48.26" size="1.778" layer="95" align="bottom-right">VDD Bypassing</text>
 <text x="15.24" y="20.32" size="1.778" layer="95" align="bottom-right">VDD_IO Bypassing</text>
 <text x="15.24" y="5.08" size="1.778" layer="95" align="bottom-right">VDD_PLL Bypassing</text>
-<text x="159.766" y="85.344" size="1.016" layer="95" align="top-left">This buffer blocks the clock while the IMG domain isn't
+<text x="162.306" y="87.884" size="1.016" layer="95" align="top-left">This buffer blocks the clock while the IMG domain isn't
 powered. It works simply by taking advantage of the
 buffer's "I_Off" behavior, which guarantees no leakage
 between input and output when its VDD=0.</text>
@@ -7055,10 +7035,6 @@ between input and output when its VDD=0.</text>
 <attribute name="MFG" x="116.84" y="50.8" size="1.778" layer="96" rot="R270" display="off"/>
 <attribute name="PN" x="116.84" y="50.8" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="U16" gate="G$1" x="167.64" y="109.22" smashed="yes">
-<attribute name="PN" x="177.8" y="93.98" size="1.778" layer="95" align="top-left"/>
-<attribute name="NAME" x="177.8" y="104.902" size="1.778" layer="95" align="top-left"/>
-</instance>
 <instance part="C47" gate="G$1" x="132.842" y="101.092" smashed="yes">
 <attribute name="NAME" x="130.556" y="100.711" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="130.556" y="98.171" size="1.778" layer="96" align="bottom-right"/>
@@ -7076,6 +7052,9 @@ between input and output when its VDD=0.</text>
 <attribute name="VALUE" x="43.434" y="19.939" size="1.778" layer="96" align="bottom-right"/>
 <attribute name="MFG" x="45.72" y="22.86" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="45.72" y="22.86" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="U1" gate="G$1" x="170.18" y="104.14" smashed="yes">
+<attribute name="NAME" x="175.26" y="102.362" size="1.778" layer="95"/>
 </instance>
 </instances>
 <busses>
@@ -7128,19 +7107,14 @@ between input and output when its VDD=0.</text>
 <label x="116.84" y="58.42" size="1.778" layer="95" rot="MR180"/>
 </segment>
 <segment>
-<pinref part="U16" gate="G$1" pin="EN"/>
-<wire x1="165.1" y1="104.14" x2="162.56" y2="104.14" width="0.1524" layer="91"/>
-<label x="162.56" y="104.14" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<pinref part="U16" gate="G$1" pin="VDD"/>
-<wire x1="175.26" y1="106.68" x2="175.26" y2="109.22" width="0.1524" layer="91"/>
-<label x="175.26" y="109.22" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="C47" gate="G$1" pin="1"/>
 <wire x1="132.842" y1="103.632" x2="132.842" y2="106.172" width="0.1524" layer="91"/>
 <label x="132.842" y="106.172" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<wire x1="172.72" y1="104.14" x2="172.72" y2="106.68" width="0.1524" layer="91"/>
+<label x="172.72" y="106.68" size="1.778" layer="95"/>
+<pinref part="U1" gate="G$1" pin="VDD"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -7214,21 +7188,14 @@ between input and output when its VDD=0.</text>
 <label x="259.08" y="33.02" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U16" gate="G$1" pin="GND"/>
-<wire x1="175.26" y1="91.44" x2="175.26" y2="88.9" width="0.1524" layer="91"/>
-<label x="175.26" y="88.9" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="C47" gate="G$1" pin="2"/>
 <wire x1="132.842" y1="96.012" x2="132.842" y2="93.472" width="0.1524" layer="91"/>
 <label x="132.842" y="93.472" size="1.778" layer="95" align="bottom-right"/>
 </segment>
-</net>
-<net name="ICE_IMG_CLK16MHZ" class="0">
 <segment>
-<pinref part="U16" gate="G$1" pin="IN"/>
-<wire x1="165.1" y1="99.06" x2="162.56" y2="99.06" width="0.1524" layer="91"/>
-<label x="162.56" y="99.06" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="172.72" y1="93.98" x2="172.72" y2="91.44" width="0.1524" layer="91"/>
+<label x="172.72" y="91.44" size="1.778" layer="95"/>
+<pinref part="U1" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="VDD_2V8_IMG" class="0">
@@ -7395,14 +7362,21 @@ between input and output when its VDD=0.</text>
 </net>
 <net name="IMG_CLK16MHZ" class="0">
 <segment>
-<pinref part="U16" gate="G$1" pin="OUT"/>
-<wire x1="185.42" y1="99.06" x2="187.96" y2="99.06" width="0.1524" layer="91"/>
-<label x="187.96" y="99.06" size="1.778" layer="95"/>
-</segment>
-<segment>
 <wire x1="152.4" y1="60.96" x2="154.94" y2="60.96" width="0.1524" layer="91"/>
 <label x="152.4" y="60.96" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U17" gate="B" pin="EXTCLK"/>
+</segment>
+<segment>
+<wire x1="180.34" y1="99.06" x2="182.88" y2="99.06" width="0.1524" layer="91"/>
+<label x="182.88" y="99.06" size="1.778" layer="95"/>
+<pinref part="U1" gate="G$1" pin="OUT"/>
+</segment>
+</net>
+<net name="ICE_IMG_CLK16MHZ" class="0">
+<segment>
+<wire x1="167.64" y1="99.06" x2="165.1" y2="99.06" width="0.1524" layer="91"/>
+<label x="165.1" y="99.06" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U1" gate="G$1" pin="IN"/>
 </segment>
 </net>
 </nets>
