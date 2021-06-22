@@ -7745,21 +7745,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="15.019021875" y="4.62788125"/>
 </polygon>
 </signal>
-<signal name="VDD_B_EN_">
-<contactref element="U12" pad="11"/>
-<wire x1="17.272" y1="13.958" x2="15.6466" y2="13.958" width="0.127" layer="1"/>
-<wire x1="18.029621875" y1="1.648740625" x2="18.34388125" y2="1.648740625" width="0.127" layer="16"/>
-<via x="18.34388125" y="1.648740625" extent="1-16" drill="0.254"/>
-<wire x1="18.34388125" y1="1.648740625" x2="18.34388125" y2="3.86588125" width="0.127" layer="1"/>
-<wire x1="18.34388125" y1="3.86588125" x2="19.812" y2="5.334" width="0.127" layer="1"/>
-<wire x1="18.034" y1="10.922" x2="18.034" y2="13.208" width="0.127" layer="1"/>
-<wire x1="18.034" y1="13.208" x2="17.284" y2="13.958" width="0.127" layer="1"/>
-<wire x1="17.284" y1="13.958" x2="17.272" y2="13.958" width="0.127" layer="1"/>
-<wire x1="19.812" y1="5.334" x2="19.812" y2="9.144" width="0.127" layer="1"/>
-<wire x1="19.812" y1="9.144" x2="18.034" y2="10.922" width="0.127" layer="1"/>
-<contactref element="R4" pad="2"/>
-<wire x1="18.029621875" y1="1.648740625" x2="-14.0455" y2="-98.806" width="0" layer="19" extent="1-16"/>
-</signal>
 <signal name="VDD_SD_EN">
 <contactref element="U8" pad="3"/>
 <contactref element="U12" pad="12"/>
@@ -8517,6 +8502,20 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="VDD_B_EN">
 <contactref element="U28" pad="6"/>
+<contactref element="U12" pad="11"/>
+<wire x1="17.272" y1="13.958" x2="15.6466" y2="13.958" width="0.127" layer="1"/>
+<wire x1="18.029621875" y1="1.648740625" x2="18.34388125" y2="1.648740625" width="0.127" layer="16"/>
+<via x="18.34388125" y="1.648740625" extent="1-16" drill="0.254"/>
+<wire x1="18.34388125" y1="1.648740625" x2="18.34388125" y2="3.86588125" width="0.127" layer="1"/>
+<wire x1="18.34388125" y1="3.86588125" x2="19.812" y2="5.334" width="0.127" layer="1"/>
+<wire x1="18.034" y1="10.922" x2="18.034" y2="13.208" width="0.127" layer="1"/>
+<wire x1="18.034" y1="13.208" x2="17.284" y2="13.958" width="0.127" layer="1"/>
+<wire x1="17.284" y1="13.958" x2="17.272" y2="13.958" width="0.127" layer="1"/>
+<wire x1="19.812" y1="5.334" x2="19.812" y2="9.144" width="0.127" layer="1"/>
+<wire x1="19.812" y1="9.144" x2="18.034" y2="10.922" width="0.127" layer="1"/>
+<contactref element="R4" pad="2"/>
+<wire x1="-14.0455" y1="-98.806" x2="-13.4296" y2="-235.45" width="0" layer="19" extent="1-1"/>
+<wire x1="18.029621875" y1="1.648740625" x2="-14.0455" y2="-98.806" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="N$43">
 <contactref element="Q10" pad="2" route="any" routetag="G$1.D"/>

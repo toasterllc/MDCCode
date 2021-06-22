@@ -4630,13 +4630,13 @@ layer."</text>
 <text x="12.7" y="38.1" size="3.81" layer="95" align="top-left">VDD_1V9_STM
 - Battery:  VDD_1V9_STM = HiZ
 - USB:      VDD_1V9_STM = VDD_1V9</text>
-<text x="12.7" y="411.48" size="3.81" layer="95" align="top-left">VDD_A
+<text x="27.94" y="635" size="3.81" layer="95" align="top-left">VDD_A
 - Battery:  VDD_A = VDD_BAT
-- USB:      VDD_A = VDD_USB_3V6</text>
-<text x="12.7" y="373.38" size="3.81" layer="95" align="top-left">VDD_B
+- USB:      VDD_A = VDD_USB_3V3 - V_DIODE</text>
+<text x="27.94" y="596.9" size="3.81" layer="95" align="top-left">VDD_B
 - Battery:  VDD_B = HiZ / VDD_BAT
-    (controlled by MSP via !VDD_B_EN!)
-- USB:      VDD_B = VDD_USB_3V6</text>
+    (controlled by MSP via VDD_B_EN)
+- USB:      VDD_B = V_DIODE</text>
 <text x="12.7" y="317.5" size="3.81" layer="95" align="top-left">VDD_1V2</text>
 <text x="12.7" y="269.24" size="3.81" layer="95" align="top-left">VDD_1V9</text>
 <text x="12.7" y="205.74" size="3.81" layer="95" align="top-left">VDD_2V8</text>
@@ -4691,11 +4691,11 @@ polarity protection</text>
 grounded with low impedance when
 battery-powered, so that VDD_USB can be
 used as a state signal</text>
-<wire x1="223.52" y1="640.08" x2="223.52" y2="607.06" width="0.1524" layer="95"/>
-<wire x1="223.52" y1="607.06" x2="292.1" y2="607.06" width="0.1524" layer="95"/>
+<wire x1="233.68" y1="640.08" x2="233.68" y2="607.06" width="0.1524" layer="95"/>
+<wire x1="233.68" y1="607.06" x2="292.1" y2="607.06" width="0.1524" layer="95"/>
 <wire x1="292.1" y1="607.06" x2="292.1" y2="640.08" width="0.1524" layer="95"/>
-<wire x1="292.1" y1="640.08" x2="223.52" y2="640.08" width="0.1524" layer="95"/>
-<text x="223.774" y="643.636" size="2.54" layer="95" align="top-left">VDD_USB: slow on, fast off</text>
+<wire x1="292.1" y1="640.08" x2="233.68" y2="640.08" width="0.1524" layer="95"/>
+<text x="233.934" y="641.096" size="2.54" layer="95">VDD_USB: slow on, fast off</text>
 <wire x1="228.6" y1="601.98" x2="228.6" y2="568.96" width="0.1524" layer="95"/>
 <wire x1="228.6" y1="568.96" x2="279.4" y2="568.96" width="0.1524" layer="95"/>
 <wire x1="279.4" y1="568.96" x2="279.4" y2="601.98" width="0.1524" layer="95"/>
@@ -4708,12 +4708,20 @@ used as a state signal</text>
 <wire x1="297.18" y1="599.44" x2="373.38" y2="599.44" width="0.1524" layer="95"/>
 <wire x1="373.38" y1="599.44" x2="373.38" y2="632.46" width="0.1524" layer="95"/>
 <wire x1="373.38" y1="632.46" x2="297.18" y2="632.46" width="0.1524" layer="95"/>
-<text x="297.434" y="636.016" size="2.54" layer="95" align="top-left">3.3V Buck</text>
+<text x="297.434" y="633.476" size="2.54" layer="95">3.3V Buck</text>
 <text x="142.494" y="-4.826" size="1.016" layer="95" align="top-left">STM32's VDDUSB is supposed
 to rise after its VDD</text>
 <wire x1="149.352" y1="-4.318" x2="154.686" y2="1.778" width="0.1524" layer="95"/>
-<text x="423.672" y="593.852" size="1.016" layer="95" align="top-left">NOR gate to ensure that VDD_B is
-unconditionally powered in USB mode.</text>
+<text x="433.832" y="593.852" size="1.016" layer="95" align="top-left">NOR gate ensures that VDD_B is
+unconditionally powered in USB
+mode</text>
+<text x="203.454" y="618.236" size="1.016" layer="95" align="top-left">Pulldown ensures that VDD_USB can
+be safely used as a binary signal</text>
+<wire x1="406.4" y1="609.6" x2="406.4" y2="566.42" width="0.1524" layer="95"/>
+<wire x1="406.4" y1="566.42" x2="457.2" y2="566.42" width="0.1524" layer="95"/>
+<wire x1="457.2" y1="566.42" x2="457.2" y2="609.6" width="0.1524" layer="95"/>
+<wire x1="457.2" y1="609.6" x2="406.4" y2="609.6" width="0.1524" layer="95"/>
+<text x="406.654" y="564.896" size="2.54" layer="95" align="top-left">VDD_B Control</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="119.38" y="309.88" smashed="yes">
@@ -5051,11 +5059,11 @@ unconditionally powered in USB mode.</text>
 <attribute name="NAME" x="270.002" y="623.57" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 <attribute name="PN" x="271.78" y="622.3" size="1.778" layer="96" rot="MR0" display="off"/>
 </instance>
-<instance part="R36" gate="G$1" x="233.68" y="617.22" smashed="yes" rot="R270">
-<attribute name="NAME" x="231.394" y="618.998" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="231.394" y="616.458" size="1.778" layer="96" rot="R180"/>
-<attribute name="MFG" x="233.68" y="617.22" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="233.68" y="617.22" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R36" gate="G$1" x="200.66" y="617.22" smashed="yes" rot="R270">
+<attribute name="NAME" x="198.374" y="618.998" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="198.374" y="616.458" size="1.778" layer="96" rot="R180"/>
+<attribute name="MFG" x="200.66" y="617.22" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="200.66" y="617.22" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="C2" gate="G$1" x="256.54" y="627.38" smashed="yes">
 <attribute name="NAME" x="253.238" y="625.983" size="1.778" layer="95" align="bottom-right"/>
@@ -5108,18 +5116,18 @@ unconditionally powered in USB mode.</text>
 <attribute name="NAME" x="247.904" y="584.327" size="1.778" layer="95"/>
 <attribute name="VALUE" x="247.904" y="581.787" size="1.778" layer="96"/>
 </instance>
-<instance part="Q10" gate="G$1" x="421.64" y="574.04" smashed="yes" rot="MR0">
-<attribute name="NAME" x="417.83" y="569.722" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-<attribute name="PN" x="421.64" y="574.04" size="1.778" layer="96" rot="MR0" display="off"/>
+<instance part="Q10" gate="G$1" x="431.8" y="574.04" smashed="yes" rot="MR0">
+<attribute name="NAME" x="427.99" y="569.722" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="PN" x="431.8" y="574.04" size="1.778" layer="96" rot="MR0" display="off"/>
 </instance>
-<instance part="J11" gate="G$1" x="436.88" y="627.38" smashed="yes">
-<attribute name="NAME" x="435.61" y="629.92" size="1.778" layer="95" align="top-left"/>
+<instance part="J11" gate="G$1" x="469.9" y="627.38" smashed="yes">
+<attribute name="NAME" x="468.63" y="629.92" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="J12" gate="G$1" x="436.88" y="579.12" smashed="yes">
-<attribute name="NAME" x="435.61" y="581.66" size="1.778" layer="95" align="top-left"/>
+<instance part="J12" gate="G$1" x="469.9" y="579.12" smashed="yes">
+<attribute name="NAME" x="468.63" y="581.66" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="U28" gate="G$1" x="411.48" y="599.44" smashed="yes" rot="MR270">
-<attribute name="NAME" x="411.48" y="589.28" size="1.778" layer="95" rot="MR0"/>
+<instance part="U28" gate="G$1" x="421.64" y="599.44" smashed="yes" rot="MR270">
+<attribute name="NAME" x="421.64" y="589.28" size="1.778" layer="95" rot="MR0"/>
 </instance>
 <instance part="C91" gate="G$1" x="302.26" y="619.76" smashed="yes">
 <attribute name="NAME" x="305.054" y="619.379" size="1.778" layer="95"/>
@@ -5215,8 +5223,8 @@ unconditionally powered in USB mode.</text>
 </segment>
 <segment>
 <pinref part="J12" gate="G$1" pin="2"/>
-<wire x1="439.42" y1="574.04" x2="441.96" y2="574.04" width="0.1524" layer="91"/>
-<label x="441.96" y="574.04" size="1.778" layer="95"/>
+<wire x1="472.44" y1="574.04" x2="474.98" y2="574.04" width="0.1524" layer="91"/>
+<label x="474.98" y="574.04" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_1V9" class="0">
@@ -5446,8 +5454,8 @@ unconditionally powered in USB mode.</text>
 </segment>
 <segment>
 <pinref part="R36" gate="G$1" pin="2"/>
-<wire x1="233.68" y1="612.14" x2="233.68" y2="609.6" width="0.1524" layer="91"/>
-<label x="233.68" y="609.6" size="1.778" layer="95"/>
+<wire x1="200.66" y1="612.14" x2="200.66" y2="609.6" width="0.1524" layer="91"/>
+<label x="200.66" y="609.6" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R37" gate="G$1" pin="1"/>
@@ -5463,8 +5471,8 @@ unconditionally powered in USB mode.</text>
 </segment>
 <segment>
 <pinref part="U28" gate="G$1" pin="GND"/>
-<wire x1="424.18" y1="596.9" x2="426.72" y2="596.9" width="0.1524" layer="91"/>
-<label x="426.72" y="596.9" size="1.778" layer="95"/>
+<wire x1="434.34" y1="596.9" x2="436.88" y2="596.9" width="0.1524" layer="91"/>
+<label x="436.88" y="596.9" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C91" gate="G$1" pin="2"/>
@@ -5697,10 +5705,9 @@ unconditionally powered in USB mode.</text>
 <wire x1="256.54" y1="622.3" x2="261.62" y2="622.3" width="0.1524" layer="91"/>
 <junction x="256.54" y="622.3"/>
 <pinref part="J10" gate="G$1" pin="2"/>
-<wire x1="256.54" y1="622.3" x2="233.68" y2="622.3" width="0.1524" layer="91"/>
-<wire x1="233.68" y1="622.3" x2="200.66" y2="622.3" width="0.1524" layer="91"/>
+<wire x1="256.54" y1="622.3" x2="200.66" y2="622.3" width="0.1524" layer="91"/>
 <pinref part="R36" gate="G$1" pin="1"/>
-<junction x="233.68" y="622.3"/>
+<junction x="200.66" y="622.3"/>
 <pinref part="D5" gate="G$1" pin="A"/>
 <wire x1="200.66" y1="622.3" x2="187.96" y2="622.3" width="0.1524" layer="91"/>
 <wire x1="261.62" y1="599.44" x2="261.62" y2="622.3" width="0.1524" layer="91"/>
@@ -5710,8 +5717,8 @@ unconditionally powered in USB mode.</text>
 <label x="200.66" y="647.7" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="414.02" y1="601.98" x2="414.02" y2="604.52" width="0.1524" layer="91"/>
-<label x="414.02" y="604.52" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="424.18" y1="601.98" x2="424.18" y2="604.52" width="0.1524" layer="91"/>
+<label x="424.18" y="604.52" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U28" gate="G$1" pin="IN1"/>
 </segment>
 </net>
@@ -5794,13 +5801,13 @@ unconditionally powered in USB mode.</text>
 </segment>
 <segment>
 <pinref part="J11" gate="G$1" pin="2"/>
-<wire x1="439.42" y1="622.3" x2="441.96" y2="622.3" width="0.1524" layer="91"/>
-<label x="441.96" y="622.3" size="1.778" layer="95"/>
+<wire x1="472.44" y1="622.3" x2="474.98" y2="622.3" width="0.1524" layer="91"/>
+<label x="474.98" y="622.3" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U28" gate="G$1" pin="VDD"/>
-<wire x1="408.94" y1="596.9" x2="406.4" y2="596.9" width="0.1524" layer="91"/>
-<label x="406.4" y="596.9" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="419.1" y1="596.9" x2="416.56" y2="596.9" width="0.1524" layer="91"/>
+<label x="416.56" y="596.9" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="VDD_3V3_STM" class="0">
@@ -5929,13 +5936,6 @@ unconditionally powered in USB mode.</text>
 <pinref part="J9" gate="G$1" pin="1"/>
 <wire x1="185.42" y1="574.04" x2="182.88" y2="574.04" width="0.1524" layer="91"/>
 <label x="182.88" y="574.04" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
-<net name="VDD_B_EN_" class="0">
-<segment>
-<wire x1="335.28" y1="383.54" x2="342.9" y2="383.54" width="0.1524" layer="91"/>
-<label x="342.9" y="383.54" size="1.778" layer="95"/>
-<pinref part="R4" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$32" class="0">
@@ -6114,10 +6114,10 @@ unconditionally powered in USB mode.</text>
 <wire x1="393.7" y1="574.04" x2="393.7" y2="622.3" width="0.1524" layer="91"/>
 <wire x1="393.7" y1="622.3" x2="391.16" y2="622.3" width="0.1524" layer="91"/>
 <pinref part="J11" gate="G$1" pin="1"/>
-<wire x1="393.7" y1="622.3" x2="436.88" y2="622.3" width="0.1524" layer="91"/>
+<wire x1="393.7" y1="622.3" x2="469.9" y2="622.3" width="0.1524" layer="91"/>
 <junction x="393.7" y="622.3"/>
 <pinref part="Q10" gate="G$1" pin="S"/>
-<wire x1="411.48" y1="574.04" x2="393.7" y2="574.04" width="0.1524" layer="91"/>
+<wire x1="421.64" y1="574.04" x2="393.7" y2="574.04" width="0.1524" layer="91"/>
 <junction x="393.7" y="574.04"/>
 </segment>
 </net>
@@ -6189,22 +6189,27 @@ unconditionally powered in USB mode.</text>
 <net name="N$51" class="0">
 <segment>
 <pinref part="Q10" gate="G$1" pin="G"/>
-<wire x1="416.56" y1="584.2" x2="416.56" y2="581.66" width="0.1524" layer="91"/>
+<wire x1="426.72" y1="584.2" x2="426.72" y2="581.66" width="0.1524" layer="91"/>
 <pinref part="U28" gate="G$1" pin="OUT"/>
 </segment>
 </net>
 <net name="VDD_B_EN" class="0">
 <segment>
-<wire x1="419.1" y1="601.98" x2="419.1" y2="604.52" width="0.1524" layer="91"/>
-<label x="419.1" y="604.52" size="1.778" layer="95"/>
+<wire x1="429.26" y1="601.98" x2="429.26" y2="604.52" width="0.1524" layer="91"/>
+<label x="429.26" y="604.52" size="1.778" layer="95"/>
 <pinref part="U28" gate="G$1" pin="IN2"/>
+</segment>
+<segment>
+<wire x1="335.28" y1="383.54" x2="342.9" y2="383.54" width="0.1524" layer="91"/>
+<label x="342.9" y="383.54" size="1.778" layer="95"/>
+<pinref part="R4" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$43" class="0">
 <segment>
 <pinref part="Q10" gate="G$1" pin="D"/>
 <pinref part="J12" gate="G$1" pin="1"/>
-<wire x1="421.64" y1="574.04" x2="436.88" y2="574.04" width="0.1524" layer="91"/>
+<wire x1="431.8" y1="574.04" x2="469.9" y2="574.04" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$52" class="0">
@@ -6523,7 +6528,7 @@ away with a smaller capacitor.</text>
 <label x="88.9" y="27.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_B_EN_" class="0">
+<net name="VDD_B_EN" class="0">
 <segment>
 <wire x1="129.54" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
 <label x="127" y="68.58" size="1.778" layer="95" align="bottom-right"/>
