@@ -56,11 +56,11 @@
 - Rev5 Todo
     
     - Consolidate parts
-        - 4.7uF capacitor (2-3x 2.2uF)
-        - 3k resistor (3x 1k)
+        - 3k resistor (?)
         - 91k resistor (2x 47k? how will that affect buck output? consider tempco!)
         - 422k resistor (4x 100k + 2x 10k? how will that affect buck output? consider tempco!)
         - 249k resistor? (2x 100k + 1x 47k)
+        √ 4.7uF capacitor (2-3x 2.2uF)
     
     - Switch 1V9 back to 1V8, now that we've solved the SD card Vih by using LVS
     
@@ -72,27 +72,26 @@
     
     - Make board left/right borders smaller
     
-    - Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
+    - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
+    
+    √ Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
         √ Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
         - See CrystalPartOptions.txt for other parts
     
-    - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
-    
     √ Fix power system to ensure that reverse current into battery/USB isn't possible
-        - Need to bench test LM66100
-            - Things to test:
-                - Ramp up USB (BAT) while BAT (USB) is already supplying power
-                    - Reverse current?
-                - Plug in USB (BAT) while BAT (USB) is already supplying power, where USB (BAT) < BAT (USB)
-                    - Reverse current?
-                - Plug in USB (BAT) while BAT (USB) is already supplying power, where USB (BAT) > BAT (USB)
-                    - Reverse current?
-                - Disconnect USB (BAT) while USB (BAT) is supplying power
-                    - In other words, disconnect the power source that is supply power
-                    - Reverse current?
-                - Disconnect USB (BAT) while BAT (USB) is supplying power
-                    - In other words, disconnect the power source that isn't supply power
-                    - Reverse current?
+        - Things to test:
+            - Ramp up USB (BAT) while BAT (USB) is already supplying power
+                - Reverse current?
+            - Plug in USB (BAT) while BAT (USB) is already supplying power, where USB (BAT) < BAT (USB)
+                - Reverse current?
+            - Plug in USB (BAT) while BAT (USB) is already supplying power, where USB (BAT) > BAT (USB)
+                - Reverse current?
+            - Disconnect USB (BAT) while USB (BAT) is supplying power
+                - In other words, disconnect the power source that is supply power
+                - Reverse current?
+            - Disconnect USB (BAT) while BAT (USB) is supplying power
+                - In other words, disconnect the power source that isn't supply power
+                - Reverse current?
     
     √ Use Nexperia 74LVC1G98GW,125 logic gate for:
         √ IMG clock-blocking buffer (replace TI part)
