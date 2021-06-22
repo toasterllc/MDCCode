@@ -4065,10 +4065,6 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="12.1k">
-<attribute name="MFG" value="Walsin"/>
-<attribute name="PN" value="WR04X1212FTL"/>
-</part>
 <part name="C15" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="2.2u">
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
@@ -4263,9 +4259,9 @@ PGND directly at the IC."
 "Connect AGND and PGND
 through a via at a different
 layer."</text>
-<text x="12.7" y="38.1" size="3.81" layer="95" align="top-left">VDD_1V9_STM
-- Battery:  VDD_1V9_STM = HiZ
-- USB:      VDD_1V9_STM = VDD_1V9</text>
+<text x="12.7" y="38.1" size="3.81" layer="95" align="top-left">VDD_1V8_STM
+- Battery:  VDD_1V8_STM = HiZ
+- USB:      VDD_1V8_STM = VDD_1V8</text>
 <text x="12.7" y="426.72" size="3.81" layer="95" align="top-left">VDD_A
 - Battery:  VDD_A = VDD_BAT
 - USB:      VDD_A = VDD_USB_3V3 - V_DIODE</text>
@@ -4274,29 +4270,14 @@ layer."</text>
     (controlled by MSP via VDD_B_EN)
 - USB:      VDD_B = V_DIODE</text>
 <text x="12.7" y="317.5" size="3.81" layer="95" align="top-left">VDD_1V2</text>
-<text x="12.7" y="269.24" size="3.81" layer="95" align="top-left">VDD_1V9</text>
+<text x="12.7" y="269.24" size="3.81" layer="95" align="top-left">VDD_1V8</text>
 <text x="12.7" y="205.74" size="3.81" layer="95" align="top-left">VDD_2V8</text>
-<text x="12.7" y="160.02" size="3.81" layer="95" align="top-left">VDD_1V9_IMG</text>
+<text x="12.7" y="160.02" size="3.81" layer="95" align="top-left">VDD_1V8_IMG</text>
 <text x="12.7" y="129.54" size="3.81" layer="95" align="top-left">VDD_2V8_IMG</text>
 <text x="12.7" y="99.06" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
 <text x="12.7" y="7.62" size="3.81" layer="95" align="top-left">VDD_3V3_STM
 - Battery:  VDD_3V3_STM = HiZ
 - USB:      VDD_3V3_STM = VDD_USB_3V3</text>
-<text x="212.852" y="255.778" size="1.016" layer="95" align="top-left">Requirements:
-- 1%
-- TCR &lt;= ±200 ppm/°C</text>
-<text x="12.7" y="261.62" size="1.016" layer="95" align="top-left">We're using 1.9V instead of 1.8V purely to
-help meet the Vih of the SD card when it's
-in 3.3V mode.
-
-In 3.3V mode, the SD card is supposed to
-be supplied 3.3V signals, but the ICE40
-gives it 1.9V signals instead. We're doing
-this because we haven't found a good
-method of switching the signal voltage
-without introducing capacitance on the
-signalling lines (which can greatly impact
-the 100MHz high-speed mode).</text>
 <text x="12.7" y="71.12" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
 <text x="180.848" y="365.252" size="1.016" layer="95" align="top-left">Battery reverse
 polarity protection</text>
@@ -4319,7 +4300,7 @@ polarity protection</text>
 <wire x1="342.9" y1="426.72" x2="266.7" y2="426.72" width="0.1524" layer="95"/>
 <text x="266.954" y="427.736" size="2.54" layer="95">3.3V Buck</text>
 <text x="180.594" y="-4.826" size="1.016" layer="95" align="top-left">STM32's VDDUSB is supposed to rise
-after its VDD (VDD_1V9_STM)</text>
+after its VDD (VDD_1V8_STM)</text>
 <wire x1="189.992" y1="-4.318" x2="195.326" y2="1.778" width="0.1524" layer="95"/>
 <text x="402.336" y="394.462" size="1.016" layer="95" align="top-left">NOR gate ensures that VDD_B is
 unconditionally powered in USB
@@ -4470,12 +4451,6 @@ ringing on the PFET's gate</text>
 <instance part="U10" gate="G$1" x="208.28" y="38.1" smashed="yes">
 <attribute name="PN" x="208.28" y="25.4" size="1.778" layer="95"/>
 <attribute name="NAME" x="208.28" y="38.862" size="1.778" layer="95"/>
-</instance>
-<instance part="R7" gate="G$1" x="210.82" y="254" smashed="yes" rot="R90">
-<attribute name="NAME" x="208.788" y="254.254" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="208.788" y="251.714" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="210.82" y="254" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="210.82" y="254" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="C15" gate="G$1" x="175.26" y="152.4" smashed="yes">
 <attribute name="PN" x="157.48" y="157.48" size="1.778" layer="96" display="off"/>
@@ -4702,7 +4677,7 @@ ringing on the PFET's gate</text>
 <label x="444.5" y="368.3" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V9" class="0">
+<net name="VDD_1V8" class="0">
 <segment>
 <pinref part="R6" gate="G$1" pin="1"/>
 <wire x1="248.92" y1="266.7" x2="251.46" y2="266.7" width="0.1524" layer="91"/>
@@ -4803,11 +4778,6 @@ ringing on the PFET's gate</text>
 <pinref part="C10" gate="G$1" pin="2"/>
 <wire x1="231.14" y1="256.54" x2="231.14" y2="254" width="0.1524" layer="91"/>
 <label x="231.14" y="254" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="R7" gate="G$1" pin="1"/>
-<wire x1="210.82" y1="248.92" x2="210.82" y2="246.38" width="0.1524" layer="91"/>
-<label x="210.82" y="246.38" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C15" gate="G$1" pin="2"/>
@@ -4923,6 +4893,11 @@ ringing on the PFET's gate</text>
 <pinref part="C20" gate="G$1" pin="2"/>
 <wire x1="175.26" y1="-2.54" x2="175.26" y2="-5.08" width="0.1524" layer="91"/>
 <label x="175.26" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U4" gate="G$1" pin="MODE"/>
+<wire x1="208.28" y1="261.62" x2="210.82" y2="261.62" width="0.1524" layer="91"/>
+<label x="210.82" y="261.62" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -5077,7 +5052,7 @@ ringing on the PFET's gate</text>
 <pinref part="U28" gate="G$1" pin="IN1"/>
 </segment>
 </net>
-<net name="VDD_1V9_STM" class="0">
+<net name="VDD_1V8_STM" class="0">
 <segment>
 <wire x1="228.6" y1="35.56" x2="231.14" y2="35.56" width="0.1524" layer="91"/>
 <label x="231.14" y="35.56" size="1.778" layer="95"/>
@@ -5092,7 +5067,7 @@ ringing on the PFET's gate</text>
 <label x="203.2" y="2.54" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="VDD_1V9_IMG" class="0">
+<net name="VDD_1V8_IMG" class="0">
 <segment>
 <wire x1="228.6" y1="154.94" x2="231.14" y2="154.94" width="0.1524" layer="91"/>
 <label x="231.14" y="154.94" size="1.778" layer="95"/>
@@ -5131,7 +5106,7 @@ ringing on the PFET's gate</text>
 <pinref part="U7" gate="G$1" pin="EN"/>
 </segment>
 </net>
-<net name="VDD_1V9_IMG_EN" class="0">
+<net name="VDD_1V8_IMG_EN" class="0">
 <segment>
 <wire x1="205.74" y1="152.4" x2="203.2" y2="152.4" width="0.1524" layer="91"/>
 <label x="203.2" y="152.4" size="1.778" layer="95" align="bottom-right"/>
@@ -5177,7 +5152,7 @@ ringing on the PFET's gate</text>
 <label x="152.4" y="416.56" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="VDD_1V9_SD" class="0">
+<net name="VDD_1V8_SD" class="0">
 <segment>
 <pinref part="U9" gate="G$1" pin="QOD"/>
 <pinref part="U9" gate="G$1" pin="VOUT"/>
@@ -5353,14 +5328,6 @@ ringing on the PFET's gate</text>
 <wire x1="312.42" y1="411.48" x2="314.96" y2="411.48" width="0.1524" layer="91"/>
 <pinref part="R43" gate="G$1" pin="2"/>
 <wire x1="314.96" y1="411.48" x2="314.96" y2="408.94" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$21" class="0">
-<segment>
-<pinref part="U4" gate="G$1" pin="MODE"/>
-<wire x1="208.28" y1="261.62" x2="210.82" y2="261.62" width="0.1524" layer="91"/>
-<pinref part="R7" gate="G$1" pin="2"/>
-<wire x1="210.82" y1="261.62" x2="210.82" y2="259.08" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$33" class="0">
@@ -5629,7 +5596,7 @@ away with a smaller capacitor.</text>
 <label x="88.9" y="17.78" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V9" class="0">
+<net name="VDD_1V8" class="0">
 <segment>
 <pinref part="U21" gate="G$1" pin="VCCA"/>
 <wire x1="86.36" y1="35.56" x2="88.9" y2="35.56" width="0.1524" layer="91"/>
@@ -5648,7 +5615,7 @@ away with a smaller capacitor.</text>
 <pinref part="U12" gate="C" pin="P2.4/TA1CLK/UCB0CLK/A6"/>
 </segment>
 </net>
-<net name="VDD_1V9_IMG_EN" class="0">
+<net name="VDD_1V8_IMG_EN" class="0">
 <segment>
 <wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
 <label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
@@ -5705,7 +5672,7 @@ away with a smaller capacitor.</text>
 <pinref part="U12" gate="C" pin="P2.3/TA1.2/UCB0STE/A5"/>
 </segment>
 </net>
-<net name="VDD_1V9_STM" class="0">
+<net name="VDD_1V8_STM" class="0">
 <segment>
 <wire x1="-5.08" y1="35.56" x2="-2.54" y2="35.56" width="0.1524" layer="91"/>
 <label x="-2.54" y="35.56" size="1.778" layer="95"/>
@@ -5999,7 +5966,7 @@ below the chip.</text>
 <busses>
 </busses>
 <nets>
-<net name="VDD_1V9" class="0">
+<net name="VDD_1V8" class="0">
 <segment>
 <pinref part="C36" gate="G$1" pin="1"/>
 <pinref part="C37" gate="G$1" pin="1"/>
@@ -7062,7 +7029,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V9_IMG" class="0">
+<net name="VDD_1V8_IMG" class="0">
 <segment>
 <pinref part="U17" gate="A" pin="VDD_IO"/>
 <wire x1="71.12" y1="45.72" x2="71.12" y2="48.26" width="0.1524" layer="91"/>
@@ -7436,7 +7403,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V9" class="0">
+<net name="VDD_1V8" class="0">
 <segment>
 <pinref part="C64" gate="G$1" pin="1"/>
 <pinref part="C63" gate="G$1" pin="1"/>
@@ -7808,7 +7775,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V9_SD" class="0">
+<net name="VDD_1V8_SD" class="0">
 <segment>
 <pinref part="R22" gate="G$1" pin="2"/>
 <wire x1="-20.32" y1="-55.88" x2="-20.32" y2="-53.34" width="0.1524" layer="91"/>
@@ -8461,7 +8428,7 @@ between input and output when its VDD=0.</text>
 <label x="0" y="-281.94" size="1.778" layer="95" align="top-left"/>
 </segment>
 </net>
-<net name="VDD_1V9_STM" class="0">
+<net name="VDD_1V8_STM" class="0">
 <segment>
 <pinref part="U19" gate="K" pin="VDD_C5"/>
 <pinref part="U19" gate="K" pin="VDD_N9"/>
