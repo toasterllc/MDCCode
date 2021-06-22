@@ -55,13 +55,6 @@
 
 - Rev5 Todo
     
-    - Consolidate parts
-        - 3k resistor (?)
-        - 91k resistor (2x 47k? how will that affect buck output? consider tempco!)
-        - 422k resistor (4x 100k + 2x 10k? how will that affect buck output? consider tempco!)
-        - 249k resistor? (2x 100k + 1x 47k)
-        √ 4.7uF capacitor (2-3x 2.2uF)
-    
     - Switch USB receptacle to USB-C
     
     - Fix motion sensor layout (we swapped the VDD and GND pins)
@@ -69,6 +62,16 @@
     - Make board left/right borders smaller
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
+    
+    √ Consolidate parts
+        √ 249k resistor? (replace with 422k, since it just needs to be >= 249k)
+        √ 4.7uF capacitor (2-3x 2.2uF)
+        X 3k resistor (?)
+            X We're not using 1k resistors
+        X 91k resistor
+            X We can't afford to let the 2V8 rail stray from its current value
+        X 422k resistor
+            X We can't afford to let the 2V8 rail stray from its current value
     
     √ Replace 0-ohm resistors with solder jumpers
     

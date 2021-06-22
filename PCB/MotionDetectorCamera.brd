@@ -2254,9 +2254,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="" x="-13.7" y="-61.6" size="1.778" layer="27" display="off"/>
 </element>
 <element name="R38" library="EagleLibrary" package="0402" value="100" x="-13.7" y="-64" smashed="yes">
-<attribute name="MFG" value="" x="-13.7" y="-64" size="1.778" layer="27" display="off"/>
+<attribute name="MFG" value="Stackpole" x="-13.7" y="-64" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.454" y="-63.444" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="" x="-13.7" y="-64" size="1.778" layer="27" display="off"/>
+<attribute name="PN" value="RMCF0402JT100R" x="-13.7" y="-64" size="1.778" layer="27" display="off"/>
 </element>
 <element name="C3" library="EagleLibrary" package="0402" value="100n" x="-13.7" y="-66.4" smashed="yes">
 <attribute name="NAME" x="-14.454" y="-65.844" size="0.508" layer="25" font="vector"/>
@@ -2282,14 +2282,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="" x="-13.7" y="-84.7" size="1.778" layer="27" display="off"/>
 </element>
 <element name="R40" library="EagleLibrary" package="0402" value="100" x="-13.7" y="-87.1" smashed="yes">
-<attribute name="MFG" value="" x="-13.7" y="-87.1" size="1.778" layer="27" display="off"/>
+<attribute name="MFG" value="Stackpole" x="-13.7" y="-87.1" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.454" y="-86.544" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="" x="-13.7" y="-87.1" size="1.778" layer="27" display="off"/>
+<attribute name="PN" value="RMCF0402JT100R" x="-13.7" y="-87.1" size="1.778" layer="27" display="off"/>
 </element>
 <element name="R41" library="EagleLibrary" package="0402" value="100" x="-13.7" y="-89.5" smashed="yes">
-<attribute name="MFG" value="" x="-13.7" y="-89.5" size="1.778" layer="27" display="off"/>
+<attribute name="MFG" value="Stackpole" x="-13.7" y="-89.5" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.454" y="-88.944" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="" x="-13.7" y="-89.5" size="1.778" layer="27" display="off"/>
+<attribute name="PN" value="RMCF0402JT100R" x="-13.7" y="-89.5" size="1.778" layer="27" display="off"/>
 </element>
 <element name="C27" library="EagleLibrary" package="0402" value="2.2u" x="-13.7" y="-91.9" smashed="yes">
 <attribute name="NAME" x="-14.454" y="-91.344" size="0.508" layer="25" font="vector"/>
@@ -2333,11 +2333,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-14.403" y="-116.3863" size="0.762" layer="25" font="vector"/>
 <attribute name="PN" value="DFE201612E-R47M=P2" x="-12.9" y="-129.8" size="1.778" layer="27" display="off"/>
 </element>
-<element name="R43" library="EagleLibrary" package="0402" value="249k" x="-7.9" y="-123.1" smashed="yes">
-<attribute name="MFG" value="" x="-13.7" y="-135.4" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-8.654" y="-122.544" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="" x="-13.7" y="-135.4" size="1.778" layer="27" display="off"/>
-</element>
 <element name="U30" library="EagleLibrary" package="TI-TPS22919DCK" value="TI-TPS22919DCK" x="-13.3" y="-127.2" smashed="yes">
 <attribute name="MFG" value="Texas Instruments" x="-13.3" y="-127.2" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-13.9604" y="-125.94548125" size="1.016" layer="25" font="vector"/>
@@ -2349,9 +2344,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="TMK105CBJ225KV-F" x="-13.7" y="-129.6" size="1.778" layer="27" display="off"/>
 </element>
 <element name="R11" library="EagleLibrary" package="0402" value="100" x="-13.7" y="-132" smashed="yes">
-<attribute name="MFG" value="" x="-13.7" y="-132" size="1.778" layer="27" display="off"/>
+<attribute name="MFG" value="Stackpole" x="-13.7" y="-132" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-14.454" y="-131.444" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="" x="-13.7" y="-132" size="1.778" layer="27" display="off"/>
+<attribute name="PN" value="RMCF0402JT100R" x="-13.7" y="-132" size="1.778" layer="27" display="off"/>
 </element>
 <element name="U1" library="EagleLibrary" package="NEXPERIA-SOT363" value="NEXPERIA-74LVC1G98-BUFFER" x="-14.4" y="-135.4" smashed="yes">
 <attribute name="MFG" value="Nexperia" x="-14.4" y="-135.4" size="1.778" layer="27" display="off"/>
@@ -2385,6 +2380,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="J3" library="EagleLibrary" package="JUMPER-SOLDER" value="JUMPER-SOLDER" x="-14.7" y="-154" smashed="yes">
 <attribute name="NAME" x="-15.454" y="-153.444" size="0.508" layer="25" font="vector"/>
+</element>
+<element name="R1" library="EagleLibrary" package="0402" value="422k" x="-14.7" y="-156.4" smashed="yes">
+<attribute name="MFG" value="Bourns" x="-14.7" y="-156.4" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.454" y="-155.844" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="CR0402-FX-4223GLF" x="-14.7" y="-156.4" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>
@@ -3420,7 +3420,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U28" pad="2"/>
 <contactref element="C91" pad="2"/>
 <contactref element="C92" pad="2"/>
-<contactref element="R43" pad="1"/>
 <contactref element="U29" pad="A1"/>
 <contactref element="U3" pad="C1"/>
 <contactref element="C7" pad="2"/>
@@ -3434,6 +3433,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C4" pad="2"/>
 <contactref element="C21" pad="2"/>
 <contactref element="U4" pad="C1"/>
+<contactref element="R1" pad="1"/>
+<wire x1="-14.2675" y1="-146.8" x2="-15.1325" y2="-156.4" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-144.4" x2="-14.2675" y2="-146.8" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-142" x2="-14.2675" y2="-144.4" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.3704" y1="-136.05" x2="-14.2675" y2="-142" width="0" layer="19" extent="1-1"/>
@@ -3441,7 +3442,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-13.2675" y1="-129.6" x2="-15.3704" y2="-135.4" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2623" y1="-127.2" x2="-13.2675" y2="-129.6" width="0" layer="19" extent="1-1"/>
 <wire x1="-10.375" y1="-122.9936" x2="-14.2623" y2="-127.2" width="0" layer="19" extent="1-1"/>
-<wire x1="-8.3325" y1="-123.1" x2="-10.375" y2="-122.9936" width="0" layer="19" extent="1-1"/>
 <wire x1="-12.0246" y1="-120.7" x2="-10.375" y2="-122.9936" width="0" layer="19" extent="1-1"/>
 <wire x1="-8.4246" y1="-117.4" x2="-12.0246" y2="-120.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.3704" y1="-114.1" x2="-8.4246" y2="-117.4" width="0" layer="19" extent="1-1"/>
@@ -8144,8 +8144,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="N$56">
 <contactref element="U29" pad="C1"/>
-<contactref element="R43" pad="2"/>
-<wire x1="-10.375" y1="-123.8064" x2="-7.4675" y2="-123.1" width="0" layer="19" extent="1-1"/>
+<contactref element="R1" pad="2"/>
+<wire x1="-10.375" y1="-123.8064" x2="-14.2675" y2="-156.4" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$33">
 <contactref element="R11" pad="1"/>
