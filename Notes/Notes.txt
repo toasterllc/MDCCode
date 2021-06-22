@@ -57,11 +57,11 @@
     
     - Switch USB receptacle to USB-C
     
-    - Fix motion sensor layout (we swapped the VDD and GND pins)
-    
     - Make board left/right borders smaller
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
+    
+    √ Fix motion sensor layout (we swapped the VDD and GND pins)
     
     √ Consolidate parts
         √ 249k resistor? (replace with 422k, since it just needs to be >= 249k)

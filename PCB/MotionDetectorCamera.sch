@@ -1254,8 +1254,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="-3.017140625" y="5.811340625" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <circle x="0" y="0" radius="5.5" width="0.127" layer="21"/>
 <circle x="0" y="0" radius="2.54" width="0.127" layer="21"/>
-<pad name="1" x="-2.54" y="0" drill="0.65"/>
-<pad name="3" x="2.54" y="0" drill="0.65"/>
+<pad name="1" x="2.54" y="0" drill="0.65"/>
+<pad name="3" x="-2.54" y="0" drill="0.65"/>
 <pad name="2" x="0" y="2.54" drill="0.65"/>
 <circle x="0" y="0" radius="1.778" width="7.62" layer="39"/>
 <circle x="0" y="0" radius="1.778" width="7.62" layer="41"/>

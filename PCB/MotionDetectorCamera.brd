@@ -1192,8 +1192,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <text x="-3.017140625" y="5.811340625" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <circle x="0" y="0" radius="5.5" width="0.127" layer="21"/>
 <circle x="0" y="0" radius="2.54" width="0.127" layer="21"/>
-<pad name="1" x="-2.54" y="0" drill="0.65"/>
-<pad name="3" x="2.54" y="0" drill="0.65"/>
+<pad name="1" x="2.54" y="0" drill="0.65"/>
+<pad name="3" x="-2.54" y="0" drill="0.65"/>
 <pad name="2" x="0" y="2.54" drill="0.65"/>
 <circle x="0" y="0" radius="1.778" width="7.62" layer="39"/>
 <circle x="0" y="0" radius="1.778" width="7.62" layer="41"/>
@@ -2352,10 +2352,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MFG" value="Nexperia" x="-14.4" y="-135.4" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-15.0604" y="-134.179621875" size="0.762" layer="25" font="vector"/>
 </element>
-<element name="X1" library="EagleLibrary" package="EPSON-FC-135" value="EPSON-FC-135" x="-13.6" y="-139.6" smashed="yes">
-<attribute name="MFG" value="Epson" x="-13.6" y="-139.6" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-15.3850625" y="-138.3900375" size="1.27" layer="25" font="vector"/>
-<attribute name="PN" value="Q13FC13500005" x="-13.6" y="-139.6" size="1.778" layer="27" display="off"/>
+<element name="X1" library="EagleLibrary" package="EPSON-FC-135" value="EPSON-FC-135" x="-9.9" y="-15.5" smashed="yes">
+<attribute name="MFG" value="Epson" x="-9.9" y="-15.5" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-11.6850625" y="-14.2900375" size="1.27" layer="25" font="vector"/>
+<attribute name="PN" value="Q13FC13500005" x="-9.9" y="-15.5" size="1.778" layer="27" display="off"/>
 </element>
 <element name="C1" library="EagleLibrary" package="0402" value="2.2u" x="-14.7" y="-142" smashed="yes">
 <attribute name="MFG" value="Taiyo Yuden" x="-14.7" y="-142" size="1.778" layer="27" display="off"/>
@@ -3746,8 +3746,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="10.4682375" y1="24.50378125" x2="16.0274" y2="25.8057" width="0" layer="19" extent="16-16"/>
 <wire x1="10.4682375" y1="23.64018125" x2="10.4682375" y2="24.50378125" width="0" layer="19" extent="16-16"/>
 <wire x1="4.5742625" y1="25.5821875" x2="10.4682375" y2="24.50378125" width="0" layer="19" extent="16-16"/>
-<wire x1="3.556" y1="27.142" x2="4.5742625" y2="25.5821875" width="0" layer="19" extent="16-16"/>
 <wire x1="2.7287125" y1="23.736640625" x2="4.5742625" y2="25.5821875" width="0" layer="19" extent="16-16"/>
+<wire x1="-1.524" y1="27.142" x2="2.7287125" y2="23.736640625" width="0" layer="19" extent="16-16"/>
+<wire x1="-3.554396875" y1="27.127921875" x2="-1.524" y2="27.142" width="0" layer="19" extent="16-16"/>
+<wire x1="-8.128" y1="23.368" x2="-3.554396875" y2="27.127921875" width="0" layer="19" extent="16-16"/>
 <wire x1="50.8" y1="40.386" x2="48.747678125" y2="34.3591375" width="0" layer="19" extent="16-16"/>
 <wire x1="8.973553125" y1="30.948925" x2="10.4682375" y2="24.50378125" width="0" layer="19" extent="1-16"/>
 <wire x1="8.9814375" y1="31.5087" x2="8.973553125" y2="30.948925" width="0" layer="19" extent="1-1"/>
@@ -3775,8 +3777,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="3.81" y1="40.132" x2="5.184140625" y2="37.07638125" width="0" layer="19" extent="1-1"/>
 <wire x1="-2.147421875" y1="35.3508" x2="4.448071875" y2="35.474409375" width="0" layer="19" extent="1-1"/>
 <wire x1="-6.35" y1="40.64" x2="-2.147421875" y2="35.3508" width="0" layer="19" extent="1-1"/>
-<wire x1="-3.554396875" y1="27.127921875" x2="3.556" y2="27.142" width="0" layer="19" extent="16-16"/>
-<wire x1="-8.128" y1="23.368" x2="-3.554396875" y2="27.127921875" width="0" layer="19" extent="16-16"/>
 <wire x1="42.1374" y1="16.1438" x2="40.497759375" y2="23.280940625" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
@@ -7767,8 +7767,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="13.999240625" y1="11.952759375" x2="13.212" y2="11.5234" width="0" layer="19" extent="1-16"/>
 <wire x1="12.73301875" y1="16.390621875" x2="12.6465625" y2="12.207659375" width="0" layer="19" extent="16-16"/>
 <wire x1="11.196325" y1="16.614140625" x2="12.73301875" y2="16.390621875" width="0" layer="19" extent="1-1"/>
-<wire x1="-1.524" y1="27.142" x2="11.196325" y2="16.614140625" width="0" layer="19" extent="1-1"/>
-<wire x1="-2.689396875" y1="27.127921875" x2="-1.524" y2="27.142" width="0" layer="19" extent="16-16"/>
+<wire x1="3.556" y1="27.142" x2="11.196325" y2="16.614140625" width="0" layer="19" extent="1-1"/>
+<wire x1="-2.689396875" y1="27.127921875" x2="3.556" y2="27.142" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="VDD_3V3_STM">
 <contactref element="U19" pad="H13"/>
@@ -7807,7 +7807,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="15.43181875" y1="9.785603125" x2="14.712" y2="11.5234" width="0.254" layer="1" curve="-45"/>
 <wire x1="17.660621875" y1="8.8907" x2="16.326721875" y2="8.8907" width="0.508" layer="1"/>
 <contactref element="X1" pad="2"/>
-<wire x1="16.326721875" y1="8.8907" x2="-12.35" y2="-139.6" width="0" layer="19" extent="1-1"/>
+<wire x1="16.326721875" y1="8.8907" x2="-8.65" y2="-15.5" width="0" layer="19" extent="1-1"/>
 <wire x1="15.43181875" y1="9.785603125" x2="16.326721875" y2="8.8907" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$17">
@@ -7816,7 +7816,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="13.472634375" y1="9.7384125" x2="14.212" y2="11.5234" width="0.254" layer="1" curve="45"/>
 <wire x1="11.280140625" y1="8.8907" x2="12.624921875" y2="8.8907" width="0.508" layer="1"/>
 <contactref element="X1" pad="1"/>
-<wire x1="11.280140625" y1="8.8907" x2="-14.85" y2="-139.6" width="0" layer="19" extent="1-1"/>
+<wire x1="11.280140625" y1="8.8907" x2="-11.15" y2="-15.5" width="0" layer="19" extent="1-1"/>
 <wire x1="13.472634375" y1="9.7384125" x2="12.624921875" y2="8.8907" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="MOTION_SIGNAL">
