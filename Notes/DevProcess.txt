@@ -1,7 +1,16 @@
-Development of new boards (and related work) occurs in the `master` branch.
+`master` contains work for the current board revision being actively developed, RevX.
 
-Once a board schematic+layout is finalized and ordered:
-  - a tag is created: `board/RevX`
-  - a branch is created: `dev/RevX`
+A new tag `board/RevX` is created when the RevX schematic/layout is finalized
+and the PCB is ordered.
 
-Development work targeting the RevX board occurs in the `dev/RevX` branch. Commits with code and other work that applies to the next board revision is cherry-picked to the `master` branch.
+A new branch `dev/RevX` is created from `master` immediately before modifying the
+schematic/layout for the RevX+1 board.
+
+    If the schematic/layout must be modified for RevX+1 before development for
+    RevX has completed (and therefore RevX development continues in `master`),
+    the `dev/RevX+1` branch should be created in advance to hold the
+    schematic/layout modifications. The `dev/RevX+1` branch must be kept
+    up-to-date with `master` using the `git rebase master` command. When the
+    time comes for `master` to transition to RevX+1 development, the
+    schematic/layout modifications should be applied using
+    `git rebase dev/RevX+1`.
