@@ -6,6 +6,8 @@
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
     
+    - Layout: when complete, make sure board origin is at 0,0
+    
     √ Fix motion sensor layout (we swapped the VDD and GND pins)
     
     √ Consolidate parts
