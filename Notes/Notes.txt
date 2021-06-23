@@ -1,5 +1,9 @@
 - Rev4 Todo
     
+    - Fix MSP level shifter net names on schematic:
+        - ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
+        - ICE_MSP_SPI_DATA is actually ICE_MSP_SPI_CLK
+    
     - Bodge VDD_A to 2V8 so that MSP430 is powered properly
     
     - Fix MSP_RST_/MSP_TEST logic levels
