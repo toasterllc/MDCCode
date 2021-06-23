@@ -1,0 +1,7 @@
+Development of new boards (and related work) occurs in the `master` branch.
+
+Once a board schematic+layout is finalized and ordered:
+  - a tag is created: `board/RevX`
+  - a branch is created: `dev/RevX`
+
+Development work targeting the RevX board occurs in the `dev/RevX` branch. Commits with code and other work that applies to the next board revision is cherry-picked to the `master` branch.
