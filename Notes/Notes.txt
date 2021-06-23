@@ -3,7 +3,7 @@
     - Bodge VDD_A to 2V8 so that MSP430 is powered properly
     
     - Fix MSP_RST_/MSP_TEST logic levels
-        *** Before bodging, just try programming MSP first. It's possible that 1.8V will meet MSP's Vih... ***
+        *** Before bodging, just try programming MSP first. It's possible that 1.8V will meet MSP's Vih ***
         - Option: Sever the MSP_RST_/MSP_TEST connections to MSP, wire them to MSPLevelShifter, then wire the output back to the MSP_RST_/MSP_TEST pins?
         - Option: Bodge STM_LED0/STM_LED1 -> MSPLevelShifter -> MSP_RST_/MSP_TEST
     
@@ -20,7 +20,7 @@
         - See SDLVSTest-Scheme5
         - Need to implement in SDController.v
     
-    √ We may need to speed up pix_dclk to get some more headroom to comfortable hit 108MHz
+    √ We may need to speed up pix_dclk to get some more headroom to comfortably hit 108MHz
         √ Optimizing highlight/shadow counting appears to help significantly. Options:
             √ 1. Add pipelining, particularly the `fifoIn_write_trigger && !fifoIn_x && !fifoIn_y` boolean chain. Store that boolean in a register to be read on the next clock cycle
             2. Move highlight/shadow counting out of PixController and into a separate command issued to ICE40, specifically for calculating stats on the image stored in RAM
@@ -54,32 +54,62 @@
 
 
 - Rev5 Todo
-
-    - Switch 1V9 back to 1V8, now that we've solved the SD card Vih by using LVS
-    
-    - For mass production, replace the only 4.7uF 0603 capacitor with 2-3 2.2uF 0402 capacitors (which we're using elsewhere in the design)
     
     - Switch USB receptacle to USB-C
     
-    - Replace 0-ohm resistors with solder jumpers
-    
-    - Fix motion sensor layout (we swapped the VDD and GND pins)
-    
     - Make board left/right borders smaller
-    
-    - Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
-        - Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
-        - See CrystalPartOptions.txt for other parts
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
     
-    - MSP430: fix power supply when plugged into USB
+    √ Fix motion sensor layout (we swapped the VDD and GND pins)
+    
+    √ Consolidate parts
+        √ 249k resistor? (replace with 422k, since it just needs to be >= 249k)
+        √ 4.7uF capacitor (2-3x 2.2uF)
+        X 3k resistor (?)
+            X We're not using 1k resistors
+        X 91k resistor
+            X We can't afford to let the 2V8 rail stray from its current value
+        X 422k resistor
+            X We can't afford to let the 2V8 rail stray from its current value
+    
+    √ Replace 0-ohm resistors with solder jumpers
+    
+    √ Switch 1V9 back to 1V8, now that we've solved the SD card Vih by using LVS
+    
+    √ Switch crystal to use Q13FC13500005 (ordered 110x from LCSC)
+        √ Also update 2x crystal capacitors -- see CrystalLoadCapacitanceCalculations.txt
+        - See CrystalPartOptions.txt for other parts
+    
+    √ Fix power system to ensure that reverse current into battery/USB isn't possible
+        - Things to test:
+            - Ramp up USB (BAT) while BAT (USB) is already supplying power
+                - Reverse current?
+            - Plug in USB (BAT) while BAT (USB) is already supplying power, where USB (BAT) < BAT (USB)
+                - Reverse current?
+            - Plug in USB (BAT) while BAT (USB) is already supplying power, where USB (BAT) > BAT (USB)
+                - Reverse current?
+            - Disconnect USB (BAT) while USB (BAT) is supplying power
+                - In other words, disconnect the power source that is supply power
+                - Reverse current?
+            - Disconnect USB (BAT) while BAT (USB) is supplying power
+                - In other words, disconnect the power source that isn't supply power
+                - Reverse current?
+    
+    √ Use Nexperia 74LVC1G98GW,125 logic gate for:
+        √ IMG clock-blocking buffer (replace TI part)
+        √ VDD_B_EN OR gate (inputs: VDD_B_EN from MSP, VDD_USB)
+    
+    √ MSP430: fix power supply, again
+        √ Switched to a slow-on/fast-off break-before-make power rail solution
+    
+    √ MSP430: fix power supply when plugged into USB
         - Problem: MSP430 needs a voltage higher than 2V to reliably start up, due to SVS
         √ Solution: Replace MAX40203 with TPS706 LDO
             - LDO requirements
                 - LDO input = VDD_B
                 - LDO output = 2.5V - 3.3V (use >2.4V so the motion sensor is powered)
-                - Needs enable, controlled by VDD_SRC_USB
+                - Needs enable, controlled by VDD_USB
                 - Needs to allow output voltage to be high while LDO is off (in battery mode)
                 - Needs reverse current protection (in case battery voltage is higher)
                 - Can't have an output discharge circuit (otherwise it'll draw current when disabled, in battery mode)
@@ -108,10 +138,10 @@
                         - Complicated
                 - Some kind of crazy charge pump circuit that's only active at power on?
     
-    - MSP430: fix level shifting
+    √ MSP430: fix level shifting
         - Since MSP430 is now running at 2.5V, we need to level-shift ICE_MSP_SPI_CLK/ICE_MSP_SPI_DATA and MSP_TEST/MSP_RST_
         
-        - Bench-testing current of NTB0102
+        - Bench-testing supply current of NTB0102
             - Supply current <5nA when A1=A2=VDDA=2.5V and B1=B2=VDDB=0V
                 - Same ballpark as reported in "Typical supply current" section of the datasheet 
         
@@ -223,7 +253,7 @@
             - One for ICE_MSP_SPI_CLK / ICE_MSP_SPI_DATA (direction controlled by MSP430)
             - One for MSP_TEST / MSP_RST_ (direction controlled by STM32)
     
-    - Fix MSP level shifter net names:
+    √ Fix MSP level shifter net names:
         - ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
         - ICE_MSP_SPI_DATA is actually ICE_MSP_SPI_CLK
     

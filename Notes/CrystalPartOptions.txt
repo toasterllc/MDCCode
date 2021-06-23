@@ -9,6 +9,9 @@ Datasheets:
     https://support.epson.biz/td/ps/productinfo.php?pn=Q13FC13500005
 
 
+Q13FC135*/FC-135 naming scheme:
+    FC-135 <Freq>kHz <LoadCapacitance> <FreqTolerance>
+
 Parts:
 
     Q13FC13500005
