@@ -213,6 +213,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* Peripheral clock enable */
+    __HAL_RCC_OTGPHYC_CLK_ENABLE();
     __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
     __HAL_RCC_USB_OTG_HS_ULPI_CLK_ENABLE();
   /* USER CODE BEGIN USB_OTG_HS_MspInit 1 */
@@ -236,6 +237,7 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* hpcd)
 
   /* USER CODE END USB_OTG_HS_MspDeInit 0 */
     /* Peripheral clock disable */
+    __HAL_RCC_OTGPHYC_CLK_DISABLE();
     __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
     __HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
 
