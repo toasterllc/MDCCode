@@ -50,7 +50,7 @@ def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, leng
 def executeTrial(_):
     projDirPath = os.path.join(scriptDir, proj)
     topFilePath = os.path.join(projDirPath, "tmp", "Top.json")
-    pcfFilePath = os.path.join(projDirPath, "Pins.pcf")
+    pcfFilePath = os.path.join(scriptDir, "Pins.pcf")
     
     cmd = [
         'nextpnr-ice40',

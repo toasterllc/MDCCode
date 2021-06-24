@@ -14,7 +14,6 @@ rm -Rf "$proj/tmp"
 mkdir -p "$proj/tmp"
 cp -R "$dir/Shared/." "$proj/tmp"
 cp "$proj/Top.v" "$proj/tmp"
-cp "$proj/Pins.pcf" "$proj/tmp"
 cd "$proj/tmp"
 
 # Simulate!
