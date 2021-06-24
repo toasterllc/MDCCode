@@ -5,10 +5,10 @@ template <typename T>
 class SystemBase {
 public:
     SystemBase() :
-    _led0(GPIOE, GPIO_PIN_12),
-    _led1(GPIOE, GPIO_PIN_15),
-    _led2(GPIOB, GPIO_PIN_10),
-    _led3(GPIOB, GPIO_PIN_11) {
+    _led0(GPIOF, GPIO_PIN_14),
+    _led1(GPIOE, GPIO_PIN_7),
+    _led2(GPIOE, GPIO_PIN_10),
+    _led3(GPIOE, GPIO_PIN_12) {
     }
 
 protected:
