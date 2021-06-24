@@ -4,13 +4,14 @@ set -e
 if [ "$#" -ne 3 ]; then
 	echo "Usage:"
     echo "  Synth.sh <DeviceType> <DevicePackage> <ProjName>"
-	echo "    DeviceType: 1k (iCEstick) or 8k (iCE40HX board)"
-	echo "    DevicePackage: tq144 (iCEstick) or ct256 (iCE40HX board)"
+	echo "    DeviceType: 1k (iCEstick), 8k (MDC Rev4, iCE40HX board)"
+	echo "    DevicePackage: tq144 (iCEstick), bg121:4k (MDC Rev4), ct256 (iCE40HX board)"
 	
 	echo
 	echo "Examples:"
-	echo "  Synth.sh 1k tq144 Icestick_SDRAMReadWriteRandomly"
-	echo "  Synth.sh 8k ct256 Iceboard_Blinky"
+	echo "  Synth.sh 8k bg121:4k Blinky # MDC Rev4"
+	echo "  Synth.sh 1k tq144 Blinky # iCEstick"
+	echo "  Synth.sh 8k ct256 Blinky # iCE40HX board"
 	exit 1
 fi
 
