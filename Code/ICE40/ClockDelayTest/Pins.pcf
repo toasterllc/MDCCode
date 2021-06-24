@@ -1,8 +1,0 @@
-set_io clk24mhz     C11     -pullup no
-set_io clk          K4      -pullup no
-set_io clkDelayed   L3      -pullup no
-
-set_io led[0]       E3      -pullup no
-set_io led[1]       F3      -pullup no
-set_io led[2]       F4      -pullup no
-set_io led[3]       G3      -pullup no
