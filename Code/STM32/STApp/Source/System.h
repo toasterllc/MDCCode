@@ -34,7 +34,6 @@ private:
     void _pixReset();
 //    void _pixConfig();
     void _pixCapture();
-    void _abort();
     
     // Peripherals
     USB _usb;
@@ -45,7 +44,6 @@ private:
     size_t _pixRemLen = 0;
     
     friend int main();
-    friend void abort();
     friend void ISR_OTG_HS();
     friend void ISR_QUADSPI();
     friend void ISR_DMA2_Stream7();

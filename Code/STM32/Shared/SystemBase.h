@@ -39,9 +39,22 @@ protected:
         _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
+    [[noreturn]] void abort() {
+        for (bool x=true;; x=!x) {
+            _led0.write(x);
+            _led1.write(x);
+            _led2.write(x);
+            _led3.write(x);
+            HAL_Delay(500);
+        }
+    }
+    
     // LEDs
     GPIO _led0;
     GPIO _led1;
     GPIO _led2;
     GPIO _led3;
+    
+private:
+    friend void abort();
 };

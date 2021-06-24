@@ -1,6 +1,5 @@
 #include "System.h"
 #include "Assert.h"
-#include "Abort.h"
 #include "SystemClock.h"
 #include "Startup.h"
 #include <string.h>
@@ -74,7 +73,7 @@ void System::_usbHandleEvent(const USB::Event& ev) {
     
     default: {
         // Invalid event type
-        Abort();
+        abort();
     }}
 }
 
@@ -107,7 +106,7 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
             len = (uintptr_t)_esram1-(uintptr_t)addr;
         } else {
             // TODO: implement proper error handling on writing out of the allowed regions
-            Abort();
+            abort();
         }
         
         // Round `len` down to the nearest max packet size.
@@ -352,4 +351,8 @@ int main() {
     for (;;) {
         Sys._handleEvent();
     }
+}
+
+[[noreturn]] void abort() {
+    Sys.abort();
 }
