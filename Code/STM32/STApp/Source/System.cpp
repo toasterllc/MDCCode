@@ -1153,16 +1153,6 @@ void System::_pixCapture() {
     _recvPixDataFromICE40();
 }
 
-[[noreturn]] void System::_abort() {
-    for (bool x=true;; x=!x) {
-        _led0.write(x);
-        _led1.write(x);
-        _led2.write(x);
-        _led3.write(x);
-        HAL_Delay(500);
-    }
-}
-
 System Sys;
 
 int main() {
@@ -1175,5 +1165,5 @@ int main() {
 }
 
 [[noreturn]] void abort() {
-    Sys._abort();
+    Sys.abort();
 }
