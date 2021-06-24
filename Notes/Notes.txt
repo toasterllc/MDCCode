@@ -4,8 +4,6 @@
         - ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
         - ICE_MSP_SPI_DATA is actually ICE_MSP_SPI_CLK
     
-    - Bodge VDD_A to 2V8 so that MSP430 is powered properly
-    
     - Fix MSP_RST_/MSP_TEST logic levels
         *** Before bodging, just try programming MSP first. It's possible that 1.8V will meet MSP's Vih ***
         - Option: Sever the MSP_RST_/MSP_TEST connections to MSP, wire them to MSPLevelShifter, then wire the output back to the MSP_RST_/MSP_TEST pins?
@@ -18,6 +16,8 @@
     - Verilog: Update SDRAM controller for new part (Winbond -> Alliance)
     
     - Verilog: Rename PIX -> IMG
+    
+    √ Bodge VDD_A to 2V8 so that MSP430 is powered properly
     
     √ Test whether we can get LVS identification working
         - It works!
