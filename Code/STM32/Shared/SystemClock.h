@@ -18,7 +18,7 @@ public:
             cfg.HSEState = RCC_HSE_BYPASS;
             cfg.PLL.PLLState = RCC_PLL_ON;
             cfg.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-            cfg.PLL.PLLM = 12;
+            cfg.PLL.PLLM = 8;
             cfg.PLL.PLLN = 128;
             cfg.PLL.PLLP = RCC_PLLP_DIV2;
             cfg.PLL.PLLQ = 2;
