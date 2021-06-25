@@ -167,33 +167,38 @@ private:
     
     uint8_t _shiftIR(uint8_t d) {
         _startShiftIR();
-        return _shift<8>(d);
+        const uint8_t din = _shift<8>(d);
+        return din;
     }
     
     template <uint8_t W>
     uint32_t _shiftDR(uint32_t d) {
         _startShiftDR();
-        uint32_t din = _shift<W>(d);
+        const uint32_t din = _shift<W>(d);
         return din;
     }
     
     uint8_t _readJTAGID() {
-        return _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+    	const uint8_t din = _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+        return din;
     }
     
     bool _readJTAGFuseBlown() {
         _shiftIR(_IR_CNTRL_SIG_CAPTURE);
-        return _shiftDR<16>(0xAAAA) == 0x5555;
+        const uint16_t din = _shiftDR<16>(0xAAAA);
+        return din == 0x5555;
     }
     
-    uint32_t _readCoreID() {
+    uint16_t _readCoreID() {
         _shiftIR(_IR_COREIP_ID);
-        return _shiftDR<16>(0);
+        const uint16_t din = _shiftDR<16>(0);
+        return din;
     }
     
     uint32_t _readDeviceIDAddr() {
         _shiftIR(_IR_DEVICE_ID);
-        return _shiftDR<20>(0);
+        const uint32_t din = _shiftDR<20>(0);
+        return din;
     }
     
     void _tclkSet(bool tclk) {
