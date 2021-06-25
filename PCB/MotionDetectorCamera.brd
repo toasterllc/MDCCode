@@ -6461,7 +6461,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="26.6959" y1="16.1894" x2="26.6959" y2="16.9514" width="0.127" layer="1"/>
 <wire x1="26.6959" y1="16.1894" x2="26.1928" y2="15.6863" width="0.127" layer="1"/>
 </signal>
-<signal name="ICE_MSP_SPI_CLK">
+<signal name="ICE_MSP_SPI_DATA">
 <contactref element="U13" pad="12"/>
 <contactref element="U15" pad="K1"/>
 <via x="24.422103125" y="23.733759375" extent="1-16" drill="0.254"/>
@@ -6474,7 +6474,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="24.49321875" y1="19.45131875" x2="24.49321875" y2="23.66264375" width="0.127" layer="16"/>
 <wire x1="24.49321875" y1="23.66264375" x2="24.422103125" y2="23.733759375" width="0.127" layer="16"/>
 </signal>
-<signal name="ICE_MSP_SPI_DATA">
+<signal name="ICE_MSP_SPI_CLK">
 <contactref element="U13" pad="11"/>
 <contactref element="U15" pad="K2"/>
 <via x="25.1968" y="23.738840625" extent="1-16" drill="0.254"/>

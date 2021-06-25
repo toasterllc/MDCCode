@@ -4,8 +4,8 @@ set_io ice_led[1]          A10
 set_io ice_led[2]          A11
 set_io ice_led[3]          B11
 set_io ice_msp_spi_aux     K3
-set_io ice_msp_spi_clk     K1
-set_io ice_msp_spi_data    K2
+set_io ice_msp_spi_clk     K2
+set_io ice_msp_spi_data    K1
 set_io ice_st_spi_clk      L10
 set_io ice_st_spi_cs_      K10
 set_io ice_st_spi_d[0]     J9

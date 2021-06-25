@@ -5707,14 +5707,14 @@ test point</text>
 <pinref part="U12" gate="C" pin="P2.2/TA1.1/A4"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_CLK" class="0">
+<net name="ICE_MSP_SPI_DATA" class="0">
 <segment>
 <pinref part="U13" gate="G$1" pin="B1"/>
 <wire x1="60.96" y1="27.94" x2="63.5" y2="27.94" width="0.1524" layer="91"/>
 <label x="63.5" y="27.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_DATA" class="0">
+<net name="ICE_MSP_SPI_CLK" class="0">
 <segment>
 <pinref part="U13" gate="G$1" pin="B2"/>
 <wire x1="60.96" y1="20.32" x2="63.5" y2="20.32" width="0.1524" layer="91"/>
@@ -6758,14 +6758,14 @@ below the chip.</text>
 <pinref part="U15" gate="D" pin="J1"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_CLK" class="0">
+<net name="ICE_MSP_SPI_DATA" class="0">
 <segment>
 <wire x1="213.36" y1="5.08" x2="215.9" y2="5.08" width="0.1524" layer="91"/>
 <label x="215.9" y="5.08" size="1.778" layer="95"/>
 <pinref part="U15" gate="D" pin="K1"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_DATA" class="0">
+<net name="ICE_MSP_SPI_CLK" class="0">
 <segment>
 <wire x1="213.36" y1="2.54" x2="215.9" y2="2.54" width="0.1524" layer="91"/>
 <label x="215.9" y="2.54" size="1.778" layer="95"/>
