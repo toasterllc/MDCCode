@@ -7,7 +7,7 @@
 
 module ClockGen #(
     // 100MHz by default
-    parameter OUTFREQ=100000000,
+    parameter FREQOUT=100000000,
     parameter DIVR=0,
     parameter DIVF=66,
     parameter DIVQ=3,
@@ -31,7 +31,7 @@ module ClockGen #(
         simClk = 0;
         simLockedCounter = 0;
         forever begin
-            #(`DivCeil(1000000000000, 2*OUTFREQ));
+            #(`DivCeil(1000000000000, 2*FREQOUT));
             simClk = !simClk;
             
             if (!simClk & !locked) begin
