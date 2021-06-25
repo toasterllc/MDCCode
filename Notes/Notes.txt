@@ -7,18 +7,18 @@
     
     - Update ICE40 to use 16 MHz clock, instead of 24 MHz
     
-    - Verilog: Update SDRAM controller for new part (Winbond -> Alliance)
-    
     - Verilog: Rename PIX -> IMG
     
-    - Get RAM working with ICE40
-        √ RAMReadWriteTest
-        - RAMReadWriteRandomlyTest
+    - Get programming MSP430 from STM32 working
     
     - Get image streaming to Mac working
         - ICEStreamApp
     
-    - Get programming MSP430 from STM32 working
+    √ Get RAM working with ICE40
+        √ RAMReadWriteTest
+        √ RAMReadWriteRandomlyTest
+    
+    √ Verilog: Update SDRAM controller for new part (Winbond -> Alliance)
     
     √ Fix MSP level shifter net names on schematic:
         √ ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
