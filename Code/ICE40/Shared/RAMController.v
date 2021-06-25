@@ -12,7 +12,7 @@
 module RAMController #(
     parameter ClkFreq               = 16_000_000,
     parameter RAMClkDelay           = 0,
-    parameter BlockSize             = 16,
+    parameter BlockSize             = 16,   // Number of words in a block
     
     localparam WordWidth            = 16,
     localparam BankWidth            = 2,
@@ -28,7 +28,7 @@ module RAMController #(
     
     localparam BlockSizeRegWidth    = `RegWidth(BlockSize-1),
     localparam BlockSizeCeilPow2    = 64'b1<<BlockSizeRegWidth,
-    localparam BlockCount           = WordCount/BlockSizeCeilPow2,
+    localparam BlockCount           = WordCount/BlockSizeCeilPow2,  // Total number of blocks in entire RAM
     localparam BlockCountRegWidth   = `RegWidth(BlockCount-1)
 )(
     input wire                  clk,            // Clock
