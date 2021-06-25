@@ -22,3 +22,19 @@ module Top(
     
     assign ice_led[3:0] = {4{counter[$size(counter)-1]}};
 endmodule
+
+`ifdef SIM
+module Testbench();
+    reg ice_img_clk16mhz = 0;
+    wire[3:0] ice_led;
+    Top Top(
+        .ice_img_clk16mhz(ice_img_clk16mhz),
+        .ice_led(ice_led)
+    );
+    
+    initial begin
+        $dumpfile("Top.vcd");
+        $dumpvars(0, Testbench);
+    end
+endmodule
+`endif
