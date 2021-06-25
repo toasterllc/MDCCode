@@ -43,9 +43,17 @@ private:
     
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
-    GPIO _clk;
-    GPIO _cs;
-    GPIO _d[8];
+    
+    using _Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
+    using _CS = GPIO<GPIOPortB, GPIO_PIN_6>;
+    using _D0 = GPIO<GPIOPortC, GPIO_PIN_9>;
+    using _D1 = GPIO<GPIOPortC, GPIO_PIN_10>;
+    using _D2 = GPIO<GPIOPortF, GPIO_PIN_7>;
+    using _D3 = GPIO<GPIOPortF, GPIO_PIN_6>;
+    using _D4 = GPIO<GPIOPortH, GPIO_PIN_2>;
+    using _D5 = GPIO<GPIOPortH, GPIO_PIN_3>;
+    using _D6 = GPIO<GPIOPortG, GPIO_PIN_9>;
+    using _D7 = GPIO<GPIOPortG, GPIO_PIN_14>;
     
     void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device);
     friend void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device);
