@@ -11,6 +11,15 @@
     
     - Verilog: Rename PIX -> IMG
     
+    - Get RAM working with ICE40
+        √ RAMReadWriteTest
+        - RAMReadWriteRandomlyTest
+    
+    - Get image streaming to Mac working
+        - ICEStreamApp
+    
+    - Get programming MSP430 from STM32 working
+    
     √ Fix MSP level shifter net names on schematic:
         √ ICE_MSP_SPI_CLK is actually ICE_MSP_SPI_DATA
         √ ICE_MSP_SPI_DATA is actually ICE_MSP_SPI_CLK
