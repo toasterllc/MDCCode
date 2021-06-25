@@ -10,14 +10,14 @@
 `timescale 1ns/1ps
 
 module Top(
-    input wire          clk24mhz,
+    input wire          ice_img_clk16mhz,
     
-    output reg[3:0]     led = 0,
+    output reg[3:0]     ice_led = 0,
     
     output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
-    output wire[12:0]   ram_a,
+    output wire[11:0]   ram_a,
     output wire         ram_cs_,
     output wire         ram_ras_,
     output wire         ram_cas_,
@@ -29,14 +29,14 @@ module Top(
     // Clock (108 MHz)
     // ====================
     localparam Clk_Freq = 108_000_000;
-    wire sd_clk;
+    wire clk;
     ClockGen #(
-        .FREQ(Clk_Freq),
+        .FREQOUT(Clk_Freq),
         .DIVR(0),
-        .DIVF(35),
+        .DIVF(53),
         .DIVQ(3),
-        .FILTER_RANGE(2)
-    ) ClockGen_sd_clk(.clkRef(clk24mhz), .clk(clk));
+        .FILTER_RANGE(1)
+    ) ClockGe(.clkRef(ice_img_clk16mhz), .clk(clk));
     
     
     reg cmd_trigger = 0;
@@ -54,7 +54,7 @@ module Top(
     localparam BlockSize = 16;
     
     RAMController #(
-        .ClkFreq(125_000_000),
+        .ClkFreq(Clk_Freq),
         .RAMClkDelay(0),
         .BlockSize(BlockSize)
         // .BlockSize(2304*1296)
@@ -161,7 +161,7 @@ module Top(
                     $display("Read word: %h (expected: %h) ✅", read_data, read_data_expected);
                 end else begin
                     $display("Read word: %h (expected: %h) ❌", read_data, read_data_expected);
-                    led <= 4'b1111;
+                    ice_led <= 4'b1111;
                     `Finish;
                 end
                 word_idx <= word_idx+1;
@@ -195,12 +195,12 @@ endmodule
 
 `ifdef SIM
 module Testbench();
-    reg clk24mhz = 0;
-    wire[3:0] led;
+    reg clk16mhz = 0;
+    wire[3:0] ice_led;
     wire ram_clk;
     wire ram_cke;
     wire[1:0] ram_ba;
-    wire[12:0] ram_a;
+    wire[11:0] ram_a;
     wire ram_cs_;
     wire ram_ras_;
     wire ram_cas_;
@@ -234,8 +234,8 @@ module Testbench();
     
     initial begin
         forever begin
-            #4;
-            clk24mhz = !clk24mhz;
+            #32;
+            clk16mhz = !clk16mhz;
         end
     end
 endmodule

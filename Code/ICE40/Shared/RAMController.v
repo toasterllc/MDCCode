@@ -10,7 +10,7 @@
 `define RAMController_Cmd_Stop      2'b11
 
 module RAMController #(
-    parameter ClkFreq               = 24_000_000,
+    parameter ClkFreq               = 16_000_000,
     parameter RAMClkDelay           = 0,
     parameter BlockSize             = 16,
     
@@ -62,20 +62,20 @@ module RAMController #(
     output wire[DQMWidth-1:0]   ram_dqm,        // Data mask
     inout wire[WordWidth-1:0]   ram_dq          // Data input/output
 );
-    // Winbond W989D6DB Timing parameters (nanoseconds)
+    // Alliance AS4C8M16MSA-6BIN Timing parameters (nanoseconds)
     localparam T_INIT                   = 200000;   // Power up initialization time
-    localparam T_REFI                   = 7812;     // Time between refreshes
-    localparam T_RC                     = 68;       // Bank activate to bank activate time (same bank)
-    localparam T_RFC                    = 72;       // Refresh time
-    localparam T_RRD                    = 15;       // Row activate to row activate time (different banks)
-    localparam T_RAS                    = 45;       // Row activate to precharge time (same bank)
+    localparam T_REFI                   = 15625;    // Time between refreshes (4K refreshes / 64ms)
+    localparam T_RC                     = 60;       // Bank activate to bank activate time (same bank)
+    localparam T_RFC                    = 80;       // Refresh time
+    localparam T_RRD                    = 12;       // Row activate to row activate time (different banks)
+    localparam T_RAS                    = 48;       // Row activate to precharge time (same bank)
     localparam T_RCD                    = 18;       // Bank activate to read/write time (same bank)
     localparam T_RP                     = 18;       // Precharge to refresh/row activate (same bank)
     localparam T_WR                     = 15;       // Write recover time
     
     // Timing parameters (clock cycles)
     // C_CAS: Column address strobe (CAS) delay cycles
-    //   CAS=2 => Fmax=104 MHz
+    //   CAS=2 => Fmax=83 MHz
     //   CAS=3 => Fmax=166 MHz
     localparam C_CAS                    = 3;
     // C_MRD (T_MRD): Set mode -> bank activate/refresh delay cycles
@@ -456,8 +456,15 @@ module RAMController #(
             ramCmd <= RAM_Cmd_SetMode;
             // ram_ba: reserved
             ramBA <= 0;
-            // ram_a:    write burst length,     test mode,  CAS latency,    burst type,     burst length
-            ramA <= {    1'b0,                   2'b0,       C_CAS[2:0],     1'b0,           3'b111};
+            // ram_a
+            ramA <= {
+                2'b0,       // reserved
+                1'b0,       // write burst length: controlled by `burst length` field
+                2'b0,       // operational mode: standard
+                C_CAS[2:0], // CAS latency: C_CAS
+                1'b0,       // burst type: sequential
+                3'b111      // burst length: full page
+            };
             
             init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
             init_state <= Init_State_Delay;
@@ -465,12 +472,17 @@ module RAMController #(
         end
         
         Init_State_Init+6: begin
-            // Set the extended operating mode of the SDRAM (applies only to Winbond RAMs)
+            // Set the extended operating mode of the SDRAM
             ramCmd <= RAM_Cmd_SetMode;
             // ram_ba: reserved
             ramBA <= 'b10;
-            // ram_a:    output drive strength,      reserved,       self refresh banks
-            ramA <= {    2'b0,                       2'b0,           3'b000};
+            // ram_a
+            ramA <= {
+                4'b0,   // reserved
+                3'b0,   // output drive strength: 100%
+                2'b0,   // reserved
+                3'b000  // partial array self refresh: all banks
+            };
             
             init_delayCounter <= `Sub(C_MRD,2); // -2 cycles getting to the next state
             init_state <= Init_State_Delay;
