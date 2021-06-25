@@ -47,14 +47,14 @@ module Random25(
 endmodule
 
 module Top(
-    input wire          clk24mhz,
+    input wire          ice_img_clk16mhz,
     
-    output wire[3:0]    led,
+    output wire[3:0]    ice_led,
     
     output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
-    output wire[12:0]   ram_a,
+    output wire[11:0]   ram_a,
     output wire         ram_cs_,
     output wire         ram_ras_,
     output wire         ram_cas_,
@@ -62,10 +62,11 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    localparam BlockWidth = 3;
 `ifdef SIM
+    localparam BlockWidth = 6;
     localparam BlockSize = 128;
 `else
+    localparam BlockWidth = 1;
     localparam BlockSize = 2304*1296;
 `endif
     
@@ -112,12 +113,12 @@ module Top(
     localparam ClkFreq = 84_000_000;
     wire clk;
     ClockGen #(
-        .FREQ(ClkFreq),
+        .FREQOUT(ClkFreq),
         .DIVR(0),
-        .DIVF(27),
+        .DIVF(41),
         .DIVQ(3),
-        .FILTER_RANGE(2)
-    ) ClockGen(.clkRef(clk24mhz), .clk(clk));
+        .FILTER_RANGE(1)
+    ) ClockGen(.clkRef(ice_img_clk16mhz), .clk(clk));
     
     wire[1:0] cmd_actual;
     reg[BlockWidth-1:0] cmd_block = 0;
@@ -189,7 +190,7 @@ module Top(
     
     reg error = 0;
     reg[24:0] statusCounter = 0;
-    assign led = {error, statusCounter[4-:3]};
+    assign ice_led = {error, statusCounter[4-:3]};
     
     localparam State_Init           = 0; // +0
     localparam State_Idle           = 1; // +0
@@ -482,12 +483,12 @@ endmodule
 
 `ifdef SIM
 module Testbench();
-    reg clk24mhz = 0;
-    wire[3:0] led;
+    reg ice_img_clk16mhz = 0;
+    wire[3:0] ice_led;
     wire ram_clk;
     wire ram_cke;
     wire[1:0] ram_ba;
-    wire[12:0] ram_a;
+    wire[11:0] ram_a;
     wire ram_cs_;
     wire ram_ras_;
     wire ram_cas_;
@@ -521,10 +522,10 @@ module Testbench();
     
     initial begin
         forever begin
-            clk24mhz = 0;
-            #21;
-            clk24mhz = 1;
-            #21;
+            ice_img_clk16mhz = 0;
+            #32;
+            ice_img_clk16mhz = 1;
+            #32;
         end
     end
 endmodule
