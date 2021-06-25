@@ -1,10 +1,10 @@
-`ifndef PixI2CMaster_v
-`define PixI2CMaster_v
+`ifndef ImgI2CMaster_v
+`define ImgI2CMaster_v
 
 `include "Util.v"
 `include "ToggleAck.v"
 
-module PixI2CMaster #(
+module ImgI2CMaster #(
     parameter ClkFreq       = 24_000_000,   // `clk` frequency
     parameter I2CClkFreq    = 400_000       // `i2c_clk` frequency
 )(
@@ -260,10 +260,10 @@ module PixI2CMaster #(
                 delay <= I2CQuarterCycleDelay;
                 state <= State_ShiftOut;
                 if (cmd_write) begin
-                    $display("[PixI2CMaster] WRITE");
+                    $display("[ImgI2CMaster] WRITE");
                     nextState <= (cmd_dataLen ? State_WriteData : State_WriteData+1);
                 end else begin
-                    $display("[PixI2CMaster] READ");
+                    $display("[ImgI2CMaster] READ");
                     nextState <= (cmd_dataLen ? State_ReadData : State_ReadData+1);
                 end
             end
