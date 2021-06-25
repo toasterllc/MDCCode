@@ -9,13 +9,15 @@
         - Option: Sever the MSP_RST_/MSP_TEST connections to MSP, wire them to MSPLevelShifter, then wire the output back to the MSP_RST_/MSP_TEST pins?
         - Option: Bodge STM_LED0/STM_LED1 -> MSPLevelShifter -> MSP_RST_/MSP_TEST
     
-    - Swap motion sensor VDD/GND pins when soldering
-    
-    - Update STM32/ICE40 to use 16 MHz clock, instead of 24 MHz
+    - Update ICE40 to use 16 MHz clock, instead of 24 MHz
     
     - Verilog: Update SDRAM controller for new part (Winbond -> Alliance)
     
     - Verilog: Rename PIX -> IMG
+    
+    √ Swap motion sensor VDD/GND pins when soldering
+    
+    √ Update STM32 to use 16 MHz clock, instead of 24 MHz
     
     √ Bodge VDD_A to 2V8 so that MSP430 is powered properly
     
