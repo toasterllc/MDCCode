@@ -45,10 +45,8 @@ protected:
         }
     }
     
-protected:
-    friend void abort();
-    using _MSPTest = GPIO<GPIOPortE, GPIO_PIN_12>;
-    using _MSPRst_ = GPIO<GPIOPortE, GPIO_PIN_15>;
+    using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
+    using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
     // TODO: move this to STLoader's system
     // TODO: we should also rename to MSPJTAG to make it clear that it's not for comms with the MSP app
     MSP430<_MSPTest,_MSPRst_,SystemClock::CPUFreqMHz> _msp;
@@ -58,4 +56,6 @@ protected:
     using _LED1 = GPIO<GPIOPortE, GPIO_PIN_7>;
     using _LED2 = GPIO<GPIOPortE, GPIO_PIN_10>;
     using _LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
+    
+    friend void abort();
 };
