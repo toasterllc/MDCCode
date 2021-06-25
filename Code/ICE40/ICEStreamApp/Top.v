@@ -42,7 +42,7 @@ module Top(
     output wire         ram_clk,
     output wire         ram_cke,
     output wire[1:0]    ram_ba,
-    output wire[12:0]   ram_a,
+    output wire[11:0]   ram_a,
     output wire         ram_cs_,
     output wire         ram_ras_,
     output wire         ram_cas_,
@@ -50,7 +50,7 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
     
-    // output reg[3:0]     led = 0
+    // output reg[3:0]     ice_led = 0
 );
     // ====================
     // ImgI2CMaster
@@ -64,7 +64,7 @@ module Top(
     wire imgi2c_status_done;
     wire imgi2c_status_err;
     wire[15:0] imgi2c_status_readData;
-    `ToggleAck(spi_imgi2c_done_, spi_imgi2c_doneAck, imgi2c_status_done, posedge, spi_clk);
+    `ToggleAck(spi_imgi2c_done_, spi_imgi2c_doneAck, imgi2c_status_done, posedge, ice_st_spi_clk);
     
     ImgI2CMaster #(
         .ClkFreq(16_000_000),
@@ -103,7 +103,7 @@ module Top(
     localparam Img_Clk_Freq = 108_000_000;
     wire img_clk;
     ClockGen #(
-        .FREQ(Img_Clk_Freq),
+        .FREQOUT(Img_Clk_Freq),
         .DIVR(0),
         .DIVF(53),
         .DIVQ(3),
@@ -114,7 +114,7 @@ module Top(
     // ImgController
     // ====================
     reg[1:0]                            imgctrl_cmd = 0;
-    reg[2:0]                            imgctrl_cmd_ramBlock = 0;
+    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
     wire                                imgctrl_readout_clk;
     wire                                imgctrl_readout_ready;
     wire                                imgctrl_readout_trigger;
@@ -204,7 +204,7 @@ module Top(
         endcase
         
         if (img_captureTrigger) begin
-            // led <= 4'b1111;
+            // ice_led <= 4'b1111;
             img_state <= Img_State_Capture;
         end
     end
@@ -229,11 +229,11 @@ module Top(
     //     MsgCycleCount=(`Msg_Len/4)-1, so with this dummy byte,
     //     MsgCycleCount=(`Msg_Len/4)+1.
     //
-    //   - Commands use 4 lines (spi_d[3:0]), so we divide `Msg_Len by 4.
+    //   - Commands use 4 lines (ice_st_ice_st_spi_d[3:0]), so we divide `Msg_Len by 4.
     //     Commands use only 4 lines, instead of all 8 lines used for responses,
     //     because dual-QSPI doesn't allow that, since dual-QSPI is meant to control
-    //     two separate flash devices, so it outputs the same data on spi_d[3:0] that
-    //     it does on spi_d[7:4].
+    //     two separate flash devices, so it outputs the same data on ice_st_ice_st_spi_d[3:0]
+    //     that it does on ice_st_ice_st_spi_d[7:4].
     localparam MsgCycleCount = (`Msg_Len/4)+1;
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
     reg[0:0] spi_doutCounter = 0;
@@ -256,9 +256,9 @@ module Top(
         `LeftBits(spi_doutReg, 0, 4)    // Low 4 bits:  4 bits of byte 0
     };
     
-    `ToggleAck(spi_imgReadoutStarted, spi_imgReadoutStartedAck, img_readoutStarted, posedge, spi_clk);
+    `ToggleAck(spi_imgReadoutStarted, spi_imgReadoutStartedAck, img_readoutStarted, posedge, ice_st_spi_clk);
     
-    assign imgctrl_readout_clk = spi_clk;
+    assign imgctrl_readout_clk = ice_st_spi_clk;
     wire spi_imgctrlReadoutReady = imgctrl_readout_ready;
     reg spi_imgctrlReadoutTrigger = 0;
     assign imgctrl_readout_trigger = spi_imgctrlReadoutTrigger;
@@ -275,14 +275,14 @@ module Top(
     localparam SPI_State_Count      = 6;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
-    always @(posedge spi_clk, negedge spi_cs) begin
+    always @(posedge ice_st_spi_clk, negedge spi_cs) begin
         // Reset ourself when we're de-selected
         if (!spi_cs) begin
             spi_state <= 0;
             spi_d_outEn <= 0;
         
         end else begin
-            // Commands only use 4 lines (spi_d[3:0]) because it's quadspi.
+            // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
             // See MsgCycleCount comment above.
             spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
             spi_dinCounter <= spi_dinCounter-1;
@@ -413,20 +413,20 @@ module Top(
     end
     
     // ====================
-    // Pin: spi_cs_
+    // Pin: ice_st_spi_cs_
     // ====================
     wire spi_cs_tmp_;
     SB_IO #(
         .PIN_TYPE(6'b0000_01),
         .PULLUP(1'b1)
     ) SB_IO_spi_cs (
-        .PACKAGE_PIN(spi_cs_),
+        .PACKAGE_PIN(ice_st_spi_cs_),
         .D_IN_0(spi_cs_tmp_)
     );
     assign spi_cs = !spi_cs_tmp_;
     
     // ====================
-    // Pin: spi_d
+    // Pin: ice_st_spi_d
     // ====================
     genvar i;
     for (i=0; i<8; i++) begin
@@ -434,9 +434,9 @@ module Top(
             .PIN_TYPE(6'b1101_00),
             .PULLUP(1'b1)
         ) SB_IO_sd_cmd (
-            .INPUT_CLK(spi_clk),
-            .OUTPUT_CLK(spi_clk),
-            .PACKAGE_PIN(spi_d[i]),
+            .INPUT_CLK(ice_st_spi_clk),
+            .OUTPUT_CLK(ice_st_spi_clk),
+            .PACKAGE_PIN(ice_st_spi_d[i]),
             .OUTPUT_ENABLE(spi_d_outEn),
             .D_OUT_0(spi_d_out[i]),
             .D_IN_0(spi_d_in[i])
@@ -454,9 +454,9 @@ endmodule
 module Testbench();
     reg         ice_img_clk16mhz = 0;
     
-    reg         spi_clk = 0;
-    reg         spi_cs_ = 0;
-    wire[7:0]   spi_d;
+    reg         ice_st_spi_clk = 0;
+    reg         ice_st_spi_cs_ = 0;
+    wire[7:0]   ice_st_spi_d;
     
     wire        img_dclk;
     wire[11:0]  img_d;
@@ -469,7 +469,7 @@ module Testbench();
     wire        ram_clk;
     wire        ram_cke;
     wire[1:0]   ram_ba;
-    wire[12:0]  ram_a;
+    wire[11:0]  ram_a;
     wire        ram_cs_;
     wire        ram_ras_;
     wire        ram_cas_;
@@ -477,7 +477,7 @@ module Testbench();
     wire[1:0]   ram_dqm;
     wire[15:0]  ram_dq;
     
-    wire[3:0]   led;
+    wire[3:0]   ice_led;
     
     Top Top(.*);
     
@@ -529,8 +529,8 @@ module Testbench();
     wire[7:0]   spi_d_out;
     reg         spi_d_outEn = 0;    
     wire[7:0]   spi_d_in;
-    assign spi_d = (spi_d_outEn ? spi_d_out : {8{1'bz}});
-    assign spi_d_in = spi_d;
+    assign ice_st_spi_d = (spi_d_outEn ? spi_d_out : {8{1'bz}});
+    assign spi_d_in = ice_st_spi_d;
     
     reg[`Msg_Len-1:0] spi_doutReg = 0;
     reg[15:0] spi_dinReg = 0;
@@ -539,28 +539,28 @@ module Testbench();
     assign spi_d_out[7:4] = `LeftBits(spi_doutReg,0,4);
     assign spi_d_out[3:0] = `LeftBits(spi_doutReg,0,4);
     
-    localparam SPI_CLK_HALF_PERIOD = 21;
+    localparam ice_st_spi_clk_HALF_PERIOD = 21;
     
     task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg, input[31:0] respLen); begin
         reg[15:0] i;
         
-        spi_cs_ = 0;
+        ice_st_spi_cs_ = 0;
         spi_doutReg = {typ, arg};
         spi_d_outEn = 1;
             
             // 2 initial dummy cycles
             for (i=0; i<2; i++) begin
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 1;
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 0;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 1;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 0;
             end
             
             for (i=0; i<`Msg_Len/4; i++) begin
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 1;
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 0;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 1;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 0;
                 
                 spi_doutReg = spi_doutReg<<4|{4{1'b1}};
             end
@@ -569,16 +569,16 @@ module Testbench();
             
             // Dummy cycles
             for (i=0; i<4; i++) begin
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 1;
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 0;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 1;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 0;
             end
             
             // Clock in response
             for (i=0; i<respLen; i++) begin
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 1;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 1;
                 
                     if (!i[0]) spi_dinReg = 0;
                     spi_dinReg = spi_dinReg<<4|{4'b0000, spi_d_in[3:0], 4'b0000, spi_d_in[7:4]};
@@ -586,12 +586,12 @@ module Testbench();
                     resp = resp<<8;
                     if (i[0]) resp = resp|spi_dinReg;
                 
-                #(SPI_CLK_HALF_PERIOD);
-                spi_clk = 0;
+                #(ice_st_spi_clk_HALF_PERIOD);
+                ice_st_spi_clk = 0;
             end
         
-        spi_cs_ = 1;
-        #1; // Allow spi_cs_ to take effect
+        ice_st_spi_cs_ = 1;
+        #1; // Allow ice_st_spi_cs_ to take effect
     end endtask
     
     task TestNoOp; begin
@@ -830,14 +830,14 @@ module Testbench();
         reg done;
         
         // Set our initial state
-        spi_cs_ = 1;
+        ice_st_spi_cs_ = 1;
         spi_doutReg = ~0;
         spi_d_outEn = 0;
         
         // Pulse the clock to get SB_IO initialized
-        spi_clk = 1;
+        ice_st_spi_clk = 1;
         #1;
-        spi_clk = 0;
+        ice_st_spi_clk = 0;
         
         // TestNoOp();
         // TestEcho();

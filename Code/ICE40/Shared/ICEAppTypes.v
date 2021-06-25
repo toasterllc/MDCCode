@@ -57,13 +57,13 @@
 `define     Msg_Arg_ImgReset_Val_Bits                           0:0
 
 `define Msg_Type_ImgCapture                                     `Msg_Type_Len'h05
-`define     Msg_Arg_ImgCapture_DstBlock_Bits                    2:0
+`define     Msg_Arg_ImgCapture_DstBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
 `define Msg_Type_ImgReadout                                     `Msg_Type_Len'h06
 `define     Msg_Arg_ImgReadout_Counter_Len                      16
 `define     Msg_Arg_ImgReadout_Counter_Bits                     31:16
 `define     Msg_Arg_ImgReadout_CaptureNext_Bits                 3:3
-`define     Msg_Arg_ImgReadout_SrcBlock_Bits                    2:0
+`define     Msg_Arg_ImgReadout_SrcBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
 `define Msg_Type_ImgI2CTransaction                              `Msg_Type_Len'h07
 `define     Msg_Arg_ImgI2CTransaction_Write_Bits                55:55
