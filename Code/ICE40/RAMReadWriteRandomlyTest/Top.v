@@ -66,8 +66,11 @@ module Top(
     localparam BlockWidth = 6;
     localparam BlockSize = 128;
 `else
-    localparam BlockWidth = 1;
-    localparam BlockSize = 2304*1296;
+    // localparam BlockWidth = 1;
+    // localparam BlockSize = 2304*1296;
+    
+    localparam BlockWidth = 16;
+    localparam BlockSize = 128;
 `endif
     
     localparam WordIdxWidth = `RegWidth(BlockSize-1);
