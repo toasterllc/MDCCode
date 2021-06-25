@@ -2,21 +2,23 @@
 set -e
 
 if [ "$#" -ne 1 ]; then
-	echo "Usage:"
+    echo "Usage:"
     echo "  Sim.sh <ProjName>"
-	exit 1
+    exit 1
 fi
 
-dir=$(cd $(dirname "$0"); pwd)
-proj="$1"
+rootDir=$(cd $(dirname "$0"); pwd)
+if [ ! -n "$rootDir" ]; then echo "Bad rootDir" ; exit 1; fi
 
-rm -Rf "$proj/tmp"
-mkdir -p "$proj/tmp"
-cp -R "$dir/Shared/." "$proj/tmp"
-cp "$proj/Top.v" "$proj/tmp"
-cd "$proj/tmp"
+proj="$1"
+if [ ! -n "$proj" ]; then echo "Bad project name" ; exit 1; fi
+
+# Create 'Sim' directory
+simDir="$rootDir/$proj/Sim"
+rm -Rf "$simDir"
+mkdir -p "$simDir"
 
 # Simulate!
-rm -f Top.vvp
-iverilog -DSIM -o Top.vvp -g2012 -DNO_ICE40_DEFAULT_ASSIGNMENTS `yosys-config --datdir/ice40/cells_sim.v` Top.v
+cd "$simDir"
+iverilog "-I$rootDir/Shared" -DSIM -o Top.vvp -g2012 -DNO_ICE40_DEFAULT_ASSIGNMENTS `yosys-config --datdir/ice40/cells_sim.v` ../Top.v
 ./Top.vvp

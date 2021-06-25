@@ -16,17 +16,20 @@ if [ "$#" -ne 3 ]; then
 fi
 
 rootDir=$(cd $(dirname "$0"); pwd)
+if [ ! -n "$rootDir" ]; then echo "Bad rootDir" ; exit 1; fi
+
 dev="$1"
+if [ ! -n "$dev" ]; then echo "Bad device" ; exit 1; fi
+
 pkg="$2"
+if [ ! -n "$pkg" ]; then echo "Bad package" ; exit 1; fi
+
 proj="$3"
+if [ ! -n "$proj" ]; then echo "Bad project name" ; exit 1; fi
 
-synthDir="$rootDir/$proj/Synth"
-
-# Remove existing synthesis files
-# (Delete specific files instead of the whole directory so we don't have to worry about
-# some crazy case that causes us to execute `rm -Rf /`.)
-rm -f "$synthDir/Top.asc" "$synthDir/Top.bin" "$synthDir/Top.json"
 # Create 'Synth' directory
+synthDir="$rootDir/$proj/Synth"
+rm -Rf "$synthDir"
 mkdir -p "$synthDir"
 
 # Synthesize the design from Verilog (.v -> .json)
