@@ -1,7 +1,7 @@
-`ifndef PixI2CSlaveSim_v
-`define PixI2CSlaveSim_v
+`ifndef ImgI2CSlaveSim_v
+`define ImgI2CSlaveSim_v
 
-module PixI2CSlaveSim(
+module ImgI2CSlaveSim(
     input wire i2c_clk,
     inout wire i2c_data
 );
@@ -103,7 +103,7 @@ module PixI2CSlaveSim(
                 if (i2cOK) begin
                     slaveAddr = dataIn[7:1];
                     dir = dataIn[0];
-                    // $display("[PixI2CSlaveSim@0x%x] dir:%d", slaveAddr, dir);
+                    // $display("[ImgI2CSlaveSim@0x%x] dir:%d", slaveAddr, dir);
                 end
                 
                 if (i2cOK) begin
@@ -115,10 +115,10 @@ module PixI2CSlaveSim(
                         if (i2cOK) begin
                             dataOut = mem[regAddr+1];
                             WriteByte();
-                            $display("[PixI2CSlaveSim@0x%x] READ (len=2): mem[0x%x] = 0x%02x%02x",
+                            $display("[ImgI2CSlaveSim@0x%x] READ (len=2): mem[0x%x] = 0x%02x%02x",
                                 slaveAddr, regAddr, mem[regAddr], mem[regAddr+1]);
                         end else begin
-                            $display("[PixI2CSlaveSim@0x%x] READ (len=1): mem[0x%x] = 0x%x",
+                            $display("[ImgI2CSlaveSim@0x%x] READ (len=1): mem[0x%x] = 0x%x",
                                 slaveAddr, regAddr, mem[regAddr]);
                         end
                     
@@ -159,7 +159,7 @@ module PixI2CSlaveSim(
                         
                         case (writeLen)
                         2: begin
-                            $display("[PixI2CSlaveSim@0x%x] WRITE (len=2): mem[0x%x] = 0x%02x%02x",
+                            $display("[ImgI2CSlaveSim@0x%x] WRITE (len=2): mem[0x%x] = 0x%02x%02x",
                                 slaveAddr, regAddr, writeData[0], writeData[1]);
                             
                             mem[regAddr] = writeData[0];
@@ -167,7 +167,7 @@ module PixI2CSlaveSim(
                         end
                         
                         1: begin
-                            $display("[PixI2CSlaveSim@0x%x] WRITE (len=1): mem[0x%x] = 0x%x",
+                            $display("[ImgI2CSlaveSim@0x%x] WRITE (len=1): mem[0x%x] = 0x%x",
                                 slaveAddr, regAddr, writeData[0]);
                             mem[regAddr] = writeData[0];
                         end
