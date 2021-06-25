@@ -10,7 +10,7 @@ module Top(
     
     wire clk;
     ClockGen #(
-        .OUTFREQ(32000000),
+        .FREQOUT(32000000),
         .DIVR(0),
         .DIVF(63),
         .DIVQ(5),
