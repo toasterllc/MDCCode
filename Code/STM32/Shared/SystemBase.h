@@ -1,15 +1,11 @@
 #include "GPIO.h"
 #include "SystemClock.h"
+#include "MSP430.h"
 
 template <typename T>
 class SystemBase {
 public:
-    SystemBase() :
-    _led0(GPIOE, GPIO_PIN_12),
-    _led1(GPIOE, GPIO_PIN_15),
-    _led2(GPIOB, GPIO_PIN_10),
-    _led3(GPIOB, GPIO_PIN_11) {
-    }
+    SystemBase() {}
 
 protected:
     void init() {
@@ -33,15 +29,15 @@ protected:
         __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         
         // Configure our LEDs
-        _led0.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _led1.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _led2.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _led3.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
+    using _MSPTest = GPIO<GPIOPortE, GPIO_PIN_12>;
+    using _MSPRst_ = GPIO<GPIOPortE, GPIO_PIN_15>;
+    MSP430<_MSPTest,_MSPRst_,SystemClock::CPUFreqMHz> _msp;
+    
     // LEDs
-    GPIO _led0;
-    GPIO _led1;
-    GPIO _led2;
-    GPIO _led3;
+    using _LED2 = GPIO<GPIOPortB, GPIO_PIN_10>;
+    using _LED3 = GPIO<GPIOPortB, GPIO_PIN_11>;
 };

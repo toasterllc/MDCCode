@@ -4,6 +4,7 @@
 
 class SystemClock {
 public:
+    static constexpr uint8_t CPUFreqMHz = 128;
     static void Init() {
         // Configure the main internal regulator output voltage
         {

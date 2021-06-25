@@ -2,6 +2,7 @@
 #include "Assert.h"
 #include "SystemClock.h"
 #include "Startup.h"
+#include "MSP430.h"
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -109,6 +110,45 @@ void System::init() {
     _super::init();
     _usb.init();
     _qspi.init();
+    
+    for (;;) {
+//        mspprintf("Connecting\r\n");
+        auto s = _msp.connect();
+//        mspprintf("-> %d\r\n", (uint8_t)s);
+        if (s != _msp.Status::OK) {
+            if (s == _msp.Status::JTAGDisabled) {
+    //            mspprintf("JTAG disabled; attempting erase...\r\n");
+                s = _msp.erase();
+    //            mspprintf("-> %d\r\n", (uint8_t)s);
+                continue;
+            } else {
+                abort();
+            }
+        }
+        
+        constexpr uint32_t AddrStart = 0xE300;
+        constexpr uint32_t AddrEnd = 0xFF80;
+        constexpr uint32_t Len = (AddrEnd-AddrStart)/2;
+        
+//        mspprintf("Writing\r\n");
+        _msp.resetCRC();
+        _msp.write(AddrStart, (uint16_t*)(0xC000), Len);
+//        mspprintf("-> Done\r\n");
+        
+//        mspprintf("Checking CRC\r\n");
+        s = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
+//        mspprintf("-> %d\r\n", (uint8_t)s);
+        if (s != _msp.Status::OK) {
+            for (;;);
+        }
+        
+//        mspprintf("Disconnecting\r\n");
+        _msp.disconnect();
+        HAL_Delay(500);
+    }
+    
+//    MSP430 msp(_mspTest, _mspRst_);
+//    msp.go();
 }
 
 
@@ -814,10 +854,10 @@ void System::_handleCmd(const USB::Cmd& ev) {
     // LEDSet
     case Cmd::Op::LEDSet: {
         switch (cmd.arg.ledSet.idx) {
-        case 0: _led0.write(cmd.arg.ledSet.on); break;
-        case 1: _led1.write(cmd.arg.ledSet.on); break;
-        case 2: _led2.write(cmd.arg.ledSet.on); break;
-        case 3: _led3.write(cmd.arg.ledSet.on); break;
+//        case 0: _led0.write(cmd.arg.ledSet.on); break;
+//        case 1: _led1.write(cmd.arg.ledSet.on); break;
+        case 2: _LED2::Write(cmd.arg.ledSet.on); break;
+        case 3: _LED3::Write(cmd.arg.ledSet.on); break;
         }
         
         break;
@@ -1155,10 +1195,10 @@ void System::_pixCapture() {
 
 [[noreturn]] void System::_abort() {
     for (bool x=true;; x=!x) {
-        _led0.write(x);
-        _led1.write(x);
-        _led2.write(x);
-        _led3.write(x);
+//        _led0.write(x);
+//        _led1.write(x);
+        _LED2::Write(x);
+        _LED3::Write(x);
         HAL_Delay(500);
     }
 }
