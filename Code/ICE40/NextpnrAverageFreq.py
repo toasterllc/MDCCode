@@ -9,13 +9,14 @@ import statistics
 
 if len(sys.argv) != 6:
     print("Usage:")
-    print("  AverageFreq.py <DeviceType> <DevicePackage> <ProjName> <ClkName> <NumTrials>")
-    print("    DeviceType: hx1k (iCEstick) or hx8k (iCE40HX board)")
-    print("    DevicePackage: tq144 (iCEstick) or ct256 (iCE40HX board)")
+    print("  NextpnrAverageFreq.py <DeviceType> <DevicePackage> <ProjName> <ClkName> <NumTrials>")
+    print("    DeviceType: hx1k (iCEstick), hx8k (MDC Rev4, iCE40HX board)")
+    print("    DevicePackage: tq144 (iCEstick), bg121:4k (MDC Rev4), ct256 (iCE40HX board)")
     print("")
     print("Examples:")
-    print("  AverageFreq.py hx1k tq144 Icestick_SDRAMReadWriteRandomly 'pix_dclk$SB_IO_IN_$glb_clk' 51")
-    print("  AverageFreq.py hx8k ct256 Iceboard_Blinky 'pix_dclk$SB_IO_IN_$glb_clk' 51")
+    print("  NextpnrAverageFreq.py hx8k bg121:4k Blinky 'clk$glb_clk' 51")
+    print("  NextpnrAverageFreq.py hx1k tq144 Blinky 'clk$glb_clk' 51")
+    print("  NextpnrAverageFreq.py hx8k ct256 Blinky 'clk$glb_clk' 51")
     sys.exit(1)
 
 scriptDir = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -49,7 +50,7 @@ def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, leng
 
 def executeTrial(_):
     projDirPath = os.path.join(scriptDir, proj)
-    topFilePath = os.path.join(projDirPath, "tmp", "Top.json")
+    topFilePath = os.path.join(projDirPath, "Synth", "Top.json")
     pcfFilePath = os.path.join(scriptDir, "Pins.pcf")
     
     cmd = [
