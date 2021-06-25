@@ -94,24 +94,24 @@ module mobile_sdr (
 
 
 
-// Timing values based on W989D6DB
+// Timing values based on Alliance AS4C8M16MSA-6BIN
                                           // SYMBOL UNITS DESCRIPTION
                                           // ------ ----- -----------
-    parameter tCK              =     7500; // tCK    ps    Nominal Clock Cycle Time
-    parameter tCK3_min         =     7500; // tCK    ps    Nominal Clock Cycle Time
-    parameter tCK2_min         =     9600; // tCK    ps    Nominal Clock Cycle Time
+    parameter tCK              =     6025; // tCK    ps    Nominal Clock Cycle Time
+    parameter tCK3_min         =     6025; // tCK    ps    Nominal Clock Cycle Time
+    parameter tCK2_min         =    12049; // tCK    ps    Nominal Clock Cycle Time
     parameter tCK1_min         =        0; // tCK    ps    Nominal Clock Cycle Time
-    parameter tAC3             =     5400; // tAC3   ps    Access time from CLK (pos edge) CL = 3
-    parameter tAC2             =     8000; // tAC2   ps    Access time from CLK (pos edge) CL = 2
+    parameter tAC3             =     5500; // tAC3   ps    Access time from CLK (pos edge) CL = 3
+    parameter tAC2             =     6000; // tAC2   ps    Access time from CLK (pos edge) CL = 2
     parameter tAC1             =        0; // tAC1   ps    Access time from CLK (pos edge) CL = 1
-    parameter tHZ3             =     5400; // tHZ3   ps    Data Out High Z time - CL = 3
-    parameter tHZ2             =     8000; // tHZ2   ps    Data Out High Z time - CL = 2
+    parameter tHZ3             =     6000; // tHZ3   ps    Data Out High Z time - CL = 3
+    parameter tHZ2             =     6000; // tHZ2   ps    Data Out High Z time - CL = 2
     parameter tHZ1             =        0; // tHZ1   ps    Data Out High Z time - CL = 1
     parameter tOH              =     2500; // tOH    ps    Data Out Hold time
     parameter tMRD             =        2; // tMRD   tCK   Load Mode Register command cycle time (2 * tCK)
-    parameter tRAS             =    45000; // tRAS   ps    Active to Precharge command time
-    parameter tRC              =    68000; // tRC    ps    Active to Active/Auto Refresh command time
-    parameter tRFC             =    72000; // tRFC   ps    Refresh to Refresh Command interval time
+    parameter tRAS             =    48000; // tRAS   ps    Active to Precharge command time
+    parameter tRC              =    60000; // tRC    ps    Active to Active/Auto Refresh command time
+    parameter tRFC             =    80000; // tRFC   ps    Refresh to Refresh Command interval time
     parameter tRCD             =    18000; // tRCD   ps    Active to Read/Write command time
     parameter tRP              =    18000; // tRP    ps    Precharge command period
     parameter tRRD             =        2; // tRRD   tCK   Active bank a to Active bank b command time (2 * tCK)
@@ -119,7 +119,7 @@ module mobile_sdr (
     parameter tWRm             =    15000; // tWR    ps    Write recovery time
     parameter tCH              =     2500; // tCH    ps    Clock high level width
     parameter tCL              =     2500; // tCL    ps    Clock low level width
-    parameter tXSR             =   120000; // tXSR   ps    Clock low level width
+    parameter tXSR             =    80000; // tXSR   ps    Exit Self Refresh to Active Command time
 
     // Size Parameters based on Part Width
 
@@ -938,7 +938,7 @@ module mobile_sdr (
      begin
         if ((cke & ~cke_q) &
             (initialization_state != 4'h9)) begin
-            $sformat (msg, "WARNING: SDRAM requires a 100us delay prior to issuing any command other than COMMAND INHIBIT or NOP"); WARN(msg);
+            $sformat (msg, "WARNING: SDRAM requires a 200us delay prior to issuing any command other than COMMAND INHIBIT or NOP"); WARN(msg);
         end
         if (((command == ACTIVATE  ) |
              (command == ACTIVATE  ) |

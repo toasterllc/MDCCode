@@ -40,7 +40,7 @@ module Top(
     
     
     reg cmd_trigger = 0;
-    reg[20:0] cmd_block = 0;
+    reg[18:0] cmd_block = 0;
     reg[1:0] cmd = 0;
     
     wire write_ready;
@@ -195,7 +195,7 @@ endmodule
 
 `ifdef SIM
 module Testbench();
-    reg clk16mhz = 0;
+    reg ice_img_clk16mhz = 0;
     wire[3:0] ice_led;
     wire ram_clk;
     wire ram_cke;
@@ -235,7 +235,7 @@ module Testbench();
     initial begin
         forever begin
             #32;
-            clk16mhz = !clk16mhz;
+            ice_img_clk16mhz = !ice_img_clk16mhz;
         end
     end
 endmodule
