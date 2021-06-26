@@ -1,18 +1,21 @@
 - Rev4 Todo
     
-    - Fix MSP_RST_/MSP_TEST logic levels
+    - Get image streaming to Mac working
+        - ICEStreamApp
+    
+    √ Update ICE40 to use 16 MHz clock, instead of 24 MHz
+    
+    √ Fix MSP_RST_/MSP_TEST logic levels
         *** Before bodging, just try programming MSP first. It's possible that 1.8V will meet MSP's Vih ***
+            XXX JTAG doesn't work
+        √ Option: add 10k resistor pullups to VDD_A, remove 1nF capacitor + 47k resistor, and have STM32 use open-drain signalling
+            Works!
         - Option: Sever the MSP_RST_/MSP_TEST connections to MSP, wire them to MSPLevelShifter, then wire the output back to the MSP_RST_/MSP_TEST pins?
         - Option: Bodge STM_LED0/STM_LED1 -> MSPLevelShifter -> MSP_RST_/MSP_TEST
     
-    - Update ICE40 to use 16 MHz clock, instead of 24 MHz
+    √ Get programming MSP430 from STM32 working
     
-    - Verilog: Rename PIX -> IMG
-    
-    - Get programming MSP430 from STM32 working
-    
-    - Get image streaming to Mac working
-        - ICEStreamApp
+    √ Verilog: Rename PIX -> IMG
     
     √ Get RAM working with ICE40
         √ RAMReadWriteTest
