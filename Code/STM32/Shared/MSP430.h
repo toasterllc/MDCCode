@@ -610,7 +610,7 @@ public:
             _crc = addr-2;
             _crcValid = true;
         }
-        _regWrite(addr, src, len);
+        _memWrite(addr, src, len);
     }
     
     void memCRCReset() {
