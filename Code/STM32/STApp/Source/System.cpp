@@ -142,79 +142,13 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
 
 
 
-// Test MSP430 RAM writing
-void System::init() {
-    _super::init();
-    _usb.init();
-    _qspi.init();
-    
-    for (;; HAL_Delay(500)) {
-        auto s = _msp.connect();
-        if (s != _msp.Status::OK) {
-            if (s == _msp.Status::JTAGDisabled) {
-                s = _msp.erase();
-                continue;
-            } else {
-                abort();
-            }
-        }
-        
-        constexpr uint32_t AddrStart = 0x2000;
-        constexpr uint32_t AddrEnd = 0x2800;
-        constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
-        
-        _msp.crcReset();
-        _msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
-        
-//        uint16_t* stmAddr = (uint16_t*)0x20010000;
-//        uint32_t mspAddr = AddrStart;
-//
-//        const uint16_t expected = *stmAddr;
-//        uint16_t got1 = 0;
-//        _msp.read(mspAddr, &got1, 1);
-//
-//        uint16_t got2 = 0;
-//        got2 = _msp.read(mspAddr);
-//
-//        _msp.crcReset();
-//        _msp.framWrite(AddrStart, (uint16_t*)(0x20010000), 1);
-//        
-//        for (uint32_t i=0; i<Len; i++) {
-//            const uint16_t expected = *stmAddr;
-//            uint16_t got1 = 0;
-//            _msp.read(mspAddr, &got1, 1);
-//            
-//            uint16_t got2 = 0;
-//            got2 = _msp.read(mspAddr);
-//            
-//            if (expected != got1) {
-//                abort();
-//            }
-//            
-//            if (expected != got2) {
-//                abort();
-//            }
-//            
-//            stmAddr++;
-//            mspAddr+=2;
-//        }
-        
-        s = _msp.crcVerify(AddrStart, Len);
-        if (s != _msp.Status::OK) {
-            abort();
-        }
-        
-        _msp.disconnect();
-    }
-}
-
-// Toggle GPIOs
+//// Test MSP430 RAM writing
 //void System::init() {
 //    _super::init();
 //    _usb.init();
 //    _qspi.init();
 //    
-//    for (;;) {
+//    for (;; HAL_Delay(500)) {
 //        auto s = _msp.connect();
 //        if (s != _msp.Status::OK) {
 //            if (s == _msp.Status::JTAGDisabled) {
@@ -225,34 +159,127 @@ void System::init() {
 //            }
 //        }
 //        
-//        constexpr uint16_t PM5CTL0  = 0x0130;
-//        constexpr uint16_t PAOUT    = 0x0202;
-//        constexpr uint16_t PADIR    = 0x0204;
-//        constexpr uint16_t PAREN    = 0x0206;
-//        constexpr uint16_t PASEL0   = 0x020A;
-//        constexpr uint16_t PASEL1   = 0x020C;
+//        constexpr uint32_t AddrStart = 0x2000;
+//        constexpr uint32_t AddrEnd = 0x2800;
+//        constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
 //        
-//        uint16_t val = 0;
+//        _msp.crcReset();
+//        _msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
 //        
-//        // Read PM5CTL0
-//        val = _msp.regRead(PM5CTL0);
-//        _msp.regWrite(PM5CTL0, 0x0010);
-//        val = _msp.regRead(PM5CTL0);
+////        uint16_t* stmAddr = (uint16_t*)0x20010000;
+////        uint32_t mspAddr = AddrStart;
+////
+////        const uint16_t expected = *stmAddr;
+////        uint16_t got1 = 0;
+////        _msp.read(mspAddr, &got1, 1);
+////
+////        uint16_t got2 = 0;
+////        got2 = _msp.read(mspAddr);
+////
+////        _msp.crcReset();
+////        _msp.framWrite(AddrStart, (uint16_t*)(0x20010000), 1);
+////        
+////        for (uint32_t i=0; i<Len; i++) {
+////            const uint16_t expected = *stmAddr;
+////            uint16_t got1 = 0;
+////            _msp.read(mspAddr, &got1, 1);
+////            
+////            uint16_t got2 = 0;
+////            got2 = _msp.read(mspAddr);
+////            
+////            if (expected != got1) {
+////                abort();
+////            }
+////            
+////            if (expected != got2) {
+////                abort();
+////            }
+////            
+////            stmAddr++;
+////            mspAddr+=2;
+////        }
 //        
-//        // Write PortA.2=1
-//        _msp.regWrite(PAOUT, 1<<2);
-//        // Set PortA.2 as an output
-//        _msp.regWrite(PADIR, 1<<2);
-//        
-//        val = _msp.regRead(PAOUT);
-//        val = _msp.regRead(PADIR);
-//        
-//        abort();
+//        s = _msp.crcVerify(AddrStart, Len);
+//        if (s != _msp.Status::OK) {
+//            abort();
+//        }
 //        
 //        _msp.disconnect();
-//        HAL_Delay(500);
 //    }
 //}
+
+// Toggle GPIOs
+void System::init() {
+    _super::init();
+    _usb.init();
+    _qspi.init();
+    
+    for (;;) {
+        auto s = _msp.connect();
+        if (s != _msp.Status::OK) {
+            if (s == _msp.Status::JTAGDisabled) {
+                s = _msp.erase();
+                continue;
+            } else {
+                abort();
+            }
+        }
+        
+        constexpr uint16_t PM5CTL0  = 0x0130;
+        constexpr uint16_t PAOUT    = 0x0202;
+        constexpr uint16_t PADIR    = 0x0204;
+        constexpr uint16_t PAREN    = 0x0206;
+        constexpr uint16_t PASEL0   = 0x020A;
+        constexpr uint16_t PASEL1   = 0x020C;
+        
+//        // Clear LOCKLPM5 in the PM5CTL0 register
+//        _msp.write(PM5CTL0, 0x0010);
+        
+        
+        
+//        {
+//            uint16_t val = 0;
+//            
+//            val = 1<<2;
+//            _msp.framWrite(PADIR, &val, 1);
+//            
+//            val = 0xFFFF;
+//            _msp.framWrite(PAOUT, &val, 1);
+//            
+//            val = _msp.read(PADIR);
+//            val = _msp.read(PAOUT);
+//            
+//            // PAOUT = 0x7FFF
+//            for (;;);
+//        }
+        
+        
+        
+        {
+            uint16_t val = 0;
+            
+            val = 1<<2;
+            _msp.framWrite(PADIR, &val, 1);
+            
+            val = 0xFFFF;
+            _msp.framWrite(PAOUT, &val, 1);
+            
+//            val = 1<<2;
+//            _msp.framWrite(PADIR, &val, 1);
+            
+            val = _msp.read(PADIR);
+            val = _msp.read(PAOUT);
+            
+            // PAOUT = 0x0000
+            for (;;);
+        }
+        
+        abort();
+        
+        _msp.disconnect();
+        HAL_Delay(500);
+    }
+}
 
 
 
