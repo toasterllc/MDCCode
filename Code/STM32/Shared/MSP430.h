@@ -203,7 +203,7 @@ private:
     
     uint16_t _deviceID() {
         const uint32_t deviceIDAddr = _deviceIDAddr()+4;
-        const uint16_t deviceID = _regRead(deviceIDAddr);
+        const uint16_t deviceID = _read(deviceIDAddr);
         return deviceID;
     }
     
@@ -253,7 +253,7 @@ private:
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        _regWrite(0x01CC, 0x5A80);
+        _write(0x01CC, 0x5A80);
         
         // Check if device is in Full-Emulation-State and return status
         _irShift(_IR_CNTRL_SIG_CAPTURE);
@@ -277,12 +277,12 @@ private:
         constexpr uint16_t Password = 0xA500;
         constexpr uint16_t MPUMask = 0x0003;
         constexpr uint16_t MPUDisabled = 0x0000;
-        uint16_t reg = _regRead(_SYSCFG0Addr);
+        uint16_t reg = _read(_SYSCFG0Addr);
         reg &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
         reg |= (Password|MPUDisabled); // Password
-        _regWrite(_SYSCFG0Addr, reg);
+        _write(_SYSCFG0Addr, reg);
         // Verify that the MPU protection bits are cleared
-        return (_regRead(_SYSCFG0Addr)&MPUMask) == MPUDisabled;
+        return (_read(_SYSCFG0Addr)&MPUMask) == MPUDisabled;
     }
     
     // CPU must be in Full-Emulation-State
@@ -311,97 +311,16 @@ private:
         _drShift<20>(0);
     }
     
-    // General purpose read
-    // Works for: peripherals, RAM, FRAM
-    //   This is the 'quick' read implementation suggested by JTAG guide
-    void _read(uint32_t addr, uint16_t* dst, uint32_t len) {
-        _pcSet(addr);
-        _tclkSet(1);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
-        _irShift(_IR_ADDR_CAPTURE);
-        _irShift(_IR_DATA_QUICK);
-        
-        for (; len; len--) {
-            _tclkSet(1);
-            _tclkSet(0);
-            *dst = _drShift<16>(0);
-            dst++;
-        }
-    }
-    
-    uint16_t _regRead(uint32_t addr) {
-        uint16_t r = 0;
-        _read(addr, &r, 1);
-        return r;
-    }
-    
-    // Register write
-    // Works for: peripherals
-    //   This is the 'slow' write implementation suggested by JTAG guide
-    void _regWrite(uint32_t addr, uint16_t val) {
-        _tclkSet(0);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0500);
-        
-        _irShift(_IR_ADDR_16BIT);
-        _drShift<20>(addr);
-        _tclkSet(1);
-        
-        // Only apply data during clock high phase
-        _irShift(_IR_DATA_TO_ADDR);
-        _drShift<16>(val);
-        _tclkSet(0);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
-        _tclkSet(1);
-        // One or more cycle, so CPU is driving correct MAB
-        _tclkSet(0);
-        _tclkSet(1);
-    }
-    
-    void _memRead(uint32_t addr, uint16_t* dst, uint32_t len) {
-        _read(addr, dst, len);
-    }
-    
-    // TODO: confirm that this works for RAM
-    // Memory write
-    // Works for: RAM, FRAM
-    //   This is a custom implementation using the 'quick' writing technique.
-    //   The JTAG guide says "For the MSP430Xv2 architecture ... there is no
-    //   specific implementation of a quick write operation", but this seems
-    //   to work, and is a lot faster than the suggested implementation.
-    void _memWrite(uint32_t addr, const uint16_t* src, uint32_t len) {
+    void _crcUpdate(uint16_t val) {
         constexpr uint16_t Poly = 0x0805;
-        _pcSet(addr-2);
-        _tclkSet(1);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0500);
-        _irShift(_IR_DATA_QUICK);
-        _tclkSet(0);
-        
-        for (; len; len--) {
-            // Update CRC
-            {
-                if (_crc & 0x8000) {
-                    _crc ^= Poly;
-                    _crc <<= 1;
-                    _crc |= 0x0001;
-                } else {
-                    _crc <<= 1;
-                }
-                
-                _crc ^= *src;
-            }
-            
-            _tclkSet(1);
-            _drShift<16>(*src);
-            src++;
-            _tclkSet(0);
+        if (_crc & 0x8000) {
+            _crc ^= Poly;
+            _crc <<= 1;
+            _crc |= 0x0001;
+        } else {
+            _crc <<= 1;
         }
-        
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
+        _crc ^= val;
     }
     
     uint16_t _crcCalc(uint32_t addr, uint32_t len) {
@@ -435,6 +354,103 @@ private:
         
         _irShift(_IR_SHIFT_OUT_PSA);
         return _drShift<16>(0);
+    }
+    
+    // General-purpose read
+    // Works for: peripherals, RAM, FRAM
+    //   This is the 'quick' read implementation suggested by JTAG guide
+    void _read(uint32_t addr, uint16_t* dst, uint32_t len) {
+        _pcSet(addr);
+        _tclkSet(1);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0501);
+        _irShift(_IR_ADDR_CAPTURE);
+        _irShift(_IR_DATA_QUICK);
+        
+        for (; len; len--) {
+            _tclkSet(1);
+            _tclkSet(0);
+            *dst = _drShift<16>(0);
+            dst++;
+        }
+    }
+    
+    uint16_t _read(uint32_t addr) {
+        uint16_t r = 0;
+        _read(addr, &r, 1);
+        return r;
+    }
+    
+    // General-purpose, single-word write
+    // Works for: peripherals, RAM, FRAM
+    //   This is the 'non-quick' write implementation suggested by JTAG guide
+    void _write(uint32_t addr, uint16_t val) {
+        _tclkSet(0);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0500);
+        
+        _irShift(_IR_ADDR_16BIT);
+        _drShift<20>(addr);
+        _tclkSet(1);
+        
+        // Only apply data during clock high phase
+        _irShift(_IR_DATA_TO_ADDR);
+        _drShift<16>(val);
+        _tclkSet(0);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0501);
+        _tclkSet(1);
+        // One or more cycle, so CPU is driving correct MAB
+        _tclkSet(0);
+        _tclkSet(1);
+    }
+    
+    // General-purpose write
+    // Works for: peripherals, RAM, FRAM
+    //   This is the 'non-quick' write implementation suggested by JTAG guide
+    void _write(uint32_t addr, const uint16_t* src, uint32_t len) {
+        while (len) {
+            _crcUpdate(*src);
+            _write(addr, *src);
+            addr += 2;
+            src++;
+            len--;
+        }
+    }
+    
+    // FRAM write
+    // Works for: FRAM
+    //   This is a custom 'quick' implementation for writing.
+    //   
+    //   The JTAG guide claims this doesn't work ("For the MSP430Xv2
+    //   architecture ... there is no specific implementation of a quick
+    //   write operation") but it seems to work for FRAM, and is a lot
+    //   faster than the suggested implementation.
+    //   
+    //   This technique is confirmed to fail in these situations:
+    //   - Writing to RAM has no effect
+    //   - Writing to PAOUT fails if the respective pin isn't an output
+    //     according to PADIR (TODO: confirm by writing 0xFFFF to PAOUT, and
+    //     confirm that only the pins enabled as outputs get their bits set)
+    void _framWrite(uint32_t addr, const uint16_t* src, uint32_t len) {
+        _pcSet(addr-2);
+        _tclkSet(1);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0500);
+        _irShift(_IR_DATA_QUICK);
+        _tclkSet(0);
+        
+        for (; len; len--) {
+            _crcUpdate(*src);
+            
+            _tclkSet(1);
+            _drShift<16>(*src);
+            src++;
+            _tclkSet(0);
+        }
+        
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0501);
     }
     
     bool _jmbErase() {
@@ -593,31 +609,41 @@ public:
         return Status::OK;
     }
     
-    uint16_t regRead(uint32_t addr) {
-        return _regRead(addr);
+    uint16_t read(uint32_t addr) {
+        return _read(addr);
     }
     
-    void regWrite(uint32_t addr, uint16_t val) {
-        _regWrite(addr, val);
+    void read(uint32_t addr, uint16_t* dst, uint32_t len) {
+        _read(addr, dst, len);
     }
     
-    void memRead(uint32_t addr, uint16_t* dst, uint32_t len) {
-        _memRead(addr, dst, len);
+    void write(uint32_t addr, uint16_t val) {
+        _write(addr, val);
     }
     
-    void memWrite(uint32_t addr, const uint16_t* src, uint32_t len) {
+    void write(uint32_t addr, const uint16_t* src, uint32_t len) {
         if (!_crcValid) {
             _crc = addr-2;
             _crcValid = true;
         }
-        _memWrite(addr, src, len);
+        _write(addr, src, len);
     }
     
-    void memCRCReset() {
+    // framWrite() is a write implementation that's faster than the
+    // general-purpose write(), but only works for FRAM memory regions
+    void framWrite(uint32_t addr, const uint16_t* src, uint32_t len) {
+        if (!_crcValid) {
+            _crc = addr-2;
+            _crcValid = true;
+        }
+        _framWrite(addr, src, len);
+    }
+    
+    void crcReset() {
         _crcValid = false;
     }
     
-    Status memCRCVerify(uint32_t addr, uint32_t len) {
+    Status crcVerify(uint32_t addr, uint32_t len) {
         return (_crc==_crcCalc(addr, len) ? Status::OK : Status::Error);
     }
 };
