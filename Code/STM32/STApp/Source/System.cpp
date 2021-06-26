@@ -165,33 +165,17 @@ void System::init() {
         uint16_t val = 0;
         
         // Read PM5CTL0
-        _msp.read(PM5CTL0, &val, 1);
+        val = _msp.regRead(PM5CTL0);
+        _msp.regWrite(PM5CTL0, 0x0010);
+        val = _msp.regRead(PM5CTL0);
         
-        {
-            const uint16_t val = 0x0010;
-            _msp.write(PM5CTL0, &val, 1);
-        }
+        // Write PortA.2=1
+        _msp.regWrite(PAOUT, 1<<2);
+        // Set PortA.2 as an output
+        _msp.regWrite(PADIR, 1<<2);
         
-        // Read PM5CTL0
-        _msp.read(PM5CTL0, &val, 1);
-        
-        {
-            // Write PortA.2=1
-            const uint16_t val = 1<<2;
-            _msp.write(PAOUT, &val, 1);
-        }
-        
-        {
-            // Set PortA.2 as an output
-            const uint16_t val = 1<<2;
-            _msp.write(PADIR, &val, 1);
-        }
-        
-        // Read PAOUT
-        _msp.read(PAOUT, &val, 1);
-        
-        // Read PADIR
-        _msp.read(PADIR, &val, 1);
+        val = _msp.regRead(PAOUT);
+        val = _msp.regRead(PADIR);
         
 //        // Read PADIR
 //        _msp.read(PADIR, &val, 1);
