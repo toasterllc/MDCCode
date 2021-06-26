@@ -136,7 +136,7 @@ private:
             _DelayUs(0);
             
             // Start driving SBWTDIO again
-            _TDIO::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _TDIO::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
         }
         
         return tdo;
@@ -179,7 +179,7 @@ private:
     }
     
     uint8_t _readJTAGID() {
-    	const uint8_t din = _shiftIR(_IR_CNTRL_SIG_CAPTURE);
+        const uint8_t din = _shiftIR(_IR_CNTRL_SIG_CAPTURE);
         return din;
     }
     
@@ -466,8 +466,8 @@ private:
     void _jtagStart(bool rst_) {
         // Reset pin states
         {
-            Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-            Rst_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+            Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
             
             Test::Write(0);
             Rst_::Write(1);
