@@ -106,44 +106,13 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
     qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
 }
 
-void System::init() {
-    _super::init();
-    _usb.init();
-    _qspi.init();
-    
-    for (;; HAL_Delay(500)) {
-        auto s = _msp.connect();
-        if (s != _msp.Status::OK) {
-            if (s == _msp.Status::JTAGDisabled) {
-                s = _msp.erase();
-                continue;
-            } else {
-                abort();
-            }
-        }
-        
-        constexpr uint32_t AddrStart = 0xE300;
-        constexpr uint32_t AddrEnd = 0xFF80;
-        constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
-        
-        _msp.resetCRC();
-        _msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
-        
-        s = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
-        if (s != _msp.Status::OK) {
-            abort();
-        }
-        
-        _msp.disconnect();
-    }
-}
-
+// Write to entire MSP430 FRAM, and verify that the CRC of written data matches what we expect
 //void System::init() {
 //    _super::init();
 //    _usb.init();
 //    _qspi.init();
 //    
-//    for (;;) {
+//    for (;; HAL_Delay(500)) {
 //        auto s = _msp.connect();
 //        if (s != _msp.Status::OK) {
 //            if (s == _msp.Status::JTAGDisabled) {
@@ -154,34 +123,143 @@ void System::init() {
 //            }
 //        }
 //        
-//        constexpr uint16_t PADIR = 0x0204;
-//        constexpr uint16_t PAOUT = 0x0202;
+//        constexpr uint32_t AddrStart = 0xE300;
+//        constexpr uint32_t AddrEnd = 0xFF80;
+//        constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
 //        
-//        {
-//            // Set PortA.2 as an output
-//            const uint16_t val = 0x0004;
-//            _msp.write(PADIR, &val, 1);
+//        _msp.resetCRC();
+//        _msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
+//        
+//        s = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
+//        if (s != _msp.Status::OK) {
+//            abort();
 //        }
 //        
-//        {
-//            // Write PortA.2=1
-//            const uint16_t val = 0x0004;
-//            _msp.write(PAOUT, &val, 1);
-//        }
+//        _msp.disconnect();
+//    }
+//}
+
+void System::init() {
+    _super::init();
+    _usb.init();
+    _qspi.init();
+    
+    for (;;) {
+        auto s = _msp.connect();
+        if (s != _msp.Status::OK) {
+            if (s == _msp.Status::JTAGDisabled) {
+                s = _msp.erase();
+                continue;
+            } else {
+                abort();
+            }
+        }
+        
+        constexpr uint16_t PM5CTL0  = 0x0130;
+        constexpr uint16_t PAOUT    = 0x0202;
+        constexpr uint16_t PADIR    = 0x0204;
+        constexpr uint16_t PAREN    = 0x0206;
+        constexpr uint16_t PASEL0   = 0x020A;
+        constexpr uint16_t PASEL1   = 0x020C;
+        
+        uint16_t val = 0;
+        
+        // Read PM5CTL0
+        _msp.read(PM5CTL0, &val, 1);
+        
+        {
+            const uint16_t val = 0x0010;
+            _msp.write(PM5CTL0, &val, 1);
+        }
+        
+        // Read PM5CTL0
+        _msp.read(PM5CTL0, &val, 1);
+        
+        {
+            // Write PortA.2=1
+            const uint16_t val = 1<<2;
+            _msp.write(PAOUT, &val, 1);
+        }
+        
+        {
+            // Set PortA.2 as an output
+            const uint16_t val = 1<<2;
+            _msp.write(PADIR, &val, 1);
+        }
+        
+        // Read PAOUT
+        _msp.read(PAOUT, &val, 1);
+        
+        // Read PADIR
+        _msp.read(PADIR, &val, 1);
+        
+//        // Read PADIR
+//        _msp.read(PADIR, &val, 1);
+//        
 //        
 //        // Read PAOUT
-//        uint16_t val = 0;
 //        _msp.read(PAOUT, &val, 1);
 //        
 //        // Read PADIR
 //        _msp.read(PADIR, &val, 1);
 //        
-//        abort();
+//        {
+//            // Write PortA.2=1
+//            const uint16_t val = 0xFFFF;
+//            _msp.write(PAOUT, &val, 1);
+//        }
 //        
-//        _msp.disconnect();
-//        HAL_Delay(500);
-//    }
-//}
+//        {
+//            // Set PortA.2 as an output
+//            const uint16_t val = 0xFFFF;
+//            _msp.write(PADIR, &val, 1);
+//        }
+        
+//        {
+//            const uint16_t val = 0;
+//            _msp.write(PASEL0, &val, 1);
+//        }
+//        
+//        {
+//            const uint16_t val = 0;
+//            _msp.write(PASEL1, &val, 1);
+//        }
+//        
+//        {
+//            const uint16_t val = 0;
+//            _msp.write(PAREN, &val, 1);
+//        }
+//        
+//        // Read PAOUT
+//        _msp.read(PAOUT, &val, 1);
+//
+//        // Read PADIR
+//        _msp.read(PADIR, &val, 1);
+
+//        {
+//            // Set PortA.2 as an output
+//            const uint16_t val = 1<<6;
+//            _msp.write(PADIR, &val, 1);
+//        }
+//
+//        {
+//            // Write PortA.2=1
+//            const uint16_t val = 1<<6;
+//            _msp.write(PAOUT, &val, 1);
+//        }
+//
+//        // Read PAOUT
+//        _msp.read(PAOUT, &val, 1);
+//
+//        // Read PADIR
+//        _msp.read(PADIR, &val, 1);
+
+        abort();
+        
+        _msp.disconnect();
+        HAL_Delay(500);
+    }
+}
 
 
 
