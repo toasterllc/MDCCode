@@ -106,7 +106,43 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
     qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
 }
 
-// Write to entire MSP430 FRAM, and verify that the CRC of written data matches what we expect
+
+//// Test MSP430 FRAM writing
+//void System::init() {
+//    _super::init();
+//    _usb.init();
+//    _qspi.init();
+//    
+//    for (;; HAL_Delay(500)) {
+//        auto s = _msp.connect();
+//        if (s != _msp.Status::OK) {
+//            if (s == _msp.Status::JTAGDisabled) {
+//                s = _msp.erase();
+//                continue;
+//            } else {
+//                abort();
+//            }
+//        }
+//        
+//        constexpr uint32_t AddrStart = 0xE300;
+//        constexpr uint32_t AddrEnd = 0xFF80;
+//        constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
+//        
+//        _msp.crcReset();
+//        _msp.framWrite(AddrStart, (uint16_t*)(0x20010000), Len);
+//        
+//        s = _msp.crcVerify(AddrStart, Len);
+//        if (s != _msp.Status::OK) {
+//            abort();
+//        }
+//        
+//        _msp.disconnect();
+//    }
+//}
+
+
+
+// Test MSP430 RAM writing
 void System::init() {
     _super::init();
     _usb.init();
@@ -123,14 +159,47 @@ void System::init() {
             }
         }
         
-        constexpr uint32_t AddrStart = 0xE300;
-        constexpr uint32_t AddrEnd = 0xFF80;
+        constexpr uint32_t AddrStart = 0x2000;
+        constexpr uint32_t AddrEnd = 0x2800;
         constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
         
-        _msp.memCRCReset();
-        _msp.memWrite(AddrStart, (uint16_t*)(0x20010000), Len);
+        _msp.crcReset();
+        _msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
         
-        s = _msp.memCRCVerify(AddrStart, (AddrEnd-AddrStart)/2);
+//        uint16_t* stmAddr = (uint16_t*)0x20010000;
+//        uint32_t mspAddr = AddrStart;
+//
+//        const uint16_t expected = *stmAddr;
+//        uint16_t got1 = 0;
+//        _msp.read(mspAddr, &got1, 1);
+//
+//        uint16_t got2 = 0;
+//        got2 = _msp.read(mspAddr);
+//
+//        _msp.crcReset();
+//        _msp.framWrite(AddrStart, (uint16_t*)(0x20010000), 1);
+//        
+//        for (uint32_t i=0; i<Len; i++) {
+//            const uint16_t expected = *stmAddr;
+//            uint16_t got1 = 0;
+//            _msp.read(mspAddr, &got1, 1);
+//            
+//            uint16_t got2 = 0;
+//            got2 = _msp.read(mspAddr);
+//            
+//            if (expected != got1) {
+//                abort();
+//            }
+//            
+//            if (expected != got2) {
+//                abort();
+//            }
+//            
+//            stmAddr++;
+//            mspAddr+=2;
+//        }
+        
+        s = _msp.crcVerify(AddrStart, Len);
         if (s != _msp.Status::OK) {
             abort();
         }
