@@ -128,11 +128,11 @@ void System::init() {
         
         constexpr uint32_t AddrStart = 0xE300;
         constexpr uint32_t AddrEnd = 0xFF80;
-        constexpr uint32_t Len = (AddrEnd-AddrStart)/2;
+        constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
         
 //        mspprintf("Writing\r\n");
         _msp.resetCRC();
-        _msp.write(AddrStart, (uint16_t*)(0xC000), Len);
+        _msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
 //        mspprintf("-> Done\r\n");
         
 //        mspprintf("Checking CRC\r\n");
