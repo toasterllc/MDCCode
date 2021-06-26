@@ -111,15 +111,11 @@ void System::init() {
     _usb.init();
     _qspi.init();
     
-    for (;;) {
-//        mspprintf("Connecting\r\n");
+    for (;; HAL_Delay(500)) {
         auto s = _msp.connect();
-//        mspprintf("-> %d\r\n", (uint8_t)s);
         if (s != _msp.Status::OK) {
             if (s == _msp.Status::JTAGDisabled) {
-    //            mspprintf("JTAG disabled; attempting erase...\r\n");
                 s = _msp.erase();
-    //            mspprintf("-> %d\r\n", (uint8_t)s);
                 continue;
             } else {
                 abort();
@@ -130,26 +126,62 @@ void System::init() {
         constexpr uint32_t AddrEnd = 0xFF80;
         constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
         
-//        mspprintf("Writing\r\n");
         _msp.resetCRC();
         _msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
-//        mspprintf("-> Done\r\n");
         
-//        mspprintf("Checking CRC\r\n");
         s = _msp.verifyCRC(AddrStart, (AddrEnd-AddrStart)/2);
-//        mspprintf("-> %d\r\n", (uint8_t)s);
         if (s != _msp.Status::OK) {
-            for (;;);
+            abort();
         }
         
-//        mspprintf("Disconnecting\r\n");
         _msp.disconnect();
-        HAL_Delay(500);
     }
-    
-//    MSP430 msp(_mspTest, _mspRst_);
-//    msp.go();
 }
+
+//void System::init() {
+//    _super::init();
+//    _usb.init();
+//    _qspi.init();
+//    
+//    for (;;) {
+//        auto s = _msp.connect();
+//        if (s != _msp.Status::OK) {
+//            if (s == _msp.Status::JTAGDisabled) {
+//                s = _msp.erase();
+//                continue;
+//            } else {
+//                abort();
+//            }
+//        }
+//        
+//        constexpr uint16_t PADIR = 0x0204;
+//        constexpr uint16_t PAOUT = 0x0202;
+//        
+//        {
+//            // Set PortA.2 as an output
+//            const uint16_t val = 0x0004;
+//            _msp.write(PADIR, &val, 1);
+//        }
+//        
+//        {
+//            // Write PortA.2=1
+//            const uint16_t val = 0x0004;
+//            _msp.write(PAOUT, &val, 1);
+//        }
+//        
+//        // Read PAOUT
+//        uint16_t val = 0;
+//        _msp.read(PAOUT, &val, 1);
+//        
+//        // Read PADIR
+//        _msp.read(PADIR, &val, 1);
+//        
+//        abort();
+//        
+//        _msp.disconnect();
+//        HAL_Delay(500);
+//    }
+//}
 
 
 
