@@ -95,13 +95,13 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
         void*const addr = (void*)cmd.arg.writeData.addr;
         // Verify that `addr` is in one of the allowed RAM regions
         extern uint8_t _sitcm_ram[], _eitcm_ram[];
-        extern uint8_t _sdtcm[], _edtcm[];
+        extern uint8_t _sdtcm_ram[], _edtcm_ram[];
         extern uint8_t _ssram1[], _esram1[];
         size_t len = 0;
         if (addr>=_sitcm_ram && addr<_eitcm_ram) {
             len = (uintptr_t)_eitcm_ram-(uintptr_t)addr;
-        } else if (addr>=_sdtcm && addr<_edtcm) {
-            len = (uintptr_t)_edtcm-(uintptr_t)addr;
+        } else if (addr>=_sdtcm_ram && addr<_edtcm_ram) {
+            len = (uintptr_t)_edtcm_ram-(uintptr_t)addr;
         } else if (addr>=_ssram1 && addr<_esram1) {
             len = (uintptr_t)_esram1-(uintptr_t)addr;
         } else {
