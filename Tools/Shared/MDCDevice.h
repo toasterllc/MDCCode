@@ -81,10 +81,10 @@ public:
             pixI2CWrite(0x304A, 0x0070);
         }
         
-        // Wait 150k EXTCLK (24MHz) periods
-        // (150e3*(1/24e6)) == 6.25ms
+        // Wait 150k EXTCLK (16MHz) periods
+        // (150e3*(1/16e6)) == 9.25ms
         {
-            usleep(7000);
+            usleep(10000);
         }
         
     }
@@ -98,29 +98,28 @@ public:
         
         // Set pre_pll_clk_div
         {
-//            pixI2CWrite(0x302E, 0x0002);  // /2 -> CLK_OP=98 MHz
-            pixI2CWrite(0x302E, 0x0004);  // /4 -> CLK_OP=49 MHz (Default)
-//            pixI2CWrite(0x302E, 0x0008);  // /8
-//            pixI2CWrite(0x302E, 0x0020);  // /32
-//            pixI2CWrite(0x302E, 0x003F);  // /63
+            pixI2CWrite(0x302E, 4);         //  /4 (default)
         }
         
         // Set pll_multiplier
         {
-            pixI2CWrite(0x3030, 0x0062);  // *98 (Default)
-//            pixI2CWrite(0x3030, 0x0031);  // *49
+            pixI2CWrite(0x3030, 147);       //  *147
+        }
+        
+        // Set vt_sys_clk_div
+        {
+            pixI2CWrite(0x302C, 1);         //  /1 (default)
         }
         
         // Set vt_pix_clk_div
         {
-            pixI2CWrite(0x302A, 0x0006);  // /6 (Default)
-//            pixI2CWrite(0x302A, 0x001F);  // /31
+            pixI2CWrite(0x302A, 6);         //  /6 (default)
         }
         
-        // Set op_pix_clk_div
-        {
-            pixI2CWrite(0x3036, 0x000C);
-        }
+//        // Set op_pix_clk_div
+//        {
+//            pixI2CWrite(0x3036, 0x000C);
+//        }
         
         // Set output slew rate
         {
