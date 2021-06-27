@@ -32,10 +32,10 @@ private:
     
     USB _usb;
     QSPI _qspi;
-    GPIO _iceCRST_;
-    GPIO _iceCDONE;
-    GPIO _iceSPIClk;
-    GPIO _iceSPICS_;
+    using _ICECRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
+    using _ICECDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
+    using _ICESPIClk = GPIO<GPIOPortB, GPIO_PIN_2>;
+    using _ICESPICS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
     uint8_t _iceBuf0[1024];
     uint8_t _iceBuf1[1024];

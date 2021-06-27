@@ -10,10 +10,6 @@ System::System() :
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
 // QSPI alignment=byte, so we can transfer single bytes at a time
 _qspi(QSPI::Mode::Single, 5, QSPI::Align::Byte),
-_iceCRST_(GPIOI, GPIO_PIN_6),
-_iceCDONE(GPIOI, GPIO_PIN_7),
-_iceSPIClk(GPIOB, GPIO_PIN_2),
-_iceSPICS_(GPIOB, GPIO_PIN_6),
 _iceBufs(_iceBuf0, _iceBuf1) {
 }
 
@@ -26,8 +22,8 @@ void System::init() {
     _qspi.init();
     
     // Configure ice40 control GPIOs
-    _iceCRST_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _iceCDONE.config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICECRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICECDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
 }
 
 void System::_handleEvent() {
@@ -131,10 +127,10 @@ void System::_stHandleCmd(const USB::Cmd& ev) {
     // Set LED
     case STCmd::Op::LEDSet: {
         switch (cmd.arg.ledSet.idx) {
-        case 0: _led0.write(cmd.arg.ledSet.on); break;
-        case 1: _led1.write(cmd.arg.ledSet.on); break;
-        case 2: _led2.write(cmd.arg.ledSet.on); break;
-        case 3: _led3.write(cmd.arg.ledSet.on); break;
+        case 0: _LED0::Write(cmd.arg.ledSet.on); break;
+        case 1: _LED1::Write(cmd.arg.ledSet.on); break;
+        case 2: _LED2::Write(cmd.arg.ledSet.on); break;
+        case 3: _LED3::Write(cmd.arg.ledSet.on); break;
         }
         
         break;
@@ -172,23 +168,23 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
                 _iceStatus==ICEStatus::Error);
         Assert(cmd.arg.start.len);
         
-        _iceSPIClk.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _iceSPICS_.config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _ICESPIClk::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _ICESPICS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         
         // Put ICE40 into configuration mode
-        _iceSPIClk.write(1);
+        _ICESPIClk::Write(1);
         
-        _iceSPICS_.write(0);
-        _iceCRST_.write(0);
+        _ICESPICS_::Write(0);
+        _ICECRST_::Write(0);
         HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
         
-        _iceCRST_.write(1);
+        _ICECRST_::Write(1);
         HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
         
-        // Release chip-select before we give control of _iceSPIClk/_iceSPICS_ to QSPI
-        _iceSPICS_.write(1);
+        // Release chip-select before we give control of _ICESPIClk/_ICESPICS_ to QSPI
+        _ICESPICS_::Write(1);
         
-        // Have QSPI take over _iceSPIClk/_iceSPICS_
+        // Have QSPI take over _ICESPIClk/_ICESPICS_
         _qspi.config();
         
         // Send 8 clocks
@@ -211,7 +207,7 @@ void System::_iceHandleCmd(const USB::Cmd& ev) {
     case ICECmd::Op::Finish: {
         bool done = false;
         for (int i=0; i<10; i++) {
-            done = _iceCDONE.read();
+            done = _ICECDONE::Read();
             if (done) break;
             HAL_Delay(1); // Sleep 1 ms
         }
