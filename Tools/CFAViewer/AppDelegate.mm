@@ -478,16 +478,16 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             });
             CFRunLoopWakeUp(CFRunLoopGetMain());
             
-            if (!(i % 10)) {
-                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
-                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
-                std::ofstream f;
-                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-                f.open([imagePath UTF8String]);
-                f.write((char*)_streamImagesThread.pixels, pixelCount*sizeof(STApp::Pixel));
-                saveIdx++;
-                printf("Saved %s\n", [imagePath UTF8String]);
-            }
+//            if (!(i % 10)) {
+//                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
+//                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
+//                std::ofstream f;
+//                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+//                f.open([imagePath UTF8String]);
+//                f.write((char*)_streamImagesThread.pixels, pixelCount*sizeof(STApp::Pixel));
+//                saveIdx++;
+//                printf("Saved %s\n", [imagePath UTF8String]);
+//            }
             
             // Adjust exposure
             const uint32_t SubsampleFactor = 16;
