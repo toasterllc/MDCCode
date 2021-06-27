@@ -1,7 +1,19 @@
 - Rev4 Todo
     
-    - Get image streaming to Mac working
-        - ICEStreamApp
+    - Don't we need to tell the image sensor the input frequency?
+    
+    - Get LVS SD initialization test working
+    
+    - Get saving images to SD card working, especially with LVS SD initialization
+    
+    - Get crystal working with MSP430
+    
+    - STLoader: add interface for writing MSP430 firmware
+    
+    √ Verify that image sensor clock is blocked when the rails are off
+    
+    √ Get image streaming to Mac working
+        √ ICEStreamApp
     
     √ Update ICE40 to use 16 MHz clock, instead of 24 MHz
     
