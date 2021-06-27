@@ -1,14 +1,15 @@
 - Rev4 Todo
     
-    - Don't we need to tell the image sensor the input frequency?
+    - STLoader: add interface for writing MSP430 firmware
+    
+    - Get crystal working with MSP430
     
     - Get LVS SD initialization test working
     
     - Get saving images to SD card working, especially with LVS SD initialization
     
-    - Get crystal working with MSP430
-    
-    - STLoader: add interface for writing MSP430 firmware
+    √ Don't we need to tell the image sensor the input frequency?
+        Yes, updated image sensor configuration in MDCDevice.h
     
     √ Verify that image sensor clock is blocked when the rails are off
     

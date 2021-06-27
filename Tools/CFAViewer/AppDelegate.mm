@@ -441,9 +441,9 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     using namespace STApp;
     assert(device);
     
-    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
-    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
-    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
+//    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
+//    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
+//    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
     
     try {
         // Reset the device to put it back in a pre-defined state
@@ -452,7 +452,7 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
         float intTime = .5;
         const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
         auto tmpPixels = std::make_unique<STApp::Pixel[]>(tmpPixelsCap);
-        uint32_t saveIdx = 1;
+//        uint32_t saveIdx = 1;
         for (uint32_t i=0;; i++) {
             // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
