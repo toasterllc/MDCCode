@@ -357,7 +357,9 @@ private:
     }
     
     // General-purpose read
-    // Works for: peripherals, RAM, FRAM
+    //   
+    //   Works for: peripherals, RAM, FRAM
+    //   
     //   This is the 'quick' read implementation suggested by JTAG guide
     void _read(uint32_t addr, uint16_t* dst, uint32_t len) {
         _pcSet(addr);
@@ -382,31 +384,38 @@ private:
     }
     
     // General-purpose, single-word write
-    // Works for: peripherals, RAM, FRAM
+    //   
+    //   Works for: peripherals, RAM, FRAM
+    //   
     //   This is the 'non-quick' write implementation suggested by JTAG guide
     void _write(uint32_t addr, uint16_t val) {
+        // Activate write mode (clear read bit in JTAG control register)
         _tclkSet(0);
         _irShift(_IR_CNTRL_SIG_16BIT);
         _drShift<16>(0x0500);
         
+        // Shift address to write to
         _irShift(_IR_ADDR_16BIT);
         _drShift<20>(addr);
         _tclkSet(1);
         
-        // Only apply data during clock high phase
+        // Shift data to write
         _irShift(_IR_DATA_TO_ADDR);
         _drShift<16>(val);
         _tclkSet(0);
+        
+        // Deactivate write mode (set read bit in JTAG control register)
         _irShift(_IR_CNTRL_SIG_16BIT);
         _drShift<16>(0x0501);
         _tclkSet(1);
-        // One or more cycle, so CPU is driving correct MAB
         _tclkSet(0);
         _tclkSet(1);
     }
     
     // General-purpose write
-    // Works for: peripherals, RAM, FRAM
+    //   
+    //   Works for: peripherals, RAM, FRAM
+    //   
     //   This is the 'non-quick' write implementation suggested by JTAG guide
     void _write(uint32_t addr, const uint16_t* src, uint32_t len) {
         while (len) {
@@ -419,7 +428,8 @@ private:
     }
     
     // FRAM write
-    // Works for: FRAM
+    //   Works for: FRAM
+    //   
     //   This is a custom 'quick' implementation for writing.
     //   
     //   The JTAG guide claims this doesn't work ("For the MSP430Xv2
@@ -427,14 +437,14 @@ private:
     //   write operation") but it seems to work for FRAM, and is a lot
     //   faster than the suggested implementation.
     //   
-    //   This technique is confirmed to fail in these situations:
-    //   - Writing to RAM has no effect
-    //   - Writing to PAOUT fails if the respective pin isn't an output
-    //     according to PADIR (TODO: confirm by writing 0xFFFF to PAOUT, and
-    //     confirm that only the pins enabled as outputs get their bits set)
+    //   This technique has been confirmed to fail in these situations:
+    //   - Writing to RAM (has no effect)
+    //   - Writing to peripherals (clears the preceding word)
     void _framWrite(uint32_t addr, const uint16_t* src, uint32_t len) {
         _pcSet(addr-2);
         _tclkSet(1);
+        
+        // Activate write mode (clear read bit in JTAG control register)
         _irShift(_IR_CNTRL_SIG_16BIT);
         _drShift<16>(0x0500);
         _irShift(_IR_DATA_QUICK);
@@ -449,8 +459,12 @@ private:
             _tclkSet(0);
         }
         
+        // Deactivate write mode (set read bit in JTAG control register)
         _irShift(_IR_CNTRL_SIG_16BIT);
         _drShift<16>(0x0501);
+        _tclkSet(1);
+        _tclkSet(0);
+        _tclkSet(1);
     }
     
     bool _jmbErase() {

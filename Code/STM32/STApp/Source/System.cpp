@@ -107,6 +107,70 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
 }
 
 
+template <typename MSP>
+void _testFRAMWrite(MSP msp) {
+    constexpr uint32_t AddrStart = 0xE300;
+    constexpr uint32_t AddrEnd = 0xFF80;
+    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
+    
+    msp.crcReset();
+    msp.framWrite(AddrStart, (uint16_t*)(0x20010000), Len);
+    
+    auto s = msp.crcVerify(AddrStart, Len);
+    if (s != MSP::Status::OK) {
+        abort();
+    }
+}
+
+template <typename MSP>
+void _testRAMWrite(MSP msp) {
+    constexpr uint32_t AddrStart = 0x2000;
+    constexpr uint32_t AddrEnd = 0x2800;
+    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
+    
+    msp.crcReset();
+    msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
+    
+    auto s = msp.crcVerify(AddrStart, Len);
+    if (s != MSP::Status::OK) {
+        abort();
+    }
+}
+
+// Test MSP430 RAM/FRAM writing
+void System::init() {
+    _super::init();
+    _usb.init();
+    _qspi.init();
+    
+    for (;; HAL_Delay(500)) {
+        auto s = _msp.connect();
+        if (s != _msp.Status::OK) {
+            if (s == _msp.Status::JTAGDisabled) {
+                s = _msp.erase();
+                continue;
+            } else {
+                abort();
+            }
+        }
+        
+        _testRAMWrite(_msp);
+        _testRAMWrite(_msp);
+        
+        _testRAMWrite(_msp);
+        _testFRAMWrite(_msp);
+        
+        _testFRAMWrite(_msp);
+        _testRAMWrite(_msp);
+        
+        _testFRAMWrite(_msp);
+        _testFRAMWrite(_msp);
+        
+        _msp.disconnect();
+    }
+}
+
+
 //// Test MSP430 FRAM writing
 //void System::init() {
 //    _super::init();
@@ -208,35 +272,53 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
 //    }
 //}
 
-// Toggle GPIOs
-void System::init() {
-    _super::init();
-    _usb.init();
-    _qspi.init();
-    
-    for (;;) {
-        auto s = _msp.connect();
-        if (s != _msp.Status::OK) {
-            if (s == _msp.Status::JTAGDisabled) {
-                s = _msp.erase();
-                continue;
-            } else {
-                abort();
-            }
-        }
-        
-        constexpr uint16_t PM5CTL0  = 0x0130;
-        constexpr uint16_t PAOUT    = 0x0202;
-        constexpr uint16_t PADIR    = 0x0204;
-        constexpr uint16_t PAREN    = 0x0206;
-        constexpr uint16_t PASEL0   = 0x020A;
-        constexpr uint16_t PASEL1   = 0x020C;
-        
-//        // Clear LOCKLPM5 in the PM5CTL0 register
-//        _msp.write(PM5CTL0, 0x0010);
-        
-        
-        
+//// Toggle GPIOs
+//void System::init() {
+//    _super::init();
+//    _usb.init();
+//    _qspi.init();
+//    
+//    for (;;) {
+//        auto s = _msp.connect();
+//        if (s != _msp.Status::OK) {
+//            if (s == _msp.Status::JTAGDisabled) {
+//                s = _msp.erase();
+//                continue;
+//            } else {
+//                abort();
+//            }
+//        }
+//        
+//        constexpr uint16_t PM5CTL0  = 0x0130;
+//        constexpr uint16_t PAOUT    = 0x0202;
+//        constexpr uint16_t PADIR    = 0x0204;
+//        constexpr uint16_t PAREN    = 0x0206;
+//        constexpr uint16_t PASEL0   = 0x020A;
+//        constexpr uint16_t PASEL1   = 0x020C;
+//        
+////        // Clear LOCKLPM5 in the PM5CTL0 register
+////        _msp.write(PM5CTL0, 0x0010);
+//        
+//        
+//        
+////        {
+////            uint16_t val = 0;
+////            
+////            val = 1<<2;
+////            _msp.framWrite(PADIR, &val, 1);
+////            
+////            val = 0xFFFF;
+////            _msp.framWrite(PAOUT, &val, 1);
+////            
+////            val = _msp.read(PADIR);
+////            val = _msp.read(PAOUT);
+////            
+////            // PAOUT = 0x7FFF
+////            for (;;);
+////        }
+//        
+//        
+//        
 //        {
 //            uint16_t val = 0;
 //            
@@ -246,40 +328,139 @@ void System::init() {
 //            val = 0xFFFF;
 //            _msp.framWrite(PAOUT, &val, 1);
 //            
+////            val = 1<<2;
+////            _msp.framWrite(PADIR, &val, 1);
+//            
 //            val = _msp.read(PADIR);
 //            val = _msp.read(PAOUT);
 //            
-//            // PAOUT = 0x7FFF
+//            // PAOUT = 0x0000
 //            for (;;);
 //        }
-        
-        
-        
-        {
-            uint16_t val = 0;
-            
-            val = 1<<2;
-            _msp.framWrite(PADIR, &val, 1);
-            
-            val = 0xFFFF;
-            _msp.framWrite(PAOUT, &val, 1);
-            
-//            val = 1<<2;
-//            _msp.framWrite(PADIR, &val, 1);
-            
-            val = _msp.read(PADIR);
-            val = _msp.read(PAOUT);
-            
-            // PAOUT = 0x0000
-            for (;;);
-        }
-        
-        abort();
-        
-        _msp.disconnect();
-        HAL_Delay(500);
-    }
-}
+//        
+//        abort();
+//        
+//        _msp.disconnect();
+//        HAL_Delay(500);
+//    }
+//}
+
+
+
+
+
+//// Debug FRAM writing
+//void System::init() {
+//    _super::init();
+//    _usb.init();
+//    _qspi.init();
+//    
+//    for (;;) {
+//        auto s = _msp.connect();
+//        if (s != _msp.Status::OK) {
+//            if (s == _msp.Status::JTAGDisabled) {
+//                s = _msp.erase();
+//                continue;
+//            } else {
+//                abort();
+//            }
+//        }
+//        
+//        constexpr uint16_t PM5CTL0  = 0x0130;
+//        constexpr uint16_t PAOUT    = 0x0202;
+//        constexpr uint16_t PADIR    = 0x0204;
+//        constexpr uint16_t PAREN    = 0x0206;
+//        constexpr uint16_t PASEL0   = 0x020A;
+//        constexpr uint16_t PASEL1   = 0x020C;
+//        
+////        // Writing to 0x0204 overwrites preceding word (0x0202)
+////        {
+////            uint16_t val = 0;
+////            
+////            val = 0xFFFF;
+////            _msp.framWrite(0x0202, &val, 1);
+////            val = _msp.read(0x0202);
+////            
+////            val = 0x1234;
+////            _msp.framWrite(0x0204, &val, 1);
+////            val = _msp.read(0x0204);
+////            
+////            val = _msp.read(0x0202);
+////            
+////            // PAOUT = 0x0000
+////            for (;;);
+////        }
+//        
+//        
+//        
+////        // Test: Writing to 0xE304 overwrites preceding word (0xE302)?
+////        {
+////            uint16_t val = 0;
+////            
+////            val = 0xFFFF;
+////            _msp.framWrite(0xE302, &val, 1);
+////            val = _msp.read(0xE302);
+////            
+////            val = 0x1234;
+////            _msp.framWrite(0xE304, &val, 1);
+////            val = _msp.read(0xE304);
+////            
+////            val = _msp.read(0xE302);
+////            
+////            // PAOUT = 0x0000
+////            for (;;);
+////        }
+//        
+////        // Test: Writing to 0xE302 overwrites preceding word (0xE304)?
+////        {
+////            uint16_t val = 0;
+////            
+////            val = 0xABCD;
+////            _msp.framWrite(0xE304, &val, 1);
+////            val = _msp.read(0xE304);
+////            
+////            val = 0x9876;
+////            _msp.framWrite(0xE302, &val, 1);
+////            val = _msp.read(0xE302);
+////            
+////            val = _msp.read(0xE304);
+////            
+////            // PAOUT = 0x0000
+////            for (;;);
+////        }
+//        
+//        
+//        // Test: Writing to 0xE302 overwrites word before or after (0xE300 / 0xE304)?
+//        {
+//            uint16_t val = 0;
+//            
+//            val = 0x1111;
+//            _msp.framWrite(0xE300, &val, 1);
+//            val = _msp.read(0xE300);
+//            
+//            val = 0x3333;
+//            _msp.framWrite(0xE304, &val, 1);
+//            val = _msp.read(0xE304);
+//            
+//            val = 0x2222;
+//            _msp.framWrite(0xE302, &val, 1);
+//            val = _msp.read(0xE302);
+//            
+//            val = _msp.read(0xE300);
+//            val = _msp.read(0xE304);
+//            
+//            // PAOUT = 0x0000
+//            for (;;);
+//        }
+//        
+//        
+//        abort();
+//        
+//        _msp.disconnect();
+//        HAL_Delay(500);
+//    }
+//}
+
 
 
 
