@@ -114,7 +114,7 @@ void _testFRAMWrite(MSP msp) {
     constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
     
     msp.crcReset();
-    msp.framWrite(AddrStart, (uint16_t*)(0x20010000), Len);
+    msp.framWrite(AddrStart, (uint16_t*)(0x00200000), Len);
     
     auto s = msp.crcVerify(AddrStart, Len);
     if (s != MSP::Status::OK) {
@@ -129,7 +129,7 @@ void _testRAMWrite(MSP msp) {
     constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
     
     msp.crcReset();
-    msp.write(AddrStart, (uint16_t*)(0x20010000), Len);
+    msp.write(AddrStart, (uint16_t*)(0x00200000), Len);
     
     auto s = msp.crcVerify(AddrStart, Len);
     if (s != MSP::Status::OK) {
