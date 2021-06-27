@@ -106,69 +106,112 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
     qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
 }
 
-
-template <typename MSP>
-void _testFRAMWrite(MSP msp) {
-    constexpr uint32_t AddrStart = 0xE300;
-    constexpr uint32_t AddrEnd = 0xFF80;
-    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
-    
-    msp.crcReset();
-    msp.framWrite(AddrStart, (uint16_t*)(0x00200000), Len);
-    
-    auto s = msp.crcVerify(AddrStart, Len);
-    if (s != MSP::Status::OK) {
-        abort();
-    }
-}
-
-template <typename MSP>
-void _testRAMWrite(MSP msp) {
-    constexpr uint32_t AddrStart = 0x2000;
-    constexpr uint32_t AddrEnd = 0x2800;
-    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
-    
-    msp.crcReset();
-    msp.write(AddrStart, (uint16_t*)(0x00200000), Len);
-    
-    auto s = msp.crcVerify(AddrStart, Len);
-    if (s != MSP::Status::OK) {
-        abort();
-    }
-}
-
 // Test MSP430 RAM/FRAM writing
 void System::init() {
     _super::init();
     _usb.init();
     _qspi.init();
     
-    for (;; HAL_Delay(500)) {
+    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
+    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
+    {
+        constexpr uint16_t PM5CTL0          = 0x0130;
+        constexpr uint16_t PAOUT            = 0x0202;
+        constexpr uint16_t PADIR            = 0x0204;
+        constexpr uint16_t PAREN            = 0x0206;
+        constexpr uint16_t PASEL0           = 0x020A;
+        constexpr uint16_t PASEL1           = 0x020C;
+        
+        constexpr uint16_t VDD_1V9_IMG_EN   = 1<<0;
+        constexpr uint16_t VDD_2V8_IMG_EN   = 1<<2;
+        
         auto s = _msp.connect();
         if (s != _msp.Status::OK) {
-            if (s == _msp.Status::JTAGDisabled) {
-                s = _msp.erase();
-                continue;
-            } else {
-                abort();
-            }
+            abort();
         }
         
-        _testRAMWrite(_msp);
-        _testRAMWrite(_msp);
+        // Clear LOCKLPM5 in the PM5CTL0 register
+        // This is necessary to be able to control the GPIOs
+        _msp.write(PM5CTL0, 0x0010);
         
-        _testRAMWrite(_msp);
-        _testFRAMWrite(_msp);
+        // Clear PAOUT so everything is driven to 0 by default
+        _msp.write(PAOUT, 0x0000);
         
-        _testFRAMWrite(_msp);
-        _testRAMWrite(_msp);
+        // Make VDD_2V8_IMG_EN / VDD_1V9_IMG_EN outputs
+        _msp.write(PADIR, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
         
-        _testFRAMWrite(_msp);
-        _testFRAMWrite(_msp);
+        // Turn on VDD_2V8_IMG_EN
+        _msp.write(PAOUT, VDD_2V8_IMG_EN);
+        HAL_Delay(10);
         
-        _msp.disconnect();
+        // Turn on VDD_1V9_IMG_EN
+        _msp.write(PAOUT, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
     }
 }
+
+
+//template <typename MSP>
+//void _testFRAMWrite(MSP msp) {
+//    constexpr uint32_t AddrStart = 0xE300;
+//    constexpr uint32_t AddrEnd = 0xFF80;
+//    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
+//    
+//    msp.crcReset();
+//    msp.framWrite(AddrStart, (uint16_t*)(0x00200000), Len);
+//    
+//    auto s = msp.crcVerify(AddrStart, Len);
+//    if (s != MSP::Status::OK) {
+//        abort();
+//    }
+//}
+//
+//template <typename MSP>
+//void _testRAMWrite(MSP msp) {
+//    constexpr uint32_t AddrStart = 0x2000;
+//    constexpr uint32_t AddrEnd = 0x2800;
+//    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
+//    
+//    msp.crcReset();
+//    msp.write(AddrStart, (uint16_t*)(0x00200000), Len);
+//    
+//    auto s = msp.crcVerify(AddrStart, Len);
+//    if (s != MSP::Status::OK) {
+//        abort();
+//    }
+//}
+//
+//// Test MSP430 RAM/FRAM writing
+//void System::init() {
+//    _super::init();
+//    _usb.init();
+//    _qspi.init();
+//    
+//    for (;; HAL_Delay(500)) {
+//        auto s = _msp.connect();
+//        if (s != _msp.Status::OK) {
+//            if (s == _msp.Status::JTAGDisabled) {
+//                s = _msp.erase();
+//                continue;
+//            } else {
+//                abort();
+//            }
+//        }
+//        
+//        _testRAMWrite(_msp);
+//        _testRAMWrite(_msp);
+//        
+//        _testRAMWrite(_msp);
+//        _testFRAMWrite(_msp);
+//        
+//        _testFRAMWrite(_msp);
+//        _testRAMWrite(_msp);
+//        
+//        _testFRAMWrite(_msp);
+//        _testFRAMWrite(_msp);
+//        
+//        _msp.disconnect();
+//    }
+//}
 
 
 //// Test MSP430 FRAM writing
