@@ -52,6 +52,20 @@ USBD_StatusTypeDef USB::iceStatusSend(const void* data, size_t len) {
     return USBD_LL_Transmit(&_device, Endpoints::ICEStatusIn, (uint8_t*)data, len);
 }
 
+USBD_StatusTypeDef USB::mspCmdRecv() {
+    return USBD_LL_PrepareReceive(&_device, Endpoints::MSPCmdOut, _mspCmdBuf, sizeof(_mspCmdBuf));
+}
+
+USBD_StatusTypeDef USB::mspDataRecv(void* addr, size_t len) {
+    return USBD_LL_PrepareReceive(&_device, Endpoints::MSPDataOut, (uint8_t*)addr, len);
+}
+
+USBD_StatusTypeDef USB::mspStatusSend(const void* data, size_t len) {
+    // TODO: if this function is called twice, the second call will clobber the first.
+    //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
+    return USBD_LL_Transmit(&_device, Endpoints::MSPStatusIn, (uint8_t*)data, len);
+}
+
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     _super::_usbd_Init(cfgidx);
     
@@ -83,6 +97,21 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
         // ICEStatusIn endpoint
         USBD_LL_OpenEP(&_device, Endpoints::ICEStatusIn, USBD_EP_TYPE_BULK, MaxPacketSize::Status);
         _device.ep_in[EndpointNum(Endpoints::ICEStatusIn)].is_used = 1U;
+    }
+    
+    // Open MSP430 endpoints
+    {
+        // MSPCmdOut endpoint
+        USBD_LL_OpenEP(&_device, Endpoints::MSPCmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
+        _device.ep_out[EndpointNum(Endpoints::MSPCmdOut)].is_used = 1U;
+        
+        // MSPDataOut endpoint
+        USBD_LL_OpenEP(&_device, Endpoints::MSPDataOut, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        _device.ep_out[EndpointNum(Endpoints::MSPDataOut)].is_used = 1U;
+        
+        // MSPStatusIn endpoint
+        USBD_LL_OpenEP(&_device, Endpoints::MSPStatusIn, USBD_EP_TYPE_BULK, MaxPacketSize::Status);
+        _device.ep_in[EndpointNum(Endpoints::MSPStatusIn)].is_used = 1U;
     }
     
     return (uint8_t)USBD_OK;

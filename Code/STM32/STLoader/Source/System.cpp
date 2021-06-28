@@ -6,6 +6,9 @@
 
 using namespace STLoader;
 
+#pragma mark - System
+System Sys;
+
 System::System() :
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
 // QSPI alignment=byte, so we can transfer single bytes at a time
@@ -32,12 +35,14 @@ void System::_handleEvent() {
     if (auto x = _usb.eventChannel.readSelect()) {
         _usbHandleEvent(*x);
     
+    // STM32 handling
     } else if (auto x = _usb.stCmdChannel.readSelect()) {
         _stHandleCmd(*x);
     
     } else if (auto x = _usb.stDataChannel.readSelect()) {
         _stHandleData(*x);
     
+    // ICE40 handling
     } else if (auto x = _usb.iceCmdChannel.readSelect()) {
         _iceHandleCmd(*x);
     
@@ -46,6 +51,13 @@ void System::_handleEvent() {
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
         _iceHandleQSPIEvent(*x);
+    
+    // MSP430 handling
+    } else if (auto x = _usb.mspCmdChannel.readSelect()) {
+        _mspHandleCmd(*x);
+    
+    } else if (auto x = _usb.mspDataChannel.readSelect()) {
+        _mspHandleData(*x);
     
     } else {
         // No events, go to sleep
@@ -73,6 +85,19 @@ void System::_usbHandleEvent(const USB::Event& ev) {
     }}
 }
 
+int main() {
+    Sys.init();
+    // Event loop
+    for (;;) {
+        Sys._handleEvent();
+    }
+}
+
+[[noreturn]] void abort() {
+    Sys.abort();
+}
+
+#pragma mark - STM32 Bootloader
 void System::_stHandleCmd(const USB::Cmd& ev) {
     STCmd cmd;
     Assert(ev.len == sizeof(cmd)); // TODO: handle errors
@@ -150,6 +175,7 @@ void System::_stHandleData(const USB::Data& ev) {
     _stStatus = STStatus::Idle;
 }
 
+#pragma mark - ICE40 Bootloader
 void System::_iceHandleCmd(const USB::Cmd& ev) {
     ICECmd cmd;
     Assert(ev.len == sizeof(cmd)); // TODO: handle errors
@@ -339,16 +365,9 @@ void System::_qspiWrite(const void* data, size_t len) {
     _qspi.write(cmd, data, len);
 }
 
-System Sys;
-
-int main() {
-    Sys.init();
-    // Event loop
-    for (;;) {
-        Sys._handleEvent();
-    }
+#pragma mark - MSP430 Bootloader
+void System::_mspHandleCmd(const USB::Cmd& ev) {
 }
 
-[[noreturn]] void abort() {
-    Sys.abort();
+void System::_mspHandleData(const USB::Data& ev) {
 }
