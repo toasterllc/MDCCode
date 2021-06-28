@@ -2,62 +2,54 @@
 #include "Enum.h"
 
 namespace STLoader {
-    Enum(uint8_t, InterfaceIdx, InterfaceIdxs,
-        STM32,
-        ICE40,
-        MSP430,
-    );
-    
     Enum(uint8_t, Endpoint, Endpoints,
-        // OUT endpoints (high bit 0)
-        Ctrl            = 0x00,
+        // Control endpoint
+        Ctrl        = 0x00,
         
         // OUT endpoints (high bit 0)
-        STCmdOut        = 0x01,
-        STDataOut       = 0x02,
-        ICECmdOut       = 0x03,
-        ICEDataOut      = 0x04,
-        MSPCmdOut       = 0x05,
-        MSPDataOut      = 0x06,
+        CmdOut      = 0x01,
+        DataOut     = 0x02,
         
         // IN endpoints (high bit 1)
-        STStatusIn      = 0x81,
-        ICEStatusIn     = 0x82,
-        MSPStatusIn     = 0x82,
+        StatusIn    = 0x81,
     );
     
     Enum(uint8_t, EndpointIdx, EndpointIdxs,
-        STCmdOut = 1,
-        STDataOut,
-        STStatusIn,
-        
-        ICECmdOut = 1,
-        ICEDataOut,
-        ICEStatusIn,
+        CmdOut = 1,
+        DataOut,
+        StatusIn,
     );
     
-    struct STCmd {
+    struct Cmd {
         enum class Op : uint8_t {
-            GetStatus,
-            WriteData,
-            Reset,
+            StatusGet,
+            
+            STWrite,
+            STReset
+            
+            ICEStart,
+            ICEFinish
+            
+            MSPStart,
+            MSPFinish,
+            
             LEDSet,
         };
         
         Op op;
         union {
             struct {
-                uint8_t idx;
-                uint8_t on;
-            } ledSet;
-            
-            struct {
                 uint32_t addr;
-            } writeData;
+            } STWrite;
             
             struct {
                 uint32_t entryPointAddr;
-            } reset;
+            } STReset;
+            
+            struct {
+                uint8_t idx;
+                uint8_t on;
+            } LEDSet;
         } arg;
     } __attribute__((packed));
     static_assert(sizeof(STCmd)==5, "STCmd: invalid size");
@@ -83,9 +75,9 @@ namespace STLoader {
     } __attribute__((packed));
     static_assert(sizeof(ICECmd)==5, "ICECmd: invalid size");
     
-    enum class ICEStatus : uint8_t {
+    enum class Status : uint8_t {
         Idle,
-        Configuring,
+        Underway,
         Done,
         Error
     };
