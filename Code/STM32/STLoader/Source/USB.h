@@ -32,11 +32,17 @@ public:
     USBD_StatusTypeDef iceDataRecv(void* addr, size_t len);
     USBD_StatusTypeDef iceStatusSend(const void* data, size_t len);
     
+    USBD_StatusTypeDef mspCmdRecv();
+    USBD_StatusTypeDef mspDataRecv(void* addr, size_t len);
+    USBD_StatusTypeDef mspStatusSend(const void* data, size_t len);
+    
     // Channels
     Channel<Cmd, 1> stCmdChannel;
     Channel<Data, 1> stDataChannel;
     Channel<Cmd, 1> iceCmdChannel;
     Channel<Data, 1> iceDataChannel;
+    Channel<Cmd, 1> mspCmdChannel;
+    Channel<Data, 1> mspDataChannel;
     
 protected:
     // Callbacks
@@ -59,6 +65,7 @@ protected:
 private:
     uint8_t _stCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
     uint8_t _iceCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    uint8_t _mspCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;

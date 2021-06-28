@@ -5,21 +5,25 @@ namespace STLoader {
     Enum(uint8_t, InterfaceIdx, InterfaceIdxs,
         STM32,
         ICE40,
+        MSP430,
     );
     
     Enum(uint8_t, Endpoint, Endpoints,
         // OUT endpoints (high bit 0)
-        Control         = 0x00,
+        Ctrl            = 0x00,
         
         // OUT endpoints (high bit 0)
         STCmdOut        = 0x01,
         STDataOut       = 0x02,
         ICECmdOut       = 0x03,
         ICEDataOut      = 0x04,
+        MSPCmdOut       = 0x05,
+        MSPDataOut      = 0x06,
         
         // IN endpoints (high bit 1)
         STStatusIn      = 0x81,
         ICEStatusIn     = 0x82,
+        MSPStatusIn     = 0x82,
     );
     
     Enum(uint8_t, EndpointIdx, EndpointIdxs,

@@ -30,6 +30,10 @@ private:
     void _qspiWriteBuf();
     void _qspiWrite(const void* data, size_t len);
     
+    // MSP430 bootloader
+    void _mspHandleCmd(const USB::Cmd& ev);
+    void _mspHandleData(const USB::Data& ev);
+    
     USB _usb;
     QSPI _qspi;
     using _ICECRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
