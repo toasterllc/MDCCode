@@ -97,6 +97,14 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
         }
         
         device.stWriteData(dataAddr, data, dataLen);
+        
+        // Wait for interface to be idle
+        // Without this, it's possible for the next `WriteData` command to update the write
+        // address while we're still sending data from this iteration.
+        for (;;) {
+            STStatus status = device.stGetStatus();
+            if (status == STStatus::Idle) break;
+        }
     }
     
     // Reset the device, triggering it to load the program we just wrote
