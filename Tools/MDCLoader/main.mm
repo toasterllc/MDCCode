@@ -132,6 +132,7 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
 }
 
+static uint8_t DebugBytes[256*1024];
 int main(int argc, const char* argv[]) {
     Args args;
     try {
@@ -160,6 +161,18 @@ int main(int argc, const char* argv[]) {
     }
     
     MDCLoaderDevice& device = devices[0];
+    device.stWriteData(0x20010000, DebugBytes, 0x1f800);
+    
+    // Wait for interface to be idle
+    // Without this, it's possible for the next `WriteData` command to update the write
+    // address while we're still sending data from this iteration.
+    for (;;) {
+        STStatus status = device.stGetStatus();
+        if (status == STStatus::Idle) break;
+    }
+    
+    
+    
     try {
         if (args.cmd == LEDSetCmd)          ledSet(args, device);
         else if (args.cmd == STLoadCmd)     stLoad(args, device);
