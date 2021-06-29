@@ -20,22 +20,27 @@ namespace STLoader {
         StatusIn,
     );
     
+    enum class Op : uint8_t {
+        None,
+        // STM32 Bootloader
+        STWrite,
+        STReset,
+        // ICE40 Bootloader
+        ICEWrite,
+        // MSP430 Bootloader
+        MSPWrite,
+        // Other commands
+        StatusGet,
+        LEDSet,
+    };
+    
+    enum class Status : uint8_t {
+        Idle,
+        Busy,
+        Error
+    };
+    
     struct Cmd {
-        enum class Op : uint8_t {
-            StatusGet,
-            
-            STWrite,
-            STReset
-            
-            ICEStart,
-            ICEFinish
-            
-            MSPStart,
-            MSPFinish,
-            
-            LEDSet,
-        };
-        
         Op op;
         union {
             struct {
@@ -47,38 +52,14 @@ namespace STLoader {
             } STReset;
             
             struct {
+                uint32_t addr;
+            } MSPWrite;
+            
+            struct {
                 uint8_t idx;
                 uint8_t on;
             } LEDSet;
         } arg;
     } __attribute__((packed));
-    static_assert(sizeof(STCmd)==5, "STCmd: invalid size");
-    
-    enum class STStatus : uint8_t {
-        Idle,
-        Writing,
-    };
-    
-    struct ICECmd {
-        enum class Op : uint8_t {
-            GetStatus,
-            Start,
-            Finish
-        };
-        
-        Op op;
-        union {
-            struct {
-                uint32_t len;
-            } start;
-        } arg;
-    } __attribute__((packed));
-    static_assert(sizeof(ICECmd)==5, "ICECmd: invalid size");
-    
-    enum class Status : uint8_t {
-        Idle,
-        Underway,
-        Done,
-        Error
-    };
+    static_assert(sizeof(Cmd)==5, "Cmd: invalid size");
 }

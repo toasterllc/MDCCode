@@ -30,34 +30,76 @@ public:
     }
     
     // Read
-    bool readable() const { return _w!=_r || _full; }
+    bool empty() const { return _w==_r && !_full; }
     
-    const Buf& readBuf() const {
-        Assert(readable());
+    const Buf& front() const {
+        Assert(!empty());
         return _bufs[_r];
     }
     
-    void readDequeue() {
-        Assert(readable());
+    void pop() {
+        Assert(!empty());
         _r++;
         if (_r == Count) _r = 0;
         _full = false;
     }
     
     // Write
-    bool writable() const { return !_full; }
+    bool full() const { return _full; }
     
-    Buf& writeBuf() {
-        Assert(writable());
+    Buf& back() {
+        Assert(!full());
         return _bufs[_w];
     }
     
-    void writeEnqueue() {
-        Assert(writable());
+    void push() {
+        Assert(!full());
         _w++;
         if (_w == Count) _w = 0;
         if (_w == _r) _full = true;
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//    // Read
+//    bool readable() const { return _w!=_r || _full; }
+//    
+//    const Buf& readBuf() const {
+//        Assert(readable());
+//        return _bufs[_r];
+//    }
+//    
+//    void readDequeue() {
+//        Assert(readable());
+//        _r++;
+//        if (_r == Count) _r = 0;
+//        _full = false;
+//    }
+//    
+//    // Write
+//    bool writable() const { return !_full; }
+//    
+//    Buf& writeBuf() {
+//        Assert(writable());
+//        return _bufs[_w];
+//    }
+//    
+//    void writeEnqueue() {
+//        Assert(writable());
+//        _w++;
+//        if (_w == Count) _w = 0;
+//        if (_w == _r) _full = true;
+//    }
     
     // Reset
     void reset() {

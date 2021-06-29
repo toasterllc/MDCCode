@@ -14,25 +14,26 @@ private:
     
     // USB
     void _usbHandleEvent(const USB::Event& ev);
+    void _usbHandleCmd(const USB::Cmd& ev);
+    void _usbHandleData(const USB::Data& ev);
     
-    // STM32 bootloader
-    void _stHandleCmd(const USB::Cmd& ev);
-    void _stHandleData(const USB::Data& ev);
+    // STM32 Bootloader
+    void _stStart(const STLoader::Cmd& cmd);
+    void _stFinish();
     
-    STLoader::STStatus _stStatus __attribute__((aligned(4))) = STLoader::STStatus::Idle;
-    
-    // ICE40 bootloader
-    void _iceHandleCmd(const USB::Cmd& ev);
+    // ICE40 Bootloader
+    void _iceStart(const STLoader::Cmd& cmd);
     void _iceHandleData(const USB::Data& ev);
+    void _iceFinish();
     void _iceHandleQSPIEvent(const QSPI::Signal& ev);
-    bool _iceBufEmpty();
     void _iceDataRecv();
     void _qspiWriteBuf();
     void _qspiWrite(const void* data, size_t len);
     
-    // MSP430 bootloader
-    void _mspHandleCmd(const USB::Cmd& ev);
+    // MSP430 Bootloader
+    void _mspStart(const STLoader::Cmd& cmd);
     void _mspHandleData(const USB::Data& ev);
+    void _mspFinish();
     
     USB _usb;
     QSPI _qspi;
@@ -41,11 +42,13 @@ private:
     using _ICESPIClk = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _ICESPICS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
-    uint8_t _iceBuf0[1024];
-    uint8_t _iceBuf1[1024];
-    BufQueue<2> _iceBufs;
-    size_t _iceRemLen = 0;
-    STLoader::ICEStatus _iceStatus __attribute__((aligned(4))) = STLoader::ICEStatus::Idle;
+    STLoader::Op _op = STLoader::Op::None;
+    STLoader::Status _status __attribute__((aligned(4))) = STLoader::Status::Idle; // Needs to be aligned to send via USB
+    bool _iceEndOfData = false;
+    
+    uint8_t _buf0[1024] __attribute__((aligned(4))); // Needs to be aligned to send via USB
+    uint8_t _buf1[1024] __attribute__((aligned(4)));
+    BufQueue<2> _bufs;
     
     friend int main();
     friend void ISR_OTG_HS();
