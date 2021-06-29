@@ -14,10 +14,11 @@
 
 using namespace STLoader;
 
-using Cmd = std::string;
-const Cmd LEDSetCmd = "ledset";
-const Cmd STLoadCmd = "stload";
-const Cmd ICELoadCmd = "iceload";
+using CmdStr = std::string;
+const CmdStr LEDSetCmd = "ledset";
+const CmdStr STLoadCmd = "stload";
+const CmdStr ICELoadCmd = "iceload";
+const CmdStr MSPLoadCmd = "mspload";
 
 void printUsage() {
     using namespace std;
@@ -29,7 +30,7 @@ void printUsage() {
 }
 
 struct Args {
-    Cmd cmd;
+    CmdStr cmd;
     struct {
         uint8_t idx;
         uint8_t on;
@@ -88,15 +89,8 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
         
         printf("Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
         
-        // Wait for interface to be idle
-        // Without this, it's possible for the next `WriteData` command to update the write
-        // address while we're still sending data from this iteration.
-        for (;;) {
-            STStatus status = device.stGetStatus();
-            if (status == STStatus::Idle) break;
-        }
-        
-        device.stWriteData(dataAddr, data, dataLen);
+        Status status = device.stWrite(dataAddr, data, dataLen);
+        if (status != Status::Idle) throw std::runtime_error("stWrite failed");
     }
     
     // Reset the device, triggering it to load the program we just wrote
@@ -108,28 +102,11 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
 static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     Mmap mmap(args.filePath.c_str());
     
-    // Start ICE40 configuration
-    printf("Starting configuration\n");
-    device.iceStart(mmap.len());
-    
-    // Send ICE40 binary
+    // Send the ICE40 binary
     printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
-    device.iceDataOutPipe.writeBuf(mmap.data(), mmap.len());
+    Status status = device.iceWrite(mmap.data(), mmap.len());
     
-    // Wait for interface to be idle
-    // Without this, the next 'Finish' command would interupt the SPI configuration process
-    for (;;) {
-        ICEStatus status = device.iceGetStatus();
-        if (status == ICEStatus::Idle) break;
-    }
-    
-    // Finish ICE40 configuration
-    printf("Finishing configuration\n");
-    device.iceFinish();
-    
-    // Request status
-    ICEStatus status = device.iceGetStatus();
-    printf("%s\n", (status==ICEStatus::Done ? "Success" : "Failed"));
+    printf("%s\n", (status==Status::Idle ? "Success" : "Failed"));
 }
 
 int main(int argc, const char* argv[]) {
@@ -159,14 +136,17 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    MDCLoaderDevice& device = devices[0];
-    try {
-        if (args.cmd == LEDSetCmd)          ledSet(args, device);
-        else if (args.cmd == STLoadCmd)     stLoad(args, device);
-        else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Error: %s\n", e.what());
-        return 1;
+    for (;;)
+    {
+        MDCLoaderDevice& device = devices[0];
+        try {
+            if (args.cmd == LEDSetCmd)          ledSet(args, device);
+            else if (args.cmd == STLoadCmd)     stLoad(args, device);
+            else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n", e.what());
+            return 1;
+        }
     }
     
     return 0;

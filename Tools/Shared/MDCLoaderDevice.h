@@ -21,115 +21,121 @@ public:
     MDCLoaderDevice(SendRight&& service) :
     USBDevice(std::move(service)) {
         std::vector<USBInterface> interfaces = usbInterfaces();
-        if (interfaces.size() != 2) throw std::runtime_error("invalid number of USB interfaces");
-        _stInterface = interfaces[0];
-        _iceInterface = interfaces[1];
+        if (interfaces.size() != 1) throw std::runtime_error("invalid number of USB interfaces");
+        _interface = interfaces[0];
         
-        stCmdOutPipe = USBPipe(_stInterface, STLoader::EndpointIdxs::STCmdOut);
-        stDataOutPipe = USBPipe(_stInterface, STLoader::EndpointIdxs::STDataOut);
-        stStatusInPipe = USBPipe(_stInterface, STLoader::EndpointIdxs::STStatusIn);
-        
-        iceCmdOutPipe = USBPipe(_iceInterface, STLoader::EndpointIdxs::ICECmdOut);
-        iceDataOutPipe = USBPipe(_iceInterface, STLoader::EndpointIdxs::ICEDataOut);
-        iceStatusInPipe = USBPipe(_iceInterface, STLoader::EndpointIdxs::ICEStatusIn);
+        cmdOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::CmdOut);
+        dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut);
+        statusInPipe = USBPipe(_interface, STLoader::EndpointIdxs::StatusIn);
     }
     
     void ledSet(uint8_t idx, bool on) {
         using namespace STLoader;
-        STCmd cmd = {
-            .op = STCmd::Op::LEDSet,
+        Cmd cmd = {
+            .op = Op::LEDSet,
             .arg = {
-                .ledSet = {
+                .LEDSet = {
                     .idx = idx,
                     .on = on,
                 },
             },
         };
-        stCmdOutPipe.write(cmd);
+        cmdOutPipe.write(cmd);
     }
     
-    STLoader::STStatus stGetStatus() {
+    STLoader::Status statusGet() {
         using namespace STLoader;
         // Request status
-        const STCmd cmd = { .op = STCmd::Op::GetStatus };
-        stCmdOutPipe.write(cmd);
+        const Cmd cmd = { .op = Op::StatusGet };
+        cmdOutPipe.write(cmd);
         // Read status
-        STStatus status;
-        stStatusInPipe.read(status);
+        Status status;
+        statusInPipe.read(status);
         return status;
     }
     
-    void stWriteData(uint32_t addr, const void* data, size_t len) {
+    STLoader::Status stWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
-        
-        // Send WriteData command
-        const STCmd cmd = {
-            .op = STCmd::Op::WriteData,
+        const Cmd cmd = {
+            .op = Op::STWrite,
             .arg = {
-                .writeData = {
+                .STWrite = {
                     .addr = addr,
                 },
             },
         };
-        stCmdOutPipe.write(cmd);
-        // Send actual data
-        stDataOutPipe.writeBuf(data, len);
+        // Send command
+        cmdOutPipe.write(cmd);
+        // Send data
+        dataOutPipe.writeBuf(data, len);
+        // Signal end-of-data
+        dataOutPipe.writeBuf(nullptr, 0);
+        // Wait for write to complete and return status
+        for (;;) {
+            const STLoader::Status s = statusGet();
+            if (s != STLoader::Status::Busy) return s;
+        }
     }
     
     void stReset(uint32_t entryPointAddr) {
         using namespace STLoader;
-        const STCmd cmd = {
-            .op = STCmd::Op::Reset,
+        const Cmd cmd = {
+            .op = Op::STReset,
             .arg = {
-                .reset = {
+                .STReset = {
                     .entryPointAddr = entryPointAddr,
                 },
             },
         };
         
-        stCmdOutPipe.write(cmd);
+        cmdOutPipe.write(cmd);
     }
     
-    void iceStart(size_t len) {
+    STLoader::Status iceWrite(const void* data, size_t len) {
         using namespace STLoader;
-        const ICECmd cmd = {
-            .op = ICECmd::Op::Start,
-            .arg = {
-                .start = {
-                    .len = (uint32_t)len,
-                }
-            }
+        const Cmd cmd = {
+            .op = Op::ICEWrite,
         };
-        iceCmdOutPipe.write(cmd);
+        // Send command
+        cmdOutPipe.write(cmd);
+        // Send data
+        dataOutPipe.writeBuf(data, len);
+        // Signal end-of-data
+        dataOutPipe.writeBuf(nullptr, 0);
+        // Wait for write to complete and return status
+        for (;;) {
+            const STLoader::Status s = statusGet();
+            if (s != STLoader::Status::Busy) return s;
+        }
     }
     
-    STLoader::ICEStatus iceGetStatus() {
+    STLoader::Status mspWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
-        // Request status
-        const ICECmd cmd = { .op = ICECmd::Op::GetStatus, };
-        iceCmdOutPipe.write(cmd);
-        
-        // Read status
-        ICEStatus status;
-        iceStatusInPipe.read(status);
-        return status;
+        const Cmd cmd = {
+            .op = Op::MSPWrite,
+            .arg = {
+                .MSPWrite = {
+                    .addr = addr,
+                },
+            },
+        };
+        // Send command
+        cmdOutPipe.write(cmd);
+        // Send data
+        dataOutPipe.writeBuf(data, len);
+        // Signal end-of-data
+        dataOutPipe.writeBuf(nullptr, 0);
+        // Wait for write to complete and return status
+        for (;;) {
+            const STLoader::Status s = statusGet();
+            if (s != STLoader::Status::Busy) return s;
+        }
     }
     
-    void iceFinish() {
-        using namespace STLoader;
-        const ICECmd cmd = { .op = ICECmd::Op::Finish };
-        iceCmdOutPipe.write(cmd);
-    }
-    
-    USBPipe stCmdOutPipe;
-    USBPipe stDataOutPipe;
-    USBPipe stStatusInPipe;
-    
-    USBPipe iceCmdOutPipe;
-    USBPipe iceDataOutPipe;
-    USBPipe iceStatusInPipe;
+    USBPipe cmdOutPipe;
+    USBPipe dataOutPipe;
+    USBPipe statusInPipe;
     
 private:
-    USBInterface _stInterface;
-    USBInterface _iceInterface;
+    USBInterface _interface;
 };

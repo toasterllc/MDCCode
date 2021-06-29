@@ -8,8 +8,8 @@ public:
     // Types
     struct MaxPacketSize {
         static constexpr size_t Cmd        = 8;
-        static constexpr size_t Status     = 8;
         static constexpr size_t Data       = 512;
+        static constexpr size_t Status     = 8;
     };
     
     struct Cmd {
@@ -24,25 +24,13 @@ public:
     // Methods
     void init();
     
-    USBD_StatusTypeDef stCmdRecv();
-    USBD_StatusTypeDef stDataRecv(void* addr, size_t len);
-    USBD_StatusTypeDef stStatusSend(const void* data, size_t len);
-    
-    USBD_StatusTypeDef iceCmdRecv();
-    USBD_StatusTypeDef iceDataRecv(void* addr, size_t len);
-    USBD_StatusTypeDef iceStatusSend(const void* data, size_t len);
-    
-    USBD_StatusTypeDef mspCmdRecv();
-    USBD_StatusTypeDef mspDataRecv(void* addr, size_t len);
-    USBD_StatusTypeDef mspStatusSend(const void* data, size_t len);
+    USBD_StatusTypeDef cmdRecv();
+    USBD_StatusTypeDef dataRecv(void* addr, size_t len);
+    USBD_StatusTypeDef statusSend(const void* data, size_t len);
     
     // Channels
-    Channel<Cmd, 1> stCmdChannel;
-    Channel<Data, 1> stDataChannel;
-    Channel<Cmd, 1> iceCmdChannel;
-    Channel<Data, 1> iceDataChannel;
-    Channel<Cmd, 1> mspCmdChannel;
-    Channel<Data, 1> mspDataChannel;
+    Channel<Cmd, 1> cmdChannel;
+    Channel<Data, 1> dataChannel;
     
 protected:
     // Callbacks
@@ -63,9 +51,7 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _stCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
-    uint8_t _iceCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
-    uint8_t _mspCmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;
