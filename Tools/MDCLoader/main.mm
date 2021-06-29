@@ -144,19 +144,6 @@ int main(int argc, const char* argv[]) {
     
     MDCLoaderDevice& device = devices[0];
     Status status = device.stWrite(0x20010000, DebugBytes, 0x1f800);
-    sleep(1);
     assert(status == Status::Idle);
-    
-    
-    
-    try {
-        if (args.cmd == LEDSetCmd)          ledSet(args, device);
-        else if (args.cmd == STLoadCmd)     stLoad(args, device);
-        else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Error: %s\n", e.what());
-        return 1;
-    }
-    
     return 0;
 }
