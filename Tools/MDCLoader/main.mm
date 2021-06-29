@@ -87,6 +87,10 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
         const uint32_t dataAddr = s.addr;
         if (!dataLen) continue; // Ignore sections with zero length
         
+        if (dataLen % 512) {
+            continue;
+        }
+        
         printf("Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
         
         Status status = device.stWrite(dataAddr, data, dataLen);
@@ -108,6 +112,8 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     
     printf("%s\n", (status==Status::Idle ? "Success" : "Failed"));
 }
+
+static uint8_t DebugBytes[256*1024];
 
 int main(int argc, const char* argv[]) {
     Args args;
@@ -137,6 +143,12 @@ int main(int argc, const char* argv[]) {
     }
     
     MDCLoaderDevice& device = devices[0];
+    Status status = device.stWrite(0x20010000, DebugBytes, 0x1f800);
+    sleep(1);
+    assert(status == Status::Idle);
+    
+    
+    
     try {
         if (args.cmd == LEDSetCmd)          ledSet(args, device);
         else if (args.cmd == STLoadCmd)     stLoad(args, device);
