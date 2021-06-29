@@ -112,6 +112,14 @@ void System::init() {
     _usb.init();
     _qspi.init();
     
+    for (bool x=true;; x=!x) {
+        _LED0::Write(x);
+        _LED1::Write(x);
+        _LED2::Write(!x);
+        _LED3::Write(!x);
+        HAL_Delay(500);
+    }
+    
     // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
     // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
     {
@@ -1228,49 +1236,48 @@ void System::_handleCmd(const USB::Cmd& ev) {
 
 void System::_handleQSPIEvent(const QSPI::Signal& ev) {
     Assert(_pixStatus.state == PixState::Capturing); // We should only be called while capturing
-    Assert(_pixBufs.writable());
+    Assert(!_pixBufs.full());
     
-    const bool wasReadable = _pixBufs.readable();
+    const bool wasEmpty = _pixBufs.empty();
     
     // Enqueue the buffer
     {
         // Update the number of remaining bytes to receive from the image sensor
-        _pixRemLen -= _pixBufs.writeBuf().len;
-        _pixBufs.writeEnqueue();
+        _pixRemLen -= _pixBufs.back().len;
+        _pixBufs.push();
     }
     
     // Start a USB transaction when we go from 0->1 buffers
-    if (!wasReadable) {
+    if (wasEmpty) {
         _sendPixDataOverUSB();
     }
     
     // Prepare to receive more data if we're expecting more,
     // and we have a buffer to store the data in
-    if (_pixRemLen && _pixBufs.writable()) {
+    if (_pixRemLen && !_pixBufs.full()) {
         _recvPixDataFromICE40();
     }
 }
 
 void System::_handlePixUSBEvent(const USB::Signal& ev) {
     Assert(_pixStatus.state == PixState::Capturing); // We should only be called while capturing
-    Assert(_pixBufs.readable());
-    const bool wasWritable = _pixBufs.writable();
+    Assert(!_pixBufs.empty());
+    const bool wasFull = _pixBufs.full();
     
     // Dequeue the buffer
-    _pixBufs.readDequeue();
+    _pixBufs.pop();
     
     // Start another USB transaction if there's more data to write
-    if (_pixBufs.readable()) {
+    if (!_pixBufs.empty()) {
         _sendPixDataOverUSB();
     }
     
     if (_pixRemLen) {
-        // Prepare to receive more data if we're expecting more,
-        // and we were previously un-writable
-        if (!wasWritable) {
+        // Prepare to receive more data if we're expecting more, and we were previously full
+        if (wasFull) {
             _recvPixDataFromICE40();
         }
-    } else if (!_pixBufs.readable()) {
+    } else if (_pixBufs.empty()) {
         _pixStatus.state = PixState::Idle;
         
         // We're done sending this image, start the next one
@@ -1280,25 +1287,25 @@ void System::_handlePixUSBEvent(const USB::Signal& ev) {
 
 // Arrange for pix data to be received from ICE40
 void System::_recvPixDataFromICE40() {
-    Assert(_pixBufs.writable());
+    Assert(!_pixBufs.full());
     
     // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
-    const size_t len = std::min(_pixRemLen, _pixBufs.writeBuf().cap);
+    const size_t len = std::min(_pixRemLen, _pixBufs.back().cap);
     // Determine whether this is the last readout, and therefore the ice40 should automatically
     // capture the next image when readout is done.
 //    const bool captureNext = (len == _pixRemLen);
     const bool captureNext = false;
-    _pixBufs.writeBuf().len = len;
+    _pixBufs.back().len = len;
     
     _ice40TransferAsync(_qspi, PixReadoutMsg(0, captureNext, len/sizeof(Pixel)),
-        _pixBufs.writeBuf().data,
-        _pixBufs.writeBuf().len);
+        _pixBufs.back().data,
+        _pixBufs.back().len);
 }
 
 // Arrange for pix data to be sent over USB
 void System::_sendPixDataOverUSB() {
-    Assert(_pixBufs.readable());
-    const auto& buf = _pixBufs.readBuf();
+    Assert(!_pixBufs.empty());
+    const auto& buf = _pixBufs.front();
     _usb.pixSend(buf.data, buf.len);
 }
 
@@ -1530,7 +1537,7 @@ void System::_pixCapture() {
     const uint16_t imageHeight = status.imageHeight();
     
     // Enqueue the PixHeader to be sent over USB
-    auto& buf = _pixBufs.writeBuf();
+    auto& buf = _pixBufs.back();
     PixHeader& hdr = *((PixHeader*)buf.data);
     hdr = PixHeader{
         .width = imageWidth,
@@ -1539,7 +1546,7 @@ void System::_pixCapture() {
         .shadowCount = status.shadowCount(),
     };
     buf.len = sizeof(PixHeader);
-    _pixBufs.writeEnqueue();
+    _pixBufs.push();
     _sendPixDataOverUSB();
     
     // Start readout from ice40
