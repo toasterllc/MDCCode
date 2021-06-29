@@ -19,9 +19,7 @@ extern "C" __attribute__((section(".isr"))) void ISR_OTG_HS() {
 }
 
 extern "C" __attribute__((section(".isr"))) void ISR_QUADSPI() {
-    Sys._qspi._isrQSPI();
 }
 
 extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
-    Sys._qspi._isrDMA();
 }

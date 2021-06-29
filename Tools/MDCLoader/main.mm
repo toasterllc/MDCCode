@@ -66,49 +66,6 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
-static void ledSet(const Args& args, MDCLoaderDevice& device) {
-    device.ledSet(args.ledSet.idx, args.ledSet.on);
-}
-
-static void stLoad(const Args& args, MDCLoaderDevice& device) {
-    ELF32Binary bin(args.filePath.c_str());
-    auto sections = bin.sections();
-    
-    uint32_t entryPointAddr = bin.entryPointAddr();
-    if (!entryPointAddr) throw std::runtime_error("no entry point");
-    
-    for (const auto& s : sections) {
-        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
-        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
-        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
-        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
-        const void*const data = bin.sectionData(s);
-        const size_t dataLen = s.size;
-        const uint32_t dataAddr = s.addr;
-        if (!dataLen) continue; // Ignore sections with zero length
-        
-        printf("Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
-        
-        Status status = device.stWrite(dataAddr, data, dataLen);
-        if (status != Status::Idle) throw std::runtime_error("stWrite failed");
-    }
-    
-    // Reset the device, triggering it to load the program we just wrote
-    printf("Resetting device\n");
-    device.stReset(entryPointAddr);
-    printf("Done\n");
-}
-
-static void iceLoad(const Args& args, MDCLoaderDevice& device) {
-    Mmap mmap(args.filePath.c_str());
-    
-    // Send the ICE40 binary
-    printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
-    Status status = device.iceWrite(mmap.data(), mmap.len());
-    
-    printf("%s\n", (status==Status::Idle ? "Success" : "Failed"));
-}
-
 int main(int argc, const char* argv[]) {
     Args args;
     try {
@@ -136,15 +93,14 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
+    static uint8_t DebugBytes[256*1024];
+    
     MDCLoaderDevice& device = devices[0];
-    try {
-        if (args.cmd == LEDSetCmd)          ledSet(args, device);
-        else if (args.cmd == STLoadCmd)     stLoad(args, device);
-        else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Error: %s\n", e.what());
-        return 1;
-    }
+    device.dataOutPipe.writeBuf(DebugBytes, 512);
+    device.dataOutPipe.writeBuf(DebugBytes, 0);
+    
+//    MDCLoaderDevice& device = devices[0];
+//    device.dataOutPipe.writeBuf(DebugBytes, 13);
     
     return 0;
 }

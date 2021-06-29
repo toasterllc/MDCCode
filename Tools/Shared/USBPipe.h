@@ -7,10 +7,18 @@ class USBPipe {
 public:
     using Milliseconds = uint32_t;
     
+    enum class Options : uint32_t {
+        None                    = 0,
+        SendZeroLengthPacket    = 1<<0,
+    };
+    
     // Default constructor: empty
     USBPipe() {}
     
-    USBPipe(USBInterface& interface, uint8_t idx) : _interface(interface), _idx(idx) {}
+    USBPipe(USBInterface& interface, uint8_t idx, Options opts=Options::None)
+    : _interface(interface), _idx(idx), _opts(opts) {
+        
+    }
     
     operator bool() const { return _interface; }
     
@@ -60,4 +68,5 @@ public:
 private:
     USBInterface _interface;
     uint8_t _idx = 0;
+    Options _opts;
 };

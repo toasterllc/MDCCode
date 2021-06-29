@@ -7,14 +7,7 @@ class USB : public USBBase<USB> {
 public:
     // Types
     struct MaxPacketSize {
-        static constexpr size_t Cmd        = 8;
         static constexpr size_t Data       = 512;
-        static constexpr size_t Status     = 8;
-    };
-    
-    struct Cmd {
-        const uint8_t* data;
-        size_t len;
     };
     
     struct Data {
@@ -24,12 +17,9 @@ public:
     // Methods
     void init();
     
-    USBD_StatusTypeDef cmdRecv();
     USBD_StatusTypeDef dataRecv(void* addr, size_t len);
-    USBD_StatusTypeDef statusSend(const void* data, size_t len);
     
     // Channels
-    Channel<Cmd, 1> cmdChannel;
     Channel<Data, 1> dataChannel;
     
 protected:
@@ -51,8 +41,6 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
-    
     using _super = USBBase<USB>;
     friend class USBBase<USB>;
 };
