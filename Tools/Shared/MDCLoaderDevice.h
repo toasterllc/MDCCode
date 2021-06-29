@@ -68,8 +68,6 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        // Signal end-of-data
-        dataOutPipe.writeBuf(nullptr, 0);
         // Wait for write to complete and return status
         for (;;) {
             const STLoader::Status s = statusGet();

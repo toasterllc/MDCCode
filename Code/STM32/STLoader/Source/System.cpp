@@ -142,10 +142,7 @@ void System::_usbHandleData(const USB::Data& ev) {
     
     switch (_op) {
     case Op::STWrite:
-        if (!ev.len) {
-            // End of data
-            _stFinish();
-        }
+        _stFinish();
         break;
     
     case Op::ICEWrite:

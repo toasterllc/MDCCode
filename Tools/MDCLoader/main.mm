@@ -136,17 +136,14 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    for (;;)
-    {
-        MDCLoaderDevice& device = devices[0];
-        try {
-            if (args.cmd == LEDSetCmd)          ledSet(args, device);
-            else if (args.cmd == STLoadCmd)     stLoad(args, device);
-            else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
-        } catch (const std::exception& e) {
-            fprintf(stderr, "Error: %s\n", e.what());
-            return 1;
-        }
+    MDCLoaderDevice& device = devices[0];
+    try {
+        if (args.cmd == LEDSetCmd)          ledSet(args, device);
+        else if (args.cmd == STLoadCmd)     stLoad(args, device);
+        else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Error: %s\n", e.what());
+        return 1;
     }
     
     return 0;
