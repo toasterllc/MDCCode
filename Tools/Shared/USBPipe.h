@@ -9,7 +9,7 @@ public:
     
     Enum(uint32_t, Option, Options,
         None                    = 0,
-        WriteZeroLengthPacket   = 1<<0,
+        WriteZeroLengthPacket   = 1<<0, // See _writeZLPIfNeeded() comment for more info
     );
     
     // Default constructor: empty
@@ -69,6 +69,26 @@ private:
     Option _opts = Options::None;
     uint16_t _maxPacketSize = 0;
     
+    // Sometimes we need to manually send a zero-length packet (ZLP) to terminate a transfer.
+    // This is needed because transfers are terminated when either:
+    // 
+    //   1. the expected number of bytes has been received, or
+    //   2. a packet length is less than the max packet size, or
+    //   3. a zero-length packet is received.
+    //
+    // In some cases #1 and #2 don't apply, and therefore #3 must be employed manually.
+    // (For example: our STM32 bootloader requests the number of bytes that will fill a
+    // certain RAM region, but allows any number of bytes up to that limit to be received,
+    // so the STM32 bootloader doesn't know the number of bytes to be received. Hence #1
+    // doesn't apply. #2 also doesn't apply when the data being sent is a multiple of the
+    // max packet size. Therefore a ZLP must be sent.)
+    // 
+    // Originally we thought that the USB APIs would automatically send a ZLP if the
+    // transfer size is a multiple of the max packet size, and therefore we didn't have to
+    // send ZLPs ourself. Empirically that doesn't seem to be the case -- the USB APIs do not
+    // send ZLPs automatically. In hindsight that makes sense, because the USB APIs cannot
+    // know whether #1 (above) applies, and if it did, the USB APIs would send a ZLP when it
+    // wasn't needed or expected. So it makes sense that we have to send ZLPs manually.
     void _writeZLPIfNeeded(size_t s, Milliseconds timeout) const {
         // Bail if we're not supposed to send zero-length packets (ZLP)
         if (!(_opts & Options::WriteZeroLengthPacket)) return;
