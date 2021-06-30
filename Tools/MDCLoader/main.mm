@@ -26,6 +26,7 @@ void printUsage() {
     cout << "  " << LEDSetCmd    << " <idx> <0/1>\n";
     cout << "  " << STLoadCmd    << " <file>\n";
     cout << "  " << ICELoadCmd   << " <file>\n";
+    cout << "  " << MSPLoadCmd   << " <file>\n";
     cout << "\n";
 }
 
@@ -59,6 +60,10 @@ static Args parseArgs(int argc, const char* argv[]) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
         args.filePath = strs[1];
     
+    } else if (args.cmd == MSPLoadCmd) {
+        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        args.filePath = strs[1];
+    
     } else {
         throw std::runtime_error("invalid command");
     }
@@ -87,26 +92,44 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
         const uint32_t dataAddr = s.addr;
         if (!dataLen) continue; // Ignore sections with zero length
         
-        printf("Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
-        
-        Status status = device.stWrite(dataAddr, data, dataLen);
-        if (status != Status::OK) throw std::runtime_error("stWrite failed");
+        printf("STLoad: Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
+        device.stWrite(dataAddr, data, dataLen);
     }
     
     // Reset the device, triggering it to load the program we just wrote
-    printf("Resetting device\n");
+    printf("STLoad: Resetting device\n");
     device.stFinish(entryPointAddr);
-    printf("Done\n");
 }
 
 static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     Mmap mmap(args.filePath.c_str());
     
     // Send the ICE40 binary
-    printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
-    Status status = device.iceWrite(mmap.data(), mmap.len());
+    printf("ICELoad: Writing %ju bytes\n", (uintmax_t)mmap.len());
+    device.iceWrite(mmap.data(), mmap.len());
+}
+
+static void mspLoad(const Args& args, MDCLoaderDevice& device) {
+    ELF32Binary bin(args.filePath.c_str());
+    auto sections = bin.sections();
     
-    printf("%s\n", (status==Status::OK ? "Success" : "Failed"));
+    device.mspStart();
+    
+    for (const auto& s : sections) {
+        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
+        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
+        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
+        const void*const data = bin.sectionData(s);
+        const size_t dataLen = s.size;
+        const uint32_t dataAddr = s.addr;
+        if (!dataLen) continue; // Ignore sections with zero length
+        
+        printf("MSPLoad: Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
+        device.mspWrite(dataAddr, data, dataLen);
+    }
+    
+    device.mspFinish();
 }
 
 int main(int argc, const char* argv[]) {
@@ -141,6 +164,7 @@ int main(int argc, const char* argv[]) {
         if (args.cmd == LEDSetCmd)          ledSet(args, device);
         else if (args.cmd == STLoadCmd)     stLoad(args, device);
         else if (args.cmd == ICELoadCmd)    iceLoad(args, device);
+        else if (args.cmd == MSPLoadCmd)    mspLoad(args, device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;

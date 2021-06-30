@@ -20,8 +20,8 @@ private:
     
     // STM32 Bootloader
     void _stWrite(const STLoader::Cmd& cmd);
-    void _stWriteFinish();
     void _stFinish(const STLoader::Cmd& cmd);
+    void _stWriteFinish();
     void _stHandleUSBData(const USB::Data& ev);
     
     // ICE40 Bootloader
@@ -36,9 +36,22 @@ private:
     // MSP430 Bootloader
     void _mspStart(const STLoader::Cmd& cmd);
     void _mspWrite(const STLoader::Cmd& cmd);
+    void _mspFinish(const STLoader::Cmd& cmd);
     void _mspWriteFinish();
     void _mspHandleUSBData(const USB::Data& ev);
-    void _mspFinish(const STLoader::Cmd& cmd);
+    void _mspUpdateState();
+    void _mspWriteBuf();
+    
+    // Other commands
+    void _statusGet(const STLoader::Cmd& cmd);
+    void _ledSet(const STLoader::Cmd& cmd);
+    
+    
+    
+    
+    
+    
+    
     
     USB _usb;
     QSPI _qspi;
@@ -50,6 +63,8 @@ private:
     STLoader::Op _usbDataOp = STLoader::Op::None;
     size_t _usbDataRem = 0;
     STLoader::Status _status __attribute__((aligned(4))) = STLoader::Status::OK; // Needs to be aligned to send via USB
+    
+    uint32_t _mspAddr = 0;
     
     uint8_t _buf0[1024] __attribute__((aligned(4))); // Needs to be aligned to send via USB
     uint8_t _buf1[1024] __attribute__((aligned(4)));

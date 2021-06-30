@@ -52,6 +52,8 @@ private:
     
     bool _tclkSaved = 1;
     uint16_t _crc = 0;
+    uint32_t _crcAddr = 0;
+    size_t _crcLen = 0;
     bool _crcValid = false;
     
     void _tapReset() {
@@ -311,6 +313,13 @@ private:
         _drShift<20>(0);
     }
     
+    void _crcStart(uint32_t addr) {
+        _crc = addr-2;
+        _crcAddr = addr;
+        _crcLen = 0;
+        _crcValid = true;
+    }
+    
     void _crcUpdate(uint16_t val) {
         constexpr uint16_t Poly = 0x0805;
         if (_crc & 0x8000) {
@@ -323,7 +332,7 @@ private:
         _crc ^= val;
     }
     
-    uint16_t _crcCalc(uint32_t addr, uint32_t len) {
+    uint16_t _crcCalc(uint32_t addr, size_t len) {
         _pcSet(addr);
         _tclkSet(1);
         
@@ -335,7 +344,7 @@ private:
         
         _irShift(_IR_DATA_PSA);
         
-        for (uint32_t i=0; i<len; i++) {
+        for (size_t i=0; i<len; i++) {
             _tclkSet(0);
             _sbwio(1, 1);
             // <- Select DR-Scan
@@ -361,7 +370,7 @@ private:
     //   Works for: peripherals, RAM, FRAM
     //   
     //   This is the 'quick' read implementation suggested by JTAG guide
-    void _read(uint32_t addr, uint16_t* dst, uint32_t len) {
+    void _read(uint32_t addr, uint16_t* dst, size_t len) {
         _pcSet(addr);
         _tclkSet(1);
         _irShift(_IR_CNTRL_SIG_16BIT);
@@ -417,7 +426,7 @@ private:
     //   Works for: peripherals, RAM, FRAM
     //   
     //   This is the 'non-quick' write implementation suggested by JTAG guide
-    void _write(uint32_t addr, const uint16_t* src, uint32_t len) {
+    void _write(uint32_t addr, const uint16_t* src, size_t len) {
         while (len) {
             _crcUpdate(*src);
             _write(addr, *src);
@@ -440,7 +449,7 @@ private:
     //   This technique has been confirmed to fail in these situations:
     //   - Writing to RAM (has no effect)
     //   - Writing to peripherals (clears the preceding word)
-    void _framWrite(uint32_t addr, const uint16_t* src, uint32_t len) {
+    void _framWrite(uint32_t addr, const uint16_t* src, size_t len) {
         _pcSet(addr-2);
         _tclkSet(1);
         
@@ -627,7 +636,7 @@ public:
         return _read(addr);
     }
     
-    void read(uint32_t addr, uint16_t* dst, uint32_t len) {
+    void read(uint32_t addr, uint16_t* dst, size_t len) {
         _read(addr, dst, len);
     }
     
@@ -635,29 +644,25 @@ public:
         _write(addr, val);
     }
     
-    void write(uint32_t addr, const uint16_t* src, uint32_t len) {
-        if (!_crcValid) {
-            _crc = addr-2;
-            _crcValid = true;
-        }
+    void write(uint32_t addr, const uint16_t* src, size_t len) {
+        if (!_crcValid) _crcStart(addr);
         _write(addr, src, len);
+        _crcLen += len;
     }
     
     // framWrite() is a write implementation that's faster than the
     // general-purpose write(), but only works for FRAM memory regions
-    void framWrite(uint32_t addr, const uint16_t* src, uint32_t len) {
-        if (!_crcValid) {
-            _crc = addr-2;
-            _crcValid = true;
-        }
+    void framWrite(uint32_t addr, const uint16_t* src, size_t len) {
+        if (!_crcValid) _crcStart(addr);
         _framWrite(addr, src, len);
+        _crcLen += len;
     }
     
     void crcReset() {
         _crcValid = false;
     }
     
-    Status crcVerify(uint32_t addr, uint32_t len) {
-        return (_crc==_crcCalc(addr, len) ? Status::OK : Status::Error);
+    Status crcVerify() {
+        return (_crc==_crcCalc(_crcAddr, _crcLen) ? Status::OK : Status::Error);
     }
 };

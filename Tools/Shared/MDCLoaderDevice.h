@@ -54,7 +54,7 @@ public:
         return status;
     }
     
-    STLoader::Status stWrite(uint32_t addr, const void* data, size_t len) {
+    void stWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
         const Cmd cmd = {
             .op = Op::STWrite,
@@ -69,11 +69,7 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        // Wait for write to complete and return status
-        for (;;) {
-            const STLoader::Status s = statusGet();
-            if (s != STLoader::Status::Busy) return s;
-        }
+        _completeOrThrow("STWrite command failed");
     }
     
     void stFinish(uint32_t entryPointAddr) {
@@ -90,7 +86,7 @@ public:
         cmdOutPipe.write(cmd);
     }
     
-    STLoader::Status iceWrite(const void* data, size_t len) {
+    void iceWrite(const void* data, size_t len) {
         using namespace STLoader;
         const Cmd cmd = {
             .op = Op::ICEWrite,
@@ -104,14 +100,20 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        // Wait for write to complete and return status
-        for (;;) {
-            const STLoader::Status s = statusGet();
-            if (s != STLoader::Status::Busy) return s;
-        }
+        _completeOrThrow("ICEWrite command failed");
     }
     
-    STLoader::Status mspWrite(uint32_t addr, const void* data, size_t len) {
+    void mspStart() {
+        using namespace STLoader;
+        const Cmd cmd = {
+            .op = Op::MSPStart,
+        };
+        // Send command
+        cmdOutPipe.write(cmd);
+        _completeOrThrow("MSPStart command failed");
+    }
+    
+    void mspWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
         const Cmd cmd = {
             .op = Op::MSPWrite,
@@ -126,11 +128,17 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        // Wait for write to complete and return status
-        for (;;) {
-            const STLoader::Status s = statusGet();
-            if (s != STLoader::Status::Busy) return s;
-        }
+        _completeOrThrow("MSPWrite command failed");
+    }
+    
+    void mspFinish() {
+        using namespace STLoader;
+        const Cmd cmd = {
+            .op = Op::MSPFinish,
+        };
+        // Send command
+        cmdOutPipe.write(cmd);
+        _completeOrThrow("MSPFinish command failed");
     }
     
     USBPipe cmdOutPipe;
@@ -139,4 +147,12 @@ public:
     
 private:
     USBInterface _interface;
+    
+    void _completeOrThrow(const char* errMsg) {
+        // Wait for completion and throw on failure
+        STLoader::Status s = STLoader::Status::OK;
+        do s = statusGet();
+        while (s == STLoader::Status::Busy);
+        if (s != STLoader::Status::OK) throw std::runtime_error(errMsg);
+    }
 };
