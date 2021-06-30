@@ -79,47 +79,29 @@ void System::_usbHandleEvent(const USB::Event& ev) {
 
 void System::_usbHandleCmd(const USB::Cmd& ev) {
     Cmd cmd;
-    Assert(ev.len == sizeof(cmd)); // TODO: handle errors
+    Assert(ev.len == sizeof(cmd));
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
     // STM32
     case Op::STWrite:   _stWrite(cmd);      break;
     case Op::STFinish:  _stFinish(cmd);     break;
-    
     // ICE40
     case Op::ICEWrite:  _iceWrite(cmd);     break;
-    
     // MSP430
     case Op::MSPStart:  _mspStart(cmd);     break;
     case Op::MSPWrite:  _mspWrite(cmd);     break;
     case Op::MSPFinish: _mspFinish(cmd);    break;
-    
     // Get status
-    case Op::StatusGet: {
-        _usb.statusSend(&_status, sizeof(_status));
-        break;
-    }
-    
+    case Op::StatusGet: _statusGet(cmd);   break;
     // Set LED
-    case Op::LEDSet: {
-        switch (cmd.arg.LEDSet.idx) {
-        case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
-        case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
-        case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
-        case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
-        }
-        
-        break;
-    }
-    
+    case Op::LEDSet:    _ledSet(cmd);       break;
     // Bad command
-    default: {
-        break;
-    }}
+    default:            abort();            break;
+    }
     
     // Prepare to receive another command
-    _usb.cmdRecv(); // TODO: handle errors
+    _usb.cmdRecv();
 }
 
 void System::_usbHandleData(const USB::Data& ev) {
@@ -128,22 +110,10 @@ void System::_usbHandleData(const USB::Data& ev) {
     _usbDataRem -= ev.len;
     
     switch (_usbDataOp) {
-    case Op::STWrite:
-        _stHandleUSBData(ev);
-        break;
-    
-    case Op::ICEWrite:
-        _iceHandleUSBData(ev);
-        break;
-    
-    case Op::MSPWrite:
-        _mspHandleUSBData(ev);
-        break;
-    
-    default:
-        // Invalid _usbDataOp
-        abort();
-        break;
+    case Op::STWrite:   _stHandleUSBData(ev);   break;
+    case Op::ICEWrite:  _iceHandleUSBData(ev);  break;
+    case Op::MSPWrite:  _mspHandleUSBData(ev);  break;
+    default:            abort();                break;
     }
 }
 
@@ -212,12 +182,6 @@ void System::_stWrite(const Cmd& cmd) {
     _usb.dataRecv(addr, ceilLen);
 }
 
-void System::_stWriteFinish() {
-    Assert(_status == Status::Busy);
-    // Update our status
-    _status = Status::OK;
-}
-
 void System::_stFinish(const Cmd& cmd) {
     Assert(cmd.op == Op::STFinish);
     
@@ -230,7 +194,14 @@ void System::_stFinish(const Cmd& cmd) {
     _status = Status::OK;
 }
 
+void System::_stWriteFinish() {
+    Assert(_status == Status::Busy);
+    // Update our status
+    _status = Status::OK;
+}
+
 void System::_stHandleUSBData(const USB::Data& ev) {
+    Assert(ev.len);
     Assert(_status == Status::Busy);
     _stWriteFinish();
 }
@@ -337,6 +308,7 @@ void System::_iceUpdateState() {
 }
 
 void System::_iceHandleUSBData(const USB::Data& ev) {
+    Assert(ev.len);
     Assert(_status == Status::Busy);
     Assert(!_bufs.full());
     
@@ -410,17 +382,12 @@ void System::_mspWrite(const Cmd& cmd) {
     // Update our status
     _usbDataOp = cmd.op;
     _usbDataRem = cmd.arg.MSPWrite.len;
+    _msp.crcReset();
+    _mspAddr = cmd.arg.MSPWrite.addr;
     _status = Status::Busy;
     
     // Prepare to receive USB data
     _usbDataRecv();
-}
-
-void System::_mspWriteFinish() {
-    _status = Status::OK;
-}
-
-void System::_mspHandleUSBData(const USB::Data& ev) {
 }
 
 void System::_mspFinish(const Cmd& cmd) {
@@ -428,5 +395,88 @@ void System::_mspFinish(const Cmd& cmd) {
     Assert(_status != Status::Busy);
     
     _msp.disconnect();
+    _status = Status::OK;
+}
+
+void System::_mspWriteFinish() {
+    // Verify the CRC of all the data we wrote
+    auto r = _msp.crcVerify();
+    if (r != _msp.Status::OK) {
+        _status = Status::Error;
+        return;
+    }
+    
+    _status = Status::OK;
+}
+
+void System::_mspHandleUSBData(const USB::Data& ev) {
+    Assert(ev.len);
+    Assert(_status == Status::Busy);
+    Assert(!_bufs.full());
+    
+    // Enqueue the buffer
+    _bufs.back().len = ev.len;
+    _bufs.push();
+    
+    _mspUpdateState();
+}
+
+void System::_mspUpdateState() {
+    // Prepare to receive more USB data if:
+    //   - we expect more data, and
+    //   - there's space in the queue, and
+    //   - we haven't arranged to receive USB data yet
+    //
+    // *** We want to do this before executing `_msp.write`, so that we can
+    // *** be receiving USB data while we're sending data via Spy-bi-wire.
+    if (_usbDataRem && !_bufs.full() && !_usb.dataRecvUnderway()) {
+        _usbDataRecv();
+    }
+    
+    // Send data if we have data to write
+    if (!_bufs.empty()) {
+        _mspWriteBuf();
+    }
+    
+    // If there's no more data coming over USB, and there's no more
+    // data to write, then we're done
+    if (!_usbDataRem && _bufs.empty()) {
+        _mspWriteFinish();
+    }
+}
+
+void System::_mspWriteBuf() {
+    // Verify that the data length is a multiple of sizeof(uint16_t),
+    // which _msp.write() requires
+    Assert(!(_bufs.front().len % sizeof(uint16_t))); // TODO: error handling
+    // Write the data over Spy-bi-wire
+    const uint16_t* data = (uint16_t*)_bufs.front().data;
+    const size_t len = _bufs.front().len;
+    const size_t wordCount = len/sizeof(uint16_t);
+    _msp.write(_mspAddr, data, wordCount);
+    // Update the MSP430 address to write to
+    _mspAddr += len;
+    // Pop the buffer, which we just finished sending over Spy-bi-wire
+    _bufs.pop();
+}
+
+#pragma mark - Other Commands
+
+void System::_statusGet(const Cmd& cmd) {
+    Assert(cmd.op == Op::StatusGet);
+    _usb.statusSend(&_status, sizeof(_status));
+}
+
+void System::_ledSet(const Cmd& cmd) {
+    Assert(cmd.op == Op::LEDSet);
+    Assert(_status != Status::Busy);
+    
+    switch (cmd.arg.LEDSet.idx) {
+    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
+    case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
+    case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
+    case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
+    }
+    
     _status = Status::OK;
 }

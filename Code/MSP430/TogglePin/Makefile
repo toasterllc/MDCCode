@@ -14,14 +14,14 @@ CXXFLAGS = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -O0 -g -Wall -std=c++17
 LFLAGS   = -L $(SUPPORT_FILE_DIRECTORY) -T $(DEVICE).ld -Wl,-Map=$(DEVICE).map
 
 all: ${OBJECTS}
-	$(CXX) $(CFLAGS) $(LFLAGS) $? -o $(DEVICE).out
+	$(CXX) $(CFLAGS) $(LFLAGS) $? -o $(DEVICE).elf
 
 debug: all
-	$(GDB) $(DEVICE).out
+	$(GDB) $(DEVICE).elf
 
 install: all
-	$(MSPDEBUG) rf2500 "prog $(DEVICE).out"
-	$(MSPDEBUG) rf2500 "verify $(DEVICE).out"
+	$(MSPDEBUG) rf2500 "prog $(DEVICE).elf"
+	$(MSPDEBUG) rf2500 "verify $(DEVICE).elf"
 
 clean:
-	rm -Rf *.o *.out *.map
+	rm -Rf *.o *.elf *.map

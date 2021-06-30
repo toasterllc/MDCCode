@@ -12,9 +12,9 @@ int main() {
     
     // ## Reset pin states
     {
-        PADIR   = 0x0004;   // *(PA_BASE+OFS_PADIR) = 0x04  =>  *0x0204 = 0x0004
-        PAOUT   = 0x0004;   // *(PA_BASE+OFS_PAOUT) = 0x04  =>  *0x0202 = 0x0004
-        
+        // PADIR   = 0x0004;   // *(PA_BASE+OFS_PADIR) = 0x04  =>  *0x0204 = 0x0004
+        // PAOUT   = 0x0004;   // *(PA_BASE+OFS_PAOUT) = 0x04  =>  *0x0202 = 0x0004
+        //
         // PAOUT   = 0x00;
         // PADIR   = 0x04;
         // PASEL0  = 0x00;
