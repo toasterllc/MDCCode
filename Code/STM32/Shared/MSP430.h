@@ -375,44 +375,6 @@ private:
         return _drShift<16>(0);
     }
     
-//    // This seems to work, but the _cpuReset() (suggested by the JTAG guide) seems to be unnecessary.
-//    // Keeping this implementation in case we find something doesn't work with 
-//    bool _crcVerify(uint32_t addr, size_t len, uint16_t crcExpected) {
-//        if (!_cpuReset()) return false;
-//        
-//        _pcSet(addr);
-//        _tclkSet(1);
-//        
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0501);
-//        
-//        _irShift(_IR_DATA_16BIT);
-//        _drShift<16>(addr-2);
-//        
-//        _irShift(_IR_DATA_PSA);
-//        
-//        for (size_t i=0; i<len; i++) {
-//            _tclkSet(0);
-//            _sbwio(1, 1);
-//            // <- Select DR-Scan
-//            _sbwio(0, 1);
-//            // <- Capture-DR
-//            _sbwio(0, 1);
-//            // <- Shift-DR
-//            _sbwio(1, 1);
-//            // <- Exit1-DR
-//            _sbwio(1, 1);
-//            // <- Update-DR
-//            _sbwio(0, 1);
-//            // <- Run-Test/Idle
-//            _tclkSet(1);
-//        }
-//        
-//        _irShift(_IR_SHIFT_OUT_PSA);
-//        const uint16_t crcGot = _drShift<16>(0);
-//        return crcGot == crcExpected;
-//    }
-    
     // General-purpose read
     //   
     //   Works for: peripherals, RAM, FRAM
