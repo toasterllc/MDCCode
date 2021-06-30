@@ -48,6 +48,14 @@ private:
         HAL_Delay(ms);
     }
     
+    static bool _AlignedAddr(uint32_t addr) {
+        return !(addr % sizeof(uint16_t));
+    }
+    
+    static bool _FRAMAddr(uint32_t addr) {
+        return addr>=0xE300 && addr<=0xFFFE;
+    }
+    
     using _TCK = Test;
     using _TDIO = Rst_;
     
@@ -649,28 +657,30 @@ public:
     }
     
     uint16_t read(uint32_t addr) {
+        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
         return _read(addr);
     }
     
     void read(uint32_t addr, uint16_t* dst, size_t len) {
+        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
         _read(addr, dst, len);
     }
     
     void write(uint32_t addr, uint16_t val) {
+        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
         _write(addr, val);
     }
     
     void write(uint32_t addr, const uint16_t* src, size_t len) {
+        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
         if (!_crcStarted) _crcStart(addr);
-        _write(addr, src, len);
-        _crcLen += len;
-    }
-    
-    // framWrite() is a write implementation that's faster than the
-    // general-purpose write(), but only works for FRAM memory regions
-    void framWrite(uint32_t addr, const uint16_t* src, size_t len) {
-        if (!_crcStarted) _crcStart(addr);
-        _framWrite(addr, src, len);
+        if (_FRAMAddr(addr) && _FRAMAddr(addr+(len-1)*2)) {
+            // framWrite() is a write implementation that's faster than the
+            // general-purpose write(), but only works for FRAM memory regions
+            _framWrite(addr, src, len);
+        } else {
+            _write(addr, src, len);
+        }
         _crcLen += len;
     }
     
