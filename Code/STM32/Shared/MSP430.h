@@ -1,6 +1,7 @@
 #pragma once
 #include "GPIO.h"
 #include "IRQState.h"
+#include "Assert.h"
 
 template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
 class MSP430 {
@@ -54,7 +55,7 @@ private:
     uint16_t _crc = 0;
     uint32_t _crcAddr = 0;
     size_t _crcLen = 0;
-    bool _crcValid = false;
+    bool _crcStarted = false;
     
     void _tapReset() {
         // Reset JTAG state machine
@@ -94,6 +95,12 @@ private:
     // Perform a single Spy-bi-wire I/O cycle
     __attribute__((noinline))
     bool _sbwio(bool tms, bool tdi, bool restoreSavedTCLK=false) {
+        // We have strict timing requirements, so disable interrupts.
+        // Specifically, the low cycle of TCK can't be longer than 7us,
+        // otherwise SBW will be disabled.
+        IRQState irq;
+        irq.disable();
+        
         // Write TMS
         {
             _TDIO::Write(tms);
@@ -214,6 +221,12 @@ private:
         _tclkSaved = tclk;
     }
     
+    bool _fullEmulationState() {
+        // Return whether the device is in full-emulation state
+        _irShift(_IR_CNTRL_SIG_CAPTURE);
+        return _drShift<16>(0) & 0x0301;
+    }
+    
     bool _cpuReset() {
         // One clock to empty the pipe
         _tclkSet(0);
@@ -258,11 +271,7 @@ private:
         _write(0x01CC, 0x5A80);
         
         // Check if device is in Full-Emulation-State and return status
-        _irShift(_IR_CNTRL_SIG_CAPTURE);
-        if (!(_drShift<16>(0) & 0x0301)) {
-            return false;
-        }
-        
+        if (!_fullEmulationState()) return false;
         return true;
     }
     
@@ -317,7 +326,7 @@ private:
         _crc = addr-2;
         _crcAddr = addr;
         _crcLen = 0;
-        _crcValid = true;
+        _crcStarted = true;
     }
     
     void _crcUpdate(uint16_t val) {
@@ -332,6 +341,7 @@ private:
         _crc ^= val;
     }
     
+    // This seems to work, but the _cpuReset() (suggested by the JTAG guide) seems to be unnecessary
     uint16_t _crcCalc(uint32_t addr, size_t len) {
         _pcSet(addr);
         _tclkSet(1);
@@ -364,6 +374,44 @@ private:
         _irShift(_IR_SHIFT_OUT_PSA);
         return _drShift<16>(0);
     }
+    
+//    // This seems to work, but the _cpuReset() (suggested by the JTAG guide) seems to be unnecessary.
+//    // Keeping this implementation in case we find something doesn't work with 
+//    bool _crcVerify(uint32_t addr, size_t len, uint16_t crcExpected) {
+//        if (!_cpuReset()) return false;
+//        
+//        _pcSet(addr);
+//        _tclkSet(1);
+//        
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0501);
+//        
+//        _irShift(_IR_DATA_16BIT);
+//        _drShift<16>(addr-2);
+//        
+//        _irShift(_IR_DATA_PSA);
+//        
+//        for (size_t i=0; i<len; i++) {
+//            _tclkSet(0);
+//            _sbwio(1, 1);
+//            // <- Select DR-Scan
+//            _sbwio(0, 1);
+//            // <- Capture-DR
+//            _sbwio(0, 1);
+//            // <- Shift-DR
+//            _sbwio(1, 1);
+//            // <- Exit1-DR
+//            _sbwio(1, 1);
+//            // <- Update-DR
+//            _sbwio(0, 1);
+//            // <- Run-Test/Idle
+//            _tclkSet(1);
+//        }
+//        
+//        _irShift(_IR_SHIFT_OUT_PSA);
+//        const uint16_t crcGot = _drShift<16>(0);
+//        return crcGot == crcExpected;
+//    }
     
     // General-purpose read
     //   
@@ -497,6 +545,12 @@ private:
     }
     
     void _jtagStart(bool rst_) {
+        // We have strict timing requirements, so disable interrupts.
+        // Specifically, the low cycle of TCK can't be longer than 7us,
+        // otherwise SBW will be disabled.
+        IRQState irq;
+        irq.disable();
+        
         // Reset pin states
         {
             Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
@@ -645,7 +699,7 @@ public:
     }
     
     void write(uint32_t addr, const uint16_t* src, size_t len) {
-        if (!_crcValid) _crcStart(addr);
+        if (!_crcStarted) _crcStart(addr);
         _write(addr, src, len);
         _crcLen += len;
     }
@@ -653,18 +707,17 @@ public:
     // framWrite() is a write implementation that's faster than the
     // general-purpose write(), but only works for FRAM memory regions
     void framWrite(uint32_t addr, const uint16_t* src, size_t len) {
-        if (!_crcValid) _crcStart(addr);
+        if (!_crcStarted) _crcStart(addr);
         _framWrite(addr, src, len);
         _crcLen += len;
     }
     
     void crcReset() {
-        _crcValid = false;
+        _crcStarted = false;
     }
     
     Status crcVerify() {
-        const uint16_t ourCRC = _crc;
-        const uint16_t theirCRC = _crcCalc(_crcAddr, _crcLen);
-        return (ourCRC==theirCRC ? Status::OK : Status::Error);
+        Assert(_crcStarted);
+        return (_crcCalc(_crcAddr, _crcLen)==_crc ? Status::OK : Status::Error);
     }
 };
