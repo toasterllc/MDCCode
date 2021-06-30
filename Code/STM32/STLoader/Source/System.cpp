@@ -3,6 +3,7 @@
 #include "SystemClock.h"
 #include "Startup.h"
 #include <string.h>
+#include <algorithm>
 
 using namespace STLoader;
 
@@ -123,8 +124,10 @@ void System::_usbHandleCmd(const USB::Cmd& ev) {
 
 void System::_usbHandleData(const USB::Data& ev) {
     Assert(_status == Status::Busy);
+    Assert(ev.len <= _usbDataRem);
+    _usbDataRem -= ev.len;
     
-    switch (_op) {
+    switch (_usbDataOp) {
     case Op::STWrite:
         _stHandleUSBData(ev);
         break;
@@ -138,16 +141,53 @@ void System::_usbHandleData(const USB::Data& ev) {
         break;
     
     default:
-        // Invalid _op
+        // Invalid _usbDataOp
         abort();
         break;
     }
 }
 
+static size_t _ceilToPacketLength(size_t len) {
+    // Round `len` up to the nearest packet size, since the USB hardware limits
+    // the data received based on packets instead of bytes
+    const size_t rem = len%USB::MaxPacketSize::Data;
+    len += (rem>0 ? USB::MaxPacketSize::Data-rem : 0);
+    return len;
+}
+
 void System::_usbDataRecv() {
     Assert(!_bufs.full());
+    Assert(_usbDataRem);
     auto& buf = _bufs.back();
-    _usb.dataRecv(buf.data, buf.cap); // TODO: handle errors
+    
+    // Prepare to receive either `_usbDataRem` bytes or the
+    // buffer capacity bytes, whichever is smaller.
+    const size_t len = _ceilToPacketLength(std::min(_usbDataRem, buf.cap));
+    // Ensure that after rounding up to the nearest packet size, we don't
+    // exceed the buffer capacity. (This should always be safe as long as
+    // the buffer capacity is a multiple of the max packet size.)
+    Assert(len <= buf.cap);
+    
+    _usb.dataRecv(buf.data, len); // TODO: handle errors
+}
+
+static size_t _regionCapacity(void* addr) {
+    // Verify that `addr` is in one of the allowed RAM regions
+    extern uint8_t _sitcm_ram[], _eitcm_ram[];
+    extern uint8_t _sdtcm_ram[], _edtcm_ram[];
+    extern uint8_t _ssram1[], _esram1[];
+    size_t cap = 0;
+    if (addr>=_sitcm_ram && addr<_eitcm_ram) {
+        cap = (uintptr_t)_eitcm_ram-(uintptr_t)addr;
+    } else if (addr>=_sdtcm_ram && addr<_edtcm_ram) {
+        cap = (uintptr_t)_edtcm_ram-(uintptr_t)addr;
+    } else if (addr>=_ssram1 && addr<_esram1) {
+        cap = (uintptr_t)_esram1-(uintptr_t)addr;
+    } else {
+        // TODO: implement proper error handling on writing out of the allowed regions
+        abort();
+    }
+    return cap;
 }
 
 #pragma mark - STM32 Bootloader
@@ -155,33 +195,21 @@ void System::_stWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::STWrite);
     Assert(_status != Status::Busy);
     
+    void*const addr = (void*)cmd.arg.STWrite.addr;
+    const size_t len = cmd.arg.STWrite.len;
+    const size_t ceilLen = _ceilToPacketLength(len);
+    const size_t regionCap = _regionCapacity(addr);
+    // Confirm that the region's capacity is large enough to hold the incoming
+    // data length (ceiled to the packet length)
+    Assert(regionCap >= ceilLen); // TODO: error handling
+    
     // Update our status
     _usbDataOp = cmd.op;
+    _usbDataRem = len;
     _status = Status::Busy;
     
-    void*const addr = (void*)cmd.arg.STWrite.addr;
-    // Verify that `addr` is in one of the allowed RAM regions
-    extern uint8_t _sitcm_ram[], _eitcm_ram[];
-    extern uint8_t _sdtcm_ram[], _edtcm_ram[];
-    extern uint8_t _ssram1[], _esram1[];
-    size_t len = 0;
-    if (addr>=_sitcm_ram && addr<_eitcm_ram) {
-        len = (uintptr_t)_eitcm_ram-(uintptr_t)addr;
-    } else if (addr>=_sdtcm_ram && addr<_edtcm_ram) {
-        len = (uintptr_t)_edtcm_ram-(uintptr_t)addr;
-    } else if (addr>=_ssram1 && addr<_esram1) {
-        len = (uintptr_t)_esram1-(uintptr_t)addr;
-    } else {
-        // TODO: implement proper error handling on writing out of the allowed regions
-        abort();
-    }
-    
-    // Round `len` down to the nearest max packet size.
-    // (We can only restrict the receipt of USB data
-    // at multiples of the max packet size.)
-    len -= len%USB::MaxPacketSize::Data;
-    Assert(len); // TODO: error handling
-    _usb.dataRecv(addr, len);
+    // Prepare to receive USB data
+    _usb.dataRecv(addr, ceilLen);
 }
 
 void System::_stWriteFinish() {
@@ -192,12 +220,14 @@ void System::_stWriteFinish() {
 
 void System::_stFinish(const Cmd& cmd) {
     Assert(cmd.op == Op::STFinish);
-    Assert(_status == Status::Busy);
     
     Start.setAppEntryPointAddr(cmd.arg.STFinish.entryPointAddr);
     // Perform software reset
     HAL_NVIC_SystemReset();
-    break;
+    
+    // Unreachable
+    // Update our status
+    _status = Status::OK;
 }
 
 void System::_stHandleUSBData(const USB::Data& ev) {
@@ -209,11 +239,6 @@ void System::_stHandleUSBData(const USB::Data& ev) {
 void System::_iceWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::ICEWrite);
     Assert(_status != Status::Busy);
-    
-    // Update our status
-    _usbDataOp = cmd.op;
-    _status = Status::Busy;
-    _usbDataEnd = false;
     
     // Configure ICE40 control GPIOs
     _ICECRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -244,7 +269,12 @@ void System::_iceWrite(const Cmd& cmd) {
     // Wait for write to complete
     _qspi.eventChannel.read();
     
-    // Prepare to receive ICE40 bootloader data
+    // Update our status
+    _usbDataOp = cmd.op;
+    _usbDataRem = cmd.arg.ICEWrite.len;
+    _status = Status::Busy;
+    
+    // Prepare to receive USB data
     _usbDataRecv();
 }
 
@@ -295,13 +325,13 @@ void System::_iceUpdateState() {
     //   - we expect more data, and
     //   - there's space in the queue, and
     //   - we haven't arranged to receive USB data yet
-    if (!_usbDataEnd && !_bufs.full() && !_usb.dataRecvUnderway()) {
+    if (_usbDataRem && !_bufs.full() && !_usb.dataRecvUnderway()) {
         _usbDataRecv();
     }
     
     // If there's no more data coming over USB, and there's no more
     // data to write, then we're done
-    if (_usbDataEnd && _bufs.empty()) {
+    if (!_usbDataRem && _bufs.empty()) {
         _iceWriteFinish();
     }
 }
@@ -310,13 +340,9 @@ void System::_iceHandleUSBData(const USB::Data& ev) {
     Assert(_status == Status::Busy);
     Assert(!_bufs.full());
     
-    if (ev.len) {
-        // Enqueue the buffer
-        _bufs.back().len = ev.len;
-        _bufs.push();
-    } else {
-        _usbDataEnd = true;
-    }
+    // Enqueue the buffer
+    _bufs.back().len = ev.len;
+    _bufs.push();
     
     _iceUpdateState();
 }
@@ -325,7 +351,7 @@ void System::_iceHandleQSPIEvent(const QSPI::Signal& ev) {
     Assert(_status == Status::Busy);
     Assert(!_bufs.empty());
     
-    // Pop the buffer, which we just finished sending
+    // Pop the buffer, which we just finished sending over QSPI
     _bufs.pop();
     
     _iceUpdateState();
@@ -383,9 +409,10 @@ void System::_mspWrite(const Cmd& cmd) {
     
     // Update our status
     _usbDataOp = cmd.op;
+    _usbDataRem = cmd.arg.MSPWrite.len;
     _status = Status::Busy;
     
-    // Prepare to receive MSP430 bootloader data
+    // Prepare to receive USB data
     _usbDataRecv();
 }
 
@@ -394,27 +421,6 @@ void System::_mspWriteFinish() {
 }
 
 void System::_mspHandleUSBData(const USB::Data& ev) {
-    Assert(ev.len);
-    Assert(!_bufs.full());
-    Assert(_status == Status::Busy);
-    
-    const bool wasEmpty = _bufs.empty();
-    
-    // Enqueue the buffer
-    {
-        _bufs.back().len = ev.len;
-        _bufs.push();
-    }
-    
-    // Start a SPI transaction when `_bufs.empty()` transitions from 1->0
-    if (wasEmpty) {
-        _qspiWriteBuf();
-    }
-    
-    // Prepare to receive more data if there's space in the queue
-    if (!_bufs.full()) {
-        _usbDataRecv();
-    }
 }
 
 void System::_mspFinish(const Cmd& cmd) {

@@ -30,10 +30,18 @@ USBD_StatusTypeDef USB::cmdRecv() {
     return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
 }
 
+bool USB::cmdRecvUnderway() const {
+    return _cmdRecvUnderway;
+}
+
 USBD_StatusTypeDef USB::dataRecv(void* addr, size_t len) {
     Assert(!_dataRecvUnderway);
     _dataRecvUnderway = true;
     return USBD_LL_PrepareReceive(&_device, Endpoints::DataOut, (uint8_t*)addr, len);
+}
+
+bool USB::dataRecvUnderway() const {
+    return _dataRecvUnderway;
 }
 
 USBD_StatusTypeDef USB::statusSend(const void* data, size_t len) {

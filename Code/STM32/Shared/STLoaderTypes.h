@@ -47,6 +47,7 @@ namespace STLoader {
         union {
             struct {
                 uint32_t addr;
+                uint32_t len;
             } STWrite;
             
             struct {
@@ -54,7 +55,12 @@ namespace STLoader {
             } STFinish;
             
             struct {
+                uint32_t len;
+            } ICEWrite;
+            
+            struct {
                 uint32_t addr;
+                uint32_t len;
             } MSPWrite;
             
             struct {
@@ -63,5 +69,5 @@ namespace STLoader {
             } LEDSet;
         } arg;
     } __attribute__((packed));
-    static_assert(sizeof(Cmd)==5, "Cmd: invalid size");
+    static_assert(sizeof(Cmd)==9, "Cmd: invalid size");
 }

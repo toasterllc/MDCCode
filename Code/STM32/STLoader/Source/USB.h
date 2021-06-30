@@ -7,7 +7,7 @@ class USB : public USBBase<USB> {
 public:
     // Types
     struct MaxPacketSize {
-        static constexpr size_t Cmd        = 8;
+        static constexpr size_t Cmd        = 16;
         static constexpr size_t Data       = 512;
         static constexpr size_t Status     = 8;
     };

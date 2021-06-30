@@ -35,7 +35,7 @@ void USB::init() {
     //   is the maximum packet size for that particular IN endpoint."
     // - "More space allocated in the transmit IN endpoint FIFO results in
     //   better performance on the USB."
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::Control), 16);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::Ctrl), 16);
     HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::CmdOut), 4);
     HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::PixIn), 768);
 }
