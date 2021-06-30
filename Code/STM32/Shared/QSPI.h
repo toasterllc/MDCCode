@@ -26,6 +26,7 @@ public:
     void command(const QSPI_CommandTypeDef& cmd);
     void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len);
     void write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len);
+    bool underway() const;
     
     struct Signal {};
     Channel<Signal, 1> eventChannel;
@@ -43,6 +44,7 @@ private:
     
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
+    bool _underway = false;
     
     using _Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _CS = GPIO<GPIOPortB, GPIO_PIN_6>;

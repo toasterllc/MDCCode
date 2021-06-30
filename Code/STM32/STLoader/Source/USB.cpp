@@ -1,6 +1,7 @@
 #include "USB.h"
 #include "Enum.h"
 #include "STLoaderTypes.h"
+#include "Assert.h"
 using namespace STLoader;
 
 void USB::init() {
@@ -24,10 +25,14 @@ void USB::init() {
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
+    Assert(!_cmdRecvUnderway);
+    _cmdRecvUnderway = true;
     return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
 }
 
 USBD_StatusTypeDef USB::dataRecv(void* addr, size_t len) {
+    Assert(!_dataRecvUnderway);
+    _dataRecvUnderway = true;
     return USBD_LL_PrepareReceive(&_device, Endpoints::DataOut, (uint8_t*)addr, len);
 }
 
@@ -92,6 +97,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
             .data = _cmdBuf,
             .len = dataLen,
         });
+        _cmdRecvUnderway = false;
         break;
     }
     
@@ -100,6 +106,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
         dataChannel.writeTry(Data{
             .len = dataLen,
         });
+        _dataRecvUnderway = false;
         break;
     }}
     

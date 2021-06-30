@@ -83,6 +83,7 @@ void QSPI::reset() {
     
     // Reset channels to clear pending events
     eventChannel.reset();
+    _underway = false;
 }
 
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
@@ -116,6 +117,8 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     // like we want.
     HAL_StatusTypeDef hs = HAL_QSPI_Command_IT(&_device, &cmd);
     Assert(hs == HAL_OK);
+    
+    _underway = true;
 }
 
 void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
@@ -129,6 +132,8 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     
     hs = HAL_QSPI_Receive_DMA(&_device, (uint8_t*)data);
     Assert(hs == HAL_OK);
+    
+    _underway = true;
 }
 
 void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
@@ -142,6 +147,12 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     
     hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)data);
     Assert(hs == HAL_OK);
+    
+    _underway = true;
+}
+
+bool QSPI::underway() const {
+    return _underway;
 }
 
 void QSPI::_isrQSPI() {
@@ -154,14 +165,17 @@ void QSPI::_isrDMA() {
 
 void QSPI::_handleCommandDone() {
     eventChannel.writeTry(Signal{});
+    _underway = false;
 }
 
 void QSPI::_handleReadDone() {
     eventChannel.writeTry(Signal{});
+    _underway = false;
 }
 
 void QSPI::_handleWriteDone() {
     eventChannel.writeTry(Signal{});
+    _underway = false;
 }
 
 void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device) {

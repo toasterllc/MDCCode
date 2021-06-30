@@ -126,23 +126,15 @@ void System::_usbHandleData(const USB::Data& ev) {
     
     switch (_op) {
     case Op::STWrite:
-        _stWriteFinish();
+        _stHandleUSBData(ev);
         break;
     
     case Op::ICEWrite:
-        if (ev.len) {
-            _iceHandleData(ev);
-        } else {
-            _iceWriteFinish();
-        }
+        _iceHandleUSBData(ev);
         break;
     
     case Op::MSPWrite:
-        if (ev.len) {
-            _mspHandleData(ev);
-        } else {
-            _mspWriteFinish();
-        }
+        _mspHandleUSBData(ev);
         break;
     
     default:
@@ -208,6 +200,11 @@ void System::_stFinish(const Cmd& cmd) {
     break;
 }
 
+void System::_stHandleUSBData(const USB::Data& ev) {
+    Assert(_status == Status::Busy);
+    _stWriteFinish();
+}
+
 #pragma mark - ICE40 Bootloader
 void System::_iceWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::ICEWrite);
@@ -216,7 +213,7 @@ void System::_iceWrite(const Cmd& cmd) {
     // Update our status
     _usbDataOp = cmd.op;
     _status = Status::Busy;
-    _iceEndOfData = false;
+    _usbDataEnd = false;
     
     // Configure ICE40 control GPIOs
     _ICECRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -253,13 +250,7 @@ void System::_iceWrite(const Cmd& cmd) {
 
 void System::_iceWriteFinish() {
     Assert(_status == Status::Busy);
-    
-    _iceEndOfData = true;
-    
-    // Short-circuit if there are still buffers being written
-    if (!_bufs.empty()) {
-        return;
-    }
+    Assert(_bufs.empty());
     
     bool ok = false;
     for (int i=0; i<10; i++) {
@@ -268,77 +259,76 @@ void System::_iceWriteFinish() {
         HAL_Delay(1); // Sleep 1 ms
     }
     
-    if (ok) {
-        // Supply >=49 additional clocks (8*7=56 clocks), per the
-        // "iCE40 Programming and Configuration" guide.
-        // These clocks apparently reach the user application. Since this
-        // appears unavoidable, prevent the clocks from affecting the user
-        // application in two ways:
-        //   1. write 0xFF, which the user application must consider as a NOP;
-        //   2. write a byte at a time, causing chip-select to be de-asserted
-        //      between bytes, which must cause the user application to reset
-        //      itself.
-        const uint8_t clockCount = 7;
-        for (int i=0; i<clockCount; i++) {
-            static const uint8_t ff = 0xff;
-            _qspiWrite(&ff, 1);
-            // Wait for write to complete
-            _qspi.eventChannel.read();
-        }
-        
-        _status = Status::OK;
-    
-    } else {
+    if (!ok) {
         // If CDONE isn't high after 10ms, consider it a failure
         _status = Status::Error;
+        return;
     }
+    
+    // Supply >=49 additional clocks (8*7=56 clocks), per the
+    // "iCE40 Programming and Configuration" guide.
+    // These clocks apparently reach the user application. Since this
+    // appears unavoidable, prevent the clocks from affecting the user
+    // application in two ways:
+    //   1. write 0xFF, which the user application must consider as a NOP;
+    //   2. write a byte at a time, causing chip-select to be de-asserted
+    //      between bytes, which must cause the user application to reset
+    //      itself.
+    const uint8_t clockCount = 7;
+    for (int i=0; i<clockCount; i++) {
+        static const uint8_t ff = 0xff;
+        _qspiWrite(&ff, 1);
+        // Wait for write to complete
+        _qspi.eventChannel.read();
+    }
+    
+    _status = Status::OK;
 }
 
-void System::_iceHandleData(const USB::Data& ev) {
-    Assert(ev.len);
-    Assert(!_bufs.full());
-    Assert(_status == Status::Busy);
-    
-    const bool wasEmpty = _bufs.empty();
-    
-    // Enqueue the buffer
-    {
-        _bufs.back().len = ev.len;
-        _bufs.push();
-    }
-    
-    // Start a SPI transaction when `_bufs.empty()` transitions from 1->0
-    if (wasEmpty) {
+void System::_iceUpdateState() {
+    // Start a QSPI transaction if we have data to write and QSPI is idle
+    if (!_bufs.empty() && !_qspi.underway()) {
         _qspiWriteBuf();
     }
     
-    // Prepare to receive more data if there's space in the queue
-    if (!_bufs.full()) {
+    // Prepare to receive more USB data if:
+    //   - we expect more data, and
+    //   - there's space in the queue, and
+    //   - we haven't arranged to receive USB data yet
+    if (!_usbDataEnd && !_bufs.full() && !_usb.dataRecvUnderway()) {
         _usbDataRecv();
     }
+    
+    // If there's no more data coming over USB, and there's no more
+    // data to write, then we're done
+    if (_usbDataEnd && _bufs.empty()) {
+        _iceWriteFinish();
+    }
+}
+
+void System::_iceHandleUSBData(const USB::Data& ev) {
+    Assert(_status == Status::Busy);
+    Assert(!_bufs.full());
+    
+    if (ev.len) {
+        // Enqueue the buffer
+        _bufs.back().len = ev.len;
+        _bufs.push();
+    } else {
+        _usbDataEnd = true;
+    }
+    
+    _iceUpdateState();
 }
 
 void System::_iceHandleQSPIEvent(const QSPI::Signal& ev) {
     Assert(_status == Status::Busy);
     Assert(!_bufs.empty());
-    const bool wasFull = _bufs.full();
     
     // Pop the buffer, which we just finished sending
     _bufs.pop();
     
-    // Prepare to receive more data if we're expecting more, and we were previously full
-    if (!_iceEndOfData && wasFull) {
-        _usbDataRecv();
-    }
-    
-    // Start another SPI transaction if there's more data to write
-    if (!_bufs.empty()) {
-        _qspiWriteBuf();
-    
-    // Otherwise, if we've been notified that there's no more data coming over USB, we're done
-    } else if (_iceEndOfData) {
-        _iceWriteFinish();
-    }
+    _iceUpdateState();
 }
 
 void System::_qspiWriteBuf() {
@@ -403,7 +393,7 @@ void System::_mspWriteFinish() {
     _status = Status::OK;
 }
 
-void System::_mspHandleData(const USB::Data& ev) {
+void System::_mspHandleUSBData(const USB::Data& ev) {
     Assert(ev.len);
     Assert(!_bufs.full());
     Assert(_status == Status::Busy);
