@@ -82,33 +82,17 @@ void System::_usbHandleCmd(const USB::Cmd& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    // STM32: Write data
-    case Op::STWrite: {
-        _stStart(cmd);
-        break;
-    }
+    // STM32
+    case Op::STWrite:   _stWrite(cmd);      break;
+    case Op::STFinish:  _stFinish(cmd);     break;
     
-    // STM32: Reset
-    //   Stash the entry point address for access after we reset,
-    //   Perform a software reset
-    case Op::STReset: {
-        Start.setAppEntryPointAddr(cmd.arg.STReset.entryPointAddr);
-        // Perform software reset
-        HAL_NVIC_SystemReset();
-        break;
-    }
+    // ICE40
+    case Op::ICEWrite:  _iceWrite(cmd);     break;
     
-    // ICE40: Write data
-    case Op::ICEWrite: {
-        _iceStart(cmd);
-        break;
-    }
-    
-    // MSP430: Write data
-    case Op::MSPWrite: {
-        _mspStart(cmd);
-        break;
-    }
+    // MSP430
+    case Op::MSPStart:  _mspStart(cmd);     break;
+    case Op::MSPWrite:  _mspWrite(cmd);     break;
+    case Op::MSPFinish: _mspFinish(cmd);    break;
     
     // Get status
     case Op::StatusGet: {
@@ -142,14 +126,14 @@ void System::_usbHandleData(const USB::Data& ev) {
     
     switch (_op) {
     case Op::STWrite:
-        _stFinish();
+        _stWriteFinish();
         break;
     
     case Op::ICEWrite:
         if (ev.len) {
             _iceHandleData(ev);
         } else {
-            _iceFinish();
+            _iceWriteFinish();
         }
         break;
     
@@ -157,7 +141,7 @@ void System::_usbHandleData(const USB::Data& ev) {
         if (ev.len) {
             _mspHandleData(ev);
         } else {
-            _mspFinish();
+            _mspWriteFinish();
         }
         break;
     
@@ -168,13 +152,19 @@ void System::_usbHandleData(const USB::Data& ev) {
     }
 }
 
+void System::_usbDataRecv() {
+    Assert(!_bufs.full());
+    auto& buf = _bufs.back();
+    _usb.dataRecv(buf.data, buf.cap); // TODO: handle errors
+}
+
 #pragma mark - STM32 Bootloader
-void System::_stStart(const Cmd& cmd) {
+void System::_stWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::STWrite);
-    Assert(_status==Status::Idle || _status==Status::Error);
+    Assert(_status != Status::Busy);
     
     // Update our status
-    _op = cmd.op;
+    _usbDataOp = cmd.op;
     _status = Status::Busy;
     
     void*const addr = (void*)cmd.arg.STWrite.addr;
@@ -202,19 +192,29 @@ void System::_stStart(const Cmd& cmd) {
     _usb.dataRecv(addr, len);
 }
 
-void System::_stFinish() {
+void System::_stWriteFinish() {
     Assert(_status == Status::Busy);
     // Update our status
-    _status = Status::Idle;
+    _status = Status::OK;
+}
+
+void System::_stFinish(const Cmd& cmd) {
+    Assert(cmd.op == Op::STFinish);
+    Assert(_status == Status::Busy);
+    
+    Start.setAppEntryPointAddr(cmd.arg.STFinish.entryPointAddr);
+    // Perform software reset
+    HAL_NVIC_SystemReset();
+    break;
 }
 
 #pragma mark - ICE40 Bootloader
-void System::_iceStart(const Cmd& cmd) {
+void System::_iceWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::ICEWrite);
-    Assert(_status==Status::Idle || _status==Status::Error);
+    Assert(_status != Status::Busy);
     
     // Update our status
-    _op = cmd.op;
+    _usbDataOp = cmd.op;
     _status = Status::Busy;
     _iceEndOfData = false;
     
@@ -248,34 +248,10 @@ void System::_iceStart(const Cmd& cmd) {
     _qspi.eventChannel.read();
     
     // Prepare to receive ICE40 bootloader data
-    _iceDataRecv();
+    _usbDataRecv();
 }
 
-void System::_iceHandleData(const USB::Data& ev) {
-    Assert(ev.len);
-    Assert(!_bufs.full());
-    Assert(_status == Status::Busy);
-    
-    const bool wasEmpty = _bufs.empty();
-    
-    // Enqueue the buffer
-    {
-        _bufs.back().len = ev.len;
-        _bufs.push();
-    }
-    
-    // Start a SPI transaction when `_bufs.empty()` transitions from 1->0
-    if (wasEmpty) {
-        _qspiWriteBuf();
-    }
-    
-    // Prepare to receive more data if there's space in the queue
-    if (!_bufs.full()) {
-        _iceDataRecv();
-    }
-}
-
-void System::_iceFinish() {
+void System::_iceWriteFinish() {
     Assert(_status == Status::Busy);
     
     _iceEndOfData = true;
@@ -310,11 +286,35 @@ void System::_iceFinish() {
             _qspi.eventChannel.read();
         }
         
-        _status = Status::Idle;
+        _status = Status::OK;
     
     } else {
         // If CDONE isn't high after 10ms, consider it a failure
         _status = Status::Error;
+    }
+}
+
+void System::_iceHandleData(const USB::Data& ev) {
+    Assert(ev.len);
+    Assert(!_bufs.full());
+    Assert(_status == Status::Busy);
+    
+    const bool wasEmpty = _bufs.empty();
+    
+    // Enqueue the buffer
+    {
+        _bufs.back().len = ev.len;
+        _bufs.push();
+    }
+    
+    // Start a SPI transaction when `_bufs.empty()` transitions from 1->0
+    if (wasEmpty) {
+        _qspiWriteBuf();
+    }
+    
+    // Prepare to receive more data if there's space in the queue
+    if (!_bufs.full()) {
+        _usbDataRecv();
     }
 }
 
@@ -328,7 +328,7 @@ void System::_iceHandleQSPIEvent(const QSPI::Signal& ev) {
     
     // Prepare to receive more data if we're expecting more, and we were previously full
     if (!_iceEndOfData && wasFull) {
-        _iceDataRecv();
+        _usbDataRecv();
     }
     
     // Start another SPI transaction if there's more data to write
@@ -337,14 +337,8 @@ void System::_iceHandleQSPIEvent(const QSPI::Signal& ev) {
     
     // Otherwise, if we've been notified that there's no more data coming over USB, we're done
     } else if (_iceEndOfData) {
-        _iceFinish();
+        _iceWriteFinish();
     }
-}
-
-void System::_iceDataRecv() {
-    Assert(!_bufs.full());
-    auto& buf = _bufs.back();
-    _usb.dataRecv(buf.data, buf.cap); // TODO: handle errors
 }
 
 void System::_qspiWriteBuf() {
@@ -381,20 +375,62 @@ void System::_qspiWrite(const void* data, size_t len) {
 
 #pragma mark - MSP430 Bootloader
 void System::_mspStart(const Cmd& cmd) {
+    Assert(cmd.op == Op::MSPStart);
+    Assert(_status != Status::Busy);
+    
+    auto s = _msp.connect();
+    if (s != _msp.Status::OK) {
+        _status = Status::Error;
+        return;
+    }
+    
+    _status = Status::OK;
+}
+
+void System::_mspWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPWrite);
-    Assert(_status==Status::Idle || _status==Status::Error);
+    Assert(_status != Status::Busy);
     
     // Update our status
-    _op = cmd.op;
+    _usbDataOp = cmd.op;
     _status = Status::Busy;
+    
+    // Prepare to receive MSP430 bootloader data
+    _usbDataRecv();
+}
+
+void System::_mspWriteFinish() {
+    _status = Status::OK;
 }
 
 void System::_mspHandleData(const USB::Data& ev) {
     Assert(ev.len);
     Assert(!_bufs.full());
     Assert(_status == Status::Busy);
+    
+    const bool wasEmpty = _bufs.empty();
+    
+    // Enqueue the buffer
+    {
+        _bufs.back().len = ev.len;
+        _bufs.push();
+    }
+    
+    // Start a SPI transaction when `_bufs.empty()` transitions from 1->0
+    if (wasEmpty) {
+        _qspiWriteBuf();
+    }
+    
+    // Prepare to receive more data if there's space in the queue
+    if (!_bufs.full()) {
+        _usbDataRecv();
+    }
 }
 
-void System::_mspFinish() {
-    _status = Status::Idle;
+void System::_mspFinish(const Cmd& cmd) {
+    Assert(cmd.op == Op::MSPFinish);
+    Assert(_status != Status::Busy);
+    
+    _msp.disconnect();
+    _status = Status::OK;
 }
