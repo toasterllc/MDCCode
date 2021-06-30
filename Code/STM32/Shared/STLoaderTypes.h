@@ -24,18 +24,20 @@ namespace STLoader {
         None,
         // STM32 Bootloader
         STWrite,
-        STReset,
+        STFinish,
         // ICE40 Bootloader
         ICEWrite,
         // MSP430 Bootloader
+        MSPStart,
         MSPWrite,
+        MSPFinish,
         // Other commands
         StatusGet,
         LEDSet,
     };
     
     enum class Status : uint8_t {
-        Idle,
+        OK,
         Busy,
         Error
     };
@@ -49,7 +51,7 @@ namespace STLoader {
             
             struct {
                 uint32_t entryPointAddr;
-            } STReset;
+            } STFinish;
             
             struct {
                 uint32_t addr;

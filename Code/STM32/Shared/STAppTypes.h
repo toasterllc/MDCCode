@@ -3,7 +3,7 @@
 
 namespace STApp {
     Enum(uint8_t, Endpoint, Endpoints,
-        Control = 0x00,
+        Ctrl    = 0x00,
         // OUT endpoints (high bit 0)
         CmdOut  = 0x01,
         // IN endpoints (high bit 1)
@@ -12,7 +12,7 @@ namespace STApp {
     );
     
     Enum(uint8_t, EndpointIdx, EndpointIdxs,
-        Control = 0x00,
+        Ctrl    = 0x00,
         CmdOut  = 0x01,
         CmdIn   = 0x02,
         PixIn   = 0x03,
