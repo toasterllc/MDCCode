@@ -663,6 +663,8 @@ public:
     }
     
     Status crcVerify() {
-        return (_crc==_crcCalc(_crcAddr, _crcLen) ? Status::OK : Status::Error);
+        const uint16_t ourCRC = _crc;
+        const uint16_t theirCRC = _crcCalc(_crcAddr, _crcLen);
+        return (ourCRC==theirCRC ? Status::OK : Status::Error);
     }
 };
