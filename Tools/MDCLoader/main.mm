@@ -96,8 +96,7 @@ int main(int argc, const char* argv[]) {
     static uint8_t DebugBytes[256*1024];
     
     MDCLoaderDevice& device = devices[0];
-    device.dataOutPipe.writeBuf(DebugBytes, 512);
-    device.dataOutPipe.writeBuf(DebugBytes, 0);
+    device.dataOutPipe.writeBuf(DebugBytes, 513);
     
 //    MDCLoaderDevice& device = devices[0];
 //    device.dataOutPipe.writeBuf(DebugBytes, 13);

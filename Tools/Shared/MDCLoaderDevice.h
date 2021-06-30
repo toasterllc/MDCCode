@@ -24,7 +24,11 @@ public:
         if (interfaces.size() != 1) throw std::runtime_error("invalid number of USB interfaces");
         _interface = interfaces[0];
         
-        dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut);
+        dataOutPipe = USBPipe(
+            _interface,
+            STLoader::EndpointIdxs::DataOut,
+            USBPipe::Options::WriteZeroLengthPacket
+        );
     }
     
     USBPipe dataOutPipe;
