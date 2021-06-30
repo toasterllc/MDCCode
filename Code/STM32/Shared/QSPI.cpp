@@ -89,6 +89,11 @@ void QSPI::reset() {
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     AssertArg(cmd.DataMode == QSPI_DATA_NONE);
     AssertArg(!cmd.NbData);
+    Assert(!_underway);
+    
+    // Update _underway before the interrupt can occur, otherwise `_underway = true`
+    // could occur after the transaction is complete, cloberring the `_underway = false`
+    _underway = true;
     
     // Dummy cycles don't appear to work correctly when no data is transferred.
     // (For some reason, only DummyCycles=0 and DummyCycles=2 work correctly,
@@ -117,8 +122,6 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     // like we want.
     HAL_StatusTypeDef hs = HAL_QSPI_Command_IT(&_device, &cmd);
     Assert(hs == HAL_OK);
-    
-    _underway = true;
 }
 
 void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
@@ -126,14 +129,17 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     AssertArg(cmd.NbData == len);
     AssertArg(data);
     AssertArg(len);
+    Assert(!_underway);
+    
+    // Update _underway before the interrupt can occur, otherwise `_underway = true`
+    // could occur after the transaction is complete, cloberring the `_underway = false`
+    _underway = true;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
     
     hs = HAL_QSPI_Receive_DMA(&_device, (uint8_t*)data);
     Assert(hs == HAL_OK);
-    
-    _underway = true;
 }
 
 void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
@@ -141,14 +147,17 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     AssertArg(cmd.NbData == len);
     AssertArg(data);
     AssertArg(len);
+    Assert(!_underway);
+    
+    // Update _underway before the interrupt can occur, otherwise `_underway = true`
+    // could occur after the transaction is complete, cloberring the `_underway = false`
+    _underway = true;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
     
     hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)data);
     Assert(hs == HAL_OK);
-    
-    _underway = true;
 }
 
 bool QSPI::underway() const {

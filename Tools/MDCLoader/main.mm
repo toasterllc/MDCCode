@@ -90,12 +90,12 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
         printf("Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
         
         Status status = device.stWrite(dataAddr, data, dataLen);
-        if (status != Status::Idle) throw std::runtime_error("stWrite failed");
+        if (status != Status::OK) throw std::runtime_error("stWrite failed");
     }
     
     // Reset the device, triggering it to load the program we just wrote
     printf("Resetting device\n");
-    device.stReset(entryPointAddr);
+    device.stFinish(entryPointAddr);
     printf("Done\n");
 }
 
@@ -106,7 +106,7 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     printf("Writing %ju bytes\n", (uintmax_t)mmap.len());
     Status status = device.iceWrite(mmap.data(), mmap.len());
     
-    printf("%s\n", (status==Status::Idle ? "Success" : "Failed"));
+    printf("%s\n", (status==Status::OK ? "Success" : "Failed"));
 }
 
 int main(int argc, const char* argv[]) {

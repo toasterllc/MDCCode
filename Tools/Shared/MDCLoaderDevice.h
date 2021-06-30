@@ -25,10 +25,7 @@ public:
         _interface = interfaces[0];
         
         cmdOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::CmdOut);
-        
-        dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut,
-            USBPipe::Options::WriteZeroLengthPacket);
-        
+        dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut);
         statusInPipe = USBPipe(_interface, STLoader::EndpointIdxs::StatusIn);
     }
     
@@ -64,6 +61,7 @@ public:
             .arg = {
                 .STWrite = {
                     .addr = addr,
+                    .len = (uint32_t)len,
                 },
             },
         };
@@ -78,12 +76,12 @@ public:
         }
     }
     
-    void stReset(uint32_t entryPointAddr) {
+    void stFinish(uint32_t entryPointAddr) {
         using namespace STLoader;
         const Cmd cmd = {
-            .op = Op::STReset,
+            .op = Op::STFinish,
             .arg = {
-                .STReset = {
+                .STFinish = {
                     .entryPointAddr = entryPointAddr,
                 },
             },
@@ -96,13 +94,16 @@ public:
         using namespace STLoader;
         const Cmd cmd = {
             .op = Op::ICEWrite,
+            .arg = {
+                .ICEWrite = {
+                    .len = (uint32_t)len,
+                },
+            },
         };
         // Send command
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        // Signal end-of-data
-        dataOutPipe.writeBuf(nullptr, 0);
         // Wait for write to complete and return status
         for (;;) {
             const STLoader::Status s = statusGet();
@@ -117,6 +118,7 @@ public:
             .arg = {
                 .MSPWrite = {
                     .addr = addr,
+                    .len = (uint32_t)len,
                 },
             },
         };
@@ -124,8 +126,6 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        // Signal end-of-data
-        dataOutPipe.writeBuf(nullptr, 0);
         // Wait for write to complete and return status
         for (;;) {
             const STLoader::Status s = statusGet();
