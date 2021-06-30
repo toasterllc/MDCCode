@@ -25,7 +25,10 @@ public:
         _interface = interfaces[0];
         
         cmdOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::CmdOut);
-        dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut);
+        
+        dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut,
+            USBPipe::Options::WriteZeroLengthPacket);
+        
         statusInPipe = USBPipe(_interface, STLoader::EndpointIdxs::StatusIn);
     }
     
