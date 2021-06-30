@@ -25,7 +25,11 @@ public:
     void init();
     
     USBD_StatusTypeDef cmdRecv();
+    bool cmdRecvUnderway() const;
+    
     USBD_StatusTypeDef dataRecv(void* addr, size_t len);
+    bool dataRecvUnderway() const;
+    
     USBD_StatusTypeDef statusSend(const void* data, size_t len);
     
     // Channels
@@ -52,6 +56,8 @@ protected:
     
 private:
     uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    bool _cmdRecvUnderway = false;
+    bool _dataRecvUnderway = false;
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;

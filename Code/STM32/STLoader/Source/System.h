@@ -43,8 +43,8 @@ private:
     using _ICESPICS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
     STLoader::Op _usbDataOp = STLoader::Op::None;
+    bool _usbDataEnd = false;
     STLoader::Status _status __attribute__((aligned(4))) = STLoader::Status::OK; // Needs to be aligned to send via USB
-    bool _iceEndOfData = false;
     
     uint8_t _buf0[1024] __attribute__((aligned(4))); // Needs to be aligned to send via USB
     uint8_t _buf1[1024] __attribute__((aligned(4)));
