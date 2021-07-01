@@ -561,15 +561,24 @@ private:
     }
     
     void _jtagEnd() {
-        // Deassert TEST
-        Test::Write(0);
-        _DelayMs(1);
+        // Release device from JTAG control
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        // Perform a reset
+        _drShift<16>(0x0C01);
+        _drShift<16>(0x0401);
+        _irShift(_IR_CNTRL_SIG_RELEASE);
         
-        // Pulse reset
-        Rst_::Write(0);
-        _DelayUs(0);
-        Rst_::Write(1);
-        _DelayUs(0);
+        // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
+        {
+            Test::Write(0);
+            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        }
+        
+        // TODO: use for Rev5, when we have real level shifting
+        {
+//            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        }
     }
     
 public:

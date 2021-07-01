@@ -6,32 +6,38 @@
 int main() {
     // ## Stop watchdog timer
     {
-        // *0x01CC = 0x5a00 | 0x0080;
         WDTCTL = WDTPW | WDTHOLD;
     }
     
+    // ## Unlock GPIOs
+    {
+        PM5CTL0 &= ~LOCKLPM5;
+    }
+    
+    // // ## Set MCLK = 16MHz
+    // {
+    //     // Configure one FRAM waitstate as required by the device datasheet for MCLK
+    //     // operation beyond 8MHz _before_ configuring the clock system.
+    //     FRCTL0 = FRCTLPW | NWAITS_1; // Change the NACCESS_x value to add the right amount of waitstates
+    //
+    //     DCOCTL = 0;
+    //     BCSCTL1 = CALBC1_16MHZ;
+    //     BCSCTL2 = 0;
+    //     DCOCTL = CALDCO_16MHZ;
+    // }
+    
     // ## Reset pin states
     {
-        // PADIR   = 0x0004;   // *(PA_BASE+OFS_PADIR) = 0x04  =>  *0x0204 = 0x0004
-        // PAOUT   = 0x0004;   // *(PA_BASE+OFS_PAOUT) = 0x04  =>  *0x0202 = 0x0004
-        //
-        // PAOUT   = 0x00;
-        // PADIR   = 0x04;
-        // PASEL0  = 0x00;
-        // PASEL1  = 0x00;
-        // PAREN   = 0x00;
-        
-        // P1OUT   = 0x00;
-        // P1DIR   = 0xFF;
-        // P1SEL   = 0x00;
-        // P1SEL2  = 0x00;
-        // P1REN   = 0x00;
-        //
-        // P2OUT   = 0x00;
-        // P2DIR   = 0xFF;
-        // P2SEL   = 0x00;
-        // P2SEL2  = 0x00;
-        // P2REN   = 0x00;
+        PAOUT   = 1<<14;
+        PADIR   = 1<<14;
+        PASEL0  = 0x0000;
+        PASEL1  = 0x0000;
+        PAREN   = 0x0000;
+    }
+    
+    for (;;) {
+        PAOUT ^= 1<<14;
+        // __delay_cycles(100000);
     }
     
     return 0;
