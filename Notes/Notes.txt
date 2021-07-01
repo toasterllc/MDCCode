@@ -1,12 +1,13 @@
 - Rev4 Todo
     
-    - STLoader: add interface for writing MSP430 firmware
-    
     - Get crystal working with MSP430
     
     - Get LVS SD initialization test working
     
     - Get saving images to SD card working, especially with LVS SD initialization
+    
+    √ STLoader: add interface for writing MSP430 firmware
+        √ We ended up overhauling everything and didn't end up adding a new interface, but MSP430 flashing is working well
     
     √ Don't we need to tell the image sensor the input frequency?
         Yes, updated image sensor configuration in MDCDevice.h
