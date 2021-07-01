@@ -1,10 +1,10 @@
 - Rev4 Todo
     
-    - Get crystal working with MSP430
-    
     - Get LVS SD initialization test working
     
     - Get saving images to SD card working, especially with LVS SD initialization
+    
+    √ Get crystal working with MSP430
     
     √ STLoader: add interface for writing MSP430 firmware
         √ We ended up overhauling everything and didn't end up adding a new interface, but MSP430 flashing is working well
