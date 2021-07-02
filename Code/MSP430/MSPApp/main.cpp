@@ -75,49 +75,6 @@ static void _sysInit() {
     }
 }
 
-// uint8_t RXData = 0;
-// uint8_t TXData = 0;
-//
-// __interrupt __attribute__((interrupt(USCI_A0_VECTOR)))
-// static void _isrUSCIA0() {
-//     switch (UCA0IV) {
-//     case USCI_SPI_UCRXIFG:
-//         RXData = UCA0RXBUF;
-//         UCA0IFG &= ~UCRXIFG;
-//         // Wake up to setup next TX
-//         __bic_SR_register_on_exit(LPM0_bits);
-//         break;
-//
-//     case USCI_SPI_UCTXIFG:
-//         UCA0TXBUF = TXData;
-//         UCA0IE &= ~UCTXIE;
-//         break;
-//
-//     default:
-//         break;
-//     }
-// }
-
-
-
-// static void tx(uint8_t b) {
-//     // Clear UCRXIFG so we can tell when tx/rx is complete
-//     UCA0IFG &= ~UCRXIFG;
-//     // Wait until `UCA0TXBUF` can accept more data
-//     while (!(UCA0IV & UCTXIFG));
-//     // Start the SPI transaction
-//     UCA0TXBUF = b;
-// }
-//
-// // Wait for tx to complete
-// static void txwait() {
-//     // Wait for UCRXIFG, not UCTXIFG! UCTXIFG signifies that UCA0TXBUF
-//     // can accept more data, not transfer completion. UCRXIFG signifies
-//     // rx completion, which implies tx completion.
-//     while (!(UCA0IV & UCRXIFG));
-// }
-
-
 static uint8_t txrx(uint8_t b) {
     // Wait until `UCA0TXBUF` can accept more data
     while (!(UCA0IFG & UCTXIFG));
@@ -132,29 +89,6 @@ static uint8_t txrx(uint8_t b) {
     while (!(UCA0IFG & UCRXIFG));
     return UCA0RXBUF;
 }
-
-// static uint8_t rx() {
-//     // Dummy write
-//     tx(0xFF);
-//     //
-//
-//     UCA0TXBUF = b;
-//     while (!(UCA0IV & UCTXIFG));
-// }
-
-// template <typename... Bs>
-// void tx(uint8_t b, Bs... bs) {
-//     tx(b);
-//     tx(bs...);
-// }
-//
-// template <size_t Len>
-// void tx(uint8_t (&bs)[Len]) {
-//     for (uint8_t b : bs) {
-//         tx(b);
-//     }
-// }
-
 
 static void txrx(const ICE40::Msg& msg, ICE40::Resp& resp) {
     // PA.4 = UCA0SIMO
@@ -189,8 +123,6 @@ static void txrx(const ICE40::Msg& msg) {
     ICE40::Resp resp;
     txrx(msg, resp);
 }
-
-
 
 int main() {
     _sysInit();
