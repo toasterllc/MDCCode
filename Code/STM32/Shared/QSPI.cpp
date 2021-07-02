@@ -93,6 +93,7 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     
     // Update _underway before the interrupt can occur, otherwise `_underway = true`
     // could occur after the transaction is complete, cloberring the `_underway = false`
+    // assignment in the completion interrupt handler.
     _underway = true;
     
     // Dummy cycles don't appear to work correctly when no data is transferred.
@@ -133,6 +134,7 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     
     // Update _underway before the interrupt can occur, otherwise `_underway = true`
     // could occur after the transaction is complete, cloberring the `_underway = false`
+    // assignment in the completion interrupt handler.
     _underway = true;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
@@ -151,6 +153,7 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     
     // Update _underway before the interrupt can occur, otherwise `_underway = true`
     // could occur after the transaction is complete, cloberring the `_underway = false`
+    // assignment in the completion interrupt handler.
     _underway = true;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
