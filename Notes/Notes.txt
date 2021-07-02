@@ -1,10 +1,10 @@
 - Rev4 Todo
     
-    - Get MSP430 comms working with ICE40
-    
     - Get LVS SD initialization test working
     
     - Get saving images to SD card working, especially with LVS SD initialization
+    
+    √ Get MSP430 comms working with ICE40
     
     √ Get crystal working with MSP430
     
