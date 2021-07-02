@@ -36,7 +36,10 @@ module Top(
     // ====================
     // SPI State Machine
     // ====================
-    localparam MsgCycleCount = `Msg_Len-2;
+    localparam TurnaroundDelay = 8;
+    localparam TurnaroundInherentDelay = 4;
+    localparam TurnaroundExtraDelay = TurnaroundDelay-TurnaroundInherentDelay;
+    localparam MsgCycleCount = `Msg_Len+TurnaroundExtraDelay-2;
     localparam RespCycleCount = `Resp_Len-1;
     
     reg[`Msg_Len-1:0] spi_dataInReg = 0;
@@ -44,6 +47,7 @@ module Top(
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dataInReg[`Msg_Arg_Bits];
     reg[`RegWidth2(MsgCycleCount,RespCycleCount)-1:0] spi_dataCounter = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
+    reg[TurnaroundExtraDelay-1:0] spi_dataInDelayed = 0;
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
@@ -51,7 +55,8 @@ module Top(
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
     always @(posedge spi_clk) begin
-        spi_dataInReg <= spi_dataInReg<<1|spi_dataIn;
+        spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataIn;
+        spi_dataInReg <= spi_dataInReg<<1|`LeftBit(spi_dataInDelayed,0);
         spi_dataCounter <= spi_dataCounter-1;
         spi_dataOutEn <= 0;
         spi_resp <= spi_resp<<1|1'b1;
@@ -81,6 +86,8 @@ module Top(
             // Echo
             `Msg_Type_Echo: begin
                 $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                // spi_resp <= 64'hxxxxxxxx_xxxxxxxx;
+                // spi_resp <= 64'h12345678_ABCDEF12;
                 spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
             end
             
@@ -155,8 +162,8 @@ module Testbench();
         
         spi_dataOutEn = 0;
         
-        // Dummy cycles
-        for (i=0; i<4; i++) begin
+        // Turnaround delay cycles
+        for (i=0; i<8; i++) begin
             #(ice_msp_spi_clk_HALF_PERIOD);
             ice_msp_spi_clk = 1;
             #(ice_msp_spi_clk_HALF_PERIOD);
