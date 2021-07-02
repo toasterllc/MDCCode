@@ -5,8 +5,10 @@
 #include <cstddef>
 #include "ICE40.h"
 
+constexpr uint32_t MCLKFreqHz = 16000000;
+constexpr uint32_t SPIResetThresholdUs = 10;
+
 static void _clockInit() {
-    constexpr uint32_t MCLKFreqHz = 16000000;
     constexpr uint32_t XT1FreqHz = 32768;
     
     // Configure one FRAM wait state, as required by the device datasheet for MCLK > 8MHz.
@@ -193,6 +195,19 @@ static void txrx(const ICE40::Msg& msg) {
 int main() {
     _sysInit();
     
+    // Reset the ICE40 SPI state machine by asserting ice_msp_spi_clk for 10us
+    {
+        // PA.6 = GPIO output
+        PAOUT  &= ~BIT6;
+        PADIR  |=  BIT6;
+        PASEL1 &= ~BIT6;
+        PASEL0 &= ~BIT6;
+        
+        PAOUT  |=  BIT6;
+        __delay_cycles((SPIResetThresholdUs*MCLKFreqHz) / 1000000);
+        PAOUT  &= ~BIT6;
+    }
+    
     // PA.3 = GPIO output
     PAOUT  &= ~BIT3;
     PADIR  |=  BIT3;
@@ -229,17 +244,10 @@ int main() {
     // De-assert USCI reset
     UCA0CTLW0 &= ~UCSWRST;
     
-    // // Reset the ICE40 SPI state machine by clocking lots of 0xFF's
-    // for (uint8_t i=0; i<8; i++) {
-    //     const ICE40::LEDSetMsg msg(i);
-    //     txrx(msg);
-    //     // __delay_cycles(16000000);
-    // }
-    
     for (uint8_t i=0;; i++) {
         const ICE40::LEDSetMsg msg(i);
         txrx(msg);
-        __delay_cycles(16000000);
+        __delay_cycles(1600000);
     }
     
     return 0;
