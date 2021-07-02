@@ -46,13 +46,6 @@ private:
     void _statusGet(const STLoader::Cmd& cmd);
     void _ledSet(const STLoader::Cmd& cmd);
     
-    
-    
-    
-    
-    
-    
-    
     USB _usb;
     QSPI _qspi;
     using _ICECRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;

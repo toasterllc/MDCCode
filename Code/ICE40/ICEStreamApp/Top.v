@@ -419,7 +419,7 @@ module Top(
     SB_IO #(
         .PIN_TYPE(6'b0000_01),
         .PULLUP(1'b1)
-    ) SB_IO_spi_cs (
+    ) SB_IO_ice_st_spi_cs_ (
         .PACKAGE_PIN(ice_st_spi_cs_),
         .D_IN_0(spi_cs_tmp_)
     );
@@ -433,7 +433,7 @@ module Top(
         SB_IO #(
             .PIN_TYPE(6'b1101_00),
             .PULLUP(1'b1)
-        ) SB_IO_sd_cmd (
+        ) SB_IO_ice_st_spi_d (
             .INPUT_CLK(ice_st_spi_clk),
             .OUTPUT_CLK(ice_st_spi_clk),
             .PACKAGE_PIN(ice_st_spi_d[i]),
