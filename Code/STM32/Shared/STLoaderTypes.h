@@ -11,13 +11,13 @@ namespace STLoader {
         DataOut     = 0x02,
         
         // IN endpoints (high bit 1)
-        StatusIn    = 0x81,
+        RespIn      = 0x81,
     );
     
     Enum(uint8_t, EndpointIdx, EndpointIdxs,
         CmdOut = 1,
         DataOut,
-        StatusIn,
+        RespIn,
     );
     
     enum class Op : uint8_t {
@@ -37,7 +37,6 @@ namespace STLoader {
         MSPDebugWriteMem,
         MSPDebugDisconnect,
         // Other commands
-        StatusGet,
         LEDSet,
     };
     

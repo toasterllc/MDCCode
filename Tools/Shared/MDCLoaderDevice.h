@@ -26,32 +26,7 @@ public:
         
         cmdOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::CmdOut);
         dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut);
-        statusInPipe = USBPipe(_interface, STLoader::EndpointIdxs::StatusIn);
-    }
-    
-    void ledSet(uint8_t idx, bool on) {
-        using namespace STLoader;
-        Cmd cmd = {
-            .op = Op::LEDSet,
-            .arg = {
-                .LEDSet = {
-                    .idx = idx,
-                    .on = on,
-                },
-            },
-        };
-        cmdOutPipe.write(cmd);
-    }
-    
-    STLoader::Status statusGet() {
-        using namespace STLoader;
-        // Request status
-        const Cmd cmd = { .op = Op::StatusGet };
-        cmdOutPipe.write(cmd);
-        // Read status
-        Status status;
-        statusInPipe.read(status);
-        return status;
+        respInPipe = USBPipe(_interface, STLoader::EndpointIdxs::RespIn);
     }
     
     void stWrite(uint32_t addr, const void* data, size_t len) {
@@ -69,7 +44,7 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        _completeOrThrow("STWrite command failed");
+        _waitOrError("STWrite command failed");
     }
     
     void stFinish(uint32_t entryPointAddr) {
@@ -100,7 +75,7 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        _completeOrThrow("ICEWrite command failed");
+        _waitOrError("ICEWrite command failed");
     }
     
     void mspStart() {
@@ -110,7 +85,7 @@ public:
         };
         // Send command
         cmdOutPipe.write(cmd);
-        _completeOrThrow("MSPStart command failed");
+        _waitOrError("MSPStart command failed");
     }
     
     void mspWrite(uint32_t addr, const void* data, size_t len) {
@@ -128,7 +103,7 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        _completeOrThrow("MSPWrite command failed");
+        _waitOrError("MSPWrite command failed");
     }
     
     void mspFinish() {
@@ -138,21 +113,35 @@ public:
         };
         // Send command
         cmdOutPipe.write(cmd);
-        _completeOrThrow("MSPFinish command failed");
+        _waitOrError("MSPFinish command failed");
+    }
+    
+    void ledSet(uint8_t idx, bool on) {
+        using namespace STLoader;
+        Cmd cmd = {
+            .op = Op::LEDSet,
+            .arg = {
+                .LEDSet = {
+                    .idx = idx,
+                    .on = on,
+                },
+            },
+        };
+        cmdOutPipe.write(cmd);
+        _waitOrError("LEDSet command failed");
     }
     
     USBPipe cmdOutPipe;
     USBPipe dataOutPipe;
-    USBPipe statusInPipe;
+    USBPipe respInPipe;
     
 private:
     USBInterface _interface;
     
-    void _completeOrThrow(const char* errMsg) {
+    void _waitOrError(const char* errMsg) {
         // Wait for completion and throw on failure
-        STLoader::Status s = STLoader::Status::OK;
-        do s = statusGet();
-        while (s == STLoader::Status::Busy);
+        STLoader::Status s;
+        respInPipe.read(s);
         if (s != STLoader::Status::OK) throw std::runtime_error(errMsg);
     }
 };
