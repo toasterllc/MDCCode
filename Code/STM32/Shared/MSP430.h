@@ -1,4 +1,6 @@
 #pragma once
+#include <string.h>
+#include <type_traits>
 #include "GPIO.h"
 #include "IRQState.h"
 #include "Assert.h"
@@ -48,12 +50,8 @@ private:
         HAL_Delay(ms);
     }
     
-    static bool _AlignedAddr(uint32_t addr) {
-        return !(addr % sizeof(uint16_t));
-    }
-    
     static bool _FRAMAddr(uint32_t addr) {
-        return addr>=0xE300 && addr<=0xFFFF;
+        return addr>=0xE300 && addr<=0xFFFE;
     }
     
     using _TCK = Test;
@@ -220,7 +218,7 @@ private:
     
     uint16_t _deviceID() {
         const uint32_t deviceIDAddr = _deviceIDAddr()+4;
-        const uint16_t deviceID = _read(deviceIDAddr);
+        const uint16_t deviceID = _read16(deviceIDAddr);
         return deviceID;
     }
     
@@ -276,7 +274,7 @@ private:
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        _write(0x01CC, 0x5A80);
+        _write16(0x01CC, 0x5A80);
         
         // Check if device is in Full-Emulation-State and return status
         if (!_fullEmulationState()) return false;
@@ -296,12 +294,12 @@ private:
         constexpr uint16_t Password = 0xA500;
         constexpr uint16_t MPUMask = 0x0003;
         constexpr uint16_t MPUDisabled = 0x0000;
-        uint16_t reg = _read(_SYSCFG0Addr);
+        uint16_t reg = _read16(_SYSCFG0Addr);
         reg &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
         reg |= (Password|MPUDisabled); // Password
-        _write(_SYSCFG0Addr, reg);
+        _write16(_SYSCFG0Addr, reg);
         // Verify that the MPU protection bits are cleared
-        return (_read(_SYSCFG0Addr)&MPUMask) == MPUDisabled;
+        return (_read16(_SYSCFG0Addr)&MPUMask) == MPUDisabled;
     }
     
     // CPU must be in Full-Emulation-State
@@ -349,8 +347,10 @@ private:
         _crc ^= val;
     }
     
-    // TODO: `len` is word count, not byte count. what to do?
     uint16_t _crcCalc(uint32_t addr, size_t len) {
+        AssertArg(!(addr % 2)); // Address must be 16-bit aligned
+        AssertArg(!(len % 2)); // Length must be 16-bit aligned
+        
         _pcSet(addr);
         _tclkSet(1);
         
@@ -362,7 +362,7 @@ private:
         
         _irShift(_IR_DATA_PSA);
         
-        for (size_t i=0; i<len; i++) {
+        for (size_t i=0; i<len; i+=2) {
             _tclkSet(0);
             _sbwio(1, 1);
             // <- Select DR-Scan
@@ -383,60 +383,94 @@ private:
         return _drShift<16>(0);
     }
     
+    template <typename T>
+    T _read(uint32_t addr) {
+        static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
+        AssertArg(!(addr % sizeof(T))); // Address must be naturally aligned
+        
+        // This is the 'quick' read implementation, because the non-quick
+        // version doesn't appear to work with some addresses. (Specifically,
+        // the device ID address, 0x1A04, always returns 0x3FFF.)
+        // We'd prefer the non-quick version since it explicitly supports
+        // byte reads in addition to word reads, while it's unclear whether
+        // the quick version supports byte reads.
+        // However byte reads appear to work fine with the quick version
+        // (including at the end of the address space, and at the start/end
+        // of regions).
+        // In addition, unaligned word reads also appear to work, even
+        // across different region types (FRAM and ROM).
+        _pcSet(addr);
+        _tclkSet(1);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0511 : 0x0501);
+        _irShift(_IR_ADDR_CAPTURE);
+        _irShift(_IR_DATA_QUICK);
+        _tclkSet(1);
+        _tclkSet(0);
+        
+        if constexpr (std::is_same_v<T,uint8_t>) {
+            if (addr % 2)   return _drShift<8>(0);
+            else            return _drShift<16>(0) & 0x00FF;
+        } else {
+            return _drShift<16>(0);
+        }
+    }
+    
+    uint8_t _read8(uint32_t addr) {
+        return _read<uint8_t>(addr);
+    }
+    
+    uint16_t _read16(uint32_t addr) {
+        return _read<uint16_t>(addr);
+    }
+    
     // General-purpose read
     //   
     //   Works for: peripherals, RAM, FRAM
     //   
     //   This is the 'quick' read implementation suggested by JTAG guide
-    void _read(uint32_t addr, void* dst, size_t len) {
-        if (addr % 2) {
-            _pcSet(addr);
-            _tclkSet(1);
-            _irShift(_IR_CNTRL_SIG_16BIT);
-            _drShift<16>(0x0501);
-            _irShift(_IR_ADDR_CAPTURE);
-            _irShift(_IR_DATA_QUICK);
-            
-            for (; len; len--) {
-                _tclkSet(1);
-                _tclkSet(0);
-                *dst = _drShift<16>(0);
+    void _read(uint32_t addr, uint8_t* dst, size_t len) {
+        while (len) {
+            // Read first/last byte
+            if (addr%2 || len==1) {
+                *dst = _read8(addr);
+                addr++;
                 dst++;
+                len--;
+            }
+            
+            // Read 16-bit words ('quick' implementation)
+            if (len > 1) {
+                _pcSet(addr);
+                _tclkSet(1);
+                _irShift(_IR_CNTRL_SIG_16BIT);
+                _drShift<16>(0x0501);
+                _irShift(_IR_ADDR_CAPTURE);
+                _irShift(_IR_DATA_QUICK);
+                
+                while (len > 1) {
+                    _tclkSet(1);
+                    _tclkSet(0);
+                    
+                    const uint16_t w = _drShift<16>(0);
+                    memcpy(dst, &w, sizeof(w));
+                    addr += 2;
+                    dst += 2;
+                    len -= 2;
+                }
             }
         }
-        
-        
-        _pcSet(addr);
-        _tclkSet(1);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
-        _irShift(_IR_ADDR_CAPTURE);
-        _irShift(_IR_DATA_QUICK);
-        
-        for (; len; len--) {
-            _tclkSet(1);
-            _tclkSet(0);
-            *dst = _drShift<16>(0);
-            dst++;
-        }
     }
     
-    uint16_t _read(uint32_t addr) {
-        uint16_t r = 0;
-        _read(addr, &r, sizeof(r));
-        return r;
-    }
-    
-    // General-purpose, single-word write
-    //   
-    //   Works for: peripherals, RAM, FRAM
-    //   
-    //   This is the 'non-quick' write implementation suggested by JTAG guide
-    void _write(uint32_t addr, uint16_t val) {
+    template <typename T>
+    void _write(uint32_t addr, T val) {
+        static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
+        AssertArg(!(addr % sizeof(T))); // Address must be naturally aligned
+        
         // Activate write mode (clear read bit in JTAG control register)
         _tclkSet(0);
         _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0500);
+        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0510 : 0x0500);
         
         // Shift address to write to
         _irShift(_IR_ADDR_16BIT);
@@ -456,18 +490,41 @@ private:
         _tclkSet(1);
     }
     
+    void _write8(uint32_t addr, uint8_t val) {
+        _write<uint8_t>(addr, val);
+    }
+    
+    void _write16(uint32_t addr, uint16_t val) {
+        _write<uint16_t>(addr, val);
+    }
+    
     // General-purpose write
     //   
     //   Works for: peripherals, RAM, FRAM
     //   
     //   This is the 'non-quick' write implementation suggested by JTAG guide
-    void _write(uint32_t addr, const uint16_t* src, size_t len) {
+    void _write(uint32_t addr, const uint8_t* src, size_t len) {
         while (len) {
-            _crcUpdate(*src);
-            _write(addr, *src);
-            addr += 2;
-            src++;
-            len--;
+            // Write first/last byte
+            if (addr%2 || len==1) {
+                _write8(addr, *src);
+                addr++;
+                src++;
+                len--;
+            }
+            
+            // Write 16-bit words
+            if (len > 1) {
+                uint16_t w = 0;
+                memcpy(&w, src, sizeof(w));
+                
+                _write16(addr, w);
+                
+                _crcUpdate(w);
+                addr += 2;
+                src += 2;
+                len -= 2;
+            }
         }
     }
     
@@ -484,31 +541,49 @@ private:
     //   This technique has been confirmed to fail in these situations:
     //   - Writing to RAM (has no effect)
     //   - Writing to peripherals (clears the preceding word)
-    void _framWrite(uint32_t addr, const uint16_t* src, size_t len) {
-        _pcSet(addr-2);
-        _tclkSet(1);
-        
-        // Activate write mode (clear read bit in JTAG control register)
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0500);
-        _irShift(_IR_DATA_QUICK);
-        _tclkSet(0);
-        
-        for (; len; len--) {
-            _crcUpdate(*src);
+    void _framWrite(uint32_t addr, const uint8_t* src, size_t len) {
+        while (len) {
+            // Write first/last byte
+            if (addr%2 || len==1) {
+                _write8(addr, *src);
+                addr++;
+                src++;
+                len--;
+            }
             
-            _tclkSet(1);
-            _drShift<16>(*src);
-            src++;
-            _tclkSet(0);
+            // Write 16-bit words ('quick' implementation)
+            if (len > 1) {
+                _pcSet(addr-2);
+                _tclkSet(1);
+                
+                // Activate write mode (clear read bit in JTAG control register)
+                _irShift(_IR_CNTRL_SIG_16BIT);
+                _drShift<16>(0x0500);
+                _irShift(_IR_DATA_QUICK);
+                _tclkSet(0);
+                
+                while (len > 1) {
+                    uint16_t w = 0;
+                    memcpy(&w, src, sizeof(w));
+                    
+                    _tclkSet(1);
+                    _drShift<16>(w);
+                    _tclkSet(0);
+                    
+                    _crcUpdate(w);
+                    addr += 2;
+                    src += 2;
+                    len -= 2;
+                }
+                
+                // Deactivate write mode (set read bit in JTAG control register)
+                _irShift(_IR_CNTRL_SIG_16BIT);
+                _drShift<16>(0x0501);
+                _tclkSet(1);
+                _tclkSet(0);
+                _tclkSet(1);
+            }
         }
-        
-        // Deactivate write mode (set read bit in JTAG control register)
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
     }
     
     bool _jmbErase() {
@@ -683,25 +758,25 @@ public:
     }
     
     uint16_t read(uint32_t addr) {
-        return _read(addr);
+        return _read16(addr);
     }
     
     void read(uint32_t addr, void* dst, size_t len) {
-        _read(addr, dst, len);
+        _read(addr, (uint8_t*)dst, len);
     }
     
     void write(uint32_t addr, uint16_t val) {
-        _write(addr, val);
+        _write16(addr, val);
     }
     
     void write(uint32_t addr, const void* src, size_t len) {
         if (!_crcStarted) _crcStart(addr);
-        if (_FRAMAddr(addr) && _FRAMAddr(addr+(len-1)*2)) {
+        if (_FRAMAddr(addr) && _FRAMAddr(addr+len-1)) {
             // framWrite() is a write implementation that's faster than the
             // general-purpose write(), but only works for FRAM memory regions
-            _framWrite(addr, src, len);
+            _framWrite(addr, (uint8_t*)src, len);
         } else {
-            _write(addr, src, len);
+            _write(addr, (uint8_t*)src, len);
         }
         _crcLen += len;
     }
