@@ -53,7 +53,7 @@ private:
     }
     
     static bool _FRAMAddr(uint32_t addr) {
-        return addr>=0xE300 && addr<=0xFFFE;
+        return addr>=0xE300 && addr<=0xFFFF;
     }
     
     using _TCK = Test;

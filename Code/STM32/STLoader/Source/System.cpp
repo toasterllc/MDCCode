@@ -48,7 +48,7 @@ void System::_handleEvent() {
         _usbHandleCmd(*x);
     
     } else if (auto x = _usb.dataRecvChannel.readSelect()) {
-        _usbHandleData(*x);
+        _usbHandleDataRecv(*x);
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
         _iceHandleQSPIEvent(*x);
@@ -101,14 +101,11 @@ void System::_usbHandleCmd(const USB::Cmd& ev) {
     // ICE40 Bootloader
     case Op::ICEWrite:              _iceWrite(cmd);             break;
     // MSP430 Bootloader
-    case Op::MSPStart:              _mspStart(cmd);             break;
-    case Op::MSPWrite:              _mspWrite(cmd);             break;
-    case Op::MSPFinish:             _mspFinish(cmd);            break;
+    case Op::MSPConnect:            _mspConnect(cmd);           break;
+    case Op::MSPRead:               _mspRead(cmd);           break;
+    case Op::MSPWrite:              _mspWrite(cmd);          break;
+    case Op::MSPDisconnect:         _mspDisconnect(cmd);        break;
     // MSP430 Debug
-    case Op::MSPDebugConnect:       _mspDebugConnect(cmd);      break;
-    case Op::MSPDebugDisconnect:    _mspDebugDisconnect(cmd);   break;
-    case Op::MSPDebugReadMem:       _mspDebugReadMem(cmd);      break;
-    case Op::MSPDebugWriteMem:      _mspDebugWriteMem(cmd);     break;
     // Set LED
     case Op::LEDSet:                _ledSet(cmd);               break;
     // Bad command
@@ -119,16 +116,16 @@ void System::_usbHandleCmd(const USB::Cmd& ev) {
     _usb.cmdRecv();
 }
 
-void System::_usbHandleData(const USB::Data& ev) {
+void System::_usbHandleDataRecv(const USB::Data& ev) {
     Assert(_status == Status::Busy);
     Assert(ev.len <= _usbDataRem);
     _usbDataRem -= ev.len;
     
     switch (_usbDataOp) {
-    case Op::STWrite:   _stHandleUSBData(ev);   break;
-    case Op::ICEWrite:  _iceHandleUSBData(ev);  break;
-    case Op::MSPWrite:  _mspHandleUSBData(ev);  break;
-    default:            abort();                break;
+    case Op::STWrite:   _stHandleUSBDataRecv(ev);       break;
+    case Op::ICEWrite:  _iceHandleUSBDataRecv(ev);      break;
+    case Op::MSPWrite:  _mspWriteHandleUSBDataRecv(ev); break;
+    default:            abort();                    break;
     }
 }
 
@@ -212,7 +209,7 @@ void System::_stWriteFinish() {
     _updateStatus(Status::OK, true);
 }
 
-void System::_stHandleUSBData(const USB::Data& ev) {
+void System::_stHandleUSBDataRecv(const USB::Data& ev) {
     Assert(ev.len);
     Assert(_status == Status::Busy);
     _stWriteFinish();
@@ -319,7 +316,7 @@ void System::_iceUpdateState() {
     }
 }
 
-void System::_iceHandleUSBData(const USB::Data& ev) {
+void System::_iceHandleUSBDataRecv(const USB::Data& ev) {
     Assert(ev.len);
     Assert(_status == Status::Busy);
     Assert(!_bufs.full());
@@ -374,12 +371,26 @@ void System::_qspiWrite(const void* data, size_t len) {
 }
 
 #pragma mark - MSP430 Bootloader
-void System::_mspStart(const Cmd& cmd) {
+void System::_mspConnect(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPStart);
     Assert(_status != Status::Busy);
     
     const auto r = _msp.connect();
     _updateStatus((r==_msp.Status::OK ? Status::OK : Status::Error), true);
+}
+
+void System::_mspRead(const STLoader::Cmd& cmd) {
+    Assert(cmd.op == Op::MSPRead);
+    Assert(_status != Status::Busy);
+    
+    // Update state
+    _usbDataOp = cmd.op;
+    _usbDataRem = cmd.arg.MSPRead.len;
+    _mspAddr = cmd.arg.MSPRead.addr;
+    _updateStatus(Status::Busy);
+    
+    // Prepare to receive USB data
+    _usbDataRecv();
 }
 
 void System::_mspWrite(const Cmd& cmd) {
@@ -397,7 +408,7 @@ void System::_mspWrite(const Cmd& cmd) {
     _usbDataRecv();
 }
 
-void System::_mspFinish(const Cmd& cmd) {
+void System::_mspDisconnect(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPFinish);
     Assert(_status != Status::Busy);
     
@@ -411,7 +422,7 @@ void System::_mspWriteFinish() {
     _updateStatus((r==_msp.Status::OK ? Status::OK : Status::Error), true);
 }
 
-void System::_mspHandleUSBData(const USB::Data& ev) {
+void System::_mspWriteHandleUSBDataRecv(const USB::Data& ev) {
     Assert(ev.len);
     Assert(_status == Status::Busy);
     Assert(!_bufs.full());
@@ -420,10 +431,80 @@ void System::_mspHandleUSBData(const USB::Data& ev) {
     _bufs.back().len = ev.len;
     _bufs.push();
     
-    _mspUpdateState();
+    _mspWriteUpdateState();
 }
 
-void System::_mspUpdateState() {
+void System::_mspReadUpdateState() {
+    // Prepare to read more data from MSP430:
+    //   - we expect more data, and
+    //   - there's space in the queue, and
+    //   - we haven't arranged to receive USB data yet
+    //
+    // *** We want to do this before executing `_msp.write`, so that we can
+    // *** be receiving USB data while we're sending data via Spy-bi-wire.
+    if (_usbDataRem && !_bufs.full()) {
+        _usbDataRecv();
+    }
+    
+    // Send data if we have data to write
+    if (!_bufs.empty()) {
+        _mspWriteBuf();
+    }
+    
+    // If there's no more data coming over USB, and there's no more
+    // data to write, then we're done
+    if (!_usbDataRem && _bufs.empty()) {
+        _mspWriteFinish();
+    }
+}
+
+void System::_mspReadBuf() {
+    
+    Assert(!_bufs.full());
+    Assert(_usbDataRem);
+    auto& buf = _bufs.back();
+    
+    // Prepare to receive either `_usbDataRem` bytes or the
+    // buffer capacity bytes, whichever is smaller.
+    const size_t len = std::min(_usbDataRem, buf.cap);
+    // Verify that the data length is a multiple of sizeof(uint16_t),
+    // which _msp.write() requires
+    Assert(!(len % sizeof(uint16_t))); // TODO: error handling
+    
+    _msp.read(_mspAddr, buf.data(), len/sizeof(uint16_t));
+    _mspAddr += len;
+    
+    const uint32_t addr = cmd.arg.MSPDebugReadMem.addr;
+    const size_t len = cmd.arg.MSPDebugReadMem.len; // uint16_t word count
+    void* dst = _usb.dataSendBuf();
+    // Verify that the requested amount of data will fit in `_usb.dataSendBuf()`
+    Assert(len*sizeof(uint16_t) <= _usb.dataSendBufCap());
+    _msp.read(_mspAddr, dst, len);
+    _usb.dataSend(dst, len*sizeof(uint16_t));
+    _updateStatus(Status::OK, true);
+    
+    
+    _usb.dataRecv(buf.data, len); // TODO: handle errors
+    
+    
+    
+    
+    // Verify that the data length is a multiple of sizeof(uint16_t),
+    // which _msp.write() requires
+    Assert(!(_bufs.front().len % sizeof(uint16_t))); // TODO: error handling
+    // Write the data over Spy-bi-wire
+    const uint16_t* data = (uint16_t*)_bufs.front().data;
+    const size_t len = _bufs.front().len;
+    const size_t wordCount = len/sizeof(uint16_t);
+    _msp.write(_mspAddr, data, wordCount);
+    // Update the MSP430 address to write to
+    _mspAddr += len;
+    // Pop the buffer, which we just finished sending over Spy-bi-wire
+    _bufs.pop();
+}
+
+
+void System::_mspWriteUpdateState() {
     // Prepare to receive more USB data if:
     //   - we expect more data, and
     //   - there's space in the queue, and
@@ -462,40 +543,40 @@ void System::_mspWriteBuf() {
     _bufs.pop();
 }
 
-#pragma mark - MSP430 Debug
-void System::_mspDebugConnect(const STLoader::Cmd& cmd) {
-    Assert(cmd.op == Op::MSPDebugConnect);
-    Assert(_status != Status::Busy);
-    
-    const auto r = _msp.connect();
-    _updateStatus((r==_msp.Status::OK ? Status::OK : Status::Error), true);
-}
-
-void System::_mspDebugDisconnect(const STLoader::Cmd& cmd) {
-    Assert(cmd.op == Op::MSPDebugDisconnect);
-    Assert(_status != Status::Busy);
-    
-    _msp.disconnect();
-    _updateStatus(Status::OK, true);
-}
-
-void System::_mspDebugReadMem(const STLoader::Cmd& cmd) {
-    Assert(cmd.op == Op::MSPDebugReadMem);
-    Assert(_status != Status::Busy);
-    
-    const uint32_t addr = cmd.arg.MSPDebugReadMem.addr;
-    const size_t len = cmd.arg.MSPDebugReadMem.len; // uint16_t word count
-    void* dst = _usb.dataSendBuf();
-    // Verify that the requested amount of data will fit in `_usb.dataSendBuf()`
-    Assert(len*sizeof(uint16_t) <= _usb.dataSendBufCap());
-    _msp.read(addr, dst, len);
-    _usb.dataSend(dst, len*sizeof(uint16_t));
-    _updateStatus(Status::OK, true);
-}
-
-void System::_mspDebugWriteMem(const STLoader::Cmd& cmd) {
-    
-}
+//#pragma mark - MSP430 Debug
+//void System::_mspDebugConnect(const STLoader::Cmd& cmd) {
+//    Assert(cmd.op == Op::MSPDebugConnect);
+//    Assert(_status != Status::Busy);
+//    
+//    const auto r = _msp.connect();
+//    _updateStatus((r==_msp.Status::OK ? Status::OK : Status::Error), true);
+//}
+//
+//void System::_mspDebugDisconnect(const STLoader::Cmd& cmd) {
+//    Assert(cmd.op == Op::MSPDebugDisconnect);
+//    Assert(_status != Status::Busy);
+//    
+//    _msp.disconnect();
+//    _updateStatus(Status::OK, true);
+//}
+//
+//void System::_mspDebugReadMem(const STLoader::Cmd& cmd) {
+//    Assert(cmd.op == Op::MSPDebugReadMem);
+//    Assert(_status != Status::Busy);
+//    
+//    const uint32_t addr = cmd.arg.MSPDebugReadMem.addr;
+//    const size_t len = cmd.arg.MSPDebugReadMem.len; // uint16_t word count
+//    void* dst = _usb.dataSendBuf();
+//    // Verify that the requested amount of data will fit in `_usb.dataSendBuf()`
+//    Assert(len*sizeof(uint16_t) <= _usb.dataSendBufCap());
+//    _msp.read(addr, dst, len);
+//    _usb.dataSend(dst, len*sizeof(uint16_t));
+//    _updateStatus(Status::OK, true);
+//}
+//
+//void System::_mspDebugWriteMem(const STLoader::Cmd& cmd) {
+//    
+//}
 
 #pragma mark - Other Commands
 

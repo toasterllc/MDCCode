@@ -16,38 +16,37 @@ private:
     // USB
     void _usbHandleEvent(const USB::Event& ev);
     void _usbHandleCmd(const USB::Cmd& ev);
-    void _usbHandleData(const USB::Data& ev);
+    void _usbHandleDataRecv(const USB::Data& ev);
     void _usbDataRecv();
     
     // STM32 Bootloader
     void _stWrite(const STLoader::Cmd& cmd);
     void _stFinish(const STLoader::Cmd& cmd);
     void _stWriteFinish();
-    void _stHandleUSBData(const USB::Data& ev);
+    void _stHandleUSBDataRecv(const USB::Data& ev);
     
     // ICE40 Bootloader
     void _iceWrite(const STLoader::Cmd& cmd);
     void _iceWriteFinish();
     void _iceUpdateState();
-    void _iceHandleUSBData(const USB::Data& ev);
+    void _iceHandleUSBDataRecv(const USB::Data& ev);
     void _iceHandleQSPIEvent(const QSPI::Signal& ev);
     void _qspiWriteBuf();
     void _qspiWrite(const void* data, size_t len);
     
     // MSP430 Bootloader
-    void _mspStart(const STLoader::Cmd& cmd);
+    void _mspConnect(const STLoader::Cmd& cmd);
+    void _mspRead(const STLoader::Cmd& cmd);
     void _mspWrite(const STLoader::Cmd& cmd);
-    void _mspFinish(const STLoader::Cmd& cmd);
+    void _mspDisconnect(const STLoader::Cmd& cmd);
     void _mspWriteFinish();
-    void _mspHandleUSBData(const USB::Data& ev);
+    void _mspHandleUSBDataRecv(const USB::Data& ev);
     void _mspUpdateState();
     void _mspWriteBuf();
     
-    // MSP430 Debug
-    void _mspDebugConnect(const STLoader::Cmd& cmd);
-    void _mspDebugDisconnect(const STLoader::Cmd& cmd);
-    void _mspDebugReadMem(const STLoader::Cmd& cmd);
-    void _mspDebugWriteMem(const STLoader::Cmd& cmd);
+//    // MSP430 Debug
+//    void _mspDebugConnect(const STLoader::Cmd& cmd);
+//    void _mspDebugDisconnect(const STLoader::Cmd& cmd);
     
     // Other commands
     void _ledSet(const STLoader::Cmd& cmd);
