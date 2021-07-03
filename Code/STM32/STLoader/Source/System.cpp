@@ -62,7 +62,7 @@ void System::_handleEvent() {
     }
 }
 
-void System::_finishWithStatus(Status status) {
+void System::_finishCmd(Status status) {
     Assert(!_bufs.full());
     Assert(!_usbDataBusy);
     
@@ -102,7 +102,7 @@ void System::_usbHandleEvent(const USB::Event& ev) {
     }}
 }
 
-void System::_usbHandleCmd(const USB::Cmd& ev) {
+void System::_usbHandleCmd(const USB::CmdRecv& ev) {
     // TODO: if this works, remove all the redundant checks from the functions called below
     Assert(_status != Status::Busy);
     
@@ -146,7 +146,7 @@ void System::_usbHandleDataRecv(const USB::DataRecv& ev) {
 }
 
 void System::_usbHandleDataSend(const USB::DataSend& ev) {
-    Assert(_status == Status::Busy);
+//    Assert(_status == Status::Busy);
     Assert(_usbDataBusy);
     Assert(!_bufs.empty());
     
@@ -190,7 +190,7 @@ void System::_usbDataRecv() {
 
 void System::_usbDataSend() {
     Assert(!_bufs.empty());
-    Assert(_usbDataRem);
+//    Assert(_usbDataRem);
     Assert(!_usbDataBusy);
     
     const auto& buf = _bufs.front();
@@ -251,7 +251,7 @@ void System::_stFinish(const Cmd& cmd) {
 
 void System::_stWriteFinish() {
     Assert(_status == Status::Busy);
-    _finishWithStatus(Status::OK);
+    _finishCmd(Status::OK);
 }
 
 void System::_stHandleUSBDataRecv(const USB::DataRecv& ev) {
@@ -261,6 +261,32 @@ void System::_stHandleUSBDataRecv(const USB::DataRecv& ev) {
 }
 
 #pragma mark - ICE40 Bootloader
+static void _qspiWrite(QSPI& qspi, const void* data, size_t len) {
+    QSPI_CommandTypeDef cmd = {
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    
+    qspi.write(cmd, data, len);
+}
+
 void System::_iceWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::ICEWrite);
     Assert(_status != Status::Busy);
@@ -287,11 +313,9 @@ void System::_iceWrite(const Cmd& cmd) {
     // Have QSPI take over _ICESPIClk/_ICESPICS_
     _qspi.config();
     
-    // Send 8 clocks
+    // Send 8 clocks and wait for them to complete
     static const uint8_t ff = 0xff;
-    _qspiWrite(&ff, 1);
-    
-    // Wait for write to complete
+    _qspiWrite(_qspi, &ff, 1);
     _qspi.eventChannel.read();
     
     // Update state
@@ -327,16 +351,15 @@ void System::_iceWriteFinish() {
         const uint8_t clockCount = 7;
         for (int i=0; i<clockCount; i++) {
             static const uint8_t ff = 0xff;
-            _qspiWrite(&ff, 1);
-            // Wait for write to complete
-            _qspi.eventChannel.read();
+            _qspiWrite(_qspi, &ff, 1);
+            _qspi.eventChannel.read(); // Wait for write to complete
         }
         
-        _finishWithStatus(Status::OK);
+        _finishCmd(Status::OK);
     
     } else {
         // If CDONE isn't high after 10ms, consider it a failure
-        _finishWithStatus(Status::Error);
+        _finishCmd(Status::Error);
     }
 }
 
@@ -391,43 +414,17 @@ void System::_iceHandleQSPIEvent(const QSPI::Signal& ev) {
 void System::_qspiWriteFromBuf() {
     Assert(!_bufs.empty());
     const auto& buf = _bufs.front();
-    _qspiWrite(buf.data, buf.len);
-}
-
-void System::_qspiWrite(const void* data, size_t len) {
-    QSPI_CommandTypeDef cmd = {
-        .Instruction = 0,
-        .InstructionMode = QSPI_INSTRUCTION_NONE,
-        
-        .Address = 0,
-        .AddressSize = QSPI_ADDRESS_8_BITS,
-        .AddressMode = QSPI_ADDRESS_NONE,
-        
-        .AlternateBytes = 0,
-        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
-        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        
-        .DummyCycles = 0,
-        
-        .NbData = (uint32_t)len,
-        .DataMode = QSPI_DATA_1_LINE,
-        
-        .DdrMode = QSPI_DDR_MODE_DISABLE,
-        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-    };
-    
-    _qspi.write(cmd, data, len);
+    _qspiWrite(_qspi, buf.data, buf.len);
     _qspiBusy = true;
 }
 
 #pragma mark - MSP430 Bootloader
 void System::_mspConnect(const Cmd& cmd) {
-    Assert(cmd.op == Op::MSPStart);
+    Assert(cmd.op == Op::MSPConnect);
     Assert(_status != Status::Busy);
     
     const auto r = _msp.connect();
-    _finishWithStatus(r==_msp.Status::OK ? Status::OK : Status::Error);
+    _finishCmd(r==_msp.Status::OK ? Status::OK : Status::Error);
 }
 
 void System::_mspRead(const STLoader::Cmd& cmd) {
@@ -444,7 +441,7 @@ void System::_mspRead(const STLoader::Cmd& cmd) {
 }
 
 void System::_mspReadFinish() {
-    _finishWithStatus(Status::OK);
+    _finishCmd(Status::OK);
 }
 
 void System::_mspReadUpdateState() {
@@ -521,7 +518,7 @@ void System::_mspWrite(const Cmd& cmd) {
 void System::_mspWriteFinish() {
     // Verify the CRC of all the data we wrote
     const auto r = _msp.crcVerify();
-    _finishWithStatus(r==_msp.Status::OK ? Status::OK : Status::Error);
+    _finishCmd(r==_msp.Status::OK ? Status::OK : Status::Error);
 }
 
 void System::_mspWriteHandleUSBDataRecv(const USB::DataRecv& ev) {
@@ -572,11 +569,11 @@ void System::_mspWriteFromBuf() {
 }
 
 void System::_mspDisconnect(const Cmd& cmd) {
-    Assert(cmd.op == Op::MSPFinish);
+    Assert(cmd.op == Op::MSPDisconnect);
     Assert(_status != Status::Busy);
     
     _msp.disconnect();
-    _finishWithStatus(Status::OK);
+    _finishCmd(Status::OK);
 }
 
 #pragma mark - Other Commands
@@ -592,5 +589,5 @@ void System::_ledSet(const Cmd& cmd) {
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
-    _finishWithStatus(Status::OK);
+    _finishCmd(Status::OK);
 }

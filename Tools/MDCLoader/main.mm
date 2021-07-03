@@ -113,7 +113,7 @@ static void mspLoad(const Args& args, MDCLoaderDevice& device) {
     ELF32Binary bin(args.filePath.c_str());
     auto sections = bin.sections();
     
-    device.mspStart();
+    device.mspConnect();
     
     for (const auto& s : sections) {
         // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
@@ -129,7 +129,7 @@ static void mspLoad(const Args& args, MDCLoaderDevice& device) {
         device.mspWrite(dataAddr, data, dataLen);
     }
     
-    device.mspFinish();
+    device.mspDisconnect();
 }
 
 int main(int argc, const char* argv[]) {
