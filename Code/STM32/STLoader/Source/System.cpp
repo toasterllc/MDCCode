@@ -59,6 +59,15 @@ void System::_handleEvent() {
     }
 }
 
+void System::_updateStatus(Status status, bool send) {
+    _status = status;
+    // Send our response
+    if (send) {
+        _usb.respSend(&_status, sizeof(_status));
+    }
+}
+
+#pragma mark - USB
 void System::_usbHandleEvent(const USB::Event& ev) {
     using Type = USB::Event::Type;
     switch (ev.type) {
@@ -92,8 +101,6 @@ void System::_usbHandleCmd(const USB::Cmd& ev) {
     case Op::MSPStart:  _mspStart(cmd);     break;
     case Op::MSPWrite:  _mspWrite(cmd);     break;
     case Op::MSPFinish: _mspFinish(cmd);    break;
-    // Get status
-    case Op::StatusGet: _statusGet(cmd);    break;
     // Set LED
     case Op::LEDSet:    _ledSet(cmd);       break;
     // Bad command
@@ -173,10 +180,10 @@ void System::_stWrite(const Cmd& cmd) {
     // data length (ceiled to the packet length)
     Assert(regionCap >= ceilLen); // TODO: error handling
     
-    // Update our status
+    // Update state
     _usbDataOp = cmd.op;
     _usbDataRem = len;
-    _status = Status::Busy;
+    _updateStatus(Status::Busy);
     
     // Prepare to receive USB data
     _usb.dataRecv(addr, ceilLen);
@@ -188,16 +195,13 @@ void System::_stFinish(const Cmd& cmd) {
     Start.setAppEntryPointAddr(cmd.arg.STFinish.entryPointAddr);
     // Perform software reset
     HAL_NVIC_SystemReset();
-    
     // Unreachable
-    // Update our status
-    _status = Status::OK;
+    abort();
 }
 
 void System::_stWriteFinish() {
     Assert(_status == Status::Busy);
-    // Update our status
-    _status = Status::OK;
+    _updateStatus(Status::OK, true);
 }
 
 void System::_stHandleUSBData(const USB::Data& ev) {
@@ -240,10 +244,10 @@ void System::_iceWrite(const Cmd& cmd) {
     // Wait for write to complete
     _qspi.eventChannel.read();
     
-    // Update our status
+    // Update state
     _usbDataOp = cmd.op;
     _usbDataRem = cmd.arg.ICEWrite.len;
-    _status = Status::Busy;
+    _updateStatus(Status::Busy);
     
     // Prepare to receive USB data
     _usbDataRecv();
@@ -260,30 +264,30 @@ void System::_iceWriteFinish() {
         HAL_Delay(1); // Sleep 1 ms
     }
     
-    if (!ok) {
+    if (ok) {
+        // Supply >=49 additional clocks (8*7=56 clocks), per the
+        // "iCE40 Programming and Configuration" guide.
+        // These clocks apparently reach the user application. Since this
+        // appears unavoidable, prevent the clocks from affecting the user
+        // application in two ways:
+        //   1. write 0xFF, which the user application must consider as a NOP;
+        //   2. write a byte at a time, causing chip-select to be de-asserted
+        //      between bytes, which must cause the user application to reset
+        //      itself.
+        const uint8_t clockCount = 7;
+        for (int i=0; i<clockCount; i++) {
+            static const uint8_t ff = 0xff;
+            _qspiWrite(&ff, 1);
+            // Wait for write to complete
+            _qspi.eventChannel.read();
+        }
+        
+        _updateStatus(Status::OK, true);
+    
+    } else {
         // If CDONE isn't high after 10ms, consider it a failure
-        _status = Status::Error;
-        return;
+        _updateStatus(Status::Error, true);
     }
-    
-    // Supply >=49 additional clocks (8*7=56 clocks), per the
-    // "iCE40 Programming and Configuration" guide.
-    // These clocks apparently reach the user application. Since this
-    // appears unavoidable, prevent the clocks from affecting the user
-    // application in two ways:
-    //   1. write 0xFF, which the user application must consider as a NOP;
-    //   2. write a byte at a time, causing chip-select to be de-asserted
-    //      between bytes, which must cause the user application to reset
-    //      itself.
-    const uint8_t clockCount = 7;
-    for (int i=0; i<clockCount; i++) {
-        static const uint8_t ff = 0xff;
-        _qspiWrite(&ff, 1);
-        // Wait for write to complete
-        _qspi.eventChannel.read();
-    }
-    
-    _status = Status::OK;
 }
 
 void System::_iceUpdateState() {
@@ -366,25 +370,20 @@ void System::_mspStart(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPStart);
     Assert(_status != Status::Busy);
     
-    auto s = _msp.connect();
-    if (s != _msp.Status::OK) {
-        _status = Status::Error;
-        return;
-    }
-    
-    _status = Status::OK;
+    const auto r = _msp.connect();
+    _updateStatus((r==_msp.Status::OK ? Status::OK : Status::Error), true);
 }
 
 void System::_mspWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPWrite);
     Assert(_status != Status::Busy);
     
-    // Update our status
+    // Update state
     _usbDataOp = cmd.op;
     _usbDataRem = cmd.arg.MSPWrite.len;
     _msp.crcReset();
     _mspAddr = cmd.arg.MSPWrite.addr;
-    _status = Status::Busy;
+    _updateStatus(Status::Busy);
     
     // Prepare to receive USB data
     _usbDataRecv();
@@ -395,18 +394,13 @@ void System::_mspFinish(const Cmd& cmd) {
     Assert(_status != Status::Busy);
     
     _msp.disconnect();
-    _status = Status::OK;
+    _updateStatus(Status::OK, true);
 }
 
 void System::_mspWriteFinish() {
     // Verify the CRC of all the data we wrote
-    auto r = _msp.crcVerify();
-    if (r != _msp.Status::OK) {
-        _status = Status::Error;
-        return;
-    }
-    
-    _status = Status::OK;
+    const auto r = _msp.crcVerify();
+    _updateStatus((r==_msp.Status::OK ? Status::OK : Status::Error), true);
 }
 
 void System::_mspHandleUSBData(const USB::Data& ev) {
@@ -462,11 +456,6 @@ void System::_mspWriteBuf() {
 
 #pragma mark - Other Commands
 
-void System::_statusGet(const Cmd& cmd) {
-    Assert(cmd.op == Op::StatusGet);
-    _usb.statusSend(&_status, sizeof(_status));
-}
-
 void System::_ledSet(const Cmd& cmd) {
     Assert(cmd.op == Op::LEDSet);
     Assert(_status != Status::Busy);
@@ -478,5 +467,5 @@ void System::_ledSet(const Cmd& cmd) {
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
-    _status = Status::OK;
+    _updateStatus(Status::OK, true);
 }

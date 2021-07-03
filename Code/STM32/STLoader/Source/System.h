@@ -11,6 +11,7 @@ public:
     
 private:
     void _handleEvent();
+    void _updateStatus(STLoader::Status status, bool send=false);
     
     // USB
     void _usbHandleEvent(const USB::Event& ev);
@@ -43,7 +44,6 @@ private:
     void _mspWriteBuf();
     
     // Other commands
-    void _statusGet(const STLoader::Cmd& cmd);
     void _ledSet(const STLoader::Cmd& cmd);
     
     USB _usb;
@@ -55,7 +55,7 @@ private:
     
     STLoader::Op _usbDataOp = STLoader::Op::None;
     size_t _usbDataRem = 0;
-    STLoader::Status _status __attribute__((aligned(4))) = STLoader::Status::OK; // Needs to be aligned to send via USB
+    STLoader::Status _status = STLoader::Status::OK;
     
     uint32_t _mspAddr = 0;
     

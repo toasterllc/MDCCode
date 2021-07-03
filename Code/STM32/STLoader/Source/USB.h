@@ -9,7 +9,7 @@ public:
     struct MaxPacketSize {
         static constexpr size_t Cmd        = 16;
         static constexpr size_t Data       = 512;
-        static constexpr size_t Status     = 8;
+        static constexpr size_t Resp       = 8;
     };
     
     struct Cmd {
@@ -30,7 +30,8 @@ public:
     USBD_StatusTypeDef dataRecv(void* addr, size_t len);
     bool dataRecvUnderway() const;
     
-    USBD_StatusTypeDef statusSend(const void* data, size_t len);
+    USBD_StatusTypeDef respSend(const void* data, size_t len);
+    bool respSendUnderway() const;
     
     // Channels
     Channel<Cmd, 1> cmdChannel;
@@ -56,8 +57,11 @@ protected:
     
 private:
     uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    uint8_t _respBuf[MaxPacketSize::Resp] __attribute__((aligned(4)));
+    
     bool _cmdRecvUnderway = false;
     bool _dataRecvUnderway = false;
+    bool _respSendUnderway = false;
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;
