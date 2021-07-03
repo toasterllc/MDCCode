@@ -93,7 +93,7 @@ void System::_usbHandleCmd(const USB::Cmd& ev) {
     case Op::MSPWrite:  _mspWrite(cmd);     break;
     case Op::MSPFinish: _mspFinish(cmd);    break;
     // Get status
-    case Op::StatusGet: _statusGet(cmd);   break;
+    case Op::StatusGet: _statusGet(cmd);    break;
     // Set LED
     case Op::LEDSet:    _ledSet(cmd);       break;
     // Bad command

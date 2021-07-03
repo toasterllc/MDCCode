@@ -24,6 +24,7 @@
 		5563E119253A8B3D00BCC0F7 /* STLoader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STLoader; sourceTree = BUILT_PRODUCTS_DIR; };
 		556875D5254A165200B774CE /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 		55844C192575D2A2008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
+		558FFF8226900AB6000897AA /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
 		55E1D95A2540E3B900628EF6 /* STLoader.ioc */ = {isa = PBXFileReference; lastKnownFileType = text; path = STLoader.ioc; sourceTree = "<group>"; };
 		55E1D9622540E3B900628EF6 /* STLoader.launch */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = STLoader.launch; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -43,6 +44,7 @@
 			isa = PBXGroup;
 			children = (
 				55844C192575D2A2008737ED /* Shared */,
+				558FFF8226900AB6000897AA /* Shared */,
 				554F17892543ED5400F67066 /* Source */,
 				554F17882543ED5400F67066 /* ST */,
 				55E1D95A2540E3B900628EF6 /* STLoader.ioc */,
