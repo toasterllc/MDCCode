@@ -22,13 +22,13 @@ void USB::init() {
     
     // # Set Tx FIFO sizes (IN endpoints; DIEPTXF0 register)
     HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Ctrl), 16);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::RespIn), 64);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::DataIn), 64);
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
     Assert(!_cmdRecvUnderway);
     _cmdRecvUnderway = true;
-    return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
+    return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdRecvBuf, sizeof(_cmdRecvBuf));
 }
 
 bool USB::cmdRecvUnderway() const {
@@ -45,11 +45,23 @@ bool USB::dataRecvUnderway() const {
     return _dataRecvUnderway;
 }
 
-USBD_StatusTypeDef USB::respSend(const void* data, size_t len) {
-    Assert(!_respSendUnderway);
-    _respSendUnderway = true;
-    memcpy(_respBuf, data, len);
-    return USBD_LL_Transmit(&_device, Endpoints::RespIn, (uint8_t*)_respBuf, len);
+USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
+    Assert(!_dataSendUnderway);
+    _dataSendUnderway = true;
+    if (data != _dataSendBuf) {
+        memcpy(_dataSendBuf, data, len);
+    }
+    return USBD_LL_Transmit(&_device, Endpoints::DataIn, (uint8_t*)_dataSendBuf, len);
+}
+
+void* USB::dataSendBuf() const {
+    Assert(!_dataSendUnderway);
+    return _dataSendBuf;
+}
+
+size_t USB::dataSendBufCap() const {
+    Assert(!_dataSendUnderway);
+    return sizeof(_dataSendBuf);
 }
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
@@ -65,9 +77,9 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
         USBD_LL_OpenEP(&_device, Endpoints::DataOut, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
         _device.ep_out[EndpointNum(Endpoints::DataOut)].is_used = 1U;
         
-        // RespIn endpoint
-        USBD_LL_OpenEP(&_device, Endpoints::RespIn, USBD_EP_TYPE_BULK, MaxPacketSize::Resp);
-        _device.ep_in[EndpointNum(Endpoints::RespIn)].is_used = 1U;
+        // DataIn endpoint
+        USBD_LL_OpenEP(&_device, Endpoints::DataIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        _device.ep_in[EndpointNum(Endpoints::DataIn)].is_used = 1U;
     }
     
     return (uint8_t)USBD_OK;
@@ -95,9 +107,9 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
     _super::_usbd_DataIn(epnum);
     
     switch (epnum) {
-    // RespIn endpoint
-    case EndpointNum(Endpoints::RespIn):
-        _respSendUnderway = false;
+    // DataIn endpoint
+    case EndpointNum(Endpoints::DataIn):
+        _dataSendUnderway = false;
         break;
     
     default:
@@ -116,8 +128,8 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // CmdOut endpoint
     case EndpointNum(Endpoints::CmdOut):
-        cmdChannel.writeTry(Cmd{
-            .data = _cmdBuf,
+        cmdRecvChannel.writeTry(Cmd{
+            .data = _cmdRecvBuf,
             .len = dataLen,
         });
         _cmdRecvUnderway = false;
@@ -125,7 +137,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // DataOut endpoint
     case EndpointNum(Endpoints::DataOut):
-        dataChannel.writeTry(Data{
+        dataRecvChannel.writeTry(Data{
             .len = dataLen,
         });
         _dataRecvUnderway = false;
@@ -190,12 +202,12 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),       // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer
                 
-                // RespIn endpoint
+                // DataIn endpoint
                 0x07,                                                           // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
-                Endpoints::RespIn,                                              // bEndpointAddress
+                Endpoints::DataIn,                                              // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
-                LOBYTE(MaxPacketSize::Resp), HIBYTE(MaxPacketSize::Resp),       // wMaxPacketSize
+                LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),       // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer
     };
     static_assert(sizeof(Desc)==DescLen, "descLen invalid");

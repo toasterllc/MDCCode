@@ -7,9 +7,8 @@ class USB : public USBBase<USB> {
 public:
     // Types
     struct MaxPacketSize {
-        static constexpr size_t Cmd        = 16;
-        static constexpr size_t Data       = 512;
-        static constexpr size_t Resp       = 8;
+        static constexpr size_t Cmd     = 16;
+        static constexpr size_t Data    = 512;
     };
     
     struct Cmd {
@@ -30,12 +29,14 @@ public:
     USBD_StatusTypeDef dataRecv(void* addr, size_t len);
     bool dataRecvUnderway() const;
     
-    USBD_StatusTypeDef respSend(const void* data, size_t len);
-    bool respSendUnderway() const;
+    USBD_StatusTypeDef dataSend(const void* data, size_t len);
+    void* dataSendBuf() const;
+    size_t dataSendBufCap() const;
+    bool dataSendUnderway() const;
     
     // Channels
-    Channel<Cmd, 1> cmdChannel;
-    Channel<Data, 1> dataChannel;
+    Channel<Cmd, 1> cmdRecvChannel;
+    Channel<Data, 1> dataRecvChannel;
     
 protected:
     // Callbacks
@@ -56,12 +57,12 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
-    uint8_t _respBuf[MaxPacketSize::Resp] __attribute__((aligned(4)));
+    uint8_t _cmdRecvBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    uint8_t _dataSendBuf[MaxPacketSize::Data] __attribute__((aligned(4)));
     
     bool _cmdRecvUnderway = false;
     bool _dataRecvUnderway = false;
-    bool _respSendUnderway = false;
+    bool _dataSendUnderway = false;
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;

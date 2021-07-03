@@ -26,7 +26,7 @@ public:
         
         cmdOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::CmdOut);
         dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut);
-        respInPipe = USBPipe(_interface, STLoader::EndpointIdxs::RespIn);
+        dataInPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataIn);
     }
     
     void stWrite(uint32_t addr, const void* data, size_t len) {
@@ -133,7 +133,7 @@ public:
     
     USBPipe cmdOutPipe;
     USBPipe dataOutPipe;
-    USBPipe respInPipe;
+    USBPipe dataInPipe;
     
 private:
     USBInterface _interface;
@@ -141,7 +141,7 @@ private:
     void _waitOrError(const char* errMsg) {
         // Wait for completion and throw on failure
         STLoader::Status s;
-        respInPipe.read(s);
+        dataInPipe.read(s);
         if (s != STLoader::Status::OK) throw std::runtime_error(errMsg);
     }
 };

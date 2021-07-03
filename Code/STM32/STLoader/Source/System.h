@@ -43,6 +43,12 @@ private:
     void _mspUpdateState();
     void _mspWriteBuf();
     
+    // MSP430 Debug
+    void _mspDebugConnect(const STLoader::Cmd& cmd);
+    void _mspDebugDisconnect(const STLoader::Cmd& cmd);
+    void _mspDebugReadMem(const STLoader::Cmd& cmd);
+    void _mspDebugWriteMem(const STLoader::Cmd& cmd);
+    
     // Other commands
     void _ledSet(const STLoader::Cmd& cmd);
     
