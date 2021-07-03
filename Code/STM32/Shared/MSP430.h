@@ -349,7 +349,7 @@ private:
         _crc ^= val;
     }
     
-    // This seems to work, but the _cpuReset() (suggested by the JTAG guide) seems to be unnecessary
+    // TODO: `len` is word count, not byte count. what to do?
     uint16_t _crcCalc(uint32_t addr, size_t len) {
         _pcSet(addr);
         _tclkSet(1);
@@ -388,7 +388,24 @@ private:
     //   Works for: peripherals, RAM, FRAM
     //   
     //   This is the 'quick' read implementation suggested by JTAG guide
-    void _read(uint32_t addr, uint16_t* dst, size_t len) {
+    void _read(uint32_t addr, void* dst, size_t len) {
+        if (addr % 2) {
+            _pcSet(addr);
+            _tclkSet(1);
+            _irShift(_IR_CNTRL_SIG_16BIT);
+            _drShift<16>(0x0501);
+            _irShift(_IR_ADDR_CAPTURE);
+            _irShift(_IR_DATA_QUICK);
+            
+            for (; len; len--) {
+                _tclkSet(1);
+                _tclkSet(0);
+                *dst = _drShift<16>(0);
+                dst++;
+            }
+        }
+        
+        
         _pcSet(addr);
         _tclkSet(1);
         _irShift(_IR_CNTRL_SIG_16BIT);
@@ -406,7 +423,7 @@ private:
     
     uint16_t _read(uint32_t addr) {
         uint16_t r = 0;
-        _read(addr, &r, 1);
+        _read(addr, &r, sizeof(r));
         return r;
     }
     
@@ -666,22 +683,18 @@ public:
     }
     
     uint16_t read(uint32_t addr) {
-        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
         return _read(addr);
     }
     
-    void read(uint32_t addr, uint16_t* dst, size_t len) {
-        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
+    void read(uint32_t addr, void* dst, size_t len) {
         _read(addr, dst, len);
     }
     
     void write(uint32_t addr, uint16_t val) {
-        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
         _write(addr, val);
     }
     
-    void write(uint32_t addr, const uint16_t* src, size_t len) {
-        AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
+    void write(uint32_t addr, const void* src, size_t len) {
         if (!_crcStarted) _crcStart(addr);
         if (_FRAMAddr(addr) && _FRAMAddr(addr+(len-1)*2)) {
             // framWrite() is a write implementation that's faster than the
