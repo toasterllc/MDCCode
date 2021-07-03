@@ -28,14 +28,12 @@ namespace STLoader {
         // ICE40 Bootloader
         ICEWrite,
         // MSP430 Bootloader
-        MSPStart,
+        MSPConnect,
+        MSPRead,
         MSPWrite,
-        MSPFinish,
+        MSPDisconnect,
         // MSP430 Debugger
-        MSPDebugConnect,
-        MSPDebugDisconnect,
-        MSPDebugReadMem,
-        MSPDebugWriteMem,
+        
         // Other commands
         LEDSet,
     };
@@ -65,17 +63,12 @@ namespace STLoader {
             struct {
                 uint32_t addr;
                 uint32_t len;
+            } MSPRead;
+            
+            struct {
+                uint32_t addr;
+                uint32_t len;
             } MSPWrite;
-            
-            struct {
-                uint32_t addr;
-                uint32_t len;
-            } MSPDebugReadMem;
-            
-            struct {
-                uint32_t addr;
-                uint32_t len;
-            } MSPDebugWriteMem;
             
             struct {
                 uint8_t idx;
