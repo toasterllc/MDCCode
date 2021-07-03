@@ -108,7 +108,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // CmdOut endpoint
     case EndpointNum(Endpoints::CmdOut):
-        cmdRecvChannel.writeTry(Cmd{
+        cmdRecvChannel.writeTry(CmdRecv{
             .data = _cmdRecvBuf,
             .len = dataLen,
         });
@@ -117,7 +117,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     
     // DataOut endpoint
     case EndpointNum(Endpoints::DataOut):
-        dataRecvChannel.writeTry(Data{
+        dataRecvChannel.writeTry(DataRecv{
             .len = dataLen,
         });
         _dataRecvBusy = false;

@@ -78,10 +78,10 @@ public:
         _waitOrError("ICEWrite command failed");
     }
     
-    void mspStart() {
+    void mspConnect() {
         using namespace STLoader;
         const Cmd cmd = {
-            .op = Op::MSPStart,
+            .op = Op::MSPConnect,
         };
         // Send command
         cmdOutPipe.write(cmd);
@@ -106,10 +106,10 @@ public:
         _waitOrError("MSPWrite command failed");
     }
     
-    void mspFinish() {
+    void mspDisconnect() {
         using namespace STLoader;
         const Cmd cmd = {
-            .op = Op::MSPFinish,
+            .op = Op::MSPDisconnect,
         };
         // Send command
         cmdOutPipe.write(cmd);
