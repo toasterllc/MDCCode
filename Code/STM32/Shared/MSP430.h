@@ -352,7 +352,6 @@ private:
         _crc ^= val;
     }
     
-    // This seems to work, but the _cpuReset() (suggested by the JTAG guide) seems to be unnecessary
     uint16_t _crcCalc(uint32_t addr, size_t len) {
         AssertArg(_AlignedAddr(addr)); // Address must be 16-bit aligned
         AssertArg(!(len % 2)); // Length must be 16-bit aligned
@@ -389,80 +388,13 @@ private:
         return _drShift<16>(0);
     }
     
-//    template <typename T>
-//    T _read(uint32_t addr) {
-//        static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
-//        
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0511 : 0x0501);
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        
-//        const uint16_t r = _drShift<16>(0) & 0x00FF;
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        return r;
-//        
-//    }
-//    
-//    
-//    
-//    
-//    
-//    uint16_t _read8(uint32_t addr) {
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0511);
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        
-//        const uint16_t r = _drShift<16>(0) & 0x00FF;
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        return r;
-//    }
-//    
-//    uint16_t _read16(uint32_t addr) {
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0501);
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        
-//        const uint16_t r = _drShift<16>(0);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        return r;
-//    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
     template <typename T>
     T _read(uint32_t addr) {
         static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
         
-        // This is the 'quick' implementation, because the non-quick version
-        // doesn't appear to work with some addresses. (Specifically, the
-        // device ID address, 0x1A04, always returns 0x3FFF.)
+        // This is the 'quick' read implementation, because the non-quick
+        // version doesn't appear to work with some addresses. (Specifically,
+        // the device ID address, 0x1A04, always returns 0x3FFF.)
         // We'd prefer the non-quick version since it explicitly supports
         // byte reads in addition to word reads, while it's unclear whether
         // the quick version supports byte reads.
@@ -474,7 +406,7 @@ private:
         _pcSet(addr);
         _tclkSet(1);
         _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(std::is_same_v<T, uint8_t> ? 0x0511 : 0x0501);
+        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0511 : 0x0501);
         _irShift(_IR_ADDR_CAPTURE);
         _irShift(_IR_DATA_QUICK);
         _tclkSet(1);
@@ -541,7 +473,7 @@ private:
         // Activate write mode (clear read bit in JTAG control register)
         _tclkSet(0);
         _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(std::is_same_v<T, uint8_t> ? 0x0510 : 0x0500);
+        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0510 : 0x0500);
         
         // Shift address to write to
         _irShift(_IR_ADDR_16BIT);
@@ -568,34 +500,6 @@ private:
     void _write16(uint32_t addr, uint16_t val) {
         _write<uint16_t>(addr, val);
     }
-    
-    
-//    template <uint8_t W>
-//    void _write(uint32_t addr, uint16_t val) {
-//        static_assert(W==8 || W==16, "invalid width");
-//        
-//        // Activate write mode (clear read bit in JTAG control register)
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(W==16 ? 0x0500 : 0x0510);
-//        
-//        // Shift address to write to
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _tclkSet(1);
-//        
-//        // Shift data to write
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _drShift<16>(val);
-//        _tclkSet(0);
-//        
-//        // Deactivate write mode (set read bit in JTAG control register)
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0501);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//    }
     
     // General-purpose write
     //   
