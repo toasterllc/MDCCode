@@ -148,18 +148,18 @@ void System::init() {
                 Assert(tmp == writeData[1]);
             }
             
-            {
-                uint16_t val = 0;
-                _msp.read(0xFFFFE, &val, 2);
-                
-                uint8_t b0;
-                _msp.read(0xFFFFE, &b0, 1);
-                
-                uint8_t b1;
-                _msp.read(0xFFFFF, &b1, 1);
-                
-                for (;;);
-            }
+//            {
+//                uint16_t val = 0;
+//                _msp.read(0xFFFFE, &val, 2);
+//                
+//                uint8_t b0;
+//                _msp.read(0xFFFFE, &b0, 1);
+//                
+//                uint8_t b1;
+//                _msp.read(0xFFFFF, &b1, 1);
+//                
+//                for (;;);
+//            }
             
             
             
@@ -240,7 +240,7 @@ void System::init() {
         {
             const uint8_t writeData[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
             uint8_t readData[sizeof(writeData)] = {};
-            _msp.write(AddrStart, (uint16_t*)writeData, sizeof(writeData));
+            _msp.write(AddrStart, writeData, sizeof(writeData));
             
             memset(readData, 0x42, sizeof(readData));
             _msp.read(AddrStart, readData, sizeof(readData));
@@ -248,13 +248,13 @@ void System::init() {
             
             const uint8_t writeData2[] = {0xCA, 0xFE, 0xBA, 0xBE, 0xFE, 0xED, 0xFA, 0xCE};
             memset(readData, 0x42, sizeof(readData));
-            _msp.write(AddrStart+1, (uint16_t*)writeData2, sizeof(writeData2)-1);
+            _msp.write(AddrStart+1, writeData2, sizeof(writeData2)-1);
             _msp.read(AddrStart+1, readData, sizeof(readData)-1);
             Assert(!memcmp(writeData2, readData, sizeof(readData)-1));
             
             const uint8_t writeData3[] = {0xBB, 0xAA, 0xAA, 0xDD, 0xBB, 0xEE, 0xEE, 0xFF};
             memset(readData, 0x42, sizeof(readData));
-            _msp.write(AddrStart+1, (uint16_t*)writeData3+1, sizeof(writeData3)-2);
+            _msp.write(AddrStart+1, writeData3+1, sizeof(writeData3)-2);
             _msp.read(AddrStart+1, readData, sizeof(readData)-2);
             Assert(!memcmp(writeData3+1, readData, sizeof(readData)-2));
         }
