@@ -1,5 +1,6 @@
 #pragma once
 #include <string.h>
+#include <type_traits>
 #include "GPIO.h"
 #include "IRQState.h"
 #include "Assert.h"
@@ -388,42 +389,267 @@ private:
         return _drShift<16>(0);
     }
     
-    uint8_t _read8(uint32_t addr) {
-        _tclkSet(0);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0511);
-        _irShift(_IR_ADDR_16BIT);
-        _drShift<20>(addr);
-        _irShift(_IR_DATA_TO_ADDR);
-        _tclkSet(1);
-        _tclkSet(0);
-        
-        const uint8_t r = _drShift<16>(0) & 0x00FF;
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
-        return r;
-        
-        
-        
-//        _pcSet(addr);
-//        _tclkSet(1);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0511);
-//        _irShift(_IR_ADDR_CAPTURE);
-//        _irShift(_IR_DATA_QUICK);
+//    template <typename T>
+//    T _read(uint32_t addr) {
+//        static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
 //        
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0511 : 0x0501);
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _irShift(_IR_DATA_TO_ADDR);
 //        _tclkSet(1);
 //        _tclkSet(0);
+//        
+//        const uint16_t r = _drShift<16>(0) & 0x00FF;
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        return r;
+//        
+//    }
+//    
+//    
+//    
+//    
+//    
+//    uint16_t _read8(uint32_t addr) {
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0511);
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _irShift(_IR_DATA_TO_ADDR);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        
+//        const uint16_t r = _drShift<16>(0) & 0x00FF;
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        return r;
+//    }
+//    
+//    uint16_t _read16(uint32_t addr) {
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0501);
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _irShift(_IR_DATA_TO_ADDR);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        
 //        const uint16_t r = _drShift<16>(0);
-//        return r & 0x00FF;
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        return r;
+//    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    template <typename T>
+    T _read(uint32_t addr) {
+        static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
+        
+        _pcSet(addr);
+        _tclkSet(1);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(std::is_same_v<T, uint8_t> ? 0x0511 : 0x0501);
+        _irShift(_IR_ADDR_CAPTURE);
+        _irShift(_IR_DATA_QUICK);
+        _tclkSet(1);
+        _tclkSet(0);
+        
+        if constexpr (std::is_same_v<T,uint8_t>) {
+            if (addr % 2)   return _drShift<8>(0);
+            else            return _drShift<16>(0) & 0x00FF;
+        } else {
+            return _drShift<16>(0);
+        }
+    }
+    
+    uint8_t _read8(uint32_t addr) {
+        return _read<uint8_t>(addr);
     }
     
     uint16_t _read16(uint32_t addr) {
-        uint16_t r = 0;
-        _read(addr, &r, sizeof(r));
-        return r;
+        return _read<uint16_t>(addr);
     }
+
+    
+    
+    
+//    uint8_t _read8(uint32_t addr) {
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0511);
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _irShift(_IR_DATA_TO_ADDR);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        
+//        const uint8_t r = _drShift<16>(0) & 0x00FF;
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        return r;
+//    }
+    
+//    uint16_t _read16(uint32_t addr) {
+//        _tapReset();
+//        
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0501);
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _irShift(_IR_DATA_TO_ADDR);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        
+//        const uint16_t r = _drShift<16>(0);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        return r;
+//    }
+//    
+//    uint8_t _read8(uint32_t addr) {
+//        return 0;
+//    }
+    
+//    uint16_t _read16(uint32_t addr) {
+////        _tapReset();
+//        
+//        // Activate read mode (clear read bit in JTAG control register)
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0501);
+//        
+//        // Shift address to read from
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _tclkSet(1);
+//        
+//        // Shift out data
+//        _irShift(_IR_DATA_TO_ADDR);
+//        const uint16_t r = _drShift<16>(0);
+//        
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//    }
+    
+    
+    
+//    template <typename T>
+//    T _read(uint32_t addr) {
+//        static_assert(
+//            std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t>,
+//            "invalid type"
+//        );
+//        
+////        _pcSet(addr);
+////        _tclkSet(1);
+////        _irShift(_IR_CNTRL_SIG_16BIT);
+////        _drShift<16>(0x0501);
+////        _irShift(_IR_ADDR_CAPTURE);
+////        _irShift(_IR_DATA_QUICK);
+////        _tclkSet(1);
+////        _tclkSet(0);
+////        const uint16_t r = _drShift<16>(0);
+////        return r;
+//        
+////        // Check Init State at the beginning
+////        _irShift(_IR_CNTRL_SIG_CAPTURE);
+////        const bool ready = _drShift<16>(0) & 0x0301;
+////        Assert(ready);
+//        
+//        // Read Memory
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        if (std::is_same_v<T, uint16_t>)
+//        {
+//            _drShift<16>(0x0501);             // Set word read
+//        }
+//        else
+//        {
+//            _drShift<16>(0x0511);             // Set byte read
+//        }
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr-4);                   // Set address
+//        _irShift(_IR_DATA_TO_ADDR);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        uint16_t r = _drShift<16>(0x0000);       // Shift out 16 bits
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        return r;
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+////        _tclkSet(0);
+////        _irShift(_IR_CNTRL_SIG_16BIT);
+////        _drShift<16>(std::is_same_v<T, uint8_t> ? 0x0511 : 0x0501);
+////        _irShift(_IR_ADDR_16BIT);
+////        _drShift<20>(addr);
+////        _irShift(_IR_DATA_TO_ADDR);
+////        _tclkSet(1);
+////        _tclkSet(0);
+////        
+////        const uint16_t mask = (std::is_same_v<T, uint8_t> ? 0x00FF : 0xFFFF);
+////        const T r = _drShift<16>(0) & mask;
+////        _tclkSet(1);
+////        _tclkSet(0);
+////        _tclkSet(1);
+////        return r;
+//    }
+//    
+//    uint8_t _read8(uint32_t addr) {
+//        return _read<uint8_t>(addr);
+//    }
+//    
+//    uint16_t _read16(uint32_t addr) {
+//        return _read<uint16_t>(addr);
+//    }
+//    
+//    uint8_t _read8(uint32_t addr) {
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0511);
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _irShift(_IR_DATA_TO_ADDR);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        
+//        const uint8_t r = _drShift<16>(0) & 0x00FF;
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//        return r;
+//    }
+//    
+//    uint16_t _read16(uint32_t addr) {
+//        uint16_t r = 0;
+//        _read(addr, &r, sizeof(r));
+//        return r;
+//    }
     
     // General-purpose read
     //   
@@ -440,7 +666,7 @@ private:
                 len--;
             }
             
-            // Read 16-bit words
+            // Read 16-bit words ('quick' implementation)
             if (len > 1) {
                 _pcSet(addr);
                 _tclkSet(1);
@@ -463,14 +689,17 @@ private:
         }
     }
     
-    template <uint8_t W>
-    void _write(uint32_t addr, uint16_t val) {
-        static_assert(W==8 || W==16, "invalid width");
+    template <typename T>
+    void _write(uint32_t addr, T val) {
+        static_assert(
+            std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t>,
+            "invalid type"
+        );
         
         // Activate write mode (clear read bit in JTAG control register)
         _tclkSet(0);
         _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(W==16 ? 0x0500 : 0x0510);
+        _drShift<16>(std::is_same_v<T, uint8_t> ? 0x0510 : 0x0500);
         
         // Shift address to write to
         _irShift(_IR_ADDR_16BIT);
@@ -490,12 +719,41 @@ private:
         _tclkSet(1);
     }
     
+    
+    
+//    template <uint8_t W>
+//    void _write(uint32_t addr, uint16_t val) {
+//        static_assert(W==8 || W==16, "invalid width");
+//        
+//        // Activate write mode (clear read bit in JTAG control register)
+//        _tclkSet(0);
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(W==16 ? 0x0500 : 0x0510);
+//        
+//        // Shift address to write to
+//        _irShift(_IR_ADDR_16BIT);
+//        _drShift<20>(addr);
+//        _tclkSet(1);
+//        
+//        // Shift data to write
+//        _irShift(_IR_DATA_TO_ADDR);
+//        _drShift<16>(val);
+//        _tclkSet(0);
+//        
+//        // Deactivate write mode (set read bit in JTAG control register)
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x0501);
+//        _tclkSet(1);
+//        _tclkSet(0);
+//        _tclkSet(1);
+//    }
+    
     void _write8(uint32_t addr, uint8_t val) {
-        _write<8>(addr, val);
+        _write<uint8_t>(addr, val);
     }
     
     void _write16(uint32_t addr, uint16_t val) {
-        _write<16>(addr, val);
+        _write<uint16_t>(addr, val);
     }
     
     // General-purpose write
@@ -551,7 +809,7 @@ private:
                 len--;
             }
             
-            // Write 16-bit words
+            // Write 16-bit words ('quick' implementation)
             if (len > 1) {
                 _pcSet(addr-2);
                 _tclkSet(1);
@@ -562,7 +820,7 @@ private:
                 _irShift(_IR_DATA_QUICK);
                 _tclkSet(0);
                 
-                for (; len; len--) {
+                while (len > 1) {
                     uint16_t w = 0;
                     memcpy(&w, src, sizeof(w));
                     

@@ -127,11 +127,123 @@ void System::init() {
         constexpr uint32_t AddrEnd = 0xFF80;
         constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
         
-        const uint8_t testData[] = {0xCA, 0xFE, 0xBA, 0xBE, 0xFE, 0xED, 0xFA, 0xCE};
-        _msp.write(AddrStart, (uint16_t*)testData, sizeof(testData)/sizeof(uint16_t));
+//        const uint8_t testData[] = {0xCA, 0xFE, 0xBA, 0xBE, 0xFE, 0xED, 0xFA, 0xCE};
+//        const uint8_t testData[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
         
-        uint8_t readData[sizeof(testData)] = {};
-        _msp.read(AddrStart, readData, sizeof(readData));
+        // Test reading
+        {
+            const uint8_t writeData[] = {0xCA, 0xFE, 0xBA, 0xBE, 0xFE, 0xED, 0xFA, 0xCE};
+            uint8_t readData[sizeof(writeData)] = {};
+            _msp.write(AddrStart, (uint16_t*)writeData, sizeof(writeData));
+            
+            {
+                uint8_t tmp = 0;
+                _msp.read(AddrStart, &tmp, 1);
+                Assert(tmp == writeData[0]);
+            }
+            
+            {
+                uint8_t tmp = 0;
+                _msp.read(AddrStart+1, &tmp, 1);
+                Assert(tmp == writeData[1]);
+            }
+            
+            
+//            {
+//                uint16_t val = 0;
+//                _msp.read(0x0000, &val, 2);
+//                
+//                uint8_t b0;
+//                _msp.read(0x0000, &b0, 1);
+//                
+//                uint8_t b1;
+//                _msp.read(0x0001, &b1, 1);
+//                
+//                for (;;);
+//            }
+
+            {
+                const uint8_t writeData[] = {0x42, 0x51};
+                _msp.write(0xFFFE, (uint16_t*)writeData, sizeof(writeData));
+                
+                uint16_t val = 0;
+                _msp.read(0xFFFE, &val, 2);
+                
+                uint8_t b0;
+                _msp.read(0xFFFE, &b0, 1);
+                
+                uint8_t b1;
+                _msp.read(0xFFFF, &b1, 1);
+                
+                for (;;);
+            }
+            
+            
+            
+//            {
+//                const uint8_t writeData[] = {0x42, 0x51};
+//                _msp.write(0x1800, (uint16_t*)writeData, sizeof(writeData));
+//                
+//                uint16_t left = 0;
+//                _msp.read(0x17FE, &left, 2);
+//                
+//                uint16_t right = 0;
+//                _msp.read(0x1800, &right, 2);
+//                
+//                uint8_t bs[4] = {};
+//                uint32_t addr = 0x17FE;
+//                for (uint8_t& b : bs) {
+//                    _msp.read(addr, &b, 1);
+//                    addr++;
+//                }
+//                
+//                for (;;);
+//            }
+            
+            memset(readData, 0x42, sizeof(readData));
+            _msp.read(AddrStart, readData, sizeof(readData));
+            Assert(!memcmp(writeData, readData, sizeof(readData)));
+            
+            memset(readData, 0x42, sizeof(readData));
+            _msp.read(AddrStart+1, readData, sizeof(readData)-1);
+            Assert(!memcmp(writeData+1, readData, sizeof(readData)-1));
+            Assert(readData[sizeof(readData)-1] == 0x42);
+            
+            memset(readData, 0x42, sizeof(readData));
+            _msp.read(AddrStart+1, readData, sizeof(readData)-2);
+            Assert(!memcmp(writeData+1, readData, sizeof(readData)-2));
+            Assert(readData[sizeof(readData)-1] == 0x42);
+            Assert(readData[sizeof(readData)-2] == 0x42);
+            
+            memset(readData, 0x42, sizeof(readData));
+            _msp.read(AddrStart+1, readData+1, sizeof(readData)-2);
+            Assert(!memcmp(writeData+1, readData+1, sizeof(readData)-2));
+            Assert(readData[0] == 0x42);
+            Assert(readData[sizeof(readData)-1] == 0x42);
+        }
+        
+        // Test writing
+        {
+            const uint8_t writeData[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+            uint8_t readData[sizeof(writeData)] = {};
+            _msp.write(AddrStart, (uint16_t*)writeData, sizeof(writeData));
+            
+            memset(readData, 0x42, sizeof(readData));
+            _msp.read(AddrStart, readData, sizeof(readData));
+            Assert(!memcmp(writeData, readData, sizeof(readData)));
+            
+            const uint8_t writeData2[] = {0xCA, 0xFE, 0xBA, 0xBE, 0xFE, 0xED, 0xFA, 0xCE};
+            memset(readData, 0x42, sizeof(readData));
+            _msp.write(AddrStart+1, (uint16_t*)writeData2, sizeof(writeData2)-1);
+            _msp.read(AddrStart+1, readData, sizeof(readData)-1);
+            Assert(!memcmp(writeData2, readData, sizeof(readData)-1));
+            
+            const uint8_t writeData3[] = {0xBB, 0xAA, 0xAA, 0xDD, 0xBB, 0xEE, 0xEE, 0xFF};
+            memset(readData, 0x42, sizeof(readData));
+            _msp.write(AddrStart+1, (uint16_t*)writeData3+1, sizeof(writeData3)-2);
+            _msp.read(AddrStart+1, readData, sizeof(readData)-2);
+            Assert(!memcmp(writeData3+1, readData, sizeof(readData)-2));
+        }
         
         _msp.disconnect();
     }
