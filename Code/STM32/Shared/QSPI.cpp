@@ -83,18 +83,18 @@ void QSPI::reset() {
     
     // Reset channels to clear pending events
     eventChannel.reset();
-    _underway = false;
+    _busy = false;
 }
 
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     AssertArg(cmd.DataMode == QSPI_DATA_NONE);
     AssertArg(!cmd.NbData);
-    Assert(!_underway);
+    Assert(!_busy);
     
-    // Update _underway before the interrupt can occur, otherwise `_underway = true`
-    // could occur after the transaction is complete, cloberring the `_underway = false`
+    // Update _busy before the interrupt can occur, otherwise `_busy = true`
+    // could occur after the transaction is complete, cloberring the `_busy = false`
     // assignment in the completion interrupt handler.
-    _underway = true;
+    _busy = true;
     
     // Dummy cycles don't appear to work correctly when no data is transferred.
     // (For some reason, only DummyCycles=0 and DummyCycles=2 work correctly,
@@ -130,12 +130,12 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     AssertArg(cmd.NbData == len);
     AssertArg(data);
     AssertArg(len);
-    Assert(!_underway);
+    Assert(!_busy);
     
-    // Update _underway before the interrupt can occur, otherwise `_underway = true`
-    // could occur after the transaction is complete, cloberring the `_underway = false`
+    // Update _busy before the interrupt can occur, otherwise `_busy = true`
+    // could occur after the transaction is complete, cloberring the `_busy = false`
     // assignment in the completion interrupt handler.
-    _underway = true;
+    _busy = true;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
@@ -149,22 +149,18 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     AssertArg(cmd.NbData == len);
     AssertArg(data);
     AssertArg(len);
-    Assert(!_underway);
+    Assert(!_busy);
     
-    // Update _underway before the interrupt can occur, otherwise `_underway = true`
-    // could occur after the transaction is complete, cloberring the `_underway = false`
+    // Update _busy before the interrupt can occur, otherwise `_busy = true`
+    // could occur after the transaction is complete, cloberring the `_busy = false`
     // assignment in the completion interrupt handler.
-    _underway = true;
+    _busy = true;
     
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
     
     hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)data);
     Assert(hs == HAL_OK);
-}
-
-bool QSPI::underway() const {
-    return _underway;
 }
 
 void QSPI::_isrQSPI() {
@@ -177,17 +173,17 @@ void QSPI::_isrDMA() {
 
 void QSPI::_handleCommandDone() {
     eventChannel.writeTry(Signal{});
-    _underway = false;
+    _busy = false;
 }
 
 void QSPI::_handleReadDone() {
     eventChannel.writeTry(Signal{});
-    _underway = false;
+    _busy = false;
 }
 
 void QSPI::_handleWriteDone() {
     eventChannel.writeTry(Signal{});
-    _underway = false;
+    _busy = false;
 }
 
 void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device) {
