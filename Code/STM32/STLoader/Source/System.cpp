@@ -44,10 +44,10 @@ void System::_handleEvent() {
     if (auto x = _usb.eventChannel.readSelect()) {
         _usbHandleEvent(*x);
     
-    } else if (auto x = _usb.cmdChannel.readSelect()) {
+    } else if (auto x = _usb.cmdRecvChannel.readSelect()) {
         _usbHandleCmd(*x);
     
-    } else if (auto x = _usb.dataChannel.readSelect()) {
+    } else if (auto x = _usb.dataRecvChannel.readSelect()) {
         _usbHandleData(*x);
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
@@ -63,7 +63,7 @@ void System::_updateStatus(Status status, bool send) {
     _status = status;
     // Send our response
     if (send) {
-        _usb.respSend(&_status, sizeof(_status));
+        _usb.dataSend(&_status, sizeof(_status));
     }
 }
 
@@ -87,24 +87,32 @@ void System::_usbHandleEvent(const USB::Event& ev) {
 }
 
 void System::_usbHandleCmd(const USB::Cmd& ev) {
+    // TODO: if this works, remove all the redundant checks from the functions called below
+    Assert(_status != Status::Busy);
+    
     Cmd cmd;
     Assert(ev.len == sizeof(cmd));
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    // STM32
-    case Op::STWrite:   _stWrite(cmd);      break;
-    case Op::STFinish:  _stFinish(cmd);     break;
-    // ICE40
-    case Op::ICEWrite:  _iceWrite(cmd);     break;
-    // MSP430
-    case Op::MSPStart:  _mspStart(cmd);     break;
-    case Op::MSPWrite:  _mspWrite(cmd);     break;
-    case Op::MSPFinish: _mspFinish(cmd);    break;
+    // STM32 Bootloader
+    case Op::STWrite:               _stWrite(cmd);              break;
+    case Op::STFinish:              _stFinish(cmd);             break;
+    // ICE40 Bootloader
+    case Op::ICEWrite:              _iceWrite(cmd);             break;
+    // MSP430 Bootloader
+    case Op::MSPStart:              _mspStart(cmd);             break;
+    case Op::MSPWrite:              _mspWrite(cmd);             break;
+    case Op::MSPFinish:             _mspFinish(cmd);            break;
+    // MSP430 Debug
+    case Op::MSPDebugConnect:       _mspDebugConnect(cmd);      break;
+    case Op::MSPDebugDisconnect:    _mspDebugDisconnect(cmd);   break;
+    case Op::MSPDebugReadMem:       _mspDebugReadMem(cmd);      break;
+    case Op::MSPDebugWriteMem:      _mspDebugWriteMem(cmd);     break;
     // Set LED
-    case Op::LEDSet:    _ledSet(cmd);       break;
+    case Op::LEDSet:                _ledSet(cmd);               break;
     // Bad command
-    default:            abort();            break;
+    default:                        abort();                    break;
     }
     
     // Prepare to receive another command
@@ -148,7 +156,7 @@ void System::_usbDataRecv() {
     _usb.dataRecv(buf.data, len); // TODO: handle errors
 }
 
-static size_t _regionCapacity(void* addr) {
+static size_t _stRegionCapacity(void* addr) {
     // Verify that `addr` is in one of the allowed RAM regions
     extern uint8_t _sitcm_ram[], _eitcm_ram[];
     extern uint8_t _sdtcm_ram[], _edtcm_ram[];
@@ -175,7 +183,7 @@ void System::_stWrite(const Cmd& cmd) {
     void*const addr = (void*)cmd.arg.STWrite.addr;
     const size_t len = cmd.arg.STWrite.len;
     const size_t ceilLen = _ceilToPacketLength(len);
-    const size_t regionCap = _regionCapacity(addr);
+    const size_t regionCap = _stRegionCapacity(addr);
     // Confirm that the region's capacity is large enough to hold the incoming
     // data length (ceiled to the packet length)
     Assert(regionCap >= ceilLen); // TODO: error handling
@@ -452,6 +460,41 @@ void System::_mspWriteBuf() {
     _mspAddr += len;
     // Pop the buffer, which we just finished sending over Spy-bi-wire
     _bufs.pop();
+}
+
+#pragma mark - MSP430 Debug
+void System::_mspDebugConnect(const STLoader::Cmd& cmd) {
+    Assert(cmd.op == Op::MSPDebugConnect);
+    Assert(_status != Status::Busy);
+    
+    const auto r = _msp.connect();
+    _updateStatus((r==_msp.Status::OK ? Status::OK : Status::Error), true);
+}
+
+void System::_mspDebugDisconnect(const STLoader::Cmd& cmd) {
+    Assert(cmd.op == Op::MSPDebugDisconnect);
+    Assert(_status != Status::Busy);
+    
+    _msp.disconnect();
+    _updateStatus(Status::OK, true);
+}
+
+void System::_mspDebugReadMem(const STLoader::Cmd& cmd) {
+    Assert(cmd.op == Op::MSPDebugReadMem);
+    Assert(_status != Status::Busy);
+    
+    const uint32_t addr = cmd.arg.MSPDebugReadMem.addr;
+    const size_t len = cmd.arg.MSPDebugReadMem.len; // uint16_t word count
+    void* dst = _usb.dataSendBuf();
+    // Verify that the requested amount of data will fit in `_usb.dataSendBuf()`
+    Assert(len*sizeof(uint16_t) <= _usb.dataSendBufCap());
+    _msp.read(addr, dst, len);
+    _usb.dataSend(dst, len*sizeof(uint16_t));
+    _updateStatus(Status::OK, true);
+}
+
+void System::_mspDebugWriteMem(const STLoader::Cmd& cmd) {
+    
 }
 
 #pragma mark - Other Commands

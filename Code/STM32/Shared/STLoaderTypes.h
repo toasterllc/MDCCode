@@ -11,13 +11,13 @@ namespace STLoader {
         DataOut     = 0x02,
         
         // IN endpoints (high bit 1)
-        RespIn      = 0x81,
+        DataIn      = 0x81,
     );
     
     Enum(uint8_t, EndpointIdx, EndpointIdxs,
         CmdOut = 1,
         DataOut,
-        RespIn,
+        DataIn,
     );
     
     enum class Op : uint8_t {
@@ -33,9 +33,9 @@ namespace STLoader {
         MSPFinish,
         // MSP430 Debugger
         MSPDebugConnect,
+        MSPDebugDisconnect,
         MSPDebugReadMem,
         MSPDebugWriteMem,
-        MSPDebugDisconnect,
         // Other commands
         LEDSet,
     };
@@ -66,6 +66,16 @@ namespace STLoader {
                 uint32_t addr;
                 uint32_t len;
             } MSPWrite;
+            
+            struct {
+                uint32_t addr;
+                uint32_t len;
+            } MSPDebugReadMem;
+            
+            struct {
+                uint32_t addr;
+                uint32_t len;
+            } MSPDebugWriteMem;
             
             struct {
                 uint8_t idx;
