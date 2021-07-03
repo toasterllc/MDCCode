@@ -148,6 +148,20 @@ void System::init() {
                 Assert(tmp == writeData[1]);
             }
             
+            {
+                uint16_t val = 0;
+                _msp.read(0xFFFFE, &val, 2);
+                
+                uint8_t b0;
+                _msp.read(0xFFFFE, &b0, 1);
+                
+                uint8_t b1;
+                _msp.read(0xFFFFF, &b1, 1);
+                
+                for (;;);
+            }
+            
+            
             
 //            {
 //                uint16_t val = 0;
@@ -162,21 +176,21 @@ void System::init() {
 //                for (;;);
 //            }
 
-            {
-                const uint8_t writeData[] = {0x42, 0x51};
-                _msp.write(0xFFFE, (uint16_t*)writeData, sizeof(writeData));
-                
-                uint16_t val = 0;
-                _msp.read(0xFFFE, &val, 2);
-                
-                uint8_t b0;
-                _msp.read(0xFFFE, &b0, 1);
-                
-                uint8_t b1;
-                _msp.read(0xFFFF, &b1, 1);
-                
-                for (;;);
-            }
+//            {
+//                const uint8_t writeData[] = {0x42, 0x51};
+//                _msp.write(0xFFFE, (uint16_t*)writeData, sizeof(writeData));
+//                
+//                uint16_t val = 0;
+//                _msp.read(0xFFFE, &val, 2);
+//                
+//                uint8_t b0;
+//                _msp.read(0xFFFE, &b0, 1);
+//                
+//                uint8_t b1;
+//                _msp.read(0xFFFF, &b1, 1);
+//                
+//                for (;;);
+//            }
             
             
             

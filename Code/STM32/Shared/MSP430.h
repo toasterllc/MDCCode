@@ -460,6 +460,17 @@ private:
     T _read(uint32_t addr) {
         static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
         
+        // This is the 'quick' implementation, because the non-quick version
+        // doesn't appear to work with some addresses. (Specifically, the
+        // device ID address, 0x1A04, always returns 0x3FFF.)
+        // We'd prefer the non-quick version since it explicitly supports
+        // byte reads in addition to word reads, while it's unclear whether
+        // the quick version supports byte reads.
+        // However byte reads appear to work fine with the quick version
+        // (including at the end of the address space, and at the start/end
+        // of regions).
+        // In addition, unaligned word reads also appear to work, even
+        // across different region types (FRAM and ROM).
         _pcSet(addr);
         _tclkSet(1);
         _irShift(_IR_CNTRL_SIG_16BIT);
@@ -484,172 +495,6 @@ private:
     uint16_t _read16(uint32_t addr) {
         return _read<uint16_t>(addr);
     }
-
-    
-    
-    
-//    uint8_t _read8(uint32_t addr) {
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0511);
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        
-//        const uint8_t r = _drShift<16>(0) & 0x00FF;
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        return r;
-//    }
-    
-//    uint16_t _read16(uint32_t addr) {
-//        _tapReset();
-//        
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0501);
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        
-//        const uint16_t r = _drShift<16>(0);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        return r;
-//    }
-//    
-//    uint8_t _read8(uint32_t addr) {
-//        return 0;
-//    }
-    
-//    uint16_t _read16(uint32_t addr) {
-////        _tapReset();
-//        
-//        // Activate read mode (clear read bit in JTAG control register)
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0501);
-//        
-//        // Shift address to read from
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _tclkSet(1);
-//        
-//        // Shift out data
-//        _irShift(_IR_DATA_TO_ADDR);
-//        const uint16_t r = _drShift<16>(0);
-//        
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//    }
-    
-    
-    
-//    template <typename T>
-//    T _read(uint32_t addr) {
-//        static_assert(
-//            std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t>,
-//            "invalid type"
-//        );
-//        
-////        _pcSet(addr);
-////        _tclkSet(1);
-////        _irShift(_IR_CNTRL_SIG_16BIT);
-////        _drShift<16>(0x0501);
-////        _irShift(_IR_ADDR_CAPTURE);
-////        _irShift(_IR_DATA_QUICK);
-////        _tclkSet(1);
-////        _tclkSet(0);
-////        const uint16_t r = _drShift<16>(0);
-////        return r;
-//        
-////        // Check Init State at the beginning
-////        _irShift(_IR_CNTRL_SIG_CAPTURE);
-////        const bool ready = _drShift<16>(0) & 0x0301;
-////        Assert(ready);
-//        
-//        // Read Memory
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        if (std::is_same_v<T, uint16_t>)
-//        {
-//            _drShift<16>(0x0501);             // Set word read
-//        }
-//        else
-//        {
-//            _drShift<16>(0x0511);             // Set byte read
-//        }
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr-4);                   // Set address
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        uint16_t r = _drShift<16>(0x0000);       // Shift out 16 bits
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        return r;
-//        
-//        
-//        
-//        
-//        
-//        
-//        
-////        _tclkSet(0);
-////        _irShift(_IR_CNTRL_SIG_16BIT);
-////        _drShift<16>(std::is_same_v<T, uint8_t> ? 0x0511 : 0x0501);
-////        _irShift(_IR_ADDR_16BIT);
-////        _drShift<20>(addr);
-////        _irShift(_IR_DATA_TO_ADDR);
-////        _tclkSet(1);
-////        _tclkSet(0);
-////        
-////        const uint16_t mask = (std::is_same_v<T, uint8_t> ? 0x00FF : 0xFFFF);
-////        const T r = _drShift<16>(0) & mask;
-////        _tclkSet(1);
-////        _tclkSet(0);
-////        _tclkSet(1);
-////        return r;
-//    }
-//    
-//    uint8_t _read8(uint32_t addr) {
-//        return _read<uint8_t>(addr);
-//    }
-//    
-//    uint16_t _read16(uint32_t addr) {
-//        return _read<uint16_t>(addr);
-//    }
-//    
-//    uint8_t _read8(uint32_t addr) {
-//        _tclkSet(0);
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x0511);
-//        _irShift(_IR_ADDR_16BIT);
-//        _drShift<20>(addr);
-//        _irShift(_IR_DATA_TO_ADDR);
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        
-//        const uint8_t r = _drShift<16>(0) & 0x00FF;
-//        _tclkSet(1);
-//        _tclkSet(0);
-//        _tclkSet(1);
-//        return r;
-//    }
-//    
-//    uint16_t _read16(uint32_t addr) {
-//        uint16_t r = 0;
-//        _read(addr, &r, sizeof(r));
-//        return r;
-//    }
     
     // General-purpose read
     //   
@@ -691,10 +536,7 @@ private:
     
     template <typename T>
     void _write(uint32_t addr, T val) {
-        static_assert(
-            std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t>,
-            "invalid type"
-        );
+        static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
         
         // Activate write mode (clear read bit in JTAG control register)
         _tclkSet(0);
@@ -719,6 +561,13 @@ private:
         _tclkSet(1);
     }
     
+    void _write8(uint32_t addr, uint8_t val) {
+        _write<uint8_t>(addr, val);
+    }
+    
+    void _write16(uint32_t addr, uint16_t val) {
+        _write<uint16_t>(addr, val);
+    }
     
     
 //    template <uint8_t W>
@@ -747,14 +596,6 @@ private:
 //        _tclkSet(0);
 //        _tclkSet(1);
 //    }
-    
-    void _write8(uint32_t addr, uint8_t val) {
-        _write<uint8_t>(addr, val);
-    }
-    
-    void _write16(uint32_t addr, uint16_t val) {
-        _write<uint16_t>(addr, val);
-    }
     
     // General-purpose write
     //   
